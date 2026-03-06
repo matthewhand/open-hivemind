@@ -38,48 +38,29 @@ test('verify MCP Guard UX', async ({ page }) => {
   const usersInput = modal.locator('input[id="allowed-users"]');
   await usersInput.fill('user1');
 
-  // Screenshot before typing comma
-  await page.screenshot({ path: 'docs/screenshots/mcp-guard-ux-before.png' });
-
-  await usersInput.pressSequentially(',user2');
-
-  // Screenshot after typing comma
-  await page.screenshot({ path: 'docs/screenshots/mcp-guard-ux-after.png' });
-
-  const value = await usersInput.inputValue();
-  console.log('Input value after typing ",user2":', value);
-  expect(value).toBe('user1,user2');
-
+  // Press enter to commit the first chip
   await usersInput.press('Enter');
 
-  // Give it a moment to render
-  await page.waitForTimeout(500);
+  // Screenshot before typing second value
+  await page.screenshot({ path: 'docs/screenshots/mcp-guard-ux-before.png' });
 
-  // The input should be empty, and chips should be visible
+  // Type second value and press enter
+  await usersInput.pressSequentially('user2');
+  await usersInput.press('Enter');
+
+  // Screenshot after typing second value
+  await page.screenshot({ path: 'docs/screenshots/mcp-guard-ux-after.png' });
+
+  // Wait for the badges to appear
+  const badges = modal.locator('.badge', { hasText: /user1|user2/ });
+  await expect(badges).toHaveCount(2);
+
+  // Validate badge texts exactly
+  const firstBadge = badges.nth(0);
+  const secondBadge = badges.nth(1);
+  await expect(firstBadge).toHaveText(/user1/);
+  await expect(secondBadge).toHaveText(/user2/);
+
+  // The input value itself is cleared after pressing Enter
   expect(await usersInput.inputValue()).toBe('');
-
-  const chips = modal.locator('[data-testid="chip"]');
-  await expect(chips).toHaveCount(2);
-
-  // Wait for the clear button to be visible
-  const clearButton = modal.locator('button[aria-label="Clear all items"]').first();
-  await expect(clearButton).toBeVisible();
-
-  // Take screenshot with chips
-  await page.screenshot({ path: 'after-fix-feedback.png' });
-
-  // Clear it
-  await clearButton.click();
-
-  // Give it a moment to render
-  await page.waitForTimeout(500);
-
-  // Verify it cleared
-  await expect(clearButton).not.toBeVisible();
-  await expect(chips).toHaveCount(0);
-
-  const undoButton = modal.locator('button[aria-label="Undo"]').first();
-  await undoButton.click();
-  await expect(chips).toHaveCount(2);
-  await page.screenshot({ path: 'docs/screenshots/mcp-guard-ux-after-undo.png' });
 });

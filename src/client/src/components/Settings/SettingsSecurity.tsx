@@ -41,7 +41,6 @@ const SettingsSecurity: React.FC = () => {
         corsOrigins: config.cors?.origins?.value || ['http://localhost:3000'],
       }));
     } catch (error) {
-      console.error('Failed to load security settings:', error);
     } finally {
       setLoading(false);
     }
@@ -83,6 +82,7 @@ const SettingsSecurity: React.FC = () => {
           'rateLimit.enabled': settings.enableRateLimit,
           'rateLimit.maxRequests': settings.rateLimitMax,
           'rateLimit.windowMs': settings.rateLimitWindow * 1000,
+          'cors.origins': settings.corsOrigins,
         }),
       });
       

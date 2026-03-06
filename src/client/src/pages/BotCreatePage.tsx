@@ -330,13 +330,13 @@ const BotCreatePage: React.FC = () => {
                     </Select>
                     <label className="label">
                       {!defaultLlmConfigured && !formData.llmProvider && (
-                        <span className="label-text-alt text-error">
+                        <span className="label-text-alt text-error whitespace-normal break-words">
                           System default is not configured. Please select a provider.
                         </span>
                       )}
                       {defaultLlmConfigured && !formData.llmProvider && (
-                        <span className="label-text-alt text-success flex items-center gap-1">
-                          <Check className="w-3 h-3" /> Using system default configuration
+                        <span className="label-text-alt text-success flex items-center gap-1 whitespace-normal break-words">
+                          <Check className="w-3 h-3 min-w-[12px]" /> Using system default configuration
                         </span>
                       )}
                     </label>
