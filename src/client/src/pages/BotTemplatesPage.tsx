@@ -1,11 +1,6 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-<<<<<<< HEAD
 import { Breadcrumbs, EmptyState, Carousel } from '../components/DaisyUI';
-=======
-import { Breadcrumbs, EmptyState } from '../components/DaisyUI';
->>>>>>> origin/main
 import { Copy, Check, Search } from 'lucide-react';
 import SearchFilterBar from '../components/SearchFilterBar';
 
@@ -31,25 +26,24 @@ const BotTemplatesPage: React.FC = () => {
   const [selectedLlmProvider, setSelectedLlmProvider] = useState<string>('All');
   const [searchTerm, setSearchTerm] = useState('');
   const [copied, setCopied] = useState(false);
-<<<<<<< HEAD
 
   const carouselItems = useMemo(() => {
     // Top 3 featured templates, or top 3 templates if none are featured
     const featured = templates.filter(t => t.featured);
-    const selected = featured.length > 0 ? featured : templates.slice(0, 3);
+    const selected = featured.length > 3 ? featured.slice(0, 3) :
+      featured.length > 0 ? featured :
+        templates.slice(0, 3);
 
     return selected.map(t => ({
       image: '',
       title: t.name,
       description: t.description,
       bgGradient: t.platform === 'discord' ? 'linear-gradient(135deg, #5865F2, #7289DA)' :
-                  t.platform === 'slack' ? 'linear-gradient(135deg, #4A154B, #E01E5A)' :
-                  t.platform === 'telegram' ? 'linear-gradient(135deg, #0088cc, #33aadd)' :
-                  'linear-gradient(135deg, #059669, #10b981)',
+        t.platform === 'slack' ? 'linear-gradient(135deg, #4A154B, #E01E5A)' :
+          t.platform === 'google' ? 'linear-gradient(135deg, #4285F4, #34A853)' :
+            'linear-gradient(135deg, #4f46e5, #7c3aed)',
     }));
   }, [templates]);
-=======
->>>>>>> origin/main
 
   const breadcrumbItems = [
     { label: 'Bots', href: '/admin/bots' },
@@ -72,7 +66,7 @@ const BotTemplatesPage: React.FC = () => {
           llmProvider: t.llmProvider,
           persona: t.persona || 'General', // Default if missing
           tags: t.tags || [],
-          featured: false // Default
+          featured: t.featured || false
         }));
 
         setTemplates(templatesArray);
@@ -127,7 +121,8 @@ const BotTemplatesPage: React.FC = () => {
       discord: 'badge-primary',
       slack: 'badge-secondary',
       mattermost: 'badge-info',
-      webhook: 'badge-success',
+      google: 'badge-success',
+      webhook: 'badge-outline',
     };
     return colors[platform] || 'badge-ghost';
   };
@@ -190,91 +185,66 @@ const BotTemplatesPage: React.FC = () => {
     <div className="p-6">
       <Breadcrumbs items={breadcrumbItems} />
 
-<<<<<<< HEAD
-
-      {/* Recommended Templates Carousel */}
-      {carouselItems.length > 0 && (
-        <div className="mb-8">
-          <h2 className="text-xl font-bold mb-4">Recommended Templates</h2>
-          <Carousel items={carouselItems} autoplay={true} interval={6000} variant="full-width" />
-        </div>
-      )}
-
-=======
-<<<<<<< HEAD
-=======
-
-
-
->>>>>>> origin/main
->>>>>>> origin/main
       <div className="mt-4 mb-8">
-      <div className="flex justify-between items-center mb-4">
+        <div className="flex justify-between items-center mb-4">
           <div>
-              <h1 className="text-3xl font-bold mb-2">
+            <h1 className="text-3xl font-bold mb-2">
               Bot Templates
-              </h1>
-              <p className="text-base-content/70">
+            </h1>
+            <p className="text-base-content/70">
               Quick-start templates to help you create bots faster. Choose a template and customize it for your needs.
-              </p>
+            </p>
           </div>
           <button
-              className="btn btn-outline"
-              onClick={() => navigate('/admin/bots/create')}
+            className="btn btn-outline"
+            onClick={() => navigate('/admin/bots/create')}
           >
-              Create Custom Bot
+            Create Custom Bot
           </button>
-      </div>
-
-      {/* Recommended Templates Carousel */}
-      {templates.length > 0 && (
-        <div className="mb-8 mt-6">
-          <h2 className="text-xl font-semibold mb-4">Recommended Templates</h2>
-          <Carousel
-            items={templates.slice(0, 3).map(t => ({
-              image: '',
-              title: t.name,
-              description: t.description,
-              bgGradient: t.platform === 'discord' ? 'linear-gradient(135deg, #5865F2, #7289DA)' :
-                         t.platform === 'slack' ? 'linear-gradient(135deg, #E01E5A, #36C5F0)' :
-                         'linear-gradient(135deg, #4f46e5, #7c3aed)'
-            }))}
-            autoplay={true}
-            interval={5000}
-            variant="card-style"
-          />
         </div>
-      )}
+
+        {/* Recommended Templates Carousel */}
+        {carouselItems.length > 0 && (
+          <div className="mb-8 mt-6">
+            <h2 className="text-xl font-semibold mb-4">Recommended Templates</h2>
+            <Carousel
+              items={carouselItems}
+              autoplay={true}
+              interval={5000}
+              variant="card-style"
+            />
+          </div>
+        )}
 
         {/* Filters */}
         <SearchFilterBar
-            searchValue={searchTerm}
-            onSearchChange={setSearchTerm}
-            searchPlaceholder="Search templates..."
-            filters={[
-                {
-                    key: 'platform',
-                    value: selectedPlatform,
-                    onChange: setSelectedPlatform,
-                    options: platformOptions,
-                    className: 'w-full sm:w-40'
-                },
-                {
-                    key: 'persona',
-                    value: selectedPersona,
-                    onChange: setSelectedPersona,
-                    options: personaOptions,
-                    className: 'w-full sm:w-40'
-                },
-                {
-                    key: 'llm',
-                    value: selectedLlmProvider,
-                    onChange: setSelectedLlmProvider,
-                    options: llmOptions,
-                    className: 'w-full sm:w-40'
-                }
-            ]}
-            onClear={handleClearFilters}
+          searchValue={searchTerm}
+          onSearchChange={setSearchTerm}
+          searchPlaceholder="Search templates..."
+          filters={[
+            {
+              key: 'platform',
+              value: selectedPlatform,
+              onChange: setSelectedPlatform,
+              options: platformOptions,
+              className: 'w-full sm:w-40'
+            },
+            {
+              key: 'persona',
+              value: selectedPersona,
+              onChange: setSelectedPersona,
+              options: personaOptions,
+              className: 'w-full sm:w-40'
+            },
+            {
+              key: 'llm',
+              value: selectedLlmProvider,
+              onChange: setSelectedLlmProvider,
+              options: llmOptions,
+              className: 'w-full sm:w-40'
+            }
+          ]}
+          onClear={handleClearFilters}
         />
       </div>
 
@@ -296,7 +266,7 @@ const BotTemplatesPage: React.FC = () => {
                   )}
                 </div>
 
-                <p className="text-sm text-base-content/70 mb-4">
+                <p className="text-sm text-base-content/70 mb-4 h-12 line-clamp-2">
                   {template.description}
                 </p>
 
@@ -335,16 +305,16 @@ const BotTemplatesPage: React.FC = () => {
             </div>
           ))
         ) : (
-            <div className="col-span-full">
-                 <EmptyState
-                    title="No templates found"
-                    description="No templates match your current filters."
-                    actionLabel="Clear Filters"
-                    onAction={handleClearFilters}
-                    icon={Search}
-                    variant="noResults"
-                />
-            </div>
+          <div className="col-span-full">
+            <EmptyState
+              title="No templates found"
+              description="No templates match your current filters."
+              actionLabel="Clear Filters"
+              onAction={handleClearFilters}
+              icon={Search}
+              variant="noResults"
+            />
+          </div>
         )}
       </div>
     </div>

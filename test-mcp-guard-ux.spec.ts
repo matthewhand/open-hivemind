@@ -31,11 +31,6 @@ test('verify MCP Guard UX', async ({ page }) => {
 
   const usersInput = modal.locator('input[id="allowed-users"]');
 
-<<<<<<< HEAD
-  console.log('Input value:', await usersInput.inputValue());
-  page.screenshot({ path: 'after-fix.png' });
-  expect(await usersInput.inputValue()).toBe('user1, user2');
-=======
   // Test typing normally (buffered text)
   await usersInput.fill('user1');
   await usersInput.press('Enter');
@@ -57,5 +52,4 @@ test('verify MCP Guard UX', async ({ page }) => {
 
   // Take screenshot with chips restored via undo
   await page.screenshot({ path: 'docs/screenshots/mcp-guard-ux-after-undo.png' });
->>>>>>> origin/main
 });
