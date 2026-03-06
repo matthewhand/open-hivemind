@@ -7,7 +7,7 @@ import { Persona as ApiPersona } from '../services/api';
 import { BotConfig as BaseBotConfig } from '../../../types/config';
 
 // Extended Bot type with UI-specific fields
-export interface BotConfigExtended extends ApiBot {
+type BotConfig = BaseBotConfig & {
     id: string; // BotsPage ensures ID is present
     envOverrides?: any;
     provider?: string; // Legacy/Aliased field

@@ -1,7 +1,7 @@
 import convict from 'convict';
 import { BotConfigurationManager } from '../../config/BotConfigurationManager';
 import { getLlmDefaultStatus } from '../../config/llmDefaultStatus';
-import { CONFIG_LIMITS, type BotConfig } from '../../types/config';
+import { CONFIG_LIMITS } from '../../types/config';
 
 export interface ValidationResult {
   isValid: boolean;
@@ -164,9 +164,7 @@ export class ConfigurationValidator {
     } else if (config.name.length < CONFIG_LIMITS.BOT_NAME_MIN_LENGTH) {
       errors.push(`Bot name must be at least ${CONFIG_LIMITS.BOT_NAME_MIN_LENGTH} characters long`);
     } else if (config.name.length > CONFIG_LIMITS.BOT_NAME_MAX_LENGTH) {
-      errors.push(
-        `Bot name must be less than ${CONFIG_LIMITS.BOT_NAME_MAX_LENGTH} characters long`
-      );
+      errors.push(`Bot name must be less than ${CONFIG_LIMITS.BOT_NAME_MAX_LENGTH} characters long`);
     }
 
     if (!config.messageProvider) {
@@ -377,11 +375,7 @@ export class ConfigurationValidator {
     // MCP Guard validation
     const mcpGuard = typeof config.mcpGuard === 'string' ? undefined : config.mcpGuard;
     if (mcpGuard?.enabled) {
-      if (
-        mcpGuard.type === 'custom' &&
-        !mcpGuard.allowedUsers?.length &&
-        !(mcpGuard as any).allowedUserIds?.length
-      ) {
+      if (mcpGuard.type === 'custom' && !mcpGuard.allowedUsers?.length && !(mcpGuard as any).allowedUserIds?.length) {
         warnings.push('MCP Guard is enabled but no allowed users specified');
         suggestions.push('Add user IDs to the allowed list or consider using owner-only mode');
       }
