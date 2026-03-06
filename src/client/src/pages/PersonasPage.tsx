@@ -1,19 +1,20 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { User, Plus, Edit2, Trash2, Sparkles, RefreshCw, Info, AlertTriangle, Shield, Copy, Search, X, Eye } from 'lucide-react';
-import { Alert } from '../components/DaisyUI/Alert';
-import Badge from '../components/DaisyUI/Badge';
-import Button from '../components/DaisyUI/Button';
-import Card from '../components/DaisyUI/Card';
-import Input from '../components/DaisyUI/Input';
-import Select from '../components/DaisyUI/Select';
-import Modal from '../components/DaisyUI/Modal';
-import PageHeader from '../components/DaisyUI/PageHeader';
-import StatsCards from '../components/DaisyUI/StatsCards';
-import { LoadingSpinner } from '../components/DaisyUI/Loading';
-import EmptyState from '../components/DaisyUI/EmptyState';
-import ToastNotification from '../components/DaisyUI/ToastNotification';
-
+import {
+  Alert,
+  Badge,
+  Button,
+  Card,
+  Input,
+  Select,
+  Modal,
+  PageHeader,
+  StatsCards,
+  LoadingSpinner,
+  EmptyState,
+  ToastNotification,
+} from '../components/DaisyUI';
 import SearchFilterBar from '../components/SearchFilterBar';
 import type { Persona as ApiPersona, Bot } from '../services/api';
 import { apiService } from '../services/api';

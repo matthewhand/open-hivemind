@@ -1,13 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState } from 'react';
-import Card from './DaisyUI/Card';
-import Badge from './DaisyUI/Badge';
-import Button from './DaisyUI/Button';
-import { Alert } from './DaisyUI/Alert';
-import Input from './DaisyUI/Input';
-import Modal from './DaisyUI/Modal';
-import Select from './DaisyUI/Select';
-
+import { Card, Badge, Button, Alert, Input, Modal, Select } from './DaisyUI';
 import {
   Cog6ToothIcon,
   PlusIcon,

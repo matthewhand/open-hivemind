@@ -7,8 +7,7 @@ import {
   MessageProviderType,
   LLMProviderType,
 } from '../../types/bot';
-import Badge from '../DaisyUI/Badge';
-
+import { Badge } from '../DaisyUI';
 import { X as XIcon, Edit as EditIcon } from 'lucide-react';
 
 interface ProviderChipProps {

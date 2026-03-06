@@ -1,9 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect, useCallback } from 'react';
-import { Alert } from '../DaisyUI/Alert';
-import Button from '../DaisyUI/Button';
-import Select from '../DaisyUI/Select';
-
+import { Alert, Button, Select } from '../DaisyUI';
 import { Bot, Link as LinkIcon } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { apiService } from '../../services/api';
@@ -43,7 +40,6 @@ const SettingsLLM: React.FC = () => {
             setProviders(options);
 
         } catch (err) {
-            // console.error removed for cleaner logs
             setAlert({
                 type: 'warning',
                 message: 'Could not load LLM settings or providers. Using defaults.',
@@ -69,7 +65,6 @@ const SettingsLLM: React.FC = () => {
             setAlert({ type: 'success', message: 'LLM settings saved successfully!' });
             setTimeout(() => setAlert(null), 5000);
         } catch (err) {
-            // console.error removed for cleaner logs
             setAlert({
                 type: 'error',
                 message: 'Failed to save LLM settings. Please try again.',

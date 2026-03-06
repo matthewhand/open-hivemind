@@ -1,17 +1,18 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Alert } from './DaisyUI/Alert';
-import Badge from './DaisyUI/Badge';
-import Button from './DaisyUI/Button';
-import Card from './DaisyUI/Card';
-import DataTable from './DaisyUI/DataTable';
-import Modal from './DaisyUI/Modal';
-import ProgressBar from './DaisyUI/ProgressBar';
-import StatsCards from './DaisyUI/StatsCards';
-import ToastNotification from './DaisyUI/ToastNotification';
-import { LoadingSpinner } from './DaisyUI/Loading';
-
+import {
+  Alert,
+  Badge,
+  Button,
+  Card,
+  DataTable,
+  Modal,
+  ProgressBar,
+  StatsCards,
+  ToastNotification,
+  LoadingSpinner,
+} from './DaisyUI';
 import type { Bot, StatusResponse } from '../services/api';
 import { apiService } from '../services/api';
 import { CreateBotWizard } from './BotManagement/CreateBotWizard';
