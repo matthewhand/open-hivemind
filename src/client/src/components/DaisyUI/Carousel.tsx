@@ -90,7 +90,7 @@ const Carousel: React.FC<CarouselProps> = ({
               </a>
               <a href={`#slide${(index + 1) % items.length}`} className="btn btn-circle" onClick={handleNext}>
                 ❯
-              </button>
+              </a>
             </div>
           </div>
         ))}
