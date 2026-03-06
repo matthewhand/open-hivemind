@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Badge from '../DaisyUI/Badge';
 import { Alert } from '../DaisyUI/Alert';
 import Button from '../DaisyUI/Button';
@@ -16,22 +16,22 @@ import {
 import type { BotConfig } from '../../../../types/config';
 
 interface RedactedValue {
-    isRedacted: boolean;
-    redactedValue: string;
-    hasValue: boolean;
+  isRedacted: boolean;
+  redactedValue: string;
+  hasValue: boolean;
 }
 
 interface BotConfigExtended extends Omit<BotConfig, 'discord' | 'slack' | 'isActive'> {
-    isActive: boolean;
-    source: string;
-    discord?: Record<string, unknown | RedactedValue>;
-    slack?: Record<string, unknown | RedactedValue>;
+  isActive: boolean;
+  source: string;
+  discord?: Record<string, unknown | RedactedValue>;
+  slack?: Record<string, unknown | RedactedValue>;
 }
 
 interface BotListResponse {
-    bots: BotConfigExtended[];
-    count: number;
-    warnings: string[];
+  bots: BotConfigExtended[];
+  count: number;
+  warnings: string[];
 }
 
 const BotListManager: React.FC = () => {
@@ -42,11 +42,7 @@ const BotListManager: React.FC = () => {
   const [selectedBot, setSelectedBot] = useState<BotConfigExtended | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  useEffect(() => {
-    fetchBots();
-  }, []);
-
-  const fetchBots = async () => {
+  const fetchBots = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -63,7 +59,11 @@ const BotListManager: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    fetchBots();
+  }, [fetchBots]);
 
   const handleViewBot = (bot: BotConfigExtended) => {
     setSelectedBot(bot);
@@ -72,15 +72,15 @@ const BotListManager: React.FC = () => {
 
   const getProviderBadgeColor = (provider: string): string => {
     switch (provider) {
-    case 'discord': return 'badge-primary';
-    case 'slack': return 'badge-secondary';
-    case 'mattermost': return 'badge-accent';
-    default: return 'badge-ghost';
+      case 'discord': return 'badge-primary';
+      case 'slack': return 'badge-secondary';
+      case 'mattermost': return 'badge-accent';
+      default: return 'badge-ghost';
     }
   };
 
   const renderConfigValue = (key: string, value: unknown): React.ReactNode => {
-    if (!value) {return <span className="text-base-content/40">—</span>;}
+    if (!value) { return <span className="text-base-content/40">—</span>; }
 
     if (typeof value === 'object' && value !== null) {
       const obj = value as Record<string, unknown>;
@@ -261,7 +261,7 @@ const BotListManager: React.FC = () => {
             {/* Detailed Config Sections */}
             <div className="space-y-4">
               <h3 className="text-sm font-bold uppercase tracking-wider opacity-50">Provider Configuration</h3>
-              
+
               {selectedBot.discord && (
                 <div className="collapse collapse-arrow bg-base-200/50">
                   <input type="checkbox" />

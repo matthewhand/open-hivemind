@@ -56,11 +56,23 @@ router.get('/system-status', async (req, res) => {
       },
     };
 
-    logAdminAction(req as AuthMiddlewareRequest, 'VIEW', 'system-status', 'success', 'System status retrieved');
+    logAdminAction(
+      req as AuthMiddlewareRequest,
+      'VIEW',
+      'system-status',
+      'success',
+      'System status retrieved'
+    );
     return res.json({ success: true, data: systemStatus });
   } catch (error) {
     debug('Error getting system status:', error);
-    logAdminAction(req as AuthMiddlewareRequest, 'VIEW', 'system-status', 'failure', `Error: ${error}`);
+    logAdminAction(
+      req as AuthMiddlewareRequest,
+      'VIEW',
+      'system-status',
+      'failure',
+      `Error: ${error}`
+    );
     return res.status(500).json({
       success: false,
       error: 'Failed to get system status',
@@ -166,7 +178,13 @@ router.get('/env-status', async (req, res) => {
       };
     });
 
-    logAdminAction(req as AuthMiddlewareRequest, 'VIEW', 'env-status', 'success', 'Environment status retrieved');
+    logAdminAction(
+      req as AuthMiddlewareRequest,
+      'VIEW',
+      'env-status',
+      'success',
+      'Environment status retrieved'
+    );
     return res.json({ success: true, data: envStatus });
   } catch (error) {
     debug('Error getting environment status:', error);
@@ -264,7 +282,13 @@ router.post('/validate-config', async (req, res) => {
     return res.json({ success: true, data: validation });
   } catch (error) {
     debug('Error validating config:', error);
-    logAdminAction(req as AuthMiddlewareRequest, 'VALIDATE', 'bot-config', 'failure', `Error: ${error}`);
+    logAdminAction(
+      req as AuthMiddlewareRequest,
+      'VALIDATE',
+      'bot-config',
+      'failure',
+      `Error: ${error}`
+    );
     return res.status(500).json({
       success: false,
       error: 'Failed to validate configuration',

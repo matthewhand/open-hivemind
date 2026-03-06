@@ -283,86 +283,90 @@ router.get('/status', authenticateToken, (req, res) => {
   }
 });
 
-
-function extractFilters(req: any) {
-  return {
-    botFilter: parseMultiParam(req.query.bot),
-    providerFilter: parseMultiParam(req.query.messageProvider),
-    llmFilter: parseMultiParam(req.query.llmProvider),
-    from: parseDate(req.query.from),
-    to: parseDate(req.query.to)
-  };
-}
-
-function filterEventsByCriteria(allEvents: any[], filters: any) {
-  const agents = new Set<string>();
-  const messageProviders = new Set<string>();
-  const llmProviders = new Set<string>();
-
-  const botFilterSet = new Set(filters.botFilter);
-  const providerFilterSet = new Set(filters.providerFilter);
-  const llmFilterSet = new Set(filters.llmFilter);
-
-  const hasBotFilter = botFilterSet.size > 0;
-  const hasProviderFilter = providerFilterSet.size > 0;
-  const hasLlmFilter = llmFilterSet.size > 0;
-  const fromTime = filters.from?.getTime();
-  const toTime = filters.to?.getTime();
-  const hasAnyFilter = hasBotFilter || hasProviderFilter || hasLlmFilter || fromTime || toTime;
-
-  const filteredEvents = allEvents.filter((event: any) => {
-    agents.add(event.botName);
-    messageProviders.add(event.provider);
-    llmProviders.add(event.llmProvider);
-
-    if (!hasAnyFilter) return true;
-
-    if (hasBotFilter && !botFilterSet.has(event.botName)) return false;
-    if (hasProviderFilter && !providerFilterSet.has(event.provider)) return false;
-    if (hasLlmFilter && !llmFilterSet.has(event.llmProvider)) return false;
-
-    const ts = new Date(event.timestamp).getTime();
-    if (fromTime && ts < fromTime) return false;
-    if (toTime && ts > toTime) return false;
-
-    return true;
-  });
-
-  return { filteredEvents, filterValues: { agents, messageProviders, llmProviders } };
-}
-
 router.get('/activity', authenticateToken, async (req, res) => {
   try {
     const manager = BotConfigurationManager.getInstance();
     const ws = WebSocketService.getInstance();
-    const botMap = new Map(manager.getAllBots().map((bot) => [bot.name, bot]));
-    const filters = extractFilters(req);
 
+    const botList = manager.getAllBots();
+    const botMap = new Map(botList.map((bot) => [bot.name, bot]));
+
+    const botFilter = parseMultiParam(req.query.bot);
+    const providerFilter = parseMultiParam(req.query.messageProvider);
+    const llmFilter = parseMultiParam(req.query.llmProvider);
+    const from = parseDate(req.query.from);
+    const to = parseDate(req.query.to);
+
+    // Fetch events from persistent storage
     const storedEvents = await ActivityLogger.getInstance().getEvents({
-      startTime: filters.from || undefined,
-      endTime: filters.to || undefined,
+      startTime: from || undefined,
+      endTime: to || undefined,
       limit: 5000,
     });
 
     const allEvents = storedEvents.map((event) => annotateEvent(event, botMap));
-    const { filteredEvents, filterValues } = filterEventsByCriteria(allEvents, filters);
+
+    const botFilterSet = new Set(botFilter);
+    const providerFilterSet = new Set(providerFilter);
+    const llmFilterSet = new Set(llmFilter);
+
+    const hasBotFilter = botFilterSet.size > 0;
+    const hasProviderFilter = providerFilterSet.size > 0;
+    const hasLlmFilter = llmFilterSet.size > 0;
+
+    const fromTime = from?.getTime();
+    const toTime = to?.getTime();
+
+    const agents = new Set<string>();
+    const messageProviders = new Set<string>();
+    const llmProviders = new Set<string>();
+
+    const hasAnyFilter = hasBotFilter || hasProviderFilter || hasLlmFilter || fromTime || toTime;
+
+    const filteredEvents = allEvents.filter((event) => {
+      agents.add(event.botName);
+      messageProviders.add(event.provider);
+      llmProviders.add(event.llmProvider);
+
+      if (!hasAnyFilter) return true;
+
+      if (hasBotFilter && !botFilterSet.has(event.botName)) {
+        return false;
+      }
+      if (hasProviderFilter && !providerFilterSet.has(event.provider)) {
+        return false;
+      }
+      if (hasLlmFilter && !llmFilterSet.has(event.llmProvider)) {
+        return false;
+      }
+      const ts = new Date(event.timestamp).getTime();
+      if (fromTime && ts < fromTime) {
+        return false;
+      }
+      if (toTime && ts > toTime) {
+        return false;
+      }
+      return true;
+    });
+
+    const timeline = buildTimeline(filteredEvents);
+    const agentMetrics = buildAgentMetrics(filteredEvents, ws.getAllBotStats());
 
     res.json({
       events: filteredEvents.slice(-200),
       filters: {
-        agents: Array.from(filterValues.agents).sort(),
-        messageProviders: Array.from(filterValues.messageProviders).sort(),
-        llmProviders: Array.from(filterValues.llmProviders).sort(),
+        agents: Array.from(agents).sort(),
+        messageProviders: Array.from(messageProviders).sort(),
+        llmProviders: Array.from(llmProviders).sort(),
       },
-      timeline: buildTimeline(filteredEvents),
-      agentMetrics: buildAgentMetrics(filteredEvents, ws.getAllBotStats()),
+      timeline,
+      agentMetrics,
     });
   } catch (error) {
     console.error('Activity API error:', error);
     res.status(500).json({ error: 'Failed to retrieve activity feed' });
   }
 });
-
 
 router.post('/alerts/:id/acknowledge', authenticateToken, (req, res) => {
   try {
@@ -427,9 +431,8 @@ function parseDate(value: unknown): Date | null {
  * Useful for preventing PII (like User IDs and Channel IDs) from leaking to the frontend.
  */
 function redactString(val: string | undefined): string | undefined {
-  if (!val) return val;
-  if (val.length <= 3) return '***';
-  return val.substring(0, 1) + '*'.repeat(val.length - 2) + val.substring(val.length - 1);
+  if (!val || val.length <= 4) return val;
+  return '*'.repeat(val.length - 4) + val.slice(-4);
 }
 
 function annotateEvent(
@@ -475,29 +478,23 @@ function buildTimeline(events: AnnotatedEvent[]) {
     .map(([timestamp, data]) => ({ timestamp, ...data }));
 }
 
-
-function updateExistingAgentMetric(
-  existing: any,
-  event: AnnotatedEvent,
-  totalMessages: number,
-  errorsForBot: string[]
-) {
-  existing.events += 1;
-  if (event.status === 'error' || event.status === 'timeout') {
-    existing.errors += 1;
-  }
-  if (new Date(event.timestamp).getTime() > new Date(existing.lastActivity).getTime()) {
-    existing.lastActivity = event.timestamp;
-  }
-  existing.totalMessages = totalMessages;
-  existing.recentErrors = errorsForBot;
-}
-
 function buildAgentMetrics(
   events: AnnotatedEvent[],
   botStats: Record<string, { messageCount: number; errors: string[]; errorCount: number }>
 ) {
-  const metrics = new Map<string, any>();
+  const metrics = new Map<
+    string,
+    {
+      botName: string;
+      messageProvider: string;
+      llmProvider: string;
+      events: number;
+      errors: number;
+      lastActivity: string;
+      totalMessages: number;
+      recentErrors: string[];
+    }
+  >();
 
   events.forEach((event) => {
     const existing = metrics.get(event.botName);
@@ -518,7 +515,15 @@ function buildAgentMetrics(
       return;
     }
 
-    updateExistingAgentMetric(existing, event, totalMessages, errorsForBot);
+    existing.events += 1;
+    if (event.status === 'error' || event.status === 'timeout') {
+      existing.errors += 1;
+    }
+    if (new Date(event.timestamp).getTime() > new Date(existing.lastActivity).getTime()) {
+      existing.lastActivity = event.timestamp;
+    }
+    existing.totalMessages = totalMessages;
+    existing.recentErrors = errorsForBot;
   });
 
   return Array.from(metrics.values()).sort((a, b) => b.events - a.events);
