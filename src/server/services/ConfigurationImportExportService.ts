@@ -659,7 +659,6 @@ export class ConfigurationImportExportService {
         const metadataPath = join(this.backupsDir, `${backupFileName}.meta`);
         await fs.writeFile(metadataPath, JSON.stringify(metadata, null, 2));
 
-<<<<<<< HEAD
         // Enforce backup retention policy
         try {
           const maxRetainedBackups = options.maxRetainedBackups || 10;
@@ -674,71 +673,6 @@ export class ConfigurationImportExportService {
           }
         } catch (retentionError) {
           debug('Error enforcing backup retention policy:', retentionError);
-=======
-        // Enforce backup retention policy with configurable limits and cold storage
-        try {
-          const generalSettings = UserConfigStore.getInstance().getGeneralSettings();
-          const maxBackups =
-            typeof generalSettings.backupRetentionLimit === 'number'
-              ? generalSettings.backupRetentionLimit
-              : 10;
-          const enableColdStorage = generalSettings.enableColdStorage === true;
-
-          const allBackups = await this.listBackups();
-          if (allBackups.length > maxBackups) {
-            debug(`Enforcing backup retention policy: keeping latest ${maxBackups} backups`);
-
-            const auditLogger = AuditLogger.getInstance();
-
-            // listBackups sorts from newest to oldest
-            const backupsToDelete = allBackups.slice(maxBackups);
-            for (const oldBackup of backupsToDelete) {
-              if (enableColdStorage) {
-                debug(`Archiving old backup to cold storage: ${oldBackup.id} (${oldBackup.name})`);
-                const oldBackupFileName = `backup-${oldBackup.name}-${new Date(oldBackup.createdAt).getTime()}.json.gz`;
-                const oldBackupPath = join(this.backupsDir, oldBackupFileName);
-                const coldDir = join(process.cwd(), 'config', 'backups', 'cold');
-                await fs.mkdir(coldDir, { recursive: true });
-
-                try {
-                  await fs.rename(oldBackupPath, join(coldDir, oldBackupFileName));
-                  // delete metadata to drop from active list
-                  await fs.unlink(join(this.backupsDir, `${oldBackupFileName}.meta`));
-
-                  auditLogger.logAdminAction(
-                    createdBy || 'system',
-                    'ARCHIVE',
-                    `backup/${oldBackup.id}`,
-                    'success',
-                    `Archived backup ${oldBackup.name} to cold storage due to retention limit`
-                  );
-                } catch (e) {
-                  debug(`Failed to cold store backup ${oldBackup.id}, falling back to delete:`, e);
-                  await this.deleteBackup(oldBackup.id);
-                  auditLogger.logAdminAction(
-                    createdBy || 'system',
-                    'DELETE',
-                    `backup/${oldBackup.id}`,
-                    'success',
-                    `Deleted backup ${oldBackup.name} due to retention limit (cold storage failed)`
-                  );
-                }
-              } else {
-                debug(`Deleting old backup: ${oldBackup.id} (${oldBackup.name})`);
-                await this.deleteBackup(oldBackup.id);
-                auditLogger.logAdminAction(
-                  createdBy || 'system',
-                  'DELETE',
-                  `backup/${oldBackup.id}`,
-                  'success',
-                  `Deleted backup ${oldBackup.name} due to retention limit`
-                );
-              }
-            }
-          }
-        } catch (retentionError) {
-          debug('Error enforcing backup retention:', retentionError);
->>>>>>> origin/main
         }
 
         return {
