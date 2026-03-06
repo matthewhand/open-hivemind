@@ -32,21 +32,21 @@ test.describe('Static Pages Screenshots', () => {
 
     // Mock static pages data if necessary (we assume the API endpoint serves up the list of static pages)
     await page.route('/api/static/pages*', async (route) => {
-        await route.fulfill({
-            status: 200,
-            json: [
-                {
-                    path: '/screensaver',
-                    name: 'Screensaver',
-                    description: 'A screensaver page.',
-                },
-                {
-                    path: '/enhanced-homepage',
-                    name: 'Enhanced Homepage',
-                    description: 'A static enhanced homepage demo.',
-                }
-            ]
-        })
+      await route.fulfill({
+        status: 200,
+        json: [
+          {
+            path: '/screensaver',
+            name: 'Screensaver',
+            description: 'A screensaver page.',
+          },
+          {
+            path: '/enhanced-homepage',
+            name: 'Enhanced Homepage',
+            description: 'A static enhanced homepage demo.',
+          },
+        ],
+      });
     });
   });
 

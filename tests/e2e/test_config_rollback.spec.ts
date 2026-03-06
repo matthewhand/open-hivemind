@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { expect, test } from '@playwright/test';
 import { setupAuth } from './test-utils';
 
 test.describe('Configuration Rollback', () => {
@@ -14,21 +14,24 @@ test.describe('Configuration Rollback', () => {
       route.fulfill({ status: 200, json: { status: 'ok' } })
     );
     await page.route('/api/config/global', async (route) =>
-      route.fulfill({ status: 200, json: {
-        "server": {
-          "values": {
-            "port": 3000
+      route.fulfill({
+        status: 200,
+        json: {
+          server: {
+            values: {
+              port: 3000,
+            },
+            schema: {
+              properties: {
+                port: {
+                  format: 'port',
+                  default: 3000,
+                },
+              },
+            },
           },
-          "schema": {
-            "properties": {
-              "port": {
-                "format": "port",
-                "default": 3000
-              }
-            }
-          }
-        }
-      } })
+        },
+      })
     );
     await page.route('/api/csrf-token', async (route) =>
       route.fulfill({ status: 200, json: { csrfToken: 'mock-token' } })
@@ -81,13 +84,16 @@ test.describe('Configuration Rollback', () => {
     await modal.locator('text=rollback_1711234567890_xxyyzz').click();
 
     // Setup mock for actual rollback
-    await page.route('/api/config/hot-reload/rollback/rollback_1711234567890_xxyyzz', async (route) => {
-      // Return updated state after rollback
-      await page.route('/api/config/hot-reload/rollbacks', async (r) => {
-        await r.fulfill({ status: 200, json: { rollbacks: [] } });
-      });
-      await route.fulfill({ status: 200, json: { success: true } });
-    });
+    await page.route(
+      '/api/config/hot-reload/rollback/rollback_1711234567890_xxyyzz',
+      async (route) => {
+        // Return updated state after rollback
+        await page.route('/api/config/hot-reload/rollbacks', async (r) => {
+          await r.fulfill({ status: 200, json: { rollbacks: [] } });
+        });
+        await route.fulfill({ status: 200, json: { success: true } });
+      }
+    );
 
     // Click to confirm rollback
     await modal.locator('button:has-text("Rollback Configuration")').click();

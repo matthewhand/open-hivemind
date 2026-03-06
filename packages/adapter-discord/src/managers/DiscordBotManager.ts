@@ -74,7 +74,10 @@ export class DiscordBotManager {
 
     if (discordBots.length === 0) {
       log('No Discord providers configured.');
-      throw new ConfigError('No Discord bot tokens provided in configuration', 'DISCORD_NO_TOKENS_CONFIGURED');
+      throw new ConfigError(
+        'No Discord bot tokens provided in configuration',
+        'DISCORD_NO_TOKENS_CONFIGURED'
+      );
     }
 
     // Load bots from configurations
@@ -85,17 +88,24 @@ export class DiscordBotManager {
         return;
       }
 
-      const token = botConfig.discordBotToken !== undefined
-        ? botConfig.discordBotToken
-        : botConfig.discord?.token;
+      const token =
+        botConfig.discordBotToken !== undefined
+          ? botConfig.discordBotToken
+          : botConfig.discord?.token;
 
       if (token === undefined || token === null) {
-        throw new ConfigError(`Empty token at position ${index + 1} in config file`, 'DISCORD_EMPTY_TOKEN_CONFIG');
+        throw new ConfigError(
+          `Empty token at position ${index + 1} in config file`,
+          'DISCORD_EMPTY_TOKEN_CONFIG'
+        );
       }
 
       const trimmedToken = String(token).trim();
       if (trimmedToken === '') {
-        throw new ConfigError(`Empty token at position ${index + 1} in config file`, 'DISCORD_EMPTY_TOKEN_CONFIG');
+        throw new ConfigError(
+          `Empty token at position ${index + 1} in config file`,
+          'DISCORD_EMPTY_TOKEN_CONFIG'
+        );
       }
 
       this.addBotToPool(trimmedToken, botConfig.name, botConfig);
