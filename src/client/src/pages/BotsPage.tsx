@@ -79,7 +79,7 @@ const redactString = (str?: string) => {
 const BotsPage: React.FC = () => {
   const [bots, setBots] = useState<BotConfig[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [uiError, setUiError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterType, setFilterType] = useState<'all' | 'active' | 'inactive'>('all');
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -90,7 +90,6 @@ const BotsPage: React.FC = () => {
   const [activityLogs, setActivityLogs] = useState<any[]>([]);
   const [chatHistory, setChatHistory] = useState<any[]>([]);
   const [logFilter, setLogFilter] = useState('');
-  const [previewTab, setPreviewTab] = useState<'activity' | 'chat'>('activity');
 
   // Create Bot State
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -143,7 +142,7 @@ const BotsPage: React.FC = () => {
   // Use Page Lifecycle Hook
   const {
     data,
-    loading,
+    loading: pageLoading,
     error: lifecycleError,
     refetch,
   } = usePageLifecycle({
@@ -153,7 +152,7 @@ const BotsPage: React.FC = () => {
   });
 
   // Derived state
-  const bots = data?.bots || [];
+  const derivedBots = data?.bots || [];
 
   const personas = data?.personas || [];
   const llmProfiles = data?.llmProfiles || [];
@@ -168,6 +167,11 @@ const BotsPage: React.FC = () => {
 
   const setError = setUiError;
   const error = uiError;
+
+  useEffect(() => {
+    setBots(derivedBots);
+    setLoading(pageLoading);
+  }, [derivedBots, pageLoading]);
 
   // Fetch logs and chat history when previewing a bot
   useEffect(() => {
@@ -291,7 +295,7 @@ const BotsPage: React.FC = () => {
       ErrorService.report(err, { action: 'deleteBot', botId: deletingBot.id });
       toast.error(err instanceof Error ? err.message : 'Failed to delete bot');
     }
-  };
+  }, [deletingBot, previewBot]);
 
   const handleToggleBotStatus = async (bot: BotConfig) => {
     try {
@@ -308,7 +312,7 @@ const BotsPage: React.FC = () => {
       ErrorService.report(err, { action: 'toggleBotStatus', botId: bot.id });
       toast.error(err instanceof Error ? err.message : 'Failed to update bot status');
     }
-  }, [previewBot?.id, toast]);
+  };
 
   const filteredBots = useMemo(() => {
     return bots.filter(bot => {
@@ -321,7 +325,6 @@ const BotsPage: React.FC = () => {
 
   const handlePreviewBot = React.useCallback(async (bot: BotConfig) => {
     setPreviewBot(bot);
-    setPreviewTab('activity');
     setActivityLogs([]);
     setChatHistory([]);
     
@@ -338,7 +341,7 @@ const BotsPage: React.FC = () => {
       // Don't show toast for initial load failures to keep UI clean, but log error
       console.error('Failed to load bot preview data:', err);
     }
-  };
+  }, [setPreviewBot, setActivityLogs, setChatHistory]);
 
   const filteredLogs = useMemo(() => {
     if (!logFilter) return activityLogs;
@@ -347,20 +350,6 @@ const BotsPage: React.FC = () => {
       log.type?.toLowerCase().includes(logFilter.toLowerCase())
     );
   }, [activityLogs, logFilter]);
-
-    try {
-      setActionLoading(deleteModal.bot.id);
-      await apiService.deleteBot(deleteModal.bot.id);
-
-      setDeleteModal({ isOpen: false, bot: null });
-      setDeleteConfirmation('');
-      await refetch();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to delete bot');
-    } finally {
-      setActionLoading(null);
-    }
-  };
 
   const handleCloneClick = (bot: BotData) => {
     setCloneModal({ isOpen: true, bot });
