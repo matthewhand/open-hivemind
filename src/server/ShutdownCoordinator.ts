@@ -70,6 +70,7 @@ export class ShutdownCoordinator {
 
   // Resource references
   private httpServer: HttpServer | null = null;
+  private serverClosePromise: Promise<void> | null = null;
   private viteServer: IShutdownable | null = null;
   private messengerServices: IMessengerService[] = [];
   private shutdownableServices: IShutdownable[] = [];
@@ -324,9 +325,22 @@ export class ShutdownCoordinator {
 
     if (this.httpServer) {
       // Stop accepting new connections
-      this.httpServer.close(() => {
-        debug('HTTP server stopped accepting connections');
+      this.serverClosePromise = new Promise((resolve, reject) => {
+        this.httpServer!.close((err) => {
+          if (err && err.message !== 'Server is not running.') {
+            debug('Error closing HTTP server:', err);
+            reject(err);
+          } else {
+            debug('HTTP server stopped accepting connections');
+            resolve();
+          }
+        });
       });
+      // Optionally terminate idle keep-alive connections in Node 18+
+      if (typeof this.httpServer.closeIdleConnections === 'function') {
+        this.httpServer.closeIdleConnections();
+        debug('HTTP server closed idle connections');
+      }
     }
 
     if (this.viteServer) {
@@ -355,6 +369,15 @@ export class ShutdownCoordinator {
         debug('WebSocket service shut down');
       } catch (error) {
         debug('Error shutting down WebSocket service:', error);
+      }
+    }
+
+    if (this.serverClosePromise) {
+      try {
+        await this.serverClosePromise;
+        debug('HTTP server drained in-flight requests');
+      } catch (error) {
+        debug('Error draining HTTP server:', error);
       }
     }
   }
@@ -444,6 +467,14 @@ export class ShutdownCoordinator {
   private async phaseFinalCleanup(): Promise<void> {
     console.log('  📋 Phase 5: Final cleanup');
 
+    if (this.httpServer) {
+      // Forcefully terminate any lingering connections
+      if (typeof this.httpServer.closeAllConnections === 'function') {
+        this.httpServer.closeAllConnections();
+        debug('HTTP server forced close all connections');
+      }
+    }
+
     // Clear any remaining timers/intervals
     // This is a safety net - services should clean up their own timers
 
@@ -451,6 +482,7 @@ export class ShutdownCoordinator {
     this.messengerServices = [];
     this.shutdownableServices = [];
     this.httpServer = null;
+    this.serverClosePromise = null;
     this.viteServer = null;
 
     debug('Final cleanup completed');
