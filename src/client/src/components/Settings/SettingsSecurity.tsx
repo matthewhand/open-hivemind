@@ -41,7 +41,6 @@ const SettingsSecurity: React.FC = () => {
         corsOrigins: config.cors?.origins?.value || ['http://localhost:3000'],
       }));
     } catch (error) {
-      // console.error removed for cleaner logs
     } finally {
       setLoading(false);
     }

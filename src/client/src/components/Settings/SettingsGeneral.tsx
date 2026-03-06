@@ -53,7 +53,6 @@ const SettingsGeneral: React.FC = () => {
         }));
       }
     } catch (e) {
-      // console.warn removed for cleaner logs
     }
     // Fallback options
     return [
