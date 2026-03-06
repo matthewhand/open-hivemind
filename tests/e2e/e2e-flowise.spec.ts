@@ -7,15 +7,6 @@ test('Flowise config forms', async ({ page }) => {
     await route.fulfill({ status: 200, json: { authenticated: true, user: { role: 'admin' } } });
   });
 
-<<<<<<< HEAD
-  // Try to click edit on flowise if it exists
-  const flowiseCard = page.locator('text="Flowise"');
-  if (await flowiseCard.count() > 0) {
-      await flowiseCard.first().locator('..').locator('..').locator('button:has-text("Edit")').click().catch(() => null);
-      await page.waitForTimeout(1000);
-      await page.screenshot({ path: 'test-results/flowise-config-verify.png', fullPage: true });
-  }
-=======
   // Mock background polling endpoints
   await page.route('/api/health/detailed', async (route) =>
     route.fulfill({ status: 200, json: { status: 'ok' } })
@@ -100,5 +91,4 @@ test('Flowise config forms', async ({ page }) => {
 
   // Check errors
   await assertNoErrors(errors, 'Flowise config forms');
->>>>>>> origin/main
 });
