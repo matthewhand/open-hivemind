@@ -252,20 +252,14 @@ export class StartupDiagnostics {
     }
 
     const existingConfigs = configStatus.filter((c) => c.exists);
-    const missingConfigs = configStatus.filter((c) => !c.exists);
 
     startupLog.info('📁 Configuration Files', {
       loaded: existingConfigs.length,
-      missing: missingConfigs.length,
       totalSize: existingConfigs.reduce((sum, c) => sum + (c.size || 0), 0),
     });
 
     existingConfigs.forEach((config) => {
       startupLog.debug(`   ✓ ${config.path} (${config.size} bytes)`);
-    });
-
-    missingConfigs.forEach((config) => {
-      startupLog.debug(`   ⚠ ${config.path} (not found)`);
     });
   }
 
@@ -294,19 +288,13 @@ export class StartupDiagnostics {
     ];
 
     const configuredProviders = providers.filter((p) => p.configured);
-    const unconfiguredProviders = providers.filter((p) => !p.configured);
 
     startupLog.info('🔗 Provider Configuration', {
       configured: configuredProviders.length,
-      unconfigured: unconfiguredProviders.length,
     });
 
     configuredProviders.forEach((provider) => {
       startupLog.debug(`   ✓ ${provider.type}: configured`);
-    });
-
-    unconfiguredProviders.forEach((provider) => {
-      startupLog.debug(`   ⚠ ${provider.type}: not configured`);
     });
 
     // Note: Actual connectivity testing will happen during provider initialization
@@ -570,7 +558,7 @@ export class StartupDiagnostics {
    * Check if a key is likely to contain sensitive information
    */
   private isSensitiveKey(key: string): boolean {
-    const sensitivePatterns = ['token', 'secret', 'key', 'password', 'auth'];
+    const sensitivePatterns = ['token', 'secret', 'key', 'password', 'auth', 'credential', 'cert'];
     return sensitivePatterns.some((pattern) => key.toLowerCase().includes(pattern));
   }
 }
