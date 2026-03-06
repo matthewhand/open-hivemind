@@ -58,7 +58,9 @@ export class SlackInteractiveHandler {
             await this.handlers.sendAskQuestionModal(payload.trigger_id);
             break;
           default:
-            debug(`[Slack] Unhandled action: ${actionId}`);
+            debug(`[Slack] Forwarding unknown action to handleButtonClick: ${actionId}`);
+            await this.handlers.handleButtonClick(defaultChannel, payload.user.id, actionId);
+            break;
         }
       }
     } catch (error) {

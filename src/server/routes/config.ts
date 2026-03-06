@@ -40,7 +40,7 @@ import webhookConfig from '../../config/webhookConfig';
 import { BotManager } from '../../managers/BotManager';
 import { providerRegistry } from '../../registries/ProviderRegistry';
 import DemoModeService from '../../services/DemoModeService';
-import { ErrorUtils, HivemindError } from '../../types/errors';
+import { ErrorUtils, HivemindError, type AppError } from "../../types/errors";
 import { type IProvider } from '../../types/IProvider';
 import {
   ConfigBackupSchema,
@@ -91,7 +91,6 @@ const router = Router();
 const coreSchemaSources: Record<string, any> = {
   message: messageConfig,
   llm: llmConfig,
-  llmTask: llmTaskConfig,
   webhook: webhookConfig,
 };
 
@@ -286,7 +285,7 @@ router.get('/bots', async (req, res) => {
       warnings: manager.getWarnings(),
     });
   } catch (error: unknown) {
-    const hivemindError = ErrorUtils.toHivemindError(error) as any;
+    const hivemindError = ErrorUtils.toHivemindError(error) as AppError;
     return res.status(hivemindError.statusCode || 500).json({
       error: hivemindError.message,
       code: 'CONFIG_BOTS_ERROR',
@@ -355,7 +354,7 @@ router.get('/sources', async (req, res) => {
       count: configFiles.length,
     });
   } catch (error: unknown) {
-    const hivemindError = ErrorUtils.toHivemindError(error) as any;
+    const hivemindError = ErrorUtils.toHivemindError(error) as AppError;
     return res.status(500).json({
       error: hivemindError.message,
       code: 'CONFIG_SOURCES_ERROR',
@@ -369,7 +368,7 @@ router.get('/llm-status', (req, res) => {
     const status = getLlmDefaultStatus();
     return res.json(status);
   } catch (error: unknown) {
-    const hivemindError = ErrorUtils.toHivemindError(error) as any;
+    const hivemindError = ErrorUtils.toHivemindError(error) as AppError;
     return res.status(hivemindError.statusCode || 500).json({
       error: hivemindError.message,
       code: 'LLM_STATUS_GET_ERROR',
@@ -383,7 +382,7 @@ router.get('/llm-profiles', (req, res) => {
     const profiles = getLlmProfiles();
     return res.json(profiles);
   } catch (error: unknown) {
-    const hivemindError = ErrorUtils.toHivemindError(error) as any;
+    const hivemindError = ErrorUtils.toHivemindError(error) as AppError;
     return res.status(hivemindError.statusCode || 500).json({
       error: hivemindError.message,
       code: 'LLM_PROFILES_GET_ERROR',
@@ -423,7 +422,7 @@ router.put('/llm-profiles/:key', (req, res) => {
       profile: updatedProfile,
     });
   } catch (error: unknown) {
-    const hivemindError = ErrorUtils.toHivemindError(error) as any;
+    const hivemindError = ErrorUtils.toHivemindError(error) as AppError;
     return res.status(hivemindError.statusCode || 500).json({
       error: hivemindError.message,
       code: 'LLM_PROFILE_UPDATE_ERROR',
@@ -510,7 +509,7 @@ router.get('/global', (req, res) => {
 
     return res.json(response);
   } catch (error: unknown) {
-    const hivemindError = ErrorUtils.toHivemindError(error) as any;
+    const hivemindError = ErrorUtils.toHivemindError(error) as AppError;
     return res.status(hivemindError.statusCode || 500).json({
       error: hivemindError.message,
       code: hivemindError.code || 'CONFIG_GLOBAL_GET_ERROR',
@@ -540,7 +539,7 @@ router.put('/global', validateRequest(ConfigUpdateSchema), async (req, res) => {
 
       if (process.env.NODE_ENV !== 'test') {
         logConfigChange(
-          req as any,
+          req as AuthMiddlewareRequest,
           'UPDATE',
           'config/general',
           'success',
@@ -618,7 +617,7 @@ router.put('/global', validateRequest(ConfigUpdateSchema), async (req, res) => {
 
     if (process.env.NODE_ENV !== 'test') {
       logConfigChange(
-        req as any,
+        req as AuthMiddlewareRequest,
         'UPDATE',
         `config/${configName}`,
         'success',
@@ -628,7 +627,7 @@ router.put('/global', validateRequest(ConfigUpdateSchema), async (req, res) => {
 
     return res.json({ success: true, message: 'Configuration updated and persisted' });
   } catch (error: unknown) {
-    const hivemindError = ErrorUtils.toHivemindError(error) as any;
+    const hivemindError = ErrorUtils.toHivemindError(error) as AppError;
     return res.status(hivemindError.statusCode || 500).json({
       error: hivemindError.message,
       code: hivemindError.code || 'CONFIG_GLOBAL_PUT_ERROR',
@@ -643,7 +642,7 @@ router.get('/message-profiles', (req, res) => {
     const profiles = getMessageProfiles();
     return res.json(profiles);
   } catch (error: unknown) {
-    const hivemindError = ErrorUtils.toHivemindError(error) as any;
+    const hivemindError = ErrorUtils.toHivemindError(error) as AppError;
     return res.status(hivemindError.statusCode || 500).json({
       error: hivemindError.message,
       code: 'MESSAGE_PROFILES_GET_ERROR',
@@ -686,7 +685,7 @@ router.post('/message-profiles', (req, res) => {
 
     return res.status(201).json({ success: true, profile: newProfile });
   } catch (error: unknown) {
-    const hivemindError = ErrorUtils.toHivemindError(error) as any;
+    const hivemindError = ErrorUtils.toHivemindError(error) as AppError;
     return res.status(hivemindError.statusCode || 500).json({
       error: hivemindError.message,
       code: 'MESSAGE_PROFILES_CREATE_ERROR',

@@ -53,7 +53,6 @@ const SettingsGeneral: React.FC = () => {
         }));
       }
     } catch (e) {
-      console.warn('Failed to load timezones:', e);
     }
     // Fallback options
     return [
