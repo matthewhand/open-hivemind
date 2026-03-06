@@ -10,10 +10,10 @@ export interface SecureConfig {
   id: string;
   name: string;
   type?: string;
-  createdAt?: string;
   data: any;
   updatedAt: string;
   checksum: string;
+  createdAt?: string;
 }
 
 /**
@@ -85,6 +85,42 @@ export class SecureConfigManager {
   /**
    * Store a configuration securely
    */
+  public encrypt(text: string): string {
+    const iv = crypto.randomBytes(16);
+    const cipher = crypto.createCipheriv(this.algorithm, this.encryptionKey, iv);
+
+    let encrypted = cipher.update(text, 'utf8', 'hex');
+    encrypted += cipher.final('hex');
+
+    const authTag = cipher.getAuthTag().toString('hex');
+
+    return `${iv.toString('hex')}:${authTag}:${encrypted}`;
+  }
+
+  public getDecryptedMainConfig(env: string): any | null {
+    const encPath = path.join(this.mainConfigDir, `${env}.json.enc`);
+    if (fs.existsSync(encPath)) {
+      const encrypted = fs.readFileSync(encPath, 'utf8');
+      try {
+        const decrypted = this.decrypt(encrypted);
+        return JSON.parse(decrypted);
+      } catch (error) {
+        debug(`Failed to decrypt main config ${env}:`, error);
+        return null;
+      }
+    }
+    const jsonPath = path.join(this.mainConfigDir, `${env}.json`);
+    if (fs.existsSync(jsonPath)) {
+      try {
+        return JSON.parse(fs.readFileSync(jsonPath, 'utf8'));
+      } catch (error) {
+        debug(`Failed to parse main config ${env}:`, error);
+        return null;
+      }
+    }
+    return null;
+  }
+
   public async storeConfig(config: Omit<SecureConfig, 'updatedAt' | 'checksum'>): Promise<void> {
     // Validate configuration
     if (!config.id || config.id.trim() === '') {
@@ -357,18 +393,6 @@ export class SecureConfigManager {
     const key = crypto.randomBytes(32);
     fs.writeFileSync(this.keyPath, key);
     return key;
-  }
-
-  public encrypt(text: string): string {
-    const iv = crypto.randomBytes(16);
-    const cipher = crypto.createCipheriv(this.algorithm, this.encryptionKey, iv);
-    
-    let encrypted = cipher.update(text, 'utf8', 'hex');
-    encrypted += cipher.final('hex');
-    
-    const authTag = cipher.getAuthTag().toString('hex');
-    
-    return `${iv.toString('hex')}:${authTag}:${encrypted}`;
   }
 
   public decrypt(text: string): string {
