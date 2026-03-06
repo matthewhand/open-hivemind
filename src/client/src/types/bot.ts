@@ -120,7 +120,7 @@ export interface ProviderTypeConfig {
 export interface FieldConfig {
   name: string;
   label: string;
-  type: 'text' | 'password' | 'number' | 'select' | 'checkbox' | 'textarea';
+  type: 'text' | 'password' | 'number' | 'select' | 'checkbox' | 'textarea' | 'url' | 'json';
   required: boolean;
   placeholder?: string;
   options?: Array<{ value: string; label: string }>;
@@ -349,17 +349,6 @@ export const LLM_PROVIDER_CONFIGS = {
     description: 'Custom local models',
     icon: '🏠',
     fields: [],
-  },
-  flowise: {
-    type: LLMProviderType.FLOWISE,
-    displayName: 'Flowise',
-    description: 'Connect to Flowise AI chatflows',
-    icon: '⚡',
-    fields: [
-      { name: 'apiUrl', label: 'API Endpoint', type: 'text', required: true, placeholder: 'http://localhost:3000' },
-      { name: 'apiKey', label: 'API Key', type: 'password', required: false },
-      { name: 'chatflowId', label: 'Chatflow ID', type: 'text', required: true }
-    ],
   },
 };
 

@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect, useCallback } from 'react';
 import { Shield, Plus, Edit2, Trash2, Check, RefreshCw, AlertCircle, Save, X, Settings, AlertTriangle, Copy } from 'lucide-react';
 import { useSuccessToast, useErrorToast } from '../components/DaisyUI/ToastNotification';
@@ -8,13 +7,10 @@ import SearchFilterBar from '../components/SearchFilterBar';
 import EmptyState from '../components/DaisyUI/EmptyState';
 import { LoadingSpinner } from '../components/DaisyUI/Loading';
 import { CommaSeparatedInput } from '../components/Common/CommaSeparatedInput';
-<<<<<<< HEAD
-=======
 import Input from '../components/DaisyUI/Input';
 import Textarea from '../components/DaisyUI/Textarea';
 import Select from '../components/DaisyUI/Select';
 import Toggle from '../components/DaisyUI/Toggle';
->>>>>>> origin/main
 
 interface McpGuardConfig {
   enabled: boolean;
@@ -44,64 +40,6 @@ interface GuardrailProfile {
 
 const API_BASE = '/api/admin';
 
-<<<<<<< HEAD
-=======
-interface CommaArrayInputProps {
-  id: string;
-  value: string[];
-  onChange: (val: string[]) => void;
-  disabled?: boolean;
-  placeholder?: string;
-  isTextArea?: boolean;
-  className?: string;
-}
-
-const CommaArrayInput: React.FC<CommaArrayInputProps> = ({ value, onChange, id, placeholder, disabled, isTextArea, className }) => {
-  const [text, setText] = useState(value?.join(', ') || '');
-  const [isFocused, setIsFocused] = useState(false);
-
-  useEffect(() => {
-    if (!isFocused) {
-      setText(value?.join(', ') || '');
-    }
-  }, [value, isFocused]);
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    setText(e.target.value);
-    onChange(e.target.value.split(',').map(s => s.trimStart()));
-  };
-
-  if (isTextArea) {
-    return (
-      <textarea
-        id={id}
-        className={className}
-        placeholder={placeholder}
-        disabled={disabled}
-        value={text}
-        onChange={handleChange}
-        onFocus={() => setIsFocused(true)}
-        onBlur={() => setIsFocused(false)}
-      />
-    );
-  }
-
-  return (
-    <input
-      id={id}
-      type="text"
-      className={className}
-      placeholder={placeholder}
-      disabled={disabled}
-      value={text}
-      onChange={handleChange}
-      onFocus={() => setIsFocused(true)}
-      onBlur={() => setIsFocused(false)}
-    />
-  );
-};
-
->>>>>>> origin/main
 const GuardsPage: React.FC = () => {
   const [profiles, setProfiles] = useState<GuardrailProfile[]>([]);
   const [loading, setLoading] = useState(true);
@@ -411,95 +349,23 @@ const GuardsPage: React.FC = () => {
                 </div>
                 {editingProfile.guards.mcpGuard.type === 'custom' && (
                   <div className="form-control mt-4">
-<<<<<<< HEAD
                     <label className="label" htmlFor="allowed-users"><span className="label-text">Allowed User IDs</span></label>
                     <CommaSeparatedInput
                       id="allowed-users"
                       value={editingProfile.guards.mcpGuard.allowedUsers || []}
                       onChange={v => updateGuard('mcpGuard', { allowedUsers: v })}
-=======
-<<<<<<< HEAD
-                    <label className="label" htmlFor="allowed-users"><span className="label-text">Allowed User IDs (comma separated)</span></label>
-                    <input
-                      id="allowed-users"
-                      type="text"
-                      className="input input-bordered"
-                      value={editingProfile.guards.mcpGuard.allowedUsers?.join(',') || ''}
-                      // Sanitization (trim().filter(Boolean)) happens in handleSaveProfile before API submission.
-                      onChange={e => updateGuard('mcpGuard', { allowedUsers: e.target.value.split(',') })}
-=======
-<<<<<<< HEAD
-                    <label className="label" htmlFor="allowed-users"><span className="label-text">Allowed User IDs (comma separated)</span></label>
-                    <CommaArrayInput
-                      id="allowed-users"
-                      className="input input-bordered"
-<<<<<<< HEAD
-                      value={editingProfile.guards.mcpGuard.allowedUsers || []}
-                      onChange={val => updateGuard('mcpGuard', { allowedUsers: val })}
-=======
-                      value={editingProfile.guards.mcpGuard.allowedUsers?.join(', ') || ''}
-                      // Note: Using trimStart() allows trailing commas during typing for better UX.
-                      // Sanitization (trim().filter(Boolean)) happens in handleSaveProfile before API submission.
-                      onChange={e => updateGuard('mcpGuard', { allowedUsers: e.target.value.split(',').map(s => s.trimStart()) })}
-=======
-                    <label className="label" htmlFor="allowed-users"><span className="label-text">Allowed User IDs</span></label>
-                    <CommaSeparatedInput
-                      id="allowed-users"
-                      value={editingProfile.guards.mcpGuard.allowedUsers || []}
-                      onChange={v => updateGuard('mcpGuard', { allowedUsers: v })}
->>>>>>> origin/main
->>>>>>> origin/main
->>>>>>> origin/main
->>>>>>> origin/main
                       disabled={!editingProfile.guards.mcpGuard.enabled}
                     />
                   </div>
                 )}
 
                 <div className="form-control mt-4">
-<<<<<<< HEAD
-                  <label className="label" htmlFor="allowed-tools"><span className="label-text">Allowed Tools</span></label>
-                  <CommaSeparatedInput
-=======
-<<<<<<< HEAD
-                  <label className="label" htmlFor="allowed-tools"><span className="label-text">Allowed Tools (comma separated)</span></label>
-                  <input
->>>>>>> origin/main
-                    id="allowed-tools"
-                    placeholder="e.g. calculator, weather"
-<<<<<<< HEAD
-                    value={editingProfile.guards.mcpGuard.allowedTools || []}
-                    onChange={v => updateGuard('mcpGuard', { allowedTools: v })}
-=======
-                    value={editingProfile.guards.mcpGuard.allowedTools?.join(',') || ''}
-                    // Sanitization (trim().filter(Boolean)) happens in handleSaveProfile before API submission.
-                    onChange={e => updateGuard('mcpGuard', { allowedTools: e.target.value.split(',') })}
-=======
-<<<<<<< HEAD
-                  <label className="label" htmlFor="allowed-tools"><span className="label-text">Allowed Tools (comma separated)</span></label>
-                  <CommaArrayInput
-                    id="allowed-tools"
-                    className="input input-bordered"
-                    placeholder="e.g. calculator, weather"
-<<<<<<< HEAD
-                    value={editingProfile.guards.mcpGuard.allowedTools || []}
-                    onChange={val => updateGuard('mcpGuard', { allowedTools: val })}
-=======
-                    value={editingProfile.guards.mcpGuard.allowedTools?.join(', ') || ''}
-                    // Note: Using trimStart() allows trailing commas during typing for better UX.
-                    // Sanitization (trim().filter(Boolean)) happens in handleSaveProfile before API submission.
-                    onChange={e => updateGuard('mcpGuard', { allowedTools: e.target.value.split(',').map(s => s.trimStart()) })}
-=======
                   <label className="label" htmlFor="allowed-tools"><span className="label-text">Allowed Tools</span></label>
                   <CommaSeparatedInput
                     id="allowed-tools"
                     placeholder="e.g. calculator, weather"
                     value={editingProfile.guards.mcpGuard.allowedTools || []}
                     onChange={v => updateGuard('mcpGuard', { allowedTools: v })}
->>>>>>> origin/main
->>>>>>> origin/main
->>>>>>> origin/main
->>>>>>> origin/main
                     disabled={!editingProfile.guards.mcpGuard.enabled}
                   />
                   <label className="label"><span className="label-text-alt opacity-70">Leave empty to allow all tools (if enabled)</span></label>
@@ -613,50 +479,12 @@ const GuardsPage: React.FC = () => {
                 </div>
 
                 <div className="form-control mt-4">
-<<<<<<< HEAD
-                  <label className="label" htmlFor="blocked-terms"><span className="label-text">Blocked Terms</span></label>
-                  <CommaSeparatedInput
-=======
-<<<<<<< HEAD
-                  <label className="label" htmlFor="blocked-terms"><span className="label-text">Blocked Terms (comma separated)</span></label>
-                  <textarea
->>>>>>> origin/main
-                    id="blocked-terms"
-                    placeholder="e.g. secret, password, confidential"
-<<<<<<< HEAD
-                    value={editingProfile.guards.contentFilter?.blockedTerms || []}
-                    onChange={v => updateGuard('contentFilter', { blockedTerms: v })}
-=======
-                    value={editingProfile.guards.contentFilter?.blockedTerms?.join(',') || ''}
-                    // Sanitization (trim().filter(Boolean)) happens in handleSaveProfile before API submission.
-                    onChange={e => updateGuard('contentFilter', { blockedTerms: e.target.value.split(',') })}
-=======
-<<<<<<< HEAD
-                  <label className="label" htmlFor="blocked-terms"><span className="label-text">Blocked Terms (comma separated)</span></label>
-                  <CommaArrayInput
-                    id="blocked-terms"
-                    isTextArea
-                    className="textarea textarea-bordered h-20"
-                    placeholder="e.g. secret, password, confidential"
-<<<<<<< HEAD
-                    value={editingProfile.guards.contentFilter?.blockedTerms || []}
-                    onChange={val => updateGuard('contentFilter', { blockedTerms: val })}
-=======
-                    value={editingProfile.guards.contentFilter?.blockedTerms?.join(', ') || ''}
-                    // Note: Using trimStart() allows trailing commas during typing for better UX.
-                    // Sanitization (trim().filter(Boolean)) happens in handleSaveProfile before API submission.
-                    onChange={e => updateGuard('contentFilter', { blockedTerms: e.target.value.split(',').map(s => s.trimStart()) })}
-=======
                   <label className="label" htmlFor="blocked-terms"><span className="label-text">Blocked Terms</span></label>
                   <CommaSeparatedInput
                     id="blocked-terms"
                     placeholder="e.g. secret, password, confidential"
                     value={editingProfile.guards.contentFilter?.blockedTerms || []}
                     onChange={v => updateGuard('contentFilter', { blockedTerms: v })}
->>>>>>> origin/main
->>>>>>> origin/main
->>>>>>> origin/main
->>>>>>> origin/main
                     disabled={!editingProfile.guards.contentFilter?.enabled}
                   />
                 </div>
