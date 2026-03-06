@@ -166,24 +166,27 @@ router.put('/:id', adminRateLimiter, (req: Request, res: Response) => {
       guards && typeof guards === 'object'
         ? Object.keys(guards)
             .filter((key) => !['__proto__', 'constructor', 'prototype'].includes(key))
-            .reduce((acc, key) => {
-              const existingValue =
-                profiles[profileIndex].guards[
-                  key as keyof (typeof profiles)[typeof profileIndex]['guards']
-                ];
-              const newValue = guards[key];
-              if (
-                typeof newValue === 'object' &&
-                newValue !== null &&
-                typeof existingValue === 'object' &&
-                existingValue !== null
-              ) {
-                acc[key] = { ...existingValue, ...newValue };
-              } else {
-                acc[key] = newValue;
-              }
-              return acc;
-            }, {} as Record<string, unknown>)
+            .reduce(
+              (acc, key) => {
+                const existingValue =
+                  profiles[profileIndex].guards[
+                    key as keyof (typeof profiles)[typeof profileIndex]['guards']
+                  ];
+                const newValue = guards[key];
+                if (
+                  typeof newValue === 'object' &&
+                  newValue !== null &&
+                  typeof existingValue === 'object' &&
+                  existingValue !== null
+                ) {
+                  acc[key] = { ...existingValue, ...newValue };
+                } else {
+                  acc[key] = newValue;
+                }
+                return acc;
+              },
+              {} as Record<string, unknown>
+            )
         : profiles[profileIndex].guards;
 
     const updatedProfile = {

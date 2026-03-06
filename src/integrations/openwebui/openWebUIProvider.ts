@@ -2,8 +2,8 @@ import axios from 'axios';
 import Debug from 'debug';
 import type { IMessage } from '@src/message/interfaces/IMessage';
 import type { ILlmProvider } from '@llm/interfaces/ILlmProvider';
-import openWebUIConfig from './openWebUIConfig';
 import { generateChatCompletionDirect } from './directClient';
+import openWebUIConfig from './openWebUIConfig';
 
 const debug = Debug('app:openWebUIProvider');
 
@@ -31,7 +31,11 @@ export class OpenWebUIProvider implements ILlmProvider {
     debug('Generating chat completion with OpenWebUI:', { userMessage, historyMessages, metadata });
 
     const apiUrl = this.config.apiUrl || openWebUIConfig.get('apiUrl');
-    const model = metadata?.modelOverride || metadata?.model || this.config.model || openWebUIConfig.get('model');
+    const model =
+      metadata?.modelOverride ||
+      metadata?.model ||
+      this.config.model ||
+      openWebUIConfig.get('model');
     const systemPrompt = metadata?.systemPrompt;
 
     let authHeader = '';
@@ -70,7 +74,7 @@ export class OpenWebUIProvider implements ILlmProvider {
     const baseURL = apiUrl.replace(/\/$/, '');
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
-      'Authorization': authHeader
+      Authorization: authHeader,
     };
 
     const client = axios.create({ baseURL, headers, timeout: 15000 });
