@@ -5,9 +5,9 @@ import {
   type BotConfigurationAudit,
   type BotConfigurationVersion,
 } from '../../database/DatabaseManager';
+import type { BotConfig } from '../../types/config';
 import { ConfigurationError } from '../../types/errorClasses';
 import { ConfigurationValidator } from './ConfigurationValidator';
-import type { BotConfig } from '../../types/config';
 
 const debug = Debug('app:BotConfigService');
 
@@ -110,7 +110,9 @@ export class BotConfigService {
       this.ensureDatabaseEnabled('create bot configurations');
 
       // Validate configuration
-      const validationResult = this.configValidator.validateBotConfig(configData as unknown as BotConfig);
+      const validationResult = this.configValidator.validateBotConfig(
+        configData as unknown as BotConfig
+      );
       if (!validationResult.isValid) {
         throw new Error(`Configuration validation failed: ${validationResult.errors.join(', ')}`);
       }
@@ -584,7 +586,9 @@ export class BotConfigService {
     suggestions: string[];
   }> {
     try {
-      const validationResult = this.configValidator.validateBotConfig(configData as unknown as BotConfig);
+      const validationResult = this.configValidator.validateBotConfig(
+        configData as unknown as BotConfig
+      );
       return validationResult;
     } catch (error) {
       debug('Error validating bot configuration:', error);

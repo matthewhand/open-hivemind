@@ -2,15 +2,9 @@ import { promises as fs } from 'fs';
 import { join } from 'path';
 import Debug from 'debug';
 import { Router } from 'express';
-<<<<<<< HEAD
-import { Client } from '@modelcontextprotocol/sdk/client/index.js';
-import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';
-import { ErrorUtils, type AppError } from "@src/types/errors";
-=======
 import type { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import type { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';
-import { ErrorUtils } from '@src/types/errors';
->>>>>>> origin/main
+import { ErrorUtils, type AppError } from '@src/types/errors';
 import MCPProviderManager from '../../config/MCPProviderManager';
 import type { MCPProviderConfig } from '../../types/mcp';
 
@@ -81,9 +75,7 @@ const connectToMCPServer = async (server: MCPServer): Promise<MCPClient> => {
     // For stdio transport (local MCP servers)
     if (server.url.startsWith('stdio://')) {
       const command = server.url.replace('stdio://', '');
-      const { StdioClientTransport } = await import(
-        '@modelcontextprotocol/sdk/client/stdio.js'
-      );
+      const { StdioClientTransport } = await import('@modelcontextprotocol/sdk/client/stdio.js');
       const transport = new StdioClientTransport({
         command: command,
         args: [],

@@ -2,7 +2,7 @@ import { promises as fs } from 'fs';
 import { join } from 'path';
 import Debug from 'debug';
 import { Router } from 'express';
-import { ErrorUtils, type AppError } from "@src/types/errors";
+import { ErrorUtils, type AppError } from '@src/types/errors';
 
 const debug = Debug('app:webui:agents');
 const router = Router();
