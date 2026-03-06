@@ -20,10 +20,11 @@ test_output*.txt
 # Test runtime-generated provider instances
 config/test/providers/instances.json
 
-# Configuration files with sensitive data
-config/user/
-config/providers/
-.env.real
+# Strict Configuration Whitelisting
+config/**/*
+!config/**/
+!config/**/*.example
+!config/**/*.md
 *.config.json
 *credentials*
 *secrets*
