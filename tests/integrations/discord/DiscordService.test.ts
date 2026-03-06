@@ -265,9 +265,7 @@ describe('DiscordService', () => {
       ]);
 
       // Re-instantiate service should throw ConfigError
-      expect(() => new DiscordService(mockDeps)).toThrow(
-        mockDeps.errorTypes.ConfigError
-      );
+      expect(() => new DiscordService(mockDeps)).toThrow(mockDeps.errorTypes.ConfigError);
 
       try {
         new DiscordService(mockDeps);

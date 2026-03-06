@@ -85,17 +85,10 @@ const Carousel: React.FC<CarouselProps> = ({
               <p>{item.description}</p>
             </div>
             <div className="absolute left-5 right-5 top-1/2 flex -translate-y-1/2 transform justify-between">
-<<<<<<< HEAD
               <a href={`#slide${(index - 1 + items.length) % items.length}`} className="btn btn-circle" onClick={handlePrev}>
                 ❮
               </a>
               <a href={`#slide${(index + 1) % items.length}`} className="btn btn-circle" onClick={handleNext}>
-=======
-              <button type="button" className="btn btn-circle" aria-label="Previous slide" onClick={(e) => { e.preventDefault(); handlePrev(); }}>
-                ❮
-              </button>
-              <button type="button" className="btn btn-circle" aria-label="Next slide" onClick={(e) => { e.preventDefault(); handleNext(); }}>
->>>>>>> origin/main
                 ❯
               </button>
             </div>

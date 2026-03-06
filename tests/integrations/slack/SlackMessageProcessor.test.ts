@@ -135,7 +135,7 @@ describe('SlackMessageProcessor', () => {
           history: jest.fn().mockResolvedValue({ messages: [] }),
         },
       });
-      
+
       const botManager = createBotManagerMock(webClient);
       const smp = new SlackMessageProcessor(botManager);
 
@@ -150,9 +150,19 @@ describe('SlackMessageProcessor', () => {
       });
 
       const enriched = await smp.enrichSlackMessage(msg);
-      expect(enriched.data.workspaceInfo).toEqual({ workspaceId: 'T123', workspaceName: 'Test Team' });
-      expect(enriched.data.channelInfo).toMatchObject({ channelId: 'C123456789', channelName: 'general' });
-      expect(enriched.data.threadInfo).toMatchObject({ isThread: true, threadTs: '1722556800.100', messageCount: 3 });
+      expect(enriched.data.workspaceInfo).toEqual({
+        workspaceId: 'T123',
+        workspaceName: 'Test Team',
+      });
+      expect(enriched.data.channelInfo).toMatchObject({
+        channelId: 'C123456789',
+        channelName: 'general',
+      });
+      expect(enriched.data.threadInfo).toMatchObject({
+        isThread: true,
+        threadTs: '1722556800.100',
+        messageCount: 3,
+      });
       expect(enriched.data.slackUser).toMatchObject({ slackUserId: 'U999', userName: 'Test User' });
       expect(enriched.data.metadata).toBeDefined();
       expect(enriched.data.channelContent).toBeDefined();
@@ -248,9 +258,15 @@ describe('SlackMessageProcessor', () => {
       });
 
       const history = [
-        new SlackMessage('Hello', 'C123456789', { role: 'user' }) as unknown as import('@message/interfaces/IMessage').IMessage,
-        new SlackMessage('Hi!', 'C123456789', { role: 'assistant' }) as unknown as import('@message/interfaces/IMessage').IMessage,
-        new SlackMessage('', 'C123456789', { role: 'user' }) as unknown as import('@message/interfaces/IMessage').IMessage,
+        new SlackMessage('Hello', 'C123456789', {
+          role: 'user',
+        }) as unknown as import('@message/interfaces/IMessage').IMessage,
+        new SlackMessage('Hi!', 'C123456789', {
+          role: 'assistant',
+        }) as unknown as import('@message/interfaces/IMessage').IMessage,
+        new SlackMessage('', 'C123456789', {
+          role: 'user',
+        }) as unknown as import('@message/interfaces/IMessage').IMessage,
       ];
 
       const payload = await smp.constructPayload(msg, history);
@@ -307,7 +323,11 @@ describe('SlackMessageProcessor', () => {
         },
       });
       const smp = new SlackMessageProcessor(createBotManagerMock(webClient));
-      const msg = new SlackMessage('t', 'C123456789', { ts: '3.001', user: 'U1', thread_ts: '3.000' });
+      const msg = new SlackMessage('t', 'C123456789', {
+        ts: '3.001',
+        user: 'U1',
+        thread_ts: '3.000',
+      });
       const enriched = await smp.enrichSlackMessage(msg);
       expect(enriched.data.threadInfo.isThread).toBe(true);
       expect(enriched.data.threadInfo.threadParticipants).toEqual(['U1', 'U2']);
