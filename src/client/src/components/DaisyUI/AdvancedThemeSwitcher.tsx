@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Input } from './index';
+import Input from './Input';
+
 
 interface ThemeOption {
   value: string;

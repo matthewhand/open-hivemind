@@ -2,7 +2,11 @@
 import React, { useState, useMemo } from 'react';
 import type { Persona, PersonaCategory} from '../../types/bot';
 import { DEFAULT_PERSONA } from '../../types/bot';
-import { Card, Button, Input, Badge } from '../DaisyUI';
+import Card from '../DaisyUI/Card';
+import Button from '../DaisyUI/Button';
+import Input from '../DaisyUI/Input';
+import Badge from '../DaisyUI/Badge';
+
 import {
   Search as SearchIcon,
   User as UserIcon,

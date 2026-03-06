@@ -1,5 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Card, Button, Badge, Progress, Alert } from '../components/DaisyUI';
+import Card from '../components/DaisyUI/Card';
+import Button from '../components/DaisyUI/Button';
+import Badge from '../components/DaisyUI/Badge';
+import { Progress } from '../components/DaisyUI/Loading';
+import { Alert } from '../components/DaisyUI/Alert';
+
 import {
   SparklesIcon,
   PlayIcon,
