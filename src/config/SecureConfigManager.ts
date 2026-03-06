@@ -10,8 +10,8 @@ export interface SecureConfig {
   id: string;
   name: string;
   type?: string;
-  data: any;
   createdAt?: string;
+  data: any;
   updatedAt: string;
   checksum: string;
 }
@@ -126,7 +126,7 @@ export class SecureConfigManager {
       debug(`Failed to store configuration ${config.id}:`, hivemindError.message);
       throw ErrorUtils.createError(
         `Failed to store secure configuration: ${hivemindError.message}`,
-        'configuration',
+        'unknown',
         'SECURE_CONFIG_STORE_FAILED',
         500,
       );
@@ -181,7 +181,7 @@ export class SecureConfigManager {
       debug(`Failed to delete configuration ${id}:`, hivemindError.message);
       throw ErrorUtils.createError(
         `Failed to delete secure configuration: ${hivemindError.message}`,
-        'configuration',
+        'unknown',
         'SECURE_CONFIG_DELETE_FAILED',
         500,
       );
@@ -341,36 +341,6 @@ export class SecureConfigManager {
     }
   }
 
-  public async listBackups(): Promise<any[]> {
-    try {
-      if (!fs.existsSync(this.backupDir)) {
-        return [];
-      }
-
-      const files = await fs.promises.readdir(this.backupDir);
-      const backups = [];
-
-      for (const file of files) {
-        if (file.endsWith('.json')) {
-          try {
-            const backupPath = path.join(this.backupDir, file);
-            const encryptedBackup = await fs.promises.readFile(backupPath, 'utf8');
-            const decryptedBackup = this.decrypt(encryptedBackup);
-            const fullBackupData = JSON.parse(decryptedBackup);
-            backups.push(fullBackupData.metadata);
-          } catch (e) {
-            debug(`Failed to read backup metadata from ${file}`, e);
-          }
-        }
-      }
-
-      return backups;
-    } catch (error) {
-      debug('Failed to list backups:', error);
-      return [];
-    }
-  }
-
   private ensureDirectories(): void {
     [this.configDir, this.backupDir].forEach(dir => {
       if (!fs.existsSync(dir)) {
@@ -426,42 +396,5 @@ export class SecureConfigManager {
   private verifyChecksum(config: SecureConfig | any): boolean {
     const { checksum, ...data } = config;
     return this.calculateChecksum(data) === checksum;
-  }
-
-  /**
-   * Reads main config files matching a given environment (e.g. default.json, production.json)
-   * It attempts to read encrypted format (*.enc) first, then falls back to plain JSON
-   * if the encrypted one is missing or corrupted.
-   *
-   * @param env - The NODE_ENV value to look for (e.g., 'production', 'development', 'default')
-   * @returns Parsed object of the configuration file, or null if neither file could be found/read
-   */
-  public getDecryptedMainConfig(env: string): any | null {
-    const jsonPath = path.join(this.mainConfigDir, `${env}.json`);
-    const encPath = path.join(this.mainConfigDir, `${env}.enc`);
-
-    try {
-      if (fs.existsSync(encPath)) {
-        debug(`Attempting to read encrypted main config from ${encPath}`);
-        const encryptedContent = fs.readFileSync(encPath, 'utf8');
-        try {
-          const decrypted = this.decrypt(encryptedContent);
-          return JSON.parse(decrypted);
-        } catch (decryptionError) {
-          debug(`Failed to decrypt main config ${encPath}:`, decryptionError);
-          // Fall through to try reading the plain text version
-        }
-      }
-
-      if (fs.existsSync(jsonPath)) {
-        debug(`Reading plain text main config from ${jsonPath}`);
-        const content = fs.readFileSync(jsonPath, 'utf8');
-        return JSON.parse(content);
-      }
-    } catch (error) {
-      debug(`Error reading main config for env ${env}:`, error);
-    }
-
-    return null;
   }
 }
