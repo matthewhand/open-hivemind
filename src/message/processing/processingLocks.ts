@@ -37,10 +37,12 @@ class ProcessingLocks {
    * @param channelId - The ID of the channel to lock.
    * @param botId - Optional bot ID for per-bot locking.
    */
-  lock(channelId: string, botId?: string): void {
+  lock(channelId: string, botId?: string): boolean {
     const key = this.getKey(channelId, botId);
+    if (this.locks.has(key)) return false;
     this.locks.set(key, true);
     debug(`lock: ${key} is now locked.`);
+    return true;
   }
 
   /**
