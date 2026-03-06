@@ -10,10 +10,10 @@ export interface SecureConfig {
   id: string;
   name: string;
   type?: string;
+  createdAt?: string;
   data: any;
   updatedAt: string;
   checksum: string;
-  createdAt?: string;
 }
 
 /**
@@ -166,21 +166,6 @@ export class SecureConfigManager {
     }
   }
 
-  public getDecryptedMainConfig(env: string): any {
-    try {
-      const configPath = path.join(this.mainConfigDir, `${env}.json.enc`);
-      if (fs.existsSync(configPath)) {
-        const encryptedData = fs.readFileSync(configPath, 'utf8');
-        const decryptedData = this.decrypt(encryptedData);
-        return JSON.parse(decryptedData);
-      }
-      return null;
-    } catch (error) {
-      debug(`Failed to read decrypted main config for env ${env}:`, error);
-      return null;
-    }
-  }
-
   /**
    * Delete a configuration
    */
@@ -232,16 +217,6 @@ export class SecureConfigManager {
   /**
    * Create a full backup of all secure configurations
    */
-  public async listBackups(): Promise<any[]> {
-    try {
-      if (!fs.existsSync(this.backupDir)) return [];
-      const files = await fs.promises.readdir(this.backupDir);
-      return files.filter(f => f.endsWith('.enc'));
-    } catch {
-      return [];
-    }
-  }
-
   public async createBackup(): Promise<string> {
     try {
       const configs = await fs.promises.readdir(this.configDir);

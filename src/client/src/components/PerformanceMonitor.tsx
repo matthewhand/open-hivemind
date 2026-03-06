@@ -1,6 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React from 'react';
-import { Alert, Card, Loading, Button } from './DaisyUI';
+import { Alert } from './DaisyUI/Alert';
+import Card from './DaisyUI/Card';
+import { Loading } from './DaisyUI/Loading';
+import Button from './DaisyUI/Button';
+
 import { ArrowPathIcon } from '@heroicons/react/24/outline';
 import type { FetchBaseQueryError } from '@reduxjs/toolkit/query';
 import type { SerializedError } from '@reduxjs/toolkit';

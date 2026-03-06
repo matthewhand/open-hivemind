@@ -43,9 +43,9 @@ describe('SlackMessageProcessor.enrichSlackMessage', () => {
 
   it('enriches message without thread, attachments, or reactions', async () => {
     const data: any = {};
-    const msg = new SlackMessage('hello', 'C123456789', data);
+    const msg = new SlackMessage('hello', 'C1', data);
     const enriched = await processor.enrichSlackMessage(msg);
-    expect(enriched.data.metadata.channelInfo.channelId).toBe('C123456789');
+    expect(enriched.data.metadata.channelInfo.channelId).toBe('C1');
     expect(enriched.data.metadata.userInfo.userName).toBe('User');
     expect(enriched.data.workspaceInfo).toEqual({ workspaceId: 'T1', workspaceName: 'TeamOne' });
     expect(enriched.data.channelInfo.channelName).toBe('gen');
@@ -76,7 +76,7 @@ describe('SlackMessageProcessor.enrichSlackMessage', () => {
       files: [{ name: 'f', filetype: 'txt', url_private: 'u', size: 5 }],
       reactions: [{ name: 'like', users: ['U1'] }],
     };
-    const msg = new SlackMessage('hey', 'C234567890', data);
+    const msg = new SlackMessage('hey', 'C2', data);
     const enriched = await processor.enrichSlackMessage(msg);
     expect(enriched.data.threadInfo.isThread).toBe(true);
     expect(enriched.data.threadInfo.threadTs).toBe('TS1');
@@ -90,14 +90,14 @@ describe('SlackMessageProcessor.enrichSlackMessage', () => {
         reaction: 'like',
         reactedUserId: 'U1',
         messageId: msg.getMessageId(),
-        messageChannelId: 'C234567890',
+        messageChannelId: 'C2',
       },
     ]);
   });
 
   it('skips canvas content fetch when SUPPRESS_CANVAS_CONTENT=true', async () => {
     process.env.SUPPRESS_CANVAS_CONTENT = 'true';
-    const msg = new SlackMessage('hi', 'C123456789', {} as any);
+    const msg = new SlackMessage('hi', 'C1', {} as any);
     const enriched = await processor.enrichSlackMessage(msg);
     expect(webClientMock.files.list).not.toHaveBeenCalled();
     expect(enriched.data.channelContent.content).toBe('');
@@ -105,7 +105,7 @@ describe('SlackMessageProcessor.enrichSlackMessage', () => {
   });
 
   it('handles files.list error gracefully', async () => {
-    const msg = new SlackMessage('hi', 'C123456789', {} as any);
+    const msg = new SlackMessage('hi', 'C1', {} as any);
     webClientMock.files.list.mockRejectedValue(new Error('list error'));
     const enriched = await processor.enrichSlackMessage(msg);
     expect(webClientMock.files.list).toHaveBeenCalled();

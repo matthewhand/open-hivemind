@@ -1,6 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { Alert, Input, Select, Toggle, Button } from '../DaisyUI';
+import { Alert } from '../DaisyUI/Alert';
+import Input from '../DaisyUI/Input';
+import Select from '../DaisyUI/Select';
+import Toggle from '../DaisyUI/Toggle';
+import Button from '../DaisyUI/Button';
+
 import { Settings as SettingsIcon, ShieldCheck, Activity } from 'lucide-react';
 
 interface GeneralConfig {
@@ -53,6 +58,7 @@ const SettingsGeneral: React.FC = () => {
         }));
       }
     } catch (e) {
+      // console.warn removed for cleaner logs
     }
     // Fallback options
     return [

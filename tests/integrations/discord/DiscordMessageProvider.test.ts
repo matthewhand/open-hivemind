@@ -95,6 +95,15 @@ jest.isolateModules(() => {
         messageConfig: { get: jest.fn() } as any,
         discordConfig: { get: jest.fn() } as any,
         errorTypes: { ConfigError: class ConfigError extends Error {} } as any,
+        getAllBotConfigs: jest.fn().mockReturnValue([
+          {
+            name: 'TestBot',
+            messageProvider: 'discord',
+            discord: {
+              token: 'test-token',
+            },
+          },
+        ]),
       });
       DiscordService.setInstance(service);
       await service.initialize();

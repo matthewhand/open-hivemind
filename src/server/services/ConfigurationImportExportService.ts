@@ -1,6 +1,6 @@
 import { createCipheriv, createDecipheriv, randomBytes, scryptSync } from 'crypto';
 import { promises as fs } from 'fs';
-import { basename, join } from 'path';
+import { basename, join, resolve, sep } from 'path';
 import { createGunzip, createGzip } from 'zlib';
 // @ts-ignore - csv-parse v6 ships its own types but TS can't resolve the /sync subpath
 // @ts-ignore - csv-stringify v6 ships its own types but TS can't resolve the /sync subpath
@@ -638,6 +638,17 @@ export class ConfigurationImportExportService {
         const backupTimestamp = Date.now();
         const backupFileName = `backup-${name}-${backupTimestamp}.json.gz`;
         const backupPath = join(this.backupsDir, backupFileName);
+
+        // Security check to prevent path traversal
+        const resolvedBackupPath = resolve(backupPath);
+        const resolvedBackupDir = resolve(this.backupsDir);
+        if (
+          !resolvedBackupPath.startsWith(resolvedBackupDir + sep) &&
+          resolvedBackupPath !== resolvedBackupDir
+        ) {
+          throw new Error('Invalid backup name: Path traversal detected');
+        }
+
         await fs.rename(result.filePath, backupPath);
 
         // Create metadata file
@@ -749,6 +760,16 @@ export class ConfigurationImportExportService {
     restoredBy?: string
   ): Promise<ImportResult> {
     try {
+      // Security check to prevent path traversal
+      const resolvedBackupPath = resolve(backupPath);
+      const resolvedBackupDir = resolve(this.backupsDir);
+      if (
+        !resolvedBackupPath.startsWith(resolvedBackupDir + sep) &&
+        resolvedBackupPath !== resolvedBackupDir
+      ) {
+        throw new Error('Invalid backup path: Path traversal detected');
+      }
+
       const importOptions: ImportOptions = {
         format: 'json',
         overwrite: true,
@@ -814,6 +835,18 @@ export class ConfigurationImportExportService {
       const backupFileName = `backup-${backup.name}-${backup.createdAt.getTime()}.json.gz`;
       const backupPath = join(this.backupsDir, backupFileName);
       const metadataPath = join(this.backupsDir, `${backupFileName}.meta`);
+
+      // Security check to prevent path traversal
+      const resolvedBackupPath = resolve(backupPath);
+      const resolvedMetadataPath = resolve(metadataPath);
+      const resolvedBackupDir = resolve(this.backupsDir);
+
+      if (
+        !resolvedBackupPath.startsWith(resolvedBackupDir + sep) ||
+        !resolvedMetadataPath.startsWith(resolvedBackupDir + sep)
+      ) {
+        throw new Error('Invalid backup: Path traversal detected');
+      }
 
       await fs.unlink(backupPath);
       await fs.unlink(metadataPath);

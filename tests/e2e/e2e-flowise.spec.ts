@@ -47,7 +47,7 @@ test('Flowise config forms', async ({ page }) => {
                 model: 'gpt-4-turbo-preview',
                 temperature: 0.7,
               },
-            }
+            },
           ],
         },
       }),

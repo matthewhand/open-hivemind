@@ -1,18 +1,17 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useEffect, useState } from 'react';
-import {
-  StatsCards,
-  Badge,
-  Button,
-  DataTable,
-  Timeline,
-  ProgressBar,
-  VisualFeedback,
-  NavbarWithSearch,
-  Tooltip,
-  Card,
-  Hero,
-} from '../components/DaisyUI';
+import StatsCards from '../components/DaisyUI/StatsCards';
+import Badge from '../components/DaisyUI/Badge';
+import Button from '../components/DaisyUI/Button';
+import DataTable from '../components/DaisyUI/DataTable';
+import Timeline from '../components/DaisyUI/Timeline';
+import ProgressBar from '../components/DaisyUI/ProgressBar';
+import VisualFeedback from '../components/DaisyUI/VisualFeedback';
+import NavbarWithSearch from '../components/DaisyUI/NavbarWithSearch';
+import Tooltip from '../components/DaisyUI/Tooltip';
+import Card from '../components/DaisyUI/Card';
+import Hero from '../components/DaisyUI/Hero';
+
 import { apiService } from '../services/api';
 import type { Bot, StatusResponse } from '../services/api';
 
@@ -69,19 +68,10 @@ const EnhancedDashboard: React.FC = () => {
 
       setBots(botData);
 
-      // Calculate stats in a single pass
-      let activeBots = 0;
-      let totalMessages = 0;
-      let totalErrors = 0;
-
-      for (let i = 0; i < botData.length; i++) {
-        const bot = botData[i];
-        if (bot.status === 'active') {
-          activeBots++;
-        }
-        totalMessages += bot.messageCount || 0;
-        totalErrors += bot.errorCount || 0;
-      }
+      // Calculate stats
+      const activeBots = botData.filter(bot => bot.status === 'active').length;
+      const totalMessages = botData.reduce((sum, bot) => sum + (bot.messageCount || 0), 0);
+      const totalErrors = botData.reduce((sum, bot) => sum + (bot.errorCount || 0), 0);
 
       setStats({
         totalBots: botData.length,

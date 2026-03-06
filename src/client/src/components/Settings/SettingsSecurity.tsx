@@ -1,8 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect, useCallback } from 'react';
-import { Alert, Button, Input, Toggle } from '../DaisyUI';
+import { Alert } from '../DaisyUI/Alert';
+import Button from '../DaisyUI/Button';
+import Input from '../DaisyUI/Input';
+import Toggle from '../DaisyUI/Toggle';
+
 import { Shield, Plus, Trash2 } from 'lucide-react';
-import SecureConfigManager from '../SecureConfigManager';
 
 const SettingsSecurity: React.FC = () => {
   const [settings, setSettings] = useState({
@@ -42,6 +45,7 @@ const SettingsSecurity: React.FC = () => {
         corsOrigins: config.cors?.origins?.value || ['http://localhost:3000'],
       }));
     } catch (error) {
+      // console.error removed for cleaner logs
     } finally {
       setLoading(false);
     }
@@ -333,13 +337,6 @@ const SettingsSecurity: React.FC = () => {
         >
           {isSaving ? 'Saving...' : 'Save Security Settings'}
         </Button>
-      </div>
-
-      <div className="divider mt-8 mb-6"></div>
-
-      {/* Secure Configuration Management Section */}
-      <div className="mt-8">
-        <SecureConfigManager />
       </div>
     </div>
   );

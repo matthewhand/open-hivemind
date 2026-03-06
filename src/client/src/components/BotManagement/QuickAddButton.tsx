@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React from 'react';
-import { Tooltip } from '../DaisyUI';
+import Button from '../DaisyUI/Button';
+
 import { Plus as PlusIcon } from 'lucide-react';
 
 interface QuickAddButtonProps {
@@ -30,21 +31,20 @@ const QuickAddButton: React.FC<QuickAddButtonProps> = ({
   };
 
   return (
-    <Tooltip content={getTooltip()} position="right">
-      <button
-        className={`
-          btn btn-circle btn-sm btn-primary
-          ${disabled ? 'btn-disabled' : 'hover:scale-110'}
-          transition-transform duration-200
-        `}
-        onClick={onClick}
-        disabled={disabled}
-        title={getTitle()}
-        aria-label={getTitle()}
-      >
-        <PlusIcon className="w-4 h-4" />
-      </button>
-    </Tooltip>
+    <button
+      className={`
+        btn btn-circle btn-sm btn-primary
+        ${disabled ? 'btn-disabled' : 'hover:scale-110'}
+        transition-transform duration-200
+        tooltip tooltip-right
+      `}
+      onClick={onClick}
+      disabled={disabled}
+      data-tip={getTooltip()}
+      title={getTitle()}
+    >
+      <PlusIcon className="w-4 h-4" />
+    </button>
   );
 };
 

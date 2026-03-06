@@ -1,6 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect } from 'react';
-import { Badge, Alert, Button, Modal } from '../DaisyUI';
+import Badge from '../DaisyUI/Badge';
+import { Alert } from '../DaisyUI/Alert';
+import Button from '../DaisyUI/Button';
+import Modal from '../DaisyUI/Modal';
+
 import {
   CpuChipIcon,
   ArrowPathIcon,
@@ -9,7 +13,11 @@ import {
   ExclamationCircleIcon,
   EyeSlashIcon,
 } from '@heroicons/react/24/outline';
+<<<<<<< HEAD
+import type { BotConfig } from '../../../../types/config';
+=======
 import { BotConfig as BaseBotConfig } from '../../../../types/config';
+>>>>>>> origin/main
 
 interface RedactedValue {
     isRedacted: boolean;
@@ -17,15 +25,23 @@ interface RedactedValue {
     hasValue: boolean;
 }
 
+<<<<<<< HEAD
+interface BotConfigExtended extends Omit<BotConfig, 'discord' | 'slack' | 'isActive'> {
+=======
 type BotConfig = BaseBotConfig & {
+>>>>>>> origin/main
     isActive: boolean;
     source: string;
     discord?: Record<string, unknown | RedactedValue>;
     slack?: Record<string, unknown | RedactedValue>;
+<<<<<<< HEAD
+}
+=======
     llmProfile?: string;
     persona?: string;
     [key: string]: unknown;
 };
+>>>>>>> origin/main
 
 interface BotListResponse {
     bots: BotConfigExtended[];

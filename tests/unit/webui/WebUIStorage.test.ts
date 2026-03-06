@@ -1,6 +1,8 @@
-import * as fs from 'fs';
+import fs from 'fs';
+import { jest } from '@jest/globals';
 import { WebUIStorage } from '../../../src/storage/webUIStorage';
 
+// Mock fs
 jest.mock('fs');
 
 describe('WebUIStorage Performance', () => {
@@ -19,26 +21,26 @@ describe('WebUIStorage Performance', () => {
     jest.clearAllMocks();
     (fs.existsSync as jest.Mock).mockReturnValue(true);
     (fs.readFileSync as jest.Mock).mockReturnValue(JSON.stringify(mockConfig));
-    (fs.writeFileSync as jest.Mock).mockImplementation(() => { });
-    (fs.mkdirSync as jest.Mock).mockImplementation(() => undefined);
+    (fs.writeFileSync as jest.Mock).mockImplementation(() => {});
+    (fs.mkdirSync as jest.Mock).mockImplementation(() => {});
 
     storage = new WebUIStorage();
   });
 
   it('should use cache and read from disk only once', () => {
     // Call loadConfig multiple times
-    const config1 = storage.loadConfig();
-    const config2 = storage.loadConfig();
-    const config3 = storage.loadConfig();
+    storage.loadConfig();
+    storage.loadConfig();
+    storage.loadConfig();
 
-    // The cache should return the exact same object reference
-    expect(config1).toBe(config2);
-    expect(config2).toBe(config3);
+    // Expect readFileSync to be called only once
+    expect(fs.readFileSync).toHaveBeenCalledTimes(1);
   });
 
   it('should update cache on saveConfig', () => {
     // Initial load
     const config1 = storage.loadConfig();
+    expect(fs.readFileSync).toHaveBeenCalledTimes(1);
 
     // Modify and save
     const newConfig = { ...config1, agents: [{ id: 'new-agent' }] };
@@ -47,8 +49,13 @@ describe('WebUIStorage Performance', () => {
     // Load again
     const config2 = storage.loadConfig();
 
-    // Should return updated config with exact same reference
-    expect(config2).toBe(newConfig);
+    // Should verify writeFileSync was called
+    expect(fs.writeFileSync).toHaveBeenCalledTimes(1);
+
+    // Should NOT read from disk again
+    expect(fs.readFileSync).toHaveBeenCalledTimes(1);
+
+    // Should return updated config
     expect(config2.agents).toHaveLength(1);
     expect(config2.agents[0].id).toBe('new-agent');
   });

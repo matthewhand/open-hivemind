@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { apiService } from '../services/api';
 import ChatInterface, { ChatMessage } from '../components/DaisyUI/Chat';
 import { BotAvatar } from '../components/BotAvatar';
-import { RefreshCw, MessageSquare } from 'lucide-react';
+import { RefreshCw, MessageSquare, Cpu, Check, ChevronDown } from 'lucide-react';
 import EmptyState from '../components/DaisyUI/EmptyState';
+import { useSuccessToast, useErrorToast } from '../components/DaisyUI/ToastNotification';
 
 // Define Bot type based on API response
 interface BotData {
@@ -19,13 +20,72 @@ interface BotData {
   persona?: string;
 }
 
+// LLM Provider option interface
+interface LlmProviderOption {
+  key: string;
+  name: string;
+  provider: string;
+}
+
 const ChatPage: React.FC = () => {
   const [bots, setBots] = useState<BotData[]>([]);
   const [selectedBotId, setSelectedBotId] = useState<string | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [isOffline, setIsOffline] = useState(!navigator.onLine);
   const [loading, setLoading] = useState(false);
   const [historyLoading, setHistoryLoading] = useState(false);
-  const [isOffline, setIsOffline] = useState(!navigator.onLine);
+  const [llmProviders, setLlmProviders] = useState<LlmProviderOption[]>([]);
+  const [swappingProvider, setSwappingProvider] = useState<string | null>(null);
+  const [showProviderDropdown, setShowProviderDropdown] = useState<string | null>(null);
+
+  const showSuccess = useSuccessToast();
+  const showError = useErrorToast();
+
+  // Fetch LLM providers
+  const fetchLlmProviders = useCallback(async () => {
+    try {
+      const response = await fetch('/api/admin/llm-profiles');
+      if (response.ok) {
+        const data = await response.json();
+        setLlmProviders(data.data || []);
+      }
+    } catch (err) {
+      console.error('Failed to fetch LLM providers:', err);
+    }
+  }, []);
+
+  // Hot swap LLM provider
+  const handleSwapProvider = async (botId: string, newProviderKey: string) => {
+    setSwappingProvider(botId);
+    try {
+      const response = await fetch(`/api/admin/bots/${botId}/llm-provider`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ llmProvider: newProviderKey }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to swap provider');
+      }
+
+      // Update local state
+      setBots(prev => prev.map(bot =>
+        bot.id === botId ? { ...bot, llmProvider: newProviderKey } : bot
+      ));
+
+      showSuccess('LLM provider updated successfully');
+    } catch (err) {
+      showError(err instanceof Error ? err.message : 'Failed to swap provider');
+    } finally {
+      setSwappingProvider(null);
+      setShowProviderDropdown(null);
+    }
+  };
+
+  useEffect(() => {
+    fetchBots();
+    fetchLlmProviders();
+  }, [fetchLlmProviders]);
 
   useEffect(() => {
     const handleOnline = () => setIsOffline(false);
@@ -38,9 +98,6 @@ const ChatPage: React.FC = () => {
     };
   }, []);
 
-  useEffect(() => {
-    fetchBots();
-  }, []);
 
   useEffect(() => {
     if (selectedBotId) {
@@ -155,89 +212,152 @@ const ChatPage: React.FC = () => {
 
   return (
     <div className="flex flex-col h-full bg-base-200">
-        <div className="p-4 bg-base-100 border-b border-base-300 shadow-sm flex justify-between items-center">
-             <div>
-                <h1 className="text-2xl font-bold flex items-center gap-2">
-                    <MessageSquare className="w-6 h-6 text-primary" />
-                    Live Chat Monitor
-                </h1>
-                <p className="text-sm text-base-content/60">Monitor conversations across your bot fleet</p>
-             </div>
-             <button onClick={handleRefresh} className="btn btn-ghost btn-circle" title="Refresh">
-                <RefreshCw className={`w-5 h-5 ${loading || historyLoading ? 'animate-spin' : ''}`} />
-             </button>
+      <div className="p-4 bg-base-100 border-b border-base-300 shadow-sm flex justify-between items-center">
+        <div>
+          <h1 className="text-2xl font-bold flex items-center gap-2">
+            <MessageSquare className="w-6 h-6 text-primary" />
+            Live Chat Monitor
+          </h1>
+          <p className="text-sm text-base-content/60">Monitor conversations across your bot fleet</p>
         </div>
+        <button onClick={handleRefresh} className="btn btn-ghost btn-circle" title="Refresh">
+          <RefreshCw className={`w-5 h-5 ${loading || historyLoading ? 'animate-spin' : ''}`} />
+        </button>
+      </div>
 
-        <div className="flex flex-1 overflow-hidden">
-            {/* Sidebar */}
-            <div className="w-72 bg-base-100 border-r border-base-300 flex flex-col">
-                <div className="p-4 font-bold text-sm text-base-content/50 uppercase tracking-wide">
-                    Active Bots ({bots.length})
-                </div>
-                <div className="flex-1 overflow-y-auto">
-                    {loading && bots.length === 0 ? (
-                        <div className="flex justify-center p-4"><span className="loading loading-spinner" /></div>
-                    ) : (
-                        <ul className="menu w-full p-2 gap-1">
-                            {bots.map(bot => (
-                                <li key={bot.id}>
-                                    <button
-                                        className={`${selectedBotId === bot.id ? 'active' : ''} flex items-center gap-3 py-3`}
-                                        onClick={() => setSelectedBotId(bot.id)}
-                                    >
-                                        <div className="relative">
-                                            <BotAvatar bot={bot} />
-                                            <span className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-base-100 ${bot.connected ? 'bg-success' : 'bg-base-300'}`} />
-                                        </div>
-                                        <div className="flex flex-col items-start min-w-0">
-                                            <span className="font-semibold truncate w-full text-left">{bot.name}</span>
-                                            <span className="text-xs opacity-50 truncate w-full text-left capitalize">{bot.messageProvider}</span>
-                                        </div>
-                                    </button>
+      <div className="flex flex-1 overflow-hidden">
+        {/* Sidebar */}
+        <div className="w-72 bg-base-100 border-r border-base-300 flex flex-col">
+          <div className="p-4 font-bold text-sm text-base-content/50 uppercase tracking-wide">
+            Active Bots ({bots.length})
+          </div>
+          <div className="flex-1 overflow-y-auto">
+            {loading && bots.length === 0 ? (
+              <div className="flex justify-center p-4"><span className="loading loading-spinner" /></div>
+            ) : (
+              <ul className="menu w-full p-2 gap-1">
+                {bots.map(bot => (
+                  <li key={bot.id} className="relative">
+                    <button
+                      className={`${selectedBotId === bot.id ? 'active' : ''} flex items-center gap-3 py-3`}
+                      onClick={() => setSelectedBotId(bot.id)}
+                    >
+                      <div className="relative">
+                        <BotAvatar bot={bot} />
+                        <span className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-base-100 ${bot.connected ? 'bg-success' : 'bg-base-300'}`} />
+                      </div>
+                      <div className="flex flex-col items-start min-w-0 flex-1">
+                        <span className="font-semibold truncate w-full text-left">{bot.name}</span>
+                        <div className="flex items-center gap-2 w-full">
+                          <span className="text-xs opacity-50 truncate text-left capitalize">{bot.messageProvider}</span>
+                          <span className="text-xs opacity-30">•</span>
+                          {/* LLM Provider Hot Swap Dropdown */}
+                          <div className="dropdown dropdown-hover dropdown-right flex-1">
+                            <button
+                              className="btn btn-ghost btn-xs px-1 min-h-0 h-auto flex items-center gap-1 text-xs opacity-70 hover:opacity-100 group"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setShowProviderDropdown(showProviderDropdown === bot.id ? null : bot.id);
+                              }}
+                              disabled={swappingProvider === bot.id}
+                              title="Click to change LLM provider"
+                            >
+                              <Cpu className="w-3 h-3" />
+                              {swappingProvider === bot.id ? (
+                                <span className="loading loading-spinner loading-xs" />
+                              ) : (
+                                <>
+                                  <span className="truncate max-w-[80px]">{bot.llmProvider || 'Default'}</span>
+                                  <ChevronDown className="w-3 h-3 opacity-50 group-hover:opacity-100" />
+                                </>
+                              )}
+                            </button>
+                            {showProviderDropdown === bot.id && (
+                              <ul className="dropdown-content menu p-2 shadow-lg bg-base-100 rounded-box w-52 z-50 max-h-60 overflow-y-auto">
+                                <li className="menu-title">
+                                  <span>Switch Provider</span>
                                 </li>
-                            ))}
-                        </ul>
-                    )}
-                </div>
-            </div>
-
-            {/* Main Content */}
-            <div className="flex-1 flex flex-col bg-base-100 relative">
-                {selectedBot ? (
-                    <div className="flex-1 flex flex-col h-full relative">
-                        {historyLoading && (
-                            <div className="absolute inset-0 bg-base-100/50 z-20 flex items-center justify-center">
-                                <span className="loading loading-spinner loading-lg text-primary"></span>
-                            </div>
-                        )}
-                        {isOffline && (
-                            <div className="bg-warning text-warning-content p-2 text-center text-sm font-semibold">
-                                You are currently offline. Messages cannot be sent.
-                            </div>
-                        )}
-                        <ChatInterface
-                            messages={messages}
-                            onSendMessage={handleSendMessage}
-                            onRetryMessage={handleRetryMessage}
-                            placeholder={isOffline ? "You are offline" : "Type a message..."}
-                            className={`h-full ${isOffline ? 'opacity-50 pointer-events-none' : ''}`}
-                            maxHeight="100%"
-                            isLoading={false}
-                        />
-                        {/* Overlay to intercept clicks on input area if needed, but placeholder should suffice */}
-                    </div>
-                ) : (
-                    <div className="flex-1 flex flex-col items-center justify-center p-8 text-center bg-base-200/50">
-                        <EmptyState
-                            icon={MessageSquare}
-                            title="Select a Bot"
-                            description="Choose a bot from the sidebar to view its real-time chat history and activity."
-                            variant="noData"
-                        />
-                    </div>
-                )}
-            </div>
+                                <li>
+                                  <button
+                                    className={`${!bot.llmProvider ? 'active' : ''} btn btn-ghost btn-sm justify-start`}
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleSwapProvider(bot.id, '');
+                                    }}
+                                  >
+                                    <Check className={`w-4 h-4 ${!bot.llmProvider ? 'visible' : 'invisible'}`} />
+                                    System Default
+                                  </button>
+                                </li>
+                                <div className="divider my-1"></div>
+                                {llmProviders.map(provider => (
+                                  <li key={provider.key}>
+                                    <button
+                                      className={`${bot.llmProvider === provider.key ? 'active' : ''} btn btn-ghost btn-sm justify-start`}
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleSwapProvider(bot.id, provider.key);
+                                      }}
+                                    >
+                                      <Check className={`w-4 h-4 ${bot.llmProvider === provider.key ? 'visible' : 'invisible'}`} />
+                                      <div className="flex flex-col items-start">
+                                        <span className="font-medium">{provider.name}</span>
+                                        <span className="text-xs opacity-50">{provider.provider}</span>
+                                      </div>
+                                    </button>
+                                  </li>
+                                ))}
+                              </ul>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
         </div>
+
+        {/* Main Content */}
+        <div className="flex-1 flex flex-col bg-base-100 relative">
+          {selectedBot ? (
+            <div className="flex-1 flex flex-col h-full relative">
+              {historyLoading && (
+                <div className="absolute inset-0 bg-base-100/50 z-20 flex items-center justify-center">
+                  <span className="loading loading-spinner loading-lg text-primary"></span>
+                </div>
+              )}
+{isOffline && (
+                <div className="absolute top-0 left-0 right-0 bg-error text-error-content text-center py-1 text-sm z-30">
+                  You are currently offline
+                </div>
+              )}
+              <ChatInterface
+                messages={messages}
+                onSendMessage={handleSendMessage}
+                onRetryMessage={handleRetryMessage}
+                                className="h-full"
+                disabled={isOffline}
+                placeholder={isOffline ? "You are offline" : "Type a message..."}
+                maxHeight="100%"
+                isLoading={false}
+              />
+              {/* Overlay to intercept clicks on input area if needed, but placeholder should suffice */}
+            </div>
+          ) : (
+            <div className="flex-1 flex flex-col items-center justify-center p-8 text-center bg-base-200/50">
+              <EmptyState
+                icon={MessageSquare}
+                title="Select a Bot"
+                description="Choose a bot from the sidebar to view its real-time chat history and activity."
+                variant="noData"
+              />
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
 };

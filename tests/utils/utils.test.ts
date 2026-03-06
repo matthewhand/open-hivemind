@@ -1,47 +1,23 @@
 import * as fs from 'fs';
 import * as path from 'path';
-import { executeCommand, executeCommandSafe, readFile } from '../../src/utils/utils';
+import { promisify } from 'util';
+import { executeCommand, readFile } from '../../src/utils/utils';
 
 // Mock fs for controlled testing
-jest.mock('fs', () => {
-  const mockFsStatSync = jest.fn();
-  const mockStatFn = jest.fn().mockImplementation((path) => {
-    try {
-      const defaultStats = { isFile: () => true, isDirectory: () => false };
-      const stats = mockFsStatSync(path);
-      return Promise.resolve(stats || defaultStats);
-    } catch (e) {
-      return Promise.reject(e);
+jest.mock('fs');
+const mockFs = fs as jest.Mocked<typeof fs>;
+
+// Mock the promisified readFile function
+const mockReadFile = jest.fn();
+jest.mock('util', () => ({
+  ...jest.requireActual('util'),
+  promisify: jest.fn().mockImplementation((fn) => {
+    if (fn && fn.name === 'readFile') {
+      return mockReadFile;
     }
-  });
-
-  const mockReadFileFn = jest.fn();
-  const mockExistsSync = jest.fn();
-  const mockReadFileSync = jest.fn();
-
-  const mockObj = {
-    __esModule: true,
-    existsSync: mockExistsSync,
-    readFileSync: mockReadFileSync,
-    statSync: mockFsStatSync,
-    promises: {
-      stat: mockStatFn,
-      readFile: mockReadFileFn,
-    }
-  };
-  return {
-    ...mockObj,
-    default: mockObj
-  };
-});
-
-const mockFs = fs as unknown as jest.Mocked<typeof fs> & {
-  promises: {
-    stat: jest.Mock;
-    readFile: jest.Mock;
-  }
-};
-const mockReadFile = mockFs.promises.readFile;
+    return jest.requireActual('util').promisify(fn);
+  }),
+}));
 
 describe('executeCommand', () => {
   beforeEach(() => {
@@ -60,7 +36,7 @@ describe('executeCommand', () => {
     });
 
     it('should handle multiline output', async () => {
-      const output = await executeCommandSafe('printf', ['line1\\nline2']);
+      const output = await executeCommand('printf "line1\\nline2"');
       expect(output.trim()).toBe('line1\nline2');
     });
   });
@@ -90,7 +66,7 @@ describe('executeCommand', () => {
     });
 
     it('should handle environment variables', async () => {
-      const output = await executeCommandSafe('sh', ['-c', 'echo $HOME']);
+      const output = await executeCommand('echo $HOME');
       expect(typeof output).toBe('string');
     });
 
@@ -110,7 +86,7 @@ describe('executeCommand', () => {
     });
 
     it('should handle special characters in output', async () => {
-      const output = await executeCommandSafe('echo', ['special chars: !@#$%^&*()']);
+      const output = await executeCommand('echo "special chars: !@#$%^&*()"');
       expect(output.trim()).toBe('special chars: !@#$%^&*()');
     });
 
@@ -220,7 +196,7 @@ describe('readFile', () => {
         'large files',
         (content: string) => expect(content.length).toBe(10000),
       ],
-      ['binary.dat', '\x00\x01\x02\x03\xFF', 'binary-like content', () => { }],
+      ['binary.dat', '\x00\x01\x02\x03\xFF', 'binary-like content', () => {}],
       [
         'multiline.txt',
         'Line 1\nLine 2\r\nLine 3\n\nLine 5',
@@ -238,7 +214,7 @@ describe('readFile', () => {
 
   describe('Performance', () => {
     it('should read files efficiently', async () => {
-      mockReadFile.mockResolvedValue('Performance test content');
+      mockFs.readFileSync.mockReturnValue('Performance test content');
       mockFs.existsSync.mockReturnValue(true);
 
       const startTime = Date.now();

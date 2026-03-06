@@ -48,6 +48,14 @@ router.post('/', async (req, res) => {
     await saveSpecsIndex(index);
 
     const specDir = path.join(specsDirectory, id, version);
+
+    // Security check to prevent path traversal
+    const resolvedSpecDir = path.resolve(specDir);
+    const resolvedSpecsDirectory = path.resolve(specsDirectory);
+    if (!resolvedSpecDir.startsWith(resolvedSpecsDirectory + path.sep)) {
+      return res.status(400).json({ error: 'Invalid spec id or version: Path traversal detected' });
+    }
+
     await fs.mkdir(specDir, { recursive: true });
     await fs.writeFile(path.join(specDir, 'spec.md'), content);
 
@@ -77,7 +85,16 @@ router.get('/:id', async (req, res) => {
       return res.status(404).json({ error: 'Specification not found' });
     }
 
-    const versions = await fs.readdir(path.join(specsDirectory, id));
+    const specDir = path.join(specsDirectory, id);
+
+    // Security check to prevent path traversal
+    const resolvedSpecDir = path.resolve(specDir);
+    const resolvedSpecsDirectory = path.resolve(specsDirectory);
+    if (!resolvedSpecDir.startsWith(resolvedSpecsDirectory + path.sep)) {
+      return res.status(400).json({ error: 'Invalid spec id: Path traversal detected' });
+    }
+
+    const versions = await fs.readdir(specDir);
     const specWithVersions = { ...spec, versions };
 
     return res.json(specWithVersions);

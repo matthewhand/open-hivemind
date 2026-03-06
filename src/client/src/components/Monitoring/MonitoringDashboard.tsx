@@ -1,6 +1,12 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect } from 'react';
-import { Card, Badge, Alert, Button, PageHeader, StatsCards } from '../DaisyUI';
+import Card from '../DaisyUI/Card';
+import Badge from '../DaisyUI/Badge';
+import { Alert } from '../DaisyUI/Alert';
+import Button from '../DaisyUI/Button';
+import PageHeader from '../DaisyUI/PageHeader';
+import StatsCards from '../DaisyUI/StatsCards';
+
 import {
   Activity,
   RotateCcw,
@@ -163,7 +169,7 @@ const MonitoringDashboard: React.FC<MonitoringDashboardProps> = ({
     { icon: <Heart className="w-5 h-5" />, label: 'Infrastructure Health' },
     { icon: <Cpu className="w-5 h-5" />, label: 'Bot Status' },
     { icon: <Clock className="w-5 h-5" />, label: 'Activity Monitor' },
-    { icon: <Activity className="w-5 h-5" />, label: 'Distributed Tracing' },
+    { icon: <Activity className="w-5 h-5" />, label: 'Bot Activity Trace' },
   ];
 
   const stats = [
@@ -291,7 +297,7 @@ const MonitoringDashboard: React.FC<MonitoringDashboardProps> = ({
         </TabPanel>
 
         <TabPanel value={activeTab} index={3}>
-          <DistributedTraceWaterfall traceId="trace-req-8f9d3b2a" spans={[{id: "authenticateRequest", parentId: null, name: "authenticateRequest", service: "auth", startTime: 0, duration: 10, status: "success"}]} />
+          <BotActivityWaterfallMonitor />
         </TabPanel>
       </div>
     </div>
