@@ -3,7 +3,6 @@ import { AuditLogger } from '@src/common/auditLogger';
 import { ErrorHandler, PerformanceMonitor } from '@src/common/errors/ErrorHandler';
 import { getLlmProvider } from '@src/llm/getLlmProvider';
 import { InputSanitizer } from '@src/utils/InputSanitizer';
-import messageConfig from '@config/messageConfig';
 import { generateChatCompletionDirect } from '@integrations/openwebui/directClient';
 import { ChannelDelayManager } from '@message/helpers/handler/ChannelDelayManager';
 import type { IMessage } from '@message/interfaces/IMessage';
@@ -11,24 +10,14 @@ import { getMessengerProvider } from '@message/management/getMessengerProvider';
 import { IdleResponseManager } from '@message/management/IdleResponseManager';
 import MessageDelayScheduler from '../helpers/handler/MessageDelayScheduler';
 import { processCommand } from '../helpers/handler/processCommand';
-import { sendFollowUpRequest } from '../helpers/handler/sendFollowUpRequest';
 import { summarizeLogWithLlm } from '../helpers/logging/LogProseSummarizer';
-import TypingMonitor from '../helpers/monitoring/TypingMonitor';
 import AdaptiveHistoryTuner from '../helpers/processing/AdaptiveHistoryTuner';
 import { addUserHintFn as addUserHint } from '../helpers/processing/addUserHint';
 import { recordBotActivity } from '../helpers/processing/ChannelActivity';
 import DuplicateMessageDetector from '../helpers/processing/DuplicateMessageDetector';
-import { GlobalActivityTracker } from '../helpers/processing/GlobalActivityTracker';
 import { trimHistoryToTokenBudget } from '../helpers/processing/HistoryBudgeter';
 import { IncomingMessageDensity } from '../helpers/processing/IncomingMessageDensity';
-import {
-  calculateLineDelayWithOptions,
-  splitOnNewlines,
-} from '../helpers/processing/LineByLineSender';
-import { detectMentions } from '../helpers/processing/MentionDetector';
 import OutgoingMessageRateLimiter from '../helpers/processing/OutgoingMessageRateLimiter';
-import { getMessageSetting } from '../helpers/processing/ResponseProfile';
-import { isNonsense } from '../helpers/processing/SemanticRelevanceChecker';
 import { shouldReplyToMessage } from '../helpers/processing/shouldReplyToMessage';
 import { splitMessageContent } from '../helpers/processing/splitMessageContent';
 import { stripBotId } from '../helpers/processing/stripBotId';
@@ -311,9 +300,10 @@ export async function handleMessage(
 
         // Calculate and apply delays
         const density = IncomingMessageDensity.getInstance().getDensity(channelId);
-        const isFollowUp = historyMessages.length > 0 && 
-                          historyMessages[historyMessages.length - 1].getAuthorId() === botId;
-        
+        const isFollowUp =
+          historyMessages.length > 0 &&
+          historyMessages[historyMessages.length - 1].getAuthorId() === botId;
+
         const delayMs = timingManager.calculateResponseDelay(
           replyDecision.meta?.chance || 0,
           density,
@@ -323,7 +313,7 @@ export async function handleMessage(
 
         if (delayMs > 0) {
           logger(`Waiting ${delayMs}ms before processing...`);
-          await new Promise(resolve => setTimeout(resolve, delayMs));
+          await new Promise((resolve) => setTimeout(resolve, delayMs));
         }
 
         // Set up typing indicators
@@ -384,16 +374,21 @@ export async function handleMessage(
         }
 
         let responseText = stripSystemPromptLeak(llmResponse.text, systemPrompt);
-        
+
         // Clean up formatting
         responseText = responseText.replace(/\\n/g, '\n').trim();
 
         if (responseText) {
           // Split into parts if needed and send
-          const parts = splitMessageContent(responseText, Number(botConfig.MESSAGE_MAX_LENGTH || 2000));
-          
+          const parts = splitMessageContent(
+            responseText,
+            Number(botConfig.MESSAGE_MAX_LENGTH || 2000)
+          );
+
           for (const part of parts) {
-            const finalReplyId = botConfig.MESSAGE_REPLY_IN_THREAD ? message.getMessageId() : undefined;
+            const finalReplyId = botConfig.MESSAGE_REPLY_IN_THREAD
+              ? message.getMessageId()
+              : undefined;
             const sentTs = await messageProvider.sendMessageToChannel(
               channelId,
               part,
@@ -406,7 +401,7 @@ export async function handleMessage(
             duplicateDetector.recordMessage(channelId, part);
             outgoingRateLimiter.recordSend(channelId);
             if (resolvedBotId) recordBotActivity(channelId, resolvedBotId);
-            
+
             idleResponseManager.recordBotResponse(serviceName, channelId);
           }
         }
@@ -415,7 +410,6 @@ export async function handleMessage(
         const processingTime = endTime - startTime;
         logger(`Message processed in ${processingTime}ms`);
         return llmResponse.text;
-
       } catch (error: unknown) {
         ErrorHandler.handle(error, 'messageHandler.handleMessage');
         const modelInfo = botConfig
