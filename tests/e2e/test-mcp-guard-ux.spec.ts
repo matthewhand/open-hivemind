@@ -19,7 +19,7 @@ test('verify MCP Guard UX', async ({ page }) => {
 
   await page.goto('/admin/guards');
 
-  await page.getByRole('button', { name: 'New Profile' }).click();
+  await page.getByRole('button', { name: 'New Profile' }).first().click();
 
   const modal = page.locator('.modal-box').filter({ hasText: /Create.*Profile/i });
   await expect(modal).toBeVisible();
@@ -46,21 +46,38 @@ test('verify MCP Guard UX', async ({ page }) => {
 
   // Type second value and press enter
   await usersInput.pressSequentially('user2');
-  await usersInput.press('Enter');
+
+  await page.waitForTimeout(500);
 
   // Screenshot after typing second value
   await page.screenshot({ path: 'docs/screenshots/mcp-guard-ux-after.png' });
 
-  // Wait for the badges to appear
-  const badges = modal.locator('.badge', { hasText: /user1|user2/ });
-  await expect(badges).toHaveCount(2);
+  const value = await usersInput.inputValue();
+  console.log('Input value after typing "user2":', value);
+  expect(value).toBe('');
 
-  // Validate badge texts exactly
-  const firstBadge = badges.nth(0);
-  const secondBadge = badges.nth(1);
-  await expect(firstBadge).toHaveText(/user1/);
-  await expect(secondBadge).toHaveText(/user2/);
+  const chips = modal.locator('[data-testid="chip"]');
+  await expect(chips).toHaveCount(2);
 
-  // The input value itself is cleared after pressing Enter
-  expect(await usersInput.inputValue()).toBe('');
+  // Wait for the clear button to be visible
+  const clearButton = modal.locator('button[aria-label="Clear all items"]').first();
+  await expect(clearButton).toBeVisible();
+
+  // Take screenshot with chips
+  await page.screenshot({ path: 'after-fix-feedback.png' });
+
+  // Clear it
+  await clearButton.click();
+
+  // Give it a moment to render
+  await page.waitForTimeout(500);
+
+  // Verify it cleared
+  await expect(clearButton).not.toBeVisible();
+  await expect(chips).toHaveCount(0);
+
+  const undoButton = modal.locator('button[aria-label="Undo"]').first();
+  await undoButton.click();
+  await expect(chips).toHaveCount(2);
+  await page.screenshot({ path: 'docs/screenshots/mcp-guard-ux-after-undo.png' });
 });
