@@ -490,9 +490,11 @@ export function createTestData(
   let data;
   switch (type) {
     case 'discord':
-      return discordConfigData;
+      data = discordConfigData;
+      break;
     case 'message':
-      return messageConfigData;
+      data = messageConfigData;
+      break;
     case 'slack':
       data = slackConfigData;
       break;
