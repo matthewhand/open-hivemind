@@ -49,13 +49,15 @@ export const SearchFilterBar: React.FC<SearchFilterBarProps> = ({
           size="sm"
           suffix={
             searchValue ? (
-              <button
-                onClick={handleClearSearch}
-                className="btn btn-ghost btn-xs btn-circle pointer-events-auto relative z-10 animate-in fade-in zoom-in duration-200"
-                aria-label="Clear search"
-              >
-                <X className="w-3 h-3" />
-              </button>
+              <div className="tooltip tooltip-left before:text-xs pointer-events-auto relative z-10 animate-in fade-in zoom-in duration-200" data-tip="Clear search">
+                <button
+                  onClick={handleClearSearch}
+                  className="btn btn-ghost btn-xs btn-circle focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none"
+                  aria-label="Clear search"
+                >
+                  <X className="w-3 h-3" />
+                </button>
+              </div>
             ) : null
           }
         />
