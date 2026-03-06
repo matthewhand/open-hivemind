@@ -5,9 +5,6 @@
   functions = "dist/netlify/functions"
   publish = "dist/client"
 
-[dev]
-  command = "npm run dev"
-
 [[redirects]]
   from = "/api/*"
   to = "/.netlify/functions/server"
@@ -18,3 +15,7 @@
   from = "/*"
   to = "/index.html"
   status = 200
+
+[dev]
+  command = "npm run dev"
+
