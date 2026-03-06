@@ -30,16 +30,16 @@ const ChatPage: React.FC = () => {
   useEffect(() => {
     const handleOnline = () => setIsOffline(false);
     const handleOffline = () => setIsOffline(true);
-
     window.addEventListener('online', handleOnline);
     window.addEventListener('offline', handleOffline);
-
-    fetchBots();
-
     return () => {
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
     };
+  }, []);
+
+  useEffect(() => {
+    fetchBots();
   }, []);
 
   useEffect(() => {
@@ -211,19 +211,18 @@ const ChatPage: React.FC = () => {
                             </div>
                         )}
                         {isOffline && (
-                          <div className="bg-warning text-warning-content p-2 text-center text-sm font-semibold relative z-10">
-                            You are currently offline. Actions may be delayed or unavailable.
-                          </div>
+                            <div className="bg-warning text-warning-content p-2 text-center text-sm font-semibold">
+                                You are currently offline. Messages cannot be sent.
+                            </div>
                         )}
                         <ChatInterface
                             messages={messages}
                             onSendMessage={handleSendMessage}
                             onRetryMessage={handleRetryMessage}
                             placeholder={isOffline ? "You are offline" : "Type a message..."}
-                            className="h-full"
+                            className={`h-full ${isOffline ? 'opacity-50 pointer-events-none' : ''}`}
                             maxHeight="100%"
                             isLoading={false}
-                            disabled={isOffline}
                         />
                         {/* Overlay to intercept clicks on input area if needed, but placeholder should suffice */}
                     </div>
