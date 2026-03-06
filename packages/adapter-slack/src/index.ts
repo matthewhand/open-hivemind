@@ -1,11 +1,3 @@
-// Core modules
-
-// Routing modules
-
-// Event handling modules
-
-// Utility modules
-
 // Re-export existing classes for backward compatibility
 export { default as SlackService } from './SlackService';
 export { SlackBotManager } from './SlackBotManager';
