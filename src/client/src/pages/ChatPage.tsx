@@ -25,9 +25,21 @@ const ChatPage: React.FC = () => {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [loading, setLoading] = useState(false);
   const [historyLoading, setHistoryLoading] = useState(false);
+  const [isOffline, setIsOffline] = useState(!navigator.onLine);
 
   useEffect(() => {
+    const handleOnline = () => setIsOffline(false);
+    const handleOffline = () => setIsOffline(true);
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
     fetchBots();
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
   }, []);
 
   useEffect(() => {
@@ -198,13 +210,20 @@ const ChatPage: React.FC = () => {
                                 <span className="loading loading-spinner loading-lg text-primary"></span>
                             </div>
                         )}
+                        {isOffline && (
+                          <div className="bg-warning text-warning-content p-2 text-center text-sm font-semibold relative z-10">
+                            You are currently offline. Actions may be delayed or unavailable.
+                          </div>
+                        )}
                         <ChatInterface
                             messages={messages}
                             onSendMessage={handleSendMessage}
-                            placeholder="Type a message..."
+                            onRetryMessage={handleRetryMessage}
+                            placeholder={isOffline ? "You are offline" : "Type a message..."}
                             className="h-full"
                             maxHeight="100%"
                             isLoading={false}
+                            disabled={isOffline}
                         />
                         {/* Overlay to intercept clicks on input area if needed, but placeholder should suffice */}
                     </div>
