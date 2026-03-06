@@ -1,6 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { Card, Badge, Button, Alert, DataTable } from './DaisyUI';
+import Card from './DaisyUI/Card';
+import Badge from './DaisyUI/Badge';
+import Button from './DaisyUI/Button';
+import { Alert } from './DaisyUI/Alert';
+import DataTable from './DaisyUI/DataTable';
+
 import {
   Activity,
   Server,

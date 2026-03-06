@@ -1,5 +1,9 @@
 import React, { memo } from 'react';
-import { Badge, Card, Rating, Button } from './DaisyUI';
+import Badge from './DaisyUI/Badge';
+import Card from './DaisyUI/Card';
+import Rating from './DaisyUI/Rating';
+import Button from './DaisyUI/Button';
+
 import type { Bot, StatusResponse } from '../services/api';
 
 interface DashboardBotCardProps {

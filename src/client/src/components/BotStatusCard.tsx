@@ -1,6 +1,13 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState } from 'react';
-import { Card, Badge, Button, Modal, Accordion, Progress, Loading } from './DaisyUI';
+import Card from './DaisyUI/Card';
+import Badge from './DaisyUI/Badge';
+import Button from './DaisyUI/Button';
+import Modal from './DaisyUI/Modal';
+import Accordion from './DaisyUI/Accordion';
+import { Progress } from './DaisyUI/Loading';
+import { Loading } from './DaisyUI/Loading';
+
 import {
   RotateCcw,
   Settings,

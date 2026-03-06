@@ -12,7 +12,11 @@ import {
   WrenchScrewdriverIcon,
 } from '@heroicons/react/24/outline';
 import { Server, Search } from 'lucide-react';
-import { Breadcrumbs, Alert, Modal, EmptyState } from '../components/DaisyUI';
+import Breadcrumbs from '../components/DaisyUI/Breadcrumbs';
+import { Alert } from '../components/DaisyUI/Alert';
+import Modal from '../components/DaisyUI/Modal';
+import EmptyState from '../components/DaisyUI/EmptyState';
+
 import SearchFilterBar from '../components/SearchFilterBar';
 
 interface Tool {
