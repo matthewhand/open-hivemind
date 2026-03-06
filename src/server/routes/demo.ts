@@ -6,7 +6,7 @@
 
 import { Router } from 'express';
 import DemoModeService from '../../services/DemoModeService';
-import { ErrorUtils, type AppError } from "../../types/errors";
+import { ErrorUtils, type AppError } from '../../types/errors';
 
 const router = Router();
 

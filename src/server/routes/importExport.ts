@@ -291,7 +291,9 @@ router.post(
       // Clean up uploaded file if it exists
       if ((req as AuthMiddlewareRequest & { file?: Express.Multer.File }).file) {
         try {
-          await fs.unlink((req as AuthMiddlewareRequest & { file?: Express.Multer.File }).file.path);
+          await fs.unlink(
+            (req as AuthMiddlewareRequest & { file?: Express.Multer.File }).file.path
+          );
         } catch (cleanupError) {
           console.error('Error cleaning up uploaded file:', cleanupError);
         }
@@ -552,12 +554,15 @@ router.post(
         });
       }
 
-      const result = await importExportService.importConfigurations((req as AuthMiddlewareRequest & { file?: Express.Multer.File }).file.path, {
-        format: req.body.format || 'json',
-        validateOnly: true,
-        skipValidation: false,
-        overwrite: false,
-      });
+      const result = await importExportService.importConfigurations(
+        (req as AuthMiddlewareRequest & { file?: Express.Multer.File }).file.path,
+        {
+          format: req.body.format || 'json',
+          validateOnly: true,
+          skipValidation: false,
+          overwrite: false,
+        }
+      );
 
       // Clean up uploaded file
       try {
@@ -577,7 +582,9 @@ router.post(
       // Clean up uploaded file if it exists
       if ((req as AuthMiddlewareRequest & { file?: Express.Multer.File }).file) {
         try {
-          await fs.unlink((req as AuthMiddlewareRequest & { file?: Express.Multer.File }).file.path);
+          await fs.unlink(
+            (req as AuthMiddlewareRequest & { file?: Express.Multer.File }).file.path
+          );
         } catch (cleanupError) {
           console.error('Error cleaning up uploaded file:', cleanupError);
         }

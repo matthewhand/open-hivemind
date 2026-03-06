@@ -187,13 +187,10 @@ importers:
         version: 3.3.2
       openai:
         specifier: ^4.82.0
-        version: 4.104.0(encoding@0.1.13)(ws@8.19.0)(zod@3.24.2)
+        version: 4.104.0(encoding@0.1.13)(ws@8.19.0)(zod@3.25.1)
       pino-pretty:
         specifier: ^11.2.2
         version: 11.3.0
-      playwright:
-        specifier: ^1.58.2
-        version: 1.58.2
       prop-types:
         specifier: ^15.8.1
         version: 15.8.1
@@ -291,11 +288,11 @@ importers:
         specifier: ^17.7.2
         version: 17.7.2
       zod:
-        specifier: ^3.24.2
-        version: 3.24.2
+        specifier: 3.25.1
+        version: 3.25.1
       zod-to-json-schema:
         specifier: 3.25.1
-        version: 3.25.1(zod@3.24.2)
+        version: 3.25.1(zod@3.25.1)
     devDependencies:
       '@babel/core':
         specifier: ^7.28.0
@@ -382,7 +379,7 @@ importers:
         specifier: ^6.1.1
         version: 6.1.1
       '@types/express':
-        specifier: ^4.17.21
+        specifier: ^4.17.25
         version: 4.17.25
       '@types/express-session':
         specifier: ^1.18.2
@@ -7963,8 +7960,8 @@ packages:
   zod@3.22.4:
     resolution: {integrity: sha512-iC+8Io04lddc+mVqQ9AZ7OQ2MrUKGN+oIQyq1vemgt46jwCwLfhq7/pwnBnNXXXZb8VTVLKwp9EDkx+ryxIWmg==}
 
-  zod@3.24.2:
-    resolution: {integrity: sha512-lY7CDW43ECgW9u1TcT3IoXHflywfVqDYze4waEz812jR/bZ8FHDsl7pFQoSZTz5N+2NqRXs8GBwnAwo3ZNxqhQ==}
+  zod@3.25.1:
+    resolution: {integrity: sha512-bkxUGQiqWDTXHSgqtevYDri5ee2GPC9szPct4pqpzLEpswgDQmuseDz81ZF0AnNu1xsmnBVmbtv/t/WeUIHlpg==}
 
   zwitch@2.0.4:
     resolution: {integrity: sha512-bXE4cR/kVZhKZX/RjPEflHaKVhUVl85noU3v6b8apfQEc1x4A+zBxjZ4lN8LqGd6WZ3dl98pY4o717VFmoPp+A==}
@@ -9744,7 +9741,7 @@ snapshots:
     dependencies:
       content-type: 1.0.5
       raw-body: 3.0.2
-      zod: 3.24.2
+      zod: 3.25.1
 
   '@mui/core-downloads-tracker@7.3.8': {}
 
@@ -11383,7 +11380,7 @@ snapshots:
     dependencies:
       devtools-protocol: 0.0.1566079
       mitt: 3.0.1
-      zod: 3.24.2
+      zod: 3.25.1
 
   ci-info@3.9.0: {}
 
@@ -14343,7 +14340,7 @@ snapshots:
     dependencies:
       mimic-fn: 2.1.0
 
-  openai@4.104.0(encoding@0.1.13)(ws@8.19.0)(zod@3.24.2):
+  openai@4.104.0(encoding@0.1.13)(ws@8.19.0)(zod@3.25.1):
     dependencies:
       '@types/node': 18.19.130
       '@types/node-fetch': 2.6.13
@@ -14354,7 +14351,7 @@ snapshots:
       node-fetch: 2.7.0(encoding@0.1.13)
     optionalDependencies:
       ws: 8.19.0
-      zod: 3.24.2
+      zod: 3.25.1
     transitivePeerDependencies:
       - encoding
 
@@ -16427,12 +16424,12 @@ snapshots:
       cookie: 1.1.1
       youch-core: 0.3.3
 
-  zod-to-json-schema@3.25.1(zod@3.24.2):
+  zod-to-json-schema@3.25.1(zod@3.25.1):
     dependencies:
-      zod: 3.24.2
+      zod: 3.25.1
 
   zod@3.22.4: {}
 
-  zod@3.24.2: {}
+  zod@3.25.1: {}
 
   zwitch@2.0.4: {}

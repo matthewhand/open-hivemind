@@ -9,6 +9,8 @@ const debug = Debug('app:SecureConfigManager');
 export interface SecureConfig {
   id: string;
   name: string;
+  type?: string;
+  createdAt?: string;
   data: any;
   updatedAt: string;
   checksum: string;
@@ -55,19 +57,7 @@ export class SecureConfigManager {
     if (!/^[a-zA-Z0-9_-]+$/.test(id)) {
       throw ErrorUtils.createError(
         'Invalid configuration ID: ID must contain only alphanumeric characters, hyphens, and underscores',
-<<<<<<< HEAD
-        'validation' as any,
-=======
-<<<<<<< HEAD
-        'validation' as any,
-=======
-<<<<<<< HEAD
-        'ValidationError' as any as any,
-=======
         'validation',
->>>>>>> origin/main
->>>>>>> origin/main
->>>>>>> origin/main
         'SECURE_CONFIG_INVALID_ID',
         400,
       );
@@ -83,19 +73,7 @@ export class SecureConfigManager {
     if (!resolvedTargetPath.startsWith(resolvedConfigDir + path.sep) && resolvedTargetPath !== resolvedConfigDir) {
       throw ErrorUtils.createError(
         'Invalid configuration ID: Path traversal detected',
-<<<<<<< HEAD
-        'validation' as any,
-=======
-<<<<<<< HEAD
-        'validation' as any,
-=======
-<<<<<<< HEAD
-        'ValidationError' as any as any,
-=======
         'validation',
->>>>>>> origin/main
->>>>>>> origin/main
->>>>>>> origin/main
         'SECURE_CONFIG_INVALID_ID',
         400,
       );
@@ -112,19 +90,7 @@ export class SecureConfigManager {
     if (!config.id || config.id.trim() === '') {
       throw ErrorUtils.createError(
         'Configuration ID is required',
-<<<<<<< HEAD
-        'validation' as any,
-=======
-<<<<<<< HEAD
-        'validation' as any,
-=======
-<<<<<<< HEAD
-        'ValidationError' as any as any,
-=======
         'validation',
->>>>>>> origin/main
->>>>>>> origin/main
->>>>>>> origin/main
         'SECURE_CONFIG_ID_REQUIRED',
         400,
       );
@@ -132,19 +98,7 @@ export class SecureConfigManager {
     if (!config.name || config.name.trim() === '') {
       throw ErrorUtils.createError(
         'Configuration name is required',
-<<<<<<< HEAD
-        'validation' as any,
-=======
-<<<<<<< HEAD
-        'validation' as any,
-=======
-<<<<<<< HEAD
-        'ValidationError' as any as any,
-=======
         'validation',
->>>>>>> origin/main
->>>>>>> origin/main
->>>>>>> origin/main
         'SECURE_CONFIG_NAME_REQUIRED',
         400,
       );
@@ -172,7 +126,7 @@ export class SecureConfigManager {
       debug(`Failed to store configuration ${config.id}:`, hivemindError.message);
       throw ErrorUtils.createError(
         `Failed to store secure configuration: ${hivemindError.message}`,
-        'technical',
+        'unknown',
         'SECURE_CONFIG_STORE_FAILED',
         500,
       );
@@ -227,7 +181,7 @@ export class SecureConfigManager {
       debug(`Failed to delete configuration ${id}:`, hivemindError.message);
       throw ErrorUtils.createError(
         `Failed to delete secure configuration: ${hivemindError.message}`,
-        'technical',
+        'unknown',
         'SECURE_CONFIG_DELETE_FAILED',
         500,
       );
@@ -331,19 +285,7 @@ export class SecureConfigManager {
       if (!resolvedBackupPath.startsWith(resolvedBackupDir + path.sep) && resolvedBackupPath !== resolvedBackupDir) {
         throw ErrorUtils.createError(
           'Invalid backup ID: Path traversal detected',
-<<<<<<< HEAD
           'validation',
-=======
-<<<<<<< HEAD
-          'validation',
-=======
-<<<<<<< HEAD
-          'ValidationError' as any,
-=======
-          'validation',
->>>>>>> origin/main
->>>>>>> origin/main
->>>>>>> origin/main
           'SECURE_CONFIG_INVALID_BACKUP_ID',
           400,
         );
@@ -417,7 +359,7 @@ export class SecureConfigManager {
     return key;
   }
 
-  private encrypt(text: string): string {
+  public encrypt(text: string): string {
     const iv = crypto.randomBytes(16);
     const cipher = crypto.createCipheriv(this.algorithm, this.encryptionKey, iv);
     
@@ -429,7 +371,7 @@ export class SecureConfigManager {
     return `${iv.toString('hex')}:${authTag}:${encrypted}`;
   }
 
-  private decrypt(text: string): string {
+  public decrypt(text: string): string {
     const [ivHex, authTagHex, encryptedText] = text.split(':');
     
     const iv = Buffer.from(ivHex, 'hex');
