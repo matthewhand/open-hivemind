@@ -520,7 +520,7 @@ export class StartupDiagnostics {
    * Check if a key is likely to contain sensitive information
    */
   private isSensitiveKey(key: string): boolean {
-    const sensitivePatterns = ['token', 'secret', 'key', 'password', 'auth'];
+    const sensitivePatterns = ['token', 'secret', 'key', 'password', 'auth', 'credential', 'cert'];
     return sensitivePatterns.some((pattern) => key.toLowerCase().includes(pattern));
   }
 }
