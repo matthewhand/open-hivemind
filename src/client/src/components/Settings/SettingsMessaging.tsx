@@ -1,15 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect, useCallback } from 'react';
 import { Alert, Toggle, Button } from '../DaisyUI';
-<<<<<<< HEAD
-import { MessageSquare, Bot, Users, Zap } from 'lucide-react';
-=======
-<<<<<<< HEAD
-import { MessageSquare, Bot, Users, Zap, BarChart3 } from 'lucide-react';
-=======
-import { MessageSquare, Bot, Users, Zap, Info } from 'lucide-react';
->>>>>>> origin/main
->>>>>>> origin/main
+import { MessageSquare, Bot, Users, Zap, Info, BarChart3 } from 'lucide-react';
 
 interface MessagingConfig {
   onlyWhenSpokenTo: boolean;
@@ -21,7 +13,51 @@ interface MessagingConfig {
   graceWindowMs: number;
   /** Whether the bot injects the user's identity hint when mentioned (MESSAGE_ADD_USER_HINT). */
   addUserHint: boolean;
+  semanticRelevanceEnabled: boolean;
+  semanticRelevanceBonus: number;
 }
+
+interface RelevanceImpactProps {
+  baseChance: number;
+  relevanceBonus: number;
+  isEnabled: boolean;
+}
+
+const RelevanceImpactCalculator: React.FC<RelevanceImpactProps> = ({
+  baseChance,
+  relevanceBonus,
+  isEnabled,
+}) => {
+  if (!isEnabled) return null;
+  const combinedPercent = Math.min(100, baseChance * relevanceBonus);
+  const isCapped = baseChance * relevanceBonus >= 100;
+
+  return (
+    <div className="bg-base-300/50 p-4 rounded-lg mt-4 border border-info/20">
+      <h6 className="text-sm font-bold flex items-center gap-2 mb-2 text-info">
+        <BarChart3 className="w-4 h-4" />
+        Semantic Impact Calculator
+      </h6>
+      <div className="flex justify-between items-center bg-base-100 p-3 rounded border border-base-content/5">
+        <div className="flex flex-col">
+          <span className="text-xs text-base-content/60">Base ({baseChance}%) × Bonus ({relevanceBonus}x)</span>
+          <span className="text-sm font-mono mt-1 font-bold">
+            {baseChance}% × {relevanceBonus}x = {(baseChance * relevanceBonus).toFixed(1)}%
+          </span>
+        </div>
+        <div className="text-right">
+          <span className="text-xs text-base-content/60">Final Chance</span>
+          <div className={`text-xl font-black ${isCapped ? 'text-error' : 'text-success'}`}>
+            {combinedPercent.toFixed(0)}%
+          </div>
+        </div>
+      </div>
+      <p className="text-[10px] text-base-content/50 mt-2 italic">
+        * Capped at 100%. Represents the probability of response when topic is semantically relevant.
+      </p>
+    </div>
+  );
+};
 
 const SettingsMessaging: React.FC = () => {
   const [settings, setSettings] = useState<MessagingConfig>({
@@ -33,6 +69,8 @@ const SettingsMessaging: React.FC = () => {
     baseChance: 5,
     graceWindowMs: 300000,
     addUserHint: false,
+    semanticRelevanceEnabled: false,
+    semanticRelevanceBonus: 5,
   });
   const [loading, setLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -62,6 +100,8 @@ const SettingsMessaging: React.FC = () => {
         baseChance: (data.MESSAGE_UNSOLICITED_BASE_CHANCE ?? 0.01) * 100,
         graceWindowMs: data.MESSAGE_ONLY_WHEN_SPOKEN_TO_GRACE_WINDOW_MS ?? 300000,
         addUserHint: data.MESSAGE_ADD_USER_HINT ?? false,
+        semanticRelevanceEnabled: data.MESSAGE_SEMANTIC_RELEVANCE_ENABLED ?? false,
+        semanticRelevanceBonus: data.MESSAGE_SEMANTIC_RELEVANCE_BONUS ?? 5,
       });
     } catch {
       setAlert({
@@ -97,6 +137,8 @@ const SettingsMessaging: React.FC = () => {
             MESSAGE_UNSOLICITED_BASE_CHANCE: settings.baseChance / 100,
             MESSAGE_ONLY_WHEN_SPOKEN_TO_GRACE_WINDOW_MS: settings.graceWindowMs,
             MESSAGE_ADD_USER_HINT: settings.addUserHint,
+            MESSAGE_SEMANTIC_RELEVANCE_ENABLED: settings.semanticRelevanceEnabled,
+            MESSAGE_SEMANTIC_RELEVANCE_BONUS: settings.semanticRelevanceBonus,
           },
         }),
       });
@@ -294,7 +336,7 @@ const SettingsMessaging: React.FC = () => {
             Context &amp; Additions
           </h6>
 
-          <div className="form-control">
+          <div className="form-control mb-3">
             <label className="label cursor-pointer py-2">
               <div>
                 <span className="label-text font-medium">Add User Hint</span>
@@ -309,10 +351,6 @@ const SettingsMessaging: React.FC = () => {
               />
             </label>
           </div>
-<<<<<<< HEAD
-=======
-<<<<<<< HEAD
-=======
 
           <div className="form-control mb-3">
             <label className="label cursor-pointer py-2">
@@ -333,7 +371,7 @@ const SettingsMessaging: React.FC = () => {
           <div className="form-control">
             <label className="label py-1 flex items-center justify-between">
               <span className="label-text text-sm font-medium flex-1 pr-4 flex items-center gap-1">
-                Semantic Relevance Threshold Tuning
+                Semantic Relevance Bonus
                 <div className="tooltip tooltip-right" data-tip="Multiplier applied to base chance if the message context is semantically related to recent conversation history (e.g. 10x means a 5% base chance becomes 50%).">
                   <Info className="w-3.5 h-3.5 text-base-content/50 cursor-help" />
                 </div>
@@ -347,16 +385,7 @@ const SettingsMessaging: React.FC = () => {
               step="1"
               value={settings.semanticRelevanceBonus}
               onChange={(e) => handleChange('semanticRelevanceBonus', parseInt(e.target.value))}
-<<<<<<< HEAD
               className="range range-sm range-info w-full"
-=======
-              className="range range-sm"
-              style={{
-                background: `linear-gradient(to right, oklch(var(--er)) 0%, oklch(var(--su)) 100%)`,
-                WebkitAppearance: 'none',
-                borderRadius: 'var(--rounded-box, 1rem)'
-              }}
->>>>>>> origin/main
               disabled={!settings.semanticRelevanceEnabled}
             />
             <div className="w-full flex justify-between text-xs px-2 mt-1 text-base-content/50">
@@ -365,25 +394,16 @@ const SettingsMessaging: React.FC = () => {
               <span>50x</span>
             </div>
             <p className="text-xs text-base-content/60 mt-2">
-              Multiplier to apply when a message is semantically relevant and the bot has posted recently.
-              {settings.semanticRelevanceBonus <= 10 && " (Gentle boost for related topics)"}
-              {settings.semanticRelevanceBonus > 10 && settings.semanticRelevanceBonus <= 30 && " (Moderate boost for solid topic matches)"}
-              {settings.semanticRelevanceBonus > 30 && " (Aggressive boost for near exact matches)"}
+              Multiplier to apply when a message is semantically relevant.
             </p>
           </div>
-<<<<<<< HEAD
 
           {/* Relevance Impact Calculator */}
-          <div className="divider my-3"></div>
           <RelevanceImpactCalculator
             baseChance={settings.baseChance}
             relevanceBonus={settings.semanticRelevanceBonus}
             isEnabled={settings.semanticRelevanceEnabled}
           />
-=======
->>>>>>> origin/main
->>>>>>> origin/main
->>>>>>> origin/main
         </div>
 
         {/* Probability */}
@@ -410,13 +430,7 @@ const SettingsMessaging: React.FC = () => {
               step="1"
               value={settings.baseChance}
               onChange={(e) => handleChange('baseChance', parseInt(e.target.value))}
-              className="range"
-              style={{
-                background: `linear-gradient(to right, oklch(var(--er)) 0%, oklch(var(--su)) 100%)`,
-                WebkitAppearance: 'none',
-                height: '1.5rem',
-                borderRadius: 'var(--rounded-box, 1rem)'
-              }}
+              className="range range-accent range-sm"
               disabled={settings.onlyWhenSpokenTo}
             />
             <div className="w-full flex justify-between text-xs px-2 mt-1 text-base-content/50">
@@ -427,28 +441,8 @@ const SettingsMessaging: React.FC = () => {
               <span>100%</span>
             </div>
             <p className="text-xs text-base-content/60 mt-2">
-              Chance to reply to unsolicited messages that look like opportunities
+              Chance to reply to unsolicited messages.
             </p>
-          </div>
-
-          <div className="mt-6 border-t border-base-200/50 pt-4">
-            <h6 className="text-sm font-semibold mb-2">Live Test Mechanism</h6>
-            <div className="bg-base-300/50 p-3 rounded-box space-y-3 text-sm">
-              <p className="text-base-content/70">
-                Test Current Tuning: Assuming a message matches the semantic topic, the combined chance to reply is shown below.
-              </p>
-              <textarea
-                className="textarea textarea-bordered w-full text-xs"
-                placeholder="Type a sample message..."
-                rows={2}
-              ></textarea>
-              <div className="flex justify-between items-center font-mono bg-base-100 p-2 rounded">
-                <span>{settings.baseChance}% × {settings.semanticRelevanceBonus}x</span>
-                <span className="font-bold text-lg text-primary">
-                  {Math.min(100, settings.baseChance * settings.semanticRelevanceBonus)}%
-                </span>
-              </div>
-            </div>
           </div>
         </div>
       </div>
@@ -509,6 +503,16 @@ const SettingsMessaging: React.FC = () => {
                   <td>Add User Hint</td>
                   <td>MESSAGE_ADD_USER_HINT</td>
                   <td>{settings.addUserHint ? '✅ true' : '➖ false'}</td>
+                </tr>
+                <tr>
+                  <td>Semantic Relevance</td>
+                  <td>MESSAGE_SEMANTIC_RELEVANCE_ENABLED</td>
+                  <td>{settings.semanticRelevanceEnabled ? '✅ true' : '➖ false'}</td>
+                </tr>
+                <tr>
+                  <td>Semantic Relevance Bonus</td>
+                  <td>MESSAGE_SEMANTIC_RELEVANCE_BONUS</td>
+                  <td>{settings.semanticRelevanceBonus}x</td>
                 </tr>
               </tbody>
             </table>

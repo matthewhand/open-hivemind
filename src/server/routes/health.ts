@@ -614,23 +614,11 @@ router.get('/errors/patterns', (req, res) => {
           const totalCount = Object.values(errorStats).reduce(
             (sum: number, val: any) => sum + (val as number),
             0
-          );
+          ) as number;
           return {
             type,
             count: count as number,
-<<<<<<< HEAD
-            percentage: Number(totalCount) > 0 ? (Number(count) / Number(totalCount)) * 100 : 0,
-=======
-<<<<<<< HEAD
-            percentage: ((totalCount as unknown as number) > 0) ? (((count as number) / (totalCount as unknown as number))) * 100 : 0,
-=======
-<<<<<<< HEAD
-            percentage: ((count as number) / (totalCount as number)) * 100,
-=======
-            percentage: ((totalCount as unknown as number) > 0) ? (((count as number) / (totalCount as unknown as number))) * 100 : 0,
->>>>>>> origin/main
->>>>>>> origin/main
->>>>>>> origin/main
+            percentage: totalCount > 0 ? (Number(count) / Number(totalCount)) * 100 : 0,
           };
         }),
       spikes: detectErrorSpikes(errorStats),
