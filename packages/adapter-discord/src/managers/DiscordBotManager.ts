@@ -49,24 +49,20 @@ export class DiscordBotManager {
 
     // Also check for legacy DISCORD_BOT_TOKEN environment variable
     const legacyToken = process.env.DISCORD_BOT_TOKEN;
-    if (legacyToken !== undefined && legacyToken !== null) {
+    if (discordBots.length === 0 && legacyToken) {
       log(
-        'Found DISCORD_BOT_TOKEN env var, using as primary provider config (splitting by comma if multiple)'
+        'Found DISCORD_BOT_TOKEN env var, using as single provider (splitting by comma if multiple)'
       );
+      const tokens = legacyToken
+        .split(',')
+        .filter((t) => t !== null && t !== undefined)
+        .map((t) => t.trim());
 
-      const parts = legacyToken.split(',');
-      const validTokens: string[] = [];
-
-      parts.forEach((t, i) => {
-        const trimmed = t.trim();
-        if (trimmed === '') {
-          throw new ConfigError(`Empty token at position ${i + 1}`, 'DISCORD_EMPTY_TOKEN_ENV');
+      tokens.forEach((token, index) => {
+        if (token === '') {
+          throw new ConfigError(`Empty token at position ${index + 1}`, 'DISCORD_EMPTY_TOKEN_ENV');
         }
-        validTokens.push(trimmed);
-      });
-
-      validTokens.forEach((token, index) => {
-        const name = validTokens.length > 1 ? `Discord Bot ${index + 1}` : 'Discord Bot';
+        const name = tokens.length > 1 ? `Discord Bot ${index + 1}` : 'Discord Bot';
         this.addBotToPool(token, name, {
           name,
           messageProvider: 'discord',
@@ -78,7 +74,7 @@ export class DiscordBotManager {
 
     if (discordBots.length === 0) {
       log('No Discord providers configured.');
-      throw new ConfigError('No Discord bot tokens provided in configuration', 'DISCORD_NO_TOKENS');
+      throw new ConfigError('No Discord bot tokens provided in configuration', 'DISCORD_NO_TOKENS_CONFIGURED');
     }
 
     // Load bots from configurations
@@ -89,12 +85,20 @@ export class DiscordBotManager {
         return;
       }
 
-      const token = botConfig.discordBotToken || botConfig.discord?.token;
-      if (!token || token.trim() === '') {
+      const token = botConfig.discordBotToken !== undefined
+        ? botConfig.discordBotToken
+        : botConfig.discord?.token;
+
+      if (token === undefined || token === null) {
         throw new ConfigError(`Empty token at position ${index + 1} in config file`, 'DISCORD_EMPTY_TOKEN_CONFIG');
       }
 
-      this.addBotToPool(token, botConfig.name, botConfig);
+      const trimmedToken = String(token).trim();
+      if (trimmedToken === '') {
+        throw new ConfigError(`Empty token at position ${index + 1} in config file`, 'DISCORD_EMPTY_TOKEN_CONFIG');
+      }
+
+      this.addBotToPool(trimmedToken, botConfig.name, botConfig);
     });
   }
 
