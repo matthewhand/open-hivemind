@@ -2,6 +2,7 @@ import Debug from 'debug';
 import { Router } from 'express';
 import { DatabaseManager } from '../../database/DatabaseManager';
 import { AnomalyDetectionService } from '../../services/AnomalyDetectionService';
+import type { AuthMiddlewareRequest } from '../../auth/types';
 
 const debug = Debug('app:webui:anomaly');
 const router = Router();
