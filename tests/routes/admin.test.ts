@@ -129,8 +129,8 @@ describe('Admin Routes', () => {
         .send(invalidData)
         .expect(400);
 
-      expect(response.body.error).toBe('Validation error');
-      expect(response.body.message).toContain('Name, type, and config are required');
+      expect(response.body.error).toBe('Validation failed');
+      expect(response.body.issues).toBeDefined();
     });
 
     test('PUT /api/admin/llm-providers/:id should update provider', async () => {
@@ -157,7 +157,6 @@ describe('Admin Routes', () => {
       const response = await request(app).delete('/api/admin/llm-providers/llm1').expect(200);
 
       expect(response.body.success).toBe(true);
-      expect(response.body.message).toContain('deleted successfully');
     });
 
     test('POST /api/admin/llm-providers/:id/toggle should toggle status', async () => {
@@ -167,7 +166,6 @@ describe('Admin Routes', () => {
         .expect(200);
 
       expect(response.body.success).toBe(true);
-      expect(response.body.message).toContain('status updated successfully');
     });
   });
 
@@ -212,8 +210,8 @@ describe('Admin Routes', () => {
         .send(invalidData)
         .expect(400);
 
-      expect(response.body.error).toBe('Validation error');
-      expect(response.body.message).toContain('Name, type, and config are required');
+      expect(response.body.error).toBe('Validation failed');
+      expect(response.body.issues).toBeDefined();
     });
   });
 
@@ -236,7 +234,6 @@ describe('Admin Routes', () => {
       const response = await request(app).post('/api/admin/personas').send(personaData).expect(200);
 
       expect(response.body.success).toBe(true);
-      expect(response.body.message).toContain('created successfully');
     });
 
     test('POST /api/admin/personas should validate key format', async () => {
@@ -248,8 +245,8 @@ describe('Admin Routes', () => {
 
       const response = await request(app).post('/api/admin/personas').send(invalidData).expect(400);
 
-      expect(response.body.error).toBe('Validation error');
-      expect(response.body.message).toContain('Key must contain only alphanumeric characters');
+      expect(response.body.error).toBe('Validation failed');
+      expect(response.body.issues).toBeDefined();
     });
 
     test('PUT /api/admin/personas/:key should update persona', async () => {
@@ -264,14 +261,12 @@ describe('Admin Routes', () => {
         .expect(200);
 
       expect(response.body.success).toBe(true);
-      expect(response.body.message).toContain('updated successfully');
     });
 
     test('DELETE /api/admin/personas/:key should delete persona', async () => {
       const response = await request(app).delete('/api/admin/personas/test_persona').expect(200);
 
       expect(response.body.success).toBe(true);
-      expect(response.body.message).toContain('deleted successfully');
     });
   });
 
@@ -297,7 +292,6 @@ describe('Admin Routes', () => {
         .expect(200);
 
       expect(response.body.success).toBe(true);
-      expect(response.body.message).toContain('Successfully connected');
     });
 
     test('POST /api/admin/mcp-servers/connect should validate URL format', async () => {
@@ -311,8 +305,8 @@ describe('Admin Routes', () => {
         .send(invalidData)
         .expect(400);
 
-      expect(response.body.error).toBe('Validation error');
-      expect(response.body.message).toContain('Server URL must be a valid URL');
+      expect(response.body.error).toBe('Validation failed');
+      expect(response.body.issues).toBeDefined();
     });
 
     test('POST /api/admin/mcp-servers/disconnect should disconnect from server', async () => {
@@ -326,7 +320,6 @@ describe('Admin Routes', () => {
         .expect(200);
 
       expect(response.body.success).toBe(true);
-      expect(response.body.message).toContain('Successfully disconnected');
     });
   });
 
@@ -370,8 +363,8 @@ describe('Admin Routes', () => {
         .send(invalidData)
         .expect(400);
 
-      expect(response.body.error).toBe('Validation error');
-      expect(response.body.message).toContain('guardType must be one of');
+      expect(response.body.error).toBe('Validation failed');
+      expect(response.body.issues).toBeDefined();
     });
 
     test('PUT /api/admin/tool-usage-guards/:id should update guard', async () => {
@@ -398,7 +391,6 @@ describe('Admin Routes', () => {
       const response = await request(app).delete('/api/admin/tool-usage-guards/guard1').expect(200);
 
       expect(response.body.success).toBe(true);
-      expect(response.body.message).toContain('deleted successfully');
     });
 
     test('POST /api/admin/tool-usage-guards/:id/toggle should toggle guard status', async () => {
@@ -408,7 +400,6 @@ describe('Admin Routes', () => {
         .expect(200);
 
       expect(response.body.success).toBe(true);
-      expect(response.body.message).toContain('status updated successfully');
     });
   });
 

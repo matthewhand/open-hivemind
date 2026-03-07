@@ -20,8 +20,26 @@ const router = Router();
 const authManager = AuthManager.getInstance();
 
 /**
- * POST /webui/api/auth/login
- * User login endpoint
+ * @openapi
+ * /webui/api/auth/login:
+ *   post:
+ *     summary: User login
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               username: { type: string }
+ *               password: { type: string }
+ *             required: [username, password]
+ *     responses:
+ *       200:
+ *         description: Login successful
+ *       401:
+ *         description: Authentication failed
  */
 router.post(
   '/login',
@@ -51,8 +69,30 @@ router.post(
 );
 
 /**
- * POST /webui/api/auth/register
- * User registration endpoint (admin only)
+ * @openapi
+ * /webui/api/auth/register:
+ *   post:
+ *     summary: User registration (admin only)
+ *     tags: [Auth]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               username: { type: string }
+ *               email: { type: string }
+ *               password: { type: string }
+ *               role: { type: string, enum: [user, admin] }
+ *             required: [username, email, password]
+ *     responses:
+ *       201:
+ *         description: User registered successfully
+ *       400:
+ *         description: Registration failed
  */
 router.post(
   '/register',
@@ -84,8 +124,25 @@ router.post(
 );
 
 /**
- * POST /webui/api/auth/refresh
- * Refresh access token
+ * @openapi
+ * /webui/api/auth/refresh:
+ *   post:
+ *     summary: Refresh access token
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               refreshToken: { type: string }
+ *             required: [refreshToken]
+ *     responses:
+ *       200:
+ *         description: Token refreshed successfully
+ *       401:
+ *         description: Token refresh failed
  */
 router.post(
   '/refresh',
@@ -114,8 +171,26 @@ router.post(
 );
 
 /**
- * POST /webui/api/auth/logout
- * User logout endpoint
+ * @openapi
+ * /webui/api/auth/logout:
+ *   post:
+ *     summary: User logout
+ *     tags: [Auth]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: false
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               refreshToken: { type: string }
+ *     responses:
+ *       200:
+ *         description: Logout successful
+ *       500:
+ *         description: Logout failed
  */
 router.post(
   '/logout',
@@ -145,8 +220,18 @@ router.post(
 );
 
 /**
- * GET /webui/api/auth/me
- * Get current user profile
+ * @openapi
+ * /webui/api/auth/me:
+ *   get:
+ *     summary: Get current user profile
+ *     tags: [Auth]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Current user profile
+ *       401:
+ *         description: Unauthorized
  */
 router.get('/me', authenticate, (req: Request, res: Response) => {
   const authReq = req as AuthMiddlewareRequest;
