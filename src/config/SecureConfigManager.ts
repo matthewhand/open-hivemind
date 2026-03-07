@@ -2,7 +2,7 @@ import * as crypto from 'crypto';
 import * as fs from 'fs';
 import * as path from 'path';
 import Debug from 'debug';
-import { HivemindError, ErrorUtils } from '@src/types/errors';
+import { ErrorUtils } from '@src/types/errors';
 
 const debug = Debug('app:SecureConfigManager');
 

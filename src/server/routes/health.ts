@@ -541,12 +541,15 @@ router.get('/errors/patterns', (req, res) => {
     timestamp: new Date().toISOString(),
     patterns: {
       errorTypes: Object.entries(errorStats)
-        .sort(([, a]: [string, any], [, b]: [string, any]) => ((b as number) - (a as number)))
+        .sort(([, a]: [string, any], [, b]: [string, any]) => (b as number) - (a as number))
         .map(([type, count]) => {
           return {
             type,
             count: count as number,
-            percentage: ((totalCount as unknown as number) > 0) ? (((count as number) / (totalCount as unknown as number))) * 100 : 0,
+            percentage:
+              (totalCount as unknown as number) > 0
+                ? ((count as number) / (totalCount as unknown as number)) * 100
+                : 0,
           };
         }),
       spikes: detectErrorSpikes(errorStats),
