@@ -256,7 +256,7 @@ export class OpenAiService {
     try {
       const models = await this.retryWithBackoff(async () => {
         const response = await this.openai.models.list();
-        return { object: 'list', created: 0, data: response.data as any[] };
+        return { object: 'list' as const, created: 0, data: response.data as any[] };
       });
       debug('[DEBUG] Models retrieved:', models);
       return models;
