@@ -185,7 +185,7 @@ const UnifiedDashboard: React.FC = () => {
 
       // If no bots are configured, default to getting started
       if (!configData.bots || configData.bots.length === 0) {
-        setActiveTab('getting-started');
+        setActiveTab(prev => prev === 'status' ? 'getting-started' : prev);
       }
 
       setError(null);
