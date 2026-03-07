@@ -146,15 +146,12 @@ export async function readFile(filePath: string): Promise<string> {
   }
 
   // Use async file operations for consistency
-  const stat = util.promisify(fs.stat);
-  const readFileAsync = util.promisify(fs.readFile);
-
-  const stats = await stat(filePath);
+  const stats = await fs.promises.stat(filePath);
   if (stats.isDirectory()) {
     throw new Error('Path is a directory, not a file');
   }
 
-  const content = await readFileAsync(filePath, 'utf8');
+  const content = await fs.promises.readFile(filePath, 'utf8');
   debug('File content: ' + content);
   return content;
 }
