@@ -19,8 +19,8 @@ import apiService from '../services/apiService';
 import type { BotConfig, ProviderModalState } from '../types/bot';
 import { LLMProviderType, MessageProviderType } from '../types/bot';
 import BotCard from '../components/BotManagement/BotCard';
-import CreateBotWizard from '../components/BotManagement/CreateBotWizard';
-import BotSettingsModal from '../components/BotSettingsModal';
+import { CreateBotWizard } from '../components/BotManagement/CreateBotWizard';
+import { BotSettingsModal } from '../components/BotSettingsModal';
 import { useLocation } from 'react-router-dom';
 
 const BotsPage: React.FC = () => {
