@@ -4,7 +4,7 @@ import Debug from 'debug';
 import { Router } from 'express';
 import type { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import type { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';
-import { ErrorUtils } from '@src/types/errors';
+import { ErrorUtils, type AppError } from '@src/types/errors';
 import MCPProviderManager from '../../config/MCPProviderManager';
 import type { MCPProviderConfig } from '../../types/mcp';
 
