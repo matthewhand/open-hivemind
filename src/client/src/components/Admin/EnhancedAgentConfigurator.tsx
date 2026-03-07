@@ -333,18 +333,24 @@ const EnhancedAgentConfigurator: React.FC = () => {
                     </label>
                   </div>
                   <div className="flex gap-1">
-                    <button
-                      className="btn btn-sm btn-circle btn-ghost"
-                      onClick={() => handleEditAgent(agent)}
-                    >
-                      <Cog6ToothIcon className="w-4 h-4" />
-                    </button>
-                    <button
-                      className="btn btn-sm btn-circle btn-error btn-ghost"
-                      onClick={() => handleDeleteAgent(agent.id)}
-                    >
-                      <TrashIcon className="w-4 h-4" />
-                    </button>
+                    <div className="tooltip" data-tip="Edit Agent">
+                      <button
+                        aria-label={`Edit agent ${agent.name}`}
+                        className="btn btn-sm btn-circle btn-ghost focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none"
+                        onClick={() => handleEditAgent(agent)}
+                      >
+                        <Cog6ToothIcon className="w-4 h-4" />
+                      </button>
+                    </div>
+                    <div className="tooltip" data-tip="Delete Agent">
+                      <button
+                        aria-label={`Delete agent ${agent.name}`}
+                        className="btn btn-sm btn-circle btn-error btn-ghost focus-visible:ring-2 focus-visible:ring-error focus-visible:outline-none"
+                        onClick={() => handleDeleteAgent(agent.id)}
+                      >
+                        <TrashIcon className="w-4 h-4" />
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>

@@ -60,9 +60,10 @@ describe('SearchFilterBar', () => {
       />
     );
     const clearButton = screen.getByLabelText('Clear search');
-    expect(clearButton).toHaveClass('pointer-events-auto');
-    expect(clearButton).toHaveClass('relative');
-    expect(clearButton).toHaveClass('z-10');
+    const tooltipWrapper = clearButton.closest('.tooltip');
+    expect(tooltipWrapper).toHaveClass('pointer-events-auto');
+    expect(tooltipWrapper).toHaveClass('relative');
+    expect(tooltipWrapper).toHaveClass('z-10');
   });
 
   it('input should have pr-10 class for padding', () => {
