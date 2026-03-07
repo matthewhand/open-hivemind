@@ -34,10 +34,11 @@ router.get('/', async (req, res) => {
 
     // Get tenantId from request user if available (assuming req.user is populated by authenticateToken)
     // The authenticateToken middleware usually populates req.user
-    const tenantId = (req as AuthMiddlewareRequest).user?.tenantId;
+    const user = (req as unknown as { user?: { tenantId?: string } }).user;
+    const tenantId = user?.tenantId;
 
     const anomalies = await dbManager.getActiveAnomalies(tenantId);
-    res.json(anomalies);
+    res.json(anomalies || []);
   } catch (error) {
     debug('Error fetching active anomalies:', error);
     // Return 503 for connection-related errors, 500 for other errors
@@ -58,10 +59,11 @@ router.get('/history', async (req, res) => {
       return;
     }
 
-    const tenantId = (req as AuthMiddlewareRequest).user?.tenantId;
+    const user = (req as unknown as { user?: { tenantId?: string } }).user;
+    const tenantId = user?.tenantId;
 
     const anomalies = await dbManager.getAnomalies(tenantId);
-    res.json(anomalies);
+    res.json(anomalies || []);
   } catch (error) {
     debug('Error fetching anomaly history:', error);
     // Return 503 for connection-related errors, 500 for other errors
