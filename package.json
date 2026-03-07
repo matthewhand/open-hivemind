@@ -17,7 +17,7 @@
     "format:check": "node ./node_modules/prettier/bin/prettier.cjs --check \"src/**/*.ts\" \"src/**/*.tsx\" \"tests/**/*.ts\" \"packages/**/*.ts\"",
     "check-types": "tsc --noEmit || true",
     "version": "tsc -v",
-    "build": "powershell -File ./scripts/build-all.ps1",
+    "build": "bash ./scripts/build-all.sh",
     "build:backend": "bash ./scripts/build-backend.sh",
     "build:frontend": "bash ./scripts/build-frontend.sh",
     "build:netlify": "bash ./scripts/build-netlify.sh",

@@ -1,4 +1,4 @@
-import axios, { AxiosInstance } from 'axios';
+import axios from 'axios';
 import Debug from 'debug';
 import type { IMessage } from '@src/message/interfaces/IMessage';
 import type { ILlmProvider } from '@llm/interfaces/ILlmProvider';
@@ -22,9 +22,9 @@ export class OpenWebUIProvider implements ILlmProvider {
     // Or we expect the user to configure API keys per profile.
     let apiKey = this.config.apiKey || 'ollama';
     try {
-        apiKey = this.config.apiKey || openWebUIConfig.get('apiKey' as any) || 'ollama';
+      apiKey = this.config.apiKey || openWebUIConfig.get('apiKey' as any) || 'ollama';
     } catch {
-        // Ignore if apiKey is not in openWebUIConfig schema
+      // Ignore if apiKey is not in openWebUIConfig schema
     }
 
     this.client = axios.create({
@@ -53,7 +53,10 @@ export class OpenWebUIProvider implements ILlmProvider {
     debug('Generating chat completion with OpenWebUI:', { userMessage, historyMessages });
 
     const messages = [
-      ...historyMessages.map((msg) => ({ role: (msg as any).role || 'user', content: msg.getText() })),
+      ...historyMessages.map((msg) => ({
+        role: (msg as any).role || 'user',
+        content: msg.getText(),
+      })),
       { role: 'user', content: userMessage },
     ];
 
@@ -64,11 +67,6 @@ export class OpenWebUIProvider implements ILlmProvider {
         model,
         messages,
       });
-
-      const response = await this.client.post('/chat/completions', {
-        model: metadata?.modelOverride || metadata?.model || this.model,
-        messages,
-      }, reqConfig);
 
       return response.data?.choices?.[0]?.message?.content || '';
     } catch (error) {
@@ -87,7 +85,7 @@ export class OpenWebUIProvider implements ILlmProvider {
         model,
         prompt,
         max_tokens: 100,
-      }, reqConfig);
+      });
 
       return response.data?.choices?.[0]?.text || '';
     } catch (error) {
