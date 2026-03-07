@@ -90,7 +90,7 @@ export class IntegrationLoader {
     return [
       'discord',
       'slack',
-      'webhook',
+      'telegram',
       'openai',
       'flowise',
       'mattermost',

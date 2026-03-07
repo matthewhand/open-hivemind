@@ -122,6 +122,8 @@ export const messageConfigData: ConfigTestData = {
   },
 };
 
+<<<<<<< HEAD
+=======
 // Telegram Config Test Data
 export const telegramConfigData: ConfigTestData = {
   defaults: {
@@ -194,6 +196,7 @@ export const webhookConfigData: ConfigTestData = {
   },
 };
 
+>>>>>>> origin/main
 // Slack Config Test Data
 export const slackConfigData: ConfigTestData = {
   defaults: {
@@ -259,6 +262,18 @@ export const commandParserTestData = {
   },
 };
 
+<<<<<<< HEAD
+/**
+ * Factory function to create test data for different scenarios
+ */
+export type CommandParserTestData = typeof commandParserTestData;
+
+export function createTestData(type: 'discord'): ConfigTestData;
+export function createTestData(type: 'message'): ConfigTestData;
+export function createTestData(type: 'slack'): ConfigTestData;
+export function createTestData(type: 'command'): CommandParserTestData;
+export function createTestData(type: 'discord' | 'message' | 'slack' | 'command'): ConfigTestData | CommandParserTestData {
+=======
 import fc from 'fast-check';
 import discordConfig from '../../src/config/discordConfig';
 import messageConfig from '../../src/config/messageConfig';
@@ -314,12 +329,16 @@ export function validateConfigAgainstSchema(type: 'discord' | 'message' | 'slack
  */
 export function createTestData(type: 'discord' | 'message' | 'slack' | 'command'): any {
   let data;
+>>>>>>> origin/main
   switch (type) {
     case 'discord':
       return discordConfigData;
     case 'message':
       return messageConfigData;
     case 'slack':
+<<<<<<< HEAD
+      return slackConfigData;
+=======
       data = slackConfigData;
       break;
     case 'telegram':
@@ -331,15 +350,19 @@ export function createTestData(type: 'discord' | 'message' | 'slack' | 'command'
     case 'webhook':
       data = webhookConfigData;
       break;
+>>>>>>> origin/main
     case 'command':
       return commandParserTestData;
     default:
       throw new Error(`Unknown test data type: ${type}`);
   }
+<<<<<<< HEAD
+=======
 
   // Validate the data against the schema
   validateConfigAgainstSchema(type as 'discord' | 'message' | 'slack' | 'telegram' | 'mattermost' | 'webhook', data.expectedResults);
   return data;
+>>>>>>> origin/main
 }
 
 /**
