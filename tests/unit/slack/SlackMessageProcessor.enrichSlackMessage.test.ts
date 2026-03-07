@@ -35,14 +35,14 @@ describe('SlackMessageProcessor.enrichSlackMessage', () => {
   });
 
   it('throws if message missing channelId', async () => {
-    const msg = new SlackMessage('hi', '', {} as any);
+    const msg = new SlackMessage('hi', '', { channel: '' } as any);
     await expect(processor.enrichSlackMessage(msg)).rejects.toThrow(
       'Message and channelId required'
     );
   });
 
   it('enriches message without thread, attachments, or reactions', async () => {
-    const data: any = {};
+    const data: any = { channel: 'C1' };
     const msg = new SlackMessage('hello', 'C1', data);
     const enriched = await processor.enrichSlackMessage(msg);
     expect(enriched.data.metadata.channelInfo.channelId).toBe('C1');
@@ -71,6 +71,7 @@ describe('SlackMessageProcessor.enrichSlackMessage', () => {
     });
     webClientMock.files.list.mockResolvedValue({ ok: true, files: [] });
     const data: any = {
+      channel: 'C2',
       user: 'U1',
       thread_ts: 'TS1',
       files: [{ name: 'f', filetype: 'txt', url_private: 'u', size: 5 }],
@@ -97,7 +98,7 @@ describe('SlackMessageProcessor.enrichSlackMessage', () => {
 
   it('skips canvas content fetch when SUPPRESS_CANVAS_CONTENT=true', async () => {
     process.env.SUPPRESS_CANVAS_CONTENT = 'true';
-    const msg = new SlackMessage('hi', 'C1', {} as any);
+    const msg = new SlackMessage('hi', 'C1', { channel: 'C1' } as any);
     const enriched = await processor.enrichSlackMessage(msg);
     expect(webClientMock.files.list).not.toHaveBeenCalled();
     expect(enriched.data.channelContent.content).toBe('');
@@ -105,7 +106,7 @@ describe('SlackMessageProcessor.enrichSlackMessage', () => {
   });
 
   it('handles files.list error gracefully', async () => {
-    const msg = new SlackMessage('hi', 'C1', {} as any);
+    const msg = new SlackMessage('hi', 'C1', { channel: 'C1' } as any);
     webClientMock.files.list.mockRejectedValue(new Error('list error'));
     const enriched = await processor.enrichSlackMessage(msg);
     expect(webClientMock.files.list).toHaveBeenCalled();

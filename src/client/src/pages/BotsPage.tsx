@@ -14,13 +14,14 @@ import PageHeader from '../components/DaisyUI/PageHeader';
 import SearchFilterBar from '../components/SearchFilterBar';
 import EmptyState from '../components/DaisyUI/EmptyState';
 import { LoadingSpinner } from '../components/DaisyUI/Loading';
-import { withRetry, ErrorService } from '../services/apiService';
-import apiService from '../services/apiService';
+import { apiService } from '../services/api';
+import { withRetry } from '../utils/withRetry';
+import { ErrorService } from '../services/ErrorService';
 import type { BotConfig, ProviderModalState } from '../types/bot';
 import { LLMProviderType, MessageProviderType } from '../types/bot';
 import BotCard from '../components/BotManagement/BotCard';
-import CreateBotWizard from '../components/BotManagement/CreateBotWizard';
-import BotSettingsModal from '../components/BotSettingsModal';
+import { CreateBotWizard } from '../components/BotManagement/CreateBotWizard';
+import { BotSettingsModal } from '../components/BotSettingsModal';
 import { useLocation } from 'react-router-dom';
 
 const BotsPage: React.FC = () => {

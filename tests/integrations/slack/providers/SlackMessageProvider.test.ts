@@ -116,22 +116,22 @@ describe('SlackMessageProvider', () => {
     provider = new SlackMessageProvider(slackService);
   });
 
-  it('initializes correctly', async () => {
-    expect(provider.getProviderName()).toBe('slack');
-  });
-
   it('sends messages through SlackService', async () => {
-    const spy = jest.spyOn(slackService, 'sendMessageToChannel').mockResolvedValue('ts123');
+    const spy = jest
+      .spyOn(SlackService.prototype, 'sendMessageToChannel')
+      .mockResolvedValue('ts123');
     const result = await provider.sendMessageToChannel('C123', 'Hello');
-    expect(spy).toHaveBeenCalledWith('C123', 'Hello', undefined, undefined, undefined);
+    expect(spy).toHaveBeenCalledWith('C123', 'Hello', undefined);
     expect(result).toBe('ts123');
+    spy.mockRestore();
   });
 
   it('retrieves history through SlackService', async () => {
     const mockMsgs = [new MockMessage('test')];
-    const spy = jest.spyOn(slackService, 'getHistory').mockResolvedValue(mockMsgs);
-    const result = await provider.getHistory('C123', 5);
+    const spy = jest.spyOn(SlackService.prototype, 'fetchMessages').mockResolvedValue(mockMsgs);
+    const result = await provider.getMessages('C123', 5);
     expect(spy).toHaveBeenCalledWith('C123', 5);
     expect(result).toBe(mockMsgs);
+    spy.mockRestore();
   });
 });

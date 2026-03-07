@@ -75,9 +75,7 @@ const connectToMCPServer = async (server: MCPServer): Promise<MCPClient> => {
     // For stdio transport (local MCP servers)
     if (server.url.startsWith('stdio://')) {
       const command = server.url.replace('stdio://', '');
-      const { StdioClientTransport } = await import(
-        '@modelcontextprotocol/sdk/client/stdio.js'
-      );
+      const { StdioClientTransport } = await import('@modelcontextprotocol/sdk/client/stdio.js');
       const transport = new StdioClientTransport({
         command: command,
         args: [],

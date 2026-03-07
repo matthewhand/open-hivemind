@@ -70,7 +70,7 @@ export default class SlackMessage extends IMessage {
   }
 
   getChannelId(): string {
-    return this.channelId;
+    return this.channelId || this.data?.channel || '';
   }
 
   getAuthorId(): string {
@@ -219,10 +219,14 @@ export default class SlackMessage extends IMessage {
     // Sanitize user profile information
     if (sanitized.user_profile) {
       if (sanitized.user_profile.real_name) {
-        sanitized.user_profile.real_name = InputSanitizer.sanitizeName(sanitized.user_profile.real_name);
+        sanitized.user_profile.real_name = InputSanitizer.sanitizeName(
+          sanitized.user_profile.real_name
+        );
       }
       if (sanitized.user_profile.display_name) {
-        sanitized.user_profile.display_name = InputSanitizer.sanitizeName(sanitized.user_profile.display_name);
+        sanitized.user_profile.display_name = InputSanitizer.sanitizeName(
+          sanitized.user_profile.display_name
+        );
       }
       if (sanitized.user_profile.email) {
         sanitized.user_profile.email = InputSanitizer.sanitizeEmail(sanitized.user_profile.email);
@@ -234,7 +238,9 @@ export default class SlackMessage extends IMessage {
       sanitized.files = sanitized.files.map((file: any) => ({
         ...file,
         name: InputSanitizer.sanitizeFileName(file.name),
-        title: file.title ? InputSanitizer.sanitizeText(file.title, { maxLength: 200 }) : file.title
+        title: file.title
+          ? InputSanitizer.sanitizeText(file.title, { maxLength: 200 })
+          : file.title,
       }));
     }
 
@@ -242,7 +248,9 @@ export default class SlackMessage extends IMessage {
     if (sanitized.reactions && Array.isArray(sanitized.reactions)) {
       sanitized.reactions = sanitized.reactions.map((reaction: any) => ({
         ...reaction,
-        name: reaction.name ? InputSanitizer.sanitizeText(reaction.name, { maxLength: 50, allowMarkdown: false }) : reaction.name
+        name: reaction.name
+          ? InputSanitizer.sanitizeText(reaction.name, { maxLength: 50, allowMarkdown: false })
+          : reaction.name,
       }));
     }
 
