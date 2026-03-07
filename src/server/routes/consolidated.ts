@@ -175,7 +175,7 @@ router.get('/env-status', async (req, res) => {
       const value = process.env[varName];
       envStatus[varName] = {
         isSet: !!value,
-        redactedValue: value ? `***${value.slice(-4)}` : undefined,
+        redactedValue: value ? redactSensitiveInfo(varName, value) : undefined,
       };
     });
 
