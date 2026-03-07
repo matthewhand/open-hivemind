@@ -1,15 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect, useCallback } from 'react';
 import { Alert, Toggle, Button } from '../DaisyUI';
-<<<<<<< HEAD
-import { MessageSquare, Bot, Users, Zap } from 'lucide-react';
-=======
-<<<<<<< HEAD
-import { MessageSquare, Bot, Users, Zap, BarChart3 } from 'lucide-react';
-=======
 import { MessageSquare, Bot, Users, Zap, Info } from 'lucide-react';
->>>>>>> origin/main
->>>>>>> origin/main
 
 interface MessagingConfig {
   onlyWhenSpokenTo: boolean;
@@ -309,10 +301,6 @@ const SettingsMessaging: React.FC = () => {
               />
             </label>
           </div>
-<<<<<<< HEAD
-=======
-<<<<<<< HEAD
-=======
 
           <div className="form-control mb-3">
             <label className="label cursor-pointer py-2">
@@ -347,16 +335,12 @@ const SettingsMessaging: React.FC = () => {
               step="1"
               value={settings.semanticRelevanceBonus}
               onChange={(e) => handleChange('semanticRelevanceBonus', parseInt(e.target.value))}
-<<<<<<< HEAD
-              className="range range-sm range-info w-full"
-=======
               className="range range-sm"
               style={{
                 background: `linear-gradient(to right, oklch(var(--er)) 0%, oklch(var(--su)) 100%)`,
                 WebkitAppearance: 'none',
                 borderRadius: 'var(--rounded-box, 1rem)'
               }}
->>>>>>> origin/main
               disabled={!settings.semanticRelevanceEnabled}
             />
             <div className="w-full flex justify-between text-xs px-2 mt-1 text-base-content/50">
@@ -371,19 +355,6 @@ const SettingsMessaging: React.FC = () => {
               {settings.semanticRelevanceBonus > 30 && " (Aggressive boost for near exact matches)"}
             </p>
           </div>
-<<<<<<< HEAD
-
-          {/* Relevance Impact Calculator */}
-          <div className="divider my-3"></div>
-          <RelevanceImpactCalculator
-            baseChance={settings.baseChance}
-            relevanceBonus={settings.semanticRelevanceBonus}
-            isEnabled={settings.semanticRelevanceEnabled}
-          />
-=======
->>>>>>> origin/main
->>>>>>> origin/main
->>>>>>> origin/main
         </div>
 
         {/* Probability */}

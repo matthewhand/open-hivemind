@@ -186,10 +186,7 @@ export const ProviderConfigForm: React.FC<ProviderConfigFormProps> = ({
   onConfigChange,
   onTestConnection,
   onAvatarLoad,
-<<<<<<< HEAD
-=======
   externalErrors,
->>>>>>> origin/main
 }) => {
   const [config, setConfig] = useState<Record<string, any>>(() => ({
     ...schema.defaultConfig,
@@ -341,11 +338,7 @@ export const ProviderConfigForm: React.FC<ProviderConfigFormProps> = ({
 
   const renderField = (field: ProviderConfigField) => {
     const value = config[field.name] ?? field.defaultValue ?? '';
-<<<<<<< HEAD
-    const error = errors[field.name];
-=======
     const error = errors[field.name] || (externalErrors && externalErrors[field.name]);
->>>>>>> origin/main
 
     const baseInputClasses = 'w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2';
     const errorClasses = error ? 'border-error focus:ring-error' : 'border-base-300 focus:ring-primary';

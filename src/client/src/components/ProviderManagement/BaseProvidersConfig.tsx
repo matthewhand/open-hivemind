@@ -13,10 +13,6 @@ import {
   PlusIcon,
   PencilIcon,
   TrashIcon,
-<<<<<<< HEAD
-} from '@heroicons/react/24/outline';
-import ProviderConfig from '../ProviderConfig';
-=======
   ArrowTopRightOnSquareIcon,
   Bars3Icon,
 } from '@heroicons/react/24/outline';
@@ -38,7 +34,6 @@ import {
   useSortable,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
->>>>>>> origin/main
 
 export interface ProviderItem {
   id: string;
@@ -48,11 +43,6 @@ export interface ProviderItem {
   isActive: boolean;
 }
 
-<<<<<<< HEAD
-export interface BaseProvidersConfigProps {
-  apiEndpoint: string;
-  providerTypeOptions: { value: string; label: string }[];
-=======
 export interface ProviderTypeOption {
   value: string;
   label: string;
@@ -62,7 +52,6 @@ export interface ProviderTypeOption {
 export interface BaseProvidersConfigProps {
   apiEndpoint: string;
   providerTypeOptions: ProviderTypeOption[];
->>>>>>> origin/main
   title: string;
   emptyStateIcon: React.ReactNode;
   emptyStateTitle: string;
@@ -70,8 +59,6 @@ export interface BaseProvidersConfigProps {
   refreshIcon: React.ReactNode;
 }
 
-<<<<<<< HEAD
-=======
 interface SortableProviderCardProps {
   provider: ProviderItem;
   onEdit: (provider: ProviderItem) => void;
@@ -168,7 +155,6 @@ const SortableProviderCard: React.FC<SortableProviderCardProps> = ({
 };
 
 
->>>>>>> origin/main
 const BaseProvidersConfig: React.FC<BaseProvidersConfigProps> = ({
   apiEndpoint,
   providerTypeOptions,
@@ -190,8 +176,6 @@ const BaseProvidersConfig: React.FC<BaseProvidersConfigProps> = ({
     type: 'success',
   });
 
-<<<<<<< HEAD
-=======
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
@@ -203,7 +187,6 @@ const BaseProvidersConfig: React.FC<BaseProvidersConfigProps> = ({
     })
   );
 
->>>>>>> origin/main
   const fetchProviders = async () => {
     try {
       setLoading(true);
@@ -223,9 +206,6 @@ const BaseProvidersConfig: React.FC<BaseProvidersConfigProps> = ({
 
   useEffect(() => {
     fetchProviders();
-<<<<<<< HEAD
-  }, [apiEndpoint]); // Added dependency to re-fetch if endpoint changes
-=======
   }, [apiEndpoint]);
 
   const handleDragEnd = async (event: DragEndEvent) => {
@@ -250,7 +230,6 @@ const BaseProvidersConfig: React.FC<BaseProvidersConfigProps> = ({
       });
     }
   };
->>>>>>> origin/main
 
   const handleOpenDialog = (provider?: ProviderItem) => {
     setEditingProvider(provider || null);
@@ -355,14 +334,11 @@ const BaseProvidersConfig: React.FC<BaseProvidersConfigProps> = ({
     }
   };
 
-<<<<<<< HEAD
-=======
   const activeProviderDocs = React.useMemo(() => {
     const currentType = formData.type || editingProvider?.type;
     return providerTypeOptions.find(o => o.value === currentType)?.docsUrl;
   }, [formData.type, editingProvider?.type, providerTypeOptions]);
 
->>>>>>> origin/main
   if (loading) {
     return <div className="flex justify-center items-center min-h-[200px]"><span className="loading loading-spinner loading-lg"></span></div>;
   }
@@ -411,59 +387,6 @@ const BaseProvidersConfig: React.FC<BaseProvidersConfigProps> = ({
           </Button>
         </div>
       ) : (
-<<<<<<< HEAD
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {providers.map((provider) => (
-            <Card key={provider.id} className="bg-base-100 shadow-xl">
-              <div className="card-body">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <h3 className="card-title">{provider.name}</h3>
-                    <div className="mt-2">
-                      <Badge variant="primary">{provider.type}</Badge>
-                    </div>
-                  </div>
-                  <div className="flex gap-2">
-                    <Badge variant={provider.isActive ? 'success' : 'neutral'}>
-                      {provider.isActive ? 'Active' : 'Inactive'}
-                    </Badge>
-                    <Button
-                      size="sm"
-                      shape="circle"
-                      color="ghost"
-                      onClick={() => handleOpenDialog(provider)}
-                    >
-                      <PencilIcon className="w-4 h-4" />
-                    </Button>
-                    <Button
-                      size="sm"
-                      shape="circle"
-                      color="error"
-                      variant="secondary" className="btn-outline"
-                      onClick={() => handleDeleteProvider(provider.id)}
-                    >
-                      <TrashIcon className="w-4 h-4" />
-                    </Button>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-4 mt-4">
-                  <span className="text-sm text-base-content/70">
-                    Status: {provider.isActive ? 'Active' : 'Inactive'}
-                  </span>
-                  <Button
-                    size="sm"
-                    variant="secondary" className="btn-outline"
-                    onClick={() => handleToggleActive(provider.id, !provider.isActive)}
-                  >
-                    {provider.isActive ? 'Deactivate' : 'Activate'}
-                  </Button>
-                </div>
-              </div>
-            </Card>
-          ))}
-        </div>
-=======
         <DndContext
           sensors={sensors}
           collisionDetection={closestCenter}
@@ -486,14 +409,10 @@ const BaseProvidersConfig: React.FC<BaseProvidersConfigProps> = ({
             </div>
           </SortableContext>
         </DndContext>
->>>>>>> origin/main
       )}
 
       <ModalForm
         open={openDialog}
-<<<<<<< HEAD
-        title={editingProvider ? 'Edit Provider' : 'Add New Provider'}
-=======
         title={
           <div className="flex justify-between items-center w-full pr-8">
             <span>{editingProvider ? 'Edit Provider' : 'Add New Provider'}</span>
@@ -509,7 +428,6 @@ const BaseProvidersConfig: React.FC<BaseProvidersConfigProps> = ({
             )}
           </div>
         }
->>>>>>> origin/main
         onClose={handleCloseDialog}
         onSubmit={handleSaveProvider}
         submitLabel={editingProvider ? 'Update' : 'Create'}
@@ -542,8 +460,6 @@ const BaseProvidersConfig: React.FC<BaseProvidersConfigProps> = ({
               />
             </div>
           )}
-<<<<<<< HEAD
-=======
 
           {editingProvider && editingProvider.isActive && (
             <div className="mt-6 pt-6 border-t border-base-200">
@@ -563,7 +479,6 @@ const BaseProvidersConfig: React.FC<BaseProvidersConfigProps> = ({
                </div>
             </div>
           )}
->>>>>>> origin/main
         </div>
       </ModalForm>
 

@@ -2,53 +2,23 @@ import fs from 'fs';
 import path from 'path';
 import Debug from 'debug';
 import { Router } from 'express';
-import { testMattermostConnection } from '@hivemind/adapter-mattermost';
-import { testSlackConnection } from '@hivemind/adapter-slack';
+import type { AuthMiddlewareRequest } from '../../auth/types';
 import { redactSensitiveInfo } from '../../common/redactSensitiveInfo';
 import { BotConfigurationManager } from '../../config/BotConfigurationManager';
-import {
-  getGuardrailProfiles,
-  saveGuardrailProfiles,
-  type GuardrailProfile,
-} from '../../config/guardrailProfiles';
 import llmConfig from '../../config/llmConfig';
 import { getLlmDefaultStatus } from '../../config/llmDefaultStatus';
-import { getLlmProfiles, saveLlmProfiles, type ProviderProfile } from '../../config/llmProfiles';
-import llmTaskConfig from '../../config/llmTaskConfig';
-import {
-  createMcpServerProfile,
-  deleteMcpServerProfile,
-  getMcpServerProfiles,
-  updateMcpServerProfile,
-} from '../../config/mcpServerProfiles';
+import { getLlmProfiles, saveLlmProfiles } from '../../config/llmProfiles';
 import messageConfig from '../../config/messageConfig';
-import { getMessageDefaultStatus } from '../../config/messageDefaultStatus';
-import {
-  getMessageProfiles,
-  saveMessageProfiles,
-  type MessageProfile,
-} from '../../config/messageProfiles';
-import {
-  createResponseProfile,
-  deleteResponseProfile,
-  getResponseProfiles,
-  updateResponseProfile,
-  type ResponseProfile,
-} from '../../config/responseProfileManager';
+import { getMessageProfiles, saveMessageProfiles } from '../../config/messageProfiles';
 import { UserConfigStore } from '../../config/UserConfigStore';
 import webhookConfig from '../../config/webhookConfig';
 import { BotManager } from '../../managers/BotManager';
 import { providerRegistry } from '../../registries/ProviderRegistry';
-import DemoModeService from '../../services/DemoModeService';
-import { ErrorUtils, HivemindError, type AppError } from "../../types/errors";
+import { ErrorUtils, type AppError } from '../../types/errors';
 import { type IProvider } from '../../types/IProvider';
-import {
-  ConfigBackupSchema,
-  ConfigRestoreSchema,
-  ConfigUpdateSchema,
-} from '../../validation/schemas/configSchema';
+import { ConfigUpdateSchema } from '../../validation/schemas/configSchema';
 import { validateRequest } from '../../validation/validateRequest';
-import { AuditedRequest, auditMiddleware, logConfigChange } from '../middleware/audit';
+import { auditMiddleware, logConfigChange } from '../middleware/audit';
 
 /**
  * Validates that a config name is safe to use in file paths.

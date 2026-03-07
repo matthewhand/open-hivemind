@@ -257,24 +257,6 @@ const UnifiedDashboard: React.FC = () => {
   );
 
   const statusBots = status?.bots ?? [];
-<<<<<<< HEAD
-  const activeBotCount = useMemo(
-    () => statusBots.filter(bot => bot.status?.toLowerCase() === 'active').length,
-    [statusBots],
-  );
-  const activeConnections = useMemo(
-    () => statusBots.filter(bot => bot.connected).length,
-    [statusBots],
-  );
-  const totalMessages = useMemo(
-    () => statusBots.reduce((sum, bot) => sum + (bot.messageCount ?? 0), 0),
-    [statusBots],
-  );
-  const totalErrors = useMemo(
-    () => statusBots.reduce((sum, bot) => sum + (bot.errorCount ?? 0), 0),
-    [statusBots],
-  );
-=======
   const { activeBotCount, activeConnections, totalMessages, totalErrors } = useMemo(() => {
     let _activeCount = 0;
     let _connections = 0;
@@ -295,7 +277,6 @@ const UnifiedDashboard: React.FC = () => {
       totalErrors: _errors,
     };
   }, [statusBots]);
->>>>>>> origin/main
   const errorRatePercent = totalMessages === 0
     ? 0
     : Number(((totalErrors / totalMessages) * 100).toFixed(2));

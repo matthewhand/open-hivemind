@@ -1,6 +1,8 @@
 import os from 'os';
 import process from 'process';
 import { Router, type NextFunction, type Request, type Response } from 'express';
+import { DatabaseManager } from '../../database/DatabaseManager';
+import { BotManager } from '../../managers/BotManager';
 import { MetricsCollector } from '../../monitoring/MetricsCollector';
 import ApiMonitorService from '../../services/ApiMonitorService';
 import { ErrorLogger } from '../../utils/errorLogger';
@@ -183,17 +185,93 @@ router.get('/alerts', (req, res) => {
 });
 
 // Readiness probe
-router.get('/ready', (req, res) => {
-  // Check if all dependencies are ready
-  // For now, we'll assume the service is ready if it's responding
-  return res.json({
-    ready: true,
-    timestamp: new Date().toISOString(),
-    checks: {
-      database: true, // Would need actual database check
-      external_apis: true, // Would need actual API checks
-      configuration: true,
-    },
+router.get('/ready', async (req, res) => {
+  const start = Date.now();
+  const checks: Record<string, any> = {};
+  let dbStatus = 'healthy';
+  let adaptersStatus = 'healthy';
+  let apiStatus = 'healthy';
+
+  // 1. Check Database
+  try {
+    const dbStart = Date.now();
+    const dbManager = DatabaseManager.getInstance();
+    const dbConnected = dbManager.isConnected();
+    const dbResponseTime = Date.now() - dbStart;
+
+    checks.database = {
+      status: dbConnected ? 'healthy' : 'unhealthy',
+      responseTimeMs: dbResponseTime,
+    };
+    dbStatus = dbConnected ? 'healthy' : 'unhealthy';
+  } catch (error: any) {
+    checks.database = { status: 'unhealthy', message: error.message };
+    dbStatus = 'unhealthy';
+  }
+
+  // 2. Check BotManager/Adapters
+  try {
+    const botManager = BotManager.getInstance();
+    const bots: any = await botManager.getAllBots();
+    const botsArray = Array.isArray(bots) ? bots : Array.from(bots.values());
+    checks.botAdapters = {
+      status: 'healthy',
+      count: botsArray.length,
+    };
+  } catch (error: any) {
+    checks.botAdapters = { status: 'unhealthy', message: error.message };
+    adaptersStatus = 'unhealthy';
+  }
+
+  // 3. External API Monitor
+  try {
+    const apiMonitor = ApiMonitorService.getInstance();
+    const statuses = apiMonitor.getAllStatuses();
+    const downApis = Object.values(statuses).filter((s) => s.status === 'offline');
+
+    checks.externalApis = {
+      status:
+        downApis.length === 0
+          ? 'healthy'
+          : downApis.length === Object.keys(statuses).length && Object.keys(statuses).length > 0
+            ? 'unhealthy'
+            : 'degraded',
+      details: {
+        down_count: downApis.length,
+        total_count: Object.keys(statuses).length,
+      },
+    };
+    apiStatus = checks.externalApis.status;
+  } catch (error: any) {
+    checks.externalApis = { status: 'unhealthy', details: { message: error.message } };
+    apiStatus = 'unhealthy';
+  }
+
+  // Determine overall status
+  let overallStatus = 'healthy';
+
+  // If database is down, service is completely unhealthy (critical)
+  if (dbStatus === 'unhealthy') {
+    overallStatus = 'unhealthy';
+  }
+  // If adapters or APIs are down but database is up, we are degraded
+  else if (
+    adaptersStatus === 'unhealthy' ||
+    apiStatus === 'unhealthy' ||
+    apiStatus === 'degraded'
+  ) {
+    overallStatus = 'degraded';
+  }
+
+  const responseTimeMs = Date.now() - start;
+  const statusCode = overallStatus === 'unhealthy' ? 503 : 200;
+
+  return res.status(statusCode).json({
+    status: overallStatus,
+    checks,
+    uptime: process.uptime(),
+    version: process.env.npm_package_version || '1.0.0',
+    response_time_ms: responseTimeMs,
   });
 });
 
@@ -609,7 +687,7 @@ router.get('/errors/patterns', (req, res) => {
     timestamp: new Date().toISOString(),
     patterns: {
       errorTypes: Object.entries(errorStats)
-        .sort(([, a]: [string, any], [, b]: [string, any]) => ((b as number) - (a as number)))
+        .sort(([, a]: [string, any], [, b]: [string, any]) => (b as number) - (a as number))
         .map(([type, count]) => {
           const totalCount = Object.values(errorStats).reduce(
             (sum: number, val: any) => sum + (val as number),
@@ -618,19 +696,7 @@ router.get('/errors/patterns', (req, res) => {
           return {
             type,
             count: count as number,
-<<<<<<< HEAD
             percentage: Number(totalCount) > 0 ? (Number(count) / Number(totalCount)) * 100 : 0,
-=======
-<<<<<<< HEAD
-            percentage: ((totalCount as unknown as number) > 0) ? (((count as number) / (totalCount as unknown as number))) * 100 : 0,
-=======
-<<<<<<< HEAD
-            percentage: ((count as number) / (totalCount as number)) * 100,
-=======
-            percentage: ((totalCount as unknown as number) > 0) ? (((count as number) / (totalCount as unknown as number))) * 100 : 0,
->>>>>>> origin/main
->>>>>>> origin/main
->>>>>>> origin/main
           };
         }),
       spikes: detectErrorSpikes(errorStats),

@@ -1,12 +1,11 @@
-import axios, { AxiosInstance } from 'axios';
+import axios, { type AxiosInstance } from 'axios';
 import Debug from 'debug';
-import type { IMessage } from '@src/message/interfaces/IMessage';
-import type { ILlmProvider } from '@llm/interfaces/ILlmProvider';
-import openWebUIConfig from './openWebUIConfig';
+import openWebUIConfig from '../../config/openWebUIConfig';
+import type { ILlmProvider } from '../../llm/interfaces/ILlmProvider';
+import type { IMessage } from '../../message/interfaces/IMessage';
 
 const debug = Debug('app:openWebUIProvider');
 
-<<<<<<< HEAD
 export interface OpenWebUIProviderConfig {
   apiUrl?: string;
   apiKey?: string;
@@ -26,17 +25,21 @@ export class OpenWebUIProvider implements ILlmProvider {
 
   constructor(config?: OpenWebUIProviderConfig) {
     this.config = config || {};
-    const rawApiUrl = this.config.apiUrl || openWebUIConfig.get('apiUrl') || 'http://localhost:3000/api/';
+    const rawApiUrl =
+      this.config.apiUrl ||
+      openWebUIConfig.get('OPEN_WEBUI_API_URL') ||
+      'http://localhost:3000/api/';
     this.resolvedApiUrl = rawApiUrl.endsWith('/') ? rawApiUrl.slice(0, -1) : rawApiUrl;
-    this.model = this.config.model || openWebUIConfig.get('model');
+    this.model = this.config.model || openWebUIConfig.get('OPEN_WEBUI_MODEL');
 
-    let headers: Record<string, string> = {
+    const headers: Record<string, string> = {
       'Content-Type': 'application/json',
+      Accept: 'application/json',
     };
 
     if (this.config.apiKey) {
       const headerName = this.config.authHeader || 'Authorization';
-      if (headerName.toLowerCase() === 'authorization' && !this.config.apiKey.toLowerCase().startsWith('bearer ')) {
+      if (headerName === 'Authorization' && !this.config.apiKey.startsWith('Bearer ')) {
         headers[headerName] = `Bearer ${this.config.apiKey}`;
       } else {
         headers[headerName] = this.config.apiKey;
@@ -48,90 +51,13 @@ export class OpenWebUIProvider implements ILlmProvider {
     this.client = axios.create({
       baseURL: this.resolvedApiUrl,
       headers,
-=======
-/**
- * Provides chat and non-chat completion functionality for OpenWebUI.
- */
-export class OpenWebUIProvider implements ILlmProvider {
-  name = 'openwebui';
-  private config: any;
-  private client: import('axios').AxiosInstance;
-
-  constructor(config?: any) {
-    this.config = config || {};
-
-    // Fallback logic for credentials since openWebUIConfig doesn't natively expose apiKey.
-    // In actual use, this logic connects to the OpenWebUI backend relying on the session API or pre-configured proxies.
-    // Or we expect the user to configure API keys per profile.
-    let apiKey = this.config.apiKey || 'ollama';
-    try {
-        apiKey = this.config.apiKey || openWebUIConfig.get('apiKey' as any) || 'ollama';
-    } catch {
-        // Ignore if apiKey is not in openWebUIConfig schema
-    }
-
-    this.client = axios.create({
-      baseURL: this.config.apiUrl || openWebUIConfig.get('apiUrl'),
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${apiKey}`, // Adjust as needed
-      },
->>>>>>> origin/main
-      timeout: 15000,
+      timeout: 30000,
     });
   }
 
-  supportsChatCompletion(): boolean {
-    return true;
-  }
-
-  supportsCompletion(): boolean {
-    return true;
-  }
-<<<<<<< HEAD
-
   private hasUserPassAuth(): boolean {
-    const username = this.config.username || openWebUIConfig.get('username');
-    const password = this.config.password || openWebUIConfig.get('password');
-    return !!(username && password && !this.config.apiKey);
+    return !!(this.config.username && this.config.password);
   }
-
-  private async getSessionKey(): Promise<string> {
-    if (this.sessionKey) {
-      return this.sessionKey;
-    }
-
-    const username = this.config.username || openWebUIConfig.get('username');
-    const password = this.config.password || openWebUIConfig.get('password');
-
-    if (!username || !password) {
-      throw new Error('Authentication required: apiKey or username/password must be provided.');
-    }
-
-    debug('Requesting new session key for:', username);
-
-    try {
-      const url = this.resolvedApiUrl + '/auth/login';
-      const response = await axios.post(
-        url,
-        { username, password },
-        { timeout: 15000 }
-      );
-      this.sessionKey = response.data.sessionKey || response.data.token;
-
-      if (!this.sessionKey) {
-        throw new Error('Failed to obtain a valid session key.');
-      }
-
-      debug('New session key obtained');
-      return this.sessionKey;
-    } catch (error) {
-      debug('Failed to obtain session key:', error);
-      throw new Error('Authentication failed');
-    }
-  }
-=======
->>>>>>> origin/main
 
   async generateChatCompletion(
     userMessage: string,
@@ -141,87 +67,143 @@ export class OpenWebUIProvider implements ILlmProvider {
     debug('Generating chat completion with OpenWebUI:', { userMessage, historyMessages });
 
     const messages = [
-      ...historyMessages.map((msg) => ({ role: (msg as any).role || 'user', content: msg.getText() })),
+      ...historyMessages.map((msg) => ({
+        role: msg.role === 'bot' ? 'assistant' : msg.role,
+        content: msg.content,
+      })),
       { role: 'user', content: userMessage },
     ];
 
-    const model = metadata?.modelOverride || this.config.model || openWebUIConfig.get('model');
-
     try {
-<<<<<<< HEAD
-      let reqConfig = {};
+      let reqConfig: any = {};
       if (this.hasUserPassAuth()) {
         const sessionKey = await this.getSessionKey();
         reqConfig = {
           headers: {
-            Authorization: `Bearer ${sessionKey}`
-          }
+            Authorization: `Bearer ${sessionKey}`,
+          },
         };
       }
-=======
-      const response = await this.client.post('/chat/completions', {
-        model,
-        messages,
-      });
->>>>>>> origin/main
 
-      const response = await this.client.post('/chat/completions', {
-        model: metadata?.modelOverride || metadata?.model || this.model,
-        messages,
-      }, reqConfig);
+      const response = await this.client.post(
+        '/chat/completions',
+        {
+          model: metadata?.modelOverride || metadata?.model || this.model,
+          messages,
+        },
+        reqConfig
+      );
 
       return response.data?.choices?.[0]?.message?.content || '';
     } catch (error) {
-      debug('Error generating chat completion:', formatError(error));
-      throw new Error(`Chat completion failed: ${getErrorMessage(error)}`);
+      debug('Error generating chat completion:', error);
+
+      if (this.hasUserPassAuth() && axios.isAxiosError(error) && error.response?.status === 401) {
+        debug('Session key may be expired, clearing it and will retry on next request');
+        this.sessionKey = null;
+      }
+
+      throw new Error(`OpenWebUI API error: ${this.getErrorMessage(error)}`);
     }
   }
 
   async generateCompletion(prompt: string): Promise<string> {
-    debug('Generating non-chat completion with OpenWebUI:', { prompt });
-
-    const model = this.config.model || openWebUIConfig.get('model');
+    debug('Generating text completion with OpenWebUI', { promptLength: prompt.length });
 
     try {
-<<<<<<< HEAD
-      let reqConfig = {};
+      let reqConfig: any = {};
       if (this.hasUserPassAuth()) {
         const sessionKey = await this.getSessionKey();
         reqConfig = {
           headers: {
-            Authorization: `Bearer ${sessionKey}`
-          }
+            Authorization: `Bearer ${sessionKey}`,
+          },
         };
       }
 
-      const response = await this.client.post('/completions', {
-        model: this.model,
-=======
-      const response = await this.client.post('/completions', {
-        model,
->>>>>>> origin/main
-        prompt,
-        max_tokens: 100,
-      }, reqConfig);
+      const response = await this.client.post(
+        '/completions',
+        {
+          model: this.model,
+          prompt,
+          max_tokens: 100,
+        },
+        reqConfig
+      );
 
       return response.data?.choices?.[0]?.text || '';
     } catch (error) {
-      debug('Error generating non-chat completion:', formatError(error));
-      throw new Error(`Non-chat completion failed: ${getErrorMessage(error)}`);
+      debug('Error generating non-chat completion:', error);
+
+      if (this.hasUserPassAuth() && axios.isAxiosError(error) && error.response?.status === 401) {
+        this.sessionKey = null;
+      }
+
+      throw new Error(`OpenWebUI API error: ${this.getErrorMessage(error)}`);
     }
   }
-}
 
-function getErrorMessage(error: unknown): string {
-  if (error instanceof Error) {
-    return error.message;
+  private async getSessionKey(): Promise<string> {
+    if (this.sessionKey) return this.sessionKey;
+
+    if (!this.hasUserPassAuth()) {
+      throw new Error('Username and password are required to obtain a session key');
+    }
+
+    try {
+      let reqConfig: any = {};
+      if (this.hasUserPassAuth()) {
+        const sessionKey = await this.getSessionKey();
+        reqConfig = {
+          headers: {
+            Authorization: `Bearer ${sessionKey}`,
+          },
+        };
+      }
+
+      const response = await this.client.post(
+        '/completions',
+        {
+          model: this.model,
+          prompt,
+          max_tokens: 100,
+        },
+        reqConfig
+      );
+
+      return response.data?.choices?.[0]?.text || '';
+    } catch (error) {
+      debug('Error generating non-chat completion:', error);
+
+      if (this.hasUserPassAuth() && axios.isAxiosError(error) && error.response?.status === 401) {
+        this.sessionKey = null;
+      }
+
+      throw new Error(`OpenWebUI API error: ${this.getErrorMessage(error)}`);
+    }
   }
-  return String(error);
-}
 
-function formatError(error: unknown): any {
-  if (axios.isAxiosError(error)) {
+  supportsChatCompletion(): boolean {
+    return true;
+  }
+
+  supportsCompletion(): boolean {
+    return true;
+  }
+
+  private getErrorMessage(error: any): string {
+    if (!axios.isAxiosError(error)) {
+      return error.message;
+    }
+
+    if (error.response?.data?.error?.message) {
+      return error.response.data.error.message;
+    }
+
+    if (error.response?.data?.detail) {
+      return error.response.data.detail;
+    }
+
     return error.response?.data || error.message;
   }
-  return getErrorMessage(error);
 }

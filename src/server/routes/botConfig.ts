@@ -473,7 +473,7 @@ router.post(
         await secureConfigManager.storeConfig({
           id: botId,
           name: updatedConfig.name || existingBot.name,
-          type: 'bot',
+
           data: {
             discord: updatedConfig.discord || {},
             slack: updatedConfig.slack || {},
@@ -481,7 +481,6 @@ router.post(
             flowise: updatedConfig.flowise || {},
             openwebui: updatedConfig.openwebui || {},
           },
-          createdAt: new Date().toISOString(),
         });
       }
 
