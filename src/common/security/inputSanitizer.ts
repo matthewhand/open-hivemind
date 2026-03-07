@@ -21,7 +21,7 @@ const DEFAULT_OPTIONS: SanitizationOptions = {
   allowHtml: false,
   allowMarkdown: true,
   stripScripts: true,
-  normalizeWhitespace: true,
+  normalizeWhitespace: true
 };
 
 /**
@@ -34,10 +34,7 @@ export class InputSanitizer {
    * @param options - Sanitization options
    * @returns Sanitized string
    */
-  public static sanitizeText(
-    input: string | null | undefined,
-    options: SanitizationOptions = {}
-  ): string {
+  public static sanitizeText(input: string | null | undefined, options: SanitizationOptions = {}): string {
     if (!input || typeof input !== 'string') {
       debug('Invalid input provided to sanitizeText:', typeof input);
       return '';
@@ -103,7 +100,7 @@ export class InputSanitizer {
       allowHtml: false,
       allowMarkdown: false,
       stripScripts: true,
-      normalizeWhitespace: true,
+      normalizeWhitespace: true
     });
   }
 
@@ -124,7 +121,7 @@ export class InputSanitizer {
       allowHtml: false,
       allowMarkdown: false,
       stripScripts: true,
-      normalizeWhitespace: true,
+      normalizeWhitespace: true
     });
 
     return emailRegex.test(sanitized) ? sanitized : null;
@@ -145,7 +142,7 @@ export class InputSanitizer {
       allowHtml: false,
       allowMarkdown: true, // Allow markdown for formatting
       stripScripts: true,
-      normalizeWhitespace: false, // Preserve formatting in content
+      normalizeWhitespace: false // Preserve formatting in content
     });
   }
 
@@ -170,7 +167,7 @@ export class InputSanitizer {
       allowHtml: false,
       allowMarkdown: false,
       stripScripts: true,
-      normalizeWhitespace: true,
+      normalizeWhitespace: true
     });
 
     return sanitized || 'sanitized_file';
@@ -243,7 +240,7 @@ export function sanitizeMessageText(text: string | null | undefined): string {
     allowHtml: false,
     allowMarkdown: true,
     stripScripts: true,
-    normalizeWhitespace: false, // Preserve user formatting
+    normalizeWhitespace: false // Preserve user formatting
   });
 }
 
@@ -256,6 +253,6 @@ export function sanitizeUserInput(input: string | null | undefined): string {
     allowHtml: false,
     allowMarkdown: false,
     stripScripts: true,
-    normalizeWhitespace: true,
+    normalizeWhitespace: true
   });
 }

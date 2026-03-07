@@ -74,25 +74,6 @@ export interface MCPProviderValidationResult {
   suggestions: string[];
 }
 
-export interface MCPTool {
-  name: string;
-  description?: string;
-  inputSchema?: any;
-}
-
-export interface MCPResource {
-  uri: string;
-  name: string;
-  description?: string;
-  mimeType?: string;
-}
-
-export interface MCPDescriptor {
-  tools?: MCPTool[];
-  resources?: MCPResource[];
-  prompts?: any[];
-}
-
 export interface MCPProviderManager {
   // Core provider management
   addProvider(config: MCPProviderConfig): Promise<void>;

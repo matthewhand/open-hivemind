@@ -14,9 +14,8 @@ interface MessageChannel {
  * Type guard to check if an object is an Error instance
  */
 function isError(obj: any): obj is Error {
-  return (
-    obj instanceof Error || (obj && typeof obj === 'object' && typeof obj.message === 'string')
-  );
+  return obj instanceof Error ||
+         (obj && typeof obj === 'object' && typeof obj.message === 'string');
 }
 
 /**

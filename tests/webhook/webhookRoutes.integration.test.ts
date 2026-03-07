@@ -143,10 +143,7 @@ describe('webhookRoutes (Integration)', () => {
         return '';
       });
 
-      const { res } = await runRoute(app, 'post', '/webhook', {
-        body,
-        headers: { 'x-webhook-token': 'secret-token' },
-      });
+      const { res } = await runRoute(app, 'post', '/webhook', { body, headers: { 'x-webhook-token': 'secret-token' } });
 
       expect(res.statusCode).toBe(400);
       expect(res.body.error).toBe('Invalid request body');
@@ -161,10 +158,7 @@ describe('webhookRoutes (Integration)', () => {
 
       // In real express app, body-parser would throw before reaching route,
       // but if an invalid object gets through, validation should catch it.
-      const { res } = await runRoute(app, 'post', '/webhook', {
-        body: 'not-an-object',
-        headers: { 'x-webhook-token': 'secret-token' },
-      });
+      const { res } = await runRoute(app, 'post', '/webhook', { body: 'not-an-object', headers: { 'x-webhook-token': 'secret-token' } });
 
       expect(res.statusCode).toBe(400);
       expect(res.body.details).toContain('Request body must be a valid JSON object');

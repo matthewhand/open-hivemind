@@ -31,11 +31,6 @@ const migrateFile = (filePath: string) => {
         }
 
         if (modified) {
-            // Create a backup before modifying the configuration file
-            const backupPath = `${filePath}.bak`;
-            fs.copyFileSync(filePath, backupPath);
-            console.log(`Created backup: ${backupPath}`);
-
             fs.writeFileSync(filePath, JSON.stringify(data, null, 2));
             console.log(`Saved updates to ${filePath}`);
         }

@@ -14,6 +14,7 @@ export interface SecureConfig {
   updatedAt: string;
   checksum: string;
   createdAt?: string;
+  rotationInterval?: number;
 }
 
 /**
@@ -156,6 +157,20 @@ export class SecureConfigManager {
           'SECURE_CONFIG_INTEGRITY_FAILED',
           500,
         );
+      }
+
+      // Check if rotation is required based on rotationInterval
+      // Ensure the config actually contains keys before warning about rotation
+      const hasConfiguredKeys = config.data && Object.keys(config.data).length > 0;
+      if (hasConfiguredKeys && config.rotationInterval && config.rotationInterval > 0) {
+        const lastUpdated = new Date(config.updatedAt).getTime();
+        const now = Date.now();
+        const daysSinceUpdate = (now - lastUpdated) / (1000 * 60 * 60 * 24);
+
+        if (daysSinceUpdate >= config.rotationInterval) {
+          debug(`[WARNING] Secure configuration '${config.name}' (ID: ${config.id}) is due for credential rotation (Interval: ${config.rotationInterval} days, Days since update: ${Math.floor(daysSinceUpdate)} days).`);
+          // In a fully automated system, this could trigger an event/webhook to automatically rotate secrets.
+        }
       }
 
       return config;

@@ -12,7 +12,10 @@ jest.mock('../../../src/config/UserConfigStore');
 jest.mock('../../../src/server/services/WebSocketService');
 jest.mock('../../../src/types/errors');
 jest.mock('fs');
-
+jest.mock('debug', () => {
+  const debugMock = jest.fn();
+  return () => debugMock;
+});
 
 describe('HotReloadManager', () => {
   let hotReloadManager: HotReloadManager;
@@ -39,7 +42,6 @@ describe('HotReloadManager', () => {
 
     const mockWebSocketService = {
       recordAlert: jest.fn(),
-      broadcastConfigChange: jest.fn(),
     };
     (WebSocketService.getInstance as jest.Mock).mockReturnValue(mockWebSocketService);
 
@@ -149,11 +151,11 @@ describe('HotReloadManager', () => {
     });
 
     it('should add warnings when global changes fail for some bots', async () => {
-      const mockStore = UserConfigStore.getInstance();
-      (mockStore.setBotOverride as jest.Mock).mockImplementation((botName) => {
-        if (botName === 'test-bot-2') throw new Error('Store error');
-      });
-      const globalChange = {
+       const mockStore = UserConfigStore.getInstance();
+       (mockStore.setBotOverride as jest.Mock).mockImplementation((botName) => {
+         if (botName === 'test-bot-2') throw new Error('Store error');
+       });
+       const globalChange = {
         type: 'update' as const,
         changes: { messageProvider: 'slack' }
       };
@@ -216,7 +218,7 @@ describe('HotReloadManager', () => {
       const applyResult = await hotReloadManager.applyConfigurationChange(change);
       const managerAny = hotReloadManager as any;
       jest.spyOn(managerAny.rollbackSnapshots, 'get').mockImplementation(() => {
-        throw new Error('Rollback Get Error');
+         throw new Error('Rollback Get Error');
       });
       const result = await hotReloadManager.rollbackToSnapshot(applyResult.rollbackId as string);
       expect(result).toBe(false);
@@ -296,24 +298,24 @@ describe('HotReloadManager', () => {
         changes: { messageProvider: 'slack' }
       };
       await hotReloadManager.applyConfigurationChange(change);
-      await hotReloadManager.applyConfigurationChange({ ...change, changes: { llmProvider: 'openai' } });
+      await hotReloadManager.applyConfigurationChange({...change, changes: { llmProvider: 'openai' }});
       expect(hotReloadManager.getChangeHistory(1)).toHaveLength(1);
     });
   });
 
   describe('applyBotChange detail', () => {
     it('should sanitize changes and handle mcpGuard custom logic', async () => {
-      const change = {
+       const change = {
         type: 'update' as const,
         botName: 'test-bot',
         changes: {
-          invalidField: 'shouldBeIgnored',
-          messageProvider: 'discord',
-          mcpGuard: {
-            enabled: true,
-            type: 'custom',
-            allowedUsers: ['user1', 'user2']
-          }
+            invalidField: 'shouldBeIgnored',
+            messageProvider: 'discord',
+            mcpGuard: {
+                enabled: true,
+                type: 'custom',
+                allowedUsers: ['user1', 'user2']
+            }
         }
       };
       const result = await hotReloadManager.applyConfigurationChange(change);
@@ -321,15 +323,15 @@ describe('HotReloadManager', () => {
     });
 
     it('should handle mcpGuard string allowedUsers logic', async () => {
-      const change = {
+       const change = {
         type: 'update' as const,
         botName: 'test-bot',
         changes: {
-          mcpGuard: {
-            enabled: true,
-            type: 'owner',
-            allowedUsers: 'user1, user2'
-          }
+            mcpGuard: {
+                enabled: true,
+                type: 'owner',
+                allowedUsers: 'user1, user2'
+            }
         }
       };
       const result = await hotReloadManager.applyConfigurationChange(change);

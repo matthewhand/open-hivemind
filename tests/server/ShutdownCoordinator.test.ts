@@ -234,7 +234,7 @@ describe('ShutdownCoordinator', () => {
           clearTimeout(mockInterval);
           intervalCleared = true;
           return Promise.resolve();
-        }),
+        })
       };
 
       coordinator.registerService(memoryLeakingService);

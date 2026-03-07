@@ -6,8 +6,6 @@ import { BotConfigurationManager } from '../../config/BotConfigurationManager';
 import ApiMonitorService, { type EndpointStatus } from '../../services/ApiMonitorService';
 import { ActivityLogger } from './ActivityLogger';
 import { BotMetricsService } from './BotMetricsService';
-import 'reflect-metadata';
-import { injectable, singleton } from 'tsyringe';
 
 const debug = Debug('app:WebSocketService');
 
@@ -48,6 +46,9 @@ export interface AlertEvent {
   acknowledgedAt?: string;
   resolvedAt?: string;
 }
+
+import 'reflect-metadata';
+import { injectable, singleton } from 'tsyringe';
 
 @singleton()
 @injectable()

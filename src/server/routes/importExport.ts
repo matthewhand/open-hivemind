@@ -206,7 +206,7 @@ router.post(
   handleValidationErrors,
   async (req: AuthMiddlewareRequest, res: Response) => {
     try {
-      const authReq = req as AuthMiddlewareRequest;
+      const authReq = req as any;
       const createdBy = authReq.user?.username || 'unknown';
 
       const result = await importExportService.exportConfigurations(
@@ -238,7 +238,7 @@ router.post(
       return res.status(500).json({
         success: false,
         message: 'Failed to export configurations',
-        error: error instanceof Error ? error.message : String(error),
+        error: (error as any).message,
       });
     }
   }
@@ -257,25 +257,25 @@ router.post(
   handleValidationErrors,
   async (req: AuthMiddlewareRequest, res: Response) => {
     try {
-      if (!(req as AuthMiddlewareRequest & { file?: Express.Multer.File }).file) {
+      if (!(req as any).file) {
         return res.status(400).json({
           success: false,
           message: 'No file uploaded',
         });
       }
 
-      const authReq = req as AuthMiddlewareRequest;
+      const authReq = req as any;
       const importedBy = authReq.user?.username || 'unknown';
 
       const result = await importExportService.importConfigurations(
-        (req as AuthMiddlewareRequest & { file?: Express.Multer.File }).file.path,
+        (req as any).file.path,
         req.body,
         importedBy
       );
 
       // Clean up uploaded file
       try {
-        await fs.unlink((req as AuthMiddlewareRequest & { file?: Express.Multer.File }).file.path);
+        await fs.unlink((req as any).file.path);
       } catch (cleanupError) {
         console.error('Error cleaning up uploaded file:', cleanupError);
       }
@@ -289,11 +289,9 @@ router.post(
       console.error('Error importing configurations:', error);
 
       // Clean up uploaded file if it exists
-      if ((req as AuthMiddlewareRequest & { file?: Express.Multer.File }).file) {
+      if ((req as any).file) {
         try {
-          await fs.unlink(
-            (req as AuthMiddlewareRequest & { file?: Express.Multer.File }).file.path
-          );
+          await fs.unlink((req as any).file.path);
         } catch (cleanupError) {
           console.error('Error cleaning up uploaded file:', cleanupError);
         }
@@ -302,7 +300,7 @@ router.post(
       return res.status(500).json({
         success: false,
         message: 'Failed to import configurations',
-        error: error instanceof Error ? error.message : String(error),
+        error: (error as any).message,
       });
     }
   }
@@ -319,7 +317,7 @@ router.post(
   handleValidationErrors,
   async (req: AuthMiddlewareRequest, res: Response) => {
     try {
-      const authReq = req as AuthMiddlewareRequest;
+      const authReq = req as any;
       const createdBy = authReq.user?.username || 'unknown';
 
       const result = await importExportService.createBackup(
@@ -336,12 +334,6 @@ router.post(
           encryptionKey: req.body.encryptionKey,
         }
       );
-
-      // In a real application, maxRetainedBackups should be fetched from the database or UserConfigStore.
-      // Here we assume it might be passed in the body or defaults to 10
-      // Since it's already implemented in the frontend as a user setting, we don't strictly need to pass it here
-      // if the frontend handles manual pruning, but for backend initiated backups, we would fetch it.
-      // We pass it to the service if provided.
 
       if (result.success) {
         return res.json({
@@ -365,7 +357,7 @@ router.post(
       return res.status(500).json({
         success: false,
         message: 'Failed to create backup',
-        error: error instanceof Error ? error.message : String(error),
+        error: (error as any).message,
       });
     }
   }
@@ -388,7 +380,7 @@ router.get('/backups', requireAdmin, async (req: AuthMiddlewareRequest, res: Res
     return res.status(500).json({
       success: false,
       message: 'Failed to list backups',
-      error: error instanceof Error ? error.message : String(error),
+      error: (error as any).message,
     });
   }
 });
@@ -405,7 +397,7 @@ router.post(
   async (req: AuthMiddlewareRequest, res: Response) => {
     try {
       const { backupId } = req.params;
-      const authReq = req as AuthMiddlewareRequest;
+      const authReq = req as any;
       const restoredBy = authReq.user?.username || 'unknown';
 
       // Get backup metadata
@@ -445,7 +437,7 @@ router.post(
       return res.status(500).json({
         success: false,
         message: 'Failed to restore from backup',
-        error: error instanceof Error ? error.message : String(error),
+        error: (error as any).message,
       });
     }
   }
@@ -479,7 +471,7 @@ router.delete(
       return res.status(500).json({
         success: false,
         message: 'Failed to delete backup',
-        error: error instanceof Error ? error.message : String(error),
+        error: (error as any).message,
       });
     }
   }
@@ -530,7 +522,7 @@ router.get(
       return res.status(500).json({
         success: false,
         message: 'Failed to download backup',
-        error: error instanceof Error ? error.message : String(error),
+        error: (error as any).message,
       });
     }
   }
@@ -547,26 +539,23 @@ router.post(
   handleUploadError,
   async (req: AuthMiddlewareRequest, res: Response) => {
     try {
-      if (!(req as AuthMiddlewareRequest & { file?: Express.Multer.File }).file) {
+      if (!(req as any).file) {
         return res.status(400).json({
           success: false,
           message: 'No file uploaded',
         });
       }
 
-      const result = await importExportService.importConfigurations(
-        (req as AuthMiddlewareRequest & { file?: Express.Multer.File }).file.path,
-        {
-          format: req.body.format || 'json',
-          validateOnly: true,
-          skipValidation: false,
-          overwrite: false,
-        }
-      );
+      const result = await importExportService.importConfigurations((req as any).file.path, {
+        format: req.body.format || 'json',
+        validateOnly: true,
+        skipValidation: false,
+        overwrite: false,
+      });
 
       // Clean up uploaded file
       try {
-        await fs.unlink((req as AuthMiddlewareRequest & { file?: Express.Multer.File }).file.path);
+        await fs.unlink((req as any).file.path);
       } catch (cleanupError) {
         console.error('Error cleaning up uploaded file:', cleanupError);
       }
@@ -580,11 +569,9 @@ router.post(
       console.error('Error validating file:', error);
 
       // Clean up uploaded file if it exists
-      if ((req as AuthMiddlewareRequest & { file?: Express.Multer.File }).file) {
+      if ((req as any).file) {
         try {
-          await fs.unlink(
-            (req as AuthMiddlewareRequest & { file?: Express.Multer.File }).file.path
-          );
+          await fs.unlink((req as any).file.path);
         } catch (cleanupError) {
           console.error('Error cleaning up uploaded file:', cleanupError);
         }
@@ -593,7 +580,7 @@ router.post(
       return res.status(500).json({
         success: false,
         message: 'Failed to validate file',
-        error: error instanceof Error ? error.message : String(error),
+        error: (error as any).message,
       });
     }
   }

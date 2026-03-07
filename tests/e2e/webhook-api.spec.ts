@@ -2,10 +2,7 @@ import { expect, test } from '@playwright/test';
 import { setupTestWithErrorDetection } from './test-utils';
 
 test.describe('Webhook API Integration', () => {
-  test('Webhook validates authentication and responds correctly to valid and invalid requests', async ({
-    request,
-    baseURL,
-  }) => {
+  test('Webhook validates authentication and responds correctly to valid and invalid requests', async ({ request, baseURL }) => {
     // The webhook route is mapped to `/webhook` in configureWebhookRoutes
     const targetUrl = `${baseURL}/webhook`;
 
@@ -17,8 +14,8 @@ test.describe('Webhook API Integration', () => {
       data: {
         id: 'playwright-test-1',
         status: 'succeeded',
-        output: ['test'],
-      },
+        output: ['test']
+      }
     });
 
     // Check it fails security or missing config (in test env, WEBHOOK_TOKEN might be empty yielding 500, or invalid yielding 403)
@@ -29,11 +26,11 @@ test.describe('Webhook API Integration', () => {
       // 2. Malformed Body
       const req2 = await request.post(targetUrl, {
         headers: {
-          'x-webhook-token': 'dummy',
+          'x-webhook-token': 'dummy'
         },
         data: {
-          invalid: 'body',
-        },
+          invalid: 'body'
+        }
       });
 
       expect(req2.status()).toBeLessThan(500);

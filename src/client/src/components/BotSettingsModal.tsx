@@ -24,15 +24,15 @@ export interface LLMProfile {
 interface BotSettingsModalProps {
     isOpen: boolean;
     onClose: () => void;
-    bot: BotConfigExtended;
+    bot: BotConfig;
     personas: ApiPersona[];
     llmProfiles: LLMProfile[];
     integrationOptions: { message: string[] };
-    onUpdateConfig: (bot: BotConfigExtended, key: string, value: any) => Promise<void>;
-    onUpdatePersona: (bot: BotConfigExtended, personaId: string) => Promise<void>;
-    onClone: (bot: BotConfigExtended) => void;
-    onDelete: (bot: BotConfigExtended) => void;
-    onViewDetails: (bot: BotConfigExtended) => void;
+    onUpdateConfig: (bot: BotConfig, key: string, value: any) => Promise<void>;
+    onUpdatePersona: (bot: BotConfig, personaId: string) => Promise<void>;
+    onClone: (bot: BotConfig) => void;
+    onDelete: (bot: BotConfig) => void;
+    onViewDetails: (bot: BotConfig) => void;
 }
 
 export const BotSettingsModal: React.FC<BotSettingsModalProps> = ({
@@ -56,7 +56,7 @@ export const BotSettingsModal: React.FC<BotSettingsModalProps> = ({
         <dialog className="modal modal-open" onClose={onClose}>
             <div className="modal-box w-11/12 max-w-4xl bg-base-100">
                 <form method="dialog">
-                    <button className="btn btn-sm btn-circle btn-ghost absolute right-2 top-2" onClick={onClose}>✕</button>
+                    <button className="btn btn-sm btn-circle btn-ghost absolute right-2 top-2" onClick={onClose} aria-label="Close settings">✕</button>
                 </form>
 
                 <div className="flex items-center gap-3 mb-6 border-b border-base-300 pb-4">

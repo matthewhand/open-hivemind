@@ -38,17 +38,12 @@ test('verify MCP Guard UX', async ({ page }) => {
   const usersInput = modal.locator('input[id="allowed-users"]');
   await usersInput.fill('user1');
 
-  // Press enter to commit the first chip
-  await usersInput.press('Enter');
-
-  // Screenshot before typing second value
+  // Screenshot before typing comma
   await page.screenshot({ path: 'docs/screenshots/mcp-guard-ux-before.png' });
 
-  // Type second value and press enter
-  await usersInput.pressSequentially('user2');
-  await usersInput.press('Enter');
+  await usersInput.pressSequentially(',user2');
 
-  // Screenshot after typing second value
+  // Screenshot after typing comma
   await page.screenshot({ path: 'docs/screenshots/mcp-guard-ux-after.png' });
 
   const value = await usersInput.inputValue();

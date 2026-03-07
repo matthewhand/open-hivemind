@@ -450,6 +450,8 @@ async function main() {
   AnomalyDetectionService.getInstance();
   appLogger.info('🔍 Anomaly Detection Service initialized');
 
+
+
   // Prepare messenger services collection for optional webhook registration later
   let messengerServices: any[] = [];
 
@@ -569,7 +571,7 @@ async function main() {
     const enableViteDev = process.env.ENABLE_VITE_DEV !== 'false';
     if (process.env.NODE_ENV === 'development' && enableViteDev) {
       // @ts-ignore - Vite is a dev dependency using dynamic import
-      const viteModule = await new Function('return import("vite")')();
+      const viteModule = await (new Function('return import("vite")')());
       const createViteServer = viteModule.createServer;
       appLogger.info('⚡ Starting Vite Middleware for Hot Reloading...');
       viteServer = await createViteServer({

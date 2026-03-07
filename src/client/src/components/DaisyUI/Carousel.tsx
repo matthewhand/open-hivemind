@@ -46,21 +46,11 @@ const Carousel: React.FC<CarouselProps> = ({
     setActiveIndex((prevIndex) => (prevIndex + 1) % items.length);
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
-    if (e.key === 'ArrowLeft') {
-      e.preventDefault();
-      handlePrev();
-    } else if (e.key === 'ArrowRight') {
-      e.preventDefault();
-      handleNext();
-    }
-  };
-
   const carouselClasses = `carousel w-full ${variant === 'card-style' ? 'space-x-4 rounded-box bg-neutral p-4' : ''
     }`;
 
   return (
-    <div className="relative" onKeyDown={handleKeyDown} tabIndex={0} aria-label="Carousel">
+    <div className="relative">
       <div className={carouselClasses}>
         {items.map((item, index) => (
           <div
@@ -85,29 +75,26 @@ const Carousel: React.FC<CarouselProps> = ({
               <p>{item.description}</p>
             </div>
             <div className="absolute left-5 right-5 top-1/2 flex -translate-y-1/2 transform justify-between">
-              <button type="button" className="btn btn-circle" aria-label="Previous slide" onClick={(e) => { e.preventDefault(); handlePrev(); }}>
+              <a href={`#slide${(index - 1 + items.length) % items.length}`} className="btn btn-circle" onClick={handlePrev} aria-label="Previous slide">
                 ❮
-              </button>
-              <button type="button" className="btn btn-circle" aria-label="Next slide" onClick={(e) => { e.preventDefault(); handleNext(); }}>
+              </a>
+              <a href={`#slide${(index + 1) % items.length}`} className="btn btn-circle" onClick={handleNext} aria-label="Next slide">
                 ❯
               </a>
             </div>
           </div>
         ))}
       </div>
-      <div className="flex w-full justify-center gap-2 py-2" role="tablist">
+      <div className="flex w-full justify-center gap-2 py-2">
         {items.map((_, index) => (
-          <button
-            type="button"
+          <a
             key={index}
-            role="tab"
-            aria-selected={index === activeIndex}
-            aria-label={`Go to slide ${index + 1}`}
+            href={`#slide${index}`}
             className={`btn btn-xs ${index === activeIndex ? 'btn-active' : ''}`}
-            onClick={(e) => { e.preventDefault(); handleSelect(index); }}
+            onClick={() => handleSelect(index)}
           >
             {index + 1}
-          </button>
+          </a>
         ))}
       </div>
     </div>

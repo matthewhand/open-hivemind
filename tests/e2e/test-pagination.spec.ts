@@ -1,6 +1,6 @@
-import * as fs from 'fs';
+import { test, expect } from '@playwright/test';
 import * as path from 'path';
-import { expect, test } from '@playwright/test';
+import * as fs from 'fs';
 
 test('Test pagination visual regressions', async ({ page }) => {
   const html = `
@@ -192,8 +192,5 @@ test('Test pagination visual regressions', async ({ page }) => {
   await page.locator('#hover-focus-test #next-ellipsis').focus();
   await page.waitForTimeout(500);
 
-  await page.screenshot({
-    path: 'docs/screenshots/pagination-after-accessible.png',
-    fullPage: true,
-  });
+  await page.screenshot({ path: 'docs/screenshots/pagination-after-accessible.png', fullPage: true });
 });

@@ -3,15 +3,6 @@ import path from 'path';
 import { executeCommand, readFile } from '../../src/utils/utils';
 
 describe('Utility Functions Comprehensive Tests', () => {
-  describe('String Operations', () => {
-    test('should handle string manipulation correctly', () => {
-      expect('hello world'.split(' ')).toEqual(['hello', 'world']);
-      expect('test'.toUpperCase()).toBe('TEST');
-      expect('  trim  '.trim()).toBe('trim');
-      expect('hello'.substring(0, 4)).toBe('hell');
-    });
-  });
-
   describe('Math Operations', () => {
     test('should handle basic arithmetic operations correctly', () => {
       expect(1 + 2).toBe(3);
@@ -315,7 +306,7 @@ describe('Utility Functions Comprehensive Tests', () => {
 
   describe('Emoji Generation Consolidated', () => {
     test('should return a valid emoji from the predefined list', () => {
-      const { getEmoji } = require('../../src/utils/common');
+      const { getEmoji } = require('../../src/common/getEmoji');
       const emoji = getEmoji();
       expect([
         '😀',
@@ -340,7 +331,7 @@ describe('Utility Functions Comprehensive Tests', () => {
     });
 
     test('should return different emojis on multiple calls', () => {
-      const { getEmoji } = require('../../src/utils/common');
+      const { getEmoji } = require('../../src/common/getEmoji');
       const generatedEmojis = new Set();
       for (let i = 0; i < 20; i++) {
         generatedEmojis.add(getEmoji());
@@ -349,7 +340,7 @@ describe('Utility Functions Comprehensive Tests', () => {
     });
 
     test('should handle rapid successive calls', () => {
-      const { getEmoji } = require('../../src/utils/common');
+      const { getEmoji } = require('../../src/common/getEmoji');
       const results = [];
       for (let i = 0; i < 100; i++) {
         results.push(getEmoji());
@@ -434,7 +425,7 @@ describe('Utility Functions Comprehensive Tests', () => {
       (AuditLogger as any).instance = null;
       auditLogger = AuditLogger.getInstance();
       // Clear any existing events
-      (await auditLogger.getAuditEvents()).forEach(() => { });
+      (await auditLogger.getAuditEvents()).forEach(() => {});
     });
 
     test('should create audit log with basic event data', async () => {

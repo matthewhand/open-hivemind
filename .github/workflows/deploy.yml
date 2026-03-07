@@ -26,6 +26,9 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Audit for hardcoded secrets
+        run: npm run audit:secrets
+
       - name: Run lint
         run: npm run lint
 
