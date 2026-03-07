@@ -4,12 +4,7 @@
   ignore = "test \"$BRANCH\" != \"main\""
   functions = "dist/netlify/functions"
   publish = "dist/client"
-<<<<<<< HEAD
-=======
-=======
-  functions = "dist/netlify/functions"
-  publish = "dist/client"
-  ignore = "test \"$BRANCH\" != \"main\""
+
 
 [[redirects]]
   from = "/api/*"
@@ -21,8 +16,6 @@
   from = "/*"
   to = "/index.html"
   status = 200
->>>>>>> origin/main
->>>>>>> origin/main
 
 [dev]
   command = "npm run dev"
