@@ -61,12 +61,7 @@ export class OpenWebUIProvider implements ILlmProvider {
 
     try {
       const response = await this.client.post('/chat/completions', {
-        model,
-        messages,
-      });
-
-      const response = await this.client.post('/chat/completions', {
-        model: metadata?.modelOverride || metadata?.model || this.model,
+        model: metadata?.modelOverride || metadata?.model || model,
         messages,
       }, reqConfig);
 
