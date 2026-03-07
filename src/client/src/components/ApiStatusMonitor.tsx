@@ -96,10 +96,8 @@ const ApiStatusMonitor: React.FC<ApiStatusMonitorProps> = ({
 
     newSocket.on('api_health_check_result', (data: { result: any; timestamp: string }) => {
       // Update specific endpoint status
-      setApiStatus(prevStatus => {
-        if (!prevStatus) return prevStatus;
-
-        const updatedEndpoints = prevStatus.endpoints.map(endpoint => {
+      if (apiStatus) {
+        const updatedEndpoints = apiStatus.endpoints.map(endpoint => {
           if (endpoint.id === data.result.endpointId) {
             return {
               ...endpoint,
@@ -112,12 +110,12 @@ const ApiStatusMonitor: React.FC<ApiStatusMonitorProps> = ({
           }
           return endpoint;
         });
-        return {
-          ...prevStatus,
+        setApiStatus({
+          ...apiStatus,
           endpoints: updatedEndpoints,
           timestamp: data.timestamp,
-        };
-      });
+        });
+      }
     });
 
     newSocket.on('disconnect', () => {
@@ -129,7 +127,7 @@ const ApiStatusMonitor: React.FC<ApiStatusMonitorProps> = ({
     return () => {
       newSocket.close();
     };
-  }, []);
+  }, [apiStatus]);
 
   useEffect(() => {
     fetchApiStatus();

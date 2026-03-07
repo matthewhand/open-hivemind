@@ -318,6 +318,7 @@ export const BotSetupWizard: React.FC<BotSetupWizardProps> = ({ onComplete, onCa
               <option value="">Select platform</option>
               <option value="discord">Discord</option>
               <option value="slack">Slack</option>
+              <option value="telegram">Telegram</option>
               <option value="mattermost">Mattermost</option>
             </select>
           </div>

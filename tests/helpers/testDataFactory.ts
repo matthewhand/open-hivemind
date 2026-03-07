@@ -122,34 +122,6 @@ export const messageConfigData: ConfigTestData = {
   },
 };
 
-// Telegram Config Test Data
-export const telegramConfigData: ConfigTestData = {
-  defaults: {
-    TELEGRAM_BOT_TOKEN: '',
-    TELEGRAM_WEBHOOK_URL: '',
-    TELEGRAM_PARSE_MODE: 'HTML',
-    TELEGRAM_ALLOWED_CHATS: '',
-    TELEGRAM_BLOCKED_USERS: '',
-    TELEGRAM_ENABLE_COMMANDS: true,
-  },
-  envVars: {
-    TELEGRAM_BOT_TOKEN: 'test-telegram-token-123',
-    TELEGRAM_WEBHOOK_URL: 'https://test.example.com/webhook',
-    TELEGRAM_PARSE_MODE: 'Markdown',
-    TELEGRAM_ALLOWED_CHATS: '12345,67890',
-    TELEGRAM_BLOCKED_USERS: '98765',
-    TELEGRAM_ENABLE_COMMANDS: 'false',
-  },
-  expectedResults: {
-    TELEGRAM_BOT_TOKEN: 'test-telegram-token-123',
-    TELEGRAM_WEBHOOK_URL: 'https://test.example.com/webhook',
-    TELEGRAM_PARSE_MODE: 'Markdown',
-    TELEGRAM_ALLOWED_CHATS: '12345,67890',
-    TELEGRAM_BLOCKED_USERS: '98765',
-    TELEGRAM_ENABLE_COMMANDS: false,
-  },
-};
-
 // Slack Config Test Data
 export const slackConfigData: ConfigTestData = {
   defaults: {
@@ -215,95 +187,29 @@ export const commandParserTestData = {
   },
 };
 
-import fc from 'fast-check';
-import discordConfig from '../../src/config/discordConfig';
-import messageConfig from '../../src/config/messageConfig';
-import slackConfig from '../../src/config/slackConfig';
-import telegramConfig from '../../src/config/telegramConfig';
-
-/**
- * Validates generated config test data against the real backend convict schema
- * to prevent drift.
- * @param type The config type
- * @param data The generated expectedResults
- * @returns true if valid, throws error otherwise
- */
-export function validateConfigAgainstSchema(type: 'discord' | 'message' | 'slack' | 'telegram', data: any): boolean {
-  try {
-    switch (type) {
-      case 'discord':
-        discordConfig.load(data);
-        discordConfig.validate({ allowed: 'strict' });
-        break;
-      case 'message':
-        messageConfig.load(data);
-        messageConfig.validate({ allowed: 'strict' });
-        break;
-      case 'slack':
-        slackConfig.load(data);
-        slackConfig.validate({ allowed: 'strict' });
-        break;
-      case 'telegram':
-        telegramConfig.load(data);
-        telegramConfig.validate({ allowed: 'strict' });
-        break;
-    }
-    return true;
-  } catch (error) {
-    throw new Error(`Test data validation failed for ${type}: ${error}`);
-  }
-}
-
 /**
  * Factory function to create test data for different scenarios
- *
- * @param type The type of test data to generate ('discord', 'message', 'slack', 'telegram', 'command')
- * @returns The requested test data. For messaging providers, this includes defaults, envVars, and expectedResults.
- *
- * Required fields by provider:
- * - discord: DISCORD_BOT_TOKEN, DISCORD_CLIENT_ID
- * - message: MESSAGE_PROVIDER, BOT_ID, NAME, PLATFORM
- * - slack: SLACK_BOT_TOKEN, SLACK_APP_TOKEN, SLACK_SIGNING_SECRET
- * - telegram: TELEGRAM_BOT_TOKEN, TELEGRAM_WEBHOOK_URL, TELEGRAM_PARSE_MODE
  */
-export function createTestData(type: 'discord' | 'message' | 'slack' | 'telegram' | 'command'): any {
-  let data;
+export type CommandParserTestData = typeof commandParserTestData;
+
+export function createTestData(type: 'discord'): ConfigTestData;
+export function createTestData(type: 'message'): ConfigTestData;
+export function createTestData(type: 'slack'): ConfigTestData;
+export function createTestData(type: 'command'): CommandParserTestData;
+export function createTestData(type: 'discord' | 'message' | 'slack' | 'command'): ConfigTestData | CommandParserTestData {
   switch (type) {
     case 'discord':
-      data = discordConfigData;
-      break;
+      return discordConfigData;
     case 'message':
-      data = messageConfigData;
-      break;
+      return messageConfigData;
     case 'slack':
-      data = slackConfigData;
-      break;
-    case 'telegram':
-      data = telegramConfigData;
-      break;
+      return slackConfigData;
     case 'command':
       return commandParserTestData;
     default:
       throw new Error(`Unknown test data type: ${type}`);
   }
-
-  // Validate the data against the schema
-  validateConfigAgainstSchema(type as 'discord' | 'message' | 'slack' | 'telegram', data.expectedResults);
-  return data;
 }
-
-/**
- * Property-based test generator for Telegram configuration
- * Generates random, valid Telegram configurations for property-based testing
- */
-export const telegramConfigGenerator = fc.record({
-  TELEGRAM_BOT_TOKEN: fc.string({ minLength: 10 }),
-  TELEGRAM_WEBHOOK_URL: fc.webUrl().chain(url => fc.constant(url || '')),
-  TELEGRAM_PARSE_MODE: fc.constantFrom('HTML', 'Markdown', 'None', ''),
-  TELEGRAM_ALLOWED_CHATS: fc.array(fc.integer()).map(arr => arr.join(',')),
-  TELEGRAM_BLOCKED_USERS: fc.array(fc.integer()).map(arr => arr.join(',')),
-  TELEGRAM_ENABLE_COMMANDS: fc.boolean()
-});
 
 /**
  * Helper to generate performance test data

@@ -4,6 +4,7 @@ import { useWebSocket } from '../contexts/WebSocketContext';
 import { apiService, ActivityResponse, ActivityEvent } from '../services/api';
 import MetricChart from '../components/Monitoring/MetricChart';
 import StatusCard from '../components/Monitoring/StatusCard';
+import { redactString } from '../utils/redaction';
 
 const AnalyticsDashboard: React.FC = () => {
   const { messageFlow, performanceMetrics } = useWebSocket();
@@ -231,7 +232,7 @@ const AnalyticsDashboard: React.FC = () => {
                     </p>
                     <div className="flex justify-between">
                       <span className="text-xs opacity-70">
-                        {event.messageType === 'incoming' ? `User: ${event.userId}` : 'Response sent'}
+                        {event.messageType === 'incoming' ? `User: ${redactString(event.userId)}` : 'Response sent'}
                       </span>
                       <span className="text-xs text-neutral-content/60">
                         {new Date(event.timestamp).toLocaleTimeString()}

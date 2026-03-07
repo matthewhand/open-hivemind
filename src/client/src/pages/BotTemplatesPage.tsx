@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Breadcrumbs, Carousel, EmptyState } from '../components/DaisyUI';
+import { Breadcrumbs, EmptyState } from '../components/DaisyUI';
 import { Copy, Check, Search, History } from 'lucide-react';
 import SearchFilterBar from '../components/SearchFilterBar';
 import { Diff, Modal } from '../components/DaisyUI';
@@ -107,7 +107,7 @@ const BotTemplatesPage: React.FC = () => {
       discord: 'badge-primary',
       slack: 'badge-secondary',
       mattermost: 'badge-info',
-      webhook: 'badge-success',
+      telegram: 'badge-success',
     };
     return colors[platform] || 'badge-ghost';
   };
@@ -175,46 +175,23 @@ const BotTemplatesPage: React.FC = () => {
     <div className="p-6">
       <Breadcrumbs items={breadcrumbItems} />
 
-
-
-
       <div className="mt-4 mb-8">
-      <div className="flex justify-between items-center mb-4">
-          <div>
-              <h1 className="text-3xl font-bold mb-2">
-              Bot Templates
-              </h1>
-              <p className="text-base-content/70">
-              Quick-start templates to help you create bots faster. Choose a template and customize it for your needs.
-              </p>
-          </div>
-          <button
-              className="btn btn-outline"
-              onClick={() => navigate('/admin/bots/create')}
-          >
-              Create Custom Bot
-          </button>
-      </div>
-
-      {/* Recommended Templates Carousel */}
-      {templates.length > 0 && (
-        <div className="mb-8 mt-6">
-          <h2 className="text-xl font-semibold mb-4">Recommended Templates</h2>
-          <Carousel
-            items={templates.slice(0, 3).map(t => ({
-              image: '',
-              title: t.name,
-              description: t.description,
-              bgGradient: t.platform === 'discord' ? 'linear-gradient(135deg, #5865F2, #7289DA)' :
-                         t.platform === 'slack' ? 'linear-gradient(135deg, #E01E5A, #36C5F0)' :
-                         'linear-gradient(135deg, #4f46e5, #7c3aed)'
-            }))}
-            autoplay={true}
-            interval={5000}
-            variant="card-style"
-          />
+        <div className="flex justify-between items-center mb-4">
+            <div>
+                <h1 className="text-3xl font-bold mb-2">
+                Bot Templates
+                </h1>
+                <p className="text-base-content/70">
+                Quick-start templates to help you create bots faster. Choose a template and customize it for your needs.
+                </p>
+            </div>
+            <button
+                className="btn btn-outline"
+                onClick={() => navigate('/admin/bots/create')}
+            >
+                Create Custom Bot
+            </button>
         </div>
-      )}
 
         {/* Filters */}
         <SearchFilterBar

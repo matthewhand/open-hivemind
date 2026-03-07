@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 
 export interface ChatMessage {
   id: string;
@@ -32,7 +32,25 @@ interface ChatInterfaceProps {
   showTypingIndicator?: boolean;
   typingUsers?: string[];
   maxHeight?: string;
+  /** Accessible label for the chat region */
+  ariaLabel?: string;
+  /** Enable announcements for screen readers */
+  announceMessages?: boolean;
 }
+
+/**
+ * Screen reader announcement helper for live regions
+ */
+const announceToScreenReader = (message: string, priority: 'polite' | 'assertive' = 'polite') => {
+  const announcement = document.createElement('div');
+  announcement.setAttribute('role', 'status');
+  announcement.setAttribute('aria-live', priority);
+  announcement.setAttribute('aria-atomic', 'true');
+  announcement.className = 'sr-only';
+  announcement.textContent = message;
+  document.body.appendChild(announcement);
+  setTimeout(() => document.body.removeChild(announcement), 1000);
+};
 
 const ChatInterface: React.FC<ChatInterfaceProps> = ({
   messages,
@@ -45,10 +63,16 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
   showTypingIndicator = false,
   typingUsers = [],
   maxHeight = '600px',
+  ariaLabel = 'Chat conversation',
+  announceMessages = true,
 }) => {
   const [inputValue, setInputValue] = useState('');
+  const [keyboardShortcutsEnabled, setKeyboardShortcutsEnabled] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
+  const liveRegionRef = useRef<HTMLDivElement>(null);
+  const lastMessageCountRef = useRef(messages.length);
 
   const scrollToBottom = () => {
     if (messagesEndRef.current) {
@@ -61,6 +85,50 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  // Announce new messages to screen readers
+  useEffect(() => {
+    if (announceMessages && messages.length > lastMessageCountRef.current) {
+      const newMessages = messages.slice(lastMessageCountRef.current);
+      newMessages.forEach((msg) => {
+        if (msg.sender.id !== currentUserId && !msg.metadata?.status) {
+          announceToScreenReader(
+            `New message from ${msg.sender.name}: ${msg.content.slice(0, 100)}${msg.content.length > 100 ? '...' : ''}`,
+            'polite'
+          );
+        }
+      });
+    }
+    lastMessageCountRef.current = messages.length;
+  }, [messages, currentUserId, announceMessages]);
+
+  // Keyboard navigation
+  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
+    if (!keyboardShortcutsEnabled) return;
+
+    // Alt + Number keys to focus specific messages (1-9)
+    if (e.altKey && e.key >= '1' && e.key <= '9') {
+      e.preventDefault();
+      const index = parseInt(e.key, 10) - 1;
+      const messageElements = messagesContainerRef.current?.querySelectorAll('[data-message-id]');
+      if (messageElements && messageElements[index]) {
+        (messageElements[index] as HTMLElement).focus();
+      }
+    }
+
+    // Escape to return focus to input
+    if (e.key === 'Escape') {
+      inputRef.current?.focus();
+    }
+
+    // Ctrl/Cmd + / to show keyboard shortcuts
+    if ((e.ctrlKey || e.metaKey) && e.key === '/') {
+      e.preventDefault();
+      announceToScreenReader(
+        'Keyboard shortcuts: Alt plus 1 through 9 to navigate to messages, Escape to return to input, Enter to send message'
+      );
+    }
+  }, [keyboardShortcutsEnabled]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -107,33 +175,45 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
     }
 
     return (
-      <div key={message.id} className={`chat ${isCurrentUser ? 'chat-end' : 'chat-start'} ${isGrouped ? 'mt-1' : 'mt-4'}`}>
+      <div
+        key={message.id}
+        data-message-id={message.id}
+        tabIndex={0}
+        role="article"
+        aria-label={`Message from ${message.sender.name} at ${formatTime(new Date(message.timestamp))}`}
+        className={`chat ${isCurrentUser ? 'chat-end' : 'chat-start'} ${isGrouped ? 'mt-1' : 'mt-4'} focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded-lg`}
+      >
         {!isGrouped && (
-          <div className={`chat-image avatar ${!message.sender.avatar ? 'placeholder' : ''}`}>
-            {message.sender.avatar ? (
-              <div className="w-10 rounded-full">
-                <img alt={message.sender.name} src={message.sender.avatar} />
-              </div>
-            ) : (
-              <div className={`bg-${isBot ? 'secondary' : 'primary'} text-${isBot ? 'secondary' : 'primary'}-content rounded-full w-10`}>
-                <span className="text-xl">
-                  {isBot ? '🤖' : (message.sender.name || '?').charAt(0).toUpperCase()}
-                </span>
-              </div>
-            )}
+          <div className="chat-image avatar" aria-hidden="true">
+            <div className="w-10 rounded-full">
+              {message.sender.avatar ? (
+                <img alt={`${message.sender.name} avatar`} src={message.sender.avatar} />
+              ) : (
+                <div className="avatar placeholder">
+                  <div className={`bg-${isBot ? 'secondary' : 'primary'} text-${isBot ? 'secondary' : 'primary'}-content rounded-full w-10`}>
+                    <span className="text-xs" aria-hidden="true">
+                      {isBot ? '🤖' : (message.sender.name || '?').slice(0, 2).toUpperCase()}
+                    </span>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         )}
 
         {!isGrouped && (
           <div className="chat-header">
-            {message.sender.name}
-            <time className="text-xs opacity-50 ml-2">
+            <span className="font-medium">{message.sender.name}</span>
+            <time className="text-xs opacity-50 ml-2" dateTime={new Date(message.timestamp).toISOString()}>
               {formatTime(new Date(message.timestamp))}
             </time>
             {message.metadata?.platform && (
-              <div className="badge badge-xs badge-ghost ml-2">
+              <span className="badge badge-xs badge-ghost ml-2">
                 {message.metadata.platform}
-              </div>
+              </span>
+            )}
+            {isCurrentUser && (
+              <span className="sr-only">(You)</span>
             )}
           </div>
         )}
@@ -197,18 +277,27 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
   };
 
   return (
-    <div className={`flex flex-col bg-base-100 ${className}`} style={{ height: maxHeight }}>
+    <div
+      className={`flex flex-col bg-base-100 ${className}`}
+      style={{ height: maxHeight }}
+      role="region"
+      aria-label={ariaLabel}
+      onKeyDown={handleKeyDown}
+    >
+      {/* Screen reader live region for announcements */}
+      <div ref={liveRegionRef} className="sr-only" aria-live="polite" aria-atomic="true" />
+
       {/* Chat Header */}
       <div className="flex items-center justify-between p-4 border-b border-base-200">
         <div className="flex items-center gap-3">
-          <div className="avatar">
+          <div className="avatar" aria-hidden="true">
             <div className="w-8 rounded-full bg-primary">
               <span className="text-primary-content text-sm">🤖</span>
             </div>
           </div>
           <div>
-            <h3 className="font-semibold">Bot Chat</h3>
-            <p className="text-xs text-base-content/60">
+            <h3 className="font-semibold" id="chat-title">Bot Chat</h3>
+            <p className="text-xs text-base-content/60" aria-live="polite">
               {messages.length} messages
             </p>
           </div>
@@ -216,22 +305,38 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
 
         <div className="flex items-center gap-2">
           <div className="dropdown dropdown-end">
-            <div tabIndex={0} role="button" className="btn btn-ghost btn-sm btn-circle" aria-label="Chat options">
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <button
+              tabIndex={0}
+              type="button"
+              className="btn btn-ghost btn-sm btn-circle"
+              aria-label="Chat options menu"
+              aria-haspopup="true"
+              aria-expanded="false"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"></path>
               </svg>
-            </div>
-            <ul tabIndex={0} className="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-52">
-              <li><a>🗑️ Clear Chat</a></li>
-              <li><a>📋 Export Chat</a></li>
-              <li><a>⚙️ Settings</a></li>
+            </button>
+            <ul tabIndex={0} className="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-52" role="menu">
+              <li role="none"><button type="button" className="w-full text-left" role="menuitem" onClick={() => announceToScreenReader('Clear chat option selected')}>🗑️ Clear Chat</button></li>
+              <li role="none"><button type="button" className="w-full text-left" role="menuitem" onClick={() => announceToScreenReader('Export chat option selected')}>📋 Export Chat</button></li>
+              <li role="none"><button type="button" className="w-full text-left" role="menuitem" onClick={() => announceToScreenReader('Settings option selected')}>⚙️ Settings</button></li>
             </ul>
           </div>
         </div>
       </div>
 
       {/* Messages Container */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-1">
+      <div
+        ref={messagesContainerRef}
+        className="flex-1 overflow-y-auto p-4 space-y-1"
+        role="log"
+        aria-live="polite"
+        aria-atomic="false"
+        aria-relevant="additions"
+        aria-labelledby="chat-title"
+        tabIndex={0}
+      >
         {messages.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-center">
             <div className="text-6xl mb-4">💬</div>
@@ -245,9 +350,13 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
             {/* Typing Indicator */}
             {showTypingIndicator && typingUsers.length > 0 && (
               <div className="chat chat-start">
-                <div className="chat-image avatar placeholder">
-                  <div className="bg-secondary text-secondary-content rounded-full w-10">
-                    <span className="text-xl">🤖</span>
+                <div className="chat-image avatar">
+                  <div className="w-10 rounded-full">
+                    <div className="avatar placeholder">
+                      <div className="bg-secondary text-secondary-content rounded-full w-10">
+                        <span className="text-xs">🤖</span>
+                      </div>
+                    </div>
                   </div>
                 </div>
                 <div className="chat-bubble chat-bubble-secondary">
@@ -263,7 +372,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
 
       {/* Input Area */}
       <div className="p-4 border-t border-base-200">
-        <form onSubmit={handleSubmit} className="flex gap-2">
+        <form onSubmit={handleSubmit} className="flex gap-2" aria-label="Send message form">
           <input
             ref={inputRef}
             type="text"
@@ -273,29 +382,42 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
             placeholder={placeholder}
             className="input input-bordered flex-1"
             disabled={isLoading}
+            aria-label="Message input"
+            aria-describedby="input-help"
+            aria-busy={isLoading}
           />
 
           <div className="flex gap-1">
             <button
               type="button"
               className="btn btn-ghost btn-square"
+              aria-label="Attach file"
               title="Attach file"
             >
-              📎
+              <span aria-hidden="true">📎</span>
             </button>
 
             <button
               type="submit"
               className={`btn btn-primary ${isLoading ? 'loading' : ''}`}
               disabled={!inputValue.trim() || isLoading}
+              aria-label={isLoading ? 'Sending message' : 'Send message'}
+              aria-busy={isLoading}
             >
-              {isLoading ? '' : '➤'}
+              {isLoading ? (
+                <span className="sr-only">Sending...</span>
+              ) : (
+                <>
+                  <span aria-hidden="true">➤</span>
+                  <span className="sr-only">Send</span>
+                </>
+              )}
             </button>
           </div>
         </form>
 
-        <div className="text-xs text-base-content/60 mt-2 text-center">
-          Press Enter to send, Shift+Enter for new line
+        <div id="input-help" className="text-xs text-base-content/60 mt-2 text-center">
+          Press Enter to send, Shift+Enter for new line. Press Alt+1-9 to navigate messages, Escape to return to input.
         </div>
       </div>
     </div>
@@ -329,122 +451,6 @@ export const ChatQuickActions: React.FC<QuickActionsProps> = ({
           {action.label}
         </button>
       ))}
-    </div>
-  );
-};
-
-// Bot Swarm Coordination Status
-interface BotSwarmStatus {
-  botId: string;
-  name: string;
-  avatar?: string;
-  status: 'active' | 'idle' | 'busy' | 'offline';
-  currentTask?: string;
-  lastSeen: Date;
-  messagesHandled: number;
-}
-
-interface BotSwarmCoordinationProps {
-  bots: BotSwarmStatus[];
-  onBotClick?: (botId: string) => void;
-  className?: string;
-}
-
-export const BotSwarmCoordination: React.FC<BotSwarmCoordinationProps> = ({
-  bots,
-  onBotClick,
-  className = '',
-}) => {
-  const getStatusColor = (status: BotSwarmStatus['status']) => {
-    switch (status) {
-      case 'active': return 'bg-success';
-      case 'busy': return 'bg-warning';
-      case 'idle': return 'bg-info';
-      case 'offline': return 'bg-error';
-      default: return 'bg-gray-400';
-    }
-  };
-
-  const getStatusText = (status: BotSwarmStatus['status']) => {
-    switch (status) {
-      case 'active': return 'Active';
-      case 'busy': return 'Busy';
-      case 'idle': return 'Idle';
-      case 'offline': return 'Offline';
-      default: return 'Unknown';
-    }
-  };
-
-  const activeBots = bots.filter(b => b.status === 'active').length;
-  const busyBots = bots.filter(b => b.status === 'busy').length;
-  const totalMessages = bots.reduce((sum, b) => sum + b.messagesHandled, 0);
-
-  return (
-    <div className={`bg-base-200 rounded-box p-4 ${className}`}>
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-2">
-          <span className="text-2xl">🐝</span>
-          <div>
-            <h4 className="font-semibold">Bot Swarm Coordination</h4>
-            <p className="text-xs text-base-content/60">
-              {activeBots} active • {busyBots} busy • {totalMessages.toLocaleString()} messages
-            </p>
-          </div>
-        </div>
-        <div className="flex gap-1">
-          <div className="badge badge-success badge-sm">{activeBots} Online</div>
-          {busyBots > 0 && <div className="badge badge-warning badge-sm">{busyBots} Busy</div>}
-        </div>
-      </div>
-
-      <div className="space-y-2 max-h-48 overflow-y-auto">
-        {bots.map((bot) => (
-          <div
-            key={bot.botId}
-            className={`flex items-center gap-3 p-2 rounded-lg cursor-pointer transition-all hover:bg-base-300 ${bot.status === 'active' ? 'bg-base-100 shadow-sm' : ''
-              }`}
-            onClick={() => onBotClick?.(bot.botId)}
-          >
-            <div className="relative">
-              <div className={`chat-image avatar ${!bot.avatar ? 'placeholder' : ''} w-8`}>
-                {bot.avatar ? (
-                  <div className="w-8 rounded-full">
-                    <img alt={bot.name} src={bot.avatar} />
-                  </div>
-                ) : (
-                  <div className="bg-secondary text-secondary-content rounded-full w-8">
-                    <span className="text-sm">🤖</span>
-                  </div>
-                )}
-              </div>
-              <span className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-base-200 ${getStatusColor(bot.status)}`} />
-            </div>
-
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2">
-                <span className="font-medium text-sm truncate">{bot.name}</span>
-                <span className={`badge badge-xs ${bot.status === 'active' ? 'badge-success' : bot.status === 'busy' ? 'badge-warning' : 'badge-ghost'}`}>
-                  {getStatusText(bot.status)}
-                </span>
-              </div>
-              {bot.currentTask && (
-                <p className="text-xs text-base-content/60 truncate">{bot.currentTask}</p>
-              )}
-            </div>
-
-            <div className="text-right">
-              <p className="text-xs text-base-content/40">{bot.messagesHandled}</p>
-              <p className="text-[10px] text-base-content/30">msgs</p>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {bots.length === 0 && (
-        <div className="text-center py-4 text-base-content/40">
-          <p className="text-sm">No bots in swarm</p>
-        </div>
-      )}
     </div>
   );
 };

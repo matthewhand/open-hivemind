@@ -2,7 +2,6 @@ import { Router } from 'express';
 import { DatabaseManager } from '@src/database/DatabaseManager';
 import WebSocketService, { type MessageFlowEvent } from '@src/server/services/WebSocketService';
 import { BotConfigurationManager } from '@config/BotConfigurationManager';
-import { redactPIIString } from '@common/logger';
 import { authenticateToken } from '../middleware/auth';
 import { ActivityLogger } from '../services/ActivityLogger';
 
@@ -427,6 +426,16 @@ function parseDate(value: unknown): Date | null {
   return Number.isNaN(date.getTime()) ? null : date;
 }
 
+/**
+ * Redacts a string by fully masking short strings and partially masking longer ones.
+ * Useful for preventing PII (like User IDs and Channel IDs) from leaking to the frontend.
+ */
+function redactString(val: string | undefined): string | undefined {
+  if (!val) return val;
+  if (val.length <= 3) return '***';
+  return val.substring(0, 1) + '***' + val.substring(val.length - 1);
+}
+
 function annotateEvent(
   event: MessageFlowEvent,
   botMap: Map<string, { llmProvider: string }>
@@ -434,8 +443,8 @@ function annotateEvent(
   const bot = botMap.get(event.botName);
   return {
     ...event,
-    userId: redactPIIString(event.userId),
-    channelId: redactPIIString(event.channelId),
+    userId: redactString(event.userId),
+    channelId: redactString(event.channelId),
     llmProvider: bot?.llmProvider || 'unknown',
   };
 }

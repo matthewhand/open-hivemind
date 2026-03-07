@@ -242,7 +242,6 @@ const ApiEndpointConfig: React.FC<ApiEndpointConfigProps> = ({ onEndpointsChange
                       variant="ghost"
                       className="btn-circle"
                       onClick={() => handleToggle(endpoint.id, !endpoint.enabled)}
-                      aria-label={endpoint.enabled ? "Disable endpoint" : "Enable endpoint"}
                     >
                       {endpoint.enabled ? (
                         <StopIcon className="w-4 h-4 text-warning" />
@@ -255,7 +254,6 @@ const ApiEndpointConfig: React.FC<ApiEndpointConfigProps> = ({ onEndpointsChange
                       variant="ghost"
                       className="btn-circle"
                       onClick={() => handleOpenDialog(endpoint)}
-                      aria-label="Edit endpoint"
                     >
                       <PencilIcon className="w-4 h-4" />
                     </Button>
@@ -264,7 +262,6 @@ const ApiEndpointConfig: React.FC<ApiEndpointConfigProps> = ({ onEndpointsChange
                       variant="ghost"
                       className="btn-circle text-error"
                       onClick={() => handleDelete(endpoint.id)}
-                      aria-label="Delete endpoint"
                     >
                       <TrashIcon className="w-4 h-4" />
                     </Button>

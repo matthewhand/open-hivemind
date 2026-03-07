@@ -431,7 +431,7 @@ const ActivityPage: React.FC = () => {
              <Button
                size="sm"
                variant="ghost"
-               className="btn-square animate-in fade-in zoom-in duration-200"
+               className="btn-square"
                onClick={handleClearFilters}
                title="Clear All Filters"
              >

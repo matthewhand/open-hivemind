@@ -42,14 +42,15 @@ const PROVIDER_ICONS: Record<string, any> = {
   openai: Brain,
   flowise: Brain,
   openwebui: Brain,
-  perplexity: Brain,
-  replicate: Brain,
-  n8n: Brain,
-  openswarm: Brain,
+  ollama: Brain,
+  anthropic: Brain,
+  gemini: Brain,
+  groq: Brain,
   discord: MessageSquare,
   slack: MessageSquare,
   mattermost: MessageSquare,
-  webhook: Globe,
+  telegram: MessageSquare,
+  whatsapp: MessageSquare,
 };
 
 

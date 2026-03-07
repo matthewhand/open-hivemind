@@ -33,9 +33,6 @@ Welcome to the Open-Hivemind User Guide. This document provides a detailed walkt
 
 ### [Dashboard / Overview](/admin/overview)
 The central hub for monitoring your bot ecosystem.
-
-![Dashboard Overview](screenshots/dashboard-overview.png)
-
 *   **Bot Status**: View real-time status of all running bots (Online, Offline, Error).
 *   **Recent Activity**: See a feed of recent interactions and events.
 *   **System Health**: Quick glance at CPU, memory, and uptime.

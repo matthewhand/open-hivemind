@@ -24,6 +24,7 @@ import { PROVIDER_CATEGORIES } from '../config/providers';
 import { useLlmStatus } from '../hooks/useLlmStatus';
 import { usePageLifecycle } from '../hooks/usePageLifecycle';
 import { apiService } from '../services/api';
+import { redactString } from '../utils/redaction';
 
 /**
  * Represents the configuration and runtime state of a generic bot instance.
@@ -303,17 +304,7 @@ const BotsPage: React.FC = () => {
     }
   };
 
-  const redact = (str: string) => {
-    if (!str) {
-      return '';
-    }
-    if (str.length <= 4) {
-      return '****';
-    }
-    return (
-      str.substring(0, 2) + '*'.repeat(Math.min(str.length - 4, 8)) + str.substring(str.length - 2)
-    );
-  };
+  const redact = (str: string) => redactString(str);
 
   return (
     <div className="space-y-6">
@@ -800,10 +791,6 @@ const BotsPage: React.FC = () => {
                               .get<any>(`/api/bots/${previewBot.id}/activity?limit=${limit}`)
                               .then((json) => {
                                 setActivityLogs(json.data?.activity || []);
-                              })
-                              .catch((err) => {
-                                console.error('Failed to fetch bot activity logs:', err);
-                                setActivityLogs([]);
                               });
                           }
                         }}

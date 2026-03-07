@@ -51,7 +51,7 @@ const StatsWidget: React.FC<WidgetProps> = ({ widget, isEditing, onUpdate, onRem
         <h3 className="font-bold text-lg">{widget.title}</h3>
         {isEditing && (
           <div className="dropdown dropdown-end">
-            <div tabIndex={0} role="button" className="btn btn-ghost btn-sm btn-circle" aria-label="Widget options">⋮</div>
+            <div tabIndex={0} role="button" className="btn btn-ghost btn-sm btn-circle">⋮</div>
             <ul tabIndex={0} className="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-52">
               <li><a onClick={() => onConfigure?.(widget.id)}>⚙️ Configure</a></li>
               <li><a onClick={() => onRemove?.(widget.id)} className="text-error">🗑️ Remove</a></li>
@@ -86,7 +86,7 @@ const ChartWidget: React.FC<WidgetProps> = ({ widget, isEditing, onUpdate, onRem
         <h3 className="font-bold text-lg">{widget.title}</h3>
         {isEditing && (
           <div className="dropdown dropdown-end">
-            <div tabIndex={0} role="button" className="btn btn-ghost btn-sm btn-circle" aria-label="Widget options">⋮</div>
+            <div tabIndex={0} role="button" className="btn btn-ghost btn-sm btn-circle">⋮</div>
             <ul tabIndex={0} className="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-52">
               <li><a onClick={() => onConfigure?.(widget.id)}>⚙️ Configure</a></li>
               <li><a onClick={() => onRemove?.(widget.id)} className="text-error">🗑️ Remove</a></li>
@@ -128,7 +128,7 @@ const ActivityWidget: React.FC<WidgetProps> = ({ widget, isEditing, onUpdate, on
         <h3 className="font-bold text-lg">{widget.title}</h3>
         {isEditing && (
           <div className="dropdown dropdown-end">
-            <div tabIndex={0} role="button" className="btn btn-ghost btn-sm btn-circle" aria-label="Widget options">⋮</div>
+            <div tabIndex={0} role="button" className="btn btn-ghost btn-sm btn-circle">⋮</div>
             <ul tabIndex={0} className="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-52">
               <li><a onClick={() => onConfigure?.(widget.id)}>⚙️ Configure</a></li>
               <li><a onClick={() => onRemove?.(widget.id)} className="text-error">🗑️ Remove</a></li>
@@ -170,7 +170,7 @@ const QuickActionsWidget: React.FC<WidgetProps> = ({ widget, isEditing, onUpdate
         <h3 className="font-bold text-lg">{widget.title}</h3>
         {isEditing && (
           <div className="dropdown dropdown-end">
-            <div tabIndex={0} role="button" className="btn btn-ghost btn-sm btn-circle" aria-label="Widget options">⋮</div>
+            <div tabIndex={0} role="button" className="btn btn-ghost btn-sm btn-circle">⋮</div>
             <ul tabIndex={0} className="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-52">
               <li><a onClick={() => onConfigure?.(widget.id)}>⚙️ Configure</a></li>
               <li><a onClick={() => onRemove?.(widget.id)} className="text-error">🗑️ Remove</a></li>
@@ -205,7 +205,7 @@ const SystemHealthWidget: React.FC<WidgetProps> = ({ widget, isEditing, onUpdate
         <h3 className="font-bold text-lg">{widget.title}</h3>
         {isEditing && (
           <div className="dropdown dropdown-end">
-            <div tabIndex={0} role="button" className="btn btn-ghost btn-sm btn-circle" aria-label="Widget options">⋮</div>
+            <div tabIndex={0} role="button" className="btn btn-ghost btn-sm btn-circle">⋮</div>
             <ul tabIndex={0} className="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-52">
               <li><a onClick={() => onConfigure?.(widget.id)}>⚙️ Configure</a></li>
               <li><a onClick={() => onRemove?.(widget.id)} className="text-error">🗑️ Remove</a></li>
