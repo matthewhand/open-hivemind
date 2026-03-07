@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Card, Badge, Alert, Button, PageHeader, StatsCards } from '../DaisyUI';
 import {
   Activity,
@@ -65,7 +65,7 @@ const MonitoringDashboard: React.FC<MonitoringDashboardProps> = ({
     setActiveTab(newValue);
   };
 
-  const handleRefresh = async () => {
+  const handleRefresh = useCallback(async () => {
     setLoading(true);
     try {
       // Refresh all monitoring data
@@ -122,7 +122,7 @@ const MonitoringDashboard: React.FC<MonitoringDashboardProps> = ({
     } finally {
       setLoading(false);
     }
-  };
+  }, [onRefresh, refreshInterval]);
 
   useEffect(() => {
     handleRefresh();
@@ -132,7 +132,7 @@ const MonitoringDashboard: React.FC<MonitoringDashboardProps> = ({
     }, refreshInterval);
 
     return () => clearInterval(interval);
-  }, [refreshInterval]);
+  }, [handleRefresh, refreshInterval]);
 
   const getOverallHealthStatus = () => {
     if (!bots.length) { return 'unknown'; }
