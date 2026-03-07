@@ -5,6 +5,7 @@ import { body, param, validationResult } from 'express-validator';
 import { authenticate, requireAdmin } from '../../auth/middleware';
 import type { AuthMiddlewareRequest } from '../../auth/types';
 import { ConfigurationImportExportService } from '../services/ConfigurationImportExportService';
+type MulterFile = { path: string; fieldname: string; originalname: string; mimetype: string; size: number; };
 
 const multer = require('multer');
 
@@ -257,7 +258,7 @@ router.post(
   handleValidationErrors,
   async (req: AuthMiddlewareRequest, res: Response) => {
     try {
-      if (!(req as AuthMiddlewareRequest & { file?: Express.Multer.File }).file) {
+      if (!(req as AuthMiddlewareRequest & { file?: MulterFile }).file) {
         return res.status(400).json({
           success: false,
           message: 'No file uploaded',
@@ -268,14 +269,14 @@ router.post(
       const importedBy = authReq.user?.username || 'unknown';
 
       const result = await importExportService.importConfigurations(
-        (req as AuthMiddlewareRequest & { file?: Express.Multer.File }).file.path,
+        (req as AuthMiddlewareRequest & { file?: MulterFile }).file.path,
         req.body,
         importedBy
       );
 
       // Clean up uploaded file
       try {
-        await fs.unlink((req as AuthMiddlewareRequest & { file?: Express.Multer.File }).file.path);
+        await fs.unlink((req as AuthMiddlewareRequest & { file?: MulterFile }).file.path);
       } catch (cleanupError) {
         console.error('Error cleaning up uploaded file:', cleanupError);
       }
@@ -289,10 +290,10 @@ router.post(
       console.error('Error importing configurations:', error);
 
       // Clean up uploaded file if it exists
-      if ((req as AuthMiddlewareRequest & { file?: Express.Multer.File }).file) {
+      if ((req as AuthMiddlewareRequest & { file?: MulterFile }).file) {
         try {
           await fs.unlink(
-            (req as AuthMiddlewareRequest & { file?: Express.Multer.File }).file.path
+            (req as AuthMiddlewareRequest & { file?: MulterFile }).file.path
           );
         } catch (cleanupError) {
           console.error('Error cleaning up uploaded file:', cleanupError);
@@ -547,7 +548,7 @@ router.post(
   handleUploadError,
   async (req: AuthMiddlewareRequest, res: Response) => {
     try {
-      if (!(req as AuthMiddlewareRequest & { file?: Express.Multer.File }).file) {
+      if (!(req as AuthMiddlewareRequest & { file?: MulterFile }).file) {
         return res.status(400).json({
           success: false,
           message: 'No file uploaded',
@@ -555,7 +556,7 @@ router.post(
       }
 
       const result = await importExportService.importConfigurations(
-        (req as AuthMiddlewareRequest & { file?: Express.Multer.File }).file.path,
+        (req as AuthMiddlewareRequest & { file?: MulterFile }).file.path,
         {
           format: req.body.format || 'json',
           validateOnly: true,
@@ -566,7 +567,7 @@ router.post(
 
       // Clean up uploaded file
       try {
-        await fs.unlink((req as AuthMiddlewareRequest & { file?: Express.Multer.File }).file.path);
+        await fs.unlink((req as AuthMiddlewareRequest & { file?: MulterFile }).file.path);
       } catch (cleanupError) {
         console.error('Error cleaning up uploaded file:', cleanupError);
       }
@@ -580,10 +581,10 @@ router.post(
       console.error('Error validating file:', error);
 
       // Clean up uploaded file if it exists
-      if ((req as AuthMiddlewareRequest & { file?: Express.Multer.File }).file) {
+      if ((req as AuthMiddlewareRequest & { file?: MulterFile }).file) {
         try {
           await fs.unlink(
-            (req as AuthMiddlewareRequest & { file?: Express.Multer.File }).file.path
+            (req as AuthMiddlewareRequest & { file?: MulterFile }).file.path
           );
         } catch (cleanupError) {
           console.error('Error cleaning up uploaded file:', cleanupError);
