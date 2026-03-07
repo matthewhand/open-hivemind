@@ -48,14 +48,12 @@ describe('BotConfigService', () => {
     // returns our mock object rather than the default mock function
     (ConfigurationValidator as jest.Mock).mockReturnValue(mockValidator);
 
+    // We must reset the BotConfigService instance so it rebuilds itself and picks up the latest DatabaseManager and ConfigurationValidator mocks.
+    // @ts-expect-error - accessing private static for testing purposes
+    BotConfigService.instance = undefined;
+
     // Get instance (singleton)
     botConfigService = BotConfigService.getInstance();
-
-    // Directly inject mocks to bypass singleton caching issues
-    // @ts-expect-error - overriding private properties for testing
-    botConfigService.dbManager = mockDbManager;
-    // @ts-expect-error
-    botConfigService.configValidator = mockValidator;
   });
 
   describe('getInstance', () => {
@@ -100,8 +98,6 @@ describe('BotConfigService', () => {
       await expect(botConfigService.createBotConfig(validConfig)).rejects.toThrow(
         'Database is not configured'
       );
-
-      mockDbManager.isConfigured.mockReturnValue(true);
     });
 
     it('should throw error if validation fails', async () => {

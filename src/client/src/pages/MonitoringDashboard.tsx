@@ -7,25 +7,6 @@ import MetricChart from '../components/Monitoring/MetricChart';
 import AlertPanel from '../components/Monitoring/AlertPanel';
 import EventStream from '../components/Monitoring/EventStream';
 
-
-const extractChartData = (metrics: any[]) => {
-  return {
-    cpu: metrics.map(m => ({ timestamp: m.timestamp, value: m.cpuUsage, label: 'CPU' })),
-    memory: metrics.map(m => ({ timestamp: m.timestamp, value: m.memoryUsage, label: 'Memory' })),
-    messages: metrics.map(m => ({ timestamp: m.timestamp, value: m.messageRate, label: 'Messages' })),
-    errors: metrics.map(m => ({ timestamp: m.timestamp, value: m.errorRate, label: 'Errors' }))
-  };
-};
-
-const calculateAlertStats = (alerts: any[]) => {
-  return alerts.reduce((acc, a) => {
-    if (a.level === 'critical') acc.critical++;
-    else if (a.level === 'warning') acc.warning++;
-    else if (a.level === 'error') acc.error++;
-    return acc;
-  }, { critical: 0, warning: 0, error: 0, total: alerts.length });
-};
-
 const MonitoringDashboard: React.FC = () => {
   const { isConnected, connect, disconnect, performanceMetrics, alerts } = useWebSocket();
   const [refreshInterval, setRefreshInterval] = useState(5000);
@@ -37,10 +18,6 @@ const MonitoringDashboard: React.FC = () => {
       disconnect();
     };
   }, []);
-
-
-  const alertStats = React.useMemo(() => calculateAlertStats(alerts), [alerts]);
-  const chartData = React.useMemo(() => extractChartData(performanceMetrics), [performanceMetrics]);
 
   const currentMetric = performanceMetrics[performanceMetrics.length - 1] || {
     cpuUsage: 0,
@@ -55,7 +32,7 @@ const MonitoringDashboard: React.FC = () => {
     {
       title: 'System Health',
       subtitle: 'Overall Status',
-      status: alertStats.error > 0 || alertStats.critical > 0 ? 'warning' : 'healthy',
+      status: alerts.some(a => a.level === 'error' || a.level === 'critical') ? 'warning' : 'healthy',
       metrics: [
         { label: 'CPU Load', value: currentMetric.cpuUsage, unit: '%' },
         { label: 'Memory', value: currentMetric.memoryUsage, unit: '%' },
@@ -77,9 +54,9 @@ const MonitoringDashboard: React.FC = () => {
       subtitle: 'System Notifications',
       status: alerts.length > 0 ? 'warning' : 'healthy',
       metrics: [
-        { label: 'Total', value: alertStats.total, icon: '🔔' },
-        { label: 'Critical', value: alertStats.critical, icon: '🚨' },
-        { label: 'Warning', value: alertStats.warning, icon: '⚠️' }
+        { label: 'Total', value: alerts.length, icon: '🔔' },
+        { label: 'Critical', value: alerts.filter(a => a.level === 'critical').length, icon: '🚨' },
+        { label: 'Warning', value: alerts.filter(a => a.level === 'warning').length, icon: '⚠️' }
       ]
     },
     {
@@ -144,7 +121,11 @@ const MonitoringDashboard: React.FC = () => {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
         <MetricChart
           title="CPU Usage"
-          data={chartData.cpu}
+          data={performanceMetrics.map(m => ({
+            timestamp: m.timestamp,
+            value: m.cpuUsage,
+            label: 'CPU'
+          }))}
           type="area"
           color="#ef4444"
           unit="%"
@@ -152,7 +133,11 @@ const MonitoringDashboard: React.FC = () => {
         />
         <MetricChart
           title="Memory Usage"
-          data={chartData.memory}
+          data={performanceMetrics.map(m => ({
+            timestamp: m.timestamp,
+            value: m.memoryUsage,
+            label: 'Memory'
+          }))}
           type="line"
           color="#3b82f6"
           unit="%"
@@ -163,7 +148,11 @@ const MonitoringDashboard: React.FC = () => {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
         <MetricChart
           title="Message Rate"
-          data={chartData.messages}
+          data={performanceMetrics.map(m => ({
+            timestamp: m.timestamp,
+            value: m.messageRate,
+            label: 'Messages'
+          }))}
           type="bar"
           color="#10b981"
           unit="msgs/sec"
@@ -171,7 +160,11 @@ const MonitoringDashboard: React.FC = () => {
         />
         <MetricChart
           title="Error Rate"
-          data={chartData.errors}
+          data={performanceMetrics.map(m => ({
+            timestamp: m.timestamp,
+            value: m.errorRate,
+            label: 'Errors'
+          }))}
           type="line"
           color="#f59e0b"
           unit="%"

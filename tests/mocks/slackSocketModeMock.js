@@ -1,8 +1,7 @@
-const mockSocketModeClient = {
-  on: jest.fn(),
-  start: jest.fn().mockResolvedValue(true),
-  disconnect: jest.fn()
-};
-module.exports = {
-  SocketModeClient: jest.fn(() => mockSocketModeClient)
-};
+class SocketModeClient {
+  constructor() {
+    this.start = jest.fn().mockResolvedValue();
+    this.on = jest.fn();
+  }
+}
+module.exports = { SocketModeClient };

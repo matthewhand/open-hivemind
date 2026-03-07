@@ -20,6 +20,8 @@ jobs:
           node-version: '20'
       - name: Install dependencies
         run: npm install
+      - name: Audit for hardcoded secrets
+        run: npm run audit:secrets
       - name: Run unit tests
         id: unit-test
         run: |

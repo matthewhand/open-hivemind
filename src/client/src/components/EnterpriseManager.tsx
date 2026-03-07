@@ -1,5 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect } from 'react';
+
+import { FunnelIcon } from '@heroicons/react/24/outline';
 import {
   ShieldCheckIcon,
   CloudIcon,
@@ -90,6 +92,26 @@ const EnterpriseManager: React.FC = () => {
     provider: '',
     config: {} as Record<string, any>,
   });
+
+
+  // Audit Query states
+  const [auditSearchTerm, setAuditSearchTerm] = useState('');
+  const [auditActionFilter, setAuditActionFilter] = useState('all');
+  const [auditResultFilter, setAuditResultFilter] = useState('all');
+
+  const filteredAuditEvents = auditEvents.filter(event => {
+    const matchesSearch = auditSearchTerm === '' ||
+      event.user.toLowerCase().includes(auditSearchTerm.toLowerCase()) ||
+      event.resource.toLowerCase().includes(auditSearchTerm.toLowerCase()) ||
+      event.details.toLowerCase().includes(auditSearchTerm.toLowerCase());
+
+    const matchesAction = auditActionFilter === 'all' || event.action === auditActionFilter;
+    const matchesResult = auditResultFilter === 'all' || event.result === auditResultFilter;
+
+    return matchesSearch && matchesAction && matchesResult;
+  });
+
+  const uniqueActions = Array.from(new Set(auditEvents.map(e => e.action)));
 
   const [cloudForm, setCloudForm] = useState({
     name: '',
@@ -491,10 +513,57 @@ const EnterpriseManager: React.FC = () => {
         </div>
       );
 
+
     case 3: // Audit & Governance
       return (
         <div>
-          <h2 className="text-xl font-semibold mb-4">Audit Events</h2>
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-xl font-semibold">Audit Events</h2>
+            <div className="flex gap-2">
+              <div className="form-control">
+                <div className="input-group">
+                  <input
+                    type="text"
+                    placeholder="Search user, resource..."
+                    className="input input-sm input-bordered"
+                    value={auditSearchTerm}
+                    onChange={(e) => setAuditSearchTerm(e.target.value)}
+                  />
+                </div>
+              </div>
+              <select
+                className="select select-sm select-bordered"
+                value={auditActionFilter}
+                onChange={(e) => setAuditActionFilter(e.target.value)}
+              >
+                <option value="all">All Actions</option>
+                {uniqueActions.map(action => (
+                  <option key={action} value={action}>{action}</option>
+                ))}
+              </select>
+              <select
+                className="select select-sm select-bordered"
+                value={auditResultFilter}
+                onChange={(e) => setAuditResultFilter(e.target.value)}
+              >
+                <option value="all">All Results</option>
+                <option value="success">Success</option>
+                <option value="failure">Failure</option>
+                <option value="warning">Warning</option>
+              </select>
+              <button
+                className="btn btn-sm btn-outline"
+                onClick={() => {
+                  setAuditSearchTerm('');
+                  setAuditActionFilter('all');
+                  setAuditResultFilter('all');
+                }}
+                disabled={!auditSearchTerm && auditActionFilter === 'all' && auditResultFilter === 'all'}
+              >
+                <FunnelIcon className="w-4 h-4 mr-1" /> Clear Filters
+              </button>
+            </div>
+          </div>
           <div className="overflow-x-auto bg-base-100 rounded-box shadow">
             <table className="table table-zebra w-full">
               <thead>
@@ -503,17 +572,19 @@ const EnterpriseManager: React.FC = () => {
                   <th>User</th>
                   <th>Action</th>
                   <th>Resource</th>
+                  <th>Details</th>
                   <th>Result</th>
                   <th>IP Address</th>
                 </tr>
               </thead>
               <tbody>
-                {auditEvents.map((event) => (
+                {filteredAuditEvents.map((event) => (
                   <tr key={event.id}>
                     <td className="text-sm">{new Date(event.timestamp).toLocaleString()}</td>
                     <td>{event.user}</td>
-                    <td>{event.action}</td>
+                    <td><div className="badge badge-ghost badge-sm">{event.action}</div></td>
                     <td>{event.resource}</td>
+                    <td className="text-xs max-w-xs truncate" title={event.details}>{event.details}</td>
                     <td>
                       <div className={`badge ${getStatusColor(event.result)} badge-sm`}>
                         {event.result}
@@ -522,7 +593,13 @@ const EnterpriseManager: React.FC = () => {
                     <td className="font-mono text-xs">{event.ipAddress}</td>
                   </tr>
                 ))}
+                {filteredAuditEvents.length === 0 && (
+                  <tr>
+                    <td colSpan={7} className="text-center py-4">No audit events match the current structured query.</td>
+                  </tr>
+                )}
               </tbody>
+
             </table>
           </div>
         </div>

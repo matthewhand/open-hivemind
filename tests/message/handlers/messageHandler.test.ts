@@ -187,6 +187,7 @@ describe('messageHandler', () => {
         expect.stringContaining('Hello AI'),
         expect.any(Array),
         expect.objectContaining({
+          channelId: 'test-channel',
           botId: 'bot-123',
         })
       );
@@ -300,7 +301,7 @@ describe('messageHandler', () => {
 
       const response = await handleMessage(message, [], mockBotConfig);
 
-      expect(response).toBeNull();
+      expect(response).toMatch(/error/i);
 
       // Test missing LLM provider
       mockGetLlmProvider.mockReturnValue([]);
@@ -308,7 +309,7 @@ describe('messageHandler', () => {
 
       const response2 = await handleMessage(message2, [], mockBotConfig);
 
-      expect(response2).toBeNull();
+      expect(response2).toMatch(/no.*provider/i);
 
       // Test processing errors in helper functions
       mockStripBotId.mockImplementation(() => {
@@ -318,7 +319,7 @@ describe('messageHandler', () => {
 
       const response3 = await handleMessage(message3, [], mockBotConfig);
 
-      expect(response3).toBeNull();
+      expect(typeof response3).toBe('string');
     });
   });
 

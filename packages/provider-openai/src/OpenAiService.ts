@@ -18,7 +18,9 @@ import {
 } from '@src/types/openai';
 import llmConfig from '@config/llmConfig';
 import openaiConfig from '@config/openaiConfig';
-// removed local listModels import
+import { redactSensitiveInfo } from '@common/redactSensitiveInfo';
+import { listModels } from './operations/listModels';
+
 const debug = Debug('app:OpenAiService');
 
 // Guard: Validate openaiConfig object
@@ -255,8 +257,7 @@ export class OpenAiService {
     debug('[DEBUG] listModels called');
     try {
       const models = await this.retryWithBackoff(async () => {
-        const response = await this.openai.models.list();
-        return { data: response.data as any[] };
+        return await listModels(this.openai);
       });
       debug('[DEBUG] Models retrieved:', models);
       return models;

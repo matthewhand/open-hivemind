@@ -32,19 +32,25 @@ test.describe('Bot Creation Form Validation', () => {
   test.setTimeout(90000);
 
   test.beforeEach(async ({ page }) => {
-    await page.route('/api/config', route => route.fulfill({ status: 200, json: {} }));
-    await page.route('/api/admin/llm-profiles', route => route.fulfill({
-      status: 200,
-      json: { data: [{ key: 'openai', name: 'OpenAI', provider: 'openai' }] }
-    }));
-    await page.route('/api/admin/guard-profiles', route => route.fulfill({
-      status: 200,
-      json: { data: [] }
-    }));
-    await page.route('/api/config/llm-status', route => route.fulfill({
-      status: 200,
-      json: { defaultConfigured: true }
-    }));
+    await page.route('/api/config', (route) => route.fulfill({ status: 200, json: {} }));
+    await page.route('/api/admin/llm-profiles', (route) =>
+      route.fulfill({
+        status: 200,
+        json: { data: [{ key: 'openai', name: 'OpenAI', provider: 'openai' }] },
+      })
+    );
+    await page.route('/api/admin/guard-profiles', (route) =>
+      route.fulfill({
+        status: 200,
+        json: { data: [] },
+      })
+    );
+    await page.route('/api/config/llm-status', (route) =>
+      route.fulfill({
+        status: 200,
+        json: { defaultConfigured: true },
+      })
+    );
   });
 
   test('Create Bot modal opens with all form fields', async ({ page }) => {
@@ -69,7 +75,7 @@ test.describe('Bot Creation Form Validation', () => {
     const modal = await openCreateBotModal(page);
 
     // Find the submit button WITHIN the modal
-    const submitButton = modal.locator('button').filter({ hasText: /create bot/i });
+    const submitButton = modal.locator('button').filter({ hasText: /Next/i });
 
     // Should be disabled when form is empty
     await expect(submitButton).toBeDisabled();
@@ -92,7 +98,7 @@ test.describe('Bot Creation Form Validation', () => {
     await nameInput.fill('Test Bot');
     await page.waitForTimeout(300);
 
-    const submitButton = modal.locator('button').filter({ hasText: /create bot/i });
+    const submitButton = modal.locator('button').filter({ hasText: /Next/i });
     await expect(submitButton).toBeDisabled();
 
     await page.screenshot({ path: 'test-results/create-bot-03-only-name.png', fullPage: true });
@@ -117,7 +123,7 @@ test.describe('Bot Creation Form Validation', () => {
     }
     await page.waitForTimeout(300);
 
-    const submitButton = modal.locator('button').filter({ hasText: /create bot/i });
+    const submitButton = modal.locator('button').filter({ hasText: /Next/i });
     await expect(submitButton).toBeDisabled();
 
     await page.screenshot({ path: 'test-results/create-bot-04-no-message.png', fullPage: true });
@@ -125,10 +131,12 @@ test.describe('Bot Creation Form Validation', () => {
   });
 
   test('Submit button disabled without LLM provider', async ({ page }) => {
-    await page.route('/api/config/llm-status', route => route.fulfill({
-      status: 200,
-      json: { defaultConfigured: false }
-    }));
+    await page.route('/api/config/llm-status', (route) =>
+      route.fulfill({
+        status: 200,
+        json: { defaultConfigured: false },
+      })
+    );
     const errors = await setupTestWithErrorDetection(page);
     await navigateAndWaitReady(page, '/admin/bots');
 
@@ -137,15 +145,15 @@ test.describe('Bot Creation Form Validation', () => {
     // Fill name
     await modal.locator('input').first().fill('Test Bot');
 
-    // Select only message provider (second select after persona)
+    // Select only message provider (index 0 on step 1)
     const selects = modal.locator('select');
     const selectCount = await selects.count();
-    if (selectCount >= 2) {
-      await selects.nth(1).selectOption('discord');
+    if (selectCount >= 1) {
+      await selects.nth(0).selectOption('discord');
     }
     await page.waitForTimeout(300);
 
-    const submitButton = modal.locator('button').filter({ hasText: /create bot/i });
+    const submitButton = modal.locator('button').filter({ hasText: /Next/i });
     await expect(submitButton).toBeDisabled();
 
     await page.screenshot({ path: 'test-results/create-bot-05-no-llm.png', fullPage: true });
@@ -194,14 +202,19 @@ test.describe('Bot Creation Form Validation', () => {
   });
 
   test('Error styling on empty required selects', async ({ page }) => {
-    await page.route('/api/config/llm-status', route => route.fulfill({
-      status: 200,
-      json: { defaultConfigured: false }
-    }));
+    await page.route('/api/config/llm-status', (route) =>
+      route.fulfill({
+        status: 200,
+        json: { defaultConfigured: false },
+      })
+    );
     const errors = await setupTestWithErrorDetection(page);
     await navigateAndWaitReady(page, '/admin/bots');
 
     const modal = await openCreateBotModal(page);
+
+    // Fill name to enable check
+    await modal.locator('input').first().fill('Test Bot');
 
     // Check for error styling on selects
     const errorSelects = modal.locator('select.select-error');
@@ -235,8 +248,14 @@ test.describe('Bot Creation Form Validation', () => {
     await nextButton.click();
     await page.waitForTimeout(300);
 
-    expect(value).toBeTruthy();
-    expect(value).toBe('default');
+    // In step 2, persona is a radio group
+    const personaInput = modal.locator('input[name="persona"]');
+    // Default is usually checked by default
+    const count = await personaInput.count();
+    expect(count).toBeGreaterThan(0);
+
+    const checkedCount = await modal.locator('input[name="persona"]:checked').count();
+    expect(checkedCount).toBe(1);
 
     await page.screenshot({ path: 'test-results/create-bot-08-persona.png', fullPage: true });
     await assertNoErrors(errors, 'Persona default value');
@@ -285,7 +304,7 @@ test.describe('Bot Creation Form Validation', () => {
     const modal = await openCreateBotModal(page);
 
     // Find Message Provider label section
-    const msgLabel = modal.locator('label:has-text("Message Provider")');
+    const msgLabel = modal.locator('label').filter({ hasText: 'Message Provider' }).first();
     const msgFormControl = msgLabel.locator('xpath=..'); // Parent
 
     // Should have a square button with +
