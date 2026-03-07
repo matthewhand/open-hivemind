@@ -41,8 +41,9 @@ interface BotData {
 =======
 import EmptyState from '../components/DaisyUI/EmptyState';
 import { LoadingSpinner } from '../components/DaisyUI/Loading';
-import { withRetry, ErrorService } from '../services/apiService';
-import apiService from '../services/apiService';
+import { ErrorService } from '../services/apiService';
+import { apiService } from '../services/api';
+import { withRetry } from '../utils/withRetry';
 import type { BotConfig, ProviderModalState } from '../types/bot';
 import { LLMProviderType, MessageProviderType } from '../types/bot';
 import BotCard from '../components/BotManagement/BotCard';
