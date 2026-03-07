@@ -36,6 +36,16 @@ export interface ProviderConfigField {
   component?: React.ComponentType<any>;
   componentProps?: Record<string, any>;
   dependsOn?: string | { field: string; value: any }; // Field dependency
+  // Helper action for fetching data (e.g., agent lookup)
+  helperAction?: {
+    type: 'fetch';
+    label: string;
+    description: string;
+    endpoint: string;
+    method: 'GET' | 'POST';
+    targetField: string;
+    valuePath: string;
+  };
 }
 
 export interface ProviderConfigFormProps {

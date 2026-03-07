@@ -7,6 +7,7 @@ export * from './schemas/mcp';
 export * from './schemas/flowise';
 export * from './schemas/openwebui';
 export * from './schemas/mattermost';
+export * from './schemas/letta';
 
 // Registry of all available provider schemas
 import type { ProviderConfigSchema } from './types';
@@ -17,6 +18,7 @@ import { mcpProviderSchema } from './schemas/mcp';
 import { flowiseProviderSchema } from './schemas/flowise';
 import { mattermostProviderSchema } from './schemas/mattermost';
 import { openWebUiProviderSchema } from './schemas/openwebui';
+import { lettaProviderSchema } from './schemas/letta';
 
 export const PROVIDER_SCHEMAS: Record<string, ProviderConfigSchema> = {
   // Message providers
@@ -28,6 +30,7 @@ export const PROVIDER_SCHEMAS: Record<string, ProviderConfigSchema> = {
   openai: openAIProviderSchema,
   flowise: flowiseProviderSchema,
   openwebui: openWebUiProviderSchema,
+  letta: lettaProviderSchema,
 
   // MCP providers
   mcp: mcpProviderSchema,
