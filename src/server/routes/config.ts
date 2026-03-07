@@ -2,6 +2,10 @@ import fs from 'fs';
 import path from 'path';
 import Debug from 'debug';
 import { Router } from 'express';
+import type { Request } from 'express';
+
+// Define a type for internal request casting since AuthMiddlewareRequest import is failing
+type AuthMiddlewareRequest = Request & { user?: { id: string; role: string; username?: string } };
 import { testMattermostConnection } from '@hivemind/adapter-mattermost';
 import { testSlackConnection } from '@hivemind/adapter-slack';
 import { redactSensitiveInfo } from '../../common/redactSensitiveInfo';
@@ -539,7 +543,7 @@ router.put('/global', validateRequest(ConfigUpdateSchema), async (req, res) => {
 
       if (process.env.NODE_ENV !== 'test') {
         logConfigChange(
-          req as AuthMiddlewareRequest,
+          req as unknown as AuthMiddlewareRequest,
           'UPDATE',
           'config/general',
           'success',
@@ -617,7 +621,7 @@ router.put('/global', validateRequest(ConfigUpdateSchema), async (req, res) => {
 
     if (process.env.NODE_ENV !== 'test') {
       logConfigChange(
-        req as AuthMiddlewareRequest,
+        req as unknown as AuthMiddlewareRequest,
         'UPDATE',
         `config/${configName}`,
         'success',
