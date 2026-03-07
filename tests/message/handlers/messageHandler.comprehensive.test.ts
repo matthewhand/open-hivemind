@@ -238,6 +238,8 @@ describe('messageHandler Configuration and Features', () => {
     );
   });
 
+
+
   it('should bypass spam probability check if mentioned', async () => {
     const botConfig = { name: 'PingBot' };
 
@@ -308,6 +310,8 @@ describe('messageHandler Configuration and Features', () => {
     const result = await handleMessage(mockMessage, [], { name: 'EmptyBot' });
     expect(result).toBeNull();
   });
+
+
 
   it('should handle invalid message detected by input sanitizer', async () => {
     (InputSanitizer.validateMessage as jest.Mock).mockReturnValue({

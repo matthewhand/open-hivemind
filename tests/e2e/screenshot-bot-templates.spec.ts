@@ -89,9 +89,7 @@ test.describe('Bot Templates Page Screenshots', () => {
 
     // Wait for the page to load and content to be visible
     await expect(page.getByText('Bot Templates')).toBeVisible();
-    await expect(
-      page.locator('h2.card-title').filter({ hasText: 'Helpful Assistant' })
-    ).toBeVisible();
+    await expect(page.locator('h2.card-title').filter({ hasText: 'Helpful Assistant' })).toBeVisible();
 
     // Wait a bit for images/badges to render
     await page.waitForTimeout(500);
@@ -110,9 +108,7 @@ test.describe('Bot Templates Page Screenshots', () => {
     // Clear search
     await searchInput.clear();
     await page.waitForTimeout(300);
-    await expect(
-      page.locator('h2.card-title').filter({ hasText: 'Helpful Assistant' })
-    ).toBeVisible();
+    await expect(page.locator('h2.card-title').filter({ hasText: 'Helpful Assistant' })).toBeVisible();
 
     // Test Interaction: Filter by Platform 'Discord'
     const platformSelect = page.locator('select').nth(0); // First select is Platform

@@ -620,7 +620,7 @@ describe('COMPREHENSIVE SECURITY & AUTHENTICATION TESTS - PHASE 4', () => {
             if (origin?.includes('localhost') || origin?.includes('127.0.0.1')) {
               expect(
                 response.headers['access-control-allow-origin'] ||
-                  response.headers['Access-Control-Allow-Origin']
+                response.headers['Access-Control-Allow-Origin']
               ).toBeTruthy();
             }
           }
@@ -778,9 +778,7 @@ describe('COMPREHENSIVE SECURITY & AUTHENTICATION TESTS - PHASE 4', () => {
           for (const userId of userIds) {
             const responses = [];
             for (let i = 0; i < 10; i++) {
-              responses.push(
-                await applyHeaders(api.get('/dashboard/api/status'), { 'X-User-ID': userId })
-              );
+              responses.push(await applyHeaders(api.get('/dashboard/api/status'), { 'X-User-ID': userId }));
             }
 
             responses.forEach((response) => {

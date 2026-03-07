@@ -1,4 +1,4 @@
-import axios, { AxiosInstance } from 'axios';
+import axios from 'axios';
 import Debug from 'debug';
 import type { IMessage } from '@src/message/interfaces/IMessage';
 import type { ILlmProvider } from '@llm/interfaces/ILlmProvider';

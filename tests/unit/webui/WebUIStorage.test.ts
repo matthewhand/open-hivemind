@@ -19,7 +19,7 @@ describe('WebUIStorage Performance', () => {
     jest.clearAllMocks();
     (fs.existsSync as jest.Mock).mockReturnValue(true);
     (fs.readFileSync as jest.Mock).mockReturnValue(JSON.stringify(mockConfig));
-    (fs.writeFileSync as jest.Mock).mockImplementation(() => {});
+    (fs.writeFileSync as jest.Mock).mockImplementation(() => { });
     (fs.mkdirSync as jest.Mock).mockImplementation(() => undefined);
 
     storage = new WebUIStorage();

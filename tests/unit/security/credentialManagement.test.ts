@@ -59,7 +59,7 @@ describe('Credential Management and Secret Handling', () => {
 
       // List configurations
       const configs = await configManager.listConfigs();
-      const configIds = configs.map((c) => c.id);
+      const configIds = configs.map(c => c.id);
 
       expect(configIds).toContain('test-config-1');
       expect(configIds).toContain('test-config-2');

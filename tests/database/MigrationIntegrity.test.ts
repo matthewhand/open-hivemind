@@ -16,7 +16,7 @@ describe('Migration Integrity', () => {
     // Open a real in-memory SQLite database
     db = await open({
       filename: ':memory:',
-      driver: sqlite3Raw.Database,
+      driver: sqlite3Raw.Database
     });
 
     const createBaseTables = `
@@ -58,21 +58,17 @@ describe('Migration Integrity', () => {
     await migrationManager.runMigrations();
 
     // Verify a new table was created
-    const anomalyTable = await db.get(
-      "SELECT name FROM sqlite_master WHERE type='table' AND name='anomaly_detection'"
-    );
+    const anomalyTable = await db.get("SELECT name FROM sqlite_master WHERE type='table' AND name='anomaly_detection'");
     expect(anomalyTable).toBeDefined();
     expect(anomalyTable.name).toBe('anomaly_detection');
 
     // Verify columns were added (e.g., tenantId to bot_configurations)
-    const botConfigCols = await db.all('PRAGMA table_info(bot_configurations)');
+    const botConfigCols = await db.all("PRAGMA table_info(bot_configurations)");
     const tenantIdCol = botConfigCols.find((col: any) => col.name === 'tenantId');
     expect(tenantIdCol).toBeDefined();
 
     // Verify index was created
-    const indexCheck = await db.get(
-      "SELECT name FROM sqlite_master WHERE type='index' AND name='idx_bot_configurations_tenant'"
-    );
+    const indexCheck = await db.get("SELECT name FROM sqlite_master WHERE type='index' AND name='idx_bot_configurations_tenant'");
     expect(indexCheck).toBeDefined();
   });
 
@@ -85,15 +81,11 @@ describe('Migration Integrity', () => {
     await migrationManager.rollbackToVersion(0);
 
     // Verify the newly created table was removed
-    const anomalyTable = await db.get(
-      "SELECT name FROM sqlite_master WHERE type='table' AND name='anomaly_detection'"
-    );
+    const anomalyTable = await db.get("SELECT name FROM sqlite_master WHERE type='table' AND name='anomaly_detection'");
     expect(anomalyTable).toBeUndefined();
 
     // Verify the index was dropped
-    const indexCheck = await db.get(
-      "SELECT name FROM sqlite_master WHERE type='index' AND name='idx_bot_configurations_tenant'"
-    );
+    const indexCheck = await db.get("SELECT name FROM sqlite_master WHERE type='index' AND name='idx_bot_configurations_tenant'");
     expect(indexCheck).toBeUndefined();
 
     // Verify tracking table is clean

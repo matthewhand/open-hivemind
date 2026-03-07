@@ -18,7 +18,6 @@ import {
 } from '@src/types/openai';
 import llmConfig from '@config/llmConfig';
 import openaiConfig from '@config/openaiConfig';
-
 // removed local listModels import
 const debug = Debug('app:OpenAiService');
 

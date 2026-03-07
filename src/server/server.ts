@@ -26,7 +26,7 @@ import dashboardRouter from './routes/dashboard';
 import errorsRouter from './routes/errors';
 // Route imports
 import guardsRouter from './routes/guards';
-import healthRouter, { PROMETHEUS_METRICS_PATH } from './routes/health';
+import healthRouter from './routes/health';
 import hotReloadRouter from './routes/hotReload';
 import importExportRouter from './routes/importExport';
 import mcpRouter from './routes/mcp';

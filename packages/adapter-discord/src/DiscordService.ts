@@ -193,7 +193,7 @@ export class DiscordService extends EventEmitter implements IMessengerService {
             ...(newBot.config.discord || {}),
             clientId: newBot.botUserId,
           };
-        } catch {}
+        } catch { }
         resolve();
       });
       newBot.client.login(newBot.config.token).catch(reject);
@@ -281,7 +281,7 @@ export class DiscordService extends EventEmitter implements IMessengerService {
           botName: 'DiscordService',
           metadata: { channelId, errorType: 'NetworkError' },
         });
-      } catch {}
+      } catch { }
 
       return [];
     }
@@ -416,13 +416,13 @@ export class DiscordService extends EventEmitter implements IMessengerService {
 
       const byId = cfgId
         ? this.botManager
-            .getAllBots()
-            .find(
-              (b) =>
-                b.botUserId === cfgId ||
-                b.config?.BOT_ID === cfgId ||
-                b.config?.discord?.clientId === cfgId
-            )
+          .getAllBots()
+          .find(
+            (b) =>
+              b.botUserId === cfgId ||
+              b.config?.BOT_ID === cfgId ||
+              b.config?.discord?.clientId === cfgId
+          )
         : undefined;
 
       const byInstanceName = agentInstanceName ? this.getBotByName(agentInstanceName) : undefined;
@@ -534,10 +534,7 @@ export class DiscordService extends EventEmitter implements IMessengerService {
 
   public async joinVoiceChannel(channelId: string): Promise<void> {
     const { ConfigError } = this.deps.errorTypes;
-    throw new ConfigError(
-      'Voice manager not initialized/supported',
-      'DISCORD_VOICE_MANAGER_NOT_INIT'
-    );
+    throw new ConfigError('Voice manager not initialized/supported', 'DISCORD_VOICE_MANAGER_NOT_INIT');
   }
 
   public async leaveVoiceChannel(channelId: string): Promise<void> {
@@ -594,7 +591,7 @@ export class DiscordService extends EventEmitter implements IMessengerService {
 
         getDefaultChannel: () => this.getDefaultChannel(),
 
-        setMessageHandler: (handler) => {},
+        setMessageHandler: (handler) => { },
 
         supportsChannelPrioritization: this.supportsChannelPrioritization,
         scoreChannel: this.scoreChannel ? (cid, meta) => this.scoreChannel!(cid, meta) : undefined,
