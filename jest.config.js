@@ -1,4 +1,16 @@
-const unitIntegrationProject = {
+module.exports = {
+  collectCoverage: true,
+  coverageDirectory: "coverage",
+  coverageReporters: ["html", "text", "lcov"],
+  coverageThreshold: {
+    global: {
+      branches: 61,
+      functions: 69,
+      lines: 73,
+      statements: 72,
+    },
+  },
+  forceExit: true,
   displayName: 'unit-integration',
   roots: ['<rootDir>/tests', '<rootDir>/packages'],
   preset: 'ts-jest',
@@ -58,59 +70,4 @@ const unitIntegrationProject = {
   transformIgnorePatterns: [
     '/node_modules/(?!chai|other-esm-dependency|node-fetch|data-uri-to-buffer|@modelcontextprotocol/sdk|fetch-blob|uuid)',
   ],
-};
-
-const realIntegrationProject = {
-  displayName: 'real-integration',
-  roots: ['<rootDir>/tests'],
-  preset: 'ts-jest',
-  testEnvironment: 'node',
-  transform: {
-    '^.+\.tsx?$': 'babel-jest',
-    '^.+\.jsx?$': 'babel-jest',
-    '^.+\.js$': 'babel-jest',
-  },
-  testRegex: '(\.|/)(real\.test)\.[tj]sx?$',
-  moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json', 'node'],
-  moduleNameMapper: {
-    '^@src/integrations/slack/(.*)$': '<rootDir>/packages/adapter-slack/src/$1',
-    '^@src/integrations/mattermost/(.*)$': '<rootDir>/packages/adapter-mattermost/src/$1',
-    '^@src/(.*)$': '<rootDir>/src/$1',
-    '^@config/(.*)$': '<rootDir>/src/config/$1',
-    '^@integrations/slack/(.*)$': '<rootDir>/packages/adapter-slack/src/$1',
-    '^@integrations/mattermost/(.*)$': '<rootDir>/packages/adapter-mattermost/src/$1',
-    '^@integrations/(.*)$': '<rootDir>/src/integrations/$1',
-    '^@types/(.*)$': '<rootDir>/src/types/$1',
-    '^@hivemind/adapter-discord$': '<rootDir>/packages/adapter-discord/src/index.ts',
-    '^@hivemind/adapter-discord/(.*)$': '<rootDir>/packages/adapter-discord/src/$1',
-    '^@hivemind/adapter-slack$': '<rootDir>/packages/adapter-slack/src/index.ts',
-    '^@hivemind/adapter-slack/(.*)$': '<rootDir>/packages/adapter-slack/src/$1',
-    '^@hivemind/adapter-mattermost$': '<rootDir>/packages/adapter-mattermost/src/index.ts',
-    '^@hivemind/adapter-mattermost/(.*)$': '<rootDir>/packages/adapter-mattermost/src/$1',
-  },
-  setupFilesAfterEnv: ['<rootDir>/tests/real.setup.ts'],
-  testPathIgnorePatterns: ['/node_modules/', '/dist/', '/tests/unit/', '/tests/integration/'],
-};
-
-const projects = [
-  unitIntegrationProject,
-  /*
-  {
-    displayName: 'frontend',
-    roots: ['<rootDir>/src/client'],
-    ...
-  },
-  */
-];
-
-if (process.env.RUN_REAL_TESTS === 'true') {
-  projects.push(realIntegrationProject);
-}
-
-module.exports = {
-  collectCoverage: true,
-  coverageDirectory: 'coverage',
-  coverageReporters: ['html', 'text', 'lcov'],
-
-  projects,
 };

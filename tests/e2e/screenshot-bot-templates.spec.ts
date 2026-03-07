@@ -89,7 +89,7 @@ test.describe('Bot Templates Page Screenshots', () => {
 
     // Wait for the page to load and content to be visible
     await expect(page.getByText('Bot Templates')).toBeVisible();
-    await expect(page.getByText('Helpful Assistant')).toBeVisible();
+    await expect(page.locator('h2.card-title').filter({ hasText: 'Helpful Assistant' })).toBeVisible();
 
     // Wait a bit for images/badges to render
     await page.waitForTimeout(500);
@@ -107,7 +107,7 @@ test.describe('Bot Templates Page Screenshots', () => {
     // Clear search
     await searchInput.clear();
     await page.waitForTimeout(300);
-    await expect(page.getByText('Helpful Assistant')).toBeVisible();
+    await expect(page.locator('h2.card-title').filter({ hasText: 'Helpful Assistant' })).toBeVisible();
 
     // Test Interaction: Filter by Platform 'Discord'
     const platformSelect = page.locator('select').nth(0); // First select is Platform
@@ -119,6 +119,7 @@ test.describe('Bot Templates Page Screenshots', () => {
     // Verify filtering
     await expect(page.getByText('Helpful Assistant')).toBeVisible(); // Discord bot
     await expect(page.getByText('Code Reviewer')).toBeHidden(); // Slack bot
+<<<<<<< HEAD
 
     // Test Interaction: Open Diff Viewer
     await page.locator('button[title="Compare Versions"]').first().click();
@@ -129,5 +130,7 @@ test.describe('Bot Templates Page Screenshots', () => {
 
     // Take screenshot of diff viewer
     await page.screenshot({ path: 'docs/screenshots/template-version-diff-viewer.png' });
+=======
+>>>>>>> origin/main
   });
 });

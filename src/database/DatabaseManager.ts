@@ -1,8 +1,10 @@
+import 'reflect-metadata';
 import { promises as fs } from 'fs';
 import { join } from 'path';
 import Debug from 'debug';
 import { open, type Database } from 'sqlite';
 import sqlite3 from 'sqlite3';
+import { injectable, singleton } from 'tsyringe';
 import { ConfigurationError, DatabaseError } from '@src/types/errorClasses';
 
 const debug = Debug('app:DatabaseManager');
@@ -299,6 +301,8 @@ export interface AIFeedback {
   metadata?: Record<string, unknown>;
 }
 
+@singleton()
+@injectable()
 export class DatabaseManager {
   private static instance: DatabaseManager | null = null;
   private config?: DatabaseConfig;
@@ -306,7 +310,7 @@ export class DatabaseManager {
   private connected = false;
   private db: Database | null = null;
 
-  private constructor(config?: DatabaseConfig) {
+  constructor(config?: DatabaseConfig) {
     if (config) {
       this.configure(config);
     }

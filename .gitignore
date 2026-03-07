@@ -23,6 +23,8 @@ config/test/providers/instances.json
 # Configuration files with sensitive data
 config/user/
 config/providers/
+config/backups/
+backup*.json
 .env.real
 *.config.json
 *credentials*
@@ -147,7 +149,6 @@ dist/config/environments/.env.backup
 .vscode-test
 
 # yarn v2
-*.bak
 .yarn/cache
 .yarn/unplugged
 .yarn/build-state.yml
@@ -193,6 +194,9 @@ test-results/
 # User bot state config
 config/user-config.json
 config/message-profiles.json
+
+# Configuration Migration Backups
+*.bak
 
 .qwen
 .serena

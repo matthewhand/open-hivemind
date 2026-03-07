@@ -25,6 +25,18 @@ const ChatPage: React.FC = () => {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [loading, setLoading] = useState(false);
   const [historyLoading, setHistoryLoading] = useState(false);
+  const [isOffline, setIsOffline] = useState(!navigator.onLine);
+
+  useEffect(() => {
+    const handleOnline = () => setIsOffline(false);
+    const handleOffline = () => setIsOffline(true);
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
 
   useEffect(() => {
     fetchBots();
@@ -89,25 +101,34 @@ const ChatPage: React.FC = () => {
 
   const selectedBot = bots.find(b => b.id === selectedBotId);
 
-  const handleSendMessage = async (content: string) => {
+  const handleSendMessage = async (content: string, existingId?: string) => {
     if (!selectedBotId) return;
 
-    const tempId = `temp-${Date.now()}`;
-    const tempMessage: ChatMessage = {
-      id: tempId,
-      content,
-      timestamp: new Date().toISOString(),
-      sender: {
-        id: 'current-user',
-        name: 'You',
-        type: 'user',
-      },
-      metadata: {
-        status: 'sending',
-      },
-    };
+    const tempId = existingId || `temp-${Date.now()}`;
 
-    setMessages(prev => [...prev, tempMessage]);
+    if (existingId) {
+      // If retrying, reset the status to sending
+      setMessages(prev => prev.map(m =>
+        m.id === tempId
+          ? { ...m, metadata: { ...m.metadata, status: 'sending' } }
+          : m
+      ));
+    } else {
+      const tempMessage: ChatMessage = {
+        id: tempId,
+        content,
+        timestamp: new Date().toISOString(),
+        sender: {
+          id: 'current-user',
+          name: 'You',
+          type: 'user',
+        },
+        metadata: {
+          status: 'sending',
+        },
+      };
+      setMessages(prev => [...prev, tempMessage]);
+    }
 
     try {
       await apiService.post(`/api/bots/${selectedBotId}/message`, { content });
@@ -116,8 +137,19 @@ const ChatPage: React.FC = () => {
       await fetchHistory(selectedBotId);
     } catch (err) {
       console.error('Failed to send message:', err);
-      // Rollback optimistic update on error
-      setMessages(prev => prev.filter(m => m.id !== tempId));
+      // Mark optimistic update as failed
+      setMessages(prev => prev.map(m =>
+        m.id === tempId
+          ? { ...m, metadata: { ...m.metadata, status: 'failed' } }
+          : m
+      ));
+    }
+  };
+
+  const handleRetryMessage = (messageId: string) => {
+    const messageToRetry = messages.find(m => m.id === messageId);
+    if (messageToRetry) {
+      handleSendMessage(messageToRetry.content, messageId);
     }
   };
 
@@ -178,11 +210,17 @@ const ChatPage: React.FC = () => {
                                 <span className="loading loading-spinner loading-lg text-primary"></span>
                             </div>
                         )}
+                        {isOffline && (
+                            <div className="bg-warning text-warning-content p-2 text-center text-sm font-semibold">
+                                You are currently offline. Messages cannot be sent.
+                            </div>
+                        )}
                         <ChatInterface
                             messages={messages}
                             onSendMessage={handleSendMessage}
-                            placeholder="Type a message..."
-                            className="h-full"
+                            onRetryMessage={handleRetryMessage}
+                            placeholder={isOffline ? "You are offline" : "Type a message..."}
+                            className={`h-full ${isOffline ? 'opacity-50 pointer-events-none' : ''}`}
                             maxHeight="100%"
                             isLoading={false}
                         />

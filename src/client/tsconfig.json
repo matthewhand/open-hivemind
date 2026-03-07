@@ -4,8 +4,7 @@
     "jsx": "react-jsx",
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true,
-    "skipLibCheck": true,
-    "noEmitOnError": false,
+    "typeRoots": ["./node_modules/@types"]
   },
   "include": [
     "src/**/*"

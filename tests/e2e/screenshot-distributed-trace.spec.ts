@@ -1,0 +1,128 @@
+import { expect, test } from '@playwright/test';
+import { setupAuth } from './test-utils';
+
+test.describe('Distributed Trace Waterfall Screenshots', () => {
+  test('capture distributed trace waterfall screenshot', async ({ page }) => {
+    // Setup authentication
+    await setupAuth(page);
+
+    // Mock API endpoints
+    await page.route('**/api/auth/check', async (route) => {
+      await route.fulfill({ status: 200, json: { authenticated: true, user: { role: 'admin' } } });
+    });
+
+    await page.route('**/api/config/llm-status', async (route) =>
+      route.fulfill({ status: 200, json: { defaultConfigured: true } })
+    );
+
+    await page.route('**/api/config/global', async (route) =>
+      route.fulfill({ status: 200, json: { bots: [] } })
+    );
+
+    await page.route('**/api/config/llm-profiles', async (route) =>
+      route.fulfill({ status: 200, json: [] })
+    );
+
+    await page.route('**/api/admin/guard-profiles', async (route) =>
+      route.fulfill({ status: 200, json: [] })
+    );
+
+    await page.route('**/api/demo/status', async (route) =>
+      route.fulfill({ status: 200, json: { enabled: false } })
+    );
+
+    await page.route('**/api/csrf-token', async (route) =>
+      route.fulfill({ status: 200, json: { csrfToken: 'mock-token' } })
+    );
+
+    // Mock dashboard status endpoints
+    await page.route('**/api/health/detailed', async (route) =>
+      route.fulfill({
+        status: 200,
+        json: {
+          status: 'healthy',
+          timestamp: new Date().toISOString(),
+          uptime: 3600 * 24 * 5,
+          memory: { used: 8 * 1024, total: 16 * 1024, usage: 50 },
+          cpu: { user: 15, system: 5 },
+          system: {
+            platform: 'linux',
+            arch: 'x64',
+            release: '5.15.0',
+            hostname: 'prod-server-01',
+            loadAverage: [0.5, 0.4, 0.3],
+          },
+        },
+      })
+    );
+
+    await page.route('**/api/dashboard/api/status', async (route) =>
+      route.fulfill({
+        status: 200,
+        json: {
+          bots: [
+            {
+              name: 'CustomerSupportBot',
+              provider: 'discord',
+              llmProvider: 'openai',
+              status: 'active',
+              connected: true,
+              messageCount: 1542,
+              errorCount: 2,
+            },
+          ],
+          uptime: 3600 * 24 * 5,
+        },
+      })
+    );
+
+    await page.route('**/api/config', async (route) =>
+      route.fulfill({
+        status: 200,
+        json: { bots: [] },
+      })
+    );
+
+    await page.route('**/health/api-endpoints', async (route) =>
+      route.fulfill({
+        status: 200,
+        json: {
+          overall: {
+            status: 'healthy',
+            stats: { total: 0, online: 0, slow: 0, offline: 0, error: 0 },
+          },
+          endpoints: [],
+        },
+      })
+    );
+
+    // Navigate to Monitoring Dashboard
+    await page.setViewportSize({ width: 1280, height: 1200 });
+    await page.goto('/admin/monitoring');
+
+    // Verification - wait for dashboard to load
+    await expect(page.getByText('Ecosystem Status')).toBeVisible();
+
+    // Click the new Distributed Tracing tab
+    await page.getByRole('tab', { name: 'Distributed Tracing' }).click();
+
+    // Wait for the waterfall component to be visible
+    await expect(page.getByText('Distributed Trace')).toBeVisible();
+    await expect(page.getByText('trace-req-8f9d3b2a')).toBeVisible();
+
+    // We should now see the sub-span 'authenticateRequest'
+    await expect(page.getByText('authenticateRequest')).toBeVisible();
+
+    // Click on 'authenticateRequest' to open the Span Metadata Inspector
+    await page.getByText('authenticateRequest').click();
+
+    // Wait for the inspector panel to become visible
+    await expect(page.getByText('Span ID:')).toBeVisible();
+
+    // Take screenshot
+    await page.screenshot({
+      path: 'docs/screenshots/distributed-trace-waterfall.png',
+      fullPage: true,
+    });
+  });
+});

@@ -5,7 +5,6 @@ import fs from 'fs';
 import { createServer } from 'http';
 import path from 'path';
 import type { NextFunction, Request, Response } from 'express';
-import { container } from 'tsyringe';
 import swarmRouter from '@src/admin/swarmRoutes';
 import { applyRateLimiting } from '@src/middleware/rateLimiter';
 import { authenticateToken } from '@src/server/middleware/auth';
@@ -27,12 +26,14 @@ import { prometheusMetricsHandler } from '@src/server/routes/health';
 import hotReloadRouter from '@src/server/routes/hotReload';
 import importExportRouter from '@src/server/routes/importExport';
 import integrationsRouter from '@src/server/routes/integrations';
+import lettaRouter from '@src/server/routes/letta';
 import openapiRouter from '@src/server/routes/openapi';
 import personasRouter from '@src/server/routes/personas';
 import secureConfigRouter from '@src/server/routes/secureConfig';
 import sitemapRouter from '@src/server/routes/sitemap';
 import specsRouter from '@src/server/routes/specs';
 import validationRouter from '@src/server/routes/validation';
+import { RealTimeValidationService } from '@src/server/services/RealTimeValidationService';
 import WebSocketService from '@src/server/services/WebSocketService';
 import { ShutdownCoordinator } from '@src/server/ShutdownCoordinator';
 import AnomalyDetectionService from '@src/services/AnomalyDetectionService';
@@ -43,7 +44,6 @@ import { IdleResponseManager } from '@message/management/IdleResponseManager';
 import Logger from '@common/logger';
 import { initProviders } from './initProviders';
 import { reloadGlobalConfigs } from './server/routes/config';
-import { Message } from './types/messages';
 import startupDiagnostics from './utils/startupDiagnostics';
 
 require('dotenv/config');
@@ -57,12 +57,10 @@ const express = require('express');
 
 const debug = require('debug');
 const messengerProviderModule = require('@message/management/getMessengerProvider');
-const messageHandlerModule = require('@message/handlers/messageHandler');
 const debugEnvVarsModule = require('@config/debugEnvVars');
 const messageConfigModule = require('@config/messageConfig');
 const webhookConfigModule = require('@config/webhookConfig');
 const healthRouteModule = require('./server/routes/health');
-const webhookServiceModule = require('@webhook/webhookService');
 
 const indexLog = debug('app:index');
 const appLogger = Logger.withContext('app:index');
@@ -267,6 +265,7 @@ app.use('/api/auth', authRouter);
 app.use('/api/admin', adminApiRouter);
 app.use('/api/anomalies', authenticateToken, anomalyRouter);
 app.use('/api/integrations', integrationsRouter);
+app.use('/api/letta', lettaRouter);
 app.use('/api/guards', authenticateToken, guardsRouter);
 app.use('/api', openapiRouter);
 app.use('/api/specs', authenticateToken, specsRouter);
@@ -307,6 +306,7 @@ async function startBot(messengerService: any) {
     messengerService.providerName || messengerService.constructor?.name || 'Unknown';
 
   try {
+    const messageHandlerModule = require('@message/handlers/messageHandler');
     debugEnvVarsModule.debugEnvVars();
     indexLog('[DEBUG] Starting bot initialization...');
     if (typeof messengerService.setApp === 'function') {
@@ -423,8 +423,10 @@ async function main() {
   // Unified application startup with enhanced diagnostics
   appLogger.info('🚀 Starting Open Hivemind Unified Server');
 
-  // Initialize providers (must be done before config routes are fully utilized)
-  await initProviders();
+  // Initialize providers (skip in demo/skip mode)
+  if (process.env.SKIP_MESSENGERS !== 'true') {
+    await initProviders();
+  }
   // Reload global configs to include provider schemas
   reloadGlobalConfigs();
 
@@ -450,16 +452,21 @@ async function main() {
   AnomalyDetectionService.getInstance();
   appLogger.info('🔍 Anomaly Detection Service initialized');
 
-  const llmProviders = await getLlmProvider();
-  appLogger.info('🤖 Resolved LLM providers', {
-    providers: llmProviders.map((p) => p.constructor.name || 'Unknown'),
-  });
-
   // Prepare messenger services collection for optional webhook registration later
   let messengerServices: any[] = [];
 
   // In demo mode, skip messenger initialization if no real providers configured
   const shouldSkipMessengers = skipMessengers || demoService.isInDemoMode();
+
+  let llmProviders: any[] = [];
+  if (!shouldSkipMessengers) {
+    llmProviders = await getLlmProvider();
+    appLogger.info('🤖 Resolved LLM providers', {
+      providers: llmProviders.map((p) => p.constructor.name || 'Unknown'),
+    });
+  } else {
+    appLogger.info('🤖 LLM provider resolution skipped (demo/skip mode)');
+  }
 
   if (shouldSkipMessengers) {
     if (demoService.isInDemoMode()) {
@@ -520,13 +527,52 @@ async function main() {
     const port = parseInt(process.env.PORT || '3028', 10);
     const server = createServer(app);
 
+    // Register background services for graceful shutdown
+    const rtvs = (RealTimeValidationService as any).getInstance
+      ? (RealTimeValidationService as any).getInstance()
+      : null;
+    if (rtvs && typeof rtvs.shutdown === 'function') {
+      shutdownCoordinator.registerService({
+        name: 'RealTimeValidationService',
+        shutdown: () => {
+          appLogger.info('🛑 Healthcheck: Shutting down RealTimeValidationService...');
+          rtvs.shutdown();
+        },
+      });
+    }
+
+    const ads = AnomalyDetectionService.getInstance();
+    if (ads && typeof ads.shutdown === 'function') {
+      shutdownCoordinator.registerService({
+        name: 'AnomalyDetectionService',
+        shutdown: () => {
+          appLogger.info('🛑 Healthcheck: Shutting down AnomalyDetectionService...');
+          ads.shutdown();
+        },
+      });
+    }
+
+    const ApiMonitorService = require('@src/services/ApiMonitorService').ApiMonitorService;
+    const ams = ApiMonitorService.getInstance ? ApiMonitorService.getInstance() : null;
+    if (ams && typeof ams.shutdown === 'function') {
+      shutdownCoordinator.registerService({
+        name: 'ApiMonitorService',
+        shutdown: () => {
+          appLogger.info('🛑 Healthcheck: Shutting down ApiMonitorService...');
+          ams.shutdown();
+        },
+      });
+    }
+
     // Register HTTP server with ShutdownCoordinator
     shutdownCoordinator.registerHttpServer(server);
 
     // Initialize Vite in Development Mode (with HMR)
-    if (process.env.NODE_ENV === 'development') {
+    const enableViteDev = process.env.ENABLE_VITE_DEV !== 'false';
+    if (process.env.NODE_ENV === 'development' && enableViteDev) {
       // @ts-ignore - Vite is a dev dependency using dynamic import
-      const { createServer: createViteServer } = await import('vite');
+      const viteModule = await new Function('return import("vite")')();
+      const createViteServer = viteModule.createServer;
       appLogger.info('⚡ Starting Vite Middleware for Hot Reloading...');
       viteServer = await createViteServer({
         server: {
@@ -542,6 +588,17 @@ async function main() {
       shutdownCoordinator.registerViteServer(viteServer);
 
       appLogger.info('⚡ Vite Middleware Active');
+    }
+
+    if (process.env.NODE_ENV === 'development' && !enableViteDev) {
+      app.get('/', (req: Request, res: Response) => {
+        res
+          .status(200)
+          .set({ 'Content-Type': 'text/html' })
+          .send(
+            '<!doctype html><html><head><title>Open Hivemind</title></head><body><h1>Open Hivemind</h1><p>Development mode without Vite. Build the frontend to view the full WebUI.</p></body></html>'
+          );
+      });
     }
 
     // Initialize WebSocket service
@@ -571,6 +628,7 @@ async function main() {
 
   const isWebhookEnabled = webhookConfig.get('WEBHOOK_ENABLED') || false;
   if (isWebhookEnabled) {
+    const webhookServiceModule = require('@webhook/webhookService');
     appLogger.info('🪝 Webhook service enabled - registering routes');
     for (const messengerService of messengerServices) {
       const channelId = messengerService.getDefaultChannel

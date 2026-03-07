@@ -6,13 +6,7 @@
  */
 
 import { v4 as uuidv4 } from 'uuid';
-import {
-  ErrorClassification,
-  ErrorUtils,
-  HivemindError,
-  type AppError,
-  type ErrorType,
-} from './errors';
+import { ErrorUtils, type AppError, type ErrorType } from './errors';
 
 /**
  * Base error class with correlation ID and recovery capabilities

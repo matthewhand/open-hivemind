@@ -5,13 +5,7 @@ import type { Application } from 'express';
 import { MattermostClient } from '@hivemind/adapter-mattermost';
 import BotConfigurationManager from '@src/config/BotConfigurationManager';
 import { MetricsCollector } from '@src/monitoring/MetricsCollector';
-import {
-  ApiError,
-  BaseHivemindError,
-  ConfigurationError,
-  NetworkError,
-  ValidationError,
-} from '@src/types/errorClasses';
+import { ValidationError } from '@src/types/errorClasses';
 import { ErrorUtils } from '@src/types/errors';
 // Routing (feature-flagged parity)
 import messageConfig from '@config/messageConfig';
@@ -47,6 +41,10 @@ export class MattermostService extends EventEmitter implements IMessengerService
   private healthStatus: Map<string, 'healthy' | 'degraded' | 'unhealthy'> = new Map();
   private connectionErrors: Map<string, number> = new Map();
   private lastActivity: Map<string, Date> = new Map();
+
+  // ⚡ Bolt Optimization: Short-lived memory cache for user profiles
+  private userCache: Map<string, { user: any; timestamp: number }> = new Map();
+  private readonly USER_CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 
   // Channel prioritization support hook (delegation gated by MESSAGE_CHANNEL_ROUTER_ENABLED)
   public supportsChannelPrioritization: boolean = true;
@@ -326,7 +324,6 @@ export class MattermostService extends EventEmitter implements IMessengerService
           }
 
           const posts = await client.getChannelPosts(channelId, 0, limit);
-          const messages: IMessage[] = [];
 
           const botConfig = this.botConfigs.get(targetBot) || {};
           const botUsername = botConfig.username;
@@ -334,20 +331,31 @@ export class MattermostService extends EventEmitter implements IMessengerService
 
           const { MattermostMessage } = await import('@hivemind/adapter-mattermost');
 
-          for (const post of posts.slice(0, limit)) {
-            const user = await client.getUser(post.user_id);
+          // ⚡ Bolt Optimization: Fetch all users concurrently using Promise.all instead of sequential await in for loop
+          const messagePromises = posts.slice(0, limit).map(async (post) => {
+            let user = null;
+            const now = Date.now();
+            const cached = this.userCache.get(post.user_id);
+            if (cached && now - cached.timestamp < this.USER_CACHE_TTL) {
+              user = cached.user;
+            } else {
+              user = await client.getUser(post.user_id);
+              this.userCache.set(post.user_id, { user, timestamp: now });
+            }
+
             const username = user
               ? `${user.first_name} ${user.last_name}`.trim() || user.username
               : 'Unknown';
             const isBot = Boolean(user?.is_bot);
 
-            const mattermostMsg = new MattermostMessage(post, username, {
+            return new MattermostMessage(post, username, {
               isBot,
               botUsername,
               botUserId,
             });
-            messages.push(mattermostMsg);
-          }
+          });
+
+          const messages: IMessage[] = await Promise.all(messagePromises);
 
           return messages.reverse(); // Most recent first
         } catch (error: any) {
@@ -555,6 +563,7 @@ export class MattermostService extends EventEmitter implements IMessengerService
     this.healthStatus.clear();
     this.connectionErrors.clear();
     this.lastActivity.clear();
+    this.userCache.clear();
 
     MattermostService.instance = undefined;
   }

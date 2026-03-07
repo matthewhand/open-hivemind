@@ -1,4 +1,6 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
+
+const AVATAR_INITIALS_MAX_LENGTH = 2;
 
 export interface ChatMessage {
   id: string;
@@ -32,25 +34,7 @@ interface ChatInterfaceProps {
   showTypingIndicator?: boolean;
   typingUsers?: string[];
   maxHeight?: string;
-  /** Accessible label for the chat region */
-  ariaLabel?: string;
-  /** Enable announcements for screen readers */
-  announceMessages?: boolean;
 }
-
-/**
- * Screen reader announcement helper for live regions
- */
-const announceToScreenReader = (message: string, priority: 'polite' | 'assertive' = 'polite') => {
-  const announcement = document.createElement('div');
-  announcement.setAttribute('role', 'status');
-  announcement.setAttribute('aria-live', priority);
-  announcement.setAttribute('aria-atomic', 'true');
-  announcement.className = 'sr-only';
-  announcement.textContent = message;
-  document.body.appendChild(announcement);
-  setTimeout(() => document.body.removeChild(announcement), 1000);
-};
 
 const ChatInterface: React.FC<ChatInterfaceProps> = ({
   messages,
@@ -63,72 +47,55 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
   showTypingIndicator = false,
   typingUsers = [],
   maxHeight = '600px',
-  ariaLabel = 'Chat conversation',
-  announceMessages = true,
 }) => {
   const [inputValue, setInputValue] = useState('');
-  const [keyboardShortcutsEnabled, setKeyboardShortcutsEnabled] = useState(true);
+  const [isAutoScroll, setIsAutoScroll] = useState(true);
+  const [hasNewMessages, setHasNewMessages] = useState(false);
+  const [unreadStartIndex, setUnreadStartIndex] = useState<number | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-  const messagesContainerRef = useRef<HTMLDivElement>(null);
-  const liveRegionRef = useRef<HTMLDivElement>(null);
-  const lastMessageCountRef = useRef(messages.length);
 
-  const scrollToBottom = () => {
-    if (messagesEndRef.current) {
+  const scrollToBottom = (force = false) => {
+    if (messagesEndRef.current && (isAutoScroll || force)) {
       setTimeout(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+        if (force) {
+          setIsAutoScroll(true);
+          setHasNewMessages(false);
+          setUnreadStartIndex(null);
+        }
       }, 0);
+    } else if (!isAutoScroll) {
+      setHasNewMessages(true);
+    }
+  };
+
+  const handleScroll = () => {
+    if (!scrollContainerRef.current) return;
+
+    const { scrollTop, scrollHeight, clientHeight } = scrollContainerRef.current;
+    const isAtBottom = Math.abs(scrollHeight - clientHeight - scrollTop) < 50;
+
+    if (isAtBottom) {
+      setIsAutoScroll(true);
+      setHasNewMessages(false);
+      setUnreadStartIndex(null);
+    } else {
+      setIsAutoScroll(false);
     }
   };
 
   useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
-
-  // Announce new messages to screen readers
-  useEffect(() => {
-    if (announceMessages && messages.length > lastMessageCountRef.current) {
-      const newMessages = messages.slice(lastMessageCountRef.current);
-      newMessages.forEach((msg) => {
-        if (msg.sender.id !== currentUserId && !msg.metadata?.status) {
-          announceToScreenReader(
-            `New message from ${msg.sender.name}: ${msg.content.slice(0, 100)}${msg.content.length > 100 ? '...' : ''}`,
-            'polite'
-          );
-        }
-      });
-    }
-    lastMessageCountRef.current = messages.length;
-  }, [messages, currentUserId, announceMessages]);
-
-  // Keyboard navigation
-  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
-    if (!keyboardShortcutsEnabled) return;
-
-    // Alt + Number keys to focus specific messages (1-9)
-    if (e.altKey && e.key >= '1' && e.key <= '9') {
-      e.preventDefault();
-      const index = parseInt(e.key, 10) - 1;
-      const messageElements = messagesContainerRef.current?.querySelectorAll('[data-message-id]');
-      if (messageElements && messageElements[index]) {
-        (messageElements[index] as HTMLElement).focus();
+    if (!isAutoScroll && messages.length > 0) {
+      if (unreadStartIndex === null) {
+        setUnreadStartIndex(messages.length - 1);
       }
+    } else if (isAutoScroll) {
+       setUnreadStartIndex(null);
     }
-
-    // Escape to return focus to input
-    if (e.key === 'Escape') {
-      inputRef.current?.focus();
-    }
-
-    // Ctrl/Cmd + / to show keyboard shortcuts
-    if ((e.ctrlKey || e.metaKey) && e.key === '/') {
-      e.preventDefault();
-      announceToScreenReader(
-        'Keyboard shortcuts: Alt plus 1 through 9 to navigate to messages, Escape to return to input, Enter to send message'
-      );
-    }
-  }, [keyboardShortcutsEnabled]);
+    scrollToBottom();
+  }, [messages, isAutoScroll]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -154,6 +121,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
   };
 
   const renderMessage = (message: ChatMessage, index: number) => {
+    const showUnreadDivider = unreadStartIndex === index;
     const isCurrentUser = message.sender.id === currentUserId;
     const isBot = message.sender.type === 'bot';
     const isSystem = message.sender.type === 'system';
@@ -166,33 +134,35 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
 
     if (isSystem) {
       return (
-        <div key={message.id} className="flex justify-center my-4">
-          <div className="badge badge-neutral badge-outline">
-            {message.content}
+        <React.Fragment key={message.id}>
+          {showUnreadDivider && (
+            <div className="divider text-secondary text-sm font-medium my-4">New Messages</div>
+          )}
+          <div className="flex justify-center my-4">
+            <div className="badge badge-neutral badge-outline">
+              {message.content}
+            </div>
           </div>
-        </div>
+        </React.Fragment>
       );
     }
 
     return (
-      <div
-        key={message.id}
-        data-message-id={message.id}
-        tabIndex={0}
-        role="article"
-        aria-label={`Message from ${message.sender.name} at ${formatTime(new Date(message.timestamp))}`}
-        className={`chat ${isCurrentUser ? 'chat-end' : 'chat-start'} ${isGrouped ? 'mt-1' : 'mt-4'} focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded-lg`}
-      >
+      <React.Fragment key={message.id}>
+        {showUnreadDivider && (
+          <div className="divider text-secondary text-sm font-medium my-4">New Messages</div>
+        )}
+        <div className={`chat ${isCurrentUser ? 'chat-end' : 'chat-start'} ${isGrouped ? 'mt-1' : 'mt-4'}`}>
         {!isGrouped && (
-          <div className="chat-image avatar" aria-hidden="true">
+          <div className="chat-image avatar">
             <div className="w-10 rounded-full">
               {message.sender.avatar ? (
-                <img alt={`${message.sender.name} avatar`} src={message.sender.avatar} />
+                <img alt={message.sender.name} src={message.sender.avatar} />
               ) : (
-                <div className="avatar placeholder">
+                <div className={'avatar placeholder'}>
                   <div className={`bg-${isBot ? 'secondary' : 'primary'} text-${isBot ? 'secondary' : 'primary'}-content rounded-full w-10`}>
-                    <span className="text-xs" aria-hidden="true">
-                      {isBot ? '🤖' : (message.sender.name || '?').slice(0, 2).toUpperCase()}
+                    <span className="text-xs">
+                      {isBot ? '🤖' : (message.sender.name || '?').charAt(0).toUpperCase()}
                     </span>
                   </div>
                 </div>
@@ -203,17 +173,14 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
 
         {!isGrouped && (
           <div className="chat-header">
-            <span className="font-medium">{message.sender.name}</span>
-            <time className="text-xs opacity-50 ml-2" dateTime={new Date(message.timestamp).toISOString()}>
+            {message.sender.name}
+            <time className="text-xs opacity-50 ml-2">
               {formatTime(new Date(message.timestamp))}
             </time>
             {message.metadata?.platform && (
-              <span className="badge badge-xs badge-ghost ml-2">
+              <div className="badge badge-xs badge-ghost ml-2">
                 {message.metadata.platform}
-              </span>
-            )}
-            {isCurrentUser && (
-              <span className="sr-only">(You)</span>
+              </div>
             )}
           </div>
         )}
@@ -223,7 +190,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
           : isBot
             ? 'chat-bubble-secondary'
             : 'chat-bubble-accent'
-          } ${message.metadata?.status === 'failed' ? 'chat-bubble-error' : ''}`}>
+        } ${message.metadata?.status === 'failed' ? 'chat-bubble-error' : ''}`}>
           {message.type === 'code' ? (
             <div className="mockup-code text-sm">
               <pre><code>{message.content}</code></pre>
@@ -273,31 +240,23 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
           </div>
         )}
       </div>
-    );
-  };
+    </React.Fragment>
+  );
+};
 
   return (
-    <div
-      className={`flex flex-col bg-base-100 ${className}`}
-      style={{ height: maxHeight }}
-      role="region"
-      aria-label={ariaLabel}
-      onKeyDown={handleKeyDown}
-    >
-      {/* Screen reader live region for announcements */}
-      <div ref={liveRegionRef} className="sr-only" aria-live="polite" aria-atomic="true" />
-
+    <div className={`flex flex-col bg-base-100 ${className}`} style={{ height: maxHeight }}>
       {/* Chat Header */}
       <div className="flex items-center justify-between p-4 border-b border-base-200">
         <div className="flex items-center gap-3">
-          <div className="avatar" aria-hidden="true">
+          <div className="avatar">
             <div className="w-8 rounded-full bg-primary">
               <span className="text-primary-content text-sm">🤖</span>
             </div>
           </div>
           <div>
-            <h3 className="font-semibold" id="chat-title">Bot Chat</h3>
-            <p className="text-xs text-base-content/60" aria-live="polite">
+            <h3 className="font-semibold">Bot Chat</h3>
+            <p className="text-xs text-base-content/60">
               {messages.length} messages
             </p>
           </div>
@@ -305,38 +264,22 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
 
         <div className="flex items-center gap-2">
           <div className="dropdown dropdown-end">
-            <button
-              tabIndex={0}
-              type="button"
-              className="btn btn-ghost btn-sm btn-circle"
-              aria-label="Chat options menu"
-              aria-haspopup="true"
-              aria-expanded="false"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <div tabIndex={0} role="button" className="btn btn-ghost btn-sm btn-circle">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"></path>
               </svg>
-            </button>
-            <ul tabIndex={0} className="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-52" role="menu">
-              <li role="none"><button type="button" className="w-full text-left" role="menuitem" onClick={() => announceToScreenReader('Clear chat option selected')}>🗑️ Clear Chat</button></li>
-              <li role="none"><button type="button" className="w-full text-left" role="menuitem" onClick={() => announceToScreenReader('Export chat option selected')}>📋 Export Chat</button></li>
-              <li role="none"><button type="button" className="w-full text-left" role="menuitem" onClick={() => announceToScreenReader('Settings option selected')}>⚙️ Settings</button></li>
+            </div>
+            <ul tabIndex={0} className="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-52">
+              <li><a>🗑️ Clear Chat</a></li>
+              <li><a>📋 Export Chat</a></li>
+              <li><a>⚙️ Settings</a></li>
             </ul>
           </div>
         </div>
       </div>
 
       {/* Messages Container */}
-      <div
-        ref={messagesContainerRef}
-        className="flex-1 overflow-y-auto p-4 space-y-1"
-        role="log"
-        aria-live="polite"
-        aria-atomic="false"
-        aria-relevant="additions"
-        aria-labelledby="chat-title"
-        tabIndex={0}
-      >
+      <div className="flex-1 overflow-y-auto p-4 space-y-1">
         {messages.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-center">
             <div className="text-6xl mb-4">💬</div>
@@ -368,11 +311,26 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
             <div ref={messagesEndRef} />
           </>
         )}
+
+        {/* Floating Scroll to Bottom Button */}
+        {!isAutoScroll && hasNewMessages && (
+          <div className="sticky bottom-4 left-0 right-0 flex justify-center pointer-events-none z-10">
+            <button
+              className="btn btn-sm btn-secondary shadow-lg pointer-events-auto flex items-center gap-2 animate-bounce"
+              onClick={() => scrollToBottom(true)}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+              </svg>
+              New Messages
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Input Area */}
       <div className="p-4 border-t border-base-200">
-        <form onSubmit={handleSubmit} className="flex gap-2" aria-label="Send message form">
+        <form onSubmit={handleSubmit} className="flex gap-2">
           <input
             ref={inputRef}
             type="text"
@@ -381,43 +339,30 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
             onKeyPress={handleKeyPress}
             placeholder={placeholder}
             className="input input-bordered flex-1"
-            disabled={isLoading}
-            aria-label="Message input"
-            aria-describedby="input-help"
-            aria-busy={isLoading}
+            disabled={isLoading || placeholder === 'You are offline'}
           />
 
           <div className="flex gap-1">
             <button
               type="button"
               className="btn btn-ghost btn-square"
-              aria-label="Attach file"
               title="Attach file"
             >
-              <span aria-hidden="true">📎</span>
+              📎
             </button>
 
             <button
               type="submit"
               className={`btn btn-primary ${isLoading ? 'loading' : ''}`}
               disabled={!inputValue.trim() || isLoading}
-              aria-label={isLoading ? 'Sending message' : 'Send message'}
-              aria-busy={isLoading}
             >
-              {isLoading ? (
-                <span className="sr-only">Sending...</span>
-              ) : (
-                <>
-                  <span aria-hidden="true">➤</span>
-                  <span className="sr-only">Send</span>
-                </>
-              )}
+              {isLoading ? '' : '➤'}
             </button>
           </div>
         </form>
 
-        <div id="input-help" className="text-xs text-base-content/60 mt-2 text-center">
-          Press Enter to send, Shift+Enter for new line. Press Alt+1-9 to navigate messages, Escape to return to input.
+        <div className="text-xs text-base-content/60 mt-2 text-center">
+          Press Enter to send, Shift+Enter for new line
         </div>
       </div>
     </div>

@@ -1,15 +1,7 @@
 import { EventEmitter } from 'events';
 import { BusinessKpiCollector } from './BusinessKpiCollector';
-import {
-  IntegrationAnomalyDetector,
-  type AnomalySeverity,
-  type IntegrationAnomaly,
-} from './IntegrationAnomalyDetector';
-import {
-  ProviderMetricsCollector,
-  type ProviderStatus,
-  type ProviderType,
-} from './ProviderMetricsCollector';
+import { IntegrationAnomalyDetector, type IntegrationAnomaly } from './IntegrationAnomalyDetector';
+import { ProviderMetricsCollector } from './ProviderMetricsCollector';
 
 /**
  * Alert level
