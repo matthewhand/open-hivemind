@@ -269,6 +269,7 @@ const SettingsSecurity: React.FC = () => {
                 <button 
                   onClick={() => handleRemoveOrigin(origin)}
                   className="hover:text-error"
+                  aria-label={`Remove origin ${origin}`}
                 >
                   <Trash2 className="w-3 h-3" />
                 </button>
