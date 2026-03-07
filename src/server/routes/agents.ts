@@ -3,6 +3,7 @@ import { join } from 'path';
 import Debug from 'debug';
 import { Router } from 'express';
 import { ErrorUtils } from '@src/types/errors';
+import { loadJsonConfig, saveJsonConfig } from '../utils/fileConfigUtils';
 
 const debug = Debug('app:webui:agents');
 const router = Router();
@@ -52,23 +53,6 @@ const ensureDataDir = async () => {
     const hivemindError = ErrorUtils.toHivemindError(error) as any;
     debug('Error creating data directory:', hivemindError.message);
   }
-};
-
-// Load/Save configurations
-const loadJsonConfig = async <T>(filePath: string, defaultValue: T): Promise<T> => {
-  try {
-    const data = await fs.readFile(filePath, 'utf8');
-    return JSON.parse(data);
-  } catch (error: unknown) {
-    const hivemindError = ErrorUtils.toHivemindError(error) as any;
-    debug(`Config file ${filePath} not found, using defaults:`, hivemindError.message);
-    return defaultValue;
-  }
-};
-
-const saveJsonConfig = async <T>(filePath: string, data: T): Promise<void> => {
-  await ensureDataDir();
-  await fs.writeFile(filePath, JSON.stringify(data, null, 2));
 };
 
 // Get environment variable overrides
