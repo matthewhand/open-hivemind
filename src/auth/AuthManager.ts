@@ -36,6 +36,7 @@ export class AuthManager {
       'backup:write',
       'backup:delete',
     ],
+    'bot-manager': ['config:read', 'bots:read', 'bots:write', 'bots:manage', 'system:read'],
     user: ['config:read', 'bots:read', 'bots:write', 'system:read'],
     viewer: ['config:read', 'bots:read', 'system:read'],
   };

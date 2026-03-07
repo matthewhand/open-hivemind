@@ -142,7 +142,8 @@ export class AuthMiddleware {
       const roleHierarchy: Record<string, number> = {
         viewer: 1,
         user: 2,
-        admin: 3,
+        'bot-manager': 3,
+        admin: 4,
       };
 
       const userRoleLevel = roleHierarchy[authReq.user.role] || 0;
