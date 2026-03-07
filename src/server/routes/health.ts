@@ -609,7 +609,7 @@ router.get('/errors/patterns', (req, res) => {
     timestamp: new Date().toISOString(),
     patterns: {
       errorTypes: Object.entries(errorStats)
-        .sort(([, a]: [string, any], [, b]: [string, any]) => (b as number) - (a as number))
+        .sort(([, a]: [string, any], [, b]: [string, any]) => ((b as number) - (a as number)))
         .map(([type, count]) => {
           const totalCount = Object.values(errorStats).reduce(
             (sum: number, val: any) => sum + (val as number),

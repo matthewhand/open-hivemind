@@ -565,6 +565,7 @@ const BotsPage: React.FC = () => {
           </div>
         )}
       </Modal>
+=======
       <ConfirmModal
         isOpen={!!deletingBot}
         title="Delete Agent"

@@ -3,6 +3,7 @@ import { Router, type Request, type Response } from 'express';
 import { AuthManager } from '../../auth/AuthManager';
 import { authenticate, requireAdmin } from '../../auth/middleware';
 import type { AuthMiddlewareRequest, LoginCredentials, RegisterData } from '../../auth/types';
+import { authLimiter } from '../middleware/rateLimiter';
 import {
   ChangePasswordSchema,
   LoginSchema,
@@ -13,7 +14,6 @@ import {
   UserIdParamSchema,
 } from '../../validation/schemas/authSchema';
 import { validateRequest } from '../../validation/validateRequest';
-import { authLimiter } from '../middleware/rateLimiter';
 
 const debug = Debug('app:AuthRoutes');
 const router = Router();
