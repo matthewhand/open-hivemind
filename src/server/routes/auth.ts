@@ -3,6 +3,7 @@ import { Router, type Request, type Response } from 'express';
 import { AuthManager } from '../../auth/AuthManager';
 import { authenticate, requireAdmin } from '../../auth/middleware';
 import type { AuthMiddlewareRequest, LoginCredentials, RegisterData } from '../../auth/types';
+import { authLimiter } from '../middleware/rateLimiter';
 import {
   ChangePasswordSchema,
   LoginSchema,
@@ -22,26 +23,32 @@ const authManager = AuthManager.getInstance();
  * POST /webui/api/auth/login
  * User login endpoint
  */
-router.post('/login', validateRequest(LoginSchema), async (req: Request, res: Response) => {
-  try {
-    const credentials: LoginCredentials = req.body;
-    // Normal authentication flow
+router.post(
+  '/login',
+  // Added rate limiting to prevent brute-force attacks
+  authLimiter,
+  validateRequest(LoginSchema),
+  async (req: Request, res: Response) => {
+    try {
+      const credentials: LoginCredentials = req.body;
+      // Normal authentication flow
 
-    const authResult = await authManager.login(credentials);
+      const authResult = await authManager.login(credentials);
 
-    return res.json({
-      success: true,
-      data: authResult,
-      message: 'Login successful',
-    });
-  } catch (error: any) {
-    debug('Login error:', error.message);
-    return res.status(401).json({
-      error: 'Authentication failed',
-      message: error.message || 'Invalid credentials',
-    });
+      return res.json({
+        success: true,
+        data: authResult,
+        message: 'Login successful',
+      });
+    } catch (error: any) {
+      debug('Login error:', error.message);
+      return res.status(401).json({
+        error: 'Authentication failed',
+        message: error.message || 'Invalid credentials',
+      });
+    }
   }
-});
+);
 
 /**
  * POST /webui/api/auth/register
@@ -49,6 +56,8 @@ router.post('/login', validateRequest(LoginSchema), async (req: Request, res: Re
  */
 router.post(
   '/register',
+  // Added rate limiting to prevent automated account creation spam
+  authLimiter,
   authenticate,
   requireAdmin,
   validateRequest(RegisterSchema),
@@ -80,6 +89,8 @@ router.post(
  */
 router.post(
   '/refresh',
+  // Added rate limiting to prevent rapid token generation attacks
+  authLimiter,
   validateRequest(RefreshTokenSchema),
   async (req: Request, res: Response) => {
     try {
