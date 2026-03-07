@@ -345,8 +345,10 @@ router.get('/sources', async (req, res) => {
           };
         });
 
-      const fileStats = await Promise.all(statPromises);
-      configFiles.push(...fileStats);
+      const fileStats = await Promise.allSettled(statPromises);
+      configFiles.push(
+        ...fileStats.map((r) => (r.status === 'fulfilled' ? r.value : null)).filter(Boolean)
+      );
     }
 
     return res.json({
