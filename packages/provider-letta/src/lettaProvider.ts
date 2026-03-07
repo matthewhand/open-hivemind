@@ -1,6 +1,6 @@
 import axios, { AxiosInstance } from 'axios';
 import Debug from 'debug';
-import type { IMessage } from '@src/message/interfaces/IMessage';
+import type { IMessage } from '@message/interfaces/IMessage';
 import type { ILlmProvider } from '@llm/interfaces/ILlmProvider';
 import lettaConfig from './lettaConfig';
 
@@ -102,14 +102,18 @@ export class LettaProvider implements ILlmProvider {
     agentId: string,
     message: string,
     role: 'user' | 'system' = 'user'
-  ): Promise<LettaMessage> {
+  ): Promise<string> {
     debug('Sending message to Letta agent:', { agentId, message: message.substring(0, 100) });
     try {
       const response = await this.client.post(`/agents/${agentId}/messages`, {
-        role,
-        content: message,
+        messages: [{ role, content: message }],
       });
-      return response.data;
+      // Response is array of messages; find last assistant message
+      const messages: LettaMessage[] = response.data?.messages || response.data || [];
+      const assistantMsg = [...messages].reverse().find(
+        (m: LettaMessage) => m.role === 'assistant' && m.content
+      );
+      return assistantMsg?.content || '';
     } catch (error) {
       debug('Error sending message:', formatError(error));
       throw new Error(`Failed to send message: ${getErrorMessage(error)}`);
@@ -146,11 +150,7 @@ export class LettaProvider implements ILlmProvider {
     debug('Generating chat completion with Letta:', { agentId, userMessage: userMessage.substring(0, 100) });
 
     try {
-      // Send the user message to the agent
-      const response = await this.sendMessage(agentId, userMessage, 'user');
-      
-      // Return the assistant's response content
-      return response.content || '';
+      return await this.sendMessage(agentId, userMessage, 'user');
     } catch (error) {
       debug('Error generating chat completion:', formatError(error));
       throw new Error(`Chat completion failed: ${getErrorMessage(error)}`);
