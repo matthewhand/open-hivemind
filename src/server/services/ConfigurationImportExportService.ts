@@ -255,7 +255,7 @@ export class ConfigurationImportExportService {
 
       // Get main configuration from SecureConfigManager
       const secureManager = SecureConfigManager.getInstance();
-      const config = secureManager.getDecryptedMainConfig(env);
+      const config = secureManager.getConfig(env);
 
       if (!config) {
         return {

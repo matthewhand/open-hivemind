@@ -124,7 +124,7 @@ export class SecureConfigManager {
       debug(`Failed to store configuration ${config.id}:`, hivemindError.message);
       throw ErrorUtils.createError(
         `Failed to store secure configuration: ${hivemindError.message}`,
-        'technical',
+        'api',
         'SECURE_CONFIG_STORE_FAILED',
         500,
       );
@@ -179,7 +179,7 @@ export class SecureConfigManager {
       debug(`Failed to delete configuration ${id}:`, hivemindError.message);
       throw ErrorUtils.createError(
         `Failed to delete secure configuration: ${hivemindError.message}`,
-        'technical',
+        'api',
         'SECURE_CONFIG_DELETE_FAILED',
         500,
       );
@@ -357,7 +357,7 @@ export class SecureConfigManager {
     return key;
   }
 
-  private encrypt(text: string): string {
+  public encrypt(text: string): string {
     const iv = crypto.randomBytes(16);
     const cipher = crypto.createCipheriv(this.algorithm, this.encryptionKey, iv);
     
@@ -369,7 +369,7 @@ export class SecureConfigManager {
     return `${iv.toString('hex')}:${authTag}:${encrypted}`;
   }
 
-  private decrypt(text: string): string {
+  public decrypt(text: string): string {
     const [ivHex, authTagHex, encryptedText] = text.split(':');
     
     const iv = Buffer.from(ivHex, 'hex');
