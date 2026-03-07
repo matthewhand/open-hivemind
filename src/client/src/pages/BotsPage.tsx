@@ -90,7 +90,6 @@ const BotsPage: React.FC = () => {
   const [activityLogs, setActivityLogs] = useState<any[]>([]);
   const [chatHistory, setChatHistory] = useState<any[]>([]);
   const [logFilter, setLogFilter] = useState('');
-  const [previewTab, setPreviewTab] = useState<'activity' | 'chat'>('activity');
 
   // Create Bot State
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -143,7 +142,6 @@ const BotsPage: React.FC = () => {
   // Use Page Lifecycle Hook
   const {
     data,
-    loading,
     error: lifecycleError,
     refetch,
   } = usePageLifecycle({
@@ -153,7 +151,6 @@ const BotsPage: React.FC = () => {
   });
 
   // Derived state
-  const bots = data?.bots || [];
 
   const personas = data?.personas || [];
   const llmProfiles = data?.llmProfiles || [];
@@ -165,9 +162,6 @@ const BotsPage: React.FC = () => {
       setUiError(lifecycleError.message);
     }
   }, [lifecycleError]);
-
-  const setError = setUiError;
-  const error = uiError;
 
   // Fetch logs and chat history when previewing a bot
   useEffect(() => {
@@ -291,7 +285,6 @@ const BotsPage: React.FC = () => {
       ErrorService.report(err, { action: 'deleteBot', botId: deletingBot.id });
       toast.error(err instanceof Error ? err.message : 'Failed to delete bot');
     }
-  };
 
   const handleToggleBotStatus = async (bot: BotConfig) => {
     try {
@@ -308,7 +301,7 @@ const BotsPage: React.FC = () => {
       ErrorService.report(err, { action: 'toggleBotStatus', botId: bot.id });
       toast.error(err instanceof Error ? err.message : 'Failed to update bot status');
     }
-  }, [previewBot?.id, toast]);
+  };
 
   const filteredBots = useMemo(() => {
     return bots.filter(bot => {

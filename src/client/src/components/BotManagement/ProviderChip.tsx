@@ -2,11 +2,11 @@
 import React from 'react';
 import type {
   MessageProvider,
-  LLMProvider} from '../../types/bot';
+  LLMProvider} from '../../types';
 import {
   MessageProviderType,
   LLMProviderType,
-} from '../../types/bot';
+} from '../../types';
 import { Badge } from '../DaisyUI';
 import { X as XIcon, Edit as EditIcon } from 'lucide-react';
 

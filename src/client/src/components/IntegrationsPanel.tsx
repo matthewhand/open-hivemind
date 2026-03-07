@@ -22,7 +22,7 @@ import {
 import { apiService } from '../services/api';
 import { PROVIDER_CATEGORIES } from '../config/providers';
 import ProviderConfigModal from './ProviderConfiguration/ProviderConfigModal';
-import { LLM_PROVIDER_CONFIGS, LLMProviderType, ProviderModalState } from '../types/bot';
+import { LLM_PROVIDER_CONFIGS, LLMProviderType, ProviderModalState } from '../types';
 
 interface ConfigSchema {
   doc?: string;
