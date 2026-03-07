@@ -65,11 +65,6 @@ export class OpenWebUIProvider implements ILlmProvider {
         messages,
       });
 
-      const response = await this.client.post('/chat/completions', {
-        model: metadata?.modelOverride || metadata?.model || this.model,
-        messages,
-      }, reqConfig);
-
       return response.data?.choices?.[0]?.message?.content || '';
     } catch (error) {
       debug('Error generating chat completion:', formatError(error));
@@ -87,7 +82,7 @@ export class OpenWebUIProvider implements ILlmProvider {
         model,
         prompt,
         max_tokens: 100,
-      }, reqConfig);
+      });
 
       return response.data?.choices?.[0]?.text || '';
     } catch (error) {
