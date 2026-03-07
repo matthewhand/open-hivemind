@@ -38,6 +38,8 @@ import { ShutdownCoordinator } from '@src/server/ShutdownCoordinator';
 import AnomalyDetectionService from '@src/services/AnomalyDetectionService';
 import DemoModeService from '@src/services/DemoModeService';
 import StartupGreetingService from '@src/services/StartupGreetingService';
+import { validateRequiredEnvVars } from '@src/utils/envValidation';
+
 import { getLlmProvider } from '@llm/getLlmProvider';
 import { IdleResponseManager } from '@message/management/IdleResponseManager';
 import Logger from '@common/logger';
@@ -418,6 +420,9 @@ async function startBot(messengerService: any) {
 }
 
 async function main() {
+  // Validate critical environment variables before proceeding
+  validateRequiredEnvVars();
+
   // Unified application startup with enhanced diagnostics
   appLogger.info('🚀 Starting Open Hivemind Unified Server');
 

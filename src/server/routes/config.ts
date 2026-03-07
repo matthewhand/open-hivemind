@@ -539,7 +539,7 @@ router.put('/global', validateRequest(ConfigUpdateSchema), async (req, res) => {
 
       if (process.env.NODE_ENV !== 'test') {
         logConfigChange(
-          req as AuthMiddlewareRequest,
+          req as any,
           'UPDATE',
           'config/general',
           'success',
@@ -617,7 +617,7 @@ router.put('/global', validateRequest(ConfigUpdateSchema), async (req, res) => {
 
     if (process.env.NODE_ENV !== 'test') {
       logConfigChange(
-        req as AuthMiddlewareRequest,
+        req as any,
         'UPDATE',
         `config/${configName}`,
         'success',

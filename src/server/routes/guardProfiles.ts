@@ -185,7 +185,7 @@ router.put('/:id', adminRateLimiter, (req: Request, res: Response) => {
                 }
                 return acc;
               },
-              {} as Record<string, unknown>
+              {} as any
             )
         : profiles[profileIndex].guards;
 
