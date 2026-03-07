@@ -107,7 +107,11 @@ describe('SlackMessageProcessor', () => {
           list: jest.fn().mockResolvedValue({
             ok: true,
             files: [
-              { id: 'F1', linked_channel_id: 'C123456789', url_private: 'https://example.com/canvas' },
+              {
+                id: 'F1',
+                linked_channel_id: 'C123456789',
+                url_private: 'https://example.com/canvas',
+              },
             ],
           }),
           info: jest.fn().mockResolvedValue({
@@ -188,7 +192,11 @@ describe('SlackMessageProcessor', () => {
           list: jest.fn().mockResolvedValue({
             ok: true,
             files: [
-              { id: 'FIMG', linked_channel_id: 'CIMG12345', url_private: 'https://example.com/img' },
+              {
+                id: 'FIMG',
+                linked_channel_id: 'CIMG12345',
+                url_private: 'https://example.com/img',
+              },
             ],
           }),
           info: jest.fn().mockResolvedValue({
@@ -213,9 +221,10 @@ describe('SlackMessageProcessor', () => {
       process.env.SUPPRESS_CANVAS_CONTENT = 'false';
       const webClient = createWebClientMock({
         files: {
-          list: jest
-            .fn()
-            .mockResolvedValue({ ok: true, files: [{ id: 'FX', linked_channel_id: 'C123456789' }] }),
+          list: jest.fn().mockResolvedValue({
+            ok: true,
+            files: [{ id: 'FX', linked_channel_id: 'C123456789' }],
+          }),
           info: jest.fn().mockResolvedValue({
             ok: true,
             file: {
@@ -254,7 +263,10 @@ describe('SlackMessageProcessor', () => {
         ts: '2.001',
         slackUser: { slackUserId: 'U111', userName: 'User One' },
         channelContent: { content: 'Context here' },
-        metadata: { channelInfo: { channelId: 'C123456789456789' }, userInfo: { userName: 'User One' } },
+        metadata: {
+          channelInfo: { channelId: 'C123456789456789' },
+          userInfo: { userName: 'User One' },
+        },
       });
 
       const history = [

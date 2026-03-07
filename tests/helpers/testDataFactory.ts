@@ -1,3 +1,11 @@
+import fc from 'fast-check';
+import discordConfig from '../../src/config/discordConfig';
+import mattermostConfig from '../../src/config/mattermostConfig';
+import messageConfig from '../../src/config/messageConfig';
+import slackConfig from '../../src/config/slackConfig';
+import telegramConfig from '../../src/config/telegramConfig';
+import webhookConfig from '../../src/config/webhookConfig';
+
 /**
  * Test data factories for creating consistent test data across test suites
  */
@@ -259,14 +267,6 @@ export const commandParserTestData = {
   },
 };
 
-import fc from 'fast-check';
-import discordConfig from '../../src/config/discordConfig';
-import messageConfig from '../../src/config/messageConfig';
-import slackConfig from '../../src/config/slackConfig';
-import telegramConfig from '../../src/config/telegramConfig';
-import mattermostConfig from '../../src/config/mattermostConfig';
-import webhookConfig from '../../src/config/webhookConfig';
-
 /**
  * Validates generated config test data against the real backend convict schema
  * to prevent drift.
@@ -274,7 +274,10 @@ import webhookConfig from '../../src/config/webhookConfig';
  * @param data The generated expectedResults
  * @returns true if valid, throws error otherwise
  */
-export function validateConfigAgainstSchema(type: 'discord' | 'message' | 'slack' | 'telegram' | 'mattermost' | 'webhook', data: any): boolean {
+export function validateConfigAgainstSchema(
+  type: 'discord' | 'message' | 'slack' | 'telegram' | 'mattermost' | 'webhook',
+  data: any
+): boolean {
   try {
     switch (type) {
       case 'discord':
@@ -338,7 +341,10 @@ export function createTestData(type: 'discord' | 'message' | 'slack' | 'command'
   }
 
   // Validate the data against the schema
-  validateConfigAgainstSchema(type as 'discord' | 'message' | 'slack' | 'telegram' | 'mattermost' | 'webhook', data.expectedResults);
+  validateConfigAgainstSchema(
+    type as 'discord' | 'message' | 'slack' | 'telegram' | 'mattermost' | 'webhook',
+    data.expectedResults
+  );
   return data;
 }
 

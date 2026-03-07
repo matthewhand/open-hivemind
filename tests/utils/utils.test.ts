@@ -27,11 +27,11 @@ jest.mock('fs', () => {
     promises: {
       stat: mockStatFn,
       readFile: mockReadFileFn,
-    }
+    },
   };
   return {
     ...mockObj,
-    default: mockObj
+    default: mockObj,
   };
 });
 
@@ -39,7 +39,7 @@ const mockFs = fs as unknown as jest.Mocked<typeof fs> & {
   promises: {
     stat: jest.Mock;
     readFile: jest.Mock;
-  }
+  };
 };
 const mockReadFile = mockFs.promises.readFile;
 
@@ -220,7 +220,7 @@ describe('readFile', () => {
         'large files',
         (content: string) => expect(content.length).toBe(10000),
       ],
-      ['binary.dat', '\x00\x01\x02\x03\xFF', 'binary-like content', () => { }],
+      ['binary.dat', '\x00\x01\x02\x03\xFF', 'binary-like content', () => {}],
       [
         'multiline.txt',
         'Line 1\nLine 2\r\nLine 3\n\nLine 5',

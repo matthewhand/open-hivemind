@@ -1,5 +1,5 @@
-import { StartupDiagnostics } from '../../../src/utils/startupDiagnostics';
 import { Logger } from '../../../src/common/logger';
+import { StartupDiagnostics } from '../../../src/utils/startupDiagnostics';
 
 // Mock Logger
 jest.mock('../../../src/common/logger', () => {
@@ -45,21 +45,21 @@ describe('StartupDiagnostics', () => {
       const summary = diagnostics.analyzeEnvironmentVariables();
 
       // Critical
-      const nodeEnv = summary.critical.find(v => v.key === 'NODE_ENV');
+      const nodeEnv = summary.critical.find((v) => v.key === 'NODE_ENV');
       expect(nodeEnv?.status).toBe('present');
 
       // Warning
-      const discordToken = summary.warning.find(v => v.key === 'DISCORD_BOT_TOKEN');
+      const discordToken = summary.warning.find((v) => v.key === 'DISCORD_BOT_TOKEN');
       expect(discordToken?.status).toBe('present');
 
-      const slackToken = summary.warning.find(v => v.key === 'SLACK_BOT_TOKEN');
+      const slackToken = summary.warning.find((v) => v.key === 'SLACK_BOT_TOKEN');
       expect(slackToken?.status).toBe('missing');
 
       // Info
-      const port = summary.info.find(v => v.key === 'PORT');
+      const port = summary.info.find((v) => v.key === 'PORT');
       expect(port?.status).toBe('present');
 
-      const webhookSecret = summary.info.find(v => v.key === 'WEBHOOK_SECRET');
+      const webhookSecret = summary.info.find((v) => v.key === 'WEBHOOK_SECRET');
       expect(webhookSecret?.status).toBe('missing');
     });
   });
@@ -121,9 +121,7 @@ describe('StartupDiagnostics', () => {
 
       await expect((diagnostics as any).logEnvironmentSummary()).resolves.toBeUndefined();
 
-      expect(mockLogger.debug).toHaveBeenCalledWith(
-        expect.stringContaining('✓ NODE_ENV:')
-      );
+      expect(mockLogger.debug).toHaveBeenCalledWith(expect.stringContaining('✓ NODE_ENV:'));
     });
   });
 });
