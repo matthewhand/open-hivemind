@@ -148,6 +148,19 @@ router.post(
  * GET /webui/api/auth/me
  * Get current user profile
  */
+router.post('/verify', async (req: Request, res: Response) => {
+  try {
+    const { token } = req.body;
+    if (!token) return res.status(400).json({ success: false, error: 'Token required' });
+    const payload = authManager.verifyAccessToken(token);
+    const user = authManager.getUser(payload.userId);
+    if (!user) return res.status(401).json({ success: false, error: 'User not found' });
+    return res.json({ success: true, user });
+  } catch (error: any) {
+    return res.status(401).json({ success: false, error: 'Invalid token' });
+  }
+});
+
 router.get('/me', authenticate, (req: Request, res: Response) => {
   const authReq = req as AuthMiddlewareRequest;
   return res.json({
