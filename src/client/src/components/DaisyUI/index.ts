@@ -69,4 +69,4 @@ export { trackDaisyUIComponent, daisyUITracker } from '../../utils/DaisyUICompon
 
 // Advanced Components
 export { default as ModelAutocomplete } from './ModelAutocomplete';
-export { default as CommaSeparatedInput } from './CommaSeparatedInput';
+export { CommaSeparatedInput } from '../Common/CommaSeparatedInput';
