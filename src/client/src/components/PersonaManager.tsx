@@ -374,7 +374,7 @@ const PersonaManager: React.FC = () => {
         <div className="toast toast-bottom toast-center z-50">
           <div className={`alert ${toast.type === 'success' ? 'alert-success' : 'alert-error'}`}>
             <span>{toast.message}</span>
-            <button className="btn btn-sm btn-ghost" onClick={() => setToast({ ...toast, show: false })}>✕</button>
+            <button className="btn btn-sm btn-ghost" onClick={() => setToast({ ...toast, show: false })} aria-label="Close notification">✕</button>
           </div>
         </div>
       )}
