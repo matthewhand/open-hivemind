@@ -42,6 +42,18 @@ export const adapterMetadata = {
   platform: 'discord' as const,
 };
 
+import type { PluginManifest } from '../../../src/plugins/PluginLoader';
+
+/** Standard factory alias — PluginLoader uses create() as the single entry point */
+export const create = createDiscordService;
+
+export const manifest: PluginManifest = {
+  displayName: 'Discord',
+  description: 'Connect your bots to Discord servers',
+  type: 'message',
+  minVersion: '1.0.0',
+};
+
 /**
  * Default export: the factory function
  */

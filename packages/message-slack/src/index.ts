@@ -25,3 +25,18 @@ export { default as SlackMessage } from './SlackMessage';
 // New exports for migration
 export { SlackMessageProvider } from './providers/SlackMessageProvider';
 export { testSlackConnection } from './SlackConnectionTest';
+
+import SlackService from './SlackService';
+import type { PluginManifest } from '../../../src/plugins/PluginLoader';
+
+/** Standard factory — preferred entry point for PluginLoader */
+export function create(_config?: any): any {
+  return SlackService.getInstance();
+}
+
+export const manifest: PluginManifest = {
+  displayName: 'Slack',
+  description: 'Connect your bots to Slack workspaces',
+  type: 'message',
+  minVersion: '1.0.0',
+};
