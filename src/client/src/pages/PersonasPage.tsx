@@ -186,13 +186,21 @@ const PersonasPage: React.FC = () => {
         }
       }
 
-      await Promise.all(updates);
+      const results = await Promise.allSettled(updates);
+      const failures = results.filter(r => r.status === 'rejected');
+      if (failures.length > 0) {
+         console.error('Failed to update some bots:', failures);
+         setError(`Saved persona, but failed to update ${failures.length} bot(s).`);
+      }
+
       await fetchData();
 
-      setShowCreateModal(false);
-      setShowEditModal(false);
-      setEditingPersona(null);
-      setCloningPersonaId(null);
+      if (failures.length === 0) {
+        setShowCreateModal(false);
+        setShowEditModal(false);
+        setEditingPersona(null);
+        setCloningPersonaId(null);
+      }
     } catch (err) {
       console.error(err);
       setError('Failed to save persona changes');
@@ -271,14 +279,23 @@ const PersonasPage: React.FC = () => {
       const updates = deletingPersona.assignedBotIds.map(botId =>
         apiService.updateBot(botId, { persona: 'default', systemInstruction: 'You are a helpful assistant.' }),
       );
-      await Promise.all(updates);
+      const results = await Promise.allSettled(updates);
+      const failures = results.filter(r => r.status === 'rejected');
+      if (failures.length > 0) {
+        console.error('Failed to update some bots before deletion:', failures);
+      }
 
       // 2. Delete persona
       await apiService.deletePersona(deletingPersona.id);
 
       await fetchData();
-      setShowDeleteModal(false);
-      setDeletingPersona(null);
+
+      if (failures.length > 0) {
+        setError(`Persona deleted, but failed to detach from ${failures.length} bot(s).`);
+      } else {
+        setShowDeleteModal(false);
+        setDeletingPersona(null);
+      }
     } catch (err) {
       setError('Failed to delete persona');
     } finally {

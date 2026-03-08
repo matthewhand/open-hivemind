@@ -26,6 +26,7 @@ import { prometheusMetricsHandler } from '@src/server/routes/health';
 import hotReloadRouter from '@src/server/routes/hotReload';
 import importExportRouter from '@src/server/routes/importExport';
 import integrationsRouter from '@src/server/routes/integrations';
+import lettaRouter from '@src/server/routes/letta';
 import openapiRouter from '@src/server/routes/openapi';
 import personasRouter from '@src/server/routes/personas';
 import secureConfigRouter from '@src/server/routes/secureConfig';
@@ -264,6 +265,7 @@ app.use('/api/auth', authRouter);
 app.use('/api/admin', adminApiRouter);
 app.use('/api/anomalies', authenticateToken, anomalyRouter);
 app.use('/api/integrations', integrationsRouter);
+app.use('/api/letta', lettaRouter);
 app.use('/api/guards', authenticateToken, guardsRouter);
 app.use('/api', openapiRouter);
 app.use('/api/specs', authenticateToken, specsRouter);
@@ -450,8 +452,6 @@ async function main() {
   AnomalyDetectionService.getInstance();
   appLogger.info('🔍 Anomaly Detection Service initialized');
 
-  
-
   // Prepare messenger services collection for optional webhook registration later
   let messengerServices: any[] = [];
 
@@ -503,22 +503,30 @@ async function main() {
       appLogger.info('🤖 Starting messenger bots', {
         services: filteredMessengers.map((s: any) => s.providerName).join(', '),
       });
-      await Promise.all(
+      const startResults = await Promise.allSettled(
         filteredMessengers.map(async (service) => {
           await startBot(service);
           appLogger.info('✅ Bot started', { provider: service.providerName });
         })
       );
+      const failures = startResults.filter((r) => r.status === 'rejected');
+      if (failures.length > 0) {
+        appLogger.error(`Failed to start ${failures.length} messenger bot(s)`, { failures });
+      }
     } else {
       appLogger.info(
         '🤖 No specific messenger service configured - starting all available services'
       );
-      await Promise.all(
+      const startResults = await Promise.allSettled(
         messengerServices.map(async (service) => {
           await startBot(service);
           appLogger.info('✅ Bot started', { provider: service.providerName });
         })
       );
+      const failures = startResults.filter((r) => r.status === 'rejected');
+      if (failures.length > 0) {
+        appLogger.error(`Failed to start ${failures.length} messenger bot(s)`, { failures });
+      }
     }
   }
 
@@ -571,7 +579,7 @@ async function main() {
     const enableViteDev = process.env.ENABLE_VITE_DEV !== 'false';
     if (process.env.NODE_ENV === 'development' && enableViteDev) {
       // @ts-ignore - Vite is a dev dependency using dynamic import
-      const viteModule = await (new Function('return import("vite")')());
+      const viteModule = await new Function('return import("vite")')();
       const createViteServer = viteModule.createServer;
       appLogger.info('⚡ Starting Vite Middleware for Hot Reloading...');
       viteServer = await createViteServer({
@@ -653,8 +661,30 @@ async function main() {
   // Setup signal handlers for graceful shutdown
   shutdownCoordinator.setupSignalHandlers();
 
+  // Setup process global handlers for unhandled promises
+  process.on('unhandledRejection', (reason, promise) => {
+    appLogger.error('Unhandled Rejection at:', { promise, reason });
+  });
+
+  process.on('uncaughtException', (error) => {
+    appLogger.error('Uncaught Exception:', { error });
+    // Give logging time to write before exit
+    setTimeout(() => process.exit(1), 1000);
+  });
+
   // Startup complete
   appLogger.info('🎉 Open Hivemind Unified Server startup complete!');
+
+  // Re-print temp password so it's visible after all startup noise
+  const { AuthManager } = require('./auth/AuthManager');
+  const generatedPwd = AuthManager.getInstance().getGeneratedPassword();
+  if (generatedPwd) {
+    console.warn('================================================================');
+    console.warn('⚠️  REMINDER: Temporary admin password (set ADMIN_PASSWORD to remove this):');
+    console.warn(`   Username: admin`);
+    console.warn(`   Password: ${generatedPwd}`);
+    console.warn('================================================================');
+  }
 }
 
 main().catch((error) => {

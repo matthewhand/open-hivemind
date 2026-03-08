@@ -17,7 +17,7 @@
     "format:check": "node ./node_modules/prettier/bin/prettier.cjs --check \"src/**/*.ts\" \"src/**/*.tsx\" \"tests/**/*.ts\" \"packages/**/*.ts\"",
     "check-types": "tsc --noEmit || true",
     "version": "tsc -v",
-    "build": "powershell -File ./scripts/build-all.ps1",
+    "build": "bash ./scripts/build-backend.sh && bash ./scripts/build-frontend.sh",
     "build:backend": "bash ./scripts/build-backend.sh",
     "build:frontend": "bash ./scripts/build-frontend.sh",
     "build:netlify": "bash ./scripts/build-netlify.sh",
@@ -71,6 +71,7 @@
     "@client": "dist/src/client",
     "@server": "dist/src/server",
     "@hivemind/provider-openai": "dist/packages/provider-openai/src",
+    "@hivemind/provider-letta": "dist/packages/provider-letta/src",
     "@hivemind/adapter-discord": "dist/packages/adapter-discord/src",
     "@hivemind/adapter-slack": "dist/packages/adapter-slack/src",
     "@hivemind/adapter-mattermost": "dist/packages/adapter-mattermost/src"
@@ -140,7 +141,6 @@
     "node-fetch": "^3.3.2",
     "openai": "^4.82.0",
     "pino-pretty": "^11.2.2",
-    "playwright": "^1.58.2",
     "prop-types": "^15.8.1",
     "puppeteer": "^24.23.0",
     "ra-core": "^5.3.0",
@@ -173,7 +173,7 @@
     "uuid": "^11.1.0",
     "winston-daily-rotate-file": "^5.0.0",
     "yargs": "^17.7.2",
-    "zod": "^3.24.2",
+    "zod": "3.25.1",
     "zod-to-json-schema": "3.25.1"
   },
   "devDependencies": {
@@ -205,7 +205,7 @@
     "@types/cors": "^2.8.19",
     "@types/debug": "^4.1.12",
     "@types/dotenv": "^6.1.1",
-    "@types/express": "^4.17.21",
+    "@types/express": "^4.17.25",
     "@types/express-session": "^1.18.2",
     "@types/ffmpeg-static": "^3.0.3",
     "@types/glob": "^8.1.0",
@@ -261,8 +261,7 @@
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.39.1",
     "vite": "^7.1.2",
-    "wrangler": "^4.34.0",
-    "zod": "^3.25.1"
+    "wrangler": "^4.34.0"
   },
   "overrides": {
     "undici": "7.22.0",

@@ -158,10 +158,18 @@ const DataTable = <T extends Record<string, any>>({
     setSelectedRows(newSelected);
   };
 
+  // Use a ref to track the previously reported selection to prevent infinite loops
+  const prevSelectedRef = React.useRef<T[]>([]);
+
   React.useEffect(() => {
     if (onSelectionChange) {
       const selectedData = Array.from(selectedRows).map(index => data[index]).filter(Boolean);
-      onSelectionChange(selectedData);
+
+      // Only call onSelectionChange if the selected data has actually changed
+      if (JSON.stringify(selectedData) !== JSON.stringify(prevSelectedRef.current)) {
+        prevSelectedRef.current = selectedData;
+        onSelectionChange(selectedData);
+      }
     }
   }, [selectedRows, data, onSelectionChange]);
 

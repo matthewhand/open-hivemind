@@ -31,6 +31,7 @@ import hotReloadRouter from './routes/hotReload';
 import importExportRouter from './routes/importExport';
 import mcpRouter from './routes/mcp';
 import personasRouter from './routes/personas';
+import { PROMETHEUS_METRICS_PATH } from './routes/health';
 import sitemapRouter from './routes/sitemap';
 import specsRouter from './routes/specs';
 
