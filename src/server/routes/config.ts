@@ -403,29 +403,21 @@ router.put('/llm-profiles/:key', (req, res) => {
 
 // ... (Rest of the file mostly same, except global config redaction)
 
-// Helper to safely and performantly deep clone schemas while skipping functions
-// JSON.stringify drops functions silently, but doing it manually is much faster.
+// Helper to safely deep clone convict schemas while skipping function-valued properties.
+// structuredClone throws on schemas with native functions; JSON.stringify silently drops
+// them but is slower. This custom clone handles both cases correctly and idiomatically.
 const deepCloneSchema = (obj: any): any => {
   if (obj === null || typeof obj !== 'object') {
     return obj;
   }
   if (Array.isArray(obj)) {
-    const arr = new Array(obj.length);
-    for (let i = 0; i < obj.length; i++) {
-      arr[i] = deepCloneSchema(obj[i]);
-    }
-    return arr;
+    return obj.map((item: any) => deepCloneSchema(item));
   }
-  const result: any = {};
-  for (const key in obj) {
-    if (Object.prototype.hasOwnProperty.call(obj, key)) {
-      const val = obj[key];
-      if (typeof val !== 'function') {
-        result[key] = deepCloneSchema(val);
-      }
-    }
-  }
-  return result;
+  return Object.fromEntries(
+    Object.entries(obj)
+      .filter(([, val]) => typeof val !== 'function')
+      .map(([key, val]) => [key, deepCloneSchema(val)])
+  );
 };
 
 // GET /api/config/global - Get all global configurations (schema + values)
