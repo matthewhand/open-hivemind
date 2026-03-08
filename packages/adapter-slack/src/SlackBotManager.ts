@@ -62,6 +62,11 @@ export class SlackBotManager {
     this.messageHandler = handler;
   }
 
+  /**
+   * Initializes all configured Slack bots concurrently.
+   * If any bot fails to authenticate, the entire initialization process will fail fast
+   * and reject with the first encountered error.
+   */
   public async initialize() {
     debug('Entering initialize');
     await Promise.all(
