@@ -116,6 +116,27 @@ describe('validateRequest middleware', () => {
     );
   });
 
+  it('should return 400 when route param fails validation', () => {
+    const schema = z.object({
+      body: z.object({}).optional(),
+      query: z.object({}).optional(),
+      params: z.object({ id: z.string().uuid() }),
+    });
+    mockReq.params = { id: 'not-a-uuid' };
+    const middleware = validateRequest(schema);
+    middleware(mockReq as Request, mockRes as Response, nextFunction as NextFunction);
+    expect(mockRes.status).toHaveBeenCalledWith(400);
+    expect(mockRes.json).toHaveBeenCalledWith(
+      expect.objectContaining({
+        error: 'Validation failed',
+        issues: expect.arrayContaining([
+          expect.objectContaining({ path: expect.arrayContaining(['params', 'id']) }),
+        ]),
+      })
+    );
+    expect(nextFunction).not.toHaveBeenCalled();
+  });
+
   it('should call next(error) for non-Zod errors', () => {
     const schema = {
       parse: jest.fn().mockImplementation(() => {
