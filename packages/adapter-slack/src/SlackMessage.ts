@@ -70,7 +70,7 @@ export default class SlackMessage extends IMessage {
   }
 
   getChannelId(): string {
-    return this.channelId || this.data?.channel || '';
+    return this.channelId || String(this.data?.channel ?? '') || '';
   }
 
   getAuthorId(): string {
