@@ -77,13 +77,23 @@ test.describe('Chat Monitor Screenshots', () => {
 
   test('capture Chat Monitor screenshots', async ({ page }) => {
     await page.goto('/admin/chat');
-    await page.waitForTimeout(1000);
+
+    // Wait for network idle to ensure React renders
+    await page.waitForLoadState('networkidle');
+    await page.waitForTimeout(3000);
+
+    // Force screenshot without assertions
     await page.screenshot({ path: 'docs/screenshots/chat-monitor.png', fullPage: true });
   });
 
   test('capture Chat Interface screenshot', async ({ page }) => {
     await page.goto('/admin/chat');
-    await page.waitForTimeout(1000);
+
+    // Wait for network idle to ensure React renders
+    await page.waitForLoadState('networkidle');
+    await page.waitForTimeout(3000);
+
+    // Force screenshot without assertions
     await page.screenshot({ path: 'docs/screenshots/chat-interface.png', fullPage: true });
   });
 });
