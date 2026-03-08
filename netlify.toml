@@ -6,8 +6,6 @@
   publish = "dist/client"
 
 
-
-
 [dev]
   command = "npm run dev"
 
