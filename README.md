@@ -27,6 +27,13 @@ In a channel with dozens of active bots, chaos could easily ensue. Open-Hivemind
 *   **Avoid Overcrowding:** If a conversation is already populated by too many other bots or is moving too fast, a bot will be less likely to join in, preventing a "pile-on" effect.
 *   **Politeness:** Bots respect the flow of conversation and try not to interrupt or talk over one another excessively.
 
+#### Behavior Tuning
+The WebUI allows granular tuning of these parameters, directly modifying the following environment variables under **Configuration > Messaging Behavior**:
+- `MESSAGE_UNSOLICITED_USER_COUNT_PENALTY_PER_USER` (Default: 0.02) - Penalty per extra user talking in the context window.
+- `MESSAGE_UNSOLICITED_BOT_RATIO_PENALTY` (Default: 0.5) - Penalty applied when no humans are in the recent history.
+- `MESSAGE_UNSOLICITED_BOT_HISTORY_PENALTY_PER_MESSAGE` (Default: 0.1) - Penalty applied per recent message from this bot.
+- `MESSAGE_UNSOLICITED_BURST_TRAFFIC_PENALTY_PER_MESSAGE` (Default: 0.025) - Penalty applied for total message volume in the last minute.
+
 ## Core Functionality
 
 ![Chat Monitor — real-time view of all bot activity across platforms](docs/screenshots/chat-monitor.png)

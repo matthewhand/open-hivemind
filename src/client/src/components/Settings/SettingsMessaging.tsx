@@ -441,7 +441,7 @@ const SettingsMessaging: React.FC = () => {
             <label className="label py-1 flex items-center justify-between">
               <span className="label-text text-sm font-medium flex-1 pr-4 flex items-center gap-1">
                 User Density Penalty
-                <div className="tooltip tooltip-right" data-tip="Penalty applied to base chance per extra user talking in the context window.">
+                <div className="tooltip tooltip-right" data-tip="Penalty applied to base chance per extra user talking in the context window. Valid range: 0 (disabled) to 0.2">
                   <Info className="w-3.5 h-3.5 text-base-content/50 cursor-help" />
                 </div>
               </span>
@@ -460,8 +460,8 @@ const SettingsMessaging: React.FC = () => {
               disabled={settings.onlyWhenSpokenTo}
             />
             <div className="w-full flex justify-between text-xs px-2 mt-1 text-base-content/50">
-              <span>0</span>
-              <span>-0.2</span>
+              <span>0 (Disabled)</span>
+              <span>-0.2 (Max)</span>
             </div>
           </div>
 
@@ -469,7 +469,7 @@ const SettingsMessaging: React.FC = () => {
             <label className="label py-1 flex items-center justify-between">
               <span className="label-text text-sm font-medium flex-1 pr-4 flex items-center gap-1">
                 Bot Ratio Penalty
-                <div className="tooltip tooltip-right" data-tip="Penalty applied when responding to bots and there are no humans in recent history.">
+                <div className="tooltip tooltip-right" data-tip="Penalty applied when responding to bots and there are no humans in recent history. Valid range: 0 (disabled) to 1.0">
                   <Info className="w-3.5 h-3.5 text-base-content/50 cursor-help" />
                 </div>
               </span>
@@ -488,8 +488,8 @@ const SettingsMessaging: React.FC = () => {
               disabled={settings.onlyWhenSpokenTo}
             />
             <div className="w-full flex justify-between text-xs px-2 mt-1 text-base-content/50">
-              <span>0</span>
-              <span>-1.0</span>
+              <span>0 (Disabled)</span>
+              <span>-1.0 (Max)</span>
             </div>
           </div>
 
@@ -497,7 +497,7 @@ const SettingsMessaging: React.FC = () => {
             <label className="label py-1 flex items-center justify-between">
               <span className="label-text text-sm font-medium flex-1 pr-4 flex items-center gap-1">
                 Bot History Penalty
-                <div className="tooltip tooltip-right" data-tip="Penalty applied per recent message from this bot.">
+                <div className="tooltip tooltip-right" data-tip="Penalty applied per recent message from this bot. Valid range: 0 (disabled) to 0.5">
                   <Info className="w-3.5 h-3.5 text-base-content/50 cursor-help" />
                 </div>
               </span>
@@ -516,8 +516,8 @@ const SettingsMessaging: React.FC = () => {
               disabled={settings.onlyWhenSpokenTo}
             />
             <div className="w-full flex justify-between text-xs px-2 mt-1 text-base-content/50">
-              <span>0</span>
-              <span>-0.5</span>
+              <span>0 (Disabled)</span>
+              <span>-0.5 (Max)</span>
             </div>
           </div>
 
@@ -525,7 +525,7 @@ const SettingsMessaging: React.FC = () => {
             <label className="label py-1 flex items-center justify-between">
               <span className="label-text text-sm font-medium flex-1 pr-4 flex items-center gap-1">
                 Burst Traffic Penalty
-                <div className="tooltip tooltip-right" data-tip="Penalty applied per total message volume in the last minute after bot's last post.">
+                <div className="tooltip tooltip-right" data-tip="Penalty applied per total message volume in the last minute after bot's last post. Valid range: 0 (disabled) to 0.1">
                   <Info className="w-3.5 h-3.5 text-base-content/50 cursor-help" />
                 </div>
               </span>
@@ -544,8 +544,8 @@ const SettingsMessaging: React.FC = () => {
               disabled={settings.onlyWhenSpokenTo}
             />
             <div className="w-full flex justify-between text-xs px-2 mt-1 text-base-content/50">
-              <span>0</span>
-              <span>-0.1</span>
+              <span>0 (Disabled)</span>
+              <span>-0.1 (Max)</span>
             </div>
           </div>
 

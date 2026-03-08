@@ -338,4 +338,81 @@ describe('shouldReplyToMessage', () => {
       (await shouldReplyToMessage(mockMessage, 'bot-id', 'discord', 'MyBot')).shouldReply
     ).toBe(false);
   });
+
+  describe('Unsolicited Probability Modifiers', () => {
+    let mockHistory: any[];
+
+    beforeEach(() => {
+      mockMessage = {
+        getChannelId: jest.fn().mockReturnValue('channel-1'),
+        getText: jest.fn().mockReturnValue('some random chatter'),
+        isFromBot: jest.fn().mockReturnValue(false),
+        isDirectMessage: jest.fn().mockReturnValue(false),
+        getAuthorId: jest.fn().mockReturnValue('user-1'),
+        getUserMentions: jest.fn().mockReturnValue([]),
+      };
+
+      (messageConfig.get as jest.Mock).mockImplementation((key) => {
+        if (key === 'MESSAGE_ONLY_WHEN_SPOKEN_TO') return false;
+        if (key === 'MESSAGE_WAKEWORDS') return ['!test'];
+        if (key === 'MESSAGE_UNSOLICITED_BASE_CHANCE') return 0.5; // High base chance for testing
+        return undefined;
+      });
+
+      // Provide history with multiple users and bots to trigger all penalties
+      mockHistory = [
+        { getAuthorId: () => 'user-1', isFromBot: () => false, getText: () => 'hello', timestamp: Date.now() - 50000 },
+        { getAuthorId: () => 'user-2', isFromBot: () => false, getText: () => 'hi', timestamp: Date.now() - 40000 },
+        { getAuthorId: () => 'bot-id', isFromBot: () => true, getText: () => 'bot response', timestamp: Date.now() - 30000 },
+        { getAuthorId: () => 'bot-id', isFromBot: () => true, getText: () => 'another bot response', timestamp: Date.now() - 20000 },
+        { getAuthorId: () => 'user-3', isFromBot: () => false, getText: () => 'yo', timestamp: Date.now() - 10000 },
+      ];
+    });
+
+    it('should respect default penalty values when not overridden in bot config', async () => {
+      const result = await shouldReplyToMessage(mockMessage, 'bot-id', 'discord', 'MyBot', mockHistory);
+
+      // With defaults (User: 0.02, BotRatio: 0.5, BotHistory: 0.1, Burst: 0.025)
+      // 3 unique users (user-1, user-2, user-3). So (3 - 1) * 0.02 = 0.04 penalty
+      // 2 bot history messages. (2 - 1) * 0.1 = 0.1 penalty
+
+      expect(result.meta?.mods.UserCount).toBeCloseTo(-0.04);
+      expect(result.meta?.mods.BotHistory).toBeCloseTo(-0.1);
+    });
+
+    it('should allow penalties to be disabled by setting them to 0 in config', async () => {
+      (messageConfig.get as jest.Mock).mockImplementation((key) => {
+        if (key === 'MESSAGE_ONLY_WHEN_SPOKEN_TO') return false;
+        if (key === 'MESSAGE_WAKEWORDS') return ['!test'];
+        if (key === 'MESSAGE_UNSOLICITED_BASE_CHANCE') return 0.5;
+        if (key === 'MESSAGE_UNSOLICITED_USER_COUNT_PENALTY_PER_USER') return 0;
+        if (key === 'MESSAGE_UNSOLICITED_BOT_HISTORY_PENALTY_PER_MESSAGE') return 0;
+        return undefined;
+      });
+
+      const result = await shouldReplyToMessage(mockMessage, 'bot-id', 'discord', 'MyBot', mockHistory);
+
+      // Penalties should not appear or should be exactly 0 (which is neutral/falsy for the string array)
+      expect(result.meta?.mods.UserCount).toBeUndefined();
+      expect(result.meta?.mods.BotHistory).toBeUndefined();
+    });
+
+    it('should support extreme penalty values safely', async () => {
+      (messageConfig.get as jest.Mock).mockImplementation((key) => {
+        if (key === 'MESSAGE_ONLY_WHEN_SPOKEN_TO') return false;
+        if (key === 'MESSAGE_WAKEWORDS') return ['!test'];
+        if (key === 'MESSAGE_UNSOLICITED_BASE_CHANCE') return 0.5;
+        if (key === 'MESSAGE_UNSOLICITED_USER_COUNT_PENALTY_PER_USER') return 1.0;
+        if (key === 'MESSAGE_UNSOLICITED_BOT_HISTORY_PENALTY_PER_MESSAGE') return 1.0;
+        return undefined;
+      });
+
+      const result = await shouldReplyToMessage(mockMessage, 'bot-id', 'discord', 'MyBot', mockHistory);
+
+      // userCountPenalty = (3 - 1) * 1.0 = 2.0 (penalty is negative)
+      // botHistoryPenalty maxes out at -0.5
+      expect(result.meta?.mods.UserCount).toBeCloseTo(-2.0);
+      expect(result.meta?.mods.BotHistory).toBeCloseTo(-0.5);
+    });
+  });
 });
