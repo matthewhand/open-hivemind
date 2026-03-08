@@ -17,6 +17,11 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Install pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 9
+
       - name: Set up Node.js
       - name: Setup pnpm
         uses: pnpm/action-setup@v3
@@ -25,16 +30,16 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-          cache: 'npm'
+          cache: 'pnpm'
 
       - name: Install dependencies
-        run: npm ci
+        run: pnpm install
 
       - name: Run lint
-        run: npm run lint
+        run: ppnpm run lint
 
       - name: Check types
-        run: npm run check-types
+        run: ppnpm run check-types
 
   build:
     runs-on: ubuntu-latest
@@ -46,6 +51,11 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Install pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 9
+
       - name: Set up Node.js
       - name: Setup pnpm
         uses: pnpm/action-setup@v3
@@ -54,13 +64,13 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-          cache: 'npm'
+          cache: 'pnpm'
 
       - name: Install dependencies
-        run: npm ci
+        run: pnpm install
 
       - name: Build
-        run: npm run build
+        run: ppnpm run build
 
       - name: Run quick smoke tests
         run: |

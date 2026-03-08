@@ -348,20 +348,51 @@ export type OpenAIResponse =
   | OpenAIError;
 
 // Type guards
-export function isOpenAIError(response: OpenAIResponse): response is OpenAIError {
-  return 'error' in response;
+/**
+ * Type guard to check if a response is an OpenAIError.
+ *
+ * @param response - The OpenAI API response to check.
+ * @returns True if the response contains an 'error' property, false otherwise.
+ * @example
+ * if (isOpenAIError(response)) {
+ *   console.error(response.error.message);
+ * }
+ */
+export function isOpenAIError(response: OpenAIResponse | null | undefined): response is OpenAIError {
+  return response != null && typeof response === 'object' && 'error' in response && Boolean((response as any).error);
 }
 
+/**
+ * Type guard to check if a response is an OpenAIChatCompletionResponse.
+ *
+ * @param response - The OpenAI API response to check.
+ * @returns True if the response object property is 'chat.completion'.
+ * @example
+ * if (isChatCompletionResponse(response)) {
+ *   console.log(response.choices[0].message.content);
+ * }
+ */
 export function isChatCompletionResponse(
-  response: OpenAIResponse
+  response: OpenAIResponse | null | undefined
 ): response is OpenAIChatCompletionResponse {
-  return 'object' in response && response.object === 'chat.completion';
+  return response != null && typeof response === 'object' && 'object' in response && response.object === 'chat.completion';
 }
 
+/**
+ * Type guard to check if a response is an OpenAIModelsListResponse.
+ *
+ * @param response - The OpenAI API response to check.
+ * @returns True if the response is a valid models list, false otherwise.
+ * @example
+ * if (isModelsListResponse(response)) {
+ *   console.log(response.data[0].id);
+ * }
+ */
 export function isModelsListResponse(
-  response: OpenAIResponse
+  response: OpenAIResponse | null | undefined
 ): response is OpenAIModelsListResponse {
   return (
+    response != null && typeof response === 'object' &&
     'object' in response &&
     response.object === 'list' &&
     'data' in response &&
@@ -371,8 +402,18 @@ export function isModelsListResponse(
   );
 }
 
+/**
+ * Type guard to check if a response is an OpenAICompletionResponse.
+ *
+ * @param response - The OpenAI API response to check.
+ * @returns True if the response object property is 'text_completion'.
+ * @example
+ * if (isCompletionResponse(response)) {
+ *   console.log(response.choices[0].text);
+ * }
+ */
 export function isCompletionResponse(
-  response: OpenAIResponse
+  response: OpenAIResponse | null | undefined
 ): response is OpenAICompletionResponse {
-  return 'object' in response && response.object === 'text_completion';
+  return response != null && typeof response === 'object' && 'object' in response && response.object === 'text_completion';
 }

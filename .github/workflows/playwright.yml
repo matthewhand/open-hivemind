@@ -15,6 +15,11 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Install pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 9
+
       - name: Set up Node.js
       - name: Setup pnpm
         uses: pnpm/action-setup@v3
@@ -24,10 +29,13 @@ jobs:
         with:
           node-version: 20
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> e7772896 (🧪 Add comprehensive unit tests for OpenAI error type checkers)
           cache: 'pnpm'
 
       - name: Install dependencies
-        run: npm ci
+        run: pnpm install
         env:
           PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
 
@@ -35,14 +43,14 @@ jobs:
         run: npx playwright install --with-deps
 
       - name: Build application
-        run: npm run build
+        run: ppnpm run build
 
       - name: Run Playwright tests
         env:
           PLAYWRIGHT_BASE_URL: http://127.0.0.1:3028
           SKIP_MESSENGERS: 'true'
           HTTP_ENABLED: 'true'
-        run: npm run test:playwright -- --reporter=line
+        run: ppnpm run test:playwright -- --reporter=line
 
       - name: Upload Playwright test artifacts
         if: ${{ always() }}
