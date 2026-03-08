@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { useOptimisticList } from '../hooks/useOptimisticList';
 import { 
   Bot, Plus, Edit2, Trash2, Check, RefreshCw, AlertCircle, 
   Search, Filter, ChevronRight, Activity, MessageSquare, 
@@ -77,7 +78,7 @@ const redactString = (str?: string) => {
 };
 
 const BotsPage: React.FC = () => {
-  const [bots, setBots] = useState<BotConfig[]>([]);
+  const { items: bots, setItems: setBots, isUpdating, executeOptimistic } = useOptimisticList<BotConfig>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -249,32 +250,51 @@ const BotsPage: React.FC = () => {
   }, [location.state]);
 
   const handleCreateBot = async (botData: any) => {
-    try {
-      const response = await apiService.post<any>('/api/bots', botData);
-      setBots(prev => [...prev, response.data.bot]);
-      setIsCreateModalOpen(false);
-      toast.success('Bot created successfully');
-    } catch (err) {
-      ErrorService.report(err, { action: 'createBot', botData });
-      toast.error(err instanceof Error ? err.message : 'Failed to create bot');
-    }
+    const tempId = 'temp-' + Date.now();
+    const optimisticBot = { ...botData, id: tempId, status: 'active', connected: false, messageCount: 0, errorCount: 0 };
+
+    setIsCreateModalOpen(false);
+
+    await executeOptimistic({
+      type: 'create',
+      optimisticItem: optimisticBot,
+      apiCall: () => apiService.post<any>('/api/bots', botData),
+      successMessage: 'Bot created successfully',
+      rollbackMessage: 'Failed to create bot',
+      onError: (err) => {
+        setIsCreateModalOpen(true);
+        ErrorService.report(err, { action: 'createBot', botData });
+      }
+    });
   };
 
   const handleUpdateBot = async (botData: any) => {
-    try {
-      const response = await apiService.put<any>(`/api/bots/${editingBot?.id}`, botData);
-      setBots(prev => prev.map(b => b.id === editingBot?.id ? response.data.bot : b));
-      setEditingBot(null);
-      toast.success('Bot updated successfully');
-      
-      // Update preview if it's the same bot
-      if (previewBot?.id === editingBot?.id) {
-        setPreviewBot(response.data.bot);
+    const currentBotId = editingBot?.id;
+    if (!currentBotId) return;
+
+    const originalBot = bots.find(b => b.id === currentBotId);
+    if (!originalBot) return;
+
+    const optimisticBot = { ...originalBot, ...botData };
+    setEditingBot(null);
+
+    await executeOptimistic({
+      type: 'update',
+      optimisticItem: optimisticBot,
+      originalItem: originalBot,
+      apiCall: () => apiService.put<any>(`/api/bots/${currentBotId}`, botData),
+      successMessage: 'Bot updated successfully',
+      rollbackMessage: 'Failed to update bot',
+      onSuccess: (res) => {
+        if (previewBot?.id === currentBotId) {
+          setPreviewBot(res.data.bot);
+        }
+      },
+      onError: (err) => {
+        setEditingBot(originalBot);
+        ErrorService.report(err, { action: 'updateBot', botId: currentBotId });
       }
-    } catch (err) {
-      ErrorService.report(err, { action: 'updateBot', botId: editingBot?.id });
-      toast.error(err instanceof Error ? err.message : 'Failed to update bot');
-    }
+    });
   };
 
   const handleDeleteBot = React.useCallback(async () => {
@@ -494,9 +514,7 @@ const BotsPage: React.FC = () => {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {filteredBots.map(bot => (
-                <BotCard
-                  key={bot.id}
-                  bot={bot}
+                <BotCard key={bot.id} bot={bot} isUpdating={isUpdating(bot.id)}
                   isSelected={previewBot?.id === bot.id}
                   onPreview={() => handlePreviewBot(bot)}
                   onEdit={() => setEditingBot(bot)}

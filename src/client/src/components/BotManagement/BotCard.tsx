@@ -29,6 +29,7 @@ import PersonaSelector from './PersonaSelector';
 import ProviderConfigModal from '../ProviderConfiguration/ProviderConfigModal';
 
 interface BotCardProps {
+  isUpdating?: boolean;
   bot: BotInstance;
   personas: Persona[];
   onStartBot?: (botId: string) => void;
