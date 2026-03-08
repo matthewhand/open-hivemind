@@ -18,7 +18,6 @@ import { apiService } from '../services/api';
 import { withRetry } from '../utils/withRetry';
 import { ErrorService } from '../services/ErrorService';
 import type { BotConfig, ProviderModalState } from '../types/bot';
-import { LLMProviderType, MessageProviderType } from '../types/bot';
 import BotCard from '../components/BotManagement/BotCard';
 import { CreateBotWizard } from '../components/BotManagement/CreateBotWizard';
 import { BotSettingsModal } from '../components/BotSettingsModal';

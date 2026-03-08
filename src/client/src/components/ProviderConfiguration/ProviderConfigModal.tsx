@@ -1,20 +1,14 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
-import React, { useState, useEffect } from 'react';
-import type {
-  ProviderModalState,
-  ProviderTypeConfig,
-  FieldConfig,
-} from '../../types/bot';
-import {
-  MessageProviderType,
-  LLMProviderType,
-  MESSAGE_PROVIDER_CONFIGS,
-  LLM_PROVIDER_CONFIGS,
-} from '../../types/bot';
+import React, { useState, useEffect, useMemo } from 'react';
+import type { ProviderModalState } from '../../types/bot';
 import { Button } from '../DaisyUI';
 import { X as XIcon } from 'lucide-react';
 import { ProviderConfigForm } from '../ProviderConfigForm';
-import { getProviderSchema } from '../../provider-configs';
+import {
+  getProviderSchema,
+  getProviderSchemasByType,
+} from '../../provider-configs';
+import type { ProviderConfigSchema } from '../../provider-configs/types';
 
 interface ProviderConfigModalProps {
   modalState: ProviderModalState;
@@ -29,39 +23,41 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
   onClose,
   onSubmit,
 }) => {
-  const [selectedType, setSelectedType] = useState<MessageProviderType | LLMProviderType>(
-    modalState.providerType === 'message' ? MessageProviderType.DISCORD : LLMProviderType.OPENAI,
-  );
+  // Get available schemas for the current provider type
+  const availableSchemas = useMemo(() => {
+    return getProviderSchemasByType(modalState.providerType as 'message' | 'llm' | 'memory' | 'tool');
+  }, [modalState.providerType]);
+
+  const [selectedType, setSelectedType] = useState<string>('');
   const [formData, setFormData] = useState<Record<string, any>>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
+
+  // Get the currently selected schema
+  const selectedSchema = useMemo(() => {
+    return selectedType ? getProviderSchema(selectedType) : null;
+  }, [selectedType]);
 
   // Initialize form data when modal opens or provider changes
   useEffect(() => {
     if (modalState.isOpen) {
       if (modalState.isEdit && modalState.provider) {
         // Edit mode: populate with existing provider data
-        setSelectedType(modalState.provider.type as MessageProviderType | LLMProviderType);
+        setSelectedType(modalState.provider.type);
         setFormData({
           name: modalState.provider.name,
           ...modalState.provider.config,
         });
       } else {
         // Add mode: start with empty form
-        const defaultType = modalState.providerType === 'message'
-          ? MessageProviderType.DISCORD
-          : LLMProviderType.OPENAI;
+        // Select first available type if current selection is invalid
+        const firstSchema = availableSchemas[0];
+        const defaultType = firstSchema?.providerType || '';
 
-        const isCurrentTypeValid = modalState.providerType === 'message'
-          ? Object.values(MessageProviderType).includes(selectedType as MessageProviderType)
-          : Object.values(LLMProviderType).includes(selectedType as LLMProviderType);
-
-        let newType = selectedType;
-        if (!isCurrentTypeValid) {
-          newType = defaultType;
-          setSelectedType(newType);
+        if (!selectedType || !availableSchemas.find(s => s.providerType === selectedType)) {
+          setSelectedType(defaultType);
         }
 
-        const defaultName = getDefaultName(newType, modalState.providerType as 'message' | 'llm', existingProviders);
+        const defaultName = getDefaultName(selectedType || defaultType, existingProviders);
         setFormData({
           name: defaultName,
         });
@@ -69,16 +65,14 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [modalState.isOpen, modalState.provider, modalState.isEdit, modalState.providerType]);
+  }, [modalState.isOpen, modalState.provider, modalState.isEdit, modalState.providerType, availableSchemas]);
 
   const getDefaultName = (
-    type: string,
-    providerType: 'message' | 'llm',
+    providerType: string,
     currentExistingProviders?: { name: string }[],
   ): string => {
-    const configs = providerType === 'message' ? MESSAGE_PROVIDER_CONFIGS : LLM_PROVIDER_CONFIGS;
-    const config = (configs as any)[type];
-    const baseName = config?.displayName || config?.name || 'New Provider';
+    const schema = getProviderSchema(providerType);
+    const baseName = schema?.displayName || 'New Provider';
 
     if (!currentExistingProviders || currentExistingProviders.length === 0) {
       return `${baseName}-1`;
@@ -93,12 +87,7 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
     return newName;
   };
 
-  const getCurrentConfig = (): ProviderTypeConfig => {
-    const configs = modalState.providerType === 'message' ? MESSAGE_PROVIDER_CONFIGS : LLM_PROVIDER_CONFIGS;
-    return (configs as any)[selectedType];
-  };
-
-  const validateField = (field: FieldConfig | any, value: any): string | null => {
+  const validateField = (field: any, value: any): string | null => {
     if (field.required && (!value || value.toString().trim() === '')) {
       return `${field.label} is required`;
     }
@@ -129,7 +118,7 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
       if (pattern && typeof value === 'string') {
         const regex = new RegExp(pattern);
         if (!regex.test(value)) {
-          // For API keys, don't fail validation in UI, just warn (ProviderConfigForm does this)
+          // For API keys, don't fail validation in UI, just warn
           if (field.name === 'apiKey' || field.type === 'password') {
             // Just pass for API Keys
           } else {
@@ -151,7 +140,6 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
   };
 
   const validateForm = (): boolean => {
-    const config = getCurrentConfig();
     const newErrors: Record<string, string> = {};
     let isValid = true;
 
@@ -161,17 +149,16 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
       isValid = false;
     }
 
-    const schema = getProviderSchema(selectedType);
-    const allFields = schema ? schema.fields : (config.fields || []);
-
-    // Validate required fields
-    allFields.forEach((field: any) => {
-      const error = validateField(field, formData[field.name]);
-      if (error) {
-        newErrors[field.name] = error;
-        isValid = false;
-      }
-    });
+    // Validate required fields from schema
+    if (selectedSchema) {
+      selectedSchema.fields.forEach((field) => {
+        const error = validateField(field, formData[field.name]);
+        if (error) {
+          newErrors[field.name] = error;
+          isValid = false;
+        }
+      });
+    }
 
     setErrors(newErrors);
     return isValid;
@@ -185,19 +172,17 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
       return;
     }
 
-    const config = getCurrentConfig();
-    const schema = getProviderSchema(selectedType);
-    const allFields = schema ? schema.fields : (config.fields || []);
-
     const providerConfig: Record<string, any> = {};
 
     // Only include fields that have values, and perform casting
-    allFields.forEach((field: any) => {
-      const value = formData[field.name];
-      if (value !== undefined && value !== '') {
-        providerConfig[field.name] = field.type === 'number' ? Number(value) : value;
-      }
-    });
+    if (selectedSchema) {
+      selectedSchema.fields.forEach((field) => {
+        const value = formData[field.name];
+        if (value !== undefined && value !== '') {
+          providerConfig[field.name] = field.type === 'number' ? Number(value) : value;
+        }
+      });
+    }
 
     const providerData = {
       name: formData.name,
@@ -229,141 +214,18 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
     }
   };
 
-  const renderField = (field: FieldConfig) => {
-    const error = errors[field.name];
-    const value = formData[field.name] || '';
-
-    const fieldClasses = `
-      w-full
-      ${error ? 'input-error' : ''}
-      ${field.type === 'textarea' ? 'textarea' : 'input'}
-      input-bordered
-    `;
-
-    switch (field.type) {
-      case 'password':
-        return (
-          <div key={field.name}>
-            <label className="label">
-              <span className="label-text font-medium">{field.label}</span>
-              {field.required && <span className="label-text-alt text-error">*</span>}
-            </label>
-            <input
-              type="password"
-              className={fieldClasses}
-              placeholder={field.placeholder}
-              value={value}
-              onChange={(e) => handleFieldChange(field.name, e.target.value)}
-            />
-            {error && <label className="label"><span className="label-text-alt text-error">{error}</span></label>}
-          </div>
-        );
-
-      case 'number':
-        return (
-          <div key={field.name}>
-            <label className="label">
-              <span className="label-text font-medium">{field.label}</span>
-              {field.required && <span className="label-text-alt text-error">*</span>}
-            </label>
-            <input
-              type="number"
-              className={fieldClasses}
-              placeholder={field.placeholder}
-              value={value}
-              onChange={(e) => handleFieldChange(field.name, e.target.value)}
-              min={field.validation?.min}
-              max={field.validation?.max}
-              step={field.name === 'temperature' ? '0.1' : '1'}
-            />
-            {error && <label className="label"><span className="label-text-alt text-error">{error}</span></label>}
-          </div>
-        );
-
-      case 'select':
-        return (
-          <div key={field.name}>
-            <label className="label">
-              <span className="label-text font-medium">{field.label}</span>
-              {field.required && <span className="label-text-alt text-error">*</span>}
-            </label>
-            <select
-              className={`${fieldClasses} select`}
-              value={value}
-              onChange={(e) => handleFieldChange(field.name, e.target.value)}
-            >
-              <option value="">Select {field.label.toLowerCase()}</option>
-              {field.options?.map(option => (
-                <option key={option.value} value={option.value}>{option.label}</option>
-              ))}
-            </select>
-            {error && <label className="label"><span className="label-text-alt text-error">{error}</span></label>}
-          </div>
-        );
-
-      case 'textarea':
-        return (
-          <div key={field.name}>
-            <label className="label">
-              <span className="label-text font-medium">{field.label}</span>
-              {field.required && <span className="label-text-alt text-error">*</span>}
-            </label>
-            <textarea
-              className={fieldClasses}
-              placeholder={field.placeholder}
-              value={value}
-              onChange={(e) => handleFieldChange(field.name, e.target.value)}
-              rows={4}
-            />
-            {error && <label className="label"><span className="label-text-alt text-error">{error}</span></label>}
-          </div>
-        );
-
-      case 'checkbox':
-        return (
-          <div key={field.name} className="form-control">
-            <label className="label cursor-pointer">
-              <span className="label-text font-medium">{field.label}</span>
-              <input
-                type="checkbox"
-                className="toggle toggle-primary"
-                checked={!!value}
-                onChange={(e) => handleFieldChange(field.name, e.target.checked)}
-              />
-            </label>
-            {error && <label className="label"><span className="label-text-alt text-error">{error}</span></label>}
-          </div>
-        );
-
-      default:
-        // text and others
-        return (
-          <div key={field.name}>
-            <label className="label">
-              <span className="label-text font-medium">{field.label}</span>
-              {field.required && <span className="label-text-alt text-error">*</span>}
-            </label>
-            <input
-              type="text"
-              className={fieldClasses}
-              placeholder={field.placeholder}
-              value={value}
-              onChange={(e) => handleFieldChange(field.name, e.target.value)}
-            />
-            {error && <label className="label"><span className="label-text-alt text-error">{error}</span></label>}
-          </div>
-        );
-    }
-  };
-
   if (!modalState.isOpen) { return null; }
 
-  // Get ALL configs to iterate types for tabs
-  const configs = modalState.providerType === 'message' ? MESSAGE_PROVIDER_CONFIGS : LLM_PROVIDER_CONFIGS;
-  const providerTypes = Object.keys(configs);
-  // Safe config access: if selectedType mismatch, fallback to first in list
-  const config = (configs as any)[selectedType] || (configs as any)[providerTypes[0]];
-  const allFields = config?.fields || [];
+  // Determine title based on provider type
+  const getProviderTypeLabel = () => {
+    switch (modalState.providerType) {
+      case 'message': return 'Message';
+      case 'llm': return 'LLM';
+      case 'memory': return 'Memory';
+      case 'tool': return 'Tool';
+      default: return 'Provider';
+    }
+  };
 
   return (
     <div className="modal modal-open">
@@ -371,7 +233,7 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
         {/* Header */}
         <div className="flex justify-between items-center mb-6">
           <h3 className="text-xl font-bold">
-            {modalState.isEdit ? 'Edit' : 'Add'} {modalState.providerType === 'message' ? 'Message' : 'LLM'} Provider
+            {modalState.isEdit ? 'Edit' : 'Add'} {getProviderTypeLabel()} Provider
           </h3>
           <button
             className="btn btn-sm btn-circle btn-ghost"
@@ -385,23 +247,22 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
         <div
           className="tabs tabs-boxed mb-6 flex-wrap gap-1"
           role="tablist"
-          aria-label={`${modalState.providerType === 'message' ? 'Message' : 'LLM'} provider types`}
+          aria-label={`${getProviderTypeLabel()} provider types`}
         >
-          {providerTypes.map(type => {
-            const typeConfig = (configs as any)[type];
-            const isActive = selectedType === type;
+          {availableSchemas.map((schema: ProviderConfigSchema) => {
+            const isActive = selectedType === schema.providerType;
             return (
               <button
-                key={type}
+                key={schema.providerType}
                 type="button"
                 className={`tab tab-sm flex items-center gap-2 ${isActive ? 'tab-active' : ''}`}
-                onClick={() => setSelectedType(type as MessageProviderType | LLMProviderType)}
+                onClick={() => setSelectedType(schema.providerType)}
                 role="tab"
                 aria-selected={isActive}
-                aria-label={`Select ${typeConfig.displayName || typeConfig.name}`}
+                aria-label={`Select ${schema.displayName}`}
               >
-                <span>{typeConfig.icon}</span>
-                {typeConfig.displayName || typeConfig.name}
+                <span>{schema.icon}</span>
+                {schema.displayName}
               </button>
             );
           })}
@@ -428,10 +289,10 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
 
           {/* Provider-specific fields */}
           <div className="space-y-4 mb-6">
-            {getProviderSchema(selectedType) ? (
+            {selectedSchema ? (
               <ProviderConfigForm
                 providerType={selectedType}
-                schema={getProviderSchema(selectedType)!}
+                schema={selectedSchema}
                 initialConfig={formData}
                 onConfigChange={handleProviderConfigChange}
                 externalErrors={errors}
@@ -457,7 +318,9 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
                 }}
               />
             ) : (
-              allFields.map(renderField)
+              <div className="text-center py-8 text-base-content/60">
+                Select a provider type to configure
+              </div>
             )}
           </div>
 

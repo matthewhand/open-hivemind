@@ -21,7 +21,8 @@ import {
 
 import { PROVIDER_CATEGORIES } from '../config/providers';
 import ProviderConfigModal from './ProviderConfiguration/ProviderConfigModal';
-import { LLM_PROVIDER_CONFIGS, LLMProviderType, ProviderModalState } from '../types';
+import type { ProviderModalState } from '../types/bot';
+import { getProviderSchema } from '../provider-configs';
 
 interface ConfigSchema {
   doc?: string;

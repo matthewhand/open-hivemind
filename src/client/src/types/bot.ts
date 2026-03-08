@@ -86,33 +86,11 @@ export interface UpdatePersonaRequest {
 
 export interface ProviderModalState {
   isOpen: boolean;
-  providerType: MessageProviderType | LLMProviderType | 'message' | 'llm';
+  providerType: 'message' | 'llm' | 'memory' | 'tool';
   provider?: MessageProvider | LLMProvider;
   mode: 'create' | 'edit';
   botId?: string | null;
   isEdit?: boolean;
-}
-
-export interface ProviderTypeConfig {
-  type: MessageProviderType | LLMProviderType;
-  displayName: string;
-  description: string;
-  icon: string;
-  fields: FieldConfig[];
-}
-
-export interface FieldConfig {
-  name: string;
-  label: string;
-  type: 'text' | 'password' | 'number' | 'select' | 'checkbox' | 'textarea';
-  required: boolean;
-  placeholder?: string;
-  options?: Array<{ value: string; label: string }>;
-  validation?: {
-    min?: number;
-    max?: number;
-    pattern?: string;
-  };
 }
 
 export interface Bot {
@@ -245,117 +223,6 @@ export interface CreateBotRequest {
     team?: string;
   };
 }
-
-export const MESSAGE_PROVIDER_CONFIGS = {
-  slack: {
-    type: MessageProviderType.SLACK,
-    displayName: 'Slack',
-    description: 'Connect to Slack workspaces',
-    icon: '💬',
-    fields: [
-      { name: 'botToken', label: 'Bot User OAuth Token', type: 'password', required: true },
-      { name: 'appToken', label: 'App-Level Token', type: 'password', required: true },
-      { name: 'signingSecret', label: 'Signing Secret', type: 'password', required: true },
-    ],
-  },
-  discord: {
-    type: MessageProviderType.DISCORD,
-    displayName: 'Discord',
-    description: 'Connect to Discord servers',
-    icon: '🎮',
-    fields: [
-      { name: 'token', label: 'Bot Token', type: 'password', required: true },
-      { name: 'clientId', label: 'Client ID', type: 'text', required: true },
-    ],
-  },
-  webhook: {
-    type: MessageProviderType.WEBHOOK,
-    displayName: 'Webhook',
-    description: 'Generic webhook integration',
-    icon: '🔗',
-    fields: [
-      { name: 'url', label: 'Webhook URL', type: 'text', required: true },
-      { name: 'secret', label: 'Secret', type: 'password', required: false },
-    ],
-  },
-  mattermost: {
-    type: MessageProviderType.MATTERMOST,
-    displayName: 'Mattermost',
-    description: 'Connect to Mattermost instances',
-    icon: '💻',
-    fields: [
-      { name: 'url', label: 'Server URL', type: 'text', required: true },
-      { name: 'accessToken', label: 'Access Token', type: 'password', required: true },
-      { name: 'teamId', label: 'Team ID', type: 'text', required: false },
-    ],
-  },
-};
-
-export const LLM_PROVIDER_CONFIGS = {
-  openai: {
-    type: LLMProviderType.OPENAI,
-    displayName: 'OpenAI',
-    description: 'GPT models from OpenAI',
-    icon: '🤖',
-    fields: [
-      { name: 'apiKey', label: 'API Key', type: 'password', required: true },
-      { name: 'model', label: 'Default Model', type: 'text', required: false, placeholder: 'gpt-4o' },
-    ],
-  },
-  flowise: {
-    type: LLMProviderType.FLOWISE,
-    displayName: 'Flowise',
-    description: 'Visual LLM orchestration',
-    icon: '🌊',
-    fields: [
-      { name: 'apiKey', label: 'API Key', type: 'password', required: true },
-      { name: 'apiUrl', label: 'API URL', type: 'text', required: true },
-      { name: 'chatflowId', label: 'Chatflow ID', type: 'text', required: true },
-    ],
-  },
-  perplexity: {
-    type: LLMProviderType.PERPLEXITY,
-    displayName: 'Perplexity',
-    description: 'Search-augmented AI models',
-    icon: '🔍',
-    fields: [
-      { name: 'apiKey', label: 'API Key', type: 'password', required: true },
-      { name: 'model', label: 'Model', type: 'text', required: false },
-    ],
-  },
-  replicate: {
-    type: LLMProviderType.REPLICATE,
-    displayName: 'Replicate',
-    description: 'Run open-source models',
-    icon: '🚀',
-    fields: [
-      { name: 'apiKey', label: 'API Key', type: 'password', required: true },
-      { name: 'model', label: 'Model', type: 'text', required: false },
-    ],
-  },
-  n8n: {
-    type: LLMProviderType.N8N,
-    displayName: 'n8n',
-    description: 'Workflow automation platform',
-    icon: '⚡',
-    fields: [
-      { name: 'webhookUrl', label: 'Webhook URL', type: 'text', required: true },
-      { name: 'authHeader', label: 'Auth Header', type: 'password', required: false },
-    ],
-  },
-  openswarm: {
-    type: LLMProviderType.OPENSWARM,
-    displayName: 'OpenSwarm',
-    description: 'Multi-agent orchestration',
-    icon: '🐝',
-    fields: [
-      { name: 'apiKey', label: 'API Key', type: 'password', required: true },
-      { name: 'apiUrl', label: 'API URL', type: 'text', required: true },
-      { name: 'swarmId', label: 'Swarm ID', type: 'text', required: true },
-      { name: 'team', label: 'Team', type: 'text', required: false },
-    ],
-  },
-};
 
 export const DEFAULT_PERSONA: Persona = {
   id: 'default',

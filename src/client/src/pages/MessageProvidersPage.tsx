@@ -15,10 +15,9 @@ import {
   Search,
   RefreshCw,
 } from 'lucide-react';
-import type { MessageProviderType } from '../types/bot';
-import { MESSAGE_PROVIDER_CONFIGS } from '../types/bot';
 import ProviderConfigModal from '../components/ProviderConfiguration/ProviderConfigModal';
 import { apiService } from '../services/api';
+import { getProviderSchema } from '../provider-configs';
 
 const MessageProvidersPage: React.FC = () => {
   const { modalState, openAddModal, openEditModal, closeModal } = useModal();
@@ -101,8 +100,8 @@ const MessageProvidersPage: React.FC = () => {
   };
 
   const getProviderIcon = (type: string) => {
-    const config = MESSAGE_PROVIDER_CONFIGS[type as MessageProviderType];
-    return config?.icon || <MessageIcon className="w-5 h-5" />;
+    const schema = getProviderSchema(type);
+    return schema?.icon || <MessageIcon className="w-5 h-5" />;
   };
 
   const toggleExpand = (key: string) => setExpandedProfile(expandedProfile === key ? null : key);
