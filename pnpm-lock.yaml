@@ -187,13 +187,10 @@ importers:
         version: 3.3.2
       openai:
         specifier: ^4.82.0
-        version: 4.104.0(encoding@0.1.13)(ws@8.19.0)(zod@3.24.2)
+        version: 4.104.0(encoding@0.1.13)(ws@8.19.0)(zod@3.25.1)
       pino-pretty:
         specifier: ^11.2.2
         version: 11.3.0
-      playwright:
-        specifier: ^1.58.2
-        version: 1.58.2
       prop-types:
         specifier: ^15.8.1
         version: 15.8.1
@@ -224,6 +221,9 @@ importers:
       react-dom:
         specifier: ^19.1.1
         version: 19.2.4(react@19.2.4)
+      react-hot-toast:
+        specifier: ^2.6.0
+        version: 2.6.0(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       react-markdown:
         specifier: ^10.1.0
         version: 10.1.0(@types/react@19.2.14)(react@19.2.4)
@@ -288,11 +288,11 @@ importers:
         specifier: ^17.7.2
         version: 17.7.2
       zod:
-        specifier: 3.24.2
-        version: 3.24.2
+        specifier: 3.25.1
+        version: 3.25.1
       zod-to-json-schema:
         specifier: 3.25.1
-        version: 3.25.1(zod@3.24.2)
+        version: 3.25.1(zod@3.25.1)
     devDependencies:
       '@babel/core':
         specifier: ^7.28.0
@@ -379,7 +379,7 @@ importers:
         specifier: ^6.1.1
         version: 6.1.1
       '@types/express':
-        specifier: ^4.17.21
+        specifier: ^4.17.25
         version: 4.17.25
       '@types/express-session':
         specifier: ^1.18.2
@@ -483,9 +483,9 @@ importers:
       eslint-plugin-react-refresh:
         specifier: ^0.4.20
         version: 0.4.26(eslint@9.39.3(jiti@2.6.1))
-      fast-check:
-        specifier: ^4.5.3
-        version: 4.5.3
+      eslint-plugin-unused-imports:
+        specifier: ^4.4.1
+        version: 4.4.1(@typescript-eslint/eslint-plugin@8.56.1(@typescript-eslint/parser@8.56.1(eslint@9.39.3(jiti@2.6.1))(typescript@5.9.3))(eslint@9.39.3(jiti@2.6.1))(typescript@5.9.3))(eslint@9.39.3(jiti@2.6.1))
       glob:
         specifier: ^11.0.0
         version: 11.1.0
@@ -4377,6 +4377,15 @@ packages:
     peerDependencies:
       eslint: '>=8.40'
 
+  eslint-plugin-unused-imports@4.4.1:
+    resolution: {integrity: sha512-oZGYUz1X3sRMGUB+0cZyK2VcvRX5lm/vB56PgNNcU+7ficUCKm66oZWKUubXWnOuPjQ8PvmXtCViXBMONPe7tQ==}
+    peerDependencies:
+      '@typescript-eslint/eslint-plugin': ^8.0.0-0 || ^7.0.0 || ^6.0.0 || ^5.0.0
+      eslint: ^10.0.0 || ^9.0.0 || ^8.0.0
+    peerDependenciesMeta:
+      '@typescript-eslint/eslint-plugin':
+        optional: true
+
   eslint-scope@5.1.1:
     resolution: {integrity: sha512-2NxwbF/hZ0KpepYN0cNbo+FN6XoK7GaHlQhgx/hIZl6Va0bF45RQOOwhLIy8lQDbuCiadSLCBnH2CFYquit5bw==}
     engines: {node: '>=8.0.0'}
@@ -4518,10 +4527,6 @@ packages:
 
   fakerest@4.2.0:
     resolution: {integrity: sha512-qJtQO0r2iirV20XTqGrYDnueb4xEreOZISRWL5u8iFDCHELVl6AElaqn6z4z+/88bI0Hia357K6YTzTVwHFLjQ==}
-
-  fast-check@4.5.3:
-    resolution: {integrity: sha512-IE9csY7lnhxBnA8g/WI5eg/hygA6MGWJMSNfFRrBlXUciADEhS1EDB0SIsMSvzubzIlOBbVITSsypCsW717poA==}
-    engines: {node: '>=12.17.0'}
 
   fast-copy@3.0.2:
     resolution: {integrity: sha512-dl0O9Vhju8IrcLndv2eU4ldt1ftXMqqfgN4H1cpmGV7P6jeB9FwpN9a2c8DPGE1Ys88rNUJVYDHq73CGAGOPfQ==}
@@ -4827,6 +4832,11 @@ packages:
   globalthis@1.0.4:
     resolution: {integrity: sha512-DpLKbNU4WylpxJykQujfCcwYWiV/Jhm50Goo0wrVILAv5jOr9d+H+UR3PhSCD2rCCEIg0uc+G+muBTwD54JhDQ==}
     engines: {node: '>= 0.4'}
+
+  goober@2.1.18:
+    resolution: {integrity: sha512-2vFqsaDVIT9Gz7N6kAL++pLpp41l3PfDuusHcjnGLfR6+huZkl6ziX+zgVC3ZxpqWhzH6pyDdGrCeDhMIvwaxw==}
+    peerDependencies:
+      csstype: ^3.0.10
 
   gopd@1.2.0:
     resolution: {integrity: sha512-ZUKRh6/kUFoAiTAtTYPZJ3hw9wNxx+BIBOijnlG9PnrJsCcSjs1wyyD6vJpaYtgnzDrKYRSqf3OO6Rfa93xsRg==}
@@ -6504,9 +6514,6 @@ packages:
   pure-rand@6.1.0:
     resolution: {integrity: sha512-bVWawvoZoBYpp6yIoQtQXHZjmz35RSVHnUOTefl8Vcjr8snTPY1wnpSPMWekcFwbxI6gtmT7rSYPFvz71ldiOA==}
 
-  pure-rand@7.0.1:
-    resolution: {integrity: sha512-oTUZM/NAZS8p7ANR3SHh30kXB+zK2r2BPcEn/awJIbOvq82WoMN4p62AWWp3Hhw50G0xMsw1mhIBLqHw64EcNQ==}
-
   qs@6.14.2:
     resolution: {integrity: sha512-V/yCWTTF7VJ9hIh18Ugr2zhJMP01MY7c5kh4J870L7imm6/DIzBsNLTXzMwUA3yZ5b/KBqLx8Kp3uRvd7xSe3Q==}
     engines: {node: '>=0.6'}
@@ -6622,6 +6629,13 @@ packages:
     engines: {node: '>=18.0.0'}
     peerDependencies:
       react: ^16.8.0 || ^17 || ^18 || ^19
+
+  react-hot-toast@2.6.0:
+    resolution: {integrity: sha512-bH+2EBMZ4sdyou/DPrfgIouFpcRLCJ+HoCA32UoAYHn6T3Ur5yfcDCeSr5mwldl6pFOsiocmrXMuoCJ1vV8bWg==}
+    engines: {node: '>=10'}
+    peerDependencies:
+      react: '>=16'
+      react-dom: '>=16'
 
   react-hotkeys-hook@5.2.4:
     resolution: {integrity: sha512-BgKg+A1+TawkYluh5Bo4cTmcgMN5L29uhJbDUQdHwPX+qgXRjIPYU5kIDHyxnAwCkCBiu9V5OpB2mpyeluVF2A==}
@@ -7943,8 +7957,8 @@ packages:
   zod@3.22.4:
     resolution: {integrity: sha512-iC+8Io04lddc+mVqQ9AZ7OQ2MrUKGN+oIQyq1vemgt46jwCwLfhq7/pwnBnNXXXZb8VTVLKwp9EDkx+ryxIWmg==}
 
-  zod@3.24.2:
-    resolution: {integrity: sha512-lY7CDW43ECgW9u1TcT3IoXHflywfVqDYze4waEz812jR/bZ8FHDsl7pFQoSZTz5N+2NqRXs8GBwnAwo3ZNxqhQ==}
+  zod@3.25.1:
+    resolution: {integrity: sha512-bkxUGQiqWDTXHSgqtevYDri5ee2GPC9szPct4pqpzLEpswgDQmuseDz81ZF0AnNu1xsmnBVmbtv/t/WeUIHlpg==}
 
   zwitch@2.0.4:
     resolution: {integrity: sha512-bXE4cR/kVZhKZX/RjPEflHaKVhUVl85noU3v6b8apfQEc1x4A+zBxjZ4lN8LqGd6WZ3dl98pY4o717VFmoPp+A==}
@@ -9724,7 +9738,7 @@ snapshots:
     dependencies:
       content-type: 1.0.5
       raw-body: 3.0.2
-      zod: 3.24.2
+      zod: 3.25.1
 
   '@mui/core-downloads-tracker@7.3.8': {}
 
@@ -11363,7 +11377,7 @@ snapshots:
     dependencies:
       devtools-protocol: 0.0.1566079
       mitt: 3.0.1
-      zod: 3.24.2
+      zod: 3.25.1
 
   ci-info@3.9.0: {}
 
@@ -12115,6 +12129,12 @@ snapshots:
     dependencies:
       eslint: 9.39.3(jiti@2.6.1)
 
+  eslint-plugin-unused-imports@4.4.1(@typescript-eslint/eslint-plugin@8.56.1(@typescript-eslint/parser@8.56.1(eslint@9.39.3(jiti@2.6.1))(typescript@5.9.3))(eslint@9.39.3(jiti@2.6.1))(typescript@5.9.3))(eslint@9.39.3(jiti@2.6.1)):
+    dependencies:
+      eslint: 9.39.3(jiti@2.6.1)
+    optionalDependencies:
+      '@typescript-eslint/eslint-plugin': 8.56.1(@typescript-eslint/parser@8.56.1(eslint@9.39.3(jiti@2.6.1))(typescript@5.9.3))(eslint@9.39.3(jiti@2.6.1))(typescript@5.9.3)
+
   eslint-scope@5.1.1:
     dependencies:
       esrecurse: 4.3.0
@@ -12324,10 +12344,6 @@ snapshots:
   fakerest@4.2.0:
     dependencies:
       lodash: 4.17.23
-
-  fast-check@4.5.3:
-    dependencies:
-      pure-rand: 7.0.1
 
   fast-copy@3.0.2: {}
 
@@ -12649,6 +12665,10 @@ snapshots:
     dependencies:
       define-properties: 1.2.1
       gopd: 1.2.0
+
+  goober@2.1.18(csstype@3.2.3):
+    dependencies:
+      csstype: 3.2.3
 
   gopd@1.2.0: {}
 
@@ -14317,7 +14337,7 @@ snapshots:
     dependencies:
       mimic-fn: 2.1.0
 
-  openai@4.104.0(encoding@0.1.13)(ws@8.19.0)(zod@3.24.2):
+  openai@4.104.0(encoding@0.1.13)(ws@8.19.0)(zod@3.25.1):
     dependencies:
       '@types/node': 18.19.130
       '@types/node-fetch': 2.6.13
@@ -14328,7 +14348,7 @@ snapshots:
       node-fetch: 2.7.0(encoding@0.1.13)
     optionalDependencies:
       ws: 8.19.0
-      zod: 3.24.2
+      zod: 3.25.1
     transitivePeerDependencies:
       - encoding
 
@@ -14715,8 +14735,6 @@ snapshots:
 
   pure-rand@6.1.0: {}
 
-  pure-rand@7.0.1: {}
-
   qs@6.14.2:
     dependencies:
       side-channel: 1.1.0
@@ -14890,6 +14908,13 @@ snapshots:
   react-hook-form@7.71.2(react@19.2.4):
     dependencies:
       react: 19.2.4
+
+  react-hot-toast@2.6.0(react-dom@19.2.4(react@19.2.4))(react@19.2.4):
+    dependencies:
+      csstype: 3.2.3
+      goober: 2.1.18(csstype@3.2.3)
+      react: 19.2.4
+      react-dom: 19.2.4(react@19.2.4)
 
   react-hotkeys-hook@5.2.4(react-dom@19.2.4(react@19.2.4))(react@19.2.4):
     dependencies:
@@ -16396,12 +16421,12 @@ snapshots:
       cookie: 1.1.1
       youch-core: 0.3.3
 
-  zod-to-json-schema@3.25.1(zod@3.24.2):
+  zod-to-json-schema@3.25.1(zod@3.25.1):
     dependencies:
-      zod: 3.24.2
+      zod: 3.25.1
 
   zod@3.22.4: {}
 
-  zod@3.24.2: {}
+  zod@3.25.1: {}
 
   zwitch@2.0.4: {}

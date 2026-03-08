@@ -2,7 +2,8 @@ import { Router } from 'express';
 import { DatabaseManager } from '@src/database/DatabaseManager';
 import WebSocketService, { type MessageFlowEvent } from '@src/server/services/WebSocketService';
 import { BotConfigurationManager } from '@config/BotConfigurationManager';
-import { authenticateToken } from '../middleware/auth';
+import { requireAdmin, authenticate } from '../../auth/middleware';
+import { authenticate, requireAdmin } from '../middleware/auth';
 import { ActivityLogger } from '../services/ActivityLogger';
 
 type AnnotatedEvent = MessageFlowEvent & { llmProvider: string };
@@ -162,16 +163,16 @@ const mockUserSegments: UserSegment[] = [
 // Full paths: /api/dashboard/ai/config, /api/dashboard/status, etc.
 // ----------------------------------------------------------------------------
 
-router.get('/ai/config', authenticateToken, (req, res) => {
+router.get('/ai/config', authenticate, requireAdmin, (req, res) => {
   res.json(dashboardConfig);
 });
 
-router.post('/ai/config', authenticateToken, (req, res) => {
+router.post('/ai/config', authenticate, requireAdmin, (req, res) => {
   dashboardConfig = { ...dashboardConfig, ...req.body };
   res.json(dashboardConfig);
 });
 
-router.get('/ai/stats', authenticateToken, (req, res) => {
+router.get('/ai/stats', authenticate, requireAdmin, (req, res) => {
   res.json({
     learningProgress: 75,
     behaviorPatternsCount: mockBehaviorPatterns.length,
@@ -179,15 +180,15 @@ router.get('/ai/stats', authenticateToken, (req, res) => {
   });
 });
 
-router.get('/ai/segments', authenticateToken, (req, res) => {
+router.get('/ai/segments', authenticate, requireAdmin, (req, res) => {
   res.json(mockUserSegments);
 });
 
-router.get('/ai/patterns', authenticateToken, (req, res) => {
+router.get('/ai/patterns', authenticate, requireAdmin, (req, res) => {
   res.json(mockBehaviorPatterns);
 });
 
-router.get('/ai/recommendations', authenticateToken, (req, res) => {
+router.get('/ai/recommendations', authenticate, requireAdmin, (req, res) => {
   const recommendations: DashboardRecommendation[] = [
     {
       id: `rec-1`,
@@ -212,7 +213,7 @@ router.get('/ai/recommendations', authenticateToken, (req, res) => {
   res.json(recommendations);
 });
 
-router.post('/ai/feedback', authenticateToken, async (req, res) => {
+router.post('/ai/feedback', authenticate, requireAdmin, async (req, res) => {
   const { recommendationId, feedback, metadata } = req.body;
   try {
     const db = DatabaseManager.getInstance();
@@ -230,14 +231,14 @@ router.post('/ai/feedback', authenticateToken, async (req, res) => {
 function isProviderConnected(bot: any): boolean {
   try {
     if (bot.messageProvider === 'slack') {
-      const svc = require('@hivemind/adapter-slack').SlackService as any;
+      const svc = require('@hivemind/adapter-slack').SlackService as unknown as Record<string, any>;
       const instance = svc?.getInstance?.();
       const mgr = instance?.getBotManager?.(bot.name) || instance?.getBotManager?.();
       const bots = mgr?.getAllBots?.() || [];
       return Array.isArray(bots) && bots.length > 0;
     }
     if (bot.messageProvider === 'discord') {
-      const svc = require('@hivemind/adapter-discord') as any;
+      const svc = require('@hivemind/adapter-discord') as unknown as Record<string, any>;
       const instance =
         svc?.DiscordService?.getInstance?.() || svc?.Discord?.DiscordService?.getInstance?.();
       const bots = instance?.getAllBots?.() || [];
@@ -249,7 +250,7 @@ function isProviderConnected(bot: any): boolean {
   }
 }
 
-router.get('/status', authenticateToken, (req, res) => {
+router.get('/status', authenticate, requireAdmin, (req, res) => {
   try {
     const manager = BotConfigurationManager.getInstance();
     let bots = [];
@@ -283,7 +284,7 @@ router.get('/status', authenticateToken, (req, res) => {
   }
 });
 
-router.get('/activity', authenticateToken, async (req, res) => {
+router.get('/activity', authenticate, requireAdmin, async (req, res) => {
   try {
     const manager = BotConfigurationManager.getInstance();
     const ws = WebSocketService.getInstance();
@@ -368,7 +369,7 @@ router.get('/activity', authenticateToken, async (req, res) => {
   }
 });
 
-router.post('/alerts/:id/acknowledge', authenticateToken, (req, res) => {
+router.post('/alerts/:id/acknowledge', authenticate, requireAdmin, (req, res) => {
   try {
     const { id } = req.params;
     const ws = WebSocketService.getInstance();
@@ -384,7 +385,7 @@ router.post('/alerts/:id/acknowledge', authenticateToken, (req, res) => {
   }
 });
 
-router.post('/alerts/:id/resolve', authenticateToken, (req, res) => {
+router.post('/alerts/:id/resolve', authenticate, requireAdmin, (req, res) => {
   try {
     const { id } = req.params;
     const ws = WebSocketService.getInstance();

@@ -4,12 +4,12 @@ import type {
   ProviderModalState,
   ProviderTypeConfig,
   FieldConfig,
-} from '../../types/bot';
+} from '../../types';
 import {
-  MessageProviderType,
-  LLMProviderType,
   MESSAGE_PROVIDER_CONFIGS,
   LLM_PROVIDER_CONFIGS,
+  MessageProviderType,
+  LLMProviderType,
 } from '../../types/bot';
 import { Button } from '../DaisyUI';
 import { X as XIcon } from 'lucide-react';
@@ -30,7 +30,7 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
   onSubmit,
 }) => {
   const [selectedType, setSelectedType] = useState<MessageProviderType | LLMProviderType>(
-    modalState.providerType === 'message' ? MessageProviderType.DISCORD : LLMProviderType.OPENAI,
+    modalState.providerType === 'message' ? 'discord' : 'openai',
   );
   const [formData, setFormData] = useState<Record<string, any>>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -48,22 +48,14 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
       } else {
         // Add mode: start with empty form
         const defaultType = modalState.providerType === 'message'
-          ? MessageProviderType.DISCORD
-          : LLMProviderType.OPENAI;
+          ? 'discord'
+          : 'openai';
 
-        // Only update selectedType if it mismatch or just to be safe (safest to always reset on open/type change)
-        // But we need to handle if user changes type via tab.
-        // Actually, this effect runs on [modalState.isOpen, modalState.providerType].
-        // If user clicks tab, only selectedType changes (which is not in deps? No, selectedType IS in deps).
-        // Wait, if selectedType is in deps, setting it triggers effect loop?
-        // Let's remove selectedType from deps if we set it?
-        // Or conditionally set it if it's invalid for current providerType.
+        const isCurrentTypeValid = modalState.providerType === 'message'
+          ? Object.keys(MESSAGE_PROVIDER_CONFIGS).includes(selectedType as string)
+          : Object.keys(LLM_PROVIDER_CONFIGS).includes(selectedType as string);
 
         let newType = selectedType;
-        const isCurrentTypeValid = modalState.providerType === 'message'
-          ? Object.values(MessageProviderType).includes(selectedType as MessageProviderType)
-          : Object.values(LLMProviderType).includes(selectedType as LLMProviderType);
-
         if (!isCurrentTypeValid) {
           newType = defaultType;
           setSelectedType(newType);
@@ -76,7 +68,8 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
         setErrors({});
       }
     }
-  }, [modalState.isOpen, modalState.provider, modalState.isEdit, selectedType, modalState.providerType, existingProviders]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [modalState.isOpen, modalState.provider, modalState.isEdit, modalState.providerType]);
 
   const getDefaultName = (
     type: string,
@@ -383,6 +376,7 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
           <button
             className="btn btn-sm btn-circle btn-ghost"
             onClick={onClose}
+            aria-label="Close modal"
           >
             <XIcon className="w-4 h-4" />
           </button>
@@ -487,191 +481,9 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
           </div>
         </form>
       </div>
-    </div>
-  );
-};
-    case 'number':
-      return (
-        <div key={field.name}>
-          <label className="label">
-            <span className="label-text font-medium">{field.label}</span>
-            {field.required && <span className="label-text-alt text-error">*</span>}
-          </label>
-          <input
-            type="number"
-            className={fieldClasses}
-            placeholder={field.placeholder}
-            value={value}
-            onChange={(e) => handleFieldChange(field.name, e.target.value)}
-            min={field.validation?.min}
-            max={field.validation?.max}
-            step={field.name === 'temperature' ? '0.1' : '1'}
-          />
-          {error && <label className="label"><span className="label-text-alt text-error">{error}</span></label>}
-        </div>
-      );
-
-    case 'select':
-      return (
-        <div key={field.name}>
-          <label className="label">
-            <span className="label-text font-medium">{field.label}</span>
-            {field.required && <span className="label-text-alt text-error">*</span>}
-          </label>
-          <select
-            className={`${fieldClasses} select`}
-            value={value}
-            onChange={(e) => handleFieldChange(field.name, e.target.value)}
-          >
-            <option value="">Select {field.label.toLowerCase()}</option>
-            {field.options?.map(option => (
-              <option key={option.value} value={option.value}>{option.label}</option>
-            ))}
-          </select>
-          {error && <label className="label"><span className="label-text-alt text-error">{error}</span></label>}
-        </div>
-      );
-
-    case 'textarea':
-      return (
-        <div key={field.name}>
-          <label className="label">
-            <span className="label-text font-medium">{field.label}</span>
-            {field.required && <span className="label-text-alt text-error">*</span>}
-          </label>
-          <textarea
-            className={fieldClasses}
-            placeholder={field.placeholder}
-            value={value}
-            onChange={(e) => handleFieldChange(field.name, e.target.value)}
-            rows={4}
-          />
-          {error && <label className="label"><span className="label-text-alt text-error">{error}</span></label>}
-        </div>
-      );
-
-    case 'checkbox':
-      return (
-        <div key={field.name} className="form-control">
-          <label className="label cursor-pointer">
-            <span className="label-text font-medium">{field.label}</span>
-            <input
-              type="checkbox"
-              className="toggle toggle-primary"
-              checked={!!value}
-              onChange={(e) => handleFieldChange(field.name, e.target.checked)}
-            />
-          </label>
-          {error && <label className="label"><span className="label-text-alt text-error">{error}</span></label>}
-        </div>
-      );
-
-    default:
-      // text and others
-      return (
-        <div key={field.name}>
-          <label className="label">
-            <span className="label-text font-medium">{field.label}</span>
-            {field.required && <span className="label-text-alt text-error">*</span>}
-          </label>
-          <input
-            type="text"
-            className={fieldClasses}
-            placeholder={field.placeholder}
-            value={value}
-            onChange={(e) => handleFieldChange(field.name, e.target.value)}
-          />
-          {error && <label className="label"><span className="label-text-alt text-error">{error}</span></label>}
-        </div>
-      );
-    }
-  };
-
-  if (!modalState.isOpen) {return null;}
-
-  // Get ALL configs to iterate types for tabs
-  const configs = modalState.providerType === 'message' ? MESSAGE_PROVIDER_CONFIGS : LLM_PROVIDER_CONFIGS;
-  const providerTypes = Object.keys(configs);
-  // Safe config access: if selectedType mismatch, fallback to first in list
-  const config = (configs as any)[selectedType] || (configs as any)[providerTypes[0]];
-  const allFields = config?.fields || [];
-
-  return (
-    <div className="modal modal-open">
-      <div className="modal-box max-w-2xl">
-        {/* Header */}
-        <div className="flex justify-between items-center mb-6">
-          <h3 className="text-xl font-bold">
-            {modalState.isEdit ? 'Edit' : 'Add'} {modalState.providerType === 'message' ? 'Message' : 'LLM'} Provider
-          </h3>
-          <button
-            className="btn btn-sm btn-circle btn-ghost"
-            onClick={onClose}
-          >
-            <XIcon className="w-4 h-4" />
-          </button>
-        </div>
-
-        {/* Provider Type Tabs */}
-        <div className="tabs tabs-boxed mb-6 flex-wrap gap-1">
-          {providerTypes.map(type => {
-            const typeConfig = (configs as any)[type];
-            return (
-              <a
-                key={type}
-                className={`tab tab-sm flex items-center gap-2 ${selectedType === type ? 'tab-active' : ''}`}
-                onClick={() => setSelectedType(type as MessageProviderType | LLMProviderType)}
-              >
-                <span>{typeConfig.icon}</span>
-                {typeConfig.displayName || typeConfig.name}
-              </a>
-            );
-          })}
-        </div>
-
-        {/* Form */}
-        <form onSubmit={handleSubmit}>
-          {/* Provider Name */}
-          <div className="form-control mb-4">
-            <label className="label">
-              <span className="label-text font-medium">Provider Name</span>
-              <span className="label-text-alt text-error">*</span>
-            </label>
-            <input
-              type="text"
-              name="name"
-              className={`input input-bordered w-full ${errors.name ? 'input-error' : ''}`}
-              placeholder="Enter a descriptive name for this provider"
-              value={formData.name || ''}
-              onChange={(e) => handleFieldChange('name', e.target.value)}
-            />
-            {errors.name && <label className="label"><span className="label-text-alt text-error">{errors.name}</span></label>}
-          </div>
-
-          {/* Provider-specific fields */}
-          <div className="space-y-4 mb-6">
-            {allFields.map(renderField)}
-          </div>
-
-          {/* Actions */}
-          <div className="modal-action">
-            <Button
-              type="button"
-              variant="ghost"
-              onClick={onClose}
-            >
-              Cancel
-            </Button>
-            <Button
-              type="submit"
-              variant="primary"
-              onClick={(e: any) => handleSubmit(e)}
-            >
-              {modalState.isEdit ? 'Update' : 'Submit'} Provider
-            </Button>
-          </div>
-        </form>
-      </div>
+      <form method="dialog" className="modal-backdrop" onClick={onClose}>
+        <button>close</button>
+      </form>
     </div>
   );
 };

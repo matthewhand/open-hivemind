@@ -226,6 +226,13 @@ export class BotManager extends EventEmitter {
       // Validate the request
       this.validateCreateBotRequest(request);
 
+      // Enforce global uniqueness of bot name
+      const allBots = await this.getAllBots();
+      const existingBot = allBots.find((b) => b.name.toLowerCase() === request.name.toLowerCase());
+      if (existingBot) {
+        throw new Error(`A bot with the name "${request.name}" already exists`);
+      }
+
       // Generate unique ID
       const botId = crypto.randomUUID();
 
@@ -356,6 +363,17 @@ export class BotManager extends EventEmitter {
       const existingBot = await this.getBot(botId);
       if (!existingBot) {
         throw new Error('Bot not found');
+      }
+
+      // Enforce global uniqueness of bot name if name is being updated
+      if (updates.name && updates.name.toLowerCase() !== existingBot.name.toLowerCase()) {
+        const allBots = await this.getAllBots();
+        const duplicateBot = allBots.find(
+          (b) => b.id !== botId && b.name.toLowerCase() === updates.name!.toLowerCase()
+        );
+        if (duplicateBot) {
+          throw new Error(`A bot with the name "${updates.name}" already exists`);
+        }
       }
 
       // Validate updates
@@ -1096,7 +1114,19 @@ export class BotManager extends EventEmitter {
       };
     });
 
-    return Promise.all(healthChecks);
+    const results = await Promise.allSettled(healthChecks);
+    return results.map((result) => {
+      if (result.status === 'fulfilled') {
+        return result.value;
+      }
+      return {
+        botId: 'unknown',
+        name: 'unknown',
+        status: 'unhealthy',
+        lastCheck: new Date(),
+        issues: ['Health check failed to execute'],
+      };
+    });
   }
 
   /**

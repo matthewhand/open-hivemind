@@ -1,9 +1,14 @@
 import Debug from 'debug';
 import { Router } from 'express';
+import type { AuthMiddlewareRequest } from '../../auth/types';
 import { BotConfigurationManager } from '../../config/BotConfigurationManager';
 import { DatabaseManager } from '../../database/DatabaseManager';
 import { auditMiddleware, logAdminAction } from '../middleware/audit';
 import { authenticateToken, requirePermission } from '../middleware/auth';
+import type { Request } from 'express';
+
+// Define a type for internal request casting since AuthMiddlewareRequest import is failing
+type AuthMiddlewareRequest = Request & { user?: { id: string; role: string; username?: string } };
 
 const debug = Debug('app:webui:consolidated');
 const router = Router();
@@ -20,7 +25,7 @@ router.get('/system-status', async (req, res) => {
     const dbManager = DatabaseManager.getInstance();
 
     const bots = botManager.getAllBots();
-    const activeBots = bots.filter((bot) => (bot as any).enabled !== false);
+    const activeBots = bots.filter((bot) => bot.enabled !== false);
 
     let dbStats = null;
     try {
@@ -56,11 +61,23 @@ router.get('/system-status', async (req, res) => {
       },
     };
 
-    logAdminAction(req as any, 'VIEW', 'system-status', 'success', 'System status retrieved');
+    logAdminAction(
+      req as unknown as AuthMiddlewareRequest,
+      'VIEW',
+      'system-status',
+      'success',
+      'System status retrieved'
+    );
     return res.json({ success: true, data: systemStatus });
   } catch (error) {
     debug('Error getting system status:', error);
-    logAdminAction(req as any, 'VIEW', 'system-status', 'failure', `Error: ${error}`);
+    logAdminAction(
+      req as unknown as AuthMiddlewareRequest,
+      'VIEW',
+      'system-status',
+      'failure',
+      `Error: ${error}`
+    );
     return res.status(500).json({
       success: false,
       error: 'Failed to get system status',
@@ -162,11 +179,17 @@ router.get('/env-status', async (req, res) => {
       const value = process.env[varName];
       envStatus[varName] = {
         isSet: !!value,
-        redactedValue: value ? `***${value.slice(-4)}` : undefined,
+        redactedValue: value ? redactSensitiveInfo(varName, value) : undefined,
       };
     });
 
-    logAdminAction(req as any, 'VIEW', 'env-status', 'success', 'Environment status retrieved');
+    logAdminAction(
+      req as unknown as AuthMiddlewareRequest,
+      'VIEW',
+      'env-status',
+      'success',
+      'Environment status retrieved'
+    );
     return res.json({ success: true, data: envStatus });
   } catch (error) {
     debug('Error getting environment status:', error);
@@ -255,7 +278,7 @@ router.post('/validate-config', async (req, res) => {
     }
 
     logAdminAction(
-      req as any,
+      req as unknown as AuthMiddlewareRequest,
       'VALIDATE',
       'bot-config',
       'success',
@@ -264,7 +287,13 @@ router.post('/validate-config', async (req, res) => {
     return res.json({ success: true, data: validation });
   } catch (error) {
     debug('Error validating config:', error);
-    logAdminAction(req as any, 'VALIDATE', 'bot-config', 'failure', `Error: ${error}`);
+    logAdminAction(
+      req as unknown as AuthMiddlewareRequest,
+      'VALIDATE',
+      'bot-config',
+      'failure',
+      `Error: ${error}`
+    );
     return res.status(500).json({
       success: false,
       error: 'Failed to validate configuration',
@@ -362,7 +391,7 @@ router.get('/metrics', async (req, res) => {
         },
         database: {
           connected: false,
-          stats: null as any,
+          stats: null as unknown as Record<string, unknown>,
         },
       },
     };
@@ -372,7 +401,7 @@ router.get('/metrics', async (req, res) => {
       const botManager = BotConfigurationManager.getInstance();
       const bots = botManager.getAllBots();
       metrics.application.bots.total = bots.length;
-      metrics.application.bots.active = bots.filter((bot) => (bot as any).enabled !== false).length;
+      metrics.application.bots.active = bots.filter((bot) => bot.enabled !== false).length;
     } catch (error) {
       debug('Error getting bot metrics:', error);
     }

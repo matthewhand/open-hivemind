@@ -81,6 +81,10 @@ const Pagination: React.FC<PaginationProps> = ({
   };
 
   const pageNumbers = useMemo(() => {
+    if (totalPages <= 1) {
+      return totalPages === 1 ? [1] : [];
+    }
+
     const pages: (number | '...prev' | '...next')[] = [];
 
     if (totalPages <= maxVisiblePages) {
@@ -93,7 +97,6 @@ const Pagination: React.FC<PaginationProps> = ({
       const isNearEnd = currentPage >= totalPages - half;
 
       pages.push(1);
-
       if (isNearStart) {
         for (let i = 2; i <= maxVisiblePages - 2; i++) {
           pages.push(i);
@@ -108,8 +111,10 @@ const Pagination: React.FC<PaginationProps> = ({
         pages.push(totalPages);
       } else {
         pages.push('...prev');
-        const offset = Math.floor((maxVisiblePages - 4) / 2);
-        for (let i = currentPage - offset; i <= currentPage + offset; i++) {
+        const middleItemsCount = maxVisiblePages - 4;
+        const offsetLeft = Math.floor((middleItemsCount - 1) / 2);
+        const offsetRight = Math.ceil((middleItemsCount - 1) / 2);
+        for (let i = currentPage - offsetLeft; i <= currentPage + offsetRight; i++) {
           pages.push(i);
         }
         pages.push('...next');
@@ -148,9 +153,6 @@ const Pagination: React.FC<PaginationProps> = ({
     }
   };
 
-  if (totalPages <= 1) {
-    return null;
-  }
 
   return (
     <div
@@ -192,7 +194,7 @@ const Pagination: React.FC<PaginationProps> = ({
                 className={`join-item btn ${currentPage === page ? 'btn-active' : ''}`}
                 onClick={() => onPageChange(page)}
                 aria-current={currentPage === page ? 'page' : undefined}
-                aria-label={`Go to page ${page}`}
+                aria-label={`Page ${page}`}
               >
                 {page}
               </button>

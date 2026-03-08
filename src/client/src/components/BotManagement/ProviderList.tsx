@@ -2,7 +2,7 @@ import React from 'react';
 import type {
   MessageProvider,
   LLMProvider,
-} from '../../types/bot';
+} from '../../types';
 import ProviderChip from './ProviderChip';
 import { Plus as PlusIcon } from 'lucide-react';
 

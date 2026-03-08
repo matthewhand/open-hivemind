@@ -67,10 +67,10 @@ async function loadPersonas(): Promise<{ key: string; name: string; systemPrompt
       return null;
     });
 
-    const results = await Promise.all(promises);
-    const out: { key: string; name: string; systemPrompt: string }[] = results.filter(
-      (item): item is { key: string; name: string; systemPrompt: string } => item !== null
-    );
+    const results = await Promise.allSettled(promises);
+    const out: { key: string; name: string; systemPrompt: string }[] = results
+      .map((r) => (r.status === 'fulfilled' ? r.value : null))
+      .filter((item): item is { key: string; name: string; systemPrompt: string } => item !== null);
 
     return out.length ? out : fallback;
   } catch (e) {

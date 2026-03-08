@@ -68,7 +68,6 @@ Create and manage individual bot instances. Connect your AI assistants to platfo
 
 *   **Dedicated Create Page**: Access a full-page interface for creating bots at `/admin/bots/create`.
 *   **Duplicate Bot**: Quickly clone an existing bot configuration.
-![Duplicate Bot Modal](screenshots/clone-bot-modal.png)
 *   **View Activity**: Monitor real-time logs and message flow for each bot via details modal.
 ![Bot Activity Logs](screenshots/bot-details-modal.png)
 *   **Link Persona / Providers**: Assign specific personalities, LLM providers, and platforms to the bot.
@@ -108,7 +107,7 @@ Manage connections to Large Language Model providers.
 ### [Message Platforms](/admin/providers/message)
 Connect your bots to messaging services.
 
-![Message Platforms List](screenshots/message-providers-list.png)
+![Message Platforms List](screenshots/message-add-provider-modal.png)
 ![Add Message Provider](screenshots/message-add-provider-modal.png)
 
 *   **Discord**: Add your Discord Bot Token and configure server settings.
@@ -273,6 +272,10 @@ Browse and manage persisted specifications and design documents.
 
 ### [Static Pages](/admin/static)
 Access a catalog of static HTML pages served by the system, like the Enhanced Homepage or Screensaver.
+
+*   **Catalog View**: Browse through all available static pages in a card-based layout.
+*   **Descriptions**: Read a brief description of what each static page is meant to showcase or test.
+*   **Direct Access**: Click on any card to immediately navigate to that static page.
 
 ---
 

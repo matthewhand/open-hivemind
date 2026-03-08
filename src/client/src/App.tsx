@@ -10,10 +10,12 @@ import ToastNotification from './components/DaisyUI/ToastNotification';
 import { BotProvider } from './contexts/BotContext';
 import { WebSocketProvider } from './contexts/WebSocketContext';
 import ScrollToTop from './components/ScrollToTop';
+import { Toaster } from 'react-hot-toast';
 
 function App() {
   return (
     <ErrorBoundary>
+      <Toaster position="top-right" />
       <Provider store={store}>
         <ReduxProvider>
           <ToastNotification position="top-right" maxToasts={5}>

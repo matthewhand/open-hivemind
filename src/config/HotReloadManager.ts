@@ -406,6 +406,10 @@ export class HotReloadManager {
         // Reload configuration so changes take effect immediately
         const manager = BotConfigurationManager.getInstance();
         manager.reload();
+
+        // Broadcast config_changed to trigger immediate hot-reloading
+        const wsService = WebSocketService.getInstance();
+        wsService.broadcastConfigChange();
       }
 
       return true;

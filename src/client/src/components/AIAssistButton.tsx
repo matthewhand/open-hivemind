@@ -55,7 +55,7 @@ const AIAssistButton: React.FC<AIAssistButtonProps> = ({
     >
       <button
         type="button"
-        className={`btn btn-ghost btn-sm btn-circle text-warning ${className}`}
+        className={`btn btn-ghost btn-sm btn-circle text-warning focus-visible:ring-2 focus-visible:ring-warning focus-visible:outline-none ${className}`}
         onClick={handleClick}
         disabled={loading}
         aria-label={loading ? `Generating ${label.replace('Generate ', '')}...` : label}

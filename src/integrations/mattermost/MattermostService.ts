@@ -336,7 +336,7 @@ export class MattermostService extends EventEmitter implements IMessengerService
             let user = null;
             const now = Date.now();
             const cached = this.userCache.get(post.user_id);
-            if (cached && (now - cached.timestamp < this.USER_CACHE_TTL)) {
+            if (cached && now - cached.timestamp < this.USER_CACHE_TTL) {
               user = cached.user;
             } else {
               user = await client.getUser(post.user_id);

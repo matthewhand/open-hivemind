@@ -186,11 +186,32 @@ export class MattermostService extends EventEmitter implements IMessengerService
 
           const hivemindError = ErrorUtils.toHivemindError(error);
           const errType = (hivemindError as any).type;
-          if (errType === 'network' || errType === 'api') {
-            throw hivemindError;
+
+          if (error.status === 403 || error.status === 404 || error.status === 400) {
+            throw new ValidationError(
+              error.message || 'Mattermost API Validation Error',
+              'channelId',
+              channelId
+            );
           }
 
-          throw error;
+          if (
+            errType === 'network' ||
+            errType === 'api' ||
+            error.status === 500 ||
+            error.status === 502 ||
+            error.status === 503 ||
+            error.status === 504 ||
+            error.status === 429
+          ) {
+            throw new NetworkError(
+              error.message || 'Mattermost API Network Error',
+              { status: error.status },
+              { url: 'mattermost_api' }
+            );
+          }
+
+          throw hivemindError;
         }
       }, RETRY_CONFIG);
 
@@ -219,9 +240,21 @@ export class MattermostService extends EventEmitter implements IMessengerService
           status: 'error',
           errorMessage: error.message,
         });
-      } catch { }
+      } catch {}
 
-      throw error;
+      if (error instanceof ValidationError || error instanceof NetworkError) {
+        throw error;
+      }
+      const hivemindError = ErrorUtils.toHivemindError(error);
+      const errType = (hivemindError as any).type;
+      if (errType === 'network' || errType === 'api') {
+        throw hivemindError;
+      }
+      throw new NetworkError(
+        error.message || 'Mattermost API Network Error',
+        { status: 500 },
+        { url: 'mattermost_api' }
+      );
     }
   }
 
@@ -293,11 +326,32 @@ export class MattermostService extends EventEmitter implements IMessengerService
 
           const hivemindError = ErrorUtils.toHivemindError(error);
           const errType = (hivemindError as any).type;
-          if (errType === 'network' || errType === 'api') {
-            throw hivemindError;
+
+          if (error.status === 403 || error.status === 404 || error.status === 400) {
+            throw new ValidationError(
+              error.message || 'Mattermost API Validation Error',
+              'channelId',
+              channelId
+            );
           }
 
-          throw error;
+          if (
+            errType === 'network' ||
+            errType === 'api' ||
+            error.status === 500 ||
+            error.status === 502 ||
+            error.status === 503 ||
+            error.status === 504 ||
+            error.status === 429
+          ) {
+            throw new NetworkError(
+              error.message || 'Mattermost API Network Error',
+              { status: error.status },
+              { url: 'mattermost_api' }
+            );
+          }
+
+          throw hivemindError;
         }
       }, RETRY_CONFIG);
 
@@ -453,7 +507,7 @@ export class MattermostService extends EventEmitter implements IMessengerService
         return;
       }
       await client.sendTyping(channelId, threadId);
-    } catch { }
+    } catch {}
   }
 
   public async setModelActivity(modelId: string, senderKey?: string): Promise<void> {

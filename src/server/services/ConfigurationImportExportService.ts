@@ -5,9 +5,9 @@ import { createGunzip, createGzip } from 'zlib';
 // @ts-ignore - csv-parse v6 ships its own types but TS can't resolve the /sync subpath
 // @ts-ignore - csv-stringify v6 ships its own types but TS can't resolve the /sync subpath
 import Debug from 'debug';
-import { UserConfigStore } from '../../config/UserConfigStore';
 import { AuditLogger } from '../../common/auditLogger';
 import { SecureConfigManager } from '../../config/SecureConfigManager';
+import { UserConfigStore } from '../../config/UserConfigStore';
 import { DatabaseManager } from '../../database/DatabaseManager';
 import { ConfigurationTemplateService } from './ConfigurationTemplateService';
 import { ConfigurationValidator } from './ConfigurationValidator';
@@ -23,6 +23,7 @@ export interface ExportOptions {
   compress?: boolean;
   encrypt?: boolean;
   encryptionKey?: string;
+  maxRetainedBackups?: number;
 }
 
 export interface ImportOptions {
@@ -154,8 +155,10 @@ export class ConfigurationImportExportService {
         const versionPromises = configs
           .filter((c) => c.id != null)
           .map(async (config) => this.dbManager.getBotConfigurationVersions(config.id as number));
-        const versionsNested = await Promise.all(versionPromises);
-        const versions = versionsNested.flat();
+        const versionsNested = await Promise.allSettled(versionPromises);
+        const versions = versionsNested
+          .map((r) => (r.status === 'fulfilled' ? r.value : []))
+          .flat();
 
         exportData.versions = versions;
         exportData.metadata.versionCount = versions.length;
@@ -255,7 +258,7 @@ export class ConfigurationImportExportService {
 
       // Get main configuration from SecureConfigManager
       const secureManager = SecureConfigManager.getInstance();
-      const config = secureManager.getDecryptedMainConfig(env);
+      const config = secureManager.getConfig(env);
 
       if (!config) {
         return {
@@ -661,7 +664,10 @@ export class ConfigurationImportExportService {
         // Enforce backup retention policy with configurable limits and cold storage
         try {
           const generalSettings = UserConfigStore.getInstance().getGeneralSettings();
-          const maxBackups = typeof generalSettings.backupRetentionLimit === 'number' ? generalSettings.backupRetentionLimit : 10;
+          const maxBackups =
+            typeof generalSettings.backupRetentionLimit === 'number'
+              ? generalSettings.backupRetentionLimit
+              : 10;
           const enableColdStorage = generalSettings.enableColdStorage === true;
 
           const allBackups = await this.listBackups();
@@ -673,7 +679,6 @@ export class ConfigurationImportExportService {
             // listBackups sorts from newest to oldest
             const backupsToDelete = allBackups.slice(maxBackups);
             for (const oldBackup of backupsToDelete) {
-
               if (enableColdStorage) {
                 debug(`Archiving old backup to cold storage: ${oldBackup.id} (${oldBackup.name})`);
                 const oldBackupFileName = `backup-${oldBackup.name}-${new Date(oldBackup.createdAt).getTime()}.json.gz`;
@@ -682,20 +687,38 @@ export class ConfigurationImportExportService {
                 await fs.mkdir(coldDir, { recursive: true });
 
                 try {
-                    await fs.rename(oldBackupPath, join(coldDir, oldBackupFileName));
-                    // delete metadata to drop from active list
-                    await fs.unlink(join(this.backupsDir, `${oldBackupFileName}.meta`));
+                  await fs.rename(oldBackupPath, join(coldDir, oldBackupFileName));
+                  // delete metadata to drop from active list
+                  await fs.unlink(join(this.backupsDir, `${oldBackupFileName}.meta`));
 
-                    auditLogger.logAdminAction(createdBy || 'system', 'ARCHIVE', `backup/${oldBackup.id}`, 'success', `Archived backup ${oldBackup.name} to cold storage due to retention limit`);
-                } catch(e) {
-                   debug(`Failed to cold store backup ${oldBackup.id}, falling back to delete:`, e);
-                   await this.deleteBackup(oldBackup.id);
-                   auditLogger.logAdminAction(createdBy || 'system', 'DELETE', `backup/${oldBackup.id}`, 'success', `Deleted backup ${oldBackup.name} due to retention limit (cold storage failed)`);
+                  auditLogger.logAdminAction(
+                    createdBy || 'system',
+                    'ARCHIVE',
+                    `backup/${oldBackup.id}`,
+                    'success',
+                    `Archived backup ${oldBackup.name} to cold storage due to retention limit`
+                  );
+                } catch (e) {
+                  debug(`Failed to cold store backup ${oldBackup.id}, falling back to delete:`, e);
+                  await this.deleteBackup(oldBackup.id);
+                  auditLogger.logAdminAction(
+                    createdBy || 'system',
+                    'DELETE',
+                    `backup/${oldBackup.id}`,
+                    'success',
+                    `Deleted backup ${oldBackup.name} due to retention limit (cold storage failed)`
+                  );
                 }
               } else {
                 debug(`Deleting old backup: ${oldBackup.id} (${oldBackup.name})`);
                 await this.deleteBackup(oldBackup.id);
-                auditLogger.logAdminAction(createdBy || 'system', 'DELETE', `backup/${oldBackup.id}`, 'success', `Deleted backup ${oldBackup.name} due to retention limit`);
+                auditLogger.logAdminAction(
+                  createdBy || 'system',
+                  'DELETE',
+                  `backup/${oldBackup.id}`,
+                  'success',
+                  `Deleted backup ${oldBackup.name} due to retention limit`
+                );
               }
             }
           }
