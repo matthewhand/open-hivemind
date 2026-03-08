@@ -20,7 +20,6 @@ Navigation: [Docs Index](../README.md) | [Configuration Overview](overview.md) |
 | **Discord** | `DiscordService` | `DISCORD_BOT_TOKEN` | ✅ | Comma-separated tokens |
 | **Slack** | `SlackService` | Slack tokens | ✅ | OAuth setup required |
 | **Mattermost** | `MattermostService` | Mattermost config | ✅ | Webhook-based |
-| **Telegram** | `TelegramService` | `TELEGRAM_BOT_TOKEN` | ✅ | BotFather setup required |
 
 ## Environment Variable Quick Setup
 

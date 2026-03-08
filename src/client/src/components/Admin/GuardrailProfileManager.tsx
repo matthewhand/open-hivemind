@@ -1,10 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import Button from '../DaisyUI/Button';
-import Modal from '../DaisyUI/Modal';
-import Card from '../DaisyUI/Card';
-import { Alert } from '../DaisyUI/Alert';
-import Badge from '../DaisyUI/Badge';
-
+import { Button, Modal, Card, Alert, Badge, Input, Textarea, Select, Toggle } from '../DaisyUI';
 import {
   PlusIcon,
   PencilIcon,
@@ -12,6 +7,7 @@ import {
   ArrowPathIcon,
   ShieldCheckIcon,
 } from '@heroicons/react/24/outline';
+import { CommaSeparatedInput } from '../Common/CommaSeparatedInput';
 
 interface GuardrailProfile {
   key: string;
@@ -39,7 +35,7 @@ const GuardrailProfileManager: React.FC = () => {
     description: '',
     enabled: true,
     type: 'owner' as 'owner' | 'custom',
-    allowedUserIds: '',
+    allowedUserIds: [] as string[],
   });
 
   const fetchProfiles = async () => {
@@ -63,7 +59,7 @@ const GuardrailProfileManager: React.FC = () => {
 
   const openCreateDialog = () => {
     setEditingProfile(null);
-    setFormData({ key: '', name: '', description: '', enabled: true, type: 'owner', allowedUserIds: '' });
+    setFormData({ key: '', name: '', description: '', enabled: true, type: 'owner', allowedUserIds: [] });
     setEditDialogOpen(true);
   };
 
@@ -75,7 +71,7 @@ const GuardrailProfileManager: React.FC = () => {
       description: profile.description || '',
       enabled: profile.mcpGuard.enabled,
       type: profile.mcpGuard.type,
-      allowedUserIds: profile.mcpGuard.allowedUserIds?.join(', ') || '',
+      allowedUserIds: profile.mcpGuard.allowedUserIds || [],
     });
     setEditDialogOpen(true);
   };
@@ -90,7 +86,7 @@ const GuardrailProfileManager: React.FC = () => {
           enabled: formData.enabled,
           type: formData.type,
           allowedUserIds: formData.type === 'custom'
-            ? formData.allowedUserIds.split(',').map(s => s.trim()).filter(Boolean)
+            ? formData.allowedUserIds
             : undefined,
         },
       };
@@ -201,10 +197,9 @@ const GuardrailProfileManager: React.FC = () => {
       >
         <div className="space-y-4">
           <div className="form-control">
-            <label className="label"><span className="label-text">Key</span></label>
-            <input
+            <Input
+              label="Key"
               type="text"
-              className="input input-bordered"
               value={formData.key}
               onChange={e => setFormData({ ...formData, key: e.target.value })}
               disabled={!!editingProfile}
@@ -212,52 +207,48 @@ const GuardrailProfileManager: React.FC = () => {
             />
           </div>
           <div className="form-control">
-            <label className="label"><span className="label-text">Name</span></label>
-            <input
+            <Input
+              label="Name"
               type="text"
-              className="input input-bordered"
               value={formData.name}
               onChange={e => setFormData({ ...formData, name: e.target.value })}
             />
           </div>
           <div className="form-control">
-            <label className="label"><span className="label-text">Description</span></label>
-            <textarea
-              className="textarea textarea-bordered"
+            <Textarea
+              label="Description"
               value={formData.description}
               onChange={e => setFormData({ ...formData, description: e.target.value })}
             />
           </div>
           <div className="form-control">
-            <label className="label cursor-pointer">
-              <span className="label-text">Guard Enabled</span>
-              <input
-                type="checkbox"
-                className="toggle toggle-primary"
+            <div className="flex items-center justify-between py-2">
+              <span className="label-text font-medium">Guard Enabled</span>
+              <Toggle
+                variant="primary"
                 checked={formData.enabled}
                 onChange={e => setFormData({ ...formData, enabled: e.target.checked })}
               />
-            </label>
+            </div>
           </div>
           <div className="form-control">
-            <label className="label"><span className="label-text">Guard Type</span></label>
-            <select
-              className="select select-bordered"
+            <Select
+              label="Guard Type"
               value={formData.type}
               onChange={e => setFormData({ ...formData, type: e.target.value as 'owner' | 'custom' })}
-            >
-              <option value="owner">Owner Only</option>
-              <option value="custom">Custom Allow List</option>
-            </select>
+              options={[
+                { value: 'owner', label: 'Owner Only' },
+                { value: 'custom', label: 'Custom Allow List' }
+              ]}
+            />
           </div>
           {formData.type === 'custom' && (
             <div className="form-control">
               <label className="label"><span className="label-text">Allowed User IDs</span></label>
-              <input
-                type="text"
-                className="input input-bordered"
+              <CommaSeparatedInput
+                id="allowed-users"
                 value={formData.allowedUserIds}
-                onChange={e => setFormData({ ...formData, allowedUserIds: e.target.value })}
+                onChange={v => setFormData({ ...formData, allowedUserIds: v })}
                 placeholder="user1, user2"
               />
               <label className="label"><span className="label-text-alt">Comma-separated user IDs</span></label>

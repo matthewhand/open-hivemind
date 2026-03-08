@@ -7,15 +7,17 @@ const debug = Debug('app:ShutdownCoordinator');
 /**
  * Shutdown phases enum.
  */
-export enum ShutdownPhase {
-  IDLE = 'idle',
-  STOP_ACCEPTING = 'stopAccepting',
-  DRAIN_REQUESTS = 'drainRequests',
-  STOP_BACKGROUND = 'stopBackground',
-  DISCONNECT_EXTERNAL = 'disconnectExternal',
-  FINAL_CLEANUP = 'finalCleanup',
-  COMPLETE = 'complete',
-}
+export const ShutdownPhase = {
+  IDLE: 'idle',
+  STOP_ACCEPTING: 'stopAccepting',
+  DRAIN_REQUESTS: 'drainRequests',
+  STOP_BACKGROUND: 'stopBackground',
+  DISCONNECT_EXTERNAL: 'disconnectExternal',
+  FINAL_CLEANUP: 'finalCleanup',
+  COMPLETE: 'complete',
+} as const;
+
+export type ShutdownPhase = typeof ShutdownPhase[keyof typeof ShutdownPhase];
 
 /**
  * Interface for services that can be shut down gracefully.

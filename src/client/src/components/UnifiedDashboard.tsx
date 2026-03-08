@@ -1,17 +1,18 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Alert } from './DaisyUI/Alert';
-import Badge from './DaisyUI/Badge';
-import Button from './DaisyUI/Button';
-import Card from './DaisyUI/Card';
-import DataTable from './DaisyUI/DataTable';
-import Modal from './DaisyUI/Modal';
-import ProgressBar from './DaisyUI/ProgressBar';
-import StatsCards from './DaisyUI/StatsCards';
-import ToastNotification from './DaisyUI/ToastNotification';
-import { LoadingSpinner } from './DaisyUI/Loading';
-
+import {
+  Alert,
+  Badge,
+  Button,
+  Card,
+  DataTable,
+  Modal,
+  ProgressBar,
+  StatsCards,
+  ToastNotification,
+  LoadingSpinner,
+} from './DaisyUI';
 import type { Bot, StatusResponse } from '../services/api';
 import { apiService } from '../services/api';
 import { CreateBotWizard } from './BotManagement/CreateBotWizard';
@@ -42,9 +43,11 @@ const MESSAGE_PROVIDER_OPTIONS = [
 
 const LLM_PROVIDER_OPTIONS = [
   { value: 'openai', label: 'OpenAI' },
+  { value: 'anthropic', label: 'Anthropic' },
   { value: 'flowise', label: 'Flowise' },
   { value: 'openwebui', label: 'Open WebUI' },
-  { value: 'replicate', label: 'Replicate' },
+  { value: 'openswarm', label: 'OpenSwarm' },
+  { value: 'letta', label: 'Letta' },
 ] as const;
 
 const providerIconMap: Record<string, string> = {
@@ -183,7 +186,7 @@ const UnifiedDashboard: React.FC = () => {
 
       // If no bots are configured, default to getting started
       if (!configData.bots || configData.bots.length === 0) {
-        setActiveTab('getting-started');
+        setActiveTab(prev => prev === 'status' ? 'getting-started' : prev);
       }
 
       setError(null);
@@ -256,24 +259,6 @@ const UnifiedDashboard: React.FC = () => {
   );
 
   const statusBots = status?.bots ?? [];
-<<<<<<< HEAD
-  const activeBotCount = useMemo(
-    () => statusBots.filter(bot => bot.status?.toLowerCase() === 'active').length,
-    [statusBots],
-  );
-  const activeConnections = useMemo(
-    () => statusBots.filter(bot => bot.connected).length,
-    [statusBots],
-  );
-  const totalMessages = useMemo(
-    () => statusBots.reduce((sum, bot) => sum + (bot.messageCount ?? 0), 0),
-    [statusBots],
-  );
-  const totalErrors = useMemo(
-    () => statusBots.reduce((sum, bot) => sum + (bot.errorCount ?? 0), 0),
-    [statusBots],
-  );
-=======
   const { activeBotCount, activeConnections, totalMessages, totalErrors } = useMemo(() => {
     let _activeCount = 0;
     let _connections = 0;
@@ -294,7 +279,6 @@ const UnifiedDashboard: React.FC = () => {
       totalErrors: _errors,
     };
   }, [statusBots]);
->>>>>>> origin/main
   const errorRatePercent = totalMessages === 0
     ? 0
     : Number(((totalErrors / totalMessages) * 100).toFixed(2));

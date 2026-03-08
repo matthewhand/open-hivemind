@@ -99,9 +99,8 @@ jest.isolateModules(() => {
           {
             name: 'TestBot',
             messageProvider: 'discord',
-            discord: {
-              token: 'test-token',
-            },
+            discord: { token: 'test-token' },
+            token: 'test-token',
           },
         ]),
       });

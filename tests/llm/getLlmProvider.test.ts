@@ -44,11 +44,15 @@ jest.mock('@integrations/openwebui/openWebUIProvider', () => {
     __esModule: true,
     OpenWebUIProvider: class MockOpenWebUIProvider {
       name = 'openwebui';
-      supportsChatCompletion() { return true; }
-      supportsCompletion() { return false; }
+      supportsChatCompletion() {
+        return true;
+      }
+      supportsCompletion() {
+        return false;
+      }
       generateChatCompletion = jest.fn().mockResolvedValue('mocked OpenWebUI response');
       generateCompletion = jest.fn();
-    }
+    },
   };
 });
 

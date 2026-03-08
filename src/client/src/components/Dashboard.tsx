@@ -1,10 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
-import { Alert } from './DaisyUI/Alert';
-import Hero from './DaisyUI/Hero';
-import Button from './DaisyUI/Button';
-import { SkeletonCard } from './DaisyUI/Skeleton';
-
+import {
+  Alert,
+  Hero,
+  Button,
+  SkeletonCard,
+} from './DaisyUI';
 import { apiService } from '../services/api';
 import type { Bot, StatusResponse } from '../services/api';
 import QuickActions from './QuickActions';
@@ -63,6 +64,8 @@ const Dashboard: React.FC = () => {
       return '💬';
     case 'slack':
       return '📢';
+    case 'telegram':
+      return '✈️';
     case 'mattermost':
       return '💼';
     default:

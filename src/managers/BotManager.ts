@@ -228,9 +228,7 @@ export class BotManager extends EventEmitter {
 
       // Enforce global uniqueness of bot name
       const allBots = await this.getAllBots();
-      const existingBot = allBots.find(
-        (b) => b.name.toLowerCase() === request.name.toLowerCase()
-      );
+      const existingBot = allBots.find((b) => b.name.toLowerCase() === request.name.toLowerCase());
       if (existingBot) {
         throw new Error(`A bot with the name "${request.name}" already exists`);
       }
@@ -1116,7 +1114,19 @@ export class BotManager extends EventEmitter {
       };
     });
 
-    return Promise.all(healthChecks);
+    const results = await Promise.allSettled(healthChecks);
+    return results.map((result) => {
+      if (result.status === 'fulfilled') {
+        return result.value;
+      }
+      return {
+        botId: 'unknown',
+        name: 'unknown',
+        status: 'unhealthy',
+        lastCheck: new Date(),
+        issues: ['Health check failed to execute'],
+      };
+    });
   }
 
   /**

@@ -155,8 +155,10 @@ export class ConfigurationImportExportService {
         const versionPromises = configs
           .filter((c) => c.id != null)
           .map(async (config) => this.dbManager.getBotConfigurationVersions(config.id as number));
-        const versionsNested = await Promise.all(versionPromises);
-        const versions = versionsNested.flat();
+        const versionsNested = await Promise.allSettled(versionPromises);
+        const versions = versionsNested
+          .map((r) => (r.status === 'fulfilled' ? r.value : []))
+          .flat();
 
         exportData.versions = versions;
         exportData.metadata.versionCount = versions.length;
@@ -659,22 +661,6 @@ export class ConfigurationImportExportService {
         const metadataPath = join(this.backupsDir, `${backupFileName}.meta`);
         await fs.writeFile(metadataPath, JSON.stringify(metadata, null, 2));
 
-<<<<<<< HEAD
-        // Enforce backup retention policy
-        try {
-          const maxRetainedBackups = options.maxRetainedBackups || 10;
-          const backups = await this.listBackups();
-          if (backups.length > maxRetainedBackups) {
-            // listBackups sorts from newest to oldest by default
-            const backupsToDelete = backups.slice(maxRetainedBackups);
-            for (const backup of backupsToDelete) {
-              await this.deleteBackup(backup.id);
-            }
-            debug(`Enforced retention policy: deleted ${backupsToDelete.length} old backups.`);
-          }
-        } catch (retentionError) {
-          debug('Error enforcing backup retention policy:', retentionError);
-=======
         // Enforce backup retention policy with configurable limits and cold storage
         try {
           const generalSettings = UserConfigStore.getInstance().getGeneralSettings();
@@ -738,7 +724,6 @@ export class ConfigurationImportExportService {
           }
         } catch (retentionError) {
           debug('Error enforcing backup retention:', retentionError);
->>>>>>> origin/main
         }
 
         return {

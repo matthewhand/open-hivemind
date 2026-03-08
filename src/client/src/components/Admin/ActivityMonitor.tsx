@@ -22,11 +22,7 @@ import {
   Cell,
 } from 'recharts';
 import { format, subDays, subHours } from 'date-fns';
-import Badge from '../DaisyUI/Badge';
-import { Alert } from '../DaisyUI/Alert';
-import Button from '../DaisyUI/Button';
-import Pagination from '../DaisyUI/Pagination';
-
+import { Badge, Alert, Button, Pagination } from '../DaisyUI';
 
 interface ActivityFilter {
   agentId?: string;
@@ -268,6 +264,8 @@ const ActivityMonitor: React.FC = () => {
           <button
             className="btn btn-sm btn-ghost gap-2"
             onClick={() => setShowFilters(!showFilters)}
+            aria-expanded={showFilters}
+            aria-label={showFilters ? 'Hide filters' : 'Show filters'}
           >
             <FunnelIcon className="w-4 h-4" />
             {showFilters ? 'Hide' : 'Show'} Filters

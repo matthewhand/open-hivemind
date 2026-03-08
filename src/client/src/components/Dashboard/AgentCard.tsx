@@ -1,14 +1,14 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect } from 'react';
-import Card from '../../DaisyUI/Card';
-import Chip from '../../DaisyUI/Chip';
-import Select from '../../DaisyUI/Select';
-import Button from '../../DaisyUI/Button';
-import { Alert } from '../../DaisyUI/Alert';
-import Tooltip from '../../DaisyUI/Tooltip';
-
-import Input from '../../DaisyUI/Input';
-
+import {
+  Card,
+  Chip,
+  Select,
+  Button,
+  Alert,
+  Tooltip,
+} from '../../DaisyUI';
+import { Input } from '../../DaisyUI';
 import type { Agent } from '../../../services/agentService';
 import { useProviders, type ProviderInfo } from '../../../hooks/useProviders';
 import { usePersonas } from '../../../hooks/usePersonas';
@@ -29,7 +29,7 @@ const AgentCard: React.FC<AgentCardProps> = ({ agent, configurable }) => {
   const [newMcpServer, setNewMcpServer] = useState({ name: '', serverUrl: '', apiKey: '' });
   const [connected, setConnected] = useState(false);
 
-  const { llmProviders, messengerProviders, loading: providersLoading, error: providersError } = useProviders();
+  const { llmProviders, messageProviders, loading: providersLoading, error: providersError } = useProviders();
 
   const fallbackMessengerProviders: ProviderInfo[] = [
     { key: 'discord', label: 'Discord' },
@@ -43,7 +43,7 @@ const AgentCard: React.FC<AgentCardProps> = ({ agent, configurable }) => {
     { key: 'openwebui', label: 'OpenWebUI' },
   ];
 
-  const messengerOptions = messengerProviders.length ? messengerProviders : fallbackMessengerProviders;
+  const messengerOptions = messageProviders.length ? messageProviders : fallbackMessengerProviders;
   const llmOptions = llmProviders.length ? llmProviders : fallbackLlmProviders;
   const { personas, loading: personasLoading, error: personasError } = usePersonas();
 

@@ -107,7 +107,7 @@ describe('SlackMessageProcessor', () => {
           list: jest.fn().mockResolvedValue({
             ok: true,
             files: [
-              { id: 'F1', linked_channel_id: 'C123', url_private: 'https://example.com/canvas' },
+              { id: 'F1', linked_channel_id: 'C123456789', url_private: 'https://example.com/canvas' },
             ],
           }),
           info: jest.fn().mockResolvedValue({
@@ -135,11 +135,11 @@ describe('SlackMessageProcessor', () => {
           history: jest.fn().mockResolvedValue({ messages: [] }),
         },
       });
-      
+
       const botManager = createBotManagerMock(webClient);
       const smp = new SlackMessageProcessor(botManager);
 
-      const msg = new SlackMessage('hi there', 'C123456789', {
+      const msg = new SlackMessage('hi there', 'C123456789456789', {
         ts: '1722556800.123',
         user: 'U999',
         thread_ts: '1722556800.100',
@@ -150,9 +150,19 @@ describe('SlackMessageProcessor', () => {
       });
 
       const enriched = await smp.enrichSlackMessage(msg);
-      expect(enriched.data.workspaceInfo).toEqual({ workspaceId: 'T123', workspaceName: 'Test Team' });
-      expect(enriched.data.channelInfo).toMatchObject({ channelId: 'C123456789', channelName: 'general' });
-      expect(enriched.data.threadInfo).toMatchObject({ isThread: true, threadTs: '1722556800.100', messageCount: 3 });
+      expect(enriched.data.workspaceInfo).toEqual({
+        workspaceId: 'T123',
+        workspaceName: 'Test Team',
+      });
+      expect(enriched.data.channelInfo).toMatchObject({
+        channelId: 'C123456789456789',
+        channelName: 'general',
+      });
+      expect(enriched.data.threadInfo).toMatchObject({
+        isThread: true,
+        threadTs: '1722556800.100',
+        messageCount: 3,
+      });
       expect(enriched.data.slackUser).toMatchObject({ slackUserId: 'U999', userName: 'Test User' });
       expect(enriched.data.metadata).toBeDefined();
       expect(enriched.data.channelContent).toBeDefined();
@@ -178,7 +188,7 @@ describe('SlackMessageProcessor', () => {
           list: jest.fn().mockResolvedValue({
             ok: true,
             files: [
-              { id: 'FIMG', linked_channel_id: 'CIMG', url_private: 'https://example.com/img' },
+              { id: 'FIMG', linked_channel_id: 'CIMG12345', url_private: 'https://example.com/img' },
             ],
           }),
           info: jest.fn().mockResolvedValue({
@@ -194,7 +204,7 @@ describe('SlackMessageProcessor', () => {
       });
 
       const smp = new SlackMessageProcessor(createBotManagerMock(webClient));
-      const msg = new SlackMessage('pic', 'CIMG', { ts: '1.002', user: 'U111' });
+      const msg = new SlackMessage('pic', 'CIMG12345', { ts: '1.002', user: 'U111' });
       const enriched = await smp.enrichSlackMessage(msg);
       expect(enriched.data.channelContent.content.startsWith('data:image/png;base64,')).toBe(true);
     });
@@ -205,7 +215,7 @@ describe('SlackMessageProcessor', () => {
         files: {
           list: jest
             .fn()
-            .mockResolvedValue({ ok: true, files: [{ id: 'FX', linked_channel_id: 'C123' }] }),
+            .mockResolvedValue({ ok: true, files: [{ id: 'FX', linked_channel_id: 'C123456789' }] }),
           info: jest.fn().mockResolvedValue({
             ok: true,
             file: {
@@ -218,7 +228,7 @@ describe('SlackMessageProcessor', () => {
         },
       });
       const smp = new SlackMessageProcessor(createBotManagerMock(webClient));
-      const msg = new SlackMessage('doc', 'C123', { ts: '1.003', user: 'U222' });
+      const msg = new SlackMessage('doc', 'C123456789', { ts: '1.003', user: 'U222' });
       const enriched = await smp.enrichSlackMessage(msg);
       expect(enriched.data.channelContent).toMatchObject({ content: '' });
     });
@@ -230,7 +240,7 @@ describe('SlackMessageProcessor', () => {
         },
       });
       const smp = new SlackMessageProcessor(createBotManagerMock(webClient));
-      const msg = new SlackMessage('hello', 'C123', { ts: '1.004', user: 'unknown' });
+      const msg = new SlackMessage('hello', 'C123456789', { ts: '1.004', user: 'unknown' });
       const enriched = await smp.enrichSlackMessage(msg);
       expect(webClient.users.info).not.toHaveBeenCalled();
       expect(enriched.data.slackUser.slackUserId).toBe('unknown');
@@ -240,21 +250,27 @@ describe('SlackMessageProcessor', () => {
   describe('constructPayload()', () => {
     it('builds payload with defaults and history aggregation', async () => {
       const smp = new SlackMessageProcessor(createBotManagerMock(createWebClientMock()));
-      const msg = new SlackMessage('What is up?', 'C123456789', {
+      const msg = new SlackMessage('What is up?', 'C123456789456789', {
         ts: '2.001',
         slackUser: { slackUserId: 'U111', userName: 'User One' },
         channelContent: { content: 'Context here' },
-        metadata: { channelInfo: { channelId: 'C123456789' }, userInfo: { userName: 'User One' } },
+        metadata: { channelInfo: { channelId: 'C123456789456789' }, userInfo: { userName: 'User One' } },
       });
 
       const history = [
-        new SlackMessage('Hello', 'C123456789', { role: 'user' }) as unknown as import('@message/interfaces/IMessage').IMessage,
-        new SlackMessage('Hi!', 'C123456789', { role: 'assistant' }) as unknown as import('@message/interfaces/IMessage').IMessage,
-        new SlackMessage('', 'C123456789', { role: 'user' }) as unknown as import('@message/interfaces/IMessage').IMessage,
+        new SlackMessage('Hello', 'C123456789', {
+          role: 'user',
+        }) as unknown as import('@message/interfaces/IMessage').IMessage,
+        new SlackMessage('Hi!', 'C123456789', {
+          role: 'assistant',
+        }) as unknown as import('@message/interfaces/IMessage').IMessage,
+        new SlackMessage('', 'C123456789', {
+          role: 'user',
+        }) as unknown as import('@message/interfaces/IMessage').IMessage,
       ];
 
       const payload = await smp.constructPayload(msg, history);
-      expect(payload.metadata.channelInfo.channelId).toBe('C123456789');
+      expect(payload.metadata.channelInfo.channelId).toBe('C123456789456789');
       expect(payload.messages.length).toBeGreaterThanOrEqual(4);
       const last = payload.messages[payload.messages.length - 1];
       expect(last).toMatchObject({ role: 'user', content: 'What is up?' });
@@ -307,7 +323,11 @@ describe('SlackMessageProcessor', () => {
         },
       });
       const smp = new SlackMessageProcessor(createBotManagerMock(webClient));
-      const msg = new SlackMessage('t', 'C123456789', { ts: '3.001', user: 'U1', thread_ts: '3.000' });
+      const msg = new SlackMessage('t', 'C123456789', {
+        ts: '3.001',
+        user: 'U1',
+        thread_ts: '3.000',
+      });
       const enriched = await smp.enrichSlackMessage(msg);
       expect(enriched.data.threadInfo.isThread).toBe(true);
       expect(enriched.data.threadInfo.threadParticipants).toEqual(['U1', 'U2']);

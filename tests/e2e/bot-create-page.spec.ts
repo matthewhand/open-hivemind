@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
-import { setupAuth } from './test-utils';
 import { CONFIG_LIMITS } from '../../src/types/config';
+import { setupAuth } from './test-utils';
 
 test.describe('Bot Create Page (Standalone)', () => {
   test.beforeEach(async ({ page }) => {
@@ -116,12 +116,20 @@ test.describe('Bot Create Page (Standalone)', () => {
     await expect(submitBtn).toBeEnabled();
 
     // 5. Verify text lengths use CONFIG_LIMITS
-    const systemInstructionInput = page.getByPlaceholder('e.g., You are a helpful and concise assistant.');
+    const systemInstructionInput = page.getByPlaceholder(
+      'e.g., You are a helpful and concise assistant.'
+    );
     await systemInstructionInput.fill('short');
-    await expect(page.getByText('System instruction is very short. Consider providing more detail.')).toBeVisible();
+    await expect(
+      page.getByText('System instruction is very short. Consider providing more detail.')
+    ).toBeVisible();
 
     const longInstruction = 'a'.repeat(CONFIG_LIMITS.SYSTEM_INSTRUCTION_WARNING_LENGTH + 1);
     await systemInstructionInput.fill(longInstruction);
-    await expect(page.getByText(`System instruction is very long (max ${CONFIG_LIMITS.SYSTEM_INSTRUCTION_WARNING_LENGTH} chars recommended).`)).toBeVisible();
+    await expect(
+      page.getByText(
+        `System instruction is very long (max ${CONFIG_LIMITS.SYSTEM_INSTRUCTION_WARNING_LENGTH} chars recommended).`
+      )
+    ).toBeVisible();
   });
 });

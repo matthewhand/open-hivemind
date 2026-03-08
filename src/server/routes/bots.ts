@@ -1,5 +1,14 @@
 import { Router } from 'express';
 import { BotManager, type CreateBotRequest } from '../../managers/BotManager';
+import {
+  BotActivityQuerySchema,
+  BotHistoryQuerySchema,
+  BotIdParamSchema,
+  CloneBotSchema,
+  CreateBotSchema,
+  UpdateBotSchema,
+} from '../../validation/schemas/botsSchema';
+import { validateRequest } from '../../validation/validateRequest';
 import { ActivityLogger } from '../services/ActivityLogger';
 import { WebSocketService } from '../services/WebSocketService';
 
@@ -7,7 +16,16 @@ const router = Router();
 const manager = BotManager.getInstance();
 const wsService = WebSocketService.getInstance();
 
-// GET /api/bots - List all bots with status
+/**
+ * @openapi
+ * /api/bots:
+ *   get:
+ *     summary: List all bots with status
+ *     tags: [Bots]
+ *     responses:
+ *       200:
+ *         description: List of bots
+ */
 router.get('/', async (req, res) => {
   try {
     const bots = await manager.getAllBots();
@@ -42,8 +60,25 @@ router.get('/', async (req, res) => {
   }
 });
 
-// GET /api/bots/:id - Get a single bot
-router.get('/:id', async (req, res) => {
+/**
+ * @openapi
+ * /api/bots/{id}:
+ *   get:
+ *     summary: Get a single bot
+ *     tags: [Bots]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Bot details
+ *       404:
+ *         description: Bot not found
+ */
+router.get('/:id', validateRequest(BotIdParamSchema), async (req, res) => {
   try {
     const { id } = req.params;
     const bot = await manager.getBot(id);
@@ -56,13 +91,28 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-// POST /api/bots - Create a new bot
-router.post('/', async (req, res) => {
+/**
+ * @openapi
+ * /api/bots:
+ *   post:
+ *     summary: Create a new bot
+ *     tags: [Bots]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               name: { type: string }
+ *             required: [name]
+ *     responses:
+ *       201:
+ *         description: Bot created
+ */
+router.post('/', validateRequest(CreateBotSchema), async (req, res) => {
   try {
     const request = req.body as CreateBotRequest;
-    if (!request.name) {
-      return res.status(400).json({ error: 'Bot name is required' });
-    }
     const bot = await manager.createBot(request);
     return res.status(201).json({ success: true, message: 'Bot created', bot });
   } catch (error: any) {
@@ -70,8 +120,35 @@ router.post('/', async (req, res) => {
   }
 });
 
-// PUT /api/bots/:id - Update a bot
-router.put('/:id', async (req, res) => {
+/**
+ * @openapi
+ * /api/bots/{id}:
+ *   put:
+ *     summary: Update a bot
+ *     tags: [Bots]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               name: { type: string }
+ *               messageProvider: { type: string }
+ *               llmProvider: { type: string }
+ *               persona: { type: string }
+ *               isActive: { type: boolean }
+ *     responses:
+ *       200:
+ *         description: Bot updated
+ */
+router.put('/:id', validateRequest(UpdateBotSchema), async (req, res) => {
   try {
     const { id } = req.params;
     const updates = req.body;
@@ -83,8 +160,23 @@ router.put('/:id', async (req, res) => {
   }
 });
 
-// DELETE /api/bots/:id - Delete a bot
-router.delete('/:id', async (req, res) => {
+/**
+ * @openapi
+ * /api/bots/{id}:
+ *   delete:
+ *     summary: Delete a bot
+ *     tags: [Bots]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Bot deleted
+ */
+router.delete('/:id', validateRequest(BotIdParamSchema), async (req, res) => {
   try {
     const { id } = req.params;
     await manager.deleteBot(id);
@@ -95,14 +187,35 @@ router.delete('/:id', async (req, res) => {
   }
 });
 
-// POST /api/bots/:id/clone - Clone a bot
-router.post('/:id/clone', async (req, res) => {
+/**
+ * @openapi
+ * /api/bots/{id}/clone:
+ *   post:
+ *     summary: Clone a bot
+ *     tags: [Bots]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               newName: { type: string }
+ *             required: [newName]
+ *     responses:
+ *       201:
+ *         description: Bot cloned
+ */
+router.post('/:id/clone', validateRequest(CloneBotSchema), async (req, res) => {
   try {
     const { id } = req.params;
     const { newName } = req.body;
-    if (!newName) {
-      return res.status(400).json({ error: 'New bot name is required' });
-    }
     const newBot = await manager.cloneBot(id, newName);
     return res.status(201).json({ success: true, message: 'Bot cloned', bot: newBot });
   } catch (error: any) {
@@ -111,8 +224,23 @@ router.post('/:id/clone', async (req, res) => {
   }
 });
 
-// POST /api/bots/:id/start - Start a bot
-router.post('/:id/start', async (req, res) => {
+/**
+ * @openapi
+ * /api/bots/{id}/start:
+ *   post:
+ *     summary: Start a bot
+ *     tags: [Bots]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Bot started
+ */
+router.post('/:id/start', validateRequest(BotIdParamSchema), async (req, res) => {
   try {
     const { id } = req.params;
     await manager.startBot(id);
@@ -123,8 +251,23 @@ router.post('/:id/start', async (req, res) => {
   }
 });
 
-// POST /api/bots/:id/stop - Stop a bot
-router.post('/:id/stop', async (req, res) => {
+/**
+ * @openapi
+ * /api/bots/{id}/stop:
+ *   post:
+ *     summary: Stop a bot
+ *     tags: [Bots]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Bot stopped
+ */
+router.post('/:id/stop', validateRequest(BotIdParamSchema), async (req, res) => {
   try {
     const { id } = req.params;
     await manager.stopBot(id);
@@ -135,11 +278,35 @@ router.post('/:id/stop', async (req, res) => {
   }
 });
 
-// GET /api/bots/:id/history - Get chat history
-router.get('/:id/history', async (req, res) => {
+/**
+ * @openapi
+ * /api/bots/{id}/history:
+ *   get:
+ *     summary: Get chat history
+ *     tags: [Bots]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *       - in: query
+ *         name: channelId
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Bot history
+ */
+router.get('/:id/history', validateRequest(BotHistoryQuerySchema), async (req, res) => {
   try {
     const { id } = req.params;
-    const limit = Math.min(Math.max(parseInt(req.query.limit as string) || 20, 1), 100);
+    const reqQuery = req.query as any;
+    const limit = Math.min(Math.max(parseInt(reqQuery.limit as string) || 20, 1), 100);
     const channelId = req.query.channelId as string;
 
     const history = await manager.getBotHistory(id, channelId, limit);
@@ -150,7 +317,6 @@ router.get('/:id/history', async (req, res) => {
   }
 });
 
-<<<<<<< HEAD
 /**
  * Redacts a string by fully masking short strings and partially masking longer ones.
  * Useful for preventing PII (like User IDs and Channel IDs) from leaking to the frontend.
@@ -158,16 +324,34 @@ router.get('/:id/history', async (req, res) => {
 function redactString(val: string | undefined): string | undefined {
   if (!val) return val;
   if (val.length <= 3) return '***';
-  return val.substring(0, 1) + '*'.repeat(val.length - 2) + val.substring(val.length - 1);
+  return val.substring(0, 1) + '***' + val.substring(val.length - 1);
 }
 
-=======
->>>>>>> origin/main
-// GET /api/bots/:id/activity - Get activity logs
-router.get('/:id/activity', async (req, res) => {
+/**
+ * @openapi
+ * /api/bots/{id}/activity:
+ *   get:
+ *     summary: Get activity logs
+ *     tags: [Bots]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Bot activity
+ */
+router.get('/:id/activity', validateRequest(BotActivityQuerySchema), async (req, res) => {
   try {
     const { id } = req.params;
-    const limit = Math.min(Math.max(parseInt(req.query.limit as string) || 20, 1), 100);
+    const reqQuery = req.query as any;
+    const limit = Math.min(Math.max(parseInt(reqQuery.limit as string) || 20, 1), 100);
 
     const bot = await manager.getBot(id);
     if (!bot) {
@@ -188,8 +372,8 @@ router.get('/:id/activity', async (req, res) => {
         result: event.status,
         metadata: {
           type: 'MESSAGE',
-          channelId: event.channelId,
-          userId: event.userId,
+          channelId: redactString(event.channelId),
+          userId: redactString(event.userId),
         },
       }))
       .reverse();

@@ -6,18 +6,11 @@ import type {
   CreatePersonaRequest,
   UpdatePersonaRequest,
   PersonaModalState,
-} from '../../types/bot';
+} from '../../types';
 import {
   Persona,
-} from '../../types/bot';
-import Modal from '../DaisyUI/Modal';
-import Button from '../DaisyUI/Button';
-import Input from '../DaisyUI/Input';
-import Textarea from '../DaisyUI/Textarea';
-import Select from '../DaisyUI/Select';
-import Badge from '../DaisyUI/Badge';
-import Card from '../DaisyUI/Card';
-
+} from '../../types';
+import { Modal, Button, Input, Textarea, Select, Badge, Card } from '../DaisyUI';
 import {
   User as UserIcon,
   Plus as AddIcon,
@@ -373,6 +366,7 @@ const PersonaConfigModal: React.FC<PersonaConfigModalProps> = ({
                         <button
                           onClick={() => removeTrait(index)}
                           className="absolute right-2 top-8 w-4 h-4 rounded-full bg-error/20 hover:bg-error/30 flex items-center justify-center"
+                          aria-label={`Remove trait ${trait.key}`}
                         >
                           <RemoveIcon className="w-3 h-3 text-error" />
                         </button>
