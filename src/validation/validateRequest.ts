@@ -17,15 +17,9 @@ export const validateRequest =
       return next();
     } catch (error) {
       if (error instanceof ZodError) {
-        // Format Zod validation errors for response
-        const errors = error.errors.map((err) => ({
-          field: err.path.join('.'),
-          message: err.message,
-        }));
-
         return res.status(400).json({
           error: 'Validation failed',
-          details: errors,
+          issues: error.issues,
         });
       }
       next(error);
