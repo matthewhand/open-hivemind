@@ -336,7 +336,7 @@ export class SlackBotManager {
    * Gracefully shutdown all Slack bot connections
    */
   public async shutdown(): Promise<void> {
-    debug('Entering shutdown');
+    debug(`Entering shutdown (${this.slackBots.length} bots)`);
 
     await Promise.all(
       this.slackBots.map(async (botInfo) => {
