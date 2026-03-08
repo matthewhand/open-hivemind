@@ -60,7 +60,7 @@ export class LettaProvider implements ILlmProvider {
           debug('per-channel mode but no channelId provided, falling back to default');
           return 'default';
         }
-        return this.getOrCreateConversation(agentId, `channel-${channelId}`);
+        return this.getOrCreateConversation(agentId, `${agentId}:channel-${channelId}`);
       }
 
       case 'per-user': {
@@ -69,7 +69,7 @@ export class LettaProvider implements ILlmProvider {
           debug('per-user mode but no userId provided, falling back to default');
           return 'default';
         }
-        return this.getOrCreateConversation(agentId, `user-${userId}`);
+        return this.getOrCreateConversation(agentId, `${agentId}:user-${userId}`);
       }
 
       default:
@@ -78,12 +78,16 @@ export class LettaProvider implements ILlmProvider {
   }
 
   /**
-   * Get or create a conversation with the given key (used as summary).
-   * Returns the conversation ID (conv-* format).
+   * Get or create a conversation for the given cache key and human-readable summary.
+   * cacheKey includes agentId to prevent cross-agent cache collisions in the singleton.
+   * summary is the human-readable name stored in Letta (e.g. 'channel-123', 'user-456').
    */
-  private async getOrCreateConversation(agentId: string, key: string): Promise<string> {
+  private async getOrCreateConversation(agentId: string, cacheKey: string): Promise<string> {
+    // Strip agentId prefix from cacheKey to get the human-readable summary
+    const summary = cacheKey.includes(':') ? cacheKey.split(':').slice(1).join(':') : cacheKey;
+
     // Check cache first
-    const cached = this.conversationCache.get(key);
+    const cached = this.conversationCache.get(cacheKey);
     if (cached) {
       return cached;
     }
@@ -94,30 +98,30 @@ export class LettaProvider implements ILlmProvider {
       // Try to list existing conversations and find by summary
       const existing = await clientAny.conversations?.list?.({ agent_id: agentId });
       if (existing && Array.isArray(existing)) {
-        const match = existing.find((conv: any) => conv.summary === key);
+        const match = existing.find((conv: any) => conv.summary === summary);
         if (match?.id) {
-          debug('Found existing conversation for key %s: %s', key, match.id);
-          this.conversationCache.set(key, match.id);
+          debug('Found existing conversation for key %s: %s', cacheKey, match.id);
+          this.conversationCache.set(cacheKey, match.id);
           return match.id;
         }
       }
 
-      // Create new conversation
+      // Create new conversation with human-readable summary
       const created = await clientAny.conversations?.create?.({
         agent_id: agentId,
-        summary: key,
+        summary,
       });
 
       if (created?.id) {
-        debug('Created new conversation for key %s: %s', key, created.id);
-        this.conversationCache.set(key, created.id);
+        debug('Created new conversation for key %s: %s', cacheKey, created.id);
+        this.conversationCache.set(cacheKey, created.id);
         return created.id;
       }
 
-      debug('Failed to create conversation for key %s, falling back to default', key);
+      debug('Failed to create conversation for key %s, falling back to default', cacheKey);
       return 'default';
     } catch (error) {
-      debug('Error getting/creating conversation for key %s: %s', key, error);
+      debug('Error getting/creating conversation for key %s: %s', cacheKey, error);
       return 'default';
     }
   }
