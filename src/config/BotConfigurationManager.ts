@@ -836,22 +836,21 @@ export class BotConfigurationManager {
     const existingServers = Array.isArray(config.mcpServers) ? config.mcpServers : [];
 
     // Combine: profile servers + existing servers (dedup by name)
-    const seenNames = new Set<string>();
-    const merged: McpServerConfig[] = [];
+    const map = new Map<string, McpServerConfig>();
 
     for (const server of profileServers) {
-      if (server.name && !seenNames.has(server.name)) {
-        seenNames.add(server.name);
-        merged.push(server);
+      if (server.name && !map.has(server.name)) {
+        map.set(server.name, server);
       }
     }
     for (const server of existingServers) {
       const name = (server as { name?: string }).name;
-      if (name && !seenNames.has(name)) {
-        seenNames.add(name);
-        merged.push(server);
+      if (name && !map.has(name)) {
+        map.set(name, server as McpServerConfig);
       }
     }
+
+    const merged = Array.from(map.values());
 
     config.mcpServers = merged;
     debug(`Applied MCP server profile "${profileName}": ${merged.length} servers`);
