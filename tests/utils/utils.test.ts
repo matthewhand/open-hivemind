@@ -77,6 +77,25 @@ describe('executeCommandSafe', () => {
       const duration = Date.now() - startTime;
       expect(duration).toBeLessThan(5000); // Should complete in under 5 seconds
     });
+
+    it('should kill process and reject when timeout is exceeded', async () => {
+      // Note: This test might be slow or flaky in some environments
+      // We use a small timeout to verify rejection
+      await expect(
+        executeCommandSafe('sleep', ['2'], { timeout: 100 })
+      ).rejects.toThrow();
+    });
+
+    it('should respect the working directory (cwd) option', async () => {
+      const tempDir = fs.mkdtempSync(path.join(process.cwd(), 'test-cwd-'));
+      try {
+        const output = await executeCommandSafe('pwd', [], { cwd: tempDir });
+        // Normalize paths for comparison (handle potential symlinks or OS differences)
+        expect(output.trim()).toMatch(new RegExp(path.basename(tempDir) + '$'));
+      } finally {
+        fs.rmdirSync(tempDir);
+      }
+    });
   });
 
   describe('Output formatting', () => {
