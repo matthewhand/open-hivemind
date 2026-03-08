@@ -655,6 +655,17 @@ async function main() {
 
   // Startup complete
   appLogger.info('🎉 Open Hivemind Unified Server startup complete!');
+
+  // Re-print temp password so it's visible after all startup noise
+  const { AuthManager } = require('./auth/AuthManager');
+  const generatedPwd = AuthManager.getInstance().getGeneratedPassword();
+  if (generatedPwd) {
+    console.warn('================================================================');
+    console.warn('⚠️  REMINDER: Temporary admin password (set ADMIN_PASSWORD to remove this):');
+    console.warn(`   Username: admin`);
+    console.warn(`   Password: ${generatedPwd}`);
+    console.warn('================================================================');
+  }
 }
 
 main().catch((error) => {
