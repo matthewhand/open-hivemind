@@ -258,9 +258,9 @@ const UnifiedDashboard: React.FC = () => {
     [fetchData, successToast, errorToast],
   );
 
-  const statusBots = useMemo(() => status?.bots ?? [], [status?.bots]);
+  const statusBots = useMemo(() => status?.bots ?? [], [status]);
 
-  // Combine multiple O(N) filter/reduce passes into a single O(N) pass
+  // Combine 4 separate O(N) filter/reduce passes into a single O(N) pass
   // to calculate dashboard statistics and prevent unnecessary re-renders.
   const { activeBotCount, activeConnections, totalMessages, totalErrors } = useMemo(() => {
     return statusBots.reduce(

@@ -1,0 +1,11 @@
+--- src/client/src/components/UnifiedDashboard.tsx
++++ src/client/src/components/UnifiedDashboard.tsx
+@@ -258,7 +258,7 @@
+     [fetchData, successToast, errorToast],
+   );
+
+-  const statusBots = useMemo(() => status?.bots ?? [], [status?.bots]);
++  const statusBots = useMemo(() => status?.bots ?? [], [status]);
+
+   // Combine multiple O(N) filter/reduce passes into a single O(N) pass
+   // to calculate dashboard statistics and prevent unnecessary re-renders.
