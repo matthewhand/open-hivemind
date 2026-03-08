@@ -15,7 +15,7 @@ jest.mock('@config/llmConfig', () => ({
 
 const MockOpenAI = jest.fn();
 jest.mock(
-  '@hivemind/provider-openai',
+  '@hivemind/llm-openai',
   () => ({
     OpenAiProvider: class {
       constructor(config: any) {

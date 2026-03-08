@@ -1,7 +1,7 @@
 {
-    "name": "@hivemind/provider-openwebui",
+    "name": "@hivemind/message-slack",
     "version": "1.0.0",
-    "description": "OpenWebUI LLM provider for Open Hivemind",
+    "description": "Slack adapter for Open Hivemind",
     "main": "dist/index.js",
     "types": "dist/index.d.ts",
     "scripts": {
@@ -10,6 +10,10 @@
         "test": "echo \"No tests yet\" && exit 0"
     },
     "dependencies": {
+        "@slack/web-api": "^7.8.0",
+        "@slack/socket-mode": "^2.0.3",
+        "@slack/rtm-api": "^7.0.2",
+        "@slack/webhook": "^7.0.4",
         "debug": "^4.3.7"
     },
     "peerDependencies": {

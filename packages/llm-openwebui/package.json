@@ -1,7 +1,7 @@
 {
-    "name": "@hivemind/provider-flowise",
+    "name": "@hivemind/llm-openwebui",
     "version": "1.0.0",
-    "description": "Flowise LLM provider for Open Hivemind",
+    "description": "OpenWebUI LLM provider for Open Hivemind",
     "main": "dist/index.js",
     "types": "dist/index.d.ts",
     "scripts": {
@@ -10,7 +10,6 @@
         "test": "echo \"No tests yet\" && exit 0"
     },
     "dependencies": {
-        "flowise-sdk": "^1.0.8",
         "debug": "^4.3.7"
     },
     "peerDependencies": {

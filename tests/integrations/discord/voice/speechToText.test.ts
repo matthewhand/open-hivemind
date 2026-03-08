@@ -1,6 +1,6 @@
 import fs from 'fs';
 import OpenAI from 'openai';
-import { transcribeAudio } from '@hivemind/adapter-discord/voice/speechToText';
+import { transcribeAudio } from '@hivemind/message-discord/voice/speechToText';
 
 jest.mock('openai');
 jest.mock('fs');

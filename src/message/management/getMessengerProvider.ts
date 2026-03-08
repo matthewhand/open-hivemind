@@ -3,10 +3,10 @@ import * as path from 'path';
 
 const gmpDebug = require('debug')('app:getMessengerProvider');
 // These modules are mocked in tests; keep access shape simple and flat
-const SlackMgr = require('@hivemind/adapter-slack');
+const SlackMgr = require('@hivemind/message-slack');
 const MattermostMgr = (() => {
   try {
-    return require('@hivemind/adapter-mattermost');
+    return require('@hivemind/message-mattermost');
   } catch (_e) {
     return null;
   }
@@ -88,7 +88,7 @@ export function getMessengerProvider() {
   // Discord (singleton) - tests mock as { DiscordService: { getInstance } }
   if (hasDiscord && wantProvider('discord')) {
     try {
-      const DiscordMgr = require('@hivemind/adapter-discord');
+      const DiscordMgr = require('@hivemind/message-discord');
       const svc = DiscordMgr?.DiscordService?.getInstance
         ? DiscordMgr.DiscordService.getInstance()
         : undefined;

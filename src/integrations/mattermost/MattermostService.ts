@@ -2,7 +2,7 @@ import { EventEmitter } from 'events';
 import retry from 'async-retry';
 import Debug from 'debug';
 import type { Application } from 'express';
-import { MattermostClient } from '@hivemind/adapter-mattermost';
+import { MattermostClient } from '@hivemind/message-mattermost';
 import BotConfigurationManager from '@src/config/BotConfigurationManager';
 import { MetricsCollector } from '@src/monitoring/MetricsCollector';
 import { ValidationError } from '@src/types/errorClasses';
@@ -329,7 +329,7 @@ export class MattermostService extends EventEmitter implements IMessengerService
           const botUsername = botConfig.username;
           const botUserId = botConfig.userId;
 
-          const { MattermostMessage } = await import('@hivemind/adapter-mattermost');
+          const { MattermostMessage } = await import('@hivemind/message-mattermost');
 
           // ⚡ Bolt Optimization: Fetch all users concurrently using Promise.all instead of sequential await in for loop
           const messagePromises = posts.slice(0, limit).map(async (post) => {

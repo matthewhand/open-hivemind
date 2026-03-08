@@ -1,5 +1,5 @@
 /**
- * @hivemind/adapter-discord
+ * @hivemind/message-discord
  *
  * Discord adapter for Open Hivemind.
  * This package provides Discord integration through the IMessengerService interface.
@@ -37,7 +37,7 @@ export const createDiscordService: IAdapterFactory = (
  * Adapter module metadata
  */
 export const adapterMetadata = {
-  name: '@hivemind/adapter-discord',
+  name: '@hivemind/message-discord',
   version: '1.0.0',
   platform: 'discord' as const,
 };

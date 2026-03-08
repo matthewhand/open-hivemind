@@ -33,7 +33,7 @@ jest.mock('@src/integrations/mattermost/mattermostClient', () => {
   };
 });
 
-jest.mock('@hivemind/adapter-mattermost', () => {
+jest.mock('@hivemind/message-mattermost', () => {
   const mockClient = {
     connect: jest.fn().mockResolvedValue(undefined),
     postMessage: jest.fn().mockResolvedValue({ id: 'post123' }),
@@ -214,7 +214,7 @@ jest.mock('../../../packages/adapter-mattermost/src/mattermostClient', () => {
 
 // Let's rely on the mock of 'mattermostClient' above to intercept calls.
 // However, the test file imports `MattermostService` from the source.
-// The original test mocked `@hivemind/adapter-mattermost` which might not be used by the relative import.
+// The original test mocked `@hivemind/message-mattermost` which might not be used by the relative import.
 
 // To fix "getaddrinfo ENOTFOUND", we must ensure that `new MattermostClient(...)` returns our mock.
 

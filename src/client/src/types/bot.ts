@@ -27,7 +27,7 @@ export enum BotStatus {
 
 export interface MessageProvider {
   id: string;
-  type: MessageProviderType;
+  type: string;
   name: string;
   config: Record<string, any>;
   enabled: boolean;
@@ -35,27 +35,10 @@ export interface MessageProvider {
 
 export interface LLMProvider {
   id: string;
-  type: LLMProviderType;
+  type: string;
   name: string;
   config: Record<string, any>;
   enabled: boolean;
-}
-
-export enum MessageProviderType {
-  DISCORD = 'discord',
-  SLACK = 'slack',
-  MATTERMOST = 'mattermost',
-  WEBHOOK = 'webhook',
-}
-
-export enum LLMProviderType {
-  OPENAI = 'openai',
-  FLOWISE = 'flowise',
-  OPENWEBUI = 'openwebui',
-  PERPLEXITY = 'perplexity',
-  REPLICATE = 'replicate',
-  N8N = 'n8n',
-  OPENSWARM = 'openswarm',
 }
 
 export interface Persona {

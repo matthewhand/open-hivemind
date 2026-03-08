@@ -1,6 +1,6 @@
 import fs from 'fs';
 import path from 'path';
-import { Discord } from '@hivemind/adapter-discord';
+import { Discord } from '@hivemind/message-discord';
 import { DiscordProvider } from '../../src/providers/DiscordProvider';
 
 // Mock dependencies
@@ -25,7 +25,7 @@ const mockDiscordInstance = {
   addBot: jest.fn().mockResolvedValue(undefined),
 };
 
-jest.mock('@hivemind/adapter-discord', () => ({
+jest.mock('@hivemind/message-discord', () => ({
   Discord: {
     DiscordService: {
       getInstance: jest.fn(() => mockDiscordInstance),

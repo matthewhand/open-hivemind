@@ -1,7 +1,7 @@
 {
-    "name": "@hivemind/provider-openswarm",
+    "name": "@hivemind/llm-openai",
     "version": "1.0.0",
-    "description": "OpenSwarm LLM provider for Open Hivemind",
+    "description": "OpenAI LLM provider for Open Hivemind",
     "main": "dist/index.js",
     "types": "dist/index.d.ts",
     "scripts": {
@@ -10,6 +10,7 @@
         "test": "echo \"No tests yet\" && exit 0"
     },
     "dependencies": {
+        "openai": "^4.82.0",
         "debug": "^4.3.7"
     },
     "peerDependencies": {

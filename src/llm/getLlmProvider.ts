@@ -103,7 +103,7 @@ export function getLlmProvider(): ILlmProvider[] {
         let instance: ILlmProvider | undefined;
         switch (config.type.toLowerCase()) {
           case 'openai':
-            const { OpenAiProvider } = require('@hivemind/provider-openai');
+            const { OpenAiProvider } = require('@hivemind/llm-openai');
             instance = new OpenAiProvider(config.config);
             debug(`Initialized OpenAI provider instance: ${config.name}`);
             break;
@@ -116,7 +116,7 @@ export function getLlmProvider(): ILlmProvider[] {
             debug(`Initialized OpenWebUI provider instance: ${config.name}`);
             break;
           case 'letta': {
-            const { LettaProvider } = require('@hivemind/provider-letta');
+            const { LettaProvider } = require('@hivemind/llm-letta');
             instance = LettaProvider.getInstance(config.config);
             debug(`Initialized Letta provider instance: ${config.name}`);
             break;
@@ -167,7 +167,7 @@ export function getLlmProvider(): ILlmProvider[] {
         let instance: ILlmProvider | undefined;
         switch (type.toLowerCase()) {
           case 'openai':
-            const { OpenAiProvider } = require('@hivemind/provider-openai');
+            const { OpenAiProvider } = require('@hivemind/llm-openai');
             instance = new OpenAiProvider();
             break;
           case 'flowise':
@@ -177,7 +177,7 @@ export function getLlmProvider(): ILlmProvider[] {
             instance = openWebUI;
             break;
           case 'letta': {
-            const { LettaProvider } = require('@hivemind/provider-letta');
+            const { LettaProvider } = require('@hivemind/llm-letta');
             instance = LettaProvider.getInstance();
             break;
           }
@@ -203,7 +203,7 @@ export function getLlmProvider(): ILlmProvider[] {
       llmProviders.push(cached.instance);
       activeProviderIds.add(defaultId);
     } else {
-      const { OpenAiProvider } = require('@hivemind/provider-openai');
+      const { OpenAiProvider } = require('@hivemind/llm-openai');
       const instance = new OpenAiProvider();
       const wrappedInstance = withTokenCounting(instance, 'default');
       providerCache.set(defaultId, { instance: wrappedInstance, configHash });

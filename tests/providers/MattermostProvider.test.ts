@@ -1,9 +1,9 @@
-import { MattermostService } from '@hivemind/adapter-mattermost';
+import { MattermostService } from '@hivemind/message-mattermost';
 import mattermostConfig from '../../src/config/mattermostConfig';
 import { MattermostProvider } from '../../src/providers/MattermostProvider';
 
 // Mock dependencies
-jest.mock('@hivemind/adapter-mattermost', () => ({
+jest.mock('@hivemind/message-mattermost', () => ({
   MattermostService: {
     getInstance: jest.fn(() => ({
       getBotNames: jest.fn(() => []),

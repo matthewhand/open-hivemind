@@ -16,7 +16,7 @@ jest.mock('@config/llmConfig', () => ({
 
 // Mock providers with some simulated overhead
 jest.mock(
-  '@hivemind/provider-openai',
+  '@hivemind/llm-openai',
   () => ({
     OpenAiProvider: class {
       config: any;

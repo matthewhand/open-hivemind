@@ -1,6 +1,6 @@
 import { execFile } from 'child_process';
 import fs from 'fs';
-import { convertOpusToWav } from '@hivemind/adapter-discord/media/convertOpusToWav';
+import { convertOpusToWav } from '@hivemind/message-discord/media/convertOpusToWav';
 
 jest.mock('child_process');
 jest.mock('fs');
