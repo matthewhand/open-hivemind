@@ -6,7 +6,8 @@ import {
   type BotConfigurationVersion,
 } from '../../database/DatabaseManager';
 import { ConfigurationError } from '../../types/errorClasses';
-import { ConfigurationValidator, type BotConfig } from './ConfigurationValidator';
+import { ConfigurationValidator } from './ConfigurationValidator';
+import type { BotConfig } from '../../types/config';
 
 const debug = Debug('app:BotConfigService');
 
@@ -109,7 +110,7 @@ export class BotConfigService {
       this.ensureDatabaseEnabled('create bot configurations');
 
       // Validate configuration
-      const validationResult = this.configValidator.validateBotConfig(configData);
+      const validationResult = this.configValidator.validateBotConfig(configData as unknown as BotConfig);
       if (!validationResult.isValid) {
         throw new Error(`Configuration validation failed: ${validationResult.errors.join(', ')}`);
       }
@@ -266,12 +267,12 @@ export class BotConfigService {
       // Validate updated configuration
       const updatedConfigData: BotConfig = {
         name: updates.name ?? existingConfig.name,
-        messageProvider: updates.messageProvider ?? existingConfig.messageProvider,
-        llmProvider: updates.llmProvider ?? existingConfig.llmProvider,
+        messageProvider: (updates.messageProvider ?? existingConfig.messageProvider) as any,
+        llmProvider: (updates.llmProvider ?? existingConfig.llmProvider) as any,
         persona: updates.persona ?? existingConfig.persona,
         systemInstruction: updates.systemInstruction ?? existingConfig.systemInstruction,
-        mcpServers: updates.mcpServers ?? existingConfig.mcpServers,
-        mcpGuard: updates.mcpGuard ? JSON.stringify(updates.mcpGuard) : existingConfig.mcpGuard,
+        mcpServers: (updates.mcpServers ?? existingConfig.mcpServers) as any,
+        mcpGuard: (updates.mcpGuard ? JSON.stringify(updates.mcpGuard) : existingConfig.mcpGuard) as any,
         discord: updates.discord
           ? JSON.stringify(updates.discord)
           : (existingConfig.discord as any),
@@ -583,7 +584,7 @@ export class BotConfigService {
     suggestions: string[];
   }> {
     try {
-      const validationResult = this.configValidator.validateBotConfig(configData as BotConfig);
+      const validationResult = this.configValidator.validateBotConfig(configData as unknown as BotConfig);
       return validationResult;
     } catch (error) {
       debug('Error validating bot configuration:', error);

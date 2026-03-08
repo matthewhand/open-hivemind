@@ -3,7 +3,6 @@ import { DatabaseManager } from '@src/database/DatabaseManager';
 import WebSocketService, { type MessageFlowEvent } from '@src/server/services/WebSocketService';
 import { BotConfigurationManager } from '@config/BotConfigurationManager';
 import { requireAdmin, authenticate } from '../../auth/middleware';
-import { authenticate, requireAdmin } from '../middleware/auth';
 import { ActivityLogger } from '../services/ActivityLogger';
 
 type AnnotatedEvent = MessageFlowEvent & { llmProvider: string };
