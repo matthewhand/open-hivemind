@@ -119,7 +119,6 @@ test.describe('Bot Templates Page Screenshots', () => {
     // Verify filtering
     await expect(page.getByText('Helpful Assistant')).toBeVisible(); // Discord bot
     await expect(page.getByText('Code Reviewer')).toBeHidden(); // Slack bot
-<<<<<<< HEAD
 
     // Test Interaction: Open Diff Viewer
     await page.locator('button[title="Compare Versions"]').first().click();
@@ -130,7 +129,5 @@ test.describe('Bot Templates Page Screenshots', () => {
 
     // Take screenshot of diff viewer
     await page.screenshot({ path: 'docs/screenshots/template-version-diff-viewer.png' });
-=======
->>>>>>> origin/main
   });
 });

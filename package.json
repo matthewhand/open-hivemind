@@ -17,11 +17,7 @@
     "format:check": "node ./node_modules/prettier/bin/prettier.cjs --check \"src/**/*.ts\" \"src/**/*.tsx\" \"tests/**/*.ts\" \"packages/**/*.ts\"",
     "check-types": "tsc --noEmit || true",
     "version": "tsc -v",
-<<<<<<< HEAD
     "build": "bash ./scripts/build-all.sh",
-=======
-    "build": "bash ./scripts/build-backend.sh && bash ./scripts/build-frontend.sh",
->>>>>>> origin/main
     "build:backend": "bash ./scripts/build-backend.sh",
     "build:frontend": "bash ./scripts/build-frontend.sh",
     "build:netlify": "bash ./scripts/build-netlify.sh",
