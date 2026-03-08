@@ -28,6 +28,22 @@ export class SlackInteractiveHandler {
     }
   }
 
+  /**
+   * Handles incoming block_actions payloads from Slack.
+   *
+   * @param payload The parsed Slack interactive payload object.
+   * @param res The Express response object for immediately acknowledging the request.
+   *
+   * @description
+   * This method inspects the `actionId` of the primary action block. It attempts to match it against
+   * known built-in commands like `getting_started`, `see_course_info`, etc.
+   *
+   * **Fallback Behavior**:
+   * If the `actionId` doesn't match a known handler, it triggers a fallback flow by forwarding the action
+   * to `this.handlers.handleButtonClick()`. This is essential for dynamically generated buttons or dynamically
+   * configured action mappings, allowing generic handlers (like the Welcome handler) to respond to unhandled
+   * buttons.
+   */
   async handleBlockAction(payload: any, res: Response): Promise<void> {
     try {
       const actionId = payload.actions[0].action_id;
@@ -35,31 +51,33 @@ export class SlackInteractiveHandler {
       // Immediately acknowledge the interactive action.
       res.status(200).send();
 
-      const defaultChannel = process.env.SLACK_DEFAULT_CHANNEL_ID;
-      if (!defaultChannel) {
+      const fallbackChannelId = process.env.SLACK_DEFAULT_CHANNEL_ID;
+      if (!fallbackChannelId) {
         debug('[Slack] SLACK_DEFAULT_CHANNEL_ID is not set, cannot send block action response.');
         return;
       }
 
+      const userId = payload.user?.id || 'unknown';
+
       if (actionId === 'getting_started') {
-        await this.handlers.sendInteractiveHelpMessage(defaultChannel, payload.user.id);
+        await this.handlers.sendInteractiveHelpMessage(fallbackChannelId, userId);
       } else {
         switch (actionId) {
           case 'see_course_info':
-            await this.handlers.sendCourseInfo(defaultChannel);
+            await this.handlers.sendCourseInfo(fallbackChannelId);
             break;
           case 'book_office_hours':
-            await this.handlers.sendBookingInstructions(defaultChannel);
+            await this.handlers.sendBookingInstructions(fallbackChannelId);
             break;
           case 'get_study_resources':
-            await this.handlers.sendStudyResources(defaultChannel);
+            await this.handlers.sendStudyResources(fallbackChannelId);
             break;
           case 'ask_question':
             await this.handlers.sendAskQuestionModal(payload.trigger_id);
             break;
           default:
             debug(`[Slack] Forwarding unknown action to handleButtonClick: ${actionId}`);
-            await this.handlers.handleButtonClick(defaultChannel, payload.user.id, actionId);
+            await this.handlers.handleButtonClick(fallbackChannelId, userId, actionId);
             break;
         }
       }
