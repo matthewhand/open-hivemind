@@ -440,6 +440,30 @@ const messageConfig = convict({
     default: 0.01,
     env: 'MESSAGE_UNSOLICITED_BASE_CHANCE',
   },
+  MESSAGE_UNSOLICITED_USER_COUNT_PENALTY_PER_USER: {
+    doc: 'Penalty applied per extra user talking in the context window',
+    format: Number,
+    default: 0.02,
+    env: 'MESSAGE_UNSOLICITED_USER_COUNT_PENALTY_PER_USER',
+  },
+  MESSAGE_UNSOLICITED_BOT_RATIO_PENALTY: {
+    doc: 'Penalty applied when responding to bots and there are no humans in recent history',
+    format: Number,
+    default: 0.5,
+    env: 'MESSAGE_UNSOLICITED_BOT_RATIO_PENALTY',
+  },
+  MESSAGE_UNSOLICITED_BOT_HISTORY_PENALTY_PER_MESSAGE: {
+    doc: 'Penalty applied per recent message from this bot',
+    format: Number,
+    default: 0.1,
+    env: 'MESSAGE_UNSOLICITED_BOT_HISTORY_PENALTY_PER_MESSAGE',
+  },
+  MESSAGE_UNSOLICITED_BURST_TRAFFIC_PENALTY_PER_MESSAGE: {
+    doc: 'Penalty applied per total message volume in the last minute after bot\'s last post',
+    format: Number,
+    default: 0.025,
+    env: 'MESSAGE_UNSOLICITED_BURST_TRAFFIC_PENALTY_PER_MESSAGE',
+  },
   MESSAGE_UNSOLICITED_SILENCE_PARTICIPANT_WINDOW_MS: {
     doc: 'Window for counting unique participants when the bot has been silent (ms)',
     format: 'int',

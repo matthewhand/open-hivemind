@@ -13,6 +13,10 @@ interface MessagingConfig {
   graceWindowMs: number;
   /** Whether the bot injects the user's identity hint when mentioned (MESSAGE_ADD_USER_HINT). */
   addUserHint: boolean;
+  userCountPenalty: number;
+  botRatioPenalty: number;
+  botHistoryPenalty: number;
+  burstTrafficPenalty: number;
 }
 
 const SettingsMessaging: React.FC = () => {
@@ -25,6 +29,10 @@ const SettingsMessaging: React.FC = () => {
     baseChance: 5,
     graceWindowMs: 300000,
     addUserHint: false,
+    userCountPenalty: 0.02,
+    botRatioPenalty: 0.5,
+    botHistoryPenalty: 0.1,
+    burstTrafficPenalty: 0.025,
   });
   const [loading, setLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -54,6 +62,10 @@ const SettingsMessaging: React.FC = () => {
         baseChance: (data.MESSAGE_UNSOLICITED_BASE_CHANCE ?? 0.01) * 100,
         graceWindowMs: data.MESSAGE_ONLY_WHEN_SPOKEN_TO_GRACE_WINDOW_MS ?? 300000,
         addUserHint: data.MESSAGE_ADD_USER_HINT ?? false,
+        userCountPenalty: data.MESSAGE_UNSOLICITED_USER_COUNT_PENALTY_PER_USER ?? 0.02,
+        botRatioPenalty: data.MESSAGE_UNSOLICITED_BOT_RATIO_PENALTY ?? 0.5,
+        botHistoryPenalty: data.MESSAGE_UNSOLICITED_BOT_HISTORY_PENALTY_PER_MESSAGE ?? 0.1,
+        burstTrafficPenalty: data.MESSAGE_UNSOLICITED_BURST_TRAFFIC_PENALTY_PER_MESSAGE ?? 0.025,
       });
     } catch {
       setAlert({
@@ -89,6 +101,10 @@ const SettingsMessaging: React.FC = () => {
             MESSAGE_UNSOLICITED_BASE_CHANCE: settings.baseChance / 100,
             MESSAGE_ONLY_WHEN_SPOKEN_TO_GRACE_WINDOW_MS: settings.graceWindowMs,
             MESSAGE_ADD_USER_HINT: settings.addUserHint,
+            MESSAGE_UNSOLICITED_USER_COUNT_PENALTY_PER_USER: settings.userCountPenalty,
+            MESSAGE_UNSOLICITED_BOT_RATIO_PENALTY: settings.botRatioPenalty,
+            MESSAGE_UNSOLICITED_BOT_HISTORY_PENALTY_PER_MESSAGE: settings.botHistoryPenalty,
+            MESSAGE_UNSOLICITED_BURST_TRAFFIC_PENALTY_PER_MESSAGE: settings.burstTrafficPenalty,
           },
         }),
       });
@@ -402,6 +418,110 @@ const SettingsMessaging: React.FC = () => {
             </p>
           </div>
 
+          <div className="form-control mt-4">
+            <label className="label py-1 flex items-center justify-between">
+              <span className="label-text text-sm font-medium flex-1 pr-4 flex items-center gap-1">
+                User Density Penalty
+                <div className="tooltip tooltip-right" data-tip="Penalty applied to base chance per extra user talking in the context window.">
+                  <Info className="w-3.5 h-3.5 text-base-content/50 cursor-help" />
+                </div>
+              </span>
+              <span className="badge badge-accent font-mono flex-none">-{settings.userCountPenalty.toFixed(2)}</span>
+            </label>
+            <input
+              type="range"
+              min="0"
+              max="0.2"
+              step="0.01"
+              value={settings.userCountPenalty}
+              onChange={(e) => handleChange('userCountPenalty', parseFloat(e.target.value))}
+              className="range range-sm range-accent"
+              disabled={settings.onlyWhenSpokenTo}
+            />
+            <div className="w-full flex justify-between text-xs px-2 mt-1 text-base-content/50">
+              <span>0</span>
+              <span>-0.2</span>
+            </div>
+          </div>
+
+          <div className="form-control mt-4">
+            <label className="label py-1 flex items-center justify-between">
+              <span className="label-text text-sm font-medium flex-1 pr-4 flex items-center gap-1">
+                Bot Ratio Penalty
+                <div className="tooltip tooltip-right" data-tip="Penalty applied when responding to bots and there are no humans in recent history.">
+                  <Info className="w-3.5 h-3.5 text-base-content/50 cursor-help" />
+                </div>
+              </span>
+              <span className="badge badge-accent font-mono flex-none">-{settings.botRatioPenalty.toFixed(2)}</span>
+            </label>
+            <input
+              type="range"
+              min="0"
+              max="1.0"
+              step="0.05"
+              value={settings.botRatioPenalty}
+              onChange={(e) => handleChange('botRatioPenalty', parseFloat(e.target.value))}
+              className="range range-sm range-accent"
+              disabled={settings.onlyWhenSpokenTo}
+            />
+            <div className="w-full flex justify-between text-xs px-2 mt-1 text-base-content/50">
+              <span>0</span>
+              <span>-1.0</span>
+            </div>
+          </div>
+
+          <div className="form-control mt-4">
+            <label className="label py-1 flex items-center justify-between">
+              <span className="label-text text-sm font-medium flex-1 pr-4 flex items-center gap-1">
+                Bot History Penalty
+                <div className="tooltip tooltip-right" data-tip="Penalty applied per recent message from this bot.">
+                  <Info className="w-3.5 h-3.5 text-base-content/50 cursor-help" />
+                </div>
+              </span>
+              <span className="badge badge-accent font-mono flex-none">-{settings.botHistoryPenalty.toFixed(2)}</span>
+            </label>
+            <input
+              type="range"
+              min="0"
+              max="0.5"
+              step="0.05"
+              value={settings.botHistoryPenalty}
+              onChange={(e) => handleChange('botHistoryPenalty', parseFloat(e.target.value))}
+              className="range range-sm range-accent"
+              disabled={settings.onlyWhenSpokenTo}
+            />
+            <div className="w-full flex justify-between text-xs px-2 mt-1 text-base-content/50">
+              <span>0</span>
+              <span>-0.5</span>
+            </div>
+          </div>
+
+          <div className="form-control mt-4">
+            <label className="label py-1 flex items-center justify-between">
+              <span className="label-text text-sm font-medium flex-1 pr-4 flex items-center gap-1">
+                Burst Traffic Penalty
+                <div className="tooltip tooltip-right" data-tip="Penalty applied per total message volume in the last minute after bot's last post.">
+                  <Info className="w-3.5 h-3.5 text-base-content/50 cursor-help" />
+                </div>
+              </span>
+              <span className="badge badge-accent font-mono flex-none">-{settings.burstTrafficPenalty.toFixed(3)}</span>
+            </label>
+            <input
+              type="range"
+              min="0"
+              max="0.1"
+              step="0.005"
+              value={settings.burstTrafficPenalty}
+              onChange={(e) => handleChange('burstTrafficPenalty', parseFloat(e.target.value))}
+              className="range range-sm range-accent"
+              disabled={settings.onlyWhenSpokenTo}
+            />
+            <div className="w-full flex justify-between text-xs px-2 mt-1 text-base-content/50">
+              <span>0</span>
+              <span>-0.1</span>
+            </div>
+          </div>
+
           <div className="mt-6 border-t border-base-200/50 pt-4">
             <h6 className="text-sm font-semibold mb-2">Live Test Mechanism</h6>
             <div className="bg-base-300/50 p-3 rounded-box space-y-3 text-sm">
@@ -480,6 +600,26 @@ const SettingsMessaging: React.FC = () => {
                   <td>Add User Hint</td>
                   <td>MESSAGE_ADD_USER_HINT</td>
                   <td>{settings.addUserHint ? '✅ true' : '➖ false'}</td>
+                </tr>
+                <tr>
+                  <td>User Count Penalty</td>
+                  <td>MESSAGE_UNSOLICITED_USER_COUNT_PENALTY_PER_USER</td>
+                  <td>{settings.userCountPenalty.toFixed(2)}</td>
+                </tr>
+                <tr>
+                  <td>Bot Ratio Penalty</td>
+                  <td>MESSAGE_UNSOLICITED_BOT_RATIO_PENALTY</td>
+                  <td>{settings.botRatioPenalty.toFixed(2)}</td>
+                </tr>
+                <tr>
+                  <td>Bot History Penalty</td>
+                  <td>MESSAGE_UNSOLICITED_BOT_HISTORY_PENALTY_PER_MESSAGE</td>
+                  <td>{settings.botHistoryPenalty.toFixed(2)}</td>
+                </tr>
+                <tr>
+                  <td>Burst Traffic Penalty</td>
+                  <td>MESSAGE_UNSOLICITED_BURST_TRAFFIC_PENALTY_PER_MESSAGE</td>
+                  <td>{settings.burstTrafficPenalty.toFixed(3)}</td>
                 </tr>
               </tbody>
             </table>
