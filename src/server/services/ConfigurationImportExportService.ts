@@ -562,23 +562,48 @@ export class ConfigurationImportExportService {
 
       // Process templates if included
       if (importData.templates && !options.validateOnly) {
-        for (const template of importData.templates) {
-          try {
-            // Check if template exists
-            const existingTemplate = await this.templateService.getTemplateById(template.id);
-            if (!existingTemplate) {
-              await this.templateService.createTemplate({
-                name: template.name,
-                description: template.description,
-                category: template.category,
-                tags: template.tags,
-                config: template.config,
-                createdBy: importedBy,
-              });
-            }
-          } catch (error) {
-            result.warnings?.push(`Error processing template: ${(error as any).message}`);
-          }
+        const BATCH_SIZE = 50;
+        const existingTemplateIds = new Set<string>();
+
+        for (let i = 0; i < importData.templates.length; i += BATCH_SIZE) {
+          const batch = importData.templates.slice(i, i + BATCH_SIZE);
+
+          // Pre-fetch a batch of required templates concurrently with individual error handling
+          await Promise.all(
+            batch.map(async (t: any) => {
+              try {
+                const existing = await this.templateService.getTemplateById(t.id);
+                if (existing) {
+                  existingTemplateIds.add(t.id);
+                }
+              } catch (error) {
+                result.warnings?.push(
+                  `Error checking template ${t.id || 'unknown'}: ${(error as any).message}`
+                );
+              }
+            })
+          );
+
+          // Create new templates concurrently within the batch
+          await Promise.all(
+            batch
+              .filter((template: any) => !existingTemplateIds.has(template.id))
+              .map(async (template: any) => {
+                try {
+                  await this.templateService.createTemplate({
+                    name: template.name,
+                    description: template.description,
+                    category: template.category,
+                    tags: template.tags,
+                    config: template.config,
+                    createdBy: importedBy,
+                  });
+                  existingTemplateIds.add(template.id);
+                } catch (error) {
+                  result.warnings?.push(`Error processing template: ${(error as any).message}`);
+                }
+              })
+          );
         }
       }
 

@@ -29,6 +29,10 @@ jobs:
 
       - name: Audit for hardcoded secrets
         run: pnpm run audit:secrets
+<<<<<<< HEAD
+=======
+
+>>>>>>> f4fe874f (ci: update workflows to strictly use pnpm instead of npm)
       - name: Run lint
         run: pnpm run lint
 
