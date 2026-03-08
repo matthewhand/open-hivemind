@@ -2,10 +2,8 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Shield, Plus, Edit2, Trash2, Check, RefreshCw, AlertCircle, Save, X, Settings, AlertTriangle, Copy, Tag } from 'lucide-react';
 import { useSuccessToast, useErrorToast } from '../components/DaisyUI/ToastNotification';
-import { CommaSeparatedInput } from '../components/CommaSeparatedInput';
 import Modal, { ConfirmModal } from '../components/DaisyUI/Modal';
 import PageHeader from '../components/DaisyUI/PageHeader';
-import { CommaSeparatedInput } from '../components/DaisyUI';
 import SearchFilterBar from '../components/SearchFilterBar';
 import EmptyState from '../components/DaisyUI/EmptyState';
 import { LoadingSpinner } from '../components/DaisyUI/Loading';

@@ -207,7 +207,7 @@ router.get('/live', (req, res) => {
 });
 
 // Prometheus metrics endpoint
-router.get('/metrics/prometheus', (req, res) => {
+export const prometheusMetricsHandler = (req: Request, res: Response) => {
   const uptime = process.uptime();
   const memoryUsage = process.memoryUsage();
   const cpuUsage = process.cpuUsage();
@@ -247,7 +247,9 @@ nodejs_version_info{version="${process.version}"} 1
 
   res.set('Content-Type', 'text/plain');
   return res.send(metrics);
-});
+};
+
+router.get('/metrics/prometheus', prometheusMetricsHandler);
 
 // API endpoints monitoring
 router.get('/api-endpoints', (req, res) => {
