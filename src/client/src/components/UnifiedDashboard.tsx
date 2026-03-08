@@ -43,9 +43,11 @@ const MESSAGE_PROVIDER_OPTIONS = [
 
 const LLM_PROVIDER_OPTIONS = [
   { value: 'openai', label: 'OpenAI' },
+  { value: 'anthropic', label: 'Anthropic' },
   { value: 'flowise', label: 'Flowise' },
   { value: 'openwebui', label: 'Open WebUI' },
-  { value: 'replicate', label: 'Replicate' },
+  { value: 'openswarm', label: 'OpenSwarm' },
+  { value: 'letta', label: 'Letta' },
 ] as const;
 
 const providerIconMap: Record<string, string> = {
