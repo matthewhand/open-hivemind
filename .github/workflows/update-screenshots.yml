@@ -21,7 +21,10 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
+<<<<<<< HEAD
           cache: 'pnpm'
+=======
+>>>>>>> 375230a2 (Security: Enforce explicit SESSION_SECRET in all environments and fix CI lockfile check)
 
       - name: Install dependencies
         run: pnpm install
