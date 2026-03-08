@@ -3,8 +3,8 @@ import type { ProviderConfigSchema } from '../types';
 export const lettaProviderSchema: ProviderConfigSchema = {
     type: 'llm',
     providerType: 'letta',
-    displayName: 'Letta (MemGPT)',
-    description: 'Connect your bot to a Letta (formerly MemGPT) agent for persistent memory and personality.',
+    displayName: 'Letta',
+    description: 'Connect your bot to a Letta agent — a stateful LLM with configurable conversation sessions.',
     icon: '🧠',
     color: '#9B59B6',
     defaultConfig: {
@@ -46,6 +46,31 @@ export const lettaProviderSchema: ProviderConfigSchema = {
                 targetField: 'agentId',
                 valuePath: 'id',
             },
+        },
+        {
+            name: 'sessionMode',
+            label: 'Session Mode',
+            type: 'select',
+            required: false,
+            description: 'How conversation history is scoped. Per-channel and per-user create separate Letta conversations automatically.',
+            group: 'Session',
+            defaultValue: 'default',
+            options: [
+                { value: 'default', label: 'Default', description: 'All messages share the agent default conversation' },
+                { value: 'per-channel', label: 'Per Channel', description: 'One conversation per channel — bots remember each channel separately' },
+                { value: 'per-user', label: 'Per User', description: 'One conversation per user — ideal for DMs or personal bots' },
+                { value: 'fixed', label: 'Fixed', description: 'Use a specific named conversation ID for all messages' },
+            ],
+        },
+        {
+            name: 'conversationId',
+            label: 'Conversation ID',
+            type: 'text',
+            required: false,
+            description: 'Letta conversation ID to use when Session Mode is "Fixed"',
+            placeholder: 'conv-...',
+            group: 'Session',
+            dependsOn: { field: 'sessionMode', value: 'fixed' },
         },
         {
             name: 'timeout',
