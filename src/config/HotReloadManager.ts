@@ -439,17 +439,26 @@ export class HotReloadManager {
         return false;
       }
 
-      // Restore the snapshot concurrently
-      await Promise.all(
-        Object.entries(snapshot).map(([botName, botConfig]) =>
+      // Restore the snapshot concurrently and surface any partial failures
+      const snapshotEntries = Object.entries(snapshot);
+      const restoreResults = await Promise.all(
+        snapshotEntries.map(([botName, botConfig]) =>
           this.applyBotChange(botName, botConfig as Record<string, any>)
         )
       );
 
-      // Remove the snapshot after successful rollback
+      const failedBots = snapshotEntries
+        .filter((_, i) => !restoreResults[i])
+        .map(([botName]) => botName);
+
+      if (failedBots.length > 0) {
+        debug(`Rollback partially failed; could not restore bots: ${failedBots.join(', ')}`);
+      }
+
+      // Remove the snapshot after rollback attempt
       this.rollbackSnapshots.delete(snapshotId);
 
-      debug(`Successfully rolled back to snapshot '${snapshotId}'`);
+      debug(`Rolled back to snapshot '${snapshotId}'${failedBots.length > 0 ? ' (partial)' : ' (complete)'}`);
       return true;
     } catch (error: unknown) {
       const hivemindError = ErrorUtils.toHivemindError(error) as any;
