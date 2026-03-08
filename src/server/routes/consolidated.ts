@@ -58,7 +58,7 @@ router.get('/system-status', async (req, res) => {
     };
 
     logAdminAction(
-      req as AuthMiddlewareRequest,
+      req as any,
       'VIEW',
       'system-status',
       'success',
@@ -68,7 +68,7 @@ router.get('/system-status', async (req, res) => {
   } catch (error) {
     debug('Error getting system status:', error);
     logAdminAction(
-      req as AuthMiddlewareRequest,
+      req as any,
       'VIEW',
       'system-status',
       'failure',
@@ -180,7 +180,7 @@ router.get('/env-status', async (req, res) => {
     });
 
     logAdminAction(
-      req as AuthMiddlewareRequest,
+      req as any,
       'VIEW',
       'env-status',
       'success',
@@ -274,7 +274,7 @@ router.post('/validate-config', async (req, res) => {
     }
 
     logAdminAction(
-      req as AuthMiddlewareRequest,
+      req as any,
       'VALIDATE',
       'bot-config',
       'success',
@@ -284,7 +284,7 @@ router.post('/validate-config', async (req, res) => {
   } catch (error) {
     debug('Error validating config:', error);
     logAdminAction(
-      req as AuthMiddlewareRequest,
+      req as any,
       'VALIDATE',
       'bot-config',
       'failure',

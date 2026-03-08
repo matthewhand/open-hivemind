@@ -165,12 +165,30 @@ router.put('/:id', adminRateLimiter, (req: Request, res: Response) => {
     const existingGuards = profiles[profileIndex].guards;
     const safeGuards =
       guards && typeof guards === 'object'
-        ? {
-            mcpGuard: guards.mcpGuard || existingGuards.mcpGuard,
-            rateLimit: guards.rateLimit ? { ...existingGuards.rateLimit, ...guards.rateLimit } : existingGuards.rateLimit,
-            contentFilter: guards.contentFilter ? { ...existingGuards.contentFilter, ...guards.contentFilter } : existingGuards.contentFilter,
-          }
-        : existingGuards;
+        ? Object.keys(guards)
+            .filter((key) => !['__proto__', 'constructor', 'prototype'].includes(key))
+            .reduce(
+              (acc, key) => {
+                const existingValue =
+                  profiles[profileIndex].guards[
+                    key as keyof (typeof profiles)[typeof profileIndex]['guards']
+                  ];
+                const newValue = guards[key];
+                if (
+                  typeof newValue === 'object' &&
+                  newValue !== null &&
+                  typeof existingValue === 'object' &&
+                  existingValue !== null
+                ) {
+                  acc[key] = { ...existingValue, ...newValue };
+                } else {
+                  acc[key] = newValue;
+                }
+                return acc;
+              },
+              {} as any
+            )
+        : profiles[profileIndex].guards;
 
     const updatedProfile: GuardrailProfile = {
       ...profiles[profileIndex],
