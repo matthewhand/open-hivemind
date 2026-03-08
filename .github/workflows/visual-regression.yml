@@ -55,20 +55,17 @@ jobs:
       with:
         fetch-depth: 0
 
-    - name: Setup pnpm
-      uses: pnpm/action-setup@v4
-      with:
-        version: 9
     - name: Setup Node.js
       uses: actions/setup-node@v4
       with:
         node-version: '20'
-        cache: 'pnpm'
+        cache: 'npm'
+        cache-dependency-path: webui/client/package-lock.json
 
     - name: Install dependencies
       run: |
         cd webui/client
-        pnpm install --frozen-lockfile
+        npm ci
 
     - name: Install Playwright Browsers
       run: |
@@ -79,12 +76,12 @@ jobs:
     - name: Build application
       run: |
         cd webui/client
-        pnpm run build
+        npm run build
 
     - name: Start application
       run: |
         cd webui/client
-        pnpm run preview &
+        npm run preview &
         sleep 10
 
     - name: Wait for application to be ready
@@ -181,20 +178,17 @@ jobs:
       with:
         token: ${{ secrets.GITHUB_TOKEN }}
 
-    - name: Setup pnpm
-      uses: pnpm/action-setup@v4
-      with:
-        version: 9
     - name: Setup Node.js
       uses: actions/setup-node@v4
       with:
         node-version: '20'
-        cache: 'pnpm'
+        cache: 'npm'
+        cache-dependency-path: webui/client/package-lock.json
 
     - name: Install dependencies
       run: |
         cd webui/client
-        pnpm install --frozen-lockfile
+        npm ci
 
     - name: Install Playwright Browsers
       run: |
@@ -204,8 +198,8 @@ jobs:
     - name: Update baseline screenshots
       run: |
         cd webui/client
-        pnpm run build
-        pnpm run preview &
+        npm run build
+        npm run preview &
         sleep 10
         timeout 60 bash -c 'until curl -f http://localhost:4173; do sleep 2; done'
         npx playwright test --project=chromium --update-snapshots
