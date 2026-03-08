@@ -1,6 +1,8 @@
 import Debug from 'debug';
 import type { KnownBlock } from '@slack/web-api';
 import WebSocketService from '@src/server/services/WebSocketService';
+import { NetworkError, ValidationError } from '@src/types/errorClasses';
+import { ErrorUtils } from '@src/types/errors';
 import type { IMessage } from '@message/interfaces/IMessage';
 import type { SlackBotManager } from '../SlackBotManager';
 import SlackMessage from '../SlackMessage';
@@ -88,7 +90,28 @@ export class SlackMessageIO implements ISlackMessageIO {
           status === 503 ||
           status === 504;
         if (attempt >= maxRetries || !retryable) {
-          throw err;
+          const errorMsg = String(err?.data?.error || err?.message || 'Unknown Slack API error');
+          if (
+            errorMsg.includes('channel_not_found') ||
+            errorMsg.includes('not_in_channel') ||
+            errorMsg.includes('is_archived') ||
+            errorMsg.includes('msg_too_long') ||
+            errorMsg.includes('invalid_blocks') ||
+            status === 400 ||
+            status === 403 ||
+            status === 404
+          ) {
+            throw new ValidationError(`Slack API validation error: ${errorMsg}`, {
+              status,
+              data: err?.data,
+            });
+          }
+
+          throw new NetworkError(
+            `Slack API network error: ${errorMsg}`,
+            { status, data: err?.data },
+            { url: 'slack_api' }
+          );
         }
         const base = retryAfter > 0 ? retryAfter * 1000 : 300;
         const backoff = base * Math.pow(2, attempt - 1) + Math.floor(Math.random() * 100);
@@ -116,7 +139,28 @@ export class SlackMessageIO implements ISlackMessageIO {
           status === 503 ||
           status === 504;
         if (attempt >= maxRetries || !retryable) {
-          throw err;
+          const errorMsg = String(err?.data?.error || err?.message || 'Unknown Slack API error');
+          if (
+            errorMsg.includes('channel_not_found') ||
+            errorMsg.includes('not_in_channel') ||
+            errorMsg.includes('is_archived') ||
+            errorMsg.includes('msg_too_long') ||
+            errorMsg.includes('invalid_blocks') ||
+            status === 400 ||
+            status === 403 ||
+            status === 404
+          ) {
+            throw new ValidationError(`Slack API validation error: ${errorMsg}`, {
+              status,
+              data: err?.data,
+            });
+          }
+
+          throw new NetworkError(
+            `Slack API network error: ${errorMsg}`,
+            { status, data: err?.data },
+            { url: 'slack_api' }
+          );
         }
         const base = retryAfter > 0 ? retryAfter * 1000 : 300;
         const backoff = base * Math.pow(2, attempt - 1) + Math.floor(Math.random() * 100);
@@ -144,7 +188,28 @@ export class SlackMessageIO implements ISlackMessageIO {
           status === 503 ||
           status === 504;
         if (attempt >= maxRetries || !retryable) {
-          throw err;
+          const errorMsg = String(err?.data?.error || err?.message || 'Unknown Slack API error');
+          if (
+            errorMsg.includes('channel_not_found') ||
+            errorMsg.includes('not_in_channel') ||
+            errorMsg.includes('is_archived') ||
+            errorMsg.includes('msg_too_long') ||
+            errorMsg.includes('invalid_blocks') ||
+            status === 400 ||
+            status === 403 ||
+            status === 404
+          ) {
+            throw new ValidationError(`Slack API validation error: ${errorMsg}`, {
+              status,
+              data: err?.data,
+            });
+          }
+
+          throw new NetworkError(
+            `Slack API network error: ${errorMsg}`,
+            { status, data: err?.data },
+            { url: 'slack_api' }
+          );
         }
         const base = retryAfter > 0 ? retryAfter * 1000 : 300;
         const backoff = base * Math.pow(2, attempt - 1) + Math.floor(Math.random() * 100);
@@ -249,21 +314,21 @@ export class SlackMessageIO implements ISlackMessageIO {
 
     if (!channelId || !text) {
       debug('Error: Missing channelId or text', { channelId, text: !!text });
-      throw new Error('Channel ID and text are required');
+      throw new ValidationError('Channel ID and text are required', { field: 'channelId/text' });
     }
 
     const targetBot = botName || this.getDefaultBotName();
     const botManager = this.getBotManager(targetBot);
     if (!botManager) {
       debug(`Error: Bot ${targetBot} not found`);
-      throw new Error(`Bot ${targetBot} not found`);
+      throw new ValidationError(`Bot ${targetBot} not found`, { field: 'botName' });
     }
 
     const bots = botManager.getAllBots();
     const botInfo = bots[0];
     if (!botInfo) {
       debug('Error: Bot not found');
-      throw new Error('Bot not found');
+      throw new ValidationError('Bot not found', { field: 'botName' });
     }
 
     // Basic immediate duplicate guard similar to SlackService behavior
@@ -358,7 +423,23 @@ export class SlackMessageIO implements ISlackMessageIO {
           metadata: { channelId },
         });
       } catch {}
-      throw new Error(`Message send failed: ${error}`);
+
+      if (error instanceof ValidationError || error instanceof NetworkError) {
+        throw error;
+      }
+
+      const hivemindError = ErrorUtils.toHivemindError(error);
+      const errType = (hivemindError as any).type;
+      if (errType === 'network' || errType === 'api') {
+        throw hivemindError;
+      }
+
+      throw new NetworkError(
+        `Message send failed: ${error}`,
+        { status: 500 },
+        { url: 'slack_api' },
+        { originalError: error }
+      );
     }
   }
 

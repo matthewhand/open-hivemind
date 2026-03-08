@@ -75,63 +75,68 @@ router.get('/', async (req: Request, res: Response) => {
  * Get bot configuration templates
  */
 router.get('/templates', async (req: Request, res: Response) => {
-  const authReq = req as AuthMiddlewareRequest;
-  const templates = {
-    discord_openai: {
-      name: 'Discord + OpenAI Bot',
-      description: 'A Discord bot using OpenAI for responses',
-      messageProvider: 'discord',
-      llmProvider: 'openai',
-      config: {
-        discord: {
-          token: '',
-          voiceChannelId: '',
-        },
-        openai: {
-          apiKey: '',
-          model: 'gpt-3.5-turbo',
-        },
-      },
-    },
-    slack_flowise: {
-      name: 'Slack + Flowise Bot',
-      description: 'A Slack bot using Flowise for AI responses',
-      messageProvider: 'slack',
-      llmProvider: 'flowise',
-      config: {
-        slack: {
-          botToken: '',
-          signingSecret: '',
-          appToken: '',
-        },
-        flowise: {
-          apiKey: '',
-          endpoint: '',
+  try {
+    const authReq = req as AuthMiddlewareRequest;
+    const templates = {
+      discord_openai: {
+        name: 'Discord + OpenAI Bot',
+        description: 'A Discord bot using OpenAI for responses',
+        messageProvider: 'discord',
+        llmProvider: 'openai',
+        config: {
+          discord: {
+            token: '',
+            voiceChannelId: '',
+          },
+          openai: {
+            apiKey: '',
+            model: 'gpt-3.5-turbo',
+          },
         },
       },
-    },
-    mattermost_openwebui: {
-      name: 'Mattermost + OpenWebUI Bot',
-      description: 'A Mattermost bot using OpenWebUI for responses',
-      messageProvider: 'mattermost',
-      llmProvider: 'openwebui',
-      config: {
-        mattermost: {
-          serverUrl: '',
-          token: '',
-        },
-        openwebui: {
-          apiKey: '',
-          endpoint: '',
+      slack_flowise: {
+        name: 'Slack + Flowise Bot',
+        description: 'A Slack bot using Flowise for AI responses',
+        messageProvider: 'slack',
+        llmProvider: 'flowise',
+        config: {
+          slack: {
+            botToken: '',
+            signingSecret: '',
+            appToken: '',
+          },
+          flowise: {
+            apiKey: '',
+            endpoint: '',
+          },
         },
       },
-    },
-  };
+      mattermost_openwebui: {
+        name: 'Mattermost + OpenWebUI Bot',
+        description: 'A Mattermost bot using OpenWebUI for responses',
+        messageProvider: 'mattermost',
+        llmProvider: 'openwebui',
+        config: {
+          mattermost: {
+            serverUrl: '',
+            token: '',
+          },
+          openwebui: {
+            apiKey: '',
+            endpoint: '',
+          },
+        },
+      },
+    };
 
-  return res.json({
-    success: true,
-    data: { templates },
-  });
+    res.json({
+      success: true,
+      data: templates,
+    });
+  } catch (error: any) {
+    debug('Error fetching templates:', error);
+    res.status(500).json({ success: false, error: 'Failed to fetch templates' });
+  }
 });
 
 /**
@@ -473,7 +478,6 @@ router.post(
         await secureConfigManager.storeConfig({
           id: botId,
           name: updatedConfig.name || existingBot.name,
-
           data: {
             discord: updatedConfig.discord || {},
             slack: updatedConfig.slack || {},

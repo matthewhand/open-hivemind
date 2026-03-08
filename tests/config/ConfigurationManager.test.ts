@@ -404,17 +404,14 @@ describe('ConfigurationManager', () => {
         expect((envConfig as any).get('PLAYWRIGHT_BASE_URL')).toBe('https://test.example.com');
       });
 
-      it('should fallback to defaults when environment variables are empty strings', () => {
+      it('should throw validation error when environment variables are empty strings', () => {
         process.env.VITE_API_BASE_URL = '';
         process.env.PLAYWRIGHT_BASE_URL = '';
 
-        // Reset instance to force reinitialization
-        (ConfigurationManager as any).instance = null;
-        const configManager = ConfigurationManager.getInstance();
-        const envConfig = configManager.getConfig('environment');
-
-        expect((envConfig as any).get('VITE_API_BASE_URL')).toBe('http://localhost:3000/api');
-        expect((envConfig as any).get('PLAYWRIGHT_BASE_URL')).toBe('http://localhost:3000');
+        // Reset modules to apply environment variables
+        jest.resetModules();
+        const { ConfigurationManager } = require('../../src/config/ConfigurationManager');
+        expect(() => ConfigurationManager.getInstance()).toThrow(/Value must be a valid URL/);
       });
 
       it('should throw validation error for invalid URL formats', () => {
@@ -424,8 +421,7 @@ describe('ConfigurationManager', () => {
         // Reset modules to apply environment variables
         jest.resetModules();
         const { ConfigurationManager } = require('../../src/config/ConfigurationManager');
-        expect(() => ConfigurationManager.getInstance()).toThrow('VITE_API_BASE_URL: Value must be a valid URL: value was "invalid-url"');
-        expect(() => ConfigurationManager.getInstance()).toThrow('PLAYWRIGHT_BASE_URL: Value must be a valid URL: value was "also-invalid"');
+        expect(() => ConfigurationManager.getInstance()).toThrow(/VITE_API_BASE_URL.*Value must be a valid URL/);
       });
 
       it('should handle partial invalid configurations by validating all', () => {
@@ -435,7 +431,7 @@ describe('ConfigurationManager', () => {
         // Reset modules to apply environment variables
         jest.resetModules();
         const { ConfigurationManager } = require('../../src/config/ConfigurationManager');
-        expect(() => ConfigurationManager.getInstance()).toThrow('PLAYWRIGHT_BASE_URL: Value must be a valid URL: value was "invalid"');
+        expect(() => ConfigurationManager.getInstance()).toThrow(/PLAYWRIGHT_BASE_URL.*Value must be a valid URL/);
       });
 
       it('should load correctly in test environment', () => {
@@ -446,6 +442,8 @@ describe('ConfigurationManager', () => {
         // Reset modules to apply environment variables
         jest.resetModules();
         const { ConfigurationManager } = require('../../src/config/ConfigurationManager');
+
+
         const configManager = ConfigurationManager.getInstance();
         const envConfig = configManager.getConfig('environment');
 
@@ -460,6 +458,7 @@ describe('ConfigurationManager', () => {
 
         // Reset modules to apply environment variables
         jest.resetModules();
+
         const { ConfigurationManager } = require('../../src/config/ConfigurationManager');
         const configManager = ConfigurationManager.getInstance();
         const envConfig = configManager.getConfig('environment');

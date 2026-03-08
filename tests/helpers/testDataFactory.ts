@@ -266,7 +266,13 @@ export const commandParserTestData = {
 /**
  * Factory function to create test data for different scenarios
  */
-export function createTestData(type: 'discord' | 'message' | 'slack' | 'command'): any {
+export type CommandParserTestData = typeof commandParserTestData;
+
+export function createTestData(type: 'discord'): ConfigTestData;
+export function createTestData(type: 'message'): ConfigTestData;
+export function createTestData(type: 'slack'): ConfigTestData;
+export function createTestData(type: 'command'): CommandParserTestData;
+export function createTestData(type: 'discord' | 'message' | 'slack' | 'command'): ConfigTestData | CommandParserTestData {
 =======
 import fc from 'fast-check';
 import discordConfig from '../../src/config/discordConfig';
@@ -321,20 +327,8 @@ export function validateConfigAgainstSchema(type: 'discord' | 'message' | 'slack
 /**
  * Generates strongly-typed test data for different platform and command scenarios
  */
-<<<<<<< HEAD
-export type CommandParserTestData = typeof commandParserTestData;
-
-export function createTestData(type: 'discord'): ConfigTestData;
-export function createTestData(type: 'message'): ConfigTestData;
-export function createTestData(type: 'slack'): ConfigTestData;
-export function createTestData(type: 'command'): CommandParserTestData;
-export function createTestData(
-  type: 'discord' | 'message' | 'slack' | 'command'
-): ConfigTestData | CommandParserTestData {
-=======
 export function createTestData(type: 'discord' | 'message' | 'slack' | 'command'): any {
   let data;
->>>>>>> origin/main
 >>>>>>> origin/main
   switch (type) {
     case 'discord':

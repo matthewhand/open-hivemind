@@ -4,7 +4,7 @@ import { getLlmProviders, getMessengerProviders, type ProviderInfo } from '../se
 
 export const useProviders = () => {
   const [llmProviders, setLlmProviders] = useState<ProviderInfo[]>([]);
-  const [messengerProviders, setMessengerProviders] = useState<ProviderInfo[]>([]);
+  const [messageProviders, setMessageProviders] = useState<ProviderInfo[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -16,7 +16,7 @@ export const useProviders = () => {
           getMessengerProviders(),
         ]);
         setLlmProviders(llm);
-        setMessengerProviders(messenger);
+        setMessageProviders(messenger);
       } catch (err) {
         setError('Failed to fetch providers');
       }
@@ -26,7 +26,7 @@ export const useProviders = () => {
     fetchProviders();
   }, []);
 
-  return { llmProviders, messengerProviders, loading, error };
+  return { llmProviders, messageProviders, loading, error };
 };
 
 export type { ProviderInfo };
