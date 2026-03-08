@@ -29,29 +29,41 @@ test('Test pagination visual regressions', async ({ page }) => {
 
           const onPageChange = () => {}; // mock for testing
 
+          const [dynamicMaxVisiblePages, setDynamicMaxVisiblePages] = React.useState(7);
+          const maxVisiblePages = dynamicMaxVisiblePages;
           const pageNumbers = React.useMemo(() => {
+            if (totalPages <= 1) {
+              return totalPages === 1 ? [1] : [];
+            }
             const pages = [];
-            if (totalPages <= 7) {
+            if (totalPages <= maxVisiblePages) {
               for (let i = 1; i <= totalPages; i++) {
                 pages.push(i);
               }
             } else {
+              const half = Math.floor(maxVisiblePages / 2);
+              const isNearStart = currentPage <= half + 1;
+              const isNearEnd = currentPage >= totalPages - half;
+
               pages.push(1);
-              if (currentPage <= 4) {
-                for (let i = 2; i <= 5; i++) {
+              if (isNearStart) {
+                for (let i = 2; i <= maxVisiblePages - 2; i++) {
                   pages.push(i);
                 }
                 pages.push('...next');
                 pages.push(totalPages);
-              } else if (currentPage >= totalPages - 3) {
+              } else if (isNearEnd) {
                 pages.push('...prev');
-                for (let i = totalPages - 4; i <= totalPages - 1; i++) {
+                for (let i = totalPages - (maxVisiblePages - 3); i <= totalPages - 1; i++) {
                   pages.push(i);
                 }
                 pages.push(totalPages);
               } else {
                 pages.push('...prev');
-                for (let i = currentPage - 1; i <= currentPage + 1; i++) {
+                const middleItemsCount = maxVisiblePages - 4;
+                const offsetLeft = Math.floor((middleItemsCount - 1) / 2);
+                const offsetRight = Math.ceil((middleItemsCount - 1) / 2);
+                for (let i = currentPage - offsetLeft; i <= currentPage + offsetRight; i++) {
                   pages.push(i);
                 }
                 pages.push('...next');
@@ -59,7 +71,7 @@ test('Test pagination visual regressions', async ({ page }) => {
               }
             }
             return pages;
-          }, [totalPages, currentPage]);
+          }, [totalPages, currentPage, maxVisiblePages]);
 
           const handleJumpPrev = () => {
             onPageChange(Math.max(1, currentPage - 5));
@@ -100,7 +112,7 @@ test('Test pagination visual regressions', async ({ page }) => {
                         key={index}
                         className={\`join-item btn \${currentPage === page ? 'btn-active' : ''}\`}
                         aria-current={currentPage === page ? 'page' : undefined}
-                        aria-label={\`Go to page \${page}\`}
+                        aria-label={\`Page \${page}\`}
                       >
                         {page}
                       </button>
