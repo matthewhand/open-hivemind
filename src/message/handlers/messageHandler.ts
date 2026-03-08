@@ -334,12 +334,15 @@ export async function handleMessage(
           activeAgentName
         );
 
-        // Track and trim history
+        // Track and trim history (skip for stateful providers that manage their own)
         const maxHistoryTokens = Number(botConfig.LLM_MAX_HISTORY_TOKENS || 2000);
-        const trimmedHistory = trimHistoryToTokenBudget(historyMessages, {
-          inputBudgetTokens: maxHistoryTokens,
-          promptText: processedMessage,
-        });
+        const providerWantsHistory = llmProvider.supportsHistory ? llmProvider.supportsHistory() : true;
+        const trimmedHistory = providerWantsHistory
+          ? trimHistoryToTokenBudget(historyMessages, {
+              inputBudgetTokens: maxHistoryTokens,
+              promptText: processedMessage,
+            })
+          : { trimmed: [] as IMessage[] };
 
         // Generate response
         const startTime = Date.now();
