@@ -59,7 +59,7 @@ jobs:
       uses: actions/setup-node@v4
       with:
         node-version: '20'
-        cache: 'npm'
+        cache: 'pnpm'
         cache-dependency-path: webui/client/package-lock.json
 
     - name: Install dependencies
@@ -182,7 +182,7 @@ jobs:
       uses: actions/setup-node@v4
       with:
         node-version: '20'
-        cache: 'npm'
+        cache: 'pnpm'
         cache-dependency-path: webui/client/package-lock.json
 
     - name: Install dependencies

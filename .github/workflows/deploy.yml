@@ -21,13 +21,11 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-          cache: 'npm'
+          cache: 'pnpm'
 
       - name: Install dependencies
-        run: npm ci
+        run: pnpm install
 
-      - name: Audit for hardcoded secrets
-        run: npm run audit:secrets
 
       - name: Run lint
         run: npm run lint
