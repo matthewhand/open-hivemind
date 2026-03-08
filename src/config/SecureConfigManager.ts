@@ -224,20 +224,20 @@ export class SecureConfigManager {
   public async listConfigs(): Promise<Omit<SecureConfig, 'data'>[]> {
     try {
       const files = await fs.promises.readdir(this.configDir);
-      const configs: Omit<SecureConfig, 'data'>[] = [];
-
-      for (const file of files) {
-        if (file.endsWith('.enc')) {
+      const configPromises = files
+        .filter(file => file.endsWith('.enc'))
+        .map(async (file) => {
           const id = file.replace('.enc', '');
           const config = await this.getConfig(id);
           if (config) {
             const { data, ...metadata } = config;
-            configs.push(metadata);
+            return metadata;
           }
-        }
-      }
+          return null;
+        });
 
-      return configs;
+      const results = await Promise.all(configPromises);
+      return results.filter((c): c is Omit<SecureConfig, 'data'> => c !== null);
     } catch (error: unknown) {
       debug('Failed to list configurations:', error);
       return [];
@@ -263,14 +263,22 @@ export class SecureConfigManager {
       const backupId = `backup_${new Date().toISOString().replace(/[:.]/g, '-')}`;
       const backupPath = path.join(this.backupDir, `${backupId}.json`);
 
-      const allConfigs: Record<string, SecureConfig> = {};
-      for (const file of configs) {
-        if (file.endsWith('.enc')) {
+      const configPromises = configs
+        .filter(file => file.endsWith('.enc'))
+        .map(async (file) => {
           const id = file.replace('.enc', '');
           const config = await this.getConfig(id);
           if (config) {
-            allConfigs[id] = config;
+            return { id, config };
           }
+          return null;
+        });
+
+      const results = await Promise.all(configPromises);
+      const allConfigs: Record<string, SecureConfig> = {};
+      for (const result of results) {
+        if (result) {
+          allConfigs[result.id] = result.config;
         }
       }
 
@@ -358,9 +366,9 @@ export class SecureConfigManager {
       const { data } = fullBackupData;
 
       // Restore configurations
-      for (const config of Object.values(data)) {
-        await this.storeConfig(config as SecureConfig);
-      }
+      await Promise.all(
+        Object.values(data).map(config => this.storeConfig(config as SecureConfig))
+      );
 
       debug(`Backup ${backupId} restored successfully`);
     } catch (error: unknown) {
