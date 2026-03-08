@@ -5,11 +5,8 @@
   functions = "dist/netlify/functions"
   publish = "dist/client"
 
-<<<<<<< HEAD
-=======
 
 
->>>>>>> origin/main
 [dev]
   command = "npm run dev"
 

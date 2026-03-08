@@ -356,6 +356,27 @@ export const LLM_PROVIDER_CONFIGS = {
       { name: 'chatflowId', label: 'Chatflow ID', type: 'text', required: true },
     ],
   },
+  ollama: {
+    type: LLMProviderType.OLLAMA,
+    displayName: 'Ollama',
+    description: 'Local models via Ollama',
+    icon: '🦙',
+    fields: [],
+  },
+  huggingface: {
+    type: LLMProviderType.HUGGINGFACE,
+    displayName: 'Hugging Face',
+    description: 'Models from Hugging Face',
+    icon: '🤗',
+    fields: [],
+  },
+  local: {
+    type: LLMProviderType.LOCAL,
+    displayName: 'Local',
+    description: 'Custom local models',
+    icon: '🏠',
+    fields: [],
+  },
   openwebui: {
     type: LLMProviderType.OPENWEBUI,
     displayName: 'OpenWebUI',

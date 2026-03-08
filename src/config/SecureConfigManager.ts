@@ -22,6 +22,10 @@ export interface SecureConfig {
  * It uses AES-256-GCM for authenticated encryption and stores data in the filesystem.
  */
 export class SecureConfigManager {
+  public getDecryptedMainConfig(env: string): any {
+    return this.getConfig(`main-${env}`);
+  }
+
   private static instance: SecureConfigManager;
   private readonly configDir: string;
   private readonly backupDir: string;
