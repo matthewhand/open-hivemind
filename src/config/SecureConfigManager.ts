@@ -236,8 +236,13 @@ export class SecureConfigManager {
           return null;
         });
 
-      const results = await Promise.all(configPromises);
-      return results.filter((c): c is Omit<SecureConfig, 'data'> => c !== null);
+      // Use allSettled so a single corrupt file doesn't abort the entire listing
+      const results = await Promise.allSettled(configPromises);
+      return results
+        .filter((r): r is PromiseFulfilledResult<Omit<SecureConfig, 'data'>> =>
+          r.status === 'fulfilled' && r.value !== null
+        )
+        .map(r => r.value);
     } catch (error: unknown) {
       debug('Failed to list configurations:', error);
       return [];
@@ -274,11 +279,14 @@ export class SecureConfigManager {
           return null;
         });
 
-      const results = await Promise.all(configPromises);
+      // Use allSettled so a single corrupt file doesn't abort the entire backup
+      const results = await Promise.allSettled(configPromises);
       const allConfigs: Record<string, SecureConfig> = {};
       for (const result of results) {
-        if (result) {
-          allConfigs[result.id] = result.config;
+        if (result.status === 'fulfilled' && result.value) {
+          allConfigs[result.value.id] = result.value.config;
+        } else if (result.status === 'rejected') {
+          debug('Skipping config during backup due to error:', result.reason);
         }
       }
 
