@@ -137,4 +137,30 @@ describe('sanitizeInput middleware', () => {
     expect(mockReq.params).toBeUndefined();
     expect(mockNext).toHaveBeenCalledTimes(1);
   });
+
+  it('should sanitize XSS payloads in custom request headers', () => {
+    mockReq.headers = { 'x-custom-header': '<script>alert(1)</script>' };
+
+    sanitizeInput(mockReq as Request, mockRes as Response, mockNext);
+
+    expect(mockReq.headers['x-custom-header']).toBe('&lt;script&gt;alert(1)&lt;/script&gt;');
+    expect(mockNext).toHaveBeenCalledTimes(1);
+  });
+
+  it('should not throw or pollute prototype on __proto__ keys', () => {
+    mockReq.body = JSON.parse('{"__proto__":{"polluted":true},"name":"<b>test</b>"}');
+
+    expect(() => sanitizeInput(mockReq as Request, mockRes as Response, mockNext)).not.toThrow();
+    expect(({} as any).polluted).toBeUndefined();
+    expect(mockNext).toHaveBeenCalledTimes(1);
+  });
+
+  it('should preserve empty strings and whitespace-only values', () => {
+    mockReq.body = { empty: '', whitespace: '   ' };
+
+    sanitizeInput(mockReq as Request, mockRes as Response, mockNext);
+
+    expect(mockReq.body).toEqual({ empty: '', whitespace: '   ' });
+    expect(mockNext).toHaveBeenCalledTimes(1);
+  });
 });
