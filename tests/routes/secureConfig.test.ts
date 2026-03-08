@@ -97,6 +97,7 @@ describe('SecureConfig API Endpoints', () => {
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
       expect(response.body.data).toHaveLength(2);
+      expect(response.body.count).toBe(2);
       expect(response.body.data[0].id).toBe('test1');
       expect(response.body.data[1].id).toBe('test2');
     });
