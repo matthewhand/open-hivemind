@@ -84,13 +84,15 @@ The [`ProviderConfigManager`](src/config/ProviderConfigManager.ts) maintains a r
 
 ### Developing New Adapters/Providers
 
-To add a new messaging platform or LLM backend:
+> **Full guide**: [Provider & Adapter Package Architecture](./provider-package-architecture.md) — covers the complete runtime discovery flow, schema-driven WebUI rendering, and step-by-step instructions for adding a new provider or adapter package.
+
+Short summary:
 
 1. **Create a new package** under `packages/adapter-<name>` or `packages/provider-<name>`
 2. **Implement the interface** – Extend `ILlmProvider` or `IAdapterFactory` from `@hivemind/shared-types`
-3. **Export your class** – Ensure it's accessible via `require()`
-4. **Add configuration schema** – Update [`BotConfigurationManager`](src/config/BotConfigurationManager.ts) if new config fields are needed
-5. **Register in loader** – Add a case to [`getLlmProvider.ts`](src/llm/getLlmProvider.ts) or [`getMessengerProvider.ts`](src/message/management/getMessengerProvider.ts)
+3. **Register in loader** – Add a case to [`getLlmProvider.ts`](src/llm/getLlmProvider.ts) or [`getMessengerProvider.ts`](src/message/management/getMessengerProvider.ts)
+4. **Add frontend field schema** – Add a schema file under `src/client/src/provider-configs/schemas/` and register it in `index.ts`
+5. **Register in available-types endpoint** – Add an entry to `GET /api/admin/available-provider-types` in `src/server/routes/admin.ts` so the WebUI discovers it automatically
 
 See existing packages for implementation patterns:
 - **Discord adapter**: [`packages/adapter-discord/src/DiscordService.ts`](packages/adapter-discord/src/DiscordService.ts)
