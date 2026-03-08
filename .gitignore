@@ -206,3 +206,8 @@ archive/
 .kilocode/
 AGENTS.md
 \nconfig/.key
+
+# Sensitive config files - never commit
+config/.key
+config/secure/
+config/providers/
