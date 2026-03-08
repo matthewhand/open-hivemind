@@ -25,10 +25,10 @@ jobs:
           cache: 'pnpm'
 
       - name: Install Playwright browsers
-        run: npx playwright install chromium
+        run: pnpm dlx playwright install chromium
 
       - name: Generate screenshots
-        run: npm run generate-docs
+        run: pnpm run generate-docs
 
       - name: Commit and push changes
         run: |

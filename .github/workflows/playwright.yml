@@ -27,22 +27,22 @@ jobs:
 <<<<<<< HEAD
 
       - name: Install dependencies
-        run: npm ci
+        run: pnpm install
         env:
           PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
 
       - name: Install Playwright browsers
-        run: npx playwright install --with-deps
+        run: pnpm dlx playwright install --with-deps
 
       - name: Build application
-        run: npm run build
+        run: pnpm run build
 
       - name: Run Playwright tests
         env:
           PLAYWRIGHT_BASE_URL: http://127.0.0.1:3028
           SKIP_MESSENGERS: 'true'
           HTTP_ENABLED: 'true'
-        run: npm run test:playwright -- --reporter=line
+        run: pnpm run test:playwright -- --reporter=line
 
       - name: Upload Playwright test artifacts
         if: ${{ always() }}

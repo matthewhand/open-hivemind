@@ -64,26 +64,26 @@ jobs:
       uses: actions/setup-node@v4
       with:
         node-version: '20'
-        cache: 'npm'
+        cache: 'pnpm'
         cache-dependency-path: webui/client/package-lock.json
     - name: Install dependencies
       run: |
         cd webui/client
-        npm ci
+        pnpm install
 
     - name: Install Playwright Browsers
       run: |
         cd webui/client
-        npx playwright install chromium
+        pnpm dlx playwright install chromium
 
     - name: Update baseline screenshots
       run: |
         cd webui/client
-        npm run build
-        npm run preview &
+        pnpm run build
+        pnpm run preview &
         sleep 10
         timeout 60 bash -c 'until curl -f http://localhost:4173; do sleep 2; done'
-        npx playwright test --project=chromium --update-snapshots
+        pnpm dlx playwright test --project=chromium --update-snapshots
 
     - name: Commit updated baseline
       run: |
