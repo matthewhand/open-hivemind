@@ -4,9 +4,11 @@ import Debug from 'debug';
 import { Router } from 'express';
 import type { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import type { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';
-import { ErrorUtils } from '@src/types/errors';
+import { ErrorUtils, type AppError } from '@src/types/errors';
 import MCPProviderManager from '../../config/MCPProviderManager';
 import type { MCPProviderConfig } from '../../types/mcp';
+import { AddMCPServerSchema, CallMCPToolSchema } from '../../validation/schemas/mcpSchema';
+import { validateRequest } from '../../validation/validateRequest';
 
 const debug = Debug('app:webui:mcp');
 const router = Router();
@@ -181,13 +183,9 @@ router.get('/servers', async (req, res) => {
 });
 
 // POST /api/mcp/servers - Add new MCP server
-router.post('/servers', async (req, res) => {
+router.post('/servers', validateRequest(AddMCPServerSchema), async (req, res) => {
   try {
     const { name, url, apiKey } = req.body;
-
-    if (!name || !url) {
-      return res.status(400).json({ error: 'Name and URL are required' });
-    }
 
     const servers = await loadMCPServers();
 
@@ -404,14 +402,10 @@ router.get('/servers/:name/tools', async (req, res) => {
 });
 
 // POST /api/mcp/servers/:name/call-tool - Call a tool on MCP server
-router.post('/servers/:name/call-tool', async (req, res) => {
+router.post('/servers/:name/call-tool', validateRequest(CallMCPToolSchema), async (req, res) => {
   try {
     const { name } = req.params;
     const { toolName, arguments: toolArgs } = req.body;
-
-    if (!toolName) {
-      return res.status(400).json({ error: 'Tool name is required' });
-    }
 
     const mcpClient = connectedClients.get(name);
     if (!mcpClient) {

@@ -68,7 +68,6 @@ Create and manage individual bot instances. Connect your AI assistants to platfo
 
 *   **Dedicated Create Page**: Access a full-page interface for creating bots at `/admin/bots/create`.
 *   **Duplicate Bot**: Quickly clone an existing bot configuration.
-![Duplicate Bot Modal](screenshots/clone-bot-modal.png)
 *   **View Activity**: Monitor real-time logs and message flow for each bot via details modal.
 ![Bot Activity Logs](screenshots/bot-details-modal.png)
 *   **Link Persona / Providers**: Assign specific personalities, LLM providers, and platforms to the bot.
@@ -108,7 +107,7 @@ Manage connections to Large Language Model providers.
 ### [Message Platforms](/admin/providers/message)
 Connect your bots to messaging services.
 
-![Message Platforms List](screenshots/message-providers-list.png)
+![Message Platforms List](screenshots/message-add-provider-modal.png)
 ![Add Message Provider](screenshots/message-add-provider-modal.png)
 
 *   **Discord**: Add your Discord Bot Token and configure server settings.

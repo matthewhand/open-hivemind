@@ -21,7 +21,7 @@ import {
 
 import { PROVIDER_CATEGORIES } from '../config/providers';
 import ProviderConfigModal from './ProviderConfiguration/ProviderConfigModal';
-import { LLM_PROVIDER_CONFIGS, LLMProviderType, ProviderModalState } from '../types/bot';
+import { LLM_PROVIDER_CONFIGS, LLMProviderType, ProviderModalState } from '../types';
 
 interface ConfigSchema {
   doc?: string;
@@ -42,14 +42,15 @@ const PROVIDER_ICONS: Record<string, any> = {
   openai: Brain,
   flowise: Brain,
   openwebui: Brain,
-  perplexity: Brain,
-  replicate: Brain,
-  n8n: Brain,
-  openswarm: Brain,
+  ollama: Brain,
+  anthropic: Brain,
+  gemini: Brain,
+  groq: Brain,
   discord: MessageSquare,
   slack: MessageSquare,
   mattermost: MessageSquare,
-  webhook: Globe,
+  telegram: MessageSquare,
+  whatsapp: MessageSquare,
 };
 
 
@@ -545,7 +546,7 @@ const IntegrationsPanel: React.FC = () => {
   return (
     <div className="animate-in fade-in duration-500 pb-20">
       {renderSection('LLM Providers', 'llm')}
-      {renderSection('Message Platforms', 'message')}
+      {renderSection('Message Providers', 'message')}
 
       {/* Edit Modal (Global Config) */}
       <Modal
@@ -585,7 +586,7 @@ const IntegrationsPanel: React.FC = () => {
         </div>
       </Modal>
 
-      {/* Create Integration Modal (Message Platforms) */}
+      {/* Create Integration Modal (Message Providers) */}
       <Modal
         isOpen={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}

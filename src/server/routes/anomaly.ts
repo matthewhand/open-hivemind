@@ -1,5 +1,6 @@
 import Debug from 'debug';
 import { Router } from 'express';
+import type { AuthMiddlewareRequest } from '../../auth/types';
 import { DatabaseManager } from '../../database/DatabaseManager';
 import { AnomalyDetectionService } from '../../services/AnomalyDetectionService';
 
@@ -37,7 +38,7 @@ router.get('/', async (req, res) => {
     const tenantId = (req as any).user?.tenantId;
 
     const anomalies = await dbManager.getActiveAnomalies(tenantId);
-    res.json(anomalies);
+    res.json(anomalies || []);
   } catch (error) {
     debug('Error fetching active anomalies:', error);
     // Return 503 for connection-related errors, 500 for other errors
@@ -61,7 +62,7 @@ router.get('/history', async (req, res) => {
     const tenantId = (req as any).user?.tenantId;
 
     const anomalies = await dbManager.getAnomalies(tenantId);
-    res.json(anomalies);
+    res.json(anomalies || []);
   } catch (error) {
     debug('Error fetching anomaly history:', error);
     // Return 503 for connection-related errors, 500 for other errors

@@ -19,7 +19,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
     },
     {
       id: 'admin-overview',
-      label: 'Admin Overview',
+      label: 'Administration',
       icon: '📊',
       path: '/admin/overview',
       visible: true,

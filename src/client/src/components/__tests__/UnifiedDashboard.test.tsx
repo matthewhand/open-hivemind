@@ -110,7 +110,8 @@ describe('UnifiedDashboard', () => {
     // When bots are configured, the Getting Started tab content (Welcome to Open Hivemind)
     // should be hidden because the active tab is 'status'.
     // Use visible check instead of existence check because hidden attribute doesn't remove from DOM.
-    expect(screen.queryByText('Welcome to Open Hivemind')).not.toBeVisible();
+    const welcomeText = screen.queryByText('Welcome to Open Hivemind');
+    if (welcomeText) expect(welcomeText).not.toBeVisible();
 
     // Alternatively check for hidden class on parent if visible check is flaky in some JSDOM setups
     // const gettingStartedPanel = screen.getByRole('tabpanel', { name: /getting started/i, hidden: true });

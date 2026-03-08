@@ -1,5 +1,6 @@
 import axios from 'axios';
 import flowiseConfig from '@integrations/flowise/flowiseConfig';
+import { isSafeUrl } from '@src/utils/ssrfGuard';
 
 /**
  * Fetches and returns a list of available chat flows from the Flowise API.
@@ -9,7 +10,12 @@ export const flowiseListChatFlows = async (): Promise<string> => {
   const baseURL = flowiseConfig.get('FLOWISE_API_ENDPOINT');
   const apiKey = flowiseConfig.get('FLOWISE_API_KEY');
 
-  const response = await axios.get(`${baseURL}/chatflows`, {
+  const targetUrl = `${baseURL}/chatflows`;
+  if (!(await isSafeUrl(targetUrl))) {
+    throw new Error('Flowise API URL is not safe to connect to.');
+  }
+
+  const response = await axios.get(targetUrl, {
     headers: { Authorization: `Bearer ${apiKey}` },
   });
 

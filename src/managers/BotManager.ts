@@ -1096,7 +1096,19 @@ export class BotManager extends EventEmitter {
       };
     });
 
-    return Promise.all(healthChecks);
+    const results = await Promise.allSettled(healthChecks);
+    return results.map((result) => {
+      if (result.status === 'fulfilled') {
+        return result.value;
+      }
+      return {
+        botId: 'unknown',
+        name: 'unknown',
+        status: 'unhealthy',
+        lastCheck: new Date(),
+        issues: ['Health check failed to execute'],
+      };
+    });
   }
 
   /**

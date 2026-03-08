@@ -52,7 +52,7 @@ export const hivemindNavItems: NavItem[] = [
   },
   {
     id: 'integrations-message',
-    label: 'Message Platforms',
+    label: 'Message Providers',
     icon: <NavIcon><MessageSquare className="w-4 h-4" /></NavIcon>,
     path: '/admin/providers/message',
     visible: true,

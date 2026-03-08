@@ -5,6 +5,7 @@ import { body, param, validationResult } from 'express-validator';
 import { authenticate, requireAdmin } from '../../auth/middleware';
 import type { AuthMiddlewareRequest } from '../../auth/types';
 import { ConfigurationImportExportService } from '../services/ConfigurationImportExportService';
+type MulterFile = { path: string; fieldname: string; originalname: string; mimetype: string; size: number; };
 
 const multer = require('multer');
 

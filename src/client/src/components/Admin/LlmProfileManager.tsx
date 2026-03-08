@@ -16,7 +16,7 @@ interface ProviderProfile {
     config: Record<string, unknown>;
 }
 
-const LLM_PROVIDERS = ['openai', 'flowise', 'openwebui', 'openswarm', 'perplexity', 'replicate', 'n8n'];
+const LLM_PROVIDERS = ['openai', 'anthropic', 'flowise', 'openwebui', 'openswarm', 'letta'];
 
 const LlmProfileManager: React.FC = () => {
   const [profiles, setProfiles] = useState<ProviderProfile[]>([]);

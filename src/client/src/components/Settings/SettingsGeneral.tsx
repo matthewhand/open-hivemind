@@ -66,6 +66,7 @@ const SettingsGeneral: React.FC = () => {
     ];
   }, []);
 
+
   const fetchSettings = useCallback(async () => {
     try {
       setLoading(true);
