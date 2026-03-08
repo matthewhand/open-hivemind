@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { useWebSocket } from '../../contexts/WebSocketContext';
 import { Card, Badge, Alert, Button, PageHeader, StatsCards } from '../DaisyUI';
 import {
   Activity,
@@ -60,6 +61,8 @@ const MonitoringDashboard: React.FC<MonitoringDashboardProps> = ({
   const [bots, setBots] = useState<BotWithStatus[]>([]);
   const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
   const [refreshInterval, setRefreshInterval] = useState(initialRefreshInterval);
+  const { isConnected, botStats } = useWebSocket();
+  const lastWsActivity = useRef<number>(0);
 
   const handleTabChange = (newValue: number) => {
     setActiveTab(newValue);
@@ -124,15 +127,27 @@ const MonitoringDashboard: React.FC<MonitoringDashboardProps> = ({
     }
   }, [onRefresh, refreshInterval]);
 
+  // Track WS activity so fallback poll knows when WS last delivered data
+  useEffect(() => {
+    if (botStats.length > 0) {
+      lastWsActivity.current = Date.now();
+    }
+  }, [botStats]);
+
+  // Initial load + fallback poll — only fires when WS hasn't delivered data recently
   useEffect(() => {
     handleRefresh();
 
+    const WS_STALE_MS = 60000; // consider WS stale after 60s of no events
     const interval = setInterval(() => {
-      handleRefresh();
+      const wsRecent = isConnected && (Date.now() - lastWsActivity.current) < WS_STALE_MS;
+      if (!wsRecent) {
+        handleRefresh();
+      }
     }, refreshInterval);
 
     return () => clearInterval(interval);
-  }, [handleRefresh, refreshInterval]);
+  }, [handleRefresh, refreshInterval, isConnected]);
 
   const getOverallHealthStatus = () => {
     if (!bots.length) { return 'unknown'; }
