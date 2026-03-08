@@ -13,16 +13,7 @@ import {
   Clock,
   DownloadCloud as DownloadIcon
 } from 'lucide-react';
-import { Alert } from '../components/DaisyUI/Alert';
-import ToastNotification from '../components/DaisyUI/ToastNotification';
-import Modal from '../components/DaisyUI/Modal';
-import Button from '../components/DaisyUI/Button';
-import Input from '../components/DaisyUI/Input';
-import Textarea from '../components/DaisyUI/Textarea';
-import PageHeader from '../components/DaisyUI/PageHeader';
-import EmptyState from '../components/DaisyUI/EmptyState';
-import StatsCards from '../components/DaisyUI/StatsCards';
-
+import { Alert, ToastNotification, Modal, Button, Input, Textarea, PageHeader, EmptyState, StatsCards } from '../components/DaisyUI';
 import SearchFilterBar from '../components/SearchFilterBar';
 import { apiService } from '../services/api';
 

@@ -64,12 +64,7 @@ jest.mock('../../src/validation/validateRequest', () => ({
   validateRequest: () => (req: any, res: any, next: any) => next(),
 }));
 
-jest.mock('../../src/validation/schemas/botSchema', () => ({
-  BotIdParamSchema: { merge: () => ({}) },
-  CloneBotSchema: {},
-  CreateBotSchema: {},
-  UpdateBotSchema: {},
-}));
+
 
 const app = express();
 app.use(express.json());

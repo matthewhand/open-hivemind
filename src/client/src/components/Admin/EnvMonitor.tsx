@@ -1,8 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect } from 'react';
-import Badge from '../DaisyUI/Badge';
-import { Alert } from '../DaisyUI/Alert';
-
+import { Badge, Alert } from '../DaisyUI';
 import { getEnvOverrides } from '../../services/agentService';
 
 const EnvMonitor: React.FC = () => {

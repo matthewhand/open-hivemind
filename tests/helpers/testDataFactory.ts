@@ -1,3 +1,14 @@
+import discordConfig from '../../src/config/discordConfig';
+import flowiseConfig from '../../src/config/flowiseConfig';
+import mattermostConfig from '../../src/config/mattermostConfig';
+import messageConfig from '../../src/config/messageConfig';
+import ollamaConfig from '../../src/config/ollamaConfig';
+import openaiConfig from '../../src/config/openaiConfig';
+import openWebUIConfig from '../../src/config/openWebUIConfig';
+import slackConfig from '../../src/config/slackConfig';
+import telegramConfig from '../../src/config/telegramConfig';
+import webhookConfig from '../../src/config/webhookConfig';
+
 /**
  * Test data factories for creating consistent test data across test suites
  */
@@ -375,17 +386,6 @@ export const commandParserTestData = {
   },
 };
 
-import discordConfig from '../../src/config/discordConfig';
-import messageConfig from '../../src/config/messageConfig';
-import slackConfig from '../../src/config/slackConfig';
-import telegramConfig from '../../src/config/telegramConfig';
-import mattermostConfig from '../../src/config/mattermostConfig';
-import webhookConfig from '../../src/config/webhookConfig';
-import openaiConfig from '../../src/config/openaiConfig';
-import ollamaConfig from '../../src/config/ollamaConfig';
-import openWebUIConfig from '../../src/config/openWebUIConfig';
-import flowiseConfig from '../../src/config/flowiseConfig';
-
 /**
  * Validates generated config test data against the real backend convict schema
  * to prevent drift.
@@ -393,7 +393,20 @@ import flowiseConfig from '../../src/config/flowiseConfig';
  * @param data The generated expectedResults
  * @returns true if valid, throws error otherwise
  */
-export function validateConfigAgainstSchema(type: 'discord' | 'message' | 'slack' | 'telegram' | 'mattermost' | 'webhook' | 'openai' | 'ollama' | 'openwebui' | 'flowise', data: any): boolean {
+export function validateConfigAgainstSchema(
+  type:
+    | 'discord'
+    | 'message'
+    | 'slack'
+    | 'telegram'
+    | 'mattermost'
+    | 'webhook'
+    | 'openai'
+    | 'ollama'
+    | 'openwebui'
+    | 'flowise',
+  data: any
+): boolean {
   try {
     switch (type) {
       case 'discord':
@@ -461,7 +474,18 @@ export function createTestData(type: 'openwebui'): ConfigTestData;
 export function createTestData(type: 'flowise'): ConfigTestData;
 export function createTestData(type: 'command'): CommandParserTestData;
 export function createTestData(
-  type: 'discord' | 'message' | 'slack' | 'telegram' | 'mattermost' | 'webhook' | 'openai' | 'ollama' | 'openwebui' | 'flowise' | 'command'
+  type:
+    | 'discord'
+    | 'message'
+    | 'slack'
+    | 'telegram'
+    | 'mattermost'
+    | 'webhook'
+    | 'openai'
+    | 'ollama'
+    | 'openwebui'
+    | 'flowise'
+    | 'command'
 ): ConfigTestData | CommandParserTestData {
   let data;
   switch (type) {
@@ -500,7 +524,20 @@ export function createTestData(
   }
 
   // Validate the data against the schema
-  validateConfigAgainstSchema(type as 'discord' | 'message' | 'slack' | 'telegram' | 'mattermost' | 'webhook' | 'openai' | 'ollama' | 'openwebui' | 'flowise', data.expectedResults);
+  validateConfigAgainstSchema(
+    type as
+      | 'discord'
+      | 'message'
+      | 'slack'
+      | 'telegram'
+      | 'mattermost'
+      | 'webhook'
+      | 'openai'
+      | 'ollama'
+      | 'openwebui'
+      | 'flowise',
+    data.expectedResults
+  );
   return data;
 }
 

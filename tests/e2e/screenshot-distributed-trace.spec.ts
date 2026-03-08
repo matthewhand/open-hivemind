@@ -45,7 +45,13 @@ test.describe('Distributed Trace Waterfall Screenshots', () => {
           uptime: 3600 * 24 * 5,
           memory: { used: 8 * 1024, total: 16 * 1024, usage: 50 },
           cpu: { user: 15, system: 5 },
-          system: { platform: 'linux', arch: 'x64', release: '5.15.0', hostname: 'prod-server-01', loadAverage: [0.5, 0.4, 0.3] },
+          system: {
+            platform: 'linux',
+            arch: 'x64',
+            release: '5.15.0',
+            hostname: 'prod-server-01',
+            loadAverage: [0.5, 0.4, 0.3],
+          },
         },
       })
     );
@@ -55,7 +61,15 @@ test.describe('Distributed Trace Waterfall Screenshots', () => {
         status: 200,
         json: {
           bots: [
-            { name: 'CustomerSupportBot', provider: 'discord', llmProvider: 'openai', status: 'active', connected: true, messageCount: 1542, errorCount: 2 },
+            {
+              name: 'CustomerSupportBot',
+              provider: 'discord',
+              llmProvider: 'openai',
+              status: 'active',
+              connected: true,
+              messageCount: 1542,
+              errorCount: 2,
+            },
           ],
           uptime: 3600 * 24 * 5,
         },
@@ -73,7 +87,10 @@ test.describe('Distributed Trace Waterfall Screenshots', () => {
       route.fulfill({
         status: 200,
         json: {
-          overall: { status: 'healthy', stats: { total: 0, online: 0, slow: 0, offline: 0, error: 0 } },
+          overall: {
+            status: 'healthy',
+            stats: { total: 0, online: 0, slow: 0, offline: 0, error: 0 },
+          },
           endpoints: [],
         },
       })
@@ -103,6 +120,9 @@ test.describe('Distributed Trace Waterfall Screenshots', () => {
     await expect(page.getByText('Span ID:')).toBeVisible();
 
     // Take screenshot
-    await page.screenshot({ path: 'docs/screenshots/distributed-trace-waterfall.png', fullPage: true });
+    await page.screenshot({
+      path: 'docs/screenshots/distributed-trace-waterfall.png',
+      fullPage: true,
+    });
   });
 });

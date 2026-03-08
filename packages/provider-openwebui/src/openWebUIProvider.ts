@@ -25,7 +25,8 @@ export class OpenWebUIProvider implements ILlmProvider {
 
   constructor(config?: OpenWebUIProviderConfig) {
     this.config = config || {};
-    const rawApiUrl = this.config.apiUrl || openWebUIConfig.get('apiUrl') || 'http://localhost:3000/api/';
+    const rawApiUrl =
+      this.config.apiUrl || openWebUIConfig.get('apiUrl') || 'http://localhost:3000/api/';
     this.resolvedApiUrl = rawApiUrl.endsWith('/') ? rawApiUrl.slice(0, -1) : rawApiUrl;
     this.model = this.config.model || openWebUIConfig.get('model');
 
@@ -35,7 +36,10 @@ export class OpenWebUIProvider implements ILlmProvider {
 
     if (this.config.apiKey) {
       const headerName = this.config.authHeader || 'Authorization';
-      if (headerName.toLowerCase() === 'authorization' && !this.config.apiKey.toLowerCase().startsWith('bearer ')) {
+      if (
+        headerName.toLowerCase() === 'authorization' &&
+        !this.config.apiKey.toLowerCase().startsWith('bearer ')
+      ) {
         headers[headerName] = `Bearer ${this.config.apiKey}`;
       } else {
         headers[headerName] = this.config.apiKey;
@@ -81,11 +85,7 @@ export class OpenWebUIProvider implements ILlmProvider {
 
     try {
       const url = this.resolvedApiUrl + '/auth/login';
-      const response = await axios.post(
-        url,
-        { username, password },
-        { timeout: 15000 }
-      );
+      const response = await axios.post(url, { username, password }, { timeout: 15000 });
       this.sessionKey = response.data.sessionKey || response.data.token;
 
       if (!this.sessionKey) {
@@ -108,7 +108,10 @@ export class OpenWebUIProvider implements ILlmProvider {
     debug('Generating chat completion with OpenWebUI:', { userMessage, historyMessages });
 
     const messages = [
-      ...historyMessages.map((msg) => ({ role: (msg as any).role || 'user', content: msg.getText() })),
+      ...historyMessages.map((msg) => ({
+        role: (msg as any).role || 'user',
+        content: msg.getText(),
+      })),
       { role: 'user', content: userMessage },
     ];
 
@@ -118,15 +121,19 @@ export class OpenWebUIProvider implements ILlmProvider {
         const sessionKey = await this.getSessionKey();
         reqConfig = {
           headers: {
-            Authorization: `Bearer ${sessionKey}`
-          }
+            Authorization: `Bearer ${sessionKey}`,
+          },
         };
       }
 
-      const response = await this.client.post('/chat/completions', {
-        model: metadata?.modelOverride || metadata?.model || this.model,
-        messages,
-      }, reqConfig);
+      const response = await this.client.post(
+        '/chat/completions',
+        {
+          model: metadata?.modelOverride || metadata?.model || this.model,
+          messages,
+        },
+        reqConfig
+      );
 
       return response.data?.choices?.[0]?.message?.content || '';
     } catch (error) {
@@ -144,16 +151,20 @@ export class OpenWebUIProvider implements ILlmProvider {
         const sessionKey = await this.getSessionKey();
         reqConfig = {
           headers: {
-            Authorization: `Bearer ${sessionKey}`
-          }
+            Authorization: `Bearer ${sessionKey}`,
+          },
         };
       }
 
-      const response = await this.client.post('/completions', {
-        model: this.model,
-        prompt,
-        max_tokens: 100,
-      }, reqConfig);
+      const response = await this.client.post(
+        '/completions',
+        {
+          model: this.model,
+          prompt,
+          max_tokens: 100,
+        },
+        reqConfig
+      );
 
       return response.data?.choices?.[0]?.text || '';
     } catch (error) {

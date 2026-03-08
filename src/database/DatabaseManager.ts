@@ -1,10 +1,10 @@
 import 'reflect-metadata';
+import { injectable, singleton } from 'tsyringe';
 import { promises as fs } from 'fs';
 import { join } from 'path';
 import Debug from 'debug';
 import { open, type Database } from 'sqlite';
 import sqlite3 from 'sqlite3';
-import { injectable, singleton } from 'tsyringe';
 import { ConfigurationError, DatabaseError } from '@src/types/errorClasses';
 
 const debug = Debug('app:DatabaseManager');

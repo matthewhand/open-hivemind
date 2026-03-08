@@ -1,31 +1,76 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect, useCallback } from 'react';
-import { Alert } from '../DaisyUI/Alert';
-import Toggle from '../DaisyUI/Toggle';
-import Button from '../DaisyUI/Button';
-
-import { MessageSquare, Bot, Users, Zap } from 'lucide-react';
+import { Alert, Toggle, Button } from '../DaisyUI';
+import { MessageSquare, Bot, Users, Zap, Info, BarChart3 } from 'lucide-react';
 
 interface MessagingConfig {
   onlyWhenSpokenTo: boolean;
   allowBotToBot: boolean;
+  botResponseModifier: number;
   unsolicitedAddressed: boolean;
   unsolicitedUnaddressed: boolean;
   baseChance: number;
   graceWindowMs: number;
   /** Whether the bot injects the user's identity hint when mentioned (MESSAGE_ADD_USER_HINT). */
   addUserHint: boolean;
+  semanticRelevanceEnabled: boolean;
+  semanticRelevanceBonus: number;
 }
+
+interface RelevanceImpactProps {
+  baseChance: number;
+  relevanceBonus: number;
+  isEnabled: boolean;
+}
+
+const RelevanceImpactCalculator: React.FC<RelevanceImpactProps> = ({
+  baseChance,
+  relevanceBonus,
+  isEnabled,
+}) => {
+  if (!isEnabled) return null;
+  const combinedPercent = Math.min(100, baseChance * relevanceBonus);
+  const isCapped = baseChance * relevanceBonus >= 100;
+
+  return (
+    <div className="bg-base-300/50 p-4 rounded-lg mt-4 border border-info/20">
+      <h6 className="text-sm font-bold flex items-center gap-2 mb-2 text-info">
+        <BarChart3 className="w-4 h-4" />
+        Semantic Impact Calculator
+      </h6>
+      <div className="flex justify-between items-center bg-base-100 p-3 rounded border border-base-content/5">
+        <div className="flex flex-col">
+          <span className="text-xs text-base-content/60">Base ({baseChance}%) × Bonus ({relevanceBonus}x)</span>
+          <span className="text-sm font-mono mt-1 font-bold">
+            {baseChance}% × {relevanceBonus}x = {(baseChance * relevanceBonus).toFixed(1)}%
+          </span>
+        </div>
+        <div className="text-right">
+          <span className="text-xs text-base-content/60">Final Chance</span>
+          <div className={`text-xl font-black ${isCapped ? 'text-error' : 'text-success'}`}>
+            {combinedPercent.toFixed(0)}%
+          </div>
+        </div>
+      </div>
+      <p className="text-[10px] text-base-content/50 mt-2 italic">
+        * Capped at 100%. Represents the probability of response when topic is semantically relevant.
+      </p>
+    </div>
+  );
+};
 
 const SettingsMessaging: React.FC = () => {
   const [settings, setSettings] = useState<MessagingConfig>({
     onlyWhenSpokenTo: true,
     allowBotToBot: false,
+    botResponseModifier: -0.1,
     unsolicitedAddressed: true,
     unsolicitedUnaddressed: false,
     baseChance: 5,
     graceWindowMs: 300000,
     addUserHint: false,
+    semanticRelevanceEnabled: false,
+    semanticRelevanceBonus: 5,
   });
   const [loading, setLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -49,11 +94,14 @@ const SettingsMessaging: React.FC = () => {
       setSettings({
         onlyWhenSpokenTo: data.MESSAGE_ONLY_WHEN_SPOKEN_TO ?? true,
         allowBotToBot: data.MESSAGE_ALLOW_BOT_TO_BOT_UNADDRESSED ?? false,
+        botResponseModifier: data.MESSAGE_BOT_RESPONSE_MODIFIER ?? -0.1,
         unsolicitedAddressed: data.MESSAGE_UNSOLICITED_ADDRESSED ?? true,
         unsolicitedUnaddressed: data.MESSAGE_UNSOLICITED_UNADDRESSED ?? false,
         baseChance: (data.MESSAGE_UNSOLICITED_BASE_CHANCE ?? 0.01) * 100,
         graceWindowMs: data.MESSAGE_ONLY_WHEN_SPOKEN_TO_GRACE_WINDOW_MS ?? 300000,
         addUserHint: data.MESSAGE_ADD_USER_HINT ?? false,
+        semanticRelevanceEnabled: data.MESSAGE_SEMANTIC_RELEVANCE_ENABLED ?? false,
+        semanticRelevanceBonus: data.MESSAGE_SEMANTIC_RELEVANCE_BONUS ?? 5,
       });
     } catch {
       setAlert({
@@ -83,11 +131,14 @@ const SettingsMessaging: React.FC = () => {
           message: {
             MESSAGE_ONLY_WHEN_SPOKEN_TO: settings.onlyWhenSpokenTo,
             MESSAGE_ALLOW_BOT_TO_BOT_UNADDRESSED: settings.allowBotToBot,
+            MESSAGE_BOT_RESPONSE_MODIFIER: settings.botResponseModifier,
             MESSAGE_UNSOLICITED_ADDRESSED: settings.unsolicitedAddressed,
             MESSAGE_UNSOLICITED_UNADDRESSED: settings.unsolicitedUnaddressed,
             MESSAGE_UNSOLICITED_BASE_CHANCE: settings.baseChance / 100,
             MESSAGE_ONLY_WHEN_SPOKEN_TO_GRACE_WINDOW_MS: settings.graceWindowMs,
             MESSAGE_ADD_USER_HINT: settings.addUserHint,
+            MESSAGE_SEMANTIC_RELEVANCE_ENABLED: settings.semanticRelevanceEnabled,
+            MESSAGE_SEMANTIC_RELEVANCE_BONUS: settings.semanticRelevanceBonus,
           },
         }),
       });
@@ -209,6 +260,33 @@ const SettingsMessaging: React.FC = () => {
               <span className="text-sm">Collision avoidance is active to prevent bot storms</span>
             </div>
           )}
+
+
+          <div className="form-control mt-4">
+            <label className="label py-1">
+              <span className="label-text text-sm font-medium">Bot Response Modifier</span>
+              <span className="badge badge-secondary font-mono">{settings.botResponseModifier.toFixed(2)}</span>
+            </label>
+            <input
+              type="range"
+              min="-1.0"
+              max="1.0"
+              step="0.05"
+              value={settings.botResponseModifier}
+              onChange={(e) => handleChange('botResponseModifier', parseFloat(e.target.value))}
+              className="range range-sm range-secondary"
+              disabled={!settings.allowBotToBot}
+            />
+            <div className="w-full flex justify-between text-xs px-2 mt-1 text-base-content/50">
+              <span>-1.0 (Strong Penalty)</span>
+              <span>0.0</span>
+              <span>+1.0 (Strong Bonus)</span>
+            </div>
+            <p className="text-xs text-base-content/60 mt-2">
+              Modifies the base chance to respond when the message is from another bot.
+            </p>
+          </div>
+
         </div>
 
         {/* Unsolicited Replies */}
@@ -258,7 +336,7 @@ const SettingsMessaging: React.FC = () => {
             Context &amp; Additions
           </h6>
 
-          <div className="form-control">
+          <div className="form-control mb-3">
             <label className="label cursor-pointer py-2">
               <div>
                 <span className="label-text font-medium">Add User Hint</span>
@@ -273,6 +351,59 @@ const SettingsMessaging: React.FC = () => {
               />
             </label>
           </div>
+
+          <div className="form-control mb-3">
+            <label className="label cursor-pointer py-2">
+              <div>
+                <span className="label-text font-medium">Semantic Search Relevance</span>
+                <p className="text-xs text-base-content/60 mt-1">
+                  Enable semantic relevance check using a 1-token LLM call to boost reply chance if the message is on-topic (MESSAGE_SEMANTIC_RELEVANCE_ENABLED)
+                </p>
+              </div>
+              <Toggle
+                checked={settings.semanticRelevanceEnabled}
+                onChange={(e) => handleChange('semanticRelevanceEnabled', e.target.checked)}
+                color="info"
+              />
+            </label>
+          </div>
+
+          <div className="form-control">
+            <label className="label py-1 flex items-center justify-between">
+              <span className="label-text text-sm font-medium flex-1 pr-4 flex items-center gap-1">
+                Semantic Relevance Bonus
+                <div className="tooltip tooltip-right" data-tip="Multiplier applied to base chance if the message context is semantically related to recent conversation history (e.g. 10x means a 5% base chance becomes 50%).">
+                  <Info className="w-3.5 h-3.5 text-base-content/50 cursor-help" />
+                </div>
+              </span>
+              <span className="badge badge-info font-mono text-xs flex-none">{settings.semanticRelevanceBonus}x</span>
+            </label>
+            <input
+              type="range"
+              min="1"
+              max="50"
+              step="1"
+              value={settings.semanticRelevanceBonus}
+              onChange={(e) => handleChange('semanticRelevanceBonus', parseInt(e.target.value))}
+              className="range range-sm range-info w-full"
+              disabled={!settings.semanticRelevanceEnabled}
+            />
+            <div className="w-full flex justify-between text-xs px-2 mt-1 text-base-content/50">
+              <span>1x</span>
+              <span>25x</span>
+              <span>50x</span>
+            </div>
+            <p className="text-xs text-base-content/60 mt-2">
+              Multiplier to apply when a message is semantically relevant.
+            </p>
+          </div>
+
+          {/* Relevance Impact Calculator */}
+          <RelevanceImpactCalculator
+            baseChance={settings.baseChance}
+            relevanceBonus={settings.semanticRelevanceBonus}
+            isEnabled={settings.semanticRelevanceEnabled}
+          />
         </div>
 
         {/* Probability */}
@@ -283,9 +414,14 @@ const SettingsMessaging: React.FC = () => {
           </h6>
 
           <div className="form-control">
-            <label className="label py-1">
-              <span className="label-text text-sm font-medium">Base Chance</span>
-              <span className="badge badge-accent font-mono">{settings.baseChance.toFixed(0)}%</span>
+            <label className="label py-1 flex items-center justify-between">
+              <span className="label-text text-sm font-medium flex-1 pr-4 flex items-center gap-1">
+                Base Chance
+                <div className="tooltip tooltip-right" data-tip="The absolute baseline probability (0-100%) the bot will chime in unaddressed, before any multipliers like semantic relevance are applied.">
+                  <Info className="w-3.5 h-3.5 text-base-content/50 cursor-help" />
+                </div>
+              </span>
+              <span className="badge badge-accent font-mono flex-none">{settings.baseChance.toFixed(0)}%</span>
             </label>
             <input
               type="range"
@@ -294,7 +430,7 @@ const SettingsMessaging: React.FC = () => {
               step="1"
               value={settings.baseChance}
               onChange={(e) => handleChange('baseChance', parseInt(e.target.value))}
-              className="range range-accent"
+              className="range range-accent range-sm"
               disabled={settings.onlyWhenSpokenTo}
             />
             <div className="w-full flex justify-between text-xs px-2 mt-1 text-base-content/50">
@@ -305,7 +441,7 @@ const SettingsMessaging: React.FC = () => {
               <span>100%</span>
             </div>
             <p className="text-xs text-base-content/60 mt-2">
-              Chance to reply to unsolicited messages that look like opportunities
+              Chance to reply to unsolicited messages.
             </p>
           </div>
         </div>
@@ -339,6 +475,11 @@ const SettingsMessaging: React.FC = () => {
                   <td>{settings.allowBotToBot ? '✅ true' : '➖ false'}</td>
                 </tr>
                 <tr>
+                  <td>Bot Response Modifier</td>
+                  <td>MESSAGE_BOT_RESPONSE_MODIFIER</td>
+                  <td>{settings.botResponseModifier.toFixed(2)}</td>
+                </tr>
+                <tr>
                   <td>Unsolicited Addressed</td>
                   <td>MESSAGE_UNSOLICITED_ADDRESSED</td>
                   <td>{settings.unsolicitedAddressed ? '✅ true' : '➖ false'}</td>
@@ -362,6 +503,16 @@ const SettingsMessaging: React.FC = () => {
                   <td>Add User Hint</td>
                   <td>MESSAGE_ADD_USER_HINT</td>
                   <td>{settings.addUserHint ? '✅ true' : '➖ false'}</td>
+                </tr>
+                <tr>
+                  <td>Semantic Relevance</td>
+                  <td>MESSAGE_SEMANTIC_RELEVANCE_ENABLED</td>
+                  <td>{settings.semanticRelevanceEnabled ? '✅ true' : '➖ false'}</td>
+                </tr>
+                <tr>
+                  <td>Semantic Relevance Bonus</td>
+                  <td>MESSAGE_SEMANTIC_RELEVANCE_BONUS</td>
+                  <td>{settings.semanticRelevanceBonus}x</td>
                 </tr>
               </tbody>
             </table>

@@ -12,7 +12,6 @@ import { useSuccessToast, useErrorToast } from '../components/DaisyUI/ToastNotif
 import Modal, { ConfirmModal } from '../components/DaisyUI/Modal';
 import PageHeader from '../components/DaisyUI/PageHeader';
 import SearchFilterBar from '../components/SearchFilterBar';
-<<<<<<< HEAD
 import { PROVIDER_CATEGORIES } from '../config/providers';
 import { useLlmStatus } from '../hooks/useLlmStatus';
 import { usePageLifecycle } from '../hooks/usePageLifecycle';
@@ -38,18 +37,44 @@ interface BotData {
   config?: any; // Bot specific config overrides
   envOverrides?: any;
 }
-=======
-import EmptyState from '../components/DaisyUI/EmptyState';
-import { LoadingSpinner } from '../components/DaisyUI/Loading';
-import { withRetry, ErrorService } from '../services/apiService';
-import apiService from '../services/apiService';
-import type { BotConfig, ProviderModalState } from '../types/bot';
-import { LLMProviderType, MessageProviderType } from '../types/bot';
-import BotCard from '../components/BotManagement/BotCard';
-import CreateBotWizard from '../components/BotManagement/CreateBotWizard';
-import BotSettingsModal from '../components/BotSettingsModal';
-import { useLocation } from 'react-router-dom';
->>>>>>> origin/main
+
+
+const getStatusIcon = (status: string, connected?: boolean) => {
+  if (status === 'active' && connected) return <span className="text-success text-lg">🟢</span>;
+  if (status === 'active') return <span className="text-warning text-lg">🟡</span>;
+  if (status === 'error') return <span className="text-error text-lg">🔴</span>;
+  return <span className="text-base-content/30 text-lg">⚪</span>;
+};
+
+const getStatusText = (status: string, connected?: boolean) => {
+  if (status === 'active' && connected) return 'Online';
+  if (status === 'active') return 'Starting...';
+  if (status === 'error') return 'Error';
+  return 'Offline';
+};
+
+const getStatusBadgeClass = (status: string, connected?: boolean) => {
+  if (status === 'active' && connected) return 'badge-success badge-outline';
+  if (status === 'active') return 'badge-warning badge-outline';
+  if (status === 'error') return 'badge-error badge-outline';
+  return 'badge-ghost badge-outline';
+};
+
+const formatTimeAgo = (dateStr: string) => {
+  if (!dateStr) return 'Never';
+  const date = new Date(dateStr);
+  const seconds = Math.floor((new Date().getTime() - date.getTime()) / 1000);
+
+  if (seconds < 60) return 'Just now';
+  if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`;
+  if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`;
+  return `${Math.floor(seconds / 86400)}d ago`;
+};
+
+const redactString = (str?: string) => {
+  if (!str || str.length <= 4) return str;
+  return str.substring(0, 2) + '*'.repeat(Math.min(str.length - 4, 8)) + str.substring(str.length - 2);
+};
 
 const BotsPage: React.FC = () => {
   const [bots, setBots] = useState<BotConfig[]>([]);
@@ -65,7 +90,6 @@ const BotsPage: React.FC = () => {
   const [activityLogs, setActivityLogs] = useState<any[]>([]);
   const [chatHistory, setChatHistory] = useState<any[]>([]);
   const [logFilter, setLogFilter] = useState('');
-<<<<<<< HEAD
   const [previewTab, setPreviewTab] = useState<'activity' | 'chat'>('activity');
 
   // Create Bot State
@@ -130,18 +154,7 @@ const BotsPage: React.FC = () => {
 
   // Derived state
   const bots = data?.bots || [];
-  /**
-   * Memoized list of bots filtered by searchQuery, preventing O(N) re-computation on every render.
-   */
-  const filteredBots = useMemo(() => bots.filter((bot) => {
-    const q = searchQuery.toLowerCase();
-    return (
-      bot.name.toLowerCase().includes(q) ||
-      (bot.provider || '').toLowerCase().includes(q) ||
-      ((bot as any).messageProvider || '').toLowerCase().includes(q) ||
-      (bot.llmProvider || '').toLowerCase().includes(q)
-    );
-  }), [bots, searchQuery]);
+
   const personas = data?.personas || [];
   const llmProfiles = data?.llmProfiles || [];
   const globalConfig = data?.globalConfig || {};
@@ -203,12 +216,6 @@ const BotsPage: React.FC = () => {
       // e.g. 'openai' or 'openai-prod'
       return validPrefixes.some((prefix) => key === prefix || key.startsWith(`${prefix}-`));
     });
-=======
-  
-  const toast = {
-    success: useSuccessToast(),
-    error: useErrorToast()
->>>>>>> origin/main
   };
 
   const location = useLocation();
@@ -270,7 +277,7 @@ const BotsPage: React.FC = () => {
     }
   };
 
-  const handleDeleteBot = async () => {
+  const handleDeleteBot = React.useCallback(async () => {
     if (!deletingBot) return;
     try {
       await apiService.delete(`/api/bots/${deletingBot.id}`);
@@ -301,7 +308,7 @@ const BotsPage: React.FC = () => {
       ErrorService.report(err, { action: 'toggleBotStatus', botId: bot.id });
       toast.error(err instanceof Error ? err.message : 'Failed to update bot status');
     }
-  };
+  }, [previewBot?.id, toast]);
 
   const filteredBots = useMemo(() => {
     return bots.filter(bot => {
@@ -312,7 +319,7 @@ const BotsPage: React.FC = () => {
     });
   }, [bots, searchQuery, filterType]);
 
-  const handlePreviewBot = async (bot: BotConfig) => {
+  const handlePreviewBot = React.useCallback(async (bot: BotConfig) => {
     setPreviewBot(bot);
     setPreviewTab('activity');
     setActivityLogs([]);
@@ -341,7 +348,6 @@ const BotsPage: React.FC = () => {
     );
   }, [activityLogs, logFilter]);
 
-<<<<<<< HEAD
     try {
       setActionLoading(deleteModal.bot.id);
       await apiService.deleteBot(deleteModal.bot.id);
@@ -419,16 +425,6 @@ const BotsPage: React.FC = () => {
       str.substring(0, 2) + '*'.repeat(Math.min(str.length - 4, 8)) + str.substring(str.length - 2)
     );
   };
-=======
-  if (loading && bots.length === 0) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[400px]">
-        <LoadingSpinner size="lg" />
-        <p className="mt-4 text-base-content/60 animate-pulse">Loading your AI Swarm...</p>
-      </div>
-    );
-  }
->>>>>>> origin/main
 
   return (
     <div className="space-y-6">
@@ -718,7 +714,6 @@ const BotsPage: React.FC = () => {
         />
       )}
 
-<<<<<<< HEAD
       {/* Delete Confirmation Modal */}
       <Modal
         isOpen={deleteModal.isOpen}
@@ -951,7 +946,6 @@ const BotsPage: React.FC = () => {
             {previewTab === 'activity' && (
               <div role="tabpanel" id="activity-panel" aria-labelledby="activity-tab">
                 <div className="flex items-center justify-end mb-3">
-<<<<<<< HEAD
                   <div className="form-control w-full flex flex-col items-end">
                     <div className="join">
                       <input
@@ -984,33 +978,6 @@ const BotsPage: React.FC = () => {
                         <option value="100">Last 100</option>
                       </select>
                     </div>
-=======
-                  <div className="flex gap-2">
-                    <input
-                      type="text"
-                      placeholder="Filter logs..."
-                      className="input input-xs input-bordered w-32"
-                      value={logFilter}
-                      onChange={(e) => setLogFilter(e.target.value)}
-                    />
-                    <select
-                      className="select select-xs select-bordered"
-                      onChange={(e) => {
-                        const limit = e.target.value;
-                        if (previewBot) {
-                          apiService
-                            .get<any>(`/api/bots/${previewBot.id}/activity?limit=${limit}`)
-                            .then((json) => {
-                              setActivityLogs(json.data?.activity || []);
-                            });
-                        }
-                      }}
-                    >
-                      <option value="20">Last 20</option>
-                      <option value="50">Last 50</option>
-                      <option value="100">Last 100</option>
-                    </select>
->>>>>>> origin/main
                   </div>
                 </div>
                 <div className="bg-base-300 rounded-lg p-4 h-48 overflow-y-auto font-mono text-xs">
@@ -1081,17 +1048,6 @@ const BotsPage: React.FC = () => {
           </div>
         )}
       </Modal>
-=======
-      <ConfirmModal
-        isOpen={!!deletingBot}
-        title="Delete Agent"
-        message={`Are you sure you want to delete ${deletingBot?.name}? This action cannot be undone.`}
-        confirmText="Delete Bot"
-        variant="error"
-        onConfirm={handleDeleteBot}
-        onCancel={() => setDeletingBot(null)}
-      />
->>>>>>> origin/main
     </div>
   );
 };

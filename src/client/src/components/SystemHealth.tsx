@@ -1,13 +1,14 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect } from 'react';
-import Card from './DaisyUI/Card';
-import { Loading } from './DaisyUI/Loading';
-import Badge from './DaisyUI/Badge';
-import { Alert } from './DaisyUI/Alert';
-import Accordion from './DaisyUI/Accordion';
-import Divider from './DaisyUI/Divider';
-import { Progress } from './DaisyUI/Loading';
-
+import {
+  Card,
+  Loading,
+  Badge,
+  Alert,
+  Accordion,
+  Divider,
+  Progress,
+} from './DaisyUI';
 import {
   CheckCircle,
   AlertTriangle,
