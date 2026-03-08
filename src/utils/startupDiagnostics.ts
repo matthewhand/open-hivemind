@@ -13,7 +13,8 @@ const startupLog = Logger.withContext('startup:diagnostics');
 
 interface EnvironmentSummary {
   critical: { key: string; value: string; status: 'present' | 'missing' | 'invalid' }[];
-  optional: { key: string; value: string; status: 'present' | 'missing' }[];
+  warning: { key: string; value: string; status: 'present' | 'missing' }[];
+  info: { key: string; value: string; status: 'present' | 'missing' }[];
   featureFlags: { key: string; value: string; description: string }[];
 }
 
@@ -69,57 +70,92 @@ export class StartupDiagnostics {
 
     const envSummary = this.analyzeEnvironmentVariables();
 
-    // Critical configuration
+    // Critical configuration (Missing = won't start)
     const criticalPresent = envSummary.critical.filter((v) => v.status === 'present').length;
-    const criticalTotal = envSummary.critical.length;
+    const criticalMissing = envSummary.critical
+      .filter((v) => v.status === 'missing')
+      .map((v) => v.key);
 
-    startupLog.info('🔐 Critical Configuration', {
-      present: `${criticalPresent}/${criticalTotal}`,
-      missing: envSummary.critical.filter((v) => v.status === 'missing').map((v) => v.key),
-    });
+    if (criticalMissing.length > 0) {
+      startupLog.error('⛔ Critical Configuration Missing', {
+        present: `${criticalPresent}/${envSummary.critical.length}`,
+        missing: criticalMissing,
+      });
+      throw new Error(`Critical configuration missing: ${criticalMissing.join(', ')}`);
+    } else {
+      startupLog.info('✅ Critical Configuration', {
+        present: `${criticalPresent}/${envSummary.critical.length}`,
+      });
+    }
 
-    // Log present critical variables (redacted)
     envSummary.critical
       .filter((v) => v.status === 'present')
       .forEach((v) => {
-        const redactedValue = redactSensitiveInfo(v.key, v.value);
-        startupLog.debug(`   ✓ ${v.key}: ${redactedValue}`);
+        startupLog.debug(`   ✓ ${v.key}: ${redactSensitiveInfo(v.key, v.value)}`);
       });
 
-    // Optional configuration
-    const optionalPresent = envSummary.optional.filter((v) => v.status === 'present').length;
+    // Warning configuration (Missing = degraded)
+    const warningPresent = envSummary.warning.filter((v) => v.status === 'present').length;
+    const warningMissing = envSummary.warning
+      .filter((v) => v.status === 'missing')
+      .map((v) => v.key);
 
-    startupLog.info('🔧 Optional Configuration', {
-      present: `${optionalPresent}/${envSummary.optional.length}`,
-    });
+    if (warningMissing.length > 0) {
+      startupLog.warn('⚠️  Warning Configuration', {
+        present: `${warningPresent}/${envSummary.warning.length}`,
+        missing: warningMissing,
+      });
+    } else {
+      startupLog.info('✅ Warning Configuration', {
+        present: `${warningPresent}/${envSummary.warning.length}`,
+      });
+    }
 
-    // Log present optional variables (redacted)
-    envSummary.optional
+    envSummary.warning
       .filter((v) => v.status === 'present')
       .forEach((v) => {
-        const redactedValue = redactSensitiveInfo(v.key, v.value);
-        startupLog.debug(`   ✓ ${v.key}: ${redactedValue}`);
+        startupLog.debug(`   ✓ ${v.key}: ${redactSensitiveInfo(v.key, v.value)}`);
+      });
+
+    // Info configuration (Missing = using default or optional)
+    const infoPresent = envSummary.info.filter((v) => v.status === 'present').length;
+    const infoMissing = envSummary.info.filter((v) => v.status === 'missing').map((v) => v.key);
+
+    startupLog.info('ℹ️  Info Configuration', {
+      present: `${infoPresent}/${envSummary.info.length}`,
+      missing: infoMissing,
+    });
+
+    envSummary.info
+      .filter((v) => v.status === 'present')
+      .forEach((v) => {
+        startupLog.debug(`   ✓ ${v.key}: ${redactSensitiveInfo(v.key, v.value)}`);
       });
   }
 
   /**
    * Analyze environment variables and categorize them
    */
-  private analyzeEnvironmentVariables(): EnvironmentSummary {
-    const criticalVars = ['NODE_ENV', 'PORT', 'MESSAGE_PROVIDER'];
+  public analyzeEnvironmentVariables(): EnvironmentSummary {
+    const criticalVars = ['NODE_ENV'];
 
-    const optionalVars = [
+    const warningVars = [
       'DISCORD_BOT_TOKEN',
       'SLACK_BOT_TOKEN',
-      'SLACK_APP_TOKEN',
-      'SLACK_SIGNING_SECRET',
       'MATTERMOST_TOKEN',
-      'MATTERMOST_URL',
       'OPENAI_API_KEY',
-      'OPENAI_BASE_URL',
       'ANTHROPIC_API_KEY',
       'OPENWEBUI_API_KEY',
       'FLOWISE_API_KEY',
+    ];
+
+    const infoVars = [
+      'PORT',
+      'MESSAGE_PROVIDER',
+      'SLACK_APP_TOKEN',
+      'SLACK_SIGNING_SECRET',
+      'MATTERMOST_URL',
+      'OPENAI_BASE_URL',
       'WEBHOOK_SECRET',
       'SECRET',
     ];
@@ -135,7 +171,8 @@ export class StartupDiagnostics {
 
     const summary: EnvironmentSummary = {
       critical: [],
-      optional: [],
+      warning: [],
+      info: [],
       featureFlags: [],
     };
 
@@ -149,10 +186,20 @@ export class StartupDiagnostics {
       });
     });
 
-    // Analyze optional variables
-    optionalVars.forEach((key) => {
+    // Analyze warning variables
+    warningVars.forEach((key) => {
       const value = process.env[key];
-      summary.optional.push({
+      summary.warning.push({
+        key,
+        value: value || '',
+        status: value ? 'present' : 'missing',
+      });
+    });
+
+    // Analyze info variables
+    infoVars.forEach((key) => {
+      const value = process.env[key];
+      summary.info.push({
         key,
         value: value || '',
         status: value ? 'present' : 'missing',
@@ -215,20 +262,14 @@ export class StartupDiagnostics {
     }
 
     const existingConfigs = configStatus.filter((c) => c.exists);
-    const missingConfigs = configStatus.filter((c) => !c.exists);
 
     startupLog.info('📁 Configuration Files', {
       loaded: existingConfigs.length,
-      missing: missingConfigs.length,
       totalSize: existingConfigs.reduce((sum, c) => sum + (c.size || 0), 0),
     });
 
     existingConfigs.forEach((config) => {
       startupLog.debug(`   ✓ ${config.path} (${config.size} bytes)`);
-    });
-
-    missingConfigs.forEach((config) => {
-      startupLog.debug(`   ⚠ ${config.path} (not found)`);
     });
   }
 
@@ -257,19 +298,13 @@ export class StartupDiagnostics {
     ];
 
     const configuredProviders = providers.filter((p) => p.configured);
-    const unconfiguredProviders = providers.filter((p) => !p.configured);
 
     startupLog.info('🔗 Provider Configuration', {
       configured: configuredProviders.length,
-      unconfigured: unconfiguredProviders.length,
     });
 
     configuredProviders.forEach((provider) => {
       startupLog.debug(`   ✓ ${provider.type}: configured`);
-    });
-
-    unconfiguredProviders.forEach((provider) => {
-      startupLog.debug(`   ⚠ ${provider.type}: not configured`);
     });
 
     // Note: Actual connectivity testing will happen during provider initialization
@@ -533,7 +568,7 @@ export class StartupDiagnostics {
    * Check if a key is likely to contain sensitive information
    */
   private isSensitiveKey(key: string): boolean {
-    const sensitivePatterns = ['token', 'secret', 'key', 'password', 'auth'];
+    const sensitivePatterns = ['token', 'secret', 'key', 'password', 'auth', 'credential', 'cert'];
     return sensitivePatterns.some((pattern) => key.toLowerCase().includes(pattern));
   }
 }

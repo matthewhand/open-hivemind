@@ -23,6 +23,7 @@ export interface ExportOptions {
   compress?: boolean;
   encrypt?: boolean;
   encryptionKey?: string;
+  maxRetainedBackups?: number;
 }
 
 export interface ImportOptions {
@@ -154,8 +155,10 @@ export class ConfigurationImportExportService {
         const versionPromises = configs
           .filter((c) => c.id != null)
           .map(async (config) => this.dbManager.getBotConfigurationVersions(config.id as number));
-        const versionsNested = await Promise.all(versionPromises);
-        const versions = versionsNested.flat();
+        const versionsNested = await Promise.allSettled(versionPromises);
+        const versions = versionsNested
+          .map((r) => (r.status === 'fulfilled' ? r.value : []))
+          .flat();
 
         exportData.versions = versions;
         exportData.metadata.versionCount = versions.length;
@@ -255,7 +258,7 @@ export class ConfigurationImportExportService {
 
       // Get main configuration from SecureConfigManager
       const secureManager = SecureConfigManager.getInstance();
-      const config = secureManager.getDecryptedMainConfig(env);
+      const config = secureManager.getConfig(env);
 
       if (!config) {
         return {

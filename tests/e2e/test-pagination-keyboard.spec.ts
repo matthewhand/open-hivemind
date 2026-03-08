@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { expect, test } from '@playwright/test';
 
 test('Test pagination keyboard and aria integration', async ({ page }) => {
   const html = `

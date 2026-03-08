@@ -64,6 +64,8 @@ const Dashboard: React.FC = () => {
       return '💬';
     case 'slack':
       return '📢';
+    case 'telegram':
+      return '✈️';
     case 'mattermost':
       return '💼';
     default:

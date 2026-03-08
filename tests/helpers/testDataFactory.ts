@@ -122,6 +122,8 @@ export const messageConfigData: ConfigTestData = {
   },
 };
 
+<<<<<<< HEAD
+=======
 // Telegram Config Test Data
 export const telegramConfigData: ConfigTestData = {
   defaults: {
@@ -150,6 +152,51 @@ export const telegramConfigData: ConfigTestData = {
   },
 };
 
+// Mattermost Config Test Data
+export const mattermostConfigData: ConfigTestData = {
+  defaults: {
+    MATTERMOST_SERVER_URL: '',
+    MATTERMOST_TOKEN: '',
+    MATTERMOST_CHANNEL: '',
+  },
+  envVars: {
+    MATTERMOST_SERVER_URL: 'https://mattermost.example.com',
+    MATTERMOST_TOKEN: 'test-mattermost-token-123',
+    MATTERMOST_CHANNEL: 'town-square',
+  },
+  expectedResults: {
+    MATTERMOST_SERVER_URL: 'https://mattermost.example.com',
+    MATTERMOST_TOKEN: 'test-mattermost-token-123',
+    MATTERMOST_CHANNEL: 'town-square',
+  },
+};
+
+// Webhook Config Test Data
+export const webhookConfigData: ConfigTestData = {
+  defaults: {
+    WEBHOOK_ENABLED: false,
+    WEBHOOK_URL: '',
+    WEBHOOK_TOKEN: '',
+    WEBHOOK_IP_WHITELIST: '',
+    WEBHOOK_PORT: 80,
+  },
+  envVars: {
+    WEBHOOK_ENABLED: 'true',
+    WEBHOOK_URL: 'https://webhook.example.com/receive',
+    WEBHOOK_TOKEN: 'test-webhook-token-123',
+    WEBHOOK_IP_WHITELIST: '127.0.0.1,192.168.1.1',
+    WEBHOOK_PORT: '8080',
+  },
+  expectedResults: {
+    WEBHOOK_ENABLED: true,
+    WEBHOOK_URL: 'https://webhook.example.com/receive',
+    WEBHOOK_TOKEN: 'test-webhook-token-123',
+    WEBHOOK_IP_WHITELIST: '127.0.0.1,192.168.1.1',
+    WEBHOOK_PORT: 8080,
+  },
+};
+
+>>>>>>> origin/main
 // Slack Config Test Data
 export const slackConfigData: ConfigTestData = {
   defaults: {
@@ -215,11 +262,25 @@ export const commandParserTestData = {
   },
 };
 
+<<<<<<< HEAD
+/**
+ * Factory function to create test data for different scenarios
+ */
+export type CommandParserTestData = typeof commandParserTestData;
+
+export function createTestData(type: 'discord'): ConfigTestData;
+export function createTestData(type: 'message'): ConfigTestData;
+export function createTestData(type: 'slack'): ConfigTestData;
+export function createTestData(type: 'command'): CommandParserTestData;
+export function createTestData(type: 'discord' | 'message' | 'slack' | 'command'): ConfigTestData | CommandParserTestData {
+=======
 import fc from 'fast-check';
 import discordConfig from '../../src/config/discordConfig';
 import messageConfig from '../../src/config/messageConfig';
 import slackConfig from '../../src/config/slackConfig';
 import telegramConfig from '../../src/config/telegramConfig';
+import mattermostConfig from '../../src/config/mattermostConfig';
+import webhookConfig from '../../src/config/webhookConfig';
 
 /**
  * Validates generated config test data against the real backend convict schema
@@ -228,7 +289,7 @@ import telegramConfig from '../../src/config/telegramConfig';
  * @param data The generated expectedResults
  * @returns true if valid, throws error otherwise
  */
-export function validateConfigAgainstSchema(type: 'discord' | 'message' | 'slack' | 'telegram', data: any): boolean {
+export function validateConfigAgainstSchema(type: 'discord' | 'message' | 'slack' | 'telegram' | 'mattermost' | 'webhook', data: any): boolean {
   try {
     switch (type) {
       case 'discord':
@@ -247,63 +308,62 @@ export function validateConfigAgainstSchema(type: 'discord' | 'message' | 'slack
         telegramConfig.load(data);
         telegramConfig.validate({ allowed: 'strict' });
         break;
+      case 'mattermost':
+        mattermostConfig.load(data);
+        mattermostConfig.validate({ allowed: 'strict' });
+        break;
+      case 'webhook':
+        webhookConfig.load(data);
+        webhookConfig.validate({ allowed: 'strict' });
+        break;
     }
     return true;
   } catch (error) {
-    throw new Error(`Test data validation failed for ${type}: ${error}`);
+    console.error(`Schema drift detected for ${type}:`, error);
+    throw error;
   }
 }
 
 /**
- * Factory function to create test data for different scenarios
- *
- * @param type The type of test data to generate ('discord', 'message', 'slack', 'telegram', 'command')
- * @returns The requested test data. For messaging providers, this includes defaults, envVars, and expectedResults.
- *
- * Required fields by provider:
- * - discord: DISCORD_BOT_TOKEN, DISCORD_CLIENT_ID
- * - message: MESSAGE_PROVIDER, BOT_ID, NAME, PLATFORM
- * - slack: SLACK_BOT_TOKEN, SLACK_APP_TOKEN, SLACK_SIGNING_SECRET
- * - telegram: TELEGRAM_BOT_TOKEN, TELEGRAM_WEBHOOK_URL, TELEGRAM_PARSE_MODE
+ * Generates strongly-typed test data for different platform and command scenarios
  */
-export function createTestData(type: 'discord' | 'message' | 'slack' | 'telegram' | 'command'): any {
+export function createTestData(type: 'discord' | 'message' | 'slack' | 'command'): any {
   let data;
+>>>>>>> origin/main
   switch (type) {
     case 'discord':
-      data = discordConfigData;
-      break;
+      return discordConfigData;
     case 'message':
-      data = messageConfigData;
-      break;
+      return messageConfigData;
     case 'slack':
+<<<<<<< HEAD
+      return slackConfigData;
+=======
       data = slackConfigData;
       break;
     case 'telegram':
       data = telegramConfigData;
       break;
+    case 'mattermost':
+      data = mattermostConfigData;
+      break;
+    case 'webhook':
+      data = webhookConfigData;
+      break;
+>>>>>>> origin/main
     case 'command':
       return commandParserTestData;
     default:
       throw new Error(`Unknown test data type: ${type}`);
   }
+<<<<<<< HEAD
+=======
 
   // Validate the data against the schema
-  validateConfigAgainstSchema(type as 'discord' | 'message' | 'slack' | 'telegram', data.expectedResults);
+  validateConfigAgainstSchema(type as 'discord' | 'message' | 'slack' | 'telegram' | 'mattermost' | 'webhook', data.expectedResults);
   return data;
+>>>>>>> origin/main
 }
-
-/**
- * Property-based test generator for Telegram configuration
- * Generates random, valid Telegram configurations for property-based testing
- */
-export const telegramConfigGenerator = fc.record({
-  TELEGRAM_BOT_TOKEN: fc.string({ minLength: 10 }),
-  TELEGRAM_WEBHOOK_URL: fc.webUrl().chain(url => fc.constant(url || '')),
-  TELEGRAM_PARSE_MODE: fc.constantFrom('HTML', 'Markdown', 'None', ''),
-  TELEGRAM_ALLOWED_CHATS: fc.array(fc.integer()).map(arr => arr.join(',')),
-  TELEGRAM_BLOCKED_USERS: fc.array(fc.integer()).map(arr => arr.join(',')),
-  TELEGRAM_ENABLE_COMMANDS: fc.boolean()
-});
 
 /**
  * Helper to generate performance test data
