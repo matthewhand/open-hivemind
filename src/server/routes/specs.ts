@@ -77,6 +77,10 @@ router.get('/', async (req, res) => {
 router.get('/:id', async (req, res) => {
   const { id } = req.params;
 
+  if (!/^[a-zA-Z0-9_-]+$/.test(id)) {
+    return res.status(400).json({ error: 'Invalid spec ID format' });
+  }
+
   const targetPath = path.join(specsDirectory, id);
   const resolvedTargetPath = path.resolve(targetPath);
   const resolvedSpecsDirectory = path.resolve(specsDirectory);
