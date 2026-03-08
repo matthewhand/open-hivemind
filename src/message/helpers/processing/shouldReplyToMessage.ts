@@ -1,10 +1,7 @@
 import Debug from 'debug';
 import messageConfig from '@config/messageConfig';
 import TypingMonitor from '../monitoring/TypingMonitor';
-import {
-  looksLikeOpportunity,
-  shouldReplyToUnsolicitedMessage,
-} from '../unsolicitedMessageHandler';
+import { shouldReplyToUnsolicitedMessage } from '../unsolicitedMessageHandler';
 import { getLastBotActivity } from './ChannelActivity';
 import { GlobalActivityTracker } from './GlobalActivityTracker';
 import { IncomingMessageDensity } from './IncomingMessageDensity';

@@ -1,7 +1,8 @@
 import Debug from 'debug';
 import { Router } from 'express';
-import { DatabaseManager, type Anomaly } from '../../database/DatabaseManager';
+import { DatabaseManager } from '../../database/DatabaseManager';
 import { AnomalyDetectionService } from '../../services/AnomalyDetectionService';
+import type { AuthMiddlewareRequest } from '../../auth/types';
 
 const debug = Debug('app:webui:anomaly');
 const router = Router();
@@ -34,7 +35,7 @@ router.get('/', async (req, res) => {
 
     // Get tenantId from request user if available (assuming req.user is populated by authenticateToken)
     // The authenticateToken middleware usually populates req.user
-    const tenantId = (req as any).user?.tenantId;
+    const tenantId = (req as AuthMiddlewareRequest).user?.id;
 
     const anomalies = await dbManager.getActiveAnomalies(tenantId);
     res.json(anomalies);
@@ -58,7 +59,7 @@ router.get('/history', async (req, res) => {
       return;
     }
 
-    const tenantId = (req as any).user?.tenantId;
+    const tenantId = (req as AuthMiddlewareRequest).user?.id;
 
     const anomalies = await dbManager.getAnomalies(tenantId);
     res.json(anomalies);

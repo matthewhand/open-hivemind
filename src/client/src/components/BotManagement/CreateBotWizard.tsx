@@ -25,7 +25,7 @@ export const CreateBotWizard: React.FC<CreateBotWizardProps> = ({
     const [formData, setFormData] = useState({
         name: '',
         description: '',
-        messageProvider: '',
+        messageProvider: 'discord',
         llmProvider: '',
         persona: 'default',
         mcpGuardProfile: '',
@@ -137,7 +137,7 @@ export const CreateBotWizard: React.FC<CreateBotWizardProps> = ({
             )}
 
             {/* Content */}
-            <div className="flex-1 overflow-y-auto px-1 pb-16">
+            <div className="flex-1 overflow-y-auto px-1">
                 {step === 1 && (
                     <div className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-300">
                         <Input
@@ -160,34 +160,24 @@ export const CreateBotWizard: React.FC<CreateBotWizardProps> = ({
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div className="form-control">
-                                <label className="label"><span className="label-text">Message Provider <span className="text-error">*</span></span></label>
-                                <div className="join w-full">
-                                    <select
-                                        className={`select select-bordered join-item w-full ${!formData.messageProvider ? 'select-error' : ''}`}
-                                        value={formData.messageProvider}
-                                        onChange={e => {
-                                            if (e.target.value === '___manage___') {
-                                                window.open('/admin/config', '_blank');
-                                                return;
-                                            }
-                                            setFormData({ ...formData, messageProvider: e.target.value });
-                                        }}
-                                    >
-                                        <option value="">Select Provider</option>
-                                        <option value="discord">Discord</option>
-                                        <option value="slack">Slack</option>
-                                        <option value="mattermost">Mattermost</option>
-                                        <option disabled>──────────</option>
-                                        <option value="___manage___">Add / Manage Providers...</option>
-                                    </select>
-                                    <button
-                                        className="btn btn-square join-item"
-                                        onClick={() => window.open('/admin/config', '_blank')}
-                                        title="Manage Providers"
-                                    >
-                                        +
-                                    </button>
-                                </div>
+                                <label className="label"><span className="label-text">Message Provider</span></label>
+                                <select
+                                    className="select select-bordered w-full"
+                                    value={formData.messageProvider}
+                                    onChange={e => {
+                                        if (e.target.value === '___manage___') {
+                                            window.open('/admin/config', '_blank');
+                                            return;
+                                        }
+                                        setFormData({ ...formData, messageProvider: e.target.value });
+                                    }}
+                                >
+                                    <option value="discord">Discord</option>
+                                    <option value="slack">Slack</option>
+                                    <option value="mattermost">Mattermost</option>
+                                    <option disabled>──────────</option>
+                                    <option value="___manage___">Add / Manage Providers...</option>
+                                </select>
                             </div>
 
                             <div className="form-control">
@@ -195,7 +185,7 @@ export const CreateBotWizard: React.FC<CreateBotWizardProps> = ({
                                     <span className="label-text">LLM Provider {defaultLlmConfigured ? '(optional)' : <span className="text-error">*</span>}</span>
                                 </label>
                                 <select
-                                    className={`select select-bordered w-full ${(!defaultLlmConfigured && !formData.llmProvider) ? 'select-error' : ''}`}
+                                    className="select select-bordered w-full"
                                     value={formData.llmProvider}
                                     onChange={e => {
                                         if (e.target.value === '___manage___') {
@@ -214,13 +204,13 @@ export const CreateBotWizard: React.FC<CreateBotWizardProps> = ({
                                 </select>
                                 <label className="label" aria-live="polite" aria-atomic="true">
                                     {!defaultLlmConfigured && !formData.llmProvider && (
-                                        <span className="label-text-alt text-error">
+                                        <span className="label-text-alt text-error whitespace-normal break-words">
                                             System default is not configured. Please select a provider.
                                         </span>
                                     )}
                                     {defaultLlmConfigured && !formData.llmProvider && (
-                                        <span className="label-text-alt text-success flex items-center gap-1">
-                                            <Check className="w-3 h-3" /> Using system default configuration
+                                        <span className="label-text-alt text-success flex items-center gap-1 whitespace-normal break-words">
+                                            <Check className="w-3 h-3 min-w-[12px]" /> Using system default configuration
                                         </span>
                                     )}
                                 </label>

@@ -40,6 +40,7 @@ const createMockService = (name: string): IShutdownable & { name: string } => ({
 describe('ShutdownCoordinator', () => {
   let coordinator: ShutdownCoordinator;
   let exitProcessSpy: jest.SpyInstance;
+  const originalEnv = process.env;
 
   beforeEach(() => {
     jest.resetModules();
@@ -104,7 +105,7 @@ describe('ShutdownCoordinator', () => {
 
   describe('Phase Management', () => {
     it('should start in IDLE phase', () => {
-      expect(coordinator.getCurrentPhase()).toBe(ShutdownPhase.IDLE);
+      expect(coordinator.getCurrentPhase()).toBe('idle');
     });
 
     it('should transition through phases during shutdown', async () => {
@@ -116,7 +117,7 @@ describe('ShutdownCoordinator', () => {
       // Since execution is instantaneous with mocks, we just wait for completion
       await jest.runAllTimersAsync();
       await shutdownPromise;
-      expect(coordinator.getCurrentPhase()).toBe(ShutdownPhase.COMPLETE);
+      expect(coordinator.getCurrentPhase()).toBe('complete');
     });
   });
 
@@ -130,7 +131,7 @@ describe('ShutdownCoordinator', () => {
       await shutdownPromise;
 
       expect(httpServer.close).toHaveBeenCalled();
-      expect(exitSpy).toHaveBeenCalledWith(0);
+      expect(exitProcessSpy).toHaveBeenCalledWith(0);
     });
 
     it('should close Vite server during shutdown', async () => {
@@ -219,6 +220,32 @@ describe('ShutdownCoordinator', () => {
 
       // HTTP server should only be closed once
       expect(httpServer.close).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe('Graceful Service Shutdown', () => {
+    it('should clear intervals and release memory for generic services during shutdown', async () => {
+      let intervalCleared = false;
+      let mockInterval: any = setTimeout(() => {}, 1000); // create a dummy timeout to mock interval
+
+      const memoryLeakingService: IShutdownable = {
+        name: 'MemoryLeakingService',
+        shutdown: jest.fn(async () => {
+          clearTimeout(mockInterval);
+          intervalCleared = true;
+          return Promise.resolve();
+        }),
+      };
+
+      coordinator.registerService(memoryLeakingService);
+
+      const shutdownPromise = coordinator.initiateShutdown('SIGTERM');
+      await jest.runAllTimersAsync();
+      await shutdownPromise;
+
+      expect(memoryLeakingService.shutdown).toHaveBeenCalled();
+      expect(intervalCleared).toBe(true);
+      expect(coordinator.getCurrentPhase()).toBe('complete');
     });
   });
 

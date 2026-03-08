@@ -87,7 +87,7 @@ For developers who want to modify the code or run locally without Docker.
 
 3.  **Start the development server:**
     ```bash
-    pnpm dev
+    pnpm run dev
     ```
 
 Access the WebUI at `http://localhost:3028`.

@@ -71,6 +71,8 @@ export interface AnomalyDetection {
   severity: 'low' | 'medium' | 'high' | 'critical';
   type: 'spike' | 'drop' | 'trend-change' | 'seasonal-anomaly';
   confidence: number;
+  lowerBound?: number;
+  upperBound?: number;
   explanation: string;
   recommendedAction?: string;
 }
@@ -284,6 +286,8 @@ const detectAnomalies = (historicalData: TimeSeriesData[], forecast: ForecastRes
         severity,
         type: data.value > expected ? 'spike' : 'drop',
         confidence: correspondingForecast.confidence,
+        lowerBound: correspondingForecast.lowerBound,
+        upperBound: correspondingForecast.upperBound,
         explanation: `Value deviated ${(deviation * 100).toFixed(1)}% from expected`,
         recommendedAction: severity === 'critical' ? 'Investigate immediately' :
           severity === 'high' ? 'Monitor closely' : 'Keep watching',
@@ -634,6 +638,7 @@ export const PredictiveAnalytics: React.FC = () => {
                     <th>Timestamp</th>
                     <th className="text-right">Value</th>
                     <th className="text-right">Expected</th>
+                    {showConfidenceBands && <th className="text-right">Confidence Band</th>}
                     <th className="text-right">Deviation</th>
                     <th className="text-center">Severity</th>
                     <th>Type</th>
@@ -646,6 +651,11 @@ export const PredictiveAnalytics: React.FC = () => {
                       <td>{anomaly.timestamp.toLocaleString()}</td>
                       <td className="text-right">{anomaly.value.toFixed(2)}</td>
                       <td className="text-right">{anomaly.expected.toFixed(2)}</td>
+                      {showConfidenceBands && (
+                        <td className="text-right text-base-content/70">
+                          [{anomaly.lowerBound?.toFixed(2)} - {anomaly.upperBound?.toFixed(2)}]
+                        </td>
+                      )}
                       <td className="text-right">{(anomaly.deviation * 100).toFixed(1)}%</td>
                       <td className="text-center">
                         <div className={`badge badge-sm ${anomaly.severity === 'critical' ? 'badge-error' :

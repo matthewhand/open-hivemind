@@ -11,6 +11,7 @@ const debug = Debug('app:AuthManager');
 export class AuthManager {
   private static instance: AuthManager;
   private users = new Map<string, User>();
+  private generatedPassword: string | null = null;
   private refreshTokens = new Set<string>();
   private readonly jwtSecret: string;
   private readonly jwtRefreshSecret: string;
@@ -108,6 +109,7 @@ export class AuthManager {
 
     if (!password) {
       password = crypto.randomBytes(16).toString('hex');
+      this.generatedPassword = password;
       console.warn('================================================================');
       console.warn('WARNING: No ADMIN_PASSWORD environment variable found.');
       console.warn(`Generated temporary admin password: ${password}`);
@@ -208,7 +210,7 @@ export class AuthManager {
 
     // Destructure to omit passwordHash — setting it to undefined leaves the
     // key present in JSON output; omitting via destructuring removes it entirely.
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+
     const { passwordHash: _ph, ...safeUser } = user;
     return safeUser;
   }
@@ -243,7 +245,6 @@ export class AuthManager {
 
     debug(`User logged in: ${user.username}`);
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { passwordHash: _ph, ...safeUser } = user;
     return {
       accessToken,
@@ -277,7 +278,6 @@ export class AuthManager {
       this.refreshTokens.delete(refreshToken);
       this.refreshTokens.add(newRefreshToken);
 
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { passwordHash: _ph, ...safeUser } = user;
       return {
         accessToken: newAccessToken,
@@ -351,10 +351,13 @@ export class AuthManager {
   /**
    * Get user by ID
    */
+  public getGeneratedPassword(): string | null {
+    return this.generatedPassword;
+  }
+
   public getUser(userId: string): User | null {
     const user = this.users.get(userId);
     if (user) {
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { passwordHash: _ph, ...safeUser } = user;
       return safeUser;
     }
@@ -377,7 +380,6 @@ export class AuthManager {
    */
   public getAllUsers(): User[] {
     return Array.from(this.users.values()).map((user) => {
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { passwordHash: _ph, ...safeUser } = user;
       return safeUser;
     });
@@ -395,7 +397,6 @@ export class AuthManager {
     const updatedUser = { ...user, ...updates };
     this.users.set(userId, updatedUser);
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { passwordHash: _ph, ...safeUser } = updatedUser;
     return safeUser;
   }
