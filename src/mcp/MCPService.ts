@@ -53,7 +53,7 @@ export class MCPService {
       debug(`Testing connection to MCP server: ${config.name} at ${config.serverUrl}`);
 
       // Dynamically require the MCP SDK
-      const { Client } = require('@modelcontextprotocol/sdk');
+      const { Client } = require('@modelcontextprotocol/sdk/client/index.js');
 
       // Create a new client for this server
       const client = new Client({
@@ -110,7 +110,7 @@ export class MCPService {
       debug(`Connecting to MCP server: ${config.name} at ${config.serverUrl}`);
 
       // Dynamically require the MCP SDK
-      const { Client } = require('@modelcontextprotocol/sdk');
+      const { Client } = require('@modelcontextprotocol/sdk/client/index.js');
 
       // Create a new client for this server
       const client = new Client({

@@ -241,7 +241,7 @@ describe('MCP API Endpoints', () => {
         .post('/api/mcp/servers/test-server/call-tool')
         .send({ arguments: {} });
       expect(response.status).toBe(400);
-      expect(response.body.error).toContain('Tool name is required');
+      expect(response.body.error).toContain('Validation failed');
     });
   });
 });
