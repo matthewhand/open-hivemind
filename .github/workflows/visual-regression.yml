@@ -66,11 +66,10 @@ jobs:
         node-version: '20'
         cache: 'pnpm'
         cache-dependency-path: webui/client/package-lock.json
-
     - name: Install dependencies
       run: |
         cd webui/client
-        npm ci
+        pnpm install
 
     - name: Install Playwright Browsers
       run: |
@@ -81,12 +80,12 @@ jobs:
     - name: Build application
       run: |
         cd webui/client
-        npm run build
+        pnpm run build
 
     - name: Start application
       run: |
         cd webui/client
-        npm run preview &
+        pnpm run preview &
         sleep 10
 
     - name: Wait for application to be ready
@@ -194,11 +193,10 @@ jobs:
         node-version: '20'
         cache: 'pnpm'
         cache-dependency-path: webui/client/package-lock.json
-
     - name: Install dependencies
       run: |
         cd webui/client
-        npm ci
+        pnpm install
 
     - name: Install Playwright Browsers
       run: |
@@ -208,8 +206,8 @@ jobs:
     - name: Update baseline screenshots
       run: |
         cd webui/client
-        npm run build
-        npm run preview &
+        pnpm run build
+        pnpm run preview &
         sleep 10
         timeout 60 bash -c 'until curl -f http://localhost:4173; do sleep 2; done'
         npx playwright test --project=chromium --update-snapshots
