@@ -185,6 +185,7 @@ test-results/
 *.md
 # Keep important documentation files tracked
 !README.md
+!CLAUDE.md
 !docs/**
 !docs/README.md
 !docs/ARCHITECTURE.md
@@ -216,3 +217,6 @@ AGENTS.md
 # Secure config
 config/secure/
 config/.key
+
+# Agent-generated screenshots (use docs/screenshots/ for canonical)
+/*.png
