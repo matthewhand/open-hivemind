@@ -2,57 +2,24 @@ import fs from 'fs';
 import path from 'path';
 import Debug from 'debug';
 import { Router } from 'express';
-import type { Request } from 'express';
 
-// Define a type for internal request casting since AuthMiddlewareRequest import is failing
-type AuthMiddlewareRequest = Request & { user?: { id: string; role: string; username?: string } };
-import { testMattermostConnection } from '@hivemind/adapter-mattermost';
-import { testSlackConnection } from '@hivemind/adapter-slack';
 import { redactSensitiveInfo } from '../../common/redactSensitiveInfo';
+import type { AuthMiddlewareRequest } from '../../auth/types';
 import { BotConfigurationManager } from '../../config/BotConfigurationManager';
-import {
-  getGuardrailProfiles,
-  saveGuardrailProfiles,
-  type GuardrailProfile,
-} from '../../config/guardrailProfiles';
 import llmConfig from '../../config/llmConfig';
 import { getLlmDefaultStatus } from '../../config/llmDefaultStatus';
-import { getLlmProfiles, saveLlmProfiles, type ProviderProfile } from '../../config/llmProfiles';
-import llmTaskConfig from '../../config/llmTaskConfig';
-import {
-  createMcpServerProfile,
-  deleteMcpServerProfile,
-  getMcpServerProfiles,
-  updateMcpServerProfile,
-} from '../../config/mcpServerProfiles';
+import { getLlmProfiles, saveLlmProfiles } from '../../config/llmProfiles';
 import messageConfig from '../../config/messageConfig';
-import { getMessageDefaultStatus } from '../../config/messageDefaultStatus';
-import {
-  getMessageProfiles,
-  saveMessageProfiles,
-  type MessageProfile,
-} from '../../config/messageProfiles';
-import {
-  createResponseProfile,
-  deleteResponseProfile,
-  getResponseProfiles,
-  updateResponseProfile,
-  type ResponseProfile,
-} from '../../config/responseProfileManager';
+import { getMessageProfiles, saveMessageProfiles } from '../../config/messageProfiles';
 import { UserConfigStore } from '../../config/UserConfigStore';
 import webhookConfig from '../../config/webhookConfig';
 import { BotManager } from '../../managers/BotManager';
 import { providerRegistry } from '../../registries/ProviderRegistry';
-import DemoModeService from '../../services/DemoModeService';
-import { ErrorUtils, HivemindError, type AppError } from "../../types/errors";
+import { ErrorUtils, type AppError } from '../../types/errors';
 import { type IProvider } from '../../types/IProvider';
-import {
-  ConfigBackupSchema,
-  ConfigRestoreSchema,
-  ConfigUpdateSchema,
-} from '../../validation/schemas/configSchema';
+import { ConfigUpdateSchema } from '../../validation/schemas/configSchema';
 import { validateRequest } from '../../validation/validateRequest';
-import { AuditedRequest, auditMiddleware, logConfigChange } from '../middleware/audit';
+import { auditMiddleware, logConfigChange } from '../middleware/audit';
 
 /**
  * Validates that a config name is safe to use in file paths.
@@ -297,6 +264,220 @@ router.get('/bots', async (req, res) => {
   }
 });
 
+const ERROR_CODES = {
+  MESSAGE_PROFILES_GET_ERROR: 'MESSAGE_PROFILES_GET_ERROR',
+  MESSAGE_PROFILE_CREATE_ERROR: 'MESSAGE_PROFILE_CREATE_ERROR',
+  MESSAGE_PROFILE_UPDATE_ERROR: 'MESSAGE_PROFILE_UPDATE_ERROR',
+  MESSAGE_PROFILE_DELETE_ERROR: 'MESSAGE_PROFILE_DELETE_ERROR',
+};
+
+const ALLOWED_PROVIDERS = ['slack', 'discord', 'telegram', 'webhook', 'mattermost'];
+const KEY_REGEX = /^[a-zA-Z0-9_-]+$/;
+const MAX_KEY_LENGTH = 50;
+
+/**
+ * GET /api/config/message-profiles
+ * Retrieves all configured message profiles.
+ *
+ * Response:
+ * - 200: { profiles: MessageProfiles }
+ * - 500: { error: string, code: string }
+ */
+router.get('/message-profiles', (req, res) => {
+  try {
+    const profiles = getMessageProfiles();
+    return res.json({ profiles });
+  } catch (error: unknown) {
+    const hivemindError = ErrorUtils.toHivemindError(error) as any;
+    return res.status(hivemindError.statusCode || 500).json({
+      error: hivemindError.message,
+      code: ERROR_CODES.MESSAGE_PROFILES_GET_ERROR,
+    });
+  }
+});
+
+/**
+ * POST /api/config/message-profiles
+ * Creates a new message profile.
+ *
+ * Request Body:
+ * - key: string (alphanumeric, -, _, max 50 chars)
+ * - name: string (non-empty)
+ * - provider: string (from ALLOWED_PROVIDERS)
+ * - config: object
+ *
+ * Response:
+ * - 200: { success: true, profile: MessageProfile }
+ * - 400: { error: string } - Validation error
+ * - 409: { error: string } - Duplicate key
+ * - 500: { error: string, code: string }
+ */
+router.post('/message-profiles', (req, res) => {
+  try {
+    const { key, name, provider, config } = req.body;
+
+    // Validation
+    if (!key || key.trim() === '') {
+      return res.status(400).json({ error: 'Message profile key is required' });
+    }
+    if (key.length > MAX_KEY_LENGTH) {
+      return res.status(400).json({ error: `Message profile key cannot exceed ${MAX_KEY_LENGTH} characters` });
+    }
+    if (!KEY_REGEX.test(key)) {
+      return res.status(400).json({ error: 'Message profile key can only contain alphanumeric characters, hyphens, and underscores' });
+    }
+
+    if (!name || name.trim() === '') {
+      return res.status(400).json({ error: 'Message profile name is required' });
+    }
+
+    if (!provider || provider.trim() === '') {
+      return res.status(400).json({ error: 'Message profile provider is required' });
+    }
+    if (!ALLOWED_PROVIDERS.includes(provider.toLowerCase())) {
+      return res.status(400).json({ error: `Invalid provider. Must be one of: ${ALLOWED_PROVIDERS.join(', ')}` });
+    }
+
+    const profiles = getMessageProfiles();
+
+    // Check for duplicate key
+    const normalizedKey = key.toLowerCase();
+    if (profiles.message.some((p) => p.key.toLowerCase() === normalizedKey)) {
+      return res.status(409).json({ error: `Message profile with key '${key}' already exists` });
+    }
+
+    const newProfile = {
+      key,
+      name,
+      provider: provider.toLowerCase(),
+      config: config || {},
+    };
+
+    profiles.message.push(newProfile);
+    saveMessageProfiles(profiles);
+
+    return res.json({
+      success: true,
+      profile: newProfile,
+    });
+  } catch (error: unknown) {
+    const hivemindError = ErrorUtils.toHivemindError(error) as any;
+    return res.status(hivemindError.statusCode || 500).json({
+      error: hivemindError.message,
+      code: ERROR_CODES.MESSAGE_PROFILE_CREATE_ERROR,
+    });
+  }
+});
+
+/**
+ * PUT /api/config/message-profiles/:key
+ * Updates an existing message profile.
+ *
+ * Request Parameters:
+ * - key: string
+ *
+ * Request Body:
+ * - name: string (optional)
+ * - provider: string (optional, from ALLOWED_PROVIDERS)
+ * - config: object (optional)
+ *
+ * Response:
+ * - 200: { success: true, profile: MessageProfile }
+ * - 400: { error: string } - Validation error
+ * - 404: { error: string } - Profile not found
+ * - 500: { error: string, code: string }
+ */
+router.put('/message-profiles/:key', (req, res) => {
+  try {
+    const { key } = req.params;
+    const { name, provider, config } = req.body;
+
+    const profiles = getMessageProfiles();
+    const normalizedKey = key.toLowerCase();
+
+    const profileIndex = profiles.message.findIndex((p) => p.key.toLowerCase() === normalizedKey);
+
+    if (profileIndex === -1) {
+      return res.status(404).json({ error: `Message profile with key '${key}' not found` });
+    }
+
+    // Validation (only validate provided fields)
+    if (name !== undefined && name.trim() === '') {
+      return res.status(400).json({ error: 'Message profile name cannot be empty' });
+    }
+
+    if (provider !== undefined) {
+      if (provider.trim() === '') {
+        return res.status(400).json({ error: 'Message profile provider cannot be empty' });
+      }
+      if (!ALLOWED_PROVIDERS.includes(provider.toLowerCase())) {
+        return res.status(400).json({ error: `Invalid provider. Must be one of: ${ALLOWED_PROVIDERS.join(', ')}` });
+      }
+    }
+
+    const updatedProfile = {
+      ...profiles.message[profileIndex],
+      ...(name !== undefined && { name }),
+      ...(provider !== undefined && { provider: provider.toLowerCase() }),
+      ...(config !== undefined && { config }),
+    };
+
+    profiles.message[profileIndex] = updatedProfile;
+    saveMessageProfiles(profiles);
+
+    return res.json({
+      success: true,
+      profile: updatedProfile,
+    });
+  } catch (error: unknown) {
+    const hivemindError = ErrorUtils.toHivemindError(error) as any;
+    return res.status(hivemindError.statusCode || 500).json({
+      error: hivemindError.message,
+      code: ERROR_CODES.MESSAGE_PROFILE_UPDATE_ERROR,
+    });
+  }
+});
+
+/**
+ * DELETE /api/config/message-profiles/:key
+ * Deletes an existing message profile.
+ *
+ * Request Parameters:
+ * - key: string
+ *
+ * Response:
+ * - 200: { success: true, message: string }
+ * - 404: { error: string } - Profile not found
+ * - 500: { error: string, code: string }
+ */
+router.delete('/message-profiles/:key', (req, res) => {
+  try {
+    const { key } = req.params;
+    const profiles = getMessageProfiles();
+    const normalizedKey = key.toLowerCase();
+
+    const initialLength = profiles.message.length;
+    profiles.message = profiles.message.filter((p) => p.key.toLowerCase() !== normalizedKey);
+
+    if (profiles.message.length === initialLength) {
+      return res.status(404).json({ error: `Message profile with key '${key}' not found` });
+    }
+
+    saveMessageProfiles(profiles);
+
+    return res.json({
+      success: true,
+      message: `Message profile '${key}' deleted successfully`,
+    });
+  } catch (error: unknown) {
+    const hivemindError = ErrorUtils.toHivemindError(error) as any;
+    return res.status(hivemindError.statusCode || 500).json({
+      error: hivemindError.message,
+      code: ERROR_CODES.MESSAGE_PROFILE_DELETE_ERROR,
+    });
+  }
+});
+
 // GET /api/config/sources - List all configuration sources
 router.get('/sources', async (req, res) => {
   try {
@@ -348,8 +529,10 @@ router.get('/sources', async (req, res) => {
           };
         });
 
-      const fileStats = await Promise.all(statPromises);
-      configFiles.push(...fileStats);
+      const fileStats = await Promise.allSettled(statPromises);
+      configFiles.push(
+        ...fileStats.map((r) => (r.status === 'fulfilled' ? r.value : null)).filter(Boolean)
+      );
     }
 
     return res.json({
@@ -377,6 +560,45 @@ router.get('/llm-status', (req, res) => {
       error: hivemindError.message,
       code: 'LLM_STATUS_GET_ERROR',
     });
+  }
+});
+
+// POST /api/config/llm-profiles - Create an LLM profile
+router.post('/llm-profiles', (req, res) => {
+  try {
+    const { key, name, provider, config } = req.body;
+    if (!key || key.trim() === '') return res.status(400).json({ error: 'LLM profile key is required' });
+    if (!name || name.trim() === '') return res.status(400).json({ error: 'LLM profile name is required' });
+    if (!provider || provider.trim() === '') return res.status(400).json({ error: 'LLM profile provider is required' });
+
+    const profiles = getLlmProfiles();
+    if (profiles.llm.some((p: any) => p.key.toLowerCase() === key.toLowerCase())) {
+      return res.status(409).json({ error: `LLM profile with key '${key}' already exists` });
+    }
+
+    const newProfile = { key, name, provider: provider.toLowerCase(), config: config || {} };
+    profiles.llm.push(newProfile);
+    saveLlmProfiles(profiles);
+    return res.status(201).json({ success: true, profile: newProfile });
+  } catch (error: unknown) {
+    const hivemindError = ErrorUtils.toHivemindError(error) as AppError;
+    return res.status(hivemindError.statusCode || 500).json({ error: hivemindError.message, code: 'LLM_PROFILE_CREATE_ERROR' });
+  }
+});
+
+// DELETE /api/config/llm-profiles/:key - Delete an LLM profile
+router.delete('/llm-profiles/:key', (req, res) => {
+  try {
+    const { key } = req.params;
+    const profiles = getLlmProfiles();
+    const initial = profiles.llm.length;
+    profiles.llm = profiles.llm.filter((p: any) => p.key.toLowerCase() !== key.toLowerCase());
+    if (profiles.llm.length === initial) return res.status(404).json({ error: `LLM profile '${key}' not found` });
+    saveLlmProfiles(profiles);
+    return res.json({ success: true, message: `LLM profile '${key}' deleted` });
+  } catch (error: unknown) {
+    const hivemindError = ErrorUtils.toHivemindError(error) as AppError;
+    return res.status(hivemindError.statusCode || 500).json({ error: hivemindError.message, code: 'LLM_PROFILE_DELETE_ERROR' });
   }
 });
 

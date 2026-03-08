@@ -1,5 +1,6 @@
 import Debug from 'debug';
 import { Router } from 'express';
+import type { AuthMiddlewareRequest } from '../../auth/types';
 import { BotConfigurationManager } from '../../config/BotConfigurationManager';
 import { DatabaseManager } from '../../database/DatabaseManager';
 import { auditMiddleware, logAdminAction } from '../middleware/audit';
@@ -178,7 +179,7 @@ router.get('/env-status', async (req, res) => {
       const value = process.env[varName];
       envStatus[varName] = {
         isSet: !!value,
-        redactedValue: value ? `***${value.slice(-4)}` : undefined,
+        redactedValue: value ? redactSensitiveInfo(varName, value) : undefined,
       };
     });
 

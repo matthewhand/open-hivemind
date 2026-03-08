@@ -267,7 +267,7 @@ const SystemManagement: React.FC = () => {
         alert('Failed to restore backup: ' + (error as Error).message);
       }
     }
-  };
+  }, []);
 
   const handleDeleteBackup = React.useCallback(async (backupId: string) => {
     if (confirm('Are you sure you want to delete this backup?')) {
@@ -280,7 +280,7 @@ const SystemManagement: React.FC = () => {
         alert('Failed to delete backup: ' + (error as Error).message);
       }
     }
-  };
+  }, []);
 
   const handleClearCache = async () => {
     if (confirm('Are you sure you want to clear the system cache? This may temporarily impact performance.')) {
@@ -300,7 +300,7 @@ const SystemManagement: React.FC = () => {
     cpuUsage: 0, memoryUsage: 0, activeConnections: 0, messageRate: 0, errorRate: 0, responseTime: 0
   };
 
-  const systemMetricsCards = React.useMemo(() => [
+  const systemMetricsCards = [
     {
       title: 'Alert Management',
       subtitle: 'Active system alerts',

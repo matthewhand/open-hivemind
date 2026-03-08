@@ -9,6 +9,13 @@ import { optionalAuth } from '../middleware/auth';
 
 const router = Router();
 
+// Custom metric labels for Prometheus
+export const METRIC_LABELS = {
+  service: process.env.METRICS_SERVICE_NAME || 'open-hivemind',
+  environment: process.env.NODE_ENV || 'development',
+  version: process.env.APP_VERSION || '1.0.0',
+};
+
 // Basic health check
 router.get('/', (req, res) => {
   const memoryUsage = process.memoryUsage();
@@ -109,6 +116,16 @@ router.get('/detailed', optionalAuth, (req: Request, res: Response) => {
           : 0,
       llmUsage: metrics.llmTokenUsage,
     },
+    metrics: {
+      endpoints: {
+        prometheus: '/health/metrics',
+        detailed: '/health/detailed',
+        alerts: '/health/alerts',
+        ready: '/health/ready',
+        live: '/health/live',
+      },
+      labels: METRIC_LABELS,
+    },
   };
 
   return res.json(healthData);
@@ -206,125 +223,53 @@ router.get('/live', (req, res) => {
   });
 });
 
-// Prometheus metrics endpoint
-export const PROMETHEUS_METRICS_PATH = '/metrics/prometheus';
-
-router.get(PROMETHEUS_METRICS_PATH, async (req, res) => {
-  const uptime = process.uptime();
-  const memoryUsage = process.memoryUsage();
-  const cpuUsage = process.cpuUsage();
-
-  let customMetrics = '';
-  try {
-    customMetrics = MetricsCollector.getInstance().getPrometheusFormat();
-  } catch (error) {
-    console.warn('Failed to get custom metrics:', error);
-    customMetrics = '# ERROR: Failed to collect custom metrics\n';
-  }
-
-  // Inject Bot-Specific metrics
-  let botMetricsStr = '';
-  try {
-    const { BotMetricsService } = await import('../../server/services/BotMetricsService');
-    const botMetricsSvc = BotMetricsService.getInstance();
-    const allBotMetrics = botMetricsSvc.getAllMetrics();
-
-    botMetricsStr += `# HELP hivemind_bot_messages_total Total messages processed per bot\n`;
-    botMetricsStr += `# TYPE hivemind_bot_messages_total counter\n`;
-    for (const [botName, metrics] of Object.entries(allBotMetrics)) {
-      botMetricsStr += `hivemind_bot_messages_total{bot="${botName}"} ${metrics.messageCount}\n`;
-    }
-
-    botMetricsStr += `\n# HELP hivemind_bot_errors_total Total errors per bot\n`;
-    botMetricsStr += `# TYPE hivemind_bot_errors_total counter\n`;
-    for (const [botName, metrics] of Object.entries(allBotMetrics)) {
-      botMetricsStr += `hivemind_bot_errors_total{bot="${botName}"} ${metrics.errorCount}\n`;
-    }
-  } catch (error) {
-    console.warn('Failed to get bot metrics:', error);
-    botMetricsStr = '# ERROR: Failed to collect bot metrics\n';
-  }
-
-  const metrics = `# HELP process_uptime_seconds Process uptime in seconds
-# TYPE process_uptime_seconds gauge
-process_uptime_seconds{instance="localhost"} ${uptime}
-
-# HELP process_memory_heap_used_bytes Process heap memory used in bytes
-# TYPE process_memory_heap_used_bytes gauge
-process_memory_heap_used_bytes{instance="localhost"} ${memoryUsage.heapUsed}
-
-# HELP process_memory_heap_total_bytes Process heap memory total in bytes
-# TYPE process_memory_heap_total_bytes gauge
-process_memory_heap_total_bytes{instance="localhost"} ${memoryUsage.heapTotal}
-
-# HELP process_resident_memory_bytes Resident memory size in bytes
-# TYPE process_resident_memory_bytes gauge
-process_resident_memory_bytes{instance="localhost"} ${memoryUsage.rss}
-
-# HELP nodejs_heap_size_total_bytes Total heap size in bytes
-# TYPE nodejs_heap_size_total_bytes gauge
-nodejs_heap_size_total_bytes{instance="localhost"} ${memoryUsage.heapTotal}
-
-# HELP process_cpu_user_seconds_total Total user CPU time spent in seconds
-# TYPE process_cpu_user_seconds_total counter
-process_cpu_user_seconds_total{instance="localhost"} ${cpuUsage.user / 1000000}
-
-# HELP process_cpu_system_seconds_total Total system CPU time spent in seconds
-# TYPE process_cpu_system_seconds_total counter
-process_cpu_system_seconds_total{instance="localhost"} ${cpuUsage.system / 1000000}
-
-# HELP nodejs_version_info Node.js version info
-# TYPE nodejs_version_info gauge
-nodejs_version_info{version="${process.version}",instance="localhost"} 1
-
-${customMetrics}
-
-${botMetricsStr}
-`;
-
-  res.set('Content-Type', 'text/plain');
-  return res.send(metrics);
-});
-
 export const prometheusMetricsHandler = (req: Request, res: Response) => {
   const uptime = process.uptime();
   const memoryUsage = process.memoryUsage();
   const cpuUsage = process.cpuUsage();
+  const { service, environment, version } = METRIC_LABELS;
+
   const metrics = `# HELP process_uptime_seconds Process uptime in seconds
 # TYPE process_uptime_seconds gauge
-process_uptime_seconds ${uptime}
+process_uptime_seconds{service="${service}",environment="${environment}",version="${version}"} ${uptime}
 
 # HELP process_memory_heap_used_bytes Process heap memory used in bytes
 # TYPE process_memory_heap_used_bytes gauge
-process_memory_heap_used_bytes ${memoryUsage.heapUsed}
+process_memory_heap_used_bytes{service="${service}",environment="${environment}",version="${version}"} ${memoryUsage.heapUsed}
 
 # HELP process_memory_heap_total_bytes Process heap memory total in bytes
 # TYPE process_memory_heap_total_bytes gauge
-process_memory_heap_total_bytes ${memoryUsage.heapTotal}
+process_memory_heap_total_bytes{service="${service}",environment="${environment}",version="${version}"} ${memoryUsage.heapTotal}
 
 # HELP process_resident_memory_bytes Resident memory size in bytes
 # TYPE process_resident_memory_bytes gauge
-process_resident_memory_bytes ${memoryUsage.rss}
+process_resident_memory_bytes{service="${service}",environment="${environment}",version="${version}"} ${memoryUsage.rss}
 
 # HELP nodejs_heap_size_total_bytes Total heap size in bytes
 # TYPE nodejs_heap_size_total_bytes gauge
-nodejs_heap_size_total_bytes ${memoryUsage.heapTotal}
+nodejs_heap_size_total_bytes{service="${service}",environment="${environment}",version="${version}"} ${memoryUsage.heapTotal}
 
 # HELP process_cpu_user_seconds_total Total user CPU time spent in seconds
 # TYPE process_cpu_user_seconds_total counter
-process_cpu_user_seconds_total ${cpuUsage.user / 1000000}
+process_cpu_user_seconds_total{service="${service}",environment="${environment}",version="${version}"} ${cpuUsage.user / 1000000}
 
 # HELP process_cpu_system_seconds_total Total system CPU time spent in seconds
 # TYPE process_cpu_system_seconds_total counter
-process_cpu_system_seconds_total ${cpuUsage.system / 1000000}
+process_cpu_system_seconds_total{service="${service}",environment="${environment}",version="${version}"} ${cpuUsage.system / 1000000}
 
 # HELP nodejs_version_info Node.js version info
 # TYPE nodejs_version_info gauge
-nodejs_version_info{version="${process.version}"} 1
+nodejs_version_info{service="${service}",environment="${environment}",version="${version}",nodeVersion="${process.version}"} 1
+
+${MetricsCollector.getInstance().getPrometheusFormat()}
 `;
-  res.set('Content-Type', 'text/plain');
-  res.send(metrics);
+
+  res.set('Content-Type', 'text/plain; charset=utf-8');
+  return res.send(metrics);
 };
+
+// Prometheus metrics endpoint
+router.get('/metrics/prometheus', prometheusMetricsHandler);
 
 // API endpoints monitoring
 router.get('/api-endpoints', (req, res) => {
@@ -609,16 +554,16 @@ router.get('/errors/patterns', (req, res) => {
     timestamp: new Date().toISOString(),
     patterns: {
       errorTypes: Object.entries(errorStats)
-        .sort(([, a]: [string, any], [, b]: [string, any]) => ((b as number) - (a as number)))
+        .sort(([, a]: [string, any], [, b]: [string, any]) => (b as number) - (a as number))
         .map(([type, count]) => {
           const totalCount = Object.values(errorStats).reduce(
             (sum: number, val: any) => sum + (val as number),
             0
-          ) as number;
+          );
           return {
             type,
             count: count as number,
-            percentage: totalCount > 0 ? (Number(count) / Number(totalCount)) * 100 : 0,
+            percentage: (totalCount as number) > 0 ? ((count as number) / (totalCount as number)) * 100 : 0,
           };
         }),
       spikes: detectErrorSpikes(errorStats),

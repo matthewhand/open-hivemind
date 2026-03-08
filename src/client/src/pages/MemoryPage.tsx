@@ -267,11 +267,24 @@ const MemoryPage: React.FC = () => {
         }
     };
 
-    const stats = [
-        { id: 'total', title: 'Total Profiles', value: profiles.length, icon: 'Database', color: 'primary' as const },
-        { id: 'active', title: 'Assigned Bots', value: profiles.reduce((acc, p) => acc + p.assignedBotNames.length, 0), icon: '🤖', color: 'secondary' as const },
-        { id: 'hits', title: 'Total API Hits', value: profiles.reduce((acc, p) => acc + (p.hitCount || 0), 0), icon: 'activity', color: 'accent' as const },
-    ];
+    // Optimization: prevent O(N) re-computations on every render by combining multiple reduce passes
+    // into a single operation wrapped in useMemo.
+    const stats = useMemo(() => {
+        const aggregated = profiles.reduce(
+            (acc, p) => {
+                acc.active += p.assignedBotNames.length;
+                acc.hits += p.hitCount || 0;
+                return acc;
+            },
+            { active: 0, hits: 0 }
+        );
+
+        return [
+            { id: 'total', title: 'Total Profiles', value: profiles.length, icon: 'Database', color: 'primary' as const },
+            { id: 'active', title: 'Assigned Bots', value: aggregated.active, icon: '🤖', color: 'secondary' as const },
+            { id: 'hits', title: 'Total API Hits', value: aggregated.hits, icon: 'activity', color: 'accent' as const },
+        ];
+    }, [profiles]);
 
     return (
         <div className="space-y-6">

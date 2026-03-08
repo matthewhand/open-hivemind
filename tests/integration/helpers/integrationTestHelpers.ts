@@ -99,6 +99,10 @@ export const INTEGRATION_CONFIGS = {
     name: 'Mattermost',
     requiredEnvVars: ['MATTERMOST_TOKEN', 'MATTERMOST_URL'],
   },
+  letta: {
+    name: 'Letta',
+    requiredEnvVars: ['LETTA_API_KEY'],
+  },
 } as const;
 
 export type IntegrationName = keyof typeof INTEGRATION_CONFIGS;

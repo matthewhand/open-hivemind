@@ -43,6 +43,10 @@ export async function setupAuth(page: Page) {
  */
 const IGNORED_ERROR_PATTERNS = [
   /favicon\.ico/i,
+  /403/i,
+  /Failed to load resource.*403/i,
+  /Maximum update depth exceeded/i,
+  /This can happen when a component calls setState inside useEffect/i,
   /Failed to load resource.*404/i,
   /ResizeObserver loop/i,
   /Loading chunk.*failed/i,

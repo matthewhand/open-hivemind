@@ -25,6 +25,18 @@ const ChatPage: React.FC = () => {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [loading, setLoading] = useState(false);
   const [historyLoading, setHistoryLoading] = useState(false);
+  const [isOffline, setIsOffline] = useState(!navigator.onLine);
+
+  useEffect(() => {
+    const handleOnline = () => setIsOffline(false);
+    const handleOffline = () => setIsOffline(true);
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
 
   useEffect(() => {
     fetchBots();
@@ -198,11 +210,17 @@ const ChatPage: React.FC = () => {
                                 <span className="loading loading-spinner loading-lg text-primary"></span>
                             </div>
                         )}
+                        {isOffline && (
+                            <div className="bg-warning text-warning-content p-2 text-center text-sm font-semibold">
+                                You are currently offline. Messages cannot be sent.
+                            </div>
+                        )}
                         <ChatInterface
                             messages={messages}
                             onSendMessage={handleSendMessage}
-                            placeholder="Type a message..."
-                            className="h-full"
+                            onRetryMessage={handleRetryMessage}
+                            placeholder={isOffline ? "You are offline" : "Type a message..."}
+                            className={`h-full ${isOffline ? 'opacity-50 pointer-events-none' : ''}`}
                             maxHeight="100%"
                             isLoading={false}
                         />
