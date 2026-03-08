@@ -24,6 +24,7 @@ function withTokenCounting(provider: ILlmProvider, _instanceId: string): ILlmPro
     name: provider.name,
     supportsChatCompletion: provider.supportsChatCompletion,
     supportsCompletion: provider.supportsCompletion,
+    supportsHistory: provider.supportsHistory,
     // Add instance ID to provider object if interface allows, to help tracking?
     // For now we map it.
     generateChatCompletion: async (

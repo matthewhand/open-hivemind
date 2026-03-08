@@ -48,6 +48,7 @@ function withTokenCounting(provider: ILlmProvider, instanceId: string): ILlmProv
     name: provider.name,
     supportsChatCompletion: provider.supportsChatCompletion,
     supportsCompletion: provider.supportsCompletion,
+    supportsHistory: provider.supportsHistory,
     generateChatCompletion: async (
       userMessage: string,
       historyMessages: IMessage[],

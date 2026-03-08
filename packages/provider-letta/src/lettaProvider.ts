@@ -31,6 +31,7 @@ export class LettaProvider implements ILlmProvider {
 
   supportsChatCompletion(): boolean { return true; }
   supportsCompletion(): boolean { return false; }
+  supportsHistory(): boolean { return false; }
 
   async generateChatCompletion(
     userMessage: string,
