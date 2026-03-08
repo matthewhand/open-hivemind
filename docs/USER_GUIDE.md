@@ -67,8 +67,7 @@ Create and manage individual bot instances. Connect your AI assistants to platfo
 ![Bots Page](screenshots/bots-page.png)
 
 *   **Dedicated Create Page**: Access a full-page interface for creating bots at `/admin/bots/create`.
-*   **Search & Filter**: Quickly find bots by searching their names or filtering by their active/inactive status.
-![Bot Search Filtered](screenshots/bot-search-filtered.png)
+*   **Search & Filter**: Quickly find bots by searching their names or filtering by their active/inactive status. <!-- screenshot: bot-search-filtered.png -->
 *   **Duplicate Bot**: Quickly clone an existing bot configuration.
 *   **View Activity**: Monitor real-time logs and message flow for each bot via details modal.
 ![Bot Activity Logs](screenshots/bot-details-modal.png)
