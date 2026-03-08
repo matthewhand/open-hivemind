@@ -67,9 +67,13 @@ export function sanitizeText(text: string): string {
     return '';
   }
   
-  const div = document.createElement('div');
-  div.textContent = text;
-  return div.innerHTML;
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;')
+    .replace(/\//g, '&#x2F;');
 }
 
 /**
@@ -164,7 +168,7 @@ export const ContextSanitizers = {
    * Sanitize for HTML attribute context
    */
   attribute: (value: string): string => {
-    return sanitizeText(value).replace(/"/g, '&quot;');
+    return sanitizeText(value);
   },
   
   /**

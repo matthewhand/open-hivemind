@@ -57,6 +57,12 @@ describe('xssSanitizer', () => {
       expect(result).toContain('&lt;/script&gt;');
     });
 
+    test('escapes all dangerous characters including quotes', () => {
+      const dirty = 'text with & < > " \' /';
+      const result = sanitizeText(dirty);
+      expect(result).toBe('text with &amp; &lt; &gt; &quot; &#39; &#x2F;');
+    });
+
     test('handles non-string input', () => {
       expect(sanitizeText(null as any)).toBe('');
     });
