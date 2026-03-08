@@ -418,6 +418,32 @@ describe('LLMResponse', () => {
   });
 
   describe('Immutability and data integrity', () => {
+    it('should deep clone the choices array to prevent modification of nested objects', () => {
+      const originalChoices = [
+        { index: 0, message: { role: 'assistant', content: 'original' }, finish_reason: 'stop' },
+      ];
+
+      const response = new LLMResponse(
+        'deep-immutable-test',
+        'chat.completion',
+        Date.now(),
+        'gpt-4',
+        originalChoices,
+        { prompt_tokens: 10, completion_tokens: 10, total_tokens: 20 },
+        'original',
+        'completed',
+        100
+      );
+
+      const choices = response.getChoices();
+      choices[0].message.content = 'modified content';
+      choices[0].index = 99;
+
+      // Original response should remain unchanged
+      expect(response.getChoices()[0].message.content).toBe('original');
+      expect(response.getChoices()[0].index).toBe(0);
+    });
+
     it('should not allow modification of choices array', () => {
       const originalChoices = [
         { index: 0, message: { role: 'assistant', content: 'original' }, finish_reason: 'stop' },

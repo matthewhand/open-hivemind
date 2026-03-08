@@ -20,7 +20,6 @@ export interface Bot {
  */
 export class DiscordBotManager {
   private bots: Bot[] = [];
-  private botMap: Map<string, Bot> = new Map();
   private deps: IServiceDependencies;
 
   private static readonly intents = [
@@ -93,7 +92,7 @@ export class DiscordBotManager {
 
   private addBotToPool(token: string, name: string, config: any): void {
     const client = new Client({ intents: DiscordBotManager.intents });
-    const bot: Bot = {
+    this.bots.push({
       client,
       botUserId: '',
       botUserName: name,
@@ -102,12 +101,7 @@ export class DiscordBotManager {
         discord: { token, ...config.discord },
         token, // Ensure root token property exists for legacy checks
       },
-    };
-    this.bots.push(bot);
-    this.botMap.set(bot.botUserName, bot);
-    if (bot.config?.name) {
-      this.botMap.set(bot.config.name, bot);
-    }
+    });
   }
 
   public async addBot(botConfig: any): Promise<void> {
@@ -135,10 +129,6 @@ export class DiscordBotManager {
       },
     };
     this.bots.push(newBot);
-    this.botMap.set(newBot.botUserName, newBot);
-    if (newBot.config?.name) {
-      this.botMap.set(newBot.config.name, newBot);
-    }
 
     // Caller is responsible for setting up listeners (event handler) and logging in
     // However, to keep addBot encapsulation, we might want to return the bot so caller can do that.
@@ -227,7 +217,7 @@ export class DiscordBotManager {
   }
 
   public getBotByName(name: string): Bot | undefined {
-    return this.botMap.get(name);
+    return this.bots.find((bot) => bot.botUserName === name);
   }
 
   public async shutdown(): Promise<void> {
@@ -235,32 +225,23 @@ export class DiscordBotManager {
       await bot.client.destroy();
       log(`Bot ${bot.botUserName} shut down`);
     }
-    this.bots = [];
-    this.botMap.clear();
   }
 
   public async disconnectBot(botName: string): Promise<boolean> {
-    const bot = this.botMap.get(botName);
+    const botIndex = this.bots.findIndex(
+      (b) => b.botUserName === botName || b.config?.name === botName
+    );
 
-    if (!bot) {
+    if (botIndex === -1) {
       log(`disconnectBot: Bot "${botName}" not found`);
       return false;
     }
 
+    const bot = this.bots[botIndex];
     try {
       await bot.client.destroy();
       log(`Disconnected bot: ${bot.botUserName}`);
-
-      const botIndex = this.bots.indexOf(bot);
-      if (botIndex !== -1) {
-        this.bots.splice(botIndex, 1);
-      }
-
-      this.botMap.delete(bot.botUserName);
-      if (bot.config?.name && this.botMap.get(bot.config.name) === bot) {
-        this.botMap.delete(bot.config.name);
-      }
-
+      this.bots.splice(botIndex, 1);
       return true;
     } catch (error: any) {
       log(`Error disconnecting bot ${botName}: ${error?.message || error}`);
@@ -269,7 +250,7 @@ export class DiscordBotManager {
   }
 
   public isBotConnected(botName: string): boolean {
-    const bot = this.botMap.get(botName);
+    const bot = this.bots.find((b) => b.botUserName === botName || b.config?.name === botName);
     if (!bot) return false;
     return bot.client.ws.status === 0;
   }

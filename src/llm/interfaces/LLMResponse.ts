@@ -72,23 +72,23 @@ class LLMResponse {
 
   /**
    * Retrieves the choices in the response.
-   * Returns a defensive deep clone so callers cannot mutate internal state.
-   * @returns {Array} A deep clone of the choices array.
+   * @returns {Array} The choices array.
    */
   getChoices(): {
     index: number;
     message: { role: string; content: string };
     finish_reason: string;
   }[] {
+    // Return a deep copy to prevent external modification
     return structuredClone(this.choices);
   }
 
   /**
    * Retrieves the usage statistics of the response.
-   * Returns a shallow copy — safe because all usage fields are primitives.
-   * @returns {Object} A shallow copy of the usage statistics.
+   * @returns {Object} The usage statistics.
    */
   getUsage(): { prompt_tokens: number; completion_tokens: number; total_tokens: number } {
+    // Return a copy to prevent external modification
     return { ...this.usage };
   }
 

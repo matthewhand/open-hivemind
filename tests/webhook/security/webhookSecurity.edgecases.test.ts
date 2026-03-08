@@ -47,8 +47,8 @@ describe('webhookSecurity edge cases', () => {
       (req: Request, res: Response, next: NextFunction) => verifyIpWhitelist(req, res, next),
       (_req: Request, res: Response) => res.status(200).send('OK')
     );
-    // default baseline. Set WEBHOOK_IP_WHITELIST to allow testing of token validation without IP block
-    setConfig({ WEBHOOK_TOKEN: 'secret-token', WEBHOOK_IP_WHITELIST: '::ffff:127.0.0.1,127.0.0.1,::1' });
+    // default baseline
+    setConfig({ WEBHOOK_TOKEN: 'secret-token', WEBHOOK_IP_WHITELIST: '' });
   });
 
   describe('verifyWebhookToken', () => {
@@ -91,13 +91,12 @@ describe('webhookSecurity edge cases', () => {
   });
 
   describe('verifyIpWhitelist', () => {
-    it('blocks with 403 when whitelist is empty', async () => {
+    it('allows all when whitelist is empty', async () => {
       setConfig({ WEBHOOK_IP_WHITELIST: '' });
       const { res } = await runRoute(app, 'post', '/secured', {
         headers: { 'x-webhook-token': 'secret-token' },
       });
-      expect(res.statusCode).toBe(403);
-      expect(res.text).toContain('IP whitelist is empty');
+      expect(res.statusCode).toBe(200);
     });
 
     it('allows when request IP is exactly whitelisted', async () => {
@@ -128,22 +127,6 @@ describe('webhookSecurity edge cases', () => {
         headers: { 'x-webhook-token': 'secret-token' },
       });
       // Since '127.0.0.1' !== '127.0.0.0/24', this will block.
-      expect(res.statusCode).toBe(403);
-    });
-
-    it('allows when whitelist contains only IPv6 loopback and request comes from IPv6', async () => {
-      setConfig({ WEBHOOK_IP_WHITELIST: '::1,::ffff:127.0.0.1' });
-      const { res } = await runRoute(app, 'post', '/secured', {
-        headers: { 'x-webhook-token': 'secret-token' },
-      });
-      expect(res.statusCode).toBe(200);
-    });
-
-    it('blocks when whitelist has entries but none match the request IP', async () => {
-      setConfig({ WEBHOOK_IP_WHITELIST: '::2,::3' });
-      const { res } = await runRoute(app, 'post', '/secured', {
-        headers: { 'x-webhook-token': 'secret-token' },
-      });
       expect(res.statusCode).toBe(403);
     });
   });

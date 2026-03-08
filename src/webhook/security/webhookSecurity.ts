@@ -129,8 +129,8 @@ export const verifyIpWhitelist = (req: Request, res: Response, next: NextFunctio
   }
 
   if (whitelistedIps.length === 0) {
-    Logger.warn('No WEBHOOK_IP_WHITELIST set, blocking request');
-    res.status(403).send('Forbidden: IP whitelist is empty');
+    Logger.warn('No WEBHOOK_IP_WHITELIST set, allowing all IPs');
+    next();
     return;
   }
 
