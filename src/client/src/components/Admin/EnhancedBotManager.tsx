@@ -720,7 +720,7 @@ const EnhancedBotManager: React.FC<EnhancedBotManagerProps> = ({ onBotSelect }) 
 
       {/* Toast Notifications */}
       {success && (
-        <div className="toast toast-bottom toast-center z-50">
+        <div className="toast toast-bottom toast-center z-50" role="status" aria-live="polite">
           <div className="alert alert-success">
             <span>{success}</span>
             <button className="btn btn-sm btn-ghost" onClick={() => setSuccess(null)}>✕</button>
@@ -729,7 +729,7 @@ const EnhancedBotManager: React.FC<EnhancedBotManagerProps> = ({ onBotSelect }) 
       )}
 
       {error && (
-        <div className="toast toast-bottom toast-center z-50">
+        <div className="toast toast-bottom toast-center z-50" role="status" aria-live="polite">
           <div className="alert alert-error">
             <span>{error}</span>
             <button className="btn btn-sm btn-ghost" onClick={() => setError(null)}>✕</button>
