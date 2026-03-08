@@ -53,6 +53,9 @@ test('verify MCP Guard UX', async ({ page }) => {
 
   const value = await usersInput.inputValue();
   console.log('Input value after typing ",user2":', value);
+<<<<<<< HEAD
+  expect(value).toBe('user1, user2');
+=======
   expect(value).toBe('user1,user2');
 
   await usersInput.press('Enter');
@@ -87,4 +90,5 @@ test('verify MCP Guard UX', async ({ page }) => {
   await undoButton.click();
   await expect(chips).toHaveCount(2);
   await page.screenshot({ path: 'docs/screenshots/mcp-guard-ux-after-undo.png' });
+>>>>>>> origin/main
 });

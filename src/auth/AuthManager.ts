@@ -11,6 +11,7 @@ const debug = Debug('app:AuthManager');
 export class AuthManager {
   private static instance: AuthManager;
   private users = new Map<string, User>();
+  private generatedPassword: string | null = null;
   private refreshTokens = new Set<string>();
   private readonly jwtSecret: string;
   private readonly jwtRefreshSecret: string;
@@ -108,6 +109,7 @@ export class AuthManager {
 
     if (!password) {
       password = crypto.randomBytes(16).toString('hex');
+      this.generatedPassword = password;
       console.warn('================================================================');
       console.warn('WARNING: No ADMIN_PASSWORD environment variable found.');
       console.warn(`Generated temporary admin password: ${password}`);
@@ -349,6 +351,10 @@ export class AuthManager {
   /**
    * Get user by ID
    */
+  public getGeneratedPassword(): string | null {
+    return this.generatedPassword;
+  }
+
   public getUser(userId: string): User | null {
     const user = this.users.get(userId);
     if (user) {

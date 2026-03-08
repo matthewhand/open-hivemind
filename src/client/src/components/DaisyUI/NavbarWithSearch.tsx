@@ -322,6 +322,7 @@ const NavbarWithSearch: React.FC<NavbarWithSearchProps> = ({
                         <button
                           className="w-full text-left px-3 py-2 rounded-lg hover:bg-base-200 transition-colors"
                           onClick={() => handleSearchSubmitWithOptions(search)}
+                          aria-label={`Search for ${search}`}
                         >
                           <div className="flex items-center gap-2">
                             <svg className="w-4 h-4 opacity-60" fill="none" stroke="currentColor" viewBox="0 0 24 24">

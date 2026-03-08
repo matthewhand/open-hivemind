@@ -1,9 +1,14 @@
 import Debug from 'debug';
 import { Router } from 'express';
+import type { AuthMiddlewareRequest } from '../../auth/types';
 import { BotConfigurationManager } from '../../config/BotConfigurationManager';
 import { DatabaseManager } from '../../database/DatabaseManager';
 import { auditMiddleware, logAdminAction } from '../middleware/audit';
 import { authenticateToken, requirePermission } from '../middleware/auth';
+import type { Request } from 'express';
+
+// Define a type for internal request casting since AuthMiddlewareRequest import is failing
+type AuthMiddlewareRequest = Request & { user?: { id: string; role: string; username?: string } };
 
 const debug = Debug('app:webui:consolidated');
 const router = Router();
@@ -57,7 +62,7 @@ router.get('/system-status', async (req, res) => {
     };
 
     logAdminAction(
-      req as AuthMiddlewareRequest,
+      req as unknown as AuthMiddlewareRequest,
       'VIEW',
       'system-status',
       'success',
@@ -67,7 +72,7 @@ router.get('/system-status', async (req, res) => {
   } catch (error) {
     debug('Error getting system status:', error);
     logAdminAction(
-      req as AuthMiddlewareRequest,
+      req as unknown as AuthMiddlewareRequest,
       'VIEW',
       'system-status',
       'failure',
@@ -174,12 +179,12 @@ router.get('/env-status', async (req, res) => {
       const value = process.env[varName];
       envStatus[varName] = {
         isSet: !!value,
-        redactedValue: value ? `***${value.slice(-4)}` : undefined,
+        redactedValue: value ? redactSensitiveInfo(varName, value) : undefined,
       };
     });
 
     logAdminAction(
-      req as AuthMiddlewareRequest,
+      req as unknown as AuthMiddlewareRequest,
       'VIEW',
       'env-status',
       'success',
@@ -273,7 +278,7 @@ router.post('/validate-config', async (req, res) => {
     }
 
     logAdminAction(
-      req as AuthMiddlewareRequest,
+      req as unknown as AuthMiddlewareRequest,
       'VALIDATE',
       'bot-config',
       'success',
@@ -283,7 +288,7 @@ router.post('/validate-config', async (req, res) => {
   } catch (error) {
     debug('Error validating config:', error);
     logAdminAction(
-      req as AuthMiddlewareRequest,
+      req as unknown as AuthMiddlewareRequest,
       'VALIDATE',
       'bot-config',
       'failure',
