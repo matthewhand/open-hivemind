@@ -85,6 +85,16 @@ const SettingsMessaging: React.FC = () => {
     setSettings(prev => ({ ...prev, [field]: value }));
   };
 
+  const resetPenalties = () => {
+    setSettings(prev => ({
+      ...prev,
+      userCountPenalty: 0.02,
+      botRatioPenalty: 0.5,
+      botHistoryPenalty: 0.1,
+      burstTrafficPenalty: 0.025,
+    }));
+  };
+
   const handleSave = async () => {
     setIsSaving(true);
     try {
@@ -375,10 +385,19 @@ const SettingsMessaging: React.FC = () => {
 
         {/* Probability */}
         <div className="card bg-base-200/50 p-4">
-          <h6 className="text-md font-semibold mb-4 flex items-center gap-2">
-            <span className="w-2 h-2 bg-accent rounded-full"></span>
-            Response Probability
-          </h6>
+          <div className="flex items-center justify-between mb-4">
+            <h6 className="text-md font-semibold flex items-center gap-2">
+              <span className="w-2 h-2 bg-accent rounded-full"></span>
+              Response Probability
+            </h6>
+            <button
+              className="btn btn-xs btn-outline btn-ghost"
+              onClick={resetPenalties}
+              title="Reset penalty tuners to default values"
+            >
+              Reset Tuners
+            </button>
+          </div>
 
           <div className="form-control">
             <label className="label py-1 flex items-center justify-between">
@@ -426,7 +445,9 @@ const SettingsMessaging: React.FC = () => {
                   <Info className="w-3.5 h-3.5 text-base-content/50 cursor-help" />
                 </div>
               </span>
-              <span className="badge badge-accent font-mono flex-none">-{settings.userCountPenalty.toFixed(2)}</span>
+              <span className={`badge font-mono flex-none ${settings.userCountPenalty === 0 ? 'badge-warning' : 'badge-accent'}`}>
+                -{settings.userCountPenalty.toFixed(2)}
+              </span>
             </label>
             <input
               type="range"
@@ -452,7 +473,9 @@ const SettingsMessaging: React.FC = () => {
                   <Info className="w-3.5 h-3.5 text-base-content/50 cursor-help" />
                 </div>
               </span>
-              <span className="badge badge-accent font-mono flex-none">-{settings.botRatioPenalty.toFixed(2)}</span>
+              <span className={`badge font-mono flex-none ${settings.botRatioPenalty === 0 ? 'badge-warning' : 'badge-accent'}`}>
+                -{settings.botRatioPenalty.toFixed(2)}
+              </span>
             </label>
             <input
               type="range"
@@ -478,7 +501,9 @@ const SettingsMessaging: React.FC = () => {
                   <Info className="w-3.5 h-3.5 text-base-content/50 cursor-help" />
                 </div>
               </span>
-              <span className="badge badge-accent font-mono flex-none">-{settings.botHistoryPenalty.toFixed(2)}</span>
+              <span className={`badge font-mono flex-none ${settings.botHistoryPenalty === 0 ? 'badge-warning' : 'badge-accent'}`}>
+                -{settings.botHistoryPenalty.toFixed(2)}
+              </span>
             </label>
             <input
               type="range"
@@ -504,7 +529,9 @@ const SettingsMessaging: React.FC = () => {
                   <Info className="w-3.5 h-3.5 text-base-content/50 cursor-help" />
                 </div>
               </span>
-              <span className="badge badge-accent font-mono flex-none">-{settings.burstTrafficPenalty.toFixed(3)}</span>
+              <span className={`badge font-mono flex-none ${settings.burstTrafficPenalty === 0 ? 'badge-warning' : 'badge-accent'}`}>
+                -{settings.burstTrafficPenalty.toFixed(3)}
+              </span>
             </label>
             <input
               type="range"
@@ -519,6 +546,38 @@ const SettingsMessaging: React.FC = () => {
             <div className="w-full flex justify-between text-xs px-2 mt-1 text-base-content/50">
               <span>0</span>
               <span>-0.1</span>
+            </div>
+          </div>
+
+          <div className="mt-6 border-t border-base-200/50 pt-4">
+            <h6 className="text-sm font-semibold mb-2">Live Simulation Preview</h6>
+            <div className="bg-base-300/50 p-3 rounded-box space-y-3 text-sm">
+              <p className="text-base-content/70">
+                Estimated reply chance under hypothetical conditions based on these settings:
+              </p>
+
+              <div className="space-y-2 font-mono text-xs">
+                <div className="flex justify-between items-center bg-base-100 p-2 rounded">
+                  <span className="flex-1">Quiet chat (0 users, 0 burst)</span>
+                  <span className="font-bold text-primary">
+                    {Math.max(0, settings.baseChance).toFixed(1)}%
+                  </span>
+                </div>
+
+                <div className="flex justify-between items-center bg-base-100 p-2 rounded">
+                  <span className="flex-1">Active chat (3 extra users, 10 msgs/min)</span>
+                  <span className="font-bold text-primary">
+                    {Math.max(0, settings.baseChance - (3 * settings.userCountPenalty * 100) - (10 * settings.burstTrafficPenalty * 100)).toFixed(1)}%
+                  </span>
+                </div>
+
+                <div className="flex justify-between items-center bg-base-100 p-2 rounded">
+                  <span className="flex-1">Bot-to-bot (no humans, 2 recent bot msgs)</span>
+                  <span className="font-bold text-primary">
+                    {Math.max(0, settings.baseChance - (settings.botRatioPenalty * 100) - (2 * settings.botHistoryPenalty * 100)).toFixed(1)}%
+                  </span>
+                </div>
+              </div>
             </div>
           </div>
 
