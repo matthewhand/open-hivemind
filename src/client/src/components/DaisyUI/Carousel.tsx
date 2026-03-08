@@ -90,7 +90,7 @@ const Carousel: React.FC<CarouselProps> = ({
               </button>
               <button type="button" className="btn btn-circle" aria-label="Next slide" onClick={(e) => { e.preventDefault(); handleNext(); }}>
                 ❯
-              </a>
+              </button>
             </div>
           </div>
         ))}

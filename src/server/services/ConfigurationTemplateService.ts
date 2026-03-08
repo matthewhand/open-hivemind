@@ -428,9 +428,10 @@ export class ConfigurationTemplateService {
           }
         });
 
-      const results = await Promise.all(templatePromises);
+      const results = await Promise.allSettled(templatePromises);
 
       const templates = results
+        .map((r) => (r.status === 'fulfilled' ? r.value : null))
         .filter((t): t is ConfigurationTemplate => t !== null)
         .filter((t) => this.matchesFilter(t, filter));
 

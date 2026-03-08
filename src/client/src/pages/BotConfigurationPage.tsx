@@ -309,7 +309,7 @@ const BotConfigurationPage: React.FC = () => {
       />
 
       <Modal
-        open={isRollbackModalOpen}
+        isOpen={isRollbackModalOpen}
         onClose={() => setIsRollbackModalOpen(false)}
         title="Configuration Rollbacks"
       >

@@ -1,7 +1,7 @@
 import convict from 'convict';
 import { BotConfigurationManager } from '../../config/BotConfigurationManager';
 import { getLlmDefaultStatus } from '../../config/llmDefaultStatus';
-import { CONFIG_LIMITS } from '../../types/config';
+import { CONFIG_LIMITS, type BotConfig } from '../../types/config';
 
 export interface ValidationResult {
   isValid: boolean;
