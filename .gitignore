@@ -209,3 +209,5 @@ archive/
 .specify/
 .kilocode/
 AGENTS.md
+config/.key
+config/secure/*

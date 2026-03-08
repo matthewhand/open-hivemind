@@ -74,15 +74,20 @@ Create and manage individual bot instances. Connect your AI assistants to platfo
 *   **Link Persona / Providers**: Assign specific personalities, LLM providers, and platforms to the bot.
 *   **Active Status**: Toggle bots on or off individually.
 
-### Bot Creation Flow
-The Bot Creation page provides a streamlined workflow for deploying new AI assistants.
+### Bot Creation Wizard
+A step-by-step process to deploy new AI agents.
 
-![Bot Create Page](screenshots/bot-create-page.png)
+1.  From the **Bots** page, click **Create New Agent**.
 
-1.  Navigate to the **Bots** section and click **Create Bot**.
-2.  **Name & Description**: Use the AI Assist button to generate creative names and descriptions.
-3.  **Visual Platform Selection**: Choose your target messaging platform using an intuitive grid interface.
+![Bot Creation Step 1](screenshots/bot-create-step1.png)
+
+2.  **Basic Info**: Provide a unique **Name** and a short **Description** of the bot's purpose.
+3.  **Platform**: Select the target messaging service (Discord, Slack, Mattermost). The list automatically populates from your configured Message Providers.
 4.  **Persona**: Choose a **Persona** from the dropdown; verify the details in the preview card.
+
+![Bot Creation Step 2](screenshots/bot-create-step2.png)
+![Bot Creation Step 3](screenshots/bot-create-step3.png)
+
 5.  **Intelligent Defaults**: The system automatically detects and suggests the default LLM provider, simplifying configuration.
 6.  Click **Create Bot** to deploy.
 
@@ -173,6 +178,10 @@ General system configuration.
 *   **System Limits**: Adjust maximum concurrent bots and response timeouts to manage resource usage.
 *   **Health & Monitoring**: Enable and configure periodic health checks for external services.
 *   **Deep Linking**: Settings tabs (General, Messaging, Security) are reflected in the URL for easy sharing.
+
+![Settings Security](screenshots/settings-security.png)
+
+*   **Security Management**: Secure configuration and secrets management are handled on the Security tab.
 
 ![Settings Saving](screenshots/settings-general-loading.png)
 
