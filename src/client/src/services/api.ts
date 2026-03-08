@@ -280,6 +280,7 @@ export interface ActivityResponse {
 class ApiService {
   private csrfToken: string | null = null;
   private csrfTokenPromise: Promise<string> | null = null;
+  private inflightGets = new Map<string, Promise<any>>();
 
   /**
    * Fetch CSRF token from the server and cache it
@@ -380,6 +381,22 @@ class ApiService {
 
   private async request<T>(endpoint: string, options?: RequestInit & { timeout?: number }): Promise<T> {
     const url = buildUrl(endpoint);
+    const method = options?.method?.toUpperCase() || 'GET';
+
+    if (method === 'GET') {
+      const inflight = this.inflightGets.get(endpoint);
+      if (inflight) return inflight as Promise<T>;
+      const promise = this._doRequest<T>(url, endpoint, options).finally(() => {
+        this.inflightGets.delete(endpoint);
+      });
+      this.inflightGets.set(endpoint, promise);
+      return promise;
+    }
+
+    return this._doRequest<T>(url, endpoint, options);
+  }
+
+  private async _doRequest<T>(url: string, endpoint: string, options?: RequestInit & { timeout?: number }): Promise<T> {
     const method = options?.method?.toUpperCase() || 'GET';
 
     const controller = new AbortController();

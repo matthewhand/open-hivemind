@@ -1,0 +1,60 @@
+import type { ProviderConfigSchema } from '../types';
+
+export const lettaProviderSchema: ProviderConfigSchema = {
+    type: 'llm',
+    providerType: 'letta',
+    displayName: 'Letta (MemGPT)',
+    description: 'Connect your bot to a Letta (formerly MemGPT) agent for persistent memory and personality.',
+    icon: '🧠',
+    color: '#9B59B6',
+    defaultConfig: {
+        apiUrl: 'https://api.letta.com/v1',
+    },
+    fields: [
+        {
+            name: 'apiUrl',
+            label: 'API URL',
+            type: 'url',
+            required: true,
+            description: 'Your Letta API base URL (use https://api.letta.com/v1 for Letta Cloud)',
+            placeholder: 'https://api.letta.com/v1',
+            group: 'Connection',
+        },
+        {
+            name: 'apiKey',
+            label: 'API Key',
+            type: 'password',
+            required: true,
+            description: 'Your Letta API key',
+            placeholder: 'sk-let-...',
+            group: 'Authentication',
+        },
+        {
+            name: 'agentId',
+            label: 'Agent ID',
+            type: 'text',
+            required: true,
+            description: 'The ID of your Letta agent',
+            placeholder: 'agent-...',
+            group: 'Agent',
+            helperAction: {
+                type: 'fetch',
+                label: '🔍 Lookup Agent',
+                description: 'Fetch the first available agent from your Letta account',
+                endpoint: '/api/letta/agents',
+                method: 'GET',
+                targetField: 'agentId',
+                valuePath: 'id',
+            },
+        },
+        {
+            name: 'timeout',
+            label: 'Request Timeout',
+            type: 'number',
+            required: false,
+            description: 'Request timeout in milliseconds (default: 30000)',
+            placeholder: '30000',
+            group: 'Advanced',
+        },
+    ],
+};

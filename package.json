@@ -17,7 +17,7 @@
     "format:check": "node ./node_modules/prettier/bin/prettier.cjs --check \"src/**/*.ts\" \"src/**/*.tsx\" \"tests/**/*.ts\" \"packages/**/*.ts\"",
     "check-types": "tsc --noEmit || true",
     "version": "tsc -v",
-    "build": "bash ./scripts/build-all.sh",
+    "build": "bash ./scripts/build-backend.sh && bash ./scripts/build-frontend.sh",
     "build:backend": "bash ./scripts/build-backend.sh",
     "build:frontend": "bash ./scripts/build-frontend.sh",
     "build:netlify": "bash ./scripts/build-netlify.sh",
@@ -71,6 +71,7 @@
     "@client": "dist/src/client",
     "@server": "dist/src/server",
     "@hivemind/provider-openai": "dist/packages/provider-openai/src",
+    "@hivemind/provider-letta": "dist/packages/provider-letta/src",
     "@hivemind/adapter-discord": "dist/packages/adapter-discord/src",
     "@hivemind/adapter-slack": "dist/packages/adapter-slack/src",
     "@hivemind/adapter-mattermost": "dist/packages/adapter-mattermost/src"

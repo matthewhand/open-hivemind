@@ -201,19 +201,21 @@ const DEFAULT_CONFIG: ProviderMonitoringConfig = {
 /**
  * ProviderMetricsCollector - Comprehensive metrics collection for all providers
  */
-export enum MetricNames {
-  MESSAGE_PROVIDER_STATUS = 'hivemind_message_provider_status',
-  MESSAGES_RECEIVED = 'hivemind_messages_received',
-  MESSAGES_SENT = 'hivemind_messages_sent',
-  MESSAGES_FAILED = 'hivemind_messages_failed',
-  MESSAGE_RESPONSE_TIME = 'hivemind_message_response_time',
-  LLM_PROVIDER_STATUS = 'hivemind_llm_provider_status',
-  LLM_REQUESTS_TOTAL = 'hivemind_llm_requests_total',
-  LLM_TOKENS_USED = 'hivemind_llm_tokens_used',
-  LLM_LATENCY = 'hivemind_llm_latency',
-  LLM_LATENCY_P95 = 'hivemind_llm_latency_p95',
-  LLM_COST_TOTAL = 'hivemind_llm_cost_total',
-}
+export const MetricNames = {
+  MESSAGE_PROVIDER_STATUS: 'hivemind_message_provider_status',
+  MESSAGES_RECEIVED: 'hivemind_messages_received',
+  MESSAGES_SENT: 'hivemind_messages_sent',
+  MESSAGES_FAILED: 'hivemind_messages_failed',
+  MESSAGE_RESPONSE_TIME: 'hivemind_message_response_time',
+  LLM_PROVIDER_STATUS: 'hivemind_llm_provider_status',
+  LLM_REQUESTS_TOTAL: 'hivemind_llm_requests_total',
+  LLM_TOKENS_USED: 'hivemind_llm_tokens_used',
+  LLM_LATENCY: 'hivemind_llm_latency',
+  LLM_LATENCY_P95: 'hivemind_llm_latency_p95',
+  LLM_COST_TOTAL: 'hivemind_llm_cost_total',
+} as const;
+
+export type MetricNameType = (typeof MetricNames)[keyof typeof MetricNames];
 
 export class ProviderMetricsCollector extends EventEmitter {
   private static instance: ProviderMetricsCollector;

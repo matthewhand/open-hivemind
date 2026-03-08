@@ -31,6 +31,8 @@ async function openCreateBotModal(page: Page) {
 test.describe('Bot Creation Form Validation', () => {
   test.setTimeout(90000);
 
+<<<<<<< HEAD
+=======
   test.beforeEach(async ({ page }) => {
     await page.route('/api/config', route => route.fulfill({ status: 200, json: {} }));
     await page.route('/api/admin/llm-profiles', route => route.fulfill({
@@ -47,6 +49,7 @@ test.describe('Bot Creation Form Validation', () => {
     }));
   });
 
+>>>>>>> origin/main
   test('Create Bot modal opens with all form fields', async ({ page }) => {
     const errors = await setupTestWithErrorDetection(page);
     await navigateAndWaitReady(page, '/admin/bots');
@@ -108,6 +111,11 @@ test.describe('Bot Creation Form Validation', () => {
     // Fill name
     await modal.locator('input').first().fill('Test Bot');
 
+<<<<<<< HEAD
+    // Select only LLM provider
+    const llmSelect = modal.locator('select').last();
+    await llmSelect.selectOption('openai');
+=======
     // Ensure message provider is empty
     const selects = modal.locator('select');
     const selectCount = await selects.count();
@@ -115,6 +123,7 @@ test.describe('Bot Creation Form Validation', () => {
       await selects.nth(0).selectOption({ value: '' });
       // Skip selecting LLM provider for this specific test as it only needs message provider empty
     }
+>>>>>>> origin/main
     await page.waitForTimeout(300);
 
     const submitButton = modal.locator('button').filter({ hasText: /create bot/i });
@@ -171,6 +180,19 @@ test.describe('Bot Creation Form Validation', () => {
     const selects = modal.locator('select');
     const selectCount = await selects.count();
 
+<<<<<<< HEAD
+    // Fill message provider (index 1 after persona)
+    if (selectCount >= 2) {
+      await selects.nth(1).selectOption('discord');
+    }
+    // Fill LLM provider (index 2)
+    if (selectCount >= 3) {
+      await selects.nth(2).selectOption('openai');
+    }
+    await page.waitForTimeout(300);
+
+    const submitButton = modal.locator('button').filter({ hasText: /create bot/i });
+=======
     // Fill message provider (index 0 on step 1)
     if (selectCount >= 1) {
       await selects.nth(0).selectOption('discord');
@@ -187,6 +209,7 @@ test.describe('Bot Creation Form Validation', () => {
 
     // In our test, if LLM provider defaults are configured, selecting only Message Provider satisfies validation.
     // Ensure all state has updated properly before asserting enabled.
+>>>>>>> origin/main
     await expect(submitButton).toBeEnabled();
 
     await page.screenshot({ path: 'test-results/create-bot-06-all-fields.png', fullPage: true });
@@ -222,6 +245,11 @@ test.describe('Bot Creation Form Validation', () => {
     const modal = await openCreateBotModal(page);
     await expect(modal).toBeVisible();
 
+<<<<<<< HEAD
+    // First select is persona, should have default value
+    const personaSelect = modal.locator('select').first();
+    const value = await personaSelect.inputValue();
+=======
     // Fill required fields and go to step 2
     await modal.locator('input').first().fill('Test Bot');
     const selects = modal.locator('select');
@@ -234,6 +262,7 @@ test.describe('Bot Creation Form Validation', () => {
     await expect(nextButton).toBeEnabled();
     await nextButton.click();
     await page.waitForTimeout(300);
+>>>>>>> origin/main
 
     expect(value).toBeTruthy();
     expect(value).toBe('default');

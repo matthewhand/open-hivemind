@@ -1,10 +1,17 @@
 import axios from 'axios';
 import openaiConfig from '../../config/openaiConfig';
+import { isSafeUrl } from '@src/utils/ssrfGuard';
 
 export async function generateCompletion(prompt: string): Promise<string> {
   const model = openaiConfig.get('OPENAI_MODEL') || 'free-small';
+  const targetUrl = 'https://open-swarm.fly.dev/v1/completions';
+
+  if (!(await isSafeUrl(targetUrl))) {
+    throw new Error('API URL is not safe to connect to.');
+  }
+
   const response = await axios.post(
-    'https://open-swarm.fly.dev/v1/completions',
+    targetUrl,
     {
       model,
       prompt,

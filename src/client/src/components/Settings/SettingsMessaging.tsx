@@ -481,6 +481,56 @@ const SettingsMessaging: React.FC = () => {
                   <td>MESSAGE_ADD_USER_HINT</td>
                   <td>{settings.addUserHint ? '✅ true' : '➖ false'}</td>
                 </tr>
+                <tr>
+                  <td>Semantic Relevance</td>
+                  <td>MESSAGE_SEMANTIC_RELEVANCE_ENABLED</td>
+                  <td>{settings.semanticRelevanceEnabled ? '✅ true' : '➖ false'}</td>
+                </tr>
+                <tr>
+                  <td>Semantic Relevance Bonus</td>
+                  <td>MESSAGE_SEMANTIC_RELEVANCE_BONUS</td>
+                  <td>{settings.semanticRelevanceBonus}</td>
+                </tr>
+                <tr>
+                  <td>Interrobang Bonus</td>
+                  <td>MESSAGE_INTERROBANG_BONUS</td>
+                  <td>(Modifier from .env)</td>
+                </tr>
+                <tr>
+                  <td>Mention Bonus</td>
+                  <td>MESSAGE_MENTION_BONUS</td>
+                  <td>(Modifier from .env)</td>
+                </tr>
+                <tr>
+                  <td>Bot Response Modifier</td>
+                  <td>MESSAGE_BOT_RESPONSE_MODIFIER</td>
+                  <td>(Modifier from .env)</td>
+                </tr>
+                <tr>
+                  <td>Priority Channel Bonus</td>
+                  <td>MESSAGE_PRIORITY_CHANNEL_BONUS</td>
+                  <td>(Modifier from .env)</td>
+                </tr>
+                <tr>
+                  <td>Priority Channel</td>
+                  <td>MESSAGE_PRIORITY_CHANNEL</td>
+                  <td>(Configured in .env)</td>
+                </tr>
+                <tr>
+                  <td>Recent Activity Decay Rate</td>
+                  <td>MESSAGE_RECENT_ACTIVITY_DECAY_RATE</td>
+                  <td>(Configured in .env)</td>
+                </tr>
+                <tr>
+                  <td>Activity Time Window</td>
+                  <td>MESSAGE_ACTIVITY_TIME_WINDOW</td>
+                  <td>(Configured in .env)</td>
+                </tr>
+                <tr>
+                  <td>Wakewords</td>
+                  <td>MESSAGE_WAKEWORDS</td>
+                  <td>(Configured in .env)</td>
+                </tr>
               </tbody>
             </table>
           </div>

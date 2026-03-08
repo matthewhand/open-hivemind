@@ -123,7 +123,7 @@ export class AnomalyDetectionService extends EventEmitter {
         }
       }
 
-      await Promise.all(storePromises);
+      await Promise.allSettled(storePromises);
     } finally {
       this.isDetecting = false;
     }

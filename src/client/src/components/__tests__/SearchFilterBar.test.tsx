@@ -52,7 +52,7 @@ describe('SearchFilterBar', () => {
     expect(handleClear).toHaveBeenCalled();
   });
 
-  it('clear button should have pointer-events-auto and stacking context classes', () => {
+  it('clear button tooltip should have pointer-events-auto and stacking context classes', () => {
     render(
       <SearchFilterBar
         searchValue="test"
