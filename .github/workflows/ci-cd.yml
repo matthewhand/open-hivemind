@@ -13,12 +13,6 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      - name: Install pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 9
-          run_install: false
-
 
       - name: Set up Node.js
       - name: Setup pnpm
@@ -28,13 +22,13 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-          cache: 'pnpm'
+          cache: 'npm'
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: npm ci
 
       - name: Audit for hardcoded secrets
-        run: pnpm run audit:secrets
+        run: npm run audit:secrets
 
       - name: Audit for hardcoded secrets
         run: pnpm run audit:secrets
@@ -42,16 +36,16 @@ jobs:
 
 >>>>>>> f4fe874f (ci: update workflows to strictly use pnpm instead of npm)
       - name: Run lint
-        run: pnpm run lint
+        run: npm run lint
 
       - name: Check types
-        run: pnpm run check-types
+        run: npm run check-types
 
       - name: Build
-        run: pnpm run build
+        run: npm run build
 
       - name: Run tests with coverage
-        run: pnpm run test:coverage
+        run: npm run test:coverage
 
       - name: Update README badge
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'

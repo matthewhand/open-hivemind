@@ -42,7 +42,7 @@ jobs:
         run: npx playwright install --with-deps
 
       - name: Run E2E tests
-        run: pnpm run test:playwright
+        run: npm run test:playwright
       - name: Generate Playwright report
         if: always()
         run: npx playwright show-report

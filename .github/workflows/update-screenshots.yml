@@ -12,12 +12,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Install pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 9
-          run_install: false
-
 
       - name: Set up Node.js
       - name: Setup pnpm
@@ -34,7 +28,7 @@ jobs:
         run: npx playwright install chromium
 
       - name: Generate screenshots
-        run: pnpm run generate-docs
+        run: npm run generate-docs
 
       - name: Commit and push changes
         run: |

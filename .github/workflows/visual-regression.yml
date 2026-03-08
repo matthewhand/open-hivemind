@@ -79,8 +79,8 @@ jobs:
     - name: Update baseline screenshots
       run: |
         cd webui/client
-        pnpm run build
-        pnpm run preview &
+        npm run build
+        npm run preview &
         sleep 10
         timeout 60 bash -c 'until curl -f http://localhost:4173; do sleep 2; done'
         npx playwright test --project=chromium --update-snapshots
