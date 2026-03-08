@@ -323,12 +323,20 @@ export class HotReloadManager {
       } else {
         // Apply global changes
         const allBots = manager.getAllBots();
-        for (const bot of allBots) {
-          const success = await this.applyBotChange(bot.name, change.changes);
-          if (success) {
-            affectedBots.push(bot.name);
+        const results = await Promise.all(
+          allBots.map(bot =>
+            this.applyBotChange(bot.name, change.changes).then(success => ({
+              botName: bot.name,
+              success,
+            }))
+          )
+        );
+
+        for (const result of results) {
+          if (result.success) {
+            affectedBots.push(result.botName);
           } else {
-            warnings.push(`Failed to apply changes to bot '${bot.name}'`);
+            warnings.push(`Failed to apply changes to bot '${result.botName}'`);
           }
         }
       }
@@ -431,10 +439,12 @@ export class HotReloadManager {
         return false;
       }
 
-      // Restore the snapshot
-      for (const [botName, botConfig] of Object.entries(snapshot)) {
-        await this.applyBotChange(botName, botConfig as Record<string, any>);
-      }
+      // Restore the snapshot concurrently
+      await Promise.all(
+        Object.entries(snapshot).map(([botName, botConfig]) =>
+          this.applyBotChange(botName, botConfig as Record<string, any>)
+        )
+      );
 
       // Remove the snapshot after successful rollback
       this.rollbackSnapshots.delete(snapshotId);
