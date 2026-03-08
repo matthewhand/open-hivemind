@@ -9,7 +9,6 @@ export { default as Button } from './Button';
 export { default as IconButton } from './IconButton';
 export { default as Card } from './Card';
 export { default as Carousel } from './Carousel';
-export { default as Chat } from './Chat';
 export { default as Diff } from './Diff';
 export { default as Indicator } from './Indicator';
 export { default as DataTable } from './DataTable';
