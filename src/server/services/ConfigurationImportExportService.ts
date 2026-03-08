@@ -584,25 +584,26 @@ export class ConfigurationImportExportService {
             })
           );
 
-          for (const template of batch) {
-            try {
-              // Check if template exists using our pre-fetched set
-              if (!existingTemplateIds.has(template.id)) {
-                await this.templateService.createTemplate({
-                  name: template.name,
-                  description: template.description,
-                  category: template.category,
-                  tags: template.tags,
-                  config: template.config,
-                  createdBy: importedBy,
-                });
-                // Add to set to prevent duplicate creations in the same import
-                existingTemplateIds.add(template.id);
-              }
-            } catch (error) {
-              result.warnings?.push(`Error processing template: ${(error as any).message}`);
-            }
-          }
+          // Create new templates concurrently within the batch
+          await Promise.all(
+            batch
+              .filter((template: any) => !existingTemplateIds.has(template.id))
+              .map(async (template: any) => {
+                try {
+                  await this.templateService.createTemplate({
+                    name: template.name,
+                    description: template.description,
+                    category: template.category,
+                    tags: template.tags,
+                    config: template.config,
+                    createdBy: importedBy,
+                  });
+                  existingTemplateIds.add(template.id);
+                } catch (error) {
+                  result.warnings?.push(`Error processing template: ${(error as any).message}`);
+                }
+              })
+          );
         }
       }
 
