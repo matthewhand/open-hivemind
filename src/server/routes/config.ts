@@ -560,6 +560,45 @@ router.get('/llm-status', (req, res) => {
   }
 });
 
+// POST /api/config/llm-profiles - Create an LLM profile
+router.post('/llm-profiles', (req, res) => {
+  try {
+    const { key, name, provider, config } = req.body;
+    if (!key || key.trim() === '') return res.status(400).json({ error: 'LLM profile key is required' });
+    if (!name || name.trim() === '') return res.status(400).json({ error: 'LLM profile name is required' });
+    if (!provider || provider.trim() === '') return res.status(400).json({ error: 'LLM profile provider is required' });
+
+    const profiles = getLlmProfiles();
+    if (profiles.llm.some((p: any) => p.key.toLowerCase() === key.toLowerCase())) {
+      return res.status(409).json({ error: `LLM profile with key '${key}' already exists` });
+    }
+
+    const newProfile = { key, name, provider: provider.toLowerCase(), config: config || {} };
+    profiles.llm.push(newProfile);
+    saveLlmProfiles(profiles);
+    return res.status(201).json({ success: true, profile: newProfile });
+  } catch (error: unknown) {
+    const hivemindError = ErrorUtils.toHivemindError(error) as AppError;
+    return res.status(hivemindError.statusCode || 500).json({ error: hivemindError.message, code: 'LLM_PROFILE_CREATE_ERROR' });
+  }
+});
+
+// DELETE /api/config/llm-profiles/:key - Delete an LLM profile
+router.delete('/llm-profiles/:key', (req, res) => {
+  try {
+    const { key } = req.params;
+    const profiles = getLlmProfiles();
+    const initial = profiles.llm.length;
+    profiles.llm = profiles.llm.filter((p: any) => p.key.toLowerCase() !== key.toLowerCase());
+    if (profiles.llm.length === initial) return res.status(404).json({ error: `LLM profile '${key}' not found` });
+    saveLlmProfiles(profiles);
+    return res.json({ success: true, message: `LLM profile '${key}' deleted` });
+  } catch (error: unknown) {
+    const hivemindError = ErrorUtils.toHivemindError(error) as AppError;
+    return res.status(hivemindError.statusCode || 500).json({ error: hivemindError.message, code: 'LLM_PROFILE_DELETE_ERROR' });
+  }
+});
+
 // GET /api/config/llm-profiles - List all LLM profiles
 router.get('/llm-profiles', (req, res) => {
   try {
