@@ -45,8 +45,7 @@ const GlobalConfigSection: React.FC<GlobalConfigSectionProps> = ({ section }) =>
       if (data && data[section]) {
         setConfig(data[section]);
       } else {
-        // setError(`Configuration section '${section}' not found`);
-        // If not found, maybe initialize empty or show warning
+        // TODO: Consider initializing with an empty schema instead of just setting null so the user can still add a new section
         setConfig(null); 
       }
     } catch (err: any) {
