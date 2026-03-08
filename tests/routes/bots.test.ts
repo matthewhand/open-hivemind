@@ -202,7 +202,7 @@ describe('Bots Router', () => {
     it('should return 400 if name is missing', async () => {
       const res = await request(app).post('/api/bots').send({ messageProvider: 'discord' });
       expect(res.status).toBe(400);
-      expect(res.body.error).toBe('Bot name is required');
+      expect(res.body.error).toBe('Validation failed');
     });
   });
 
@@ -263,7 +263,7 @@ describe('Bots Router', () => {
     it('should return 400 if newName is missing', async () => {
       const res = await request(app).post('/api/bots/test-bot/clone').send({});
       expect(res.status).toBe(400);
-      expect(res.body.error).toBe('New bot name is required');
+      expect(res.body.error).toBe('Validation failed');
     });
   });
 

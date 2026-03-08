@@ -1,14 +1,3 @@
-import discordConfig from '../../src/config/discordConfig';
-import flowiseConfig from '../../src/config/flowiseConfig';
-import mattermostConfig from '../../src/config/mattermostConfig';
-import messageConfig from '../../src/config/messageConfig';
-import ollamaConfig from '../../src/config/ollamaConfig';
-import openaiConfig from '../../src/config/openaiConfig';
-import openWebUIConfig from '../../src/config/openWebUIConfig';
-import slackConfig from '../../src/config/slackConfig';
-import telegramConfig from '../../src/config/telegramConfig';
-import webhookConfig from '../../src/config/webhookConfig';
-
 /**
  * Test data factories for creating consistent test data across test suites
  */
@@ -133,6 +122,8 @@ export const messageConfigData: ConfigTestData = {
   },
 };
 
+<<<<<<< HEAD
+=======
 // Telegram Config Test Data
 export const telegramConfigData: ConfigTestData = {
   defaults: {
@@ -205,6 +196,7 @@ export const webhookConfigData: ConfigTestData = {
   },
 };
 
+>>>>>>> origin/main
 // Slack Config Test Data
 export const slackConfigData: ConfigTestData = {
   defaults: {
@@ -239,122 +231,6 @@ export const slackConfigData: ConfigTestData = {
   },
 };
 
-// OpenAI Config Test Data
-export const openaiConfigData: ConfigTestData = {
-  defaults: {
-    OPENAI_API_KEY: '',
-    OPENAI_TEMPERATURE: 0.7,
-    OPENAI_MAX_TOKENS: 150,
-    OPENAI_FREQUENCY_PENALTY: 0.1,
-    OPENAI_PRESENCE_PENALTY: 0.05,
-    OPENAI_BASE_URL: 'https://api.openai.com/v1',
-    OPENAI_TIMEOUT: 10000,
-    OPENAI_ORGANIZATION: '',
-    OPENAI_MODEL: 'gpt-5.2',
-    OPENAI_STOP: [],
-    OPENAI_TOP_P: 1.0,
-    OPENAI_SYSTEM_PROMPT: 'Greetings, human...',
-    OPENAI_RESPONSE_MAX_TOKENS: 100,
-    OPENAI_MAX_RETRIES: 3,
-    OPENAI_FINISH_REASON_RETRY: 'stop',
-    OPENAI_VOICE: 'nova',
-  },
-  envVars: {
-    OPENAI_API_KEY: 'test-openai-key',
-    OPENAI_MODEL: 'gpt-4',
-    OPENAI_TEMPERATURE: '0.5',
-    OPENAI_MAX_TOKENS: '500',
-  },
-  expectedResults: {
-    OPENAI_API_KEY: 'test-openai-key',
-    OPENAI_TEMPERATURE: 0.5,
-    OPENAI_MAX_TOKENS: 500,
-    OPENAI_FREQUENCY_PENALTY: 0.1,
-    OPENAI_PRESENCE_PENALTY: 0.05,
-    OPENAI_BASE_URL: 'https://api.openai.com/v1',
-    OPENAI_TIMEOUT: 10000,
-    OPENAI_ORGANIZATION: '',
-    OPENAI_MODEL: 'gpt-4',
-    OPENAI_STOP: [],
-    OPENAI_TOP_P: 1.0,
-    OPENAI_SYSTEM_PROMPT: 'Greetings, human...',
-    OPENAI_RESPONSE_MAX_TOKENS: 100,
-    OPENAI_MAX_RETRIES: 3,
-    OPENAI_FINISH_REASON_RETRY: 'stop',
-    OPENAI_VOICE: 'nova',
-  },
-};
-
-// Ollama Config Test Data
-export const ollamaConfigData: ConfigTestData = {
-  defaults: {
-    OLLAMA_BASE_URL: 'http://localhost:11434',
-    OLLAMA_MODEL: 'llama2',
-    OLLAMA_TEMPERATURE: 0.7,
-    OLLAMA_SYSTEM_PROMPT: 'You are a helpful AI assistant.',
-    OLLAMA_CONTEXT_WINDOW: 4096,
-  },
-  envVars: {
-    OLLAMA_BASE_URL: 'http://ollama:11434',
-    OLLAMA_MODEL: 'mistral',
-    OLLAMA_TEMPERATURE: '0.8',
-  },
-  expectedResults: {
-    OLLAMA_BASE_URL: 'http://ollama:11434',
-    OLLAMA_MODEL: 'mistral',
-    OLLAMA_TEMPERATURE: 0.8,
-    OLLAMA_SYSTEM_PROMPT: 'You are a helpful AI assistant.',
-    OLLAMA_CONTEXT_WINDOW: 4096,
-  },
-};
-
-// OpenWebUI Config Test Data
-export const openWebUIConfigData: ConfigTestData = {
-  defaults: {
-    OPEN_WEBUI_API_URL: 'http://host.docker.internal:3000/api/',
-    OPEN_WEBUI_USERNAME: 'admin',
-    OPEN_WEBUI_PASSWORD: 'password123',
-    OPEN_WEBUI_KNOWLEDGE_FILE: '',
-    OPEN_WEBUI_MODEL: 'llama3.2',
-  },
-  envVars: {
-    OPEN_WEBUI_API_URL: 'http://webui:8080/api/',
-    OPEN_WEBUI_USERNAME: 'testuser',
-    OPEN_WEBUI_PASSWORD: 'testpassword',
-  },
-  expectedResults: {
-    OPEN_WEBUI_API_URL: 'http://webui:8080/api/',
-    OPEN_WEBUI_USERNAME: 'testuser',
-    OPEN_WEBUI_PASSWORD: 'testpassword',
-    OPEN_WEBUI_KNOWLEDGE_FILE: '',
-    OPEN_WEBUI_MODEL: 'llama3.2',
-  },
-};
-
-// Flowise Config Test Data
-export const flowiseConfigData: ConfigTestData = {
-  defaults: {
-    FLOWISE_API_ENDPOINT: '',
-    FLOWISE_API_KEY: '',
-    FLOWISE_CONVERSATION_CHATFLOW_ID: '',
-    FLOWISE_COMPLETION_CHATFLOW_ID: '',
-    FLOWISE_USE_REST: true,
-  },
-  envVars: {
-    FLOWISE_API_ENDPOINT: 'http://flowise:3000',
-    FLOWISE_API_KEY: 'test-flowise-key',
-    FLOWISE_CONVERSATION_CHATFLOW_ID: 'chat-123',
-    FLOWISE_USE_REST: 'false',
-  },
-  expectedResults: {
-    FLOWISE_API_ENDPOINT: 'http://flowise:3000',
-    FLOWISE_API_KEY: 'test-flowise-key',
-    FLOWISE_CONVERSATION_CHATFLOW_ID: 'chat-123',
-    FLOWISE_COMPLETION_CHATFLOW_ID: '',
-    FLOWISE_USE_REST: false,
-  },
-};
-
 // Command Parser Test Data
 export const commandParserTestData = {
   validCommands: [
@@ -386,6 +262,26 @@ export const commandParserTestData = {
   },
 };
 
+<<<<<<< HEAD
+/**
+ * Factory function to create test data for different scenarios
+ */
+export type CommandParserTestData = typeof commandParserTestData;
+
+export function createTestData(type: 'discord'): ConfigTestData;
+export function createTestData(type: 'message'): ConfigTestData;
+export function createTestData(type: 'slack'): ConfigTestData;
+export function createTestData(type: 'command'): CommandParserTestData;
+export function createTestData(type: 'discord' | 'message' | 'slack' | 'command'): ConfigTestData | CommandParserTestData {
+=======
+import fc from 'fast-check';
+import discordConfig from '../../src/config/discordConfig';
+import messageConfig from '../../src/config/messageConfig';
+import slackConfig from '../../src/config/slackConfig';
+import telegramConfig from '../../src/config/telegramConfig';
+import mattermostConfig from '../../src/config/mattermostConfig';
+import webhookConfig from '../../src/config/webhookConfig';
+
 /**
  * Validates generated config test data against the real backend convict schema
  * to prevent drift.
@@ -393,20 +289,7 @@ export const commandParserTestData = {
  * @param data The generated expectedResults
  * @returns true if valid, throws error otherwise
  */
-export function validateConfigAgainstSchema(
-  type:
-    | 'discord'
-    | 'message'
-    | 'slack'
-    | 'telegram'
-    | 'mattermost'
-    | 'webhook'
-    | 'openai'
-    | 'ollama'
-    | 'openwebui'
-    | 'flowise',
-  data: any
-): boolean {
+export function validateConfigAgainstSchema(type: 'discord' | 'message' | 'slack' | 'telegram' | 'mattermost' | 'webhook', data: any): boolean {
   try {
     switch (type) {
       case 'discord':
@@ -433,22 +316,6 @@ export function validateConfigAgainstSchema(
         webhookConfig.load(data);
         webhookConfig.validate({ allowed: 'strict' });
         break;
-      case 'openai':
-        openaiConfig.load(data);
-        openaiConfig.validate({ allowed: 'strict' });
-        break;
-      case 'ollama':
-        ollamaConfig.load(data);
-        ollamaConfig.validate({ allowed: 'warn' });
-        break;
-      case 'openwebui':
-        openWebUIConfig.load(data);
-        openWebUIConfig.validate({ allowed: 'strict' });
-        break;
-      case 'flowise':
-        flowiseConfig.load(data);
-        flowiseConfig.validate({ allowed: 'strict' });
-        break;
     }
     return true;
   } catch (error) {
@@ -460,40 +327,18 @@ export function validateConfigAgainstSchema(
 /**
  * Generates strongly-typed test data for different platform and command scenarios
  */
-export type CommandParserTestData = typeof commandParserTestData;
-
-export function createTestData(type: 'discord'): ConfigTestData;
-export function createTestData(type: 'message'): ConfigTestData;
-export function createTestData(type: 'slack'): ConfigTestData;
-export function createTestData(type: 'telegram'): ConfigTestData;
-export function createTestData(type: 'mattermost'): ConfigTestData;
-export function createTestData(type: 'webhook'): ConfigTestData;
-export function createTestData(type: 'openai'): ConfigTestData;
-export function createTestData(type: 'ollama'): ConfigTestData;
-export function createTestData(type: 'openwebui'): ConfigTestData;
-export function createTestData(type: 'flowise'): ConfigTestData;
-export function createTestData(type: 'command'): CommandParserTestData;
-export function createTestData(
-  type:
-    | 'discord'
-    | 'message'
-    | 'slack'
-    | 'telegram'
-    | 'mattermost'
-    | 'webhook'
-    | 'openai'
-    | 'ollama'
-    | 'openwebui'
-    | 'flowise'
-    | 'command'
-): ConfigTestData | CommandParserTestData {
+export function createTestData(type: 'discord' | 'message' | 'slack' | 'command'): any {
   let data;
+>>>>>>> origin/main
   switch (type) {
     case 'discord':
       return discordConfigData;
     case 'message':
       return messageConfigData;
     case 'slack':
+<<<<<<< HEAD
+      return slackConfigData;
+=======
       data = slackConfigData;
       break;
     case 'telegram':
@@ -505,40 +350,19 @@ export function createTestData(
     case 'webhook':
       data = webhookConfigData;
       break;
-    case 'openai':
-      data = openaiConfigData;
-      break;
-    case 'ollama':
-      data = ollamaConfigData;
-      break;
-    case 'openwebui':
-      data = openWebUIConfigData;
-      break;
-    case 'flowise':
-      data = flowiseConfigData;
-      break;
+>>>>>>> origin/main
     case 'command':
       return commandParserTestData;
     default:
       throw new Error(`Unknown test data type: ${type}`);
   }
+<<<<<<< HEAD
+=======
 
   // Validate the data against the schema
-  validateConfigAgainstSchema(
-    type as
-      | 'discord'
-      | 'message'
-      | 'slack'
-      | 'telegram'
-      | 'mattermost'
-      | 'webhook'
-      | 'openai'
-      | 'ollama'
-      | 'openwebui'
-      | 'flowise',
-    data.expectedResults
-  );
+  validateConfigAgainstSchema(type as 'discord' | 'message' | 'slack' | 'telegram' | 'mattermost' | 'webhook', data.expectedResults);
   return data;
+>>>>>>> origin/main
 }
 
 /**

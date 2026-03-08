@@ -72,7 +72,9 @@ export class StartupDiagnostics {
 
     // Critical configuration (Missing = won't start)
     const criticalPresent = envSummary.critical.filter((v) => v.status === 'present').length;
-    const criticalMissing = envSummary.critical.filter((v) => v.status === 'missing').map((v) => v.key);
+    const criticalMissing = envSummary.critical
+      .filter((v) => v.status === 'missing')
+      .map((v) => v.key);
 
     if (criticalMissing.length > 0) {
       startupLog.error('⛔ Critical Configuration Missing', {
@@ -86,13 +88,17 @@ export class StartupDiagnostics {
       });
     }
 
-    envSummary.critical.filter((v) => v.status === 'present').forEach((v) => {
-      startupLog.debug(`   ✓ ${v.key}: ${redactSensitiveInfo(v.key, v.value)}`);
-    });
+    envSummary.critical
+      .filter((v) => v.status === 'present')
+      .forEach((v) => {
+        startupLog.debug(`   ✓ ${v.key}: ${redactSensitiveInfo(v.key, v.value)}`);
+      });
 
     // Warning configuration (Missing = degraded)
     const warningPresent = envSummary.warning.filter((v) => v.status === 'present').length;
-    const warningMissing = envSummary.warning.filter((v) => v.status === 'missing').map((v) => v.key);
+    const warningMissing = envSummary.warning
+      .filter((v) => v.status === 'missing')
+      .map((v) => v.key);
 
     if (warningMissing.length > 0) {
       startupLog.warn('⚠️  Warning Configuration', {
@@ -105,9 +111,11 @@ export class StartupDiagnostics {
       });
     }
 
-    envSummary.warning.filter((v) => v.status === 'present').forEach((v) => {
-      startupLog.debug(`   ✓ ${v.key}: ${redactSensitiveInfo(v.key, v.value)}`);
-    });
+    envSummary.warning
+      .filter((v) => v.status === 'present')
+      .forEach((v) => {
+        startupLog.debug(`   ✓ ${v.key}: ${redactSensitiveInfo(v.key, v.value)}`);
+      });
 
     // Info configuration (Missing = using default or optional)
     const infoPresent = envSummary.info.filter((v) => v.status === 'present').length;
@@ -118,9 +126,11 @@ export class StartupDiagnostics {
       missing: infoMissing,
     });
 
-    envSummary.info.filter((v) => v.status === 'present').forEach((v) => {
-      startupLog.debug(`   ✓ ${v.key}: ${redactSensitiveInfo(v.key, v.value)}`);
-    });
+    envSummary.info
+      .filter((v) => v.status === 'present')
+      .forEach((v) => {
+        startupLog.debug(`   ✓ ${v.key}: ${redactSensitiveInfo(v.key, v.value)}`);
+      });
   }
 
   /**

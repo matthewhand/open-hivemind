@@ -19,7 +19,7 @@ test('verify MCP Guard UX', async ({ page }) => {
 
   await page.goto('/admin/guards');
 
-  await page.getByRole('button', { name: 'New Profile' }).first().click();
+  await page.getByRole('button', { name: 'New Profile' }).click();
 
   const modal = page.locator('.modal-box').filter({ hasText: /Create.*Profile/i });
   await expect(modal).toBeVisible();
@@ -46,15 +46,25 @@ test('verify MCP Guard UX', async ({ page }) => {
 
   // Type second value and press enter
   await usersInput.pressSequentially('user2');
-
-  await page.waitForTimeout(500);
+  await usersInput.press('Enter');
 
   // Screenshot after typing second value
   await page.screenshot({ path: 'docs/screenshots/mcp-guard-ux-after.png' });
 
   const value = await usersInput.inputValue();
-  console.log('Input value after typing "user2":', value);
-  expect(value).toBe('');
+  console.log('Input value after typing ",user2":', value);
+<<<<<<< HEAD
+  expect(value).toBe('user1, user2');
+=======
+  expect(value).toBe('user1,user2');
+
+  await usersInput.press('Enter');
+
+  // Give it a moment to render
+  await page.waitForTimeout(500);
+
+  // The input should be empty, and chips should be visible
+  expect(await usersInput.inputValue()).toBe('');
 
   const chips = modal.locator('[data-testid="chip"]');
   await expect(chips).toHaveCount(2);
@@ -80,4 +90,5 @@ test('verify MCP Guard UX', async ({ page }) => {
   await undoButton.click();
   await expect(chips).toHaveCount(2);
   await page.screenshot({ path: 'docs/screenshots/mcp-guard-ux-after-undo.png' });
+>>>>>>> origin/main
 });

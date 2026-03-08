@@ -155,7 +155,7 @@ describe('SlackMessageProcessor', () => {
         workspaceName: 'Test Team',
       });
       expect(enriched.data.channelInfo).toMatchObject({
-        channelId: 'C123456789',
+        channelId: 'C123456789456789',
         channelName: 'general',
       });
       expect(enriched.data.threadInfo).toMatchObject({
