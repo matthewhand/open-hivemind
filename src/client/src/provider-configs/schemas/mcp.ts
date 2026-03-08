@@ -7,10 +7,10 @@ import type { ProviderConfigSchema } from '../types';
  * command configuration and environment variable management.
  */
 export const mcpProviderSchema: ProviderConfigSchema = {
-  type: 'mcp',
+  type: 'tool',
   providerType: 'mcp',
-  displayName: 'MCP Provider',
-  description: 'Model Context Protocol server for external tools and data sources',
+  displayName: 'MCP Server',
+  description: 'Model Context Protocol server — connects external tools and data sources to your bots',
   icon: '🔗',
   color: '#3B82F6',
   fields: [

@@ -44,7 +44,7 @@ export const getProviderSchema = (providerType: string): ProviderConfigSchema | 
   return PROVIDER_SCHEMAS[providerType];
 };
 
-export const getProviderSchemasByType = (type: 'message' | 'llm' | 'mcp'): ProviderConfigSchema[] => {
+export const getProviderSchemasByType = (type: 'message' | 'llm' | 'memory' | 'tool'): ProviderConfigSchema[] => {
   return Object.values(PROVIDER_SCHEMAS).filter(schema => schema.type === type);
 };
 
