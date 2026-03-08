@@ -7,6 +7,7 @@
 
 import 'reflect-metadata';
 import { container, Lifecycle } from 'tsyringe';
+import Logger from '../common/logger';
 import { BotConfigurationManager } from '../config/BotConfigurationManager';
 // Import implementations
 import { ConfigurationManager } from '../config/ConfigurationManager';
@@ -14,6 +15,8 @@ import ProviderConfigManager from '../config/ProviderConfigManager';
 import { SecureConfigManager } from '../config/SecureConfigManager';
 import { UserConfigStore } from '../config/UserConfigStore';
 import { TOKENS } from './container';
+
+const logger = Logger.withContext('DI');
 
 /**
  * Registers all core services with the DI container.
@@ -56,7 +59,7 @@ export function registerServices(): void {
     useValue: ProviderConfigManager.getInstance(),
   });
 
-  console.log('✅ DI services registered');
+  logger.info('✅ DI services registered');
 }
 
 /**
