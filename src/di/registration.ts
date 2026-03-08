@@ -44,7 +44,7 @@ export function registerServices(): void {
     useValue: SecureConfigManager.getInstance(),
   });
 
-  logger.debug('Registering BotConfigurationManager class');
+  logger.warn('BotConfigurationManager is being registered a second time (useClass); this will override the useValue registration above');
   container.register(
     TOKENS.BotConfigurationManager,
     {
@@ -53,7 +53,7 @@ export function registerServices(): void {
     { lifecycle: Lifecycle.Singleton }
   );
 
-  logger.debug('Registering UserConfigStore (re-registering instance)');
+  logger.warn('UserConfigStore is being registered a second time; this will override the first registration');
   container.register(TOKENS.UserConfigStore, {
     useValue: UserConfigStore.getInstance(),
   });
