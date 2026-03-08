@@ -18,5 +18,4 @@ test('Flowise config forms', async ({ page }) => {
     await page.waitForTimeout(1000);
     await page.screenshot({ path: 'test-results/flowise-config-verify.png', fullPage: true });
   }
->>>>>>> origin/main
 });

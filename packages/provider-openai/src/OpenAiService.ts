@@ -21,7 +21,6 @@ import openaiConfig from '@config/openaiConfig';
 import { redactSensitiveInfo } from '@common/redactSensitiveInfo';
 import { listModels } from './operations/listModels';
 
-
 const debug = Debug('app:OpenAiService');
 
 // Guard: Validate openaiConfig object

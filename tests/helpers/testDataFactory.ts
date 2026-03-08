@@ -130,6 +130,78 @@ export const messageConfigData: ConfigTestData = {
   },
 };
 
+// Telegram Config Test Data
+export const telegramConfigData: ConfigTestData = {
+  defaults: {
+    TELEGRAM_BOT_TOKEN: '',
+    TELEGRAM_WEBHOOK_URL: '',
+    TELEGRAM_PARSE_MODE: 'HTML',
+    TELEGRAM_ALLOWED_CHATS: '',
+    TELEGRAM_BLOCKED_USERS: '',
+    TELEGRAM_ENABLE_COMMANDS: true,
+  },
+  envVars: {
+    TELEGRAM_BOT_TOKEN: 'test-telegram-token-123',
+    TELEGRAM_WEBHOOK_URL: 'https://test.example.com/webhook',
+    TELEGRAM_PARSE_MODE: 'Markdown',
+    TELEGRAM_ALLOWED_CHATS: '12345,67890',
+    TELEGRAM_BLOCKED_USERS: '98765',
+    TELEGRAM_ENABLE_COMMANDS: 'false',
+  },
+  expectedResults: {
+    TELEGRAM_BOT_TOKEN: 'test-telegram-token-123',
+    TELEGRAM_WEBHOOK_URL: 'https://test.example.com/webhook',
+    TELEGRAM_PARSE_MODE: 'Markdown',
+    TELEGRAM_ALLOWED_CHATS: '12345,67890',
+    TELEGRAM_BLOCKED_USERS: '98765',
+    TELEGRAM_ENABLE_COMMANDS: false,
+  },
+};
+
+// Mattermost Config Test Data
+export const mattermostConfigData: ConfigTestData = {
+  defaults: {
+    MATTERMOST_SERVER_URL: '',
+    MATTERMOST_TOKEN: '',
+    MATTERMOST_CHANNEL: '',
+  },
+  envVars: {
+    MATTERMOST_SERVER_URL: 'https://mattermost.example.com',
+    MATTERMOST_TOKEN: 'test-mattermost-token-123',
+    MATTERMOST_CHANNEL: 'town-square',
+  },
+  expectedResults: {
+    MATTERMOST_SERVER_URL: 'https://mattermost.example.com',
+    MATTERMOST_TOKEN: 'test-mattermost-token-123',
+    MATTERMOST_CHANNEL: 'town-square',
+  },
+};
+
+// Webhook Config Test Data
+export const webhookConfigData: ConfigTestData = {
+  defaults: {
+    WEBHOOK_ENABLED: false,
+    WEBHOOK_URL: '',
+    WEBHOOK_TOKEN: '',
+    WEBHOOK_IP_WHITELIST: '',
+    WEBHOOK_PORT: 80,
+  },
+  envVars: {
+    WEBHOOK_ENABLED: 'true',
+    WEBHOOK_URL: 'https://webhook.example.com/receive',
+    WEBHOOK_TOKEN: 'test-webhook-token-123',
+    WEBHOOK_IP_WHITELIST: '127.0.0.1,192.168.1.1',
+    WEBHOOK_PORT: '8080',
+  },
+  expectedResults: {
+    WEBHOOK_ENABLED: true,
+    WEBHOOK_URL: 'https://webhook.example.com/receive',
+    WEBHOOK_TOKEN: 'test-webhook-token-123',
+    WEBHOOK_IP_WHITELIST: '127.0.0.1,192.168.1.1',
+    WEBHOOK_PORT: 8080,
+  },
+};
+
 // Slack Config Test Data
 export const slackConfigData: ConfigTestData = {
   defaults: {
@@ -257,7 +329,6 @@ export function createTestData(
   type: 'discord' | 'message' | 'slack' | 'telegram' | 'mattermost' | 'webhook' | 'command'
 ): any {
   let data;
->>>>>>> origin/main
   switch (type) {
     case 'discord':
       data = discordConfigData;
@@ -266,12 +337,29 @@ export function createTestData(
       data = messageConfigData;
       break;
     case 'slack':
-      return slackConfigData;
+      data = slackConfigData;
+      break;
+    case 'telegram':
+      data = telegramConfigData;
+      break;
+    case 'mattermost':
+      data = mattermostConfigData;
+      break;
+    case 'webhook':
+      data = webhookConfigData;
+      break;
     case 'command':
       return commandParserTestData;
     default:
       throw new Error(`Unknown test data type: ${type}`);
   }
+
+  // Validate the data against the schema
+  validateConfigAgainstSchema(
+    type as 'discord' | 'message' | 'slack' | 'telegram' | 'mattermost' | 'webhook',
+    data.expectedResults
+  );
+  return data;
 }
 
 /**

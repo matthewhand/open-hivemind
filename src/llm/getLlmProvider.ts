@@ -114,11 +114,6 @@ export function getLlmProvider(): ILlmProvider[] {
             instance = openWebUI; // Singleton/Stateless
             debug(`Initialized OpenWebUI provider instance: ${config.name}`);
             break;
-          case 'letta':
-            const { LettaProvider } = require('@hivemind/provider-letta');
-            instance = new LettaProvider(config.config);
-            debug(`Initialized Letta provider instance: ${config.name}`);
-            break;
           default:
             debug(`Unknown LLM provider type: ${config.type}`);
         }
@@ -173,10 +168,6 @@ export function getLlmProvider(): ILlmProvider[] {
             break;
           case 'openwebui':
             instance = openWebUI;
-            break;
-          case 'letta':
-            const { LettaProvider } = require('@hivemind/provider-letta');
-            instance = new LettaProvider();
             break;
         }
         if (instance) {
