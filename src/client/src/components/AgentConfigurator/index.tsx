@@ -129,7 +129,7 @@ const AgentConfigurator: React.FC<AgentConfiguratorProps> = ({ title = 'Agent Co
   const { personas, loading: personasLoading } = usePersonas();
   const {
     llmProviders,
-    messengerProviders,
+    messageProviders,
     loading: providersLoading,
     error: providersError,
   } = useProviders();
@@ -322,7 +322,7 @@ const AgentConfigurator: React.FC<AgentConfiguratorProps> = ({ title = 'Agent Co
     return map;
   }, [statusData]);
 
-  const messageProviderInfoList = messengerProviders.length ? messengerProviders : fallbackMessageProviders;
+  const messageProviderInfoList = messageProviders.length ? messageProviders : fallbackMessageProviders;
   const llmProviderInfoList = llmProviders.length ? llmProviders : fallbackLlmProviders;
 
   const messageProviderOptions = useMemo(() => messageProviderInfoList.map(toOptionLabel), [messageProviderInfoList]);
