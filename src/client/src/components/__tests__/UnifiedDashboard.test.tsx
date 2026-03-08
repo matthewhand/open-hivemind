@@ -1,3 +1,4 @@
+import { expect, vi } from 'vitest';
 // Jest provides describe, it, expect, beforeEach as globals
 import React from 'react';
 import { render, screen, waitFor, fireEvent } from '@testing-library/react';
@@ -5,7 +6,7 @@ import '@testing-library/jest-dom';
 import { BrowserRouter } from 'react-router-dom';
 import UnifiedDashboard from '../UnifiedDashboard';
 import { apiService } from '../../services/api';
-import { vi } from 'vitest';
+
 
 // Mock apiService using Vitest
 vi.mock('../../services/api', () => ({
@@ -33,7 +34,11 @@ vi.mock('../DaisyUI', () => ({
     isOpen ? <div role="dialog">{children}</div> : null
   ),
   ProgressBar: () => <div className="progress-bar">Progress</div>,
-  StatsCards: () => <div className="stats-cards">Stats</div>,
+  StatsCards: (props: any) => (
+    <div className="stats-cards" data-testid="stats-cards">
+      {JSON.stringify(props.stats)}
+    </div>
+  ),
   ToastNotification: {
     useSuccessToast: () => vi.fn(),
     useErrorToast: () => vi.fn(),
@@ -151,4 +156,57 @@ describe('UnifiedDashboard', () => {
     fireEvent.click(screen.getByTestId('performance-tab'));
     expect(screen.getByTestId('performance-tab')).toHaveClass('tab-active');
   });
+
+  it('correctly calculates derived statistics from status bots', async () => {
+    const mockBots = [
+      { name: 'Bot1', messageProvider: 'discord', llmProvider: 'openai' },
+      { name: 'Bot2', messageProvider: 'slack', llmProvider: 'anthropic' },
+    ];
+    (apiService.getConfig as any).mockResolvedValue({
+      bots: mockBots,
+      warnings: [],
+      environment: 'development',
+    });
+
+    // Status mock returns 2 active bots, 1 connected, 150 messages total, 5 errors total
+    (apiService.getStatus as any).mockResolvedValue({
+      bots: [
+        { name: 'Bot1', status: 'active', connected: true, messageCount: 100, errorCount: 2 },
+        { name: 'Bot2', status: 'active', connected: false, messageCount: 50, errorCount: 3 },
+        { name: 'Bot3', status: 'inactive', connected: false, messageCount: 0, errorCount: 0 },
+      ],
+      uptime: 100,
+    });
+    (apiService.getPersonas as any).mockResolvedValue([]);
+    (apiService.getLlmProfiles as any).mockResolvedValue({ profiles: { llm: [] } });
+
+    render(
+      <BrowserRouter>
+        <UnifiedDashboard />
+      </BrowserRouter>
+    );
+
+    // Wait for the StatsCards component to render the stats props
+    await waitFor(() => {
+      const statsCards = screen.getByTestId('stats-cards');
+      expect(statsCards.textContent).toContain('Active Bots');
+    });
+
+    const statsText = screen.getByTestId('stats-cards').textContent || '';
+    const statsData = JSON.parse(statsText);
+
+    // Check if the parsed statsData contains the objects we expect
+    const activeBots = statsData.find((s: any) => s.title === 'Active Bots');
+    expect(activeBots).toBeDefined();
+    expect(activeBots.value).toBe(2);
+
+    const totalMessages = statsData.find((s: any) => s.title === 'Total Messages' || s.title === 'Messages Today');
+    expect(totalMessages).toBeDefined();
+    expect(totalMessages.value).toBe(150);
+
+    const errorRate = statsData.find((s: any) => s.title === 'Error Rate');
+    expect(errorRate).toBeDefined();
+    expect(errorRate.value).toBe('3.33%');
+  });
+
 });
