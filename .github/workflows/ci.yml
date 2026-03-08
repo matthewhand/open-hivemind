@@ -24,13 +24,13 @@ jobs:
           node-version: '20'
           cache: 'pnpm'
       - name: Install dependencies
-        run: ppnpm install
+        run: pnpm install
       - name: Audit for hardcoded secrets
-        run: ppnpm run audit:secrets
+        run: pnpm run audit:secrets
       - name: Run unit tests
         id: unit-test
         run: |
-          ppnpm test 2>&1 | tee unit-test-output.txt
+          pnpm test 2>&1 | tee unit-test-output.txt
           # Extract passing unit test count from output
           UNIT_PASSING_TESTS=$(grep "Tests:" unit-test-output.txt | grep -o "[0-9]\+ passed" | grep -o "[0-9]\+")
           echo "unit_passing_tests=$UNIT_PASSING_TESTS" >> $GITHUB_OUTPUT
@@ -40,7 +40,7 @@ jobs:
         run: pnpm exec playwright install --with-deps
 
       - name: Run E2E tests
-        run: ppnpm run test:playwright
+        run: pnpm run test:playwright
       - name: Generate Playwright report
         if: always()
         run: npx playwright show-report
