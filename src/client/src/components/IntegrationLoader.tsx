@@ -173,8 +173,8 @@ export class IntegrationLoader {
       this.manifestCache.set(integrationId, defaultManifest);
       return defaultManifest;
 
-    } catch (_error) {
-      // Return default manifest on error
+    } catch (error) {
+      logger.debug(`Failed to load manifest for integration ${integrationId}, using default:`, error);
       const defaultManifest: IntegrationManifest = {
         id: integrationId,
         name: this.capitalizeFirst(integrationId),
