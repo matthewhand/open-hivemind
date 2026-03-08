@@ -139,6 +139,15 @@ describe('DemoModeService', () => {
       });
       expect(demoService.detectDemoMode()).toBe(true);
     });
+
+    it('should return true when no bots are configured at all', () => {
+      const { BotConfigurationManager } = require('../../src/config/BotConfigurationManager');
+      BotConfigurationManager.getInstance.mockReturnValueOnce({
+        getAllBots: () => [],
+        getWarnings: () => ['No bot configuration found'],
+      });
+      expect(demoService.detectDemoMode()).toBe(true);
+    });
   });
 
   describe('initialize', () => {
