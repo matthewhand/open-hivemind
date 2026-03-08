@@ -154,7 +154,7 @@ export async function readFile(filePath: string): Promise<string> {
     throw new Error('Path is a directory, not a file');
   }
 
-  const content = await readFileAsync(filePath, 'utf8');
+  const content = await fs.promises.readFile(filePath, 'utf8');
   debug('File content: ' + content);
   return content;
 }
