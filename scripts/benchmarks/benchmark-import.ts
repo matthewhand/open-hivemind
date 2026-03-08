@@ -1,3 +1,4 @@
+import { writeFileSync, unlinkSync } from 'fs';
 import { ConfigurationImportExportService } from '../../src/server/services/ConfigurationImportExportService';
 import { DatabaseManager } from '../../src/database/DatabaseManager';
 
@@ -52,7 +53,6 @@ const importData = {
 };
 
 // Write dummy data to a temp file
-import { writeFileSync, unlinkSync } from 'fs';
 const tempFile = 'scripts/benchmarks/temp-import-bench.json';
 writeFileSync(tempFile, JSON.stringify(importData));
 
