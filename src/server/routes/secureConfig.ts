@@ -19,8 +19,12 @@ router.get('/', async (req: Request, res: Response) => {
     const configIds = await secureConfigManager.listConfigs();
     const configs = [];
 
-    for (const configData of configIds) {
-      const config = await secureConfigManager.getConfig(configData.id);
+    const configPromises = configIds.map((configData) =>
+      secureConfigManager.getConfig(configData.id)
+    );
+    const configResults = await Promise.all(configPromises);
+
+    for (const config of configResults) {
       if (config) {
         // Return metadata without sensitive data
         configs.push({
