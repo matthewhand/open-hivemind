@@ -435,6 +435,12 @@ export class ConfigurationImportExportService {
 
   /**
    * Import configurations from file
+   *
+   * Note on Caching: When importing configurations, if the import data contains multiple
+   * versions referencing the same `botConfigurationId`, this method caches the DB validation
+   * results for those IDs (both valid and invalid). This cache is request-scoped and ephemeral,
+   * living only for the duration of the method call to prevent N+1 query patterns. Large imports
+   * with many unique config IDs will correctly make exactly one DB call per unique ID.
    */
   async importConfigurations(
     filePath: string,
@@ -547,11 +553,27 @@ export class ConfigurationImportExportService {
 
       // Process versions if included
       if (importData.versions && !options.validateOnly) {
+        // Cache to avoid N+1 queries when importing multiple versions for the same configuration
+        const validConfigIds = new Set<number>();
+        const invalidConfigIds = new Set<number>();
+
         for (const version of importData.versions) {
           try {
-            // Check if configuration exists
-            const config = await this.dbManager.getBotConfiguration(version.botConfigurationId);
-            if (config) {
+            const configId = version.botConfigurationId;
+            let isValid = validConfigIds.has(configId);
+
+            if (!isValid && !invalidConfigIds.has(configId)) {
+              // Check if configuration exists
+              const config = await this.dbManager.getBotConfiguration(configId);
+              if (config) {
+                validConfigIds.add(configId);
+                isValid = true;
+              } else {
+                invalidConfigIds.add(configId);
+              }
+            }
+
+            if (isValid) {
               await this.dbManager.createBotConfigurationVersion(version);
             }
           } catch (error) {

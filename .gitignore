@@ -211,3 +211,4 @@ AGENTS.md
 config/.key
 config/secure/
 config/providers/
+scripts/benchmarks/temp-import-bench.json
