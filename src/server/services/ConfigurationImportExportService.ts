@@ -547,11 +547,27 @@ export class ConfigurationImportExportService {
 
       // Process versions if included
       if (importData.versions && !options.validateOnly) {
+        // Cache to avoid N+1 queries when importing multiple versions for the same configuration
+        const validConfigIds = new Set<number>();
+        const invalidConfigIds = new Set<number>();
+
         for (const version of importData.versions) {
           try {
-            // Check if configuration exists
-            const config = await this.dbManager.getBotConfiguration(version.botConfigurationId);
-            if (config) {
+            const configId = version.botConfigurationId;
+            let isValid = validConfigIds.has(configId);
+
+            if (!isValid && !invalidConfigIds.has(configId)) {
+              // Check if configuration exists
+              const config = await this.dbManager.getBotConfiguration(configId);
+              if (config) {
+                validConfigIds.add(configId);
+                isValid = true;
+              } else {
+                invalidConfigIds.add(configId);
+              }
+            }
+
+            if (isValid) {
               await this.dbManager.createBotConfigurationVersion(version);
             }
           } catch (error) {
