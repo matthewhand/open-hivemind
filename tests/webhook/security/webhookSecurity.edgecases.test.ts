@@ -130,5 +130,21 @@ describe('webhookSecurity edge cases', () => {
       // Since '127.0.0.1' !== '127.0.0.0/24', this will block.
       expect(res.statusCode).toBe(403);
     });
+
+    it('allows when whitelist contains only IPv6 loopback and request comes from IPv6', async () => {
+      setConfig({ WEBHOOK_IP_WHITELIST: '::1,::ffff:127.0.0.1' });
+      const { res } = await runRoute(app, 'post', '/secured', {
+        headers: { 'x-webhook-token': 'secret-token' },
+      });
+      expect(res.statusCode).toBe(200);
+    });
+
+    it('blocks when whitelist has entries but none match the request IP', async () => {
+      setConfig({ WEBHOOK_IP_WHITELIST: '::2,::3' });
+      const { res } = await runRoute(app, 'post', '/secured', {
+        headers: { 'x-webhook-token': 'secret-token' },
+      });
+      expect(res.statusCode).toBe(403);
+    });
   });
 });
