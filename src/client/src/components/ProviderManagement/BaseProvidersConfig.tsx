@@ -483,7 +483,7 @@ const BaseProvidersConfig: React.FC<BaseProvidersConfigProps> = ({
       </ModalForm>
 
       {toast.show && (
-        <div className="toast toast-bottom toast-center z-50">
+        <div className="toast toast-bottom toast-center z-50" role="status" aria-live="polite">
           <div className={`alert ${toast.type === 'success' ? 'alert-success' : 'alert-error'}`}>
             <span>{toast.message}</span>
             <button className="btn btn-sm btn-ghost" onClick={() => setToast({ ...toast, show: false })}>✕</button>
