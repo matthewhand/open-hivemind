@@ -435,6 +435,12 @@ export class ConfigurationImportExportService {
 
   /**
    * Import configurations from file
+   *
+   * Note on Caching: When importing configurations, if the import data contains multiple
+   * versions referencing the same `botConfigurationId`, this method caches the DB validation
+   * results for those IDs (both valid and invalid). This cache is request-scoped and ephemeral,
+   * living only for the duration of the method call to prevent N+1 query patterns. Large imports
+   * with many unique config IDs will correctly make exactly one DB call per unique ID.
    */
   async importConfigurations(
     filePath: string,

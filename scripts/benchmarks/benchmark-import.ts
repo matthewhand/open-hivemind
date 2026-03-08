@@ -1,5 +1,5 @@
-import { ConfigurationImportExportService } from './src/server/services/ConfigurationImportExportService';
-import { DatabaseManager } from './src/database/DatabaseManager';
+import { ConfigurationImportExportService } from '../../src/server/services/ConfigurationImportExportService';
+import { DatabaseManager } from '../../src/database/DatabaseManager';
 
 // Mock the DatabaseManager instance
 const dbManager = DatabaseManager.getInstance();
@@ -53,7 +53,7 @@ const importData = {
 
 // Write dummy data to a temp file
 import { writeFileSync, unlinkSync } from 'fs';
-const tempFile = './temp-import-bench.json';
+const tempFile = 'scripts/benchmarks/temp-import-bench.json';
 writeFileSync(tempFile, JSON.stringify(importData));
 
 async function runBenchmark() {
@@ -70,3 +70,5 @@ async function runBenchmark() {
 }
 
 runBenchmark().catch(console.error);
+// NOTE: This is a standalone benchmark script to measure the N+1 optimization.
+// It runs independently and temporarily mocks out the database manager.
