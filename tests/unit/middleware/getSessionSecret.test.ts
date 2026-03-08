@@ -44,7 +44,7 @@ describe('getSessionSecret', () => {
       const secret = getSessionSecret();
       expect(secret).toBe('shortsecret');
       expect(console.warn).toHaveBeenCalledWith(
-        'WARNING: SESSION_SECRET should be at least 32 characters long'
+        expect.stringContaining('SESSION_SECRET is only 11 characters')
       );
     });
   });
