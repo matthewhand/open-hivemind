@@ -8,12 +8,12 @@ const router = Router();
 const specsDirectory = path.join(process.cwd(), 'specs');
 
 const specMetadataSchema = z.object({
-  id: z.string(),
+  id: z.string().regex(/^[a-zA-Z0-9_-]+$/, 'Invalid ID format'),
   topic: z.string(),
   tags: z.array(z.string()),
   author: z.string(),
   timestamp: z.string(),
-  version: z.string(),
+  version: z.string().regex(/^[a-zA-Z0-9_.-]+$/, 'Invalid version format'),
 });
 
 type SpecMetadata = z.infer<typeof specMetadataSchema>;
@@ -43,11 +43,18 @@ router.post('/', async (req, res) => {
       return res.status(400).json({ error: 'Invalid spec data', details: validation.error.errors });
     }
 
+    const specDir = path.join(specsDirectory, id, version);
+    const resolvedSpecDir = path.resolve(specDir);
+    const resolvedSpecsDirectory = path.resolve(specsDirectory);
+
+    if (!resolvedSpecDir.startsWith(resolvedSpecsDirectory + path.sep)) {
+      return res.status(400).json({ error: 'Invalid spec ID or version: Path traversal detected' });
+    }
+
     const index = await getSpecsIndex();
     index.push(newSpec);
     await saveSpecsIndex(index);
 
-    const specDir = path.join(specsDirectory, id, version);
     await fs.mkdir(specDir, { recursive: true });
     await fs.writeFile(path.join(specDir, 'spec.md'), content);
 
@@ -69,6 +76,22 @@ router.get('/', async (req, res) => {
 
 router.get('/:id', async (req, res) => {
   const { id } = req.params;
+
+  if (!/^[a-zA-Z0-9_-]+$/.test(id)) {
+    return res.status(400).json({ error: 'Invalid spec ID format' });
+  }
+
+  const targetPath = path.join(specsDirectory, id);
+  const resolvedTargetPath = path.resolve(targetPath);
+  const resolvedSpecsDirectory = path.resolve(specsDirectory);
+
+  if (
+    !resolvedTargetPath.startsWith(resolvedSpecsDirectory + path.sep) &&
+    resolvedTargetPath !== resolvedSpecsDirectory
+  ) {
+    return res.status(400).json({ error: 'Invalid spec ID: Path traversal detected' });
+  }
+
   try {
     const index = await getSpecsIndex();
     const spec = index.find((s) => s.id === id);
@@ -77,7 +100,7 @@ router.get('/:id', async (req, res) => {
       return res.status(404).json({ error: 'Specification not found' });
     }
 
-    const versions = await fs.readdir(path.join(specsDirectory, id));
+    const versions = await fs.readdir(targetPath);
     const specWithVersions = { ...spec, versions };
 
     return res.json(specWithVersions);
