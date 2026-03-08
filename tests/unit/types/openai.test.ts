@@ -23,6 +23,11 @@ describe('OpenAI Type Guards', () => {
       } as OpenAIResponse;
       expect(isOpenAIError(response)).toBe(false);
     });
+
+    it('returns false when error is explicitly null', () => {
+      const response = { object: 'chat.completion', error: null } as any as OpenAIResponse;
+      expect(isOpenAIError(response)).toBe(false);
+    });
   });
 
   describe('isChatCompletionResponse', () => {
