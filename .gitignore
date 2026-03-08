@@ -24,6 +24,9 @@ config/test/providers/instances.json
 config/user/
 config/providers/
 config/backups/
+config/secure/
+*.enc
+config/.key
 backup*.json
 .env.real
 *.config.json
