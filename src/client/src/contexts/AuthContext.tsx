@@ -110,16 +110,20 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   useEffect(() => {
     // Check for serverless mode
-    fetch('/health')
-      .then(res => res.json())
-      .then(data => {
-        if (data.platform === 'vercel-serverless' || data.platform === 'serverless') {
-          setIsServerless(true);
+    const checkServerless = async () => {
+      try {
+        const res = await fetch('/health');
+        if (res.ok) {
+          const data = await res.json();
+          if (data.platform === 'vercel-serverless' || data.platform === 'serverless') {
+            setIsServerless(true);
+          }
         }
-      })
-      .catch(() => {
+      } catch {
         // Assume not serverless or backend down
-      });
+      }
+    };
+    checkServerless();
   }, []);
 
   const login = async (username: string, password: string): Promise<boolean> => {

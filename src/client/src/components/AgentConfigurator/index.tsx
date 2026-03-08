@@ -60,6 +60,12 @@ const fallbackLlmProviders: ProviderInfo[] = [
     helpText: 'Generate an API key from the OpenAI portal and paste it into the Open-Hivemind configuration.',
   },
   {
+    key: 'anthropic',
+    label: 'Anthropic',
+    docsUrl: 'https://console.anthropic.com/account/keys',
+    helpText: 'Generate an API key from the Anthropic console.',
+  },
+  {
     key: 'flowise',
     label: 'Flowise',
     docsUrl: 'https://docs.flowiseai.com/',
@@ -72,28 +78,16 @@ const fallbackLlmProviders: ProviderInfo[] = [
     helpText: 'Enable API access in OpenWebUI and copy the token from the admin interface.',
   },
   {
-    key: 'perplexity',
-    label: 'Perplexity',
-    docsUrl: 'https://www.perplexity.ai/developer',
-    helpText: 'Request API access from Perplexity and supply the issued API key.',
-  },
-  {
-    key: 'replicate',
-    label: 'Replicate',
-    docsUrl: 'https://replicate.com/account',
-    helpText: 'Copy the Replicate API token from your account settings.',
-  },
-  {
-    key: 'n8n',
-    label: 'n8n',
-    docsUrl: 'https://docs.n8n.io/',
-    helpText: 'Provide the n8n webhook URL that triggers your workflow.',
-  },
-  {
     key: 'openswarm',
     label: 'OpenSwarm',
     docsUrl: 'https://openswarm.ai/',
     helpText: 'Provide the OpenSwarm base URL and API key configured for your swarm deployment.',
+  },
+  {
+    key: 'letta',
+    label: 'Letta',
+    docsUrl: 'https://docs.letta.com/',
+    helpText: 'Provide the Letta API URL, API key, and agent ID.',
   },
 ];
 
@@ -135,7 +129,7 @@ const AgentConfigurator: React.FC<AgentConfiguratorProps> = ({ title = 'Agent Co
   const { personas, loading: personasLoading } = usePersonas();
   const {
     llmProviders,
-    messengerProviders,
+    messageProviders,
     loading: providersLoading,
     error: providersError,
   } = useProviders();
@@ -328,7 +322,7 @@ const AgentConfigurator: React.FC<AgentConfiguratorProps> = ({ title = 'Agent Co
     return map;
   }, [statusData]);
 
-  const messageProviderInfoList = messengerProviders.length ? messengerProviders : fallbackMessageProviders;
+  const messageProviderInfoList = messageProviders.length ? messageProviders : fallbackMessageProviders;
   const llmProviderInfoList = llmProviders.length ? llmProviders : fallbackLlmProviders;
 
   const messageProviderOptions = useMemo(() => messageProviderInfoList.map(toOptionLabel), [messageProviderInfoList]);
@@ -417,24 +411,25 @@ const AgentConfigurator: React.FC<AgentConfiguratorProps> = ({ title = 'Agent Co
   };
 
   const handleGuardUsersChange = (bot: Bot, value: string) => {
-    const list = value
-      .split(',')
-      .map(entry => entry.trim())
-      .filter(Boolean);
-
-    const current = selectionState[bot.name];
-    if (!current) {return;}
-    if (current.mcpGuardProfile) {return;}
-    const updatedGuard = { ...current.mcpGuard, allowedUserIds: list };
+    // Only update local input state to avoid immediate tokenization
     setGuardInputState(prev => ({ ...prev, [bot.name]: value }));
-    handleSelectionChange(bot, 'mcpGuard', updatedGuard, false);
   };
 
   const handleGuardUsersBlur = (bot: Bot) => {
     const current = selectionState[bot.name];
+    const inputValue = guardInputState[bot.name] || '';
     if (!current) {return;}
     if (current.mcpGuardProfile) {return;}
-    commitChanges(bot.name, { mcpGuard: current.mcpGuard });
+
+    const list = inputValue
+      .split(',')
+      .map(entry => entry.trim())
+      .filter(Boolean);
+
+    const updatedGuard = { ...current.mcpGuard, allowedUserIds: list };
+
+    handleSelectionChange(bot, 'mcpGuard', updatedGuard, false);
+    commitChanges(bot.name, { mcpGuard: updatedGuard });
   };
 
   const handleGuardrailProfileChange = (bot: Bot, profileKey: string) => {

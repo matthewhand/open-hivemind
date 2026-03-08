@@ -1,3 +1,4 @@
+import crypto from 'crypto';
 import { EventEmitter } from 'events';
 import Debug from 'debug';
 import { DatabaseManager } from '../../database/DatabaseManager';
@@ -98,6 +99,7 @@ export class RealTimeValidationService extends EventEmitter {
   private subscriptions = new Map<string, ValidationSubscription>();
   private validationHistory: ValidationReport[] = [];
   private maxHistorySize = 100;
+  private validationInterval: NodeJS.Timeout | null = null;
 
   private constructor() {
     super();
@@ -522,11 +524,23 @@ export class RealTimeValidationService extends EventEmitter {
    */
   private setupEventHandlers(): void {
     // Periodic validation for subscribed configurations
-    setInterval(() => {
+    this.validationInterval = setInterval(() => {
       this.validateSubscribedConfigurations().catch((error: any) => {
         debug('Error in periodic validation:', error);
       });
     }, 60000); // Validate every minute
+  }
+
+  /**
+   * Clean up resources, particularly stopping the validation interval.
+   */
+  public shutdown(): void {
+    if (this.validationInterval) {
+      clearInterval(this.validationInterval);
+      this.validationInterval = null;
+    }
+    this.removeAllListeners();
+    debug('RealTimeValidationService shutdown completed');
   }
 
   /**
@@ -977,7 +991,7 @@ export class RealTimeValidationService extends EventEmitter {
    * Generate report ID
    */
   private generateReportId(): string {
-    return 'val-' + Date.now().toString(36) + '-' + Math.random().toString(36).substr(2, 9);
+    return 'val-' + crypto.randomUUID();
   }
 
   /**

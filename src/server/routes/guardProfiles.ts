@@ -6,6 +6,7 @@ import {
   saveGuardrailProfiles,
   type GuardrailProfile,
 } from '../../config/guardrailProfiles';
+import { adminRateLimiter } from '../../middleware/rateLimiter';
 
 const router = Router();
 
@@ -62,7 +63,7 @@ router.get('/:id', (req: Request, res: Response) => {
 });
 
 // POST / - Create a new profile
-router.post('/', (req: Request, res: Response) => {
+router.post('/', adminRateLimiter, (req: Request, res: Response) => {
   try {
     const { name, description, guards } = req.body;
 
@@ -145,7 +146,7 @@ router.post('/', (req: Request, res: Response) => {
 });
 
 // PUT /:id - Update a profile
-router.put('/:id', (req: Request, res: Response) => {
+router.put('/:id', adminRateLimiter, (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const { name, description, guards } = req.body;
@@ -161,35 +162,43 @@ router.put('/:id', (req: Request, res: Response) => {
     }
 
     // Merge updates with validation to prevent prototype pollution
+    const currentGuards = profiles[profileIndex].guards || { mcpGuard: { enabled: false, type: 'owner' } };
+
     const safeGuards =
       guards && typeof guards === 'object'
         ? Object.keys(guards)
             .filter((key) => !['__proto__', 'constructor', 'prototype'].includes(key))
-            .reduce((acc, key) => {
-              const existingValue =
-                profiles[profileIndex].guards[
-                  key as keyof (typeof profiles)[typeof profileIndex]['guards']
-                ];
-              const newValue = guards[key];
-              if (
-                typeof newValue === 'object' &&
-                newValue !== null &&
-                typeof existingValue === 'object' &&
-                existingValue !== null
-              ) {
-                acc[key] = { ...existingValue, ...newValue };
-              } else {
-                acc[key] = newValue;
-              }
-              return acc;
-            }, {} as any)
-        : profiles[profileIndex].guards;
+            .reduce(
+              (acc, key) => {
+                const existingValue =
+                  currentGuards[
+                    key as keyof (typeof profiles)[typeof profileIndex]['guards']
+                  ];
+                const newValue = guards[key];
+                if (
+                  typeof newValue === 'object' &&
+                  newValue !== null &&
+                  typeof existingValue === 'object' &&
+                  existingValue !== null
+                ) {
+                  acc[key] = { ...existingValue, ...newValue };
+                } else {
+                  acc[key] = newValue;
+                }
+                return acc;
+              },
+              {} as any
+            )
+        : currentGuards;
 
-    const updatedProfile = {
+    const updatedProfile: GuardrailProfile = {
       ...profiles[profileIndex],
       name: name && typeof name === 'string' ? name : profiles[profileIndex].name,
-      description: description !== undefined ? description : profiles[profileIndex].description,
-      guards: safeGuards,
+      description: description !== undefined && description !== null ? description : profiles[profileIndex].description,
+      guards: {
+        ...currentGuards,
+        ...safeGuards
+      } as GuardrailProfile['guards'],
     };
 
     profiles[profileIndex] = updatedProfile;
@@ -210,16 +219,17 @@ router.put('/:id', (req: Request, res: Response) => {
 });
 
 // DELETE /:id - Delete a profile
-router.delete('/:id', (req: Request, res: Response) => {
+router.delete('/:id', adminRateLimiter, (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const profiles = loadGuardrailProfiles();
     const profileExists = profiles.some((p) => p.id === id);
 
+    // Make DELETE idempotent: if it doesn't exist, just return success
     if (!profileExists) {
-      return res.status(404).json({
-        success: false,
-        error: 'Profile not found',
+      return res.json({
+        success: true,
+        message: 'Guard profile deleted successfully',
       });
     }
 

@@ -52,7 +52,7 @@ export const Hero: React.FC<HeroProps> = ({
 }) => {
   const getHeroClasses = () => {
     const baseClasses = ['hero'];
-    
+
     // Add minimum height
     switch (minHeight) {
     case 'screen':
@@ -79,7 +79,7 @@ export const Hero: React.FC<HeroProps> = ({
 
   const getContentClasses = () => {
     const contentClasses = ['hero-content'];
-    
+
     // Add alignment
     if (alignment === 'center') {
       contentClasses.push('text-center');
@@ -107,7 +107,7 @@ export const Hero: React.FC<HeroProps> = ({
   const renderOverlay = () => {
     if (variant === 'overlay' || gradient) {
       return (
-        <div 
+        <div
           className="hero-overlay bg-opacity-60"
           aria-hidden="true"
         />
@@ -129,7 +129,7 @@ export const Hero: React.FC<HeroProps> = ({
       <div className={getContentClasses()}>
         <div className="max-w-md">
           {title && (
-            <h1 
+            <h1
               className={`text-5xl font-bold ${titleColor}`}
               data-testid={testId ? `${testId}-title` : undefined}
             >
@@ -137,7 +137,7 @@ export const Hero: React.FC<HeroProps> = ({
             </h1>
           )}
           {subtitle && (
-            <p 
+            <p
               className={`py-6 ${subtitleColor}`}
               data-testid={testId ? `${testId}-subtitle` : undefined}
             >
@@ -145,7 +145,7 @@ export const Hero: React.FC<HeroProps> = ({
             </p>
           )}
           {actions && (
-            <div 
+            <div
               className="mt-6"
               data-testid={testId ? `${testId}-actions` : undefined}
             >

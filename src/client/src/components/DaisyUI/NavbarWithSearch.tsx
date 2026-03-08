@@ -271,7 +271,7 @@ const NavbarWithSearch: React.FC<NavbarWithSearchProps> = ({
               </svg>
             </button>
           </div>
-          
+
           {/* Search Suggestions Dropdown */}
           {showSuggestions && (
             <div
@@ -303,7 +303,7 @@ const NavbarWithSearch: React.FC<NavbarWithSearchProps> = ({
                   </ul>
                 </div>
               )}
-              
+
               {recentSearches.length > 0 && (
                 <div className="p-2">
                   {searchQuery && filteredSuggestions.length > 0 && <div className="divider my-1"></div>}
@@ -322,6 +322,7 @@ const NavbarWithSearch: React.FC<NavbarWithSearchProps> = ({
                         <button
                           className="w-full text-left px-3 py-2 rounded-lg hover:bg-base-200 transition-colors"
                           onClick={() => handleSearchSubmitWithOptions(search)}
+                          aria-label={`Search for ${search}`}
                         >
                           <div className="flex items-center gap-2">
                             <svg className="w-4 h-4 opacity-60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -335,7 +336,7 @@ const NavbarWithSearch: React.FC<NavbarWithSearchProps> = ({
                   </ul>
                 </div>
               )}
-              
+
               {!searchQuery && recentSearches.length === 0 && (
                 <div className="p-4 text-center text-sm text-base-content/60">
                   <div className="flex flex-col items-center gap-2">
@@ -413,11 +414,11 @@ const NavbarWithSearch: React.FC<NavbarWithSearchProps> = ({
             <li className="menu-title">Choose Theme</li>
             {themeOptions.map((theme) => (
               <li key={theme.value}>
-                <input 
-                  type="radio" 
-                  name="theme-dropdown" 
-                  className="theme-controller" 
-                  value={theme.value} 
+                <input
+                  type="radio"
+                  name="theme-dropdown"
+                  className="theme-controller"
+                  value={theme.value}
                   aria-label={theme.label}
                 />
                 <span className="flex items-center gap-2">

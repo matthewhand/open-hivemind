@@ -17,13 +17,33 @@ export interface BotInstance {
   envOverrides?: Record<string, any>;
 }
 
-export enum BotStatus {
-  ACTIVE = 'active',
-  INACTIVE = 'inactive',
-  ERROR = 'error',
-  STARTING = 'starting',
-  STOPPING = 'stopping'
-}
+export const BotStatus = {
+  ACTIVE: 'active',
+  INACTIVE: 'inactive',
+  ERROR: 'error',
+  STARTING: 'starting',
+  STOPPING: 'stopping',
+} as const;
+export type BotStatus = typeof BotStatus[keyof typeof BotStatus];
+
+export const MessageProviderType = {
+  DISCORD: 'discord',
+  SLACK: 'slack',
+  MATTERMOST: 'mattermost',
+  WEBHOOK: 'webhook',
+} as const;
+export type MessageProviderType = typeof MessageProviderType[keyof typeof MessageProviderType];
+
+export const LLMProviderType = {
+  OPENAI: 'openai',
+  FLOWISE: 'flowise',
+  OPENWEBUI: 'openwebui',
+  PERPLEXITY: 'perplexity',
+  REPLICATE: 'replicate',
+  N8N: 'n8n',
+  OPENSWARM: 'openswarm',
+} as const;
+export type LLMProviderType = typeof LLMProviderType[keyof typeof LLMProviderType];
 
 export interface MessageProvider {
   id: string;
@@ -41,12 +61,12 @@ export interface LLMProvider {
   enabled: boolean;
 }
 
+
 export enum MessageProviderType {
-  SLACK = 'slack',
   DISCORD = 'discord',
-  TELEGRAM = 'telegram',
+  SLACK = 'slack',
+  MATTERMOST = 'mattermost',
   WEBHOOK = 'webhook',
-  MATTERMOST = 'mattermost'
 }
 
 export enum LLMProviderType {
@@ -54,7 +74,13 @@ export enum LLMProviderType {
   ANTHROPIC = 'anthropic',
   OLLAMA = 'ollama',
   HUGGINGFACE = 'huggingface',
-  LOCAL = 'local'
+  LOCAL = 'local',
+  FLOWISE = 'flowise',
+  OPENWEBUI = 'openwebui',
+  PERPLEXITY = 'perplexity',
+  REPLICATE = 'replicate',
+  N8N = 'n8n',
+  OPENSWARM = 'openswarm',
 }
 
 export interface Persona {
@@ -68,14 +94,15 @@ export interface Persona {
   updatedAt: string;
 }
 
-export enum PersonaCategory {
-  PROFESSIONAL = 'professional',
-  CREATIVE = 'creative',
-  TECHNICAL = 'technical',
-  CASUAL = 'casual',
-  EDUCATIONAL = 'educational',
-  ENTERTAINMENT = 'entertainment'
-}
+export const PersonaCategory = {
+  PROFESSIONAL: 'professional',
+  CREATIVE: 'creative',
+  TECHNICAL: 'technical',
+  CASUAL: 'casual',
+  EDUCATIONAL: 'educational',
+  ENTERTAINMENT: 'entertainment',
+} as const;
+export type PersonaCategory = typeof PersonaCategory[keyof typeof PersonaCategory];
 
 export interface PersonaTrait {
   name: string;
@@ -284,15 +311,6 @@ export const MESSAGE_PROVIDER_CONFIGS = {
       { name: 'clientId', label: 'Client ID', type: 'text', required: true },
     ],
   },
-  telegram: {
-    type: MessageProviderType.TELEGRAM,
-    displayName: 'Telegram',
-    description: 'Connect to Telegram groups',
-    icon: '✈️',
-    fields: [
-      { name: 'token', label: 'Bot Token', type: 'password', required: true },
-    ],
-  },
   webhook: {
     type: MessageProviderType.WEBHOOK,
     displayName: 'Webhook',
@@ -327,42 +345,100 @@ export const LLM_PROVIDER_CONFIGS = {
       { name: 'model', label: 'Default Model', type: 'text', required: false, placeholder: 'gpt-4o' },
     ],
   },
-  anthropic: {
-    type: LLMProviderType.ANTHROPIC,
-    displayName: 'Anthropic',
-    description: 'Claude models from Anthropic',
-    icon: '🧠',
+  flowise: {
+    type: LLMProviderType.FLOWISE,
+    displayName: 'Flowise',
+    description: 'Visual LLM orchestration',
+    icon: '🌊',
     fields: [
       { name: 'apiKey', label: 'API Key', type: 'password', required: true },
-      { name: 'model', label: 'Default Model', type: 'text', required: false, placeholder: 'claude-3-opus-20240229' },
+      { name: 'apiUrl', label: 'API URL', type: 'text', required: true },
+      { name: 'chatflowId', label: 'Chatflow ID', type: 'text', required: true },
     ],
   },
-  ollama: {
-    type: LLMProviderType.OLLAMA,
-    displayName: 'Ollama',
-    description: 'Local models via Ollama',
-    icon: '🦙',
+  openwebui: {
+    type: LLMProviderType.OPENWEBUI,
+    displayName: 'OpenWebUI',
+    description: 'Connect to OpenWebUI instances',
+    icon: '🌐',
     fields: [
-      { name: 'endpoint', label: 'API Endpoint', type: 'text', required: true, placeholder: 'http://localhost:11434' },
-      { name: 'model', label: 'Model', type: 'text', required: true, placeholder: 'llama2, codellama, mistral, etc.' },
-      { name: 'maxTokens', label: 'Max Tokens', type: 'number', required: false, placeholder: '2048', validation: { min: 1, max: 8192 } },
-      { name: 'temperature', label: 'Temperature', type: 'number', required: false, placeholder: '0.7', validation: { min: 0, max: 2 } },
-      { name: 'keepAlive', label: 'Keep Alive', type: 'text', required: false, placeholder: '5m' },
+      { name: 'apiKey', label: 'API Key', type: 'password', required: true },
+      { name: 'apiUrl', label: 'API URL', type: 'text', required: true },
     ],
   },
-  huggingface: {
-    type: LLMProviderType.HUGGINGFACE,
-    displayName: 'Hugging Face',
-    description: 'Models from Hugging Face',
-    icon: '🤗',
+  openswarm: {
+    type: LLMProviderType.OPENSWARM,
+    displayName: 'OpenSwarm',
+    description: 'Connect to OpenSwarm clusters',
+    icon: '🐝',
+    fields: [
+      { name: 'apiKey', label: 'API Key', type: 'password', required: false },
+      { name: 'baseUrl', label: 'API URL', type: 'text', required: false },
+      { name: 'team', label: 'Team', type: 'text', required: false },
+    ],
+  },
+  perplexity: {
+    type: LLMProviderType.PERPLEXITY,
+    displayName: 'Perplexity',
+    description: 'Perplexity AI models',
+    icon: '🔍',
     fields: [],
   },
-  local: {
-    type: LLMProviderType.LOCAL,
-    displayName: 'Local',
-    description: 'Custom local models',
-    icon: '🏠',
+  replicate: {
+    type: LLMProviderType.REPLICATE,
+    displayName: 'Replicate',
+    description: 'Run machine learning models on Replicate',
+    icon: '🚀',
     fields: [],
+  },
+  n8n: {
+    type: LLMProviderType.N8N,
+    displayName: 'n8n',
+    description: 'Workflow automation with n8n',
+    icon: '⚙️',
+    fields: [],
+  },
+  perplexity: {
+    type: LLMProviderType.PERPLEXITY,
+    displayName: 'Perplexity',
+    description: 'Search-augmented AI models',
+    icon: '🔍',
+    fields: [
+      { name: 'apiKey', label: 'API Key', type: 'password', required: true },
+      { name: 'model', label: 'Model', type: 'text', required: false },
+    ],
+  },
+  replicate: {
+    type: LLMProviderType.REPLICATE,
+    displayName: 'Replicate',
+    description: 'Run open-source models',
+    icon: '🚀',
+    fields: [
+      { name: 'apiKey', label: 'API Key', type: 'password', required: true },
+      { name: 'model', label: 'Model', type: 'text', required: false },
+    ],
+  },
+  n8n: {
+    type: LLMProviderType.N8N,
+    displayName: 'n8n',
+    description: 'Workflow automation platform',
+    icon: '⚡',
+    fields: [
+      { name: 'webhookUrl', label: 'Webhook URL', type: 'text', required: true },
+      { name: 'authHeader', label: 'Auth Header', type: 'password', required: false },
+    ],
+  },
+  openswarm: {
+    type: LLMProviderType.OPENSWARM,
+    displayName: 'OpenSwarm',
+    description: 'Multi-agent orchestration',
+    icon: '🐝',
+    fields: [
+      { name: 'apiKey', label: 'API Key', type: 'password', required: true },
+      { name: 'apiUrl', label: 'API URL', type: 'text', required: true },
+      { name: 'swarmId', label: 'Swarm ID', type: 'text', required: true },
+      { name: 'team', label: 'Team', type: 'text', required: false },
+    ],
   },
 };
 

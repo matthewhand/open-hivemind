@@ -22,9 +22,14 @@ interface DataTableProps<T> {
     showSizeChanger?: boolean;
     pageSizeOptions?: number[];
   };
+  /** Controls whether a search box is displayed in the toolbar. */
   searchable?: boolean;
+  /** Controls whether an "Export CSV" button is displayed in the toolbar. */
   exportable?: boolean;
+  /** Additional CSS classes for the root container. */
   className?: string;
+  /** Enables a UI toggle switch to change the table from paginated mode to an IntersectionObserver-driven infinite scroll mode. */
+  enableInfiniteScrollToggle?: boolean;
 }
 
 const DataTable = <T extends Record<string, any>>({
@@ -38,6 +43,7 @@ const DataTable = <T extends Record<string, any>>({
   searchable = true,
   exportable = false,
   className = '',
+  enableInfiniteScrollToggle = false,
 }: DataTableProps<T>) => {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(pagination.pageSize);
@@ -46,6 +52,15 @@ const DataTable = <T extends Record<string, any>>({
   const [searchTerm, setSearchTerm] = useState('');
   const [columnFilters, setColumnFilters] = useState<Record<string, string>>({});
   const [selectedRows, setSelectedRows] = useState<Set<number>>(new Set());
+  const [isInfiniteScroll, setIsInfiniteScroll] = useState(false);
+  const loadMoreRef = React.useRef<HTMLDivElement>(null);
+
+  // Reset page when toggling mode
+  React.useEffect(() => {
+    if (isInfiniteScroll) {
+      setCurrentPage(1);
+    }
+  }, [isInfiniteScroll]);
 
   // Filter and search data
   const filteredData = useMemo(() => {
@@ -75,7 +90,7 @@ const DataTable = <T extends Record<string, any>>({
       filtered.sort((a, b) => {
         const aValue = a[sortField];
         const bValue = b[sortField];
-        
+
         if (aValue < bValue) {return sortDirection === 'asc' ? -1 : 1;}
         if (aValue > bValue) {return sortDirection === 'asc' ? 1 : -1;}
         return 0;
@@ -87,11 +102,31 @@ const DataTable = <T extends Record<string, any>>({
 
   // Paginate data
   const paginatedData = useMemo(() => {
+    if (isInfiniteScroll) {
+      return filteredData.slice(0, currentPage * pageSize);
+    }
     const startIndex = (currentPage - 1) * pageSize;
     return filteredData.slice(startIndex, startIndex + pageSize);
-  }, [filteredData, currentPage, pageSize]);
+  }, [filteredData, currentPage, pageSize, isInfiniteScroll]);
 
   const totalPages = Math.ceil(filteredData.length / pageSize);
+
+  // Infinite Scroll Observer
+  React.useEffect(() => {
+    if (!isInfiniteScroll || !loadMoreRef.current) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && currentPage < totalPages) {
+          setCurrentPage((prev) => prev + 1);
+        }
+      },
+      { threshold: 0.1 }
+    );
+
+    observer.observe(loadMoreRef.current);
+    return () => observer.disconnect();
+  }, [isInfiniteScroll, currentPage, totalPages]);
 
   const handleSort = (field: keyof T) => {
     if (sortField === field) {
@@ -113,20 +148,28 @@ const DataTable = <T extends Record<string, any>>({
   const handleSelectRow = (index: number, checked: boolean) => {
     const globalIndex = (currentPage - 1) * pageSize + index;
     const newSelected = new Set(selectedRows);
-    
+
     if (checked) {
       newSelected.add(globalIndex);
     } else {
       newSelected.delete(globalIndex);
     }
-    
+
     setSelectedRows(newSelected);
   };
+
+  // Use a ref to track the previously reported selection to prevent infinite loops
+  const prevSelectedRef = React.useRef<T[]>([]);
 
   React.useEffect(() => {
     if (onSelectionChange) {
       const selectedData = Array.from(selectedRows).map(index => data[index]).filter(Boolean);
-      onSelectionChange(selectedData);
+
+      // Only call onSelectionChange if the selected data has actually changed
+      if (JSON.stringify(selectedData) !== JSON.stringify(prevSelectedRef.current)) {
+        prevSelectedRef.current = selectedData;
+        onSelectionChange(selectedData);
+      }
     }
   }, [selectedRows, data, onSelectionChange]);
 
@@ -138,7 +181,7 @@ const DataTable = <T extends Record<string, any>>({
         return `"${String(value).replace(/"/g, '""')}"`;
       }).join(','),
     ).join('\n');
-    
+
     const csv = `${headers}\n${rows}`;
     const blob = new Blob([csv], { type: 'text/csv' });
     const url = window.URL.createObjectURL(blob);
@@ -192,7 +235,7 @@ const DataTable = <T extends Record<string, any>>({
               />
             </div>
           )}
-          
+
           {selectedRows.size > 0 && (
             <div className="badge badge-primary">
               {selectedRows.size} selected
@@ -201,19 +244,34 @@ const DataTable = <T extends Record<string, any>>({
         </div>
 
         <div className="flex items-center gap-2">
+          {enableInfiniteScrollToggle && (
+            <div className="form-control mr-4">
+              <label className="label cursor-pointer gap-2">
+                <span className="label-text text-sm">Infinite Scroll</span>
+                <input
+                  type="checkbox"
+                  className="toggle toggle-sm toggle-primary"
+                  checked={isInfiniteScroll}
+                  onChange={(e) => setIsInfiniteScroll(e.target.checked)}
+                />
+              </label>
+            </div>
+          )}
+
           {exportable && (
-            <button 
+            <button
               className="btn btn-outline btn-sm"
               onClick={exportToCSV}
             >
               📥 Export CSV
             </button>
           )}
-          
+
           <div className="form-control">
             <select
               className="select select-bordered select-sm"
               value={pageSize}
+              disabled={isInfiniteScroll}
               onChange={(e) => {
                 setPageSize(Number(e.target.value));
                 setCurrentPage(1);
@@ -263,7 +321,7 @@ const DataTable = <T extends Record<string, any>>({
                 </th>
               )}
               {columns.map((col) => (
-                <th 
+                <th
                   key={String(col.key)}
                   className={col.sortable ? 'cursor-pointer hover:bg-base-200' : ''}
                   style={{ width: col.width }}
@@ -285,7 +343,7 @@ const DataTable = <T extends Record<string, any>>({
           </thead>
           <tbody>
             {paginatedData.map((row, index) => (
-              <tr 
+              <tr
                 key={index}
                 className={`hover ${onRowClick ? 'cursor-pointer' : ''} ${
                   selectedRows.has((currentPage - 1) * pageSize + index) ? 'bg-primary/10' : ''
@@ -314,7 +372,7 @@ const DataTable = <T extends Record<string, any>>({
                 ))}
               </tr>
             ))}
-            
+
             {paginatedData.length === 0 && (
               <tr>
                 <td colSpan={columns.length + (selectable ? 1 : 0)} className="text-center py-8">
@@ -322,7 +380,7 @@ const DataTable = <T extends Record<string, any>>({
                     <span className="text-4xl">📭</span>
                     <span className="text-base-content/60">No data found</span>
                     {searchTerm && (
-                      <button 
+                      <button
                         className="btn btn-ghost btn-sm"
                         onClick={() => setSearchTerm('')}
                       >
@@ -337,8 +395,14 @@ const DataTable = <T extends Record<string, any>>({
         </table>
       </div>
 
+      {isInfiniteScroll && currentPage < totalPages && (
+        <div ref={loadMoreRef} className="py-8 flex justify-center">
+          <span className="loading loading-spinner loading-md text-primary"></span>
+        </div>
+      )}
+
       {/* Pagination */}
-      {totalPages > 1 && (
+      {!isInfiniteScroll && totalPages > 1 && (
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="text-sm text-base-content/60">
             Showing {(currentPage - 1) * pageSize + 1} to {Math.min(currentPage * pageSize, filteredData.length)} of {filteredData.length} entries

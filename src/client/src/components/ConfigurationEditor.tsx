@@ -59,12 +59,11 @@ const ConfigurationEditor: React.FC<ConfigurationEditorProps> = ({ bot, onSave }
 
   const llmProviders = [
     { value: 'openai', label: 'OpenAI' },
+    { value: 'anthropic', label: 'Anthropic' },
     { value: 'flowise', label: 'Flowise' },
     { value: 'openwebui', label: 'OpenWebUI' },
     { value: 'openswarm', label: 'OpenSwarm' },
-    { value: 'perplexity', label: 'Perplexity' },
-    { value: 'replicate', label: 'Replicate' },
-    { value: 'n8n', label: 'n8n' },
+    { value: 'letta', label: 'Letta' },
   ];
 
   useEffect(() => {

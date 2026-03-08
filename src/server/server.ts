@@ -10,7 +10,6 @@ import {
   setupGracefulShutdown,
 } from '../middleware/errorHandler';
 // Error handling imports
-import { ErrorUtils, HivemindError } from '../types/errors';
 // Middleware imports
 import { auditMiddleware } from './middleware/audit';
 import { authenticateToken, optionalAuth } from './middleware/auth';
@@ -32,6 +31,7 @@ import hotReloadRouter from './routes/hotReload';
 import importExportRouter from './routes/importExport';
 import mcpRouter from './routes/mcp';
 import personasRouter from './routes/personas';
+import { PROMETHEUS_METRICS_PATH } from './routes/health';
 import sitemapRouter from './routes/sitemap';
 import specsRouter from './routes/specs';
 

@@ -289,6 +289,12 @@ const AgentConfigCard: React.FC<AgentConfigCardProps> = ({
                       value={guardInput}
                       onChange={(e) => onGuardUsersChange(bot, e.target.value)}
                       onBlur={() => onGuardUsersBlur(bot)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          onGuardUsersBlur(bot);
+                        }
+                      }}
                       disabled={metadata.mcpGuard?.locked || pending || guardrailProfileActive}
                     />
                     <label className="label">
