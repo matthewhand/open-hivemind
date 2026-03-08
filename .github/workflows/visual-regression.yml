@@ -65,7 +65,6 @@ jobs:
         node-version: '20'
         cache: 'pnpm'
 
-
     - name: Install dependencies
       run: |
         cd webui/client
@@ -191,7 +190,6 @@ jobs:
       with:
         node-version: '20'
         cache: 'pnpm'
-
 
     - name: Install dependencies
       run: |
