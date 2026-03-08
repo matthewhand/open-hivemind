@@ -14,29 +14,33 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Install pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 9
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-          cache: 'npm'
+          cache: 'pnpm'
 
       - name: Install dependencies
-        run: npm ci
+        run: pnpm install
 
       - name: Audit for hardcoded secrets
-        run: npm run audit:secrets
+        run: pnpm run audit:secrets
 
       - name: Run lint
-        run: npm run lint
+        run: pnpm run lint
 
       - name: Check types
-        run: npm run check-types
+        run: pnpm run check-types
 
       - name: Build
-        run: npm run build
+        run: pnpm run build
 
       - name: Run tests with coverage
-        run: npm run test:coverage
+        run: pnpm run test:coverage
 
       - name: Update README badge
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
