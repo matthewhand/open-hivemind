@@ -43,10 +43,10 @@ jobs:
         run: npm audit --audit-level=high --production
 
       - name: Run unit tests
-        run: ppnpm test -- --passWithNoTests --coverage --testPathPattern=tests/unit
+        run: pnpm test -- --passWithNoTests --coverage --testPathPattern=tests/unit
 
       - name: Run integration tests
-        run: ppnpm test -- --passWithNoTests --testPathPattern=tests/integration
+        run: pnpm test -- --passWithNoTests --testPathPattern=tests/integration
 
       - name: Build
         run: pnpm run build
