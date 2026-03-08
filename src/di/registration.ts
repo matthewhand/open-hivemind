@@ -7,6 +7,7 @@
 
 import 'reflect-metadata';
 import { container, Lifecycle } from 'tsyringe';
+import Logger from '../common/logger';
 import { BotConfigurationManager } from '../config/BotConfigurationManager';
 // Import implementations
 import { ConfigurationManager } from '../config/ConfigurationManager';
@@ -15,31 +16,35 @@ import { SecureConfigManager } from '../config/SecureConfigManager';
 import { UserConfigStore } from '../config/UserConfigStore';
 import { TOKENS } from './container';
 
+const logger = Logger.withContext('DI');
+
 /**
  * Registers all core services with the DI container.
  * Should be called once at application startup.
  */
 export function registerServices(): void {
   // Configuration services - singletons
+  logger.debug('Registering ConfigurationManager');
   container.register(TOKENS.ConfigurationManager, {
     useValue: ConfigurationManager.getInstance(),
   });
 
+  logger.debug('Registering BotConfigurationManager instance');
   container.register(TOKENS.BotConfigurationManager, {
     useValue: BotConfigurationManager.getInstance(),
   });
 
+  logger.debug('Registering UserConfigStore');
   container.register(TOKENS.UserConfigStore, {
     useValue: UserConfigStore.getInstance(),
   });
 
-  container.register(
-    TOKENS.SecureConfigManager,
-    {
-      useValue: SecureConfigManager.getInstance(),
-    }
-  );
+  logger.debug('Registering SecureConfigManager');
+  container.register(TOKENS.SecureConfigManager, {
+    useValue: SecureConfigManager.getInstance(),
+  });
 
+  logger.warn('BotConfigurationManager is being registered a second time (useClass); this will override the useValue registration above');
   container.register(
     TOKENS.BotConfigurationManager,
     {
@@ -48,15 +53,17 @@ export function registerServices(): void {
     { lifecycle: Lifecycle.Singleton }
   );
 
+  logger.warn('UserConfigStore is being registered a second time; this will override the first registration');
   container.register(TOKENS.UserConfigStore, {
     useValue: UserConfigStore.getInstance(),
   });
 
+  logger.debug('Registering ProviderConfigManager');
   container.register(TOKENS.ProviderConfigManager, {
     useValue: ProviderConfigManager.getInstance(),
   });
 
-  console.log('✅ DI services registered');
+  logger.info('✅ DI services registered');
 }
 
 /**
