@@ -33,10 +33,10 @@ const ProvidersPage: React.FC = () => {
     },
     {
       title: 'LLM Providers',
-      description: 'Set up OpenAI, Anthropic, Ollama, and custom LLM providers for AI responses',
+      description: 'Set up OpenAI, Flowise, Letta, and other LLM providers for AI responses',
       icon: <LLMIcon className="w-12 h-12" />,
       color: 'secondary' as const,
-      providers: ['OpenAI', 'Anthropic', 'Ollama', 'Custom'],
+      providers: ['OpenAI', 'Flowise', 'Letta', 'OpenWebUI'],
       action: () => navigate('/admin/providers/llm'),
       features: [
         'Multiple AI model support',

@@ -14,13 +14,7 @@ export interface LlmDefaultStatus {
 
 const REQUIRED_LIBS: Record<string, string> = {
   openai: 'openai',
-  anthropic: '@anthropic-ai/sdk',
   flowise: 'flowise-sdk',
-  google: '@google/generative-ai',
-  mistral: '@mistralai/mistralai',
-  cohere: 'cohere-ai',
-  // Local providers don't always need libs but good to track
-  ollama: 'ollama',
 };
 
 const checkLibraryAvailability = (): Record<string, { installed: boolean; package: string }> => {

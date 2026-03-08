@@ -302,7 +302,25 @@ export interface MCPServer {
 
 ---
 
-### Priority 2: MCP Integration (MEDIUM)
+### Priority 2: Provider Package Roadmap (MEDIUM)
+
+The following providers are descoped stubs — no implementation exists. Each should become a proper `packages/provider-*` or `packages/adapter-*` package tagged for the community marketplace.
+
+| Provider | Type | Package name | Marketplace tag |
+|---|---|---|---|
+| Ollama | `llm` | `packages/provider-ollama` | `open-hivemind-provider-llm` |
+| Anthropic (Claude) | `llm` | `packages/provider-anthropic` | `open-hivemind-provider-llm` |
+| Google Gemini | `llm` | `packages/provider-gemini` | `open-hivemind-provider-llm` |
+| Groq | `llm` | `packages/provider-groq` | `open-hivemind-provider-llm` |
+| Mistral | `llm` | `packages/provider-mistral` | `open-hivemind-provider-llm` |
+| Cohere | `llm` | `packages/provider-cohere` | `open-hivemind-provider-llm` |
+| WhatsApp | `message` | `packages/adapter-whatsapp` | `open-hivemind-adapter-message` |
+
+Each package must implement `ILlmProvider` (llm) or `IMessengerService` (message) and include a `src/client/src/provider-configs/schemas/<name>.ts` WebUI schema file.
+
+---
+
+### Priority 3: MCP Integration (MEDIUM)
 
 #### Task 2.1: WebUI Tool Discovery Surfacing
 **Status**: 🔴 Not Started

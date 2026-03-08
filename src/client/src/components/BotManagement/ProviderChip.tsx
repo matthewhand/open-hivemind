@@ -70,9 +70,9 @@ const ProviderChip: React.FC<ProviderChipProps> = ({
       webhook: '🔗',
       // LLM providers
       openai: '🤖',
-      anthropic: '🧠',
-      ollama: '🦙',
-      huggingface: '🤗',
+      flowise: '🌊',
+      openwebui: '🖥️',
+      letta: '🧠',
       custom: '⚙️',
     };
     return icons[providerType] || '❓';
@@ -87,9 +87,9 @@ const ProviderChip: React.FC<ProviderChipProps> = ({
       webhook: 'Webhook',
       // LLM providers
       openai: 'OpenAI',
-      anthropic: 'Anthropic',
-      ollama: 'Ollama',
-      huggingface: 'Hugging Face',
+      flowise: 'Flowise',
+      openwebui: 'OpenWebUI',
+      letta: 'Letta',
       custom: 'Custom',
     };
     return labels[providerType] || providerType;

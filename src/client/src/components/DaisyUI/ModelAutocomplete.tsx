@@ -23,7 +23,7 @@ interface ModelAutocompleteProps {
   disabled?: boolean;
   apiKey?: string;
   baseUrl?: string;
-  providerType: 'openai' | 'anthropic' | 'ollama' | 'custom';
+  providerType: 'openai' | 'custom' | string;
   onValidationError?: (error: string) => void;
   onValidationSuccess?: () => void;
   className?: string;
@@ -73,20 +73,7 @@ const ModelAutocomplete: React.FC<ModelAutocompleteProps> = ({
         endpoint = `${baseUrl || 'https://api.openai.com/v1'}/models`;
         headers['Authorization'] = `Bearer ${apiKey}`;
         break;
-      case 'anthropic':
-        // Anthropic doesn't have a public models endpoint, use static list
-        setSuggestions([
-          { id: 'claude-3-opus-20240229', name: 'Claude 3 Opus', description: 'Most powerful model for complex tasks' },
-          { id: 'claude-3-sonnet-20240229', name: 'Claude 3 Sonnet', description: 'Balanced model for most use cases' },
-          { id: 'claude-3-haiku-20240307', name: 'Claude 3 Haiku', description: 'Fast and compact model' },
-          { id: 'claude-2.1', name: 'Claude 2.1', description: 'Legacy model with large context' },
-          { id: 'claude-instant-1.2', name: 'Claude Instant', description: 'Fast and cost-effective' },
-        ]);
-        setIsLoading(false);
-        return;
-      case 'ollama':
-        endpoint = `${baseUrl || 'http://localhost:11434'}/api/tags`;
-        break;
+
       default:
         setIsLoading(false);
         return;
@@ -112,14 +99,7 @@ const ModelAutocomplete: React.FC<ModelAutocompleteProps> = ({
           provider: 'openai',
         })) || [];
         break;
-      case 'ollama':
-        models = data.models?.map((model: any) => ({
-          id: model.name,
-          name: model.name,
-          description: `${model.details?.parameter_size || 'Unknown'} • ${model.details?.family || 'Unknown'}`,
-          provider: 'ollama',
-        })) || [];
-        break;
+
       }
 
       setSuggestions(models);
@@ -164,11 +144,6 @@ const ModelAutocomplete: React.FC<ModelAutocompleteProps> = ({
       setValidationWarning(prev => prev ?
         `${prev} • OpenAI API keys typically start with "sk-"` :
         'OpenAI API keys typically start with "sk-"',
-      );
-    } else if (apiKey && providerType === 'anthropic' && !apiKey.startsWith('sk-ant-')) {
-      setValidationWarning(prev => prev ?
-        `${prev} • Anthropic API keys typically start with "sk-ant-"` :
-        'Anthropic API keys typically start with "sk-ant-"',
       );
     }
 
