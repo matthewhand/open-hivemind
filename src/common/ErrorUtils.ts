@@ -6,13 +6,15 @@ export interface HivemindError {
   context?: Record<string, any>;
 }
 
-export enum ErrorClassification {
-  USER_ERROR = 'user_error',
-  SYSTEM_ERROR = 'system_error',
-  NETWORK_ERROR = 'network_error',
-  VALIDATION_ERROR = 'validation_error',
-  UNKNOWN_ERROR = 'unknown_error',
-}
+export const ErrorClassification = {
+  USER_ERROR: 'user_error',
+  SYSTEM_ERROR: 'system_error',
+  NETWORK_ERROR: 'network_error',
+  VALIDATION_ERROR: 'validation_error',
+  UNKNOWN_ERROR: 'unknown_error',
+} as const;
+
+export type ErrorClassification = typeof ErrorClassification[keyof typeof ErrorClassification];
 
 export class ErrorUtils {
   /**

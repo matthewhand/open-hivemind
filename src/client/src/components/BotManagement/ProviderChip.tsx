@@ -2,13 +2,12 @@
 import React from 'react';
 import type {
   MessageProvider,
-  LLMProvider} from '../../types/bot';
+  LLMProvider} from '../../types';
 import {
   MessageProviderType,
   LLMProviderType,
-} from '../../types/bot';
-import Badge from '../DaisyUI/Badge';
-
+} from '../../types';
+import { Badge } from '../DaisyUI';
 import { X as XIcon, Edit as EditIcon } from 'lucide-react';
 
 interface ProviderChipProps {
@@ -66,17 +65,15 @@ const ProviderChip: React.FC<ProviderChipProps> = ({
     const icons: Record<string, string> = {
       // Message providers
       discord: '💬',
+      telegram: '✈️',
       slack: '📱',
-      mattermost: '💻',
       webhook: '🔗',
       // LLM providers
       openai: '🤖',
-      flowise: '🌊',
-      openwebui: '🌐',
-      perplexity: '🔍',
-      replicate: '🚀',
-      n8n: '⚡',
-      openswarm: '🐝',
+      anthropic: '🧠',
+      ollama: '🦙',
+      huggingface: '🤗',
+      custom: '⚙️',
     };
     return icons[providerType] || '❓';
   };
@@ -85,17 +82,15 @@ const ProviderChip: React.FC<ProviderChipProps> = ({
     const labels: Record<string, string> = {
       // Message providers
       discord: 'Discord',
+      telegram: 'Telegram',
       slack: 'Slack',
-      mattermost: 'Mattermost',
       webhook: 'Webhook',
       // LLM providers
       openai: 'OpenAI',
-      flowise: 'Flowise',
-      openwebui: 'OpenWebUI',
-      perplexity: 'Perplexity',
-      replicate: 'Replicate',
-      n8n: 'n8n',
-      openswarm: 'OpenSwarm',
+      anthropic: 'Anthropic',
+      ollama: 'Ollama',
+      huggingface: 'Hugging Face',
+      custom: 'Custom',
     };
     return labels[providerType] || providerType;
   };

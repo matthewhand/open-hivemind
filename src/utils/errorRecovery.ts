@@ -48,17 +48,13 @@ export interface RecoveryResult<T = any> {
 /**
  * Circuit breaker states
  */
-enum CircuitState {
-  CLOSED = 'closed',
-  OPEN = 'open',
-  HALF_OPEN = 'half_open',
-}
+export type CircuitState = 'closed' | 'open' | 'half_open';
 
 /**
  * Circuit breaker implementation
  */
 export class CircuitBreaker {
-  private state: CircuitState = CircuitState.CLOSED;
+  private state: CircuitState = 'closed';
   private failureCount = 0;
   private lastFailureTime = 0;
   private successCount = 0;
@@ -69,9 +65,9 @@ export class CircuitBreaker {
    * Execute operation with circuit breaker protection
    */
   async execute<T>(operation: () => Promise<T>): Promise<T> {
-    if (this.state === CircuitState.OPEN) {
+    if (this.state === 'open') {
       if (this.shouldAttemptReset()) {
-        this.state = CircuitState.HALF_OPEN;
+        this.state = 'half_open';
         debug('Circuit breaker transitioning to HALF_OPEN');
       } else {
         throw new Error('Circuit breaker is OPEN');
@@ -95,8 +91,8 @@ export class CircuitBreaker {
     this.failureCount = 0;
     this.successCount++;
 
-    if (this.state === CircuitState.HALF_OPEN) {
-      this.state = CircuitState.CLOSED;
+    if (this.state === 'half_open') {
+      this.state = 'closed';
       debug('Circuit breaker transitioning to CLOSED');
     }
   }
@@ -110,7 +106,7 @@ export class CircuitBreaker {
     this.successCount = 0;
 
     if (this.failureCount >= this.config.failureThreshold) {
-      this.state = CircuitState.OPEN;
+      this.state = 'open';
       debug(`Circuit breaker transitioning to OPEN after ${this.failureCount} failures`);
     }
   }
@@ -145,7 +141,7 @@ export class CircuitBreaker {
    * Reset circuit breaker
    */
   reset(): void {
-    this.state = CircuitState.CLOSED;
+    this.state = 'closed';
     this.failureCount = 0;
     this.successCount = 0;
     this.lastFailureTime = 0;

@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import Card from './DaisyUI/Card';
 import Badge from './DaisyUI/Badge';
 import { Alert } from './DaisyUI/Alert';
@@ -58,6 +58,24 @@ interface ApiStatusMonitorProps {
   refreshInterval?: number;
 }
 
+const formatResponseTime = (ms: number) => {
+  if (ms < 1000) { return `${ms.toFixed(0)}ms`; }
+  return `${(ms / 1000).toFixed(1)}s`;
+};
+
+const formatUptime = (dateString: string) => {
+  const date = new Date(dateString);
+  const now = new Date();
+  const diff = now.getTime() - date.getTime();
+  const seconds = Math.floor(diff / 1000);
+  const minutes = Math.floor(seconds / 60);
+  const hours = Math.floor(minutes / 60);
+
+  if (hours > 0) { return `${hours}h ${minutes % 60}m ago`; }
+  if (minutes > 0) { return `${minutes}m ago`; }
+  return `${seconds}s ago`;
+};
+
 const ApiStatusMonitor: React.FC<ApiStatusMonitorProps> = ({
   refreshInterval = 30000,
 }) => {
@@ -95,10 +113,8 @@ const ApiStatusMonitor: React.FC<ApiStatusMonitorProps> = ({
 
     newSocket.on('api_health_check_result', (data: { result: any; timestamp: string }) => {
       // Update specific endpoint status
-      setApiStatus(prevStatus => {
-        if (!prevStatus) return prevStatus;
-
-        const updatedEndpoints = prevStatus.endpoints.map(endpoint => {
+      if (apiStatus) {
+        const updatedEndpoints = apiStatus.endpoints.map(endpoint => {
           if (endpoint.id === data.result.endpointId) {
             return {
               ...endpoint,
@@ -111,12 +127,12 @@ const ApiStatusMonitor: React.FC<ApiStatusMonitorProps> = ({
           }
           return endpoint;
         });
-        return {
-          ...prevStatus,
+        setApiStatus({
+          ...apiStatus,
           endpoints: updatedEndpoints,
           timestamp: data.timestamp,
-        };
-      });
+        });
+      }
     });
 
     newSocket.on('disconnect', () => {
@@ -128,7 +144,7 @@ const ApiStatusMonitor: React.FC<ApiStatusMonitorProps> = ({
     return () => {
       newSocket.close();
     };
-  }, []);
+  }, [apiStatus]);
 
   useEffect(() => {
     fetchApiStatus();
@@ -143,49 +159,32 @@ const ApiStatusMonitor: React.FC<ApiStatusMonitorProps> = ({
   const getStatusIcon = (status: string) => {
     const className = 'w-5 h-5';
     switch (status) {
-    case 'online':
-      return <CheckCircleIcon className={`${className} text-success`} />;
-    case 'slow':
-      return <ExclamationTriangleIcon className={`${className} text-warning`} />;
-    case 'offline':
-    case 'error':
-      return <ExclamationCircleIcon className={`${className} text-error`} />;
-    default:
-      return <InformationCircleIcon className={`${className} text-info`} />;
+      case 'online':
+        return <CheckCircleIcon className={`${className} text-success`} />;
+      case 'slow':
+        return <ExclamationTriangleIcon className={`${className} text-warning`} />;
+      case 'offline':
+      case 'error':
+        return <ExclamationCircleIcon className={`${className} text-error`} />;
+      default:
+        return <InformationCircleIcon className={`${className} text-info`} />;
     }
   };
 
   const getStatusColor = (status: string) => {
     switch (status) {
-    case 'online':
-      return 'success';
-    case 'slow':
-      return 'warning';
-    case 'offline':
-    case 'error':
-      return 'error';
-    default:
-      return 'ghost';
+      case 'online':
+        return 'success';
+      case 'slow':
+        return 'warning';
+      case 'offline':
+      case 'error':
+        return 'error';
+      default:
+        return 'ghost';
     }
   };
 
-  const formatResponseTime = (ms: number) => {
-    if (ms < 1000) {return `${ms.toFixed(0)}ms`;}
-    return `${(ms / 1000).toFixed(1)}s`;
-  };
-
-  const formatUptime = (dateString: string) => {
-    const date = new Date(dateString);
-    const now = new Date();
-    const diff = now.getTime() - date.getTime();
-    const seconds = Math.floor(diff / 1000);
-    const minutes = Math.floor(seconds / 60);
-    const hours = Math.floor(minutes / 60);
-
-    if (hours > 0) {return `${hours}h ${minutes % 60}m ago`;}
-    if (minutes > 0) {return `${minutes}m ago`;}
-    return `${seconds}s ago`;
-  };
 
   const handleStartMonitoring = async () => {
     try {
@@ -235,6 +234,30 @@ const ApiStatusMonitor: React.FC<ApiStatusMonitorProps> = ({
     );
   }
 
+  const metrics = useMemo(() => {
+    let totalResponseTime = 0;
+    let totalChecks = 0;
+    let successfulChecks = 0;
+
+    if (apiStatus && apiStatus.endpoints) {
+      for (const ep of apiStatus.endpoints) {
+        totalResponseTime += ep.averageResponseTime;
+        totalChecks += ep.totalChecks;
+        successfulChecks += ep.successfulChecks;
+      }
+    }
+
+    const avgResponseTime = apiStatus?.endpoints?.length ? totalResponseTime / apiStatus.endpoints.length : 0;
+    const successRate = totalChecks > 0 ? Math.round((successfulChecks / totalChecks) * 100) : 0;
+
+    return {
+      avgResponseTime,
+      totalChecks,
+      successfulChecks,
+      successRate
+    };
+  }, [apiStatus]);
+
   const accordionItems = [
     {
       id: 'monitoring-details',
@@ -247,20 +270,16 @@ const ApiStatusMonitor: React.FC<ApiStatusMonitorProps> = ({
               Performance Metrics
             </h4>
             <p className="text-sm">
-              • Average Response Time: {formatResponseTime(
-                apiStatus.endpoints.reduce((sum, ep) => sum + ep.averageResponseTime, 0) / apiStatus.endpoints.length || 0,
-              )}
+              • Average Response Time: {formatResponseTime(metrics.avgResponseTime)}
             </p>
             <p className="text-sm">
-              • Total Checks: {apiStatus.endpoints.reduce((sum, ep) => sum + ep.totalChecks, 0)}
+              • Total Checks: {metrics.totalChecks}
             </p>
             <p className="text-sm">
-              • Successful Checks: {apiStatus.endpoints.reduce((sum, ep) => sum + ep.successfulChecks, 0)}
+              • Successful Checks: {metrics.successfulChecks}
             </p>
             <p className="text-sm">
-              • Overall Success Rate: {apiStatus.endpoints.reduce((sum, ep) => sum + ep.totalChecks, 0) > 0 ?
-                Math.round((apiStatus.endpoints.reduce((sum, ep) => sum + ep.successfulChecks, 0) /
-                  apiStatus.endpoints.reduce((sum, ep) => sum + ep.totalChecks, 0)) * 100) : 0}%
+              • Overall Success Rate: {metrics.successRate}%
             </p>
           </div>
           <div className="min-w-[300px] flex-1">

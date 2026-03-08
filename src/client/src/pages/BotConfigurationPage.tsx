@@ -1,15 +1,17 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect, useCallback } from 'react';
-import { Settings, Save, RefreshCw, AlertCircle, CheckCircle } from 'lucide-react';
-import PageHeader from '../components/DaisyUI/PageHeader';
-import Accordion from '../components/DaisyUI/Accordion';
-import Input from '../components/DaisyUI/Input';
-import Select from '../components/DaisyUI/Select';
-import Toggle from '../components/DaisyUI/Toggle';
-import Button from '../components/DaisyUI/Button';
-import { Alert } from '../components/DaisyUI/Alert';
-import Badge from '../components/DaisyUI/Badge';
-
+import { Settings, Save, RefreshCw, AlertCircle, CheckCircle, History } from 'lucide-react';
+import {
+  PageHeader,
+  Accordion,
+  Input,
+  Select,
+  Toggle,
+  Button,
+  Alert,
+  Badge,
+  Modal,
+} from '../components/DaisyUI';
 
 interface ConfigSchema {
   values: Record<string, any>;
@@ -32,6 +34,24 @@ const BotConfigurationPage: React.FC = () => {
   const [success, setSuccess] = useState<string | null>(null);
   const [modifiedConfigs, setModifiedConfigs] = useState<Record<string, Record<string, any>>>({});
 
+  // Rollback state
+  const [rollbacks, setRollbacks] = useState<string[]>([]);
+  const [isRollbackModalOpen, setIsRollbackModalOpen] = useState(false);
+  const [rollingBack, setRollingBack] = useState(false);
+  const [selectedSnapshot, setSelectedSnapshot] = useState<string | null>(null);
+
+  const fetchRollbacks = useCallback(async () => {
+    try {
+      const response = await fetch(`${API_BASE}/config/hot-reload/rollbacks`);
+      if (response.ok) {
+        const data = await response.json();
+        setRollbacks(data.rollbacks || []);
+      }
+    } catch (err) {
+      console.error('Error fetching rollbacks:', err);
+    }
+  }, []);
+
   const fetchConfigs = useCallback(async () => {
     try {
       setLoading(true);
@@ -45,6 +65,7 @@ const BotConfigurationPage: React.FC = () => {
       const data = await response.json();
       setConfigs(data);
       setModifiedConfigs({});
+      await fetchRollbacks();
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to fetch configuration';
       setError(message);
@@ -57,6 +78,32 @@ const BotConfigurationPage: React.FC = () => {
   useEffect(() => {
     fetchConfigs();
   }, [fetchConfigs]);
+
+  const handleRollback = async () => {
+    if (!selectedSnapshot) return;
+
+    try {
+      setRollingBack(true);
+      setError(null);
+      const response = await fetch(`${API_BASE}/config/hot-reload/rollback/${selectedSnapshot}`, {
+        method: 'POST',
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.message || 'Failed to rollback configuration');
+      }
+
+      setSuccess(`Successfully rolled back to snapshot ${selectedSnapshot}`);
+      setIsRollbackModalOpen(false);
+      setSelectedSnapshot(null);
+      await fetchConfigs();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to rollback configuration');
+    } finally {
+      setRollingBack(false);
+    }
+  };
 
   const updateConfigValue = (configName: string, key: string, value: any) => {
     setModifiedConfigs(prev => ({
@@ -244,11 +291,85 @@ const BotConfigurationPage: React.FC = () => {
         icon={Settings}
         gradient="accent"
         actions={
-          <Button onClick={fetchConfigs} variant="ghost" className="gap-2" disabled={loading}>
-            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} /> Reload
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              onClick={() => setIsRollbackModalOpen(true)}
+              variant="ghost"
+              className="gap-2"
+              disabled={loading || rollbacks.length === 0}
+            >
+              <History className="w-4 h-4" />
+              Rollbacks {rollbacks.length > 0 && <Badge variant="primary" size="sm">{rollbacks.length}</Badge>}
+            </Button>
+            <Button onClick={fetchConfigs} variant="ghost" className="gap-2" disabled={loading}>
+              <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} /> Reload
+            </Button>
+          </div>
         }
       />
+
+      <Modal
+        isOpen={isRollbackModalOpen}
+        onClose={() => setIsRollbackModalOpen(false)}
+        title="Configuration Rollbacks"
+      >
+        <div className="space-y-4">
+          <p className="text-base-content/70">
+            Select a previous configuration snapshot to rollback to. This will restore the settings to the state they were in when the snapshot was created.
+          </p>
+
+          {rollbacks.length === 0 ? (
+            <div className="text-center py-8 text-base-content/50">
+              No rollback snapshots available.
+            </div>
+          ) : (
+            <div className="space-y-2 max-h-60 overflow-y-auto">
+              {rollbacks.map((snapshotId) => {
+                // Parse timestamp from format like rollback_1711234567890_xxyyzz
+                const timestampStr = snapshotId.split('_')[1];
+                let displayDate = 'Unknown date';
+                if (timestampStr) {
+                  const timestamp = parseInt(timestampStr, 10);
+                  if (!isNaN(timestamp)) {
+                    displayDate = new Date(timestamp).toLocaleString();
+                  }
+                }
+
+                return (
+                  <div
+                    key={snapshotId}
+                    className={`p-3 border rounded-lg cursor-pointer transition-colors ${
+                      selectedSnapshot === snapshotId
+                        ? 'border-primary bg-primary/10'
+                        : 'border-base-300 hover:border-primary/50'
+                    }`}
+                    onClick={() => setSelectedSnapshot(snapshotId)}
+                  >
+                    <div className="font-medium">{snapshotId}</div>
+                    <div className="text-xs text-base-content/60 mt-1">
+                      Created: {displayDate}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          <div className="flex justify-end gap-2 mt-6">
+            <Button variant="ghost" onClick={() => setIsRollbackModalOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              variant="primary"
+              disabled={!selectedSnapshot || rollingBack}
+              loading={rollingBack}
+              onClick={handleRollback}
+            >
+              Rollback Configuration
+            </Button>
+          </div>
+        </div>
+      </Modal>
 
       {/* Stats */}
       <div className="stats stats-horizontal bg-base-200 w-full">

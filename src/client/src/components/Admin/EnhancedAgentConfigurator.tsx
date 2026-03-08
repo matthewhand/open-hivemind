@@ -1,8 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import Badge from '../DaisyUI/Badge';
-import { Alert } from '../DaisyUI/Alert';
-import Button from '../DaisyUI/Button';
-
+import { Badge, Alert, Button } from '../DaisyUI';
 import {
   PlusIcon,
   TrashIcon,
@@ -13,9 +10,7 @@ import {
   XCircleIcon,
   ExclamationTriangleIcon,
 } from '@heroicons/react/24/outline';
-import Modal from '../DaisyUI/Modal';
-import Pagination from '../DaisyUI/Pagination';
-
+import { Modal, Pagination } from '../DaisyUI';
 import AgentForm from './AgentForm';
 
 interface Agent {
@@ -341,12 +336,14 @@ const EnhancedAgentConfigurator: React.FC = () => {
                     <button
                       className="btn btn-sm btn-circle btn-ghost"
                       onClick={() => handleEditAgent(agent)}
+                      aria-label={`Edit settings for ${agent.name}`}
                     >
                       <Cog6ToothIcon className="w-4 h-4" />
                     </button>
                     <button
                       className="btn btn-sm btn-circle btn-error btn-ghost"
                       onClick={() => handleDeleteAgent(agent.id)}
+                      aria-label={`Delete ${agent.name}`}
                     >
                       <TrashIcon className="w-4 h-4" />
                     </button>

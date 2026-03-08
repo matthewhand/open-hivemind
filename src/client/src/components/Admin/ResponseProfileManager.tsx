@@ -1,10 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import Button from '../DaisyUI/Button';
-import Modal from '../DaisyUI/Modal';
-import Card from '../DaisyUI/Card';
-import { Alert } from '../DaisyUI/Alert';
-import Badge from '../DaisyUI/Badge';
-
+import { Button, IconButton, Modal, Card, Alert, Badge } from '../DaisyUI';
 import {
   PlusIcon,
   PencilIcon,
@@ -176,9 +171,9 @@ const ResponseProfileManager: React.FC = () => {
                 <Badge variant="neutral">{Object.keys(profile.settings).length} settings</Badge>
               </div>
               <div className="card-actions justify-end mt-4">
-                <Button variant="ghost" size="sm" onClick={() => openEditDialog(profile)}><PencilIcon className="w-4 h-4" /></Button>
+                <IconButton variant="ghost" size="sm" aria-label="Edit profile" onClick={() => openEditDialog(profile)} icon={<PencilIcon className="w-4 h-4" />} />
                 {!profile.isBuiltIn && (
-                  <Button variant="ghost" size="sm" className="text-error" onClick={() => handleDelete(profile.key)}><TrashIcon className="w-4 h-4" /></Button>
+                  <IconButton variant="ghost" size="sm" className="text-error" aria-label="Delete profile" onClick={() => handleDelete(profile.key)} icon={<TrashIcon className="w-4 h-4" />} />
                 )}
               </div>
             </div>

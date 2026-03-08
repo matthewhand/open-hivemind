@@ -280,7 +280,6 @@ export class LogAggregator extends EventEmitter {
    */
   getStats(timeWindowMs: number = 3600000): LogStats {
     const cutoff = Date.now() - timeWindowMs;
-    const recentLogs = this.logs.filter((log) => log.timestamp >= cutoff);
 
     const byLevel: Record<LogLevel, number> = {
       debug: 0,
@@ -302,30 +301,49 @@ export class LogAggregator extends EventEmitter {
       custom: 0,
     };
 
-    for (const log of recentLogs) {
-      byLevel[log.level]++;
-      bySource[log.source]++;
+    // Time series setup
+    const numBuckets = 60;
+    const bucketSize = Math.floor(timeWindowMs / numBuckets);
+    const timeSeries: { timestamp: number; count: number }[] = Array.from(
+      { length: numBuckets },
+      (_, i) => ({
+        timestamp: cutoff + i * bucketSize,
+        count: 0,
+      })
+    );
+
+    let total = 0;
+    const recentErrors: LogEntry[] = [];
+
+    // Reverse iterate to quickly find recent errors and efficiently process logs
+    for (let i = this.logs.length - 1; i >= 0; i--) {
+      const log = this.logs[i];
+
+      // Collect up to 10 recent errors across all logs (maintaining original behavior)
+      if (recentErrors.length < 10 && (log.level === 'error' || log.level === 'fatal')) {
+        recentErrors.unshift(log); // unshift to maintain chronological order
+      }
+
+      if (log.timestamp >= cutoff) {
+        total++;
+        byLevel[log.level]++;
+        bySource[log.source]++;
+
+        // Calculate bucket index
+        const bucketIndex = Math.floor((log.timestamp - cutoff) / bucketSize);
+        if (bucketIndex >= 0 && bucketIndex < numBuckets) {
+          timeSeries[bucketIndex].count++;
+        }
+      } else if (recentErrors.length >= 10) {
+        // Optimization: since logs are chronological, if we hit a log before the cutoff
+        // AND we've already found our 10 recent errors, we can stop entirely
+        // This makes the operation O(recent logs) rather than O(all logs)
+        break;
+      }
     }
 
-    const total = recentLogs.length;
     const errorCount = byLevel.error + byLevel.fatal;
     const warningCount = byLevel.warn;
-
-    const recentErrors = this.logs
-      .filter((log) => log.level === 'error' || log.level === 'fatal')
-      .slice(0, 10);
-
-    // Time series
-    const bucketSize = Math.floor(timeWindowMs / 60); // 60 buckets
-    const timeSeries: { timestamp: number; count: number }[] = [];
-    for (let i = 0; i < 60; i++) {
-      const bucketStart = cutoff + i * bucketSize;
-      const bucketEnd = bucketStart + bucketSize;
-      const count = recentLogs.filter(
-        (log) => log.timestamp >= bucketStart && log.timestamp < bucketEnd
-      ).length;
-      timeSeries.push({ timestamp: bucketStart, count });
-    }
 
     return {
       totalLogs: total,

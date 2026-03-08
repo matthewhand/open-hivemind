@@ -1,8 +1,6 @@
 import React from 'react';
 import Dashboard from '../../components/Dashboard';
-import Breadcrumbs from '../../components/DaisyUI/Breadcrumbs';
-import Carousel from '../../components/DaisyUI/Carousel';
-
+import { Breadcrumbs, Carousel } from '../../components/DaisyUI';
 
 const DashboardPage: React.FC = () => {
   const breadcrumbItems = [{ label: 'Dashboard', href: '/dashboard', isActive: true }];

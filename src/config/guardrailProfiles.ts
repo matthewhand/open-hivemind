@@ -9,7 +9,7 @@ export interface GuardrailProfile {
   id: string;
   name: string;
   description?: string;
-  guards: {
+  guards: any | {
     mcpGuard: McpGuardConfig;
     rateLimit?: {
       enabled: boolean;

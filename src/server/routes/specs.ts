@@ -34,10 +34,10 @@ async function saveSpecsIndex(index: SpecMetadata[]) {
 }
 
 router.post('/', async (req, res) => {
-  const { id, topic, tags, author, timestamp, version, content } = req.body;
-  const newSpec: SpecMetadata = { id, topic, tags, author, timestamp, version };
-
   try {
+    const { id, topic, tags, author, timestamp, version, content } = req.body;
+    const newSpec: SpecMetadata = { id, topic, tags, author, timestamp, version };
+
     const validation = specMetadataSchema.safeParse(newSpec);
     if (!validation.success) {
       return res.status(400).json({ error: 'Invalid spec data', details: validation.error.errors });

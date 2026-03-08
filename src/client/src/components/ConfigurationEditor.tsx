@@ -1,16 +1,17 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect } from 'react';
-import Card from './DaisyUI/Card';
-import Button from './DaisyUI/Button';
-import { Alert } from './DaisyUI/Alert';
-import Input from './DaisyUI/Input';
-import Select from './DaisyUI/Select';
-import Textarea from './DaisyUI/Textarea';
-import Modal from './DaisyUI/Modal';
-import { Loading } from './DaisyUI/Loading';
-import Tooltip from './DaisyUI/Tooltip';
-import Badge from './DaisyUI/Badge';
-
+import {
+  Card,
+  Button,
+  Alert,
+  Input,
+  Select,
+  Textarea,
+  Modal,
+  Loading,
+  Tooltip,
+  Badge,
+} from './DaisyUI';
 import {
   Save as SaveIcon,
   RotateCcw as RefreshIcon,
@@ -58,12 +59,11 @@ const ConfigurationEditor: React.FC<ConfigurationEditorProps> = ({ bot, onSave }
 
   const llmProviders = [
     { value: 'openai', label: 'OpenAI' },
+    { value: 'anthropic', label: 'Anthropic' },
     { value: 'flowise', label: 'Flowise' },
     { value: 'openwebui', label: 'OpenWebUI' },
     { value: 'openswarm', label: 'OpenSwarm' },
-    { value: 'perplexity', label: 'Perplexity' },
-    { value: 'replicate', label: 'Replicate' },
-    { value: 'n8n', label: 'n8n' },
+    { value: 'letta', label: 'Letta' },
   ];
 
   useEffect(() => {

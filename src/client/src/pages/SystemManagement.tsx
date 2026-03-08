@@ -33,6 +33,17 @@ interface BackupRecord {
   createdAt: string;
 }
 
+
+const calculateAlertStats = (alerts: any[]) => {
+  return alerts.reduce((acc, a) => {
+    if (a.level === 'critical') acc.critical++;
+    else if (a.level === 'warning') acc.warning++;
+    else if (a.level === 'error') acc.error++;
+    else if (a.level === 'info') acc.info++;
+    return acc;
+  }, { critical: 0, warning: 0, error: 0, info: 0, total: alerts.length });
+};
+
 const SystemManagement: React.FC = () => {
   const { alerts, performanceMetrics } = useWebSocket();
   const [systemConfig, setSystemConfig] = useState<SystemConfig>({
@@ -245,7 +256,7 @@ const SystemManagement: React.FC = () => {
     }
   };
 
-  const handleRestoreBackup = async (backupId: string) => {
+  const handleRestoreBackup = React.useCallback(async (backupId: string) => {
     if (confirm('Are you sure you want to restore this backup? This will overwrite current configuration.')) {
       try {
         await apiService.restoreSystemBackup(backupId);
@@ -256,9 +267,9 @@ const SystemManagement: React.FC = () => {
         alert('Failed to restore backup: ' + (error as Error).message);
       }
     }
-  };
+  }, []);
 
-  const handleDeleteBackup = async (backupId: string) => {
+  const handleDeleteBackup = React.useCallback(async (backupId: string) => {
     if (confirm('Are you sure you want to delete this backup?')) {
       try {
         await apiService.deleteSystemBackup(backupId);
@@ -269,7 +280,7 @@ const SystemManagement: React.FC = () => {
         alert('Failed to delete backup: ' + (error as Error).message);
       }
     }
-  };
+  }, []);
 
   const handleClearCache = async () => {
     if (confirm('Are you sure you want to clear the system cache? This may temporarily impact performance.')) {
@@ -282,6 +293,9 @@ const SystemManagement: React.FC = () => {
     }
   };
 
+
+  const alertStats = React.useMemo(() => calculateAlertStats(alerts), [alerts]);
+
   const currentMetric = performanceMetrics[performanceMetrics.length - 1] || {
     cpuUsage: 0, memoryUsage: 0, activeConnections: 0, messageRate: 0, errorRate: 0, responseTime: 0
   };
@@ -290,13 +304,13 @@ const SystemManagement: React.FC = () => {
     {
       title: 'Alert Management',
       subtitle: 'Active system alerts',
-      status: alerts.some(a => a.level === 'error') ? 'error' :
-        alerts.some(a => a.level === 'warning') ? 'warning' : 'healthy',
+      status: alertStats.error > 0 ? 'error' :
+        alertStats.warning > 0 ? 'warning' : 'healthy',
       metrics: [
-        { label: 'Critical', value: alerts.filter(a => a.level === 'critical').length, icon: '🚨' },
-        { label: 'Warnings', value: alerts.filter(a => a.level === 'warning').length, icon: '⚠️' },
-        { label: 'Info', value: alerts.filter(a => a.level === 'info').length, icon: 'ℹ️' },
-        { label: 'Total', value: alerts.length, icon: '✅' },
+        { label: 'Critical', value: alertStats.critical, icon: '🚨' },
+        { label: 'Warnings', value: alertStats.warning, icon: '⚠️' },
+        { label: 'Info', value: alertStats.info, icon: 'ℹ️' },
+        { label: 'Total', value: alertStats.total, icon: '✅' },
       ],
     },
     {

@@ -18,9 +18,7 @@ import {
 } from '@src/types/openai';
 import llmConfig from '@config/llmConfig';
 import openaiConfig from '@config/openaiConfig';
-import { redactSensitiveInfo } from '@common/redactSensitiveInfo';
-import { listModels } from './operations/listModels';
-
+import { redactSensitiveInfo } from '@src/common/redactSensitiveInfo';
 const debug = Debug('app:OpenAiService');
 
 // Guard: Validate openaiConfig object
@@ -257,7 +255,8 @@ export class OpenAiService {
     debug('[DEBUG] listModels called');
     try {
       const models = await this.retryWithBackoff(async () => {
-        return await listModels(this.openai);
+        const response = await this.openai.models.list();
+        return { object: 'list' as const, created: 0, data: response.data as any[] };
       });
       debug('[DEBUG] Models retrieved:', models);
       return models;

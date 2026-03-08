@@ -1,11 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState } from 'react';
-import Card from './DaisyUI/Card';
-import Button from './DaisyUI/Button';
-import Modal from './DaisyUI/Modal';
-import Input from './DaisyUI/Input';
-import { Loading } from './DaisyUI/Loading';
-
+import { Card, Button, Modal, Input, Loading } from './DaisyUI';
 import {
   ArrowPathIcon,
   XMarkIcon,

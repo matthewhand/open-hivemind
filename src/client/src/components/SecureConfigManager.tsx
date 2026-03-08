@@ -1,15 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars, react-refresh/only-export-components, no-empty, no-case-declarations */
 import React, { useState, useEffect } from 'react';
-import Card from './DaisyUI/Card';
-import Badge from './DaisyUI/Badge';
-import Button from './DaisyUI/Button';
-import Modal from './DaisyUI/Modal';
-import Input from './DaisyUI/Input';
-import { Alert } from './DaisyUI/Alert';
-import { Loading } from './DaisyUI/Loading';
-import Toggle from './DaisyUI/Toggle';
-import Tooltip from './DaisyUI/Tooltip';
-
+import { Card, Badge, Button, Modal, Input, Alert, Loading, Toggle, Tooltip } from './DaisyUI';
 import {
   PlusIcon,
   PencilIcon,

@@ -1,19 +1,21 @@
+import { withRetry } from '../utils/withRetry';
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Clock, Download, LayoutList, GitBranch, RefreshCw, X } from 'lucide-react';
-import { Alert } from '../components/DaisyUI/Alert';
-import Badge from '../components/DaisyUI/Badge';
-import Button from '../components/DaisyUI/Button';
-import Card from '../components/DaisyUI/Card';
-import DataTable from '../components/DaisyUI/DataTable';
-import StatsCards from '../components/DaisyUI/StatsCards';
-import Timeline from '../components/DaisyUI/Timeline';
-import Toggle from '../components/DaisyUI/Toggle';
-import PageHeader from '../components/DaisyUI/PageHeader';
-import { LoadingSpinner } from '../components/DaisyUI/Loading';
-import EmptyState from '../components/DaisyUI/EmptyState';
-import Input from '../components/DaisyUI/Input';
-
+import {
+  Alert,
+  Badge,
+  Button,
+  Card,
+  DataTable,
+  StatsCards,
+  Timeline,
+  Toggle,
+  PageHeader,
+  LoadingSpinner,
+  EmptyState,
+  Input,
+} from '../components/DaisyUI';
 import SearchFilterBar from '../components/SearchFilterBar';
 import { apiService, ActivityEvent, ActivityResponse } from '../services/api';
 
@@ -48,53 +50,43 @@ const ActivityPage: React.FC = () => {
    */
 
   const fetchActivity = useCallback(async () => {
-    const shouldRetry = retryCount < maxRetries;
+    // Don't set loading on auto-refresh to avoid flickering
+    if (!autoRefresh) setLoading(true);
+    setError(null);
+    setRetryCount(0); // Reset before attempt
+
+    const params: any = {};
+    if (selectedBot !== 'all') params.bot = selectedBot;
+    if (selectedProvider !== 'all') params.messageProvider = selectedProvider;
+    if (selectedLlmProvider !== 'all') params.llmProvider = selectedLlmProvider;
+    if (startDate) params.from = new Date(startDate).toISOString();
+    if (endDate) params.to = new Date(endDate).toISOString();
+
     try {
-      // Exponential backoff retry logic
-      const currentDelay = shouldRetry ? retryDelay * Math.pow(2, retryCount) : 0;
+      const result = await withRetry(
+        () => apiService.getActivity(params),
+        maxRetries,
+        1000,
+        (err, attempt, max) => {
+           console.log(`Retrying fetchActivity in ${1000 * Math.pow(1.5, attempt - 1)}ms (attempt ${attempt}/${max})`);
+           setRetryCount(attempt);
+        }
+      );
 
-      if (currentDelay > 0) {
-        console.log(`Retrying fetchActivity in ${currentDelay}ms (attempt ${retryCount + 1}/${maxRetries})`);
-        await new Promise(resolve => setTimeout(resolve, currentDelay));
-      }
-
-      // Don't set loading on auto-refresh to avoid flickering
-      if (!autoRefresh) setLoading(true);
-      setError(null);
-
-      const params: any = {};
-      if (selectedBot !== 'all') params.bot = selectedBot;
-      if (selectedProvider !== 'all') params.messageProvider = selectedProvider;
-      if (selectedLlmProvider !== 'all') params.llmProvider = selectedLlmProvider;
-      if (startDate) params.from = new Date(startDate).toISOString();
-      if (endDate) params.to = new Date(endDate).toISOString();
-
-      const result = await apiService.getActivity(params);
       setData(result);
-
-      // Store initial filters
       if (result.filters) {
         setAvailableFilters(prev => prev || result.filters);
       }
-
-      // Reset retry state on success
       setRetryCount(0);
       setRetryDelay(1000);
     } catch (err: any) {
       const message = err instanceof Error ? err.message : 'Failed to fetch activity';
       setError(message);
       console.error('Error fetching activity:', err);
-
-      // Implement retry logic for transient errors
-      if (shouldRetry && (err.message && (err.message.includes('network') || err.message.includes('timeout')))) {
-        setRetryCount(prev => prev + 1);
-        setRetryDelay(prev => prev * 2); // Exponential backoff
-        fetchActivity(); // Retry immediately
-      }
     } finally {
       setLoading(false);
     }
-  }, [selectedBot, selectedProvider, selectedLlmProvider, startDate, endDate, autoRefresh, retryCount, maxRetries, retryDelay]);
+  }, [selectedBot, selectedProvider, selectedLlmProvider, startDate, endDate, autoRefresh, maxRetries]);
 
   useEffect(() => {
     fetchActivity();
@@ -430,7 +422,7 @@ const ActivityPage: React.FC = () => {
              <Button
                size="sm"
                variant="ghost"
-               className="btn-square animate-in fade-in zoom-in duration-200"
+               className="btn-square"
                onClick={handleClearFilters}
                title="Clear All Filters"
              >

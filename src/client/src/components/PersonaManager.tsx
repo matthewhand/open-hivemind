@@ -1,13 +1,14 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect } from 'react';
-import Card from './DaisyUI/Card';
-import Button from './DaisyUI/Button';
-import ModalForm from './DaisyUI/ModalForm';
-import Input from './DaisyUI/Input';
-import Textarea from './DaisyUI/Textarea';
-import { Alert } from './DaisyUI/Alert';
-import DataTable from './DaisyUI/DataTable';
-
+import {
+  Card,
+  Button,
+  ModalForm,
+  Input,
+  Textarea,
+  Alert,
+  DataTable,
+} from './DaisyUI';
 import {
   PlusIcon,
   PencilIcon,

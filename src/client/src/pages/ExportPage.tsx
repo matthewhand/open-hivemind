@@ -13,16 +13,7 @@ import {
   Clock,
   DownloadCloud as DownloadIcon
 } from 'lucide-react';
-import { Alert } from '../components/DaisyUI/Alert';
-import ToastNotification from '../components/DaisyUI/ToastNotification';
-import Modal from '../components/DaisyUI/Modal';
-import Button from '../components/DaisyUI/Button';
-import Input from '../components/DaisyUI/Input';
-import Textarea from '../components/DaisyUI/Textarea';
-import PageHeader from '../components/DaisyUI/PageHeader';
-import EmptyState from '../components/DaisyUI/EmptyState';
-import StatsCards from '../components/DaisyUI/StatsCards';
-
+import { Alert, ToastNotification, Modal, Button, Input, Textarea, PageHeader, EmptyState, StatsCards } from '../components/DaisyUI';
 import SearchFilterBar from '../components/SearchFilterBar';
 import { apiService } from '../services/api';
 
@@ -367,7 +358,7 @@ const ExportPage: React.FC = () => {
                       <td className="font-mono text-sm">{formatBytes(backup.size)}</td>
                       <td className="text-sm">{new Date(backup.createdAt).toLocaleString()}</td>
                       <td className="flex justify-end gap-2">
-                        <div className="tooltip tooltip-top" data-tip="Restore">
+                        <div className="tooltip tooltip-left" data-tip="Restore">
                           <Button
                             size="xs"
                             variant="ghost"
@@ -378,7 +369,7 @@ const ExportPage: React.FC = () => {
                             <RotateCcw className="w-4 h-4" />
                           </Button>
                         </div>
-                        <div className="tooltip tooltip-top" data-tip="Download">
+                        <div className="tooltip tooltip-left" data-tip="Download">
                           <Button
                             size="xs"
                             variant="ghost"
@@ -389,7 +380,7 @@ const ExportPage: React.FC = () => {
                             <Download className="w-4 h-4" />
                           </Button>
                         </div>
-                        <div className="tooltip tooltip-top" data-tip="Delete">
+                        <div className="tooltip tooltip-left" data-tip="Delete">
                           <Button
                             size="xs"
                             variant="ghost"
