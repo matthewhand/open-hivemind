@@ -158,7 +158,8 @@ const BotsPage: React.FC = () => {
       // e.g. 'openai' or 'openai-prod'
       return validPrefixes.some((prefix) => key === prefix || key.startsWith(`${prefix}-`));
     });
-  
+  };
+
   const toast = {
     success: useSuccessToast(),
     error: useErrorToast()
@@ -237,6 +238,7 @@ const BotsPage: React.FC = () => {
       ErrorService.report(err, { action: 'deleteBot', botId: deletingBot.id });
       toast.error(err instanceof Error ? err.message : 'Failed to delete bot');
     }
+  };
 
   const handleToggleBotStatus = async (bot: BotConfig) => {
     try {
