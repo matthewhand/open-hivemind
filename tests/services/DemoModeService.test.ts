@@ -148,6 +148,18 @@ describe('DemoModeService', () => {
       });
       expect(demoService.detectDemoMode()).toBe(true);
     });
+
+    it('should continue checking bots and return false if at least one has valid credentials', () => {
+      const { BotConfigurationManager } = require('../../src/config/BotConfigurationManager');
+      BotConfigurationManager.getInstance.mockReturnValueOnce({
+        getAllBots: () => [
+          { discord: { token: 'short' } }, // too short — not valid
+          { openai: { apiKey: 'valid-openai-api-key' } }, // valid
+        ],
+        getWarnings: () => [],
+      });
+      expect(demoService.detectDemoMode()).toBe(false);
+    });
   });
 
   describe('initialize', () => {
@@ -232,6 +244,12 @@ describe('DemoModeService', () => {
       expect(conversation.messages).toEqual([]);
     });
 
+    it('should return the same conversation instance on repeated calls', () => {
+      const conv1 = demoService.getOrCreateConversation('channel-1', 'Demo Bot');
+      const conv2 = demoService.getOrCreateConversation('channel-1', 'Demo Bot');
+      expect(conv1).toBe(conv2);
+    });
+
     it('should add messages to conversation', () => {
       const message = demoService.addMessage('channel-1', 'Demo Bot', 'Hello!', 'incoming');
 
@@ -246,6 +264,11 @@ describe('DemoModeService', () => {
 
       const history = demoService.getConversationHistory('channel-1', 'Demo Bot');
       expect(history.length).toBe(2);
+    });
+
+    it('should return empty history for a non-existent conversation', () => {
+      const history = demoService.getConversationHistory('no-such-channel', 'Demo Bot');
+      expect(history).toEqual([]);
     });
   });
 
@@ -269,6 +292,16 @@ describe('DemoModeService', () => {
       expect(status).toHaveProperty('botCount');
       expect(status).toHaveProperty('conversationCount');
       expect(status).toHaveProperty('messageCount');
+    });
+
+    it('should calculate correct messageCount across multiple conversations', () => {
+      demoService.addMessage('channel-1', 'Demo Bot', 'msg 1', 'incoming');
+      demoService.addMessage('channel-1', 'Demo Bot', 'msg 2', 'outgoing');
+      demoService.addMessage('channel-2', 'Demo Bot', 'msg 3', 'incoming');
+
+      const status = demoService.getDemoStatus();
+      expect(status.conversationCount).toBe(2);
+      expect(status.messageCount).toBe(3);
     });
   });
 });
