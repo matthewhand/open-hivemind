@@ -74,16 +74,16 @@ jobs:
     - name: Install Playwright Browsers
       run: |
         cd webui/client
-        npx playwright install chromium
+        pnpm dlx playwright install chromium
 
     - name: Update baseline screenshots
       run: |
         cd webui/client
-        npm run build
-        npm run preview &
+        pnpm run build
+        pnpm run preview &
         sleep 10
         timeout 60 bash -c 'until curl -f http://localhost:4173; do sleep 2; done'
-        npx playwright test --project=chromium --update-snapshots
+        pnpm dlx playwright test --project=chromium --update-snapshots
 
     - name: Commit updated baseline
       run: |
