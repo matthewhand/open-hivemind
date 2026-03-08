@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars, react-refresh/only-export-components, no-empty, no-case-declarations */
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars, react-refresh/only-export-components, no-case-declarations */
 import type { ComponentType} from 'react';
 import { lazy, Suspense } from 'react';
 import React from 'react';
@@ -222,6 +222,7 @@ export class IntegrationLoader {
           });
         } catch (componentError) {
           // Component doesn't exist, skip it
+          console.debug(`Component ${componentPath} not found for integration ${integrationId}`);
         }
       }
 
