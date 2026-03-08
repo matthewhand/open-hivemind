@@ -29,7 +29,6 @@ interface ChatInterfaceProps {
   onRetryMessage?: (messageId: string) => void;
   currentUserId?: string;
   isLoading?: boolean;
-  disabled?: boolean;
   placeholder?: string;
   className?: string;
   showTypingIndicator?: boolean;
@@ -43,7 +42,6 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
   onRetryMessage,
   currentUserId = 'current-user',
   isLoading = false,
-  disabled = false,
   placeholder = 'Type your message...',
   className = '',
   showTypingIndicator = false,
@@ -341,7 +339,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
             onKeyPress={handleKeyPress}
             placeholder={placeholder}
             className="input input-bordered flex-1"
-            disabled={isLoading || disabled}
+            disabled={isLoading}
           />
 
           <div className="flex gap-1">
@@ -356,7 +354,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
             <button
               type="submit"
               className={`btn btn-primary ${isLoading ? 'loading' : ''}`}
-              disabled={!inputValue.trim() || isLoading || disabled}
+              disabled={!inputValue.trim() || isLoading}
             >
               {isLoading ? '' : '➤'}
             </button>

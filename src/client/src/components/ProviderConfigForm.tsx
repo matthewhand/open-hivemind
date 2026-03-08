@@ -1,14 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect } from 'react';
 import type { ProviderConfigFormProps, ProviderConfigField } from '../provider-configs/types';
-import Input from './DaisyUI/Input';
-import Select from './DaisyUI/Select';
-import Textarea from './DaisyUI/Textarea';
-import Toggle from './DaisyUI/Toggle';
-import Button from './DaisyUI/Button';
-import { Alert } from './DaisyUI/Alert';
-import Badge from './DaisyUI/Badge';
-
+import { Input, Select, Textarea, Toggle, Button, Alert, Badge } from './DaisyUI';
 
 // OpenAI Model Pricing Data (per 1K tokens)
 interface ModelPricing {
@@ -193,10 +186,6 @@ export const ProviderConfigForm: React.FC<ProviderConfigFormProps> = ({
   onConfigChange,
   onTestConnection,
   onAvatarLoad,
-<<<<<<< HEAD
-=======
-  externalErrors,
->>>>>>> origin/main
 }) => {
   const [config, setConfig] = useState<Record<string, any>>(() => ({
     ...schema.defaultConfig,
@@ -348,11 +337,7 @@ export const ProviderConfigForm: React.FC<ProviderConfigFormProps> = ({
 
   const renderField = (field: ProviderConfigField) => {
     const value = config[field.name] ?? field.defaultValue ?? '';
-<<<<<<< HEAD
     const error = errors[field.name];
-=======
-    const error = errors[field.name] || (externalErrors && externalErrors[field.name]);
->>>>>>> origin/main
 
     const baseInputClasses = 'w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2';
     const errorClasses = error ? 'border-error focus:ring-error' : 'border-base-300 focus:ring-primary';

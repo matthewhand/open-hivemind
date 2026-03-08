@@ -164,9 +164,7 @@ export class ConfigurationValidator {
     } else if (config.name.length < CONFIG_LIMITS.BOT_NAME_MIN_LENGTH) {
       errors.push(`Bot name must be at least ${CONFIG_LIMITS.BOT_NAME_MIN_LENGTH} characters long`);
     } else if (config.name.length > CONFIG_LIMITS.BOT_NAME_MAX_LENGTH) {
-      errors.push(
-        `Bot name must be less than ${CONFIG_LIMITS.BOT_NAME_MAX_LENGTH} characters long`
-      );
+      errors.push(`Bot name must be less than ${CONFIG_LIMITS.BOT_NAME_MAX_LENGTH} characters long`);
     }
 
     if (!config.messageProvider) {

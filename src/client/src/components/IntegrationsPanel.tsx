@@ -1,16 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useEffect, useState } from 'react';
-import { Alert } from './DaisyUI/Alert';
-import Button from './DaisyUI/Button';
-import Card from './DaisyUI/Card';
-import Input from './DaisyUI/Input';
-import Select from './DaisyUI/Select';
-import Toggle from './DaisyUI/Toggle';
-import { Loading } from './DaisyUI/Loading';
-import Textarea from './DaisyUI/Textarea';
-import Modal from './DaisyUI/Modal';
-import Badge from './DaisyUI/Badge';
-
+import { Alert, Button, IconButton, Card, Input, Select, Toggle, Loading, Textarea, Modal, Badge } from './DaisyUI';
 import {
   PuzzlePieceIcon,
   ChatBubbleLeftRightIcon,
@@ -29,6 +19,7 @@ import {
   Bot,
 } from 'lucide-react';
 
+import { apiService } from '../services/api';
 import { PROVIDER_CATEGORIES } from '../config/providers';
 import ProviderConfigModal from './ProviderConfiguration/ProviderConfigModal';
 import { LLM_PROVIDER_CONFIGS, LLMProviderType, ProviderModalState } from '../types/bot';
@@ -52,15 +43,14 @@ const PROVIDER_ICONS: Record<string, any> = {
   openai: Brain,
   flowise: Brain,
   openwebui: Brain,
-  ollama: Brain,
-  anthropic: Brain,
-  gemini: Brain,
-  groq: Brain,
+  perplexity: Brain,
+  replicate: Brain,
+  n8n: Brain,
+  openswarm: Brain,
   discord: MessageSquare,
   slack: MessageSquare,
   mattermost: MessageSquare,
-  telegram: MessageSquare,
-  whatsapp: MessageSquare,
+  webhook: Globe,
 };
 
 
@@ -101,23 +91,22 @@ const IntegrationsPanel: React.FC = () => {
     try {
       setLoading(true);
       const [configRes, botsRes, profilesRes] = await Promise.all([
-        fetch('/api/config/global'),
-        fetch('/api/dashboard/api/status'), // Using status endpoint for bots list
-        fetch('/api/config/llm-profiles'),
+        apiService.get('/api/config/global'),
+        apiService.get('/api/dashboard/status'), // Using status endpoint for bots list
+        apiService.get('/api/config/llm-profiles'),
       ]);
 
-      if (!configRes.ok) { throw new Error('Failed to fetch configuration'); }
-      const configData = await configRes.json();
+      const configData = configRes as any;
       setConfig(configData);
       setAdvancedMode(configData._userSettings?.values?.['webui.advancedMode'] || false);
 
-      if (botsRes.ok) {
-        const botsData = await botsRes.json();
+      if (botsRes) {
+        const botsData = botsRes as any;
         setBots(botsData.bots || []);
       }
 
-      if (profilesRes.ok) {
-        const profilesData = await profilesRes.json();
+      if (profilesRes) {
+        const profilesData = profilesRes as any;
         setLlmProfiles(profilesData.profiles?.llm || []);
       }
     } catch (err: any) {
@@ -300,7 +289,7 @@ const IntegrationsPanel: React.FC = () => {
               className={`join-item w-full input-sm ${isLocked ? 'input-disabled bg-base-200 text-base-content/50' : ''}`}
               placeholder={isReadOnly ? 'Protected Value' : ''}
             />
-            {isLocked && <button className="btn btn-sm btn-square join-item btn-disabled"><LockClosedIcon className="w-4 h-4" /></button>}
+            {isLocked && <IconButton aria-label="Value is locked from environment" size="sm" className="join-item btn-disabled" icon={<LockClosedIcon className="w-4 h-4" />} />}
           </div>
         )}
         {type === 'select' && (

@@ -2,10 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useModal } from '../hooks/useModal';
 import { useBotProviders } from '../hooks/useBotProviders';
-import Card from '../components/DaisyUI/Card';
-import Button from '../components/DaisyUI/Button';
-import Badge from '../components/DaisyUI/Badge';
-
+import { Card, Button, Badge } from '../components/DaisyUI';
 import {
   MessageCircle as MessageIcon,
   Plus as AddIcon,
@@ -14,8 +11,7 @@ import {
   XCircle as XIcon,
   AlertCircle as WarningIcon,
 } from 'lucide-react';
-import Breadcrumbs from '../components/DaisyUI/Breadcrumbs';
-
+import { Breadcrumbs } from '../components/DaisyUI';
 import type { MessageProviderType} from '../types/bot';
 import { MESSAGE_PROVIDER_CONFIGS } from '../types/bot';
 import ProviderConfigModal from '../components/ProviderConfiguration/ProviderConfigModal';
