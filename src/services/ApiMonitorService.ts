@@ -2,6 +2,8 @@ import { EventEmitter } from 'events';
 import Debug from 'debug';
 import type { Response } from 'node-fetch';
 import { webUIStorage } from '../storage/webUIStorage';
+import 'reflect-metadata';
+import { injectable, singleton } from 'tsyringe';
 
 const debug = Debug('app:ApiMonitorService');
 
@@ -57,9 +59,6 @@ export interface HealthCheckResult {
   statusCode?: number;
   errorMessage?: string;
 }
-
-import 'reflect-metadata';
-import { injectable, singleton } from 'tsyringe';
 
 @singleton()
 @injectable()
@@ -153,7 +152,7 @@ export class ApiMonitorService extends EventEmitter {
           }
 
           if (url && !url.startsWith('http')) {
-             return;
+            return;
           }
 
           const endpointId = `llm-${provider.id || provider.type}`;
@@ -168,16 +167,16 @@ export class ApiMonitorService extends EventEmitter {
             interval: 60000,
             timeout: 10000,
             retries: 3,
-            retryDelay: 1000
+            retryDelay: 1000,
           };
 
           // Note: API keys are used for health check requests but are never exposed
           // in the `/health/api-endpoints` response, as `getAllStatuses()` returns
           // `EndpointStatus`, not `EndpointConfig`.
           if (provider.config && provider.config.apiKey) {
-             config.headers = {
-               'Authorization': `Bearer ${provider.config.apiKey}`
-             };
+            config.headers = {
+              Authorization: `Bearer ${provider.config.apiKey}`,
+            };
           }
 
           if (!this.endpoints.has(endpointId)) {
@@ -185,8 +184,12 @@ export class ApiMonitorService extends EventEmitter {
           } else {
             const existing = this.endpoints.get(endpointId);
             // Only update if url or key changes to avoid resetting intervals unnecessarily
-            if (existing && (existing.url !== config.url || existing.headers?.Authorization !== config.headers?.Authorization)) {
-                this.updateEndpoint(endpointId, config);
+            if (
+              existing &&
+              (existing.url !== config.url ||
+                existing.headers?.Authorization !== config.headers?.Authorization)
+            ) {
+              this.updateEndpoint(endpointId, config);
             }
           }
         });
@@ -198,7 +201,6 @@ export class ApiMonitorService extends EventEmitter {
           this.removeEndpoint(key);
         }
       });
-
     } catch (e) {
       debug('Error syncing LLM endpoints:', e);
     }

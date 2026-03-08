@@ -339,7 +339,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
             onKeyPress={handleKeyPress}
             placeholder={placeholder}
             className="input input-bordered flex-1"
-            disabled={isLoading}
+            disabled={isLoading || placeholder === 'You are offline'}
           />
 
           <div className="flex gap-1">
@@ -369,36 +369,8 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
   );
 };
 
-// Quick Actions Component for common bot commands
-interface QuickActionsProps {
-  onActionClick: (action: string) => void;
-  actions?: { label: string; command: string; icon?: string }[];
-}
 
-export const ChatQuickActions: React.FC<QuickActionsProps> = ({
-  onActionClick,
-  actions = [
-    { label: 'Status', command: '/status', icon: '📊' },
-    { label: 'Help', command: '/help', icon: '❓' },
-    { label: 'Restart', command: '/restart', icon: '🔄' },
-    { label: 'Settings', command: '/settings', icon: '⚙️' },
-  ],
-}) => {
-  return (
-    <div className="flex gap-2 p-2 bg-base-200 rounded-lg">
-      {actions.map((action, index) => (
-        <button
-          key={index}
-          className="btn btn-sm btn-ghost"
-          onClick={() => onActionClick(action.command)}
-        >
-          {action.icon && <span className="mr-1">{action.icon}</span>}
-          {action.label}
-        </button>
-      ))}
-    </div>
-  );
-};
+export default ChatInterface;
 
 // Chat Statistics Component
 interface ChatStatsProps {

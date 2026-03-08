@@ -162,6 +162,7 @@ router.put('/:id', adminRateLimiter, (req: Request, res: Response) => {
     }
 
     // Merge updates with validation to prevent prototype pollution
+    const existingGuards = profiles[profileIndex].guards;
     const safeGuards =
       guards && typeof guards === 'object'
         ? Object.keys(guards)
@@ -189,7 +190,7 @@ router.put('/:id', adminRateLimiter, (req: Request, res: Response) => {
             )
         : profiles[profileIndex].guards;
 
-    const updatedProfile = {
+    const updatedProfile: GuardrailProfile = {
       ...profiles[profileIndex],
       name: name && typeof name === 'string' ? name : profiles[profileIndex].name,
       description: description !== undefined ? description : profiles[profileIndex].description,
@@ -220,10 +221,11 @@ router.delete('/:id', adminRateLimiter, (req: Request, res: Response) => {
     const profiles = loadGuardrailProfiles();
     const profileExists = profiles.some((p) => p.id === id);
 
+    // Make DELETE idempotent: if it doesn't exist, just return success
     if (!profileExists) {
-      return res.status(404).json({
-        success: false,
-        error: 'Profile not found',
+      return res.json({
+        success: true,
+        message: 'Guard profile deleted successfully',
       });
     }
 
