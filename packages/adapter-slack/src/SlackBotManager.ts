@@ -64,26 +64,28 @@ export class SlackBotManager {
 
   public async initialize() {
     debug('Entering initialize');
-    for (const botInfo of this.slackBots) {
-      try {
-        const authTest = await botInfo.webClient.auth.test();
-        botInfo.botUserId = authTest.user_id;
-        botInfo.botUserName = authTest.user;
-        debug(`Bot authenticated: ${botInfo.botUserName} (${botInfo.botUserId})`);
-      } catch (error: unknown) {
-        const hivemindError = ErrorUtils.toHivemindError(error) as any;
-        const errorInfo = ErrorUtils.classifyError(hivemindError);
-        debug(
-          `Failed to authenticate bot with token ${botInfo.botToken.substring(0, 8)}...: ${hivemindError.message}`,
-          {
-            errorCode: hivemindError.code,
-            errorType: errorInfo.type,
-            severity: errorInfo.severity,
-          }
-        );
-        throw hivemindError;
-      }
-    }
+    await Promise.all(
+      this.slackBots.map(async (botInfo) => {
+        try {
+          const authTest = await botInfo.webClient.auth.test();
+          botInfo.botUserId = authTest.user_id;
+          botInfo.botUserName = authTest.user;
+          debug(`Bot authenticated: ${botInfo.botUserName} (${botInfo.botUserId})`);
+        } catch (error: unknown) {
+          const hivemindError = ErrorUtils.toHivemindError(error) as any;
+          const errorInfo = ErrorUtils.classifyError(hivemindError);
+          debug(
+            `Failed to authenticate bot with token ${botInfo.botToken.substring(0, 8)}...: ${hivemindError.message}`,
+            {
+              errorCode: hivemindError.code,
+              errorType: errorInfo.type,
+              severity: errorInfo.severity,
+            }
+          );
+          throw hivemindError;
+        }
+      })
+    );
     await this.startListening();
   }
 
