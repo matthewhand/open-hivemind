@@ -55,11 +55,16 @@ jobs:
       with:
         fetch-depth: 0
 
+    - name: Setup pnpm
+      uses: pnpm/action-setup@v3
+      with:
+        version: 10
+
     - name: Setup Node.js
       uses: actions/setup-node@v4
       with:
         node-version: '20'
-        cache: 'npm'
+        cache: 'pnpm'
         cache-dependency-path: webui/client/package-lock.json
 
     - name: Install dependencies
@@ -178,11 +183,16 @@ jobs:
       with:
         token: ${{ secrets.GITHUB_TOKEN }}
 
+    - name: Setup pnpm
+      uses: pnpm/action-setup@v3
+      with:
+        version: 10
+
     - name: Setup Node.js
       uses: actions/setup-node@v4
       with:
         node-version: '20'
-        cache: 'npm'
+        cache: 'pnpm'
         cache-dependency-path: webui/client/package-lock.json
 
     - name: Install dependencies
