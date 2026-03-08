@@ -3,13 +3,9 @@ import { useCallback } from 'react';
 import type {
   MessageProvider,
   LLMProvider,
-  MessageProviderType,
-  LLMProviderType} from '../types/bot';
-import {
-  MESSAGE_PROVIDER_CONFIGS,
-  LLM_PROVIDER_CONFIGS,
 } from '../types/bot';
 import { useBots } from './useBots';
+import { getProviderSchemasByType, getProviderSchema } from '../provider-configs';
 
 const useBotProviders = () => {
   const { updateBot } = useBots();
@@ -19,24 +15,19 @@ const useBotProviders = () => {
 
   // Create message provider
   const createMessageProvider = useCallback((
-    botId: string,
-    type: MessageProviderType,
+    _botId: string,
+    type: string,
     name: string,
     config: Record<string, any>,
   ): MessageProvider => {
-    const providerConfig = MESSAGE_PROVIDER_CONFIGS[type];
-    if (!providerConfig) {
-      throw new Error(`Unknown message provider type: ${type}`);
-    }
+    const schema = getProviderSchema(type);
 
     const provider: MessageProvider = {
       id: generateId(),
       type,
-      name: name || providerConfig.name,
+      name: name || schema?.displayName || 'New Provider',
       config,
-      status: 'disconnected',
-      lastConnected: null,
-      error: null,
+      enabled: true,
     };
 
     return provider;
@@ -44,24 +35,19 @@ const useBotProviders = () => {
 
   // Create LLM provider
   const createLLMProvider = useCallback((
-    botId: string,
-    type: LLMProviderType,
+    _botId: string,
+    type: string,
     name: string,
     config: Record<string, any>,
   ): LLMProvider => {
-    const providerConfig = LLM_PROVIDER_CONFIGS[type];
-    if (!providerConfig) {
-      throw new Error(`Unknown LLM provider type: ${type}`);
-    }
+    const schema = getProviderSchema(type);
 
     const provider: LLMProvider = {
       id: generateId(),
       type,
-      name: name || providerConfig.name,
+      name: name || schema?.displayName || 'New Provider',
       config,
-      status: 'unavailable',
-      lastConnected: null,
-      error: null,
+      enabled: true,
     };
 
     return provider;
@@ -70,7 +56,7 @@ const useBotProviders = () => {
   // Add message provider to bot
   const addMessageProvider = useCallback((
     botId: string,
-    type: MessageProviderType,
+    type: string,
     name: string,
     config: Record<string, any>,
   ) => {
@@ -87,7 +73,7 @@ const useBotProviders = () => {
   // Add LLM provider to bot
   const addLLMProvider = useCallback((
     botId: string,
-    type: LLMProviderType,
+    type: string,
     name: string,
     config: Record<string, any>,
   ) => {
@@ -140,7 +126,7 @@ const useBotProviders = () => {
   ): Promise<boolean> => {
     try {
       // Update provider status to testing
-      updateProvider(botId, providerId, { status: 'testing', error: null });
+      updateProvider(botId, providerId, { enabled: false });
 
       // Simulate API call to test provider
       await new Promise(resolve => setTimeout(resolve, 1000));
@@ -153,7 +139,7 @@ const useBotProviders = () => {
         if (messageProvider) {
           const updatedProviders = prevBot.messageProviders.map(p =>
             p.id === providerId
-              ? { ...p, status: 'connected' as const, lastConnected: new Date().toISOString(), error: null }
+              ? { ...p, enabled: true }
               : p,
           );
           return { ...prevBot, messageProviders: updatedProviders };
@@ -162,7 +148,7 @@ const useBotProviders = () => {
         if (llmProvider) {
           const updatedProviders = prevBot.llmProviders.map(p =>
             p.id === providerId
-              ? { ...p, status: 'available' as const, lastConnected: new Date().toISOString(), error: null }
+              ? { ...p, enabled: true }
               : p,
           );
           return { ...prevBot, llmProviders: updatedProviders };
@@ -182,7 +168,7 @@ const useBotProviders = () => {
         if (messageProvider) {
           const updatedProviders = prevBot.messageProviders.map(p =>
             p.id === providerId
-              ? { ...p, status: 'error' as const, error: errorMessage }
+              ? { ...p, enabled: false }
               : p,
           );
           return { ...prevBot, messageProviders: updatedProviders };
@@ -191,7 +177,7 @@ const useBotProviders = () => {
         if (llmProvider) {
           const updatedProviders = prevBot.llmProviders.map(p =>
             p.id === providerId
-              ? { ...p, status: 'error' as const, error: errorMessage }
+              ? { ...p, enabled: false }
               : p,
           );
           return { ...prevBot, llmProviders: updatedProviders };
@@ -206,20 +192,20 @@ const useBotProviders = () => {
 
   // Get available provider types
   const getAvailableMessageProviders = useCallback(() => {
-    return Object.keys(MESSAGE_PROVIDER_CONFIGS) as MessageProviderType[];
+    return getProviderSchemasByType('message').map(s => s.providerType);
   }, []);
 
   const getAvailableLLMProviders = useCallback(() => {
-    return Object.keys(LLM_PROVIDER_CONFIGS) as LLMProviderType[];
+    return getProviderSchemasByType('llm').map(s => s.providerType);
   }, []);
 
-  // Get provider config by type
-  const getMessageProviderConfig = useCallback((type: MessageProviderType) => {
-    return MESSAGE_PROVIDER_CONFIGS[type];
+  // Get provider schema by type
+  const getMessageProviderSchema = useCallback((type: string) => {
+    return getProviderSchema(type);
   }, []);
 
-  const getLLMProviderConfig = useCallback((type: LLMProviderType) => {
-    return LLM_PROVIDER_CONFIGS[type];
+  const getLLMProviderSchema = useCallback((type: string) => {
+    return getProviderSchema(type);
   }, []);
 
   return {
@@ -230,8 +216,8 @@ const useBotProviders = () => {
     testProvider,
     getAvailableMessageProviders,
     getAvailableLLMProviders,
-    getMessageProviderConfig,
-    getLLMProviderConfig,
+    getMessageProviderSchema,
+    getLLMProviderSchema,
   };
 };
 

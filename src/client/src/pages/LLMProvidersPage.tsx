@@ -22,10 +22,9 @@ import {
   ToggleLeft as ToggleOffIcon,
   ToggleRight as ToggleOnIcon,
 } from 'lucide-react';
-import type { LLMProviderType } from '../types/bot';
-import { LLM_PROVIDER_CONFIGS } from '../types/bot';
 import ProviderConfigModal from '../components/ProviderConfiguration/ProviderConfigModal';
 import { apiService } from '../services/api';
+import { getProviderSchema } from '../provider-configs';
 
 const LLMProvidersPage: React.FC = () => {
   const { modalState, openAddModal, openEditModal, closeModal } = useModal();
@@ -116,8 +115,8 @@ const LLMProvidersPage: React.FC = () => {
   };
 
   const getProviderIcon = (type: string) => {
-    const config = LLM_PROVIDER_CONFIGS[type as LLMProviderType];
-    return config?.icon || <BrainIcon className="w-5 h-5" />;
+    const schema = getProviderSchema(type);
+    return schema?.icon || <BrainIcon className="w-5 h-5" />;
   };
 
   const toggleExpand = (key: string) => setExpandedProfile(expandedProfile === key ? null : key);

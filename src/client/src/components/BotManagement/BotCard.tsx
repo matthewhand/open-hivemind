@@ -152,9 +152,13 @@ const BotCard: React.FC<BotCardProps> = ({
   };
 
   const handleEditProvider = (provider: MessageProvider | LLMProvider) => {
+    // Determine provider type from the provider's type string
+    const providerType = provider.type.includes('discord') || provider.type.includes('slack') || provider.type.includes('telegram') || provider.type.includes('mattermost')
+      ? 'message' as const
+      : 'llm' as const;
     setProviderModalState({
       isOpen: true,
-      providerType: provider.type as MessageProviderType | LLMProviderType,
+      providerType,
       mode: 'edit',
       provider: provider,
       botId: bot.id,

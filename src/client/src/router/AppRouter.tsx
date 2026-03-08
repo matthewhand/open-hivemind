@@ -124,6 +124,8 @@ const AppRouter: React.FC = () => {
           <Route path="providers" element={<ProvidersPage />} />
           <Route path="providers/message" element={<MessageProvidersPage />} />
           <Route path="providers/llm" element={<LLMProvidersPage />} />
+          <Route path="providers/memory" element={<LLMProvidersPage />} />
+          <Route path="providers/tool" element={<LLMProvidersPage />} />
 
           <Route path="personas" element={<PersonasPage />} />
 
