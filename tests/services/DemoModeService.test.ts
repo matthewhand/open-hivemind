@@ -5,11 +5,14 @@
 import { DemoModeService } from '../../src/services/DemoModeService';
 
 // Mock the BotConfigurationManager
+const mockGetAllBots = jest.fn(() => []);
+const mockGetWarnings = jest.fn(() => ['No bot configuration found']);
+
 jest.mock('../../src/config/BotConfigurationManager', () => ({
   BotConfigurationManager: {
     getInstance: jest.fn(() => ({
-      getAllBots: jest.fn(() => []),
-      getWarnings: jest.fn(() => ['No bot configuration found']),
+      getAllBots: mockGetAllBots,
+      getWarnings: mockGetWarnings,
       isLegacyMode: jest.fn(() => false),
     })),
   },
@@ -42,6 +45,8 @@ describe('DemoModeService', () => {
 
   afterEach(() => {
     jest.clearAllMocks();
+    mockGetAllBots.mockReturnValue([]);
+    mockGetWarnings.mockReturnValue(['No bot configuration found']);
   });
 
   describe('getInstance', () => {
@@ -75,6 +80,39 @@ describe('DemoModeService', () => {
 
     it('should return false when OPENAI_API_KEY is set', () => {
       process.env.OPENAI_API_KEY = 'sk-valid-openai-api-key-here';
+      expect(demoService.detectDemoMode()).toBe(false);
+    });
+
+    it('should return false when a configured bot has a Discord token', () => {
+      mockGetAllBots.mockReturnValue([{ discord: { token: 'valid-discord-token' } }]);
+      expect(demoService.detectDemoMode()).toBe(false);
+    });
+
+    it('should return false when a configured bot has a Slack token', () => {
+      mockGetAllBots.mockReturnValue([{ slack: { botToken: 'valid-slack-token' } }]);
+      expect(demoService.detectDemoMode()).toBe(false);
+    });
+
+    it('should return false when a configured bot has a Mattermost token', () => {
+      mockGetAllBots.mockReturnValue([{ mattermost: { token: 'valid-mattermost-token' } }]);
+      expect(demoService.detectDemoMode()).toBe(false);
+    });
+
+    it('should return false when a configured bot has an OpenAI key', () => {
+      mockGetAllBots.mockReturnValue([{ openai: { apiKey: 'valid-openai-api-key' } }]);
+      expect(demoService.detectDemoMode()).toBe(false);
+    });
+
+    it('should return false when a configured bot has a Flowise key', () => {
+      mockGetAllBots.mockReturnValue([{ flowise: { apiKey: 'valid-flowise-api-key' } }]);
+      expect(demoService.detectDemoMode()).toBe(false);
+    });
+
+    it('should continue checking bots if one lacks real credentials', () => {
+      mockGetAllBots.mockReturnValue([
+        { discord: { token: 'short' } }, // not long enough
+        { openai: { apiKey: 'valid-openai-api-key' } }, // valid
+      ]);
       expect(demoService.detectDemoMode()).toBe(false);
     });
   });
@@ -133,6 +171,26 @@ describe('DemoModeService', () => {
       expect(typeof response).toBe('string');
       expect(response.length).toBeGreaterThan(0);
     });
+
+    it('should return a response for configuration questions', () => {
+      process.env.DEMO_MODE = 'true';
+      demoService.initialize();
+
+      const response = demoService.generateDemoResponse('How do I config this?', 'Demo Bot');
+      expect(typeof response).toBe('string');
+      expect(response.length).toBeGreaterThan(0);
+      expect(response).toMatch(/configure/i); // Matches responses given for 'config'
+    });
+
+    it('should return a response for feature questions', () => {
+      process.env.DEMO_MODE = 'true';
+      demoService.initialize();
+
+      const response = demoService.generateDemoResponse('What features do you have?', 'Demo Bot');
+      expect(typeof response).toBe('string');
+      expect(response.length).toBeGreaterThan(0);
+      expect(response).toMatch(/capabilities/i); // Matches responses given for 'feature'
+    });
   });
 
   describe('conversation management', () => {
@@ -141,6 +199,12 @@ describe('DemoModeService', () => {
       expect(conversation.channelId).toBe('channel-1');
       expect(conversation.botName).toBe('Demo Bot');
       expect(conversation.messages).toEqual([]);
+    });
+
+    it('should return an existing conversation if it already exists', () => {
+      const conversation1 = demoService.getOrCreateConversation('channel-1', 'Demo Bot');
+      const conversation2 = demoService.getOrCreateConversation('channel-1', 'Demo Bot');
+      expect(conversation1).toBe(conversation2); // Same instance
     });
 
     it('should add messages to conversation', () => {
@@ -157,6 +221,11 @@ describe('DemoModeService', () => {
 
       const history = demoService.getConversationHistory('channel-1', 'Demo Bot');
       expect(history.length).toBe(2);
+    });
+
+    it('should return empty history for a non-existent conversation', () => {
+      const history = demoService.getConversationHistory('non-existent-channel', 'Demo Bot');
+      expect(history).toEqual([]);
     });
   });
 
@@ -180,6 +249,16 @@ describe('DemoModeService', () => {
       expect(status).toHaveProperty('botCount');
       expect(status).toHaveProperty('conversationCount');
       expect(status).toHaveProperty('messageCount');
+    });
+
+    it('should calculate correct messageCount when conversations exist', () => {
+      demoService.addMessage('channel-1', 'Demo Bot', 'msg 1', 'incoming');
+      demoService.addMessage('channel-1', 'Demo Bot', 'msg 2', 'outgoing');
+      demoService.addMessage('channel-2', 'Demo Bot', 'msg 3', 'incoming');
+
+      const status = demoService.getDemoStatus();
+      expect(status.conversationCount).toBe(2);
+      expect(status.messageCount).toBe(3);
     });
   });
 });
