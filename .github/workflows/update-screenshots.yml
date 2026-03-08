@@ -21,16 +21,14 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
+<<<<<<< HEAD
           cache: 'pnpm'
-
-      - name: Install dependencies
-        run: pnpm install
 
       - name: Install Playwright browsers
         run: npx playwright install chromium
 
       - name: Generate screenshots
-        run: pnpm run generate-docs
+        run: npm run generate-docs
 
       - name: Commit and push changes
         run: |

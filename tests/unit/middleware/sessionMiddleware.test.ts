@@ -1,3 +1,6 @@
+// Ensure a session secret is provided before module loads
+process.env.SESSION_SECRET = 'testsecretlongenoughstringtoavoidwarning32chars';
+
 import { destroySession } from '../../../src/middleware/sessionMiddleware';
 import { Request } from 'express';
 
