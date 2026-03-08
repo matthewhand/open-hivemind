@@ -1,7 +1,7 @@
 import axios, { AxiosInstance } from 'axios';
 import Debug from 'debug';
-import type { ILlmProvider } from '@llm/interfaces/ILlmProvider';
 import type { IMessage } from '@message/interfaces/IMessage';
+import type { ILlmProvider } from '@llm/interfaces/ILlmProvider';
 import lettaConfig from './lettaConfig';
 
 const debug = Debug('app:lettaProvider');
@@ -40,7 +40,8 @@ export class LettaProvider implements ILlmProvider {
 
   private constructor(config?: LettaProviderConfig) {
     this.config = config || {};
-    const rawApiUrl = this.config.apiUrl || lettaConfig.get('apiUrl') || 'https://api.letta.com/v1';
+    const rawApiUrl =
+      this.config.apiUrl || lettaConfig.get('apiUrl') || 'https://api.letta.com/v1';
     this.resolvedApiUrl = rawApiUrl.endsWith('/') ? rawApiUrl.slice(0, -1) : rawApiUrl;
 
     const apiKey = this.config.apiKey || lettaConfig.get('apiKey');

@@ -125,9 +125,7 @@ test.describe('Letta Provider E2E Tests', () => {
     await lookupButton.click();
 
     // Wait for the agent ID to be populated from the lookup
-    await expect(page.locator('input[name="agentId"]')).toHaveValue(
-      'agent-e2fa86a3-cea2-4645-acd7-d12f0dc2efd5'
-    );
+    await expect(page.locator('input[name="agentId"]')).toHaveValue('agent-e2fa86a3-cea2-4645-acd7-d12f0dc2efd5');
 
     // Fill in timeout
     await page.fill('input[name="timeout"]', '30000');
@@ -190,7 +188,9 @@ test.describe('Letta Provider E2E Tests', () => {
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
-        body: JSON.stringify([{ id: 'letta', name: 'Letta (MemGPT)', category: 'llm' }]),
+        body: JSON.stringify([
+          { id: 'letta', name: 'Letta (MemGPT)', category: 'llm' },
+        ]),
       });
     });
 

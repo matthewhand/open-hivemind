@@ -33,9 +33,12 @@ export function registerServices(): void {
     useValue: UserConfigStore.getInstance(),
   });
 
-  container.register(TOKENS.SecureConfigManager, {
-    useValue: SecureConfigManager.getInstance(),
-  });
+  container.register(
+    TOKENS.SecureConfigManager,
+    {
+      useValue: SecureConfigManager.getInstance(),
+    }
+  );
 
   container.register(
     TOKENS.BotConfigurationManager,

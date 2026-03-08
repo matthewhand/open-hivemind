@@ -356,11 +356,7 @@ export async function handleMessage(
           llmResponse = await llmProvider.generateChatCompletion(
             processedMessage,
             trimmedHistory.trimmed,
-            {
-              systemPrompt,
-              maxTokens: Number(botConfig.LLM_MAX_TOKENS || 150),
-              temperature: Number(botConfig.LLM_TEMPERATURE || 0.7),
-            }
+            { systemPrompt, maxTokens: Number(botConfig.LLM_MAX_TOKENS || 150), temperature: Number(botConfig.LLM_TEMPERATURE || 0.7) }
           );
         }
 

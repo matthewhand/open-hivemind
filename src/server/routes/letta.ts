@@ -1,5 +1,5 @@
+import { Router, Request, Response } from 'express';
 import axios from 'axios';
-import { Router, type Request, type Response } from 'express';
 import { isSafeUrl } from '../../utils/ssrfGuard';
 
 const router = Router();
@@ -11,17 +11,15 @@ const router = Router();
 router.get('/agents', async (req: Request, res: Response) => {
   try {
     // Get credentials from query params or headers
-    const apiKey = (req.headers['x-letta-api-key'] as string) || (req.query.apiKey as string);
-    const apiUrl =
-      (req.headers['x-letta-api-url'] as string) ||
-      (req.query.apiUrl as string) ||
-      'https://api.letta.com/v1';
+    const apiKey = req.headers['x-letta-api-key'] as string || req.query.apiKey as string;
+    const apiUrl = (req.headers['x-letta-api-url'] as string) ||
+                   (req.query.apiUrl as string) ||
+                   'https://api.letta.com/v1';
 
     if (!apiKey) {
       return res.status(400).json({
         error: 'Missing API key',
-        message:
-          'Please provide Letta API key via x-letta-api-key header or apiKey query parameter',
+        message: 'Please provide Letta API key via x-letta-api-key header or apiKey query parameter'
       });
     }
 
@@ -30,13 +28,13 @@ router.get('/agents', async (req: Request, res: Response) => {
     if (!(await isSafeUrl(baseUrl))) {
       return res.status(403).json({
         error: 'Forbidden',
-        message: 'The provided API URL is not safe to connect to.',
+        message: 'The provided API URL is not safe to connect to.'
       });
     }
 
     const response = await axios.get(`${baseUrl}/agents`, {
       headers: {
-        Authorization: `Bearer ${apiKey}`,
+        'Authorization': `Bearer ${apiKey}`,
         'Content-Type': 'application/json',
       },
       timeout: 10000,
@@ -77,17 +75,15 @@ router.get('/agents', async (req: Request, res: Response) => {
 router.get('/agents/:id', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const apiKey = (req.headers['x-letta-api-key'] as string) || (req.query.apiKey as string);
-    const apiUrl =
-      (req.headers['x-letta-api-url'] as string) ||
-      (req.query.apiUrl as string) ||
-      'https://api.letta.com/v1';
+    const apiKey = req.headers['x-letta-api-key'] as string || req.query.apiKey as string;
+    const apiUrl = (req.headers['x-letta-api-url'] as string) ||
+                   (req.query.apiUrl as string) ||
+                   'https://api.letta.com/v1';
 
     if (!apiKey) {
       return res.status(400).json({
         error: 'Missing API key',
-        message:
-          'Please provide Letta API key via x-letta-api-key header or apiKey query parameter',
+        message: 'Please provide Letta API key via x-letta-api-key header or apiKey query parameter'
       });
     }
 
@@ -96,13 +92,13 @@ router.get('/agents/:id', async (req: Request, res: Response) => {
     if (!(await isSafeUrl(baseUrl))) {
       return res.status(403).json({
         error: 'Forbidden',
-        message: 'The provided API URL is not safe to connect to.',
+        message: 'The provided API URL is not safe to connect to.'
       });
     }
 
     const response = await axios.get(`${baseUrl}/agents/${id}`, {
       headers: {
-        Authorization: `Bearer ${apiKey}`,
+        'Authorization': `Bearer ${apiKey}`,
         'Content-Type': 'application/json',
       },
       timeout: 10000,
