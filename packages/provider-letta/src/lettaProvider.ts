@@ -6,6 +6,9 @@ import lettaConfig from './lettaConfig';
 
 const debug = Debug('app:lettaProvider');
 
+const MAX_RETRIES = 3;
+const RETRY_BASE_DELAY_MS = 500;
+
 export interface LettaProviderConfig {
   apiUrl?: string;
   apiKey?: string;
@@ -30,11 +33,12 @@ export interface LettaMessage {
 
 export class LettaProvider implements ILlmProvider {
   name = 'letta';
+  private static instance: LettaProvider;
   private client: AxiosInstance;
   private config: LettaProviderConfig;
   private resolvedApiUrl: string;
 
-  constructor(config?: LettaProviderConfig) {
+  private constructor(config?: LettaProviderConfig) {
     this.config = config || {};
     const rawApiUrl =
       this.config.apiUrl || lettaConfig.get('apiUrl') || 'https://api.letta.com/v1';
@@ -51,10 +55,38 @@ export class LettaProvider implements ILlmProvider {
       baseURL: this.resolvedApiUrl,
       headers: {
         'Content-Type': 'application/json',
-        ...(apiKey ? { 'Authorization': `Bearer ${apiKey}` } : {}),
+        ...(apiKey ? { Authorization: `Bearer ${apiKey}` } : {}),
       },
       timeout,
     });
+  }
+
+  static getInstance(config?: LettaProviderConfig): LettaProvider {
+    if (!LettaProvider.instance) {
+      LettaProvider.instance = new LettaProvider(config);
+    }
+    return LettaProvider.instance;
+  }
+
+  private async retryWithBackoff<T>(fn: () => Promise<T>): Promise<T> {
+    let lastError: unknown;
+    for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+      try {
+        return await fn();
+      } catch (error) {
+        lastError = error;
+        const isRetryable =
+          axios.isAxiosError(error) &&
+          (error.response?.status === undefined || // network error
+            error.response.status === 429 ||
+            error.response.status >= 500);
+        if (!isRetryable || attempt === MAX_RETRIES - 1) break;
+        const delay = RETRY_BASE_DELAY_MS * Math.pow(2, attempt);
+        debug(`Retry attempt ${attempt + 1}/${MAX_RETRIES} after ${delay}ms`);
+        await new Promise((r) => setTimeout(r, delay));
+      }
+    }
+    throw lastError;
   }
 
   supportsChatCompletion(): boolean {
@@ -62,16 +94,13 @@ export class LettaProvider implements ILlmProvider {
   }
 
   supportsCompletion(): boolean {
-    return false; // Letta uses chat-based messaging
+    return false;
   }
 
-  /**
-   * List available agents from the Letta API
-   */
   async listAgents(): Promise<LettaAgent[]> {
     debug('Listing Letta agents');
     try {
-      const response = await this.client.get('/agents');
+      const response = await this.retryWithBackoff(() => this.client.get('/agents'));
       return response.data || [];
     } catch (error) {
       debug('Error listing agents:', formatError(error));
@@ -79,25 +108,16 @@ export class LettaProvider implements ILlmProvider {
     }
   }
 
-  /**
-   * Get the first available agent ID (useful for auto-configuration)
-   */
   async getFirstAgentId(): Promise<string | null> {
     try {
       const agents = await this.listAgents();
-      if (agents.length > 0) {
-        return agents[0].id;
-      }
-      return null;
+      return agents.length > 0 ? agents[0].id : null;
     } catch (error) {
       debug('Error getting first agent:', error);
       return null;
     }
   }
 
-  /**
-   * Send a message to a Letta agent and get the response
-   */
   async sendMessage(
     agentId: string,
     message: string,
@@ -105,14 +125,15 @@ export class LettaProvider implements ILlmProvider {
   ): Promise<string> {
     debug('Sending message to Letta agent:', { agentId, message: message.substring(0, 100) });
     try {
-      const response = await this.client.post(`/agents/${agentId}/messages`, {
-        messages: [{ role, content: message }],
-      });
-      // Response is array of messages; find last assistant message
-      const messages: LettaMessage[] = response.data?.messages || response.data || [];
-      const assistantMsg = [...messages].reverse().find(
-        (m: LettaMessage) => m.role === 'assistant' && m.content
+      const response = await this.retryWithBackoff(() =>
+        this.client.post(`/agents/${agentId}/messages`, {
+          messages: [{ role, content: message }],
+        })
       );
+      const messages: LettaMessage[] = response.data?.messages || response.data || [];
+      const assistantMsg = [...messages]
+        .reverse()
+        .find((m: LettaMessage) => m.role === 'assistant' && m.content);
       return assistantMsg?.content || '';
     } catch (error) {
       debug('Error sending message:', formatError(error));
@@ -120,15 +141,12 @@ export class LettaProvider implements ILlmProvider {
     }
   }
 
-  /**
-   * Get conversation history for an agent
-   */
-  async getMessages(agentId: string, limit: number = 50): Promise<LettaMessage[]> {
+  async getMessages(agentId: string, limit = 50): Promise<LettaMessage[]> {
     debug('Getting messages for agent:', { agentId, limit });
     try {
-      const response = await this.client.get(`/agents/${agentId}/messages`, {
-        params: { limit },
-      });
+      const response = await this.retryWithBackoff(() =>
+        this.client.get(`/agents/${agentId}/messages`, { params: { limit } })
+      );
       return response.data || [];
     } catch (error) {
       debug('Error getting messages:', formatError(error));
@@ -138,16 +156,21 @@ export class LettaProvider implements ILlmProvider {
 
   async generateChatCompletion(
     userMessage: string,
-    historyMessages: IMessage[] = [],
+    _historyMessages: IMessage[] = [],
     metadata?: Record<string, any>
   ): Promise<string> {
     const agentId = metadata?.agentId || this.config.agentId || lettaConfig.get('agentId');
-    
+
     if (!agentId) {
-      throw new Error('No agent ID provided. Please configure an agent ID or use the lookup feature to find available agents.');
+      throw new Error(
+        'No agent ID provided. Configure LETTA_AGENT_ID or pass agentId in metadata.'
+      );
     }
 
-    debug('Generating chat completion with Letta:', { agentId, userMessage: userMessage.substring(0, 100) });
+    debug('Generating chat completion with Letta:', {
+      agentId,
+      userMessage: userMessage.substring(0, 100),
+    });
 
     try {
       return await this.sendMessage(agentId, userMessage, 'user');
@@ -158,24 +181,19 @@ export class LettaProvider implements ILlmProvider {
   }
 
   async generateCompletion(_prompt: string): Promise<string> {
-    throw new Error('Letta provider does not support non-chat completion. Use generateChatCompletion instead.');
+    throw new Error(
+      'Letta provider does not support non-chat completion. Use generateChatCompletion instead.'
+    );
   }
 }
 
 function getErrorMessage(error: unknown): string {
-  if (error instanceof Error) {
-    return error.message;
-  }
-  return String(error);
+  return error instanceof Error ? error.message : String(error);
 }
 
 function formatError(error: unknown): any {
   if (axios.isAxiosError(error)) {
-    return {
-      status: error.response?.status,
-      data: error.response?.data,
-      message: error.message,
-    };
+    return { status: error.response?.status, data: error.response?.data, message: error.message };
   }
   return getErrorMessage(error);
 }
