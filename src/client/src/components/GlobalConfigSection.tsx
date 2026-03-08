@@ -39,6 +39,7 @@ const GlobalConfigSection: React.FC<GlobalConfigSectionProps> = ({ section }) =>
   const fetchConfig = async () => {
     try {
       setLoading(true);
+      setError(null);
       const res = await fetch('/api/config/global');
       if (!res.ok) {throw new Error('Failed to fetch configuration');}
       const data = await res.json();
