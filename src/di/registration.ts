@@ -36,9 +36,8 @@ export function registerServices(): void {
   container.register(
     TOKENS.SecureConfigManager,
     {
-      useClass: SecureConfigManager,
-    },
-    { lifecycle: Lifecycle.Singleton }
+      useValue: SecureConfigManager.getInstance(),
+    }
   );
 
   container.register(
