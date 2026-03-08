@@ -162,3 +162,30 @@ See existing packages for implementation patterns:
 ---
 
 This document serves as a comprehensive manual for developers working on Open-Hivemind, detailing intricate operational mechanics and best practices to ensure a resilient and scalable bot ecosystem.
+
+## Screenshot Convention
+
+### Directory roles
+
+| Path | Purpose |
+|------|---------|
+| `docs/screenshots/<name>.png` | Canonical screenshots — what docs reference. Plain kebab-case names, no suffixes. |
+| `archive/screenshots/<name>-before-<YYYYMMDD>.png` | Timestamped snapshots taken before a UI change. |
+| `/*.png` (repo root) | Gitignored — transient agent output, never committed. |
+
+### Updating a screenshot
+
+```bash
+# Archive the old one with a date stamp
+git mv docs/screenshots/foo.png archive/screenshots/foo-before-$(date +%Y%m%d).png
+
+# Place the new canonical screenshot
+cp /path/to/new.png docs/screenshots/foo.png
+git add docs/screenshots/foo.png archive/screenshots/
+```
+
+### Rules
+- `docs/screenshots/` filenames must be plain kebab-case — no `-before`, `-after`, `-v2`, or date suffixes.
+- `archive/screenshots/` filenames must include a `-before-YYYYMMDD` or `-YYYYMMDD` timestamp.
+- Never duplicate a file between `docs/` and `archive/`.
+- Root `*.png` files are gitignored; delete them after use.
