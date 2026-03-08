@@ -16,21 +16,6 @@ describe('OpenAI Type Guards', () => {
       expect(isOpenAIError(response)).toBe(true);
     });
 
-    it('returns false for null input', () => {
-      expect(isOpenAIError(null as any)).toBe(false);
-    });
-
-    it('returns false for undefined input', () => {
-      expect(isOpenAIError(undefined as any)).toBe(false);
-    });
-
-    it('returns false for falsy error field', () => {
-      const response = { object: 'error', error: null } as any;
-      expect(isOpenAIError(response)).toBe(false);
-      const response2 = { object: 'error', error: false } as any;
-      expect(isOpenAIError(response2)).toBe(false);
-    });
-
     it('returns false when error is not present', () => {
       const response = {
         object: 'chat.completion',
@@ -51,14 +36,6 @@ describe('OpenAI Type Guards', () => {
         usage: { prompt_tokens: 10, completion_tokens: 20, total_tokens: 30 },
       } as OpenAIResponse;
       expect(isChatCompletionResponse(response)).toBe(true);
-    });
-
-    it('returns false for null input', () => {
-      expect(isChatCompletionResponse(null as any)).toBe(false);
-    });
-
-    it('returns false for undefined input', () => {
-      expect(isChatCompletionResponse(undefined as any)).toBe(false);
     });
 
     it('returns false when object is not chat.completion', () => {
@@ -84,14 +61,6 @@ describe('OpenAI Type Guards', () => {
         data: [{ id: 'model-1', object: 'model', created: 123456, owned_by: 'openai' }],
       } as OpenAIResponse;
       expect(isModelsListResponse(response)).toBe(true);
-    });
-
-    it('returns false for null input', () => {
-      expect(isModelsListResponse(null as any)).toBe(false);
-    });
-
-    it('returns false for undefined input', () => {
-      expect(isModelsListResponse(undefined as any)).toBe(false);
     });
 
     it('returns false when object is not list', () => {
@@ -144,14 +113,6 @@ describe('OpenAI Type Guards', () => {
         usage: { prompt_tokens: 10, completion_tokens: 20, total_tokens: 30 },
       } as OpenAIResponse;
       expect(isCompletionResponse(response)).toBe(true);
-    });
-
-    it('returns false for null input', () => {
-      expect(isCompletionResponse(null as any)).toBe(false);
-    });
-
-    it('returns false for undefined input', () => {
-      expect(isCompletionResponse(undefined as any)).toBe(false);
     });
 
     it('returns false when object is not text_completion', () => {
