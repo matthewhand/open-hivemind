@@ -132,6 +132,17 @@ See existing packages for implementation patterns:
   ```
   Additional tests exist to simulate edge cases and verify recovery from error conditions.
 
+### MCP Integration Test Setup
+The MCP integration tests (`tests/integrations/mcp/MCPService.test.ts`) require mocking the `@modelcontextprotocol/sdk` to simulate local and remote MCP server behavior without requiring external dependencies during CI runs.
+
+To run the MCP integration tests:
+```bash
+npx jest tests/integrations/mcp/MCPService.test.ts
+```
+
+**Mocking Local Development Servers:**
+For local development, real MCP servers can be launched utilizing `stdio` transport. When developing locally, ensure the target MCP executable (e.g., `npx @modelcontextprotocol/server-everything`) is available in the environment path or mock the SDK responses similarly to the test suite using `jest.mock('@modelcontextprotocol/sdk')` to return mock `listTools` and `callTool` responses.
+
 ## Engineering Best Practices and Contribution Guidelines
 
 ### Code Style and Standards

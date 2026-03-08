@@ -84,6 +84,32 @@ describe('MCPService Integration', () => {
   });
 
   describe('Tool Discovery', () => {
+    it('should handle server connection failure gracefully', async () => {
+      // Mock the connect function to throw an error for this test
+      const config: MCPConfig = {
+        name: 'failing-server',
+        serverUrl: 'http://localhost:8080',
+        apiKey: 'test-api-key',
+      };
+
+      // We need to temporarily modify the global mock to reject for this specific test
+      // Since it's a dynamic require inside the method, we mock the global module again
+      // or intercept it. Instead of remocking the whole module, we can intercept the mock
+      // if we are careful, but since we are using require() inside the method, the module
+      // returns the jest mock. Let's create a scenario where connect throws.
+      const sdk = require('@modelcontextprotocol/sdk/client/index.js');
+      sdk.Client.mockImplementationOnce(() => ({
+        connect: jest.fn().mockRejectedValue(new Error('Connection refused')),
+        listTools: jest.fn(),
+      }));
+
+      await expect(mcpService.connectToServer(config))
+        .rejects.toThrow('Failed to connect to MCP server failing-server: Connection refused');
+
+      // Client should not be stored
+      expect(mcpService.getConnectedServers()).not.toContain('failing-server');
+    });
+
     it('should test connection and discover tools without storing client', async () => {
       const config: MCPConfig = {
         name: 'test-server-test-conn',
@@ -159,6 +185,16 @@ describe('MCPService Integration', () => {
       await expect(
         mcpService.executeTool('non-existent-server', 'test-tool', {})
       ).rejects.toThrow('Not connected to MCP server: non-existent-server');
+    });
+
+    it('should handle tool execution timeout or failure', async () => {
+      // Create a mock that throws an error to simulate failure/timeout
+      const client = (mcpService as any).clients.get('exec-server');
+      client.callTool = jest.fn().mockRejectedValue(new Error('Tool execution timed out'));
+
+      await expect(
+        mcpService.executeTool('exec-server', 'test-tool-1', { param: 'value' })
+      ).rejects.toThrow('Failed to execute tool test-tool-1 on server exec-server: Tool execution timed out');
     });
   });
 
