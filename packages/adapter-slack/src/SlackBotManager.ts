@@ -336,25 +336,27 @@ export class SlackBotManager {
    * Gracefully shutdown all Slack bot connections
    */
   public async shutdown(): Promise<void> {
-    debug('Entering shutdown');
+    debug(`Entering shutdown (${this.slackBots.length} bots)`);
 
-    for (const botInfo of this.slackBots) {
-      try {
-        // Disconnect Socket Mode client
-        if (botInfo.socketClient) {
-          await botInfo.socketClient.disconnect();
-          debug(`Socket client disconnected for bot: ${botInfo.botUserName}`);
-        }
+    await Promise.all(
+      this.slackBots.map(async (botInfo) => {
+        try {
+          // Disconnect Socket Mode client
+          if (botInfo.socketClient) {
+            await botInfo.socketClient.disconnect();
+            debug(`Socket client disconnected for bot: ${botInfo.botUserName}`);
+          }
 
-        // Disconnect RTM client
-        if (botInfo.rtmClient) {
-          await botInfo.rtmClient.disconnect();
-          debug(`RTM client disconnected for bot: ${botInfo.botUserName}`);
+          // Disconnect RTM client
+          if (botInfo.rtmClient) {
+            await botInfo.rtmClient.disconnect();
+            debug(`RTM client disconnected for bot: ${botInfo.botUserName}`);
+          }
+        } catch (error) {
+          debug(`Error disconnecting bot ${botInfo.botUserName}:`, error);
         }
-      } catch (error) {
-        debug(`Error disconnecting bot ${botInfo.botUserName}:`, error);
-      }
-    }
+      })
+    );
 
     // Clear all bots
     this.slackBots = [];
