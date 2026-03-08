@@ -77,6 +77,68 @@ describe('DemoModeService', () => {
       process.env.OPENAI_API_KEY = 'sk-valid-openai-api-key-here';
       expect(demoService.detectDemoMode()).toBe(false);
     });
+
+    it('should return false when a bot is configured with a real Discord token', () => {
+      const { BotConfigurationManager } = require('../../src/config/BotConfigurationManager');
+      BotConfigurationManager.getInstance.mockReturnValueOnce({
+        getAllBots: () => [{ discord: { token: 'valid-discord-bot-token-here' } }],
+        getWarnings: () => [],
+      });
+      expect(demoService.detectDemoMode()).toBe(false);
+    });
+
+    it('should return false when a bot is configured with a real Slack token', () => {
+      const { BotConfigurationManager } = require('../../src/config/BotConfigurationManager');
+      BotConfigurationManager.getInstance.mockReturnValueOnce({
+        getAllBots: () => [{ slack: { botToken: 'valid-slack-bot-token-here' } }],
+        getWarnings: () => [],
+      });
+      expect(demoService.detectDemoMode()).toBe(false);
+    });
+
+    it('should return false when a bot is configured with a real Mattermost token', () => {
+      const { BotConfigurationManager } = require('../../src/config/BotConfigurationManager');
+      BotConfigurationManager.getInstance.mockReturnValueOnce({
+        getAllBots: () => [{ mattermost: { token: 'valid-mattermost-bot-token-here' } }],
+        getWarnings: () => [],
+      });
+      expect(demoService.detectDemoMode()).toBe(false);
+    });
+
+    it('should return false when a bot is configured with a real OpenAI key', () => {
+      const { BotConfigurationManager } = require('../../src/config/BotConfigurationManager');
+      BotConfigurationManager.getInstance.mockReturnValueOnce({
+        getAllBots: () => [{ openai: { apiKey: 'sk-valid-openai-api-key-here' } }],
+        getWarnings: () => [],
+      });
+      expect(demoService.detectDemoMode()).toBe(false);
+    });
+
+    it('should return false when a bot is configured with a real Flowise key', () => {
+      const { BotConfigurationManager } = require('../../src/config/BotConfigurationManager');
+      BotConfigurationManager.getInstance.mockReturnValueOnce({
+        getAllBots: () => [{ flowise: { apiKey: 'valid-flowise-api-key-here' } }],
+        getWarnings: () => [],
+      });
+      expect(demoService.detectDemoMode()).toBe(false);
+    });
+
+    it('should return true when a bot has short/invalid credentials', () => {
+      const { BotConfigurationManager } = require('../../src/config/BotConfigurationManager');
+      BotConfigurationManager.getInstance.mockReturnValueOnce({
+        getAllBots: () => [
+          {
+            discord: { token: 'short' },
+            slack: { botToken: 'short' },
+            mattermost: { token: 'short' },
+            openai: { apiKey: 'short' },
+            flowise: { apiKey: 'short' },
+          },
+        ],
+        getWarnings: () => ['No bot configuration found'],
+      });
+      expect(demoService.detectDemoMode()).toBe(true);
+    });
   });
 
   describe('initialize', () => {
@@ -132,6 +194,24 @@ describe('DemoModeService', () => {
       const response = demoService.generateDemoResponse('Random message', 'Demo Bot');
       expect(typeof response).toBe('string');
       expect(response.length).toBeGreaterThan(0);
+    });
+
+    it('should return a response for configuration questions', () => {
+      process.env.DEMO_MODE = 'true';
+      demoService.initialize();
+
+      const response = demoService.generateDemoResponse('How do I config this?', 'Demo Bot');
+      expect(typeof response).toBe('string');
+      expect(response).toMatch(/configure/i);
+    });
+
+    it('should return a response for feature questions', () => {
+      process.env.DEMO_MODE = 'true';
+      demoService.initialize();
+
+      const response = demoService.generateDemoResponse('What features do you have?', 'Demo Bot');
+      expect(typeof response).toBe('string');
+      expect(response).toMatch(/capabilities/i);
     });
   });
 
