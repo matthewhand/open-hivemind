@@ -11,6 +11,7 @@ export interface SecureConfig {
   name: string;
   type?: string;
   data: any;
+  createdAt?: string;
   updatedAt: string;
   checksum: string;
   createdAt?: string;
@@ -21,6 +22,10 @@ export interface SecureConfig {
  * It uses AES-256-GCM for authenticated encryption and stores data in the filesystem.
  */
 export class SecureConfigManager {
+  public getDecryptedMainConfig(env: string): any {
+    return this.getConfig(`main-${env}`);
+  }
+
   private static instance: SecureConfigManager;
   private readonly configDir: string;
   private readonly backupDir: string;
@@ -152,7 +157,7 @@ export class SecureConfigManager {
       if (this.calculateChecksum(configWithoutChecksum) !== checksum) {
         throw ErrorUtils.createError(
           'Configuration integrity check failed',
-          'IntegrityError' as any,
+          'configuration',
           'SECURE_CONFIG_INTEGRITY_FAILED',
           500,
         );
@@ -334,7 +339,7 @@ export class SecureConfigManager {
       if (this.calculateChecksum(metadataWithoutChecksum) !== checksum) {
         throw ErrorUtils.createError(
           'Backup integrity check failed',
-          'IntegrityError' as any,
+          'configuration',
           'SECURE_CONFIG_BACKUP_INTEGRITY_FAILED',
           500,
         );

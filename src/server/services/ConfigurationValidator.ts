@@ -377,7 +377,11 @@ export class ConfigurationValidator {
     // MCP Guard validation
     const mcpGuard = typeof config.mcpGuard === 'string' ? undefined : config.mcpGuard;
     if (mcpGuard?.enabled) {
-      if (mcpGuard.type === 'custom' && !mcpGuard.allowedUsers?.length && !(mcpGuard as any).allowedUserIds?.length) {
+      if (
+        mcpGuard.type === 'custom' &&
+        !mcpGuard.allowedUsers?.length &&
+        !(mcpGuard as any).allowedUserIds?.length
+      ) {
         warnings.push('MCP Guard is enabled but no allowed users specified');
         suggestions.push('Add user IDs to the allowed list or consider using owner-only mode');
       }

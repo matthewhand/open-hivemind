@@ -2,7 +2,6 @@ import fs from 'fs';
 import path from 'path';
 import Debug from 'debug';
 import { Router } from 'express';
-
 import { redactSensitiveInfo } from '../../common/redactSensitiveInfo';
 import type { AuthMiddlewareRequest } from '../../auth/types';
 import { BotConfigurationManager } from '../../config/BotConfigurationManager';

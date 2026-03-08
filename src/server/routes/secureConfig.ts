@@ -54,7 +54,7 @@ router.get('/', async (req: Request, res: Response) => {
 router.get('/:id', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const config = await secureConfigManager.getConfig(id);
+    const config = await secureConfigManager.getConfig(id as any);
 
     if (!config) {
       return res.status(404).json({
@@ -299,7 +299,7 @@ router.post('/backup', async (req: AuditedRequest, res: Response) => {
 });
 
 /**
- * POST /webui/api/secure-config/restore/:backupId
+* POST /webui/api/secure-config/restore/:backupId
  * Restore from a specific backup
  */
 router.post('/restore/:backupId', async (req: AuditedRequest, res: Response) => {
