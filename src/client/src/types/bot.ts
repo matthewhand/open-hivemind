@@ -71,6 +71,10 @@ export enum MessageProviderType {
 
 export enum LLMProviderType {
   OPENAI = 'openai',
+  ANTHROPIC = 'anthropic',
+  OLLAMA = 'ollama',
+  HUGGINGFACE = 'huggingface',
+  LOCAL = 'local',
   FLOWISE = 'flowise',
   OPENWEBUI = 'openwebui',
   PERPLEXITY = 'perplexity',
@@ -352,29 +356,6 @@ export const LLM_PROVIDER_CONFIGS = {
       { name: 'chatflowId', label: 'Chatflow ID', type: 'text', required: true },
     ],
   },
-<<<<<<< HEAD
-=======
-  ollama: {
-    type: LLMProviderType.OLLAMA,
-    displayName: 'Ollama',
-    description: 'Local models via Ollama',
-    icon: '🦙',
-    fields: [],
-  },
-  huggingface: {
-    type: LLMProviderType.HUGGINGFACE,
-    displayName: 'Hugging Face',
-    description: 'Models from Hugging Face',
-    icon: '🤗',
-    fields: [],
-  },
-  local: {
-    type: LLMProviderType.LOCAL,
-    displayName: 'Local',
-    description: 'Custom local models',
-    icon: '🏠',
-    fields: [],
-  },
   openwebui: {
     type: LLMProviderType.OPENWEBUI,
     displayName: 'OpenWebUI',
@@ -417,7 +398,6 @@ export const LLM_PROVIDER_CONFIGS = {
     icon: '⚙️',
     fields: [],
   },
->>>>>>> origin/main
   perplexity: {
     type: LLMProviderType.PERPLEXITY,
     displayName: 'Perplexity',
