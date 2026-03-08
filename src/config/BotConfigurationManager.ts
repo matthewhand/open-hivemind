@@ -15,6 +15,7 @@ import type {
   McpGuardConfig,
   ConfigurationValidationResult,
   BotOverride,
+  LettaSessionMode,
 } from '@src/types/config';
 import { ConfigurationError } from '../types/errorClasses';
 
@@ -298,6 +299,20 @@ const botSchema = {
     format: String,
     default: '',
     env: 'BOTS_{name}_LETTA_SYSTEM_PROMPT',
+  },
+
+  LETTA_SESSION_MODE: {
+    doc: 'How Letta conversation sessions are scoped. "default" uses the agent default session, "per-channel" creates one conversation per channel, "per-user" creates one per user/DM, "fixed" uses LETTA_CONVERSATION_ID.',
+    format: ['default', 'per-channel', 'per-user', 'fixed'],
+    default: 'default',
+    env: 'BOTS_{name}_LETTA_SESSION_MODE',
+  },
+
+  LETTA_CONVERSATION_ID: {
+    doc: 'Fixed Letta conversation ID to use when LETTA_SESSION_MODE is "fixed"',
+    format: String,
+    default: '',
+    env: 'BOTS_{name}_LETTA_CONVERSATION_ID',
   },
 };
 
@@ -597,6 +612,8 @@ export class BotConfigurationManager {
       config.letta = {
         agentId: botConfig.get('LETTA_AGENT_ID') || undefined,
         systemPrompt: botConfig.get('LETTA_SYSTEM_PROMPT') || undefined,
+        sessionMode: (botConfig.get('LETTA_SESSION_MODE') || 'default') as LettaSessionMode,
+        conversationId: botConfig.get('LETTA_CONVERSATION_ID') || undefined,
       };
     }
 

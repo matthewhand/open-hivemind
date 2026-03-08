@@ -758,11 +758,18 @@ export function isMcpGuardConfig(obj: unknown): obj is McpGuardConfig {
 export type PlatformConfig = DiscordConfig | SlackConfig | MattermostConfig;
 
 /**
+ * Letta session mode - determines how conversation sessions are scoped
+ */
+export type LettaSessionMode = 'default' | 'per-channel' | 'per-user' | 'fixed';
+
+/**
  * Union type for all LLM provider configurations
  */
 export interface LettaConfig {
   agentId?: string;
   systemPrompt?: string;
+  sessionMode?: LettaSessionMode;
+  conversationId?: string;
 }
 
 export type LlmProviderConfig = OpenAIConfig | FlowiseConfig | OpenWebUIConfig | OpenSwarmConfig | LettaConfig;
