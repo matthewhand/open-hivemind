@@ -403,6 +403,31 @@ router.put('/llm-profiles/:key', (req, res) => {
 
 // ... (Rest of the file mostly same, except global config redaction)
 
+// Helper to safely and performantly deep clone schemas while skipping functions
+// JSON.stringify drops functions silently, but doing it manually is much faster.
+const deepCloneSchema = (obj: any): any => {
+  if (obj === null || typeof obj !== 'object') {
+    return obj;
+  }
+  if (Array.isArray(obj)) {
+    const arr = new Array(obj.length);
+    for (let i = 0; i < obj.length; i++) {
+      arr[i] = deepCloneSchema(obj[i]);
+    }
+    return arr;
+  }
+  const result: any = {};
+  for (const key in obj) {
+    if (Object.prototype.hasOwnProperty.call(obj, key)) {
+      const val = obj[key];
+      if (typeof val !== 'function') {
+        result[key] = deepCloneSchema(val);
+      }
+    }
+  }
+  return result;
+};
+
 // GET /api/config/global - Get all global configurations (schema + values)
 router.get('/global', (req, res) => {
   try {
@@ -413,7 +438,9 @@ router.get('/global', (req, res) => {
       const props = config.getProperties();
 
       // Get schema and deep clone it to avoid mutating the source
-      const schema = JSON.parse(JSON.stringify(config.getSchema()));
+      // Native structuredClone throws on convict schemas due to native functions,
+      // so we use a fast custom clone that strips them out like JSON.stringify would.
+      const schema = deepCloneSchema(config.getSchema());
 
       // Check for environment variable overrides and mark as locked
       const properties = schema.properties || schema;
@@ -428,7 +455,7 @@ router.get('/global', (req, res) => {
       }
 
       // Redact sensitive values in props
-      const redactedProps = JSON.parse(JSON.stringify(props)); // Deep copy
+      const redactedProps = structuredClone(props); // Deep copy
 
       // Helper to redact recursively using provider metadata if available
       const provider = providerRegistry.get(key); // key is config name, e.g. 'slack'
