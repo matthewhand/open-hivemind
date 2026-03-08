@@ -107,9 +107,15 @@ const PersonaManager: React.FC = () => {
 
   const handleDeleteSelected = async () => {
     try {
-      await Promise.all(Array.from(selectedPersonas).map(key => deletePersona(key)));
-      setToastMessage('Selected personas deleted successfully');
-      setToastType('success');
+      const results = await Promise.allSettled(Array.from(selectedPersonas).map(key => deletePersona(key)));
+      const failures = results.filter(r => r.status === 'rejected');
+      if (failures.length > 0) {
+        setToastMessage(`Deleted personas, but failed to delete ${failures.length} item(s)`);
+        setToastType('warning');
+      } else {
+        setToastMessage('Selected personas deleted successfully');
+        setToastType('success');
+      }
       setSelectedPersonas(new Set());
       loadPersonas();
     } catch {

@@ -23,6 +23,11 @@ config/test/providers/instances.json
 # Configuration files with sensitive data
 config/user/
 config/providers/
+config/backups/
+config/secure/
+*.enc
+config/.key
+backup*.json
 .env.real
 *.config.json
 *credentials*
@@ -180,6 +185,7 @@ test-results/
 *.md
 # Keep important documentation files tracked
 !README.md
+!CLAUDE.md
 !docs/**
 !docs/README.md
 !docs/ARCHITECTURE.md
@@ -207,3 +213,10 @@ archive/
 .specify/
 .kilocode/
 AGENTS.md
+
+# Secure config
+config/secure/
+config/.key
+
+# Agent-generated screenshots (use docs/screenshots/ for canonical)
+/*.png

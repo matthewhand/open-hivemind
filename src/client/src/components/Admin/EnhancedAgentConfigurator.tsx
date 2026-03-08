@@ -336,12 +336,14 @@ const EnhancedAgentConfigurator: React.FC = () => {
                     <button
                       className="btn btn-sm btn-circle btn-ghost"
                       onClick={() => handleEditAgent(agent)}
+                      aria-label={`Edit settings for ${agent.name}`}
                     >
                       <Cog6ToothIcon className="w-4 h-4" />
                     </button>
                     <button
                       className="btn btn-sm btn-circle btn-error btn-ghost"
                       onClick={() => handleDeleteAgent(agent.id)}
+                      aria-label={`Delete ${agent.name}`}
                     >
                       <TrashIcon className="w-4 h-4" />
                     </button>

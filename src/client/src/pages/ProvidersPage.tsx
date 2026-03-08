@@ -19,10 +19,10 @@ const ProvidersPage: React.FC = () => {
   const providerCategories = [
     {
       title: 'Message Providers',
-      description: 'Configure Discord, Mattermost, Slack, and Webhook providers for bot communication',
+      description: 'Configure Discord, Telegram, Slack, and Webhook providers for bot communication',
       icon: <MessageIcon className="w-12 h-12" />,
       color: 'primary' as const,
-      providers: ['Discord', 'Mattermost', 'Slack', 'Webhook'],
+      providers: ['Discord', 'Telegram', 'Slack', 'Webhook'],
       action: () => navigate('/admin/providers/message'),
       features: [
         'Real-time messaging integration',
@@ -33,10 +33,10 @@ const ProvidersPage: React.FC = () => {
     },
     {
       title: 'LLM Providers',
-      description: 'Set up OpenAI, Flowise, OpenWebUI, and other LLM providers for AI responses',
+      description: 'Set up OpenAI, Anthropic, Ollama, and custom LLM providers for AI responses',
       icon: <LLMIcon className="w-12 h-12" />,
       color: 'secondary' as const,
-      providers: ['OpenAI', 'Flowise', 'OpenWebUI', 'Other'],
+      providers: ['OpenAI', 'Anthropic', 'Ollama', 'Custom'],
       action: () => navigate('/admin/providers/llm'),
       features: [
         'Multiple AI model support',

@@ -15,6 +15,8 @@ import {
 const slackConfig = INTEGRATION_CONFIGS.slack;
 const canRunTests = hasAllEnvVars(...slackConfig.requiredEnvVars);
 
+jest.unmock('@slack/web-api');
+
 createIntegrationSuite(slackConfig.name, slackConfig.requiredEnvVars, () => {
   // Lazy import to avoid loading Slack SDK if tests are skipped
   let SlackService: typeof import('@integrations/slack/SlackService').SlackService;

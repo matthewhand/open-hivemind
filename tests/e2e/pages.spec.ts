@@ -7,88 +7,71 @@ import {
 } from './test-utils';
 
 /**
- * Comprehensive Page Rendering Tests with Strict Error Detection
- * Tests FAIL on console errors
+ * Smoke tests: every nav route must render without JS errors or crash.
+ * A "crash" is defined as: no <body> content, or a React error boundary message.
  */
+
+const ALL_PAGES = [
+  { path: '/admin/overview',          label: 'Overview' },
+  { path: '/admin/providers/llm',     label: 'LLM Providers' },
+  { path: '/admin/providers/message', label: 'Message Providers' },
+  { path: '/admin/bots',              label: 'Bots' },
+  { path: '/admin/personas',          label: 'Personas' },
+  { path: '/admin/guards',            label: 'Guards' },
+  { path: '/admin/settings',          label: 'Settings' },
+  { path: '/admin/monitoring',        label: 'Monitoring' },
+  { path: '/admin/configuration',     label: 'Configuration' },
+  { path: '/admin/showcase',          label: 'Showcase' },
+  { path: '/admin/sitemap',           label: 'Sitemap' },
+];
+
 test.describe('Page Rendering - All Admin Pages', () => {
   test.setTimeout(90000);
 
-  test.describe('Overview Page', () => {
-    test('renders overview page without errors', async ({ page }) => {
+  for (const { path, label } of ALL_PAGES) {
+    test(`${label} renders without errors`, async ({ page }) => {
       const errors = await setupTestWithErrorDetection(page);
-      await navigateAndWaitReady(page, '/admin/overview');
+      await navigateAndWaitReady(page, path);
 
-      expect(page.url()).toContain('/admin/overview');
-      const main = page.locator('main').first();
-      if ((await main.count()) > 0) {
-        await expect(main).toBeVisible();
-      }
-      await page.screenshot({ path: 'test-results/pages-overview.png', fullPage: true });
+      // Must stay on the requested route (no redirect to /login counts as a crash for smoke purposes)
+      expect(page.url()).toContain(path);
 
-      await assertNoErrors(errors, 'Overview page');
+      // Body must have content
+      const body = page.locator('body');
+      await expect(body).not.toBeEmpty();
+
+      // No React error boundary text
+      const bodyText = await body.innerText().catch(() => '');
+      expect(bodyText).not.toContain('Something went wrong');
+      expect(bodyText).not.toContain('Unexpected Application Error');
+
+      await page.screenshot({ path: `test-results/pages-${label.toLowerCase().replace(/\s+/g, '-')}.png`, fullPage: true });
+      await assertNoErrors(errors, `${label} page`);
     });
-  });
+  }
 
-  test.describe('Bots Page', () => {
-    test('renders bots page without errors', async ({ page }) => {
-      const errors = await setupTestWithErrorDetection(page);
-      await navigateAndWaitReady(page, '/admin/bots');
-
-      expect(page.url()).toContain('/admin/bots');
-      await page.screenshot({ path: 'test-results/pages-bots.png', fullPage: true });
-
-      await assertNoErrors(errors, 'Bots page');
-    });
-  });
-
-  test.describe('Personas Page', () => {
-    test('renders personas page without errors', async ({ page }) => {
-      const errors = await setupTestWithErrorDetection(page);
-      await navigateAndWaitReady(page, '/admin/personas');
-
-      expect(page.url()).toContain('/admin/personas');
-      await page.screenshot({ path: 'test-results/pages-personas.png', fullPage: true });
-
-      await assertNoErrors(errors, 'Personas page');
-    });
-  });
-
-  test.describe('Navigation', () => {
-    test('can navigate between pages without errors', async ({ page }) => {
-      const errors = await setupTestWithErrorDetection(page);
-
-      const pages = [
-        '/admin/overview',
-        '/admin/bots',
-        '/admin/personas',
-        '/admin/config',
-        '/admin/settings',
-      ];
-      for (const pagePath of pages) {
-        await page.goto(pagePath);
-        await waitForPageReady(page);
-      }
-      await page.screenshot({ path: 'test-results/pages-navigation-check.png', fullPage: true });
-
-      await assertNoErrors(errors, 'Multi-page navigation');
-    });
+  test('can navigate between all pages without errors', async ({ page }) => {
+    const errors = await setupTestWithErrorDetection(page);
+    for (const { path } of ALL_PAGES) {
+      await page.goto(path);
+      await waitForPageReady(page);
+    }
+    await assertNoErrors(errors, 'Multi-page navigation');
   });
 
   test.describe('Responsive Design', () => {
-    test('pages render on mobile viewport without errors', async ({ page }) => {
+    test('renders on mobile viewport without errors', async ({ page }) => {
       const errors = await setupTestWithErrorDetection(page);
       await page.setViewportSize({ width: 375, height: 667 });
       await navigateAndWaitReady(page, '/admin/bots');
-
       await page.screenshot({ path: 'test-results/pages-mobile-bots.png', fullPage: true });
       await assertNoErrors(errors, 'Mobile viewport');
     });
 
-    test('pages render on tablet viewport without errors', async ({ page }) => {
+    test('renders on tablet viewport without errors', async ({ page }) => {
       const errors = await setupTestWithErrorDetection(page);
       await page.setViewportSize({ width: 768, height: 1024 });
       await navigateAndWaitReady(page, '/admin/bots');
-
       await page.screenshot({ path: 'test-results/pages-tablet-bots.png', fullPage: true });
       await assertNoErrors(errors, 'Tablet viewport');
     });

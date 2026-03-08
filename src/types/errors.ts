@@ -19,7 +19,7 @@ export const ERROR_TYPES = {
 } as const;
 
 // Base error types
-export type ErrorType = typeof ERROR_TYPES[keyof typeof ERROR_TYPES];
+export type ErrorType = (typeof ERROR_TYPES)[keyof typeof ERROR_TYPES];
 
 /**
  * Generic error type that can be used in catch blocks to replace 'any'

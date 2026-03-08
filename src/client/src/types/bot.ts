@@ -54,7 +54,12 @@ export enum LLMProviderType {
   OLLAMA = 'ollama',
   HUGGINGFACE = 'huggingface',
   LOCAL = 'local',
-  FLOWISE = 'flowise'
+  FLOWISE = 'flowise',
+  OPENWEBUI = 'openwebui',
+  PERPLEXITY = 'perplexity',
+  REPLICATE = 'replicate',
+  N8N = 'n8n',
+  OPENSWARM = 'openswarm',
 }
 
 export interface Persona {
@@ -350,15 +355,46 @@ export const LLM_PROVIDER_CONFIGS = {
     icon: '🏠',
     fields: [],
   },
-  flowise: {
-    type: LLMProviderType.FLOWISE,
-    displayName: 'Flowise',
-    description: 'Connect to Flowise AI chatflows',
+  perplexity: {
+    type: LLMProviderType.PERPLEXITY,
+    displayName: 'Perplexity',
+    description: 'Search-augmented AI models',
+    icon: '🔍',
+    fields: [
+      { name: 'apiKey', label: 'API Key', type: 'password', required: true },
+      { name: 'model', label: 'Model', type: 'text', required: false },
+    ],
+  },
+  replicate: {
+    type: LLMProviderType.REPLICATE,
+    displayName: 'Replicate',
+    description: 'Run open-source models',
+    icon: '🚀',
+    fields: [
+      { name: 'apiKey', label: 'API Key', type: 'password', required: true },
+      { name: 'model', label: 'Model', type: 'text', required: false },
+    ],
+  },
+  n8n: {
+    type: LLMProviderType.N8N,
+    displayName: 'n8n',
+    description: 'Workflow automation platform',
     icon: '⚡',
     fields: [
-      { name: 'apiUrl', label: 'API Endpoint', type: 'text', required: true, placeholder: 'http://localhost:3000' },
-      { name: 'apiKey', label: 'API Key', type: 'password', required: false },
-      { name: 'chatflowId', label: 'Chatflow ID', type: 'text', required: true }
+      { name: 'webhookUrl', label: 'Webhook URL', type: 'text', required: true },
+      { name: 'authHeader', label: 'Auth Header', type: 'password', required: false },
+    ],
+  },
+  openswarm: {
+    type: LLMProviderType.OPENSWARM,
+    displayName: 'OpenSwarm',
+    description: 'Multi-agent orchestration',
+    icon: '🐝',
+    fields: [
+      { name: 'apiKey', label: 'API Key', type: 'password', required: true },
+      { name: 'apiUrl', label: 'API URL', type: 'text', required: true },
+      { name: 'swarmId', label: 'Swarm ID', type: 'text', required: true },
+      { name: 'team', label: 'Team', type: 'text', required: false },
     ],
   },
 };
