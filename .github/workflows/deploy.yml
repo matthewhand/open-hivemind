@@ -17,35 +17,39 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-          cache: 'npm'
+          cache: 'pnpm'
 
       - name: Install dependencies
-        run: npm ci
+        run: pnpm install --frozen-lockfile
 
       - name: Audit for hardcoded secrets
-        run: npm run audit:secrets
+        run: pnpm run audit:secrets
 
       - name: Run lint
-        run: npm run lint
+        run: pnpm run lint
 
       - name: Check types
-        run: npm run check-types
+        run: pnpm run check-types
 
       - name: Run security audit
-        run: npm audit --audit-level=high --production
+        run: pnpm audit --audit-level=high --production
 
       - name: Run unit tests
-        run: npm test -- --passWithNoTests --coverage --testPathPattern=tests/unit
+        run: pnpm test -- --passWithNoTests --coverage --testPathPattern=tests/unit
 
       - name: Run integration tests
-        run: npm test -- --passWithNoTests --testPathPattern=tests/integration
+        run: pnpm test -- --passWithNoTests --testPathPattern=tests/integration
 
       - name: Build
-        run: npm run build
+        run: pnpm run build
 
       - name: Test bundle size
         run: |
