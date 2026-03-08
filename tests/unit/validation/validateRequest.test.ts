@@ -40,7 +40,7 @@ describe('validateRequest middleware', () => {
     expect(mockRes.json).not.toHaveBeenCalled();
   });
 
-  it('should return 400 and validation issues if validation fails', () => {
+  it('should return 400 and detailed validation issues if validation fails', () => {
     const schema = z.object({
       body: z.object({
         name: z.string(),
@@ -56,10 +56,64 @@ describe('validateRequest middleware', () => {
     expect(mockRes.json).toHaveBeenCalledWith(
       expect.objectContaining({
         error: 'Validation failed',
-        issues: expect.any(Array),
+        issues: expect.arrayContaining([
+          expect.objectContaining({
+            path: expect.any(Array),
+            message: expect.any(String),
+          }),
+        ]),
       })
     );
     expect(nextFunction).not.toHaveBeenCalled();
+  });
+
+  it('should return 400 when query param fails validation', () => {
+    const schema = z.object({
+      body: z.object({}).optional(),
+      query: z.object({ page: z.string().regex(/^\d+$/) }),
+      params: z.object({}).optional(),
+    });
+
+    mockReq.query = { page: 'not-a-number' };
+
+    const middleware = validateRequest(schema);
+    middleware(mockReq as Request, mockRes as Response, nextFunction as NextFunction);
+
+    expect(mockRes.status).toHaveBeenCalledWith(400);
+    expect(mockRes.json).toHaveBeenCalledWith(
+      expect.objectContaining({
+        error: 'Validation failed',
+        issues: expect.arrayContaining([
+          expect.objectContaining({
+            path: expect.arrayContaining(['query', 'page']),
+          }),
+        ]),
+      })
+    );
+  });
+
+  it('should return all validation issues when multiple fields fail', () => {
+    const schema = z.object({
+      body: z.object({
+        name: z.string(),
+        age: z.number(),
+      }),
+    });
+
+    mockReq.body = { name: 123, age: 'not-a-number' };
+
+    const middleware = validateRequest(schema);
+    middleware(mockReq as Request, mockRes as Response, nextFunction as NextFunction);
+
+    expect(mockRes.status).toHaveBeenCalledWith(400);
+    const jsonCall = (mockRes.json as jest.Mock).mock.calls[0][0];
+    expect(jsonCall.issues.length).toBeGreaterThanOrEqual(2);
+    expect(jsonCall.issues).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ path: ['body', 'name'] }),
+        expect.objectContaining({ path: ['body', 'age'] }),
+      ])
+    );
   });
 
   it('should call next(error) for non-Zod errors', () => {
