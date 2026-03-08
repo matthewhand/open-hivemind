@@ -629,7 +629,16 @@ async function main() {
       if (fs.existsSync(frontendDistPath)) {
         appLogger.info('📱 Frontend assets served from', { path: frontendDistPath });
       } else {
-        appLogger.warn('⚠️  Frontend build not found - run `npm run build` to create WebUI assets');
+        appLogger.warn('⚠️  Frontend build not found - attempting auto-build via `npm run build:frontend`');
+        const { execFile } = require('child_process');
+        execFile('npm', ['run', 'build:frontend'], { cwd: process.cwd() }, (err: Error | null, stdout: string, stderr: string) => {
+          if (err) {
+            appLogger.warn('⚠️  Auto-build failed (devDependencies may be pruned in production). Run `npm run build:frontend` manually.', { error: err.message });
+          } else {
+            appLogger.info('✅ Frontend auto-build succeeded', { stdout: stdout.trim() });
+          }
+          if (stderr) appLogger.debug('build:frontend stderr', { stderr: stderr.trim() });
+        });
       }
     });
   } else {
