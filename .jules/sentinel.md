@@ -9,3 +9,8 @@
 **Prevention:**
 1. Always apply strict regex patterns (e.g., `/^[a-zA-Z0-9_-]+$/`) to any user input that will be used as a filename or path segment.
 2. After constructing a path with `path.join`, always resolve it and verify it starts with the resolved expected base directory (`resolvedPath.startsWith(resolvedBase + path.sep)`).
+
+## 2026-03-08 - Letta API Proxy SSRF Vulnerability
+**Vulnerability:** The Letta API proxy routes (`/agents` and `/agents/:id`) directly passed an external, unvalidated `apiUrl` provided via user input (query param or header) to `axios.get`.
+**Learning:** This constitutes a critical Server-Side Request Forgery (SSRF) vulnerability, allowing an attacker to force the backend server to make requests to internal or protected endpoints on the network. The existing `isSafeUrl` guard was omitted in this new endpoint.
+**Prevention:** Always wrap arbitrary external URL inputs bound for backend HTTP clients in the project's SSRF protection mechanism (`isSafeUrl`) before performing the request.

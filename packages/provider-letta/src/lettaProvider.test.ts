@@ -1,4 +1,6 @@
 import axios from 'axios';
+// Import after mocks are registered
+import { LettaProvider } from './lettaProvider';
 
 jest.mock('axios');
 jest.mock('./lettaConfig', () => ({
@@ -6,9 +8,6 @@ jest.mock('./lettaConfig', () => ({
   default: { get: jest.fn().mockReturnValue(undefined) },
 }));
 jest.mock('debug', () => () => jest.fn());
-
-// Import after mocks are registered
-import { LettaProvider } from './lettaProvider';
 
 const mockedAxios = axios as jest.Mocked<typeof axios>;
 
@@ -119,10 +118,7 @@ describe('retryWithBackoff', () => {
     const axiosErr = Object.assign(new Error('rate limited'), {
       response: { status: 429 },
     });
-    const get = jest
-      .fn()
-      .mockRejectedValueOnce(axiosErr)
-      .mockResolvedValueOnce({ data: [] });
+    const get = jest.fn().mockRejectedValueOnce(axiosErr).mockResolvedValueOnce({ data: [] });
 
     mockedAxios.create.mockReturnValue(makeClient({ get }) as any);
     mockedAxios.isAxiosError.mockReturnValue(true);

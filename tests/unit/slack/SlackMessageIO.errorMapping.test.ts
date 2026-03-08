@@ -10,11 +10,13 @@ describe('SlackMessageIO Error Mapping', () => {
     mockWebClient = {
       chat: {
         postMessage: jest.fn(),
-      }
+      },
     };
 
     mockBotManager = {
-      getAllBots: jest.fn().mockReturnValue([{ botUserName: 'test-bot', webClient: mockWebClient }])
+      getAllBots: jest
+        .fn()
+        .mockReturnValue([{ botUserName: 'test-bot', webClient: mockWebClient }]),
     };
 
     slackMessageIO = new SlackMessageIO(
@@ -27,7 +29,9 @@ describe('SlackMessageIO Error Mapping', () => {
   it('should map channel_not_found to ValidationError', async () => {
     mockWebClient.chat.postMessage.mockRejectedValue({ data: { error: 'channel_not_found' } });
 
-    await expect(slackMessageIO.sendMessageToChannel('C123', 'test')).rejects.toThrow(ValidationError);
+    await expect(slackMessageIO.sendMessageToChannel('C123', 'test')).rejects.toThrow(
+      ValidationError
+    );
   });
 
   it('should map 500 error to NetworkError', async () => {
