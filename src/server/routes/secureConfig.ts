@@ -82,28 +82,26 @@ router.get('/:id', async (req: Request, res: Response) => {
  */
 router.post('/', async (req: AuditedRequest, res: Response) => {
   try {
-    const { id, name, type, data } = req.body;
+    const { id, name, data } = req.body;
 
-    if (!id || !name || !type || !data) {
+    if (!id || !name || !data) {
       logConfigChange(
         req,
         'CREATE',
         `secure-config/${id}`,
         'failure',
-        'Missing required fields: id, name, type, data'
+        'Missing required fields: id, name, data'
       );
       return res.status(400).json({
         success: false,
-        error: 'Missing required fields: id, name, type, data',
+        error: 'Missing required fields: id, name, data',
       });
     }
 
     const config: Omit<SecureConfig, 'updatedAt' | 'checksum'> = {
       id,
       name,
-      type,
       data,
-      createdAt: new Date().toISOString(),
     };
 
     await secureConfigManager.storeConfig(config);
@@ -113,13 +111,13 @@ router.post('/', async (req: AuditedRequest, res: Response) => {
       'CREATE',
       `secure-config/${id}`,
       'success',
-      `Created secure configuration ${name} of type ${type}`
+      `Created secure configuration ${name}`
     );
 
     return res.status(201).json({
       success: true,
       message: 'Configuration stored securely',
-      data: { id, name, type },
+      data: { id, name },
     });
   } catch (error: any) {
     debug('Failed to create secure config:', error);
@@ -144,19 +142,19 @@ router.post('/', async (req: AuditedRequest, res: Response) => {
 router.put('/:id', async (req: AuditedRequest, res: Response) => {
   try {
     const { id } = req.params;
-    const { name, type, data } = req.body;
+    const { name, data } = req.body;
 
-    if (!name || !type || !data) {
+    if (!name || !data) {
       logConfigChange(
         req,
         'UPDATE',
         `secure-config/${id}`,
         'failure',
-        'Missing required fields: name, type, data'
+        'Missing required fields: name, data'
       );
       return res.status(400).json({
         success: false,
-        error: 'Missing required fields: name, type, data',
+        error: 'Missing required fields: name, data',
       });
     }
 
@@ -173,9 +171,7 @@ router.put('/:id', async (req: AuditedRequest, res: Response) => {
     const updatedConfig: Omit<SecureConfig, 'updatedAt' | 'checksum'> = {
       id,
       name,
-      type,
       data,
-      createdAt: existingConfig.createdAt,
     };
 
     await secureConfigManager.storeConfig(updatedConfig);
@@ -195,7 +191,7 @@ router.put('/:id', async (req: AuditedRequest, res: Response) => {
     return res.json({
       success: true,
       message: 'Configuration updated successfully',
-      data: { id, name, type },
+      data: { id, name },
     });
   } catch (error: any) {
     debug(`Failed to update secure config ${req.params.id}:`, error);
@@ -298,28 +294,6 @@ router.post('/backup', async (req: AuditedRequest, res: Response) => {
     return res.status(500).json({
       success: false,
       error: 'Failed to create backup',
-    });
-  }
-});
-
-/**
- * GET /webui/api/secure-config/backups
- * List all available backups
- */
-router.get('/backups/list', async (req: Request, res: Response) => {
-  try {
-    const backups = await secureConfigManager.listBackups();
-
-    return res.json({
-      success: true,
-      data: backups,
-      count: backups.length,
-    });
-  } catch (error: any) {
-    debug('Failed to list backups:', error);
-    return res.status(500).json({
-      success: false,
-      error: 'Failed to retrieve backups',
     });
   }
 });

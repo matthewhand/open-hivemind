@@ -126,7 +126,7 @@ export class SecureConfigManager {
       debug(`Failed to store configuration ${config.id}:`, hivemindError.message);
       throw ErrorUtils.createError(
         `Failed to store secure configuration: ${hivemindError.message}`,
-        'unknown',
+        'api',
         'SECURE_CONFIG_STORE_FAILED',
         500,
       );
@@ -196,7 +196,7 @@ export class SecureConfigManager {
       debug(`Failed to delete configuration ${id}:`, hivemindError.message);
       throw ErrorUtils.createError(
         `Failed to delete secure configuration: ${hivemindError.message}`,
-        'unknown',
+        'api',
         'SECURE_CONFIG_DELETE_FAILED',
         500,
       );
