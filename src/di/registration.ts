@@ -24,25 +24,27 @@ const logger = Logger.withContext('DI');
  */
 export function registerServices(): void {
   // Configuration services - singletons
+  logger.debug('Registering ConfigurationManager');
   container.register(TOKENS.ConfigurationManager, {
     useValue: ConfigurationManager.getInstance(),
   });
 
+  logger.debug('Registering BotConfigurationManager instance');
   container.register(TOKENS.BotConfigurationManager, {
     useValue: BotConfigurationManager.getInstance(),
   });
 
+  logger.debug('Registering UserConfigStore');
   container.register(TOKENS.UserConfigStore, {
     useValue: UserConfigStore.getInstance(),
   });
 
-  container.register(
-    TOKENS.SecureConfigManager,
-    {
-      useValue: SecureConfigManager.getInstance(),
-    }
-  );
+  logger.debug('Registering SecureConfigManager');
+  container.register(TOKENS.SecureConfigManager, {
+    useValue: SecureConfigManager.getInstance(),
+  });
 
+  logger.debug('Registering BotConfigurationManager class');
   container.register(
     TOKENS.BotConfigurationManager,
     {
@@ -51,10 +53,12 @@ export function registerServices(): void {
     { lifecycle: Lifecycle.Singleton }
   );
 
+  logger.debug('Registering UserConfigStore (re-registering instance)');
   container.register(TOKENS.UserConfigStore, {
     useValue: UserConfigStore.getInstance(),
   });
 
+  logger.debug('Registering ProviderConfigManager');
   container.register(TOKENS.ProviderConfigManager, {
     useValue: ProviderConfigManager.getInstance(),
   });
