@@ -47,8 +47,8 @@ describe('webhookSecurity edge cases', () => {
       (req: Request, res: Response, next: NextFunction) => verifyIpWhitelist(req, res, next),
       (_req: Request, res: Response) => res.status(200).send('OK')
     );
-    // default baseline
-    setConfig({ WEBHOOK_TOKEN: 'secret-token', WEBHOOK_IP_WHITELIST: '' });
+    // default baseline. Set WEBHOOK_IP_WHITELIST to allow testing of token validation without IP block
+    setConfig({ WEBHOOK_TOKEN: 'secret-token', WEBHOOK_IP_WHITELIST: '::ffff:127.0.0.1,127.0.0.1,::1' });
   });
 
   describe('verifyWebhookToken', () => {
@@ -91,12 +91,13 @@ describe('webhookSecurity edge cases', () => {
   });
 
   describe('verifyIpWhitelist', () => {
-    it('allows all when whitelist is empty', async () => {
+    it('blocks with 403 when whitelist is empty', async () => {
       setConfig({ WEBHOOK_IP_WHITELIST: '' });
       const { res } = await runRoute(app, 'post', '/secured', {
         headers: { 'x-webhook-token': 'secret-token' },
       });
-      expect(res.statusCode).toBe(200);
+      expect(res.statusCode).toBe(403);
+      expect(res.text).toContain('IP whitelist is empty');
     });
 
     it('allows when request IP is exactly whitelisted', async () => {
