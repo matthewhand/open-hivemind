@@ -16,6 +16,84 @@ export interface TestResult {
   details?: any;
 }
 
+export interface BotConfig {
+  name: string;
+  messageProvider: string;
+  llmProvider: string;
+  llmProfile?: string;
+  discord?:
+    | {
+        token: string;
+        clientId?: string;
+        guildId?: string;
+        channelId?: string;
+        voiceChannelId?: string;
+      }
+    | string;
+  slack?:
+    | {
+        botToken: string;
+        appToken?: string;
+        signingSecret: string;
+        joinChannels?: string;
+        defaultChannelId?: string;
+        mode?: 'socket' | 'rtm';
+      }
+    | string;
+  mattermost?:
+    | {
+        serverUrl: string;
+        token: string;
+        teamId?: string;
+        channelId?: string;
+      }
+    | string;
+  openai?:
+    | {
+        apiKey: string;
+        model?: string;
+        temperature?: number;
+        maxTokens?: number;
+      }
+    | string;
+  flowise?:
+    | {
+        apiKey: string;
+        endpoint: string;
+        chatflowId?: string;
+      }
+    | string;
+  openwebui?:
+    | {
+        apiKey: string;
+        endpoint: string;
+        model?: string;
+      }
+    | string;
+  openswarm?:
+    | {
+        apiKey: string;
+        endpoint: string;
+        agentId?: string;
+      }
+    | string;
+  persona?: string;
+  mcpGuardProfile?: string;
+  responseProfile?: string;
+  systemInstruction?: string;
+  mcpServers?: string | string[] | { name: string; serverUrl?: string }[];
+  mcpGuard?:
+    | {
+        enabled: boolean;
+        type: 'owner' | 'custom';
+        allowedUserIds?: string[];
+      }
+    | string;
+  createdAt?: string;
+  updatedAt?: string;
+  isActive?: boolean;
+}
+
 export class ConfigurationValidator {
   private botConfigManager: typeof BotConfigurationManager;
   private botSchema: convict.Schema<any>;
@@ -181,7 +259,7 @@ export class ConfigurationValidator {
     const normalizedLlmProvider =
       typeof config.llmProvider === 'string' ? config.llmProvider.trim() : '';
     const llmDefaults = getLlmDefaultStatus();
-    const normalizedConfig: BotConfig = { ...config, llmProvider: normalizedLlmProvider as any };
+    const normalizedConfig: BotConfig = { ...config, llmProvider: normalizedLlmProvider };
 
     if (!normalizedLlmProvider) {
       if (!llmDefaults.configured) {
@@ -291,11 +369,11 @@ export class ConfigurationValidator {
 
       case 'flowise': {
         const flowise = typeof config.flowise === 'string' ? undefined : config.flowise;
-        if (!flowise?.apiBaseUrl && !(flowise as any)?.endpoint) {
+        if (!flowise?.endpoint) {
           errors.push('Flowise endpoint is required');
         } else {
           try {
-            new URL(flowise.apiBaseUrl || (flowise as any).endpoint);
+            new URL(flowise.endpoint);
           } catch {
             errors.push('Flowise endpoint must be a valid URL');
           }
@@ -308,11 +386,11 @@ export class ConfigurationValidator {
         if (!openwebui?.apiKey) {
           errors.push('OpenWebUI API key is required');
         }
-        if (!openwebui?.apiUrl && !(openwebui as any)?.endpoint) {
+        if (!openwebui?.endpoint) {
           errors.push('OpenWebUI endpoint is required');
         } else {
           try {
-            new URL(openwebui.apiUrl || (openwebui as any).endpoint);
+            new URL(openwebui.endpoint);
           } catch {
             errors.push('OpenWebUI endpoint must be a valid URL');
           }
@@ -325,11 +403,11 @@ export class ConfigurationValidator {
         if (!openswarm?.apiKey) {
           errors.push('OpenSwarm API key is required');
         }
-        if (!openswarm?.baseUrl && !(openswarm as any)?.endpoint) {
+        if (!openswarm?.endpoint) {
           errors.push('OpenSwarm endpoint is required');
         } else {
           try {
-            new URL(openswarm.baseUrl || (openswarm as any).endpoint);
+            new URL(openswarm.endpoint);
           } catch {
             errors.push('OpenSwarm endpoint must be a valid URL');
           }
@@ -377,11 +455,15 @@ export class ConfigurationValidator {
     // MCP Guard validation
     const mcpGuard = typeof config.mcpGuard === 'string' ? undefined : config.mcpGuard;
     if (mcpGuard?.enabled) {
+<<<<<<< HEAD
+      if (mcpGuard.type === 'custom' && !mcpGuard.allowedUserIds?.length) {
+=======
       if (
         mcpGuard.type === 'custom' &&
         !mcpGuard.allowedUsers?.length &&
         !(mcpGuard as any).allowedUserIds?.length
       ) {
+>>>>>>> origin/main
         warnings.push('MCP Guard is enabled but no allowed users specified');
         suggestions.push('Add user IDs to the allowed list or consider using owner-only mode');
       }

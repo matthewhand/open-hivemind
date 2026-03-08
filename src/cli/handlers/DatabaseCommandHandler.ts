@@ -30,25 +30,6 @@ export class DatabaseCommandHandler implements CommandHandler {
       });
 
     dbCommand
-      .command('rollback')
-      .description('Rollback the database to a specific migration version')
-      .option(
-        '-v, --version <version>',
-        'Target migration version to rollback to (e.g. 0 to rollback all)'
-      )
-      .action(async (options) => {
-        if (options.version === undefined) {
-          dbLogger.error(chalk.red('Please provide a target version with -v or --version'));
-          return;
-        }
-        try {
-          await this.rollbackDatabase(parseInt(options.version, 10));
-        } catch (error) {
-          dbLogger.error(chalk.red('Error rolling back database:'), error);
-        }
-      });
-
-    dbCommand
       .command('stats')
       .description('Show database statistics')
       .action(async () => {
@@ -93,52 +74,6 @@ export class DatabaseCommandHandler implements CommandHandler {
 
     await dbManager.connect();
     dbLogger.info(chalk.green('✓ Database initialized successfully'));
-  }
-
-  private async rollbackDatabase(targetVersion: number): Promise<void> {
-    dbLogger.info(chalk.blue(`Preparing to rollback database to version ${targetVersion}...`));
-
-    if (!this.dbManager.isConfigured()) {
-      dbLogger.error(chalk.red('Database is not configured. Run init first or start the server.'));
-      return;
-    }
-
-    if (!this.dbManager.isConnected()) {
-      await this.dbManager.connect();
-    }
-
-    const dbInstance = (this.dbManager as any).db;
-
-    if (!dbInstance) {
-      dbLogger.error(chalk.red('Underlying database connection could not be established.'));
-      return;
-    }
-
-    const { MigrationManager } = await import('../../database/MigrationManager');
-    const migrationManager = new MigrationManager(dbInstance);
-
-    const { confirm } = await inquirer.prompt([
-      {
-        type: 'confirm',
-        name: 'confirm',
-        message: `Are you sure you want to rollback to version ${targetVersion}? This may result in data loss for dropped tables/columns.`,
-        default: false,
-      },
-    ]);
-
-    if (!confirm) {
-      dbLogger.info(chalk.yellow('Rollback cancelled'));
-      return;
-    }
-
-    try {
-      dbLogger.info(chalk.blue('Executing rollback...'));
-      await migrationManager.rollbackToVersion(targetVersion);
-      dbLogger.info(chalk.green(`✓ Database successfully rolled back to version ${targetVersion}`));
-    } catch (error) {
-      dbLogger.error(chalk.red('Rollback failed:'), error);
-      throw error;
-    }
   }
 
   /**

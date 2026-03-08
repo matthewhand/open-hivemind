@@ -21,16 +21,6 @@ interface DistributedTraceWaterfallProps {
   className?: string;
 }
 
-const getServiceColor = (service: string) => {
-  // Generate deterministic distinct colors based on service name
-  let hash = 0;
-  for (let i = 0; i < service.length; i++) {
-    hash = service.charCodeAt(i) + ((hash << 5) - hash);
-  }
-  const hue = Math.abs(hash) % 360;
-  return `hsl(${hue}, 70%, 50%)`;
-};
-
 export const DistributedTraceWaterfall: React.FC<DistributedTraceWaterfallProps> = ({
   traceId,
   spans,
@@ -62,43 +52,6 @@ export const DistributedTraceWaterfall: React.FC<DistributedTraceWaterfallProps>
     setSelectedSpanId(id === selectedSpanId ? null : id);
   };
 
-  // Build tree and calculate durations with memoization
-  const { rootSpans, spanMap, totalDuration, minStartTime } = React.useMemo(() => {
-    if (!spans || spans.length === 0) {
-      return { rootSpans: [], spanMap: new Map<string, TraceSpan>(), totalDuration: 1, minStartTime: 0 };
-    }
-
-    const map = new Map<string, TraceSpan>();
-    const roots: TraceSpan[] = [];
-
-    spans.forEach(span => {
-      map.set(span.id, { ...span, children: [] });
-    });
-
-    spans.forEach(span => {
-      const node = map.get(span.id);
-      if (node) {
-        if (node.parentId) {
-          const parent = map.get(node.parentId);
-          if (parent) {
-            parent.children = parent.children || [];
-            parent.children.push(node);
-          } else {
-            roots.push(node);
-          }
-        } else {
-          roots.push(node);
-        }
-      }
-    });
-
-    const minStart = Math.min(...spans.map(s => s.startTime));
-    const maxEnd = Math.max(...spans.map(s => s.startTime + s.duration));
-    const duration = Math.max(maxEnd - minStart, 1);
-
-    return { rootSpans: roots, spanMap: map, totalDuration: duration, minStartTime: minStart };
-  }, [spans]);
-
   if (!spans || spans.length === 0) {
     return (
       <Card className={`shadow-sm ${className}`}>
@@ -109,6 +62,46 @@ export const DistributedTraceWaterfall: React.FC<DistributedTraceWaterfallProps>
       </Card>
     );
   }
+
+  // Build tree from flat spans
+  const spanMap = new Map<string, TraceSpan>();
+  const rootSpans: TraceSpan[] = [];
+
+  spans.forEach(span => {
+    spanMap.set(span.id, { ...span, children: [] });
+  });
+
+  spans.forEach(span => {
+    const node = spanMap.get(span.id);
+    if (node) {
+      if (node.parentId) {
+        const parent = spanMap.get(node.parentId);
+        if (parent) {
+          parent.children = parent.children || [];
+          parent.children.push(node);
+        } else {
+          rootSpans.push(node);
+        }
+      } else {
+        rootSpans.push(node);
+      }
+    }
+  });
+
+  // Calculate total duration for timeline scaling
+  const minStartTime = Math.min(...spans.map(s => s.startTime));
+  const maxEndTime = Math.max(...spans.map(s => s.startTime + s.duration));
+  const totalDuration = Math.max(maxEndTime - minStartTime, 1);
+
+  const getServiceColor = (service: string) => {
+    // Generate deterministic distinct colors based on service name
+    let hash = 0;
+    for (let i = 0; i < service.length; i++) {
+      hash = service.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    const hue = Math.abs(hash) % 360;
+    return `hsl(${hue}, 70%, 50%)`;
+  };
 
   const selectedSpan = selectedSpanId ? spanMap.get(selectedSpanId) : null;
 
@@ -234,7 +227,7 @@ export const DistributedTraceWaterfall: React.FC<DistributedTraceWaterfallProps>
               <button className="btn btn-xs join-item" onClick={() => setPanOffset(Math.max(0, panOffset - 10))} disabled={panOffset <= 0} title="Pan Left" aria-label="Pan Left"><MoveLeft className="w-3 h-3" /></button>
               <button className="btn btn-xs join-item" onClick={() => setZoomLevel(Math.max(1, zoomLevel - 0.5))} disabled={zoomLevel <= 1} title="Zoom Out" aria-label="Zoom Out"><ZoomOut className="w-3 h-3" /></button>
               <button className="btn btn-xs join-item" onClick={() => { setZoomLevel(1); setPanOffset(0); }} title="Reset View" aria-label="Reset Zoom and Pan">1x</button>
-              <button className="btn btn-xs join-item" onClick={() => setZoomLevel(zoomLevel + 0.5)} disabled={zoomLevel >= 5} title="Zoom In " aria-label="Zoom In"><ZoomIn className="w-3 h-3" /></button>
+              <button className="btn btn-xs join-item" onClick={() => setZoomLevel(zoomLevel + 0.5)} disabled={zoomLevel >= 5} title="Zoom In" aria-label="Zoom In"><ZoomIn className="w-3 h-3" /></button>
               <button className="btn btn-xs join-item" onClick={() => setPanOffset(Math.min(100, panOffset + 10))} disabled={panOffset >= 100} title="Pan Right" aria-label="Pan Right"><MoveRight className="w-3 h-3" /></button>
             </div>
 
@@ -251,9 +244,9 @@ export const DistributedTraceWaterfall: React.FC<DistributedTraceWaterfallProps>
             <div className="relative pb-4">
               {/* Background grid lines matching header ticks */}
               <div className="absolute inset-y-0 right-0 w-2/3 pointer-events-none flex pr-0 pl-4">
-                {Array.from({ length: 6 }).map((_, i) => (
-                  <div key={i} className="flex-1 border-l border-base-200/50 h-full"></div>
-                ))}
+                 {Array.from({ length: 6 }).map((_, i) => (
+                   <div key={i} className="flex-1 border-l border-base-200/50 h-full"></div>
+                 ))}
               </div>
               {/* Render top-level spans which recursively render children */}
               {rootSpans.map(span => renderSpan(span, 0))}
@@ -283,9 +276,9 @@ export const DistributedTraceWaterfall: React.FC<DistributedTraceWaterfallProps>
                 <div className="font-mono">{selectedSpan.service}</div>
                 <div className="text-base-content/60">Status:</div>
                 <div>
-                  <Badge variant={selectedSpan.status === 'success' ? 'success' : selectedSpan.status === 'error' ? 'error' : 'warning'}>
-                    {selectedSpan.status}
-                  </Badge>
+                   <Badge variant={selectedSpan.status === 'success' ? 'success' : selectedSpan.status === 'error' ? 'error' : 'warning'}>
+                     {selectedSpan.status}
+                   </Badge>
                 </div>
                 <div className="text-base-content/60">Duration:</div>
                 <div className="font-mono">{selectedSpan.duration.toFixed(2)}ms</div>

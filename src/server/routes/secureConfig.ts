@@ -54,7 +54,7 @@ router.get('/', async (req: Request, res: Response) => {
 router.get('/:id', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const config = await secureConfigManager.getConfig(id as any);
+    const config = await secureConfigManager.getConfig(id);
 
     if (!config) {
       return res.status(404).json({
@@ -299,7 +299,33 @@ router.post('/backup', async (req: AuditedRequest, res: Response) => {
 });
 
 /**
+<<<<<<< HEAD
+ * GET /webui/api/secure-config/backups
+ * List all available backups
+ */
+router.get('/backups/list', async (req: Request, res: Response) => {
+  try {
+    const backups = await secureConfigManager.listBackups();
+
+    return res.json({
+      success: true,
+      data: backups,
+      count: backups.length,
+    });
+  } catch (error: any) {
+    debug('Failed to list backups:', error);
+    return res.status(500).json({
+      success: false,
+      error: 'Failed to retrieve backups',
+    });
+  }
+});
+
+/**
+ * POST /webui/api/secure-config/restore/:backupId
+=======
 * POST /webui/api/secure-config/restore/:backupId
+>>>>>>> origin/main
  * Restore from a specific backup
  */
 router.post('/restore/:backupId', async (req: AuditedRequest, res: Response) => {

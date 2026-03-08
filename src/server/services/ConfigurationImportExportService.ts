@@ -23,7 +23,6 @@ export interface ExportOptions {
   compress?: boolean;
   encrypt?: boolean;
   encryptionKey?: string;
-  maxRetainedBackups?: number;
 }
 
 export interface ImportOptions {
@@ -258,7 +257,7 @@ export class ConfigurationImportExportService {
 
       // Get main configuration from SecureConfigManager
       const secureManager = SecureConfigManager.getInstance();
-      const config = secureManager.getConfig(env);
+      const config = secureManager.getDecryptedMainConfig(env);
 
       if (!config) {
         return {

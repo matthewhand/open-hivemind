@@ -1,4 +1,8 @@
+<<<<<<< HEAD
+import axios from 'axios';
+=======
 import axios, { type AxiosInstance } from 'axios';
+>>>>>>> origin/main
 import Debug from 'debug';
 import openWebUIConfig from '../../config/openWebUIConfig';
 import type { ILlmProvider } from '../../llm/interfaces/ILlmProvider';
@@ -6,6 +10,27 @@ import type { IMessage } from '../../message/interfaces/IMessage';
 
 const debug = Debug('app:openWebUIProvider');
 
+<<<<<<< HEAD
+// Create axios instance with API URL and headers
+const openWebUIClient = axios.create({
+  baseURL: openWebUIConfig.get('apiUrl'),
+  headers: {
+    'Content-Type': 'application/json',
+    Authorization: 'Bearer ollama', // Adjust as needed
+  },
+  timeout: 15000,
+});
+
+const model = openWebUIConfig.get('model');
+
+/**
+ * Provides chat and non-chat completion functionality for OpenWebUI.
+ */
+export const openWebUIProvider: ILlmProvider = {
+  name: 'openwebui',
+  supportsChatCompletion: (): boolean => true,
+  supportsCompletion: (): boolean => true,
+=======
 export interface OpenWebUIProviderConfig {
   apiUrl?: string;
   apiKey?: string;
@@ -58,23 +83,35 @@ export class OpenWebUIProvider implements ILlmProvider {
   private hasUserPassAuth(): boolean {
     return !!(this.config.username && this.config.password);
   }
+>>>>>>> origin/main
 
   async generateChatCompletion(
     userMessage: string,
-    historyMessages: IMessage[] = [],
-    metadata?: Record<string, any>
+    historyMessages: IMessage[] = []
   ): Promise<string> {
     debug('Generating chat completion with OpenWebUI:', { userMessage, historyMessages });
 
     const messages = [
+<<<<<<< HEAD
+      ...historyMessages.map((msg) => ({ role: 'user', content: msg.getText() })),
+=======
       ...historyMessages.map((msg) => ({
         role: msg.role === 'bot' ? 'assistant' : msg.role,
         content: msg.content,
       })),
+>>>>>>> origin/main
       { role: 'user', content: userMessage },
     ];
 
     try {
+<<<<<<< HEAD
+      const response = await openWebUIClient.post('/chat/completions', {
+        model,
+        messages,
+      });
+
+      return response.data.choices[0].message.content;
+=======
       let reqConfig: any = {};
       if (this.hasUserPassAuth()) {
         const sessionKey = await this.getSessionKey();
@@ -95,6 +132,7 @@ export class OpenWebUIProvider implements ILlmProvider {
       );
 
       return response.data?.choices?.[0]?.message?.content || '';
+>>>>>>> origin/main
     } catch (error) {
       debug('Error generating chat completion:', error);
 
@@ -105,9 +143,19 @@ export class OpenWebUIProvider implements ILlmProvider {
 
       throw new Error(`OpenWebUI API error: ${this.getErrorMessage(error)}`);
     }
-  }
+  },
 
   async generateCompletion(prompt: string): Promise<string> {
+<<<<<<< HEAD
+    debug('Generating non-chat completion with OpenWebUI:', { prompt });
+
+    try {
+      const response = await openWebUIClient.post('/completions', {
+        model,
+        prompt,
+        max_tokens: 100,
+      });
+=======
     debug('Generating text completion with OpenWebUI', { promptLength: prompt.length });
 
     try {
@@ -130,8 +178,9 @@ export class OpenWebUIProvider implements ILlmProvider {
         },
         reqConfig
       );
+>>>>>>> origin/main
 
-      return response.data?.choices?.[0]?.text || '';
+      return response.data.choices[0].text;
     } catch (error) {
       debug('Error generating non-chat completion:', error);
 
@@ -141,6 +190,17 @@ export class OpenWebUIProvider implements ILlmProvider {
 
       throw new Error(`OpenWebUI API error: ${this.getErrorMessage(error)}`);
     }
+<<<<<<< HEAD
+  },
+};
+
+/**
+ * Safely extracts the error message.
+ */
+function getErrorMessage(error: unknown): string {
+  if (error instanceof Error) {
+    return error.message;
+=======
   }
 
   private async getSessionKey(): Promise<string> {
@@ -181,8 +241,16 @@ export class OpenWebUIProvider implements ILlmProvider {
 
       throw new Error(`OpenWebUI API error: ${this.getErrorMessage(error)}`);
     }
+>>>>>>> origin/main
   }
 
+<<<<<<< HEAD
+/**
+ * Formats the error for debugging purposes.
+ */
+function formatError(error: unknown): any {
+  if (axios.isAxiosError(error)) {
+=======
   supportsChatCompletion(): boolean {
     return true;
   }
@@ -204,6 +272,7 @@ export class OpenWebUIProvider implements ILlmProvider {
       return error.response.data.detail;
     }
 
+>>>>>>> origin/main
     return error.response?.data || error.message;
   }
 }

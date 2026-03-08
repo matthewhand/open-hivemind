@@ -41,32 +41,26 @@ const authManager = AuthManager.getInstance();
  *       401:
  *         description: Authentication failed
  */
-router.post(
-  '/login',
-  // Added rate limiting to prevent brute-force attacks
-  authLimiter,
-  validateRequest(LoginSchema),
-  async (req: Request, res: Response) => {
-    try {
-      const credentials: LoginCredentials = req.body;
-      // Normal authentication flow
+router.post('/login', validateRequest(LoginSchema), async (req: Request, res: Response) => {
+  try {
+    const credentials: LoginCredentials = req.body;
+    // Normal authentication flow
 
-      const authResult = await authManager.login(credentials);
+    const authResult = await authManager.login(credentials);
 
-      return res.json({
-        success: true,
-        data: authResult,
-        message: 'Login successful',
-      });
-    } catch (error: any) {
-      debug('Login error:', error.message);
-      return res.status(401).json({
-        error: 'Authentication failed',
-        message: error.message || 'Invalid credentials',
-      });
-    }
+    return res.json({
+      success: true,
+      data: authResult,
+      message: 'Login successful',
+    });
+  } catch (error: any) {
+    debug('Login error:', error.message);
+    return res.status(401).json({
+      error: 'Authentication failed',
+      message: error.message || 'Invalid credentials',
+    });
   }
-);
+});
 
 /**
  * @openapi
@@ -96,8 +90,6 @@ router.post(
  */
 router.post(
   '/register',
-  // Added rate limiting to prevent automated account creation spam
-  authLimiter,
   authenticate,
   requireAdmin,
   validateRequest(RegisterSchema),
@@ -146,8 +138,6 @@ router.post(
  */
 router.post(
   '/refresh',
-  // Added rate limiting to prevent rapid token generation attacks
-  authLimiter,
   validateRequest(RefreshTokenSchema),
   async (req: Request, res: Response) => {
     try {

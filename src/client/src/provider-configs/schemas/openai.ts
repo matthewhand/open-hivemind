@@ -1,4 +1,5 @@
 import type { ProviderConfigSchema } from '../types';
+import ModelAutocomplete from '../../components/DaisyUI/ModelAutocomplete';
 
 export const openAIProviderSchema: ProviderConfigSchema = {
   type: 'llm',
@@ -19,7 +20,7 @@ export const openAIProviderSchema: ProviderConfigSchema = {
       type: 'password',
       required: true,
       description: 'Your OpenAI API key',
-      placeholder: 'sk-1234567890123456789012345678901234567890123456789012345678901234',
+      placeholder: 'sk-...',
       group: 'Authentication',
     },
     {
@@ -49,6 +50,10 @@ export const openAIProviderSchema: ProviderConfigSchema = {
       placeholder: 'gpt-4-turbo-preview, gpt-4, gpt-3.5-turbo...',
       defaultValue: 'gpt-4',
       group: 'Model Configuration',
+      component: ModelAutocomplete,
+      componentProps: {
+        providerType: 'openai',
+      },
     },
     {
       name: 'maxTokens',

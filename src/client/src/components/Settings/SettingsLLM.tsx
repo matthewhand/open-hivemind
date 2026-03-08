@@ -3,7 +3,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Alert, Button, Select } from '../DaisyUI';
 import { Bot, Link as LinkIcon } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { apiService } from '../../services/api';
+import axios from 'axios';
 
 interface LLMConfig {
     defaultLlm: string;
@@ -23,16 +23,16 @@ const SettingsLLM: React.FC = () => {
             setLoading(true);
 
             // Fetch global config to get the default LLM
-            const configRes = await apiService.get('/api/config/global');
-            const rawConfig = configRes || {};
+            const configRes = await axios.get('/api/config/global');
+            const rawConfig = configRes.data;
             const llmData = rawConfig?.llm?.values ?? rawConfig;
 
             const currentDefault = llmData.LLM_PROVIDER || '';
             setSettings({ defaultLlm: currentDefault });
 
             // Fetch available LLM providers from the API
-            const providersRes = await apiService.get('/api/admin/llm-providers');
-            const availableProviders = providersRes?.providers || [];
+            const providersRes = await axios.get('/api/admin/llm-providers');
+            const availableProviders = providersRes.data.providers || [];
             const options = availableProviders.map((p: any) => ({
                 value: p.key,
                 label: p.label,
@@ -40,6 +40,7 @@ const SettingsLLM: React.FC = () => {
             setProviders(options);
 
         } catch (err) {
+            console.error('Failed to load LLM settings:', err);
             setAlert({
                 type: 'warning',
                 message: 'Could not load LLM settings or providers. Using defaults.',
@@ -56,7 +57,7 @@ const SettingsLLM: React.FC = () => {
     const handleSave = async () => {
         setIsSaving(true);
         try {
-            await apiService.put('/api/config/global', {
+            await axios.put('/api/config/global', {
                 llm: {
                     LLM_PROVIDER: settings.defaultLlm,
                 },
@@ -65,6 +66,7 @@ const SettingsLLM: React.FC = () => {
             setAlert({ type: 'success', message: 'LLM settings saved successfully!' });
             setTimeout(() => setAlert(null), 5000);
         } catch (err) {
+            console.error('Save failed:', err);
             setAlert({
                 type: 'error',
                 message: 'Failed to save LLM settings. Please try again.',

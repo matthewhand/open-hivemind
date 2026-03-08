@@ -64,6 +64,7 @@ describe('Dashboard API Endpoints - COMPLETE TDD SUITE', () => {
         expect(bot).toHaveProperty('status');
         expect(bot).toHaveProperty('connected');
         expect(bot).toHaveProperty('messageCount');
+        expect(bot).toHaveProperty('errorCount');
 
         expect(typeof bot.name).toBe('string');
         expect(typeof bot.provider).toBe('string');
@@ -71,6 +72,7 @@ describe('Dashboard API Endpoints - COMPLETE TDD SUITE', () => {
         expect(typeof bot.status).toBe('string');
         expect(typeof bot.connected).toBe('boolean');
         expect(typeof bot.messageCount).toBe('number');
+        expect(typeof bot.errorCount).toBe('number');
       }
     });
 
@@ -88,6 +90,7 @@ describe('Dashboard API Endpoints - COMPLETE TDD SUITE', () => {
 
       response.body.bots.forEach((bot: any) => {
         expect(bot.messageCount).toBeGreaterThanOrEqual(0);
+        expect(bot.errorCount).toBeGreaterThanOrEqual(0);
       });
     });
 

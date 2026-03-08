@@ -14,9 +14,9 @@ import PageHeader from '../components/DaisyUI/PageHeader';
 import SearchFilterBar from '../components/SearchFilterBar';
 import EmptyState from '../components/DaisyUI/EmptyState';
 import { LoadingSpinner } from '../components/DaisyUI/Loading';
-import { ErrorService } from '../services/apiService';
 import { apiService } from '../services/api';
 import { withRetry } from '../utils/withRetry';
+import { ErrorService } from '../services/ErrorService';
 import type { BotConfig, ProviderModalState } from '../types/bot';
 import { LLMProviderType, MessageProviderType } from '../types/bot';
 import BotCard from '../components/BotManagement/BotCard';
@@ -38,126 +38,6 @@ const BotsPage: React.FC = () => {
   const [activityLogs, setActivityLogs] = useState<any[]>([]);
   const [chatHistory, setChatHistory] = useState<any[]>([]);
   const [logFilter, setLogFilter] = useState('');
-
-  // Create Bot State
-  const [showCreateModal, setShowCreateModal] = useState(false);
-
-  // Get LLM status to check if system default is configured
-  const { status: llmStatus } = useLlmStatus();
-  const defaultLlmConfigured = llmStatus?.defaultConfigured ?? false;
-
-  // Delete Modal State
-  const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; bot: BotData | null }>({
-    isOpen: false,
-    bot: null,
-  });
-  const [deleteConfirmation, setDeleteConfirmation] = useState('');
-
-  // Clone Modal State
-  const [cloneModal, setCloneModal] = useState<{ isOpen: boolean; bot: BotData | null }>({
-    isOpen: false,
-    bot: null,
-  });
-  const [cloneName, setCloneName] = useState('');
-
-  // Define data fetching logic
-  const fetchPageData = useCallback(async (_signal: AbortSignal) => {
-    const [configData, globalData, personasData, profilesData] = await Promise.all([
-      apiService.getConfig(),
-      apiService.getGlobalConfig(),
-      apiService.getPersonas(),
-      apiService.getLlmProfiles(),
-    ]);
-
-    const personas = personasData || [];
-    const llmProfiles = profilesData?.profiles?.llm || [];
-
-    const globalConfig: any = {};
-    if (globalData) {
-      Object.keys(globalData).forEach((key) => {
-        globalConfig[key] = globalData[key].values;
-      });
-    }
-
-    return {
-      bots: (configData.bots || []) as unknown as BotData[],
-      personas,
-      llmProfiles,
-      globalConfig,
-    };
-  }, []);
-
-  // Use Page Lifecycle Hook
-  const {
-    data,
-    error: lifecycleError,
-    refetch,
-  } = usePageLifecycle({
-    title: 'Bot Management',
-    fetchData: fetchPageData,
-    initialData: { bots: [], personas: [], llmProfiles: [], globalConfig: {} },
-  });
-
-  // Derived state
-
-  const personas = data?.personas || [];
-  const llmProfiles = data?.llmProfiles || [];
-  const globalConfig = data?.globalConfig || {};
-
-  // Sync lifecycle error to UI error
-  useEffect(() => {
-    if (lifecycleError) {
-      setUiError(lifecycleError.message);
-    }
-  }, [lifecycleError]);
-
-  // Fetch logs and chat history when previewing a bot
-  useEffect(() => {
-    if (previewBot) {
-      // Fetch activity logs
-      const fetchActivity = async () => {
-        try {
-          const json = await withRetry(() => apiService.get<any>(`/api/bots/${previewBot.id}/activity?limit=20`));
-          setActivityLogs(json.data?.activity || []);
-        } catch (err) {
-          ErrorService.report(err, { botId: previewBot.id, action: 'fetchActivityLogs' });
-          toast.error('Failed to load bot activity logs');
-          setActivityLogs([]);
-        }
-      };
-
-      fetchActivity();
-
-      // Fetch chat history
-      const fetchChatHistory = async () => {
-        setChatLoading(true);
-        try {
-          const json = await withRetry(() => apiService.get<any>(`/api/bots/${previewBot.id}/history?limit=20`));
-          setChatHistory(json.data?.history || []);
-        } catch (err) {
-          ErrorService.report(err, { botId: previewBot.id, action: 'fetchChatHistory' });
-          toast.error('Failed to load chat history');
-          setChatHistory([]);
-        } finally {
-          setChatLoading(false);
-        }
-      };
-      fetchChatHistory();
-    } else {
-      setActivityLogs([]);
-      setChatHistory([]);
-    }
-  }, [previewBot]);
-
-  const getIntegrationOptions = (category: 'llm' | 'message') => {
-    const allKeys = Object.keys(globalConfig);
-    const validPrefixes = PROVIDER_CATEGORIES[category] || [];
-
-    return allKeys.filter((key) => {
-      // Match exact provider name or provider-instance
-      // e.g. 'openai' or 'openai-prod'
-      return validPrefixes.some((prefix) => key === prefix || key.startsWith(`${prefix}-`));
-    });
   
   const toast = {
     success: useSuccessToast(),
@@ -237,6 +117,7 @@ const BotsPage: React.FC = () => {
       ErrorService.report(err, { action: 'deleteBot', botId: deletingBot.id });
       toast.error(err instanceof Error ? err.message : 'Failed to delete bot');
     }
+  };
 
   const handleToggleBotStatus = async (bot: BotConfig) => {
     try {
