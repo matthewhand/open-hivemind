@@ -1,5 +1,6 @@
 import axios from 'axios';
 import Debug from 'debug';
+import { isSafeUrl } from '@src/utils/ssrfGuard';
 
 const debug = Debug('app:flowiseCommand');
 
@@ -47,6 +48,12 @@ export class FlowiseCommand {
     // Construct the full API URL
     const url = apiUrl + endpointId;
     debug('Constructed Flowise API URL: ' + url);
+
+    if (!(await isSafeUrl(url))) {
+      const errorMessage = 'Flowise API URL is not safe to connect to.';
+      debug(errorMessage);
+      return { success: false, message: errorMessage };
+    }
 
     try {
       // Log the request headers for better debugging

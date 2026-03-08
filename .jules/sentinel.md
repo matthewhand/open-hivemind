@@ -1,4 +1,5 @@
-## 2025-03-03 - Path Traversal Prevention in Dynamic Filenames
-**Vulnerability:** The backup download and restore endpoints dynamically constructed file paths using an unvalidated `backup.name` string directly in `path.join()`. This allowed path traversal if a backup's name contained `../` sequences.
-**Learning:** Even when reading metadata from an internal, trusted directory (`listBackups()` reads `.meta` files), the strings within that metadata (like `backup.name`) must still be treated as untrusted input if they were originally sourced from users during creation, especially when they are subsequently used to construct file paths.
-**Prevention:** Always use `path.resolve()` on the base directory and the constructed target path, then explicitly verify that the target path `startsWith(resolvedBaseDir + path.sep)` before performing any file operations.
+## 2025-02-26 - Add SSRF Protection to Outbound Requests
+
+**Vulnerability:** External APIs calls to configurable or dynamic endpoints were made via `axios` without validating the URL, potentially leading to Server-Side Request Forgery (SSRF).
+**Learning:** Although primary parameters like `baseUrl` come from server configurations, the absence of verification for out-bound requests exposes the internal network if configuration falls back to external payloads or is manipulated. Defense in depth matters.
+**Prevention:** Every outbound request (using `axios` or similar) must validate its target destination by running it through the custom `isSafeUrl` function to check for valid protocols and ensure no routing to private/loopback IPs.
