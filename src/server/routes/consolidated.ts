@@ -5,10 +5,6 @@ import { BotConfigurationManager } from '../../config/BotConfigurationManager';
 import { DatabaseManager } from '../../database/DatabaseManager';
 import { auditMiddleware, logAdminAction } from '../middleware/audit';
 import { authenticateToken, requirePermission } from '../middleware/auth';
-import type { Request } from 'express';
-
-// Define a type for internal request casting since AuthMiddlewareRequest import is failing
-type AuthMiddlewareRequest = Request & { user?: { id: string; role: string; username?: string } };
 
 const debug = Debug('app:webui:consolidated');
 const router = Router();
@@ -62,7 +58,7 @@ router.get('/system-status', async (req, res) => {
     };
 
     logAdminAction(
-      req as unknown as AuthMiddlewareRequest,
+      req as any,
       'VIEW',
       'system-status',
       'success',
@@ -72,7 +68,7 @@ router.get('/system-status', async (req, res) => {
   } catch (error) {
     debug('Error getting system status:', error);
     logAdminAction(
-      req as unknown as AuthMiddlewareRequest,
+      req as any,
       'VIEW',
       'system-status',
       'failure',
@@ -184,7 +180,7 @@ router.get('/env-status', async (req, res) => {
     });
 
     logAdminAction(
-      req as unknown as AuthMiddlewareRequest,
+      req as any,
       'VIEW',
       'env-status',
       'success',
@@ -278,7 +274,7 @@ router.post('/validate-config', async (req, res) => {
     }
 
     logAdminAction(
-      req as unknown as AuthMiddlewareRequest,
+      req as any,
       'VALIDATE',
       'bot-config',
       'success',
@@ -288,7 +284,7 @@ router.post('/validate-config', async (req, res) => {
   } catch (error) {
     debug('Error validating config:', error);
     logAdminAction(
-      req as unknown as AuthMiddlewareRequest,
+      req as any,
       'VALIDATE',
       'bot-config',
       'failure',

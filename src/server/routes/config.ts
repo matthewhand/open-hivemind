@@ -2,7 +2,6 @@ import fs from 'fs';
 import path from 'path';
 import Debug from 'debug';
 import { Router } from 'express';
-
 import { redactSensitiveInfo } from '../../common/redactSensitiveInfo';
 import type { AuthMiddlewareRequest } from '../../auth/types';
 import { BotConfigurationManager } from '../../config/BotConfigurationManager';
@@ -765,7 +764,7 @@ router.put('/global', validateRequest(ConfigUpdateSchema), async (req, res) => {
 
       if (process.env.NODE_ENV !== 'test') {
         logConfigChange(
-          req as unknown as AuthMiddlewareRequest,
+          req as any,
           'UPDATE',
           'config/general',
           'success',
@@ -843,7 +842,7 @@ router.put('/global', validateRequest(ConfigUpdateSchema), async (req, res) => {
 
     if (process.env.NODE_ENV !== 'test') {
       logConfigChange(
-        req as unknown as AuthMiddlewareRequest,
+        req as any,
         'UPDATE',
         `config/${configName}`,
         'success',

@@ -162,8 +162,7 @@ router.put('/:id', adminRateLimiter, (req: Request, res: Response) => {
     }
 
     // Merge updates with validation to prevent prototype pollution
-    const currentGuards = profiles[profileIndex].guards || { mcpGuard: { enabled: false, type: 'owner' } };
-
+    const existingGuards = profiles[profileIndex].guards;
     const safeGuards =
       guards && typeof guards === 'object'
         ? Object.keys(guards)
@@ -171,7 +170,7 @@ router.put('/:id', adminRateLimiter, (req: Request, res: Response) => {
             .reduce(
               (acc, key) => {
                 const existingValue =
-                  currentGuards[
+                  profiles[profileIndex].guards[
                     key as keyof (typeof profiles)[typeof profileIndex]['guards']
                   ];
                 const newValue = guards[key];
@@ -189,16 +188,13 @@ router.put('/:id', adminRateLimiter, (req: Request, res: Response) => {
               },
               {} as any
             )
-        : currentGuards;
+        : profiles[profileIndex].guards;
 
     const updatedProfile: GuardrailProfile = {
       ...profiles[profileIndex],
       name: name && typeof name === 'string' ? name : profiles[profileIndex].name,
-      description: description !== undefined && description !== null ? description : profiles[profileIndex].description,
-      guards: {
-        ...currentGuards,
-        ...safeGuards
-      } as GuardrailProfile['guards'],
+      description: description !== undefined ? description : profiles[profileIndex].description,
+      guards: safeGuards,
     };
 
     profiles[profileIndex] = updatedProfile;
