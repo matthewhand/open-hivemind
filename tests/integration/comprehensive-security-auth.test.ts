@@ -426,9 +426,10 @@ describe('COMPREHENSIVE SECURITY & AUTHENTICATION TESTS - PHASE 4', () => {
               sessionId: `session-${index}`,
             }));
 
-          const requests = sessions.map((session) => api.post('/webui/api/auth/session', session));
-
-          const responses = await Promise.all(requests);
+          const responses = [];
+          for (const session of sessions) {
+            responses.push(await api.post('/webui/api/auth/session').send(session));
+          }
 
           responses.forEach((response) => {
             expect([200, 201, 401, 404, 500]).toContain(response.status);
@@ -619,7 +620,7 @@ describe('COMPREHENSIVE SECURITY & AUTHENTICATION TESTS - PHASE 4', () => {
             if (origin?.includes('localhost') || origin?.includes('127.0.0.1')) {
               expect(
                 response.headers['access-control-allow-origin'] ||
-                  response.headers['Access-Control-Allow-Origin']
+                response.headers['Access-Control-Allow-Origin']
               ).toBeTruthy();
             }
           }
@@ -727,11 +728,10 @@ describe('COMPREHENSIVE SECURITY & AUTHENTICATION TESTS - PHASE 4', () => {
           const endpoint = '/dashboard/api/status';
           const requestCount = 50;
 
-          const requests = Array(requestCount)
-            .fill(null)
-            .map(() => api.get(endpoint));
-
-          const responses = await Promise.all(requests);
+          const responses = [];
+          for (let i = 0; i < requestCount; i++) {
+            responses.push(await api.get(endpoint));
+          }
 
           const statusCodes = responses.map((r) => r.status);
           const rateLimitedRequests = statusCodes.filter((code) => code === 429);
@@ -776,11 +776,10 @@ describe('COMPREHENSIVE SECURITY & AUTHENTICATION TESTS - PHASE 4', () => {
           const userIds = ['user1', 'user2', 'user3'];
 
           for (const userId of userIds) {
-            const requests = Array(10)
-              .fill(null)
-              .map(() => applyHeaders(api.get('/dashboard/api/status'), { 'X-User-ID': userId }));
-
-            const responses = await Promise.all(requests);
+            const responses = [];
+            for (let i = 0; i < 10; i++) {
+              responses.push(await applyHeaders(api.get('/dashboard/api/status'), { 'X-User-ID': userId }));
+            }
 
             responses.forEach((response) => {
               expect([200, 429, 500]).toContain(response.status);

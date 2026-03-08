@@ -4,6 +4,7 @@ import type { IMessage } from '@message/interfaces/IMessage';
 import openWebUIConfig from './openWebUIConfig';
 import { getSessionKey } from './sessionManager';
 import { getKnowledgeFileId } from './uploadKnowledgeFile';
+import { isSafeUrl } from '@src/utils/ssrfGuard';
 
 const debug = Debug('app:runInference');
 
@@ -59,6 +60,11 @@ export async function generateChatCompletion(
     ) {
       payload.systemPrompt = metadata.systemPrompt;
     }
+
+    if (!(await isSafeUrl(url))) {
+      throw new Error('OpenWebUI API URL is not safe to connect to.');
+    }
+
     const response = await axios.post(url, payload, { headers, timeout: 15000 });
 
     debug('Inference result:', response.data);

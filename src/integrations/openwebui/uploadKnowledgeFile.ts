@@ -3,6 +3,7 @@ import axios from 'axios';
 import Debug from 'debug';
 import openWebUIConfig from './openWebUIConfig';
 import { getSessionKey } from './sessionManager';
+import { isSafeUrl } from '@src/utils/ssrfGuard';
 
 const debug = Debug('app:uploadKnowledgeFile');
 let knowledgeFileId: string | null = null; // Cache the knowledge file ID in memory.
@@ -66,8 +67,13 @@ async function performUpload(): Promise<void> {
       'Content-Type': 'multipart/form-data',
     };
 
+    const targetUrl = apiUrl + '/v1/files';
+    if (!(await isSafeUrl(targetUrl))) {
+      throw new Error('OpenWebUI API URL is not safe to connect to.');
+    }
+
     const fileData = fs.createReadStream(knowledgeFile);
-    const response = await axios.post(apiUrl + '/v1/files', fileData, { headers, timeout: 30000 });
+    const response = await axios.post(targetUrl, fileData, { headers, timeout: 30000 });
 
     const newKnowledgeFileId = response.data.fileId;
     if (!newKnowledgeFileId) {

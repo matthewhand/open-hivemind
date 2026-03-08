@@ -1,6 +1,8 @@
 import os from 'os';
 import process from 'process';
 import { Router, type NextFunction, type Request, type Response } from 'express';
+import { DatabaseManager } from '../../database/DatabaseManager';
+import { BotManager } from '../../managers/BotManager';
 import { MetricsCollector } from '../../monitoring/MetricsCollector';
 import ApiMonitorService from '../../services/ApiMonitorService';
 import { ErrorLogger } from '../../utils/errorLogger';
@@ -8,6 +10,13 @@ import { globalRecoveryManager } from '../../utils/errorRecovery';
 import { optionalAuth } from '../middleware/auth';
 
 const router = Router();
+
+// Custom metric labels for Prometheus
+export const METRIC_LABELS = {
+  service: process.env.METRICS_SERVICE_NAME || 'open-hivemind',
+  environment: process.env.NODE_ENV || 'development',
+  version: process.env.APP_VERSION || '1.0.0',
+};
 
 // Basic health check
 router.get('/', (req, res) => {
@@ -109,6 +118,16 @@ router.get('/detailed', optionalAuth, (req: Request, res: Response) => {
           : 0,
       llmUsage: metrics.llmTokenUsage,
     },
+    metrics: {
+      endpoints: {
+        prometheus: '/health/metrics',
+        detailed: '/health/detailed',
+        alerts: '/health/alerts',
+        ready: '/health/ready',
+        live: '/health/live',
+      },
+      labels: METRIC_LABELS,
+    },
   };
 
   return res.json(healthData);
@@ -183,17 +202,93 @@ router.get('/alerts', (req, res) => {
 });
 
 // Readiness probe
-router.get('/ready', (req, res) => {
-  // Check if all dependencies are ready
-  // For now, we'll assume the service is ready if it's responding
-  return res.json({
-    ready: true,
-    timestamp: new Date().toISOString(),
-    checks: {
-      database: true, // Would need actual database check
-      external_apis: true, // Would need actual API checks
-      configuration: true,
-    },
+router.get('/ready', async (req, res) => {
+  const start = Date.now();
+  const checks: Record<string, any> = {};
+  let dbStatus = 'healthy';
+  let adaptersStatus = 'healthy';
+  let apiStatus = 'healthy';
+
+  // 1. Check Database
+  try {
+    const dbStart = Date.now();
+    const dbManager = DatabaseManager.getInstance();
+    const dbConnected = dbManager.isConnected();
+    const dbResponseTime = Date.now() - dbStart;
+
+    checks.database = {
+      status: dbConnected ? 'healthy' : 'unhealthy',
+      responseTimeMs: dbResponseTime,
+    };
+    dbStatus = dbConnected ? 'healthy' : 'unhealthy';
+  } catch (error: any) {
+    checks.database = { status: 'unhealthy', message: error.message };
+    dbStatus = 'unhealthy';
+  }
+
+  // 2. Check BotManager/Adapters
+  try {
+    const botManager = BotManager.getInstance();
+    const bots: any = await botManager.getAllBots();
+    const botsArray = Array.isArray(bots) ? bots : Array.from(bots.values());
+    checks.botAdapters = {
+      status: 'healthy',
+      count: botsArray.length,
+    };
+  } catch (error: any) {
+    checks.botAdapters = { status: 'unhealthy', message: error.message };
+    adaptersStatus = 'unhealthy';
+  }
+
+  // 3. External API Monitor
+  try {
+    const apiMonitor = ApiMonitorService.getInstance();
+    const statuses = apiMonitor.getAllStatuses();
+    const downApis = Object.values(statuses).filter((s) => s.status === 'offline');
+
+    checks.externalApis = {
+      status:
+        downApis.length === 0
+          ? 'healthy'
+          : downApis.length === Object.keys(statuses).length && Object.keys(statuses).length > 0
+            ? 'unhealthy'
+            : 'degraded',
+      details: {
+        down_count: downApis.length,
+        total_count: Object.keys(statuses).length,
+      },
+    };
+    apiStatus = checks.externalApis.status;
+  } catch (error: any) {
+    checks.externalApis = { status: 'unhealthy', details: { message: error.message } };
+    apiStatus = 'unhealthy';
+  }
+
+  // Determine overall status
+  let overallStatus = 'healthy';
+
+  // If database is down, service is completely unhealthy (critical)
+  if (dbStatus === 'unhealthy') {
+    overallStatus = 'unhealthy';
+  }
+  // If adapters or APIs are down but database is up, we are degraded
+  else if (
+    adaptersStatus === 'unhealthy' ||
+    apiStatus === 'unhealthy' ||
+    apiStatus === 'degraded'
+  ) {
+    overallStatus = 'degraded';
+  }
+
+  const responseTimeMs = Date.now() - start;
+  const statusCode = overallStatus === 'unhealthy' ? 503 : 200;
+
+  return res.status(statusCode).json({
+    status: overallStatus,
+    checks,
+    uptime: process.uptime(),
+    version: process.env.npm_package_version || '1.0.0',
+    response_time_ms: responseTimeMs,
   });
 });
 
@@ -206,90 +301,53 @@ router.get('/live', (req, res) => {
   });
 });
 
-// Prometheus metrics endpoint
-router.get('/metrics/prometheus', (req, res) => {
+export const prometheusMetricsHandler = (req: Request, res: Response) => {
   const uptime = process.uptime();
   const memoryUsage = process.memoryUsage();
   const cpuUsage = process.cpuUsage();
+  const { service, environment, version } = METRIC_LABELS;
 
   const metrics = `# HELP process_uptime_seconds Process uptime in seconds
 # TYPE process_uptime_seconds gauge
-process_uptime_seconds ${uptime}
+process_uptime_seconds{service="${service}",environment="${environment}",version="${version}"} ${uptime}
 
 # HELP process_memory_heap_used_bytes Process heap memory used in bytes
 # TYPE process_memory_heap_used_bytes gauge
-process_memory_heap_used_bytes ${memoryUsage.heapUsed}
+process_memory_heap_used_bytes{service="${service}",environment="${environment}",version="${version}"} ${memoryUsage.heapUsed}
 
 # HELP process_memory_heap_total_bytes Process heap memory total in bytes
 # TYPE process_memory_heap_total_bytes gauge
-process_memory_heap_total_bytes ${memoryUsage.heapTotal}
+process_memory_heap_total_bytes{service="${service}",environment="${environment}",version="${version}"} ${memoryUsage.heapTotal}
 
 # HELP process_resident_memory_bytes Resident memory size in bytes
 # TYPE process_resident_memory_bytes gauge
-process_resident_memory_bytes ${memoryUsage.rss}
+process_resident_memory_bytes{service="${service}",environment="${environment}",version="${version}"} ${memoryUsage.rss}
 
 # HELP nodejs_heap_size_total_bytes Total heap size in bytes
 # TYPE nodejs_heap_size_total_bytes gauge
-nodejs_heap_size_total_bytes ${memoryUsage.heapTotal}
+nodejs_heap_size_total_bytes{service="${service}",environment="${environment}",version="${version}"} ${memoryUsage.heapTotal}
 
 # HELP process_cpu_user_seconds_total Total user CPU time spent in seconds
 # TYPE process_cpu_user_seconds_total counter
-process_cpu_user_seconds_total ${cpuUsage.user / 1000000}
+process_cpu_user_seconds_total{service="${service}",environment="${environment}",version="${version}"} ${cpuUsage.user / 1000000}
 
 # HELP process_cpu_system_seconds_total Total system CPU time spent in seconds
 # TYPE process_cpu_system_seconds_total counter
-process_cpu_system_seconds_total ${cpuUsage.system / 1000000}
+process_cpu_system_seconds_total{service="${service}",environment="${environment}",version="${version}"} ${cpuUsage.system / 1000000}
 
 # HELP nodejs_version_info Node.js version info
 # TYPE nodejs_version_info gauge
-nodejs_version_info{version="${process.version}"} 1
+nodejs_version_info{service="${service}",environment="${environment}",version="${version}",nodeVersion="${process.version}"} 1
 
 ${MetricsCollector.getInstance().getPrometheusFormat()}
 `;
 
   res.set('Content-Type', 'text/plain; charset=utf-8');
   return res.send(metrics);
-});
-
-export const prometheusMetricsHandler = (req: Request, res: Response) => {
-  const uptime = process.uptime();
-  const memoryUsage = process.memoryUsage();
-  const cpuUsage = process.cpuUsage();
-  const metrics = `# HELP process_uptime_seconds Process uptime in seconds
-# TYPE process_uptime_seconds gauge
-process_uptime_seconds ${uptime}
-
-# HELP process_memory_heap_used_bytes Process heap memory used in bytes
-# TYPE process_memory_heap_used_bytes gauge
-process_memory_heap_used_bytes ${memoryUsage.heapUsed}
-
-# HELP process_memory_heap_total_bytes Process heap memory total in bytes
-# TYPE process_memory_heap_total_bytes gauge
-process_memory_heap_total_bytes ${memoryUsage.heapTotal}
-
-# HELP process_resident_memory_bytes Resident memory size in bytes
-# TYPE process_resident_memory_bytes gauge
-process_resident_memory_bytes ${memoryUsage.rss}
-
-# HELP nodejs_heap_size_total_bytes Total heap size in bytes
-# TYPE nodejs_heap_size_total_bytes gauge
-nodejs_heap_size_total_bytes ${memoryUsage.heapTotal}
-
-# HELP process_cpu_user_seconds_total Total user CPU time spent in seconds
-# TYPE process_cpu_user_seconds_total counter
-process_cpu_user_seconds_total ${cpuUsage.user / 1000000}
-
-# HELP process_cpu_system_seconds_total Total system CPU time spent in seconds
-# TYPE process_cpu_system_seconds_total counter
-process_cpu_system_seconds_total ${cpuUsage.system / 1000000}
-
-# HELP nodejs_version_info Node.js version info
-# TYPE nodejs_version_info gauge
-nodejs_version_info{version="${process.version}"} 1
-`;
-  res.set('Content-Type', 'text/plain');
-  res.send(metrics);
 };
+
+// Prometheus metrics endpoint
+router.get('/metrics/prometheus', prometheusMetricsHandler);
 
 // API endpoints monitoring
 router.get('/api-endpoints', (req, res) => {
@@ -570,26 +628,20 @@ router.get('/errors/patterns', (req, res) => {
   const errorStats = errorLogger.getErrorStats();
   const recentErrors = errorLogger.getRecentErrorCount(60000);
 
-  // ⚡ Bolt Optimization: Calculate total count once instead of inside the map loop
-  // This changes an O(n²) operation into an O(n) operation when computing error percentages
-  const totalCount = Object.values(errorStats).reduce(
-    (sum: number, val: any) => sum + (val as number),
-    0
-  );
-
   const patternsData = {
     timestamp: new Date().toISOString(),
     patterns: {
       errorTypes: Object.entries(errorStats)
         .sort(([, a]: [string, any], [, b]: [string, any]) => (b as number) - (a as number))
         .map(([type, count]) => {
+          const totalCount = Object.values(errorStats).reduce(
+            (sum: number, val: any) => sum + (val as number),
+            0
+          );
           return {
             type,
             count: count as number,
-            percentage:
-              (totalCount as unknown as number) > 0
-                ? ((count as number) / (totalCount as unknown as number)) * 100
-                : 0,
+            percentage: (totalCount as number) > 0 ? ((count as number) / (totalCount as number)) * 100 : 0,
           };
         }),
       spikes: detectErrorSpikes(errorStats),

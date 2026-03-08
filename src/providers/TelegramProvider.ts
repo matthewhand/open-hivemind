@@ -55,7 +55,7 @@ export class TelegramProvider implements IMessageProvider<TelegramConfig> {
       // Ignore reading or parsing errors, instances will be empty
     }
 
-    const bots = await Promise.all(
+    const botPromises = await Promise.allSettled(
       instances.map(async (inst: any) => {
         let connected = false;
         try {
@@ -72,6 +72,12 @@ export class TelegramProvider implements IMessageProvider<TelegramConfig> {
           connected,
         };
       })
+    );
+
+    const bots = botPromises.map((r: any) =>
+      r.status === 'fulfilled'
+        ? r.value
+        : { provider: 'telegram', name: 'unknown', connected: false }
     );
 
     return {

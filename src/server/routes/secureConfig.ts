@@ -1,171 +1,337 @@
-
 import Debug from 'debug';
 import { Router, type Request, type Response } from 'express';
 import { SecureConfigManager, type SecureConfig } from '@config/SecureConfigManager';
-import { auditMiddleware, logConfigChange, logAdminAction, type AuditedRequest } from '../middleware/audit';
+import { auditMiddleware, logConfigChange, type AuditedRequest } from '../middleware/audit';
 
 const debug = Debug('app:SecureConfigRoutes');
 const router = Router();
 const secureConfigManager = SecureConfigManager.getInstance();
 
+// Apply audit middleware to all secure config routes
 router.use(auditMiddleware);
 
+/**
+ * GET /webui/api/secure-config
+ * List all secure configurations (without sensitive data)
+ */
 router.get('/', async (req: Request, res: Response) => {
   try {
     const configIds = await secureConfigManager.listConfigs();
     const configs = [];
 
-    for (const id of configIds) {
-      const config = await secureConfigManager.getConfig(id.id || (id as any));
+    for (const configData of configIds) {
+      const config = await secureConfigManager.getConfig(configData.id);
       if (config) {
+        // Return metadata without sensitive data
         configs.push({
           id: config.id,
           name: config.name,
+          type: config.type,
+          createdAt: config.createdAt,
           updatedAt: config.updatedAt,
         });
       }
     }
 
-    return res.json({ success: true, data: configs, count: configs.length });
+    return res.json({
+      success: true,
+      data: configs,
+      count: configs.length,
+    });
   } catch (error: any) {
     debug('Failed to list secure configs:', error);
-    return res.status(500).json({ success: false, error: error.message || 'Internal server error' });
+    return res.status(500).json({
+      success: false,
+      error: 'Failed to retrieve configurations',
+    });
   }
 });
 
+/**
+ * GET /webui/api/secure-config/:id
+ * Get a specific secure configuration
+ */
 router.get('/:id', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const config = await secureConfigManager.getConfig(id);
+    const config = await secureConfigManager.getConfig(id as any);
 
     if (!config) {
-      return res.status(404).json({ success: false, error: 'Configuration not found' });
+      return res.status(404).json({
+        success: false,
+        error: 'Configuration not found',
+      });
     }
 
     return res.json({
       success: true,
-      data: {
-        id: config.id,
-        name: config.name,
-        updatedAt: config.updatedAt,
-      },
+      data: config,
     });
   } catch (error: any) {
     debug(`Failed to get secure config ${req.params.id}:`, error);
-    return res.status(500).json({ success: false, error: error.message || 'Internal server error' });
+    return res.status(500).json({
+      success: false,
+      error: 'Failed to retrieve configuration',
+    });
   }
 });
 
+/**
+ * POST /webui/api/secure-config
+ * Create a new secure configuration
+ */
 router.post('/', async (req: AuditedRequest, res: Response) => {
   try {
     const { id, name, data } = req.body;
 
     if (!id || !name || !data) {
-      return res.status(400).json({ success: false, error: 'Missing required fields: id, name, data' });
+      logConfigChange(
+        req,
+        'CREATE',
+        `secure-config/${id}`,
+        'failure',
+        'Missing required fields: id, name, data'
+      );
+      return res.status(400).json({
+        success: false,
+        error: 'Missing required fields: id, name, data',
+      });
     }
 
-    const configToStore: SecureConfig = { id, name, data, updatedAt: new Date().toISOString() } as any;
+    const config: Omit<SecureConfig, 'updatedAt' | 'checksum'> = {
+      id,
+      name,
+      data,
+    };
 
-    await secureConfigManager.storeConfig(configToStore);
+    await secureConfigManager.storeConfig(config);
 
-    logConfigChange(req, 'CREATE', 'SecureConfig', 'success', `Created secure configuration ${name}`, {
-      metadata: { configId: id },
+    logConfigChange(
+      req,
+      'CREATE',
+      `secure-config/${id}`,
+      'success',
+      `Created secure configuration ${name}`
+    );
+
+    return res.status(201).json({
+      success: true,
+      message: 'Configuration stored securely',
+      data: { id, name },
     });
-
-    return res.status(201).json({ success: true, message: 'Configuration stored securely', data: { id, name } });
   } catch (error: any) {
-    debug('Failed to store secure config:', error);
-
-    logConfigChange(req, 'CREATE', 'SecureConfig', 'failure', error.message || 'Unknown error', {
-      metadata: { error: error.message },
+    debug('Failed to create secure config:', error);
+    logConfigChange(
+      req,
+      'CREATE',
+      `secure-config/${req.body?.id || 'unknown'}`,
+      'failure',
+      `Failed to create secure configuration: ${error.message}`
+    );
+    return res.status(500).json({
+      success: false,
+      error: 'Failed to store configuration',
     });
-
-    return res.status(500).json({ success: false, error: error.message || 'Internal server error' });
   }
 });
 
+/**
+ * PUT /webui/api/secure-config/:id
+ * Update an existing secure configuration
+ */
 router.put('/:id', async (req: AuditedRequest, res: Response) => {
   try {
     const { id } = req.params;
     const { name, data } = req.body;
 
     if (!name || !data) {
-      return res.status(400).json({ success: false, error: 'Missing required fields: name, data' });
+      logConfigChange(
+        req,
+        'UPDATE',
+        `secure-config/${id}`,
+        'failure',
+        'Missing required fields: name, data'
+      );
+      return res.status(400).json({
+        success: false,
+        error: 'Missing required fields: name, data',
+      });
     }
 
+    // Check if config exists
     const existingConfig = await secureConfigManager.getConfig(id);
     if (!existingConfig) {
-      return res.status(404).json({ success: false, error: 'Configuration not found' });
+      logConfigChange(req, 'UPDATE', `secure-config/${id}`, 'failure', 'Configuration not found');
+      return res.status(404).json({
+        success: false,
+        error: 'Configuration not found',
+      });
     }
 
-    const configToStore: SecureConfig = { id, name, data, updatedAt: new Date().toISOString() } as any;
+    const updatedConfig: Omit<SecureConfig, 'updatedAt' | 'checksum'> = {
+      id,
+      name,
+      data,
+    };
 
-    await secureConfigManager.storeConfig(configToStore);
+    await secureConfigManager.storeConfig(updatedConfig);
 
-    logConfigChange(req, 'UPDATE', 'SecureConfig', 'success', `Updated secure configuration ${name}`, {
-      metadata: { configId: id },
+    logConfigChange(
+      req,
+      'UPDATE',
+      `secure-config/${id}`,
+      'success',
+      `Updated secure configuration ${name}`,
+      {
+        oldValue: existingConfig,
+        newValue: updatedConfig,
+      }
+    );
+
+    return res.json({
+      success: true,
+      message: 'Configuration updated successfully',
+      data: { id, name },
     });
-
-    return res.json({ success: true, message: 'Configuration updated securely', data: { id, name } });
   } catch (error: any) {
     debug(`Failed to update secure config ${req.params.id}:`, error);
-
-    logConfigChange(req, 'UPDATE', 'SecureConfig', 'failure', error.message || 'Unknown error', {
-      metadata: { configId: req.params.id, error: error.message },
+    logConfigChange(
+      req,
+      'UPDATE',
+      `secure-config/${req.params.id}`,
+      'failure',
+      `Failed to update secure configuration: ${error.message}`
+    );
+    return res.status(500).json({
+      success: false,
+      error: 'Failed to update configuration',
     });
-
-    return res.status(500).json({ success: false, error: error.message || 'Internal server error' });
   }
 });
 
+/**
+ * DELETE /webui/api/secure-config/:id
+ * Delete a secure configuration
+ */
 router.delete('/:id', async (req: AuditedRequest, res: Response) => {
   try {
     const { id } = req.params;
 
+    // Get config before deletion for audit logging
+    const configToDelete = await secureConfigManager.getConfig(id);
+
     try {
-        await secureConfigManager.deleteConfig(id);
-    } catch(e) {
-        return res.status(404).json({ success: false, error: 'Configuration not found' });
+      await secureConfigManager.deleteConfig(id);
+    } catch {
+      logConfigChange(req, 'DELETE', `secure-config/${id}`, 'failure', 'Configuration not found');
+      return res.status(404).json({
+        success: false,
+        error: 'Configuration not found',
+      });
     }
 
-    logConfigChange(req, 'DELETE', 'SecureConfig', 'success', `Deleted secure configuration ${id}`, {
-      metadata: { configId: id },
-    });
+    logConfigChange(
+      req,
+      'DELETE',
+      `secure-config/${id}`,
+      'success',
+      `Deleted secure configuration ${configToDelete?.name || id}`,
+      {
+        oldValue: configToDelete,
+      }
+    );
 
-    return res.json({ success: true, message: 'Configuration deleted successfully' });
+    return res.json({
+      success: true,
+      message: 'Configuration deleted successfully',
+    });
   } catch (error: any) {
     debug(`Failed to delete secure config ${req.params.id}:`, error);
-
-    logConfigChange(req, 'DELETE', 'SecureConfig', 'failure', error.message || 'Unknown error', {
-      metadata: { configId: req.params.id, error: error.message },
+    logConfigChange(
+      req,
+      'DELETE',
+      `secure-config/${req.params.id}`,
+      'failure',
+      `Failed to delete secure configuration: ${error.message}`
+    );
+    return res.status(500).json({
+      success: false,
+      error: 'Failed to delete configuration',
     });
-
-    return res.status(500).json({ success: false, error: error.message || 'Internal server error' });
   }
 });
 
-router.post('/:id/test', async (req: AuditedRequest, res: Response) => {
+/**
+ * POST /webui/api/secure-config/backup
+ * Create a backup of all secure configurations
+ */
+router.post('/backup', async (req: AuditedRequest, res: Response) => {
   try {
-    const { id } = req.params;
-    const config = await secureConfigManager.getConfig(id);
+    const backupId = await secureConfigManager.createBackup();
 
-    if (!config) {
-      return res.status(404).json({ success: false, error: 'Configuration not found' });
-    }
+    logConfigChange(
+      req,
+      'CREATE',
+      `secure-config/backup/${backupId}`,
+      'success',
+      'Created backup of all secure configurations'
+    );
 
-    logAdminAction(req, 'TEST_CONNECTION', 'SecureConfig', 'success', `Tested connection for ${config.name}`, {
-      metadata: { configId: id },
+    return res.json({
+      success: true,
+      message: 'Backup created successfully',
+      data: { backupId },
     });
-
-    return res.json({ success: true, message: 'Connection test completed (simulated)', data: { status: 'ok', latency: Math.floor(Math.random() * 100) + 20 } });
   } catch (error: any) {
-    debug(`Failed to test secure config ${req.params.id}:`, error);
-
-    logAdminAction(req, 'TEST_CONNECTION', 'SecureConfig', 'failure', error.message || 'Unknown error', {
-      metadata: { configId: req.params.id, error: error.message },
+    debug('Failed to create backup:', error);
+    logConfigChange(
+      req,
+      'CREATE',
+      'secure-config/backup',
+      'failure',
+      `Failed to create backup: ${error.message}`
+    );
+    return res.status(500).json({
+      success: false,
+      error: 'Failed to create backup',
     });
+  }
+});
 
-    return res.status(500).json({ success: false, error: error.message || 'Internal server error' });
+/**
+* POST /webui/api/secure-config/restore/:backupId
+ * Restore from a specific backup
+ */
+router.post('/restore/:backupId', async (req: AuditedRequest, res: Response) => {
+  try {
+    const { backupId } = req.params;
+    await secureConfigManager.restoreBackup(backupId);
+
+    logConfigChange(
+      req,
+      'UPDATE',
+      'secure-config/global',
+      'success',
+      `Restored secure configurations from backup ${backupId}`
+    );
+
+    return res.json({
+      success: true,
+      message: `Successfully restored from backup ${backupId}`,
+    });
+  } catch (error: any) {
+    debug(`Failed to restore backup ${req.params.backupId}:`, error);
+    logConfigChange(
+      req,
+      'UPDATE',
+      'secure-config/global',
+      'failure',
+      `Failed to restore from backup ${req.params.backupId}: ${error.message}`
+    );
+    return res.status(500).json({
+      success: false,
+      error: 'Failed to restore from backup',
+    });
   }
 });
 

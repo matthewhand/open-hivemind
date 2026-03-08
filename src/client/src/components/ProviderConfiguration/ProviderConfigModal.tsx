@@ -4,12 +4,12 @@ import type {
   ProviderModalState,
   ProviderTypeConfig,
   FieldConfig,
-} from '../../types/bot';
+} from '../../types';
 import {
-  MessageProviderType,
-  LLMProviderType,
   MESSAGE_PROVIDER_CONFIGS,
   LLM_PROVIDER_CONFIGS,
+  MessageProviderType,
+  LLMProviderType,
 } from '../../types/bot';
 import { Button } from '../DaisyUI';
 import { X as XIcon } from 'lucide-react';
@@ -30,7 +30,7 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
   onSubmit,
 }) => {
   const [selectedType, setSelectedType] = useState<MessageProviderType | LLMProviderType>(
-    modalState.providerType === 'message' ? MessageProviderType.DISCORD : LLMProviderType.OPENAI,
+    modalState.providerType === 'message' ? 'discord' : 'openai',
   );
   const [formData, setFormData] = useState<Record<string, any>>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -48,12 +48,12 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
       } else {
         // Add mode: start with empty form
         const defaultType = modalState.providerType === 'message'
-          ? MessageProviderType.DISCORD
-          : LLMProviderType.OPENAI;
+          ? 'discord'
+          : 'openai';
 
         const isCurrentTypeValid = modalState.providerType === 'message'
-          ? Object.values(MessageProviderType).includes(selectedType as MessageProviderType)
-          : Object.values(LLMProviderType).includes(selectedType as LLMProviderType);
+          ? Object.keys(MESSAGE_PROVIDER_CONFIGS).includes(selectedType as string)
+          : Object.keys(LLM_PROVIDER_CONFIGS).includes(selectedType as string);
 
         let newType = selectedType;
         if (!isCurrentTypeValid) {
@@ -376,6 +376,7 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
           <button
             className="btn btn-sm btn-circle btn-ghost"
             onClick={onClose}
+            aria-label="Close modal"
           >
             <XIcon className="w-4 h-4" />
           </button>
@@ -480,6 +481,9 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
           </div>
         </form>
       </div>
+      <form method="dialog" className="modal-backdrop" onClick={onClose}>
+        <button>close</button>
+      </form>
     </div>
   );
 };

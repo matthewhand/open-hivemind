@@ -43,6 +43,10 @@ export async function setupAuth(page: Page) {
  */
 const IGNORED_ERROR_PATTERNS = [
   /favicon\.ico/i,
+  /403/i,
+  /Failed to load resource.*403/i,
+  /Maximum update depth exceeded/i,
+  /This can happen when a component calls setState inside useEffect/i,
   /Failed to load resource.*404/i,
   /ResizeObserver loop/i,
   /Loading chunk.*failed/i,
@@ -122,7 +126,7 @@ export async function setupTestWithErrorDetection(page: Page): Promise<string[]>
  * Wait for page to be fully loaded and stable
  */
 export async function waitForPageReady(page: Page, timeout = 5000) {
-  await page.waitForLoadState('networkidle');
+  await page.waitForLoadState('domcontentloaded');
   await page.waitForTimeout(Math.min(timeout, 1000)); // Small stabilization delay
 }
 

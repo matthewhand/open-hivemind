@@ -6,9 +6,9 @@ export { default as Badge } from './Badge';
 export { default as Breadcrumbs } from './Breadcrumbs';
 export { default as Hero } from './Hero';
 export { default as Button } from './Button';
+export { default as IconButton } from './IconButton';
 export { default as Card } from './Card';
 export { default as Carousel } from './Carousel';
-export { default as Chat } from './Chat';
 export { default as Diff } from './Diff';
 export { default as Indicator } from './Indicator';
 export { default as DataTable } from './DataTable';
@@ -68,4 +68,4 @@ export { trackDaisyUIComponent, daisyUITracker } from '../../utils/DaisyUICompon
 
 // Advanced Components
 export { default as ModelAutocomplete } from './ModelAutocomplete';
-export { default as CommaSeparatedInput } from './CommaSeparatedInput';
+export { CommaSeparatedInput } from '../Common/CommaSeparatedInput';

@@ -6,27 +6,25 @@ import { MessageSquare, Bot, Users, Zap, Info } from 'lucide-react';
 interface MessagingConfig {
   onlyWhenSpokenTo: boolean;
   allowBotToBot: boolean;
+  botResponseModifier: number;
   unsolicitedAddressed: boolean;
   unsolicitedUnaddressed: boolean;
   baseChance: number;
   graceWindowMs: number;
   /** Whether the bot injects the user's identity hint when mentioned (MESSAGE_ADD_USER_HINT). */
   addUserHint: boolean;
-  semanticRelevanceEnabled: boolean;
-  semanticRelevanceBonus: number;
 }
 
 const SettingsMessaging: React.FC = () => {
   const [settings, setSettings] = useState<MessagingConfig>({
     onlyWhenSpokenTo: true,
     allowBotToBot: false,
+    botResponseModifier: -0.1,
     unsolicitedAddressed: true,
     unsolicitedUnaddressed: false,
     baseChance: 5,
     graceWindowMs: 300000,
     addUserHint: false,
-    semanticRelevanceEnabled: true,
-    semanticRelevanceBonus: 10,
   });
   const [loading, setLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -50,13 +48,12 @@ const SettingsMessaging: React.FC = () => {
       setSettings({
         onlyWhenSpokenTo: data.MESSAGE_ONLY_WHEN_SPOKEN_TO ?? true,
         allowBotToBot: data.MESSAGE_ALLOW_BOT_TO_BOT_UNADDRESSED ?? false,
+        botResponseModifier: data.MESSAGE_BOT_RESPONSE_MODIFIER ?? -0.1,
         unsolicitedAddressed: data.MESSAGE_UNSOLICITED_ADDRESSED ?? true,
         unsolicitedUnaddressed: data.MESSAGE_UNSOLICITED_UNADDRESSED ?? false,
         baseChance: (data.MESSAGE_UNSOLICITED_BASE_CHANCE ?? 0.01) * 100,
         graceWindowMs: data.MESSAGE_ONLY_WHEN_SPOKEN_TO_GRACE_WINDOW_MS ?? 300000,
         addUserHint: data.MESSAGE_ADD_USER_HINT ?? false,
-        semanticRelevanceEnabled: data.MESSAGE_SEMANTIC_RELEVANCE_ENABLED ?? true,
-        semanticRelevanceBonus: data.MESSAGE_SEMANTIC_RELEVANCE_BONUS ?? 10,
       });
     } catch {
       setAlert({
@@ -86,13 +83,12 @@ const SettingsMessaging: React.FC = () => {
           message: {
             MESSAGE_ONLY_WHEN_SPOKEN_TO: settings.onlyWhenSpokenTo,
             MESSAGE_ALLOW_BOT_TO_BOT_UNADDRESSED: settings.allowBotToBot,
+            MESSAGE_BOT_RESPONSE_MODIFIER: settings.botResponseModifier,
             MESSAGE_UNSOLICITED_ADDRESSED: settings.unsolicitedAddressed,
             MESSAGE_UNSOLICITED_UNADDRESSED: settings.unsolicitedUnaddressed,
             MESSAGE_UNSOLICITED_BASE_CHANCE: settings.baseChance / 100,
             MESSAGE_ONLY_WHEN_SPOKEN_TO_GRACE_WINDOW_MS: settings.graceWindowMs,
             MESSAGE_ADD_USER_HINT: settings.addUserHint,
-            MESSAGE_SEMANTIC_RELEVANCE_ENABLED: settings.semanticRelevanceEnabled,
-            MESSAGE_SEMANTIC_RELEVANCE_BONUS: settings.semanticRelevanceBonus,
           },
         }),
       });
@@ -214,6 +210,33 @@ const SettingsMessaging: React.FC = () => {
               <span className="text-sm">Collision avoidance is active to prevent bot storms</span>
             </div>
           )}
+
+
+          <div className="form-control mt-4">
+            <label className="label py-1">
+              <span className="label-text text-sm font-medium">Bot Response Modifier</span>
+              <span className="badge badge-secondary font-mono">{settings.botResponseModifier.toFixed(2)}</span>
+            </label>
+            <input
+              type="range"
+              min="-1.0"
+              max="1.0"
+              step="0.05"
+              value={settings.botResponseModifier}
+              onChange={(e) => handleChange('botResponseModifier', parseFloat(e.target.value))}
+              className="range range-sm range-secondary"
+              disabled={!settings.allowBotToBot}
+            />
+            <div className="w-full flex justify-between text-xs px-2 mt-1 text-base-content/50">
+              <span>-1.0 (Strong Penalty)</span>
+              <span>0.0</span>
+              <span>+1.0 (Strong Bonus)</span>
+            </div>
+            <p className="text-xs text-base-content/60 mt-2">
+              Modifies the base chance to respond when the message is from another bot.
+            </p>
+          </div>
+
         </div>
 
         {/* Unsolicited Replies */}
@@ -263,7 +286,7 @@ const SettingsMessaging: React.FC = () => {
             Context &amp; Additions
           </h6>
 
-          <div className="form-control mb-3">
+          <div className="form-control">
             <label className="label cursor-pointer py-2">
               <div>
                 <span className="label-text font-medium">Add User Hint</span>
@@ -326,7 +349,10 @@ const SettingsMessaging: React.FC = () => {
               <span>50x</span>
             </div>
             <p className="text-xs text-base-content/60 mt-2">
-              Multiplier to apply when a message is semantically relevant and the bot has posted recently
+              Multiplier to apply when a message is semantically relevant and the bot has posted recently.
+              {settings.semanticRelevanceBonus <= 10 && " (Gentle boost for related topics)"}
+              {settings.semanticRelevanceBonus > 10 && settings.semanticRelevanceBonus <= 30 && " (Moderate boost for solid topic matches)"}
+              {settings.semanticRelevanceBonus > 30 && " (Aggressive boost for near exact matches)"}
             </p>
           </div>
         </div>
@@ -426,6 +452,11 @@ const SettingsMessaging: React.FC = () => {
                   <td>{settings.allowBotToBot ? '✅ true' : '➖ false'}</td>
                 </tr>
                 <tr>
+                  <td>Bot Response Modifier</td>
+                  <td>MESSAGE_BOT_RESPONSE_MODIFIER</td>
+                  <td>{settings.botResponseModifier.toFixed(2)}</td>
+                </tr>
+                <tr>
                   <td>Unsolicited Addressed</td>
                   <td>MESSAGE_UNSOLICITED_ADDRESSED</td>
                   <td>{settings.unsolicitedAddressed ? '✅ true' : '➖ false'}</td>
@@ -459,6 +490,46 @@ const SettingsMessaging: React.FC = () => {
                   <td>Semantic Relevance Bonus</td>
                   <td>MESSAGE_SEMANTIC_RELEVANCE_BONUS</td>
                   <td>{settings.semanticRelevanceBonus}</td>
+                </tr>
+                <tr>
+                  <td>Interrobang Bonus</td>
+                  <td>MESSAGE_INTERROBANG_BONUS</td>
+                  <td>(Modifier from .env)</td>
+                </tr>
+                <tr>
+                  <td>Mention Bonus</td>
+                  <td>MESSAGE_MENTION_BONUS</td>
+                  <td>(Modifier from .env)</td>
+                </tr>
+                <tr>
+                  <td>Bot Response Modifier</td>
+                  <td>MESSAGE_BOT_RESPONSE_MODIFIER</td>
+                  <td>(Modifier from .env)</td>
+                </tr>
+                <tr>
+                  <td>Priority Channel Bonus</td>
+                  <td>MESSAGE_PRIORITY_CHANNEL_BONUS</td>
+                  <td>(Modifier from .env)</td>
+                </tr>
+                <tr>
+                  <td>Priority Channel</td>
+                  <td>MESSAGE_PRIORITY_CHANNEL</td>
+                  <td>(Configured in .env)</td>
+                </tr>
+                <tr>
+                  <td>Recent Activity Decay Rate</td>
+                  <td>MESSAGE_RECENT_ACTIVITY_DECAY_RATE</td>
+                  <td>(Configured in .env)</td>
+                </tr>
+                <tr>
+                  <td>Activity Time Window</td>
+                  <td>MESSAGE_ACTIVITY_TIME_WINDOW</td>
+                  <td>(Configured in .env)</td>
+                </tr>
+                <tr>
+                  <td>Wakewords</td>
+                  <td>MESSAGE_WAKEWORDS</td>
+                  <td>(Configured in .env)</td>
                 </tr>
               </tbody>
             </table>

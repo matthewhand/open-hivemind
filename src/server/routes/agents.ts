@@ -2,7 +2,7 @@ import { promises as fs } from 'fs';
 import { join } from 'path';
 import Debug from 'debug';
 import { Router } from 'express';
-import { ErrorUtils } from '@src/types/errors';
+import { ErrorUtils, type AppError } from '@src/types/errors';
 import { loadJsonConfig, saveJsonConfig } from '../utils/fileConfigUtils';
 
 const debug = Debug('app:webui:agents');
@@ -50,10 +50,11 @@ const ensureDataDir = async () => {
   try {
     await fs.mkdir(dataDir, { recursive: true });
   } catch (error: unknown) {
-    const hivemindError = ErrorUtils.toHivemindError(error) as any;
+    const hivemindError = ErrorUtils.toHivemindError(error) as AppError;
     debug('Error creating data directory:', hivemindError.message);
   }
 };
+
 
 // Get environment variable overrides
 const getEnvOverrides = (): Record<string, { isOverridden: boolean; redactedValue?: string }> => {
@@ -124,7 +125,7 @@ router.get('/', async (req, res) => {
 
     return res.json({ agents: agentsWithEnvInfo });
   } catch (error: unknown) {
-    const hivemindError = ErrorUtils.toHivemindError(error) as any;
+    const hivemindError = ErrorUtils.toHivemindError(error) as AppError;
     const errorInfo = ErrorUtils.classifyError(hivemindError);
 
     debug('Error fetching agents:', {
@@ -159,7 +160,7 @@ router.post('/', async (req, res) => {
     debug(`Created new agent: ${newAgent.name}`);
     return res.json({ agent: newAgent });
   } catch (error: unknown) {
-    const hivemindError = ErrorUtils.toHivemindError(error) as any;
+    const hivemindError = ErrorUtils.toHivemindError(error) as AppError;
     const errorInfo = ErrorUtils.classifyError(hivemindError);
 
     debug('Error creating agent:', {
@@ -196,7 +197,7 @@ router.put('/:id', async (req, res) => {
     debug(`Updated agent: ${agents[agentIndex].name}`);
     return res.json({ agent: agents[agentIndex] });
   } catch (error: unknown) {
-    const hivemindError = ErrorUtils.toHivemindError(error) as any;
+    const hivemindError = ErrorUtils.toHivemindError(error) as AppError;
     const errorInfo = ErrorUtils.classifyError(hivemindError);
 
     debug('Error updating agent:', {
@@ -231,7 +232,7 @@ router.delete('/:id', async (req, res) => {
     debug(`Deleted agent: ${id}`);
     return res.json({ success: true });
   } catch (error: unknown) {
-    const hivemindError = ErrorUtils.toHivemindError(error) as any;
+    const hivemindError = ErrorUtils.toHivemindError(error) as AppError;
     const errorInfo = ErrorUtils.classifyError(hivemindError);
 
     debug('Error deleting agent:', {
@@ -275,7 +276,7 @@ router.get('/personas', async (req, res) => {
 
     return res.json({ personas });
   } catch (error: unknown) {
-    const hivemindError = ErrorUtils.toHivemindError(error) as any;
+    const hivemindError = ErrorUtils.toHivemindError(error) as AppError;
     const errorInfo = ErrorUtils.classifyError(hivemindError);
 
     debug('Error fetching personas:', {
@@ -318,7 +319,7 @@ router.post('/personas', async (req, res) => {
     debug(`Created new persona: ${name}`);
     return res.json({ persona: newPersona });
   } catch (error: unknown) {
-    const hivemindError = ErrorUtils.toHivemindError(error) as any;
+    const hivemindError = ErrorUtils.toHivemindError(error) as AppError;
     const errorInfo = ErrorUtils.classifyError(hivemindError);
 
     debug('Error creating persona:', {
@@ -355,7 +356,7 @@ router.put('/personas/:key', async (req, res) => {
     debug(`Updated persona: ${name}`);
     return res.json({ persona: personas[personaIndex] });
   } catch (error: unknown) {
-    const hivemindError = ErrorUtils.toHivemindError(error) as any;
+    const hivemindError = ErrorUtils.toHivemindError(error) as AppError;
     const errorInfo = ErrorUtils.classifyError(hivemindError);
 
     debug('Error updating persona:', {
@@ -394,7 +395,7 @@ router.delete('/personas/:key', async (req, res) => {
     debug(`Deleted persona: ${key}`);
     return res.json({ success: true });
   } catch (error: unknown) {
-    const hivemindError = ErrorUtils.toHivemindError(error) as any;
+    const hivemindError = ErrorUtils.toHivemindError(error) as AppError;
     const errorInfo = ErrorUtils.classifyError(hivemindError);
 
     debug('Error deleting persona:', {

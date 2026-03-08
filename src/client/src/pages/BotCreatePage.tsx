@@ -111,7 +111,7 @@ const BotCreatePage: React.FC = () => {
     { id: 'discord', name: 'Discord', icon: Gamepad2, color: 'text-indigo-500' },
     { id: 'slack', name: 'Slack', icon: Hash, color: 'text-purple-500' },
     { id: 'mattermost', name: 'Mattermost', icon: MessageSquare, color: 'text-blue-500' },
-    { id: 'webhook', name: 'Webhook', icon: Send, color: 'text-emerald-500' },
+    { id: 'telegram', name: 'Telegram', icon: Send, color: 'text-sky-500' },
   ];
 
   const selectedPersona = personas.find(p => p.id === formData.persona);
@@ -330,13 +330,13 @@ const BotCreatePage: React.FC = () => {
                     </Select>
                     <label className="label">
                       {!defaultLlmConfigured && !formData.llmProvider && (
-                        <span className="label-text-alt text-error">
+                        <span className="label-text-alt text-error whitespace-normal break-words">
                           System default is not configured. Please select a provider.
                         </span>
                       )}
                       {defaultLlmConfigured && !formData.llmProvider && (
-                        <span className="label-text-alt text-success flex items-center gap-1">
-                          <Check className="w-3 h-3" /> Using system default configuration
+                        <span className="label-text-alt text-success flex items-center gap-1 whitespace-normal break-words">
+                          <Check className="w-3 h-3 min-w-[12px]" /> Using system default configuration
                         </span>
                       )}
                     </label>
