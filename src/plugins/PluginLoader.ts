@@ -124,3 +124,28 @@ export function instantiateMessageService(mod: any, config?: any): any {
     'Plugin does not export create(), a default factory, or a Service.getInstance().'
   );
 }
+
+/**
+ * Instantiate a memory provider from a loaded module.
+ *
+ * Contract (preferred): module exports `create(config)` → IMemoryProvider
+ * Fallback: known Provider class patterns.
+ */
+export function instantiateMemoryProvider(mod: any, config?: any): any {
+  // Preferred: explicit factory
+  if (typeof mod.create === 'function') {
+    return mod.create(config);
+  }
+  // Fallback: *Provider constructor
+  const ctor = Object.keys(mod).find((k) => k.endsWith('Provider') && typeof mod[k] === 'function');
+  if (ctor) {
+    return new mod[ctor](config);
+  }
+  // Fallback: default export
+  if (typeof mod.default === 'function') {
+    return new mod.default(config);
+  }
+  throw new Error(
+    'Memory plugin does not export create(), a Provider class, or a default constructor.'
+  );
+}

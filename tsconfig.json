@@ -58,7 +58,9 @@
       "@hivemind/message-slack": ["packages/message-slack/src/index.ts"],
       "@hivemind/message-slack/*": ["packages/message-slack/src/*"],
       "@hivemind/message-mattermost": ["packages/message-mattermost/src/index.ts"],
-      "@hivemind/message-mattermost/*": ["packages/message-mattermost/src/*"]
+      "@hivemind/message-mattermost/*": ["packages/message-mattermost/src/*"],
+      "@hivemind/memory-mem0": ["packages/memory-mem0/src/index.ts"],
+      "@hivemind/memory-mem0/*": ["packages/memory-mem0/src/*"]
     },
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true
@@ -72,7 +74,8 @@
     "packages/llm-openswarm/src/**/*",
     "packages/message-discord/src/**/*",
     "packages/message-slack/src/**/*",
-    "packages/message-mattermost/src/**/*"
+    "packages/message-mattermost/src/**/*",
+    "packages/memory-mem0/src/**/*"
   ],
   "exclude": ["tests/**/*", "node_modules", "src/client/**/*", "src/provider-configs/**/*", "packages/**/*.test.ts", "packages/**/*.spec.ts"],
   "files": ["src/global.d.ts"]
