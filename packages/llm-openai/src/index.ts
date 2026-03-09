@@ -3,9 +3,10 @@ export { default as openAiService, OpenAiService } from './OpenAiService';
 
 import { OpenAiProvider } from './openAiProvider';
 import type { PluginManifest } from '../../../src/plugins/PluginLoader';
+import type { OpenAIConfig } from '../../../src/types/config';
 
 /** Standard factory — preferred entry point for PluginLoader */
-export function create(config?: any): OpenAiProvider {
+export function create(config?: OpenAIConfig & { timeout?: number; organization?: string; temperature?: number; maxTokens?: number }): OpenAiProvider {
   return new OpenAiProvider(config);
 }
 

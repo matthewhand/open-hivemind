@@ -10,6 +10,7 @@ import {
 import openaiConfig from '@config/openaiConfig';
 import type { ILlmProvider } from '@llm/interfaces/ILlmProvider';
 import type { IMessage } from '@message/interfaces/IMessage';
+import type { OpenAIConfig } from '@src/types/config';
 
 const debug = Debug('app:openAiProvider');
 
@@ -21,10 +22,15 @@ const delay = (ms: number): Promise<void> => new Promise((resolve) => setTimeout
 
 export class OpenAiProvider implements ILlmProvider {
   name = 'openai';
-  private config: any;
+  private config: OpenAIConfig & {
+    timeout?: number;
+    organization?: string;
+    temperature?: number;
+    maxTokens?: number;
+  };
 
-  constructor(config?: any) {
-    this.config = config || {};
+  constructor(config?: OpenAIConfig & { timeout?: number; organization?: string; temperature?: number; maxTokens?: number }) {
+    this.config = config || { apiKey: '' };
   }
 
   supportsChatCompletion(): boolean {

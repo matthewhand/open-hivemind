@@ -1085,7 +1085,9 @@ export class BotConfigurationManager {
     config.name = newName;
 
     // Remove internal properties if any (e.g., _updatedAt)
-    delete (config as any)._updatedAt;
+    if (typeof config === 'object' && config !== null && '_updatedAt' in config) {
+      delete (config as Record<string, unknown>)._updatedAt;
+    }
 
     // Add the new bot (this will validate and save it)
     await this.addBot(config);
