@@ -119,13 +119,8 @@ export class ConfigurationImportExportService {
       let filePath = join(this.exportsDir, `${baseFileName}.${options.format}`);
 
       // Get configurations
-      const configs = [];
-      for (const id of configIds) {
-        const config = await this.dbManager.getBotConfiguration(id);
-        if (config) {
-          configs.push(config);
-        }
-      }
+      const configsRaw = await this.dbManager.getBotConfigurationsBulk(configIds);
+      const configs = configsRaw.filter(Boolean);
 
       if (configs.length === 0) {
         return {
@@ -151,13 +146,15 @@ export class ConfigurationImportExportService {
 
       // Include versions if requested
       if (options.includeVersions) {
-        const versionPromises = configs
-          .filter((c) => c.id != null)
-          .map(async (config) => this.dbManager.getBotConfigurationVersions(config.id as number));
-        const versionsNested = await Promise.allSettled(versionPromises);
-        const versions = versionsNested
-          .map((r) => (r.status === 'fulfilled' ? r.value : []))
-          .flat();
+        const validConfigIds = configs.map(c => c.id).filter(Boolean) as number[];
+        let versions: any[] = [];
+        if (validConfigIds.length > 0) {
+          const versionsMap = await this.dbManager.getBotConfigurationVersionsBulk(validConfigIds);
+          for (const id of validConfigIds) {
+            const configVersions = versionsMap.get(id) || [];
+            versions.push(...configVersions);
+          }
+        }
 
         exportData.versions = versions;
         exportData.metadata.versionCount = versions.length;
