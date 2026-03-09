@@ -14,7 +14,8 @@ test.describe('Settings Screenshots', () => {
     const globalConfigData = await globalConfigResponse.json();
 
     // Verify we have real API data (not mocked)
-    expect(globalConfigData).toBeTruthy();
+    expect(globalConfigData).toBeDefined();
+    expect(globalConfigData).not.toBeNull();
     expect(Object.keys(globalConfigData).length).toBeGreaterThan(0);
 
     // 1. Navigate to default settings page (General tab)
