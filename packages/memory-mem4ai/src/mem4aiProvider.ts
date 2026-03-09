@@ -81,15 +81,15 @@ export class Mem4aiProvider {
         };
 
         try {
-            const response = await this.makeRequest('/memories', 'POST', body);
+            const response = await this.makeRequest('/memories', 'POST', body) as Record<string, unknown>;
 
             this.debug('Memory added successfully', { id: response.id });
             return {
-                id: response.id,
-                content: response.content,
-                metadata: response.metadata,
-                timestamp: response.created_at,
-                tags: response.tags,
+                id: response.id as string,
+                content: response.content as string,
+                metadata: response.metadata as Record<string, unknown> | undefined,
+                timestamp: response.created_at as number,
+                tags: response.tags as string[],
             };
         } catch (error) {
             this.debug('Failed to add memory', error);
@@ -255,7 +255,7 @@ export class Mem4aiProvider {
                 throw new Error(`Mem4ai API error: ${response.status} - ${error}`);
             }
 
-            return await response.json();
+            return await response.json() as Promise<unknown>;
         } finally {
             clearTimeout(timeout);
         }
