@@ -80,7 +80,7 @@ class LLMResponse {
     finish_reason: string;
   }[] {
     // Return a deep copy to prevent external modification
-    return JSON.parse(JSON.stringify(this.choices));
+    return structuredClone(this.choices);
   }
 
   /**
