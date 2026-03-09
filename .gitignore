@@ -222,3 +222,8 @@ patch_yml2.js
 scratch.js
 scripts/merge_pr.py
 package-lock.json
+
+# Compiled TypeScript artifacts in src/ (tsc output)
+src/**/*.js
+src/**/*.d.ts
+src/**/*.d.ts.map
