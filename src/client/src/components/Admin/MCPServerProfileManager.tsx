@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { PlusIcon, PencilIcon, TrashIcon, ServerStackIcon } from '@heroicons/react/24/outline';
 import { Button, Modal, Card, Alert, Badge } from '../DaisyUI';
+import { ConfirmModal } from '../DaisyUI/Modal';
 
 interface McpServerConfig {
     name: string;
@@ -342,19 +343,15 @@ const MCPServerProfileManager: React.FC = () => {
       </Modal>
 
       {/* Delete Confirmation Modal */}
-      <Modal
+      <ConfirmModal
         isOpen={!!deleteConfirm}
         onClose={() => setDeleteConfirm(null)}
         title="Confirm Delete"
-      >
-        <p className="py-4">Are you sure you want to delete this profile? This action cannot be undone.</p>
-        <div className="modal-action">
-          <Button variant="ghost" onClick={() => setDeleteConfirm(null)}>Cancel</Button>
-          <button className="btn btn-error" onClick={() => deleteConfirm && handleDelete(deleteConfirm)}>
-                        Delete Profile
-          </button>
-        </div>
-      </Modal>
+        message="Are you sure you want to delete this profile? This action cannot be undone."
+        confirmText="Delete Profile"
+        confirmVariant="error"
+        onConfirm={() => deleteConfirm && handleDelete(deleteConfirm)}
+      />
     </div>
   );
 };
