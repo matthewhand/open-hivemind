@@ -189,7 +189,7 @@ const ExportPage: React.FC = () => {
   const stats = useMemo(() => {
     const totalBackups = backups.length;
     const lastBackup = backups.length > 0
-      ? new Date(Math.max(...backups.map(b => new Date(b.createdAt).getTime()))).toLocaleDateString()
+      ? new Date(backups.reduce((max, b) => Math.max(max, new Date(b.createdAt).getTime()), -Infinity)).toLocaleDateString()
       : 'N/A';
 
     return [
