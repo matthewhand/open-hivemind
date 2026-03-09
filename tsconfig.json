@@ -60,7 +60,9 @@
       "@hivemind/message-mattermost": ["packages/message-mattermost/src/index.ts"],
       "@hivemind/message-mattermost/*": ["packages/message-mattermost/src/*"],
       "@hivemind/memory-mem0": ["packages/memory-mem0/src/index.ts"],
-      "@hivemind/memory-mem0/*": ["packages/memory-mem0/src/*"]
+      "@hivemind/memory-mem0/*": ["packages/memory-mem0/src/*"],
+      "@hivemind/tool-mcp": ["packages/tool-mcp/src/index.ts"],
+      "@hivemind/tool-mcp/*": ["packages/tool-mcp/src/*"]
     },
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true
@@ -75,7 +77,8 @@
     "packages/message-discord/src/**/*",
     "packages/message-slack/src/**/*",
     "packages/message-mattermost/src/**/*",
-    "packages/memory-mem0/src/**/*"
+    "packages/memory-mem0/src/**/*",
+    "packages/tool-mcp/src/**/*"
   ],
   "exclude": ["tests/**/*", "node_modules", "src/client/**/*", "src/provider-configs/**/*", "packages/**/*.test.ts", "packages/**/*.spec.ts"],
   "files": ["src/global.d.ts"]

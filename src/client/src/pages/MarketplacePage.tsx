@@ -26,9 +26,18 @@ interface MarketplacePackage {
   displayName: string;
   description: string;
   type: 'llm' | 'message' | 'memory' | 'tool';
+  /** Local (built-in) version */
+  localVersion?: string;
+  /** GitHub registry version */
+  registryVersion?: string;
+  /** Currently active version */
   version: string;
-  status: 'built-in' | 'installed' | 'available';
+  /** Status */
+  status: 'built-in' | 'installed' | 'available' | 'update-available';
+  /** Source of current version */
+  source?: 'local' | 'registry';
   repoUrl?: string;
+  changelog?: string;
   installedAt?: string;
   updatedAt?: string;
 }
@@ -57,6 +66,7 @@ const STATUS_BADGES = {
   'built-in': { label: 'Built-in', color: 'neutral' as const },
   'installed': { label: 'Installed', color: 'success' as const },
   'available': { label: 'Available', color: 'info' as const },
+  'update-available': { label: 'Update', color: 'warning' as const },
 } as const;
 
 // ---------------------------------------------------------------------------
@@ -328,10 +338,43 @@ const MarketplacePage: React.FC = () => {
                     {pkg.description}
                   </p>
 
+                  {/* Version Info */}
                   <div className="flex items-center justify-between text-xs text-base-content/50 mb-3">
-                    <span>v{pkg.version}</span>
+                    <div className="flex flex-col gap-1">
+                      {pkg.localVersion && (
+                        <span className="flex items-center gap-1">
+                          <span className="text-base-content/70">Local:</span>
+                          <span className="font-mono">v{pkg.localVersion}</span>
+                          {pkg.source === 'local' && (
+                            <span className="badge badge-xs badge-primary">active</span>
+                          )}
+                        </span>
+                      )}
+                      {pkg.registryVersion && (
+                        <span className="flex items-center gap-1">
+                          <GitHubIcon className="w-3 h-3" />
+                          <span className="font-mono">v{pkg.registryVersion}</span>
+                          {pkg.source === 'registry' && (
+                            <span className="badge badge-xs badge-secondary">active</span>
+                          )}
+                          {pkg.status === 'update-available' && (
+                            <span className="badge badge-xs badge-warning">newer</span>
+                          )}
+                        </span>
+                      )}
+                      {!pkg.localVersion && !pkg.registryVersion && (
+                        <span className="font-mono">v{pkg.version}</span>
+                      )}
+                    </div>
                     <span className="uppercase badge badge-sm badge-outline">{pkg.type}</span>
                   </div>
+
+                  {/* Changelog */}
+                  {pkg.changelog && pkg.status === 'update-available' && (
+                    <div className="text-xs text-base-content/60 mb-3 p-2 bg-base-300 rounded">
+                      <span className="font-medium">What's new:</span> {pkg.changelog}
+                    </div>
+                  )}
 
                   {/* Actions */}
                   <div className="flex gap-2">

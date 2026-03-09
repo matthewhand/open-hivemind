@@ -23,11 +23,105 @@ export interface MarketplacePackage {
   displayName: string;
   description: string;
   type: 'llm' | 'message' | 'memory' | 'tool';
+  /** Local (built-in) version */
+  localVersion?: string;
+  /** GitHub registry version (latest available) */
+  registryVersion?: string;
+  /** Currently active version */
   version: string;
-  status: 'built-in' | 'installed' | 'available';
+  /** Status */
+  status: 'built-in' | 'installed' | 'available' | 'update-available';
+  /** Source of current version: 'local' | 'registry' */
+  source?: 'local' | 'registry';
+  /** GitHub repo URL */
   repoUrl?: string;
+  /** Changelog for latest version */
+  changelog?: string;
   installedAt?: string;
   updatedAt?: string;
+}
+
+// ---------------------------------------------------------------------------
+// GitHub Registry
+// ---------------------------------------------------------------------------
+
+const REGISTRY_URL =
+  'https://raw.githubusercontent.com/matthewhand/open-hivemind/main/packages/registry.json';
+const REGISTRY_CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+
+interface GitHubRegistry {
+  version: string;
+  updated: string;
+  packages: Record<
+    string,
+    {
+      displayName: string;
+      description: string;
+      version: string;
+      repoUrl: string;
+      changelog?: string;
+    }
+  >;
+}
+
+let registryCache: {
+  data: GitHubRegistry | null;
+  fetchedAt: number;
+} = { data: null, fetchedAt: 0 };
+
+/**
+ * Fetch the GitHub registry with caching
+ */
+async function fetchGitHubRegistry(): Promise<GitHubRegistry | null> {
+  const now = Date.now();
+
+  // Check cache
+  if (
+    registryCache.data &&
+    registryCache.fetchedAt &&
+    now - registryCache.fetchedAt < REGISTRY_CACHE_TTL * 1000
+  ) {
+    debug('Using cached registry (age: %dms)', now - registryCache.fetchedAt);
+    return registryCache.data;
+  }
+
+  try {
+    debug('Fetching GitHub registry from %s', REGISTRY_URL);
+    const response = await fetch(REGISTRY_URL, {
+      headers: {
+        Accept: 'application/json',
+        'User-Agent': 'Open-Hivemind-Marketplace/1.0',
+      },
+    });
+
+    if (!response.ok) {
+      debug('Failed to fetch registry: %d', response.status);
+      return null;
+    }
+
+    const data = await response.json();
+    registryCache = { data, fetchedAt: now };
+    return data;
+  } catch (e) {
+    debug('Error fetching registry: %s', e);
+    return null;
+  }
+}
+
+/**
+ * Compare two semver versions
+ */
+function compareVersions(local: string, github: string): -1 | 0 | 1 {
+  const localParts = local.split('.').map(Number);
+  const githubParts = github.split('.').map(Number);
+
+  for (let i = 0; i < Math.max(localParts.length, githubParts.length); i++) {
+    const localPart = localParts[i] || 0;
+    const githubPart = githubParts[i] || 0;
+    if (githubPart > localPart) return 1;
+    if (githubPart < localPart) return -1;
+  }
+  return 0; // Equal
 }
 
 // ---------------------------------------------------------------------------
@@ -88,8 +182,10 @@ function scanBuiltInPackages(): MarketplacePackage[] {
         displayName: manifest?.displayName || pkgJson.name || dir,
         description: manifest?.description || pkgJson.description || 'No description available',
         type: manifest?.type || type,
+        localVersion: pkgJson.version || '0.0.0',
         version: pkgJson.version || '0.0.0',
         status: 'built-in',
+        source: 'local',
       });
     } catch (e) {
       debug('Failed to read package %s: %s', dir, e);
@@ -137,18 +233,71 @@ router.use(authenticateToken);
 
 /**
  * GET /api/marketplace/packages
- * List all available packages (built-in + installed)
+ * List all available packages (built-in + installed + GitHub updates)
  */
-router.get('/packages', (req, res) => {
+router.get('/packages', async (req, res) => {
   try {
     const builtIn = scanBuiltInPackages();
     const installed = getInstalledPlugins();
+    const githubRegistry = await fetchGitHubRegistry();
 
-    // Merge: built-in packages take precedence, then installed plugins
+    // Merge packages with GitHub overrides
     const packageMap = new Map<string, MarketplacePackage>();
 
-    for (const pkg of [...builtIn, ...installed]) {
+    // Add built-in packages
+    for (const pkg of builtIn) {
       packageMap.set(pkg.name, pkg);
+    }
+
+    // Add installed plugins (override built-in)
+    for (const pkg of installed) {
+      packageMap.set(pkg.name, pkg);
+    }
+
+    // Apply GitHub registry overrides
+    if (githubRegistry?.packages) {
+      for (const [name, githubPkg] of Object.entries(githubRegistry.packages)) {
+        const existing = packageMap.get(name);
+
+        if (existing) {
+          // Show both versions
+          const localVersion = existing.localVersion || existing.version;
+          const registryVersion = githubPkg.version;
+          const updateAvailable = compareVersions(localVersion, registryVersion) > 0;
+
+          // Merge with GitHub metadata, but keep both versions visible
+          packageMap.set(name, {
+            ...existing,
+            displayName: githubPkg.displayName || existing.displayName,
+            description: githubPkg.description || existing.description,
+            localVersion,
+            registryVersion,
+            version: localVersion, // Default to local
+            status: updateAvailable ? 'update-available' : existing.status,
+            changelog: githubPkg.changelog,
+            repoUrl: githubPkg.repoUrl || existing.repoUrl,
+          });
+        } else {
+          // Package not installed locally, show as available from registry
+          const namePrefix = name.split('-')[0];
+          const validTypes = ['llm', 'message', 'memory', 'tool'] as const;
+          const type = validTypes.includes(namePrefix as any)
+            ? (namePrefix as MarketplacePackage['type'])
+            : 'tool';
+
+          packageMap.set(name, {
+            name,
+            displayName: githubPkg.displayName,
+            description: githubPkg.description,
+            type,
+            registryVersion: githubPkg.version,
+            version: githubPkg.version,
+            status: 'available',
+            source: 'registry',
+            repoUrl: githubPkg.repoUrl,
+          });
+        }
+      }
     }
 
     const packages = Array.from(packageMap.values());
@@ -165,16 +314,32 @@ router.get('/packages', (req, res) => {
  * GET /api/marketplace/packages/:name
  * Get single package details
  */
-router.get('/packages/:name', (req, res) => {
+router.get('/packages/:name', async (req, res) => {
   try {
     const name = req.params.name;
     const builtIn = scanBuiltInPackages();
     const installed = getInstalledPlugins();
+    const githubRegistry = await fetchGitHubRegistry();
 
     const pkg = [...installed, ...builtIn].find((p) => p.name === name);
 
     if (!pkg) {
       return res.status(404).json({ error: 'Package not found' });
+    }
+
+    // Apply GitHub override if available
+    if (githubRegistry?.packages?.[name]) {
+      const githubPkg = githubRegistry.packages[name];
+      const updateAvailable = compareVersions(pkg.version, githubPkg.version) > 0;
+
+      return res.json({
+        ...pkg,
+        displayName: githubPkg.displayName || pkg.displayName,
+        description: githubPkg.description || pkg.description,
+        githubVersion: githubPkg.version,
+        updateAvailable,
+        changelog: githubPkg.changelog,
+      });
     }
 
     return res.json(pkg);
@@ -269,6 +434,20 @@ router.post('/update/:name', requireRole('admin'), async (req, res) => {
   } catch (err: any) {
     debug('Update error: %s', err);
     return res.status(400).json({ error: 'Update failed', message: err.message });
+  }
+});
+
+/**
+ * GET /api/marketplace/registry
+ * Get the raw GitHub registry (for debugging)
+ */
+router.get('/registry', async (req, res) => {
+  try {
+    const registry = await fetchGitHubRegistry();
+    return res.json(registry);
+  } catch (err: any) {
+    debug('Error fetching registry: %s', err);
+    return res.status(500).json({ error: 'Failed to fetch registry', message: err.message });
   }
 });
 

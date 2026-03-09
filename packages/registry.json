@@ -1,0 +1,64 @@
+{
+  "$schema": "https://json.schemastore.org/package.json",
+  "version": "1.0.0",
+  "updated": "2026-03-09T00:00:00Z",
+  "packages": {
+    "llm-openai": {
+      "displayName": "OpenAI",
+      "description": "GPT models via the OpenAI API — supports GPT-4, GPT-3.5, and custom models",
+      "version": "1.0.1",
+      "repoUrl": "https://github.com/matthewhand/open-hivemind",
+      "changelog": "Added support for GPT-4-turbo vision"
+    },
+    "llm-letta": {
+      "displayName": "Letta",
+      "description": "Stateful agents with persistent memory via the Letta (MemGPT) API",
+      "version": "1.0.2",
+      "repoUrl": "https://github.com/matthewhand/open-hivemind",
+      "changelog": "Fixed session mode scoping"
+    },
+    "llm-flowise": {
+      "displayName": "Flowise",
+      "description": "Visual LLM orchestration via the Flowise API — drag-and-drop AI workflows",
+      "version": "1.0.0",
+      "repoUrl": "https://github.com/matthewhand/open-hivemind"
+    },
+    "llm-openwebui": {
+      "displayName": "OpenWebUI",
+      "description": "Connect to a self-hosted OpenWebUI instance — supports multiple LLM backends",
+      "version": "1.0.0",
+      "repoUrl": "https://github.com/matthewhand/open-hivemind"
+    },
+    "llm-openswarm": {
+      "displayName": "OpenSwarm",
+      "description": "Multi-agent orchestration via the OpenSwarm API — coordinate multiple AI agents",
+      "version": "1.0.0",
+      "repoUrl": "https://github.com/matthewhand/open-hivemind"
+    },
+    "memory-mem0": {
+      "displayName": "Mem0",
+      "description": "Persistent memory for AI agents via Mem0 — stores facts, preferences, and context across sessions",
+      "version": "1.0.0",
+      "repoUrl": "https://github.com/matthewhand/open-hivemind"
+    },
+    "message-discord": {
+      "displayName": "Discord",
+      "description": "Connect your bots to Discord servers — supports slash commands, threads, and voice",
+      "version": "1.0.1",
+      "repoUrl": "https://github.com/matthewhand/open-hivemind",
+      "changelog": "Added thread support"
+    },
+    "message-slack": {
+      "displayName": "Slack",
+      "description": "Connect your bots to Slack workspaces — supports app home, modals, and workflows",
+      "version": "1.0.0",
+      "repoUrl": "https://github.com/matthewhand/open-hivemind"
+    },
+    "message-mattermost": {
+      "displayName": "Mattermost",
+      "description": "Connect your bots to self-hosted Mattermost instances — secure enterprise messaging",
+      "version": "1.0.0",
+      "repoUrl": "https://github.com/matthewhand/open-hivemind"
+    }
+  }
+}
