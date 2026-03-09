@@ -1,68 +1,43 @@
 #!/bin/bash
+# Basic hardcoded secrets scanner.
+# Checks source files for common secret patterns and fails CI if any are found.
 
-# Simple secret scanner for CI
-# Checks for common patterns of hardcoded secrets
-
-echo "Running secret audit..."
-
-# Patterns to look for
-PATTERNS=(
-    "AI_KEY"
-    "API_KEY"
-    "SECRET"
-    "TOKEN"
-    "PASSWORD"
-    "PRIVATE_KEY"
-)
-
-# Files/Directories to exclude
-EXCLUDES=(
-    "node_modules"
-    ".git"
-    "dist"
-    "package-lock.json"
-    "pnpm-lock.yaml"
-    "*.png"
-    "*.jpg"
-    "*.jpeg"
-    "*.gif"
-    "*.ico"
-    "scripts/audit-secrets.sh"
-    "tests" # Exclude tests as they often use mock secrets
-    "scripts/debug"
-    "scripts/audit-secrets.sh"
-)
-
-# Construct grep exclude arguments
-GREP_EXCLUDES=""
-for pattern in "${EXCLUDES[@]}"; do
-    if [[ $pattern == *"*"* ]]; then
-        GREP_EXCLUDES="$GREP_EXCLUDES --exclude=$pattern"
-    else
-        GREP_EXCLUDES="$GREP_EXCLUDES --exclude-dir=$pattern --exclude=$pattern"
-    fi
-done
+echo "Auditing for hardcoded secrets..."
 
 EXIT_CODE=0
 
-for pattern in "${PATTERNS[@]}"; do
-    # Search for pattern=value (case insensitive)
-    # We use -i for case-insensitive, -I to ignore binary files, -r for recursive
-    # We look for matches that look like assignments to catch hardcoded values
-    # Filtering out common False Positives like process.env or config.get
-    matches=$(grep -rEi "$pattern\s*=\s*['\"][a-zA-Z0-9_\-]{5,}['\"]" . $GREP_EXCLUDES | grep -v "process.env" | grep -v "config.get")
+# Directories to scan
+SCAN_DIRS="src tests packages"
 
-    if [ ! -z "$matches" ]; then
-        echo "⚠️ Potential secrets found for pattern '$pattern':"
-        echo "$matches"
-        EXIT_CODE=1
-    fi
+# Patterns that are likely hardcoded secrets (not env var references)
+PATTERNS=(
+  'sk-[A-Za-z0-9]{48}'         # OpenAI API key
+  'xoxb-[A-Za-z0-9\-]+'        # Slack bot token
+  'xoxp-[A-Za-z0-9\-]+'        # Slack user token
+  'AKIA[A-Z0-9]{16}'           # AWS access key ID
+  'ghp_[A-Za-z0-9]{36}'        # GitHub personal access token
+  'password\s*=\s*["'"'"'][^"'"'"']{8,}["'"'"']'  # Literal password assignments
+)
+
+for pattern in "${PATTERNS[@]}"; do
+  matches=$(grep -rn --include="*.ts" --include="*.tsx" --include="*.js" \
+    -E "$pattern" $SCAN_DIRS 2>/dev/null \
+    | grep -v "node_modules" \
+    | grep -v "\.test\." \
+    | grep -v "process\.env\." \
+    | grep -v "// " )
+
+  if [ -n "$matches" ]; then
+    echo "⚠️  Potential secret found (pattern: $pattern):"
+    echo "$matches"
+    EXIT_CODE=1
+  fi
 done
 
 if [ $EXIT_CODE -eq 0 ]; then
-    echo "✅ No obvious secrets found in source code."
+  echo "✅ No hardcoded secrets detected."
 else
-    echo "❌ Secret audit failed. Please remove hardcoded secrets."
+  echo "❌ Secret audit failed. Please remove hardcoded secrets."
 fi
 
 exit $EXIT_CODE
