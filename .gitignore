@@ -205,17 +205,17 @@ archive/
 .specify/
 .kilocode/
 AGENTS.md
-\nconfig/.key
 
 # Sensitive config files - never commit
 config/.key
 config/secure/
+config/backups/
 config/providers/
+config/user/
 scripts/benchmarks/temp-import-bench.json
 
 # Development artifacts
 .letta/
-config/backups/
 .pending_prs.json
 current_prs.json
 patch_yml2.js
