@@ -38,6 +38,11 @@ export const WebSocketProvider: React.FC<{ children: ReactNode }> = ({ children 
   const connect = () => {
     if (socket?.connected) { return; }
 
+    // Ensure we clean up any old disconnected socket instance before creating a new one
+    if (socket) {
+      socket.disconnect();
+    }
+
     const connectionTarget = API_BASE_URL && API_BASE_URL.length > 0 ? API_BASE_URL : undefined;
     const tokenString = localStorage.getItem('auth_tokens');
     let token = '';
