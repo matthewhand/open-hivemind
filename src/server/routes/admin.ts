@@ -5,6 +5,7 @@ import { DatabaseManager } from '../../database/DatabaseManager';
 import { MCPService } from '../../mcp/MCPService';
 import ApiMonitorService from '../../services/ApiMonitorService';
 import { webUIStorage } from '../../storage/webUIStorage';
+import { getTrustedMcpReposConfig } from '../../config/trustedMcpRepos';
 import { getRelevantEnvVars } from '../../utils/envUtils';
 import { isSafeUrl } from '../../utils/ssrfGuard';
 import {
@@ -1008,13 +1009,20 @@ router.get('/mcp-servers', (req: Request, res: Response) => {
   try {
     const mcpService = MCPService.getInstance();
     const servers = mcpService.getConnectedServers();
+    const trustConfig = getTrustedMcpReposConfig();
 
     // Get stored MCP server configurations
     const storedMcps = webUIStorage.getMcps();
 
     return res.json({
       success: true,
-      data: { servers, configurations: storedMcps },
+      data: {
+        servers,
+        configurations: storedMcps,
+        trustedRepositories: trustConfig.trustedRepositories,
+        cautionRepositories: trustConfig.cautionRepositories,
+        trustSettings: trustConfig.settings,
+      },
       message: 'Connected MCP servers retrieved successfully',
     });
   } catch (error: any) {

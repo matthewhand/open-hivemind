@@ -34,6 +34,14 @@ interface MCPServer {
   tools?: Tool[];
 }
 
+interface TrustedRepository {
+  owner: string;
+  repo: string;
+  name: string;
+  description?: string;
+  verified: boolean;
+}
+
 const getAuthHeaders = (): Record<string, string> => {
   const headers: Record<string, string> = { 'Content-Type': 'application/json' };
   try {
@@ -58,6 +66,9 @@ const MCPServersPage: React.FC = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [isTesting, setIsTesting] = useState(false);
   const [alert, setAlert] = useState<{ type: 'success' | 'error', message: string } | null>(null);
+  const [trustedRepositories, setTrustedRepositories] = useState<TrustedRepository[]>([]);
+  const [cautionRepositories, setCautionRepositories] = useState<TrustedRepository[]>([]);
+  const [showTrustIndicator, setShowTrustIndicator] = useState(true);
 
   // Search and Filter State
   const [searchTerm, setSearchTerm] = useState('');
@@ -107,9 +118,15 @@ const MCPServersPage: React.FC = () => {
       }).filter(Boolean);
 
       setServers([...connectedServers, ...storedConfigs]);
+      setTrustedRepositories(Array.isArray(data.data?.trustedRepositories) ? data.data.trustedRepositories : []);
+      setCautionRepositories(Array.isArray(data.data?.cautionRepositories) ? data.data.cautionRepositories : []);
+      setShowTrustIndicator(data.data?.trustSettings?.showTrustIndicator !== false);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch servers');
       setServers([]);
+      setTrustedRepositories([]);
+      setCautionRepositories([]);
+      setShowTrustIndicator(true);
     } finally {
       setLoading(false);
     }
@@ -548,6 +565,48 @@ const MCPServersPage: React.FC = () => {
             message={alert.message}
             onClose={() => setAlert(null)}
           />
+        </div>
+      )}
+
+      {showTrustIndicator && (trustedRepositories.length > 0 || cautionRepositories.length > 0) && (
+        <div className="space-y-3 mb-6">
+          {trustedRepositories.length > 0 && (
+            <Alert
+              status="success"
+              icon={<CheckCircleIcon className="w-5 h-5 shrink-0" />}
+              className="items-start"
+            >
+              <div className="space-y-2">
+                <p className="font-medium">Pre-vetted MCP repositories are configured for this environment.</p>
+                <div className="flex flex-wrap gap-2">
+                  {trustedRepositories.map((repo) => (
+                    <span key={`${repo.owner}/${repo.repo}`} className="badge badge-success badge-outline">
+                      {repo.name} ({repo.owner}/{repo.repo})
+                    </span>
+                  ))}
+                </div>
+              </div>
+            </Alert>
+          )}
+
+          {cautionRepositories.length > 0 && (
+            <Alert
+              status="warning"
+              icon={<ExclamationCircleIcon className="w-5 h-5 shrink-0" />}
+              className="items-start"
+            >
+              <div className="space-y-2">
+                <p className="font-medium">Some repositories are marked for caution before production use.</p>
+                <div className="flex flex-wrap gap-2">
+                  {cautionRepositories.map((repo) => (
+                    <span key={`${repo.owner}/${repo.repo}`} className="badge badge-warning badge-outline">
+                      {repo.name} ({repo.owner}/{repo.repo})
+                    </span>
+                  ))}
+                </div>
+              </div>
+            </Alert>
+          )}
         </div>
       )}
 
