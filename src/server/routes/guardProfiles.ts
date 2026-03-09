@@ -106,6 +106,17 @@ router.post('/', (req: Request, res: Response) => {
     }
 
     const profiles = loadGuardrailProfiles();
+
+    // Idempotency check: see if profile with same name already exists
+    const existingProfile = profiles.find((p) => p.name === name);
+    if (existingProfile) {
+      return res.status(200).json({
+        success: true,
+        data: existingProfile,
+        message: 'Guard profile already exists',
+      });
+    }
+
     const newProfile: GuardrailProfile = {
       id: uuidv4(),
       name,
@@ -240,9 +251,9 @@ router.delete('/:id', (req: Request, res: Response) => {
     const profileExists = profiles.some((p) => p.id === id);
 
     if (!profileExists) {
-      return res.status(404).json({
-        success: false,
-        error: 'Profile not found',
+      return res.status(200).json({
+        success: true,
+        message: 'Guard profile already deleted or not found',
       });
     }
 
