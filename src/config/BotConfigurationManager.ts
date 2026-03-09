@@ -34,7 +34,10 @@ const botSchema = {
   // LLM provider configuration
   LLM_PROVIDER: {
     doc: 'LLM provider type (openai, flowise, etc.)',
-    format: ['openai', 'flowise', 'openwebui', 'perplexity', 'replicate', 'n8n', 'openswarm', 'letta'],
+    // Using String format instead of an enum list allows plugins to add new providers
+    // without requiring code changes here. The PluginLoader will fail at runtime if
+    // the provider doesn't exist, which is sufficient validation.
+    format: String,
     default: 'flowise',
     env: 'BOTS_{name}_LLM_PROVIDER',
   },

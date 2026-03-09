@@ -1,4 +1,5 @@
 export { LettaProvider, LettaProviderConfig } from './lettaProvider';
+export { listAgents, getAgent, type AgentSummary } from './agentBrowser';
 
 import { LettaProvider } from './lettaProvider';
 import type { PluginManifest } from '../../../src/plugins/PluginLoader';
