@@ -74,3 +74,50 @@ export interface IMessageProvider<TConfig = any> extends IProvider<TConfig> {
 export interface ILLMProvider<TConfig = any> extends IProvider<TConfig> {
   type: 'llm';
 }
+
+/**
+ * Memory provider interface for persistent AI memory.
+ * Implementations: Mem0, Zep, Letta memory, etc.
+ */
+export interface IMemoryProvider {
+  /** Provider identifier */
+  id: string;
+  /** Display name */
+  label: string;
+  /** Provider type */
+  type: 'memory';
+
+  /** Add memories from conversation messages */
+  add(
+    messages: Array<{ role: 'user' | 'assistant'; content: string }>,
+    options?: { userId?: string; agentId?: string; metadata?: Record<string, any> }
+  ): Promise<{
+    results: Array<{ id: string; memory: string; score?: number; metadata?: Record<string, any> }>;
+  }>;
+
+  /** Search memories by natural language query */
+  search(
+    query: string,
+    options?: { userId?: string; agentId?: string; limit?: number }
+  ): Promise<{
+    results: Array<{ id: string; memory: string; score?: number; metadata?: Record<string, any> }>;
+  }>;
+
+  /** Get all memories for a user/agent */
+  getAll(options?: {
+    userId?: string;
+    agentId?: string;
+  }): Promise<{ results: Array<{ id: string; memory: string }> }>;
+
+  /** Get a specific memory by ID */
+  get(memoryId: string): Promise<{ id: string; memory: string } | null>;
+
+  /** Update a memory's content */
+  update(memoryId: string, newContent: string): Promise<{ id: string; memory: string }>;
+
+  /** Delete a specific memory */
+  delete(memoryId: string): Promise<void>;
+
+  /** Delete all memories for a user/agent */
+  deleteAll(options?: { userId?: string; agentId?: string }): Promise<void>;
+}
