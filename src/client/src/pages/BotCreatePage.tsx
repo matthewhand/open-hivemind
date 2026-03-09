@@ -131,7 +131,7 @@ const BotCreatePage: React.FC = () => {
       <PageHeader
         title="Create New Bot"
         description="Configure a new bot instance with persona and provider settings."
-        icon={Bot}
+        icon={<Bot className="w-6 h-6" />}
         gradient="primary"
         actions={
           <Button variant="ghost" onClick={() => navigate('/admin/bots')}>

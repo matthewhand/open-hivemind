@@ -2,7 +2,7 @@
     "name": "@hivemind/memory-mem4ai",
     "version": "1.0.0",
     "description": "Mem4ai memory provider for Open Hivemind - Open-source, LLM-friendly memory management with adaptive personalization and flexible metadata tagging",
-    "main": "dist/index.js",
+    "main": "src/index.ts",
     "types": "dist/index.d.ts",
     "scripts": {
         "build": "npx tsc",
