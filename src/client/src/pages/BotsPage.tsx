@@ -348,15 +348,27 @@ const BotsPage: React.FC = () => {
             </div>
           </SearchFilterBar>
 
-          {error && (
-            <div className="alert alert-error shadow-sm">
+          {error && bots.length > 0 && (
+            <div className="alert alert-error shadow-sm mb-4">
               <AlertCircle className="w-5 h-5" />
               <span>{error}</span>
               <button className="btn btn-ghost btn-xs" onClick={fetchBots}>Try Again</button>
             </div>
           )}
 
-          {filteredBots.length === 0 ? (
+          {error && bots.length === 0 ? (
+            <EmptyState
+              icon={<AlertTriangle className="w-16 h-16 text-error/50" />}
+              title="Failed to load swarm"
+              description="We encountered an error while trying to load your AI agents. Please try again."
+              action={
+                <button className="btn btn-outline btn-error" onClick={fetchBots}>
+                  <RefreshCw className="w-4 h-4 mr-2" />
+                  Retry Connection
+                </button>
+              }
+            />
+          ) : filteredBots.length === 0 ? (
             <EmptyState
               icon={<Bot className="w-16 h-16 text-base-content/20" />}
               title={searchQuery ? "No agents found" : "Your swarm is empty"}
