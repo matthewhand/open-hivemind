@@ -9,6 +9,9 @@ export * from './schemas/flowise';
 export * from './schemas/openwebui';
 export * from './schemas/mattermost';
 export * from './schemas/letta';
+export * from './schemas/mem0';
+export * from './schemas/mem4ai';
+export * from './schemas/memvault';
 
 // Registry of all available provider schemas
 import type { ProviderConfigSchema } from './types';
@@ -21,6 +24,9 @@ import { flowiseProviderSchema } from './schemas/flowise';
 import { mattermostProviderSchema } from './schemas/mattermost';
 import { openWebUiProviderSchema } from './schemas/openwebui';
 import { lettaProviderSchema } from './schemas/letta';
+import { mem0ProviderSchema } from './schemas/mem0';
+import { mem4aiProviderSchema } from './schemas/mem4ai';
+import { memvaultProviderSchema } from './schemas/memvault';
 
 export const PROVIDER_SCHEMAS: Record<string, ProviderConfigSchema> = {
   // Message providers
@@ -37,6 +43,11 @@ export const PROVIDER_SCHEMAS: Record<string, ProviderConfigSchema> = {
 
   // MCP providers
   mcp: mcpProviderSchema,
+
+  // Memory providers
+  mem0: mem0ProviderSchema,
+  mem4ai: mem4aiProviderSchema,
+  memvault: memvaultProviderSchema,
 };
 
 // Helper functions for working with provider schemas

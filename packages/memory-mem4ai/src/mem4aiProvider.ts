@@ -263,3 +263,18 @@ export class Mem4aiProvider {
 }
 
 export default Mem4aiProvider;
+
+// ---------------------------------------------------------------------------
+// Factory and manifest
+// ---------------------------------------------------------------------------
+
+export function create(config: Mem4aiConfig): Mem4aiProvider {
+    return new Mem4aiProvider(config);
+}
+
+export const manifest = {
+    displayName: 'Mem4ai',
+    description: 'LLM-friendly memory management with adaptive personalization and flexible metadata tagging',
+    type: 'memory',
+    minVersion: '1.0.0',
+};
