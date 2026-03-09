@@ -166,7 +166,10 @@ export const CommaSeparatedInput: React.FC<CommaSeparatedInputProps> = ({
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setInputValue(e.target.value);
+    const newValue = e.target.value;
+    // Auto-add space after comma for better UX
+    const formattedValue = newValue.replace(/,(?=[^\s])/g, ', ');
+    setInputValue(formattedValue);
     setShowSuggestions(true);
     if (internalError) {
       setInternalError(null);
@@ -236,6 +239,7 @@ export const CommaSeparatedInput: React.FC<CommaSeparatedInputProps> = ({
         {!disabled && canUndo && (
           <button
             type="button"
+            onMouseDown={(e) => e.preventDefault()}
             onClick={handleUndo}
             className="p-1 mx-1 rounded-full text-base-content/40 hover:text-primary hover:bg-primary/10 focus:outline-none transition-colors"
             title="Undo last change (Ctrl+Z)"
@@ -250,6 +254,7 @@ export const CommaSeparatedInput: React.FC<CommaSeparatedInputProps> = ({
         {!disabled && value.length > 0 && (
           <button
             type="button"
+            onMouseDown={(e) => e.preventDefault()}
             onClick={handleClearAll}
             className="p-1 mx-1 rounded-full text-base-content/40 hover:text-error hover:bg-error/10 focus:outline-none transition-colors"
             title="Clear all"
