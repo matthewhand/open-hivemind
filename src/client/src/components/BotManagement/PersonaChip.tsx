@@ -102,6 +102,7 @@ const PersonaChip: React.FC<PersonaChipProps> = ({
               }}
               className="w-4 h-4 rounded hover:bg-base-300 flex items-center justify-center"
               title="Edit persona"
+              aria-label={`Edit persona ${persona.name}`}
             >
               ✏️
             </button>
@@ -115,6 +116,7 @@ const PersonaChip: React.FC<PersonaChipProps> = ({
               }}
               className="w-4 h-4 rounded hover:bg-error/20 flex items-center justify-center"
               title="Remove persona"
+              aria-label={`Remove persona ${persona.name}`}
             >
               ✕
             </button>
