@@ -61,6 +61,9 @@ module.exports = {
       process.env.RUN_SYSTEM_TESTS === 'true'
         ? '<rootDir>/node_modules/discord.js'
         : '<rootDir>/tests/__mocks__/discord.js.ts',
+    'mem0ai/oss': '<rootDir>/tests/mocks/mem0ai.js',
+    'mem0ai': '<rootDir>/tests/mocks/mem0ai.js',
+    '^pg$': '<rootDir>/tests/mocks/pg.js',
   },
   setupFilesAfterEnv: ['<rootDir>/tests/jest.setup.ts'],
   testPathIgnorePatterns: [
