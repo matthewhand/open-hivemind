@@ -11,6 +11,7 @@ export * from './schemas/mattermost';
 export * from './schemas/letta';
 export * from './schemas/mem0';
 export * from './schemas/mem4ai';
+export * from './schemas/openswarm';
 
 // Registry of all available provider schemas
 import type { ProviderConfigSchema } from './types';
@@ -25,6 +26,7 @@ import { openWebUiProviderSchema } from './schemas/openwebui';
 import { lettaProviderSchema } from './schemas/letta';
 import { mem0ProviderSchema } from './schemas/mem0';
 import { mem4aiProviderSchema } from './schemas/mem4ai';
+import { openSwarmProviderSchema } from './schemas/openswarm';
 
 export const PROVIDER_SCHEMAS: Record<string, ProviderConfigSchema> = {
   // Message providers
@@ -45,6 +47,7 @@ export const PROVIDER_SCHEMAS: Record<string, ProviderConfigSchema> = {
   // Memory providers
   mem0: mem0ProviderSchema,
   mem4ai: mem4aiProviderSchema,
+  openswarm: openSwarmProviderSchema,
 };
 
 // Helper functions for working with provider schemas
