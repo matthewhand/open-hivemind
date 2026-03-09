@@ -2,8 +2,19 @@
 // Provider-specific configuration types - separate from core bot types
 // This allows for a pluggable architecture where providers can define their own configs
 
+/**
+ * Provider type taxonomy:
+ *   'llm'     — inference providers (openai, flowise, openwebui, letta, ollama, ...)
+ *   'message' — chat platform adapters (discord, slack, mattermost, telegram, ...)
+ *   'memory'  — external memory stores (mem0, memvault, zep, ...)
+ *   'tool'    — tool/function providers; subtypes include:
+ *                 'mcp'      — Model Context Protocol servers
+ *                 'skill'    — TODO: packaged capability bundles (investigate)
+ *                 'function' — TODO: direct function registration
+ *                 'builtin'  — TODO: hardcoded system capabilities
+ */
 export interface ProviderConfigSchema {
-  type: 'message' | 'llm' | 'mcp';
+  type: 'message' | 'llm' | 'memory' | 'tool';
   providerType: string;
   displayName: string;
   description: string;
@@ -70,7 +81,7 @@ export interface ProviderConfigModalProps {
 }
 
 export interface ProviderSchema {
-  type: 'mcp';
+  type: 'tool';
   name: string;
   description: string;
   version: string;

@@ -493,7 +493,9 @@ export class BotConfigService {
       const versions = await this.dbManager.getBotConfigurationVersions(botConfigurationId);
       const nextVersion =
         versions.length > 0
-          ? (Math.max(...versions.map((v) => parseInt(v.version))) + 1).toString()
+          ? (
+              versions.reduce((max, v) => Math.max(max, parseInt(v.version)), -Infinity) + 1
+            ).toString()
           : '1';
 
       // Create version

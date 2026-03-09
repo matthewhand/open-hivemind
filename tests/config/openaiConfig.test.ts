@@ -27,6 +27,7 @@ describe('openaiConfig', () => {
     delete process.env.OPENAI_MAX_RETRIES;
     delete process.env.OPENAI_FINISH_REASON_RETRY;
     delete process.env.OPENAI_VOICE;
+    delete process.env.OPENAI_EMBEDDING_MODELS;
     jest.resetModules();
   });
 
@@ -61,6 +62,11 @@ describe('openaiConfig', () => {
       const openaiConfig = require('../../src/config/openaiConfig').default;
       expect(openaiConfig.get('OPENAI_STOP')).toEqual([]);
       expect(Array.isArray(openaiConfig.get('OPENAI_STOP'))).toBe(true);
+      expect(openaiConfig.get('OPENAI_EMBEDDING_MODELS')).toEqual([
+        'text-embedding-3-large',
+        'text-embedding-3-small',
+        'text-embedding-ada-002',
+      ]);
     });
 
     it('should validate schema with defaults', () => {
@@ -98,9 +104,14 @@ describe('openaiConfig', () => {
 
     it('should load array values from environment', () => {
       process.env.OPENAI_STOP = 'stop1,stop2';
+      process.env.OPENAI_EMBEDDING_MODELS = 'text-embedding-3-small,text-embedding-3-large';
       
       const openaiConfig = require('../../src/config/openaiConfig').default;
       expect(openaiConfig.get('OPENAI_STOP')).toEqual(['stop1', 'stop2']);
+      expect(openaiConfig.get('OPENAI_EMBEDDING_MODELS')).toEqual([
+        'text-embedding-3-small',
+        'text-embedding-3-large',
+      ]);
     });
   });
 });

@@ -152,7 +152,7 @@ const UnifiedDashboard: React.FC = () => {
           apiService.getLlmProfiles(),
         ]);
         setPersonas(personasData || []);
-        setLlmProfiles(profilesData.profiles?.llm || []);
+        setLlmProfiles(profilesData.llm || profilesData.profiles?.llm || []);
         setDefaultLlmConfigured(!!profilesData?.defaultConfigured);
       }
       // Only open the modal after data has been successfully loaded.

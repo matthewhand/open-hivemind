@@ -1,5 +1,5 @@
 import Debug from 'debug';
-import { DiscordMessage } from '@hivemind/adapter-discord';
+import { DiscordMessage } from '@hivemind/message-discord';
 
 // Silence debug and console noise
 jest.mock('debug', () => () => jest.fn());

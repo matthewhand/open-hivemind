@@ -109,6 +109,9 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v2
+        with:
+          version: 8
       - uses: superfly/flyctl-actions/setup-flyctl@master
       - run: flyctl deploy -c fly.toml --wait-timeout 300
         env:

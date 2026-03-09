@@ -115,7 +115,7 @@ function createProviderFromInstance(
     let provider: ILlmProvider | undefined;
     switch (type) {
       case 'openai':
-        const { OpenAiProvider } = require('@hivemind/provider-openai');
+        const { OpenAiProvider } = require('@hivemind/llm-openai');
         provider = new OpenAiProvider(cfg);
         break;
       case 'flowise':

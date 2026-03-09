@@ -45,6 +45,10 @@
       "testUtils": ["./tests/testUtils"],
       "@hivemind/provider-openai": ["packages/provider-openai/src/index.ts"],
       "@hivemind/provider-openai/*": ["packages/provider-openai/src/*"],
+      "@hivemind/memory-mem4ai": ["packages/memory-mem4ai/src/index.ts"],
+      "@hivemind/memory-mem4ai/*": ["packages/memory-mem4ai/src/*"],
+      "@hivemind/memory-memvault": ["packages/memory-memvault/src/index.ts"],
+      "@hivemind/memory-memvault/*": ["packages/memory-memvault/src/*"],
       "@hivemind/adapter-discord": ["packages/adapter-discord/src/index.ts"],
       "@hivemind/adapter-discord/*": ["packages/adapter-discord/src/*"],
       "@hivemind/adapter-slack": ["packages/adapter-slack/src/index.ts"],
@@ -58,6 +62,8 @@
   "include": [
     "src/**/*",
     "packages/provider-openai/src/**/*",
+    "packages/memory-mem4ai/src/**/*",
+    "packages/memory-memvault/src/**/*",
     "packages/adapter-discord/src/**/*",
     "packages/adapter-slack/src/**/*",
     "packages/adapter-mattermost/src/**/*"

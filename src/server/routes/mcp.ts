@@ -190,8 +190,9 @@ router.post('/servers', validateRequest(AddMCPServerSchema), async (req, res) =>
     const servers = await loadMCPServers();
 
     // Check if server already exists
-    if (servers.find((s) => s.name === name)) {
-      return res.status(400).json({ error: 'MCP server with this name already exists' });
+    const existingServer = servers.find((s) => s.name === name);
+    if (existingServer) {
+      return res.status(200).json({ server: existingServer });
     }
 
     const newServer: MCPServer = {
@@ -555,6 +556,16 @@ router.post('/providers', async (req, res) => {
   try {
     const providerConfig: MCPProviderConfig = req.body;
 
+    // Idempotency check: return existing if it exists by ID
+    const existingProvider = mcpProviderManager.getProvider(providerConfig.id);
+    if (existingProvider) {
+      return res.status(200).json({
+        success: true,
+        data: existingProvider,
+        message: 'Provider already exists'
+      });
+    }
+
     // Validate configuration
     const validation = mcpProviderManager.validateProviderConfig(providerConfig);
     if (!validation.isValid) {
@@ -654,9 +665,9 @@ router.delete('/providers/:id', async (req, res) => {
 
     const provider = mcpProviderManager.getProvider(id);
     if (!provider) {
-      return res.status(404).json({
-        success: false,
-        error: 'MCP provider not found',
+      return res.status(200).json({
+        success: true,
+        message: 'MCP provider already deleted or not found',
       });
     }
 

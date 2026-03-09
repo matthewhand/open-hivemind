@@ -504,7 +504,9 @@ export class WebSocketService {
         stats,
         timestamp: new Date().toISOString(),
       });
-    } catch {}
+    } catch (error) {
+      debug('Error broadcasting bot stats:', error);
+    }
   }
 
   private sendBotStatus(socket: any): void {

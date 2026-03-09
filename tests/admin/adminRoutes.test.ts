@@ -30,7 +30,7 @@ jest.mock('@integrations/slack/SlackService', () => ({
   }),
 }));
 
-jest.mock('@hivemind/adapter-discord', () => ({
+jest.mock('@hivemind/message-discord', () => ({
   Discord: {
     DiscordService: {
       getInstance: jest.fn().mockReturnValue({

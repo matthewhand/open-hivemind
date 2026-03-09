@@ -361,6 +361,54 @@ router.get('/llm-profiles', (req, res) => {
   }
 });
 
+router.post('/llm-profiles', (req, res) => {
+  try {
+    const newProfile = req.body;
+
+    if (!newProfile.key || newProfile.key.trim() === '') {
+      return res.status(400).json({ error: 'LLM profile key is required', code: 'INVALID_REQUEST' });
+    }
+    if (!newProfile.name || newProfile.name.trim() === '') {
+      return res.status(400).json({ error: 'LLM profile name is required', code: 'INVALID_REQUEST' });
+    }
+    if (!newProfile.provider || newProfile.provider.trim() === '') {
+      return res.status(400).json({ error: 'LLM profile provider is required', code: 'INVALID_REQUEST' });
+    }
+
+    const modelType = newProfile.modelType || 'chat';
+    if (!['chat', 'embedding', 'both'].includes(modelType)) {
+      return res.status(400).json({
+        error: `Invalid modelType '${modelType}'. Must be one of: chat, embedding, both`,
+        code: 'INVALID_REQUEST',
+      });
+    }
+
+    const profiles = getLlmProfiles();
+    if (profiles.llm.find((p) => p.key.toLowerCase() === newProfile.key.toLowerCase())) {
+      return res.status(409).json({
+        error: `LLM profile with key '${newProfile.key}' already exists`,
+        code: 'CONFLICT',
+      });
+    }
+
+    const sanitizedProfile = {
+      ...newProfile,
+      modelType,
+    };
+
+    profiles.llm.push(sanitizedProfile);
+    saveLlmProfiles(profiles);
+
+    return res.status(201).json({ success: true, profile: sanitizedProfile });
+  } catch (error: unknown) {
+    const hivemindError = ErrorUtils.toHivemindError(error) as any;
+    return res.status(hivemindError.statusCode || 500).json({
+      error: hivemindError.message,
+      code: 'LLM_PROFILE_CREATE_ERROR',
+    });
+  }
+});
+
 // PUT /api/config/llm-profiles/:key - Update an LLM profile
 router.put('/llm-profiles/:key', (req, res) => {
   try {
@@ -374,6 +422,9 @@ router.put('/llm-profiles/:key', (req, res) => {
     if (!updates.provider || updates.provider.trim() === '') {
       return res.status(400).json({ error: 'LLM profile provider is required' });
     }
+    if (updates.modelType && !['chat', 'embedding', 'both'].includes(updates.modelType)) {
+      return res.status(400).json({ error: 'LLM profile modelType must be chat, embedding, or both' });
+    }
 
     const profiles = getLlmProfiles();
     const normalizedKey = key.toLowerCase();
@@ -383,7 +434,11 @@ router.put('/llm-profiles/:key', (req, res) => {
       return res.status(404).json({ error: `LLM profile with key '${key}' not found` });
     }
 
-    const updatedProfile = { ...profiles.llm[index], ...updates };
+    const updatedProfile = {
+      ...profiles.llm[index],
+      ...updates,
+      modelType: updates.modelType || profiles.llm[index].modelType || 'chat',
+    };
     profiles.llm[index] = updatedProfile;
 
     saveLlmProfiles(profiles);
@@ -397,6 +452,29 @@ router.put('/llm-profiles/:key', (req, res) => {
     return res.status(hivemindError.statusCode || 500).json({
       error: hivemindError.message,
       code: 'LLM_PROFILE_UPDATE_ERROR',
+    });
+  }
+});
+
+router.delete('/llm-profiles/:key', (req, res) => {
+  try {
+    const { key } = req.params;
+    const profiles = getLlmProfiles();
+    const index = profiles.llm.findIndex((profile) => profile.key.toLowerCase() === key.toLowerCase());
+
+    if (index === -1) {
+      return res.status(404).json({ error: `LLM profile with key '${key}' not found` });
+    }
+
+    const [deletedProfile] = profiles.llm.splice(index, 1);
+    saveLlmProfiles(profiles);
+
+    return res.json({ success: true, profile: deletedProfile });
+  } catch (error: unknown) {
+    const hivemindError = ErrorUtils.toHivemindError(error) as any;
+    return res.status(hivemindError.statusCode || 500).json({
+      error: hivemindError.message,
+      code: 'LLM_PROFILE_DELETE_ERROR',
     });
   }
 });

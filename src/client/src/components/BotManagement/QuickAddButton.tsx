@@ -26,7 +26,7 @@ const QuickAddButton: React.FC<QuickAddButtonProps> = ({
     }
     return type === 'message'
       ? 'Add Discord, Telegram, Slack, or Webhook provider'
-      : 'Add OpenAI, Anthropic, Ollama, or Custom LLM provider';
+      : 'Add OpenAI, Flowise, Letta, or custom LLM provider';
   };
 
   return (

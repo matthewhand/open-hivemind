@@ -24,14 +24,14 @@ const mockSlackService = {
   disconnect: jest.fn().mockResolvedValue(undefined),
 };
 
-jest.mock('@hivemind/adapter-discord', () => ({
+jest.mock('@hivemind/message-discord', () => ({
   DiscordService: {
     getInstance: jest.fn(() => mockDiscordService),
   },
 }));
 
 // Mocking the adapter directly as it is required in the source
-jest.mock('@hivemind/adapter-slack', () => ({
+jest.mock('@hivemind/message-slack', () => ({
   SlackService: {
     getInstance: jest.fn(() => mockSlackService),
   },
@@ -207,7 +207,7 @@ describe('getMessengerProvider', () => {
 
   describe('Error Handling', () => {
     it('should handle service initialization errors gracefully', () => {
-      const { DiscordService } = require('@hivemind/adapter-discord');
+      const { DiscordService } = require('@hivemind/message-discord');
       DiscordService.getInstance.mockImplementation(() => {
         throw new Error('Service initialization failed');
       });

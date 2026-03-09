@@ -25,7 +25,7 @@ const mockSlackInstance = {
   addBot: jest.fn().mockResolvedValue(undefined),
 };
 
-jest.mock('@hivemind/adapter-slack', () => ({
+jest.mock('@hivemind/message-slack', () => ({
   SlackService: {
     getInstance: jest.fn(() => mockSlackInstance),
   },

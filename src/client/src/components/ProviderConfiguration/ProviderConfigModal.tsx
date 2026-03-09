@@ -14,7 +14,9 @@ import {
 import { Button } from '../DaisyUI';
 import { X as XIcon } from 'lucide-react';
 import { ProviderConfigForm } from '../ProviderConfigForm';
+import type { ProviderConfigSchema } from '../../provider-configs';
 import { getProviderSchema } from '../../provider-configs';
+import { apiService } from '../../services/api';
 
 interface ProviderConfigModalProps {
   modalState: ProviderModalState;
@@ -29,11 +31,17 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
   onClose,
   onSubmit,
 }) => {
+  const resolveModelType = (provider?: { modelType?: 'chat' | 'embedding' | 'both'; config?: Record<string, any> }) => {
+    const rawValue = provider?.modelType || provider?.config?.modelType;
+    return rawValue === 'embedding' || rawValue === 'both' ? rawValue : 'chat';
+  };
+
   const [selectedType, setSelectedType] = useState<MessageProviderType | LLMProviderType>(
     modalState.providerType === 'message' ? MessageProviderType.DISCORD : LLMProviderType.OPENAI,
   );
   const [formData, setFormData] = useState<Record<string, any>>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [openAiEmbeddingModels, setOpenAiEmbeddingModels] = useState<string[]>([]);
 
   // Initialize form data when modal opens or provider changes
   useEffect(() => {
@@ -43,6 +51,7 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
         setSelectedType(modalState.provider.type as MessageProviderType | LLMProviderType);
         setFormData({
           name: modalState.provider.name,
+          modelType: modalState.providerType === 'llm' ? resolveModelType(modalState.provider as any) : undefined,
           ...modalState.provider.config,
         });
       } else {
@@ -64,12 +73,59 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
         const defaultName = getDefaultName(newType, modalState.providerType as 'message' | 'llm', existingProviders);
         setFormData({
           name: defaultName,
+          ...(modalState.providerType === 'llm' ? { modelType: 'chat' } : {}),
         });
         setErrors({});
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [modalState.isOpen, modalState.provider, modalState.isEdit, modalState.providerType]);
+
+  useEffect(() => {
+    if (!modalState.isOpen || modalState.providerType !== 'llm') {
+      return;
+    }
+
+    let isActive = true;
+
+    apiService
+      .get('/api/config/global')
+      .then((config: any) => {
+        if (!isActive) {
+          return;
+        }
+
+        const models = config?.openai?.values?.OPENAI_EMBEDDING_MODELS;
+        setOpenAiEmbeddingModels(Array.isArray(models) ? models.filter((value): value is string => typeof value === 'string' && value.trim() !== '') : []);
+      })
+      .catch(() => {
+        if (isActive) {
+          setOpenAiEmbeddingModels([]);
+        }
+      });
+
+    return () => {
+      isActive = false;
+    };
+  }, [modalState.isOpen, modalState.providerType]);
+
+  useEffect(() => {
+    if (
+      modalState.providerType !== 'llm' ||
+      selectedType !== LLMProviderType.OPENAI ||
+      (formData.modelType || 'chat') !== 'embedding' ||
+      openAiEmbeddingModels.length === 0
+    ) {
+      return;
+    }
+
+    if (!openAiEmbeddingModels.includes(formData.model)) {
+      setFormData(prev => ({
+        ...prev,
+        model: openAiEmbeddingModels[0],
+      }));
+    }
+  }, [formData.model, formData.modelType, modalState.providerType, openAiEmbeddingModels, selectedType]);
 
   const getDefaultName = (
     type: string,
@@ -96,6 +152,44 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
   const getCurrentConfig = (): ProviderTypeConfig => {
     const configs = modalState.providerType === 'message' ? MESSAGE_PROVIDER_CONFIGS : LLM_PROVIDER_CONFIGS;
     return (configs as any)[selectedType];
+  };
+
+  const getCurrentSchema = (): ProviderConfigSchema | undefined => {
+    const schema = getProviderSchema(selectedType);
+    if (!schema) {
+      return undefined;
+    }
+
+    if (
+      modalState.providerType !== 'llm' ||
+      selectedType !== LLMProviderType.OPENAI ||
+      (formData.modelType || 'chat') !== 'embedding' ||
+      openAiEmbeddingModels.length === 0
+    ) {
+      return schema;
+    }
+
+    return {
+      ...schema,
+      fields: schema.fields.map((field) => {
+        if (field.name !== 'model') {
+          return field;
+        }
+
+        return {
+          ...field,
+          type: 'select',
+          description: 'Choose an embedding model from the configured OpenAI embedding model catalog.',
+          options: openAiEmbeddingModels.map((model) => ({
+            label: model,
+            value: model,
+          })),
+          component: undefined,
+          componentProps: undefined,
+          defaultValue: openAiEmbeddingModels[0],
+        };
+      }),
+    };
   };
 
   const validateField = (field: FieldConfig | any, value: any): string | null => {
@@ -160,8 +254,12 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
       newErrors.name = 'Provider name is required';
       isValid = false;
     }
+    if (modalState.providerType === 'llm' && !['chat', 'embedding', 'both'].includes(formData.modelType || 'chat')) {
+      newErrors.modelType = 'Model type must be chat, embedding, or both';
+      isValid = false;
+    }
 
-    const schema = getProviderSchema(selectedType);
+    const schema = getCurrentSchema();
     const allFields = schema ? schema.fields : (config.fields || []);
 
     // Validate required fields
@@ -186,7 +284,7 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
     }
 
     const config = getCurrentConfig();
-    const schema = getProviderSchema(selectedType);
+    const schema = getCurrentSchema();
     const allFields = schema ? schema.fields : (config.fields || []);
 
     const providerConfig: Record<string, any> = {};
@@ -202,6 +300,7 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
     const providerData = {
       name: formData.name,
       type: selectedType,
+      ...(modalState.providerType === 'llm' ? { modelType: formData.modelType || 'chat' } : {}),
       config: providerConfig,
       ...(modalState.isEdit && { id: modalState.provider?.id }),
     };
@@ -363,6 +462,7 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
   const providerTypes = Object.keys(configs);
   // Safe config access: if selectedType mismatch, fallback to first in list
   const config = (configs as any)[selectedType] || (configs as any)[providerTypes[0]];
+  const currentSchema = getCurrentSchema();
   const allFields = config?.fields || [];
 
   return (
@@ -381,31 +481,53 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
           </button>
         </div>
 
-        {/* Provider Type Tabs - flex-wrap and gap-1 fix overlapping tabs in modal */}
-        <div
-          className="tabs tabs-boxed mb-6 flex-wrap gap-1"
-          role="tablist"
-          aria-label={`${modalState.providerType === 'message' ? 'Message' : 'LLM'} provider types`}
-        >
-          {providerTypes.map(type => {
-            const typeConfig = (configs as any)[type];
-            const isActive = selectedType === type;
-            return (
-              <button
-                key={type}
-                type="button"
-                className={`tab tab-sm flex items-center gap-2 ${isActive ? 'tab-active' : ''}`}
-                onClick={() => setSelectedType(type as MessageProviderType | LLMProviderType)}
-                role="tab"
-                aria-selected={isActive}
-                aria-label={`Select ${typeConfig.displayName || typeConfig.name}`}
-              >
-                <span>{typeConfig.icon}</span>
-                {typeConfig.displayName || typeConfig.name}
-              </button>
-            );
-          })}
-        </div>
+        {modalState.providerType === 'llm' ? (
+          <div className="form-control mb-6">
+            <label className="label">
+              <span className="label-text font-medium">Provider</span>
+              <span className="label-text-alt text-error">*</span>
+            </label>
+            <select
+              className="select select-bordered w-full"
+              value={selectedType}
+              onChange={(e) => setSelectedType(e.target.value as LLMProviderType)}
+            >
+              {providerTypes.map(type => {
+                const typeConfig = (configs as any)[type];
+                return (
+                  <option key={type} value={type}>
+                    {typeConfig.displayName || typeConfig.name}
+                  </option>
+                );
+              })}
+            </select>
+          </div>
+        ) : (
+          <div
+            className="tabs tabs-boxed mb-6 flex-wrap gap-1"
+            role="tablist"
+            aria-label="Message provider types"
+          >
+            {providerTypes.map(type => {
+              const typeConfig = (configs as any)[type];
+              const isActive = selectedType === type;
+              return (
+                <button
+                  key={type}
+                  type="button"
+                  className={`tab tab-sm flex items-center gap-2 ${isActive ? 'tab-active' : ''}`}
+                  onClick={() => setSelectedType(type as MessageProviderType | LLMProviderType)}
+                  role="tab"
+                  aria-selected={isActive}
+                  aria-label={`Select ${typeConfig.displayName || typeConfig.name}`}
+                >
+                  <span>{typeConfig.icon}</span>
+                  {typeConfig.displayName || typeConfig.name}
+                </button>
+              );
+            })}
+          </div>
+        )}
 
         {/* Form */}
         <form onSubmit={handleSubmit}>
@@ -426,12 +548,48 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
             {errors.name && <label className="label"><span className="label-text-alt text-error">{errors.name}</span></label>}
           </div>
 
+          {modalState.providerType === 'llm' && (
+            <div className="form-control mb-4">
+              <label className="label">
+                <span className="label-text font-medium">Model Type</span>
+                <span className="label-text-alt text-error">*</span>
+              </label>
+              <select
+                name="modelType"
+                className={`select select-bordered w-full ${errors.modelType ? 'select-error' : ''}`}
+                value={formData.modelType || 'chat'}
+                onChange={(e) => handleFieldChange('modelType', e.target.value)}
+              >
+                <option value="chat">Chat</option>
+                <option value="embedding">Embedding</option>
+                <option value="both">Both</option>
+              </select>
+              <label className="label">
+                <span className="label-text-alt">
+                  Mark embedding-only profiles so they can be used by memory/search without appearing as chat models.
+                </span>
+              </label>
+              {errors.modelType && <label className="label"><span className="label-text-alt text-error">{errors.modelType}</span></label>}
+            </div>
+          )}
+
+          {modalState.providerType === 'llm' &&
+            selectedType === LLMProviderType.OPENAI &&
+            (formData.modelType || 'chat') === 'embedding' &&
+            openAiEmbeddingModels.length > 0 && (
+            <div className="alert alert-info mb-4 text-sm">
+              <span>
+                Select an embedding-capable OpenAI provider first, then choose one of the configured embedding models.
+              </span>
+            </div>
+          )}
+
           {/* Provider-specific fields */}
           <div className="space-y-4 mb-6">
-            {getProviderSchema(selectedType) ? (
+            {currentSchema ? (
               <ProviderConfigForm
                 providerType={selectedType}
-                schema={getProviderSchema(selectedType)!}
+                schema={currentSchema}
                 initialConfig={formData}
                 onConfigChange={handleProviderConfigChange}
                 externalErrors={errors}

@@ -23,6 +23,7 @@ interface ProviderProfile {
   name?: string;
   description?: string;
   provider: string;
+  modelType?: 'chat' | 'embedding' | 'both';
   config?: Record<string, unknown>;
 }
 
@@ -233,9 +234,11 @@ const AgentConfigurator: React.FC<AgentConfiguratorProps> = ({ title = 'Agent Co
         const response = await fetch('/api/config/llm-profiles');
         if (!response.ok) {return;}
         const data = await response.json();
-        const profiles = data?.profiles;
-        if (!profiles || typeof profiles !== 'object') {return;}
-        const llmProfilesList = Array.isArray(profiles.llm) ? profiles.llm : [];
+        const llmProfilesList = Array.isArray(data?.llm)
+          ? data.llm
+          : Array.isArray(data?.profiles?.llm)
+            ? data.profiles.llm
+            : [];
         if (isMounted) {
           setLlmProfiles(llmProfilesList);
         }
@@ -682,6 +685,7 @@ const buildProviderProfileOptions = (
     ? profiles.filter(profile => profile.provider === normalizedProvider)
     : profiles;
   const options = filtered
+    .filter(profile => profile.modelType !== 'embedding')
     .filter(profile => profile.key)
     .map(profile => ({
       value: profile.key,

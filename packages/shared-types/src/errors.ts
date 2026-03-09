@@ -4,7 +4,7 @@
  * @module @hivemind/shared-types/errors
  *
  * ## Purpose
- * These error classes are designed for use by adapter packages (@hivemind/adapter-*)
+ * These error classes are designed for use by message packages (@hivemind/message-*)
  * to avoid circular dependencies with the main codebase. They provide a common error
  * handling interface that can be extended or adapted by the main codebase.
  *
@@ -16,11 +16,11 @@
  * - Automatic error classification
  * - Retry configuration
  *
- * These lightweight errors are suitable for adapter packages that need basic error
+ * These lightweight errors are suitable for message packages that need basic error
  * types without the overhead of the full error infrastructure.
  *
  * ## When to Use
- * - Use these errors **within adapter packages** (`@hivemind/adapter-*`)
+ * - Use these errors **within message packages** (`@hivemind/message-*`)
  * - Use `src/types/errorClasses.ts` for **main codebase** error handling
  * - The `IErrorFactory` interface allows adapters to use either implementation
  *
@@ -108,7 +108,7 @@ export abstract class BaseError extends Error {
  * - Field, value, and expected type metadata
  *
  * This lightweight version provides basic validation error functionality suitable
- * for adapter packages that need to signal validation failures without the full
+ * for message packages that need to signal validation failures without the full
  * error infrastructure.
  *
  * @example
@@ -156,7 +156,7 @@ export class ValidationError extends BaseError {
  * - Automatic retry delay calculation with jitter
  *
  * This lightweight version provides basic network error functionality suitable
- * for adapter packages that need to signal network failures without the full
+ * for message packages that need to signal network failures without the full
  * error infrastructure.
  *
  * @example
@@ -205,7 +205,7 @@ export class NetworkError extends BaseError {
  * - Retry-after support for rate-limited requests
  *
  * This lightweight version provides basic API error functionality suitable for
- * adapter packages that need to signal API failures without the full error
+ * message packages that need to signal API failures without the full error
  * infrastructure.
  *
  * @example
@@ -255,7 +255,7 @@ export class ApiError extends BaseError {
  * - Critical severity classification
  *
  * This lightweight version provides basic configuration error functionality suitable
- * for adapter packages that need to signal configuration issues without the full
+ * for message packages that need to signal configuration issues without the full
  * error infrastructure.
  *
  * @example
@@ -294,7 +294,7 @@ export class ConfigurationError extends BaseError {
 /**
  * Factory interface for creating error instances.
  *
- * This interface allows adapter packages to use either the lightweight error
+ * This interface allows message packages to use either the lightweight error
  * classes from this module or the full-featured error classes from the main
  * codebase. Adapters can accept an error factory in their constructor to
  * allow for flexible error handling strategies.

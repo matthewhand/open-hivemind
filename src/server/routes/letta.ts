@@ -1,5 +1,5 @@
 import { Router, Request, Response } from 'express';
-import axios from 'axios';
+import { listAgents, getAgent } from '@hivemind/llm-letta';
 
 const router = Router();
 
@@ -22,41 +22,14 @@ router.get('/agents', async (req: Request, res: Response) => {
       });
     }
 
-    const baseUrl = apiUrl.endsWith('/') ? apiUrl.slice(0, -1) : apiUrl;
-
-    const response = await axios.get(`${baseUrl}/agents`, {
-      headers: {
-        'Authorization': `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
-      },
-      timeout: 10000,
-    });
-
-    // Return simplified agent list
-    const agents = response.data.map((agent: any) => ({
-      id: agent.id,
-      name: agent.name,
-      description: agent.description,
-      created_at: agent.created_at,
-      updated_at: agent.updated_at,
-    }));
-
+    const agents = await listAgents(apiKey, apiUrl);
     return res.json(agents);
   } catch (error) {
-    if (axios.isAxiosError(error)) {
-      const status = error.response?.status || 500;
-      const message = error.response?.data?.message || error.message;
-      return res.status(status).json({
-        error: 'Letta API Error',
-        message,
-        details: error.response?.data,
-      });
-    }
-
+    const message = error instanceof Error ? error.message : 'Unknown error';
     console.error('Letta agents lookup error:', error);
     return res.status(500).json({
-      error: 'Internal Server Error',
-      message: 'Failed to fetch agents from Letta API',
+      error: 'Letta API Error',
+      message,
     });
   }
 });
@@ -79,31 +52,14 @@ router.get('/agents/:id', async (req: Request, res: Response) => {
       });
     }
 
-    const baseUrl = apiUrl.endsWith('/') ? apiUrl.slice(0, -1) : apiUrl;
-
-    const response = await axios.get(`${baseUrl}/agents/${id}`, {
-      headers: {
-        'Authorization': `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
-      },
-      timeout: 10000,
-    });
-
-    return res.json(response.data);
+    const agent = await getAgent(id, apiKey, apiUrl);
+    return res.json(agent);
   } catch (error) {
-    if (axios.isAxiosError(error)) {
-      const status = error.response?.status || 500;
-      const message = error.response?.data?.message || error.message;
-      return res.status(status).json({
-        error: 'Letta API Error',
-        message,
-      });
-    }
-
+    const message = error instanceof Error ? error.message : 'Unknown error';
     console.error('Letta agent details error:', error);
     return res.status(500).json({
-      error: 'Internal Server Error',
-      message: 'Failed to fetch agent details from Letta API',
+      error: 'Letta API Error',
+      message,
     });
   }
 });

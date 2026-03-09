@@ -12,7 +12,7 @@ const useModal = () => {
   });
 
   // Open modal for adding provider
-  const openAddModal = useCallback((botId: string, providerType: 'message' | 'llm') => {
+  const openAddModal = useCallback((botId: string, providerType: 'message' | 'llm' | 'memory' | 'tool') => {
     setModalState({
       isOpen: true,
       providerType,
@@ -26,7 +26,7 @@ const useModal = () => {
   // Open modal for editing provider
   const openEditModal = useCallback((
     botId: string,
-    providerType: 'message' | 'llm',
+    providerType: 'message' | 'llm' | 'memory' | 'tool',
     provider: MessageProvider | LLMProvider,
   ) => {
     setModalState({

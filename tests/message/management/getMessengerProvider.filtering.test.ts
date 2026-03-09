@@ -8,7 +8,7 @@ jest.mock('fs', () => ({
   ),
 }));
 
-jest.mock('@hivemind/adapter-discord', () => ({
+jest.mock('@hivemind/message-discord', () => ({
   DiscordService: {
     getInstance: jest.fn(() => ({
       provider: 'discord',

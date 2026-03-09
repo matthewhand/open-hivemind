@@ -497,7 +497,9 @@ Do not mention that the channel was quiet/idle and do not say "I noticed".`;
         if (activityBotId) {
           recordBotActivity(channelId, activityBotId);
         }
-      } catch {}
+      } catch (error) {
+        log(`Error recording bot activity for idle response: ${error}`);
+      }
 
       this.recordBotResponse(serviceName, channelId);
       activity.idleResponseSentSinceLastInteraction = true;

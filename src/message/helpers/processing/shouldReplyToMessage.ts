@@ -105,7 +105,9 @@ export async function shouldReplyToMessage(
       debug('Message from bot itself. Not replying.');
       return { shouldReply: false, reason: 'Message from self' };
     }
-  } catch {}
+  } catch (error) {
+    debug('Error checking if message is from self:', error);
+  }
 
   // 1. Global Ignore Bots
   if (isFromBot) {
@@ -174,7 +176,9 @@ export async function shouldReplyToMessage(
     if (typeof (density as any).recordMessage === 'function') {
       (density as any).recordMessage(channelId, authorId, isFromBot);
     }
-  } catch {}
+  } catch (error) {
+    debug('Error recording incoming message density:', error);
+  }
 
   // Analyze history for penalties
   const recentHistory = historyMessages ? historyMessages.slice(-15) : [];
@@ -196,7 +200,9 @@ export async function shouldReplyToMessage(
       } else {
         uniqueUsers.add(aid);
       }
-    } catch {}
+    } catch (error) {
+      debug('Error analyzing recent history messages:', error);
+    }
   }
   if (authorId && authorId !== botId) {
     if (isFromBot) {
@@ -290,7 +296,9 @@ export async function shouldReplyToMessage(
       if (density && typeof (density as any).getUniqueParticipantCount === 'function') {
         participants = (density as any).getUniqueParticipantCount(channelId, windowMs);
       }
-    } catch {}
+    } catch (error) {
+      debug('Error getting unique participant count:', error);
+    }
     participants = Math.max(1, participants);
     const participantPenalty = Math.max(0, participants - 2) * 0.05 * -1;
     if (participantPenalty !== 0) {
@@ -333,7 +341,9 @@ export async function shouldReplyToMessage(
         chance -= 0.1;
         mods.push('-OffTopic(-0.1)');
       }
-    } catch {}
+    } catch (error) {
+      debug('Error analyzing semantics:', error);
+    }
   }
 
   const isAddressedToSomeone =
@@ -435,7 +445,9 @@ export async function shouldReplyToMessage(
         mods.push(`+QuietChannel(+${quietBonus.toFixed(2)})`);
       }
     }
-  } catch {}
+  } catch (error) {
+    debug('Error getting messages per minute for quiet bonus calculation:', error);
+  }
 
   // 6. Global Activity (Fatigue) Penalty
   const activityScore = GlobalActivityTracker.getInstance().getScore(botId);

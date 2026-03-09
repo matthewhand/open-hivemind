@@ -38,6 +38,7 @@ export interface LLMProvider {
   type: LLMProviderType;
   name: string;
   config: Record<string, any>;
+  modelType?: 'chat' | 'embedding' | 'both';
   enabled: boolean;
 }
 

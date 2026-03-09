@@ -108,7 +108,7 @@ const IntegrationsPanel: React.FC = () => {
 
       if (profilesRes.ok) {
         const profilesData = await profilesRes.json();
-        setLlmProfiles(profilesData.profiles?.llm || []);
+        setLlmProfiles(profilesData.llm || profilesData.profiles?.llm || []);
       }
     } catch (err: any) {
       setError(err.message);
@@ -376,7 +376,7 @@ const IntegrationsPanel: React.FC = () => {
                           isOpen: true,
                           isEdit: true,
                           providerType: 'llm',
-                          provider: { id: profile.key, name: profile.name, type: profile.provider, config: profile.config }
+                          provider: { id: profile.key, name: profile.name, type: profile.provider, config: profile.config, modelType: profile.modelType }
                         })}>
                           <PencilSquareIcon className="w-4 h-4" />
                         </Button>

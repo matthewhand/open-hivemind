@@ -281,10 +281,11 @@ export const ProviderConfigForm: React.FC<ProviderConfigFormProps> = ({
           const Component = field.component;
           return (
             <Component
-              value={value}
+              value={typeof value === 'string' ? value : ''}
               onChange={(newValue: any) => handleFieldChange(field.name, newValue)}
               apiKey={config.apiKey}
-              baseUrl={config.baseUrl || config.endpoint}
+              baseUrl={config.baseUrl || config.apiUrl || config.endpoint}
+              providerType={(field.componentProps?.providerType || schema.providerType) as any}
               onValidationError={(error: string) => {
                 // Show validation warnings instead of errors for API keys
                 if (field.name === 'apiKey') {
@@ -303,7 +304,15 @@ export const ProviderConfigForm: React.FC<ProviderConfigFormProps> = ({
             />
           );
         }
-        break;
+        return (
+          <Input
+            type="text"
+            value={typeof value === 'string' ? value : ''}
+            onChange={(e) => handleFieldChange(field.name, e.target.value)}
+            placeholder={field.placeholder}
+            className={inputClasses}
+          />
+        );
 
       default:
         return (

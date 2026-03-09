@@ -1,16 +1,9 @@
 import * as fs from 'fs';
 import * as path from 'path';
 
+import { loadPlugin, instantiateMessageService } from '@src/plugins/PluginLoader';
+
 const gmpDebug = require('debug')('app:getMessengerProvider');
-// These modules are mocked in tests; keep access shape simple and flat
-const SlackMgr = require('@hivemind/adapter-slack');
-const MattermostMgr = (() => {
-  try {
-    return require('@hivemind/adapter-mattermost');
-  } catch (_e) {
-    return null;
-  }
-})();
 
 /**
  * Get Messenger Providers
@@ -85,85 +78,27 @@ export function getMessengerProvider() {
   const hasSlack = hasType('slack') || providerFilter.includes('slack');
   const hasMattermost = hasType('mattermost') || providerFilter.includes('mattermost');
 
-  // Discord (singleton) - tests mock as { DiscordService: { getInstance } }
-  if (hasDiscord && wantProvider('discord')) {
+  // Load each requested message provider dynamically via PluginLoader
+  const requestedTypes = [
+    { name: 'discord',    wanted: hasDiscord && wantProvider('discord') },
+    { name: 'slack',      wanted: hasSlack && wantProvider('slack') },
+    { name: 'mattermost', wanted: hasMattermost && wantProvider('mattermost') },
+  ];
+
+  for (const { name, wanted } of requestedTypes) {
+    if (!wanted) continue;
     try {
-      const DiscordMgr = require('@hivemind/adapter-discord');
-      const svc = DiscordMgr?.DiscordService?.getInstance
-        ? DiscordMgr.DiscordService.getInstance()
-        : undefined;
+      const mod = loadPlugin(`message-${name}`);
+      const svc = instantiateMessageService(mod);
       if (svc) {
-        // Ensure provider identity is exposed for tests
         if (typeof (svc as any).provider === 'undefined') {
-          (svc as any).provider = 'discord';
+          (svc as any).provider = name;
         }
         messengerServices.push(svc);
-        gmpDebug('Initialized Discord provider');
-        gmpDebug(
-          `Discord svc typeof=${typeof svc} keys=${Object.keys(svc)} provider=${(svc as any).provider}`
-        );
+        gmpDebug('Initialized %s provider via plugin loader', name);
       }
     } catch (e: any) {
-      gmpDebug(`Failed to initialize Discord provider: ${e?.message || String(e)}`);
-    }
-  }
-
-  // Slack (singleton) - use getInstance
-  if (wantProvider('slack') && hasSlack) {
-    try {
-      let svc: any = null;
-      // Prefer the exact export shape used by tests
-      if (SlackMgr?.SlackService?.getInstance) {
-        svc = SlackMgr.SlackService.getInstance();
-      } else if (SlackMgr?.default?.SlackService?.getInstance) {
-        svc = SlackMgr.default.SlackService.getInstance();
-      } else if (SlackMgr?.default?.getInstance) {
-        svc = SlackMgr.default.getInstance();
-      } else if (typeof SlackMgr === 'function' && SlackMgr.getInstance) {
-        svc = SlackMgr.getInstance();
-      } else if (SlackMgr?.SlackService) {
-        // Handle case where SlackService is a class constructor exported directly or in namespace
-        if (SlackMgr.SlackService.getInstance) {
-          svc = SlackMgr.SlackService.getInstance();
-        }
-      }
-
-      if (svc) {
-        // Ensure provider identity is exposed for tests
-        if (typeof (svc as any).provider === 'undefined') {
-          (svc as any).provider = 'slack';
-        }
-        messengerServices.push(svc);
-        gmpDebug('Initialized Slack provider');
-        gmpDebug(
-          `Slack svc typeof=${typeof svc} keys=${Object.keys(svc)} provider=${(svc as any).provider}`
-        );
-      }
-    } catch (e: any) {
-      gmpDebug(`Failed to initialize Slack provider: ${e?.message || String(e)}`);
-    }
-  }
-
-  // Mattermost (singleton)
-  if (MattermostMgr && wantProvider('mattermost') && hasMattermost) {
-    try {
-      const svc = MattermostMgr.MattermostService?.getInstance
-        ? MattermostMgr.MattermostService.getInstance()
-        : MattermostMgr.default?.getInstance
-          ? MattermostMgr.default.getInstance()
-          : MattermostMgr.getInstance
-            ? MattermostMgr.getInstance()
-            : null;
-      if (svc) {
-        messengerServices.push(svc);
-        gmpDebug('Initialized Mattermost provider');
-      } else {
-        gmpDebug('Mattermost provider module present but no getInstance found; skipping');
-      }
-    } catch (e: any) {
-      const errMsg =
-        e && typeof e === 'object' && 'message' in e ? (e as Error).message : String(e);
-      gmpDebug(`Failed to initialize Mattermost provider: ${errMsg}`);
+      gmpDebug(`Failed to initialize ${name} provider: ${e?.message || String(e)}`);
     }
   }
 
@@ -179,19 +114,8 @@ export function getMessengerProvider() {
     if (providerFilter.length === 0) {
       gmpDebug('No valid messenger providers initialized, defaulting to Slack');
       try {
-        let svc: any = null;
-        if (SlackMgr?.SlackService?.getInstance) {
-          svc = SlackMgr.SlackService.getInstance();
-        } else if (SlackMgr?.default?.SlackService?.getInstance) {
-          svc = SlackMgr.default.SlackService.getInstance();
-        } else if (SlackMgr?.default?.getInstance) {
-          svc = SlackMgr.default.getInstance();
-        } else if (typeof SlackMgr === 'function' && SlackMgr.getInstance) {
-          svc = SlackMgr.getInstance();
-        } else if (SlackMgr?.SlackService?.getInstance) {
-          svc = SlackMgr.SlackService.getInstance();
-        }
-
+        const mod = loadPlugin('message-slack');
+        const svc = instantiateMessageService(mod);
         if (svc) {
           if (typeof (svc as any).provider === 'undefined') {
             (svc as any).provider = 'slack';

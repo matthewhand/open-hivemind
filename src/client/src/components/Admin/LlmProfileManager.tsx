@@ -41,7 +41,7 @@ const LlmProfileManager: React.FC = () => {
       const response = await fetch('/api/config/llm-profiles');
       if (!response.ok) {throw new Error('Failed to fetch profiles');}
       const data = await response.json();
-      setProfiles(data.profiles?.llm || []);
+      setProfiles(data.llm || data.profiles?.llm || []);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch profiles');
     } finally {
