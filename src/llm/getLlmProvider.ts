@@ -24,6 +24,7 @@ function withTokenCounting(provider: ILlmProvider, _instanceId: string): ILlmPro
     name: provider.name,
     supportsChatCompletion: provider.supportsChatCompletion,
     supportsCompletion: provider.supportsCompletion,
+    supportsHistory: provider.supportsHistory,
     // Add instance ID to provider object if interface allows, to help tracking?
     // For now we map it.
     generateChatCompletion: async (
@@ -114,6 +115,12 @@ export function getLlmProvider(): ILlmProvider[] {
             instance = openWebUI; // Singleton/Stateless
             debug(`Initialized OpenWebUI provider instance: ${config.name}`);
             break;
+          case 'letta': {
+            const { LettaProvider } = require('@hivemind/provider-letta');
+            instance = LettaProvider.getInstance(config.config);
+            debug(`Initialized Letta provider instance: ${config.name}`);
+            break;
+          }
           default:
             debug(`Unknown LLM provider type: ${config.type}`);
         }
@@ -169,6 +176,11 @@ export function getLlmProvider(): ILlmProvider[] {
           case 'openwebui':
             instance = openWebUI;
             break;
+          case 'letta': {
+            const { LettaProvider } = require('@hivemind/provider-letta');
+            instance = LettaProvider.getInstance();
+            break;
+          }
         }
         if (instance) {
           const wrappedInstance = withTokenCounting(instance, 'legacy');

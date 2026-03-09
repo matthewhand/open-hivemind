@@ -4,6 +4,8 @@ import express from 'express';
 import { RealTimeValidationService } from '../src/server/services/RealTimeValidationService';
 import { WebSocketService } from '../src/server/services/WebSocketService';
 
+process.env.SESSION_SECRET = 'testsecretlongenoughstringtoavoidwarning32chars';
+
 // Set default timeout for all tests
 jest.setTimeout(60000);
 

@@ -23,6 +23,10 @@ export class FlowiseProvider implements ILlmProvider {
     return true;
   }
 
+  supportsHistory(): boolean {
+    return false;
+  }
+
   async generateChatCompletion(
     userMessage: string,
     historyMessages: IMessage[],

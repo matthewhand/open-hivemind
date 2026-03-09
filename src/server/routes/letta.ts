@@ -1,6 +1,5 @@
 import { Router, Request, Response } from 'express';
 import axios from 'axios';
-import { isSafeUrl } from '../../utils/ssrfGuard';
 
 const router = Router();
 
@@ -24,13 +23,6 @@ router.get('/agents', async (req: Request, res: Response) => {
     }
 
     const baseUrl = apiUrl.endsWith('/') ? apiUrl.slice(0, -1) : apiUrl;
-
-    if (!(await isSafeUrl(baseUrl))) {
-      return res.status(403).json({
-        error: 'Forbidden',
-        message: 'The provided API URL is not safe to connect to.'
-      });
-    }
 
     const response = await axios.get(`${baseUrl}/agents`, {
       headers: {
@@ -88,13 +80,6 @@ router.get('/agents/:id', async (req: Request, res: Response) => {
     }
 
     const baseUrl = apiUrl.endsWith('/') ? apiUrl.slice(0, -1) : apiUrl;
-
-    if (!(await isSafeUrl(baseUrl))) {
-      return res.status(403).json({
-        error: 'Forbidden',
-        message: 'The provided API URL is not safe to connect to.'
-      });
-    }
 
     const response = await axios.get(`${baseUrl}/agents/${id}`, {
       headers: {

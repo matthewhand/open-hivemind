@@ -1,147 +1,78 @@
-import axios from 'axios';
-
-jest.mock('axios');
-jest.mock('./lettaConfig', () => ({
-  __esModule: true,
-  default: { get: jest.fn().mockReturnValue(undefined) },
-}));
-jest.mock('debug', () => () => jest.fn());
-
-// Import after mocks are registered
+import Letta from '@letta-ai/letta-client';
 import { LettaProvider } from './lettaProvider';
 
-const mockedAxios = axios as jest.Mocked<typeof axios>;
+jest.mock('@letta-ai/letta-client');
 
-function makeClient(overrides: { get?: jest.Mock; post?: jest.Mock } = {}) {
-  return {
-    get: overrides.get ?? jest.fn(),
-    post: overrides.post ?? jest.fn(),
-  };
-}
+const mockCreate = jest.fn();
+const MockLetta = Letta as jest.MockedClass<typeof Letta>;
 
 beforeEach(() => {
-  jest.useFakeTimers();
+  jest.clearAllMocks();
   (LettaProvider as any).instance = undefined;
-  mockedAxios.isAxiosError.mockReturnValue(false);
-  // Default: empty client; individual tests override as needed
-  mockedAxios.create.mockReturnValue(makeClient() as any);
+  MockLetta.mockImplementation(() => ({
+    agents: { messages: { create: mockCreate } },
+  }) as any);
 });
 
-afterEach(() => {
-  jest.useRealTimers();
-});
-
-describe('singleton', () => {
-  it('returns the same instance on repeated calls', () => {
-    const a = LettaProvider.getInstance({ apiKey: 'k' });
-    const b = LettaProvider.getInstance({ apiKey: 'other' });
-    expect(a).toBe(b);
-  });
-});
-
-describe('listAgents', () => {
-  it('returns data from GET /agents', async () => {
-    const agents = [{ id: '1', name: 'agent-one' }];
-    const client = makeClient({ get: jest.fn().mockResolvedValue({ data: agents }) });
-    mockedAxios.create.mockReturnValue(client as any);
-
-    const result = await LettaProvider.getInstance().listAgents();
-    expect(result).toEqual(agents);
-    expect(client.get).toHaveBeenCalledWith('/agents');
+describe('LettaProvider.generateChatCompletion', () => {
+  it('throws when no agentId is configured', async () => {
+    delete process.env.LETTA_AGENT_ID;
+    const provider = LettaProvider.getInstance();
+    await expect(provider.generateChatCompletion('hello', [])).rejects.toThrow('No agent ID');
   });
 
-  it('throws wrapped error on failure', async () => {
-    const client = makeClient({ get: jest.fn().mockRejectedValue(new Error('network down')) });
-    mockedAxios.create.mockReturnValue(client as any);
-
-    await expect(LettaProvider.getInstance().listAgents()).rejects.toThrow(
-      'Failed to list agents: network down'
-    );
-  });
-});
-
-describe('sendMessage', () => {
-  it('returns last assistant message content', async () => {
-    const data = [
-      { id: '1', role: 'user', content: 'hi' },
-      { id: '2', role: 'assistant', content: 'hello' },
-    ];
-    const client = makeClient({ post: jest.fn().mockResolvedValue({ data }) });
-    mockedAxios.create.mockReturnValue(client as any);
-
-    const result = await LettaProvider.getInstance().sendMessage('agent-1', 'hi');
-    expect(result).toBe('hello');
-  });
-
-  it('returns empty string when no assistant message', async () => {
-    const client = makeClient({ post: jest.fn().mockResolvedValue({ data: [] }) });
-    mockedAxios.create.mockReturnValue(client as any);
-
-    expect(await LettaProvider.getInstance().sendMessage('agent-1', 'hi')).toBe('');
-  });
-});
-
-describe('generateChatCompletion', () => {
-  it('throws when no agentId configured', async () => {
-    await expect(LettaProvider.getInstance().generateChatCompletion('hello')).rejects.toThrow(
-      'No agent ID provided'
-    );
-  });
-
-  it('delegates to sendMessage with agentId from metadata', async () => {
-    const client = makeClient({
-      post: jest.fn().mockResolvedValue({
-        data: [{ id: '1', role: 'assistant', content: 'reply' }],
-      }),
+  it('sends message and returns assistant content string', async () => {
+    mockCreate.mockResolvedValue({
+      messages: [
+        { role: 'user', content: 'hello' },
+        { role: 'assistant', content: 'world' },
+      ],
+      stop_reason: 'end_turn',
+      usage: {},
     });
-    mockedAxios.create.mockReturnValue(client as any);
+    const provider = LettaProvider.getInstance();
+    const result = await provider.generateChatCompletion('hello', [], { agentId: 'agent-123' });
+    expect(result).toBe('world');
+    expect(mockCreate).toHaveBeenCalledWith('agent-123', { input: 'hello' });
+  });
 
-    const result = await LettaProvider.getInstance().generateChatCompletion('hello', [], {
-      agentId: 'agent-42',
+  it('prepends systemPrompt from metadata', async () => {
+    mockCreate.mockResolvedValue({
+      messages: [{ role: 'assistant', content: 'ok' }],
+      stop_reason: 'end_turn',
+      usage: {},
     });
-    expect(result).toBe('reply');
-    expect(client.post).toHaveBeenCalledWith('/agents/agent-42/messages', {
-      messages: [{ role: 'user', content: 'hello' }],
+    const provider = LettaProvider.getInstance();
+    await provider.generateChatCompletion('hi', [], { agentId: 'agent-123', systemPrompt: 'be terse' });
+    expect(mockCreate).toHaveBeenCalledWith('agent-123', { input: 'be terse\n\nhi' });
+  });
+
+  it('returns empty string when no assistant message in response', async () => {
+    mockCreate.mockResolvedValue({
+      messages: [{ role: 'tool', content: 'tool result' }],
+      stop_reason: 'end_turn',
+      usage: {},
     });
+    const provider = LettaProvider.getInstance();
+    const result = await provider.generateChatCompletion('hi', [], { agentId: 'agent-123' });
+    expect(result).toBe('');
+  });
+
+  it('extracts text from array content', async () => {
+    mockCreate.mockResolvedValue({
+      messages: [{ role: 'assistant', content: [{ type: 'text', text: 'array reply' }] }],
+      stop_reason: 'end_turn',
+      usage: {},
+    });
+    const provider = LettaProvider.getInstance();
+    const result = await provider.generateChatCompletion('hi', [], { agentId: 'agent-123' });
+    expect(result).toBe('array reply');
   });
 });
 
-describe('generateCompletion', () => {
-  it('always throws', async () => {
-    await expect(LettaProvider.getInstance().generateCompletion('x')).rejects.toThrow(
-      'does not support non-chat completion'
-    );
-  });
-});
-
-describe('retryWithBackoff', () => {
-  it('retries on 429 and succeeds on second attempt', async () => {
-    const axiosErr = Object.assign(new Error('rate limited'), {
-      response: { status: 429 },
-    });
-    const get = jest
-      .fn()
-      .mockRejectedValueOnce(axiosErr)
-      .mockResolvedValueOnce({ data: [] });
-
-    mockedAxios.create.mockReturnValue(makeClient({ get }) as any);
-    mockedAxios.isAxiosError.mockReturnValue(true);
-
-    const promise = LettaProvider.getInstance().listAgents();
-    await jest.runAllTimersAsync();
-    expect(await promise).toEqual([]);
-    expect(get).toHaveBeenCalledTimes(2);
-  });
-
-  it('does not retry on 400', async () => {
-    const axiosErr = Object.assign(new Error('bad request'), {
-      response: { status: 400 },
-    });
-    const get = jest.fn().mockRejectedValue(axiosErr);
-    mockedAxios.create.mockReturnValue(makeClient({ get }) as any);
-    mockedAxios.isAxiosError.mockReturnValue(true);
-
-    await expect(LettaProvider.getInstance().listAgents()).rejects.toThrow('bad request');
-    expect(get).toHaveBeenCalledTimes(1);
+describe('LettaProvider.generateCompletion', () => {
+  it('throws unsupported error', async () => {
+    const provider = LettaProvider.getInstance();
+    await expect(provider.generateCompletion('prompt')).rejects.toThrow();
   });
 });

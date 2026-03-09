@@ -33,7 +33,7 @@ const botSchema = {
   // LLM provider configuration
   LLM_PROVIDER: {
     doc: 'LLM provider type (openai, flowise, etc.)',
-    format: ['openai', 'flowise', 'openwebui', 'perplexity', 'replicate', 'n8n', 'openswarm'],
+    format: ['openai', 'flowise', 'openwebui', 'perplexity', 'replicate', 'n8n', 'openswarm', 'letta'],
     default: 'flowise',
     env: 'BOTS_{name}_LLM_PROVIDER',
   },
@@ -283,6 +283,21 @@ const botSchema = {
     format: String,
     default: 'default-team',
     env: 'BOTS_{name}_OPENSWARM_TEAM',
+  },
+
+  // Letta configuration
+  LETTA_AGENT_ID: {
+    doc: 'Letta agent ID for this bot',
+    format: String,
+    default: '',
+    env: 'BOTS_{name}_LETTA_AGENT_ID',
+  },
+
+  LETTA_SYSTEM_PROMPT: {
+    doc: 'System prompt override for Letta agent',
+    format: String,
+    default: '',
+    env: 'BOTS_{name}_LETTA_SYSTEM_PROMPT',
   },
 };
 
@@ -575,6 +590,13 @@ export class BotConfigurationManager {
         baseUrl: botConfig.get('OPENSWARM_BASE_URL'),
         apiKey: botConfig.get('OPENSWARM_API_KEY'),
         team: botConfig.get('OPENSWARM_TEAM'),
+      };
+    }
+
+    if (config.llmProvider === 'letta') {
+      config.letta = {
+        agentId: botConfig.get('LETTA_AGENT_ID') || undefined,
+        systemPrompt: botConfig.get('LETTA_SYSTEM_PROMPT') || undefined,
       };
     }
 

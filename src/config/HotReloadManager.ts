@@ -323,12 +323,20 @@ export class HotReloadManager {
       } else {
         // Apply global changes
         const allBots = manager.getAllBots();
-        for (const bot of allBots) {
-          const success = await this.applyBotChange(bot.name, change.changes);
-          if (success) {
-            affectedBots.push(bot.name);
+        const results = await Promise.all(
+          allBots.map(bot =>
+            this.applyBotChange(bot.name, change.changes).then(success => ({
+              botName: bot.name,
+              success,
+            }))
+          )
+        );
+
+        for (const result of results) {
+          if (result.success) {
+            affectedBots.push(result.botName);
           } else {
-            warnings.push(`Failed to apply changes to bot '${bot.name}'`);
+            warnings.push(`Failed to apply changes to bot '${result.botName}'`);
           }
         }
       }
@@ -431,15 +439,26 @@ export class HotReloadManager {
         return false;
       }
 
-      // Restore the snapshot
-      for (const [botName, botConfig] of Object.entries(snapshot)) {
-        await this.applyBotChange(botName, botConfig as Record<string, any>);
+      // Restore the snapshot concurrently and surface any partial failures
+      const snapshotEntries = Object.entries(snapshot);
+      const restoreResults = await Promise.all(
+        snapshotEntries.map(([botName, botConfig]) =>
+          this.applyBotChange(botName, botConfig as Record<string, any>)
+        )
+      );
+
+      const failedBots = snapshotEntries
+        .filter((_, i) => !restoreResults[i])
+        .map(([botName]) => botName);
+
+      if (failedBots.length > 0) {
+        debug(`Rollback partially failed; could not restore bots: ${failedBots.join(', ')}`);
       }
 
-      // Remove the snapshot after successful rollback
+      // Remove the snapshot after rollback attempt
       this.rollbackSnapshots.delete(snapshotId);
 
-      debug(`Successfully rolled back to snapshot '${snapshotId}'`);
+      debug(`Rolled back to snapshot '${snapshotId}'${failedBots.length > 0 ? ' (partial)' : ' (complete)'}`);
       return true;
     } catch (error: unknown) {
       const hivemindError = ErrorUtils.toHivemindError(error) as any;

@@ -1,6 +1,6 @@
 import fs from 'fs';
 import path from 'path';
-import { executeCommand, readFile } from '../../src/utils/utils';
+import { executeCommandSafe, readFile } from '../../src/utils/utils';
 
 describe('Utility Functions Comprehensive Tests', () => {
   describe('Math Operations', () => {
@@ -102,7 +102,7 @@ describe('Utility Functions Comprehensive Tests', () => {
 
   describe('Basic Assertions', () => {
     test('should execute utility helpers for commands and file handling', async () => {
-      const commandOutput = await executeCommand('echo unit-test');
+      const commandOutput = await executeCommandSafe('echo', ['unit-test']);
       expect(commandOutput).toBe('unit-test\n');
 
       const tempPath = path.join(__dirname, 'utility-sample.txt');

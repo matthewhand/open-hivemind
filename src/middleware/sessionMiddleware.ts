@@ -18,28 +18,25 @@ const debug = Debug('app:sessionMiddleware');
  */
 
 // Validate session secret strength
-function getSessionSecret(): string {
+export function getSessionSecret(): string {
   const envSecret = process.env.SESSION_SECRET;
 
-  if (envSecret) {
-    // Validate secret strength
-    if (envSecret.length < 32) {
-      console.warn('WARNING: SESSION_SECRET should be at least 32 characters long');
-    }
-    return envSecret;
-  }
-
-  // Generate random secret for development/test only
-  if (process.env.NODE_ENV === 'production') {
+  if (!envSecret) {
     throw new Error(
-      'SESSION_SECRET environment variable is required in production. ' +
+      'SESSION_SECRET environment variable is required. ' +
         "Generate a secure secret with: node -e \"console.log(require('crypto').randomBytes(64).toString('hex'))\""
     );
   }
 
-  const generatedSecret = crypto.randomBytes(64).toString('hex');
-  debug('Generated random session secret for development');
-  return generatedSecret;
+  // Validate secret strength
+  if (envSecret.length < 32) {
+    console.warn(
+      `WARNING: SESSION_SECRET is only ${envSecret.length} characters; ` +
+        'it should be at least 32 characters long for adequate security'
+    );
+  }
+
+  return envSecret;
 }
 
 const SESSION_SECRET = getSessionSecret();

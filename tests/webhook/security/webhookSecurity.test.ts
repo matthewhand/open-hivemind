@@ -100,14 +100,15 @@ describe('WebhookSecurity', () => {
   });
 
   describe('verifyIpWhitelist', () => {
-    it('should call next when IP whitelist is empty', () => {
+    it('should return 403 when IP whitelist is empty', () => {
       mockWebhookConfig.get.mockReturnValue('');
       req.ip = '192.168.1.100';
 
       verifyIpWhitelist(req as Request, res as Response, next);
 
-      expect(next).toHaveBeenCalled();
-      expect(res.status).not.toHaveBeenCalled();
+      expect(res.status).toHaveBeenCalledWith(403);
+      expect(res.send).toHaveBeenCalledWith('Forbidden: IP whitelist is empty');
+      expect(next).not.toHaveBeenCalled();
     });
 
     it('should call next when IP is in whitelist', () => {

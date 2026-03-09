@@ -14,7 +14,10 @@ jest.mock('../../../src/types/errors');
 jest.mock('fs');
 jest.mock('debug', () => {
   const debugMock = jest.fn();
-  return () => debugMock;
+  const debug = () => debugMock;
+  debug.default = debug;
+  debug.debug = debug;
+  return debug;
 });
 
 describe('HotReloadManager', () => {
@@ -150,6 +153,66 @@ describe('HotReloadManager', () => {
       expect(result.affectedBots).toContain('test-bot');
     });
 
+    it('should apply global changes to all bots concurrently', async () => {
+      const mockManager = BotConfigurationManager.getInstance();
+      (mockManager.getAllBots as jest.Mock).mockReturnValue([
+        { name: 'bot1' },
+        { name: 'bot2' },
+        { name: 'bot3' }
+      ]);
+
+      let inFlight = 0;
+      let maxInFlight = 0;
+
+      const spy = jest.spyOn(hotReloadManager as any, 'applyBotChange').mockImplementation(async () => {
+        inFlight++;
+        maxInFlight = Math.max(maxInFlight, inFlight);
+        await new Promise(resolve => setTimeout(resolve, 10)); // simulate async work
+        inFlight--;
+        return true;
+      });
+
+      const globalChange = {
+        type: 'update' as const,
+        changes: { messageProvider: 'slack' }
+      };
+
+      const result = await hotReloadManager.applyConfigurationChange(globalChange);
+
+      expect(result.success).toBe(true);
+      expect(result.affectedBots).toEqual(['bot1', 'bot2', 'bot3']); // Check they all succeeded
+      expect(maxInFlight).toBe(3); // Prove they ran concurrently
+
+      spy.mockRestore();
+    });
+
+    it('should handle mixed success/failure concurrently', async () => {
+      const mockManager = BotConfigurationManager.getInstance();
+      (mockManager.getAllBots as jest.Mock).mockReturnValue([
+        { name: 'bot1' },
+        { name: 'bot2' },
+        { name: 'bot3' }
+      ]);
+
+      const spy = jest.spyOn(hotReloadManager as any, 'applyBotChange').mockImplementation(async (botName) => {
+        return botName !== 'bot2'; // bot2 fails
+      });
+
+      const globalChange = {
+        type: 'update' as const,
+        changes: { messageProvider: 'slack' }
+      };
+
+      const result = await hotReloadManager.applyConfigurationChange(globalChange);
+
+      // Even if some fail, global apply succeeds overall but returns warnings
+      expect(result.success).toBe(true);
+      expect(result.affectedBots).toEqual(['bot1', 'bot3']);
+      expect(result.warnings).toContain("Failed to apply changes to bot 'bot2'");
+
+      spy.mockRestore();
+    });
+
     it('should add warnings when global changes fail for some bots', async () => {
        const mockStore = UserConfigStore.getInstance();
        (mockStore.setBotOverride as jest.Mock).mockImplementation((botName) => {
@@ -207,6 +270,40 @@ describe('HotReloadManager', () => {
       const applyResult = await hotReloadManager.applyConfigurationChange(change);
       const result = await hotReloadManager.rollbackToSnapshot(applyResult.rollbackId as string);
       expect(result).toBe(true);
+    });
+
+    it('should restore global snapshot concurrently', async () => {
+      const mockManager = BotConfigurationManager.getInstance();
+      (mockManager.getAllBots as jest.Mock).mockReturnValue([
+        { name: 'bot1' },
+        { name: 'bot2' },
+        { name: 'bot3' }
+      ]);
+
+      const change = {
+        type: 'update' as const,
+        changes: { messageProvider: 'slack' }
+      };
+
+      const applyResult = await hotReloadManager.applyConfigurationChange(change);
+
+      let inFlight = 0;
+      let maxInFlight = 0;
+
+      const spy = jest.spyOn(hotReloadManager as any, 'applyBotChange').mockImplementation(async () => {
+        inFlight++;
+        maxInFlight = Math.max(maxInFlight, inFlight);
+        await new Promise(resolve => setTimeout(resolve, 10)); // simulate async work
+        inFlight--;
+        return true;
+      });
+
+      const result = await hotReloadManager.rollbackToSnapshot(applyResult.rollbackId as string);
+
+      expect(result).toBe(true);
+      expect(maxInFlight).toBe(3); // Prove they rolled back concurrently
+
+      spy.mockRestore();
     });
 
     it('should handle rollback error gracefully', async () => {

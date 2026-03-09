@@ -41,6 +41,13 @@ export interface ILlmProvider {
   supportsChatCompletion: () => boolean;
 
   /**
+   * Indicates whether the provider requires history to be passed by the caller.
+   * Stateful providers (Flowise, OpenWebUI, Letta) manage their own history.
+   * Defaults to true if not implemented.
+   */
+  supportsHistory?: () => boolean;
+
+  /**
    * Indicates whether the provider supports non-chat completions.
    *
    * Non-chat completions are single-turn text generation without
