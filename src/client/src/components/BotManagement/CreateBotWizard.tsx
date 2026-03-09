@@ -282,7 +282,7 @@ export const CreateBotWizard: React.FC<CreateBotWizardProps> = ({
                                     }}
                                 >
                                     <option value="">{defaultLlmConfigured ? 'Use System Default' : 'Select Provider'}</option>
-                                    {llmProfiles.map(p => (
+                                    {llmProfiles.filter(p => p.modelType !== 'embedding').map(p => (
                                         <option key={p.key} value={p.key}>{p.name} ({p.provider})</option>
                                     ))}
                                     <option disabled>──────────</option>

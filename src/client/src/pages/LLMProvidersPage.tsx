@@ -22,9 +22,29 @@ import {
   ToggleLeft as ToggleOffIcon,
   ToggleRight as ToggleOnIcon,
 } from 'lucide-react';
+import type { LLMProviderType } from '../types/bot';
+import { LLM_PROVIDER_CONFIGS } from '../types/bot';
 import ProviderConfigModal from '../components/ProviderConfiguration/ProviderConfigModal';
 import { apiService } from '../services/api';
-import { getProviderSchema } from '../provider-configs';
+
+type LlmModelType = 'chat' | 'embedding' | 'both';
+
+const normalizeModelType = (value: unknown): LlmModelType => {
+  if (value === 'embedding' || value === 'both') {
+    return value;
+  }
+  return 'chat';
+};
+
+const isChatCapable = (profile: any): boolean => {
+  const modelType = normalizeModelType(profile?.modelType);
+  return modelType === 'chat' || modelType === 'both';
+};
+
+const isEmbeddingCapable = (profile: any): boolean => {
+  const modelType = normalizeModelType(profile?.modelType);
+  return modelType === 'embedding' || modelType === 'both';
+};
 
 const LLMProvidersPage: React.FC = () => {
   const { modalState, openAddModal, openEditModal, closeModal } = useModal();
@@ -34,6 +54,7 @@ const LLMProvidersPage: React.FC = () => {
   const [libraryStatus, setLibraryStatus] = useState<Record<string, { installed: boolean; package: string }>>({});
   const [webuiIntelligenceProvider, setWebuiIntelligenceProvider] = useState<string>('');
   const [defaultChatbotProfile, setDefaultChatbotProfile] = useState<string>('');
+  const [defaultEmbeddingProvider, setDefaultEmbeddingProvider] = useState<string>('');
   const [perUseCaseEnabled, setPerUseCaseEnabled] = useState<boolean>(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -48,11 +69,13 @@ const LLMProvidersPage: React.FC = () => {
         apiService.get('/api/config/llm-status'),
         apiService.get('/api/config/global'),
       ]);
-      setProfiles((profilesRes as any).profiles?.llm || []);
+      setProfiles((profilesRes as any).llm || (profilesRes as any).profiles?.llm || []);
       setDefaultStatus(statusRes);
       const gs = (globalRes as any)._userSettings?.values || {};
+      const llmValues = (globalRes as any).llm?.values || {};
       setWebuiIntelligenceProvider(gs.webuiIntelligenceProvider || '');
       setDefaultChatbotProfile(gs.defaultChatbotProfile || '');
+      setDefaultEmbeddingProvider(llmValues.DEFAULT_EMBEDDING_PROVIDER || gs.defaultEmbeddingProfile || '');
       setPerUseCaseEnabled(!!gs.perUseCaseEnabled);
       if ((statusRes as any).libraryStatus) setLibraryStatus((statusRes as any).libraryStatus);
     } catch (err: any) {
@@ -68,11 +91,18 @@ const LLMProvidersPage: React.FC = () => {
     await apiService.put('/api/config/global', patch);
   };
 
+  const saveLlmConfig = async (patch: Record<string, any>) => {
+    await apiService.put('/api/config/global', {
+      configName: 'llm',
+      updates: patch,
+    });
+  };
+
   const handleAddProfile = () => openAddModal('global', 'llm');
 
   const handleEditProfile = (profile: any) => {
     openEditModal('global', 'llm', {
-      id: profile.key, name: profile.name, type: profile.provider, config: profile.config, enabled: true,
+      id: profile.key, name: profile.name, type: profile.provider, config: profile.config, modelType: profile.modelType, enabled: true,
     } as any);
   };
 
@@ -90,6 +120,7 @@ const LLMProvidersPage: React.FC = () => {
         key: providerData.name.toLowerCase().replace(/\s+/g, '-'),
         name: providerData.name,
         provider: providerData.type,
+        modelType: providerData.modelType || 'chat',
         config: providerData.config,
       };
       if (modalState.isEdit && modalState.provider?.id) {
@@ -115,8 +146,8 @@ const LLMProvidersPage: React.FC = () => {
   };
 
   const getProviderIcon = (type: string) => {
-    const schema = getProviderSchema(type);
-    return schema?.icon || <BrainIcon className="w-5 h-5" />;
+    const config = LLM_PROVIDER_CONFIGS[type as LLMProviderType];
+    return config?.icon || <BrainIcon className="w-5 h-5" />;
   };
 
   const toggleExpand = (key: string) => setExpandedProfile(expandedProfile === key ? null : key);
@@ -144,6 +175,9 @@ const LLMProvidersPage: React.FC = () => {
     const types = new Set(profiles.map(p => p.provider));
     return Array.from(types).map(type => ({ label: type, value: type }));
   }, [profiles]);
+
+  const chatProfiles = useMemo(() => profiles.filter(isChatCapable), [profiles]);
+  const embeddingProfiles = useMemo(() => profiles.filter(isEmbeddingCapable), [profiles]);
 
   const stats = [
     { id: 'total', title: 'Total Profiles', value: profiles.length, icon: 'brain', color: 'primary' as const },
@@ -174,7 +208,7 @@ const LLMProvidersPage: React.FC = () => {
       {error && <Alert status="error" icon={<XIcon />} message={error} onClose={() => setError(null)} />}
 
       {/* ── Use-case assignment cards ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-4 gap-6">
 
         {/* 1. System Default (env-var fallback) */}
         <Card className={`bg-base-100 shadow-sm border ${defaultStatus?.configured ? 'border-success/20' : 'border-warning/20'}`}>
@@ -226,7 +260,7 @@ const LLMProvidersPage: React.FC = () => {
                 disabled={loading}
               >
                 <option value="">Use System Default</option>
-                {profiles.map((p) => (
+                {chatProfiles.map((p) => (
                   <option key={p.key} value={p.key}>{p.name} ({p.provider})</option>
                 ))}
               </select>
@@ -254,7 +288,34 @@ const LLMProvidersPage: React.FC = () => {
                 disabled={loading}
               >
                 <option value="">None (Disabled)</option>
-                {profiles.map((p) => (
+                {chatProfiles.map((p) => (
+                  <option key={p.key} value={p.key}>{p.name} ({p.provider})</option>
+                ))}
+              </select>
+            </div>
+          </div>
+        </Card>
+
+        <Card className="bg-base-100 shadow-sm border border-base-200">
+          <div className="card-body p-5">
+            <h3 className="font-bold flex items-center gap-2 mb-1">
+              <CpuIcon className="w-4 h-4 text-secondary" /> Default Embedding Provider
+            </h3>
+            <p className="text-xs opacity-60 mb-3">
+              Embedding-capable provider/profile used by memory and semantic search features when embeddings are needed.
+            </p>
+            <div className="form-control w-full">
+              <select
+                className="select select-bordered select-sm w-full"
+                value={defaultEmbeddingProvider}
+                onChange={async (e) => {
+                  setDefaultEmbeddingProvider(e.target.value);
+                  await saveLlmConfig({ DEFAULT_EMBEDDING_PROVIDER: e.target.value }).catch(() => {});
+                }}
+                disabled={loading}
+              >
+                <option value="">None Selected</option>
+                {embeddingProfiles.map((p) => (
                   <option key={p.key} value={p.key}>{p.name} ({p.provider})</option>
                 ))}
               </select>
@@ -342,12 +403,27 @@ const LLMProvidersPage: React.FC = () => {
                       </h3>
                       <div className="flex items-center gap-2 mt-1">
                         <Badge variant="secondary" size="small" style="outline">{profile.provider}</Badge>
+                        <Badge
+                          variant={
+                            normalizeModelType(profile.modelType) === 'embedding'
+                              ? 'warning'
+                              : normalizeModelType(profile.modelType) === 'both'
+                                ? 'info'
+                                : 'neutral'
+                          }
+                          size="small"
+                        >
+                          {normalizeModelType(profile.modelType)}
+                        </Badge>
                         {renderLibraryCheck(profile.provider)}
                         {profile.key === defaultChatbotProfile && (
                           <Badge variant="primary" size="small">Default Chatbot</Badge>
                         )}
                         {profile.key === webuiIntelligenceProvider && (
                           <Badge variant="warning" size="small">WebUI AI</Badge>
+                        )}
+                        {profile.key === defaultEmbeddingProvider && (
+                          <Badge variant="secondary" size="small">Default Embedding</Badge>
                         )}
                       </div>
                     </div>

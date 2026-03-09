@@ -58,6 +58,48 @@ describe('LLM Profiles API Endpoints', () => {
     app.use('/api/config', configRouter);
   });
 
+  describe('POST /api/config/llm-profiles', () => {
+    it('should create an LLM profile with modelType metadata', async () => {
+      mockGetLlmProfiles.mockReturnValue({ llm: [] });
+
+      const payload = {
+        key: 'text-embedding-3-large',
+        name: 'Text Embedding 3 Large',
+        provider: 'openai',
+        modelType: 'embedding',
+        config: { model: 'text-embedding-3-large' },
+      };
+
+      const response = await request(app)
+        .post('/api/config/llm-profiles')
+        .send(payload)
+        .expect(201);
+
+      expect(response.body.success).toBe(true);
+      expect(response.body.profile).toEqual(expect.objectContaining(payload));
+      expect(mockSaveLlmProfiles).toHaveBeenCalledWith({
+        llm: [expect.objectContaining(payload)],
+      });
+    });
+
+    it('should reject invalid modelType values', async () => {
+      mockGetLlmProfiles.mockReturnValue({ llm: [] });
+
+      await request(app)
+        .post('/api/config/llm-profiles')
+        .send({
+          key: 'bad-model',
+          name: 'Bad Model',
+          provider: 'openai',
+          modelType: 'search',
+          config: {},
+        })
+        .expect(400);
+
+      expect(mockSaveLlmProfiles).not.toHaveBeenCalled();
+    });
+  });
+
   describe('PUT /api/config/llm-profiles/:key', () => {
     it('should update an existing LLM profile', async () => {
       const existingProfiles = {
@@ -76,6 +118,7 @@ describe('LLM Profiles API Endpoints', () => {
         key: 'existing-profile',
         name: 'Updated Profile',
         provider: 'openai',
+        modelType: 'embedding',
         config: { apiKey: 'new-key' },
       };
 
@@ -94,6 +137,7 @@ describe('LLM Profiles API Endpoints', () => {
             key: 'existing-profile',
             name: 'Updated Profile',
             provider: 'openai',
+            modelType: 'embedding',
             config: { apiKey: 'new-key' },
           }),
         ],
@@ -181,6 +225,29 @@ describe('LLM Profiles API Endpoints', () => {
 
       expect(response.body.error).toContain('provider');
       expect(mockSaveLlmProfiles).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('DELETE /api/config/llm-profiles/:key', () => {
+    it('should delete an existing profile', async () => {
+      mockGetLlmProfiles.mockReturnValue({
+        llm: [
+          {
+            key: 'chat-profile',
+            name: 'Chat Profile',
+            provider: 'openai',
+            modelType: 'chat',
+            config: {},
+          },
+        ],
+      });
+
+      const response = await request(app)
+        .delete('/api/config/llm-profiles/chat-profile')
+        .expect(200);
+
+      expect(response.body.success).toBe(true);
+      expect(mockSaveLlmProfiles).toHaveBeenCalledWith({ llm: [] });
     });
   });
 });
