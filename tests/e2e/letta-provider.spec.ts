@@ -83,7 +83,7 @@ test.describe('Letta Provider E2E Tests', () => {
         contentType: 'application/json',
         body: JSON.stringify([
           { id: 'openai', name: 'OpenAI', category: 'llm' },
-          { id: 'letta', name: 'Letta (MemGPT)', category: 'llm' },
+          { id: 'letta', name: 'Letta', category: 'llm' },
         ]),
       });
     });
@@ -110,10 +110,10 @@ test.describe('Letta Provider E2E Tests', () => {
     await expect(page.locator('.modal-box, [role="dialog"]')).toBeVisible();
 
     // Select Letta provider
-    await page.click('text=Letta (MemGPT)');
+    await page.click('text=Letta');
 
     // Wait for the configuration form
-    await expect(page.locator('text=Configure Letta (MemGPT)')).toBeVisible();
+    await expect(page.locator('text=Configure Letta')).toBeVisible();
 
     // Fill in the form
     await page.fill('input[name="apiUrl"]', 'https://api.letta.com/v1');
@@ -189,7 +189,7 @@ test.describe('Letta Provider E2E Tests', () => {
         status: 200,
         contentType: 'application/json',
         body: JSON.stringify([
-          { id: 'letta', name: 'Letta (MemGPT)', category: 'llm' },
+          { id: 'letta', name: 'Letta', category: 'llm' },
         ]),
       });
     });
@@ -216,10 +216,10 @@ test.describe('Letta Provider E2E Tests', () => {
     await expect(page.locator('.modal-box, [role="dialog"]')).toBeVisible();
 
     // Select Letta provider
-    await page.click('text=Letta (MemGPT)');
+    await page.click('text=Letta');
 
     // Wait for the configuration form
-    await expect(page.locator('text=Configure Letta (MemGPT)')).toBeVisible();
+    await expect(page.locator('text=Configure Letta')).toBeVisible();
 
     // Try to save without filling required fields
     await page.getByRole('button', { name: /Save|Create/i }).click();
