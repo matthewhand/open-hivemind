@@ -14,6 +14,7 @@ import {
 import { auditMiddleware } from './middleware/audit';
 import { authenticateToken, optionalAuth } from './middleware/auth';
 import { csrfProtection, csrfTokenHandler } from './middleware/csrf';
+import { applyRateLimiting } from '../middleware/rateLimiter';
 import { securityHeaders } from './middleware/security';
 import activityRouter from './routes/activity';
 import adminRouter from './routes/admin';
@@ -115,11 +116,8 @@ export class WebUIServer {
 
     this.app.use(cors(corsOptions));
 
-    // Rate limiting (basic implementation)
-    this.app.use('/api', (req, res, next) => {
-      // Basic rate limiting middleware
-      next();
-    });
+    // Rate limiting (robust implementation)
+    this.app.use('/api', applyRateLimiting);
 
     // Body parsing
     this.app.use(express.json({ limit: '10mb' }));
