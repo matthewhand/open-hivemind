@@ -1,0 +1,23 @@
+{
+    "$schema": "./schemas/trusted-mcp-repos.schema.json",
+    "trustedRepositories": [
+        {
+            "owner": "matthewhand",
+            "repo": "open-hivemind",
+            "name": "Open Hivemind",
+            "description": "Multi-agent LLM orchestration platform",
+            "verified": true,
+            "addedAt": "2026-03-06T00:00:00Z"
+        }
+    ],
+    "cautionRepositories": [],
+    "settings": {
+        "requireVerifiedForProduction": false,
+        "showTrustIndicator": true,
+        "defaultTrustLevel": "caution"
+    },
+    "metadata": {
+        "lastUpdated": "2026-03-06T00:00:00Z",
+        "version": "1.0.0"
+    }
+}

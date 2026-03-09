@@ -1,0 +1,54 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://open-hivemind.dev/schemas/trusted-mcp-repos.schema.json",
+  "title": "Trusted MCP Repositories",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["trustedRepositories", "cautionRepositories", "settings", "metadata"],
+  "properties": {
+    "trustedRepositories": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/repository" }
+    },
+    "cautionRepositories": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/repository" }
+    },
+    "settings": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["requireVerifiedForProduction", "showTrustIndicator", "defaultTrustLevel"],
+      "properties": {
+        "requireVerifiedForProduction": { "type": "boolean" },
+        "showTrustIndicator": { "type": "boolean" },
+        "defaultTrustLevel": {
+          "type": "string",
+          "enum": ["trusted", "caution"]
+        }
+      }
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "lastUpdated": { "type": "string" },
+        "version": { "type": "string" }
+      }
+    }
+  },
+  "$defs": {
+    "repository": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["owner", "repo", "name", "verified"],
+      "properties": {
+        "owner": { "type": "string", "minLength": 1 },
+        "repo": { "type": "string", "minLength": 1 },
+        "name": { "type": "string", "minLength": 1 },
+        "description": { "type": "string" },
+        "verified": { "type": "boolean" },
+        "addedAt": { "type": "string" }
+      }
+    }
+  }
+}
