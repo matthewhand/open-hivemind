@@ -113,6 +113,13 @@ router.get('/:id', validateRequest(BotIdParamSchema), async (req, res) => {
 router.post('/', validateRequest(CreateBotSchema), async (req, res) => {
   try {
     const request = req.body as CreateBotRequest;
+    // Idempotency check: see if bot with same name exists
+    const allBots = await manager.getAllBots();
+    const existingBot = allBots.find((b) => b.name === request.name);
+    if (existingBot) {
+      return res.status(200).json({ success: true, message: 'Bot already exists', bot: existingBot });
+    }
+
     const bot = await manager.createBot(request);
     return res.status(201).json({ success: true, message: 'Bot created', bot });
   } catch (error: any) {
@@ -179,6 +186,12 @@ router.put('/:id', validateRequest(UpdateBotSchema), async (req, res) => {
 router.delete('/:id', validateRequest(BotIdParamSchema), async (req, res) => {
   try {
     const { id } = req.params;
+    // Idempotency: return 200/204 even if resource already gone
+    const existingBot = await manager.getBot(id);
+    if (!existingBot) {
+      return res.json({ success: true, message: 'Bot already deleted or not found' });
+    }
+
     await manager.deleteBot(id);
     return res.json({ success: true, message: 'Bot deleted' });
   } catch (error: any) {
@@ -216,6 +229,14 @@ router.post('/:id/clone', validateRequest(CloneBotSchema), async (req, res) => {
   try {
     const { id } = req.params;
     const { newName } = req.body;
+
+    // Idempotency check: see if cloned bot already exists
+    const allBots = await manager.getAllBots();
+    const existingBot = allBots.find((b) => b.name === newName);
+    if (existingBot) {
+      return res.status(200).json({ success: true, message: 'Bot clone already exists', bot: existingBot });
+    }
+
     const newBot = await manager.cloneBot(id, newName);
     return res.status(201).json({ success: true, message: 'Bot cloned', bot: newBot });
   } catch (error: any) {
