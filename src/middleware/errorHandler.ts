@@ -11,6 +11,7 @@ import type { NextFunction, Request, Response } from 'express';
 import { MetricsCollector } from '../monitoring/MetricsCollector';
 import { ErrorFactory, type BaseHivemindError } from '../types/errorClasses';
 import { errorLogger } from '../utils/errorLogger';
+import { createErrorResponse } from '../utils/errorResponse';
 
 const debug = Debug('app:error:middleware');
 
@@ -39,25 +40,6 @@ interface ErrorContext {
   body?: any;
   params?: any;
   query?: any;
-}
-
-/**
- * Error response structure
- */
-interface ErrorResponse {
-  error: string;
-  code: string;
-  message?: string;
-  correlationId: string;
-  timestamp: string;
-  details?: Record<string, unknown>;
-  recovery?: {
-    canRecover: boolean;
-    retryDelay?: number;
-    maxRetries?: number;
-    steps?: string[];
-  };
-  stack?: string; // Only in development
 }
 
 /**
@@ -142,44 +124,6 @@ function sanitizeRequestBody(body: any): any {
 }
 
 /**
- * Create standardized error response
- */
-function createErrorResponse(
-  error: BaseHivemindError,
-  context: ErrorContext,
-  includeStack = false
-): ErrorResponse {
-  const recovery = error.getRecoveryStrategy();
-
-  const response: ErrorResponse = {
-    error: error.name,
-    code: error.code || 'INTERNAL_ERROR',
-    message: error.message,
-    correlationId: context.correlationId,
-    timestamp: new Date().toISOString(),
-  };
-
-  if (error.details) {
-    response.details = error.details;
-  }
-
-  if (recovery) {
-    response.recovery = {
-      canRecover: recovery.canRecover,
-      retryDelay: recovery.retryDelay,
-      maxRetries: recovery.maxRetries,
-      steps: recovery.recoverySteps,
-    };
-  }
-
-  if (includeStack && error.stack) {
-    response.stack = error.stack;
-  }
-
-  return response;
-}
-
-/**
  * Global error handler middleware
  */
 export function globalErrorHandler(
@@ -209,8 +153,16 @@ export function globalErrorHandler(
   // Determine response status
   const statusCode = hivemindError.statusCode || 500;
 
-  // Create error response
-  const errorResponse = createErrorResponse(hivemindError, context, includeStack);
+  // Create standard error response
+  const errorResponseBuilder = createErrorResponse(hivemindError, context.correlationId)
+    .withRequest(context.path, context.method, context.correlationId);
+
+  const errorResponse = errorResponseBuilder.build();
+
+  if (includeStack && hivemindError.stack) {
+    // Inject stack trace in development mode
+    errorResponse.stack = hivemindError.stack;
+  }
 
   // Ensure correlation ID is set in response headers
   if (req.correlationId && !res.getHeader('X-Correlation-ID')) {
