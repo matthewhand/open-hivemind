@@ -295,9 +295,15 @@ export class MattermostService extends EventEmitter implements IMessengerService
 
           const { MattermostMessage } = await import('./MattermostMessage');
           const messagePromises = posts.slice(0, limit).map(async (post) => {
-            const user = await client.getUser(post.user_id);
+            let user;
+            try {
+              user = await client.getUser(post.user_id);
+            } catch (err: any) {
+              debug(`Failed to fetch user ${post.user_id}: ${err.message}`);
+            }
+
             const username = user
-              ? `${user.first_name} ${user.last_name}`.trim() || user.username
+              ? `${user.first_name || ''} ${user.last_name || ''}`.trim() || user.username || 'Unknown'
               : 'Unknown';
             const isBot = Boolean(user?.is_bot);
 
