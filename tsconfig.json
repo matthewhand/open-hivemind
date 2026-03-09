@@ -19,7 +19,7 @@
     "rootDir": "./",
     "baseUrl": "./",
     "typeRoots": ["./node_modules/@types", "./src/types"],
-    "types": [],
+    "types": ["jest", "node"],
     "incremental": true,
     "skipLibCheck": true,
     "noEmitOnError": false,
