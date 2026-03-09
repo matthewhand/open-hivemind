@@ -1,4 +1,4 @@
-import { DiscordBotManager, Bot } from '../../../packages/adapter-discord/src/managers/DiscordBotManager';
+import { DiscordBotManager, Bot } from '../../../packages/message-discord/src/managers/DiscordBotManager';
 
 const makeClient = (wsStatus = 0) => ({
   ws: { status: wsStatus },
@@ -14,7 +14,11 @@ jest.mock('discord.js', () => ({
 }));
 
 function makeManager(): DiscordBotManager {
-  return new DiscordBotManager({} as any);
+  return new DiscordBotManager({
+    errorTypes: { ConfigError: class extends Error {}, NetworkError: class extends Error {} },
+    getAllBotConfigs: () => [],
+    isBotDisabled: () => false,
+  } as any);
 }
 
 function injectBot(manager: DiscordBotManager, name: string, wsStatus = 0): Bot {
