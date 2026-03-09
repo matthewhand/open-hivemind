@@ -1199,6 +1199,47 @@ export class DatabaseManager {
     }
   }
 
+  /**
+   * Get multiple bot configurations in a single query
+   */
+  async getBotConfigurationsBulk(ids: number[]): Promise<BotConfiguration[]> {
+    this.ensureConnected();
+
+    if (ids.length === 0) return [];
+
+    try {
+      const placeholders = ids.map(() => '?').join(',');
+      const rows = await this.db!.all(
+        `SELECT * FROM bot_configurations WHERE id IN (${placeholders})`,
+        ids
+      );
+
+      return rows.map((row) => ({
+        id: row.id,
+        name: row.name,
+        messageProvider: row.messageProvider,
+        llmProvider: row.llmProvider,
+        persona: row.persona,
+        systemInstruction: row.systemInstruction,
+        mcpServers: row.mcpServers,
+        mcpGuard: row.mcpGuard,
+        discord: row.discord,
+        slack: row.slack,
+        mattermost: row.mattermost,
+        openai: row.openai,
+        flowise: row.flowise,
+        openwebui: row.openwebui,
+        openswarm: row.openswarm,
+        isActive: row.isActive === 1,
+        createdAt: new Date(row.createdAt),
+        updatedAt: new Date(row.updatedAt),
+      }));
+    } catch (error) {
+      debug('Error getting bulk bot configurations:', error);
+      throw new Error(`Failed to get bulk bot configurations: ${error}`);
+    }
+  }
+
   async getBotConfigurationByName(name: string): Promise<BotConfiguration | null> {
     this.ensureConnected();
 
