@@ -6,10 +6,10 @@ Mem0 memory provider for open-hivemind — persistent memory for AI agents.
 
 Mem0 is a **local SDK-based** memory provider that:
 - **Extracts facts automatically** from conversations using LLM
-- **Handles embeddings internally** using OpenAI's embedding models
+- **Handles embeddings** using OpenAI or OpenAI-compatible backends
 - **Stores vectors locally** or in external vector stores (Qdrant, Pinecone)
 
-> **Note:** Unlike Mem4ai and MemVault, Mem0 does NOT support external embedding providers (`embeddingProviderId`, `llmProfileKey`). It manages embeddings internally using the provided OpenAI API key.
+> **Note:** Mem0 uses the `mem0ai` SDK which supports OpenAI-compatible embedding backends (vLLM, Ollama, LiteLLM, etc.). Configure `llmBaseUrl` to point to your embedding server. Unlike Mem4ai and MemVault, Mem0 does NOT use `embeddingProviderId` or `llmProfileKey` - it manages embeddings directly via the SDK config.
 
 ## Features
 
