@@ -1,7 +1,6 @@
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
-
 import Debug from 'debug';
 
 const debug = Debug('app:pluginLoader');
@@ -66,7 +65,7 @@ export function loadPlugin(name: string): any {
 
   throw new Error(
     `Plugin '${name}' not found. ` +
-    `Check that @hivemind/${name} is installed or the plugin exists in ${PLUGINS_DIR}.`
+      `Check that @hivemind/${name} is installed or the plugin exists in ${PLUGINS_DIR}.`
   );
 }
 
@@ -82,12 +81,14 @@ export function instantiateLlmProvider(mod: any, config: any): any {
     return mod.create(config);
   }
   // Fallback: singleton getInstance
-  const name = Object.keys(mod).find(k => k.endsWith('Provider') && typeof mod[k]?.getInstance === 'function');
+  const name = Object.keys(mod).find(
+    (k) => k.endsWith('Provider') && typeof mod[k]?.getInstance === 'function'
+  );
   if (name) {
     return mod[name].getInstance(config);
   }
   // Fallback: constructor
-  const ctor = Object.keys(mod).find(k => k.endsWith('Provider') && typeof mod[k] === 'function');
+  const ctor = Object.keys(mod).find((k) => k.endsWith('Provider') && typeof mod[k] === 'function');
   if (ctor) {
     return new mod[ctor](config);
   }
@@ -114,10 +115,12 @@ export function instantiateMessageService(mod: any, config?: any): any {
   }
   // Fallback: *Service.getInstance()
   const svcKey = Object.keys(mod).find(
-    k => k.endsWith('Service') && typeof mod[k]?.getInstance === 'function'
+    (k) => k.endsWith('Service') && typeof mod[k]?.getInstance === 'function'
   );
   if (svcKey) {
     return mod[svcKey].getInstance();
   }
-  throw new Error('Plugin does not export create(), a default factory, or a Service.getInstance().');
+  throw new Error(
+    'Plugin does not export create(), a default factory, or a Service.getInstance().'
+  );
 }
