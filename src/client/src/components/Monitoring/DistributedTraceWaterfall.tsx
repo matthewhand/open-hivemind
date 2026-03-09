@@ -89,8 +89,8 @@ export const DistributedTraceWaterfall: React.FC<DistributedTraceWaterfallProps>
   });
 
   // Calculate total duration for timeline scaling
-  const minStartTime = Math.min(...spans.map(s => s.startTime));
-  const maxEndTime = Math.max(...spans.map(s => s.startTime + s.duration));
+  const minStartTime = spans.reduce((min, s) => Math.min(min, s.startTime), Infinity);
+  const maxEndTime = spans.reduce((max, s) => Math.max(max, s.startTime + s.duration), -Infinity);
   const totalDuration = Math.max(maxEndTime - minStartTime, 1);
 
   const getServiceColor = (service: string) => {
