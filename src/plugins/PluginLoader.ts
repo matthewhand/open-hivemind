@@ -2,6 +2,8 @@ import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
 import Debug from 'debug';
+import type { ILlmProvider, IMessengerService } from '@hivemind/shared-types';
+import type { AnyConfig } from '../types/config';
 
 const debug = Debug('app:pluginLoader');
 
@@ -28,6 +30,13 @@ export interface PluginManifest {
   type: 'llm' | 'message' | 'memory' | 'tool';
 }
 
+export interface PluginModule {
+  manifest?: PluginManifest;
+  create?: (config?: AnyConfig | any) => any;
+  default?: (config?: AnyConfig | any) => any;
+  [key: string]: any;
+}
+
 /**
  * Load a plugin by its full package name (e.g. 'llm-openai', 'message-discord').
  *
@@ -38,14 +47,14 @@ export interface PluginManifest {
  * Returns the raw module object. Callers use `mod.create(config)` or
  * fall back to known class names for packages that predate the factory contract.
  */
-export function loadPlugin(name: string): any {
+export function loadPlugin(name: string): PluginModule {
   // 1. Try built-in workspace package
   try {
     const mod = require(`@hivemind/${name}`);
     debug('Loaded built-in plugin: @hivemind/%s', name);
     return mod;
-  } catch (e: any) {
-    if (!e.message?.includes('Cannot find module')) throw e;
+  } catch (e: unknown) {
+    if (e instanceof Error && !e.message?.includes('Cannot find module')) throw e;
   }
 
   // 2. Try community plugins dir
@@ -58,8 +67,9 @@ export function loadPlugin(name: string): any {
       const mod = require(pluginPath);
       debug('Loaded community plugin: %s', pluginPath);
       return mod;
-    } catch (e: any) {
-      throw new Error(`Failed to load community plugin '${name}': ${e.message}`);
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : String(e);
+      throw new Error(`Failed to load community plugin '${name}': ${msg}`);
     }
   }
 
@@ -75,7 +85,7 @@ export function loadPlugin(name: string): any {
  * Contract (preferred): module exports `create(config)` → ILlmProvider
  * Fallback: known class name patterns for pre-factory packages.
  */
-export function instantiateLlmProvider(mod: any, config: any): any {
+export function instantiateLlmProvider(mod: PluginModule, config?: AnyConfig | any): ILlmProvider {
   // Preferred: explicit factory
   if (typeof mod.create === 'function') {
     return mod.create(config);
@@ -84,17 +94,22 @@ export function instantiateLlmProvider(mod: any, config: any): any {
   const name = Object.keys(mod).find(
     (k) => k.endsWith('Provider') && typeof mod[k]?.getInstance === 'function'
   );
-  if (name) {
+  if (name && typeof mod[name].getInstance === 'function') {
     return mod[name].getInstance(config);
   }
   // Fallback: constructor
   const ctor = Object.keys(mod).find((k) => k.endsWith('Provider') && typeof mod[k] === 'function');
-  if (ctor) {
+  if (ctor && typeof mod[ctor] === 'function') {
     return new mod[ctor](config);
   }
   // Fallback: default export
   if (typeof mod.default === 'function') {
-    return new mod.default(config);
+    // Handling cases where default could be a class constructor or a factory
+    try {
+      return new (mod.default as any)(config);
+    } catch (e) {
+      return mod.default(config);
+    }
   }
   throw new Error('Plugin does not export create(), a Provider class, or a default constructor.');
 }
@@ -105,7 +120,7 @@ export function instantiateLlmProvider(mod: any, config: any): any {
  * Contract (preferred): module exports `create(config)` → IMessengerService
  * Fallback: known Service singleton patterns.
  */
-export function instantiateMessageService(mod: any, config?: any): any {
+export function instantiateMessageService(mod: PluginModule, config?: AnyConfig | any): IMessengerService {
   // Preferred: explicit factory
   if (typeof mod.create === 'function') {
     return mod.create(config);
@@ -117,7 +132,7 @@ export function instantiateMessageService(mod: any, config?: any): any {
   const svcKey = Object.keys(mod).find(
     (k) => k.endsWith('Service') && typeof mod[k]?.getInstance === 'function'
   );
-  if (svcKey) {
+  if (svcKey && typeof mod[svcKey].getInstance === 'function') {
     return mod[svcKey].getInstance();
   }
   throw new Error(
