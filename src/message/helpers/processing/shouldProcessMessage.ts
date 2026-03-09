@@ -27,7 +27,9 @@ function getDefaultChannelId(): string {
     if (discordChannel) {
       return discordChannel;
     }
-  } catch {}
+  } catch (error) {
+    debug('Error getting discord config for default channel:', error);
+  }
 
   try {
     // Try Slack config
@@ -36,7 +38,9 @@ function getDefaultChannelId(): string {
     if (slackChannel) {
       return slackChannel;
     }
-  } catch {}
+  } catch (error) {
+    debug('Error getting slack config for default channel:', error);
+  }
 
   return '';
 }
