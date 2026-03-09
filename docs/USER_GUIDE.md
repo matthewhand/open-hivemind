@@ -245,6 +245,8 @@ An internal chat interface for admins to experiment with prompts and query syste
 
 ### [UI Components](/admin/showcase)
 A reference for developers extending the WebUI.
+![UI Components Showcase](screenshots/showcase-page.png)
+
 *   **Component Library**: View available UI elements (buttons, inputs, cards) and their usage.
 
 ### [System Backups & Export](/admin/export)
