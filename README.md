@@ -87,7 +87,7 @@ For developers who want to modify the code or run locally without Docker.
 
 3.  **Start the development server:**
     ```bash
-    pnpm dev
+    pnpm run dev
     ```
 
 Access the WebUI at `http://localhost:3028`.
@@ -111,3 +111,27 @@ For a detailed walkthrough of every menu item and feature, please refer to the [
 ## License
 
 Released under the [MIT License](LICENSE).
+
+
+## Security & Environment Configuration
+
+Security is paramount in Open-Hivemind. While you can manage a significant portion of configuration via the WebUI, core security, cryptographic secrets, and system behavior are defined via environment variables (usually stored in your `.env` file).
+
+### Critical Security Variables
+If you deploy this publicly, **these variables must be set.**
+
+*   **`NODE_ENV`**: Determines operational mode. Always set to `production` in deployed environments to enforce strict validation and secure defaults.
+*   **`ADMIN_PASSWORD`**: Provides a robust fallback admin password for initial login.
+*   **`SESSION_SECRET`**: Cryptographic key used to encrypt stateful user sessions.
+*   **`JWT_SECRET`** & **`JWT_REFRESH_SECRET`**: Keys used to sign and verify API access tokens.
+
+### Configuration Variables
+Open-Hivemind leverages a myriad of environment variables for system configuration. Here are the core categories:
+
+*   **System Controls**: `PORT`, `BASE_URL`, `LOG_LEVEL`, `REDIS_URL`, `DEMO_MODE`
+*   **Security & Network Limits**: `ADMIN_IP_WHITELIST`, `ALLOW_LOCALHOST_ADMIN`, `ALLOW_LOCAL_NETWORK_ACCESS`, `CORS_ORIGIN`, `TRUST_PROXY`, `RATE_LIMIT_API_MAX`
+*   **Bot Registries (Multi-bot setup)**: Prefix dynamically instantiated bots via `BOTS_<NAME>_DISCORD_BOT_TOKEN` etc.
+*   **Global Fallbacks**: `DISCORD_BOT_TOKEN`, `SLACK_BOT_TOKEN`, `OPENAI_API_KEY`, `LLM_PROVIDER`, `MESSAGE_PROVIDER`
+*   **Behavior Tuning**: `MESSAGE_ACTIVITY_TIME_WINDOW`, `MESSAGE_MENTION_BONUS`, `MESSAGE_RECENT_ACTIVITY_DECAY_RATE`
+
+For a comprehensive, documented list of every supported variable, consult the `.env.sample` file included in the root of the repository.

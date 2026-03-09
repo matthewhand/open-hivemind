@@ -1,14 +1,13 @@
 import { createCipheriv, createDecipheriv, randomBytes, scryptSync } from 'crypto';
-import { createReadStream, createWriteStream, promises as fs } from 'fs';
+import { promises as fs } from 'fs';
 import { basename, join } from 'path';
-import { pipeline } from 'stream/promises';
 import { createGunzip, createGzip } from 'zlib';
 // @ts-ignore - csv-parse v6 ships its own types but TS can't resolve the /sync subpath
-import { parse } from 'csv-parse/sync';
 // @ts-ignore - csv-stringify v6 ships its own types but TS can't resolve the /sync subpath
-import { stringify } from 'csv-stringify/sync';
 import Debug from 'debug';
+import { AuditLogger } from '../../common/auditLogger';
 import { SecureConfigManager } from '../../config/SecureConfigManager';
+import { UserConfigStore } from '../../config/UserConfigStore';
 import { DatabaseManager } from '../../database/DatabaseManager';
 import { ConfigurationTemplateService } from './ConfigurationTemplateService';
 import { ConfigurationValidator } from './ConfigurationValidator';
@@ -120,13 +119,8 @@ export class ConfigurationImportExportService {
       let filePath = join(this.exportsDir, `${baseFileName}.${options.format}`);
 
       // Get configurations
-      const configs = [];
-      for (const id of configIds) {
-        const config = await this.dbManager.getBotConfiguration(id);
-        if (config) {
-          configs.push(config);
-        }
-      }
+      const configsRaw = await this.dbManager.getBotConfigurationsBulk(configIds);
+      const configs = configsRaw.filter(Boolean);
 
       if (configs.length === 0) {
         return {
@@ -152,11 +146,15 @@ export class ConfigurationImportExportService {
 
       // Include versions if requested
       if (options.includeVersions) {
-        const versionPromises = configs
-          .filter((c) => c.id != null)
-          .map(async (config) => this.dbManager.getBotConfigurationVersions(config.id as number));
-        const versionsNested = await Promise.all(versionPromises);
-        const versions = versionsNested.flat();
+        const validConfigIds = configs.map(c => c.id).filter(Boolean) as number[];
+        let versions: any[] = [];
+        if (validConfigIds.length > 0) {
+          const versionsMap = await this.dbManager.getBotConfigurationVersionsBulk(validConfigIds);
+          for (const id of validConfigIds) {
+            const configVersions = versionsMap.get(id) || [];
+            versions.push(...configVersions);
+          }
+        }
 
         exportData.versions = versions;
         exportData.metadata.versionCount = versions.length;
@@ -434,6 +432,12 @@ export class ConfigurationImportExportService {
 
   /**
    * Import configurations from file
+   *
+   * Note on Caching: When importing configurations, if the import data contains multiple
+   * versions referencing the same `botConfigurationId`, this method caches the DB validation
+   * results for those IDs (both valid and invalid). This cache is request-scoped and ephemeral,
+   * living only for the duration of the method call to prevent N+1 query patterns. Large imports
+   * with many unique config IDs will correctly make exactly one DB call per unique ID.
    */
   async importConfigurations(
     filePath: string,
@@ -546,11 +550,27 @@ export class ConfigurationImportExportService {
 
       // Process versions if included
       if (importData.versions && !options.validateOnly) {
+        // Cache to avoid N+1 queries when importing multiple versions for the same configuration
+        const validConfigIds = new Set<number>();
+        const invalidConfigIds = new Set<number>();
+
         for (const version of importData.versions) {
           try {
-            // Check if configuration exists
-            const config = await this.dbManager.getBotConfiguration(version.botConfigurationId);
-            if (config) {
+            const configId = version.botConfigurationId;
+            let isValid = validConfigIds.has(configId);
+
+            if (!isValid && !invalidConfigIds.has(configId)) {
+              // Check if configuration exists
+              const config = await this.dbManager.getBotConfiguration(configId);
+              if (config) {
+                validConfigIds.add(configId);
+                isValid = true;
+              } else {
+                invalidConfigIds.add(configId);
+              }
+            }
+
+            if (isValid) {
               await this.dbManager.createBotConfigurationVersion(version);
             }
           } catch (error) {
@@ -561,23 +581,48 @@ export class ConfigurationImportExportService {
 
       // Process templates if included
       if (importData.templates && !options.validateOnly) {
-        for (const template of importData.templates) {
-          try {
-            // Check if template exists
-            const existingTemplate = await this.templateService.getTemplateById(template.id);
-            if (!existingTemplate) {
-              await this.templateService.createTemplate({
-                name: template.name,
-                description: template.description,
-                category: template.category,
-                tags: template.tags,
-                config: template.config,
-                createdBy: importedBy,
-              });
-            }
-          } catch (error) {
-            result.warnings?.push(`Error processing template: ${(error as any).message}`);
-          }
+        const BATCH_SIZE = 50;
+        const existingTemplateIds = new Set<string>();
+
+        for (let i = 0; i < importData.templates.length; i += BATCH_SIZE) {
+          const batch = importData.templates.slice(i, i + BATCH_SIZE);
+
+          // Pre-fetch a batch of required templates concurrently with individual error handling
+          await Promise.all(
+            batch.map(async (t: any) => {
+              try {
+                const existing = await this.templateService.getTemplateById(t.id);
+                if (existing) {
+                  existingTemplateIds.add(t.id);
+                }
+              } catch (error) {
+                result.warnings?.push(
+                  `Error checking template ${t.id || 'unknown'}: ${(error as any).message}`
+                );
+              }
+            })
+          );
+
+          // Create new templates concurrently within the batch
+          await Promise.all(
+            batch
+              .filter((template: any) => !existingTemplateIds.has(template.id))
+              .map(async (template: any) => {
+                try {
+                  await this.templateService.createTemplate({
+                    name: template.name,
+                    description: template.description,
+                    category: template.category,
+                    tags: template.tags,
+                    config: template.config,
+                    createdBy: importedBy,
+                  });
+                  existingTemplateIds.add(template.id);
+                } catch (error) {
+                  result.warnings?.push(`Error processing template: ${(error as any).message}`);
+                }
+              })
+          );
         }
       }
 
@@ -593,7 +638,17 @@ export class ConfigurationImportExportService {
   }
 
   /**
-   * Create a backup of all configurations
+   * Create a backup of all configurations.
+   *
+   * Side-effects:
+   * - Enforces a configurable backup retention policy (deletes or cold-stores old backups if count > max).
+   * - Emits an audit log event when an old backup is pruned.
+   *
+   * @param name The name of the backup
+   * @param description Optional description for the backup
+   * @param createdBy User who triggered the backup
+   * @param options Additional export options (format, encryption, etc.)
+   * @returns An ExportResult containing the filePath, size, and checksum on success.
    */
   async createBackup(
     name: string,
@@ -625,7 +680,8 @@ export class ConfigurationImportExportService {
 
       if (result.success && result.filePath) {
         // Move to backups directory
-        const backupFileName = `backup-${name}-${Date.now()}.json.gz`;
+        const backupTimestamp = Date.now();
+        const backupFileName = `backup-${name}-${backupTimestamp}.json.gz`;
         const backupPath = join(this.backupsDir, backupFileName);
         await fs.rename(result.filePath, backupPath);
 
@@ -634,7 +690,7 @@ export class ConfigurationImportExportService {
           id: this.generateBackupId(),
           name,
           description,
-          createdAt: new Date(),
+          createdAt: new Date(backupTimestamp),
           createdBy: createdBy || 'unknown',
           configCount: configIds.length,
           versionCount: 0, // Will be calculated
@@ -647,6 +703,71 @@ export class ConfigurationImportExportService {
 
         const metadataPath = join(this.backupsDir, `${backupFileName}.meta`);
         await fs.writeFile(metadataPath, JSON.stringify(metadata, null, 2));
+
+        // Enforce backup retention policy with configurable limits and cold storage
+        try {
+          const generalSettings = UserConfigStore.getInstance().getGeneralSettings();
+          const maxBackups =
+            typeof generalSettings.backupRetentionLimit === 'number'
+              ? generalSettings.backupRetentionLimit
+              : 10;
+          const enableColdStorage = generalSettings.enableColdStorage === true;
+
+          const allBackups = await this.listBackups();
+          if (allBackups.length > maxBackups) {
+            debug(`Enforcing backup retention policy: keeping latest ${maxBackups} backups`);
+
+            const auditLogger = AuditLogger.getInstance();
+
+            // listBackups sorts from newest to oldest
+            const backupsToDelete = allBackups.slice(maxBackups);
+            for (const oldBackup of backupsToDelete) {
+              if (enableColdStorage) {
+                debug(`Archiving old backup to cold storage: ${oldBackup.id} (${oldBackup.name})`);
+                const oldBackupFileName = `backup-${oldBackup.name}-${new Date(oldBackup.createdAt).getTime()}.json.gz`;
+                const oldBackupPath = join(this.backupsDir, oldBackupFileName);
+                const coldDir = join(process.cwd(), 'config', 'backups', 'cold');
+                await fs.mkdir(coldDir, { recursive: true });
+
+                try {
+                  await fs.rename(oldBackupPath, join(coldDir, oldBackupFileName));
+                  // delete metadata to drop from active list
+                  await fs.unlink(join(this.backupsDir, `${oldBackupFileName}.meta`));
+
+                  auditLogger.logAdminAction(
+                    createdBy || 'system',
+                    'ARCHIVE',
+                    `backup/${oldBackup.id}`,
+                    'success',
+                    `Archived backup ${oldBackup.name} to cold storage due to retention limit`
+                  );
+                } catch (e) {
+                  debug(`Failed to cold store backup ${oldBackup.id}, falling back to delete:`, e);
+                  await this.deleteBackup(oldBackup.id);
+                  auditLogger.logAdminAction(
+                    createdBy || 'system',
+                    'DELETE',
+                    `backup/${oldBackup.id}`,
+                    'success',
+                    `Deleted backup ${oldBackup.name} due to retention limit (cold storage failed)`
+                  );
+                }
+              } else {
+                debug(`Deleting old backup: ${oldBackup.id} (${oldBackup.name})`);
+                await this.deleteBackup(oldBackup.id);
+                auditLogger.logAdminAction(
+                  createdBy || 'system',
+                  'DELETE',
+                  `backup/${oldBackup.id}`,
+                  'success',
+                  `Deleted backup ${oldBackup.name} due to retention limit`
+                );
+              }
+            }
+          }
+        } catch (retentionError) {
+          debug('Error enforcing backup retention:', retentionError);
+        }
 
         return {
           ...result,

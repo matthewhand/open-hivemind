@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Alert, Button, Input, Toggle } from '../DaisyUI';
 import { Shield, Plus, Trash2 } from 'lucide-react';
+import SecureConfigManager from '../SecureConfigManager';
 
 const SettingsSecurity: React.FC = () => {
   const [settings, setSettings] = useState({
@@ -268,6 +269,7 @@ const SettingsSecurity: React.FC = () => {
                 <button 
                   onClick={() => handleRemoveOrigin(origin)}
                   className="hover:text-error"
+                  aria-label={`Remove origin ${origin}`}
                 >
                   <Trash2 className="w-3 h-3" />
                 </button>
@@ -332,6 +334,13 @@ const SettingsSecurity: React.FC = () => {
         >
           {isSaving ? 'Saving...' : 'Save Security Settings'}
         </Button>
+      </div>
+
+      <div className="divider mt-8 mb-6"></div>
+
+      {/* Secure Configuration Management Section */}
+      <div className="mt-8">
+        <SecureConfigManager />
       </div>
     </div>
   );

@@ -34,7 +34,7 @@ const Login: React.FC = () => {
     try {
       const success = await login(formData.username, formData.password);
       if (success) {
-        navigate('/dashboard', { replace: true });
+        navigate('/admin/bots', { replace: true });
       } else {
         setError('Invalid username or password');
       }

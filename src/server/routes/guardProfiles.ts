@@ -25,11 +25,11 @@ router.get('/', (req: Request, res: Response) => {
       success: true,
       data: profiles,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     return res.status(500).json({
       success: false,
       error: 'Failed to load guardrail profiles',
-      message: error.message,
+      message: error instanceof Error ? error.message : String(error),
     });
   }
 });
@@ -52,19 +52,42 @@ router.get('/:id', (req: Request, res: Response) => {
       success: true,
       data: profile,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     return res.status(500).json({
       success: false,
       error: 'Failed to retrieve profile',
-      message: error.message,
+      message: error instanceof Error ? error.message : String(error),
     });
   }
 });
 
+interface GuardBody {
+  name: string;
+  description?: string;
+  guards: {
+    mcpGuard?: {
+      enabled?: boolean;
+      type: string;
+      allowedUsers?: string[];
+      allowedTools?: string[];
+    };
+    rateLimit?: {
+      enabled?: boolean;
+      maxRequests?: number;
+      windowMs?: number;
+    };
+    contentFilter?: {
+      enabled?: boolean;
+      strictness: string;
+      blockedTerms?: string[];
+    };
+  };
+}
+
 // POST / - Create a new profile
 router.post('/', (req: Request, res: Response) => {
   try {
-    const { name, description, guards } = req.body;
+    const { name, description, guards } = req.body as GuardBody;
 
     if (!name || typeof name !== 'string') {
       return res.status(400).json({
@@ -83,6 +106,17 @@ router.post('/', (req: Request, res: Response) => {
     }
 
     const profiles = loadGuardrailProfiles();
+
+    // Idempotency check: see if profile with same name already exists
+    const existingProfile = profiles.find((p) => p.name === name);
+    if (existingProfile) {
+      return res.status(200).json({
+        success: true,
+        data: existingProfile,
+        message: 'Guard profile already exists',
+      });
+    }
+
     const newProfile: GuardrailProfile = {
       id: uuidv4(),
       name,
@@ -94,7 +128,7 @@ router.post('/', (req: Request, res: Response) => {
           ['owner', 'custom'].includes(guards.mcpGuard.type)
             ? {
                 enabled: Boolean(guards.mcpGuard.enabled),
-                type: guards.mcpGuard.type,
+                type: guards.mcpGuard.type as 'owner' | 'custom',
                 ...(guards.mcpGuard.allowedUsers && Array.isArray(guards.mcpGuard.allowedUsers)
                   ? { allowedUsers: guards.mcpGuard.allowedUsers }
                   : {}),
@@ -116,7 +150,7 @@ router.post('/', (req: Request, res: Response) => {
             ? {
                 enabled: Boolean(guards.contentFilter.enabled),
                 strictness: ['low', 'medium', 'high'].includes(guards.contentFilter.strictness)
-                  ? guards.contentFilter.strictness
+                  ? guards.contentFilter.strictness as 'low' | 'medium' | 'high'
                   : 'low',
                 ...(guards.contentFilter.blockedTerms &&
                 Array.isArray(guards.contentFilter.blockedTerms)
@@ -135,11 +169,11 @@ router.post('/', (req: Request, res: Response) => {
       data: newProfile,
       message: 'Guard profile created successfully',
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     return res.status(500).json({
       success: false,
       error: 'Failed to create guard profile',
-      message: error.message,
+      message: error instanceof Error ? error.message : String(error),
     });
   }
 });
@@ -148,7 +182,7 @@ router.post('/', (req: Request, res: Response) => {
 router.put('/:id', (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const { name, description, guards } = req.body;
+    const { name, description, guards } = req.body as Partial<GuardBody>;
 
     const profiles = loadGuardrailProfiles();
     const profileIndex = profiles.findIndex((p) => p.id === id);
@@ -163,26 +197,26 @@ router.put('/:id', (req: Request, res: Response) => {
     // Merge updates with validation to prevent prototype pollution
     const safeGuards =
       guards && typeof guards === 'object'
-        ? Object.keys(guards)
+        ? (Object.keys(guards) as Array<keyof typeof guards>)
             .filter((key) => !['__proto__', 'constructor', 'prototype'].includes(key))
             .reduce((acc, key) => {
               const existingValue =
                 profiles[profileIndex].guards[
                   key as keyof (typeof profiles)[typeof profileIndex]['guards']
                 ];
-              const newValue = guards[key];
+              const newValue = guards[key as keyof typeof guards];
               if (
                 typeof newValue === 'object' &&
                 newValue !== null &&
                 typeof existingValue === 'object' &&
                 existingValue !== null
               ) {
-                acc[key] = { ...existingValue, ...newValue };
+                (acc as any)[key] = { ...existingValue, ...newValue };
               } else {
-                acc[key] = newValue;
+                (acc as any)[key] = newValue;
               }
               return acc;
-            }, {} as any)
+            }, {} as Record<string, unknown>)
         : profiles[profileIndex].guards;
 
     const updatedProfile = {
@@ -200,11 +234,11 @@ router.put('/:id', (req: Request, res: Response) => {
       data: updatedProfile,
       message: 'Guard profile updated successfully',
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     return res.status(500).json({
       success: false,
       error: 'Failed to update guard profile',
-      message: error.message,
+      message: error instanceof Error ? error.message : String(error),
     });
   }
 });
@@ -217,9 +251,9 @@ router.delete('/:id', (req: Request, res: Response) => {
     const profileExists = profiles.some((p) => p.id === id);
 
     if (!profileExists) {
-      return res.status(404).json({
-        success: false,
-        error: 'Profile not found',
+      return res.status(200).json({
+        success: true,
+        message: 'Guard profile already deleted or not found',
       });
     }
 
@@ -230,11 +264,11 @@ router.delete('/:id', (req: Request, res: Response) => {
       success: true,
       message: 'Guard profile deleted successfully',
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     return res.status(500).json({
       success: false,
       error: 'Failed to delete guard profile',
-      message: error.message,
+      message: error instanceof Error ? error.message : String(error),
     });
   }
 });

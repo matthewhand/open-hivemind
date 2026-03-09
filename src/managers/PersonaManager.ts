@@ -3,7 +3,7 @@ import { EventEmitter } from 'events';
 import fs from 'fs';
 import path from 'path';
 import Debug from 'debug';
-import { ErrorUtils, HivemindError } from '../types/errors';
+import { ErrorUtils } from '../types/errors';
 
 const debug = Debug('app:PersonaManager');
 

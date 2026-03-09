@@ -5,18 +5,21 @@
  * in catch blocks and error handling throughout the application.
  */
 
+export const ERROR_TYPES = {
+  UNKNOWN: 'unknown',
+  NETWORK: 'network',
+  VALIDATION: 'validation',
+  AUTHENTICATION: 'authentication',
+  AUTHORIZATION: 'authorization',
+  CONFIGURATION: 'configuration',
+  API: 'api',
+  DATABASE: 'database',
+  RATE_LIMIT: 'rate-limit',
+  TIMEOUT: 'timeout',
+} as const;
+
 // Base error types
-export type ErrorType =
-  | 'unknown'
-  | 'network'
-  | 'validation'
-  | 'authentication'
-  | 'authorization'
-  | 'configuration'
-  | 'api'
-  | 'database'
-  | 'rate-limit'
-  | 'timeout';
+export type ErrorType = (typeof ERROR_TYPES)[keyof typeof ERROR_TYPES];
 
 /**
  * Generic error type that can be used in catch blocks to replace 'any'

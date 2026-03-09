@@ -122,7 +122,7 @@ router.post('/generate', async (req, res) => {
       switch (profile.provider.toLowerCase()) {
         case 'openai':
           // Dynamic require for OpenAI provider
-          const { OpenAiProvider } = require('@hivemind/provider-openai');
+          const { OpenAiProvider } = require('@hivemind/llm-openai');
           instance = new OpenAiProvider(profile.config);
           debug(`Initialized OpenAI provider instance for AI Assist: ${profile.name}`);
           break;

@@ -5,12 +5,12 @@ import type {
   PersonaCategory,
   CreatePersonaRequest,
   UpdatePersonaRequest,
-} from '../types/bot';
+} from '../types';
 import {
   PersonaTrait,
   BUILTIN_PERSONAS,
   DEFAULT_PERSONA,
-} from '../types/bot';
+} from '../types';
 
 interface UsePersonasReturn {
   personas: Persona[];

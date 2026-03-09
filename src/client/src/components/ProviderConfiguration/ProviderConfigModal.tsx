@@ -13,6 +13,10 @@ import {
 } from '../../types/bot';
 import { Button } from '../DaisyUI';
 import { X as XIcon } from 'lucide-react';
+import { ProviderConfigForm } from '../ProviderConfigForm';
+import type { ProviderConfigSchema } from '../../provider-configs';
+import { getProviderSchema } from '../../provider-configs';
+import { apiService } from '../../services/api';
 
 interface ProviderConfigModalProps {
   modalState: ProviderModalState;
@@ -27,11 +31,17 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
   onClose,
   onSubmit,
 }) => {
+  const resolveModelType = (provider?: { modelType?: 'chat' | 'embedding' | 'both'; config?: Record<string, any> }) => {
+    const rawValue = provider?.modelType || provider?.config?.modelType;
+    return rawValue === 'embedding' || rawValue === 'both' ? rawValue : 'chat';
+  };
+
   const [selectedType, setSelectedType] = useState<MessageProviderType | LLMProviderType>(
     modalState.providerType === 'message' ? MessageProviderType.DISCORD : LLMProviderType.OPENAI,
   );
   const [formData, setFormData] = useState<Record<string, any>>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [openAiEmbeddingModels, setOpenAiEmbeddingModels] = useState<string[]>([]);
 
   // Initialize form data when modal opens or provider changes
   useEffect(() => {
@@ -41,6 +51,7 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
         setSelectedType(modalState.provider.type as MessageProviderType | LLMProviderType);
         setFormData({
           name: modalState.provider.name,
+          modelType: modalState.providerType === 'llm' ? resolveModelType(modalState.provider as any) : undefined,
           ...modalState.provider.config,
         });
       } else {
@@ -49,19 +60,11 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
           ? MessageProviderType.DISCORD
           : LLMProviderType.OPENAI;
 
-        // Only update selectedType if it mismatch or just to be safe (safest to always reset on open/type change)
-        // But we need to handle if user changes type via tab.
-        // Actually, this effect runs on [modalState.isOpen, modalState.providerType].
-        // If user clicks tab, only selectedType changes (which is not in deps? No, selectedType IS in deps).
-        // Wait, if selectedType is in deps, setting it triggers effect loop?
-        // Let's remove selectedType from deps if we set it?
-        // Or conditionally set it if it's invalid for current providerType.
-
-        let newType = selectedType;
         const isCurrentTypeValid = modalState.providerType === 'message'
           ? Object.values(MessageProviderType).includes(selectedType as MessageProviderType)
           : Object.values(LLMProviderType).includes(selectedType as LLMProviderType);
 
+        let newType = selectedType;
         if (!isCurrentTypeValid) {
           newType = defaultType;
           setSelectedType(newType);
@@ -70,11 +73,59 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
         const defaultName = getDefaultName(newType, modalState.providerType as 'message' | 'llm', existingProviders);
         setFormData({
           name: defaultName,
+          ...(modalState.providerType === 'llm' ? { modelType: 'chat' } : {}),
         });
         setErrors({});
       }
     }
-  }, [modalState.isOpen, modalState.provider, modalState.isEdit, selectedType, modalState.providerType, existingProviders]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [modalState.isOpen, modalState.provider, modalState.isEdit, modalState.providerType]);
+
+  useEffect(() => {
+    if (!modalState.isOpen || modalState.providerType !== 'llm') {
+      return;
+    }
+
+    let isActive = true;
+
+    apiService
+      .get('/api/config/global')
+      .then((config: any) => {
+        if (!isActive) {
+          return;
+        }
+
+        const models = config?.openai?.values?.OPENAI_EMBEDDING_MODELS;
+        setOpenAiEmbeddingModels(Array.isArray(models) ? models.filter((value): value is string => typeof value === 'string' && value.trim() !== '') : []);
+      })
+      .catch(() => {
+        if (isActive) {
+          setOpenAiEmbeddingModels([]);
+        }
+      });
+
+    return () => {
+      isActive = false;
+    };
+  }, [modalState.isOpen, modalState.providerType]);
+
+  useEffect(() => {
+    if (
+      modalState.providerType !== 'llm' ||
+      selectedType !== LLMProviderType.OPENAI ||
+      (formData.modelType || 'chat') !== 'embedding' ||
+      openAiEmbeddingModels.length === 0
+    ) {
+      return;
+    }
+
+    if (!openAiEmbeddingModels.includes(formData.model)) {
+      setFormData(prev => ({
+        ...prev,
+        model: openAiEmbeddingModels[0],
+      }));
+    }
+  }, [formData.model, formData.modelType, modalState.providerType, openAiEmbeddingModels, selectedType]);
 
   const getDefaultName = (
     type: string,
@@ -103,12 +154,50 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
     return (configs as any)[selectedType];
   };
 
-  const validateField = (field: FieldConfig, value: any): string | null => {
+  const getCurrentSchema = (): ProviderConfigSchema | undefined => {
+    const schema = getProviderSchema(selectedType);
+    if (!schema) {
+      return undefined;
+    }
+
+    if (
+      modalState.providerType !== 'llm' ||
+      selectedType !== LLMProviderType.OPENAI ||
+      (formData.modelType || 'chat') !== 'embedding' ||
+      openAiEmbeddingModels.length === 0
+    ) {
+      return schema;
+    }
+
+    return {
+      ...schema,
+      fields: schema.fields.map((field) => {
+        if (field.name !== 'model') {
+          return field;
+        }
+
+        return {
+          ...field,
+          type: 'select',
+          description: 'Choose an embedding model from the configured OpenAI embedding model catalog.',
+          options: openAiEmbeddingModels.map((model) => ({
+            label: model,
+            value: model,
+          })),
+          component: undefined,
+          componentProps: undefined,
+          defaultValue: openAiEmbeddingModels[0],
+        };
+      }),
+    };
+  };
+
+  const validateField = (field: FieldConfig | any, value: any): string | null => {
     if (field.required && (!value || value.toString().trim() === '')) {
       return `${field.label} is required`;
     }
 
-    if (field.validation && value) {
+    if (field.validation && value !== undefined && value !== null && value !== '') {
       const { min, max, pattern } = field.validation;
 
       if (field.type === 'number') {
@@ -121,15 +210,34 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
         }
       }
 
+      if (field.type === 'text' || field.type === 'password' || field.type === 'url') {
+        const strValue = String(value);
+        if (min !== undefined && strValue.length < min) {
+          return `${field.label} must be at least ${min} characters`;
+        }
+        if (max !== undefined && strValue.length > max) {
+          return `${field.label} must be at most ${max} characters`;
+        }
+      }
+
       if (pattern && typeof value === 'string') {
         const regex = new RegExp(pattern);
         if (!regex.test(value)) {
-          // Provide specific error messages for common field types
-          if (field.type === 'url') {
-            return `${field.label} must be a valid HTTPS URL`;
+          // For API keys, don't fail validation in UI, just warn (ProviderConfigForm does this)
+          if (field.name === 'apiKey' || field.type === 'password') {
+            // Just pass for API Keys
+          } else {
+            if (field.type === 'url') {
+              return `${field.label} must be a valid HTTPS URL`;
+            }
+            return `${field.label} format is invalid`;
           }
-          return `${field.label} format is invalid`;
         }
+      }
+
+      if (field.validation.custom) {
+        const customError = field.validation.custom(value);
+        if (customError) { return customError; }
       }
     }
 
@@ -146,10 +254,16 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
       newErrors.name = 'Provider name is required';
       isValid = false;
     }
+    if (modalState.providerType === 'llm' && !['chat', 'embedding', 'both'].includes(formData.modelType || 'chat')) {
+      newErrors.modelType = 'Model type must be chat, embedding, or both';
+      isValid = false;
+    }
+
+    const schema = getCurrentSchema();
+    const allFields = schema ? schema.fields : (config.fields || []);
 
     // Validate required fields
-    const allFields = config.fields || [];
-    allFields.forEach(field => {
+    allFields.forEach((field: any) => {
       const error = validateField(field, formData[field.name]);
       if (error) {
         newErrors[field.name] = error;
@@ -170,11 +284,13 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
     }
 
     const config = getCurrentConfig();
-    const allFields = config.fields || [];
+    const schema = getCurrentSchema();
+    const allFields = schema ? schema.fields : (config.fields || []);
+
     const providerConfig: Record<string, any> = {};
 
-    // Only include fields that have values
-    allFields.forEach(field => {
+    // Only include fields that have values, and perform casting
+    allFields.forEach((field: any) => {
       const value = formData[field.name];
       if (value !== undefined && value !== '') {
         providerConfig[field.name] = field.type === 'number' ? Number(value) : value;
@@ -184,11 +300,19 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
     const providerData = {
       name: formData.name,
       type: selectedType,
+      ...(modalState.providerType === 'llm' ? { modelType: formData.modelType || 'chat' } : {}),
       config: providerConfig,
       ...(modalState.isEdit && { id: modalState.provider?.id }),
     };
 
     onSubmit(providerData);
+  };
+
+  const handleProviderConfigChange = (newConfig: Record<string, any>) => {
+    setFormData(prev => ({
+      ...prev,
+      ...newConfig,
+    }));
   };
 
   const handleFieldChange = (key: string, value: any) => {
@@ -216,128 +340,129 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
     `;
 
     switch (field.type) {
-    case 'password':
-      return (
-        <div key={field.name}>
-          <label className="label">
-            <span className="label-text font-medium">{field.label}</span>
-            {field.required && <span className="label-text-alt text-error">*</span>}
-          </label>
-          <input
-            type="password"
-            className={fieldClasses}
-            placeholder={field.placeholder}
-            value={value}
-            onChange={(e) => handleFieldChange(field.name, e.target.value)}
-          />
-          {error && <label className="label"><span className="label-text-alt text-error">{error}</span></label>}
-        </div>
-      );
-
-    case 'number':
-      return (
-        <div key={field.name}>
-          <label className="label">
-            <span className="label-text font-medium">{field.label}</span>
-            {field.required && <span className="label-text-alt text-error">*</span>}
-          </label>
-          <input
-            type="number"
-            className={fieldClasses}
-            placeholder={field.placeholder}
-            value={value}
-            onChange={(e) => handleFieldChange(field.name, e.target.value)}
-            min={field.validation?.min}
-            max={field.validation?.max}
-            step={field.name === 'temperature' ? '0.1' : '1'}
-          />
-          {error && <label className="label"><span className="label-text-alt text-error">{error}</span></label>}
-        </div>
-      );
-
-    case 'select':
-      return (
-        <div key={field.name}>
-          <label className="label">
-            <span className="label-text font-medium">{field.label}</span>
-            {field.required && <span className="label-text-alt text-error">*</span>}
-          </label>
-          <select
-            className={`${fieldClasses} select`}
-            value={value}
-            onChange={(e) => handleFieldChange(field.name, e.target.value)}
-          >
-            <option value="">Select {field.label.toLowerCase()}</option>
-            {field.options?.map(option => (
-              <option key={option.value} value={option.value}>{option.label}</option>
-            ))}
-          </select>
-          {error && <label className="label"><span className="label-text-alt text-error">{error}</span></label>}
-        </div>
-      );
-
-    case 'textarea':
-      return (
-        <div key={field.name}>
-          <label className="label">
-            <span className="label-text font-medium">{field.label}</span>
-            {field.required && <span className="label-text-alt text-error">*</span>}
-          </label>
-          <textarea
-            className={fieldClasses}
-            placeholder={field.placeholder}
-            value={value}
-            onChange={(e) => handleFieldChange(field.name, e.target.value)}
-            rows={4}
-          />
-          {error && <label className="label"><span className="label-text-alt text-error">{error}</span></label>}
-        </div>
-      );
-
-    case 'checkbox':
-      return (
-        <div key={field.name} className="form-control">
-          <label className="label cursor-pointer">
-            <span className="label-text font-medium">{field.label}</span>
+      case 'password':
+        return (
+          <div key={field.name}>
+            <label className="label">
+              <span className="label-text font-medium">{field.label}</span>
+              {field.required && <span className="label-text-alt text-error">*</span>}
+            </label>
             <input
-              type="checkbox"
-              className="toggle toggle-primary"
-              checked={!!value}
-              onChange={(e) => handleFieldChange(field.name, e.target.checked)}
+              type="password"
+              className={fieldClasses}
+              placeholder={field.placeholder}
+              value={value}
+              onChange={(e) => handleFieldChange(field.name, e.target.value)}
             />
-          </label>
-          {error && <label className="label"><span className="label-text-alt text-error">{error}</span></label>}
-        </div>
-      );
+            {error && <label className="label"><span className="label-text-alt text-error">{error}</span></label>}
+          </div>
+        );
 
-    default:
-      // text and others
-      return (
-        <div key={field.name}>
-          <label className="label">
-            <span className="label-text font-medium">{field.label}</span>
-            {field.required && <span className="label-text-alt text-error">*</span>}
-          </label>
-          <input
-            type="text"
-            className={fieldClasses}
-            placeholder={field.placeholder}
-            value={value}
-            onChange={(e) => handleFieldChange(field.name, e.target.value)}
-          />
-          {error && <label className="label"><span className="label-text-alt text-error">{error}</span></label>}
-        </div>
-      );
+      case 'number':
+        return (
+          <div key={field.name}>
+            <label className="label">
+              <span className="label-text font-medium">{field.label}</span>
+              {field.required && <span className="label-text-alt text-error">*</span>}
+            </label>
+            <input
+              type="number"
+              className={fieldClasses}
+              placeholder={field.placeholder}
+              value={value}
+              onChange={(e) => handleFieldChange(field.name, e.target.value)}
+              min={field.validation?.min}
+              max={field.validation?.max}
+              step={field.name === 'temperature' ? '0.1' : '1'}
+            />
+            {error && <label className="label"><span className="label-text-alt text-error">{error}</span></label>}
+          </div>
+        );
+
+      case 'select':
+        return (
+          <div key={field.name}>
+            <label className="label">
+              <span className="label-text font-medium">{field.label}</span>
+              {field.required && <span className="label-text-alt text-error">*</span>}
+            </label>
+            <select
+              className={`${fieldClasses} select`}
+              value={value}
+              onChange={(e) => handleFieldChange(field.name, e.target.value)}
+            >
+              <option value="">Select {field.label.toLowerCase()}</option>
+              {field.options?.map(option => (
+                <option key={option.value} value={option.value}>{option.label}</option>
+              ))}
+            </select>
+            {error && <label className="label"><span className="label-text-alt text-error">{error}</span></label>}
+          </div>
+        );
+
+      case 'textarea':
+        return (
+          <div key={field.name}>
+            <label className="label">
+              <span className="label-text font-medium">{field.label}</span>
+              {field.required && <span className="label-text-alt text-error">*</span>}
+            </label>
+            <textarea
+              className={fieldClasses}
+              placeholder={field.placeholder}
+              value={value}
+              onChange={(e) => handleFieldChange(field.name, e.target.value)}
+              rows={4}
+            />
+            {error && <label className="label"><span className="label-text-alt text-error">{error}</span></label>}
+          </div>
+        );
+
+      case 'checkbox':
+        return (
+          <div key={field.name} className="form-control">
+            <label className="label cursor-pointer">
+              <span className="label-text font-medium">{field.label}</span>
+              <input
+                type="checkbox"
+                className="toggle toggle-primary"
+                checked={!!value}
+                onChange={(e) => handleFieldChange(field.name, e.target.checked)}
+              />
+            </label>
+            {error && <label className="label"><span className="label-text-alt text-error">{error}</span></label>}
+          </div>
+        );
+
+      default:
+        // text and others
+        return (
+          <div key={field.name}>
+            <label className="label">
+              <span className="label-text font-medium">{field.label}</span>
+              {field.required && <span className="label-text-alt text-error">*</span>}
+            </label>
+            <input
+              type="text"
+              className={fieldClasses}
+              placeholder={field.placeholder}
+              value={value}
+              onChange={(e) => handleFieldChange(field.name, e.target.value)}
+            />
+            {error && <label className="label"><span className="label-text-alt text-error">{error}</span></label>}
+          </div>
+        );
     }
   };
 
-  if (!modalState.isOpen) {return null;}
+  if (!modalState.isOpen) { return null; }
 
   // Get ALL configs to iterate types for tabs
   const configs = modalState.providerType === 'message' ? MESSAGE_PROVIDER_CONFIGS : LLM_PROVIDER_CONFIGS;
   const providerTypes = Object.keys(configs);
   // Safe config access: if selectedType mismatch, fallback to first in list
   const config = (configs as any)[selectedType] || (configs as any)[providerTypes[0]];
+  const currentSchema = getCurrentSchema();
   const allFields = config?.fields || [];
 
   return (
@@ -356,31 +481,53 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
           </button>
         </div>
 
-        {/* Provider Type Tabs - flex-wrap and gap-1 fix overlapping tabs in modal */}
-        <div
-          className="tabs tabs-boxed mb-6 flex-wrap gap-1"
-          role="tablist"
-          aria-label={`${modalState.providerType === 'message' ? 'Message' : 'LLM'} provider types`}
-        >
-          {providerTypes.map(type => {
-            const typeConfig = (configs as any)[type];
-            const isActive = selectedType === type;
-            return (
-              <button
-                key={type}
-                type="button"
-                className={`tab tab-sm flex items-center gap-2 ${isActive ? 'tab-active' : ''}`}
-                onClick={() => setSelectedType(type as MessageProviderType | LLMProviderType)}
-                role="tab"
-                aria-selected={isActive}
-                aria-label={`Select ${typeConfig.displayName || typeConfig.name}`}
-              >
-                <span>{typeConfig.icon}</span>
-                {typeConfig.displayName || typeConfig.name}
-              </button>
-            );
-          })}
-        </div>
+        {modalState.providerType === 'llm' ? (
+          <div className="form-control mb-6">
+            <label className="label">
+              <span className="label-text font-medium">Provider</span>
+              <span className="label-text-alt text-error">*</span>
+            </label>
+            <select
+              className="select select-bordered w-full"
+              value={selectedType}
+              onChange={(e) => setSelectedType(e.target.value as LLMProviderType)}
+            >
+              {providerTypes.map(type => {
+                const typeConfig = (configs as any)[type];
+                return (
+                  <option key={type} value={type}>
+                    {typeConfig.displayName || typeConfig.name}
+                  </option>
+                );
+              })}
+            </select>
+          </div>
+        ) : (
+          <div
+            className="tabs tabs-boxed mb-6 flex-wrap gap-1"
+            role="tablist"
+            aria-label="Message provider types"
+          >
+            {providerTypes.map(type => {
+              const typeConfig = (configs as any)[type];
+              const isActive = selectedType === type;
+              return (
+                <button
+                  key={type}
+                  type="button"
+                  className={`tab tab-sm flex items-center gap-2 ${isActive ? 'tab-active' : ''}`}
+                  onClick={() => setSelectedType(type as MessageProviderType | LLMProviderType)}
+                  role="tab"
+                  aria-selected={isActive}
+                  aria-label={`Select ${typeConfig.displayName || typeConfig.name}`}
+                >
+                  <span>{typeConfig.icon}</span>
+                  {typeConfig.displayName || typeConfig.name}
+                </button>
+              );
+            })}
+          </div>
+        )}
 
         {/* Form */}
         <form onSubmit={handleSubmit}>
@@ -401,9 +548,75 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
             {errors.name && <label className="label"><span className="label-text-alt text-error">{errors.name}</span></label>}
           </div>
 
+          {modalState.providerType === 'llm' && (
+            <div className="form-control mb-4">
+              <label className="label">
+                <span className="label-text font-medium">Model Type</span>
+                <span className="label-text-alt text-error">*</span>
+              </label>
+              <select
+                name="modelType"
+                className={`select select-bordered w-full ${errors.modelType ? 'select-error' : ''}`}
+                value={formData.modelType || 'chat'}
+                onChange={(e) => handleFieldChange('modelType', e.target.value)}
+              >
+                <option value="chat">Chat</option>
+                <option value="embedding">Embedding</option>
+                <option value="both">Both</option>
+              </select>
+              <label className="label">
+                <span className="label-text-alt">
+                  Mark embedding-only profiles so they can be used by memory/search without appearing as chat models.
+                </span>
+              </label>
+              {errors.modelType && <label className="label"><span className="label-text-alt text-error">{errors.modelType}</span></label>}
+            </div>
+          )}
+
+          {modalState.providerType === 'llm' &&
+            selectedType === LLMProviderType.OPENAI &&
+            (formData.modelType || 'chat') === 'embedding' &&
+            openAiEmbeddingModels.length > 0 && (
+            <div className="alert alert-info mb-4 text-sm">
+              <span>
+                Select an embedding-capable OpenAI provider first, then choose one of the configured embedding models.
+              </span>
+            </div>
+          )}
+
           {/* Provider-specific fields */}
           <div className="space-y-4 mb-6">
-            {allFields.map(renderField)}
+            {currentSchema ? (
+              <ProviderConfigForm
+                providerType={selectedType}
+                schema={currentSchema}
+                initialConfig={formData}
+                onConfigChange={handleProviderConfigChange}
+                externalErrors={errors}
+                onTestConnection={async (config) => {
+                  // Enhanced test connection with provider-specific validation
+                  try {
+                    const response = await fetch('/api/v1/admin/providers/test-connection', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({
+                        providerType: selectedType,
+                        config,
+                      }),
+                    });
+                    return response.ok;
+                  } catch {
+                    // Fallback: basic validation if endpoint not available
+                    const hasRequiredFields = ['apiKey', 'endpoint', 'baseUrl'].some(
+                      key => config[key] && config[key].toString().trim() !== ''
+                    );
+                    return hasRequiredFields;
+                  }
+                }}
+              />
+            ) : (
+              allFields.map(renderField)
+            )}
           </div>
 
           {/* Actions */}

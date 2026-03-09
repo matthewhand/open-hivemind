@@ -204,5 +204,26 @@ archive/
 /api/
 .specify/
 .kilocode/
-.seen_prs.json
-.auto_merge_state.json
+AGENTS.md
+\nconfig/.key
+
+# Sensitive config files - never commit
+config/.key
+config/secure/
+config/providers/
+scripts/benchmarks/temp-import-bench.json
+
+# Development artifacts
+.letta/
+config/backups/
+.pending_prs.json
+current_prs.json
+patch_yml2.js
+scratch.js
+scripts/merge_pr.py
+package-lock.json
+
+# Compiled TypeScript artifacts in src/ (tsc output)
+src/**/*.js
+src/**/*.d.ts
+src/**/*.d.ts.map

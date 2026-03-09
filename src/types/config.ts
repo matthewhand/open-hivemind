@@ -28,7 +28,8 @@ export type LlmProvider =
   | 'perplexity'
   | 'replicate'
   | 'n8n'
-  | 'openswarm';
+  | 'openswarm'
+  | 'letta';
 
 /**
  * Slack connection modes
@@ -229,6 +230,8 @@ export interface BotConfig {
   openwebui?: OpenWebUIConfig;
   /** OpenSwarm configuration */
   openswarm?: OpenSwarmConfig;
+  /** Letta configuration */
+  letta?: LettaConfig;
   /** Index signature for compatibility with Record<string, unknown> */
   [key: string]: unknown;
 }
@@ -755,9 +758,21 @@ export function isMcpGuardConfig(obj: unknown): obj is McpGuardConfig {
 export type PlatformConfig = DiscordConfig | SlackConfig | MattermostConfig;
 
 /**
+ * Letta session mode - determines how conversation sessions are scoped
+ */
+export type LettaSessionMode = 'default' | 'per-channel' | 'per-user' | 'fixed';
+
+/**
  * Union type for all LLM provider configurations
  */
-export type LlmProviderConfig = OpenAIConfig | FlowiseConfig | OpenWebUIConfig | OpenSwarmConfig;
+export interface LettaConfig {
+  agentId?: string;
+  systemPrompt?: string;
+  sessionMode?: LettaSessionMode;
+  conversationId?: string;
+}
+
+export type LlmProviderConfig = OpenAIConfig | FlowiseConfig | OpenWebUIConfig | OpenSwarmConfig | LettaConfig;
 
 /**
  * Union type for all configuration types
@@ -809,4 +824,16 @@ export const CONFIG_EXTENSIONS = {
   JSON: '.json',
   ENCRYPTED: '.enc',
   BACKUP: '.json',
+} as const;
+
+/**
+ * Configuration limits and boundaries
+ */
+export const CONFIG_LIMITS = {
+  SYSTEM_INSTRUCTION_MAX_LENGTH: 5000,
+  SYSTEM_INSTRUCTION_WARNING_LENGTH: 2000,
+  SYSTEM_INSTRUCTION_MIN_LENGTH: 10,
+  BOT_NAME_MIN_LENGTH: 2,
+  BOT_NAME_MAX_LENGTH: 50,
+  PROFILE_NAME_MAX_LENGTH: 100,
 } as const;

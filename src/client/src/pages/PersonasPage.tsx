@@ -286,11 +286,16 @@ const PersonasPage: React.FC = () => {
     }
   };
 
-  const stats = [
-    { id: 'total', title: 'Total Personas', value: personas.length, icon: '✨', color: 'primary' as const },
-    { id: 'active', title: 'Assigned Bots', value: personas.reduce((acc, p) => acc + p.assignedBotNames.length, 0), icon: '🤖', color: 'secondary' as const },
-    { id: 'custom', title: 'Custom Personas', value: personas.filter(p => !p.isBuiltIn).length, icon: 'user', color: 'accent' as const },
-  ];
+  const stats = useMemo(() => {
+    const active = personas.reduce((acc, p) => acc + p.assignedBotNames.length, 0);
+    const custom = personas.reduce((acc, p) => acc + (p.isBuiltIn ? 0 : 1), 0);
+
+    return [
+      { id: 'total', title: 'Total Personas', value: personas.length, icon: '✨', color: 'primary' as const },
+      { id: 'active', title: 'Assigned Bots', value: active, icon: '🤖', color: 'secondary' as const },
+      { id: 'custom', title: 'Custom Personas', value: custom, icon: 'user', color: 'accent' as const },
+    ];
+  }, [personas]);
 
   return (
     <div className="space-y-6">

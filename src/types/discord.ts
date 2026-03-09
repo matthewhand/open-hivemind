@@ -6,8 +6,6 @@
  * including message objects, user data, channel information, and other Discord-specific entities.
  */
 
-import { Collection } from 'discord.js';
-
 // Base Discord API Response Types
 export interface DiscordAPIResponse {
   ok: boolean;

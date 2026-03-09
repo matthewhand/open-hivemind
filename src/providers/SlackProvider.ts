@@ -1,6 +1,6 @@
 import fs from 'fs';
 import path from 'path';
-import { SlackService } from '@hivemind/adapter-slack';
+import { SlackService } from '@hivemind/message-slack';
 import slackConfig, { type SlackConfig } from '../config/slackConfig';
 import { type IMessageProvider } from '../types/IProvider';
 

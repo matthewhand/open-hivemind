@@ -6,11 +6,11 @@ import type {
   LLMProvider,
   Persona,
   ProviderModalState,
-} from '../../types/bot';
+} from '../../types';
 import {
   BotStatus,
   DEFAULT_PERSONA,
-} from '../../types/bot';
+} from '../../types';
 import { Button, Badge } from '../DaisyUI';
 import {
   Play as PlayIcon,
@@ -65,14 +65,14 @@ const BotCard: React.FC<BotCardProps> = ({
 
   const getStatusColor = (status: BotStatus) => {
     switch (status) {
-    case BotStatus.ACTIVE:
+    case 'active':
       return 'badge-success';
-    case BotStatus.INACTIVE:
-    case BotStatus.STOPPING:
+    case 'inactive':
+    case 'stopping':
       return 'badge-ghost';
-    case BotStatus.ERROR:
+    case 'error':
       return 'badge-error';
-    case BotStatus.STARTING:
+    case 'starting':
       return 'badge-info';
     default:
       return 'badge-ghost';
@@ -81,23 +81,23 @@ const BotCard: React.FC<BotCardProps> = ({
 
   const getStatusText = (status: BotStatus) => {
     switch (status) {
-    case BotStatus.ACTIVE:
+    case 'active':
       return 'Running';
-    case BotStatus.INACTIVE:
+    case 'inactive':
       return 'Stopped';
-    case BotStatus.ERROR:
+    case 'error':
       return 'Error';
-    case BotStatus.STARTING:
+    case 'starting':
       return 'Starting';
-    case BotStatus.STOPPING:
+    case 'stopping':
       return 'Stopping';
     default:
       return status;
     }
   };
 
-  const canStart = bot.status === BotStatus.INACTIVE || bot.status === BotStatus.ERROR;
-  const canStop = bot.status === BotStatus.ACTIVE;
+  const canStart = bot.status === 'inactive' || bot.status === 'error';
+  const canStop = bot.status === 'active';
   const hasProviders = bot.messageProviders.length > 0 || bot.llmProviders.length > 0;
 
   const handleStartBot = () => {
@@ -152,9 +152,13 @@ const BotCard: React.FC<BotCardProps> = ({
   };
 
   const handleEditProvider = (provider: MessageProvider | LLMProvider) => {
+    // Determine provider type from the provider's type string
+    const providerType = provider.type.includes('discord') || provider.type.includes('slack') || provider.type.includes('telegram') || provider.type.includes('mattermost')
+      ? 'message' as const
+      : 'llm' as const;
     setProviderModalState({
       isOpen: true,
-      providerType: provider.type as any, // Type narrowing might be needed but 'as any' is safe here given context
+      providerType,
       mode: 'edit',
       provider: provider,
       botId: bot.id,
@@ -252,7 +256,7 @@ const BotCard: React.FC<BotCardProps> = ({
               variant="ghost"
               size="sm"
               onClick={() => setShowPersonaSelector(!showPersonaSelector)}
-              disabled={bot.status === BotStatus.ACTIVE}
+              disabled={bot.status === 'active'}
               className="px-2"
               aria-label="Edit Persona"
             >
@@ -301,7 +305,7 @@ const BotCard: React.FC<BotCardProps> = ({
               variant="ghost"
               size="sm"
               onClick={handleAddMessageProvider}
-              disabled={bot.status === BotStatus.ACTIVE}
+              disabled={bot.status === 'active'}
               className="px-2"
               data-testid="add-message-provider-btn"
               aria-label="Add Message Provider"
@@ -314,7 +318,7 @@ const BotCard: React.FC<BotCardProps> = ({
             type="message"
             onRemove={handleRemoveProvider}
             onEdit={handleEditProvider}
-            disabled={bot.status === BotStatus.ACTIVE}
+            disabled={bot.status === 'active'}
           />
         </div>
 
@@ -333,7 +337,7 @@ const BotCard: React.FC<BotCardProps> = ({
               variant="ghost"
               size="sm"
               onClick={handleAddLLMProvider}
-              disabled={bot.status === BotStatus.ACTIVE}
+              disabled={bot.status === 'active'}
               className="px-2"
               data-testid="add-llm-provider-btn"
               aria-label="Add LLM Provider"
@@ -346,7 +350,7 @@ const BotCard: React.FC<BotCardProps> = ({
             type="llm"
             onRemove={handleRemoveProvider}
             onEdit={handleEditProvider}
-            disabled={bot.status === BotStatus.ACTIVE}
+            disabled={bot.status === 'active'}
           />
         </div>
 

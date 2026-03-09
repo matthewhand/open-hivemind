@@ -81,7 +81,7 @@ describe('WebhookSecurity', () => {
 
     it('should allow Authorization Bearer token as fallback', () => {
       mockWebhookConfig.get.mockReturnValue('valid-token');
-      req.headers = { authorization: 'Bearer valid-token' };
+      req.headers = { 'authorization': 'Bearer valid-token' };
 
       verifyWebhookToken(req as Request, res as Response, next);
 
@@ -91,7 +91,7 @@ describe('WebhookSecurity', () => {
 
     it('should allow case-insensitive Authorization header', () => {
       mockWebhookConfig.get.mockReturnValue('valid-token');
-      req.headers = { Authorization: 'bearer valid-token' };
+      req.headers = { 'Authorization': 'bearer valid-token' };
 
       verifyWebhookToken(req as Request, res as Response, next);
 
@@ -100,14 +100,15 @@ describe('WebhookSecurity', () => {
   });
 
   describe('verifyIpWhitelist', () => {
-    it('should call next when IP whitelist is empty', () => {
+    it('should return 403 when IP whitelist is empty', () => {
       mockWebhookConfig.get.mockReturnValue('');
       req.ip = '192.168.1.100';
 
       verifyIpWhitelist(req as Request, res as Response, next);
 
-      expect(next).toHaveBeenCalled();
-      expect(res.status).not.toHaveBeenCalled();
+      expect(res.status).toHaveBeenCalledWith(403);
+      expect(res.send).toHaveBeenCalledWith('Forbidden: IP whitelist is empty');
+      expect(next).not.toHaveBeenCalled();
     });
 
     it('should call next when IP is in whitelist', () => {

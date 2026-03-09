@@ -25,6 +25,7 @@ export const openWebUIProvider: ILlmProvider = {
   name: 'openwebui',
   supportsChatCompletion: (): boolean => true,
   supportsCompletion: (): boolean => true,
+  supportsHistory: (): boolean => false,
 
   async generateChatCompletion(
     userMessage: string,

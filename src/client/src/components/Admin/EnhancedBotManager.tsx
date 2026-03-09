@@ -250,7 +250,7 @@ const EnhancedBotManager: React.FC<EnhancedBotManagerProps> = ({ onBotSelect }) 
       systemInstruction: bot.systemInstruction,
       mcpServers: bot.mcpServers,
       mcpGuard: bot.mcpGuard,
-      mcpGuardProfile: (bot as any).mcpGuardProfile || '',
+      mcpGuardProfile: bot.mcpGuardProfile || '',
       isActive: bot.isActive,
       discord: bot.discord || {},
       slack: bot.slack || {},
@@ -527,6 +527,7 @@ const EnhancedBotManager: React.FC<EnhancedBotManagerProps> = ({ onBotSelect }) 
                       <button
                         className="btn btn-ghost btn-sm btn-circle"
                         onClick={() => handleToggleExpanded(bot.id)}
+                        aria-label={isExpanded ? "Collapse bot details" : "Expand bot details"}
                       >
                         {isExpanded ? (
                           <ChevronUpIcon className="w-4 h-4" />
@@ -548,7 +549,7 @@ const EnhancedBotManager: React.FC<EnhancedBotManagerProps> = ({ onBotSelect }) 
                       <Badge variant="secondary">{bot.llmProvider}</Badge>
                     </td>
                     <td>
-                      <Badge variant={status.color as any}>{status.status}</Badge>
+                      <Badge variant={status.color as "error" | "warning" | "success" | "neutral"}>{status.status}</Badge>
                     </td>
                     <td>{bot.persona || 'default'}</td>
                     <td>
@@ -564,6 +565,7 @@ const EnhancedBotManager: React.FC<EnhancedBotManagerProps> = ({ onBotSelect }) 
                           className="btn btn-ghost btn-sm btn-circle"
                           onClick={() => onBotSelect?.(bot)}
                           title="View Details"
+                          aria-label={`View details for ${bot.name}`}
                         >
                           <EyeIcon className="w-4 h-4" />
                         </button>
@@ -571,6 +573,7 @@ const EnhancedBotManager: React.FC<EnhancedBotManagerProps> = ({ onBotSelect }) 
                           className="btn btn-ghost btn-sm btn-circle"
                           onClick={() => openEditForm(bot)}
                           title="Edit"
+                          aria-label={`Edit ${bot.name}`}
                         >
                           <PencilIcon className="w-4 h-4" />
                         </button>
@@ -578,6 +581,7 @@ const EnhancedBotManager: React.FC<EnhancedBotManagerProps> = ({ onBotSelect }) 
                           className="btn btn-ghost btn-sm btn-circle"
                           onClick={() => handleDuplicateBot(bot)}
                           title="Duplicate"
+                          aria-label={`Duplicate ${bot.name}`}
                         >
                           <DocumentDuplicateIcon className="w-4 h-4" />
                         </button>
@@ -585,6 +589,7 @@ const EnhancedBotManager: React.FC<EnhancedBotManagerProps> = ({ onBotSelect }) 
                           className="btn btn-ghost btn-sm btn-circle text-error"
                           onClick={() => openDeleteConfirmation(bot)}
                           title="Delete"
+                          aria-label={`Delete ${bot.name}`}
                         >
                           <TrashIcon className="w-4 h-4" />
                         </button>
@@ -640,16 +645,18 @@ const EnhancedBotManager: React.FC<EnhancedBotManagerProps> = ({ onBotSelect }) 
             className="join-item btn btn-sm"
             onClick={() => setPage(Math.max(0, page - 1))}
             disabled={page === 0}
+            aria-label="Previous page"
           >
             Previous
           </button>
-          <button className="join-item btn btn-sm">
+          <button className="join-item btn btn-sm" aria-current="page">
             Page {page + 1}
           </button>
           <button
             className="join-item btn btn-sm"
             onClick={() => setPage(page + 1)}
             disabled={filteredBots.length < rowsPerPage}
+            aria-label="Next page"
           >
             Next
           </button>
@@ -720,19 +727,19 @@ const EnhancedBotManager: React.FC<EnhancedBotManagerProps> = ({ onBotSelect }) 
 
       {/* Toast Notifications */}
       {success && (
-        <div className="toast toast-bottom toast-center z-50">
+        <div className="toast toast-bottom toast-center z-50" role="status" aria-live="polite">
           <div className="alert alert-success">
             <span>{success}</span>
-            <button className="btn btn-sm btn-ghost" onClick={() => setSuccess(null)}>✕</button>
+            <button className="btn btn-sm btn-ghost" onClick={() => setSuccess(null)} aria-label="Close success message">✕</button>
           </div>
         </div>
       )}
 
       {error && (
-        <div className="toast toast-bottom toast-center z-50">
+        <div className="toast toast-bottom toast-center z-50" role="status" aria-live="polite">
           <div className="alert alert-error">
             <span>{error}</span>
-            <button className="btn btn-sm btn-ghost" onClick={() => setError(null)}>✕</button>
+            <button className="btn btn-sm btn-ghost" onClick={() => setError(null)} aria-label="Close error message">✕</button>
           </div>
         </div>
       )}

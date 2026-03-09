@@ -19,7 +19,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
     },
     {
       id: 'admin-overview',
-      label: 'Admin Overview',
+      label: 'Administration',
       icon: '📊',
       path: '/admin/overview',
       visible: true,
@@ -29,6 +29,13 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
       label: 'Bot Management',
       icon: '🤖',
       path: '/admin/bots',
+      visible: true,
+    },
+    {
+      id: 'admin-marketplace',
+      label: 'Package Marketplace',
+      icon: '📦',
+      path: '/admin/marketplace',
       visible: true,
     },
     {

@@ -13,6 +13,7 @@ export const ProviderConfigForm: React.FC<ProviderConfigFormProps> = ({
   onConfigChange,
   onTestConnection,
   onAvatarLoad,
+  externalErrors = {},
 }) => {
   const [config, setConfig] = useState<Record<string, any>>(() => ({
     ...schema.defaultConfig,
@@ -158,7 +159,7 @@ export const ProviderConfigForm: React.FC<ProviderConfigFormProps> = ({
 
   const renderField = (field: ProviderConfigField) => {
     const value = config[field.name] ?? field.defaultValue ?? '';
-    const error = errors[field.name];
+    const error = externalErrors[field.name] || errors[field.name];
 
     const baseInputClasses = 'w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2';
     const errorClasses = error ? 'border-error focus:ring-error' : 'border-base-300 focus:ring-primary';
@@ -280,10 +281,11 @@ export const ProviderConfigForm: React.FC<ProviderConfigFormProps> = ({
           const Component = field.component;
           return (
             <Component
-              value={value}
+              value={typeof value === 'string' ? value : ''}
               onChange={(newValue: any) => handleFieldChange(field.name, newValue)}
               apiKey={config.apiKey}
-              baseUrl={config.baseUrl || config.endpoint}
+              baseUrl={config.baseUrl || config.apiUrl || config.endpoint}
+              providerType={(field.componentProps?.providerType || schema.providerType) as any}
               onValidationError={(error: string) => {
                 // Show validation warnings instead of errors for API keys
                 if (field.name === 'apiKey') {
@@ -302,7 +304,15 @@ export const ProviderConfigForm: React.FC<ProviderConfigFormProps> = ({
             />
           );
         }
-        break;
+        return (
+          <Input
+            type="text"
+            value={typeof value === 'string' ? value : ''}
+            onChange={(e) => handleFieldChange(field.name, e.target.value)}
+            placeholder={field.placeholder}
+            className={inputClasses}
+          />
+        );
 
       default:
         return (

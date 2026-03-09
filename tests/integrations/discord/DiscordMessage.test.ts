@@ -1,5 +1,5 @@
 import { Message, TextChannel, User } from 'discord.js';
-import { DiscordMessage } from '@hivemind/adapter-discord';
+import { DiscordMessage } from '@hivemind/message-discord';
 
 describe('DiscordMessage', () => {
   let mockUser: any;

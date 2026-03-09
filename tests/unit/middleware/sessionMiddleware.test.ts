@@ -1,5 +1,8 @@
-import { Request } from 'express';
+// Ensure a session secret is provided before module loads
+process.env.SESSION_SECRET = 'testsecretlongenoughstringtoavoidwarning32chars';
+
 import { destroySession } from '../../../src/middleware/sessionMiddleware';
+import { Request } from 'express';
 
 /**
  * Unit tests for the destroySession utility function.
@@ -15,7 +18,7 @@ describe('destroySession', () => {
     const req = {
       session: {
         destroy: destroyMock,
-      },
+      }
     } as unknown as Request;
 
     await expect(destroySession(req)).resolves.toBeUndefined();
@@ -28,7 +31,7 @@ describe('destroySession', () => {
     const req = {
       session: {
         destroy: destroyMock,
-      },
+      }
     } as unknown as Request;
 
     await expect(destroySession(req)).rejects.toThrow('destruction failed');

@@ -157,7 +157,7 @@ dist/
 |----------|-------------|---------|
 | `NODE_ENV` | Environment mode | `production` |
 | `CORS_ORIGIN` | Allowed CORS origins | `https://your-domain.netlify.app` |
-| `PORT` | Server port (for local testing) | `3000` |
+| `PORT` | Server port (for local testing) | `3028` |
 
 ## Support
 For issues with the Netlify deployment:

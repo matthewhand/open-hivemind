@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   ExternalLink,
   Download,
@@ -88,47 +88,49 @@ const SitemapPage: React.FC = () => {
     window.open(url, '_blank', 'noopener,noreferrer');
   };
 
-  const filteredUrls = sitemapData?.urls.filter(url => {
-    const matchesAccess = accessFilter === 'all' || url.access === accessFilter;
-    const matchesSearch = !searchValue ||
-      url.url.toLowerCase().includes(searchValue.toLowerCase()) ||
-      url.description.toLowerCase().includes(searchValue.toLowerCase());
-    return matchesAccess && matchesSearch;
-  }) || [];
+  const groupedUrls = useMemo(() => {
+    const urls = sitemapData?.urls || [];
+    return urls.reduce((acc, url) => {
+      const matchesAccess = accessFilter === 'all' || url.access === accessFilter;
+      const matchesSearch = !searchValue ||
+        url.url.toLowerCase().includes(searchValue.toLowerCase()) ||
+        url.description.toLowerCase().includes(searchValue.toLowerCase());
 
-  const groupedUrls = filteredUrls.reduce((acc, url) => {
-    let category = 'Other';
+      if (!matchesAccess || !matchesSearch) return acc;
 
-    if (url.url === '/') {
-      category = 'Root';
-    } else if (url.url.startsWith('/admin')) {
-      if (url.url.includes('/bots') || url.url.includes('/personas')) {
-        category = 'Bot Management';
-      } else if (url.url.includes('/mcp')) {
-        category = 'MCP Servers';
-      } else if (url.url.includes('/monitoring') || url.url.includes('/activity') || url.url.includes('/analytics')) {
-        category = 'Monitoring & Analytics';
-      } else if (url.url.includes('/settings') || url.url.includes('/config') || url.url.includes('/configuration') || url.url.includes('/system-management')) {
-        category = 'System Management';
-      } else if (url.url.includes('/ai/')) {
-        category = 'AI Features';
-      } else if (url.url.includes('/integrations')) {
-        category = 'Integrations';
-      } else {
-        category = 'Main Dashboard';
+      let category = 'Other';
+
+      if (url.url === '/') {
+        category = 'Root';
+      } else if (url.url.startsWith('/admin')) {
+        if (url.url.includes('/bots') || url.url.includes('/personas')) {
+          category = 'Bot Management';
+        } else if (url.url.includes('/mcp')) {
+          category = 'MCP Servers';
+        } else if (url.url.includes('/monitoring') || url.url.includes('/activity') || url.url.includes('/analytics')) {
+          category = 'Monitoring & Analytics';
+        } else if (url.url.includes('/settings') || url.url.includes('/config') || url.url.includes('/configuration') || url.url.includes('/system-management')) {
+          category = 'System Management';
+        } else if (url.url.includes('/ai/')) {
+          category = 'AI Features';
+        } else if (url.url.includes('/integrations')) {
+          category = 'Integrations';
+        } else {
+          category = 'Main Dashboard';
+        }
+      } else if (url.url.startsWith('/webui')) {
+        category = 'Legacy Interfaces';
+      } else if (url.url.startsWith('/health') || url.url.startsWith('/api')) {
+        category = 'System APIs';
+      } else if (url.url === '/login') {
+        category = 'Authentication';
       }
-    } else if (url.url.startsWith('/webui')) {
-      category = 'Legacy Interfaces';
-    } else if (url.url.startsWith('/health') || url.url.startsWith('/api')) {
-      category = 'System APIs';
-    } else if (url.url === '/login') {
-      category = 'Authentication';
-    }
 
-    if (!acc[category]) { acc[category] = []; }
-    acc[category].push(url);
-    return acc;
-  }, {} as Record<string, SitemapUrl[]>) || {};
+      if (!acc[category]) { acc[category] = []; }
+      acc[category].push(url);
+      return acc;
+    }, {} as Record<string, SitemapUrl[]>);
+  }, [sitemapData, accessFilter, searchValue]);
 
   if (loading) {
     return (

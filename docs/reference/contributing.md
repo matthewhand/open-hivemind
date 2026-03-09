@@ -119,10 +119,11 @@ Open-Hivemind is a TypeScript-based multi-agent bot ecosystem with:
 
 **Key architectural principle**: The core application knows nothing about Discord, Slack, OpenAI, or Flowise implementations. These are loaded at runtime via `require()` based on `MESSAGE_PROVIDER` and `LLM_PROVIDER` configuration. This enables hot-swapping backends without code changes.
 
-See [Architecture Overview](../architecture/development.md) for detailed patterns including:
-- Dynamic loading of adapters/providers
+See [Provider & Adapter Package Architecture](../architecture/provider-package-architecture.md) for the complete guide on:
+- Runtime discovery flow and schema-driven WebUI rendering
+- Step-by-step instructions for adding a new provider or adapter package
 - Interface contracts (`ILlmProvider`, `IAdapterFactory`)
-- Adding new platforms or LLM backends
+- Frontend field schema registration
 
 ### Code Style Requirements
 

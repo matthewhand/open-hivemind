@@ -1,4 +1,4 @@
-import { MattermostService } from '@hivemind/adapter-mattermost';
+import { MattermostService } from '@hivemind/message-mattermost';
 import mattermostConfig, { type MattermostConfig } from '../config/mattermostConfig';
 import { type IMessageProvider } from '../types/IProvider';
 

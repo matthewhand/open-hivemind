@@ -18,6 +18,7 @@ export interface OpenAIConfig {
   OPENAI_MAX_RETRIES: number;
   OPENAI_FINISH_REASON_RETRY: string;
   OPENAI_VOICE: string;
+  OPENAI_EMBEDDING_MODELS: string[];
 }
 
 const openaiConfig = convict<OpenAIConfig>({
@@ -116,6 +117,24 @@ const openaiConfig = convict<OpenAIConfig>({
     format: String,
     default: 'nova',
     env: 'OPENAI_VOICE',
+  },
+  OPENAI_EMBEDDING_MODELS: {
+    doc: 'Supported OpenAI embedding models for provider configuration',
+    format: Array,
+    default: ['text-embedding-3-large', 'text-embedding-3-small', 'text-embedding-ada-002'],
+    env: 'OPENAI_EMBEDDING_MODELS',
+    coerce: (val: unknown) => {
+      if (Array.isArray(val)) {
+        return val.map(String).map(item => item.trim()).filter(Boolean);
+      }
+      if (typeof val === 'string') {
+        return val
+          .split(',')
+          .map(item => item.trim())
+          .filter(Boolean);
+      }
+      return ['text-embedding-3-large', 'text-embedding-3-small', 'text-embedding-ada-002'];
+    },
   },
 });
 

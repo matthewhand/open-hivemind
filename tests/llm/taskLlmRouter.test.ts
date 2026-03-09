@@ -29,7 +29,7 @@ jest.mock('@src/monitoring/MetricsCollector', () => ({
 }));
 
 // Mock OpenAI provider to surface constructor config + metadata
-jest.mock('@hivemind/provider-openai', () => ({
+jest.mock('@hivemind/llm-openai', () => ({
   __esModule: true,
   OpenAiProvider: jest.fn().mockImplementation((cfg: any) => ({
     name: 'openai',

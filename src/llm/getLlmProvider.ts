@@ -3,8 +3,7 @@ import ProviderConfigManager from '@src/config/ProviderConfigManager';
 import { MetricsCollector } from '@src/monitoring/MetricsCollector';
 import type { IConfigAccessor } from '@src/types/configAccessor';
 import llmConfig from '@config/llmConfig';
-import { FlowiseProvider } from '@integrations/flowise/flowiseProvider';
-import * as openWebUIImport from '@integrations/openwebui/runInference';
+import { loadPlugin, instantiateLlmProvider } from '@src/plugins/PluginLoader';
 import type { ILlmProvider } from '@llm/interfaces/ILlmProvider';
 import type { IMessage } from '@message/interfaces/IMessage';
 
@@ -24,6 +23,7 @@ function withTokenCounting(provider: ILlmProvider, _instanceId: string): ILlmPro
     name: provider.name,
     supportsChatCompletion: provider.supportsChatCompletion,
     supportsCompletion: provider.supportsCompletion,
+    supportsHistory: provider.supportsHistory,
     // Add instance ID to provider object if interface allows, to help tracking?
     // For now we map it.
     generateChatCompletion: async (
@@ -52,32 +52,6 @@ function withTokenCounting(provider: ILlmProvider, _instanceId: string): ILlmPro
   };
 }
 
-const openWebUI: ILlmProvider = {
-  name: 'openwebui',
-  supportsChatCompletion: () => true,
-  supportsCompletion: () => false,
-  generateChatCompletion: async (
-    userMessage: string,
-    historyMessages: IMessage[],
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    metadata?: Record<string, any>
-  ): Promise<string> => {
-    if (openWebUIImport.generateChatCompletion.length === 3) {
-      const result = await openWebUIImport.generateChatCompletion(
-        userMessage,
-        historyMessages,
-        metadata
-      );
-      return result.text || '';
-    } else {
-      const result = await openWebUIImport.generateChatCompletion(userMessage, historyMessages);
-      return result.text || '';
-    }
-  },
-  generateCompletion: async () => {
-    throw new Error('Non-chat completion not supported by OpenWebUI');
-  },
-};
 
 export function getLlmProvider(): ILlmProvider[] {
   const providerManager = ProviderConfigManager.getInstance();
@@ -100,22 +74,12 @@ export function getLlmProvider(): ILlmProvider[] {
         }
 
         let instance: ILlmProvider | undefined;
-        switch (config.type.toLowerCase()) {
-          case 'openai':
-            const { OpenAiProvider } = require('@hivemind/provider-openai');
-            instance = new OpenAiProvider(config.config);
-            debug(`Initialized OpenAI provider instance: ${config.name}`);
-            break;
-          case 'flowise':
-            instance = new FlowiseProvider(config.config);
-            debug(`Initialized Flowise provider instance: ${config.name}`);
-            break;
-          case 'openwebui':
-            instance = openWebUI; // Singleton/Stateless
-            debug(`Initialized OpenWebUI provider instance: ${config.name}`);
-            break;
-          default:
-            debug(`Unknown LLM provider type: ${config.type}`);
+        try {
+          const mod = loadPlugin(`llm-${config.type.toLowerCase()}`);
+          instance = instantiateLlmProvider(mod, config.config);
+          debug(`Initialized LLM provider via plugin loader: ${config.type} (${config.name})`);
+        } catch (err) {
+          debug(`Failed to load LLM plugin 'llm-${config.type}': ${err}`);
         }
 
         if (instance) {
@@ -158,17 +122,12 @@ export function getLlmProvider(): ILlmProvider[] {
         }
 
         let instance: ILlmProvider | undefined;
-        switch (type.toLowerCase()) {
-          case 'openai':
-            const { OpenAiProvider } = require('@hivemind/provider-openai');
-            instance = new OpenAiProvider();
-            break;
-          case 'flowise':
-            instance = new FlowiseProvider();
-            break;
-          case 'openwebui':
-            instance = openWebUI;
-            break;
+        try {
+          const mod = loadPlugin(`llm-${type.toLowerCase()}`);
+          instance = instantiateLlmProvider(mod, {});
+          debug(`Initialized legacy LLM provider via plugin loader: ${type}`);
+        } catch (err) {
+          debug(`Failed to load legacy LLM plugin 'llm-${type}': ${err}`);
         }
         if (instance) {
           const wrappedInstance = withTokenCounting(instance, 'legacy');
@@ -191,8 +150,8 @@ export function getLlmProvider(): ILlmProvider[] {
       llmProviders.push(cached.instance);
       activeProviderIds.add(defaultId);
     } else {
-      const { OpenAiProvider } = require('@hivemind/provider-openai');
-      const instance = new OpenAiProvider();
+      const mod = loadPlugin('llm-openai');
+      const instance = instantiateLlmProvider(mod, {});
       const wrappedInstance = withTokenCounting(instance, 'default');
       providerCache.set(defaultId, { instance: wrappedInstance, configHash });
       llmProviders.push(wrappedInstance);

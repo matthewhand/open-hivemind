@@ -167,7 +167,7 @@ describe('DiscordService', () => {
     };
 
     // Import DiscordService fresh
-    const { DiscordService: DS } = require('@hivemind/adapter-discord');
+    const { DiscordService: DS } = require('@hivemind/message-discord');
     DiscordService = DS;
 
     // Instantiate with dependency injection

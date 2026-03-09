@@ -1,7 +1,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { promisify } from 'util';
-import { executeCommand, readFile } from '../../src/utils/utils';
+import { executeCommandSafe, readFile } from '../../src/utils/utils';
 
 // Mock fs for controlled testing
 jest.mock('fs');
@@ -19,79 +19,98 @@ jest.mock('util', () => ({
   }),
 }));
 
-describe('executeCommand', () => {
+describe('executeCommandSafe', () => {
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
   describe('Basic functionality', () => {
     it('should execute a command and return output', async () => {
-      const output = await executeCommand('echo hello');
+      const output = await executeCommandSafe('echo', ['hello']);
       expect(output.trim()).toBe('hello');
     });
 
     it('should execute commands with arguments', async () => {
-      const output = await executeCommand('echo "hello world"');
+      const output = await executeCommandSafe('echo', ['hello world']);
       expect(output.trim()).toBe('hello world');
     });
 
     it('should handle multiline output', async () => {
-      const output = await executeCommand('printf "line1\\nline2"');
+      const output = await executeCommandSafe('printf', ['line1\nline2']);
       expect(output.trim()).toBe('line1\nline2');
     });
   });
 
   describe('Error handling', () => {
     it.each([
-      ['invalidcommand', 'should handle command errors gracefully'],
-      ['exit 1', 'should handle commands that exit with non-zero status'],
-      ['ls /nonexistent/directory', 'should handle commands with stderr output'],
-      ['', 'should handle empty commands'],
-    ])('%s', async (command, description) => {
-      await expect(executeCommand(command)).rejects.toThrow();
+      ['invalidcommand', [], 'should handle command errors gracefully'],
+      ['exit', ['1'], 'should handle commands that exit with non-zero status'],
+      ['ls', ['/nonexistent/directory'], 'should handle commands with stderr output'],
+      ['', [], 'should handle empty commands'],
+    ])('%s %p', async (command, args, description) => {
+      await expect(executeCommandSafe(command, args)).rejects.toThrow();
     });
 
     it('should handle null/undefined commands', async () => {
-      await expect(executeCommand(null as any)).rejects.toThrow();
-      await expect(executeCommand(undefined as any)).rejects.toThrow();
+      await expect(executeCommandSafe(null as any)).rejects.toThrow();
+      await expect(executeCommandSafe(undefined as any)).rejects.toThrow();
     });
   });
 
   describe('Command execution options', () => {
     it('should handle commands with different working directories', async () => {
       // Test that commands can be executed from different directories
-      const output = await executeCommand('pwd');
+      const output = await executeCommandSafe('pwd', []);
       expect(typeof output).toBe('string');
       expect(output.length).toBeGreaterThan(0);
     });
 
     it('should handle environment variables', async () => {
-      const output = await executeCommand('echo $HOME');
+      const output = await executeCommandSafe('echo', [process.env.HOME || '']);
       expect(typeof output).toBe('string');
     });
 
     it('should handle timeout scenarios', async () => {
       // Test with a command that should complete quickly
       const startTime = Date.now();
-      await executeCommand('echo "quick command"');
+      await executeCommandSafe('echo', ['quick command']);
       const duration = Date.now() - startTime;
       expect(duration).toBeLessThan(5000); // Should complete in under 5 seconds
+    });
+
+    it('should kill process and reject when timeout is exceeded', async () => {
+      // Note: This test might be slow or flaky in some environments
+      // We use a small timeout to verify rejection
+      await expect(
+        executeCommandSafe('sleep', ['2'], { timeout: 100 })
+      ).rejects.toThrow();
+    });
+
+    it('should respect the working directory (cwd) option', async () => {
+      const tempDir = fs.mkdtempSync(path.join(process.cwd(), 'test-cwd-'));
+      try {
+        const output = await executeCommandSafe('pwd', [], { cwd: tempDir });
+        // Normalize paths for comparison (handle potential symlinks or OS differences)
+        expect(output.trim()).toMatch(new RegExp(path.basename(tempDir) + '$'));
+      } finally {
+        fs.rmdirSync(tempDir);
+      }
     });
   });
 
   describe('Output formatting', () => {
     it('should preserve whitespace in output', async () => {
-      const output = await executeCommand('echo "  spaced  "');
+      const output = await executeCommandSafe('echo', ['  spaced  ']);
       expect(output).toBe('  spaced  \n');
     });
 
     it('should handle special characters in output', async () => {
-      const output = await executeCommand('echo "special chars: !@#$%^&*()"');
+      const output = await executeCommandSafe('echo', ['special chars: !@#$%^&*()']);
       expect(output.trim()).toBe('special chars: !@#$%^&*()');
     });
 
     it('should handle unicode characters', async () => {
-      const output = await executeCommand('echo "unicode: 🚀 ✅ 🎉"');
+      const output = await executeCommandSafe('echo', ['unicode: 🚀 ✅ 🎉']);
       expect(output.trim()).toBe('unicode: 🚀 ✅ 🎉');
     });
   });

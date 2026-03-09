@@ -1,10 +1,7 @@
 import Debug from 'debug';
 import messageConfig from '@config/messageConfig';
 import TypingMonitor from '../monitoring/TypingMonitor';
-import {
-  looksLikeOpportunity,
-  shouldReplyToUnsolicitedMessage,
-} from '../unsolicitedMessageHandler';
+import { shouldReplyToUnsolicitedMessage } from '../unsolicitedMessageHandler';
 import { getLastBotActivity } from './ChannelActivity';
 import { GlobalActivityTracker } from './GlobalActivityTracker';
 import { IncomingMessageDensity } from './IncomingMessageDensity';
@@ -108,7 +105,9 @@ export async function shouldReplyToMessage(
       debug('Message from bot itself. Not replying.');
       return { shouldReply: false, reason: 'Message from self' };
     }
-  } catch {}
+  } catch (error) {
+    debug('Error checking if message is from self:', error);
+  }
 
   // 1. Global Ignore Bots
   if (isFromBot) {
@@ -177,7 +176,9 @@ export async function shouldReplyToMessage(
     if (typeof (density as any).recordMessage === 'function') {
       (density as any).recordMessage(channelId, authorId, isFromBot);
     }
-  } catch {}
+  } catch (error) {
+    debug('Error recording incoming message density:', error);
+  }
 
   // Analyze history for penalties
   const recentHistory = historyMessages ? historyMessages.slice(-15) : [];
@@ -199,7 +200,9 @@ export async function shouldReplyToMessage(
       } else {
         uniqueUsers.add(aid);
       }
-    } catch {}
+    } catch (error) {
+      debug('Error analyzing recent history messages:', error);
+    }
   }
   if (authorId && authorId !== botId) {
     if (isFromBot) {
@@ -209,10 +212,12 @@ export async function shouldReplyToMessage(
     }
   }
 
-  const botHistoryPenalty = Math.max(-0.5, (botHistoryCount - 1) * 0.1 * -1);
+  const botHistoryPenaltyPerMsg = Number(getMessageSetting('MESSAGE_UNSOLICITED_BOT_HISTORY_PENALTY_PER_MESSAGE', botConfig) ?? 0.1);
+  const botHistoryPenalty = Math.max(-0.5, (botHistoryCount - 1) * botHistoryPenaltyPerMsg * -1);
   const tokenDensityPenalty = Math.max(0, selfTokenCount * 0.0001) * -1;
+  const userCountPenaltyPerUser = Number(getMessageSetting('MESSAGE_UNSOLICITED_USER_COUNT_PENALTY_PER_USER', botConfig) ?? 0.02);
   const userCountPenalty =
-    uniqueUsers.size > 1 ? Math.max(0, (uniqueUsers.size - 1) * 0.02) * -1 : 0;
+    uniqueUsers.size > 1 ? Math.max(0, (uniqueUsers.size - 1) * userCountPenaltyPerUser) * -1 : 0;
 
   // Unsolicited handler gating
   if (!isDirectlyAddressed) {
@@ -291,7 +296,9 @@ export async function shouldReplyToMessage(
       if (density && typeof (density as any).getUniqueParticipantCount === 'function') {
         participants = (density as any).getUniqueParticipantCount(channelId, windowMs);
       }
-    } catch {}
+    } catch (error) {
+      debug('Error getting unique participant count:', error);
+    }
     participants = Math.max(1, participants);
     const participantPenalty = Math.max(0, participants - 2) * 0.05 * -1;
     if (participantPenalty !== 0) {
@@ -315,7 +322,8 @@ export async function shouldReplyToMessage(
 
   // Prevent bot-to-bot storms when the provided context contains no user messages at all.
   // Only apply when the triggering message is from a bot; do not penalize user-originated prompts.
-  const botRatioPenalty = isFromBot && uniqueUsers.size === 0 ? -0.5 : 0;
+  const botRatioPenaltyVal = Number(getMessageSetting('MESSAGE_UNSOLICITED_BOT_RATIO_PENALTY', botConfig) ?? 0.5);
+  const botRatioPenalty = isFromBot && uniqueUsers.size === 0 ? -botRatioPenaltyVal : 0;
   chance += botRatioPenalty;
   mods.push(`BotRatio(${botRatioPenalty >= 0 ? '+' : ''}${botRatioPenalty.toFixed(2)})`);
 
@@ -333,7 +341,9 @@ export async function shouldReplyToMessage(
         chance -= 0.1;
         mods.push('-OffTopic(-0.1)');
       }
-    } catch {}
+    } catch (error) {
+      debug('Error analyzing semantics:', error);
+    }
   }
 
   const isAddressedToSomeone =
@@ -411,8 +421,9 @@ export async function shouldReplyToMessage(
       userPostedRecently = true;
     }
 
-    // BurstTraffic penalty - HALVED from previous values
-    const burstPenalty = Math.max(-0.15, (msgsSinceLastPost - 1) * 0.025 * -1);
+    // BurstTraffic penalty
+    const burstTrafficPenaltyPerMsg = Number(getMessageSetting('MESSAGE_UNSOLICITED_BURST_TRAFFIC_PENALTY_PER_MESSAGE', botConfig) ?? 0.025);
+    const burstPenalty = Math.max(-0.15, (msgsSinceLastPost - 1) * burstTrafficPenaltyPerMsg * -1);
     if (burstPenalty !== 0) {
       chance += burstPenalty;
       mods.push(`BurstTraffic(${burstPenalty.toFixed(2)})`);
@@ -434,7 +445,9 @@ export async function shouldReplyToMessage(
         mods.push(`+QuietChannel(+${quietBonus.toFixed(2)})`);
       }
     }
-  } catch {}
+  } catch (error) {
+    debug('Error getting messages per minute for quiet bonus calculation:', error);
+  }
 
   // 6. Global Activity (Fatigue) Penalty
   const activityScore = GlobalActivityTracker.getInstance().getScore(botId);

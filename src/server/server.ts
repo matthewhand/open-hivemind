@@ -10,11 +10,11 @@ import {
   setupGracefulShutdown,
 } from '../middleware/errorHandler';
 // Error handling imports
-import { ErrorUtils, HivemindError } from '../types/errors';
 // Middleware imports
 import { auditMiddleware } from './middleware/audit';
 import { authenticateToken, optionalAuth } from './middleware/auth';
 import { csrfProtection, csrfTokenHandler } from './middleware/csrf';
+import { applyRateLimiting } from '../middleware/rateLimiter';
 import { securityHeaders } from './middleware/security';
 import activityRouter from './routes/activity';
 import adminRouter from './routes/admin';
@@ -116,11 +116,8 @@ export class WebUIServer {
 
     this.app.use(cors(corsOptions));
 
-    // Rate limiting (basic implementation)
-    this.app.use('/api', (req, res, next) => {
-      // Basic rate limiting middleware
-      next();
-    });
+    // Rate limiting (robust implementation)
+    this.app.use('/api', applyRateLimiting);
 
     // Body parsing
     this.app.use(express.json({ limit: '10mb' }));
@@ -170,13 +167,6 @@ export class WebUIServer {
   private setupRoutes(): void {
     // Health check (no auth required) - mount at /health for backward compatibility
     this.app.use('/health', healthRouter);
-
-    // Prometheus metrics export (no auth required)
-    this.app.get('/metrics', (req, res, next) => {
-      // Ensure the /metrics route correctly calls the prometheus endpoint logic.
-      req.url = '/metrics/prometheus';
-      healthRouter(req, res, next);
-    });
 
     // Sitemap routes (no auth required)
     this.app.use('/', sitemapRouter);

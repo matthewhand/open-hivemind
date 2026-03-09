@@ -19,8 +19,12 @@ router.get('/', async (req: Request, res: Response) => {
     const configIds = await secureConfigManager.listConfigs();
     const configs = [];
 
-    for (const id of configIds) {
-      const config = await secureConfigManager.getConfig(id);
+    const configPromises = configIds.map((configData) =>
+      secureConfigManager.getConfig(configData.id)
+    );
+    const configResults = await Promise.all(configPromises);
+
+    for (const config of configResults) {
       if (config) {
         // Return metadata without sensitive data
         configs.push({
@@ -224,9 +228,9 @@ router.delete('/:id', async (req: AuditedRequest, res: Response) => {
     // Get config before deletion for audit logging
     const configToDelete = await secureConfigManager.getConfig(id);
 
-    const deleted = await secureConfigManager.deleteConfig(id);
-
-    if (!deleted) {
+    try {
+      await secureConfigManager.deleteConfig(id);
+    } catch {
       logConfigChange(req, 'DELETE', `secure-config/${id}`, 'failure', 'Configuration not found');
       return res.status(404).json({
         success: false,

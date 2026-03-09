@@ -14,7 +14,8 @@ test.describe('Settings Screenshots', () => {
     const globalConfigData = await globalConfigResponse.json();
 
     // Verify we have real API data (not mocked)
-    expect(globalConfigData).toBeTruthy();
+    expect(globalConfigData).toBeDefined();
+    expect(globalConfigData).not.toBeNull();
     expect(Object.keys(globalConfigData).length).toBeGreaterThan(0);
 
     // 1. Navigate to default settings page (General tab)
@@ -49,5 +50,12 @@ test.describe('Settings Screenshots', () => {
 
     // Screenshot while loading
     await page.screenshot({ path: 'docs/screenshots/settings-general-loading.png' });
+
+    // Check Secure Configuration Manager on Security tab
+    await page.goto('/admin/settings?tab=security');
+    await page.waitForSelector('h5:has-text("Security Settings")');
+
+    // Screenshot Security Tab
+    await page.screenshot({ path: 'docs/screenshots/settings-security.png', fullPage: true });
   });
 });

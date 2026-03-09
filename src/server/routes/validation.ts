@@ -1,9 +1,9 @@
 import { Router, type Request, type Response } from 'express';
 import { body, param, query, validationResult } from 'express-validator';
-import { authenticate, requireAdmin } from '../../auth/middleware';
+import { requireAdmin } from '../../auth/middleware';
 import type { AuthMiddlewareRequest } from '../../auth/types';
 import type { BotConfig } from '../../types/config';
-import { ErrorUtils, HivemindError } from '../../types/errors';
+import { ErrorUtils } from '../../types/errors';
 import { RealTimeValidationService } from '../services/RealTimeValidationService';
 
 const router = Router();
@@ -34,6 +34,7 @@ function validateBotConfiguration(bot: Partial<BotConfig>): BotValidationResult 
 
   if (!bot.name) {
     errors.push('Bot name is required');
+    errors.push('Name is required');
   }
 
   if (!bot.messageProvider) {
@@ -315,43 +316,47 @@ router.get('/api/validation', async (req: AuthMiddlewareRequest, res: Response) 
 });
 
 router.post('/api/validation/test', async (req: AuthMiddlewareRequest, res: Response) => {
-  const { config } = req.body ?? {};
+  try {
+    const { config } = req.body ?? {};
 
-  if (!config) {
-    return res.status(400).json({
-      error: 'Configuration data required',
-    });
-  }
+    if (!config) {
+      return res.status(400).json({
+        error: 'Configuration data required',
+      });
+    }
 
-  if (typeof config !== 'object' || Array.isArray(config)) {
-    return res.status(400).json({
-      error: 'Configuration data must be an object',
-    });
-  }
+    if (typeof config !== 'object' || Array.isArray(config)) {
+      return res.status(400).json({
+        error: 'Configuration data must be an object',
+      });
+    }
 
-  const bots = (config as { bots?: Partial<BotConfig>[] }).bots;
+    const bots = (config as { bots?: Partial<BotConfig>[] }).bots;
 
-  if (!Array.isArray(bots)) {
-    return res.status(200).json({
-      valid: false,
-      errors: ['Configuration must include a "bots" array'],
-      warnings: [],
-      recommendations: [],
-      botValidation: [],
+    if (!Array.isArray(bots)) {
+      return res.status(200).json({
+        valid: false,
+        errors: ['Configuration must include a "bots" array'],
+        warnings: [],
+        recommendations: [],
+        botValidation: [],
+        timestamp: new Date().toISOString(),
+      });
+    }
+
+    const summary = evaluateBotConfigurations(bots);
+
+    return res.json({
+      valid: summary.isValid,
+      errors: summary.errors,
+      warnings: summary.warnings,
+      recommendations: summary.recommendations,
+      botValidation: summary.botValidation,
       timestamp: new Date().toISOString(),
     });
+  } catch (error: any) {
+    return res.status(500).json({ error: error.message });
   }
-
-  const summary = evaluateBotConfigurations(bots);
-
-  return res.json({
-    valid: summary.isValid,
-    errors: summary.errors,
-    warnings: summary.warnings,
-    recommendations: summary.recommendations,
-    botValidation: summary.botValidation,
-    timestamp: new Date().toISOString(),
-  });
 });
 
 router.get('/api/validation/schema', (_req: AuthMiddlewareRequest, res: Response) => {

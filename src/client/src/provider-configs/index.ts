@@ -3,26 +3,32 @@ export * from './types';
 export * from './schemas/discord';
 export * from './schemas/slack';
 export * from './schemas/openai';
-export * from './schemas/anthropic';
-export * from './schemas/ollama';
 export * from './schemas/telegram';
 export * from './schemas/mcp';
 export * from './schemas/flowise';
 export * from './schemas/openwebui';
 export * from './schemas/mattermost';
+export * from './schemas/letta';
+export * from './schemas/mem0';
+export * from './schemas/mem4ai';
+export * from './schemas/openswarm';
+export * from './schemas/memvault';
 
 // Registry of all available provider schemas
 import type { ProviderConfigSchema } from './types';
 import { discordProviderSchema } from './schemas/discord';
 import { slackProviderSchema } from './schemas/slack';
 import { openAIProviderSchema } from './schemas/openai';
-import { anthropicProviderSchema } from './schemas/anthropic';
-import { ollamaProviderSchema } from './schemas/ollama';
 import { telegramProviderSchema } from './schemas/telegram';
 import { mcpProviderSchema } from './schemas/mcp';
 import { flowiseProviderSchema } from './schemas/flowise';
 import { mattermostProviderSchema } from './schemas/mattermost';
 import { openWebUiProviderSchema } from './schemas/openwebui';
+import { lettaProviderSchema } from './schemas/letta';
+import { mem0ProviderSchema } from './schemas/mem0';
+import { mem4aiProviderSchema } from './schemas/mem4ai';
+import { openSwarmProviderSchema } from './schemas/openswarm';
+import { memvaultProviderSchema } from './schemas/memvault';
 
 export const PROVIDER_SCHEMAS: Record<string, ProviderConfigSchema> = {
   // Message providers
@@ -33,13 +39,20 @@ export const PROVIDER_SCHEMAS: Record<string, ProviderConfigSchema> = {
 
   // LLM providers
   openai: openAIProviderSchema,
-  anthropic: anthropicProviderSchema,
-  ollama: ollamaProviderSchema,
   flowise: flowiseProviderSchema,
   openwebui: openWebUiProviderSchema,
+  letta: lettaProviderSchema,
 
   // MCP providers
   mcp: mcpProviderSchema,
+
+  // Memory providers
+  mem0: mem0ProviderSchema,
+  mem4ai: mem4aiProviderSchema,
+  memvault: memvaultProviderSchema,
+
+  // LLM providers (extended)
+  openswarm: openSwarmProviderSchema,
 };
 
 // Helper functions for working with provider schemas
@@ -47,7 +60,7 @@ export const getProviderSchema = (providerType: string): ProviderConfigSchema | 
   return PROVIDER_SCHEMAS[providerType];
 };
 
-export const getProviderSchemasByType = (type: 'message' | 'llm' | 'mcp'): ProviderConfigSchema[] => {
+export const getProviderSchemasByType = (type: 'message' | 'llm' | 'memory' | 'tool'): ProviderConfigSchema[] => {
   return Object.values(PROVIDER_SCHEMAS).filter(schema => schema.type === type);
 };
 

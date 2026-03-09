@@ -1,3 +1,4 @@
+import { withRetry } from '../utils/withRetry';
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Clock, Download, LayoutList, GitBranch, RefreshCw, X } from 'lucide-react';
@@ -49,53 +50,45 @@ const ActivityPage: React.FC = () => {
    */
 
   const fetchActivity = useCallback(async () => {
-    const shouldRetry = retryCount < maxRetries;
+    // Don't set loading on auto-refresh to avoid flickering
+    if (!autoRefresh) setLoading(true);
+    setError(null);
+    setRetryCount(0); // Reset before attempt
+
+    const params: any = {};
+    if (selectedBot !== 'all') params.bot = selectedBot;
+    if (selectedProvider !== 'all') params.messageProvider = selectedProvider;
+    if (selectedLlmProvider !== 'all') params.llmProvider = selectedLlmProvider;
+    if (startDate) params.from = new Date(startDate).toISOString();
+    if (endDate) params.to = new Date(endDate).toISOString();
+
     try {
-      // Exponential backoff retry logic
-      const currentDelay = shouldRetry ? retryDelay * Math.pow(2, retryCount) : 0;
+      const result = await withRetry(
+        () => apiService.getActivity(params),
+        maxRetries,
+        1000,
+        (err, attempt, max) => {
+           const delayMs = 1000 * Math.pow(2, attempt - 1);
+           console.log(`Retrying fetchActivity in ${delayMs}ms (attempt ${attempt}/${max})`);
+           setRetryCount(attempt);
+           setRetryDelay(delayMs);
+        }
+      );
 
-      if (currentDelay > 0) {
-        console.log(`Retrying fetchActivity in ${currentDelay}ms (attempt ${retryCount + 1}/${maxRetries})`);
-        await new Promise(resolve => setTimeout(resolve, currentDelay));
-      }
-
-      // Don't set loading on auto-refresh to avoid flickering
-      if (!autoRefresh) setLoading(true);
-      setError(null);
-
-      const params: any = {};
-      if (selectedBot !== 'all') params.bot = selectedBot;
-      if (selectedProvider !== 'all') params.messageProvider = selectedProvider;
-      if (selectedLlmProvider !== 'all') params.llmProvider = selectedLlmProvider;
-      if (startDate) params.from = new Date(startDate).toISOString();
-      if (endDate) params.to = new Date(endDate).toISOString();
-
-      const result = await apiService.getActivity(params);
       setData(result);
-
-      // Store initial filters
       if (result.filters) {
         setAvailableFilters(prev => prev || result.filters);
       }
-
-      // Reset retry state on success
       setRetryCount(0);
       setRetryDelay(1000);
     } catch (err: any) {
       const message = err instanceof Error ? err.message : 'Failed to fetch activity';
       setError(message);
       console.error('Error fetching activity:', err);
-
-      // Implement retry logic for transient errors
-      if (shouldRetry && (err.message && (err.message.includes('network') || err.message.includes('timeout')))) {
-        setRetryCount(prev => prev + 1);
-        setRetryDelay(prev => prev * 2); // Exponential backoff
-        fetchActivity(); // Retry immediately
-      }
     } finally {
       setLoading(false);
     }
-  }, [selectedBot, selectedProvider, selectedLlmProvider, startDate, endDate, autoRefresh, retryCount, maxRetries, retryDelay]);
+  }, [selectedBot, selectedProvider, selectedLlmProvider, startDate, endDate, autoRefresh, maxRetries]);
 
   useEffect(() => {
     fetchActivity();
@@ -288,32 +281,29 @@ const ActivityPage: React.FC = () => {
         />
       )}
 
-      {/* Retry Button if there are errors */}
-      {error && retryCount > 0 && (
+      {/* Auto-retrying indicator */}
+      {loading && retryCount > 0 && (
+        <Alert
+          status="warning"
+          message={`Auto-retrying (${retryCount}/${maxRetries}) in ${retryDelay}ms...`}
+        />
+      )}
+
+      {/* Manual Retry Button if there are persistent errors */}
+      {error && (
         <div className="mt-2 text-center">
-          {retryCount < maxRetries ? (
-            <Button
-              size="sm"
-              variant="secondary"
-              onClick={fetchActivity}
-              disabled={loading}
-            >
-              Retry ({retryCount}/{maxRetries})
-            </Button>
-          ) : (
-            <Button
-              size="sm"
-              variant="secondary"
-              onClick={() => {
-                setRetryCount(0);
-                setRetryDelay(1000);
-                setError(null);
-                fetchActivity();
-              }}
-            >
-              Reset & Retry
-            </Button>
-          )}
+          <Button
+            size="sm"
+            variant="secondary"
+            onClick={() => {
+              setRetryCount(0);
+              setRetryDelay(1000);
+              setError(null);
+              fetchActivity();
+            }}
+          >
+            Reset & Retry
+          </Button>
         </div>
       )}
 

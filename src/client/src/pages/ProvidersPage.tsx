@@ -1,13 +1,68 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, Button, Badge } from '../components/DaisyUI';
 import {
   MessageCircle as MessageIcon,
   Brain as LLMIcon,
+  Database as MemoryIcon,
+  Wrench as ToolIcon,
   Settings as ConfigIcon,
   ArrowRight as ArrowIcon,
 } from 'lucide-react';
 import { Breadcrumbs } from '../components/DaisyUI';
+import { getProviderSchemasByType } from '../provider-configs';
+
+// Icon mapping for provider types
+const TYPE_ICONS = {
+  message: MessageIcon,
+  llm: LLMIcon,
+  memory: MemoryIcon,
+  tool: ToolIcon,
+} as const;
+
+// Title mapping for provider types
+const TYPE_TITLES: Record<string, string> = {
+  message: 'Message Providers',
+  llm: 'LLM Providers',
+  memory: 'Memory Providers',
+  tool: 'Tool Providers',
+};
+
+// Description mapping for provider types
+const TYPE_DESCRIPTIONS: Record<string, string> = {
+  message: 'Configure Discord, Telegram, Slack, and other messaging providers for bot communication',
+  llm: 'Set up OpenAI, Flowise, Letta, and other LLM providers for AI responses',
+  memory: 'Configure memory providers for persistent context and knowledge storage',
+  tool: 'Set up tool providers for extended capabilities and integrations',
+};
+
+// Feature mapping for provider types
+const TYPE_FEATURES: Record<string, string[]> = {
+  message: [
+    'Real-time messaging integration',
+    'Multi-platform support',
+    'Webhook customization',
+    'Channel management',
+  ],
+  llm: [
+    'Multiple AI model support',
+    'Fallback configuration',
+    'Custom model integration',
+    'API key management',
+  ],
+  memory: [
+    'Persistent context storage',
+    'Knowledge management',
+    'Cross-session memory',
+    'Vector embeddings',
+  ],
+  tool: [
+    'Extended capabilities',
+    'External integrations',
+    'MCP server support',
+    'Custom tooling',
+  ],
+};
 
 const ProvidersPage: React.FC = () => {
   const navigate = useNavigate();
@@ -16,36 +71,30 @@ const ProvidersPage: React.FC = () => {
     { label: 'Providers', href: '/admin/providers', isActive: true },
   ];
 
-  const providerCategories = [
-    {
-      title: 'Message Providers',
-      description: 'Configure Discord, Telegram, Slack, and Webhook providers for bot communication',
-      icon: <MessageIcon className="w-12 h-12" />,
-      color: 'primary' as const,
-      providers: ['Discord', 'Telegram', 'Slack', 'Webhook'],
-      action: () => navigate('/admin/providers/message'),
-      features: [
-        'Real-time messaging integration',
-        'Multi-platform support',
-        'Webhook customization',
-        'Channel management',
-      ],
-    },
-    {
-      title: 'LLM Providers',
-      description: 'Set up OpenAI, Anthropic, Ollama, and custom LLM providers for AI responses',
-      icon: <LLMIcon className="w-12 h-12" />,
-      color: 'secondary' as const,
-      providers: ['OpenAI', 'Anthropic', 'Ollama', 'Custom'],
-      action: () => navigate('/admin/providers/llm'),
-      features: [
-        'Multiple AI model support',
-        'Fallback configuration',
-        'Custom model integration',
-        'API key management',
-      ],
-    },
-  ];
+  // Generate provider categories dynamically from schemas
+  const providerCategories = useMemo(() => {
+    const types: ('message' | 'llm' | 'memory' | 'tool')[] = ['message', 'llm', 'memory', 'tool'];
+
+    return types.map((type) => {
+      const schemas = getProviderSchemasByType(type);
+      const Icon = TYPE_ICONS[type];
+      const color = type === 'message' ? 'primary' as const :
+                    type === 'llm' ? 'secondary' as const :
+                    type === 'memory' ? 'accent' as const :
+                    'info' as const;
+
+      return {
+        type,
+        title: TYPE_TITLES[type],
+        description: TYPE_DESCRIPTIONS[type],
+        icon: <Icon className="w-12 h-12" />,
+        color,
+        providers: schemas.map(schema => schema.displayName),
+        action: () => navigate(`/admin/providers/${type}`),
+        features: TYPE_FEATURES[type],
+      };
+    }).filter(category => category.providers.length > 0);
+  }, [navigate]);
 
   return (
     <div className="p-6">
@@ -54,14 +103,14 @@ const ProvidersPage: React.FC = () => {
       <div className="mt-4 mb-8">
         <h1 className="text-4xl font-bold mb-2">Provider Management</h1>
         <p className="text-base-content/70">
-          Configure and manage your messaging and AI providers for bot instances
+          Configure and manage your messaging, AI, memory, and tool providers for bot instances
         </p>
       </div>
 
       {/* Provider Categories */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
         {providerCategories.map((category) => (
-          <Card key={category.title} className="bg-base-100 shadow-xl border border-base-300 hover:shadow-2xl transition-shadow duration-200">
+          <Card key={category.type} className="bg-base-100 shadow-xl border border-base-300 hover:shadow-2xl transition-shadow duration-200">
             <div className="card-body">
               {/* Header */}
               <div className="flex items-start justify-between mb-4">

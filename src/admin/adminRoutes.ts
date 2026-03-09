@@ -2,8 +2,8 @@ import fs from 'fs';
 import path from 'path';
 import Debug from 'debug';
 import { Router, type Request, type Response } from 'express';
-import { Discord } from '@hivemind/adapter-discord';
-import { SlackService } from '@hivemind/adapter-slack';
+import { Discord } from '@hivemind/message-discord';
+import { SlackService } from '@hivemind/message-slack';
 import { authenticate, requireAdmin } from '../auth/middleware';
 import { providerRegistry } from '../registries/ProviderRegistry';
 import { auditMiddleware, logAdminAction, type AuditedRequest } from '../server/middleware/audit';
@@ -67,10 +67,10 @@ async function loadPersonas(): Promise<{ key: string; name: string; systemPrompt
       return null;
     });
 
-    const results = await Promise.all(promises);
-    const out: { key: string; name: string; systemPrompt: string }[] = results.filter(
-      (item): item is { key: string; name: string; systemPrompt: string } => item !== null
-    );
+    const results = await Promise.allSettled(promises);
+    const out: { key: string; name: string; systemPrompt: string }[] = results
+      .map((r) => (r.status === 'fulfilled' ? r.value : null))
+      .filter((item): item is { key: string; name: string; systemPrompt: string } => item !== null);
 
     return out.length ? out : fallback;
   } catch (e) {

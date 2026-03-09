@@ -89,12 +89,20 @@ jest.isolateModules(() => {
         },
       }));
 
-      const { DiscordService } = require('@hivemind/adapter-discord');
+      const { DiscordService } = require('@hivemind/message-discord');
       service = new DiscordService({
         logger: { info: jest.fn(), error: jest.fn(), warn: jest.fn(), debug: jest.fn() } as any,
         messageConfig: { get: jest.fn() } as any,
         discordConfig: { get: jest.fn() } as any,
         errorTypes: { ConfigError: class ConfigError extends Error {} } as any,
+        getAllBotConfigs: jest.fn().mockReturnValue([
+          {
+            name: 'TestBot',
+            messageProvider: 'discord',
+            discord: { token: 'test-token' },
+            token: 'test-token',
+          },
+        ]),
       });
       DiscordService.setInstance(service);
       await service.initialize();
@@ -102,7 +110,7 @@ jest.isolateModules(() => {
       // Load Provider class from the same isolated module context
       ({
         DiscordMessageProvider,
-      } = require('@hivemind/adapter-discord/providers/DiscordMessageProvider'));
+      } = require('@hivemind/message-discord/providers/DiscordMessageProvider'));
 
       // Ensure a bot is present (workaround for CI config loading issues)
       if (service.getAllBots().length === 0) {

@@ -1,4 +1,3 @@
-import crypto from 'crypto';
 import type { Server as HttpServer } from 'http';
 import os from 'os';
 import Debug from 'debug';
@@ -7,6 +6,8 @@ import { BotConfigurationManager } from '../../config/BotConfigurationManager';
 import ApiMonitorService, { type EndpointStatus } from '../../services/ApiMonitorService';
 import { ActivityLogger } from './ActivityLogger';
 import { BotMetricsService } from './BotMetricsService';
+import 'reflect-metadata';
+import { injectable, singleton } from 'tsyringe';
 
 const debug = Debug('app:WebSocketService');
 
@@ -48,6 +49,8 @@ export interface AlertEvent {
   resolvedAt?: string;
 }
 
+@singleton()
+@injectable()
 export class WebSocketService {
   private static instance: WebSocketService;
   private io: SocketIOServer | null = null;
@@ -68,7 +71,7 @@ export class WebSocketService {
   // API monitoring
   private apiMonitorService: ApiMonitorService;
 
-  private constructor() {
+  constructor() {
     this.initializeMonitoringData();
     this.apiMonitorService = ApiMonitorService.getInstance();
     this.setupApiMonitoring();
@@ -92,6 +95,9 @@ export class WebSocketService {
     this.apiMonitorService.on('healthCheckResult', (result) => {
       this.handleApiHealthCheckResult(result);
     });
+
+    // Sync LLM endpoints on startup before starting monitoring
+    this.apiMonitorService.syncLlmEndpoints();
 
     // Start monitoring all configured endpoints
     this.apiMonitorService.startAllMonitoring();
@@ -149,7 +155,7 @@ export class WebSocketService {
   public recordMessageFlow(event: Omit<MessageFlowEvent, 'id' | 'timestamp'>): void {
     const messageEvent: MessageFlowEvent = {
       ...event,
-      id: `msg_${crypto.randomUUID()}`,
+      id: `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
       timestamp: new Date().toISOString(),
     };
 
@@ -181,7 +187,7 @@ export class WebSocketService {
   ): void {
     const alertEvent: AlertEvent = {
       ...alert,
-      id: `alert_${crypto.randomUUID()}`,
+      id: `alert_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
       timestamp: new Date().toISOString(),
       status: 'active',
     };
@@ -498,7 +504,9 @@ export class WebSocketService {
         stats,
         timestamp: new Date().toISOString(),
       });
-    } catch {}
+    } catch (error) {
+      debug('Error broadcasting bot stats:', error);
+    }
   }
 
   private sendBotStatus(socket: any): void {

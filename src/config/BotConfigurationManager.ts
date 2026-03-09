@@ -15,6 +15,7 @@ import type {
   McpGuardConfig,
   ConfigurationValidationResult,
   BotOverride,
+  LettaSessionMode,
 } from '@src/types/config';
 import { ConfigurationError } from '../types/errorClasses';
 
@@ -33,7 +34,10 @@ const botSchema = {
   // LLM provider configuration
   LLM_PROVIDER: {
     doc: 'LLM provider type (openai, flowise, etc.)',
-    format: ['openai', 'flowise', 'openwebui', 'perplexity', 'replicate', 'n8n', 'openswarm'],
+    // Using String format instead of an enum list allows plugins to add new providers
+    // without requiring code changes here. The PluginLoader will fail at runtime if
+    // the provider doesn't exist, which is sufficient validation.
+    format: String,
     default: 'flowise',
     env: 'BOTS_{name}_LLM_PROVIDER',
   },
@@ -283,6 +287,35 @@ const botSchema = {
     format: String,
     default: 'default-team',
     env: 'BOTS_{name}_OPENSWARM_TEAM',
+  },
+
+  // Letta configuration
+  LETTA_AGENT_ID: {
+    doc: 'Letta agent ID for this bot',
+    format: String,
+    default: '',
+    env: 'BOTS_{name}_LETTA_AGENT_ID',
+  },
+
+  LETTA_SYSTEM_PROMPT: {
+    doc: 'System prompt override for Letta agent',
+    format: String,
+    default: '',
+    env: 'BOTS_{name}_LETTA_SYSTEM_PROMPT',
+  },
+
+  LETTA_SESSION_MODE: {
+    doc: 'How Letta conversation sessions are scoped. "default" uses the agent default session, "per-channel" creates one conversation per channel, "per-user" creates one per user/DM, "fixed" uses LETTA_CONVERSATION_ID.',
+    format: ['default', 'per-channel', 'per-user', 'fixed'],
+    default: 'default',
+    env: 'BOTS_{name}_LETTA_SESSION_MODE',
+  },
+
+  LETTA_CONVERSATION_ID: {
+    doc: 'Fixed Letta conversation ID to use when LETTA_SESSION_MODE is "fixed"',
+    format: String,
+    default: '',
+    env: 'BOTS_{name}_LETTA_CONVERSATION_ID',
   },
 };
 
@@ -575,6 +608,15 @@ export class BotConfigurationManager {
         baseUrl: botConfig.get('OPENSWARM_BASE_URL'),
         apiKey: botConfig.get('OPENSWARM_API_KEY'),
         team: botConfig.get('OPENSWARM_TEAM'),
+      };
+    }
+
+    if (config.llmProvider === 'letta') {
+      config.letta = {
+        agentId: botConfig.get('LETTA_AGENT_ID') || undefined,
+        systemPrompt: botConfig.get('LETTA_SYSTEM_PROMPT') || undefined,
+        sessionMode: (botConfig.get('LETTA_SESSION_MODE') || 'default') as LettaSessionMode,
+        conversationId: botConfig.get('LETTA_CONVERSATION_ID') || undefined,
       };
     }
 
@@ -1043,7 +1085,9 @@ export class BotConfigurationManager {
     config.name = newName;
 
     // Remove internal properties if any (e.g., _updatedAt)
-    delete (config as any)._updatedAt;
+    if (typeof config === 'object' && config !== null && '_updatedAt' in config) {
+      delete (config as Record<string, unknown>)._updatedAt;
+    }
 
     // Add the new bot (this will validate and save it)
     await this.addBot(config);

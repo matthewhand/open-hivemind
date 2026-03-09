@@ -42,7 +42,9 @@ describe('MCPServersPage', () => {
       json: async () => ({
         data: {
           servers: [],
-          configurations: []
+          configurations: [],
+          trustedRepositories: [],
+          cautionRepositories: []
         }
       })
     });
@@ -77,6 +79,38 @@ describe('MCPServersPage', () => {
     expect(screen.getByPlaceholderText('Leave blank if not required or unchanged')).toBeInTheDocument();
   });
 
+  test('renders trusted repository context when returned by the API', async () => {
+    (global.fetch as jest.Mock).mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({
+        data: {
+          servers: [],
+          configurations: [],
+          trustedRepositories: [
+            {
+              owner: 'matthewhand',
+              repo: 'open-hivemind',
+              name: 'Open Hivemind',
+              verified: true
+            }
+          ],
+          cautionRepositories: []
+        }
+      })
+    });
+
+    await act(async () => {
+      render(
+        <MemoryRouter>
+          <MCPServersPage />
+        </MemoryRouter>
+      );
+    });
+
+    expect(screen.getByText(/Pre-vetted MCP repositories/i)).toBeInTheDocument();
+    expect(screen.getByText(/Open Hivemind \(matthewhand\/open-hivemind\)/i)).toBeInTheDocument();
+  });
+
   test('handleServerAction calls correct API endpoints', async () => {
     const mockServers = [
       {
@@ -93,7 +127,9 @@ describe('MCPServersPage', () => {
           json: async () => ({
             data: {
               servers: [],
-              configurations: mockServers
+              configurations: mockServers,
+              trustedRepositories: [],
+              cautionRepositories: []
             }
           })
         });

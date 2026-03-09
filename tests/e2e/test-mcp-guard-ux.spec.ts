@@ -52,7 +52,7 @@ test('verify MCP Guard UX', async ({ page }) => {
   await expect(modal).toBeVisible();
 
   // Enable Access Control toggle first since the select is disabled initially
-  const toggle = modal.locator('input[type="checkbox"].toggle-primary');
+  const toggle = modal.locator('input[type="checkbox"].toggle').first();
   await toggle.click();
 
   // Wait for the form to render
@@ -75,5 +75,5 @@ test('verify MCP Guard UX', async ({ page }) => {
 
   const value = await usersInput.inputValue();
   console.log('Input value after typing ",user2":', value);
-  expect(value).toBe('user1,user2');
+  expect(value).toBe('user1, user2');
 });

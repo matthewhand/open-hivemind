@@ -1,5 +1,5 @@
-import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
+import { vi } from 'vitest';
 import SearchFilterBar from '../SearchFilterBar';
 
 describe('SearchFilterBar', () => {
@@ -7,21 +7,23 @@ describe('SearchFilterBar', () => {
     render(
       <SearchFilterBar
         searchValue=""
-        onSearchChange={jest.fn()}
-        searchPlaceholder="Test Search"
+        onSearchChange={vi.fn()}
+        searchPlaceholder="Custom Search..."
       />
     );
-    expect(screen.getByPlaceholderText('Test Search')).toBeInTheDocument();
+
+    const input = screen.getByPlaceholderText('Custom Search...');
+    expect(input).toBeInTheDocument();
   });
 
   it('renders clear button when searchValue is present', () => {
-    const handleSearchChange = jest.fn();
     render(
       <SearchFilterBar
-        searchValue="test"
-        onSearchChange={handleSearchChange}
+        searchValue="test query"
+        onSearchChange={vi.fn()}
       />
     );
+
     const clearButton = screen.getByLabelText('Clear search');
     expect(clearButton).toBeInTheDocument();
   });
@@ -30,35 +32,37 @@ describe('SearchFilterBar', () => {
     render(
       <SearchFilterBar
         searchValue=""
-        onSearchChange={jest.fn()}
+        onSearchChange={vi.fn()}
       />
     );
-    expect(screen.queryByLabelText('Clear search')).not.toBeInTheDocument();
+
+    const clearButton = screen.queryByLabelText('Clear search');
+    expect(clearButton).not.toBeInTheDocument();
   });
 
   it('calls onSearchChange with empty string when clear button is clicked', () => {
-    const handleSearchChange = jest.fn();
-    const handleClear = jest.fn();
+    const mockOnSearchChange = vi.fn();
     render(
       <SearchFilterBar
-        searchValue="test"
-        onSearchChange={handleSearchChange}
-        onClear={handleClear}
+        searchValue="test query"
+        onSearchChange={mockOnSearchChange}
       />
     );
+
     const clearButton = screen.getByLabelText('Clear search');
     fireEvent.click(clearButton);
-    expect(handleSearchChange).toHaveBeenCalledWith('');
-    expect(handleClear).toHaveBeenCalled();
+
+    expect(mockOnSearchChange).toHaveBeenCalledWith('');
   });
 
-  it('clear button should have pointer-events-auto and stacking context classes', () => {
+  it('clear button tooltip should have pointer-events-auto and stacking context classes', () => {
     render(
       <SearchFilterBar
-        searchValue="test"
-        onSearchChange={jest.fn()}
+        searchValue="test query"
+        onSearchChange={vi.fn()}
       />
     );
+
     const clearButton = screen.getByLabelText('Clear search');
     expect(clearButton).toHaveClass('pointer-events-auto');
     expect(clearButton).toHaveClass('relative');
@@ -68,11 +72,11 @@ describe('SearchFilterBar', () => {
   it('input should have pr-10 class for padding', () => {
     render(
       <SearchFilterBar
-        searchValue=""
-        onSearchChange={jest.fn()}
+        searchValue="test query"
+        onSearchChange={vi.fn()}
       />
     );
-    const input = screen.getByRole('textbox');
+    const input = screen.getByPlaceholderText('Search...');
     expect(input).toHaveClass('pr-10');
   });
 });

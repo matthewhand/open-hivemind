@@ -3,7 +3,7 @@ import { getLlmProvider } from '@llm/getLlmProvider';
 
 // Mock the modules
 jest.mock('@llm/getLlmProvider');
-jest.mock('@hivemind/adapter-discord');
+jest.mock('@hivemind/message-discord');
 jest.mock('@integrations/slack/SlackService');
 jest.mock('@integrations/mattermost/MattermostService');
 

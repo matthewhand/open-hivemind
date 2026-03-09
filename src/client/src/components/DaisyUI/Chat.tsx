@@ -1,7 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
 
-const AVATAR_INITIALS_MAX_LENGTH = 2;
-
 export interface ChatMessage {
   id: string;
   content: string;
@@ -111,20 +109,18 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
     return (
       <div key={message.id} className={`chat ${isCurrentUser ? 'chat-end' : 'chat-start'} ${isGrouped ? 'mt-1' : 'mt-4'}`}>
         {!isGrouped && (
-          <div className="chat-image avatar">
-            <div className="w-10 rounded-full">
-              {message.sender.avatar ? (
+          <div className={`chat-image avatar ${!message.sender.avatar ? 'placeholder' : ''}`}>
+            {message.sender.avatar ? (
+              <div className="w-10 rounded-full">
                 <img alt={message.sender.name} src={message.sender.avatar} />
-              ) : (
-                <div className={'avatar placeholder'}>
-                  <div className={`bg-${isBot ? 'secondary' : 'primary'} text-${isBot ? 'secondary' : 'primary'}-content rounded-full w-10`}>
-                    <span className="text-xs">
-                      {isBot ? '🤖' : (message.sender.name || '?').charAt(0).toUpperCase()}
-                    </span>
-                  </div>
-                </div>
-              )}
-            </div>
+              </div>
+            ) : (
+              <div className={`bg-${isBot ? 'secondary' : 'primary'} text-${isBot ? 'secondary' : 'primary'}-content rounded-full w-10`}>
+                <span className="text-xl">
+                  {isBot ? '🤖' : (message.sender.name || '?').charAt(0).toUpperCase()}
+                </span>
+              </div>
+            )}
           </div>
         )}
 
@@ -147,7 +143,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
           : isBot
             ? 'chat-bubble-secondary'
             : 'chat-bubble-accent'
-        } ${message.metadata?.status === 'failed' ? 'chat-bubble-error' : ''}`}>
+          } ${message.metadata?.status === 'failed' ? 'chat-bubble-error' : ''}`}>
           {message.type === 'code' ? (
             <div className="mockup-code text-sm">
               <pre><code>{message.content}</code></pre>
@@ -220,7 +216,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
 
         <div className="flex items-center gap-2">
           <div className="dropdown dropdown-end">
-            <div tabIndex={0} role="button" className="btn btn-ghost btn-sm btn-circle">
+            <div tabIndex={0} role="button" className="btn btn-ghost btn-sm btn-circle" aria-label="Chat options">
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"></path>
               </svg>
@@ -249,13 +245,9 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
             {/* Typing Indicator */}
             {showTypingIndicator && typingUsers.length > 0 && (
               <div className="chat chat-start">
-                <div className="chat-image avatar">
-                  <div className="w-10 rounded-full">
-                    <div className="avatar placeholder">
-                      <div className="bg-secondary text-secondary-content rounded-full w-10">
-                        <span className="text-xs">🤖</span>
-                      </div>
-                    </div>
+                <div className="chat-image avatar placeholder">
+                  <div className="bg-secondary text-secondary-content rounded-full w-10">
+                    <span className="text-xl">🤖</span>
                   </div>
                 </div>
                 <div className="chat-bubble chat-bubble-secondary">
@@ -310,78 +302,5 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
   );
 };
 
-// Quick Actions Component for common bot commands
-interface QuickActionsProps {
-  onActionClick: (action: string) => void;
-  actions?: { label: string; command: string; icon?: string }[];
-}
-
-export const ChatQuickActions: React.FC<QuickActionsProps> = ({
-  onActionClick,
-  actions = [
-    { label: 'Status', command: '/status', icon: '📊' },
-    { label: 'Help', command: '/help', icon: '❓' },
-    { label: 'Restart', command: '/restart', icon: '🔄' },
-    { label: 'Settings', command: '/settings', icon: '⚙️' },
-  ],
-}) => {
-  return (
-    <div className="flex gap-2 p-2 bg-base-200 rounded-lg">
-      {actions.map((action, index) => (
-        <button
-          key={index}
-          className="btn btn-sm btn-ghost"
-          onClick={() => onActionClick(action.command)}
-        >
-          {action.icon && <span className="mr-1">{action.icon}</span>}
-          {action.label}
-        </button>
-      ))}
-    </div>
-  );
-};
-
-// Chat Statistics Component
-interface ChatStatsProps {
-  totalMessages: number;
-  activeUsers: number;
-  uptime: string;
-  responseTime: string;
-}
-
-export const ChatStats: React.FC<ChatStatsProps> = ({
-  totalMessages,
-  activeUsers,
-  uptime,
-  responseTime,
-}) => {
-  return (
-    <div className="stats stats-vertical lg:stats-horizontal shadow">
-      <div className="stat">
-        <div className="stat-title">Messages</div>
-        <div className="stat-value text-primary">{totalMessages.toLocaleString()}</div>
-        <div className="stat-desc">Total processed</div>
-      </div>
-
-      <div className="stat">
-        <div className="stat-title">Active Users</div>
-        <div className="stat-value text-secondary">{activeUsers}</div>
-        <div className="stat-desc">Currently chatting</div>
-      </div>
-
-      <div className="stat">
-        <div className="stat-title">Uptime</div>
-        <div className="stat-value text-accent">{uptime}</div>
-        <div className="stat-desc">System running</div>
-      </div>
-
-      <div className="stat">
-        <div className="stat-title">Response Time</div>
-        <div className="stat-value text-info">{responseTime}</div>
-        <div className="stat-desc">Average response</div>
-      </div>
-    </div>
-  );
-};
 
 export default ChatInterface;

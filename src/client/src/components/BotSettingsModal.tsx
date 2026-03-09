@@ -55,7 +55,7 @@ export const BotSettingsModal: React.FC<BotSettingsModalProps> = ({
         <dialog className="modal modal-open" onClose={onClose}>
             <div className="modal-box w-11/12 max-w-4xl bg-base-100">
                 <form method="dialog">
-                    <button className="btn btn-sm btn-circle btn-ghost absolute right-2 top-2" onClick={onClose}>✕</button>
+                    <button className="btn btn-sm btn-circle btn-ghost absolute right-2 top-2" onClick={onClose} aria-label="Close settings">✕</button>
                 </form>
 
                 <div className="flex items-center gap-3 mb-6 border-b border-base-300 pb-4">
@@ -145,7 +145,7 @@ export const BotSettingsModal: React.FC<BotSettingsModalProps> = ({
                                             </a>
                                         </li>
                                         <div className="divider my-1"></div>
-                                        {llmProfiles.map(profile => (
+                                        {llmProfiles.filter(profile => profile.modelType !== 'embedding').map(profile => (
                                             <li key={profile.key}>
                                                 <a onClick={() => { onUpdateConfig(bot, 'llmProvider', profile.key); (document.activeElement as HTMLElement)?.blur(); }} className={bot.llmProvider === profile.key ? 'active' : ''}>
                                                     <div className="flex flex-col gap-0.5">

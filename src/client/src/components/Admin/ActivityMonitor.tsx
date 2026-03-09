@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   ArrowPathIcon,
   ArrowDownTrayIcon,
@@ -252,9 +252,37 @@ const ActivityMonitor: React.FC = () => {
     }
   };
 
-  const getUniqueProviders = (type: 'messageProvider' | 'llmProvider') => {
-    return [...new Set(agents.map(agent => agent[type]))].filter(Boolean);
-  };
+  const uniqueMessageProviders = useMemo(() => {
+    return [...new Set(agents.map(agent => agent.messageProvider))].filter(Boolean);
+  }, [agents]);
+
+  const uniqueLlmProviders = useMemo(() => {
+    return [...new Set(agents.map(agent => agent.llmProvider))].filter(Boolean);
+  }, [agents]);
+
+  const providerMessagesData = useMemo(() => {
+    if (!summary) return [];
+    return Object.entries(summary.messagesByProvider).map(([provider, count]) => ({
+      name: provider,
+      value: count,
+    }));
+  }, [summary]);
+
+  const agentMessagesData = useMemo(() => {
+    if (!summary) return [];
+    return Object.entries(summary.messagesByAgent).map(([agent, count]) => ({
+      agent,
+      count,
+    }));
+  }, [summary]);
+
+  const llmUsageData = useMemo(() => {
+    if (!summary) return [];
+    return Object.entries(summary.llmUsageByProvider).map(([provider, usage]) => ({
+      provider,
+      usage,
+    }));
+  }, [summary]);
 
   const renderFilters = () => (
     <div className="card bg-base-100 shadow-xl mb-6">
@@ -264,6 +292,8 @@ const ActivityMonitor: React.FC = () => {
           <button
             className="btn btn-sm btn-ghost gap-2"
             onClick={() => setShowFilters(!showFilters)}
+            aria-expanded={showFilters}
+            aria-label={showFilters ? 'Hide filters' : 'Show filters'}
           >
             <FunnelIcon className="w-4 h-4" />
             {showFilters ? 'Hide' : 'Show'} Filters
@@ -301,7 +331,7 @@ const ActivityMonitor: React.FC = () => {
                   onChange={(e) => handleFilterChange({ messageProvider: e.target.value || undefined })}
                 >
                   <option value="">All Providers</option>
-                  {getUniqueProviders('messageProvider').map((provider) => (
+                  {uniqueMessageProviders.map((provider) => (
                     <option key={provider} value={provider}>
                       {provider}
                     </option>
@@ -319,7 +349,7 @@ const ActivityMonitor: React.FC = () => {
                   onChange={(e) => handleFilterChange({ llmProvider: e.target.value || undefined })}
                 >
                   <option value="">All LLM Providers</option>
-                  {getUniqueProviders('llmProvider').map((provider) => (
+                  {uniqueLlmProviders.map((provider) => (
                     <option key={provider} value={provider}>
                       {provider}
                     </option>
@@ -537,10 +567,7 @@ const ActivityMonitor: React.FC = () => {
               <ResponsiveContainer width="100%" height={250}>
                 <PieChart>
                   <Pie
-                    data={Object.entries(summary.messagesByProvider).map(([provider, count]) => ({
-                      name: provider,
-                      value: count,
-                    }))}
+                    data={providerMessagesData}
                     cx="50%"
                     cy="50%"
                     outerRadius={80}
@@ -548,7 +575,7 @@ const ActivityMonitor: React.FC = () => {
                     dataKey="value"
                     label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
                   >
-                    {Object.entries(summary.messagesByProvider).map((_, index) => (
+                    {providerMessagesData.map((_, index) => (
                       <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                     ))}
                   </Pie>
@@ -598,10 +625,7 @@ const ActivityMonitor: React.FC = () => {
             <div className="card-body">
               <h3 className="card-title mb-4">Messages by Agent</h3>
               <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={Object.entries(summary.messagesByAgent).map(([agent, count]) => ({
-                  agent,
-                  count,
-                }))}>
+                <BarChart data={agentMessagesData}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="agent" />
                   <YAxis />
@@ -616,10 +640,7 @@ const ActivityMonitor: React.FC = () => {
             <div className="card-body">
               <h3 className="card-title mb-4">LLM Usage by Provider</h3>
               <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={Object.entries(summary.llmUsageByProvider).map(([provider, usage]) => ({
-                  provider,
-                  usage,
-                }))}>
+                <BarChart data={llmUsageData}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="provider" />
                   <YAxis />

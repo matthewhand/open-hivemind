@@ -1,12 +1,12 @@
-import { exec } from 'child_process';
+import { execFile } from 'child_process';
 import fs from 'fs';
-import { convertOpusToWav } from '@hivemind/adapter-discord/media/convertOpusToWav';
+import { convertOpusToWav } from '@hivemind/message-discord/media/convertOpusToWav';
 
 jest.mock('child_process');
 jest.mock('fs');
 
 describe('convertOpusToWav', () => {
-  const mockExec = exec as jest.MockedFunction<typeof exec>;
+  const mockExecFile = execFile as unknown as jest.MockedFunction<any>;
   const mockFs = fs as jest.Mocked<typeof fs>;
 
   beforeEach(() => {
@@ -21,7 +21,7 @@ describe('convertOpusToWav', () => {
     const opusBuffer = Buffer.from('opus data');
     const outputDir = '/temp';
 
-    mockExec.mockImplementation((cmd, callback: any) => {
+    mockExecFile.mockImplementation((cmd: string, args: string[], callback: any) => {
       callback(null, { stdout: '', stderr: '' });
       return {} as any;
     });
@@ -36,16 +36,25 @@ describe('convertOpusToWav', () => {
   it('should handle ffmpeg errors', async () => {
     const opusBuffer = Buffer.from('opus data');
 
-    mockExec.mockImplementation((cmd, callback: any) => {
-      callback(new Error('ffmpeg not found'), null);
+    mockExecFile.mockImplementation((cmd: string, args: string[], callback: any) => {
+      if (args && args[0] === '-version') {
+        callback(null, { stdout: 'ffmpeg version', stderr: '' });
+      } else {
+        callback(new Error('ffmpeg error'), null);
+      }
       return {} as any;
     });
 
-    await expect(convertOpusToWav(opusBuffer, '/temp')).rejects.toThrow('ffmpeg not found');
+    await expect(convertOpusToWav(opusBuffer, '/temp')).rejects.toThrow('ffmpeg error');
   });
 
   it('should handle file write errors', async () => {
     const opusBuffer = Buffer.from('opus data');
+
+    mockExecFile.mockImplementation((cmd: string, args: string[], callback: any) => {
+      callback(null, { stdout: 'ffmpeg version', stderr: '' });
+      return {} as any;
+    });
 
     mockFs.promises.writeFile = jest.fn().mockRejectedValue(new Error('Permission denied'));
 

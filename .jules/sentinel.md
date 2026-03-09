@@ -1,8 +1,15 @@
-## 2025-03-03 - Path Traversal Prevention in Dynamic Filenames
-**Vulnerability:** The backup download and restore endpoints dynamically constructed file paths using an unvalidated `backup.name` string directly in `path.join()`. This allowed path traversal if a backup's name contained `../` sequences.
-**Learning:** Even when reading metadata from an internal, trusted directory (`listBackups()` reads `.meta` files), the strings within that metadata (like `backup.name`) must still be treated as untrusted input if they were originally sourced from users during creation, especially when they are subsequently used to construct file paths.
-**Prevention:** Always use `path.resolve()` on the base directory and the constructed target path, then explicitly verify that the target path `startsWith(resolvedBaseDir + path.sep)` before performing any file operations.
-## 2024-11-20 - Replace Weak Random Number Generation for Event IDs
-**Vulnerability:** Predictable `Math.random()` values were being used as part of unique ID generation for real-time events (notifications, validation reports, message flows).
-**Learning:** While not directly exploitable for session hijacking, weak IDs in real-time streams could theoretically allow event guessing or collision in high-throughput scenarios. `Math.random()` should never be used where uniqueness or security is required.
-**Prevention:** Use standard `crypto.randomUUID()` for all newly generated system IDs instead of relying on custom string concatenation with `Date.now()` and `Math.random()`.
+## 2025-02-26 - Add SSRF Protection to Outbound Requests
+
+**Vulnerability:** External APIs calls to configurable or dynamic endpoints were made via `axios` without validating the URL, potentially leading to Server-Side Request Forgery (SSRF).
+**Learning:** Although primary parameters like `baseUrl` come from server configurations, the absence of verification for out-bound requests exposes the internal network if configuration falls back to external payloads or is manipulated. Defense in depth matters.
+**Prevention:** Every outbound request (using `axios` or similar) must validate its target destination by running it through the custom `isSafeUrl` function to check for valid protocols and ensure no routing to private/loopback IPs.
+## 2024-03-08 - Path Traversal in File Operations
+**Vulnerability:** A path traversal vulnerability existed in `src/server/routes/specs.ts` where unvalidated user inputs (`id` and `version`) were directly passed to `path.join` to determine file system paths for both creating directories/files and reading directories.
+**Learning:** `z.string()` in Zod does not protect against directory traversal payloads (like `../`). It strictly validates type, not content semantics. Furthermore, constructing file paths from user inputs without subsequent `path.resolve` boundary verification breaks defense-in-depth, allowing an attacker to escape the intended directory.
+**Prevention:**
+1. Always apply strict regex patterns (e.g., `/^[a-zA-Z0-9_-]+$/`) to any user input that will be used as a filename or path segment.
+2. After constructing a path with `path.join`, always resolve it and verify it starts with the resolved expected base directory (`resolvedPath.startsWith(resolvedBase + path.sep)`).
+## 2025-03-09 - Client-Level SSRF Bypass via Axios Redirects and Method Invocation
+**Vulnerability:** A static SSRF check at initialization or within a `connect` method is insufficient for Axios clients configured with a user-supplied server URL. Attackers can bypass the check by invoking other API methods directly or by providing an external domain that redirects to an internal/loopback IP address.
+**Learning:** Checking the base URL only covers the first request's initial destination. Because Axios automatically follows redirects (up to 5 by default), subsequent hops can route to unsafe internal network locations.
+**Prevention:** Rather than checking the base URL statically, implement an Axios request interceptor (`axios.interceptors.request.use()`) that intercepts every outbound request, constructs the full URL (`reqConfig.baseURL + reqConfig.url`), and validates it against `isSafeUrl()`. This guarantees all API interactions are protected, including redirect flows and direct method invocations.

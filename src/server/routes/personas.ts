@@ -63,6 +63,13 @@ router.get('/:id', (req, res) => {
 // POST /api/personas
 router.post('/', validateRequest(CreatePersonaSchema), async (req, res) => {
   try {
+    // Idempotency check: see if persona with same name exists
+    const allPersonas = manager.getAllPersonas();
+    const existingPersona = allPersonas.find((p) => p.name === req.body.name);
+    if (existingPersona) {
+      return res.status(200).json(existingPersona);
+    }
+
     // Basic validation until strict schema is hooked up globally if needed
     const newPersona = manager.createPersona(req.body);
     return res.status(201).json(newPersona);
@@ -74,6 +81,15 @@ router.post('/', validateRequest(CreatePersonaSchema), async (req, res) => {
 // POST /api/personas/:id/clone
 router.post('/:id/clone', (req, res) => {
   try {
+    if (req.body.name) {
+      // Idempotency check: see if cloned persona already exists
+      const allPersonas = manager.getAllPersonas();
+      const existingPersona = allPersonas.find((p) => p.name === req.body.name);
+      if (existingPersona) {
+        return res.status(200).json(existingPersona);
+      }
+    }
+
     const clonedPersona = manager.clonePersona(req.params.id, req.body);
     return res.status(201).json(clonedPersona);
   } catch (error: any) {
@@ -97,10 +113,12 @@ router.put('/:id', async (req, res) => {
 // DELETE /api/personas/:id
 router.delete('/:id', (req, res) => {
   try {
-    const success = manager.deletePersona(req.params.id);
-    if (!success) {
-      return res.status(404).json({ error: 'Persona not found' });
+    const existingPersona = manager.getPersona(req.params.id);
+    if (!existingPersona) {
+      return res.json({ success: true }); // Idempotency: return 200 if already gone
     }
+
+    manager.deletePersona(req.params.id);
     return res.json({ success: true });
   } catch (error: any) {
     return res.status(400).json({ error: error.message });

@@ -17,6 +17,7 @@ describe('llmConfig', () => {
       const freshLlmConfig = require('../../src/config/llmConfig').default;
 
       expect(freshLlmConfig.get('LLM_PROVIDER')).toBe('openai');
+      expect(freshLlmConfig.get('DEFAULT_EMBEDDING_PROVIDER')).toBe('');
       expect(freshLlmConfig.get('LLM_PARALLEL_EXECUTION')).toBe(false);
     });
 
@@ -25,7 +26,7 @@ describe('llmConfig', () => {
     });
 
     it('should have all required configuration keys', () => {
-      const requiredKeys = ['LLM_PROVIDER', 'LLM_PARALLEL_EXECUTION'];
+      const requiredKeys = ['LLM_PROVIDER', 'DEFAULT_EMBEDDING_PROVIDER', 'LLM_PARALLEL_EXECUTION'];
       
       requiredKeys.forEach(key => {
         expect(() => llmConfig.get(key as any)).not.toThrow();
@@ -81,12 +82,14 @@ describe('llmConfig', () => {
 
     it('should handle multiple environment variables simultaneously', () => {
       process.env.LLM_PROVIDER = 'flowise';
+      process.env.DEFAULT_EMBEDDING_PROVIDER = 'embed-openai';
       process.env.LLM_PARALLEL_EXECUTION = 'true';
       
       jest.resetModules();
       const config = require('../../src/config/llmConfig').default;
       
       expect(config.get('LLM_PROVIDER')).toBe('flowise');
+      expect(config.get('DEFAULT_EMBEDDING_PROVIDER')).toBe('embed-openai');
       expect(config.get('LLM_PARALLEL_EXECUTION')).toBe(true);
     });
   });
@@ -132,6 +135,7 @@ describe('llmConfig', () => {
 
     it('should have correct data types', () => {
       expect(typeof llmConfig.get('LLM_PROVIDER')).toBe('string');
+      expect(typeof llmConfig.get('DEFAULT_EMBEDDING_PROVIDER')).toBe('string');
       expect(typeof llmConfig.get('LLM_PARALLEL_EXECUTION')).toBe('boolean');
     });
 

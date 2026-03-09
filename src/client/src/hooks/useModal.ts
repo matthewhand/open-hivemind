@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import type { ProviderModalState, MessageProvider, LLMProvider } from '../types/bot';
+import type { ProviderModalState, MessageProvider, LLMProvider } from '../types';
 
 const useModal = () => {
   const [modalState, setModalState] = useState<ProviderModalState>({
@@ -12,7 +12,7 @@ const useModal = () => {
   });
 
   // Open modal for adding provider
-  const openAddModal = useCallback((botId: string, providerType: 'message' | 'llm') => {
+  const openAddModal = useCallback((botId: string, providerType: 'message' | 'llm' | 'memory' | 'tool') => {
     setModalState({
       isOpen: true,
       providerType,
@@ -26,7 +26,7 @@ const useModal = () => {
   // Open modal for editing provider
   const openEditModal = useCallback((
     botId: string,
-    providerType: 'message' | 'llm',
+    providerType: 'message' | 'llm' | 'memory' | 'tool',
     provider: MessageProvider | LLMProvider,
   ) => {
     setModalState({

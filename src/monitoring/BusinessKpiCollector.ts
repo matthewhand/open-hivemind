@@ -366,9 +366,13 @@ export class BusinessKpiCollector extends EventEmitter {
       case 'avg':
         return relevantPoints.reduce((sum, dp) => sum + dp.value, 0) / relevantPoints.length;
       case 'min':
-        return Math.min(...relevantPoints.map((dp) => dp.value));
+        // ⚡ Bolt: Replace Math.min(...array.map()) with a single O(N) reduce operation
+        // to avoid O(N) memory allocation and prevent 'Maximum call stack size exceeded' on large arrays.
+        return relevantPoints.reduce((min, dp) => (dp.value < min ? dp.value : min), Infinity);
       case 'max':
-        return Math.max(...relevantPoints.map((dp) => dp.value));
+        // ⚡ Bolt: Replace Math.max(...array.map()) with a single O(N) reduce operation
+        // to avoid O(N) memory allocation and prevent 'Maximum call stack size exceeded' on large arrays.
+        return relevantPoints.reduce((max, dp) => (dp.value > max ? dp.value : max), -Infinity);
       case 'count':
         return relevantPoints.length;
       case 'percentile':

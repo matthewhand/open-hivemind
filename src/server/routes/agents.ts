@@ -2,9 +2,7 @@ import { promises as fs } from 'fs';
 import { join } from 'path';
 import Debug from 'debug';
 import { Router } from 'express';
-import { ErrorUtils, HivemindError } from '@src/types/errors';
-import { BotConfigurationManager } from '../../config/BotConfigurationManager';
-import { DatabaseManager } from '../../database/DatabaseManager';
+import { ErrorUtils } from '@src/types/errors';
 
 const debug = Debug('app:webui:agents');
 const router = Router();
@@ -166,6 +164,13 @@ router.post('/', async (req, res) => {
     const agentData: Omit<AgentConfig, 'id'> = req.body;
 
     const agents = await loadJsonConfig<AgentConfig[]>(AGENTS_CONFIG_FILE, []);
+
+    // Idempotency check: return existing agent with same name
+    const existingAgent = agents.find((a) => a.name === agentData.name);
+    if (existingAgent) {
+      return res.status(200).json({ agent: existingAgent });
+    }
+
     const newAgent: AgentConfig = {
       ...agentData,
       id: `agent_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
@@ -324,8 +329,9 @@ router.post('/personas', async (req, res) => {
     const key = name.toLowerCase().replace(/[^a-z0-9]/g, '_');
 
     // Check if persona already exists
-    if (personas.find((p) => p.key === key)) {
-      return res.status(400).json({ error: 'Persona with this name already exists' });
+    const existingPersona = personas.find((p) => p.key === key);
+    if (existingPersona) {
+      return res.status(200).json({ persona: existingPersona });
     }
 
     const newPersona: Persona = { key, name, systemPrompt };

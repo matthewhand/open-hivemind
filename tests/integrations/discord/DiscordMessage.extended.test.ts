@@ -1,4 +1,4 @@
-import { DiscordMessage } from '@hivemind/adapter-discord';
+import { DiscordMessage } from '@hivemind/message-discord';
 
 describe('DiscordMessageExtended Integration', () => {
   const createMockMessage = (overrides = {}) => ({

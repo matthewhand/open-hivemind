@@ -48,6 +48,7 @@ function withTokenCounting(provider: ILlmProvider, instanceId: string): ILlmProv
     name: provider.name,
     supportsChatCompletion: provider.supportsChatCompletion,
     supportsCompletion: provider.supportsCompletion,
+    supportsHistory: provider.supportsHistory,
     generateChatCompletion: async (
       userMessage: string,
       historyMessages: IMessage[],
@@ -114,7 +115,7 @@ function createProviderFromInstance(
     let provider: ILlmProvider | undefined;
     switch (type) {
       case 'openai':
-        const { OpenAiProvider } = require('@hivemind/provider-openai');
+        const { OpenAiProvider } = require('@hivemind/llm-openai');
         provider = new OpenAiProvider(cfg);
         break;
       case 'flowise':

@@ -38,6 +38,7 @@ const SettingsGeneral: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [alert, setAlert] = useState<{ type: 'success' | 'error', message: string } | null>(null);
+  const [fetchError, setFetchError] = useState<string | null>(null);
 
   // Generate timezone options dynamically
   const timezoneOptions = useMemo(() => {
@@ -65,9 +66,11 @@ const SettingsGeneral: React.FC = () => {
     ];
   }, []);
 
+
   const fetchSettings = useCallback(async () => {
     try {
       setLoading(true);
+      setFetchError(null);
       const response = await fetch('/api/config/global');
       if (!response.ok) { throw new Error('Failed to fetch settings'); }
       const data = await response.json();
@@ -91,6 +94,7 @@ const SettingsGeneral: React.FC = () => {
         advancedMode: userSettings['webui.advancedMode'] || false,
       });
     } catch (error) {
+      setFetchError(error instanceof Error ? error.message : 'An unknown error occurred while fetching settings.');
       setAlert({ type: 'error', message: 'Failed to load settings' });
     } finally {
       setLoading(false);
@@ -140,8 +144,45 @@ const SettingsGeneral: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-12">
-        <span className="loading loading-spinner loading-lg"></span>
+      <div className="space-y-6">
+        <div className="flex items-center gap-3 mb-4">
+          <div className="h-5 w-5 bg-base-300 rounded animate-pulse"></div>
+          <div>
+            <div className="h-5 w-48 bg-base-300 rounded mb-1 animate-pulse" style={{ animationDelay: '0ms' }}></div>
+            <div className="h-4 w-64 bg-base-300 rounded animate-pulse" style={{ animationDelay: '100ms' }}></div>
+          </div>
+        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {[1, 2, 3, 4].map((i, index) => (
+            <div key={i} className="card bg-base-100 border border-base-300 shadow-sm p-4 h-full">
+              <div className="h-6 bg-base-300 rounded w-1/3 mb-4 animate-pulse" style={{ animationDelay: `${index * 150}ms` }}></div>
+              <div className="space-y-4">
+                <div>
+                  <div className="h-4 bg-base-300 rounded w-1/4 mb-2 animate-pulse" style={{ animationDelay: `${index * 150 + 50}ms` }}></div>
+                  <div className="h-10 bg-base-300 rounded w-full animate-pulse" style={{ animationDelay: `${index * 150 + 100}ms` }}></div>
+                </div>
+                <div>
+                  <div className="h-4 bg-base-300 rounded w-1/4 mb-2 animate-pulse" style={{ animationDelay: `${index * 150 + 150}ms` }}></div>
+                  <div className="h-24 bg-base-300 rounded w-full animate-pulse" style={{ animationDelay: `${index * 150 + 200}ms` }}></div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  if (fetchError) {
+    return (
+      <div className="flex flex-col items-center justify-center py-12 space-y-4">
+        <div className="text-error mb-2">
+          <ShieldCheck className="w-12 h-12 mx-auto mb-2 opacity-50" />
+          <p className="font-semibold text-lg text-center">{fetchError}</p>
+        </div>
+        <Button variant="primary" onClick={fetchSettings} className="gap-2">
+           <Activity className="w-4 h-4" /> Retry
+        </Button>
       </div>
     );
   }
@@ -243,25 +284,13 @@ const SettingsGeneral: React.FC = () => {
             Logging & Notifications
           </h6>
 
-          <div className="form-control mb-3">
-            <label className="label cursor-pointer py-1">
-              <span className="label-text text-sm">Enable system logging</span>
-              <Toggle
-                checked={settings.enableLogging}
-                onChange={(e) => handleChange('enableLogging', e.target.checked)}
-                size="sm"
-              />
-            </label>
-          </div>
-
-          <div className="form-control mb-3">
+          <div className="form-control mb-4">
             <label className="label py-1">
               <span className="label-text text-sm font-medium">Log Level</span>
             </label>
             <Select
               value={settings.logLevel}
               onChange={(e) => handleChange('logLevel', e.target.value)}
-              disabled={!settings.enableLogging}
               size="sm"
               options={[
                 { value: 'debug', label: 'Debug' },
@@ -272,146 +301,93 @@ const SettingsGeneral: React.FC = () => {
             />
           </div>
 
-          <div className="form-control">
-            <label className="label cursor-pointer py-1">
-              <span className="label-text text-sm">Enable notifications</span>
-              <Toggle
-                checked={settings.enableNotifications}
-                onChange={(e) => handleChange('enableNotifications', e.target.checked)}
-                size="sm"
-              />
-            </label>
+          <div className="space-y-3">
+            <Toggle
+              label="Enable Detailed Logging"
+              checked={settings.enableLogging}
+              onChange={(checked) => handleChange('enableLogging', checked)}
+              size="sm"
+            />
+            <Toggle
+              label="Enable Desktop Notifications"
+              checked={settings.enableNotifications}
+              onChange={(checked) => handleChange('enableNotifications', checked)}
+              size="sm"
+            />
           </div>
         </div>
 
         {/* System Limits */}
         <div className={commonCardClass}>
           <h6 className="text-md font-semibold mb-4 flex items-center gap-2">
-            <ShieldCheck className="w-4 h-4 text-warning" />
-            System Limits
+            <span className="w-2 h-2 bg-warning rounded-full"></span>
+            System Limits & Health
           </h6>
 
-          {/* Concurrent Bots */}
-          <div className="form-control mb-6">
-            <label className="label py-1">
-              <span className="label-text text-sm font-medium">Max Concurrent Bots</span>
-              <span className="badge badge-primary font-mono">{settings.maxConcurrentBots}</span>
-            </label>
-            <input
-              type="range"
-              min="1"
-              max="100"
-              value={settings.maxConcurrentBots}
-              onChange={(e) => handleChange('maxConcurrentBots', parseInt(e.target.value))}
-              className="range range-primary range-xs"
-            />
-            <div className="w-full flex justify-between text-xs px-2 mt-1 text-base-content/50 font-mono">
-              <span>1</span>
-              <span>50</span>
-              <span>100</span>
-            </div>
-          </div>
-
-          {/* Response Timeout */}
-          <div className="form-control">
-            <label className="label py-1">
-              <span className="label-text text-sm font-medium">Response Timeout (seconds)</span>
-              <span className="badge badge-neutral font-mono">{settings.defaultResponseTimeout}s</span>
-            </label>
-            <input
-              type="range"
-              min="5"
-              max="300"
-              value={settings.defaultResponseTimeout}
-              onChange={(e) => handleChange('defaultResponseTimeout', parseInt(e.target.value))}
-              className="range range-neutral range-xs"
-            />
-            <div className="w-full flex justify-between text-xs px-2 mt-1 text-base-content/50 font-mono">
-              <span>5s</span>
-              <span>300s</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Health & Monitoring */}
-        <div className={commonCardClass}>
-          <h6 className="text-md font-semibold mb-4 flex items-center gap-2">
-            <Activity className="w-4 h-4 text-success" />
-            Health & Monitoring
-          </h6>
-
-          <div className="form-control mb-6">
-            <label className="label cursor-pointer py-1">
-              <span className="label-text text-sm font-medium">Enable Health Checks</span>
-              <Toggle
-                checked={settings.enableHealthChecks}
-                onChange={(e) => handleChange('enableHealthChecks', e.target.checked)}
+          <div className="grid grid-cols-2 gap-4 mb-4">
+            <div className="form-control">
+              <label className="label py-1">
+                <span className="label-text text-sm font-medium">Max Bots</span>
+              </label>
+              <Input
+                type="number"
+                value={settings.maxConcurrentBots}
+                onChange={(e) => handleChange('maxConcurrentBots', parseInt(e.target.value))}
                 size="sm"
               />
-            </label>
-            <div className="label pt-0 pb-1">
-              <span className="label-text-alt text-base-content/50">
-                Periodically check status of external services and APIs.
-              </span>
             </div>
-          </div>
-
-          <div className={`form-control ${!settings.enableHealthChecks ? 'opacity-50 pointer-events-none' : ''}`}>
-            <label className="label py-1">
-              <span className="label-text text-sm font-medium">Check Interval (seconds)</span>
-              <span className="badge badge-success font-mono">{settings.healthCheckInterval}s</span>
-            </label>
-            <input
-              type="range"
-              min="30"
-              max="300"
-              step="30"
-              value={settings.healthCheckInterval}
-              onChange={(e) => handleChange('healthCheckInterval', parseInt(e.target.value))}
-              className="range range-success range-xs"
-              disabled={!settings.enableHealthChecks}
-            />
-            <div className="w-full flex justify-between text-xs px-2 mt-1 text-base-content/50 font-mono">
-              <span>30s</span>
-              <span>150s</span>
-              <span>300s</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Advanced Settings */}
-        <div className={commonCardClass}>
-          <h6 className="text-md font-semibold mb-4 flex items-center gap-2">
-            <SettingsIcon className="w-4 h-4 text-base-content" />
-            Advanced Settings
-          </h6>
-
-          <div className="form-control">
-            <label className="label cursor-pointer py-1">
-              <span className="label-text text-sm">Enable Advanced Mode</span>
-              <Toggle
-                checked={settings.advancedMode}
-                onChange={(e) => handleChange('advancedMode', e.target.checked)}
+            <div className="form-control">
+              <label className="label py-1">
+                <span className="label-text text-sm font-medium">Timeout (s)</span>
+              </label>
+              <Input
+                type="number"
+                value={settings.defaultResponseTimeout}
+                onChange={(e) => handleChange('defaultResponseTimeout', parseInt(e.target.value))}
                 size="sm"
               />
-            </label>
-            <div className="label pt-0 pb-1">
-              <span className="label-text-alt text-base-content/50">
-                Unlocks experimental features and granular configuration options across the system.
-              </span>
             </div>
+          </div>
+
+          <div className="space-y-3">
+            <Toggle
+              label="Enable Background Health Checks"
+              checked={settings.enableHealthChecks}
+              onChange={(checked) => handleChange('enableHealthChecks', checked)}
+              size="sm"
+            />
+            {settings.enableHealthChecks && (
+              <div className="form-control mt-2 pl-4 border-l-2 border-base-300">
+                <label className="label py-1">
+                  <span className="label-text text-xs font-medium">Interval (seconds)</span>
+                </label>
+                <Input
+                  type="number"
+                  value={settings.healthCheckInterval}
+                  onChange={(e) => handleChange('healthCheckInterval', parseInt(e.target.value))}
+                  size="xs"
+                />
+              </div>
+            )}
+            <Toggle
+              label="Advanced Mode (Show all options)"
+              checked={settings.advancedMode}
+              onChange={(checked) => handleChange('advancedMode', checked)}
+              size="sm"
+            />
           </div>
         </div>
       </div>
 
-      <div className="flex justify-end pt-4">
+      <div className="flex justify-end pt-4 border-t border-base-300">
         <Button
-          onClick={handleSave}
-          disabled={isSaving}
           variant="primary"
+          onClick={handleSave}
           loading={isSaving}
+          className="min-w-[120px]"
         >
-          {isSaving ? 'Saving...' : 'Save Settings'}
+          <SettingsIcon className="w-4 h-4 mr-2" />
+          Save Settings
         </Button>
       </div>
     </div>

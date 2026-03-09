@@ -1,10 +1,9 @@
 import React from 'react';
-import type { LucideIcon } from 'lucide-react';
 
 interface PageHeaderProps {
     title: string;
     description?: string;
-    icon?: LucideIcon;
+    icon?: React.ReactNode;
     actions?: React.ReactNode;
     gradient?: 'primary' | 'secondary' | 'accent' | 'success' | 'warning' | 'error';
     className?: string;
@@ -35,7 +34,7 @@ const iconBgMap = {
 const PageHeader: React.FC<PageHeaderProps> = ({
   title,
   description,
-  icon: Icon,
+  icon,
   actions,
   gradient = 'primary',
   className = '',
@@ -54,9 +53,9 @@ const PageHeader: React.FC<PageHeaderProps> = ({
 
       <div className="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div className="flex items-start gap-4">
-          {Icon && (
+          {icon && (
             <div className={`p-3 rounded-xl ${iconBgMap[gradient]} backdrop-blur-sm shadow-sm`}>
-              <Icon className="w-6 h-6" />
+              {icon}
             </div>
           )}
           <div>

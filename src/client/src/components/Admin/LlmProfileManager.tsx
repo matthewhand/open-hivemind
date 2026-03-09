@@ -16,7 +16,7 @@ interface ProviderProfile {
     config: Record<string, unknown>;
 }
 
-const LLM_PROVIDERS = ['openai', 'flowise', 'openwebui', 'openswarm', 'perplexity', 'replicate', 'n8n'];
+const LLM_PROVIDERS = ['openai', 'anthropic', 'flowise', 'openwebui', 'openswarm', 'letta'];
 
 const LlmProfileManager: React.FC = () => {
   const [profiles, setProfiles] = useState<ProviderProfile[]>([]);
@@ -41,7 +41,7 @@ const LlmProfileManager: React.FC = () => {
       const response = await fetch('/api/config/llm-profiles');
       if (!response.ok) {throw new Error('Failed to fetch profiles');}
       const data = await response.json();
-      setProfiles(data.profiles?.llm || []);
+      setProfiles(data.llm || data.profiles?.llm || []);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch profiles');
     } finally {
@@ -210,7 +210,7 @@ const LlmProfileManager: React.FC = () => {
       </Modal>
 
       {toastMessage && (
-        <div className="toast toast-bottom toast-center z-50">
+        <div className="toast toast-bottom toast-center z-50" role="status" aria-live="polite">
           <div className={`alert ${toastType === 'success' ? 'alert-success' : 'alert-error'}`}>
             <span>{toastMessage}</span>
             <button className="btn btn-sm btn-ghost" onClick={() => setToastMessage('')}>✕</button>

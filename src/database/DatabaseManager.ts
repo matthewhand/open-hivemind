@@ -1,8 +1,10 @@
+import 'reflect-metadata';
 import { promises as fs } from 'fs';
 import { join } from 'path';
 import Debug from 'debug';
 import { open, type Database } from 'sqlite';
 import sqlite3 from 'sqlite3';
+import { injectable, singleton } from 'tsyringe';
 import { ConfigurationError, DatabaseError } from '@src/types/errorClasses';
 
 const debug = Debug('app:DatabaseManager');
@@ -299,6 +301,8 @@ export interface AIFeedback {
   metadata?: Record<string, unknown>;
 }
 
+@singleton()
+@injectable()
 export class DatabaseManager {
   private static instance: DatabaseManager | null = null;
   private config?: DatabaseConfig;
@@ -306,7 +310,7 @@ export class DatabaseManager {
   private connected = false;
   private db: Database | null = null;
 
-  private constructor(config?: DatabaseConfig) {
+  constructor(config?: DatabaseConfig) {
     if (config) {
       this.configure(config);
     }
@@ -1192,6 +1196,47 @@ export class DatabaseManager {
     } catch (error) {
       debug('Error getting bot configuration:', error);
       throw new Error(`Failed to get bot configuration: ${error}`);
+    }
+  }
+
+  /**
+   * Get multiple bot configurations in a single query
+   */
+  async getBotConfigurationsBulk(ids: number[]): Promise<BotConfiguration[]> {
+    this.ensureConnected();
+
+    if (ids.length === 0) return [];
+
+    try {
+      const placeholders = ids.map(() => '?').join(',');
+      const rows = await this.db!.all(
+        `SELECT * FROM bot_configurations WHERE id IN (${placeholders})`,
+        ids
+      );
+
+      return rows.map((row) => ({
+        id: row.id,
+        name: row.name,
+        messageProvider: row.messageProvider,
+        llmProvider: row.llmProvider,
+        persona: row.persona,
+        systemInstruction: row.systemInstruction,
+        mcpServers: row.mcpServers,
+        mcpGuard: row.mcpGuard,
+        discord: row.discord,
+        slack: row.slack,
+        mattermost: row.mattermost,
+        openai: row.openai,
+        flowise: row.flowise,
+        openwebui: row.openwebui,
+        openswarm: row.openswarm,
+        isActive: row.isActive === 1,
+        createdAt: new Date(row.createdAt),
+        updatedAt: new Date(row.updatedAt),
+      }));
+    } catch (error) {
+      debug('Error getting bulk bot configurations:', error);
+      throw new Error(`Failed to get bulk bot configurations: ${error}`);
     }
   }
 
