@@ -58,7 +58,7 @@ const BotCreatePage: React.FC = () => {
         }
 
         setPersonas(personasData || []);
-        setLlmProfiles(profilesData?.profiles?.llm || []);
+        setLlmProfiles(profilesData?.llm || profilesData?.profiles?.llm || []);
         const servers = mcpResponse?.data || mcpResponse || [];
         setMcpServers(Array.isArray(servers) ? servers : []);
       } catch (err) {
@@ -115,6 +115,7 @@ const BotCreatePage: React.FC = () => {
   ];
 
   const selectedPersona = personas.find(p => p.id === formData.persona);
+  const chatCapableProfiles = llmProfiles.filter((profile: any) => profile?.modelType !== 'embedding');
   return (
     <div className="space-y-6">
       <Breadcrumbs items={breadcrumbItems} />
@@ -324,7 +325,7 @@ const BotCreatePage: React.FC = () => {
                           ? `Use System Default ${llmStatus?.defaultProviders?.[0]?.name ? `(${llmStatus.defaultProviders[0].name})` : ''}`
                           : 'Select Provider...'}
                       </option>
-                      {llmProfiles.map((p) => (
+                      {chatCapableProfiles.map((p) => (
                         <option key={p.key} value={p.key}>{p.name} ({p.provider})</option>
                       ))}
                     </Select>

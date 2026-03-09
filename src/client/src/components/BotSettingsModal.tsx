@@ -145,7 +145,7 @@ export const BotSettingsModal: React.FC<BotSettingsModalProps> = ({
                                             </a>
                                         </li>
                                         <div className="divider my-1"></div>
-                                        {llmProfiles.map(profile => (
+                                        {llmProfiles.filter(profile => profile.modelType !== 'embedding').map(profile => (
                                             <li key={profile.key}>
                                                 <a onClick={() => { onUpdateConfig(bot, 'llmProvider', profile.key); (document.activeElement as HTMLElement)?.blur(); }} className={bot.llmProvider === profile.key ? 'active' : ''}>
                                                     <div className="flex flex-col gap-0.5">

@@ -21,8 +21,7 @@ import {
 
 import { PROVIDER_CATEGORIES } from '../config/providers';
 import ProviderConfigModal from './ProviderConfiguration/ProviderConfigModal';
-import type { ProviderModalState } from '../types/bot';
-import { getProviderSchema } from '../provider-configs';
+import { LLM_PROVIDER_CONFIGS, LLMProviderType, ProviderModalState } from '../types';
 
 interface ConfigSchema {
   doc?: string;
@@ -43,11 +42,15 @@ const PROVIDER_ICONS: Record<string, any> = {
   openai: Brain,
   flowise: Brain,
   openwebui: Brain,
-  letta: Brain,
+  ollama: Brain,
+  anthropic: Brain,
+  gemini: Brain,
+  groq: Brain,
   discord: MessageSquare,
   slack: MessageSquare,
   mattermost: MessageSquare,
   telegram: MessageSquare,
+  whatsapp: MessageSquare,
 };
 
 
@@ -105,7 +108,7 @@ const IntegrationsPanel: React.FC = () => {
 
       if (profilesRes.ok) {
         const profilesData = await profilesRes.json();
-        setLlmProfiles(profilesData.profiles?.llm || []);
+        setLlmProfiles(profilesData.llm || profilesData.profiles?.llm || []);
       }
     } catch (err: any) {
       setError(err.message);
@@ -373,7 +376,7 @@ const IntegrationsPanel: React.FC = () => {
                           isOpen: true,
                           isEdit: true,
                           providerType: 'llm',
-                          provider: { id: profile.key, name: profile.name, type: profile.provider, config: profile.config }
+                          provider: { id: profile.key, name: profile.name, type: profile.provider, config: profile.config, modelType: profile.modelType }
                         })}>
                           <PencilSquareIcon className="w-4 h-4" />
                         </Button>

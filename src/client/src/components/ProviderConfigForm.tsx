@@ -1,31 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import type { ProviderConfigFormProps, ProviderConfigField } from '../provider-configs/types';
 import { Input, Select, Textarea, Toggle, Button, Alert, Badge } from './DaisyUI';
-import { RefreshCw as RefreshIcon } from 'lucide-react';
 
 interface FieldError {
   [fieldName: string]: string;
 }
-
-// Helper function to extract value from nested object using dot path
-const getValueByPath = (obj: any, path: string): any => {
-  const keys = path.split('.');
-  let result = obj;
-  for (const key of keys) {
-    if (result === null || result === undefined) {
-      return undefined;
-    }
-    // Handle array indices like 'data.0.id'
-    const arrayMatch = key.match(/^(\d+)$/);
-    if (arrayMatch && Array.isArray(result)) {
-      result = result[parseInt(arrayMatch[1], 10)];
-    } else {
-      result = result[key];
-    }
-  }
-  return result;
-};
 
 export const ProviderConfigForm: React.FC<ProviderConfigFormProps> = ({
   schema,
@@ -43,8 +23,6 @@ export const ProviderConfigForm: React.FC<ProviderConfigFormProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [testResult, setTestResult] = useState<{ success: boolean; message: string } | null>(null);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
-  const [helperLoading, setHelperLoading] = useState<Record<string, boolean>>({});
-  const [helperErrors, setHelperErrors] = useState<Record<string, string>>({});
 
   // Group fields by their group property
   const groupedFields = schema.fields.reduce((groups, field) => {
@@ -104,15 +82,6 @@ export const ProviderConfigForm: React.FC<ProviderConfigFormProps> = ({
     delete newErrors[fieldName];
     setErrors(newErrors);
 
-    // Clear helper error for this field
-    if (helperErrors[fieldName]) {
-      setHelperErrors(prev => {
-        const newHelperErrors = { ...prev };
-        delete newHelperErrors[fieldName];
-        return newHelperErrors;
-      });
-    }
-
     // Validate field
     const field = schema.fields.find(f => f.name === fieldName);
     if (field) {
@@ -127,63 +96,6 @@ export const ProviderConfigForm: React.FC<ProviderConfigFormProps> = ({
     setTestResult(null);
     setAvatarUrl(null);
   };
-
-  // Handle helper action
-  const handleHelperAction = useCallback(async (field: ProviderConfigField) => {
-    if (!field.helperAction) return;
-
-    const { endpoint, method, targetField, valuePath } = field.helperAction;
-
-    setHelperLoading(prev => ({ ...prev, [field.name]: true }));
-    setHelperErrors(prev => ({ ...prev, [field.name]: '' }));
-
-    try {
-      // Build URL with query params for GET requests
-      let fetchUrl = endpoint;
-      const fetchOptions: RequestInit = {
-        method,
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      };
-
-      if (method === 'GET') {
-        // Add config values as query params
-        const queryParams = new URLSearchParams();
-        Object.entries(config).forEach(([key, value]) => {
-          if (value !== undefined && value !== null && value !== '') {
-            queryParams.append(key, String(value));
-          }
-        });
-        fetchUrl = `${endpoint}?${queryParams.toString()}`;
-      } else {
-        // POST with config as body
-        fetchOptions.body = JSON.stringify(config);
-      }
-
-      const response = await fetch(fetchUrl, fetchOptions);
-
-      if (!response.ok) {
-        throw new Error(`Request failed with status ${response.status}`);
-      }
-
-      const data = await response.json();
-      const extractedValue = getValueByPath(data, valuePath);
-
-      if (extractedValue === undefined) {
-        throw new Error(`Could not find value at path: ${valuePath}`);
-      }
-
-      // Set the extracted value to the target field
-      handleFieldChange(targetField, extractedValue);
-
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Failed to fetch value';
-      setHelperErrors(prev => ({ ...prev, [field.name]: errorMessage }));
-    } finally {
-      setHelperLoading(prev => ({ ...prev, [field.name]: false }));
-    }
-  }, [config]);
 
   const handleTestConnection = async () => {
     // Validate all required fields
@@ -248,8 +160,6 @@ export const ProviderConfigForm: React.FC<ProviderConfigFormProps> = ({
   const renderField = (field: ProviderConfigField) => {
     const value = config[field.name] ?? field.defaultValue ?? '';
     const error = externalErrors[field.name] || errors[field.name];
-    const helperError = helperErrors[field.name];
-    const isHelperLoading = helperLoading[field.name];
 
     const baseInputClasses = 'w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2';
     const errorClasses = error ? 'border-error focus:ring-error' : 'border-base-300 focus:ring-primary';
@@ -371,10 +281,11 @@ export const ProviderConfigForm: React.FC<ProviderConfigFormProps> = ({
           const Component = field.component;
           return (
             <Component
-              value={value}
+              value={typeof value === 'string' ? value : ''}
               onChange={(newValue: any) => handleFieldChange(field.name, newValue)}
               apiKey={config.apiKey}
-              baseUrl={config.baseUrl || config.endpoint}
+              baseUrl={config.baseUrl || config.apiUrl || config.endpoint}
+              providerType={(field.componentProps?.providerType || schema.providerType) as any}
               onValidationError={(error: string) => {
                 // Show validation warnings instead of errors for API keys
                 if (field.name === 'apiKey') {
@@ -393,7 +304,15 @@ export const ProviderConfigForm: React.FC<ProviderConfigFormProps> = ({
             />
           );
         }
-        break;
+        return (
+          <Input
+            type="text"
+            value={typeof value === 'string' ? value : ''}
+            onChange={(e) => handleFieldChange(field.name, e.target.value)}
+            placeholder={field.placeholder}
+            className={inputClasses}
+          />
+        );
 
       default:
         return (
@@ -411,32 +330,9 @@ export const ProviderConfigForm: React.FC<ProviderConfigFormProps> = ({
 
     return (
       <div className="space-y-1">
-        <div className="flex items-center gap-2">
-          <div className="flex-1">
-            {renderInput()}
-          </div>
-          {field.helperAction && (
-            <button
-              type="button"
-              className="btn btn-sm btn-ghost"
-              onClick={() => handleHelperAction(field)}
-              disabled={isHelperLoading}
-              title={field.helperAction.description}
-              aria-label={field.helperAction.label}
-            >
-              {isHelperLoading ? (
-                <RefreshIcon className="w-4 h-4 animate-spin" />
-              ) : (
-                <RefreshIcon className="w-4 h-4" />
-              )}
-            </button>
-          )}
-        </div>
+        {renderInput()}
         {error && (
           <p className="text-xs text-red-500 mt-1">{error}</p>
-        )}
-        {helperError && (
-          <p className="text-xs text-orange-500 mt-1">{helperError}</p>
         )}
       </div>
     );
