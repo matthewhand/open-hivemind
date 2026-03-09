@@ -1,3 +1,4 @@
+import { AuthMiddlewareRequest } from '../../auth/types';
 import fs from 'fs';
 import path from 'path';
 import Debug from 'debug';

@@ -1,3 +1,4 @@
+import { AuthMiddlewareRequest } from '../../auth/types';
 import Debug from 'debug';
 import { Router } from 'express';
 import { DatabaseManager } from '../../database/DatabaseManager';
@@ -34,7 +35,7 @@ router.get('/', async (req, res) => {
 
     // Get tenantId from request user if available (assuming req.user is populated by authenticateToken)
     // The authenticateToken middleware usually populates req.user
-    const tenantId = (req as AuthMiddlewareRequest).user?.tenantId;
+    const tenantId = ((req as AuthMiddlewareRequest).user as any)?.tenantId;
 
     const anomalies = await dbManager.getActiveAnomalies(tenantId);
     res.json(anomalies);
@@ -58,7 +59,7 @@ router.get('/history', async (req, res) => {
       return;
     }
 
-    const tenantId = (req as AuthMiddlewareRequest).user?.tenantId;
+    const tenantId = ((req as AuthMiddlewareRequest).user as any)?.tenantId;
 
     const anomalies = await dbManager.getAnomalies(tenantId);
     res.json(anomalies);

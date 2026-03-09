@@ -196,7 +196,7 @@ router.put('/:id', adminRateLimiter, (req: Request, res: Response) => {
       guards: safeGuards,
     };
 
-    profiles[profileIndex] = updatedProfile;
+    profiles[profileIndex] = updatedProfile as any;
     saveGuardrailProfiles(profiles);
 
     return res.json({

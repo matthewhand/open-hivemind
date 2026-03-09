@@ -1,15 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect, useCallback } from 'react';
 import { Alert, Toggle, Button } from '../DaisyUI';
-<<<<<<< HEAD
-import { MessageSquare, Bot, Users, Zap } from 'lucide-react';
-=======
-<<<<<<< HEAD
-import { MessageSquare, Bot, Users, Zap, BarChart3 } from 'lucide-react';
-=======
-import { MessageSquare, Bot, Users, Zap, Info } from 'lucide-react';
->>>>>>> origin/main
->>>>>>> origin/main
+
+
 
 interface MessagingConfig {
   onlyWhenSpokenTo: boolean;
@@ -309,54 +302,7 @@ const SettingsMessaging: React.FC = () => {
               />
             </label>
           </div>
-<<<<<<< HEAD
-=======
-<<<<<<< HEAD
-=======
 
-          <div className="form-control mb-3">
-            <label className="label cursor-pointer py-2">
-              <div>
-                <span className="label-text font-medium">Semantic Search Relevance</span>
-                <p className="text-xs text-base-content/60 mt-1">
-                  Enable semantic relevance check using a 1-token LLM call to boost reply chance if the message is on-topic (MESSAGE_SEMANTIC_RELEVANCE_ENABLED)
-                </p>
-              </div>
-              <Toggle
-                checked={settings.semanticRelevanceEnabled}
-                onChange={(e) => handleChange('semanticRelevanceEnabled', e.target.checked)}
-                color="info"
-              />
-            </label>
-          </div>
-
-          <div className="form-control">
-            <label className="label py-1 flex items-center justify-between">
-              <span className="label-text text-sm font-medium flex-1 pr-4 flex items-center gap-1">
-                Semantic Relevance Threshold Tuning
-                <div className="tooltip tooltip-right" data-tip="Multiplier applied to base chance if the message context is semantically related to recent conversation history (e.g. 10x means a 5% base chance becomes 50%).">
-                  <Info className="w-3.5 h-3.5 text-base-content/50 cursor-help" />
-                </div>
-              </span>
-              <span className="badge badge-info font-mono text-xs flex-none">{settings.semanticRelevanceBonus}x</span>
-            </label>
-            <input
-              type="range"
-              min="1"
-              max="50"
-              step="1"
-              value={settings.semanticRelevanceBonus}
-              onChange={(e) => handleChange('semanticRelevanceBonus', parseInt(e.target.value))}
-<<<<<<< HEAD
-              className="range range-sm range-info w-full"
-=======
-              className="range range-sm"
-              style={{
-                background: `linear-gradient(to right, oklch(var(--er)) 0%, oklch(var(--su)) 100%)`,
-                WebkitAppearance: 'none',
-                borderRadius: 'var(--rounded-box, 1rem)'
-              }}
->>>>>>> origin/main
               disabled={!settings.semanticRelevanceEnabled}
             />
             <div className="w-full flex justify-between text-xs px-2 mt-1 text-base-content/50">
@@ -371,19 +317,9 @@ const SettingsMessaging: React.FC = () => {
               {settings.semanticRelevanceBonus > 30 && " (Aggressive boost for near exact matches)"}
             </p>
           </div>
-<<<<<<< HEAD
 
-          {/* Relevance Impact Calculator */}
-          <div className="divider my-3"></div>
-          <RelevanceImpactCalculator
-            baseChance={settings.baseChance}
-            relevanceBonus={settings.semanticRelevanceBonus}
-            isEnabled={settings.semanticRelevanceEnabled}
-          />
-=======
->>>>>>> origin/main
->>>>>>> origin/main
->>>>>>> origin/main
+
+
         </div>
 
         {/* Probability */}
@@ -449,7 +385,6 @@ const SettingsMessaging: React.FC = () => {
                 </span>
               </div>
             </div>
-          </div>
         </div>
       </div>
 

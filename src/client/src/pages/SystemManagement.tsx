@@ -41,7 +41,8 @@ const calculateAlertStats = (alerts: any[]) => {
     else if (a.level === 'error') acc.error++;
     else if (a.level === 'info') acc.info++;
     return acc;
-  }, { critical: 0, warning: 0, error: 0, info: 0, total: alerts.length });
+  }, { critical: 0, warning: 0, error: 0, info: 0, total: alerts.length   }
+
 };
 
 const SystemManagement: React.FC = () => {
@@ -60,7 +61,8 @@ const SystemManagement: React.FC = () => {
       disk: 90,
       responseTime: 500,
     },
-  });
+    }
+
 
   const [backups, setBackups] = useState<BackupRecord[]>([]);
   const [isCreatingBackup, setIsCreatingBackup] = useState(false);
@@ -179,7 +181,8 @@ const SystemManagement: React.FC = () => {
       setSystemConfig(updatedConfig);
 
       // Persist to backend (user settings)
-      await apiService.updateGlobalConfig({ [key]: value });
+      await apiService.updateGlobalConfig({ [key]: value   }
+
     } catch (error) {
       console.error('Failed to update configuration:', error);
     } finally {
@@ -227,7 +230,8 @@ const SystemManagement: React.FC = () => {
         description: 'Manual backup from System Management',
         encrypt: useEncryption,
         encryptionKey: useEncryption ? encryptionKey : undefined
-      });
+        }
+
       alert('Backup created successfully');
 
       // Enforce backup retention policy
