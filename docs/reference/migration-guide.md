@@ -382,6 +382,30 @@ cp .env.backup.* .env
 npm start
 ```
 
+## Utility Function Migration: `executeCommand` to `executeCommandSafe`
+
+The deprecated and insecure `executeCommand` function has been removed from `src/utils/utils.ts`. All callers must migrate to `executeCommandSafe`.
+
+### Why the change?
+`executeCommand` used `child_process.exec`, which invokes a shell and is vulnerable to **Command Injection** if any part of the command string contains unvalidated user input.
+
+### How to migrate
+`executeCommandSafe` uses `execFile` without a shell and requires arguments to be passed as an array, preventing shell-based injection attacks.
+
+#### Before (Unsafe)
+```typescript
+import { executeCommand } from '../utils/utils';
+// Vulnerable to injection if userInput contains shell metacharacters like ';'
+const output = await executeCommand(`ls -la ${userInput}`);
+```
+
+#### After (Safe)
+```typescript
+import { executeCommandSafe } from '../utils/utils';
+// Safe: userInput is treated as a literal argument
+const output = await executeCommandSafe('ls', ['-la', userInput]);
+```
+
 ## Support
 
 For migration issues:
