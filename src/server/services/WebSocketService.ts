@@ -25,7 +25,7 @@ export interface MessageFlowEvent {
   errorMessage?: string;
 }
 
-export interface PerformanceMetric {
+interface PerformanceMetric {
   timestamp: string;
   responseTime: number;
   memoryUsage: number;

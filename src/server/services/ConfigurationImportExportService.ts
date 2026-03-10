@@ -15,7 +15,7 @@ import { ConfigurationVersionService } from './ConfigurationVersionService';
 
 const debug = Debug('app:ConfigurationImportExportService');
 
-export interface ExportOptions {
+interface ExportOptions {
   format: 'json' | 'yaml' | 'csv';
   includeVersions?: boolean;
   includeAuditLogs?: boolean;
@@ -25,7 +25,7 @@ export interface ExportOptions {
   encryptionKey?: string;
 }
 
-export interface ImportOptions {
+interface ImportOptions {
   format: 'json' | 'yaml' | 'csv';
   overwrite?: boolean;
   validateOnly?: boolean;
@@ -33,7 +33,7 @@ export interface ImportOptions {
   decryptionKey?: string;
 }
 
-export interface ExportResult {
+interface ExportResult {
   success: boolean;
   filePath?: string;
   size?: number;
@@ -41,7 +41,7 @@ export interface ExportResult {
   error?: string;
 }
 
-export interface ImportResult {
+interface ImportResult {
   success: boolean;
   importedCount?: number;
   skippedCount?: number;
@@ -50,7 +50,7 @@ export interface ImportResult {
   warnings?: string[];
 }
 
-export interface BackupMetadata {
+interface BackupMetadata {
   id: string;
   name: string;
   description?: string;
