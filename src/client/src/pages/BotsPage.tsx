@@ -23,6 +23,12 @@ import type { BotConfig, ProviderModalState } from '../types/bot';
 import { LLMProviderType, MessageProviderType } from '../types/bot';
 import BotCard from '../components/BotManagement/BotCard';
 import { useLocation } from 'react-router-dom';
+import { useLlmStatus } from '../hooks/useLlmStatus';
+import { usePageLifecycle } from '../hooks/usePageLifecycle';
+
+interface BotData extends BotConfig {
+  id: string;
+}
 
 const BotsPage: React.FC = () => {
   const [bots, setBots] = useState<BotConfig[]>([]);
@@ -137,7 +143,6 @@ const BotsPage: React.FC = () => {
 
       // Fetch chat history
       const fetchChatHistory = async () => {
-        setChatLoading(true);
         try {
           const json = await withRetry(() => apiService.get<any>(`/api/bots/${previewBot.id}/history?limit=20`));
           setChatHistory(json.data?.history || []);
@@ -145,8 +150,6 @@ const BotsPage: React.FC = () => {
           ErrorService.report(err, { botId: previewBot.id, action: 'fetchChatHistory' });
           toast.error('Failed to load chat history');
           setChatHistory([]);
-        } finally {
-          setChatLoading(false);
         }
       };
       fetchChatHistory();
@@ -155,17 +158,6 @@ const BotsPage: React.FC = () => {
       setChatHistory([]);
     }
   }, [previewBot]);
-
-  const getIntegrationOptions = (category: 'llm' | 'message') => {
-    const allKeys = Object.keys(globalConfig);
-    const validPrefixes = PROVIDER_CATEGORIES[category] || [];
-
-    return allKeys.filter((key) => {
-      // Match exact provider name or provider-instance
-      // e.g. 'openai' or 'openai-prod'
-      return validPrefixes.some((prefix) => key === prefix || key.startsWith(`${prefix}-`));
-    });
-  };
 
   const toast = {
     success: useSuccessToast(),
@@ -397,25 +389,16 @@ const BotsPage: React.FC = () => {
               icon={AlertTriangle}
               title="Failed to load swarm"
               description="We encountered an error while trying to load your AI agents. Please try again."
-              action={
-                <button className="btn btn-outline btn-error" onClick={fetchBots}>
-                  <RefreshCw className="w-4 h-4 mr-2" />
-                  Retry Connection
-                </button>
-              }
+              actionLabel="Retry Connection"
+              onAction={fetchBots}
             />
           ) : filteredBots.length === 0 ? (
             <EmptyState
               icon={Bot}
               title={searchQuery ? "No agents found" : "Your swarm is empty"}
               description={searchQuery ? "No agents match your search criteria." : "Start by creating your first specialized AI agent."}
-              action={
-                !searchQuery && (
-                  <button className="btn btn-primary" onClick={() => setIsCreateModalOpen(true)}>
-                    Create First Bot
-                  </button>
-                )
-              }
+              actionLabel={searchQuery ? undefined : "Create First Bot"}
+              onAction={searchQuery ? undefined : () => setIsCreateModalOpen(true)}
             />
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
