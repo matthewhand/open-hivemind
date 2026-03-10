@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 
 export interface CommaSeparatedInputProps {
-  value: string[];
+  value?: string[];
   onChange: (v: string[]) => void;
   maxItems?: number;
   placeholder?: string;
@@ -15,7 +15,7 @@ export interface CommaSeparatedInputProps {
 }
 
 export const CommaSeparatedInput: React.FC<CommaSeparatedInputProps> = ({
-  value,
+  value = [],
   onChange,
   maxItems = 20,
   placeholder = 'Type and press Enter or comma',
@@ -40,13 +40,14 @@ export const CommaSeparatedInput: React.FC<CommaSeparatedInputProps> = ({
   const [canUndo, setCanUndo] = useState(false);
 
   // We need to keep a ref of current value to push to history
-  const currentValueRef = useRef(value);
+  const currentValueRef = useRef(value || []);
 
   useEffect(() => {
     // Only update if it actually changed to avoid infinite loops,
     // though the parent might give us the same array ref if we're lucky.
-    if (JSON.stringify(currentValueRef.current) !== JSON.stringify(value)) {
-      currentValueRef.current = value;
+    const safeValue = value || [];
+    if (JSON.stringify(currentValueRef.current) !== JSON.stringify(safeValue)) {
+      currentValueRef.current = safeValue;
     }
   }, [value]);
 
@@ -166,7 +167,9 @@ export const CommaSeparatedInput: React.FC<CommaSeparatedInputProps> = ({
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setInputValue(e.target.value);
+    let newValue = e.target.value;
+    newValue = newValue.replace(/,(?=[^\s])/g, ', ');
+    setInputValue(newValue);
     setShowSuggestions(true);
     if (internalError) {
       setInternalError(null);
