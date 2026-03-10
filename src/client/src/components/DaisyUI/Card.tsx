@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import React from 'react';
+import { SkeletonRectangle, SkeletonText } from './Skeleton';
 
 // Define the props for the Card component
 interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
@@ -168,13 +169,13 @@ const CardBase: React.FC<CardProps> = ({
     return (
       <div className={cardClasses} {...props}>
         {imageSrc && !imageOverlay && (
-          <figure className="skeleton h-32 w-full"></figure>
+          <SkeletonRectangle height="8rem" width="100%" className="rounded-b-none" />
         )}
         <div className="card-body">
-          <div className="skeleton h-4 w-1/3 mb-2"></div>
-          <div className="skeleton h-4 w-full mb-2"></div>
-          <div className="skeleton h-4 w-full mb-4"></div>
-          <div className="skeleton h-8 w-1/4 ml-auto"></div>
+          <SkeletonText lines={1} height="1rem" width="33.333%" className="mb-2" />
+          <SkeletonText lines={1} height="1rem" width="100%" className="mb-2" />
+          <SkeletonText lines={1} height="1rem" width="100%" className="mb-4" />
+          <SkeletonRectangle height="2rem" width="25%" className="ml-auto" />
         </div>
       </div>
     );
