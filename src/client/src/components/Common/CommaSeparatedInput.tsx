@@ -67,25 +67,31 @@ export const CommaSeparatedInput: React.FC<CommaSeparatedInputProps> = ({
     }
   }, [canUndo, disabled, onChange]);
 
-  const commitInput = (forceValue?: string, keepTrailingText: boolean = false) => {
+  const commitInput = (forceValue?: string) => {
     const textToCommit = forceValue !== undefined ? forceValue : inputValue;
-
     if (!textToCommit.trim()) {
       setIsTouched(true);
       return;
     }
 
+    // Split by comma, preserving empty strings so we can see if there is trailing text
     const parts = textToCommit.split(',');
-    // If keepTrailingText is true, we keep the last part as the remaining input
-    const remainingInput = keepTrailingText && textToCommit.includes(',') ? parts.pop() || '' : '';
 
-    const current = parts.map(s => s.trim()).filter(Boolean);
+    // The trailing text is the last part after the last comma
+    const trailingText = parts.length > 1 ? parts.pop() || '' : '';
 
+    // The items to commit are the parts before the last comma
+    const itemsToCommit = parts.map(s => s.trim()).filter(Boolean);
+
+    commitItems(itemsToCommit, trailingText);
+  };
+
+  const commitItems = (items: string[], trailingText: string) => {
     const next = [...value];
     let changed = false;
     let localError: string | null = null;
 
-    for (const item of current) {
+    for (const item of items) {
       if (validate) {
         const validationError = validate(item);
         if (validationError) {
@@ -108,7 +114,7 @@ export const CommaSeparatedInput: React.FC<CommaSeparatedInputProps> = ({
         pushToHistory(next);
         onChange(next);
       }
-      setInputValue(keepTrailingText ? remainingInput : '');
+      setInputValue(trailingText);
       setShowSuggestions(false);
     }
   };
@@ -170,7 +176,7 @@ export const CommaSeparatedInput: React.FC<CommaSeparatedInputProps> = ({
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;
     if (val.includes(',')) {
-      commitInput(val, true);
+      commitInput(val);
     } else {
       setInputValue(val);
       setShowSuggestions(true);
