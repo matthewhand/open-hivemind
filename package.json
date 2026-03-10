@@ -89,7 +89,7 @@
     "@dnd-kit/sortable": "^10.0.0",
     "@dnd-kit/utilities": "^3.2.2",
     "@heroicons/react": "^2.2.0",
-    "@modelcontextprotocol/sdk": "1.0.1",
+    "@modelcontextprotocol/sdk": "1.27.1",
     "@reduxjs/toolkit": "^2.9.0",
     "@slack/rtm-api": "^7.0.2",
     "@slack/socket-mode": "^2.0.3",
@@ -170,6 +170,7 @@
     "sqlite": "^5.1.1",
     "sqlite3": "^5.1.7",
     "tailwind-merge": "^3.3.1",
+    "tar": "7.5.10",
     "tough-cookie": "^6.0.0",
     "ts-essentials": "^10.0.2",
     "tsyringe": "^4.10.0",
@@ -274,7 +275,11 @@
     "undici": "7.22.0",
     "uuid": "^11.1.0",
     "fast-xml-parser": "^5.4.1",
-    "tar": "^7.5.9",
     "yaml": "^2.4.2"
+  },
+  "pnpm": {
+    "overrides": {
+      "tar": "^7.5.10"
+    }
   }
 }
