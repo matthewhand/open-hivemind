@@ -23,6 +23,8 @@ import BotCard from '../components/BotManagement/BotCard';
 import { CreateBotWizard } from '../components/BotManagement/CreateBotWizard';
 import { BotSettingsModal } from '../components/BotSettingsModal';
 import { useLocation } from 'react-router-dom';
+import { useLlmStatus } from '../hooks/useLlmStatus';
+import { usePageLifecycle } from '../hooks/usePageLifecycle';
 
 const BotsPage: React.FC = () => {
   const [bots, setBots] = useState<BotConfig[]>([]);
@@ -107,7 +109,7 @@ const BotsPage: React.FC = () => {
   // Sync lifecycle error to UI error
   useEffect(() => {
     if (lifecycleError) {
-      setUiError(lifecycleError.message);
+      setError(lifecycleError.message);
     }
   }, [lifecycleError]);
 
@@ -358,28 +360,22 @@ const BotsPage: React.FC = () => {
 
           {error && bots.length === 0 ? (
             <EmptyState
-              icon={<AlertTriangle className="w-16 h-16 text-error/50" />}
+              icon={AlertTriangle}
               title="Failed to load swarm"
               description="We encountered an error while trying to load your AI agents. Please try again."
-              action={
-                <button className="btn btn-outline btn-error" onClick={fetchBots}>
-                  <RefreshCw className="w-4 h-4 mr-2" />
-                  Retry Connection
-                </button>
-              }
+              actionLabel="Retry Connection"
+              actionIcon={RefreshCw}
+              onAction={fetchBots}
+              variant="error"
             />
           ) : filteredBots.length === 0 ? (
             <EmptyState
-              icon={<Bot className="w-16 h-16 text-base-content/20" />}
+              icon={Bot}
               title={searchQuery ? "No agents found" : "Your swarm is empty"}
               description={searchQuery ? "No agents match your search criteria." : "Start by creating your first specialized AI agent."}
-              action={
-                !searchQuery && (
-                  <button className="btn btn-primary" onClick={() => setIsCreateModalOpen(true)}>
-                    Create First Bot
-                  </button>
-                )
-              }
+              actionLabel={searchQuery ? undefined : "Create First Bot"}
+              onAction={searchQuery ? undefined : () => setIsCreateModalOpen(true)}
+              variant="noData"
             />
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
