@@ -674,17 +674,6 @@ async function main() {
   // Setup signal handlers for graceful shutdown
   shutdownCoordinator.setupSignalHandlers();
 
-  // Setup process global handlers for unhandled promises
-  process.on('unhandledRejection', (reason, promise) => {
-    appLogger.error('Unhandled Rejection at:', { promise, reason });
-  });
-
-  process.on('uncaughtException', (error) => {
-    appLogger.error('Uncaught Exception:', { error });
-    // Give logging time to write before exit
-    setTimeout(() => process.exit(1), 1000);
-  });
-
   // Startup complete
   appLogger.info('🎉 Open Hivemind Unified Server startup complete!');
 
