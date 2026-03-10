@@ -9,20 +9,20 @@ import { ConfigurationValidator } from './ConfigurationValidator';
 
 const debug = Debug('app:ConfigurationVersionService');
 
-export interface CreateVersionRequest {
+interface CreateVersionRequest {
   botConfigurationId: number;
   version: string;
   changeLog?: string;
   createdBy?: string;
 }
 
-export interface VersionHistoryResponse {
+interface VersionHistoryResponse {
   versions: BotConfigurationVersion[];
   total: number;
   currentVersion?: string;
 }
 
-export interface VersionComparisonResult {
+interface VersionComparisonResult {
   version1: BotConfigurationVersion;
   version2: BotConfigurationVersion;
   differences: ConfigurationDifference[];
@@ -33,7 +33,7 @@ export interface VersionComparisonResult {
   };
 }
 
-export interface ConfigurationDifference {
+interface ConfigurationDifference {
   field: string;
   path: string;
   oldValue: any;
