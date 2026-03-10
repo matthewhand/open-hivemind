@@ -317,8 +317,10 @@ process_cpu_system_seconds_total ${cpuUsage.system / 1000000}
 # HELP nodejs_version_info Node.js version info
 # TYPE nodejs_version_info gauge
 nodejs_version_info{version="${process.version}"} 1
+
+${MetricsCollector.getInstance().getPrometheusFormat()}
 `;
-  res.set('Content-Type', 'text/plain');
+  res.set('Content-Type', 'text/plain; charset=utf-8');
   res.send(metrics);
 };
 
