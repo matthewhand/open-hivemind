@@ -38,10 +38,16 @@ export interface Mem0Config {
   historyDbPath?: string;
   /** Custom LLM base URL */
   llmBaseUrl?: string;
+  /** Custom embedder base URL (for OpenAI-compatible endpoints) */
+  embedderBaseUrl?: string;
   /** User ID scope for memories */
   userId?: string;
   /** Agent ID scope for memories */
   agentId?: string;
+  /** Reference to LLM provider for embeddings (resolved by caller) */
+  embeddingProviderId?: string;
+  /** LLM profile key for embeddings (resolved by caller) */
+  llmProfileKey?: string;
 }
 
 // ---------------------------------------------------------------------------
@@ -81,6 +87,8 @@ export class Mem0Provider {
         config: {
           apiKey: config.apiKey,
           model: config.embedderModel ?? 'text-embedding-3-small',
+          // Support OpenAI-compatible embedding endpoints (e.g., vLLM, Ollama, Voyage)
+          ...(config.embedderBaseUrl ? { openaiBaseUrl: config.embedderBaseUrl } : {}),
         },
       };
     }
