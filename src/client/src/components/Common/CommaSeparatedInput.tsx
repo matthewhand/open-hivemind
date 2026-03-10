@@ -166,7 +166,15 @@ export const CommaSeparatedInput: React.FC<CommaSeparatedInputProps> = ({
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setInputValue(e.target.value);
+    let newValue = e.target.value;
+    // We only auto-format if the user is not actively deleting characters.
+    // This prevents the "backspace trap" where deleting the auto-inserted space
+    // immediately re-inserts it.
+    const isDeleting = (e.nativeEvent as InputEvent).inputType?.startsWith('delete');
+    if (!isDeleting) {
+      newValue = newValue.replace(/,([^ ])/g, ', $1');
+    }
+    setInputValue(newValue);
     setShowSuggestions(true);
     if (internalError) {
       setInternalError(null);
