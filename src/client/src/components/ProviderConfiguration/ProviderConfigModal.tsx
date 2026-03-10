@@ -11,7 +11,7 @@ import {
   MESSAGE_PROVIDER_CONFIGS,
   LLM_PROVIDER_CONFIGS,
 } from '../../types/bot';
-import { Button } from '../DaisyUI';
+import Button from '../DaisyUI/Button';
 import { X as XIcon } from 'lucide-react';
 import { ProviderConfigForm } from '../ProviderConfigForm';
 import type { ProviderConfigSchema } from '../../provider-configs';
