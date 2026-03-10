@@ -1,5 +1,20 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 
+const COMMA_INPUT_CONSTANTS = {
+  DEFAULT_MAX_ITEMS: 20,
+  BLUR_DELAY_MS: 150,
+};
+
+const STRINGS = {
+  DEFAULT_PLACEHOLDER: 'Type and press Enter or comma',
+  MAX_ITEMS_REACHED: 'Max items reached',
+  ARIA_REMOVE: 'Remove',
+  ARIA_UNDO: 'Undo',
+  ARIA_CLEAR_ALL: 'Clear all items',
+  TITLE_UNDO: 'Undo last change (Ctrl+Z)',
+  TITLE_CLEAR_ALL: 'Clear all',
+};
+
 export interface CommaSeparatedInputProps {
   value: string[];
   onChange: (v: string[]) => void;
@@ -17,8 +32,8 @@ export interface CommaSeparatedInputProps {
 export const CommaSeparatedInput: React.FC<CommaSeparatedInputProps> = ({
   value,
   onChange,
-  maxItems = 20,
-  placeholder = 'Type and press Enter or comma',
+  maxItems = COMMA_INPUT_CONSTANTS.DEFAULT_MAX_ITEMS,
+  placeholder = STRINGS.DEFAULT_PLACEHOLDER,
   disabled = false,
   id,
   className = '',
@@ -207,7 +222,7 @@ export const CommaSeparatedInput: React.FC<CommaSeparatedInputProps> = ({
               type="button"
               className="text-base-content/50 hover:text-base-content"
               onClick={() => handleRemove(v)}
-              aria-label={`Remove ${v}`}
+              aria-label={`${STRINGS.ARIA_REMOVE} ${v}`}
             >
               &times;
             </button>
@@ -224,10 +239,10 @@ export const CommaSeparatedInput: React.FC<CommaSeparatedInputProps> = ({
           onKeyDown={handleKeyDown}
           onBlur={() => {
             // Add a small delay so suggestion clicks can fire before blur
-            setTimeout(() => commitInput(), 150);
+            setTimeout(() => commitInput(), COMMA_INPUT_CONSTANTS.BLUR_DELAY_MS);
           }}
           onPaste={handlePaste}
-          placeholder={value.length >= maxItems ? 'Max items reached' : placeholder}
+          placeholder={value.length >= maxItems ? STRINGS.MAX_ITEMS_REACHED : placeholder}
           disabled={disabled || value.length >= maxItems}
           aria-invalid={!!displayError}
           aria-describedby={displayError ? errorId : undefined}
@@ -238,8 +253,8 @@ export const CommaSeparatedInput: React.FC<CommaSeparatedInputProps> = ({
             type="button"
             onClick={handleUndo}
             className="p-1 mx-1 rounded-full text-base-content/40 hover:text-primary hover:bg-primary/10 focus:outline-none transition-colors"
-            title="Undo last change (Ctrl+Z)"
-            aria-label="Undo"
+            title={STRINGS.TITLE_UNDO}
+            aria-label={STRINGS.ARIA_UNDO}
           >
             <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M3 7v6h6" />
@@ -252,8 +267,8 @@ export const CommaSeparatedInput: React.FC<CommaSeparatedInputProps> = ({
             type="button"
             onClick={handleClearAll}
             className="p-1 mx-1 rounded-full text-base-content/40 hover:text-error hover:bg-error/10 focus:outline-none transition-colors"
-            title="Clear all"
-            aria-label="Clear all items"
+            title={STRINGS.TITLE_CLEAR_ALL}
+            aria-label={STRINGS.ARIA_CLEAR_ALL}
           >
             <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 20 20" fill="currentColor">
               <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
