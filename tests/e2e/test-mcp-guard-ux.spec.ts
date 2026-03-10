@@ -70,10 +70,22 @@ test('verify MCP Guard UX', async ({ page }) => {
 
   await usersInput.pressSequentially(',user2');
 
+  // Need a tiny delay for React state update
+  await page.waitForTimeout(100);
+
   // Screenshot after typing comma
   await page.screenshot({ path: 'docs/screenshots/mcp-guard-ux-after.png' });
 
+  // Wait for the first chip to appear to ensure processing has happened
+  const chip = page.locator('[data-testid="chip"]').first();
+  await expect(chip).toBeVisible();
+
+  // The input value itself should be just 'user2'
   const value = await usersInput.inputValue();
   console.log('Input value after typing ",user2":', value);
-  expect(value).toBe('user1, user2');
+  expect(value).toBe('user2');
+
+  // The chip should be 'user1'
+  const chipText = await chip.textContent();
+  expect(chipText).toContain('user1');
 });
