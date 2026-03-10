@@ -3,6 +3,7 @@ import process from 'process';
 import { Router, type NextFunction, type Request, type Response } from 'express';
 import { MetricsCollector } from '../../monitoring/MetricsCollector';
 import ApiMonitorService from '../../services/ApiMonitorService';
+import { DatabaseManager } from '../../database/DatabaseManager';
 import { ErrorLogger } from '../../utils/errorLogger';
 import { globalRecoveryManager } from '../../utils/errorRecovery';
 import { optionalAuth } from '../middleware/auth';
@@ -12,11 +13,26 @@ const router = Router();
 // Basic health check
 router.get('/', (req, res) => {
   const memoryUsage = process.memoryUsage();
-  return res.status(200).json({
-    status: 'healthy',
+
+  let dbStatus = 'unknown';
+  try {
+    const dbManager = DatabaseManager.getInstance();
+    dbStatus = dbManager.isConnected() ? 'healthy' : 'unhealthy';
+  } catch (error) {
+    dbStatus = 'error';
+  }
+
+  const status = dbStatus === 'healthy' ? 'healthy' : 'degraded';
+  const statusCode = status === 'healthy' ? 200 : 200; // Even degraded, we return 200 for basic health. /ready will return 503 if not ready.
+
+  return res.status(statusCode).json({
+    status: status,
     timestamp: new Date().toISOString(),
     version: '1.0.0',
     uptime: process.uptime(),
+    checks: {
+      database: dbStatus
+    },
     memory: {
       used: Math.round(memoryUsage.heapUsed / 1024 / 1024),
       total: Math.round(memoryUsage.heapTotal / 1024 / 1024),
@@ -185,14 +201,24 @@ router.get('/alerts', (req, res) => {
 // Readiness probe
 router.get('/ready', (req, res) => {
   // Check if all dependencies are ready
-  // For now, we'll assume the service is ready if it's responding
-  return res.json({
-    ready: true,
+  let dbReady = false;
+  try {
+    const dbManager = DatabaseManager.getInstance();
+    dbReady = dbManager.isConnected();
+  } catch (error) {
+    dbReady = false;
+  }
+
+  // We are ready if critical dependencies are up
+  const isReady = dbReady;
+  const statusCode = isReady ? 200 : 503;
+
+  return res.status(statusCode).json({
+    ready: isReady,
     timestamp: new Date().toISOString(),
     checks: {
-      database: true, // Would need actual database check
-      external_apis: true, // Would need actual API checks
-      configuration: true,
+      database: dbReady,
+      configuration: true, // Assumed true if app initialized enough to reach here, unless deeper config checks added
     },
   });
 });
