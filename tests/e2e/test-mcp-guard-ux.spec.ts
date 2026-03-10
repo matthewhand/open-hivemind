@@ -70,20 +70,14 @@ test('verify MCP Guard UX', async ({ page }) => {
 
   await usersInput.pressSequentially(',user2');
 
-  // also press comma after user2 to turn it into a chip
-  await usersInput.pressSequentially(',');
+  // Press Enter to commit the last chip
+  await usersInput.press('Enter');
 
-  // Screenshot after typing comma
+  // Screenshot after typing comma and pressing enter
   await page.screenshot({ path: 'docs/screenshots/mcp-guard-ux-after.png' });
 
-  // Now expect user1 and user2 to be created as chips
   const chips = modal.locator('[data-testid="chip"]');
   await expect(chips).toHaveCount(2);
-
-  const chip1Text = await chips.nth(0).innerText();
-  const chip2Text = await chips.nth(1).innerText();
-
-  // They include a close button "×" text, so we can check if they contain "user1" and "user2"
-  expect(chip1Text).toContain('user1');
-  expect(chip2Text).toContain('user2');
+  await expect(chips.nth(0)).toContainText('user1');
+  await expect(chips.nth(1)).toContainText('user2');
 });
