@@ -166,10 +166,24 @@ export const CommaSeparatedInput: React.FC<CommaSeparatedInputProps> = ({
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setInputValue(e.target.value);
-    setShowSuggestions(true);
-    if (internalError) {
-      setInternalError(null);
+    const newVal = e.target.value;
+    if (newVal.includes(',')) {
+      // Split by comma
+      const parts = newVal.split(',');
+      // The last part might be unfinished text
+      const completedParts = parts.slice(0, -1);
+      const lastPart = parts[parts.length - 1];
+
+      const newValues = completedParts
+        .map(p => p.trim())
+        .filter(p => p && !value.includes(p));
+
+      if (newValues.length > 0) {
+        onChange([...value, ...newValues]);
+      }
+      setInputValue(lastPart);
+    } else {
+      setInputValue(newVal);
     }
   };
 
