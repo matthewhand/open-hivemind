@@ -1,0 +1,77 @@
+
+> open-hivemind@1.0.0 test /app
+> NODE_CONFIG_DIR=config/test/ NODE_ENV=test node -r dotenv/config node_modules/.bin/jest --runInBand tests/services/AnomalyDetectionService.test.ts
+
+PASS unit-integration tests/services/AnomalyDetectionService.test.ts
+  AnomalyDetectionService
+    Initialization and Config
+      ✓ should initialize with default config (4 ms)
+      ✓ should update config (1 ms)
+      ✓ should shutdown and clear intervals (1 ms)
+    addDataPoint
+      ✓ should add data point to window (1 ms)
+      ✓ should not add data point if metric not monitored (1 ms)
+      ✓ should not add data point if disabled (1 ms)
+      ✓ should shift old data points when window is full (1 ms)
+    runDetection
+      ✓ should skip detection if disabled (1 ms)
+      ✓ should skip detection if already detecting (1 ms)
+      ✓ should skip metric if not enough data points
+      ✓ should not detect anomaly if within threshold (1 ms)
+      ✓ should detect medium anomaly and trigger alerts (3 ms)
+      ✓ should categorize severities correctly (2 ms)
+      ✓ should handle database storage errors gracefully (1 ms)
+    Anomaly Management
+      ✓ should resolve anomaly (1 ms)
+      ✓ should return false when resolving non-existent anomaly
+      ✓ should get active anomalies (1 ms)
+
+----------------------------------|---------|----------|---------|---------|--------------------------------------------------------------------------------------------------
+File                              | % Stmts | % Branch | % Funcs | % Lines | Uncovered Line #s
+----------------------------------|---------|----------|---------|---------|--------------------------------------------------------------------------------------------------
+All files                         |    8.52 |     2.64 |     8.4 |    8.71 |
+ src/config                       |    4.55 |        0 |       0 |     4.8 |
+  BotConfigurationManager.ts      |    0.54 |        0 |       0 |    0.56 | 326-1243
+  ProviderConfigManager.ts        |    1.02 |        0 |       0 |    1.09 | 25-231
+  UserConfigStore.ts              |       0 |        0 |       0 |       0 | 27-217
+  guardrailProfiles.ts            |   19.44 |        0 |       0 |   20.58 | 91-92,96-133,138-143,147-148
+  llmConfig.ts                    |   18.18 |        0 |       0 |      25 | 22-28
+  llmDefaultStatus.ts             |      20 |      100 |       0 |      20 | 21-32,36-46
+  llmProfiles.ts                  |    19.4 |        0 |       0 |      20 | 29-32,38-39,43-54,65-66,70-102,107-112,116-117,121-128,132-133,137-142
+  mcpServerProfiles.ts            |     7.4 |        0 |       0 |    8.51 | 30-122
+ src/database                     |    3.13 |     2.63 |    6.25 |    3.27 |
+  DatabaseManager.ts              |    3.13 |     2.63 |    6.25 |    3.27 | 315,349-806,814-815,820-2150
+ src/monitoring                   |       0 |        0 |       0 |       0 |
+  MetricsCollector.ts             |       0 |        0 |       0 |       0 | 37-259
+ src/server/services              |    8.93 |     1.11 |   11.16 |    9.06 |
+  ActivityLogger.ts               |    1.78 |        0 |       0 |    1.81 | 24-125
+  BotConfigService.ts             |    3.89 |     0.81 |      10 |    3.92 | 89-90,108-592
+  BotMetricsService.ts            |    2.43 |        0 |       0 |    2.43 | 16-100
+  ConfigurationTemplateService.ts |   11.83 |     3.75 |   18.75 |   12.19 | 75-77,90-96,258-365,376-640
+  ConfigurationValidator.ts       |    2.12 |        0 |   15.38 |    2.12 | 210-577
+  RealTimeValidationService.ts    |   16.94 |     0.89 |   17.77 |   17.24 | 133-145,162-174,191-203,221-235,253-282,300-327,345-361,379-408,426-460,526-542,557-580,595-1000
+  WebSocketService.ts             |       9 |     1.35 |    5.79 |    9.15 | 92,96,107-140,156-856
+ src/services                     |   41.46 |     29.5 |   42.55 |      41 |
+  AnomalyDetectionService.ts      |   97.59 |    97.05 |   88.88 |   98.71 | 215
+  ApiMonitorService.ts            |   12.88 |      3.4 |   13.79 |   13.04 | 13-18,86-133,143-192,200-230,236,240-241,250-428
+ src/storage                      |   11.02 |        8 |   11.42 |   12.19 |
+  webUIStorage.ts                 |   11.02 |        8 |   11.42 |   12.19 | 36,45,50-55,77-186,200-376
+ src/types                        |    2.94 |        0 |       0 |    2.94 |
+  config.ts                       |   30.76 |        0 |       0 |   30.76 | 625-741
+  errorClasses.ts                 |       0 |        0 |       0 |       0 | 33-631
+  errors.ts                       |    1.61 |        0 |       0 |    1.61 | 202-473
+ tests/mocks                      |    3.56 |        0 |       0 |    3.79 |
+  sqlite.ts                       |    4.71 |        0 |       0 |    5.05 | 7-14,39-438,443-448
+  sqlite3.ts                      |     1.6 |        0 |       0 |    1.69 | 3-298,304
+----------------------------------|---------|----------|---------|---------|--------------------------------------------------------------------------------------------------
+Jest: "global" coverage threshold for statements (72%) not met: 8.52%
+Jest: "global" coverage threshold for branches (61%) not met: 2.64%
+Jest: "global" coverage threshold for lines (73%) not met: 8.71%
+Jest: "global" coverage threshold for functions (69%) not met: 8.4%
+Test Suites: 1 passed, 1 total
+Tests:       17 passed, 17 total
+Snapshots:   0 total
+Time:        1.515 s
+Ran all test suites matching /tests\/services\/AnomalyDetectionService.test.ts/i.
+Force exiting Jest: Have you considered using `--detectOpenHandles` to detect async operations that kept running after all tests finished?
+ ELIFECYCLE  Test failed. See above for more details.
