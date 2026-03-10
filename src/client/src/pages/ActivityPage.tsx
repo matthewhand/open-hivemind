@@ -67,8 +67,7 @@ const ActivityPage: React.FC = () => {
         () => apiService.getActivity(params),
         maxRetries,
         1000,
-        (err, attempt, max) => {
-           const delayMs = 1000 * Math.pow(2, attempt - 1);
+        (err, attempt, max, delayMs) => {
            console.log(`Retrying fetchActivity in ${delayMs}ms (attempt ${attempt}/${max})`);
            setRetryCount(attempt);
            setRetryDelay(delayMs);
