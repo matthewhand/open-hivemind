@@ -25,7 +25,7 @@ describe('HotReloadManager', () => {
 
   beforeEach(() => {
     // @ts-ignore
-    HotReloadManager.instance = undefined;
+    HotReloadManager.instance = null;
     jest.clearAllMocks();
     (fs.existsSync as jest.Mock).mockReturnValue(true);
     const mockWatcher = { close: jest.fn() };

@@ -24,6 +24,7 @@ describe('ConfigurationImportExportService - Backup Retention', () => {
   let mockAuditLogger: any;
 
   beforeEach(() => {
+    (ConfigurationImportExportService as any).instance = null;
     jest.clearAllMocks();
 
     // Setup UserConfigStore mock

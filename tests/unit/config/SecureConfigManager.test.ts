@@ -24,7 +24,7 @@ describe('SecureConfigManager rotation logic', () => {
 
     // Re-initialize manager
     // @ts-ignore
-    SecureConfigManager.instance = undefined;
+    SecureConfigManager.instance = null;
     manager = SecureConfigManager.getInstance();
 
     // Get the mocked debug instance
