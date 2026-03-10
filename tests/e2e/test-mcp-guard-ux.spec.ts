@@ -73,7 +73,17 @@ test('verify MCP Guard UX', async ({ page }) => {
   // Screenshot after typing comma
   await page.screenshot({ path: 'docs/screenshots/mcp-guard-ux-after.png' });
 
+  // Wait for the UI to update with chips
+  await page.waitForTimeout(500);
+
+  // Instead of expecting standard string input, we should expect chips
+  const chips = modal.locator('[data-testid="chip"]');
+  await expect(chips).toHaveCount(1);
+  await expect(chips.nth(0)).toHaveText(/user1/);
+
+  // The input field itself should now contain "user2" because the comma
+  // committed "user1" into a chip
   const value = await usersInput.inputValue();
   console.log('Input value after typing ",user2":', value);
-  expect(value).toBe('user1, user2');
+  expect(value).toBe('user2');
 });
