@@ -6,7 +6,7 @@ import Modal, { ConfirmModal } from '../components/DaisyUI/Modal';
 import PageHeader from '../components/DaisyUI/PageHeader';
 import SearchFilterBar from '../components/SearchFilterBar';
 import EmptyState from '../components/DaisyUI/EmptyState';
-import { LoadingSpinner } from '../components/DaisyUI/Loading';
+import { LoadingSpinner, LoadingSkeletonCard } from '../components/DaisyUI/Loading';
 import { CommaSeparatedInput } from '../components/Common/CommaSeparatedInput';
 import Input from '../components/DaisyUI/Input';
 import Textarea from '../components/DaisyUI/Textarea';
@@ -216,8 +216,10 @@ const GuardsPage: React.FC = () => {
       />
 
       {loading && !editingProfile ? (
-        <div className="flex items-center justify-center py-12">
-          <LoadingSpinner size="lg" />
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <LoadingSkeletonCard />
+          <LoadingSkeletonCard />
+          <LoadingSkeletonCard />
         </div>
       ) : profiles.length === 0 ? (
         <EmptyState

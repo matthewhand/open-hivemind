@@ -1,14 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useModal } from '../hooks/useModal';
-import Card from '../components/DaisyUI/Card';
-import Button from '../components/DaisyUI/Button';
-import Badge from '../components/DaisyUI/Badge';
-import { Alert } from '../components/DaisyUI/Alert';
-import PageHeader from '../components/DaisyUI/PageHeader';
-import StatsCards from '../components/DaisyUI/StatsCards';
-import EmptyState from '../components/DaisyUI/EmptyState';
-import { LoadingSpinner } from '../components/DaisyUI/Loading';
+import { Card, Button, Badge, Alert, PageHeader, StatsCards, EmptyState, LoadingSpinner, LoadingSkeletonCard } from '../components/DaisyUI';
 import SearchFilterBar from '../components/SearchFilterBar';
 import {
   MessageSquare as MessageIcon,
@@ -46,11 +39,6 @@ const MessageProvidersPage: React.FC = () => {
       setLoading(false);
     }
   }, []);
-
-  const reportSaveError = (message: string, err: any) => {
-    console.error(message, err);
-    setError(err?.message || message);
-  };
 
   useEffect(() => { fetchProfiles(); }, [fetchProfiles]);
 
@@ -96,13 +84,7 @@ const MessageProvidersPage: React.FC = () => {
           try {
             await apiService.post('/api/config/message-profiles', payload);
           } catch (createErr: any) {
-            if (backup) {
-              try {
-                await apiService.post('/api/config/message-profiles', backup);
-              } catch (restoreErr: any) {
-                reportSaveError('Failed to restore previous message profile after save error', restoreErr);
-              }
-            }
+            if (backup) await apiService.post('/api/config/message-profiles', backup).catch(() => {});
             throw createErr;
           }
         }
@@ -147,7 +129,7 @@ const MessageProvidersPage: React.FC = () => {
       <PageHeader
         title="Message Providers"
         description="Configure messaging platform connections for your bots."
-        icon={<MessageIcon className="w-6 h-6" />}
+        icon={MessageIcon}
         actions={
           <div className="flex gap-2">
             <Button variant="ghost" onClick={fetchProfiles} disabled={loading}>
@@ -178,7 +160,11 @@ const MessageProvidersPage: React.FC = () => {
       />
 
       {loading ? (
-        <div className="flex justify-center py-12"><LoadingSpinner size="lg" /></div>
+        <div className="grid grid-cols-1 gap-4">
+          <LoadingSkeletonCard />
+          <LoadingSkeletonCard />
+          <LoadingSkeletonCard />
+        </div>
       ) : profiles.length === 0 ? (
         <EmptyState
           icon={MessageIcon}

@@ -1,33 +1,27 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars, unused-imports/no-unused-imports */
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Alert } from './DaisyUI/Alert';
-import Badge from './DaisyUI/Badge';
-import Button from './DaisyUI/Button';
-import Card from './DaisyUI/Card';
-import DataTable from './DaisyUI/DataTable';
-import Modal from './DaisyUI/Modal';
-import ProgressBar from './DaisyUI/ProgressBar';
-import StatsCards from './DaisyUI/StatsCards';
-import ToastNotification from './DaisyUI/ToastNotification';
-import { LoadingSpinner } from './DaisyUI/Loading';
+import {
+  Alert,
+  Badge,
+  Button,
+  Card,
+  DataTable,
+  Modal,
+  ProgressBar,
+  StatsCards,
+  ToastNotification,
+  LoadingSpinner,
+  LoadingSkeletonCard,
+} from './DaisyUI';
 import type { Bot, StatusResponse } from '../services/api';
 import { apiService } from '../services/api';
 import { CreateBotWizard } from './BotManagement/CreateBotWizard';
-import { Info, Cpu } from 'lucide-react';
-import { GettingStartedTab } from './Dashboard/tabs/GettingStartedTab';
-import { StatusTab } from './Dashboard/tabs/StatusTab';
-import { PerformanceTab } from './Dashboard/tabs/PerformanceTab';
-import { usePerformanceMetrics } from './Dashboard/hooks/usePerformanceMetrics';
-
-
-
-
-import { useNavigate } from 'react-router-dom';
+import { PlusCircle, RefreshCw, LayoutDashboard, Cpu, HardDrive, Gauge, Clock, Activity, Info, Rocket } from 'lucide-react';
 
 type DashboardTab = 'getting-started' | 'status' | 'performance';
 
-export interface BotTableRow {
+interface BotTableRow {
   id: string;
   name: string;
   provider: string;
@@ -118,7 +112,6 @@ const buildLastActivityLabel = (
 };
 
 const UnifiedDashboard: React.FC = () => {
-  const navigate = useNavigate();
   const [bots, setBots] = useState<Bot[]>([]);
   const [status, setStatus] = useState<StatusResponse | null>(null);
   const [personas, setPersonas] = useState<any[]>([]);
@@ -155,12 +148,10 @@ const UnifiedDashboard: React.FC = () => {
       // Use || so that we re-fetch whenever either dataset is missing,
       // not only when both are empty (fixes &&-vs-|| logic error).
       if (personas.length === 0 || llmProfiles.length === 0) {
-        const [personasResult, profilesResult] = await Promise.allSettled([
+        const [personasData, profilesData] = await Promise.all([
           apiService.getPersonas(),
           apiService.getLlmProfiles(),
         ]);
-        const personasData = personasResult.status === 'fulfilled' ? personasResult.value : [];
-        const profilesData = profilesResult.status === 'fulfilled' ? profilesResult.value : {};
         setPersonas(personasData || []);
         setLlmProfiles(profilesData.llm || profilesData.profiles?.llm || []);
         setDefaultLlmConfigured(!!profilesData?.defaultConfigured);
@@ -183,12 +174,10 @@ const UnifiedDashboard: React.FC = () => {
     try {
       // ⚡ Bolt Optimization: Removed getPersonas() and getLlmProfiles()
       // from this critical path to speed up dashboard rendering.
-      const [configResult, statusResult] = await Promise.allSettled([
+      const [configData, statusData] = await Promise.all([
         apiService.getConfig(),
         apiService.getStatus(),
       ]);
-      const configData = configResult.status === 'fulfilled' ? configResult.value : { bots: [] };
-      const statusData = statusResult.status === 'fulfilled' ? statusResult.value : { bots: [] };
 
       setBots(configData.bots || []);
       setStatus(statusData);
@@ -291,44 +280,60 @@ const UnifiedDashboard: React.FC = () => {
     );
   }, [statusBots]);
 
+  const errorRatePercent = totalMessages === 0
+    ? 0
+    : Number(((totalErrors / totalMessages) * 100).toFixed(2));
+  const uptimeSeconds = status?.uptime ?? 0;
+  const uptimeDisplay = formatUptime(uptimeSeconds);
 
-  const statsCards = useMemo(() => {
-    return [
+  const guardedBots = useMemo(
+    () => bots.filter(bot => bot.mcpGuard?.enabled).length,
+    [bots],
+  );
+
+  const statsCards = useMemo(
+    () => [
       {
-        id: 'agents',
-        title: 'Active Agents',
+        id: 'active-bots',
+        title: 'Active Bots',
         value: activeBotCount,
-        total: bots.length,
-        icon: 'Bot',
-        color: 'primary',
+        change: bots.length === 0 ? 0 : Math.round((activeBotCount / bots.length) * 100),
+        changeType: (activeBotCount >= bots.length / 2 ? 'increase' : 'decrease') as 'increase' | 'decrease',
+        icon: '🤖',
+        description: `${activeBotCount} of ${bots.length} agents online`,
+        color: 'success' as const,
       },
       {
-        id: 'messages',
-        title: 'Messages Processed',
+        id: 'total-messages',
+        title: 'Messages Today',
         value: totalMessages,
-        trend: '+12%',
-        icon: 'MessageSquare',
-        color: 'secondary',
+        change: totalMessages > 0 ? Math.min(100, Math.round(totalMessages / 50)) : 0,
+        changeType: (totalMessages > 0 ? 'increase' : 'neutral') as 'increase' | 'neutral',
+        icon: '💬',
+        description: `${activeConnections} live conversations`,
+        color: 'secondary' as const,
       },
       {
-        id: 'connections',
-        title: 'Active Connections',
-        value: activeConnections,
-        total: bots.length,
-        icon: 'Activity',
-        color: 'accent',
-      },
-      {
-        id: 'errors',
+        id: 'error-rate',
         title: 'Error Rate',
-        value: totalErrors,
-        trend: '-2%',
-        icon: 'AlertTriangle',
-        color: 'error',
+        value: `${errorRatePercent}%`,
+        change: errorRatePercent,
+        changeType: (errorRatePercent <= 2 ? 'decrease' : 'increase') as 'decrease' | 'increase',
+        icon: '🚨',
+        description: `${totalErrors} errors observed`,
+        color: errorRatePercent <= 2 ? 'success' as const : 'warning' as const,
       },
-    ];
-  }, [activeBotCount, bots.length, totalMessages, activeConnections, totalErrors]);
-
+      {
+        id: 'uptime',
+        title: 'Cluster Uptime',
+        value: uptimeDisplay,
+        icon: '⏱️',
+        description: `Up since ${uptimeDisplay === '—' ? '—' : 'last restart'}`,
+        color: 'secondary' as const,
+      },
+    ],
+    [activeBotCount, bots.length, totalMessages, activeConnections, errorRatePercent, totalErrors, uptimeDisplay],
+  );
 
   const botTableData = useMemo<BotTableRow[]>(() => {
     return bots.map((bot, index) => {
@@ -352,17 +357,76 @@ const UnifiedDashboard: React.FC = () => {
     });
   }, [bots, statusBots]);
 
-
-  const getBotColumns = () => [
-    { key: 'name', label: 'Agent Name' },
-    { key: 'provider', label: 'Provider' },
-    { key: 'llm', label: 'LLM' },
-    { key: 'status', label: 'Status' },
-    { key: 'messageCount', label: 'Messages' },
-    { key: 'errorCount', label: 'Errors' }
-  ];
-
-  const botColumns = useMemo(() => getBotColumns(), []);
+  const botColumns = useMemo(
+    () => [
+      {
+        key: 'name' as const,
+        title: 'Bot',
+        sortable: true,
+        render: (_value: string, record: BotTableRow) => (
+          <div className="flex flex-col gap-1">
+            <div className="flex items-center gap-2">
+              <span className="text-xl" aria-hidden>{getProviderEmoji(record.provider)}</span>
+              <span className="font-semibold">{record.name}</span>
+              {record.persona && (
+                <Badge variant="secondary" size="small" className="uppercase">
+                  {record.persona}
+                </Badge>
+              )}
+            </div>
+            <div className="text-xs text-base-content/60">
+              {record.guard}
+            </div>
+          </div>
+        ),
+      },
+      {
+        key: 'status' as const,
+        title: 'Status',
+        sortable: true,
+        render: (value: string) => (
+          <Badge variant={getStatusBadgeVariant(value)} size="small">
+            {value.toUpperCase()}
+          </Badge>
+        ),
+      },
+      {
+        key: 'connected' as const,
+        title: 'Connection',
+        sortable: true,
+        render: (_value: boolean, record: BotTableRow) => (
+          <Badge variant={record.connected ? 'success' : 'warning'} size="small">
+            {record.connected ? 'Online' : 'Offline'}
+          </Badge>
+        ),
+      },
+      {
+        key: 'messageCount' as const,
+        title: 'Messages',
+        sortable: true,
+        render: (value: number) => value.toLocaleString(),
+      },
+      {
+        key: 'errorCount' as const,
+        title: 'Errors',
+        sortable: true,
+        render: (value: number) =>
+          value > 0 ? (
+            <Badge variant="error" size="small">
+              {value}
+            </Badge>
+          ) : (
+            <span className="text-base-content/60">0</span>
+          ),
+      },
+      {
+        key: 'lastActivity' as const,
+        title: 'Last Activity',
+        sortable: true,
+      },
+    ],
+    [],
+  );
 
   const performanceMetrics = useMemo(() => {
     const cpuUsage = Math.min(92, activeConnections * 14 + 28);
@@ -416,26 +480,162 @@ const UnifiedDashboard: React.FC = () => {
     [performanceMetrics, bots.length, activeConnections, totalErrors],
   );
 
+  const createBotFields = useMemo(
+    () => [
+      {
+        name: 'name',
+        label: 'Bot Name',
+        type: 'text' as const,
+        placeholder: 'Support Assistant',
+        required: true,
+      },
+      {
+        name: 'messageProvider',
+        label: 'Message Provider',
+        type: 'select' as const,
+        required: true,
+        options: MESSAGE_PROVIDER_OPTIONS,
+      },
+      {
+        name: 'llmProvider',
+        label: 'LLM Provider',
+        type: 'select' as const,
+        required: true,
+        options: LLM_PROVIDER_OPTIONS,
+      },
+      {
+        name: 'systemInstruction',
+        label: 'System Instruction',
+        type: 'textarea' as const,
+        placeholder: 'Describe how this bot should behave...',
+      },
+      {
+        name: 'autoJoin',
+        label: 'Auto-join default channels',
+        type: 'checkbox' as const,
+        helperText: 'Automatically connect to channels configured for the selected provider.',
+      },
+    ],
+    [],
+  );
 
-
-
+  const createBotSteps = useMemo(
+    () => [
+      {
+        title: 'Define Basics',
+        description: 'Name your agent and select core providers.',
+        fields: ['name', 'messageProvider', 'llmProvider'],
+      },
+      {
+        title: 'Configure Behaviour',
+        description: 'Add optional system prompt and automations.',
+        fields: ['systemInstruction', 'autoJoin'],
+      },
+    ],
+    [],
+  );
 
   return (
     <div className="space-y-6">
       {/* Dashboard Header with Gradient */}
-      <DashboardHeader
-        handleOpenCreateModal={handleOpenCreateModal}
-        isModalDataLoading={isModalDataLoading}
-        handleRefresh={handleRefresh}
-        refreshing={refreshing}
-      />
+      <div className="bg-gradient-to-r from-primary/20 via-primary/10 to-transparent rounded-2xl p-6 border border-primary/20">
+        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <div className="flex items-center gap-4">
+            <div className="p-3 bg-primary/20 rounded-xl">
+              <LayoutDashboard className="w-8 h-8 text-primary" />
+            </div>
+            <div>
+              <h1
+                className="text-2xl font-bold tracking-tight"
+                data-testid="dashboard-title"
+              >
+                Open-Hivemind Dashboard
+              </h1>
+              <p className="text-sm text-base-content/60">
+                Unified control centre for your multi-agent deployments
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <ToastNotification.Notifications />
+            <Button
+              variant="secondary"
+              onClick={handleOpenCreateModal}
+              aria-label="Create new bot"
+              className="gap-2"
+              loading={isModalDataLoading}
+              loadingText="Loading"
+            >
+              <PlusCircle className="w-4 h-4" />
+              Create Bot
+            </Button>
+            <Button
+              variant="primary"
+              data-testid="refresh-button"
+              onClick={handleRefresh}
+              loading={refreshing}
+              loadingText="Refreshing"
+              aria-label="Refresh dashboard"
+              className="gap-2"
+            >
+              <RefreshCw className="w-4 h-4" />
+              Refresh
+            </Button>
+          </div>
+        </div>
+      </div>
 
       {/* Tabs */}
-      <DashboardTabs activeTab={activeTab} setActiveTab={setActiveTab} />
+      <div
+        role="tablist"
+        className="tabs tabs-boxed w-fit bg-base-200/50 p-1 rounded-xl"
+        aria-label="Dashboard sections"
+      >
+        <button
+          id="dashboard-tab-getting-started"
+          role="tab"
+          data-testid="getting-started-tab"
+          className={`tab gap-2 ${activeTab === 'getting-started' ? 'tab-active' : ''}`}
+          aria-selected={activeTab === 'getting-started'}
+          aria-controls="dashboard-panel-getting-started"
+          onClick={() => setActiveTab('getting-started')}
+        >
+          <Rocket className="w-4 h-4" />
+          Getting Started
+        </button>
+        <button
+          id="dashboard-tab-status"
+          role="tab"
+          data-testid="status-tab"
+          className={`tab gap-2 ${activeTab === 'status' ? 'tab-active' : ''}`}
+          aria-selected={activeTab === 'status'}
+          aria-controls="dashboard-panel-status"
+          onClick={() => setActiveTab('status')}
+        >
+          <Activity className="w-4 h-4" />
+          Status
+        </button>
+        <button
+          id="dashboard-tab-performance"
+          role="tab"
+          data-testid="performance-tab"
+          className={`tab gap-2 ${activeTab === 'performance' ? 'tab-active' : ''}`}
+          aria-selected={activeTab === 'performance'}
+          aria-controls="dashboard-panel-performance"
+          onClick={() => setActiveTab('performance')}
+        >
+          <Gauge className="w-4 h-4" />
+          Performance
+        </button>
+      </div>
 
       {loading ? (
-        <div className="flex justify-center py-20">
-          <LoadingSpinner size="lg" />
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 py-6">
+          <LoadingSkeletonCard />
+          <LoadingSkeletonCard />
+          <LoadingSkeletonCard />
+          <LoadingSkeletonCard />
         </div>
       ) : (
         <>
