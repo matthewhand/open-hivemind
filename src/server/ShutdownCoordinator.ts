@@ -17,7 +17,7 @@ export const ShutdownPhase = {
   COMPLETE: 'complete',
 } as const;
 
-export type ShutdownPhase = typeof ShutdownPhase[keyof typeof ShutdownPhase];
+export type ShutdownPhase = (typeof ShutdownPhase)[keyof typeof ShutdownPhase];
 
 /**
  * Interface for services that can be shut down gracefully.
