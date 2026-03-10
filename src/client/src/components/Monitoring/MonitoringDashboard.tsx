@@ -228,7 +228,7 @@ const MonitoringDashboard: React.FC<MonitoringDashboardProps> = ({
       <PageHeader
         title="System Monitoring"
         description={`Last updated: ${lastRefresh.toLocaleTimeString()}`}
-        icon={ChartBar}
+        icon={<ChartBar className="w-5 h-5" />}
         actions={
           <div className="flex items-center gap-2">
             <select
