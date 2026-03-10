@@ -2,6 +2,8 @@
 import React, { useState } from 'react';
 import { BotChatTimeline } from '../components/BotChatTimeline';
 import BotChatBubbles from '../components/BotChatBubbles';
+import { PageHeader } from '../components/DaisyUI';
+import { LayoutTemplate } from 'lucide-react';
 
 /**
  * DaisyUI Component Showcase
@@ -26,15 +28,16 @@ const DaisyUIShowcase: React.FC = () => {
   return (
     <div className="p-6">
       {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold">DaisyUI Component Reference</h1>
-        <p className="text-base-content/60 mt-1">
-          Official DaisyUI components using raw CSS classes -
-          <a href="https://daisyui.com/components/" target="_blank" rel="noopener noreferrer" className="link link-primary ml-1">
+      <PageHeader
+        title="DaisyUI Component Reference"
+        description="Official DaisyUI components using raw CSS classes"
+        icon={<LayoutTemplate className="w-6 h-6" />}
+        actions={
+          <a href="https://daisyui.com/components/" target="_blank" rel="noopener noreferrer" className="btn btn-outline btn-sm">
             View Official Docs
           </a>
-        </p>
-      </div>
+        }
+      />
 
       {/* Component Navigation */}
       <div className="tabs tabs-boxed mb-6 flex-wrap">

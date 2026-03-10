@@ -7,7 +7,7 @@ import {
   CodeBracketIcon,
   ListBulletIcon,
 } from '@heroicons/react/24/outline';
-import { Breadcrumbs, Alert, Modal } from '../components/DaisyUI';
+import { Breadcrumbs, Alert, Modal, PageHeader } from '../components/DaisyUI';
 
 interface MCPTool {
   id: string;
@@ -291,14 +291,11 @@ const MCPToolsPage: React.FC = () => {
     <div className="p-6">
       <Breadcrumbs items={breadcrumbItems} />
 
-      <div className="mt-4 mb-8">
-        <h1 className="text-3xl font-bold mb-2">
-          MCP Tools
-        </h1>
-        <p className="text-base-content/70">
-          Browse and manage tools available from your MCP servers
-        </p>
-      </div>
+      <PageHeader
+        title="MCP Tools"
+        description="Browse and manage tools available from your MCP servers"
+        icon={<ToolIcon className="w-6 h-6" />}
+      />
 
       {alert && (
         <div className="mb-6">
@@ -311,8 +308,8 @@ const MCPToolsPage: React.FC = () => {
       )}
 
       {/* Filters */}
-      <div className="flex flex-wrap gap-4 mb-6">
-        <div className="form-control w-full md:w-auto md:flex-1 max-w-md">
+      <div className="flex flex-col sm:flex-row gap-4 mb-6">
+        <div className="form-control w-full sm:flex-1 max-w-md">
           <div className="input-group">
             <div className="relative w-full">
               <input
@@ -328,7 +325,7 @@ const MCPToolsPage: React.FC = () => {
         </div>
 
         <select
-          className="select select-bordered w-full md:w-auto"
+          className="select select-bordered w-full sm:w-auto"
           value={categoryFilter}
           onChange={(e) => setCategoryFilter(e.target.value)}
         >
@@ -341,7 +338,7 @@ const MCPToolsPage: React.FC = () => {
         </select>
 
         <select
-          className="select select-bordered w-full md:w-auto"
+          className="select select-bordered w-full sm:w-auto"
           value={serverFilter}
           onChange={(e) => setServerFilter(e.target.value)}
         >

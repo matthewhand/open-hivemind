@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Card, Button, Input, Badge, Breadcrumbs, Pagination } from '../components/DaisyUI';
-import { MagnifyingGlassIcon, PlusIcon, BookOpenIcon } from '@heroicons/react/24/outline';
+import { Card, Button, Input, Badge, Breadcrumbs, Pagination, PageHeader } from '../components/DaisyUI';
+import { MagnifyingGlassIcon, PlusIcon, BookOpenIcon, DocumentTextIcon } from '@heroicons/react/24/outline';
 import useSpecs from '../hooks/useSpecs';
 
 const SpecsPage: React.FC = () => {
@@ -62,13 +62,14 @@ const SpecsPage: React.FC = () => {
     <div className="container mx-auto p-6">
       <Breadcrumbs items={breadcrumbItems} />
 
-      <div className="mt-6 mb-8">
-        <h1 className="text-3xl font-bold mb-2">Specifications</h1>
-        <p className="opacity-70">View, search, and manage persisted specifications</p>
-      </div>
+      <PageHeader
+        title="Specifications"
+        description="View, search, and manage persisted specifications"
+        icon={<DocumentTextIcon className="w-6 h-6" />}
+      />
 
       {/* Search and Actions */}
-      <div className="flex flex-col md:flex-row gap-4 mb-6">
+      <div className="flex flex-col sm:flex-row gap-4 mb-6">
         <div className="flex-1 relative">
           <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 opacity-50" />
           <Input
