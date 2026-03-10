@@ -149,8 +149,20 @@ describe('MigrationManager', () => {
 
       // @ts-ignore - Accessing private property for testing
       migrationManager.migrations = [
-        { id: '001_add_tenant_support', name: 'Migration 1', version: 1, up: jest.fn() },
-        { id: '002_add_rbac_enhancements', name: 'Migration 2', version: 2, up: jest.fn() },
+        {
+          id: '001_add_tenant_support',
+          name: 'Migration 1',
+          version: 1,
+          up: jest.fn(),
+          down: jest.fn(),
+        },
+        {
+          id: '002_add_rbac_enhancements',
+          name: 'Migration 2',
+          version: 2,
+          up: jest.fn(),
+          down: jest.fn(),
+        },
         mockMigration,
       ];
 
@@ -228,7 +240,7 @@ describe('MigrationManager', () => {
 
       // @ts-ignore - Accessing private property for testing
       migrationManager.migrations = [
-        { id: '001', name: 'Migration 1', version: 1, up: jest.fn() },
+        { id: '001', name: 'Migration 1', version: 1, up: jest.fn(), down: jest.fn() },
         mockMigration,
       ];
 
@@ -237,24 +249,27 @@ describe('MigrationManager', () => {
       expect(mockDb.exec).toHaveBeenCalledWith('ROLLBACK');
     });
 
-    it('should skip migrations without down function', async () => {
+    it('should throw an explicit error if a rollback is attempted on an irreversible migration', async () => {
       mockDb.all.mockResolvedValueOnce([
         { id: '001', version: 1 },
         { id: '002', version: 2 },
       ]);
 
       const migrations = [
-        { id: '001', version: 1, up: jest.fn() },
-        { id: '002', version: 2, up: jest.fn() }, // No down function
+        { id: '001', version: 1, up: jest.fn(), down: jest.fn() },
+        { id: '002', version: 2, up: jest.fn() }, // No down function, irreversible
       ];
 
       // @ts-ignore - Accessing private property for testing
       migrationManager.migrations = migrations;
 
-      await migrationManager.rollbackToVersion(0);
+      await expect(migrationManager.rollbackToVersion(0)).rejects.toThrow(
+        'Cannot rollback: Migration 002 is irreversible (missing down method).'
+      );
 
-      // Should not attempt to rollback migration 002 since it has no down function
-      expect(mockDb.run).not.toHaveBeenCalledWith('DELETE FROM migrations WHERE id = ?', ['002']);
+      // Should not attempt to rollback anything if there's an irreversible migration
+      expect(migrations[0].down).not.toHaveBeenCalled();
+      expect(mockDb.run).not.toHaveBeenCalled();
     });
   });
 
