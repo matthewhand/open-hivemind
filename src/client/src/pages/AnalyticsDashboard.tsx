@@ -5,6 +5,8 @@ import { apiService, ActivityResponse, ActivityEvent } from '../services/api';
 import MetricChart from '../components/Monitoring/MetricChart';
 import StatusCard from '../components/Monitoring/StatusCard';
 import { redactString } from '../utils/redaction';
+import Logger from '../utils/logger';
+
 
 const AnalyticsDashboard: React.FC = () => {
   const { messageFlow, performanceMetrics } = useWebSocket();
@@ -35,7 +37,7 @@ const AnalyticsDashboard: React.FC = () => {
       });
       setActivityData(data);
     } catch (error) {
-      console.error('Failed to fetch analytics data:', error);
+      Logger.error('Failed to fetch analytics data:', error);
     } finally {
       setIsLoading(false);
     }

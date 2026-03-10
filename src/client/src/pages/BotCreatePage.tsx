@@ -15,6 +15,8 @@ import { useLlmStatus } from '../hooks/useLlmStatus';
 import AIAssistButton from '../components/AIAssistButton';
 import { apiService } from '../services/api';
 import { CONFIG_LIMITS } from '../../../types/config';
+import Logger from '../utils/logger';
+
 
 const BotCreatePage: React.FC = () => {
   const navigate = useNavigate();
@@ -62,7 +64,7 @@ const BotCreatePage: React.FC = () => {
         const servers = mcpResponse?.data || mcpResponse || [];
         setMcpServers(Array.isArray(servers) ? servers : []);
       } catch (err) {
-        console.error('Failed to load data', err);
+        Logger.error('Failed to load data', err);
         setAlert({ type: 'error', message: 'Failed to load configuration data' });
       } finally {
         setLoading(false);
@@ -377,7 +379,7 @@ const BotCreatePage: React.FC = () => {
                               onChange={(e) => {
                                 const serverId = server.id || server.name;
                                 if (!serverId) {
-                                  console.warn('Server ID or name is required');
+                                  Logger.warn('Server ID or name is required');
                                   return;
                                 }
                                 setFormData(prev => ({

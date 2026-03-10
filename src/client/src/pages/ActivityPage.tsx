@@ -18,6 +18,8 @@ import {
 } from '../components/DaisyUI';
 import SearchFilterBar from '../components/SearchFilterBar';
 import { apiService, ActivityEvent, ActivityResponse } from '../services/api';
+import Logger from '../utils/logger';
+
 
 const ActivityPage: React.FC = () => {
   const [data, setData] = useState<ActivityResponse | null>(null);
@@ -68,7 +70,7 @@ const ActivityPage: React.FC = () => {
         maxRetries,
         1000,
         (err, attempt, max) => {
-           console.log(`Retrying fetchActivity in ${1000 * Math.pow(1.5, attempt - 1)}ms (attempt ${attempt}/${max})`);
+           Logger.log(`Retrying fetchActivity in ${1000 * Math.pow(1.5, attempt - 1)}ms (attempt ${attempt}/${max})`);
            setRetryCount(attempt);
         }
       );
@@ -82,7 +84,7 @@ const ActivityPage: React.FC = () => {
     } catch (err: any) {
       const message = err instanceof Error ? err.message : 'Failed to fetch activity';
       setError(message);
-      console.error('Error fetching activity:', err);
+      Logger.error('Error fetching activity:', err);
     } finally {
       setLoading(false);
     }

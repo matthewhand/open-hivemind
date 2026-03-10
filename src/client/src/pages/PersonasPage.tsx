@@ -18,6 +18,8 @@ import {
 import SearchFilterBar from '../components/SearchFilterBar';
 import type { Persona as ApiPersona, Bot } from '../services/api';
 import { apiService } from '../services/api';
+import Logger from '../utils/logger';
+
 
 // Extend UI Persona type to include assigned bots for display
 interface Persona extends ApiPersona {
@@ -124,7 +126,7 @@ const PersonasPage: React.FC = () => {
       await navigator.clipboard.writeText(text);
       successToast('Copied!', 'System prompt copied to clipboard');
     } catch (err) {
-      console.error('Failed to copy', err);
+      Logger.error('Failed to copy', err);
       errorToast('Error', 'Failed to copy to clipboard');
     }
   };
@@ -194,7 +196,7 @@ const PersonasPage: React.FC = () => {
       setEditingPersona(null);
       setCloningPersonaId(null);
     } catch (err) {
-      console.error(err);
+      Logger.error(err);
       setError('Failed to save persona changes');
     } finally {
       setLoading(false);

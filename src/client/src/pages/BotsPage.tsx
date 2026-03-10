@@ -23,6 +23,8 @@ import BotCard from '../components/BotManagement/BotCard';
 import { CreateBotWizard } from '../components/BotManagement/CreateBotWizard';
 import { BotSettingsModal } from '../components/BotSettingsModal';
 import { useLocation } from 'react-router-dom';
+import Logger from '../utils/logger';
+
 
 const BotsPage: React.FC = () => {
   const [bots, setBots] = useState<BotConfig[]>([]);
@@ -283,7 +285,7 @@ const BotsPage: React.FC = () => {
     } catch (err) {
       ErrorService.report(err, { botId: bot.id, action: 'fetchBotPreviewData' });
       // Don't show toast for initial load failures to keep UI clean, but log error
-      console.error('Failed to load bot preview data:', err);
+      Logger.error('Failed to load bot preview data:', err);
     }
   };
 

@@ -1,6 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars, react-refresh/only-export-components, no-empty, no-case-declarations */
 import type { ReactNode } from 'react';
 import React, { useState, useEffect, useRef } from 'react';
+import Logger from '../../utils/logger';
+
 
 export interface FormField {
   name: string;
@@ -261,7 +263,7 @@ export const Form: React.FC<FormProps> = ({
       setIsSubmitting(true);
       await onSubmit(formData);
     } catch (error) {
-      console.error('Form submission error:', error);
+      Logger.error('Form submission error:', error);
     } finally {
       setIsSubmitting(false);
     }

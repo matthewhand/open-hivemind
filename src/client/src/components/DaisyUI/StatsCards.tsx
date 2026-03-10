@@ -6,6 +6,8 @@ import {
   Users, Activity, Settings, Database, Wifi,
 } from 'lucide-react';
 import { animate } from 'framer-motion';
+import Logger from '../../utils/logger';
+
 
 interface StatItem {
   id: string;
@@ -354,7 +356,7 @@ export const useSystemStats = () => {
         setError(null);
       } catch (err) {
         setError('Failed to fetch system stats');
-        console.error('Error fetching stats:', err);
+        Logger.error('Error fetching stats:', err);
       } finally {
         setIsLoading(false);
       }

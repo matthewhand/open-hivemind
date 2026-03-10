@@ -12,6 +12,8 @@ import {
 } from '@heroicons/react/24/outline';
 import { Modal, Pagination } from '../DaisyUI';
 import AgentForm from './AgentForm';
+import Logger from '../../utils/logger';
+
 
 interface Agent {
   id: string;
@@ -93,7 +95,7 @@ const EnhancedAgentConfigurator: React.FC = () => {
       setMcpServers(mcpData.servers || []);
     } catch (err) {
       setError('Failed to fetch configuration data');
-      console.error('Error fetching data:', err);
+      Logger.error('Error fetching data:', err);
     } finally {
       setLoading(false);
     }

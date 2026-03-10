@@ -23,6 +23,8 @@ import {
 } from 'recharts';
 import { format, subDays, subHours } from 'date-fns';
 import { Badge, Alert, Button, Pagination } from '../DaisyUI';
+import Logger from '../../utils/logger';
+
 
 interface ActivityFilter {
   agentId?: string;
@@ -121,7 +123,7 @@ const ActivityMonitor: React.FC = () => {
       const data = await response.json();
       setAgents(data.agents || []);
     } catch (err) {
-      console.error('Error fetching agents:', err);
+      Logger.error('Error fetching agents:', err);
     }
   };
 
@@ -175,7 +177,7 @@ const ActivityMonitor: React.FC = () => {
       }
     } catch (err) {
       setError(`Failed to fetch activity data: ${err}`);
-      console.error('Error fetching activity data:', err);
+      Logger.error('Error fetching activity data:', err);
     } finally {
       setLoading(false);
     }

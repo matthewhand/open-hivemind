@@ -12,6 +12,8 @@ import {
 } from '@heroicons/react/24/outline';
 import { apiService } from '../services/api';
 import type { Bot } from '../services/api';
+import Logger from '../utils/logger';
+
 
 interface WizardStep {
   id: string;
@@ -68,7 +70,7 @@ const ConfigurationWizard: React.FC = () => {
       const response = await apiService.getConfig();
       setExistingBots(response.bots);
     } catch (err) {
-      console.error('Failed to load existing bots:', err);
+      Logger.error('Failed to load existing bots:', err);
     }
   };
 

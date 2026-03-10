@@ -6,6 +6,8 @@ import StatusCard from '../components/Monitoring/StatusCard';
 import MetricChart from '../components/Monitoring/MetricChart';
 import AlertPanel from '../components/Monitoring/AlertPanel';
 import EventStream from '../components/Monitoring/EventStream';
+import Logger from '../utils/logger';
+
 
 const MonitoringDashboard: React.FC = () => {
   const { isConnected, connect, disconnect, performanceMetrics, alerts } = useWebSocket();
@@ -184,16 +186,16 @@ const MonitoringDashboard: React.FC = () => {
             source: 'System',
             metadata: alert.metadata,
           }))}
-          onAcknowledge={(id) => console.log('Acknowledged alert:', id)}
-          onResolve={(id) => console.log('Resolved alert:', id)}
-          onDismiss={(id) => console.log('Dismissed alert:', id)}
+          onAcknowledge={(id) => Logger.log('Acknowledged alert:', id)}
+          onResolve={(id) => Logger.log('Resolved alert:', id)}
+          onDismiss={(id) => Logger.log('Dismissed alert:', id)}
           maxAlerts={10}
         />
         <EventStream
           maxEvents={20}
           showFilters={true}
           autoScroll={true}
-          onEventClick={(event) => console.log('Event clicked:', event)}
+          onEventClick={(event) => Logger.log('Event clicked:', event)}
         />
       </div>
     </div>

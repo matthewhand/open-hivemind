@@ -2,6 +2,8 @@
 import React, { useEffect, useState } from 'react';
 import { Alert, Button, Card, Input, Select, Toggle, Loading, Textarea } from './DaisyUI';
 import { CheckCircleIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline';
+import Logger from '../utils/logger';
+
 
 interface ConfigSchema {
   doc?: string;
@@ -63,7 +65,7 @@ const ComprehensiveConfigPanel: React.FC = () => {
           valuesToSave[fieldName] = JSON.parse(jsonStr);
         } catch (e) {
           // Ignore invalid JSON, maybe warn user?
-          console.warn(`Skipping invalid JSON for ${fieldName}`);
+          Logger.warn(`Skipping invalid JSON for ${fieldName}`);
         }
       }
     });

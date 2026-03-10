@@ -1,6 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Badge, LoadingSpinner, Alert } from './index';
+import Logger from '../../utils/logger';
+
 
 interface ModelOption {
   id: string;
@@ -104,7 +106,7 @@ const ModelAutocomplete: React.FC<ModelAutocompleteProps> = ({
 
       setSuggestions(models);
     } catch (error) {
-      console.error('Failed to fetch models:', error);
+      Logger.error('Failed to fetch models:', error);
       setFetchError(error instanceof Error ? error.message : 'Failed to fetch models');
     } finally {
       setIsLoading(false);

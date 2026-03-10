@@ -2,6 +2,8 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Alert, Input, Select, Toggle, Button } from '../DaisyUI';
 import { Settings as SettingsIcon, ShieldCheck, Activity } from 'lucide-react';
+import Logger from '../../utils/logger';
+
 
 interface GeneralConfig {
   instanceName: string;
@@ -53,7 +55,7 @@ const SettingsGeneral: React.FC = () => {
         }));
       }
     } catch (e) {
-      console.warn('Failed to load timezones:', e);
+      Logger.warn('Failed to load timezones:', e);
     }
     // Fallback options
     return [

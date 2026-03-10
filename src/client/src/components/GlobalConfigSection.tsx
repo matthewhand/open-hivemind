@@ -1,6 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useEffect, useState } from 'react';
 import { Alert, Button, Card, Input, Select, Toggle, Loading, Textarea } from './DaisyUI';
+import Logger from '../utils/logger';
+
 
 interface ConfigSchema {
   doc?: string;
@@ -66,7 +68,7 @@ const GlobalConfigSection: React.FC<GlobalConfigSectionProps> = ({ section }) =>
       try {
         valuesToSave[key] = JSON.parse(jsonStr);
       } catch (e) {
-        console.warn(`Skipping invalid JSON for ${section}.${key}`);
+        Logger.warn(`Skipping invalid JSON for ${section}.${key}`);
       }
     });
 

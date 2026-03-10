@@ -4,6 +4,8 @@ import { useNavigate } from 'react-router-dom';
 import { Breadcrumbs, EmptyState } from '../components/DaisyUI';
 import { Copy, Check, Search } from 'lucide-react';
 import SearchFilterBar from '../components/SearchFilterBar';
+import Logger from '../utils/logger';
+
 
 interface BotTemplate {
   id: string;
@@ -55,7 +57,7 @@ const BotTemplatesPage: React.FC = () => {
         setTemplates(templatesArray);
       }
     } catch (error) {
-      console.error('Failed to fetch templates:', error);
+      Logger.error('Failed to fetch templates:', error);
     } finally {
       setLoading(false);
     }
@@ -95,7 +97,7 @@ const BotTemplatesPage: React.FC = () => {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch (err) {
-      console.error('Failed to copy:', err);
+      Logger.error('Failed to copy:', err);
     }
   };
 

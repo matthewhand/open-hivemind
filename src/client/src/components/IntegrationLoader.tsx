@@ -3,6 +3,8 @@ import type { ComponentType } from 'react';
 import { lazy, Suspense } from 'react';
 import React from 'react';
 import logger from '../utils/logger';
+import Logger from '../utils/logger';
+
 
 // Types for dynamic integration components
 export interface IntegrationUIComponent {
@@ -72,11 +74,11 @@ export class IntegrationLoader {
           const components = await this.loadIntegrationComponents(integrationId);
           allComponents.push(...components);
         } catch (error) {
-          console.warn(`Failed to load components for integration ${integrationId}:`, error);
+          Logger.warn(`Failed to load components for integration ${integrationId}:`, error);
         }
       }
     } catch (error) {
-      console.error('Failed to discover integrations:', error);
+      Logger.error('Failed to discover integrations:', error);
     }
 
     return allComponents;
@@ -126,7 +128,7 @@ export class IntegrationLoader {
               icon: componentInfo.icon,
             });
           } catch (componentError) {
-            console.warn(`Failed to load component ${componentId} for integration ${integrationId}:`, componentError);
+            Logger.warn(`Failed to load component ${componentId} for integration ${integrationId}:`, componentError);
           }
         }
       }
@@ -138,7 +140,7 @@ export class IntegrationLoader {
       }
 
     } catch (error) {
-      console.warn(`Failed to load integration ${integrationId}:`, error);
+      Logger.warn(`Failed to load integration ${integrationId}:`, error);
     }
 
     return components;
@@ -228,7 +230,7 @@ export class IntegrationLoader {
       }
 
     } catch (error) {
-      console.warn(`Failed to auto-discover components for integration ${integrationId}:`, error);
+      Logger.warn(`Failed to auto-discover components for integration ${integrationId}:`, error);
     }
 
     return components;
@@ -318,7 +320,7 @@ export function LazyIntegrationComponent({
     IntegrationLoader.getInstance()
       .loadComponent(integrationId, componentPath)
       .catch(error => {
-        console.error(`Failed to load integration component ${integrationId}.${componentPath}:`, error);
+        Logger.error(`Failed to load integration component ${integrationId}.${componentPath}:`, error);
         // Return a simple error component
         return {
           default: () => onError(error instanceof Error ? error : new Error('Unknown error')),

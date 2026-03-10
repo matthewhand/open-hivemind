@@ -22,6 +22,8 @@ import {
 import type { Bot, CreateBotRequest } from '../../services/botDataProvider';
 import { botDataProvider } from '../../services/botDataProvider';
 import { useLlmStatus } from '../../hooks/useLlmStatus';
+import Logger from '../../utils/logger';
+
 
 interface EnhancedBotManagerProps {
   onBotSelect?: (bot: Bot) => void;
@@ -122,7 +124,7 @@ const EnhancedBotManager: React.FC<EnhancedBotManagerProps> = ({ onBotSelect }) 
         setGuardProfiles(gpData.data || []);
       }
     } catch (err) {
-      console.error('Error loading options:', err);
+      Logger.error('Error loading options:', err);
     }
   };
 

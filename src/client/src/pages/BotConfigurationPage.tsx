@@ -1,7 +1,9 @@
+import Logger from '../utils/logger';
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect, useCallback } from 'react';
 import { Settings, Save, RefreshCw, AlertCircle, CheckCircle, History } from 'lucide-react';
 import {
+
   PageHeader,
   Accordion,
   Input,
@@ -48,7 +50,7 @@ const BotConfigurationPage: React.FC = () => {
         setRollbacks(data.rollbacks || []);
       }
     } catch (err) {
-      console.error('Error fetching rollbacks:', err);
+      Logger.error('Error fetching rollbacks:', err);
     }
   }, []);
 
@@ -69,7 +71,7 @@ const BotConfigurationPage: React.FC = () => {
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to fetch configuration';
       setError(message);
-      console.error('Error fetching config:', err);
+      Logger.error('Error fetching config:', err);
     } finally {
       setLoading(false);
     }
