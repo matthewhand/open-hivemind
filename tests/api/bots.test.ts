@@ -79,7 +79,13 @@ app.use('/api/bots', botsRouter);
 const getMockManager = () => BotManager.getInstance() as unknown as Record<string, jest.Mock>;
 
 describe('Bots Routes', () => {
+  afterEach(() => {
+    (BotManager as any).instance = undefined;
+  });
+
   beforeEach(() => {
+    (BotManager as any).instance = undefined;
+
     jest.clearAllMocks();
   });
 

@@ -7,6 +7,7 @@ describe('ApiMonitorService', () => {
   let service: ApiMonitorService;
 
   beforeEach(() => {
+    (ApiMonitorService as any).instance = undefined;
     service = ApiMonitorService.getInstance();
     service.stopAllMonitoring();
     // Clear all endpoints
@@ -18,6 +19,7 @@ describe('ApiMonitorService', () => {
   });
 
   afterEach(() => {
+    (ApiMonitorService as any).instance = undefined;
     service.stopAllMonitoring();
     // Clean up any remaining listeners
     service.removeAllListeners();
