@@ -297,7 +297,7 @@ const BotsPage: React.FC = () => {
     );
   }, [activityLogs, logFilter]);
 
-  if (loading && bots.length === 0) {
+  if (loading && bots.length === 0 && !error) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[400px]">
         <LoadingSpinner size="lg" />
@@ -324,7 +324,7 @@ const BotsPage: React.FC = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Main Content: Bot List */}
-        <div className="lg:col-span-2 space-y-4">
+        <div className={`${error && bots.length === 0 ? 'lg:col-span-3' : 'lg:col-span-2'} space-y-4`}>
           <SearchFilterBar
             searchQuery={searchQuery}
             onSearchChange={setSearchQuery}
@@ -401,6 +401,7 @@ const BotsPage: React.FC = () => {
         </div>
 
         {/* Sidebar: Bot Preview/Details */}
+        {!(error && bots.length === 0) && (
         <div className="lg:col-span-1">
           {previewBot ? (
             <div className="card bg-base-100 shadow-xl border border-base-200 sticky top-6 animate-in fade-in slide-in-from-right-4 duration-300">
@@ -586,6 +587,7 @@ const BotsPage: React.FC = () => {
             </div>
           )}
         </div>
+        )}
       </div>
 
       {/* Modals */}
