@@ -22,11 +22,13 @@ const AIAssistButton: React.FC<AIAssistButtonProps> = ({
   className = '',
 }) => {
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const { addToast } = useToast();
 
   const handleClick = async () => {
     try {
       setLoading(true);
+      setError(null);
       const response: any = await apiService.post('/api/ai-assist/generate', {
         prompt,
         systemPrompt,
@@ -35,6 +37,8 @@ const AIAssistButton: React.FC<AIAssistButtonProps> = ({
         onSuccess(response.result);
       }
     } catch (err: any) {
+      setError('Failed to generate');
+      // Check if it's a configuration error
       if (err.message && err.message.includes('not configured')) {
         addToast({
           type: 'warning',
@@ -43,11 +47,6 @@ const AIAssistButton: React.FC<AIAssistButtonProps> = ({
         });
       } else {
         console.error('AI Gen error:', err);
-        addToast({
-          type: 'error',
-          title: 'Generation Failed',
-          message: err.message || 'Failed to generate AI response.',
-        });
       }
     } finally {
       setLoading(false);
@@ -56,8 +55,8 @@ const AIAssistButton: React.FC<AIAssistButtonProps> = ({
 
   return (
     <div
-      className="tooltip tooltip-right font-normal normal-case text-sm"
-      data-tip={loading ? 'Generating...' : label}
+      className={`tooltip tooltip-right font-normal normal-case text-sm ${error ? 'tooltip-error' : ''}`}
+      data-tip={error || (loading ? 'Generating...' : label)}
       aria-live="polite"
     >
       <button
