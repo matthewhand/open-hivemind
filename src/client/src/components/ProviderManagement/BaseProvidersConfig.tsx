@@ -1,14 +1,12 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect } from 'react';
-import {
-  Card,
-  Button,
-  ModalForm,
-  Input,
-  Select,
-  Alert,
-  Badge,
-} from '../DaisyUI';
+import Card from '../DaisyUI/Card';
+import Button from '../DaisyUI/Button';
+import ModalForm from '../DaisyUI/ModalForm';
+import Input from '../DaisyUI/Input';
+import Select from '../DaisyUI/Select';
+import { Alert } from '../DaisyUI/Alert';
+import Badge from '../DaisyUI/Badge';
 import {
   PlusIcon,
   PencilIcon,
