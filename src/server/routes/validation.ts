@@ -573,9 +573,9 @@ router.delete(
           message: 'Validation rule deleted successfully',
         });
       } else {
-        return res.status(404).json({
-          success: false,
-          message: 'Validation rule not found',
+        return res.status(200).json({
+          success: true,
+          message: 'Validation rule already deleted or not found',
         });
       }
     } catch (error: unknown) {
@@ -758,9 +758,9 @@ router.delete(
           message: 'Validation profile deleted successfully',
         });
       } else {
-        return res.status(404).json({
-          success: false,
-          message: 'Validation profile not found',
+        return res.status(200).json({
+          success: true,
+          message: 'Validation profile already deleted or not found',
         });
       }
     } catch (error: unknown) {
@@ -910,9 +910,9 @@ router.delete(
           message: 'Unsubscribed from validation successfully',
         });
       } else {
-        return res.status(404).json({
-          success: false,
-          message: 'Subscription not found',
+        return res.status(200).json({
+          success: true,
+          message: 'Subscription already deleted or not found',
         });
       }
     } catch (error: unknown) {

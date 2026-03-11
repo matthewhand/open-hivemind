@@ -473,7 +473,7 @@ router.delete('/llm-profiles/:key', (req, res) => {
     );
 
     if (index === -1) {
-      return res.status(404).json({ error: `LLM profile with key '${key}' not found` });
+      return res.status(200).json({ success: true, message: `LLM profile with key '${key}' already deleted or not found` });
     }
 
     const [deletedProfile] = profiles.llm.splice(index, 1);

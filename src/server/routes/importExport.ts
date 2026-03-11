@@ -469,9 +469,9 @@ router.delete(
           message: 'Backup deleted successfully',
         });
       } else {
-        return res.status(404).json({
-          success: false,
-          message: 'Backup not found',
+        return res.status(200).json({
+          success: true,
+          message: 'Backup already deleted or not found',
         });
       }
     } catch (error) {

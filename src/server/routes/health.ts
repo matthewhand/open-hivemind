@@ -468,23 +468,24 @@ router.delete('/api-endpoints/:id', (req, res) => {
   try {
     const endpoint = apiMonitor.getEndpoint(req.params.id);
     if (!endpoint) {
-      return res.status(404).json({
-        error: 'Failed to remove endpoint',
-        message: 'Endpoint not found',
+      return res.status(200).json({
+        success: true,
+        message: 'Endpoint already removed or not found',
         timestamp: new Date().toISOString(),
       });
     }
     apiMonitor.removeEndpoint(req.params.id);
 
     return res.json({
+      success: true,
       message: 'Endpoint removed successfully',
       removedEndpoint: endpoint,
       timestamp: new Date().toISOString(),
     });
   } catch (error) {
-    return res.status(404).json({
+    return res.status(500).json({
       error: 'Failed to remove endpoint',
-      message: error instanceof Error ? error.message : 'Endpoint not found',
+      message: error instanceof Error ? error.message : 'An error occurred during removal',
       timestamp: new Date().toISOString(),
     });
   }
