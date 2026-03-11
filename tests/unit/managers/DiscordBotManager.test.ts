@@ -101,7 +101,7 @@ describe('DiscordBotManager Map-based lookups', () => {
       injectBot(mgr, 'zeta');
       injectBot(mgr, 'eta');
       await mgr.disconnectBot('zeta');
-      expect(mgr.getBotByName('eta')).toBeDefined();
+      expect(mgr.getBotByName('eta')?.botUserName).toBe('eta');
       expect(mgr.getAllBots()).toHaveLength(1);
     });
   });
