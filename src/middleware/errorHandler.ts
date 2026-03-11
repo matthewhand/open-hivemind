@@ -250,37 +250,19 @@ function emitErrorEvent(error: BaseHivemindError, context: ErrorContext, statusC
 
 /**
  * Setup global error handlers
+ * (Deprecated - Global process handlers are now managed centrally by ShutdownCoordinator
+ * to prevent duplicate registrations and race conditions)
  */
 export function setupGlobalErrorHandlers(): void {
-  // Handle uncaught exceptions
-  process.on('uncaughtException', handleUncaughtException);
-
-  // Handle unhandled promise rejections
-  process.on('unhandledRejection', handleUnhandledRejection);
-
-  debug('Global error handlers setup completed');
+  debug('Global error handlers setup skipped - managed by ShutdownCoordinator');
 }
 
 /**
  * Graceful shutdown handler
+ * (Deprecated - Graceful shutdown is now managed centrally by ShutdownCoordinator)
  */
 export function setupGracefulShutdown(): void {
-  const shutdown = (signal: string): void => {
-    console.log(`\nReceived ${signal}. Starting graceful shutdown...`);
-
-    // Close server, database connections, etc.
-    // This would be implemented by the main application
-
-    setTimeout(() => {
-      console.log('Graceful shutdown completed');
-      process.exit(0);
-    }, 5000); // 5 second timeout
-  };
-
-  process.on('SIGTERM', () => shutdown('SIGTERM'));
-  process.on('SIGINT', () => shutdown('SIGINT'));
-
-  debug('Graceful shutdown handlers setup completed');
+  debug('Graceful shutdown handlers setup skipped - managed by ShutdownCoordinator');
 }
 
 /**
