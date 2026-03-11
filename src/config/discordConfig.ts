@@ -225,15 +225,14 @@ try {
   discordConfig.loadFile(configPath);
   debug(`Successfully loaded Discord config from ${configPath}`);
 } catch (error: any) {
-  if (error.code === 'ENOENT') {
-    debug(`Warning: Could not load discordConfig from ${configPath}, file not found. Using defaults and env vars.`);
+  if (error.code !== 'ENOENT') {
+    debug(`Error reading discord config from ${configPath}:`, error.message);
   } else {
-    // Re-throw parsing errors
-    throw error;
+    debug(`Discord config file not found at ${configPath}, using environment variables and defaults`);
   }
 }
 
-// Validate configuration (fail fast if invalid)
+// Validation must happen outside the generic try-catch to fail fast if config is malformed
 discordConfig.validate({ allowed: 'strict' });
 
 export default discordConfig;

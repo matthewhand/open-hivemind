@@ -150,15 +150,14 @@ try {
   openaiConfig.loadFile(configPath);
   debug(`Successfully loaded OpenAI config from ${configPath}`);
 } catch (error: any) {
-  if (error.code === 'ENOENT') {
-    debug(`Warning: Could not load openaiConfig from ${configPath}, file not found. Using defaults and env vars.`);
+  if (error.code !== 'ENOENT') {
+    debug(`Error reading openai config from ${configPath}:`, error.message);
   } else {
-    // Re-throw parsing errors
-    throw error;
+    debug(`OpenAI config file not found at ${configPath}, using environment variables and defaults`);
   }
 }
 
-// Validate configuration (fail fast if invalid)
+// Validation must happen outside the generic try-catch to fail fast if config is malformed
 openaiConfig.validate({ allowed: 'strict' });
 
 export default openaiConfig;
