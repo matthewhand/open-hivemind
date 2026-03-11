@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { isSafeUrl } from '@src/utils/ssrfGuard';
+import { isSafeUrl } from '@hivemind/shared-types';
 import openaiConfig from '../../config/openaiConfig';
 
 export async function generateCompletion(prompt: string): Promise<string> {
