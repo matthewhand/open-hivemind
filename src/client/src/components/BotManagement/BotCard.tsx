@@ -191,8 +191,8 @@ const BotCard: React.FC<BotCardProps> = ({
         <div className="flex justify-between items-start mb-4">
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-2 min-w-0">
-              <h2 className="card-title text-lg font-semibold truncate break-all min-w-0 max-w-[200px]" title={bot.name}>{bot.name}</h2>
-              <Badge variant={getStatusColor(bot.status)} size="sm" className="whitespace-nowrap flex-shrink-0">
+              <h2 className="card-title text-lg font-semibold truncate break-all min-w-0" title={bot.name}>{bot.name}</h2>
+              <Badge variant={getStatusColor(bot.status) as "success" | "ghost" | "error" | "info"} size="sm" className="whitespace-nowrap shrink-0">
                 {getStatusText(bot.status)}
               </Badge>
             </div>
