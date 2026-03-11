@@ -1,9 +1,9 @@
 import os from 'os';
 import process from 'process';
 import { Router, type NextFunction, type Request, type Response } from 'express';
+import { DatabaseManager } from '../../database/DatabaseManager';
 import { MetricsCollector } from '../../monitoring/MetricsCollector';
 import ApiMonitorService from '../../services/ApiMonitorService';
-import { DatabaseManager } from '../../database/DatabaseManager';
 import { ErrorLogger } from '../../utils/errorLogger';
 import { globalRecoveryManager } from '../../utils/errorRecovery';
 import { optionalAuth } from '../middleware/auth';
@@ -31,7 +31,7 @@ router.get('/', (req, res) => {
     version: '1.0.0',
     uptime: process.uptime(),
     checks: {
-      database: dbStatus
+      database: dbStatus,
     },
     memory: {
       used: Math.round(memoryUsage.heapUsed / 1024 / 1024),
