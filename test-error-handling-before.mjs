@@ -19,7 +19,7 @@ import { chromium } from 'playwright';
     localStorage.setItem('auth_user', user);
   }, { token: fakeToken, user: fakeUser });
 
-  await page.goto('http://localhost:5173/admin/bots', { waitUntil: 'domcontentloaded' });
+  await page.goto('http://localhost:3030/admin/bots', { waitUntil: 'domcontentloaded' });
   await page.waitForTimeout(4000);
 
   await page.screenshot({ path: 'before-click-bots.png' });
