@@ -20,9 +20,9 @@ test('Verify environment variable completeness in env sample', async ({ page }) 
     if (pre) {
         // Highlighting some added vars to make visual proof obvious
         pre.innerHTML = pre.innerHTML
-            .replace(/BODY_PARSER_JSON_LIMIT/g, '<mark>BODY_PARSER_JSON_LIMIT</mark>')
-            .replace(/LOW_MEMORY_MODE/g, '<mark>LOW_MEMORY_MODE</mark>')
-            .replace(/STARTUP_LOG_SYSTEM_PROMPT/g, '<mark>STARTUP_LOG_SYSTEM_PROMPT</mark>');
+            .replace(/MESSAGE_ALLOW_BOT_TO_BOT_UNADDRESSED/g, '<mark>MESSAGE_ALLOW_BOT_TO_BOT_UNADDRESSED</mark>')
+            .replace(/DISABLE_DELAYS/g, '<mark>DISABLE_DELAYS</mark>')
+            .replace(/DEFAULT_EMBEDDING_PROVIDER/g, '<mark>DEFAULT_EMBEDDING_PROVIDER</mark>');
     }
   });
 
