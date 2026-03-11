@@ -221,6 +221,27 @@ export class ErrorUtils {
     return undefined;
   }
 
+  static getField(error: HivemindError, field: string): any {
+    if (error && typeof error === 'object' && field in error) {
+      return (error as Record<string, any>)[field];
+    }
+    return undefined;
+  }
+
+  static getTimestamp(error: HivemindError): Date | undefined {
+    if (error && typeof error === 'object' && 'timestamp' in error) {
+      return error.timestamp as Date;
+    }
+    return undefined;
+  }
+
+  static getDetails(error: HivemindError): Record<string, unknown> | undefined {
+    if (error && typeof error === 'object' && 'details' in error) {
+      return error.details as Record<string, unknown>;
+    }
+    return undefined;
+  }
+
   /**
    * Safely extract status code from any error type
    */
