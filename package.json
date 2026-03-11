@@ -233,7 +233,7 @@
     "@types/supertest": "^6.0.2",
     "@types/uuidv4": "^2.0.0",
     "@typescript-eslint/eslint-plugin": "^8.41.0",
-    "@typescript-eslint/parser": "^8.41.0",
+    "@typescript-eslint/parser": "^8.57.0",
     "@vercel/node": "^5.5.16",
     "@vitejs/plugin-react": "^5.0.0",
     "babel-jest": "^29.7.0",
