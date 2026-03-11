@@ -64,12 +64,17 @@ const BotsPage: React.FC = () => {
 
   // Define data fetching logic
   const fetchPageData = useCallback(async (_signal: AbortSignal) => {
-    const [configData, globalData, personasData, profilesData] = await Promise.all([
+    const [configResult, globalResult, personasResult, profilesResult] = await Promise.allSettled([
       apiService.getConfig(),
       apiService.getGlobalConfig(),
       apiService.getPersonas(),
       apiService.getLlmProfiles(),
     ]);
+
+    const configData = configResult.status === 'fulfilled' ? configResult.value : { bots: [] };
+    const globalData = globalResult.status === 'fulfilled' ? globalResult.value : {};
+    const personasData = personasResult.status === 'fulfilled' ? personasResult.value : [];
+    const profilesData = profilesResult.status === 'fulfilled' ? profilesResult.value : {};
 
     const personas = personasData || [];
     const llmProfiles = profilesData?.llm || profilesData?.profiles?.llm || [];

@@ -71,11 +71,14 @@ const LLMProvidersPage: React.FC = () => {
   const fetchProfiles = useCallback(async () => {
     try {
       setLoading(true);
-      const [profilesRes, statusRes, globalRes] = await Promise.all([
+      const [profilesResult, statusResult, globalResult] = await Promise.allSettled([
         apiService.get('/api/config/llm-profiles'),
         apiService.get('/api/config/llm-status'),
         apiService.get('/api/config/global'),
       ]);
+      const profilesRes = profilesResult.status === 'fulfilled' ? profilesResult.value : {};
+      const statusRes = statusResult.status === 'fulfilled' ? statusResult.value : {};
+      const globalRes = globalResult.status === 'fulfilled' ? globalResult.value : {};
       setProfiles((profilesRes as any).llm || (profilesRes as any).profiles?.llm || []);
       setDefaultStatus(statusRes);
       const gs = (globalRes as any)._userSettings?.values || {};

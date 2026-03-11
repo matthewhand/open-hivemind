@@ -77,16 +77,12 @@ const MonitoringDashboard: React.FC<MonitoringDashboardProps> = ({
     setLoading(true);
     try {
       // Refresh all monitoring data
-      const [systemData, configData] = await Promise.all([
-        apiService.getStatus().catch((err) => {
-          console.error('[Monitoring] getStatus failed:', err);
-          return { bots: [] } as any;
-        }),
-        apiService.getConfig().catch((err) => {
-          console.error('[Monitoring] getConfig failed:', err);
-          return { bots: [] };
-        }),
+      const [systemResult, configResult] = await Promise.allSettled([
+        apiService.getStatus(),
+        apiService.getConfig()
       ]);
+      const systemData = systemResult.status === 'fulfilled' ? systemResult.value : { bots: [] };
+      const configData = configResult.status === 'fulfilled' ? configResult.value : { bots: [] };
 
       setSystemMetrics(systemData);
       // Add mock status data to bots for demonstration if not present in systemData
