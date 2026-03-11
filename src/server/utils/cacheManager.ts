@@ -1,4 +1,3 @@
-
 import { DatabaseManager } from '../../database/DatabaseManager';
 import { clearRequireCache } from './requireCache';
 
@@ -11,6 +10,4 @@ export async function clearAllSystemCaches(): Promise<void> {
   if (typeof (dbManager as any).clearCache === 'function') {
     await (dbManager as any).clearCache();
   }
-
-
 }
