@@ -110,6 +110,9 @@ export class GreetingStateManager {
    * @param channelId The channel ID where the greeting was sent
    */
   public async markGreetingAsSent(serviceId: string, channelId: string): Promise<void> {
+    if (!serviceId) {
+      throw new Error("serviceId is required");
+    }
     this.ensureInitialized();
 
     this.state[serviceId] = {

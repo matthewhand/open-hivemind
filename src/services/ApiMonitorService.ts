@@ -83,6 +83,9 @@ export class ApiMonitorService extends EventEmitter {
   }
 
   public addEndpoint(config: EndpointConfig): void {
+    if (!config || !config.id || !config.url) {
+      throw new Error("Invalid endpoint configuration");
+    }
     this.endpoints.set(config.id, config);
     this.initializeEndpointStatus(config);
     debug(`Added endpoint: ${config.name} (${config.url})`);

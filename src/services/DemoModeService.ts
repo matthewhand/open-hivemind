@@ -231,6 +231,9 @@ export class DemoModeService {
    * Generate a simulated AI response
    */
   public generateDemoResponse(message: string, botName: string): string {
+    if (message === null || message === undefined) {
+      throw new Error("Message cannot be null or undefined");
+    }
     const responses = this.getContextualResponses(message, botName);
     const randomIndex = Math.floor(Math.random() * responses.length);
     return responses[randomIndex];

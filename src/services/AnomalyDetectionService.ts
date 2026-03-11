@@ -48,6 +48,9 @@ export class AnomalyDetectionService extends EventEmitter {
   }
 
   addDataPoint(metric: string, value: number): void {
+    if (value === null || value === undefined || isNaN(value) || !isFinite(value)) {
+      return;
+    }
     if (!this.config.enabled || !this.config.metricsToMonitor.includes(metric)) {
       return;
     }
