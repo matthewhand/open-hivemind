@@ -29,7 +29,7 @@ export async function listAgents(apiKey: string, apiUrl?: string): Promise<Agent
   const agents = await client.agents.list();
 
   // Transform to simplified agent summary
-  return (agents as unknown as any[]).map((agent: any) => ({
+  return (agents as any).map((agent: any) => ({
     id: agent.id,
     name: agent.name,
     description: agent.description,
