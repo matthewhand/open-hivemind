@@ -1,12 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useWebSocket } from '../../contexts/WebSocketContext';
-import Card from '../DaisyUI/Card';
-import Badge from '../DaisyUI/Badge';
-import { Alert } from '../DaisyUI/Alert';
-import Button from '../DaisyUI/Button';
-import PageHeader from '../DaisyUI/PageHeader';
-import StatsCards from '../DaisyUI/StatsCards';
+import { Card, Badge, Alert, Button, PageHeader, StatsCards } from '../DaisyUI';
 import {
   Activity,
   RotateCcw,
@@ -77,12 +72,16 @@ const MonitoringDashboard: React.FC<MonitoringDashboardProps> = ({
     setLoading(true);
     try {
       // Refresh all monitoring data
-      const [systemResult, configResult] = await Promise.allSettled([
-        apiService.getStatus(),
-        apiService.getConfig()
+      const [systemData, configData] = await Promise.all([
+        apiService.getStatus().catch((err) => {
+          console.error('[Monitoring] getStatus failed:', err);
+          return { bots: [] } as any;
+        }),
+        apiService.getConfig().catch((err) => {
+          console.error('[Monitoring] getConfig failed:', err);
+          return { bots: [] };
+        }),
       ]);
-      const systemData = systemResult.status === 'fulfilled' ? systemResult.value : { bots: [] };
-      const configData = configResult.status === 'fulfilled' ? configResult.value : { bots: [] };
 
       setSystemMetrics(systemData);
       // Add mock status data to bots for demonstration if not present in systemData
@@ -229,7 +228,7 @@ const MonitoringDashboard: React.FC<MonitoringDashboardProps> = ({
       <PageHeader
         title="System Monitoring"
         description={`Last updated: ${lastRefresh.toLocaleTimeString()}`}
-        icon={<ChartBar className="w-5 h-5" />}
+        icon={<ChartBar className="w-6 h-6" />}
         actions={
           <div className="flex items-center gap-2">
             <select
