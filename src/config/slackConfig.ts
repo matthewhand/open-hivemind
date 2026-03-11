@@ -120,12 +120,17 @@ const debug = Debug('app:slackConfig');
 
 try {
   slackConfig.loadFile(configPath);
-  slackConfig.validate({ allowed: 'strict' });
   debug(`Successfully loaded Slack config from ${configPath}`);
-} catch (error) {
-  // Fallback to defaults if config file is missing or invalid
-  debug(`Warning: Could not load slack config from ${configPath}, using defaults`);
-  debug('Configuration error details:', error as any);
+} catch (error: any) {
+  if (error.code === 'ENOENT') {
+    debug(`Warning: Could not load slackConfig from ${configPath}, file not found. Using defaults and env vars.`);
+  } else {
+    // Re-throw parsing errors
+    throw error;
+  }
 }
+
+// Validate configuration (fail fast if invalid)
+slackConfig.validate({ allowed: 'strict' });
 
 export default slackConfig;
