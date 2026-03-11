@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Sparkles, Loader2 } from 'lucide-react';
 import { apiService } from '../services/api';
+import { useToast } from './DaisyUI/ToastNotification';
 
 /**
  * Props for the AIAssistButton component.
@@ -22,6 +23,7 @@ const AIAssistButton: React.FC<AIAssistButtonProps> = ({
 }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { addToast } = useToast();
 
   const handleClick = async () => {
     try {
@@ -38,7 +40,11 @@ const AIAssistButton: React.FC<AIAssistButtonProps> = ({
       setError('Failed to generate');
       // Check if it's a configuration error
       if (err.message && err.message.includes('not configured')) {
-        alert('AI Assistance is not configured. Please go to LLM Providers page to configure it.');
+        addToast({
+          type: 'warning',
+          title: 'Not Configured',
+          message: 'AI Assistance is not configured. Please go to LLM Providers page to configure it.',
+        });
       } else {
         console.error('AI Gen error:', err);
       }
