@@ -44,6 +44,7 @@ import { validateRequiredEnvVars } from '@src/utils/envValidation';
 import { getLlmProvider } from '@llm/getLlmProvider';
 import { IdleResponseManager } from '@message/management/IdleResponseManager';
 import Logger from '@common/logger';
+import { container } from '@src/di/container';
 import { initProviders } from './initProviders';
 import { reloadGlobalConfigs } from './server/routes/config';
 import startupDiagnostics from './utils/startupDiagnostics';
@@ -450,7 +451,8 @@ async function main() {
   }
 
   // Initialize the StartupGreetingService
-  await StartupGreetingService.initialize();
+  const startupGreetingService = container.resolve(StartupGreetingService);
+  await startupGreetingService.initialize();
 
   // Initialize AnomalyDetectionService
   AnomalyDetectionService.getInstance();
