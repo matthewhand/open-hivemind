@@ -115,6 +115,9 @@ export const CommaSeparatedInput: React.FC<CommaSeparatedInputProps> = ({
     if (e.key === 'Enter') {
       e.preventDefault();
       commitInput();
+    } else if (e.key === ',') {
+      e.preventDefault();
+      commitInput();
     } else if (e.key === 'Backspace' && !inputValue && value.length > 0) {
       const next = value.slice(0, -1);
       pushToHistory(next);
