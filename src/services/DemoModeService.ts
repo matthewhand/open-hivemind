@@ -6,11 +6,10 @@
  */
 
 import 'reflect-metadata';
-import crypto from 'crypto';
 import Debug from 'debug';
 import { inject, injectable, singleton } from 'tsyringe';
-import { type BotConfigurationManager } from '../config/BotConfigurationManager';
-import { type UserConfigStore } from '../config/UserConfigStore';
+import { BotConfigurationManager } from '../config/BotConfigurationManager';
+import { UserConfigStore } from '../config/UserConfigStore';
 import { TOKENS } from '../di/container';
 
 const debug = Debug('app:DemoModeService');
@@ -320,7 +319,7 @@ export class DemoModeService {
 
     if (!this.conversations.has(key)) {
       this.conversations.set(key, {
-        id: `conv-${crypto.randomUUID()}`,
+        id: `conv-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
         channelId,
         botName,
         messages: [],
@@ -346,7 +345,7 @@ export class DemoModeService {
     const conversation = this.getOrCreateConversation(channelId, botName);
 
     const message: DemoMessage = {
-      id: `msg-${crypto.randomUUID()}`,
+      id: `msg-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
       timestamp: new Date().toISOString(),
       botName,
       channelId,
