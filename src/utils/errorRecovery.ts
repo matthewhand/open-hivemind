@@ -284,7 +284,8 @@ export class RetryHandler {
 
     // Add jitter if enabled
     if (this.config.jitter) {
-      const jitterRange = delay * 0.1;
+      // Proportional jitter +/- 10%
+      const jitterRange = delay * 0.2;
       delay += Math.random() * jitterRange - jitterRange / 2;
     }
 
