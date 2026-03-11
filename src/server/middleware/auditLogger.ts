@@ -1,5 +1,6 @@
 import { type NextFunction, type Request, type Response } from 'express';
 import { Logger } from '@src/common/logger';
+import { type AuthMiddlewareRequest } from '@src/auth/types';
 
 export interface AuditLogEntry {
   timestamp: string;
@@ -73,7 +74,7 @@ export const auditMiddleware = (action: string, resource: string) => {
           action,
           resource,
           resourceId: req.params.id || req.params.name || req.params.key || req.params.userId,
-          userId: (req as any).user?.id || (req as any).user?.username || 'anonymous',
+          userId: (req as AuthMiddlewareRequest).user?.id || (req as AuthMiddlewareRequest).user?.username || 'anonymous',
           ip:
             req.ip ||
             req.connection?.remoteAddress ||
@@ -124,7 +125,7 @@ export const auditMiddlewareWithChanges = (
           action,
           resource,
           resourceId: req.params.id || req.params.name || req.params.key || req.params.userId,
-          userId: (req as any).user?.id || (req as any).user?.username || 'anonymous',
+          userId: (req as AuthMiddlewareRequest).user?.id || (req as AuthMiddlewareRequest).user?.username || 'anonymous',
           ip:
             req.ip ||
             req.connection?.remoteAddress ||
@@ -168,7 +169,7 @@ export const logAuditEvent = (
     action,
     resource,
     resourceId: options.resourceId || req.params.id || req.params.name || req.params.key,
-    userId: (req as any).user?.id || (req as any).user?.username || 'anonymous',
+    userId: (req as AuthMiddlewareRequest).user?.id || (req as AuthMiddlewareRequest).user?.username || 'anonymous',
     ip:
       req.ip ||
       req.connection?.remoteAddress ||
