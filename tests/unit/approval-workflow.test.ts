@@ -80,7 +80,7 @@ describe('Approval Workflow', () => {
   describe('Approval Request Retrieval', () => {
     let createdRequestId: number;
 
-    beforeAll(async () => {
+    beforeEach(async () => {
       // Create a test approval request
       const request: Omit<ApprovalRequest, 'id' | 'createdAt'> = {
         resourceType: 'BotConfiguration',
