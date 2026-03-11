@@ -36,11 +36,17 @@ const debug = Debug('app:mattermostConfig');
 
 try {
   mattermostConfig.loadFile(configPath);
-  mattermostConfig.validate({allowed: 'strict'});
   debug(`Successfully loaded Mattermost config from ${configPath}`);
-} catch {
-  // Fallback to defaults if config file is missing or invalid
-  debug(`Warning: Could not load mattermost config from ${configPath}, using defaults`);
+} catch (error: any) {
+  if (error.code === 'ENOENT') {
+    debug(`Warning: Could not load mattermostConfig from ${configPath}, file not found. Using defaults and env vars.`);
+  } else {
+    // Re-throw parsing errors
+    throw error;
+  }
 }
+
+// Validate configuration (fail fast if invalid)
+mattermostConfig.validate({ allowed: 'strict' });
 
 export default mattermostConfig;

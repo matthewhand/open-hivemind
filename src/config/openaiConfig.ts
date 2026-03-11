@@ -148,11 +148,17 @@ const debug = Debug('app:openaiConfig');
 
 try {
   openaiConfig.loadFile(configPath);
-  openaiConfig.validate({ allowed: 'strict' });
   debug(`Successfully loaded OpenAI config from ${configPath}`);
-} catch {
-  // Fallback to defaults/env vars if config file is missing or invalid
-  debug(`Warning: Could not load openai config from ${configPath}, using env vars and defaults`);
+} catch (error: any) {
+  if (error.code === 'ENOENT') {
+    debug(`Warning: Could not load openaiConfig from ${configPath}, file not found. Using defaults and env vars.`);
+  } else {
+    // Re-throw parsing errors
+    throw error;
+  }
 }
+
+// Validate configuration (fail fast if invalid)
+openaiConfig.validate({ allowed: 'strict' });
 
 export default openaiConfig;
