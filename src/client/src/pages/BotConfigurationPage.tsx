@@ -286,7 +286,7 @@ const BotConfigurationPage: React.FC = () => {
       <PageHeader
         title="Global Defaults"
         description="System and provider settings (convict configs)"
-        icon={Settings}
+        icon={<Settings className="w-8 h-8" />}
         gradient="accent"
         actions={
           <div className="flex gap-2">
