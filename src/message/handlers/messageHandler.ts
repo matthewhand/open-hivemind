@@ -1,6 +1,7 @@
 import Debug from 'debug';
 import { AuditLogger } from '@src/common/auditLogger';
-import { ErrorHandler, PerformanceMonitor } from '@src/common/errors/ErrorHandler';
+import { ErrorHandler } from '@src/common/errors/ErrorHandler';
+import { PerformanceMonitor } from '@src/common/errors/PerformanceMonitor';
 import { getLlmProvider } from '@src/llm/getLlmProvider';
 import { InputSanitizer } from '@src/utils/InputSanitizer';
 import { generateChatCompletionDirect } from '@integrations/openwebui/directClient';
