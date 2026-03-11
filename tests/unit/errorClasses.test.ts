@@ -26,8 +26,8 @@ describe('Error Classes', () => {
     expect(error.message).toBe('Test error');
     expect(error.status).toBe(500);
     expect(error.code).toBe('TEST_ERROR');
-    expect(error.timestamp).toBeDefined();
-    expect(error.correlationId).toBeDefined();
+    expect(error.timestamp).toBeInstanceOf(Date);
+    expect(typeof error.correlationId).toBe('string');
     expect(error.severity).toBe('high');
   });
 
