@@ -438,7 +438,7 @@ async function main() {
   await startupDiagnostics.logStartupDiagnostics();
 
   // Initialize Demo Mode Service
-  const demoService = DemoModeService.getInstance();
+  const demoService = container.resolve(DemoModeService);
   demoService.initialize();
 
   if (demoService.isInDemoMode()) {
@@ -566,7 +566,7 @@ async function main() {
     }
 
     const ApiMonitorService = require('@src/services/ApiMonitorService').ApiMonitorService;
-    const ams = ApiMonitorService.getInstance ? ApiMonitorService.getInstance() : null;
+    const ams = container.resolve(ApiMonitorService) as any;
     if (ams && typeof ams.shutdown === 'function') {
       shutdownCoordinator.registerService({
         name: 'ApiMonitorService',
