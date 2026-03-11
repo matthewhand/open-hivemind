@@ -726,10 +726,11 @@ const EnterpriseManager: React.FC = () => {
         <div className="modal-box">
           <h3 className="font-bold text-lg mb-4">Add Integration</h3>
           <div className="form-control w-full mb-4">
-            <label className="label">
+            <label className="label" htmlFor="integration-name">
               <span className="label-text">Integration Name</span>
             </label>
             <input
+              id="integration-name"
               type="text"
               className="input input-bordered w-full"
               value={integrationForm.name}
@@ -737,10 +738,11 @@ const EnterpriseManager: React.FC = () => {
             />
           </div>
           <div className="form-control w-full mb-4">
-            <label className="label">
+            <label className="label" htmlFor="integration-type">
               <span className="label-text">Type</span>
             </label>
             <select
+              id="integration-type"
               className="select select-bordered w-full"
               value={integrationForm.type}
               onChange={(e) =>
@@ -758,10 +760,11 @@ const EnterpriseManager: React.FC = () => {
             </select>
           </div>
           <div className="form-control w-full mb-4">
-            <label className="label">
+            <label className="label" htmlFor="integration-provider">
               <span className="label-text">Provider</span>
             </label>
             <input
+              id="integration-provider"
               type="text"
               className="input input-bordered w-full"
               value={integrationForm.provider}
@@ -793,10 +796,11 @@ const EnterpriseManager: React.FC = () => {
         <div className="modal-box">
           <h3 className="font-bold text-lg mb-4">Add Cloud Provider</h3>
           <div className="form-control w-full mb-4">
-            <label className="label">
+            <label className="label" htmlFor="cloud-name">
               <span className="label-text">Provider Name</span>
             </label>
             <input
+              id="cloud-name"
               type="text"
               className="input input-bordered w-full"
               value={cloudForm.name}
@@ -804,10 +808,11 @@ const EnterpriseManager: React.FC = () => {
             />
           </div>
           <div className="form-control w-full mb-4">
-            <label className="label">
+            <label className="label" htmlFor="cloud-type">
               <span className="label-text">Cloud Type</span>
             </label>
             <select
+              id="cloud-type"
               className="select select-bordered w-full"
               value={cloudForm.type}
               onChange={(e) =>
@@ -822,10 +827,11 @@ const EnterpriseManager: React.FC = () => {
             </select>
           </div>
           <div className="form-control w-full mb-4">
-            <label className="label">
+            <label className="label" htmlFor="cloud-region">
               <span className="label-text">Region</span>
             </label>
             <input
+              id="cloud-region"
               type="text"
               className="input input-bordered w-full"
               value={cloudForm.region}
