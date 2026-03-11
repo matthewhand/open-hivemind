@@ -81,10 +81,19 @@ const ApiStatusMonitor: React.FC<ApiStatusMonitorProps> = ({
   const setupWebSocket = useCallback(() => {
     const newSocket = io({
       path: '/webui/socket.io',
+      reconnection: true,
+      reconnectionAttempts: Infinity,
+      reconnectionDelay: 1000,
+      reconnectionDelayMax: 5000,
+      randomizationFactor: 0.5,
     });
 
     newSocket.on('connect', () => {
       console.log('Connected to WebSocket for API monitoring');
+    });
+
+    newSocket.on('reconnect_attempt', (attempt) => {
+      console.log(`API Monitoring WebSocket reconnect attempt ${attempt}`);
     });
 
     newSocket.on('api_status_update', (data: { endpoints: EndpointStatus[]; overall: any; timestamp: string }) => {
