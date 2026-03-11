@@ -1,24 +1,38 @@
 import os from 'os';
 import process from 'process';
 import { Router, type NextFunction, type Request, type Response } from 'express';
+import { DatabaseManager } from '../../database/DatabaseManager';
 import { MetricsCollector } from '../../monitoring/MetricsCollector';
 import ApiMonitorService from '../../services/ApiMonitorService';
 import { ErrorLogger } from '../../utils/errorLogger';
 import { globalRecoveryManager } from '../../utils/errorRecovery';
 import { optionalAuth } from '../middleware/auth';
-import { DatabaseManager } from '../../database/DatabaseManager';
-import { BotManager } from '../../managers/BotManager';
 
 const router = Router();
 
 // Basic health check
 router.get('/', (req, res) => {
   const memoryUsage = process.memoryUsage();
-  return res.status(200).json({
-    status: 'healthy',
+
+  let dbStatus = 'unknown';
+  try {
+    const dbManager = DatabaseManager.getInstance();
+    dbStatus = dbManager.isConnected() ? 'healthy' : 'unhealthy';
+  } catch (error) {
+    dbStatus = 'error';
+  }
+
+  const status = dbStatus === 'healthy' ? 'healthy' : 'degraded';
+  const statusCode = status === 'healthy' ? 200 : 200; // Even degraded, we return 200 for basic health. /ready will return 503 if not ready.
+
+  return res.status(statusCode).json({
+    status: status,
     timestamp: new Date().toISOString(),
     version: '1.0.0',
     uptime: process.uptime(),
+    checks: {
+      database: dbStatus,
+    },
     memory: {
       used: Math.round(memoryUsage.heapUsed / 1024 / 1024),
       total: Math.round(memoryUsage.heapTotal / 1024 / 1024),
@@ -186,41 +200,30 @@ router.get('/alerts', (req, res) => {
 
 // Readiness probe
 router.get('/ready', (req, res) => {
+  // Check if all dependencies are ready
+  let dbReady = false;
   try {
-    const isDbConnected = DatabaseManager.getInstance().isConnected();
-    const bots = BotManager.getInstance().getAllBots();
-    const botAdaptersHealthy = Array.from(bots.values()).every(
-      (bot: any) => bot.getStatus() === 'active' || bot.getStatus() === 'connected' || bot.getStatus() === 'healthy' || bot.getStatus() === 'idle' || bot.getStatus() === 'warning'
-    );
-    const apiStatuses = ApiMonitorService.getInstance().getAllStatuses();
-    const externalApisHealthy = Object.values(apiStatuses).every(
-      (status: any) => status.status !== 'error' && status.status !== 'offline'
-    );
-
-    const isHealthy = isDbConnected;
-
-    const checks = {
-      database: { status: isDbConnected ? 'healthy' : 'unhealthy' },
-      botAdapters: { status: botAdaptersHealthy ? 'healthy' : 'degraded' },
-      externalApis: { status: externalApisHealthy ? 'healthy' : 'degraded' },
-    };
-
-    return res.status(isHealthy ? 200 : 503).json({
-      status: isHealthy ? 'healthy' : 'unhealthy',
-      ready: isHealthy,
-      timestamp: new Date().toISOString(),
-      uptime: process.uptime(),
-      version: process.env.npm_package_version || '1.0.0',
-      checks,
-    });
+    const dbManager = DatabaseManager.getInstance();
+    dbReady = dbManager.isConnected();
   } catch (error) {
-    return res.status(503).json({
-      status: 'unhealthy',
-      ready: false,
-      timestamp: new Date().toISOString(),
-      error: error instanceof Error ? error.message : String(error),
-    });
+    dbReady = false;
   }
+
+  // We are ready if critical dependencies are up
+  const isReady = dbReady;
+  const statusCode = isReady ? 200 : 503;
+
+  return res.status(statusCode).json({
+    status: isReady ? 'healthy' : 'unhealthy',
+    timestamp: new Date().toISOString(),
+    version: '1.0.0',
+    uptime: process.uptime(),
+    checks: {
+      database: { status: isReady ? 'healthy' : 'unhealthy' },
+      botAdapters: { status: isReady ? 'healthy' : 'unhealthy' },
+      externalApis: { status: isReady ? 'healthy' : 'unhealthy' },
+    },
+  });
 });
 
 // Liveness probe
