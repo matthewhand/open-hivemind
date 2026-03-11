@@ -88,21 +88,21 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
 
     let isActive = true;
 
-    apiService
-      .get('/api/config/global')
-      .then((config: any) => {
-        if (!isActive) {
-          return;
-        }
+    const fetchConfig = async () => {
+      try {
+        const config: any = await apiService.get('/api/config/global');
+        if (!isActive) return;
 
         const models = config?.openai?.values?.OPENAI_EMBEDDING_MODELS;
         setOpenAiEmbeddingModels(Array.isArray(models) ? models.filter((value): value is string => typeof value === 'string' && value.trim() !== '') : []);
-      })
-      .catch(() => {
+      } catch (error) {
         if (isActive) {
           setOpenAiEmbeddingModels([]);
         }
-      });
+      }
+    };
+
+    fetchConfig();
 
     return () => {
       isActive = false;
@@ -522,7 +522,7 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
                   aria-selected={isActive}
                   aria-label={`Select ${typeConfig.displayName || typeConfig.name}`}
                 >
-                  <span>{typeConfig.icon}</span>
+                  <span>{typeof typeConfig.icon === 'string' ? typeConfig.icon : '•'}</span>
                   {typeConfig.displayName || typeConfig.name}
                 </button>
               );
