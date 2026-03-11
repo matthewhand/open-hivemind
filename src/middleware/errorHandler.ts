@@ -154,8 +154,10 @@ export function globalErrorHandler(
   const statusCode = hivemindError.statusCode || 500;
 
   // Create standard error response
-  const errorResponseBuilder = createErrorResponse(hivemindError, context.correlationId)
-    .withRequest(context.path, context.method, context.correlationId);
+  const errorResponseBuilder = createErrorResponse(
+    hivemindError,
+    context.correlationId
+  ).withRequest(context.path, context.method, context.correlationId);
 
   const errorResponse = errorResponseBuilder.build();
 

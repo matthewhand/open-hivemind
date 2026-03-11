@@ -1,3 +1,5 @@
+import debug from 'debug';
+const d = debug('app:shouldProcessMessage');
 import messageConfig from '@config/messageConfig';
 import type { IMessage } from '@message/interfaces/IMessage';
 
@@ -28,7 +30,7 @@ function getDefaultChannelId(): string {
       return discordChannel;
     }
   } catch (error) {
-    debug('Error getting discord config for default channel:', error);
+    d('Error getting discord config for default channel:', error);
   }
 
   try {
@@ -39,7 +41,7 @@ function getDefaultChannelId(): string {
       return slackChannel;
     }
   } catch (error) {
-    debug('Error getting slack config for default channel:', error);
+    d('Error getting slack config for default channel:', error);
   }
 
   return '';
