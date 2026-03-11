@@ -24,6 +24,8 @@ import { LLMProviderType, MessageProviderType } from '../types/bot';
 import BotCard from '../components/BotManagement/BotCard';
 import { CreateBotWizard } from '../components/BotManagement/CreateBotWizard';
 import { BotSettingsModal } from '../components/BotSettingsModal';
+import { useLlmStatus } from '../hooks/useLlmStatus';
+import { usePageLifecycle } from '../hooks/usePageLifecycle';
 import { useLocation } from 'react-router-dom';
 
 const BotsPage: React.FC = () => {
@@ -93,6 +95,8 @@ const BotsPage: React.FC = () => {
       globalConfig,
     };
   }, []);
+
+  const [uiError, setUiError] = useState<string | null>(null);
 
   // Use Page Lifecycle Hook
   const {
