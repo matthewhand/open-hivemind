@@ -1,5 +1,3 @@
-import { useLlmStatus } from '../hooks/useLlmStatus';
-import { usePageLifecycle } from '../hooks/usePageLifecycle';
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { 
@@ -8,10 +6,12 @@ import {
   Settings, ExternalLink, Shield, Info, MoreVertical,
   Cpu, Zap, Copy, Save, X, Terminal, Globe, User, Clock,
   Key, ShieldCheck, Database, Layout, Command, 
-  TriangleAlert as AlertTriangle, Play, Pause, Square, Trash, MoreHorizontal
+  AlertTriangle, Play, Pause, Square, Trash, MoreHorizontal
 } from 'lucide-react';
 import { useSuccessToast, useErrorToast } from '../components/DaisyUI/ToastNotification';
 import Modal, { ConfirmModal } from '../components/DaisyUI/Modal';
+import { useLlmStatus } from '../hooks/useLlmStatus';
+import { usePageLifecycle } from '../hooks/usePageLifecycle';
 import PageHeader from '../components/DaisyUI/PageHeader';
 import SearchFilterBar from '../components/SearchFilterBar';
 import EmptyState from '../components/DaisyUI/EmptyState';
@@ -41,46 +41,126 @@ const BotsPage: React.FC = () => {
   const [chatHistory, setChatHistory] = useState<any[]>([]);
   const [logFilter, setLogFilter] = useState('');
 
-  const [previewError, setPreviewError] = useState<string | null>(null);
-  const [chatError, setChatError] = useState<string | null>(null);
-
   // Create Bot State
   const [showCreateModal, setShowCreateModal] = useState(false);
 
-  const fetchBotPreviewData = useCallback(async (botId: string) => {
-    setPreviewError(null);
-    setChatError(null);
-    try {
-      const activityJson = await withRetry(() => apiService.get<any>(`/api/bots/${botId}/activity?limit=20`));
-      setActivityLogs(activityJson.data?.activity || []);
-    } catch (err) {
-      ErrorService.report(err, { botId, action: 'fetchActivityLogs' });
-      setPreviewError(err instanceof Error ? err.message : 'Failed to load bot activity logs');
-      setActivityLogs([]);
+  // Get LLM status to check if system default is configured
+  const { status: llmStatus } = useLlmStatus();
+  const defaultLlmConfigured = llmStatus?.defaultConfigured ?? false;
+
+  // Delete Modal State
+  const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; bot: BotData | null }>({
+    isOpen: false,
+    bot: null,
+  });
+  const [deleteConfirmation, setDeleteConfirmation] = useState('');
+
+  // Clone Modal State
+  const [cloneModal, setCloneModal] = useState<{ isOpen: boolean; bot: BotData | null }>({
+    isOpen: false,
+    bot: null,
+  });
+  const [cloneName, setCloneName] = useState('');
+
+  // Define data fetching logic
+  const fetchPageData = useCallback(async (_signal: AbortSignal) => {
+    const [configData, globalData, personasData, profilesData] = await Promise.all([
+      apiService.getConfig(),
+      apiService.getGlobalConfig(),
+      apiService.getPersonas(),
+      apiService.getLlmProfiles(),
+    ]);
+
+    const personas = personasData || [];
+    const llmProfiles = profilesData?.llm || profilesData?.profiles?.llm || [];
+
+    const globalConfig: any = {};
+    if (globalData) {
+      Object.keys(globalData).forEach((key) => {
+        globalConfig[key] = globalData[key].values;
+      });
     }
 
-    try {
-      const chatJson = await withRetry(() => apiService.get<any>(`/api/bots/${botId}/history?limit=20`));
-      setChatHistory(chatJson.data?.history || []);
-    } catch (err) {
-      ErrorService.report(err, { botId, action: 'fetchChatHistory' });
-      setChatError(err instanceof Error ? err.message : 'Failed to load chat history');
-      setChatHistory([]);
-    }
+    return {
+      bots: (configData.bots || []) as unknown as BotData[],
+      personas,
+      llmProfiles,
+      globalConfig,
+    };
   }, []);
+
+  // Use Page Lifecycle Hook
+  const {
+    data,
+    error: lifecycleError,
+    refetch,
+  } = usePageLifecycle({
+    title: 'Bot Management',
+    fetchData: fetchPageData,
+    initialData: { bots: [], personas: [], llmProfiles: [], globalConfig: {} },
+  });
+
+  // Derived state
+
+  const personas = data?.personas || [];
+  const llmProfiles = data?.llmProfiles || [];
+  const globalConfig = data?.globalConfig || {};
+
+  // Sync lifecycle error to UI error
+  useEffect(() => {
+    if (lifecycleError) {
+      setError(lifecycleError.message);
+    }
+  }, [lifecycleError]);
 
   // Fetch logs and chat history when previewing a bot
   useEffect(() => {
     if (previewBot) {
-      fetchBotPreviewData(previewBot.id);
+      // Fetch activity logs
+      const fetchActivity = async () => {
+        try {
+          const json = await withRetry(() => apiService.get<any>(`/api/bots/${previewBot.id}/activity?limit=20`));
+          setActivityLogs(json.data?.activity || []);
+        } catch (err) {
+          ErrorService.report(err, { botId: previewBot.id, action: 'fetchActivityLogs' });
+          toast.error('Failed to load bot activity logs');
+          setActivityLogs([]);
+        }
+      };
+
+      fetchActivity();
+
+      // Fetch chat history
+      const fetchChatHistory = async () => {
+        setChatLoading(true);
+        try {
+          const json = await withRetry(() => apiService.get<any>(`/api/bots/${previewBot.id}/history?limit=20`));
+          setChatHistory(json.data?.history || []);
+        } catch (err) {
+          ErrorService.report(err, { botId: previewBot.id, action: 'fetchChatHistory' });
+          toast.error('Failed to load chat history');
+          setChatHistory([]);
+        } finally {
+          setChatLoading(false);
+        }
+      };
+      fetchChatHistory();
     } else {
       setActivityLogs([]);
       setChatHistory([]);
-      setPreviewError(null);
-      setChatError(null);
     }
-  }, [previewBot, fetchBotPreviewData]);
+  }, [previewBot]);
 
+  const getIntegrationOptions = (category: 'llm' | 'message') => {
+    const allKeys = Object.keys(globalConfig);
+    const validPrefixes = PROVIDER_CATEGORIES[category] || [];
+
+    return allKeys.filter((key) => {
+      // Match exact provider name or provider-instance
+      // e.g. 'openai' or 'openai-prod'
+      return validPrefixes.some((prefix) => key === prefix || key.startsWith(`${prefix}-`));
+    });
+  };
 
   const toast = {
     success: useSuccessToast(),
@@ -191,6 +271,22 @@ const BotsPage: React.FC = () => {
   const handlePreviewBot = async (bot: BotConfig) => {
     setPreviewBot(bot);
     setPreviewTab('activity');
+    setActivityLogs([]);
+    setChatHistory([]);
+    
+    try {
+      // Load initial activity
+      const activityJson = await withRetry(() => apiService.get<any>(`/api/bots/${bot.id}/activity?limit=20`));
+      setActivityLogs(activityJson.data?.activity || []);
+      
+      // Load initial chat
+      const chatJson = await withRetry(() => apiService.get<any>(`/api/bots/${bot.id}/chat?limit=20`));
+      setChatHistory(chatJson.data?.messages || []);
+    } catch (err) {
+      ErrorService.report(err, { botId: bot.id, action: 'fetchBotPreviewData' });
+      // Don't show toast for initial load failures to keep UI clean, but log error
+      console.error('Failed to load bot preview data:', err);
+    }
   };
 
   const filteredLogs = useMemo(() => {
@@ -267,19 +363,25 @@ const BotsPage: React.FC = () => {
               icon={AlertTriangle}
               title="Failed to load swarm"
               description="We encountered an error while trying to load your AI agents. Please try again."
-              actionLabel="Retry Connection"
-              actionIcon={RefreshCw}
-              onAction={fetchBots}
-              variant="error"
+              action={
+                <button className="btn btn-outline btn-error" onClick={fetchBots}>
+                  <RefreshCw className="w-4 h-4 mr-2" />
+                  Retry Connection
+                </button>
+              }
             />
           ) : filteredBots.length === 0 ? (
             <EmptyState
               icon={Bot}
               title={searchQuery ? "No agents found" : "Your swarm is empty"}
               description={searchQuery ? "No agents match your search criteria." : "Start by creating your first specialized AI agent."}
-              actionLabel={!searchQuery ? "Create First Bot" : undefined}
-              onAction={!searchQuery ? () => setIsCreateModalOpen(true) : undefined}
-              variant="noData"
+              action={
+                !searchQuery && (
+                  <button className="btn btn-primary" onClick={() => setIsCreateModalOpen(true)}>
+                    Create First Bot
+                  </button>
+                )
+              }
             />
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -378,70 +480,55 @@ const BotsPage: React.FC = () => {
                   {/* Activity Log Panel */}
                   {previewTab === 'activity' && (
                     <div className="space-y-3 max-h-[300px] overflow-y-auto pr-1 custom-scrollbar">
-                      {previewError ? (
-                        <EmptyState
-                          icon={AlertTriangle}
-                          title="Failed to load activity"
-                          description={previewError}
-                          actionLabel="Retry"
-                          actionIcon={RefreshCw}
-                          onAction={() => fetchBotPreviewData(previewBot.id)}
-                          variant="error"
-                        />
-                      ) : (
-                        <>
-                          <div className="flex items-center justify-end mb-2">
-                            <div className="join w-full">
-                              <input
-                                type="text"
-                                placeholder="Filter..."
-                                className="input input-xs input-bordered join-item flex-1"
-                                value={logFilter}
-                                onChange={(e) => setLogFilter(e.target.value)}
-                              />
-                              <select
-                                className="select select-xs select-bordered join-item"
-                                onChange={async (e) => {
-                                  const limit = e.target.value;
-                                  if (previewBot) {
-                                    try {
-                                      const json = await withRetry(() => apiService.get<any>(`/api/bots/${previewBot.id}/activity?limit=${limit}`));
-                                      setActivityLogs(json.data?.activity || []);
-                                      setPreviewError(null);
-                                    } catch (err) {
-                                      ErrorService.report(err, { botId: previewBot.id, action: 'fetchActivityLogs' });
-                                      setPreviewError(err instanceof Error ? err.message : 'Failed to load bot activity logs');
-                                      setActivityLogs([]);
-                                    }
-                                  }
-                                }}
-                              >
-                                <option value="20">20</option>
-                                <option value="50">50</option>
-                                <option value="100">100</option>
-                              </select>
-                            </div>
-                          </div>
+                      <div className="flex items-center justify-end mb-2">
+                        <div className="join w-full">
+                          <input 
+                            type="text" 
+                            placeholder="Filter..." 
+                            className="input input-xs input-bordered join-item flex-1"
+                            value={logFilter}
+                            onChange={(e) => setLogFilter(e.target.value)}
+                          />
+                          <select 
+                            className="select select-xs select-bordered join-item"
+                            onChange={async (e) => {
+                              const limit = e.target.value;
+                              if (previewBot) {
+                                try {
+                                  const json = await withRetry(() => apiService.get<any>(`/api/bots/${previewBot.id}/activity?limit=${limit}`));
+                                  setActivityLogs(json.data?.activity || []);
+                                } catch (err) {
+                                  ErrorService.report(err, { botId: previewBot.id, action: 'fetchActivityLogs' });
+                                  toast.error('Failed to load bot activity logs');
+                                  setActivityLogs([]);
+                                }
+                              }
+                            }}
+                          >
+                            <option value="20">20</option>
+                            <option value="50">50</option>
+                            <option value="100">100</option>
+                          </select>
+                        </div>
+                      </div>
 
-                          {filteredLogs.length === 0 ? (
-                            <div className="text-center py-8 opacity-40">
-                              <Activity className="w-8 h-8 mx-auto mb-2" />
-                              <p className="text-xs">No activity recorded</p>
+                      {filteredLogs.length === 0 ? (
+                        <div className="text-center py-8 opacity-40">
+                          <Activity className="w-8 h-8 mx-auto mb-2" />
+                          <p className="text-xs">No activity recorded</p>
+                        </div>
+                      ) : (
+                        <div className="space-y-2">
+                          {filteredLogs.map((log, idx) => (
+                            <div key={idx} className="bg-base-200/30 p-2 rounded text-[11px] border-l-2 border-primary">
+                              <div className="flex justify-between opacity-60 mb-1">
+                                <span className="font-bold uppercase">{log.type}</span>
+                                <span>{new Date(log.timestamp).toLocaleTimeString()}</span>
+                              </div>
+                              <p className="line-clamp-2">{log.message}</p>
                             </div>
-                          ) : (
-                            <div className="space-y-2">
-                              {filteredLogs.map((log, idx) => (
-                                <div key={idx} className="bg-base-200/30 p-2 rounded text-[11px] border-l-2 border-primary">
-                                  <div className="flex justify-between opacity-60 mb-1">
-                                    <span className="font-bold uppercase">{log.type}</span>
-                                    <span>{new Date(log.timestamp).toLocaleTimeString()}</span>
-                                  </div>
-                                  <p className="line-clamp-2">{log.message}</p>
-                                </div>
-                              ))}
-                            </div>
-                          )}
-                        </>
+                          ))}
+                        </div>
                       )}
                     </div>
                   )}
@@ -449,17 +536,7 @@ const BotsPage: React.FC = () => {
                   {/* Chat History Panel */}
                   {previewTab === 'chat' && (
                     <div className="space-y-3 max-h-[300px] overflow-y-auto pr-1 custom-scrollbar">
-                      {chatError ? (
-                        <EmptyState
-                          icon={AlertTriangle}
-                          title="Failed to load chat history"
-                          description={chatError}
-                          actionLabel="Retry"
-                          actionIcon={RefreshCw}
-                          onAction={() => fetchBotPreviewData(previewBot.id)}
-                          variant="error"
-                        />
-                      ) : chatHistory.length === 0 ? (
+                      {chatHistory.length === 0 ? (
                         <div className="text-center py-8 opacity-40">
                           <MessageSquare className="w-8 h-8 mx-auto mb-2" />
                           <p className="text-xs">No recent chat history</p>
