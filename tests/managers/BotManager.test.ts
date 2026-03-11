@@ -75,6 +75,15 @@ describe('BotManager', () => {
     // Setup mocks
     mockBotConfigManager = {
       getAllBots: jest.fn().mockReturnValue([]),
+      getBot: jest.fn().mockImplementation((id: any) => {
+        if (id === 'Bot 1') return { ...mockBotConfig, name: 'Bot 1' };
+        if (id === 'custom-bot') return { ...mockBotConfig, name: 'custom-bot' };
+        if (id === 'test-bot-id') return { ...mockBotConfig, name: 'Test Bot' }; // Map test-bot-id back to name "Test Bot"
+        if (id === 'Test Bot') return { ...mockBotConfig, name: 'Test Bot' };
+        if (id === 'configured-bot-id') return { ...mockBotConfig, name: 'configured-bot-id' };
+        if (id === 'source-bot') return { ...mockBotConfig, name: 'source-bot' };
+        return undefined;
+      }),
       cloneBot: jest.fn(),
       deleteBot: jest.fn(),
     };
@@ -171,6 +180,8 @@ describe('BotManager', () => {
     it('should retrieve a bot by ID', async () => {
       const customBot = { ...mockBotInstance, id: 'custom-bot', name: 'Custom Bot' };
       (webUIStorage.getAgents as jest.Mock).mockReturnValue([customBot]);
+      // The new logic requires it to be in customBots cache
+      botManager['customBots'].set('custom-bot', customBot);
 
       const bot = await botManager.getBot('custom-bot');
       expect(bot).toBeDefined();
@@ -225,7 +236,7 @@ describe('BotManager', () => {
 
   describe('updateBot', () => {
     it('should throw error if bot is not found', async () => {
-      mockBotConfigManager.getAllBots.mockReturnValue([]);
+      mockBotConfigManager.getBot.mockReturnValue(undefined);
       (webUIStorage.getAgents as jest.Mock).mockReturnValue([]);
 
       await expect(botManager.updateBot('non-existent', { name: 'UpdatedName' })).rejects.toThrow(
@@ -271,6 +282,7 @@ describe('BotManager', () => {
     it('should clone a custom bot', async () => {
       const sourceBot = { ...mockBotInstance, id: 'source-id', name: 'Source Bot' };
       (webUIStorage.getAgents as jest.Mock).mockReturnValue([sourceBot]);
+      botManager['customBots'].set('source-id', sourceBot);
 
       const clonedBot = await botManager.cloneBot('source-id', 'Cloned Bot');
 
@@ -346,6 +358,11 @@ describe('BotManager', () => {
       mockBotConfigManager.getAllBots.mockReturnValue([bot]);
       (webUIStorage.getAgents as jest.Mock).mockReturnValue([]);
 
+      // Set the default channel in the bot config manually for the test
+      mockBotConfigManager.getBot.mockImplementation((id: any) => {
+        if (id === 'Bot 1') return { ...mockBotConfig, name: 'Bot 1', discord: { defaultChannelId: 'default-channel' } };
+        return undefined;
+      });
       await botManager.getBotHistory('Bot 1');
 
       expect(mockMessengerService.getMessagesFromChannel).toHaveBeenCalledWith(
