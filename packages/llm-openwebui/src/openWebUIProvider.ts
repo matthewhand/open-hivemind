@@ -44,9 +44,12 @@ export const openWebUIProvider: ILlmProvider = {
         throw new Error('OpenWebUI API URL is not safe to connect to.');
       }
 
-      const response = await openWebUIClient.post('/chat/completions', {
+      const response = await axios.post(targetUrl, {
         model,
         messages,
+      }, {
+        headers: openWebUIClient.defaults.headers,
+        timeout: openWebUIClient.defaults.timeout,
       });
 
       return response.data.choices[0].message.content;
@@ -65,10 +68,13 @@ export const openWebUIProvider: ILlmProvider = {
         throw new Error('OpenWebUI API URL is not safe to connect to.');
       }
 
-      const response = await openWebUIClient.post('/completions', {
+      const response = await axios.post(targetUrl, {
         model,
         prompt,
         max_tokens: 100,
+      }, {
+        headers: openWebUIClient.defaults.headers,
+        timeout: openWebUIClient.defaults.timeout,
       });
 
       return response.data.choices[0].text;
