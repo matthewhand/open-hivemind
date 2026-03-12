@@ -5,7 +5,6 @@ import { apiService } from '../services/api';
 import AlertPanel from '../components/Monitoring/AlertPanel';
 import StatusCard from '../components/Monitoring/StatusCard';
 import Modal from '../components/DaisyUI/Modal';
-import { Toast } from '../components/DaisyUI/Toast';
 
 interface SystemConfig {
   refreshInterval: number;
@@ -69,11 +68,6 @@ const SystemManagement: React.FC = () => {
   const [systemInfo, setSystemInfo] = useState<any>(null);
   const [envOverrides, setEnvOverrides] = useState<Record<string, string> | null>(null);
   const [isPerformanceLoading, setIsPerformanceLoading] = useState(false);
-  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null);
-  const showToast = (message: string, type: 'success' | 'error' | 'info' = 'info') => {
-    setToast({ message, type });
-    setTimeout(() => setToast(null), 3500);
-  };
 
 
   useEffect(() => {
@@ -206,11 +200,11 @@ const SystemManagement: React.FC = () => {
 
   const confirmCreateBackup = async () => {
     if (useEncryption && !encryptionKey) {
-      showToast('Encryption key is required when encryption is enabled', 'error');
+      alert('Encryption key is required when encryption is enabled');
       return;
     }
     if (useEncryption && encryptionKey.length < 8) {
-      showToast('Encryption key must be at least 8 characters long', 'error');
+      alert('Encryption key must be at least 8 characters long');
       return;
     }
 
@@ -223,11 +217,11 @@ const SystemManagement: React.FC = () => {
         encrypt: useEncryption,
         encryptionKey: useEncryption ? encryptionKey : undefined
       });
-      showToast('Backup created successfully', 'success');
+      alert('Backup created successfully');
       await fetchBackupHistory();
     } catch (error) {
       console.error('Failed to create backup:', error);
-      showToast('Failed to create backup: ' + (error as Error).message, 'error');
+      alert('Failed to create backup: ' + (error as Error).message);
     } finally {
       setIsCreatingBackup(false);
     }
@@ -237,11 +231,11 @@ const SystemManagement: React.FC = () => {
     if (confirm('Are you sure you want to restore this backup? This will overwrite current configuration.')) {
       try {
         await apiService.restoreSystemBackup(backupId);
-        showToast('System restored successfully. Reloading...', 'success');
+        alert('System restored successfully. Reloading...');
         setTimeout(() => window.location.reload(), 2000);
       } catch (error) {
         console.error('Failed to restore backup:', error);
-        showToast('Failed to restore backup: ' + (error as Error).message, 'error');
+        alert('Failed to restore backup: ' + (error as Error).message);
       }
     }
   };
