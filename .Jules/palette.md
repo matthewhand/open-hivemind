@@ -1,3 +1,7 @@
 ## 2025-03-07 - Add ARIA Labels to Icon-Only Buttons
 **Learning:** This application heavily utilizes custom DaisyUI wrapper components, often creating `<button>` elements that only contain HeroIcons or Lucide React icons. By default, these icon-only buttons are invisible to screen readers, causing accessibility issues where users cannot determine the button's purpose (e.g., delete, edit, close, expand).
 **Action:** When implementing new UI elements or refactoring existing ones, always ensure that any `<button>` lacking visible, descriptive text content includes an `aria-label` attribute describing its function. When a button toggles state (like expanding a section), use `aria-expanded` in conjunction with a dynamic `aria-label`.
+
+## 2025-03-08 - Dynamic ARIA labels for Password/Sensitive Data Visibility Toggles
+**Learning:** In forms managing sensitive configuration (like `ProviderConfig.tsx`), toggling visibility of API keys or passwords relies on icon-only buttons (`Eye` vs `EyeOff`). Screen readers won't catch the state change or understand the icon's purpose if static or missing labels are used.
+**Action:** When creating visibility toggles for sensitive input fields, bind a dynamic `aria-label` to the state (e.g., `showData ? "Hide sensitive data for [label]" : "Show sensitive data for [label]"`). This explicitly informs users not only of the action but also provides context about which specific field they are interacting with.
