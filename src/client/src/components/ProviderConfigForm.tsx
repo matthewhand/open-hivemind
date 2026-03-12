@@ -284,7 +284,7 @@ export const ProviderConfigForm: React.FC<ProviderConfigFormProps> = ({
           onChange={(newValue: any) => handleFieldChange(field.name, newValue)}
           apiKey={config.apiKey}
           baseUrl={config.baseUrl || config.apiUrl || config.endpoint}
-          providerType={(field.componentProps?.providerType || schema.providerType) as string}
+          providerType={(field.componentProps?.providerType || schema.providerType) as any}
           onValidationError={(error: string) => {
             if (field.name === 'apiKey') {
               console.warn(`API Key validation warning: ${error}`);

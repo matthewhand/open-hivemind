@@ -45,7 +45,7 @@ export interface ProviderConfigField {
   group?: string;
   // Additional props for custom field types
   component?: React.ComponentType<any>;
-  componentProps?: Record<string, unknown>;
+  componentProps?: Record<string, any>;
   dependsOn?: string | { field: string; value: any }; // Field dependency
   // Helper action for fetching data (e.g., agent lookup)
   helperAction?: {
