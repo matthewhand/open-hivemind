@@ -1,5 +1,5 @@
-import { Response } from 'express';
-import { ErrorUtils } from '../../types/errors';
+import { type Response } from 'express';
+import { ErrorUtils, type AppError } from '../../types/errors';
 
 export const handleRouteError = (
   error: unknown,
@@ -9,7 +9,7 @@ export const handleRouteError = (
   defaultErrorCode: string,
   includeSuccess = false
 ) => {
-  const hivemindError = ErrorUtils.toHivemindError(error) as any;
+  const hivemindError = ErrorUtils.toHivemindError(error) as AppError;
   const errorInfo = ErrorUtils.classifyError(hivemindError);
 
   debugInstance(debugMessage, {
