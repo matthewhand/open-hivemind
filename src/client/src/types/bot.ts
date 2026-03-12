@@ -69,6 +69,14 @@ export type LLMProviderType = typeof LLM_PROVIDER_TYPES[keyof typeof LLM_PROVIDE
 export const PROVIDER_TYPES = { ...MESSAGE_PROVIDER_TYPES, ...LLM_PROVIDER_TYPES } as const;
 export type ProviderType = MessageProviderType | LLMProviderType;
 
+export function isMessageProvider(type: string): type is MessageProviderType {
+  return Object.values(MESSAGE_PROVIDER_TYPES).includes(type as MessageProviderType);
+}
+
+export function isLLMProvider(type: string): type is LLMProviderType {
+  return Object.values(LLM_PROVIDER_TYPES).includes(type as LLMProviderType);
+}
+
 export interface Persona {
   id: string;
   name: string;
@@ -116,7 +124,7 @@ export interface UpdatePersonaRequest {
 
 export interface ProviderModalState {
   isOpen: boolean;
-  providerType: MessageProviderType | LLMProviderType | 'message' | 'llm';
+  providerType: ProviderType | 'message' | 'llm';
   provider?: MessageProvider | LLMProvider;
   mode: 'create' | 'edit';
   botId?: string | null;
