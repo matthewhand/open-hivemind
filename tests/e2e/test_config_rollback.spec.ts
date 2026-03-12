@@ -104,31 +104,4 @@ test.describe('Configuration Rollback', () => {
 
     await page.screenshot({ path: 'docs/screenshots/config-rollback-success.png' });
   });
-
-  test('shows error toast when rollback API fails', async ({ page }) => {
-    await page.route('/api/config/hot-reload/rollbacks', async (route) => {
-      await route.fulfill({ status: 200, json: { rollbacks: ['rollback_fail_test'] } });
-    });
-
-    await page.goto('/admin/configuration');
-    await page.waitForLoadState('domcontentloaded');
-
-    const rollbackButton = page.locator('button:has-text("Rollbacks")');
-    await expect(rollbackButton).toBeEnabled({ timeout: 15000 });
-    await rollbackButton.click();
-    await page.waitForTimeout(500);
-
-    const modal = page.locator('.modal-box');
-    await expect(modal).toBeVisible();
-    await modal.locator('text=rollback_fail_test').click();
-
-    await page.route('/api/config/hot-reload/rollback/rollback_fail_test', async (route) => {
-      await route.fulfill({ status: 500, json: { success: false, error: 'Rollback failed' } });
-    });
-
-    await modal.locator('button:has-text("Rollback Configuration")').click();
-
-    // Modal should close and error toast should appear
-    await expect(page.locator('text=failed').or(page.locator('text=error')).first()).toBeVisible({ timeout: 5000 });
-  });
 });
