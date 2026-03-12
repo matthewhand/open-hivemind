@@ -1,11 +1,11 @@
 import os from 'os';
 import process from 'process';
 import { Router, type NextFunction, type Request, type Response } from 'express';
+import { container } from 'tsyringe';
 import { DatabaseManager } from '../../database/DatabaseManager';
 import { BotManager } from '../../managers/BotManager';
 import { MetricsCollector } from '../../monitoring/MetricsCollector';
 import ApiMonitorService from '../../services/ApiMonitorService';
-import { container } from 'tsyringe';
 import { ErrorLogger } from '../../utils/errorLogger';
 import { globalRecoveryManager } from '../../utils/errorRecovery';
 import { optionalAuth } from '../middleware/auth';

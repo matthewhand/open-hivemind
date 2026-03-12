@@ -218,7 +218,7 @@ export class MigrationManager {
           if (major < 3 || (major === 3 && minor < 35)) {
             console.warn(
               `SQLite version ${sqliteVersion} does not support DROP COLUMN. ` +
-              `Migration rollback may fail. Minimum required: 3.35.0`
+                `Migration rollback may fail. Minimum required: 3.35.0`
             );
           }
 
