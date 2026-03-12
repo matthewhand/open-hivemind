@@ -1,3 +1,4 @@
+import { container } from 'tsyringe';
 import os from 'os';
 import process from 'process';
 import { Router, type NextFunction, type Request, type Response } from 'express';
@@ -12,7 +13,7 @@ import { BotManager } from '../../managers/BotManager';
 const router = Router();
 
 // Basic health check
-router.get('/', (req, res) => {
+router.get(.*, async (req, res) => {
   const memoryUsage = process.memoryUsage();
   return res.status(200).json({
     status: 'healthy',
@@ -33,7 +34,7 @@ router.get('/', (req, res) => {
 });
 
 // Detailed health check - requires authentication for full details
-router.get('/detailed', optionalAuth, (req: Request, res: Response) => {
+router.get(.*, async (req: Request, res: Response) => {
   const uptime = process.uptime();
   const memoryUsage = process.memoryUsage();
   const metrics = MetricsCollector.getInstance().getMetrics();
@@ -117,7 +118,7 @@ router.get('/detailed', optionalAuth, (req: Request, res: Response) => {
 });
 
 // System metrics endpoint
-router.get('/metrics', (req, res) => {
+router.get(.*, async (req, res) => {
   const uptime = process.uptime();
   const memoryUsage = process.memoryUsage();
   const cpuUsage = process.cpuUsage();
@@ -148,7 +149,7 @@ router.get('/metrics', (req, res) => {
 });
 
 // Alerts endpoint
-router.get('/alerts', (req, res) => {
+router.get(.*, async (req, res) => {
   const memoryUsage = process.memoryUsage();
   const memoryPercentage = (memoryUsage.heapUsed / memoryUsage.heapTotal) * 100;
   const uptime = process.uptime();
@@ -185,14 +186,14 @@ router.get('/alerts', (req, res) => {
 });
 
 // Readiness probe
-router.get('/ready', (req, res) => {
+router.get(.*, async (req, res) => {
   try {
     const isDbConnected = DatabaseManager.getInstance().isConnected();
-    const bots = BotManager.getInstance().getAllBots();
-    const botAdaptersHealthy = Array.from(bots.values()).every(
+    const bots = await BotManager.getInstance().getAllBots();
+    const botAdaptersHealthy = Array.from(bots).every(
       (bot: any) => bot.getStatus() === 'active' || bot.getStatus() === 'connected' || bot.getStatus() === 'healthy' || bot.getStatus() === 'idle' || bot.getStatus() === 'warning'
     );
-    const apiStatuses = ApiMonitorService.getInstance().getAllStatuses();
+    const apiStatuses = container.resolve(ApiMonitorService).getAllStatuses();
     const externalApisHealthy = Object.values(apiStatuses).every(
       (status: any) => status.status !== 'error' && status.status !== 'offline'
     );
@@ -224,7 +225,7 @@ router.get('/ready', (req, res) => {
 });
 
 // Liveness probe
-router.get('/live', (req, res) => {
+router.get(.*, async (req, res) => {
   // Simple liveness check - if we can respond, we're alive
   return res.json({
     alive: true,
@@ -233,7 +234,7 @@ router.get('/live', (req, res) => {
 });
 
 // Prometheus metrics endpoint
-router.get('/metrics/prometheus', (req, res) => {
+router.get(.*, async (req, res) => {
   const uptime = process.uptime();
   const memoryUsage = process.memoryUsage();
   const cpuUsage = process.cpuUsage();
@@ -318,8 +319,8 @@ nodejs_version_info{version="${process.version}"} 1
 };
 
 // API endpoints monitoring
-router.get('/api-endpoints', (req, res) => {
-  const apiMonitor = ApiMonitorService.getInstance();
+router.get(.*, async (req, res) => {
+  const apiMonitor = container.resolve(ApiMonitorService);
   const statuses = apiMonitor.getAllStatuses();
   const overallHealth = apiMonitor.getOverallHealth();
 
@@ -331,8 +332,8 @@ router.get('/api-endpoints', (req, res) => {
 });
 
 // Get specific endpoint status
-router.get('/api-endpoints/:id', (req, res) => {
-  const apiMonitor = ApiMonitorService.getInstance();
+router.get(.*, async (req, res) => {
+  const apiMonitor = container.resolve(ApiMonitorService);
   const status = apiMonitor.getEndpointStatus(req.params.id);
 
   if (!status) {
@@ -350,7 +351,7 @@ router.get('/api-endpoints/:id', (req, res) => {
 
 // Cleanup endpoint (admin only)
 router.post('/cleanup', (req, res) => {
-  const apiMonitor = ApiMonitorService.getInstance();
+  const apiMonitor = container.resolve(ApiMonitorService);
 
   try {
     const config = req.body;
@@ -396,7 +397,7 @@ router.post('/cleanup', (req, res) => {
 
 // Add new endpoint to monitor
 router.post('/api-endpoints', (req, res) => {
-  const apiMonitor = ApiMonitorService.getInstance();
+  const apiMonitor = container.resolve(ApiMonitorService);
 
   try {
     const config = req.body;
@@ -442,7 +443,7 @@ router.post('/api-endpoints', (req, res) => {
 
 // Update endpoint configuration
 router.put('/api-endpoints/:id', (req, res) => {
-  const apiMonitor = ApiMonitorService.getInstance();
+  const apiMonitor = container.resolve(ApiMonitorService);
 
   try {
     apiMonitor.updateEndpoint(req.params.id, req.body);
@@ -463,7 +464,7 @@ router.put('/api-endpoints/:id', (req, res) => {
 
 // Remove endpoint from monitoring
 router.delete('/api-endpoints/:id', (req, res) => {
-  const apiMonitor = ApiMonitorService.getInstance();
+  const apiMonitor = container.resolve(ApiMonitorService);
 
   try {
     const endpoint = apiMonitor.getEndpoint(req.params.id);
@@ -492,7 +493,7 @@ router.delete('/api-endpoints/:id', (req, res) => {
 
 // Start monitoring all endpoints
 router.post('/api-endpoints/start', (req, res) => {
-  const apiMonitor = ApiMonitorService.getInstance();
+  const apiMonitor = container.resolve(ApiMonitorService);
   apiMonitor.startAllMonitoring();
 
   return res.json({
@@ -503,7 +504,7 @@ router.post('/api-endpoints/start', (req, res) => {
 
 // Stop monitoring all endpoints
 router.post('/api-endpoints/stop', (req, res) => {
-  const apiMonitor = ApiMonitorService.getInstance();
+  const apiMonitor = container.resolve(ApiMonitorService);
   apiMonitor.stopAllMonitoring();
 
   return res.json({
@@ -535,7 +536,7 @@ router.use((err: any, req: Request, res: Response, next: NextFunction) => {
 });
 
 // Error-specific health endpoints
-router.get('/errors', (req, res) => {
+router.get(.*, async (req, res) => {
   const errorLogger = ErrorLogger.getInstance();
   const errorStats = errorLogger.getErrorStats();
   const recentErrors = errorLogger.getRecentErrorCount(60000); // Last minute
@@ -564,7 +565,7 @@ router.get('/errors', (req, res) => {
 });
 
 // Recovery system health endpoint
-router.get('/recovery', (req, res) => {
+router.get(.*, async (req, res) => {
   const recoveryStats = globalRecoveryManager.getAllStats();
   const errorLogger = ErrorLogger.getInstance();
 
@@ -591,7 +592,7 @@ router.get('/recovery', (req, res) => {
 });
 
 // Error patterns and anomalies endpoint
-router.get('/errors/patterns', (req, res) => {
+router.get(.*, async (req, res) => {
   const errorLogger = ErrorLogger.getInstance();
   const errorStats = errorLogger.getErrorStats();
   const recentErrors = errorLogger.getRecentErrorCount(60000);

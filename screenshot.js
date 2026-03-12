@@ -1,14 +1,21 @@
 const { chromium } = require('playwright');
-const path = require('path');
 
 (async () => {
   const browser = await chromium.launch();
   const page = await browser.newPage();
 
-  const reportPath = path.resolve('coverage/lcov-report/index.html');
-  await page.goto(`file://${reportPath}`);
-
-  await page.screenshot({ path: 'baseline-coverage.png', fullPage: true });
-
-  await browser.close();
+  try {
+    await page.goto('http://localhost:3000/login');
+    await page.waitForLoadState('networkidle');
+    await page.fill('input[type="password"]', 'admin');
+    await page.click('button[type="submit"]');
+    await page.waitForURL('http://localhost:3000/dashboard');
+    await page.waitForLoadState('networkidle');
+    await page.screenshot({ path: 'after-fix-dashboard.png' });
+    console.log("Screenshot generated at after-fix-dashboard.png");
+  } catch(e) {
+    console.error(e);
+  } finally {
+    await browser.close();
+  }
 })();

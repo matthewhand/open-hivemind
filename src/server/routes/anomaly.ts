@@ -1,3 +1,4 @@
+import type { AuthMiddlewareRequest } from '../../auth/types';
 import Debug from 'debug';
 import { Router } from 'express';
 import type { AuthMiddlewareRequest } from '../../auth/types';
