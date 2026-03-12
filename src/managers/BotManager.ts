@@ -75,6 +75,7 @@ export class BotManager extends EventEmitter {
   private botConfigManager: BotConfigurationManager;
   private secureConfigManager: SecureConfigManager;
   private customBots = new Map<string, BotInstance>();
+  private webUIBotIndex = new Map<string, BotInstance>();
   private botsFilePath: string;
 
   constructor() {
@@ -94,8 +95,25 @@ export class BotManager extends EventEmitter {
   }
 
   /**
-   * Generate a stable ID for configured bots based on name
+   * Rebuild the webUI bot index from storage (call after any mutation).
    */
+  private rebuildWebUIIndex(): void {
+    this.webUIBotIndex.clear();
+    for (const bot of webUIStorage.getAgents()) {
+      this.webUIBotIndex.set(bot.id, bot);
+    }
+  }
+
+  /**
+   * Get a specific bot by ID — synchronous, O(1) for all sources.
+   */
+  public getBotSync(botId: string): BotInstance | null {
+    if (this.customBots.has(botId)) return this.customBots.get(botId)!;
+    if (this.webUIBotIndex.has(botId)) return this.webUIBotIndex.get(botId)!;
+    const configured = this.botConfigManager.getBot(botId);
+    return configured ? this.mapConfiguredBotToInstance(configured) : null;
+  }
+
   private getStableId(name: string): string {
     return crypto.createHash('md5').update(name).digest('hex').substring(0, 8);
   }
@@ -122,6 +140,7 @@ export class BotManager extends EventEmitter {
         });
         debug(`Loaded ${this.customBots.size} custom bots`);
       }
+      this.rebuildWebUIIndex();
     } catch (error: unknown) {
       debug('Error loading custom bots:', ErrorUtils.getMessage(error));
     }
@@ -187,11 +206,8 @@ export class BotManager extends EventEmitter {
         return bot;
       }
 
-      // ⚡ Bolt Optimization: Faster lookups using getBot directly instead of mapping O(N) via getAllBots()
-      // Note: While customBots is an array, it's typically very small. WebUI storage replaces getAllBots traversal.
-      // Check custom bots from web UI storage first (they overwrite configured bots)
-      const customBots = webUIStorage.getAgents();
-      const customBot = customBots.find((b: BotInstance) => b.id === botId);
+      // ⚡ O(1) lookup via webUIBotIndex instead of O(N) find
+      const customBot = this.webUIBotIndex.get(botId);
       if (customBot) {
         debug(`Retrieved custom bot from web UI storage: ${customBot.name} (${customBot.id})`);
         return customBot;
