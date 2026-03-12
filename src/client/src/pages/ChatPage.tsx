@@ -190,12 +190,12 @@ const ChatPage: React.FC = () => {
     }
   };
 
-  const handleRetryMessage = (messageId: string) => {
+  const handleRetryMessage = useCallback((messageId: string) => {
     const messageToRetry = messages.find(m => m.id === messageId);
-    if (messageToRetry) {
-      handleSendMessage(messageToRetry.content, messageId);
-    }
-  };
+    if (!messageToRetry) return;
+    setMessages(prev => prev.filter(m => m.id !== messageId));
+    handleSendMessage(messageToRetry.content);
+  }, [messages, handleSendMessage]);
 
   return (
     <div className="flex flex-col h-full bg-base-200">
