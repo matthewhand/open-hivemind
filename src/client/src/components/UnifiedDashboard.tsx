@@ -15,15 +15,9 @@ import type { Bot, StatusResponse } from '../services/api';
 import { apiService } from '../services/api';
 import { CreateBotWizard } from './BotManagement/CreateBotWizard';
 import { Info } from 'lucide-react';
-import { GettingStartedTab } from './Dashboard/tabs/GettingStartedTab';
-import { StatusTab } from './Dashboard/tabs/StatusTab';
-import { PerformanceTab } from './Dashboard/tabs/PerformanceTab';
-import { usePerformanceMetrics } from './Dashboard/hooks/usePerformanceMetrics';
-import { useDashboardStats } from './Dashboard/hooks/useDashboardStats';
-import { DashboardHeader } from './Dashboard/DashboardHeader';
-import { DashboardTabs } from './Dashboard/DashboardTabs';
-import { getBotColumns } from './Dashboard/utils/getBotColumns';
 import { useNavigate } from 'react-router-dom';
+import { Activity, Clock, Cpu, HardDrive } from 'lucide-react';
+import { RefreshCw, Plus } from 'lucide-react';
 
 type DashboardTab = 'getting-started' | 'status' | 'performance';
 
@@ -291,14 +285,33 @@ const UnifiedDashboard: React.FC = () => {
     );
   }, [statusBots]);
 
-  const { statsCards } = useDashboardStats(
-    bots,
-    statusBots,
-    activeBotCount,
-    totalMessages,
-    activeConnections,
-    totalErrors,
-    status?.uptime ?? 0
+  const statsCards = useMemo(
+    () => [
+      {
+        title: 'Active Agents',
+        value: `${activeBotCount} / ${bots.length}`,
+        trend: activeBotCount > 0 ? '+12%' : '0%',
+        trendUp: activeBotCount > 0,
+        subtext: 'vs last week',
+      },
+      {
+        title: 'Total Processed Messages',
+        value: totalMessages.toLocaleString(),
+        trend: totalMessages > 0 ? '+8%' : '0%',
+        trendUp: totalMessages > 0,
+        subtext: 'all time',
+      },
+      {
+        title: 'Platform Uptime',
+        value: `${Math.floor((status?.uptime ?? 0) / 3600)}h ${Math.floor(
+          ((status?.uptime ?? 0) % 3600) / 60
+        )}m`,
+        trend: '99.9%',
+        trendUp: true,
+        subtext: 'last 30 days',
+      },
+    ],
+    [activeBotCount, bots.length, totalMessages, status?.uptime]
   );
 
   const botTableData = useMemo<BotTableRow[]>(() => {
@@ -323,7 +336,85 @@ const UnifiedDashboard: React.FC = () => {
     });
   }, [bots, statusBots]);
 
-  const botColumns = useMemo(() => getBotColumns(), []);
+  const botColumns = useMemo(() => [
+    {
+      accessorKey: 'name',
+      header: 'Name',
+      cell: (value: any, row: any) => (
+        <div className="flex items-center gap-3">
+          <span className="text-xl" aria-hidden>
+            {getProviderEmoji(row.provider)}
+          </span>
+          <div>
+            <div className="font-semibold">{String(value)}</div>
+            <div className="text-xs text-base-content/60">
+              {row.persona ? `Persona: ${row.persona}` : 'No Persona'}
+            </div>
+          </div>
+        </div>
+      ),
+    },
+    {
+      accessorKey: 'status',
+      header: 'Status',
+      cell: (value: any) => (
+        <Badge variant={getStatusBadgeVariant(String(value))} size="small">
+          {String(value).toUpperCase()}
+        </Badge>
+      ),
+    },
+    {
+      accessorKey: 'connected',
+      header: 'Connection',
+      cell: (value: any) => (
+        <Badge variant={value ? 'success' : 'neutral'} size="small" className="gap-1">
+          {value ? (
+            <>
+              <div className="w-1.5 h-1.5 rounded-full bg-current" aria-hidden />
+              Online
+            </>
+          ) : (
+            <>
+              <div className="w-1.5 h-1.5 rounded-full bg-current opacity-40" aria-hidden />
+              Offline
+            </>
+          )}
+        </Badge>
+      ),
+    },
+    {
+      accessorKey: 'messageCount',
+      header: 'Messages',
+      cell: (value: any) => (
+        <span className="font-mono text-sm">{value.toLocaleString()}</span>
+      ),
+    },
+    {
+      accessorKey: 'guard',
+      header: 'Security',
+      cell: (value: any) => (
+        <Badge
+          variant={
+            value === 'Open Access'
+              ? 'warning'
+              : value === 'Owner Guard'
+              ? 'neutral'
+              : 'success'
+          }
+          size="small"
+        >
+          {String(value)}
+        </Badge>
+      ),
+    },
+    {
+      accessorKey: 'lastActivity',
+      header: 'Last Activity',
+      cell: (value: any) => (
+        <span className="text-sm text-base-content/70">{String(value)}</span>
+      ),
+    },
+  ], []);
 
   const performanceMetrics = useMemo(() => {
     const cpuUsage = Math.min(92, activeConnections * 14 + 28);
@@ -384,15 +475,80 @@ const UnifiedDashboard: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Dashboard Header with Gradient */}
-      <DashboardHeader
-        handleOpenCreateModal={handleOpenCreateModal}
-        isModalDataLoading={isModalDataLoading}
-        handleRefresh={handleRefresh}
-        refreshing={refreshing}
-      />
+      <div className="bg-gradient-to-r from-primary to-secondary rounded-lg text-primary-content shadow-lg p-6 lg:p-8 relative overflow-hidden flex flex-col sm:flex-row gap-6 items-start sm:items-center justify-between">
+        <div className="absolute inset-0 opacity-10 mix-blend-overlay pointer-events-none">
+          {/* Subtle noise pattern */}
+        </div>
+        <div className="relative z-10 flex items-start gap-4">
+          <div className="bg-base-100/20 p-3 rounded-lg backdrop-blur-sm hidden sm:block shadow-sm">
+            <Activity className="w-8 h-8 opacity-90" aria-hidden />
+          </div>
+          <div className="space-y-1">
+            <h1 className="text-2xl lg:text-3xl font-bold tracking-tight">Swarm Command Center</h1>
+            <p className="opacity-90 max-w-lg leading-relaxed text-sm">
+              Deploy, monitor, and manage your AI agent fleet.
+            </p>
+          </div>
+        </div>
+        <div className="relative z-10 flex flex-wrap gap-3">
+          <Button
+            variant="outline"
+            className="border-primary-content/30 hover:bg-primary-content/20 text-primary-content transition-all focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-primary-content"
+            onClick={handleRefresh}
+            disabled={refreshing}
+            aria-label="Refresh Swarm Data"
+            title="Refresh Swarm Data"
+            size="medium"
+          >
+            <RefreshCw className={`w-4 h-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} aria-hidden />
+            Refresh
+          </Button>
+          <Button
+            variant="ghost"
+            className="bg-base-100/20 hover:bg-base-100/30 text-primary-content border-0 backdrop-blur-sm shadow-sm transition-all focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-primary-content"
+            onClick={handleOpenCreateModal}
+            disabled={isModalDataLoading}
+            aria-haspopup="dialog"
+            aria-expanded={isCreateModalOpen}
+            size="medium"
+          >
+            {isModalDataLoading ? (
+              <span className="loading loading-spinner loading-sm mr-2" aria-hidden />
+            ) : (
+              <Plus className="w-4 h-4 mr-2" aria-hidden />
+            )}
+            Deploy Agent
+          </Button>
+        </div>
+      </div>
 
       {/* Tabs */}
-      <DashboardTabs activeTab={activeTab} setActiveTab={setActiveTab} />
+      <div className="tabs tabs-bordered" role="tablist">
+        <button
+          className={`tab ${activeTab === 'getting-started' ? 'tab-active' : ''}`}
+          role="tab"
+          aria-selected={activeTab === 'getting-started'}
+          onClick={() => setActiveTab('getting-started')}
+        >
+          Getting Started
+        </button>
+        <button
+          className={`tab ${activeTab === 'status' ? 'tab-active' : ''}`}
+          role="tab"
+          aria-selected={activeTab === 'status'}
+          onClick={() => setActiveTab('status')}
+        >
+          Fleet Status
+        </button>
+        <button
+          className={`tab ${activeTab === 'performance' ? 'tab-active' : ''}`}
+          role="tab"
+          aria-selected={activeTab === 'performance'}
+          onClick={() => setActiveTab('performance')}
+        >
+          Performance Telemetry
+        </button>
+      </div>
 
       {loading ? (
         <div className="flex justify-center py-20">
