@@ -159,9 +159,9 @@ const discordConfig = convict({
 const configPath = 'config/providers/discord.json';
 try {
   discordConfig.loadFile(configPath);
-} catch (error: any) {
-  if (error.code !== 'ENOENT') {
-    console.error(`Error reading discord config from ${configPath}:`, error.message);
+} catch (error: unknown) {
+  if ((error as NodeJS.ErrnoException).code !== 'ENOENT') {
+    console.error(`Error reading discord config from ${configPath}:`, error instanceof Error ? error.message : String(error));
     throw error;
   } else {
     console.warn(`Discord config file not found at ${configPath}, using environment variables and defaults`);

@@ -149,9 +149,9 @@ const debug = Debug('app:openaiConfig');
 try {
   openaiConfig.loadFile(configPath);
   debug(`Successfully loaded OpenAI config from ${configPath}`);
-} catch (error: any) {
-  if (error.code !== 'ENOENT') {
-    debug(`Error reading openai config from ${configPath}:`, error.message);
+} catch (error: unknown) {
+  if ((error as NodeJS.ErrnoException).code !== 'ENOENT') {
+    debug(`Error reading openai config from ${configPath}:`, error instanceof Error ? error.message : String(error));
     throw error;
   } else {
     debug(`OpenAI config file not found at ${configPath}, using environment variables and defaults`);
