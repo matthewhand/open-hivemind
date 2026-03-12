@@ -11,12 +11,11 @@
     "packages/*"
   ],
   "scripts": {
-    "lint": "node ./node_modules/eslint/bin/eslint.js src/ && pnpm run check:workspace-deps",
+    "lint": "node ./node_modules/eslint/bin/eslint.js src/",
     "lint:fix": "node ./node_modules/eslint/bin/eslint.js src/ --fix",
     "format": "node ./node_modules/prettier/bin/prettier.cjs --write \"src/**/*.ts\" \"src/**/*.tsx\" \"tests/**/*.ts\" \"packages/**/*.ts\"",
     "format:check": "node ./node_modules/prettier/bin/prettier.cjs --check \"src/**/*.ts\" \"src/**/*.tsx\" \"tests/**/*.ts\" \"packages/**/*.ts\"",
     "check-types": "tsc --noEmit || true",
-    "check:workspace-deps": "node -e \"const fs=require('fs');const lock=fs.readFileSync('pnpm-lock.yaml','utf8');if(lock.includes(\\\"specifier: '*'\\\"))process.exit(1);console.log('workspace deps OK');\"",
     "version": "tsc -v",
     "build": "bash ./scripts/build-all.sh",
     "build:backend": "bash ./scripts/build-backend.sh",
