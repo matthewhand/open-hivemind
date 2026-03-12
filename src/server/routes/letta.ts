@@ -1,4 +1,4 @@
-import { Request, Response, Router } from 'express';
+import { Router, type Request, type Response } from 'express';
 import { getAgent, listAgents } from '@hivemind/llm-letta';
 
 const router = Router();

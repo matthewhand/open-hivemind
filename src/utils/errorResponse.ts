@@ -586,15 +586,6 @@ export const ResponseUtils = {
   },
 };
 
-/**
- * Safely extract a string message from an unknown catch value.
- * Replaces the repeated `error instanceof Error ? error.message : String(error)` pattern.
- */
-export function getErrorMessage(error: unknown): string {
-  if (error instanceof Error) return error.message;
-  return String(error);
-}
-
 export default {
   createErrorResponse,
   createSuccessResponse,
@@ -603,5 +594,4 @@ export default {
   ErrorResponses,
   ResponseUtils,
   HTTP_STATUS_CODES,
-  getErrorMessage,
 };
