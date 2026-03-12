@@ -7,6 +7,8 @@
  * @param retries The maximum number of retry attempts (default is 3).
  * @param delayMs The initial delay in milliseconds before the first retry (default is 1000). The delay increases by 2x with each retry.
  * @param onRetry Optional callback to fire before attempting a retry. Useful for updating UI state.
+ * @param originalRetries Internal — tracks original max for attempt numbering.
+ * @param label Optional label for structured log output (e.g. service name).
  * @returns A promise resolving to the result of the `operation` if successful.
  * @throws The error from the final failed attempt if all retries are exhausted.
  */
@@ -15,7 +17,8 @@ export async function withRetry<T>(
   retries = 3,
   delayMs = 1000,
   onRetry?: (error: any, attempt: number, maxRetries: number, delayMs: number) => void,
-  originalRetries?: number
+  originalRetries?: number,
+  label = 'withRetry'
 ): Promise<T> {
   const maxRetries = originalRetries ?? retries;
   try {
@@ -34,11 +37,21 @@ export async function withRetry<T>(
       onRetry(error, currentAttempt, maxRetries, delayMs);
     }
 
+    // Structured retry log for observability
+    console.warn(JSON.stringify({
+      event: 'retry_attempt',
+      label,
+      attempt: currentAttempt,
+      maxRetries,
+      delayMs,
+      errorMessage: error instanceof Error ? error.message : String(error),
+    }));
+
     // Apply +/- 10% proportional jitter to prevent thundering herd
     const jitterRange = delayMs * 0.2;
     const jitteredDelayMs = Math.max(0, Math.floor(delayMs + (Math.random() * jitterRange - jitterRange / 2)));
 
     await new Promise(resolve => setTimeout(resolve, jitteredDelayMs));
-    return withRetry(operation, retries - 1, delayMs * 2, onRetry, maxRetries);
+    return withRetry(operation, retries - 1, delayMs * 2, onRetry, maxRetries, label);
   }
 }
