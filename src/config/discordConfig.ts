@@ -224,9 +224,10 @@ const configPath = path.join(configDir, 'providers/discord.json');
 try {
   discordConfig.loadFile(configPath);
   debug(`Successfully loaded Discord config from ${configPath}`);
-} catch (error: any) {
-  if (error.code !== 'ENOENT') {
-    debug(`Error reading discord config from ${configPath}:`, error.message);
+} catch (error: unknown) {
+  if ((error as NodeJS.ErrnoException).code !== 'ENOENT' (error as NodeJS.ErrnoException).code !== 'ENOTDIR') {
+    debug(`Error reading discord config from ${configPath}:`, error instanceof Error ? error.message : String(error));
+    throw error;
   } else {
     debug(`Discord config file not found at ${configPath}, using environment variables and defaults`);
   }

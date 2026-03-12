@@ -121,9 +121,10 @@ const debug = Debug('app:slackConfig');
 try {
   slackConfig.loadFile(configPath);
   debug(`Successfully loaded Slack config from ${configPath}`);
-} catch (error: any) {
-  if (error.code !== 'ENOENT') {
-    debug(`Error reading slack config from ${configPath}:`, error.message);
+} catch (error: unknown) {
+  if ((error as NodeJS.ErrnoException).code !== 'ENOENT') {
+    debug(`Error reading slack config from ${configPath}:`, error instanceof Error ? error.message : String(error));
+    throw error;
   } else {
     debug(`Slack config file not found at ${configPath}, using environment variables and defaults`);
   }
