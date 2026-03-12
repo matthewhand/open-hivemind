@@ -5,6 +5,7 @@ import { BotAvatar } from '../components/BotAvatar';
 import { RefreshCw, MessageSquare, Cpu, Check, ChevronDown } from 'lucide-react';
 import EmptyState from '../components/DaisyUI/EmptyState';
 import { useSuccessToast, useErrorToast } from '../components/DaisyUI/ToastNotification';
+import { useNetworkStatus } from '../hooks/useNetworkStatus';
 
 // Define Bot type based on API response
 interface BotData {
@@ -36,7 +37,7 @@ const ChatPage: React.FC = () => {
   const [llmProviders, setLlmProviders] = useState<LlmProviderOption[]>([]);
   const [swappingProvider, setSwappingProvider] = useState<string | null>(null);
   const [showProviderDropdown, setShowProviderDropdown] = useState<string | null>(null);
-  const [isOffline, setIsOffline] = useState(!navigator.onLine);
+  const { isOffline, enqueue, registerFlush, queueLength } = useNetworkStatus();
 
   const showSuccess = useSuccessToast();
   const showError = useErrorToast();
@@ -86,19 +87,6 @@ const ChatPage: React.FC = () => {
     fetchBots();
     fetchLlmProviders();
   }, [fetchLlmProviders]);
-
-  useEffect(() => {
-    const handleOnline = () => setIsOffline(false);
-    const handleOffline = () => setIsOffline(true);
-
-    window.addEventListener('online', handleOnline);
-    window.addEventListener('offline', handleOffline);
-
-    return () => {
-      window.removeEventListener('online', handleOnline);
-      window.removeEventListener('offline', handleOffline);
-    };
-  }, []);
 
   useEffect(() => {
     if (selectedBotId) {
@@ -159,8 +147,20 @@ const ChatPage: React.FC = () => {
 
   const selectedBot = bots.find(b => b.id === selectedBotId);
 
+  useEffect(() => {
+    if (!selectedBotId) return;
+    registerFlush(async ({ content, botId }) => {
+      await apiService.post(`/api/bots/${botId}/message`, { content });
+      await fetchHistory(botId);
+    });
+  }, [selectedBotId, registerFlush]);
+
   const handleSendMessage = async (content: string, existingId?: string) => {
-    if (!selectedBotId || isOffline) return;
+    if (!selectedBotId) return;
+    if (isOffline) {
+      enqueue({ content, botId: selectedBotId });
+      return;
+    }
 
     const tempId = existingId || `temp-${Date.now()}`;
 
@@ -325,7 +325,7 @@ const ChatPage: React.FC = () => {
         <div className="flex-1 flex flex-col bg-base-100 relative">
           {isOffline && (
             <div className="bg-warning text-warning-content p-2 text-center text-sm font-semibold z-10">
-              You are currently offline
+              You are currently offline{queueLength > 0 ? ` — ${queueLength} message${queueLength > 1 ? 's' : ''} queued` : ''}
             </div>
           )}
           {selectedBot ? (
