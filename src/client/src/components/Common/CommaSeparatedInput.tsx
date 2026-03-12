@@ -12,7 +12,6 @@ export interface CommaSeparatedInputProps {
   tagColor?: (tag: string) => string;
   error?: string;
   validate?: (item: string) => string | null;
-  label?: React.ReactNode;
 }
 
 export const CommaSeparatedInput: React.FC<CommaSeparatedInputProps> = ({
@@ -27,7 +26,6 @@ export const CommaSeparatedInput: React.FC<CommaSeparatedInputProps> = ({
   tagColor,
   error,
   validate,
-  label,
 }) => {
   const [inputValue, setInputValue] = useState('');
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -194,7 +192,7 @@ export const CommaSeparatedInput: React.FC<CommaSeparatedInputProps> = ({
   const displayError = (isTouched && internalError) || error;
   const errorId = id ? `${id}-error` : 'csi-error';
 
-  const inputContent = (
+  return (
     <div className={`relative flex flex-col w-full ${className}`}>
       <div
         className={`flex flex-wrap items-center gap-2 p-1 bg-base-100 border rounded-lg focus-within:ring-2 ${
@@ -297,17 +295,4 @@ export const CommaSeparatedInput: React.FC<CommaSeparatedInputProps> = ({
       )}
     </div>
   );
-
-  if (label) {
-    return (
-      <div className="form-control w-full">
-        <label className="label">
-          <span className="label-text">{label}</span>
-        </label>
-        {inputContent}
-      </div>
-    );
-  }
-
-  return inputContent;
 };
