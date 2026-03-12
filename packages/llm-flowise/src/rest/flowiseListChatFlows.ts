@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { isSafeUrl } from '@hivemind/shared-types';
 import flowiseConfig from '@integrations/flowise/flowiseConfig';
 
 /**
@@ -9,7 +10,12 @@ export const flowiseListChatFlows = async (): Promise<string> => {
   const baseURL = flowiseConfig.get('FLOWISE_API_ENDPOINT');
   const apiKey = flowiseConfig.get('FLOWISE_API_KEY');
 
-  const response = await axios.get(`${baseURL}/chatflows`, {
+  const targetUrl = `${baseURL}/chatflows`;
+  if (!(await isSafeUrl(targetUrl))) {
+    throw new Error('Flowise API URL is not safe to connect to.');
+  }
+
+  const response = await axios.get(targetUrl, {
     headers: { Authorization: `Bearer ${apiKey}` },
   });
 

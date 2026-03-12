@@ -1,5 +1,6 @@
 import axios from 'axios';
 import Debug from 'debug';
+import { isSafeUrl } from '@hivemind/shared-types';
 
 const debug = Debug('app:flowiseCommand');
 
@@ -49,6 +50,10 @@ export class FlowiseCommand {
     debug('Constructed Flowise API URL: ' + url);
 
     try {
+      if (!(await isSafeUrl(url))) {
+        throw new Error('Flowise API URL is not safe to connect to.');
+      }
+
       // Log the request headers for better debugging
       const headers = { Authorization: 'Bearer ' + apiKey };
       debug('Request Headers:', headers);
