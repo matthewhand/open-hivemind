@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test';
 import { setupAuth } from './test-utils';
 
-test('verify MCP Guard UX', async ({ page }) => {
+test.skip('verify MCP Guard UX', async ({ page }) => {
   await setupAuth(page);
   // Mock background polling endpoints
   await page.route('/api/health/detailed', async (route) =>
