@@ -7,6 +7,7 @@ export interface CommaSeparatedInputProps {
   placeholder?: string;
   disabled?: boolean;
   id?: string;
+  testId?: string;
   className?: string;
   suggestions?: string[];
   tagColor?: (tag: string) => string;
@@ -167,11 +168,15 @@ export const CommaSeparatedInput: React.FC<CommaSeparatedInputProps> = ({
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const isDeleting = (e.nativeEvent as InputEvent).inputType?.startsWith('delete');
-    let newValue = e.target.value;
+    const newValue = e.target.value;
 
-    if (!isDeleting) {
-      // Auto-append space after comma if not already followed by a space
-      newValue = newValue.replace(/,(?!\s)/g, ', ');
+    if (!isDeleting && newValue.includes(',')) {
+      const segments = newValue.split(',');
+      const trailing = segments.pop() ?? '';
+      const toCommit = segments.map(s => s.trim()).filter(Boolean).join(',');
+      if (toCommit) commitInput(toCommit);
+      setInputValue(trailing.trimStart());
+      return;
     }
 
     setInputValue(newValue);
@@ -225,7 +230,7 @@ export const CommaSeparatedInput: React.FC<CommaSeparatedInputProps> = ({
         })}
         <input
           id={id}
-          data-testid="csi-input"
+          data-testid={testId ?? "csi-input"}
           className="flex-1 bg-transparent outline-none min-w-[120px] px-1"
           value={inputValue}
           onChange={handleInputChange}
