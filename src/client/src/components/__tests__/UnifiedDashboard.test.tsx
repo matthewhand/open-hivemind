@@ -9,7 +9,8 @@ import { ToastProvider } from '../DaisyUI/ToastNotification';
 import { ToastProvider } from '../DaisyUI/ToastNotification';
 import UnifiedDashboard from '../UnifiedDashboard';
 import { apiService } from '../../services/api';
-
+import { ToastProvider } from '../DaisyUI/ToastNotification';
+import { I18nProvider } from '../../i18n/I18nProvider';
 
 // Mock apiService using Vitest
 vi.mock('../../services/api', () => ({
@@ -59,6 +60,14 @@ vi.mock('../BotManagement/CreateBotWizard', () => ({
 }));
 
 describe('UnifiedDashboard', () => {
+  const renderWithProviders = (ui: React.ReactElement) => {
+    return render(
+      <I18nProvider>
+        <ToastProvider>{ui}</ToastProvider>
+      </I18nProvider>
+    );
+  };
+
   beforeEach(() => {
     vi.clearAllMocks();
     // Mock HTMLDialogElement methods
@@ -78,7 +87,7 @@ describe('UnifiedDashboard', () => {
     (apiService.getPersonas as any).mockResolvedValue([]);
     (apiService.getLlmProfiles as any).mockResolvedValue({ profiles: { llm: [] } });
 
-    render(
+    renderWithProviders(
       <BrowserRouter>
         <ToastProvider><ToastProvider><ToastProvider><UnifiedDashboard /></ToastProvider></ToastProvider></ToastProvider>
       </BrowserRouter>
@@ -89,7 +98,9 @@ describe('UnifiedDashboard', () => {
       expect(gettingStartedTab).toHaveClass('tab-active');
     });
 
-    expect(screen.getByText('Welcome to Open Hivemind')).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByText('Welcome to Open Hivemind')).toBeInTheDocument();
+    });
     expect(screen.getByText('No valid configuration found')).toBeInTheDocument();
   });
 
@@ -107,7 +118,7 @@ describe('UnifiedDashboard', () => {
     (apiService.getPersonas as any).mockResolvedValue([]);
     (apiService.getLlmProfiles as any).mockResolvedValue({ profiles: { llm: [] } });
 
-    render(
+    renderWithProviders(
       <BrowserRouter>
         <ToastProvider><ToastProvider><ToastProvider><UnifiedDashboard /></ToastProvider></ToastProvider></ToastProvider>
       </BrowserRouter>
@@ -118,11 +129,13 @@ describe('UnifiedDashboard', () => {
       expect(statusTab).toHaveClass('tab-active');
     });
 
-    // When bots are configured, the Getting Started tab content (Welcome to Open Hivemind)
+    // When bots are configured, the Getting Started tab content
     // should be hidden because the active tab is 'status'.
     // Use visible check instead of existence check because hidden attribute doesn't remove from DOM.
-    const welcomeText = screen.queryByText('Welcome to Open Hivemind');
-    if (welcomeText) expect(welcomeText).not.toBeVisible();
+    await waitFor(() => {
+      const welcomeText = screen.queryByText('Welcome to Open Hivemind');
+      if (welcomeText) expect(welcomeText).not.toBeVisible();
+    });
 
     // Alternatively check for hidden class on parent if visible check is flaky in some JSDOM setups
     // const gettingStartedPanel = screen.getByRole('tabpanel', { name: /getting started/i, hidden: true });
@@ -142,7 +155,7 @@ describe('UnifiedDashboard', () => {
     (apiService.getPersonas as any).mockResolvedValue([]);
     (apiService.getLlmProfiles as any).mockResolvedValue({ profiles: { llm: [] } });
 
-    render(
+    renderWithProviders(
       <BrowserRouter>
         <ToastProvider><ToastProvider><ToastProvider><UnifiedDashboard /></ToastProvider></ToastProvider></ToastProvider>
       </BrowserRouter>
@@ -186,7 +199,7 @@ describe('UnifiedDashboard', () => {
     (apiService.getPersonas as any).mockResolvedValue([]);
     (apiService.getLlmProfiles as any).mockResolvedValue({ profiles: { llm: [] } });
 
-    render(
+    renderWithProviders(
       <BrowserRouter>
         <ToastProvider><ToastProvider><ToastProvider><UnifiedDashboard /></ToastProvider></ToastProvider></ToastProvider>
       </BrowserRouter>

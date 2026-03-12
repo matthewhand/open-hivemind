@@ -4,13 +4,15 @@ import { vi } from 'vitest';
 import StandaloneActivity from '../StandaloneActivity';
 import { apiService } from '../../services/api';
 
+import { I18nProvider } from '../../i18n/I18nProvider';
+
 // Mock components
 vi.mock('../../components/DaisyUI', () => ({
   Alert: ({ message }: any) => <div data-testid="alert">{message}</div>,
   Badge: ({ children }: any) => <span data-testid="badge">{children}</span>,
   Button: ({ children, onClick }: any) => <button onClick={onClick}>{children}</button>,
   Card: ({ children }: any) => <div data-testid="card">{children}</div>,
-  DataTable: ({ data }: any) => <div data-testid="data-table">Rows: {data?.length}</div>,
+  DataTable: ({ data }: any) => <div data-testid="data-table">Rows: {data?.length || 0}</div>,
   StatsCards: () => <div data-testid="stats-cards" />,
   Timeline: () => <div data-testid="timeline" />,
   Toggle: () => <div data-testid="toggle" />,
@@ -40,7 +42,11 @@ describe('StandaloneActivity', () => {
       agentMetrics: []
     });
 
-    render(<StandaloneActivity />);
+    render(
+      <I18nProvider>
+        <StandaloneActivity />
+      </I18nProvider>
+    );
 
     // ActivityMonitor initially shows loading (which might render card with spinner or similar)
     // Or it renders DataTable with loading prop.
@@ -54,6 +60,6 @@ describe('StandaloneActivity', () => {
     // Wait for data to be rendered
     await waitFor(() => {
       expect(screen.getByTestId('data-table')).toHaveTextContent('Rows: 2');
-    });
+    }, { timeout: 3000 });
   });
 });

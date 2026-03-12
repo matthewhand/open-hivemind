@@ -2,15 +2,17 @@ import React from 'react';
 import Dashboard from '../../components/Dashboard';
 import Breadcrumbs from '../../components/DaisyUI/Breadcrumbs';
 import Carousel from '../../components/DaisyUI/Carousel';
+import { useI18n } from '../../i18n/I18nProvider';
 
 const DashboardPage: React.FC = () => {
+  const { t } = useI18n();
   const breadcrumbItems = [{ label: 'Dashboard', href: '/dashboard', isActive: true }];
 
   const carouselItems = [
     {
       image: '', // Using styled content below instead
-      title: 'Welcome to Open-Hivemind',
-      description: 'Your multi-agent AI platform for seamless communication across platforms.',
+      title: t('dashboard.welcome.title'),
+      description: t('dashboard.welcome.description'),
       bgGradient: 'linear-gradient(135deg, #4f46e5, #7c3aed)',
     },
     {

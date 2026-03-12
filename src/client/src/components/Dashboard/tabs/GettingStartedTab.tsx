@@ -1,2 +1,3 @@
 import React from 'react';
-export const GettingStartedTab: React.FC<any> = () => <div />;
+
+export const GettingStartedTab = (props: any) => <div>Getting Started Tab</div>;

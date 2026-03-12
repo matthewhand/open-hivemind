@@ -13,6 +13,7 @@ import Card from '../components/DaisyUI/Card';
 import Hero from '../components/DaisyUI/Hero';
 import { apiService } from '../services/api';
 import type { Bot, StatusResponse } from '../services/api';
+import { useI18n } from '../i18n/I18nProvider';
 
 interface DashboardStats {
   totalBots: number;
@@ -23,6 +24,7 @@ interface DashboardStats {
 }
 
 const EnhancedDashboard: React.FC = () => {
+  const { t } = useI18n();
   const [bots, setBots] = useState<Bot[]>([]);
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -153,7 +155,7 @@ const EnhancedDashboard: React.FC = () => {
     <div className="min-h-screen bg-base-100">
       {/* Enhanced Navbar */}
       <NavbarWithSearch
-        title="Open-Hivemind Dashboard"
+        title={t('dashboard.welcome.title')}
         subtitle={lastUpdated ? `Last updated: ${lastUpdated.toLocaleTimeString()}` : ''}
         onSearch={handleSearch}
         searchPlaceholder="Search bots, providers..."
@@ -184,8 +186,8 @@ const EnhancedDashboard: React.FC = () => {
       <Hero
         variant="overlay"
         bgColor="bg-gradient-to-r from-primary to-secondary"
-        title="Welcome to Open-Hivemind Dashboard"
-        subtitle="Monitor and manage your AI agents across multiple platforms with real-time insights and comprehensive analytics."
+        title={t('dashboard.welcome.title')}
+        subtitle={t('dashboard.welcome.subtitle')}
         alignment="center"
         gradient={true}
         minHeight="lg"

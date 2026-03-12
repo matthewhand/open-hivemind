@@ -1,2 +1,3 @@
 import React from 'react';
-export const PerformanceTab: React.FC<any> = () => <div />;
+
+export const PerformanceTab = (props: any) => <div>Performance Tab</div>;

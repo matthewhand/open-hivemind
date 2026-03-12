@@ -67,17 +67,19 @@ export const CommaSeparatedInput: React.FC<CommaSeparatedInputProps> = ({
     }
   }, [canUndo, disabled, onChange]);
 
-  const commitInput = (forceValue?: string) => {
+  const commitInput = (forceValue?: string, keepTrailingText: boolean = false) => {
     const textToCommit = forceValue !== undefined ? forceValue : inputValue;
+
     if (!textToCommit.trim()) {
       setIsTouched(true);
       return;
     }
 
-    const current = textToCommit
-      .split(',')
-      .map(s => s.trim())
-      .filter(Boolean);
+    const parts = textToCommit.split(',');
+    // If keepTrailingText is true, we keep the last part as the remaining input
+    const remainingInput = keepTrailingText && textToCommit.includes(',') ? parts.pop() || '' : '';
+
+    const current = parts.map(s => s.trim()).filter(Boolean);
 
     const next = [...value];
     let changed = false;
@@ -106,7 +108,7 @@ export const CommaSeparatedInput: React.FC<CommaSeparatedInputProps> = ({
         pushToHistory(next);
         onChange(next);
       }
-      setInputValue('');
+      setInputValue(keepTrailingText ? remainingInput : '');
       setShowSuggestions(false);
     }
   };
@@ -166,18 +168,15 @@ export const CommaSeparatedInput: React.FC<CommaSeparatedInputProps> = ({
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const isDeleting = (e.nativeEvent as InputEvent).inputType?.startsWith('delete');
-    let newValue = e.target.value;
-
-    if (!isDeleting) {
-      // Auto-append space after comma if not already followed by a space
-      newValue = newValue.replace(/,(?!\s)/g, ', ');
-    }
-
-    setInputValue(newValue);
-    setShowSuggestions(true);
-    if (internalError) {
-      setInternalError(null);
+    const val = e.target.value;
+    if (val.includes(',')) {
+      commitInput(val, true);
+    } else {
+      setInputValue(val);
+      setShowSuggestions(true);
+      if (internalError) {
+        setInternalError(null);
+      }
     }
   };
 

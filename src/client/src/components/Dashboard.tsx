@@ -2,6 +2,7 @@
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { Alert } from './DaisyUI/Alert';
 import Hero from './DaisyUI/Hero';
+import { useI18n } from '../i18n/I18nProvider';
 import Button from './DaisyUI/Button';
 import { SkeletonCard } from './DaisyUI/Skeleton';
 import { apiService } from '../services/api';
@@ -17,6 +18,7 @@ const Dashboard: React.FC = () => {
   const [botRatings, setBotRatings] = useState<Record<string, number>>({});
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
+  const { t } = useI18n();
 
   const fetchData = useCallback(async () => {
     try {
@@ -202,10 +204,10 @@ const Dashboard: React.FC = () => {
         <div className="flex flex-col items-center space-y-6">
           <div className="text-center">
             <h1 className="text-5xl font-bold text-white drop-shadow-lg mb-4">
-              🧠 Open-Hivemind Dashboard
+              🧠 {t('dashboard.welcome.title')}
             </h1>
             <p className="text-xl text-white/90 drop-shadow-md">
-              Your AI Agent Swarm Control Center
+              {t('dashboard.welcome.subtitle')}
             </p>
           </div>
 

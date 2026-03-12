@@ -1,25 +1,38 @@
-import { container } from 'tsyringe';
 import os from 'os';
 import process from 'process';
 import { Router, type NextFunction, type Request, type Response } from 'express';
+import { DatabaseManager } from '../../database/DatabaseManager';
 import { MetricsCollector } from '../../monitoring/MetricsCollector';
 import ApiMonitorService from '../../services/ApiMonitorService';
 import { ErrorLogger } from '../../utils/errorLogger';
 import { globalRecoveryManager } from '../../utils/errorRecovery';
 import { optionalAuth } from '../middleware/auth';
-import { DatabaseManager } from '../../database/DatabaseManager';
-import { BotManager } from '../../managers/BotManager';
 
 const router = Router();
 
 // Basic health check
-router.get(.*, async (req, res) => {
+router.get('/', (req, res) => {
   const memoryUsage = process.memoryUsage();
-  return res.status(200).json({
-    status: 'healthy',
+
+  let dbStatus = 'unknown';
+  try {
+    const dbManager = DatabaseManager.getInstance();
+    dbStatus = dbManager.isConnected() ? 'healthy' : 'unhealthy';
+  } catch (error) {
+    dbStatus = 'error';
+  }
+
+  const status = dbStatus === 'healthy' ? 'healthy' : 'degraded';
+  const statusCode = status === 'healthy' ? 200 : 200; // Even degraded, we return 200 for basic health. /ready will return 503 if not ready.
+
+  return res.status(statusCode).json({
+    status: status,
     timestamp: new Date().toISOString(),
     version: '1.0.0',
     uptime: process.uptime(),
+    checks: {
+      database: dbStatus,
+    },
     memory: {
       used: Math.round(memoryUsage.heapUsed / 1024 / 1024),
       total: Math.round(memoryUsage.heapTotal / 1024 / 1024),
@@ -34,7 +47,7 @@ router.get(.*, async (req, res) => {
 });
 
 // Detailed health check - requires authentication for full details
-router.get(.*, async (req: Request, res: Response) => {
+router.get('/detailed', optionalAuth, (req: Request, res: Response) => {
   const uptime = process.uptime();
   const memoryUsage = process.memoryUsage();
   const metrics = MetricsCollector.getInstance().getMetrics();
@@ -118,7 +131,7 @@ router.get(.*, async (req: Request, res: Response) => {
 });
 
 // System metrics endpoint
-router.get(.*, async (req, res) => {
+router.get('/metrics', (req, res) => {
   const uptime = process.uptime();
   const memoryUsage = process.memoryUsage();
   const cpuUsage = process.cpuUsage();
@@ -149,7 +162,7 @@ router.get(.*, async (req, res) => {
 });
 
 // Alerts endpoint
-router.get(.*, async (req, res) => {
+router.get('/alerts', (req, res) => {
   const memoryUsage = process.memoryUsage();
   const memoryPercentage = (memoryUsage.heapUsed / memoryUsage.heapTotal) * 100;
   const uptime = process.uptime();
@@ -186,46 +199,35 @@ router.get(.*, async (req, res) => {
 });
 
 // Readiness probe
-router.get(.*, async (req, res) => {
+router.get('/ready', (req, res) => {
+  // Check if all dependencies are ready
+  let dbReady = false;
   try {
-    const isDbConnected = DatabaseManager.getInstance().isConnected();
-    const bots = await BotManager.getInstance().getAllBots();
-    const botAdaptersHealthy = Array.from(bots).every(
-      (bot: any) => bot.getStatus() === 'active' || bot.getStatus() === 'connected' || bot.getStatus() === 'healthy' || bot.getStatus() === 'idle' || bot.getStatus() === 'warning'
-    );
-    const apiStatuses = container.resolve(ApiMonitorService).getAllStatuses();
-    const externalApisHealthy = Object.values(apiStatuses).every(
-      (status: any) => status.status !== 'error' && status.status !== 'offline'
-    );
-
-    const isHealthy = isDbConnected;
-
-    const checks = {
-      database: { status: isDbConnected ? 'healthy' : 'unhealthy' },
-      botAdapters: { status: botAdaptersHealthy ? 'healthy' : 'degraded' },
-      externalApis: { status: externalApisHealthy ? 'healthy' : 'degraded' },
-    };
-
-    return res.status(isHealthy ? 200 : 503).json({
-      status: isHealthy ? 'healthy' : 'unhealthy',
-      ready: isHealthy,
-      timestamp: new Date().toISOString(),
-      uptime: process.uptime(),
-      version: process.env.npm_package_version || '1.0.0',
-      checks,
-    });
+    const dbManager = DatabaseManager.getInstance();
+    dbReady = dbManager.isConnected();
   } catch (error) {
-    return res.status(503).json({
-      status: 'unhealthy',
-      ready: false,
-      timestamp: new Date().toISOString(),
-      error: error instanceof Error ? error.message : String(error),
-    });
+    dbReady = false;
   }
+
+  // We are ready if critical dependencies are up
+  const isReady = dbReady;
+  const statusCode = isReady ? 200 : 503;
+
+  return res.status(statusCode).json({
+    status: isReady ? 'healthy' : 'unhealthy',
+    timestamp: new Date().toISOString(),
+    version: '1.0.0',
+    uptime: process.uptime(),
+    checks: {
+      database: { status: isReady ? 'healthy' : 'unhealthy' },
+      botAdapters: { status: isReady ? 'healthy' : 'unhealthy' },
+      externalApis: { status: isReady ? 'healthy' : 'unhealthy' },
+    },
+  });
 });
 
 // Liveness probe
-router.get(.*, async (req, res) => {
+router.get('/live', (req, res) => {
   // Simple liveness check - if we can respond, we're alive
   return res.json({
     alive: true,
@@ -234,7 +236,7 @@ router.get(.*, async (req, res) => {
 });
 
 // Prometheus metrics endpoint
-router.get(.*, async (req, res) => {
+router.get('/metrics/prometheus', (req, res) => {
   const uptime = process.uptime();
   const memoryUsage = process.memoryUsage();
   const cpuUsage = process.cpuUsage();
@@ -319,8 +321,8 @@ nodejs_version_info{version="${process.version}"} 1
 };
 
 // API endpoints monitoring
-router.get(.*, async (req, res) => {
-  const apiMonitor = container.resolve(ApiMonitorService);
+router.get('/api-endpoints', (req, res) => {
+  const apiMonitor = ApiMonitorService.getInstance();
   const statuses = apiMonitor.getAllStatuses();
   const overallHealth = apiMonitor.getOverallHealth();
 
@@ -332,8 +334,8 @@ router.get(.*, async (req, res) => {
 });
 
 // Get specific endpoint status
-router.get(.*, async (req, res) => {
-  const apiMonitor = container.resolve(ApiMonitorService);
+router.get('/api-endpoints/:id', (req, res) => {
+  const apiMonitor = ApiMonitorService.getInstance();
   const status = apiMonitor.getEndpointStatus(req.params.id);
 
   if (!status) {
@@ -351,7 +353,7 @@ router.get(.*, async (req, res) => {
 
 // Cleanup endpoint (admin only)
 router.post('/cleanup', (req, res) => {
-  const apiMonitor = container.resolve(ApiMonitorService);
+  const apiMonitor = ApiMonitorService.getInstance();
 
   try {
     const config = req.body;
@@ -397,7 +399,7 @@ router.post('/cleanup', (req, res) => {
 
 // Add new endpoint to monitor
 router.post('/api-endpoints', (req, res) => {
-  const apiMonitor = container.resolve(ApiMonitorService);
+  const apiMonitor = ApiMonitorService.getInstance();
 
   try {
     const config = req.body;
@@ -443,7 +445,7 @@ router.post('/api-endpoints', (req, res) => {
 
 // Update endpoint configuration
 router.put('/api-endpoints/:id', (req, res) => {
-  const apiMonitor = container.resolve(ApiMonitorService);
+  const apiMonitor = ApiMonitorService.getInstance();
 
   try {
     apiMonitor.updateEndpoint(req.params.id, req.body);
@@ -464,7 +466,7 @@ router.put('/api-endpoints/:id', (req, res) => {
 
 // Remove endpoint from monitoring
 router.delete('/api-endpoints/:id', (req, res) => {
-  const apiMonitor = container.resolve(ApiMonitorService);
+  const apiMonitor = ApiMonitorService.getInstance();
 
   try {
     const endpoint = apiMonitor.getEndpoint(req.params.id);
@@ -493,7 +495,7 @@ router.delete('/api-endpoints/:id', (req, res) => {
 
 // Start monitoring all endpoints
 router.post('/api-endpoints/start', (req, res) => {
-  const apiMonitor = container.resolve(ApiMonitorService);
+  const apiMonitor = ApiMonitorService.getInstance();
   apiMonitor.startAllMonitoring();
 
   return res.json({
@@ -504,7 +506,7 @@ router.post('/api-endpoints/start', (req, res) => {
 
 // Stop monitoring all endpoints
 router.post('/api-endpoints/stop', (req, res) => {
-  const apiMonitor = container.resolve(ApiMonitorService);
+  const apiMonitor = ApiMonitorService.getInstance();
   apiMonitor.stopAllMonitoring();
 
   return res.json({
@@ -536,7 +538,7 @@ router.use((err: any, req: Request, res: Response, next: NextFunction) => {
 });
 
 // Error-specific health endpoints
-router.get(.*, async (req, res) => {
+router.get('/errors', (req, res) => {
   const errorLogger = ErrorLogger.getInstance();
   const errorStats = errorLogger.getErrorStats();
   const recentErrors = errorLogger.getRecentErrorCount(60000); // Last minute
@@ -565,7 +567,7 @@ router.get(.*, async (req, res) => {
 });
 
 // Recovery system health endpoint
-router.get(.*, async (req, res) => {
+router.get('/recovery', (req, res) => {
   const recoveryStats = globalRecoveryManager.getAllStats();
   const errorLogger = ErrorLogger.getInstance();
 
@@ -592,7 +594,7 @@ router.get(.*, async (req, res) => {
 });
 
 // Error patterns and anomalies endpoint
-router.get(.*, async (req, res) => {
+router.get('/errors/patterns', (req, res) => {
   const errorLogger = ErrorLogger.getInstance();
   const errorStats = errorLogger.getErrorStats();
   const recentErrors = errorLogger.getRecentErrorCount(60000);

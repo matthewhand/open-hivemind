@@ -12,6 +12,7 @@ import { WebSocketProvider } from './contexts/WebSocketContext';
 import ScrollToTop from './components/ScrollToTop';
 import { Toaster } from 'react-hot-toast';
 import { IntegrationProvider } from './components/IntegrationLoader';
+import { I18nProvider } from './i18n/I18nProvider';
 
 function App() {
   return (
@@ -24,10 +25,12 @@ function App() {
               <BotProvider>
                 <WebSocketProvider>
                   <IntegrationProvider>
-                    <BrowserRouter>
-                      <ScrollToTop />
-                      <AppRouter />
-                    </BrowserRouter>
+                    <I18nProvider>
+                      <BrowserRouter>
+                        <ScrollToTop />
+                        <AppRouter />
+                      </BrowserRouter>
+                    </I18nProvider>
                   </IntegrationProvider>
                 </WebSocketProvider>
               </BotProvider>
