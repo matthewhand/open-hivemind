@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect , useRef} from 'react';
 import type { DaisyUIComponentStats } from '../utils/DaisyUIComponentTracker';
 import { daisyUITracker } from '../utils/DaisyUIComponentTracker';
 import Button from './DaisyUI/Button';
@@ -19,6 +19,8 @@ const DaisyUIComponentTracker: React.FC<Props> = ({ isOpen = true, onClose }) =>
   const [selectedCategory, setSelectedCategory] = useState<string>('overview');
   const [showSuggestions, setShowSuggestions] = useState(false);
 
+  const timerRef = useRef<number | null>(null);
+
   useEffect(() => {
     const updateStats = () => {
       const currentStats = daisyUITracker.getStats();
@@ -26,8 +28,13 @@ const DaisyUIComponentTracker: React.FC<Props> = ({ isOpen = true, onClose }) =>
     };
 
     updateStats();
-    const interval = setInterval(updateStats, 5000); // Update every 5 seconds
-    return () => clearInterval(interval);
+    timerRef.current = window.setInterval(updateStats, 5000); // Update every 5 seconds
+    return () => {
+      if (timerRef.current !== null) {
+        window.clearInterval(timerRef.current);
+        timerRef.current = null;
+      }
+    };
   }, []);
 
   const handleExportData = () => {

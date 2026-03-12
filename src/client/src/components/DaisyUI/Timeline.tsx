@@ -88,6 +88,7 @@ const Timeline: React.FC<TimelineProps> = ({
     .slice(0, maxEvents)
 
   // Auto-scroll to top when new events are added
+  const timerRef = useRef<number | null>(null);
   useEffect(() => {
     if (autoScroll && timelineRef.current && sortedEvents.length > 0) {
       timelineRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' })
@@ -251,13 +252,16 @@ export const ActivityFeed: React.FC<ActivityFeedProps> = ({
 }) => {
   const [currentEvents, setCurrentEvents] = useState<TimelineEvent[]>(events)
 
+
+
   useEffect(() => {
     setCurrentEvents(events)
   }, [events])
 
   // Simulate real-time updates (in a real app, this would come from WebSocket or API)
+
   useEffect(() => {
-    const interval = setInterval(() => {
+    timerRef.current = window.setInterval(() => {
       const newEvent: TimelineEvent = {
         id: `event-${Date.now()}`,
         timestamp: new Date(),
@@ -271,7 +275,12 @@ export const ActivityFeed: React.FC<ActivityFeedProps> = ({
       onNewEvent?.(newEvent)
     }, 30000) // Add a new event every 30 seconds
 
-    return () => clearInterval(interval)
+    return () => {
+      if (timerRef.current !== null) {
+        window.clearInterval(timerRef.current);
+        timerRef.current = null;
+      }
+    }
   }, [onNewEvent])
 
   return <Timeline events={currentEvents} {...timelineProps} />

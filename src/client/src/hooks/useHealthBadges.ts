@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
-import { useState, useEffect } from 'react';
+import { useState, useEffect , useRef} from 'react';
 
 // ... existing interface
 interface HealthBadges {
@@ -16,6 +16,8 @@ export const useHealthBadges = (): HealthBadges => {
         configWarning: false,
         loading: true,
     });
+
+    const timerRef = useRef<number | null>(null);
 
     useEffect(() => {
         const fetchHealthData = async () => {
@@ -68,8 +70,13 @@ export const useHealthBadges = (): HealthBadges => {
         };
 
         fetchHealthData();
-        const interval = setInterval(fetchHealthData, 30000);
-        return () => clearInterval(interval);
+        timerRef.current = window.setInterval(fetchHealthData, 30000);
+        return () => {
+      if (timerRef.current !== null) {
+        window.clearInterval(timerRef.current);
+        timerRef.current = null;
+      }
+    };
     }, []);
 
     return badges;

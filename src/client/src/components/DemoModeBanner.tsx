@@ -2,7 +2,7 @@
  * DemoModeBanner - Shows a banner when the app is running in demo mode
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect , useRef} from 'react';
 
 interface DemoStatus {
     isDemoMode: boolean;
@@ -16,6 +16,8 @@ const DemoModeBanner: React.FC = () => {
     const [demoStatus, setDemoStatus] = useState<DemoStatus | null>(null);
     const [isDismissed, setIsDismissed] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
+
+    const timerRef = useRef<number | null>(null);
 
     useEffect(() => {
         const checkDemoMode = async () => {
@@ -35,8 +37,13 @@ const DemoModeBanner: React.FC = () => {
         checkDemoMode();
 
         // Check every 30 seconds
-        const interval = setInterval(checkDemoMode, 30000);
-        return () => clearInterval(interval);
+        timerRef.current = window.setInterval(checkDemoMode, 30000);
+        return () => {
+      if (timerRef.current !== null) {
+        window.clearInterval(timerRef.current);
+        timerRef.current = null;
+      }
+    };
     }, []);
 
     if (isLoading || !demoStatus || !demoStatus.isDemoMode || isDismissed) {

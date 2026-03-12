@@ -42,6 +42,8 @@ const MetricChart: React.FC<MetricChartProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const timerRef = useRef<number | null>(null);
+
   useEffect(() => {
     const formattedData = data.map(item => ({
       time: new Date(item.timestamp).toLocaleTimeString(),
@@ -52,15 +54,22 @@ const MetricChart: React.FC<MetricChartProps> = ({
     setChartData(formattedData);
   }, [data]);
 
+
+
   useEffect(() => {
     if (refreshInterval && onRefresh) {
-      const interval = setInterval(() => {
+      timerRef.current = window.setInterval(() => {
         setIsLoading(true);
         onRefresh();
         setTimeout(() => setIsLoading(false), 1000);
       }, refreshInterval);
 
-      return () => clearInterval(interval);
+      return () => {
+      if (timerRef.current !== null) {
+        window.clearInterval(timerRef.current);
+        timerRef.current = null;
+      }
+    };
     }
   }, [refreshInterval, onRefresh]);
 

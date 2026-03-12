@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect , useRef} from 'react';
 import { useWebSocket } from '../contexts/WebSocketContext';
 import { apiService } from '../services/api';
 import AlertPanel from '../components/Monitoring/AlertPanel';
@@ -70,6 +70,9 @@ const SystemManagement: React.FC = () => {
   const [isPerformanceLoading, setIsPerformanceLoading] = useState(false);
 
 
+  const timerRef = useRef<number | null>(null);
+
+
   useEffect(() => {
     fetchSystemConfig();
     fetchBackupHistory();
@@ -77,11 +80,17 @@ const SystemManagement: React.FC = () => {
 
 
   // Performance monitoring polling
+
   useEffect(() => {
     if (activeTab === 'performance') {
       fetchApiStatus();
-      const interval = setInterval(fetchApiStatus, 10000); // Refresh every 10s
-      return () => clearInterval(interval);
+      timerRef.current = window.setInterval(fetchApiStatus, 10000); // Refresh every 10s
+      return () => {
+      if (timerRef.current !== null) {
+        window.clearInterval(timerRef.current);
+        timerRef.current = null;
+      }
+    };
     }
   }, [activeTab]);
 
@@ -93,6 +102,9 @@ const SystemManagement: React.FC = () => {
       console.error('Failed to fetch API status:', error);
     }
   };
+
+
+
 
 
   useEffect(() => {

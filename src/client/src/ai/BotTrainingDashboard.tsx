@@ -9,7 +9,7 @@
  *
  * DO NOT import or route to this component until the backend AI APIs are implemented.
  */
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect , useRef} from 'react';
 import { useAppSelector } from '../store/hooks';
 import { selectUser } from '../store/slices/authSlice';
 import { AnimatedBox } from '../animations/AnimationComponents';
@@ -62,6 +62,7 @@ export const BotTrainingDashboard: React.FC = () => {
   const [selectedSession, setSelectedSession] = useState<string | null>(null);
 
   // Mock data generation
+  const timerRef = useRef<number | null>(null);
   useEffect(() => {
     const mockSessions: TrainingSession[] = [
       {
@@ -111,7 +112,7 @@ export const BotTrainingDashboard: React.FC = () => {
     setSessions(mockSessions);
 
     // Simulate metrics update
-    const interval = setInterval(() => {
+    timerRef.current = window.setInterval(() => {
       setMetrics({
         cpuUsage: 45 + Math.random() * 20,
         memoryUsage: 60 + Math.random() * 15,
@@ -137,7 +138,12 @@ export const BotTrainingDashboard: React.FC = () => {
       }));
     }, 1000);
 
-    return () => clearInterval(interval);
+    return () => {
+      if (timerRef.current !== null) {
+        window.clearInterval(timerRef.current);
+        timerRef.current = null;
+      }
+    };
   }, []);
 
   const getStatusColor = (status: string) => {

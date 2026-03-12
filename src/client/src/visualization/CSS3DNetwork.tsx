@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect , useRef} from 'react';
 import { useAppSelector } from '../store/hooks';
 import { selectDashboard } from '../store/slices/dashboardSlice';
 import { AnimatedBox } from '../animations/AnimationComponents';
@@ -89,17 +89,23 @@ export const CSS3DNetwork: React.FC<CSS3DNetworkProps> = ({
   const positions = generatePositions();
 
   // Auto-rotation effect
+  const timerRef = useRef<number | null>(null);
   useEffect(() => {
     if (!autoRotate) {return;}
 
-    const interval = setInterval(() => {
+    timerRef.current = window.setInterval(() => {
       setRotation(prev => ({
         x: prev.x + rotationSpeed * 0.1,
         y: prev.y + rotationSpeed * 0.2,
       }));
     }, 50);
 
-    return () => clearInterval(interval);
+    return () => {
+      if (timerRef.current !== null) {
+        window.clearInterval(timerRef.current);
+        timerRef.current = null;
+      }
+    };
   }, [autoRotate, rotationSpeed]);
 
   const handleMouseDown = (event: React.MouseEvent) => {

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect , useRef} from 'react';
 
 export interface StatusMetric {
   label: string;
@@ -35,14 +35,21 @@ const StatusCard: React.FC<StatusCardProps> = ({
 }) => {
   const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
 
+  const timerRef = useRef<number | null>(null);
+
   useEffect(() => {
     if (refreshInterval && onRefresh) {
-      const interval = setInterval(() => {
+      timerRef.current = window.setInterval(() => {
         onRefresh();
         setLastRefresh(new Date());
       }, refreshInterval);
 
-      return () => clearInterval(interval);
+      return () => {
+      if (timerRef.current !== null) {
+        window.clearInterval(timerRef.current);
+        timerRef.current = null;
+      }
+    };
     }
   }, [refreshInterval, onRefresh]);
 

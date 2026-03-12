@@ -9,7 +9,7 @@
  *
  * DO NOT import or route to this component until the backend AI APIs are implemented.
  */
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect , useRef} from 'react';
 import { useAppSelector } from '../store/hooks';
 import { selectPerformance } from '../store/slices/performanceSlice';
 import { selectDashboard } from '../store/slices/dashboardSlice';
@@ -217,6 +217,7 @@ export const AIInsightsPanel: React.FC<AIInsightsPanelProps> = ({
   };
 
   // Load insights
+  const timerRef = useRef<number | null>(null);
   useEffect(() => {
     const loadInsights = () => {
       setLoading(true);
@@ -232,8 +233,13 @@ export const AIInsightsPanel: React.FC<AIInsightsPanelProps> = ({
     loadInsights();
 
     if (autoRefresh) {
-      const interval = setInterval(loadInsights, refreshInterval);
-      return () => clearInterval(interval);
+      timerRef.current = window.setInterval(loadInsights, refreshInterval);
+      return () => {
+      if (timerRef.current !== null) {
+        window.clearInterval(timerRef.current);
+        timerRef.current = null;
+      }
+    };
     }
   }, [autoRefresh, refreshInterval, maxInsights, metrics, bots]);
 

@@ -74,6 +74,8 @@ const AnimatedCounter: React.FC<AnimatedCounterProps> = ({ value, className }) =
   const prevValueRef = useRef<number>(value);
   const controlsRef = useRef<ReturnType<typeof animate> | null>(null);
 
+  const timerRef = useRef<number | null>(null);
+
   useEffect(() => {
     const node = nodeRef.current;
     if (!node) return;
@@ -268,6 +270,7 @@ export const useSystemStats = () => {
   const [isLoading, setIsLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
 
+  const timerRef = React.useRef<number | null>(null);
   React.useEffect(() => {
     const fetchStats = async () => {
       try {
@@ -362,8 +365,13 @@ export const useSystemStats = () => {
 
     fetchStats();
 
-    const interval = setInterval(fetchStats, 30000);
-    return () => clearInterval(interval);
+    timerRef.current = window.setInterval(fetchStats, 30000);
+    return () => {
+      if (timerRef.current !== null) {
+        window.clearInterval(timerRef.current);
+        timerRef.current = null;
+      }
+    };
   }, []);
 
   return { stats, isLoading, error, refresh: () => setIsLoading(true) };

@@ -195,6 +195,7 @@ const MonitoringDashboard: React.FC<MonitoringDashboardProps> = ({
   }, [onRefresh, refreshInterval]);
 
   // Track WS activity so fallback poll knows when WS last delivered data
+  const timerRef = useRef<number | null>(null);
   useEffect(() => {
     if (botStats.length > 0) {
       lastWsActivity.current = Date.now();
@@ -202,18 +203,24 @@ const MonitoringDashboard: React.FC<MonitoringDashboardProps> = ({
   }, [botStats]);
 
   // Initial load + fallback poll — only fires when WS hasn't delivered data recently
+
   useEffect(() => {
     handleRefresh();
 
     const WS_STALE_MS = 60000; // consider WS stale after 60s of no events
-    const interval = setInterval(() => {
+    timerRef.current = window.setInterval(() => {
       const wsRecent = isConnected && (Date.now() - lastWsActivity.current) < WS_STALE_MS;
       if (!wsRecent) {
         handleRefresh();
       }
     }, refreshInterval);
 
-    return () => clearInterval(interval);
+    return () => {
+      if (timerRef.current !== null) {
+        window.clearInterval(timerRef.current);
+        timerRef.current = null;
+      }
+    };
   }, [handleRefresh, refreshInterval, isConnected]);
 
   const getOverallHealthStatus = () => {
