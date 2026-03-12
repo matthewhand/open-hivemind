@@ -1,13 +1,10 @@
 import { useMemo } from 'react';
 
 export const useDashboardStats = (
-  bots: any[],
-  statusBots: any[],
   activeBotCount: number,
   totalMessages: number,
   activeConnections: number,
   totalErrors: number,
-  uptime: number
 ) => {
   const statsCards = useMemo(() => [
     {
