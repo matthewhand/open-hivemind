@@ -230,3 +230,7 @@ package-lock.json
 src/**/*.js
 src/**/*.d.ts
 src/**/*.d.ts.map
+
+# ESLint complexity reports (generated artefacts, not source)
+eslint-complexity*.json
+src/client/eslint-complexity*.json
