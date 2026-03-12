@@ -682,3 +682,69 @@ export function generatePerformanceTestData(
     expected: { command: `${prefix}${i}`, args: [`arg${i}`] },
   }));
 }
+
+// ─── Object factories for unit tests ────────────────────────────────────────
+
+let _botSeq = 0;
+let _msgSeq = 0;
+
+export interface BotFactory {
+  id: string;
+  name: string;
+  status: 'active' | 'inactive' | 'error';
+  connected: boolean;
+  provider: string;
+  messageProvider: string;
+  llmProvider: string;
+  messageCount: number;
+  errorCount: number;
+  persona?: string;
+}
+
+export interface MessageFactory {
+  id: string;
+  content: string;
+  timestamp: string;
+  authorId: string;
+  authorName: string;
+  botId: string;
+  platform: string;
+}
+
+/** Create a minimal valid bot object, overridable via partial. */
+export function createBot(overrides: Partial<BotFactory> = {}): BotFactory {
+  const seq = ++_botSeq;
+  return {
+    id: `bot-${seq}`,
+    name: `Test Bot ${seq}`,
+    status: 'active',
+    connected: true,
+    provider: 'discord',
+    messageProvider: 'discord',
+    llmProvider: 'openai',
+    messageCount: 0,
+    errorCount: 0,
+    ...overrides,
+  };
+}
+
+/** Create a minimal valid message object, overridable via partial. */
+export function createMessage(overrides: Partial<MessageFactory> = {}): MessageFactory {
+  const seq = ++_msgSeq;
+  return {
+    id: `msg-${seq}`,
+    content: `Test message ${seq}`,
+    timestamp: new Date(0).toISOString(),
+    authorId: 'user-1',
+    authorName: 'Test User',
+    botId: 'bot-1',
+    platform: 'discord',
+    ...overrides,
+  };
+}
+
+/** Reset factory sequences (call in beforeEach for deterministic IDs). */
+export function resetFactorySequences(): void {
+  _botSeq = 0;
+  _msgSeq = 0;
+}
