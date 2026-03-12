@@ -30,6 +30,7 @@ export class AnomalyDetectionService extends EventEmitter {
   private anomalies: Anomaly[] = [];
   private isDetecting = false;
   private detectionInterval: NodeJS.Timeout | null = null;
+  private metricsInterval: NodeJS.Timeout | null = null;
   private dbManager: DatabaseManager;
   private wsService: WebSocketService;
   private metricsCollector: MetricsCollector;
@@ -183,8 +184,9 @@ export class AnomalyDetectionService extends EventEmitter {
     };
   }
 
-  getAnomalies(): Anomaly[] {
-    return [...this.anomalies];
+  getAnomalies(limit?: number): Anomaly[] {
+    const all = [...this.anomalies];
+    return limit ? all.slice(-limit) : all;
   }
 
   /**
@@ -194,6 +196,10 @@ export class AnomalyDetectionService extends EventEmitter {
     if (this.detectionInterval) {
       clearInterval(this.detectionInterval);
       this.detectionInterval = null;
+    }
+    if (this.metricsInterval) {
+      clearInterval(this.metricsInterval);
+      this.metricsInterval = null;
     }
     this.removeAllListeners();
     debug('AnomalyDetectionService shutdown completed');
@@ -231,6 +237,7 @@ export class AnomalyDetectionService extends EventEmitter {
     };
     // Poll every 10 seconds to feed rolling windows
     setInterval(poll, 10000);
+    this.metricsInterval = setInterval(poll, 10000);
     poll();
   }
 }
