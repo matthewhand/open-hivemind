@@ -68,12 +68,12 @@ describe('ConfigurationTemplateService', () => {
 
     const template = await service.createTemplate(request);
 
-    expect(template).not.toBeNull();
+    expect(template).toBeDefined();
     expect(template.name).toBe(request.name);
-    expect(typeof template.id).toBe('string');
+    expect(template.id).toMatch(/\S+/);
 
     const storedTemplate = await service.getTemplateById(template.id);
-    expect(storedTemplate).not.toBeNull();
+    expect(storedTemplate).toBeDefined();
     expect(storedTemplate?.name).toBe(request.name);
   });
 

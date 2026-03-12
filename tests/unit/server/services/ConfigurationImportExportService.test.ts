@@ -109,6 +109,7 @@ describe('ConfigurationImportExportService - Backup Retention', () => {
 
     expect(result.success).toBe(true);
     expect(typeof result.filePath).toBe('string');
+    expect(result.filePath).toMatch(/\S+/);
   });
 });
 
