@@ -12,10 +12,6 @@ export interface CommaSeparatedInputProps {
   tagColor?: (tag: string) => string;
   error?: string;
   validate?: (item: string) => string | null;
-  /** Max character length for a single token. Tokens exceeding this are rejected. */
-  maxTokenLength?: number;
-  /** Normalise tokens before dedup check (e.g. 'lowercase'). Default: none. */
-  normalize?: 'lowercase' | 'uppercase' | 'trim' | ((v: string) => string);
 }
 
 export const CommaSeparatedInput: React.FC<CommaSeparatedInputProps> = ({
@@ -30,16 +26,7 @@ export const CommaSeparatedInput: React.FC<CommaSeparatedInputProps> = ({
   tagColor,
   error,
   validate,
-  maxTokenLength,
-  normalize,
 }) => {
-  const normalizeToken = (token: string): string => {
-    if (!normalize) return token;
-    if (normalize === 'lowercase') return token.toLowerCase();
-    if (normalize === 'uppercase') return token.toUpperCase();
-    if (normalize === 'trim') return token.trim();
-    return normalize(token);
-  };
   const [inputValue, setInputValue] = useState('');
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [internalError, setInternalError] = useState<string | null>(null);
@@ -97,21 +84,16 @@ export const CommaSeparatedInput: React.FC<CommaSeparatedInputProps> = ({
     let localError: string | null = null;
 
     for (const item of current) {
-      if (maxTokenLength && item.length > maxTokenLength) {
-        localError = `Token "${item.substring(0, 20)}…" exceeds max length of ${maxTokenLength}`;
-        break;
-      }
-      const normalised = normalizeToken(item);
       if (validate) {
-        const validationError = validate(normalised);
+        const validationError = validate(item);
         if (validationError) {
           localError = validationError;
           break; // Stop parsing if there's an invalid item
         }
       }
 
-      if (!next.includes(normalised) && next.length < maxItems) {
-        next.push(normalised);
+      if (!next.includes(item) && next.length < maxItems) {
+        next.push(item);
         changed = true;
       }
     }
