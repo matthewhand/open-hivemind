@@ -1,14 +1,14 @@
 import os from 'os';
 import process from 'process';
 import { Router, type NextFunction, type Request, type Response } from 'express';
-import { DatabaseManager } from '../../database/DatabaseManager';
-import { container } from '../../di/container';
-import { BotManager } from '../../managers/BotManager';
 import { MetricsCollector } from '../../monitoring/MetricsCollector';
-import ApiMonitorService from '../../services/ApiMonitorService';
+import { ApiMonitorService } from '../../services/ApiMonitorService';
 import { ErrorLogger } from '../../utils/errorLogger';
+import { container } from 'tsyringe';
 import { globalRecoveryManager } from '../../utils/errorRecovery';
 import { optionalAuth } from '../middleware/auth';
+import { DatabaseManager } from '../../database/DatabaseManager';
+import { BotManager } from '../../managers/BotManager';
 
 const router = Router();
 
@@ -190,15 +190,11 @@ router.get('/ready', async (req, res) => {
   try {
     const isDbConnected = DatabaseManager.getInstance().isConnected();
     const bots = await BotManager.getInstance().getAllBots();
-    const botAdaptersHealthy = Array.from(bots).every(
-      (bot: any) =>
-        bot.getStatus() === 'active' ||
-        bot.getStatus() === 'connected' ||
-        bot.getStatus() === 'healthy' ||
-        bot.getStatus() === 'idle' ||
-        bot.getStatus() === 'warning'
+    const botAdaptersHealthy = Array.from(bots.values()).every(
+      (bot: any) => bot.getStatus() === 'active' || bot.getStatus() === 'connected' || bot.getStatus() === 'healthy' || bot.getStatus() === 'idle' || bot.getStatus() === 'warning'
     );
-    const apiStatuses = container.resolve(ApiMonitorService).getAllStatuses();
+    const apiMonitorService = container.resolve(ApiMonitorService);
+    const apiStatuses = apiMonitorService.getAllStatuses();
     const externalApisHealthy = Object.values(apiStatuses).every(
       (status: any) => status.status !== 'error' && status.status !== 'offline'
     );
@@ -287,12 +283,7 @@ export const prometheusMetricsHandler = (req: Request, res: Response) => {
   const uptime = process.uptime();
   const memoryUsage = process.memoryUsage();
   const cpuUsage = process.cpuUsage();
-  const startTimeSecs = Date.now() / 1000 - uptime;
-  const metrics = `# HELP process_start_time_seconds Start time of the process since unix epoch in seconds
-# TYPE process_start_time_seconds gauge
-process_start_time_seconds ${startTimeSecs}
-
-# HELP process_uptime_seconds Process uptime in seconds
+  const metrics = `# HELP process_uptime_seconds Process uptime in seconds
 # TYPE process_uptime_seconds gauge
 process_uptime_seconds ${uptime}
 
@@ -312,10 +303,6 @@ process_resident_memory_bytes ${memoryUsage.rss}
 # TYPE nodejs_heap_size_total_bytes gauge
 nodejs_heap_size_total_bytes ${memoryUsage.heapTotal}
 
-# HELP nodejs_external_memory_bytes Node.js external memory size in bytes
-# TYPE nodejs_external_memory_bytes gauge
-nodejs_external_memory_bytes ${memoryUsage.external}
-
 # HELP process_cpu_user_seconds_total Total user CPU time spent in seconds
 # TYPE process_cpu_user_seconds_total counter
 process_cpu_user_seconds_total ${cpuUsage.user / 1000000}
@@ -327,10 +314,8 @@ process_cpu_system_seconds_total ${cpuUsage.system / 1000000}
 # HELP nodejs_version_info Node.js version info
 # TYPE nodejs_version_info gauge
 nodejs_version_info{version="${process.version}"} 1
-
-${MetricsCollector.getInstance().getPrometheusFormat()}
 `;
-  res.set('Content-Type', 'text/plain; version=0.0.4; charset=utf-8');
+  res.set('Content-Type', 'text/plain');
   res.send(metrics);
 };
 
@@ -485,24 +470,23 @@ router.delete('/api-endpoints/:id', (req, res) => {
   try {
     const endpoint = apiMonitor.getEndpoint(req.params.id);
     if (!endpoint) {
-      return res.status(200).json({
-        success: true,
-        message: 'Endpoint already removed or not found',
+      return res.status(404).json({
+        error: 'Failed to remove endpoint',
+        message: 'Endpoint not found',
         timestamp: new Date().toISOString(),
       });
     }
     apiMonitor.removeEndpoint(req.params.id);
 
     return res.json({
-      success: true,
       message: 'Endpoint removed successfully',
       removedEndpoint: endpoint,
       timestamp: new Date().toISOString(),
     });
   } catch (error) {
-    return res.status(500).json({
+    return res.status(404).json({
       error: 'Failed to remove endpoint',
-      message: error instanceof Error ? error.message : 'An error occurred during removal',
+      message: error instanceof Error ? error.message : 'Endpoint not found',
       timestamp: new Date().toISOString(),
     });
   }
