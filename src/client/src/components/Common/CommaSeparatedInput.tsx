@@ -12,6 +12,8 @@ export interface CommaSeparatedInputProps {
   tagColor?: (tag: string) => string;
   error?: string;
   validate?: (item: string) => string | null;
+  normalize?: (token: string) => string;
+  maxTokenLength?: number;
 }
 
 export const CommaSeparatedInput: React.FC<CommaSeparatedInputProps> = ({
@@ -26,6 +28,8 @@ export const CommaSeparatedInput: React.FC<CommaSeparatedInputProps> = ({
   tagColor,
   error,
   validate,
+  normalize = (t) => t.trim(),
+  maxTokenLength,
 }) => {
   const [inputValue, setInputValue] = useState('');
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -76,8 +80,9 @@ export const CommaSeparatedInput: React.FC<CommaSeparatedInputProps> = ({
 
     const current = textToCommit
       .split(',')
-      .map(s => s.trim())
-      .filter(Boolean);
+      .map(s => normalize(s))
+      .filter(Boolean)
+      .map(s => maxTokenLength ? s.slice(0, maxTokenLength) : s);
 
     const next = [...value];
     let changed = false;
@@ -147,9 +152,10 @@ export const CommaSeparatedInput: React.FC<CommaSeparatedInputProps> = ({
     if (!pastedText) return;
 
     const current = pastedText
-      .split(',')
-      .map(s => s.trim())
-      .filter(Boolean);
+      .split(/[,\n]/)
+      .map(s => normalize(s))
+      .filter(Boolean)
+      .map(s => maxTokenLength ? s.slice(0, maxTokenLength) : s);
 
     const next = [...value];
     let changed = false;
