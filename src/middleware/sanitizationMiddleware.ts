@@ -4,9 +4,10 @@ import type { NextFunction, Request, Response } from 'express';
 // Cleans and sanitizes user input to prevent XSS and injection attacks
 
 /**
- * Sanitizes a string value by escaping HTML entities
+ * Sanitizes a string value by escaping HTML entities.
+ * Exported for unit testing.
  */
-function sanitizeString(value: string): string {
+export function sanitizeString(value: string): string {
   return value
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
