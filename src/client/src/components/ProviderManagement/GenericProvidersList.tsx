@@ -32,7 +32,6 @@ interface GenericProvidersListProps {
   onAddProfile: () => void;
   onEditProfile: (profile: ProfileItem) => void;
   onDeleteProfile: (key: string) => void;
-  onDuplicateProfile?: (profile: ProfileItem) => void;
   getProviderIcon: (type: string) => React.ReactNode;
   renderExtraBadges?: (profile: ProfileItem) => React.ReactNode;
 }
@@ -46,7 +45,6 @@ const GenericProvidersList: React.FC<GenericProvidersListProps> = ({
   onAddProfile,
   onEditProfile,
   onDeleteProfile,
-  onDuplicateProfile,
   getProviderIcon,
   renderExtraBadges,
 }) => {
@@ -129,11 +127,6 @@ const GenericProvidersList: React.FC<GenericProvidersListProps> = ({
                     <Button size="sm" variant="ghost" onClick={() => onEditProfile(profile)}>
                       <EditIcon className="w-4 h-4" />
                     </Button>
-                    {onDuplicateProfile && (
-                      <Button size="sm" variant="ghost" onClick={() => onDuplicateProfile(profile)} title="Duplicate">
-                        <ConfigIcon className="w-4 h-4" />
-                      </Button>
-                    )}
                     <Button size="sm" variant="ghost" className="text-error hover:bg-error/10" onClick={() => onDeleteProfile(profile.key)}>
                       <DeleteIcon className="w-4 h-4" />
                     </Button>

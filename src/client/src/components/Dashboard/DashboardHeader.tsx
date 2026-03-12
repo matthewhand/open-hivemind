@@ -1,3 +1,5 @@
 import React from 'react';
 
-export const DashboardHeader = (props: any) => <div>Dashboard Header</div>;
+export const DashboardHeader: React.FC<any> = () => {
+  return null;
+};

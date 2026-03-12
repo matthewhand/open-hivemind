@@ -6,7 +6,7 @@ import Card from './DaisyUI/Card';
 import Input from './DaisyUI/Input';
 import Select from './DaisyUI/Select';
 import Toggle from './DaisyUI/Toggle';
-import Loading from './DaisyUI/Loading';
+import { LoadingSpinner as Loading } from './DaisyUI/Loading';
 import Textarea from './DaisyUI/Textarea';
 import Modal from './DaisyUI/Modal';
 import Badge from './DaisyUI/Badge';
@@ -302,7 +302,7 @@ const IntegrationsPanel: React.FC = () => {
               className={`join-item w-full input-sm ${isLocked ? 'input-disabled bg-base-200 text-base-content/50' : ''}`}
               placeholder={isReadOnly ? 'Protected Value' : ''}
             />
-            {isLocked && <button aria-label="Setting is locked" className="btn btn-sm btn-square join-item btn-disabled"><LockClosedIcon className="w-4 h-4" /></button>}
+            {isLocked && <button className="btn btn-sm btn-square join-item btn-disabled"><LockClosedIcon className="w-4 h-4" /></button>}
           </div>
         )}
         {type === 'select' && (
