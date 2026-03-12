@@ -166,12 +166,68 @@ export const CommaSeparatedInput: React.FC<CommaSeparatedInputProps> = ({
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newVal = e.target.value;
-    if (newVal.includes(',')) {
-      // Allow pasting multiple comma-separated items or typing a comma
-      commitInput(newVal);
+    const val = e.target.value;
+
+    if (val.includes(',')) {
+      // Split the current value into potential items
+      const parts = val.split(',');
+      const lastPart = parts.pop() || ''; // The remainder after the last comma
+
+      const validParts = parts.map(p => p.trim()).filter(Boolean);
+
+      if (validParts.length > 0) {
+        const next = [...value];
+        let changed = false;
+        let localError: string | null = null;
+        const uncommittedParts: string[] = [];
+
+        for (const item of validParts) {
+          // If we've hit max items, keep the rest in the input
+          if (next.length >= maxItems) {
+            uncommittedParts.push(item);
+            continue;
+          }
+
+          if (validate) {
+            const validationError = validate(item);
+            if (validationError) {
+              localError = validationError;
+              uncommittedParts.push(item);
+              // Stop processing if one fails validation, keep the rest uncommitted
+              continue;
+            }
+          }
+
+          if (!next.includes(item)) {
+            next.push(item);
+            changed = true;
+          }
+        }
+
+        setInternalError(localError);
+        setIsTouched(true);
+
+        if (changed) {
+          pushToHistory(next);
+          onChange(next);
+        }
+
+        // Reconstruct the input value using any uncommitted parts plus the remainder
+        let nextInputValue = uncommittedParts.join(', ');
+        if (uncommittedParts.length > 0 && lastPart) {
+           nextInputValue += ', ' + lastPart.trimStart();
+        } else if (lastPart) {
+           nextInputValue = lastPart.trimStart();
+        }
+
+        setInputValue(nextInputValue);
+        setShowSuggestions(false);
+      } else {
+        // Commas were typed but no valid text existed before them
+        setInputValue(lastPart.trimStart());
+      }
     } else {
-      setInputValue(newVal);
+      setInputValue(val);
       setShowSuggestions(true);
       if (internalError) {
         setInternalError(null);
