@@ -212,7 +212,7 @@ describe('BotManager', () => {
       const bot = await botManager.createBot(createRequest);
 
       expect(bot.name).toBe(createRequest.name);
-      expect(bot.id).toBeDefined();
+      expect(bot.id).toMatch(/\S+/);
       expect(webUIStorage.saveAgent).toHaveBeenCalledWith(
         expect.objectContaining({
           name: createRequest.name,
