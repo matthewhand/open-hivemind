@@ -1,7 +1,9 @@
 import { Router, type Request, type Response } from 'express';
 import { getAgent, listAgents } from '@hivemind/llm-letta';
+import { createLogger } from '@src/common/StructuredLogger';
 
 const router = Router();
+const logger = createLogger('routes:letta');
 
 /**
  * GET /api/letta/agents - List available Letta agents
@@ -28,7 +30,10 @@ router.get('/agents', async (req: Request, res: Response) => {
     return res.json(agents);
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Unknown error';
-    console.error('Letta agents lookup error:', error);
+    logger.error(
+      'Letta agents lookup error:',
+      error instanceof Error ? error : new Error(String(error))
+    );
     return res.status(500).json({
       error: 'Letta API Error',
       message,
@@ -60,7 +65,10 @@ router.get('/agents/:id', async (req: Request, res: Response) => {
     return res.json(agent);
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Unknown error';
-    console.error('Letta agent details error:', error);
+    logger.error(
+      'Letta agent details error:',
+      error instanceof Error ? error : new Error(String(error))
+    );
     return res.status(500).json({
       error: 'Letta API Error',
       message,
