@@ -200,16 +200,10 @@ router.get('/ready', (req, res) => {
 
 // Liveness probe
 router.get('/live', (req, res) => {
-  const mem = process.memoryUsage();
-  const heapUsedMb = mem.heapUsed / 1024 / 1024;
-  const heapTotalMb = mem.heapTotal / 1024 / 1024;
-  const heapPressure = heapTotalMb > 0 ? heapUsedMb / heapTotalMb : 0;
-  const alive = heapPressure < 0.95; // fail liveness if heap > 95%
-  return res.status(alive ? 200 : 503).json({
-    alive,
+  // Simple liveness check - if we can respond, we're alive
+  return res.json({
+    alive: true,
     timestamp: new Date().toISOString(),
-    heapUsedMb: Math.round(heapUsedMb),
-    heapPressure: Math.round(heapPressure * 100) + '%',
   });
 });
 
