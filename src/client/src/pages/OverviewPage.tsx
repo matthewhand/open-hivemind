@@ -1,8 +1,6 @@
 import React from 'react';
-import Dashboard from '../components/Dashboard';
-
 const OverviewPage: React.FC = () => {
-  return <Dashboard />;
+  return <div>Unified Dashboard is temporarily disabled due to missing modules on the main branch.</div>;
 };
 
 export default OverviewPage;
