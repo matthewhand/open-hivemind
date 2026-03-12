@@ -3,7 +3,7 @@ import React from 'react';
 interface PageHeaderProps {
     title: string;
     description?: string;
-    icon?: React.ReactNode | React.ComponentType<{ className?: string }>;
+    icon?: React.ReactNode;
     actions?: React.ReactNode;
     gradient?: 'primary' | 'secondary' | 'accent' | 'success' | 'warning' | 'error';
     className?: string;
@@ -34,14 +34,11 @@ const iconBgMap = {
 const PageHeader: React.FC<PageHeaderProps> = ({
   title,
   description,
-  icon: iconProp,
+  icon,
   actions,
   gradient = 'primary',
   className = '',
 }) => {
-  const icon = typeof iconProp === 'function'
-    ? React.createElement(iconProp as React.ComponentType<{ className?: string }>, { className: 'w-6 h-6' })
-    : iconProp;
   return (
     <div
       className={`
