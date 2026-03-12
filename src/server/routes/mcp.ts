@@ -339,7 +339,9 @@ router.delete('/servers/:name', async (req, res) => {
     const filteredServers = servers.filter((s) => s.name !== name);
 
     if (filteredServers.length === servers.length) {
-      return res.status(200).json({ success: true, message: 'MCP server already deleted or not found' });
+      return res
+        .status(200)
+        .json({ success: true, message: 'MCP server already deleted or not found' });
     }
 
     await saveMCPServers(filteredServers);
