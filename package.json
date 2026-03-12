@@ -11,6 +11,7 @@
     "packages/*"
   ],
   "scripts": {
+    "check:workspace-deps": "node scripts/sync-deps.js",
     "lint": "node ./node_modules/eslint/bin/eslint.js src/",
     "lint:fix": "node ./node_modules/eslint/bin/eslint.js src/ --fix",
     "format": "node ./node_modules/prettier/bin/prettier.cjs --write \"src/**/*.ts\" \"src/**/*.tsx\" \"tests/**/*.ts\" \"packages/**/*.ts\"",
