@@ -682,3 +682,20 @@ export function generatePerformanceTestData(
     expected: { command: `${prefix}${i}`, args: [`arg${i}`] },
   }));
 }
+
+/**
+ * Factory for creating mock bot instances in tests
+ */
+export function createMockBot(overrides: Record<string, any> = {}): Record<string, any> {
+  return {
+    id: `bot-${Math.random().toString(36).slice(2, 9)}`,
+    name: 'Test Bot',
+    status: 'inactive',
+    messageProviders: [],
+    llmProviders: [],
+    config: {},
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+    ...overrides,
+  };
+}
