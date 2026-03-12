@@ -1,38 +1,19 @@
 import { useMemo } from 'react';
 
-export interface DashboardBot {
-  id: string;
-  name: string;
-  status: string;
-  [key: string]: unknown;
-}
-
-export interface StatCard {
-  title: string;
-  value: number | string;
-  description: string;
-  icon: string;
-}
-
 export const useDashboardStats = (
-  bots: DashboardBot[],
-  statusBots: DashboardBot[],
+  bots: any[],
+  statusBots: any[],
   activeBotCount: number,
   totalMessages: number,
   activeConnections: number,
   totalErrors: number,
   uptime: number
 ) => {
-  const errorRate = useMemo(
-    () => (totalMessages > 0 ? ((totalErrors / totalMessages) * 100).toFixed(1) : '0.0'),
-    [totalErrors, totalMessages]
-  );
-
-  const statsCards = useMemo((): StatCard[] => [
+  const statsCards = useMemo(() => [
     {
       title: 'Total Bots',
       value: bots.length,
-      description: `${activeBotCount} active`,
+      description: 'Configured bots',
       icon: '🤖',
     },
     {
@@ -50,7 +31,7 @@ export const useDashboardStats = (
     {
       title: 'Total Errors',
       value: totalErrors,
-      description: `${errorRate}% error rate`,
+      description: 'Errors encountered',
       icon: '⚠️',
     },
     {
@@ -59,7 +40,7 @@ export const useDashboardStats = (
       description: 'System uptime',
       icon: '⏱️',
     },
-  ], [bots.length, activeBotCount, activeConnections, totalMessages, totalErrors, errorRate, uptime]);
+  ], [bots.length, activeConnections, totalMessages, totalErrors, uptime]);
 
-  return { statsCards, errorRate, activeBotCount };
+  return { statsCards };
 };
