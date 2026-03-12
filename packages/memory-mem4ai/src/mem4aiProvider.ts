@@ -28,6 +28,20 @@ export interface SearchResult {
     timestamp?: number;
 }
 
+export interface Mem4aiCreateResponse {
+    id: string;
+    content: string;
+    metadata?: Record<string, unknown>;
+    created_at?: number;
+    tags?: string[];
+}
+
+export interface Mem4aiErrorResponse {
+    error: string;
+    message?: string;
+    status?: number;
+}
+
 /**
  * Mem4ai Memory Provider implementation
  * 
@@ -81,7 +95,7 @@ export class Mem4aiProvider {
         };
 
         try {
-            const response = await this.makeRequest('/memories', 'POST', body) as Record<string, unknown>;
+            const response = await this.makeRequest<Mem4aiCreateResponse>('/memories', 'POST', body);
 
             this.debug('Memory added successfully', { id: response.id });
             return {
