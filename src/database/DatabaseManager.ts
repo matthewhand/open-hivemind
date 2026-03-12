@@ -1208,10 +1208,9 @@ export class DatabaseManager {
     if (ids.length === 0) return [];
 
     try {
-      const placeholders = ids.map(() => '?').join(',');
       const rows = await this.db!.all(
-        `SELECT * FROM bot_configurations WHERE id IN (${placeholders})`,
-        ids
+        `SELECT * FROM bot_configurations WHERE id IN (SELECT value FROM json_each(?))`,
+        [JSON.stringify(ids)]
       );
 
       return rows.map((row) => ({
@@ -1578,10 +1577,9 @@ export class DatabaseManager {
     }
 
     try {
-      const placeholders = botConfigurationIds.map(() => '?').join(',');
       const rows = await this.db!.all(
-        `SELECT * FROM bot_configuration_versions WHERE botConfigurationId IN (${placeholders}) ORDER BY botConfigurationId, version DESC`,
-        botConfigurationIds
+        `SELECT * FROM bot_configuration_versions WHERE botConfigurationId IN (SELECT value FROM json_each(?)) ORDER BY botConfigurationId, version DESC`,
+        [JSON.stringify(botConfigurationIds)]
       );
 
       const versionsMap = new Map<number, BotConfigurationVersion[]>();
@@ -1695,10 +1693,9 @@ export class DatabaseManager {
     }
 
     try {
-      const placeholders = botConfigurationIds.map(() => '?').join(',');
       const rows = await this.db!.all(
-        `SELECT * FROM bot_configuration_audit WHERE botConfigurationId IN (${placeholders}) ORDER BY botConfigurationId, performedAt DESC`,
-        botConfigurationIds
+        `SELECT * FROM bot_configuration_audit WHERE botConfigurationId IN (SELECT value FROM json_each(?)) ORDER BY botConfigurationId, performedAt DESC`,
+        [JSON.stringify(botConfigurationIds)]
       );
 
       const auditMap = new Map<number, BotConfigurationAudit[]>();
