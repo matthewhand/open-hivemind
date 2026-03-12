@@ -186,14 +186,17 @@ router.get('/alerts', (req, res) => {
 router.get('/ready', (req, res) => {
   const apiMonitor = ApiMonitorService.getInstance();
   const overallHealth = apiMonitor.getOverallHealth();
-  const isReady = overallHealth.status !== 'error';
+  const uptimeSecs = process.uptime();
+  const isReady = overallHealth.status !== 'error' && uptimeSecs > 5;
 
   return res.status(isReady ? 200 : 503).json({
     ready: isReady,
     timestamp: new Date().toISOString(),
+    uptimeSecs: Math.floor(uptimeSecs),
     checks: {
       external_apis: overallHealth.status,
       configuration: true,
+      startup_grace: uptimeSecs > 5,
     },
   });
 });
