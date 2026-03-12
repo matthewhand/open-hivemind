@@ -26,6 +26,9 @@ importers:
       '@heroicons/react':
         specifier: ^2.2.0
         version: 2.2.0(react@19.2.4)
+      '@letta-ai/letta-client':
+        specifier: ^1.7.12
+        version: 1.7.12
       '@modelcontextprotocol/sdk':
         specifier: 1.0.1
         version: 1.0.1
@@ -188,6 +191,9 @@ importers:
       openai:
         specifier: ^4.82.0
         version: 4.104.0(encoding@0.1.13)(ws@8.19.0)(zod@3.24.2)
+      pg:
+        specifier: ^8.20.0
+        version: 8.20.0
       pino-pretty:
         specifier: ^11.2.2
         version: 11.3.0
@@ -3250,9 +3256,6 @@ packages:
 
   '@sinonjs/text-encoding@0.7.3':
     resolution: {integrity: sha512-DE427ROAphMQzU4ENbliGYrBSYPXF+TtLg9S8vzeA+OF4ZKzoDdzfL8sxuMUGS/lgRhM6j1URSk9ghf7Xo1tyA==}
-    deprecated: |-
-      Deprecated: no longer maintained and no longer used by Sinon packages. See
-        https://github.com/sinonjs/nise/issues/243 for replacement details.
 
   '@slack/logger@4.0.0':
     resolution: {integrity: sha512-Wz7QYfPAlG/DR+DfABddUZeNgoeY7d1J39OCR2jR+v7VBsB8ezulDK5szTnDDPDwLH5IWhLvXIHlCFZV7MSKgA==}

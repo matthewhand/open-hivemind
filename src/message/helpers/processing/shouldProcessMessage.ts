@@ -22,7 +22,7 @@ export function getMinIntervalMs(): number {
 /**
  * Gets the default channel ID from the appropriate config based on provider.
  */
-export function getDefaultChannelId(): string {
+function getDefaultChannelId(): string {
   try {
     // Try Discord config first
     const discordConfig = require('@config/discordConfig').default;
