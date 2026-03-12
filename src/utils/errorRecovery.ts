@@ -661,35 +661,6 @@ export function registerFallback(operationKey: string, fallback: () => Promise<a
   globalRecoveryManager.registerFallback(operationKey, fallback);
 }
 
-/**
- * Check whether an HTTP status code should trigger a retry based on config.
- * Useful for fetch/axios callers that need to decide before throwing.
- */
-export function isRetryableHttpError(statusCode: number, config: Partial<RetryConfig> = {}): boolean {
-  const codes = config.retryableStatusCodes ?? DEFAULT_RETRY_CONFIG.retryableStatusCodes;
-  return codes.includes(statusCode);
-}
-
-/**
- * Combine retry + timeout: retries the operation up to maxRetries times,
- * each attempt subject to an individual timeoutMs deadline.
- */
-export async function withRetryAndTimeout<T>(
-  fn: () => Promise<T>,
-  timeoutMs: number,
-  retryConfig?: Partial<RetryConfig>
-): Promise<RecoveryResult<T>> {
-  const handler = globalRecoveryManager.getRetryHandler('retryAndTimeout', retryConfig);
-  return handler.executeWithRetry(() =>
-    Promise.race([
-      fn(),
-      new Promise<never>((_, reject) =>
-        setTimeout(() => reject(new TimeoutError('Operation timed out', timeoutMs)), timeoutMs)
-      ),
-    ])
-  ) as Promise<RecoveryResult<T>>;
-}
-
 export default {
   RetryHandler,
   CircuitBreaker,
@@ -698,8 +669,6 @@ export default {
   globalRecoveryManager,
   executeWithRecovery,
   registerFallback,
-  isRetryableHttpError,
-  withRetryAndTimeout,
   DEFAULT_RETRY_CONFIG,
   DEFAULT_CIRCUIT_BREAKER_CONFIG,
 };
