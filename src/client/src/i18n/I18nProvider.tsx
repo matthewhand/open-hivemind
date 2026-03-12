@@ -36,6 +36,12 @@ const translations: Record<Language, Record<string, string>> = {
     'dashboard.getting_started.subtitle': 'Let\'s get your multi-agent system up and running. Follow the steps below to configure your environment.',
     'status.online': 'Online',
     'status.offline': 'Offline',
+    'nav.dashboard': 'Dashboard',
+    'nav.bots': 'Bots',
+    'nav.settings': 'Settings',
+    'nav.monitoring': 'Monitoring',
+    'nav.chat': 'Chat',
+    'nav.personas': 'Personas',
   },
   es: {
     'app.title': 'Mente Colmena Abierta',
@@ -50,6 +56,8 @@ const translations: Record<Language, Record<string, string>> = {
     'nav.bots': 'Bots',
     'nav.settings': 'Configuración',
     'nav.monitoring': 'Monitoreo',
+    'nav.chat': 'Chat',
+    'nav.personas': 'Personas',
   },
   fr: {
     'app.title': 'Esprit de Ruche Ouvert',
@@ -64,6 +72,8 @@ const translations: Record<Language, Record<string, string>> = {
     'nav.bots': 'Bots',
     'nav.settings': 'Paramètres',
     'nav.monitoring': 'Surveillance',
+    'nav.chat': 'Chat',
+    'nav.personas': 'Personas',
   },
   de: {
     'app.title': 'Offenes Bienenvolk',
@@ -78,6 +88,8 @@ const translations: Record<Language, Record<string, string>> = {
     'nav.bots': 'Bots',
     'nav.settings': 'Einstellungen',
     'nav.monitoring': 'Überwachung',
+    'nav.chat': 'Chat',
+    'nav.personas': 'Personas',
   },
   zh: {
     'app.title': '开放蜂巢思维',
@@ -92,6 +104,8 @@ const translations: Record<Language, Record<string, string>> = {
     'nav.bots': '机器人',
     'nav.settings': '设置',
     'nav.monitoring': '监控',
+    'nav.chat': '聊天',
+    'nav.personas': '角色',
   },
 };
 
