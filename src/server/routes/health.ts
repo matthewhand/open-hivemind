@@ -286,7 +286,12 @@ export const prometheusMetricsHandler = (req: Request, res: Response) => {
   const uptime = process.uptime();
   const memoryUsage = process.memoryUsage();
   const cpuUsage = process.cpuUsage();
-  const metrics = `# HELP process_uptime_seconds Process uptime in seconds
+  const startTimeSecs = (Date.now() / 1000) - uptime;
+  const metrics = `# HELP process_start_time_seconds Start time of the process since unix epoch in seconds
+# TYPE process_start_time_seconds gauge
+process_start_time_seconds ${startTimeSecs}
+
+# HELP process_uptime_seconds Process uptime in seconds
 # TYPE process_uptime_seconds gauge
 process_uptime_seconds ${uptime}
 
@@ -306,6 +311,10 @@ process_resident_memory_bytes ${memoryUsage.rss}
 # TYPE nodejs_heap_size_total_bytes gauge
 nodejs_heap_size_total_bytes ${memoryUsage.heapTotal}
 
+# HELP nodejs_external_memory_bytes Node.js external memory size in bytes
+# TYPE nodejs_external_memory_bytes gauge
+nodejs_external_memory_bytes ${memoryUsage.external}
+
 # HELP process_cpu_user_seconds_total Total user CPU time spent in seconds
 # TYPE process_cpu_user_seconds_total counter
 process_cpu_user_seconds_total ${cpuUsage.user / 1000000}
@@ -317,8 +326,10 @@ process_cpu_system_seconds_total ${cpuUsage.system / 1000000}
 # HELP nodejs_version_info Node.js version info
 # TYPE nodejs_version_info gauge
 nodejs_version_info{version="${process.version}"} 1
+
+${MetricsCollector.getInstance().getPrometheusFormat()}
 `;
-  res.set('Content-Type', 'text/plain');
+  res.set('Content-Type', 'text/plain; version=0.0.4; charset=utf-8');
   res.send(metrics);
 };
 

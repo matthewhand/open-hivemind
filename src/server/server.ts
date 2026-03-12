@@ -23,7 +23,7 @@ import dashboardRouter from './routes/dashboard';
 import errorsRouter from './routes/errors';
 // Route imports
 import guardsRouter from './routes/guards';
-import healthRouter from './routes/health';
+import healthRouter, { prometheusMetricsHandler } from './routes/health';
 import hotReloadRouter from './routes/hotReload';
 import importExportRouter from './routes/importExport';
 import mcpRouter from './routes/mcp';
@@ -163,6 +163,9 @@ export class WebUIServer {
   private setupRoutes(): void {
     // Health check (no auth required) - mount at /health for backward compatibility
     this.app.use('/health', healthRouter);
+
+    // Prometheus metrics endpoint directly on root for standard scrapers
+    this.app.get('/metrics', prometheusMetricsHandler);
 
     // Sitemap routes (no auth required)
     this.app.use('/', sitemapRouter);
