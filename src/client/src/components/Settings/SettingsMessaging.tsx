@@ -1,8 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
-import React, { useState, useEffect, useCallback } from 'react';
-import { Alert } from '../DaisyUI/Alert';
-import Toggle from '../DaisyUI/Toggle';
-import Button from '../DaisyUI/Button';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { Alert, Toggle, Button } from '../DaisyUI';
 import { MessageSquare, Bot, Users, Zap, Info } from 'lucide-react';
 
 interface MessagingConfig {
@@ -33,6 +31,15 @@ const SettingsMessaging: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [alert, setAlert] = useState<{ type: 'success' | 'error' | 'warning', message: string } | null>(null);
+  const alertTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (alertTimerRef.current) {
+        clearTimeout(alertTimerRef.current);
+      }
+    };
+  }, []);
 
   const fetchSettings = useCallback(async () => {
     try {
@@ -101,7 +108,10 @@ const SettingsMessaging: React.FC = () => {
 
       if (!response.ok) { throw new Error('Failed to save settings'); }
       setAlert({ type: 'success', message: 'Messaging settings saved! Restart may be required.' });
-      setTimeout(() => setAlert(null), 5000);
+      if (alertTimerRef.current) {
+        clearTimeout(alertTimerRef.current);
+      }
+      alertTimerRef.current = setTimeout(() => setAlert(null), 5000);
     } catch {
       setAlert({
         type: 'error',
