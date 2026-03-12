@@ -18,6 +18,29 @@ export class MigrationManager {
     this.loadMigrations();
   }
 
+  /**
+   * Checks if SQLite version supports DROP COLUMN (requires 3.35.0+)
+   * @returns true if DROP COLUMN is supported
+   */
+  private async supportsDropColumn(): Promise<boolean> {
+    try {
+      const result = await this.db.get('SELECT sqlite_version() as version');
+      const version = result?.version || '3.0.0';
+      const [major, minor] = version.split('.').map(Number);
+      const supported = major > 3 || (major === 3 && minor >= 35);
+      if (!supported) {
+        Logger.warn(
+          `SQLite version ${version} does not support DROP COLUMN. ` +
+            `Minimum required: 3.35.0. Rollback operations may fail.`
+        );
+      }
+      return supported;
+    } catch {
+      // If we can't check version, assume it's supported
+      return true;
+    }
+  }
+
   private loadMigrations(): void {
     // Define all migrations here
     this.migrations = [
@@ -53,6 +76,10 @@ export class MigrationManager {
           );
         },
         down: async (db: any) => {
+          // Check SQLite version for DROP COLUMN support (requires 3.35.0+)
+          const manager = new MigrationManager(db);
+          await manager['supportsDropColumn']();
+
           await db.exec('DROP INDEX IF EXISTS idx_bot_configuration_audit_tenant');
           await db.exec('DROP INDEX IF EXISTS idx_bot_configuration_versions_tenant');
           await db.exec('DROP INDEX IF EXISTS idx_bot_metrics_tenant');
