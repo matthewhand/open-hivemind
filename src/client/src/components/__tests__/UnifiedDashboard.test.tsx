@@ -6,6 +6,7 @@ import '@testing-library/jest-dom';
 import { BrowserRouter } from 'react-router-dom';
 import { ToastProvider } from '../DaisyUI/ToastNotification';
 import { ToastProvider } from '../DaisyUI/ToastNotification';
+import { ToastProvider } from '../DaisyUI/ToastNotification';
 import UnifiedDashboard from '../UnifiedDashboard';
 import { apiService } from '../../services/api';
 
@@ -79,7 +80,7 @@ describe('UnifiedDashboard', () => {
 
     render(
       <BrowserRouter>
-        <ToastProvider><ToastProvider><UnifiedDashboard /></ToastProvider></ToastProvider>
+        <ToastProvider><ToastProvider><ToastProvider><UnifiedDashboard /></ToastProvider></ToastProvider></ToastProvider>
       </BrowserRouter>
     );
 
@@ -108,7 +109,7 @@ describe('UnifiedDashboard', () => {
 
     render(
       <BrowserRouter>
-        <ToastProvider><ToastProvider><UnifiedDashboard /></ToastProvider></ToastProvider>
+        <ToastProvider><ToastProvider><ToastProvider><UnifiedDashboard /></ToastProvider></ToastProvider></ToastProvider>
       </BrowserRouter>
     );
 
@@ -143,7 +144,7 @@ describe('UnifiedDashboard', () => {
 
     render(
       <BrowserRouter>
-        <ToastProvider><ToastProvider><UnifiedDashboard /></ToastProvider></ToastProvider>
+        <ToastProvider><ToastProvider><ToastProvider><UnifiedDashboard /></ToastProvider></ToastProvider></ToastProvider>
       </BrowserRouter>
     );
 
@@ -187,7 +188,7 @@ describe('UnifiedDashboard', () => {
 
     render(
       <BrowserRouter>
-        <ToastProvider><ToastProvider><UnifiedDashboard /></ToastProvider></ToastProvider>
+        <ToastProvider><ToastProvider><ToastProvider><UnifiedDashboard /></ToastProvider></ToastProvider></ToastProvider>
       </BrowserRouter>
     );
 

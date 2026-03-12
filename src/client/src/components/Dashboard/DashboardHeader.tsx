@@ -8,9 +8,6 @@ interface DashboardHeaderProps {
   isModalDataLoading: boolean;
   handleRefresh: () => void;
   refreshing: boolean;
-  title?: string;
-  description?: string;
-  createLabel?: string;
 }
 
 export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
@@ -18,16 +15,13 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
   isModalDataLoading,
   handleRefresh,
   refreshing,
-  title = 'Command Center',
-  description = 'Unified view of your bots, personas, LLMs, and system status',
-  createLabel = 'Create Bot',
 }) => {
   return (
     <div className="relative overflow-hidden bg-gradient-to-r from-primary/10 via-primary/5 to-base-100 rounded-2xl p-6 md:p-8 mb-6 border border-primary/10">
       <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
         <PageHeader
-          title={title}
-          description={description}
+          title="Command Center"
+          description="Unified view of your bots, personas, LLMs, and system status"
           icon={<LayoutDashboard className="w-8 h-8 text-primary" />}
         />
         <div className="flex gap-3">
@@ -50,7 +44,7 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
             disabled={isModalDataLoading}
             aria-label="Create new bot"
           >
-            {createLabel}
+            Create Bot
           </Button>
         </div>
       </div>
