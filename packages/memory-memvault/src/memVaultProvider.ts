@@ -75,15 +75,34 @@ export class MemVaultProvider {
     async initialize(): Promise<void> {
         this.debug('Initializing MemVault database connection');
 
+        // Enforce sensible bounds for connection pool size to prevent exhaustion
+        let maxConnections = this.config.max ?? DEFAULT_MEMVAULT_CONFIG.max ?? 10;
+        if (maxConnections < 1) maxConnections = 1;
+        if (maxConnections > 100) maxConnections = 100;
+
         this.pool = new Pool({
             host: this.config.host,
             port: this.config.port,
             database: this.config.database,
             user: this.config.user,
             password: this.config.password,
-            max: this.config.max,
-            idleTimeoutMillis: this.config.idleTimeoutMillis,
-            connectionTimeoutMillis: this.config.connectionTimeoutMillis,
+            max: maxConnections,
+            idleTimeoutMillis: this.config.idleTimeoutMillis ?? DEFAULT_MEMVAULT_CONFIG.idleTimeoutMillis,
+            connectionTimeoutMillis: this.config.connectionTimeoutMillis ?? DEFAULT_MEMVAULT_CONFIG.connectionTimeoutMillis,
+        });
+
+        // Prevent process crashes on idle client errors
+        this.pool.on('error', (err) => {
+            this.debug('Unexpected error on idle MemVault pg client', err);
+        });
+        this.pool.on('connect', () => {
+            this.debug('New MemVault pg client connected', this.poolStats());
+        });
+        this.pool.on('acquire', () => {
+            const stats = this.poolStats();
+            if (stats.waitingCount > 0) {
+                this.debug('MemVault pool under pressure', stats);
+            }
         });
 
         await this.ensureDatabaseExtensions();
@@ -358,10 +377,23 @@ export class MemVaultProvider {
 
         try {
             await this.pool.query('SELECT 1');
+            this.debug('MemVault health check passed', this.poolStats());
             return true;
         } catch {
             return false;
         }
+    }
+
+    /**
+     * Return current pool statistics for health monitoring
+     */
+    poolStats(): { totalCount: number; idleCount: number; waitingCount: number } {
+        if (!this.pool) return { totalCount: 0, idleCount: 0, waitingCount: 0 };
+        return {
+            totalCount: this.pool.totalCount,
+            idleCount: this.pool.idleCount,
+            waitingCount: this.pool.waitingCount,
+        };
     }
 
     /**

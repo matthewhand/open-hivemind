@@ -6,6 +6,7 @@ jest.mock('pg', () => ({
     Pool: jest.fn().mockImplementation(() => ({
         query: jest.fn(),
         end: jest.fn(),
+        on: jest.fn(),
     })),
 }));
 
