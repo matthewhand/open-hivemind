@@ -319,6 +319,7 @@ const ChatPage: React.FC = () => {
               <ChatInterface
                 messages={messages}
                 onSendMessage={handleSendMessage}
+                onRetryMessage={handleRetryMessage}
                 placeholder="Type a message..."
                 className="h-full"
                 maxHeight="100%"
