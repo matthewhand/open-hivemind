@@ -12,15 +12,13 @@ export interface CommaSeparatedInputProps {
   tagColor?: (tag: string) => string;
   error?: string;
   validate?: (item: string) => string | null;
-  /** Additional delimiter characters besides comma. E.g. [';'] to also split on semicolons. */
-  extraDelimiters?: string[];
 }
 
 export const CommaSeparatedInput: React.FC<CommaSeparatedInputProps> = ({
   value,
   onChange,
   maxItems = 20,
-  placeholder = 'Type and press Enter, Tab, or comma',
+  placeholder = 'Type and press Enter or comma',
   disabled = false,
   id,
   className = '',
@@ -28,12 +26,7 @@ export const CommaSeparatedInput: React.FC<CommaSeparatedInputProps> = ({
   tagColor,
   error,
   validate,
-  extraDelimiters = [],
 }) => {
-  const delimiterRegex = React.useMemo(() => {
-    const escaped = [',', ...extraDelimiters].map(d => d.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
-    return new RegExp(`[${escaped.join('')}]`);
-  }, [extraDelimiters]);
   const [inputValue, setInputValue] = useState('');
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [internalError, setInternalError] = useState<string | null>(null);
@@ -119,7 +112,7 @@ export const CommaSeparatedInput: React.FC<CommaSeparatedInputProps> = ({
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter' || e.key === 'Tab') {
+    if (e.key === 'Enter') {
       e.preventDefault();
       commitInput();
     } else if (e.key === 'Backspace' && !inputValue && value.length > 0) {
@@ -175,9 +168,9 @@ export const CommaSeparatedInput: React.FC<CommaSeparatedInputProps> = ({
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;
 
-    if (delimiterRegex.test(val)) {
+    if (val.includes(',')) {
       // Split the current value into potential items
-      const parts = val.split(delimiterRegex);
+      const parts = val.split(',');
       const lastPart = parts.pop() || ''; // The remainder after the last comma
 
       const validParts = parts.map(p => p.trim()).filter(Boolean);
@@ -230,7 +223,7 @@ export const CommaSeparatedInput: React.FC<CommaSeparatedInputProps> = ({
         setInputValue(nextInputValue);
         setShowSuggestions(false);
       } else {
-        // Delimiters were typed but no valid text existed before them
+        // Commas were typed but no valid text existed before them
         setInputValue(lastPart.trimStart());
       }
     } else {
