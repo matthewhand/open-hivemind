@@ -61,7 +61,13 @@
       "@hivemind/adapter-slack": ["packages/adapter-slack/src/index.ts"],
       "@hivemind/adapter-slack/*": ["packages/adapter-slack/src/*"],
       "@hivemind/adapter-mattermost": ["packages/adapter-mattermost/src/index.ts"],
-      "@hivemind/adapter-mattermost/*": ["packages/adapter-mattermost/src/*"]
+      "@hivemind/adapter-mattermost/*": ["packages/adapter-mattermost/src/*"],
+      "@hivemind/message-discord": ["packages/message-discord/src/index.ts"],
+      "@hivemind/message-discord/*": ["packages/message-discord/src/*"],
+      "@hivemind/message-slack": ["packages/message-slack/src/index.ts"],
+      "@hivemind/message-slack/*": ["packages/message-slack/src/*"],
+      "@hivemind/message-mattermost": ["packages/message-mattermost/src/index.ts"],
+      "@hivemind/message-mattermost/*": ["packages/message-mattermost/src/*"]
     },
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true
@@ -73,7 +79,10 @@
     "packages/memory-memvault/src/**/*",
     "packages/adapter-discord/src/**/*",
     "packages/adapter-slack/src/**/*",
-    "packages/adapter-mattermost/src/**/*"
+    "packages/adapter-mattermost/src/**/*",
+    "packages/message-discord/src/**/*",
+    "packages/message-slack/src/**/*",
+    "packages/message-mattermost/src/**/*"
   ],
   "exclude": ["tests/**/*", "node_modules", "src/client/**/*"],
   "files": ["src/global.d.ts"]

@@ -3,26 +3,30 @@ import classNames from 'classnames';
 
 
 export interface ToggleProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'size'> {
-    label?: string;
+    label?: React.ReactNode;
     size?: 'xs' | 'sm' | 'md' | 'lg';
     color?: 'primary' | 'secondary' | 'accent' | 'success' | 'warning' | 'info' | 'error';
+    variant?: 'primary' | 'secondary' | 'accent' | 'success' | 'warning' | 'info' | 'error';
 }
 
 const Toggle: React.FC<ToggleProps> = ({
   label,
   size = 'md',
   color,
+  variant,
   className,
   checked,
   onChange,
   ...props
 }) => {
 
+  const activeColor = color || variant;
+
   const toggleClasses = classNames(
     'toggle',
     {
       [`toggle-${size}`]: size,
-      [`toggle-${color}`]: color,
+      [`toggle-${activeColor}`]: activeColor,
     },
     className,
   );
