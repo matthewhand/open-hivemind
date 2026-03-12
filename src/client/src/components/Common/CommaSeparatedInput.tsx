@@ -1,9 +1,4 @@
-import React, { useState, useRef, useEffect, useCallback, forwardRef, useImperativeHandle } from 'react';
-
-export interface CommaSeparatedInputHandle {
-  focus: () => void;
-  clear: () => void;
-}
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 
 export interface CommaSeparatedInputProps {
   value: string[];
@@ -17,11 +12,9 @@ export interface CommaSeparatedInputProps {
   tagColor?: (tag: string) => string;
   error?: string;
   validate?: (item: string) => string | null;
-  onFocus?: () => void;
-  onBlur?: () => void;
 }
 
-export const CommaSeparatedInput = forwardRef<CommaSeparatedInputHandle, CommaSeparatedInputProps>(function CommaSeparatedInput({
+export const CommaSeparatedInput: React.FC<CommaSeparatedInputProps> = ({
   value,
   onChange,
   maxItems = 20,
@@ -33,15 +26,7 @@ export const CommaSeparatedInput = forwardRef<CommaSeparatedInputHandle, CommaSe
   tagColor,
   error,
   validate,
-  onFocus,
-  onBlur: onBlurProp,
-}, ref) {
-  const inputRef = useRef<HTMLInputElement>(null);
-
-  useImperativeHandle(ref, () => ({
-    focus: () => inputRef.current?.focus(),
-    clear: () => { onChange([]); setInputValue(''); },
-  }));
+}) => {
   const [inputValue, setInputValue] = useState('');
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [internalError, setInternalError] = useState<string | null>(null);
@@ -232,7 +217,6 @@ export const CommaSeparatedInput = forwardRef<CommaSeparatedInputHandle, CommaSe
           );
         })}
         <input
-        ref={inputRef}
           id={id}
           data-testid="csi-input"
           className="flex-1 bg-transparent outline-none min-w-[120px] px-1"
@@ -241,9 +225,8 @@ export const CommaSeparatedInput = forwardRef<CommaSeparatedInputHandle, CommaSe
           onKeyDown={handleKeyDown}
           onBlur={() => {
             // Add a small delay so suggestion clicks can fire before blur
-            setTimeout(() => { commitInput(); onBlurProp?.(); }, 150);
+            setTimeout(() => commitInput(), 150);
           }}
-          onFocus={onFocus}
           onPaste={handlePaste}
           placeholder={value.length >= maxItems ? 'Max items reached' : placeholder}
           disabled={disabled || value.length >= maxItems}
@@ -309,4 +292,4 @@ export const CommaSeparatedInput = forwardRef<CommaSeparatedInputHandle, CommaSe
       )}
     </div>
   );
-});
+};
