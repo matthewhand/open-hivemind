@@ -7,6 +7,7 @@ export interface CommaSeparatedInputProps {
   placeholder?: string;
   disabled?: boolean;
   id?: string;
+  testId?: string;
   className?: string;
   suggestions?: string[];
   tagColor?: (tag: string) => string;
@@ -74,24 +75,16 @@ export const CommaSeparatedInput: React.FC<CommaSeparatedInputProps> = ({
       return;
     }
 
-    // Split by comma, preserving empty strings so we can see if there is trailing text
-    const parts = textToCommit.split(',');
+    const current = textToCommit
+      .split(',')
+      .map(s => s.trim())
+      .filter(Boolean);
 
-    // The trailing text is the last part after the last comma
-    const trailingText = parts.length > 1 ? parts.pop() || '' : '';
-
-    // The items to commit are the parts before the last comma
-    const itemsToCommit = parts.map(s => s.trim()).filter(Boolean);
-
-    commitItems(itemsToCommit, trailingText);
-  };
-
-  const commitItems = (items: string[], trailingText: string) => {
     const next = [...value];
     let changed = false;
     let localError: string | null = null;
 
-    for (const item of items) {
+    for (const item of current) {
       if (validate) {
         const validationError = validate(item);
         if (validationError) {
@@ -114,7 +107,7 @@ export const CommaSeparatedInput: React.FC<CommaSeparatedInputProps> = ({
         pushToHistory(next);
         onChange(next);
       }
-      setInputValue(trailingText);
+      setInputValue('');
       setShowSuggestions(false);
     }
   };
@@ -174,15 +167,22 @@ export const CommaSeparatedInput: React.FC<CommaSeparatedInputProps> = ({
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const val = e.target.value;
-    if (val.includes(',')) {
-      commitInput(val);
-    } else {
-      setInputValue(val);
-      setShowSuggestions(true);
-      if (internalError) {
-        setInternalError(null);
-      }
+    const isDeleting = (e.nativeEvent as InputEvent).inputType?.startsWith('delete');
+    const newValue = e.target.value;
+
+    if (!isDeleting && newValue.includes(',')) {
+      const segments = newValue.split(',');
+      const trailing = segments.pop() ?? '';
+      const toCommit = segments.map(s => s.trim()).filter(Boolean).join(',');
+      if (toCommit) commitInput(toCommit);
+      setInputValue(trailing.trimStart());
+      return;
+    }
+
+    setInputValue(newValue);
+    setShowSuggestions(true);
+    if (internalError) {
+      setInternalError(null);
     }
   };
 
@@ -230,7 +230,7 @@ export const CommaSeparatedInput: React.FC<CommaSeparatedInputProps> = ({
         })}
         <input
           id={id}
-          data-testid="csi-input"
+          data-testid={testId ?? "csi-input"}
           className="flex-1 bg-transparent outline-none min-w-[120px] px-1"
           value={inputValue}
           onChange={handleInputChange}
