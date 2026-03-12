@@ -2,12 +2,13 @@ import ApiMonitorService, {
   EndpointConfig,
   EndpointStatus,
 } from '../../src/services/ApiMonitorService';
+import { resetSingleton } from '../helpers/singletonReset';
 
 describe('ApiMonitorService', () => {
   let service: ApiMonitorService;
 
   beforeEach(() => {
-    (ApiMonitorService as any).instance = null;
+    resetSingleton(ApiMonitorService);
     service = ApiMonitorService.getInstance();
     service.stopAllMonitoring();
     // Clear all endpoints

@@ -3,6 +3,7 @@ import { AuditLogger } from '../../../../src/common/auditLogger';
 import { UserConfigStore } from '../../../../src/config/UserConfigStore';
 import { DatabaseManager } from '../../../../src/database/DatabaseManager';
 import { ConfigurationImportExportService } from '../../../../src/server/services/ConfigurationImportExportService';
+import { resetSingleton } from '../../../helpers/singletonReset';
 
 jest.mock('../../../../src/database/DatabaseManager');
 jest.mock('../../../../src/config/UserConfigStore');
@@ -24,7 +25,7 @@ describe('ConfigurationImportExportService - Backup Retention', () => {
   let mockAuditLogger: any;
 
   beforeEach(() => {
-    (ConfigurationImportExportService as any).instance = null;
+    resetSingleton(ConfigurationImportExportService);
     jest.clearAllMocks();
 
     // Setup UserConfigStore mock

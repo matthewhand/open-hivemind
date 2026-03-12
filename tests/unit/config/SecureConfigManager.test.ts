@@ -1,6 +1,7 @@
 import fs from 'fs';
 import { SecureConfigManager } from '../../../src/config/SecureConfigManager';
 import Debug from 'debug';
+import { resetSingleton } from '../../helpers/singletonReset';
 
 // We need to mock 'debug' to intercept the logging.
 jest.mock('debug', () => {
@@ -24,7 +25,7 @@ describe('SecureConfigManager rotation logic', () => {
 
     // Re-initialize manager
     // @ts-ignore
-    SecureConfigManager.instance = null;
+    resetSingleton(SecureConfigManager);
     manager = SecureConfigManager.getInstance();
 
     // Get the mocked debug instance

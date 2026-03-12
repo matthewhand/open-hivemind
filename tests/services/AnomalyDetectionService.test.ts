@@ -1,6 +1,7 @@
 import { AnomalyDetectionService } from '../../src/services/AnomalyDetectionService';
 import { DatabaseManager } from '../../src/database/DatabaseManager';
 import { WebSocketService } from '../../src/server/services/WebSocketService';
+import { resetSingleton } from '../helpers/singletonReset';
 
 describe('AnomalyDetectionService', () => {
   let service: AnomalyDetectionService;
@@ -9,7 +10,7 @@ describe('AnomalyDetectionService', () => {
 
   beforeEach(() => {
     // Force a fresh instance for clean tests
-    (AnomalyDetectionService as any).instance = null;
+    resetSingleton(AnomalyDetectionService);
     service = AnomalyDetectionService.getInstance();
 
     // Default config values
