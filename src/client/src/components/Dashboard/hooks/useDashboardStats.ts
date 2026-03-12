@@ -9,11 +9,16 @@ export const useDashboardStats = (
   totalErrors: number,
   uptime: number
 ) => {
+  const errorRate = useMemo(
+    () => (totalMessages > 0 ? ((totalErrors / totalMessages) * 100).toFixed(1) : '0.0'),
+    [totalErrors, totalMessages]
+  );
+
   const statsCards = useMemo(() => [
     {
       title: 'Total Bots',
       value: bots.length,
-      description: 'Configured bots',
+      description: `${activeBotCount} active`,
       icon: '🤖',
     },
     {
@@ -31,7 +36,7 @@ export const useDashboardStats = (
     {
       title: 'Total Errors',
       value: totalErrors,
-      description: 'Errors encountered',
+      description: `${errorRate}% error rate`,
       icon: '⚠️',
     },
     {
@@ -40,7 +45,7 @@ export const useDashboardStats = (
       description: 'System uptime',
       icon: '⏱️',
     },
-  ], [bots.length, activeConnections, totalMessages, totalErrors, uptime]);
+  ], [bots.length, activeBotCount, activeConnections, totalMessages, totalErrors, errorRate, uptime]);
 
-  return { statsCards };
+  return { statsCards, errorRate };
 };
