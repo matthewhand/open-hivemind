@@ -8,3 +8,22 @@ export function safeString(value: unknown, fallback = ''): string {
   if (typeof value === 'number' || typeof value === 'boolean') return String(value);
   return fallback;
 }
+
+/**
+ * Safely converts a value to a number.
+ * Returns fallback for null, undefined, NaN, or non-numeric values.
+ */
+export function safeNumber(value: unknown, fallback = 0): number {
+  if (value === null || value === undefined) return fallback;
+  const n = Number(value);
+  return isNaN(n) ? fallback : n;
+}
+
+/**
+ * Safely ensures a value is an array.
+ * Prevents .map()/.filter() crashes on null/undefined props.
+ */
+export function safeArray<T>(value: unknown, fallback: T[] = []): T[] {
+  if (Array.isArray(value)) return value as T[];
+  return fallback;
+}
