@@ -50,8 +50,6 @@ describe('GreetingStateManager', () => {
   const mockDataDir = '/app/data';
 
   beforeEach(() => {
-    // Reset singleton instance
-    (GreetingStateManager as any).instance = null;
     jest.clearAllMocks();
 
     // Setup default mock implementation
@@ -62,15 +60,7 @@ describe('GreetingStateManager', () => {
     (fs.writeFile as jest.Mock).mockResolvedValue(undefined);
     (fs.mkdir as jest.Mock).mockResolvedValue(undefined);
 
-    stateManager = GreetingStateManager.getInstance();
-  });
-
-  describe('getInstance', () => {
-    it('should return the same instance', () => {
-      const instance1 = GreetingStateManager.getInstance();
-      const instance2 = GreetingStateManager.getInstance();
-      expect(instance1).toBe(instance2);
-    });
+    stateManager = new GreetingStateManager();
   });
 
   describe('initialize', () => {

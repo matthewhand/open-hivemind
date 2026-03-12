@@ -17,15 +17,13 @@ export interface BotInstance {
   envOverrides?: Record<string, any>;
 }
 
-export const BOT_STATUSES = {
-  ACTIVE: 'active',
-  INACTIVE: 'inactive',
-  ERROR: 'error',
-  STARTING: 'starting',
-  STOPPING: 'stopping'
-} as const;
-
-export type BotStatus = typeof BOT_STATUSES[keyof typeof BOT_STATUSES];
+export enum BotStatus {
+  ACTIVE = 'active',
+  INACTIVE = 'inactive',
+  ERROR = 'error',
+  STARTING = 'starting',
+  STOPPING = 'stopping'
+}
 
 export interface MessageProvider {
   id: string;
@@ -44,37 +42,21 @@ export interface LLMProvider {
   enabled: boolean;
 }
 
-export const MESSAGE_PROVIDER_TYPES = {
-  DISCORD: 'discord',
-  SLACK: 'slack',
-  MATTERMOST: 'mattermost',
-  WEBHOOK: 'webhook',
-} as const;
-
-export type MessageProviderType = typeof MESSAGE_PROVIDER_TYPES[keyof typeof MESSAGE_PROVIDER_TYPES];
-
-export const LLM_PROVIDER_TYPES = {
-  OPENAI: 'openai',
-  FLOWISE: 'flowise',
-  OPENWEBUI: 'openwebui',
-  PERPLEXITY: 'perplexity',
-  REPLICATE: 'replicate',
-  N8N: 'n8n',
-  OPENSWARM: 'openswarm',
-} as const;
-
-export type LLMProviderType = typeof LLM_PROVIDER_TYPES[keyof typeof LLM_PROVIDER_TYPES];
-
-/** Unified const merging all provider type values for single-import convenience */
-export const PROVIDER_TYPES = { ...MESSAGE_PROVIDER_TYPES, ...LLM_PROVIDER_TYPES } as const;
-export type ProviderType = MessageProviderType | LLMProviderType;
-
-export function isMessageProvider(type: string): type is MessageProviderType {
-  return Object.values(MESSAGE_PROVIDER_TYPES).includes(type as MessageProviderType);
+export enum MessageProviderType {
+  DISCORD = 'discord',
+  SLACK = 'slack',
+  MATTERMOST = 'mattermost',
+  WEBHOOK = 'webhook',
 }
 
-export function isLLMProvider(type: string): type is LLMProviderType {
-  return Object.values(LLM_PROVIDER_TYPES).includes(type as LLMProviderType);
+export enum LLMProviderType {
+  OPENAI = 'openai',
+  FLOWISE = 'flowise',
+  OPENWEBUI = 'openwebui',
+  PERPLEXITY = 'perplexity',
+  REPLICATE = 'replicate',
+  N8N = 'n8n',
+  OPENSWARM = 'openswarm',
 }
 
 export interface Persona {
@@ -88,16 +70,14 @@ export interface Persona {
   updatedAt: string;
 }
 
-export const PERSONA_CATEGORIES = {
-  PROFESSIONAL: 'professional',
-  CREATIVE: 'creative',
-  TECHNICAL: 'technical',
-  CASUAL: 'casual',
-  EDUCATIONAL: 'educational',
-  ENTERTAINMENT: 'entertainment'
-} as const;
-
-export type PersonaCategory = typeof PERSONA_CATEGORIES[keyof typeof PERSONA_CATEGORIES];
+export enum PersonaCategory {
+  PROFESSIONAL = 'professional',
+  CREATIVE = 'creative',
+  TECHNICAL = 'technical',
+  CASUAL = 'casual',
+  EDUCATIONAL = 'educational',
+  ENTERTAINMENT = 'entertainment'
+}
 
 export interface PersonaTrait {
   name: string;
@@ -124,7 +104,7 @@ export interface UpdatePersonaRequest {
 
 export interface ProviderModalState {
   isOpen: boolean;
-  providerType: ProviderType | 'message' | 'llm';
+  providerType: MessageProviderType | LLMProviderType | 'message' | 'llm';
   provider?: MessageProvider | LLMProvider;
   mode: 'create' | 'edit';
   botId?: string | null;
@@ -286,7 +266,7 @@ export interface CreateBotRequest {
 
 export const MESSAGE_PROVIDER_CONFIGS = {
   slack: {
-    type: MESSAGE_PROVIDER_TYPES.SLACK,
+    type: MessageProviderType.SLACK,
     displayName: 'Slack',
     description: 'Connect to Slack workspaces',
     icon: '💬',
@@ -297,7 +277,7 @@ export const MESSAGE_PROVIDER_CONFIGS = {
     ],
   },
   discord: {
-    type: MESSAGE_PROVIDER_TYPES.DISCORD,
+    type: MessageProviderType.DISCORD,
     displayName: 'Discord',
     description: 'Connect to Discord servers',
     icon: '🎮',
@@ -307,7 +287,7 @@ export const MESSAGE_PROVIDER_CONFIGS = {
     ],
   },
   webhook: {
-    type: MESSAGE_PROVIDER_TYPES.WEBHOOK,
+    type: MessageProviderType.WEBHOOK,
     displayName: 'Webhook',
     description: 'Generic webhook integration',
     icon: '🔗',
@@ -317,7 +297,7 @@ export const MESSAGE_PROVIDER_CONFIGS = {
     ],
   },
   mattermost: {
-    type: MESSAGE_PROVIDER_TYPES.MATTERMOST,
+    type: MessageProviderType.MATTERMOST,
     displayName: 'Mattermost',
     description: 'Connect to Mattermost instances',
     icon: '💻',
@@ -331,7 +311,7 @@ export const MESSAGE_PROVIDER_CONFIGS = {
 
 export const LLM_PROVIDER_CONFIGS = {
   openai: {
-    type: LLM_PROVIDER_TYPES.OPENAI,
+    type: LLMProviderType.OPENAI,
     displayName: 'OpenAI',
     description: 'GPT models from OpenAI',
     icon: '🤖',
@@ -341,7 +321,7 @@ export const LLM_PROVIDER_CONFIGS = {
     ],
   },
   flowise: {
-    type: LLM_PROVIDER_TYPES.FLOWISE,
+    type: LLMProviderType.FLOWISE,
     displayName: 'Flowise',
     description: 'Visual LLM orchestration',
     icon: '🌊',
@@ -352,7 +332,7 @@ export const LLM_PROVIDER_CONFIGS = {
     ],
   },
   perplexity: {
-    type: LLM_PROVIDER_TYPES.PERPLEXITY,
+    type: LLMProviderType.PERPLEXITY,
     displayName: 'Perplexity',
     description: 'Search-augmented AI models',
     icon: '🔍',
@@ -362,7 +342,7 @@ export const LLM_PROVIDER_CONFIGS = {
     ],
   },
   replicate: {
-    type: LLM_PROVIDER_TYPES.REPLICATE,
+    type: LLMProviderType.REPLICATE,
     displayName: 'Replicate',
     description: 'Run open-source models',
     icon: '🚀',
@@ -372,7 +352,7 @@ export const LLM_PROVIDER_CONFIGS = {
     ],
   },
   n8n: {
-    type: LLM_PROVIDER_TYPES.N8N,
+    type: LLMProviderType.N8N,
     displayName: 'n8n',
     description: 'Workflow automation platform',
     icon: '⚡',
@@ -382,7 +362,7 @@ export const LLM_PROVIDER_CONFIGS = {
     ],
   },
   openswarm: {
-    type: LLM_PROVIDER_TYPES.OPENSWARM,
+    type: LLMProviderType.OPENSWARM,
     displayName: 'OpenSwarm',
     description: 'Multi-agent orchestration',
     icon: '🐝',
@@ -404,7 +384,7 @@ export const DEFAULT_PERSONA: Persona = {
     { name: 'Tone', value: 'Friendly', weight: 1 },
     { name: 'Style', value: 'Professional', weight: 1 },
   ],
-  category: PERSONA_CATEGORIES.PROFESSIONAL,
+  category: PersonaCategory.PROFESSIONAL,
   createdAt: new Date().toISOString(),
   updatedAt: new Date().toISOString(),
 };
@@ -420,7 +400,7 @@ export const BUILTIN_PERSONAS: Persona[] = [
       { name: 'Tone', value: 'Professional', weight: 1 },
       { name: 'Style', value: 'Empathetic', weight: 1 },
     ],
-    category: PERSONA_CATEGORIES.PROFESSIONAL,
+    category: PersonaCategory.PROFESSIONAL,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   },
@@ -433,7 +413,7 @@ export const BUILTIN_PERSONAS: Persona[] = [
       { name: 'Tone', value: 'Analytical', weight: 1 },
       { name: 'Style', value: 'Technical', weight: 1 },
     ],
-    category: PERSONA_CATEGORIES.TECHNICAL,
+    category: PersonaCategory.TECHNICAL,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   },
@@ -446,7 +426,7 @@ export const BUILTIN_PERSONAS: Persona[] = [
       { name: 'Tone', value: 'Creative', weight: 1 },
       { name: 'Style', value: 'Artistic', weight: 1 },
     ],
-    category: PERSONA_CATEGORIES.CREATIVE,
+    category: PersonaCategory.CREATIVE,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   },

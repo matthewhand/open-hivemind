@@ -74,16 +74,24 @@ export const CommaSeparatedInput: React.FC<CommaSeparatedInputProps> = ({
       return;
     }
 
-    const current = textToCommit
-      .split(',')
-      .map(s => s.trim())
-      .filter(Boolean);
+    // Split by comma, preserving empty strings so we can see if there is trailing text
+    const parts = textToCommit.split(',');
 
+    // The trailing text is the last part after the last comma
+    const trailingText = parts.length > 1 ? parts.pop() || '' : '';
+
+    // The items to commit are the parts before the last comma
+    const itemsToCommit = parts.map(s => s.trim()).filter(Boolean);
+
+    commitItems(itemsToCommit, trailingText);
+  };
+
+  const commitItems = (items: string[], trailingText: string) => {
     const next = [...value];
     let changed = false;
     let localError: string | null = null;
 
-    for (const item of current) {
+    for (const item of items) {
       if (validate) {
         const validationError = validate(item);
         if (validationError) {
@@ -106,7 +114,7 @@ export const CommaSeparatedInput: React.FC<CommaSeparatedInputProps> = ({
         pushToHistory(next);
         onChange(next);
       }
-      setInputValue('');
+      setInputValue(trailingText);
       setShowSuggestions(false);
     }
   };
@@ -166,18 +174,15 @@ export const CommaSeparatedInput: React.FC<CommaSeparatedInputProps> = ({
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    let newValue = e.target.value;
-    // We only auto-format if the user is not actively deleting characters.
-    // This prevents the "backspace trap" where deleting the auto-inserted space
-    // immediately re-inserts it.
-    const isDeleting = (e.nativeEvent as InputEvent).inputType?.startsWith('delete');
-    if (!isDeleting) {
-      newValue = newValue.replace(/,([^ ])/g, ', $1');
-    }
-    setInputValue(newValue);
-    setShowSuggestions(true);
-    if (internalError) {
-      setInternalError(null);
+    const val = e.target.value;
+    if (val.includes(',')) {
+      commitInput(val);
+    } else {
+      setInputValue(val);
+      setShowSuggestions(true);
+      if (internalError) {
+        setInternalError(null);
+      }
     }
   };
 

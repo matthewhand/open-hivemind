@@ -1,11 +1,11 @@
 import { Router } from 'express';
-import debugModule from 'debug';
+import { createLogger } from '@src/common/StructuredLogger';
 import { requireAdmin } from '../../auth/middleware';
 import { authenticateToken } from '../middleware/auth';
-import { clearAllSystemCaches } from '../utils/cacheManager';
+import { clearAllSystemCaches } from '../utils/cacheManager'; // We'll implement this
 
-const debug = debugModule('hivemind:routes:cache');
 const router = Router();
+const logger = createLogger('routes:cache');
 
 // Apply authentication to all cache routes
 router.use(authenticateToken, requireAdmin);
@@ -28,7 +28,10 @@ router.post('/clear', async (req, res) => {
     await clearAllSystemCaches();
     res.json({ success: true, message: 'Cache cleared successfully' });
   } catch (error) {
-    debug('Failed to clear cache: %O', error);
+    logger.error(
+      'Failed to clear cache:',
+      error instanceof Error ? error : new Error(String(error))
+    );
     res.status(500).json({ success: false, error: 'Failed to clear cache' });
   }
 });
