@@ -237,8 +237,8 @@ const UnifiedDashboard: React.FC = () => {
 
   const performanceMetrics = useMemo(() => {
     return {
-      cpuUsage: status?.system?.cpuUsage ?? Math.random() * 40 + 10,
-      memoryUsage: status?.system?.memoryUsage ?? Math.random() * 30 + 40,
+      cpuUsage: status?.system?.cpuUsage ?? 0,
+      memoryUsage: status?.system?.memoryUsage ?? 0,
       throughput: (totalMessages / Math.max(1, (status?.uptime ?? 1) / 3600)) * 10,
       stabilityScore: totalErrors > 0
         ? Math.max(0, 100 - (totalErrors / Math.max(1, totalMessages)) * 100)
