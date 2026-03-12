@@ -15,7 +15,7 @@ interface I18nContextType {
   availableLanguages: { code: Language; name: string; flag: string }[];
 }
 
-const I18nContext = createContext<I18nContextType | undefined>(undefined);
+export const I18nContext = createContext<I18nContextType | undefined>(undefined);
 
 const availableLanguages: { code: Language; name: string; flag: string }[] = [
   { code: 'en', name: 'English', flag: '🇺🇸' },
@@ -36,6 +36,10 @@ const translations: Record<Language, Record<string, string>> = {
     'dashboard.getting_started.subtitle': 'Let\'s get your multi-agent system up and running. Follow the steps below to configure your environment.',
     'status.online': 'Online',
     'status.offline': 'Offline',
+    'nav.dashboard': 'Dashboard',
+    'nav.bots': 'Bots',
+    'nav.settings': 'Settings',
+    'nav.monitoring': 'Monitoring',
   },
   es: {
     'app.title': 'Mente Colmena Abierta',
