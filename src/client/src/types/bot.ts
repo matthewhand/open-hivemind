@@ -65,6 +65,10 @@ export const LLM_PROVIDER_TYPES = {
 
 export type LLMProviderType = typeof LLM_PROVIDER_TYPES[keyof typeof LLM_PROVIDER_TYPES];
 
+/** Unified const merging all provider type values for single-import convenience */
+export const PROVIDER_TYPES = { ...MESSAGE_PROVIDER_TYPES, ...LLM_PROVIDER_TYPES } as const;
+export type ProviderType = MessageProviderType | LLMProviderType;
+
 export interface Persona {
   id: string;
   name: string;
