@@ -118,7 +118,11 @@ router.delete('/:id', (req, res) => {
       return res.json({ success: true }); // Idempotency: return 200 if already gone
     }
 
-    manager.deletePersona(req.params.id);
+    const success = manager.deletePersona(req.params.id);
+    if (!success) {
+      return res.json({ success: true, message: 'Persona already deleted or not found' });
+    }
+
     return res.json({ success: true });
   } catch (error: any) {
     return res.status(400).json({ error: error.message });
