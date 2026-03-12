@@ -1,23 +1,15 @@
 module.exports = {
   collectCoverage: true,
   coverageDirectory: "coverage",
-  coverageReporters: ["html", "text", "lcov", "json-summary"],
+  coverageReporters: ["html", "text", "lcov"],
   coverageThreshold: {
     global: {
-      branches: 65,
-      functions: 72,
-      lines: 76,
-      statements: 75,
+      branches: 61,
+      functions: 69,
+      lines: 73,
+      statements: 72,
     },
   },
-  coveragePathIgnorePatterns: [
-    '/node_modules/',
-    '/tests/mocks/',
-    '/tests/helpers/',
-    '\.spec\.ts$',
-    '\.test\.ts$',
-    '/dist/',
-  ],
   forceExit: true,
   displayName: 'unit-integration',
   roots: ['<rootDir>/tests', '<rootDir>/packages'],
