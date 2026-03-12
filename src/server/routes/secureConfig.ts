@@ -26,6 +26,13 @@ router.get('/', async (req: Request, res: Response) => {
 
     for (const config of configResults) {
       if (config) {
+        const rotationInterval = (config as any).rotationInterval;
+        const updatedAt = config.updatedAt ? new Date(config.updatedAt).getTime() : null;
+        const daysSinceUpdate = updatedAt ? (Date.now() - updatedAt) / 86400000 : null;
+        const daysUntilRotation = (rotationInterval && rotationInterval > 0 && daysSinceUpdate !== null)
+          ? Math.max(0, Math.ceil(rotationInterval - daysSinceUpdate))
+          : null;
+        const rotationOverdue = daysUntilRotation === 0;
         // Return metadata without sensitive data
         configs.push({
           id: config.id,
@@ -33,6 +40,9 @@ router.get('/', async (req: Request, res: Response) => {
           type: config.type,
           createdAt: config.createdAt,
           updatedAt: config.updatedAt,
+          rotationInterval: rotationInterval ?? null,
+          daysUntilRotation,
+          rotationOverdue,
         });
       }
     }
