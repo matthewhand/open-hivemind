@@ -29,6 +29,16 @@ export class WebUIStorage {
   }
 
   /**
+   * Clears the config cache. Intended for testing purposes only.
+   */
+  public clearCacheForTesting(): void {
+    if (process.env.NODE_ENV === 'test') {
+      this.configCache = null;
+      this.guardsInitializationInProgress = false;
+    }
+  }
+
+  /**
    * Ensure the configuration directory exists
    */
   private ensureConfigDir(): void {
@@ -48,7 +58,8 @@ export class WebUIStorage {
     try {
       if (fs.existsSync(this.configFile)) {
         const data = fs.readFileSync(this.configFile, 'utf8');
-        this.configCache = JSON.parse(data);
+        const parsed = JSON.parse(data);
+        this.configCache = parsed;
         return this.configCache!;
       }
     } catch (error) {
