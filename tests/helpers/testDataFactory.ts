@@ -699,3 +699,33 @@ export function createMockBot(overrides: Record<string, any> = {}): Record<strin
     ...overrides,
   };
 }
+
+/**
+ * Factory for creating mock provider instances in tests
+ */
+export function createMockProvider(type: 'discord' | 'slack' | 'openai' | 'flowise' = 'discord', overrides: Record<string, any> = {}): Record<string, any> {
+  return {
+    id: `provider-${Math.random().toString(36).slice(2, 9)}`,
+    type,
+    name: `Test ${type} Provider`,
+    config: {},
+    enabled: true,
+    ...overrides,
+  };
+}
+
+/**
+ * Factory for creating mock IMessage instances in tests
+ */
+export function createMockMessage(overrides: Record<string, any> = {}): Record<string, any> {
+  return {
+    getMessageId: () => `msg-${Math.random().toString(36).slice(2, 9)}`,
+    getText: () => 'test message',
+    getChannelId: () => 'channel-123',
+    getAuthorId: () => 'user-456',
+    isFromBot: () => false,
+    mentionsBot: () => false,
+    getTimestamp: () => new Date(),
+    ...overrides,
+  };
+}
