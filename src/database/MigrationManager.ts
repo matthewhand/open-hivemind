@@ -537,4 +537,34 @@ export class MigrationManager {
 
     return { executed, pending };
   }
+
+  /**
+   * Roll back the last N executed migrations in reverse order.
+   * Skips migrations without a `down` method.
+   */
+  async rollbackLastN(n: number): Promise<void> {
+    const executed = this.migrations
+      .filter((m) => this.executedMigrations.has(m.id))
+      .sort((a, b) => b.version - a.version)
+      .slice(0, n);
+
+    for (const migration of executed) {
+      if (migration.down) {
+        await this.rollbackMigration(migration);
+        this.executedMigrations.delete(migration.id);
+      } else {
+        Logger.warn(`Migration ${migration.id} has no down() — skipping rollback`);
+      }
+    }
+  }
+
+  /**
+   * Validate that every registered migration has a `down` method.
+   * Returns an array of migration IDs that are missing rollback support.
+   */
+  validateMigrations(): string[] {
+    return this.migrations
+      .filter((m) => !m.down)
+      .map((m) => m.id);
+  }
 }
