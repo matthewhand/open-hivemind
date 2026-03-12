@@ -14,6 +14,13 @@ describe('WebUIStorage Performance', () => {
 
   let storage: WebUIStorage;
 
+  const resetMocks = () => {
+    (fs.existsSync as jest.Mock).mockClear();
+    (fs.readFileSync as jest.Mock).mockClear();
+    (fs.writeFileSync as jest.Mock).mockClear();
+    (fs.mkdirSync as jest.Mock).mockClear();
+  };
+
   beforeEach(() => {
     jest.clearAllMocks();
 
@@ -22,16 +29,10 @@ describe('WebUIStorage Performance', () => {
     jest.spyOn(fs, 'writeFileSync').mockImplementation(() => undefined);
     jest.spyOn(fs, 'mkdirSync').mockImplementation(() => undefined);
 
-    // Re-initialize for isolation
     storage = new WebUIStorage();
     storage.resetCache();
 
-    // Clear history caused by constructor calls (existsSync/mkdirSync)
-    // to ensure test assertions start from zero.
-    (fs.existsSync as jest.Mock).mockClear();
-    (fs.readFileSync as jest.Mock).mockClear();
-    (fs.writeFileSync as jest.Mock).mockClear();
-    (fs.mkdirSync as jest.Mock).mockClear();
+    resetMocks();
   });
 
   afterEach(() => {
