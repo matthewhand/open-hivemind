@@ -95,6 +95,15 @@ export class MemVaultProvider {
         this.pool.on('error', (err) => {
             this.debug('Unexpected error on idle MemVault pg client', err);
         });
+        this.pool.on('connect', () => {
+            this.debug('New MemVault pg client connected', this.poolStats());
+        });
+        this.pool.on('acquire', () => {
+            const stats = this.poolStats();
+            if (stats.waitingCount > 0) {
+                this.debug('MemVault pool under pressure', stats);
+            }
+        });
 
         await this.ensureDatabaseExtensions();
 
@@ -368,10 +377,23 @@ export class MemVaultProvider {
 
         try {
             await this.pool.query('SELECT 1');
+            this.debug('MemVault health check passed', this.poolStats());
             return true;
         } catch {
             return false;
         }
+    }
+
+    /**
+     * Return current pool statistics for health monitoring
+     */
+    poolStats(): { totalCount: number; idleCount: number; waitingCount: number } {
+        if (!this.pool) return { totalCount: 0, idleCount: 0, waitingCount: 0 };
+        return {
+            totalCount: this.pool.totalCount,
+            idleCount: this.pool.idleCount,
+            waitingCount: this.pool.waitingCount,
+        };
     }
 
     /**
