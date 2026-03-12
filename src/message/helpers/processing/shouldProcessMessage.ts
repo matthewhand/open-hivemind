@@ -1,6 +1,3 @@
-import Debug from 'debug';
-const debug = Debug('hivemind:shouldProcessMessage');
-
 import messageConfig from '@config/messageConfig';
 import type { IMessage } from '@message/interfaces/IMessage';
 
@@ -31,8 +28,7 @@ function getDefaultChannelId(): string {
       return discordChannel;
     }
   } catch (error) {
-    const logger = getLogger("shouldProcessMessage");
-      logger.console.console.debug('Error getting discord config for default channel:', error);
+    debug('Error getting discord config for default channel:', error);
   }
 
   try {
@@ -43,8 +39,7 @@ function getDefaultChannelId(): string {
       return slackChannel;
     }
   } catch (error) {
-    const logger = getLogger("shouldProcessMessage");
-      logger.console.console.debug('Error getting slack config for default channel:', error);
+    debug('Error getting slack config for default channel:', error);
   }
 
   return '';
