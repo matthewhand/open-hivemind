@@ -39,7 +39,7 @@ const SystemSettings: React.FC = () => {
       <PageHeader
         title="Settings"
         description="Configure your Open-Hivemind instance settings and preferences"
-        icon={Cog}
+        icon={<Cog />}
         gradient="primary"
       />
 
