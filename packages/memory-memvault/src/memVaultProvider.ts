@@ -375,6 +375,18 @@ export class MemVaultProvider {
     }
 
     /**
+     * Return pg.Pool connection counts for observability
+     */
+    getPoolStats(): { total: number; idle: number; waiting: number } | null {
+        if (!this.pool) return null;
+        return {
+            total: this.pool.totalCount,
+            idle: this.pool.idleCount,
+            waiting: this.pool.waitingCount,
+        };
+    }
+
+    /**
      * Close the database connection
      */
     async disconnect(): Promise<void> {
