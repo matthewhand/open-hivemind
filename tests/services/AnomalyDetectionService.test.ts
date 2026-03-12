@@ -1,17 +1,23 @@
-import { AnomalyDetectionService } from '../../src/services/AnomalyDetectionService';
 import { DatabaseManager } from '../../src/database/DatabaseManager';
 import { WebSocketService } from '../../src/server/services/WebSocketService';
-import { resetSingleton } from '../helpers/singletonReset';
+import { AnomalyDetectionService } from '../../src/services/AnomalyDetectionService';
 
 describe('AnomalyDetectionService', () => {
   let service: AnomalyDetectionService;
   let dbManager: DatabaseManager;
   let wsService: WebSocketService;
 
+  let metricsCollector: any;
+
   beforeEach(() => {
     // Force a fresh instance for clean tests
-    resetSingleton(AnomalyDetectionService);
-    service = AnomalyDetectionService.getInstance();
+    (AnomalyDetectionService as any).instance = undefined;
+    dbManager = DatabaseManager.getInstance({ type: 'sqlite', path: ':memory:' });
+    wsService = WebSocketService.getInstance();
+    metricsCollector = {} as any; // Mock metrics collector
+
+    service = new AnomalyDetectionService(dbManager, wsService, metricsCollector);
+    (AnomalyDetectionService as any).instance = service;
 
     // Default config values
     service.updateConfig({
@@ -26,9 +32,6 @@ describe('AnomalyDetectionService', () => {
     (service as any).dataWindows.clear();
     (service as any).anomalies = [];
     (service as any).isDetecting = false;
-
-    dbManager = DatabaseManager.getInstance({ type: 'sqlite', path: ':memory:' });
-    wsService = WebSocketService.getInstance();
 
     jest.spyOn(dbManager, 'storeAnomaly').mockResolvedValue(undefined);
     jest.spyOn(dbManager, 'resolveAnomaly').mockResolvedValue(true);
@@ -74,7 +77,10 @@ describe('AnomalyDetectionService', () => {
       const window = service['dataWindows'].get('responseTime');
       expect(window).toContain(150);
       expect(window!.length).toBe(1);
-      expect(emitSpy).toHaveBeenCalledWith('dataPointAdded', { metric: 'responseTime', value: 150 });
+      expect(emitSpy).toHaveBeenCalledWith('dataPointAdded', {
+        metric: 'responseTime',
+        value: 150,
+      });
     });
 
     test('should not add data point if metric not monitored', () => {
@@ -276,7 +282,10 @@ describe('AnomalyDetectionService', () => {
 
       expect(result).toBe(true);
       expect(service.getAnomalies()[0].resolved).toBe(true);
-      expect(emitSpy).toHaveBeenCalledWith('anomalyResolved', expect.objectContaining({ id: 'test-anomaly', resolved: true }));
+      expect(emitSpy).toHaveBeenCalledWith(
+        'anomalyResolved',
+        expect.objectContaining({ id: 'test-anomaly', resolved: true })
+      );
       expect(dbManager.resolveAnomaly).toHaveBeenCalledWith('test-anomaly');
     });
 
@@ -297,6 +306,48 @@ describe('AnomalyDetectionService', () => {
       expect(active.length).toBe(1);
       expect(active[0].id).toBe('1');
       expect(active[0].resolved).toBe(false);
+    });
+  });
+
+  describe('Edge Cases and Concurrency', () => {
+    test('should handle adding null/undefined/NaN values gracefully', () => {
+      const emitSpy = jest.spyOn(service, 'emit');
+      service.addDataPoint('responseTime', null as any);
+      service.addDataPoint('responseTime', undefined as any);
+      service.addDataPoint('responseTime', NaN);
+
+      const window = service['dataWindows'].get('responseTime');
+      // Should not add invalid numbers
+      expect(window).toBeUndefined();
+      expect(emitSpy).not.toHaveBeenCalled();
+    });
+
+    test('should handle extremely long metric names', () => {
+      const longMetric = 'm'.repeat(5000);
+      service.updateConfig({ metricsToMonitor: [longMetric] });
+      service.addDataPoint(longMetric, 100);
+      expect(service['dataWindows'].get(longMetric)).toEqual([100]);
+    });
+
+    test('should handle concurrent runDetection calls safely', async () => {
+      // Setup some data
+      service.updateConfig({ minDataPoints: 5, zThreshold: 3 });
+      for (let i = 0; i < 5; i++) {
+        service.addDataPoint('responseTime', 100);
+      }
+      service.addDataPoint('responseTime', 150); // anomaly
+
+      const promises = [];
+      for (let i = 0; i < 10; i++) {
+        promises.push(service.runDetection());
+      }
+      await Promise.all(promises);
+    });
+
+    test('should handle empty strings for metric', () => {
+      service.updateConfig({ metricsToMonitor: [''] });
+      service.addDataPoint('', 100);
+      expect(service['dataWindows'].get('')).toEqual([100]);
     });
   });
 });

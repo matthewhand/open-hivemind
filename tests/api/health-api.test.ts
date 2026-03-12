@@ -10,6 +10,7 @@
 
 import express from 'express';
 import request from 'supertest';
+import { DatabaseManager } from '../../src/database/DatabaseManager';
 import healthRouter from '../../src/server/routes/health';
 
 // Mock auth middleware so the detail endpoint returns full system stats for these tests
@@ -20,28 +21,12 @@ jest.mock('../../src/server/middleware/auth', () => ({
   },
 }));
 
-jest.mock('../../src/database/DatabaseManager', () => ({
-  DatabaseManager: {
-    getInstance: jest.fn().mockReturnValue({
-      isConnected: jest.fn().mockReturnValue(true),
-    }),
-  },
-}));
-
-jest.mock('../../src/managers/BotManager', () => ({
-  BotManager: {
-    getInstance: jest.fn().mockReturnValue({
-      getAllBots: jest.fn().mockReturnValue(new Map()),
-    }),
-  },
-}));
-
-jest.mock('../../src/services/ApiMonitorService', () => {
+// Mock DatabaseManager to control database state in tests
+jest.mock('../../src/database/DatabaseManager', () => {
   return {
-    __esModule: true,
-    default: {
+    DatabaseManager: {
       getInstance: jest.fn().mockReturnValue({
-        getAllStatuses: jest.fn().mockReturnValue({}),
+        isConnected: jest.fn().mockReturnValue(true),
       }),
     },
   };

@@ -81,7 +81,7 @@ describe('WebhookSecurity', () => {
 
     it('should allow Authorization Bearer token as fallback', () => {
       mockWebhookConfig.get.mockReturnValue('valid-token');
-      req.headers = { 'authorization': 'Bearer valid-token' };
+      req.headers = { authorization: 'Bearer valid-token' };
 
       verifyWebhookToken(req as Request, res as Response, next);
 
@@ -91,7 +91,7 @@ describe('WebhookSecurity', () => {
 
     it('should allow case-insensitive Authorization header', () => {
       mockWebhookConfig.get.mockReturnValue('valid-token');
-      req.headers = { 'Authorization': 'bearer valid-token' };
+      req.headers = { Authorization: 'bearer valid-token' };
 
       verifyWebhookToken(req as Request, res as Response, next);
 
