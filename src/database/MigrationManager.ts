@@ -211,13 +211,24 @@ export class MigrationManager {
           );
         },
         down: async (db: any) => {
-          await db.exec('DROP INDEX IF EXISTS idx_system_metrics_type');
-          await db.exec('DROP INDEX IF EXISTS idx_system_metrics_name');
+          // Check SQLite version for DROP COLUMN support (requires 3.35.0+)
+          const versionResult = await db.get('SELECT sqlite_version()');
+          const sqliteVersion = versionResult?.values?.[0] || '3.0.0';
+          const [major, minor] = sqliteVersion.split('.').map(Number);
+          if (major < 3 || (major === 3 && minor < 35)) {
+            console.warn(
+              `SQLite version ${sqliteVersion} does not support DROP COLUMN. ` +
+              `Migration rollback may fail. Minimum required: 3.35.0`
+            );
+          }
+
           await db.exec('DROP INDEX IF EXISTS idx_health_checks_timestamp');
           await db.exec('DROP INDEX IF EXISTS idx_health_checks_status');
           await db.exec('DROP INDEX IF EXISTS idx_health_checks_component');
-          await db.exec('DROP TABLE IF EXISTS system_metrics');
           await db.exec('DROP TABLE IF EXISTS health_checks');
+          await db.exec('DROP INDEX IF EXISTS idx_system_metrics_type');
+          await db.exec('DROP INDEX IF EXISTS idx_system_metrics_name');
+          await db.exec('DROP TABLE IF EXISTS system_metrics');
         },
       },
       {
