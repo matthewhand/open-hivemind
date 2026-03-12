@@ -1,5 +1,6 @@
 import crypto from 'crypto';
 import { EventEmitter } from 'events';
+import crypto from 'crypto';
 import Debug from 'debug';
 import { WebSocketService } from './WebSocketService';
 

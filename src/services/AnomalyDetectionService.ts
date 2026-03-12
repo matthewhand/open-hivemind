@@ -1,5 +1,6 @@
 import crypto from 'crypto';
 import { EventEmitter } from 'events';
+import crypto from 'crypto';
 import Debug from 'debug';
 import { DatabaseManager, type Anomaly } from '../database/DatabaseManager';
 import { MetricsCollector } from '../monitoring/MetricsCollector';
