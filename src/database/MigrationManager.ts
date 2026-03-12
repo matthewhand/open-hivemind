@@ -52,6 +52,21 @@ export class MigrationManager {
             'CREATE INDEX IF NOT EXISTS idx_bot_configuration_audit_tenant ON bot_configuration_audit(tenantId)'
           );
         },
+        down: async (db: any) => {
+          await db.exec('DROP INDEX IF EXISTS idx_bot_configuration_audit_tenant');
+          await db.exec('DROP INDEX IF EXISTS idx_bot_configuration_versions_tenant');
+          await db.exec('DROP INDEX IF EXISTS idx_bot_metrics_tenant');
+          await db.exec('DROP INDEX IF EXISTS idx_bot_sessions_tenant');
+          await db.exec('DROP INDEX IF EXISTS idx_messages_tenant');
+          await db.exec('DROP INDEX IF EXISTS idx_bot_configurations_tenant');
+
+          await db.exec('ALTER TABLE bot_metrics DROP COLUMN tenantId');
+          await db.exec('ALTER TABLE bot_sessions DROP COLUMN tenantId');
+          await db.exec('ALTER TABLE messages DROP COLUMN tenantId');
+          await db.exec('ALTER TABLE bot_configuration_audit DROP COLUMN tenantId');
+          await db.exec('ALTER TABLE bot_configuration_versions DROP COLUMN tenantId');
+          await db.exec('ALTER TABLE bot_configurations DROP COLUMN tenantId');
+        },
       },
       {
         id: '002_add_rbac_enhancements',
@@ -72,6 +87,16 @@ export class MigrationManager {
           await db.exec('CREATE INDEX IF NOT EXISTS idx_roles_tenant ON roles(tenantId)');
           await db.exec('CREATE INDEX IF NOT EXISTS idx_roles_level ON roles(level)');
         },
+        down: async (db: any) => {
+          await db.exec('DROP INDEX IF EXISTS idx_roles_level');
+          await db.exec('DROP INDEX IF EXISTS idx_roles_tenant');
+
+          await db.exec('ALTER TABLE roles DROP COLUMN updatedAt');
+          await db.exec('ALTER TABLE roles DROP COLUMN createdAt');
+          await db.exec('ALTER TABLE roles DROP COLUMN isActive');
+          await db.exec('ALTER TABLE roles DROP COLUMN level');
+          await db.exec('ALTER TABLE roles DROP COLUMN description');
+        },
       },
       {
         id: '003_add_user_indexes',
@@ -81,6 +106,11 @@ export class MigrationManager {
           await db.exec('CREATE INDEX IF NOT EXISTS idx_users_tenant ON users(tenantId)');
           await db.exec('CREATE INDEX IF NOT EXISTS idx_audits_tenant ON audits(tenantId)');
           await db.exec('CREATE INDEX IF NOT EXISTS idx_audits_user ON audits(userId)');
+        },
+        down: async (db: any) => {
+          await db.exec('DROP INDEX IF EXISTS idx_audits_user');
+          await db.exec('DROP INDEX IF EXISTS idx_audits_tenant');
+          await db.exec('DROP INDEX IF EXISTS idx_users_tenant');
         },
       },
       {
@@ -123,6 +153,14 @@ export class MigrationManager {
           await db.exec(
             'CREATE INDEX IF NOT EXISTS idx_anomaly_detection_tenant ON anomaly_detection(tenantId)'
           );
+        },
+        down: async (db: any) => {
+          await db.exec('DROP INDEX IF EXISTS idx_anomaly_detection_tenant');
+          await db.exec('DROP INDEX IF EXISTS idx_anomaly_detection_resolved');
+          await db.exec('DROP INDEX IF EXISTS idx_anomaly_detection_severity');
+          await db.exec('DROP INDEX IF EXISTS idx_anomaly_detection_metric');
+          await db.exec('DROP INDEX IF EXISTS idx_anomaly_detection_timestamp');
+          await db.exec('DROP TABLE IF EXISTS anomaly_detection');
         },
       },
       {
@@ -172,6 +210,15 @@ export class MigrationManager {
             'CREATE INDEX IF NOT EXISTS idx_system_metrics_type ON system_metrics(metricType)'
           );
         },
+        down: async (db: any) => {
+          await db.exec('DROP INDEX IF EXISTS idx_system_metrics_type');
+          await db.exec('DROP INDEX IF EXISTS idx_system_metrics_name');
+          await db.exec('DROP INDEX IF EXISTS idx_health_checks_timestamp');
+          await db.exec('DROP INDEX IF EXISTS idx_health_checks_status');
+          await db.exec('DROP INDEX IF EXISTS idx_health_checks_component');
+          await db.exec('DROP TABLE IF EXISTS system_metrics');
+          await db.exec('DROP TABLE IF EXISTS health_checks');
+        },
       },
       {
         id: '006_add_audit_enhancements',
@@ -191,6 +238,20 @@ export class MigrationManager {
           await db.exec('CREATE INDEX IF NOT EXISTS idx_audits_resource ON audits(resource)');
           await db.exec('CREATE INDEX IF NOT EXISTS idx_audits_severity ON audits(severity)');
           await db.exec('CREATE INDEX IF NOT EXISTS idx_audits_status ON audits(status)');
+        },
+        down: async (db: any) => {
+          await db.exec('DROP INDEX IF EXISTS idx_audits_status');
+          await db.exec('DROP INDEX IF EXISTS idx_audits_severity');
+          await db.exec('DROP INDEX IF EXISTS idx_audits_resource');
+          await db.exec('DROP INDEX IF EXISTS idx_audits_action');
+
+          await db.exec('ALTER TABLE audits DROP COLUMN metadata');
+          await db.exec('ALTER TABLE audits DROP COLUMN details');
+          await db.exec('ALTER TABLE audits DROP COLUMN status');
+          await db.exec('ALTER TABLE audits DROP COLUMN severity');
+          await db.exec('ALTER TABLE audits DROP COLUMN userAgent');
+          await db.exec('ALTER TABLE audits DROP COLUMN ipAddress');
+          await db.exec('ALTER TABLE audits DROP COLUMN resourceId');
         },
       },
       {
@@ -224,6 +285,12 @@ export class MigrationManager {
             'CREATE INDEX IF NOT EXISTS idx_notifications_read ON notifications(isRead)'
           );
         },
+        down: async (db: any) => {
+          await db.exec('DROP INDEX IF EXISTS idx_notifications_read');
+          await db.exec('DROP INDEX IF EXISTS idx_notifications_tenant');
+          await db.exec('DROP INDEX IF EXISTS idx_notifications_user');
+          await db.exec('DROP TABLE IF EXISTS notifications');
+        },
       },
       {
         id: '008_add_caching_support',
@@ -243,6 +310,11 @@ export class MigrationManager {
 
           await db.exec('CREATE INDEX IF NOT EXISTS idx_cache_expires ON cache_entries(expiresAt)');
           await db.exec('CREATE INDEX IF NOT EXISTS idx_cache_tenant ON cache_entries(tenantId)');
+        },
+        down: async (db: any) => {
+          await db.exec('DROP INDEX IF EXISTS idx_cache_tenant');
+          await db.exec('DROP INDEX IF EXISTS idx_cache_expires');
+          await db.exec('DROP TABLE IF EXISTS cache_entries');
         },
       },
       {
@@ -273,6 +345,13 @@ export class MigrationManager {
           await db.exec('CREATE INDEX IF NOT EXISTS idx_job_queue_tenant ON job_queue(tenantId)');
           await db.exec('CREATE INDEX IF NOT EXISTS idx_job_queue_created ON job_queue(createdAt)');
         },
+        down: async (db: any) => {
+          await db.exec('DROP INDEX IF EXISTS idx_job_queue_created');
+          await db.exec('DROP INDEX IF EXISTS idx_job_queue_tenant');
+          await db.exec('DROP INDEX IF EXISTS idx_job_queue_priority');
+          await db.exec('DROP INDEX IF EXISTS idx_job_queue_status');
+          await db.exec('DROP TABLE IF EXISTS job_queue');
+        },
       },
       {
         id: '010_add_event_streaming',
@@ -301,6 +380,12 @@ export class MigrationManager {
             'CREATE INDEX IF NOT EXISTS idx_event_stream_timestamp ON event_stream(timestamp)'
           );
         },
+        down: async (db: any) => {
+          await db.exec('DROP INDEX IF EXISTS idx_event_stream_timestamp');
+          await db.exec('DROP INDEX IF EXISTS idx_event_stream_tenant');
+          await db.exec('DROP INDEX IF EXISTS idx_event_stream_type');
+          await db.exec('DROP TABLE IF EXISTS event_stream');
+        },
       },
       {
         id: '011_add_cron_timezone_support',
@@ -314,8 +399,9 @@ export class MigrationManager {
           );
         },
         down: async (db: any) => {
-          // SQLite doesn't support DROP COLUMN cleanly in all versions. We omit down or leave empty for safety,
-          // or ideally we would recreate the table without the column. For simplicity, we'll leave it as a no-op down.
+          await db.exec('ALTER TABLE bot_data_purging_schedules DROP COLUMN timezone');
+          await db.exec('ALTER TABLE bot_backup_schedules DROP COLUMN timezone');
+          await db.exec('ALTER TABLE bot_scheduling DROP COLUMN timezone');
         },
       },
     ];
