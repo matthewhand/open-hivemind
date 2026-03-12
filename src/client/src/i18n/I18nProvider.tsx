@@ -46,6 +46,10 @@ const translations: Record<Language, Record<string, string>> = {
     'dashboard.getting_started.subtitle': 'Pongamos en marcha su sistema multiagente. Siga los pasos a continuación para configurar su entorno.',
     'status.online': 'En línea',
     'status.offline': 'Desconectado',
+    'nav.dashboard': 'Panel',
+    'nav.bots': 'Bots',
+    'nav.settings': 'Configuración',
+    'nav.monitoring': 'Monitoreo',
   },
   fr: {
     'app.title': 'Esprit de Ruche Ouvert',
@@ -56,6 +60,10 @@ const translations: Record<Language, Record<string, string>> = {
     'dashboard.getting_started.subtitle': 'Mettons votre système multi-agents en marche. Suivez les étapes ci-dessous pour configurer votre environnement.',
     'status.online': 'En ligne',
     'status.offline': 'Hors ligne',
+    'nav.dashboard': 'Tableau de bord',
+    'nav.bots': 'Bots',
+    'nav.settings': 'Paramètres',
+    'nav.monitoring': 'Surveillance',
   },
   de: {
     'app.title': 'Offenes Bienenvolk',
@@ -66,6 +74,10 @@ const translations: Record<Language, Record<string, string>> = {
     'dashboard.getting_started.subtitle': 'Lassen Sie uns Ihr Multi-Agenten-System zum Laufen bringen. Befolgen Sie die nachstehenden Schritte, um Ihre Umgebung zu konfigurieren.',
     'status.online': 'Online',
     'status.offline': 'Offline',
+    'nav.dashboard': 'Dashboard',
+    'nav.bots': 'Bots',
+    'nav.settings': 'Einstellungen',
+    'nav.monitoring': 'Überwachung',
   },
   zh: {
     'app.title': '开放蜂巢思维',
@@ -76,6 +88,10 @@ const translations: Record<Language, Record<string, string>> = {
     'dashboard.getting_started.subtitle': '让我们启动并运行您的多代理系统。按照以下步骤配置您的环境。',
     'status.online': '在线',
     'status.offline': '离线',
+    'nav.dashboard': '仪表板',
+    'nav.bots': '机器人',
+    'nav.settings': '设置',
+    'nav.monitoring': '监控',
   },
 };
 
