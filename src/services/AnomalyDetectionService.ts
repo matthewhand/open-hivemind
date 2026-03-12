@@ -30,7 +30,6 @@ export class AnomalyDetectionService extends EventEmitter {
   private anomalies: Anomaly[] = [];
   private isDetecting = false;
   private detectionInterval: NodeJS.Timeout | null = null;
-  private metricsInterval: NodeJS.Timeout | null = null;
   private dbManager: DatabaseManager;
   private wsService: WebSocketService;
   private metricsCollector: MetricsCollector;
@@ -45,7 +44,6 @@ export class AnomalyDetectionService extends EventEmitter {
     this.wsService = wsService;
     this.metricsCollector = metricsCollector;
     this.setMaxListeners(15);
-    this.integrateWithMetrics();
     // Start periodic detection
     this.detectionInterval = setInterval(() => this.runDetection(), 30000); // Every 30 seconds
   }
@@ -184,9 +182,8 @@ export class AnomalyDetectionService extends EventEmitter {
     };
   }
 
-  getAnomalies(limit?: number): Anomaly[] {
-    const all = [...this.anomalies];
-    return limit ? all.slice(-limit) : all;
+  getAnomalies(): Anomaly[] {
+    return [...this.anomalies];
   }
 
   /**
@@ -196,10 +193,6 @@ export class AnomalyDetectionService extends EventEmitter {
     if (this.detectionInterval) {
       clearInterval(this.detectionInterval);
       this.detectionInterval = null;
-    }
-    if (this.metricsInterval) {
-      clearInterval(this.metricsInterval);
-      this.metricsInterval = null;
     }
     this.removeAllListeners();
     debug('AnomalyDetectionService shutdown completed');
@@ -223,22 +216,11 @@ export class AnomalyDetectionService extends EventEmitter {
     return this.anomalies.filter((a) => !a.resolved);
   }
 
-  // Integration hook for MetricsCollector — polls current metrics and feeds data points
+  // Integration hook for MetricsCollector
   private integrateWithMetrics(): void {
-    const poll = () => {
-      try {
-        const snapshot = this.metricsCollector.getSnapshot?.();
-        if (!snapshot) return;
-        if (typeof snapshot.responseTime === 'number') this.addDataPoint('responseTime', snapshot.responseTime);
-        if (typeof snapshot.errorRate === 'number') this.addDataPoint('errors', snapshot.errorRate);
-      } catch (err) {
-        debug('MetricsCollector poll error:', err);
-      }
-    };
-    // Poll every 10 seconds to feed rolling windows
-    setInterval(poll, 10000);
-    this.metricsInterval = setInterval(poll, 10000);
-    poll();
+    // This would be called periodically or on events to add data points
+    // For example, in a real setup, listen to events or poll
+    // Using this.metricsCollector
   }
 }
 
