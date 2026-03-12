@@ -46,6 +46,11 @@ const SKIP_HEADER_SANITIZATION = new Set([
   'etag',
 ]);
 
+/** Allow callers to register additional headers that should bypass sanitization */
+export function addSkipHeader(...headers: string[]): void {
+  for (const h of headers) SKIP_HEADER_SANITIZATION.add(h.toLowerCase());
+}
+
 /**
  * Middleware to sanitize request body, query, and params
  */
