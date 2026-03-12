@@ -211,24 +211,13 @@ export class MigrationManager {
           );
         },
         down: async (db: any) => {
-          // Check SQLite version for DROP COLUMN support (requires 3.35.0+)
-          const versionResult = await db.get('SELECT sqlite_version()');
-          const sqliteVersion = versionResult?.values?.[0] || '3.0.0';
-          const [major, minor] = sqliteVersion.split('.').map(Number);
-          if (major < 3 || (major === 3 && minor < 35)) {
-            console.warn(
-              `SQLite version ${sqliteVersion} does not support DROP COLUMN. ` +
-              `Migration rollback may fail. Minimum required: 3.35.0`
-            );
-          }
-
+          await db.exec('DROP INDEX IF EXISTS idx_system_metrics_type');
+          await db.exec('DROP INDEX IF EXISTS idx_system_metrics_name');
           await db.exec('DROP INDEX IF EXISTS idx_health_checks_timestamp');
           await db.exec('DROP INDEX IF EXISTS idx_health_checks_status');
           await db.exec('DROP INDEX IF EXISTS idx_health_checks_component');
-          await db.exec('DROP TABLE IF EXISTS health_checks');
-          await db.exec('DROP INDEX IF EXISTS idx_system_metrics_type');
-          await db.exec('DROP INDEX IF EXISTS idx_system_metrics_name');
           await db.exec('DROP TABLE IF EXISTS system_metrics');
+          await db.exec('DROP TABLE IF EXISTS health_checks');
         },
       },
       {
@@ -536,35 +525,5 @@ export class MigrationManager {
     const pending = this.migrations.filter((m) => !this.executedMigrations.has(m.id));
 
     return { executed, pending };
-  }
-
-  /**
-   * Roll back the last N executed migrations in reverse order.
-   * Skips migrations without a `down` method.
-   */
-  async rollbackLastN(n: number): Promise<void> {
-    const executed = this.migrations
-      .filter((m) => this.executedMigrations.has(m.id))
-      .sort((a, b) => b.version - a.version)
-      .slice(0, n);
-
-    for (const migration of executed) {
-      if (migration.down) {
-        await this.rollbackMigration(migration);
-        this.executedMigrations.delete(migration.id);
-      } else {
-        Logger.warn(`Migration ${migration.id} has no down() — skipping rollback`);
-      }
-    }
-  }
-
-  /**
-   * Validate that every registered migration has a `down` method.
-   * Returns an array of migration IDs that are missing rollback support.
-   */
-  validateMigrations(): string[] {
-    return this.migrations
-      .filter((m) => !m.down)
-      .map((m) => m.id);
   }
 }
