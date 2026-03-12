@@ -38,6 +38,14 @@ function sanitizeObject(obj: any): any {
   return obj;
 }
 
+const SKIP_HEADER_SANITIZATION = new Set([
+  'authorization',
+  'cookie',
+  'set-cookie',
+  'proxy-authorization',
+  'etag',
+]);
+
 /**
  * Middleware to sanitize request body, query, and params
  */
@@ -55,7 +63,15 @@ export const sanitizeInput = (req: Request, res: Response, next: NextFunction) =
   }
 
   if (req.headers && typeof req.headers === 'object') {
-    req.headers = sanitizeObject(req.headers);
+    const sanitizedHeaders: any = {};
+    for (const key of Object.keys(req.headers)) {
+      if (SKIP_HEADER_SANITIZATION.has(key.toLowerCase())) {
+        sanitizedHeaders[key] = req.headers[key];
+      } else {
+        sanitizedHeaders[key] = sanitizeObject(req.headers[key]);
+      }
+    }
+    req.headers = sanitizedHeaders;
   }
 
   next();

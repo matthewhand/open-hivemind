@@ -11,6 +11,7 @@ describe('sanitizeInput middleware', () => {
       body: {},
       query: {},
       params: {},
+      headers: {},
     };
     mockRes = {};
     mockNext = jest.fn();
@@ -161,6 +162,23 @@ describe('sanitizeInput middleware', () => {
     sanitizeInput(mockReq as Request, mockRes as Response, mockNext);
 
     expect(mockReq.body).toEqual({ empty: '', whitespace: '   ' });
+    expect(mockNext).toHaveBeenCalledTimes(1);
+  });
+
+  it('should not corrupt standard headers that contain valid characters', () => {
+    mockReq.headers = {
+      'authorization': 'Bearer "my_token"',
+      'cookie': 'session_id="value123"&user=test',
+      'etag': 'W/"0815"',
+      'x-custom-header': '<script>alert(1)</script>'
+    };
+
+    sanitizeInput(mockReq as Request, mockRes as Response, mockNext);
+
+    expect(mockReq.headers['authorization']).toBe('Bearer "my_token"');
+    expect(mockReq.headers['cookie']).toBe('session_id="value123"&user=test');
+    expect(mockReq.headers['etag']).toBe('W/"0815"');
+    expect(mockReq.headers['x-custom-header']).toBe('&lt;script&gt;alert(1)&lt;/script&gt;');
     expect(mockNext).toHaveBeenCalledTimes(1);
   });
 });
