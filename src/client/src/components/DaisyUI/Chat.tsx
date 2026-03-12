@@ -27,6 +27,7 @@ interface ChatInterfaceProps {
   onRetryMessage?: (messageId: string) => void;
   currentUserId?: string;
   isLoading?: boolean;
+  isDisabled?: boolean;
   placeholder?: string;
   className?: string;
   showTypingIndicator?: boolean;
@@ -40,6 +41,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
   onRetryMessage,
   currentUserId = 'current-user',
   isLoading = false,
+  isDisabled = false,
   placeholder = 'Type your message...',
   className = '',
   showTypingIndicator = false,
@@ -272,7 +274,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
             onKeyPress={handleKeyPress}
             placeholder={placeholder}
             className="input input-bordered flex-1"
-            disabled={isLoading}
+            disabled={isLoading || isDisabled}
           />
 
           <div className="flex gap-1">
@@ -280,6 +282,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
               type="button"
               className="btn btn-ghost btn-square"
               title="Attach file"
+              disabled={isDisabled}
             >
               📎
             </button>
@@ -287,7 +290,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
             <button
               type="submit"
               className={`btn btn-primary ${isLoading ? 'loading' : ''}`}
-              disabled={!inputValue.trim() || isLoading}
+              disabled={!inputValue.trim() || isLoading || isDisabled}
             >
               {isLoading ? '' : '➤'}
             </button>

@@ -36,6 +36,7 @@ const ChatPage: React.FC = () => {
   const [llmProviders, setLlmProviders] = useState<LlmProviderOption[]>([]);
   const [swappingProvider, setSwappingProvider] = useState<string | null>(null);
   const [showProviderDropdown, setShowProviderDropdown] = useState<string | null>(null);
+  const [isOffline, setIsOffline] = useState(!navigator.onLine);
 
   const showSuccess = useSuccessToast();
   const showError = useErrorToast();
@@ -85,6 +86,19 @@ const ChatPage: React.FC = () => {
     fetchBots();
     fetchLlmProviders();
   }, [fetchLlmProviders]);
+
+  useEffect(() => {
+    const handleOnline = () => setIsOffline(false);
+    const handleOffline = () => setIsOffline(true);
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
 
   useEffect(() => {
     if (selectedBotId) {
@@ -146,7 +160,7 @@ const ChatPage: React.FC = () => {
   const selectedBot = bots.find(b => b.id === selectedBotId);
 
   const handleSendMessage = async (content: string, existingId?: string) => {
-    if (!selectedBotId) return;
+    if (!selectedBotId || isOffline) return;
 
     const tempId = existingId || `temp-${Date.now()}`;
 
@@ -190,12 +204,12 @@ const ChatPage: React.FC = () => {
     }
   };
 
-  const handleRetryMessage = useCallback((messageId: string) => {
+  const handleRetryMessage = (messageId: string) => {
     const messageToRetry = messages.find(m => m.id === messageId);
-    if (!messageToRetry) return;
-    setMessages(prev => prev.filter(m => m.id !== messageId));
-    handleSendMessage(messageToRetry.content);
-  }, [messages, handleSendMessage]);
+    if (messageToRetry) {
+      handleSendMessage(messageToRetry.content, messageId);
+    }
+  };
 
   return (
     <div className="flex flex-col h-full bg-base-200">
@@ -309,6 +323,11 @@ const ChatPage: React.FC = () => {
 
         {/* Main Content */}
         <div className="flex-1 flex flex-col bg-base-100 relative">
+          {isOffline && (
+            <div className="bg-warning text-warning-content p-2 text-center text-sm font-semibold z-10">
+              You are currently offline
+            </div>
+          )}
           {selectedBot ? (
             <div className="flex-1 flex flex-col h-full relative">
               {historyLoading && (
@@ -320,17 +339,18 @@ const ChatPage: React.FC = () => {
                 messages={messages}
                 onSendMessage={handleSendMessage}
                 onRetryMessage={handleRetryMessage}
-                placeholder="Type a message..."
+                placeholder={isOffline ? "You are offline" : "Type a message..."}
                 className="h-full"
                 maxHeight="100%"
                 isLoading={false}
+                isDisabled={isOffline}
               />
               {/* Overlay to intercept clicks on input area if needed, but placeholder should suffice */}
             </div>
           ) : (
             <div className="flex-1 flex flex-col items-center justify-center p-8 text-center bg-base-200/50">
               <EmptyState
-                icon={<MessageSquare className="w-12 h-12" />}
+                icon={MessageSquare}
                 title="Select a Bot"
                 description="Choose a bot from the sidebar to view its real-time chat history and activity."
                 variant="noData"
