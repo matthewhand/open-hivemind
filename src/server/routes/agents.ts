@@ -1,5 +1,6 @@
 import { promises as fs } from 'fs';
 import { join } from 'path';
+import crypto from 'crypto';
 import Debug from 'debug';
 import { Router } from 'express';
 import { ErrorUtils } from '@src/types/errors';
@@ -173,7 +174,7 @@ router.post('/', async (req, res) => {
 
     const newAgent: AgentConfig = {
       ...agentData,
-      id: `agent_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      id: `agent_${crypto.randomUUID()}`,
     };
 
     agents.push(newAgent);
