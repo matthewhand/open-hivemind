@@ -186,11 +186,11 @@ router.get('/alerts', (req, res) => {
 });
 
 // Readiness probe
-router.get('/ready', (req, res) => {
+router.get('/ready', async (req, res) => {
   try {
     const isDbConnected = DatabaseManager.getInstance().isConnected();
-    const bots = BotManager.getInstance().getAllBots();
-    const botAdaptersHealthy = Array.from(bots.values()).every(
+    const bots = await BotManager.getInstance().getAllBots();
+    const botAdaptersHealthy = Array.from(bots).every(
       (bot: any) =>
         bot.getStatus() === 'active' ||
         bot.getStatus() === 'connected' ||
