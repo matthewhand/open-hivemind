@@ -14,6 +14,7 @@ interface BotsTabProps {
   handleBotSelectionChange: (rows: any[]) => void;
   handleOpenCreateModal: () => void;
   isModalDataLoading: boolean;
+  title?: string;
 }
 
 export const BotsTab: React.FC<BotsTabProps> = ({
@@ -22,7 +23,8 @@ export const BotsTab: React.FC<BotsTabProps> = ({
   selectedBots,
   handleBotSelectionChange,
   handleOpenCreateModal,
-  isModalDataLoading
+  isModalDataLoading,
+  title,
 }) => {
   const navigate = useNavigate();
   const botColumns = getBotColumns((id) => navigate(`/bots/${id}`));
@@ -31,7 +33,7 @@ export const BotsTab: React.FC<BotsTabProps> = ({
     <Card className="bg-base-100 shadow-xl border border-base-200">
       <Card.Body>
         <div className="flex justify-between items-center mb-6">
-          <Card.Title className="m-0">Active Bots</Card.Title>
+          <Card.Title className="m-0">{title ?? 'Active Bots'}</Card.Title>
           <Button
             onClick={handleOpenCreateModal}
             variant="primary"
