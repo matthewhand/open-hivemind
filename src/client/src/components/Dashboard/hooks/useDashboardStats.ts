@@ -1,8 +1,22 @@
 import { useMemo } from 'react';
 
+export interface DashboardBot {
+  id: string;
+  name: string;
+  status: string;
+  [key: string]: unknown;
+}
+
+export interface StatCard {
+  title: string;
+  value: number | string;
+  description: string;
+  icon: string;
+}
+
 export const useDashboardStats = (
-  bots: any[],
-  statusBots: any[],
+  bots: DashboardBot[],
+  statusBots: DashboardBot[],
   activeBotCount: number,
   totalMessages: number,
   activeConnections: number,
@@ -14,7 +28,7 @@ export const useDashboardStats = (
     [totalErrors, totalMessages]
   );
 
-  const statsCards = useMemo(() => [
+  const statsCards = useMemo((): StatCard[] => [
     {
       title: 'Total Bots',
       value: bots.length,
@@ -47,5 +61,5 @@ export const useDashboardStats = (
     },
   ], [bots.length, activeBotCount, activeConnections, totalMessages, totalErrors, errorRate, uptime]);
 
-  return { statsCards, errorRate };
+  return { statsCards, errorRate, activeBotCount };
 };
