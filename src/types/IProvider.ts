@@ -90,9 +90,9 @@ export interface IMemoryProvider {
   /** Add memories from conversation messages */
   add(
     messages: Array<{ role: 'user' | 'assistant'; content: string }>,
-    options?: { userId?: string; agentId?: string; metadata?: Record<string, unknown> }
+    options?: { userId?: string; agentId?: string; metadata?: Record<string, any> }
   ): Promise<{
-    results: Array<{ id: string; memory: string; score?: number; metadata?: Record<string, unknown> }>;
+    results: Array<{ id: string; memory: string; score?: number; metadata?: Record<string, any> }>;
   }>;
 
   /** Search memories by natural language query */
@@ -100,7 +100,7 @@ export interface IMemoryProvider {
     query: string,
     options?: { userId?: string; agentId?: string; limit?: number }
   ): Promise<{
-    results: Array<{ id: string; memory: string; score?: number; metadata?: Record<string, unknown> }>;
+    results: Array<{ id: string; memory: string; score?: number; metadata?: Record<string, any> }>;
   }>;
 
   /** Get all memories for a user/agent */
