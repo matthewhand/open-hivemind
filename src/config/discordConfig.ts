@@ -225,8 +225,9 @@ try {
   discordConfig.loadFile(configPath);
   debug(`Successfully loaded Discord config from ${configPath}`);
 } catch (error: any) {
-  if (error.code !== 'ENOENT') {
+  if (error.code !== 'ENOENT' && error.code !== 'ENOTDIR') {
     debug(`Error reading discord config from ${configPath}:`, error.message);
+    throw error;
   } else {
     debug(`Discord config file not found at ${configPath}, using environment variables and defaults`);
   }
