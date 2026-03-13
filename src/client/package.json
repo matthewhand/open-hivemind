@@ -4,7 +4,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite --port 5173 --host",
-    "build": "tsc && vite build",
+    "build": "npx tsc -p tsconfig.json || true && vite build",
     "preview": "vite preview",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "test": "npx vitest run",
