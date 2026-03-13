@@ -24,13 +24,12 @@ export async function listAgents(apiKey: string, apiUrl?: string): Promise<Agent
   const client = new Letta({
     baseUrl: baseUrl,
     token: apiKey,
-  } as any);
+  });
 
-  const agentsResult = await client.agents.list();
-  const agentsList = Array.isArray(agentsResult) ? agentsResult : (agentsResult as any).data || [];
+  const agents = await client.agents.list();
 
   // Transform to simplified agent summary
-  return agentsList.map((agent: any) => ({
+  return agents.map((agent: any) => ({
     id: agent.id,
     name: agent.name,
     description: agent.description,
@@ -53,7 +52,7 @@ export async function getAgent(agentId: string, apiKey: string, apiUrl?: string)
   const client = new Letta({
     baseUrl: baseUrl,
     token: apiKey,
-  } as any);
+  });
 
   const agent = await client.agents.retrieve(agentId);
 
