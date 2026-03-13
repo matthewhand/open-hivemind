@@ -1,5 +1,6 @@
 import axios from 'axios';
 import Debug from 'debug';
+import { isSafeUrl } from '@hivemind/shared-types';
 import type { IMessage } from '@src/message/interfaces/IMessage';
 import type { ILlmProvider } from '@llm/interfaces/ILlmProvider';
 import openWebUIConfig from './openWebUIConfig';
@@ -38,6 +39,11 @@ export const openWebUIProvider: ILlmProvider = {
     ];
 
     try {
+      const targetUrl = openWebUIConfig.get('apiUrl') + '/chat/completions';
+      if (!(await isSafeUrl(targetUrl))) {
+        throw new Error('OpenWebUI API URL is not safe to connect to.');
+      }
+
       const response = await openWebUIClient.post('/chat/completions', {
         model,
         messages,
@@ -54,6 +60,11 @@ export const openWebUIProvider: ILlmProvider = {
     debug('Generating non-chat completion with OpenWebUI:', { prompt });
 
     try {
+      const targetUrl = openWebUIConfig.get('apiUrl') + '/completions';
+      if (!(await isSafeUrl(targetUrl))) {
+        throw new Error('OpenWebUI API URL is not safe to connect to.');
+      }
+
       const response = await openWebUIClient.post('/completions', {
         model,
         prompt,
