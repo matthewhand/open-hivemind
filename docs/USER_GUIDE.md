@@ -17,6 +17,7 @@ Welcome to the Open-Hivemind User Guide. This document provides a detailed walkt
   - [Guards](#guards)
   - [MCP Servers](#mcp-servers)
   - [MCP Tools](#mcp-tools)
+  - [Package Marketplace](#package-marketplace)
 - [System](#system)
   - [Settings Overview](#settings-overview)
   - [Webhook](#webhook)
@@ -157,6 +158,17 @@ Browse and manage tools available from your connected MCP servers.
 *   **Schema Inspection**: View input and output schemas for each tool.
 *   **Tool Execution**: Test tools directly via **Form Mode** (based on the tool's schema) and **JSON Mode** for advanced input.
 *   **Enable/Disable**: Toggle individual tools on or off.
+
+### [Package Marketplace](/admin/marketplace)
+Browse and manage available packages, including LLM providers, message platforms, and more.
+
+![Marketplace Page](screenshots/marketplace-page.png)
+![Install Package from URL Modal](screenshots/marketplace-install-modal.png)
+
+*   **Package Discovery**: Browse a variety of built-in and third-party packages to extend functionality.
+*   **Type Filtering**: Easily filter packages by categories such as LLM, Messaging, Memory, and Tools.
+*   **Install via URL**: Install custom community packages by providing a valid GitHub URL.
+*   **Management Actions**: Install, update, or uninstall packages with built-in status indicators (Built-in, Installed, Available).
 
 ---
 
