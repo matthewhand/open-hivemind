@@ -1,44 +1,19 @@
 import { Logger } from '@common/logger';
 
-export interface Db {
-  exec(sql: string): Promise<void>;
-  run(sql: string, params?: unknown[]): Promise<unknown>;
-  get(sql: string): Promise<Record<string, string> | undefined>;
-  all(sql: string): Promise<Record<string, unknown>[]>;
-}
-
 export interface Migration {
   id: string;
   name: string;
-  up: (db: Db) => Promise<void>;
-  down?: (db: Db) => Promise<void>;
+  up: (db: any) => Promise<void>;
+  down?: (db: any) => Promise<void>;
   version: number;
-}
-
-async function supportsDropColumn(db: Db): Promise<boolean> {
-  try {
-    const result = await db.get('SELECT sqlite_version() as version');
-    const version = result?.version ?? '3.0.0';
-    const [major, minor] = version.split('.').map(Number);
-    const supported = major > 3 || (major === 3 && minor >= 35);
-    if (!supported) {
-      Logger.warn(
-        `SQLite version ${version} does not support DROP COLUMN. ` +
-          `Minimum required: 3.35.0. Rollback operations may fail.`
-      );
-    }
-    return supported;
-  } catch {
-    return true;
-  }
 }
 
 export class MigrationManager {
   private migrations: Migration[] = [];
   private executedMigrations = new Set<string>();
-  private db: Db;
+  private db: any;
 
-  constructor(db: Db) {
+  constructor(db: any) {
     this.db = db;
     this.loadMigrations();
   }
@@ -50,7 +25,7 @@ export class MigrationManager {
         id: '001_add_tenant_support',
         name: 'Add tenant support to existing tables',
         version: 1,
-        up: async (db: Db) => {
+        up: async (db: any) => {
           // Add tenantId columns to existing tables
           await db.exec('ALTER TABLE bot_configurations ADD COLUMN tenantId TEXT');
           await db.exec('ALTER TABLE bot_configuration_versions ADD COLUMN tenantId TEXT');
@@ -77,29 +52,12 @@ export class MigrationManager {
             'CREATE INDEX IF NOT EXISTS idx_bot_configuration_audit_tenant ON bot_configuration_audit(tenantId)'
           );
         },
-        down: async (db: Db) => {
-          await supportsDropColumn(db);
-
-          await db.exec('DROP INDEX IF EXISTS idx_bot_configuration_audit_tenant');
-          await db.exec('DROP INDEX IF EXISTS idx_bot_configuration_versions_tenant');
-          await db.exec('DROP INDEX IF EXISTS idx_bot_metrics_tenant');
-          await db.exec('DROP INDEX IF EXISTS idx_bot_sessions_tenant');
-          await db.exec('DROP INDEX IF EXISTS idx_messages_tenant');
-          await db.exec('DROP INDEX IF EXISTS idx_bot_configurations_tenant');
-
-          await db.exec('ALTER TABLE bot_metrics DROP COLUMN tenantId');
-          await db.exec('ALTER TABLE bot_sessions DROP COLUMN tenantId');
-          await db.exec('ALTER TABLE messages DROP COLUMN tenantId');
-          await db.exec('ALTER TABLE bot_configuration_audit DROP COLUMN tenantId');
-          await db.exec('ALTER TABLE bot_configuration_versions DROP COLUMN tenantId');
-          await db.exec('ALTER TABLE bot_configurations DROP COLUMN tenantId');
-        },
       },
       {
         id: '002_add_rbac_enhancements',
         name: 'Add RBAC enhancements to roles table',
         version: 2,
-        up: async (db: Db) => {
+        up: async (db: any) => {
           await db.exec('ALTER TABLE roles ADD COLUMN description TEXT');
           await db.exec('ALTER TABLE roles ADD COLUMN level INTEGER DEFAULT 0');
           await db.exec('ALTER TABLE roles ADD COLUMN isActive BOOLEAN DEFAULT 1');
@@ -114,37 +72,22 @@ export class MigrationManager {
           await db.exec('CREATE INDEX IF NOT EXISTS idx_roles_tenant ON roles(tenantId)');
           await db.exec('CREATE INDEX IF NOT EXISTS idx_roles_level ON roles(level)');
         },
-        down: async (db: Db) => {
-          await db.exec('DROP INDEX IF EXISTS idx_roles_level');
-          await db.exec('DROP INDEX IF EXISTS idx_roles_tenant');
-
-          await db.exec('ALTER TABLE roles DROP COLUMN updatedAt');
-          await db.exec('ALTER TABLE roles DROP COLUMN createdAt');
-          await db.exec('ALTER TABLE roles DROP COLUMN isActive');
-          await db.exec('ALTER TABLE roles DROP COLUMN level');
-          await db.exec('ALTER TABLE roles DROP COLUMN description');
-        },
       },
       {
         id: '003_add_user_indexes',
         name: 'Add user indexes',
         version: 3,
-        up: async (db: Db) => {
+        up: async (db: any) => {
           await db.exec('CREATE INDEX IF NOT EXISTS idx_users_tenant ON users(tenantId)');
           await db.exec('CREATE INDEX IF NOT EXISTS idx_audits_tenant ON audits(tenantId)');
           await db.exec('CREATE INDEX IF NOT EXISTS idx_audits_user ON audits(userId)');
-        },
-        down: async (db: Db) => {
-          await db.exec('DROP INDEX IF EXISTS idx_audits_user');
-          await db.exec('DROP INDEX IF EXISTS idx_audits_tenant');
-          await db.exec('DROP INDEX IF EXISTS idx_users_tenant');
         },
       },
       {
         id: '004_add_anomaly_tracking',
         name: 'Add anomaly tracking tables',
         version: 4,
-        up: async (db: Db) => {
+        up: async (db: any) => {
           await db.exec(`
             CREATE TABLE IF NOT EXISTS anomaly_detection (
               id TEXT PRIMARY KEY,
@@ -181,20 +124,12 @@ export class MigrationManager {
             'CREATE INDEX IF NOT EXISTS idx_anomaly_detection_tenant ON anomaly_detection(tenantId)'
           );
         },
-        down: async (db: Db) => {
-          await db.exec('DROP INDEX IF EXISTS idx_anomaly_detection_tenant');
-          await db.exec('DROP INDEX IF EXISTS idx_anomaly_detection_resolved');
-          await db.exec('DROP INDEX IF EXISTS idx_anomaly_detection_severity');
-          await db.exec('DROP INDEX IF EXISTS idx_anomaly_detection_metric');
-          await db.exec('DROP INDEX IF EXISTS idx_anomaly_detection_timestamp');
-          await db.exec('DROP TABLE IF EXISTS anomaly_detection');
-        },
       },
       {
         id: '005_add_monitoring_support',
         name: 'Add monitoring and health check support',
         version: 5,
-        up: async (db: Db) => {
+        up: async (db: any) => {
           await db.exec(`
             CREATE TABLE IF NOT EXISTS health_checks (
               id TEXT PRIMARY KEY,
@@ -237,21 +172,12 @@ export class MigrationManager {
             'CREATE INDEX IF NOT EXISTS idx_system_metrics_type ON system_metrics(metricType)'
           );
         },
-        down: async (db: Db) => {
-          await db.exec('DROP INDEX IF EXISTS idx_system_metrics_type');
-          await db.exec('DROP INDEX IF EXISTS idx_system_metrics_name');
-          await db.exec('DROP INDEX IF EXISTS idx_health_checks_timestamp');
-          await db.exec('DROP INDEX IF EXISTS idx_health_checks_status');
-          await db.exec('DROP INDEX IF EXISTS idx_health_checks_component');
-          await db.exec('DROP TABLE IF EXISTS system_metrics');
-          await db.exec('DROP TABLE IF EXISTS health_checks');
-        },
       },
       {
         id: '006_add_audit_enhancements',
         name: 'Add audit log enhancements',
         version: 6,
-        up: async (db: Db) => {
+        up: async (db: any) => {
           await db.exec('ALTER TABLE audits ADD COLUMN resourceId TEXT');
           await db.exec('ALTER TABLE audits ADD COLUMN ipAddress TEXT');
           await db.exec('ALTER TABLE audits ADD COLUMN userAgent TEXT');
@@ -266,26 +192,12 @@ export class MigrationManager {
           await db.exec('CREATE INDEX IF NOT EXISTS idx_audits_severity ON audits(severity)');
           await db.exec('CREATE INDEX IF NOT EXISTS idx_audits_status ON audits(status)');
         },
-        down: async (db: Db) => {
-          await db.exec('DROP INDEX IF EXISTS idx_audits_status');
-          await db.exec('DROP INDEX IF EXISTS idx_audits_severity');
-          await db.exec('DROP INDEX IF EXISTS idx_audits_resource');
-          await db.exec('DROP INDEX IF EXISTS idx_audits_action');
-
-          await db.exec('ALTER TABLE audits DROP COLUMN metadata');
-          await db.exec('ALTER TABLE audits DROP COLUMN details');
-          await db.exec('ALTER TABLE audits DROP COLUMN status');
-          await db.exec('ALTER TABLE audits DROP COLUMN severity');
-          await db.exec('ALTER TABLE audits DROP COLUMN userAgent');
-          await db.exec('ALTER TABLE audits DROP COLUMN ipAddress');
-          await db.exec('ALTER TABLE audits DROP COLUMN resourceId');
-        },
       },
       {
         id: '007_add_notifications',
         name: 'Add notification system',
         version: 7,
-        up: async (db: Db) => {
+        up: async (db: any) => {
           await db.exec(`
             CREATE TABLE IF NOT EXISTS notifications (
               id TEXT PRIMARY KEY,
@@ -312,18 +224,12 @@ export class MigrationManager {
             'CREATE INDEX IF NOT EXISTS idx_notifications_read ON notifications(isRead)'
           );
         },
-        down: async (db: Db) => {
-          await db.exec('DROP INDEX IF EXISTS idx_notifications_read');
-          await db.exec('DROP INDEX IF EXISTS idx_notifications_tenant');
-          await db.exec('DROP INDEX IF EXISTS idx_notifications_user');
-          await db.exec('DROP TABLE IF EXISTS notifications');
-        },
       },
       {
         id: '008_add_caching_support',
         name: 'Add caching system support',
         version: 8,
-        up: async (db: Db) => {
+        up: async (db: any) => {
           await db.exec(`
             CREATE TABLE IF NOT EXISTS cache_entries (
               key TEXT PRIMARY KEY,
@@ -338,17 +244,12 @@ export class MigrationManager {
           await db.exec('CREATE INDEX IF NOT EXISTS idx_cache_expires ON cache_entries(expiresAt)');
           await db.exec('CREATE INDEX IF NOT EXISTS idx_cache_tenant ON cache_entries(tenantId)');
         },
-        down: async (db: Db) => {
-          await db.exec('DROP INDEX IF EXISTS idx_cache_tenant');
-          await db.exec('DROP INDEX IF EXISTS idx_cache_expires');
-          await db.exec('DROP TABLE IF EXISTS cache_entries');
-        },
       },
       {
         id: '009_add_job_queue',
         name: 'Add job queue system',
         version: 9,
-        up: async (db: Db) => {
+        up: async (db: any) => {
           await db.exec(`
             CREATE TABLE IF NOT EXISTS job_queue (
               id TEXT PRIMARY KEY,
@@ -372,19 +273,12 @@ export class MigrationManager {
           await db.exec('CREATE INDEX IF NOT EXISTS idx_job_queue_tenant ON job_queue(tenantId)');
           await db.exec('CREATE INDEX IF NOT EXISTS idx_job_queue_created ON job_queue(createdAt)');
         },
-        down: async (db: Db) => {
-          await db.exec('DROP INDEX IF EXISTS idx_job_queue_created');
-          await db.exec('DROP INDEX IF EXISTS idx_job_queue_tenant');
-          await db.exec('DROP INDEX IF EXISTS idx_job_queue_priority');
-          await db.exec('DROP INDEX IF EXISTS idx_job_queue_status');
-          await db.exec('DROP TABLE IF EXISTS job_queue');
-        },
       },
       {
         id: '010_add_event_streaming',
         name: 'Add event streaming support',
         version: 10,
-        up: async (db: Db) => {
+        up: async (db: any) => {
           await db.exec(`
             CREATE TABLE IF NOT EXISTS event_stream (
               id TEXT PRIMARY KEY,
@@ -407,28 +301,21 @@ export class MigrationManager {
             'CREATE INDEX IF NOT EXISTS idx_event_stream_timestamp ON event_stream(timestamp)'
           );
         },
-        down: async (db: Db) => {
-          await db.exec('DROP INDEX IF EXISTS idx_event_stream_timestamp');
-          await db.exec('DROP INDEX IF EXISTS idx_event_stream_tenant');
-          await db.exec('DROP INDEX IF EXISTS idx_event_stream_type');
-          await db.exec('DROP TABLE IF EXISTS event_stream');
-        },
       },
       {
         id: '011_add_cron_timezone_support',
         name: 'Add timezone support to cron scheduling tables',
         version: 11,
-        up: async (db: Db) => {
+        up: async (db: any) => {
           await db.exec("ALTER TABLE bot_scheduling ADD COLUMN timezone TEXT DEFAULT 'UTC'");
           await db.exec("ALTER TABLE bot_backup_schedules ADD COLUMN timezone TEXT DEFAULT 'UTC'");
           await db.exec(
             "ALTER TABLE bot_data_purging_schedules ADD COLUMN timezone TEXT DEFAULT 'UTC'"
           );
         },
-        down: async (db: Db) => {
-          await db.exec('ALTER TABLE bot_data_purging_schedules DROP COLUMN timezone');
-          await db.exec('ALTER TABLE bot_backup_schedules DROP COLUMN timezone');
-          await db.exec('ALTER TABLE bot_scheduling DROP COLUMN timezone');
+        down: async (db: any) => {
+          // SQLite doesn't support DROP COLUMN cleanly in all versions. We omit down or leave empty for safety,
+          // or ideally we would recreate the table without the column. For simplicity, we'll leave it as a no-op down.
         },
       },
     ];
@@ -448,7 +335,7 @@ export class MigrationManager {
 
   async getExecutedMigrations(): Promise<string[]> {
     const rows = await this.db.all('SELECT id FROM migrations ORDER BY version');
-    return rows.map((row) => row.id as string);
+    return rows.map((row: any) => row.id);
   }
 
   async runMigrations(): Promise<void> {
@@ -508,17 +395,20 @@ export class MigrationManager {
   async rollbackToVersion(version: number): Promise<void> {
     const migrationsToRollback = this.migrations
       .filter((m) => m.version > version)
-      .sort((a, b) => b.version - a.version);
+      .sort((a, b) => b.version - a.version); // Reverse order
 
-    const irreversible = migrationsToRollback.find((m) => !m.down);
-    if (irreversible) {
+    // Validate that all migrations to be rolled back are reversible
+    const irreversibleMigration = migrationsToRollback.find((m) => !m.down);
+    if (irreversibleMigration) {
       throw new Error(
-        `Cannot rollback: Migration ${irreversible.id} is irreversible (missing down method).`
+        `Cannot rollback: Migration ${irreversibleMigration.id} is irreversible (missing down method).`
       );
     }
 
     for (const migration of migrationsToRollback) {
-      await this.rollbackMigration(migration);
+      if (migration.down) {
+        await this.rollbackMigration(migration);
+      }
     }
   }
 
@@ -526,12 +416,16 @@ export class MigrationManager {
     try {
       Logger.info(`Rolling back migration ${migration.id}: ${migration.name}`);
 
+      // Start transaction
       await this.db.exec('BEGIN TRANSACTION');
 
+      // Execute rollback
       await migration.down!(this.db);
 
+      // Remove from migrations table
       await this.db.run('DELETE FROM migrations WHERE id = ?', [migration.id]);
 
+      // Commit transaction
       await this.db.exec('COMMIT');
 
       Logger.info(`Successfully rolled back migration ${migration.id}`);

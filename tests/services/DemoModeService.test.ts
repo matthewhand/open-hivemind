@@ -329,14 +329,12 @@ describe('DemoModeService', () => {
     it('should handle concurrent addMessage calls safely', async () => {
       const promises = [];
       for (let i = 0; i < 100; i++) {
-        promises.push(
-          new Promise<void>((resolve) => {
-            setTimeout(() => {
-              demoService.addMessage('channel-1', 'Demo Bot', `Message ${i}`, 'incoming');
-              resolve();
-            }, Math.random() * 10);
-          })
-        );
+        promises.push(new Promise<void>((resolve) => {
+          setTimeout(() => {
+            demoService.addMessage('channel-1', 'Demo Bot', `Message ${i}`, 'incoming');
+            resolve();
+          }, Math.random() * 10);
+        }));
       }
       await Promise.all(promises);
 
@@ -344,4 +342,5 @@ describe('DemoModeService', () => {
       expect(history.length).toBe(100);
     });
   });
+
 });

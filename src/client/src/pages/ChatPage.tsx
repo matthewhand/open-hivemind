@@ -5,7 +5,6 @@ import { BotAvatar } from '../components/BotAvatar';
 import { RefreshCw, MessageSquare, Cpu, Check, ChevronDown } from 'lucide-react';
 import EmptyState from '../components/DaisyUI/EmptyState';
 import { useSuccessToast, useErrorToast } from '../components/DaisyUI/ToastNotification';
-import { useNetworkStatus } from '../hooks/useNetworkStatus';
 
 // Define Bot type based on API response
 interface BotData {
@@ -37,7 +36,6 @@ const ChatPage: React.FC = () => {
   const [llmProviders, setLlmProviders] = useState<LlmProviderOption[]>([]);
   const [swappingProvider, setSwappingProvider] = useState<string | null>(null);
   const [showProviderDropdown, setShowProviderDropdown] = useState<string | null>(null);
-  const { isOffline, enqueue, registerFlush, queueLength } = useNetworkStatus();
 
   const showSuccess = useSuccessToast();
   const showError = useErrorToast();
@@ -147,22 +145,10 @@ const ChatPage: React.FC = () => {
 
   const selectedBot = bots.find(b => b.id === selectedBotId);
 
-  useEffect(() => {
-    if (!selectedBotId) return;
-    registerFlush(async ({ content, botId }) => {
-      await apiService.post(`/api/bots/${botId}/message`, { content });
-      await fetchHistory(botId);
-    });
-  }, [selectedBotId, registerFlush, fetchHistory]);
-
   const handleSendMessage = async (content: string, existingId?: string) => {
     if (!selectedBotId) return;
-    if (isOffline) {
-      enqueue({ content, botId: selectedBotId });
-      return;
-    }
 
-    const tempId = existingId || `temp-${globalThis.crypto.randomUUID()}`;
+    const tempId = existingId || `temp-${Date.now()}`;
 
     if (existingId) {
       // If retrying, reset the status to sending
@@ -323,11 +309,6 @@ const ChatPage: React.FC = () => {
 
         {/* Main Content */}
         <div className="flex-1 flex flex-col bg-base-100 relative">
-          {isOffline && (
-            <div className="bg-warning text-warning-content p-2 text-center text-sm font-semibold z-10">
-              You are currently offline{queueLength > 0 ? ` — ${queueLength} message${queueLength > 1 ? 's' : ''} queued` : ''}
-            </div>
-          )}
           {selectedBot ? (
             <div className="flex-1 flex flex-col h-full relative">
               {historyLoading && (
@@ -338,12 +319,10 @@ const ChatPage: React.FC = () => {
               <ChatInterface
                 messages={messages}
                 onSendMessage={handleSendMessage}
-                onRetryMessage={handleRetryMessage}
-                placeholder={isOffline ? "You are offline" : "Type a message..."}
+                placeholder="Type a message..."
                 className="h-full"
                 maxHeight="100%"
                 isLoading={false}
-                isDisabled={isOffline}
               />
               {/* Overlay to intercept clicks on input area if needed, but placeholder should suffice */}
             </div>

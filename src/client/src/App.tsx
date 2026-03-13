@@ -1,7 +1,7 @@
 import React from 'react';
 import { BrowserRouter } from 'react-router-dom';
 import { Provider } from 'react-redux';
-import { store } from './store/store';
+import { store } from './store';
 import ReduxProvider from './components/ReduxProvider';
 import ErrorBoundary from './components/ErrorBoundary';
 import AppRouter from './router/AppRouter';
@@ -12,7 +12,6 @@ import { WebSocketProvider } from './contexts/WebSocketContext';
 import ScrollToTop from './components/ScrollToTop';
 import { Toaster } from 'react-hot-toast';
 import { IntegrationProvider } from './components/IntegrationLoader';
-import { I18nProvider } from './i18n/I18nProvider';
 
 function App() {
   return (
@@ -25,12 +24,10 @@ function App() {
               <BotProvider>
                 <WebSocketProvider>
                   <IntegrationProvider>
-                    <I18nProvider>
-                      <BrowserRouter>
-                        <ScrollToTop />
-                        <AppRouter />
-                      </BrowserRouter>
-                    </I18nProvider>
+                    <BrowserRouter>
+                      <ScrollToTop />
+                      <AppRouter />
+                    </BrowserRouter>
                   </IntegrationProvider>
                 </WebSocketProvider>
               </BotProvider>

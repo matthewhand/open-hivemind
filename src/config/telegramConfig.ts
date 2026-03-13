@@ -75,10 +75,9 @@ const configPath = path.join(configDir, 'providers/telegram.json');
 try {
   telegramConfig.loadFile(configPath);
   debug(`Successfully loaded Telegram config from ${configPath}`);
-} catch (error: unknown) {
-  if ((error as NodeJS.ErrnoException).code !== 'ENOENT') {
-    debug(`Error reading telegram config from ${configPath}:`, error instanceof Error ? error.message : String(error));
-    throw error;
+} catch (error: any) {
+  if (error.code !== 'ENOENT') {
+    debug(`Error reading telegram config from ${configPath}:`, error.message);
   } else {
     debug(`Telegram config file not found at ${configPath}, using environment variables and defaults`);
   }

@@ -25,10 +25,6 @@ export default defineConfig({
         target: 'http://localhost:3028',
         changeOrigin: true,
       },
-      '/metrics': {
-        target: 'http://localhost:3028',
-        changeOrigin: true,
-      },
     },
   },
   resolve: {

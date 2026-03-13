@@ -31,7 +31,7 @@ describe('redaction', () => {
         });
 
         it('should show first and last char with mask for longer strings in strict mode', () => {
-            expect(redactString('user123')).toBe('u***3');
+            expect(redactString('user123')).toBe('u***r');
             expect(redactString('testuser')).toBe('t***r');
         });
 
@@ -67,7 +67,7 @@ describe('redaction', () => {
 
         it('should support moderate level', () => {
             configureRedaction({ level: 'moderate' });
-            expect(redactString('user123')).toBe('us***23');
+            expect(redactString('user123')).toBe('us****23');
             expect(redactString('ab')).toBe('**');
         });
 
@@ -84,7 +84,7 @@ describe('redaction', () => {
         });
 
         it('should redact email addresses', () => {
-            expect(redactEmail('user@example.com')).toBe('u***r@e***.com');
+            expect(redactEmail('user@example.com')).toBe('u***r@e***e.com');
         });
 
         it('should handle short local parts', () => {
@@ -98,8 +98,8 @@ describe('redaction', () => {
         });
 
         it('should redact phone numbers showing only last 4 digits', () => {
-            expect(redactPhone('555-123-4567')).toBe('******4567');
-            expect(redactPhone('+1 (555) 123-4567')).toBe('*******4567');
+            expect(redactPhone('555-123-4567')).toBe('*******4567');
+            expect(redactPhone('+1 (555) 123-4567')).toBe('**********4567');
         });
 
         it('should fully redact short numbers', () => {

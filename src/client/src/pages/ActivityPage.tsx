@@ -15,7 +15,6 @@ import { LoadingSpinner } from '../components/DaisyUI/Loading';
 import EmptyState from '../components/DaisyUI/EmptyState';
 import Input from '../components/DaisyUI/Input';
 import SearchFilterBar from '../components/SearchFilterBar';
-import { useInterval } from '../hooks/useInterval';
 import { apiService, ActivityEvent, ActivityResponse } from '../services/api';
 
 const ActivityPage: React.FC = () => {
@@ -88,7 +87,9 @@ const ActivityPage: React.FC = () => {
     }
   }, [selectedBot, selectedProvider, selectedLlmProvider, startDate, endDate, autoRefresh, maxRetries]);
 
-  useInterval(fetchActivity, autoRefresh ? 5000 : null);
+  useEffect(() => {
+    fetchActivity();
+  }, [fetchActivity]); // fetchActivity depends on filters, so this runs when filters change
 
   const handleClearFilters = () => {
     setSearchQuery('');
@@ -99,6 +100,12 @@ const ActivityPage: React.FC = () => {
     setEndDate('');
   };
 
+  useEffect(() => {
+    if (autoRefresh) {
+      const interval = setInterval(fetchActivity, 5000);
+      return () => clearInterval(interval);
+    }
+  }, [autoRefresh, fetchActivity]);
 
   const handleExport = () => {
     if (!data?.events || data.events.length === 0) return;
@@ -305,7 +312,7 @@ const ActivityPage: React.FC = () => {
       <PageHeader
         title="Activity Feed"
         description="Real-time message flow and events"
-        icon={<Clock className="w-12 h-12" />}
+        icon={Clock}
         actions={
           <div className="flex items-center gap-2">
             {/* View Toggle */}
@@ -428,7 +435,7 @@ const ActivityPage: React.FC = () => {
         </div>
       ) : filteredEvents.length === 0 ? (
         <EmptyState
-          icon={<Clock className="w-12 h-12" />}
+          icon={Clock}
           title={events.length === 0 ? "No activity yet" : "No matching events"}
           description={events.length === 0 ? "Events will appear here as your bots process messages" : "Try adjusting your search or filters"}
           actionLabel="Refresh"

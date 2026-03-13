@@ -1,3 +1,3 @@
-## 2026-03-13 - Added ARIA labels to Icon-only Buttons
-**Learning:** Icon-only buttons without `aria-label` attributes are invisible to screen readers, making critical actions inaccessible. Ensure that buttons like close notifications ('✕') or visual indicators (like a lock icon) provide context.
-**Action:** Always add an `aria-label` string for state-toggling buttons and icon-only buttons indicating purpose.
+## 2025-03-07 - Add ARIA Labels to Icon-Only Buttons
+**Learning:** This application heavily utilizes custom DaisyUI wrapper components, often creating `<button>` elements that only contain HeroIcons or Lucide React icons. By default, these icon-only buttons are invisible to screen readers, causing accessibility issues where users cannot determine the button's purpose (e.g., delete, edit, close, expand).
+**Action:** When implementing new UI elements or refactoring existing ones, always ensure that any `<button>` lacking visible, descriptive text content includes an `aria-label` attribute describing its function. When a button toggles state (like expanding a section), use `aria-expanded` in conjunction with a dynamic `aria-label`.

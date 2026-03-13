@@ -43,7 +43,7 @@ jest.mock('@hivemind/llm-openai', () => ({
 }));
 
 // Mock Flowise provider
-jest.mock('@hivemind/llm-flowise/flowiseProvider', () => ({
+jest.mock('@integrations/flowise/flowiseProvider', () => ({
   __esModule: true,
   FlowiseProvider: jest.fn().mockImplementation((_cfg: any) => ({
     name: 'flowise',
@@ -55,7 +55,7 @@ jest.mock('@hivemind/llm-flowise/flowiseProvider', () => ({
 }));
 
 // Mock OpenWebUI
-jest.mock('@hivemind/llm-openwebui/runInference', () => ({
+jest.mock('@integrations/openwebui/runInference', () => ({
   __esModule: true,
   generateChatCompletion: jest.fn().mockResolvedValue({ text: 'openwebui' }),
 }));
@@ -78,7 +78,7 @@ describe('taskLlmRouter.getTaskLlm', () => {
     };
 
     // Import after mocks
-
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
     const { getTaskLlm } = require('@llm/taskLlmRouter');
 
     const sel = getTaskLlm('semantic', { fallbackProviders: [fallback], baseMetadata: { x: 1 } });
@@ -97,6 +97,7 @@ describe('taskLlmRouter.getTaskLlm', () => {
 
     process.env.LLM_SEMANTIC_MODEL = 'gpt-5.1-nano';
 
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
     const { getTaskLlm } = require('@llm/taskLlmRouter');
 
     const sel = getTaskLlm('semantic', { fallbackProviders: [fallback] });
@@ -119,6 +120,7 @@ describe('taskLlmRouter.getTaskLlm', () => {
     process.env.LLM_SEMANTIC_PROVIDER = 'openai-default';
     process.env.LLM_SEMANTIC_MODEL = 'override-model';
 
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
     const { getTaskLlm } = require('@llm/taskLlmRouter');
 
     const sel = getTaskLlm('semantic');
@@ -150,6 +152,7 @@ describe('taskLlmRouter.getTaskLlm', () => {
 
     process.env.LLM_SEMANTIC_PROVIDER = 'openai';
 
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
     const { getTaskLlm } = require('@llm/taskLlmRouter');
 
     const sel = getTaskLlm('semantic');

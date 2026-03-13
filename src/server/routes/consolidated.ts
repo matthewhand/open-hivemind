@@ -56,13 +56,7 @@ router.get('/system-status', async (req, res) => {
       },
     };
 
-    logAdminAction(
-      req as AuditedRequest,
-      'VIEW',
-      'system-status',
-      'success',
-      'System status retrieved'
-    );
+    logAdminAction(req as AuditedRequest, 'VIEW', 'system-status', 'success', 'System status retrieved');
     return res.json({ success: true, data: systemStatus });
   } catch (error) {
     debug('Error getting system status:', error);
@@ -172,13 +166,7 @@ router.get('/env-status', async (req, res) => {
       };
     });
 
-    logAdminAction(
-      req as AuditedRequest,
-      'VIEW',
-      'env-status',
-      'success',
-      'Environment status retrieved'
-    );
+    logAdminAction(req as AuditedRequest, 'VIEW', 'env-status', 'success', 'Environment status retrieved');
     return res.json({ success: true, data: envStatus });
   } catch (error) {
     debug('Error getting environment status:', error);

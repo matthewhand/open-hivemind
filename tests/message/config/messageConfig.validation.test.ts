@@ -15,7 +15,7 @@ function reloadMessageConfig() {
       delete require.cache[k];
     }
   }
-
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
   return require(modPath).default;
 }
 

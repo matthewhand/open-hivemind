@@ -107,7 +107,7 @@ export class GreetingStateManager {
    */
   public async markGreetingAsSent(serviceId: string, channelId: string): Promise<void> {
     if (!serviceId) {
-      throw new Error('serviceId is required');
+      throw new Error("serviceId is required");
     }
     this.ensureInitialized();
 

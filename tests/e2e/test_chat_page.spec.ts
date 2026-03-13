@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { test, expect } from '@playwright/test';
 import { setupAuth } from './test-utils';
 
 test.describe('ChatPage Optimistic Message Rollback', () => {
@@ -71,7 +71,7 @@ test.describe('ChatPage Optimistic Message Rollback', () => {
   test('sending a message optimistically updates and rolls back on failure', async ({ page }) => {
     // Setup delayed failure mock for message sending so we can see the optimistic state
     await page.route('/api/bots/*/message', async (route) => {
-      await new Promise((resolve) => setTimeout(resolve, 500)); // Delay to see optimistic UI
+      await new Promise(resolve => setTimeout(resolve, 500)); // Delay to see optimistic UI
       await route.fulfill({
         status: 500,
         json: { error: 'Failed to send message' },
@@ -173,7 +173,7 @@ test.describe('ChatPage Optimistic Message Rollback', () => {
     await expect(page.getByText(testMessage)).toBeVisible();
   });
 
-  test('offline mode allows sending and rolls back optimistically', async ({ context, page }) => {
+  test('offline mode disables sending preemptively', async ({ context, page }) => {
     await page.goto('/admin/chat');
     await expect(page.getByText('Active Bots')).toBeVisible();
     await page.click('button:has-text("Support Bot")');
@@ -182,28 +182,18 @@ test.describe('ChatPage Optimistic Message Rollback', () => {
     // Simulate offline natively using Playwright Context API
     await context.setOffline(true);
 
-    // The input should still be enabled and allow typing
-    const testMessage = 'Offline message test';
-    await expect(page.getByPlaceholder('Type a message...')).toBeEnabled();
-    await page.fill('input[placeholder="Type a message..."]', testMessage);
-    await page.press('input[placeholder="Type a message..."]', 'Enter');
+    // Wait for the UI to reflect offline status (ChatPage.tsx listens to the 'offline' window event)
+    await expect(page.getByText('You are currently offline')).toBeVisible();
+    await expect(page.getByPlaceholder('You are offline')).toBeDisabled();
 
-    // The message should appear optimistically
-    await expect(page.getByText(testMessage)).toBeVisible();
-
-    // Then it should fail and show Retry because the network is offline
-    await expect(page.getByText('Retry')).toBeVisible({ timeout: 2000 });
-
-    // Screenshot offline mode rollback
-    await page.screenshot({ path: 'docs/screenshots/chatpage-offline-rollback.png' });
+    // Screenshot offline mode
+    await page.screenshot({ path: 'docs/screenshots/chatpage-offline.png' });
 
     // Simulate online
     await context.setOffline(false);
 
-    // Click retry
-    await page.click('button:has-text("Retry")');
-
-    // It should go back to sending...
-    await expect(page.getByText('Sending...')).toBeVisible();
+    // Check input is enabled again
+    await expect(page.getByText('You are currently offline')).not.toBeVisible();
+    await expect(page.getByPlaceholder('Type a message...')).toBeEnabled();
   });
 });

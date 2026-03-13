@@ -67,19 +67,20 @@ export const CommaSeparatedInput: React.FC<CommaSeparatedInputProps> = ({
     }
   }, [canUndo, disabled, onChange]);
 
-  const commitInput = (forceValue?: string, keepTrailingText: boolean = false) => {
+  const commitInput = (forceValue?: string, overrideTrailingText?: string) => {
     const textToCommit = forceValue !== undefined ? forceValue : inputValue;
-
     if (!textToCommit.trim()) {
       setIsTouched(true);
+      if (overrideTrailingText !== undefined) {
+        setInputValue(overrideTrailingText);
+      }
       return;
     }
 
-    const parts = textToCommit.split(',');
-    // If keepTrailingText is true, we keep the last part as the remaining input
-    const remainingInput = keepTrailingText && textToCommit.includes(',') ? parts.pop() || '' : '';
-
-    const current = parts.map(s => s.trim()).filter(Boolean);
+    const current = textToCommit
+      .split(',')
+      .map(s => s.trim())
+      .filter(Boolean);
 
     const next = [...value];
     let changed = false;
@@ -108,13 +109,16 @@ export const CommaSeparatedInput: React.FC<CommaSeparatedInputProps> = ({
         pushToHistory(next);
         onChange(next);
       }
-      setInputValue(keepTrailingText ? remainingInput : '');
-      setShowSuggestions(false);
+      setInputValue(overrideTrailingText !== undefined ? overrideTrailingText : '');
+      setShowSuggestions(overrideTrailingText !== undefined && overrideTrailingText.length > 0);
     }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
+      e.preventDefault();
+      commitInput();
+    } else if (e.key === ',') {
       e.preventDefault();
       commitInput();
     } else if (e.key === 'Backspace' && !inputValue && value.length > 0) {
@@ -169,14 +173,20 @@ export const CommaSeparatedInput: React.FC<CommaSeparatedInputProps> = ({
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;
+
+    // Auto-commit on typing comma and leave trailing text
     if (val.includes(',')) {
-      commitInput(val, true);
-    } else {
-      setInputValue(val);
-      setShowSuggestions(true);
-      if (internalError) {
-        setInternalError(null);
-      }
+      const parts = val.split(',');
+      const trailingText = parts.pop() || '';
+      const textToCommit = parts.join(',');
+      commitInput(textToCommit, trailingText);
+      return;
+    }
+
+    setInputValue(val);
+    setShowSuggestions(true);
+    if (internalError) {
+      setInternalError(null);
     }
   };
 

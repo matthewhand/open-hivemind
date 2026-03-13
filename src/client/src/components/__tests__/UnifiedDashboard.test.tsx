@@ -4,13 +4,9 @@ import React from 'react';
 import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { BrowserRouter } from 'react-router-dom';
-import { ToastProvider } from '../DaisyUI/ToastNotification';
-import { ToastProvider } from '../DaisyUI/ToastNotification';
-import { ToastProvider } from '../DaisyUI/ToastNotification';
 import UnifiedDashboard from '../UnifiedDashboard';
 import { apiService } from '../../services/api';
-import { ToastProvider } from '../DaisyUI/ToastNotification';
-import { I18nProvider } from '../../i18n/I18nProvider';
+
 
 // Mock apiService using Vitest
 vi.mock('../../services/api', () => ({
@@ -24,9 +20,6 @@ vi.mock('../../services/api', () => ({
 }));
 
 // Mock DaisyUI components - provide minimal implementations for testing
-vi.mock('../DaisyUI/StatsCards', () => ({
-  default: ({ stats }: any) => <div data-testid="stats-cards">{JSON.stringify(stats)}</div>
-}));
 vi.mock('../DaisyUI', () => ({
   Alert: ({ children }: { children: React.ReactNode }) => <div className="alert">{children}</div>,
   Badge: ({ children }: { children: React.ReactNode }) => <span className="badge">{children}</span>,
@@ -60,14 +53,6 @@ vi.mock('../BotManagement/CreateBotWizard', () => ({
 }));
 
 describe('UnifiedDashboard', () => {
-  const renderWithProviders = (ui: React.ReactElement) => {
-    return render(
-      <I18nProvider>
-        <ToastProvider>{ui}</ToastProvider>
-      </I18nProvider>
-    );
-  };
-
   beforeEach(() => {
     vi.clearAllMocks();
     // Mock HTMLDialogElement methods
@@ -87,9 +72,9 @@ describe('UnifiedDashboard', () => {
     (apiService.getPersonas as any).mockResolvedValue([]);
     (apiService.getLlmProfiles as any).mockResolvedValue({ profiles: { llm: [] } });
 
-    renderWithProviders(
+    render(
       <BrowserRouter>
-        <ToastProvider><ToastProvider><ToastProvider><UnifiedDashboard /></ToastProvider></ToastProvider></ToastProvider>
+        <UnifiedDashboard />
       </BrowserRouter>
     );
 
@@ -98,9 +83,7 @@ describe('UnifiedDashboard', () => {
       expect(gettingStartedTab).toHaveClass('tab-active');
     });
 
-    await waitFor(() => {
-      expect(screen.getByText('Welcome to Open Hivemind')).toBeInTheDocument();
-    });
+    expect(screen.getByText('Welcome to Open Hivemind')).toBeInTheDocument();
     expect(screen.getByText('No valid configuration found')).toBeInTheDocument();
   });
 
@@ -118,9 +101,9 @@ describe('UnifiedDashboard', () => {
     (apiService.getPersonas as any).mockResolvedValue([]);
     (apiService.getLlmProfiles as any).mockResolvedValue({ profiles: { llm: [] } });
 
-    renderWithProviders(
+    render(
       <BrowserRouter>
-        <ToastProvider><ToastProvider><ToastProvider><UnifiedDashboard /></ToastProvider></ToastProvider></ToastProvider>
+        <UnifiedDashboard />
       </BrowserRouter>
     );
 
@@ -129,13 +112,11 @@ describe('UnifiedDashboard', () => {
       expect(statusTab).toHaveClass('tab-active');
     });
 
-    // When bots are configured, the Getting Started tab content
+    // When bots are configured, the Getting Started tab content (Welcome to Open Hivemind)
     // should be hidden because the active tab is 'status'.
     // Use visible check instead of existence check because hidden attribute doesn't remove from DOM.
-    await waitFor(() => {
-      const welcomeText = screen.queryByText('Welcome to Open Hivemind');
-      if (welcomeText) expect(welcomeText).not.toBeVisible();
-    });
+    const welcomeText = screen.queryByText('Welcome to Open Hivemind');
+    if (welcomeText) expect(welcomeText).not.toBeVisible();
 
     // Alternatively check for hidden class on parent if visible check is flaky in some JSDOM setups
     // const gettingStartedPanel = screen.getByRole('tabpanel', { name: /getting started/i, hidden: true });
@@ -155,9 +136,9 @@ describe('UnifiedDashboard', () => {
     (apiService.getPersonas as any).mockResolvedValue([]);
     (apiService.getLlmProfiles as any).mockResolvedValue({ profiles: { llm: [] } });
 
-    renderWithProviders(
+    render(
       <BrowserRouter>
-        <ToastProvider><ToastProvider><ToastProvider><UnifiedDashboard /></ToastProvider></ToastProvider></ToastProvider>
+        <UnifiedDashboard />
       </BrowserRouter>
     );
 
@@ -199,9 +180,9 @@ describe('UnifiedDashboard', () => {
     (apiService.getPersonas as any).mockResolvedValue([]);
     (apiService.getLlmProfiles as any).mockResolvedValue({ profiles: { llm: [] } });
 
-    renderWithProviders(
+    render(
       <BrowserRouter>
-        <ToastProvider><ToastProvider><ToastProvider><UnifiedDashboard /></ToastProvider></ToastProvider></ToastProvider>
+        <UnifiedDashboard />
       </BrowserRouter>
     );
 
@@ -217,15 +198,15 @@ describe('UnifiedDashboard', () => {
     // Check if the parsed statsData contains the objects we expect
     const activeBots = statsData.find((s: any) => s.title === 'Active Bots');
     expect(activeBots).toBeDefined();
-    expect(activeBots.value).toBe('2 / 2');
+    expect(activeBots.value).toBe(2);
 
     const totalMessages = statsData.find((s: any) => s.title === 'Total Messages' || s.title === 'Messages Today');
     expect(totalMessages).toBeDefined();
-    expect(totalMessages.value).toBe('150');
+    expect(totalMessages.value).toBe(150);
 
-    const errorRate = statsData.find((s: any) => s.title === 'Errors');
+    const errorRate = statsData.find((s: any) => s.title === 'Error Rate');
     expect(errorRate).toBeDefined();
-    expect(errorRate.value).toBe('5');
+    expect(errorRate.value).toBe('3.33%');
   });
 
 });

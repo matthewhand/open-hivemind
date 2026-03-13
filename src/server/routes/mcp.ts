@@ -5,7 +5,6 @@ import { Router } from 'express';
 import type { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import type { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';
 import { ErrorUtils } from '@src/types/errors';
-import { validateMCPCommand } from '../../utils/mcpSecurity';
 import MCPProviderManager from '../../config/MCPProviderManager';
 import type { MCPProviderConfig } from '../../types/mcp';
 import { AddMCPServerSchema, CallMCPToolSchema } from '../../validation/schemas/mcpSchema';
@@ -78,12 +77,6 @@ const connectToMCPServer = async (server: MCPServer): Promise<MCPClient> => {
     // For stdio transport (local MCP servers)
     if (server.url.startsWith('stdio://')) {
       const command = server.url.replace('stdio://', '');
-
-      const commandValidation = validateMCPCommand(command);
-      if (!commandValidation.isValid) {
-        throw new Error(`Invalid MCP server command: ${commandValidation.error}`);
-      }
-
       const { StdioClientTransport } = await import('@modelcontextprotocol/sdk/client/stdio.js');
       const transport = new StdioClientTransport({
         command: command,

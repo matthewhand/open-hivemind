@@ -1,6 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
-import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import { Alert, Input, Select, Toggle, Button } from '../DaisyUI';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { Alert } from '../DaisyUI/Alert';
+import Input from '../DaisyUI/Input';
+import Select from '../DaisyUI/Select';
+import Toggle from '../DaisyUI/Toggle';
+import Button from '../DaisyUI/Button';
 import { Settings as SettingsIcon, ShieldCheck, Activity } from 'lucide-react';
 
 interface GeneralConfig {
@@ -39,15 +43,6 @@ const SettingsGeneral: React.FC = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [alert, setAlert] = useState<{ type: 'success' | 'error', message: string } | null>(null);
   const [fetchError, setFetchError] = useState<string | null>(null);
-  const alertTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  useEffect(() => {
-    return () => {
-      if (alertTimerRef.current) {
-        clearTimeout(alertTimerRef.current);
-      }
-    };
-  }, []);
 
   // Generate timezone options dynamically
   const timezoneOptions = useMemo(() => {
@@ -143,10 +138,7 @@ const SettingsGeneral: React.FC = () => {
 
       if (!response.ok) { throw new Error('Failed to save settings'); }
       setAlert({ type: 'success', message: 'Settings saved successfully!' });
-      if (alertTimerRef.current) {
-        clearTimeout(alertTimerRef.current);
-      }
-      alertTimerRef.current = setTimeout(() => setAlert(null), 3000);
+      setTimeout(() => setAlert(null), 3000);
     } catch (error) {
       setAlert({ type: 'error', message: 'Failed to save settings. Some settings may require environment variables.' });
     } finally {

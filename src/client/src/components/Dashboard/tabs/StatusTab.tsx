@@ -1,3 +1,5 @@
 import React from 'react';
-
-export const StatusTab = (props: any) => <div>Status Tab</div>;
+// Empty file to satisfy imports - the content is actually in UnifiedDashboard
+export function StatusTab() {
+  return null;
+}

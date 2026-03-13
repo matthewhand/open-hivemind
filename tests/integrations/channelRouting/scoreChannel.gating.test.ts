@@ -54,9 +54,9 @@ function mockChannelRouter(returnValue: number) {
 function mockDiscordMinimal() {
   jest.doMock('@hivemind/message-discord', () => {
     // defer resolution to use already-mocked modules
-
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
     const messageConfig = require('@config/messageConfig').default;
-
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
     const CR = require('@message/routing/ChannelRouter');
     const router = CR.ChannelRouter ?? CR.default ?? CR;
     class DiscordService {
@@ -77,8 +77,9 @@ function mockDiscordMinimal() {
  */
 function mockSlackMinimal() {
   jest.doMock('@hivemind/message-slack', () => {
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
     const messageConfig = require('@config/messageConfig').default;
-
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
     const CR = require('@message/routing/ChannelRouter');
     const router = CR.ChannelRouter ?? CR.default ?? CR;
     class SlackService {
@@ -95,8 +96,9 @@ function mockSlackMinimal() {
 
 function mockMattermostMinimal() {
   jest.doMock('@hivemind/message-mattermost', () => {
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
     const messageConfig = require('@config/messageConfig').default;
-
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
     const CR = require('@message/routing/ChannelRouter');
     const router = CR.ChannelRouter ?? CR.default ?? CR;
     class MattermostService {
