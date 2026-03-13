@@ -1,5 +1,6 @@
 import axios from 'axios';
 import Debug from 'debug';
+import { isSafeUrl } from '@hivemind/shared-types';
 import type { IMessage } from '@src/message/interfaces/IMessage';
 import type { ILlmProvider } from '@llm/interfaces/ILlmProvider';
 import openWebUIConfig from './openWebUIConfig';
@@ -38,15 +39,20 @@ export const openWebUIProvider: ILlmProvider = {
     ];
 
     try {
-      const response = await openWebUIClient.post('/chat/completions', {
-        model,
-        messages,
+      const targetUrl = openWebUIConfig.get('apiUrl') + '/chat/completions';
+      if (!(await isSafeUrl(targetUrl))) {
+        throw new Error('OpenWebUI API URL is not safe to connect to.');
+      }
+
+      const response = await axios.post(targetUrl, { model, messages }, {
+        headers: openWebUIClient.defaults.headers.common,
+        timeout: 15000,
       });
 
       return response.data.choices[0].message.content;
     } catch (error) {
-      debug('Error generating chat completion:', formatError(error));
-      throw new Error(`Chat completion failed: ${getErrorMessage(error)}`);
+      debug('Error generating chat completion:', error);
+      throw error instanceof Error ? error : new Error(String(error));
     }
   },
 
@@ -54,36 +60,22 @@ export const openWebUIProvider: ILlmProvider = {
     debug('Generating non-chat completion with OpenWebUI:', { prompt });
 
     try {
-      const response = await openWebUIClient.post('/completions', {
-        model,
-        prompt,
-        max_tokens: 100,
+      const targetUrl = openWebUIConfig.get('apiUrl') + '/completions';
+      if (!(await isSafeUrl(targetUrl))) {
+        throw new Error('OpenWebUI API URL is not safe to connect to.');
+      }
+
+      const response = await axios.post(targetUrl, { model, prompt, max_tokens: 100 }, {
+        headers: openWebUIClient.defaults.headers.common,
+        timeout: 15000,
       });
 
       return response.data.choices[0].text;
     } catch (error) {
-      debug('Error generating non-chat completion:', formatError(error));
-      throw new Error(`Non-chat completion failed: ${getErrorMessage(error)}`);
+      debug('Error generating non-chat completion:', error);
+      throw error instanceof Error ? error : new Error(String(error));
     }
   },
 };
 
-/**
- * Safely extracts the error message.
- */
-function getErrorMessage(error: unknown): string {
-  if (error instanceof Error) {
-    return error.message;
-  }
-  return String(error);
-}
 
-/**
- * Formats the error for debugging purposes.
- */
-function formatError(error: unknown): any {
-  if (axios.isAxiosError(error)) {
-    return error.response?.data || error.message;
-  }
-  return getErrorMessage(error);
-}
