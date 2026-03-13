@@ -97,12 +97,16 @@ const loadDynamicConfigs = () => {
             const newConfig = convict(schemaSources[type].getSchema());
 
             // Load file
-            newConfig.loadFile(path.join(providersDir, file));
             try {
-              newConfig.validate({ allowed: 'warn' });
-            } catch (e) {
-              console.warn(`Validation warning for ${name}:`, e);
+              newConfig.loadFile(path.join(providersDir, file));
+            } catch (error: any) {
+              if (error.code !== 'ENOENT') {
+                console.warn(`Error reading dynamic config from ${file}:`, error.message);
+              }
             }
+
+            // Validation must happen outside the generic try-catch to fail fast if config is malformed
+            newConfig.validate({ allowed: 'strict' });
 
             globalConfigs[name] = newConfig;
           }

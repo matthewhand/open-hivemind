@@ -1,8 +1,21 @@
 // Export all provider schemas
-export type { ProviderConfigSchema, ProviderConfigField, ProviderConfigFormProps, ProviderConfigModalProps, ProviderSchema, MCPServerDefinition, AvatarService } from './types';
+export * from './types';
+export * from './schemas/discord';
+export * from './schemas/slack';
+export * from './schemas/openai';
+export * from './schemas/telegram';
+export * from './schemas/mcp';
+export * from './schemas/flowise';
+export * from './schemas/openwebui';
+export * from './schemas/mattermost';
+export * from './schemas/letta';
+export * from './schemas/mem0';
+export * from './schemas/mem4ai';
+export * from './schemas/openswarm';
+export * from './schemas/memvault';
 
 // Registry of all available provider schemas
-
+import type { ProviderConfigSchema } from './types';
 import { discordProviderSchema } from './schemas/discord';
 import { slackProviderSchema } from './schemas/slack';
 import { openAIProviderSchema } from './schemas/openai';

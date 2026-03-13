@@ -1,11 +1,20 @@
-import React, { useEffect, useState } from 'react';
-import { PencilIcon, PlusIcon, TrashIcon } from '@heroicons/react/24/outline';
-import { Alert } from './DaisyUI/Alert';
-import Badge from './DaisyUI/Badge';
-import Button from './DaisyUI/Button';
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
+import React, { useState, useEffect } from 'react';
 import Card from './DaisyUI/Card';
+import Button from './DaisyUI/Button';
+import ModalForm from './DaisyUI/ModalForm';
 import Input from './DaisyUI/Input';
 import Select from './DaisyUI/Select';
+import { Alert } from './DaisyUI/Alert';
+import Chip from './DaisyUI/Chip';
+import Badge from './DaisyUI/Badge';
+import Checkbox from './DaisyUI/Checkbox';
+import {
+  PlusIcon,
+  PencilIcon,
+  TrashIcon,
+  ShieldCheckIcon,
+} from '@heroicons/react/24/outline';
 
 interface ToolUsageGuard {
   id: string;
@@ -36,13 +45,11 @@ const ToolUsageGuardsConfig: React.FC = () => {
       ownerOnly: false,
     },
   });
-  const [toast, setToast] = useState<{ show: boolean; message: string; type: 'success' | 'error' }>(
-    {
-      show: false,
-      message: '',
-      type: 'success',
-    }
-  );
+  const [toast, setToast] = useState<{ show: boolean; message: string; type: 'success' | 'error' }>({
+    show: false,
+    message: '',
+    type: 'success',
+  });
 
   const guardTypes = [
     { value: 'owner', label: 'Owner Only' },
@@ -73,18 +80,16 @@ const ToolUsageGuardsConfig: React.FC = () => {
 
   const handleOpenDialog = (guard?: ToolUsageGuard) => {
     setEditingGuard(guard || null);
-    setFormData(
-      guard || {
-        name: '',
-        toolName: '',
-        guardType: 'owner',
-        config: {
-          allowedUsers: [],
-          allowedRoles: [],
-          ownerOnly: false,
-        },
-      }
-    );
+    setFormData(guard || {
+      name: '',
+      toolName: '',
+      guardType: 'owner',
+      config: {
+        allowedUsers: [],
+        allowedRoles: [],
+        ownerOnly: false,
+      },
+    });
     setOpenDialog(true);
   };
 
@@ -133,19 +138,14 @@ const ToolUsageGuardsConfig: React.FC = () => {
     } catch (err) {
       setToast({
         show: true,
-        message:
-          err instanceof Error
-            ? err.message
-            : `Failed to ${editingGuard ? 'update' : 'create'} tool usage guard`,
+        message: err instanceof Error ? err.message : `Failed to ${editingGuard ? 'update' : 'create'} tool usage guard`,
         type: 'error',
       });
     }
   };
 
   const handleDeleteGuard = async (guardId: string) => {
-    if (!confirm('Are you sure you want to delete this tool usage guard?')) {
-      return;
-    }
+    if (!confirm('Are you sure you want to delete this tool usage guard?')) {return;}
 
     try {
       const response = await fetch(`/api/admin/tool-usage-guards/${guardId}`, {
@@ -196,11 +196,7 @@ const ToolUsageGuardsConfig: React.FC = () => {
   };
 
   if (loading) {
-    return (
-      <div className="flex justify-center items-center min-h-[200px]">
-        <span className="loading loading-spinner loading-lg"></span>
-      </div>
-    );
+    return <div className="flex justify-center items-center min-h-[200px]"><span className="loading loading-spinner loading-lg"></span></div>;
   }
 
   return (
@@ -216,7 +212,9 @@ const ToolUsageGuardsConfig: React.FC = () => {
         </Button>
       </div>
 
-      {error && <Alert status="error" message={error} onClose={() => setError(null)} />}
+      {error && (
+        <Alert status="error" message={error} onClose={() => setError(null)} />
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {guards.map((guard) => (
@@ -225,7 +223,9 @@ const ToolUsageGuardsConfig: React.FC = () => {
               <div className="flex justify-between items-start">
                 <div>
                   <h3 className="card-title">{guard.name}</h3>
-                  <p className="text-sm text-base-content/70 mt-1">Tool: {guard.toolName}</p>
+                  <p className="text-sm text-base-content/70 mt-1">
+                    Tool: {guard.toolName}
+                  </p>
                   <div className="mt-2">
                     <Badge variant="primary">{guard.guardType}</Badge>
                   </div>
@@ -246,8 +246,7 @@ const ToolUsageGuardsConfig: React.FC = () => {
                     size="sm"
                     shape="circle"
                     color="error"
-                    variant="secondary"
-                    className="btn-outline"
+                    variant="secondary" className="btn-outline"
                     onClick={() => handleDeleteGuard(guard.id)}
                   >
                     <TrashIcon className="w-4 h-4" />
@@ -261,8 +260,7 @@ const ToolUsageGuardsConfig: React.FC = () => {
                 </span>
                 <Button
                   size="sm"
-                  variant="secondary"
-                  className="btn-outline"
+                  variant="secondary" className="btn-outline"
                   onClick={() => handleToggleActive(guard.id, !guard.isActive)}
                 >
                   {guard.isActive ? 'Deactivate' : 'Activate'}
@@ -299,12 +297,10 @@ const ToolUsageGuardsConfig: React.FC = () => {
           <Select
             label="Guard Type"
             value={formData.guardType || 'owner'}
-            onChange={(e) =>
-              setFormData({
-                ...formData,
-                guardType: e.target.value as 'owner' | 'userList' | 'role',
-              })
-            }
+            onChange={(e) => setFormData({
+              ...formData,
+              guardType: e.target.value as 'owner' | 'userList' | 'role',
+            })}
             options={guardTypes}
             fullWidth
           />
@@ -317,12 +313,10 @@ const ToolUsageGuardsConfig: React.FC = () => {
                   type="checkbox"
                   className="toggle toggle-primary"
                   checked={formData.config?.ownerOnly || false}
-                  onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      config: { ...formData.config, ownerOnly: e.target.checked },
-                    })
-                  }
+                  onChange={(e) => setFormData({
+                    ...formData,
+                    config: { ...formData.config, ownerOnly: e.target.checked },
+                  })}
                 />
               </label>
             </div>
@@ -332,18 +326,13 @@ const ToolUsageGuardsConfig: React.FC = () => {
             <Input
               label="Allowed Users"
               value={formData.config?.allowedUsers?.join(', ') || ''}
-              onChange={(e) =>
-                setFormData({
-                  ...formData,
-                  config: {
-                    ...formData.config,
-                    allowedUsers: e.target.value
-                      .split(',')
-                      .map((u) => u.trim())
-                      .filter((u) => u),
-                  },
-                })
-              }
+              onChange={(e) => setFormData({
+                ...formData,
+                config: {
+                  ...formData.config,
+                  allowedUsers: e.target.value.split(',').map(u => u.trim()).filter(u => u),
+                },
+              })}
               fullWidth
               helperText="Comma-separated list of user IDs"
             />
@@ -353,18 +342,13 @@ const ToolUsageGuardsConfig: React.FC = () => {
             <Input
               label="Allowed Roles"
               value={formData.config?.allowedRoles?.join(', ') || ''}
-              onChange={(e) =>
-                setFormData({
-                  ...formData,
-                  config: {
-                    ...formData.config,
-                    allowedRoles: e.target.value
-                      .split(',')
-                      .map((r) => r.trim())
-                      .filter((r) => r),
-                  },
-                })
-              }
+              onChange={(e) => setFormData({
+                ...formData,
+                config: {
+                  ...formData.config,
+                  allowedRoles: e.target.value.split(',').map(r => r.trim()).filter(r => r),
+                },
+              })}
               fullWidth
               helperText="Comma-separated list of user roles"
             />
@@ -376,13 +360,7 @@ const ToolUsageGuardsConfig: React.FC = () => {
         <div className="toast toast-bottom toast-center z-50" role="status" aria-live="polite">
           <div className={`alert ${toast.type === 'success' ? 'alert-success' : 'alert-error'}`}>
             <span>{toast.message}</span>
-            <button
-              className="btn btn-sm btn-ghost"
-              aria-label="Dismiss message"
-              onClick={() => setToast({ ...toast, show: false })}
-            >
-              ✕
-            </button>
+            <button className="btn btn-sm btn-ghost" onClick={() => setToast({ ...toast, show: false })}>✕</button>
           </div>
         </div>
       )}
