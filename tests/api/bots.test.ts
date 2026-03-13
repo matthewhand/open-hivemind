@@ -64,7 +64,7 @@ jest.mock('../../src/validation/validateRequest', () => ({
   validateRequest: () => (req: any, res: any, next: any) => next(),
 }));
 
-jest.mock('../../src/validation/schemas/botSchema', () => ({
+jest.mock('../../src/validation/schemas/adminSchema', () => ({
   BotIdParamSchema: { merge: () => ({}) },
   CloneBotSchema: {},
   CreateBotSchema: {},
