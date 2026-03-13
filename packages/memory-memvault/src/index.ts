@@ -8,5 +8,5 @@
  * @version 1.0.0
  */
 
-export * from './memVaultProvider';
-export * from './memVaultConfig';
+export { MemoryEntry, SearchResult, MemVaultProvider, create, manifest } from './memVaultProvider';
+export { MemVaultConfig, DEFAULT_MEMVAULT_CONFIG } from './memVaultConfig';
