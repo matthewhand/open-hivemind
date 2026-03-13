@@ -13,6 +13,7 @@ import { getMessengerServiceByProvider } from '../message/ProviderRegistry';
 import { webUIStorage } from '../storage/webUIStorage';
 import { ErrorUtils } from '../types/errors';
 import { checkBotEnvOverrides } from '../utils/envUtils';
+import type { BotConfig } from '../types/config';
 
 const debug = Debug('app:BotManager');
 
@@ -177,7 +178,7 @@ export class BotManager extends EventEmitter {
   /**
    * Helper to map a raw configuration object to a unified BotInstance
    */
-  private mapConfigToBotInstance(bot: any): BotInstance {
+  private mapConfigToBotInstance(bot: BotConfig): BotInstance {
     return {
       // Use bot name as stable ID - random UUIDs break getBot() lookups
       id: bot.name,
