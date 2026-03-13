@@ -404,6 +404,7 @@ const GuardsPage: React.FC = () => {
                       value={editingProfile.guards.rateLimit?.maxRequests || 100}
                       onChange={e => updateGuard('rateLimit', { maxRequests: parseInt(e.target.value) })}
                       disabled={!editingProfile.guards.rateLimit?.enabled}
+                      id="max-requests"
                       aria-label="Max Requests"
                     />
                   </div>
