@@ -6,7 +6,7 @@ import Badge from './DaisyUI/Badge';
 import { Alert } from './DaisyUI/Alert';
 import Accordion from './DaisyUI/Accordion';
 import Divider from './DaisyUI/Divider';
-import { Progress } from './DaisyUI/Loading';
+import { Progress } from './DaisyUI';
 import {
   CheckCircle,
   AlertTriangle,
