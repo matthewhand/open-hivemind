@@ -7,7 +7,7 @@
 
 import 'reflect-metadata';
 import Debug from 'debug';
-import { injectable, singleton, inject } from 'tsyringe';
+import { inject, injectable, singleton } from 'tsyringe';
 import { BotConfigurationManager } from '../config/BotConfigurationManager';
 import { UserConfigStore } from '../config/UserConfigStore';
 import { TOKENS } from '../di/container';
@@ -227,7 +227,7 @@ export class DemoModeService {
    */
   public generateDemoResponse(message: string, botName: string): string {
     if (message === null || message === undefined) {
-      throw new Error("Message cannot be null or undefined");
+      throw new Error('Message cannot be null or undefined');
     }
     const responses = this.getContextualResponses(message, botName);
     const randomIndex = Math.floor(Math.random() * responses.length);

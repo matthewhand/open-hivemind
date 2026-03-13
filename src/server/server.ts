@@ -13,7 +13,6 @@ import { csrfProtection, csrfTokenHandler } from './middleware/csrf';
 import { securityHeaders } from './middleware/security';
 import activityRouter from './routes/activity';
 import adminRouter from './routes/admin';
-import cacheRouter from './routes/cache';
 import agentsRouter from './routes/agents';
 import aiAssistRouter from './routes/ai-assist';
 import botsRouter from './routes/bots';

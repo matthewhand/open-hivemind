@@ -1,10 +1,10 @@
-import { WebClient } from '@slack/web-api';
-import BotConfigurationManager from '@src/config/BotConfigurationManager';
-import slackConfig from '@src/config/slackConfig';
 import { SlackBotManager } from '@hivemind/message-slack/SlackBotManager';
 import { SlackEventProcessor } from '@hivemind/message-slack/SlackEventProcessor';
 import SlackMessage from '@hivemind/message-slack/SlackMessage';
 import { SlackService } from '@hivemind/message-slack/SlackService';
+import { WebClient } from '@slack/web-api';
+import BotConfigurationManager from '@src/config/BotConfigurationManager';
+import slackConfig from '@src/config/slackConfig';
 
 jest.mock('@hivemind/message-slack/SlackBotManager');
 jest.mock('@hivemind/message-slack/SlackMessage');

@@ -360,7 +360,12 @@ describe('BotManager', () => {
 
       // Set the default channel in the bot config manually for the test
       mockBotConfigManager.getBot.mockImplementation((id: any) => {
-        if (id === 'Bot 1') return { ...mockBotConfig, name: 'Bot 1', discord: { defaultChannelId: 'default-channel' } };
+        if (id === 'Bot 1')
+          return {
+            ...mockBotConfig,
+            name: 'Bot 1',
+            discord: { defaultChannelId: 'default-channel' },
+          };
         return undefined;
       });
       await botManager.getBotHistory('Bot 1');
