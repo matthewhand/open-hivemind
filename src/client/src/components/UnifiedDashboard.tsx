@@ -15,10 +15,6 @@ import type { Bot, StatusResponse } from '../services/api';
 import { apiService } from '../services/api';
 import { CreateBotWizard } from './BotManagement/CreateBotWizard';
 import { Info } from 'lucide-react';
-import { useDashboardStats } from './Dashboard/hooks/useDashboardStats';
-import { DashboardHeader } from './Dashboard/DashboardHeader';
-import { DashboardTabs } from './Dashboard/DashboardTabs';
-import { getBotColumns } from './Dashboard/utils/getBotColumns';
 
 
 
