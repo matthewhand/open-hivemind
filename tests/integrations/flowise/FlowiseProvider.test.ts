@@ -1,7 +1,7 @@
-import flowiseConfig from '@config/flowiseConfig';
 import flowiseProvider from '@hivemind/llm-flowise/flowiseProvider';
 import { getFlowiseResponse } from '@hivemind/llm-flowise/flowiseRestClient';
 import { getFlowiseSdkResponse } from '@hivemind/llm-flowise/flowiseSdkClient';
+import flowiseConfig from '@config/flowiseConfig';
 import { getLlmProvider } from '@llm/getLlmProvider';
 import { IMessage } from '@message/interfaces/IMessage';
 
