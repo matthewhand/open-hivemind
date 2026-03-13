@@ -82,8 +82,8 @@ const Dashboard: React.FC = () => {
   const activeBots = useMemo(() => {
     if (!status?.bots) return 0;
     // status.bots aligns with bots array based on rendering logic.
-    // Optimization: filtering directly on status array is O(N) vs O(N^2)
-    return status.bots.filter(b => b.status === 'active').length;
+    // ⚡ Bolt Optimization: Replaced .filter().length with .reduce() to avoid O(N) intermediate array allocation.
+    return status.bots.reduce((count, b) => (b.status === 'active' ? count + 1 : count), 0);
   }, [status]);
 
   const totalMessages = useMemo(

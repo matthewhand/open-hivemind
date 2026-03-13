@@ -26,8 +26,10 @@ export async function listAgents(apiKey: string, apiUrl?: string): Promise<Agent
     token: apiKey,
   } as any);
 
-  const agentsResult = await client.agents.list();
-  const agentsList = Array.isArray(agentsResult) ? agentsResult : (agentsResult as any).data || [];
+  const response = await client.agents.list();
+
+  // Handling different potential responses from the SDK
+  const agentsList = Array.isArray(response) ? response : (response as any).agents || (response as any).data || [];
 
   // Transform to simplified agent summary
   return agentsList.map((agent: any) => ({

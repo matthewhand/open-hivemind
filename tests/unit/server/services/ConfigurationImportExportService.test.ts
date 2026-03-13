@@ -3,6 +3,7 @@ import { AuditLogger } from '../../../../src/common/auditLogger';
 import { UserConfigStore } from '../../../../src/config/UserConfigStore';
 import { DatabaseManager } from '../../../../src/database/DatabaseManager';
 import { ConfigurationImportExportService } from '../../../../src/server/services/ConfigurationImportExportService';
+import { resetSingleton } from '../../../helpers/singletonReset';
 
 jest.mock('../../../../src/database/DatabaseManager');
 jest.mock('../../../../src/config/UserConfigStore');
@@ -24,6 +25,7 @@ describe('ConfigurationImportExportService - Backup Retention', () => {
   let mockAuditLogger: any;
 
   beforeEach(() => {
+    resetSingleton(ConfigurationImportExportService);
     jest.clearAllMocks();
 
     // Setup UserConfigStore mock
@@ -106,7 +108,8 @@ describe('ConfigurationImportExportService - Backup Retention', () => {
     const result = await service.createBackup('test');
 
     expect(result.success).toBe(true);
-    expect(result.filePath).toBeDefined();
+    expect(typeof result.filePath).toBe('string');
+    expect(result.filePath).toMatch(/\S+/);
   });
 });
 
@@ -135,18 +138,20 @@ describe('ConfigurationImportExportService - Version Caching', () => {
 
     // Mock fs.readFile to return standard format JSON
     (fs.readFile as jest.Mock).mockImplementation((path) => {
-      return Promise.resolve(JSON.stringify({
-        configurations: [],
-        versions: [
-          { botConfigurationId: 1, version: '1.0' },
-          { botConfigurationId: 1, version: '1.1' },
-          { botConfigurationId: 1, version: '1.2' },
-          { botConfigurationId: 2, version: '1.0' },
-          { botConfigurationId: 2, version: '1.1' },
-          { botConfigurationId: 3, version: '1.0' }, // Invalid ID
-          { botConfigurationId: 3, version: '1.1' },
-        ]
-      }));
+      return Promise.resolve(
+        JSON.stringify({
+          configurations: [],
+          versions: [
+            { botConfigurationId: 1, version: '1.0' },
+            { botConfigurationId: 1, version: '1.1' },
+            { botConfigurationId: 1, version: '1.2' },
+            { botConfigurationId: 2, version: '1.0' },
+            { botConfigurationId: 2, version: '1.1' },
+            { botConfigurationId: 3, version: '1.0' }, // Invalid ID
+            { botConfigurationId: 3, version: '1.1' },
+          ],
+        })
+      );
     });
   });
 

@@ -231,7 +231,6 @@ test.describe('Monitoring Dashboard Screenshots', () => {
       })
     );
 
-
     // Mock Ready probe
     await page.route('**/health/ready', async (route) =>
       route.fulfill({
@@ -243,8 +242,8 @@ test.describe('Monitoring Dashboard Screenshots', () => {
             database: { status: 'healthy' },
             botAdapters: { status: 'healthy' },
             externalApis: { status: 'healthy' },
-          }
-        }
+          },
+        },
       })
     );
 

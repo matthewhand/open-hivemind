@@ -125,9 +125,10 @@ const MCPProviderManagerComponent: React.FC<MCPProviderManagerProps> = ({ classN
     try {
       await manager.removeProvider(providerId);
       await loadProviders();
+      addToast({ type: 'success', title: 'Success', message: 'Provider deleted successfully' });
     } catch (error) {
       console.error('Failed to delete provider:', error);
-      alert('Failed to delete provider: ' + (error instanceof Error ? error.message : String(error)));
+      addToast({ type: 'error', title: 'Error', message: 'Failed to delete provider: ' + (error instanceof Error ? error.message : String(error)) });
     }
   };
 
@@ -139,9 +140,10 @@ const MCPProviderManagerComponent: React.FC<MCPProviderManagerProps> = ({ classN
 
       await manager.startProvider(providerId);
       await loadProviders();
+      addToast({ type: 'success', title: 'Success', message: 'Provider started successfully' });
     } catch (error) {
       console.error('Failed to start provider:', error);
-      alert('Failed to start provider: ' + (error instanceof Error ? error.message : String(error)));
+      addToast({ type: 'error', title: 'Error', message: 'Failed to start provider: ' + (error instanceof Error ? error.message : String(error)) });
     } finally {
       setProviders(prev => prev.map(p =>
         p.id === providerId ? { ...p, isStarting: false } : p,
@@ -157,9 +159,10 @@ const MCPProviderManagerComponent: React.FC<MCPProviderManagerProps> = ({ classN
 
       await manager.stopProvider(providerId);
       await loadProviders();
+      addToast({ type: 'success', title: 'Success', message: 'Provider stopped successfully' });
     } catch (error) {
       console.error('Failed to stop provider:', error);
-      alert('Failed to stop provider: ' + (error instanceof Error ? error.message : String(error)));
+      addToast({ type: 'error', title: 'Error', message: 'Failed to stop provider: ' + (error instanceof Error ? error.message : String(error)) });
     } finally {
       setProviders(prev => prev.map(p =>
         p.id === providerId ? { ...p, isStopping: false } : p,
@@ -178,9 +181,10 @@ const MCPProviderManagerComponent: React.FC<MCPProviderManagerProps> = ({ classN
         ...prev,
         [providerId]: result,
       }));
+      addToast({ type: 'success', title: 'Success', message: 'Provider tested successfully' });
     } catch (error) {
       console.error('Failed to test provider:', error);
-      alert('Failed to test provider: ' + (error instanceof Error ? error.message : String(error)));
+      addToast({ type: 'error', title: 'Error', message: 'Failed to test provider: ' + (error instanceof Error ? error.message : String(error)) });
     } finally {
       setProviders(prev => prev.map(p =>
         p.id === providerId ? { ...p, isTesting: false } : p,
@@ -200,9 +204,10 @@ const MCPProviderManagerComponent: React.FC<MCPProviderManagerProps> = ({ classN
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
+      addToast({ type: 'success', title: 'Success', message: 'Providers exported successfully' });
     } catch (error) {
       console.error('Failed to export providers:', error);
-      alert('Failed to export providers');
+      addToast({ type: 'error', title: 'Error', message: 'Failed to export providers' });
     }
   };
 
@@ -216,10 +221,10 @@ const MCPProviderManagerComponent: React.FC<MCPProviderManagerProps> = ({ classN
         const data = e.target?.result as string;
         await manager.importProviders(data);
         await loadProviders();
-        alert('Providers imported successfully');
+        addToast({ type: 'success', title: 'Success', message: 'Providers imported successfully' });
       } catch (error) {
         console.error('Failed to import providers:', error);
-        alert('Failed to import providers: ' + (error instanceof Error ? error.message : String(error)));
+        addToast({ type: 'error', title: 'Error', message: 'Failed to import providers: ' + (error instanceof Error ? error.message : String(error)) });
       }
     };
     reader.readAsText(file);

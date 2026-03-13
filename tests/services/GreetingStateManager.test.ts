@@ -310,7 +310,9 @@ describe('GreetingStateManager', () => {
     it('should handle null/undefined/empty string serviceId', async () => {
       await expect(stateManager.markGreetingAsSent('', 'channel-1')).rejects.toThrow();
       await expect(stateManager.markGreetingAsSent(null as any, 'channel-1')).rejects.toThrow();
-      await expect(stateManager.markGreetingAsSent(undefined as any, 'channel-1')).rejects.toThrow();
+      await expect(
+        stateManager.markGreetingAsSent(undefined as any, 'channel-1')
+      ).rejects.toThrow();
     });
 
     it('should handle max-length strings for serviceId and channelId', async () => {
@@ -334,5 +336,4 @@ describe('GreetingStateManager', () => {
       }
     });
   });
-
 });

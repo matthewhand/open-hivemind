@@ -304,7 +304,7 @@ const BotTemplatesPage: React.FC = () => {
                     description="No templates match your current filters."
                     actionLabel="Clear Filters"
                     onAction={handleClearFilters}
-                    icon={Search}
+                    icon={<Search className="w-12 h-12" />}
                     variant="noResults"
                 />
             </div>

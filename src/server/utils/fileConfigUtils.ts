@@ -1,7 +1,7 @@
 import { promises as fs } from 'fs';
 import { join } from 'path';
 import Debug from 'debug';
-import { ErrorUtils } from '../../types/errors';
+import { ErrorUtils, type AppError } from '../../types/errors';
 
 const debug = Debug('app:fileConfigUtils');
 
@@ -11,7 +11,7 @@ export const ensureDataDir = async () => {
   try {
     await fs.mkdir(dataDir, { recursive: true });
   } catch (error: unknown) {
-    const hivemindError = ErrorUtils.toHivemindError(error) as any;
+    const hivemindError = ErrorUtils.toHivemindError(error) as AppError;
     debug('Error creating data directory:', hivemindError.message);
   }
 };
@@ -26,7 +26,7 @@ export const loadJsonConfig = async <T>(
     const data = await fs.readFile(filePath, 'utf8');
     return JSON.parse(data);
   } catch (error: unknown) {
-    const hivemindError = ErrorUtils.toHivemindError(error) as any;
+    const hivemindError = ErrorUtils.toHivemindError(error) as AppError;
     debugInstance(`Config file ${filePath} not found, using defaults:`, hivemindError.message);
     return defaultValue;
   }

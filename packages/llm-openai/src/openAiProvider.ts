@@ -1,5 +1,6 @@
 import Debug from 'debug';
 import { OpenAI } from 'openai';
+import type { OpenAIConfig } from '@src/types/config';
 import {
   ApiError,
   BaseHivemindError,
@@ -7,11 +8,9 @@ import {
   NetworkError,
   TimeoutError,
 } from '@src/types/errorClasses';
-import { isSafeUrl } from '@hivemind/shared-types';
 import openaiConfig from '@config/openaiConfig';
 import type { ILlmProvider } from '@llm/interfaces/ILlmProvider';
 import type { IMessage } from '@message/interfaces/IMessage';
-import type { OpenAIConfig } from '@src/types/config';
 
 const debug = Debug('app:openAiProvider');
 
@@ -30,7 +29,14 @@ export class OpenAiProvider implements ILlmProvider {
     maxTokens?: number;
   };
 
-  constructor(config?: OpenAIConfig & { timeout?: number; organization?: string; temperature?: number; maxTokens?: number }) {
+  constructor(
+    config?: OpenAIConfig & {
+      timeout?: number;
+      organization?: string;
+      temperature?: number;
+      maxTokens?: number;
+    }
+  ) {
     this.config = config || { apiKey: '' };
   }
 
@@ -91,9 +97,6 @@ export class OpenAiProvider implements ILlmProvider {
     // Validate baseURL
     try {
       new URL(baseURL);
-      if (baseURL !== DEFAULT_BASE_URL && !(await isSafeUrl(baseURL))) {
-        throw new Error('Unsafe URL');
-      }
     } catch {
       baseURL = DEFAULT_BASE_URL;
     }
@@ -160,15 +163,6 @@ export class OpenAiProvider implements ILlmProvider {
     const apiKey = this.config.apiKey || openaiConfig.get('OPENAI_API_KEY');
     let baseURL = this.config.baseUrl || openaiConfig.get('OPENAI_BASE_URL') || DEFAULT_BASE_URL;
     const model = this.config.model || openaiConfig.get('OPENAI_MODEL') || 'gpt-4o'; // Text models like gpt-3.5-turbo-instruct?
-
-    try {
-      new URL(baseURL);
-      if (baseURL !== DEFAULT_BASE_URL && !(await isSafeUrl(baseURL))) {
-        throw new Error('Unsafe URL');
-      }
-    } catch {
-      baseURL = DEFAULT_BASE_URL;
-    }
 
     const openai = new OpenAI({ apiKey, baseURL });
 

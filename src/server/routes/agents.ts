@@ -174,7 +174,7 @@ router.post('/', async (req, res) => {
 
     const newAgent: AgentConfig = {
       ...agentData,
-      id: `agent_${crypto.randomUUID()}`,
+      id: `agent_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
     };
 
     agents.push(newAgent);
@@ -247,7 +247,7 @@ router.delete('/:id', async (req, res) => {
     const filteredAgents = agents.filter((agent) => agent.id !== id);
 
     if (filteredAgents.length === agents.length) {
-      return res.status(200).json({ success: true, message: 'Agent already deleted or not found' });
+      return res.json({ success: true, message: 'Agent already deleted or not found' });
     }
 
     await saveJsonConfig(AGENTS_CONFIG_FILE, filteredAgents);
@@ -411,9 +411,7 @@ router.delete('/personas/:key', async (req, res) => {
     const filteredPersonas = personas.filter((p) => p.key !== key);
 
     if (filteredPersonas.length === personas.length) {
-      return res
-        .status(200)
-        .json({ success: true, message: 'Persona already deleted or not found' });
+      return res.json({ success: true, message: 'Persona already deleted or not found' });
     }
 
     await saveJsonConfig(PERSONAS_CONFIG_FILE, filteredPersonas);

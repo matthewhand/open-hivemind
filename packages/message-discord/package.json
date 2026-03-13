@@ -18,7 +18,7 @@
         "libsodium-wrappers": "^0.7.9"
     },
     "peerDependencies": {
-        "@hivemind/shared-types": "workspace:*"
+        "@hivemind/shared-types": ">=1.0.0"
     },
     "devDependencies": {
         "@types/debug": "^4.1.12",
