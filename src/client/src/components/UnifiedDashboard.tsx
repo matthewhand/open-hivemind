@@ -15,6 +15,10 @@ import type { Bot, StatusResponse } from '../services/api';
 import { apiService } from '../services/api';
 import { CreateBotWizard } from './BotManagement/CreateBotWizard';
 import { Info } from 'lucide-react';
+import { GettingStartedTab } from './Dashboard/tabs/GettingStartedTab';
+import { StatusTab } from './Dashboard/tabs/StatusTab';
+import { PerformanceTab } from './Dashboard/tabs/PerformanceTab';
+import { usePerformanceMetrics } from './Dashboard/hooks/usePerformanceMetrics';
 import { useNavigate } from 'react-router-dom';
 
 type DashboardTab = 'getting-started' | 'status' | 'performance';
