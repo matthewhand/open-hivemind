@@ -153,7 +153,7 @@ const ChatPage: React.FC = () => {
       await apiService.post(`/api/bots/${botId}/message`, { content });
       await fetchHistory(botId);
     });
-  }, [selectedBotId, registerFlush]);
+  }, [selectedBotId, registerFlush, fetchHistory]);
 
   const handleSendMessage = async (content: string, existingId?: string) => {
     if (!selectedBotId) return;
@@ -162,7 +162,7 @@ const ChatPage: React.FC = () => {
       return;
     }
 
-    const tempId = existingId || `temp-${Date.now()}`;
+    const tempId = existingId || `temp-${globalThis.crypto.randomUUID()}`;
 
     if (existingId) {
       // If retrying, reset the status to sending
