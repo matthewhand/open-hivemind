@@ -317,7 +317,12 @@ export class Database {
         );
       } else if (sql.includes('IN (')) {
         // Handle bulk queries with IN clause
-        const ids = args;
+        let ids = args;
+        if (sql.includes('json_each') && typeof args[0] === 'string') {
+          try {
+            ids = JSON.parse(args[0]);
+          } catch (e) {}
+        }
         return configs.filter((config: any) => ids.includes(config.id));
       }
       return configs;
@@ -343,7 +348,12 @@ export class Database {
       const versions = this.data.get('bot_configuration_versions') || [];
 
       if (sql.includes('WHERE botConfigurationId IN')) {
-        const configIds = args;
+        let configIds = args;
+        if (sql.includes('json_each') && typeof args[0] === 'string') {
+          try {
+            configIds = JSON.parse(args[0]);
+          } catch (e) {}
+        }
         return versions
           .filter((version: any) => configIds.includes(version.botConfigurationId))
           .sort((a, b) => {
@@ -361,7 +371,12 @@ export class Database {
       const audits = this.data.get('bot_configuration_audit') || [];
 
       if (sql.includes('WHERE botConfigurationId IN')) {
-        const configIds = args;
+        let configIds = args;
+        if (sql.includes('json_each') && typeof args[0] === 'string') {
+          try {
+            configIds = JSON.parse(args[0]);
+          } catch (e) {}
+        }
         return audits
           .filter((audit: any) => configIds.includes(audit.botConfigurationId))
           .sort((a, b) => {
