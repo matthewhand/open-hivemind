@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback , useRef} from 'react';
 
 interface CountdownProps {
   targetDate: Date | number; // Either a Date object or a timestamp
@@ -38,18 +38,23 @@ const Countdown: React.FC<CountdownProps> = ({
 
   const [timeLeft, setTimeLeft] = useState(calculateTimeLeft);
 
+  const timerRef = useRef<number | null>(null);
+
   useEffect(() => {
     // Recalculate immediately in case target date changed
     setTimeLeft(calculateTimeLeft());
 
     // Set up interval to update the time left
-    const timer = setInterval(() => {
+    timerRef.current = window.setInterval(() => {
       const newTimeLeft = calculateTimeLeft();
       setTimeLeft(newTimeLeft);
 
       // If the countdown has reached zero, clear the interval
       if (newTimeLeft.totalSeconds <= 0) {
-        clearInterval(timer);
+        if (timerRef.current !== null) {
+          window.clearInterval(timerRef.current);
+          timerRef.current = null;
+        }
         if (onComplete) {
           onComplete();
         }
@@ -57,7 +62,12 @@ const Countdown: React.FC<CountdownProps> = ({
     }, 1000);
 
     // Cleanup function to clear the interval when component unmounts
-    return () => clearInterval(timer);
+    return () => {
+      if (timerRef.current !== null) {
+        window.clearInterval(timerRef.current);
+        timerRef.current = null;
+      }
+    };
   }, [calculateTimeLeft, onComplete]);
 
   // Determine if the countdown has finished

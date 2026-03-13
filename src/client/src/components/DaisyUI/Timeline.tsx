@@ -1,4 +1,5 @@
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useEffect, useRef, useState, useCallback } from 'react'
+import { useInterval } from '../../hooks/useInterval'
 
 export type EventType = 'success' | 'error' | 'warning' | 'info' | 'neutral'
 
@@ -251,13 +252,13 @@ export const ActivityFeed: React.FC<ActivityFeedProps> = ({
 }) => {
   const [currentEvents, setCurrentEvents] = useState<TimelineEvent[]>(events)
 
+
+
   useEffect(() => {
     setCurrentEvents(events)
   }, [events])
 
-  // Simulate real-time updates (in a real app, this would come from WebSocket or API)
-  useEffect(() => {
-    const interval = setInterval(() => {
+  const addHealthCheckEvent = useCallback(() => {
       const newEvent: TimelineEvent = {
         id: `event-${Date.now()}`,
         timestamp: new Date(),
@@ -266,13 +267,11 @@ export const ActivityFeed: React.FC<ActivityFeedProps> = ({
         type: 'success',
         metadata: { status: 'healthy' },
       }
-
-      setCurrentEvents(prev => [newEvent, ...prev.slice(0, 49)]) // Keep max 50 events
+      setCurrentEvents(prev => [newEvent, ...prev.slice(0, 49)])
       onNewEvent?.(newEvent)
-    }, 30000) // Add a new event every 30 seconds
+  }, [onNewEvent]);
 
-    return () => clearInterval(interval)
-  }, [onNewEvent])
+  useInterval(addHealthCheckEvent, 30000);
 
   return <Timeline events={currentEvents} {...timelineProps} />
 }

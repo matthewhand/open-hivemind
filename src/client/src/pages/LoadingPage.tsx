@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { LoadingSpinner } from '../components/DaisyUI/Loading';
 
@@ -6,16 +6,21 @@ const LoadingPage: React.FC = () => {
   const navigate = useNavigate();
   const [progress, setProgress] = useState(0);
 
+  const timerRef = useRef<number | null>(null);
+
   useEffect(() => {
     const totalDuration = 3000; // 3 seconds
     const intervalDuration = 100; // Update every 100ms
     const totalSteps = totalDuration / intervalDuration;
 
-    const interval = setInterval(() => {
+    timerRef.current = window.setInterval(() => {
       setProgress((prev) => {
         const next = prev + (100 / totalSteps);
         if (next >= 100) {
-          clearInterval(interval);
+          if (timerRef.current !== null) {
+            window.clearInterval(timerRef.current);
+            timerRef.current = null;
+          }
           setTimeout(() => {
             navigate('/admin/overview');
           }, 200); // Small delay after reaching 100%
@@ -25,7 +30,12 @@ const LoadingPage: React.FC = () => {
       });
     }, intervalDuration);
 
-    return () => clearInterval(interval);
+    return () => {
+      if (timerRef.current !== null) {
+        window.clearInterval(timerRef.current);
+        timerRef.current = null;
+      }
+    };
   }, [navigate]);
 
   return (

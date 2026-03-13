@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars, react-refresh/only-export-components, no-empty, no-case-declarations, @typescript-eslint/explicit-module-boundary-types */
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useCallback } from 'react';
+import { useInterval } from '../../hooks/useInterval';
 import {
   Bot, MessageCircle, CheckCircle, Clock, Server, Zap,
   HardDrive, AlertTriangle, TrendingUp, TrendingDown, Minus,
@@ -268,8 +269,7 @@ export const useSystemStats = () => {
   const [isLoading, setIsLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
 
-  React.useEffect(() => {
-    const fetchStats = async () => {
+  const fetchStats = React.useCallback(async () => {
       try {
         setIsLoading(true);
 
@@ -360,11 +360,10 @@ export const useSystemStats = () => {
       }
     };
 
-    fetchStats();
-
-    const interval = setInterval(fetchStats, 30000);
-    return () => clearInterval(interval);
   }, []);
+
+  React.useEffect(() => { fetchStats(); }, [fetchStats]);
+  useInterval(fetchStats, 30000);
 
   return { stats, isLoading, error, refresh: () => setIsLoading(true) };
 };

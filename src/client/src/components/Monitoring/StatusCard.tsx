@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useCallback } from 'react';
+import { useInterval } from '../../hooks/useInterval';
 
 export interface StatusMetric {
   label: string;
@@ -35,16 +36,10 @@ const StatusCard: React.FC<StatusCardProps> = ({
 }) => {
   const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
 
-  useEffect(() => {
-    if (refreshInterval && onRefresh) {
-      const interval = setInterval(() => {
-        onRefresh();
-        setLastRefresh(new Date());
-      }, refreshInterval);
-
-      return () => clearInterval(interval);
-    }
-  }, [refreshInterval, onRefresh]);
+  const handleRefreshTick = useCallback(() => {
+    if (onRefresh) { onRefresh(); setLastRefresh(new Date()); }
+  }, [onRefresh]);
+  useInterval(handleRefreshTick, refreshInterval && onRefresh ? refreshInterval : null);
 
   const getStatusColor = (status: string) => {
     switch (status) {

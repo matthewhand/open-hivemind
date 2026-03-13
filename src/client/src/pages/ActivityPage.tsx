@@ -15,6 +15,7 @@ import { LoadingSpinner } from '../components/DaisyUI/Loading';
 import EmptyState from '../components/DaisyUI/EmptyState';
 import Input from '../components/DaisyUI/Input';
 import SearchFilterBar from '../components/SearchFilterBar';
+import { useInterval } from '../hooks/useInterval';
 import { apiService, ActivityEvent, ActivityResponse } from '../services/api';
 
 const ActivityPage: React.FC = () => {
@@ -87,9 +88,7 @@ const ActivityPage: React.FC = () => {
     }
   }, [selectedBot, selectedProvider, selectedLlmProvider, startDate, endDate, autoRefresh, maxRetries]);
 
-  useEffect(() => {
-    fetchActivity();
-  }, [fetchActivity]); // fetchActivity depends on filters, so this runs when filters change
+  useInterval(fetchActivity, autoRefresh ? 5000 : null);
 
   const handleClearFilters = () => {
     setSearchQuery('');
@@ -100,12 +99,6 @@ const ActivityPage: React.FC = () => {
     setEndDate('');
   };
 
-  useEffect(() => {
-    if (autoRefresh) {
-      const interval = setInterval(fetchActivity, 5000);
-      return () => clearInterval(interval);
-    }
-  }, [autoRefresh, fetchActivity]);
 
   const handleExport = () => {
     if (!data?.events || data.events.length === 0) return;
