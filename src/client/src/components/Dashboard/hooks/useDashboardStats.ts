@@ -1,43 +1,42 @@
 import { useMemo } from 'react';
-import type { Bot, StatusResponse } from '../../../services/api';
 
 export const useDashboardStats = (
-  bots: Bot[],
-  statusBots: any[],
   activeBotCount: number,
   totalMessages: number,
   activeConnections: number,
   totalErrors: number,
-  uptimeSeconds: number
 ) => {
-  const statsCards = useMemo(() => {
-    return [
-      {
-        id: 'activeBots',
-        title: 'Active Bots',
-        value: activeBotCount,
-        description: 'Total bots running',
-      },
-      {
-        id: 'totalMessages',
-        title: 'Total Messages',
-        value: totalMessages,
-        description: 'Messages processed',
-      },
-      {
-        id: 'totalErrors',
-        title: 'Total Errors',
-        value: totalErrors,
-        description: 'Errors encountered',
-      },
-      {
-        id: 'uptime',
-        title: 'Uptime',
-        value: Math.floor(uptimeSeconds / 3600) + 'h',
-        description: 'Total uptime',
-      },
-    ];
-  }, [activeBotCount, totalMessages, totalErrors, uptimeSeconds]);
+  const statsCards = useMemo(() => [
+    {
+      id: 'active-bots',
+      title: 'Active Bots',
+      value: activeBotCount.toString(),
+      icon: 'bot',
+      color: 'primary' as const,
+      trend: { value: 0, isPositive: true },
+    },
+    {
+      id: 'total-messages',
+      title: 'Total Messages',
+      value: totalMessages.toString(),
+      icon: 'message',
+      color: 'secondary' as const,
+    },
+    {
+      id: 'active-connections',
+      title: 'Active Connections',
+      value: activeConnections.toString(),
+      icon: 'zap',
+      color: 'success' as const,
+    },
+    {
+      id: 'total-errors',
+      title: 'Total Errors',
+      value: totalErrors.toString(),
+      icon: 'alert',
+      color: 'error' as const,
+    },
+  ], [activeBotCount, totalMessages, activeConnections, totalErrors]);
 
   return { statsCards };
 };
