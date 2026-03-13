@@ -4,6 +4,7 @@ import type { ChildProcess } from 'child_process';
 import { spawn } from 'child_process';
 import { v4 as uuidv4 } from 'uuid';
 import { ErrorUtils } from '@src/types/errors';
+import { validateMCPCommand } from '../utils/mcpSecurity';
 import type {
   MCPProviderConfig,
   MCPProviderStatus,
@@ -345,41 +346,9 @@ export class MCPProviderManager extends EventEmitter implements IMCPProviderMana
 
     // Command validation
     if (config.command) {
-      const command = (config.command as string).trim();
-
-      // Security validation: Block dangerous shell commands
-      const blockedCommands = [
-        'sh', 'bash', 'zsh', 'dash', 'csh', 'ksh', 'tcsh',
-        'cmd', 'cmd.exe', 'powershell', 'powershell.exe', 'pwsh',
-      ];
-
-      const isBlocked = blockedCommands.some(blocked => {
-        const lowerCommand = command.toLowerCase();
-        // Check exact match
-        if (lowerCommand === blocked) return true;
-        // Check if it ends with the blocked command (e.g. /bin/sh)
-        // using forward slash or backslash as separator
-        // blocked commands are lowercase in the list
-        const pattern = new RegExp(`[\\/\\\\]${blocked}$`);
-        return pattern.test(lowerCommand);
-      });
-
-      if (isBlocked) {
-        errors.push('Command is not allowed for security reasons');
-      }
-
-      const validCommandPatterns = [
-        /^[a-zA-Z0-9\-_]+$/,
-        /^\.\/[a-zA-Z0-9\-_\/.]+$/,
-        /^\/[a-zA-Z0-9\-_\/.]+$/,
-        /^[a-zA-Z]:\\[a-zA-Z0-9\-_\/.\\]+$/,
-        /^npx [a-zA-Z0-9\-@/.]+$/,
-        /^npm run [a-zA-Z0-9\-_]+$/,
-      ];
-
-      const isValidCommand = validCommandPatterns.some(pattern => pattern.test(command));
-      if (!isValidCommand) {
-        errors.push('Invalid command format');
+      const commandValidation = validateMCPCommand(config.command);
+      if (!commandValidation.isValid) {
+        errors.push(commandValidation.error!);
       }
     }
 
