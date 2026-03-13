@@ -387,7 +387,7 @@ const MCPServersPage: React.FC = () => {
     if (servers.length === 0) {
       return (
         <EmptyState
-          icon={Server}
+          icon={<Server className="w-12 h-12" />}
           title="No servers configured"
           description="Connect an MCP server to get started extending your bot's capabilities."
           actionLabel="Add Server"
@@ -400,7 +400,7 @@ const MCPServersPage: React.FC = () => {
     if (filteredServers.length === 0) {
       return (
         <EmptyState
-          icon={Search}
+          icon={<Search className="w-12 h-12" />}
           title="No results found"
           description={`No servers match your search for "${searchTerm}".`}
           actionLabel="Clear Search"

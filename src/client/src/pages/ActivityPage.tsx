@@ -312,7 +312,7 @@ const ActivityPage: React.FC = () => {
       <PageHeader
         title="Activity Feed"
         description="Real-time message flow and events"
-        icon={Clock}
+        icon={<Clock className="w-12 h-12" />}
         actions={
           <div className="flex items-center gap-2">
             {/* View Toggle */}
@@ -435,7 +435,7 @@ const ActivityPage: React.FC = () => {
         </div>
       ) : filteredEvents.length === 0 ? (
         <EmptyState
-          icon={Clock}
+          icon={<Clock className="w-12 h-12" />}
           title={events.length === 0 ? "No activity yet" : "No matching events"}
           description={events.length === 0 ? "Events will appear here as your bots process messages" : "Try adjusting your search or filters"}
           actionLabel="Refresh"
