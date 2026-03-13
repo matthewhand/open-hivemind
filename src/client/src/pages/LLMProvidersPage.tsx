@@ -97,6 +97,11 @@ const LLMProvidersPage: React.FC = () => {
     });
   };
 
+  const reportSaveError = (message: string, err: any) => {
+    console.error(message, err);
+    setError(err?.message || message);
+  };
+
   const handleAddProfile = () => openAddModal('global', 'llm');
 
   const handleEditProfile = (profile: ProfileItem) => {
@@ -132,7 +137,13 @@ const LLMProvidersPage: React.FC = () => {
           try {
             await apiService.post('/api/config/llm-profiles', payload);
           } catch (e: any) {
-            if (backup) await apiService.post('/api/config/llm-profiles', backup).catch(() => {});
+            if (backup) {
+              try {
+                await apiService.post('/api/config/llm-profiles', backup);
+              } catch (restoreErr: any) {
+                reportSaveError('Failed to restore previous LLM profile after save error', restoreErr);
+              }
+            }
             throw e;
           }
         }
@@ -244,8 +255,15 @@ const LLMProvidersPage: React.FC = () => {
                 className="select select-bordered select-sm w-full"
                 value={defaultChatbotProfile}
                 onChange={async (e) => {
-                  setDefaultChatbotProfile(e.target.value);
-                  await saveGlobal({ defaultChatbotProfile: e.target.value }).catch(() => {});
+                  const previous = defaultChatbotProfile;
+                  const next = e.target.value;
+                  setDefaultChatbotProfile(next);
+                  try {
+                    await saveGlobal({ defaultChatbotProfile: next });
+                  } catch (err: any) {
+                    setDefaultChatbotProfile(previous);
+                    reportSaveError('Failed to update default chatbot profile', err);
+                  }
                 }}
                 disabled={loading}
               >
@@ -272,8 +290,15 @@ const LLMProvidersPage: React.FC = () => {
                 className="select select-bordered select-sm w-full"
                 value={webuiIntelligenceProvider}
                 onChange={async (e) => {
-                  setWebuiIntelligenceProvider(e.target.value);
-                  await saveGlobal({ webuiIntelligenceProvider: e.target.value }).catch(() => {});
+                  const previous = webuiIntelligenceProvider;
+                  const next = e.target.value;
+                  setWebuiIntelligenceProvider(next);
+                  try {
+                    await saveGlobal({ webuiIntelligenceProvider: next });
+                  } catch (err: any) {
+                    setWebuiIntelligenceProvider(previous);
+                    reportSaveError('Failed to update WebUI intelligence provider', err);
+                  }
                 }}
                 disabled={loading}
               >
@@ -299,8 +324,15 @@ const LLMProvidersPage: React.FC = () => {
                 className="select select-bordered select-sm w-full"
                 value={defaultEmbeddingProvider}
                 onChange={async (e) => {
-                  setDefaultEmbeddingProvider(e.target.value);
-                  await saveLlmConfig({ DEFAULT_EMBEDDING_PROVIDER: e.target.value }).catch(() => {});
+                  const previous = defaultEmbeddingProvider;
+                  const next = e.target.value;
+                  setDefaultEmbeddingProvider(next);
+                  try {
+                    await saveLlmConfig({ DEFAULT_EMBEDDING_PROVIDER: next });
+                  } catch (err: any) {
+                    setDefaultEmbeddingProvider(previous);
+                    reportSaveError('Failed to update default embedding provider', err);
+                  }
                 }}
                 disabled={loading}
               >
@@ -333,8 +365,15 @@ const LLMProvidersPage: React.FC = () => {
             className="toggle toggle-primary"
             checked={perUseCaseEnabled}
             onChange={async (e) => {
-              setPerUseCaseEnabled(e.target.checked);
-              await saveGlobal({ perUseCaseEnabled: e.target.checked }).catch(() => {});
+              const previous = perUseCaseEnabled;
+              const next = e.target.checked;
+              setPerUseCaseEnabled(next);
+              try {
+                await saveGlobal({ perUseCaseEnabled: next });
+              } catch (err: any) {
+                setPerUseCaseEnabled(previous);
+                reportSaveError('Failed to update per-use-case setting', err);
+              }
             }}
           />
         </div>
