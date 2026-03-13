@@ -435,6 +435,28 @@ export class ErrorUtils {
   }
 
   /**
+   * Convert any error to an AppError for consistent route handling.
+   */
+  static toAppError(error: unknown, message?: string, type?: string): AppError {
+    const normalized = this.toHivemindError(error, message, type);
+    if (isAppError(normalized)) {
+      return normalized;
+    }
+
+    const normalizedType =
+      normalized && typeof normalized === 'object' && 'type' in normalized
+        ? (normalized.type as ErrorType)
+        : undefined;
+
+    return this.createError(
+      this.getMessage(normalized),
+      normalizedType || (type as ErrorType) || 'unknown',
+      this.getCode(normalized),
+      this.getStatusCode(normalized)
+    );
+  }
+
+  /**
    * Create a standardized error object
    */
   static createError(
