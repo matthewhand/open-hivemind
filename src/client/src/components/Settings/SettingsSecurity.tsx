@@ -1,9 +1,6 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { useAutoHide } from '../../hooks/useAutoHide';
-import { Alert } from '../DaisyUI/Alert';
-import Button from '../DaisyUI/Button';
-import Input from '../DaisyUI/Input';
-import Toggle from '../DaisyUI/Toggle';
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { Alert, Button, Input, Toggle } from '../DaisyUI';
 import { Shield, Plus, Trash2 } from 'lucide-react';
 import SecureConfigManager from '../SecureConfigManager';
 
@@ -26,7 +23,16 @@ const SettingsSecurity: React.FC = () => {
   const [newOrigin, setNewOrigin] = useState('');
   const [loading, setLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
-  const { alert, setAlert } = useAutoHide<{ type: 'success' | 'error'; message: string }>(3000);
+  const [alert, setAlert] = useState<{ type: 'success' | 'error', message: string } | null>(null);
+  const alertTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (alertTimerRef.current) {
+        clearTimeout(alertTimerRef.current);
+      }
+    };
+  }, []);
 
   const fetchSettings = useCallback(async () => {
     try {
@@ -42,9 +48,7 @@ const SettingsSecurity: React.FC = () => {
         enableRateLimit: config.rateLimit?.enabled?.value !== false,
         rateLimitMax: config.rateLimit?.maxRequests?.value || 100,
         rateLimitWindow: config.rateLimit?.windowMs?.value ? config.rateLimit.windowMs.value / 1000 : 60,
-        enableCors: config.cors?.enabled?.value !== false,
         corsOrigins: config.cors?.origins?.value || ['http://localhost:3000'],
-        enableSecurityHeaders: config.securityHeaders?.enabled?.value !== false,
       }));
     } catch (error) {
       console.error('Failed to load security settings:', error);
@@ -57,7 +61,7 @@ const SettingsSecurity: React.FC = () => {
     fetchSettings();
   }, [fetchSettings]);
 
-  const handleChange = (field: string, value: string | number | boolean | string[]) => {
+  const handleChange = (field: string, value: any) => {
     setSettings(prev => ({ ...prev, [field]: value }));
   };
 
@@ -94,6 +98,10 @@ const SettingsSecurity: React.FC = () => {
       
       if (!response.ok) {throw new Error('Failed to save settings');}
       setAlert({ type: 'success', message: 'Security settings saved!' });
+      if (alertTimerRef.current) {
+        clearTimeout(alertTimerRef.current);
+      }
+      alertTimerRef.current = setTimeout(() => setAlert(null), 3000);
     } catch (error) {
       setAlert({ type: 'error', message: 'Failed to save. Some settings require environment variables.' });
     } finally {
