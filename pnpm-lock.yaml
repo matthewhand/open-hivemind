@@ -562,11 +562,7 @@ importers:
   packages/llm-flowise:
     dependencies:
       '@hivemind/shared-types':
-<<<<<<< HEAD
-        specifier: '*'
-=======
         specifier: workspace:*
->>>>>>> d5213de3 (Refiner (Import Order and Dependency Hygiene): Align dependency versioning and order)
         version: link:../shared-types
       debug:
         specifier: ^4.3.7
@@ -585,11 +581,7 @@ importers:
   packages/llm-letta:
     dependencies:
       '@hivemind/shared-types':
-<<<<<<< HEAD
-        specifier: '*'
-=======
         specifier: workspace:*
->>>>>>> d5213de3 (Refiner (Import Order and Dependency Hygiene): Align dependency versioning and order)
         version: link:../shared-types
       '@letta-ai/letta-client':
         specifier: ^1.7.11
@@ -608,11 +600,7 @@ importers:
   packages/llm-openai:
     dependencies:
       '@hivemind/shared-types':
-<<<<<<< HEAD
-        specifier: '*'
-=======
         specifier: workspace:*
->>>>>>> d5213de3 (Refiner (Import Order and Dependency Hygiene): Align dependency versioning and order)
         version: link:../shared-types
       debug:
         specifier: ^4.3.7
@@ -631,11 +619,7 @@ importers:
   packages/llm-openswarm:
     dependencies:
       '@hivemind/shared-types':
-<<<<<<< HEAD
-        specifier: '*'
-=======
         specifier: workspace:*
->>>>>>> d5213de3 (Refiner (Import Order and Dependency Hygiene): Align dependency versioning and order)
         version: link:../shared-types
       debug:
         specifier: ^4.3.7
@@ -651,11 +635,7 @@ importers:
   packages/llm-openwebui:
     dependencies:
       '@hivemind/shared-types':
-<<<<<<< HEAD
-        specifier: '*'
-=======
         specifier: workspace:*
->>>>>>> d5213de3 (Refiner (Import Order and Dependency Hygiene): Align dependency versioning and order)
         version: link:../shared-types
       debug:
         specifier: ^4.3.7
@@ -702,11 +682,7 @@ importers:
   packages/memory-mem4ai:
     dependencies:
       '@hivemind/shared-types':
-<<<<<<< HEAD
-        specifier: '*'
-=======
         specifier: workspace:*
->>>>>>> d5213de3 (Refiner (Import Order and Dependency Hygiene): Align dependency versioning and order)
         version: link:../shared-types
       debug:
         specifier: ^4.3.7
@@ -734,11 +710,7 @@ importers:
   packages/memory-memvault:
     dependencies:
       '@hivemind/shared-types':
-<<<<<<< HEAD
-        specifier: '*'
-=======
         specifier: workspace:*
->>>>>>> d5213de3 (Refiner (Import Order and Dependency Hygiene): Align dependency versioning and order)
         version: link:../shared-types
       debug:
         specifier: ^4.3.7
@@ -778,11 +750,7 @@ importers:
         specifier: ^0.17.0
         version: 0.17.0(ffmpeg-static@5.3.0)
       '@hivemind/shared-types':
-<<<<<<< HEAD
-        specifier: '>=1.0.0'
-=======
         specifier: workspace:*
->>>>>>> d5213de3 (Refiner (Import Order and Dependency Hygiene): Align dependency versioning and order)
         version: link:../shared-types
       debug:
         specifier: ^4.3.7
@@ -819,11 +787,7 @@ importers:
   packages/message-mattermost:
     dependencies:
       '@hivemind/shared-types':
-<<<<<<< HEAD
-        specifier: '*'
-=======
         specifier: workspace:*
->>>>>>> d5213de3 (Refiner (Import Order and Dependency Hygiene): Align dependency versioning and order)
         version: link:../shared-types
       async-retry:
         specifier: ^1.3.3
@@ -848,11 +812,7 @@ importers:
   packages/message-slack:
     dependencies:
       '@hivemind/shared-types':
-<<<<<<< HEAD
-        specifier: '*'
-=======
         specifier: workspace:*
->>>>>>> d5213de3 (Refiner (Import Order and Dependency Hygiene): Align dependency versioning and order)
         version: link:../shared-types
       '@slack/rtm-api':
         specifier: ^7.0.2
@@ -3261,6 +3221,9 @@ packages:
 
   '@sinonjs/text-encoding@0.7.3':
     resolution: {integrity: sha512-DE427ROAphMQzU4ENbliGYrBSYPXF+TtLg9S8vzeA+OF4ZKzoDdzfL8sxuMUGS/lgRhM6j1URSk9ghf7Xo1tyA==}
+    deprecated: |-
+      Deprecated: no longer maintained and no longer used by Sinon packages. See
+        https://github.com/sinonjs/nise/issues/243 for replacement details.
 
   '@slack/logger@4.0.0':
     resolution: {integrity: sha512-Wz7QYfPAlG/DR+DfABddUZeNgoeY7d1J39OCR2jR+v7VBsB8ezulDK5szTnDDPDwLH5IWhLvXIHlCFZV7MSKgA==}
