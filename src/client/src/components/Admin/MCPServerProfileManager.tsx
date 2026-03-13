@@ -73,7 +73,7 @@ const MCPServerProfileManager: React.FC = () => {
     setFormKey(profile.key);
     setFormName(profile.name);
     setFormDescription(profile.description || '');
-    setFormServers([...profile.mcpServers]);
+    setFormServers([...(profile.mcpServers || [])]);
     setShowModal(true);
   };
 
@@ -205,9 +205,9 @@ const MCPServerProfileManager: React.FC = () => {
                 <div className="mt-3">
                   <div className="flex items-center gap-2 text-sm font-medium mb-2">
                     <ServerStackIcon className="w-4 h-4" />
-                    <span>Servers ({profile.mcpServers.length})</span>
+                    <span>Servers ({profile.mcpServers?.length || 0})</span>
                   </div>
-                  {profile.mcpServers.length > 0 ? (
+                  {profile.mcpServers?.length ? (
                     <ul className="text-sm space-y-1">
                       {profile.mcpServers.slice(0, 3).map((server, i) => (
                         <li key={i} className="truncate text-base-content/70">

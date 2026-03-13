@@ -139,9 +139,9 @@ const Modal: React.FC<ModalProps> = ({
         </div>
 
         {/* Actions */}
-        {actions.length > 0 && (
+        {(actions || []).length > 0 && (
           <div className="modal-action">
-            {actions.map((action, index) => (
+            {(actions || []).map((action, index) => (
               <button
                 key={index}
                 className={`btn ${getVariantClass(action.variant)} ${action.loading ? 'loading' : ''}`}
