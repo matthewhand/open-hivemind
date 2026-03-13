@@ -326,5 +326,10 @@ describe('errorHandler middleware', () => {
       rateLimitErrorHandler(mockReq as Request, mockRes as Response, mockNext);
       expect(mockNext).toHaveBeenCalled();
     });
+
+    it('should not forward an error to next', () => {
+      rateLimitErrorHandler(mockReq as Request, mockRes as Response, mockNext);
+      expect(mockNext).toHaveBeenCalledWith();
+    });
   });
 });
