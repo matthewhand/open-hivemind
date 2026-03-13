@@ -1,4 +1,5 @@
-import React, { useState, useEffect , useRef} from 'react';
+import React, { useState, useCallback } from 'react';
+import { useInterval } from '../../hooks/useInterval';
 
 type CarouselItem = {
   image: string;
@@ -22,24 +23,10 @@ const Carousel: React.FC<CarouselProps> = ({
 }) => {
   const [activeIndex, setActiveIndex] = useState(0);
 
-  const timerRef = useRef<number | null>(null);
-
-  useEffect(() => {
-    if (!autoplay) { return; }
-
-    const tick = () => {
-      setActiveIndex((prevIndex) => (prevIndex + 1) % items.length);
-    };
-
-    timerRef.current = window.setInterval(tick, interval);
-
-    return () => {
-      if (timerRef.current !== null) {
-        window.clearInterval(timerRef.current);
-        timerRef.current = null;
-      }
-    };
-  }, [items.length, autoplay, interval]);
+  const tick = useCallback(() => {
+    setActiveIndex((prevIndex) => (prevIndex + 1) % items.length);
+  }, [items.length]);
+  useInterval(tick, autoplay ? interval : null);
 
   const handleSelect = (selectedIndex: number) => {
     setActiveIndex(selectedIndex);

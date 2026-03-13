@@ -9,7 +9,8 @@
  *
  * DO NOT import or route to this component until the backend AI APIs are implemented.
  */
-import React, { useState, useEffect , useRef} from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { useInterval } from '../hooks/useInterval';
 import { useAppSelector } from '../store/hooks';
 import { selectPerformance } from '../store/slices/performanceSlice';
 import { selectDashboard } from '../store/slices/dashboardSlice';
@@ -217,31 +218,17 @@ export const AIInsightsPanel: React.FC<AIInsightsPanelProps> = ({
   };
 
   // Load insights
-  const timerRef = useRef<number | null>(null);
-  useEffect(() => {
-    const loadInsights = () => {
+  const loadInsights = useCallback(() => {
       setLoading(true);
-
-      // Simulate AI processing delay
       setTimeout(() => {
         const newInsights = generateAIInsights();
         setInsights(newInsights.slice(0, maxInsights));
         setLoading(false);
       }, 1500);
-    };
+  }, [maxInsights, metrics, bots]); // eslint-disable-line react-hooks/exhaustive-deps
 
-    loadInsights();
-
-    if (autoRefresh) {
-      timerRef.current = window.setInterval(loadInsights, refreshInterval);
-      return () => {
-      if (timerRef.current !== null) {
-        window.clearInterval(timerRef.current);
-        timerRef.current = null;
-      }
-    };
-    }
-  }, [autoRefresh, refreshInterval, maxInsights, metrics, bots]);
+  useEffect(() => { loadInsights(); }, [loadInsights]);
+  useInterval(loadInsights, autoRefresh ? refreshInterval : null);
 
   const toggleInsightExpansion = (insightId: string) => {
     setExpandedInsights(prev => {

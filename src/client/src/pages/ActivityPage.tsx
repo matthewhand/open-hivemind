@@ -1,6 +1,6 @@
 import { withRetry } from '../utils/withRetry';
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
-import React, { useState, useEffect, useCallback, useMemo , useRef} from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Clock, Download, LayoutList, GitBranch, RefreshCw, X } from 'lucide-react';
 import { Alert } from '../components/DaisyUI/Alert';
 import Badge from '../components/DaisyUI/Badge';
@@ -15,6 +15,7 @@ import { LoadingSpinner } from '../components/DaisyUI/Loading';
 import EmptyState from '../components/DaisyUI/EmptyState';
 import Input from '../components/DaisyUI/Input';
 import SearchFilterBar from '../components/SearchFilterBar';
+import { useInterval } from '../hooks/useInterval';
 import { apiService, ActivityEvent, ActivityResponse } from '../services/api';
 
 const ActivityPage: React.FC = () => {
@@ -87,11 +88,7 @@ const ActivityPage: React.FC = () => {
     }
   }, [selectedBot, selectedProvider, selectedLlmProvider, startDate, endDate, autoRefresh, maxRetries]);
 
-  const timerRef = useRef<number | null>(null);
-
-  useEffect(() => {
-    fetchActivity();
-  }, [fetchActivity]); // fetchActivity depends on filters, so this runs when filters change
+  useInterval(fetchActivity, autoRefresh ? 5000 : null);
 
   const handleClearFilters = () => {
     setSearchQuery('');
@@ -102,19 +99,6 @@ const ActivityPage: React.FC = () => {
     setEndDate('');
   };
 
-
-
-  useEffect(() => {
-    if (autoRefresh) {
-      timerRef.current = window.setInterval(fetchActivity, 5000);
-      return () => {
-      if (timerRef.current !== null) {
-        window.clearInterval(timerRef.current);
-        timerRef.current = null;
-      }
-    };
-    }
-  }, [autoRefresh, fetchActivity]);
 
   const handleExport = () => {
     if (!data?.events || data.events.length === 0) return;

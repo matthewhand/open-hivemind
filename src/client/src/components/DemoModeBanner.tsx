@@ -2,7 +2,8 @@
  * DemoModeBanner - Shows a banner when the app is running in demo mode
  */
 
-import React, { useState, useEffect , useRef} from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { useInterval } from '../hooks/useInterval';
 
 interface DemoStatus {
     isDemoMode: boolean;
@@ -17,34 +18,22 @@ const DemoModeBanner: React.FC = () => {
     const [isDismissed, setIsDismissed] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
 
-    const timerRef = useRef<number | null>(null);
-
-    useEffect(() => {
-        const checkDemoMode = async () => {
-            try {
-                const response = await fetch('/api/demo/status');
-                if (response.ok) {
-                    const data = await response.json();
-                    setDemoStatus(data);
-                }
-            } catch (error) {
-                console.debug('Could not check demo mode status:', error);
-            } finally {
-                setIsLoading(false);
+    const checkDemoMode = useCallback(async () => {
+        try {
+            const response = await fetch('/api/demo/status');
+            if (response.ok) {
+                const data = await response.json();
+                setDemoStatus(data);
             }
-        };
-
-        checkDemoMode();
-
-        // Check every 30 seconds
-        timerRef.current = window.setInterval(checkDemoMode, 30000);
-        return () => {
-      if (timerRef.current !== null) {
-        window.clearInterval(timerRef.current);
-        timerRef.current = null;
-      }
-    };
+        } catch (error) {
+            console.debug('Could not check demo mode status:', error);
+        } finally {
+            setIsLoading(false);
+        }
     }, []);
+
+    useEffect(() => { checkDemoMode(); }, [checkDemoMode]);
+    useInterval(checkDemoMode, 30000);
 
     if (isLoading || !demoStatus || !demoStatus.isDemoMode || isDismissed) {
         return null;

@@ -1,4 +1,5 @@
-import React, { useState, useEffect , useRef} from 'react';
+import React, { useState } from 'react';
+import { useInterval } from '../../hooks/useInterval';
 
 interface Metric {
   name: string;
@@ -21,21 +22,7 @@ const VisualFeedback: React.FC<VisualFeedbackProps> = ({ metrics, initialRating 
   const [rating, setRating] = useState(initialRating);
   const [hoverRating, setHoverRating] = useState(0);
 
-  const timerRef = useRef<number | null>(null);
-
-  useEffect(() => {
-    // Here you would typically fetch real-time data
-    // For demonstration, we'll just log updates
-    timerRef.current = window.setInterval(() => {
-      console.log('Fetching new metrics data...');
-    }, 5000);
-    return () => {
-      if (timerRef.current !== null) {
-        window.clearInterval(timerRef.current);
-        timerRef.current = null;
-      }
-    };
-  }, []);
+  useInterval(() => { /* real-time metrics polling placeholder */ }, 5000);
 
   return (
     <div className="p-4 bg-base-200 rounded-box shadow-lg">

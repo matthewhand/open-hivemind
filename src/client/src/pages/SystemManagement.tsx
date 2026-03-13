@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
-import React, { useState, useEffect , useRef} from 'react';
+import React, { useState, useEffect } from 'react';
 import { useWebSocket } from '../contexts/WebSocketContext';
+import { useInterval } from '../hooks/useInterval';
 import { apiService } from '../services/api';
 import AlertPanel from '../components/Monitoring/AlertPanel';
 import StatusCard from '../components/Monitoring/StatusCard';
@@ -70,29 +71,7 @@ const SystemManagement: React.FC = () => {
   const [isPerformanceLoading, setIsPerformanceLoading] = useState(false);
 
 
-  const timerRef = useRef<number | null>(null);
-
-
-  useEffect(() => {
-    fetchSystemConfig();
-    fetchBackupHistory();
-  }, []);
-
-
-  // Performance monitoring polling
-
-  useEffect(() => {
-    if (activeTab === 'performance') {
-      fetchApiStatus();
-      timerRef.current = window.setInterval(fetchApiStatus, 10000); // Refresh every 10s
-      return () => {
-      if (timerRef.current !== null) {
-        window.clearInterval(timerRef.current);
-        timerRef.current = null;
-      }
-    };
-    }
-  }, [activeTab]);
+  useInterval(fetchApiStatus, activeTab === 'performance' ? 10000 : null);
 
   const fetchApiStatus = async () => {
     try {

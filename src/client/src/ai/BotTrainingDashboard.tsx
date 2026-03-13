@@ -9,7 +9,8 @@
  *
  * DO NOT import or route to this component until the backend AI APIs are implemented.
  */
-import React, { useState, useEffect , useRef} from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { useInterval } from '../hooks/useInterval';
 import { useAppSelector } from '../store/hooks';
 import { selectUser } from '../store/slices/authSlice';
 import { AnimatedBox } from '../animations/AnimationComponents';
@@ -61,8 +62,34 @@ export const BotTrainingDashboard: React.FC = () => {
   });
   const [selectedSession, setSelectedSession] = useState<string | null>(null);
 
+  const updateMetrics = useCallback(() => {
+      setMetrics({
+        cpuUsage: 45 + Math.random() * 20,
+        memoryUsage: 60 + Math.random() * 15,
+        gpuUsage: 85 + Math.random() * 10,
+        temperature: 65 + Math.random() * 10,
+        estimatedTimeRemaining: 3600 - Math.random() * 100,
+      });
+      setSessions(prev => prev.map(session => {
+        if (session.status === 'training') {
+          const newProgress = Math.min(100, session.progress + 0.5);
+          const newEpoch = Math.min(session.epochs, Math.floor((newProgress / 100) * session.epochs));
+          return {
+            ...session,
+            progress: newProgress,
+            currentEpoch: newEpoch,
+            accuracy: Math.min(0.99, session.accuracy + 0.001),
+            loss: Math.max(0.01, session.loss - 0.001),
+            status: newProgress >= 100 ? 'completed' : 'training',
+          };
+        }
+        return session;
+      }));
+  }, []);
+
+  useInterval(updateMetrics, 1000);
+
   // Mock data generation
-  const timerRef = useRef<number | null>(null);
   useEffect(() => {
     const mockSessions: TrainingSession[] = [
       {
@@ -110,40 +137,6 @@ export const BotTrainingDashboard: React.FC = () => {
       },
     ];
     setSessions(mockSessions);
-
-    // Simulate metrics update
-    timerRef.current = window.setInterval(() => {
-      setMetrics({
-        cpuUsage: 45 + Math.random() * 20,
-        memoryUsage: 60 + Math.random() * 15,
-        gpuUsage: 85 + Math.random() * 10,
-        temperature: 65 + Math.random() * 10,
-        estimatedTimeRemaining: 3600 - Math.random() * 100,
-      });
-
-      setSessions(prev => prev.map(session => {
-        if (session.status === 'training') {
-          const newProgress = Math.min(100, session.progress + 0.5);
-          const newEpoch = Math.min(session.epochs, Math.floor((newProgress / 100) * session.epochs));
-          return {
-            ...session,
-            progress: newProgress,
-            currentEpoch: newEpoch,
-            accuracy: Math.min(0.99, session.accuracy + 0.001),
-            loss: Math.max(0.01, session.loss - 0.001),
-            status: newProgress >= 100 ? 'completed' : 'training',
-          };
-        }
-        return session;
-      }));
-    }, 1000);
-
-    return () => {
-      if (timerRef.current !== null) {
-        window.clearInterval(timerRef.current);
-        timerRef.current = null;
-      }
-    };
   }, []);
 
   const getStatusColor = (status: string) => {

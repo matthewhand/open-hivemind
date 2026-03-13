@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars, react-refresh/only-export-components, no-empty, no-case-declarations, @typescript-eslint/explicit-module-boundary-types */
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useCallback } from 'react';
+import { useInterval } from '../../hooks/useInterval';
 import {
   Bot, MessageCircle, CheckCircle, Clock, Server, Zap,
   HardDrive, AlertTriangle, TrendingUp, TrendingDown, Minus,
@@ -73,8 +74,6 @@ const AnimatedCounter: React.FC<AnimatedCounterProps> = ({ value, className }) =
   const nodeRef = useRef<HTMLParagraphElement>(null);
   const prevValueRef = useRef<number>(value);
   const controlsRef = useRef<ReturnType<typeof animate> | null>(null);
-
-  const timerRef = useRef<number | null>(null);
 
   useEffect(() => {
     const node = nodeRef.current;
@@ -270,9 +269,7 @@ export const useSystemStats = () => {
   const [isLoading, setIsLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
 
-  const timerRef = React.useRef<number | null>(null);
-  React.useEffect(() => {
-    const fetchStats = async () => {
+  const fetchStats = React.useCallback(async () => {
       try {
         setIsLoading(true);
 
@@ -363,16 +360,10 @@ export const useSystemStats = () => {
       }
     };
 
-    fetchStats();
-
-    timerRef.current = window.setInterval(fetchStats, 30000);
-    return () => {
-      if (timerRef.current !== null) {
-        window.clearInterval(timerRef.current);
-        timerRef.current = null;
-      }
-    };
   }, []);
+
+  React.useEffect(() => { fetchStats(); }, [fetchStats]);
+  useInterval(fetchStats, 30000);
 
   return { stats, isLoading, error, refresh: () => setIsLoading(true) };
 };

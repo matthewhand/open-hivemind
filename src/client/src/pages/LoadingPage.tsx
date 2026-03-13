@@ -1,4 +1,4 @@
-import React, { useEffect, useState , useRef} from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { LoadingSpinner } from '../components/DaisyUI/Loading';
 
@@ -18,9 +18,9 @@ const LoadingPage: React.FC = () => {
         const next = prev + (100 / totalSteps);
         if (next >= 100) {
           if (timerRef.current !== null) {
-          window.clearInterval(timerRef.current);
-          timerRef.current = null;
-        }
+            window.clearInterval(timerRef.current);
+            timerRef.current = null;
+          }
           setTimeout(() => {
             navigate('/admin/overview');
           }, 200); // Small delay after reaching 100%

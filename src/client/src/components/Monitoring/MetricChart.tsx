@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { useInterval } from '../../hooks/useInterval';
 import { Line, Bar, Area, Pie, LineChart, BarChart, AreaChart, PieChart, XAxis, YAxis, Tooltip, CartesianGrid, Legend } from 'recharts';
 
 export interface MetricData {
@@ -42,10 +43,10 @@ const MetricChart: React.FC<MetricChartProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const timerRef = useRef<number | null>(null);
-
-  useEffect(() => {
-    const formattedData = data.map(item => ({
+  const handleRefreshTick = useCallback(() => {
+    if (onRefresh) { setIsLoading(true); onRefresh(); setTimeout(() => setIsLoading(false), 1000); }
+  }, [onRefresh]);
+  useInterval(handleRefreshTick, refreshInterval && onRefresh ? refreshInterval : null);
       time: new Date(item.timestamp).toLocaleTimeString(),
       value: item.value,
       label: item.label || '',
@@ -55,23 +56,6 @@ const MetricChart: React.FC<MetricChartProps> = ({
   }, [data]);
 
 
-
-  useEffect(() => {
-    if (refreshInterval && onRefresh) {
-      timerRef.current = window.setInterval(() => {
-        setIsLoading(true);
-        onRefresh();
-        setTimeout(() => setIsLoading(false), 1000);
-      }, refreshInterval);
-
-      return () => {
-      if (timerRef.current !== null) {
-        window.clearInterval(timerRef.current);
-        timerRef.current = null;
-      }
-    };
-    }
-  }, [refreshInterval, onRefresh]);
 
   const renderChart = () => {
     const commonProps = {
