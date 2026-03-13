@@ -13,9 +13,7 @@ jest.mock('./MattermostService', () => ({
 }));
 
 jest.mock('@src/config/BotConfigurationManager', () => ({
-  BotConfigurationManager: {
-    getInstance: jest.fn().mockReturnValue({ getAllBots: jest.fn().mockReturnValue([]) }),
-  },
+  BotConfigurationManager: { getInstance: jest.fn().mockReturnValue({ getAllBots: jest.fn().mockReturnValue([]) }) },
 }));
 
 describe('message-mattermost', () => {

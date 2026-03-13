@@ -196,8 +196,7 @@ export class MattermostService extends EventEmitter implements IMessengerService
             );
           }
 
-          const isRetryable =
-            errType === 'network' ||
+          const isRetryable = errType === 'network' ||
             errType === 'api' ||
             error.status === 500 ||
             error.status === 502 ||
@@ -206,10 +205,7 @@ export class MattermostService extends EventEmitter implements IMessengerService
             error.status === 429;
 
           if (isRetryable && attempt <= maxRetries) {
-            const delay = Math.min(
-              maxDelay,
-              baseDelay * Math.pow(2, attempt - 1) + Math.random() * baseDelay
-            );
+            const delay = Math.min(maxDelay, baseDelay * Math.pow(2, attempt - 1) + Math.random() * baseDelay);
             await new Promise((resolve) => setTimeout(resolve, delay));
             continue;
           }
@@ -321,9 +317,7 @@ export class MattermostService extends EventEmitter implements IMessengerService
             }
 
             const username = user
-              ? `${user.first_name || ''} ${user.last_name || ''}`.trim() ||
-                user.username ||
-                'Unknown'
+              ? `${user.first_name || ''} ${user.last_name || ''}`.trim() || user.username || 'Unknown'
               : 'Unknown';
             const isBot = Boolean(user?.is_bot);
 
@@ -361,8 +355,7 @@ export class MattermostService extends EventEmitter implements IMessengerService
             );
           }
 
-          const isRetryable =
-            errType === 'network' ||
+          const isRetryable = errType === 'network' ||
             errType === 'api' ||
             error.status === 500 ||
             error.status === 502 ||
@@ -371,10 +364,7 @@ export class MattermostService extends EventEmitter implements IMessengerService
             error.status === 429;
 
           if (isRetryable && attempt <= maxRetries) {
-            const delay = Math.min(
-              maxDelay,
-              baseDelay * Math.pow(2, attempt - 1) + Math.random() * baseDelay
-            );
+            const delay = Math.min(maxDelay, baseDelay * Math.pow(2, attempt - 1) + Math.random() * baseDelay);
             await new Promise((resolve) => setTimeout(resolve, delay));
             continue;
           }

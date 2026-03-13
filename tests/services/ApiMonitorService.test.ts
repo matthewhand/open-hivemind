@@ -338,7 +338,7 @@ describe('ApiMonitorService', () => {
         name: 'Long API',
         url: longUrl,
         method: 'GET',
-        enabled: true,
+        enabled: true
       } as any;
 
       service.addEndpoint(endpoint);
@@ -349,25 +349,22 @@ describe('ApiMonitorService', () => {
     it('should handle concurrent addEndpoint calls', async () => {
       const promises = [];
       for (let i = 0; i < 100; i++) {
-        promises.push(
-          new Promise<void>((resolve) => {
-            setTimeout(() => {
-              service.addEndpoint({
-                id: `concurrent-endpoint-${i}`,
-                name: `Concurrent ${i}`,
-                url: 'http://example.com',
-                method: 'GET',
-                enabled: true,
-              } as any);
-              resolve();
-            }, Math.random() * 10);
-          })
-        );
+        promises.push(new Promise<void>((resolve) => {
+          setTimeout(() => {
+            service.addEndpoint({
+              id: `concurrent-endpoint-${i}`,
+              name: `Concurrent ${i}`,
+              url: 'http://example.com',
+              method: 'GET',
+              enabled: true
+            } as any);
+            resolve();
+          }, Math.random() * 10);
+        }));
       }
       await Promise.all(promises);
-      expect(
-        service.getAllEndpoints().filter((e) => e.id.startsWith('concurrent-endpoint-')).length
-      ).toBe(100);
+      expect(service.getAllEndpoints().filter(e => e.id.startsWith('concurrent-endpoint-')).length).toBe(100);
     });
   });
+
 });

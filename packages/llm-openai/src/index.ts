@@ -1,19 +1,12 @@
+export { OpenAiProvider, openAiProvider } from './openAiProvider';
+export { default as openAiService, OpenAiService } from './OpenAiService';
+
 import { OpenAiProvider } from './openAiProvider';
 import type { PluginManifest } from '../../../src/plugins/PluginLoader';
 import type { OpenAIConfig } from '../../../src/types/config';
 
-export { OpenAiProvider, openAiProvider } from './openAiProvider';
-export { default as openAiService, OpenAiService } from './OpenAiService';
-
 /** Standard factory — preferred entry point for PluginLoader */
-export function create(
-  config?: OpenAIConfig & {
-    timeout?: number;
-    organization?: string;
-    temperature?: number;
-    maxTokens?: number;
-  }
-): OpenAiProvider {
+export function create(config?: OpenAIConfig & { timeout?: number; organization?: string; temperature?: number; maxTokens?: number }): OpenAiProvider {
   return new OpenAiProvider(config);
 }
 
