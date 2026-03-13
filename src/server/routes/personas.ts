@@ -120,7 +120,7 @@ router.delete('/:id', (req, res) => {
 
     const success = manager.deletePersona(req.params.id);
     if (!success) {
-      return res.json({ success: true, message: 'Persona already deleted or not found' });
+        return res.json({ success: true, message: 'Persona already deleted or not found' });
     }
 
     return res.json({ success: true });
