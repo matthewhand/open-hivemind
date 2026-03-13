@@ -287,7 +287,7 @@ export const prometheusMetricsHandler = (req: Request, res: Response) => {
   const uptime = process.uptime();
   const memoryUsage = process.memoryUsage();
   const cpuUsage = process.cpuUsage();
-  const startTimeSecs = (Date.now() / 1000) - uptime;
+  const startTimeSecs = Date.now() / 1000 - uptime;
   const metrics = `# HELP process_start_time_seconds Start time of the process since unix epoch in seconds
 # TYPE process_start_time_seconds gauge
 process_start_time_seconds ${startTimeSecs}

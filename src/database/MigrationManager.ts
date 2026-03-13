@@ -24,7 +24,7 @@ async function supportsDropColumn(db: Db): Promise<boolean> {
     if (!supported) {
       Logger.warn(
         `SQLite version ${version} does not support DROP COLUMN. ` +
-        `Minimum required: 3.35.0. Rollback operations may fail.`
+          `Minimum required: 3.35.0. Rollback operations may fail.`
       );
     }
     return supported;
