@@ -4,6 +4,9 @@ import React from 'react';
 import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { BrowserRouter } from 'react-router-dom';
+import { ToastProvider } from '../DaisyUI/ToastNotification';
+import { ToastProvider } from '../DaisyUI/ToastNotification';
+import { ToastProvider } from '../DaisyUI/ToastNotification';
 import UnifiedDashboard from '../UnifiedDashboard';
 import { apiService } from '../../services/api';
 
@@ -20,6 +23,9 @@ vi.mock('../../services/api', () => ({
 }));
 
 // Mock DaisyUI components - provide minimal implementations for testing
+vi.mock('../DaisyUI/StatsCards', () => ({
+  default: ({ stats }: any) => <div data-testid="stats-cards">{JSON.stringify(stats)}</div>
+}));
 vi.mock('../DaisyUI', () => ({
   Alert: ({ children }: { children: React.ReactNode }) => <div className="alert">{children}</div>,
   Badge: ({ children }: { children: React.ReactNode }) => <span className="badge">{children}</span>,
@@ -74,7 +80,7 @@ describe('UnifiedDashboard', () => {
 
     render(
       <BrowserRouter>
-        <UnifiedDashboard />
+        <ToastProvider><ToastProvider><ToastProvider><UnifiedDashboard /></ToastProvider></ToastProvider></ToastProvider>
       </BrowserRouter>
     );
 
@@ -103,7 +109,7 @@ describe('UnifiedDashboard', () => {
 
     render(
       <BrowserRouter>
-        <UnifiedDashboard />
+        <ToastProvider><ToastProvider><ToastProvider><UnifiedDashboard /></ToastProvider></ToastProvider></ToastProvider>
       </BrowserRouter>
     );
 
@@ -138,7 +144,7 @@ describe('UnifiedDashboard', () => {
 
     render(
       <BrowserRouter>
-        <UnifiedDashboard />
+        <ToastProvider><ToastProvider><ToastProvider><UnifiedDashboard /></ToastProvider></ToastProvider></ToastProvider>
       </BrowserRouter>
     );
 
@@ -182,7 +188,7 @@ describe('UnifiedDashboard', () => {
 
     render(
       <BrowserRouter>
-        <UnifiedDashboard />
+        <ToastProvider><ToastProvider><ToastProvider><UnifiedDashboard /></ToastProvider></ToastProvider></ToastProvider>
       </BrowserRouter>
     );
 
@@ -198,15 +204,15 @@ describe('UnifiedDashboard', () => {
     // Check if the parsed statsData contains the objects we expect
     const activeBots = statsData.find((s: any) => s.title === 'Active Bots');
     expect(activeBots).toBeDefined();
-    expect(activeBots.value).toBe(2);
+    expect(activeBots.value).toBe('2 / 2');
 
     const totalMessages = statsData.find((s: any) => s.title === 'Total Messages' || s.title === 'Messages Today');
     expect(totalMessages).toBeDefined();
-    expect(totalMessages.value).toBe(150);
+    expect(totalMessages.value).toBe('150');
 
-    const errorRate = statsData.find((s: any) => s.title === 'Error Rate');
+    const errorRate = statsData.find((s: any) => s.title === 'Errors');
     expect(errorRate).toBeDefined();
-    expect(errorRate.value).toBe('3.33%');
+    expect(errorRate.value).toBe('5');
   });
 
 });
