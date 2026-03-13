@@ -160,17 +160,20 @@ test.describe('System Management Page Screenshots', () => {
       route.fulfill({ status: 200, json: { csrfToken: 'mock-token' } })
     );
 
-
     // Mock Cache API endpoint error first for before screenshot
-    await page.route('**/api/cache/clear', async (route) => {
-      await route.fulfill({
-        status: 404,
-        json: {
-          success: false,
-          error: 'Not Found'
-        },
-      });
-    }, { times: 1 });
+    await page.route(
+      '**/api/cache/clear',
+      async (route) => {
+        await route.fulfill({
+          status: 404,
+          json: {
+            success: false,
+            error: 'Not Found',
+          },
+        });
+      },
+      { times: 1 }
+    );
 
     // Mock Cache API endpoint success for after screenshot
     await page.route('**/api/cache/clear', async (route) => {
@@ -178,7 +181,7 @@ test.describe('System Management Page Screenshots', () => {
         status: 200,
         json: {
           success: true,
-          message: 'Cache cleared successfully'
+          message: 'Cache cleared successfully',
         },
       });
     });
@@ -202,10 +205,13 @@ test.describe('System Management Page Screenshots', () => {
     await page.screenshot({ path: 'docs/screenshots/system-management-page.png', fullPage: true });
 
     // Take screenshot before clear cache
-    await page.screenshot({ path: 'docs/screenshots/system-management-before.png', fullPage: true });
+    await page.screenshot({
+      path: 'docs/screenshots/system-management-before.png',
+      fullPage: true,
+    });
 
     // Click "Clear System Cache" (first click to trigger the 404 failure)
-    page.on('dialog', dialog => dialog.accept());
+    page.on('dialog', (dialog) => dialog.accept());
     await page.getByText('Clear System Cache').click();
     await page.waitForTimeout(500); // Wait for the alert
 
@@ -215,6 +221,5 @@ test.describe('System Management Page Screenshots', () => {
 
     // Take screenshot after clear cache
     await page.screenshot({ path: 'docs/screenshots/system-management-after.png', fullPage: true });
-
   });
 });

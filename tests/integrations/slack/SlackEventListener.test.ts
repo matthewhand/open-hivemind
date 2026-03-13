@@ -1,6 +1,6 @@
 import express from 'express';
-import { WebClient } from '@slack/web-api';
 import { SlackService } from '@hivemind/message-slack/SlackService';
+import { WebClient } from '@slack/web-api';
 
 interface SlackBotInfo {
   botToken: string;
