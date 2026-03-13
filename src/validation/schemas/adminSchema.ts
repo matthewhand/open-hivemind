@@ -57,11 +57,9 @@ export const LlmProviderSchema = z.object({
     .object({
       name: z.string().min(1, { message: 'Name, type, and config are required' }),
       type: z.string().min(1, { message: 'Name, type, and config are required' }),
-      config: z
-        .record(z.any())
-        .refine((val) => Object.keys(val).length > 0, {
-          message: 'Name, type, and config are required',
-        }),
+      config: z.record(z.any()).refine((val) => Object.keys(val).length > 0, {
+        message: 'Name, type, and config are required',
+      }),
     })
     .passthrough(),
 });
@@ -74,11 +72,9 @@ export const UpdateLlmProviderSchema = z.object({
     .object({
       name: z.string().min(1, { message: 'Name, type, and config are required' }),
       type: z.string().min(1, { message: 'Name, type, and config are required' }),
-      config: z
-        .record(z.any())
-        .refine((val) => Object.keys(val).length > 0, {
-          message: 'Name, type, and config are required',
-        }),
+      config: z.record(z.any()).refine((val) => Object.keys(val).length > 0, {
+        message: 'Name, type, and config are required',
+      }),
     })
     .passthrough(),
 });
@@ -88,11 +84,9 @@ export const MessengerProviderSchema = z.object({
     .object({
       name: z.string().min(1, { message: 'Name, type, and config are required' }),
       type: z.string().min(1, { message: 'Name, type, and config are required' }),
-      config: z
-        .record(z.any())
-        .refine((val) => Object.keys(val).length > 0, {
-          message: 'Name, type, and config are required',
-        }),
+      config: z.record(z.any()).refine((val) => Object.keys(val).length > 0, {
+        message: 'Name, type, and config are required',
+      }),
     })
     .passthrough(),
 });
@@ -105,11 +99,9 @@ export const UpdateMessengerProviderSchema = z.object({
     .object({
       name: z.string().min(1, { message: 'Name, type, and config are required' }),
       type: z.string().min(1, { message: 'Name, type, and config are required' }),
-      config: z
-        .record(z.any())
-        .refine((val) => Object.keys(val).length > 0, {
-          message: 'Name, type, and config are required',
-        }),
+      config: z.record(z.any()).refine((val) => Object.keys(val).length > 0, {
+        message: 'Name, type, and config are required',
+      }),
     })
     .passthrough(),
 });

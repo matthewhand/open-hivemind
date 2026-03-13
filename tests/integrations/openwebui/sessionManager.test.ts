@@ -59,7 +59,7 @@ function loadIsolated(prime: (deps: { axiosPost: jest.Mock }) => void) {
   let mod: any;
   jest.isolateModules(() => {
     prime({ axiosPost });
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
+
     mod = require('../../../src/integrations/openwebui/sessionManager');
   });
   return { mod, axiosPost };
