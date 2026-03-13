@@ -56,6 +56,10 @@ const Pagination: React.FC<PaginationProps> = ({
     return () => observer.disconnect();
   }, [explicitMaxVisiblePages]);
 
+  if (totalPages <= 1) {
+    return null;
+  }
+
   const handlePrevious = () => {
     if (currentPage > 1) {
       onPageChange(currentPage - 1);

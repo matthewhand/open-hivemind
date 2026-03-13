@@ -41,14 +41,15 @@ describe('ProvidersPage', () => {
   it('renders all provider types in badges', () => {
     renderWithRouter(<ProvidersPage />);
 
-    // We check for some of the providers returned dynamically
+    // Message Providers
     expect(screen.getByText('Discord')).toBeDefined();
     expect(screen.getByText('Telegram')).toBeDefined();
     expect(screen.getByText('Slack')).toBeDefined();
 
-    // Webhook has been removed or is present via a different file
-    // Let's assert on Mattermost which exists in the new schema
-    expect(screen.getByText('Mattermost')).toBeDefined();
+    // LLM Providers
+    expect(screen.getByText('OpenAI')).toBeDefined();
+    expect(screen.getByText('Flowise')).toBeDefined();
+    expect(screen.getByText('Letta')).toBeDefined();
   });
 
   it('navigates to message providers config when clicked', () => {
