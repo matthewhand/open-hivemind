@@ -121,7 +121,7 @@ export class Mem4aiProvider {
         }
 
         try {
-            const response = await this.makeRequest(`/memories/search?${params}`, 'GET');
+            const response = await this.makeRequest<{ results: Array<Record<string, unknown>> }>(`/memories/search?${params}`, 'GET');
 
             const results: SearchResult[] = response.results.map((result: Record<string, unknown>) => ({
                 id: result.id as string,
@@ -150,7 +150,7 @@ export class Mem4aiProvider {
         });
 
         try {
-            const response = await this.makeRequest(`/memories?${params}`, 'GET');
+            const response = await this.makeRequest<{ memories: Array<Record<string, unknown>> }>(`/memories?${params}`, 'GET');
 
             const memories: MemoryEntry[] = response.memories.map((mem: Record<string, unknown>) => ({
                 id: mem.id as string,
@@ -196,7 +196,7 @@ export class Mem4aiProvider {
         };
 
         try {
-            const response = await this.makeRequest(`/memories/${id}`, 'PUT', body);
+            const response = await this.makeRequest<{ id: string; content: string; metadata?: Record<string, unknown>; updated_at?: number; tags?: string[] }>(`/memories/${id}`, 'PUT', body);
 
             this.debug('Memory updated', { id });
             return {
@@ -227,7 +227,7 @@ export class Mem4aiProvider {
     /**
      * Make API request to Mem4ai
      */
-    private async makeRequest(endpoint: string, method: string, body?: Record<string, unknown>): Promise<Record<string, unknown>> {
+    private async makeRequest<T = Record<string, unknown>>(endpoint: string, method: string, body?: Record<string, unknown>): Promise<T> {
         const url = `${this.config.apiUrl}${endpoint}`;
 
         const headers: Record<string, string> = {
@@ -255,7 +255,7 @@ export class Mem4aiProvider {
                 throw new Error(`Mem4ai API error: ${response.status} - ${error}`);
             }
 
-            return await response.json() as Promise<unknown>;
+            return await response.json() as T;
         } finally {
             clearTimeout(timeout);
         }
