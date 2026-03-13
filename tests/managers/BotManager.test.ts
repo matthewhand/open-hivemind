@@ -184,7 +184,7 @@ describe('BotManager', () => {
       botManager['customBots'].set('custom-bot', customBot);
 
       const bot = await botManager.getBot('custom-bot');
-      expect(bot).toBeDefined();
+      expect(bot).not.toBeNull();
       expect(bot?.id).toBe('custom-bot');
     });
 
@@ -212,7 +212,7 @@ describe('BotManager', () => {
       const bot = await botManager.createBot(createRequest);
 
       expect(bot.name).toBe(createRequest.name);
-      expect(bot.id).toBeDefined();
+      expect(typeof bot.id).toBe('string');
       expect(webUIStorage.saveAgent).toHaveBeenCalledWith(
         expect.objectContaining({
           name: createRequest.name,
@@ -360,7 +360,12 @@ describe('BotManager', () => {
 
       // Set the default channel in the bot config manually for the test
       mockBotConfigManager.getBot.mockImplementation((id: any) => {
-        if (id === 'Bot 1') return { ...mockBotConfig, name: 'Bot 1', discord: { defaultChannelId: 'default-channel' } };
+        if (id === 'Bot 1')
+          return {
+            ...mockBotConfig,
+            name: 'Bot 1',
+            discord: { defaultChannelId: 'default-channel' },
+          };
         return undefined;
       });
       await botManager.getBotHistory('Bot 1');

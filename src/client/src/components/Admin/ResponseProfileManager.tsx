@@ -1,30 +1,34 @@
-import React, { useState, useEffect } from 'react';
-import Button from '../DaisyUI/Button';
-import Modal from '../DaisyUI/Modal';
-import Card from '../DaisyUI/Card';
-import { Alert } from '../DaisyUI/Alert';
-import Badge from '../DaisyUI/Badge';
+import React, { useEffect, useState } from 'react';
 import {
-  PlusIcon,
-  PencilIcon,
-  TrashIcon,
   ArrowPathIcon,
   ClockIcon,
+  PencilIcon,
+  PlusIcon,
+  TrashIcon,
 } from '@heroicons/react/24/outline';
+import { Alert } from '../DaisyUI/Alert';
+import Badge from '../DaisyUI/Badge';
+import Button from '../DaisyUI/Button';
+import Card from '../DaisyUI/Card';
+import Modal from '../DaisyUI/Modal';
 
 interface ResponseProfile {
-    key: string;
-    name: string;
-    description?: string;
-    enabled?: boolean;
-    isBuiltIn?: boolean;
-    settings: Record<string, number | boolean>;
+  key: string;
+  name: string;
+  description?: string;
+  enabled?: boolean;
+  isBuiltIn?: boolean;
+  settings: Record<string, number | boolean>;
 }
 
 const SETTING_GROUPS = {
   delays: {
     label: 'Delay Settings',
-    keys: ['MESSAGE_DELAY_MULTIPLIER', 'MESSAGE_READING_DELAY_MAX_MS', 'MESSAGE_READING_DELAY_PER_CHAR_MS'],
+    keys: [
+      'MESSAGE_DELAY_MULTIPLIER',
+      'MESSAGE_READING_DELAY_MAX_MS',
+      'MESSAGE_READING_DELAY_PER_CHAR_MS',
+    ],
   },
   engagement: {
     label: 'Engagement Settings',
@@ -55,7 +59,9 @@ const ResponseProfileManager: React.FC = () => {
     try {
       setLoading(true);
       const response = await fetch('/api/config/response-profiles');
-      if (!response.ok) {throw new Error('Failed to fetch profiles');}
+      if (!response.ok) {
+        throw new Error('Failed to fetch profiles');
+      }
       const data = await response.json();
       setProfiles(data.profiles || []);
     } catch (err) {
@@ -65,7 +71,9 @@ const ResponseProfileManager: React.FC = () => {
     }
   };
 
-  useEffect(() => { fetchProfiles(); }, []);
+  useEffect(() => {
+    fetchProfiles();
+  }, []);
 
   const openCreateDialog = () => {
     setEditingProfile(null);
@@ -96,7 +104,9 @@ const ResponseProfileManager: React.FC = () => {
       };
 
       const method = editingProfile ? 'PUT' : 'POST';
-      const url = editingProfile ? `/api/config/response-profiles/${editingProfile.key}` : '/api/config/response-profiles';
+      const url = editingProfile
+        ? `/api/config/response-profiles/${editingProfile.key}`
+        : '/api/config/response-profiles';
 
       const response = await fetch(url, {
         method,
@@ -120,7 +130,9 @@ const ResponseProfileManager: React.FC = () => {
   };
 
   const handleDelete = async (key: string) => {
-    if (!confirm(`Delete profile "${key}"?`)) {return;}
+    if (!confirm(`Delete profile "${key}"?`)) {
+      return;
+    }
     try {
       const response = await fetch(`/api/config/response-profiles/${key}`, { method: 'DELETE' });
       if (!response.ok) {
@@ -137,11 +149,15 @@ const ResponseProfileManager: React.FC = () => {
   };
 
   const updateSetting = (key: string, value: number | boolean) => {
-    setFormData(prev => ({ ...prev, settings: { ...prev.settings, [key]: value } }));
+    setFormData((prev) => ({ ...prev, settings: { ...prev.settings, [key]: value } }));
   };
 
   if (loading) {
-    return <div className="flex justify-center items-center min-h-[200px]"><span className="loading loading-spinner loading-lg"></span></div>;
+    return (
+      <div className="flex justify-center items-center min-h-[200px]">
+        <span className="loading loading-spinner loading-lg"></span>
+      </div>
+    );
   }
 
   return (
@@ -152,22 +168,40 @@ const ResponseProfileManager: React.FC = () => {
           <h2 className="text-2xl font-bold">Engagement Profiles</h2>
         </div>
         <div className="flex gap-2">
-          <Button variant="ghost" onClick={fetchProfiles} startIcon={<ArrowPathIcon className="w-5 h-5" />}>Refresh</Button>
-          <Button variant="primary" onClick={openCreateDialog} startIcon={<PlusIcon className="w-5 h-5" />}>Add Profile</Button>
+          <Button
+            variant="ghost"
+            onClick={fetchProfiles}
+            startIcon={<ArrowPathIcon className="w-5 h-5" />}
+          >
+            Refresh
+          </Button>
+          <Button
+            variant="primary"
+            onClick={openCreateDialog}
+            startIcon={<PlusIcon className="w-5 h-5" />}
+          >
+            Add Profile
+          </Button>
         </div>
       </div>
 
       {error && <Alert status="error" message={error} onClose={() => setError(null)} />}
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {profiles.map(profile => (
+        {profiles.map((profile) => (
           <Card key={profile.key} className="bg-base-200 shadow-sm">
             <div className="card-body">
               <h3 className="card-title">
                 {profile.name}
-                {profile.isBuiltIn && <Badge variant="warning" className="ml-2">Built-in</Badge>}
+                {profile.isBuiltIn && (
+                  <Badge variant="warning" className="ml-2">
+                    Built-in
+                  </Badge>
+                )}
               </h3>
-              <p className="text-sm text-base-content/70">{profile.description || 'No description'}</p>
+              <p className="text-sm text-base-content/70">
+                {profile.description || 'No description'}
+              </p>
               <div className="flex gap-2 mt-2 flex-wrap">
                 <Badge variant={profile.enabled !== false ? 'success' : 'secondary'}>
                   {profile.enabled !== false ? 'Enabled' : 'Disabled'}
@@ -175,9 +209,18 @@ const ResponseProfileManager: React.FC = () => {
                 <Badge variant="neutral">{Object.keys(profile.settings).length} settings</Badge>
               </div>
               <div className="card-actions justify-end mt-4">
-                <Button variant="ghost" size="sm" onClick={() => openEditDialog(profile)}><PencilIcon className="w-4 h-4" /></Button>
+                <Button variant="ghost" size="sm" onClick={() => openEditDialog(profile)}>
+                  <PencilIcon className="w-4 h-4" />
+                </Button>
                 {!profile.isBuiltIn && (
-                  <Button variant="ghost" size="sm" className="text-error" onClick={() => handleDelete(profile.key)}><TrashIcon className="w-4 h-4" /></Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-error"
+                    onClick={() => handleDelete(profile.key)}
+                  >
+                    <TrashIcon className="w-4 h-4" />
+                  </Button>
                 )}
               </div>
             </div>
@@ -185,26 +228,57 @@ const ResponseProfileManager: React.FC = () => {
         ))}
       </div>
 
-      <Modal isOpen={editDialogOpen} onClose={() => setEditDialogOpen(false)} title={editingProfile ? 'Edit Engagement Profile' : 'Create Engagement Profile'}>
+      <Modal
+        isOpen={editDialogOpen}
+        onClose={() => setEditDialogOpen(false)}
+        title={editingProfile ? 'Edit Engagement Profile' : 'Create Engagement Profile'}
+      >
         <div className="space-y-4 max-h-[60vh] overflow-y-auto">
           <div className="grid grid-cols-2 gap-4">
             <div className="form-control">
-              <label className="label"><span className="label-text">Key</span></label>
-              <input type="text" className="input input-bordered" value={formData.key} onChange={e => setFormData({ ...formData, key: e.target.value })} disabled={!!editingProfile} placeholder="my-profile" />
+              <label className="label">
+                <span className="label-text">Key</span>
+              </label>
+              <input
+                type="text"
+                className="input input-bordered"
+                value={formData.key}
+                onChange={(e) => setFormData({ ...formData, key: e.target.value })}
+                disabled={!!editingProfile}
+                placeholder="my-profile"
+              />
             </div>
             <div className="form-control">
-              <label className="label"><span className="label-text">Name</span></label>
-              <input type="text" className="input input-bordered" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} />
+              <label className="label">
+                <span className="label-text">Name</span>
+              </label>
+              <input
+                type="text"
+                className="input input-bordered"
+                value={formData.name}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              />
             </div>
           </div>
           <div className="form-control">
-            <label className="label"><span className="label-text">Description</span></label>
-            <textarea className="textarea textarea-bordered" value={formData.description} onChange={e => setFormData({ ...formData, description: e.target.value })} />
+            <label className="label">
+              <span className="label-text">Description</span>
+            </label>
+            <textarea
+              className="textarea textarea-bordered"
+              value={formData.description}
+              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+            />
           </div>
           <div className="form-control">
             <label className="label cursor-pointer">
               <span className="label-text">Enabled</span>
-              <input type="checkbox" className="toggle toggle-primary" checked={formData.enabled} onChange={e => setFormData({ ...formData, enabled: e.target.checked })} />
+              <input
+                type="checkbox"
+                className="toggle toggle-primary"
+                checked={formData.enabled}
+                onChange={(e) => setFormData({ ...formData, enabled: e.target.checked })}
+              />
             </label>
           </div>
 
@@ -214,13 +288,28 @@ const ResponseProfileManager: React.FC = () => {
               <div className="collapse-title font-medium">{group.label}</div>
               <div className="collapse-content">
                 <div className="grid grid-cols-2 gap-3">
-                  {group.keys.map(key => (
+                  {group.keys.map((key) => (
                     <div key={key} className="form-control">
-                      <label className="label py-1"><span className="label-text text-xs">{key.replace('MESSAGE_', '').replace(/_/g, ' ')}</span></label>
+                      <label className="label py-1">
+                        <span className="label-text text-xs">
+                          {key.replace('MESSAGE_', '').replace(/_/g, ' ')}
+                        </span>
+                      </label>
                       {BOOLEAN_KEYS.includes(key) ? (
-                        <input type="checkbox" className="toggle toggle-sm" checked={formData.settings[key] === true} onChange={e => updateSetting(key, e.target.checked)} />
+                        <input
+                          type="checkbox"
+                          className="toggle toggle-sm"
+                          checked={formData.settings[key] === true}
+                          onChange={(e) => updateSetting(key, e.target.checked)}
+                        />
                       ) : (
-                        <input type="number" className="input input-bordered input-sm" value={formData.settings[key] as number || ''} onChange={e => updateSetting(key, parseFloat(e.target.value) || 0)} placeholder="(default)" />
+                        <input
+                          type="number"
+                          className="input input-bordered input-sm"
+                          value={(formData.settings[key] as number) || ''}
+                          onChange={(e) => updateSetting(key, parseFloat(e.target.value) || 0)}
+                          placeholder="(default)"
+                        />
                       )}
                     </div>
                   ))}
@@ -231,7 +320,9 @@ const ResponseProfileManager: React.FC = () => {
         </div>
         <div className="modal-action">
           <Button onClick={() => setEditDialogOpen(false)}>Cancel</Button>
-          <Button variant="primary" onClick={handleSave}>Save</Button>
+          <Button variant="primary" onClick={handleSave}>
+            Save
+          </Button>
         </div>
       </Modal>
 
@@ -239,7 +330,13 @@ const ResponseProfileManager: React.FC = () => {
         <div className="toast toast-bottom toast-center z-50" role="status" aria-live="polite">
           <div className={`alert ${toastType === 'success' ? 'alert-success' : 'alert-error'}`}>
             <span>{toastMessage}</span>
-            <button className="btn btn-sm btn-ghost" onClick={() => setToastMessage('')}>✕</button>
+            <button
+              className="btn btn-sm btn-ghost"
+              aria-label="Dismiss message"
+              onClick={() => setToastMessage('')}
+            >
+              ✕
+            </button>
           </div>
         </div>
       )}

@@ -71,6 +71,53 @@ function checkDocsDrift() {
             console.log('✅ All config keys mentioned in README.md exist in .env.sample');
         }
 
+        // 4.5. Check actual codebase config schemas (convict) and process.env against .env.sample
+        let codeEnvKeys = [];
+        try {
+            // Find process.env.XYZ
+            const grepProcessEnv = execSync(`grep -ro -h "process\\.env\\.[A-Z0-9_]\\+" ${SRC_DIR} || true`).toString();
+            const processKeys = grepProcessEnv.split('\n').filter(Boolean).map(s => s.replace('process.env.', ''));
+            codeEnvKeys.push(...processKeys);
+
+            // Find env: 'XYZ' in src/config/ (convict schema mappings)
+            const grepConfigEnv = execSync(`grep -ro -h "env: '[A-Z0-9_]\\+'" ${path.join(SRC_DIR, 'config')} || true`).toString();
+            const configKeys = grepConfigEnv.split('\n').filter(Boolean).map(s => s.replace("env: '", '').replace("'", ''));
+            codeEnvKeys.push(...configKeys);
+        } catch (e) {
+            console.warn('⚠️ Could not extract code env keys via grep.', e.message);
+        }
+
+        codeEnvKeys = [...new Set(codeEnvKeys)];
+
+        // Filter out dynamic prefixes, internal/experimental flags, and build variables
+        const ignoredPrefixes = [
+            'BOTS_', 'npm_', 'MESSAGE_', 'DISCORD_', 'TELEGRAM_', 'OPENAI_', 'LLM_TASK_', 'SLACK_'
+        ];
+
+        const ignoredExact = [
+            'NODE_ENV', 'PORT', 'BOTS', 'DEBUG', 'SECRET', 'PLATFORM', 'NAME', 'BOT_ID', 'GREETING',
+            'PLAYWRIGHT_BASE_URL', 'MATTERMOST_CHANNEL', 'WEBHOOK_URL', 'WEBHOOK_TOKEN',
+            'FLOWISE_API_ENDPOINT', 'FLOWISE_USE_REST', 'REPORT_ISSUE_URL',
+            'OPEN_WEBUI_API_URL', 'OPEN_WEBUI_USERNAME', 'OPEN_WEBUI_PASSWORD', 'OPEN_WEBUI_KNOWLEDGE_FILE',
+            'DEFAULT_EMBEDDING_PROVIDER', 'LLM_PARALLEL_EXECUTION', 'DISABLE_DELAYS'
+        ];
+
+        const missingCodeInEnv = codeEnvKeys.filter(key => {
+            if (envKeys.includes(key)) return false;
+            if (ignoredExact.includes(key)) return false;
+            if (ignoredPrefixes.some(prefix => key.startsWith(prefix))) return false;
+            if (key.includes('{name}')) return false;
+            return true;
+        });
+
+        if (missingCodeInEnv.length > 0) {
+            console.error('❌ Documentation drift detected! The following config keys are defined in the codebase but missing from .env.sample:');
+            missingCodeInEnv.forEach(key => console.error(`   - ${key}`));
+            hasError = true;
+        } else {
+            console.log('✅ All public codebase config keys exist in .env.sample');
+        }
+
         // 5. Check actual routes against docs
         if (fs.existsSync(DOCS_DIR)) {
             console.log('✅ Docs directory found. Checking routes...');
@@ -122,7 +169,7 @@ function checkDocsDrift() {
 
                 // We're suppressing failures for routes check to prevent breaking CI due to complex dynamic routes
                 // uncomment the below line for strict checking
-                // hasError = true;
+                hasError = true;
             } else {
                 console.log('✅ All routes mentioned in docs appear to exist in codebase.');
             }

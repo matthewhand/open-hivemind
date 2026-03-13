@@ -4,6 +4,7 @@ import type { KnownBlock } from '@slack/web-api';
 import { ConfigurationError, NetworkError, ValidationError } from '@src/types/errorClasses';
 import { ErrorUtils } from '@src/types/errors';
 import type { IMessage } from '@message/interfaces/IMessage';
+import { isSafeUrl } from '@hivemind/shared-types';
 import type { SlackBotManager } from './SlackBotManager';
 import type SlackMessage from './SlackMessage';
 
@@ -161,6 +162,10 @@ export class SlackMessageProcessor {
                   };
                   if (!contentInfoAny.content && contentInfoAny.file?.url_private) {
                     try {
+                      if (!(await isSafeUrl(contentInfoAny.file.url_private))) {
+                        throw new Error('Unsafe URL provided for file content');
+                      }
+
                       const contentResponse = await axios.get(contentInfoAny.file.url_private, {
                         headers: { Authorization: `Bearer ${process.env.SLACK_BOT_TOKEN}` },
                         timeout: 15000,
@@ -186,6 +191,10 @@ export class SlackMessageProcessor {
                   contentInfoAny.file &&
                   ['png', 'jpg', 'jpeg', 'gif'].includes(contentInfoAny.file.filetype || '')
                 ) {
+                  if (!(await isSafeUrl(contentInfoAny.file.url_private!))) {
+                    throw new Error('Unsafe URL provided for image content');
+                  }
+
                   const fileResponse = await axios.get(contentInfoAny.file.url_private!, {
                     headers: { Authorization: `Bearer ${process.env.SLACK_BOT_TOKEN}` },
                     responseType: 'arraybuffer',

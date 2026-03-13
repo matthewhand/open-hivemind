@@ -7,24 +7,15 @@ import Badge from '../components/DaisyUI/Badge';
 import { Alert } from '../components/DaisyUI/Alert';
 import PageHeader from '../components/DaisyUI/PageHeader';
 import StatsCards from '../components/DaisyUI/StatsCards';
-import EmptyState from '../components/DaisyUI/EmptyState';
-import { LoadingSpinner } from '../components/DaisyUI/Loading';
-import SearchFilterBar from '../components/SearchFilterBar';
 import {
   Brain as BrainIcon,
   Plus as AddIcon,
   Settings as ConfigIcon,
-  CheckCircle as CheckIcon,
   XCircle as XIcon,
   AlertCircle as WarningIcon,
   Zap as ZapIcon,
   MessageSquare as ChatIcon,
   Cpu as CpuIcon,
-  Trash2 as DeleteIcon,
-  Edit as EditIcon,
-  ChevronDown as ExpandIcon,
-  ChevronRight as CollapseIcon,
-  Search,
   RefreshCw,
   ToggleLeft as ToggleOffIcon,
   ToggleRight as ToggleOnIcon,
@@ -33,6 +24,7 @@ import type { LLMProviderType } from '../types/bot';
 import { LLM_PROVIDER_CONFIGS } from '../types/bot';
 import ProviderConfigModal from '../components/ProviderConfiguration/ProviderConfigModal';
 import { apiService } from '../services/api';
+import GenericProvidersList, { type ProfileItem } from '../components/ProviderManagement/GenericProvidersList';
 
 type LlmModelType = 'chat' | 'embedding' | 'both';
 
@@ -55,9 +47,8 @@ const isEmbeddingCapable = (profile: any): boolean => {
 
 const LLMProvidersPage: React.FC = () => {
   const { modalState, openAddModal, openEditModal, closeModal } = useModal();
-  const [profiles, setProfiles] = useState<any[]>([]);
+  const [profiles, setProfiles] = useState<ProfileItem[]>([]);
   const [defaultStatus, setDefaultStatus] = useState<any>(null);
-  const [expandedProfile, setExpandedProfile] = useState<string | null>(null);
   const [libraryStatus, setLibraryStatus] = useState<Record<string, { installed: boolean; package: string }>>({});
   const [webuiIntelligenceProvider, setWebuiIntelligenceProvider] = useState<string>('');
   const [defaultChatbotProfile, setDefaultChatbotProfile] = useState<string>('');
@@ -65,8 +56,6 @@ const LLMProvidersPage: React.FC = () => {
   const [perUseCaseEnabled, setPerUseCaseEnabled] = useState<boolean>(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [filterType, setFilterType] = useState('all');
 
   const fetchProfiles = useCallback(async () => {
     try {
@@ -108,9 +97,14 @@ const LLMProvidersPage: React.FC = () => {
     });
   };
 
+  const reportSaveError = (message: string, err: any) => {
+    console.error(message, err);
+    setError(err?.message || message);
+  };
+
   const handleAddProfile = () => openAddModal('global', 'llm');
 
-  const handleEditProfile = (profile: any) => {
+  const handleEditProfile = (profile: ProfileItem) => {
     openEditModal('global', 'llm', {
       id: profile.key, name: profile.name, type: profile.provider, config: profile.config, modelType: profile.modelType, enabled: true,
     } as any);
@@ -143,7 +137,13 @@ const LLMProvidersPage: React.FC = () => {
           try {
             await apiService.post('/api/config/llm-profiles', payload);
           } catch (e: any) {
-            if (backup) await apiService.post('/api/config/llm-profiles', backup).catch(() => {});
+            if (backup) {
+              try {
+                await apiService.post('/api/config/llm-profiles', backup);
+              } catch (restoreErr: any) {
+                reportSaveError('Failed to restore previous LLM profile after save error', restoreErr);
+              }
+            }
             throw e;
           }
         }
@@ -160,8 +160,6 @@ const LLMProvidersPage: React.FC = () => {
     return config?.icon || <BrainIcon className="w-5 h-5" />;
   };
 
-  const toggleExpand = (key: string) => setExpandedProfile(expandedProfile === key ? null : key);
-
   const renderLibraryCheck = (type: string) => {
     const status = libraryStatus[type];
     if (!status?.installed) return status ? (
@@ -173,13 +171,6 @@ const LLMProvidersPage: React.FC = () => {
     ) : null;
     return null;
   };
-
-  const filteredProfiles = useMemo(() =>
-    profiles.filter(p => {
-      const matchesSearch = p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                            p.provider.toLowerCase().includes(searchQuery.toLowerCase());
-      return matchesSearch && (filterType === 'all' || p.provider === filterType);
-    }), [profiles, searchQuery, filterType]);
 
   const providerTypes = useMemo(() => {
     const types = new Set(profiles.map(p => p.provider));
@@ -264,8 +255,15 @@ const LLMProvidersPage: React.FC = () => {
                 className="select select-bordered select-sm w-full"
                 value={defaultChatbotProfile}
                 onChange={async (e) => {
-                  setDefaultChatbotProfile(e.target.value);
-                  await saveGlobal({ defaultChatbotProfile: e.target.value }).catch(() => {});
+                  const previous = defaultChatbotProfile;
+                  const next = e.target.value;
+                  setDefaultChatbotProfile(next);
+                  try {
+                    await saveGlobal({ defaultChatbotProfile: next });
+                  } catch (err: any) {
+                    setDefaultChatbotProfile(previous);
+                    reportSaveError('Failed to update default chatbot profile', err);
+                  }
                 }}
                 disabled={loading}
               >
@@ -292,8 +290,15 @@ const LLMProvidersPage: React.FC = () => {
                 className="select select-bordered select-sm w-full"
                 value={webuiIntelligenceProvider}
                 onChange={async (e) => {
-                  setWebuiIntelligenceProvider(e.target.value);
-                  await saveGlobal({ webuiIntelligenceProvider: e.target.value }).catch(() => {});
+                  const previous = webuiIntelligenceProvider;
+                  const next = e.target.value;
+                  setWebuiIntelligenceProvider(next);
+                  try {
+                    await saveGlobal({ webuiIntelligenceProvider: next });
+                  } catch (err: any) {
+                    setWebuiIntelligenceProvider(previous);
+                    reportSaveError('Failed to update WebUI intelligence provider', err);
+                  }
                 }}
                 disabled={loading}
               >
@@ -319,8 +324,15 @@ const LLMProvidersPage: React.FC = () => {
                 className="select select-bordered select-sm w-full"
                 value={defaultEmbeddingProvider}
                 onChange={async (e) => {
-                  setDefaultEmbeddingProvider(e.target.value);
-                  await saveLlmConfig({ DEFAULT_EMBEDDING_PROVIDER: e.target.value }).catch(() => {});
+                  const previous = defaultEmbeddingProvider;
+                  const next = e.target.value;
+                  setDefaultEmbeddingProvider(next);
+                  try {
+                    await saveLlmConfig({ DEFAULT_EMBEDDING_PROVIDER: next });
+                  } catch (err: any) {
+                    setDefaultEmbeddingProvider(previous);
+                    reportSaveError('Failed to update default embedding provider', err);
+                  }
                 }}
                 disabled={loading}
               >
@@ -353,8 +365,15 @@ const LLMProvidersPage: React.FC = () => {
             className="toggle toggle-primary"
             checked={perUseCaseEnabled}
             onChange={async (e) => {
-              setPerUseCaseEnabled(e.target.checked);
-              await saveGlobal({ perUseCaseEnabled: e.target.checked }).catch(() => {});
+              const previous = perUseCaseEnabled;
+              const next = e.target.checked;
+              setPerUseCaseEnabled(next);
+              try {
+                await saveGlobal({ perUseCaseEnabled: next });
+              } catch (err: any) {
+                setPerUseCaseEnabled(previous);
+                reportSaveError('Failed to update per-use-case setting', err);
+              }
             }}
           />
         </div>
@@ -362,121 +381,43 @@ const LLMProvidersPage: React.FC = () => {
 
       <div className="divider">Custom Profiles</div>
 
-      <SearchFilterBar
-        searchValue={searchQuery}
-        onSearchChange={setSearchQuery}
-        searchPlaceholder="Search profiles..."
-        filters={[{
-          key: 'type',
-          value: filterType,
-          onChange: setFilterType,
-          options: [{ label: 'All Types', value: 'all' }, ...providerTypes],
-          className: 'w-48',
-        }]}
+      <GenericProvidersList
+        profiles={profiles}
+        loading={loading}
+        emptyStateIcon={BrainIcon}
+        emptyStateTitle="No Profiles Created"
+        emptyStateDescription="Create a custom profile to override system defaults for specific bots."
+        onAddProfile={handleAddProfile}
+        onEditProfile={handleEditProfile}
+        onDeleteProfile={handleDeleteProfile}
+        getProviderIcon={getProviderIcon}
+        renderExtraBadges={(profile: ProfileItem) => (
+          <>
+            <Badge
+              variant={
+                normalizeModelType(profile.modelType) === 'embedding'
+                  ? 'warning'
+                  : normalizeModelType(profile.modelType) === 'both'
+                    ? 'info'
+                    : 'neutral'
+              }
+              size="small"
+            >
+              {normalizeModelType(profile.modelType)}
+            </Badge>
+            {renderLibraryCheck(profile.provider)}
+            {profile.key === defaultChatbotProfile && (
+              <Badge variant="primary" size="small">Default Chatbot</Badge>
+            )}
+            {profile.key === webuiIntelligenceProvider && (
+              <Badge variant="warning" size="small">WebUI AI</Badge>
+            )}
+            {profile.key === defaultEmbeddingProvider && (
+              <Badge variant="secondary" size="small">Default Embedding</Badge>
+            )}
+          </>
+        )}
       />
-
-      {loading ? (
-        <div className="flex justify-center py-12"><LoadingSpinner size="lg" /></div>
-      ) : profiles.length === 0 ? (
-        <EmptyState
-          icon={BrainIcon}
-          title="No Profiles Created"
-          description="Create a custom profile to override system defaults for specific bots."
-          actionLabel="Create Profile"
-          actionIcon={AddIcon}
-          onAction={handleAddProfile}
-          variant="noData"
-        />
-      ) : filteredProfiles.length === 0 ? (
-        <EmptyState
-          icon={Search}
-          title="No matching profiles"
-          description="Try adjusting your search or filters."
-          actionLabel="Clear Filters"
-          onAction={() => { setSearchQuery(''); setFilterType('all'); }}
-          variant="noResults"
-        />
-      ) : (
-        <div className="grid grid-cols-1 gap-4">
-          {filteredProfiles.map((profile) => (
-            <Card key={profile.key} className="bg-base-100 shadow-sm border border-base-200 transition-all hover:shadow-md">
-              <div className="card-body p-0">
-                <div className="p-4 flex items-center justify-between cursor-pointer" onClick={() => toggleExpand(profile.key)}>
-                  <div className="flex items-center gap-4">
-                    <div className="p-3 bg-primary/10 text-primary rounded-xl">
-                      {getProviderIcon(profile.provider)}
-                    </div>
-                    <div>
-                      <h3 className="font-bold text-lg flex items-center gap-2">
-                        {profile.name}
-                        <span className="text-xs font-normal opacity-50 px-2 py-0.5 bg-base-200 rounded-full font-mono">{profile.key}</span>
-                      </h3>
-                      <div className="flex items-center gap-2 mt-1">
-                        <Badge variant="secondary" size="small" style="outline">{profile.provider}</Badge>
-                        <Badge
-                          variant={
-                            normalizeModelType(profile.modelType) === 'embedding'
-                              ? 'warning'
-                              : normalizeModelType(profile.modelType) === 'both'
-                                ? 'info'
-                                : 'neutral'
-                          }
-                          size="small"
-                        >
-                          {normalizeModelType(profile.modelType)}
-                        </Badge>
-                        {renderLibraryCheck(profile.provider)}
-                        {profile.key === defaultChatbotProfile && (
-                          <Badge variant="primary" size="small">Default Chatbot</Badge>
-                        )}
-                        {profile.key === webuiIntelligenceProvider && (
-                          <Badge variant="warning" size="small">WebUI AI</Badge>
-                        )}
-                        {profile.key === defaultEmbeddingProvider && (
-                          <Badge variant="secondary" size="small">Default Embedding</Badge>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
-                    <Button size="sm" variant="ghost" onClick={() => handleEditProfile(profile)}>
-                      <EditIcon className="w-4 h-4" />
-                    </Button>
-                    <Button size="sm" variant="ghost" className="text-error hover:bg-error/10" onClick={() => handleDeleteProfile(profile.key)}>
-                      <DeleteIcon className="w-4 h-4" />
-                    </Button>
-                    <Button size="sm" variant="ghost" onClick={() => toggleExpand(profile.key)}>
-                      {expandedProfile === profile.key ? <CollapseIcon className="w-4 h-4" /> : <ExpandIcon className="w-4 h-4" />}
-                    </Button>
-                  </div>
-                </div>
-
-                {expandedProfile === profile.key && (
-                  <div className="px-4 pb-4 pt-0">
-                    <div className="bg-base-200/50 rounded-xl p-4 border border-base-200">
-                      <h4 className="text-xs font-bold uppercase opacity-50 mb-3 flex items-center gap-2">
-                        <ConfigIcon className="w-3 h-3" /> Configuration
-                      </h4>
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                        {Object.entries(profile.config || {}).map(([k, v]) => (
-                          <div key={k} className="bg-base-100 p-2 rounded border border-base-200/50 flex flex-col">
-                            <span className="font-mono text-[10px] opacity-50 uppercase tracking-wider mb-1">{k}</span>
-                            <span className="font-medium text-sm truncate" title={String(v)}>
-                              {String(k).toLowerCase().includes('key') || String(k).toLowerCase().includes('token') || String(k).toLowerCase().includes('password')
-                                ? '••••••••'
-                                : String(v)}
-                            </span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </Card>
-          ))}
-        </div>
-      )}
 
       <ProviderConfigModal
         modalState={{ ...modalState, providerType: 'llm' }}

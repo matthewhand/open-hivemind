@@ -1,4 +1,7 @@
-import { DiscordBotManager, Bot } from '../../../packages/message-discord/src/managers/DiscordBotManager';
+import {
+  Bot,
+  DiscordBotManager,
+} from '../../../packages/message-discord/src/managers/DiscordBotManager';
 
 const makeClient = (wsStatus = 0) => ({
   ws: { status: wsStatus },
@@ -9,7 +12,13 @@ const makeClient = (wsStatus = 0) => ({
 
 jest.mock('discord.js', () => ({
   Client: jest.fn().mockImplementation(() => makeClient()),
-  GatewayIntentBits: { Guilds: 1, GuildMessages: 2, MessageContent: 4, GuildMembers: 8, DirectMessages: 16 },
+  GatewayIntentBits: {
+    Guilds: 1,
+    GuildMessages: 2,
+    MessageContent: 4,
+    GuildMembers: 8,
+    DirectMessages: 16,
+  },
   Partials: { Channel: 'Channel' },
 }));
 
@@ -77,7 +86,7 @@ describe('DiscordBotManager Map-based lookups', () => {
       injectBot(mgr, 'delta');
       expect(await mgr.disconnectBot('delta')).toBe(true);
       expect(mgr.getBotByName('delta')).toBeUndefined();
-      expect(mgr.getAllBots().find(b => b.botUserName === 'delta')).toBeUndefined();
+      expect(mgr.getAllBots().find((b) => b.botUserName === 'delta')).toBeUndefined();
     });
 
     it('returns false when client.destroy throws', async () => {
@@ -92,7 +101,7 @@ describe('DiscordBotManager Map-based lookups', () => {
       injectBot(mgr, 'zeta');
       injectBot(mgr, 'eta');
       await mgr.disconnectBot('zeta');
-      expect(mgr.getBotByName('eta')).toBeDefined();
+      expect(mgr.getBotByName('eta')?.botUserName).toBe('eta');
       expect(mgr.getAllBots()).toHaveLength(1);
     });
   });

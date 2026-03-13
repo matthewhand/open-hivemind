@@ -7,7 +7,7 @@ import ApiMonitorService, { type EndpointStatus } from '../../services/ApiMonito
 import { ActivityLogger } from './ActivityLogger';
 import { BotMetricsService } from './BotMetricsService';
 import 'reflect-metadata';
-import { injectable, singleton, container } from 'tsyringe';
+import { container, injectable, singleton } from 'tsyringe';
 
 const debug = Debug('app:WebSocketService');
 
