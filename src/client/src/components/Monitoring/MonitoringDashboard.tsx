@@ -3,7 +3,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useWebSocket } from '../../contexts/WebSocketContext';
 import Card from '../DaisyUI/Card';
 import Badge from '../DaisyUI/Badge';
-import { Alert } from '../DaisyUI/Alert';
+import Alert from '../DaisyUI/Alert';
 import Button from '../DaisyUI/Button';
 import PageHeader from '../DaisyUI/PageHeader';
 import StatsCards from '../DaisyUI/StatsCards';
