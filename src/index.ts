@@ -6,6 +6,7 @@ import { createServer } from 'http';
 import path from 'path';
 import type { NextFunction, Request, Response } from 'express';
 import swarmRouter from '@src/admin/swarmRoutes';
+import { container } from '@src/di/container';
 import { applyRateLimiting } from '@src/middleware/rateLimiter';
 import { authenticateToken } from '@src/server/middleware/auth';
 import { ipWhitelist } from '@src/server/middleware/security';
@@ -43,7 +44,6 @@ import { validateRequiredEnvVars } from '@src/utils/envValidation';
 import { getLlmProvider } from '@llm/getLlmProvider';
 import { IdleResponseManager } from '@message/management/IdleResponseManager';
 import Logger from '@common/logger';
-import { container } from '@src/di/container';
 import { initProviders } from './initProviders';
 import { reloadGlobalConfigs } from './server/routes/config';
 import startupDiagnostics from './utils/startupDiagnostics';
@@ -438,7 +438,7 @@ async function main() {
   await startupDiagnostics.logStartupDiagnostics();
 
   // Initialize Demo Mode Service
-  const demoService = DemoModeService.getInstance();
+  const demoService = container.resolve(DemoModeService);
   demoService.initialize();
 
   if (demoService.isInDemoMode()) {
@@ -566,7 +566,7 @@ async function main() {
     }
 
     const ApiMonitorService = require('@src/services/ApiMonitorService').ApiMonitorService;
-    const ams = ApiMonitorService.getInstance ? ApiMonitorService.getInstance() : null;
+    const ams = container.resolve(ApiMonitorService) as any;
     if (ams && typeof ams.shutdown === 'function') {
       shutdownCoordinator.registerService({
         name: 'ApiMonitorService',

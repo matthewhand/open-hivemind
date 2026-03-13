@@ -4,10 +4,10 @@ import Badge from '../DaisyUI/Badge';
 import { Alert } from '../DaisyUI/Alert';
 import Button from '../DaisyUI/Button';
 import Modal from '../DaisyUI/Modal';
+import AdminPageLayout from './AdminPageLayout';
 import {
   DocumentDuplicateIcon,
   PlusIcon,
-  ArrowPathIcon,
 } from '@heroicons/react/24/outline';
 
 interface Template {
@@ -81,25 +81,15 @@ const TemplateManager: React.FC = () => {
     }
   };
 
-  if (loading) {return <div className="flex justify-center items-center min-h-[200px]"><span className="loading loading-spinner loading-lg"></span></div>;}
-
   return (
-    <div className="p-6">
-      <div className="flex justify-between items-center mb-6">
-        <div>
-          <h2 className="text-2xl font-bold">Bot Templates</h2>
-          <p className="text-base-content/60">Start quickly by creating a bot from a pre-configured template.</p>
-        </div>
-        <div className="flex gap-2">
-          <Button variant="ghost" onClick={fetchTemplates} startIcon={<ArrowPathIcon className="w-5 h-5" />}>Refresh</Button>
-        </div>
-      </div>
-
-      {error && (
-        <div className="mb-4">
-          <Alert status="error" message={error} onClose={() => setError(null)} />
-        </div>
-      )}
+    <AdminPageLayout
+      title="Bot Templates"
+      description="Start quickly by creating a bot from a pre-configured template."
+      onRefresh={fetchTemplates}
+      error={error}
+      onErrorClose={() => setError(null)}
+      loading={loading}
+    >
 
       {templates.length === 0 ? (
         <div className="col-span-full text-center py-12">
@@ -166,7 +156,7 @@ const TemplateManager: React.FC = () => {
           )}
         </div>
       </Modal>
-    </div>
+    </AdminPageLayout>
   );
 };
 
