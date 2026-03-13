@@ -19,10 +19,6 @@ import { GettingStartedTab } from './Dashboard/tabs/GettingStartedTab';
 import { StatusTab } from './Dashboard/tabs/StatusTab';
 import { PerformanceTab } from './Dashboard/tabs/PerformanceTab';
 import { usePerformanceMetrics } from './Dashboard/hooks/usePerformanceMetrics';
-import { useDashboardStats } from './Dashboard/hooks/useDashboardStats';
-import { DashboardHeader } from './Dashboard/DashboardHeader';
-import { DashboardTabs } from './Dashboard/DashboardTabs';
-import { getBotColumns } from './Dashboard/utils/getBotColumns';
 import { useNavigate } from 'react-router-dom';
 import { useI18n } from '../i18n/I18nProvider';
 

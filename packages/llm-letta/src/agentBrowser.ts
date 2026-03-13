@@ -19,17 +19,18 @@ export interface AgentSummary {
  * @returns Array of agent summaries
  */
 export async function listAgents(apiKey: string, apiUrl?: string): Promise<AgentSummary[]> {
-  const baseURL = apiUrl || 'https://api.letta.com/v1';
+  const baseUrl = apiUrl || 'https://api.letta.com/v1';
 
   const client = new Letta({
-    baseURL: baseURL,
-    apiKey: apiKey,
-  });
+    environment: baseUrl,
+    token: apiKey,
+  } as any);
 
   const agents = await client.agents.list();
 
   // Transform to simplified agent summary
-  return ((agents as any).data || agents).map((agent: any) => ({
+  const agentsList = Array.isArray(agents) ? agents : (agents as any).data || [];
+  return agentsList.map((agent: any) => ({
     id: agent.id,
     name: agent.name,
     description: agent.description,
@@ -46,13 +47,17 @@ export async function listAgents(apiKey: string, apiUrl?: string): Promise<Agent
  * @param apiUrl - Optional API URL (defaults to https://api.letta.com/v1)
  * @returns Agent summary
  */
-export async function getAgent(agentId: string, apiKey: string, apiUrl?: string): Promise<AgentSummary> {
-  const baseURL = apiUrl || 'https://api.letta.com/v1';
+export async function getAgent(
+  agentId: string,
+  apiKey: string,
+  apiUrl?: string
+): Promise<AgentSummary> {
+  const baseUrl = apiUrl || 'https://api.letta.com/v1';
 
   const client = new Letta({
-    baseURL: baseURL,
-    apiKey: apiKey,
-  });
+    environment: baseUrl,
+    token: apiKey,
+  } as any);
 
   const agent = await client.agents.retrieve(agentId);
 

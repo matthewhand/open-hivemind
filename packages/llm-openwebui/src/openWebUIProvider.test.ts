@@ -1,10 +1,6 @@
 import { create, manifest } from './index';
 import { openWebUIProvider } from './openWebUIProvider';
 
-jest.mock('@hivemind/shared-types', () => ({
-  isSafeUrl: jest.fn().mockResolvedValue(true),
-}));
-
 jest.mock('axios', () => {
   const mockPost = jest.fn();
   const mockGet = jest.fn();
