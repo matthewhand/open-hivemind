@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { createLogger } from '@src/common/StructuredLogger';
+import { createLogger, toError } from '@src/common/StructuredLogger';
 import { DatabaseManager } from '@src/database/DatabaseManager';
 import WebSocketService, { type MessageFlowEvent } from '@src/server/services/WebSocketService';
 import { BotConfigurationManager } from '@config/BotConfigurationManager';
@@ -223,7 +223,7 @@ router.post('/ai/feedback', authenticate, requireAdmin, async (req, res) => {
   } catch (error) {
     logger.error(
       'Error storing AI feedback:',
-      error instanceof Error ? error : new Error(String(error))
+      toError(error)
     );
     res.status(500).json({ error: 'Failed to store feedback' });
   }
@@ -285,7 +285,7 @@ router.get('/status', authenticate, requireAdmin, (req, res) => {
 
     res.json({ bots: status, uptime: process.uptime() });
   } catch (error) {
-    logger.error('Status API error:', error instanceof Error ? error : new Error(String(error)));
+    logger.error('Status API error:', toError(error));
     res.status(500).json({ error: 'Failed to get status' });
   }
 });
@@ -373,7 +373,7 @@ router.get('/activity', authenticate, requireAdmin, async (req, res) => {
       agentMetrics,
     });
   } catch (error) {
-    logger.error('Activity API error:', error instanceof Error ? error : new Error(String(error)));
+    logger.error('Activity API error:', toError(error));
     res.status(500).json({ error: 'Failed to retrieve activity feed' });
   }
 });
@@ -391,7 +391,7 @@ router.post('/alerts/:id/acknowledge', authenticate, requireAdmin, (req, res) =>
   } catch (error) {
     logger.error(
       'Acknowledge alert error:',
-      error instanceof Error ? error : new Error(String(error))
+      toError(error)
     );
     res.status(500).json({ error: 'Failed to acknowledge alert' });
   }
@@ -408,7 +408,7 @@ router.post('/alerts/:id/resolve', authenticate, requireAdmin, (req, res) => {
       res.status(404).json({ success: false, message: 'Alert not found' });
     }
   } catch (error) {
-    logger.error('Resolve alert error:', error instanceof Error ? error : new Error(String(error)));
+    logger.error('Resolve alert error:', toError(error));
     res.status(500).json({ error: 'Failed to resolve alert' });
   }
 });

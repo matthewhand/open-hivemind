@@ -2,7 +2,7 @@ import fs from 'fs/promises';
 import path from 'path';
 import { Router, type Request, type Response } from 'express';
 import { body, param, validationResult } from 'express-validator';
-import { createLogger } from '@src/common/StructuredLogger';
+import { createLogger, toError } from '@src/common/StructuredLogger';
 import { authenticate, requireAdmin } from '../../auth/middleware';
 import type { AuthMiddlewareRequest } from '../../auth/types';
 import { ConfigurationImportExportService } from '../services/ConfigurationImportExportService';
@@ -245,7 +245,7 @@ router.post(
     } catch (error) {
       logger.error(
         'Error exporting configurations:',
-        error instanceof Error ? error : new Error(String(error))
+        toError(error)
       );
       return res.status(500).json({
         success: false,
@@ -302,7 +302,7 @@ router.post(
     } catch (error) {
       logger.error(
         'Error importing configurations:',
-        error instanceof Error ? error : new Error(String(error))
+        toError(error)
       );
 
       // Clean up uploaded file if it exists
@@ -374,7 +374,7 @@ router.post(
     } catch (error) {
       logger.error(
         'Error creating backup:',
-        error instanceof Error ? error : new Error(String(error))
+        toError(error)
       );
       return res.status(500).json({
         success: false,
@@ -400,7 +400,7 @@ router.get('/backups', requireAdmin, async (req: AuthMiddlewareRequest, res: Res
   } catch (error) {
     logger.error(
       'Error listing backups:',
-      error instanceof Error ? error : new Error(String(error))
+      toError(error)
     );
     return res.status(500).json({
       success: false,
@@ -459,7 +459,7 @@ router.post(
     } catch (error) {
       logger.error(
         'Error restoring from backup:',
-        error instanceof Error ? error : new Error(String(error))
+        toError(error)
       );
       return res.status(500).json({
         success: false,
@@ -496,7 +496,7 @@ router.delete(
     } catch (error) {
       logger.error(
         'Error deleting backup:',
-        error instanceof Error ? error : new Error(String(error))
+        toError(error)
       );
       return res.status(500).json({
         success: false,
@@ -550,7 +550,7 @@ router.get(
     } catch (error) {
       logger.error(
         'Error downloading backup:',
-        error instanceof Error ? error : new Error(String(error))
+        toError(error)
       );
       return res.status(500).json({
         success: false,
@@ -604,7 +604,7 @@ router.post(
     } catch (error) {
       logger.error(
         'Error validating file:',
-        error instanceof Error ? error : new Error(String(error))
+        toError(error)
       );
 
       // Clean up uploaded file if it exists

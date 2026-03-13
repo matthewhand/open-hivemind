@@ -1,6 +1,6 @@
 import Debug from 'debug';
 import { Router, type Request, type Response } from 'express';
-import { createLogger } from '@src/common/StructuredLogger';
+import { createLogger, toError } from '@src/common/StructuredLogger';
 import { webUIStorage } from '../../storage/webUIStorage';
 
 const router = Router();
@@ -19,7 +19,7 @@ router.get('/', (req: Request, res: Response) => {
   } catch (error: any) {
     logger.error(
       'Error retrieving guards:',
-      error instanceof Error ? error : new Error(String(error))
+      toError(error)
     );
     debug('Error retrieving guards:', error);
     return res.status(500).json({

@@ -2,7 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import Debug from 'debug';
 import { Router } from 'express';
-import { createLogger } from '@src/common/StructuredLogger';
+import { createLogger, toError } from '@src/common/StructuredLogger';
 import { redactSensitiveInfo } from '../../common/redactSensitiveInfo';
 import { BotConfigurationManager } from '../../config/BotConfigurationManager';
 import llmConfig from '../../config/llmConfig';
@@ -116,7 +116,7 @@ const loadDynamicConfigs = () => {
       });
     }
   } catch (e) {
-    logger.error('Failed to load dynamic configs:', e instanceof Error ? e : new Error(String(e)));
+    logger.error('Failed to load dynamic configs:', toError(e));
   }
 };
 
