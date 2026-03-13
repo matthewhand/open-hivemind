@@ -18,7 +18,7 @@ import { ErrorUtils } from '../../types/errors';
 import { type IProvider } from '../../types/IProvider';
 import { ConfigUpdateSchema } from '../../validation/schemas/configSchema';
 import { validateRequest } from '../../validation/validateRequest';
-import { auditMiddleware, logConfigChange } from '../middleware/audit';
+import { auditMiddleware, logConfigChange, type AuditedRequest } from '../middleware/audit';
 
 /**
  * Validates that a config name is safe to use in file paths.
@@ -366,13 +366,19 @@ router.post('/llm-profiles', (req, res) => {
     const newProfile = req.body;
 
     if (!newProfile.key || newProfile.key.trim() === '') {
-      return res.status(400).json({ error: 'LLM profile key is required', code: 'INVALID_REQUEST' });
+      return res
+        .status(400)
+        .json({ error: 'LLM profile key is required', code: 'INVALID_REQUEST' });
     }
     if (!newProfile.name || newProfile.name.trim() === '') {
-      return res.status(400).json({ error: 'LLM profile name is required', code: 'INVALID_REQUEST' });
+      return res
+        .status(400)
+        .json({ error: 'LLM profile name is required', code: 'INVALID_REQUEST' });
     }
     if (!newProfile.provider || newProfile.provider.trim() === '') {
-      return res.status(400).json({ error: 'LLM profile provider is required', code: 'INVALID_REQUEST' });
+      return res
+        .status(400)
+        .json({ error: 'LLM profile provider is required', code: 'INVALID_REQUEST' });
     }
 
     const modelType = newProfile.modelType || 'chat';
@@ -423,7 +429,9 @@ router.put('/llm-profiles/:key', (req, res) => {
       return res.status(400).json({ error: 'LLM profile provider is required' });
     }
     if (updates.modelType && !['chat', 'embedding', 'both'].includes(updates.modelType)) {
-      return res.status(400).json({ error: 'LLM profile modelType must be chat, embedding, or both' });
+      return res
+        .status(400)
+        .json({ error: 'LLM profile modelType must be chat, embedding, or both' });
     }
 
     const profiles = getLlmProfiles();
@@ -460,10 +468,12 @@ router.delete('/llm-profiles/:key', (req, res) => {
   try {
     const { key } = req.params;
     const profiles = getLlmProfiles();
-    const index = profiles.llm.findIndex((profile) => profile.key.toLowerCase() === key.toLowerCase());
+    const index = profiles.llm.findIndex(
+      (profile) => profile.key.toLowerCase() === key.toLowerCase()
+    );
 
     if (index === -1) {
-      return res.status(200).json({ success: true, message: `LLM profile with key '${key}' already deleted or not found` });
+      return res.status(404).json({ error: `LLM profile with key '${key}' not found` });
     }
 
     const [deletedProfile] = profiles.llm.splice(index, 1);
@@ -607,7 +617,7 @@ router.put('/global', validateRequest(ConfigUpdateSchema), async (req, res) => {
 
       if (process.env.NODE_ENV !== 'test') {
         logConfigChange(
-          req as any,
+          req as AuditedRequest,
           'UPDATE',
           'config/general',
           'success',
@@ -685,7 +695,7 @@ router.put('/global', validateRequest(ConfigUpdateSchema), async (req, res) => {
 
     if (process.env.NODE_ENV !== 'test') {
       logConfigChange(
-        req as any,
+        req as AuditedRequest,
         'UPDATE',
         `config/${configName}`,
         'success',

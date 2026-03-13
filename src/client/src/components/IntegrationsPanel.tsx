@@ -6,7 +6,7 @@ import Card from './DaisyUI/Card';
 import Input from './DaisyUI/Input';
 import Select from './DaisyUI/Select';
 import Toggle from './DaisyUI/Toggle';
-import { LoadingSpinner as Loading } from './DaisyUI/Loading';
+import { Loading } from './DaisyUI/Loading';
 import Textarea from './DaisyUI/Textarea';
 import Modal from './DaisyUI/Modal';
 import Badge from './DaisyUI/Badge';
@@ -30,7 +30,7 @@ import {
 
 import { PROVIDER_CATEGORIES } from '../config/providers';
 import ProviderConfigModal from './ProviderConfiguration/ProviderConfigModal';
-import { LLM_PROVIDER_CONFIGS, LLMProviderType, ProviderModalState } from '../types/bot';
+import { LLM_PROVIDER_CONFIGS, LLMProviderType, ProviderModalState } from '../types';
 
 interface ConfigSchema {
   doc?: string;

@@ -1,6 +1,5 @@
 import axios from 'axios';
 import Debug from 'debug';
-import { isSafeUrl } from '@hivemind/shared-types';
 import openWebUIConfig from './openWebUIConfig';
 
 const debug = Debug('app:sessionManager');
@@ -22,13 +21,8 @@ export async function getSessionKey(): Promise<string> {
   debug('Requesting new session key for:', username);
 
   try {
-    const targetUrl = apiUrl + '/auth/login';
-    if (!(await isSafeUrl(targetUrl))) {
-      throw new Error('OpenWebUI API URL is not safe to connect to.');
-    }
-
     const response = await axios.post(
-      targetUrl,
+      apiUrl + '/auth/login',
       { username, password },
       { timeout: 15000 }
     );

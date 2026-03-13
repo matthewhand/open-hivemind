@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect } from 'react';
 import { useWebSocket } from '../contexts/WebSocketContext';
-import { useInterval } from '../hooks/useInterval';
 import { apiService } from '../services/api';
 import AlertPanel from '../components/Monitoring/AlertPanel';
 import StatusCard from '../components/Monitoring/StatusCard';
@@ -71,7 +70,20 @@ const SystemManagement: React.FC = () => {
   const [isPerformanceLoading, setIsPerformanceLoading] = useState(false);
 
 
-  useInterval(fetchApiStatus, activeTab === 'performance' ? 10000 : null);
+  useEffect(() => {
+    fetchSystemConfig();
+    fetchBackupHistory();
+  }, []);
+
+
+  // Performance monitoring polling
+  useEffect(() => {
+    if (activeTab === 'performance') {
+      fetchApiStatus();
+      const interval = setInterval(fetchApiStatus, 10000); // Refresh every 10s
+      return () => clearInterval(interval);
+    }
+  }, [activeTab]);
 
   const fetchApiStatus = async () => {
     try {
@@ -81,9 +93,6 @@ const SystemManagement: React.FC = () => {
       console.error('Failed to fetch API status:', error);
     }
   };
-
-
-
 
 
   useEffect(() => {

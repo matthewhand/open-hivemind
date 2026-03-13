@@ -108,7 +108,7 @@ router.delete('/:id', (req, res) => {
   try {
     const success = providerManager.deleteProvider(req.params.id);
     if (!success) {
-      return res.json({ success: true, message: 'Provider already deleted or not found' });
+      return res.status(404).json({ error: 'Provider not found' });
     }
     log(`Deleted provider: ${req.params.id}`);
     return res.json({ success: true });

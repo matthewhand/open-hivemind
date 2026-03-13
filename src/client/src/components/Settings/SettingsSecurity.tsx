@@ -1,6 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
-import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { Alert, Button, Input, Toggle } from '../DaisyUI';
+import React, { useState, useEffect, useCallback } from 'react';
+import { Alert } from '../DaisyUI/Alert';
+import Button from '../DaisyUI/Button';
+import Input from '../DaisyUI/Input';
+import Toggle from '../DaisyUI/Toggle';
 import { Shield, Plus, Trash2 } from 'lucide-react';
 import SecureConfigManager from '../SecureConfigManager';
 
@@ -24,15 +27,6 @@ const SettingsSecurity: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [alert, setAlert] = useState<{ type: 'success' | 'error', message: string } | null>(null);
-  const alertTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  useEffect(() => {
-    return () => {
-      if (alertTimerRef.current) {
-        clearTimeout(alertTimerRef.current);
-      }
-    };
-  }, []);
 
   const fetchSettings = useCallback(async () => {
     try {
@@ -98,10 +92,7 @@ const SettingsSecurity: React.FC = () => {
       
       if (!response.ok) {throw new Error('Failed to save settings');}
       setAlert({ type: 'success', message: 'Security settings saved!' });
-      if (alertTimerRef.current) {
-        clearTimeout(alertTimerRef.current);
-      }
-      alertTimerRef.current = setTimeout(() => setAlert(null), 3000);
+      setTimeout(() => setAlert(null), 3000);
     } catch (error) {
       setAlert({ type: 'error', message: 'Failed to save. Some settings require environment variables.' });
     } finally {

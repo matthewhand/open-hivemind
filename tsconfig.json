@@ -38,6 +38,7 @@
       "@types/*": ["src/types/*"],
       "@hivemind/message-slack/*": ["packages/message-slack/src/*"],
       "@hivemind/message-slack": ["packages/message-slack/src/index.ts"],
+      "@hivemind/message-slack/*": ["packages/message-slack/src/*"],
       "@src/integrations/mattermost/*": ["packages/adapter-mattermost/src/*"],
       "@hivemind/message-mattermost": ["packages/message-mattermost/src/index.ts"],
       "@hivemind/message-mattermost/*": ["packages/message-mattermost/src/*"],

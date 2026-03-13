@@ -30,9 +30,9 @@ describe('Comprehensive Security Integration Tests', () => {
       'https://trusted-domain.com,http://localhost:3000,http://localhost:3028';
 
     // Re-import after setting env
-
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
     const { applyCors } = require('../../src/middleware/corsMiddleware');
-
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
     const { applySessionManagement } = require('../../src/middleware/sessionMiddleware');
 
     app = express();

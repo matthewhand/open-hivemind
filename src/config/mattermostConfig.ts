@@ -37,10 +37,9 @@ const debug = Debug('app:mattermostConfig');
 try {
   mattermostConfig.loadFile(configPath);
   debug(`Successfully loaded Mattermost config from ${configPath}`);
-} catch (error: unknown) {
-  if ((error as NodeJS.ErrnoException).code !== 'ENOENT') {
-    debug(`Error reading mattermost config from ${configPath}:`, error instanceof Error ? error.message : String(error));
-    throw error;
+} catch (error: any) {
+  if (error.code !== 'ENOENT') {
+    debug(`Error reading mattermost config from ${configPath}:`, error.message);
   } else {
     debug(`Mattermost config file not found at ${configPath}, using environment variables and defaults`);
   }

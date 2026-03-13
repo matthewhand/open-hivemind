@@ -232,9 +232,9 @@ router.delete('/:id', async (req: AuditedRequest, res: Response) => {
       await secureConfigManager.deleteConfig(id);
     } catch {
       logConfigChange(req, 'DELETE', `secure-config/${id}`, 'failure', 'Configuration not found');
-      return res.status(200).json({
-        success: true,
-        message: 'Configuration already deleted or not found',
+      return res.status(404).json({
+        success: false,
+        error: 'Configuration not found',
       });
     }
 

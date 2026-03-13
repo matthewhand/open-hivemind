@@ -2,9 +2,8 @@ import express from 'express';
 import request from 'supertest';
 import dashboardRouter from '../../src/server/routes/dashboard';
 
-jest.mock('../../src/auth/middleware', () => ({
-  authenticate: (req: any, res: any, next: any) => next(),
-  requireAdmin: (req: any, res: any, next: any) => next(),
+jest.mock('../../src/server/middleware/auth', () => ({
+  authenticateToken: (req: any, res: any, next: any) => next(),
 }));
 
 jest.mock('@src/config/BotConfigurationManager', () => ({

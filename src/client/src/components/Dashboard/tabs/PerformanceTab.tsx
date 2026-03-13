@@ -1,3 +1,5 @@
 import React from 'react';
-
-export const PerformanceTab = (props: any) => <div>Performance Tab</div>;
+// Empty file to satisfy imports - the content is actually in UnifiedDashboard
+export function PerformanceTab() {
+  return null;
+}

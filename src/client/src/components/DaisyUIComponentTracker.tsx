@@ -1,6 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
-import React, { useState, useCallback } from 'react';
-import { useInterval } from '../hooks/useInterval';
+import React, { useState, useEffect } from 'react';
 import type { DaisyUIComponentStats } from '../utils/DaisyUIComponentTracker';
 import { daisyUITracker } from '../utils/DaisyUIComponentTracker';
 import Button from './DaisyUI/Button';
@@ -20,11 +19,16 @@ const DaisyUIComponentTracker: React.FC<Props> = ({ isOpen = true, onClose }) =>
   const [selectedCategory, setSelectedCategory] = useState<string>('overview');
   const [showSuggestions, setShowSuggestions] = useState(false);
 
-  const updateStats = useCallback(() => {
-    setStats(daisyUITracker.getStats());
-  }, []);
+  useEffect(() => {
+    const updateStats = () => {
+      const currentStats = daisyUITracker.getStats();
+      setStats(currentStats);
+    };
 
-  useInterval(updateStats, 5000);
+    updateStats();
+    const interval = setInterval(updateStats, 5000); // Update every 5 seconds
+    return () => clearInterval(interval);
+  }, []);
 
   const handleExportData = () => {
     const data = daisyUITracker.exportData();

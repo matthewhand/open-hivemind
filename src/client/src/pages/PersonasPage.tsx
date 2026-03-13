@@ -186,11 +186,7 @@ const PersonasPage: React.FC = () => {
         }
       }
 
-      const results = await Promise.allSettled(updates);
-      const failedUpdates = results.filter(r => r.status === 'rejected');
-      if (failedUpdates.length > 0) {
-        errorToast('Warning', `${failedUpdates.length} bot(s) failed to update. They may still be using the old persona.`);
-      }
+      await Promise.all(updates);
       await fetchData();
 
       setShowCreateModal(false);
@@ -275,11 +271,7 @@ const PersonasPage: React.FC = () => {
       const updates = deletingPersona.assignedBotIds.map(botId =>
         apiService.updateBot(botId, { persona: 'default', systemInstruction: 'You are a helpful assistant.' }),
       );
-      const results = await Promise.allSettled(updates);
-      const failedUpdates = results.filter(r => r.status === 'rejected');
-      if (failedUpdates.length > 0) {
-        errorToast('Warning', `${failedUpdates.length} bot(s) failed to unassign from this persona. They may still attempt to use it.`);
-      }
+      await Promise.all(updates);
 
       // 2. Delete persona
       await apiService.deletePersona(deletingPersona.id);
@@ -320,7 +312,7 @@ const PersonasPage: React.FC = () => {
       <PageHeader
         title="Personas (Beta)"
         description="Manage AI personalities and system prompts"
-        icon={<Sparkles className="w-12 h-12" />}
+        icon={Sparkles}
         actions={
           <div className="flex gap-2">
             <Button
@@ -375,7 +367,7 @@ const PersonasPage: React.FC = () => {
         </div>
       ) : personas.length === 0 ? (
         <EmptyState
-          icon={<Sparkles className="w-12 h-12" />}
+          icon={Sparkles}
           title="No personas configured"
           description="Create your first persona to get started"
           actionLabel="Create Persona"
@@ -385,7 +377,7 @@ const PersonasPage: React.FC = () => {
         />
       ) : filteredPersonas.length === 0 ? (
         <EmptyState
-          icon={<Search className="w-12 h-12" />}
+          icon={Search}
           title="No personas found"
           description="Try adjusting your search or filters"
           actionLabel="Clear Filters"

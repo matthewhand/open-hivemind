@@ -1,42 +1,43 @@
 import { useMemo } from 'react';
+import { Bot, StatusResponse } from '../../../../services/api';
 
-export const useDashboardStats = (
+export function useDashboardStats(
+  bots: Bot[],
+  statusBots: StatusResponse[],
   activeBotCount: number,
   totalMessages: number,
   activeConnections: number,
   totalErrors: number,
-) => {
-  const statsCards = useMemo(() => [
-    {
-      id: 'active-bots',
-      title: 'Active Bots',
-      value: activeBotCount.toString(),
-      icon: 'bot',
-      color: 'primary' as const,
-      trend: { value: 0, isPositive: true },
-    },
-    {
-      id: 'total-messages',
-      title: 'Total Messages',
-      value: totalMessages.toString(),
-      icon: 'message',
-      color: 'secondary' as const,
-    },
-    {
-      id: 'active-connections',
-      title: 'Active Connections',
-      value: activeConnections.toString(),
-      icon: 'zap',
-      color: 'success' as const,
-    },
-    {
-      id: 'total-errors',
-      title: 'Total Errors',
-      value: totalErrors.toString(),
-      icon: 'alert',
-      color: 'error' as const,
-    },
-  ], [activeBotCount, totalMessages, activeConnections, totalErrors]);
+  uptime: number
+) {
+  const statsCards = useMemo(() => {
+    return [
+      {
+        title: 'Active Bots',
+        value: activeBotCount.toString(),
+        description: `${bots.length} total configured`,
+        color: 'primary',
+      },
+      {
+        title: 'Connected',
+        value: activeConnections.toString(),
+        description: 'Currently online',
+        color: 'success',
+      },
+      {
+        title: 'Messages Processed',
+        value: totalMessages.toString(),
+        description: 'Total messages handled',
+        color: 'info',
+      },
+      {
+        title: 'Error Rate',
+        value: totalMessages > 0 ? `${((totalErrors / totalMessages) * 100).toFixed(2)}%` : '0%',
+        description: `${totalErrors} total errors`,
+        color: totalErrors > 0 ? 'error' : 'success',
+      },
+    ];
+  }, [activeBotCount, bots.length, activeConnections, totalMessages, totalErrors]);
 
   return { statsCards };
-};
+}

@@ -1,4 +1,4 @@
-import { useState, useEffect , useRef} from 'react';
+import { useState, useEffect } from 'react';
 import type { Metrics } from '../services/metricsService';
 import { getMetrics } from '../services/metricsService';
 
@@ -6,8 +6,6 @@ export const useMetrics = () => {
   const [metrics, setMetrics] = useState<Metrics | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
-  const timerRef = useRef<number | null>(null);
 
   useEffect(() => {
     const fetchMetrics = async () => {
@@ -21,14 +19,9 @@ export const useMetrics = () => {
     };
 
     fetchMetrics();
-    timerRef.current = window.setInterval(fetchMetrics, 5000); // Refresh every 5 seconds
+    const interval = setInterval(fetchMetrics, 5000); // Refresh every 5 seconds
 
-    return () => {
-      if (timerRef.current !== null) {
-        window.clearInterval(timerRef.current);
-        timerRef.current = null;
-      }
-    };
+    return () => clearInterval(interval);
   }, []);
 
   return { metrics, loading, error };

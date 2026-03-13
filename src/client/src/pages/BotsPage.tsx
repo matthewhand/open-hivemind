@@ -1,4 +1,3 @@
-import { useLlmStatus } from '../hooks/useLlmStatus';
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { 
@@ -94,8 +93,6 @@ const BotsPage: React.FC = () => {
       globalConfig,
     };
   }, []);
-
-  const [uiError, setUiError] = useState<string | null>(null);
 
   // Use Page Lifecycle Hook
   const {

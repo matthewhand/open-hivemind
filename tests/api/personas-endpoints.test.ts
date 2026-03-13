@@ -102,9 +102,9 @@ describe('Personas Routes', () => {
       await request(app).delete('/api/personas/p1').expect(200);
     });
 
-    it('should return 200 if delete fails', async () => {
+    it('should return 404 if delete fails', async () => {
       getMockManager().deletePersona.mockReturnValue(false);
-      await request(app).delete('/api/personas/p1').expect(200);
+      await request(app).delete('/api/personas/p1').expect(404);
     });
   });
 

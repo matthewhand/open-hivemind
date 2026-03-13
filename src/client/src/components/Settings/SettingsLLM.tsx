@@ -1,6 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
-import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { Alert, Button, Select } from '../DaisyUI';
+import React, { useState, useEffect, useCallback } from 'react';
+import { Alert } from '../DaisyUI/Alert';
+import Button from '../DaisyUI/Button';
+import Select from '../DaisyUI/Select';
 import { Bot, Link as LinkIcon } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
@@ -17,15 +19,6 @@ const SettingsLLM: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
     const [alert, setAlert] = useState<{ type: 'success' | 'error' | 'warning'; message: string } | null>(null);
-  const alertTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  useEffect(() => {
-    return () => {
-      if (alertTimerRef.current) {
-        clearTimeout(alertTimerRef.current);
-      }
-    };
-  }, []);
 
     const fetchSettingsAndProviders = useCallback(async () => {
         try {
@@ -73,10 +66,7 @@ const SettingsLLM: React.FC = () => {
             });
 
             setAlert({ type: 'success', message: 'LLM settings saved successfully!' });
-            if (alertTimerRef.current) {
-                clearTimeout(alertTimerRef.current);
-            }
-            alertTimerRef.current = setTimeout(() => setAlert(null), 5000);
+            setTimeout(() => setAlert(null), 5000);
         } catch (err) {
             console.error('Save failed:', err);
             setAlert({

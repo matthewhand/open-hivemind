@@ -1,15 +1,11 @@
-import { create, manifest } from './index';
 import { openWebUIProvider } from './openWebUIProvider';
+import { create, manifest } from './index';
 
 jest.mock('axios', () => {
   const mockPost = jest.fn();
   const mockGet = jest.fn();
   const instance = { post: mockPost, get: mockGet };
-  return {
-    create: jest.fn(() => instance),
-    isAxiosError: jest.fn().mockReturnValue(false),
-    _instance: instance,
-  };
+  return { create: jest.fn(() => instance), isAxiosError: jest.fn().mockReturnValue(false), _instance: instance };
 });
 
 const axios = require('axios');
@@ -35,8 +31,6 @@ describe('openWebUIProvider', () => {
 
   it('generateChatCompletion throws on error', async () => {
     axios._instance.post.mockRejectedValueOnce(new Error('network'));
-    await expect(openWebUIProvider.generateChatCompletion('hello', [])).rejects.toThrow(
-      'Chat completion failed'
-    );
+    await expect(openWebUIProvider.generateChatCompletion('hello', [])).rejects.toThrow('Chat completion failed');
   });
 });

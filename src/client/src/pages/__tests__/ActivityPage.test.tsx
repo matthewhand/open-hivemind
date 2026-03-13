@@ -127,7 +127,7 @@ describe('ActivityPage', () => {
     expect(getActivityMock).toHaveBeenCalled();
   });
 
-  it.skip('handles API errors gracefully', async () => {
+  it('handles API errors gracefully', async () => {
     getActivityMock.mockRejectedValue(new Error('Network error'));
 
     render(<ActivityPage />);

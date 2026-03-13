@@ -34,8 +34,8 @@ describe('ProvidersPage', () => {
     expect(screen.getByText('LLM Providers')).toBeDefined();
 
     // Check for category descriptions
-    expect(screen.getByText(/Configure Discord, Telegram, Slack, and other messaging providers/i)).toBeDefined();
-    expect(screen.getByText(/Set up OpenAI, Flowise, Letta, and other LLM providers/i)).toBeDefined();
+    expect(screen.getByText(/Configure Discord, Telegram, Slack, and Webhook providers/i)).toBeDefined();
+    expect(screen.getByText(/Set up OpenAI, Anthropic, Ollama, and custom LLM providers/i)).toBeDefined();
   });
 
   it('renders all provider types in badges', () => {
@@ -45,11 +45,13 @@ describe('ProvidersPage', () => {
     expect(screen.getByText('Discord')).toBeDefined();
     expect(screen.getByText('Telegram')).toBeDefined();
     expect(screen.getByText('Slack')).toBeDefined();
+    expect(screen.getByText('Webhook')).toBeDefined();
 
     // LLM Providers
     expect(screen.getByText('OpenAI')).toBeDefined();
-    expect(screen.getByText('Flowise')).toBeDefined();
-    expect(screen.getByText('Letta')).toBeDefined();
+    expect(screen.getByText('Anthropic')).toBeDefined();
+    expect(screen.getByText('Ollama')).toBeDefined();
+    expect(screen.getByText('Custom')).toBeDefined();
   });
 
   it('navigates to message providers config when clicked', () => {

@@ -48,41 +48,12 @@ export default class DuplicateMessageDetector {
     return DuplicateMessageDetector.instance;
   }
 
-<<<<<<< HEAD
-  /**
-   * ⚡ Bolt Optimization:
-   * Replaced O(N) full array traversal (.filter) with an early-exit loop.
-   * Since history is chronologically ordered, we can find the first valid
-   * message and slice, reducing unnecessary iterations over valid items.
-   */
-  private getRecentHistory(
-    history: MessageRecord[],
-    now: number,
-    windowMs: number
-  ): MessageRecord[] {
-    for (let i = 0; i < history.length; i++) {
-      if (now - history[i].timestamp < windowMs) {
-        return i === 0 ? history : history.slice(i);
-      }
-    }
-    return [];
-  }
-
   /**
    * Check if a message is a duplicate
    * @param channelId The channel ID
    * @param content The message content to check
    * @returns true if the message is a duplicate and should be suppressed
    */
-=======
-  private findFirstValidIndex(history: MessageRecord[], now: number, windowMs: number): number {
-    for (let i = 0; i < history.length; i++) {
-      if (now - history[i].timestamp < windowMs) return i;
-    }
-    return history.length;
-  }
-
->>>>>>> ef0b14ff (widen: extract findFirstValidIndex helper, remove 4x duplicated validIndex loop)
   /**
    * Check if a message is a duplicate
    * @param channelId The channel ID
@@ -104,12 +75,7 @@ export default class DuplicateMessageDetector {
       const history = this.recentMessages.get(channelId) || [];
 
       // Clean up old messages outside the time window
-<<<<<<< HEAD
-      const recentHistory = this.getRecentHistory(history, now, windowMs);
-=======
-      const validIndex = this.findFirstValidIndex(history, now, windowMs);
-      const recentHistory = validIndex === 0 ? history : history.slice(validIndex);
->>>>>>> ef0b14ff (widen: extract findFirstValidIndex helper, remove 4x duplicated validIndex loop)
+      const recentHistory = history.filter((msg) => now - msg.timestamp < windowMs);
 
       // Normalize content for comparison (trim, lowercase, remove extra whitespace)
       const normalizedContent = this.normalizeContent(content);
@@ -226,12 +192,7 @@ export default class DuplicateMessageDetector {
       let history = this.recentMessages.get(channelId) || [];
 
       // Clean up old messages
-<<<<<<< HEAD
-      history = this.getRecentHistory(history, now, windowMs);
-=======
-      const validIndex = this.findFirstValidIndex(history, now, windowMs);
-      history = validIndex === 0 ? history : history.slice(validIndex);
->>>>>>> ef0b14ff (widen: extract findFirstValidIndex helper, remove 4x duplicated validIndex loop)
+      history = history.filter((msg) => now - msg.timestamp < windowMs);
 
       // Add new message
       history.push({
@@ -277,15 +238,9 @@ export default class DuplicateMessageDetector {
 
       const now = Date.now();
       const history = this.recentMessages.get(channelId) || [];
-<<<<<<< HEAD
-      const recentHistory = this.getRecentHistory(history, now, windowMs).slice(-historySize);
-=======
-
-      // ⚡ Bolt Optimization: History is chronologically ordered.
-      const validIndex = this.findFirstValidIndex(history, now, windowMs);
-      const timeFilteredHistory = validIndex === 0 ? history : history.slice(validIndex);
-      const recentHistory = timeFilteredHistory.slice(-historySize);
->>>>>>> ef0b14ff (widen: extract findFirstValidIndex helper, remove 4x duplicated validIndex loop)
+      const recentHistory = history
+        .filter((msg) => now - msg.timestamp < windowMs)
+        .slice(-historySize);
 
       if (recentHistory.length < minHistory) {
         return 0;
@@ -445,16 +400,8 @@ export default class DuplicateMessageDetector {
 
     // Remove expired messages from each channel
     for (const [channelId, history] of this.recentMessages) {
-<<<<<<< HEAD
-      const filtered = this.getRecentHistory(history, now, windowMs);
+      const filtered = history.filter((msg) => now - msg.timestamp < windowMs);
       if (filtered.length === 0) {
-=======
-      // ⚡ Bolt Optimization: History is chronologically ordered.
-      const validIndex = this.findFirstValidIndex(history, now, windowMs);
-
-      if (validIndex === history.length) {
-        // All messages expired
->>>>>>> ef0b14ff (widen: extract findFirstValidIndex helper, remove 4x duplicated validIndex loop)
         this.recentMessages.delete(channelId);
         cleaned++;
       } else if (filtered.length !== history.length) {

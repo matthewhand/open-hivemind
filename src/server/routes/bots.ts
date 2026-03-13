@@ -197,7 +197,8 @@ router.delete('/:id', validateRequest(BotIdParamSchema), async (req, res) => {
     await manager.deleteBot(id);
     return res.json({ success: true, message: 'Bot deleted' });
   } catch (error: any) {
-    return res.status(500).json({ error: error.message });
+    const status = error.message.includes('not found') ? 404 : 400;
+    return res.status(status).json({ error: error.message });
   }
 });
 
