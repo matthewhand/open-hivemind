@@ -42,6 +42,12 @@ import validationRouter from '@src/server/routes/validation';
 import { RealTimeValidationService } from '@src/server/services/RealTimeValidationService';
 import WebSocketService from '@src/server/services/WebSocketService';
 import { ShutdownCoordinator } from '@src/server/ShutdownCoordinator';
+import { EnhancedAlertManager } from '@src/monitoring/EnhancedAlertManager';
+import { TracingService } from '@src/monitoring/TracingService';
+import { ProviderMetricsCollector } from '@src/monitoring/ProviderMetricsCollector';
+import { IntegrationAnomalyDetector } from '@src/monitoring/IntegrationAnomalyDetector';
+import { AdvancedMonitor } from '@src/monitoring/AdvancedMonitor';
+
 import AnomalyDetectionService from '@src/services/AnomalyDetectionService';
 import DemoModeService from '@src/services/DemoModeService';
 import StartupGreetingService from '@src/services/StartupGreetingService';

@@ -1,2 +1,3 @@
 import React from 'react';
-export const StatusTab: React.FC<any> = () => <div />;
+
+export const StatusTab = (props: any) => <div>Status Tab</div>;
