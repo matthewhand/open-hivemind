@@ -551,7 +551,7 @@ const EnhancedBotManager: React.FC<EnhancedBotManagerProps> = ({ onBotSelect }) 
                     </td>
                     <td>{bot.persona || 'default'}</td>
                     <td>
-                      {bot.mcpServers?.length ? (
+                      {bot.mcpServers.length > 0 ? (
                         <Badge variant="primary">{bot.mcpServers.length} servers</Badge>
                       ) : (
                         <span className="text-base-content/50">None</span>
@@ -607,7 +607,7 @@ const EnhancedBotManager: React.FC<EnhancedBotManagerProps> = ({ onBotSelect }) 
                               {bot.systemInstruction || 'None'}
                             </p>
                           </div>
-                          {!!bot.mcpServers?.length && (
+                          {bot.mcpServers.length > 0 && (
                             <div>
                               <h4 className="font-medium text-sm mb-1">MCP Servers:</h4>
                               <div className="flex flex-wrap gap-1">

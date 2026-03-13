@@ -284,7 +284,7 @@ const EnhancedAgentConfigurator: React.FC = () => {
                   )}
 
                   {/* MCP Servers */}
-                  {!!agent.mcpServers?.length && (
+                  {agent.mcpServers.length > 0 && (
                     <div>
                       <p className="text-sm text-base-content/60 mb-1">MCP Servers ({agent.mcpServers.length})</p>
                       <div className="flex flex-wrap gap-1">

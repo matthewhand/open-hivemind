@@ -1,7 +1,7 @@
 import express from 'express';
 import request from 'supertest';
-import * as guardrailProfilesConfig from '../../src/config/guardrailProfiles';
 import guardProfilesRouter from '../../src/server/routes/guardProfiles';
+import * as guardrailProfilesConfig from '../../src/config/guardrailProfiles';
 
 // Mock the config functions
 jest.mock('../../src/config/guardrailProfiles', () => ({
@@ -127,9 +127,7 @@ describe('Guard Profiles Route', () => {
 
     it('should return 200 and existing profile if name already exists', async () => {
       const existingProfile = { id: 'existing1', name: 'New Profile', guards: {} };
-      (guardrailProfilesConfig.loadGuardrailProfiles as jest.Mock).mockReturnValue([
-        existingProfile,
-      ]);
+      (guardrailProfilesConfig.loadGuardrailProfiles as jest.Mock).mockReturnValue([existingProfile]);
 
       const response = await request(app).post('/guard-profiles').send(validBody);
 
@@ -167,9 +165,7 @@ describe('Guard Profiles Route', () => {
     ];
 
     it('should update an existing profile', async () => {
-      (guardrailProfilesConfig.loadGuardrailProfiles as jest.Mock).mockReturnValue([
-        ...existingProfiles,
-      ]);
+      (guardrailProfilesConfig.loadGuardrailProfiles as jest.Mock).mockReturnValue([...existingProfiles]);
 
       const updateData = {
         name: 'Updated Profile 1',
@@ -178,7 +174,9 @@ describe('Guard Profiles Route', () => {
         },
       };
 
-      const response = await request(app).put('/guard-profiles/profile1').send(updateData);
+      const response = await request(app)
+        .put('/guard-profiles/profile1')
+        .send(updateData);
 
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
@@ -189,11 +187,11 @@ describe('Guard Profiles Route', () => {
     });
 
     it('should return 404 if profile not found', async () => {
-      (guardrailProfilesConfig.loadGuardrailProfiles as jest.Mock).mockReturnValue([
-        ...existingProfiles,
-      ]);
+      (guardrailProfilesConfig.loadGuardrailProfiles as jest.Mock).mockReturnValue([...existingProfiles]);
 
-      const response = await request(app).put('/guard-profiles/unknown').send({ name: 'Updated' });
+      const response = await request(app)
+        .put('/guard-profiles/unknown')
+        .send({ name: 'Updated' });
 
       expect(response.status).toBe(404);
       expect(response.body.success).toBe(false);
@@ -205,7 +203,9 @@ describe('Guard Profiles Route', () => {
         throw new Error('Internal failure');
       });
 
-      const response = await request(app).put('/guard-profiles/profile1').send({ name: 'Updated' });
+      const response = await request(app)
+        .put('/guard-profiles/profile1')
+        .send({ name: 'Updated' });
 
       expect(response.status).toBe(500);
       expect(response.body.success).toBe(false);
@@ -218,9 +218,7 @@ describe('Guard Profiles Route', () => {
     const existingProfiles = [{ id: 'profile1', name: 'Profile 1' }];
 
     it('should delete an existing profile', async () => {
-      (guardrailProfilesConfig.loadGuardrailProfiles as jest.Mock).mockReturnValue([
-        ...existingProfiles,
-      ]);
+      (guardrailProfilesConfig.loadGuardrailProfiles as jest.Mock).mockReturnValue([...existingProfiles]);
 
       const response = await request(app).delete('/guard-profiles/profile1');
 
@@ -229,15 +227,12 @@ describe('Guard Profiles Route', () => {
       expect(response.body.message).toBe('Guard profile deleted successfully');
       expect(guardrailProfilesConfig.saveGuardrailProfiles).toHaveBeenCalledTimes(1);
 
-      const savedProfiles = (guardrailProfilesConfig.saveGuardrailProfiles as jest.Mock).mock
-        .calls[0][0];
+      const savedProfiles = (guardrailProfilesConfig.saveGuardrailProfiles as jest.Mock).mock.calls[0][0];
       expect(savedProfiles).toEqual([]);
     });
 
     it('should return 200 with message if profile not found/already deleted', async () => {
-      (guardrailProfilesConfig.loadGuardrailProfiles as jest.Mock).mockReturnValue([
-        ...existingProfiles,
-      ]);
+      (guardrailProfilesConfig.loadGuardrailProfiles as jest.Mock).mockReturnValue([...existingProfiles]);
 
       const response = await request(app).delete('/guard-profiles/unknown');
 
