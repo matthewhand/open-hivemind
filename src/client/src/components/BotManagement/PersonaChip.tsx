@@ -1,5 +1,5 @@
 import React from 'react';
-import type { Persona } from '../../types/bot';
+import type { Persona } from '../../types';
 import Badge from '../DaisyUI/Badge';
 
 interface PersonaChipProps {

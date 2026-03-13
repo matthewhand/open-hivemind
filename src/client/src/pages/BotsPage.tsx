@@ -94,6 +94,8 @@ const BotsPage: React.FC = () => {
     };
   }, []);
 
+  const [uiError, setUiError] = useState<string | null>(null);
+
   // Use Page Lifecycle Hook
   const {
     data,

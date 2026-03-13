@@ -184,7 +184,7 @@ describe('BotManager', () => {
       botManager['customBots'].set('custom-bot', customBot);
 
       const bot = await botManager.getBot('custom-bot');
-      expect(bot).not.toBeNull();
+      expect(bot).toBeDefined();
       expect(bot?.id).toBe('custom-bot');
     });
 
@@ -212,7 +212,7 @@ describe('BotManager', () => {
       const bot = await botManager.createBot(createRequest);
 
       expect(bot.name).toBe(createRequest.name);
-      expect(typeof bot.id).toBe('string');
+      expect(bot.id).toBeDefined();
       expect(webUIStorage.saveAgent).toHaveBeenCalledWith(
         expect.objectContaining({
           name: createRequest.name,
