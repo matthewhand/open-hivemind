@@ -27,6 +27,10 @@ const PROFILES_FILE = path.join(CONFIG_DIR, 'mcp-server-profiles.json');
 let profilesCache: McpServerProfile[] | null = null;
 let profilesMap: Map<string, McpServerProfile> | null = null;
 
+function buildMap(profiles: McpServerProfile[]): Map<string, McpServerProfile> {
+  return new Map(profiles.map(p => [p.key, p]));
+}
+
 function ensureConfigDir(): void {
   if (!fs.existsSync(CONFIG_DIR)) {
     fs.mkdirSync(CONFIG_DIR, { recursive: true });
@@ -50,10 +54,7 @@ function loadProfiles(): McpServerProfile[] {
     profilesCache = [];
   }
 
-  profilesMap = new Map();
-  for (const profile of profilesCache) {
-    profilesMap.set(profile.key, profile);
-  }
+  profilesMap = buildMap(profilesCache);
 
   return profilesCache;
 }
@@ -63,10 +64,7 @@ function saveProfiles(profiles: McpServerProfile[]): void {
   const data: McpServerProfilesData = { profiles };
   fs.writeFileSync(PROFILES_FILE, JSON.stringify(data, null, 2), 'utf-8');
   profilesCache = profiles;
-  profilesMap = new Map();
-  for (const profile of profiles) {
-    profilesMap.set(profile.key, profile);
-  }
+  profilesMap = buildMap(profiles);
   debug(`Saved ${profiles.length} MCP server profiles`);
 }
 
@@ -82,7 +80,7 @@ export function getMcpServerProfileByKey(key: string): McpServerProfile | undefi
 export function createMcpServerProfile(profile: McpServerProfile): McpServerProfile {
   const profiles = loadProfiles();
 
-  if (profiles.some(p => p.key === profile.key)) {
+  if (profilesMap?.has(profile.key)) {
     throw new Error(`Profile with key "${profile.key}" already exists`);
   }
 
