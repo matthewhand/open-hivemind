@@ -55,7 +55,12 @@ export const WebSocketProvider: React.FC<{ children: ReactNode }> = ({ children 
       transports: ['websocket', 'polling'],
       auth: {
         token: token
-      }
+      },
+      reconnection: true,
+      reconnectionAttempts: Infinity,
+      reconnectionDelay: 1000,
+      reconnectionDelayMax: 5000,
+      randomizationFactor: 0.5,
     });
 
     newSocket.on('connect', () => {
@@ -63,9 +68,26 @@ export const WebSocketProvider: React.FC<{ children: ReactNode }> = ({ children 
       setIsConnected(true);
     });
 
-    newSocket.on('disconnect', () => {
-      console.log('WebSocket disconnected');
+    newSocket.on('disconnect', (reason) => {
+      console.log('WebSocket disconnected', reason);
       setIsConnected(false);
+    });
+
+    newSocket.on('reconnect_attempt', (attempt) => {
+      console.log(`WebSocket reconnect attempt ${attempt}`);
+    });
+
+    newSocket.on('reconnect', (attempt) => {
+      console.log(`WebSocket reconnected after ${attempt} attempts`);
+      setIsConnected(true);
+    });
+
+    newSocket.on('reconnect_error', (error) => {
+      console.error('WebSocket reconnect error:', error);
+    });
+
+    newSocket.on('reconnect_failed', () => {
+      console.error('WebSocket reconnect failed');
     });
 
     // Message flow events

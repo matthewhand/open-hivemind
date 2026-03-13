@@ -63,7 +63,13 @@ export const CommaSeparatedInput: React.FC<CommaSeparatedInputProps> = ({
       value={inputValue}
       onChange={e => {
         isTyping.current = true;
-        setInputValue(e.target.value);
+        const nativeEvent = e.nativeEvent as InputEvent;
+        const isDeleting = nativeEvent.inputType?.startsWith('delete');
+        let newVal = e.target.value;
+        if (!isDeleting && newVal.endsWith(',')) {
+          newVal = newVal + ' ';
+        }
+        setInputValue(newVal);
       }}
       onKeyDown={handleKeyDown}
       onBlur={commitInput}
