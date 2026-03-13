@@ -1,5 +1,5 @@
-import type { PluginManifest } from '../../../src/plugins/PluginLoader';
 import { openWebUIProvider } from './openWebUIProvider';
+import type { PluginManifest } from '../../../src/plugins/PluginLoader';
 
 export { openWebUIProvider } from './openWebUIProvider';
 export { generateChatCompletion } from './runInference';

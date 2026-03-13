@@ -1,5 +1,5 @@
-import type { PluginManifest } from '../../../src/plugins/PluginLoader';
 import { FlowiseProvider } from './flowiseProvider';
+import type { PluginManifest } from '../../../src/plugins/PluginLoader';
 
 export { FlowiseProvider } from './flowiseProvider';
 export { default as flowiseProvider } from './flowiseProvider';

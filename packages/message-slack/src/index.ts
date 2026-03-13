@@ -1,5 +1,5 @@
-import type { PluginManifest } from '../../../src/plugins/PluginLoader';
 import SlackService from './SlackService';
+import type { PluginManifest } from '../../../src/plugins/PluginLoader';
 
 // Core modules
 export { SlackConfigurationLoader } from './core/SlackConfigurationLoader';

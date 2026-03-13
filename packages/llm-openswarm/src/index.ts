@@ -1,5 +1,5 @@
-import type { PluginManifest } from '../../../src/plugins/PluginLoader';
 import { OpenSwarmProvider } from './OpenSwarmProvider';
+import type { PluginManifest } from '../../../src/plugins/PluginLoader';
 
 export { OpenSwarmProvider } from './OpenSwarmProvider';
 
