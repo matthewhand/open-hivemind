@@ -221,7 +221,7 @@ const GuardsPage: React.FC = () => {
         </div>
       ) : profiles.length === 0 ? (
         <EmptyState
-          icon={Shield}
+          icon={<Shield className="w-6 h-6" />}
           title="No Guard Profiles"
           description="Create a guard profile to enforce security policies and access controls for your bots."
           actionLabel="New Profile"
@@ -231,7 +231,7 @@ const GuardsPage: React.FC = () => {
         />
       ) : filteredProfiles.length === 0 ? (
         <EmptyState
-          icon={Shield}
+          icon={<Shield className="w-6 h-6" />}
           title="No Matches Found"
           description="Try adjusting your search criteria."
           variant="noResults"

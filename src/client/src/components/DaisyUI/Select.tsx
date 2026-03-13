@@ -22,6 +22,7 @@ export interface SelectProps extends Omit<SelectHTMLAttributes<HTMLSelectElement
   error?: boolean;
   success?: boolean;
   renderOption?: (option: SelectOption) => React.ReactNode;
+  label?: React.ReactNode;
 }
 
 const Select = forwardRef<HTMLSelectElement, SelectProps>(
@@ -37,6 +38,7 @@ const Select = forwardRef<HTMLSelectElement, SelectProps>(
       className,
       children,
       renderOption,
+      label,
       ...props
     },
     ref,
@@ -72,7 +74,7 @@ const Select = forwardRef<HTMLSelectElement, SelectProps>(
       );
     };
 
-    return (
+    const selectContent = (
       <div className="relative w-full">
         <select ref={ref} className={selectClasses} {...props}>
           {children}
@@ -88,6 +90,19 @@ const Select = forwardRef<HTMLSelectElement, SelectProps>(
         )}
       </div>
     );
+
+    if (label) {
+      return (
+        <div className="form-control w-full">
+          <label className="label">
+            <span className="label-text">{label}</span>
+          </label>
+          {selectContent}
+        </div>
+      );
+    }
+
+    return selectContent;
   },
 );
 

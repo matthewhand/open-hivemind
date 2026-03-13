@@ -7,7 +7,6 @@ export interface CommaSeparatedInputProps {
   placeholder?: string;
   disabled?: boolean;
   id?: string;
-  testId?: string;
   className?: string;
   suggestions?: string[];
   tagColor?: (tag: string) => string;
@@ -167,22 +166,16 @@ export const CommaSeparatedInput: React.FC<CommaSeparatedInputProps> = ({
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const isDeleting = (e.nativeEvent as InputEvent).inputType?.startsWith('delete');
-    const newValue = e.target.value;
-
-    if (!isDeleting && newValue.includes(',')) {
-      const segments = newValue.split(',');
-      const trailing = segments.pop() ?? '';
-      const toCommit = segments.map(s => s.trim()).filter(Boolean).join(',');
-      if (toCommit) commitInput(toCommit);
-      setInputValue(trailing.trimStart());
-      return;
-    }
-
-    setInputValue(newValue);
-    setShowSuggestions(true);
-    if (internalError) {
-      setInternalError(null);
+    const newVal = e.target.value;
+    if (newVal.includes(',')) {
+      // Allow pasting multiple comma-separated items or typing a comma
+      commitInput(newVal);
+    } else {
+      setInputValue(newVal);
+      setShowSuggestions(true);
+      if (internalError) {
+        setInternalError(null);
+      }
     }
   };
 
@@ -230,7 +223,7 @@ export const CommaSeparatedInput: React.FC<CommaSeparatedInputProps> = ({
         })}
         <input
           id={id}
-          data-testid={testId ?? "csi-input"}
+          data-testid="csi-input"
           className="flex-1 bg-transparent outline-none min-w-[120px] px-1"
           value={inputValue}
           onChange={handleInputChange}

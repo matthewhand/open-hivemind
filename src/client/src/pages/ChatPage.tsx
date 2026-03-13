@@ -330,7 +330,7 @@ const ChatPage: React.FC = () => {
           ) : (
             <div className="flex-1 flex flex-col items-center justify-center p-8 text-center bg-base-200/50">
               <EmptyState
-                icon={MessageSquare}
+                icon={<MessageSquare className="w-12 h-12" />}
                 title="Select a Bot"
                 description="Choose a bot from the sidebar to view its real-time chat history and activity."
                 variant="noData"
