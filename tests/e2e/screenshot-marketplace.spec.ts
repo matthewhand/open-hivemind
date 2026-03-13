@@ -6,6 +6,24 @@ test.describe('Marketplace Page', () => {
     // Setup authentication and error detection
     await setupTestWithErrorDetection(page);
 
+    // Mock API response
+    await page.route('**/api/marketplace/packages', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify([
+          {
+            name: '@hivemind/llm-test',
+            displayName: 'Test LLM Provider',
+            description: 'A test LLM provider for the marketplace',
+            type: 'llm',
+            status: 'built-in',
+            version: '1.0.0'
+          }
+        ])
+      });
+    });
+
     // Navigate to Marketplace page
     await navigateAndWaitReady(page, '/admin/marketplace');
 
@@ -31,6 +49,24 @@ test.describe('Marketplace Page', () => {
   test('Capture Install from URL Modal', async ({ page }) => {
     // Setup authentication and error detection
     await setupTestWithErrorDetection(page);
+
+    // Mock API response
+    await page.route('**/api/marketplace/packages', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify([
+          {
+            name: '@hivemind/llm-test',
+            displayName: 'Test LLM Provider',
+            description: 'A test LLM provider for the marketplace',
+            type: 'llm',
+            status: 'built-in',
+            version: '1.0.0'
+          }
+        ])
+      });
+    });
 
     // Navigate to Marketplace page
     await navigateAndWaitReady(page, '/admin/marketplace');
@@ -68,6 +104,24 @@ test.describe('Marketplace Page', () => {
   test('Filter packages by type', async ({ page }) => {
     // Setup authentication and error detection
     await setupTestWithErrorDetection(page);
+
+    // Mock API response
+    await page.route('**/api/marketplace/packages', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify([
+          {
+            name: '@hivemind/llm-test',
+            displayName: 'Test LLM Provider',
+            description: 'A test LLM provider for the marketplace',
+            type: 'llm',
+            status: 'built-in',
+            version: '1.0.0'
+          }
+        ])
+      });
+    });
 
     // Navigate to Marketplace page
     await navigateAndWaitReady(page, '/admin/marketplace');
