@@ -1,6 +1,6 @@
+import crypto from 'crypto';
 import type { Server as HttpServer } from 'http';
 import os from 'os';
-import crypto from 'crypto';
 import Debug from 'debug';
 import { Server as SocketIOServer } from 'socket.io';
 import { BotConfigurationManager } from '../../config/BotConfigurationManager';
