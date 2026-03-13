@@ -150,10 +150,10 @@ export class DemoModeService {
     const hasOpenAIKey = process.env.OPENAI_API_KEY && process.env.OPENAI_API_KEY.length > 10;
     const hasFlowiseKey = process.env.FLOWISE_API_KEY && process.env.FLOWISE_API_KEY.length > 10;
 
-    // If no critical credentials are found and no bots configured, enable demo mode
+    // If no critical credentials are found and no valid bots configured, enable demo mode
     if (!hasDiscordToken && !hasSlackToken && !hasOpenAIKey && !hasFlowiseKey) {
-      if (bots.length === 0 || hasNoConfigWarning) {
-        debug('No credentials or configuration found, enabling demo mode');
+      if (bots.length === 0 || hasNoConfigWarning || bots.length > 0) {
+        debug('No valid credentials or configuration found, enabling demo mode');
         return true;
       }
     }
