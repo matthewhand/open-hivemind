@@ -14,13 +14,8 @@ import { LoadingSpinner } from './DaisyUI/Loading';
 import type { Bot, StatusResponse } from '../services/api';
 import { apiService } from '../services/api';
 import { CreateBotWizard } from './BotManagement/CreateBotWizard';
-import { Info, PlusCircle, RefreshCw, LayoutDashboard, Cpu, HardDrive, Gauge, Clock, Activity, Rocket } from 'lucide-react';
-import { GettingStartedTab } from './Dashboard/tabs/GettingStartedTab';
-import { StatusTab } from './Dashboard/tabs/StatusTab';
-import { PerformanceTab } from './Dashboard/tabs/PerformanceTab';
-import { usePerformanceMetrics } from './Dashboard/hooks/usePerformanceMetrics';
+import { Info } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { useI18n } from '../i18n/I18nProvider';
 
 type DashboardTab = 'getting-started' | 'status' | 'performance';
 
@@ -271,8 +266,6 @@ const UnifiedDashboard: React.FC = () => {
 
   // Combine 4 separate O(N) filter/reduce passes into a single O(N) pass
   // to calculate dashboard statistics and prevent unnecessary re-renders.
-  const { t } = useI18n();
-
   const { activeBotCount, activeConnections, totalMessages, totalErrors } = useMemo(() => {
     return statusBots.reduce(
       (acc, bot) => {
@@ -410,9 +403,9 @@ const UnifiedDashboard: React.FC = () => {
             <div className="hero bg-base-200 rounded-2xl p-8">
               <div className="hero-content text-center">
                 <div className="max-w-md">
-                  <h1 className="text-4xl font-bold">{t('dashboard.welcome.title')}</h1>
+                  <h1 className="text-4xl font-bold">Welcome to Open Hivemind</h1>
                   <p className="py-6">
-                    {t('dashboard.getting_started.subtitle')}
+                    Let's get your multi-agent system up and running. Follow the steps below to configure your environment.
                   </p>
 
                   {bots.length === 0 && (
@@ -565,10 +558,10 @@ const UnifiedDashboard: React.FC = () => {
                   </p>
                   <div className="flex flex-wrap gap-2 mt-3">
                     <Badge variant="success" size="small">
-                      Guarded&nbsp;{bots.filter(bot => bot.mcpGuard?.enabled).length}
+                      Guarded&nbsp;{guardedBots}
                     </Badge>
                     <Badge variant="warning" size="small">
-                      Open&nbsp;{Math.max(bots.length - bots.filter(bot => bot.mcpGuard?.enabled).length, 0)}
+                      Open&nbsp;{Math.max(bots.length - guardedBots, 0)}
                     </Badge>
                     <Badge variant="neutral" size="small">
                       Owner only&nbsp;{bots.filter(bot => bot.mcpGuard?.type === 'owner').length}
