@@ -2,9 +2,10 @@ import os from 'os';
 import process from 'process';
 import { Router, type NextFunction, type Request, type Response } from 'express';
 import { DatabaseManager } from '../../database/DatabaseManager';
+import { container } from '../../di/container';
 import { BotManager } from '../../managers/BotManager';
 import { MetricsCollector } from '../../monitoring/MetricsCollector';
-import ApiMonitorService from '../../services/ApiMonitorService';
+import type ApiMonitorService from '../../services/ApiMonitorService';
 import { ErrorLogger } from '../../utils/errorLogger';
 import { globalRecoveryManager } from '../../utils/errorRecovery';
 import { optionalAuth } from '../middleware/auth';
@@ -185,11 +186,11 @@ router.get('/alerts', (req, res) => {
 });
 
 // Readiness probe
-router.get('/ready', (req, res) => {
+router.get('/ready', async (req, res) => {
   try {
     const isDbConnected = DatabaseManager.getInstance().isConnected();
-    const bots = BotManager.getInstance().getAllBots();
-    const botAdaptersHealthy = Array.from(bots.values()).every(
+    const bots = await BotManager.getInstance().getAllBots();
+    const botAdaptersHealthy = bots.every(
       (bot: any) =>
         bot.getStatus() === 'active' ||
         bot.getStatus() === 'connected' ||
@@ -197,7 +198,8 @@ router.get('/ready', (req, res) => {
         bot.getStatus() === 'idle' ||
         bot.getStatus() === 'warning'
     );
-    const apiStatuses = ApiMonitorService.getInstance().getAllStatuses();
+    const apiMonitor = container.resolve<ApiMonitorService>('ApiMonitorService');
+    const apiStatuses = apiMonitor.getAllStatuses();
     const externalApisHealthy = Object.values(apiStatuses).every(
       (status: any) => status.status !== 'error' && status.status !== 'offline'
     );
@@ -324,7 +326,7 @@ nodejs_version_info{version="${process.version}"} 1
 
 // API endpoints monitoring
 router.get('/api-endpoints', (req, res) => {
-  const apiMonitor = ApiMonitorService.getInstance();
+  const apiMonitor = container.resolve<ApiMonitorService>('ApiMonitorService');
   const statuses = apiMonitor.getAllStatuses();
   const overallHealth = apiMonitor.getOverallHealth();
 
@@ -337,7 +339,7 @@ router.get('/api-endpoints', (req, res) => {
 
 // Get specific endpoint status
 router.get('/api-endpoints/:id', (req, res) => {
-  const apiMonitor = ApiMonitorService.getInstance();
+  const apiMonitor = container.resolve<ApiMonitorService>('ApiMonitorService');
   const status = apiMonitor.getEndpointStatus(req.params.id);
 
   if (!status) {
@@ -355,7 +357,7 @@ router.get('/api-endpoints/:id', (req, res) => {
 
 // Cleanup endpoint (admin only)
 router.post('/cleanup', (req, res) => {
-  const apiMonitor = ApiMonitorService.getInstance();
+  const apiMonitor = container.resolve<ApiMonitorService>('ApiMonitorService');
 
   try {
     const config = req.body;
@@ -401,7 +403,7 @@ router.post('/cleanup', (req, res) => {
 
 // Add new endpoint to monitor
 router.post('/api-endpoints', (req, res) => {
-  const apiMonitor = ApiMonitorService.getInstance();
+  const apiMonitor = container.resolve<ApiMonitorService>('ApiMonitorService');
 
   try {
     const config = req.body;
@@ -447,7 +449,7 @@ router.post('/api-endpoints', (req, res) => {
 
 // Update endpoint configuration
 router.put('/api-endpoints/:id', (req, res) => {
-  const apiMonitor = ApiMonitorService.getInstance();
+  const apiMonitor = container.resolve<ApiMonitorService>('ApiMonitorService');
 
   try {
     apiMonitor.updateEndpoint(req.params.id, req.body);
@@ -468,7 +470,7 @@ router.put('/api-endpoints/:id', (req, res) => {
 
 // Remove endpoint from monitoring
 router.delete('/api-endpoints/:id', (req, res) => {
-  const apiMonitor = ApiMonitorService.getInstance();
+  const apiMonitor = container.resolve<ApiMonitorService>('ApiMonitorService');
 
   try {
     const endpoint = apiMonitor.getEndpoint(req.params.id);
@@ -497,7 +499,7 @@ router.delete('/api-endpoints/:id', (req, res) => {
 
 // Start monitoring all endpoints
 router.post('/api-endpoints/start', (req, res) => {
-  const apiMonitor = ApiMonitorService.getInstance();
+  const apiMonitor = container.resolve<ApiMonitorService>('ApiMonitorService');
   apiMonitor.startAllMonitoring();
 
   return res.json({
@@ -508,7 +510,7 @@ router.post('/api-endpoints/start', (req, res) => {
 
 // Stop monitoring all endpoints
 router.post('/api-endpoints/stop', (req, res) => {
-  const apiMonitor = ApiMonitorService.getInstance();
+  const apiMonitor = container.resolve<ApiMonitorService>('ApiMonitorService');
   apiMonitor.stopAllMonitoring();
 
   return res.json({

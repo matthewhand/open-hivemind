@@ -1,5 +1,5 @@
-import { EventEmitter } from 'events';
 import crypto from 'crypto';
+import { EventEmitter } from 'events';
 import Debug from 'debug';
 import { DatabaseManager } from '../../database/DatabaseManager';
 import { BotConfigService } from './BotConfigService';
