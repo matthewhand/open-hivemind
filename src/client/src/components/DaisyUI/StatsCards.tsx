@@ -270,11 +270,11 @@ export const useSystemStats = () => {
   const [error, setError] = React.useState<string | null>(null);
 
   const fetchStats = React.useCallback(async () => {
-      try {
-        setIsLoading(true);
+    try {
+      setIsLoading(true);
 
-        const response = await fetch('/api/webui/system-status');
-        const data = await response.json();
+      const response = await fetch('/api/webui/system-status');
+      const data = await response.json();
 
         const mockStats: StatItem[] = [
           {
@@ -358,9 +358,7 @@ export const useSystemStats = () => {
       } finally {
         setIsLoading(false);
       }
-    };
-
-  }, []);
+    }, []);
 
   React.useEffect(() => { fetchStats(); }, [fetchStats]);
   useInterval(fetchStats, 30000);

@@ -47,6 +47,9 @@ const MetricChart: React.FC<MetricChartProps> = ({
     if (onRefresh) { setIsLoading(true); onRefresh(); setTimeout(() => setIsLoading(false), 1000); }
   }, [onRefresh]);
   useInterval(handleRefreshTick, refreshInterval && onRefresh ? refreshInterval : null);
+
+  useEffect(() => {
+    const formattedData = data.map((item) => ({
       time: new Date(item.timestamp).toLocaleTimeString(),
       value: item.value,
       label: item.label || '',
