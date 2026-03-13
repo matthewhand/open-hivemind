@@ -1,7 +1,7 @@
 import React from 'react';
 import { BrowserRouter } from 'react-router-dom';
 import { Provider } from 'react-redux';
-import { store } from './store';
+import { store } from './store/store';
 import ReduxProvider from './components/ReduxProvider';
 import ErrorBoundary from './components/ErrorBoundary';
 import AppRouter from './router/AppRouter';

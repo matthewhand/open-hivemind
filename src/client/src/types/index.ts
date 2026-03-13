@@ -1,2 +1,2 @@
-export * from './bot';
-export * from './spec';
+export type { BotInstance, BotStatus, MessageProvider, LLMProvider, MessageProviderType, LLMProviderType, Persona, PersonaCategory, PersonaTrait, CreatePersonaRequest, UpdatePersonaRequest, ProviderModalState, ProviderTypeConfig, FieldConfig, Bot, CreateBotRequest, MESSAGE_PROVIDER_CONFIGS, LLM_PROVIDER_CONFIGS, DEFAULT_PERSONA, BUILTIN_PERSONAS, PersonaModalState } from './bot';
+export type { Spec, SpecListResponse, SpecDetailResponse, SpecVersion } from './spec';
