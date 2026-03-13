@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars, react-refresh/only-export-components, no-empty, no-case-declarations */
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Card from './DaisyUI/Card';
 import Badge from './DaisyUI/Badge';
 import Button from './DaisyUI/Button';
@@ -47,22 +47,22 @@ const SecureConfigManager: React.FC<SecureConfigManagerProps> = ({ onRefresh }) 
   });
   const [backupFile, setBackupFile] = useState('');
 
-  const fetchConfigs = async () => {
+  const fetchConfigs = useCallback(async () => {
     try {
       setLoading(true);
       const response = await apiService.getSecureConfigs();
-      setConfigs(response.data || []);
+      setConfigs(response.configs || []);
     } catch (error) {
       console.error('Failed to load secure configs:', error);
       showToast('Failed to load secure configurations', 'error');
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchConfigs();
-  }, []);
+  }, [fetchConfigs]);
 
   const showToast = (message: string, type: 'success' | 'error' | 'info') => {
     setToast({ show: true, message, type });
@@ -78,7 +78,7 @@ const SecureConfigManager: React.FC<SecureConfigManagerProps> = ({ onRefresh }) 
     if (config) {
       try {
         const response = await apiService.getSecureConfig(config.id);
-        const fullConfig = response.data;
+        const fullConfig = response.config;
         setEditingConfig(fullConfig);
         setFormData({
           name: fullConfig.name,
@@ -109,22 +109,10 @@ const SecureConfigManager: React.FC<SecureConfigManagerProps> = ({ onRefresh }) 
 
     try {
       if (editingConfig) {
-        await apiService.updateSecureConfig(editingConfig.id, {
-          name: formData.name,
-          data: formData.data,
-          rotationInterval: formData.rotationInterval > 0 ? formData.rotationInterval : undefined,
-          type: editingConfig.type || 'custom',
-        });
+        await apiService.saveSecureConfig(editingConfig.name, formData.data, formData.encryptSensitive);
         showToast(`Configuration "${formData.name}" updated successfully`, 'success');
       } else {
-        const id = formData.name.toLowerCase().replace(/[^a-z0-9_-]/g, '-');
-        await apiService.createSecureConfig({
-          id,
-          name: formData.name,
-          data: formData.data,
-          rotationInterval: formData.rotationInterval > 0 ? formData.rotationInterval : undefined,
-          type: 'custom',
-        });
+        await apiService.saveSecureConfig(formData.name, formData.data, formData.encryptSensitive);
         showToast(`Configuration "${formData.name}" created successfully`, 'success');
       }
       handleCloseDialog();

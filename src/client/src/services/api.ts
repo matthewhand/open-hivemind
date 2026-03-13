@@ -219,6 +219,8 @@ export interface SecureConfig {
   createdAt: string;
   updatedAt: string;
   encrypted: boolean;
+  rotationInterval?: number;
+  type?: string;
 }
 
 export interface HotReloadRequest {
