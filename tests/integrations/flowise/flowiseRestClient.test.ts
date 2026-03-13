@@ -1,10 +1,10 @@
 import axios from 'axios';
-import { ConfigurationManager } from '@config/ConfigurationManager';
 import flowiseConfig from '@hivemind/llm-flowise/flowiseConfig';
 import {
   getFlowiseResponse,
   getFlowiseResponseFallback,
 } from '@hivemind/llm-flowise/flowiseRestClient';
+import { ConfigurationManager } from '@config/ConfigurationManager';
 
 jest.mock('axios');
 const mockedAxios = axios as jest.Mocked<typeof axios>;

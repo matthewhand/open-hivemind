@@ -1,10 +1,10 @@
 import express from 'express';
 import request from 'supertest';
+import { container } from 'tsyringe';
 import { DatabaseManager } from '../../src/database/DatabaseManager';
 import { BotManager } from '../../src/managers/BotManager';
 import healthRouter from '../../src/server/routes/health';
 import ApiMonitorService from '../../src/services/ApiMonitorService';
-import { container } from 'tsyringe';
 
 // Mock dependencies
 jest.mock('../../src/database/DatabaseManager');

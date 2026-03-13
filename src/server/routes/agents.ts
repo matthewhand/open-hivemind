@@ -1,4 +1,3 @@
-import crypto from 'crypto';
 import { promises as fs } from 'fs';
 import { join } from 'path';
 import Debug from 'debug';

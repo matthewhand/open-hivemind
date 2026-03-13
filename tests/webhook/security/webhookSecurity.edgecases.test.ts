@@ -28,7 +28,6 @@ type MockedConfig = {
 
 // Utility to update mocked config
 function setConfig(next: Record<string, string>) {
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
   const cfg = require('@config/webhookConfig').default as MockedConfig;
   cfg.__set(next);
 }
