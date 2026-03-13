@@ -36,10 +36,6 @@ const Pagination: React.FC<PaginationProps> = ({
   const totalPages = Math.ceil(totalItems / pageSize);
   const maxVisiblePages = explicitMaxVisiblePages || dynamicMaxVisiblePages;
 
-  if (totalPages <= 1) {
-    return null;
-  }
-
   useEffect(() => {
     if (explicitMaxVisiblePages || !containerRef.current) return;
 
@@ -59,6 +55,10 @@ const Pagination: React.FC<PaginationProps> = ({
     observer.observe(containerRef.current);
     return () => observer.disconnect();
   }, [explicitMaxVisiblePages]);
+
+  if (totalPages <= 1) {
+    return null;
+  }
 
   const handlePrevious = () => {
     if (currentPage > 1) {
