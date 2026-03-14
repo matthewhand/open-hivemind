@@ -35,6 +35,16 @@ const ConfigurationValidation: React.FC<ConfigurationValidationProps> = ({ bot }
   const [validationResults, setValidationResults] = useState<ValidationResult[]>([]);
   const [loading, setLoading] = useState(false);
 
+  const normalizeMcpServers = (servers: Bot['mcpServers']) => {
+    if (!servers) return [];
+    return (Array.isArray(servers) ? servers : [servers]).map((server) => {
+      if (typeof server === 'string') {
+        return { name: server, serverUrl: undefined };
+      }
+      return { name: server.name, serverUrl: server.serverUrl };
+    });
+  };
+
   useEffect(() => {
     if (bot) {
       validateConfiguration(bot);
@@ -78,6 +88,28 @@ const ConfigurationValidation: React.FC<ConfigurationValidationProps> = ({ bot }
       });
     }
 
+    const validMessageProviders = ['discord', 'slack', 'mattermost'];
+    if (botConfig.messageProvider && !validMessageProviders.includes(botConfig.messageProvider)) {
+      results.push({
+        type: 'warning',
+        category: 'Basic Configuration',
+        message: `Unknown message provider "${botConfig.messageProvider}"`,
+        field: 'messageProvider',
+        suggestion: 'Confirm the provider is supported or update to a valid provider.',
+      });
+    }
+
+    const validLlmProviders = ['openai', 'flowise', 'openwebui', 'openswarm', 'perplexity', 'replicate', 'n8n'];
+    if (botConfig.llmProvider && !validLlmProviders.includes(botConfig.llmProvider)) {
+      results.push({
+        type: 'warning',
+        category: 'Basic Configuration',
+        message: `Unknown LLM provider "${botConfig.llmProvider}"`,
+        field: 'llmProvider',
+        suggestion: 'Confirm the provider is supported or update to a valid provider.',
+      });
+    }
+
     // Provider-specific validation
     if (botConfig.messageProvider === 'discord' && !botConfig.discord?.token) {
       results.push({
@@ -99,6 +131,16 @@ const ConfigurationValidation: React.FC<ConfigurationValidationProps> = ({ bot }
       });
     }
 
+    if (botConfig.messageProvider === 'mattermost' && (!botConfig.mattermost?.url || !botConfig.mattermost?.accessToken)) {
+      results.push({
+        type: 'warning',
+        category: 'Mattermost Configuration',
+        message: 'Mattermost URL or access token missing',
+        field: 'mattermost',
+        suggestion: 'Set MATTERMOST_URL and MATTERMOST_ACCESS_TOKEN environment variables',
+      });
+    }
+
     if (botConfig.llmProvider === 'openai' && !botConfig.openai?.apiKey) {
       results.push({
         type: 'warning',
@@ -106,6 +148,76 @@ const ConfigurationValidation: React.FC<ConfigurationValidationProps> = ({ bot }
         message: 'OpenAI API key not configured',
         field: 'openai.apiKey',
         suggestion: 'Set OPENAI_API_KEY environment variable',
+      });
+    }
+
+    if (botConfig.llmProvider === 'openai' && !botConfig.openai?.model) {
+      results.push({
+        type: 'info',
+        category: 'OpenAI Configuration',
+        message: 'OpenAI model not specified',
+        field: 'openai.model',
+        suggestion: 'Select a model (e.g. gpt-4o-mini) to ensure deterministic behavior.',
+      });
+    }
+
+    if (botConfig.llmProvider === 'flowise' && (!botConfig.flowise?.apiUrl || !botConfig.flowise?.chatflowId)) {
+      results.push({
+        type: 'warning',
+        category: 'Flowise Configuration',
+        message: 'Flowise API URL or chatflow ID missing',
+        field: 'flowise',
+        suggestion: 'Set FLOWISE_API_URL and FLOWISE_CHATFLOW_ID.',
+      });
+    }
+
+    if (botConfig.llmProvider === 'openwebui' && (!botConfig.openwebui?.apiUrl || !botConfig.openwebui?.model)) {
+      results.push({
+        type: 'warning',
+        category: 'OpenWebUI Configuration',
+        message: 'OpenWebUI API URL or model missing',
+        field: 'openwebui',
+        suggestion: 'Set OPENWEBUI_API_URL and OPENWEBUI_MODEL.',
+      });
+    }
+
+    if (botConfig.llmProvider === 'openswarm' && (!botConfig.openswarm?.apiUrl || !botConfig.openswarm?.swarmId)) {
+      results.push({
+        type: 'warning',
+        category: 'OpenSwarm Configuration',
+        message: 'OpenSwarm API URL or swarm ID missing',
+        field: 'openswarm',
+        suggestion: 'Set OPENSWARM_API_URL and OPENSWARM_SWARM_ID.',
+      });
+    }
+
+    if (botConfig.llmProvider === 'perplexity' && !botConfig.perplexity?.apiKey) {
+      results.push({
+        type: 'warning',
+        category: 'Perplexity Configuration',
+        message: 'Perplexity API key not configured',
+        field: 'perplexity.apiKey',
+        suggestion: 'Set PERPLEXITY_API_KEY environment variable.',
+      });
+    }
+
+    if (botConfig.llmProvider === 'replicate' && (!botConfig.replicate?.apiKey || !botConfig.replicate?.model)) {
+      results.push({
+        type: 'warning',
+        category: 'Replicate Configuration',
+        message: 'Replicate API key or model not configured',
+        field: 'replicate',
+        suggestion: 'Set REPLICATE_API_KEY and REPLICATE_MODEL.',
+      });
+    }
+
+    if (botConfig.llmProvider === 'n8n' && (!botConfig.n8n?.apiUrl || !botConfig.n8n?.workflowId)) {
+      results.push({
+        type: 'warning',
+        category: 'n8n Configuration',
+        message: 'n8n API URL or workflow ID missing',
+        field: 'n8n',
+        suggestion: 'Set N8N_API_URL and N8N_WORKFLOW_ID.',
       });
     }
 
@@ -130,6 +242,26 @@ const ConfigurationValidation: React.FC<ConfigurationValidationProps> = ({ bot }
           suggestion: 'Consider adding more detailed instructions for better bot behavior',
         });
       }
+    } else {
+      results.push({
+        type: 'info',
+        category: 'System Instruction',
+        message: 'System instruction is not set',
+        field: 'systemInstruction',
+        suggestion: 'Add a system instruction to guide tone, safety, and response style.',
+      });
+    }
+
+    const mcpServers = normalizeMcpServers(botConfig.mcpServers);
+    const mcpMissingUrl = mcpServers.filter((server) => !server.serverUrl && server.name);
+    if (mcpServers.length > 0 && mcpMissingUrl.length > 0) {
+      results.push({
+        type: 'warning',
+        category: 'MCP Configuration',
+        message: `${mcpMissingUrl.length} MCP server(s) missing a server URL`,
+        field: 'mcpServers',
+        suggestion: 'Ensure each MCP server has a valid URL configured.',
+      });
     }
 
     // Success message if no errors
@@ -141,6 +273,19 @@ const ConfigurationValidation: React.FC<ConfigurationValidationProps> = ({ bot }
         suggestion: 'No issues detected in the current configuration',
       });
     }
+
+    const severityOrder: Record<ValidationResult['type'], number> = {
+      error: 0,
+      warning: 1,
+      info: 2,
+      success: 3,
+    };
+
+    results.sort((a, b) => {
+      const severityDelta = severityOrder[a.type] - severityOrder[b.type];
+      if (severityDelta !== 0) return severityDelta;
+      return a.category.localeCompare(b.category);
+    });
 
     setValidationResults(results);
     setLoading(false);
@@ -219,7 +364,12 @@ const ConfigurationValidation: React.FC<ConfigurationValidationProps> = ({ bot }
     },
     {
       property: 'MCP Servers',
-      value: `${bot.mcpServers ? (Array.isArray(bot.mcpServers) ? bot.mcpServers.length : 1) : 0} configured`,
+      value: (() => {
+        const servers = normalizeMcpServers(bot.mcpServers);
+        const missing = servers.filter((server) => !server.serverUrl && server.name);
+        const missingSuffix = missing.length > 0 ? ` (${missing.length} missing URL)` : '';
+        return `${servers.length} configured${missingSuffix}`;
+      })(),
       status: <CheckCircleIcon className="w-5 h-5 text-success" />,
     },
   ];
@@ -312,14 +462,13 @@ const ConfigurationValidation: React.FC<ConfigurationValidationProps> = ({ bot }
       )}
 
       {/* Configuration Overview */}
-      <Accordion defaultOpen={false}>
-        <Accordion.Item value="overview">
-          <Accordion.Trigger>Configuration Overview</Accordion.Trigger>
-          <Accordion.Content>
-            <DataTable columns={configTableColumns} data={configTableData} />
-          </Accordion.Content>
-        </Accordion.Item>
-      </Accordion>
+      <Accordion
+        items={[{
+          id: "overview",
+          title: "Configuration Overview",
+          content: <DataTable columns={configTableColumns} data={configTableData} />
+        }]}
+      />
     </Card>
   );
 };
