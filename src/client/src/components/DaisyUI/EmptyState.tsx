@@ -1,6 +1,6 @@
 import React from 'react';
 import type { LucideIcon } from 'lucide-react';
-import { Button } from './Button';
+import Button from './Button';
 
 interface EmptyStateProps {
   icon: LucideIcon;
@@ -112,7 +112,7 @@ const EmptyState: React.FC<EmptyStateProps> = ({
             shadow-lg shadow-current/5
           `}
         >
-          <Icon className="w-12 h-12" strokeWidth={1.5} />
+          {React.isValidElement(Icon) ? Icon : React.createElement(Icon as React.ElementType, { className: "w-12 h-12", strokeWidth: 1.5 })}
         </div>
 
         <h3 className="text-xl font-semibold mb-2 text-base-content">
@@ -128,7 +128,7 @@ const EmptyState: React.FC<EmptyStateProps> = ({
             variant={variant === 'primary' || variant === 'secondary' || variant === 'accent' || variant === 'noData' || variant === 'noResults' ? (variant === 'noData' ? 'primary' : variant === 'noResults' ? 'secondary' : variant) : 'primary'}
             onClick={onAction}
             className={`gap-2 shadow-lg ${styles.buttonShadow} transition-shadow`}
-            startIcon={ActionIcon ? <ActionIcon className="w-4 h-4" /> : undefined}
+            startIcon={ActionIcon ? (React.isValidElement(ActionIcon) ? ActionIcon : React.createElement(ActionIcon as React.ElementType, { className: "w-4 h-4" })) : undefined}
           >
             {actionLabel}
           </Button>
