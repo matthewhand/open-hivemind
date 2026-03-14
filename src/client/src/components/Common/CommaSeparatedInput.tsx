@@ -74,24 +74,16 @@ export const CommaSeparatedInput: React.FC<CommaSeparatedInputProps> = ({
       return;
     }
 
-    // Split by comma, preserving empty strings so we can see if there is trailing text
-    const parts = textToCommit.split(',');
+    const current = textToCommit
+      .split(',')
+      .map(s => s.trim())
+      .filter(Boolean);
 
-    // The trailing text is the last part after the last comma
-    const trailingText = parts.length > 1 ? parts.pop() || '' : '';
-
-    // The items to commit are the parts before the last comma
-    const itemsToCommit = parts.map(s => s.trim()).filter(Boolean);
-
-    commitItems(itemsToCommit, trailingText);
-  };
-
-  const commitItems = (items: string[], trailingText: string) => {
     const next = [...value];
     let changed = false;
     let localError: string | null = null;
 
-    for (const item of items) {
+    for (const item of current) {
       if (validate) {
         const validationError = validate(item);
         if (validationError) {
@@ -114,7 +106,7 @@ export const CommaSeparatedInput: React.FC<CommaSeparatedInputProps> = ({
         pushToHistory(next);
         onChange(next);
       }
-      setInputValue(trailingText);
+      setInputValue('');
       setShowSuggestions(false);
     }
   };
@@ -174,15 +166,18 @@ export const CommaSeparatedInput: React.FC<CommaSeparatedInputProps> = ({
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const val = e.target.value;
-    if (val.includes(',')) {
-      commitInput(val);
-    } else {
-      setInputValue(val);
-      setShowSuggestions(true);
-      if (internalError) {
-        setInternalError(null);
-      }
+    let newValue = e.target.value;
+
+    // Auto-insert space after comma if typed, but only if we are typing (length increased)
+    // To avoid the backspace trap, we check if the new value is longer than the old value
+    if (newValue.length > inputValue.length && newValue.endsWith(',') && !newValue.endsWith(', ')) {
+      newValue = newValue + ' ';
+    }
+
+    setInputValue(newValue);
+    setShowSuggestions(true);
+    if (internalError) {
+      setInternalError(null);
     }
   };
 
@@ -249,6 +244,7 @@ export const CommaSeparatedInput: React.FC<CommaSeparatedInputProps> = ({
         {!disabled && canUndo && (
           <button
             type="button"
+            onMouseDown={(e) => e.preventDefault()}
             onClick={handleUndo}
             className="p-1 mx-1 rounded-full text-base-content/40 hover:text-primary hover:bg-primary/10 focus:outline-none transition-colors"
             title="Undo last change (Ctrl+Z)"
@@ -263,6 +259,7 @@ export const CommaSeparatedInput: React.FC<CommaSeparatedInputProps> = ({
         {!disabled && value.length > 0 && (
           <button
             type="button"
+            onMouseDown={(e) => e.preventDefault()}
             onClick={handleClearAll}
             className="p-1 mx-1 rounded-full text-base-content/40 hover:text-error hover:bg-error/10 focus:outline-none transition-colors"
             title="Clear all"
