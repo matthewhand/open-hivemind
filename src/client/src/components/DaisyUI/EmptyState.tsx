@@ -1,11 +1,6 @@
 import React from 'react';
 import type { LucideIcon } from 'lucide-react';
-<<<<<<< HEAD
-import Button from './Button';
-import { safeString } from '../../utils/safeString';
-=======
 import { Button } from './Button';
->>>>>>> 9ad452c7 (Refiner: Final frontend build fix)
 
 interface EmptyStateProps {
   icon: LucideIcon;
@@ -89,10 +84,6 @@ const EmptyState: React.FC<EmptyStateProps> = ({
   className = '',
 }) => {
   const styles = variantStyles[variant] || variantStyles.primary;
-  const titleText = safeString(title);
-  const descriptionText = safeString(description);
-  const actionLabelNode = React.isValidElement(actionLabel) ? actionLabel : safeString(actionLabel);
-  const hasAction = Boolean(actionLabelNode) && Boolean(onAction);
 
   return (
     <div
@@ -125,23 +116,21 @@ const EmptyState: React.FC<EmptyStateProps> = ({
         </div>
 
         <h3 className="text-xl font-semibold mb-2 text-base-content">
-          {titleText}
+          {title}
         </h3>
 
-        {descriptionText && (
-          <p className="text-base-content/60 max-w-md mb-8">
-            {descriptionText}
-          </p>
-        )}
+        <p className="text-base-content/60 max-w-md mb-8">
+          {description}
+        </p>
 
-        {hasAction && (
+        {actionLabel && onAction && (
           <Button
             variant={variant === 'primary' || variant === 'secondary' || variant === 'accent' || variant === 'noData' || variant === 'noResults' ? (variant === 'noData' ? 'primary' : variant === 'noResults' ? 'secondary' : variant) : 'primary'}
             onClick={onAction}
             className={`gap-2 shadow-lg ${styles.buttonShadow} transition-shadow`}
             startIcon={ActionIcon ? <ActionIcon className="w-4 h-4" /> : undefined}
           >
-            {actionLabelNode}
+            {actionLabel}
           </Button>
         )}
       </div>
