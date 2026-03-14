@@ -13,15 +13,7 @@ import {
   Clock,
   DownloadCloud as DownloadIcon
 } from 'lucide-react';
-import { Alert } from '../components/DaisyUI/Alert';
-import ToastNotification from '../components/DaisyUI/ToastNotification';
-import Modal from '../components/DaisyUI/Modal';
-import Button from '../components/DaisyUI/Button';
-import Input from '../components/DaisyUI/Input';
-import Textarea from '../components/DaisyUI/Textarea';
-import PageHeader from '../components/DaisyUI/PageHeader';
-import EmptyState from '../components/DaisyUI/EmptyState';
-import StatsCards from '../components/DaisyUI/StatsCards';
+import { Alert, ToastNotification, Modal, Button, Input, Textarea, PageHeader, EmptyState, StatsCards } from '../components/DaisyUI';
 import SearchFilterBar from '../components/SearchFilterBar';
 import { apiService } from '../services/api';
 
@@ -205,21 +197,21 @@ const ExportPage: React.FC = () => {
         id: 'total-backups',
         title: 'Total Backups',
         value: totalBackups,
-        icon: <Archive className="w-8 h-8" />,
+        icon: 'archive',
         color: 'primary' as const,
       },
       {
         id: 'total-size',
         title: 'Total Size',
         value: formatBytes(totalSize),
-        icon: <HardDrive className="w-8 h-8" />,
+        icon: 'storage',
         color: 'secondary' as const,
       },
       {
         id: 'last-backup',
         title: 'Latest Backup',
         value: lastBackup,
-        icon: <Clock className="w-8 h-8" />,
+        icon: 'clock',
         color: 'accent' as const,
       },
     ];
@@ -268,7 +260,7 @@ const ExportPage: React.FC = () => {
       <PageHeader
         title="Export & System Data"
         description="Manage system backups, export configurations, and access API specifications."
-        icon={<Archive className="w-6 h-6" />}
+        icon={<Archive className="w-8 h-8" />}
         gradient="secondary"
       />
 
@@ -286,12 +278,12 @@ const ExportPage: React.FC = () => {
       {/* System Backups Section */}
       <div className="card bg-base-100 shadow-xl">
         <div className="card-body">
-          <div className="flex flex-col sm:flex-row justify-between items-center mb-4 gap-4">
+          <div className="flex flex-col md:flex-row justify-between items-center mb-4 gap-4">
             <div>
               <h2 className="card-title text-xl">System Backups</h2>
               <p className="text-sm text-base-content/70">Create and manage full system configuration backups.</p>
             </div>
-            <div className="flex items-center gap-2 w-full sm:w-auto">
+            <div className="flex items-center gap-2 w-full md:w-auto">
               <Button
                 variant="primary"
                 onClick={() => setCreateModalOpen(true)}
