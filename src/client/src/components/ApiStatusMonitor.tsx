@@ -1,14 +1,12 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect, useCallback } from 'react';
-import {
-  Card,
-  Badge,
-  Alert,
-  Accordion,
-  Divider,
-  Button,
-  Tooltip,
-} from './DaisyUI';
+import Card from './DaisyUI/Card';
+import Badge from './DaisyUI/Badge';
+import { Alert } from './DaisyUI/Alert';
+import Accordion from './DaisyUI/Accordion';
+import Divider from './DaisyUI/Divider';
+import Button from './DaisyUI/Button';
+import Tooltip from './DaisyUI/Tooltip';
 import {
   CheckCircleIcon,
   ExclamationCircleIcon,
@@ -85,10 +83,19 @@ const ApiStatusMonitor: React.FC<ApiStatusMonitorProps> = ({
 
     const newSocket = io({
       path: '/webui/socket.io',
+      reconnection: true,
+      reconnectionAttempts: Infinity,
+      reconnectionDelay: 1000,
+      reconnectionDelayMax: 5000,
+      randomizationFactor: 0.5,
     });
 
     newSocket.on('connect', () => {
       console.log('Connected to WebSocket for API monitoring');
+    });
+
+    newSocket.on('reconnect_attempt', (attempt) => {
+      console.log(`API Monitoring WebSocket reconnect attempt ${attempt}`);
     });
 
     newSocket.on('api_status_update', (data: { endpoints: EndpointStatus[]; overall: any; timestamp: string }) => {
@@ -98,10 +105,10 @@ const ApiStatusMonitor: React.FC<ApiStatusMonitorProps> = ({
 
     newSocket.on('api_health_check_result', (data: { result: any; timestamp: string }) => {
       // Update specific endpoint status
-      setApiStatus(prevStatus => {
-        if (!prevStatus) return prevStatus;
+      setApiStatus((currentStatus) => {
+        if (!currentStatus) return currentStatus;
 
-        const updatedEndpoints = prevStatus.endpoints.map(endpoint => {
+        const updatedEndpoints = currentStatus.endpoints.map(endpoint => {
           if (endpoint.id === data.result.endpointId) {
             return {
               ...endpoint,
@@ -116,7 +123,7 @@ const ApiStatusMonitor: React.FC<ApiStatusMonitorProps> = ({
         });
 
         return {
-          ...prevStatus,
+          ...currentStatus,
           endpoints: updatedEndpoints,
           timestamp: data.timestamp,
         };
@@ -129,7 +136,7 @@ const ApiStatusMonitor: React.FC<ApiStatusMonitorProps> = ({
 
     setSocket(newSocket);
 
-    let interval: NodeJS.Timeout;
+    let interval: NodeJS.Timeout | undefined;
     if (refreshInterval > 0) {
       interval = setInterval(fetchApiStatus, refreshInterval);
     }
@@ -237,7 +244,21 @@ const ApiStatusMonitor: React.FC<ApiStatusMonitorProps> = ({
     );
   }
 
-  const accordionItems = [
+  // Combine 6 separate O(N) reduce passes into a single O(N) pass
+  // to calculate api monitoring statistics and prevent unnecessary O(N) re-computations
+  const { totalAvgResponseTime, totalChecks, successfulChecks } = React.useMemo(() => {
+    return apiStatus.endpoints.reduce(
+      (acc, ep) => {
+        acc.totalAvgResponseTime += ep.averageResponseTime || 0;
+        acc.totalChecks += ep.totalChecks || 0;
+        acc.successfulChecks += ep.successfulChecks || 0;
+        return acc;
+      },
+      { totalAvgResponseTime: 0, totalChecks: 0, successfulChecks: 0 }
+    );
+  }, [apiStatus.endpoints]);
+
+  const accordionItems = React.useMemo(() => [
     {
       id: 'monitoring-details',
       title: 'Monitoring Details',
@@ -250,19 +271,18 @@ const ApiStatusMonitor: React.FC<ApiStatusMonitorProps> = ({
             </h4>
             <p className="text-sm">
               • Average Response Time: {formatResponseTime(
-                apiStatus.endpoints.reduce((sum, ep) => sum + ep.averageResponseTime, 0) / apiStatus.endpoints.length || 0,
+                totalAvgResponseTime / (apiStatus.endpoints.length || 1)
               )}
             </p>
             <p className="text-sm">
-              • Total Checks: {apiStatus.endpoints.reduce((sum, ep) => sum + ep.totalChecks, 0)}
+              • Total Checks: {totalChecks}
             </p>
             <p className="text-sm">
-              • Successful Checks: {apiStatus.endpoints.reduce((sum, ep) => sum + ep.successfulChecks, 0)}
+              • Successful Checks: {successfulChecks}
             </p>
             <p className="text-sm">
-              • Overall Success Rate: {apiStatus.endpoints.reduce((sum, ep) => sum + ep.totalChecks, 0) > 0 ?
-                Math.round((apiStatus.endpoints.reduce((sum, ep) => sum + ep.successfulChecks, 0) /
-                  apiStatus.endpoints.reduce((sum, ep) => sum + ep.totalChecks, 0)) * 100) : 0}%
+              • Overall Success Rate: {totalChecks > 0 ?
+                Math.round((successfulChecks / totalChecks) * 100) : 0}%
             </p>
           </div>
           <div className="min-w-[300px] flex-1">
@@ -282,7 +302,7 @@ const ApiStatusMonitor: React.FC<ApiStatusMonitorProps> = ({
         </div>
       ),
     },
-  ];
+  ], [apiStatus.timestamp, apiStatus.endpoints.length, monitoringActive, socket?.connected, totalAvgResponseTime, totalChecks, successfulChecks]);
 
   return (
     <Card>

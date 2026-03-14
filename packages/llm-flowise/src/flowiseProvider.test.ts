@@ -1,3 +1,7 @@
+import { getFlowiseResponse } from '@integrations/flowise/flowiseRestClient';
+import { getFlowiseSdkResponse } from '@integrations/flowise/flowiseSdkClient';
+import { FlowiseProvider } from './flowiseProvider';
+
 jest.mock('@config/flowiseConfig', () => ({
   get: jest.fn((key: string) => {
     if (key === 'FLOWISE_USE_REST') return false;
@@ -13,10 +17,6 @@ jest.mock('@integrations/flowise/flowiseRestClient', () => ({
 jest.mock('@integrations/flowise/flowiseSdkClient', () => ({
   getFlowiseSdkResponse: jest.fn().mockResolvedValue('sdk response'),
 }));
-
-import { FlowiseProvider } from './flowiseProvider';
-import { getFlowiseResponse } from '@integrations/flowise/flowiseRestClient';
-import { getFlowiseSdkResponse } from '@integrations/flowise/flowiseSdkClient';
 
 describe('FlowiseProvider', () => {
   let provider: FlowiseProvider;

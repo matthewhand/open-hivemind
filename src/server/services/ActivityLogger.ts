@@ -6,7 +6,7 @@ import { type MessageFlowEvent } from './WebSocketService';
 
 const debug = Debug('app:ActivityLogger');
 
-export interface ActivityFilter {
+interface ActivityFilter {
   startTime?: Date;
   endTime?: Date;
   limit?: number;

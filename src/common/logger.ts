@@ -190,7 +190,7 @@ export function sanitizeForLogging<T>(value: T, key?: string): unknown {
   return sanitizeValue(key, value, new WeakSet<object>());
 }
 
-export interface LoggerInstance {
+interface LoggerInstance {
   trace: (...args: unknown[]) => void;
   debug: (...args: unknown[]) => void;
   info: (...args: unknown[]) => void;

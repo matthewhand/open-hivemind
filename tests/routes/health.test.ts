@@ -1,8 +1,8 @@
 import express from 'express';
 import request from 'supertest';
-import healthRouter from '../../src/server/routes/health';
 import { DatabaseManager } from '../../src/database/DatabaseManager';
 import { BotManager } from '../../src/managers/BotManager';
+import healthRouter from '../../src/server/routes/health';
 import ApiMonitorService from '../../src/services/ApiMonitorService';
 
 // Mock dependencies
