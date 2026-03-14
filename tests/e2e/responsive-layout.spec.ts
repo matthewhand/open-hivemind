@@ -9,6 +9,9 @@ const VIEWPORTS = [
 
 const PAGES = [
   { path: '/admin/mcp-servers', name: 'MCPServersPage' },
+  { path: '/admin/mcp-tools', name: 'MCPToolsPage' },
+  { path: '/admin/specs', name: 'SpecsPage' },
+  { path: '/admin/export', name: 'ExportPage' },
   { path: '/admin/bots', name: 'BotsPage' },
   { path: '/admin/personas', name: 'PersonasPage' },
 ];
@@ -23,6 +26,9 @@ test.describe('Responsive Layout', () => {
       route.fulfill({ status: 200, json: { status: 'ok' } })
     );
     // Stub all list endpoints to return empty arrays
+    await page.route('/api/specs', (route) =>
+      route.fulfill({ status: 200, json: [] })
+    );
     await page.route('/api/**', (route) => {
       if (route.request().method() === 'GET') {
         route.fulfill({ status: 200, json: { data: [], success: true } });

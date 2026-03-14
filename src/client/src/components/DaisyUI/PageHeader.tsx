@@ -51,7 +51,7 @@ const PageHeader: React.FC<PageHeaderProps> = ({
       {/* Background decoration */}
       <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-radial from-primary/5 to-transparent opacity-50 blur-3xl" />
 
-      <div className="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+      <div className="relative z-10 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div className="flex items-start gap-4">
           {icon && (
             <div className={`p-3 rounded-xl ${iconBgMap[gradient]} backdrop-blur-sm shadow-sm`}>
