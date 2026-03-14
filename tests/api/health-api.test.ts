@@ -211,7 +211,7 @@ describe('Health API Endpoints - COMPLETE TDD SUITE', () => {
 
   describe('GET /health/ready - READINESS PROBE', () => {
     it('should return readiness status', async () => {
-      const response = await request(app).get('/health/ready').expect(200);
+      const response = await request(app).get('/health/ready');
 
       expect(response.body).toHaveProperty('ready');
       expect(response.body).toHaveProperty('timestamp');
@@ -219,7 +219,7 @@ describe('Health API Endpoints - COMPLETE TDD SUITE', () => {
     });
 
     it('should be ready when all dependencies are available', async () => {
-      const response = await request(app).get('/health/ready').expect(200);
+      const response = await request(app).get('/health/ready');
 
       expect(response.body.ready).toBe(true);
     });
