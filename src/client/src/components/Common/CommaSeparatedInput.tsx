@@ -53,8 +53,8 @@ export const CommaSeparatedInput: React.FC<CommaSeparatedInputProps> = ({
   useEffect(() => {
     // Only update if it actually changed to avoid infinite loops,
     // though the parent might give us the same array ref if we're lucky.
-    if (JSON.stringify(currentValueRef.current) !== JSON.stringify(value)) {
-      currentValueRef.current = value;
+    if (JSON.stringify(currentValueRef.current) !== JSON.stringify(normalizedValue)) {
+      currentValueRef.current = normalizedValue;
     }
   }, [normalizedValue]);
 
@@ -77,6 +77,7 @@ export const CommaSeparatedInput: React.FC<CommaSeparatedInputProps> = ({
 
   const commitInput = (forceValue?: string) => {
     const textToCommit = forceValue !== undefined ? forceValue : inputValue;
+    // Check if there is a trailing delimiter, and keep trailing text in the input
     const delimiterMatches = [
       textToCommit.lastIndexOf(','),
       textToCommit.lastIndexOf(';'),
@@ -137,6 +138,7 @@ export const CommaSeparatedInput: React.FC<CommaSeparatedInputProps> = ({
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter' || e.key === ',' || e.key === ';') {
       e.preventDefault();
+      // On Enter, we want to commit everything, so we append a comma to force processing of the last word
       commitInput(inputValue + ',');
     } else if (e.key === 'Backspace' && !inputValue && normalizedValue.length > 0) {
       const next = normalizedValue.slice(0, -1);
