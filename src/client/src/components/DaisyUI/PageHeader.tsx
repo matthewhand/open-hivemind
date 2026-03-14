@@ -32,7 +32,7 @@ const iconBgMap = {
  * Consistent page header with gradient background, icon, and actions.
  * Use this at the top of every page for visual consistency.
  */
-const PageHeader: React.FC<PageHeaderProps> = ({
+export const PageHeader: React.FC<PageHeaderProps> = ({
   title,
   description,
   icon,

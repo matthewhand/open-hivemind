@@ -4,10 +4,11 @@ import { authenticate, requireAdmin } from '../../auth/middleware';
 import { getTrustedMcpReposConfig } from '../../config/trustedMcpRepos';
 import { DatabaseManager } from '../../database/DatabaseManager';
 import { MCPService } from '../../mcp/MCPService';
+import { container } from 'tsyringe';
 import ApiMonitorService from '../../services/ApiMonitorService';
 import { webUIStorage } from '../../storage/webUIStorage';
 import { getRelevantEnvVars } from '../../utils/envUtils';
-import { isSafeUrl } from '../../utils/ssrfGuard';
+import { isSafeUrl } from '@hivemind/shared-types';
 import {
   LlmProviderSchema,
   McpServerConnectSchema,
@@ -339,7 +340,7 @@ router.post(
       webUIStorage.saveLlmProvider(newProvider);
 
       // Sync monitor endpoints
-      ApiMonitorService.getInstance().syncLlmEndpoints();
+      container.resolve(ApiMonitorService).syncLlmEndpoints();
 
       return res.json({
         success: true,
@@ -380,7 +381,7 @@ router.put(
       webUIStorage.saveLlmProvider(updatedProvider);
 
       // Sync monitor endpoints
-      ApiMonitorService.getInstance().syncLlmEndpoints();
+      container.resolve(ApiMonitorService).syncLlmEndpoints();
 
       return res.json({
         success: true,
@@ -423,7 +424,7 @@ router.delete(
       webUIStorage.deleteLlmProvider(id);
 
       // Sync monitor endpoints
-      ApiMonitorService.getInstance().syncLlmEndpoints();
+      container.resolve(ApiMonitorService).syncLlmEndpoints();
 
       return res.json({
         success: true,
@@ -455,7 +456,7 @@ router.post(
         webUIStorage.saveLlmProvider(provider);
 
         // Sync monitor endpoints
-        ApiMonitorService.getInstance().syncLlmEndpoints();
+        container.resolve(ApiMonitorService).syncLlmEndpoints();
       } else {
         return res.status(404).json({
           error: 'Provider not found',

@@ -126,11 +126,7 @@ export async function setupTestWithErrorDetection(page: Page): Promise<string[]>
  * Wait for page to be fully loaded and stable
  */
 export async function waitForPageReady(page: Page, timeout = 5000) {
-  try {
-    await page.waitForLoadState('networkidle', { timeout });
-  } catch (e) {
-    console.warn(`[waitForPageReady] networkidle timed out after ${timeout}ms.`);
-  }
+  // await page.waitForLoadState('networkidle');
   await page.waitForTimeout(Math.min(timeout, 1000)); // Small stabilization delay
 }
 

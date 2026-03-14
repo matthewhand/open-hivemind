@@ -6,7 +6,7 @@ import Card from './DaisyUI/Card';
 import Input from './DaisyUI/Input';
 import Select from './DaisyUI/Select';
 import Toggle from './DaisyUI/Toggle';
-import { Loading } from './DaisyUI/Loading';
+import { LoadingSpinner as Loading } from './DaisyUI/Loading';
 import Textarea from './DaisyUI/Textarea';
 import Modal from './DaisyUI/Modal';
 import Badge from './DaisyUI/Badge';
@@ -31,7 +31,6 @@ import {
 import { PROVIDER_CATEGORIES } from '../config/providers';
 import ProviderConfigModal from './ProviderConfiguration/ProviderConfigModal';
 import { LLM_PROVIDER_CONFIGS, LLMProviderType, ProviderModalState } from '../types';
-import { apiService } from '../services/api';
 
 interface ConfigSchema {
   doc?: string;
@@ -100,24 +99,30 @@ const IntegrationsPanel: React.FC = () => {
   const fetchData = async () => {
     try {
       setLoading(true);
-      const [configData, botsData, profilesData] = await Promise.all([
-        apiService.get('/api/config/global').catch(() => ({})),
-        apiService.get('/api/dashboard/status').catch((e) => {
-          console.warn('Failed to load bot status for IntegrationsPanel', e);
-          return { bots: [] };
-        }),
-        apiService.get('/api/config/llm-profiles').catch(() => []),
+      const [configResult, botsResult, profilesResult] = await Promise.allSettled([
+        fetch('/api/config/global'),
+        fetch('/api/dashboard/api/status'), // Using status endpoint for bots list
+        fetch('/api/config/llm-profiles'),
       ]);
+      const configRes = configResult.status === 'fulfilled' ? configResult.value : { ok: false, json: async () => ({}) } as unknown as Response;
+      const botsRes = botsResult.status === 'fulfilled' ? botsResult.value : { ok: false, json: async () => ({ bots: [] }) } as unknown as Response;
+      const profilesRes = profilesResult.status === 'fulfilled' ? profilesResult.value : { ok: false, json: async () => ({ llm: [] }) } as unknown as Response;
 
-      // If we got nothing, fallback to at least an empty object for config
-      // to avoid infinite loading states.
-      setConfig(configData && Object.keys(configData).length > 0 ? configData : { _mock: true });
+      if (!configRes.ok) { throw new Error('Failed to fetch configuration'); }
+      const configData = await configRes.json();
+      setConfig(configData);
+      setAdvancedMode(configData._userSettings?.values?.['webui.advancedMode'] || false);
 
-      setAdvancedMode(configData?._userSettings?.values?.['webui.advancedMode'] || false);
-      setBots(botsData?.bots || []);
-      setLlmProfiles(Array.isArray(profilesData) ? profilesData : profilesData?.llm || profilesData?.profiles?.llm || []);
+      if (botsRes.ok) {
+        const botsData = await botsRes.json();
+        setBots(botsData.bots || []);
+      }
+
+      if (profilesRes.ok) {
+        const profilesData = await profilesRes.json();
+        setLlmProfiles(profilesData.llm || profilesData.profiles?.llm || []);
+      }
     } catch (err: any) {
-      console.error('IntegrationsPanel fetch error:', err);
       setError(err.message);
     } finally {
       setLoading(false);

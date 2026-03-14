@@ -11,6 +11,18 @@ test.describe('Distributed Trace Waterfall Screenshots', () => {
       await route.fulfill({ status: 200, json: { authenticated: true, user: { role: 'admin' } } });
     });
 
+    await page.route('**/api/webui/system-status', async (route) => {
+      await route.fulfill({ status: 200, json: {
+        bots: { total: 12, active: 8 },
+        database: { stats: { totalMessages: 2847 } },
+        mcp: { connected: 5 }
+      } });
+    });
+
+    await page.route('**/api/dashboard/api/activity*', async (route) => {
+       await route.fulfill({ status: 200, json: { events: [] } });
+    });
+
     await page.route('**/api/config/llm-status', async (route) =>
       route.fulfill({ status: 200, json: { defaultConfigured: true } })
     );

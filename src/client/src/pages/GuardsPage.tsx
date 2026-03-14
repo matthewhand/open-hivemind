@@ -15,7 +15,7 @@ import Toggle from '../components/DaisyUI/Toggle';
 
 interface McpGuardConfig {
   enabled: boolean;
-  type: 'owner' | 'custom';
+  type: McpGuardType;
   allowedUsers?: string[];
   allowedTools?: string[];
 }
@@ -33,13 +33,29 @@ interface GuardrailProfile {
     };
     contentFilter?: {
       enabled: boolean;
-      strictness: 'low' | 'medium' | 'high';
+      strictness: StrictnessLevel;
       blockedTerms?: string[];
     };
   };
 }
 
+
+const DEFAULT_MAX_REQUESTS = 100;
+const DEFAULT_WINDOW_MS = 60000;
+const MAX_WINDOW_SECONDS = 3600;
+const MILLISECONDS_PER_SECOND = 1000;
+
+const STRICTNESS_LEVELS = ['low', 'medium', 'high'] as const;
+type StrictnessLevel = typeof STRICTNESS_LEVELS[number];
+
+const MCP_GUARD_TYPES = {
+  OWNER: 'owner',
+  CUSTOM: 'custom',
+} as const;
+type McpGuardType = typeof MCP_GUARD_TYPES[keyof typeof MCP_GUARD_TYPES];
+
 const API_BASE = '/api/admin';
+
 
 const GuardsPage: React.FC = () => {
   const [profiles, setProfiles] = useState<GuardrailProfile[]>([]);
@@ -60,9 +76,9 @@ const GuardsPage: React.FC = () => {
     name: '',
     description: '',
     guards: {
-      mcpGuard: { enabled: false, type: 'owner', allowedUsers: [], allowedTools: [] },
-      rateLimit: { enabled: false, maxRequests: 100, windowMs: 60000 },
-      contentFilter: { enabled: false, strictness: 'low', blockedTerms: [] },
+      mcpGuard: { enabled: false, type: MCP_GUARD_TYPES.OWNER, allowedUsers: [], allowedTools: [] },
+      rateLimit: { enabled: false, maxRequests: DEFAULT_MAX_REQUESTS, windowMs: DEFAULT_WINDOW_MS },
+      contentFilter: { enabled: false, strictness: STRICTNESS_LEVELS[0], blockedTerms: [] },
     },
   });
 
@@ -329,7 +345,7 @@ const GuardsPage: React.FC = () => {
                 <Shield className="w-5 h-5" /> Access Control
                 <div className="ml-auto z-10" onClick={e => e.stopPropagation()}>
                   <Toggle
-                    variant="primary"
+                    color="primary"
                     checked={editingProfile.guards.mcpGuard.enabled}
                     onChange={e => updateGuard('mcpGuard', { enabled: e.target.checked })}
                   />
@@ -343,12 +359,12 @@ const GuardsPage: React.FC = () => {
                     onChange={e => updateGuard('mcpGuard', { type: e.target.value })}
                     disabled={!editingProfile.guards.mcpGuard.enabled}
                     options={[
-                      { value: 'owner', label: 'Owner Only' },
-                      { value: 'custom', label: 'Custom Allowed Users' }
+                      { value: MCP_GUARD_TYPES.OWNER, label: 'Owner Only' },
+                      { value: MCP_GUARD_TYPES.CUSTOM, label: 'Custom Allowed Users' }
                     ]}
                   />
                 </div>
-                {editingProfile.guards.mcpGuard.type === 'custom' && (
+                {editingProfile.guards.mcpGuard.type === MCP_GUARD_TYPES.CUSTOM && (
                   <div className="form-control mt-4">
                     <label className="label" htmlFor="allowed-users"><span className="label-text">Allowed User IDs</span></label>
                     <CommaSeparatedInput
@@ -381,7 +397,7 @@ const GuardsPage: React.FC = () => {
                 <RefreshCw className="w-5 h-5" /> Rate Limiter
                 <div className="ml-auto z-10" onClick={e => e.stopPropagation()}>
                   <Toggle
-                    variant="warning"
+                    color="warning"
                     checked={editingProfile.guards.rateLimit?.enabled || false}
                     onChange={e => updateGuard('rateLimit', { enabled: e.target.checked })}
                   />
@@ -399,8 +415,9 @@ const GuardsPage: React.FC = () => {
                           )}
                         </div>
                       }
+                      id="max-requests"
                       type="number"
-                      value={editingProfile.guards.rateLimit?.maxRequests || 100}
+                      value={editingProfile.guards.rateLimit?.maxRequests || DEFAULT_MAX_REQUESTS}
                       onChange={e => updateGuard('rateLimit', { maxRequests: parseInt(e.target.value) })}
                       disabled={!editingProfile.guards.rateLimit?.enabled}
                       aria-label="Max Requests"
@@ -413,7 +430,7 @@ const GuardsPage: React.FC = () => {
                           <span>Window (seconds)</span>
                           <div className="flex items-center gap-2">
                             <span className="label-text-alt text-info" title="Time period for counting requests">
-                              Max 1 hour (3600s)
+                              Max 1 hour ({MAX_WINDOW_SECONDS}s)
                             </span>
                             {!editingProfile.guards.rateLimit?.enabled && (
                               <span className="badge badge-sm border-base-300">Disabled</span>
@@ -422,21 +439,23 @@ const GuardsPage: React.FC = () => {
                         </div>
                       }
                       type="number"
-                      value={(editingProfile.guards.rateLimit?.windowMs || 60000) / 1000}
+                      value={(editingProfile.guards.rateLimit?.windowMs || DEFAULT_WINDOW_MS) / MILLISECONDS_PER_SECOND}
                       onChange={e => {
-                        const seconds = Math.max(1, Math.min(3600, parseInt(e.target.value) || 0));
-                        updateGuard('rateLimit', { windowMs: seconds * 1000 });
+                        const seconds = Math.max(1, Math.min(MAX_WINDOW_SECONDS, parseInt(e.target.value) || 0));
+                        updateGuard('rateLimit', { windowMs: seconds * MILLISECONDS_PER_SECOND });
                       }}
                       disabled={!editingProfile.guards.rateLimit?.enabled}
+                      id="window-seconds"
                       min={1}
-                      max={3600}
+                      max={MAX_WINDOW_SECONDS}
                       placeholder="60"
+                      aria-label="Window (seconds)"
                       helperText={
                         (() => {
-                          const seconds = (editingProfile.guards.rateLimit?.windowMs || 60000) / 1000;
+                          const seconds = (editingProfile.guards.rateLimit?.windowMs || DEFAULT_WINDOW_MS) / MILLISECONDS_PER_SECOND;
                           if (seconds < 60) return `${seconds} seconds`;
                           if (seconds === 60) return '1 minute';
-                          if (seconds < 3600) return `${Math.floor(seconds / 60)} min ${seconds % 60}s`;
+                          if (seconds < MAX_WINDOW_SECONDS) return `${Math.floor(seconds / 60)} min ${seconds % 60}s`;
                           return '1 hour';
                         })()
                       }
@@ -453,7 +472,7 @@ const GuardsPage: React.FC = () => {
                 <AlertTriangle className="w-5 h-5" /> Content Filter
                 <div className="ml-auto z-10" onClick={e => e.stopPropagation()}>
                   <Toggle
-                    variant="error"
+                    color="error"
                     checked={editingProfile.guards.contentFilter?.enabled || false}
                     onChange={e => updateGuard('contentFilter', { enabled: e.target.checked })}
                   />

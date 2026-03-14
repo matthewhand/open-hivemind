@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import Badge from './Badge';
-import { Loading as LoadingSpinner } from './Loading';
+import LoadingSpinner from '../LoadingSpinner';
 import { Alert } from './Alert';
 
 interface ModelOption {

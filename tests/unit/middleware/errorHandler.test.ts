@@ -1,18 +1,18 @@
 import { NextFunction, Request, Response } from 'express';
-import { MetricsCollector } from '../../../src/monitoring/MetricsCollector';
-import { ErrorFactory, BaseHivemindError } from '../../../src/types/errorClasses';
-import { errorLogger } from '../../../src/utils/errorLogger';
 import {
-  correlationMiddleware,
-  globalErrorHandler,
   asyncErrorHandler,
+  correlationMiddleware,
+  errorRecoveryMiddleware,
+  globalErrorHandler,
   handleUncaughtException,
   handleUnhandledRejection,
+  rateLimitErrorHandler,
   setupGlobalErrorHandlers,
   setupGracefulShutdown,
-  errorRecoveryMiddleware,
-  rateLimitErrorHandler,
 } from '../../../src/middleware/errorHandler';
+import { MetricsCollector } from '../../../src/monitoring/MetricsCollector';
+import { BaseHivemindError, ErrorFactory } from '../../../src/types/errorClasses';
+import { errorLogger } from '../../../src/utils/errorLogger';
 
 jest.mock('../../../src/monitoring/MetricsCollector', () => ({
   MetricsCollector: {
@@ -272,8 +272,8 @@ describe('errorHandler middleware', () => {
 
       setupGlobalErrorHandlers();
 
-      expect(onSpy).toHaveBeenCalledWith('uncaughtException', handleUncaughtException);
-      expect(onSpy).toHaveBeenCalledWith('unhandledRejection', handleUnhandledRejection);
+      // Expected to be a no-op as it's now managed by ShutdownCoordinator
+      expect(onSpy).not.toHaveBeenCalled();
 
       onSpy.mockRestore();
     });
@@ -285,8 +285,8 @@ describe('errorHandler middleware', () => {
 
       setupGracefulShutdown();
 
-      expect(onSpy).toHaveBeenCalledWith('SIGTERM', expect.any(Function));
-      expect(onSpy).toHaveBeenCalledWith('SIGINT', expect.any(Function));
+      // Expected to be a no-op as it's now managed by ShutdownCoordinator
+      expect(onSpy).not.toHaveBeenCalled();
 
       onSpy.mockRestore();
     });
@@ -318,6 +318,10 @@ describe('errorHandler middleware', () => {
   });
 
   describe('rateLimitErrorHandler', () => {
+    /**
+     * Currently a stub test since rateLimitErrorHandler is a passthrough stub.
+     * This test ensures it doesn't break when passing through to next().
+     */
     it('should call next', () => {
       rateLimitErrorHandler(mockReq as Request, mockRes as Response, mockNext);
       expect(mockNext).toHaveBeenCalled();

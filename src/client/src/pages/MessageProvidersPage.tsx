@@ -47,6 +47,11 @@ const MessageProvidersPage: React.FC = () => {
     }
   }, []);
 
+  const reportSaveError = (message: string, err: any) => {
+    console.error(message, err);
+    setError(err?.message || message);
+  };
+
   useEffect(() => { fetchProfiles(); }, [fetchProfiles]);
 
   const handleAddProfile = () => openAddModal('global', 'message');
@@ -91,7 +96,13 @@ const MessageProvidersPage: React.FC = () => {
           try {
             await apiService.post('/api/config/message-profiles', payload);
           } catch (createErr: any) {
-            if (backup) await apiService.post('/api/config/message-profiles', backup).catch(() => {});
+            if (backup) {
+              try {
+                await apiService.post('/api/config/message-profiles', backup);
+              } catch (restoreErr: any) {
+                reportSaveError('Failed to restore previous message profile after save error', restoreErr);
+              }
+            }
             throw createErr;
           }
         }
