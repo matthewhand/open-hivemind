@@ -139,14 +139,13 @@ describe('sanitizeInput middleware', () => {
     expect(mockNext).toHaveBeenCalledTimes(1);
   });
 
-  it('should not sanitize custom request headers by default', () => {
-    // Note: sanitizationMiddleware historically only sanitizes body, query, and params.
-    // Testing that headers remain untouched.
+  it('should sanitize custom x- request headers', () => {
+    // sanitizationMiddleware sanitizes x- prefixed headers for XSS prevention
     mockReq.headers = { 'x-custom-header': '<script>alert(1)</script>' };
 
     sanitizeInput(mockReq as Request, mockRes as Response, mockNext);
 
-    expect(mockReq.headers['x-custom-header']).toBe('<script>alert(1)</script>');
+    expect(mockReq.headers['x-custom-header']).toBe('&lt;script&gt;alert(1)&lt;/script&gt;');
     expect(mockNext).toHaveBeenCalledTimes(1);
   });
 
