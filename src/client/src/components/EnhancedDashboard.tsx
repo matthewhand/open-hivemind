@@ -62,7 +62,7 @@ const EnhancedDashboard: React.FC = () => {
       setIsLoading(true);
       setError(null);
 
-      const response = await apiService.get<StatusResponse>('/api/dashboard/api/status');
+      const response = await apiService.get<StatusResponse>('/api/dashboard/status');
       const { bots: botData, uptime } = response.data;
 
       setBots(botData);
