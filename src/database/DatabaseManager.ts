@@ -17,6 +17,7 @@ export interface DatabaseConfig {
   database?: string;
   username?: string;
   password?: string;
+  poolSize?: number;
 }
 
 export interface MessageRecord {
@@ -309,6 +310,8 @@ export class DatabaseManager {
   private configured = false;
   private connected = false;
   private db: Database | null = null;
+  private poolSize: number = 10;
+  private activeQueries: number = 0;
 
   constructor(config?: DatabaseConfig) {
     if (config) {
@@ -342,6 +345,9 @@ export class DatabaseManager {
 
   configure(config: DatabaseConfig): void {
     this.config = config;
+    if (config.poolSize) {
+      this.poolSize = config.poolSize;
+    }
     this.configured = true;
   }
 
@@ -383,6 +389,29 @@ export class DatabaseManager {
         this.db = await open({
           filename: dbPath,
           driver: sqlite3.Database,
+        });
+
+        // Proxy to handle connection pool exhaustion
+        const originalDb = this.db;
+        const self = this;
+        this.db = new Proxy(originalDb, {
+          get(target, prop, receiver) {
+            const origMethod = Reflect.get(target, prop, receiver);
+            if (typeof origMethod === 'function' && ['run', 'get', 'all', 'exec'].includes(prop as string)) {
+              return async function (...args: any[]) {
+                if (self.activeQueries >= self.poolSize) {
+                  throw new DatabaseError('Connection pool exhausted', 'POOL_EXHAUSTED');
+                }
+                self.activeQueries++;
+                try {
+                  return await Reflect.apply(origMethod, target, args);
+                } finally {
+                  self.activeQueries--;
+                }
+              };
+            }
+            return origMethod;
+          }
         });
 
         await this.createTables();
@@ -1090,6 +1119,8 @@ export class DatabaseManager {
     totalChannels: number;
     totalAuthors: number;
     providers: Record<string, number>;
+    poolSize: number;
+    activeConnections: number;
   }> {
     this.ensureConnected();
 
@@ -1111,6 +1142,8 @@ export class DatabaseManager {
         totalChannels: totalChannels.count,
         totalAuthors: totalAuthors.count,
         providers,
+        poolSize: this.poolSize,
+        activeConnections: this.activeQueries,
       };
     } catch (error) {
       debug('Error getting stats:', error);

@@ -121,6 +121,7 @@ test.describe('System Management Page Screenshots', () => {
               connected: true,
               stats: {
                 poolSize: 10,
+                activeConnections: 10,
               },
             },
           },
