@@ -238,7 +238,7 @@ const BotConfigurationPage: React.FC = () => {
           <Badge variant="ghost" size="sm">{Object.keys(values).length} settings</Badge>
           {changed && <Badge variant="warning" size="sm">Modified</Badge>}
         </div>
-      ) as unknown as string,
+      ),
       content: (
         <div className="py-2">
           {Object.entries(values).map(([key, value]) =>
@@ -286,7 +286,7 @@ const BotConfigurationPage: React.FC = () => {
       <PageHeader
         title="Global Defaults"
         description="System and provider settings (convict configs)"
-        icon={<Settings className="w-8 h-8" />}
+        icon={<Settings />}
         gradient="accent"
         actions={
           <div className="flex gap-2">

@@ -30,7 +30,7 @@ import {
 
 import { PROVIDER_CATEGORIES } from '../config/providers';
 import ProviderConfigModal from './ProviderConfiguration/ProviderConfigModal';
-import { LLM_PROVIDER_CONFIGS, LLMProviderType, ProviderModalState } from '../types';
+import { LLM_PROVIDER_CONFIGS, LLMProviderType, ProviderModalState } from '../types/bot';
 
 interface ConfigSchema {
   doc?: string;
@@ -101,7 +101,7 @@ const IntegrationsPanel: React.FC = () => {
       setLoading(true);
       const [configResult, botsResult, profilesResult] = await Promise.allSettled([
         fetch('/api/config/global'),
-        fetch('/api/dashboard/api/status'), // Using status endpoint for bots list
+        fetch('/api/dashboard/status'),
         fetch('/api/config/llm-profiles'),
       ]);
       const configRes = configResult.status === 'fulfilled' ? configResult.value : { ok: false, json: async () => ({}) } as unknown as Response;

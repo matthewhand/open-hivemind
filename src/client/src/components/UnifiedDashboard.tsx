@@ -16,7 +16,7 @@ import { apiService } from '../services/api';
 import { CreateBotWizard } from './BotManagement/CreateBotWizard';
 import { Info } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { Activity, Clock, Cpu, HardDrive } from 'lucide-react';
+import { Activity, Clock, Cpu, HardDrive, PlusCircle } from 'lucide-react';
 import { RefreshCw, Plus } from 'lucide-react';
 
 type DashboardTab = 'getting-started' | 'status' | 'performance';
@@ -285,34 +285,42 @@ const UnifiedDashboard: React.FC = () => {
     );
   }, [statusBots]);
 
-  const statsCards = useMemo(
-    () => [
+  const statsCards = useMemo(() => {
+    return [
       {
+        id: 'agents',
         title: 'Active Agents',
-        value: `${activeBotCount} / ${bots.length}`,
-        trend: activeBotCount > 0 ? '+12%' : '0%',
-        trendUp: activeBotCount > 0,
-        subtext: 'vs last week',
+        value: activeBotCount,
+        total: bots.length,
+        icon: 'Bot',
+        color: 'primary',
       },
       {
-        title: 'Total Processed Messages',
-        value: totalMessages.toLocaleString(),
-        trend: totalMessages > 0 ? '+8%' : '0%',
-        trendUp: totalMessages > 0,
-        subtext: 'all time',
+        id: 'messages',
+        title: 'Messages Processed',
+        value: totalMessages,
+        trend: '+12%',
+        icon: 'MessageSquare',
+        color: 'secondary',
       },
       {
-        title: 'Platform Uptime',
-        value: `${Math.floor((status?.uptime ?? 0) / 3600)}h ${Math.floor(
-          ((status?.uptime ?? 0) % 3600) / 60
-        )}m`,
-        trend: '99.9%',
-        trendUp: true,
-        subtext: 'last 30 days',
+        id: 'connections',
+        title: 'Active Connections',
+        value: activeConnections,
+        total: bots.length,
+        icon: 'Activity',
+        color: 'accent',
       },
-    ],
-    [activeBotCount, bots.length, totalMessages, status?.uptime]
-  );
+      {
+        id: 'errors',
+        title: 'Error Rate',
+        value: totalErrors,
+        trend: '-2%',
+        icon: 'AlertTriangle',
+        color: 'error',
+      },
+    ];
+  }, [activeBotCount, bots.length, totalMessages, activeConnections, totalErrors]);
 
   const botTableData = useMemo<BotTableRow[]>(() => {
     return bots.map((bot, index) => {
@@ -336,85 +344,16 @@ const UnifiedDashboard: React.FC = () => {
     });
   }, [bots, statusBots]);
 
-  const botColumns = useMemo(() => [
-    {
-      accessorKey: 'name',
-      header: 'Name',
-      cell: (value: any, row: any) => (
-        <div className="flex items-center gap-3">
-          <span className="text-xl" aria-hidden>
-            {getProviderEmoji(row.provider)}
-          </span>
-          <div>
-            <div className="font-semibold">{String(value)}</div>
-            <div className="text-xs text-base-content/60">
-              {row.persona ? `Persona: ${row.persona}` : 'No Persona'}
-            </div>
-          </div>
-        </div>
-      ),
-    },
-    {
-      accessorKey: 'status',
-      header: 'Status',
-      cell: (value: any) => (
-        <Badge variant={getStatusBadgeVariant(String(value))} size="small">
-          {String(value).toUpperCase()}
-        </Badge>
-      ),
-    },
-    {
-      accessorKey: 'connected',
-      header: 'Connection',
-      cell: (value: any) => (
-        <Badge variant={value ? 'success' : 'neutral'} size="small" className="gap-1">
-          {value ? (
-            <>
-              <div className="w-1.5 h-1.5 rounded-full bg-current" aria-hidden />
-              Online
-            </>
-          ) : (
-            <>
-              <div className="w-1.5 h-1.5 rounded-full bg-current opacity-40" aria-hidden />
-              Offline
-            </>
-          )}
-        </Badge>
-      ),
-    },
-    {
-      accessorKey: 'messageCount',
-      header: 'Messages',
-      cell: (value: any) => (
-        <span className="font-mono text-sm">{value.toLocaleString()}</span>
-      ),
-    },
-    {
-      accessorKey: 'guard',
-      header: 'Security',
-      cell: (value: any) => (
-        <Badge
-          variant={
-            value === 'Open Access'
-              ? 'warning'
-              : value === 'Owner Guard'
-              ? 'neutral'
-              : 'success'
-          }
-          size="small"
-        >
-          {String(value)}
-        </Badge>
-      ),
-    },
-    {
-      accessorKey: 'lastActivity',
-      header: 'Last Activity',
-      cell: (value: any) => (
-        <span className="text-sm text-base-content/70">{String(value)}</span>
-      ),
-    },
-  ], []);
+  const getBotColumns = () => [
+    { key: 'name', label: 'Agent Name' },
+    { key: 'provider', label: 'Provider' },
+    { key: 'llm', label: 'LLM' },
+    { key: 'status', label: 'Status' },
+    { key: 'messageCount', label: 'Messages' },
+    { key: 'errorCount', label: 'Errors' }
+  ];
+
+  const botColumns = useMemo(() => getBotColumns(), []);
 
   const performanceMetrics = useMemo(() => {
     const cpuUsage = Math.min(92, activeConnections * 14 + 28);

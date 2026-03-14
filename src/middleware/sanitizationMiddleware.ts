@@ -96,10 +96,15 @@ export const sanitizeInput = (req: Request, res: Response, next: NextFunction) =
     req.params = sanitizeObject(req.params);
   }
 
+<<<<<<< HEAD
   if (req.headers && typeof req.headers === 'object') {
     const sanitizedHeaders: any = {};
     for (const key of Object.keys(req.headers)) {
-      if (SKIP_HEADER_SANITIZATION.has(key.toLowerCase())) {
+      const normalizedKey = key.toLowerCase();
+      if (normalizedKey === '__proto__' || normalizedKey === 'constructor' || normalizedKey === 'prototype') {
+        continue;
+      }
+      if (SKIP_HEADER_SANITIZATION.has(normalizedKey) || !normalizedKey.startsWith('x-')) {
         sanitizedHeaders[key] = req.headers[key];
       } else {
         sanitizedHeaders[key] = sanitizeObject(req.headers[key]);
