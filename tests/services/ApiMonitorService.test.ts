@@ -7,6 +7,7 @@ describe('ApiMonitorService', () => {
   let service: ApiMonitorService;
 
   beforeEach(() => {
+    (ApiMonitorService as any).instance = undefined;
     service = ApiMonitorService.getInstance();
     service.stopAllMonitoring();
     // Clear all endpoints
@@ -18,6 +19,7 @@ describe('ApiMonitorService', () => {
   });
 
   afterEach(() => {
+    (ApiMonitorService as any).instance = undefined;
     service.stopAllMonitoring();
     // Clean up any remaining listeners
     service.removeAllListeners();
@@ -317,4 +319,52 @@ describe('ApiMonitorService', () => {
       });
     });
   });
+
+  describe('Edge Cases and Concurrency', () => {
+    it('should handle adding endpoint with null/undefined values gracefully', () => {
+      expect(() => {
+        service.addEndpoint(null as any);
+      }).toThrow();
+      expect(() => {
+        service.addEndpoint(undefined as any);
+      }).toThrow();
+    });
+
+    it('should handle extremely long strings for endpoint id/url', () => {
+      const longId = 'a'.repeat(10000);
+      const longUrl = 'http://' + 'b'.repeat(10000) + '.com';
+      const endpoint = {
+        id: longId,
+        name: 'Long API',
+        url: longUrl,
+        method: 'GET',
+        enabled: true
+      } as any;
+
+      service.addEndpoint(endpoint);
+      expect(service.getEndpoint(longId)).toBeDefined();
+      expect(service.getEndpoint(longId)?.url).toBe(longUrl);
+    });
+
+    it('should handle concurrent addEndpoint calls', async () => {
+      const promises = [];
+      for (let i = 0; i < 100; i++) {
+        promises.push(new Promise<void>((resolve) => {
+          setTimeout(() => {
+            service.addEndpoint({
+              id: `concurrent-endpoint-${i}`,
+              name: `Concurrent ${i}`,
+              url: 'http://example.com',
+              method: 'GET',
+              enabled: true
+            } as any);
+            resolve();
+          }, Math.random() * 10);
+        }));
+      }
+      await Promise.all(promises);
+      expect(service.getAllEndpoints().filter(e => e.id.startsWith('concurrent-endpoint-')).length).toBe(100);
+    });
+  });
+
 });

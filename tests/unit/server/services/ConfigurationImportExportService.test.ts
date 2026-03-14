@@ -134,7 +134,7 @@ describe('ConfigurationImportExportService - Version Caching', () => {
     (service as any).dbManager = dbManagerMock;
 
     // Mock fs.readFile to return standard format JSON
-    (fs.promises.readFile as jest.Mock).mockImplementation((path) => {
+    (fs.readFile as jest.Mock).mockImplementation((path) => {
       return Promise.resolve(JSON.stringify({
         configurations: [],
         versions: [

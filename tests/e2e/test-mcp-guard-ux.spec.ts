@@ -69,11 +69,13 @@ test('verify MCP Guard UX', async ({ page }) => {
   await page.screenshot({ path: 'docs/screenshots/mcp-guard-ux-before.png' });
 
   await usersInput.pressSequentially(',user2');
+  await usersInput.press('Enter');
 
   // Screenshot after typing comma
   await page.screenshot({ path: 'docs/screenshots/mcp-guard-ux-after.png' });
 
-  const value = await usersInput.inputValue();
-  console.log('Input value after typing ",user2":', value);
-  expect(value).toBe('user1, user2');
+  const chips = modal.locator('[data-testid="chip"]');
+  await expect(chips).toHaveCount(2);
+  await expect(chips.nth(0)).toHaveText(/user1/);
+  await expect(chips.nth(1)).toHaveText(/user2/);
 });

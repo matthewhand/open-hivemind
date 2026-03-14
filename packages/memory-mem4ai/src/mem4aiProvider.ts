@@ -1,9 +1,9 @@
 /**
  * Mem4ai Memory Provider for Open Hivemind
- * 
+ *
  * Open-source, LLM-friendly memory management with adaptive personalization
  * and flexible metadata tagging.
- * 
+ *
  * @package @hivemind/memory-mem4ai
  */
 
@@ -30,7 +30,7 @@ export interface SearchResult {
 
 /**
  * Mem4ai Memory Provider implementation
- * 
+ *
  * Provides adaptive memory management with flexible metadata tagging
  * for LLM applications.
  */
