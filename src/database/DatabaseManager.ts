@@ -1207,14 +1207,25 @@ export class DatabaseManager {
 
     if (ids.length === 0) return [];
 
-    try {
-      const placeholders = ids.map(() => '?').join(',');
-      const rows = await this.db!.all(
-        `SELECT * FROM bot_configurations WHERE id IN (${placeholders})`,
-        ids
-      );
+    // Validate all inputs are valid numbers to prevent injection/DOS
+    const validIds = ids.filter((id) => typeof id === 'number' && !isNaN(id) && isFinite(id));
+    if (validIds.length === 0) return [];
 
-      return rows.map((row) => ({
+    try {
+      const CHUNK_SIZE = 100;
+      const allRows: any[] = [];
+
+      for (let i = 0; i < validIds.length; i += CHUNK_SIZE) {
+        const chunk = validIds.slice(i, i + CHUNK_SIZE);
+        const placeholders = chunk.map(() => '?').join(',');
+        const rows = await this.db!.all(
+          `SELECT * FROM bot_configurations WHERE id IN (${placeholders})`,
+          chunk
+        );
+        allRows.push(...rows);
+      }
+
+      return allRows.map((row) => ({
         id: row.id,
         name: row.name,
         messageProvider: row.messageProvider,
@@ -1577,16 +1588,29 @@ export class DatabaseManager {
       return new Map();
     }
 
+    // Validate all inputs are valid numbers
+    const validIds = botConfigurationIds.filter(
+      (id) => typeof id === 'number' && !isNaN(id) && isFinite(id)
+    );
+    if (validIds.length === 0) return new Map();
+
     try {
-      const placeholders = botConfigurationIds.map(() => '?').join(',');
-      const rows = await this.db!.all(
-        `SELECT * FROM bot_configuration_versions WHERE botConfigurationId IN (${placeholders}) ORDER BY botConfigurationId, version DESC`,
-        botConfigurationIds
-      );
+      const CHUNK_SIZE = 100;
+      const allRows: any[] = [];
+
+      for (let i = 0; i < validIds.length; i += CHUNK_SIZE) {
+        const chunk = validIds.slice(i, i + CHUNK_SIZE);
+        const placeholders = chunk.map(() => '?').join(',');
+        const rows = await this.db!.all(
+          `SELECT * FROM bot_configuration_versions WHERE botConfigurationId IN (${placeholders}) ORDER BY botConfigurationId, version DESC`,
+          chunk
+        );
+        allRows.push(...rows);
+      }
 
       const versionsMap = new Map<number, BotConfigurationVersion[]>();
 
-      rows.forEach((row) => {
+      allRows.forEach((row) => {
         const configId = row.botConfigurationId;
         const version: BotConfigurationVersion = {
           id: row.id,
@@ -1694,16 +1718,29 @@ export class DatabaseManager {
       return new Map();
     }
 
+    // Validate all inputs are valid numbers
+    const validIds = botConfigurationIds.filter(
+      (id) => typeof id === 'number' && !isNaN(id) && isFinite(id)
+    );
+    if (validIds.length === 0) return new Map();
+
     try {
-      const placeholders = botConfigurationIds.map(() => '?').join(',');
-      const rows = await this.db!.all(
-        `SELECT * FROM bot_configuration_audit WHERE botConfigurationId IN (${placeholders}) ORDER BY botConfigurationId, performedAt DESC`,
-        botConfigurationIds
-      );
+      const CHUNK_SIZE = 100;
+      const allRows: any[] = [];
+
+      for (let i = 0; i < validIds.length; i += CHUNK_SIZE) {
+        const chunk = validIds.slice(i, i + CHUNK_SIZE);
+        const placeholders = chunk.map(() => '?').join(',');
+        const rows = await this.db!.all(
+          `SELECT * FROM bot_configuration_audit WHERE botConfigurationId IN (${placeholders}) ORDER BY botConfigurationId, performedAt DESC`,
+          chunk
+        );
+        allRows.push(...rows);
+      }
 
       const auditMap = new Map<number, BotConfigurationAudit[]>();
 
-      rows.forEach((row) => {
+      allRows.forEach((row) => {
         const configId = row.botConfigurationId;
         const audit: BotConfigurationAudit = {
           id: row.id,
