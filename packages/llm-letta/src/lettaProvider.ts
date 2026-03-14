@@ -1,7 +1,7 @@
 import Debug from 'debug';
 import Letta from '@letta-ai/letta-client';
-import type { IMessage } from '@message/interfaces/IMessage';
 import type { ILlmProvider } from '@llm/interfaces/ILlmProvider';
+import type { IMessage } from '@message/interfaces/IMessage';
 
 const debug = Debug('app:lettaProvider');
 
@@ -32,9 +32,15 @@ export class LettaProvider implements ILlmProvider {
     return LettaProvider.instance;
   }
 
-  supportsChatCompletion(): boolean { return true; }
-  supportsCompletion(): boolean { return false; }
-  supportsHistory(): boolean { return false; }
+  supportsChatCompletion(): boolean {
+    return true;
+  }
+  supportsCompletion(): boolean {
+    return false;
+  }
+  supportsHistory(): boolean {
+    return false;
+  }
 
   /**
    * Resolve the conversation ID based on session mode and metadata.
@@ -142,7 +148,12 @@ export class LettaProvider implements ILlmProvider {
     // Resolve conversation ID based on session mode
     const convId = await this.resolveConversationId(agentId, metadata);
 
-    debug('Sending to Letta agent %s, conversation %s: %s', agentId, convId, input.substring(0, 100));
+    debug(
+      'Sending to Letta agent %s, conversation %s: %s',
+      agentId,
+      convId,
+      input.substring(0, 100)
+    );
 
     // Use default conversation API (backward compatible) or conversation-specific API
     if (convId === 'default') {

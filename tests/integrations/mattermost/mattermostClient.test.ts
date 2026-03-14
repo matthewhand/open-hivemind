@@ -1,9 +1,5 @@
 import axios from 'axios';
-<<<<<<< HEAD
-import MattermostClient from '../../../src/integrations/mattermost/mattermostClient';
-=======
 import MattermostClient from '../../../packages/message-mattermost/src/mattermostClient';
->>>>>>> d5213de3 (Refiner (Import Order and Dependency Hygiene): Align dependency versioning and order)
 
 jest.mock('axios');
 jest.mock('@src/utils/ssrfGuard', () => ({
