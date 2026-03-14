@@ -1,1 +1,3 @@
-export const useDashboardStats = () => ({ stats: null, loading: false });
+export const useDashboardStats = (props: any) => ({
+  statsCards: []
+});

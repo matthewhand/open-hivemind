@@ -795,6 +795,7 @@ try {
 } catch (error: any) {
   if (error.code !== 'ENOENT') {
     debug(`Error reading message config from ${configPath}:`, error.message);
+    throw error;
   } else {
     debug(`Message config file not found at ${configPath}, using environment variables and defaults`);
   }
