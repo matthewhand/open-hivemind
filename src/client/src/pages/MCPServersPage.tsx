@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   PlusIcon,
@@ -12,11 +12,7 @@ import {
   WrenchScrewdriverIcon,
 } from '@heroicons/react/24/outline';
 import { Server, Search } from 'lucide-react';
-import Breadcrumbs from '../components/DaisyUI/Breadcrumbs';
-import { Alert } from '../components/DaisyUI/Alert';
-import Modal from '../components/DaisyUI/Modal';
-import EmptyState from '../components/DaisyUI/EmptyState';
-import PageHeader from '../components/DaisyUI/PageHeader';
+import { Breadcrumbs, Alert, Modal, EmptyState, PageHeader } from '../components/DaisyUI';
 import SearchFilterBar from '../components/SearchFilterBar';
 
 interface Tool {

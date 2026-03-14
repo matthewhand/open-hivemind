@@ -16,6 +16,7 @@ import { mem0ProviderSchema } from './schemas/mem0';
 import { mem4aiProviderSchema } from './schemas/mem4ai';
 import { openSwarmProviderSchema } from './schemas/openswarm';
 import { memvaultProviderSchema } from './schemas/memvault';
+import { webhookProviderSchema } from './schemas/webhook';
 
 export const PROVIDER_SCHEMAS: Record<string, ProviderConfigSchema> = {
   // Message providers
@@ -23,6 +24,7 @@ export const PROVIDER_SCHEMAS: Record<string, ProviderConfigSchema> = {
   slack: slackProviderSchema,
   telegram: telegramProviderSchema,
   mattermost: mattermostProviderSchema,
+  webhook: webhookProviderSchema,
 
   // LLM providers
   openai: openAIProviderSchema,
