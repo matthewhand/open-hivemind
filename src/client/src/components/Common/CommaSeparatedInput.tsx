@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { safeArray, safeString } from '../../utils/safeString';
 
 export interface CommaSeparatedInputProps {
-  value: string[];
+  value?: string[];
   onChange: (v: string[]) => void;
   maxItems?: number;
   placeholder?: string;
@@ -16,7 +16,7 @@ export interface CommaSeparatedInputProps {
 }
 
 export const CommaSeparatedInput: React.FC<CommaSeparatedInputProps> = ({
-  value,
+  value = [],
   onChange,
   maxItems = 20,
   placeholder = 'Type and press Enter or comma',
