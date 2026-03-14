@@ -399,15 +399,17 @@ export class ShutdownCoordinator {
       debug('Error clearing IdleResponseManager:', error);
     }
 
-    // Stop all registered shutdownable services (background tasks)
-    for (const service of this.shutdownableServices) {
+    // Stop all registered shutdownable services (background tasks) concurrently
+    const backgroundShutdowns = this.shutdownableServices.map(async (service) => {
       try {
         await service.shutdown();
         debug(`Service shut down: ${service.name || service.constructor?.name || 'unknown'}`);
       } catch (error) {
         debug(`Error shutting down service: ${service.name || 'unknown'}`, error);
       }
-    }
+    });
+
+    await Promise.allSettled(backgroundShutdowns);
   }
 
   /**
