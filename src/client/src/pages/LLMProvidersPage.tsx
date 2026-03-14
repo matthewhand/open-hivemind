@@ -1,14 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useModal } from '../hooks/useModal';
-import Card from '../components/DaisyUI/Card';
-import Button from '../components/DaisyUI/Button';
-import Badge from '../components/DaisyUI/Badge';
-import { Alert } from '../components/DaisyUI/Alert';
-import PageHeader from '../components/DaisyUI/PageHeader';
-import StatsCards from '../components/DaisyUI/StatsCards';
-import EmptyState from '../components/DaisyUI/EmptyState';
-import { LoadingSpinner } from '../components/DaisyUI/Loading';
+import { Card, Button, Badge, Alert, PageHeader, StatsCards, EmptyState, LoadingSpinner, LoadingSkeletonCard } from '../components/DaisyUI';
 import SearchFilterBar from '../components/SearchFilterBar';
 import {
   Brain as BrainIcon,
@@ -71,14 +64,11 @@ const LLMProvidersPage: React.FC = () => {
   const fetchProfiles = useCallback(async () => {
     try {
       setLoading(true);
-      const [profilesResult, statusResult, globalResult] = await Promise.allSettled([
+      const [profilesRes, statusRes, globalRes] = await Promise.all([
         apiService.get('/api/config/llm-profiles'),
         apiService.get('/api/config/llm-status'),
         apiService.get('/api/config/global'),
       ]);
-      const profilesRes = profilesResult.status === 'fulfilled' ? profilesResult.value : {};
-      const statusRes = statusResult.status === 'fulfilled' ? statusResult.value : {};
-      const globalRes = globalResult.status === 'fulfilled' ? globalResult.value : {};
       setProfiles((profilesRes as any).llm || (profilesRes as any).profiles?.llm || []);
       setDefaultStatus(statusRes);
       const gs = (globalRes as any)._userSettings?.values || {};
@@ -106,11 +96,6 @@ const LLMProvidersPage: React.FC = () => {
       configName: 'llm',
       updates: patch,
     });
-  };
-
-  const reportSaveError = (message: string, err: any) => {
-    console.error(message, err);
-    setError(err?.message || message);
   };
 
   const handleAddProfile = () => openAddModal('global', 'llm');
@@ -148,13 +133,7 @@ const LLMProvidersPage: React.FC = () => {
           try {
             await apiService.post('/api/config/llm-profiles', payload);
           } catch (e: any) {
-            if (backup) {
-              try {
-                await apiService.post('/api/config/llm-profiles', backup);
-              } catch (restoreErr: any) {
-                reportSaveError('Failed to restore previous LLM profile after save error', restoreErr);
-              }
-            }
+            if (backup) await apiService.post('/api/config/llm-profiles', backup).catch(() => {});
             throw e;
           }
         }
@@ -211,7 +190,7 @@ const LLMProvidersPage: React.FC = () => {
       <PageHeader
         title="LLM Providers"
         description="Configure AI provider profiles and assign them to specific use cases."
-        icon={<BrainIcon className="w-6 h-6" />}
+        icon={BrainIcon}
         actions={
           <div className="flex gap-2">
             <Button variant="ghost" onClick={fetchProfiles} disabled={loading}>
@@ -275,15 +254,8 @@ const LLMProvidersPage: React.FC = () => {
                 className="select select-bordered select-sm w-full"
                 value={defaultChatbotProfile}
                 onChange={async (e) => {
-                  const previous = defaultChatbotProfile;
-                  const next = e.target.value;
-                  setDefaultChatbotProfile(next);
-                  try {
-                    await saveGlobal({ defaultChatbotProfile: next });
-                  } catch (err: any) {
-                    setDefaultChatbotProfile(previous);
-                    reportSaveError('Failed to update default chatbot profile', err);
-                  }
+                  setDefaultChatbotProfile(e.target.value);
+                  await saveGlobal({ defaultChatbotProfile: e.target.value }).catch(() => {});
                 }}
                 disabled={loading}
               >
@@ -310,15 +282,8 @@ const LLMProvidersPage: React.FC = () => {
                 className="select select-bordered select-sm w-full"
                 value={webuiIntelligenceProvider}
                 onChange={async (e) => {
-                  const previous = webuiIntelligenceProvider;
-                  const next = e.target.value;
-                  setWebuiIntelligenceProvider(next);
-                  try {
-                    await saveGlobal({ webuiIntelligenceProvider: next });
-                  } catch (err: any) {
-                    setWebuiIntelligenceProvider(previous);
-                    reportSaveError('Failed to update WebUI intelligence provider', err);
-                  }
+                  setWebuiIntelligenceProvider(e.target.value);
+                  await saveGlobal({ webuiIntelligenceProvider: e.target.value }).catch(() => {});
                 }}
                 disabled={loading}
               >
@@ -344,15 +309,8 @@ const LLMProvidersPage: React.FC = () => {
                 className="select select-bordered select-sm w-full"
                 value={defaultEmbeddingProvider}
                 onChange={async (e) => {
-                  const previous = defaultEmbeddingProvider;
-                  const next = e.target.value;
-                  setDefaultEmbeddingProvider(next);
-                  try {
-                    await saveLlmConfig({ DEFAULT_EMBEDDING_PROVIDER: next });
-                  } catch (err: any) {
-                    setDefaultEmbeddingProvider(previous);
-                    reportSaveError('Failed to update default embedding provider', err);
-                  }
+                  setDefaultEmbeddingProvider(e.target.value);
+                  await saveLlmConfig({ DEFAULT_EMBEDDING_PROVIDER: e.target.value }).catch(() => {});
                 }}
                 disabled={loading}
               >
@@ -385,15 +343,8 @@ const LLMProvidersPage: React.FC = () => {
             className="toggle toggle-primary"
             checked={perUseCaseEnabled}
             onChange={async (e) => {
-              const previous = perUseCaseEnabled;
-              const next = e.target.checked;
-              setPerUseCaseEnabled(next);
-              try {
-                await saveGlobal({ perUseCaseEnabled: next });
-              } catch (err: any) {
-                setPerUseCaseEnabled(previous);
-                reportSaveError('Failed to update per-use-case setting', err);
-              }
+              setPerUseCaseEnabled(e.target.checked);
+              await saveGlobal({ perUseCaseEnabled: e.target.checked }).catch(() => {});
             }}
           />
         </div>
@@ -415,7 +366,11 @@ const LLMProvidersPage: React.FC = () => {
       />
 
       {loading ? (
-        <div className="flex justify-center py-12"><LoadingSpinner size="lg" /></div>
+        <div className="grid grid-cols-1 gap-4">
+          <LoadingSkeletonCard />
+          <LoadingSkeletonCard />
+          <LoadingSkeletonCard />
+        </div>
       ) : profiles.length === 0 ? (
         <EmptyState
           icon={BrainIcon}
