@@ -1,8 +1,5 @@
-import debugFn from 'debug';
 import messageConfig from '@config/messageConfig';
 import type { IMessage } from '@message/interfaces/IMessage';
-
-const debug = debugFn('hivemind:message:shouldProcessMessage');
 
 /**
  * Returns the minimum interval in milliseconds for processing messages.
