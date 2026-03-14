@@ -1,3 +1,9 @@
-export const useDashboardStats = (props: any) => ({
-  statsCards: []
-});
+export const useDashboardStats = (
+  bots: any,
+  statusBots: any,
+  activeBotCount: any,
+  totalMessages: any,
+  activeConnections: any
+) => {
+  return { statsCards: [] };
+};
