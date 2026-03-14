@@ -25,8 +25,6 @@ import BotCard from '../components/BotManagement/BotCard';
 import { CreateBotWizard } from '../components/BotManagement/CreateBotWizard';
 import { BotSettingsModal } from '../components/BotSettingsModal';
 import { useLocation } from 'react-router-dom';
-import { useLlmStatus } from '../hooks/useLlmStatus';
-import { usePageLifecycle } from '../hooks/usePageLifecycle';
 
 interface BotData extends BotConfig {
   id: string;
@@ -105,8 +103,6 @@ const BotsPage: React.FC = () => {
       globalConfig,
     };
   }, []);
-
-  const [uiError, setUiError] = useState<string | null>(null);
 
   // Use Page Lifecycle Hook
   const {

@@ -11,6 +11,7 @@ describe('sanitizeInput middleware', () => {
       body: {},
       query: {},
       params: {},
+      headers: {},
     };
     mockRes = {};
     mockNext = jest.fn();
@@ -164,6 +165,40 @@ describe('sanitizeInput middleware', () => {
     sanitizeInput(mockReq as Request, mockRes as Response, mockNext);
 
     expect(mockReq.body).toEqual({ empty: '', whitespace: '   ' });
+    expect(mockNext).toHaveBeenCalledTimes(1);
+  });
+
+  it('should not corrupt standard headers that contain valid characters', () => {
+    mockReq.headers = {
+      'authorization': 'Bearer "my_token"',
+      'cookie': 'session_id="value123"&user=test',
+      'etag': 'W/"0815"',
+      'content-type': 'application/json; charset="utf-8"',
+      'user-agent': 'Mozilla/5.0 (X11; Linux x86_64)',
+      'x-custom-header': '<script>alert(1)</script>',
+    };
+
+    sanitizeInput(mockReq as Request, mockRes as Response, mockNext);
+
+    expect(mockReq.headers['authorization']).toBe('Bearer "my_token"');
+    expect(mockReq.headers['cookie']).toBe('session_id="value123"&user=test');
+    expect(mockReq.headers['etag']).toBe('W/"0815"');
+    expect(mockReq.headers['content-type']).toBe('application/json; charset="utf-8"');
+    expect(mockReq.headers['user-agent']).toBe('Mozilla/5.0 (X11; Linux x86_64)');
+    expect(mockReq.headers['x-custom-header']).toBe('&lt;script&gt;alert(1)&lt;/script&gt;');
+    expect(mockNext).toHaveBeenCalledTimes(1);
+  });
+
+  it('should sanitize arrays in custom headers', () => {
+    mockReq.headers = {
+      'x-custom-array': ['<script>', 'safe', '&'],
+      'x-forwarded-for': '127.0.0.1, 10.0.0.1',
+    };
+
+    sanitizeInput(mockReq as Request, mockRes as Response, mockNext);
+
+    expect(mockReq.headers['x-custom-array']).toEqual(['&lt;script&gt;', 'safe', '&amp;']);
+    expect(mockReq.headers['x-forwarded-for']).toBe('127.0.0.1, 10.0.0.1');
     expect(mockNext).toHaveBeenCalledTimes(1);
   });
 });
