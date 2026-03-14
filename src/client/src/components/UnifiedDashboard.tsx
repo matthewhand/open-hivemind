@@ -1,19 +1,16 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import {
-  Alert,
-  Badge,
-  Button,
-  Card,
-  DataTable,
-  Modal,
-  ProgressBar,
-  StatsCards,
-  ToastNotification,
-  LoadingSpinner,
-  LoadingSkeletonCard,
-} from './DaisyUI';
+import { Alert } from './DaisyUI/Alert';
+import Badge from './DaisyUI/Badge';
+import Button from './DaisyUI/Button';
+import Card from './DaisyUI/Card';
+import DataTable from './DaisyUI/DataTable';
+import Modal from './DaisyUI/Modal';
+import ProgressBar from './DaisyUI/ProgressBar';
+import StatsCards from './DaisyUI/StatsCards';
+import ToastNotification from './DaisyUI/ToastNotification';
+import { LoadingSpinner } from './DaisyUI/Loading';
 import type { Bot, StatusResponse } from '../services/api';
 import { apiService } from '../services/api';
 import { CreateBotWizard } from './BotManagement/CreateBotWizard';
@@ -631,11 +628,8 @@ const UnifiedDashboard: React.FC = () => {
       </div>
 
       {loading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 py-6">
-          <LoadingSkeletonCard />
-          <LoadingSkeletonCard />
-          <LoadingSkeletonCard />
-          <LoadingSkeletonCard />
+        <div className="flex justify-center py-20">
+          <LoadingSpinner size="lg" />
         </div>
       ) : (
         <>

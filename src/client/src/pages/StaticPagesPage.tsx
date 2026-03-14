@@ -1,7 +1,9 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React from 'react';
-import { Card, Button, Breadcrumbs, PageHeader } from '../components/DaisyUI';
-import { ArrowTopRightOnSquareIcon, HomeIcon, ClockIcon, ComputerDesktopIcon, DocumentTextIcon } from '@heroicons/react/24/outline';
+import Card from '../components/DaisyUI/Card';
+import Button from '../components/DaisyUI/Button';
+import Breadcrumbs from '../components/DaisyUI/Breadcrumbs';
+import { ArrowTopRightOnSquareIcon, HomeIcon, ClockIcon, ComputerDesktopIcon } from '@heroicons/react/24/outline';
 
 const StaticPagesPage: React.FC = () => {
   const breadcrumbItems = [{ label: 'Static Pages', href: '/static', isActive: true }];
@@ -38,11 +40,10 @@ const StaticPagesPage: React.FC = () => {
     <div className="p-6">
       <Breadcrumbs items={breadcrumbItems} />
 
-      <PageHeader
-        title="Static Pages"
-        description="Browse and access static HTML pages and resources"
-        icon={<DocumentTextIcon className="w-6 h-6" />}
-      />
+      <div className="mt-4 mb-8">
+        <h1 className="text-3xl font-bold mb-2">Static Pages</h1>
+        <p className="text-base-content/70">Browse and access static HTML pages and resources</p>
+      </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
         {staticPages.map((page) => (

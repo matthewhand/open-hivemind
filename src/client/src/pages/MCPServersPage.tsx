@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   PlusIcon,
@@ -12,7 +12,10 @@ import {
   WrenchScrewdriverIcon,
 } from '@heroicons/react/24/outline';
 import { Server, Search } from 'lucide-react';
-import { Breadcrumbs, Alert, Modal, EmptyState, PageHeader } from '../components/DaisyUI';
+import Breadcrumbs from '../components/DaisyUI/Breadcrumbs';
+import { Alert } from '../components/DaisyUI/Alert';
+import Modal from '../components/DaisyUI/Modal';
+import EmptyState from '../components/DaisyUI/EmptyState';
 import SearchFilterBar from '../components/SearchFilterBar';
 
 interface Tool {
@@ -517,20 +520,23 @@ const MCPServersPage: React.FC = () => {
     <div className="p-6">
       <Breadcrumbs items={breadcrumbItems} />
 
-      <PageHeader
-        title="MCP Servers"
-        description="Manage Model Context Protocol servers and their tools"
-        icon={<Server className="w-6 h-6" />}
-        actions={
-          <button
-            className="btn btn-primary"
-            onClick={handleAddServer}
-          >
-            <PlusIcon className="w-5 h-5 mr-2" />
-            Add Server
-          </button>
-        }
-      />
+      <div className="flex justify-between items-center mt-4 mb-8">
+        <div>
+          <h1 className="text-3xl font-bold mb-2">
+            MCP Servers
+          </h1>
+          <p className="text-base-content/70">
+            Manage Model Context Protocol servers and their tools
+          </p>
+        </div>
+        <button
+          className="btn btn-primary"
+          onClick={handleAddServer}
+        >
+          <PlusIcon className="w-5 h-5 mr-2" />
+          Add Server
+        </button>
+      </div>
 
       {servers.length > 0 && (
         <div className="mb-6">
