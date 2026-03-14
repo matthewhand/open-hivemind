@@ -14,7 +14,15 @@ import { LoadingSpinner } from './DaisyUI/Loading';
 import type { Bot, StatusResponse } from '../services/api';
 import { apiService } from '../services/api';
 import { CreateBotWizard } from './BotManagement/CreateBotWizard';
-import { Info, PlusCircle, HardDrive, Clock, Activity, Cpu } from 'lucide-react';
+import { Info, Cpu } from 'lucide-react';
+import { GettingStartedTab } from './Dashboard/tabs/GettingStartedTab';
+import { StatusTab } from './Dashboard/tabs/StatusTab';
+import { PerformanceTab } from './Dashboard/tabs/PerformanceTab';
+import { usePerformanceMetrics } from './Dashboard/hooks/usePerformanceMetrics';
+
+
+
+
 import { useNavigate } from 'react-router-dom';
 
 type DashboardTab = 'getting-started' | 'status' | 'performance';
@@ -283,64 +291,44 @@ const UnifiedDashboard: React.FC = () => {
     );
   }, [statusBots]);
 
-  const guardedBots = useMemo(
-    () => bots.filter(bot => bot.mcpGuard?.enabled).length,
-    [bots],
-  );
 
-  const statsCards = useMemo(
-    () => [
+  const statsCards = useMemo(() => {
+    return [
       {
-        id: 'total-bots',
-        label: 'Total Configured Agents',
-        value: bots.length,
-        trend: bots.length > 0 ? '+1' : '0',
-        helper: `${guardedBots} guarded`,
-        variant: 'primary',
-      },
-      {
-        id: 'active-bots',
-        label: 'Active Agents',
+        id: 'agents',
+        title: 'Active Agents',
         value: activeBotCount,
-        trend: 'online',
-        helper: `${activeConnections} connected`,
-        variant: 'success',
+        total: bots.length,
+        icon: 'Bot',
+        color: 'primary',
       },
       {
-        id: 'total-messages',
-        label: 'Total Messages',
-        value: totalMessages.toLocaleString(),
+        id: 'messages',
+        title: 'Messages Processed',
+        value: totalMessages,
         trend: '+12%',
-        helper: 'Last 24 hours',
-        variant: 'info',
+        icon: 'MessageSquare',
+        color: 'secondary',
       },
       {
-        id: 'total-errors',
-        label: 'System Errors',
-        value: totalErrors.toLocaleString(),
-        trend: totalErrors > 0 ? 'attention' : 'stable',
-        helper: 'Requires review',
-        variant: totalErrors > 0 ? 'error' : 'neutral',
+        id: 'connections',
+        title: 'Active Connections',
+        value: activeConnections,
+        total: bots.length,
+        icon: 'Activity',
+        color: 'accent',
       },
       {
-        id: 'system-uptime',
-        label: 'System Uptime',
-        value: formatUptime(status?.uptime ?? 0),
-        trend: 'healthy',
-        helper: 'Since last restart',
-        variant: 'secondary',
+        id: 'errors',
+        title: 'Error Rate',
+        value: totalErrors,
+        trend: '-2%',
+        icon: 'AlertTriangle',
+        color: 'error',
       },
-    ],
-    [
-      bots.length,
-      activeBotCount,
-      totalMessages,
-      totalErrors,
-      status?.uptime,
-      guardedBots,
-      activeConnections,
-    ],
-  );
+    ];
+  }, [activeBotCount, bots.length, totalMessages, activeConnections, totalErrors]);
+
 
   const botTableData = useMemo<BotTableRow[]>(() => {
     return bots.map((bot, index) => {
@@ -364,115 +352,17 @@ const UnifiedDashboard: React.FC = () => {
     });
   }, [bots, statusBots]);
 
-  const botColumns = useMemo(
-    () => [
-      {
-        key: 'name',
-        title: 'Agent',
-        render: (_: any, item: BotTableRow) => (
-          <div className="font-semibold">{item.name}</div>
-        ),
-        sortable: true,
-      },
-      {
-        key: 'status',
-        title: 'Status',
-        render: (_: any, item: BotTableRow) => (
-          <Badge variant={getStatusBadgeVariant(item.status)} size="small">
-            {item.status.toUpperCase()}
-          </Badge>
-        ),
-        sortable: true,
-      },
-      {
-        key: 'connected',
-        title: 'Connection',
-        render: (_: any, item: BotTableRow) => (
-          <div className="flex items-center gap-2">
-            <span
-              className={`w-2 h-2 rounded-full ${item.connected ? 'bg-success' : 'bg-error'}`}
-            ></span>
-            <span className="text-sm">
-              {item.connected ? 'Connected' : 'Disconnected'}
-            </span>
-          </div>
-        ),
-        sortable: true,
-      },
-      {
-        key: 'provider',
-        title: 'Providers',
-        render: (_: any, item: BotTableRow) => (
-          <div className="flex flex-col gap-1">
-            <div className="flex items-center gap-1.5 text-xs text-base-content/70">
-              <span aria-hidden>{getProviderEmoji(item.provider)}</span>
-              <span className="uppercase tracking-wider font-semibold">
-                {item.provider}
-              </span>
-            </div>
-            <div className="flex items-center gap-1.5 text-xs text-base-content/70">
-              <span aria-hidden>🧠</span>
-              <span className="uppercase tracking-wider font-semibold">
-                {item.llm}
-              </span>
-            </div>
-          </div>
-        ),
-        sortable: true,
-      },
-      {
-        key: 'guard',
-        title: 'MCP Guard',
-        render: (_: any, item: BotTableRow) => (
-          <Badge
-            variant={item.guard === 'Open Access' ? 'warning' : 'success'}
-            size="small"
-          >
-            {item.guard}
-          </Badge>
-        ),
-        sortable: true,
-      },
-      {
-        key: 'messageCount',
-        title: 'Traffic',
-        render: (_: any, item: BotTableRow) => (
-          <div className="flex items-center gap-4">
-            <div className="text-right">
-              <div className="text-sm font-semibold">
-                {item.messageCount.toLocaleString()}
-              </div>
-              <div className="text-[10px] text-base-content/50 uppercase tracking-widest">
-                Msgs
-              </div>
-            </div>
-            {item.errorCount > 0 && (
-              <div className="text-right text-error">
-                <div className="text-sm font-semibold">
-                  {item.errorCount.toLocaleString()}
-                </div>
-                <div className="text-[10px] uppercase tracking-widest opacity-80">
-                  Errs
-                </div>
-              </div>
-            )}
-          </div>
-        ),
-        sortable: true,
-      },
-      {
-        key: 'lastActivity',
-        title: 'Last Activity',
-        render: (_: any, item: BotTableRow) => (
-          <div className="text-sm text-base-content/70">
-            {item.lastActivity}
-          </div>
-        ),
-        sortable: true,
-      },
-    ],
-    [],
-  );
+
+  const getBotColumns = () => [
+    { key: 'name', label: 'Agent Name' },
+    { key: 'provider', label: 'Provider' },
+    { key: 'llm', label: 'LLM' },
+    { key: 'status', label: 'Status' },
+    { key: 'messageCount', label: 'Messages' },
+    { key: 'errorCount', label: 'Errors' }
+  ];
+
+  const botColumns = useMemo(() => getBotColumns(), []);
 
   const performanceMetrics = useMemo(() => {
     const cpuUsage = Math.min(92, activeConnections * 14 + 28);
@@ -533,78 +423,15 @@ const UnifiedDashboard: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Dashboard Header with Gradient */}
-      <div className="bg-gradient-to-r from-primary to-secondary text-primary-content rounded-2xl p-8 shadow-2xl relative overflow-hidden animate-in fade-in slide-in-from-top-4 duration-500">
-        <div className="absolute top-0 right-0 p-8 opacity-10 pointer-events-none">
-          <Cpu className="w-48 h-48 animate-spin-slow" />
-        </div>
-        <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
-          <div className="max-w-xl">
-            <h1 className="text-4xl font-extrabold tracking-tight mb-2 flex items-center gap-3">
-              <span>Swarm Control</span>
-              <Badge variant="secondary" size="small" className="font-mono text-xs shadow-sm bg-base-100/20 border-base-100/30">
-                v{systemVersion}
-              </Badge>
-            </h1>
-            <p className="text-primary-content/80 text-lg leading-relaxed">
-              Real-time telemetry and management for your multi-agent architecture.
-            </p>
-          </div>
-          <div className="flex flex-col sm:flex-row gap-3 min-w-[280px]">
-            <Button
-              variant="secondary"
-              className="flex-1 shadow-lg hover:-translate-y-0.5 transition-transform"
-              onClick={handleOpenCreateModal}
-              loading={isModalDataLoading}
-              loadingText="Initializing..."
-            >
-              <PlusCircle className="w-5 h-5 mr-2" />
-              Deploy Agent
-            </Button>
-            <Button
-              variant="outline"
-              className="flex-1 border-primary-content/30 text-primary-content hover:bg-primary-content hover:text-primary shadow-lg hover:-translate-y-0.5 transition-transform"
-              onClick={handleRefresh}
-              loading={refreshing}
-            >
-              Refresh Data
-            </Button>
-          </div>
-        </div>
-      </div>
+      <DashboardHeader
+        handleOpenCreateModal={handleOpenCreateModal}
+        isModalDataLoading={isModalDataLoading}
+        handleRefresh={handleRefresh}
+        refreshing={refreshing}
+      />
 
       {/* Tabs */}
-      <div className="tabs tabs-boxed bg-base-200/50 p-1 flex-nowrap overflow-x-auto custom-scrollbar" role="tablist">
-        <button
-          className={`tab tab-sm md:tab-md flex-1 gap-2 font-semibold transition-all ${activeTab === 'status' ? 'tab-active shadow-sm' : 'opacity-70 hover:opacity-100'}`}
-          onClick={() => setActiveTab('status')}
-          role="tab"
-          id="dashboard-tab-status"
-          aria-controls="dashboard-panel-status"
-          aria-selected={activeTab === 'status'}
-        >
-          <Activity className="w-4 h-4" /> Swarm Status
-        </button>
-        <button
-          className={`tab tab-sm md:tab-md flex-1 gap-2 font-semibold transition-all ${activeTab === 'performance' ? 'tab-active shadow-sm' : 'opacity-70 hover:opacity-100'}`}
-          onClick={() => setActiveTab('performance')}
-          role="tab"
-          id="dashboard-tab-performance"
-          aria-controls="dashboard-panel-performance"
-          aria-selected={activeTab === 'performance'}
-        >
-          <Cpu className="w-4 h-4" /> Telemetry
-        </button>
-        <button
-          className={`tab tab-sm md:tab-md flex-1 gap-2 font-semibold transition-all ${activeTab === 'getting-started' ? 'tab-active shadow-sm' : 'opacity-70 hover:opacity-100'}`}
-          onClick={() => setActiveTab('getting-started')}
-          role="tab"
-          id="dashboard-tab-getting-started"
-          aria-controls="dashboard-panel-getting-started"
-          aria-selected={activeTab === 'getting-started'}
-        >
-          <HardDrive className="w-4 h-4" /> Quick Setup
-        </button>
-      </div>
+      <DashboardTabs activeTab={activeTab} setActiveTab={setActiveTab} />
 
       {loading ? (
         <div className="flex justify-center py-20">
