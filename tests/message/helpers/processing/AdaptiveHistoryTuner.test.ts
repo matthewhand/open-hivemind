@@ -1,7 +1,13 @@
 import AdaptiveHistoryTuner from '../../../../src/message/helpers/processing/AdaptiveHistoryTuner';
 
 describe('AdaptiveHistoryTuner', () => {
+  afterEach(() => {
+    (AdaptiveHistoryTuner as any).instance = undefined;
+  });
+
   beforeEach(() => {
+    (AdaptiveHistoryTuner as any).instance = undefined;
+
     AdaptiveHistoryTuner.getInstance().reset();
   });
 

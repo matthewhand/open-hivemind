@@ -1,6 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect } from 'react';
-import { Card, Badge, Button, Alert, Loading } from './DaisyUI';
+import Card from './DaisyUI/Card';
+import Badge from './DaisyUI/Badge';
+import Button from './DaisyUI/Button';
+import { Alert } from './DaisyUI/Alert';
+import { Loading } from './DaisyUI/Loading';
 import {
   ArrowTrendingUpIcon,
   ArrowTrendingDownIcon,
