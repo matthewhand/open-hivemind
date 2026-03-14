@@ -214,7 +214,8 @@ router.post(
   handleValidationErrors,
   async (req: AuthMiddlewareRequest, res: Response) => {
     try {
-      const createdBy = req.user?.username || 'unknown';
+      const authReq = req;
+      const createdBy = authReq.user?.username || 'unknown';
 
       const result = await importExportService.exportConfigurations(
         req.body.configIds,
@@ -245,7 +246,7 @@ router.post(
       return res.status(500).json({
         success: false,
         message: 'Failed to export configurations',
-        error: (error as any).message,
+        error: error instanceof Error ? error.message : String(error),
       });
     }
   }
@@ -264,24 +265,25 @@ router.post(
   handleValidationErrors,
   async (req: AuthMiddlewareRequest, res: Response) => {
     try {
-      if (!req.file) {
+      if (!(req as unknown as { file?: { path: string } }).file) {
         return res.status(400).json({
           success: false,
           message: 'No file uploaded',
         });
       }
 
-      const importedBy = req.user?.username || 'unknown';
+      const authReq = req;
+      const importedBy = authReq.user?.username || 'unknown';
 
       const result = await importExportService.importConfigurations(
-        req.file.path,
+        (req as unknown as { file?: { path: string } }).file.path,
         req.body,
         importedBy
       );
 
       // Clean up uploaded file
       try {
-        await fs.unlink(req.file.path);
+        await fs.unlink((req as unknown as { file?: { path: string } }).file.path);
       } catch (cleanupError) {
         console.error('Error cleaning up uploaded file:', cleanupError);
       }
@@ -295,9 +297,9 @@ router.post(
       console.error('Error importing configurations:', error);
 
       // Clean up uploaded file if it exists
-      if (req.file) {
+      if ((req as unknown as { file?: { path: string } }).file) {
         try {
-          await fs.unlink(req.file.path);
+          await fs.unlink((req as unknown as { file?: { path: string } }).file.path);
         } catch (cleanupError) {
           console.error('Error cleaning up uploaded file:', cleanupError);
         }
@@ -306,7 +308,7 @@ router.post(
       return res.status(500).json({
         success: false,
         message: 'Failed to import configurations',
-        error: (error as any).message,
+        error: error instanceof Error ? error.message : String(error),
       });
     }
   }
@@ -323,7 +325,8 @@ router.post(
   handleValidationErrors,
   async (req: AuthMiddlewareRequest, res: Response) => {
     try {
-      const createdBy = req.user?.username || 'unknown';
+      const authReq = req;
+      const createdBy = authReq.user?.username || 'unknown';
 
       const result = await importExportService.createBackup(
         req.body.name,
@@ -362,7 +365,7 @@ router.post(
       return res.status(500).json({
         success: false,
         message: 'Failed to create backup',
-        error: (error as any).message,
+        error: error instanceof Error ? error.message : String(error),
       });
     }
   }
@@ -385,7 +388,7 @@ router.get('/backups', requireAdmin, async (req: AuthMiddlewareRequest, res: Res
     return res.status(500).json({
       success: false,
       message: 'Failed to list backups',
-      error: (error as any).message,
+      error: error instanceof Error ? error.message : String(error),
     });
   }
 });
@@ -402,7 +405,8 @@ router.post(
   async (req: AuthMiddlewareRequest, res: Response) => {
     try {
       const { backupId } = req.params;
-      const restoredBy = req.user?.username || 'unknown';
+      const authReq = req;
+      const restoredBy = authReq.user?.username || 'unknown';
 
       // Get backup metadata
       const backups = await importExportService.listBackups();
@@ -441,7 +445,7 @@ router.post(
       return res.status(500).json({
         success: false,
         message: 'Failed to restore from backup',
-        error: (error as any).message,
+        error: error instanceof Error ? error.message : String(error),
       });
     }
   }
@@ -475,7 +479,7 @@ router.delete(
       return res.status(500).json({
         success: false,
         message: 'Failed to delete backup',
-        error: (error as any).message,
+        error: error instanceof Error ? error.message : String(error),
       });
     }
   }
@@ -526,7 +530,7 @@ router.get(
       return res.status(500).json({
         success: false,
         message: 'Failed to download backup',
-        error: (error as any).message,
+        error: error instanceof Error ? error.message : String(error),
       });
     }
   }
@@ -543,23 +547,26 @@ router.post(
   handleUploadError,
   async (req: AuthMiddlewareRequest, res: Response) => {
     try {
-      if (!req.file) {
+      if (!(req as unknown as { file?: { path: string } }).file) {
         return res.status(400).json({
           success: false,
           message: 'No file uploaded',
         });
       }
 
-      const result = await importExportService.importConfigurations(req.file.path, {
-        format: req.body.format || 'json',
-        validateOnly: true,
-        skipValidation: false,
-        overwrite: false,
-      });
+      const result = await importExportService.importConfigurations(
+        (req as unknown as { file?: { path: string } }).file.path,
+        {
+          format: req.body.format || 'json',
+          validateOnly: true,
+          skipValidation: false,
+          overwrite: false,
+        }
+      );
 
       // Clean up uploaded file
       try {
-        await fs.unlink(req.file.path);
+        await fs.unlink((req as unknown as { file?: { path: string } }).file.path);
       } catch (cleanupError) {
         console.error('Error cleaning up uploaded file:', cleanupError);
       }
@@ -573,9 +580,9 @@ router.post(
       console.error('Error validating file:', error);
 
       // Clean up uploaded file if it exists
-      if (req.file) {
+      if ((req as unknown as { file?: { path: string } }).file) {
         try {
-          await fs.unlink(req.file.path);
+          await fs.unlink((req as unknown as { file?: { path: string } }).file.path);
         } catch (cleanupError) {
           console.error('Error cleaning up uploaded file:', cleanupError);
         }
@@ -584,7 +591,7 @@ router.post(
       return res.status(500).json({
         success: false,
         message: 'Failed to validate file',
-        error: (error as any).message,
+        error: error instanceof Error ? error.message : String(error),
       });
     }
   }

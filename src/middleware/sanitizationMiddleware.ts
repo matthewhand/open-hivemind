@@ -96,7 +96,6 @@ export const sanitizeInput = (req: Request, res: Response, next: NextFunction) =
     req.params = sanitizeObject(req.params);
   }
 
-<<<<<<< HEAD
   if (req.headers && typeof req.headers === 'object') {
     const sanitizedHeaders: any = {};
     for (const key of Object.keys(req.headers)) {

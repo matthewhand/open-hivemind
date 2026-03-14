@@ -18,7 +18,7 @@ import { ErrorUtils } from '../../types/errors';
 import { type IProvider } from '../../types/IProvider';
 import { ConfigUpdateSchema } from '../../validation/schemas/configSchema';
 import { validateRequest } from '../../validation/validateRequest';
-import { auditMiddleware, logConfigChange, type AuditedRequest } from '../middleware/audit';
+import { auditMiddleware, logConfigChange } from '../middleware/audit';
 
 /**
  * Validates that a config name is safe to use in file paths.
@@ -97,16 +97,12 @@ const loadDynamicConfigs = () => {
             const newConfig = convict(schemaSources[type].getSchema());
 
             // Load file
+            newConfig.loadFile(path.join(providersDir, file));
             try {
-              newConfig.loadFile(path.join(providersDir, file));
-            } catch (error: any) {
-              if (error.code !== 'ENOENT') {
-                console.warn(`Error reading dynamic config from ${file}:`, error.message);
-              }
+              newConfig.validate({ allowed: 'warn' });
+            } catch (e) {
+              console.warn(`Validation warning for ${name}:`, e);
             }
-
-            // Validation must happen outside the generic try-catch to fail fast if config is malformed
-            newConfig.validate({ allowed: 'strict' });
 
             globalConfigs[name] = newConfig;
           }
@@ -260,9 +256,9 @@ router.get('/bots', async (req, res) => {
       warnings: manager.getWarnings(),
     });
   } catch (error: unknown) {
-    const hivemindError = ErrorUtils.toAppError(error);
-    return res.status(hivemindError.statusCode || 500).json({
-      error: hivemindError.message,
+    const hivemindError = ErrorUtils.toHivemindError(error);
+    return res.status(ErrorUtils.getStatusCode(hivemindError) || 500).json({
+      error: ErrorUtils.getMessage(hivemindError),
       code: 'CONFIG_BOTS_ERROR',
     });
   }
@@ -329,9 +325,9 @@ router.get('/sources', async (req, res) => {
       count: configFiles.length,
     });
   } catch (error: unknown) {
-    const hivemindError = ErrorUtils.toAppError(error);
+    const hivemindError = ErrorUtils.toHivemindError(error);
     return res.status(500).json({
-      error: hivemindError.message,
+      error: ErrorUtils.getMessage(hivemindError),
       code: 'CONFIG_SOURCES_ERROR',
     });
   }
@@ -343,9 +339,9 @@ router.get('/llm-status', (req, res) => {
     const status = getLlmDefaultStatus();
     return res.json(status);
   } catch (error: unknown) {
-    const hivemindError = ErrorUtils.toAppError(error);
-    return res.status(hivemindError.statusCode || 500).json({
-      error: hivemindError.message,
+    const hivemindError = ErrorUtils.toHivemindError(error);
+    return res.status(ErrorUtils.getStatusCode(hivemindError) || 500).json({
+      error: ErrorUtils.getMessage(hivemindError),
       code: 'LLM_STATUS_GET_ERROR',
     });
   }
@@ -357,9 +353,9 @@ router.get('/llm-profiles', (req, res) => {
     const profiles = getLlmProfiles();
     return res.json(profiles);
   } catch (error: unknown) {
-    const hivemindError = ErrorUtils.toAppError(error);
-    return res.status(hivemindError.statusCode || 500).json({
-      error: hivemindError.message,
+    const hivemindError = ErrorUtils.toHivemindError(error);
+    return res.status(ErrorUtils.getStatusCode(hivemindError) || 500).json({
+      error: ErrorUtils.getMessage(hivemindError),
       code: 'LLM_PROFILES_GET_ERROR',
     });
   }
@@ -411,9 +407,9 @@ router.post('/llm-profiles', (req, res) => {
 
     return res.status(201).json({ success: true, profile: sanitizedProfile });
   } catch (error: unknown) {
-    const hivemindError = ErrorUtils.toAppError(error);
-    return res.status(hivemindError.statusCode || 500).json({
-      error: hivemindError.message,
+    const hivemindError = ErrorUtils.toHivemindError(error);
+    return res.status(ErrorUtils.getStatusCode(hivemindError) || 500).json({
+      error: ErrorUtils.getMessage(hivemindError),
       code: 'LLM_PROFILE_CREATE_ERROR',
     });
   }
@@ -460,9 +456,9 @@ router.put('/llm-profiles/:key', (req, res) => {
       profile: updatedProfile,
     });
   } catch (error: unknown) {
-    const hivemindError = ErrorUtils.toAppError(error);
-    return res.status(hivemindError.statusCode || 500).json({
-      error: hivemindError.message,
+    const hivemindError = ErrorUtils.toHivemindError(error);
+    return res.status(ErrorUtils.getStatusCode(hivemindError) || 500).json({
+      error: ErrorUtils.getMessage(hivemindError),
       code: 'LLM_PROFILE_UPDATE_ERROR',
     });
   }
@@ -485,9 +481,9 @@ router.delete('/llm-profiles/:key', (req, res) => {
 
     return res.json({ success: true, profile: deletedProfile });
   } catch (error: unknown) {
-    const hivemindError = ErrorUtils.toAppError(error);
-    return res.status(hivemindError.statusCode || 500).json({
-      error: hivemindError.message,
+    const hivemindError = ErrorUtils.toHivemindError(error);
+    return res.status(ErrorUtils.getStatusCode(hivemindError) || 500).json({
+      error: ErrorUtils.getMessage(hivemindError),
       code: 'LLM_PROFILE_DELETE_ERROR',
     });
   }
@@ -591,10 +587,10 @@ router.get('/global', (req, res) => {
 
     return res.json(response);
   } catch (error: unknown) {
-    const hivemindError = ErrorUtils.toAppError(error);
-    return res.status(hivemindError.statusCode || 500).json({
-      error: hivemindError.message,
-      code: hivemindError.code || 'CONFIG_GLOBAL_GET_ERROR',
+    const hivemindError = ErrorUtils.toHivemindError(error);
+    return res.status(ErrorUtils.getStatusCode(hivemindError) || 500).json({
+      error: ErrorUtils.getMessage(hivemindError),
+      code: ErrorUtils.getCode(hivemindError) || 'CONFIG_GLOBAL_GET_ERROR',
     });
   }
 });
@@ -620,13 +616,7 @@ router.put('/global', validateRequest(ConfigUpdateSchema), async (req, res) => {
       await userConfigStore.setGeneralSettings(settingsToSave);
 
       if (process.env.NODE_ENV !== 'test') {
-        logConfigChange(
-          req as AuditedRequest,
-          'UPDATE',
-          'config/general',
-          'success',
-          'Updated general settings'
-        );
+        logConfigChange(req, 'UPDATE', 'config/general', 'success', 'Updated general settings');
       }
 
       return res.json({ success: true, message: 'General settings updated and persisted' });
@@ -699,7 +689,7 @@ router.put('/global', validateRequest(ConfigUpdateSchema), async (req, res) => {
 
     if (process.env.NODE_ENV !== 'test') {
       logConfigChange(
-        req as AuditedRequest,
+        req,
         'UPDATE',
         `config/${configName}`,
         'success',
@@ -709,10 +699,10 @@ router.put('/global', validateRequest(ConfigUpdateSchema), async (req, res) => {
 
     return res.json({ success: true, message: 'Configuration updated and persisted' });
   } catch (error: unknown) {
-    const hivemindError = ErrorUtils.toAppError(error);
-    return res.status(hivemindError.statusCode || 500).json({
-      error: hivemindError.message,
-      code: hivemindError.code || 'CONFIG_GLOBAL_PUT_ERROR',
+    const hivemindError = ErrorUtils.toHivemindError(error);
+    return res.status(ErrorUtils.getStatusCode(hivemindError) || 500).json({
+      error: ErrorUtils.getMessage(hivemindError),
+      code: ErrorUtils.getCode(hivemindError) || 'CONFIG_GLOBAL_PUT_ERROR',
     });
   }
 });
@@ -724,9 +714,9 @@ router.get('/message-profiles', (req, res) => {
     const profiles = getMessageProfiles();
     return res.json(profiles);
   } catch (error: unknown) {
-    const hivemindError = ErrorUtils.toAppError(error);
-    return res.status(hivemindError.statusCode || 500).json({
-      error: hivemindError.message,
+    const hivemindError = ErrorUtils.toHivemindError(error);
+    return res.status(ErrorUtils.getStatusCode(hivemindError) || 500).json({
+      error: ErrorUtils.getMessage(hivemindError),
       code: 'MESSAGE_PROFILES_GET_ERROR',
     });
   }
@@ -767,9 +757,9 @@ router.post('/message-profiles', (req, res) => {
 
     return res.status(201).json({ success: true, profile: newProfile });
   } catch (error: unknown) {
-    const hivemindError = ErrorUtils.toAppError(error);
-    return res.status(hivemindError.statusCode || 500).json({
-      error: hivemindError.message,
+    const hivemindError = ErrorUtils.toHivemindError(error);
+    return res.status(ErrorUtils.getStatusCode(hivemindError) || 500).json({
+      error: ErrorUtils.getMessage(hivemindError),
       code: 'MESSAGE_PROFILES_CREATE_ERROR',
     });
   }

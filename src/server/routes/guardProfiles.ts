@@ -212,9 +212,9 @@ router.put('/:id', (req: Request, res: Response) => {
                   typeof existingValue === 'object' &&
                   existingValue !== null
                 ) {
-                  (acc as any)[key] = { ...existingValue, ...newValue };
+                  acc[key] = { ...existingValue, ...newValue };
                 } else {
-                  (acc as any)[key] = newValue;
+                  acc[key] = newValue;
                 }
                 return acc;
               },
