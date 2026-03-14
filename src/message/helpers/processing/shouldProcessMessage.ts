@@ -1,7 +1,8 @@
 import debug from 'debug';
-const d = debug('app:shouldProcessMessage');
 import messageConfig from '@config/messageConfig';
 import type { IMessage } from '@message/interfaces/IMessage';
+
+const d = debug('app:shouldProcessMessage');
 
 /**
  * Returns the minimum interval in milliseconds for processing messages.
