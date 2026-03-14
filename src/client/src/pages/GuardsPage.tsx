@@ -66,6 +66,23 @@ const GuardsPage: React.FC = () => {
     },
   });
 
+  const normalizeList = (list?: string[]) => {
+    if (!list) return [];
+    const seen = new Set<string>();
+    const normalized: string[] = [];
+
+    for (const raw of list) {
+      const trimmed = raw.trim();
+      if (!trimmed) continue;
+      const key = trimmed.toLowerCase();
+      if (seen.has(key)) continue;
+      seen.add(key);
+      normalized.push(trimmed);
+    }
+
+    return normalized;
+  };
+
   const fetchProfiles = useCallback(async () => {
     try {
       setLoading(true);
@@ -93,14 +110,16 @@ const GuardsPage: React.FC = () => {
 
     // Clean up arrays before saving
     const profileToSave = JSON.parse(JSON.stringify(editingProfile));
-    if (profileToSave.guards.mcpGuard.allowedUsers) {
-      profileToSave.guards.mcpGuard.allowedUsers = profileToSave.guards.mcpGuard.allowedUsers.map((s: string) => s.trim()).filter(Boolean);
-    }
-    if (profileToSave.guards.mcpGuard.allowedTools) {
-      profileToSave.guards.mcpGuard.allowedTools = profileToSave.guards.mcpGuard.allowedTools.map((s: string) => s.trim()).filter(Boolean);
-    }
-    if (profileToSave.guards.contentFilter?.blockedTerms) {
-      profileToSave.guards.contentFilter.blockedTerms = profileToSave.guards.contentFilter.blockedTerms.map((s: string) => s.trim()).filter(Boolean);
+    profileToSave.guards.mcpGuard.allowedUsers = normalizeList(
+      profileToSave.guards.mcpGuard.allowedUsers,
+    );
+    profileToSave.guards.mcpGuard.allowedTools = normalizeList(
+      profileToSave.guards.mcpGuard.allowedTools,
+    );
+    if (profileToSave.guards.contentFilter) {
+      profileToSave.guards.contentFilter.blockedTerms = normalizeList(
+        profileToSave.guards.contentFilter.blockedTerms,
+      );
     }
 
     try {

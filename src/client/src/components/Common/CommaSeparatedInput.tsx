@@ -75,6 +75,66 @@ export const CommaSeparatedInput: React.FC<CommaSeparatedInputProps> = ({
     }
   }, [canUndo, disabled, onChange]);
 
+  const splitItems = (text: string) =>
+    text
+      .split(/[,;\n\r]+/)
+      .map(item => item.trim())
+      .filter(Boolean);
+
+  const applyItems = useCallback((items: string[]) => {
+    if (items.length === 0) {
+      setIsTouched(true);
+      return { applied: false, changed: false };
+    }
+
+    const next = [...normalizedValue];
+    let changed = false;
+    let maxReached = false;
+    let validationError: string | null = null;
+
+    for (const item of items) {
+      if (validate) {
+        const itemError = validate(item);
+        if (itemError) {
+          validationError = itemError;
+          break;
+        }
+      }
+
+      if (next.includes(item)) {
+        continue;
+      }
+
+      if (next.length >= maxItems) {
+        maxReached = true;
+        break;
+      }
+
+      next.push(item);
+      changed = true;
+    }
+
+    if (validationError) {
+      setInternalError(validationError);
+      setIsTouched(true);
+      return { applied: false, changed: false };
+    }
+
+    if (changed) {
+      pushToHistory(next);
+      onChange(next);
+    }
+
+    if (maxReached) {
+      setInternalError(`Max items reached (${maxItems})`);
+      setIsTouched(true);
+    } else if (internalError) {
+      setInternalError(null);
+    }
+
+    return { applied: true, changed };
+  }, [normalizedValue, maxItems, validate, pushToHistory, onChange, internalError]);
+
   const commitInput = (forceValue?: string) => {
     const textToCommit = forceValue !== undefined ? forceValue : inputValue;
     // Check if there is a trailing delimiter, and keep trailing text in the input
@@ -93,43 +153,19 @@ export const CommaSeparatedInput: React.FC<CommaSeparatedInputProps> = ({
       remainingText = textToCommit.slice(lastDelimiterIndex + 1);
     }
 
-    if (!itemsToProcess.trim() && !remainingText.trim()) {
-      setIsTouched(true);
+    if (!itemsToProcess.trim()) {
+      if (remainingText.trim()) {
+        setInputValue(remainingText);
+      } else {
+        setIsTouched(true);
+      }
       return;
     }
 
-    const current = itemsToProcess
-      .split(/[,;\n\r]+/)
-      .map(s => s.trim())
-      .filter(Boolean);
+    const current = splitItems(itemsToProcess);
+    const { applied } = applyItems(current);
 
-    const next = [...normalizedValue];
-    let changed = false;
-    let localError: string | null = null;
-
-    for (const item of current) {
-      if (validate) {
-        const validationError = validate(item);
-        if (validationError) {
-          localError = validationError;
-          break; // Stop parsing if there's an invalid item
-        }
-      }
-
-      if (!next.includes(item) && next.length < maxItems) {
-        next.push(item);
-        changed = true;
-      }
-    }
-
-    setInternalError(localError);
-    setIsTouched(true);
-
-    if (!localError) {
-      if (changed) {
-        pushToHistory(next);
-        onChange(next);
-      }
+    if (applied) {
       setInputValue(remainingText);
       setShowSuggestions(false);
     }
@@ -171,23 +207,8 @@ export const CommaSeparatedInput: React.FC<CommaSeparatedInputProps> = ({
     const pastedText = e.clipboardData.getData('text');
     if (!pastedText) return;
 
-    const current = pastedText
-      .split(/[,;\n\r]+/)
-      .map(s => s.trim())
-      .filter(Boolean);
-
-    const next = [...normalizedValue];
-    let changed = false;
-    for (const item of current) {
-      if (!next.includes(item) && next.length < maxItems) {
-        next.push(item);
-        changed = true;
-      }
-    }
-    if (changed) {
-      pushToHistory(next);
-      onChange(next);
-    }
+    const current = splitItems(pastedText);
+    applyItems(current);
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -216,6 +237,11 @@ export const CommaSeparatedInput: React.FC<CommaSeparatedInputProps> = ({
 
   const displayError = (isTouched && internalError) || error;
   const errorId = id ? `${id}-error` : 'csi-error';
+  const suggestionsId = id ? `${id}-suggestions` : 'csi-suggestions';
+  const showSuggestionsList = !disabled
+    && showSuggestions
+    && filteredSuggestions.length > 0
+    && inputValue.trim().length > 0;
 
   return (
     <div className={`relative flex flex-col w-full ${className}`}>
@@ -263,6 +289,8 @@ export const CommaSeparatedInput: React.FC<CommaSeparatedInputProps> = ({
           disabled={disabled || normalizedValue.length >= maxItems}
           aria-invalid={!!displayError}
           aria-describedby={displayError ? errorId : undefined}
+          aria-expanded={showSuggestionsList}
+          aria-controls={showSuggestionsList ? suggestionsId : undefined}
         />
         <div className="flex items-center gap-1">
           {!disabled && canUndo && (
@@ -299,16 +327,23 @@ export const CommaSeparatedInput: React.FC<CommaSeparatedInputProps> = ({
 
       {displayError && (
         <label className="label" id={errorId}>
-          <span className="label-text-alt text-error">{displayError}</span>
+          <span className="label-text-alt text-error" aria-live="polite">
+            {displayError}
+          </span>
         </label>
       )}
 
       {/* Autocomplete Dropdown */}
-      {!disabled && showSuggestions && filteredSuggestions.length > 0 && inputValue.trim().length > 0 && (
-        <ul className="absolute left-0 right-0 top-full mt-1 max-h-48 overflow-auto rounded-md bg-base-100 shadow-lg ring-1 ring-base-content/5 z-50">
+      {showSuggestionsList && (
+        <ul
+          id={suggestionsId}
+          role="listbox"
+          className="absolute left-0 right-0 top-full mt-1 max-h-48 overflow-auto rounded-md bg-base-100 shadow-lg ring-1 ring-base-content/5 z-50"
+        >
           {filteredSuggestions.map(s => (
             <li
               key={s}
+              role="option"
               onMouseDown={(e) => {
                 // Prevent input blur before click fires
                 e.preventDefault();
