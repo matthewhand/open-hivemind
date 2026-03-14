@@ -39,10 +39,16 @@ const configPath = path.join(configDir, 'providers/webhook.json');
 
 try {
   webhookConfig.loadFile(configPath);
-  webhookConfig.validate({ allowed: 'strict' });
-} catch {
-  // Fallback to defaults if config file is missing or invalid
-  console.warn(`Warning: Could not load webhook config from ${configPath}, using defaults`);
+} catch (error: any) {
+  if (error.code !== 'ENOENT') {
+    console.error(`Error reading webhook config from ${configPath}:`, error.message);
+    throw error;
+  } else {
+    console.warn(`Webhook config file not found at ${configPath}, using environment variables and defaults`);
+  }
 }
+
+// Validation must happen outside the generic try-catch to fail fast if config is malformed
+webhookConfig.validate({ allowed: 'strict' });
 
 export default webhookConfig;

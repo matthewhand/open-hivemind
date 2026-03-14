@@ -38,3 +38,4 @@ export {
   defaultErrorFactory,
   type IErrorFactory,
 } from './errors';
+export { isSafeUrl } from './ssrfGuard';

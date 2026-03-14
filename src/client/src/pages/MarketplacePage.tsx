@@ -1,5 +1,8 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Card, Button, Badge, Breadcrumbs } from '../components/DaisyUI';
+import Card from '../components/DaisyUI/Card';
+import Button from '../components/DaisyUI/Button';
+import Badge from '../components/DaisyUI/Badge';
+import Breadcrumbs from '../components/DaisyUI/Breadcrumbs';
 import {
   Store as StoreIcon,
   Download as DownloadIcon,
@@ -11,7 +14,7 @@ import {
   MessageCircle as MessageIcon,
   Database as MemoryIcon,
   Wrench as ToolIcon,
-  GitHub as GitHubIcon,
+  Github as GitHubIcon,
   AlertCircle as AlertIcon,
   CheckCircle as CheckIcon,
   X as CloseIcon,

@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { safeArray, safeString } from '../../utils/safeString';
 
 export interface CommaSeparatedInputProps {
-  value: string[];
+  value?: string[];
   onChange: (v: string[]) => void;
   maxItems?: number;
   placeholder?: string;
@@ -16,7 +16,7 @@ export interface CommaSeparatedInputProps {
 }
 
 export const CommaSeparatedInput: React.FC<CommaSeparatedInputProps> = ({
-  value,
+  value = [],
   onChange,
   maxItems = 20,
   placeholder = 'Type and press Enter or comma',
@@ -77,6 +77,7 @@ export const CommaSeparatedInput: React.FC<CommaSeparatedInputProps> = ({
 
   const commitInput = (forceValue?: string) => {
     const textToCommit = forceValue !== undefined ? forceValue : inputValue;
+    // Check if there is a trailing delimiter, and keep trailing text in the input
     const delimiterMatches = [
       textToCommit.lastIndexOf(','),
       textToCommit.lastIndexOf(';'),
