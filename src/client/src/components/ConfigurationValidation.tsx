@@ -305,14 +305,13 @@ const ConfigurationValidation: React.FC<ConfigurationValidationProps> = ({ bot }
       )}
 
       {/* Configuration Overview */}
-      <Accordion defaultOpen={false}>
-        <Accordion.Item value="overview">
-          <Accordion.Trigger>Configuration Overview</Accordion.Trigger>
-          <Accordion.Content>
-            <DataTable columns={configTableColumns} data={configTableData} />
-          </Accordion.Content>
-        </Accordion.Item>
-      </Accordion>
+      <Accordion
+        items={[{
+          id: "overview",
+          title: "Configuration Overview",
+          content: <DataTable columns={configTableColumns} data={configTableData} />
+        }]}
+      />
     </Card>
   );
 };
