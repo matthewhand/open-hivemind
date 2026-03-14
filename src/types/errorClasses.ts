@@ -548,8 +548,8 @@ export class ErrorFactory {
       case 'network': {
         return new NetworkError(
           ErrorUtils.getMessage(hivemindError),
-          ErrorUtils.getField(hivemindError, 'response'),
-          ErrorUtils.getField(hivemindError, 'request'),
+          ErrorUtils.getRecordField(hivemindError, 'response'),
+          ErrorUtils.getRecordField(hivemindError, 'request'),
           context
         );
       }
@@ -557,10 +557,10 @@ export class ErrorFactory {
       case 'validation': {
         return new ValidationError(
           ErrorUtils.getMessage(hivemindError),
-          ErrorUtils.getField(hivemindError, 'field'),
+          ErrorUtils.getStringField(hivemindError, 'field'),
           ErrorUtils.getField(hivemindError, 'value'),
           ErrorUtils.getField(hivemindError, 'expected'),
-          ErrorUtils.getField(hivemindError, 'suggestions'),
+          ErrorUtils.getStringArrayField(hivemindError, 'suggestions'),
           context
         );
       }
@@ -568,9 +568,9 @@ export class ErrorFactory {
       case 'configuration': {
         return new ConfigurationError(
           ErrorUtils.getMessage(hivemindError),
-          ErrorUtils.getField(hivemindError, 'configKey'),
-          ErrorUtils.getField(hivemindError, 'expectedType'),
-          ErrorUtils.getField(hivemindError, 'providedType'),
+          ErrorUtils.getStringField(hivemindError, 'configKey'),
+          ErrorUtils.getStringField(hivemindError, 'expectedType'),
+          ErrorUtils.getStringField(hivemindError, 'providedType'),
           context
         );
       }
@@ -578,9 +578,9 @@ export class ErrorFactory {
       case 'database': {
         return new DatabaseError(
           ErrorUtils.getMessage(hivemindError),
-          ErrorUtils.getField(hivemindError, 'operation'),
-          ErrorUtils.getField(hivemindError, 'table'),
-          ErrorUtils.getField(hivemindError, 'query'),
+          ErrorUtils.getStringField(hivemindError, 'operation'),
+          ErrorUtils.getStringField(hivemindError, 'table'),
+          ErrorUtils.getStringField(hivemindError, 'query'),
           context
         );
       }
@@ -588,8 +588,13 @@ export class ErrorFactory {
       case 'authentication': {
         return new AuthenticationError(
           ErrorUtils.getMessage(hivemindError),
-          ErrorUtils.getField(hivemindError, 'provider'),
-          ErrorUtils.getField(hivemindError, 'reason'),
+          ErrorUtils.getStringField(hivemindError, 'provider'),
+          ErrorUtils.getStringField(hivemindError, 'reason') as
+            | 'invalid_credentials'
+            | 'expired_token'
+            | 'missing_token'
+            | 'invalid_format'
+            | undefined,
           context
         );
       }
@@ -597,9 +602,9 @@ export class ErrorFactory {
       case 'authorization': {
         return new AuthorizationError(
           ErrorUtils.getMessage(hivemindError),
-          ErrorUtils.getField(hivemindError, 'resource'),
-          ErrorUtils.getField(hivemindError, 'action'),
-          ErrorUtils.getField(hivemindError, 'requiredPermission'),
+          ErrorUtils.getStringField(hivemindError, 'resource'),
+          ErrorUtils.getStringField(hivemindError, 'action'),
+          ErrorUtils.getStringField(hivemindError, 'requiredPermission'),
           context
         );
       }
@@ -607,10 +612,10 @@ export class ErrorFactory {
       case 'rate-limit': {
         return new RateLimitError(
           ErrorUtils.getMessage(hivemindError),
-          ErrorUtils.getField(hivemindError, 'retryAfter') || 60,
-          ErrorUtils.getField(hivemindError, 'limit'),
-          ErrorUtils.getField(hivemindError, 'remaining'),
-          ErrorUtils.getField(hivemindError, 'resetTime'),
+          ErrorUtils.getNumberField(hivemindError, 'retryAfter') || 60,
+          ErrorUtils.getNumberField(hivemindError, 'limit'),
+          ErrorUtils.getNumberField(hivemindError, 'remaining'),
+          ErrorUtils.getDateField(hivemindError, 'resetTime'),
           context
         );
       }
@@ -618,8 +623,8 @@ export class ErrorFactory {
       case 'timeout': {
         return new TimeoutError(
           ErrorUtils.getMessage(hivemindError),
-          ErrorUtils.getField(hivemindError, 'timeoutMs') || 30000,
-          ErrorUtils.getField(hivemindError, 'operation'),
+          ErrorUtils.getNumberField(hivemindError, 'timeoutMs') || 30000,
+          ErrorUtils.getStringField(hivemindError, 'operation'),
           context
         );
       }
@@ -627,10 +632,10 @@ export class ErrorFactory {
       case 'api': {
         return new ApiError(
           ErrorUtils.getMessage(hivemindError),
-          ErrorUtils.getField(hivemindError, 'service') || 'unknown',
-          ErrorUtils.getField(hivemindError, 'endpoint'),
+          ErrorUtils.getStringField(hivemindError, 'service') || 'unknown',
+          ErrorUtils.getStringField(hivemindError, 'endpoint'),
           ErrorUtils.getStatusCode(hivemindError),
-          ErrorUtils.getField(hivemindError, 'retryAfter'),
+          ErrorUtils.getNumberField(hivemindError, 'retryAfter'),
           context
         );
       }
