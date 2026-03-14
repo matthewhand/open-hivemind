@@ -45,7 +45,15 @@ export const CommaSeparatedInput: React.FC<Props> = ({ id, value, onChange, disa
     <input
       id={id}
       value={inputValue}
-      onChange={(e) => setInputValue(e.target.value)}
+      onChange={(e) => {
+        const nativeEvent = e.nativeEvent as InputEvent;
+        const isDeleting = nativeEvent.inputType?.startsWith('delete');
+        let newVal = e.target.value;
+        if (!isDeleting && newVal.endsWith(',')) {
+          newVal = newVal + ' ';
+        }
+        setInputValue(newVal);
+      }}
       onBlur={handleBlur}
       onKeyDown={handleKeyDown}
       disabled={disabled}

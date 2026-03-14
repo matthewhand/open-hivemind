@@ -1,6 +1,6 @@
 /**
  * Mem4ai Configuration for Open Hivemind
- * 
+ *
  * Configuration interface for the Mem4ai memory provider.
  * Mem4ai provides open-source, LLM-friendly memory management with
  * adaptive personalization and flexible metadata tagging.

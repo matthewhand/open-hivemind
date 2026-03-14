@@ -54,6 +54,10 @@ export const sanitizeInput = (req: Request, res: Response, next: NextFunction) =
     req.params = sanitizeObject(req.params);
   }
 
+  if (req.headers && typeof req.headers === 'object') {
+    req.headers = sanitizeObject(req.headers);
+  }
+
   next();
 };
 

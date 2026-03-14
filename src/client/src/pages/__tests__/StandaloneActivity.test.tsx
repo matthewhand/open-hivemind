@@ -5,18 +5,20 @@ import StandaloneActivity from '../StandaloneActivity';
 import { apiService } from '../../services/api';
 
 // Mock components
-vi.mock('../../components/DaisyUI', () => ({
+vi.mock('../../components/DaisyUI/Alert', () => ({
   Alert: ({ message }: any) => <div data-testid="alert">{message}</div>,
-  Badge: ({ children }: any) => <span data-testid="badge">{children}</span>,
-  Button: ({ children, onClick }: any) => <button onClick={onClick}>{children}</button>,
-  Card: ({ children }: any) => <div data-testid="card">{children}</div>,
-  DataTable: ({ data }: any) => <div data-testid="data-table">Rows: {data?.length}</div>,
-  StatsCards: () => <div data-testid="stats-cards" />,
-  Timeline: () => <div data-testid="timeline" />,
-  Toggle: () => <div data-testid="toggle" />,
-  PageHeader: () => <div data-testid="page-header" />,
-  LoadingSpinner: () => <div data-testid="loading-spinner" />,
-  EmptyState: () => <div data-testid="empty-state" />,
+}));
+vi.mock('../../components/DaisyUI/Badge', () => ({
+  default: ({ children }: any) => <span data-testid="badge">{children}</span>,
+}));
+vi.mock('../../components/DaisyUI/Button', () => ({
+  default: ({ children, onClick }: any) => <button onClick={onClick}>{children}</button>,
+}));
+vi.mock('../../components/DaisyUI/Card', () => ({
+  default: ({ children }: any) => <div data-testid="card">{children}</div>,
+}));
+vi.mock('../../components/DaisyUI/DataTable', () => ({
+  default: ({ data }: any) => <div data-testid="data-table">Rows: {data?.length}</div>,
 }));
 
 // Mock API
