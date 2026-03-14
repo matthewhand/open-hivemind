@@ -12,7 +12,11 @@ import Select from '../components/DaisyUI/Select';
 import { useLlmStatus } from '../hooks/useLlmStatus';
 import AIAssistButton from '../components/AIAssistButton';
 import { apiService } from '../services/api';
-import { CONFIG_LIMITS } from '../../../types/config';
+
+const CONFIG_LIMITS = {
+  SYSTEM_INSTRUCTION_MIN_LENGTH: 10,
+  SYSTEM_INSTRUCTION_WARNING_LENGTH: 2000,
+};
 
 const BotCreatePage: React.FC = () => {
   const navigate = useNavigate();
