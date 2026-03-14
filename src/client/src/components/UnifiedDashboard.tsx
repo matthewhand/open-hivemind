@@ -1,18 +1,16 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import {
-  Alert,
-  Badge,
-  Button,
-  Card,
-  DataTable,
-  Modal,
-  ProgressBar,
-  StatsCards,
-  ToastNotification,
-  LoadingSpinner,
-} from './DaisyUI';
+import { Alert } from './DaisyUI/Alert';
+import Badge from './DaisyUI/Badge';
+import Button from './DaisyUI/Button';
+import Card from './DaisyUI/Card';
+import DataTable from './DaisyUI/DataTable';
+import Modal from './DaisyUI/Modal';
+import ProgressBar from './DaisyUI/ProgressBar';
+import StatsCards from './DaisyUI/StatsCards';
+import ToastNotification from './DaisyUI/ToastNotification';
+import { LoadingSpinner } from './DaisyUI/Loading';
 import type { Bot, StatusResponse } from '../services/api';
 import { apiService } from '../services/api';
 import { CreateBotWizard } from './BotManagement/CreateBotWizard';
@@ -147,10 +145,12 @@ const UnifiedDashboard: React.FC = () => {
       // Use || so that we re-fetch whenever either dataset is missing,
       // not only when both are empty (fixes &&-vs-|| logic error).
       if (personas.length === 0 || llmProfiles.length === 0) {
-        const [personasData, profilesData] = await Promise.all([
+        const [personasResult, profilesResult] = await Promise.allSettled([
           apiService.getPersonas(),
           apiService.getLlmProfiles(),
         ]);
+        const personasData = personasResult.status === 'fulfilled' ? personasResult.value : [];
+        const profilesData = profilesResult.status === 'fulfilled' ? profilesResult.value : {};
         setPersonas(personasData || []);
         setLlmProfiles(profilesData.llm || profilesData.profiles?.llm || []);
         setDefaultLlmConfigured(!!profilesData?.defaultConfigured);
@@ -173,10 +173,12 @@ const UnifiedDashboard: React.FC = () => {
     try {
       // ⚡ Bolt Optimization: Removed getPersonas() and getLlmProfiles()
       // from this critical path to speed up dashboard rendering.
-      const [configData, statusData] = await Promise.all([
+      const [configResult, statusResult] = await Promise.allSettled([
         apiService.getConfig(),
         apiService.getStatus(),
       ]);
+      const configData = configResult.status === 'fulfilled' ? configResult.value : { bots: [] };
+      const statusData = statusResult.status === 'fulfilled' ? statusResult.value : { bots: [] };
 
       setBots(configData.bots || []);
       setStatus(statusData);

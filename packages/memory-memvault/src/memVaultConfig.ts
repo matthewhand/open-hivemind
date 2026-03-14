@@ -1,6 +1,6 @@
 /**
  * MemVault Configuration for Open Hivemind
- * 
+ *
  * Configuration interface for the MemVault memory provider.
  * MemVault is an open-source RAG memory server built natively in Node.js
  * with Postgres + pgvector; uses hybrid scoring (vector similarity × 0.8) + (recency decay × 0.2).

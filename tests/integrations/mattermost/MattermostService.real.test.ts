@@ -1,4 +1,4 @@
-import { MattermostService } from '../../../packages/adapter-mattermost/src/MattermostService';
+import { MattermostService } from '../../../packages/message-mattermost/src/MattermostService';
 
 const REAL_MATTERMOST_URL = process.env.REAL_MATTERMOST_URL;
 const REAL_MATTERMOST_TOKEN = process.env.REAL_MATTERMOST_TOKEN;
