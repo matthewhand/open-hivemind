@@ -54,7 +54,13 @@ const MCPProviderManagerComponent: React.FC<MCPProviderManagerProps> = ({ classN
     manager.on('provider_test_completed', handleProviderTestCompleted);
 
     return () => {
-      manager.removeAllListeners();
+      manager.off('provider_added', loadProviders);
+      manager.off('provider_removed', loadProviders);
+      manager.off('provider_updated', loadProviders);
+      manager.off('provider_started', handleProviderStarted);
+      manager.off('provider_stopped', handleProviderStopped);
+      manager.off('provider_error', handleProviderError);
+      manager.off('provider_test_completed', handleProviderTestCompleted);
     };
   }, [manager]);
 
