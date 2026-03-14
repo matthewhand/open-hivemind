@@ -39,8 +39,12 @@ export async function executeCommandSafe(
     }
     debug('Command stdout: ' + stdout);
     return stdout;
-  } catch (err: any) {
-    debug('Command execution error: ' + err.message);
+  } catch (err: unknown) {
+    if (err instanceof Error) {
+      debug('Command execution error: ' + err.message);
+    } else {
+      debug('Command execution error: ' + String(err));
+    }
     throw err;
   }
 }
