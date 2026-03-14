@@ -1,12 +1,12 @@
 import 'reflect-metadata';
 import { container } from 'tsyringe';
 import {
-  resetContainer,
+  isRegistered,
+  registerInstance,
   registerSingleton,
   registerTransient,
-  registerInstance,
+  resetContainer,
   resolve,
-  isRegistered,
 } from '../../../src/di/container';
 
 describe('DI Container', () => {

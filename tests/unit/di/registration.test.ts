@@ -75,8 +75,12 @@ describe('DI Service Registration Logging', () => {
     expect(mockLogger.debug).toHaveBeenCalledWith('Registering BotConfigurationManager instance');
     expect(mockLogger.debug).toHaveBeenCalledWith('Registering UserConfigStore');
     expect(mockLogger.debug).toHaveBeenCalledWith('Registering SecureConfigManager');
-    expect(mockLogger.warn).toHaveBeenCalledWith('BotConfigurationManager is being registered a second time (useClass); this will override the useValue registration above');
-    expect(mockLogger.warn).toHaveBeenCalledWith('UserConfigStore is being registered a second time; this will override the first registration');
+    expect(mockLogger.warn).toHaveBeenCalledWith(
+      'BotConfigurationManager is being registered a second time (useClass); this will override the useValue registration above'
+    );
+    expect(mockLogger.warn).toHaveBeenCalledWith(
+      'UserConfigStore is being registered a second time; this will override the first registration'
+    );
     expect(mockLogger.debug).toHaveBeenCalledWith('Registering ProviderConfigManager');
 
     // Verify completion log (info level)

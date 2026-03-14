@@ -1,19 +1,11 @@
+
 [build]
   command = "npm run build:netlify"
   functions = "dist/netlify/functions"
   publish = "dist/client"
 
-# Only build on main branch to avoid unnecessary builds on feature branches
-# Use context-specific commands to generate a dummy directory rather than 'ignore',
-# which cancels the build and causes Netlify redirect parsing failures.
-[context.deploy-preview]
-  command = "mkdir -p dist/client dist/netlify/functions && echo 'Skipped PR Build' > dist/client/index.html"
-
-[context.branch-deploy]
-  command = "mkdir -p dist/client dist/netlify/functions && echo 'Skipped Branch Build' > dist/client/index.html"
-
-[dev]
-  command = "npm run dev"
+[functions]
+  node_bundler = "esbuild"
 
 [[redirects]]
   from = "/api/*"

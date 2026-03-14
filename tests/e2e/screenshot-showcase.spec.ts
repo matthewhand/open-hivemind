@@ -7,8 +7,12 @@ test.describe('Showcase Screenshots', () => {
     await setupAuth(page);
 
     // Mock API endpoints to prevent hanging tests
-    await page.route('**/api/config/llm-status', async (route) => route.fulfill({ status: 200, json: { defaultConfigured: true } }));
-    await page.route('**/api/config/llm-profiles', async (route) => route.fulfill({ status: 200, json: { profiles: { llm: [] } } }));
+    await page.route('**/api/config/llm-status', async (route) =>
+      route.fulfill({ status: 200, json: { defaultConfigured: true } })
+    );
+    await page.route('**/api/config/llm-profiles', async (route) =>
+      route.fulfill({ status: 200, json: { profiles: { llm: [] } } })
+    );
 
     // Navigate to Showcase page
     await page.setViewportSize({ width: 1280, height: 1200 });

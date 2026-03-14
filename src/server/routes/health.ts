@@ -1,11 +1,11 @@
 import os from 'os';
 import process from 'process';
 import { Router, type NextFunction, type Request, type Response } from 'express';
+import { container } from 'tsyringe';
 import { DatabaseManager } from '../../database/DatabaseManager';
-import { container } from '../../di/container';
 import { BotManager } from '../../managers/BotManager';
 import { MetricsCollector } from '../../monitoring/MetricsCollector';
-import ApiMonitorService from '../../services/ApiMonitorService';
+import { ApiMonitorService } from '../../services/ApiMonitorService';
 import { ErrorLogger } from '../../utils/errorLogger';
 import { globalRecoveryManager } from '../../utils/errorRecovery';
 import { optionalAuth } from '../middleware/auth';
@@ -190,7 +190,7 @@ router.get('/ready', async (req, res) => {
   try {
     const isDbConnected = DatabaseManager.getInstance().isConnected();
     const bots = await BotManager.getInstance().getAllBots();
-    const botAdaptersHealthy = bots.every(
+    const botAdaptersHealthy = Array.from(bots).every(
       (bot: any) =>
         bot.getStatus() === 'active' ||
         bot.getStatus() === 'connected' ||
@@ -198,8 +198,7 @@ router.get('/ready', async (req, res) => {
         bot.getStatus() === 'idle' ||
         bot.getStatus() === 'warning'
     );
-    const apiMonitor = container.resolve(ApiMonitorService);
-    const apiStatuses = apiMonitor.getAllStatuses();
+    const apiStatuses = container.resolve(ApiMonitorService).getAllStatuses();
     const externalApisHealthy = Object.values(apiStatuses).every(
       (status: any) => status.status !== 'error' && status.status !== 'offline'
     );

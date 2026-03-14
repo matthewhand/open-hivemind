@@ -1,5 +1,5 @@
-import { OpenSwarmProvider } from './OpenSwarmProvider';
 import { create, manifest } from './index';
+import { OpenSwarmProvider } from './OpenSwarmProvider';
 
 jest.mock('axios', () => ({
   post: jest.fn(),
