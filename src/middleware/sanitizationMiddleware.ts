@@ -54,9 +54,10 @@ export const sanitizeInput = (req: Request, res: Response, next: NextFunction) =
     req.params = sanitizeObject(req.params);
   }
 
-  if (req.headers && typeof req.headers === 'object') {
-    req.headers = sanitizeObject(req.headers);
-  }
+  // Historically we do not sanitize request headers by default as it can break expected formatting.
+  // if (req.headers && typeof req.headers === 'object') {
+  //   req.headers = sanitizeObject(req.headers);
+  // }
 
   next();
 };

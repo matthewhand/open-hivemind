@@ -1,7 +1,11 @@
 import React from 'react';
 import type { LucideIcon } from 'lucide-react';
+<<<<<<< HEAD
 import Button from './Button';
 import { safeString } from '../../utils/safeString';
+=======
+import { Button } from './Button';
+>>>>>>> 9ad452c7 (Refiner: Final frontend build fix)
 
 interface EmptyStateProps {
   icon: LucideIcon;
