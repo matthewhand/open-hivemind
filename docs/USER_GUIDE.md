@@ -259,6 +259,16 @@ A reference for developers extending the WebUI.
 
 *   **Component Library**: View available UI elements (buttons, inputs, cards) and their usage.
 
+### System Alerts
+Alerts are used throughout the system to communicate important states to the user.
+
+![System Alerts](screenshots/system-alerts.png)
+
+*   **Info**: General information or updates (e.g. software updates).
+*   **Success**: Confirmation of successful actions (e.g. configuration saved).
+*   **Warning**: Notices about potential issues (e.g. rate limits approaching).
+*   **Error**: Critical failures that require attention (e.g. database connection failed).
+
 ### [System Backups & Export](/admin/export)
 Manage system configuration backups and download API documentation.
 
