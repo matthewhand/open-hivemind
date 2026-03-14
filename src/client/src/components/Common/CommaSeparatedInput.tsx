@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
+import { safeArray, safeString } from '../../utils/safeString';
 
 export interface CommaSeparatedInputProps {
   value: string[];
@@ -27,6 +28,13 @@ export const CommaSeparatedInput: React.FC<CommaSeparatedInputProps> = ({
   error,
   validate,
 }) => {
+  const normalizedValue = safeArray<string>(value)
+    .map((item) => safeString(item))
+    .filter(Boolean);
+  const normalizedSuggestions = safeArray<string>(suggestions)
+    .map((item) => safeString(item))
+    .filter(Boolean);
+
   const [inputValue, setInputValue] = useState('');
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [internalError, setInternalError] = useState<string | null>(null);
@@ -40,15 +48,15 @@ export const CommaSeparatedInput: React.FC<CommaSeparatedInputProps> = ({
   const [canUndo, setCanUndo] = useState(false);
 
   // We need to keep a ref of current value to push to history
-  const currentValueRef = useRef(value);
+  const currentValueRef = useRef(normalizedValue);
 
   useEffect(() => {
     // Only update if it actually changed to avoid infinite loops,
     // though the parent might give us the same array ref if we're lucky.
-    if (JSON.stringify(currentValueRef.current) !== JSON.stringify(value)) {
-      currentValueRef.current = value;
+    if (JSON.stringify(currentValueRef.current) !== JSON.stringify(normalizedValue)) {
+      currentValueRef.current = normalizedValue;
     }
-  }, [value]);
+  }, [normalizedValue]);
 
   const pushToHistory = useCallback((newValue: string[]) => {
     const last = historyRef.current[historyRef.current.length - 1];
@@ -75,11 +83,11 @@ export const CommaSeparatedInput: React.FC<CommaSeparatedInputProps> = ({
     }
 
     const current = textToCommit
-      .split(',')
+      .split(/[,;\n\r]+/)
       .map(s => s.trim())
       .filter(Boolean);
 
-    const next = [...value];
+    const next = [...normalizedValue];
     let changed = false;
     let localError: string | null = null;
 
@@ -112,11 +120,11 @@ export const CommaSeparatedInput: React.FC<CommaSeparatedInputProps> = ({
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter') {
+    if (e.key === 'Enter' || e.key === ',' || e.key === ';') {
       e.preventDefault();
       commitInput();
-    } else if (e.key === 'Backspace' && !inputValue && value.length > 0) {
-      const next = value.slice(0, -1);
+    } else if (e.key === 'Backspace' && !inputValue && normalizedValue.length > 0) {
+      const next = normalizedValue.slice(0, -1);
       pushToHistory(next);
       onChange(next);
     } else if ((e.ctrlKey || e.metaKey) && e.key === 'z') {
@@ -127,7 +135,7 @@ export const CommaSeparatedInput: React.FC<CommaSeparatedInputProps> = ({
 
   const handleRemove = (itemToRemove: string) => {
     if (disabled) return;
-    const next = value.filter(item => item !== itemToRemove);
+    const next = normalizedValue.filter(item => item !== itemToRemove);
     pushToHistory(next);
     onChange(next);
   };
@@ -147,11 +155,11 @@ export const CommaSeparatedInput: React.FC<CommaSeparatedInputProps> = ({
     if (!pastedText) return;
 
     const current = pastedText
-      .split(',')
+      .split(/[,;\n\r]+/)
       .map(s => s.trim())
       .filter(Boolean);
 
-    const next = [...value];
+    const next = [...normalizedValue];
     let changed = false;
     for (const item of current) {
       if (!next.includes(item) && next.length < maxItems) {
@@ -178,8 +186,8 @@ export const CommaSeparatedInput: React.FC<CommaSeparatedInputProps> = ({
     commitInput(suggestion);
   };
 
-  const filteredSuggestions = suggestions.filter(s =>
-    !value.includes(s) &&
+  const filteredSuggestions = normalizedSuggestions.filter(s =>
+    !normalizedValue.includes(s) &&
     s.toLowerCase().includes(inputValue.toLowerCase())
   );
 
@@ -193,27 +201,27 @@ export const CommaSeparatedInput: React.FC<CommaSeparatedInputProps> = ({
           displayError ? 'border-error focus-within:ring-error' : 'focus-within:ring-primary'
         }`}
       >
-        {value.map(v => {
-        const customColorClass = tagColor ? tagColor(v) : 'bg-base-200 text-base-content';
-        return (
-        <span
-          key={v}
-          data-testid="chip"
-          className={`flex items-center gap-1 px-2 py-1 text-sm rounded-md ${customColorClass}`}
-        >
-          {v}
-          {!disabled && (
-            <button
-              type="button"
-              className="text-base-content/50 hover:text-base-content"
-              onClick={() => handleRemove(v)}
-              onMouseDown={(e) => e.preventDefault()}
-              aria-label={`Remove ${v}`}
+        {normalizedValue.map(v => {
+          const customColorClass = tagColor ? tagColor(v) : 'bg-base-200 text-base-content';
+          return (
+            <span
+              key={v}
+              data-testid="chip"
+              className={`flex items-center gap-1 px-2 py-1 text-sm rounded-md ${customColorClass}`}
             >
-              &times;
-            </button>
-          )}
-          </span>
+              {v}
+              {!disabled && (
+                <button
+                  type="button"
+                  className="text-base-content/50 hover:text-base-content"
+                  onClick={() => handleRemove(v)}
+                  onMouseDown={(e) => e.preventDefault()}
+                  aria-label={`Remove ${v}`}
+                >
+                  &times;
+                </button>
+              )}
+            </span>
           );
         })}
         <input
@@ -228,8 +236,8 @@ export const CommaSeparatedInput: React.FC<CommaSeparatedInputProps> = ({
             setTimeout(() => commitInput(), 150);
           }}
           onPaste={handlePaste}
-          placeholder={value.length >= maxItems ? 'Max items reached' : placeholder}
-          disabled={disabled || value.length >= maxItems}
+          placeholder={normalizedValue.length >= maxItems ? 'Max items reached' : placeholder}
+          disabled={disabled || normalizedValue.length >= maxItems}
           aria-invalid={!!displayError}
           aria-describedby={displayError ? errorId : undefined}
         />
