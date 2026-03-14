@@ -65,16 +65,13 @@ test('verify MCP Guard UX', async ({ page }) => {
   const usersInput = modal.locator('input[id="allowed-users"]');
   await usersInput.fill('user1');
 
-  // Screenshot before typing comma
-  await page.screenshot({ path: 'docs/screenshots/mcp-guard-ux-before.png' });
-
   await usersInput.pressSequentially(',user2');
 
   // Need a tiny delay for React state update
   await page.waitForTimeout(100);
 
-  // Screenshot after typing comma
-  await page.screenshot({ path: 'docs/screenshots/mcp-guard-ux-after.png' });
+  // Canonical screenshot for docs
+  await page.screenshot({ path: 'docs/screenshots/mcp-guard-ux.png' });
 
   // Wait for the first chip to appear to ensure processing has happened
   const chip = page.locator('[data-testid="chip"]').first();
