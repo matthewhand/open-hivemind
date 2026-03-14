@@ -1,2 +1,2 @@
 import React from 'react';
-export const DashboardTabs: React.FC<any> = () => <div />;
+export const DashboardTabs: React.FC<any> = () => <div>Tabs</div>;
