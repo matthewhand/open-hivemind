@@ -4,12 +4,16 @@ describe('TypingActivity', () => {
   let activity: TypingActivity;
 
   beforeEach(() => {
+    (TypingActivity as any).instance = undefined;
+
     jest.useFakeTimers();
     activity = TypingActivity.getInstance();
     activity.clear();
   });
 
   afterEach(() => {
+    (TypingActivity as any).instance = undefined;
+
     jest.useRealTimers();
   });
 

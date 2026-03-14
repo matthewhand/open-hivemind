@@ -1,6 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React from 'react';
-import { Card, Button, Breadcrumbs } from '../components/DaisyUI';
+import Card from '../components/DaisyUI/Card';
+import Button from '../components/DaisyUI/Button';
+import Breadcrumbs from '../components/DaisyUI/Breadcrumbs';
 import { ArrowTopRightOnSquareIcon, HomeIcon, ClockIcon, ComputerDesktopIcon } from '@heroicons/react/24/outline';
 
 const StaticPagesPage: React.FC = () => {

@@ -77,6 +77,7 @@ export const CommaSeparatedInput: React.FC<CommaSeparatedInputProps> = ({
 
   const commitInput = (forceValue?: string) => {
     const textToCommit = forceValue !== undefined ? forceValue : inputValue;
+    // Check if there is a trailing delimiter, and keep trailing text in the input
     const delimiterMatches = [
       textToCommit.lastIndexOf(','),
       textToCommit.lastIndexOf(';'),

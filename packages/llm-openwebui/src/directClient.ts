@@ -1,5 +1,6 @@
 import axios from 'axios';
 import Debug from 'debug';
+import { isSafeUrl } from '@hivemind/shared-types';
 import type { IMessage } from '@message/interfaces/IMessage';
 
 const debug = Debug('app:openWebUI:direct');
@@ -42,6 +43,11 @@ export async function generateChatCompletionDirect(
   messages.push({ role: 'user', content: userMessage });
 
   try {
+    const targetUrl = `${baseURL}/chat/completions`;
+    if (!(await isSafeUrl(targetUrl))) {
+      throw new Error('OpenWebUI API URL is not safe to connect to.');
+    }
+
     const resp = await client.post('/chat/completions', {
       model: overrides.model,
       messages,
