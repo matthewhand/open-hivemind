@@ -196,7 +196,17 @@ export class RetryHandler {
 
         // Don't wait on the last attempt
         if (attempt < this.config.maxRetries) {
-          const delay = this.calculateDelay(attempt);
+          let delay = this.calculateDelay(attempt);
+
+          // Use error-specific retryDelay if available
+          if (lastError instanceof BaseHivemindError) {
+            const recoveryStrategy = lastError.getRecoveryStrategy();
+            if (recoveryStrategy && recoveryStrategy.retryDelay !== undefined) {
+              delay = recoveryStrategy.retryDelay;
+              debug(`Using error-specific retry delay of ${delay}ms`);
+            }
+          }
+
           debug(`Waiting ${delay}ms before retry...`);
           await this.sleep(delay);
         }
@@ -274,7 +284,8 @@ export class RetryHandler {
 
     // Add jitter if enabled
     if (this.config.jitter) {
-      const jitterRange = delay * 0.1;
+      // Proportional jitter +/- 10%
+      const jitterRange = delay * 0.2;
       delay += Math.random() * jitterRange - jitterRange / 2;
     }
 
