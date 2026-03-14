@@ -8,7 +8,6 @@ import type {
   PerformanceMetric,
 } from '../../../src/webui/services/WebSocketService';
 import type { AlertEvent } from '../types/Alert';
-import { safeArray } from '../utils/safeString';
 
 type BotStat = { name: string; messageCount: number; errorCount: number };
 
@@ -31,7 +30,6 @@ const API_BASE_URL = rawBaseUrl?.replace(/\/$/, '');
 export const WebSocketProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [socket, setSocket] = useState<Socket | null>(null);
   const socketRef = useRef<Socket | null>(null);
-  const isConnectingRef = useRef(false);
   const [isConnected, setIsConnected] = useState(false);
   const [messageFlow, setMessageFlow] = useState<MessageFlowEvent[]>([]);
   const [alerts, setAlerts] = useState<AlertEvent[]>([]);
@@ -39,13 +37,7 @@ export const WebSocketProvider: React.FC<{ children: ReactNode }> = ({ children 
   const [botStats, setBotStats] = useState<BotStat[]>([]);
 
   const connect = useCallback(() => {
-    if (socketRef.current?.connected || isConnectingRef.current) { return; }
-
-    if (socketRef.current) {
-      socketRef.current.removeAllListeners();
-      socketRef.current.disconnect();
-      socketRef.current = null;
-    }
+    if (socketRef.current?.connected) { return; }
 
     const connectionTarget = API_BASE_URL && API_BASE_URL.length > 0 ? API_BASE_URL : undefined;
     const tokenString = localStorage.getItem('auth_tokens');
@@ -59,71 +51,40 @@ export const WebSocketProvider: React.FC<{ children: ReactNode }> = ({ children 
       }
     }
 
-    isConnectingRef.current = true;
     const newSocket = io(connectionTarget, {
       path: '/webui/socket.io',
       transports: ['websocket', 'polling'],
       auth: {
         token: token
-      },
-      reconnection: true,
-      reconnectionAttempts: Infinity,
-      reconnectionDelay: 1000,
-      reconnectionDelayMax: 5000,
-      randomizationFactor: 0.5,
+      }
     });
 
     newSocket.on('connect', () => {
       console.log('WebSocket connected');
       setIsConnected(true);
-      isConnectingRef.current = false;
     });
 
-    newSocket.on('disconnect', (reason) => {
-      console.log('WebSocket disconnected', reason);
+    newSocket.on('disconnect', () => {
+      console.log('WebSocket disconnected');
       setIsConnected(false);
-      isConnectingRef.current = false;
-    });
-
-    newSocket.on('reconnect_attempt', (attempt) => {
-      console.log(`WebSocket reconnect attempt ${attempt}`);
-    });
-
-    newSocket.on('reconnect', (attempt) => {
-      console.log(`WebSocket reconnected after ${attempt} attempts`);
-      setIsConnected(true);
-    });
-
-    newSocket.on('reconnect_error', (error) => {
-      console.error('WebSocket reconnect error:', error);
-    });
-
-    newSocket.on('reconnect_failed', () => {
-      console.error('WebSocket reconnect failed');
     });
 
     // Message flow events
     newSocket.on('message_flow_update', (data) => {
-      setMessageFlow(safeArray<MessageFlowEvent>(data?.messages).slice(-100));
+      setMessageFlow(data.messages || []);
     });
 
     newSocket.on('message_flow_broadcast', (data) => {
-      const incoming = safeArray<MessageFlowEvent>(data?.latest);
-      if (incoming.length === 0) { return; }
-      setMessageFlow(prev => [...prev, ...incoming].slice(-100));
+      setMessageFlow(prev => [...prev, ...(data.latest || [])].slice(-100));
     });
 
     // Alert events
     newSocket.on('alerts_update', (data) => {
-      const incoming = safeArray<AlertEvent>(data?.alerts);
-      const next = incoming
-        .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
-        .slice(0, 50);
-      setAlerts(next);
+      setAlerts(data.alerts || []);
     });
 
     newSocket.on('alerts_broadcast', (data) => {
-      const incoming = safeArray<AlertEvent>(data?.alerts);
+      const incoming = data.alerts || [];
       setAlerts((prev) => {
         const merged = [...prev];
         incoming.forEach((inc: AlertEvent) => {
@@ -154,17 +115,16 @@ export const WebSocketProvider: React.FC<{ children: ReactNode }> = ({ children 
 
     // Performance metrics
     newSocket.on('performance_metrics_update', (data) => {
-      setPerformanceMetrics(safeArray<PerformanceMetric>(data?.metrics).slice(-60));
+      setPerformanceMetrics(data.metrics || []);
     });
 
     newSocket.on('performance_metrics_broadcast', (data) => {
-      if (!data?.current) { return; }
       setPerformanceMetrics(prev => [...prev, data.current].slice(-60));
     });
 
     // Bot stats
     newSocket.on('bot_stats_broadcast', (data) => {
-      setBotStats(safeArray<BotStat>(data?.stats));
+      setBotStats(data.stats || []);
     });
 
     // Bot status updates
@@ -181,11 +141,6 @@ export const WebSocketProvider: React.FC<{ children: ReactNode }> = ({ children 
     newSocket.on('error', (error) => {
       console.error('WebSocket error:', error);
     });
-    newSocket.on('connect_error', (error) => {
-      console.error('WebSocket connect error:', error);
-      setIsConnected(false);
-      isConnectingRef.current = false;
-    });
 
     socketRef.current = newSocket;
     setSocket(newSocket);
@@ -193,13 +148,11 @@ export const WebSocketProvider: React.FC<{ children: ReactNode }> = ({ children 
 
   const disconnect = useCallback(() => {
     if (socketRef.current) {
-      socketRef.current.removeAllListeners();
       socketRef.current.disconnect();
       socketRef.current = null;
       setSocket(null);
       setIsConnected(false);
     }
-    isConnectingRef.current = false;
   }, []);
 
   useEffect(() => {
