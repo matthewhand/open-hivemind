@@ -3,7 +3,8 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Breadcrumbs from '../components/DaisyUI/Breadcrumbs';
 import EmptyState from '../components/DaisyUI/EmptyState';
-import { Copy, Check, Search } from 'lucide-react';
+import PageHeader from '../components/DaisyUI/PageHeader';
+import { Copy, Check, Search, Bot } from 'lucide-react';
 import SearchFilterBar from '../components/SearchFilterBar';
 
 interface BotTemplate {
@@ -168,26 +169,21 @@ const BotTemplatesPage: React.FC = () => {
     <div className="p-6">
       <Breadcrumbs items={breadcrumbItems} />
 
-
-
+      <PageHeader
+        title="Bot Templates"
+        description="Quick-start templates to help you create bots faster. Choose a template and customize it for your needs."
+        icon={<Bot className="w-6 h-6" />}
+        actions={
+          <button
+            className="btn btn-outline"
+            onClick={() => navigate('/admin/bots/create')}
+          >
+            Create Custom Bot
+          </button>
+        }
+      />
 
       <div className="mt-4 mb-8">
-      <div className="flex justify-between items-center mb-4">
-          <div>
-              <h1 className="text-3xl font-bold mb-2">
-              Bot Templates
-              </h1>
-              <p className="text-base-content/70">
-              Quick-start templates to help you create bots faster. Choose a template and customize it for your needs.
-              </p>
-          </div>
-          <button
-              className="btn btn-outline"
-              onClick={() => navigate('/admin/bots/create')}
-          >
-              Create Custom Bot
-          </button>
-      </div>
 
       {/* Recommended Templates Carousel */}
       {templates.length > 0 && (

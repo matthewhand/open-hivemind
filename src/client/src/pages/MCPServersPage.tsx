@@ -16,6 +16,7 @@ import Breadcrumbs from '../components/DaisyUI/Breadcrumbs';
 import { Alert } from '../components/DaisyUI/Alert';
 import Modal from '../components/DaisyUI/Modal';
 import EmptyState from '../components/DaisyUI/EmptyState';
+import PageHeader from '../components/DaisyUI/PageHeader';
 import SearchFilterBar from '../components/SearchFilterBar';
 
 interface Tool {
@@ -520,23 +521,20 @@ const MCPServersPage: React.FC = () => {
     <div className="p-6">
       <Breadcrumbs items={breadcrumbItems} />
 
-      <div className="flex justify-between items-center mt-4 mb-8">
-        <div>
-          <h1 className="text-3xl font-bold mb-2">
-            MCP Servers
-          </h1>
-          <p className="text-base-content/70">
-            Manage Model Context Protocol servers and their tools
-          </p>
-        </div>
-        <button
-          className="btn btn-primary"
-          onClick={handleAddServer}
-        >
-          <PlusIcon className="w-5 h-5 mr-2" />
-          Add Server
-        </button>
-      </div>
+      <PageHeader
+        title="MCP Servers"
+        description="Manage Model Context Protocol servers and their tools"
+        icon={<Server className="w-6 h-6" />}
+        actions={
+          <button
+            className="btn btn-primary"
+            onClick={handleAddServer}
+          >
+            <PlusIcon className="w-5 h-5 mr-2" />
+            Add Server
+          </button>
+        }
+      />
 
       {servers.length > 0 && (
         <div className="mb-6">

@@ -6,7 +6,8 @@ import Button from '../components/DaisyUI/Button';
 import Badge from '../components/DaisyUI/Badge';
 import Dropdown from '../components/DaisyUI/Dropdown';
 import Breadcrumbs from '../components/DaisyUI/Breadcrumbs';
-import { ArrowLeftIcon, ArrowDownTrayIcon } from '@heroicons/react/24/outline';
+import PageHeader from '../components/DaisyUI/PageHeader';
+import { ArrowLeftIcon, ArrowDownTrayIcon, DocumentTextIcon } from '@heroicons/react/24/outline';
 import ReactMarkdown from 'react-markdown';
 import useSpec from '../hooks/useSpec';
 
@@ -97,36 +98,37 @@ ${spec.content.replace(/^/gm, '  ')}
     <div className="container mx-auto p-6 max-w-4xl">
       <Breadcrumbs items={breadcrumbItems} />
 
+      <PageHeader
+        title={spec.topic}
+        description={`By ${spec.author} • ${new Date(spec.date).toLocaleDateString()}`}
+        icon={<DocumentTextIcon className="w-6 h-6" />}
+        actions={
+          <div className="flex items-center gap-2">
+            <Button
+              size="sm"
+              className="btn-ghost"
+              onClick={() => window.history.back()}
+            >
+              <ArrowLeftIcon className="w-4 h-4 mr-2" />
+              Back
+            </Button>
+            <Dropdown
+              trigger={
+                <Button className="btn-primary btn-sm">
+                  <ArrowDownTrayIcon className="w-4 h-4 mr-2" />
+                  Export
+                </Button>
+              }
+              items={exportItems}
+              align="end"
+            />
+          </div>
+        }
+      />
+
       <div className="mt-6">
         <Card className="shadow-lg">
           <div className="card-body">
-            {/* Header */}
-            <div className="flex items-center justify-between mb-6">
-              <div className="flex items-center gap-4">
-                <Button
-                  size="sm"
-                  className="btn-ghost"
-                  onClick={() => window.history.back()}
-                >
-                  <ArrowLeftIcon className="w-4 h-4 mr-2" />
-                  Back
-                </Button>
-                <div>
-                  <h1 className="text-3xl font-bold">{spec.topic}</h1>
-                  <p className="opacity-70">By {spec.author} • {new Date(spec.date).toLocaleDateString()}</p>
-                </div>
-              </div>
-              <Dropdown
-                trigger={
-                  <Button className="btn-primary">
-                    <ArrowDownTrayIcon className="w-4 h-4 mr-2" />
-                    Export
-                  </Button>
-                }
-                items={exportItems}
-              />
-            </div>
-
             {/* Tags */}
             <div className="flex flex-wrap gap-2 mb-6">
               {spec.tags.map((tag, index) => (

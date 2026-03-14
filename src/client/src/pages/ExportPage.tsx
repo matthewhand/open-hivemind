@@ -268,7 +268,7 @@ const ExportPage: React.FC = () => {
       <PageHeader
         title="Export & System Data"
         description="Manage system backups, export configurations, and access API specifications."
-        icon={Archive}
+        icon={<Archive className="w-6 h-6" />}
         gradient="secondary"
       />
 
@@ -286,12 +286,12 @@ const ExportPage: React.FC = () => {
       {/* System Backups Section */}
       <div className="card bg-base-100 shadow-xl">
         <div className="card-body">
-          <div className="flex flex-col md:flex-row justify-between items-center mb-4 gap-4">
+          <div className="flex flex-col sm:flex-row justify-between items-center mb-4 gap-4">
             <div>
               <h2 className="card-title text-xl">System Backups</h2>
               <p className="text-sm text-base-content/70">Create and manage full system configuration backups.</p>
             </div>
-            <div className="flex items-center gap-2 w-full md:w-auto">
+            <div className="flex items-center gap-2 w-full sm:w-auto">
               <Button
                 variant="primary"
                 onClick={() => setCreateModalOpen(true)}
