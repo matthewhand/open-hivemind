@@ -576,7 +576,7 @@ const AgentConfigurator: React.FC<AgentConfiguratorProps> = ({ title = 'Agent Co
           <div className={`alert alert-${feedback.type} shadow-lg mb-4`}>
             <div>
               <span>{feedback.message}</span>
-              <button className="btn btn-ghost btn-sm" onClick={() => setFeedback(null)}>✕</button>
+              <button className="btn btn-ghost btn-sm" onClick={() => setFeedback(null)} aria-label="Close message">✕</button>
             </div>
           </div>
         )}
