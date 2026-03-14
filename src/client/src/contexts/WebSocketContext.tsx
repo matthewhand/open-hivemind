@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars, react-refresh/only-export-components, no-empty, no-case-declarations */
 import type { ReactNode } from 'react';
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState, useRef, useCallback } from 'react';
 import type { Socket } from 'socket.io-client';
 import { io } from 'socket.io-client';
 import type {
@@ -8,6 +8,7 @@ import type {
   PerformanceMetric,
 } from '../../../src/webui/services/WebSocketService';
 import type { AlertEvent } from '../types/Alert';
+import { safeArray } from '../utils/safeString';
 
 type BotStat = { name: string; messageCount: number; errorCount: number };
 
@@ -29,14 +30,22 @@ const API_BASE_URL = rawBaseUrl?.replace(/\/$/, '');
 
 export const WebSocketProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [socket, setSocket] = useState<Socket | null>(null);
+  const socketRef = useRef<Socket | null>(null);
+  const isConnectingRef = useRef(false);
   const [isConnected, setIsConnected] = useState(false);
   const [messageFlow, setMessageFlow] = useState<MessageFlowEvent[]>([]);
   const [alerts, setAlerts] = useState<AlertEvent[]>([]);
   const [performanceMetrics, setPerformanceMetrics] = useState<PerformanceMetric[]>([]);
   const [botStats, setBotStats] = useState<BotStat[]>([]);
 
-  const connect = () => {
-    if (socket?.connected) { return; }
+  const connect = useCallback(() => {
+    if (socketRef.current?.connected || isConnectingRef.current) { return; }
+
+    if (socketRef.current) {
+      socketRef.current.removeAllListeners();
+      socketRef.current.disconnect();
+      socketRef.current = null;
+    }
 
     const connectionTarget = API_BASE_URL && API_BASE_URL.length > 0 ? API_BASE_URL : undefined;
     const tokenString = localStorage.getItem('auth_tokens');
@@ -50,6 +59,7 @@ export const WebSocketProvider: React.FC<{ children: ReactNode }> = ({ children 
       }
     }
 
+    isConnectingRef.current = true;
     const newSocket = io(connectionTarget, {
       path: '/webui/socket.io',
       transports: ['websocket', 'polling'],
@@ -66,11 +76,13 @@ export const WebSocketProvider: React.FC<{ children: ReactNode }> = ({ children 
     newSocket.on('connect', () => {
       console.log('WebSocket connected');
       setIsConnected(true);
+      isConnectingRef.current = false;
     });
 
     newSocket.on('disconnect', (reason) => {
       console.log('WebSocket disconnected', reason);
       setIsConnected(false);
+      isConnectingRef.current = false;
     });
 
     newSocket.on('reconnect_attempt', (attempt) => {
@@ -92,20 +104,26 @@ export const WebSocketProvider: React.FC<{ children: ReactNode }> = ({ children 
 
     // Message flow events
     newSocket.on('message_flow_update', (data) => {
-      setMessageFlow(data.messages || []);
+      setMessageFlow(safeArray<MessageFlowEvent>(data?.messages).slice(-100));
     });
 
     newSocket.on('message_flow_broadcast', (data) => {
-      setMessageFlow(prev => [...prev, ...(data.latest || [])].slice(-100));
+      const incoming = safeArray<MessageFlowEvent>(data?.latest);
+      if (incoming.length === 0) { return; }
+      setMessageFlow(prev => [...prev, ...incoming].slice(-100));
     });
 
     // Alert events
     newSocket.on('alerts_update', (data) => {
-      setAlerts(data.alerts || []);
+      const incoming = safeArray<AlertEvent>(data?.alerts);
+      const next = incoming
+        .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+        .slice(0, 50);
+      setAlerts(next);
     });
 
     newSocket.on('alerts_broadcast', (data) => {
-      const incoming = data.alerts || [];
+      const incoming = safeArray<AlertEvent>(data?.alerts);
       setAlerts((prev) => {
         const merged = [...prev];
         incoming.forEach((inc: AlertEvent) => {
@@ -136,16 +154,17 @@ export const WebSocketProvider: React.FC<{ children: ReactNode }> = ({ children 
 
     // Performance metrics
     newSocket.on('performance_metrics_update', (data) => {
-      setPerformanceMetrics(data.metrics || []);
+      setPerformanceMetrics(safeArray<PerformanceMetric>(data?.metrics).slice(-60));
     });
 
     newSocket.on('performance_metrics_broadcast', (data) => {
+      if (!data?.current) { return; }
       setPerformanceMetrics(prev => [...prev, data.current].slice(-60));
     });
 
     // Bot stats
     newSocket.on('bot_stats_broadcast', (data) => {
-      setBotStats(data.stats || []);
+      setBotStats(safeArray<BotStat>(data?.stats));
     });
 
     // Bot status updates
@@ -162,23 +181,32 @@ export const WebSocketProvider: React.FC<{ children: ReactNode }> = ({ children 
     newSocket.on('error', (error) => {
       console.error('WebSocket error:', error);
     });
+    newSocket.on('connect_error', (error) => {
+      console.error('WebSocket connect error:', error);
+      setIsConnected(false);
+      isConnectingRef.current = false;
+    });
 
+    socketRef.current = newSocket;
     setSocket(newSocket);
-  };
+  }, []);
 
-  const disconnect = () => {
-    if (socket) {
-      socket.disconnect();
+  const disconnect = useCallback(() => {
+    if (socketRef.current) {
+      socketRef.current.removeAllListeners();
+      socketRef.current.disconnect();
+      socketRef.current = null;
       setSocket(null);
       setIsConnected(false);
     }
-  };
+    isConnectingRef.current = false;
+  }, []);
 
   useEffect(() => {
     return () => {
       disconnect();
     };
-  }, []);
+  }, [disconnect]);
 
   const value: WebSocketContextType = {
     socket,
