@@ -1,8 +1,8 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
-import React, { useState } from 'react';
+
+import React from 'react';
 import { useParams } from 'react-router-dom';
-import { Card, Button, Badge, Breadcrumbs, Dropdown, Menu, PageHeader } from '../components/DaisyUI';
-import { ArrowLeftIcon, ArrowDownTrayIcon, ShareIcon, DocumentDuplicateIcon, CheckIcon, DocumentTextIcon } from '@heroicons/react/24/outline';
+import { Card, Button, Badge, Breadcrumbs, Dropdown, PageHeader } from '../components/DaisyUI';
+import { ArrowLeftIcon, ArrowDownTrayIcon, DocumentTextIcon } from '@heroicons/react/24/outline';
 import ReactMarkdown from 'react-markdown';
 import useSpec from '../hooks/useSpec';
 

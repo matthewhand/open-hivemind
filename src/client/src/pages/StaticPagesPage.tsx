@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React from 'react';
 import { Card, Button, Breadcrumbs, PageHeader } from '../components/DaisyUI';
 import { ArrowTopRightOnSquareIcon, HomeIcon, ClockIcon, ComputerDesktopIcon, DocumentTextIcon } from '@heroicons/react/24/outline';
