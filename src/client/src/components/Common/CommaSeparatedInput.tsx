@@ -77,7 +77,6 @@ export const CommaSeparatedInput: React.FC<CommaSeparatedInputProps> = ({
 
   const commitInput = (forceValue?: string) => {
     const textToCommit = forceValue !== undefined ? forceValue : inputValue;
-
     // Check if there is a trailing delimiter, and keep trailing text in the input
     const delimiterMatches = [
       textToCommit.lastIndexOf(','),
@@ -131,7 +130,7 @@ export const CommaSeparatedInput: React.FC<CommaSeparatedInputProps> = ({
         pushToHistory(next);
         onChange(next);
       }
-      setInputValue(remainingText); // set to remaining text after last comma
+      setInputValue(remainingText);
       setShowSuggestions(false);
     }
   };
@@ -265,35 +264,35 @@ export const CommaSeparatedInput: React.FC<CommaSeparatedInputProps> = ({
           aria-invalid={!!displayError}
           aria-describedby={displayError ? errorId : undefined}
         />
-      <div className="flex items-center gap-1">
-        {!disabled && canUndo && (
-          <button
-            type="button"
-            onClick={handleUndo}
-            onMouseDown={(e) => e.preventDefault()}
-            className="p-1 mx-1 rounded-full text-base-content/40 hover:text-primary hover:bg-primary/10 focus:outline-none transition-colors"
-            title="Undo last change (Ctrl+Z)"
-            aria-label="Undo"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M3 7v6h6" />
-              <path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13" />
-            </svg>
-          </button>
-        )}
-        {!disabled && normalizedValue.length > 0 && (
-          <button
-            type="button"
-            onClick={handleClearAll}
-            onMouseDown={(e) => e.preventDefault()}
-            className="p-1 mx-1 rounded-full text-base-content/40 hover:text-error hover:bg-error/10 focus:outline-none transition-colors"
-            title="Clear all"
-            aria-label="Clear all items"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 20 20" fill="currentColor">
-              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-            </svg>
-          </button>
+        <div className="flex items-center gap-1">
+          {!disabled && canUndo && (
+            <button
+              type="button"
+              onClick={handleUndo}
+              onMouseDown={(e) => e.preventDefault()}
+              className="p-1 mx-1 rounded-full text-base-content/40 hover:text-primary hover:bg-primary/10 focus:outline-none transition-colors"
+              title="Undo last change (Ctrl+Z)"
+              aria-label="Undo"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M3 7v6h6" />
+                <path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13" />
+              </svg>
+            </button>
+          )}
+          {!disabled && normalizedValue.length > 0 && (
+            <button
+              type="button"
+              onClick={handleClearAll}
+              onMouseDown={(e) => e.preventDefault()}
+              className="p-1 mx-1 rounded-full text-base-content/40 hover:text-error hover:bg-error/10 focus:outline-none transition-colors"
+              title="Clear all"
+              aria-label="Clear all items"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+              </svg>
+            </button>
           )}
         </div>
       </div>
