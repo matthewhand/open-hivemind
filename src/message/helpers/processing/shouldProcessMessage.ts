@@ -1,6 +1,9 @@
 import debug from 'debug';
 import messageConfig from '@config/messageConfig';
 import type { IMessage } from '@message/interfaces/IMessage';
+import debugFn from 'debug';
+
+const debug = debugFn('hivemind:message:shouldProcessMessage');
 
 const d = debug('app:shouldProcessMessage');
 

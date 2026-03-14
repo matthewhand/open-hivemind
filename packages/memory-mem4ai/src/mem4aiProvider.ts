@@ -123,7 +123,7 @@ export class Mem4aiProvider {
         try {
             const response = await this.makeRequest(`/memories/search?${params}`, 'GET');
 
-            const results: SearchResult[] = (response.results as any[]).map((result: Record<string, unknown>) => ({
+            const results: SearchResult[] = (response.results as any[] || []).map((result: any) => ({
                 id: result.id as string,
                 content: result.content as string,
                 score: result.score as number,
@@ -152,7 +152,7 @@ export class Mem4aiProvider {
         try {
             const response = await this.makeRequest(`/memories?${params}`, 'GET');
 
-            const memories: MemoryEntry[] = (response.memories as any[]).map((mem: Record<string, unknown>) => ({
+            const memories: MemoryEntry[] = (response.memories as any[] || []).map((mem: any) => ({
                 id: mem.id as string,
                 content: mem.content as string,
                 metadata: mem.metadata as Record<string, unknown> | undefined,
@@ -196,15 +196,15 @@ export class Mem4aiProvider {
         };
 
         try {
-            const response = await this.makeRequest(`/memories/${id}`, 'PUT', body);
+            const response = await this.makeRequest(`/memories/${id}`, 'PUT', body) as Record<string, unknown>;
 
             this.debug('Memory updated', { id });
             return {
                 id: response.id as string,
                 content: response.content as string,
-                metadata: response.metadata as Record<string, unknown>,
+                metadata: response.metadata as Record<string, unknown> | undefined,
                 timestamp: response.updated_at as number,
-                tags: response.tags as string[],
+                tags: response.tags as string[] | undefined,
             };
         } catch (error) {
             this.debug('Failed to update memory', error);
@@ -255,7 +255,7 @@ export class Mem4aiProvider {
                 throw new Error(`Mem4ai API error: ${response.status} - ${error}`);
             }
 
-            return await response.json() as Promise<any>;
+            return await response.json() as Promise<Record<string, unknown>>;
         } finally {
             clearTimeout(timeout);
         }
