@@ -1,8 +1,8 @@
 import React from 'react';
-import UnifiedDashboard from '../components/UnifiedDashboard';
+import Dashboard from '../components/Dashboard';
 
 const OverviewPage: React.FC = () => {
-  return <UnifiedDashboard />;
+  return <Dashboard />;
 };
 
 export default OverviewPage;

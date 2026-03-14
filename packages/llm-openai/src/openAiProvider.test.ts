@@ -1,5 +1,5 @@
-import { OpenAiProvider } from './openAiProvider';
 import { create, manifest } from './index';
+import { OpenAiProvider } from './openAiProvider';
 
 jest.mock('openai', () => {
   const mockCreate = jest.fn().mockResolvedValue({
@@ -35,7 +35,11 @@ describe('OpenAiProvider', () => {
   it('generateChatCompletion returns empty string on no content', async () => {
     const { OpenAI } = require('openai');
     OpenAI.mockImplementationOnce(() => ({
-      chat: { completions: { create: jest.fn().mockResolvedValue({ choices: [{ message: { content: null } }] }) } },
+      chat: {
+        completions: {
+          create: jest.fn().mockResolvedValue({ choices: [{ message: { content: null } }] }),
+        },
+      },
     }));
     const p = new OpenAiProvider({ apiKey: 'sk-test' });
     const result = await p.generateChatCompletion('hello', []);

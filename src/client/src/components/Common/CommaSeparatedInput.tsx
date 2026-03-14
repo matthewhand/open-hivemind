@@ -1,7 +1,8 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
+import { safeArray, safeString } from '../../utils/safeString';
 
 export interface CommaSeparatedInputProps {
-  value: string[];
+  value?: string[];
   onChange: (v: string[]) => void;
   maxItems?: number;
   placeholder?: string;
@@ -15,7 +16,7 @@ export interface CommaSeparatedInputProps {
 }
 
 export const CommaSeparatedInput: React.FC<CommaSeparatedInputProps> = ({
-  value,
+  value = [],
   onChange,
   maxItems = 20,
   placeholder = 'Type and press Enter or comma',
@@ -27,6 +28,13 @@ export const CommaSeparatedInput: React.FC<CommaSeparatedInputProps> = ({
   error,
   validate,
 }) => {
+  const normalizedValue = safeArray<string>(value)
+    .map((item) => safeString(item))
+    .filter(Boolean);
+  const normalizedSuggestions = safeArray<string>(suggestions)
+    .map((item) => safeString(item))
+    .filter(Boolean);
+
   const [inputValue, setInputValue] = useState('');
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [internalError, setInternalError] = useState<string | null>(null);
@@ -40,15 +48,15 @@ export const CommaSeparatedInput: React.FC<CommaSeparatedInputProps> = ({
   const [canUndo, setCanUndo] = useState(false);
 
   // We need to keep a ref of current value to push to history
-  const currentValueRef = useRef(value);
+  const currentValueRef = useRef(normalizedValue);
 
   useEffect(() => {
     // Only update if it actually changed to avoid infinite loops,
     // though the parent might give us the same array ref if we're lucky.
-    if (JSON.stringify(currentValueRef.current) !== JSON.stringify(value)) {
-      currentValueRef.current = value;
+    if (JSON.stringify(currentValueRef.current) !== JSON.stringify(normalizedValue)) {
+      currentValueRef.current = normalizedValue;
     }
-  }, [value]);
+  }, [normalizedValue]);
 
   const pushToHistory = useCallback((newValue: string[]) => {
     const last = historyRef.current[historyRef.current.length - 1];
@@ -67,56 +75,109 @@ export const CommaSeparatedInput: React.FC<CommaSeparatedInputProps> = ({
     }
   }, [canUndo, disabled, onChange]);
 
-  const commitInput = (forceValue?: string) => {
-    const textToCommit = forceValue !== undefined ? forceValue : inputValue;
-    if (!textToCommit.trim()) {
-      setIsTouched(true);
-      return;
-    }
-
-    const current = textToCommit
-      .split(',')
-      .map(s => s.trim())
+  const splitItems = (text: string) =>
+    text
+      .split(/[,;\n\r]+/)
+      .map(item => item.trim())
       .filter(Boolean);
 
-    const next = [...value];
-    let changed = false;
-    let localError: string | null = null;
+  const applyItems = useCallback((items: string[]) => {
+    if (items.length === 0) {
+      setIsTouched(true);
+      return { applied: false, changed: false };
+    }
 
-    for (const item of current) {
+    const next = [...normalizedValue];
+    let changed = false;
+    let maxReached = false;
+    let validationError: string | null = null;
+
+    for (const item of items) {
       if (validate) {
-        const validationError = validate(item);
-        if (validationError) {
-          localError = validationError;
-          break; // Stop parsing if there's an invalid item
+        const itemError = validate(item);
+        if (itemError) {
+          validationError = itemError;
+          break;
         }
       }
 
-      if (!next.includes(item) && next.length < maxItems) {
-        next.push(item);
-        changed = true;
+      if (next.includes(item)) {
+        continue;
       }
+
+      if (next.length >= maxItems) {
+        maxReached = true;
+        break;
+      }
+
+      next.push(item);
+      changed = true;
     }
 
-    setInternalError(localError);
-    setIsTouched(true);
+    if (validationError) {
+      setInternalError(validationError);
+      setIsTouched(true);
+      return { applied: false, changed: false };
+    }
 
-    if (!localError) {
-      if (changed) {
-        pushToHistory(next);
-        onChange(next);
+    if (changed) {
+      pushToHistory(next);
+      onChange(next);
+    }
+
+    if (maxReached) {
+      setInternalError(`Max items reached (${maxItems})`);
+      setIsTouched(true);
+    } else if (internalError) {
+      setInternalError(null);
+    }
+
+    return { applied: true, changed };
+  }, [normalizedValue, maxItems, validate, pushToHistory, onChange, internalError]);
+
+  const commitInput = (forceValue?: string) => {
+    const textToCommit = forceValue !== undefined ? forceValue : inputValue;
+    // Check if there is a trailing delimiter, and keep trailing text in the input
+    const delimiterMatches = [
+      textToCommit.lastIndexOf(','),
+      textToCommit.lastIndexOf(';'),
+      textToCommit.lastIndexOf('\n'),
+      textToCommit.lastIndexOf('\r'),
+    ];
+    const lastDelimiterIndex = Math.max(...delimiterMatches);
+    let itemsToProcess = textToCommit;
+    let remainingText = '';
+
+    if (lastDelimiterIndex >= 0) {
+      itemsToProcess = textToCommit.slice(0, lastDelimiterIndex);
+      remainingText = textToCommit.slice(lastDelimiterIndex + 1);
+    }
+
+    if (!itemsToProcess.trim()) {
+      if (remainingText.trim()) {
+        setInputValue(remainingText);
+      } else {
+        setIsTouched(true);
       }
-      setInputValue('');
+      return;
+    }
+
+    const current = splitItems(itemsToProcess);
+    const { applied } = applyItems(current);
+
+    if (applied) {
+      setInputValue(remainingText);
       setShowSuggestions(false);
     }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter') {
+    if (e.key === 'Enter' || e.key === ',' || e.key === ';') {
       e.preventDefault();
-      commitInput();
-    } else if (e.key === 'Backspace' && !inputValue && value.length > 0) {
-      const next = value.slice(0, -1);
+      // On Enter, we want to commit everything, so we append a comma to force processing of the last word
+      commitInput(inputValue + ',');
+    } else if (e.key === 'Backspace' && !inputValue && normalizedValue.length > 0) {
+      const next = normalizedValue.slice(0, -1);
       pushToHistory(next);
       onChange(next);
     } else if ((e.ctrlKey || e.metaKey) && e.key === 'z') {
@@ -127,7 +188,7 @@ export const CommaSeparatedInput: React.FC<CommaSeparatedInputProps> = ({
 
   const handleRemove = (itemToRemove: string) => {
     if (disabled) return;
-    const next = value.filter(item => item !== itemToRemove);
+    const next = normalizedValue.filter(item => item !== itemToRemove);
     pushToHistory(next);
     onChange(next);
   };
@@ -146,27 +207,18 @@ export const CommaSeparatedInput: React.FC<CommaSeparatedInputProps> = ({
     const pastedText = e.clipboardData.getData('text');
     if (!pastedText) return;
 
-    const current = pastedText
-      .split(',')
-      .map(s => s.trim())
-      .filter(Boolean);
-
-    const next = [...value];
-    let changed = false;
-    for (const item of current) {
-      if (!next.includes(item) && next.length < maxItems) {
-        next.push(item);
-        changed = true;
-      }
-    }
-    if (changed) {
-      pushToHistory(next);
-      onChange(next);
-    }
+    const current = splitItems(pastedText);
+    applyItems(current);
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setInputValue(e.target.value);
+    const newVal = e.target.value;
+    if (/[,\n;\r]/.test(newVal)) {
+      commitInput(newVal);
+      return;
+    }
+
+    setInputValue(newVal);
     setShowSuggestions(true);
     if (internalError) {
       setInternalError(null);
@@ -175,16 +227,21 @@ export const CommaSeparatedInput: React.FC<CommaSeparatedInputProps> = ({
 
   const handleSuggestionClick = (suggestion: string) => {
     if (disabled) return;
-    commitInput(suggestion);
+    commitInput(suggestion + ',');
   };
 
-  const filteredSuggestions = suggestions.filter(s =>
-    !value.includes(s) &&
+  const filteredSuggestions = normalizedSuggestions.filter(s =>
+    !normalizedValue.includes(s) &&
     s.toLowerCase().includes(inputValue.toLowerCase())
   );
 
   const displayError = (isTouched && internalError) || error;
   const errorId = id ? `${id}-error` : 'csi-error';
+  const suggestionsId = id ? `${id}-suggestions` : 'csi-suggestions';
+  const showSuggestionsList = !disabled
+    && showSuggestions
+    && filteredSuggestions.length > 0
+    && inputValue.trim().length > 0;
 
   return (
     <div className={`relative flex flex-col w-full ${className}`}>
@@ -193,26 +250,27 @@ export const CommaSeparatedInput: React.FC<CommaSeparatedInputProps> = ({
           displayError ? 'border-error focus-within:ring-error' : 'focus-within:ring-primary'
         }`}
       >
-        {value.map(v => {
-        const customColorClass = tagColor ? tagColor(v) : 'bg-base-200 text-base-content';
-        return (
-        <span
-          key={v}
-          data-testid="chip"
-          className={`flex items-center gap-1 px-2 py-1 text-sm rounded-md ${customColorClass}`}
-        >
-          {v}
-          {!disabled && (
-            <button
-              type="button"
-              className="text-base-content/50 hover:text-base-content"
-              onClick={() => handleRemove(v)}
-              aria-label={`Remove ${v}`}
+        {normalizedValue.map(v => {
+          const customColorClass = tagColor ? tagColor(v) : 'bg-base-200 text-base-content';
+          return (
+            <span
+              key={v}
+              data-testid="chip"
+              className={`flex items-center gap-1 px-2 py-1 text-sm rounded-md ${customColorClass}`}
             >
-              &times;
-            </button>
-          )}
-          </span>
+              {v}
+              {!disabled && (
+                <button
+                  type="button"
+                  className="text-base-content/50 hover:text-base-content"
+                  onClick={() => handleRemove(v)}
+                  onMouseDown={(e) => e.preventDefault()}
+                  aria-label={`Remove ${v}`}
+                >
+                  &times;
+                </button>
+              )}
+            </span>
           );
         })}
         <input
@@ -227,54 +285,65 @@ export const CommaSeparatedInput: React.FC<CommaSeparatedInputProps> = ({
             setTimeout(() => commitInput(), 150);
           }}
           onPaste={handlePaste}
-          placeholder={value.length >= maxItems ? 'Max items reached' : placeholder}
-          disabled={disabled || value.length >= maxItems}
+          placeholder={normalizedValue.length >= maxItems ? 'Max items reached' : placeholder}
+          disabled={disabled || normalizedValue.length >= maxItems}
           aria-invalid={!!displayError}
           aria-describedby={displayError ? errorId : undefined}
+          aria-expanded={showSuggestionsList}
+          aria-controls={showSuggestionsList ? suggestionsId : undefined}
         />
-      <div className="flex items-center gap-1">
-        {!disabled && canUndo && (
-          <button
-            type="button"
-            onClick={handleUndo}
-            className="p-1 mx-1 rounded-full text-base-content/40 hover:text-primary hover:bg-primary/10 focus:outline-none transition-colors"
-            title="Undo last change (Ctrl+Z)"
-            aria-label="Undo"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M3 7v6h6" />
-              <path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13" />
-            </svg>
-          </button>
-        )}
-        {!disabled && value.length > 0 && (
-          <button
-            type="button"
-            onClick={handleClearAll}
-            className="p-1 mx-1 rounded-full text-base-content/40 hover:text-error hover:bg-error/10 focus:outline-none transition-colors"
-            title="Clear all"
-            aria-label="Clear all items"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 20 20" fill="currentColor">
-              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-            </svg>
-          </button>
+        <div className="flex items-center gap-1">
+          {!disabled && canUndo && (
+            <button
+              type="button"
+              onClick={handleUndo}
+              onMouseDown={(e) => e.preventDefault()}
+              className="p-1 mx-1 rounded-full text-base-content/40 hover:text-primary hover:bg-primary/10 focus:outline-none transition-colors"
+              title="Undo last change (Ctrl+Z)"
+              aria-label="Undo"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M3 7v6h6" />
+                <path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13" />
+              </svg>
+            </button>
+          )}
+          {!disabled && normalizedValue.length > 0 && (
+            <button
+              type="button"
+              onClick={handleClearAll}
+              onMouseDown={(e) => e.preventDefault()}
+              className="p-1 mx-1 rounded-full text-base-content/40 hover:text-error hover:bg-error/10 focus:outline-none transition-colors"
+              title="Clear all"
+              aria-label="Clear all items"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+              </svg>
+            </button>
           )}
         </div>
       </div>
 
       {displayError && (
         <label className="label" id={errorId}>
-          <span className="label-text-alt text-error">{displayError}</span>
+          <span className="label-text-alt text-error" aria-live="polite">
+            {displayError}
+          </span>
         </label>
       )}
 
       {/* Autocomplete Dropdown */}
-      {!disabled && showSuggestions && filteredSuggestions.length > 0 && inputValue.trim().length > 0 && (
-        <ul className="absolute left-0 right-0 top-full mt-1 max-h-48 overflow-auto rounded-md bg-base-100 shadow-lg ring-1 ring-base-content/5 z-50">
+      {showSuggestionsList && (
+        <ul
+          id={suggestionsId}
+          role="listbox"
+          className="absolute left-0 right-0 top-full mt-1 max-h-48 overflow-auto rounded-md bg-base-100 shadow-lg ring-1 ring-base-content/5 z-50"
+        >
           {filteredSuggestions.map(s => (
             <li
               key={s}
+              role="option"
               onMouseDown={(e) => {
                 // Prevent input blur before click fires
                 e.preventDefault();
