@@ -454,7 +454,7 @@ async function main() {
   await startupGreetingService.initialize();
 
   // Initialize AnomalyDetectionService
-  AnomalyDetectionService.getInstance();
+  container.resolve(AnomalyDetectionService);
   appLogger.info('🔍 Anomaly Detection Service initialized');
 
   // Prepare messenger services collection for optional webhook registration later
@@ -554,7 +554,7 @@ async function main() {
       });
     }
 
-    const ads = AnomalyDetectionService.getInstance();
+    const ads = container.resolve(AnomalyDetectionService);
     if (ads && typeof ads.shutdown === 'function') {
       shutdownCoordinator.registerService({
         name: 'AnomalyDetectionService',
