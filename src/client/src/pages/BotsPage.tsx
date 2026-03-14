@@ -40,7 +40,6 @@ const BotsPage: React.FC = () => {
   const [activityLogs, setActivityLogs] = useState<any[]>([]);
   const [chatHistory, setChatHistory] = useState<any[]>([]);
   const [logFilter, setLogFilter] = useState('');
-  const [chatLoading, setChatLoading] = useState(false);
 
   // Create Bot State
   const [showCreateModal, setShowCreateModal] = useState(false);

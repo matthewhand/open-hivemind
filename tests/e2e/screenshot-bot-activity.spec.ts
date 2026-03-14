@@ -30,8 +30,8 @@ test.describe('Bot Activity Screenshots', () => {
       {
         id: 'log1',
         timestamp: new Date().toISOString(),
-        type: 'INCOMING',
-        message: 'Message length: 15',
+        action: 'INCOMING',
+        details: 'Message length: 15',
         result: 'success',
         metadata: {
           type: 'MESSAGE',
@@ -42,8 +42,8 @@ test.describe('Bot Activity Screenshots', () => {
       {
         id: 'log2',
         timestamp: new Date(Date.now() - 5000).toISOString(),
-        type: 'OUTGOING',
-        message: 'Message length: 120',
+        action: 'OUTGOING',
+        details: 'Message length: 120',
         result: 'success',
         metadata: {
           type: 'MESSAGE',
@@ -54,8 +54,8 @@ test.describe('Bot Activity Screenshots', () => {
       {
         id: 'log3',
         timestamp: new Date(Date.now() - 10000).toISOString(),
-        type: 'ERROR',
-        message: 'Connection timeout',
+        action: 'ERROR',
+        details: 'Connection timeout',
         result: 'error',
         metadata: {
           type: 'MESSAGE',
@@ -128,21 +128,6 @@ test.describe('Bot Activity Screenshots', () => {
       }
     });
 
-    // Handle Chat Logs GET
-    await page.route('**/api/bots/screenshot-bot/chat*', async (route) => {
-      console.log('Intercepted chat request');
-      await route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify({
-          success: true,
-          data: {
-            history: []
-          }
-        })
-      });
-    });
-
     // Handle Activity Logs GET
     await page.route('**/api/bots/screenshot-bot/activity*', async (route) => {
       console.log('Intercepted activity request');
@@ -190,10 +175,10 @@ test.describe('Bot Activity Screenshots', () => {
     try {
       await expect(page.getByText('Connection timeout')).toBeVisible({ timeout: 2000 });
     } catch (e) {
-      console.log('Activity log not visible, clicking the card body containing the description...');
+      console.log('Activity log not visible, trying clicking the "More Options" button or the card itself...');
 
       // Let's click the card body containing the description.
-      await page.getByText('A bot for screenshots').first().click();
+      await page.getByText('A bot for screenshots').click();
       await page.waitForTimeout(1000);
 
       try {
@@ -201,7 +186,7 @@ test.describe('Bot Activity Screenshots', () => {
       } catch (innerE) {
         console.log('Log still not found, clicking "Configure" as fallback...');
         // In case the preview doesn't exist, maybe it's in a modal like before.
-        await page.getByRole('button', { name: 'Configure' }).first().click();
+        await page.getByRole('button', { name: 'Configure' }).click();
 
         try {
             await expect(page.getByText('Connection timeout')).toBeVisible({ timeout: 5000 });

@@ -40,8 +40,6 @@ interface BotCardProps {
   onAddProvider?: (botId: string, providerType: 'message' | 'llm') => void;
   onRemoveProvider?: (botId: string, providerId: string) => void;
   onPersonaChange?: (botId: string, personaId: string) => void;
-  onPreview?: () => void;
-  isSelected?: boolean;
 }
 
 const BotCard: React.FC<BotCardProps> = ({
@@ -55,8 +53,6 @@ const BotCard: React.FC<BotCardProps> = ({
   onAddProvider,
   onRemoveProvider,
   onPersonaChange,
-  onPreview,
-  isSelected,
 }) => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [showPersonaSelector, setShowPersonaSelector] = useState(false);
@@ -189,14 +185,7 @@ const BotCard: React.FC<BotCardProps> = ({
   };
 
   return (
-    <div
-      className={`card bg-base-100 shadow-xl border hover:shadow-2xl transition-all duration-200 ${isSelected ? 'border-primary ring-2 ring-primary ring-opacity-50' : 'border-base-300'} ${onPreview ? 'cursor-pointer' : ''}`}
-      onClick={(e) => {
-        // Prevent preview when clicking buttons inside the card
-        if ((e.target as HTMLElement).closest('button, a, .dropdown')) return;
-        if (onPreview) onPreview();
-      }}
-    >
+    <div className="card bg-base-100 shadow-xl border border-base-300 hover:shadow-2xl transition-shadow duration-200">
       <div className="card-body p-6">
         {/* Header */}
         <div className="flex justify-between items-start mb-4">
