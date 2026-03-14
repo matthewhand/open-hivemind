@@ -6,7 +6,7 @@ import Modal, { ConfirmModal } from '../components/DaisyUI/Modal';
 import PageHeader from '../components/DaisyUI/PageHeader';
 import SearchFilterBar from '../components/SearchFilterBar';
 import EmptyState from '../components/DaisyUI/EmptyState';
-import { LoadingSpinner, LoadingSkeletonCard } from '../components/DaisyUI/Loading';
+import { LoadingSpinner } from '../components/DaisyUI/Loading';
 import { CommaSeparatedInput } from '../components/Common/CommaSeparatedInput';
 import Input from '../components/DaisyUI/Input';
 import Textarea from '../components/DaisyUI/Textarea';
@@ -195,7 +195,7 @@ const GuardsPage: React.FC = () => {
       <PageHeader
         title="Guard Profiles"
         description="Manage security and access control profiles for bots"
-        icon={<Shield className="w-6 h-6" />}
+        icon={<Shield />}
         actions={
           <div className="flex gap-2">
             <button onClick={fetchProfiles} className="btn btn-ghost btn-sm" disabled={loading} title="Refresh">
@@ -216,10 +216,8 @@ const GuardsPage: React.FC = () => {
       />
 
       {loading && !editingProfile ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          <LoadingSkeletonCard />
-          <LoadingSkeletonCard />
-          <LoadingSkeletonCard />
+        <div className="flex items-center justify-center py-12">
+          <LoadingSpinner size="lg" />
         </div>
       ) : profiles.length === 0 ? (
         <EmptyState
