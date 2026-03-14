@@ -37,6 +37,12 @@ import validationRouter from '@src/server/routes/validation';
 import { RealTimeValidationService } from '@src/server/services/RealTimeValidationService';
 import WebSocketService from '@src/server/services/WebSocketService';
 import { ShutdownCoordinator } from '@src/server/ShutdownCoordinator';
+import { EnhancedAlertManager } from '@src/monitoring/EnhancedAlertManager';
+import { TracingService } from '@src/monitoring/TracingService';
+import { ProviderMetricsCollector } from '@src/monitoring/ProviderMetricsCollector';
+import { IntegrationAnomalyDetector } from '@src/monitoring/IntegrationAnomalyDetector';
+import { AdvancedMonitor } from '@src/monitoring/AdvancedMonitor';
+
 import AnomalyDetectionService from '@src/services/AnomalyDetectionService';
 import DemoModeService from '@src/services/DemoModeService';
 import StartupGreetingService from '@src/services/StartupGreetingService';
@@ -573,6 +579,61 @@ async function main() {
         shutdown: () => {
           appLogger.info('🛑 Healthcheck: Shutting down ApiMonitorService...');
           ams.shutdown();
+        },
+      });
+    }
+
+    const eam = EnhancedAlertManager.getInstance();
+    if (eam && typeof eam.shutdown === 'function') {
+      shutdownCoordinator.registerService({
+        name: 'EnhancedAlertManager',
+        shutdown: () => {
+          appLogger.info('🛑 Healthcheck: Shutting down EnhancedAlertManager...');
+          eam.shutdown();
+        },
+      });
+    }
+
+    const ts = TracingService.getInstance();
+    if (ts && typeof ts.shutdown === 'function') {
+      shutdownCoordinator.registerService({
+        name: 'TracingService',
+        shutdown: () => {
+          appLogger.info('🛑 Healthcheck: Shutting down TracingService...');
+          ts.shutdown();
+        },
+      });
+    }
+
+    const pmc = ProviderMetricsCollector.getInstance();
+    if (pmc && typeof pmc.shutdown === 'function') {
+      shutdownCoordinator.registerService({
+        name: 'ProviderMetricsCollector',
+        shutdown: () => {
+          appLogger.info('🛑 Healthcheck: Shutting down ProviderMetricsCollector...');
+          pmc.shutdown();
+        },
+      });
+    }
+
+    const iad = IntegrationAnomalyDetector.getInstance();
+    if (iad && typeof iad.shutdown === 'function') {
+      shutdownCoordinator.registerService({
+        name: 'IntegrationAnomalyDetector',
+        shutdown: () => {
+          appLogger.info('🛑 Healthcheck: Shutting down IntegrationAnomalyDetector...');
+          iad.shutdown();
+        },
+      });
+    }
+
+    const am = AdvancedMonitor.getInstance();
+    if (am && typeof am.shutdown === 'function') {
+      shutdownCoordinator.registerService({
+        name: 'AdvancedMonitor',
+        shutdown: () => {
+          appLogger.info('🛑 Healthcheck: Shutting down AdvancedMonitor...');
+          am.shutdown();
         },
       });
     }

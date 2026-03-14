@@ -66,23 +66,6 @@ const GuardsPage: React.FC = () => {
     },
   });
 
-  const normalizeList = (list?: string[]) => {
-    if (!list) return [];
-    const seen = new Set<string>();
-    const normalized: string[] = [];
-
-    for (const raw of list) {
-      const trimmed = raw.trim();
-      if (!trimmed) continue;
-      const key = trimmed.toLowerCase();
-      if (seen.has(key)) continue;
-      seen.add(key);
-      normalized.push(trimmed);
-    }
-
-    return normalized;
-  };
-
   const fetchProfiles = useCallback(async () => {
     try {
       setLoading(true);
@@ -110,16 +93,14 @@ const GuardsPage: React.FC = () => {
 
     // Clean up arrays before saving
     const profileToSave = JSON.parse(JSON.stringify(editingProfile));
-    profileToSave.guards.mcpGuard.allowedUsers = normalizeList(
-      profileToSave.guards.mcpGuard.allowedUsers,
-    );
-    profileToSave.guards.mcpGuard.allowedTools = normalizeList(
-      profileToSave.guards.mcpGuard.allowedTools,
-    );
-    if (profileToSave.guards.contentFilter) {
-      profileToSave.guards.contentFilter.blockedTerms = normalizeList(
-        profileToSave.guards.contentFilter.blockedTerms,
-      );
+    if (profileToSave.guards.mcpGuard.allowedUsers) {
+      profileToSave.guards.mcpGuard.allowedUsers = profileToSave.guards.mcpGuard.allowedUsers.map((s: string) => s.trim()).filter(Boolean);
+    }
+    if (profileToSave.guards.mcpGuard.allowedTools) {
+      profileToSave.guards.mcpGuard.allowedTools = profileToSave.guards.mcpGuard.allowedTools.map((s: string) => s.trim()).filter(Boolean);
+    }
+    if (profileToSave.guards.contentFilter?.blockedTerms) {
+      profileToSave.guards.contentFilter.blockedTerms = profileToSave.guards.contentFilter.blockedTerms.map((s: string) => s.trim()).filter(Boolean);
     }
 
     try {
@@ -214,7 +195,7 @@ const GuardsPage: React.FC = () => {
       <PageHeader
         title="Guard Profiles"
         description="Manage security and access control profiles for bots"
-        icon={<Shield className="w-8 h-8" />}
+        icon={<Shield className="w-6 h-6" />}
         actions={
           <div className="flex gap-2">
             <button onClick={fetchProfiles} className="btn btn-ghost btn-sm" disabled={loading} title="Refresh">
@@ -418,7 +399,6 @@ const GuardsPage: React.FC = () => {
                           )}
                         </div>
                       }
-                      id="max-requests"
                       type="number"
                       value={editingProfile.guards.rateLimit?.maxRequests || 100}
                       onChange={e => updateGuard('rateLimit', { maxRequests: parseInt(e.target.value) })}
@@ -448,11 +428,9 @@ const GuardsPage: React.FC = () => {
                         updateGuard('rateLimit', { windowMs: seconds * 1000 });
                       }}
                       disabled={!editingProfile.guards.rateLimit?.enabled}
-                      id="window-seconds"
                       min={1}
                       max={3600}
                       placeholder="60"
-                      aria-label="Window (seconds)"
                       helperText={
                         (() => {
                           const seconds = (editingProfile.guards.rateLimit?.windowMs || 60000) / 1000;

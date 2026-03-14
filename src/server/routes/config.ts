@@ -2,6 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import Debug from 'debug';
 import { Router } from 'express';
+import { createLogger } from '@src/common/StructuredLogger';
 import { redactSensitiveInfo } from '../../common/redactSensitiveInfo';
 import { BotConfigurationManager } from '../../config/BotConfigurationManager';
 import llmConfig from '../../config/llmConfig';
@@ -56,6 +57,7 @@ function isPathWithinAllowed(targetPath: string, allowedBasePath: string): boole
 
 const debug = Debug('app:server:routes:config');
 const router = Router();
+const logger = createLogger('routes:config');
 
 // Core schemas that are always present
 const coreSchemaSources: Record<string, any> = {
@@ -110,7 +112,7 @@ const loadDynamicConfigs = () => {
       });
     }
   } catch (e) {
-    console.error('Failed to load dynamic configs:', e);
+    logger.error('Failed to load dynamic configs:', e instanceof Error ? e : new Error(String(e)));
   }
 };
 
