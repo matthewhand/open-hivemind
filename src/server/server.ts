@@ -3,10 +3,7 @@ import { join } from 'path';
 import cors from 'cors';
 import Debug from 'debug';
 import express from 'express';
-import {
-  correlationMiddleware,
-  globalErrorHandler,
-} from '../middleware/errorHandler';
+import { correlationMiddleware, globalErrorHandler } from '../middleware/errorHandler';
 import { applyRateLimiting } from '../middleware/rateLimiter';
 // Error handling imports
 // Middleware imports
