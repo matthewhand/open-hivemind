@@ -166,22 +166,14 @@ export const CommaSeparatedInput: React.FC<CommaSeparatedInputProps> = ({
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newVal = e.target.value;
-    if (newVal.includes(',')) {
-      const parts = newVal.split(',');
-      const textToCommit = parts.slice(0, -1).join(',');
-      const remainingText = parts[parts.length - 1];
 
-      if (textToCommit.trim()) {
-        commitInput(textToCommit);
-      }
-      setInputValue(remainingText);
-    } else {
-      setInputValue(newVal);
-      setShowSuggestions(true);
-      if (internalError) {
-        setInternalError(null);
-      }
+    const val = e.target.value;
+    // Automatically add space after comma if typed directly
+    const formattedVal = val.replace(/,([^\s])/g, ', $1');
+    setInputValue(formattedVal);
+    setShowSuggestions(true);
+    if (internalError) {
+      setInternalError(null);
     }
   };
 
