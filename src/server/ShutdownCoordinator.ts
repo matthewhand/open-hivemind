@@ -366,16 +366,18 @@ export class ShutdownCoordinator {
     this.logger.info('Phase 2: Drain in-flight requests');
 
     // Close WebSocket connections
-    const WebSocketService = require('@src/server/services/WebSocketService').default;
-    const wsService = WebSocketService.getInstance();
-
-    if (wsService && typeof wsService.shutdown === 'function') {
-      try {
-        await wsService.shutdown();
-        debug('WebSocket service shut down');
-      } catch (error) {
-        debug('Error shutting down WebSocket service:', error);
+    try {
+      const WebSocketServiceModule = require('./services/WebSocketService');
+      const WebSocketService = WebSocketServiceModule.default || WebSocketServiceModule.WebSocketService;
+      if (WebSocketService && typeof WebSocketService.getInstance === 'function') {
+        const wsService = WebSocketService.getInstance();
+        if (wsService && typeof wsService.shutdown === 'function') {
+          await wsService.shutdown();
+          debug('WebSocket service shut down');
+        }
       }
+    } catch (error) {
+      debug('Error shutting down WebSocket service:', error);
     }
   }
 
