@@ -398,9 +398,10 @@ export class MigrationManager {
       .sort((a, b) => b.version - a.version); // Reverse order
 
     for (const migration of migrationsToRollback) {
-      if (migration.down) {
-        await this.rollbackMigration(migration);
+      if (!migration.down) {
+        throw new Error(`Migration ${migration.id} does not support rollback`);
       }
+      await this.rollbackMigration(migration);
     }
   }
 
