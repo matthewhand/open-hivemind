@@ -1,6 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect, useCallback } from 'react';
-import { Alert, Button, Input, Toggle } from '../DaisyUI';
+import { Alert } from '../DaisyUI/Alert';
+import Button from '../DaisyUI/Button';
+import Input from '../DaisyUI/Input';
+import Toggle from '../DaisyUI/Toggle';
 import { Shield, Plus, Trash2 } from 'lucide-react';
 import SecureConfigManager from '../SecureConfigManager';
 
@@ -144,13 +147,14 @@ const SettingsSecurity: React.FC = () => {
             </div>
 
             <div className={`form-control transition-all duration-200 ${!settings.enableAuthentication ? 'opacity-50 pointer-events-none' : ''}`}>
-              <label className="label py-1">
+              <label htmlFor="sessionTimeout" className="label py-1">
                 <span className="label-text text-sm font-medium">Session Timeout (seconds)</span>
                 {!settings.enableAuthentication && (
                   <span className="badge badge-sm badge-ghost">Disabled</span>
                 )}
               </label>
               <Input
+                id="sessionTimeout"
                 type="number"
                 value={settings.sessionTimeout}
                 onChange={(e) => handleChange('sessionTimeout', parseInt(e.target.value))}
@@ -158,7 +162,6 @@ const SettingsSecurity: React.FC = () => {
                 min={300}
                 max={86400}
                 size="sm"
-                aria-label="Session timeout in seconds"
               />
             </div>
 
@@ -197,13 +200,14 @@ const SettingsSecurity: React.FC = () => {
             </div>
 
             <div className={`form-control transition-all duration-200 ${!settings.enableRateLimit ? 'opacity-50 pointer-events-none' : ''}`}>
-              <label className="label py-1">
+              <label htmlFor="rateLimitWindow" className="label py-1">
                 <span className="label-text text-sm font-medium">Time Window (seconds)</span>
                 {!settings.enableRateLimit && (
                   <span className="badge badge-sm badge-ghost">Disabled</span>
                 )}
               </label>
               <Input
+                id="rateLimitWindow"
                 type="number"
                 value={settings.rateLimitWindow}
                 onChange={(e) => handleChange('rateLimitWindow', parseInt(e.target.value))}
@@ -211,18 +215,18 @@ const SettingsSecurity: React.FC = () => {
                 min={10}
                 max={3600}
                 size="sm"
-                aria-label="Rate limit time window in seconds"
               />
             </div>
 
             <div className={`form-control transition-all duration-200 ${!settings.enableRateLimit ? 'opacity-50 pointer-events-none' : ''}`}>
-              <label className="label py-1">
+              <label htmlFor="rateLimitMax" className="label py-1">
                 <span className="label-text text-sm font-medium">Max Requests per Window</span>
                 {!settings.enableRateLimit && (
                   <span className="badge badge-sm badge-ghost">Disabled</span>
                 )}
               </label>
               <Input
+                id="rateLimitMax"
                 type="number"
                 value={settings.rateLimitMax}
                 onChange={(e) => handleChange('rateLimitMax', parseInt(e.target.value))}
@@ -230,7 +234,6 @@ const SettingsSecurity: React.FC = () => {
                 min={10}
                 max={10000}
                 size="sm"
-                aria-label="Maximum requests per time window"
               />
             </div>
           </div>

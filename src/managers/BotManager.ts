@@ -155,22 +155,7 @@ export class BotManager extends EventEmitter {
 
       // Add configured bots first
       for (const bot of configuredBots) {
-        const botInstance: BotInstance = {
-          // Use bot name as stable ID - random UUIDs break getBot() lookups
-          id: bot.name,
-          name: bot.name,
-          messageProvider: bot.messageProvider,
-          llmProvider: bot.llmProvider,
-          isActive: true, // Configured bots are considered active
-          createdAt: new Date().toISOString(),
-          lastModified: new Date().toISOString(),
-          config: this.sanitizeConfig(bot),
-          persona: bot.persona || 'default',
-          systemInstruction: bot.systemInstruction,
-          mcpServers: bot.mcpServers || [],
-          mcpGuard: bot.mcpGuard || { enabled: false, type: 'owner' },
-          envOverrides: checkBotEnvOverrides(bot.name),
-        };
+        const botInstance = this.mapConfigToBotInstance(bot);
         botMap.set(botInstance.id, botInstance);
       }
 
@@ -190,6 +175,28 @@ export class BotManager extends EventEmitter {
   }
 
   /**
+   * Helper to map a raw configuration object to a unified BotInstance
+   */
+  private mapConfigToBotInstance(bot: any): BotInstance {
+    return {
+      // Use bot name as stable ID - random UUIDs break getBot() lookups
+      id: bot.name,
+      name: bot.name,
+      messageProvider: bot.messageProvider,
+      llmProvider: bot.llmProvider,
+      isActive: true, // Configured bots are considered active
+      createdAt: new Date().toISOString(),
+      lastModified: new Date().toISOString(),
+      config: this.sanitizeConfig(bot),
+      persona: bot.persona || 'default',
+      systemInstruction: bot.systemInstruction,
+      mcpServers: bot.mcpServers || [],
+      mcpGuard: bot.mcpGuard || { enabled: false, type: 'owner' },
+      envOverrides: checkBotEnvOverrides(bot.name),
+    };
+  }
+
+  /**
    * Get a specific bot by ID
    */
   public async getBot(botId: string): Promise<BotInstance | null> {
@@ -201,17 +208,16 @@ export class BotManager extends EventEmitter {
         return bot;
       }
 
-      // Check configured bots
-      const bots = await this.getAllBots();
-      const bot = bots.find((b) => b.id === botId);
+      // Check configured bots - O(1) lookup instead of O(N) iteration
+      const configuredBot = this.botConfigManager.getBot(botId);
 
-      if (bot) {
-        debug(`Retrieved configured bot: ${bot.name} (${bot.id})`);
-      } else {
-        debug(`Bot not found: ${botId}`);
+      if (configuredBot) {
+        debug(`Retrieved configured bot: ${configuredBot.name} (${botId})`);
+        return this.mapConfigToBotInstance(configuredBot);
       }
 
-      return bot || null;
+      debug(`Bot not found: ${botId}`);
+      return null;
     } catch (error: unknown) {
       debug('Error getting bot:', ErrorUtils.getMessage(error));
       throw ErrorUtils.createError('Failed to retrieve bot instance', 'configuration');
