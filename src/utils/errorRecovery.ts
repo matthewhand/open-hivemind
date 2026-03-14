@@ -196,7 +196,17 @@ export class RetryHandler {
 
         // Don't wait on the last attempt
         if (attempt < this.config.maxRetries) {
-          const delay = this.calculateDelay(attempt);
+          let delay = this.calculateDelay(attempt);
+
+          // Use error-specific retryDelay if available
+          if (lastError instanceof BaseHivemindError) {
+            const recoveryStrategy = lastError.getRecoveryStrategy();
+            if (recoveryStrategy && recoveryStrategy.retryDelay !== undefined) {
+              delay = recoveryStrategy.retryDelay;
+              debug(`Using error-specific retry delay of ${delay}ms`);
+            }
+          }
+
           debug(`Waiting ${delay}ms before retry...`);
           await this.sleep(delay);
         }
