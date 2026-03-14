@@ -66,13 +66,13 @@ test('verify MCP Guard UX', async ({ page }) => {
   await usersInput.fill('user1');
 
   // Screenshot before typing comma
-  await page.screenshot({ path: 'docs/screenshots/mcp-guard-ux-before.png' });
+  await page.screenshot({ path: 'mcp-guard-ux-before.png' });
 
   await usersInput.pressSequentially(',user2');
   await usersInput.press('Enter');
 
   // Screenshot after typing comma
-  await page.screenshot({ path: 'docs/screenshots/mcp-guard-ux-after.png' });
+  await page.screenshot({ path: 'docs/screenshots/mcp-guard-ux.png' });
 
   const chips = modal.locator('[data-testid="chip"]');
   await expect(chips).toHaveCount(2);
@@ -113,7 +113,7 @@ test('graceful degradation on API failure', async ({ page }) => {
   await expect(page.locator('.toast, .alert-error').first()).toContainText('Failed to fetch profiles');
 
   // Take screenshot of graceful degradation state
-  await page.screenshot({ path: 'docs/screenshots/mcp-guard-ux-api-failure.png' });
+  await page.screenshot({ path: 'mcp-guard-ux-api-failure.png' });
 
   // Ensure the page doesn't crash to "Something went wrong" entirely
   await expect(page.locator('h1', { hasText: 'Guard Profiles' })).toBeVisible();

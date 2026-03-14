@@ -12,6 +12,7 @@ import Input from '../components/DaisyUI/Input';
 import Textarea from '../components/DaisyUI/Textarea';
 import Select from '../components/DaisyUI/Select';
 import Toggle from '../components/DaisyUI/Toggle';
+import { safeArray, safeString } from '../utils/safeString';
 
 interface McpGuardConfig {
   enabled: boolean;
@@ -72,9 +73,10 @@ const GuardsPage: React.FC = () => {
       const response = await fetch(`${API_BASE}/guard-profiles`);
       if (!response.ok) throw new Error('Failed to fetch profiles');
       const result = await response.json();
-      setProfiles(result.data || []);
+      setProfiles(safeArray<GuardrailProfile>(result?.data));
     } catch (err) {
       showError(err instanceof Error ? err.message : 'Failed to fetch profiles');
+      setProfiles([]);
     } finally {
       setLoading(false);
     }
@@ -186,8 +188,8 @@ const GuardsPage: React.FC = () => {
     });
   };
 
-  const filteredProfiles = profiles.filter(profile =>
-    profile.name.toLowerCase().includes(searchValue.toLowerCase())
+  const filteredProfiles = safeArray<GuardrailProfile>(profiles).filter(profile =>
+    safeString(profile?.name).toLowerCase().includes(searchValue.toLowerCase())
   );
 
   return (
