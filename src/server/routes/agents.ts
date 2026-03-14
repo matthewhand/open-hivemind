@@ -3,6 +3,7 @@ import { join } from 'path';
 import Debug from 'debug';
 import { Router } from 'express';
 import { ErrorUtils } from '@src/types/errors';
+import crypto from 'crypto';
 
 const debug = Debug('app:webui:agents');
 const router = Router();
@@ -176,7 +177,7 @@ router.post('/', async (req, res) => {
 
     const newAgent: AgentConfig = {
       ...agentData,
-      id: `agent_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      id: `agent_${crypto.randomUUID()}`,
     };
 
     agents.push(newAgent);
