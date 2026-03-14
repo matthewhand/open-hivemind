@@ -5,7 +5,7 @@
  * in catch blocks and error handling throughout the application.
  */
 
-export const ERROR_TYPES = {
+const ERROR_TYPES = {
   UNKNOWN: 'unknown',
   NETWORK: 'network',
   VALIDATION: 'validation',
@@ -25,7 +25,7 @@ export type ErrorType = (typeof ERROR_TYPES)[keyof typeof ERROR_TYPES];
  * Generic error type that can be used in catch blocks to replace 'any'
  * Provides type safety while maintaining backward compatibility
  */
-export type GenericError =
+type GenericError =
   | Error
   | AxiosError
   | ApiError
@@ -49,7 +49,7 @@ export interface AppError extends Error {
 /**
  * Network/HTTP error type (commonly thrown by axios and fetch)
  */
-export interface NetworkError extends AppError {
+interface NetworkError extends AppError {
   type: 'network';
   statusCode: number;
   response?: {
@@ -65,7 +65,7 @@ export interface NetworkError extends AppError {
 /**
  * Axios-specific error type (common in API integrations)
  */
-export interface AxiosError extends Error {
+interface AxiosError extends Error {
   isAxiosError: boolean;
   response?: {
     status: number;
@@ -84,7 +84,7 @@ export interface AxiosError extends Error {
 /**
  * API error type for external service integrations
  */
-export interface ApiError extends AppError {
+interface ApiError extends AppError {
   type: 'api';
   service: string;
   endpoint?: string;
@@ -95,7 +95,7 @@ export interface ApiError extends AppError {
 /**
  * Validation error type
  */
-export interface ValidationError extends AppError {
+interface ValidationError extends AppError {
   type: 'validation';
   field?: string;
   value?: unknown;
@@ -106,7 +106,7 @@ export interface ValidationError extends AppError {
 /**
  * Configuration error type
  */
-export interface ConfigurationError extends AppError {
+interface ConfigurationError extends AppError {
   type: 'configuration';
   configKey?: string;
   expectedType?: string;
@@ -116,7 +116,7 @@ export interface ConfigurationError extends AppError {
 /**
  * Database error type
  */
-export interface DatabaseError extends AppError {
+interface DatabaseError extends AppError {
   type: 'database';
   operation?: string;
   table?: string;
@@ -126,7 +126,7 @@ export interface DatabaseError extends AppError {
 /**
  * Authentication error type
  */
-export interface AuthenticationError extends AppError {
+interface AuthenticationError extends AppError {
   type: 'authentication';
   provider?: string;
   reason?: 'invalid_credentials' | 'expired_token' | 'missing_token' | 'invalid_format';
@@ -135,7 +135,7 @@ export interface AuthenticationError extends AppError {
 /**
  * Authorization error type
  */
-export interface AuthorizationError extends AppError {
+interface AuthorizationError extends AppError {
   type: 'authorization';
   resource?: string;
   action?: string;
@@ -145,7 +145,7 @@ export interface AuthorizationError extends AppError {
 /**
  * Rate limit error type
  */
-export interface RateLimitError extends AppError {
+interface RateLimitError extends AppError {
   type: 'rate-limit';
   retryAfter: number;
   limit?: number;
@@ -156,7 +156,7 @@ export interface RateLimitError extends AppError {
 /**
  * Timeout error type
  */
-export interface TimeoutError extends AppError {
+interface TimeoutError extends AppError {
   type: 'timeout';
   timeoutMs: number;
   operation?: string;
@@ -183,7 +183,7 @@ export type HivemindError =
 /**
  * Error classification result
  */
-export interface ErrorClassification {
+interface ErrorClassification {
   type: ErrorType;
   retryable: boolean;
   severity: 'low' | 'medium' | 'high' | 'critical';
@@ -219,6 +219,79 @@ export class ErrorUtils {
       return String(error.code);
     }
     return undefined;
+  }
+
+  static getField(error: HivemindError, field: string): unknown {
+    if (error && typeof error === 'object' && field in error) {
+      return (error as Record<string, unknown>)[field];
+    }
+    return undefined;
+  }
+
+  static getStringField(error: HivemindError, field: string): string | undefined {
+    const value = this.getField(error, field);
+    return typeof value === 'string' ? value : undefined;
+  }
+
+  static getNumberField(error: HivemindError, field: string): number | undefined {
+    const value = this.getField(error, field);
+    if (typeof value === 'number' && Number.isFinite(value)) {
+      return value;
+    }
+    if (typeof value === 'string' && value.trim() !== '' && Number.isFinite(Number(value))) {
+      return Number(value);
+    }
+    return undefined;
+  }
+
+  static getBooleanField(error: HivemindError, field: string): boolean | undefined {
+    const value = this.getField(error, field);
+    return typeof value === 'boolean' ? value : undefined;
+  }
+
+  static getRecordField<T extends Record<string, unknown>>(
+    error: HivemindError,
+    field: string
+  ): T | undefined {
+    const value = this.getField(error, field);
+    if (value && typeof value === 'object' && !Array.isArray(value)) {
+      return value as T;
+    }
+    return undefined;
+  }
+
+  static getArrayField(error: HivemindError, field: string): unknown[] | undefined {
+    const value = this.getField(error, field);
+    return Array.isArray(value) ? value : undefined;
+  }
+
+  static getStringArrayField(error: HivemindError, field: string): string[] | undefined {
+    const value = this.getArrayField(error, field);
+    if (!value) return undefined;
+    const strings = value.filter((item): item is string => typeof item === 'string');
+    return strings.length ? strings : undefined;
+  }
+
+  static getDateField(error: HivemindError, field: string): Date | undefined {
+    const value = this.getField(error, field);
+    if (value instanceof Date && !Number.isNaN(value.getTime())) {
+      return value;
+    }
+    if (typeof value === 'string') {
+      const parsed = new Date(value);
+      if (!Number.isNaN(parsed.getTime())) {
+        return parsed;
+      }
+    }
+    return undefined;
+  }
+
+  static getTimestamp(error: HivemindError): Date | undefined {
+    return this.getDateField(error, 'timestamp');
+  }
+
+  static getDetails(error: HivemindError): Record<string, unknown> | undefined {
+    return this.getRecordField(error, 'details');
   }
 
   /**
@@ -435,6 +508,28 @@ export class ErrorUtils {
   }
 
   /**
+   * Convert any error to an AppError for consistent route handling.
+   */
+  static toAppError(error: unknown, message?: string, type?: string): AppError {
+    const normalized = this.toHivemindError(error, message, type);
+    if (isAppError(normalized)) {
+      return normalized;
+    }
+
+    const normalizedType =
+      normalized && typeof normalized === 'object' && 'type' in normalized
+        ? (normalized.type as ErrorType)
+        : undefined;
+
+    return this.createError(
+      this.getMessage(normalized),
+      normalizedType || (type as ErrorType) || 'unknown',
+      this.getCode(normalized),
+      this.getStatusCode(normalized)
+    );
+  }
+
+  /**
    * Create a standardized error object
    */
   static createError(
@@ -459,7 +554,7 @@ export class ErrorUtils {
 /**
  * Type guard to check if error is a HivemindError
  */
-export function isHivemindError(error: unknown): error is HivemindError {
+function isHivemindError(error: unknown): error is HivemindError {
   return Boolean(
     error instanceof Error ||
     (error && typeof error === 'object' && ('type' in error || 'code' in error))
@@ -469,7 +564,7 @@ export function isHivemindError(error: unknown): error is HivemindError {
 /**
  * Type guard to check if error is an AppError
  */
-export function isAppError(error: unknown): error is AppError {
+function isAppError(error: unknown): error is AppError {
   return Boolean(
     error instanceof Error &&
     error &&

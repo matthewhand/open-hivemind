@@ -1,7 +1,9 @@
-import { Router, Request, Response } from 'express';
-import { listAgents, getAgent } from '@hivemind/llm-letta';
+import { Router, type Request, type Response } from 'express';
+import { getAgent, listAgents } from '@hivemind/llm-letta';
+import { createLogger } from '@src/common/StructuredLogger';
 
 const router = Router();
+const logger = createLogger('routes:letta');
 
 /**
  * GET /api/letta/agents - List available Letta agents
@@ -10,15 +12,17 @@ const router = Router();
 router.get('/agents', async (req: Request, res: Response) => {
   try {
     // Get credentials from query params or headers
-    const apiKey = req.headers['x-letta-api-key'] as string || req.query.apiKey as string;
-    const apiUrl = (req.headers['x-letta-api-url'] as string) ||
-                   (req.query.apiUrl as string) ||
-                   'https://api.letta.com/v1';
+    const apiKey = (req.headers['x-letta-api-key'] as string) || (req.query.apiKey as string);
+    const apiUrl =
+      (req.headers['x-letta-api-url'] as string) ||
+      (req.query.apiUrl as string) ||
+      'https://api.letta.com/v1';
 
     if (!apiKey) {
       return res.status(400).json({
         error: 'Missing API key',
-        message: 'Please provide Letta API key via x-letta-api-key header or apiKey query parameter'
+        message:
+          'Please provide Letta API key via x-letta-api-key header or apiKey query parameter',
       });
     }
 
@@ -26,7 +30,10 @@ router.get('/agents', async (req: Request, res: Response) => {
     return res.json(agents);
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Unknown error';
-    console.error('Letta agents lookup error:', error);
+    logger.error(
+      'Letta agents lookup error:',
+      error instanceof Error ? error : new Error(String(error))
+    );
     return res.status(500).json({
       error: 'Letta API Error',
       message,
@@ -40,15 +47,17 @@ router.get('/agents', async (req: Request, res: Response) => {
 router.get('/agents/:id', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const apiKey = req.headers['x-letta-api-key'] as string || req.query.apiKey as string;
-    const apiUrl = (req.headers['x-letta-api-url'] as string) ||
-                   (req.query.apiUrl as string) ||
-                   'https://api.letta.com/v1';
+    const apiKey = (req.headers['x-letta-api-key'] as string) || (req.query.apiKey as string);
+    const apiUrl =
+      (req.headers['x-letta-api-url'] as string) ||
+      (req.query.apiUrl as string) ||
+      'https://api.letta.com/v1';
 
     if (!apiKey) {
       return res.status(400).json({
         error: 'Missing API key',
-        message: 'Please provide Letta API key via x-letta-api-key header or apiKey query parameter'
+        message:
+          'Please provide Letta API key via x-letta-api-key header or apiKey query parameter',
       });
     }
 
@@ -56,7 +65,10 @@ router.get('/agents/:id', async (req: Request, res: Response) => {
     return res.json(agent);
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Unknown error';
-    console.error('Letta agent details error:', error);
+    logger.error(
+      'Letta agent details error:',
+      error instanceof Error ? error : new Error(String(error))
+    );
     return res.status(500).json({
       error: 'Letta API Error',
       message,

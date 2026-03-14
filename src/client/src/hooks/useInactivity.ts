@@ -12,9 +12,11 @@ interface UseInactivityOptions {
  * It sets isIdle=true only after initial mount + timeout of no activity.
  * Any user activity while idle will immediately wake and reset the timer.
  */
+const DEFAULT_EVENTS = ['mousemove', 'mousedown', 'keydown', 'touchstart', 'scroll', 'visibilitychange'];
+
 export function useInactivity({
   timeoutMs = 60_000,
-  events = ['mousemove', 'mousedown', 'keydown', 'touchstart', 'scroll', 'visibilitychange'],
+  events = DEFAULT_EVENTS,
   onIdle,
   onWake,
 }: UseInactivityOptions = {}) {

@@ -1,10 +1,6 @@
-import fs from 'fs';
-import path from 'path';
-import Debug from 'debug';
 import llmConfig from './llmConfig';
 import { UserConfigStore } from './UserConfigStore';
-
-const debug = Debug('app:llmProfiles');
+import { loadProfiles, saveProfiles, findProfileByKey } from './profileUtils';
 
 export type LlmModelType = 'chat' | 'embedding' | 'both';
 
@@ -61,60 +57,33 @@ const normalizeProfile = (profile: unknown): ProviderProfile | null => {
   };
 };
 
-const getProfilesPath = (): string => {
-  const configDir = process.env.NODE_CONFIG_DIR || path.join(process.cwd(), 'config');
-  return path.join(configDir, 'llm-profiles.json');
-};
-
 export const loadLlmProfiles = (): LlmProfiles => {
-  const filePath = getProfilesPath();
-  try {
-    if (!fs.existsSync(filePath)) {
-      // Create scaffolding if missing
-      const scaffold = { ...DEFAULT_LLM_PROFILES };
-      try {
-        const dir = path.dirname(filePath);
-        if (!fs.existsSync(dir)) {
-          fs.mkdirSync(dir, { recursive: true });
-        }
-        fs.writeFileSync(filePath, JSON.stringify(scaffold, null, 2), 'utf8');
-        debug('Created scaffolding for llm profiles at', filePath);
-        return scaffold;
-      } catch (err) {
-        debug('Failed to create scaffolding:', err);
-        return scaffold;
+  return loadProfiles<LlmProfiles>({
+    filename: 'llm-profiles.json',
+    defaultData: DEFAULT_LLM_PROFILES,
+    profileType: 'llm',
+    validateAndMigrate: (parsed) => {
+      if (!parsed || typeof parsed !== 'object') {
+        throw new Error('llm profiles must be an object');
       }
-    }
-    const raw = fs.readFileSync(filePath, 'utf8');
-    const parsed = JSON.parse(raw);
-    if (!parsed || typeof parsed !== 'object') {
-      throw new Error('llm profiles must be an object');
-    }
-    return {
-      llm: Array.isArray(parsed.llm)
-        ? parsed.llm
-          .map(normalizeProfile)
-          .filter((profile): profile is ProviderProfile => profile !== null)
-        : [],
-    };
-  } catch (error) {
-    debug('Failed to load llm profiles, using defaults:', error);
-    return { ...DEFAULT_LLM_PROFILES, llm: [] };
-  }
+      return {
+        llm: Array.isArray(parsed.llm)
+          ? parsed.llm
+            .map(normalizeProfile)
+            .filter((profile): profile is ProviderProfile => profile !== null)
+          : [],
+      };
+    },
+  });
 };
 
 export const saveLlmProfiles = (profiles: LlmProfiles): void => {
-  const filePath = getProfilesPath();
-  const dir = path.dirname(filePath);
-  if (!fs.existsSync(dir)) {
-    fs.mkdirSync(dir, { recursive: true });
-  }
-  fs.writeFileSync(filePath, JSON.stringify(profiles, null, 2));
+  saveProfiles('llm-profiles.json', profiles);
 };
 
 export const getLlmProfileByKey = (key: string): ProviderProfile | undefined => {
-  const normalized = key.trim().toLowerCase();
-  return loadLlmProfiles().llm.find(profile => profile.key.toLowerCase() === normalized);
+  const profiles = loadLlmProfiles().llm;
+  return findProfileByKey(profiles, 'key', key);
 };
 
 export const getDefaultEmbeddingProfileKey = (): string | undefined => {
