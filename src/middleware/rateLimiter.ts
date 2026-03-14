@@ -42,6 +42,10 @@ const RATE_LIMIT_CONFIG = {
     windowMs: parseInt(process.env.RATE_LIMIT_API_WINDOW_MS || '60000', 10), // 1 minute
     max: parseInt(process.env.RATE_LIMIT_API_MAX || '60', 10),
   },
+  mutatingApi: {
+    windowMs: parseInt(process.env.RATE_LIMIT_MUTATING_API_WINDOW_MS || '60000', 10), // 1 minute
+    max: parseInt(process.env.RATE_LIMIT_MUTATING_API_MAX || '30', 10),
+  },
 };
 
 // Redis client and store
@@ -580,6 +584,18 @@ export const apiRateLimiter = rateLimit({
   handler: createRateLimitHandler('API'),
 });
 
+// Mutating API rate limiter - stricter limit for write endpoints
+export const mutatingApiRateLimiter = rateLimit({
+  windowMs: RATE_LIMIT_CONFIG.mutatingApi.windowMs,
+  max: RATE_LIMIT_CONFIG.mutatingApi.max,
+  standardHeaders: true,
+  legacyHeaders: false,
+  store: createStore('mutatingApi', RATE_LIMIT_CONFIG.mutatingApi.windowMs),
+  keyGenerator: getClientKey,
+  skip: shouldSkipRateLimit,
+  handler: createRateLimitHandler('API (Mutating)'),
+});
+
 /**
  * Middleware to apply rate limiting based on route type
  */
@@ -591,6 +607,7 @@ export const applyRateLimiting = (req: Request, res: Response, next: NextFunctio
   // Use baseUrl + path to get the full path including mount point
   // This ensures correct matching regardless of where the middleware is mounted
   const path = req.baseUrl ? req.baseUrl + req.path : req.path;
+  const isMutating = ['POST', 'PUT', 'DELETE', 'PATCH'].includes(req.method);
 
   // Apply different rate limiters based on route patterns
   if (path.startsWith('/api/config')) {
@@ -600,8 +617,14 @@ export const applyRateLimiting = (req: Request, res: Response, next: NextFunctio
   } else if (path.startsWith('/api/admin')) {
     return adminRateLimiter(req, res, next);
   } else if (path.startsWith('/api/')) {
+    if (isMutating) {
+      return mutatingApiRateLimiter(req, res, next);
+    }
     return apiRateLimiter(req, res, next);
   } else {
+    if (isMutating) {
+      return mutatingApiRateLimiter(req, res, next);
+    }
     return defaultRateLimiter(req, res, next);
   }
 };
@@ -676,6 +699,7 @@ export {
   authRateLimiter as authLimiter,
   adminRateLimiter as adminLimiter,
   apiRateLimiter as apiLimiter,
+  mutatingApiRateLimiter as mutatingApiLimiter,
 };
 
 // Export helper functions for testing
