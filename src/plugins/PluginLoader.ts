@@ -107,7 +107,7 @@ export function instantiateLlmProvider(mod: PluginModule, config?: AnyConfig | a
     // Handling cases where default could be a class constructor or a factory
     try {
       return new (mod.default as any)(config);
-    } catch (e) {
+    } catch (_e) {
       return mod.default(config);
     }
   }
@@ -120,7 +120,10 @@ export function instantiateLlmProvider(mod: PluginModule, config?: AnyConfig | a
  * Contract (preferred): module exports `create(config)` → IMessengerService
  * Fallback: known Service singleton patterns.
  */
-export function instantiateMessageService(mod: PluginModule, config?: AnyConfig | any): IMessengerService {
+export function instantiateMessageService(
+  mod: PluginModule,
+  config?: AnyConfig | any
+): IMessengerService {
   // Preferred: explicit factory
   if (typeof mod.create === 'function') {
     return mod.create(config);

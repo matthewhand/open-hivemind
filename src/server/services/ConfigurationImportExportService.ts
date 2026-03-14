@@ -146,7 +146,7 @@ export class ConfigurationImportExportService {
 
       // Include versions if requested
       if (options.includeVersions) {
-        const validConfigIds = configs.map(c => c.id).filter(Boolean) as number[];
+        const validConfigIds = configs.map((c) => c.id).filter(Boolean) as number[];
         let versions: any[] = [];
         if (validConfigIds.length > 0) {
           const versionsMap = await this.dbManager.getBotConfigurationVersionsBulk(validConfigIds);
