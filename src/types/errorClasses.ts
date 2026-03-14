@@ -164,10 +164,11 @@ export class NetworkError extends BaseHivemindError {
   }
 
   private calculateRetryDelay(): number {
-    // Exponential backoff with jitter
+    // Exponential backoff with proportional jitter (+/- 10%)
     const baseDelay = 1000; // 1 second
-    const jitter = Math.random() * 1000; // Random jitter up to 1 second
-    return baseDelay + jitter;
+    const jitterRange = baseDelay * 0.2; // 20% total range
+    const jitter = Math.random() * jitterRange - jitterRange / 2; // +/- 10%
+    return Math.max(0, Math.floor(baseDelay + jitter));
   }
 }
 
