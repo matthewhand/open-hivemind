@@ -1,15 +1,28 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import { Activity, AlertTriangle, ChartBar, Clock, Cpu, Heart, RotateCcw } from 'lucide-react';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useWebSocket } from '../../contexts/WebSocketContext';
-import BotStatusCard from '../BotStatusCard';
+import Card from '../DaisyUI/Card';
+import Badge from '../DaisyUI/Badge';
 import { Alert } from '../DaisyUI/Alert';
 import Button from '../DaisyUI/Button';
 import PageHeader from '../DaisyUI/PageHeader';
 import StatsCards from '../DaisyUI/StatsCards';
+import {
+  Activity,
+  RotateCcw,
+  Heart,
+  Cpu,
+  Clock,
+  ChartBar,
+  AlertTriangle,
+} from 'lucide-react';
 import SystemHealth from '../SystemHealth';
+import BotStatusCard from '../BotStatusCard';
 import ActivityMonitor from './ActivityMonitor';
-import DistributedTraceWaterfall, { type TraceSpan } from './DistributedTraceWaterfall';
+import DistributedTraceWaterfall, { TraceSpan } from './DistributedTraceWaterfall';
+import BotActivityWaterfallMonitor from './BotActivityWaterfallMonitor';
+import { apiService } from '../../services/api';
+import type { StatusResponse, Bot } from '../../services/api';
 
 const mockSpans: TraceSpan[] = [
   {
@@ -20,7 +33,7 @@ const mockSpans: TraceSpan[] = [
     startTime: 0,
     duration: 1245.5,
     status: 'success',
-    tags: { 'http.status_code': '200', 'client.id': 'app-mobile-1' },
+    tags: { 'http.status_code': '200', 'client.id': 'app-mobile-1' }
   },
   {
     id: 'span-auth-11',
@@ -30,7 +43,7 @@ const mockSpans: TraceSpan[] = [
     startTime: 5.2,
     duration: 45.1,
     status: 'success',
-    tags: { 'user.id': 'usr_99823' },
+    tags: { 'user.id': 'usr_99823' }
   },
   {
     id: 'span-db-12',
@@ -40,7 +53,7 @@ const mockSpans: TraceSpan[] = [
     startTime: 8.5,
     duration: 38.0,
     status: 'success',
-    tags: { 'db.query': 'SELECT * FROM sessions WHERE token = ?' },
+    tags: { 'db.query': 'SELECT * FROM sessions WHERE token = ?' }
   },
   {
     id: 'span-bot-20',
@@ -49,7 +62,7 @@ const mockSpans: TraceSpan[] = [
     service: 'bot-core',
     startTime: 55.0,
     duration: 1180.2,
-    status: 'success',
+    status: 'success'
   },
   {
     id: 'span-llm-30',
@@ -59,7 +72,7 @@ const mockSpans: TraceSpan[] = [
     startTime: 60.5,
     duration: 1050.8,
     status: 'success',
-    tags: { model: 'gpt-4', 'tokens.prompt': '145', 'tokens.completion': '280' },
+    tags: { 'model': 'gpt-4', 'tokens.prompt': '145', 'tokens.completion': '280' }
   },
   {
     id: 'span-ext-api-40',
@@ -70,9 +83,10 @@ const mockSpans: TraceSpan[] = [
     duration: 65.0,
     status: 'error',
     tags: { 'http.url': 'https://api.crm.local/users/99823' },
-    logs: ['Connection timeout after 60ms', 'Retrying... failed'],
-  },
+    logs: ['Connection timeout after 60ms', 'Retrying... failed']
+  }
 ];
+
 
 interface BotWithStatus extends Bot {
   id: string;
@@ -143,36 +157,28 @@ const MonitoringDashboard: React.FC<MonitoringDashboardProps> = ({
       // Let's keep the mock generation for now as per instructions to "improve UI" not necessarily "implement full backend logic" if it's missing.
       // But actually, apiService.getStatus() returns bots with status. Let's try to use that if available.
 
-      // Create a map for O(1) lookups instead of using .find() inside the map
-      const statusBotMap = new Map();
-      if (systemData?.bots) {
-        systemData.bots.forEach((b: any) => statusBotMap.set(b.name, b));
-      }
-
       const botsWithStatus = configData.bots.map((bot: Bot) => {
-        const statusBot = statusBotMap.get(bot.name);
+        const statusBot = systemData?.bots?.find((b: any) => b.name === bot.name);
         return {
           ...bot,
           id: bot.name,
-          statusData: statusBot
-            ? {
-                status: statusBot.status,
-                connected: statusBot.connected || false,
-                messageCount: statusBot.messageCount || 0,
-                errorCount: statusBot.errorCount || 0,
-                responseTime: 0, // Not in StatusResponse
-                uptime: 0, // Not in StatusResponse
-                lastActivity: new Date().toISOString(),
-              }
-            : {
-                status: 'healthy',
-                connected: true,
-                messageCount: Math.floor(Math.random() * 100),
-                errorCount: Math.floor(Math.random() * 5),
-                responseTime: Math.floor(Math.random() * 500) + 100,
-                uptime: Math.floor(Math.random() * 86400),
-                lastActivity: new Date().toISOString(),
-              },
+          statusData: statusBot ? {
+            status: statusBot.status,
+            connected: statusBot.connected || false,
+            messageCount: statusBot.messageCount || 0,
+            errorCount: statusBot.errorCount || 0,
+            responseTime: 0, // Not in StatusResponse
+            uptime: 0, // Not in StatusResponse
+            lastActivity: new Date().toISOString(),
+          } : {
+            status: 'healthy',
+            connected: true,
+            messageCount: Math.floor(Math.random() * 100),
+            errorCount: Math.floor(Math.random() * 5),
+            responseTime: Math.floor(Math.random() * 500) + 100,
+            uptime: Math.floor(Math.random() * 86400),
+            lastActivity: new Date().toISOString(),
+          },
         };
       });
       setBots(botsWithStatus);
@@ -201,7 +207,7 @@ const MonitoringDashboard: React.FC<MonitoringDashboardProps> = ({
 
     const WS_STALE_MS = 60000; // consider WS stale after 60s of no events
     const interval = setInterval(() => {
-      const wsRecent = isConnected && Date.now() - lastWsActivity.current < WS_STALE_MS;
+      const wsRecent = isConnected && (Date.now() - lastWsActivity.current) < WS_STALE_MS;
       if (!wsRecent) {
         handleRefresh();
       }
@@ -211,16 +217,14 @@ const MonitoringDashboard: React.FC<MonitoringDashboardProps> = ({
   }, [handleRefresh, refreshInterval, isConnected]);
 
   const getOverallHealthStatus = () => {
-    if (!bots.length) {
-      return 'unknown';
-    }
+    if (!bots.length) { return 'unknown'; }
 
-    const botHealthIssues = bots.filter(
-      (bot) => bot.statusData?.status === 'error' || bot.statusData?.status === 'warning'
+    const botHealthIssues = bots.filter(bot =>
+      bot.statusData?.status === 'error' || bot.statusData?.status === 'warning',
     ).length;
 
     if (botHealthIssues > 0) {
-      const hasError = bots.some((bot) => bot.statusData?.status === 'error');
+      const hasError = bots.some(bot => bot.statusData?.status === 'error');
       return hasError ? 'error' : 'warning';
     }
     return 'healthy';
@@ -228,14 +232,10 @@ const MonitoringDashboard: React.FC<MonitoringDashboardProps> = ({
 
   const getHealthColor = (status: string) => {
     switch (status) {
-      case 'healthy':
-        return 'success';
-      case 'warning':
-        return 'warning';
-      case 'error':
-        return 'error';
-      default:
-        return 'info';
+      case 'healthy': return 'success';
+      case 'warning': return 'warning';
+      case 'error': return 'error';
+      default: return 'info';
     }
   };
 
@@ -259,7 +259,7 @@ const MonitoringDashboard: React.FC<MonitoringDashboardProps> = ({
     {
       id: 'active',
       title: 'Active Bots',
-      value: `${bots.filter((bot) => bot.statusData?.connected).length}/${bots.length}`,
+      value: `${bots.filter(bot => bot.statusData?.connected).length}/${bots.length}`,
       description: 'Connected / Total',
       icon: <Cpu className="w-8 h-8" />,
       color: 'primary' as const,
@@ -267,13 +267,9 @@ const MonitoringDashboard: React.FC<MonitoringDashboardProps> = ({
     {
       id: 'errors',
       title: 'Error Rate',
-      value: `${
-        bots.length > 0
-          ? Math.round(
-              (bots.filter((bot) => bot.statusData?.status === 'error').length / bots.length) * 100
-            )
-          : 0
-      }%`,
+      value: `${bots.length > 0
+        ? Math.round((bots.filter(bot => bot.statusData?.status === 'error').length / bots.length) * 100)
+        : 0}%`,
       description: 'Bots with errors',
       icon: <AlertTriangle className="w-8 h-8" />, // AlertTriangle needs import or use generic
       color: 'error' as const,
@@ -281,17 +277,13 @@ const MonitoringDashboard: React.FC<MonitoringDashboardProps> = ({
     {
       id: 'latency',
       title: 'Response Time',
-      value: `${
-        bots.length > 0
-          ? Math.round(
-              bots.reduce((acc, bot) => acc + (bot.statusData?.responseTime || 0), 0) / bots.length
-            )
-          : 0
-      }ms`,
+      value: `${bots.length > 0
+        ? Math.round(bots.reduce((acc, bot) => acc + (bot.statusData?.responseTime || 0), 0) / bots.length)
+        : 0}ms`,
       description: 'Average',
       icon: <Clock className="w-8 h-8" />,
       color: 'secondary' as const,
-    },
+    }
   ];
 
   // Need to import AlertTriangle
@@ -381,11 +373,7 @@ const MonitoringDashboard: React.FC<MonitoringDashboardProps> = ({
         </TabPanel>
 
         <TabPanel value={activeTab} index={3}>
-          <DistributedTraceWaterfall
-            traceId="trace-req-8f9d3b2a"
-            spans={mockSpans}
-            className="h-[600px] shadow-lg rounded-xl"
-          />
+          <DistributedTraceWaterfall traceId="trace-req-8f9d3b2a" spans={mockSpans} className="h-[600px] shadow-lg rounded-xl" />
         </TabPanel>
       </div>
     </div>
