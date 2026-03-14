@@ -104,10 +104,12 @@ const SystemManagement: React.FC = () => {
   const fetchPerformanceData = async () => {
     setIsPerformanceLoading(true);
     try {
-      const [info, overrides] = await Promise.all([
+      const [infoResult, overridesResult] = await Promise.allSettled([
         apiService.getSystemInfo(),
         apiService.getEnvOverrides()
       ]);
+      const info = infoResult.status === 'fulfilled' ? infoResult.value : { systemInfo: {} };
+      const overrides = overridesResult.status === 'fulfilled' ? overridesResult.value : { data: { envVars: {} } };
       setSystemInfo(info.systemInfo);
       // Backend returns { success: true, data: { envVars: ... } }
       setEnvOverrides(overrides.data?.envVars || overrides.envVars);

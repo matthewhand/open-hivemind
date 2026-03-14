@@ -40,7 +40,8 @@ test.describe('MCP Tools Page - Run Tool Modal', () => {
   });
 
   test('should open modal when Run Tool is clicked', async ({ page }) => {
-    await setupTestWithErrorDetection(page); await page.goto('/');
+    await setupTestWithErrorDetection(page);
+    await page.goto('/');
     await page.goto('/admin/mcp/tools');
 
     // Find the Run Tool button for test-tool
@@ -55,10 +56,14 @@ test.describe('MCP Tools Page - Run Tool Modal', () => {
   });
 
   test('should show error for invalid JSON', async ({ page }) => {
-    await setupTestWithErrorDetection(page); await page.goto('/');
+    await setupTestWithErrorDetection(page);
+    await page.goto('/');
     await page.goto('/admin/mcp/tools');
 
-    await page.getByRole('button', { name: /Run Tool/i }).first().click();
+    await page
+      .getByRole('button', { name: /Run Tool/i })
+      .first()
+      .click();
 
     // Switch to JSON mode
     await page.getByRole('button', { name: 'Raw JSON' }).click();
@@ -95,10 +100,14 @@ test.describe('MCP Tools Page - Run Tool Modal', () => {
       });
     });
 
-    await setupTestWithErrorDetection(page); await page.goto('/');
+    await setupTestWithErrorDetection(page);
+    await page.goto('/');
     await page.goto('/admin/mcp/tools');
 
-    await page.getByRole('button', { name: /Run Tool/i }).first().click();
+    await page
+      .getByRole('button', { name: /Run Tool/i })
+      .first()
+      .click();
 
     // Switch to JSON mode
     await page.getByRole('button', { name: 'Raw JSON' }).click();

@@ -1,6 +1,6 @@
 import express from 'express';
+import { SlackService } from '@hivemind/message-slack/SlackService';
 import { WebClient } from '@slack/web-api';
-import { SlackService } from '@integrations/slack/SlackService';
 
 interface SlackBotInfo {
   botToken: string;
@@ -36,7 +36,7 @@ jest.mock('@src/config/slackConfig', () => ({
   },
 }));
 
-jest.mock('@integrations/slack/SlackBotManager', () => {
+jest.mock('@hivemind/message-slack/SlackBotManager', () => {
   return jest.fn().mockImplementation(
     (): SlackBotManagerMock => ({
       initialize: jest.fn().mockImplementation(async function (this: SlackBotManagerMock) {

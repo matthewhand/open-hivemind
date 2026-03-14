@@ -13,7 +13,6 @@ import {
   UserIdParamSchema,
 } from '../../validation/schemas/authSchema';
 import { validateRequest } from '../../validation/validateRequest';
-import { authLimiter } from '../middleware/rateLimiter';
 
 const debug = Debug('app:AuthRoutes');
 const router = Router();
