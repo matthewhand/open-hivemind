@@ -169,7 +169,7 @@ export class UserConfigStore {
     }
 
     // Pre-calculate disabled status for all bots to avoid O(N^2)
-    const disabledBots = new Set(this.config.generalSettings?.disabledBots || []);
+    const disabledBots = new Set((this.config as any).general?.disabledBots || []);
 
     for (const botConfig of this.config.bots) {
       if (!botConfig.name) continue;
