@@ -17,6 +17,7 @@ import { Alert } from '../components/DaisyUI/Alert';
 import Modal from '../components/DaisyUI/Modal';
 import EmptyState from '../components/DaisyUI/EmptyState';
 import SearchFilterBar from '../components/SearchFilterBar';
+import { AdaptiveGrid } from '../components/ResponsiveComponents';
 
 interface Tool {
   name: string;
@@ -414,7 +415,7 @@ const MCPServersPage: React.FC = () => {
     }
 
     return (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <AdaptiveGrid breakpoints={{ xs: 1, md: 2, lg: 3 }} spacing={6}>
         {filteredServers.map((server) => (
           <div key={server.id} className="card bg-base-100 shadow-xl h-full border border-base-200">
             <div className="card-body">
@@ -512,7 +513,7 @@ const MCPServersPage: React.FC = () => {
             </div>
           </div>
         ))}
-      </div>
+      </AdaptiveGrid>
     );
   };
 
