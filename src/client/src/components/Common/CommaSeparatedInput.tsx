@@ -236,6 +236,7 @@ export const CommaSeparatedInput: React.FC<CommaSeparatedInputProps> = ({
                   type="button"
                   className="text-base-content/50 hover:text-base-content"
                   onClick={() => handleRemove(v)}
+                  onMouseDown={(e) => e.preventDefault()}
                   aria-label={`Remove ${v}`}
                 >
                   &times;
@@ -257,7 +258,7 @@ export const CommaSeparatedInput: React.FC<CommaSeparatedInputProps> = ({
           }}
           onPaste={handlePaste}
           placeholder={normalizedValue.length >= maxItems ? 'Max items reached' : placeholder}
-          disabled={disabled || value.length >= maxItems}
+          disabled={disabled || normalizedValue.length >= maxItems}
           aria-invalid={!!displayError}
           aria-describedby={displayError ? errorId : undefined}
         />
@@ -277,7 +278,7 @@ export const CommaSeparatedInput: React.FC<CommaSeparatedInputProps> = ({
             </svg>
           </button>
         )}
-        {!disabled && value.length > 0 && (
+        {!disabled && normalizedValue.length > 0 && (
           <button
             type="button"
             onClick={handleClearAll}
