@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars, react-refresh/only-export-components, no-empty, no-case-declarations */
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import type { BotInstance} from '../types/bot';
-import { BotStatus, MessageProvider, LLMProvider } from '../types/bot';
+import { BOT_STATUSES, MessageProvider, LLMProvider } from '../types/bot';
 import { apiService } from '../services/api';
 
 interface BotContextType {
@@ -58,7 +58,7 @@ export const BotProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const newBot: BotInstance = {
       id: generateId(),
       name: name || 'New Bot',
-      status: BotStatus.INACTIVE, // Default to inactive/stopped
+      status: BOT_STATUSES.INACTIVE, // Default to inactive/stopped
       provider: {} as any, // Legacy field, kept for type compatibility if needed, but we use arrays below
       messageProviders: [],
       llmProviders: [],
@@ -92,7 +92,7 @@ export const BotProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       ...bot,
       id: generateId(),
       name: `${bot.name} (Clone)`,
-      status: BotStatus.INACTIVE,
+      status: BOT_STATUSES.INACTIVE,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
@@ -115,17 +115,17 @@ export const BotProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       }
 
       // Optimistic UI update: show STARTING state while API call is in progress
-      updateBot(botId, { status: BotStatus.STARTING });
+      updateBot(botId, { status: BOT_STATUSES.STARTING });
 
       await apiService.startBot(botId);
 
-      updateBot(botId, { status: BotStatus.ACTIVE, lastActive: new Date().toISOString() });
+      updateBot(botId, { status: BOT_STATUSES.ACTIVE, lastActive: new Date().toISOString() });
       return true;
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Failed to start';
       setError(msg);
       // Revert to previous status or mark as error
-      updateBot(botId, { status: BotStatus.ERROR, error: msg });
+      updateBot(botId, { status: BOT_STATUSES.ERROR, error: msg });
       return false;
     } finally {
       setLoading(false);
@@ -138,17 +138,17 @@ export const BotProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       setError(null);
 
       // Optimistic UI update: show STOPPING state while API call is in progress
-      updateBot(botId, { status: BotStatus.STOPPING });
+      updateBot(botId, { status: BOT_STATUSES.STOPPING });
 
       await apiService.stopBot(botId);
 
-      updateBot(botId, { status: BotStatus.INACTIVE });
+      updateBot(botId, { status: BOT_STATUSES.INACTIVE });
       return true;
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Failed to stop bot';
       setError(msg);
       // Revert to ACTIVE since the stop failed
-      updateBot(botId, { status: BotStatus.ACTIVE });
+      updateBot(botId, { status: BOT_STATUSES.ACTIVE });
       return false;
     } finally {
       setLoading(false);
