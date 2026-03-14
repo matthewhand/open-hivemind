@@ -176,3 +176,4 @@ Card.Title = CardTitle;
 Card.Actions = CardActions;
 
 export default Card;
+export { Card };

@@ -278,3 +278,4 @@ export const ActivityFeed: React.FC<ActivityFeedProps> = ({
 }
 
 export default Timeline
+export { Timeline };
