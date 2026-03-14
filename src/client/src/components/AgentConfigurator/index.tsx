@@ -12,7 +12,7 @@ import { getMCPServers } from '../../services/agentService';
 import AgentConfigCard from './AgentConfigCard';
 import type { BotUIState, GuardInputState, GuardState } from './types';
 import type { ProviderInfo } from '../../services/providerService';
-import { LoadingSpinner } from '../DaisyUI';
+import { LoadingSpinner } from '../DaisyUI/Loading';
 
 interface AgentConfiguratorProps {
   title?: string;

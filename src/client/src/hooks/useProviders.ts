@@ -11,10 +11,16 @@ export const useProviders = () => {
   useEffect(() => {
     const fetchProviders = async () => {
       try {
-        const [llm, messenger] = await Promise.all([
+        const [llmResult, messengerResult] = await Promise.allSettled([
           getLlmProviders(),
           getMessengerProviders(),
         ]);
+
+        const llm = llmResult.status === 'fulfilled' ? llmResult.value : [];
+        const messenger = messengerResult.status === 'fulfilled' ? messengerResult.value : [];
+        if (llmResult.status === 'rejected' && messengerResult.status === 'rejected') {
+          throw new Error('Failed to fetch providers');
+        }
         setLlmProviders(llm);
         setMessageProviders(messenger);
       } catch (err) {

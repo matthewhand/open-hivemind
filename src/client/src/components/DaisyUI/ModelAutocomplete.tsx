@@ -1,6 +1,13 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Badge, LoadingSpinner, Alert } from './index';
+<<<<<<< HEAD
+import Badge from './Badge';
+import LoadingSpinner from '../LoadingSpinner';
+=======
+import { Badge } from './Badge';
+import { LoadingSpinner } from './Loading';
+>>>>>>> 9ad452c7 (Refiner: Final frontend build fix)
+import { Alert } from './Alert';
 
 interface ModelOption {
   id: string;
