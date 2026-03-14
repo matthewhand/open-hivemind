@@ -6,7 +6,7 @@ import Card from './DaisyUI/Card';
 import Input from './DaisyUI/Input';
 import Select from './DaisyUI/Select';
 import Toggle from './DaisyUI/Toggle';
-import { LoadingSpinner as Loading } from './DaisyUI/Loading';
+import { Loading } from './DaisyUI/Loading';
 import Textarea from './DaisyUI/Textarea';
 import Modal from './DaisyUI/Modal';
 import Badge from './DaisyUI/Badge';
@@ -99,14 +99,11 @@ const IntegrationsPanel: React.FC = () => {
   const fetchData = async () => {
     try {
       setLoading(true);
-      const [configResult, botsResult, profilesResult] = await Promise.allSettled([
+      const [configRes, botsRes, profilesRes] = await Promise.all([
         fetch('/api/config/global'),
         fetch('/api/dashboard/api/status'), // Using status endpoint for bots list
         fetch('/api/config/llm-profiles'),
       ]);
-      const configRes = configResult.status === 'fulfilled' ? configResult.value : { ok: false, json: async () => ({}) } as unknown as Response;
-      const botsRes = botsResult.status === 'fulfilled' ? botsResult.value : { ok: false, json: async () => ({ bots: [] }) } as unknown as Response;
-      const profilesRes = profilesResult.status === 'fulfilled' ? profilesResult.value : { ok: false, json: async () => ({ llm: [] }) } as unknown as Response;
 
       if (!configRes.ok) { throw new Error('Failed to fetch configuration'); }
       const configData = await configRes.json();

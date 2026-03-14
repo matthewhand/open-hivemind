@@ -1,7 +1,14 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useModal } from '../hooks/useModal';
-import { Card, Button, Badge, Alert, PageHeader, StatsCards, EmptyState, LoadingSpinner, LoadingSkeletonCard } from '../components/DaisyUI';
+import Card from '../components/DaisyUI/Card';
+import Button from '../components/DaisyUI/Button';
+import Badge from '../components/DaisyUI/Badge';
+import { Alert } from '../components/DaisyUI/Alert';
+import PageHeader from '../components/DaisyUI/PageHeader';
+import StatsCards from '../components/DaisyUI/StatsCards';
+import EmptyState from '../components/DaisyUI/EmptyState';
+import { LoadingSpinner } from '../components/DaisyUI/Loading';
 import SearchFilterBar from '../components/SearchFilterBar';
 import {
   MessageSquare as MessageIcon,
@@ -160,11 +167,7 @@ const MessageProvidersPage: React.FC = () => {
       />
 
       {loading ? (
-        <div className="grid grid-cols-1 gap-4">
-          <LoadingSkeletonCard />
-          <LoadingSkeletonCard />
-          <LoadingSkeletonCard />
-        </div>
+        <div className="flex justify-center py-12"><LoadingSpinner size="lg" /></div>
       ) : profiles.length === 0 ? (
         <EmptyState
           icon={MessageIcon}
