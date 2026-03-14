@@ -1,15 +1,15 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useEffect, useState } from 'react';
 import { Alert } from './DaisyUI/Alert';
+import Badge from './DaisyUI/Badge';
 import Button from './DaisyUI/Button';
 import Card from './DaisyUI/Card';
 import Input from './DaisyUI/Input';
-import Select from './DaisyUI/Select';
-import Toggle from './DaisyUI/Toggle';
-import { LoadingSpinner as Loading } from './DaisyUI/Loading';
-import Textarea from './DaisyUI/Textarea';
+import { Loading } from './DaisyUI/Loading';
 import Modal from './DaisyUI/Modal';
-import Badge from './DaisyUI/Badge';
+import Select from './DaisyUI/Select';
+import Textarea from './DaisyUI/Textarea';
+import Toggle from './DaisyUI/Toggle';
 import {
   PuzzlePieceIcon,
   ChatBubbleLeftRightIcon,
