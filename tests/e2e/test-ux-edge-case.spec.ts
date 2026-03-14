@@ -42,6 +42,7 @@ test.describe('Edge Case Test Coverage Gaps - Max Length UX', () => {
     await page.goto('/admin/bots');
 
     await expect(page.locator('.card-title').first()).toBeVisible({ timeout: 10000 });
+    await expect(page.locator('.badge').first()).toBeVisible();
 
     await page.screenshot({ path: '.jules/after-ux-fix.png', fullPage: true });
   });
