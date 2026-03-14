@@ -25,11 +25,23 @@ import BotCard from '../components/BotManagement/BotCard';
 import { CreateBotWizard } from '../components/BotManagement/CreateBotWizard';
 import { BotSettingsModal } from '../components/BotSettingsModal';
 import { useLocation } from 'react-router-dom';
+import { useLlmStatus } from '../hooks/useLlmStatus';
+import { usePageLifecycle } from '../hooks/usePageLifecycle';
+
+interface BotData extends BotConfig {
+  id: string;
+}
+
+const PROVIDER_CATEGORIES = {
+  llm: ['openai', 'anthropic', 'cohere', 'google'],
+  message: ['discord', 'slack', 'mattermost', 'teams']
+};
 
 const BotsPage: React.FC = () => {
   const [bots, setBots] = useState<BotConfig[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [uiError, setUiError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterType, setFilterType] = useState<'all' | 'active' | 'inactive'>('all');
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);

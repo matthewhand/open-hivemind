@@ -69,7 +69,6 @@ test('verify MCP Guard UX', async ({ page }) => {
 
   // Need a tiny delay for React state update
   await page.waitForTimeout(100);
-
   // Canonical screenshot for docs
   await page.screenshot({ path: 'docs/screenshots/mcp-guard-ux.png' });
 
