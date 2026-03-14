@@ -410,7 +410,9 @@ router.delete('/personas/:key', async (req, res) => {
     const filteredPersonas = personas.filter((p) => p.key !== key);
 
     if (filteredPersonas.length === personas.length) {
-      return res.status(200).json({ success: true, message: 'Persona already deleted or not found' });
+      return res
+        .status(200)
+        .json({ success: true, message: 'Persona already deleted or not found' });
     }
 
     await saveJsonConfig(PERSONAS_CONFIG_FILE, filteredPersonas);
