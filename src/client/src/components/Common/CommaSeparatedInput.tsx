@@ -69,12 +69,23 @@ export const CommaSeparatedInput: React.FC<CommaSeparatedInputProps> = ({
 
   const commitInput = (forceValue?: string) => {
     const textToCommit = forceValue !== undefined ? forceValue : inputValue;
-    if (!textToCommit.trim()) {
+
+    // Check if there is a trailing comma, and keep the trailing text in the input
+    let itemsToProcess = textToCommit;
+    let remainingText = '';
+
+    if (textToCommit.includes(',')) {
+      const parts = textToCommit.split(',');
+      remainingText = parts.pop() || ''; // Keep the last part after the last comma
+      itemsToProcess = parts.join(','); // Process everything before the last comma
+    }
+
+    if (!itemsToProcess.trim() && !remainingText.trim()) {
       setIsTouched(true);
       return;
     }
 
-    const current = textToCommit
+    const current = itemsToProcess
       .split(',')
       .map(s => s.trim())
       .filter(Boolean);
@@ -106,7 +117,7 @@ export const CommaSeparatedInput: React.FC<CommaSeparatedInputProps> = ({
         pushToHistory(next);
         onChange(next);
       }
-      setInputValue('');
+      setInputValue(remainingText); // set to remaining text after last comma
       setShowSuggestions(false);
     }
   };
@@ -114,7 +125,8 @@ export const CommaSeparatedInput: React.FC<CommaSeparatedInputProps> = ({
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
       e.preventDefault();
-      commitInput();
+      // On Enter, we want to commit everything, so we append a comma to force processing of the last word
+      commitInput(inputValue + ',');
     } else if (e.key === 'Backspace' && !inputValue && value.length > 0) {
       const next = value.slice(0, -1);
       pushToHistory(next);
@@ -166,7 +178,13 @@ export const CommaSeparatedInput: React.FC<CommaSeparatedInputProps> = ({
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setInputValue(e.target.value);
+    const newVal = e.target.value;
+    if (newVal.includes(',')) {
+      commitInput(newVal);
+      return;
+    }
+
+    setInputValue(newVal);
     setShowSuggestions(true);
     if (internalError) {
       setInternalError(null);
@@ -175,7 +193,7 @@ export const CommaSeparatedInput: React.FC<CommaSeparatedInputProps> = ({
 
   const handleSuggestionClick = (suggestion: string) => {
     if (disabled) return;
-    commitInput(suggestion);
+    commitInput(suggestion + ',');
   };
 
   const filteredSuggestions = suggestions.filter(s =>
