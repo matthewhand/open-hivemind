@@ -226,6 +226,8 @@ updated-coverage*
 before-after-*
 before-click-*
 page-state*
+ts-complexity*.js
+verification/after-fix*
 *.patch.py
 .pending_prs.json
 current_prs.json
