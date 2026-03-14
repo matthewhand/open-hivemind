@@ -20,6 +20,33 @@ jest.mock('../../src/server/middleware/auth', () => ({
   },
 }));
 
+jest.mock('../../src/database/DatabaseManager', () => ({
+  DatabaseManager: {
+    getInstance: jest.fn().mockReturnValue({
+      isConnected: jest.fn().mockReturnValue(true),
+    }),
+  },
+}));
+
+jest.mock('../../src/managers/BotManager', () => ({
+  BotManager: {
+    getInstance: jest.fn().mockReturnValue({
+      getAllBots: jest.fn().mockReturnValue(new Map()),
+    }),
+  },
+}));
+
+jest.mock('../../src/services/ApiMonitorService', () => {
+  return {
+    __esModule: true,
+    default: {
+      getInstance: jest.fn().mockReturnValue({
+        getAllStatuses: jest.fn().mockReturnValue({}),
+      }),
+    },
+  };
+});
+
 describe('Health API Endpoints - COMPLETE TDD SUITE', () => {
   let app: express.Application;
 

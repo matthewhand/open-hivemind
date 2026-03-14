@@ -82,7 +82,7 @@ test('verify MCP Guard UX', async ({ page }) => {
   console.log('Input value after typing ",user2":', value);
   expect(value).toBe('user2');
 
-  // The chip should be 'user1'
-  const chipText = await chip.textContent();
-  expect(chipText).toContain('user1');
+  const chips = modal.locator('[data-testid="chip"]');
+  await expect(chips).toHaveCount(1);
+  await expect(chips.first()).toHaveText(/user1/);
 });

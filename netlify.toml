@@ -1,12 +1,11 @@
+
 [build]
   command = "npm run build:netlify"
-  # Only build on main branch to avoid unnecessary builds on feature branches
-  ignore = "test \"$BRANCH\" != \"main\""
   functions = "dist/netlify/functions"
   publish = "dist/client"
 
-[dev]
-  command = "npm run dev"
+[functions]
+  node_bundler = "esbuild"
 
 [[redirects]]
   from = "/api/*"
