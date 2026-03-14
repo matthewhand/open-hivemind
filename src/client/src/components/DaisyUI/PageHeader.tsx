@@ -1,4 +1,5 @@
 import React from 'react';
+import { safeString } from '../../utils/safeString';
 
 interface PageHeaderProps {
     title: string;
@@ -31,7 +32,7 @@ const iconBgMap = {
  * Consistent page header with gradient background, icon, and actions.
  * Use this at the top of every page for visual consistency.
  */
-const PageHeader: React.FC<PageHeaderProps> = ({
+export const PageHeader: React.FC<PageHeaderProps> = ({
   title,
   description,
   icon,
@@ -39,6 +40,9 @@ const PageHeader: React.FC<PageHeaderProps> = ({
   gradient = 'primary',
   className = '',
 }) => {
+  const titleText = safeString(title);
+  const descriptionText = safeString(description);
+
   return (
     <div
       className={`
@@ -55,16 +59,16 @@ const PageHeader: React.FC<PageHeaderProps> = ({
         <div className="flex items-start gap-4">
           {icon && (
             <div className={`p-3 rounded-xl ${iconBgMap[gradient]} backdrop-blur-sm shadow-sm`}>
-              {icon}
+              {React.isValidElement(icon) ? icon : React.createElement(icon as React.ElementType, { className: "w-6 h-6" })}
             </div>
           )}
           <div>
             <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-base-content to-base-content/70 bg-clip-text">
-              {title}
+              {titleText}
             </h1>
-            {description && (
+            {descriptionText && (
               <p className="text-base-content/60 mt-1 text-sm">
-                {description}
+                {descriptionText}
               </p>
             )}
           </div>

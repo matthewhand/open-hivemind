@@ -1,9 +1,9 @@
 /**
  * Mem4ai Memory Provider for Open Hivemind
- * 
+ *
  * Open-source, LLM-friendly memory management with adaptive personalization
  * and flexible metadata tagging.
- * 
+ *
  * @package @hivemind/memory-mem4ai
  */
 
@@ -30,7 +30,7 @@ export interface SearchResult {
 
 /**
  * Mem4ai Memory Provider implementation
- * 
+ *
  * Provides adaptive memory management with flexible metadata tagging
  * for LLM applications.
  */
@@ -81,15 +81,15 @@ export class Mem4aiProvider {
         };
 
         try {
-            const response = await this.makeRequest('/memories', 'POST', body);
+            const response = await this.makeRequest('/memories', 'POST', body) as Record<string, unknown>;
 
             this.debug('Memory added successfully', { id: response.id });
             return {
-                id: response.id,
-                content: response.content,
-                metadata: response.metadata,
-                timestamp: response.created_at,
-                tags: response.tags,
+                id: response.id as string,
+                content: response.content as string,
+                metadata: response.metadata as Record<string, unknown> | undefined,
+                timestamp: response.created_at as number,
+                tags: response.tags as string[],
             };
         } catch (error) {
             this.debug('Failed to add memory', error);
@@ -255,7 +255,7 @@ export class Mem4aiProvider {
                 throw new Error(`Mem4ai API error: ${response.status} - ${error}`);
             }
 
-            return await response.json();
+            return await response.json() as Promise<unknown>;
         } finally {
             clearTimeout(timeout);
         }
@@ -263,3 +263,14 @@ export class Mem4aiProvider {
 }
 
 export default Mem4aiProvider;
+
+export function create(config: Mem4aiConfig): Mem4aiProvider {
+    return new Mem4aiProvider(config);
+}
+
+export const manifest = {
+    displayName: 'Mem4ai',
+    description: 'LLM-friendly memory management with adaptive personalization and flexible metadata tagging',
+    type: 'memory',
+    minVersion: '1.0.0',
+};

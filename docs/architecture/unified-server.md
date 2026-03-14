@@ -95,7 +95,7 @@ PORT=8080 npm run start
 SKIP_MESSENGERS=true npm run start:dev
 
 # Production with custom environment
-NODE_ENV=production PORT=3000 npm run start
+NODE_ENV=production PORT=3028 npm run start
 ```
 
 ## 🔧 Development Workflow
