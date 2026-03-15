@@ -78,7 +78,9 @@ const ApiStatusMonitor: React.FC<ApiStatusMonitorProps> = ({
     }
   }, []);
 
-  const setupWebSocket = useCallback(() => {
+  useEffect(() => {
+    fetchApiStatus();
+
     const newSocket = io({
       path: '/webui/socket.io',
       reconnection: true,
@@ -103,8 +105,10 @@ const ApiStatusMonitor: React.FC<ApiStatusMonitorProps> = ({
 
     newSocket.on('api_health_check_result', (data: { result: any; timestamp: string }) => {
       // Update specific endpoint status
-      if (apiStatus) {
-        const updatedEndpoints = apiStatus.endpoints.map(endpoint => {
+      setApiStatus((currentStatus) => {
+        if (!currentStatus) return currentStatus;
+
+        const updatedEndpoints = currentStatus.endpoints.map(endpoint => {
           if (endpoint.id === data.result.endpointId) {
             return {
               ...endpoint,
@@ -117,12 +121,13 @@ const ApiStatusMonitor: React.FC<ApiStatusMonitorProps> = ({
           }
           return endpoint;
         });
-        setApiStatus({
-          ...apiStatus,
+
+        return {
+          ...currentStatus,
           endpoints: updatedEndpoints,
           timestamp: data.timestamp,
-        });
-      }
+        };
+      });
     });
 
     newSocket.on('disconnect', () => {
@@ -131,20 +136,18 @@ const ApiStatusMonitor: React.FC<ApiStatusMonitorProps> = ({
 
     setSocket(newSocket);
 
-    return () => {
-      newSocket.close();
-    };
-  }, [apiStatus]);
-
-  useEffect(() => {
-    fetchApiStatus();
-    setupWebSocket();
-
+    let interval: NodeJS.Timeout | undefined;
     if (refreshInterval > 0) {
-      const interval = setInterval(fetchApiStatus, refreshInterval);
-      return () => clearInterval(interval);
+      interval = setInterval(fetchApiStatus, refreshInterval);
     }
-  }, [fetchApiStatus, setupWebSocket, refreshInterval]);
+
+    return () => {
+      newSocket.disconnect();
+      if (interval) {
+        clearInterval(interval);
+      }
+    };
+  }, [fetchApiStatus, refreshInterval]);
 
   const getStatusIcon = (status: string) => {
     const className = 'w-5 h-5';

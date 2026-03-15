@@ -129,9 +129,9 @@ If you deploy this publicly, **these variables must be set.**
 Open-Hivemind leverages a myriad of environment variables for system configuration. Here are the core categories:
 
 *   **System Controls**: `PORT`, `BASE_URL`, `LOG_LEVEL`, `REDIS_URL`, `DEMO_MODE`
-*   **Security & Network Limits**: `ADMIN_IP_WHITELIST`, `ALLOW_LOCALHOST_ADMIN`, `ALLOW_LOCAL_NETWORK_ACCESS`, `CORS_ORIGIN`, `TRUST_PROXY`, `RATE_LIMIT_API_MAX`
+*   **Security & Network Limits**: `ADMIN_IP_WHITELIST`, `ALLOW_LOCALHOST_ADMIN`, `ALLOW_LOCAL_NETWORK_ACCESS`, `CORS_ORIGIN`, `TRUST_PROXY`, `RATE_LIMIT_API_MAX`, `RATE_LIMIT_API_WINDOW_MS`, `RATE_LIMIT_AUTH_MAX`, `RATE_LIMIT_AUTH_WINDOW_MS`, `DISABLE_RATE_LIMIT`, `API_AUTH_TOKEN`
 *   **Bot Registries (Multi-bot setup)**: Prefix dynamically instantiated bots via `BOTS_<NAME>_DISCORD_BOT_TOKEN` etc.
-*   **Global Fallbacks**: `DISCORD_BOT_TOKEN`, `SLACK_BOT_TOKEN`, `OPENAI_API_KEY`, `LLM_PROVIDER`, `MESSAGE_PROVIDER`
-*   **Behavior Tuning**: `MESSAGE_ACTIVITY_TIME_WINDOW`, `MESSAGE_MENTION_BONUS`, `MESSAGE_RECENT_ACTIVITY_DECAY_RATE`
+*   **Global Fallbacks**: `DISCORD_BOT_TOKEN`, `SLACK_BOT_TOKEN`, `OPENAI_API_KEY`, `OPENAI_BASE_URL`, `OPENAI_MODEL`, `FLOWISE_API_BASE_URL`, `FLOWISE_API_KEY`, `LLM_PROVIDER`, `MESSAGE_PROVIDER`
+*   **Behavior Tuning**: `MESSAGE_ACTIVITY_TIME_WINDOW`, `MESSAGE_MENTION_BONUS`, `MESSAGE_RECENT_ACTIVITY_DECAY_RATE`, `MESSAGE_INTERROBANG_BONUS`, `MESSAGE_BOT_RESPONSE_MODIFIER`, `MESSAGE_PRIORITY_CHANNEL_BONUS`, `MESSAGE_WAKEWORDS`, `IDLE_RESPONSE_ENABLED`, `IDLE_RESPONSE_MIN_DELAY`, `IDLE_RESPONSE_MAX_DELAY`
 
 For a comprehensive, documented list of every supported variable, consult the `.env.sample` file included in the root of the repository.

@@ -1,6 +1,9 @@
 import Debug from 'debug';
 import { Router } from 'express';
+import { container } from 'tsyringe';
+import { AuthMiddlewareRequest } from '../../auth/types';
 import { DatabaseManager } from '../../database/DatabaseManager';
+import { TOKENS } from '../../di/container';
 import { AnomalyDetectionService } from '../../services/AnomalyDetectionService';
 
 const debug = Debug('app:webui:anomaly');
@@ -96,6 +99,6 @@ export function createAnomalyRouter(
 
 // Retain a default export that uses the global instances to avoid breaking any other imports that rely on it.
 export default createAnomalyRouter(
-  AnomalyDetectionService.getInstance(),
-  DatabaseManager.getInstance()
+  container.resolve(AnomalyDetectionService),
+  container.resolve<DatabaseManager>(TOKENS.DatabaseManager)
 );

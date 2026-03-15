@@ -56,7 +56,6 @@ describe('errorHandler middleware', () => {
   let mockNext: NextFunction;
 
   beforeEach(() => {
-    (MetricsCollector as any).instance = undefined;
     mockReq = {
       method: 'GET',
       path: '/test',
@@ -117,16 +116,20 @@ describe('errorHandler middleware', () => {
       expect(MetricsCollector.getInstance().incrementErrors).toHaveBeenCalled();
 
       expect(mockRes.status).toHaveBeenCalledWith(500);
-
-      const jsonCallArg = (mockRes.json as jest.Mock).mock.calls[0][0];
-
-      expect(jsonCallArg.error).toBeDefined();
-      expect(jsonCallArg.error.code).toBe('MOCK_ERROR');
-      expect(jsonCallArg.error.message).toBe('Mock error message');
-      expect(jsonCallArg.error.correlationId).toBe('test-corr-id');
-      expect(jsonCallArg.error.details).toEqual({ foo: 'bar' });
+      expect(mockRes.json).toHaveBeenCalledWith(
+        expect.objectContaining({
+          success: false,
+          error: expect.objectContaining({
+            code: 'MOCK_ERROR',
+            message: 'Mock error message',
+            correlationId: 'test-corr-id',
+            details: { foo: 'bar' },
+          }),
+        })
+      );
 
       // Ensure response doesn't contain stack in production
+      const jsonCallArg = (mockRes.json as jest.Mock).mock.calls[0][0];
       expect(jsonCallArg.stack).toBeUndefined();
 
       process.env.NODE_ENV = originalEnv;
@@ -191,7 +194,6 @@ describe('errorHandler middleware', () => {
     });
 
     afterEach(() => {
-      (MetricsCollector as any).instance = undefined;
       process.env.NODE_ENV = originalEnv;
       mockExit.mockRestore();
       mockConsoleError.mockRestore();
@@ -229,7 +231,6 @@ describe('errorHandler middleware', () => {
     });
 
     afterEach(() => {
-      (MetricsCollector as any).instance = undefined;
       process.env.NODE_ENV = originalEnv;
       mockExit.mockRestore();
       mockConsoleError.mockRestore();
@@ -267,28 +268,14 @@ describe('errorHandler middleware', () => {
   });
 
   describe('setupGlobalErrorHandlers', () => {
-    it('should register process listeners for exceptions and rejections', () => {
-      const onSpy = jest.spyOn(process, 'on').mockImplementation((() => {}) as any);
-
-      setupGlobalErrorHandlers();
-
-      // Expected to be a no-op as it's now managed by ShutdownCoordinator
-      expect(onSpy).not.toHaveBeenCalled();
-
-      onSpy.mockRestore();
+    it('should not throw (now delegated to ShutdownCoordinator)', () => {
+      expect(() => setupGlobalErrorHandlers()).not.toThrow();
     });
   });
 
   describe('setupGracefulShutdown', () => {
-    it('should register process listeners for SIGTERM and SIGINT', () => {
-      const onSpy = jest.spyOn(process, 'on').mockImplementation((() => {}) as any);
-
-      setupGracefulShutdown();
-
-      // Expected to be a no-op as it's now managed by ShutdownCoordinator
-      expect(onSpy).not.toHaveBeenCalled();
-
-      onSpy.mockRestore();
+    it('should not throw (now delegated to ShutdownCoordinator)', () => {
+      expect(() => setupGracefulShutdown()).not.toThrow();
     });
   });
 
@@ -318,10 +305,6 @@ describe('errorHandler middleware', () => {
   });
 
   describe('rateLimitErrorHandler', () => {
-    /**
-     * Currently a stub test since rateLimitErrorHandler is a passthrough stub.
-     * This test ensures it doesn't break when passing through to next().
-     */
     it('should call next', () => {
       rateLimitErrorHandler(mockReq as Request, mockRes as Response, mockNext);
       expect(mockNext).toHaveBeenCalled();

@@ -6,6 +6,7 @@ import type { BotOverride } from '@src/types/config';
 import Debug from 'debug';
 import fs from 'fs';
 import path from 'path';
+import crypto from 'crypto';
 
 const debug = Debug('app:HotReloadManager');
 
@@ -128,7 +129,7 @@ export class HotReloadManager {
     this.isReloading = true;
 
     try {
-      const changeId = `change_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      const changeId = `change_${crypto.randomUUID()}`;
       const fullChange: ConfigurationChange = {
         ...change,
         id: changeId,
@@ -273,7 +274,7 @@ export class HotReloadManager {
   private async createRollbackSnapshot(change: ConfigurationChange): Promise<string | null> {
     try {
       const manager = BotConfigurationManager.getInstance();
-      const snapshotId = `rollback_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      const snapshotId = `rollback_${crypto.randomUUID()}`;
 
       if (change.botName) {
         // Single bot snapshot

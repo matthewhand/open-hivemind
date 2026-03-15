@@ -145,12 +145,10 @@ const UnifiedDashboard: React.FC = () => {
       // Use || so that we re-fetch whenever either dataset is missing,
       // not only when both are empty (fixes &&-vs-|| logic error).
       if (personas.length === 0 || llmProfiles.length === 0) {
-        const [personasResult, profilesResult] = await Promise.allSettled([
+        const [personasData, profilesData] = await Promise.all([
           apiService.getPersonas(),
           apiService.getLlmProfiles(),
         ]);
-        const personasData = personasResult.status === 'fulfilled' ? personasResult.value : [];
-        const profilesData = profilesResult.status === 'fulfilled' ? profilesResult.value : {};
         setPersonas(personasData || []);
         setLlmProfiles(profilesData.llm || profilesData.profiles?.llm || []);
         setDefaultLlmConfigured(!!profilesData?.defaultConfigured);
@@ -173,12 +171,10 @@ const UnifiedDashboard: React.FC = () => {
     try {
       // ⚡ Bolt Optimization: Removed getPersonas() and getLlmProfiles()
       // from this critical path to speed up dashboard rendering.
-      const [configResult, statusResult] = await Promise.allSettled([
+      const [configData, statusData] = await Promise.all([
         apiService.getConfig(),
         apiService.getStatus(),
       ]);
-      const configData = configResult.status === 'fulfilled' ? configResult.value : { bots: [] };
-      const statusData = statusResult.status === 'fulfilled' ? statusResult.value : { bots: [] };
 
       setBots(configData.bots || []);
       setStatus(statusData);

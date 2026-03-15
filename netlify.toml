@@ -1,16 +1,14 @@
 [build]
-  command = "pnpm run build:netlify"
+  command = "npm run build:netlify"
   functions = "dist/netlify/functions"
   publish = "dist/client"
 
-[build.environment]
-  NODE_VERSION = "20"
-
+# Safely fast-path PR builds to save minutes without breaking Netlify redirect parsing
 [context.deploy-preview]
-  command = "mkdir -p dist/client dist/netlify/functions && echo 'Skipped' > dist/client/index.html && echo 'exports.handler = async () => ({ statusCode: 200, body: String(200) });' > dist/netlify/functions/server.js"
+  command = "mkdir -p dist/client dist/netlify/functions && echo 'Skipped PR Build' > dist/client/index.html && echo 'exports.handler = async () => ({ statusCode: 200, body: \"Skipped\" });' > dist/netlify/functions/server.js"
 
 [context.branch-deploy]
-  command = "mkdir -p dist/client dist/netlify/functions && echo 'Skipped' > dist/client/index.html && echo 'exports.handler = async () => ({ statusCode: 200, body: String(200) });' > dist/netlify/functions/server.js"
+  command = "mkdir -p dist/client dist/netlify/functions && echo 'Skipped Branch Build' > dist/client/index.html && echo 'exports.handler = async () => ({ statusCode: 200, body: \"Skipped\" });' > dist/netlify/functions/server.js"
 
 [dev]
   command = "pnpm run dev"

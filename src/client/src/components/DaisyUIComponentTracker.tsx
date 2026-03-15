@@ -5,6 +5,8 @@ import { daisyUITracker } from '../utils/DaisyUIComponentTracker';
 import Button from './DaisyUI/Button';
 import Badge from './DaisyUI/Badge';
 import Card from './DaisyUI/Card';
+import Tabs from './DaisyUI/Tabs';
+import Tab from './DaisyUI/Tab';
 import { Progress } from './DaisyUI/Loading';
 import { Alert } from './DaisyUI/Alert';
 import Modal from './DaisyUI/Modal';
@@ -95,35 +97,20 @@ const DaisyUIComponentTracker: React.FC<Props> = ({ isOpen = true, onClose }) =>
           </div>
 
           {/* Tabs */}
-          <div className="tabs tabs-boxed w-full">
-            <button
-              className={`tab ${selectedCategory === 'overview' ? 'tab-active' : ''}`}
-              onClick={() => setSelectedCategory('overview')}
-            >
+          <div className="w-full tabs tabs-boxed mb-4">
+            <button className={`tab ${selectedCategory === 'overview' ? "tab-active" : ""}`} onClick={() => setSelectedCategory('overview')}>
               Overview
             </button>
-            <button
-              className={`tab ${selectedCategory === 'used' ? 'tab-active' : ''}`}
-              onClick={() => setSelectedCategory('used')}
-            >
+            <button className={`tab ${selectedCategory === 'used' ? "tab-active" : ""}`} onClick={() => setSelectedCategory('used')}>
               Used Components ({stats.usedComponents})
             </button>
-            <button
-              className={`tab ${selectedCategory === 'unused' ? 'tab-active' : ''}`}
-              onClick={() => setSelectedCategory('unused')}
-            >
+            <button className={`tab ${selectedCategory === 'unused' ? "tab-active" : ""}`} onClick={() => setSelectedCategory('unused')}>
               Unused ({stats.unusedComponents.length})
             </button>
-            <button
-              className={`tab ${selectedCategory === 'suggestions' ? 'tab-active' : ''}`}
-              onClick={() => setSelectedCategory('suggestions')}
-            >
+            <button className={`tab ${selectedCategory === 'suggestions' ? "tab-active" : ""}`} onClick={() => setSelectedCategory('suggestions')}>
               Suggestions ({suggestions.length})
             </button>
-            <button
-              className={`tab ${selectedCategory === 'categories' ? 'tab-active' : ''}`}
-              onClick={() => setSelectedCategory('categories')}
-            >
+            <button className={`tab ${selectedCategory === 'categories' ? "tab-active" : ""}`} onClick={() => setSelectedCategory('categories')}>
               By Category
             </button>
           </div>

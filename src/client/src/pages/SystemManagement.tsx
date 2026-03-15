@@ -674,6 +674,18 @@ const SystemManagement: React.FC = () => {
                               <span className="opacity-70">Pool Size:</span>
                               <span className="font-mono">{systemInfo.database.stats.poolSize || 'N/A'}</span>
                             </div>
+                            <div className="flex justify-between">
+                              <span className="opacity-70">Active Connections:</span>
+                              <span className={`font-mono ${(systemInfo.database.stats.activeConnections >= systemInfo.database.stats.poolSize) ? 'text-error font-bold' : ''}`}>
+                                {systemInfo.database.stats.activeConnections || 0}
+                              </span>
+                            </div>
+                            {systemInfo.database.stats.activeConnections >= systemInfo.database.stats.poolSize && (
+                              <div className="mt-2 text-xs text-error flex items-center gap-1">
+                                <span>⚠️</span>
+                                <span>Connection pool exhausted</span>
+                              </div>
+                            )}
                             {/* Add more DB stats if available */}
                           </>
                         )}

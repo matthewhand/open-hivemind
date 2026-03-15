@@ -11,16 +11,16 @@ describe('DiscordMessageSender Error Mapping', () => {
     mockClient = {
       channels: {
         fetch: jest.fn(),
-      }
+      },
     };
 
     mockBotManager = {
-      getAllBots: jest.fn().mockReturnValue([{ botUserName: 'test-bot', client: mockClient }])
+      getAllBots: jest.fn().mockReturnValue([{ botUserName: 'test-bot', client: mockClient }]),
     };
 
     mockDeps = {
       errorTypes: { ConfigError: Error, ValidationError, NetworkError },
-      logger: { error: jest.fn() }
+      logger: { error: jest.fn() },
     };
 
     discordMessageSender = new DiscordMessageSender(mockBotManager, mockDeps as any);

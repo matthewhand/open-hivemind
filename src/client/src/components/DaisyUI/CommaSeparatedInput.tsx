@@ -63,7 +63,26 @@ export const CommaSeparatedInput: React.FC<CommaSeparatedInputProps> = ({
       value={inputValue}
       onChange={e => {
         isTyping.current = true;
-        setInputValue(e.target.value);
+        const val = e.target.value;
+        if (val.includes(',')) {
+          // Tokenize immediately on comma
+          const parts = val.split(',');
+          const trailingText = parts.length > 1 ? parts.pop() || '' : '';
+          const itemsToCommit = parts.map(s => s.trim()).filter(Boolean);
+
+          if (itemsToCommit.length > 0) {
+            const next = [...value];
+            for (const item of itemsToCommit) {
+              if (!next.includes(item) && next.length < maxItems) {
+                next.push(item);
+              }
+            }
+            onChange(next);
+          }
+          setInputValue(trailingText);
+        } else {
+          setInputValue(val);
+        }
       }}
       onKeyDown={handleKeyDown}
       onBlur={commitInput}

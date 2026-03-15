@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars, react-refresh/only-export-components, no-empty, no-case-declarations */
 import type { ReactNode } from 'react';
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState, useRef, useCallback } from 'react';
 import type { Socket } from 'socket.io-client';
 import { io } from 'socket.io-client';
 import type {
@@ -29,14 +29,20 @@ const API_BASE_URL = rawBaseUrl?.replace(/\/$/, '');
 
 export const WebSocketProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [socket, setSocket] = useState<Socket | null>(null);
+  const socketRef = useRef<Socket | null>(null);
   const [isConnected, setIsConnected] = useState(false);
   const [messageFlow, setMessageFlow] = useState<MessageFlowEvent[]>([]);
   const [alerts, setAlerts] = useState<AlertEvent[]>([]);
   const [performanceMetrics, setPerformanceMetrics] = useState<PerformanceMetric[]>([]);
   const [botStats, setBotStats] = useState<BotStat[]>([]);
 
-  const connect = () => {
-    if (socket?.connected) { return; }
+  const connect = useCallback(() => {
+    if (socketRef.current?.connected) { return; }
+
+    // Ensure we clean up any old disconnected socket instance before creating a new one
+    if (socket) {
+      socket.disconnect();
+    }
 
     const connectionTarget = API_BASE_URL && API_BASE_URL.length > 0 ? API_BASE_URL : undefined;
     const tokenString = localStorage.getItem('auth_tokens');
@@ -55,12 +61,7 @@ export const WebSocketProvider: React.FC<{ children: ReactNode }> = ({ children 
       transports: ['websocket', 'polling'],
       auth: {
         token: token
-      },
-      reconnection: true,
-      reconnectionAttempts: Infinity,
-      reconnectionDelay: 1000,
-      reconnectionDelayMax: 5000,
-      randomizationFactor: 0.5,
+      }
     });
 
     newSocket.on('connect', () => {
@@ -68,26 +69,9 @@ export const WebSocketProvider: React.FC<{ children: ReactNode }> = ({ children 
       setIsConnected(true);
     });
 
-    newSocket.on('disconnect', (reason) => {
-      console.log('WebSocket disconnected', reason);
+    newSocket.on('disconnect', () => {
+      console.log('WebSocket disconnected');
       setIsConnected(false);
-    });
-
-    newSocket.on('reconnect_attempt', (attempt) => {
-      console.log(`WebSocket reconnect attempt ${attempt}`);
-    });
-
-    newSocket.on('reconnect', (attempt) => {
-      console.log(`WebSocket reconnected after ${attempt} attempts`);
-      setIsConnected(true);
-    });
-
-    newSocket.on('reconnect_error', (error) => {
-      console.error('WebSocket reconnect error:', error);
-    });
-
-    newSocket.on('reconnect_failed', () => {
-      console.error('WebSocket reconnect failed');
     });
 
     // Message flow events
@@ -163,22 +147,24 @@ export const WebSocketProvider: React.FC<{ children: ReactNode }> = ({ children 
       console.error('WebSocket error:', error);
     });
 
+    socketRef.current = newSocket;
     setSocket(newSocket);
-  };
+  }, []);
 
-  const disconnect = () => {
-    if (socket) {
-      socket.disconnect();
+  const disconnect = useCallback(() => {
+    if (socketRef.current) {
+      socketRef.current.disconnect();
+      socketRef.current = null;
       setSocket(null);
       setIsConnected(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     return () => {
       disconnect();
     };
-  }, []);
+  }, [disconnect]);
 
   const value: WebSocketContextType = {
     socket,

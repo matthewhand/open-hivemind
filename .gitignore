@@ -217,7 +217,18 @@ scripts/benchmarks/temp-import-bench.json
 # Development artifacts
 .letta/
 patch_*.py
-after-fix.*
+after-fix*
+before-fix*
+before-ux-fix*
+after-ux-fix*
+baseline-coverage*
+updated-coverage*
+before-after-*
+before-click-*
+page-state*
+ts-complexity*.js
+verification/after-fix*
+verification/test_mcpservers.py
 *.patch.py
 .pending_prs.json
 current_prs.json

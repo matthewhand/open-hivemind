@@ -6,6 +6,7 @@ import {
   saveGuardrailProfiles,
   type GuardrailProfile,
 } from '../../config/guardrailProfiles';
+import { ErrorResponses, sendSuccessResponse } from '../../utils/errorResponse';
 
 const router = Router();
 
@@ -21,16 +22,13 @@ if (!isTestEnv) {
 router.get('/', (req: Request, res: Response) => {
   try {
     const profiles = loadGuardrailProfiles();
-    return res.json({
-      success: true,
-      data: profiles,
-    });
+    return sendSuccessResponse(res, profiles);
   } catch (error: unknown) {
-    return res.status(500).json({
-      success: false,
-      error: 'Failed to load guardrail profiles',
-      message: error instanceof Error ? error.message : String(error),
-    });
+    const message = error instanceof Error ? error.message : String(error);
+    const errResp = ErrorResponses.internalServerError('Failed to load guardrail profiles')
+      .withDetails({ message })
+      .build();
+    return res.status(errResp.error.code === 'INTERNAL_SERVER_ERROR' ? 500 : 500).json(errResp);
   }
 });
 
@@ -42,22 +40,19 @@ router.get('/:id', (req: Request, res: Response) => {
     const profile = profiles.find((p) => p.id === id);
 
     if (!profile) {
-      return res.status(404).json({
-        success: false,
-        error: 'Profile not found',
-      });
+      return res.status(404).json(ErrorResponses.notFound('Profile').build());
     }
 
-    return res.json({
-      success: true,
-      data: profile,
-    });
+    return sendSuccessResponse(res, profile);
   } catch (error: unknown) {
-    return res.status(500).json({
-      success: false,
-      error: 'Failed to retrieve profile',
-      message: error instanceof Error ? error.message : String(error),
-    });
+    const message = error instanceof Error ? error.message : String(error);
+    return res
+      .status(500)
+      .json(
+        ErrorResponses.internalServerError('Failed to retrieve profile')
+          .withDetails({ message })
+          .build()
+      );
   }
 });
 
@@ -90,19 +85,23 @@ router.post('/', (req: Request, res: Response) => {
     const { name, description, guards } = req.body as GuardBody;
 
     if (!name || typeof name !== 'string') {
-      return res.status(400).json({
-        success: false,
-        error: 'Validation error',
-        message: 'Name is required and must be a string',
-      });
+      return res
+        .status(400)
+        .json(
+          ErrorResponses.badRequest('Validation error')
+            .withDetails({ message: 'Name is required and must be a string' })
+            .build()
+        );
     }
 
     if (!guards || typeof guards !== 'object') {
-      return res.status(400).json({
-        success: false,
-        error: 'Validation error',
-        message: 'Guards configuration is required',
-      });
+      return res
+        .status(400)
+        .json(
+          ErrorResponses.badRequest('Validation error')
+            .withDetails({ message: 'Guards configuration is required' })
+            .build()
+        );
     }
 
     const profiles = loadGuardrailProfiles();
@@ -110,11 +109,9 @@ router.post('/', (req: Request, res: Response) => {
     // Idempotency check: see if profile with same name already exists
     const existingProfile = profiles.find((p) => p.name === name);
     if (existingProfile) {
-      return res.status(200).json({
-        success: true,
-        data: existingProfile,
+      return sendSuccessResponse(res, existingProfile, undefined, {
         message: 'Guard profile already exists',
-      });
+      } as any);
     }
 
     const newProfile: GuardrailProfile = {
@@ -167,14 +164,18 @@ router.post('/', (req: Request, res: Response) => {
     return res.status(201).json({
       success: true,
       data: newProfile,
+      meta: { timestamp: new Date().toISOString() },
       message: 'Guard profile created successfully',
     });
   } catch (error: unknown) {
-    return res.status(500).json({
-      success: false,
-      error: 'Failed to create guard profile',
-      message: error instanceof Error ? error.message : String(error),
-    });
+    const message = error instanceof Error ? error.message : String(error);
+    return res
+      .status(500)
+      .json(
+        ErrorResponses.internalServerError('Failed to create guard profile')
+          .withDetails({ message })
+          .build()
+      );
   }
 });
 
@@ -232,17 +233,18 @@ router.put('/:id', (req: Request, res: Response) => {
     profiles[profileIndex] = updatedProfile;
     saveGuardrailProfiles(profiles);
 
-    return res.json({
-      success: true,
-      data: updatedProfile,
+    return sendSuccessResponse(res, updatedProfile, undefined, {
       message: 'Guard profile updated successfully',
-    });
+    } as any);
   } catch (error: unknown) {
-    return res.status(500).json({
-      success: false,
-      error: 'Failed to update guard profile',
-      message: error instanceof Error ? error.message : String(error),
-    });
+    const message = error instanceof Error ? error.message : String(error);
+    return res
+      .status(500)
+      .json(
+        ErrorResponses.internalServerError('Failed to update guard profile')
+          .withDetails({ message })
+          .build()
+      );
   }
 });
 
@@ -256,6 +258,7 @@ router.delete('/:id', (req: Request, res: Response) => {
     if (!profileExists) {
       return res.status(200).json({
         success: true,
+        data: null,
         message: 'Guard profile already deleted or not found',
       });
     }
@@ -265,14 +268,18 @@ router.delete('/:id', (req: Request, res: Response) => {
 
     return res.json({
       success: true,
+      data: null,
       message: 'Guard profile deleted successfully',
     });
   } catch (error: unknown) {
-    return res.status(500).json({
-      success: false,
-      error: 'Failed to delete guard profile',
-      message: error instanceof Error ? error.message : String(error),
-    });
+    const message = error instanceof Error ? error.message : String(error);
+    return res
+      .status(500)
+      .json(
+        ErrorResponses.internalServerError('Failed to delete guard profile')
+          .withDetails({ message })
+          .build()
+      );
   }
 });
 

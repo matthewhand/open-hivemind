@@ -147,30 +147,31 @@ describe('MigrationManager', () => {
         down: jest.fn().mockResolvedValue(undefined),
       };
 
+      // Mock migration with down function
+      const mockMigration2 = {
+        id: '002_add_rbac_enhancements',
+        name: 'Add rbac enhancements',
+        version: 2,
+        up: jest.fn(),
+        down: jest.fn().mockResolvedValue(undefined),
+      };
+
       // @ts-ignore - Accessing private property for testing
       migrationManager.migrations = [
-        {
-          id: '001_add_tenant_support',
-          name: 'Migration 1',
-          version: 1,
-          up: jest.fn(),
-          down: jest.fn(),
-        },
-        {
-          id: '002_add_rbac_enhancements',
-          name: 'Migration 2',
-          version: 2,
-          up: jest.fn(),
-          down: jest.fn(),
-        },
+        { id: '001_add_tenant_support', name: 'Migration 1', version: 1, up: jest.fn(), down: jest.fn() },
+        mockMigration2,
         mockMigration,
       ];
 
       await migrationManager.rollbackToVersion(1);
 
       expect(mockMigration.down).toHaveBeenCalledWith(mockDb);
+      expect(mockMigration2.down).toHaveBeenCalledWith(mockDb);
       expect(mockDb.run).toHaveBeenCalledWith('DELETE FROM migrations WHERE id = ?', [
         '003_add_user_indexes',
+      ]);
+      expect(mockDb.run).toHaveBeenCalledWith('DELETE FROM migrations WHERE id = ?', [
+        '002_add_rbac_enhancements',
       ]);
     });
 
@@ -240,7 +241,7 @@ describe('MigrationManager', () => {
 
       // @ts-ignore - Accessing private property for testing
       migrationManager.migrations = [
-        { id: '001', name: 'Migration 1', version: 1, up: jest.fn(), down: jest.fn() },
+        { id: '001', name: 'Migration 1', version: 1, up: jest.fn() },
         mockMigration,
       ];
 
@@ -249,27 +250,24 @@ describe('MigrationManager', () => {
       expect(mockDb.exec).toHaveBeenCalledWith('ROLLBACK');
     });
 
-    it('should throw an explicit error if a rollback is attempted on an irreversible migration', async () => {
+    it('should throw an error when attempting to rollback a migration without a down function', async () => {
       mockDb.all.mockResolvedValueOnce([
         { id: '001', version: 1 },
         { id: '002', version: 2 },
       ]);
 
       const migrations = [
-        { id: '001', version: 1, up: jest.fn(), down: jest.fn() },
-        { id: '002', version: 2, up: jest.fn() }, // No down function, irreversible
+        { id: '001', version: 1, up: jest.fn() },
+        { id: '002', version: 2, up: jest.fn() }, // No down function
       ];
 
       // @ts-ignore - Accessing private property for testing
       migrationManager.migrations = migrations;
 
-      await expect(migrationManager.rollbackToVersion(0)).rejects.toThrow(
-        'Cannot rollback: Migration 002 is irreversible (missing down method).'
-      );
+      await expect(migrationManager.rollbackToVersion(0)).rejects.toThrow('Migration 002 does not support rollback');
 
-      // Should not attempt to rollback anything if there's an irreversible migration
-      expect(migrations[0].down).not.toHaveBeenCalled();
-      expect(mockDb.run).not.toHaveBeenCalled();
+      // Should not attempt to rollback at all
+      expect(mockDb.run).not.toHaveBeenCalledWith('DELETE FROM migrations WHERE id = ?', ['002']);
     });
   });
 

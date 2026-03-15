@@ -46,7 +46,7 @@ test('verify MCP Guard UX', async ({ page }) => {
 
   await page.goto('/admin/guards');
 
-  await page.getByRole('button', { name: 'New Profile' }).click();
+  await page.getByRole('button', { name: 'New Profile' }).first().click();
 
   const modal = page.locator('.modal-box').filter({ hasText: /Create.*Profile/i });
   await expect(modal).toBeVisible();
@@ -69,15 +69,22 @@ test('verify MCP Guard UX', async ({ page }) => {
   await page.screenshot({ path: 'docs/screenshots/mcp-guard-ux-before.png' });
 
   await usersInput.pressSequentially(',user2');
+  await usersInput.press('Enter');
 
   // Screenshot after typing comma
   await page.screenshot({ path: 'docs/screenshots/mcp-guard-ux-after.png' });
 
+  // Wait for the UI to update with chips
+  await page.waitForTimeout(500);
+
+  // Instead of expecting standard string input, we should expect chips
+  const chips = modal.locator('[data-testid="chip"]');
+  await expect(chips).toHaveCount(1);
+  await expect(chips.nth(0)).toHaveText(/user1/);
+
+  // The input field itself should now contain "user2" because the comma
+  // committed "user1" into a chip
   const value = await usersInput.inputValue();
   console.log('Input value after typing ",user2":', value);
   expect(value).toBe('user2');
-
-  const chips = modal.locator('[data-testid="chip"]');
-  await expect(chips).toHaveCount(1);
-  await expect(chips.first()).toHaveText(/user1/);
 });

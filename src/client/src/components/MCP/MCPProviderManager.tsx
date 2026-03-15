@@ -29,6 +29,7 @@ const MCPProviderManagerComponent: React.FC<MCPProviderManagerProps> = ({ classN
   const [testResults, setTestResults] = useState<Record<string, MCPProviderTestResult>>({});
   const [manager] = useState(() => new MCPProviderManager());
   const [isSaving, setIsSaving] = useState(false);
+  const { addToast } = useToast();
 
   // Form state for create/edit
   const [formData, setFormData] = useState({
@@ -54,7 +55,13 @@ const MCPProviderManagerComponent: React.FC<MCPProviderManagerProps> = ({ classN
     manager.on('provider_test_completed', handleProviderTestCompleted);
 
     return () => {
-      manager.removeAllListeners();
+      manager.off('provider_added', loadProviders);
+      manager.off('provider_removed', loadProviders);
+      manager.off('provider_updated', loadProviders);
+      manager.off('provider_started', handleProviderStarted);
+      manager.off('provider_stopped', handleProviderStopped);
+      manager.off('provider_error', handleProviderError);
+      manager.off('provider_test_completed', handleProviderTestCompleted);
     };
   }, [manager]);
 
@@ -127,7 +134,11 @@ const MCPProviderManagerComponent: React.FC<MCPProviderManagerProps> = ({ classN
       await loadProviders();
     } catch (error) {
       console.error('Failed to delete provider:', error);
-      alert('Failed to delete provider: ' + (error instanceof Error ? error.message : String(error)));
+      addToast({
+        type: 'error',
+        title: 'Error',
+        message: 'Failed to delete provider: ' + (error instanceof Error ? error.message : String(error))
+      });
     }
   };
 
@@ -141,7 +152,11 @@ const MCPProviderManagerComponent: React.FC<MCPProviderManagerProps> = ({ classN
       await loadProviders();
     } catch (error) {
       console.error('Failed to start provider:', error);
-      alert('Failed to start provider: ' + (error instanceof Error ? error.message : String(error)));
+      addToast({
+        type: 'error',
+        title: 'Error',
+        message: 'Failed to start provider: ' + (error instanceof Error ? error.message : String(error))
+      });
     } finally {
       setProviders(prev => prev.map(p =>
         p.id === providerId ? { ...p, isStarting: false } : p,
@@ -159,7 +174,11 @@ const MCPProviderManagerComponent: React.FC<MCPProviderManagerProps> = ({ classN
       await loadProviders();
     } catch (error) {
       console.error('Failed to stop provider:', error);
-      alert('Failed to stop provider: ' + (error instanceof Error ? error.message : String(error)));
+      addToast({
+        type: 'error',
+        title: 'Error',
+        message: 'Failed to stop provider: ' + (error instanceof Error ? error.message : String(error))
+      });
     } finally {
       setProviders(prev => prev.map(p =>
         p.id === providerId ? { ...p, isStopping: false } : p,
@@ -180,7 +199,11 @@ const MCPProviderManagerComponent: React.FC<MCPProviderManagerProps> = ({ classN
       }));
     } catch (error) {
       console.error('Failed to test provider:', error);
-      alert('Failed to test provider: ' + (error instanceof Error ? error.message : String(error)));
+      addToast({
+        type: 'error',
+        title: 'Error',
+        message: 'Failed to test provider: ' + (error instanceof Error ? error.message : String(error))
+      });
     } finally {
       setProviders(prev => prev.map(p =>
         p.id === providerId ? { ...p, isTesting: false } : p,
@@ -202,7 +225,11 @@ const MCPProviderManagerComponent: React.FC<MCPProviderManagerProps> = ({ classN
       URL.revokeObjectURL(url);
     } catch (error) {
       console.error('Failed to export providers:', error);
-      alert('Failed to export providers');
+      addToast({
+        type: 'error',
+        title: 'Error',
+        message: 'Failed to export providers'
+      });
     }
   };
 
@@ -216,10 +243,18 @@ const MCPProviderManagerComponent: React.FC<MCPProviderManagerProps> = ({ classN
         const data = e.target?.result as string;
         await manager.importProviders(data);
         await loadProviders();
-        alert('Providers imported successfully');
+        addToast({
+          type: 'success',
+          title: 'Success',
+          message: 'Providers imported successfully'
+        });
       } catch (error) {
         console.error('Failed to import providers:', error);
-        alert('Failed to import providers: ' + (error instanceof Error ? error.message : String(error)));
+        addToast({
+          type: 'error',
+          title: 'Error',
+          message: 'Failed to import providers: ' + (error instanceof Error ? error.message : String(error))
+        });
       }
     };
     reader.readAsText(file);
