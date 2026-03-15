@@ -44,7 +44,9 @@ export function registerServices(): void {
     useValue: SecureConfigManager.getInstance(),
   });
 
-  logger.warn('BotConfigurationManager is being registered a second time (useClass); this will override the useValue registration above');
+  logger.warn(
+    'BotConfigurationManager is being registered a second time (useClass); this will override the useValue registration above'
+  );
   container.register(
     TOKENS.BotConfigurationManager,
     {
@@ -53,7 +55,9 @@ export function registerServices(): void {
     { lifecycle: Lifecycle.Singleton }
   );
 
-  logger.warn('UserConfigStore is being registered a second time; this will override the first registration');
+  logger.warn(
+    'UserConfigStore is being registered a second time; this will override the first registration'
+  );
   container.register(TOKENS.UserConfigStore, {
     useValue: UserConfigStore.getInstance(),
   });
@@ -62,6 +66,30 @@ export function registerServices(): void {
   container.register(TOKENS.ProviderConfigManager, {
     useValue: ProviderConfigManager.getInstance(),
   });
+
+  // Ensure DatabaseManager, WebSocketService, MetricsCollector are available for injection
+  // if not already registered elsewhere. We register their singleton instances here
+  // so that AnomalyDetectionService can resolve them correctly.
+  const { DatabaseManager } = require('../database/DatabaseManager');
+  if (!container.isRegistered(TOKENS.DatabaseManager)) {
+    container.register(TOKENS.DatabaseManager, {
+      useValue: DatabaseManager.getInstance(),
+    });
+  }
+
+  const { WebSocketService } = require('../server/services/WebSocketService');
+  if (!container.isRegistered(TOKENS.WebSocketService)) {
+    container.register(TOKENS.WebSocketService, {
+      useValue: WebSocketService.getInstance(),
+    });
+  }
+
+  const { MetricsCollector } = require('../monitoring/MetricsCollector');
+  if (!container.isRegistered(TOKENS.MetricsCollector)) {
+    container.register(TOKENS.MetricsCollector, {
+      useValue: MetricsCollector.getInstance(),
+    });
+  }
 
   logger.info('✅ DI services registered');
 }
