@@ -24,9 +24,10 @@ export interface ChatMessage {
 interface ChatInterfaceProps {
   messages: ChatMessage[];
   onSendMessage: (content: string) => void;
-  onRetryMessage?: (messageId: string) => void;
+  onRetry?: (messageId: string) => void;
   currentUserId?: string;
   isLoading?: boolean;
+  disabled?: boolean;
   placeholder?: string;
   className?: string;
   showTypingIndicator?: boolean;
@@ -37,9 +38,10 @@ interface ChatInterfaceProps {
 const ChatInterface: React.FC<ChatInterfaceProps> = ({
   messages,
   onSendMessage,
-  onRetryMessage,
+  onRetry,
   currentUserId = 'current-user',
   isLoading = false,
+  disabled = false,
   placeholder = 'Type your message...',
   className = '',
   showTypingIndicator = false,
@@ -162,11 +164,11 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
             </div>
           )}
 
-          {message.metadata?.status === 'failed' && onRetryMessage && (
+          {message.metadata?.status === 'error' && onRetry && (
             <div className="flex items-center mt-2">
               <button
                 className="btn btn-xs btn-error btn-outline"
-                onClick={() => onRetryMessage(message.id)}
+                onClick={() => onRetry(message.id)}
               >
                 Retry
               </button>
@@ -272,7 +274,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
             onKeyPress={handleKeyPress}
             placeholder={placeholder}
             className="input input-bordered flex-1"
-            disabled={isLoading}
+            disabled={isLoading || disabled}
           />
 
           <div className="flex gap-1">

@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
 import { Sparkles, Loader2 } from 'lucide-react';
 import { apiService } from '../services/api';
-import Logger from '../utils/logger';
-
+import { useToast } from './DaisyUI/ToastNotification';
 
 /**
  * Props for the AIAssistButton component.
@@ -24,6 +23,7 @@ const AIAssistButton: React.FC<AIAssistButtonProps> = ({
 }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { addToast } = useToast();
 
   const handleClick = async () => {
     try {
@@ -40,9 +40,18 @@ const AIAssistButton: React.FC<AIAssistButtonProps> = ({
       setError('Failed to generate');
       // Check if it's a configuration error
       if (err.message && err.message.includes('not configured')) {
-        alert('AI Assistance is not configured. Please go to LLM Providers page to configure it.');
+        addToast({
+          type: 'warning',
+          title: 'Not Configured',
+          message: 'AI Assistance is not configured. Please go to LLM Providers page to configure it.'
+        });
       } else {
-        Logger.error('AI Gen error:', err);
+        console.error('AI Gen error:', err);
+        addToast({
+          type: 'error',
+          title: 'Error',
+          message: 'Failed to generate response'
+        });
       }
     } finally {
       setLoading(false);
@@ -50,25 +59,29 @@ const AIAssistButton: React.FC<AIAssistButtonProps> = ({
   };
 
   return (
-    <div
-      className={`tooltip tooltip-right font-normal normal-case text-sm ${error ? 'tooltip-error' : ''}`}
-      data-tip={error || (loading ? 'Generating...' : label)}
-      aria-live="polite"
-    >
+    <div className={`tooltip tooltip-right ${error ? 'tooltip-error' : ''}`} data-tip={error || label}>
       <button
         type="button"
         className={`btn btn-ghost btn-sm btn-circle text-warning ${className}`}
         onClick={handleClick}
         disabled={loading}
-        aria-label={loading ? `Generating ${label.replace('Generate ', '')}...` : label}
+        aria-disabled={loading}
+        aria-label={loading ? `${label} - loading in progress` : label}
         aria-busy={loading}
+        aria-describedby={error ? 'ai-assist-error' : undefined}
+        title={loading ? 'Generating...' : label}
       >
         {loading ? (
           <span className="loading loading-spinner loading-xs" aria-hidden="true" />
         ) : (
-          <Sparkles className="w-4 h-4" />
+          <Sparkles className="w-4 h-4" aria-hidden="true" />
         )}
       </button>
+      {error && (
+        <span id="ai-assist-error" className="sr-only" role="alert" aria-live="polite">
+          {error}
+        </span>
+      )}
     </div>
   );
 };

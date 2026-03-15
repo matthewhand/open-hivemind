@@ -21,12 +21,11 @@ describe('Pagination Component', () => {
     jest.clearAllMocks();
   });
 
-  it('renders single disabled page when totalPages <= 1', () => {
-    // totalItems = 10, pageSize = 10 -> 1 page
-    render(<Pagination {...defaultProps} totalItems={10} pageSize={10} />);
-    expect(screen.getByLabelText('Page 1')).toBeInTheDocument();
-    expect(screen.getByLabelText('Go to previous page')).toBeDisabled();
-    expect(screen.getByLabelText('Go to next page')).toBeDisabled();
+  it('renders nothing when totalPages <= 1', () => {
+    // totalItems = 10, pageSize = 10 -> 1 page -> component returns null
+    const { container } = render(<Pagination {...defaultProps} totalItems={10} pageSize={10} />);
+    expect(screen.queryByLabelText('Page 1')).not.toBeInTheDocument();
+    expect(container.firstChild).toBeNull();
   });
 
   it('renders nothing when totalPages is 0', () => {

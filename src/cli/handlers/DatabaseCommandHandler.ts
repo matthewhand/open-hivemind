@@ -10,8 +10,8 @@ const dbLogger = Logger.withContext('DatabaseCommandHandler');
 export class DatabaseCommandHandler implements CommandHandler {
   private dbManager: DatabaseManager;
 
-  constructor() {
-    this.dbManager = DatabaseManager.getInstance();
+  constructor(dbManager: DatabaseManager) {
+    this.dbManager = dbManager;
   }
 
   public setup(program: Command): void {

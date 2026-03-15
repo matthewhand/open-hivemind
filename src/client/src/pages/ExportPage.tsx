@@ -13,7 +13,15 @@ import {
   Clock,
   DownloadCloud as DownloadIcon
 } from 'lucide-react';
-import { Alert, ToastNotification, Modal, Button, Input, Textarea, PageHeader, EmptyState, StatsCards } from '../components/DaisyUI';
+import { Alert } from '../components/DaisyUI/Alert';
+import ToastNotification from '../components/DaisyUI/ToastNotification';
+import Modal from '../components/DaisyUI/Modal';
+import Button from '../components/DaisyUI/Button';
+import Input from '../components/DaisyUI/Input';
+import Textarea from '../components/DaisyUI/Textarea';
+import PageHeader from '../components/DaisyUI/PageHeader';
+import EmptyState from '../components/DaisyUI/EmptyState';
+import StatsCards from '../components/DaisyUI/StatsCards';
 import SearchFilterBar from '../components/SearchFilterBar';
 import { apiService } from '../services/api';
 import Logger from '../utils/logger';
@@ -199,21 +207,21 @@ const ExportPage: React.FC = () => {
         id: 'total-backups',
         title: 'Total Backups',
         value: totalBackups,
-        icon: <Archive className="w-8 h-8" />,
+        icon: 'archive',
         color: 'primary' as const,
       },
       {
         id: 'total-size',
         title: 'Total Size',
         value: formatBytes(totalSize),
-        icon: <HardDrive className="w-8 h-8" />,
+        icon: 'storage',
         color: 'secondary' as const,
       },
       {
         id: 'last-backup',
         title: 'Latest Backup',
         value: lastBackup,
-        icon: <Clock className="w-8 h-8" />,
+        icon: 'clock',
         color: 'accent' as const,
       },
     ];
@@ -262,7 +270,7 @@ const ExportPage: React.FC = () => {
       <PageHeader
         title="Export & System Data"
         description="Manage system backups, export configurations, and access API specifications."
-        icon={Archive}
+        icon={<Archive className="w-8 h-8" />}
         gradient="secondary"
       />
 

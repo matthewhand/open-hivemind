@@ -12,7 +12,7 @@ This document explains the available startup modes, what code paths they exercis
 | Unified Dev | `make start-dev` | Yes (if build present or auto-built) | No | 3028 (default) | Auto-builds if missing | Single process (Express + static) |
 | Dev w/ HMR | `make start-dev-hmr` | Yes (via Vite) | Yes | 3028 (API) / 5173 (UI) | No (Vite in-memory) | Two processes (backend + Vite) |
 | Production  | `make start-prod` | Yes | No | 3028 (if set) or env PORT | Requires full build | Uses compiled JS + dist assets |
-| Backend Only Dev (deprecated) | `npm run dev:backend` | Only if pre-built | No | 5005 or env PORT | Yes | Redundant; use `make start-dev` |
+| Backend Only Dev (deprecated) | `npm run dev:backend` | Only if pre-built | No | 3028 or env PORT | Yes | Redundant; use `make start-dev` |
 | Legacy Script | `./dev-start.sh dev` | Depends | Maybe | 3028/5173 | Yes | Deprecated multi-path logic |
 | Vite Only | `npm run dev:frontend` | Yes | Yes | 5173 | No | Backend APIs unavailable unless started separately |
 
@@ -94,7 +94,7 @@ Order matters:
 | Symptom | Likely Cause | Fix |
 |---------|--------------|-----|
 | 404 at `/` in dev | No frontend build yet | Run `make start-dev` (auto builds) or `npm run build:frontend` |
-| Curl to 3028 refused | Server using default 5005 | Export `PORT=3028` or rely on Makefile default |
+| Curl to 3028 refused | Server using default port not 3028 | Export `PORT=3028` or rely on Makefile default |
 | JSON 404 under `/webui/route` | SPA fallback disabled for `/webui` | Decide if `/webui` should become SPA and adjust routing |
 | Module alias errors in dev | module-alias pointing at dist/ | Fixed by conditional require + tsconfig-paths |
 

@@ -1,3 +1,6 @@
+import type { PluginManifest } from '../../../src/plugins/PluginLoader';
+import { MattermostService } from './MattermostService';
+
 export { MattermostService as default } from './MattermostService';
 export { MattermostService } from './MattermostService';
 export { default as MattermostClient } from './mattermostClient';
@@ -6,9 +9,6 @@ export {
   testMattermostConnection,
   type MattermostConnectionTestResult,
 } from './MattermostConnectionTest';
-
-import { MattermostService } from './MattermostService';
-import type { PluginManifest } from '../../../src/plugins/PluginLoader';
 
 /** Standard factory — preferred entry point for PluginLoader */
 export function create(_config?: any): any {

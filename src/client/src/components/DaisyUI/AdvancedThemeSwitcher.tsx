@@ -1,7 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Input } from './index';
-import Logger from '../../utils/logger';
-
+import Input from './Input';
 
 interface ThemeOption {
   value: string;
