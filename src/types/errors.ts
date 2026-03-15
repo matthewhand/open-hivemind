@@ -221,6 +221,79 @@ export class ErrorUtils {
     return undefined;
   }
 
+  static getField(error: HivemindError, field: string): unknown {
+    if (error && typeof error === 'object' && field in error) {
+      return (error as Record<string, unknown>)[field];
+    }
+    return undefined;
+  }
+
+  static getStringField(error: HivemindError, field: string): string | undefined {
+    const value = this.getField(error, field);
+    return typeof value === 'string' ? value : undefined;
+  }
+
+  static getNumberField(error: HivemindError, field: string): number | undefined {
+    const value = this.getField(error, field);
+    if (typeof value === 'number' && Number.isFinite(value)) {
+      return value;
+    }
+    if (typeof value === 'string' && value.trim() !== '' && Number.isFinite(Number(value))) {
+      return Number(value);
+    }
+    return undefined;
+  }
+
+  static getBooleanField(error: HivemindError, field: string): boolean | undefined {
+    const value = this.getField(error, field);
+    return typeof value === 'boolean' ? value : undefined;
+  }
+
+  static getRecordField<T extends Record<string, unknown>>(
+    error: HivemindError,
+    field: string
+  ): T | undefined {
+    const value = this.getField(error, field);
+    if (value && typeof value === 'object' && !Array.isArray(value)) {
+      return value as T;
+    }
+    return undefined;
+  }
+
+  static getArrayField(error: HivemindError, field: string): unknown[] | undefined {
+    const value = this.getField(error, field);
+    return Array.isArray(value) ? value : undefined;
+  }
+
+  static getStringArrayField(error: HivemindError, field: string): string[] | undefined {
+    const value = this.getArrayField(error, field);
+    if (!value) return undefined;
+    const strings = value.filter((item): item is string => typeof item === 'string');
+    return strings.length ? strings : undefined;
+  }
+
+  static getDateField(error: HivemindError, field: string): Date | undefined {
+    const value = this.getField(error, field);
+    if (value instanceof Date && !Number.isNaN(value.getTime())) {
+      return value;
+    }
+    if (typeof value === 'string') {
+      const parsed = new Date(value);
+      if (!Number.isNaN(parsed.getTime())) {
+        return parsed;
+      }
+    }
+    return undefined;
+  }
+
+  static getTimestamp(error: HivemindError): Date | undefined {
+    return this.getDateField(error, 'timestamp');
+  }
+
+  static getDetails(error: HivemindError): Record<string, unknown> | undefined {
+    return this.getRecordField(error, 'details');
+  }
+
   /**
    * Safely extract status code from any error type
    */
@@ -431,6 +504,28 @@ export class ErrorUtils {
       undefined,
       undefined,
       { originalError: error }
+    );
+  }
+
+  /**
+   * Convert any error to an AppError for consistent route handling.
+   */
+  static toAppError(error: unknown, message?: string, type?: string): AppError {
+    const normalized = this.toHivemindError(error, message, type);
+    if (isAppError(normalized)) {
+      return normalized;
+    }
+
+    const normalizedType =
+      normalized && typeof normalized === 'object' && 'type' in normalized
+        ? (normalized.type as ErrorType)
+        : undefined;
+
+    return this.createError(
+      this.getMessage(normalized),
+      normalizedType || (type as ErrorType) || 'unknown',
+      this.getCode(normalized),
+      this.getStatusCode(normalized)
     );
   }
 

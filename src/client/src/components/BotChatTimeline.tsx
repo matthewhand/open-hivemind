@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React from 'react';
 import { Check, MessageSquare, Bot, User, Clock } from 'lucide-react';
+import { SkeletonRectangle } from './DaisyUI/Skeleton';
 
 export const BotChatTimeline: React.FC = () => {
     return (
@@ -46,7 +47,7 @@ export const BotChatTimeline: React.FC = () => {
                         <div className="flex items-center gap-2 font-bold opacity-50 text-xs uppercase tracking-wider mb-1">
                             <Clock className="w-3 h-3" /> Pending
                         </div>
-                        <div className="skeleton h-12 w-full rounded-lg"></div>
+                        <SkeletonRectangle height="3rem" width="100%" className="rounded-lg" />
                     </div>
                 </li>
             </ul>

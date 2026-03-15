@@ -97,6 +97,8 @@ export class BotMetricsService {
       this.saveInterval = null;
     }
     // Final save attempt (fire and forget as we might be shutting down)
-    this.saveMetrics().catch(() => {});
+    this.saveMetrics().catch((error) => {
+      debug('Failed to save bot metrics during shutdown:', error);
+    });
   }
 }
