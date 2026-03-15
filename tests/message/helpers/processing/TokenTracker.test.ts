@@ -5,6 +5,8 @@ describe('TokenTracker', () => {
   const channelId = 'test-channel';
 
   beforeEach(() => {
+    (TokenTracker as any).instance = undefined;
+
     // Reset Singleton State
     tracker = TokenTracker.getInstance();
     (tracker as any).channelTokens.clear();
@@ -12,6 +14,8 @@ describe('TokenTracker', () => {
   });
 
   afterEach(() => {
+    (TokenTracker as any).instance = undefined;
+
     jest.useRealTimers();
   });
 

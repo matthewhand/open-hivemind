@@ -5,7 +5,7 @@ import { FaPlus, FaTrash, FaPlay, FaStop, FaRedo, FaCheck, FaExclamationTriangle
 import type { MCPProviderConfig, MCPProviderStatus, MCPProviderTestResult, MCPProviderTemplate } from '../../types/mcp';
 import MCPProviderManager from '../../../config/MCPProviderManager';
 import { mcpProviderSchema } from '../../provider-configs/schemas/mcp';
-import { useToast } from '../DaisyUI/ToastNotification';
+import MCPProviderForm from './MCPProviderForm';
 
 interface MCPProviderManagerProps {
   className?: string;
@@ -55,7 +55,13 @@ const MCPProviderManagerComponent: React.FC<MCPProviderManagerProps> = ({ classN
     manager.on('provider_test_completed', handleProviderTestCompleted);
 
     return () => {
-      manager.removeAllListeners();
+      manager.off('provider_added', loadProviders);
+      manager.off('provider_removed', loadProviders);
+      manager.off('provider_updated', loadProviders);
+      manager.off('provider_started', handleProviderStarted);
+      manager.off('provider_stopped', handleProviderStopped);
+      manager.off('provider_error', handleProviderError);
+      manager.off('provider_test_completed', handleProviderTestCompleted);
     };
   }, [manager]);
 
@@ -624,190 +630,30 @@ const MCPProviderManagerComponent: React.FC<MCPProviderManagerProps> = ({ classN
       </div>
 
       {/* Create Provider Modal */}
-      <Modal open={isCreateModalOpen} onClickBackdrop={() => setIsCreateModalOpen(false)}>
-        <Modal.Header className="font-bold">Create MCP Provider</Modal.Header>
-        <Modal.Body>
-          <div className="space-y-4">
-            <div className="form-control">
-              <label className="label"><span className="label-text">Provider Name*</span></label>
-              <Input
-                value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                placeholder="my-mcp-provider"
-                className="input-bordered"
-              />
-            </div>
-            <div className="form-control">
-              <label className="label"><span className="label-text">Command*</span></label>
-              <Input
-                value={formData.command}
-                onChange={(e) => setFormData({ ...formData, command: e.target.value })}
-                placeholder="npx -y @modelcontextprotocol/server-*"
-                className="input-bordered"
-              />
-              <label className="label"><span className="label-text-alt">The command to start the MCP server</span></label>
-            </div>
-            <div className="form-control">
-              <label className="label"><span className="label-text">Arguments</span></label>
-              <Input
-                value={formData.args}
-                onChange={(e) => setFormData({ ...formData, args: e.target.value })}
-                placeholder="--port 8080 --config /path/to/config"
-                className="input-bordered"
-              />
-              <label className="label"><span className="label-text-alt">Space-separated arguments</span></label>
-            </div>
-            <div className="form-control">
-              <label className="label"><span className="label-text">Environment Variables</span></label>
-              <textarea
-                className="textarea textarea-bordered"
-                value={formData.env}
-                onChange={(e) => setFormData({ ...formData, env: e.target.value })}
-                placeholder="KEY=value&#10;ANOTHER_KEY=value"
-                rows={3}
-              />
-              <label className="label"><span className="label-text-alt">One per line, KEY=value format</span></label>
-            </div>
-            <div className="form-control">
-              <label className="label"><span className="label-text">Description</span></label>
-              <Input
-                value={formData.description}
-                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                placeholder="Optional description"
-                className="input-bordered"
-              />
-            </div>
-            <div className="form-control">
-              <label className="label cursor-pointer">
-                <span className="label-text">Auto-start on boot</span>
-                <Toggle
-                  checked={formData.autoStart}
-                  onChange={(e) => setFormData({ ...formData, autoStart: e.target.checked })}
-                />
-              </label>
-            </div>
-          </div>
-        </Modal.Body>
-        <Modal.Actions>
-          <Button variant="secondary" className="btn-outline" onClick={() => setIsCreateModalOpen(false)}>
-            Cancel
-          </Button>
-          <Button
-            color="primary"
-            onClick={async () => {
-              if (!formData.name || !formData.command) {
-                addToast({
-                  type: 'error',
-                  title: 'Error',
-                  message: 'Name and command are required'
-                });
-                return;
-              }
-              setIsSaving(true);
-              try {
-                const envObj: Record<string, string> = {};
-                formData.env.split('\n').forEach(line => {
-                  const [key, ...valueParts] = line.split('=');
-                  if (key && valueParts.length) envObj[key.trim()] = valueParts.join('=').trim();
-                });
-                await manager.addProvider({
-                  name: formData.name,
-                  command: formData.command,
-                  args: formData.args.split(/\s+/).filter(Boolean),
-                  env: envObj,
-                  autoStart: formData.autoStart,
-                  description: formData.description,
-                });
-                setFormData({ name: '', command: '', args: '', env: '', autoStart: true, description: '' });
-                setIsCreateModalOpen(false);
-                loadProviders();
-              } catch (error) {
-                console.error('Failed to create provider:', error);
-                addToast({
-                  type: 'error',
-                  title: 'Error',
-                  message: 'Failed to create provider: ' + (error instanceof Error ? error.message : String(error))
-                });
-              } finally {
-                setIsSaving(false);
-              }
-            }}
-            disabled={isSaving}
-          >
-            {isSaving ? <span className="loading loading-spinner loading-sm" /> : 'Create Provider'}
-          </Button>
-        </Modal.Actions>
-      </Modal>
+      <MCPProviderForm
+        isOpen={isCreateModalOpen}
+        onClose={() => setIsCreateModalOpen(false)}
+        title="Create MCP Provider"
+        initialData={formData as any}
+        onSave={async (providerData) => {
+          await manager.addProvider(providerData as MCPProviderConfig);
+          loadProviders();
+        }}
+      />
 
       {/* Edit Provider Modal */}
-      <Modal open={isEditModalOpen} onClickBackdrop={() => setIsEditModalOpen(false)}>
-        <Modal.Header className="font-bold">Edit MCP Provider</Modal.Header>
-        <Modal.Body>
-          {selectedProvider && (
-            <div className="space-y-4">
-              <div className="form-control">
-                <label className="label"><span className="label-text">Provider Name</span></label>
-                <Input
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="input-bordered"
-                />
-              </div>
-              <div className="form-control">
-                <label className="label"><span className="label-text">Command</span></label>
-                <Input
-                  value={formData.command}
-                  onChange={(e) => setFormData({ ...formData, command: e.target.value })}
-                  className="input-bordered"
-                />
-              </div>
-              <div className="form-control">
-                <label className="label"><span className="label-text">Arguments</span></label>
-                <Input
-                  value={formData.args}
-                  onChange={(e) => setFormData({ ...formData, args: e.target.value })}
-                  placeholder="Space-separated arguments"
-                  className="input-bordered"
-                />
-              </div>
-              <div className="form-control">
-                <label className="label"><span className="label-text">Environment Variables</span></label>
-                <textarea
-                  className="textarea textarea-bordered"
-                  value={formData.env}
-                  onChange={(e) => setFormData({ ...formData, env: e.target.value })}
-                  rows={3}
-                />
-              </div>
-              <div className="form-control">
-                <label className="label"><span className="label-text">Description</span></label>
-                <Input
-                  value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  className="input-bordered"
-                />
-              </div>
-              <div className="form-control">
-                <label className="label cursor-pointer">
-                  <span className="label-text">Auto-start on boot</span>
-                  <Toggle
-                    checked={formData.autoStart}
-                    onChange={(e) => setFormData({ ...formData, autoStart: e.target.checked })}
-                  />
-                </label>
-              </div>
-            </div>
-          )}
-        </Modal.Body>
-        <Modal.Actions>
-          <Button variant="secondary" className="btn-outline" onClick={() => setIsEditModalOpen(false)}>
-            Cancel
-          </Button>
-          <Button color="primary" onClick={() => setIsEditModalOpen(false)}>
-            Save Changes
-          </Button>
-        </Modal.Actions>
-      </Modal>
+      <MCPProviderForm
+        isOpen={isEditModalOpen}
+        onClose={() => setIsEditModalOpen(false)}
+        title="Edit MCP Provider"
+        initialData={selectedProvider}
+        onSave={async (providerData) => {
+          if (selectedProvider) {
+            await manager.updateProvider(selectedProvider.id, providerData as Partial<MCPProviderConfig>);
+            loadProviders();
+          }
+        }}
+      />
     </div>
   );
 };
