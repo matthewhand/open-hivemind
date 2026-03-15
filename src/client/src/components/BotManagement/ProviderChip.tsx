@@ -4,7 +4,7 @@ import type {
   MessageProvider,
   LLMProvider,
 } from '../../types';
-import { Badge } from '../DaisyUI';
+import Badge from '../DaisyUI/Badge';
 import { X as XIcon, Edit as EditIcon } from 'lucide-react';
 
 interface ProviderChipProps {

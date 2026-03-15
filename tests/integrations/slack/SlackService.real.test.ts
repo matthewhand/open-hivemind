@@ -1,4 +1,4 @@
-import { SlackService } from '../../../packages/adapter-slack/src/SlackService';
+import { SlackService } from '../../../packages/message-slack/src/SlackService';
 
 const REAL_SLACK_TOKEN = process.env.REAL_SLACK_TOKEN;
 const REAL_SLACK_CHANNEL = process.env.REAL_SLACK_CHANNEL;
@@ -52,7 +52,8 @@ describe('Slack Real Integration', () => {
       `Test message ${Date.now()}`
     );
 
-    expect(messageId).toBeTruthy();
+    expect(messageId).toBeDefined();
+    expect(messageId).not.toBeNull();
     expect(typeof messageId).toBe('string');
   }, 30000);
 

@@ -1,14 +1,12 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect, useCallback } from 'react';
-import {
-  Card,
-  Badge,
-  Alert,
-  Accordion,
-  Divider,
-  Button,
-  Tooltip,
-} from './DaisyUI';
+import Card from './DaisyUI/Card';
+import Badge from './DaisyUI/Badge';
+import { Alert } from './DaisyUI/Alert';
+import Accordion from './DaisyUI/Accordion';
+import Divider from './DaisyUI/Divider';
+import Button from './DaisyUI/Button';
+import Tooltip from './DaisyUI/Tooltip';
 import {
   CheckCircleIcon,
   ExclamationCircleIcon,
@@ -80,13 +78,24 @@ const ApiStatusMonitor: React.FC<ApiStatusMonitorProps> = ({
     }
   }, []);
 
-  const setupWebSocket = useCallback(() => {
+  useEffect(() => {
+    fetchApiStatus();
+
     const newSocket = io({
       path: '/webui/socket.io',
+      reconnection: true,
+      reconnectionAttempts: Infinity,
+      reconnectionDelay: 1000,
+      reconnectionDelayMax: 5000,
+      randomizationFactor: 0.5,
     });
 
     newSocket.on('connect', () => {
       console.log('Connected to WebSocket for API monitoring');
+    });
+
+    newSocket.on('reconnect_attempt', (attempt) => {
+      console.log(`API Monitoring WebSocket reconnect attempt ${attempt}`);
     });
 
     newSocket.on('api_status_update', (data: { endpoints: EndpointStatus[]; overall: any; timestamp: string }) => {
@@ -96,8 +105,10 @@ const ApiStatusMonitor: React.FC<ApiStatusMonitorProps> = ({
 
     newSocket.on('api_health_check_result', (data: { result: any; timestamp: string }) => {
       // Update specific endpoint status
-      if (apiStatus) {
-        const updatedEndpoints = apiStatus.endpoints.map(endpoint => {
+      setApiStatus((currentStatus) => {
+        if (!currentStatus) return currentStatus;
+
+        const updatedEndpoints = currentStatus.endpoints.map(endpoint => {
           if (endpoint.id === data.result.endpointId) {
             return {
               ...endpoint,
@@ -110,12 +121,13 @@ const ApiStatusMonitor: React.FC<ApiStatusMonitorProps> = ({
           }
           return endpoint;
         });
-        setApiStatus({
-          ...apiStatus,
+
+        return {
+          ...currentStatus,
           endpoints: updatedEndpoints,
           timestamp: data.timestamp,
-        });
-      }
+        };
+      });
     });
 
     newSocket.on('disconnect', () => {
@@ -124,20 +136,18 @@ const ApiStatusMonitor: React.FC<ApiStatusMonitorProps> = ({
 
     setSocket(newSocket);
 
-    return () => {
-      newSocket.close();
-    };
-  }, [apiStatus]);
-
-  useEffect(() => {
-    fetchApiStatus();
-    setupWebSocket();
-
+    let interval: NodeJS.Timeout | undefined;
     if (refreshInterval > 0) {
-      const interval = setInterval(fetchApiStatus, refreshInterval);
-      return () => clearInterval(interval);
+      interval = setInterval(fetchApiStatus, refreshInterval);
     }
-  }, [fetchApiStatus, setupWebSocket, refreshInterval]);
+
+    return () => {
+      newSocket.disconnect();
+      if (interval) {
+        clearInterval(interval);
+      }
+    };
+  }, [fetchApiStatus, refreshInterval]);
 
   const getStatusIcon = (status: string) => {
     const className = 'w-5 h-5';

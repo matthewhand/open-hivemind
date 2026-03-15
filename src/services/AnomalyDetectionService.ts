@@ -1,8 +1,10 @@
 import { EventEmitter } from 'events';
 import Debug from 'debug';
+import { injectable, singleton, inject } from 'tsyringe';
 import { DatabaseManager, type Anomaly } from '../database/DatabaseManager';
 import { MetricsCollector } from '../monitoring/MetricsCollector';
 import { WebSocketService, type AlertEvent } from '../server/services/WebSocketService';
+import { TOKENS } from '../di/container';
 
 const debug = Debug('app:AnomalyDetectionService');
 
@@ -14,8 +16,9 @@ export interface DetectionConfig {
   minDataPoints: number; // Minimum points needed for calculation
 }
 
+@singleton()
+@injectable()
 export class AnomalyDetectionService extends EventEmitter {
-  private static instance: AnomalyDetectionService;
   private config: DetectionConfig = {
     enabled: true,
     windowSize: 50,
@@ -27,19 +30,22 @@ export class AnomalyDetectionService extends EventEmitter {
   private anomalies: Anomaly[] = [];
   private isDetecting = false;
   private detectionInterval: NodeJS.Timeout | null = null;
+  private dbManager: DatabaseManager;
+  private wsService: WebSocketService;
+  private metricsCollector: MetricsCollector;
 
-  private constructor() {
+  constructor(
+    @inject(TOKENS.DatabaseManager) dbManager: DatabaseManager,
+    @inject(TOKENS.WebSocketService) wsService: WebSocketService,
+    @inject(TOKENS.MetricsCollector) metricsCollector: MetricsCollector
+  ) {
     super();
+    this.dbManager = dbManager;
+    this.wsService = wsService;
+    this.metricsCollector = metricsCollector;
     this.setMaxListeners(15);
     // Start periodic detection
     this.detectionInterval = setInterval(() => this.runDetection(), 30000); // Every 30 seconds
-  }
-
-  static getInstance(): AnomalyDetectionService {
-    if (!AnomalyDetectionService.instance) {
-      AnomalyDetectionService.instance = new AnomalyDetectionService();
-    }
-    return AnomalyDetectionService.instance;
   }
 
   updateConfig(newConfig: Partial<DetectionConfig>): void {
@@ -48,6 +54,9 @@ export class AnomalyDetectionService extends EventEmitter {
   }
 
   addDataPoint(metric: string, value: number): void {
+    if (value === null || value === undefined || isNaN(value) || !isFinite(value)) {
+      return;
+    }
     if (!this.config.enabled || !this.config.metricsToMonitor.includes(metric)) {
       return;
     }
@@ -72,7 +81,6 @@ export class AnomalyDetectionService extends EventEmitter {
     debug('Running anomaly detection');
 
     try {
-      const dbManager = DatabaseManager.getInstance();
       const storePromises: Promise<void>[] = [];
 
       for (const [metric, window] of this.dataWindows.entries()) {
@@ -91,13 +99,12 @@ export class AnomalyDetectionService extends EventEmitter {
 
           // Store in database
           storePromises.push(
-            dbManager.storeAnomaly(anomaly).catch((err) => {
+            this.dbManager.storeAnomaly(anomaly).catch((err) => {
               debug('Failed to store anomaly:', err);
             })
           );
 
           // Broadcast via WebSocket
-          const wsService = WebSocketService.getInstance();
           const alert: Omit<
             AlertEvent,
             'id' | 'timestamp' | 'status' | 'acknowledgedAt' | 'resolvedAt'
@@ -117,7 +124,7 @@ export class AnomalyDetectionService extends EventEmitter {
               expected: anomaly.expectedMean,
             },
           };
-          wsService.recordAlert(alert);
+          this.wsService.recordAlert(alert);
 
           debug(`Anomaly detected in ${metric}: z-score ${zScore.toFixed(2)}`);
         }
@@ -198,8 +205,7 @@ export class AnomalyDetectionService extends EventEmitter {
       this.emit('anomalyResolved', this.anomalies[index]);
 
       // Update in database
-      const dbManager = DatabaseManager.getInstance();
-      await dbManager.resolveAnomaly(id);
+      await this.dbManager.resolveAnomaly(id);
 
       return true;
     }
@@ -212,9 +218,9 @@ export class AnomalyDetectionService extends EventEmitter {
 
   // Integration hook for MetricsCollector
   private integrateWithMetrics(): void {
-    const metricsCollector = MetricsCollector.getInstance();
     // This would be called periodically or on events to add data points
     // For example, in a real setup, listen to events or poll
+    // Using this.metricsCollector
   }
 }
 

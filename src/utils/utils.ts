@@ -39,8 +39,12 @@ export async function executeCommandSafe(
     }
     debug('Command stdout: ' + stdout);
     return stdout;
-  } catch (err: any) {
-    debug('Command execution error: ' + err.message);
+  } catch (err: unknown) {
+    if (err instanceof Error) {
+      debug('Command execution error: ' + err.message);
+    } else {
+      debug('Command execution error: ' + String(err));
+    }
     throw err;
   }
 }
@@ -66,7 +70,7 @@ export async function readFile(filePath: string): Promise<string> {
     throw new Error('Path is a directory, not a file');
   }
 
-  const content = await fs.promises.readFile(filePath, 'utf8');
+  const content = await readFileAsync(filePath, 'utf8');
   debug('File content: ' + content);
   return content;
 }

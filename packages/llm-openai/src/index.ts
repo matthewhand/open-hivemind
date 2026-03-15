@@ -1,4 +1,4 @@
-export * from './openAiProvider';
+export { OpenAiProvider, openAiProvider } from './openAiProvider';
 export { default as openAiService, OpenAiService } from './OpenAiService';
 
 import { OpenAiProvider } from './openAiProvider';
