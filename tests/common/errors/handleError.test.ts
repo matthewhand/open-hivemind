@@ -52,7 +52,7 @@ describe('handleError', () => {
       const messageChannel = { send: asyncSend };
       const error = new Error('Async test error');
 
-      expect(() => handleError(error, messageChannel)).not.toThrow();
+      handleError(error, messageChannel);
       expect(asyncSend).toHaveBeenCalledWith('Random error message');
     });
   });
@@ -61,7 +61,7 @@ describe('handleError', () => {
     it('should not send message if no messageChannel provided', () => {
       const error = new Error('Test error');
 
-      expect(() => handleError(error)).not.toThrow();
+      handleError(error);
       expect(mockGetRandomErrorMessage).not.toHaveBeenCalled();
     });
 
@@ -72,7 +72,7 @@ describe('handleError', () => {
     ])('should not send message if messageChannel has $case', ({ channel }) => {
       const error = new Error('Test error');
 
-      expect(() => handleError(error, channel)).not.toThrow();
+      handleError(error, channel);
       expect(mockGetRandomErrorMessage).not.toHaveBeenCalled();
     });
   });
@@ -81,10 +81,14 @@ describe('handleError', () => {
     it('should handle null/undefined errors gracefully', () => {
       const messageChannel = { send: mockSend };
 
-      expect(() => handleError(null as any)).not.toThrow();
-      expect(() => handleError(undefined as any)).not.toThrow();
-      expect(() => handleError(null as any, messageChannel)).not.toThrow();
-      expect(() => handleError(undefined as any, messageChannel)).not.toThrow();
+      handleError(null as any);
+      handleError(undefined as any);
+      expect(mockGetRandomErrorMessage).not.toHaveBeenCalled();
+
+      handleError(null as any, messageChannel);
+      handleError(undefined as any, messageChannel);
+      expect(mockSend).toHaveBeenCalledTimes(2);
+      expect(mockSend).toHaveBeenCalledWith('Random error message');
     });
 
     it('should handle non-Error objects', () => {
@@ -92,9 +96,10 @@ describe('handleError', () => {
       const stringError = 'String error';
       const objectError = { message: 'Object error' };
 
-      expect(() => handleError(stringError as any, messageChannel)).not.toThrow();
-      expect(() => handleError(objectError as any, messageChannel)).not.toThrow();
+      handleError(stringError as any, messageChannel);
+      handleError(objectError as any, messageChannel);
       expect(mockSend).toHaveBeenCalledTimes(2);
+      expect(mockSend).toHaveBeenCalledWith('Random error message');
     });
 
     it('should handle errors with special properties', () => {
@@ -103,7 +108,7 @@ describe('handleError', () => {
       (customError as any).code = 'CUSTOM_CODE';
       (customError as any).statusCode = 500;
 
-      expect(() => handleError(customError, messageChannel)).not.toThrow();
+      handleError(customError, messageChannel);
       expect(mockSend).toHaveBeenCalledWith('Random error message');
     });
   });
@@ -113,14 +118,14 @@ describe('handleError', () => {
       const error = new Error('Debug test error');
       const messageChannel = { send: mockSend };
 
-      expect(() => handleError(error, messageChannel)).not.toThrow();
+      handleError(error, messageChannel);
       expect(mockSend).toHaveBeenCalledWith('Random error message');
     });
 
     it('should log even when no message channel provided', () => {
       const error = new Error('Debug only error');
 
-      expect(() => handleError(error)).not.toThrow();
+      handleError(error);
       expect(mockGetRandomErrorMessage).not.toHaveBeenCalled();
     });
   });

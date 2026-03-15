@@ -1,7 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { Card, Button, Badge, Dropdown, Breadcrumbs } from '../components/DaisyUI';
+import Card from '../components/DaisyUI/Card';
+import Button from '../components/DaisyUI/Button';
+import Badge from '../components/DaisyUI/Badge';
+import Dropdown from '../components/DaisyUI/Dropdown';
+import Breadcrumbs from '../components/DaisyUI/Breadcrumbs';
 import { ArrowLeftIcon, ArrowDownTrayIcon } from '@heroicons/react/24/outline';
 import ReactMarkdown from 'react-markdown';
 import useSpec from '../hooks/useSpec';
