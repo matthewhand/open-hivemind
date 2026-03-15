@@ -41,6 +41,25 @@ interface GuardrailProfile {
 
 const API_BASE = '/api/admin';
 
+const RATE_LIMIT_CONSTANTS = {
+  DEFAULT_MAX_REQUESTS: 100,
+  DEFAULT_WINDOW_MS: 60000, // 1 minute
+  MIN_WINDOW_SECONDS: 1,
+  MAX_WINDOW_SECONDS: 3600, // 1 hour
+  MS_PER_SECOND: 1000,
+  SECONDS_PER_MINUTE: 60,
+};
+
+const STRINGS = {
+  RATE_LIMIT_DISABLED: 'Disabled',
+  RATE_LIMIT_MAX_HELP: 'Max 1 hour (3600s)',
+  RATE_LIMIT_ONE_MIN: '1 minute',
+  RATE_LIMIT_ONE_HOUR: '1 hour',
+  RATE_LIMIT_SEC_SUFFIX: 'seconds',
+  RATE_LIMIT_MIN_ABBR: 'min',
+  RATE_LIMIT_SEC_ABBR: 's',
+};
+
 const GuardsPage: React.FC = () => {
   const [profiles, setProfiles] = useState<GuardrailProfile[]>([]);
   const [loading, setLoading] = useState(true);
@@ -61,7 +80,7 @@ const GuardsPage: React.FC = () => {
     description: '',
     guards: {
       mcpGuard: { enabled: false, type: 'owner', allowedUsers: [], allowedTools: [] },
-      rateLimit: { enabled: false, maxRequests: 100, windowMs: 60000 },
+      rateLimit: { enabled: false, maxRequests: RATE_LIMIT_CONSTANTS.DEFAULT_MAX_REQUESTS, windowMs: RATE_LIMIT_CONSTANTS.DEFAULT_WINDOW_MS },
       contentFilter: { enabled: false, strictness: 'low', blockedTerms: [] },
     },
   });
@@ -193,9 +212,10 @@ const GuardsPage: React.FC = () => {
   return (
     <div className="space-y-6">
       <PageHeader
+        icon={<Shield className="w-6 h-6" />}
         title="Guard Profiles"
         description="Manage security and access control profiles for bots"
-        icon={<Shield />}
+        icon={<Shield className="w-6 h-6" />}
         actions={
           <div className="flex gap-2">
             <button onClick={fetchProfiles} className="btn btn-ghost btn-sm" disabled={loading} title="Refresh">
@@ -395,12 +415,12 @@ const GuardsPage: React.FC = () => {
                         <div className="flex justify-between w-full">
                           <span>Max Requests</span>
                           {!editingProfile.guards.rateLimit?.enabled && (
-                            <span className="badge badge-sm border-base-300">Disabled</span>
+                            <span className="badge badge-sm border-base-300">{STRINGS.RATE_LIMIT_DISABLED}</span>
                           )}
                         </div>
                       }
                       type="number"
-                      value={editingProfile.guards.rateLimit?.maxRequests || 100}
+                      value={editingProfile.guards.rateLimit?.maxRequests || RATE_LIMIT_CONSTANTS.DEFAULT_MAX_REQUESTS}
                       onChange={e => updateGuard('rateLimit', { maxRequests: parseInt(e.target.value) })}
                       disabled={!editingProfile.guards.rateLimit?.enabled}
                       aria-label="Max Requests"
@@ -413,31 +433,31 @@ const GuardsPage: React.FC = () => {
                           <span>Window (seconds)</span>
                           <div className="flex items-center gap-2">
                             <span className="label-text-alt text-info" title="Time period for counting requests">
-                              Max 1 hour (3600s)
+                              {STRINGS.RATE_LIMIT_MAX_HELP}
                             </span>
                             {!editingProfile.guards.rateLimit?.enabled && (
-                              <span className="badge badge-sm border-base-300">Disabled</span>
+                              <span className="badge badge-sm border-base-300">{STRINGS.RATE_LIMIT_DISABLED}</span>
                             )}
                           </div>
                         </div>
                       }
                       type="number"
-                      value={(editingProfile.guards.rateLimit?.windowMs || 60000) / 1000}
+                      value={(editingProfile.guards.rateLimit?.windowMs || RATE_LIMIT_CONSTANTS.DEFAULT_WINDOW_MS) / RATE_LIMIT_CONSTANTS.MS_PER_SECOND}
                       onChange={e => {
-                        const seconds = Math.max(1, Math.min(3600, parseInt(e.target.value) || 0));
-                        updateGuard('rateLimit', { windowMs: seconds * 1000 });
+                        const seconds = Math.max(RATE_LIMIT_CONSTANTS.MIN_WINDOW_SECONDS, Math.min(RATE_LIMIT_CONSTANTS.MAX_WINDOW_SECONDS, parseInt(e.target.value) || 0));
+                        updateGuard('rateLimit', { windowMs: seconds * RATE_LIMIT_CONSTANTS.MS_PER_SECOND });
                       }}
                       disabled={!editingProfile.guards.rateLimit?.enabled}
-                      min={1}
-                      max={3600}
-                      placeholder="60"
+                      min={RATE_LIMIT_CONSTANTS.MIN_WINDOW_SECONDS}
+                      max={RATE_LIMIT_CONSTANTS.MAX_WINDOW_SECONDS}
+                      placeholder={RATE_LIMIT_CONSTANTS.SECONDS_PER_MINUTE.toString()}
                       helperText={
                         (() => {
-                          const seconds = (editingProfile.guards.rateLimit?.windowMs || 60000) / 1000;
-                          if (seconds < 60) return `${seconds} seconds`;
-                          if (seconds === 60) return '1 minute';
-                          if (seconds < 3600) return `${Math.floor(seconds / 60)} min ${seconds % 60}s`;
-                          return '1 hour';
+                          const seconds = (editingProfile.guards.rateLimit?.windowMs || RATE_LIMIT_CONSTANTS.DEFAULT_WINDOW_MS) / RATE_LIMIT_CONSTANTS.MS_PER_SECOND;
+                          if (seconds < RATE_LIMIT_CONSTANTS.SECONDS_PER_MINUTE) return `${seconds} ${STRINGS.RATE_LIMIT_SEC_SUFFIX}`;
+                          if (seconds === RATE_LIMIT_CONSTANTS.SECONDS_PER_MINUTE) return STRINGS.RATE_LIMIT_ONE_MIN;
+                          if (seconds < RATE_LIMIT_CONSTANTS.MAX_WINDOW_SECONDS) return `${Math.floor(seconds / RATE_LIMIT_CONSTANTS.SECONDS_PER_MINUTE)} ${STRINGS.RATE_LIMIT_MIN_ABBR} ${seconds % RATE_LIMIT_CONSTANTS.SECONDS_PER_MINUTE}${STRINGS.RATE_LIMIT_SEC_ABBR}`;
+                          return STRINGS.RATE_LIMIT_ONE_HOUR;
                         })()
                       }
                     />

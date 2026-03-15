@@ -1,75 +1,24 @@
 import type { ReactNode } from 'react';
 import React from 'react';
+import { SkeletonRectangle, SkeletonText } from './Skeleton';
 
-// Define the props for the Card component
 interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
-  /**
-   * The title of the card
-   */
   title?: string;
-  /**
-   * The subtitle of the card
-   */
   subtitle?: string;
-  /**
-   * The body content of the card
-   */
   children?: ReactNode;
-  /**
-    * Actions to display in the card footer
-    */
   actions?: ReactNode;
-  /**
-   * Optional image source for the card
-   */
   imageSrc?: string;
-  /**
-    * Alt text for the image
-    */
   imageAlt?: string;
-  /**
-   * Whether the card has an image overlay style
-   */
   imageOverlay?: boolean;
-  /**
-   * Whether the card is compact
-   */
   compact?: boolean;
-  /**
-   * Whether the card is horizontal (side-by-side)
-   */
   side?: boolean;
-  /**
-   * Whether the image takes the full width of the card
-   */
   imageFull?: boolean;
-  /**
-   * Background color variant (e.g., 'primary', 'secondary', 'accent')
-   */
   bgVariant?: 'primary' | 'secondary' | 'accent' | 'neutral' | 'info' | 'success' | 'warning' | 'error' | 'ghost' | 'card';
-  /**
-   * Border color variant (e.g., 'primary', 'secondary', 'accent')
-   */
   borderVariant?: 'primary' | 'secondary' | 'accent' | 'info' | 'success' | 'warning' | 'error';
-  /**
-   * Whether the card is in a loading state
-   */
   loading?: boolean;
-  /**
-   * Content to show when the card is in an empty state
-   */
   emptyState?: ReactNode;
-  /**
-   * Whether to show hover effect with lift and glow
-   */
   hover?: boolean;
-  /**
-   * Glow color variant for hover effect
-   */
   glowColor?: 'primary' | 'secondary' | 'accent' | 'success' | 'warning' | 'error';
-  /**
-   * Additional CSS classes to apply to the card
-   */
   className?: string;
 }
 
@@ -82,7 +31,6 @@ const glowMap = {
   error: 'hover:shadow-error/20',
 };
 
-// Subcomponents interfaces
 interface CardBodyProps {
   children?: ReactNode;
   className?: string;
@@ -99,10 +47,7 @@ interface CardActionsProps {
   className?: string;
 }
 
-// Subcomponents definitions
 const CardBody: React.FC<CardBodyProps> = ({ children, className = '' }) => {
-  // If className is provided, we assume the user wants a specific wrapper, so we render a div.
-  // Otherwise, we render a fragment to avoid double padding since Card already wraps children in .card-body
   if (className) {
     return <div className={className}>{children}</div>;
   }
@@ -120,10 +65,6 @@ const CardActions: React.FC<CardActionsProps> = ({ children, className = '' }) =
 };
 CardActions.displayName = 'Card.Actions';
 
-/**
- * A reusable DaisyUI Card component.
- * Supports different styles, content sections, and states.
- */
 const CardBase: React.FC<CardProps> = ({
   title,
   subtitle,
@@ -144,7 +85,6 @@ const CardBase: React.FC<CardProps> = ({
   className = '',
   ...props
 }) => {
-  // Construct CSS classes based on props
   let cardClasses = 'card bg-base-100';
   if (compact) { cardClasses += ' card-compact'; }
   if (side) { cardClasses += ' card-side'; }
@@ -152,7 +92,6 @@ const CardBase: React.FC<CardProps> = ({
   if (bgVariant) { cardClasses += ` bg-${bgVariant}`; }
   if (borderVariant) { cardClasses += ` border border-${borderVariant}`; }
 
-  // Enhanced hover effects
   if (hover) {
     cardClasses += ' transition-all duration-300 ease-out hover:-translate-y-1 hover:shadow-xl';
     if (glowColor && glowMap[glowColor]) {
@@ -162,25 +101,22 @@ const CardBase: React.FC<CardProps> = ({
 
   if (className) { cardClasses += ` ${className}`; }
 
-
-  // If loading, show skeleton loaders
   if (loading) {
     return (
       <div className={cardClasses} {...props}>
         {imageSrc && !imageOverlay && (
-          <figure className="skeleton h-32 w-full"></figure>
+          <SkeletonRectangle height="8rem" width="100%" className="rounded-b-none" />
         )}
         <div className="card-body">
-          <div className="skeleton h-4 w-1/3 mb-2"></div>
-          <div className="skeleton h-4 w-full mb-2"></div>
-          <div className="skeleton h-4 w-full mb-4"></div>
-          <div className="skeleton h-8 w-1/4 ml-auto"></div>
+          <SkeletonText lines={1} height="1rem" width="33.333%" className="mb-2" />
+          <SkeletonText lines={1} height="1rem" width="100%" className="mb-2" />
+          <SkeletonText lines={1} height="1rem" width="100%" className="mb-4" />
+          <SkeletonRectangle height="2rem" width="25%" className="ml-auto" />
         </div>
       </div>
     );
   }
 
-  // If empty state content is provided, show it
   if (emptyState) {
     return (
       <div className={cardClasses} {...props}>
@@ -196,10 +132,8 @@ const CardBase: React.FC<CardProps> = ({
     );
   }
 
-  // Otherwise, render the full card
   return (
     <div className={cardClasses} {...props}>
-      {/* Image section - if imageFull, it's the background; if imageOverlay, it's part of the body; otherwise, it's a figure */}
       {imageSrc && imageFull && (
         <figure>
           <img src={imageSrc} alt={imageAlt} />
@@ -217,7 +151,6 @@ const CardBase: React.FC<CardProps> = ({
       )}
 
       <div className="card-body relative z-10">
-        {/* Title and subtitle */}
         {(title || subtitle) && (
           <div className="card-title">
             {title && <h2>{title}</h2>}
@@ -225,17 +158,14 @@ const CardBase: React.FC<CardProps> = ({
           </div>
         )}
 
-        {/* Body content */}
         {children}
 
-        {/* Actions */}
         {actions && <div className="card-actions justify-end">{actions}</div>}
       </div>
     </div>
   );
 };
 
-// Attach subcomponents with intersection type
 const Card = CardBase as React.FC<CardProps> & {
   Body: typeof CardBody;
   Title: typeof CardTitle;

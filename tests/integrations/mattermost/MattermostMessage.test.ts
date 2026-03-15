@@ -1,7 +1,7 @@
 import {
   MattermostMessage,
   MattermostPost,
-} from '../../../packages/adapter-mattermost/src/MattermostMessage';
+} from '../../../packages/message-mattermost/src/MattermostMessage';
 
 describe('MattermostMessage', () => {
   let mockPost: MattermostPost;
