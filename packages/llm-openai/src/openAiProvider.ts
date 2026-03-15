@@ -1,5 +1,6 @@
 import Debug from 'debug';
 import { OpenAI } from 'openai';
+import type { OpenAIConfig } from '@src/types/config';
 import {
   ApiError,
   BaseHivemindError,
@@ -10,7 +11,6 @@ import {
 import openaiConfig from '@config/openaiConfig';
 import type { ILlmProvider } from '@llm/interfaces/ILlmProvider';
 import type { IMessage } from '@message/interfaces/IMessage';
-import type { OpenAIConfig } from '@src/types/config';
 
 const debug = Debug('app:openAiProvider');
 
@@ -29,7 +29,14 @@ export class OpenAiProvider implements ILlmProvider {
     maxTokens?: number;
   };
 
-  constructor(config?: OpenAIConfig & { timeout?: number; organization?: string; temperature?: number; maxTokens?: number }) {
+  constructor(
+    config?: OpenAIConfig & {
+      timeout?: number;
+      organization?: string;
+      temperature?: number;
+      maxTokens?: number;
+    }
+  ) {
     this.config = config || { apiKey: '' };
   }
 

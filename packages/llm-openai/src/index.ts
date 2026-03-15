@@ -1,7 +1,3 @@
-export * from './openAiProvider';
-export { default as openAiService, OpenAiService } from './OpenAiService';
-
-import { OpenAiProvider } from './openAiProvider';
 import type { PluginManifest } from '../../../src/plugins/PluginLoader';
 import type { OpenAIConfig } from '../../../src/types/config';
 import { OpenAiProvider } from './openAiProvider';

@@ -117,7 +117,9 @@ router.post('/', validateRequest(CreateBotSchema), async (req, res) => {
     const allBots = await manager.getAllBots();
     const existingBot = allBots.find((b) => b.name === request.name);
     if (existingBot) {
-      return res.status(200).json({ success: true, message: 'Bot already exists', bot: existingBot });
+      return res
+        .status(200)
+        .json({ success: true, message: 'Bot already exists', bot: existingBot });
     }
 
     const bot = await manager.createBot(request);
@@ -234,7 +236,9 @@ router.post('/:id/clone', validateRequest(CloneBotSchema), async (req, res) => {
     const allBots = await manager.getAllBots();
     const existingBot = allBots.find((b) => b.name === newName);
     if (existingBot) {
-      return res.status(200).json({ success: true, message: 'Bot clone already exists', bot: existingBot });
+      return res
+        .status(200)
+        .json({ success: true, message: 'Bot clone already exists', bot: existingBot });
     }
 
     const newBot = await manager.cloneBot(id, newName);
