@@ -4,6 +4,13 @@
     "description": "Discord adapter for Open Hivemind",
     "main": "dist/index.js",
     "types": "dist/index.d.ts",
+    "exports": {
+        ".": {
+            "import": "./dist/index.js",
+            "require": "./dist/index.js",
+            "types": "./dist/index.d.ts"
+        }
+    },
     "scripts": {
         "build": "npx tsc -b",
         "clean": "rm -rf dist",
@@ -18,7 +25,7 @@
         "libsodium-wrappers": "^0.7.9"
     },
     "peerDependencies": {
-        "@hivemind/shared-types": ">=1.0.0"
+        "@hivemind/shared-types": "workspace:*"
     },
     "devDependencies": {
         "@types/debug": "^4.1.12",

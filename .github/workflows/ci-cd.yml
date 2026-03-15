@@ -19,7 +19,7 @@ jobs:
         uses: pnpm/action-setup@v3
         with:
           version: 10
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: '20'
           cache: 'pnpm'
@@ -30,10 +30,6 @@ jobs:
       - name: Audit for hardcoded secrets
         run: pnpm run audit:secrets
 
-      - name: Audit for hardcoded secrets
-        run: pnpm run audit:secrets
-
->>>>>>> f4fe874f (ci: update workflows to strictly use pnpm instead of npm)
       - name: Run lint
         run: pnpm run lint
 
@@ -50,7 +46,6 @@ jobs:
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         run: |
           # Extract passing tests (adapt from existing)
-<<<<<<< HEAD
           PASSING_TESTS=$(pnpm test -- --silent | grep -oP '\d+(?= passed)' || echo 0)
           sed -i "s/Total Tests: [0-9,]\+ passing tests/Total Tests: $PASSING_TESTS passing tests/" README.md
           sed -i "s/badge\/tests-[0-9]\+%20passing/badge\/tests-$PASSING_TESTS%20passing/" README.md
