@@ -1,4 +1,4 @@
-import { DiscordMessageSender } from '../../../packages/adapter-discord/src/managers/DiscordMessageSender';
+import { DiscordMessageSender } from '../../../packages/message-discord/src/managers/DiscordMessageSender';
 import { NetworkError, ValidationError } from '../../../src/types/errorClasses';
 
 describe('DiscordMessageSender Error Mapping', () => {

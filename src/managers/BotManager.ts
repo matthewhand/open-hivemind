@@ -156,22 +156,7 @@ export class BotManager extends EventEmitter {
 
       // Add configured bots first
       for (const bot of configuredBots) {
-        const botInstance: BotInstance = {
-          // Use bot name as stable ID - random UUIDs break getBot() lookups
-          id: bot.name,
-          name: bot.name,
-          messageProvider: bot.messageProvider,
-          llmProvider: bot.llmProvider,
-          isActive: true, // Configured bots are considered active
-          createdAt: new Date().toISOString(),
-          lastModified: new Date().toISOString(),
-          config: this.sanitizeConfig(bot),
-          persona: bot.persona || 'default',
-          systemInstruction: bot.systemInstruction,
-          mcpServers: bot.mcpServers || [],
-          mcpGuard: bot.mcpGuard || { enabled: false, type: 'owner' },
-          envOverrides: checkBotEnvOverrides(bot.name),
-        };
+        const botInstance = this.mapConfiguredBotToInstance(bot);
         botMap.set(botInstance.id, botInstance);
       }
 
@@ -195,28 +180,60 @@ export class BotManager extends EventEmitter {
    */
   public async getBot(botId: string): Promise<BotInstance | null> {
     try {
-      // Check custom bots first
+      // Check custom bots first (in-memory loaded from custom-bots.json)
       if (this.customBots.has(botId)) {
         const bot = this.customBots.get(botId)!;
         debug(`Retrieved custom bot: ${bot.name} (${bot.id})`);
         return bot;
       }
 
-      // Check configured bots
-      const bots = await this.getAllBots();
-      const bot = bots.find((b) => b.id === botId);
-
-      if (bot) {
-        debug(`Retrieved configured bot: ${bot.name} (${bot.id})`);
-      } else {
-        debug(`Bot not found: ${botId}`);
+      // ⚡ Bolt Optimization: Faster lookups using getBot directly instead of mapping O(N) via getAllBots()
+      // Note: While customBots is an array, it's typically very small. WebUI storage replaces getAllBots traversal.
+      // Check custom bots from web UI storage first (they overwrite configured bots)
+      const customBots = webUIStorage.getAgents();
+      const customBot = customBots.find((b: BotInstance) => b.id === botId);
+      if (customBot) {
+        debug(`Retrieved custom bot from web UI storage: ${customBot.name} (${customBot.id})`);
+        return customBot;
       }
 
-      return bot || null;
+      // Then check configured bots directly. The botConfigManager.getBot is an O(1) Map lookup.
+      // Note: for configured bots, the 'botId' corresponds to their name
+      const configuredBot = this.botConfigManager.getBot(botId);
+      if (configuredBot) {
+        const botInstance = this.mapConfiguredBotToInstance(configuredBot);
+        debug(`Retrieved configured bot: ${botInstance.name} (${botInstance.id})`);
+        return botInstance;
+      }
+
+      debug(`Bot not found: ${botId}`);
+      return null;
     } catch (error: unknown) {
       debug('Error getting bot:', ErrorUtils.getMessage(error));
       throw ErrorUtils.createError('Failed to retrieve bot instance', 'configuration');
     }
+  }
+
+  /**
+   * Map a BotConfig object to a BotInstance
+   */
+  private mapConfiguredBotToInstance(bot: BotConfig): BotInstance {
+    return {
+      // Use bot name as stable ID - random UUIDs break getBot() lookups
+      id: bot.name,
+      name: bot.name,
+      messageProvider: bot.messageProvider,
+      llmProvider: bot.llmProvider,
+      isActive: true, // Configured bots are considered active
+      createdAt: new Date().toISOString(),
+      lastModified: new Date().toISOString(),
+      config: this.sanitizeConfig(bot as unknown as Record<string, unknown>),
+      persona: bot.persona || 'default',
+      systemInstruction: bot.systemInstruction,
+      mcpServers: bot.mcpServers || [],
+      mcpGuard: bot.mcpGuard || { enabled: false, type: 'owner' },
+      envOverrides: checkBotEnvOverrides(bot.name),
+    };
   }
 
   /**

@@ -23,14 +23,14 @@ export async function listAgents(apiKey: string, apiUrl?: string): Promise<Agent
 
   const client = new Letta({
     baseURL: baseUrl,
-    apiKey: apiKey,
-  });
+    token: apiKey,
+  } as any);
 
   const response = await client.agents.list();
   const agents = (response as any).data || [];
 
   // Transform to simplified agent summary
-  return (agents as unknown as any[]).map((agent: any) => ({
+  return agents.map((agent: any) => ({
     id: agent.id,
     name: agent.name,
     description: agent.description,
@@ -56,8 +56,8 @@ export async function getAgent(
 
   const client = new Letta({
     baseURL: baseUrl,
-    apiKey: apiKey,
-  });
+    token: apiKey,
+  } as any);
 
   const agent = await client.agents.retrieve(agentId);
 

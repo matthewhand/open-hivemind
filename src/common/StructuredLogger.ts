@@ -16,17 +16,17 @@ import { sanitizeForLogging } from './logger';
 /**
  * Log levels supported by the StructuredLogger
  */
-export type LogLevel = 'debug' | 'info' | 'warn' | 'error' | 'fatal';
+type LogLevel = 'debug' | 'info' | 'warn' | 'error' | 'fatal';
 
 /**
  * Error categories for classification
  */
-export type ErrorCategory = 'database' | 'network' | 'validation' | 'configuration' | 'system';
+type ErrorCategory = 'database' | 'network' | 'validation' | 'configuration' | 'system';
 
 /**
  * Structured log entry format
  */
-export interface LogEntry {
+interface LogEntry {
   timestamp: string;
   level: LogLevel;
   message: string;
@@ -39,7 +39,7 @@ export interface LogEntry {
 /**
  * Options for creating a StructuredLogger
  */
-export interface StructuredLoggerOptions {
+interface StructuredLoggerOptions {
   /** Service name for log entries */
   service: string;
   /** Optional trace ID for request correlation */

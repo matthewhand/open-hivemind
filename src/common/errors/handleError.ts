@@ -32,7 +32,7 @@ function isValidMessageChannel(obj: any): obj is MessageChannel {
  * @param error - The error object to be handled.
  * @param messageChannel - The message channel to send the error message to.
  */
-export function handleError(error: unknown, messageChannel: any = null): void {
+function handleError(error: unknown, messageChannel: any = null): void {
   // Validate error parameter
   if (!isError(error)) {
     debug('Invalid error parameter provided to handleError:', typeof error);
@@ -69,3 +69,5 @@ export function handleError(error: unknown, messageChannel: any = null): void {
     debug('Invalid messageChannel provided - missing or invalid send method');
   }
 }
+
+export { handleError };

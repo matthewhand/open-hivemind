@@ -330,7 +330,7 @@ router.post('/:id/stop', validateRequest(BotIdParamSchema), async (req, res) => 
 router.get('/:id/history', validateRequest(BotHistoryQuerySchema), async (req, res) => {
   try {
     const { id } = req.params;
-    const reqQuery = req.query as any;
+    const reqQuery = req.query;
     const limit = Math.min(Math.max(parseInt(reqQuery.limit as string) || 20, 1), 100);
     const channelId = req.query.channelId as string;
 
@@ -375,7 +375,7 @@ function redactString(val: string | undefined): string | undefined {
 router.get('/:id/activity', validateRequest(BotActivityQuerySchema), async (req, res) => {
   try {
     const { id } = req.params;
-    const reqQuery = req.query as any;
+    const reqQuery = req.query;
     const limit = Math.min(Math.max(parseInt(reqQuery.limit as string) || 20, 1), 100);
 
     const bot = await manager.getBot(id);

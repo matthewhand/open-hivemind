@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { isSafeUrl } from '@hivemind/shared-types';
 import type { ILlmProvider } from '@llm/interfaces/ILlmProvider';
 import { LLMResponse } from '@llm/interfaces/LLMResponse';
 import type { IMessage } from '@message/interfaces/IMessage';
@@ -29,9 +30,14 @@ export class OpenSwarmProvider implements ILlmProvider {
   ): Promise<string> {
     try {
       const teamName = metadata?.team || metadata?.model || 'default-team';
+      const targetUrl = `${this.baseUrl}/chat/completions`;
+
+      if (!(await isSafeUrl(targetUrl))) {
+        throw new Error('OpenSwarm API URL is not safe to connect to.');
+      }
 
       const response = await axios.post(
-        `${this.baseUrl}/chat/completions`,
+        targetUrl,
         {
           model: teamName,
           messages: [...historyMessages, { role: 'user', content: userMessage }],

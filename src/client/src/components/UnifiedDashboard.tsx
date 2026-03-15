@@ -1,31 +1,20 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import {
-  Alert,
-  Badge,
-  Button,
-  Card,
-  DataTable,
-  Modal,
-  ProgressBar,
-  StatsCards,
-  ToastNotification,
-  LoadingSpinner,
-} from './DaisyUI';
+import { Alert } from './DaisyUI/Alert';
+import Badge from './DaisyUI/Badge';
+import Button from './DaisyUI/Button';
+import Card from './DaisyUI/Card';
+import DataTable from './DaisyUI/DataTable';
+import Modal from './DaisyUI/Modal';
+import ProgressBar from './DaisyUI/ProgressBar';
+import StatsCards from './DaisyUI/StatsCards';
+import ToastNotification from './DaisyUI/ToastNotification';
+import { LoadingSpinner } from './DaisyUI/Loading';
 import type { Bot, StatusResponse } from '../services/api';
 import { apiService } from '../services/api';
 import { CreateBotWizard } from './BotManagement/CreateBotWizard';
-import { Info } from 'lucide-react';
-import { GettingStartedTab } from './Dashboard/tabs/GettingStartedTab';
-import { StatusTab } from './Dashboard/tabs/StatusTab';
-import { PerformanceTab } from './Dashboard/tabs/PerformanceTab';
-import { usePerformanceMetrics } from './Dashboard/hooks/usePerformanceMetrics';
-
-
-
-
-import { useNavigate } from 'react-router-dom';
+import { PlusCircle, RefreshCw, LayoutDashboard, Cpu, HardDrive, Gauge, Clock, Activity, Info, Rocket } from 'lucide-react';
 
 type DashboardTab = 'getting-started' | 'status' | 'performance';
 
@@ -288,44 +277,60 @@ const UnifiedDashboard: React.FC = () => {
     );
   }, [statusBots]);
 
+  const errorRatePercent = totalMessages === 0
+    ? 0
+    : Number(((totalErrors / totalMessages) * 100).toFixed(2));
+  const uptimeSeconds = status?.uptime ?? 0;
+  const uptimeDisplay = formatUptime(uptimeSeconds);
 
-  const statsCards = useMemo(() => {
-    return [
+  const guardedBots = useMemo(
+    () => bots.filter(bot => bot.mcpGuard?.enabled).length,
+    [bots],
+  );
+
+  const statsCards = useMemo(
+    () => [
       {
-        id: 'agents',
-        title: 'Active Agents',
+        id: 'active-bots',
+        title: 'Active Bots',
         value: activeBotCount,
-        total: bots.length,
-        icon: 'Bot',
-        color: 'primary',
+        change: bots.length === 0 ? 0 : Math.round((activeBotCount / bots.length) * 100),
+        changeType: (activeBotCount >= bots.length / 2 ? 'increase' : 'decrease') as 'increase' | 'decrease',
+        icon: '🤖',
+        description: `${activeBotCount} of ${bots.length} agents online`,
+        color: 'success' as const,
       },
       {
-        id: 'messages',
-        title: 'Messages Processed',
+        id: 'total-messages',
+        title: 'Messages Today',
         value: totalMessages,
-        trend: '+12%',
-        icon: 'MessageSquare',
-        color: 'secondary',
+        change: totalMessages > 0 ? Math.min(100, Math.round(totalMessages / 50)) : 0,
+        changeType: (totalMessages > 0 ? 'increase' : 'neutral') as 'increase' | 'neutral',
+        icon: '💬',
+        description: `${activeConnections} live conversations`,
+        color: 'secondary' as const,
       },
       {
-        id: 'connections',
-        title: 'Active Connections',
-        value: activeConnections,
-        total: bots.length,
-        icon: 'Activity',
-        color: 'accent',
-      },
-      {
-        id: 'errors',
+        id: 'error-rate',
         title: 'Error Rate',
-        value: totalErrors,
-        trend: '-2%',
-        icon: 'AlertTriangle',
-        color: 'error',
+        value: `${errorRatePercent}%`,
+        change: errorRatePercent,
+        changeType: (errorRatePercent <= 2 ? 'decrease' : 'increase') as 'decrease' | 'increase',
+        icon: '🚨',
+        description: `${totalErrors} errors observed`,
+        color: errorRatePercent <= 2 ? 'success' as const : 'warning' as const,
       },
-    ];
-  }, [activeBotCount, bots.length, totalMessages, activeConnections, totalErrors]);
-
+      {
+        id: 'uptime',
+        title: 'Cluster Uptime',
+        value: uptimeDisplay,
+        icon: '⏱️',
+        description: `Up since ${uptimeDisplay === '—' ? '—' : 'last restart'}`,
+        color: 'secondary' as const,
+      },
+    ],
+    [activeBotCount, bots.length, totalMessages, activeConnections, errorRatePercent, totalErrors, uptimeDisplay],
+  );
 
   const botTableData = useMemo<BotTableRow[]>(() => {
     return bots.map((bot, index) => {
@@ -349,17 +354,76 @@ const UnifiedDashboard: React.FC = () => {
     });
   }, [bots, statusBots]);
 
-
-  const getBotColumns = () => [
-    { key: 'name', label: 'Agent Name' },
-    { key: 'provider', label: 'Provider' },
-    { key: 'llm', label: 'LLM' },
-    { key: 'status', label: 'Status' },
-    { key: 'messageCount', label: 'Messages' },
-    { key: 'errorCount', label: 'Errors' }
-  ];
-
-  const botColumns = useMemo(() => getBotColumns(), []);
+  const botColumns = useMemo(
+    () => [
+      {
+        key: 'name' as const,
+        title: 'Bot',
+        sortable: true,
+        render: (_value: string, record: BotTableRow) => (
+          <div className="flex flex-col gap-1">
+            <div className="flex items-center gap-2">
+              <span className="text-xl" aria-hidden>{getProviderEmoji(record.provider)}</span>
+              <span className="font-semibold">{record.name}</span>
+              {record.persona && (
+                <Badge variant="secondary" size="small" className="uppercase">
+                  {record.persona}
+                </Badge>
+              )}
+            </div>
+            <div className="text-xs text-base-content/60">
+              {record.guard}
+            </div>
+          </div>
+        ),
+      },
+      {
+        key: 'status' as const,
+        title: 'Status',
+        sortable: true,
+        render: (value: string) => (
+          <Badge variant={getStatusBadgeVariant(value)} size="small">
+            {value.toUpperCase()}
+          </Badge>
+        ),
+      },
+      {
+        key: 'connected' as const,
+        title: 'Connection',
+        sortable: true,
+        render: (_value: boolean, record: BotTableRow) => (
+          <Badge variant={record.connected ? 'success' : 'warning'} size="small">
+            {record.connected ? 'Online' : 'Offline'}
+          </Badge>
+        ),
+      },
+      {
+        key: 'messageCount' as const,
+        title: 'Messages',
+        sortable: true,
+        render: (value: number) => value.toLocaleString(),
+      },
+      {
+        key: 'errorCount' as const,
+        title: 'Errors',
+        sortable: true,
+        render: (value: number) =>
+          value > 0 ? (
+            <Badge variant="error" size="small">
+              {value}
+            </Badge>
+          ) : (
+            <span className="text-base-content/60">0</span>
+          ),
+      },
+      {
+        key: 'lastActivity' as const,
+        title: 'Last Activity',
+        sortable: true,
+      },
+    ],
+    [],
+  );
 
   const performanceMetrics = useMemo(() => {
     const cpuUsage = Math.min(92, activeConnections * 14 + 28);

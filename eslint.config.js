@@ -127,6 +127,7 @@ module.exports = [
     plugins: {
       '@typescript-eslint': require('@typescript-eslint/eslint-plugin'),
       prettier: eslintPluginPrettier,
+      ...((() => { try { return { jest: require('eslint-plugin-jest') }; } catch { return {}; } })()),
     },
     rules: {
       // Prettier integration
@@ -144,6 +145,11 @@ module.exports = [
       '@typescript-eslint/explicit-function-return-type': 'off',
       '@typescript-eslint/explicit-module-boundary-types': 'off',
       'no-console': 'off',
+
+      // Enforce specific assertions over weak ones
+
+
+
     },
   },
   // Prettier config override to turn off conflicting rules
