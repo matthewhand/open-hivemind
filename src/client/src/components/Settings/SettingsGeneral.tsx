@@ -1,10 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { Alert } from '../DaisyUI/Alert';
-import Input from '../DaisyUI/Input';
-import Select from '../DaisyUI/Select';
-import Toggle from '../DaisyUI/Toggle';
-import Button from '../DaisyUI/Button';
+import { Alert, Input, Select, Toggle, Button } from '../DaisyUI';
 import { Settings as SettingsIcon, ShieldCheck, Activity } from 'lucide-react';
 import Logger from '../../utils/logger';
 
@@ -222,11 +218,10 @@ const SettingsGeneral: React.FC = () => {
           </h6>
 
           <div className="form-control mb-4">
-            <label htmlFor="instanceName" className="label py-1">
+            <label className="label py-1">
               <span className="label-text text-sm font-medium">Instance Name</span>
             </label>
             <Input
-              id="instanceName"
               value={settings.instanceName}
               onChange={(e) => handleChange('instanceName', e.target.value)}
               placeholder="Display name for this Open-Hivemind instance"
@@ -235,11 +230,10 @@ const SettingsGeneral: React.FC = () => {
           </div>
 
           <div className="form-control">
-            <label htmlFor="description" className="label py-1">
+            <label className="label py-1">
               <span className="label-text text-sm font-medium">Description</span>
             </label>
             <textarea
-              id="description"
               className="textarea textarea-bordered textarea-sm w-full"
               value={settings.description}
               onChange={(e) => handleChange('description', e.target.value)}
@@ -257,11 +251,10 @@ const SettingsGeneral: React.FC = () => {
           </h6>
 
           <div className="form-control mb-4">
-            <label htmlFor="timezone" className="label py-1">
+            <label className="label py-1">
               <span className="label-text text-sm font-medium">Timezone</span>
             </label>
             <Select
-              id="timezone"
               value={settings.timezone}
               onChange={(e) => handleChange('timezone', e.target.value)}
               size="sm"
@@ -270,11 +263,10 @@ const SettingsGeneral: React.FC = () => {
           </div>
 
           <div className="form-control">
-            <label htmlFor="theme" className="label py-1">
+            <label className="label py-1">
               <span className="label-text text-sm font-medium">Theme</span>
             </label>
             <Select
-              id="theme"
               value={settings.theme}
               onChange={(e) => handleChange('theme', e.target.value)}
               size="sm"
@@ -295,11 +287,10 @@ const SettingsGeneral: React.FC = () => {
           </h6>
 
           <div className="form-control mb-4">
-            <label htmlFor="logLevel" className="label py-1">
+            <label className="label py-1">
               <span className="label-text text-sm font-medium">Log Level</span>
             </label>
             <Select
-              id="logLevel"
               value={settings.logLevel}
               onChange={(e) => handleChange('logLevel', e.target.value)}
               size="sm"
@@ -337,11 +328,10 @@ const SettingsGeneral: React.FC = () => {
 
           <div className="grid grid-cols-2 gap-4 mb-4">
             <div className="form-control">
-              <label htmlFor="maxConcurrentBots" className="label py-1">
+              <label className="label py-1">
                 <span className="label-text text-sm font-medium">Max Bots</span>
               </label>
               <Input
-                id="maxConcurrentBots"
                 type="number"
                 value={settings.maxConcurrentBots}
                 onChange={(e) => handleChange('maxConcurrentBots', parseInt(e.target.value))}
@@ -349,11 +339,10 @@ const SettingsGeneral: React.FC = () => {
               />
             </div>
             <div className="form-control">
-              <label htmlFor="defaultResponseTimeout" className="label py-1">
+              <label className="label py-1">
                 <span className="label-text text-sm font-medium">Timeout (s)</span>
               </label>
               <Input
-                id="defaultResponseTimeout"
                 type="number"
                 value={settings.defaultResponseTimeout}
                 onChange={(e) => handleChange('defaultResponseTimeout', parseInt(e.target.value))}
@@ -371,11 +360,10 @@ const SettingsGeneral: React.FC = () => {
             />
             {settings.enableHealthChecks && (
               <div className="form-control mt-2 pl-4 border-l-2 border-base-300">
-                <label htmlFor="healthCheckInterval" className="label py-1">
+                <label className="label py-1">
                   <span className="label-text text-xs font-medium">Interval (seconds)</span>
                 </label>
                 <Input
-                  id="healthCheckInterval"
                   type="number"
                   value={settings.healthCheckInterval}
                   onChange={(e) => handleChange('healthCheckInterval', parseInt(e.target.value))}

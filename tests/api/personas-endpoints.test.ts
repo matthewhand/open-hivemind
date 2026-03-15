@@ -27,13 +27,7 @@ app.use('/api/personas', personasRouter);
 const getMockManager = () => PersonaManager.getInstance() as unknown as Record<string, jest.Mock>;
 
 describe('Personas Routes', () => {
-  afterEach(() => {
-    (PersonaManager as any).instance = undefined;
-  });
-
   beforeEach(() => {
-    (PersonaManager as any).instance = undefined;
-
     jest.clearAllMocks();
   });
 

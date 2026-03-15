@@ -14,9 +14,9 @@ export const ErrorClassification = {
   UNKNOWN_ERROR: 'unknown_error',
 } as const;
 
-export type ErrorClassification = (typeof ErrorClassification)[keyof typeof ErrorClassification];
+export type ErrorClassification = typeof ErrorClassification[keyof typeof ErrorClassification];
 
-class ErrorUtils {
+export class ErrorUtils {
   /**
    * Converts an unknown error to a standardized HivemindError format.
    *

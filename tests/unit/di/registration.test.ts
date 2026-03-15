@@ -1,7 +1,7 @@
 import 'reflect-metadata';
 import { container } from 'tsyringe';
-import Logger from '../../../src/common/logger';
 import { registerServices } from '../../../src/di/registration';
+import Logger from '../../../src/common/logger';
 
 // Mock all singleton services to prevent real initialization
 jest.mock('../../../src/config/ConfigurationManager', () => ({
@@ -72,9 +72,7 @@ describe('DI Service Registration Logging', () => {
     expect(mockLogger.debug).toHaveBeenCalledWith('Registering UserConfigStore');
     expect(mockLogger.debug).toHaveBeenCalledWith('Registering SecureConfigManager');
     expect(mockLogger.debug).toHaveBeenCalledWith('Registering BotConfigurationManager class');
-    expect(mockLogger.debug).toHaveBeenCalledWith(
-      'Registering UserConfigStore (re-registering instance)'
-    );
+    expect(mockLogger.debug).toHaveBeenCalledWith('Registering UserConfigStore (re-registering instance)');
     expect(mockLogger.debug).toHaveBeenCalledWith('Registering ProviderConfigManager');
 
     // Verify completion log (info level)

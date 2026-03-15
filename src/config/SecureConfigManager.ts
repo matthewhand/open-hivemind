@@ -30,15 +30,16 @@ export class SecureConfigManager {
   private readonly keyPath: string;
   private readonly mainConfigDir: string;
 
-  private constructor(baseDir?: string) {
-    const root = baseDir || path.join(process.cwd(), 'config');
-    this.configDir = path.join(root, 'secure');
-    this.backupDir = path.join(root, 'backups');
-    this.keyPath = path.join(root, '.key');
-    this.mainConfigDir = root;
+  private constructor() {
+    this.configDir = path.join(process.cwd(), 'config', 'secure');
+    this.backupDir = path.join(process.cwd(), 'config', 'backups');
+    this.keyPath = path.join(process.cwd(), 'config', '.key');
 
     this.ensureDirectories();
+
+    // Generate or load encryption key
     this.encryptionKey = this.getOrCreateEncryptionKey();
+    this.mainConfigDir = path.join(process.cwd(), 'config');
   }
 
   public static getInstance(): SecureConfigManager {

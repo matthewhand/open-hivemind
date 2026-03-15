@@ -13,10 +13,12 @@ import {
   EyeIcon,
   DocumentDuplicateIcon,
 } from '@heroicons/react/24/outline';
-import Button from '../DaisyUI/Button';
-import Badge from '../DaisyUI/Badge';
-import Modal from '../DaisyUI/Modal';
-import { Alert } from '../DaisyUI/Alert';
+import {
+  Button,
+  Badge,
+  Modal,
+  Alert,
+} from '../DaisyUI';
 import type { Bot, CreateBotRequest } from '../../services/botDataProvider';
 import { botDataProvider } from '../../services/botDataProvider';
 import { useLlmStatus } from '../../hooks/useLlmStatus';

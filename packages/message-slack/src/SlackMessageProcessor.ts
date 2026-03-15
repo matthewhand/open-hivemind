@@ -1,7 +1,6 @@
 import axios from 'axios';
 import Debug from 'debug';
 import type { KnownBlock } from '@slack/web-api';
-import { isSafeUrl } from '@hivemind/shared-types';
 import { ConfigurationError, NetworkError, ValidationError } from '@src/types/errorClasses';
 import { ErrorUtils } from '@src/types/errors';
 import type { IMessage } from '@message/interfaces/IMessage';
@@ -162,16 +161,7 @@ export class SlackMessageProcessor {
                   };
                   if (!contentInfoAny.content && contentInfoAny.file?.url_private) {
                     try {
-                      const fileUrl = contentInfoAny.file.url_private;
-                      if (!(await isSafeUrl(fileUrl))) {
-                        throw ErrorUtils.createError(
-                          `Unsafe URL for Slack canvas content: ${fileUrl}`,
-                          'validation' as any,
-                          'SLACK_UNSAFE_URL',
-                          400
-                        );
-                      }
-                      const contentResponse = await axios.get(fileUrl, {
+                      const contentResponse = await axios.get(contentInfoAny.file.url_private, {
                         headers: { Authorization: `Bearer ${process.env.SLACK_BOT_TOKEN}` },
                         timeout: 15000,
                       });
@@ -196,16 +186,7 @@ export class SlackMessageProcessor {
                   contentInfoAny.file &&
                   ['png', 'jpg', 'jpeg', 'gif'].includes(contentInfoAny.file.filetype || '')
                 ) {
-                  const fileUrl = contentInfoAny.file.url_private!;
-                  if (!(await isSafeUrl(fileUrl))) {
-                    throw ErrorUtils.createError(
-                      `Unsafe URL for Slack image content: ${fileUrl}`,
-                      'validation' as any,
-                      'SLACK_UNSAFE_URL',
-                      400
-                    );
-                  }
-                  const fileResponse = await axios.get(fileUrl, {
+                  const fileResponse = await axios.get(contentInfoAny.file.url_private!, {
                     headers: { Authorization: `Bearer ${process.env.SLACK_BOT_TOKEN}` },
                     responseType: 'arraybuffer',
                     timeout: 15000,

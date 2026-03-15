@@ -12,13 +12,9 @@ import {
   TrashIcon,
   WrenchScrewdriverIcon,
 } from '@heroicons/react/24/outline';
-import { Alert } from '../components/DaisyUI/Alert';
-import Breadcrumbs from '../components/DaisyUI/Breadcrumbs';
-import EmptyState from '../components/DaisyUI/EmptyState';
-import Modal from '../components/DaisyUI/Modal';
-import { AdaptiveGrid } from '../components/ResponsiveComponents';
+import { Server, Search } from 'lucide-react';
+import { Breadcrumbs, Alert, Modal, EmptyState } from '../components/DaisyUI';
 import SearchFilterBar from '../components/SearchFilterBar';
-import { AdaptiveGrid } from '../components/ResponsiveComponents';
 
 interface Tool {
   name: string;
@@ -461,7 +457,7 @@ const MCPServersPage: React.FC = () => {
     }
 
     return (
-      <AdaptiveGrid breakpoints={{ xs: 1, md: 2, lg: 3 }} spacing={6}>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {filteredServers.map((server) => (
           <div key={server.id} className="card bg-base-100 shadow-xl h-full border border-base-200">
             <div className="card-body">
@@ -568,7 +564,7 @@ const MCPServersPage: React.FC = () => {
             </div>
           </div>
         ))}
-      </AdaptiveGrid>
+      </div>
     );
   };
 

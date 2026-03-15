@@ -1,13 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect } from 'react';
 import type { ProviderConfigFormProps, ProviderConfigField } from '../provider-configs/types';
-import Input from './DaisyUI/Input';
-import Select from './DaisyUI/Select';
-import Textarea from './DaisyUI/Textarea';
-import Toggle from './DaisyUI/Toggle';
-import Button from './DaisyUI/Button';
-import { Alert } from './DaisyUI/Alert';
-import Badge from './DaisyUI/Badge';
+import { Input, Select, Textarea, Toggle, Button, Alert, Badge } from './DaisyUI';
 
 interface FieldError {
   [fieldName: string]: string;

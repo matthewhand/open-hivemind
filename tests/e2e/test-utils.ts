@@ -34,7 +34,6 @@ export async function setupAuth(page: Page) {
           refreshToken: token,
           expiresIn: 3600,
       }));
-      localStorage.setItem('auth_user', JSON.stringify(JSON.parse(user)));
     },
     { token: fakeToken, user: fakeUser }
   );
@@ -97,30 +96,6 @@ export function setupErrorCollection(page: Page): string[] {
         errors.push(`[Network Error] 401 Unauthorized: ${url}`);
         console.error(`🔴 Network Error: 401 Unauthorized: ${url}`);
       }
-    }
-  });
-
-  // Intercept API requests to prevent network errors in components
-  // that don't gracefully handle test environments with missing APIs
-  page.route('**/api/**', async route => {
-    try {
-      const url = route.request().url();
-      if (url.includes('/api/dashboard/status')) {
-        await route.fulfill({ status: 200, json: { bots: [], uptime: 100 } });
-      } else if (url.includes('/api/config')) {
-        await route.fulfill({ status: 200, json: { bots: [], warnings: [], legacyMode: false, environment: 'test' } });
-      } else if (url.includes('/api/bots')) {
-        await route.fulfill({ status: 200, json: [] });
-      } else if (url.includes('/api/personas')) {
-        await route.fulfill({ status: 200, json: [] });
-      } else if (url.includes('/api/dashboard/api/status')) {
-        await route.fulfill({ status: 200, json: { bots: [] } });
-      } else {
-        route.fallback().catch(() => {});
-      }
-    } catch (e) {
-      // Ignore routing errors if the page is navigating or closed
-      route.fallback().catch(() => {});
     }
   });
 

@@ -12,7 +12,7 @@ test.describe('Error Handling & Edge Cases', () => {
     test('handles 404 page gracefully', async ({ page }) => {
       const errors = await setupTestWithErrorDetection(page);
       await page.goto('/admin/nonexistent-page');
-      await page.waitForLoadState('domcontentloaded');
+      await page.waitForLoadState('networkidle');
       await page.waitForTimeout(2000);
 
       await expect(page.locator('body')).toBeVisible();
@@ -24,7 +24,7 @@ test.describe('Error Handling & Edge Cases', () => {
     test('handles invalid bot ID in URL', async ({ page }) => {
       const errors = await setupTestWithErrorDetection(page);
       await page.goto('/admin/bots/invalid-bot-id-12345');
-      await page.waitForLoadState('domcontentloaded');
+      await page.waitForLoadState('networkidle');
       await page.waitForTimeout(2000);
 
       await page.screenshot({ path: 'test-results/error-02-invalid-id.png', fullPage: true });
@@ -37,7 +37,7 @@ test.describe('Error Handling & Edge Cases', () => {
       await page.waitForTimeout(2000);
 
       await page.goto('/admin/overview');
-      await page.waitForLoadState('domcontentloaded');
+      await page.waitForLoadState('networkidle');
       await page.waitForTimeout(2000);
 
       expect(page.url()).toContain('/admin');
