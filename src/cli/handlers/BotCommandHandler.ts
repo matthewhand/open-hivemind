@@ -9,9 +9,9 @@ export class BotCommandHandler implements CommandHandler {
   private configManager: BotConfigurationManager;
   private dbManager: DatabaseManager;
 
-  constructor() {
-    this.configManager = BotConfigurationManager.getInstance();
-    this.dbManager = DatabaseManager.getInstance();
+  constructor(configManager: BotConfigurationManager, dbManager: DatabaseManager) {
+    this.configManager = configManager;
+    this.dbManager = dbManager;
   }
 
   public setup(program: Command): void {

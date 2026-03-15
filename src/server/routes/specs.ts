@@ -2,8 +2,10 @@ import { promises as fs } from 'fs';
 import path from 'path';
 import { Router } from 'express';
 import { z } from 'zod';
+import { createLogger } from '@src/common/StructuredLogger';
 
 const router = Router();
+const logger = createLogger('routes:specs');
 
 const specsDirectory = path.join(process.cwd(), 'specs');
 
@@ -60,7 +62,7 @@ router.post('/', async (req, res) => {
 
     return res.status(201).json(newSpec);
   } catch (error) {
-    console.error('Failed to save spec:', error);
+    logger.error('Failed to save spec:', error instanceof Error ? error : new Error(String(error)));
     return res.status(500).json({ error: 'Failed to save specification' });
   }
 });

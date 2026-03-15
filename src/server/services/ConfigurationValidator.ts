@@ -200,6 +200,24 @@ export class ConfigurationValidator {
         default: null,
         nullable: true,
       },
+      createdAt: {
+        doc: 'Creation timestamp',
+        format: String,
+        default: '',
+        nullable: true,
+      },
+      updatedAt: {
+        doc: 'Last update timestamp',
+        format: String,
+        default: '',
+        nullable: true,
+      },
+      isActive: {
+        doc: 'Is bot active',
+        format: Boolean,
+        default: true,
+        nullable: true,
+      },
     };
   }
 

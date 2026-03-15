@@ -188,6 +188,19 @@ function exec(cmd: string, args: string[], cwd: string): void {
  * @throws PluginValidationError if the manifest is invalid or type mismatches
  */
 export async function installPlugin(repoUrl: string): Promise<PluginInfo> {
+  if (typeof repoUrl !== 'string' || repoUrl.trim().startsWith('-')) {
+    throw new PluginValidationError('Invalid repository URL: cannot start with a dash');
+  }
+
+  try {
+    const parsed = new URL(repoUrl);
+    if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+      throw new PluginValidationError('Invalid repository URL: must use http or https protocol');
+    }
+  } catch (err) {
+    throw new PluginValidationError('Invalid repository URL format');
+  }
+
   fs.mkdirSync(PLUGINS_DIR, { recursive: true });
 
   // Clone into a temp dir first so we can read the name before committing

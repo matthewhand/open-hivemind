@@ -156,6 +156,14 @@ export class AdvancedMonitor extends EventEmitter {
     this.performHealthChecks();
   }
 
+  /**
+   * Clean up resources and stop monitoring.
+   */
+  public shutdown(): void {
+    this.stopMonitoring();
+    this.removeAllListeners();
+  }
+
   public stopMonitoring(): void {
     if (!this.isMonitoring) {
       return;
@@ -173,6 +181,11 @@ export class AdvancedMonitor extends EventEmitter {
       clearInterval(this.healthCheckInterval);
       this.healthCheckInterval = null;
     }
+  }
+
+  public shutdown(): void {
+    this.stopMonitoring();
+    this.removeAllListeners();
   }
 
   private collectSystemMetrics(): void {
