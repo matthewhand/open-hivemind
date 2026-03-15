@@ -167,29 +167,21 @@ export const CommaSeparatedInput: React.FC<CommaSeparatedInputProps> = ({
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newVal = e.target.value;
-
-    // Auto-commit if user types a comma
-    if (newVal.endsWith(',')) {
+    if (newVal.includes(',')) {
       const parts = newVal.split(',');
-      const itemToCommit = parts[0];
+      const textToCommit = parts.slice(0, -1).join(',');
+      const remainingText = parts[parts.length - 1];
 
-      // If there's something to commit, commit it
-      if (itemToCommit.trim()) {
-        commitInput(itemToCommit);
-        // Put any trailing text (after the comma) back in the input field
-        const trailing = parts.slice(1).join(',').trim();
-        setInputValue(trailing);
-      } else {
-        // Just empty the input if they typed a comma with no text
-        setInputValue('');
+      if (textToCommit.trim()) {
+        commitInput(textToCommit);
       }
-      return;
-    }
-
-    setInputValue(newVal);
-    setShowSuggestions(true);
-    if (internalError) {
-      setInternalError(null);
+      setInputValue(remainingText);
+    } else {
+      setInputValue(newVal);
+      setShowSuggestions(true);
+      if (internalError) {
+        setInternalError(null);
+      }
     }
   };
 
