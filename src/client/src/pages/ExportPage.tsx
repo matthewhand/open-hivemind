@@ -13,19 +13,9 @@ import {
   Clock,
   DownloadCloud as DownloadIcon
 } from 'lucide-react';
-import { Alert } from '../components/DaisyUI/Alert';
-import ToastNotification from '../components/DaisyUI/ToastNotification';
-import Modal from '../components/DaisyUI/Modal';
-import Button from '../components/DaisyUI/Button';
-import Input from '../components/DaisyUI/Input';
-import Textarea from '../components/DaisyUI/Textarea';
-import PageHeader from '../components/DaisyUI/PageHeader';
-import EmptyState from '../components/DaisyUI/EmptyState';
-import StatsCards from '../components/DaisyUI/StatsCards';
+import { Alert, ToastNotification, Modal, Button, Input, Textarea, PageHeader, EmptyState, StatsCards } from '../components/DaisyUI';
 import SearchFilterBar from '../components/SearchFilterBar';
 import { apiService } from '../services/api';
-import Logger from '../utils/logger';
-
 
 interface Backup {
   id: string;
@@ -52,7 +42,7 @@ const ExportPage: React.FC = () => {
       const data = await apiService.listSystemBackups();
       setBackups(data);
     } catch (err) {
-      Logger.error('Failed to fetch backups:', err);
+      console.error('Failed to fetch backups:', err);
       setToast({ title: 'Error', message: 'Failed to load backups', type: 'error' });
     } finally {
       setLoading(false);
@@ -207,21 +197,21 @@ const ExportPage: React.FC = () => {
         id: 'total-backups',
         title: 'Total Backups',
         value: totalBackups,
-        icon: 'archive',
+        icon: <Archive className="w-8 h-8" />,
         color: 'primary' as const,
       },
       {
         id: 'total-size',
         title: 'Total Size',
         value: formatBytes(totalSize),
-        icon: 'storage',
+        icon: <HardDrive className="w-8 h-8" />,
         color: 'secondary' as const,
       },
       {
         id: 'last-backup',
         title: 'Latest Backup',
         value: lastBackup,
-        icon: 'clock',
+        icon: <Clock className="w-8 h-8" />,
         color: 'accent' as const,
       },
     ];
@@ -270,7 +260,7 @@ const ExportPage: React.FC = () => {
       <PageHeader
         title="Export & System Data"
         description="Manage system backups, export configurations, and access API specifications."
-        icon={<Archive className="w-8 h-8" />}
+        icon={<Archive className="w-6 h-6" />}
         gradient="secondary"
       />
 

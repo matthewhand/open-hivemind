@@ -1,6 +1,6 @@
 import React from 'react';
 import { useSearchParams } from 'react-router-dom';
-import Breadcrumbs from '../components/DaisyUI/Breadcrumbs';
+import { Breadcrumbs } from '../components/DaisyUI';
 import SettingsGeneral from '../components/Settings/SettingsGeneral';
 import SettingsSecurity from '../components/Settings/SettingsSecurity';
 import SettingsMessaging from '../components/Settings/SettingsMessaging';
@@ -39,7 +39,7 @@ const SystemSettings: React.FC = () => {
       <PageHeader
         title="Settings"
         description="Configure your Open-Hivemind instance settings and preferences"
-        icon={<Cog />}
+        icon={<Cog className="w-6 h-6" />}
         gradient="primary"
       />
 
