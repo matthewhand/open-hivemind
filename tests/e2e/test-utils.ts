@@ -34,7 +34,6 @@ export async function setupAuth(page: Page) {
           refreshToken: token,
           expiresIn: 3600,
       }));
-      localStorage.setItem('auth_user', JSON.stringify(JSON.parse(user)));
     },
     { token: fakeToken, user: fakeUser }
   );
