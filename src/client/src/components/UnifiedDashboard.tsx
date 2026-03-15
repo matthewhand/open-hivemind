@@ -19,10 +19,10 @@ import { GettingStartedTab } from './Dashboard/tabs/GettingStartedTab';
 import { StatusTab } from './Dashboard/tabs/StatusTab';
 import { PerformanceTab } from './Dashboard/tabs/PerformanceTab';
 import { usePerformanceMetrics } from './Dashboard/hooks/usePerformanceMetrics';
-import { useDashboardStats } from './Dashboard/hooks/useDashboardStats';
-import { DashboardHeader } from './Dashboard/DashboardHeader';
-import { DashboardTabs } from './Dashboard/DashboardTabs';
-import { getBotColumns } from './Dashboard/utils/getBotColumns';
+
+
+
+
 import { useNavigate } from 'react-router-dom';
 
 type DashboardTab = 'getting-started' | 'status' | 'performance';
@@ -291,15 +291,44 @@ const UnifiedDashboard: React.FC = () => {
     );
   }, [statusBots]);
 
-  const { statsCards } = useDashboardStats(
-    bots,
-    statusBots,
-    activeBotCount,
-    totalMessages,
-    activeConnections,
-    totalErrors,
-    status?.uptime ?? 0
-  );
+
+  const statsCards = useMemo(() => {
+    return [
+      {
+        id: 'agents',
+        title: 'Active Agents',
+        value: activeBotCount,
+        total: bots.length,
+        icon: 'Bot',
+        color: 'primary',
+      },
+      {
+        id: 'messages',
+        title: 'Messages Processed',
+        value: totalMessages,
+        trend: '+12%',
+        icon: 'MessageSquare',
+        color: 'secondary',
+      },
+      {
+        id: 'connections',
+        title: 'Active Connections',
+        value: activeConnections,
+        total: bots.length,
+        icon: 'Activity',
+        color: 'accent',
+      },
+      {
+        id: 'errors',
+        title: 'Error Rate',
+        value: totalErrors,
+        trend: '-2%',
+        icon: 'AlertTriangle',
+        color: 'error',
+      },
+    ];
+  }, [activeBotCount, bots.length, totalMessages, activeConnections, totalErrors]);
+
 
   const botTableData = useMemo<BotTableRow[]>(() => {
     return bots.map((bot, index) => {
@@ -322,6 +351,16 @@ const UnifiedDashboard: React.FC = () => {
       };
     });
   }, [bots, statusBots]);
+
+
+  const getBotColumns = () => [
+    { key: 'name', label: 'Agent Name' },
+    { key: 'provider', label: 'Provider' },
+    { key: 'llm', label: 'LLM' },
+    { key: 'status', label: 'Status' },
+    { key: 'messageCount', label: 'Messages' },
+    { key: 'errorCount', label: 'Errors' }
+  ];
 
   const botColumns = useMemo(() => getBotColumns(), []);
 
