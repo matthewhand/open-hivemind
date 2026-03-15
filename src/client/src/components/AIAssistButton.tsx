@@ -48,29 +48,25 @@ const AIAssistButton: React.FC<AIAssistButtonProps> = ({
   };
 
   return (
-    <div className={`tooltip tooltip-right ${error ? 'tooltip-error' : ''}`} data-tip={error || label}>
+    <div
+      className={`tooltip tooltip-right font-normal normal-case text-sm ${error ? 'tooltip-error' : ''}`}
+      data-tip={error || (loading ? 'Generating...' : label)}
+      aria-live="polite"
+    >
       <button
         type="button"
         className={`btn btn-ghost btn-sm btn-circle text-warning ${className}`}
         onClick={handleClick}
         disabled={loading}
-        aria-disabled={loading}
-        aria-label={loading ? `${label} - loading in progress` : label}
+        aria-label={loading ? `Generating ${label.replace('Generate ', '')}...` : label}
         aria-busy={loading}
-        aria-describedby={error ? 'ai-assist-error' : undefined}
-        title={loading ? 'Generating...' : label}
       >
         {loading ? (
           <span className="loading loading-spinner loading-xs" aria-hidden="true" />
         ) : (
-          <Sparkles className="w-4 h-4" aria-hidden="true" />
+          <Sparkles className="w-4 h-4" />
         )}
       </button>
-      {error && (
-        <span id="ai-assist-error" className="sr-only" role="alert" aria-live="polite">
-          {error}
-        </span>
-      )}
     </div>
   );
 };

@@ -16,12 +16,23 @@ interface GreetingConfig {
 
 @singleton()
 export class StartupGreetingService extends EventEmitter {
+  private static instance: StartupGreetingService;
+
   public constructor(
     @inject(GreetingStateManager) private greetingStateManager: GreetingStateManager
   ) {
     super();
     appLogger.info('StartupGreetingService initialized');
+    this.greetingStateManager = GreetingStateManager.getInstance();
     this.on('service-ready', this.handleServiceReady.bind(this));
+  }
+
+  public static getInstance(): StartupGreetingService {
+    if (!StartupGreetingService.instance) {
+      const greetingStateManager = GreetingStateManager.getInstance();
+      StartupGreetingService.instance = new StartupGreetingService(greetingStateManager);
+    }
+    return StartupGreetingService.instance;
   }
 
   public async initialize() {
@@ -143,5 +154,4 @@ IMPORTANT: Do not wrap any part of your response in quotation marks. Just output
   }
 }
 
-// Exporting class instead of instance
-export default StartupGreetingService;
+export default StartupGreetingService.getInstance();

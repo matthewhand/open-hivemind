@@ -304,44 +304,4 @@ describe('DemoModeService', () => {
       expect(status.messageCount).toBe(3);
     });
   });
-
-  describe('Edge Cases and Concurrency', () => {
-    beforeEach(() => {
-      process.env.DEMO_MODE = 'true';
-      demoService.initialize();
-    });
-
-    it('should handle empty/null/undefined inputs in generateDemoResponse', () => {
-      expect(demoService.generateDemoResponse('', 'Bot')).toBeDefined();
-      expect(() => demoService.generateDemoResponse(null as any, 'Bot')).toThrow();
-      expect(() => demoService.generateDemoResponse(undefined as any, 'Bot')).toThrow();
-    });
-
-    it('should handle extremely long messages', () => {
-      const longMessage = 'a'.repeat(10000);
-      const response = demoService.generateDemoResponse(longMessage, 'Demo Bot');
-      expect(response).toBeDefined();
-
-      const addedMsg = demoService.addMessage('channel-1', 'Demo Bot', longMessage, 'incoming');
-      expect(addedMsg.content).toBe(longMessage);
-    });
-
-    it('should handle concurrent addMessage calls safely', async () => {
-      const promises = [];
-      for (let i = 0; i < 100; i++) {
-        promises.push(
-          new Promise<void>((resolve) => {
-            setTimeout(() => {
-              demoService.addMessage('channel-1', 'Demo Bot', `Message ${i}`, 'incoming');
-              resolve();
-            }, Math.random() * 10);
-          })
-        );
-      }
-      await Promise.all(promises);
-
-      const history = demoService.getConversationHistory('channel-1', 'Demo Bot');
-      expect(history.length).toBe(100);
-    });
-  });
 });

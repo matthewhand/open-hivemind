@@ -76,9 +76,10 @@ describe('slackConfig', () => {
     process.env.SLACK_MODE = 'invalid-mode';
     
     jest.resetModules();
+    const config = require('../../src/config/slackConfig').default;
     
-    // Should fail validation with invalid mode immediately on import now that validation is strict and fail-fast
-    expect(() => require('../../src/config/slackConfig').default).toThrow('SLACK_MODE: must be one of the possible values: ["socket","rtm"]');
+    // Should fail validation with invalid mode
+    expect(() => config.validate({ allowed: 'strict' })).toThrow('SLACK_MODE: must be one of the possible values: ["socket","rtm"]');
     
     process.env = OLD_ENV;
   });

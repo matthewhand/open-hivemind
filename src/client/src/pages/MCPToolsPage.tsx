@@ -7,9 +7,7 @@ import {
   CodeBracketIcon,
   ListBulletIcon,
 } from '@heroicons/react/24/outline';
-import Breadcrumbs from '../components/DaisyUI/Breadcrumbs';
-import { Alert } from '../components/DaisyUI/Alert';
-import Modal from '../components/DaisyUI/Modal';
+import { Breadcrumbs, Alert, Modal } from '../components/DaisyUI';
 
 interface MCPTool {
   id: string;

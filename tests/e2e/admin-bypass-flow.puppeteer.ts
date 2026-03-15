@@ -89,8 +89,7 @@ describe('Admin Bypass E2E Flow', () => {
 
       for (const selector of adminSections) {
         const element = await page.$(selector);
-        expect(element).toBeDefined();
-        expect(element).not.toBeNull();
+        expect(element).toBeTruthy();
       }
 
       // Check that admin can access user management
@@ -251,8 +250,7 @@ describe('Admin Bypass E2E Flow', () => {
       // Get initial token
       const initialToken = await page.evaluate(() => localStorage.getItem('accessToken'));
 
-      expect(initialToken).toBeDefined();
-      expect(initialToken).not.toBeNull();
+      expect(initialToken).toBeTruthy();
 
       // Navigate to a protected page
       await page.goto('http://localhost:3028/admin');
