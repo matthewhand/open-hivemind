@@ -11,7 +11,7 @@ const errorMessages: string[] = [
   'Hold on, recalibrating my humor sensors! 🤖😂',
 ];
 
-export function getRandomErrorMessage(): string {
+function getRandomErrorMessage(): string {
   const randomIndex = Math.floor(Math.random() * errorMessages.length);
   return errorMessages[randomIndex];
 }

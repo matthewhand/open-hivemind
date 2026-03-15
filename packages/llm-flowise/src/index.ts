@@ -1,8 +1,8 @@
+import type { PluginManifest } from '../../../src/plugins/PluginLoader';
+import { FlowiseProvider } from './flowiseProvider';
+
 export { FlowiseProvider } from './flowiseProvider';
 export { default as flowiseProvider } from './flowiseProvider';
-
-import { FlowiseProvider } from './flowiseProvider';
-import type { PluginManifest } from '../../../src/plugins/PluginLoader';
 
 /** Standard factory — preferred entry point for PluginLoader */
 export function create(config?: any): FlowiseProvider {

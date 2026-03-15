@@ -4,6 +4,9 @@
     "jsx": "react-jsx",
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true,
+    "paths": {
+      "@hivemind/shared-types": ["../../packages/shared-types/src/index.ts"]
+    }
   },
   "include": [
     "src/**/*"
