@@ -78,7 +78,7 @@ build:
 	@echo "Frontend build..."
 	@cd src/client && ../../node_modules/.bin/vite build
 	@echo "Backend build..."
-	@npx rimraf dist && mkdir -p dist/scripts && cp src/scripts/* dist/scripts/ && cp -r config dist/ && node node_modules/.bin/tsc
+	@npx rimraf dist && mkdir -p dist/scripts && cp src/scripts/* dist/scripts/ && cp -r config dist/ && npx tsc
 	@echo "Copying frontend to dist..."
 	@mkdir -p dist/client && cp -r src/client/dist dist/client/
 

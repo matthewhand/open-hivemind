@@ -72,8 +72,8 @@ describe('Error Handling System', () => {
       expect(error.message).toBe('Test error');
       expect(error.status).toBe(400);
       expect(error.code).toBe('VALIDATION_ERROR');
-      expect(error.timestamp).toBeDefined();
-      expect(error.correlationId).toBeDefined();
+      expect(error.timestamp).toBeInstanceOf(Date);
+      expect(typeof error.correlationId).toBe('string');
       expect(error.severity).toBe('medium');
     });
 
@@ -218,7 +218,9 @@ describe('Error Handling System', () => {
       const stats = logger.getErrorStats();
 
       expect(typeof stats).toBe('object');
-      expect(stats).toBeDefined();
+      expect(stats).not.toBeNull();
+      expect(stats).toHaveProperty('totalErrors');
+      expect(stats).toHaveProperty('errorTypes');
     });
 
     test('should get recent errors', () => {

@@ -105,7 +105,8 @@ describe('openwebui/uploadKnowledgeFile', () => {
     // apiUrl ends with '/api/', session code appends '/v1/files' resulting in '/api//v1/files'
     expect(url).toMatch(/\/api\/\/v1\/files$/);
     // We pass the stream directly as body
-    expect(body).toBeTruthy();
+    expect(body).toBeDefined();
+    expect(body).not.toBeNull();
     expect(options).toEqual({
       headers: {
         Authorization: 'Bearer sk-abc',

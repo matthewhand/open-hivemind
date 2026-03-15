@@ -4,7 +4,7 @@ import Debug from 'debug';
 
 const debug = Debug('app:trustedMcpRepos');
 
-export interface TrustedMcpRepository {
+interface TrustedMcpRepository {
   owner: string;
   repo: string;
   name: string;
@@ -13,18 +13,18 @@ export interface TrustedMcpRepository {
   addedAt?: string;
 }
 
-export interface TrustedMcpReposSettings {
+interface TrustedMcpReposSettings {
   requireVerifiedForProduction: boolean;
   showTrustIndicator: boolean;
   defaultTrustLevel: 'trusted' | 'caution';
 }
 
-export interface TrustedMcpReposMetadata {
+interface TrustedMcpReposMetadata {
   lastUpdated?: string;
   version?: string;
 }
 
-export interface TrustedMcpReposConfig {
+interface TrustedMcpReposConfig {
   trustedRepositories: TrustedMcpRepository[];
   cautionRepositories: TrustedMcpRepository[];
   settings: TrustedMcpReposSettings;
