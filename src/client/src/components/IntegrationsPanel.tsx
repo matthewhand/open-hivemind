@@ -31,7 +31,7 @@ import {
 import { PROVIDER_CATEGORIES } from '../config/providers';
 import ProviderConfigModal from './ProviderConfiguration/ProviderConfigModal';
 import { LLM_PROVIDER_CONFIGS, LLMProviderType, ProviderModalState } from '../types';
-import { useToast } from './DaisyUI/ToastNotification';
+import { apiService } from '../services/api';
 
 interface ConfigSchema {
   doc?: string;
@@ -93,8 +93,6 @@ const IntegrationsPanel: React.FC = () => {
     provider: null,
   });
 
-  const { addToast } = useToast();
-
   useEffect(() => {
     fetchData();
   }, []);
@@ -102,27 +100,24 @@ const IntegrationsPanel: React.FC = () => {
   const fetchData = async () => {
     try {
       setLoading(true);
-      const [configRes, botsRes, profilesRes] = await Promise.all([
-        fetch('/api/config/global'),
-        fetch('/api/dashboard/api/status'), // Using status endpoint for bots list
-        fetch('/api/config/llm-profiles'),
+      const [configData, botsData, profilesData] = await Promise.all([
+        apiService.get('/api/config/global').catch(() => ({})),
+        apiService.get('/api/dashboard/status').catch((e) => {
+          console.warn('Failed to load bot status for IntegrationsPanel', e);
+          return { bots: [] };
+        }),
+        apiService.get('/api/config/llm-profiles').catch(() => []),
       ]);
 
-      if (!configRes.ok) { throw new Error('Failed to fetch configuration'); }
-      const configData = await configRes.json();
-      setConfig(configData);
-      setAdvancedMode(configData._userSettings?.values?.['webui.advancedMode'] || false);
+      // If we got nothing, fallback to at least an empty object for config
+      // to avoid infinite loading states.
+      setConfig(configData && Object.keys(configData).length > 0 ? configData : { _mock: true });
 
-      if (botsRes.ok) {
-        const botsData = await botsRes.json();
-        setBots(botsData.bots || []);
-      }
-
-      if (profilesRes.ok) {
-        const profilesData = await profilesRes.json();
-        setLlmProfiles(profilesData.llm || profilesData.profiles?.llm || []);
-      }
+      setAdvancedMode(configData?._userSettings?.values?.['webui.advancedMode'] || false);
+      setBots(botsData?.bots || []);
+      setLlmProfiles(Array.isArray(profilesData) ? profilesData : profilesData?.llm || profilesData?.profiles?.llm || []);
     } catch (err: any) {
+      console.error('IntegrationsPanel fetch error:', err);
       setError(err.message);
     } finally {
       setLoading(false);
@@ -166,7 +161,7 @@ const IntegrationsPanel: React.FC = () => {
       setIsModalOpen(false);
       setSelectedConfigName(null);
     } catch (err: any) {
-      addToast({ type: 'error', title: 'Error', message: err.message });
+      alert(err.message);
     } finally {
       setSaving(false);
     }
@@ -199,7 +194,7 @@ const IntegrationsPanel: React.FC = () => {
       setNewIntegrationName('');
       setNewConfigValues({});
     } catch (err: any) {
-      addToast({ type: 'error', title: 'Error', message: err.message });
+      alert(err.message);
     } finally {
       setSaving(false);
     }
@@ -233,7 +228,7 @@ const IntegrationsPanel: React.FC = () => {
       await fetchData();
       setProviderModalState({ ...providerModalState, isOpen: false });
     } catch (err: any) {
-      addToast({ type: 'error', title: 'Error', message: `Failed to save profile: ${err.message}` });
+      alert(`Failed to save profile: ${err.message}`);
     } finally {
       setSaving(false);
     }
@@ -246,7 +241,7 @@ const IntegrationsPanel: React.FC = () => {
       await fetch(`/api/config/llm-profiles/${key}`, { method: 'DELETE' });
       await fetchData();
     } catch (err: any) {
-      addToast({ type: 'error', title: 'Error', message: `Failed to delete profile: ${err.message}` });
+      alert(`Failed to delete profile: ${err.message}`);
     } finally {
       setSaving(false);
     }
@@ -368,7 +363,7 @@ const IntegrationsPanel: React.FC = () => {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mb-6">
             {llmProfiles.map(profile => {
-              const Icon = PROVIDER_ICONS[profile.provider] || Brain;
+              const IconComponent = PROVIDER_ICONS[profile.provider] || Brain;
               const connectedBots = getConnectedBots(profile.key, 'llm');
               return (
                 <Card key={profile.key} className="bg-base-100 shadow-sm hover:shadow-md transition-all border border-base-200 group">
@@ -376,7 +371,7 @@ const IntegrationsPanel: React.FC = () => {
                     <div className="flex items-start justify-between mb-3">
                       <div className="flex items-center gap-3 overflow-hidden">
                         <div className="p-2 bg-base-200 rounded-lg text-primary group-hover:bg-primary group-hover:text-primary-content transition-colors">
-                          <Icon className="w-5 h-5" />
+                          {React.isValidElement(IconComponent) ? IconComponent : React.createElement(IconComponent as React.ElementType, { className: "w-5 h-5" })}
                         </div>
                         <div className="min-w-0">
                           <h3 className="font-bold text-sm truncate" title={profile.name}>{profile.name}</h3>
@@ -493,7 +488,7 @@ const IntegrationsPanel: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
           {sectionItems.map(key => {
             const type = baseProviders.find(base => key === base || key.startsWith(`${base}-`)) || key;
-            const Icon = PROVIDER_ICONS[type] || PuzzlePieceIcon;
+            const IconComponent = PROVIDER_ICONS[type] || PuzzlePieceIcon;
             const item = config[key];
             const isLocked = Object.values(item.schema).some((s: any) => s.locked);
             const isActive = isConfigured(item);
@@ -506,7 +501,7 @@ const IntegrationsPanel: React.FC = () => {
                   <div className="flex items-start justify-between mb-3">
                     <div className="flex items-center gap-3 overflow-hidden">
                       <div className="p-2 bg-base-200 rounded-lg text-primary group-hover:bg-primary group-hover:text-primary-content transition-colors">
-                        <Icon className="w-5 h-5" />
+                        {React.isValidElement(IconComponent) ? IconComponent : React.createElement(IconComponent as React.ElementType, { className: "w-5 h-5" })}
                       </div>
                       <div className="min-w-0">
                         <h3 className="font-bold text-sm truncate" title={key}>{key}</h3>
