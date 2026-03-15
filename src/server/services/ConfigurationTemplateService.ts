@@ -6,7 +6,7 @@ import { ConfigurationValidator } from './ConfigurationValidator';
 
 const debug = Debug('app:ConfigurationTemplateService');
 
-export interface ConfigurationTemplate {
+interface ConfigurationTemplate {
   id: string;
   name: string;
   description: string;
@@ -20,7 +20,7 @@ export interface ConfigurationTemplate {
   usageCount: number;
 }
 
-export interface CreateTemplateRequest {
+interface CreateTemplateRequest {
   name: string;
   description: string;
   category: 'discord' | 'slack' | 'mattermost' | 'webhook' | 'llm' | 'general';
@@ -29,7 +29,7 @@ export interface CreateTemplateRequest {
   createdBy?: string;
 }
 
-export interface UpdateTemplateRequest {
+interface UpdateTemplateRequest {
   name?: string;
   description?: string;
   category?: 'discord' | 'slack' | 'mattermost' | 'webhook' | 'llm' | 'general';
@@ -37,7 +37,7 @@ export interface UpdateTemplateRequest {
   config?: any;
 }
 
-export interface TemplateFilter {
+interface TemplateFilter {
   category?: 'discord' | 'slack' | 'mattermost' | 'webhook' | 'llm' | 'general';
   tags?: string[];
   search?: string;

@@ -1,6 +1,6 @@
-import { validateRequest } from '@src/validation/validateRequest';
-import { Request, Response, NextFunction } from 'express';
+import { NextFunction, Request, Response } from 'express';
 import { z } from 'zod';
+import { validateRequest } from '@src/validation/validateRequest';
 
 describe('validateRequest middleware', () => {
   let mockReq: Partial<Request>;

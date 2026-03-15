@@ -17,7 +17,11 @@ test.describe('Dashboard Performance & Verification', () => {
         expiresIn: 3600,
       };
       localStorage.setItem('auth_user', JSON.stringify(user));
+      localStorage.setItem('user', JSON.stringify(user));
       localStorage.setItem('auth_tokens', JSON.stringify(tokens));
+      localStorage.setItem('token', tokens.accessToken);
+      localStorage.setItem('refreshToken', tokens.refreshToken);
+      localStorage.setItem('expiresAt', (Date.now() + 3600000).toString());
     });
 
     // 2. Mock API endpoints
@@ -42,7 +46,7 @@ test.describe('Dashboard Performance & Verification', () => {
       });
     });
 
-    await page.route('**/api/dashboard/api/status', async (route) => {
+    await page.route('**/api/admin/overview/api/status', async (route) => {
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
@@ -69,7 +73,7 @@ test.describe('Dashboard Performance & Verification', () => {
 
   test('Dashboard loads bots correctly', async ({ page }) => {
     // Navigate to dashboard
-    await page.goto('/dashboard');
+    await page.goto('/admin/overview');
 
     // Wait for header to be visible (verifies we are on the dashboard)
     await expect(page.getByText('Open-Hivemind Dashboard')).toBeVisible();

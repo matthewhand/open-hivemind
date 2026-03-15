@@ -1,5 +1,9 @@
-import { OpenSwarmProvider } from './OpenSwarmProvider';
 import { create, manifest } from './index';
+import { OpenSwarmProvider } from './OpenSwarmProvider';
+
+jest.mock('@hivemind/shared-types', () => ({
+  isSafeUrl: jest.fn().mockResolvedValue(true),
+}));
 
 jest.mock('axios', () => ({
   post: jest.fn(),

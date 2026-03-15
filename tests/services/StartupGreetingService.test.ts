@@ -3,7 +3,7 @@ import messageConfig from '@config/messageConfig';
 import { getLlmProvider } from '@llm/getLlmProvider';
 import Logger from '@common/logger';
 import { GreetingStateManager } from '../../src/services/GreetingStateManager';
-import { StartupGreetingService } from '../../src/services/StartupGreetingService';
+import StartupGreetingService from '../../src/services/StartupGreetingService';
 
 // Mock Logger
 jest.mock('@common/logger', () => {

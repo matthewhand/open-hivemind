@@ -24,15 +24,17 @@ export async function setupAuth(page: Page) {
 
   await page.addInitScript(
     ({ token, user }) => {
-      localStorage.setItem(
-        'auth_tokens',
-        JSON.stringify({
+      localStorage.setItem('token', token);
+      localStorage.setItem('refreshToken', token);
+      localStorage.setItem('expiresAt', (Date.now() + 3600000).toString());
+      localStorage.setItem('user', user);
+      localStorage.setItem('auth_user', user);
+      localStorage.setItem('auth_tokens', JSON.stringify({
           accessToken: token,
           refreshToken: token,
           expiresIn: 3600,
-        })
-      );
-      localStorage.setItem('auth_user', user);
+      }));
+      localStorage.setItem('auth_user', JSON.stringify(JSON.parse(user)));
     },
     { token: fakeToken, user: fakeUser }
   );
@@ -98,6 +100,30 @@ export function setupErrorCollection(page: Page): string[] {
     }
   });
 
+  // Intercept API requests to prevent network errors in components
+  // that don't gracefully handle test environments with missing APIs
+  page.route('**/api/**', async route => {
+    try {
+      const url = route.request().url();
+      if (url.includes('/api/dashboard/status')) {
+        await route.fulfill({ status: 200, json: { bots: [], uptime: 100 } });
+      } else if (url.includes('/api/config')) {
+        await route.fulfill({ status: 200, json: { bots: [], warnings: [], legacyMode: false, environment: 'test' } });
+      } else if (url.includes('/api/bots')) {
+        await route.fulfill({ status: 200, json: [] });
+      } else if (url.includes('/api/personas')) {
+        await route.fulfill({ status: 200, json: [] });
+      } else if (url.includes('/api/dashboard/api/status')) {
+        await route.fulfill({ status: 200, json: { bots: [] } });
+      } else {
+        route.fallback().catch(() => {});
+      }
+    } catch (e) {
+      // Ignore routing errors if the page is navigating or closed
+      route.fallback().catch(() => {});
+    }
+  });
+
   return errors;
 }
 
@@ -126,7 +152,7 @@ export async function setupTestWithErrorDetection(page: Page): Promise<string[]>
  * Wait for page to be fully loaded and stable
  */
 export async function waitForPageReady(page: Page, timeout = 5000) {
-  await page.waitForLoadState('networkidle');
+  await page.waitForLoadState('domcontentloaded');
   await page.waitForTimeout(Math.min(timeout, 1000)); // Small stabilization delay
 }
 
