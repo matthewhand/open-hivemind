@@ -46,10 +46,6 @@ done
 EXIT_CODE=0
 
 for pattern in "${PATTERNS[@]}"; do
-    # Search for pattern=value (case insensitive)
-    # We use -i for case-insensitive, -I to ignore binary files, -r for recursive
-    # We look for matches that look like assignments to catch hardcoded values
-    # Filtering out common False Positives like process.env or config.get
     matches=$(grep -rEi "$pattern\s*=\s*['\"][a-zA-Z0-9_\-]{5,}['\"]" . $GREP_EXCLUDES | grep -v "process.env" | grep -v "config.get")
 
     if [ ! -z "$matches" ]; then

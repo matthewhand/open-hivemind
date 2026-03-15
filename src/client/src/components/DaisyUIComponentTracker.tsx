@@ -5,6 +5,8 @@ import { daisyUITracker } from '../utils/DaisyUIComponentTracker';
 import Button from './DaisyUI/Button';
 import Badge from './DaisyUI/Badge';
 import Card from './DaisyUI/Card';
+import Tabs from './DaisyUI/Tabs';
+import Tab from './DaisyUI/Tab';
 import { Progress } from './DaisyUI/Loading';
 import { Alert } from './DaisyUI/Alert';
 import Modal from './DaisyUI/Modal';

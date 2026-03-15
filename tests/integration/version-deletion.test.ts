@@ -54,6 +54,14 @@ describe.skip('Configuration Version Deletion', () => {
   });
 
   describe('Version Creation', () => {
+    afterEach(() => {
+      (ConfigurationVersionService as any).instance = undefined;
+    });
+
+    beforeEach(() => {
+      (ConfigurationVersionService as any).instance = undefined;
+    });
+
     test('should create multiple versions', async () => {
       // Create version 1.0
       await versionService.createVersion({

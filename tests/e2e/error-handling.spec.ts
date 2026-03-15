@@ -12,11 +12,10 @@ test.describe('Error Handling & Edge Cases', () => {
     test('handles 404 page gracefully', async ({ page }) => {
       const errors = await setupTestWithErrorDetection(page);
       await page.goto('/admin/nonexistent-page');
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
       await page.waitForTimeout(2000);
 
-      const hasContent = (await page.locator('body').count()) > 0;
-      expect(hasContent).toBeTruthy();
+      await expect(page.locator('body')).toBeVisible();
       await page.screenshot({ path: 'test-results/error-01-404.png', fullPage: true });
 
       await assertNoErrors(errors, '404 page handling');
@@ -25,7 +24,7 @@ test.describe('Error Handling & Edge Cases', () => {
     test('handles invalid bot ID in URL', async ({ page }) => {
       const errors = await setupTestWithErrorDetection(page);
       await page.goto('/admin/bots/invalid-bot-id-12345');
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
       await page.waitForTimeout(2000);
 
       await page.screenshot({ path: 'test-results/error-02-invalid-id.png', fullPage: true });
@@ -38,7 +37,7 @@ test.describe('Error Handling & Edge Cases', () => {
       await page.waitForTimeout(2000);
 
       await page.goto('/admin/overview');
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
       await page.waitForTimeout(2000);
 
       expect(page.url()).toContain('/admin');
@@ -67,8 +66,7 @@ test.describe('Error Handling & Edge Cases', () => {
 
       const bots = page.locator('[class*="card"], [class*="bot"]');
       const emptyState = page.locator('text=/no bots|empty|create.*first|get started/i');
-      const hasContent = (await bots.count()) > 0 || (await emptyState.count()) > 0;
-      expect(hasContent).toBeTruthy();
+      await expect(bots.first().or(emptyState.first())).toBeVisible();
 
       await page.screenshot({ path: 'test-results/error-08-empty.png', fullPage: true });
       await assertNoErrors(errors, 'Empty state handling');

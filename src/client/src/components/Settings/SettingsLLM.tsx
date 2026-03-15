@@ -111,11 +111,12 @@ const SettingsLLM: React.FC = () => {
                 </h6>
 
                 <div className="form-control mb-4 max-w-md">
-                    <label className="label">
+                    <label htmlFor="defaultLlm" className="label">
                         <span className="label-text font-medium">Default LLM</span>
                         <span className="label-text-alt text-base-content/60">Used for features like AI summary</span>
                     </label>
                     <Select
+                        id="defaultLlm"
                         value={settings.defaultLlm}
                         onChange={(e) => setSettings({ defaultLlm: e.target.value })}
                         className="w-full"

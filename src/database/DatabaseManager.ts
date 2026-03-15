@@ -17,6 +17,7 @@ export interface DatabaseConfig {
   database?: string;
   username?: string;
   password?: string;
+  poolSize?: number;
 }
 
 export interface MessageRecord {
@@ -309,6 +310,8 @@ export class DatabaseManager {
   private configured = false;
   private connected = false;
   private db: Database | null = null;
+  private poolSize: number = 10;
+  private activeQueries: number = 0;
 
   constructor(config?: DatabaseConfig) {
     if (config) {
@@ -342,6 +345,9 @@ export class DatabaseManager {
 
   configure(config: DatabaseConfig): void {
     this.config = config;
+    if (config.poolSize) {
+      this.poolSize = config.poolSize;
+    }
     this.configured = true;
   }
 
@@ -383,6 +389,29 @@ export class DatabaseManager {
         this.db = await open({
           filename: dbPath,
           driver: sqlite3.Database,
+        });
+
+        // Proxy to handle connection pool exhaustion
+        const originalDb = this.db;
+        const self = this;
+        this.db = new Proxy(originalDb, {
+          get(target, prop, receiver) {
+            const origMethod = Reflect.get(target, prop, receiver);
+            if (typeof origMethod === 'function' && ['run', 'get', 'all', 'exec'].includes(prop as string)) {
+              return async function (...args: any[]) {
+                if (self.activeQueries >= self.poolSize) {
+                  throw new DatabaseError('Connection pool exhausted', 'POOL_EXHAUSTED');
+                }
+                self.activeQueries++;
+                try {
+                  return await Reflect.apply(origMethod, target, args);
+                } finally {
+                  self.activeQueries--;
+                }
+              };
+            }
+            return origMethod;
+          }
         });
 
         await this.createTables();
@@ -1090,6 +1119,8 @@ export class DatabaseManager {
     totalChannels: number;
     totalAuthors: number;
     providers: Record<string, number>;
+    poolSize: number;
+    activeConnections: number;
   }> {
     this.ensureConnected();
 
@@ -1111,6 +1142,8 @@ export class DatabaseManager {
         totalChannels: totalChannels.count,
         totalAuthors: totalAuthors.count,
         providers,
+        poolSize: this.poolSize,
+        activeConnections: this.activeQueries,
       };
     } catch (error) {
       debug('Error getting stats:', error);
@@ -1196,6 +1229,58 @@ export class DatabaseManager {
     } catch (error) {
       debug('Error getting bot configuration:', error);
       throw new Error(`Failed to get bot configuration: ${error}`);
+    }
+  }
+
+  /**
+   * Get multiple bot configurations in a single query
+   */
+  async getBotConfigurationsBulk(ids: number[]): Promise<BotConfiguration[]> {
+    this.ensureConnected();
+
+    if (ids.length === 0) return [];
+
+    // Validate all inputs are valid numbers to prevent injection/DOS
+    const validIds = ids.filter((id) => typeof id === 'number' && !isNaN(id) && isFinite(id));
+    if (validIds.length === 0) return [];
+
+    try {
+      const CHUNK_SIZE = 100;
+      const allRows: any[] = [];
+
+      for (let i = 0; i < validIds.length; i += CHUNK_SIZE) {
+        const chunk = validIds.slice(i, i + CHUNK_SIZE);
+        const placeholders = chunk.map(() => '?').join(',');
+        const rows = await this.db!.all(
+          `SELECT * FROM bot_configurations WHERE id IN (${placeholders})`,
+          chunk
+        );
+        allRows.push(...rows);
+      }
+
+      return allRows.map((row) => ({
+        id: row.id,
+        name: row.name,
+        messageProvider: row.messageProvider,
+        llmProvider: row.llmProvider,
+        persona: row.persona,
+        systemInstruction: row.systemInstruction,
+        mcpServers: row.mcpServers,
+        mcpGuard: row.mcpGuard,
+        discord: row.discord,
+        slack: row.slack,
+        mattermost: row.mattermost,
+        openai: row.openai,
+        flowise: row.flowise,
+        openwebui: row.openwebui,
+        openswarm: row.openswarm,
+        isActive: row.isActive === 1,
+        createdAt: new Date(row.createdAt),
+        updatedAt: new Date(row.updatedAt),
+      }));
+    } catch (error) {
+      debug('Error getting bulk bot configurations:', error);
+      throw new Error(`Failed to get bulk bot configurations: ${error}`);
     }
   }
 
@@ -1536,16 +1621,29 @@ export class DatabaseManager {
       return new Map();
     }
 
+    // Validate all inputs are valid numbers
+    const validIds = botConfigurationIds.filter(
+      (id) => typeof id === 'number' && !isNaN(id) && isFinite(id)
+    );
+    if (validIds.length === 0) return new Map();
+
     try {
-      const placeholders = botConfigurationIds.map(() => '?').join(',');
-      const rows = await this.db!.all(
-        `SELECT * FROM bot_configuration_versions WHERE botConfigurationId IN (${placeholders}) ORDER BY botConfigurationId, version DESC`,
-        botConfigurationIds
-      );
+      const CHUNK_SIZE = 100;
+      const allRows: any[] = [];
+
+      for (let i = 0; i < validIds.length; i += CHUNK_SIZE) {
+        const chunk = validIds.slice(i, i + CHUNK_SIZE);
+        const placeholders = chunk.map(() => '?').join(',');
+        const rows = await this.db!.all(
+          `SELECT * FROM bot_configuration_versions WHERE botConfigurationId IN (${placeholders}) ORDER BY botConfigurationId, version DESC`,
+          chunk
+        );
+        allRows.push(...rows);
+      }
 
       const versionsMap = new Map<number, BotConfigurationVersion[]>();
 
-      rows.forEach((row) => {
+      allRows.forEach((row) => {
         const configId = row.botConfigurationId;
         const version: BotConfigurationVersion = {
           id: row.id,
@@ -1653,16 +1751,29 @@ export class DatabaseManager {
       return new Map();
     }
 
+    // Validate all inputs are valid numbers
+    const validIds = botConfigurationIds.filter(
+      (id) => typeof id === 'number' && !isNaN(id) && isFinite(id)
+    );
+    if (validIds.length === 0) return new Map();
+
     try {
-      const placeholders = botConfigurationIds.map(() => '?').join(',');
-      const rows = await this.db!.all(
-        `SELECT * FROM bot_configuration_audit WHERE botConfigurationId IN (${placeholders}) ORDER BY botConfigurationId, performedAt DESC`,
-        botConfigurationIds
-      );
+      const CHUNK_SIZE = 100;
+      const allRows: any[] = [];
+
+      for (let i = 0; i < validIds.length; i += CHUNK_SIZE) {
+        const chunk = validIds.slice(i, i + CHUNK_SIZE);
+        const placeholders = chunk.map(() => '?').join(',');
+        const rows = await this.db!.all(
+          `SELECT * FROM bot_configuration_audit WHERE botConfigurationId IN (${placeholders}) ORDER BY botConfigurationId, performedAt DESC`,
+          chunk
+        );
+        allRows.push(...rows);
+      }
 
       const auditMap = new Map<number, BotConfigurationAudit[]>();
 
-      rows.forEach((row) => {
+      allRows.forEach((row) => {
         const configId = row.botConfigurationId;
         const audit: BotConfigurationAudit = {
           id: row.id,
