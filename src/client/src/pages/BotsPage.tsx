@@ -14,8 +14,7 @@ import PageHeader from '../components/DaisyUI/PageHeader';
 import SearchFilterBar from '../components/SearchFilterBar';
 import EmptyState from '../components/DaisyUI/EmptyState';
 import { LoadingSpinner } from '../components/DaisyUI/Loading';
-import { withRetry, ErrorService } from '../services/apiService';
-import apiService from '../services/apiService';
+import { apiService } from '../services/api';
 import type { BotConfig, ProviderModalState } from '../types/bot';
 import { LLMProviderType, MessageProviderType } from '../types/bot';
 import BotCard from '../components/BotManagement/BotCard';
@@ -48,11 +47,10 @@ const BotsPage: React.FC = () => {
   const fetchBots = useCallback(async () => {
     try {
       setLoading(true);
-      const json = await withRetry(() => apiService.get<any>('/api/bots'));
+      const json = await apiService.request<any>('/api/bots');
       setBots(json.data?.bots || []);
       setError(null);
     } catch (err) {
-      ErrorService.report(err, { action: 'fetchBots' });
       setError(err instanceof Error ? err.message : 'Failed to fetch bots');
       toast.error('Failed to load bots');
     } finally {
@@ -75,19 +73,18 @@ const BotsPage: React.FC = () => {
 
   const handleCreateBot = async (botData: any) => {
     try {
-      const response = await apiService.post<any>('/api/bots', botData);
+      const response = await apiService.request<any>('/api/bots', { method: 'POST', body: JSON.stringify(botData) });
       setBots(prev => [...prev, response.data.bot]);
       setIsCreateModalOpen(false);
       toast.success('Bot created successfully');
     } catch (err) {
-      ErrorService.report(err, { action: 'createBot', botData });
       toast.error(err instanceof Error ? err.message : 'Failed to create bot');
     }
   };
 
   const handleUpdateBot = async (botData: any) => {
     try {
-      const response = await apiService.put<any>(`/api/bots/${editingBot?.id}`, botData);
+      const response = await apiService.request<any>(`/api/bots/${editingBot?.id}`, { method: 'PUT', body: JSON.stringify(botData) });
       setBots(prev => prev.map(b => b.id === editingBot?.id ? response.data.bot : b));
       setEditingBot(null);
       toast.success('Bot updated successfully');
@@ -97,7 +94,6 @@ const BotsPage: React.FC = () => {
         setPreviewBot(response.data.bot);
       }
     } catch (err) {
-      ErrorService.report(err, { action: 'updateBot', botId: editingBot?.id });
       toast.error(err instanceof Error ? err.message : 'Failed to update bot');
     }
   };
@@ -105,7 +101,7 @@ const BotsPage: React.FC = () => {
   const handleDeleteBot = async () => {
     if (!deletingBot) return;
     try {
-      await apiService.delete(`/api/bots/${deletingBot.id}`);
+      await apiService.request(`/api/bots/${deletingBot.id}`, { method: 'DELETE' });
       setBots(prev => prev.filter(b => b.id !== deletingBot.id));
       if (previewBot?.id === deletingBot.id) {
         setPreviewBot(null);
@@ -113,7 +109,6 @@ const BotsPage: React.FC = () => {
       setDeletingBot(null);
       toast.success('Bot deleted successfully');
     } catch (err) {
-      ErrorService.report(err, { action: 'deleteBot', botId: deletingBot.id });
       toast.error(err instanceof Error ? err.message : 'Failed to delete bot');
     }
   };
@@ -121,7 +116,7 @@ const BotsPage: React.FC = () => {
   const handleToggleBotStatus = async (bot: BotConfig) => {
     try {
       const newStatus = bot.status === 'active' ? 'inactive' : 'active';
-      const response = await apiService.patch<any>(`/api/bots/${bot.id}/status`, { status: newStatus });
+      const response = await apiService.request<any>(`/api/bots/${bot.id}/status`, { method: 'PATCH', body: JSON.stringify({ status: newStatus }) });
       setBots(prev => prev.map(b => b.id === bot.id ? { ...b, status: newStatus } : b));
       
       if (previewBot?.id === bot.id) {
@@ -130,7 +125,6 @@ const BotsPage: React.FC = () => {
       
       toast.success(`Bot ${newStatus === 'active' ? 'activated' : 'deactivated'} successfully`);
     } catch (err) {
-      ErrorService.report(err, { action: 'toggleBotStatus', botId: bot.id });
       toast.error(err instanceof Error ? err.message : 'Failed to update bot status');
     }
   };
@@ -152,14 +146,13 @@ const BotsPage: React.FC = () => {
     
     try {
       // Load initial activity
-      const activityJson = await withRetry(() => apiService.get<any>(`/api/bots/${bot.id}/activity?limit=20`));
+      const activityJson = await apiService.request<any>(`/api/bots/${bot.id}/activity?limit=20`);
       setActivityLogs(activityJson.data?.activity || []);
       
       // Load initial chat
-      const chatJson = await withRetry(() => apiService.get<any>(`/api/bots/${bot.id}/chat?limit=20`));
+      const chatJson = await apiService.request<any>(`/api/bots/${bot.id}/chat?limit=20`);
       setChatHistory(chatJson.data?.messages || []);
     } catch (err) {
-      ErrorService.report(err, { botId: bot.id, action: 'fetchBotPreviewData' });
       // Don't show toast for initial load failures to keep UI clean, but log error
       console.error('Failed to load bot preview data:', err);
     }
@@ -359,10 +352,9 @@ const BotsPage: React.FC = () => {
                               const limit = e.target.value;
                               if (previewBot) {
                                 try {
-                                  const json = await withRetry(() => apiService.get<any>(`/api/bots/${previewBot.id}/activity?limit=${limit}`));
+                                  const json = await apiService.request<any>(`/api/bots/${previewBot.id}/activity?limit=${limit}`);
                                   setActivityLogs(json.data?.activity || []);
                                 } catch (err) {
-                                  ErrorService.report(err, { botId: previewBot.id, action: 'fetchActivityLogs' });
                                   toast.error('Failed to load bot activity logs');
                                   setActivityLogs([]);
                                 }

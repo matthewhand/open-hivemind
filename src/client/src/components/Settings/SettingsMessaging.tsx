@@ -13,6 +13,9 @@ interface MessagingConfig {
   graceWindowMs: number;
   /** Whether the bot injects the user's identity hint when mentioned (MESSAGE_ADD_USER_HINT). */
   addUserHint: boolean;
+  mentionBonus?: number;
+  questionBonus?: number;
+  shortLengthPenalty?: number;
 }
 
 const SettingsMessaging: React.FC = () => {
@@ -25,6 +28,9 @@ const SettingsMessaging: React.FC = () => {
     baseChance: 5,
     graceWindowMs: 300000,
     addUserHint: false,
+    mentionBonus: 0.5,
+    questionBonus: 0.2,
+    shortLengthPenalty: 0,
   });
   const [loading, setLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -54,6 +60,9 @@ const SettingsMessaging: React.FC = () => {
         baseChance: (data.MESSAGE_UNSOLICITED_BASE_CHANCE ?? 0.01) * 100,
         graceWindowMs: data.MESSAGE_ONLY_WHEN_SPOKEN_TO_GRACE_WINDOW_MS ?? 300000,
         addUserHint: data.MESSAGE_ADD_USER_HINT ?? false,
+        mentionBonus: data.MESSAGE_MENTION_BONUS ?? 0.5,
+        questionBonus: data.MESSAGE_QUESTION_BONUS ?? 0.2,
+        shortLengthPenalty: data.MESSAGE_SHORT_LENGTH_PENALTY ?? 0,
       });
     } catch {
       setAlert({
@@ -89,6 +98,9 @@ const SettingsMessaging: React.FC = () => {
             MESSAGE_UNSOLICITED_BASE_CHANCE: settings.baseChance / 100,
             MESSAGE_ONLY_WHEN_SPOKEN_TO_GRACE_WINDOW_MS: settings.graceWindowMs,
             MESSAGE_ADD_USER_HINT: settings.addUserHint,
+            MESSAGE_MENTION_BONUS: settings.mentionBonus,
+            MESSAGE_QUESTION_BONUS: settings.questionBonus,
+            MESSAGE_SHORT_LENGTH_PENALTY: settings.shortLengthPenalty,
           },
         }),
       });
@@ -276,6 +288,69 @@ const SettingsMessaging: React.FC = () => {
                 disabled={settings.onlyWhenSpokenTo}
               />
             </label>
+          </div>
+        </div>
+
+        {/* Probability Modifiers Legend */}
+        <div className="card bg-base-200/50 p-4 lg:col-span-2">
+          <h6 className="text-md font-semibold mb-4 flex items-center gap-2">
+            <Zap className="w-4 h-4 text-warning" />
+            Dynamic Probability Modifiers Legend
+          </h6>
+          <p className="text-sm text-base-content/70 mb-4">
+            Adjust the modifiers below to fine-tune how the bot calculates its chance to reply.
+          </p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="form-control">
+              <label className="label py-1">
+                <span className="label-text text-sm font-medium">Mention Bonus</span>
+                <span className="badge badge-ghost font-mono text-xs">+{settings.mentionBonus ?? 0.5}</span>
+              </label>
+              <input
+                type="range"
+                min="0"
+                max="1.0"
+                step="0.1"
+                value={settings.mentionBonus ?? 0.5}
+                onChange={(e) => handleChange('mentionBonus', parseFloat(e.target.value))}
+                className="range range-sm range-warning"
+              />
+              <p className="text-xs text-base-content/60 mt-1">Bonus chance when bot is directly mentioned.</p>
+            </div>
+
+            <div className="form-control">
+              <label className="label py-1">
+                <span className="label-text text-sm font-medium">Question Bonus</span>
+                <span className="badge badge-ghost font-mono text-xs">+{settings.questionBonus ?? 0.2}</span>
+              </label>
+              <input
+                type="range"
+                min="0"
+                max="1.0"
+                step="0.1"
+                value={settings.questionBonus ?? 0.2}
+                onChange={(e) => handleChange('questionBonus', parseFloat(e.target.value))}
+                className="range range-sm range-warning"
+              />
+              <p className="text-xs text-base-content/60 mt-1">Bonus chance when message contains a question mark.</p>
+            </div>
+
+            <div className="form-control md:col-span-2">
+              <label className="label py-1">
+                <span className="label-text text-sm font-medium">Short Length Penalty</span>
+                <span className="badge badge-ghost font-mono text-xs">-{settings.shortLengthPenalty ?? 0}</span>
+              </label>
+              <input
+                type="range"
+                min="0"
+                max="1.0"
+                step="0.1"
+                value={settings.shortLengthPenalty ?? 0}
+                onChange={(e) => handleChange('shortLengthPenalty', parseFloat(e.target.value))}
+                className="range range-sm range-error"
+              />
+              <p className="text-xs text-base-content/60 mt-1">Penalty subtracted if message length is under 10 characters.</p>
+            </div>
           </div>
         </div>
 

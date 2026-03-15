@@ -343,6 +343,24 @@ const messageConfig = convict({
     default: true,
     env: 'MESSAGE_ADD_USER_HINT',
   },
+  MESSAGE_MENTION_BONUS: {
+    doc: 'Bonus chance when bot is directly mentioned',
+    format: Number,
+    default: 0.5,
+    env: 'MESSAGE_MENTION_BONUS',
+  },
+  MESSAGE_QUESTION_BONUS: {
+    doc: 'Bonus chance when message contains a question mark',
+    format: Number,
+    default: 0.2,
+    env: 'MESSAGE_QUESTION_BONUS',
+  },
+  MESSAGE_SHORT_LENGTH_PENALTY: {
+    doc: 'Penalty subtracted if message length is under 10 characters',
+    format: Number,
+    default: 0.0,
+    env: 'MESSAGE_SHORT_LENGTH_PENALTY',
+  },
   DISABLE_DELAYS: {
     doc: 'When true, skips all artificial delays (reading delay, post-inference typing simulation). Typing indicator still shows during actual LLM inference. Per-bot override: BOTS_{name}_DISABLE_DELAYS=true',
     format: Boolean,
@@ -397,12 +415,7 @@ const messageConfig = convict({
     default: 1500,
     env: 'MESSAGE_COMPOUNDING_DELAY_BASE_MS',
   },
-  MESSAGE_SHORT_LENGTH_PENALTY: {
-    doc: 'Penalty to apply to probability for very short messages (<10 chars) to discourage responding to "ok", "lol"',
-    format: Number,
-    default: 0.1,
-    env: 'MESSAGE_SHORT_LENGTH_PENALTY',
-  },
+
 
   MESSAGE_COMPOUNDING_DELAY_MAX_MS: {
     doc: 'Maximum compounding delay before responding (ms). Prevents infinite wait.',
@@ -644,12 +657,7 @@ const messageConfig = convict({
     default: true,
     env: 'MESSAGE_WEBHOOK_ENABLED',
   },
-  MESSAGE_MENTION_BONUS: {
-    doc: 'Bonus for mentions',
-    format: Number,
-    default: 0.1,
-    env: 'MESSAGE_MENTION_BONUS',
-  },
+
   MESSAGE_FILTER_BY_USER: {
     doc: 'Filter messages by user',
     format: String,
