@@ -1,13 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
-import {
-  Alert,
-  Hero,
-  Button,
-  SkeletonCard,
-  SkeletonText,
-  SkeletonRectangle,
-} from './DaisyUI';
+import { Alert } from './DaisyUI/Alert';
+import Hero from './DaisyUI/Hero';
+import Button from './DaisyUI/Button';
+import { SkeletonCard } from './DaisyUI/Skeleton';
 import { apiService } from '../services/api';
 import type { Bot, StatusResponse } from '../services/api';
 import QuickActions from './QuickActions';
@@ -25,10 +21,12 @@ const Dashboard: React.FC = () => {
   const fetchData = useCallback(async () => {
     try {
       setError(null);
-      const [configData, statusData] = await Promise.all([
+      const [configResult, statusResult] = await Promise.allSettled([
         apiService.getConfig(),
         apiService.getStatus(),
       ]);
+      const configData = configResult.status === 'fulfilled' ? configResult.value : { bots: [] };
+      const statusData = statusResult.status === 'fulfilled' ? statusResult.value : { bots: [] };
       setBots(configData.bots);
       setStatus(statusData);
       setToastMessage('Dashboard refreshed successfully!');
@@ -191,7 +189,7 @@ const Dashboard: React.FC = () => {
         <div className="toast toast-bottom toast-center z-50" role="status" aria-live="polite">
           <div className="alert alert-success">
             <span>{toastMessage}</span>
-            <button className="btn btn-sm btn-ghost" onClick={() => setShowToast(false)}>✕</button>
+            <button className="btn btn-sm btn-ghost" onClick={() => setShowToast(false)} aria-label="Close message">✕</button>
           </div>
         </div>
       )}

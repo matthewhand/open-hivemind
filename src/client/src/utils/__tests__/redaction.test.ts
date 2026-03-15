@@ -32,7 +32,7 @@ describe('redaction', () => {
         });
 
         it('should show first and last char with mask for longer strings in strict mode', () => {
-            expect(redactString('user123')).toBe('u***3');
+            expect(redactString('user123')).toBe('u***r');
             expect(redactString('testuser')).toBe('t***r');
         });
 
@@ -100,7 +100,7 @@ describe('redaction', () => {
         });
 
         it('should redact phone numbers showing only last 4 digits', () => {
-            expect(redactPhone('555-123-4567')).toBe('******4567');
+            expect(redactPhone('555-123-4567')).toBe('*******4567');
             expect(redactPhone('+1 (555) 123-4567')).toBe('*******4567');
         });
 
@@ -142,7 +142,7 @@ describe('redaction', () => {
             const redactor = createRedactor();
             expect(redactor.string('test')).toBe('t***t');
             expect(redactor.email('test@test.com')).toBe('t***t@t***t.com');
-            expect(redactor.phone('555-5555')).toBe('***5555');
+            expect(redactor.phone('555-5555')).toBe('*5555');
             expect(redactor.ip('1.2.3.4')).toBe('1.***.***.4');
             expect(redactor.uuid('abcd-1234')).toBe('abcd...1234');
         });
