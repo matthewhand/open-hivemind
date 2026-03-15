@@ -2,7 +2,6 @@ import fs, { promises as fsPromises } from 'fs';
 import path from 'path';
 import readline from 'readline';
 import Debug from 'debug';
-import crypto from 'crypto';
 
 const debug = Debug('app:auditLogger');
 
@@ -302,7 +301,7 @@ export class AuditLogger {
   }
 
   private generateId(): string {
-    return `audit_${crypto.randomUUID()}`;
+    return `audit_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
   }
 
   public getLogFilePath(): string {

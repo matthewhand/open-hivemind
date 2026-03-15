@@ -27,7 +27,7 @@ const DEFAULT_OPTIONS: SanitizationOptions = {
 /**
  * Input sanitizer utility class for preventing XSS and injection attacks
  */
-export class InputSanitizer {
+class InputSanitizer {
   /**
    * Sanitizes user-provided text content
    * @param input - The input string to sanitize
@@ -237,7 +237,7 @@ export class InputSanitizer {
 /**
  * Convenience function for sanitizing message text
  */
-export function sanitizeMessageText(text: string | null | undefined): string {
+function sanitizeMessageText(text: string | null | undefined): string {
   return InputSanitizer.sanitizeText(text, {
     maxLength: 4000, // Slack message limit
     allowHtml: false,
@@ -250,7 +250,7 @@ export function sanitizeMessageText(text: string | null | undefined): string {
 /**
  * Convenience function for sanitizing user input in interactive actions
  */
-export function sanitizeUserInput(input: string | null | undefined): string {
+function sanitizeUserInput(input: string | null | undefined): string {
   return InputSanitizer.sanitizeText(input, {
     maxLength: 1000,
     allowHtml: false,

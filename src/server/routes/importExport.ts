@@ -2,24 +2,15 @@ import fs from 'fs/promises';
 import path from 'path';
 import { Router, type Request, type Response } from 'express';
 import { body, param, validationResult } from 'express-validator';
-import { createLogger } from '@src/common/StructuredLogger';
 import { authenticate, requireAdmin } from '../../auth/middleware';
 import type { AuthMiddlewareRequest } from '../../auth/types';
 import { ConfigurationImportExportService } from '../services/ConfigurationImportExportService';
-
-type MulterFile = {
-  path: string;
-  fieldname: string;
-  originalname: string;
-  mimetype: string;
-  size: number;
-};
+type MulterFile = { path: string; fieldname: string; originalname: string; mimetype: string; size: number; };
 
 const multer = require('multer');
 
 const router = Router();
 const importExportService = ConfigurationImportExportService.getInstance();
-const logger = createLogger('routes:importExport');
 
 // Configure multer for file uploads
 const upload = multer({
@@ -216,7 +207,7 @@ router.post(
   handleValidationErrors,
   async (req: AuthMiddlewareRequest, res: Response) => {
     try {
-      const authReq = req;
+      const authReq = req as any;
       const createdBy = authReq.user?.username || 'unknown';
 
       const result = await importExportService.exportConfigurations(
@@ -244,14 +235,11 @@ router.post(
         });
       }
     } catch (error) {
-      logger.error(
-        'Error exporting configurations:',
-        error instanceof Error ? error : new Error(String(error))
-      );
+      console.error('Error exporting configurations:', error);
       return res.status(500).json({
         success: false,
         message: 'Failed to export configurations',
-        error: error instanceof Error ? error.message : String(error),
+        error: (error as any).message,
       });
     }
   }
@@ -270,30 +258,27 @@ router.post(
   handleValidationErrors,
   async (req: AuthMiddlewareRequest, res: Response) => {
     try {
-      if (!(req as unknown as { file?: { path: string } }).file) {
+      if (!(req as any).file) {
         return res.status(400).json({
           success: false,
           message: 'No file uploaded',
         });
       }
 
-      const authReq = req;
+      const authReq = req as any;
       const importedBy = authReq.user?.username || 'unknown';
 
       const result = await importExportService.importConfigurations(
-        (req as unknown as { file?: { path: string } }).file.path,
+        (req as any).file.path,
         req.body,
         importedBy
       );
 
       // Clean up uploaded file
       try {
-        await fs.unlink((req as unknown as { file?: { path: string } }).file.path);
+        await fs.unlink((req as any).file.path);
       } catch (cleanupError) {
-        logger.error(
-          'Error cleaning up uploaded file:',
-          cleanupError instanceof Error ? cleanupError : new Error(String(cleanupError))
-        );
+        console.error('Error cleaning up uploaded file:', cleanupError);
       }
 
       return res.json({
@@ -302,27 +287,21 @@ router.post(
         data: result,
       });
     } catch (error) {
-      logger.error(
-        'Error importing configurations:',
-        error instanceof Error ? error : new Error(String(error))
-      );
+      console.error('Error importing configurations:', error);
 
       // Clean up uploaded file if it exists
-      if ((req as unknown as { file?: { path: string } }).file) {
+      if ((req as any).file) {
         try {
-          await fs.unlink((req as unknown as { file?: { path: string } }).file.path);
+          await fs.unlink((req as any).file.path);
         } catch (cleanupError) {
-          logger.error(
-            'Error cleaning up uploaded file:',
-            cleanupError instanceof Error ? cleanupError : new Error(String(cleanupError))
-          );
+          console.error('Error cleaning up uploaded file:', cleanupError);
         }
       }
 
       return res.status(500).json({
         success: false,
         message: 'Failed to import configurations',
-        error: error instanceof Error ? error.message : String(error),
+        error: (error as any).message,
       });
     }
   }
@@ -339,7 +318,7 @@ router.post(
   handleValidationErrors,
   async (req: AuthMiddlewareRequest, res: Response) => {
     try {
-      const authReq = req;
+      const authReq = req as any;
       const createdBy = authReq.user?.username || 'unknown';
 
       const result = await importExportService.createBackup(
@@ -375,14 +354,11 @@ router.post(
         });
       }
     } catch (error) {
-      logger.error(
-        'Error creating backup:',
-        error instanceof Error ? error : new Error(String(error))
-      );
+      console.error('Error creating backup:', error);
       return res.status(500).json({
         success: false,
         message: 'Failed to create backup',
-        error: error instanceof Error ? error.message : String(error),
+        error: (error as any).message,
       });
     }
   }
@@ -401,14 +377,11 @@ router.get('/backups', requireAdmin, async (req: AuthMiddlewareRequest, res: Res
       count: backups.length,
     });
   } catch (error) {
-    logger.error(
-      'Error listing backups:',
-      error instanceof Error ? error : new Error(String(error))
-    );
+    console.error('Error listing backups:', error);
     return res.status(500).json({
       success: false,
       message: 'Failed to list backups',
-      error: error instanceof Error ? error.message : String(error),
+      error: (error as any).message,
     });
   }
 });
@@ -425,7 +398,7 @@ router.post(
   async (req: AuthMiddlewareRequest, res: Response) => {
     try {
       const { backupId } = req.params;
-      const authReq = req;
+      const authReq = req as any;
       const restoredBy = authReq.user?.username || 'unknown';
 
       // Get backup metadata
@@ -461,14 +434,11 @@ router.post(
         data: result,
       });
     } catch (error) {
-      logger.error(
-        'Error restoring from backup:',
-        error instanceof Error ? error : new Error(String(error))
-      );
+      console.error('Error restoring from backup:', error);
       return res.status(500).json({
         success: false,
         message: 'Failed to restore from backup',
-        error: error instanceof Error ? error.message : String(error),
+        error: (error as any).message,
       });
     }
   }
@@ -498,14 +468,11 @@ router.delete(
         });
       }
     } catch (error) {
-      logger.error(
-        'Error deleting backup:',
-        error instanceof Error ? error : new Error(String(error))
-      );
+      console.error('Error deleting backup:', error);
       return res.status(500).json({
         success: false,
         message: 'Failed to delete backup',
-        error: error instanceof Error ? error.message : String(error),
+        error: (error as any).message,
       });
     }
   }
@@ -552,14 +519,11 @@ router.get(
       res.setHeader('Content-Disposition', `attachment; filename="${backupFileName}"`);
       return res.sendFile(backupPath);
     } catch (error) {
-      logger.error(
-        'Error downloading backup:',
-        error instanceof Error ? error : new Error(String(error))
-      );
+      console.error('Error downloading backup:', error);
       return res.status(500).json({
         success: false,
         message: 'Failed to download backup',
-        error: error instanceof Error ? error.message : String(error),
+        error: (error as any).message,
       });
     }
   }
@@ -576,31 +540,25 @@ router.post(
   handleUploadError,
   async (req: AuthMiddlewareRequest, res: Response) => {
     try {
-      if (!(req as unknown as { file?: { path: string } }).file) {
+      if (!(req as any).file) {
         return res.status(400).json({
           success: false,
           message: 'No file uploaded',
         });
       }
 
-      const result = await importExportService.importConfigurations(
-        (req as unknown as { file?: { path: string } }).file.path,
-        {
-          format: req.body.format || 'json',
-          validateOnly: true,
-          skipValidation: false,
-          overwrite: false,
-        }
-      );
+      const result = await importExportService.importConfigurations((req as any).file.path, {
+        format: req.body.format || 'json',
+        validateOnly: true,
+        skipValidation: false,
+        overwrite: false,
+      });
 
       // Clean up uploaded file
       try {
-        await fs.unlink((req as unknown as { file?: { path: string } }).file.path);
+        await fs.unlink((req as any).file.path);
       } catch (cleanupError) {
-        logger.error(
-          'Error cleaning up uploaded file:',
-          cleanupError instanceof Error ? cleanupError : new Error(String(cleanupError))
-        );
+        console.error('Error cleaning up uploaded file:', cleanupError);
       }
 
       return res.json({
@@ -609,27 +567,21 @@ router.post(
         data: result,
       });
     } catch (error) {
-      logger.error(
-        'Error validating file:',
-        error instanceof Error ? error : new Error(String(error))
-      );
+      console.error('Error validating file:', error);
 
       // Clean up uploaded file if it exists
-      if ((req as unknown as { file?: { path: string } }).file) {
+      if ((req as any).file) {
         try {
-          await fs.unlink((req as unknown as { file?: { path: string } }).file.path);
+          await fs.unlink((req as any).file.path);
         } catch (cleanupError) {
-          logger.error(
-            'Error cleaning up uploaded file:',
-            cleanupError instanceof Error ? cleanupError : new Error(String(cleanupError))
-          );
+          console.error('Error cleaning up uploaded file:', cleanupError);
         }
       }
 
       return res.status(500).json({
         success: false,
         message: 'Failed to validate file',
-        error: error instanceof Error ? error.message : String(error),
+        error: (error as any).message,
       });
     }
   }

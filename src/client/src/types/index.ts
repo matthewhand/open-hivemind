@@ -1,2 +1,2 @@
-export { BotInstance, BotStatus, MessageProvider, LLMProvider, MessageProviderType, LLMProviderType, Persona, PersonaCategory, PersonaTrait, CreatePersonaRequest, UpdatePersonaRequest, ProviderModalState, ProviderTypeConfig, FieldConfig, Bot, CreateBotRequest, MESSAGE_PROVIDER_CONFIGS, LLM_PROVIDER_CONFIGS, DEFAULT_PERSONA, BUILTIN_PERSONAS, PersonaModalState } from './bot';
-export { Spec, SpecListResponse, SpecDetailResponse, SpecVersion } from './spec';
+export * from './bot';
+export * from './spec';

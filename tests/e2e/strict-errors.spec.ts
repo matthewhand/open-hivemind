@@ -221,7 +221,7 @@ test.describe('Strict Error Detection Tests', () => {
 
       // Verify sections exist
       const sections = page.locator('[class*="section"], [class*="card"], [class*="collapse"]');
-      expect(await sections.count()).toBeGreaterThan(0);
+      await expect(sections.first()).toBeVisible();
 
       await page.screenshot({ path: 'test-results/strict-13-config-sections.png' });
       await assertNoErrors(errors, 'Config sections display');

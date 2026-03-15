@@ -1,12 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useWebSocket } from '../../contexts/WebSocketContext';
-import Card from '../DaisyUI/Card';
-import Badge from '../DaisyUI/Badge';
-import { Alert } from '../DaisyUI/Alert';
-import Button from '../DaisyUI/Button';
-import PageHeader from '../DaisyUI/PageHeader';
-import StatsCards from '../DaisyUI/StatsCards';
+import { Card, Badge, Alert, Button, PageHeader, StatsCards } from '../DaisyUI';
 import {
   Activity,
   RotateCcw,
@@ -24,69 +19,7 @@ import BotActivityWaterfallMonitor from './BotActivityWaterfallMonitor';
 import { apiService } from '../../services/api';
 import type { StatusResponse, Bot } from '../../services/api';
 
-const mockSpans: TraceSpan[] = [
-  {
-    id: 'trace-req-8f9d3b2a',
-    parentId: null,
-    name: 'POST /api/v1/chat/completions',
-    service: 'api-gateway',
-    startTime: 0,
-    duration: 1245.5,
-    status: 'success',
-    tags: { 'http.status_code': '200', 'client.id': 'app-mobile-1' }
-  },
-  {
-    id: 'span-auth-11',
-    parentId: 'trace-req-8f9d3b2a',
-    name: 'authenticateRequest',
-    service: 'auth-service',
-    startTime: 5.2,
-    duration: 45.1,
-    status: 'success',
-    tags: { 'user.id': 'usr_99823' }
-  },
-  {
-    id: 'span-db-12',
-    parentId: 'span-auth-11',
-    name: 'querySessionToken',
-    service: 'database',
-    startTime: 8.5,
-    duration: 38.0,
-    status: 'success',
-    tags: { 'db.query': 'SELECT * FROM sessions WHERE token = ?' }
-  },
-  {
-    id: 'span-bot-20',
-    parentId: 'trace-req-8f9d3b2a',
-    name: 'processChatLogic',
-    service: 'bot-core',
-    startTime: 55.0,
-    duration: 1180.2,
-    status: 'success'
-  },
-  {
-    id: 'span-llm-30',
-    parentId: 'span-bot-20',
-    name: 'generateResponse',
-    service: 'llm-provider',
-    startTime: 60.5,
-    duration: 1050.8,
-    status: 'success',
-    tags: { 'model': 'gpt-4', 'tokens.prompt': '145', 'tokens.completion': '280' }
-  },
-  {
-    id: 'span-ext-api-40',
-    parentId: 'span-bot-20',
-    name: 'fetchUserData',
-    service: 'external-api',
-    startTime: 1120.0,
-    duration: 65.0,
-    status: 'error',
-    tags: { 'http.url': 'https://api.crm.local/users/99823' },
-    logs: ['Connection timeout after 60ms', 'Retrying... failed']
-  }
-];
-
+// Mock trace data for the Distributed Trace Waterfall removed since we use dynamic bot data
 
 interface BotWithStatus extends Bot {
   id: string;
@@ -245,7 +178,7 @@ const MonitoringDashboard: React.FC<MonitoringDashboardProps> = ({
     { icon: <Heart className="w-5 h-5" />, label: 'Infrastructure Health' },
     { icon: <Cpu className="w-5 h-5" />, label: 'Bot Status' },
     { icon: <Clock className="w-5 h-5" />, label: 'Activity Monitor' },
-    { icon: <Activity className="w-5 h-5" />, label: 'Distributed Tracing' },
+    { icon: <Activity className="w-5 h-5" />, label: 'Bot Activity Trace' },
   ];
 
   const stats = [
@@ -295,7 +228,7 @@ const MonitoringDashboard: React.FC<MonitoringDashboardProps> = ({
       <PageHeader
         title="System Monitoring"
         description={`Last updated: ${lastRefresh.toLocaleTimeString()}`}
-        icon={<ChartBar />}
+        icon={ChartBar}
         actions={
           <div className="flex items-center gap-2">
             <select
@@ -325,7 +258,7 @@ const MonitoringDashboard: React.FC<MonitoringDashboardProps> = ({
       />
 
       {/* Overall Health Summary */}
-      <StatsCards stats={stats} isLoading={false} />
+      <StatsCards stats={stats} isLoading={loading && !systemMetrics} />
 
       {/* Tab Navigation */}
       <div className="bg-base-200 border-b border-base-300 rounded-t-lg">
@@ -373,7 +306,7 @@ const MonitoringDashboard: React.FC<MonitoringDashboardProps> = ({
         </TabPanel>
 
         <TabPanel value={activeTab} index={3}>
-          <DistributedTraceWaterfall traceId="trace-req-8f9d3b2a" spans={mockSpans} className="h-[600px] shadow-lg rounded-xl" />
+          <BotActivityWaterfallMonitor />
         </TabPanel>
       </div>
     </div>

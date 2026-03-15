@@ -1,7 +1,6 @@
 import Debug from 'debug';
 import { AuditLogger } from '@src/common/auditLogger';
-import { ErrorHandler } from '@src/common/errors/ErrorHandler';
-import { PerformanceMonitor } from '@src/common/errors/PerformanceMonitor';
+import { ErrorHandler, PerformanceMonitor } from '@src/common/errors/ErrorHandler';
 import { getLlmProvider } from '@src/llm/getLlmProvider';
 import { InputSanitizer } from '@src/utils/InputSanitizer';
 import { generateChatCompletionDirect } from '@integrations/openwebui/directClient';
@@ -337,9 +336,7 @@ export async function handleMessage(
 
         // Track and trim history (skip for stateful providers that manage their own)
         const maxHistoryTokens = Number(botConfig.LLM_MAX_HISTORY_TOKENS || 2000);
-        const providerWantsHistory = llmProvider.supportsHistory
-          ? llmProvider.supportsHistory()
-          : true;
+        const providerWantsHistory = llmProvider.supportsHistory ? llmProvider.supportsHistory() : true;
         const trimmedHistory = providerWantsHistory
           ? trimHistoryToTokenBudget(historyMessages, {
               inputBudgetTokens: maxHistoryTokens,

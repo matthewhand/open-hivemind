@@ -164,11 +164,10 @@ export class NetworkError extends BaseHivemindError {
   }
 
   private calculateRetryDelay(): number {
-    // Exponential backoff with proportional jitter (+/- 10%)
+    // Exponential backoff with jitter
     const baseDelay = 1000; // 1 second
-    const jitterRange = baseDelay * 0.2; // 20% total range
-    const jitter = Math.random() * jitterRange - jitterRange / 2; // +/- 10%
-    return Math.max(0, Math.floor(baseDelay + jitter));
+    const jitter = Math.random() * 1000; // Random jitter up to 1 second
+    return baseDelay + jitter;
   }
 }
 
@@ -546,100 +545,86 @@ export class ErrorFactory {
     const classification = ErrorUtils.classifyError(hivemindError);
 
     switch (classification.type) {
-      case 'network': {
+      case 'network':
         return new NetworkError(
           ErrorUtils.getMessage(hivemindError),
-          ErrorUtils.getRecordField(hivemindError, 'response'),
-          ErrorUtils.getRecordField(hivemindError, 'request'),
+          (hivemindError as any).response,
+          (hivemindError as any).request,
           context
         );
-      }
 
-      case 'validation': {
+      case 'validation':
         return new ValidationError(
           ErrorUtils.getMessage(hivemindError),
-          ErrorUtils.getStringField(hivemindError, 'field'),
-          ErrorUtils.getField(hivemindError, 'value'),
-          ErrorUtils.getField(hivemindError, 'expected'),
-          ErrorUtils.getStringArrayField(hivemindError, 'suggestions'),
+          (hivemindError as any).field,
+          (hivemindError as any).value,
+          (hivemindError as any).expected,
+          (hivemindError as any).suggestions,
           context
         );
-      }
 
-      case 'configuration': {
+      case 'configuration':
         return new ConfigurationError(
           ErrorUtils.getMessage(hivemindError),
-          ErrorUtils.getStringField(hivemindError, 'configKey'),
-          ErrorUtils.getStringField(hivemindError, 'expectedType'),
-          ErrorUtils.getStringField(hivemindError, 'providedType'),
+          (hivemindError as any).configKey,
+          (hivemindError as any).expectedType,
+          (hivemindError as any).providedType,
           context
         );
-      }
 
-      case 'database': {
+      case 'database':
         return new DatabaseError(
           ErrorUtils.getMessage(hivemindError),
-          ErrorUtils.getStringField(hivemindError, 'operation'),
-          ErrorUtils.getStringField(hivemindError, 'table'),
-          ErrorUtils.getStringField(hivemindError, 'query'),
+          (hivemindError as any).operation,
+          (hivemindError as any).table,
+          (hivemindError as any).query,
           context
         );
-      }
 
-      case 'authentication': {
+      case 'authentication':
         return new AuthenticationError(
           ErrorUtils.getMessage(hivemindError),
-          ErrorUtils.getStringField(hivemindError, 'provider'),
-          ErrorUtils.getStringField(hivemindError, 'reason') as
-            | 'invalid_credentials'
-            | 'expired_token'
-            | 'missing_token'
-            | 'invalid_format'
-            | undefined,
+          (hivemindError as any).provider,
+          (hivemindError as any).reason,
           context
         );
-      }
 
-      case 'authorization': {
+      case 'authorization':
         return new AuthorizationError(
           ErrorUtils.getMessage(hivemindError),
-          ErrorUtils.getStringField(hivemindError, 'resource'),
-          ErrorUtils.getStringField(hivemindError, 'action'),
-          ErrorUtils.getStringField(hivemindError, 'requiredPermission'),
+          (hivemindError as any).resource,
+          (hivemindError as any).action,
+          (hivemindError as any).requiredPermission,
           context
         );
-      }
 
-      case 'rate-limit': {
+      case 'rate-limit':
         return new RateLimitError(
           ErrorUtils.getMessage(hivemindError),
-          ErrorUtils.getNumberField(hivemindError, 'retryAfter') || 60,
-          ErrorUtils.getNumberField(hivemindError, 'limit'),
-          ErrorUtils.getNumberField(hivemindError, 'remaining'),
-          ErrorUtils.getDateField(hivemindError, 'resetTime'),
+          (hivemindError as any).retryAfter || 60,
+          (hivemindError as any).limit,
+          (hivemindError as any).remaining,
+          (hivemindError as any).resetTime,
           context
         );
-      }
 
-      case 'timeout': {
+      case 'timeout':
         return new TimeoutError(
           ErrorUtils.getMessage(hivemindError),
-          ErrorUtils.getNumberField(hivemindError, 'timeoutMs') || 30000,
-          ErrorUtils.getStringField(hivemindError, 'operation'),
+          (hivemindError as any).timeoutMs || 30000,
+          (hivemindError as any).operation,
           context
         );
-      }
 
-      case 'api': {
+      case 'api':
         return new ApiError(
           ErrorUtils.getMessage(hivemindError),
-          ErrorUtils.getStringField(hivemindError, 'service') || 'unknown',
-          ErrorUtils.getStringField(hivemindError, 'endpoint'),
+          (hivemindError as any).service || 'unknown',
+          (hivemindError as any).endpoint,
           ErrorUtils.getStatusCode(hivemindError),
-          ErrorUtils.getNumberField(hivemindError, 'retryAfter'),
+          (hivemindError as any).retryAfter,
           context
         );
-      }
 
       default:
         // Create a generic error for unknown types

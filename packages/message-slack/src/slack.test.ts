@@ -1,5 +1,5 @@
-import { SlackInstanceFactory } from './core/SlackInstanceFactory';
 import { create, manifest } from './index';
+import { SlackInstanceFactory } from './core/SlackInstanceFactory';
 
 jest.mock('./core/SlackInstanceFactory');
 jest.mock('./SlackService', () => ({
@@ -8,9 +8,7 @@ jest.mock('./SlackService', () => ({
 }));
 jest.mock('./SlackBotManager');
 jest.mock('@src/config/BotConfigurationManager', () => ({
-  BotConfigurationManager: {
-    getInstance: jest.fn().mockReturnValue({ getAllBots: jest.fn().mockReturnValue([]) }),
-  },
+  BotConfigurationManager: { getInstance: jest.fn().mockReturnValue({ getAllBots: jest.fn().mockReturnValue([]) }) },
 }));
 
 describe('message-slack', () => {

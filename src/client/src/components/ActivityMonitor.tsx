@@ -1,10 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import Card from './DaisyUI/Card';
-import Badge from './DaisyUI/Badge';
-import Button from './DaisyUI/Button';
-import { Alert } from './DaisyUI/Alert';
-import DataTable from './DaisyUI/DataTable';
+import { Card, Badge, Button, Alert, DataTable } from './DaisyUI';
 import {
   Activity,
   Server,
@@ -116,30 +112,16 @@ const ActivityMonitor: React.FC<ActivityMonitorProps> = ({ showPopoutButton = fa
   // Calculated Stats
   const { totalEvents, errorEvents, uniqueBots, recentEventsCount } = useMemo(() => {
     const total = events.length;
-
-    // ⚡ Bolt Optimization: Combined multiple array iterations into a single O(N) reduce pass
-    const now = Date.now();
-    const fiveMinsAgo = now - 5 * 60 * 1000;
-
-    const stats = events.reduce((acc, e) => {
-      if (e.status === 'error' || e.status === 'timeout') {
-        acc.errors++;
-      }
-
-      acc.uniqueBots.add(e.botName);
-
-      if (new Date(e.timestamp).getTime() > fiveMinsAgo) {
-        acc.recent++;
-      }
-
-      return acc;
-    }, { errors: 0, uniqueBots: new Set<string>(), recent: 0 });
+    const errors = events.filter(e => e.status === 'error' || e.status === 'timeout').length;
+    const unique = new Set(events.map(e => e.botName)).size;
+    // Events in last 5 minutes (assuming events are recent)
+    const recent = events.filter(e => new Date(e.timestamp).getTime() > Date.now() - 5 * 60 * 1000).length;
 
     return {
       totalEvents: total,
-      errorEvents: stats.errors,
-      uniqueBots: stats.uniqueBots.size,
-      recentEventsCount: stats.recent
+      errorEvents: errors,
+      uniqueBots: unique,
+      recentEventsCount: recent
     };
   }, [events]);
 

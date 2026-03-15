@@ -34,11 +34,7 @@ export async function withRetry<T>(
       onRetry(error, currentAttempt, maxRetries, delayMs);
     }
 
-    // Apply +/- 10% proportional jitter to prevent thundering herd
-    const jitterRange = delayMs * 0.2;
-    const jitteredDelayMs = Math.max(0, Math.floor(delayMs + (Math.random() * jitterRange - jitterRange / 2)));
-
-    await new Promise(resolve => setTimeout(resolve, jitteredDelayMs));
+    await new Promise(resolve => setTimeout(resolve, delayMs));
     return withRetry(operation, retries - 1, delayMs * 2, onRetry, maxRetries);
   }
 }
