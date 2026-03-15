@@ -44,7 +44,7 @@ const configMocks = [
   'slackConfig',
   'openaiConfig',
   'flowiseConfig',
-  'ollamaConfig',
+
   'mattermostConfig',
   'openWebUIConfig',
   'webhookConfig',

@@ -20,6 +20,9 @@
             "@message/*": [
                 "../../src/message/*"
             ],
+            "@common/*": [
+                "../../src/common/*"
+            ],
             "@types/*": [
                 "../../src/types/*"
             ],

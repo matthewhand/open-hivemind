@@ -1,5 +1,5 @@
 import { IMessage } from '@message/interfaces/IMessage';
-import { InputSanitizer, sanitizeMessageText } from '@common/security/inputSanitizer';
+import { InputSanitizer, sanitizeMessageText } from '../../../src/common/security/inputSanitizer';
 
 // Define proper Slack message interfaces
 interface SlackUser {
