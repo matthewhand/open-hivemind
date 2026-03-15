@@ -16,6 +16,7 @@ import adminRouter from './routes/admin';
 import agentsRouter from './routes/agents';
 import aiAssistRouter from './routes/ai-assist';
 import botsRouter from './routes/bots';
+import cacheRouter from './routes/cache';
 import configRouter from './routes/config';
 import consolidatedRouter from './routes/consolidated';
 import dashboardRouter from './routes/dashboard';
