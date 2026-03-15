@@ -14,7 +14,7 @@ import {
   Cpu,
   Clock,
   ChartBar,
-  AlertTriangle,
+  AlertCircle,
 } from 'lucide-react';
 import SystemHealth from '../SystemHealth';
 import BotStatusCard from '../BotStatusCard';
@@ -23,6 +23,8 @@ import DistributedTraceWaterfall, { TraceSpan } from './DistributedTraceWaterfal
 import BotActivityWaterfallMonitor from './BotActivityWaterfallMonitor';
 import { apiService } from '../../services/api';
 import type { StatusResponse, Bot } from '../../services/api';
+import Logger from '../../utils/logger';
+
 
 const mockSpans: TraceSpan[] = [
   {
@@ -141,11 +143,11 @@ const MonitoringDashboard: React.FC<MonitoringDashboardProps> = ({
       // Refresh all monitoring data
       const [systemData, configData] = await Promise.all([
         apiService.getStatus().catch((err) => {
-          console.error('[Monitoring] getStatus failed:', err);
+          Logger.error('[Monitoring] getStatus failed:', err);
           return { bots: [] } as any;
         }),
         apiService.getConfig().catch((err) => {
-          console.error('[Monitoring] getConfig failed:', err);
+          Logger.error('[Monitoring] getConfig failed:', err);
           return { bots: [] };
         }),
       ]);
@@ -188,7 +190,7 @@ const MonitoringDashboard: React.FC<MonitoringDashboardProps> = ({
         onRefresh();
       }
     } catch (error) {
-      console.error('Failed to refresh monitoring data:', error);
+      Logger.error('Failed to refresh monitoring data:', error);
     } finally {
       setLoading(false);
     }
@@ -240,6 +242,7 @@ const MonitoringDashboard: React.FC<MonitoringDashboardProps> = ({
   };
 
   const overallStatus = getOverallHealthStatus();
+  console.log("Rendering MonitoringDashboard...");
 
   const tabs = [
     { icon: <Heart className="w-5 h-5" />, label: 'Infrastructure Health' },
@@ -271,7 +274,7 @@ const MonitoringDashboard: React.FC<MonitoringDashboardProps> = ({
         ? Math.round((bots.filter(bot => bot.statusData?.status === 'error').length / bots.length) * 100)
         : 0}%`,
       description: 'Bots with errors',
-      icon: <AlertTriangle className="w-8 h-8" />, // AlertTriangle needs import or use generic
+      icon: <AlertCircle className="w-8 h-8" />,
       color: 'error' as const,
     },
     {
@@ -286,8 +289,8 @@ const MonitoringDashboard: React.FC<MonitoringDashboardProps> = ({
     }
   ];
 
-  // Need to import AlertTriangle
-  // Added AlertTriangle to imports in the file block above (I'll need to make sure it's actually there)
+  // Need to import AlertCircle
+  // Added AlertCircle to imports in the file block above (I'll need to make sure it's actually there)
 
   return (
     <div className="flex-1 space-y-6">

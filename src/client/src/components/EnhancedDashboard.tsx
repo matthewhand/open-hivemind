@@ -13,6 +13,8 @@ import Card from '../components/DaisyUI/Card';
 import Hero from '../components/DaisyUI/Hero';
 import { apiService } from '../services/api';
 import type { Bot, StatusResponse } from '../services/api';
+import Logger from '../utils/logger';
+
 
 interface DashboardStats {
   totalBots: number;
@@ -105,7 +107,7 @@ const EnhancedDashboard: React.FC = () => {
   const handleSearch = (query: string) => {
     setSearchQuery(query);
     // In a real app, this might trigger a search API call
-    console.log('Searching for:', query);
+    Logger.log('Searching for:', query);
   };
 
   const handleRefresh = () => {

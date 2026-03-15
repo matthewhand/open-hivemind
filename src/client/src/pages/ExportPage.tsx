@@ -24,6 +24,8 @@ import EmptyState from '../components/DaisyUI/EmptyState';
 import StatsCards from '../components/DaisyUI/StatsCards';
 import SearchFilterBar from '../components/SearchFilterBar';
 import { apiService } from '../services/api';
+import Logger from '../utils/logger';
+
 
 interface Backup {
   id: string;
@@ -50,7 +52,7 @@ const ExportPage: React.FC = () => {
       const data = await apiService.listSystemBackups();
       setBackups(data);
     } catch (err) {
-      console.error('Failed to fetch backups:', err);
+      Logger.error('Failed to fetch backups:', err);
       setToast({ title: 'Error', message: 'Failed to load backups', type: 'error' });
     } finally {
       setLoading(false);

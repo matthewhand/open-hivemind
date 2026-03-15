@@ -1,5 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect, useCallback } from 'react';
+import Logger from '../../utils/logger';
+
 
 interface Widget {
   id: string;
@@ -312,7 +314,7 @@ const DashboardWidgetSystem: React.FC<DashboardWidgetSystemProps> = ({
         const parsedWidgets = JSON.parse(saved);
         setWidgets(parsedWidgets);
       } catch (error) {
-        console.warn('Failed to load saved widgets:', error);
+        Logger.warn('Failed to load saved widgets:', error);
       }
     }
   }, [initialWidgets]);

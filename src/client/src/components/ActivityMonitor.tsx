@@ -16,6 +16,8 @@ import {
   AlertCircle,
 } from 'lucide-react';
 import { apiService, ActivityEvent } from '../services/api';
+import Logger from '../utils/logger';
+
 
 const getStatusColor = (status: string): 'info' | 'warning' | 'error' | 'success' => {
   switch (status) {
@@ -60,7 +62,7 @@ const ActivityMonitor: React.FC<ActivityMonitorProps> = ({ showPopoutButton = fa
 
       setLastUpdated(new Date());
     } catch (error) {
-      console.error('Failed to fetch activity:', error);
+      Logger.error('Failed to fetch activity:', error);
     } finally {
       setLoading(false);
     }

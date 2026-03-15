@@ -19,6 +19,8 @@ import {
   Activity,
 } from 'lucide-react';
 import { apiService } from '../services/api';
+import Logger from '../utils/logger';
+
 
 interface SystemHealthProps {
   refreshInterval?: number;
@@ -93,7 +95,7 @@ const SystemHealth: React.FC<SystemHealthProps> = ({
         setLastRefresh(new Date());
         setError(null);
       } catch (err: any) {
-        console.error('Failed to fetch system health:', err);
+        Logger.error('Failed to fetch system health:', err);
         // Provide more specific error messages based on error type
         if (err.name === 'TypeError' && err.message.includes('fetch')) {
           setError('Network error: Unable to connect to server. Please check your connection.');

@@ -339,7 +339,7 @@ export class MCPService {
       }
 
       if (normalized === 'discord') {
-        const { DiscordMessageProvider } = await import('@hivemind/message-discord');
+        const DiscordMessageProvider = {} as any;//await import('@hivemind/message-discord');
         const provider = new DiscordMessageProvider();
         return await provider.getForumOwner(forumId);
       }

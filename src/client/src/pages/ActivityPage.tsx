@@ -16,6 +16,8 @@ import EmptyState from '../components/DaisyUI/EmptyState';
 import Input from '../components/DaisyUI/Input';
 import SearchFilterBar from '../components/SearchFilterBar';
 import { apiService, ActivityEvent, ActivityResponse } from '../services/api';
+import Logger from '../utils/logger';
+
 
 const ActivityPage: React.FC = () => {
   const [data, setData] = useState<ActivityResponse | null>(null);
@@ -82,7 +84,7 @@ const ActivityPage: React.FC = () => {
     } catch (err: any) {
       const message = err instanceof Error ? err.message : 'Failed to fetch activity';
       setError(message);
-      console.error('Error fetching activity:', err);
+      Logger.error('Error fetching activity:', err);
     } finally {
       setLoading(false);
     }

@@ -24,6 +24,8 @@ import {
   XMarkIcon,
 } from '@heroicons/react/24/outline';
 import { useAppSelector } from '../store/hooks';
+import Logger from '../utils/logger';
+
 
 const SystemInfo: React.FC = () => {
   const dashboard = useAppSelector(state => state.dashboard);
@@ -73,10 +75,10 @@ const SystemInfo: React.FC = () => {
       }
 
       const data = await response.json();
-      console.log(`System ${action} initiated:`, data);
+      Logger.log(`System ${action} initiated:`, data);
       setLogs(prev => [...prev, `[${new Date().toISOString()}] System ${action} initiated: ${data.message || 'Success'}`]);
     } catch (error) {
-      console.error(`Failed to ${action} system:`, error);
+      Logger.error(`Failed to ${action} system:`, error);
       setLogs(prev => [...prev, `[${new Date().toISOString()}] Failed to ${action}: ${error instanceof Error ? error.message : 'Unknown error'}`]);
     } finally {
       setIsLoading(false);

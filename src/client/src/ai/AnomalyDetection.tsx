@@ -1,3 +1,4 @@
+import Logger from '../utils/logger';
 /**
  * @wip ROADMAP ITEM — NOT ACTIVE
  *
@@ -15,6 +16,7 @@ import { selectUser } from '../store/slices/authSlice';
 import { AnimatedBox } from '../animations/AnimationComponents';
 import { apiService } from '../services/api';
 import {
+
   ExclamationTriangleIcon,
   ChartBarIcon,
   Cog6ToothIcon,
@@ -476,15 +478,15 @@ export const AnomalyDetection: React.FC<AnomalyDetectionProps> = ({ onAnomalyDet
         }));
       } else {
         // Keep mock data if no real data
-        console.log('No real anomalies found, using mock data');
+        Logger.log('No real anomalies found, using mock data');
       }
     } catch (error: unknown) {
       // Handle authentication errors (401) - user should be redirected to login
       if (error instanceof Error && error.message.includes('401')) {
-        console.warn('Authentication expired, please log in again');
+        Logger.warn('Authentication expired, please log in again');
         // The apiService typically handles redirects, but we can add additional handling here
       } else {
-        console.error('Failed to fetch anomalies', error);
+        Logger.error('Failed to fetch anomalies', error);
       }
     } finally {
       setIsLoading(false);

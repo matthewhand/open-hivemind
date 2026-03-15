@@ -8,6 +8,8 @@ import type {
   PerformanceMetric,
 } from '../../../src/webui/services/WebSocketService';
 import type { AlertEvent } from '../types/Alert';
+import Logger from '../utils/logger';
+
 
 type BotStat = { name: string; messageCount: number; errorCount: number };
 
@@ -52,7 +54,7 @@ export const WebSocketProvider: React.FC<{ children: ReactNode }> = ({ children 
         const tokens = JSON.parse(tokenString);
         token = tokens.accessToken;
       } catch (e) {
-        console.error('Failed to parse auth token', e);
+        Logger.error('Failed to parse auth token', e);
       }
     }
 
@@ -65,12 +67,12 @@ export const WebSocketProvider: React.FC<{ children: ReactNode }> = ({ children 
     });
 
     newSocket.on('connect', () => {
-      console.log('WebSocket connected');
+      Logger.log('WebSocket connected');
       setIsConnected(true);
     });
 
     newSocket.on('disconnect', () => {
-      console.log('WebSocket disconnected');
+      Logger.log('WebSocket disconnected');
       setIsConnected(false);
     });
 
@@ -134,17 +136,17 @@ export const WebSocketProvider: React.FC<{ children: ReactNode }> = ({ children 
 
     // Bot status updates
     newSocket.on('bot_status_update', (data) => {
-      console.log('Bot status update:', data);
+      Logger.log('Bot status update:', data);
     });
 
     // System metrics
     newSocket.on('system_metrics_update', (data) => {
-      console.log('System metrics update:', data);
+      Logger.log('System metrics update:', data);
     });
 
     // Error handling
     newSocket.on('error', (error) => {
-      console.error('WebSocket error:', error);
+      Logger.error('WebSocket error:', error);
     });
 
     socketRef.current = newSocket;

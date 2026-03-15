@@ -81,7 +81,7 @@ const MCPProviderManagerComponent: React.FC<MCPProviderManagerProps> = ({ classN
 
       setProviders(providersWithStatus);
     } catch (error) {
-      console.error('Failed to load providers:', error);
+      Logger.error('Failed to load providers:', error);
     }
   };
 
@@ -90,7 +90,7 @@ const MCPProviderManagerComponent: React.FC<MCPProviderManagerProps> = ({ classN
       const availableTemplates = manager.getTemplates();
       setTemplates(availableTemplates);
     } catch (error) {
-      console.error('Failed to load templates:', error);
+      Logger.error('Failed to load templates:', error);
     }
   };
 

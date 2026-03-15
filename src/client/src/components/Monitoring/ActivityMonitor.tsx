@@ -11,6 +11,8 @@ import SearchFilterBar from '../SearchFilterBar';
 import { useWebSocket } from '../../hooks/useWebSocket';
 import { apiService, ActivityEvent, ActivityResponse } from '../../services/api';
 import { Clock, Activity, AlertTriangle, MessageSquare, RefreshCw } from 'lucide-react';
+import Logger from '../../utils/logger';
+
 
 interface FilterOptions {
   agent?: string;
@@ -67,7 +69,7 @@ const ActivityMonitor: React.FC = () => {
       }
       setError(null);
     } catch (err: any) {
-      console.error('Failed to fetch activity:', err);
+      Logger.error('Failed to fetch activity:', err);
       setError('Failed to load activity history');
     } finally {
       setLoading(false);

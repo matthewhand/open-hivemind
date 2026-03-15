@@ -154,7 +154,7 @@ const BotsPage: React.FC = () => {
       setChatHistory(chatJson.data?.messages || []);
     } catch (err) {
       // Don't show toast for initial load failures to keep UI clean, but log error
-      console.error('Failed to load bot preview data:', err);
+      Logger.error('Failed to load bot preview data:', err);
     }
   };
 
