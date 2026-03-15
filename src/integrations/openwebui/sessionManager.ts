@@ -1,7 +1,7 @@
 import axios from 'axios';
 import Debug from 'debug';
-import openWebUIConfig from './openWebUIConfig';
 import { isSafeUrl } from '@src/utils/ssrfGuard';
+import openWebUIConfig from './openWebUIConfig';
 
 const debug = Debug('app:sessionManager');
 let sessionKey: string | null = null; // Cache session key in memory.
@@ -57,11 +57,7 @@ async function authenticateAndGetKey(): Promise<string> {
       throw new Error('OpenWebUI API URL is not safe to connect to.');
     }
 
-    const response = await axios.post(
-      targetUrl,
-      { username, password },
-      { timeout: 15000 }
-    );
+    const response = await axios.post(targetUrl, { username, password }, { timeout: 15000 });
 
     const newSessionKey = response.data.sessionKey;
 
