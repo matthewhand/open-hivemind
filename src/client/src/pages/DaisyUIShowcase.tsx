@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { BotChatTimeline } from '../components/BotChatTimeline';
-import { PageHeader } from '../components/DaisyUI';
+import PageHeader from '../components/DaisyUI/PageHeader';
 import { LayoutTemplate } from 'lucide-react';
 
 /**

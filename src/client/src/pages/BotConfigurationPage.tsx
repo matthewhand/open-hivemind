@@ -1,17 +1,15 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect, useCallback } from 'react';
 import { Settings, Save, RefreshCw, AlertCircle, CheckCircle, History } from 'lucide-react';
-import {
-  PageHeader,
-  Accordion,
-  Input,
-  Select,
-  Toggle,
-  Button,
-  Alert,
-  Badge,
-  Modal,
-} from '../components/DaisyUI';
+import PageHeader from '../components/DaisyUI/PageHeader';
+import Accordion from '../components/DaisyUI/Accordion';
+import Input from '../components/DaisyUI/Input';
+import Select from '../components/DaisyUI/Select';
+import Toggle from '../components/DaisyUI/Toggle';
+import Button from '../components/DaisyUI/Button';
+import { Alert } from '../components/DaisyUI/Alert';
+import Badge from '../components/DaisyUI/Badge';
+import { Modal } from '../components/DaisyUI/Modal';
 
 interface ConfigSchema {
   values: Record<string, any>;
