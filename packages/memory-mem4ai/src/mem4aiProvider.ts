@@ -268,9 +268,145 @@ export class Mem4aiProvider {
         throw new Error(`Mem4ai API error: ${response.status} - ${error}`);
       }
 
-      return (await response.json()) as Promise<unknown>;
-    } finally {
-      clearTimeout(timeout);
+        try {
+            const response = await this.makeRequest(`/memories/search?${params}`, 'GET');
+
+            const results: SearchResult[] = (response.results as any[]).map((result: Record<string, unknown>) => ({
+                id: result.id as string,
+                content: result.content as string,
+                score: result.score as number,
+                metadata: result.metadata as Record<string, unknown> | undefined,
+                timestamp: result.created_at as number | undefined,
+            }));
+
+            this.debug('Search completed', { resultsCount: results.length });
+            return results;
+        } catch (error) {
+            this.debug('Search failed', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Get all memories
+     */
+    async getMemories(limit?: number): Promise<MemoryEntry[]> {
+        this.debug('Getting memories', { limit });
+
+        const params = new URLSearchParams({
+            limit: String(limit || this.config.limit || 10),
+        });
+
+        try {
+            const response = await this.makeRequest(`/memories?${params}`, 'GET');
+
+            const memories: MemoryEntry[] = (response.memories as any[]).map((mem: Record<string, unknown>) => ({
+                id: mem.id as string,
+                content: mem.content as string,
+                metadata: mem.metadata as Record<string, unknown> | undefined,
+                timestamp: mem.created_at as number | undefined,
+                tags: mem.tags as string[] | undefined,
+            }));
+
+            this.debug('Retrieved memories', { count: memories.length });
+            return memories;
+        } catch (error) {
+            this.debug('Failed to get memories', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Delete a memory entry
+     */
+    async deleteMemory(id: string): Promise<boolean> {
+        this.debug('Deleting memory', { id });
+
+        try {
+            await this.makeRequest(`/memories/${id}`, 'DELETE');
+            this.debug('Memory deleted', { id });
+            return true;
+        } catch (error) {
+            this.debug('Failed to delete memory', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Update a memory entry
+     */
+    async updateMemory(id: string, content: string, metadata?: Record<string, unknown>): Promise<MemoryEntry> {
+        this.debug('Updating memory', { id, contentLength: content.length });
+
+        const body = {
+            content,
+            metadata,
+        };
+
+        try {
+            const response = await this.makeRequest(`/memories/${id}`, 'PUT', body);
+
+            this.debug('Memory updated', { id });
+            return {
+                id: response.id as string,
+                content: response.content as string,
+                metadata: response.metadata as Record<string, unknown>,
+                timestamp: response.updated_at as number,
+                tags: response.tags as string[],
+            };
+        } catch (error) {
+            this.debug('Failed to update memory', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Check provider health
+     */
+    async healthCheck(): Promise<boolean> {
+        try {
+            await this.makeRequest('/health', 'GET');
+            return true;
+        } catch {
+            return false;
+        }
+    }
+
+    /**
+     * Make API request to Mem4ai
+     */
+    private async makeRequest(endpoint: string, method: string, body?: Record<string, unknown>): Promise<Record<string, unknown>> {
+        const url = `${this.config.apiUrl}${endpoint}`;
+
+        const headers: Record<string, string> = {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${this.config.apiKey}`,
+        };
+
+        if (this.config.organizationId) {
+            headers['X-Organization-ID'] = this.config.organizationId;
+        }
+
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), this.config.timeout || 30000);
+
+        try {
+            const response = await fetch(url, {
+                method,
+                headers,
+                body: body ? JSON.stringify(body) : undefined,
+                signal: controller.signal,
+            });
+
+            if (!response.ok) {
+                const error = await response.text();
+                throw new Error(`Mem4ai API error: ${response.status} - ${error}`);
+            }
+
+            return await response.json() as Promise<any>;
+        } finally {
+            clearTimeout(timeout);
+        }
     }
   }
 }

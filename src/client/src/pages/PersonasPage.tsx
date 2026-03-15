@@ -188,7 +188,11 @@ const PersonasPage: React.FC = () => {
         }
       }
 
-      await Promise.all(updates);
+      const results = await Promise.allSettled(updates);
+      const failedUpdates = results.filter(r => r.status === 'rejected');
+      if (failedUpdates.length > 0) {
+        errorToast('Warning', `${failedUpdates.length} bot(s) failed to update. They may still be using the old persona.`);
+      }
       await fetchData();
 
       setShowCreateModal(false);
@@ -273,7 +277,11 @@ const PersonasPage: React.FC = () => {
       const updates = deletingPersona.assignedBotIds.map(botId =>
         apiService.updateBot(botId, { persona: 'default', systemInstruction: 'You are a helpful assistant.' }),
       );
-      await Promise.all(updates);
+      const results = await Promise.allSettled(updates);
+      const failedUpdates = results.filter(r => r.status === 'rejected');
+      if (failedUpdates.length > 0) {
+        errorToast('Warning', `${failedUpdates.length} bot(s) failed to unassign from this persona. They may still attempt to use it.`);
+      }
 
       // 2. Delete persona
       await apiService.deletePersona(deletingPersona.id);
