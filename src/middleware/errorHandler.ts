@@ -21,6 +21,8 @@ declare global {
     interface Request {
       correlationId?: string;
       startTime?: number;
+      retryCount?: number;
+      maxRetries?: number;
     }
   }
 }
@@ -78,11 +80,11 @@ function extractErrorContext(req: Request): ErrorContext {
   return {
     correlationId: req.correlationId || 'unknown',
     requestId: req.headers['x-request-id'] as string,
-    userId: (req as any).user?.id || (req as any).user?.sub,
+    userId: (req as import('../auth/types').AuthMiddlewareRequest).user?.id,
     path: req.path,
     method: req.method,
     userAgent: req.headers['user-agent'],
-    ip: req.ip || req.connection.remoteAddress,
+    ip: req.ip || req.connection?.remoteAddress,
     duration,
     // Sanitize sensitive data
     body: sanitizeRequestBody(req.body),
@@ -252,37 +254,19 @@ function emitErrorEvent(error: BaseHivemindError, context: ErrorContext, statusC
 
 /**
  * Setup global error handlers
+ * (Deprecated - Global process handlers are now managed centrally by ShutdownCoordinator
+ * to prevent duplicate registrations and race conditions)
  */
 export function setupGlobalErrorHandlers(): void {
-  // Handle uncaught exceptions
-  process.on('uncaughtException', handleUncaughtException);
-
-  // Handle unhandled promise rejections
-  process.on('unhandledRejection', handleUnhandledRejection);
-
-  debug('Global error handlers setup completed');
+  debug('Global error handlers setup skipped - managed by ShutdownCoordinator');
 }
 
 /**
  * Graceful shutdown handler
+ * (Deprecated - Graceful shutdown is now managed centrally by ShutdownCoordinator)
  */
 export function setupGracefulShutdown(): void {
-  const shutdown = (signal: string): void => {
-    console.log(`\nReceived ${signal}. Starting graceful shutdown...`);
-
-    // Close server, database connections, etc.
-    // This would be implemented by the main application
-
-    setTimeout(() => {
-      console.log('Graceful shutdown completed');
-      process.exit(0);
-    }, 5000); // 5 second timeout
-  };
-
-  process.on('SIGTERM', () => shutdown('SIGTERM'));
-  process.on('SIGINT', () => shutdown('SIGINT'));
-
-  debug('Graceful shutdown handlers setup completed');
+  debug('Graceful shutdown handlers setup skipped - managed by ShutdownCoordinator');
 }
 
 /**
@@ -298,8 +282,8 @@ export function errorRecoveryMiddleware(req: Request, res: Response, next: NextF
   }
 
   // Add retry information to request
-  (req as any).retryCount = retryCount;
-  (req as any).maxRetries = maxRetries;
+  req.retryCount = retryCount;
+  req.maxRetries = maxRetries;
 
   next();
 }

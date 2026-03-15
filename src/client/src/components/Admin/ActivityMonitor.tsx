@@ -22,7 +22,10 @@ import {
   Cell,
 } from 'recharts';
 import { format, subDays, subHours } from 'date-fns';
-import { Badge, Alert, Button, Pagination } from '../DaisyUI';
+import Badge from '../DaisyUI/Badge';
+import { Alert } from '../DaisyUI/Alert';
+import Button from '../DaisyUI/Button';
+import Pagination from '../DaisyUI/Pagination';
 
 interface ActivityFilter {
   agentId?: string;

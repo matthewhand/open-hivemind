@@ -26,7 +26,7 @@ fi
 echo "🔹 Compiling serverless function..."
 mkdir -p dist/netlify/functions
 # Use npx tsc to compile the specific file
-npx tsc src/netlify/functions/server.ts \
+npx tsc src/netlify/functions/server.ts --esModuleInterop \
   --outDir dist/netlify/functions \
   --target es2018 \
   --module commonjs \

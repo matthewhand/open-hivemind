@@ -2,19 +2,25 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Bot, Save, ArrowLeft, Gamepad2, Hash, MessageSquare, Send, Check } from 'lucide-react';
-import {
-  Breadcrumbs,
-  Alert,
-  PageHeader,
-  Button,
-  Input,
-  Textarea,
-  Select,
-} from '../components/DaisyUI';
+import Breadcrumbs from '../components/DaisyUI/Breadcrumbs';
+import { Alert } from '../components/DaisyUI/Alert';
+import PageHeader from '../components/DaisyUI/PageHeader';
+import Button from '../components/DaisyUI/Button';
+import Input from '../components/DaisyUI/Input';
+import Textarea from '../components/DaisyUI/Textarea';
+import Select from '../components/DaisyUI/Select';
 import { useLlmStatus } from '../hooks/useLlmStatus';
 import AIAssistButton from '../components/AIAssistButton';
 import { apiService } from '../services/api';
-import { CONFIG_LIMITS } from '../../../types/config';
+// Hardcoded fallback for Vite build:
+const CONFIG_LIMITS = {
+  SYSTEM_INSTRUCTION_MAX_LENGTH: 5000,
+  SYSTEM_INSTRUCTION_WARNING_LENGTH: 2000,
+  SYSTEM_INSTRUCTION_MIN_LENGTH: 10,
+  BOT_NAME_MIN_LENGTH: 2,
+  BOT_NAME_MAX_LENGTH: 50,
+  PROFILE_NAME_MAX_LENGTH: 100,
+};
 
 const BotCreatePage: React.FC = () => {
   const navigate = useNavigate();
@@ -42,10 +48,12 @@ const BotCreatePage: React.FC = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [personasData, profilesData] = await Promise.all([
+        const [personasResult, profilesResult] = await Promise.allSettled([
           apiService.getPersonas(),
           apiService.getLlmProfiles(),
         ]);
+        const personasData = personasResult.status === 'fulfilled' ? personasResult.value : [];
+        const profilesData = profilesResult.status === 'fulfilled' ? profilesResult.value : {};
 
         let mcpResponse: any = { data: [] };
         try {

@@ -1,6 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect, useCallback } from 'react';
-import { Alert, Toggle, Button } from '../DaisyUI';
+import { Alert } from '../DaisyUI/Alert';
+import Toggle from '../DaisyUI/Toggle';
+import Button from '../DaisyUI/Button';
 import { MessageSquare, Bot, Users, Zap, Info } from 'lucide-react';
 
 interface MessagingConfig {

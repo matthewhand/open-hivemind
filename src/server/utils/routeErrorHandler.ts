@@ -9,7 +9,7 @@ export const handleRouteError = (
   defaultErrorCode: string,
   includeSuccess = false
 ) => {
-  const hivemindError = ErrorUtils.toHivemindError(error) as any;
+  const hivemindError = ErrorUtils.toAppError(error);
   const errorInfo = ErrorUtils.classifyError(hivemindError);
 
   debugInstance(debugMessage, {

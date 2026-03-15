@@ -14,7 +14,7 @@
         "pg": "^8.11.3"
     },
     "peerDependencies": {
-        "@hivemind/shared-types": "*"
+        "@hivemind/shared-types": "workspace:*"
     },
     "devDependencies": {
         "@types/jest": "^29.5.12",

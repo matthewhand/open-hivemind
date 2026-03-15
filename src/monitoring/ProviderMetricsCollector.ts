@@ -674,6 +674,14 @@ export class ProviderMetricsCollector extends EventEmitter {
   }
 
   /**
+   * Clean up resources and stop monitoring.
+   */
+  public shutdown(): void {
+    this.stopMonitoring();
+    this.removeAllListeners();
+  }
+
+  /**
    * Start monitoring all enabled providers
    */
   startMonitoring(): void {

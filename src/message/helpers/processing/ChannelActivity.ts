@@ -8,6 +8,19 @@ const lastBotActivityByChannelAndBot = new Map<string, number>();
 const recentChannelActivity = new Map<string, { botId: string; timestamp: number }[]>();
 const ACTIVITY_WINDOW_MS = 30000; // 30 seconds
 
+// ⚡ Bolt Optimization: Use early-exit loop and .slice() instead of full array .filter()
+function filterRecentActivities<T extends { timestamp: number }>(
+  activities: T[],
+  cutoff: number
+): T[] {
+  for (let i = 0; i < activities.length; i++) {
+    if (activities[i].timestamp > cutoff) {
+      return i === 0 ? activities : activities.slice(i);
+    }
+  }
+  return [];
+}
+
 export function recordBotActivity(channelId: string, botId: string): void {
   const now = Date.now();
   lastBotActivityByChannelAndBot.set(`${channelId}:${botId}`, now);
@@ -18,7 +31,7 @@ export function recordBotActivity(channelId: string, botId: string): void {
 
   // Prune old entries
   const cutoff = now - ACTIVITY_WINDOW_MS;
-  const pruned = activities.filter((a) => a.timestamp > cutoff);
+  const pruned = filterRecentActivities(activities, cutoff);
   recentChannelActivity.set(channelId, pruned);
 
   debug(`Recorded bot activity in ${channelId}:${botId}`);
@@ -37,7 +50,7 @@ export function getRecentChannelActivity(
   since: number
 ): { botId: string; timestamp: number }[] {
   const activities = recentChannelActivity.get(channelId) || [];
-  return activities.filter((a) => a.timestamp > since);
+  return filterRecentActivities(activities, since);
 }
 
 // For tests
