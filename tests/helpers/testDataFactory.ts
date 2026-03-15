@@ -213,6 +213,13 @@ export const slackConfigData: ConfigTestData = {
     WELCOME_RESOURCE_URL: 'https://university.example.com/resources',
     REPORT_ISSUE_URL: 'https://university.example.com/report-issue',
     SLACK_MODE: 'socket',
+    SLACK_BOT_JOIN_CHANNEL_MESSAGE:
+      "# Bot joined the {channel} channel! :robot_face:\n\nWelcome! I'm here to assist. [Get Started](action:start_{channel})",
+    SLACK_USER_JOIN_CHANNEL_MESSAGE:
+      "# Welcome, {user}, to the {channel} channel! :wave:\n\nHere’s some quick info:\n- *Purpose*: Support student inquiries related to learning objectives...\n- *Resources*: [Learn More](${process.env.WELCOME_RESOURCE_URL || 'https://university.example.com/resources'})\n\n## Actions\n- [Learning Objectives](action:learn_objectives_{channel})\n- [How-To](action:how_to_{channel})\n- [Contact Support](action:contact_support_{channel})\n- [Report Issue](action:report_issue_{channel})",
+    SLACK_BOT_LEARN_MORE_MESSAGE: 'Here’s more info about channel {channel}!',
+    SLACK_BUTTON_MAPPINGS:
+      '{"learn_objectives_C08BC0X4DFD": "Learning Objectives", "how_to_C08BC0X4DFD": "How-To", "contact_support_C08BC0X4DFD": "Contact Support", "report_issue_C08BC0X4DFD": "Report Issue", "start_C08BC0X4DFD": "Get Started"}',
   },
   envVars: {
     SLACK_BOT_TOKEN: 'xoxb-test-token-123',
@@ -223,6 +230,10 @@ export const slackConfigData: ConfigTestData = {
     SLACK_MODE: 'rtm',
     WELCOME_RESOURCE_URL: 'https://custom.example.com/welcome',
     REPORT_ISSUE_URL: 'https://custom.example.com/report',
+    SLACK_BOT_JOIN_CHANNEL_MESSAGE: 'Custom bot join message {channel}',
+    SLACK_USER_JOIN_CHANNEL_MESSAGE: 'Custom user join message {user} in {channel}',
+    SLACK_BOT_LEARN_MORE_MESSAGE: 'Custom learn more message {channel}',
+    SLACK_BUTTON_MAPPINGS: '{"test_action": "Test Action"}',
   },
   expectedResults: {
     SLACK_BOT_TOKEN: 'xoxb-test-token-123',
@@ -233,6 +244,10 @@ export const slackConfigData: ConfigTestData = {
     SLACK_MODE: 'rtm',
     WELCOME_RESOURCE_URL: 'https://custom.example.com/welcome',
     REPORT_ISSUE_URL: 'https://custom.example.com/report',
+    SLACK_BOT_JOIN_CHANNEL_MESSAGE: 'Custom bot join message {channel}',
+    SLACK_USER_JOIN_CHANNEL_MESSAGE: 'Custom user join message {user} in {channel}',
+    SLACK_BOT_LEARN_MORE_MESSAGE: 'Custom learn more message {channel}',
+    SLACK_BUTTON_MAPPINGS: '{"test_action": "Test Action"}',
   },
 };
 
@@ -373,6 +388,117 @@ export const telegramConfigGenerator = fc.record({
   TELEGRAM_ALLOWED_CHATS: fc.array(fc.integer()).map((arr) => arr.join(',')),
   TELEGRAM_BLOCKED_USERS: fc.array(fc.integer()).map((arr) => arr.join(',')),
   TELEGRAM_ENABLE_COMMANDS: fc.boolean(),
+});
+
+/**
+ * Property-based test generator for Discord configuration
+ */
+export const discordConfigGenerator = fc.record({
+  DISCORD_BOT_TOKEN: fc.string({ minLength: 10 }),
+  DISCORD_CLIENT_ID: fc.string({ minLength: 10 }),
+  DISCORD_GUILD_ID: fc.string({ minLength: 10 }),
+  DISCORD_AUDIO_FILE_PATH: fc.string({ minLength: 3 }),
+  DISCORD_WELCOME_MESSAGE: fc.string(),
+  DISCORD_CHANNEL_ID: fc.string(),
+  DISCORD_DEFAULT_CHANNEL_ID: fc.string(),
+  DISCORD_VOICE_CHANNEL_ID: fc.string(),
+  DISCORD_PRIORITY_CHANNEL: fc.string(),
+  DISCORD_MESSAGE_HISTORY_LIMIT: fc.integer({ min: 1, max: 100 }),
+  DISCORD_UNSOLICITED_CHANCE_MODIFIER: fc.float({ min: Math.fround(0.1), max: Math.fround(2.0) }),
+  DISCORD_MAX_MESSAGE_LENGTH: fc.integer({ min: 100, max: 2000 }),
+  DISCORD_INTER_PART_DELAY_MS: fc.integer({ min: 0, max: 5000 }),
+  DISCORD_TYPING_DELAY_MAX_MS: fc.integer({ min: 0, max: 10000 }),
+  DISCORD_PRIORITY_CHANNEL_BONUS: fc.float({ min: Math.fround(0.1), max: Math.fround(2.0) }),
+  DISCORD_MESSAGE_PROCESSING_DELAY_MS: fc.integer({ min: 0, max: 10000 }),
+  DISCORD_LOGGING_ENABLED: fc.boolean(),
+  DISCORD_CHANNEL_BONUSES: fc.dictionary(fc.string(), fc.float()),
+});
+
+/**
+ * Property-based test generator for Message configuration
+ */
+export const messageConfigGenerator = fc.record({
+  MESSAGE_PROVIDER: fc.constantFrom(
+    'discord',
+    'slack',
+    'telegram',
+    'mattermost',
+    'console',
+    'webhook'
+  ),
+  MESSAGE_COMMAND_AUTHORISED_USERS: fc.array(fc.string()).map((arr) => arr.join(',')),
+  MESSAGE_FILTER_BY_USER: fc.array(fc.string()).map((arr) => arr.join(',')),
+  MESSAGE_USERNAME_OVERRIDE: fc.string(),
+  BOT_ID: fc.string({ minLength: 3 }),
+  PLATFORM: fc.string(),
+  NAME: fc.string(),
+  MESSAGE_IGNORE_BOTS: fc.boolean(),
+  MESSAGE_ADD_USER_HINT: fc.boolean(),
+  MESSAGE_ONLY_WHEN_SPOKEN_TO: fc.boolean(),
+  MESSAGE_INTERACTIVE_FOLLOWUPS: fc.boolean(),
+  MESSAGE_UNSOLICITED_ADDRESSED: fc.boolean(),
+  MESSAGE_UNSOLICITED_UNADDRESSED: fc.boolean(),
+  MESSAGE_RESPOND_IN_THREAD: fc.boolean(),
+  MESSAGE_COMMAND_INLINE: fc.boolean(),
+  MESSAGE_LLM_FOLLOW_UP: fc.boolean(),
+  MESSAGE_STRIP_BOT_ID: fc.boolean(),
+  DISABLE_DELAYS: fc.boolean(),
+  MESSAGE_SEMANTIC_RELEVANCE_ENABLED: fc.boolean(),
+  MESSAGE_ALLOW_SELF_MENTION: fc.boolean(),
+  MESSAGE_SUPPRESS_DUPLICATES: fc.boolean(),
+  MESSAGE_RATE_LIMIT_PER_CHANNEL: fc.integer({ min: 1, max: 100 }),
+  MESSAGE_MIN_DELAY: fc.integer({ min: 0, max: 5000 }),
+  MESSAGE_MAX_DELAY: fc.integer({ min: 1000, max: 20000 }),
+  MESSAGE_ACTIVITY_TIME_WINDOW: fc.integer({ min: 1000, max: 600000 }),
+  MESSAGE_THREAD_RELATION_WINDOW: fc.integer({ min: 1000, max: 600000 }),
+  MESSAGE_RECENT_ACTIVITY_DECAY_RATE: fc.float({ min: Math.fround(0.1), max: Math.fround(1.0) }),
+  MESSAGE_INTERROBANG_BONUS: fc.float({ min: Math.fround(0.1), max: Math.fround(2.0) }),
+  MESSAGE_BOT_RESPONSE_MODIFIER: fc.float({ min: Math.fround(-1.0), max: Math.fround(1.0) }),
+  MESSAGE_MIN_INTERVAL_MS: fc.integer({ min: 0, max: 10000 }),
+  MESSAGE_HISTORY_LIMIT: fc.integer({ min: 1, max: 100 }),
+  MESSAGE_DELAY_MULTIPLIER: fc.float({ min: Math.fround(0.1), max: Math.fround(5.0) }),
+  MESSAGE_SEMANTIC_RELEVANCE_BONUS: fc.float({ min: Math.fround(0.1), max: Math.fround(20.0) }),
+  MESSAGE_WAKEWORDS: fc.array(fc.string()),
+  CHANNEL_BONUSES: fc.dictionary(fc.string(), fc.float()),
+  CHANNEL_PRIORITIES: fc.dictionary(fc.string(), fc.integer()),
+});
+
+/**
+ * Property-based test generator for Slack configuration
+ */
+export const slackConfigGenerator = fc.record({
+  SLACK_BOT_TOKEN: fc.string({ minLength: 10 }).map((s) => `xoxb-${s}`),
+  SLACK_APP_TOKEN: fc.string({ minLength: 10 }).map((s) => `xapp-${s}`),
+  SLACK_SIGNING_SECRET: fc.string({ minLength: 10 }),
+  SLACK_JOIN_CHANNELS: fc.array(fc.string({ minLength: 3 })).map((arr) => arr.join(',')),
+  SLACK_DEFAULT_CHANNEL_ID: fc.string(),
+  WELCOME_RESOURCE_URL: fc.webUrl().chain((url) => fc.constant(url || '')),
+  REPORT_ISSUE_URL: fc.webUrl().chain((url) => fc.constant(url || '')),
+  SLACK_MODE: fc.constantFrom('socket', 'rtm', 'events'),
+  SLACK_BOT_JOIN_CHANNEL_MESSAGE: fc.string(),
+  SLACK_USER_JOIN_CHANNEL_MESSAGE: fc.string(),
+  SLACK_BOT_LEARN_MORE_MESSAGE: fc.string(),
+  SLACK_BUTTON_MAPPINGS: fc.string(),
+});
+
+/**
+ * Property-based test generator for Mattermost configuration
+ */
+export const mattermostConfigGenerator = fc.record({
+  MATTERMOST_SERVER_URL: fc.webUrl().chain((url) => fc.constant(url || '')),
+  MATTERMOST_TOKEN: fc.string({ minLength: 10 }),
+  MATTERMOST_CHANNEL: fc.string(),
+});
+
+/**
+ * Property-based test generator for Webhook configuration
+ */
+export const webhookConfigGenerator = fc.record({
+  WEBHOOK_ENABLED: fc.boolean(),
+  WEBHOOK_URL: fc.webUrl().chain((url) => fc.constant(url || '')),
+  WEBHOOK_TOKEN: fc.string(),
+  WEBHOOK_IP_WHITELIST: fc.array(fc.ipV4()).map((arr) => arr.join(',')),
+  WEBHOOK_PORT: fc.integer({ min: 1024, max: 65535 }),
 });
 
 /**

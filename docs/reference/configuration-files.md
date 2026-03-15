@@ -597,9 +597,9 @@ COPY . .
 RUN npm run build
 RUN npm prune --omit=dev
 
-EXPOSE 3000
+EXPOSE 3028
 HEALTHCHECK --interval=30s --timeout=3s \
-  CMD curl -f http://localhost:3000/health || exit 1
+  CMD curl -f http://localhost:3028/health || exit 1
 
 CMD ["npm", "start"]
 ```
@@ -616,7 +616,7 @@ CMD ["npm", "start"]
 2. **Dependencies**: Install system packages based on feature flags
 3. **Install**: `npm ci` for dependencies
 4. **Build**: `npm run build` and prune dev dependencies
-5. **Runtime**: Expose port 3000 with health check
+5. **Runtime**: Expose port 3028 with health check
 
 **When to Modify**:
 - Changing Node.js version
@@ -634,7 +634,7 @@ services:
   hivemind:
     build: .
     ports:
-      - "3000:3000"
+      - "3028:3028"
     environment:
       - NODE_ENV=production
     env_file:
@@ -665,7 +665,7 @@ services:
 
 | Service | Port | Purpose |
 |---------|------|---------|
-| `hivemind` | 3000 | Main application |
+| `hivemind` | 3028 | Main application |
 | `prometheus` | 9090 | Metrics collection |
 | `grafana` | 3001 | Metrics visualization |
 
@@ -713,7 +713,7 @@ services:
 
 | Aspect | Local | Production |
 |--------|-------|------------|
-| Port | 3020 | 3000 |
+| Port | 3020 | 3028 |
 | Logging | JSON file with rotation | Default |
 | Monitoring | None | Prometheus + Grafana |
 | Service Name | `open-hivemind-agent` | `hivemind` |
@@ -741,10 +741,10 @@ primary_region = 'syd'
     BUILD_TIMESTAMP = "1736856000"
 
 [env]
-  PORT = '5005'
+  PORT = '3028'
 
 [http_service]
-  internal_port = 5005
+  internal_port = 3028
   force_https = true
   auto_stop_machines = 'stop'
   auto_start_machines = true
@@ -764,8 +764,8 @@ primary_region = 'syd'
 | App | `primary_region` | `syd` | Primary deployment region (Sydney) |
 | Build | `image` | `mhand79/open-hivemind` | Docker Hub image |
 | Build | `BUILD_TIMESTAMP` | Unix timestamp | Cache-busting build arg |
-| Env | `PORT` | `5005` | Internal port for the app |
-| HTTP Service | `internal_port` | `5005` | Port exposed by the app |
+| Env | `PORT` | `3028` | Internal port for the app |
+| HTTP Service | `internal_port` | `3028` | Port exposed by the app |
 | HTTP Service | `force_https` | `true` | Redirect HTTP to HTTPS |
 | HTTP Service | `auto_stop_machines` | `stop` | Stop machines when idle |
 | HTTP Service | `auto_start_machines` | `true` | Start machines on request |

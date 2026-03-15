@@ -7,7 +7,7 @@ import ApiMonitorService, { type EndpointStatus } from '../../services/ApiMonito
 import { ActivityLogger } from './ActivityLogger';
 import { BotMetricsService } from './BotMetricsService';
 import 'reflect-metadata';
-import { injectable, singleton } from 'tsyringe';
+import { container, injectable, singleton } from 'tsyringe';
 
 const debug = Debug('app:WebSocketService');
 
@@ -25,7 +25,7 @@ export interface MessageFlowEvent {
   errorMessage?: string;
 }
 
-export interface PerformanceMetric {
+interface PerformanceMetric {
   timestamp: string;
   responseTime: number;
   memoryUsage: number;
@@ -73,7 +73,7 @@ export class WebSocketService {
 
   constructor() {
     this.initializeMonitoringData();
-    this.apiMonitorService = ApiMonitorService.getInstance();
+    this.apiMonitorService = container.resolve(ApiMonitorService);
     this.setupApiMonitoring();
   }
 
