@@ -1,6 +1,9 @@
 import os from 'os';
 import process from 'process';
 import { Router, type NextFunction, type Request, type Response } from 'express';
+import { DatabaseManager } from '../../database/DatabaseManager';
+import { container } from '../../di/container';
+import { BotManager } from '../../managers/BotManager';
 import { MetricsCollector } from '../../monitoring/MetricsCollector';
 import ApiMonitorService from '../../services/ApiMonitorService';
 import { ErrorLogger } from '../../utils/errorLogger';
@@ -198,11 +201,50 @@ router.get('/alerts', (req, res) => {
 });
 
 // Readiness probe
-router.get('/ready', (req, res) => {
-  // Check if all dependencies are ready
-  // For now, we'll assume the service is ready if it's responding
-  return res.json({
-    ready: true,
+router.get('/ready', async (req, res) => {
+  try {
+    const isDbConnected = DatabaseManager.getInstance().isConnected();
+    const bots = await BotManager.getInstance().getAllBots();
+    const botAdaptersHealthy = bots.every(
+      (bot: any) =>
+        bot.getStatus() === 'active' ||
+        bot.getStatus() === 'connected' ||
+        bot.getStatus() === 'healthy' ||
+        bot.getStatus() === 'idle' ||
+        bot.getStatus() === 'warning'
+    );
+    const apiMonitor = container.resolve(ApiMonitorService);
+    const apiStatuses = apiMonitor.getAllStatuses();
+    const externalApisHealthy = Object.values(apiStatuses).every(
+      (status: any) => status.status !== 'error' && status.status !== 'offline'
+    );
+
+    const isHealthy = isDbConnected;
+
+    const checks = {
+      database: { status: isDbConnected ? 'healthy' : 'unhealthy' },
+      botAdapters: { status: botAdaptersHealthy ? 'healthy' : 'degraded' },
+      externalApis: { status: externalApisHealthy ? 'healthy' : 'degraded' },
+    };
+
+    return res.status(isHealthy ? 200 : 503).json({
+      status: isHealthy ? 'healthy' : 'unhealthy',
+      ready: isHealthy,
+      timestamp: new Date().toISOString(),
+      uptime: process.uptime(),
+      version: process.env.npm_package_version || '1.0.0',
+      checks,
+    });
+  } catch (error) {
+    dbReady = false;
+  }
+
+  // We are ready if critical dependencies are up
+  const isReady = dbReady;
+  const statusCode = isReady ? 200 : 503;
+
+  return res.status(statusCode).json({
+    ready: isReady,
     timestamp: new Date().toISOString(),
     checks: {
       database: true, // Would need actual database check
