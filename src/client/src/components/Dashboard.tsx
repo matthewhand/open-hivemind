@@ -100,30 +100,30 @@ const Dashboard: React.FC = () => {
       <div className="min-h-screen bg-base-200">
         {/* Hero Section Skeleton */}
         <div className="min-h-[60vh] bg-base-300 flex items-center justify-center">
-          <div className="text-center space-y-6">
-            <div className="skeleton h-12 w-80 rounded"></div>
-            <div className="skeleton h-6 w-64 rounded"></div>
+          <div className="text-center space-y-6 flex flex-col items-center">
+            <SkeletonRectangle height="3rem" width="20rem" className="rounded" />
+            <SkeletonRectangle height="1.5rem" width="16rem" className="rounded" />
 
             {/* Stats Overview Skeleton */}
-            <div className="stats shadow-lg bg-base-100/90 backdrop-blur">
+            <div className="stats shadow-lg bg-base-100/90 backdrop-blur w-full max-w-3xl">
               <div className="stat place-items-center">
-                <div className="skeleton h-6 w-20 rounded mb-2"></div>
-                <div className="skeleton h-8 w-12 rounded mb-2"></div>
-                <div className="skeleton h-4 w-24 rounded"></div>
+                <SkeletonText lines={1} height="1.5rem" width="5rem" className="mb-2" />
+                <SkeletonText lines={1} height="2rem" width="3rem" className="mb-2" />
+                <SkeletonText lines={1} height="1rem" width="6rem" />
               </div>
               <div className="stat place-items-center">
-                <div className="skeleton h-6 w-24 rounded mb-2"></div>
-                <div className="skeleton h-8 w-16 rounded mb-2"></div>
-                <div className="skeleton h-4 w-20 rounded"></div>
+                <SkeletonText lines={1} height="1.5rem" width="6rem" className="mb-2" />
+                <SkeletonText lines={1} height="2rem" width="4rem" className="mb-2" />
+                <SkeletonText lines={1} height="1rem" width="5rem" />
               </div>
               <div className="stat place-items-center">
-                <div className="skeleton h-6 w-20 rounded mb-2"></div>
-                <div className="skeleton h-8 w-14 rounded mb-2"></div>
-                <div className="skeleton h-4 w-28 rounded"></div>
+                <SkeletonText lines={1} height="1.5rem" width="5rem" className="mb-2" />
+                <SkeletonText lines={1} height="2rem" width="3.5rem" className="mb-2" />
+                <SkeletonText lines={1} height="1rem" width="7rem" />
               </div>
             </div>
 
-            <div className="skeleton h-12 w-48 rounded"></div>
+            <SkeletonRectangle height="3rem" width="12rem" className="rounded mt-4" />
           </div>
         </div>
 
@@ -131,7 +131,7 @@ const Dashboard: React.FC = () => {
         <div className="max-w-7xl mx-auto px-4 py-8">
           {/* Quick Actions Skeleton */}
           <div className="mb-8">
-            <div className="skeleton h-12 w-full rounded"></div>
+            <SkeletonRectangle height="3rem" width="100%" className="rounded" />
           </div>
 
           {/* Bot Cards Grid Skeleton */}
@@ -143,22 +143,22 @@ const Dashboard: React.FC = () => {
 
           {/* System Status Footer Skeleton */}
           <div className="bg-base-100 rounded-lg shadow p-6">
-            <div className="skeleton h-8 w-48 rounded mb-4"></div>
+            <SkeletonText lines={1} height="2rem" width="12rem" className="mb-4" />
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="stat">
-                <div className="skeleton h-4 w-12 rounded mb-2"></div>
-                <div className="skeleton h-6 w-16 rounded mb-2"></div>
-                <div className="skeleton h-3 w-32 rounded"></div>
+                <SkeletonText lines={1} height="1rem" width="3rem" className="mb-2" />
+                <SkeletonText lines={1} height="1.5rem" width="4rem" className="mb-2" />
+                <SkeletonText lines={1} height="0.75rem" width="8rem" />
               </div>
               <div className="stat">
-                <div className="skeleton h-4 w-16 rounded mb-2"></div>
-                <div className="skeleton h-6 w-12 rounded mb-2"></div>
-                <div className="skeleton h-3 w-28 rounded"></div>
+                <SkeletonText lines={1} height="1rem" width="4rem" className="mb-2" />
+                <SkeletonText lines={1} height="1.5rem" width="3rem" className="mb-2" />
+                <SkeletonText lines={1} height="0.75rem" width="7rem" />
               </div>
               <div className="stat">
-                <div className="skeleton h-4 w-20 rounded mb-2"></div>
-                <div className="skeleton h-6 w-18 rounded mb-2"></div>
-                <div className="skeleton h-3 w-30 rounded"></div>
+                <SkeletonText lines={1} height="1rem" width="5rem" className="mb-2" />
+                <SkeletonText lines={1} height="1.5rem" width="4.5rem" className="mb-2" />
+                <SkeletonText lines={1} height="0.75rem" width="7.5rem" />
               </div>
             </div>
           </div>
