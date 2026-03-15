@@ -302,7 +302,7 @@ const IntegrationsPanel: React.FC = () => {
               className={`join-item w-full input-sm ${isLocked ? 'input-disabled bg-base-200 text-base-content/50' : ''}`}
               placeholder={isReadOnly ? 'Protected Value' : ''}
             />
-            {isLocked && <button className="btn btn-sm btn-square join-item btn-disabled"><LockClosedIcon className="w-4 h-4" /></button>}
+            {isLocked && <button className="btn btn-sm btn-square join-item btn-disabled" aria-label="Field is locked"><LockClosedIcon className="w-4 h-4" /></button>}
           </div>
         )}
         {type === 'select' && (
