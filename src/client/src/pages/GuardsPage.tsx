@@ -193,6 +193,7 @@ const GuardsPage: React.FC = () => {
   return (
     <div className="space-y-6">
       <PageHeader
+        icon={<Shield className="w-6 h-6" />}
         title="Guard Profiles"
         description="Manage security and access control profiles for bots"
         icon={<Shield className="w-6 h-6" />}
