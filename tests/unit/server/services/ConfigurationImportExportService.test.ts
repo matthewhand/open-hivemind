@@ -135,18 +135,20 @@ describe('ConfigurationImportExportService - Version Caching', () => {
 
     // Mock fs.readFile to return standard format JSON
     (fs.readFile as jest.Mock).mockImplementation((path) => {
-      return Promise.resolve(JSON.stringify({
-        configurations: [],
-        versions: [
-          { botConfigurationId: 1, version: '1.0' },
-          { botConfigurationId: 1, version: '1.1' },
-          { botConfigurationId: 1, version: '1.2' },
-          { botConfigurationId: 2, version: '1.0' },
-          { botConfigurationId: 2, version: '1.1' },
-          { botConfigurationId: 3, version: '1.0' }, // Invalid ID
-          { botConfigurationId: 3, version: '1.1' },
-        ]
-      }));
+      return Promise.resolve(
+        JSON.stringify({
+          configurations: [],
+          versions: [
+            { botConfigurationId: 1, version: '1.0' },
+            { botConfigurationId: 1, version: '1.1' },
+            { botConfigurationId: 1, version: '1.2' },
+            { botConfigurationId: 2, version: '1.0' },
+            { botConfigurationId: 2, version: '1.1' },
+            { botConfigurationId: 3, version: '1.0' }, // Invalid ID
+            { botConfigurationId: 3, version: '1.1' },
+          ],
+        })
+      );
     });
   });
 

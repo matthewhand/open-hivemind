@@ -166,15 +166,11 @@ export const CommaSeparatedInput: React.FC<CommaSeparatedInputProps> = ({
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    let newValue = e.target.value;
-    // We only auto-format if the user is not actively deleting characters.
-    // This prevents the "backspace trap" where deleting the auto-inserted space
-    // immediately re-inserts it.
-    const isDeleting = (e.nativeEvent as InputEvent).inputType?.startsWith('delete');
-    if (!isDeleting) {
-      newValue = newValue.replace(/,([^ ])/g, ', $1');
-    }
-    setInputValue(newValue);
+
+    const val = e.target.value;
+    // Automatically add space after comma if typed directly
+    const formattedVal = val.replace(/,([^\s])/g, ', $1');
+    setInputValue(formattedVal);
     setShowSuggestions(true);
     if (internalError) {
       setInternalError(null);
@@ -244,6 +240,7 @@ export const CommaSeparatedInput: React.FC<CommaSeparatedInputProps> = ({
         {!disabled && canUndo && (
           <button
             type="button"
+            onMouseDown={(e) => e.preventDefault()}
             onClick={handleUndo}
             className="p-1 mx-1 rounded-full text-base-content/40 hover:text-primary hover:bg-primary/10 focus:outline-none transition-colors"
             title="Undo last change (Ctrl+Z)"
@@ -258,6 +255,7 @@ export const CommaSeparatedInput: React.FC<CommaSeparatedInputProps> = ({
         {!disabled && value.length > 0 && (
           <button
             type="button"
+            onMouseDown={(e) => e.preventDefault()}
             onClick={handleClearAll}
             className="p-1 mx-1 rounded-full text-base-content/40 hover:text-error hover:bg-error/10 focus:outline-none transition-colors"
             title="Clear all"
