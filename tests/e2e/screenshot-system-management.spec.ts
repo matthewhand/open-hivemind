@@ -137,8 +137,16 @@ test.describe('System Management Page Screenshots', () => {
           envVars: {
             NODE_ENV: 'production',
             LOG_LEVEL: 'info',
-            API_PORT: '3000',
-            DB_HOST: 'postgres-primary',
+            PORT: '3000',
+            BASE_URL: 'https://hivemind.local',
+            RATE_LIMIT_API_MAX: '100',
+            RATE_LIMIT_AUTH_MAX: '5',
+            SESSION_MAX_AGE: '86400000',
+            JWT_SECRET: '****cret',
+            REDIS_URL: 'redis://localhost:6379',
+            WEBHOOK_ENABLED: 'true',
+            LLM_PROVIDER: 'openai',
+            OPENAI_MODEL: 'gpt-4o',
           },
         },
       });
