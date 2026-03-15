@@ -15,7 +15,7 @@ import {
   ArrowPathIcon,
   ShieldCheckIcon,
 } from '@heroicons/react/24/outline';
-import { CommaSeparatedInput } from '../Common/CommaSeparatedInput';
+import { CommaSeparatedInput } from '../CommaSeparatedInput';
 
 interface GuardrailProfile {
   key: string;
