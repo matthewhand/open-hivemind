@@ -75,7 +75,7 @@ export default class DuplicateMessageDetector {
       const history = this.recentMessages.get(channelId) || [];
 
       // Clean up old messages outside the time window
-      const recentHistory = this.filterRecentHistory(history, windowMs, now);
+      const recentHistory = history.filter((msg) => now - msg.timestamp < windowMs);
 
       // Normalize content for comparison (trim, lowercase, remove extra whitespace)
       const normalizedContent = this.normalizeContent(content);
@@ -192,7 +192,7 @@ export default class DuplicateMessageDetector {
       let history = this.recentMessages.get(channelId) || [];
 
       // Clean up old messages
-      history = this.filterRecentHistory(history, windowMs, now);
+      history = history.filter((msg) => now - msg.timestamp < windowMs);
 
       // Add new message
       history.push({
@@ -238,7 +238,9 @@ export default class DuplicateMessageDetector {
 
       const now = Date.now();
       const history = this.recentMessages.get(channelId) || [];
-      const recentHistory = this.filterRecentHistory(history, windowMs, now).slice(-historySize);
+      const recentHistory = history
+        .filter((msg) => now - msg.timestamp < windowMs)
+        .slice(-historySize);
 
       if (recentHistory.length < minHistory) {
         return 0;
@@ -283,31 +285,6 @@ export default class DuplicateMessageDetector {
       debug(`Error computing repetition temperature boost: ${error}`);
       return 0;
     }
-  }
-
-  /**
-   * Normalize message content for comparison
-   * Strips non-alphanumeric (keeps spaces) to catch "Hello." vs "Hello"
-   */
-
-  // ⚡ Bolt Optimization: Use early-exit loop and .slice() instead of full array .filter()
-  // Since history is chronologically ordered, we can stop checking once we find a message within the window.
-  // This changes complexity from O(N) to O(K) where K is the number of older messages to drop.
-  private filterRecentHistory<T extends { timestamp: number }>(
-    history: T[],
-    windowMs: number,
-    now: number
-  ): T[] {
-    const cutoff = now - windowMs;
-    // Find the first message that is within the window
-    for (let i = 0; i < history.length; i++) {
-      if (history[i].timestamp > cutoff) {
-        // Return everything from this point forward
-        return i === 0 ? history : history.slice(i);
-      }
-    }
-    // All messages are outside the window
-    return [];
   }
 
   /**
@@ -423,7 +400,7 @@ export default class DuplicateMessageDetector {
 
     // Remove expired messages from each channel
     for (const [channelId, history] of this.recentMessages) {
-      const filtered = this.filterRecentHistory(history, windowMs, now);
+      const filtered = history.filter((msg) => now - msg.timestamp < windowMs);
       if (filtered.length === 0) {
         this.recentMessages.delete(channelId);
         cleaned++;

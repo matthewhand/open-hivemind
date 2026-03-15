@@ -9,7 +9,7 @@ export const verifyWebhookToken = (req: Request, res: Response, next: NextFuncti
     (k) => k.toLowerCase() === 'x-webhook-token'
   );
 
-  let providedToken: string = headerKey ? String(req.headers[headerKey.toLowerCase()]) : '';
+  let providedToken: string = headerKey ? String((req.headers as any)[headerKey]) : '';
 
   // Fallback to Authorization Bearer token if x-webhook-token is not provided
   // RFC 6750 specifies Bearer token format: Bearer <token>
@@ -19,7 +19,7 @@ export const verifyWebhookToken = (req: Request, res: Response, next: NextFuncti
       (k) => k.toLowerCase() === 'authorization'
     );
     if (authHeaderKey) {
-      const authHeaderValue = String(req.headers[authHeaderKey.toLowerCase()]);
+      const authHeaderValue = String((req.headers as any)[authHeaderKey]);
       if (authHeaderValue.toLowerCase().startsWith(BEARER_PREFIX)) {
         providedToken = authHeaderValue.substring(BEARER_PREFIX.length).trim();
       }

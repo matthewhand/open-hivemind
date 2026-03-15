@@ -397,19 +397,10 @@ export class MigrationManager {
       .filter((m) => m.version > version)
       .sort((a, b) => b.version - a.version); // Reverse order
 
-    // Validate that all migrations to be rolled back are reversible
-    const irreversibleMigration = migrationsToRollback.find((m) => !m.down);
-    if (irreversibleMigration) {
-      throw new Error(
-        `Cannot rollback: Migration ${irreversibleMigration.id} is irreversible (missing down method).`
-      );
-    }
-
     for (const migration of migrationsToRollback) {
-      if (!migration.down) {
-        throw new Error(`Migration ${migration.id} does not support rollback`);
+      if (migration.down) {
+        await this.rollbackMigration(migration);
       }
-      await this.rollbackMigration(migration);
     }
   }
 

@@ -78,8 +78,8 @@ function scanBuiltInPackages(): MarketplacePackage[] {
 
       // Derive type from package name prefix
       const namePrefix = dir.split('-')[0];
-      const validTypes: ReadonlyArray<string> = ['llm', 'message', 'memory', 'tool'];
-      const type = validTypes.includes(namePrefix)
+      const validTypes = ['llm', 'message', 'memory', 'tool'] as const;
+      const type = validTypes.includes(namePrefix as any)
         ? (namePrefix as MarketplacePackage['type'])
         : 'tool';
 

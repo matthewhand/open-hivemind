@@ -1,13 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import Button from '../DaisyUI/Button';
-import Modal from '../DaisyUI/Modal';
-import Card from '../DaisyUI/Card';
-import { Alert } from '../DaisyUI/Alert';
-import Badge from '../DaisyUI/Badge';
-import Input from '../DaisyUI/Input';
-import Textarea from '../DaisyUI/Textarea';
-import Select from '../DaisyUI/Select';
-import Toggle from '../DaisyUI/Toggle';
+import { Button, Modal, Card, Alert, Badge, Input, Textarea, Select, Toggle } from '../DaisyUI';
 import {
   PlusIcon,
   PencilIcon,
@@ -273,7 +265,7 @@ const GuardrailProfileManager: React.FC = () => {
         <div className="toast toast-bottom toast-center z-50" role="status" aria-live="polite">
           <div className={`alert ${toastType === 'success' ? 'alert-success' : 'alert-error'}`}>
             <span>{toastMessage}</span>
-            <button className="btn btn-sm btn-ghost" onClick={() => setToastMessage('')} aria-label="Close message">✕</button>
+            <button className="btn btn-sm btn-ghost" onClick={() => setToastMessage('')}>✕</button>
           </div>
         </div>
       )}

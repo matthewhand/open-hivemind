@@ -1,10 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { PlusIcon, PencilIcon, TrashIcon, ServerStackIcon } from '@heroicons/react/24/outline';
-import Button from '../DaisyUI/Button';
-import Modal from '../DaisyUI/Modal';
-import Card from '../DaisyUI/Card';
-import { Alert } from '../DaisyUI/Alert';
-import Badge from '../DaisyUI/Badge';
+import { Button, Modal, Card, Alert, Badge } from '../DaisyUI';
 
 interface McpServerConfig {
     name: string;

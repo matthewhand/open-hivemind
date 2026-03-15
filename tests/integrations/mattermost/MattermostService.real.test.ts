@@ -1,4 +1,4 @@
-import { MattermostService } from '../../../packages/message-mattermost/src/MattermostService';
+import { MattermostService } from '../../../packages/adapter-mattermost/src/MattermostService';
 
 const REAL_MATTERMOST_URL = process.env.REAL_MATTERMOST_URL;
 const REAL_MATTERMOST_TOKEN = process.env.REAL_MATTERMOST_TOKEN;
@@ -63,8 +63,7 @@ describe('Mattermost Real Integration', () => {
       `Test message ${Date.now()}`
     );
 
-    expect(messageId).toBeDefined();
-    expect(messageId).not.toBeNull();
+    expect(messageId).toBeTruthy();
     expect(typeof messageId).toBe('string');
   }, 30000);
 

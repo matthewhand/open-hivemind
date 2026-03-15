@@ -4,8 +4,6 @@ describe('IncomingMessageDensity', () => {
   let density: IncomingMessageDensity;
 
   beforeEach(() => {
-    (IncomingMessageDensity as any).instance = undefined;
-
     // Reset singleton logic if possible or just clear state
     density = IncomingMessageDensity.getInstance();
     density.clear();
@@ -13,8 +11,6 @@ describe('IncomingMessageDensity', () => {
   });
 
   afterEach(() => {
-    (IncomingMessageDensity as any).instance = undefined;
-
     jest.useRealTimers();
   });
 
