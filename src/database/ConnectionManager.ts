@@ -3,7 +3,7 @@ import { open, type Database } from 'sqlite';
 import sqlite3 from 'sqlite3';
 import { Logger } from '@common/logger';
 
-export interface ConnectionOptions {
+interface ConnectionOptions {
   databasePath: string;
   readonly?: boolean;
   timeout?: number;

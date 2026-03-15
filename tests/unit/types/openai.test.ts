@@ -1,8 +1,8 @@
 import {
-  isOpenAIError,
   isChatCompletionResponse,
-  isModelsListResponse,
   isCompletionResponse,
+  isModelsListResponse,
+  isOpenAIError,
   OpenAIResponse,
 } from '../../../src/types/openai';
 

@@ -196,6 +196,7 @@ const GuardsPage: React.FC = () => {
         icon={<Shield className="w-6 h-6" />}
         title="Guard Profiles"
         description="Manage security and access control profiles for bots"
+        icon={<Shield className="w-6 h-6" />}
         actions={
           <div className="flex gap-2">
             <button onClick={fetchProfiles} className="btn btn-ghost btn-sm" disabled={loading} title="Refresh">

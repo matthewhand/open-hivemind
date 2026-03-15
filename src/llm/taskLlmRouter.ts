@@ -3,7 +3,7 @@ import ProviderConfigManager, { type ProviderInstance } from '@src/config/Provid
 import { MetricsCollector } from '@src/monitoring/MetricsCollector';
 import llmTaskConfig from '@config/llmTaskConfig';
 import { FlowiseProvider } from '@integrations/flowise/flowiseProvider';
-import * as openWebUIImport from '@integrations/openwebui/runInference';
+import { openWebUIProvider as openWebUI } from '@integrations/openwebui/openWebUIProvider';
 import { getLlmProvider } from '@llm/getLlmProvider';
 import type { ILlmProvider } from '@llm/interfaces/ILlmProvider';
 import type { IMessage } from '@message/interfaces/IMessage';
@@ -73,35 +73,6 @@ function withTokenCounting(provider: ILlmProvider, instanceId: string): ILlmProv
     },
   };
 }
-
-const openWebUI: ILlmProvider = {
-  name: 'openwebui',
-  supportsChatCompletion: () => true,
-  supportsCompletion: () => false,
-  generateChatCompletion: async (
-    userMessage: string,
-    historyMessages: IMessage[],
-    metadata?: Record<string, any>
-  ) => {
-    if (openWebUIImport.generateChatCompletion.length === 3) {
-      const result = await openWebUIImport.generateChatCompletion(
-        userMessage,
-        historyMessages,
-        metadata
-      );
-      return result.text || '';
-    } else {
-      const result = await (openWebUIImport as any).generateChatCompletion(
-        userMessage,
-        historyMessages
-      );
-      return result.text || '';
-    }
-  },
-  generateCompletion: async () => {
-    throw new Error('Non-chat completion not supported by OpenWebUI');
-  },
-};
 
 function createProviderFromInstance(
   instance: ProviderInstance,
