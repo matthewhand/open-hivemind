@@ -11,7 +11,7 @@
   command = "mkdir -p dist/client dist/netlify/functions && echo 'Skipped Branch Build' > dist/client/index.html && echo 'exports.handler = async () => ({ statusCode: 200, body: \"Skipped\" });' > dist/netlify/functions/server.js"
 
 [dev]
-  command = "npm run dev"
+  command = "pnpm run dev"
 
 [[redirects]]
   from = "/api/*"

@@ -6,11 +6,11 @@ echo "🏗️  Building Netlify deployment..."
 # 1. Build Backend
 echo "🔹 Building backend..."
 # Use existing build script but ensure it doesn't sleep
-BUILD_POST_BUILD_SLEEP_SECONDS=0 npm run build:backend
+BUILD_POST_BUILD_SLEEP_SECONDS=0 pnpm run build:backend
 
 # 2. Build Frontend
 echo "🔹 Building frontend..."
-npm run build:frontend
+pnpm run build:frontend
 
 # 3. Prepare Publish Directory
 echo "🔹 Preparing publish directory..."

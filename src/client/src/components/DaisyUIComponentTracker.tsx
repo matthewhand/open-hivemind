@@ -97,38 +97,23 @@ const DaisyUIComponentTracker: React.FC<Props> = ({ isOpen = true, onClose }) =>
           </div>
 
           {/* Tabs */}
-          <Tabs className="w-full">
-            <Tab
-              active={selectedCategory === 'overview'}
-              onClick={() => setSelectedCategory('overview')}
-            >
+          <div className="w-full tabs tabs-boxed mb-4">
+            <button className={`tab ${selectedCategory === 'overview' ? "tab-active" : ""}`} onClick={() => setSelectedCategory('overview')}>
               Overview
-            </Tab>
-            <Tab
-              active={selectedCategory === 'used'}
-              onClick={() => setSelectedCategory('used')}
-            >
+            </button>
+            <button className={`tab ${selectedCategory === 'used' ? "tab-active" : ""}`} onClick={() => setSelectedCategory('used')}>
               Used Components ({stats.usedComponents})
-            </Tab>
-            <Tab
-              active={selectedCategory === 'unused'}
-              onClick={() => setSelectedCategory('unused')}
-            >
+            </button>
+            <button className={`tab ${selectedCategory === 'unused' ? "tab-active" : ""}`} onClick={() => setSelectedCategory('unused')}>
               Unused ({stats.unusedComponents.length})
-            </Tab>
-            <Tab
-              active={selectedCategory === 'suggestions'}
-              onClick={() => setSelectedCategory('suggestions')}
-            >
+            </button>
+            <button className={`tab ${selectedCategory === 'suggestions' ? "tab-active" : ""}`} onClick={() => setSelectedCategory('suggestions')}>
               Suggestions ({suggestions.length})
-            </Tab>
-            <Tab
-              active={selectedCategory === 'categories'}
-              onClick={() => setSelectedCategory('categories')}
-            >
+            </button>
+            <button className={`tab ${selectedCategory === 'categories' ? "tab-active" : ""}`} onClick={() => setSelectedCategory('categories')}>
               By Category
-            </Tab>
-          </Tabs>
+            </button>
+          </div>
 
           {/* Tab Content */}
           <div className="mt-6">
