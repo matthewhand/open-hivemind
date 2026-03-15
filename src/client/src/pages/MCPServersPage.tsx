@@ -18,7 +18,6 @@ import EmptyState from '../components/DaisyUI/EmptyState';
 import Modal from '../components/DaisyUI/Modal';
 import { AdaptiveGrid } from '../components/ResponsiveComponents';
 import SearchFilterBar from '../components/SearchFilterBar';
-import { AdaptiveGrid } from '../components/ResponsiveComponents';
 
 interface Tool {
   name: string;
