@@ -1,9 +1,11 @@
 import { Router, type Request, type Response } from 'express';
+import { createLogger } from '@src/common/StructuredLogger';
 import { ErrorFactory } from '../../types/errorClasses';
 import { errorLogger } from '../../utils/errorLogger';
 import { authenticateToken } from '../middleware/auth';
 
 const router = Router();
+const logger = createLogger('routes:errors');
 
 // Handle CORS preflight requests
 router.options('*', (req, res) => {
@@ -77,7 +79,10 @@ router.post('/frontend', async (req: Request, res: Response) => {
       message: 'Error report received and logged',
     });
   } catch (error) {
-    console.error('Failed to process frontend error report:', error);
+    logger.error(
+      'Failed to process frontend error report:',
+      error instanceof Error ? error : new Error(String(error))
+    );
 
     // Log the processing error
     await errorLogger.logError(error as Error, {
@@ -104,7 +109,10 @@ router.get('/stats', authenticateToken, async (req: Request, res: Response) => {
     const stats = await errorLogger.getErrorStats();
     return res.json(stats);
   } catch (error) {
-    console.error('Failed to get error stats:', error);
+    logger.error(
+      'Failed to get error stats:',
+      error instanceof Error ? error : new Error(String(error))
+    );
     return res.status(500).json({ error: 'Failed to retrieve error statistics' });
   }
 });
@@ -116,7 +124,10 @@ router.get('/recent', authenticateToken, async (req: Request, res: Response) => 
     const recentErrors = await errorLogger.getRecentErrors(limit);
     return res.json(recentErrors);
   } catch (error) {
-    console.error('Failed to get recent errors:', error);
+    logger.error(
+      'Failed to get recent errors:',
+      error instanceof Error ? error : new Error(String(error))
+    );
     return res.status(500).json({ error: 'Failed to retrieve recent errors' });
   }
 });

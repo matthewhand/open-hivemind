@@ -1,6 +1,9 @@
 import Debug from 'debug';
 import { Router } from 'express';
+import { container } from 'tsyringe';
+import { AuthMiddlewareRequest } from '../../auth/types';
 import { DatabaseManager } from '../../database/DatabaseManager';
+import { TOKENS } from '../../di/container';
 import { AnomalyDetectionService } from '../../services/AnomalyDetectionService';
 
 const debug = Debug('app:webui:anomaly');
@@ -37,7 +40,7 @@ export function createAnomalyRouter(
 
       // Get tenantId from request user if available (assuming req.user is populated by authenticateToken)
       // The authenticateToken middleware usually populates req.user
-      const tenantId = (req as any).user?.tenantId;
+      const tenantId = (req as AuthMiddlewareRequest).user?.tenantId;
 
       const anomalies = await dbManager.getActiveAnomalies(tenantId);
       res.json(anomalies || []);
@@ -60,7 +63,7 @@ export function createAnomalyRouter(
         return;
       }
 
-      const tenantId = (req as any).user?.tenantId;
+      const tenantId = (req as AuthMiddlewareRequest).user?.tenantId;
 
       const anomalies = await dbManager.getAnomalies(tenantId);
       res.json(anomalies || []);
@@ -96,6 +99,6 @@ export function createAnomalyRouter(
 
 // Retain a default export that uses the global instances to avoid breaking any other imports that rely on it.
 export default createAnomalyRouter(
-  AnomalyDetectionService.getInstance(),
-  DatabaseManager.getInstance()
+  container.resolve(AnomalyDetectionService),
+  container.resolve<DatabaseManager>(TOKENS.DatabaseManager)
 );

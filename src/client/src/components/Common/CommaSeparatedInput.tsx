@@ -67,13 +67,10 @@ export const CommaSeparatedInput: React.FC<CommaSeparatedInputProps> = ({
     }
   }, [canUndo, disabled, onChange]);
 
-  const commitInput = (forceValue?: string, overrideTrailingText?: string) => {
+  const commitInput = (forceValue?: string) => {
     const textToCommit = forceValue !== undefined ? forceValue : inputValue;
     if (!textToCommit.trim()) {
       setIsTouched(true);
-      if (overrideTrailingText !== undefined) {
-        setInputValue(overrideTrailingText);
-      }
       return;
     }
 
@@ -109,8 +106,8 @@ export const CommaSeparatedInput: React.FC<CommaSeparatedInputProps> = ({
         pushToHistory(next);
         onChange(next);
       }
-      setInputValue(overrideTrailingText !== undefined ? overrideTrailingText : '');
-      setShowSuggestions(overrideTrailingText !== undefined && overrideTrailingText.length > 0);
+      setInputValue('');
+      setShowSuggestions(false);
     }
   };
 
@@ -169,18 +166,11 @@ export const CommaSeparatedInput: React.FC<CommaSeparatedInputProps> = ({
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+
     const val = e.target.value;
-
-    // Auto-commit on typing comma and leave trailing text
-    if (val.includes(',')) {
-      const parts = val.split(',');
-      const trailingText = parts.pop() || '';
-      const textToCommit = parts.join(',');
-      commitInput(textToCommit, trailingText);
-      return;
-    }
-
-    setInputValue(val);
+    // Automatically add space after comma if typed directly
+    const formattedVal = val.replace(/,([^\s])/g, ', $1');
+    setInputValue(formattedVal);
     setShowSuggestions(true);
     if (internalError) {
       setInternalError(null);
@@ -250,6 +240,7 @@ export const CommaSeparatedInput: React.FC<CommaSeparatedInputProps> = ({
         {!disabled && canUndo && (
           <button
             type="button"
+            onMouseDown={(e) => e.preventDefault()}
             onClick={handleUndo}
             className="p-1 mx-1 rounded-full text-base-content/40 hover:text-primary hover:bg-primary/10 focus:outline-none transition-colors"
             title="Undo last change (Ctrl+Z)"
@@ -264,6 +255,7 @@ export const CommaSeparatedInput: React.FC<CommaSeparatedInputProps> = ({
         {!disabled && value.length > 0 && (
           <button
             type="button"
+            onMouseDown={(e) => e.preventDefault()}
             onClick={handleClearAll}
             className="p-1 mx-1 rounded-full text-base-content/40 hover:text-error hover:bg-error/10 focus:outline-none transition-colors"
             title="Clear all"

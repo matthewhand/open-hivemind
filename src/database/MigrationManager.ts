@@ -406,9 +406,10 @@ export class MigrationManager {
     }
 
     for (const migration of migrationsToRollback) {
-      if (migration.down) {
-        await this.rollbackMigration(migration);
+      if (!migration.down) {
+        throw new Error(`Migration ${migration.id} does not support rollback`);
       }
+      await this.rollbackMigration(migration);
     }
   }
 

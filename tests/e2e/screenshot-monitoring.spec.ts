@@ -62,7 +62,7 @@ test.describe('Monitoring Dashboard Screenshots', () => {
     );
 
     // 2. Dashboard Status (used by MonitoringDashboard to get bot statuses)
-    await page.route('/api/dashboard/api/status', async (route) =>
+    await page.route('**/api/dashboard/status', async (route) =>
       route.fulfill({
         status: 200,
         json: {
@@ -139,7 +139,7 @@ test.describe('Monitoring Dashboard Screenshots', () => {
 
     // Mock Dashboard Status (Bot Statuses)
     // We want a mix of statuses but overall healthy enough or at least clear
-    await page.route('**/api/dashboard/api/status', async (route) =>
+    await page.route('**/api/dashboard/status', async (route) =>
       route.fulfill({
         status: 200,
         json: {
@@ -227,6 +227,22 @@ test.describe('Monitoring Dashboard Screenshots', () => {
             },
           ],
           timestamp: new Date().toISOString(),
+        },
+      })
+    );
+
+    // Mock Ready probe
+    await page.route('**/health/ready', async (route) =>
+      route.fulfill({
+        status: 200,
+        json: {
+          status: 'healthy',
+          ready: true,
+          checks: {
+            database: { status: 'healthy' },
+            botAdapters: { status: 'healthy' },
+            externalApis: { status: 'healthy' },
+          },
         },
       })
     );

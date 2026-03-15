@@ -80,7 +80,7 @@ describe('Approval Workflow', () => {
   describe('Approval Request Retrieval', () => {
     let createdRequestId: number;
 
-    beforeEach(async () => {
+    beforeAll(async () => {
       // Create a test approval request
       const request: Omit<ApprovalRequest, 'id' | 'createdAt'> = {
         resourceType: 'BotConfiguration',
@@ -188,7 +188,8 @@ describe('Approval Workflow', () => {
       expect(request!.status).toBe('approved');
       expect(request!.reviewedBy).toBe('admin-user');
       // Compare ISO strings to avoid millisecond precision issues between JS and SQLite
-      expect(request!.reviewedAt).toBeTruthy();
+      expect(request!.reviewedAt).toBeDefined();
+      expect(request!.reviewedAt).not.toBeNull();
       expect(new Date(request!.reviewedAt!).getTime()).toBeCloseTo(
         new Date(updates.reviewedAt!).getTime(),
         -2

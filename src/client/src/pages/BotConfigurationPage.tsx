@@ -1,15 +1,17 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect, useCallback } from 'react';
 import { Settings, Save, RefreshCw, AlertCircle, CheckCircle, History } from 'lucide-react';
-import PageHeader from '../components/DaisyUI/PageHeader';
-import Accordion from '../components/DaisyUI/Accordion';
-import Input from '../components/DaisyUI/Input';
-import Select from '../components/DaisyUI/Select';
-import Toggle from '../components/DaisyUI/Toggle';
-import Button from '../components/DaisyUI/Button';
-import { Alert } from '../components/DaisyUI/Alert';
-import Badge from '../components/DaisyUI/Badge';
-import Modal from '../components/DaisyUI/Modal';
+import {
+  PageHeader,
+  Accordion,
+  Input,
+  Select,
+  Toggle,
+  Button,
+  Alert,
+  Badge,
+  Modal,
+} from '../components/DaisyUI';
 
 interface ConfigSchema {
   values: Record<string, any>;
@@ -286,7 +288,7 @@ const BotConfigurationPage: React.FC = () => {
       <PageHeader
         title="Global Defaults"
         description="System and provider settings (convict configs)"
-        icon={Settings}
+        icon={<Settings className="w-8 h-8 text-accent" />}
         gradient="accent"
         actions={
           <div className="flex gap-2">

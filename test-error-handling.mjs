@@ -26,7 +26,7 @@ import { chromium } from 'playwright';
     body: JSON.stringify({ error: 'Internal Server Error' })
   }));
 
-  await page.goto('http://localhost:5173/admin/bots', { waitUntil: 'domcontentloaded' });
+  await page.goto('http://localhost:3030/admin/bots', { waitUntil: 'domcontentloaded' });
   await page.waitForTimeout(3000); // Wait for animations
   await page.screenshot({ path: 'after-fix-bots-error.png' });
 
