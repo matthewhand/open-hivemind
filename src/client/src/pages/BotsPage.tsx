@@ -10,19 +10,25 @@ import {
 } from 'lucide-react';
 import { useSuccessToast, useErrorToast } from '../components/DaisyUI/ToastNotification';
 import Modal, { ConfirmModal } from '../components/DaisyUI/Modal';
+import { useLlmStatus } from '../hooks/useLlmStatus';
+import { usePageLifecycle } from '../hooks/usePageLifecycle';
 import PageHeader from '../components/DaisyUI/PageHeader';
 import SearchFilterBar from '../components/SearchFilterBar';
 import EmptyState from '../components/DaisyUI/EmptyState';
-import { LoadingSpinner } from '../components/DaisyUI/Loading';
+import { LoadingSpinner, LoadingSkeletonCard } from '../components/DaisyUI/Loading';
 import { apiService } from '../services/api';
 import { withRetry } from '../utils/withRetry';
 import { ErrorService } from '../services/ErrorService';
 import type { BotConfig, ProviderModalState } from '../types/bot';
 import { LLMProviderType, MessageProviderType } from '../types/bot';
 import BotCard from '../components/BotManagement/BotCard';
-import { CreateBotWizard } from '../components/BotManagement/CreateBotWizard';
-import { BotSettingsModal } from '../components/BotSettingsModal';
 import { useLocation } from 'react-router-dom';
+import { useLlmStatus } from '../hooks/useLlmStatus';
+import { usePageLifecycle } from '../hooks/usePageLifecycle';
+
+interface BotData extends BotConfig {
+  id: string;
+}
 
 const BotsPage: React.FC = () => {
   const [bots, setBots] = useState<BotConfig[]>([]);
@@ -62,12 +68,17 @@ const BotsPage: React.FC = () => {
 
   // Define data fetching logic
   const fetchPageData = useCallback(async (_signal: AbortSignal) => {
-    const [configData, globalData, personasData, profilesData] = await Promise.all([
+    const [configResult, globalResult, personasResult, profilesResult] = await Promise.allSettled([
       apiService.getConfig(),
       apiService.getGlobalConfig(),
       apiService.getPersonas(),
       apiService.getLlmProfiles(),
     ]);
+
+    const configData = configResult.status === 'fulfilled' ? configResult.value : { bots: [] };
+    const globalData = globalResult.status === 'fulfilled' ? globalResult.value : {};
+    const personasData = personasResult.status === 'fulfilled' ? personasResult.value : [];
+    const profilesData = profilesResult.status === 'fulfilled' ? profilesResult.value : {};
 
     const personas = personasData || [];
     const llmProfiles = profilesData?.llm || profilesData?.profiles?.llm || [];
@@ -86,6 +97,8 @@ const BotsPage: React.FC = () => {
       globalConfig,
     };
   }, []);
+
+  const [uiError, setUiError] = useState<string | null>(null);
 
   // Use Page Lifecycle Hook
   const {
@@ -107,7 +120,7 @@ const BotsPage: React.FC = () => {
   // Sync lifecycle error to UI error
   useEffect(() => {
     if (lifecycleError) {
-      setUiError(lifecycleError.message);
+      setError(lifecycleError.message);
     }
   }, [lifecycleError]);
 
@@ -130,7 +143,6 @@ const BotsPage: React.FC = () => {
 
       // Fetch chat history
       const fetchChatHistory = async () => {
-        setChatLoading(true);
         try {
           const json = await withRetry(() => apiService.get<any>(`/api/bots/${previewBot.id}/history?limit=20`));
           setChatHistory(json.data?.history || []);
@@ -138,8 +150,6 @@ const BotsPage: React.FC = () => {
           ErrorService.report(err, { botId: previewBot.id, action: 'fetchChatHistory' });
           toast.error('Failed to load chat history');
           setChatHistory([]);
-        } finally {
-          setChatLoading(false);
         }
       };
       fetchChatHistory();
@@ -148,17 +158,6 @@ const BotsPage: React.FC = () => {
       setChatHistory([]);
     }
   }, [previewBot]);
-
-  const getIntegrationOptions = (category: 'llm' | 'message') => {
-    const allKeys = Object.keys(globalConfig);
-    const validPrefixes = PROVIDER_CATEGORIES[category] || [];
-
-    return allKeys.filter((key) => {
-      // Match exact provider name or provider-instance
-      // e.g. 'openai' or 'openai-prod'
-      return validPrefixes.some((prefix) => key === prefix || key.startsWith(`${prefix}-`));
-    });
-  };
 
   const toast = {
     success: useSuccessToast(),
@@ -295,11 +294,40 @@ const BotsPage: React.FC = () => {
     );
   }, [activityLogs, logFilter]);
 
-  if (loading && bots.length === 0) {
+  if (loading && bots.length === 0 && !error) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[400px]">
-        <LoadingSpinner size="lg" />
-        <p className="mt-4 text-base-content/60 animate-pulse">Loading your AI Swarm...</p>
+      <div className="space-y-6">
+        <PageHeader
+          title="AI Swarm Management"
+          description="Configure, monitor, and deploy your specialized AI agents."
+          icon={<Bot className="w-8 h-8 text-primary" />}
+          actions={
+            <button
+              className="btn btn-primary"
+              disabled
+            >
+              <Plus className="w-4 h-4 mr-2" /> Create New Bot
+            </button>
+          }
+        />
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2 space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <LoadingSkeletonCard />
+              <LoadingSkeletonCard />
+              <LoadingSkeletonCard />
+              <LoadingSkeletonCard />
+            </div>
+          </div>
+          <div className="lg:col-span-1">
+            <div className="card bg-base-100 shadow-xl border border-dashed border-base-300 h-full min-h-[400px]">
+              <div className="card-body items-center justify-center text-center opacity-40">
+                <LoadingSpinner size="lg" />
+                <p className="mt-4 text-base-content/60 animate-pulse">Loading your AI Swarm...</p>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     );
   }
@@ -322,7 +350,7 @@ const BotsPage: React.FC = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Main Content: Bot List */}
-        <div className="lg:col-span-2 space-y-4">
+        <div className={`${error && bots.length === 0 ? 'lg:col-span-3' : 'lg:col-span-2'} space-y-4`}>
           <SearchFilterBar
             searchQuery={searchQuery}
             onSearchChange={setSearchQuery}
@@ -358,28 +386,19 @@ const BotsPage: React.FC = () => {
 
           {error && bots.length === 0 ? (
             <EmptyState
-              icon={<AlertTriangle className="w-16 h-16 text-error/50" />}
+              icon={AlertTriangle}
               title="Failed to load swarm"
               description="We encountered an error while trying to load your AI agents. Please try again."
-              action={
-                <button className="btn btn-outline btn-error" onClick={fetchBots}>
-                  <RefreshCw className="w-4 h-4 mr-2" />
-                  Retry Connection
-                </button>
-              }
+              actionLabel="Retry Connection"
+              onAction={fetchBots}
             />
           ) : filteredBots.length === 0 ? (
             <EmptyState
-              icon={<Bot className="w-16 h-16 text-base-content/20" />}
+              icon={Bot}
               title={searchQuery ? "No agents found" : "Your swarm is empty"}
               description={searchQuery ? "No agents match your search criteria." : "Start by creating your first specialized AI agent."}
-              action={
-                !searchQuery && (
-                  <button className="btn btn-primary" onClick={() => setIsCreateModalOpen(true)}>
-                    Create First Bot
-                  </button>
-                )
-              }
+              actionLabel={searchQuery ? undefined : "Create First Bot"}
+              onAction={searchQuery ? undefined : () => setIsCreateModalOpen(true)}
             />
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -399,6 +418,7 @@ const BotsPage: React.FC = () => {
         </div>
 
         {/* Sidebar: Bot Preview/Details */}
+        {!(error && bots.length === 0) && (
         <div className="lg:col-span-1">
           {previewBot ? (
             <div className="card bg-base-100 shadow-xl border border-base-200 sticky top-6 animate-in fade-in slide-in-from-right-4 duration-300">
@@ -584,6 +604,7 @@ const BotsPage: React.FC = () => {
             </div>
           )}
         </div>
+        )}
       </div>
 
       {/* Modals */}

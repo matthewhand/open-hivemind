@@ -1,6 +1,8 @@
 import os from 'os';
 import process from 'process';
 import { Router, type NextFunction, type Request, type Response } from 'express';
+import { DatabaseManager } from '../../database/DatabaseManager';
+import { BotManager } from '../../managers/BotManager';
 import { MetricsCollector } from '../../monitoring/MetricsCollector';
 import ApiMonitorService from '../../services/ApiMonitorService';
 import { ErrorLogger } from '../../utils/errorLogger';
@@ -184,17 +186,46 @@ router.get('/alerts', (req, res) => {
 
 // Readiness probe
 router.get('/ready', (req, res) => {
-  // Check if all dependencies are ready
-  // For now, we'll assume the service is ready if it's responding
-  return res.json({
-    ready: true,
-    timestamp: new Date().toISOString(),
-    checks: {
-      database: true, // Would need actual database check
-      external_apis: true, // Would need actual API checks
-      configuration: true,
-    },
-  });
+  try {
+    const isDbConnected = DatabaseManager.getInstance().isConnected();
+    const bots = BotManager.getInstance().getAllBots();
+    const botAdaptersHealthy = Array.from(bots.values()).every(
+      (bot: any) =>
+        bot.getStatus() === 'active' ||
+        bot.getStatus() === 'connected' ||
+        bot.getStatus() === 'healthy' ||
+        bot.getStatus() === 'idle' ||
+        bot.getStatus() === 'warning'
+    );
+    const apiStatuses = ApiMonitorService.getInstance().getAllStatuses();
+    const externalApisHealthy = Object.values(apiStatuses).every(
+      (status: any) => status.status !== 'error' && status.status !== 'offline'
+    );
+
+    const isHealthy = isDbConnected;
+
+    const checks = {
+      database: { status: isDbConnected ? 'healthy' : 'unhealthy' },
+      botAdapters: { status: botAdaptersHealthy ? 'healthy' : 'degraded' },
+      externalApis: { status: externalApisHealthy ? 'healthy' : 'degraded' },
+    };
+
+    return res.status(isHealthy ? 200 : 503).json({
+      status: isHealthy ? 'healthy' : 'unhealthy',
+      ready: isHealthy,
+      timestamp: new Date().toISOString(),
+      uptime: process.uptime(),
+      version: process.env.npm_package_version || '1.0.0',
+      checks,
+    });
+  } catch (error) {
+    return res.status(503).json({
+      status: 'unhealthy',
+      ready: false,
+      timestamp: new Date().toISOString(),
+      error: error instanceof Error ? error.message : String(error),
+    });
+  }
 });
 
 // Liveness probe
@@ -212,38 +243,8 @@ router.get('/metrics/prometheus', (req, res) => {
   const memoryUsage = process.memoryUsage();
   const cpuUsage = process.cpuUsage();
 
-  const metrics = `# HELP process_uptime_seconds Process uptime in seconds
-# TYPE process_uptime_seconds gauge
-process_uptime_seconds ${uptime}
-
-# HELP process_memory_heap_used_bytes Process heap memory used in bytes
-# TYPE process_memory_heap_used_bytes gauge
-process_memory_heap_used_bytes ${memoryUsage.heapUsed}
-
-# HELP process_memory_heap_total_bytes Process heap memory total in bytes
-# TYPE process_memory_heap_total_bytes gauge
-process_memory_heap_total_bytes ${memoryUsage.heapTotal}
-
-# HELP process_resident_memory_bytes Resident memory size in bytes
-# TYPE process_resident_memory_bytes gauge
-process_resident_memory_bytes ${memoryUsage.rss}
-
-# HELP nodejs_heap_size_total_bytes Total heap size in bytes
-# TYPE nodejs_heap_size_total_bytes gauge
-nodejs_heap_size_total_bytes ${memoryUsage.heapTotal}
-
-# HELP process_cpu_user_seconds_total Total user CPU time spent in seconds
-# TYPE process_cpu_user_seconds_total counter
-process_cpu_user_seconds_total ${cpuUsage.user / 1000000}
-
-# HELP process_cpu_system_seconds_total Total system CPU time spent in seconds
-# TYPE process_cpu_system_seconds_total counter
-process_cpu_system_seconds_total ${cpuUsage.system / 1000000}
-
-# HELP nodejs_version_info Node.js version info
-# TYPE nodejs_version_info gauge
-nodejs_version_info{version="${process.version}"} 1
-
+  const baseMetrics = PROMETHEUS_METRICS_TEMPLATE(uptime, memoryUsage, cpuUsage, process.version);
+  const metrics = `${baseMetrics}
 ${MetricsCollector.getInstance().getPrometheusFormat()}
 `;
 
@@ -251,11 +252,12 @@ ${MetricsCollector.getInstance().getPrometheusFormat()}
   return res.send(metrics);
 });
 
-export const prometheusMetricsHandler = (req: Request, res: Response) => {
-  const uptime = process.uptime();
-  const memoryUsage = process.memoryUsage();
-  const cpuUsage = process.cpuUsage();
-  const metrics = `# HELP process_uptime_seconds Process uptime in seconds
+const PROMETHEUS_METRICS_TEMPLATE = (
+  uptime: number,
+  memoryUsage: NodeJS.MemoryUsage,
+  cpuUsage: NodeJS.CpuUsage,
+  version: string
+) => `# HELP process_uptime_seconds Process uptime in seconds
 # TYPE process_uptime_seconds gauge
 process_uptime_seconds ${uptime}
 
@@ -285,8 +287,14 @@ process_cpu_system_seconds_total ${cpuUsage.system / 1000000}
 
 # HELP nodejs_version_info Node.js version info
 # TYPE nodejs_version_info gauge
-nodejs_version_info{version="${process.version}"} 1
+nodejs_version_info{version="${version}"} 1
 `;
+
+export const prometheusMetricsHandler = (req: Request, res: Response) => {
+  const uptime = process.uptime();
+  const memoryUsage = process.memoryUsage();
+  const cpuUsage = process.cpuUsage();
+  const metrics = PROMETHEUS_METRICS_TEMPLATE(uptime, memoryUsage, cpuUsage, process.version);
   res.set('Content-Type', 'text/plain');
   res.send(metrics);
 };

@@ -117,7 +117,9 @@ router.post('/', validateRequest(CreateBotSchema), async (req, res) => {
     const allBots = await manager.getAllBots();
     const existingBot = allBots.find((b) => b.name === request.name);
     if (existingBot) {
-      return res.status(200).json({ success: true, message: 'Bot already exists', bot: existingBot });
+      return res
+        .status(200)
+        .json({ success: true, message: 'Bot already exists', bot: existingBot });
     }
 
     const bot = await manager.createBot(request);
@@ -234,7 +236,9 @@ router.post('/:id/clone', validateRequest(CloneBotSchema), async (req, res) => {
     const allBots = await manager.getAllBots();
     const existingBot = allBots.find((b) => b.name === newName);
     if (existingBot) {
-      return res.status(200).json({ success: true, message: 'Bot clone already exists', bot: existingBot });
+      return res
+        .status(200)
+        .json({ success: true, message: 'Bot clone already exists', bot: existingBot });
     }
 
     const newBot = await manager.cloneBot(id, newName);
@@ -326,7 +330,7 @@ router.post('/:id/stop', validateRequest(BotIdParamSchema), async (req, res) => 
 router.get('/:id/history', validateRequest(BotHistoryQuerySchema), async (req, res) => {
   try {
     const { id } = req.params;
-    const reqQuery = req.query as any;
+    const reqQuery = req.query;
     const limit = Math.min(Math.max(parseInt(reqQuery.limit as string) || 20, 1), 100);
     const channelId = req.query.channelId as string;
 
@@ -371,7 +375,7 @@ function redactString(val: string | undefined): string | undefined {
 router.get('/:id/activity', validateRequest(BotActivityQuerySchema), async (req, res) => {
   try {
     const { id } = req.params;
-    const reqQuery = req.query as any;
+    const reqQuery = req.query;
     const limit = Math.min(Math.max(parseInt(reqQuery.limit as string) || 20, 1), 100);
 
     const bot = await manager.getBot(id);

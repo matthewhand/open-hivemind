@@ -1,18 +1,18 @@
 import { NextFunction, Request, Response } from 'express';
-import { MetricsCollector } from '../../../src/monitoring/MetricsCollector';
-import { ErrorFactory, BaseHivemindError } from '../../../src/types/errorClasses';
-import { errorLogger } from '../../../src/utils/errorLogger';
 import {
-  correlationMiddleware,
-  globalErrorHandler,
   asyncErrorHandler,
+  correlationMiddleware,
+  errorRecoveryMiddleware,
+  globalErrorHandler,
   handleUncaughtException,
   handleUnhandledRejection,
+  rateLimitErrorHandler,
   setupGlobalErrorHandlers,
   setupGracefulShutdown,
-  errorRecoveryMiddleware,
-  rateLimitErrorHandler,
 } from '../../../src/middleware/errorHandler';
+import { MetricsCollector } from '../../../src/monitoring/MetricsCollector';
+import { BaseHivemindError, ErrorFactory } from '../../../src/types/errorClasses';
+import { errorLogger } from '../../../src/utils/errorLogger';
 
 jest.mock('../../../src/monitoring/MetricsCollector', () => ({
   MetricsCollector: {
@@ -116,17 +116,17 @@ describe('errorHandler middleware', () => {
       expect(MetricsCollector.getInstance().incrementErrors).toHaveBeenCalled();
 
       expect(mockRes.status).toHaveBeenCalledWith(500);
-      expect(mockRes.json).toHaveBeenCalledWith(expect.objectContaining({
-        error: 'MockError',
-        code: 'MOCK_ERROR',
-        message: 'Mock error message',
-        correlationId: 'test-corr-id',
-        details: { foo: 'bar' },
-        recovery: {
-          canRecover: false,
-          steps: ['Step 1'],
-        }
-      }));
+      expect(mockRes.json).toHaveBeenCalledWith(
+        expect.objectContaining({
+          success: false,
+          error: expect.objectContaining({
+            code: 'MOCK_ERROR',
+            message: 'Mock error message',
+            correlationId: 'test-corr-id',
+            details: { foo: 'bar' },
+          }),
+        })
+      );
 
       // Ensure response doesn't contain stack in production
       const jsonCallArg = (mockRes.json as jest.Mock).mock.calls[0][0];
@@ -268,28 +268,14 @@ describe('errorHandler middleware', () => {
   });
 
   describe('setupGlobalErrorHandlers', () => {
-    it('should register process listeners for exceptions and rejections', () => {
-      const onSpy = jest.spyOn(process, 'on').mockImplementation((() => {}) as any);
-
-      setupGlobalErrorHandlers();
-
-      expect(onSpy).toHaveBeenCalledWith('uncaughtException', handleUncaughtException);
-      expect(onSpy).toHaveBeenCalledWith('unhandledRejection', handleUnhandledRejection);
-
-      onSpy.mockRestore();
+    it('should not throw (now delegated to ShutdownCoordinator)', () => {
+      expect(() => setupGlobalErrorHandlers()).not.toThrow();
     });
   });
 
   describe('setupGracefulShutdown', () => {
-    it('should register process listeners for SIGTERM and SIGINT', () => {
-      const onSpy = jest.spyOn(process, 'on').mockImplementation((() => {}) as any);
-
-      setupGracefulShutdown();
-
-      expect(onSpy).toHaveBeenCalledWith('SIGTERM', expect.any(Function));
-      expect(onSpy).toHaveBeenCalledWith('SIGINT', expect.any(Function));
-
-      onSpy.mockRestore();
+    it('should not throw (now delegated to ShutdownCoordinator)', () => {
+      expect(() => setupGracefulShutdown()).not.toThrow();
     });
   });
 

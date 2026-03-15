@@ -14,7 +14,7 @@
         "debug": "^4.3.7"
     },
     "peerDependencies": {
-        "@hivemind/shared-types": "*"
+        "@hivemind/shared-types": "workspace:*"
     },
     "devDependencies": {
         "@types/debug": "^4.1.12",
