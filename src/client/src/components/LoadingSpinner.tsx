@@ -1,5 +1,5 @@
 import React from 'react';
-import { LoadingSpinner } from './DaisyUI';
+import { LoadingSpinner } from './DaisyUI/Loading';
 
 interface LoadingSpinnerComponentProps {
   message?: string;
