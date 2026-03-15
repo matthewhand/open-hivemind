@@ -1,5 +1,6 @@
 import axios from 'axios';
 import Debug from 'debug';
+import { isSafeUrl } from '@hivemind/shared-types';
 import { ConfigurationManager } from '@config/ConfigurationManager';
 import flowiseConfig from '@integrations/flowise/flowiseConfig';
 
@@ -49,7 +50,13 @@ export async function getFlowiseResponse(channelId: string, question: string): P
 
   try {
     debug('Sending request to Flowise:', { baseURL, chatflowId, payload });
-    const response = await axios.post(`${baseURL}/prediction/${chatflowId}`, payload, { headers });
+    const targetUrl = `${baseURL}/prediction/${chatflowId}`;
+
+    if (!(await isSafeUrl(targetUrl))) {
+      throw new Error('Flowise API URL is not safe to connect to.');
+    }
+
+    const response = await axios.post(targetUrl, payload, { headers });
     const { text, chatId: newChatId } = response.data;
 
     debug('Received response from Flowise:', { text, newChatId });
