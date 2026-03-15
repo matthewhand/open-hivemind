@@ -56,12 +56,14 @@
       "@hivemind/memory-mem4ai/*": ["packages/memory-mem4ai/src/*"],
       "@hivemind/memory-memvault": ["packages/memory-memvault/src/index.ts"],
       "@hivemind/memory-memvault/*": ["packages/memory-memvault/src/*"],
-      "@hivemind/adapter-discord": ["packages/adapter-discord/src/index.ts"],
-      "@hivemind/adapter-discord/*": ["packages/adapter-discord/src/*"],
-      "@hivemind/adapter-slack": ["packages/adapter-slack/src/index.ts"],
-      "@hivemind/adapter-slack/*": ["packages/adapter-slack/src/*"],
-      "@hivemind/adapter-mattermost": ["packages/adapter-mattermost/src/index.ts"],
-      "@hivemind/adapter-mattermost/*": ["packages/adapter-mattermost/src/*"]
+      "@hivemind/message-discord": ["packages/message-discord/src/index.ts"],
+      "@hivemind/message-discord/*": ["packages/message-discord/src/*"],
+      "@hivemind/message-slack": ["packages/message-slack/src/index.ts"],
+      "@hivemind/message-slack/*": ["packages/message-slack/src/*"],
+      "@hivemind/message-mattermost": ["packages/message-mattermost/src/index.ts"],
+      "@hivemind/message-mattermost/*": ["packages/message-mattermost/src/*"],
+      "@hivemind/llm-letta": ["packages/llm-letta/src/index.ts"],
+      "@hivemind/llm-letta/*": ["packages/llm-letta/src/*"]
     },
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true
@@ -71,9 +73,10 @@
     "packages/provider-openai/src/**/*",
     "packages/memory-mem4ai/src/**/*",
     "packages/memory-memvault/src/**/*",
-    "packages/adapter-discord/src/**/*",
-    "packages/adapter-slack/src/**/*",
-    "packages/adapter-mattermost/src/**/*"
+    "packages/message-discord/src/**/*",
+    "packages/message-slack/src/**/*",
+    "packages/message-mattermost/src/**/*",
+    "packages/llm-letta/src/**/*"
   ],
   "exclude": ["tests/**/*", "node_modules", "src/client/**/*"],
   "files": ["src/global.d.ts"]

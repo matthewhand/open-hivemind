@@ -8,8 +8,6 @@ import type {
   PerformanceMetric,
 } from '../../../src/webui/services/WebSocketService';
 import type { AlertEvent } from '../types/Alert';
-import Logger from '../utils/logger';
-
 
 type BotStat = { name: string; messageCount: number; errorCount: number };
 
@@ -41,11 +39,6 @@ export const WebSocketProvider: React.FC<{ children: ReactNode }> = ({ children 
   const connect = useCallback(() => {
     if (socketRef.current?.connected) { return; }
 
-    // Ensure we clean up any old disconnected socket instance before creating a new one
-    if (socket) {
-      socket.disconnect();
-    }
-
     const connectionTarget = API_BASE_URL && API_BASE_URL.length > 0 ? API_BASE_URL : undefined;
     const tokenString = localStorage.getItem('auth_tokens');
     let token = '';
@@ -54,7 +47,7 @@ export const WebSocketProvider: React.FC<{ children: ReactNode }> = ({ children 
         const tokens = JSON.parse(tokenString);
         token = tokens.accessToken;
       } catch (e) {
-        Logger.error('Failed to parse auth token', e);
+        console.error('Failed to parse auth token', e);
       }
     }
 
@@ -67,12 +60,12 @@ export const WebSocketProvider: React.FC<{ children: ReactNode }> = ({ children 
     });
 
     newSocket.on('connect', () => {
-      Logger.log('WebSocket connected');
+      console.log('WebSocket connected');
       setIsConnected(true);
     });
 
     newSocket.on('disconnect', () => {
-      Logger.log('WebSocket disconnected');
+      console.log('WebSocket disconnected');
       setIsConnected(false);
     });
 
@@ -136,17 +129,17 @@ export const WebSocketProvider: React.FC<{ children: ReactNode }> = ({ children 
 
     // Bot status updates
     newSocket.on('bot_status_update', (data) => {
-      Logger.log('Bot status update:', data);
+      console.log('Bot status update:', data);
     });
 
     // System metrics
     newSocket.on('system_metrics_update', (data) => {
-      Logger.log('System metrics update:', data);
+      console.log('System metrics update:', data);
     });
 
     // Error handling
     newSocket.on('error', (error) => {
-      Logger.error('WebSocket error:', error);
+      console.error('WebSocket error:', error);
     });
 
     socketRef.current = newSocket;
