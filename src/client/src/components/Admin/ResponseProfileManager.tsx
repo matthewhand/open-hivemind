@@ -1,5 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Button, Modal, Card, Alert, Badge } from '../DaisyUI';
+import Button from '../DaisyUI/Button';
+import Modal from '../DaisyUI/Modal';
+import Card from '../DaisyUI/Card';
+import { Alert } from '../DaisyUI/Alert';
+import Badge from '../DaisyUI/Badge';
 import {
   PlusIcon,
   PencilIcon,
@@ -36,6 +40,7 @@ const ResponseProfileManager: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [editingProfile, setEditingProfile] = useState<ResponseProfile | null>(null);
+  const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
   const [toastMessage, setToastMessage] = useState('');
   const [toastType, setToastType] = useState<'success' | 'error'>('success');
 
@@ -116,7 +121,7 @@ const ResponseProfileManager: React.FC = () => {
   };
 
   const handleDelete = async (key: string) => {
-    if (!confirm(`Delete profile "${key}"?`)) {return;}
+    setDeleteConfirm(null);
     try {
       const response = await fetch(`/api/config/response-profiles/${key}`, { method: 'DELETE' });
       if (!response.ok) {
@@ -173,7 +178,7 @@ const ResponseProfileManager: React.FC = () => {
               <div className="card-actions justify-end mt-4">
                 <Button variant="ghost" size="sm" onClick={() => openEditDialog(profile)}><PencilIcon className="w-4 h-4" /></Button>
                 {!profile.isBuiltIn && (
-                  <Button variant="ghost" size="sm" className="text-error" onClick={() => handleDelete(profile.key)}><TrashIcon className="w-4 h-4" /></Button>
+                  <Button variant="ghost" size="sm" className="text-error" onClick={() => setDeleteConfirm(profile.key)}><TrashIcon className="w-4 h-4" /></Button>
                 )}
               </div>
             </div>
@@ -231,11 +236,21 @@ const ResponseProfileManager: React.FC = () => {
         </div>
       </Modal>
 
+      <ConfirmModal
+        isOpen={!!deleteConfirm}
+        onClose={() => setDeleteConfirm(null)}
+        title="Confirm Delete"
+        message={`Are you sure you want to delete profile "${deleteConfirm}"?`}
+        confirmText="Delete Profile"
+        confirmVariant="error"
+        onConfirm={() => deleteConfirm && handleDelete(deleteConfirm)}
+      />
+
       {toastMessage && (
         <div className="toast toast-bottom toast-center z-50" role="status" aria-live="polite">
           <div className={`alert ${toastType === 'success' ? 'alert-success' : 'alert-error'}`}>
             <span>{toastMessage}</span>
-            <button className="btn btn-sm btn-ghost" onClick={() => setToastMessage('')}>✕</button>
+            <button className="btn btn-sm btn-ghost" onClick={() => setToastMessage('')} aria-label="Close message">✕</button>
           </div>
         </div>
       )}

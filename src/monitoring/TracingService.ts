@@ -424,6 +424,14 @@ export class TracingService extends EventEmitter {
   }
 
   /**
+   * Clean up resources and stop exporting.
+   */
+  public shutdown(): void {
+    this.stopExporting();
+    this.removeAllListeners();
+  }
+
+  /**
    * Export completed spans
    */
   async exportSpans(): Promise<void> {
