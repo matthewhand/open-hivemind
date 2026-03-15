@@ -18,21 +18,6 @@ jobs:
         uses: pnpm/action-setup@v3
         with:
           version: 10
-      - uses: actions/setup-node@v4
+        uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: 'pnpm'
-
-      - name: Install Playwright browsers
-        run: pnpm dlx playwright install chromium
-
-      - name: Generate screenshots
-        run: pnpm run generate-docs
-
-      - name: Commit and push changes
-        run: |
-          git config --global user.name 'github-actions[bot]'
-          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
-          git add docs/screenshots/*.png
-          git commit -m "chore: update documentation screenshots [skip ci]" || echo "No changes to commit"
-          git push
