@@ -1,9 +1,9 @@
 import fs from 'fs';
 import axios from 'axios';
 import Debug from 'debug';
+import { isSafeUrl } from '@src/utils/ssrfGuard';
 import openWebUIConfig from './openWebUIConfig';
 import { getSessionKey } from './sessionManager';
-import { isSafeUrl } from '@src/utils/ssrfGuard';
 
 const debug = Debug('app:uploadKnowledgeFile');
 let knowledgeFileId: string | null = null; // Cache the knowledge file ID in memory.

@@ -12,17 +12,17 @@ import {
  */
 
 const ALL_PAGES = [
-  { path: '/admin/overview',          label: 'Overview' },
-  { path: '/admin/providers/llm',     label: 'LLM Providers' },
+  { path: '/admin/overview', label: 'Overview' },
+  { path: '/admin/providers/llm', label: 'LLM Providers' },
   { path: '/admin/providers/message', label: 'Message Providers' },
-  { path: '/admin/bots',              label: 'Bots' },
-  { path: '/admin/personas',          label: 'Personas' },
-  { path: '/admin/guards',            label: 'Guards' },
-  { path: '/admin/settings',          label: 'Settings' },
-  { path: '/admin/monitoring',        label: 'Monitoring' },
-  { path: '/admin/configuration',     label: 'Configuration' },
-  { path: '/admin/showcase',          label: 'Showcase' },
-  { path: '/admin/sitemap',           label: 'Sitemap' },
+  { path: '/admin/bots', label: 'Bots' },
+  { path: '/admin/personas', label: 'Personas' },
+  { path: '/admin/guards', label: 'Guards' },
+  { path: '/admin/settings', label: 'Settings' },
+  { path: '/admin/monitoring', label: 'Monitoring' },
+  { path: '/admin/configuration', label: 'Configuration' },
+  { path: '/admin/showcase', label: 'Showcase' },
+  { path: '/admin/sitemap', label: 'Sitemap' },
 ];
 
 test.describe('Page Rendering - All Admin Pages', () => {
@@ -45,7 +45,10 @@ test.describe('Page Rendering - All Admin Pages', () => {
       expect(bodyText).not.toContain('Something went wrong');
       expect(bodyText).not.toContain('Unexpected Application Error');
 
-      await page.screenshot({ path: `test-results/pages-${label.toLowerCase().replace(/\s+/g, '-')}.png`, fullPage: true });
+      await page.screenshot({
+        path: `test-results/pages-${label.toLowerCase().replace(/\s+/g, '-')}.png`,
+        fullPage: true,
+      });
       await assertNoErrors(errors, `${label} page`);
     });
   }
