@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import Input from './Input';
+import { Input } from './Input';
 
 interface ThemeOption {
   value: string;
@@ -271,7 +271,7 @@ const AdvancedThemeSwitcher: React.FC<ThemeSwitcherProps> = ({
     try {
       localStorage.setItem('hivemind-favorite-themes', JSON.stringify(newFavorites));
     } catch (e) {
-      Logger.error('Failed to persist favorites, reverting', e);
+      console.error('Failed to persist favorites, reverting', e);
       setFavoriteThemes(previousFavorites);
     }
   };
