@@ -21,8 +21,6 @@ declare global {
     interface Request {
       correlationId?: string;
       startTime?: number;
-      retryCount?: number;
-      maxRetries?: number;
     }
   }
 }
@@ -80,11 +78,11 @@ function extractErrorContext(req: Request): ErrorContext {
   return {
     correlationId: req.correlationId || 'unknown',
     requestId: req.headers['x-request-id'] as string,
-    userId: (req as import('../auth/types').AuthMiddlewareRequest).user?.id,
+    userId: (req as any).user?.id || (req as any).user?.sub,
     path: req.path,
     method: req.method,
     userAgent: req.headers['user-agent'],
-    ip: req.ip || req.connection?.remoteAddress,
+    ip: req.ip || req.connection.remoteAddress,
     duration,
     // Sanitize sensitive data
     body: sanitizeRequestBody(req.body),
@@ -156,10 +154,8 @@ export function globalErrorHandler(
   const statusCode = hivemindError.statusCode || 500;
 
   // Create standard error response
-  const errorResponseBuilder = createErrorResponse(
-    hivemindError,
-    context.correlationId
-  ).withRequest(context.path, context.method, context.correlationId);
+  const errorResponseBuilder = createErrorResponse(hivemindError, context.correlationId)
+    .withRequest(context.path, context.method, context.correlationId);
 
   const errorResponse = errorResponseBuilder.build();
 
@@ -254,19 +250,37 @@ function emitErrorEvent(error: BaseHivemindError, context: ErrorContext, statusC
 
 /**
  * Setup global error handlers
- * (Deprecated - Global process handlers are now managed centrally by ShutdownCoordinator
- * to prevent duplicate registrations and race conditions)
  */
 export function setupGlobalErrorHandlers(): void {
-  debug('Global error handlers setup skipped - managed by ShutdownCoordinator');
+  // Handle uncaught exceptions
+  process.on('uncaughtException', handleUncaughtException);
+
+  // Handle unhandled promise rejections
+  process.on('unhandledRejection', handleUnhandledRejection);
+
+  debug('Global error handlers setup completed');
 }
 
 /**
  * Graceful shutdown handler
- * (Deprecated - Graceful shutdown is now managed centrally by ShutdownCoordinator)
  */
 export function setupGracefulShutdown(): void {
-  debug('Graceful shutdown handlers setup skipped - managed by ShutdownCoordinator');
+  const shutdown = (signal: string): void => {
+    console.log(`\nReceived ${signal}. Starting graceful shutdown...`);
+
+    // Close server, database connections, etc.
+    // This would be implemented by the main application
+
+    setTimeout(() => {
+      console.log('Graceful shutdown completed');
+      process.exit(0);
+    }, 5000); // 5 second timeout
+  };
+
+  process.on('SIGTERM', () => shutdown('SIGTERM'));
+  process.on('SIGINT', () => shutdown('SIGINT'));
+
+  debug('Graceful shutdown handlers setup completed');
 }
 
 /**
@@ -282,8 +296,8 @@ export function errorRecoveryMiddleware(req: Request, res: Response, next: NextF
   }
 
   // Add retry information to request
-  req.retryCount = retryCount;
-  req.maxRetries = maxRetries;
+  (req as any).retryCount = retryCount;
+  (req as any).maxRetries = maxRetries;
 
   next();
 }

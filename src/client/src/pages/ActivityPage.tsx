@@ -2,18 +2,20 @@ import { withRetry } from '../utils/withRetry';
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Clock, Download, LayoutList, GitBranch, RefreshCw, X } from 'lucide-react';
-import { Alert } from '../components/DaisyUI/Alert';
-import Badge from '../components/DaisyUI/Badge';
-import Button from '../components/DaisyUI/Button';
-import Card from '../components/DaisyUI/Card';
-import DataTable from '../components/DaisyUI/DataTable';
-import StatsCards from '../components/DaisyUI/StatsCards';
-import Timeline from '../components/DaisyUI/Timeline';
-import Toggle from '../components/DaisyUI/Toggle';
-import PageHeader from '../components/DaisyUI/PageHeader';
-import { LoadingSpinner } from '../components/DaisyUI/Loading';
-import EmptyState from '../components/DaisyUI/EmptyState';
-import Input from '../components/DaisyUI/Input';
+import {
+  Alert,
+  Badge,
+  Button,
+  Card,
+  DataTable,
+  StatsCards,
+  Timeline,
+  Toggle,
+  PageHeader,
+  LoadingSpinner,
+  EmptyState,
+  Input,
+} from '../components/DaisyUI';
 import SearchFilterBar from '../components/SearchFilterBar';
 import { apiService, ActivityEvent, ActivityResponse } from '../services/api';
 import Logger from '../utils/logger';

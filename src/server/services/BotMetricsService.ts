@@ -4,7 +4,7 @@ import Debug from 'debug';
 
 const debug = Debug('app:BotMetricsService');
 
-interface BotMetrics {
+export interface BotMetrics {
   messageCount: number;
   errorCount: number;
   lastActive?: string;
@@ -97,8 +97,6 @@ export class BotMetricsService {
       this.saveInterval = null;
     }
     // Final save attempt (fire and forget as we might be shutting down)
-    this.saveMetrics().catch((error) => {
-      debug('Failed to save bot metrics during shutdown:', error);
-    });
+    this.saveMetrics().catch(() => {});
   }
 }

@@ -1,11 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import Card from '../components/DaisyUI/Card';
-import Button from '../components/DaisyUI/Button';
-import Input from '../components/DaisyUI/Input';
-import Badge from '../components/DaisyUI/Badge';
-import Breadcrumbs from '../components/DaisyUI/Breadcrumbs';
-import Pagination from '../components/DaisyUI/Pagination';
+import { Card, Button, Input, Badge, Breadcrumbs, Pagination } from '../components/DaisyUI';
 import { MagnifyingGlassIcon, PlusIcon, BookOpenIcon } from '@heroicons/react/24/outline';
 import useSpecs from '../hooks/useSpecs';
 

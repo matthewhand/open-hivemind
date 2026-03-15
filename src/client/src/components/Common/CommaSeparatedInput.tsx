@@ -178,13 +178,7 @@ export const CommaSeparatedInput: React.FC<CommaSeparatedInputProps> = ({
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newVal = e.target.value;
-    if (newVal.includes(',')) {
-      commitInput(newVal);
-      return;
-    }
-
-    setInputValue(newVal);
+    setInputValue(e.target.value);
     setShowSuggestions(true);
     if (internalError) {
       setInternalError(null);

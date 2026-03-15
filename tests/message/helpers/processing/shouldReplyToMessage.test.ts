@@ -16,16 +16,10 @@ jest.mock('../../../../src/config/messageConfig');
 jest.mock('../../../../src/message/helpers/unsolicitedMessageHandler');
 
 describe('shouldReplyToMessage', () => {
-  afterEach(() => {
-    (IncomingMessageDensity as any).instance = undefined;
-  });
-
   let mockMessage: any;
   const originalDateNow = Date.now;
 
   beforeEach(() => {
-    (IncomingMessageDensity as any).instance = undefined;
-
     global.Date.now = originalDateNow;
     jest.restoreAllMocks();
     jest.clearAllMocks();

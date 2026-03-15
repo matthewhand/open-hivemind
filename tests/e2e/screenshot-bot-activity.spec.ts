@@ -65,15 +65,6 @@ test.describe('Bot Activity Screenshots', () => {
       },
     ];
 
-    // Mock general endpoints that Dashboard layout requires
-    await page.route('**/api/auth/check', async (route) => {
-      await route.fulfill({ status: 200, json: { authenticated: true, user: { role: 'admin' } } });
-    });
-
-    await page.route('**/api/health/detailed', async (route) => {
-      await route.fulfill({ status: 200, json: { status: 'healthy', memory: { usage: 25 }, cpu: { user: 10 } } });
-    });
-
     // Mock API responses
     await page.route('**/api/config/llm-profiles', async (route) => {
       await route.fulfill({
@@ -95,33 +86,14 @@ test.describe('Bot Activity Screenshots', () => {
     });
 
     await page.route('**/api/config/global', async (route) => {
-      await route.fulfill({ json: { _userSettings: { values: {} } } });
+      await route.fulfill({ json: { openai: { values: {} }, discord: { values: {} } } });
     });
 
-    await page.route('**/api/config/llm-status', async (route) => {
-      await route.fulfill({ status: 200, json: { defaultConfigured: true } });
-    });
-
-    // Handle Config GET (it's called by multiple components, sometimes checking /api/config)
+    // Handle Config GET
     await page.route('**/api/config', async (route) => {
       if (route.request().method() === 'GET') {
         await route.fulfill({
-          status: 200,
-          contentType: 'application/json',
-          body: JSON.stringify({ bots: [mockBot], legacyMode: false, environment: 'test', warnings: [] }),
-        });
-      } else {
-        await route.continue();
-      }
-    });
-
-    // Handle /api/bots GET since BotsPage uses withRetry which checks success flag
-    await page.route('**/api/bots', async (route) => {
-      if (route.request().method() === 'GET') {
-        await route.fulfill({
-          status: 200,
-          contentType: 'application/json',
-          body: JSON.stringify({ success: true, bots: [mockBot], data: { bots: [mockBot] } }),
+          json: { bots: [mockBot], legacyMode: false, environment: 'test', warnings: [] },
         });
       } else {
         await route.continue();
@@ -153,52 +125,31 @@ test.describe('Bot Activity Screenshots', () => {
     // Screenshot Bots Page (Clean)
     await page.screenshot({ path: 'docs/screenshots/bots-page.png', fullPage: true });
 
-    // To open the preview, we need to click the card.
-    // The safest way is to find the card element and click it via evaluate.
-    await page.evaluate(() => {
-      const heading = Array.from(document.querySelectorAll('h2')).find(h => h.textContent?.includes('Screenshot Bot'));
-      if (heading) {
-        const cardBody = heading.closest('.card-body');
-        if (cardBody) {
-            // Find a button or the outer container that has the click handler
-            const card = cardBody.closest('.card') as HTMLElement;
-            if (card) {
-                card.click();
-            }
-        }
-      }
-    });
+    // Open Settings Modal
+    const settingsButton = page.locator('button[title="Bot Settings"]').first();
+    await settingsButton.click();
 
-    await page.waitForTimeout(1000);
+    // Wait for Settings Modal
+    const settingsModal = page.locator('.modal-box', { hasText: 'Core Configuration' });
+    await expect(settingsModal).toBeVisible();
 
-    // Wait for the Activity text or similar inside the sidebar.
+    // Click "View Logs & Details"
+    await settingsModal.getByRole('button', { name: /View Logs & Details/i }).click();
+
+    // Wait for Details Modal (Preview Modal)
+    const detailsModal = page.locator('.modal-box', { hasText: 'Recent Activity' });
+    await expect(detailsModal).toBeVisible();
+
+    // Wait for logs to render
     try {
-      await expect(page.getByText('Connection timeout')).toBeVisible({ timeout: 2000 });
+      await expect(page.getByText('Connection timeout')).toBeVisible({ timeout: 5000 });
     } catch (e) {
-      console.log('Activity log not visible, trying clicking the "More Options" button or the card itself...');
-
-      // Let's click the card body containing the description.
-      await page.getByText('A bot for screenshots').click();
-      await page.waitForTimeout(1000);
-
-      try {
-        await expect(page.getByText('Connection timeout')).toBeVisible({ timeout: 5000 });
-      } catch (innerE) {
-        console.log('Log still not found, clicking "Configure" as fallback...');
-        // In case the preview doesn't exist, maybe it's in a modal like before.
-        await page.getByRole('button', { name: 'Configure' }).click();
-
-        try {
-            await expect(page.getByText('Connection timeout')).toBeVisible({ timeout: 5000 });
-        } catch (finalE) {
-            console.log('Log still not found, taking debug screenshot');
-            await page.screenshot({ path: 'docs/screenshots/debug-failure.png' });
-            throw finalE;
-        }
-      }
+      console.log('Log not found, taking screenshot for debug');
+      await page.screenshot({ path: 'docs/screenshots/debug-failure.png' });
+      throw e;
     }
 
-    // Screenshot Details panel
-    await page.screenshot({ path: 'docs/screenshots/bot-details-modal.png', fullPage: true });
+    // Screenshot Details Modal
+    await page.screenshot({ path: 'docs/screenshots/bot-details-modal.png' });
   });
 });

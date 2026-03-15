@@ -28,14 +28,16 @@ function sanitizeObject(obj: unknown): unknown {
   if (obj !== null && typeof obj === 'object') {
     const sanitized: any = {};
     for (const key of Object.keys(obj)) {
-      if (key === '__proto__' || key === 'constructor' || key === 'prototype') continue;
-      sanitized[key] = sanitizeObject((obj as any)[key]);
+      sanitized[key] = sanitizeObject(obj[key]);
     }
     return sanitized;
   }
   return obj;
 }
 
+/**
+ * Middleware to sanitize request body, query, and params
+ */
 export const sanitizeInput = (req: Request, res: Response, next: NextFunction) => {
   if (req.body && typeof req.body === 'object') {
     req.body = sanitizeObject(req.body);
@@ -46,21 +48,7 @@ export const sanitizeInput = (req: Request, res: Response, next: NextFunction) =
   if (req.params && typeof req.params === 'object') {
     req.params = sanitizeObject(req.params) as typeof req.params;
   }
-  if (req.headers && typeof req.headers === 'object') {
-    const sanitizedHeaders: any = {};
-    for (const key of Object.keys(req.headers)) {
-      const normalizedKey = key.toLowerCase();
-      if (normalizedKey === '__proto__' || normalizedKey === 'constructor' || normalizedKey === 'prototype') {
-        continue;
-      }
-      if (SKIP_HEADER_SANITIZATION.has(normalizedKey) || !normalizedKey.startsWith('x-')) {
-        sanitizedHeaders[key] = req.headers[key];
-      } else {
-        sanitizedHeaders[key] = sanitizeObject(req.headers[key]);
-      }
-    }
-    req.headers = sanitizedHeaders;
-  }
+
   next();
 };
 

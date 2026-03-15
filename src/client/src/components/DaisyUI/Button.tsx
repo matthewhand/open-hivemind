@@ -1,20 +1,31 @@
 import React, { memo } from 'react';
 
 export interface ButtonProps extends Omit<React.ButtonHTMLAttributes<HTMLButtonElement>, 'color' | 'style'> {
+  /** The content to display inside the button */
   children: React.ReactNode;
+  /** Color variant of the button */
   variant?: 'primary' | 'secondary' | 'accent' | 'ghost' | 'link';
+  /** Size of the button */
   size?: 'xs' | 'sm' | 'md' | 'lg';
+  /** Style variant - solid or outline */
   buttonStyle?: 'solid' | 'outline';
+  /** Whether the button is in a loading state */
   loading?: boolean;
+  /** Optional icon to display before the content */
   icon?: React.ReactNode;
+  /** Optional icon to display after the content */
   iconRight?: React.ReactNode;
+  /** Optional icon to display before the content (alias for icon) */
   startIcon?: React.ReactNode;
+  /** Optional icon to display after the content (alias for iconRight) */
   endIcon?: React.ReactNode;
+  /** Additional CSS classes */
   className?: string;
+  /** Loading text to display when loading */
   loadingText?: string;
 }
 
-// Bolt Optimization: Added React.memo() to prevent unnecessary re-renders.
+// ⚡ Bolt Optimization: Added React.memo() to prevent unnecessary re-renders.
 // Since Button is a primitive UI component used inside lists and forms,
 // this skips reconciliation passes when parent re-renders and props are identical.
 export const Button = memo(({
@@ -42,19 +53,19 @@ export const Button = memo(({
 
   const getSizeClass = () => {
     switch (size) {
-    case 'xs': return 'btn-xs';
-    case 'sm': return 'btn-sm';
-    case 'lg': return 'btn-lg';
-    default: return '';
+      case 'xs': return 'btn-xs';
+      case 'sm': return 'btn-sm';
+      case 'lg': return 'btn-lg';
+      default: return '';
     }
   };
 
   const getSpinnerSizeClass = () => {
     switch (size) {
-    case 'xs': return 'loading-xs';
-    case 'sm': return 'loading-sm';
-    case 'lg': return 'loading-lg';
-    default: return 'loading-md';
+      case 'xs': return 'loading-xs';
+      case 'sm': return 'loading-sm';
+      case 'lg': return 'loading-lg';
+      default: return 'loading-md';
     }
   };
 

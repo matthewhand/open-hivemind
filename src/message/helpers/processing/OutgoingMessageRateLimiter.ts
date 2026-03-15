@@ -16,18 +16,6 @@ export class OutgoingMessageRateLimiter {
     10
   );
 
-  // ⚡ Bolt Optimization: Use early-exit loop and .slice() instead of full array .filter()
-  // Since timestamps are chronologically ordered, we can stop checking once we find one within the window.
-  private filterRecentTimestamps(timestamps: number[], windowMs: number, now: number): number[] {
-    const cutoff = now - windowMs;
-    for (let i = 0; i < timestamps.length; i++) {
-      if (timestamps[i] > cutoff) {
-        return i === 0 ? timestamps : timestamps.slice(i);
-      }
-    }
-    return [];
-  }
-
   public static getInstance(): OutgoingMessageRateLimiter {
     if (!OutgoingMessageRateLimiter.instance) {
       OutgoingMessageRateLimiter.instance = new OutgoingMessageRateLimiter();
@@ -71,7 +59,7 @@ export class OutgoingMessageRateLimiter {
 
     const now = Date.now();
     // Remove old timestamps outside the window
-    const valid = this.filterRecentTimestamps(timestamps, windowMs, now);
+    const valid = timestamps.filter((t) => now - t < windowMs);
     // Also enforce max timestamps per channel to prevent unbounded array growth
     const limited = valid.slice(-this.MAX_TIMESTAMPS_PER_CHANNEL);
     this.byChannel.set(channelId, limited);

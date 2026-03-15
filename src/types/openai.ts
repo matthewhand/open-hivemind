@@ -349,7 +349,7 @@ export type OpenAIResponse =
 
 // Type guards
 export function isOpenAIError(response: OpenAIResponse): response is OpenAIError {
-  return 'error' in response && response.error !== null && response.error !== undefined;
+  return 'error' in response;
 }
 
 export function isChatCompletionResponse(

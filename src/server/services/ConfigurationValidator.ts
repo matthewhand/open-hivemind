@@ -3,14 +3,14 @@ import { BotConfigurationManager } from '../../config/BotConfigurationManager';
 import { getLlmDefaultStatus } from '../../config/llmDefaultStatus';
 import { CONFIG_LIMITS } from '../../types/config';
 
-interface ValidationResult {
+export interface ValidationResult {
   isValid: boolean;
   errors: string[];
   warnings: string[];
   suggestions: string[];
 }
 
-interface TestResult {
+export interface TestResult {
   success: boolean;
   message: string;
   details?: any;
@@ -198,24 +198,6 @@ export class ConfigurationValidator {
         doc: 'OpenSwarm configuration',
         format: Object,
         default: null,
-        nullable: true,
-      },
-      createdAt: {
-        doc: 'Creation timestamp',
-        format: String,
-        default: '',
-        nullable: true,
-      },
-      updatedAt: {
-        doc: 'Last update timestamp',
-        format: String,
-        default: '',
-        nullable: true,
-      },
-      isActive: {
-        doc: 'Is bot active',
-        format: Boolean,
-        default: true,
         nullable: true,
       },
     };

@@ -1,16 +1,18 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useEffect, useState } from 'react';
-import StatsCards from '../components/DaisyUI/StatsCards';
-import Badge from '../components/DaisyUI/Badge';
-import Button from '../components/DaisyUI/Button';
-import DataTable from '../components/DaisyUI/DataTable';
-import Timeline from '../components/DaisyUI/Timeline';
-import ProgressBar from '../components/DaisyUI/ProgressBar';
-import VisualFeedback from '../components/DaisyUI/VisualFeedback';
-import NavbarWithSearch from '../components/DaisyUI/NavbarWithSearch';
-import Tooltip from '../components/DaisyUI/Tooltip';
-import Card from '../components/DaisyUI/Card';
-import Hero from '../components/DaisyUI/Hero';
+import {
+  StatsCards,
+  Badge,
+  Button,
+  DataTable,
+  Timeline,
+  ProgressBar,
+  VisualFeedback,
+  NavbarWithSearch,
+  Tooltip,
+  Card,
+  Hero,
+} from '../components/DaisyUI';
 import { apiService } from '../services/api';
 import type { Bot, StatusResponse } from '../services/api';
 import Logger from '../utils/logger';
@@ -64,7 +66,7 @@ const EnhancedDashboard: React.FC = () => {
       setIsLoading(true);
       setError(null);
 
-      const response = await apiService.get<StatusResponse>('/api/dashboard/status');
+      const response = await apiService.get<StatusResponse>('/api/dashboard/api/status');
       const { bots: botData, uptime } = response.data;
 
       setBots(botData);
@@ -404,7 +406,7 @@ const EnhancedDashboard: React.FC = () => {
         <div className="toast toast-bottom toast-center z-50" role="status" aria-live="polite">
           <div className={`alert ${toastType === 'success' ? 'alert-success' : toastType === 'error' ? 'alert-error' : toastType === 'warning' ? 'alert-warning' : 'alert-info'}`}>
             <span>{toastMessage}</span>
-            <button className="btn btn-sm btn-ghost" onClick={() => setToastMessage('')} aria-label="Close message">✕</button>
+            <button className="btn btn-sm btn-ghost" onClick={() => setToastMessage('')}>✕</button>
           </div>
         </div>
       )}
