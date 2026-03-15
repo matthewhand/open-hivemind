@@ -88,7 +88,7 @@ describe('Error Handling Integration Tests', () => {
         .send('{"malformed"}')
         .expect(400);
 
-      expect(response.body.message).toContain('Expected');
+      expect(response.body.error.message).toContain('Expected');
     });
 
     test('should include correlation ID from header in error response', async () => {
@@ -166,7 +166,7 @@ describe('Error Handling Integration Tests', () => {
       const response = await request(app).get('/test-error').expect(500);
 
       expect(response.body.error).toBeDefined();
-      expect(response.body.message).toContain('Test error for middleware');
+      expect(response.body.error.message).toContain('Test error for middleware');
     });
 
     test('should handle async errors in route handlers', async () => {
@@ -179,7 +179,7 @@ describe('Error Handling Integration Tests', () => {
       const response = await request(app).get('/test-async-error').expect(500);
 
       expect(response.body.error).toBeDefined();
-      expect(response.body.message).toContain('Test async error');
+      expect(response.body.error.message).toContain('Test async error');
     });
   });
 
