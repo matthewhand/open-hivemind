@@ -228,6 +228,7 @@ before-click-*
 page-state*
 ts-complexity*.js
 verification/after-fix*
+verification/test_mcpservers.py
 *.patch.py
 .pending_prs.json
 current_prs.json
