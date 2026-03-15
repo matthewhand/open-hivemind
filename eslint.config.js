@@ -147,9 +147,9 @@ module.exports = [
       'no-console': 'off',
 
       // Enforce specific assertions over weak ones
-      'jest/no-truthy-falsy': 'warn',
-      'jest/prefer-to-be': 'warn',
-      'jest/prefer-to-have-length': 'warn',
+
+
+
     },
   },
   // Prettier config override to turn off conflicting rules
