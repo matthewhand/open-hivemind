@@ -10,8 +10,13 @@ describe('MattermostService Error Mapping', () => {
       postMessage: jest.fn(),
     };
 
-    service = new MattermostService({} as any, {} as any);
+    (MattermostService as any).instance = undefined;
+    service = (MattermostService as any).getInstance();
     (service as any).clients.set('test-bot', mockClient);
+  });
+
+  afterEach(() => {
+    (MattermostService as any).instance = undefined;
   });
 
   it('should map 404 to ValidationError', async () => {
