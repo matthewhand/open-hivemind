@@ -10,25 +10,17 @@ import {
 } from 'lucide-react';
 import { useSuccessToast, useErrorToast } from '../components/DaisyUI/ToastNotification';
 import Modal, { ConfirmModal } from '../components/DaisyUI/Modal';
-import { useLlmStatus } from '../hooks/useLlmStatus';
-import { usePageLifecycle } from '../hooks/usePageLifecycle';
 import PageHeader from '../components/DaisyUI/PageHeader';
 import SearchFilterBar from '../components/SearchFilterBar';
 import EmptyState from '../components/DaisyUI/EmptyState';
-import { LoadingSpinner, LoadingSkeletonCard } from '../components/DaisyUI/Loading';
+import { LoadingSpinner } from '../components/DaisyUI/Loading';
 import { apiService } from '../services/api';
-import { withRetry } from '../utils/withRetry';
-import { ErrorService } from '../services/ErrorService';
 import type { BotConfig, ProviderModalState } from '../types/bot';
 import { LLMProviderType, MessageProviderType } from '../types/bot';
 import BotCard from '../components/BotManagement/BotCard';
+import { CreateBotWizard } from '../components/BotManagement/CreateBotWizard';
+import { BotSettingsModal } from '../components/BotSettingsModal';
 import { useLocation } from 'react-router-dom';
-import { useLlmStatus } from '../hooks/useLlmStatus';
-import { usePageLifecycle } from '../hooks/usePageLifecycle';
-
-interface BotData extends BotConfig {
-  id: string;
-}
 
 const BotsPage: React.FC = () => {
   const [bots, setBots] = useState<BotConfig[]>([]);
@@ -44,121 +36,7 @@ const BotsPage: React.FC = () => {
   const [activityLogs, setActivityLogs] = useState<any[]>([]);
   const [chatHistory, setChatHistory] = useState<any[]>([]);
   const [logFilter, setLogFilter] = useState('');
-
-  // Create Bot State
-  const [showCreateModal, setShowCreateModal] = useState(false);
-
-  // Get LLM status to check if system default is configured
-  const { status: llmStatus } = useLlmStatus();
-  const defaultLlmConfigured = llmStatus?.defaultConfigured ?? false;
-
-  // Delete Modal State
-  const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; bot: BotData | null }>({
-    isOpen: false,
-    bot: null,
-  });
-  const [deleteConfirmation, setDeleteConfirmation] = useState('');
-
-  // Clone Modal State
-  const [cloneModal, setCloneModal] = useState<{ isOpen: boolean; bot: BotData | null }>({
-    isOpen: false,
-    bot: null,
-  });
-  const [cloneName, setCloneName] = useState('');
-
-  // Define data fetching logic
-  const fetchPageData = useCallback(async (_signal: AbortSignal) => {
-    const [configResult, globalResult, personasResult, profilesResult] = await Promise.allSettled([
-      apiService.getConfig(),
-      apiService.getGlobalConfig(),
-      apiService.getPersonas(),
-      apiService.getLlmProfiles(),
-    ]);
-
-    const configData = configResult.status === 'fulfilled' ? configResult.value : { bots: [] };
-    const globalData = globalResult.status === 'fulfilled' ? globalResult.value : {};
-    const personasData = personasResult.status === 'fulfilled' ? personasResult.value : [];
-    const profilesData = profilesResult.status === 'fulfilled' ? profilesResult.value : {};
-
-    const personas = personasData || [];
-    const llmProfiles = profilesData?.llm || profilesData?.profiles?.llm || [];
-
-    const globalConfig: any = {};
-    if (globalData) {
-      Object.keys(globalData).forEach((key) => {
-        globalConfig[key] = globalData[key].values;
-      });
-    }
-
-    return {
-      bots: (configData.bots || []) as unknown as BotData[],
-      personas,
-      llmProfiles,
-      globalConfig,
-    };
-  }, []);
-
-  const [uiError, setUiError] = useState<string | null>(null);
-
-  // Use Page Lifecycle Hook
-  const {
-    data,
-    error: lifecycleError,
-    refetch,
-  } = usePageLifecycle({
-    title: 'Bot Management',
-    fetchData: fetchPageData,
-    initialData: { bots: [], personas: [], llmProfiles: [], globalConfig: {} },
-  });
-
-  // Derived state
-
-  const personas = data?.personas || [];
-  const llmProfiles = data?.llmProfiles || [];
-  const globalConfig = data?.globalConfig || {};
-
-  // Sync lifecycle error to UI error
-  useEffect(() => {
-    if (lifecycleError) {
-      setError(lifecycleError.message);
-    }
-  }, [lifecycleError]);
-
-  // Fetch logs and chat history when previewing a bot
-  useEffect(() => {
-    if (previewBot) {
-      // Fetch activity logs
-      const fetchActivity = async () => {
-        try {
-          const json = await withRetry(() => apiService.get<any>(`/api/bots/${previewBot.id}/activity?limit=20`));
-          setActivityLogs(json.data?.activity || []);
-        } catch (err) {
-          ErrorService.report(err, { botId: previewBot.id, action: 'fetchActivityLogs' });
-          toast.error('Failed to load bot activity logs');
-          setActivityLogs([]);
-        }
-      };
-
-      fetchActivity();
-
-      // Fetch chat history
-      const fetchChatHistory = async () => {
-        try {
-          const json = await withRetry(() => apiService.get<any>(`/api/bots/${previewBot.id}/history?limit=20`));
-          setChatHistory(json.data?.history || []);
-        } catch (err) {
-          ErrorService.report(err, { botId: previewBot.id, action: 'fetchChatHistory' });
-          toast.error('Failed to load chat history');
-          setChatHistory([]);
-        }
-      };
-      fetchChatHistory();
-    } else {
-      setActivityLogs([]);
-      setChatHistory([]);
-    }
-  }, [previewBot]);
-
+  
   const toast = {
     success: useSuccessToast(),
     error: useErrorToast()
@@ -169,11 +47,10 @@ const BotsPage: React.FC = () => {
   const fetchBots = useCallback(async () => {
     try {
       setLoading(true);
-      const json = await withRetry(() => apiService.get<any>('/api/bots'));
+      const json = await apiService.request<any>('/api/bots');
       setBots(json.data?.bots || []);
       setError(null);
     } catch (err) {
-      ErrorService.report(err, { action: 'fetchBots' });
       setError(err instanceof Error ? err.message : 'Failed to fetch bots');
       toast.error('Failed to load bots');
     } finally {
@@ -196,19 +73,18 @@ const BotsPage: React.FC = () => {
 
   const handleCreateBot = async (botData: any) => {
     try {
-      const response = await apiService.post<any>('/api/bots', botData);
+      const response = await apiService.request<any>('/api/bots', { method: 'POST', body: JSON.stringify(botData) });
       setBots(prev => [...prev, response.data.bot]);
       setIsCreateModalOpen(false);
       toast.success('Bot created successfully');
     } catch (err) {
-      ErrorService.report(err, { action: 'createBot', botData });
       toast.error(err instanceof Error ? err.message : 'Failed to create bot');
     }
   };
 
   const handleUpdateBot = async (botData: any) => {
     try {
-      const response = await apiService.put<any>(`/api/bots/${editingBot?.id}`, botData);
+      const response = await apiService.request<any>(`/api/bots/${editingBot?.id}`, { method: 'PUT', body: JSON.stringify(botData) });
       setBots(prev => prev.map(b => b.id === editingBot?.id ? response.data.bot : b));
       setEditingBot(null);
       toast.success('Bot updated successfully');
@@ -218,7 +94,6 @@ const BotsPage: React.FC = () => {
         setPreviewBot(response.data.bot);
       }
     } catch (err) {
-      ErrorService.report(err, { action: 'updateBot', botId: editingBot?.id });
       toast.error(err instanceof Error ? err.message : 'Failed to update bot');
     }
   };
@@ -226,7 +101,7 @@ const BotsPage: React.FC = () => {
   const handleDeleteBot = async () => {
     if (!deletingBot) return;
     try {
-      await apiService.delete(`/api/bots/${deletingBot.id}`);
+      await apiService.request(`/api/bots/${deletingBot.id}`, { method: 'DELETE' });
       setBots(prev => prev.filter(b => b.id !== deletingBot.id));
       if (previewBot?.id === deletingBot.id) {
         setPreviewBot(null);
@@ -234,7 +109,6 @@ const BotsPage: React.FC = () => {
       setDeletingBot(null);
       toast.success('Bot deleted successfully');
     } catch (err) {
-      ErrorService.report(err, { action: 'deleteBot', botId: deletingBot.id });
       toast.error(err instanceof Error ? err.message : 'Failed to delete bot');
     }
   };
@@ -242,7 +116,7 @@ const BotsPage: React.FC = () => {
   const handleToggleBotStatus = async (bot: BotConfig) => {
     try {
       const newStatus = bot.status === 'active' ? 'inactive' : 'active';
-      const response = await apiService.patch<any>(`/api/bots/${bot.id}/status`, { status: newStatus });
+      const response = await apiService.request<any>(`/api/bots/${bot.id}/status`, { method: 'PATCH', body: JSON.stringify({ status: newStatus }) });
       setBots(prev => prev.map(b => b.id === bot.id ? { ...b, status: newStatus } : b));
       
       if (previewBot?.id === bot.id) {
@@ -251,7 +125,6 @@ const BotsPage: React.FC = () => {
       
       toast.success(`Bot ${newStatus === 'active' ? 'activated' : 'deactivated'} successfully`);
     } catch (err) {
-      ErrorService.report(err, { action: 'toggleBotStatus', botId: bot.id });
       toast.error(err instanceof Error ? err.message : 'Failed to update bot status');
     }
   };
@@ -273,14 +146,13 @@ const BotsPage: React.FC = () => {
     
     try {
       // Load initial activity
-      const activityJson = await withRetry(() => apiService.get<any>(`/api/bots/${bot.id}/activity?limit=20`));
+      const activityJson = await apiService.request<any>(`/api/bots/${bot.id}/activity?limit=20`);
       setActivityLogs(activityJson.data?.activity || []);
       
       // Load initial chat
-      const chatJson = await withRetry(() => apiService.get<any>(`/api/bots/${bot.id}/chat?limit=20`));
+      const chatJson = await apiService.request<any>(`/api/bots/${bot.id}/chat?limit=20`);
       setChatHistory(chatJson.data?.messages || []);
     } catch (err) {
-      ErrorService.report(err, { botId: bot.id, action: 'fetchBotPreviewData' });
       // Don't show toast for initial load failures to keep UI clean, but log error
       console.error('Failed to load bot preview data:', err);
     }
@@ -294,40 +166,11 @@ const BotsPage: React.FC = () => {
     );
   }, [activityLogs, logFilter]);
 
-  if (loading && bots.length === 0 && !error) {
+  if (loading && bots.length === 0) {
     return (
-      <div className="space-y-6">
-        <PageHeader
-          title="AI Swarm Management"
-          description="Configure, monitor, and deploy your specialized AI agents."
-          icon={<Bot className="w-8 h-8 text-primary" />}
-          actions={
-            <button
-              className="btn btn-primary"
-              disabled
-            >
-              <Plus className="w-4 h-4 mr-2" /> Create New Bot
-            </button>
-          }
-        />
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2 space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <LoadingSkeletonCard />
-              <LoadingSkeletonCard />
-              <LoadingSkeletonCard />
-              <LoadingSkeletonCard />
-            </div>
-          </div>
-          <div className="lg:col-span-1">
-            <div className="card bg-base-100 shadow-xl border border-dashed border-base-300 h-full min-h-[400px]">
-              <div className="card-body items-center justify-center text-center opacity-40">
-                <LoadingSpinner size="lg" />
-                <p className="mt-4 text-base-content/60 animate-pulse">Loading your AI Swarm...</p>
-              </div>
-            </div>
-          </div>
-        </div>
+      <div className="flex flex-col items-center justify-center min-h-[400px]">
+        <LoadingSpinner size="lg" />
+        <p className="mt-4 text-base-content/60 animate-pulse">Loading your AI Swarm...</p>
       </div>
     );
   }
@@ -350,7 +193,7 @@ const BotsPage: React.FC = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Main Content: Bot List */}
-        <div className={`${error && bots.length === 0 ? 'lg:col-span-3' : 'lg:col-span-2'} space-y-4`}>
+        <div className="lg:col-span-2 space-y-4">
           <SearchFilterBar
             searchQuery={searchQuery}
             onSearchChange={setSearchQuery}
@@ -376,29 +219,26 @@ const BotsPage: React.FC = () => {
             </div>
           </SearchFilterBar>
 
-          {error && bots.length > 0 && (
-            <div className="alert alert-error shadow-sm mb-4">
+          {error && (
+            <div className="alert alert-error shadow-sm">
               <AlertCircle className="w-5 h-5" />
               <span>{error}</span>
               <button className="btn btn-ghost btn-xs" onClick={fetchBots}>Try Again</button>
             </div>
           )}
 
-          {error && bots.length === 0 ? (
+          {filteredBots.length === 0 ? (
             <EmptyState
-              icon={AlertTriangle}
-              title="Failed to load swarm"
-              description="We encountered an error while trying to load your AI agents. Please try again."
-              actionLabel="Retry Connection"
-              onAction={fetchBots}
-            />
-          ) : filteredBots.length === 0 ? (
-            <EmptyState
-              icon={Bot}
+              icon={<Bot className="w-16 h-16 text-base-content/20" />}
               title={searchQuery ? "No agents found" : "Your swarm is empty"}
               description={searchQuery ? "No agents match your search criteria." : "Start by creating your first specialized AI agent."}
-              actionLabel={searchQuery ? undefined : "Create First Bot"}
-              onAction={searchQuery ? undefined : () => setIsCreateModalOpen(true)}
+              action={
+                !searchQuery && (
+                  <button className="btn btn-primary" onClick={() => setIsCreateModalOpen(true)}>
+                    Create First Bot
+                  </button>
+                )
+              }
             />
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -418,7 +258,6 @@ const BotsPage: React.FC = () => {
         </div>
 
         {/* Sidebar: Bot Preview/Details */}
-        {!(error && bots.length === 0) && (
         <div className="lg:col-span-1">
           {previewBot ? (
             <div className="card bg-base-100 shadow-xl border border-base-200 sticky top-6 animate-in fade-in slide-in-from-right-4 duration-300">
@@ -513,10 +352,9 @@ const BotsPage: React.FC = () => {
                               const limit = e.target.value;
                               if (previewBot) {
                                 try {
-                                  const json = await withRetry(() => apiService.get<any>(`/api/bots/${previewBot.id}/activity?limit=${limit}`));
+                                  const json = await apiService.request<any>(`/api/bots/${previewBot.id}/activity?limit=${limit}`);
                                   setActivityLogs(json.data?.activity || []);
                                 } catch (err) {
-                                  ErrorService.report(err, { botId: previewBot.id, action: 'fetchActivityLogs' });
                                   toast.error('Failed to load bot activity logs');
                                   setActivityLogs([]);
                                 }
@@ -604,7 +442,6 @@ const BotsPage: React.FC = () => {
             </div>
           )}
         </div>
-        )}
       </div>
 
       {/* Modals */}

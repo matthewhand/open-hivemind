@@ -742,20 +742,26 @@ function applyModifiers(
   const text = (message.getText?.() || '').toLowerCase();
   const mods: string[] = [];
   if (isDirectlyAddressed) {
-    chance += 0.5;
-    mods.push('+Mention(+0.5)');
+    const rawMentionBonus = Number(getMessageSetting('MESSAGE_MENTION_BONUS', botConfig));
+    const mentionBonus = isNaN(rawMentionBonus) ? 0.5 : rawMentionBonus;
+    chance += mentionBonus;
+    mods.push(`+Mention(+${mentionBonus.toFixed(1)})`);
     if (isLeadingAddress) {
       chance += 1.0;
       mods.push('+Leading(+1.0)');
     }
   }
   if (isReplyToBot) {
-    chance += 0.5;
-    mods.push('+Reply(+0.5)');
+    const rawMentionBonus = Number(getMessageSetting('MESSAGE_MENTION_BONUS', botConfig));
+    const bonus = isNaN(rawMentionBonus) || rawMentionBonus === 0 ? 0.5 : rawMentionBonus;
+    chance += bonus;
+    mods.push(`+Reply(+${bonus.toFixed(1)})`);
   }
   if (text.includes('?')) {
-    chance += 0.2;
-    mods.push('+Q(+0.2)');
+    const rawQBonus = Number(getMessageSetting('MESSAGE_QUESTION_BONUS', botConfig));
+    const qBonus = isNaN(rawQBonus) ? 0.2 : rawQBonus;
+    chance += qBonus;
+    mods.push(`+Q(+${qBonus.toFixed(1)})`);
   }
   if (text.includes('!')) {
     chance += 0.1;
@@ -765,7 +771,7 @@ function applyModifiers(
     const penalty = Number(getMessageSetting('MESSAGE_SHORT_LENGTH_PENALTY', botConfig)) || 0;
     if (penalty > 0) {
       chance -= penalty;
-      mods.push(`-Short(${penalty})`);
+      mods.push(`-Short(${penalty.toFixed(1)})`);
     }
   }
   if (typeof message.isFromBot === 'function' && message.isFromBot()) {
