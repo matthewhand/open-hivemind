@@ -12,6 +12,7 @@ import {
   StatsCards,
   ToastNotification,
   LoadingSpinner,
+  LoadingSkeletonCard,
 } from './DaisyUI';
 import type { Bot, StatusResponse } from '../services/api';
 import { apiService } from '../services/api';
@@ -630,8 +631,11 @@ const UnifiedDashboard: React.FC = () => {
       </div>
 
       {loading ? (
-        <div className="flex justify-center py-20">
-          <LoadingSpinner size="lg" />
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 py-6">
+          <LoadingSkeletonCard />
+          <LoadingSkeletonCard />
+          <LoadingSkeletonCard />
+          <LoadingSkeletonCard />
         </div>
       ) : (
         <>

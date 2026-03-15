@@ -12,6 +12,7 @@ import {
   PageHeader,
   StatsCards,
   LoadingSpinner,
+  LoadingSkeletonCard,
   EmptyState,
   ToastNotification,
 } from '../components/DaisyUI';
@@ -362,8 +363,11 @@ const PersonasPage: React.FC = () => {
 
       {/* Persona List */}
       {loading ? (
-        <div className="flex items-center justify-center py-12">
-          <LoadingSpinner size="lg" />
+        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
+          <LoadingSkeletonCard />
+          <LoadingSkeletonCard />
+          <LoadingSkeletonCard />
+          <LoadingSkeletonCard />
         </div>
       ) : personas.length === 0 ? (
         <EmptyState

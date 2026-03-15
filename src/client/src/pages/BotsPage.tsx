@@ -13,7 +13,7 @@ import Modal, { ConfirmModal } from '../components/DaisyUI/Modal';
 import PageHeader from '../components/DaisyUI/PageHeader';
 import SearchFilterBar from '../components/SearchFilterBar';
 import EmptyState from '../components/DaisyUI/EmptyState';
-import { LoadingSpinner } from '../components/DaisyUI/Loading';
+import { LoadingSpinner, LoadingSkeletonCard } from '../components/DaisyUI/Loading';
 import { apiService } from '../services/api';
 import { withRetry } from '../utils/withRetry';
 import { ErrorService } from '../services/ErrorService';
@@ -297,9 +297,38 @@ const BotsPage: React.FC = () => {
 
   if (loading && bots.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[400px]">
-        <LoadingSpinner size="lg" />
-        <p className="mt-4 text-base-content/60 animate-pulse">Loading your AI Swarm...</p>
+      <div className="space-y-6">
+        <PageHeader
+          title="AI Swarm Management"
+          description="Configure, monitor, and deploy your specialized AI agents."
+          icon={<Bot className="w-8 h-8 text-primary" />}
+          actions={
+            <button
+              className="btn btn-primary"
+              disabled
+            >
+              <Plus className="w-4 h-4 mr-2" /> Create New Bot
+            </button>
+          }
+        />
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2 space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <LoadingSkeletonCard />
+              <LoadingSkeletonCard />
+              <LoadingSkeletonCard />
+              <LoadingSkeletonCard />
+            </div>
+          </div>
+          <div className="lg:col-span-1">
+            <div className="card bg-base-100 shadow-xl border border-dashed border-base-300 h-full min-h-[400px]">
+              <div className="card-body items-center justify-center text-center opacity-40">
+                <LoadingSpinner size="lg" />
+                <p className="mt-4 text-base-content/60 animate-pulse">Loading your AI Swarm...</p>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     );
   }

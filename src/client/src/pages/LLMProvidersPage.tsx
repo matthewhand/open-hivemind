@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useModal } from '../hooks/useModal';
-import { Card, Button, Badge, Alert, PageHeader, StatsCards, EmptyState, LoadingSpinner } from '../components/DaisyUI';
+import { Card, Button, Badge, Alert, PageHeader, StatsCards, EmptyState, LoadingSpinner, LoadingSkeletonCard } from '../components/DaisyUI';
 import SearchFilterBar from '../components/SearchFilterBar';
 import {
   Brain as BrainIcon,
@@ -366,7 +366,11 @@ const LLMProvidersPage: React.FC = () => {
       />
 
       {loading ? (
-        <div className="flex justify-center py-12"><LoadingSpinner size="lg" /></div>
+        <div className="grid grid-cols-1 gap-4">
+          <LoadingSkeletonCard />
+          <LoadingSkeletonCard />
+          <LoadingSkeletonCard />
+        </div>
       ) : profiles.length === 0 ? (
         <EmptyState
           icon={BrainIcon}

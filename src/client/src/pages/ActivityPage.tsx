@@ -13,6 +13,7 @@ import {
   Toggle,
   PageHeader,
   LoadingSpinner,
+  LoadingSkeletonCard,
   EmptyState,
   Input,
 } from '../components/DaisyUI';
@@ -433,8 +434,10 @@ const ActivityPage: React.FC = () => {
 
       {/* Content */}
       {loading && !data ? (
-        <div className="flex items-center justify-center py-12">
-          <LoadingSpinner size="lg" />
+        <div className="space-y-4">
+          <LoadingSkeletonCard />
+          <LoadingSkeletonCard />
+          <LoadingSkeletonCard />
         </div>
       ) : filteredEvents.length === 0 ? (
         <EmptyState
