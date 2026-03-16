@@ -1,3 +1,4 @@
+import { container } from "../../di/container";
 /**
  * Demo Mode Routes
  *
@@ -16,7 +17,7 @@ const router = Router();
  */
 router.get('/status', (req, res) => {
   try {
-    const demoService = DemoModeService.getInstance();
+    const demoService = container.resolve(DemoModeService);
     const status = demoService.getDemoStatus();
 
     res.json({
@@ -40,7 +41,7 @@ router.get('/status', (req, res) => {
  */
 router.get('/bots', (req, res) => {
   try {
-    const demoService = DemoModeService.getInstance();
+    const demoService = container.resolve(DemoModeService);
     const bots = demoService.getDemoBots();
 
     res.json({
@@ -75,7 +76,7 @@ router.post('/chat', (req, res) => {
       return;
     }
 
-    const demoService = DemoModeService.getInstance();
+    const demoService = container.resolve(DemoModeService);
 
     if (!demoService.isInDemoMode()) {
       res.status(400).json({
@@ -129,7 +130,7 @@ router.post('/chat', (req, res) => {
  */
 router.get('/conversations', (req, res) => {
   try {
-    const demoService = DemoModeService.getInstance();
+    const demoService = container.resolve(DemoModeService);
     const conversations = demoService.getAllConversations();
 
     res.json({
@@ -152,7 +153,7 @@ router.get('/conversations', (req, res) => {
 router.get('/conversations/:channelId/:botName', (req, res) => {
   try {
     const { channelId, botName } = req.params;
-    const demoService = DemoModeService.getInstance();
+    const demoService = container.resolve(DemoModeService);
     const messages = demoService.getConversationHistory(channelId, botName);
 
     res.json({
@@ -176,7 +177,7 @@ router.get('/conversations/:channelId/:botName', (req, res) => {
  */
 router.post('/reset', (req, res) => {
   try {
-    const demoService = DemoModeService.getInstance();
+    const demoService = container.resolve(DemoModeService);
     demoService.reset();
 
     res.json({

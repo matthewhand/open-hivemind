@@ -331,7 +331,7 @@ export class MCPService {
 
     try {
       if (normalized === 'slack') {
-        const provider = new SlackMessageProvider();
+        const provider = new (require("@hivemind/message-slack").SlackMessageProvider)();
         return await provider.getForumOwner(forumId);
       }
 
