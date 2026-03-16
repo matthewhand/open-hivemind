@@ -12,17 +12,14 @@ const MockLetta = Letta as jest.MockedClass<typeof Letta>;
 beforeEach(() => {
   jest.clearAllMocks();
   (LettaProvider as any).instance = undefined;
-  MockLetta.mockImplementation(
-    () =>
-      ({
-        agents: { messages: { create: mockCreate } },
-        conversations: {
-          list: mockConvList,
-          create: mockConvCreate,
-          messages: { create: mockConvMessageCreate },
-        },
-      }) as any
-  );
+  MockLetta.mockImplementation(() => ({
+    agents: { messages: { create: mockCreate } },
+    conversations: {
+      list: mockConvList,
+      create: mockConvCreate,
+      messages: { create: mockConvMessageCreate },
+    },
+  }) as any);
 });
 
 describe('LettaProvider.generateChatCompletion', () => {
@@ -54,10 +51,7 @@ describe('LettaProvider.generateChatCompletion', () => {
       usage: {},
     });
     const provider = LettaProvider.getInstance();
-    await provider.generateChatCompletion('hi', [], {
-      agentId: 'agent-123',
-      systemPrompt: 'be terse',
-    });
+    await provider.generateChatCompletion('hi', [], { agentId: 'agent-123', systemPrompt: 'be terse' });
     expect(mockCreate).toHaveBeenCalledWith('agent-123', { input: 'be terse\n\nhi' });
   });
 

@@ -1,9 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars, react-refresh/only-export-components */
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import Card from '../components/DaisyUI/Card';
-import Button from '../components/DaisyUI/Button';
-import { LoadingSpinner } from '../components/DaisyUI/Loading';
-import Toggle from '../components/DaisyUI/Toggle';
+import { Card, Button, LoadingSpinner, Toggle } from '../components/DaisyUI';
 import {
   CircleStackIcon,
   TrashIcon,

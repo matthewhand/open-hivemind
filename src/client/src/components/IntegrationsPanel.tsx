@@ -1,15 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useEffect, useState } from 'react';
-import { Alert } from './DaisyUI/Alert';
-import Button from './DaisyUI/Button';
-import Card from './DaisyUI/Card';
-import Input from './DaisyUI/Input';
-import Select from './DaisyUI/Select';
-import Toggle from './DaisyUI/Toggle';
-import { Loading } from './DaisyUI/Loading';
-import Textarea from './DaisyUI/Textarea';
-import Modal from './DaisyUI/Modal';
-import Badge from './DaisyUI/Badge';
+import { Alert, Button, Card, Input, Select, Toggle, Loading, Textarea, Modal, Badge } from './DaisyUI';
 import {
   PuzzlePieceIcon,
   ChatBubbleLeftRightIcon,
@@ -31,7 +22,6 @@ import {
 import { PROVIDER_CATEGORIES } from '../config/providers';
 import ProviderConfigModal from './ProviderConfiguration/ProviderConfigModal';
 import { LLM_PROVIDER_CONFIGS, LLMProviderType, ProviderModalState } from '../types';
-import { useToast } from './DaisyUI/ToastNotification';
 
 interface ConfigSchema {
   doc?: string;
@@ -92,8 +82,6 @@ const IntegrationsPanel: React.FC = () => {
     providerType: 'llm',
     provider: null,
   });
-
-  const { addToast } = useToast();
 
   useEffect(() => {
     fetchData();
@@ -166,7 +154,7 @@ const IntegrationsPanel: React.FC = () => {
       setIsModalOpen(false);
       setSelectedConfigName(null);
     } catch (err: any) {
-      addToast({ type: 'error', title: 'Error', message: err.message });
+      alert(err.message);
     } finally {
       setSaving(false);
     }
@@ -199,7 +187,7 @@ const IntegrationsPanel: React.FC = () => {
       setNewIntegrationName('');
       setNewConfigValues({});
     } catch (err: any) {
-      addToast({ type: 'error', title: 'Error', message: err.message });
+      alert(err.message);
     } finally {
       setSaving(false);
     }
@@ -233,7 +221,7 @@ const IntegrationsPanel: React.FC = () => {
       await fetchData();
       setProviderModalState({ ...providerModalState, isOpen: false });
     } catch (err: any) {
-      addToast({ type: 'error', title: 'Error', message: `Failed to save profile: ${err.message}` });
+      alert(`Failed to save profile: ${err.message}`);
     } finally {
       setSaving(false);
     }
@@ -246,7 +234,7 @@ const IntegrationsPanel: React.FC = () => {
       await fetch(`/api/config/llm-profiles/${key}`, { method: 'DELETE' });
       await fetchData();
     } catch (err: any) {
-      addToast({ type: 'error', title: 'Error', message: `Failed to delete profile: ${err.message}` });
+      alert(`Failed to delete profile: ${err.message}`);
     } finally {
       setSaving(false);
     }

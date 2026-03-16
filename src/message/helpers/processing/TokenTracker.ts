@@ -25,22 +25,6 @@ class TokenTracker {
   private readonly MAX_TOKENS_IN_WINDOW = 3000; // hard cap per channel per minute
   private readonly REDUCTION_FACTOR = 0.1; // reduce probability by 10% per 100 tokens over threshold
 
-  // ⚡ Bolt Optimization: Use early-exit loop and .slice() instead of full array .filter()
-  // Since records are chronologically ordered, we can stop checking once we find a record within the window.
-  private filterRecentRecords<T extends { timestamp: number }>(
-    records: T[],
-    windowMs: number,
-    now: number
-  ): T[] {
-    const cutoff = now - windowMs;
-    for (let i = 0; i < records.length; i++) {
-      if (records[i].timestamp > cutoff) {
-        return i === 0 ? records : records.slice(i);
-      }
-    }
-    return [];
-  }
-
   private constructor() {
     debug('TokenTracker initialized');
   }
@@ -60,7 +44,7 @@ class TokenTracker {
     const records = this.channelTokens.get(channelId) || [];
 
     // Clean old records
-    const recentRecords = this.filterRecentRecords(records, this.WINDOW_MS, now);
+    const recentRecords = records.filter((r) => now - r.timestamp < this.WINDOW_MS);
 
     // Add new record
     recentRecords.push({ tokens: tokenCount, timestamp: now });
@@ -77,7 +61,7 @@ class TokenTracker {
   public getTokensInWindow(channelId: string): number {
     const now = Date.now();
     const records = this.channelTokens.get(channelId) || [];
-    const recentRecords = this.filterRecentRecords(records, this.WINDOW_MS, now);
+    const recentRecords = records.filter((r) => now - r.timestamp < this.WINDOW_MS);
     return recentRecords.reduce((sum, r) => sum + r.tokens, 0);
   }
 

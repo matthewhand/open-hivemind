@@ -1,8 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect, useCallback } from 'react';
-import { Alert } from '../DaisyUI/Alert';
-import Button from '../DaisyUI/Button';
-import Select from '../DaisyUI/Select';
+import { Alert, Button, Select } from '../DaisyUI';
 import { Bot, Link as LinkIcon } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
@@ -111,12 +109,11 @@ const SettingsLLM: React.FC = () => {
                 </h6>
 
                 <div className="form-control mb-4 max-w-md">
-                    <label htmlFor="defaultLlm" className="label">
+                    <label className="label">
                         <span className="label-text font-medium">Default LLM</span>
                         <span className="label-text-alt text-base-content/60">Used for features like AI summary</span>
                     </label>
                     <Select
-                        id="defaultLlm"
                         value={settings.defaultLlm}
                         onChange={(e) => setSettings({ defaultLlm: e.target.value })}
                         className="w-full"

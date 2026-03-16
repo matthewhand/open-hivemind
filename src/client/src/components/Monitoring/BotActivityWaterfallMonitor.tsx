@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { apiService, ActivityEvent } from '../../services/api';
 import DistributedTraceWaterfall, { TraceSpan } from './DistributedTraceWaterfall';
-import { Alert } from '../DaisyUI/Alert';
+import { Alert } from '../DaisyUI';
 
 export const BotActivityWaterfallMonitor: React.FC = () => {
     const [spans, setSpans] = useState<TraceSpan[]>([]);
@@ -73,7 +73,7 @@ export const BotActivityWaterfallMonitor: React.FC = () => {
                     newSpans.push({
                         id: event.id,
                         parentId: botId,
-                        name: (event as any).spanName || `${event.messageType === 'incoming' ? 'Received' : 'Sent'} Message`,
+                        name: `${event.messageType === 'incoming' ? 'Received' : 'Sent'} Message`,
                         service: 'message',
                         startTime: eventTime,
                         duration: processingTimeMs,

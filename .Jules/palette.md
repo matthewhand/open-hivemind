@@ -1,3 +1,3 @@
-## 2025-02-28 - ARIA Labels for Icon-Only Buttons
-**Learning:** Found a widespread pattern across multiple administrative and dashboard components (`MCPServerManager.tsx`, `EnterpriseManager.tsx`, `Dashboard.tsx`, etc.) where toast notification and alert close buttons used a plain `✕` character without an `aria-label`. This makes it impossible for screen reader users to understand the purpose of these buttons.
-**Action:** Always ensure icon-only buttons (`✕`, `⚙️`, etc.) are accompanied by an `aria-label` describing their action (e.g., `aria-label="Close message"`).
+## 2025-03-07 - Add ARIA Labels to Icon-Only Buttons
+**Learning:** This application heavily utilizes custom DaisyUI wrapper components, often creating `<button>` elements that only contain HeroIcons or Lucide React icons. By default, these icon-only buttons are invisible to screen readers, causing accessibility issues where users cannot determine the button's purpose (e.g., delete, edit, close, expand).
+**Action:** When implementing new UI elements or refactoring existing ones, always ensure that any `<button>` lacking visible, descriptive text content includes an `aria-label` attribute describing its function. When a button toggles state (like expanding a section), use `aria-expanded` in conjunction with a dynamic `aria-label`.

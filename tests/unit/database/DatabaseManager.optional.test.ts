@@ -1,13 +1,7 @@
 import { DatabaseManager } from '../../../src/database/DatabaseManager';
 
 describe('DatabaseManager optional configuration handling', () => {
-  beforeEach(() => {
-    (DatabaseManager as any).instance = undefined;
-  });
-
   afterEach(() => {
-    (DatabaseManager as any).instance = undefined;
-
     jest.resetModules();
   });
 

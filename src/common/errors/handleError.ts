@@ -69,5 +69,3 @@ function handleError(error: unknown, messageChannel: any = null): void {
     debug('Invalid messageChannel provided - missing or invalid send method');
   }
 }
-
-export { handleError };

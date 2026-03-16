@@ -1,18 +1,20 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { User, Plus, Edit2, Trash2, Sparkles, RefreshCw, Info, AlertTriangle, Shield, Copy, Search, X, Eye } from 'lucide-react';
-import { Alert } from '../components/DaisyUI/Alert';
-import Badge from '../components/DaisyUI/Badge';
-import Button from '../components/DaisyUI/Button';
-import Card from '../components/DaisyUI/Card';
-import Input from '../components/DaisyUI/Input';
-import Select from '../components/DaisyUI/Select';
-import Modal from '../components/DaisyUI/Modal';
-import PageHeader from '../components/DaisyUI/PageHeader';
-import StatsCards from '../components/DaisyUI/StatsCards';
-import { LoadingSpinner } from '../components/DaisyUI/Loading';
-import EmptyState from '../components/DaisyUI/EmptyState';
-import ToastNotification from '../components/DaisyUI/ToastNotification';
+import {
+  Alert,
+  Badge,
+  Button,
+  Card,
+  Input,
+  Select,
+  Modal,
+  PageHeader,
+  StatsCards,
+  LoadingSpinner,
+  EmptyState,
+  ToastNotification,
+} from '../components/DaisyUI';
 import SearchFilterBar from '../components/SearchFilterBar';
 import type { Persona as ApiPersona, Bot } from '../services/api';
 import { apiService } from '../services/api';
@@ -184,12 +186,7 @@ const PersonasPage: React.FC = () => {
         }
       }
 
-      const results = await Promise.allSettled(updates);
-      const failures = results.filter(r => r.status === 'rejected');
-      if (failures.length > 0) {
-        console.warn(`Failed to update ${failures.length} bot(s) while saving persona`);
-      }
-
+      await Promise.all(updates);
       await fetchData();
 
       setShowCreateModal(false);
@@ -274,12 +271,7 @@ const PersonasPage: React.FC = () => {
       const updates = deletingPersona.assignedBotIds.map(botId =>
         apiService.updateBot(botId, { persona: 'default', systemInstruction: 'You are a helpful assistant.' }),
       );
-
-      const results = await Promise.allSettled(updates);
-      const failures = results.filter(r => r.status === 'rejected');
-      if (failures.length > 0) {
-        console.warn(`Failed to revert ${failures.length} bot(s) before deleting persona`);
-      }
+      await Promise.all(updates);
 
       // 2. Delete persona
       await apiService.deletePersona(deletingPersona.id);
