@@ -11,7 +11,7 @@ import Logger from '../common/logger';
 import { BotConfigurationManager } from '../config/BotConfigurationManager';
 // Import implementations
 import { ConfigurationManager } from '../config/ConfigurationManager';
-import ProviderConfigManager from '../config/ProviderConfigManager';
+import ProviderConfigManager = require('../config/ProviderConfigManager');
 import { SecureConfigManager } from '../config/SecureConfigManager';
 import { UserConfigStore } from '../config/UserConfigStore';
 import { TOKENS } from './container';
@@ -63,8 +63,10 @@ export function registerServices(): void {
   });
 
   logger.debug('Registering ProviderConfigManager');
+  const providerManagerModule = require('../config/ProviderConfigManager');
+  const providerManagerClass = providerManagerModule.default || providerManagerModule.ProviderConfigManager || providerManagerModule;
   container.register(TOKENS.ProviderConfigManager, {
-    useValue: ProviderConfigManager.getInstance(),
+    useValue: providerManagerClass.getInstance(),
   });
 
   // Ensure DatabaseManager, WebSocketService, MetricsCollector are available for injection

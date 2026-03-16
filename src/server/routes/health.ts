@@ -7,6 +7,7 @@ import ApiMonitorService from '../../services/ApiMonitorService';
 import { ErrorLogger } from '../../utils/errorLogger';
 import { globalRecoveryManager } from '../../utils/errorRecovery';
 import { optionalAuth } from '../middleware/auth';
+import { container } from 'tsyringe';
 
 const router = Router();
 
@@ -319,7 +320,7 @@ nodejs_version_info{version="${process.version}"} 1
 
 // API endpoints monitoring
 router.get('/api-endpoints', (req, res) => {
-  const apiMonitor = ApiMonitorService.getInstance();
+  const apiMonitor = container.resolve(ApiMonitorService);
   const statuses = apiMonitor.getAllStatuses();
   const overallHealth = apiMonitor.getOverallHealth();
 
@@ -332,7 +333,7 @@ router.get('/api-endpoints', (req, res) => {
 
 // Get specific endpoint status
 router.get('/api-endpoints/:id', (req, res) => {
-  const apiMonitor = ApiMonitorService.getInstance();
+  const apiMonitor = container.resolve(ApiMonitorService);
   const status = apiMonitor.getEndpointStatus(req.params.id);
 
   if (!status) {
@@ -350,7 +351,7 @@ router.get('/api-endpoints/:id', (req, res) => {
 
 // Cleanup endpoint (admin only)
 router.post('/cleanup', (req, res) => {
-  const apiMonitor = ApiMonitorService.getInstance();
+  const apiMonitor = container.resolve(ApiMonitorService);
 
   try {
     const config = req.body;
@@ -396,7 +397,7 @@ router.post('/cleanup', (req, res) => {
 
 // Add new endpoint to monitor
 router.post('/api-endpoints', (req, res) => {
-  const apiMonitor = ApiMonitorService.getInstance();
+  const apiMonitor = container.resolve(ApiMonitorService);
 
   try {
     const config = req.body;
@@ -442,7 +443,7 @@ router.post('/api-endpoints', (req, res) => {
 
 // Update endpoint configuration
 router.put('/api-endpoints/:id', (req, res) => {
-  const apiMonitor = ApiMonitorService.getInstance();
+  const apiMonitor = container.resolve(ApiMonitorService);
 
   try {
     apiMonitor.updateEndpoint(req.params.id, req.body);
@@ -463,7 +464,7 @@ router.put('/api-endpoints/:id', (req, res) => {
 
 // Remove endpoint from monitoring
 router.delete('/api-endpoints/:id', (req, res) => {
-  const apiMonitor = ApiMonitorService.getInstance();
+  const apiMonitor = container.resolve(ApiMonitorService);
 
   try {
     const endpoint = apiMonitor.getEndpoint(req.params.id);
@@ -492,7 +493,7 @@ router.delete('/api-endpoints/:id', (req, res) => {
 
 // Start monitoring all endpoints
 router.post('/api-endpoints/start', (req, res) => {
-  const apiMonitor = ApiMonitorService.getInstance();
+  const apiMonitor = container.resolve(ApiMonitorService);
   apiMonitor.startAllMonitoring();
 
   return res.json({
@@ -503,7 +504,7 @@ router.post('/api-endpoints/start', (req, res) => {
 
 // Stop monitoring all endpoints
 router.post('/api-endpoints/stop', (req, res) => {
-  const apiMonitor = ApiMonitorService.getInstance();
+  const apiMonitor = container.resolve(ApiMonitorService);
   apiMonitor.stopAllMonitoring();
 
   return res.json({

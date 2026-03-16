@@ -2,6 +2,7 @@ import Debug from 'debug';
 import { Router } from 'express';
 import { DatabaseManager } from '../../database/DatabaseManager';
 import { AnomalyDetectionService } from '../../services/AnomalyDetectionService';
+import { container } from 'tsyringe';
 
 const debug = Debug('app:webui:anomaly');
 const router = Router();
@@ -76,7 +77,7 @@ router.get('/history', async (req, res) => {
 // POST /api/anomalies/:id/resolve - Resolve an anomaly
 router.post('/:id/resolve', async (req, res) => {
   try {
-    const service = AnomalyDetectionService.getInstance();
+    const service = container.resolve(AnomalyDetectionService);
     const success = await service.resolveAnomaly(req.params.id);
 
     if (success) {

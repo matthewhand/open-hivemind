@@ -332,22 +332,19 @@ export class MattermostService extends EventEmitter implements IMessengerService
             }
 
             if (!user) {
-              // Enforce cache size limit by evicting the oldest-timestamp entry
-              if (this.userCache.size >= this.MAX_USER_CACHE_SIZE) {
-                let oldestKey: string | undefined;
-                let oldestTime = Infinity;
-                for (const [k, v] of this.userCache) {
-                  if (v.timestamp < oldestTime) { oldestTime = v.timestamp; oldestKey = k; }
-                }
-                if (oldestKey) this.userCache.delete(oldestKey);
-              }
-
-              // Insert into cache before awaiting to prevent concurrent stampede
               const fetchPromise = client.getUser(post.user_id).catch((err: any) => {
                 debug(`Failed to fetch user ${post.user_id}: ${err.message}`);
+                // Remove failed promises from cache so we can retry next time
                 this.userCache.delete(post.user_id);
                 return null;
               });
+
+              // Enforce cache size limit
+              if (this.userCache.size >= this.MAX_USER_CACHE_SIZE) {
+                const oldestKey = this.userCache.keys().next().value;
+                if (oldestKey) this.userCache.delete(oldestKey);
+              }
+
               this.userCache.set(post.user_id, { promise: fetchPromise, timestamp: now });
               user = await fetchPromise;
             }

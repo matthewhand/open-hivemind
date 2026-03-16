@@ -1,8 +1,11 @@
 import Debug from 'debug';
 import { VoiceChannel, type Client } from 'discord.js';
-import { getRandomDelay } from '@src/common/getRandomDelay';
 
 const debug = Debug('app:connectToVoiceChannel');
+
+const getRandomDelay = (min: number, max: number): number => {
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+};
 
 /**
  * Connect to Voice Channel
