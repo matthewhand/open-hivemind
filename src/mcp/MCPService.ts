@@ -331,7 +331,6 @@ export class MCPService {
 
     try {
       if (normalized === 'slack') {
-        const SlackMessageProvider = {} as any;
         const provider = new SlackMessageProvider();
         return await provider.getForumOwner(forumId);
       }

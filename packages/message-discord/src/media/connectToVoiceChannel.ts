@@ -1,6 +1,6 @@
 import Debug from 'debug';
 import { VoiceChannel, type Client } from 'discord.js';
-import { getRandomDelay } from '@hivemind/shared-types';
+import { getRandomDelay } from '@src/common/getRandomDelay';
 
 const debug = Debug('app:connectToVoiceChannel');
 
