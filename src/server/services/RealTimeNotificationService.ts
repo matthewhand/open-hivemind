@@ -1,4 +1,4 @@
-import crypto from 'crypto';
+import * as crypto from 'crypto';
 import { EventEmitter } from 'events';
 import Debug from 'debug';
 import { WebSocketService } from './WebSocketService';
