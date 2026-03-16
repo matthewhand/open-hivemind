@@ -78,6 +78,10 @@ export const TOKENS = {
   // Integration Services
   SlackService: 'SlackService',
   MattermostService: 'MattermostService',
+
+  // Other Services
+  DemoModeService: 'DemoModeService',
+  AnomalyDetectionService: 'AnomalyDetectionService',
 } as const;
 
 /**

@@ -638,60 +638,6 @@ async function main() {
     }
 
     // Register HTTP server with ShutdownCoordinator
-    const eam = EnhancedAlertManager.getInstance();
-    if (eam && typeof eam.shutdown === 'function') {
-      shutdownCoordinator.registerService({
-        name: 'EnhancedAlertManager',
-        shutdown: () => {
-          appLogger.info('🛑 Healthcheck: Shutting down EnhancedAlertManager...');
-          eam.shutdown();
-        },
-      });
-    }
-
-    const ts = TracingService.getInstance();
-    if (ts && typeof ts.shutdown === 'function') {
-      shutdownCoordinator.registerService({
-        name: 'TracingService',
-        shutdown: () => {
-          appLogger.info('🛑 Healthcheck: Shutting down TracingService...');
-          ts.shutdown();
-        },
-      });
-    }
-
-    const pmc = ProviderMetricsCollector.getInstance();
-    if (pmc && typeof pmc.shutdown === 'function') {
-      shutdownCoordinator.registerService({
-        name: 'ProviderMetricsCollector',
-        shutdown: () => {
-          appLogger.info('🛑 Healthcheck: Shutting down ProviderMetricsCollector...');
-          pmc.shutdown();
-        },
-      });
-    }
-
-    const iad = IntegrationAnomalyDetector.getInstance();
-    if (iad && typeof iad.shutdown === 'function') {
-      shutdownCoordinator.registerService({
-        name: 'IntegrationAnomalyDetector',
-        shutdown: () => {
-          appLogger.info('🛑 Healthcheck: Shutting down IntegrationAnomalyDetector...');
-          iad.shutdown();
-        },
-      });
-    }
-
-    const am = AdvancedMonitor.getInstance();
-    if (am && typeof am.shutdown === 'function') {
-      shutdownCoordinator.registerService({
-        name: 'AdvancedMonitor',
-        shutdown: () => {
-          appLogger.info('🛑 Healthcheck: Shutting down AdvancedMonitor...');
-          am.shutdown();
-        },
-      });
-    }
 
     shutdownCoordinator.registerHttpServer(server);
 

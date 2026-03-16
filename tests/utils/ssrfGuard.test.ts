@@ -1,5 +1,5 @@
 import dns from 'dns';
-import { isPrivateIP, isSafeUrl } from '../../src/utils/ssrfGuard';
+import { isPrivateIP, isSafeUrl } from '../../packages/shared-types/src/ssrfGuard';
 
 // Mock dns.promises.lookup
 jest.mock('dns', () => ({

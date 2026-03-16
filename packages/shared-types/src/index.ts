@@ -39,3 +39,4 @@ export {
   type IErrorFactory,
 } from './errors';
 export { isSafeUrl } from './ssrfGuard';
+export { getRandomDelay } from './getRandomDelay';
