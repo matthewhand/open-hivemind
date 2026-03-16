@@ -1,15 +1,42 @@
 import type { NextFunction, Request, Response } from 'express';
 
 const SKIP_HEADER_SANITIZATION = new Set([
-  'authorization', 'accept', 'accept-encoding', 'accept-language',
-  'cache-control', 'cookie', 'connection', 'content-disposition',
-  'content-encoding', 'content-language', 'content-length', 'content-type',
-  'dnt', 'set-cookie', 'etag', 'host', 'if-modified-since', 'if-none-match',
-  'origin', 'pragma', 'proxy-authorization', 'range', 'referer',
-  'sec-ch-ua', 'sec-ch-ua-mobile', 'sec-ch-ua-platform',
-  'sec-fetch-dest', 'sec-fetch-mode', 'sec-fetch-site', 'sec-fetch-user',
-  'upgrade-insecure-requests', 'user-agent',
-  'x-forwarded-for', 'x-forwarded-host', 'x-forwarded-proto', 'x-real-ip',
+  'authorization',
+  'accept',
+  'accept-encoding',
+  'accept-language',
+  'cache-control',
+  'cookie',
+  'connection',
+  'content-disposition',
+  'content-encoding',
+  'content-language',
+  'content-length',
+  'content-type',
+  'dnt',
+  'set-cookie',
+  'etag',
+  'host',
+  'if-modified-since',
+  'if-none-match',
+  'origin',
+  'pragma',
+  'proxy-authorization',
+  'range',
+  'referer',
+  'sec-ch-ua',
+  'sec-ch-ua-mobile',
+  'sec-ch-ua-platform',
+  'sec-fetch-dest',
+  'sec-fetch-mode',
+  'sec-fetch-site',
+  'sec-fetch-user',
+  'upgrade-insecure-requests',
+  'user-agent',
+  'x-forwarded-for',
+  'x-forwarded-host',
+  'x-forwarded-proto',
+  'x-real-ip',
 ]);
 
 function sanitizeString(value: string): string {
@@ -50,7 +77,11 @@ export const sanitizeInput = (req: Request, res: Response, next: NextFunction) =
     const sanitizedHeaders: any = {};
     for (const key of Object.keys(req.headers)) {
       const normalizedKey = key.toLowerCase();
-      if (normalizedKey === '__proto__' || normalizedKey === 'constructor' || normalizedKey === 'prototype') {
+      if (
+        normalizedKey === '__proto__' ||
+        normalizedKey === 'constructor' ||
+        normalizedKey === 'prototype'
+      ) {
         continue;
       }
       if (SKIP_HEADER_SANITIZATION.has(normalizedKey) || !normalizedKey.startsWith('x-')) {

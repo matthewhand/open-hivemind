@@ -384,10 +384,10 @@ const IntegrationsPanel: React.FC = () => {
                           isEdit: true,
                           providerType: 'llm',
                           provider: { id: profile.key, name: profile.name, type: profile.provider, config: profile.config, modelType: profile.modelType }
-                        })} aria-label={`Edit ${profile.name} provider profile`}>
+                        })}>
                           <PencilSquareIcon className="w-4 h-4" />
                         </Button>
-                        <Button variant="ghost" size="sm" className="btn-square btn-xs text-error" onClick={() => handleDeleteProfile(profile.key)} aria-label={`Delete ${profile.name} provider profile`}>
+                        <Button variant="ghost" size="sm" className="btn-square btn-xs text-error" onClick={() => handleDeleteProfile(profile.key)}>
                           <TrashIcon className="w-4 h-4" />
                         </Button>
                       </div>
@@ -511,7 +511,7 @@ const IntegrationsPanel: React.FC = () => {
                         </div>
                       </div>
                     </div>
-                    <Button variant="ghost" size="sm" className="btn-square btn-xs" onClick={() => openEditModal(key)} aria-label={`Edit ${key} configured global integration`}>
+                    <Button variant="ghost" size="sm" className="btn-square btn-xs" onClick={() => openEditModal(key)}>
                       <PencilSquareIcon className="w-4 h-4" />
                     </Button>
                   </div>
