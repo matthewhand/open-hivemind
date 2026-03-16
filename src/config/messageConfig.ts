@@ -415,13 +415,6 @@ const messageConfig = convict({
     default: 1500,
     env: 'MESSAGE_COMPOUNDING_DELAY_BASE_MS',
   },
-  MESSAGE_SHORT_LENGTH_PENALTY: {
-    doc: 'Penalty to apply to probability for very short messages (<10 chars) to discourage responding to "ok", "lol"',
-    format: Number,
-    default: 0.1,
-    env: 'MESSAGE_SHORT_LENGTH_PENALTY',
-  },
-
   MESSAGE_COMPOUNDING_DELAY_MAX_MS: {
     doc: 'Maximum compounding delay before responding (ms). Prevents infinite wait.',
     format: 'int',
@@ -661,12 +654,6 @@ const messageConfig = convict({
     format: Boolean,
     default: true,
     env: 'MESSAGE_WEBHOOK_ENABLED',
-  },
-  MESSAGE_MENTION_BONUS: {
-    doc: 'Bonus for mentions',
-    format: Number,
-    default: 0.1,
-    env: 'MESSAGE_MENTION_BONUS',
   },
   MESSAGE_FILTER_BY_USER: {
     doc: 'Filter messages by user',

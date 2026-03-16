@@ -76,7 +76,9 @@ router.get('/history', async (req, res) => {
 // POST /api/anomalies/:id/resolve - Resolve an anomaly
 router.post('/:id/resolve', async (req, res) => {
   try {
-    const service = AnomalyDetectionService.getInstance();
+    const { container } = require('../../di/container');
+    const { TOKENS } = require('../../di/container');
+    const service = container.resolve(TOKENS.AnomalyDetectionService);
     const success = await service.resolveAnomaly(req.params.id);
 
     if (success) {
