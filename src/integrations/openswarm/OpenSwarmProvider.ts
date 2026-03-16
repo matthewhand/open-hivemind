@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { isSafeUrl } from '@src/utils/ssrfGuard';
+import { isSafeUrl } from '@hivemind/shared-types';
 import type { ILlmProvider } from '@llm/interfaces/ILlmProvider';
 
 export class OpenSwarmProvider implements ILlmProvider {
