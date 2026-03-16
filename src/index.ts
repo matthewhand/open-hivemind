@@ -8,6 +8,17 @@ import type { NextFunction, Request, Response } from 'express';
 import swarmRouter from '@src/admin/swarmRoutes';
 import { container } from '@src/di/container';
 import { applyRateLimiting } from '@src/middleware/rateLimiter';
+import { AdvancedMonitor, AdvancedMonitor } from '@src/monitoring/AdvancedMonitor';
+import { EnhancedAlertManager, EnhancedAlertManager } from '@src/monitoring/EnhancedAlertManager';
+import {
+  IntegrationAnomalyDetector,
+  IntegrationAnomalyDetector,
+} from '@src/monitoring/IntegrationAnomalyDetector';
+import {
+  ProviderMetricsCollector,
+  ProviderMetricsCollector,
+} from '@src/monitoring/ProviderMetricsCollector';
+import { TracingService, TracingService } from '@src/monitoring/TracingService';
 import { authenticateToken } from '@src/server/middleware/auth';
 import { ipWhitelist } from '@src/server/middleware/security';
 import adminApiRouter from '@src/server/routes/admin';
@@ -37,18 +48,7 @@ import validationRouter from '@src/server/routes/validation';
 import { RealTimeValidationService } from '@src/server/services/RealTimeValidationService';
 import WebSocketService from '@src/server/services/WebSocketService';
 import { ShutdownCoordinator } from '@src/server/ShutdownCoordinator';
-import { EnhancedAlertManager } from '@src/monitoring/EnhancedAlertManager';
-import { TracingService } from '@src/monitoring/TracingService';
-import { ProviderMetricsCollector } from '@src/monitoring/ProviderMetricsCollector';
-import { IntegrationAnomalyDetector } from '@src/monitoring/IntegrationAnomalyDetector';
-import { AdvancedMonitor } from '@src/monitoring/AdvancedMonitor';
-
 import AnomalyDetectionService from '@src/services/AnomalyDetectionService';
-import { EnhancedAlertManager } from '@src/monitoring/EnhancedAlertManager';
-import { TracingService } from '@src/monitoring/TracingService';
-import { ProviderMetricsCollector } from '@src/monitoring/ProviderMetricsCollector';
-import { IntegrationAnomalyDetector } from '@src/monitoring/IntegrationAnomalyDetector';
-import { AdvancedMonitor } from '@src/monitoring/AdvancedMonitor';
 import DemoModeService from '@src/services/DemoModeService';
 import StartupGreetingService from '@src/services/StartupGreetingService';
 import { validateRequiredEnvVars } from '@src/utils/envValidation';

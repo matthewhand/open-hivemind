@@ -2,7 +2,7 @@ import { promises as fs } from 'fs';
 import chalk from 'chalk';
 import { type Command } from 'commander';
 import inquirer from 'inquirer';
-import { BotConfigurationManager } from '@config/BotConfigurationManager';
+import { type BotConfigurationManager } from '@config/BotConfigurationManager';
 import { type CommandHandler } from './CommandHandler';
 
 export class ConfigCommandHandler implements CommandHandler {

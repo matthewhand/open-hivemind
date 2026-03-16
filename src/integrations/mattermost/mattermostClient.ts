@@ -91,8 +91,10 @@ export default class MattermostClient {
 
   public async sendTyping(channelId: string, parentId?: string): Promise<void> {
     // Fire and forget typing event
-    this.axios.post(`/channels/${channelId}/typing`, { parent_id: parentId }).catch((error: any) => {
-      debug('Failed to send Mattermost typing event:', error?.message || error);
-    });
+    this.axios
+      .post(`/channels/${channelId}/typing`, { parent_id: parentId })
+      .catch((error: any) => {
+        debug('Failed to send Mattermost typing event:', error?.message || error);
+      });
   }
 }
