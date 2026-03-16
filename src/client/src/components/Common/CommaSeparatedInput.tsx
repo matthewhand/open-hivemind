@@ -69,23 +69,12 @@ export const CommaSeparatedInput: React.FC<CommaSeparatedInputProps> = ({
 
   const commitInput = (forceValue?: string) => {
     const textToCommit = forceValue !== undefined ? forceValue : inputValue;
-
-    // Check if there is a trailing comma, and keep the trailing text in the input
-    let itemsToProcess = textToCommit;
-    let remainingText = '';
-
-    if (textToCommit.includes(',')) {
-      const parts = textToCommit.split(',');
-      remainingText = parts.pop() || ''; // Keep the last part after the last comma
-      itemsToProcess = parts.join(','); // Process everything before the last comma
-    }
-
-    if (!itemsToProcess.trim() && !remainingText.trim()) {
+    if (!textToCommit.trim()) {
       setIsTouched(true);
       return;
     }
 
-    const current = itemsToProcess
+    const current = textToCommit
       .split(',')
       .map(s => s.trim())
       .filter(Boolean);
@@ -117,7 +106,7 @@ export const CommaSeparatedInput: React.FC<CommaSeparatedInputProps> = ({
         pushToHistory(next);
         onChange(next);
       }
-      setInputValue(remainingText); // set to remaining text after last comma
+      setInputValue('');
       setShowSuggestions(false);
     }
   };
@@ -125,8 +114,7 @@ export const CommaSeparatedInput: React.FC<CommaSeparatedInputProps> = ({
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
       e.preventDefault();
-      // On Enter, we want to commit everything, so we append a comma to force processing of the last word
-      commitInput(inputValue + ',');
+      commitInput();
     } else if (e.key === 'Backspace' && !inputValue && value.length > 0) {
       const next = value.slice(0, -1);
       pushToHistory(next);
@@ -180,20 +168,26 @@ export const CommaSeparatedInput: React.FC<CommaSeparatedInputProps> = ({
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newVal = e.target.value;
     if (newVal.includes(',')) {
-      commitInput(newVal);
-      return;
-    }
+      const parts = newVal.split(',');
+      const textToCommit = parts.slice(0, -1).join(',');
+      const remainingText = parts[parts.length - 1];
 
-    setInputValue(newVal);
-    setShowSuggestions(true);
-    if (internalError) {
-      setInternalError(null);
+      if (textToCommit.trim()) {
+        commitInput(textToCommit);
+      }
+      setInputValue(remainingText);
+    } else {
+      setInputValue(newVal);
+      setShowSuggestions(true);
+      if (internalError) {
+        setInternalError(null);
+      }
     }
   };
 
   const handleSuggestionClick = (suggestion: string) => {
     if (disabled) return;
-    commitInput(suggestion + ',');
+    commitInput(suggestion);
   };
 
   const filteredSuggestions = suggestions.filter(s =>

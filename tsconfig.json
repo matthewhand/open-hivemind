@@ -55,7 +55,15 @@
       "@hivemind/memory-mem4ai": ["packages/memory-mem4ai/src/index.ts"],
       "@hivemind/memory-mem4ai/*": ["packages/memory-mem4ai/src/*"],
       "@hivemind/memory-memvault": ["packages/memory-memvault/src/index.ts"],
-      "@hivemind/memory-memvault/*": ["packages/memory-memvault/src/*"]
+      "@hivemind/memory-memvault/*": ["packages/memory-memvault/src/*"],
+      "@hivemind/message-discord": ["packages/message-discord/src/index.ts"],
+      "@hivemind/message-discord/*": ["packages/message-discord/src/*"],
+      "@hivemind/message-slack": ["packages/message-slack/src/index.ts"],
+      "@hivemind/message-slack/*": ["packages/message-slack/src/*"],
+      "@hivemind/message-mattermost": ["packages/message-mattermost/src/index.ts"],
+      "@hivemind/message-mattermost/*": ["packages/message-mattermost/src/*"],
+      "@hivemind/llm-letta": ["packages/llm-letta/src/index.ts"],
+      "@hivemind/llm-letta/*": ["packages/llm-letta/src/*"]
     },
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true
