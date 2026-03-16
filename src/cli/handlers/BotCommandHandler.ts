@@ -1,8 +1,8 @@
 import chalk from 'chalk';
 import { type Command } from 'commander';
 import inquirer from 'inquirer';
-import { BotConfigurationManager } from '@config/BotConfigurationManager';
-import { DatabaseManager } from '../../database/DatabaseManager';
+import { type BotConfigurationManager } from '@config/BotConfigurationManager';
+import { type DatabaseManager } from '../../database/DatabaseManager';
 import { type CommandHandler } from './CommandHandler';
 
 export class BotCommandHandler implements CommandHandler {
