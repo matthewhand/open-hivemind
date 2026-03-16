@@ -17,12 +17,7 @@ fi
 
 echo "[build:backend] starting at $(timestamp) with NODE_OPTIONS=${NODE_OPTIONS}"
 set -x
-node node_modules/.bin/tsc --noEmitOnError false --skipLibCheck || \
-  echo 'TypeScript compilation completed with warnings, but build succeeded'
+npx tsc --noEmitOnError false --skipLibCheck || true
+echo 'TypeScript compilation completed with warnings, but build succeeded'
 set +x
 echo "[build:backend] finished at $(timestamp)"
-
-if [[ "${POST_SLEEP}" -gt 0 ]]; then
-  echo "[build:backend] sleeping for ${POST_SLEEP}s to keep container alive"
-  sleep "${POST_SLEEP}"
-fi

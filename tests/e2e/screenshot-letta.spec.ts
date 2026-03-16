@@ -118,7 +118,9 @@ test.describe('Letta Provider Documentation Screenshots', () => {
       await lookupButton.click();
 
       // Wait for the agent ID to be populated
-      await expect(page.locator('input[name="agentId"]')).toHaveValue('agent-e2fa86a3-cea2-4645-acd7-d12f0dc2efd5');
+      await expect(page.locator('input[name="agentId"]')).toHaveValue(
+        'agent-e2fa86a3-cea2-4645-acd7-d12f0dc2efd5'
+      );
 
       // Screenshot: Agent lookup in action
       await page.screenshot({
@@ -128,7 +130,9 @@ test.describe('Letta Provider Documentation Screenshots', () => {
 
     // Assert no errors were captured
     if (errors.length > 0) {
-      throw new Error(`Screenshot test failed with ${errors.length} error(s):\n${errors.join('\n')}`);
+      throw new Error(
+        `Screenshot test failed with ${errors.length} error(s):\n${errors.join('\n')}`
+      );
     }
   });
 
@@ -238,7 +242,10 @@ test.describe('Letta Provider Documentation Screenshots', () => {
 
     // Fill in the form
     await page.fill('input[name="apiUrl"]', 'https://api.letta.com/v1');
-    await page.fill('input[name="apiKey"]', 'sk-let-NzU1OWUwYWUtOTE4ZS00ZjZkLWJkMmMtMGQwYTg4YTg5NzQ2');
+    await page.fill(
+      'input[name="apiKey"]',
+      'sk-let-NzU1OWUwYWUtOTE4ZS00ZjZkLWJkMmMtMGQwYTg4YTg5NzQ2'
+    );
 
     // Screenshot: Form with credentials filled
     await page.screenshot({
@@ -247,7 +254,9 @@ test.describe('Letta Provider Documentation Screenshots', () => {
 
     // Assert no errors were captured
     if (errors.length > 0) {
-      throw new Error(`Screenshot test failed with ${errors.length} error(s):\n${errors.join('\n')}`);
+      throw new Error(
+        `Screenshot test failed with ${errors.length} error(s):\n${errors.join('\n')}`
+      );
     }
   });
 });
