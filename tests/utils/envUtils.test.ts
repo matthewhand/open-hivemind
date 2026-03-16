@@ -5,16 +5,23 @@ import {
   checkBotEnvOverrides,
 } from '../../src/utils/envUtils';
 
+function setEnv(vars: Record<string, string>): void {
+  Object.keys(process.env).forEach((key) => delete process.env[key]);
+  Object.assign(process.env, vars);
+}
+
 describe('envUtils', () => {
   const originalEnv = { ...process.env };
 
   beforeEach(() => {
     jest.resetModules();
-    process.env = { ...originalEnv };
+    Object.keys(process.env).forEach((key) => delete process.env[key]);
+    Object.assign(process.env, originalEnv);
   });
 
   afterAll(() => {
-    process.env = originalEnv;
+    Object.keys(process.env).forEach((key) => delete process.env[key]);
+    Object.assign(process.env, originalEnv);
   });
 
   describe('redactSensitiveValue', () => {
@@ -32,6 +39,11 @@ describe('envUtils', () => {
       expect(redactSensitiveValue('')).toBe('');
       expect(redactSensitiveValue(null as any)).toBe('');
       expect(redactSensitiveValue(undefined as any)).toBe('');
+    });
+
+    it('should handle exactly 9 character values', () => {
+      const result = redactSensitiveValue('123456789');
+      expect(result).toMatch(/^\d{4}\*{4}\d{4}$/);
     });
   });
 
@@ -57,16 +69,22 @@ describe('envUtils', () => {
       const result = checkEnvOverride('TEST_VAR');
       expect(result.redactedValue).toBe('*****');
     });
+
+    it('should redact SECRET-named keys', () => {
+      process.env.MY_SECRET = 'supersecretvalue';
+      const result = checkEnvOverride('MY_SECRET');
+      expect(result.isOverridden).toBe(true);
+      expect(result.redactedValue).not.toContain('supersecret');
+    });
   });
 
   describe('getRelevantEnvVars', () => {
     it('should return relevant env vars and redact sensitive ones', () => {
-      // Clear env to have a clean state for this test
-      process.env = {
+      setEnv({
         BOTS_MYBOT_TOKEN: 'secret-token-long',
         PORT: '3000',
         OTHER_VAR: 'not-relevant',
-      };
+      });
 
       const result = getRelevantEnvVars();
 
@@ -76,17 +94,13 @@ describe('envUtils', () => {
     });
 
     it('should handle non-sensitive relevant env vars', () => {
-      process.env = {
-        LOG_LEVEL: 'debug',
-      };
+      setEnv({ LOG_LEVEL: 'debug' });
       const result = getRelevantEnvVars();
       expect(result.LOG_LEVEL).toBe('debug');
     });
 
     it('should match exact prefix if it is the whole name', () => {
-      process.env = {
-        PORT: '8080',
-      };
+      setEnv({ PORT: '8080' });
       const result = getRelevantEnvVars();
       expect(result.PORT).toBe('8080');
     });
@@ -111,8 +125,7 @@ describe('envUtils', () => {
     });
 
     it('should return empty object if no overrides exist for the bot', () => {
-      // Ensure no relevant env vars are set
-      process.env = {};
+      setEnv({});
       const result = checkBotEnvOverrides('NoOverridesBot');
       expect(result).toEqual({});
     });
