@@ -315,14 +315,6 @@ export class EnhancedAlertManager extends EventEmitter {
   }
 
   /**
-   * Clean up resources and stop monitoring.
-   */
-  public shutdown(): void {
-    this.stopMonitoring();
-    this.removeAllListeners();
-  }
-
-  /**
    * Stop alert monitoring
    */
   stopMonitoring(): void {

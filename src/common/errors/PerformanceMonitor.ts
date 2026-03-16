@@ -8,7 +8,7 @@ const logger = Debug('app:PerformanceMonitor');
  * This class provides static methods for measuring and logging
  * the performance of async and sync operations.
  */
-export class PerformanceMonitor {
+class PerformanceMonitor {
   private static timings = new Map<string, number>();
 
   /**

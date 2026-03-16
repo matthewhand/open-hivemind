@@ -146,7 +146,7 @@ export class ConfigurationImportExportService {
 
       // Include versions if requested
       if (options.includeVersions) {
-        const validConfigIds = configs.map((c) => c.id).filter(Boolean) as number[];
+        const validConfigIds = configs.map(c => c.id).filter(Boolean) as number[];
         let versions: any[] = [];
         if (validConfigIds.length > 0) {
           const versionsMap = await this.dbManager.getBotConfigurationVersionsBulk(validConfigIds);
@@ -439,176 +439,47 @@ export class ConfigurationImportExportService {
    * living only for the duration of the method call to prevent N+1 query patterns. Large imports
    * with many unique config IDs will correctly make exactly one DB call per unique ID.
    */
-  private async _readFileData(filePath: string, options: ImportOptions): Promise<Buffer | string> {
-    let data: Buffer | string = await fs.readFile(filePath);
-    if (filePath.endsWith('.gz')) {
-      data = await this.decompressData(data);
-    }
-    if (filePath.endsWith('.enc')) {
-      if (!options.decryptionKey) {
-        throw new Error('Decryption key is required for encrypted import');
-      }
-      data = await this.decryptData(data, options.decryptionKey as string);
-    }
-    return data;
-  }
-
-  private _parseFileData(data: Buffer | string, format: string): any {
-    switch (format) {
-      case 'json':
-        return JSON.parse(data.toString());
-      case 'yaml':
-        return this.parseYAML(data.toString());
-      case 'csv':
-        return this.parseCSV(data.toString());
-      default:
-        throw new Error(`Unsupported import format: ${format}`);
-    }
-  }
-
-  private async _processConfigurations(
-    configurations: any[],
-    options: ImportOptions,
-    result: ImportResult
-  ): Promise<void> {
-    for (const config of configurations) {
-      try {
-        if (!options.skipValidation) {
-          const validationResult = this.configValidator.validateBotConfig(config);
-          if (!validationResult.isValid) {
-            if (options.validateOnly) {
-              result.errors?.push(
-                `Configuration validation failed: ${validationResult.errors.join(', ')}`
-              );
-              result.errorCount = (result.errorCount || 0) + 1;
-              continue;
-            } else {
-              result.warnings?.push(
-                `Configuration validation warnings: ${validationResult.errors.join(', ')}`
-              );
-            }
-          }
-        }
-
-        if (options.validateOnly) {
-          continue;
-        }
-
-        const existingConfig = config.id
-          ? await this.dbManager.getBotConfiguration(config.id)
-          : null;
-
-        if (existingConfig && !options.overwrite) {
-          result.skippedCount = (result.skippedCount || 0) + 1;
-          result.warnings?.push(`Configuration ${config.name} already exists, skipping`);
-          continue;
-        }
-
-        if (existingConfig && options.overwrite) {
-          if (existingConfig.id) {
-            await this.dbManager.updateBotConfiguration(existingConfig.id, config);
-          }
-          result.warnings?.push(`Configuration ${config.name} updated`);
-        } else {
-          await this.dbManager.createBotConfiguration(config);
-        }
-
-        result.importedCount = (result.importedCount || 0) + 1;
-      } catch (error) {
-        result.errors?.push(
-          `Error processing configuration ${config.name || 'unknown'}: ${(error as any).message}`
-        );
-        result.errorCount = (result.errorCount || 0) + 1;
-      }
-    }
-  }
-
-  private async _processVersions(versions: any[], result: ImportResult): Promise<void> {
-    const validConfigIds = new Set<number>();
-    const invalidConfigIds = new Set<number>();
-
-    for (const version of versions) {
-      try {
-        const configId = version.botConfigurationId;
-        let isValid = validConfigIds.has(configId);
-
-        if (!isValid && !invalidConfigIds.has(configId)) {
-          const config = await this.dbManager.getBotConfiguration(configId);
-          if (config) {
-            validConfigIds.add(configId);
-            isValid = true;
-          } else {
-            invalidConfigIds.add(configId);
-          }
-        }
-
-        if (isValid) {
-          await this.dbManager.createBotConfigurationVersion(version);
-        }
-      } catch (error) {
-        result.warnings?.push(`Error processing version: ${(error as any).message}`);
-      }
-    }
-  }
-
-  private async _processTemplates(
-    templates: any[],
-    importedBy: string | undefined,
-    result: ImportResult
-  ): Promise<void> {
-    const BATCH_SIZE = 50;
-    const existingTemplateIds = new Set<string>();
-
-    for (let i = 0; i < templates.length; i += BATCH_SIZE) {
-      const batch = templates.slice(i, i + BATCH_SIZE);
-
-      await Promise.all(
-        batch.map(async (t: any) => {
-          try {
-            const existing = await this.templateService.getTemplateById(t.id);
-            if (existing) {
-              existingTemplateIds.add(t.id);
-            }
-          } catch (error) {
-            result.warnings?.push(
-              `Error checking template ${t.id || 'unknown'}: ${(error as any).message}`
-            );
-          }
-        })
-      );
-
-      await Promise.all(
-        batch
-          .filter((template: any) => !existingTemplateIds.has(template.id))
-          .map(async (template: any) => {
-            try {
-              await this.templateService.createTemplate({
-                name: template.name,
-                description: template.description,
-                category: template.category,
-                tags: template.tags,
-                config: template.config,
-                createdBy: importedBy,
-              });
-              existingTemplateIds.add(template.id);
-            } catch (error) {
-              result.warnings?.push(`Error processing template: ${(error as any).message}`);
-            }
-          })
-      );
-    }
-  }
-
   async importConfigurations(
     filePath: string,
     options: ImportOptions,
     importedBy?: string
   ): Promise<ImportResult> {
     try {
-      const data = await this._readFileData(filePath, options);
-      const format = this.detectFormat(filePath);
-      const importData = this._parseFileData(data, format);
+      // Read file
+      let data: Buffer | string = await fs.readFile(filePath);
 
+      // Decompress if needed
+      if (filePath.endsWith('.gz')) {
+        data = await this.decompressData(data);
+      }
+
+      // Decrypt if needed
+      if (filePath.endsWith('.enc')) {
+        if (!options.decryptionKey) {
+          throw new Error('Decryption key is required for encrypted import');
+        }
+        data = await this.decryptData(data, options.decryptionKey as string);
+      }
+
+      // Parse data based on format
+      let importData: any;
+      const format = this.detectFormat(filePath);
+
+      switch (format) {
+        case 'json':
+          importData = JSON.parse(data.toString());
+          break;
+        case 'yaml':
+          importData = this.parseYAML(data.toString());
+          break;
+        case 'csv':
+          importData = this.parseCSV(data.toString());
+          break;
+        default:
+          throw new Error(`Unsupported import format: ${format}`);
+      }
+
+      // Validate import data structure
       if (!importData.configurations || !Array.isArray(importData.configurations)) {
         throw new Error('Invalid import data: configurations array is required');
       }
@@ -622,14 +493,137 @@ export class ConfigurationImportExportService {
         warnings: [],
       };
 
-      await this._processConfigurations(importData.configurations, options, result);
+      // Process configurations
+      for (const config of importData.configurations) {
+        try {
+          // Validate configuration
+          if (!options.skipValidation) {
+            const validationResult = this.configValidator.validateBotConfig(config);
+            if (!validationResult.isValid) {
+              if (options.validateOnly) {
+                result.errors?.push(
+                  `Configuration validation failed: ${validationResult.errors.join(', ')}`
+                );
+                result.errorCount = (result.errorCount || 0) + 1;
+                continue;
+              } else {
+                result.warnings?.push(
+                  `Configuration validation warnings: ${validationResult.errors.join(', ')}`
+                );
+              }
+            }
+          }
 
-      if (importData.versions && !options.validateOnly) {
-        await this._processVersions(importData.versions, result);
+          if (options.validateOnly) {
+            continue;
+          }
+
+          // Check if configuration exists
+          const existingConfig = config.id
+            ? await this.dbManager.getBotConfiguration(config.id)
+            : null;
+
+          if (existingConfig && !options.overwrite) {
+            result.skippedCount = (result.skippedCount || 0) + 1;
+            result.warnings?.push(`Configuration ${config.name} already exists, skipping`);
+            continue;
+          }
+
+          // Create or update configuration
+          if (existingConfig && options.overwrite) {
+            if (existingConfig.id) {
+              await this.dbManager.updateBotConfiguration(existingConfig.id, config);
+            }
+            result.warnings?.push(`Configuration ${config.name} updated`);
+          } else {
+            await this.dbManager.createBotConfiguration(config);
+          }
+
+          result.importedCount = (result.importedCount || 0) + 1;
+        } catch (error) {
+          result.errors?.push(
+            `Error processing configuration ${config.name || 'unknown'}: ${(error as any).message}`
+          );
+          result.errorCount = (result.errorCount || 0) + 1;
+        }
       }
 
+      // Process versions if included
+      if (importData.versions && !options.validateOnly) {
+        // Cache to avoid N+1 queries when importing multiple versions for the same configuration
+        const validConfigIds = new Set<number>();
+        const invalidConfigIds = new Set<number>();
+
+        for (const version of importData.versions) {
+          try {
+            const configId = version.botConfigurationId;
+            let isValid = validConfigIds.has(configId);
+
+            if (!isValid && !invalidConfigIds.has(configId)) {
+              // Check if configuration exists
+              const config = await this.dbManager.getBotConfiguration(configId);
+              if (config) {
+                validConfigIds.add(configId);
+                isValid = true;
+              } else {
+                invalidConfigIds.add(configId);
+              }
+            }
+
+            if (isValid) {
+              await this.dbManager.createBotConfigurationVersion(version);
+            }
+          } catch (error) {
+            result.warnings?.push(`Error processing version: ${(error as any).message}`);
+          }
+        }
+      }
+
+      // Process templates if included
       if (importData.templates && !options.validateOnly) {
-        await this._processTemplates(importData.templates, importedBy, result);
+        const BATCH_SIZE = 50;
+        const existingTemplateIds = new Set<string>();
+
+        for (let i = 0; i < importData.templates.length; i += BATCH_SIZE) {
+          const batch = importData.templates.slice(i, i + BATCH_SIZE);
+
+          // Pre-fetch a batch of required templates concurrently with individual error handling
+          await Promise.all(
+            batch.map(async (t: any) => {
+              try {
+                const existing = await this.templateService.getTemplateById(t.id);
+                if (existing) {
+                  existingTemplateIds.add(t.id);
+                }
+              } catch (error) {
+                result.warnings?.push(
+                  `Error checking template ${t.id || 'unknown'}: ${(error as any).message}`
+                );
+              }
+            })
+          );
+
+          // Create new templates concurrently within the batch
+          await Promise.all(
+            batch
+              .filter((template: any) => !existingTemplateIds.has(template.id))
+              .map(async (template: any) => {
+                try {
+                  await this.templateService.createTemplate({
+                    name: template.name,
+                    description: template.description,
+                    category: template.category,
+                    tags: template.tags,
+                    config: template.config,
+                    createdBy: importedBy,
+                  });
+                  existingTemplateIds.add(template.id);
+                } catch (error) {
+                  result.warnings?.push(`Error processing template: ${(error as any).message}`);
+                }
+              })
+          );
+        }
       }
 
       debug(`Imported ${result.importedCount} configurations from ${filePath}`);

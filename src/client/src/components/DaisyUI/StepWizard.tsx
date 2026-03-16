@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import Input from './Input';
+import { Input } from './index';
 
 export interface Step {
   id: string;

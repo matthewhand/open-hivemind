@@ -105,9 +105,6 @@ describe('messageHandler Configuration and Features', () => {
   let mockLlmProvider: jest.Mocked<ILlmProvider>;
 
   beforeEach(() => {
-    (TokenTracker as any).instance = undefined;
-    (DuplicateMessageDetector as any).instance = undefined;
-
     jest.clearAllMocks();
     jest.useFakeTimers();
     (processingLocks.isLocked as jest.Mock).mockReturnValue(false);
@@ -174,9 +171,6 @@ describe('messageHandler Configuration and Features', () => {
   });
 
   afterEach(() => {
-    (TokenTracker as any).instance = undefined;
-    (DuplicateMessageDetector as any).instance = undefined;
-
     jest.useRealTimers();
   });
 

@@ -355,8 +355,7 @@ describe('DiscordService', () => {
         agentDisplayName: 'Madgwick AI',
       });
 
-      expect(ctx).toBeDefined();
-      expect(ctx).not.toBeNull();
+      expect(ctx).toBeTruthy();
       expect(ctx.botId).toBe('555555555555555555');
       expect(ctx.senderKey).toBe('555555555555555555');
       expect(ctx.nameCandidates).toEqual(expect.arrayContaining(['seneca', 'Seneca']));

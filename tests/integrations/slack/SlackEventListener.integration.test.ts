@@ -1,10 +1,10 @@
-import SlackMessage from '@hivemind/message-slack/SlackMessage';
-import { SlackService } from '@hivemind/message-slack/SlackService';
+import SlackMessage from '@integrations/slack/SlackMessage';
+import { SlackService } from '@integrations/slack/SlackService';
 
 /**
  * Test-only SlackService mock; no legacy config/network.
  */
-jest.mock('@hivemind/message-slack/SlackService', () => {
+jest.mock('@integrations/slack/SlackService', () => {
   class FakeSlackService {
     static instance: any;
     private handler: any = null;

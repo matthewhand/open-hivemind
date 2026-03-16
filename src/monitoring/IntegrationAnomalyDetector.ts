@@ -214,14 +214,6 @@ export class IntegrationAnomalyDetector extends EventEmitter {
   }
 
   /**
-   * Clean up resources and stop detection.
-   */
-  public shutdown(): void {
-    this.stopDetection();
-    this.removeAllListeners();
-  }
-
-  /**
    * Add data point for an integration
    */
   addDataPoint(

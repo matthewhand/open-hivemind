@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import type { BotInstance, BotStatus } from '../types/bot';
+import type { BotInstance, BotStatus } from '../types';
 
 const useBots = () => {
   const [bots, setBots] = useState<BotInstance[]>([]);
