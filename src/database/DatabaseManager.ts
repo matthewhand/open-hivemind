@@ -397,10 +397,7 @@ export class DatabaseManager {
         this.db = new Proxy(originalDb, {
           get(target, prop, receiver) {
             const origMethod = Reflect.get(target, prop, receiver);
-            if (
-              typeof origMethod === 'function' &&
-              ['run', 'get', 'all', 'exec'].includes(prop as string)
-            ) {
+            if (typeof origMethod === 'function' && ['run', 'get', 'all', 'exec'].includes(prop as string)) {
               return async function (...args: any[]) {
                 if (self.activeQueries >= self.poolSize) {
                   throw new DatabaseError('Connection pool exhausted', 'POOL_EXHAUSTED');
@@ -414,7 +411,7 @@ export class DatabaseManager {
               };
             }
             return origMethod;
-          },
+          }
         });
 
         await this.createTables();

@@ -1,6 +1,6 @@
 import Debug from 'debug';
 import { VoiceChannel, type Client } from 'discord.js';
-import { getRandomDelay } from '@src/common/getRandomDelay';
+
 
 const debug = Debug('app:connectToVoiceChannel');
 
@@ -30,7 +30,7 @@ export async function connectToVoiceChannel(
       throw new Error('Invalid voice channel ID');
     }
     debug('Connecting to voice channel: ' + channel.name);
-    const delay = getRandomDelay(1000, 5000);
+    const delay = Math.floor(Math.random() * (5000 - 1000 + 1)) + 1000;
     debug('Simulating connection delay of ' + delay + 'ms');
     await new Promise((resolve) => setTimeout(resolve, delay));
     return channel;

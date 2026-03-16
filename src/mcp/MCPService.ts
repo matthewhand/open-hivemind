@@ -1,4 +1,5 @@
 import Debug from 'debug';
+
 import { BotConfigurationManager } from '@config/BotConfigurationManager';
 import { MCPGuard, type MCPGuardConfig } from './MCPGuard';
 
@@ -331,12 +332,12 @@ export class MCPService {
 
     try {
       if (normalized === 'slack') {
-        const provider = new SlackMessageProvider();
+        const provider = new (require("@hivemind/message-slack").SlackMessageProvider)();
         return await provider.getForumOwner(forumId);
       }
 
       if (normalized === 'discord') {
-        const DiscordMessageProvider = {} as any; //await import('@hivemind/message-discord');
+        const DiscordMessageProvider = {} as any;//await import('@hivemind/message-discord');
         const provider = new DiscordMessageProvider();
         return await provider.getForumOwner(forumId);
       }
