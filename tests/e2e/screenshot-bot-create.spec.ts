@@ -132,7 +132,8 @@ test.describe('Bot Create Page Screenshots', () => {
     await expect(page.getByText('A helpful, general-purpose AI assistant')).toBeVisible();
 
     // Verify LLM Provider Select is visible
-    const llmSelect = page.getByRole('combobox').filter({ hasText: 'Use System Default' });
+    // Wait for either combobox or select depending on how it's rendered by daisyUI
+    const llmSelect = page.locator('select').filter({ hasText: 'Use System Default' }).first();
     await expect(llmSelect).toBeVisible();
 
     // Optional: Select a different persona to show dynamic update (and capture that state)
