@@ -1,11 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useMemo } from 'react';
-<<<<<<< HEAD
-import type { Persona, PersonaCategory} from '../../types';
-import { DEFAULT_PERSONA } from '../../types';
-import { Card, Button, Input, Badge } from '../DaisyUI';
-<<<<<<< HEAD
-=======
 import type { Persona, PersonaCategory } from '../../types/bot';
 import { DEFAULT_PERSONA } from '../../types/bot';
 import Card from '../DaisyUI/Card';

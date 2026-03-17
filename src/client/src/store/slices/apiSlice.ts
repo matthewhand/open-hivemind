@@ -1,9 +1,5 @@
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
-<<<<<<< HEAD
 import type { RootState } from '../../store';
-=======
-import type { RootState } from '../index';
->>>>>>> origin/refiner-database-migration-reversibility-3845862468620237629
 import type {
   Bot,
   ConfigResponse,
