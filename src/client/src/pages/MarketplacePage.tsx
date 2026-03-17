@@ -3,7 +3,6 @@ import { Card, Button, Badge, Breadcrumbs } from '../components/DaisyUI';
 import {
   Store as StoreIcon,
   Download as DownloadIcon,
-  RefreshCw,
   RefreshCw as UpdateIcon,
   Trash2 as UninstallIcon,
   Plus as PlusIcon,
@@ -458,5 +457,6 @@ const MarketplacePage: React.FC = () => {
 };
 
 // Missing imports
+const RefreshCw = UpdateIcon;
 
 export default MarketplacePage;
