@@ -438,7 +438,7 @@ async function main() {
   await startupDiagnostics.logStartupDiagnostics();
 
   // Initialize Demo Mode Service
-  const demoService = DemoModeService.getInstance();
+  const demoService = container.resolve(DemoModeService);
   demoService.initialize();
 
   if (demoService.isInDemoMode()) {
@@ -450,7 +450,8 @@ async function main() {
   }
 
   // Initialize the StartupGreetingService
-  await StartupGreetingService.initialize();
+  const startupGreetingService = container.resolve(StartupGreetingService);
+  await startupGreetingService.initialize();
 
   // Initialize AnomalyDetectionService
   AnomalyDetectionService.getInstance();
@@ -565,7 +566,7 @@ async function main() {
     }
 
     const ApiMonitorService = require('@src/services/ApiMonitorService').ApiMonitorService;
-    const ams = ApiMonitorService.getInstance ? ApiMonitorService.getInstance() : null;
+    const ams = container.resolve(ApiMonitorService) as any;
     if (ams && typeof ams.shutdown === 'function') {
       shutdownCoordinator.registerService({
         name: 'ApiMonitorService',
@@ -683,17 +684,6 @@ async function main() {
 
   // Setup signal handlers for graceful shutdown
   shutdownCoordinator.setupSignalHandlers();
-
-  // Setup process global handlers for unhandled promises
-  process.on('unhandledRejection', (reason, promise) => {
-    appLogger.error('Unhandled Rejection at:', { promise, reason });
-  });
-
-  process.on('uncaughtException', (error) => {
-    appLogger.error('Uncaught Exception:', { error });
-    // Give logging time to write before exit
-    setTimeout(() => process.exit(1), 1000);
-  });
 
   // Startup complete
   appLogger.info('🎉 Open Hivemind Unified Server startup complete!');

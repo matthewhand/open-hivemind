@@ -1,5 +1,3 @@
-import Logger from '../utils/logger';
-
 /**
  * A centralized service for reporting errors, which can be extended to integrate
  * with third-party tracking services like Sentry, DataDog, etc.
@@ -19,7 +17,7 @@ export class ErrorService {
    * }
    */
   static report(error: any, context?: Record<string, any>) {
-    Logger.error('[ErrorService Reported]', error, context);
+    console.error('[ErrorService Reported]', error, context);
     // Future integration point for Sentry or other error tracking
   }
 }

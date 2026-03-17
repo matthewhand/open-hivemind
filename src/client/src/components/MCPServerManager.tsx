@@ -1,5 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Button, Modal, Card, Alert, Badge } from './DaisyUI';
+import Button from './DaisyUI/Button';
+import Modal from './DaisyUI/Modal';
+import Card from './DaisyUI/Card';
+import { Alert } from './DaisyUI/Alert';
+import Badge from './DaisyUI/Badge';
 import {
   PlusIcon,
   LinkIcon,

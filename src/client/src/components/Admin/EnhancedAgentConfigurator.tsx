@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Badge, Alert, Button } from '../DaisyUI';
+import Badge from '../DaisyUI/Badge';
+import { Alert } from '../DaisyUI/Alert';
+import Button from '../DaisyUI/Button';
 import {
   PlusIcon,
   TrashIcon,
@@ -10,10 +12,9 @@ import {
   XCircleIcon,
   ExclamationTriangleIcon,
 } from '@heroicons/react/24/outline';
-import { Modal, Pagination } from '../DaisyUI';
+import Modal from '../DaisyUI/Modal';
+import Pagination from '../DaisyUI/Pagination';
 import AgentForm from './AgentForm';
-import Logger from '../../utils/logger';
-
 
 interface Agent {
   id: string;
@@ -95,7 +96,7 @@ const EnhancedAgentConfigurator: React.FC = () => {
       setMcpServers(mcpData.servers || []);
     } catch (err) {
       setError('Failed to fetch configuration data');
-      Logger.error('Error fetching data:', err);
+      console.error('Error fetching data:', err);
     } finally {
       setLoading(false);
     }

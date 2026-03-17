@@ -2,7 +2,7 @@
     "name": "@hivemind/llm-letta",
     "version": "1.0.0",
     "description": "Letta (MemGPT) LLM provider for Open Hivemind",
-    "main": "src/index.ts",
+    "main": "dist/index.js",
     "types": "dist/index.d.ts",
     "scripts": {
         "build": "npx tsc",
@@ -14,7 +14,7 @@
         "debug": "^4.3.7"
     },
     "peerDependencies": {
-        "@hivemind/shared-types": "*"
+        "@hivemind/shared-types": "workspace:*"
     },
     "devDependencies": {
         "@types/debug": "^4.1.12",

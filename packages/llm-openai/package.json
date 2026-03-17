@@ -2,7 +2,7 @@
     "name": "@hivemind/llm-openai",
     "version": "1.0.0",
     "description": "OpenAI LLM provider for Open Hivemind",
-    "main": "src/index.ts",
+    "main": "dist/index.js",
     "types": "dist/index.d.ts",
     "scripts": {
         "build": "npx tsc",
@@ -14,7 +14,7 @@
         "debug": "^4.3.7"
     },
     "peerDependencies": {
-        "@hivemind/shared-types": "*"
+        "@hivemind/shared-types": "workspace:*"
     },
     "devDependencies": {
         "typescript": "^5.9.2",

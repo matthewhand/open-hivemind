@@ -5,8 +5,7 @@
  */
 
 import { Router } from 'express';
-import { container } from '../../di/container';
-import { TOKENS } from '../../di/container';
+import { container } from 'tsyringe';
 import DemoModeService from '../../services/DemoModeService';
 import { ErrorUtils } from '../../types/errors';
 
@@ -18,7 +17,7 @@ const router = Router();
  */
 router.get('/status', (req, res) => {
   try {
-    const demoService = container.resolve<DemoModeService>(TOKENS.DemoModeService);
+    const demoService = container.resolve(DemoModeService);
     const status = demoService.getDemoStatus();
 
     res.json({
@@ -42,7 +41,7 @@ router.get('/status', (req, res) => {
  */
 router.get('/bots', (req, res) => {
   try {
-    const demoService = container.resolve<DemoModeService>(TOKENS.DemoModeService);
+    const demoService = container.resolve(DemoModeService);
     const bots = demoService.getDemoBots();
 
     res.json({
@@ -77,7 +76,7 @@ router.post('/chat', (req, res) => {
       return;
     }
 
-    const demoService = container.resolve<DemoModeService>(TOKENS.DemoModeService);
+    const demoService = container.resolve(DemoModeService);
 
     if (!demoService.isInDemoMode()) {
       res.status(400).json({
@@ -131,7 +130,7 @@ router.post('/chat', (req, res) => {
  */
 router.get('/conversations', (req, res) => {
   try {
-    const demoService = container.resolve<DemoModeService>(TOKENS.DemoModeService);
+    const demoService = container.resolve(DemoModeService);
     const conversations = demoService.getAllConversations();
 
     res.json({
@@ -154,7 +153,7 @@ router.get('/conversations', (req, res) => {
 router.get('/conversations/:channelId/:botName', (req, res) => {
   try {
     const { channelId, botName } = req.params;
-    const demoService = container.resolve<DemoModeService>(TOKENS.DemoModeService);
+    const demoService = container.resolve(DemoModeService);
     const messages = demoService.getConversationHistory(channelId, botName);
 
     res.json({
@@ -178,7 +177,7 @@ router.get('/conversations/:channelId/:botName', (req, res) => {
  */
 router.post('/reset', (req, res) => {
   try {
-    const demoService = container.resolve<DemoModeService>(TOKENS.DemoModeService);
+    const demoService = container.resolve(DemoModeService);
     demoService.reset();
 
     res.json({

@@ -215,7 +215,13 @@ scripts/benchmarks/temp-import-bench.json
 
 # Development artifacts
 .letta/
+<<<<<<< HEAD
 config/backups/
+=======
+patch_*.py
+after-fix.*
+*.patch.py
+>>>>>>> origin/refiner-barrel-export-audit-4424264890390605711
 .pending_prs.json
 current_prs.json
 patch_yml2.js

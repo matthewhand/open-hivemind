@@ -18,7 +18,7 @@ import { ErrorUtils } from '../../types/errors';
 import { type IProvider } from '../../types/IProvider';
 import { ConfigUpdateSchema } from '../../validation/schemas/configSchema';
 import { validateRequest } from '../../validation/validateRequest';
-import { auditMiddleware, logConfigChange } from '../middleware/audit';
+import { auditMiddleware, logConfigChange, type AuditedRequest } from '../middleware/audit';
 
 /**
  * Validates that a config name is safe to use in file paths.
@@ -617,7 +617,7 @@ router.put('/global', validateRequest(ConfigUpdateSchema), async (req, res) => {
 
       if (process.env.NODE_ENV !== 'test') {
         logConfigChange(
-          req as any,
+          req as AuditedRequest,
           'UPDATE',
           'config/general',
           'success',
@@ -695,7 +695,7 @@ router.put('/global', validateRequest(ConfigUpdateSchema), async (req, res) => {
 
     if (process.env.NODE_ENV !== 'test') {
       logConfigChange(
-        req as any,
+        req as AuditedRequest,
         'UPDATE',
         `config/${configName}`,
         'success',

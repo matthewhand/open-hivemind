@@ -1,11 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Breadcrumbs, EmptyState } from '../components/DaisyUI';
+import Breadcrumbs from '../components/DaisyUI/Breadcrumbs';
+import EmptyState from '../components/DaisyUI/EmptyState';
 import { Copy, Check, Search } from 'lucide-react';
 import SearchFilterBar from '../components/SearchFilterBar';
-import Logger from '../utils/logger';
-
 
 interface BotTemplate {
   id: string;
@@ -57,7 +56,7 @@ const BotTemplatesPage: React.FC = () => {
         setTemplates(templatesArray);
       }
     } catch (error) {
-      Logger.error('Failed to fetch templates:', error);
+      console.error('Failed to fetch templates:', error);
     } finally {
       setLoading(false);
     }
@@ -97,7 +96,7 @@ const BotTemplatesPage: React.FC = () => {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch (err) {
-      Logger.error('Failed to copy:', err);
+      console.error('Failed to copy:', err);
     }
   };
 

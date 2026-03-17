@@ -20,18 +20,32 @@ jest.mock('../../src/server/middleware/auth', () => ({
   },
 }));
 
-// Mock DatabaseManager to control database state in tests
-jest.mock('../../src/database/DatabaseManager', () => {
+jest.mock('../../src/database/DatabaseManager', () => ({
+  DatabaseManager: {
+    getInstance: jest.fn().mockReturnValue({
+      isConnected: jest.fn().mockReturnValue(true),
+    }),
+  },
+}));
+
+jest.mock('../../src/managers/BotManager', () => ({
+  BotManager: {
+    getInstance: jest.fn().mockReturnValue({
+      getAllBots: jest.fn().mockReturnValue(new Map()),
+    }),
+  },
+}));
+
+jest.mock('../../src/services/ApiMonitorService', () => {
   return {
-    DatabaseManager: {
+    __esModule: true,
+    default: {
       getInstance: jest.fn().mockReturnValue({
-        isConnected: jest.fn().mockReturnValue(true)
-      })
-    }
+        getAllStatuses: jest.fn().mockReturnValue({}),
+      }),
+    },
   };
 });
-
-import { DatabaseManager } from '../../src/database/DatabaseManager';
 
 describe('Health API Endpoints - COMPLETE TDD SUITE', () => {
   let app: express.Application;

@@ -1,14 +1,12 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect } from 'react';
-import {
-  Card,
-  Badge,
-  Button,
-  Input,
-  Select,
-  Modal,
-  Loading,
-} from './DaisyUI';
+import Card from './DaisyUI/Card';
+import Badge from './DaisyUI/Badge';
+import Button from './DaisyUI/Button';
+import Input from './DaisyUI/Input';
+import Select from './DaisyUI/Select';
+import Modal from './DaisyUI/Modal';
+import { Loading } from './DaisyUI/Loading';
 import {
   PlusIcon,
   PencilIcon,
@@ -17,8 +15,6 @@ import {
   StopIcon,
 } from '@heroicons/react/24/outline';
 import { apiService } from '../services/api';
-import Logger from '../utils/logger';
-
 
 interface EndpointConfig {
   id: string;
@@ -73,7 +69,7 @@ const ApiEndpointConfig: React.FC<ApiEndpointConfigProps> = ({ onEndpointsChange
       setEndpoints([]);
       setLoading(false);
     } catch (error) {
-      Logger.error('Failed to fetch endpoints:', error);
+      console.error('Failed to fetch endpoints:', error);
       setLoading(false);
     }
   };
@@ -151,7 +147,7 @@ const ApiEndpointConfig: React.FC<ApiEndpointConfigProps> = ({ onEndpointsChange
       fetchEndpoints();
       onEndpointsChange?.();
     } catch (error) {
-      Logger.error('Failed to save endpoint:', error);
+      console.error('Failed to save endpoint:', error);
       showToast('Failed to save endpoint', 'error');
     }
   };
@@ -163,7 +159,7 @@ const ApiEndpointConfig: React.FC<ApiEndpointConfigProps> = ({ onEndpointsChange
       fetchEndpoints();
       onEndpointsChange?.();
     } catch (error) {
-      Logger.error('Failed to delete endpoint:', error);
+      console.error('Failed to delete endpoint:', error);
       showToast('Failed to delete endpoint', 'error');
     }
   };
@@ -174,7 +170,7 @@ const ApiEndpointConfig: React.FC<ApiEndpointConfigProps> = ({ onEndpointsChange
       fetchEndpoints();
       onEndpointsChange?.();
     } catch (error) {
-      Logger.error('Failed to toggle endpoint:', error);
+      console.error('Failed to toggle endpoint:', error);
     }
   };
 

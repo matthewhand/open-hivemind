@@ -1,22 +1,18 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useEffect, useState } from 'react';
-import {
-  StatsCards,
-  Badge,
-  Button,
-  DataTable,
-  Timeline,
-  ProgressBar,
-  VisualFeedback,
-  NavbarWithSearch,
-  Tooltip,
-  Card,
-  Hero,
-} from '../components/DaisyUI';
+import StatsCards from '../components/DaisyUI/StatsCards';
+import Badge from '../components/DaisyUI/Badge';
+import Button from '../components/DaisyUI/Button';
+import DataTable from '../components/DaisyUI/DataTable';
+import Timeline from '../components/DaisyUI/Timeline';
+import ProgressBar from '../components/DaisyUI/ProgressBar';
+import VisualFeedback from '../components/DaisyUI/VisualFeedback';
+import NavbarWithSearch from '../components/DaisyUI/NavbarWithSearch';
+import Tooltip from '../components/DaisyUI/Tooltip';
+import Card from '../components/DaisyUI/Card';
+import Hero from '../components/DaisyUI/Hero';
 import { apiService } from '../services/api';
 import type { Bot, StatusResponse } from '../services/api';
-import Logger from '../utils/logger';
-
 
 interface DashboardStats {
   totalBots: number;
@@ -109,7 +105,7 @@ const EnhancedDashboard: React.FC = () => {
   const handleSearch = (query: string) => {
     setSearchQuery(query);
     // In a real app, this might trigger a search API call
-    Logger.log('Searching for:', query);
+    console.log('Searching for:', query);
   };
 
   const handleRefresh = () => {

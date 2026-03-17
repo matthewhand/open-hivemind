@@ -9,8 +9,6 @@ import {
 } from '@heroicons/react/24/outline';
 import { useAppSelector } from '../store/hooks';
 import { AdaptiveGrid } from '../components/ResponsiveComponents';
-import Logger from '../utils/logger';
-
 
 export interface WidgetConfig {
   id: string;
@@ -325,7 +323,7 @@ export const WidgetSystem: React.FC<WidgetSystemProps> = ({
   useEffect(() => {
     if (autoSave) {
       // Save widget configuration
-      Logger.log('Widget configuration saved:', widgets);
+      console.log('Widget configuration saved:', widgets);
     }
   }, [widgets, autoSave]);
 

@@ -1,9 +1,5 @@
 import { useDispatch, useSelector, type TypedUseSelectorHook } from 'react-redux';
-<<<<<<< HEAD
 import type { RootState, AppDispatch } from '../store';
-=======
-import type { RootState, AppDispatch } from './store';
->>>>>>> origin/fix/memory-leak-inactivity-11251779731564442311
 
 // Use throughout your app instead of plain `useDispatch` and `useSelector`
 export const useAppDispatch = () => useDispatch<AppDispatch>();

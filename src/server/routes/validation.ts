@@ -681,8 +681,7 @@ router.post(
   handleValidationErrors,
   async (req: AuthMiddlewareRequest, res: Response) => {
     try {
-      const authReq = req as any;
-      const createdBy = authReq.user?.username || 'unknown';
+      const createdBy = req.user?.username || 'unknown';
 
       // Check if profile already exists
       const existingProfile = validationService.getProfile(req.body.id);

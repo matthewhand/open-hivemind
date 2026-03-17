@@ -3,8 +3,6 @@ import type { ComponentType } from 'react';
 import { lazy, Suspense } from 'react';
 import React from 'react';
 import logger from '../utils/logger';
-import Logger from '../utils/logger';
-
 
 // Types for dynamic integration components
 export interface IntegrationUIComponent {
@@ -74,11 +72,11 @@ export class IntegrationLoader {
           const components = await this.loadIntegrationComponents(integrationId);
           allComponents.push(...components);
         } catch (error) {
-          Logger.warn(`Failed to load components for integration ${integrationId}:`, error);
+          console.warn(`Failed to load components for integration ${integrationId}:`, error);
         }
       }
     } catch (error) {
-      Logger.error('Failed to discover integrations:', error);
+      console.error('Failed to discover integrations:', error);
     }
 
     return allComponents;
@@ -128,7 +126,7 @@ export class IntegrationLoader {
               icon: componentInfo.icon,
             });
           } catch (componentError) {
-            Logger.warn(`Failed to load component ${componentId} for integration ${integrationId}:`, componentError);
+            console.warn(`Failed to load component ${componentId} for integration ${integrationId}:`, componentError);
           }
         }
       }
@@ -140,7 +138,7 @@ export class IntegrationLoader {
       }
 
     } catch (error) {
-      Logger.warn(`Failed to load integration ${integrationId}:`, error);
+      console.warn(`Failed to load integration ${integrationId}:`, error);
     }
 
     return components;
@@ -230,7 +228,7 @@ export class IntegrationLoader {
       }
 
     } catch (error) {
-      Logger.warn(`Failed to auto-discover components for integration ${integrationId}:`, error);
+      console.warn(`Failed to auto-discover components for integration ${integrationId}:`, error);
     }
 
     return components;
@@ -305,6 +303,29 @@ export class IntegrationLoader {
 /**
  * Higher-order component for lazy loading integration components with error handling
  */
+// Create a Context for Dependency Injection
+const IntegrationContext = React.createContext<IntegrationLoader | null>(null);
+
+export function IntegrationProvider({ children, loader }: { children: React.ReactNode, loader?: IntegrationLoader }) {
+  // We allow passing an explicit loader instance, or default to a new one
+  const [loaderInstance] = React.useState(() => loader || new IntegrationLoader());
+
+  return (
+    <IntegrationContext.Provider value={loaderInstance}>
+      {children}
+    </IntegrationContext.Provider>
+  );
+}
+
+export function useIntegrationLoader(): IntegrationLoader {
+  const context = React.useContext(IntegrationContext);
+  if (!context) {
+    // For backwards compatibility and places where it's not wrapped in Provider yet
+    return IntegrationLoader.getInstance();
+  }
+  return context;
+}
+
 export function LazyIntegrationComponent({
   integrationId,
   componentPath,
@@ -316,11 +337,13 @@ export function LazyIntegrationComponent({
   fallback?: React.ReactNode;
   onError?: (error: Error) => React.ReactNode;
 }) {
+  const loader = useIntegrationLoader();
+
   const LazyComponent = lazy(() =>
-    IntegrationLoader.getInstance()
+    loader
       .loadComponent(integrationId, componentPath)
       .catch(error => {
-        Logger.error(`Failed to load integration component ${integrationId}.${componentPath}:`, error);
+        console.error(`Failed to load integration component ${integrationId}.${componentPath}:`, error);
         // Return a simple error component
         return {
           default: () => onError(error instanceof Error ? error : new Error('Unknown error')),
@@ -339,6 +362,7 @@ export function LazyIntegrationComponent({
  * Hook for using integration components in React components
  */
 export function useIntegrationComponents() {
+  const loader = useIntegrationLoader();
   const [components, setComponents] = React.useState<IntegrationUIComponent[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<Error | null>(null);
@@ -348,7 +372,6 @@ export function useIntegrationComponents() {
       try {
         setLoading(true);
         setError(null);
-        const loader = IntegrationLoader.getInstance();
         const discoveredComponents = await loader.discoverIntegrations();
         setComponents(discoveredComponents);
       } catch (err) {
@@ -359,13 +382,12 @@ export function useIntegrationComponents() {
     };
 
     loadComponents();
-  }, []);
+  }, [loader]);
 
   const refresh = React.useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
-      const loader = IntegrationLoader.getInstance();
       const refreshedComponents = await loader.refreshIntegrations();
       setComponents(refreshedComponents);
     } catch (err) {
@@ -373,7 +395,7 @@ export function useIntegrationComponents() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [loader]);
 
   const getComponentsByCategory = React.useCallback((category: IntegrationUIComponent['category']) => {
     return components.filter(c => c.category === category);
