@@ -68,6 +68,26 @@ function removeFromRegistry(name: string): void {
 }
 
 // ---------------------------------------------------------------------------
+// Name Validation
+// ---------------------------------------------------------------------------
+
+/**
+ * Validates that a plugin name is structurally safe and follows naming conventions.
+ * This prevents path traversal attacks (e.g. '../../etc/passwd').
+ */
+function validatePluginName(name: string): void {
+  if (!name || typeof name !== 'string') {
+    throw new PluginValidationError('Plugin name must be a string.');
+  }
+  // Enforces valid prefix and alphanumeric + dash/underscore characters
+  if (!/^(llm|message|memory|tool)-[a-zA-Z0-9_-]+$/.test(name)) {
+    throw new PluginValidationError(
+      `Invalid plugin name format: '${name}'. Must match ^(llm|message|memory|tool)-[a-zA-Z0-9_-]+$`
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Require-cache eviction
 // ---------------------------------------------------------------------------
 
@@ -94,15 +114,9 @@ function evictFromCache(pluginPath: string): void {
  * being loaded as an 'llm' provider silently at runtime.
  */
 function validateManifestType(name: string, manifest: PluginManifest): void {
-  const namePrefix = name.split('-')[0];
-  const validTypes = ['llm', 'message', 'memory', 'tool'] as const;
+  validatePluginName(name);
 
-  if (!validTypes.includes(namePrefix as any)) {
-    throw new PluginValidationError(
-      `Package name '${name}' must start with a valid type prefix: ${validTypes.join(', ')}. ` +
-        `Got prefix '${namePrefix}'.`
-    );
-  }
+  const namePrefix = name.split('-')[0];
 
   if (manifest.type !== namePrefix) {
     throw new PluginValidationError(
@@ -197,21 +211,25 @@ function validateRepoUrl(url: string): void {
     throw new PluginValidationError(
       'Invalid repository URL protocol. Only http: and https: are allowed.'
     );
+  }
 
   // Prevent argument injection via hostname or path
-  if (parsedUrl.hostname.includes(" ") || parsedUrl.pathname.includes(" ")) {
-    throw new PluginValidationError("Invalid repository URL: spaces not allowed.");
+  if (parsedUrl.hostname.includes(' ') || parsedUrl.pathname.includes(' ')) {
+    throw new PluginValidationError('Invalid repository URL: spaces not allowed.');
   }
-  
+
   // Prevent command injection through special git URL patterns
   if (/--[a-z-]+=/i.test(parsedUrl.href)) {
-    throw new PluginValidationError("Invalid repository URL: contains suspicious patterns.");
+    throw new PluginValidationError('Invalid repository URL: contains suspicious patterns.');
   }
-  
+
   // Prevent shell metacharacters in hostname
   if (/[;&|`$()]/.test(parsedUrl.hostname)) {
-    throw new PluginValidationError("Invalid repository URL: contains shell metacharacters.");
+    throw new PluginValidationError('Invalid repository URL: contains shell metacharacters.');
   }
+}
+
+/**
  * Install a community plugin from a git repository URL.
  *
  * Steps:
@@ -235,6 +253,8 @@ export async function installPlugin(repoUrl: string): Promise<PluginInfo> {
     exec('git', ['clone', '--depth', '1', repoUrl, tempPath], PLUGINS_DIR);
 
     const name = deriveNameFromPath(tempPath);
+    validatePluginName(name);
+
     const pluginPath = path.join(PLUGINS_DIR, name);
 
     // If already installed, refuse — use updatePlugin instead
@@ -282,6 +302,7 @@ export async function installPlugin(repoUrl: string): Promise<PluginInfo> {
  * @throws Error if the plugin is not found in PLUGINS_DIR
  */
 export async function uninstallPlugin(name: string): Promise<void> {
+  validatePluginName(name);
   const pluginPath = path.join(PLUGINS_DIR, name);
 
   if (!fs.existsSync(pluginPath)) {
@@ -308,6 +329,7 @@ export async function uninstallPlugin(name: string): Promise<void> {
  * @throws PluginValidationError if the updated plugin fails manifest validation
  */
 export async function updatePlugin(name: string): Promise<PluginInfo> {
+  validatePluginName(name);
   const pluginPath = path.join(PLUGINS_DIR, name);
 
   if (!fs.existsSync(pluginPath)) {
