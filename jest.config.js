@@ -25,6 +25,7 @@ module.exports = {
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json', 'node'],
   moduleNameMapper: {
     uuid: require.resolve('uuid'),
+    '^@hivemind/shared-types$': '<rootDir>/packages/shared-types/src/index.ts',
     '^@src/utils/logger$': '<rootDir>/tests/mocks/logger.ts',
     '^@src/integrations/slack/(.*)$': '<rootDir>/packages/message-slack/src/$1',
     '^@src/integrations/mattermost/(.*)$': '<rootDir>/packages/message-mattermost/src/$1',
