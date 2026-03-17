@@ -25,13 +25,8 @@ fi
 # 5. Compiling Serverless Function
 echo "🔹 Compiling serverless function..."
 mkdir -p dist/netlify/functions
-<<<<<<< HEAD
 # Use pnpm exec to compile the specific file safely in CI
 pnpm exec tsc src/netlify/functions/server.ts \
-=======
-# Use npx tsc to compile the specific file
-npx tsc src/netlify/functions/server.ts \
->>>>>>> origin/jules-responsive-layout-consistency-5760872167389438897
   --outDir dist/netlify/functions \
   --target es2018 \
   --module commonjs \
