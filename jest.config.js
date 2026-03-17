@@ -37,6 +37,7 @@ module.exports = {
     '^@message/interfaces/messageConfig$': '<rootDir>/src/config/messageConfig.ts',
     '^@webhook/(.*)$': '<rootDir>/src/webhook/$1',
     '^@services/(.*)$': '<rootDir>/src/services/$1',
+    '^@integrations/discord/(.*)$': '<rootDir>/packages/message-discord/src/$1',
     '^@integrations/slack/(.*)$': '<rootDir>/packages/message-slack/src/$1',
     '^@integrations/mattermost/(.*)$': '<rootDir>/packages/message-mattermost/src/$1',
     '^@integrations/(.*)$': '<rootDir>/src/integrations/$1',
