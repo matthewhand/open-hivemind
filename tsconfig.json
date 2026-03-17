@@ -76,7 +76,8 @@
     "packages/message-discord/src/**/*",
     "packages/message-slack/src/**/*",
     "packages/message-mattermost/src/**/*",
-    "packages/llm-letta/src/**/*"
+    "packages/llm-letta/src/**/*",
+    "packages/shared-types/src/**/*"
   ],
   "exclude": ["tests/**/*", "node_modules", "src/client/**/*"],
   "files": ["src/global.d.ts"]

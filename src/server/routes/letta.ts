@@ -1,6 +1,6 @@
 import { Router, type Request, type Response } from 'express';
 import { getAgent, listAgents } from '@hivemind/llm-letta';
-import { isSafeUrl } from '@src/utils/ssrfGuard';
+import { isSafeUrl } from '../utils/ssrfGuard';
 
 const router = Router();
 

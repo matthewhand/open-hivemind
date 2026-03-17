@@ -1,7 +1,7 @@
 import Debug from 'debug';
 import { Router, type Request, type Response } from 'express';
 import { container } from 'tsyringe';
-import { isSafeUrl } from '@src/utils/ssrfGuard';
+import { isSafeUrl } from '../../utils/ssrfGuard';
 import { authenticate, requireAdmin } from '../../auth/middleware';
 import { getTrustedMcpReposConfig } from '../../config/trustedMcpRepos';
 import { DatabaseManager } from '../../database/DatabaseManager';
