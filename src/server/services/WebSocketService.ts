@@ -8,7 +8,11 @@ import ApiMonitorService, { type EndpointStatus } from '../../services/ApiMonito
 import { ActivityLogger } from './ActivityLogger';
 import { BotMetricsService } from './BotMetricsService';
 import 'reflect-metadata';
+<<<<<<< HEAD
 import { injectable, singleton } from 'tsyringe';
+=======
+import { container, injectable, singleton } from 'tsyringe';
+>>>>>>> origin/refiner-promise-handling-personas-11974248204293140303
 
 const debug = Debug('app:WebSocketService');
 

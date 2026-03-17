@@ -24,6 +24,7 @@ export async function listAgents(apiKey: string, apiUrl?: string): Promise<Agent
   const client = new Letta({
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
     baseURL: baseURL,
 =======
     baseUrl: baseUrl,
@@ -32,11 +33,16 @@ export async function listAgents(apiKey: string, apiUrl?: string): Promise<Agent
     baseUrl: baseUrl,
 >>>>>>> origin/refiner-database-migration-reversibility-3845862468620237629
     token: apiKey,
+=======
+    baseURL: baseUrl,
+    apiKey: apiKey,
+>>>>>>> origin/refiner-promise-handling-personas-11974248204293140303
   });
 
   const agents = await client.agents.list();
 
   // Transform to simplified agent summary
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
   return agents.data.map((agent: any) => ({
@@ -46,6 +52,9 @@ export async function listAgents(apiKey: string, apiUrl?: string): Promise<Agent
 =======
   return agents.map((agent: any) => ({
 >>>>>>> origin/refiner-database-migration-reversibility-3845862468620237629
+=======
+  return (agents as unknown as any[]).map((agent: any) => ({
+>>>>>>> origin/refiner-promise-handling-personas-11974248204293140303
     id: agent.id,
     name: agent.name,
     description: agent.description,
@@ -77,6 +86,7 @@ export async function getAgent(
   const client = new Letta({
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
     baseURL: baseURL,
 =======
     baseUrl: baseUrl,
@@ -85,6 +95,10 @@ export async function getAgent(
     baseUrl: baseUrl,
 >>>>>>> origin/refiner-database-migration-reversibility-3845862468620237629
     token: apiKey,
+=======
+    baseURL: baseUrl,
+    apiKey: apiKey,
+>>>>>>> origin/refiner-promise-handling-personas-11974248204293140303
   });
 
   const agent = await client.agents.retrieve(agentId);

@@ -274,6 +274,7 @@ export class Mem4aiProvider {
 
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
             const results: SearchResult[] = (response.results as any[]).map((result: Record<string, unknown>) => ({
 =======
             const results: SearchResult[] = response.results.map((result: Record<string, unknown>) => ({
@@ -281,6 +282,9 @@ export class Mem4aiProvider {
 =======
             const results: SearchResult[] = response.results.map((result: Record<string, unknown>) => ({
 >>>>>>> origin/refiner-database-migration-reversibility-3845862468620237629
+=======
+            const results: SearchResult[] = (response.results as any[]).map((result: Record<string, unknown>) => ({
+>>>>>>> origin/refiner-promise-handling-personas-11974248204293140303
                 id: result.id as string,
                 content: result.content as string,
                 score: result.score as number,
@@ -311,6 +315,7 @@ export class Mem4aiProvider {
 
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
             const memories: MemoryEntry[] = (response.memories as any[]).map((mem: Record<string, unknown>) => ({
 =======
             const memories: MemoryEntry[] = response.memories.map((mem: Record<string, unknown>) => ({
@@ -318,6 +323,9 @@ export class Mem4aiProvider {
 =======
             const memories: MemoryEntry[] = response.memories.map((mem: Record<string, unknown>) => ({
 >>>>>>> origin/refiner-database-migration-reversibility-3845862468620237629
+=======
+            const memories: MemoryEntry[] = (response.memories as any[]).map((mem: Record<string, unknown>) => ({
+>>>>>>> origin/refiner-promise-handling-personas-11974248204293140303
                 id: mem.id as string,
                 content: mem.content as string,
                 metadata: mem.metadata as Record<string, unknown> | undefined,
@@ -367,11 +375,15 @@ export class Mem4aiProvider {
             return {
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> origin/refiner-promise-handling-personas-11974248204293140303
                 id: response.id as string,
                 content: response.content as string,
                 metadata: response.metadata as Record<string, unknown>,
                 timestamp: response.updated_at as number,
                 tags: response.tags as string[],
+<<<<<<< HEAD
 =======
 =======
 >>>>>>> origin/refiner-database-migration-reversibility-3845862468620237629
@@ -384,6 +396,8 @@ export class Mem4aiProvider {
 >>>>>>> origin/jules-responsive-layout-consistency-5760872167389438897
 =======
 >>>>>>> origin/refiner-database-migration-reversibility-3845862468620237629
+=======
+>>>>>>> origin/refiner-promise-handling-personas-11974248204293140303
             };
         } catch (error) {
             this.debug('Failed to update memory', error);
@@ -434,7 +448,7 @@ export class Mem4aiProvider {
                 throw new Error(`Mem4ai API error: ${response.status} - ${error}`);
             }
 
-            return await response.json() as Promise<unknown>;
+            return await response.json() as Promise<any>;
         } finally {
             clearTimeout(timeout);
         }

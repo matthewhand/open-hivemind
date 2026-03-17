@@ -32,6 +32,7 @@ export default defineConfig({
       '@src': './src',
       '@config': '../config',
       '@webui': './webui/src',
+      '@hivemind/shared-types': '../../packages/shared-types/src/index.ts',
     },
   },
   build: {

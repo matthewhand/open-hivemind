@@ -14,7 +14,15 @@ import {
 import { useLlmStatus } from '../hooks/useLlmStatus';
 import AIAssistButton from '../components/AIAssistButton';
 import { apiService } from '../services/api';
-import { CONFIG_LIMITS } from '../../../types/config';
+// Hardcoded fallback for Vite build:
+const CONFIG_LIMITS = {
+  SYSTEM_INSTRUCTION_MAX_LENGTH: 5000,
+  SYSTEM_INSTRUCTION_WARNING_LENGTH: 2000,
+  SYSTEM_INSTRUCTION_MIN_LENGTH: 10,
+  BOT_NAME_MIN_LENGTH: 2,
+  BOT_NAME_MAX_LENGTH: 50,
+  PROFILE_NAME_MAX_LENGTH: 100,
+};
 
 const BotCreatePage: React.FC = () => {
   const navigate = useNavigate();
