@@ -29,6 +29,12 @@ export async function isSafeUrl(url: string): Promise<boolean> {
 
     // Check if hostname is an IP literal
     if (net.isIP(hostname)) {
+
+    // Block cloud metadata service hostnames (DNS rebinding protection)
+    const metadataHostnames = ["metadata.google.internal", "metadata", "metadata.azure"];
+    if (metadataHostnames.includes(hostname.toLowerCase())) {
+      return false;
+    }
       if (isPrivateIP(hostname)) {
         return process.env.ALLOW_LOCAL_NETWORK_ACCESS === 'true';
       }
@@ -90,6 +96,11 @@ function isPrivateIPv4(ip: string): boolean {
   // 0.0.0.0/8 (Current network)
   if (a === 0) return true;
 
+  // 224.0.0.0/4 (Multicast)
+  if (a >= 224 && a <= 239) return true;
+
+  // 240.0.0.0/4 (Reserved/Broadcast)
+  if (a >= 240) return true;
   return false;
 }
 
