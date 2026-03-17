@@ -1,5 +1,4 @@
 import { Router } from 'express';
-import { createLogger } from '@src/common/StructuredLogger';
 import { DatabaseManager } from '@src/database/DatabaseManager';
 import WebSocketService, { type MessageFlowEvent } from '@src/server/services/WebSocketService';
 import { BotConfigurationManager } from '@config/BotConfigurationManager';
@@ -9,7 +8,6 @@ import { ActivityLogger } from '../services/ActivityLogger';
 type AnnotatedEvent = MessageFlowEvent & { llmProvider: string };
 
 const router = Router();
-const logger = createLogger('routes:dashboard');
 
 // ----------------------------------------------------------------------------
 // AI Dashboard Interfaces & Mock Data
@@ -221,10 +219,7 @@ router.post('/ai/feedback', authenticate, requireAdmin, async (req, res) => {
     await db.storeAIFeedback({ recommendationId, feedback, metadata });
     res.json({ success: true });
   } catch (error) {
-    logger.error(
-      'Error storing AI feedback:',
-      error instanceof Error ? error : new Error(String(error))
-    );
+    console.error('Error storing AI feedback:', error);
     res.status(500).json({ error: 'Failed to store feedback' });
   }
 });
@@ -235,14 +230,14 @@ router.post('/ai/feedback', authenticate, requireAdmin, async (req, res) => {
 function isProviderConnected(bot: any): boolean {
   try {
     if (bot.messageProvider === 'slack') {
-      const svc = require('@hivemind/message-slack').SlackService;
+      const svc = require('@hivemind/message-slack').SlackService as any;
       const instance = svc?.getInstance?.();
       const mgr = instance?.getBotManager?.(bot.name) || instance?.getBotManager?.();
       const bots = mgr?.getAllBots?.() || [];
       return Array.isArray(bots) && bots.length > 0;
     }
     if (bot.messageProvider === 'discord') {
-      const svc = require('@hivemind/message-discord');
+      const svc = require('@hivemind/message-discord') as any;
       const instance =
         svc?.DiscordService?.getInstance?.() || svc?.Discord?.DiscordService?.getInstance?.();
       const bots = instance?.getAllBots?.() || [];
@@ -261,9 +256,7 @@ router.get('/status', authenticate, requireAdmin, (req, res) => {
     try {
       bots = manager.getAllBots();
     } catch (e) {
-      logger.warn('Failed to load bots for status', {
-        error: e instanceof Error ? e.message : String(e),
-      });
+      console.warn('Failed to load bots for status:', e);
       bots = [];
     }
 
@@ -285,7 +278,7 @@ router.get('/status', authenticate, requireAdmin, (req, res) => {
 
     res.json({ bots: status, uptime: process.uptime() });
   } catch (error) {
-    logger.error('Status API error:', error instanceof Error ? error : new Error(String(error)));
+    console.error('Status API error:', error);
     res.status(500).json({ error: 'Failed to get status' });
   }
 });
@@ -311,6 +304,8 @@ router.get('/activity', authenticate, requireAdmin, async (req, res) => {
       limit: 5000,
     });
 
+    const allEvents = storedEvents.map((event) => annotateEvent(event, botMap));
+
     const botFilterSet = new Set(botFilter);
     const providerFilterSet = new Set(providerFilter);
     const llmFilterSet = new Set(llmFilter);
@@ -328,36 +323,31 @@ router.get('/activity', authenticate, requireAdmin, async (req, res) => {
 
     const hasAnyFilter = hasBotFilter || hasProviderFilter || hasLlmFilter || fromTime || toTime;
 
-    // ⚡ Bolt Optimization: Filter events before mapping to avoid creating 5000 new objects when only a few are needed
-    const filteredEvents = storedEvents
-      .filter((event) => {
-        const llmProvider = botMap.get(event.botName)?.llmProvider || 'unknown';
+    const filteredEvents = allEvents.filter((event) => {
+      agents.add(event.botName);
+      messageProviders.add(event.provider);
+      llmProviders.add(event.llmProvider);
 
-        agents.add(event.botName);
-        messageProviders.add(event.provider);
-        llmProviders.add(llmProvider);
+      if (!hasAnyFilter) return true;
 
-        if (!hasAnyFilter) return true;
-
-        if (hasBotFilter && !botFilterSet.has(event.botName)) {
-          return false;
-        }
-        if (hasProviderFilter && !providerFilterSet.has(event.provider)) {
-          return false;
-        }
-        if (hasLlmFilter && !llmFilterSet.has(llmProvider)) {
-          return false;
-        }
-        const ts = new Date(event.timestamp).getTime();
-        if (fromTime && ts < fromTime) {
-          return false;
-        }
-        if (toTime && ts > toTime) {
-          return false;
-        }
-        return true;
-      })
-      .map((event) => annotateEvent(event, botMap));
+      if (hasBotFilter && !botFilterSet.has(event.botName)) {
+        return false;
+      }
+      if (hasProviderFilter && !providerFilterSet.has(event.provider)) {
+        return false;
+      }
+      if (hasLlmFilter && !llmFilterSet.has(event.llmProvider)) {
+        return false;
+      }
+      const ts = new Date(event.timestamp).getTime();
+      if (fromTime && ts < fromTime) {
+        return false;
+      }
+      if (toTime && ts > toTime) {
+        return false;
+      }
+      return true;
+    });
 
     const timeline = buildTimeline(filteredEvents);
     const agentMetrics = buildAgentMetrics(filteredEvents, ws.getAllBotStats());
@@ -373,7 +363,7 @@ router.get('/activity', authenticate, requireAdmin, async (req, res) => {
       agentMetrics,
     });
   } catch (error) {
-    logger.error('Activity API error:', error instanceof Error ? error : new Error(String(error)));
+    console.error('Activity API error:', error);
     res.status(500).json({ error: 'Failed to retrieve activity feed' });
   }
 });
@@ -389,10 +379,7 @@ router.post('/alerts/:id/acknowledge', authenticate, requireAdmin, (req, res) =>
       res.status(404).json({ success: false, message: 'Alert not found' });
     }
   } catch (error) {
-    logger.error(
-      'Acknowledge alert error:',
-      error instanceof Error ? error : new Error(String(error))
-    );
+    console.error('Acknowledge alert error:', error);
     res.status(500).json({ error: 'Failed to acknowledge alert' });
   }
 });
@@ -408,7 +395,7 @@ router.post('/alerts/:id/resolve', authenticate, requireAdmin, (req, res) => {
       res.status(404).json({ success: false, message: 'Alert not found' });
     }
   } catch (error) {
-    logger.error('Resolve alert error:', error instanceof Error ? error : new Error(String(error)));
+    console.error('Resolve alert error:', error);
     res.status(500).json({ error: 'Failed to resolve alert' });
   }
 });

@@ -163,7 +163,7 @@ const SettingsMessaging: React.FC = () => {
           </div>
 
           <div className="form-control">
-            <label htmlFor="graceWindowMs" className="label py-1">
+            <label className="label py-1">
               <span className="label-text text-sm font-medium">Grace Window</span>
               <span className="badge badge-ghost font-mono text-xs">
                 {settings.graceWindowMs >= 60000
@@ -172,7 +172,6 @@ const SettingsMessaging: React.FC = () => {
               </span>
             </label>
             <input
-              id="graceWindowMs"
               type="range"
               min="0"
               max="600000"
@@ -299,7 +298,7 @@ const SettingsMessaging: React.FC = () => {
           </div>
 
           <div className="form-control">
-            <label htmlFor="semanticRelevanceBonus" className="label py-1 flex items-center justify-between">
+            <label className="label py-1 flex items-center justify-between">
               <span className="label-text text-sm font-medium flex-1 pr-4 flex items-center gap-1">
                 Semantic Relevance Threshold Tuning
                 <div className="tooltip tooltip-right" data-tip="Multiplier applied to base chance if the message context is semantically related to recent conversation history (e.g. 10x means a 5% base chance becomes 50%).">
@@ -309,7 +308,6 @@ const SettingsMessaging: React.FC = () => {
               <span className="badge badge-info font-mono text-xs flex-none">{settings.semanticRelevanceBonus}x</span>
             </label>
             <input
-              id="semanticRelevanceBonus"
               type="range"
               min="1"
               max="50"
@@ -343,7 +341,7 @@ const SettingsMessaging: React.FC = () => {
           </h6>
 
           <div className="form-control">
-            <label htmlFor="baseChance" className="label py-1 flex items-center justify-between">
+            <label className="label py-1 flex items-center justify-between">
               <span className="label-text text-sm font-medium flex-1 pr-4 flex items-center gap-1">
                 Base Chance
                 <div className="tooltip tooltip-right" data-tip="The absolute baseline probability (0-100%) the bot will chime in unaddressed, before any multipliers like semantic relevance are applied.">
@@ -353,7 +351,6 @@ const SettingsMessaging: React.FC = () => {
               <span className="badge badge-accent font-mono flex-none">{settings.baseChance.toFixed(0)}%</span>
             </label>
             <input
-              id="baseChance"
               type="range"
               min="0"
               max="100"

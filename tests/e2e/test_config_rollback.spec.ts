@@ -48,11 +48,11 @@ test.describe('Configuration Rollback', () => {
     });
 
     await page.goto('/admin/configuration');
-    await page.waitForLoadState('domcontentloaded');
+    await page.waitForLoadState('networkidle');
 
     // Wait for the button to be disabled when there are no rollbacks
     const rollbackButton = page.locator('button:has-text("Rollbacks")');
-    await expect(rollbackButton).toBeDisabled({ timeout: 15000 });
+    await expect(rollbackButton).toBeDisabled();
 
     await page.screenshot({ path: 'docs/screenshots/config-rollback-empty.png' });
 
@@ -63,9 +63,9 @@ test.describe('Configuration Rollback', () => {
 
     // Refresh to get new mock
     await page.locator('button:has-text("Reload")').click();
-    await page.waitForLoadState('domcontentloaded');
+    await page.waitForLoadState('networkidle');
 
-    await expect(rollbackButton).toBeEnabled({ timeout: 15000 });
+    await expect(rollbackButton).toBeEnabled();
     await expect(rollbackButton).toContainText('1'); // Badge with count
 
     await page.screenshot({ path: 'docs/screenshots/config-rollback-available.png' });

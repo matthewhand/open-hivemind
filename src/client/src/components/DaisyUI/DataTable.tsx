@@ -1,6 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useMemo } from 'react';
-import { SkeletonRectangle } from './Skeleton';
 
 interface Column<T> {
   key: keyof T;
@@ -200,18 +199,18 @@ const DataTable = <T extends Record<string, any>>({
         <table className="table table-zebra w-full">
           <thead>
             <tr>
-              {selectable && <th><SkeletonRectangle height="1rem" width="1rem" /></th>}
+              {selectable && <th><div className="skeleton h-4 w-4"></div></th>}
               {columns.map((col, index) => (
-                <th key={index}><SkeletonRectangle height="1rem" width="6rem" /></th>
+                <th key={index}><div className="skeleton h-4 w-24"></div></th>
               ))}
             </tr>
           </thead>
           <tbody>
             {Array.from({ length: pageSize }).map((_, index) => (
               <tr key={index}>
-                {selectable && <td><SkeletonRectangle height="1rem" width="1rem" /></td>}
+                {selectable && <td><div className="skeleton h-4 w-4"></div></td>}
                 {columns.map((_, colIndex) => (
-                  <td key={colIndex}><SkeletonRectangle height="1rem" width="100%" /></td>
+                  <td key={colIndex}><div className="skeleton h-4 w-full"></div></td>
                 ))}
               </tr>
             ))}

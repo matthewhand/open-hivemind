@@ -85,19 +85,21 @@ test.describe('Message Providers Screenshots', () => {
     await page.goto('/admin/providers/message');
 
     // Wait for the page to load and profiles to be displayed
-    // Look for the "Message Providers" header or one of the mock profiles
-    await expect(page.getByRole('heading', { name: 'Message Providers' })).toBeVisible();
+    // Look for the "Configured Platforms" header or one of the mock profiles
+    await expect(page.getByText('Configured Platforms')).toBeVisible();
     await expect(page.getByText('Community Discord')).toBeVisible();
 
     // Take screenshot of the list
     await page.screenshot({ path: 'docs/screenshots/message-providers-list.png', fullPage: true });
 
-    // Click "Create Profile" to open configuration modal
-    await page.getByRole('button', { name: 'Create Profile' }).click();
+    // Click "Configure Discord" button
+    // The text in the button is "Configure Discord" based on `Configure {config.displayName}`
+    await page.getByRole('button', { name: 'Configure Discord' }).click();
 
     // Wait for modal to be visible
     const modal = page.locator('.modal-box');
     await expect(modal).toBeVisible();
+    await expect(modal.getByText('Add Message Provider')).toBeVisible();
 
     // Take screenshot of the modal
     await page.screenshot({ path: 'docs/screenshots/message-add-provider-modal.png' });

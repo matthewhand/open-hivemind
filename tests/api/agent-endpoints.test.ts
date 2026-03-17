@@ -197,9 +197,7 @@ describe('Agent API Endpoints', () => {
     });
 
     it('should return 200 when deleting a non-existent persona (idempotent)', async () => {
-      const deleteResponse = await request(app).delete(
-        '/api/agents/personas/non_existent_persona_key'
-      );
+      const deleteResponse = await request(app).delete('/api/agents/personas/non_existent_persona_key');
       expect(deleteResponse.status).toBe(200);
       expect(deleteResponse.body.success).toBe(true);
       expect(deleteResponse.body.message).toBe('Persona already deleted or not found');

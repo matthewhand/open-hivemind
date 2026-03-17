@@ -1,5 +1,9 @@
 import axios from 'axios';
+<<<<<<< HEAD
+import MattermostClient from '../../../src/integrations/mattermost/mattermostClient';
+=======
 import MattermostClient from '../../../packages/message-mattermost/src/mattermostClient';
+>>>>>>> d5213de3 (Refiner (Import Order and Dependency Hygiene): Align dependency versioning and order)
 
 jest.mock('axios');
 jest.mock('@src/utils/ssrfGuard', () => ({
@@ -25,7 +29,7 @@ describe('MattermostClient', () => {
       token: 'test-token',
     });
 
-    (client as any).api = mockApi; // It uses this.api, not this.axios
+    (client as any).axios = mockApi; // It uses this.axios, not this.api
   });
 
   afterEach(() => {
@@ -33,7 +37,7 @@ describe('MattermostClient', () => {
   });
 
   it('should connect successfully', async () => {
-    const mockApi = (client as any).api;
+    const mockApi = (client as any).axios;
     mockApi.get.mockResolvedValue({
       status: 200,
       data: { username: 'testbot' },
@@ -45,14 +49,14 @@ describe('MattermostClient', () => {
   });
 
   it('should handle connection failure', async () => {
-    const mockApi = (client as any).api;
+    const mockApi = (client as any).axios;
     mockApi.get.mockRejectedValue(new Error('Network error'));
 
     await expect(client.connect()).rejects.toThrow('Network error');
   });
 
   it('should post message successfully', async () => {
-    const mockApi = (client as any).api;
+    const mockApi = (client as any).axios;
     mockApi.get.mockResolvedValue({
       status: 200,
       data: { username: 'testbot' },
@@ -72,7 +76,7 @@ describe('MattermostClient', () => {
   });
 
   it('should get channel posts', async () => {
-    const mockApi = (client as any).api;
+    const mockApi = (client as any).axios;
     mockApi.get.mockResolvedValue({
       data: {
         order: ['post1', 'post2'],
@@ -89,7 +93,7 @@ describe('MattermostClient', () => {
   });
 
   it('should get user info', async () => {
-    const mockApi = (client as any).api;
+    const mockApi = (client as any).axios;
     mockApi.get.mockResolvedValue({
       data: { id: 'user123', username: 'testuser' },
     });
@@ -100,7 +104,7 @@ describe('MattermostClient', () => {
   });
 
   it('should handle user not found', async () => {
-    const mockApi = (client as any).api;
+    const mockApi = (client as any).axios;
     mockApi.get.mockRejectedValue(new Error('Not found'));
 
     const user = await client.getUser('nonexistent');
@@ -109,12 +113,12 @@ describe('MattermostClient', () => {
   });
 
   it('should get channel info', async () => {
-    const mockApi = (client as any).api;
+    const mockApi = (client as any).axios;
     mockApi.get.mockResolvedValue({
       data: { id: 'channel123', name: 'general' },
     });
 
-    const channel = await client.getChannelInfo('abcdefghijklmnopqrstuvwxyz');
+    const channel = await client.getChannelInfo('channel123');
 
     expect(channel?.name).toBe('general');
   });

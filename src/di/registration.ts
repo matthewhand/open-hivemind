@@ -67,30 +67,6 @@ export function registerServices(): void {
     useValue: ProviderConfigManager.getInstance(),
   });
 
-  // Ensure DatabaseManager, WebSocketService, MetricsCollector are available for injection
-  // if not already registered elsewhere. We register their singleton instances here
-  // so that AnomalyDetectionService can resolve them correctly.
-  const { DatabaseManager } = require('../database/DatabaseManager');
-  if (!container.isRegistered(TOKENS.DatabaseManager)) {
-    container.register(TOKENS.DatabaseManager, {
-      useValue: DatabaseManager.getInstance(),
-    });
-  }
-
-  const { WebSocketService } = require('../server/services/WebSocketService');
-  if (!container.isRegistered(TOKENS.WebSocketService)) {
-    container.register(TOKENS.WebSocketService, {
-      useValue: WebSocketService.getInstance(),
-    });
-  }
-
-  const { MetricsCollector } = require('../monitoring/MetricsCollector');
-  if (!container.isRegistered(TOKENS.MetricsCollector)) {
-    container.register(TOKENS.MetricsCollector, {
-      useValue: MetricsCollector.getInstance(),
-    });
-  }
-
   logger.info('✅ DI services registered');
 }
 

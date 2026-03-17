@@ -37,18 +37,7 @@ import validationRouter from '@src/server/routes/validation';
 import { RealTimeValidationService } from '@src/server/services/RealTimeValidationService';
 import WebSocketService from '@src/server/services/WebSocketService';
 import { ShutdownCoordinator } from '@src/server/ShutdownCoordinator';
-import { EnhancedAlertManager } from '@src/monitoring/EnhancedAlertManager';
-import { TracingService } from '@src/monitoring/TracingService';
-import { ProviderMetricsCollector } from '@src/monitoring/ProviderMetricsCollector';
-import { IntegrationAnomalyDetector } from '@src/monitoring/IntegrationAnomalyDetector';
-import { AdvancedMonitor } from '@src/monitoring/AdvancedMonitor';
-
 import AnomalyDetectionService from '@src/services/AnomalyDetectionService';
-import { EnhancedAlertManager } from '@src/monitoring/EnhancedAlertManager';
-import { TracingService } from '@src/monitoring/TracingService';
-import { ProviderMetricsCollector } from '@src/monitoring/ProviderMetricsCollector';
-import { IntegrationAnomalyDetector } from '@src/monitoring/IntegrationAnomalyDetector';
-import { AdvancedMonitor } from '@src/monitoring/AdvancedMonitor';
 import DemoModeService from '@src/services/DemoModeService';
 import StartupGreetingService from '@src/services/StartupGreetingService';
 import { validateRequiredEnvVars } from '@src/utils/envValidation';
@@ -449,7 +438,7 @@ async function main() {
   await startupDiagnostics.logStartupDiagnostics();
 
   // Initialize Demo Mode Service
-  const demoService = container.resolve(DemoModeService);
+  const demoService = DemoModeService.getInstance();
   demoService.initialize();
 
   if (demoService.isInDemoMode()) {
@@ -465,7 +454,7 @@ async function main() {
   await startupGreetingService.initialize();
 
   // Initialize AnomalyDetectionService
-  container.resolve(AnomalyDetectionService);
+  AnomalyDetectionService.getInstance();
   appLogger.info('🔍 Anomaly Detection Service initialized');
 
   // Prepare messenger services collection for optional webhook registration later
@@ -565,7 +554,7 @@ async function main() {
       });
     }
 
-    const ads = container.resolve(AnomalyDetectionService);
+    const ads = AnomalyDetectionService.getInstance();
     if (ads && typeof ads.shutdown === 'function') {
       shutdownCoordinator.registerService({
         name: 'AnomalyDetectionService',
@@ -577,7 +566,7 @@ async function main() {
     }
 
     const ApiMonitorService = require('@src/services/ApiMonitorService').ApiMonitorService;
-    const ams = container.resolve(ApiMonitorService) as any;
+    const ams = ApiMonitorService.getInstance ? ApiMonitorService.getInstance() : null;
     if (ams && typeof ams.shutdown === 'function') {
       shutdownCoordinator.registerService({
         name: 'ApiMonitorService',
@@ -588,117 +577,7 @@ async function main() {
       });
     }
 
-    const eam = EnhancedAlertManager.getInstance();
-    if (eam && typeof eam.shutdown === 'function') {
-      shutdownCoordinator.registerService({
-        name: 'EnhancedAlertManager',
-        shutdown: () => {
-          appLogger.info('🛑 Healthcheck: Shutting down EnhancedAlertManager...');
-          eam.shutdown();
-        },
-      });
-    }
-
-    const ts = TracingService.getInstance();
-    if (ts && typeof ts.shutdown === 'function') {
-      shutdownCoordinator.registerService({
-        name: 'TracingService',
-        shutdown: () => {
-          appLogger.info('🛑 Healthcheck: Shutting down TracingService...');
-          ts.shutdown();
-        },
-      });
-    }
-
-    const pmc = ProviderMetricsCollector.getInstance();
-    if (pmc && typeof pmc.shutdown === 'function') {
-      shutdownCoordinator.registerService({
-        name: 'ProviderMetricsCollector',
-        shutdown: () => {
-          appLogger.info('🛑 Healthcheck: Shutting down ProviderMetricsCollector...');
-          pmc.shutdown();
-        },
-      });
-    }
-
-    const iad = IntegrationAnomalyDetector.getInstance();
-    if (iad && typeof iad.shutdown === 'function') {
-      shutdownCoordinator.registerService({
-        name: 'IntegrationAnomalyDetector',
-        shutdown: () => {
-          appLogger.info('🛑 Healthcheck: Shutting down IntegrationAnomalyDetector...');
-          iad.shutdown();
-        },
-      });
-    }
-
-    const am = AdvancedMonitor.getInstance();
-    if (am && typeof am.shutdown === 'function') {
-      shutdownCoordinator.registerService({
-        name: 'AdvancedMonitor',
-        shutdown: () => {
-          appLogger.info('🛑 Healthcheck: Shutting down AdvancedMonitor...');
-          am.shutdown();
-        },
-      });
-    }
-
     // Register HTTP server with ShutdownCoordinator
-    const eam = EnhancedAlertManager.getInstance();
-    if (eam && typeof eam.shutdown === 'function') {
-      shutdownCoordinator.registerService({
-        name: 'EnhancedAlertManager',
-        shutdown: () => {
-          appLogger.info('🛑 Healthcheck: Shutting down EnhancedAlertManager...');
-          eam.shutdown();
-        },
-      });
-    }
-
-    const ts = TracingService.getInstance();
-    if (ts && typeof ts.shutdown === 'function') {
-      shutdownCoordinator.registerService({
-        name: 'TracingService',
-        shutdown: () => {
-          appLogger.info('🛑 Healthcheck: Shutting down TracingService...');
-          ts.shutdown();
-        },
-      });
-    }
-
-    const pmc = ProviderMetricsCollector.getInstance();
-    if (pmc && typeof pmc.shutdown === 'function') {
-      shutdownCoordinator.registerService({
-        name: 'ProviderMetricsCollector',
-        shutdown: () => {
-          appLogger.info('🛑 Healthcheck: Shutting down ProviderMetricsCollector...');
-          pmc.shutdown();
-        },
-      });
-    }
-
-    const iad = IntegrationAnomalyDetector.getInstance();
-    if (iad && typeof iad.shutdown === 'function') {
-      shutdownCoordinator.registerService({
-        name: 'IntegrationAnomalyDetector',
-        shutdown: () => {
-          appLogger.info('🛑 Healthcheck: Shutting down IntegrationAnomalyDetector...');
-          iad.shutdown();
-        },
-      });
-    }
-
-    const am = AdvancedMonitor.getInstance();
-    if (am && typeof am.shutdown === 'function') {
-      shutdownCoordinator.registerService({
-        name: 'AdvancedMonitor',
-        shutdown: () => {
-          appLogger.info('🛑 Healthcheck: Shutting down AdvancedMonitor...');
-          am.shutdown();
-        },
-      });
-    }
-
     shutdownCoordinator.registerHttpServer(server);
 
     // Initialize Vite in Development Mode (with HMR)

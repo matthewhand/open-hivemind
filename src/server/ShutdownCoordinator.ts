@@ -366,18 +366,16 @@ export class ShutdownCoordinator {
     this.logger.info('Phase 2: Drain in-flight requests');
 
     // Close WebSocket connections
-    try {
-      const WebSocketServiceModule = require('./services/WebSocketService');
-      const WebSocketService = WebSocketServiceModule.default || WebSocketServiceModule.WebSocketService;
-      if (WebSocketService && typeof WebSocketService.getInstance === 'function') {
-        const wsService = WebSocketService.getInstance();
-        if (wsService && typeof wsService.shutdown === 'function') {
-          await wsService.shutdown();
-          debug('WebSocket service shut down');
-        }
+    const WebSocketService = require('@src/server/services/WebSocketService').default;
+    const wsService = WebSocketService.getInstance();
+
+    if (wsService && typeof wsService.shutdown === 'function') {
+      try {
+        await wsService.shutdown();
+        debug('WebSocket service shut down');
+      } catch (error) {
+        debug('Error shutting down WebSocket service:', error);
       }
-    } catch (error) {
-      debug('Error shutting down WebSocket service:', error);
     }
   }
 
@@ -399,17 +397,15 @@ export class ShutdownCoordinator {
       debug('Error clearing IdleResponseManager:', error);
     }
 
-    // Stop all registered shutdownable services (background tasks) concurrently
-    const backgroundShutdowns = this.shutdownableServices.map(async (service) => {
+    // Stop all registered shutdownable services (background tasks)
+    for (const service of this.shutdownableServices) {
       try {
         await service.shutdown();
         debug(`Service shut down: ${service.name || service.constructor?.name || 'unknown'}`);
       } catch (error) {
         debug(`Error shutting down service: ${service.name || 'unknown'}`, error);
       }
-    });
-
-    await Promise.allSettled(backgroundShutdowns);
+    }
   }
 
   /**

@@ -6,7 +6,6 @@ import {
   Users, Activity, Settings, Database, Wifi,
 } from 'lucide-react';
 import { animate } from 'framer-motion';
-import { safeArray, safeNumber, safeString } from '../../utils/safeString';
 
 interface StatItem {
   id: string;
@@ -183,16 +182,8 @@ const StatsCards: React.FC<StatsCardsProps> = ({ stats, isLoading = false, class
     if (typeof icon === 'string') {
       return iconMap[icon] || <Activity className="w-8 h-8" />;
     }
-    if (React.isValidElement(icon)) {
-      return icon;
-    }
-    if (typeof icon === 'function') {
-      return React.createElement(icon as React.ElementType, { className: 'w-8 h-8' });
-    }
-    return <Activity className="w-8 h-8" />;
+    return icon;
   };
-
-  const safeStats = safeArray<StatItem>(stats);
 
   if (isLoading) {
     return (
@@ -217,16 +208,7 @@ const StatsCards: React.FC<StatsCardsProps> = ({ stats, isLoading = false, class
 
   return (
     <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 ${className}`}>
-      {safeStats.map((stat, index) => {
-        const titleText = safeString(stat.title);
-        const descriptionText = safeString(stat.description);
-        const valueIsNumber = typeof stat.value === 'number';
-        const numericValue = valueIsNumber ? safeNumber(stat.value, 0) : safeNumber(stat.value, NaN);
-        const displayValue = valueIsNumber ? numericValue : safeString(stat.value);
-        const changeValue = stat.change !== undefined ? safeNumber(stat.change, NaN) : NaN;
-        const hasChange = stat.change !== undefined && !Number.isNaN(changeValue);
-
-        return (
+      {stats.map((stat, index) => (
         <div
           key={stat.id}
           className={`
@@ -242,30 +224,30 @@ const StatsCards: React.FC<StatsCardsProps> = ({ stats, isLoading = false, class
             <div className="flex items-start justify-between">
               <div className="space-y-1 flex-1">
                 <p className="text-sm font-medium text-base-content/60 uppercase tracking-wide">
-                  {titleText}
+                  {stat.title}
                 </p>
 
-                {valueIsNumber ? (
+                {typeof stat.value === 'number' ? (
                   <AnimatedCounter
-                    value={numericValue}
+                    value={stat.value}
                     className={`text-3xl font-bold ${getStatColor(stat.color)}`}
                   />
                 ) : (
                   <p className={`text-3xl font-bold ${getStatColor(stat.color)}`}>
-                    {displayValue}
+                    {stat.value}
                   </p>
                 )}
 
-                {hasChange && (
+                {stat.change !== undefined && (
                   <div className={`flex items-center gap-1 text-sm ${getChangeColor(stat.changeType)}`}>
                     {getChangeIcon(stat.changeType)}
-                    <span className="font-medium">{Math.abs(changeValue)}%</span>
+                    <span className="font-medium">{Math.abs(stat.change)}%</span>
                     <span className="text-base-content/40 text-xs">vs last period</span>
                   </div>
                 )}
 
-                {descriptionText && !hasChange && (
-                  <p className="text-sm text-base-content/60">{descriptionText}</p>
+                {stat.description && !stat.change && (
+                  <p className="text-sm text-base-content/60">{stat.description}</p>
                 )}
               </div>
 
@@ -275,8 +257,7 @@ const StatsCards: React.FC<StatsCardsProps> = ({ stats, isLoading = false, class
             </div>
           </div>
         </div>
-        );
-      })}
+      ))}
     </div>
   );
 };
@@ -388,7 +369,4 @@ export const useSystemStats = () => {
   return { stats, isLoading, error, refresh: () => setIsLoading(true) };
 };
 
-=======
-import React from 'react';
-export const StatsCards: React.FC<any> = () => <div />;
 export default StatsCards;

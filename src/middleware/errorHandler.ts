@@ -21,8 +21,6 @@ declare global {
     interface Request {
       correlationId?: string;
       startTime?: number;
-      retryCount?: number;
-      maxRetries?: number;
     }
   }
 }
@@ -80,11 +78,11 @@ function extractErrorContext(req: Request): ErrorContext {
   return {
     correlationId: req.correlationId || 'unknown',
     requestId: req.headers['x-request-id'] as string,
-    userId: (req as import('../auth/types').AuthMiddlewareRequest).user?.id,
+    userId: (req as any).user?.id || (req as any).user?.sub,
     path: req.path,
     method: req.method,
     userAgent: req.headers['user-agent'],
-    ip: req.ip || req.connection?.remoteAddress,
+    ip: req.ip || req.connection.remoteAddress,
     duration,
     // Sanitize sensitive data
     body: sanitizeRequestBody(req.body),
@@ -282,8 +280,8 @@ export function errorRecoveryMiddleware(req: Request, res: Response, next: NextF
   }
 
   // Add retry information to request
-  req.retryCount = retryCount;
-  req.maxRetries = maxRetries;
+  (req as any).retryCount = retryCount;
+  (req as any).maxRetries = maxRetries;
 
   next();
 }

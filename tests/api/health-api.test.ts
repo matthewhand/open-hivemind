@@ -20,32 +20,18 @@ jest.mock('../../src/server/middleware/auth', () => ({
   },
 }));
 
-jest.mock('../../src/database/DatabaseManager', () => ({
-  DatabaseManager: {
-    getInstance: jest.fn().mockReturnValue({
-      isConnected: jest.fn().mockReturnValue(true),
-    }),
-  },
-}));
-
-jest.mock('../../src/managers/BotManager', () => ({
-  BotManager: {
-    getInstance: jest.fn().mockReturnValue({
-      getAllBots: jest.fn().mockReturnValue(new Map()),
-    }),
-  },
-}));
-
-jest.mock('../../src/services/ApiMonitorService', () => {
+// Mock DatabaseManager to control database state in tests
+jest.mock('../../src/database/DatabaseManager', () => {
   return {
-    __esModule: true,
-    default: {
+    DatabaseManager: {
       getInstance: jest.fn().mockReturnValue({
-        getAllStatuses: jest.fn().mockReturnValue({}),
-      }),
-    },
+        isConnected: jest.fn().mockReturnValue(true)
+      })
+    }
   };
 });
+
+import { DatabaseManager } from '../../src/database/DatabaseManager';
 
 describe('Health API Endpoints - COMPLETE TDD SUITE', () => {
   let app: express.Application;
@@ -211,7 +197,7 @@ describe('Health API Endpoints - COMPLETE TDD SUITE', () => {
 
   describe('GET /health/ready - READINESS PROBE', () => {
     it('should return readiness status', async () => {
-      const response = await request(app).get('/health/ready');
+      const response = await request(app).get('/health/ready').expect(200);
 
       expect(response.body).toHaveProperty('ready');
       expect(response.body).toHaveProperty('timestamp');
@@ -219,7 +205,7 @@ describe('Health API Endpoints - COMPLETE TDD SUITE', () => {
     });
 
     it('should be ready when all dependencies are available', async () => {
-      const response = await request(app).get('/health/ready');
+      const response = await request(app).get('/health/ready').expect(200);
 
       expect(response.body.ready).toBe(true);
     });
