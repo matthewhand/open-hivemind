@@ -197,21 +197,21 @@ const ExportPage: React.FC = () => {
         id: 'total-backups',
         title: 'Total Backups',
         value: totalBackups,
-        icon: <Archive className="w-8 h-8" />,
+        icon: 'archive',
         color: 'primary' as const,
       },
       {
         id: 'total-size',
         title: 'Total Size',
         value: formatBytes(totalSize),
-        icon: <HardDrive className="w-8 h-8" />,
+        icon: 'storage',
         color: 'secondary' as const,
       },
       {
         id: 'last-backup',
         title: 'Latest Backup',
         value: lastBackup,
-        icon: <Clock className="w-8 h-8" />,
+        icon: 'clock',
         color: 'accent' as const,
       },
     ];
@@ -260,7 +260,7 @@ const ExportPage: React.FC = () => {
       <PageHeader
         title="Export & System Data"
         description="Manage system backups, export configurations, and access API specifications."
-        icon={Archive}
+        icon={<Archive className="w-8 h-8" />}
         gradient="secondary"
       />
 
