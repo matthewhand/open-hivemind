@@ -3,9 +3,9 @@ import { getLlmProvider } from '@llm/getLlmProvider';
 
 // Mock the modules
 jest.mock('@llm/getLlmProvider');
-jest.mock('@hivemind/message-discord');
-jest.mock('@hivemind/message-slack/SlackService');
-jest.mock('@hivemind/message-mattermost/MattermostService');
+jest.mock('../../packages/message-discord/src/index');
+jest.mock('../../packages/message-slack/src/SlackService');
+jest.mock('../../packages/message-mattermost/src/MattermostService');
 
 // Test suite enabled
 const describeOrSkip = describe;
@@ -104,9 +104,8 @@ describe('System Integration Tests', () => {
   describe('Messenger Service Integration', () => {
     it('should have a valid default channel configured', () => {
       const channelId = messengerService.getDefaultChannel();
+      expect(channelId).toBeDefined();
       expect(channelId).not.toBeNull();
-      expect(channelId).not.toBeUndefined();
-      expect(channelId).not.toBe('');
       expect(typeof channelId).toBe('string');
       expect(channelId.length).toBeGreaterThan(0);
       console.log(`📍 Default channel ID: ${channelId}`);
@@ -114,9 +113,8 @@ describe('System Integration Tests', () => {
 
     it('should be able to get client information', () => {
       const clientId = messengerService.getClientId();
+      expect(clientId).toBeDefined();
       expect(clientId).not.toBeNull();
-      expect(clientId).not.toBeUndefined();
-      expect(clientId).not.toBe('');
       expect(typeof clientId).toBe('string');
       console.log(`🤖 Bot client ID: ${clientId}`);
     });
@@ -135,9 +133,8 @@ describe('System Integration Tests', () => {
 
       const messageId = await messengerService.sendMessageToChannel(channelId, testMessage);
 
+      expect(messageId).toBeDefined();
       expect(messageId).not.toBeNull();
-      expect(messageId).not.toBeUndefined();
-      expect(messageId).not.toBe('');
       expect(typeof messageId).toBe('string');
       console.log(`✅ Message sent successfully with ID: ${messageId}`);
     });
@@ -186,9 +183,8 @@ describe('System Integration Tests', () => {
         channelId: messengerService.getDefaultChannel(),
       });
 
+      expect(response).toBeDefined();
       expect(response).not.toBeNull();
-      expect(response).not.toBeUndefined();
-      expect(response).not.toBe('');
       expect(typeof response).toBe('string');
       expect(response.length).toBeGreaterThan(0);
 
@@ -233,9 +229,8 @@ describe('System Integration Tests', () => {
         { channelId: messengerService.getDefaultChannel() }
       );
 
+      expect(response).toBeDefined();
       expect(response).not.toBeNull();
-      expect(response).not.toBeUndefined();
-      expect(response).not.toBe('');
       expect(typeof response).toBe('string');
       console.log(
         `💬 Conversation response: "${response.substring(0, 100)}${response.length > 100 ? '...' : ''}"`
@@ -257,9 +252,8 @@ describe('System Integration Tests', () => {
       );
 
       // Verify LLM response is valid
+      expect(llmResponse).toBeDefined();
       expect(llmResponse).not.toBeNull();
-      expect(llmResponse).not.toBeUndefined();
-      expect(llmResponse).not.toBe('');
       expect(typeof llmResponse).toBe('string');
       expect(llmResponse.length).toBeGreaterThan(0);
 
@@ -273,9 +267,8 @@ describe('System Integration Tests', () => {
       const messageId = await messengerService.sendMessageToChannel(channelId, testMessage);
 
       // Verify message was sent successfully
+      expect(messageId).toBeDefined();
       expect(messageId).not.toBeNull();
-      expect(messageId).not.toBeUndefined();
-      expect(messageId).not.toBe('');
       expect(typeof messageId).toBe('string');
 
       console.log(`🎉 End-to-end test completed successfully!`);
@@ -307,9 +300,8 @@ describe('System Integration Tests', () => {
 
       // Verify all operations succeeded
       results.forEach((messageId, index) => {
+        expect(messageId).toBeDefined();
         expect(messageId).not.toBeNull();
-        expect(messageId).not.toBeUndefined();
-        expect(messageId).not.toBe('');
         console.log(`✅ Concurrent operation ${index + 1} completed: ${messageId}`);
       });
     });
@@ -353,9 +345,8 @@ describe('System Integration Tests', () => {
       const testMessage = '🔄 Service continuity test';
 
       const messageId = await messengerService.sendMessageToChannel(channelId, testMessage);
+      expect(messageId).toBeDefined();
       expect(messageId).not.toBeNull();
-      expect(messageId).not.toBeUndefined();
-      expect(messageId).not.toBe('');
 
       // Verify service identity is maintained
       const currentClientId = messengerService.getClientId();
@@ -388,9 +379,8 @@ describe('System Integration Tests', () => {
 
       // Verify all messages were sent
       results.forEach((messageId) => {
+        expect(messageId).toBeDefined();
         expect(messageId).not.toBeNull();
-        expect(messageId).not.toBeUndefined();
-        expect(messageId).not.toBe('');
       });
 
       console.log(`⚡ Load test completed: ${messageCount} messages in ${duration}ms`);
@@ -407,9 +397,8 @@ describe('System Integration Tests', () => {
       const messageId = await messengerService.sendMessageToChannel(channelId, largeContent);
       const duration = Date.now() - startTime;
 
+      expect(messageId).toBeDefined();
       expect(messageId).not.toBeNull();
-      expect(messageId).not.toBeUndefined();
-      expect(messageId).not.toBe('');
       expect(duration).toBeLessThan(10000); // Should complete within 10 seconds
 
       console.log(`📏 Large message test completed in ${duration}ms`);

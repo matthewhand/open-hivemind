@@ -52,7 +52,8 @@ describe('Slack Real Integration', () => {
       `Test message ${Date.now()}`
     );
 
-    expect(messageId).toBeTruthy();
+    expect(messageId).toBeDefined();
+    expect(messageId).not.toBeNull();
     expect(typeof messageId).toBe('string');
   }, 30000);
 

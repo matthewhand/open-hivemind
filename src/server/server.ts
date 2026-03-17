@@ -3,7 +3,12 @@ import { join } from 'path';
 import cors from 'cors';
 import Debug from 'debug';
 import express from 'express';
-import { correlationMiddleware, globalErrorHandler } from '../middleware/errorHandler';
+import {
+  correlationMiddleware,
+  globalErrorHandler,
+  setupGlobalErrorHandlers,
+  setupGracefulShutdown,
+} from '../middleware/errorHandler';
 import { applyRateLimiting } from '../middleware/rateLimiter';
 // Error handling imports
 // Middleware imports
@@ -233,6 +238,12 @@ export class WebUIServer {
   private setupErrorHandling(): void {
     // Global error handler middleware
     this.app.use(globalErrorHandler);
+
+    // Setup global error handlers for uncaught exceptions and unhandled rejections
+    setupGlobalErrorHandlers();
+
+    // Setup graceful shutdown handlers
+    setupGracefulShutdown();
 
     debug('Error handling setup completed');
   }
