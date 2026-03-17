@@ -325,14 +325,18 @@ router.get('/activity', authenticate, requireAdmin, async (req, res) => {
     // This avoids allocating, transforming, and garbage-collecting thousands
     // of unnecessary intermediate annotated event objects (and redactString computations),
     // significantly reducing memory overhead when filtering large datasets (up to 5000 items).
+    // Build filter options from all events, not just filtered results
+    storedEvents.forEach((event) => {
+      const bot = botMap.get(event.botName);
+      agents.add(event.botName);
+      messageProviders.add(event.provider);
+      llmProviders.add(bot?.llmProvider || 'unknown');
+    });
+
     const filteredEvents = storedEvents
       .filter((event) => {
         const bot = botMap.get(event.botName);
         const eventLlmProvider = bot?.llmProvider || 'unknown';
-
-        agents.add(event.botName);
-        messageProviders.add(event.provider);
-        llmProviders.add(eventLlmProvider);
 
         if (!hasAnyFilter) return true;
 
