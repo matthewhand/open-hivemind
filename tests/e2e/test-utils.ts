@@ -24,15 +24,17 @@ export async function setupAuth(page: Page) {
 
   await page.addInitScript(
     ({ token, user }) => {
-      localStorage.setItem(
-        'auth_tokens',
-        JSON.stringify({
+      localStorage.setItem('token', token);
+      localStorage.setItem('refreshToken', token);
+      localStorage.setItem('expiresAt', (Date.now() + 3600000).toString());
+      localStorage.setItem('user', user);
+      localStorage.setItem('auth_user', user);
+      localStorage.setItem('auth_tokens', JSON.stringify({
           accessToken: token,
           refreshToken: token,
           expiresIn: 3600,
-        })
-      );
-      localStorage.setItem('auth_user', user);
+      }));
+      localStorage.setItem('auth_user', JSON.stringify(JSON.parse(user)));
     },
     { token: fakeToken, user: fakeUser }
   );
@@ -126,7 +128,7 @@ export async function setupTestWithErrorDetection(page: Page): Promise<string[]>
  * Wait for page to be fully loaded and stable
  */
 export async function waitForPageReady(page: Page, timeout = 5000) {
-  await page.waitForLoadState('networkidle');
+  await page.waitForLoadState('domcontentloaded');
   await page.waitForTimeout(Math.min(timeout, 1000)); // Small stabilization delay
 }
 
