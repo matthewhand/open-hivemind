@@ -12,10 +12,10 @@ primary_region = 'syd'
     BUILD_TIMESTAMP = "1736856000"
 
 [env]
-  PORT = '3028'
+  PORT = '5005'
 
 [http_service]
-  internal_port = 3028
+  internal_port = 5005
   force_https = true
   auto_stop_machines = 'stop'
   auto_start_machines = true

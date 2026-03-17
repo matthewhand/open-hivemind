@@ -1,0 +1,30 @@
+GET /api/admin/available-provider-types missing — hardcoded provider lists in AgentConfigurator, LlmProfileManager, UnifiedDashboard, ConfigurationEditor instead of calling useProviders()
+WebSocketContext — bot_status_update and system_metrics_update only console.log; not wired to state or exposed via hook
+WebUIStorage — synchronous fs.readFileSync/writeFileSync on every mutation; no write queue; concurrent saves corrupt the JSON file
+WebUIStorage.getGuards() — busy-wait while (guardsInitializationInProgress) is a synchronous spin-lock; will hang the event loop
+admin.ts /tool-usage-guards — all CRUD handlers return mock/hardcoded data; no persistence to webUIStorage or DB
+admin.ts /providers — hardcoded provider list duplicates PROVIDER_SCHEMAS registry; the two will drift
+getLlmProvider.ts — require() inside a switch at call time; missing providers silently return undefined with no user-visible error
+OpenAiService — generateChatResponse is a passthrough to generateChatCompletion; dead wrapper adds confusion and a second public surface
+OpenAiService — console.debug (not debug()) on line building chatParams; leaks full message history to stdout in production
+OpenAiService — singleton exported as default OpenAiService.getInstance(); prevents per-bot multi-instance use (each bot needs its own config)
+Provider config sanitisation in admin.ts — API keys truncated to key.substring(0,3)+*** before saving; the real key is never stored, so the provider can never reconnect after a restart
+ConfigurationManager — only holds environment schema; all other configs (openaiConfig, discordConfig, etc.) are separate convict instances with no unified validation pass
+messageConfig / openaiConfig / discordConfig — each is a standalone convict file; no shared base schema; env-var naming conventions differ across files
+Grace Window setting — preset buttons committed to SettingsMessaging.tsx but no PR created; setting not persisted to backend or reflected in messageConfig
+MonitoringDashboard — 60 s WS-silence fallback polls all endpoints; no per-endpoint staleness tracking; a single slow endpoint blocks the refresh
+WebSocketContext — connect() called manually; no auto-connect on mount; consumers must call connect() themselves or the socket never opens
+AuthManager — generated password stored in memory only; process restart loses it before the user reads it; should write to a one-time file or env-override
+webUIStorage — single flat JSON file for all entity types; no schema migration path; adding a new field silently leaves old records without it
+ProviderConfigManager vs webUIStorage — two separate persistence layers for provider config; getLlmProvider.ts reads from ProviderConfigManager, WebUI writes to webUIStorage; they are not synced
+DemoModeService — demo mode bypasses auth checks; no explicit flag in API responses to tell the UI it is in demo mode; real credentials could be submitted against a demo instance
+MCPService — testConnection creates a temporary named server (test-${Date.now()}); if the request errors mid-way the temp server leaks into getConnectedServers()
+shouldReplyToMessage / shouldProcessMessage — social-anxiety probability logic is untested; no unit tests for the engagement/crowd-control thresholds
+IdleResponseManager — idle trigger interval not surfaced in WebUI settings; only configurable via env var; contradicts the no code required promise
+ChannelRouter — channel routing rules stored in config files; no CRUD UI; users must edit JSON directly
+BotManager — bot start/stop is fire-and-forget; no status feedback to the caller; UI shows started before the adapter has actually connected
+PersonaManager — personas loaded from config/personas/*.json files AND from webUIStorage; duplicates appear when both sources have the same key
+MemoryManager — Mem0Provider, Mem4aiProvider, MemVaultProvider exist but none are selectable from the WebUI; memory provider type is hardcoded
+AnomalyDetectionService.test.ts — disabled (.disabled suffix); anomaly detection has zero test coverage
+patch*.js files in repo root (patch2.js–patch6.js) — leftover one-off migration scripts committed to main; should be removed or moved to scripts/migrations/
+E2E screenshot specs — ~30 screenshot-only spec files in tests/e2e/; they inflate CI time with no assertion value beyond page renders; should be consolidated or gated behind a --screenshots flag

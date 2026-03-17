@@ -23,11 +23,7 @@ The Webhook configuration module manages settings for the webhook service.
 - **Environment Variable**: `WEBHOOK_TOKEN`
 
 ### WEBHOOK_IP_WHITELIST
-- **Description**: Comma-separated list of IPs allowed to send webhook requests.
-  - ⚠️ **BREAKING CHANGE**: An empty value now **BLOCKS all requests** (default-deny).
-  - To restore open access use: `0.0.0.0/0`
-  - Supports exact IPv4 and IPv6 addresses.
-  - **CIDR notation is NOT currently supported** for granular ranges.
+- **Description**: Comma-separated list of IPs allowed to send webhook requests
 - **Type**: String
 - **Default**: `''`
 - **Environment Variable**: `WEBHOOK_IP_WHITELIST`

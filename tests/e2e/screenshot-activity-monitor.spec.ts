@@ -167,15 +167,11 @@ test.describe('Activity Monitor Screenshots', () => {
     // Wait for dashboard to load
     await expect(page.getByRole('heading', { name: 'System Monitoring' })).toBeVisible();
 
-    // Ensure all data loads properly
-    // Depending on what data is loading, the refresh button may remain disabled briefly.
-    await page.waitForFunction(() => {
-        const btn = document.querySelector('button:has-text("Refresh")');
-        return btn && !btn.hasAttribute('disabled');
-    }, { timeout: 15000 }).catch(() => console.log('Refresh button timeout, proceeding anyway'));
+    // Wait for loading to finish (ensure refresh button is not showing spinner)
+    await expect(page.getByRole('button', { name: 'Refresh' })).toBeEnabled();
 
     // Switch to Activity Monitor tab
-    await page.locator('.tabs a.tab:has-text("Activity Monitor")').click();
+    await page.getByRole('tab', { name: 'Activity Monitor' }).click();
 
     // Wait for table to load
     await expect(page.getByRole('cell', { name: 'CustomerSupport' }).first()).toBeVisible();

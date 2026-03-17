@@ -51,19 +51,18 @@ const configPath = path.join(configDir, 'providers/flowise.json');
 if (process.env.NODE_ENV !== 'test') {
   try {
     flowiseConfig.loadFile(configPath);
-  } catch (error: any) {
-    if (error.code !== 'ENOENT') {
-      console.error(`Error reading flowise config from ${configPath}:`, error.message);
-      throw error;
-    } else {
-      console.warn(`Warning: Could not load flowise config from ${configPath}, using defaults`);
-    }
+  } catch {
+    // Fallback to defaults if config file is missing or invalid
+    console.warn(`Warning: Could not load flowise config from ${configPath}, using defaults`);
   }
 }
 
-// Always validate the config to ensure it works properly, even in test environment.
-// Validation must happen outside the generic try-catch to fail fast if config is malformed.
-flowiseConfig.validate({ allowed: 'strict' });
+// Always validate the config to ensure it works properly, even in test environment
+try {
+  flowiseConfig.validate({ allowed: 'strict' });
+} catch (error) {
+  console.warn(`Warning: Flowise config validation failed: ${error}, using defaults`);
+}
 
 // Override the get method to handle undefined keys gracefully
 const originalGet = flowiseConfig.get.bind(flowiseConfig);

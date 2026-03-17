@@ -1,7 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import Badge from '../DaisyUI/Badge';
-import { Alert } from '../DaisyUI/Alert';
-import Button from '../DaisyUI/Button';
+import { Badge, Alert, Button } from '../DaisyUI';
 import {
   PlusIcon,
   TrashIcon,
@@ -12,8 +10,7 @@ import {
   XCircleIcon,
   ExclamationTriangleIcon,
 } from '@heroicons/react/24/outline';
-import Modal from '../DaisyUI/Modal';
-import Pagination from '../DaisyUI/Pagination';
+import { Modal, Pagination } from '../DaisyUI';
 import AgentForm from './AgentForm';
 
 interface Agent {

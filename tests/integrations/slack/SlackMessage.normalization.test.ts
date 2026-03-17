@@ -1,4 +1,4 @@
-import SlackMessage from '@hivemind/message-slack/SlackMessage';
+import SlackMessage from '@integrations/slack/SlackMessage';
 
 describe('SlackMessage normalization', () => {
   it('extracts authorId from data.user string', () => {

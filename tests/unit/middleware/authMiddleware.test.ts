@@ -1,7 +1,7 @@
-import { NextFunction, Request, Response } from 'express';
-import { AuthManager } from '../../../src/auth/AuthManager';
+import { Request, Response, NextFunction } from 'express';
 import { AuthMiddleware } from '../../../src/auth/middleware';
 import { AuthenticationError, AuthorizationError } from '../../../src/types/errorClasses';
+import { AuthManager } from '../../../src/auth/AuthManager';
 
 jest.mock('../../../src/auth/AuthManager');
 

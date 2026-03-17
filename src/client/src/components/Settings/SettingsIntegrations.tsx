@@ -1,10 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect, useCallback } from 'react';
-import { Alert } from '../DaisyUI/Alert';
-import Badge from '../DaisyUI/Badge';
-import Button from '../DaisyUI/Button';
-import Card from '../DaisyUI/Card';
-import Toggle from '../DaisyUI/Toggle';
+import { Alert, Badge, Button, Card, Toggle } from '../DaisyUI';
 import { Puzzle, CheckCircle, XCircle, AlertTriangle } from 'lucide-react';
 
 interface Integration {
