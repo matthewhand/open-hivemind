@@ -73,7 +73,11 @@ test('verify MCP Guard UX', async ({ page }) => {
   // Screenshot after typing comma
   await page.screenshot({ path: 'docs/screenshots/mcp-guard-ux-after.png' });
 
+  // Assert the chips are created
+  const chips = page.locator('[data-testid="chip"]');
+  await expect(chips).toHaveCount(1);
+  await expect(chips.nth(0)).toHaveText(/user1/);
+
   const value = await usersInput.inputValue();
-  console.log('Input value after typing ",user2":', value);
-  expect(value).toBe('user1, user2');
+  expect(value).toBe('user2');
 });
