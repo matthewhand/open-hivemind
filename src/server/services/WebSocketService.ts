@@ -1,4 +1,4 @@
-import * as crypto from 'crypto';
+import { randomBytes } from 'crypto';
 import type { Server as HttpServer } from 'http';
 import os from 'os';
 import Debug from 'debug';
@@ -8,11 +8,7 @@ import ApiMonitorService, { type EndpointStatus } from '../../services/ApiMonito
 import { ActivityLogger } from './ActivityLogger';
 import { BotMetricsService } from './BotMetricsService';
 import 'reflect-metadata';
-<<<<<<< HEAD
-import { injectable, singleton } from 'tsyringe';
-=======
 import { container, injectable, singleton } from 'tsyringe';
->>>>>>> origin/refiner-promise-handling-personas-11974248204293140303
 
 const debug = Debug('app:WebSocketService');
 
@@ -78,7 +74,7 @@ export class WebSocketService {
 
   constructor() {
     this.initializeMonitoringData();
-    this.apiMonitorService = ApiMonitorService.getInstance();
+    this.apiMonitorService = container.resolve(ApiMonitorService);
     this.setupApiMonitoring();
   }
 
@@ -160,7 +156,7 @@ export class WebSocketService {
   public recordMessageFlow(event: Omit<MessageFlowEvent, 'id' | 'timestamp'>): void {
     const messageEvent: MessageFlowEvent = {
       ...event,
-      id: `msg_${Date.now()}_${crypto.randomUUID()}`,
+      id: `msg_${Date.now()}_${randomBytes(5).toString('hex')}`,
       timestamp: new Date().toISOString(),
     };
 
@@ -192,7 +188,7 @@ export class WebSocketService {
   ): void {
     const alertEvent: AlertEvent = {
       ...alert,
-      id: `alert_${Date.now()}_${crypto.randomUUID()}`,
+      id: `alert_${Date.now()}_${randomBytes(5).toString('hex')}`,
       timestamp: new Date().toISOString(),
       status: 'active',
     };

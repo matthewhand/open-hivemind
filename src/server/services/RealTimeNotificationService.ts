@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 import * as crypto from 'crypto';
+=======
+import { randomBytes } from 'crypto';
+>>>>>>> origin/security-secure-id-generation-3529167712319656025
 import { EventEmitter } from 'events';
 import Debug from 'debug';
 import { WebSocketService } from './WebSocketService';
@@ -258,6 +262,10 @@ class RealTimeNotificationService extends EventEmitter {
   }
 
   private generateId(): string {
+<<<<<<< HEAD
     return `${Date.now()}-${crypto.randomUUID()}`;
+=======
+    return `${Date.now()}-${randomBytes(5).toString('hex')}`;
+>>>>>>> origin/security-secure-id-generation-3529167712319656025
   }
 }
