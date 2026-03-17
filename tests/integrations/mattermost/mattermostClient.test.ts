@@ -2,7 +2,7 @@ import axios from 'axios';
 import MattermostClient from '../../../packages/message-mattermost/src/mattermostClient';
 
 jest.mock('axios');
-jest.mock('@hivemind/shared-types', () => ({
+jest.mock('@src/utils/ssrfGuard', () => ({
   isSafeUrl: jest.fn().mockResolvedValue(true)
 }));
 

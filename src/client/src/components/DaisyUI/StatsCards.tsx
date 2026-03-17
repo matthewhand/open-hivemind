@@ -121,7 +121,7 @@ const AnimatedCounter: React.FC<AnimatedCounterProps> = ({ value, className }) =
 };
 
 
-const StatsCards: React.FC<StatsCardsProps> = ({ stats, isLoading = false, className = '' }) => {
+export const StatsCards: React.FC<StatsCardsProps> = ({ stats, isLoading = false, className = '' }) => {
   const getGradientBg = (color?: string) => {
     switch (color) {
     case 'primary': return 'bg-gradient-to-br from-primary/20 via-primary/10 to-transparent';
@@ -387,5 +387,6 @@ export const useSystemStats = () => {
 
   return { stats, isLoading, error, refresh: () => setIsLoading(true) };
 };
+
 
 export default StatsCards;
