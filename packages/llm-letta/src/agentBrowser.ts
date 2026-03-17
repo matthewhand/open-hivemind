@@ -22,11 +22,12 @@ export async function listAgents(apiKey: string, apiUrl?: string): Promise<Agent
   const baseUrl = apiUrl || 'https://api.letta.com/v1';
 
   const client = new Letta({
-    baseUrl: baseUrl,
+    baseURL: baseUrl,
     token: apiKey,
-  });
+  } as any);
 
-  const agents = await client.agents.list();
+  const response = await client.agents.list();
+  const agents = (response as any).data || [];
 
   // Transform to simplified agent summary
   return agents.map((agent: any) => ({
@@ -46,13 +47,17 @@ export async function listAgents(apiKey: string, apiUrl?: string): Promise<Agent
  * @param apiUrl - Optional API URL (defaults to https://api.letta.com/v1)
  * @returns Agent summary
  */
-export async function getAgent(agentId: string, apiKey: string, apiUrl?: string): Promise<AgentSummary> {
+export async function getAgent(
+  agentId: string,
+  apiKey: string,
+  apiUrl?: string
+): Promise<AgentSummary> {
   const baseUrl = apiUrl || 'https://api.letta.com/v1';
 
   const client = new Letta({
-    baseUrl: baseUrl,
+    baseURL: baseUrl,
     token: apiKey,
-  });
+  } as any);
 
   const agent = await client.agents.retrieve(agentId);
 
