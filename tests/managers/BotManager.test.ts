@@ -148,10 +148,10 @@ describe('BotManager', () => {
       const bots = await botManager.getAllBots();
 
       expect(bots).toHaveLength(2);
-      expect(bots.some((b) => b.id === 'Configured Bot')).toBeDefined();
-      expect(bots.some((b) => b.id === 'Configured Bot')).not.toBeNull();
-      expect(bots.some((b) => b.id === 'custom-bot')).toBeDefined();
-      expect(bots.some((b) => b.id === 'custom-bot')).not.toBeNull();
+      expect(bots.find((b) => b.id === 'Configured Bot')).toBeDefined();
+      expect(bots.find((b) => b.id === 'Configured Bot')).not.toBeNull();
+      expect(bots.find((b) => b.id === 'custom-bot')).toBeDefined();
+      expect(bots.find((b) => b.id === 'custom-bot')).not.toBeNull();
     });
 
     it('should prioritize custom bots over configured bots with same ID', async () => {

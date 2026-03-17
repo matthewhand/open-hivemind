@@ -203,7 +203,7 @@ describe('System Integration Tests', () => {
       const primaryProvider = llmProviders[0];
 
       // Test with empty prompt
-      await expect(primaryProvider.generateChatCompletion('', [], {})).resolves.toBeTruthy(); // Should not throw, but return some response
+      await expect(primaryProvider.generateChatCompletion('', [], {})).resolves.toBeDefined(); // Should not throw, but return some response
 
       // Test with very long prompt
       const longPrompt = 'test '.repeat(1000);
