@@ -1,6 +1,6 @@
-import { AnomalyDetectionService } from '../../src/services/AnomalyDetectionService';
 import { DatabaseManager } from '../../src/database/DatabaseManager';
 import { WebSocketService } from '../../src/server/services/WebSocketService';
+import { AnomalyDetectionService } from '../../src/services/AnomalyDetectionService';
 
 describe('AnomalyDetectionService', () => {
   let service: AnomalyDetectionService;
@@ -73,7 +73,10 @@ describe('AnomalyDetectionService', () => {
       const window = service['dataWindows'].get('responseTime');
       expect(window).toContain(150);
       expect(window!.length).toBe(1);
-      expect(emitSpy).toHaveBeenCalledWith('dataPointAdded', { metric: 'responseTime', value: 150 });
+      expect(emitSpy).toHaveBeenCalledWith('dataPointAdded', {
+        metric: 'responseTime',
+        value: 150,
+      });
     });
 
     test('should not add data point if metric not monitored', () => {
@@ -275,7 +278,10 @@ describe('AnomalyDetectionService', () => {
 
       expect(result).toBe(true);
       expect(service.getAnomalies()[0].resolved).toBe(true);
-      expect(emitSpy).toHaveBeenCalledWith('anomalyResolved', expect.objectContaining({ id: 'test-anomaly', resolved: true }));
+      expect(emitSpy).toHaveBeenCalledWith(
+        'anomalyResolved',
+        expect.objectContaining({ id: 'test-anomaly', resolved: true })
+      );
       expect(dbManager.resolveAnomaly).toHaveBeenCalledWith('test-anomaly');
     });
 
