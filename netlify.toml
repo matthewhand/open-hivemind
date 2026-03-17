@@ -1,5 +1,6 @@
 [build]
-  command = "npm install -g pnpm && pnpm install --no-frozen-lockfile && pnpm run build:netlify"
+  command = "npm run build:netlify"
+  # Only build on main branch to avoid unnecessary builds on feature branches
   functions = "dist/netlify/functions"
   publish = "dist/client"
 
