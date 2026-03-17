@@ -1,21 +1,27 @@
-// Export all provider schemas
-export type { ProviderConfigSchema, ProviderConfigField, ProviderConfigFormProps, ProviderConfigModalProps, ProviderSchema, MCPServerDefinition, AvatarService } from './types';
-
 // Registry of all available provider schemas
 
 import { discordProviderSchema } from './schemas/discord';
-import { slackProviderSchema } from './schemas/slack';
-import { openAIProviderSchema } from './schemas/openai';
-import { telegramProviderSchema } from './schemas/telegram';
-import { mcpProviderSchema } from './schemas/mcp';
 import { flowiseProviderSchema } from './schemas/flowise';
-import { mattermostProviderSchema } from './schemas/mattermost';
-import { openWebUiProviderSchema } from './schemas/openwebui';
 import { lettaProviderSchema } from './schemas/letta';
+import { mattermostProviderSchema } from './schemas/mattermost';
+import { mcpProviderSchema } from './schemas/mcp';
 import { mem0ProviderSchema } from './schemas/mem0';
 import { mem4aiProviderSchema } from './schemas/mem4ai';
-import { openSwarmProviderSchema } from './schemas/openswarm';
-import { memvaultProviderSchema } from './schemas/memvault';
+import { openAIProviderSchema } from './schemas/openai';
+import { openWebUiProviderSchema } from './schemas/openwebui';
+import { slackProviderSchema } from './schemas/slack';
+import { telegramProviderSchema } from './schemas/telegram';
+
+// Export all provider schemas
+export type {
+  ProviderConfigSchema,
+  ProviderConfigField,
+  ProviderConfigFormProps,
+  ProviderConfigModalProps,
+  ProviderSchema,
+  MCPServerDefinition,
+  AvatarService,
+} from './types';
 
 export const PROVIDER_SCHEMAS: Record<string, ProviderConfigSchema> = {
   // Message providers
@@ -36,10 +42,6 @@ export const PROVIDER_SCHEMAS: Record<string, ProviderConfigSchema> = {
   // Memory providers
   mem0: mem0ProviderSchema,
   mem4ai: mem4aiProviderSchema,
-  memvault: memvaultProviderSchema,
-
-  // LLM providers (extended)
-  openswarm: openSwarmProviderSchema,
 };
 
 // Helper functions for working with provider schemas
@@ -47,8 +49,10 @@ export const getProviderSchema = (providerType: string): ProviderConfigSchema | 
   return PROVIDER_SCHEMAS[providerType];
 };
 
-export const getProviderSchemasByType = (type: 'message' | 'llm' | 'memory' | 'tool'): ProviderConfigSchema[] => {
-  return Object.values(PROVIDER_SCHEMAS).filter(schema => schema.type === type);
+export const getProviderSchemasByType = (
+  type: 'message' | 'llm' | 'memory' | 'tool'
+): ProviderConfigSchema[] => {
+  return Object.values(PROVIDER_SCHEMAS).filter((schema) => schema.type === type);
 };
 
 export const getAllProviderSchemas = (): ProviderConfigSchema[] => {
