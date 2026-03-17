@@ -16,23 +16,7 @@ import {
 import type { Bot, StatusResponse } from '../services/api';
 import { apiService } from '../services/api';
 import { CreateBotWizard } from './BotManagement/CreateBotWizard';
-<<<<<<< HEAD
 import { PlusCircle, RefreshCw, LayoutDashboard, Cpu, HardDrive, Gauge, Clock, Activity, Info, Rocket } from 'lucide-react';
-=======
-import { Info } from 'lucide-react';
-<<<<<<< HEAD
-=======
-import { GettingStartedTab } from './Dashboard/tabs/GettingStartedTab';
-import { StatusTab } from './Dashboard/tabs/StatusTab';
-import { PerformanceTab } from './Dashboard/tabs/PerformanceTab';
-import { usePerformanceMetrics } from './Dashboard/hooks/usePerformanceMetrics';
-
-
-
-
->>>>>>> origin/refiner-promise-handling-personas-11974248204293140303
-import { useNavigate } from 'react-router-dom';
->>>>>>> origin/refiner-barrel-export-audit-4424264890390605711
 
 type DashboardTab = 'getting-started' | 'status' | 'performance';
 
@@ -295,7 +279,6 @@ const UnifiedDashboard: React.FC = () => {
     );
   }, [statusBots]);
 
-<<<<<<< HEAD
   const errorRatePercent = totalMessages === 0
     ? 0
     : Number(((totalErrors / totalMessages) * 100).toFixed(2));
@@ -350,46 +333,6 @@ const UnifiedDashboard: React.FC = () => {
     ],
     [activeBotCount, bots.length, totalMessages, activeConnections, errorRatePercent, totalErrors, uptimeDisplay],
   );
-=======
-
-  const statsCards = useMemo(() => {
-    return [
-      {
-        id: 'agents',
-        title: 'Active Agents',
-        value: activeBotCount,
-        total: bots.length,
-        icon: 'Bot',
-        color: 'primary',
-      },
-      {
-        id: 'messages',
-        title: 'Messages Processed',
-        value: totalMessages,
-        trend: '+12%',
-        icon: 'MessageSquare',
-        color: 'secondary',
-      },
-      {
-        id: 'connections',
-        title: 'Active Connections',
-        value: activeConnections,
-        total: bots.length,
-        icon: 'Activity',
-        color: 'accent',
-      },
-      {
-        id: 'errors',
-        title: 'Error Rate',
-        value: totalErrors,
-        trend: '-2%',
-        icon: 'AlertTriangle',
-        color: 'error',
-      },
-    ];
-  }, [activeBotCount, bots.length, totalMessages, activeConnections, totalErrors]);
-
->>>>>>> origin/refiner-promise-handling-personas-11974248204293140303
 
   const botTableData = useMemo<BotTableRow[]>(() => {
     return bots.map((bot, index) => {
@@ -413,7 +356,6 @@ const UnifiedDashboard: React.FC = () => {
     });
   }, [bots, statusBots]);
 
-<<<<<<< HEAD
   const botColumns = useMemo(
     () => [
       {
@@ -484,19 +426,6 @@ const UnifiedDashboard: React.FC = () => {
     ],
     [],
   );
-=======
-
-  const getBotColumns = () => [
-    { key: 'name', label: 'Agent Name' },
-    { key: 'provider', label: 'Provider' },
-    { key: 'llm', label: 'LLM' },
-    { key: 'status', label: 'Status' },
-    { key: 'messageCount', label: 'Messages' },
-    { key: 'errorCount', label: 'Errors' }
-  ];
-
-  const botColumns = useMemo(() => getBotColumns(), []);
->>>>>>> origin/refiner-promise-handling-personas-11974248204293140303
 
   const performanceMetrics = useMemo(() => {
     const cpuUsage = Math.min(92, activeConnections * 14 + 28);

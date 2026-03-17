@@ -25,13 +25,8 @@ fi
 # 5. Compiling Serverless Function
 echo "🔹 Compiling serverless function..."
 mkdir -p dist/netlify/functions
-<<<<<<< HEAD
 # Use pnpm exec to compile the specific file safely in CI
 pnpm exec tsc src/netlify/functions/server.ts \
-=======
-# Use npx tsc to compile the specific file
-npx tsc src/netlify/functions/server.ts \
->>>>>>> origin/refiner-database-migration-reversibility-3845862468620237629
   --outDir dist/netlify/functions \
   --target es2018 \
   --module commonjs \
