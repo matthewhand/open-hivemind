@@ -295,3 +295,20 @@ describe('listInstalledPlugins', () => {
     expect(listInstalledPlugins()).toEqual([]);
   });
 });
+
+  // Additional security tests for argument injection prevention
+  it('rejects URLs with argument injection patterns in hostname', async () => {
+    await expect(installPlugin('https:// --upload-pack=malicious.com/repo')).rejects.toThrow(PluginValidationError);
+    await expect(installPlugin('https:// --config=evil.com/repo')).rejects.toThrow(PluginValidationError);
+  });
+
+  it('rejects URLs with shell metacharacters in hostname', async () => {
+    await expect(installPlugin('https://host;name.com/repo')).rejects.toThrow(PluginValidationError);
+    await expect(installPlugin('https://host|name.com/repo')).rejects.toThrow(PluginValidationError);
+    await expect(installPlugin('https://host`name.com/repo')).rejects.toThrow(PluginValidationError);
+  });
+
+  it('rejects URLs with spaces in hostname or path', async () => {
+    await expect(installPlugin('https://host name.com/repo')).rejects.toThrow(PluginValidationError);
+    await expect(installPlugin('https://hostname.com/path with spaces')).rejects.toThrow(PluginValidationError);
+  });
