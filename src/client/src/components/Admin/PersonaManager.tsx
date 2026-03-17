@@ -188,6 +188,7 @@ const PersonaManager: React.FC = () => {
                   variant="ghost"
                   size="sm"
                   className="btn-square"
+                  aria-label={`Edit ${persona.name} persona`}
                   onClick={() => handleOpenModal(persona)}
                 >
                   <PencilIcon className="w-4 h-4" />
@@ -196,6 +197,7 @@ const PersonaManager: React.FC = () => {
                   variant="ghost"
                   size="sm"
                   className="btn-square text-error hover:bg-error hover:text-error-content"
+                  aria-label={`Delete ${persona.name} persona`}
                   onClick={() => handleDeletePersona(persona.key)}
                 >
                   <TrashIcon className="w-4 h-4" />
