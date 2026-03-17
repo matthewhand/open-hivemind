@@ -83,11 +83,14 @@ export class ConfigurationTemplateService {
    */
   private async loadBuiltInTemplates(): Promise<void> {
     try {
+      // Ensure directory exists before loading
+      await this.ensureTemplatesDirectory();
+
       const builtInTemplates = this.getBuiltInTemplates();
+      const existingIds = await this.getAllTemplateIds();
 
       for (const template of builtInTemplates) {
-        const existingTemplate = await this.getTemplateById(template.id);
-        if (!existingTemplate) {
+        if (!existingIds.has(template.id)) {
           await this.saveTemplate(template);
           debug('Loaded built-in template:', template.name);
         }
