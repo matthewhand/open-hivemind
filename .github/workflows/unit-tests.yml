@@ -32,7 +32,7 @@ jobs:
 
       - name: Run core unit tests
         run: |
-          NODE_CONFIG_DIR=config/test NODE_ENV=test node -r dotenv/config node_modules/.bin/jest \
+          NODE_CONFIG_DIR=config/test NODE_ENV=test node -r dotenv/config ./node_modules/jest/bin/jest.js \
             tests/unit/ \
             --verbose \
             --ci \
@@ -62,7 +62,7 @@ jobs:
 
       - name: Run integration unit tests
         run: |
-          NODE_CONFIG_DIR=config/test NODE_ENV=test node -r dotenv/config node_modules/.bin/jest \
+          NODE_CONFIG_DIR=config/test NODE_ENV=test node -r dotenv/config ./node_modules/jest/bin/jest.js \
             tests/integrations/ \
             tests/llm/ \
             tests/managers/ \
@@ -94,7 +94,7 @@ jobs:
 
       - name: Run service unit tests
         run: |
-          NODE_CONFIG_DIR=config/test NODE_ENV=test node -r dotenv/config node_modules/.bin/jest \
+          NODE_CONFIG_DIR=config/test NODE_ENV=test node -r dotenv/config ./node_modules/jest/bin/jest.js \
             tests/config/ \
             tests/services/ \
             tests/utils/ \
