@@ -1,12 +1,5 @@
 import { OpenSwarmProvider } from './OpenSwarmProvider';
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
 import { create, manifest } from './index';
->>>>>>> origin/jules-responsive-layout-consistency-5760872167389438897
-=======
-import { create, manifest } from './index';
->>>>>>> origin/refiner-database-migration-reversibility-3845862468620237629
 
 jest.mock('axios', () => ({
   post: jest.fn(),

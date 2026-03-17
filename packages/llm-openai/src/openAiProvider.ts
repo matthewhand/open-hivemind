@@ -1,12 +1,5 @@
 import Debug from 'debug';
 import { OpenAI } from 'openai';
-<<<<<<< HEAD
-<<<<<<< HEAD
-import type { OpenAIConfig } from '@src/types/config';
-=======
->>>>>>> origin/jules-responsive-layout-consistency-5760872167389438897
-=======
->>>>>>> origin/refiner-database-migration-reversibility-3845862468620237629
 import {
   ApiError,
   BaseHivemindError,

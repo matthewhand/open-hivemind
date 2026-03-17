@@ -12,13 +12,6 @@ import {
   TrashIcon,
   WrenchScrewdriverIcon,
 } from '@heroicons/react/24/outline';
-<<<<<<< HEAD
-<<<<<<< HEAD
-import { Alert } from '../components/DaisyUI/Alert';
-import Breadcrumbs from '../components/DaisyUI/Breadcrumbs';
-import EmptyState from '../components/DaisyUI/EmptyState';
-import Modal from '../components/DaisyUI/Modal';
-=======
 import { Server, Search } from 'lucide-react';
 import { Breadcrumbs, Alert, Modal, EmptyState } from '../components/DaisyUI';
 import SearchFilterBar from '../components/SearchFilterBar';

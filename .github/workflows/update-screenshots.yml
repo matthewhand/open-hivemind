@@ -22,11 +22,6 @@ jobs:
         with:
           node-version: 20
 <<<<<<< HEAD
-<<<<<<< HEAD
-=======
-<<<<<<< HEAD
-=======
->>>>>>> origin/refiner-database-migration-reversibility-3845862468620237629
           cache: 'pnpm'
 
       - name: Install Playwright browsers

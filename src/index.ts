@@ -582,13 +582,6 @@ async function main() {
     }
 
     // Register HTTP server with ShutdownCoordinator
-<<<<<<< HEAD
-<<<<<<< HEAD
-
-=======
->>>>>>> origin/jules-responsive-layout-consistency-5760872167389438897
-=======
->>>>>>> origin/refiner-database-migration-reversibility-3845862468620237629
     shutdownCoordinator.registerHttpServer(server);
 
     // Initialize Vite in Development Mode (with HMR)

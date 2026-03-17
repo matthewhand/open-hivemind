@@ -160,10 +160,6 @@ const BotsPage: React.FC = () => {
     });
   };
 
-<<<<<<< HEAD
->>>>>>> origin/jules-responsive-layout-consistency-5760872167389438897
-=======
->>>>>>> origin/refiner-database-migration-reversibility-3845862468620237629
   const toast = {
     success: useSuccessToast(),
     error: useErrorToast()
@@ -356,11 +352,6 @@ const BotsPage: React.FC = () => {
 
           {filteredBots.length === 0 ? (
             <EmptyState
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
-=======
->>>>>>> origin/refiner-database-migration-reversibility-3845862468620237629
               icon={<AlertTriangle className="w-16 h-16 text-error/50" />}
               title="Failed to load swarm"
               description="We encountered an error while trying to load your AI agents. Please try again."
@@ -373,10 +364,6 @@ const BotsPage: React.FC = () => {
             />
           ) : filteredBots.length === 0 ? (
             <EmptyState
-<<<<<<< HEAD
->>>>>>> origin/jules-responsive-layout-consistency-5760872167389438897
-=======
->>>>>>> origin/refiner-database-migration-reversibility-3845862468620237629
               icon={<Bot className="w-16 h-16 text-base-content/20" />}
               title={searchQuery ? "No agents found" : "Your swarm is empty"}
               description={searchQuery ? "No agents match your search criteria." : "Start by creating your first specialized AI agent."}

@@ -1,23 +1,10 @@
 [build]
-  command = "pnpm run build:netlify"
-<<<<<<< HEAD
-  functions = "dist/netlify/functions"
-  publish = "dist/client"
-
-[build.environment]
-  NODE_VERSION = "20"
-  NODE_ENV = "development"
-
-[functions]
-  node_bundler = "esbuild"
-
-=======
+  command = "npm run build:netlify"
   # Only build on main branch to avoid unnecessary builds on feature branches
   ignore = "test \"$BRANCH\" != \"main\""
   functions = "dist/netlify/functions"
   publish = "dist/client"
 
->>>>>>> origin/refiner-database-migration-reversibility-3845862468620237629
 [dev]
   command = "pnpm run dev"
 

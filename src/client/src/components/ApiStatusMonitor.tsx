@@ -92,7 +92,6 @@ const ApiStatusMonitor: React.FC<ApiStatusMonitorProps> = ({
       Logger.log('Connected to WebSocket for API monitoring');
 =======
       console.log('Connected to WebSocket for API monitoring');
->>>>>>> origin/refiner-database-migration-reversibility-3845862468620237629
     });
 
     newSocket.on('api_status_update', (data: { endpoints: EndpointStatus[]; overall: any; timestamp: string }) => {

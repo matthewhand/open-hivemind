@@ -1,13 +1,5 @@
 import React, { useState, useCallback } from 'react';
-<<<<<<< HEAD
-<<<<<<< HEAD
-import { Input } from './Input';
-=======
 import { Input } from './index';
->>>>>>> origin/jules-responsive-layout-consistency-5760872167389438897
-=======
-import { Input } from './index';
->>>>>>> origin/refiner-database-migration-reversibility-3845862468620237629
 
 export interface Step {
   id: string;

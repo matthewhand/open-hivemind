@@ -20,10 +20,6 @@ import { apiService } from '../../services/api';
 import type { StatusResponse, Bot } from '../../services/api';
 import Logger from '../../utils/logger';
 
-<<<<<<< HEAD
-
-=======
->>>>>>> origin/refiner-database-migration-reversibility-3845862468620237629
 // Mock trace data for the Distributed Trace Waterfall removed since we use dynamic bot data
 
 interface BotWithStatus extends Bot {

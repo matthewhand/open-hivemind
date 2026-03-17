@@ -1,16 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-<<<<<<< HEAD
-<<<<<<< HEAD
-import Badge from './Badge';
-import { Loading as LoadingSpinner } from './Loading';
-import { Alert } from './Alert';
-=======
 import { Badge, LoadingSpinner, Alert } from './index';
->>>>>>> origin/jules-responsive-layout-consistency-5760872167389438897
-=======
-import { Badge, LoadingSpinner, Alert } from './index';
->>>>>>> origin/refiner-database-migration-reversibility-3845862468620237629
 
 interface ModelOption {
   id: string;

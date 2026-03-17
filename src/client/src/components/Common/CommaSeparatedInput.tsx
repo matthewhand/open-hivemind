@@ -166,27 +166,6 @@ export const CommaSeparatedInput: React.FC<CommaSeparatedInputProps> = ({
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-<<<<<<< HEAD
-<<<<<<< HEAD
-    const newVal = e.target.value;
-    if (newVal.includes(',')) {
-      const parts = newVal.split(',');
-      const textToCommit = parts.slice(0, -1).join(',');
-      const remainingText = parts[parts.length - 1];
-
-      if (textToCommit.trim()) {
-        commitInput(textToCommit);
-      }
-      setInputValue(remainingText);
-    } else {
-      setInputValue(newVal);
-      setShowSuggestions(true);
-      if (internalError) {
-        setInternalError(null);
-      }
-=======
-=======
->>>>>>> origin/refiner-database-migration-reversibility-3845862468620237629
     setInputValue(e.target.value);
     setShowSuggestions(true);
     if (internalError) {
