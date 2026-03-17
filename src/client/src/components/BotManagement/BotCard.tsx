@@ -11,7 +11,8 @@ import {
   BotStatus,
   DEFAULT_PERSONA,
 } from '../../types';
-import { Button, Badge } from '../DaisyUI';
+import Button from '../DaisyUI/Button';
+import Badge from '../DaisyUI/Badge';
 import {
   Play as PlayIcon,
   Square as StopIcon,
