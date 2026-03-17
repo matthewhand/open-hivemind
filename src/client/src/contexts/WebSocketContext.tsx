@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars, react-refresh/only-export-components, no-empty, no-case-declarations */
 import type { ReactNode } from 'react';
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState, useRef, useCallback } from 'react';
 import type { Socket } from 'socket.io-client';
 import { io } from 'socket.io-client';
 import type {
@@ -32,14 +32,15 @@ const sortAlertsDescending = (a: AlertEvent, b: AlertEvent) => b.timestamp.local
 
 export const WebSocketProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [socket, setSocket] = useState<Socket | null>(null);
+  const socketRef = useRef<Socket | null>(null);
   const [isConnected, setIsConnected] = useState(false);
   const [messageFlow, setMessageFlow] = useState<MessageFlowEvent[]>([]);
   const [alerts, setAlerts] = useState<AlertEvent[]>([]);
   const [performanceMetrics, setPerformanceMetrics] = useState<PerformanceMetric[]>([]);
   const [botStats, setBotStats] = useState<BotStat[]>([]);
 
-  const connect = () => {
-    if (socket?.connected) { return; }
+  const connect = useCallback(() => {
+    if (socketRef.current?.connected) { return; }
 
     const connectionTarget = API_BASE_URL && API_BASE_URL.length > 0 ? API_BASE_URL : undefined;
     const tokenString = localStorage.getItem('auth_tokens');
@@ -140,22 +141,24 @@ export const WebSocketProvider: React.FC<{ children: ReactNode }> = ({ children 
       console.error('WebSocket error:', error);
     });
 
+    socketRef.current = newSocket;
     setSocket(newSocket);
-  };
+  }, []);
 
-  const disconnect = () => {
-    if (socket) {
-      socket.disconnect();
+  const disconnect = useCallback(() => {
+    if (socketRef.current) {
+      socketRef.current.disconnect();
+      socketRef.current = null;
       setSocket(null);
       setIsConnected(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     return () => {
       disconnect();
     };
-  }, []);
+  }, [disconnect]);
 
   const value: WebSocketContextType = {
     socket,
