@@ -12,10 +12,16 @@ import {
   TrashIcon,
   WrenchScrewdriverIcon,
 } from '@heroicons/react/24/outline';
+<<<<<<< HEAD
 import { Alert } from '../components/DaisyUI/Alert';
 import Breadcrumbs from '../components/DaisyUI/Breadcrumbs';
 import EmptyState from '../components/DaisyUI/EmptyState';
 import Modal from '../components/DaisyUI/Modal';
+=======
+import { Server, Search } from 'lucide-react';
+import { Breadcrumbs, Alert, Modal, EmptyState } from '../components/DaisyUI';
+import SearchFilterBar from '../components/SearchFilterBar';
+>>>>>>> origin/jules-responsive-layout-consistency-5760872167389438897
 import { AdaptiveGrid } from '../components/ResponsiveComponents';
 import SearchFilterBar from '../components/SearchFilterBar';
 

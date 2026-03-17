@@ -1,5 +1,9 @@
 import React, { useState, useCallback } from 'react';
+<<<<<<< HEAD
 import { Input } from './Input';
+=======
+import { Input } from './index';
+>>>>>>> origin/jules-responsive-layout-consistency-5760872167389438897
 
 export interface Step {
   id: string;

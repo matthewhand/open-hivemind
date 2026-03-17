@@ -175,11 +175,6 @@ export class AdvancedMonitor extends EventEmitter {
     }
   }
 
-  public shutdown(): void {
-    this.stopMonitoring();
-    this.removeAllListeners();
-  }
-
   private collectSystemMetrics(): void {
     try {
       const timestamp = Date.now();

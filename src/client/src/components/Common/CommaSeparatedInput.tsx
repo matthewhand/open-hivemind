@@ -166,6 +166,7 @@ export const CommaSeparatedInput: React.FC<CommaSeparatedInputProps> = ({
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+<<<<<<< HEAD
     const newVal = e.target.value;
     if (newVal.includes(',')) {
       const parts = newVal.split(',');
@@ -182,6 +183,12 @@ export const CommaSeparatedInput: React.FC<CommaSeparatedInputProps> = ({
       if (internalError) {
         setInternalError(null);
       }
+=======
+    setInputValue(e.target.value);
+    setShowSuggestions(true);
+    if (internalError) {
+      setInternalError(null);
+>>>>>>> origin/jules-responsive-layout-consistency-5760872167389438897
     }
   };
 

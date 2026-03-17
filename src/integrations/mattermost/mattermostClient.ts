@@ -1,6 +1,5 @@
 import axios, { type AxiosInstance } from 'axios';
 import Debug from 'debug';
-import { isSafeUrl } from '@hivemind/shared-types';
 
 const debug = Debug('app:mattermost-client');
 
@@ -26,9 +25,6 @@ export default class MattermostClient {
 
   public async connect(): Promise<void> {
     try {
-      if (!(await isSafeUrl(this.axios.defaults.baseURL!))) {
-        throw new Error('Mattermost API URL is not safe to connect to.');
-      }
       const response = await this.axios.get('/users/me');
       this.me = response.data;
       this.connected = true;
@@ -91,10 +87,14 @@ export default class MattermostClient {
 
   public async sendTyping(channelId: string, parentId?: string): Promise<void> {
     // Fire and forget typing event
+<<<<<<< HEAD
     this.axios
       .post(`/channels/${channelId}/typing`, { parent_id: parentId })
       .catch((error: any) => {
         debug('Failed to send Mattermost typing event:', error?.message || error);
       });
+=======
+    this.axios.post(`/channels/${channelId}/typing`, { parent_id: parentId }).catch(() => {});
+>>>>>>> origin/jules-responsive-layout-consistency-5760872167389438897
   }
 }

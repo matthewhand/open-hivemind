@@ -8,8 +8,11 @@ import errorReducer from './slices/errorSlice';
 import uiReducer from './slices/uiSlice';
 import performanceReducer from './slices/performanceSlice';
 import websocketReducer from './slices/websocketSlice';
+<<<<<<< HEAD
 import Logger from '../utils/logger';
 
+=======
+>>>>>>> origin/jules-responsive-layout-consistency-5760872167389438897
 
 const rootReducer = combineReducers({
   [apiSlice.reducerPath]: apiSlice.reducer,
@@ -73,7 +76,11 @@ const initializeApp = () => {
           payload: parsedValue,
         });
       } catch (e) {
+<<<<<<< HEAD
         Logger.error(`Failed to load setting ${setting}:`, e);
+=======
+        console.error(`Failed to load setting ${setting}:`, e);
+>>>>>>> origin/jules-responsive-layout-consistency-5760872167389438897
       }
     }
   });

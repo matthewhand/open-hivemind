@@ -156,7 +156,26 @@ export class BotManager extends EventEmitter {
 
       // Add configured bots first
       for (const bot of configuredBots) {
+<<<<<<< HEAD
         const botInstance = this.mapConfiguredBotToInstance(bot);
+=======
+        const botInstance: BotInstance = {
+          // Use bot name as stable ID - random UUIDs break getBot() lookups
+          id: bot.name,
+          name: bot.name,
+          messageProvider: bot.messageProvider,
+          llmProvider: bot.llmProvider,
+          isActive: true, // Configured bots are considered active
+          createdAt: new Date().toISOString(),
+          lastModified: new Date().toISOString(),
+          config: this.sanitizeConfig(bot),
+          persona: bot.persona || 'default',
+          systemInstruction: bot.systemInstruction,
+          mcpServers: bot.mcpServers || [],
+          mcpGuard: bot.mcpGuard || { enabled: false, type: 'owner' },
+          envOverrides: checkBotEnvOverrides(bot.name),
+        };
+>>>>>>> origin/jules-responsive-layout-consistency-5760872167389438897
         botMap.set(botInstance.id, botInstance);
       }
 
@@ -180,13 +199,18 @@ export class BotManager extends EventEmitter {
    */
   public async getBot(botId: string): Promise<BotInstance | null> {
     try {
+<<<<<<< HEAD
       // Check custom bots first (in-memory loaded from custom-bots.json)
+=======
+      // Check custom bots first
+>>>>>>> origin/jules-responsive-layout-consistency-5760872167389438897
       if (this.customBots.has(botId)) {
         const bot = this.customBots.get(botId)!;
         debug(`Retrieved custom bot: ${bot.name} (${bot.id})`);
         return bot;
       }
 
+<<<<<<< HEAD
       // ⚡ Bolt Optimization: Faster lookups using getBot directly instead of mapping O(N) via getAllBots()
       // Note: While customBots is an array, it's typically very small. WebUI storage replaces getAllBots traversal.
       // Check custom bots from web UI storage first (they overwrite configured bots)
@@ -208,6 +232,19 @@ export class BotManager extends EventEmitter {
 
       debug(`Bot not found: ${botId}`);
       return null;
+=======
+      // Check configured bots
+      const bots = await this.getAllBots();
+      const bot = bots.find((b) => b.id === botId);
+
+      if (bot) {
+        debug(`Retrieved configured bot: ${bot.name} (${bot.id})`);
+      } else {
+        debug(`Bot not found: ${botId}`);
+      }
+
+      return bot || null;
+>>>>>>> origin/jules-responsive-layout-consistency-5760872167389438897
     } catch (error: unknown) {
       debug('Error getting bot:', ErrorUtils.getMessage(error));
       throw ErrorUtils.createError('Failed to retrieve bot instance', 'configuration');
@@ -215,6 +252,7 @@ export class BotManager extends EventEmitter {
   }
 
   /**
+<<<<<<< HEAD
    * Map a BotConfig object to a BotInstance
    */
   private mapConfiguredBotToInstance(bot: BotConfig): BotInstance {
@@ -237,6 +275,8 @@ export class BotManager extends EventEmitter {
   }
 
   /**
+=======
+>>>>>>> origin/jules-responsive-layout-consistency-5760872167389438897
    * Create a new bot instance
    */
   public async createBot(request: CreateBotRequest): Promise<BotInstance> {

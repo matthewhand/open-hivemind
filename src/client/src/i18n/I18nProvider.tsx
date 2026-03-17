@@ -1,9 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars, react-refresh/only-export-components, no-empty, no-case-declarations */
 import React, { createContext, useContext, useState } from 'react';
-import Card from '../components/DaisyUI/Card';
-import Badge from '../components/DaisyUI/Badge';
-import Button from '../components/DaisyUI/Button';
-import { LoadingSpinner } from '../components/DaisyUI/Loading';
+import { Card, Badge, Button, LoadingSpinner } from '../components/DaisyUI';
 import { LanguageIcon, GlobeAltIcon } from '@heroicons/react/24/outline';
 
 type Language = 'en' | 'es' | 'fr' | 'de' | 'zh';

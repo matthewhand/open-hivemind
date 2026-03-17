@@ -8,5 +8,5 @@
  * @version 1.0.0
  */
 
-export { MemoryEntry, SearchResult, Mem4aiProvider, create, manifest } from './mem4aiProvider';
-export { Mem4aiConfig, DEFAULT_MEM4AI_CONFIG } from './mem4aiConfig';
+export * from './mem4aiProvider';
+export * from './mem4aiConfig';

@@ -1,5 +1,4 @@
 import React from 'react';
-import { safeString } from '../../utils/safeString';
 
 interface PageHeaderProps {
     title: string;
@@ -32,7 +31,7 @@ const iconBgMap = {
  * Consistent page header with gradient background, icon, and actions.
  * Use this at the top of every page for visual consistency.
  */
-export const PageHeader: React.FC<PageHeaderProps> = ({
+const PageHeader: React.FC<PageHeaderProps> = ({
   title,
   description,
   icon,
@@ -40,9 +39,6 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
   gradient = 'primary',
   className = '',
 }) => {
-  const titleText = safeString(title);
-  const descriptionText = safeString(description);
-
   return (
     <div
       className={`
@@ -55,20 +51,20 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
       {/* Background decoration */}
       <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-radial from-primary/5 to-transparent opacity-50 blur-3xl" />
 
-      <div className="relative z-10 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+      <div className="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div className="flex items-start gap-4">
           {icon && (
             <div className={`p-3 rounded-xl ${iconBgMap[gradient]} backdrop-blur-sm shadow-sm`}>
-              {React.isValidElement(icon) ? icon : React.createElement(icon as React.ElementType, { className: "w-6 h-6" })}
+              {icon}
             </div>
           )}
           <div>
             <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-base-content to-base-content/70 bg-clip-text">
-              {titleText}
+              {title}
             </h1>
-            {descriptionText && (
+            {description && (
               <p className="text-base-content/60 mt-1 text-sm">
-                {descriptionText}
+                {description}
               </p>
             )}
           </div>

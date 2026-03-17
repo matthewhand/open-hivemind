@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React from 'react';
-import Button from '../DaisyUI/Button';
-import Tooltip from '../DaisyUI/Tooltip';
+import { Button, Tooltip } from '../DaisyUI';
 import { Plus as PlusIcon } from 'lucide-react';
 
 interface QuickAddButtonProps {

@@ -174,7 +174,11 @@ router.post('/', async (req, res) => {
 
     const newAgent: AgentConfig = {
       ...agentData,
+<<<<<<< HEAD
       id: `agent_${Date.now()}_${randomBytes(5).toString('hex')}`,
+=======
+      id: `agent_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+>>>>>>> origin/jules-responsive-layout-consistency-5760872167389438897
     };
 
     agents.push(newAgent);

@@ -1,5 +1,4 @@
 import React from 'react';
-import { SkeletonRectangle, SkeletonText } from './DaisyUI/Skeleton';
 
 interface Message {
     id: string;
@@ -22,13 +21,11 @@ const BotChatBubbles: React.FC<BotChatBubblesProps> = ({ messages, botName = 'Bo
                 {[1, 2, 3].map((i) => (
                     <div key={i} className={`chat ${i % 2 === 0 ? 'chat-start' : 'chat-end'}`}>
                         <div className="chat-header mb-1">
-                            <SkeletonText lines={1} height="1rem" width="5rem" />
+                            <div className="skeleton h-4 w-20"></div>
                         </div>
-                        <div className="chat-bubble !p-0 !bg-transparent border-0 before:hidden after:hidden">
-                            <SkeletonRectangle height="3rem" width="12rem" className="rounded-2xl" />
-                        </div>
+                        <div className="chat-bubble skeleton h-12 w-48"></div>
                         <div className="chat-footer opacity-50 mt-1">
-                            <SkeletonText lines={1} height="0.75rem" width="3rem" />
+                            <div className="skeleton h-3 w-12"></div>
                         </div>
                     </div>
                 ))}

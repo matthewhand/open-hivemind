@@ -1,5 +1,9 @@
 import Debug from 'debug';
 import { Router } from 'express';
+<<<<<<< HEAD
+=======
+import type { AuthMiddlewareRequest } from '../../auth/types';
+>>>>>>> origin/jules-responsive-layout-consistency-5760872167389438897
 import { DatabaseManager } from '../../database/DatabaseManager';
 import { AnomalyDetectionService } from '../../services/AnomalyDetectionService';
 
@@ -76,9 +80,13 @@ router.get('/history', async (req, res) => {
 // POST /api/anomalies/:id/resolve - Resolve an anomaly
 router.post('/:id/resolve', async (req, res) => {
   try {
+<<<<<<< HEAD
     const { container } = require('../../di/container');
     const { TOKENS } = require('../../di/container');
     const service = container.resolve(TOKENS.AnomalyDetectionService);
+=======
+    const service = AnomalyDetectionService.getInstance();
+>>>>>>> origin/jules-responsive-layout-consistency-5760872167389438897
     const success = await service.resolveAnomaly(req.params.id);
 
     if (success) {

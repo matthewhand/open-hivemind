@@ -1,4 +1,8 @@
 import Debug from 'debug';
+<<<<<<< HEAD
+=======
+import { SlackMessageProvider } from '@hivemind/message-slack';
+>>>>>>> origin/jules-responsive-layout-consistency-5760872167389438897
 import { BotConfigurationManager } from '@config/BotConfigurationManager';
 import { MCPGuard, type MCPGuardConfig } from './MCPGuard';
 
@@ -331,7 +335,10 @@ export class MCPService {
 
     try {
       if (normalized === 'slack') {
+<<<<<<< HEAD
         const SlackMessageProvider = {} as any;
+=======
+>>>>>>> origin/jules-responsive-layout-consistency-5760872167389438897
         const provider = new SlackMessageProvider();
         return await provider.getForumOwner(forumId);
       }

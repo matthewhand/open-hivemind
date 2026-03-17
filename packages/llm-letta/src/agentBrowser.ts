@@ -22,14 +22,22 @@ export async function listAgents(apiKey: string, apiUrl?: string): Promise<Agent
   const baseURL = apiUrl || 'https://api.letta.com/v1';
 
   const client = new Letta({
+<<<<<<< HEAD
     baseURL: baseURL,
+=======
+    baseUrl: baseUrl,
+>>>>>>> origin/jules-responsive-layout-consistency-5760872167389438897
     token: apiKey,
   });
 
   const agents = await client.agents.list();
 
   // Transform to simplified agent summary
+<<<<<<< HEAD
   return agents.data.map((agent: any) => ({
+=======
+  return agents.map((agent: any) => ({
+>>>>>>> origin/jules-responsive-layout-consistency-5760872167389438897
     id: agent.id,
     name: agent.name,
     description: agent.description,
@@ -50,7 +58,11 @@ export async function getAgent(agentId: string, apiKey: string, apiUrl?: string)
   const baseURL = apiUrl || 'https://api.letta.com/v1';
 
   const client = new Letta({
+<<<<<<< HEAD
     baseURL: baseURL,
+=======
+    baseUrl: baseUrl,
+>>>>>>> origin/jules-responsive-layout-consistency-5760872167389438897
     token: apiKey,
   });
 

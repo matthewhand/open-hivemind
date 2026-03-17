@@ -1,14 +1,13 @@
 import Debug from 'debug';
 import { Router, type Request, type Response } from 'express';
-import { container } from 'tsyringe';
-import { isSafeUrl } from '@hivemind/shared-types';
 import { authenticate, requireAdmin } from '../../auth/middleware';
-import { getTrustedMcpReposConfig } from '../../config/trustedMcpRepos';
 import { DatabaseManager } from '../../database/DatabaseManager';
 import { MCPService } from '../../mcp/MCPService';
 import ApiMonitorService from '../../services/ApiMonitorService';
 import { webUIStorage } from '../../storage/webUIStorage';
+import { getTrustedMcpReposConfig } from '../../config/trustedMcpRepos';
 import { getRelevantEnvVars } from '../../utils/envUtils';
+import { isSafeUrl } from '../../utils/ssrfGuard';
 import {
   LlmProviderSchema,
   McpServerConnectSchema,
@@ -340,7 +339,7 @@ router.post(
       webUIStorage.saveLlmProvider(newProvider);
 
       // Sync monitor endpoints
-      container.resolve(ApiMonitorService).syncLlmEndpoints();
+      ApiMonitorService.getInstance().syncLlmEndpoints();
 
       return res.json({
         success: true,
@@ -381,7 +380,7 @@ router.put(
       webUIStorage.saveLlmProvider(updatedProvider);
 
       // Sync monitor endpoints
-      container.resolve(ApiMonitorService).syncLlmEndpoints();
+      ApiMonitorService.getInstance().syncLlmEndpoints();
 
       return res.json({
         success: true,
@@ -424,7 +423,7 @@ router.delete(
       webUIStorage.deleteLlmProvider(id);
 
       // Sync monitor endpoints
-      container.resolve(ApiMonitorService).syncLlmEndpoints();
+      ApiMonitorService.getInstance().syncLlmEndpoints();
 
       return res.json({
         success: true,
@@ -456,7 +455,7 @@ router.post(
         webUIStorage.saveLlmProvider(provider);
 
         // Sync monitor endpoints
-        container.resolve(ApiMonitorService).syncLlmEndpoints();
+        ApiMonitorService.getInstance().syncLlmEndpoints();
       } else {
         return res.status(404).json({
           error: 'Provider not found',

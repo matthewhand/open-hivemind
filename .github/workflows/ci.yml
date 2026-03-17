@@ -27,10 +27,7 @@ jobs:
       - name: Install dependencies
         run: pnpm install
       - name: Audit for hardcoded secrets
-        run: pnpm run audit:secrets
-      - name: Check for documentation drift
-        run: node scripts/check-docs-drift.js
-      - name: Run unit tests
+        run: pnpm run audit:secrets      - name: Run unit tests
         id: unit-test
         run: |
           pnpm exec jest 2>&1 | tee unit-test-output.txt

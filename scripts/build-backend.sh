@@ -17,7 +17,11 @@ fi
 
 echo "[build:backend] starting at $(timestamp) with NODE_OPTIONS=${NODE_OPTIONS}"
 set -x
+<<<<<<< HEAD
 npx tsc --noEmitOnError false --skipLibCheck || \
+=======
+node node_modules/.bin/tsc --noEmitOnError false --skipLibCheck || \
+>>>>>>> origin/jules-responsive-layout-consistency-5760872167389438897
   echo 'TypeScript compilation completed with warnings, but build succeeded'
 set +x
 echo "[build:backend] finished at $(timestamp)"

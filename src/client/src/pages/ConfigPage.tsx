@@ -17,7 +17,11 @@ const ConfigPage: React.FC = () => {
       <PageHeader
         title="Integrations & Configuration"
         description="Manage system integrations and global defaults."
+<<<<<<< HEAD
         icon={<Plug className="w-6 h-6" />}
+=======
+        icon={Plug}
+>>>>>>> origin/jules-responsive-layout-consistency-5760872167389438897
         gradient="secondary"
       />
 

@@ -286,7 +286,11 @@ const BotConfigurationPage: React.FC = () => {
       <PageHeader
         title="Global Defaults"
         description="System and provider settings (convict configs)"
+<<<<<<< HEAD
         icon={<Settings className="w-6 h-6" />}
+=======
+        icon={Settings}
+>>>>>>> origin/jules-responsive-layout-consistency-5760872167389438897
         gradient="accent"
         actions={
           <div className="flex gap-2">

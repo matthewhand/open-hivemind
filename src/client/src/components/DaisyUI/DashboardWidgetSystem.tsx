@@ -426,8 +426,6 @@ const DashboardWidgetSystem: React.FC<DashboardWidgetSystemProps> = ({
         document.removeEventListener('mouseup', handleMouseUp);
       };
     }
-    // Ensures cleanup block is tied properly and no dangling listeners remain
-    // when dragging stops or component unmounts unexpectedly.
   }, [draggedWidget, handleMouseMove, handleMouseUp]);
 
   const resetLayout = () => {

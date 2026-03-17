@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 export {
   PLUGINS_DIR,
   PluginManifest,
@@ -13,3 +14,7 @@ export {
   PluginValidationError,
   listInstalledPlugins,
 } from './PluginManager';
+=======
+export * from './PluginLoader';
+export * from './PluginManager';
+>>>>>>> origin/jules-responsive-layout-consistency-5760872167389438897

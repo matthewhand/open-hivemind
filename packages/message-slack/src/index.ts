@@ -1,6 +1,3 @@
-import type { PluginManifest } from '../../../src/plugins/PluginLoader';
-import SlackService from './SlackService';
-
 // Core modules
 export { SlackConfigurationLoader } from './core/SlackConfigurationLoader';
 export { SlackInstanceFactory } from './core/SlackInstanceFactory';
@@ -28,6 +25,9 @@ export { default as SlackMessage } from './SlackMessage';
 // New exports for migration
 export { SlackMessageProvider } from './providers/SlackMessageProvider';
 export { testSlackConnection } from './SlackConnectionTest';
+
+import SlackService from './SlackService';
+import type { PluginManifest } from '../../../src/plugins/PluginLoader';
 
 /** Standard factory — preferred entry point for PluginLoader */
 export function create(_config?: any): any {

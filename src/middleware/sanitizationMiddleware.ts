@@ -1,5 +1,6 @@
 import type { NextFunction, Request, Response } from 'express';
 
+<<<<<<< HEAD
 const SKIP_HEADER_SANITIZATION = new Set([
   'authorization',
   'accept',
@@ -42,6 +43,16 @@ const SKIP_HEADER_SANITIZATION = new Set([
 function sanitizeString(value: string): string {
   return value
     .replace(/\x00/g, '')
+=======
+// Input sanitization middleware
+// Cleans and sanitizes user input to prevent XSS and injection attacks
+
+/**
+ * Sanitizes a string value by escaping HTML entities
+ */
+function sanitizeString(value: string): string {
+  return value
+>>>>>>> origin/jules-responsive-layout-consistency-5760872167389438897
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
@@ -49,6 +60,7 @@ function sanitizeString(value: string): string {
     .replace(/'/g, '&#x27;');
 }
 
+<<<<<<< HEAD
 function sanitizeObject(obj: unknown): unknown {
   if (typeof obj === 'string') return sanitizeString(obj);
   if (Array.isArray(obj)) return obj.map(sanitizeObject);
@@ -63,6 +75,34 @@ function sanitizeObject(obj: unknown): unknown {
   return obj;
 }
 
+=======
+/**
+ * Recursively sanitizes an object or array
+ */
+function sanitizeObject(obj: any): any {
+  if (typeof obj === 'string') {
+    return sanitizeString(obj);
+  }
+
+  if (Array.isArray(obj)) {
+    return obj.map((item) => sanitizeObject(item));
+  }
+
+  if (obj !== null && typeof obj === 'object') {
+    const sanitized: any = {};
+    for (const key of Object.keys(obj)) {
+      sanitized[key] = sanitizeObject(obj[key]);
+    }
+    return sanitized;
+  }
+
+  return obj;
+}
+
+/**
+ * Middleware to sanitize request body, query, and params
+ */
+>>>>>>> origin/jules-responsive-layout-consistency-5760872167389438897
 export const sanitizeInput = (req: Request, res: Response, next: NextFunction) => {
   if (req.body && typeof req.body === 'object') {
     req.body = sanitizeObject(req.body);
@@ -73,6 +113,7 @@ export const sanitizeInput = (req: Request, res: Response, next: NextFunction) =
   if (req.params && typeof req.params === 'object') {
     req.params = sanitizeObject(req.params) as typeof req.params;
   }
+<<<<<<< HEAD
   if (req.headers && typeof req.headers === 'object') {
     const sanitizedHeaders: any = {};
     for (const key of Object.keys(req.headers)) {
@@ -92,6 +133,9 @@ export const sanitizeInput = (req: Request, res: Response, next: NextFunction) =
     }
     req.headers = sanitizedHeaders;
   }
+=======
+
+>>>>>>> origin/jules-responsive-layout-consistency-5760872167389438897
   next();
 };
 

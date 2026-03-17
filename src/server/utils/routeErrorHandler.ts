@@ -1,4 +1,4 @@
-import { type Response } from 'express';
+import { Response } from 'express';
 import { ErrorUtils } from '../../types/errors';
 
 export const handleRouteError = (
@@ -9,7 +9,7 @@ export const handleRouteError = (
   defaultErrorCode: string,
   includeSuccess = false
 ) => {
-  const hivemindError = ErrorUtils.toAppError(error);
+  const hivemindError = ErrorUtils.toHivemindError(error) as any;
   const errorInfo = ErrorUtils.classifyError(hivemindError);
 
   debugInstance(debugMessage, {

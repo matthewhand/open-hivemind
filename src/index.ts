@@ -6,7 +6,6 @@ import { createServer } from 'http';
 import path from 'path';
 import type { NextFunction, Request, Response } from 'express';
 import swarmRouter from '@src/admin/swarmRoutes';
-import { container } from '@src/di/container';
 import { applyRateLimiting } from '@src/middleware/rateLimiter';
 import { AdvancedMonitor } from '@src/monitoring/AdvancedMonitor';
 import { EnhancedAlertManager } from '@src/monitoring/EnhancedAlertManager';
@@ -46,6 +45,7 @@ import AnomalyDetectionService from '@src/services/AnomalyDetectionService';
 import DemoModeService from '@src/services/DemoModeService';
 import StartupGreetingService from '@src/services/StartupGreetingService';
 import { validateRequiredEnvVars } from '@src/utils/envValidation';
+
 import { getLlmProvider } from '@llm/getLlmProvider';
 import { IdleResponseManager } from '@message/management/IdleResponseManager';
 import Logger from '@common/logger';
@@ -443,7 +443,7 @@ async function main() {
   await startupDiagnostics.logStartupDiagnostics();
 
   // Initialize Demo Mode Service
-  const demoService = container.resolve(DemoModeService);
+  const demoService = DemoModeService.getInstance();
   demoService.initialize();
 
   if (demoService.isInDemoMode()) {
@@ -455,11 +455,10 @@ async function main() {
   }
 
   // Initialize the StartupGreetingService
-  const startupGreetingService = container.resolve(StartupGreetingService);
-  await startupGreetingService.initialize();
+  await StartupGreetingService.initialize();
 
   // Initialize AnomalyDetectionService
-  container.resolve(AnomalyDetectionService);
+  AnomalyDetectionService.getInstance();
   appLogger.info('🔍 Anomaly Detection Service initialized');
 
   // Prepare messenger services collection for optional webhook registration later
@@ -559,7 +558,7 @@ async function main() {
       });
     }
 
-    const ads = container.resolve(AnomalyDetectionService);
+    const ads = AnomalyDetectionService.getInstance();
     if (ads && typeof ads.shutdown === 'function') {
       shutdownCoordinator.registerService({
         name: 'AnomalyDetectionService',
@@ -571,7 +570,7 @@ async function main() {
     }
 
     const ApiMonitorService = require('@src/services/ApiMonitorService').ApiMonitorService;
-    const ams = container.resolve(ApiMonitorService) as any;
+    const ams = ApiMonitorService.getInstance ? ApiMonitorService.getInstance() : null;
     if (ams && typeof ams.shutdown === 'function') {
       shutdownCoordinator.registerService({
         name: 'ApiMonitorService',
@@ -582,63 +581,11 @@ async function main() {
       });
     }
 
-    const eam = EnhancedAlertManager.getInstance();
-    if (eam && typeof eam.shutdown === 'function') {
-      shutdownCoordinator.registerService({
-        name: 'EnhancedAlertManager',
-        shutdown: () => {
-          appLogger.info('🛑 Healthcheck: Shutting down EnhancedAlertManager...');
-          eam.shutdown();
-        },
-      });
-    }
-
-    const ts = TracingService.getInstance();
-    if (ts && typeof ts.shutdown === 'function') {
-      shutdownCoordinator.registerService({
-        name: 'TracingService',
-        shutdown: () => {
-          appLogger.info('🛑 Healthcheck: Shutting down TracingService...');
-          ts.shutdown();
-        },
-      });
-    }
-
-    const pmc = ProviderMetricsCollector.getInstance();
-    if (pmc && typeof pmc.shutdown === 'function') {
-      shutdownCoordinator.registerService({
-        name: 'ProviderMetricsCollector',
-        shutdown: () => {
-          appLogger.info('🛑 Healthcheck: Shutting down ProviderMetricsCollector...');
-          pmc.shutdown();
-        },
-      });
-    }
-
-    const iad = IntegrationAnomalyDetector.getInstance();
-    if (iad && typeof iad.shutdown === 'function') {
-      shutdownCoordinator.registerService({
-        name: 'IntegrationAnomalyDetector',
-        shutdown: () => {
-          appLogger.info('🛑 Healthcheck: Shutting down IntegrationAnomalyDetector...');
-          iad.shutdown();
-        },
-      });
-    }
-
-    const am = AdvancedMonitor.getInstance();
-    if (am && typeof am.shutdown === 'function') {
-      shutdownCoordinator.registerService({
-        name: 'AdvancedMonitor',
-        shutdown: () => {
-          appLogger.info('🛑 Healthcheck: Shutting down AdvancedMonitor...');
-          am.shutdown();
-        },
-      });
-    }
-
     // Register HTTP server with ShutdownCoordinator
+<<<<<<< HEAD
 
+=======
+>>>>>>> origin/jules-responsive-layout-consistency-5760872167389438897
     shutdownCoordinator.registerHttpServer(server);
 
     // Initialize Vite in Development Mode (with HMR)
@@ -693,26 +640,16 @@ async function main() {
       if (fs.existsSync(frontendDistPath)) {
         appLogger.info('📱 Frontend assets served from', { path: frontendDistPath });
       } else {
-        appLogger.warn(
-          '⚠️  Frontend build not found - attempting auto-build via `npm run build:frontend`'
-        );
+        appLogger.warn('⚠️  Frontend build not found - attempting auto-build via `npm run build:frontend`');
         const { execFile } = require('child_process');
-        execFile(
-          'npm',
-          ['run', 'build:frontend'],
-          { cwd: process.cwd() },
-          (err: Error | null, stdout: string, stderr: string) => {
-            if (err) {
-              appLogger.warn(
-                '⚠️  Auto-build failed (devDependencies may be pruned in production). Run `npm run build:frontend` manually.',
-                { error: err.message }
-              );
-            } else {
-              appLogger.info('✅ Frontend auto-build succeeded', { stdout: stdout.trim() });
-            }
-            if (stderr) appLogger.debug('build:frontend stderr', { stderr: stderr.trim() });
+        execFile('npm', ['run', 'build:frontend'], { cwd: process.cwd() }, (err: Error | null, stdout: string, stderr: string) => {
+          if (err) {
+            appLogger.warn('⚠️  Auto-build failed (devDependencies may be pruned in production). Run `npm run build:frontend` manually.', { error: err.message });
+          } else {
+            appLogger.info('✅ Frontend auto-build succeeded', { stdout: stdout.trim() });
           }
-        );
+          if (stderr) appLogger.debug('build:frontend stderr', { stderr: stderr.trim() });
+        });
       }
     });
   } else {
@@ -745,6 +682,17 @@ async function main() {
 
   // Setup signal handlers for graceful shutdown
   shutdownCoordinator.setupSignalHandlers();
+
+  // Setup process global handlers for unhandled promises
+  process.on('unhandledRejection', (reason, promise) => {
+    appLogger.error('Unhandled Rejection at:', { promise, reason });
+  });
+
+  process.on('uncaughtException', (error) => {
+    appLogger.error('Uncaught Exception:', { error });
+    // Give logging time to write before exit
+    setTimeout(() => process.exit(1), 1000);
+  });
 
   // Startup complete
   appLogger.info('🎉 Open Hivemind Unified Server startup complete!');

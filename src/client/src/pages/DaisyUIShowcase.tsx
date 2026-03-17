@@ -1,8 +1,12 @@
-
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState } from 'react';
 import { BotChatTimeline } from '../components/BotChatTimeline';
+<<<<<<< HEAD
 import PageHeader from '../components/DaisyUI/PageHeader';
 import { LayoutTemplate } from 'lucide-react';
+=======
+import BotChatBubbles from '../components/BotChatBubbles';
+>>>>>>> origin/jules-responsive-layout-consistency-5760872167389438897
 
 /**
  * DaisyUI Component Showcase
@@ -27,16 +31,15 @@ const DaisyUIShowcase: React.FC = () => {
   return (
     <div className="p-6">
       {/* Header */}
-      <PageHeader
-        title="DaisyUI Component Reference"
-        description="Official DaisyUI components using raw CSS classes"
-        icon={<LayoutTemplate className="w-6 h-6" />}
-        actions={
-          <a href="https://daisyui.com/components/" target="_blank" rel="noopener noreferrer" className="btn btn-outline btn-sm">
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold">DaisyUI Component Reference</h1>
+        <p className="text-base-content/60 mt-1">
+          Official DaisyUI components using raw CSS classes -
+          <a href="https://daisyui.com/components/" target="_blank" rel="noopener noreferrer" className="link link-primary ml-1">
             View Official Docs
           </a>
-        }
-      />
+        </p>
+      </div>
 
       {/* Component Navigation */}
       <div className="tabs tabs-boxed mb-6 flex-wrap">

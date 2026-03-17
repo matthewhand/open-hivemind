@@ -1,10 +1,13 @@
 import axios from 'axios';
-import MattermostClient from '../../../packages/message-mattermost/src/mattermostClient';
+import MattermostClient from '../../../packages/adapter-mattermost/src/mattermostClient';
 
 jest.mock('axios');
+<<<<<<< HEAD
 jest.mock('@hivemind/shared-types', () => ({
   isSafeUrl: jest.fn().mockResolvedValue(true)
 }));
+=======
+>>>>>>> origin/jules-responsive-layout-consistency-5760872167389438897
 
 describe('MattermostClient', () => {
   let client: MattermostClient;
@@ -14,7 +17,6 @@ describe('MattermostClient', () => {
     const mockApi = {
       get: jest.fn(),
       post: jest.fn(),
-      defaults: { baseURL: 'https://mattermost.example.com/api/v4' }
     };
 
     mockAxios = axios as jest.Mocked<typeof axios>;
@@ -25,7 +27,7 @@ describe('MattermostClient', () => {
       token: 'test-token',
     });
 
-    (client as any).api = mockApi; // It uses this.api, not this.axios
+    (client as any).api = mockApi;
   });
 
   afterEach(() => {
@@ -48,7 +50,7 @@ describe('MattermostClient', () => {
     const mockApi = (client as any).api;
     mockApi.get.mockRejectedValue(new Error('Network error'));
 
-    await expect(client.connect()).rejects.toThrow('Network error');
+    await expect(client.connect()).rejects.toThrow('Mattermost connection failed');
   });
 
   it('should post message successfully', async () => {
@@ -72,10 +74,9 @@ describe('MattermostClient', () => {
   });
 
   it('should get channel posts', async () => {
-    const mockApi = (client as any).api;
-    mockApi.get.mockResolvedValue({
+    const mockApi = mockAxios.create();
+    mockApi.get = jest.fn().mockResolvedValue({
       data: {
-        order: ['post1', 'post2'],
         posts: {
           post1: { id: 'post1', message: 'Message 1' },
           post2: { id: 'post2', message: 'Message 2' },
@@ -89,8 +90,8 @@ describe('MattermostClient', () => {
   });
 
   it('should get user info', async () => {
-    const mockApi = (client as any).api;
-    mockApi.get.mockResolvedValue({
+    const mockApi = mockAxios.create();
+    mockApi.get = jest.fn().mockResolvedValue({
       data: { id: 'user123', username: 'testuser' },
     });
 
@@ -100,8 +101,8 @@ describe('MattermostClient', () => {
   });
 
   it('should handle user not found', async () => {
-    const mockApi = (client as any).api;
-    mockApi.get.mockRejectedValue(new Error('Not found'));
+    const mockApi = mockAxios.create();
+    mockApi.get = jest.fn().mockRejectedValue(new Error('Not found'));
 
     const user = await client.getUser('nonexistent');
 
@@ -109,14 +110,27 @@ describe('MattermostClient', () => {
   });
 
   it('should get channel info', async () => {
-    const mockApi = (client as any).api;
-    mockApi.get.mockResolvedValue({
+    const mockApi = mockAxios.create();
+    mockApi.get = jest.fn().mockResolvedValue({
       data: { id: 'channel123', name: 'general' },
     });
 
-    const channel = await client.getChannelInfo('abcdefghijklmnopqrstuvwxyz');
+    const channel = await client.getChannel('channel123');
 
     expect(channel?.name).toBe('general');
   });
 
+  it('should disconnect properly', () => {
+    client.disconnect();
+    expect(client.isConnected()).toBe(false);
+  });
+
+  it('should require connection for posting', async () => {
+    await expect(
+      client.postMessage({
+        channel: 'test',
+        text: 'test',
+      })
+    ).rejects.toThrow('Not connected to Mattermost server');
+  });
 });
