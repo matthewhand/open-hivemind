@@ -198,7 +198,7 @@ const mockClient2 = {
   getChannelInfo: jest.fn().mockResolvedValue(null),
   sendTyping: jest.fn().mockResolvedValue(undefined),
 };
-jest.mock('../../../packages/adapter-mattermost/src/mattermostClient', () => {
+jest.mock('../../../packages/message-mattermost/src/mattermostClient', () => {
   const MockClient = jest.fn(() => mockClient2);
   return {
     MattermostClient: MockClient,

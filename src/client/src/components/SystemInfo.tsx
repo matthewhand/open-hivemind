@@ -11,13 +11,11 @@
  */
 
 import React, { useState } from 'react';
-import {
-  Card,
-  Button,
-  Loading,
-  Tooltip,
-  ConfirmModal,
-} from './DaisyUI';
+import Card from './DaisyUI/Card';
+import Button from './DaisyUI/Button';
+import { Loading } from './DaisyUI/Loading';
+import Tooltip from './DaisyUI/Tooltip';
+import { ConfirmModal } from './DaisyUI/Modal';
 import {
   ArrowDownTrayIcon,
   ArrowPathIcon,
@@ -26,8 +24,6 @@ import {
   XMarkIcon,
 } from '@heroicons/react/24/outline';
 import { useAppSelector } from '../store/hooks';
-import Logger from '../utils/logger';
-
 
 const SystemInfo: React.FC = () => {
   const dashboard = useAppSelector(state => state.dashboard);
@@ -77,10 +73,10 @@ const SystemInfo: React.FC = () => {
       }
 
       const data = await response.json();
-      Logger.log(`System ${action} initiated:`, data);
+      console.log(`System ${action} initiated:`, data);
       setLogs(prev => [...prev, `[${new Date().toISOString()}] System ${action} initiated: ${data.message || 'Success'}`]);
     } catch (error) {
-      Logger.error(`Failed to ${action} system:`, error);
+      console.error(`Failed to ${action} system:`, error);
       setLogs(prev => [...prev, `[${new Date().toISOString()}] Failed to ${action}: ${error instanceof Error ? error.message : 'Unknown error'}`]);
     } finally {
       setIsLoading(false);

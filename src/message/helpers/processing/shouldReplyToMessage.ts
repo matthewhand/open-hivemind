@@ -212,10 +212,14 @@ export async function shouldReplyToMessage(
     }
   }
 
-  const botHistoryPenaltyPerMsg = Number(getMessageSetting('MESSAGE_UNSOLICITED_BOT_HISTORY_PENALTY_PER_MESSAGE', botConfig) ?? 0.1);
+  const botHistoryPenaltyPerMsg = Number(
+    getMessageSetting('MESSAGE_UNSOLICITED_BOT_HISTORY_PENALTY_PER_MESSAGE', botConfig) ?? 0.1
+  );
   const botHistoryPenalty = Math.max(-0.5, (botHistoryCount - 1) * botHistoryPenaltyPerMsg * -1);
   const tokenDensityPenalty = Math.max(0, selfTokenCount * 0.0001) * -1;
-  const userCountPenaltyPerUser = Number(getMessageSetting('MESSAGE_UNSOLICITED_USER_COUNT_PENALTY_PER_USER', botConfig) ?? 0.02);
+  const userCountPenaltyPerUser = Number(
+    getMessageSetting('MESSAGE_UNSOLICITED_USER_COUNT_PENALTY_PER_USER', botConfig) ?? 0.02
+  );
   const userCountPenalty =
     uniqueUsers.size > 1 ? Math.max(0, (uniqueUsers.size - 1) * userCountPenaltyPerUser) * -1 : 0;
 
@@ -322,7 +326,9 @@ export async function shouldReplyToMessage(
 
   // Prevent bot-to-bot storms when the provided context contains no user messages at all.
   // Only apply when the triggering message is from a bot; do not penalize user-originated prompts.
-  const botRatioPenaltyVal = Number(getMessageSetting('MESSAGE_UNSOLICITED_BOT_RATIO_PENALTY', botConfig) ?? 0.5);
+  const botRatioPenaltyVal = Number(
+    getMessageSetting('MESSAGE_UNSOLICITED_BOT_RATIO_PENALTY', botConfig) ?? 0.5
+  );
   const botRatioPenalty = isFromBot && uniqueUsers.size === 0 ? -botRatioPenaltyVal : 0;
   chance += botRatioPenalty;
   mods.push(`BotRatio(${botRatioPenalty >= 0 ? '+' : ''}${botRatioPenalty.toFixed(2)})`);
@@ -422,7 +428,9 @@ export async function shouldReplyToMessage(
     }
 
     // BurstTraffic penalty
-    const burstTrafficPenaltyPerMsg = Number(getMessageSetting('MESSAGE_UNSOLICITED_BURST_TRAFFIC_PENALTY_PER_MESSAGE', botConfig) ?? 0.025);
+    const burstTrafficPenaltyPerMsg = Number(
+      getMessageSetting('MESSAGE_UNSOLICITED_BURST_TRAFFIC_PENALTY_PER_MESSAGE', botConfig) ?? 0.025
+    );
     const burstPenalty = Math.max(-0.15, (msgsSinceLastPost - 1) * burstTrafficPenaltyPerMsg * -1);
     if (burstPenalty !== 0) {
       chance += burstPenalty;
@@ -734,26 +742,20 @@ function applyModifiers(
   const text = (message.getText?.() || '').toLowerCase();
   const mods: string[] = [];
   if (isDirectlyAddressed) {
-    const rawMentionBonus = Number(getMessageSetting('MESSAGE_MENTION_BONUS', botConfig));
-    const mentionBonus = isNaN(rawMentionBonus) ? 0.5 : rawMentionBonus;
-    chance += mentionBonus;
-    mods.push(`+Mention(+${mentionBonus.toFixed(1)})`);
+    chance += 0.5;
+    mods.push('+Mention(+0.5)');
     if (isLeadingAddress) {
       chance += 1.0;
       mods.push('+Leading(+1.0)');
     }
   }
   if (isReplyToBot) {
-    const rawMentionBonus = Number(getMessageSetting('MESSAGE_MENTION_BONUS', botConfig));
-    const bonus = isNaN(rawMentionBonus) || rawMentionBonus === 0 ? 0.5 : rawMentionBonus;
-    chance += bonus;
-    mods.push(`+Reply(+${bonus.toFixed(1)})`);
+    chance += 0.5;
+    mods.push('+Reply(+0.5)');
   }
   if (text.includes('?')) {
-    const rawQBonus = Number(getMessageSetting('MESSAGE_QUESTION_BONUS', botConfig));
-    const qBonus = isNaN(rawQBonus) ? 0.2 : rawQBonus;
-    chance += qBonus;
-    mods.push(`+Q(+${qBonus.toFixed(1)})`);
+    chance += 0.2;
+    mods.push('+Q(+0.2)');
   }
   if (text.includes('!')) {
     chance += 0.1;
@@ -763,7 +765,7 @@ function applyModifiers(
     const penalty = Number(getMessageSetting('MESSAGE_SHORT_LENGTH_PENALTY', botConfig)) || 0;
     if (penalty > 0) {
       chance -= penalty;
-      mods.push(`-Short(${penalty.toFixed(1)})`);
+      mods.push(`-Short(${penalty})`);
     }
   }
   if (typeof message.isFromBot === 'function' && message.isFromBot()) {

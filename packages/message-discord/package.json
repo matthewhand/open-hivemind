@@ -2,7 +2,7 @@
     "name": "@hivemind/message-discord",
     "version": "1.0.0",
     "description": "Discord adapter for Open Hivemind",
-    "main": "src/index.ts",
+    "main": "dist/index.js",
     "types": "dist/index.d.ts",
     "scripts": {
         "build": "npx tsc -b",
@@ -18,7 +18,7 @@
         "libsodium-wrappers": "^0.7.9"
     },
     "peerDependencies": {
-        "@hivemind/shared-types": ">=1.0.0"
+        "@hivemind/shared-types": "workspace:*"
     },
     "devDependencies": {
         "@types/debug": "^4.1.12",

@@ -1,6 +1,15 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState } from 'react';
-import { Card, Badge, Button, Input, Select, Modal, Alert, Toggle, Tooltip, Loading } from './DaisyUI';
+import Card from './DaisyUI/Card';
+import Badge from './DaisyUI/Badge';
+import Button from './DaisyUI/Button';
+import Input from './DaisyUI/Input';
+import Select from './DaisyUI/Select';
+import Modal from './DaisyUI/Modal';
+import { Alert } from './DaisyUI/Alert';
+import Toggle from './DaisyUI/Toggle';
+import Tooltip from './DaisyUI/Tooltip';
+import { Loading } from './DaisyUI/Loading';
 import {
   ArrowPathIcon,
   TrashIcon,
@@ -12,8 +21,6 @@ import {
   selectConfigError,
 } from '../store/slices/configSlice';
 import LoadingSpinnerComponent from './LoadingSpinner';
-import Logger from '../utils/logger';
-
 
 const ConfigManager: React.FC = () => {
   const config = useAppSelector(selectConfig);
@@ -72,7 +79,7 @@ const ConfigManager: React.FC = () => {
       setValidationErrors({});
       showToast('Configuration saved successfully', 'success');
     } catch (error) {
-      Logger.error('Failed to save configuration:', error);
+      console.error('Failed to save configuration:', error);
       showToast('Failed to save configuration', 'error');
     }
   };
@@ -132,7 +139,7 @@ const ConfigManager: React.FC = () => {
                   variant="ghost"
                   size="sm"
                   className="btn-circle"
-                  onClick={() => Logger.log('Refresh configs')}
+                  onClick={() => console.log('Refresh configs')}
                 >
                   <ArrowPathIcon className="w-5 h-5" />
                 </Button>

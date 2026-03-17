@@ -1,14 +1,12 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect, useCallback } from 'react';
-import {
-  Card,
-  Badge,
-  Alert,
-  Accordion,
-  Divider,
-  Button,
-  Tooltip,
-} from './DaisyUI';
+import Card from './DaisyUI/Card';
+import Badge from './DaisyUI/Badge';
+import { Alert } from './DaisyUI/Alert';
+import Accordion from './DaisyUI/Accordion';
+import Divider from './DaisyUI/Divider';
+import Button from './DaisyUI/Button';
+import Tooltip from './DaisyUI/Tooltip';
 import {
   CheckCircleIcon,
   ExclamationCircleIcon,
@@ -22,8 +20,6 @@ import {
 import { apiService } from '../services/api';
 import type { Socket } from 'socket.io-client';
 import io from 'socket.io-client';
-import Logger from '../utils/logger';
-
 
 interface EndpointStatus {
   id: string;
@@ -77,7 +73,7 @@ const ApiStatusMonitor: React.FC<ApiStatusMonitorProps> = ({
       setLastRefresh(new Date());
       setLoading(false);
     } catch (error) {
-      Logger.error('Failed to fetch API status:', error);
+      console.error('Failed to fetch API status:', error);
       setLoading(false);
     }
   }, []);
@@ -85,14 +81,19 @@ const ApiStatusMonitor: React.FC<ApiStatusMonitorProps> = ({
   const setupWebSocket = useCallback(() => {
     const newSocket = io({
       path: '/webui/socket.io',
+      reconnection: true,
+      reconnectionAttempts: Infinity,
+      reconnectionDelay: 1000,
+      reconnectionDelayMax: 5000,
+      randomizationFactor: 0.5,
     });
 
     newSocket.on('connect', () => {
-<<<<<<< HEAD
-      Logger.log('Connected to WebSocket for API monitoring');
-=======
       console.log('Connected to WebSocket for API monitoring');
->>>>>>> origin/refiner-database-migration-reversibility-3845862468620237629
+    });
+
+    newSocket.on('reconnect_attempt', (attempt) => {
+      console.log(`API Monitoring WebSocket reconnect attempt ${attempt}`);
     });
 
     newSocket.on('api_status_update', (data: { endpoints: EndpointStatus[]; overall: any; timestamp: string }) => {
@@ -125,7 +126,7 @@ const ApiStatusMonitor: React.FC<ApiStatusMonitorProps> = ({
     });
 
     newSocket.on('disconnect', () => {
-      Logger.log('Disconnected from WebSocket');
+      console.log('Disconnected from WebSocket');
     });
 
     setSocket(newSocket);
@@ -197,7 +198,7 @@ const ApiStatusMonitor: React.FC<ApiStatusMonitorProps> = ({
       await apiService.startApiMonitoring();
       setMonitoringActive(true);
     } catch (error) {
-      Logger.error('Failed to start monitoring:', error);
+      console.error('Failed to start monitoring:', error);
     }
   };
 
@@ -206,7 +207,7 @@ const ApiStatusMonitor: React.FC<ApiStatusMonitorProps> = ({
       await apiService.stopApiMonitoring();
       setMonitoringActive(false);
     } catch (error) {
-      Logger.error('Failed to stop monitoring:', error);
+      console.error('Failed to stop monitoring:', error);
     }
   };
 

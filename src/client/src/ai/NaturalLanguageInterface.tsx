@@ -27,8 +27,6 @@ import {
   CpuChipIcon,
 } from '@heroicons/react/24/outline';
 import { MicrophoneIcon as MicrophoneSolidIcon } from '@heroicons/react/24/solid';
-import Logger from '../utils/logger';
-
 
 // Web Speech API type declarations
 interface SpeechRecognitionResult {
@@ -416,7 +414,7 @@ export const NaturalLanguageInterface: React.FC<NaturalLanguageInterfaceProps> =
       };
 
       recognitionRef.current.onerror = (event: SpeechRecognitionErrorEvent) => {
-        Logger.error('Speech recognition error:', event.error);
+        console.error('Speech recognition error:', event.error);
         setIsListening(false);
       };
 
@@ -475,12 +473,12 @@ export const NaturalLanguageInterface: React.FC<NaturalLanguageInterfaceProps> =
         // Fallback to mock behavior if backend fails or not configured
         // Distinguish between error types for better user feedback
         if (res.status === 401) {
-          Logger.warn('AI Assist: Authentication required - user may need to log in');
+          console.warn('AI Assist: Authentication required - user may need to log in');
         } else if (res.status === 400) {
           const errorData = await res.json().catch(() => ({}));
-          Logger.warn('AI Assist: Configuration error:', errorData.error || res.statusText);
+          console.warn('AI Assist: Configuration error:', errorData.error || res.statusText);
         } else {
-          Logger.warn('AI Assist: Backend error, falling back to mock:', res.statusText);
+          console.warn('AI Assist: Backend error, falling back to mock:', res.statusText);
         }
 
         // Simulate NLP processing delay
@@ -506,7 +504,7 @@ export const NaturalLanguageInterface: React.FC<NaturalLanguageInterfaceProps> =
         responseText = generateResponse(text, matchedIntent, confidence);
       }
     } catch (error) {
-      Logger.error('Error calling AI Assist:', error);
+      console.error('Error calling AI Assist:', error);
       // Simulate NLP processing delay
       await new Promise(resolve => setTimeout(resolve, 1000));
 

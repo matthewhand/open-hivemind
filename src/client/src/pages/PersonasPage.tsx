@@ -1,25 +1,21 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { User, Plus, Edit2, Trash2, Sparkles, RefreshCw, Info, AlertTriangle, Shield, Copy, Search, X, Eye } from 'lucide-react';
-import {
-  Alert,
-  Badge,
-  Button,
-  Card,
-  Input,
-  Select,
-  Modal,
-  PageHeader,
-  StatsCards,
-  LoadingSpinner,
-  EmptyState,
-  ToastNotification,
-} from '../components/DaisyUI';
+import { Alert } from '../components/DaisyUI/Alert';
+import Badge from '../components/DaisyUI/Badge';
+import Button from '../components/DaisyUI/Button';
+import Card from '../components/DaisyUI/Card';
+import Input from '../components/DaisyUI/Input';
+import Select from '../components/DaisyUI/Select';
+import Modal from '../components/DaisyUI/Modal';
+import PageHeader from '../components/DaisyUI/PageHeader';
+import StatsCards from '../components/DaisyUI/StatsCards';
+import { LoadingSpinner } from '../components/DaisyUI/Loading';
+import EmptyState from '../components/DaisyUI/EmptyState';
+import ToastNotification from '../components/DaisyUI/ToastNotification';
 import SearchFilterBar from '../components/SearchFilterBar';
 import type { Persona as ApiPersona, Bot } from '../services/api';
 import { apiService } from '../services/api';
-import Logger from '../utils/logger';
-
 
 // Extend UI Persona type to include assigned bots for display
 interface Persona extends ApiPersona {
@@ -72,10 +68,12 @@ const PersonasPage: React.FC = () => {
       setLoading(true);
       setError(null);
 
-      const [configResponse, personasResponse] = await Promise.all([
+      const [configResult, personasResult] = await Promise.allSettled([
         apiService.getConfig(),
         apiService.getPersonas(),
       ]);
+      const configResponse = configResult.status === 'fulfilled' ? configResult.value : { bots: [] };
+      const personasResponse = personasResult.status === 'fulfilled' ? personasResult.value : [];
 
       const botList = configResponse.bots || [];
       const filledBots = botList.map((b: any) => ({
@@ -126,7 +124,7 @@ const PersonasPage: React.FC = () => {
       await navigator.clipboard.writeText(text);
       successToast('Copied!', 'System prompt copied to clipboard');
     } catch (err) {
-      Logger.error('Failed to copy', err);
+      console.error('Failed to copy', err);
       errorToast('Error', 'Failed to copy to clipboard');
     }
   };
@@ -196,7 +194,7 @@ const PersonasPage: React.FC = () => {
       setEditingPersona(null);
       setCloningPersonaId(null);
     } catch (err) {
-      Logger.error(err);
+      console.error(err);
       setError('Failed to save persona changes');
     } finally {
       setLoading(false);
@@ -314,7 +312,7 @@ const PersonasPage: React.FC = () => {
       <PageHeader
         title="Personas (Beta)"
         description="Manage AI personalities and system prompts"
-        icon={<Sparkles className="w-6 h-6" />}
+        icon={Sparkles}
         actions={
           <div className="flex gap-2">
             <Button

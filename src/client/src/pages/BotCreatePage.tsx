@@ -2,15 +2,13 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Bot, Save, ArrowLeft, Gamepad2, Hash, MessageSquare, Send, Check } from 'lucide-react';
-import {
-  Breadcrumbs,
-  Alert,
-  PageHeader,
-  Button,
-  Input,
-  Textarea,
-  Select,
-} from '../components/DaisyUI';
+import Breadcrumbs from '../components/DaisyUI/Breadcrumbs';
+import { Alert } from '../components/DaisyUI/Alert';
+import PageHeader from '../components/DaisyUI/PageHeader';
+import Button from '../components/DaisyUI/Button';
+import Input from '../components/DaisyUI/Input';
+import Textarea from '../components/DaisyUI/Textarea';
+import Select from '../components/DaisyUI/Select';
 import { useLlmStatus } from '../hooks/useLlmStatus';
 import AIAssistButton from '../components/AIAssistButton';
 import { apiService } from '../services/api';
@@ -42,10 +40,12 @@ const BotCreatePage: React.FC = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [personasData, profilesData] = await Promise.all([
+        const [personasResult, profilesResult] = await Promise.allSettled([
           apiService.getPersonas(),
           apiService.getLlmProfiles(),
         ]);
+        const personasData = personasResult.status === 'fulfilled' ? personasResult.value : [];
+        const profilesData = profilesResult.status === 'fulfilled' ? profilesResult.value : {};
 
         let mcpResponse: any = { data: [] };
         try {
@@ -62,7 +62,7 @@ const BotCreatePage: React.FC = () => {
         const servers = mcpResponse?.data || mcpResponse || [];
         setMcpServers(Array.isArray(servers) ? servers : []);
       } catch (err) {
-        Logger.error('Failed to load data', err);
+        console.error('Failed to load data', err);
         setAlert({ type: 'error', message: 'Failed to load configuration data' });
       } finally {
         setLoading(false);
@@ -123,7 +123,7 @@ const BotCreatePage: React.FC = () => {
       <PageHeader
         title="Create New Bot"
         description="Configure a new bot instance with persona and provider settings."
-        icon={<Bot className="w-6 h-6" />}
+        icon={Bot}
         gradient="primary"
         actions={
           <Button variant="ghost" onClick={() => navigate('/admin/bots')}>
@@ -377,7 +377,7 @@ const BotCreatePage: React.FC = () => {
                               onChange={(e) => {
                                 const serverId = server.id || server.name;
                                 if (!serverId) {
-                                  Logger.warn('Server ID or name is required');
+                                  console.warn('Server ID or name is required');
                                   return;
                                 }
                                 setFormData(prev => ({

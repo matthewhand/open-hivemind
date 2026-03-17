@@ -1,34 +1,12 @@
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
 export * from './openAiProvider';
-=======
-export { OpenAiProvider, openAiProvider } from './openAiProvider';
->>>>>>> origin/refiner-barrel-export-audit-4424264890390605711
-=======
-export * from './openAiProvider';
->>>>>>> origin/refiner-database-migration-reversibility-3845862468620237629
 export { default as openAiService, OpenAiService } from './OpenAiService';
 
 import { OpenAiProvider } from './openAiProvider';
->>>>>>> origin/jules-responsive-layout-consistency-5760872167389438897
 import type { PluginManifest } from '../../../src/plugins/PluginLoader';
 import type { OpenAIConfig } from '../../../src/types/config';
-import { OpenAiProvider } from './openAiProvider';
-
-export * from './openAiProvider';
-export { default as openAiService, OpenAiService } from './OpenAiService';
 
 /** Standard factory — preferred entry point for PluginLoader */
-export function create(
-  config?: OpenAIConfig & {
-    timeout?: number;
-    organization?: string;
-    temperature?: number;
-    maxTokens?: number;
-  }
-): OpenAiProvider {
+export function create(config?: OpenAIConfig & { timeout?: number; organization?: string; temperature?: number; maxTokens?: number }): OpenAiProvider {
   return new OpenAiProvider(config);
 }
 

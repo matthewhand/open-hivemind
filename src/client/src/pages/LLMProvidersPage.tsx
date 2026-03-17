@@ -1,7 +1,14 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useModal } from '../hooks/useModal';
-import { Card, Button, Badge, Alert, PageHeader, StatsCards, EmptyState, LoadingSpinner } from '../components/DaisyUI';
+import Card from '../components/DaisyUI/Card';
+import Button from '../components/DaisyUI/Button';
+import Badge from '../components/DaisyUI/Badge';
+import { Alert } from '../components/DaisyUI/Alert';
+import PageHeader from '../components/DaisyUI/PageHeader';
+import StatsCards from '../components/DaisyUI/StatsCards';
+import EmptyState from '../components/DaisyUI/EmptyState';
+import { LoadingSpinner } from '../components/DaisyUI/Loading';
 import SearchFilterBar from '../components/SearchFilterBar';
 import {
   Brain as BrainIcon,
@@ -64,11 +71,14 @@ const LLMProvidersPage: React.FC = () => {
   const fetchProfiles = useCallback(async () => {
     try {
       setLoading(true);
-      const [profilesRes, statusRes, globalRes] = await Promise.all([
+      const [profilesResult, statusResult, globalResult] = await Promise.allSettled([
         apiService.get('/api/config/llm-profiles'),
         apiService.get('/api/config/llm-status'),
         apiService.get('/api/config/global'),
       ]);
+      const profilesRes = profilesResult.status === 'fulfilled' ? profilesResult.value : {};
+      const statusRes = statusResult.status === 'fulfilled' ? statusResult.value : {};
+      const globalRes = globalResult.status === 'fulfilled' ? globalResult.value : {};
       setProfiles((profilesRes as any).llm || (profilesRes as any).profiles?.llm || []);
       setDefaultStatus(statusRes);
       const gs = (globalRes as any)._userSettings?.values || {};

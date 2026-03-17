@@ -1,4 +1,3 @@
-import Logger from '../utils/logger';
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import { useState, useCallback, useEffect } from 'react';
 import type {
@@ -8,7 +7,6 @@ import type {
   UpdatePersonaRequest,
 } from '../types';
 import {
-
   PersonaTrait,
   BUILTIN_PERSONAS,
   DEFAULT_PERSONA,
@@ -195,7 +193,7 @@ export const usePersonas = (): UsePersonasReturn => {
       ));
 
       // In a real implementation, this would make an API call to update the bot
-      Logger.log(`Assigning persona "${persona.name}" to bot "${botId}"`);
+      console.log(`Assigning persona "${persona.name}" to bot "${botId}"`);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to assign persona to bot';
       setError(errorMessage);

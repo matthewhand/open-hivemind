@@ -1,6 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { Card, Badge, Button, Alert, DataTable } from './DaisyUI';
+import Card from './DaisyUI/Card';
+import Badge from './DaisyUI/Badge';
+import Button from './DaisyUI/Button';
+import { Alert } from './DaisyUI/Alert';
+import DataTable from './DaisyUI/DataTable';
 import {
   Activity,
   Server,
@@ -12,8 +16,6 @@ import {
   AlertCircle,
 } from 'lucide-react';
 import { apiService, ActivityEvent } from '../services/api';
-import Logger from '../utils/logger';
-
 
 const getStatusColor = (status: string): 'info' | 'warning' | 'error' | 'success' => {
   switch (status) {
@@ -58,7 +60,7 @@ const ActivityMonitor: React.FC<ActivityMonitorProps> = ({ showPopoutButton = fa
 
       setLastUpdated(new Date());
     } catch (error) {
-      Logger.error('Failed to fetch activity:', error);
+      console.error('Failed to fetch activity:', error);
     } finally {
       setLoading(false);
     }

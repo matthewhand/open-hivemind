@@ -9,7 +9,7 @@ import Toggle from '../components/DaisyUI/Toggle';
 import Button from '../components/DaisyUI/Button';
 import { Alert } from '../components/DaisyUI/Alert';
 import Badge from '../components/DaisyUI/Badge';
-import { Modal } from '../components/DaisyUI/Modal';
+import Modal from '../components/DaisyUI/Modal';
 
 interface ConfigSchema {
   values: Record<string, any>;
@@ -286,15 +286,7 @@ const BotConfigurationPage: React.FC = () => {
       <PageHeader
         title="Global Defaults"
         description="System and provider settings (convict configs)"
-<<<<<<< HEAD
-<<<<<<< HEAD
-        icon={<Settings className="w-6 h-6" />}
-=======
-        icon={Settings}
->>>>>>> origin/jules-responsive-layout-consistency-5760872167389438897
-=======
-        icon={Settings}
->>>>>>> origin/refiner-database-migration-reversibility-3845862468620237629
+        icon={<Settings className="w-8 h-8" />}
         gradient="accent"
         actions={
           <div className="flex gap-2">

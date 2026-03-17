@@ -1,5 +1,3 @@
-import Logger from '../utils/logger';
-
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 // Provider-specific configuration types - separate from core bot types
 // This allows for a pluggable architecture where providers can define their own configs
@@ -112,7 +110,7 @@ export class AvatarService {
       }
       return null;
     } catch (error) {
-      Logger.error('Failed to load avatar:', error);
+      console.error('Failed to load avatar:', error);
       return null;
     }
   }

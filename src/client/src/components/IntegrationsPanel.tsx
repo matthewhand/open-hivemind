@@ -30,11 +30,7 @@ import {
 
 import { PROVIDER_CATEGORIES } from '../config/providers';
 import ProviderConfigModal from './ProviderConfiguration/ProviderConfigModal';
-<<<<<<< HEAD
-import { LLM_PROVIDER_CONFIGS, LLMProviderType, ProviderModalState } from '../types/bot';
-=======
 import { LLM_PROVIDER_CONFIGS, LLMProviderType, ProviderModalState } from '../types';
->>>>>>> origin/refiner-database-migration-reversibility-3845862468620237629
 
 interface ConfigSchema {
   doc?: string;

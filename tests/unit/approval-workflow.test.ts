@@ -80,7 +80,7 @@ describe('Approval Workflow', () => {
   describe('Approval Request Retrieval', () => {
     let createdRequestId: number;
 
-    beforeAll(async () => {
+    beforeEach(async () => {
       // Create a test approval request
       const request: Omit<ApprovalRequest, 'id' | 'createdAt'> = {
         resourceType: 'BotConfiguration',
@@ -95,7 +95,7 @@ describe('Approval Workflow', () => {
 
     test('should retrieve approval request by ID', async () => {
       const request = await dbManager.getApprovalRequest(createdRequestId);
-      expect(request).toBeDefined();
+      expect(request).not.toBeNull();
       expect(request!.id).toBe(createdRequestId);
       expect(request!.resourceType).toBe('BotConfiguration');
       expect(request!.resourceId).toBe(testBotConfigId);
@@ -188,7 +188,7 @@ describe('Approval Workflow', () => {
       expect(request!.status).toBe('approved');
       expect(request!.reviewedBy).toBe('admin-user');
       // Compare ISO strings to avoid millisecond precision issues between JS and SQLite
-      expect(request!.reviewedAt).toBeTruthy();
+      expect(request!.reviewedAt).not.toBeNull();
       expect(new Date(request!.reviewedAt!).getTime()).toBeCloseTo(
         new Date(updates.reviewedAt!).getTime(),
         -2
@@ -348,7 +348,7 @@ describe('Approval Workflow', () => {
         expect(typeof result).toBe('number');
       } catch (error) {
         // If it throws, that's also acceptable
-        expect(error).toBeDefined();
+        expect(error).toBeInstanceOf(Error);
       }
     });
   });

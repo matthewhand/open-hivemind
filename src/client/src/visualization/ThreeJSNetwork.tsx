@@ -6,8 +6,6 @@ import { AnimatedBox } from '../animations/AnimationComponents';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import { CSS2DRenderer, CSS2DObject } from 'three/examples/jsm/renderers/CSS2DRenderer';
-import Logger from '../utils/logger';
-
 
 interface BotNode {
   id: string;
@@ -249,7 +247,7 @@ export const ThreeJSNetwork: React.FC<ThreeJSNetworkProps> = ({
 
     // Create particle system (simplified version without Three.js)
     // This would be implemented with actual Three.js when the library is available
-    Logger.log('Particle system would be created here with Three.js');
+    console.log('Particle system would be created here with Three.js');
   }, [bots, metrics, createBotNode, createConnection, createParticleSystem]);
 
   useEffect(() => {

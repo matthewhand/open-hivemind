@@ -2,7 +2,7 @@
     "name": "@hivemind/memory-memvault",
     "version": "1.0.0",
     "description": "MemVault memory provider for Open Hivemind - Open-source RAG memory server built natively in Node.js with Postgres + pgvector; uses hybrid scoring (vector similarity × 0.8) + (recency decay × 0.2)",
-    "main": "src/index.ts",
+    "main": "dist/index.js",
     "types": "dist/index.d.ts",
     "scripts": {
         "build": "npx tsc",
@@ -14,7 +14,7 @@
         "pg": "^8.11.3"
     },
     "peerDependencies": {
-        "@hivemind/shared-types": "*"
+        "@hivemind/shared-types": "workspace:*"
     },
     "devDependencies": {
         "@types/jest": "^29.5.12",

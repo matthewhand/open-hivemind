@@ -13,17 +13,13 @@ import {
   EyeIcon,
   DocumentDuplicateIcon,
 } from '@heroicons/react/24/outline';
-import {
-  Button,
-  Badge,
-  Modal,
-  Alert,
-} from '../DaisyUI';
+import Button from '../DaisyUI/Button';
+import Badge from '../DaisyUI/Badge';
+import Modal from '../DaisyUI/Modal';
+import { Alert } from '../DaisyUI/Alert';
 import type { Bot, CreateBotRequest } from '../../services/botDataProvider';
 import { botDataProvider } from '../../services/botDataProvider';
 import { useLlmStatus } from '../../hooks/useLlmStatus';
-import Logger from '../../utils/logger';
-
 
 interface EnhancedBotManagerProps {
   onBotSelect?: (bot: Bot) => void;
@@ -124,7 +120,7 @@ const EnhancedBotManager: React.FC<EnhancedBotManagerProps> = ({ onBotSelect }) 
         setGuardProfiles(gpData.data || []);
       }
     } catch (err) {
-      Logger.error('Error loading options:', err);
+      console.error('Error loading options:', err);
     }
   };
 

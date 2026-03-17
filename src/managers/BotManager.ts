@@ -11,7 +11,6 @@ import type { MCPGuardConfig } from '../mcp/MCPGuard';
 import type { MCPConfig } from '../mcp/MCPService';
 import { getMessengerServiceByProvider } from '../message/ProviderRegistry';
 import { webUIStorage } from '../storage/webUIStorage';
-import type { BotConfig } from '../types/config';
 import { ErrorUtils } from '../types/errors';
 import { checkBotEnvOverrides } from '../utils/envUtils';
 
@@ -156,32 +155,7 @@ export class BotManager extends EventEmitter {
 
       // Add configured bots first
       for (const bot of configuredBots) {
-<<<<<<< HEAD
-<<<<<<< HEAD
-        const botInstance = this.mapConfiguredBotToInstance(bot);
-=======
-=======
->>>>>>> origin/refiner-database-migration-reversibility-3845862468620237629
-        const botInstance: BotInstance = {
-          // Use bot name as stable ID - random UUIDs break getBot() lookups
-          id: bot.name,
-          name: bot.name,
-          messageProvider: bot.messageProvider,
-          llmProvider: bot.llmProvider,
-          isActive: true, // Configured bots are considered active
-          createdAt: new Date().toISOString(),
-          lastModified: new Date().toISOString(),
-          config: this.sanitizeConfig(bot),
-          persona: bot.persona || 'default',
-          systemInstruction: bot.systemInstruction,
-          mcpServers: bot.mcpServers || [],
-          mcpGuard: bot.mcpGuard || { enabled: false, type: 'owner' },
-          envOverrides: checkBotEnvOverrides(bot.name),
-        };
-<<<<<<< HEAD
->>>>>>> origin/jules-responsive-layout-consistency-5760872167389438897
-=======
->>>>>>> origin/refiner-database-migration-reversibility-3845862468620237629
+        const botInstance = this.mapConfigToBotInstance(bot);
         botMap.set(botInstance.id, botInstance);
       }
 
@@ -201,78 +175,9 @@ export class BotManager extends EventEmitter {
   }
 
   /**
-   * Get a specific bot by ID
+   * Helper to map a raw configuration object to a unified BotInstance
    */
-  public async getBot(botId: string): Promise<BotInstance | null> {
-    try {
-<<<<<<< HEAD
-<<<<<<< HEAD
-      // Check custom bots first (in-memory loaded from custom-bots.json)
-=======
-      // Check custom bots first
->>>>>>> origin/jules-responsive-layout-consistency-5760872167389438897
-=======
-      // Check custom bots first
->>>>>>> origin/refiner-database-migration-reversibility-3845862468620237629
-      if (this.customBots.has(botId)) {
-        const bot = this.customBots.get(botId)!;
-        debug(`Retrieved custom bot: ${bot.name} (${bot.id})`);
-        return bot;
-      }
-
-<<<<<<< HEAD
-<<<<<<< HEAD
-      // ⚡ Bolt Optimization: Faster lookups using getBot directly instead of mapping O(N) via getAllBots()
-      // Note: While customBots is an array, it's typically very small. WebUI storage replaces getAllBots traversal.
-      // Check custom bots from web UI storage first (they overwrite configured bots)
-      const customBots = webUIStorage.getAgents();
-      const customBot = customBots.find((b: BotInstance) => b.id === botId);
-      if (customBot) {
-        debug(`Retrieved custom bot from web UI storage: ${customBot.name} (${customBot.id})`);
-        return customBot;
-      }
-
-      // Then check configured bots directly. The botConfigManager.getBot is an O(1) Map lookup.
-      // Note: for configured bots, the 'botId' corresponds to their name
-      const configuredBot = this.botConfigManager.getBot(botId);
-      if (configuredBot) {
-        const botInstance = this.mapConfiguredBotToInstance(configuredBot);
-        debug(`Retrieved configured bot: ${botInstance.name} (${botInstance.id})`);
-        return botInstance;
-      }
-
-      debug(`Bot not found: ${botId}`);
-      return null;
-=======
-=======
->>>>>>> origin/refiner-database-migration-reversibility-3845862468620237629
-      // Check configured bots
-      const bots = await this.getAllBots();
-      const bot = bots.find((b) => b.id === botId);
-
-      if (bot) {
-        debug(`Retrieved configured bot: ${bot.name} (${bot.id})`);
-      } else {
-        debug(`Bot not found: ${botId}`);
-      }
-
-      return bot || null;
-<<<<<<< HEAD
->>>>>>> origin/jules-responsive-layout-consistency-5760872167389438897
-=======
->>>>>>> origin/refiner-database-migration-reversibility-3845862468620237629
-    } catch (error: unknown) {
-      debug('Error getting bot:', ErrorUtils.getMessage(error));
-      throw ErrorUtils.createError('Failed to retrieve bot instance', 'configuration');
-    }
-  }
-
-  /**
-<<<<<<< HEAD
-<<<<<<< HEAD
-   * Map a BotConfig object to a BotInstance
-   */
-  private mapConfiguredBotToInstance(bot: BotConfig): BotInstance {
+  private mapConfigToBotInstance(bot: any): BotInstance {
     return {
       // Use bot name as stable ID - random UUIDs break getBot() lookups
       id: bot.name,
@@ -282,7 +187,7 @@ export class BotManager extends EventEmitter {
       isActive: true, // Configured bots are considered active
       createdAt: new Date().toISOString(),
       lastModified: new Date().toISOString(),
-      config: this.sanitizeConfig(bot as unknown as Record<string, unknown>),
+      config: this.sanitizeConfig(bot),
       persona: bot.persona || 'default',
       systemInstruction: bot.systemInstruction,
       mcpServers: bot.mcpServers || [],
@@ -292,10 +197,34 @@ export class BotManager extends EventEmitter {
   }
 
   /**
-=======
->>>>>>> origin/jules-responsive-layout-consistency-5760872167389438897
-=======
->>>>>>> origin/refiner-database-migration-reversibility-3845862468620237629
+   * Get a specific bot by ID
+   */
+  public async getBot(botId: string): Promise<BotInstance | null> {
+    try {
+      // Check custom bots first
+      if (this.customBots.has(botId)) {
+        const bot = this.customBots.get(botId)!;
+        debug(`Retrieved custom bot: ${bot.name} (${bot.id})`);
+        return bot;
+      }
+
+      // Check configured bots - O(1) lookup instead of O(N) iteration
+      const configuredBot = this.botConfigManager.getBot(botId);
+
+      if (configuredBot) {
+        debug(`Retrieved configured bot: ${configuredBot.name} (${botId})`);
+        return this.mapConfigToBotInstance(configuredBot);
+      }
+
+      debug(`Bot not found: ${botId}`);
+      return null;
+    } catch (error: unknown) {
+      debug('Error getting bot:', ErrorUtils.getMessage(error));
+      throw ErrorUtils.createError('Failed to retrieve bot instance', 'configuration');
+    }
+  }
+
+  /**
    * Create a new bot instance
    */
   public async createBot(request: CreateBotRequest): Promise<BotInstance> {

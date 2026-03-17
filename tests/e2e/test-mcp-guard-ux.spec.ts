@@ -75,17 +75,9 @@ test('verify MCP Guard UX', async ({ page }) => {
 
   const value = await usersInput.inputValue();
   console.log('Input value after typing ",user2":', value);
-<<<<<<< HEAD
-<<<<<<< HEAD
   expect(value).toBe('user2');
 
   const chips = modal.locator('[data-testid="chip"]');
   await expect(chips).toHaveCount(1);
   await expect(chips.first()).toHaveText(/user1/);
-=======
-  expect(value).toBe('user1, user2');
->>>>>>> origin/jules-responsive-layout-consistency-5760872167389438897
-=======
-  expect(value).toBe('user1, user2');
->>>>>>> origin/refiner-database-migration-reversibility-3845862468620237629
 });

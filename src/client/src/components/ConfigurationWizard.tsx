@@ -1,6 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect } from 'react';
-import { Card, Button, Input, Select, Alert, Badge } from './DaisyUI';
+import Card from './DaisyUI/Card';
+import Button from './DaisyUI/Button';
+import Input from './DaisyUI/Input';
+import Select from './DaisyUI/Select';
+import { Alert } from './DaisyUI/Alert';
+import Badge from './DaisyUI/Badge';
 import {
   ArrowRightIcon,
   ArrowLeftIcon,
@@ -12,8 +17,6 @@ import {
 } from '@heroicons/react/24/outline';
 import { apiService } from '../services/api';
 import type { Bot } from '../services/api';
-import Logger from '../utils/logger';
-
 
 interface WizardStep {
   id: string;
@@ -70,7 +73,7 @@ const ConfigurationWizard: React.FC = () => {
       const response = await apiService.getConfig();
       setExistingBots(response.bots);
     } catch (err) {
-      Logger.error('Failed to load existing bots:', err);
+      console.error('Failed to load existing bots:', err);
     }
   };
 

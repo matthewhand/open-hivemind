@@ -1,4 +1,3 @@
-import * as crypto from 'crypto';
 import { IMessage } from '@message/interfaces/IMessage';
 
 /**
@@ -145,7 +144,7 @@ export class SyntheticMessage extends IMessage {
     this.content = syntheticText;
     this.data = originalMessage.data;
     this.metadata = originalMessage.metadata;
-    this.messageId = `synthetic-${this.originalChannelId}-${Date.now()}-${crypto.randomUUID()}`;
+    this.messageId = `synthetic-${this.originalChannelId}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
     this.text = syntheticText;
     this.authorId = 'idle_response_system';
     this.authorName = 'System';

@@ -1,8 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars, react-refresh/only-export-components, no-empty, no-case-declarations */
 import type { ReactNode } from 'react';
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import Logger from '../utils/logger';
-
 
 export interface User {
   id: string;
@@ -58,13 +56,13 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         } else {
           // Token is expired, try to refresh it silently
           refreshToken().catch((error) => {
-            Logger.warn('Failed to refresh expired token on load:', error);
+            console.warn('Failed to refresh expired token on load:', error);
             // Don't logout here - just don't set the user
             // The app will handle being in an unauthenticated state
           });
         }
       } catch (error) {
-        Logger.error('Failed to parse stored auth data:', error);
+        console.error('Failed to parse stored auth data:', error);
         // Don't logout - just don't set the user
       }
     } else if (import.meta.env.DEV && import.meta.env.VITE_AUTO_LOGIN === 'true') {
@@ -173,7 +171,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
       return false;
     } catch (error) {
-      Logger.error('Login error:', error);
+      console.error('Login error:', error);
       return false;
     }
   };
@@ -226,7 +224,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
       return false;
     } catch (error) {
-      Logger.error('Token refresh error:', error);
+      console.error('Token refresh error:', error);
       logout();
       return false;
     }
@@ -265,7 +263,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
       return null;
     } catch (error) {
-      Logger.error('Token verification error:', error);
+      console.error('Token verification error:', error);
       return null;
     }
   };

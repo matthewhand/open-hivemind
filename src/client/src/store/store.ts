@@ -8,8 +8,6 @@ import errorReducer from './slices/errorSlice';
 import uiReducer from './slices/uiSlice';
 import performanceReducer from './slices/performanceSlice';
 import websocketReducer from './slices/websocketSlice';
-import Logger from '../utils/logger';
-
 
 const rootReducer = combineReducers({
   [apiSlice.reducerPath]: apiSlice.reducer,
@@ -73,7 +71,7 @@ const initializeApp = () => {
           payload: parsedValue,
         });
       } catch (e) {
-        Logger.error(`Failed to load setting ${setting}:`, e);
+        console.error(`Failed to load setting ${setting}:`, e);
       }
     }
   });
