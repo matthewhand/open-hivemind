@@ -16,12 +16,7 @@ import {
 import type { Bot, StatusResponse } from '../services/api';
 import { apiService } from '../services/api';
 import { CreateBotWizard } from './BotManagement/CreateBotWizard';
-<<<<<<< HEAD
 import { PlusCircle, RefreshCw, LayoutDashboard, Cpu, HardDrive, Gauge, Clock, Activity, Info, Rocket } from 'lucide-react';
-=======
-import { Info } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
->>>>>>> origin/refiner-barrel-export-audit-4424264890390605711
 
 type DashboardTab = 'getting-started' | 'status' | 'performance';
 

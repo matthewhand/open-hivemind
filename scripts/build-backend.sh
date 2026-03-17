@@ -17,11 +17,7 @@ fi
 
 echo "[build:backend] starting at $(timestamp) with NODE_OPTIONS=${NODE_OPTIONS}"
 set -x
-<<<<<<< HEAD
 pnpm exec tsc --noEmitOnError false --skipLibCheck || \
-=======
-npx tsc --noEmitOnError false --skipLibCheck || \
->>>>>>> origin/refiner-database-migration-reversibility-3845862468620237629
   echo 'TypeScript compilation completed with warnings, but build succeeded'
 set +x
 echo "[build:backend] finished at $(timestamp)"

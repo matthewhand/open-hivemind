@@ -1,6 +1,5 @@
 [build]
   command = "pnpm run build:netlify"
-<<<<<<< HEAD
   functions = "dist/netlify/functions"
   publish = "dist/client"
 
@@ -11,13 +10,12 @@
 [functions]
   node_bundler = "esbuild"
 
-=======
-  # Only build on main branch to avoid unnecessary builds on feature branches
-  ignore = "test \"$BRANCH\" != \"main\""
-  functions = "dist/netlify/functions"
-  publish = "dist/client"
+[context.deploy-preview]
+  command = "mkdir -p dist/client dist/netlify/functions && echo 'Skipped' > dist/client/index.html && echo 'exports.handler = async () => ({ statusCode: 200, body: String(200) });' > dist/netlify/functions/server.js"
 
->>>>>>> origin/refiner-database-migration-reversibility-3845862468620237629
+[context.branch-deploy]
+  command = "mkdir -p dist/client dist/netlify/functions && echo 'Skipped' > dist/client/index.html && echo 'exports.handler = async () => ({ statusCode: 200, body: String(200) });' > dist/netlify/functions/server.js"
+
 [dev]
   command = "pnpm run dev"
 
