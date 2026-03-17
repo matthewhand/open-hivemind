@@ -23,8 +23,8 @@ interface AgentConfig {
   };
   isActive: boolean;
   envOverrides?: Record<string, { isOverridden: boolean; redactedValue?: string }>;
-  createdAt: string;
-  updatedAt: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 interface Persona {
