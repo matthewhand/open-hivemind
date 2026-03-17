@@ -73,6 +73,7 @@ export const RedactionDebugToggle: React.FC = () => {
                                     type="checkbox"
                                     className="toggle toggle-warning toggle-sm"
                                     checked={bypassEnabled}
+                                    aria-label={bypassEnabled ? "Hide sensitive data" : "Reveal sensitive data"}
                                     onChange={handleToggleBypass}
                                 />
                             </label>
