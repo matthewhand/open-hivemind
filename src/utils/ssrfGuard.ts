@@ -104,7 +104,6 @@ function isPrivateIPv6(ip: string): boolean {
   if (ip === '::' || ip === '0:0:0:0:0:0:0:0') return true;
 
   // fc00::/7 (Unique Local)
-  // standard format usually starts with fc or fd
   const firstBlock = ip.split(':')[0].toLowerCase();
   if (firstBlock.startsWith('fc') || firstBlock.startsWith('fd')) return true;
 

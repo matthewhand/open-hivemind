@@ -71,9 +71,11 @@
     "packages/provider-openai/src/**/*",
     "packages/memory-mem4ai/src/**/*",
     "packages/memory-memvault/src/**/*",
-    "packages/adapter-discord/src/**/*",
-    "packages/adapter-slack/src/**/*",
-    "packages/adapter-mattermost/src/**/*"
+    "packages/message-discord/src/**/*",
+    "packages/message-slack/src/**/*",
+    "packages/message-mattermost/src/**/*",
+    "packages/llm-letta/src/**/*",
+    "packages/shared-types/src/**/*"
   ],
   "exclude": ["tests/**/*", "node_modules", "src/client/**/*"],
   "files": ["src/global.d.ts"]

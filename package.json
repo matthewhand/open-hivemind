@@ -73,6 +73,7 @@
     "@client": "dist/src/client",
     "@server": "dist/src/server",
     "@hivemind/provider-openai": "dist/packages/provider-openai/src",
+    "@hivemind/shared-types": "dist/packages/shared-types/src",
     "@hivemind/llm-letta": "dist/packages/llm-letta/src",
     "@hivemind/memory-mem4ai": "dist/packages/memory-mem4ai/src",
     "@hivemind/memory-memvault": "dist/packages/memory-memvault/src",

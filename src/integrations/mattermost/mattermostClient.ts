@@ -1,6 +1,6 @@
 import axios, { type AxiosInstance } from 'axios';
 import Debug from 'debug';
-import { isSafeUrl } from '@hivemind/shared-types';
+import { isSafeUrl } from '../../utils/ssrfGuard';
 
 const debug = Debug('app:mattermost-client');
 
