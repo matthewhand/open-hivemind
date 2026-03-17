@@ -1,7 +1,11 @@
 [build]
-  command = "npm install -g pnpm && pnpm install && pnpm run build:netlify"
+  command = "npm install -g pnpm && pnpm install --no-frozen-lockfile && pnpm run build:netlify"
   functions = "dist/netlify/functions"
   publish = "dist/client"
+
+[build.environment]
+  NODE_VERSION = "20"
+  PNPM_VERSION = "9.15.4"
 
 [dev]
   command = "npm run dev"
