@@ -8,8 +8,8 @@ import { type CommandHandler } from './CommandHandler';
 export class ConfigCommandHandler implements CommandHandler {
   private configManager: BotConfigurationManager;
 
-  constructor(configManager: BotConfigurationManager) {
-    this.configManager = configManager;
+  constructor() {
+    this.configManager = BotConfigurationManager.getInstance();
   }
 
   public setup(program: Command): void {

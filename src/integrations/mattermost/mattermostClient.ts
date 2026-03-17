@@ -88,6 +88,7 @@ export default class MattermostClient {
   public async sendTyping(channelId: string, parentId?: string): Promise<void> {
     // Fire and forget typing event
 <<<<<<< HEAD
+<<<<<<< HEAD
     this.axios
       .post(`/channels/${channelId}/typing`, { parent_id: parentId })
       .catch((error: any) => {
@@ -96,5 +97,8 @@ export default class MattermostClient {
 =======
     this.axios.post(`/channels/${channelId}/typing`, { parent_id: parentId }).catch(() => {});
 >>>>>>> origin/jules-responsive-layout-consistency-5760872167389438897
+=======
+    this.axios.post(`/channels/${channelId}/typing`, { parent_id: parentId }).catch(() => {});
+>>>>>>> origin/refiner-database-migration-reversibility-3845862468620237629
   }
 }

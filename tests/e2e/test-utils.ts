@@ -24,17 +24,15 @@ export async function setupAuth(page: Page) {
 
   await page.addInitScript(
     ({ token, user }) => {
-      localStorage.setItem('token', token);
-      localStorage.setItem('refreshToken', token);
-      localStorage.setItem('expiresAt', (Date.now() + 3600000).toString());
-      localStorage.setItem('user', user);
-      localStorage.setItem('auth_user', user);
-      localStorage.setItem('auth_tokens', JSON.stringify({
+      localStorage.setItem(
+        'auth_tokens',
+        JSON.stringify({
           accessToken: token,
           refreshToken: token,
           expiresIn: 3600,
-      }));
-      localStorage.setItem('auth_user', JSON.stringify(JSON.parse(user)));
+        })
+      );
+      localStorage.setItem('auth_user', user);
     },
     { token: fakeToken, user: fakeUser }
   );

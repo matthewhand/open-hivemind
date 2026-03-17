@@ -22,10 +22,13 @@ jobs:
         with:
           version: 10
 <<<<<<< HEAD
+<<<<<<< HEAD
 
       - name: Set up Node.js
 =======
 >>>>>>> origin/jules-responsive-layout-consistency-5760872167389438897
+=======
+>>>>>>> origin/refiner-database-migration-reversibility-3845862468620237629
         uses: actions/setup-node@v4
         with:
           node-version: '20'

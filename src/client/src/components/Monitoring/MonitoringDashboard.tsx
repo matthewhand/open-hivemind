@@ -1,12 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useWebSocket } from '../../contexts/WebSocketContext';
-import Card from '../DaisyUI/Card';
-import Badge from '../DaisyUI/Badge';
-import { Alert } from '../DaisyUI/Alert';
-import Button from '../DaisyUI/Button';
-import PageHeader from '../DaisyUI/PageHeader';
-import StatsCards from '../DaisyUI/StatsCards';
+import { Card, Badge, Alert, Button, PageHeader, StatsCards } from '../DaisyUI';
 import {
   Activity,
   RotateCcw,
@@ -25,7 +20,10 @@ import { apiService } from '../../services/api';
 import type { StatusResponse, Bot } from '../../services/api';
 import Logger from '../../utils/logger';
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> origin/refiner-database-migration-reversibility-3845862468620237629
 // Mock trace data for the Distributed Trace Waterfall removed since we use dynamic bot data
 
 interface BotWithStatus extends Bot {

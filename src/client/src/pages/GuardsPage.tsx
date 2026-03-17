@@ -196,10 +196,14 @@ const GuardsPage: React.FC = () => {
         title="Guard Profiles"
         description="Manage security and access control profiles for bots"
 <<<<<<< HEAD
+<<<<<<< HEAD
         icon={<Shield />}
 =======
         icon={<Shield className="w-8 h-8" />}
 >>>>>>> origin/jules-responsive-layout-consistency-5760872167389438897
+=======
+        icon={<Shield className="w-8 h-8" />}
+>>>>>>> origin/refiner-database-migration-reversibility-3845862468620237629
         actions={
           <div className="flex gap-2">
             <button onClick={fetchProfiles} className="btn btn-ghost btn-sm" disabled={loading} title="Refresh">

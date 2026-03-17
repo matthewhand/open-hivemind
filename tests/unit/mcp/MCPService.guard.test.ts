@@ -106,11 +106,7 @@ describe('MCPService guard enforcement', () => {
   });
 
   it('derives forum owner via provider when not supplied', async () => {
-<<<<<<< HEAD
-    const { SlackMessageProvider } = require('@hivemind/message-slack/providers/SlackMessageProvider');
-=======
     const { SlackMessageProvider } = require('@integrations/slack/providers/SlackMessageProvider');
->>>>>>> origin/jules-responsive-layout-consistency-5760872167389438897
     const mockGetForumOwner = jest.fn().mockResolvedValue('slack-owner') as any;
     SlackMessageProvider.mockImplementation(() => ({
       getForumOwner: mockGetForumOwner,

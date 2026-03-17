@@ -124,10 +124,14 @@ export class Mem4aiProvider {
             const response = await this.makeRequest(`/memories/search?${params}`, 'GET');
 
 <<<<<<< HEAD
+<<<<<<< HEAD
             const results: SearchResult[] = (response.results as any[]).map((result: Record<string, unknown>) => ({
 =======
             const results: SearchResult[] = response.results.map((result: Record<string, unknown>) => ({
 >>>>>>> origin/jules-responsive-layout-consistency-5760872167389438897
+=======
+            const results: SearchResult[] = response.results.map((result: Record<string, unknown>) => ({
+>>>>>>> origin/refiner-database-migration-reversibility-3845862468620237629
                 id: result.id as string,
                 content: result.content as string,
                 score: result.score as number,
@@ -157,10 +161,14 @@ export class Mem4aiProvider {
             const response = await this.makeRequest(`/memories?${params}`, 'GET');
 
 <<<<<<< HEAD
+<<<<<<< HEAD
             const memories: MemoryEntry[] = (response.memories as any[]).map((mem: Record<string, unknown>) => ({
 =======
             const memories: MemoryEntry[] = response.memories.map((mem: Record<string, unknown>) => ({
 >>>>>>> origin/jules-responsive-layout-consistency-5760872167389438897
+=======
+            const memories: MemoryEntry[] = response.memories.map((mem: Record<string, unknown>) => ({
+>>>>>>> origin/refiner-database-migration-reversibility-3845862468620237629
                 id: mem.id as string,
                 content: mem.content as string,
                 metadata: mem.metadata as Record<string, unknown> | undefined,
@@ -209,18 +217,24 @@ export class Mem4aiProvider {
             this.debug('Memory updated', { id });
             return {
 <<<<<<< HEAD
+<<<<<<< HEAD
                 id: response.id as string,
                 content: response.content as string,
                 metadata: response.metadata as Record<string, unknown>,
                 timestamp: response.updated_at as number,
                 tags: response.tags as string[],
 =======
+=======
+>>>>>>> origin/refiner-database-migration-reversibility-3845862468620237629
                 id: response.id,
                 content: response.content,
                 metadata: response.metadata,
                 timestamp: response.updated_at,
                 tags: response.tags,
+<<<<<<< HEAD
 >>>>>>> origin/jules-responsive-layout-consistency-5760872167389438897
+=======
+>>>>>>> origin/refiner-database-migration-reversibility-3845862468620237629
             };
         } catch (error) {
             this.debug('Failed to update memory', error);

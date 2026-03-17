@@ -2,9 +2,12 @@ import os from 'os';
 import process from 'process';
 import { Router, type NextFunction, type Request, type Response } from 'express';
 <<<<<<< HEAD
+<<<<<<< HEAD
 import { DatabaseManager } from '../../database/DatabaseManager';
 =======
 >>>>>>> origin/jules-responsive-layout-consistency-5760872167389438897
+=======
+>>>>>>> origin/refiner-database-migration-reversibility-3845862468620237629
 import { MetricsCollector } from '../../monitoring/MetricsCollector';
 import ApiMonitorService from '../../services/ApiMonitorService';
 import { ErrorLogger } from '../../utils/errorLogger';
@@ -205,6 +208,7 @@ router.get('/alerts', (req, res) => {
 router.get('/ready', (req, res) => {
   // Check if all dependencies are ready
 <<<<<<< HEAD
+<<<<<<< HEAD
   let dbReady = false;
   try {
     const dbManager = DatabaseManager.getInstance();
@@ -224,6 +228,8 @@ router.get('/ready', (req, res) => {
       database: dbReady,
       configuration: true, // Assumed true if app initialized enough to reach here, unless deeper config checks added
 =======
+=======
+>>>>>>> origin/refiner-database-migration-reversibility-3845862468620237629
   // For now, we'll assume the service is ready if it's responding
   return res.json({
     ready: true,
@@ -232,7 +238,10 @@ router.get('/ready', (req, res) => {
       database: true, // Would need actual database check
       external_apis: true, // Would need actual API checks
       configuration: true,
+<<<<<<< HEAD
 >>>>>>> origin/jules-responsive-layout-consistency-5760872167389438897
+=======
+>>>>>>> origin/refiner-database-migration-reversibility-3845862468620237629
     },
   });
 });

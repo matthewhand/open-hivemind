@@ -36,12 +36,17 @@ export const WebSocketProvider: React.FC<{ children: ReactNode }> = ({ children 
   const [botStats, setBotStats] = useState<BotStat[]>([]);
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   const connect = useCallback(() => {
     if (socketRef.current?.connected) { return; }
 =======
   const connect = () => {
     if (socket?.connected) { return; }
 >>>>>>> origin/jules-responsive-layout-consistency-5760872167389438897
+=======
+  const connect = () => {
+    if (socket?.connected) { return; }
+>>>>>>> origin/refiner-database-migration-reversibility-3845862468620237629
 
     const connectionTarget = API_BASE_URL && API_BASE_URL.length > 0 ? API_BASE_URL : undefined;
     const tokenString = localStorage.getItem('auth_tokens');

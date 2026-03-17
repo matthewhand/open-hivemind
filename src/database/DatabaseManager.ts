@@ -386,6 +386,7 @@ export class DatabaseManager {
         });
 
 <<<<<<< HEAD
+<<<<<<< HEAD
         // Proxy to handle connection pool exhaustion
         const originalDb = this.db;
         const self = this;
@@ -414,6 +415,8 @@ export class DatabaseManager {
 
 =======
 >>>>>>> origin/jules-responsive-layout-consistency-5760872167389438897
+=======
+>>>>>>> origin/refiner-database-migration-reversibility-3845862468620237629
         await this.createTables();
         await this.createIndexes();
         await this.migrate();

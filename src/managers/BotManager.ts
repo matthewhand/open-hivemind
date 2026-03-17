@@ -157,8 +157,11 @@ export class BotManager extends EventEmitter {
       // Add configured bots first
       for (const bot of configuredBots) {
 <<<<<<< HEAD
+<<<<<<< HEAD
         const botInstance = this.mapConfiguredBotToInstance(bot);
 =======
+=======
+>>>>>>> origin/refiner-database-migration-reversibility-3845862468620237629
         const botInstance: BotInstance = {
           // Use bot name as stable ID - random UUIDs break getBot() lookups
           id: bot.name,
@@ -175,7 +178,10 @@ export class BotManager extends EventEmitter {
           mcpGuard: bot.mcpGuard || { enabled: false, type: 'owner' },
           envOverrides: checkBotEnvOverrides(bot.name),
         };
+<<<<<<< HEAD
 >>>>>>> origin/jules-responsive-layout-consistency-5760872167389438897
+=======
+>>>>>>> origin/refiner-database-migration-reversibility-3845862468620237629
         botMap.set(botInstance.id, botInstance);
       }
 
@@ -200,16 +206,21 @@ export class BotManager extends EventEmitter {
   public async getBot(botId: string): Promise<BotInstance | null> {
     try {
 <<<<<<< HEAD
+<<<<<<< HEAD
       // Check custom bots first (in-memory loaded from custom-bots.json)
 =======
       // Check custom bots first
 >>>>>>> origin/jules-responsive-layout-consistency-5760872167389438897
+=======
+      // Check custom bots first
+>>>>>>> origin/refiner-database-migration-reversibility-3845862468620237629
       if (this.customBots.has(botId)) {
         const bot = this.customBots.get(botId)!;
         debug(`Retrieved custom bot: ${bot.name} (${bot.id})`);
         return bot;
       }
 
+<<<<<<< HEAD
 <<<<<<< HEAD
       // ⚡ Bolt Optimization: Faster lookups using getBot directly instead of mapping O(N) via getAllBots()
       // Note: While customBots is an array, it's typically very small. WebUI storage replaces getAllBots traversal.
@@ -233,6 +244,8 @@ export class BotManager extends EventEmitter {
       debug(`Bot not found: ${botId}`);
       return null;
 =======
+=======
+>>>>>>> origin/refiner-database-migration-reversibility-3845862468620237629
       // Check configured bots
       const bots = await this.getAllBots();
       const bot = bots.find((b) => b.id === botId);
@@ -244,7 +257,10 @@ export class BotManager extends EventEmitter {
       }
 
       return bot || null;
+<<<<<<< HEAD
 >>>>>>> origin/jules-responsive-layout-consistency-5760872167389438897
+=======
+>>>>>>> origin/refiner-database-migration-reversibility-3845862468620237629
     } catch (error: unknown) {
       debug('Error getting bot:', ErrorUtils.getMessage(error));
       throw ErrorUtils.createError('Failed to retrieve bot instance', 'configuration');
@@ -252,6 +268,7 @@ export class BotManager extends EventEmitter {
   }
 
   /**
+<<<<<<< HEAD
 <<<<<<< HEAD
    * Map a BotConfig object to a BotInstance
    */
@@ -277,6 +294,8 @@ export class BotManager extends EventEmitter {
   /**
 =======
 >>>>>>> origin/jules-responsive-layout-consistency-5760872167389438897
+=======
+>>>>>>> origin/refiner-database-migration-reversibility-3845862468620237629
    * Create a new bot instance
    */
   public async createBot(request: CreateBotRequest): Promise<BotInstance> {

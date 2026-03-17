@@ -1,6 +1,7 @@
 import type { NextFunction, Request, Response } from 'express';
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 const SKIP_HEADER_SANITIZATION = new Set([
   'authorization',
   'accept',
@@ -39,9 +40,17 @@ const SKIP_HEADER_SANITIZATION = new Set([
   'x-forwarded-proto',
   'x-real-ip',
 ]);
+=======
+// Input sanitization middleware
+// Cleans and sanitizes user input to prevent XSS and injection attacks
+>>>>>>> origin/refiner-database-migration-reversibility-3845862468620237629
 
+/**
+ * Sanitizes a string value by escaping HTML entities
+ */
 function sanitizeString(value: string): string {
   return value
+<<<<<<< HEAD
     .replace(/\x00/g, '')
 =======
 // Input sanitization middleware
@@ -53,6 +62,8 @@ function sanitizeString(value: string): string {
 function sanitizeString(value: string): string {
   return value
 >>>>>>> origin/jules-responsive-layout-consistency-5760872167389438897
+=======
+>>>>>>> origin/refiner-database-migration-reversibility-3845862468620237629
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
@@ -61,20 +72,36 @@ function sanitizeString(value: string): string {
 }
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 function sanitizeObject(obj: unknown): unknown {
   if (typeof obj === 'string') return sanitizeString(obj);
   if (Array.isArray(obj)) return obj.map(sanitizeObject);
+=======
+/**
+ * Recursively sanitizes an object or array
+ */
+function sanitizeObject(obj: any): any {
+  if (typeof obj === 'string') {
+    return sanitizeString(obj);
+  }
+
+  if (Array.isArray(obj)) {
+    return obj.map((item) => sanitizeObject(item));
+  }
+
+>>>>>>> origin/refiner-database-migration-reversibility-3845862468620237629
   if (obj !== null && typeof obj === 'object') {
     const sanitized: any = {};
     for (const key of Object.keys(obj)) {
-      if (key === '__proto__' || key === 'constructor' || key === 'prototype') continue;
-      sanitized[key] = sanitizeObject((obj as any)[key]);
+      sanitized[key] = sanitizeObject(obj[key]);
     }
     return sanitized;
   }
+
   return obj;
 }
 
+<<<<<<< HEAD
 =======
 /**
  * Recursively sanitizes an object or array
@@ -103,14 +130,22 @@ function sanitizeObject(obj: any): any {
  * Middleware to sanitize request body, query, and params
  */
 >>>>>>> origin/jules-responsive-layout-consistency-5760872167389438897
+=======
+/**
+ * Middleware to sanitize request body, query, and params
+ */
+>>>>>>> origin/refiner-database-migration-reversibility-3845862468620237629
 export const sanitizeInput = (req: Request, res: Response, next: NextFunction) => {
   if (req.body && typeof req.body === 'object') {
     req.body = sanitizeObject(req.body);
   }
+
   if (req.query && typeof req.query === 'object') {
-    req.query = sanitizeObject(req.query) as typeof req.query;
+    req.query = sanitizeObject(req.query);
   }
+
   if (req.params && typeof req.params === 'object') {
+<<<<<<< HEAD
     req.params = sanitizeObject(req.params) as typeof req.params;
   }
 <<<<<<< HEAD
@@ -136,6 +171,11 @@ export const sanitizeInput = (req: Request, res: Response, next: NextFunction) =
 =======
 
 >>>>>>> origin/jules-responsive-layout-consistency-5760872167389438897
+=======
+    req.params = sanitizeObject(req.params);
+  }
+
+>>>>>>> origin/refiner-database-migration-reversibility-3845862468620237629
   next();
 };
 

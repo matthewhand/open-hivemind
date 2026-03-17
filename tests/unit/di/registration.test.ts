@@ -73,12 +73,16 @@ describe('DI Service Registration Logging', () => {
     expect(mockLogger.debug).toHaveBeenCalledWith('Registering SecureConfigManager');
     expect(mockLogger.debug).toHaveBeenCalledWith('Registering BotConfigurationManager class');
 <<<<<<< HEAD
+<<<<<<< HEAD
     expect(mockLogger.debug).toHaveBeenCalledWith(
       'Registering UserConfigStore (re-registering instance)'
     );
 =======
     expect(mockLogger.debug).toHaveBeenCalledWith('Registering UserConfigStore (re-registering instance)');
 >>>>>>> origin/jules-responsive-layout-consistency-5760872167389438897
+=======
+    expect(mockLogger.debug).toHaveBeenCalledWith('Registering UserConfigStore (re-registering instance)');
+>>>>>>> origin/refiner-database-migration-reversibility-3845862468620237629
     expect(mockLogger.debug).toHaveBeenCalledWith('Registering ProviderConfigManager');
 
     // Verify completion log (info level)

@@ -19,26 +19,17 @@ export class HivemindCLI {
   private setupCommands(): void {
     this.program.name('hivemind').description('Hivemind AI Bot Management CLI').version('1.0.0');
 
-    // Try resolving from container if we registered them (though CLI might be run before app startup)
-    const botConfigManager = container.isRegistered(TOKENS.BotConfigurationManager)
-      ? container.resolve<BotConfigurationManager>(TOKENS.BotConfigurationManager)
-      : BotConfigurationManager.getInstance();
-
-    const databaseManager = container.isRegistered(TOKENS.DatabaseManager)
-      ? container.resolve<DatabaseManager>(TOKENS.DatabaseManager)
-      : DatabaseManager.getInstance();
-
     // Bot management commands
-    new BotCommandHandler(botConfigManager, databaseManager).setup(this.program);
+    new BotCommandHandler().setup(this.program);
 
     // Database commands
-    new DatabaseCommandHandler(databaseManager).setup(this.program);
+    new DatabaseCommandHandler().setup(this.program);
 
     // Server management commands
     new ServerCommandHandler().setup(this.program);
 
     // Configuration commands
-    new ConfigCommandHandler(botConfigManager).setup(this.program);
+    new ConfigCommandHandler().setup(this.program);
   }
 
   public run(argv: string[]): void {

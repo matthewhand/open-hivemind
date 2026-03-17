@@ -9,10 +9,13 @@ import uiReducer from './slices/uiSlice';
 import performanceReducer from './slices/performanceSlice';
 import websocketReducer from './slices/websocketSlice';
 <<<<<<< HEAD
+<<<<<<< HEAD
 import Logger from '../utils/logger';
 
 =======
 >>>>>>> origin/jules-responsive-layout-consistency-5760872167389438897
+=======
+>>>>>>> origin/refiner-database-migration-reversibility-3845862468620237629
 
 const rootReducer = combineReducers({
   [apiSlice.reducerPath]: apiSlice.reducer,
@@ -77,10 +80,14 @@ const initializeApp = () => {
         });
       } catch (e) {
 <<<<<<< HEAD
+<<<<<<< HEAD
         Logger.error(`Failed to load setting ${setting}:`, e);
 =======
         console.error(`Failed to load setting ${setting}:`, e);
 >>>>>>> origin/jules-responsive-layout-consistency-5760872167389438897
+=======
+        console.error(`Failed to load setting ${setting}:`, e);
+>>>>>>> origin/refiner-database-migration-reversibility-3845862468620237629
       }
     }
   });

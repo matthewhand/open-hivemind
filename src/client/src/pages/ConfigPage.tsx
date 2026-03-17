@@ -18,10 +18,14 @@ const ConfigPage: React.FC = () => {
         title="Integrations & Configuration"
         description="Manage system integrations and global defaults."
 <<<<<<< HEAD
+<<<<<<< HEAD
         icon={<Plug className="w-6 h-6" />}
 =======
         icon={Plug}
 >>>>>>> origin/jules-responsive-layout-consistency-5760872167389438897
+=======
+        icon={Plug}
+>>>>>>> origin/refiner-database-migration-reversibility-3845862468620237629
         gradient="secondary"
       />
 

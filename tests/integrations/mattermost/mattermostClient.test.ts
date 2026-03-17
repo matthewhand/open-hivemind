@@ -3,11 +3,14 @@ import MattermostClient from '../../../packages/adapter-mattermost/src/mattermos
 
 jest.mock('axios');
 <<<<<<< HEAD
+<<<<<<< HEAD
 jest.mock('@hivemind/shared-types', () => ({
   isSafeUrl: jest.fn().mockResolvedValue(true)
 }));
 =======
 >>>>>>> origin/jules-responsive-layout-consistency-5760872167389438897
+=======
+>>>>>>> origin/refiner-database-migration-reversibility-3845862468620237629
 
 describe('MattermostClient', () => {
   let client: MattermostClient;

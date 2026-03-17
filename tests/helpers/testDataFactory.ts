@@ -236,6 +236,7 @@ export const slackConfigData: ConfigTestData = {
     SLACK_MODE: 'rtm',
     WELCOME_RESOURCE_URL: 'https://custom.example.com/welcome',
     REPORT_ISSUE_URL: 'https://custom.example.com/report',
+<<<<<<< HEAD
   },
 };
 
@@ -343,6 +344,8 @@ export const openaiConfigData: ConfigTestData = {
       'text-embedding-3-small',
       'text-embedding-ada-002',
     ],
+=======
+>>>>>>> origin/refiner-database-migration-reversibility-3845862468620237629
   },
 };
 

@@ -1,5 +1,9 @@
 import { useDispatch, useSelector, type TypedUseSelectorHook } from 'react-redux';
+<<<<<<< HEAD
 import type { RootState, AppDispatch } from '../store';
+=======
+import type { RootState, AppDispatch } from './index';
+>>>>>>> origin/refiner-database-migration-reversibility-3845862468620237629
 
 // Use throughout your app instead of plain `useDispatch` and `useSelector`
 export const useAppDispatch = () => useDispatch<AppDispatch>();
