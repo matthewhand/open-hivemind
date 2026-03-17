@@ -62,8 +62,17 @@ export async function listAgents(apiKey: string, apiUrl?: string): Promise<Agent
  * @param apiUrl - Optional API URL (defaults to https://api.letta.com/v1)
  * @returns Agent summary
  */
+<<<<<<< HEAD
 export async function getAgent(agentId: string, apiKey: string, apiUrl?: string): Promise<AgentSummary> {
   const baseURL = apiUrl || 'https://api.letta.com/v1';
+=======
+export async function getAgent(
+  agentId: string,
+  apiKey: string,
+  apiUrl?: string
+): Promise<AgentSummary> {
+  const baseUrl = apiUrl || 'https://api.letta.com/v1';
+>>>>>>> origin/refiner-comma-separated-input-ux-5264879587366086815
 
   const client = new Letta({
 <<<<<<< HEAD

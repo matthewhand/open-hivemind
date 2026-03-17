@@ -1,11 +1,11 @@
 import Debug from 'debug';
 import { Router, type Request, type Response } from 'express';
 import { authenticate, requireAdmin } from '../../auth/middleware';
+import { getTrustedMcpReposConfig } from '../../config/trustedMcpRepos';
 import { DatabaseManager } from '../../database/DatabaseManager';
 import { MCPService } from '../../mcp/MCPService';
 import ApiMonitorService from '../../services/ApiMonitorService';
 import { webUIStorage } from '../../storage/webUIStorage';
-import { getTrustedMcpReposConfig } from '../../config/trustedMcpRepos';
 import { getRelevantEnvVars } from '../../utils/envUtils';
 import { isSafeUrl } from '../../utils/ssrfGuard';
 import {

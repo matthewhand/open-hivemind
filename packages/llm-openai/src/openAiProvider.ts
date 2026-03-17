@@ -2,11 +2,15 @@ import Debug from 'debug';
 import { OpenAI } from 'openai';
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 import type { OpenAIConfig } from '@src/types/config';
 =======
 >>>>>>> origin/jules-responsive-layout-consistency-5760872167389438897
 =======
 >>>>>>> origin/refiner-database-migration-reversibility-3845862468620237629
+=======
+import type { OpenAIConfig } from '@src/types/config';
+>>>>>>> origin/refiner-comma-separated-input-ux-5264879587366086815
 import {
   ApiError,
   BaseHivemindError,
@@ -17,7 +21,6 @@ import {
 import openaiConfig from '@config/openaiConfig';
 import type { ILlmProvider } from '@llm/interfaces/ILlmProvider';
 import type { IMessage } from '@message/interfaces/IMessage';
-import type { OpenAIConfig } from '@src/types/config';
 
 const debug = Debug('app:openAiProvider');
 
@@ -36,7 +39,14 @@ export class OpenAiProvider implements ILlmProvider {
     maxTokens?: number;
   };
 
-  constructor(config?: OpenAIConfig & { timeout?: number; organization?: string; temperature?: number; maxTokens?: number }) {
+  constructor(
+    config?: OpenAIConfig & {
+      timeout?: number;
+      organization?: string;
+      temperature?: number;
+      maxTokens?: number;
+    }
+  ) {
     this.config = config || { apiKey: '' };
   }
 

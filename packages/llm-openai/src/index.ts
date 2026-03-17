@@ -1,7 +1,14 @@
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
+=======
+import type { PluginManifest } from '../../../src/plugins/PluginLoader';
+import type { OpenAIConfig } from '../../../src/types/config';
+import { OpenAiProvider } from './openAiProvider';
+
+>>>>>>> origin/refiner-comma-separated-input-ux-5264879587366086815
 export * from './openAiProvider';
 =======
 export { OpenAiProvider, openAiProvider } from './openAiProvider';
@@ -11,6 +18,7 @@ export * from './openAiProvider';
 >>>>>>> origin/refiner-database-migration-reversibility-3845862468620237629
 export { default as openAiService, OpenAiService } from './OpenAiService';
 
+<<<<<<< HEAD
 import { OpenAiProvider } from './openAiProvider';
 >>>>>>> origin/jules-responsive-layout-consistency-5760872167389438897
 import type { PluginManifest } from '../../../src/plugins/PluginLoader';
@@ -20,6 +28,8 @@ import { OpenAiProvider } from './openAiProvider';
 export * from './openAiProvider';
 export { default as openAiService, OpenAiService } from './OpenAiService';
 
+=======
+>>>>>>> origin/refiner-comma-separated-input-ux-5264879587366086815
 /** Standard factory — preferred entry point for PluginLoader */
 export function create(
   config?: OpenAIConfig & {

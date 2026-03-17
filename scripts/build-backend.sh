@@ -18,15 +18,15 @@ fi
 echo "[build:backend] starting at $(timestamp) with NODE_OPTIONS=${NODE_OPTIONS}"
 set -x
 <<<<<<< HEAD
+<<<<<<< HEAD
 pnpm exec tsc --noEmitOnError false --skipLibCheck || \
 =======
 npx tsc --noEmitOnError false --skipLibCheck || \
 >>>>>>> origin/refiner-database-migration-reversibility-3845862468620237629
   echo 'TypeScript compilation completed with warnings, but build succeeded'
+=======
+npx tsc --noEmitOnError false --skipLibCheck || true
+echo 'TypeScript compilation completed with warnings, but build succeeded'
+>>>>>>> origin/refiner-comma-separated-input-ux-5264879587366086815
 set +x
 echo "[build:backend] finished at $(timestamp)"
-
-if [[ "${POST_SLEEP}" -gt 0 ]]; then
-  echo "[build:backend] sleeping for ${POST_SLEEP}s to keep container alive"
-  sleep "${POST_SLEEP}"
-fi

@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import { OpenSwarmProvider } from './OpenSwarmProvider';
 <<<<<<< HEAD
 <<<<<<< HEAD
@@ -7,6 +8,10 @@ import { create, manifest } from './index';
 =======
 import { create, manifest } from './index';
 >>>>>>> origin/refiner-database-migration-reversibility-3845862468620237629
+=======
+import { create, manifest } from './index';
+import { OpenSwarmProvider } from './OpenSwarmProvider';
+>>>>>>> origin/refiner-comma-separated-input-ux-5264879587366086815
 
 jest.mock('axios', () => ({
   post: jest.fn(),

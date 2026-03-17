@@ -90,10 +90,22 @@ test.describe('Bot Create Page Screenshots', () => {
         contentType: 'application/json',
         body: JSON.stringify({
           data: [
-            { id: 'github-tools', name: 'GitHub Integration Server', description: 'Provides actions to search repos, open PRs, and review code.' },
-            { id: 'fs-reader', name: 'File System Server', description: 'Read-only access to specific local directories.' },
-            { id: 'db-query', name: 'Database Query Server', description: 'Allows safe, read-only SQL queries to the analytics database.' }
-          ]
+            {
+              id: 'github-tools',
+              name: 'GitHub Integration Server',
+              description: 'Provides actions to search repos, open PRs, and review code.',
+            },
+            {
+              id: 'fs-reader',
+              name: 'File System Server',
+              description: 'Read-only access to specific local directories.',
+            },
+            {
+              id: 'db-query',
+              name: 'Database Query Server',
+              description: 'Allows safe, read-only SQL queries to the analytics database.',
+            },
+          ],
         }),
       });
     });
