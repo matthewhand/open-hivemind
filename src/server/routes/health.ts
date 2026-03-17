@@ -1,6 +1,7 @@
 import os from 'os';
 import process from 'process';
 import { Router, type NextFunction, type Request, type Response } from 'express';
+import { DatabaseManager } from '../../database/DatabaseManager';
 import { MetricsCollector } from '../../monitoring/MetricsCollector';
 import ApiMonitorService from '../../services/ApiMonitorService';
 import { ErrorLogger } from '../../utils/errorLogger';
@@ -17,6 +18,12 @@ router.get('/', (req, res) => {
     timestamp: new Date().toISOString(),
     version: '1.0.0',
     uptime: process.uptime(),
+<<<<<<< HEAD
+=======
+    checks: {
+      database: dbStatus,
+    },
+>>>>>>> origin/fix/memory-leak-inactivity-11251779731564442311
     memory: {
       used: Math.round(memoryUsage.heapUsed / 1024 / 1024),
       total: Math.round(memoryUsage.heapTotal / 1024 / 1024),

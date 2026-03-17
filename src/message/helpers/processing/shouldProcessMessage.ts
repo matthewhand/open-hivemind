@@ -1,8 +1,16 @@
+<<<<<<< HEAD
 import debugFn from 'debug';
 import messageConfig from '@config/messageConfig';
 import type { IMessage } from '@message/interfaces/IMessage';
 
 const debug = debugFn('hivemind:message:shouldProcessMessage');
+=======
+import debug from 'debug';
+import messageConfig from '@config/messageConfig';
+import type { IMessage } from '@message/interfaces/IMessage';
+
+const d = debug('app:shouldProcessMessage');
+>>>>>>> origin/fix/memory-leak-inactivity-11251779731564442311
 
 /**
  * Returns the minimum interval in milliseconds for processing messages.

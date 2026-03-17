@@ -1,7 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import Badge from './Badge';
+<<<<<<< HEAD
 import { Loading as LoadingSpinner } from './Loading';
+=======
+import LoadingSpinner from '../LoadingSpinner';
+>>>>>>> origin/fix/memory-leak-inactivity-11251779731564442311
 import { Alert } from './Alert';
 
 interface ModelOption {

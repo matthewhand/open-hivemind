@@ -1,5 +1,9 @@
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
+<<<<<<< HEAD
 import type { RootState } from '../../store';
+=======
+import type { RootState } from '../store';
+>>>>>>> origin/fix/memory-leak-inactivity-11251779731564442311
 import type {
   Bot,
   ConfigResponse,

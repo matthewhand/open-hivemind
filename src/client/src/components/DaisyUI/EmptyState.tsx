@@ -1,6 +1,10 @@
 import React from 'react';
 import type { LucideIcon } from 'lucide-react';
+<<<<<<< HEAD
 import Button from './Button';
+=======
+import { Button } from './Button';
+>>>>>>> origin/fix/memory-leak-inactivity-11251779731564442311
 
 interface EmptyStateProps {
   icon: LucideIcon;
