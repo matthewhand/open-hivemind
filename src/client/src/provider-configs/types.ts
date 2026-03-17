@@ -25,7 +25,6 @@ export interface ProviderConfigSchema {
 }
 
 export interface ProviderConfigField {
-  sensitive?: boolean;
   name: string;
   label: string;
   type: 'text' | 'password' | 'number' | 'url' | 'json' | 'select' | 'multiselect' | 'boolean' | 'textarea' | 'model-autocomplete' | 'keyvalue' | 'checkbox';
