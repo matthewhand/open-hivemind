@@ -1,4 +1,4 @@
-import { randomBytes } from 'crypto';
+import { randomUUID } from 'crypto';
 import type { Server as HttpServer } from 'http';
 import os from 'os';
 import Debug from 'debug';
@@ -156,7 +156,7 @@ export class WebSocketService {
   public recordMessageFlow(event: Omit<MessageFlowEvent, 'id' | 'timestamp'>): void {
     const messageEvent: MessageFlowEvent = {
       ...event,
-      id: `msg_${Date.now()}_${randomBytes(5).toString('hex')}`,
+      id: `msg_${Date.now()}_${randomUUID()}`,
       timestamp: new Date().toISOString(),
     };
 
@@ -188,7 +188,7 @@ export class WebSocketService {
   ): void {
     const alertEvent: AlertEvent = {
       ...alert,
-      id: `alert_${Date.now()}_${randomBytes(5).toString('hex')}`,
+      id: `alert_${Date.now()}_${randomUUID()}`,
       timestamp: new Date().toISOString(),
       status: 'active',
     };
