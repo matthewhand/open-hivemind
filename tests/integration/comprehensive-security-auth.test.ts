@@ -620,7 +620,7 @@ describe('COMPREHENSIVE SECURITY & AUTHENTICATION TESTS - PHASE 4', () => {
               expect(
                 response.headers['access-control-allow-origin'] ||
                   response.headers['Access-Control-Allow-Origin']
-              ).toBeDefined();
+              ).toBeTruthy();
             }
           }
         },
