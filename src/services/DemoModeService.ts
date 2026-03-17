@@ -6,15 +6,8 @@
  */
 
 import Debug from 'debug';
-<<<<<<< HEAD
 import { BotConfigurationManager } from '../config/BotConfigurationManager';
 import { UserConfigStore } from '../config/UserConfigStore';
-=======
-import { inject, injectable, singleton } from 'tsyringe';
-import { type BotConfigurationManager } from '../config/BotConfigurationManager';
-import { type UserConfigStore } from '../config/UserConfigStore';
-import { TOKENS } from '../di/container';
->>>>>>> origin/refiner-promise-handling-personas-11974248204293140303
 
 const debug = Debug('app:DemoModeService');
 
@@ -238,12 +231,6 @@ export class DemoModeService {
    * Generate a simulated AI response
    */
   public generateDemoResponse(message: string, botName: string): string {
-<<<<<<< HEAD
-=======
-    if (message === null || message === undefined) {
-      throw new Error('Message cannot be null or undefined');
-    }
->>>>>>> origin/refiner-promise-handling-personas-11974248204293140303
     const responses = this.getContextualResponses(message, botName);
     const randomIndex = Math.floor(Math.random() * responses.length);
     return responses[randomIndex];

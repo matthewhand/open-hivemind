@@ -1,20 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useMemo } from 'react';
-<<<<<<< HEAD
 import type { Persona, PersonaCategory} from '../../types';
 import { DEFAULT_PERSONA } from '../../types';
 import { Card, Button, Input, Badge } from '../DaisyUI';
-<<<<<<< HEAD
-=======
-import type { Persona, PersonaCategory } from '../../types/bot';
-import { DEFAULT_PERSONA } from '../../types/bot';
-import Card from '../DaisyUI/Card';
-import Button from '../DaisyUI/Button';
-import Input from '../DaisyUI/Input';
-import Badge from '../DaisyUI/Badge';
->>>>>>> origin/refiner-barrel-export-audit-4424264890390605711
-=======
->>>>>>> origin/refiner-database-migration-reversibility-3845862468620237629
 import {
   Search as SearchIcon,
   User as UserIcon,

@@ -1,8 +1,4 @@
 import { type NextFunction, type Request, type Response } from 'express';
-<<<<<<< HEAD
-=======
-import { type AuthMiddlewareRequest } from '@src/auth/types';
->>>>>>> origin/refiner-promise-handling-personas-11974248204293140303
 import { Logger } from '@src/common/logger';
 
 export interface AuditLogEntry {
@@ -77,14 +73,7 @@ export const auditMiddleware = (action: string, resource: string) => {
           action,
           resource,
           resourceId: req.params.id || req.params.name || req.params.key || req.params.userId,
-<<<<<<< HEAD
           userId: (req as any).user?.id || (req as any).user?.username || 'anonymous',
-=======
-          userId:
-            (req as AuthMiddlewareRequest).user?.id ||
-            (req as AuthMiddlewareRequest).user?.username ||
-            'anonymous',
->>>>>>> origin/refiner-promise-handling-personas-11974248204293140303
           ip:
             req.ip ||
             req.connection?.remoteAddress ||
@@ -135,14 +124,7 @@ export const auditMiddlewareWithChanges = (
           action,
           resource,
           resourceId: req.params.id || req.params.name || req.params.key || req.params.userId,
-<<<<<<< HEAD
           userId: (req as any).user?.id || (req as any).user?.username || 'anonymous',
-=======
-          userId:
-            (req as AuthMiddlewareRequest).user?.id ||
-            (req as AuthMiddlewareRequest).user?.username ||
-            'anonymous',
->>>>>>> origin/refiner-promise-handling-personas-11974248204293140303
           ip:
             req.ip ||
             req.connection?.remoteAddress ||
@@ -186,14 +168,7 @@ export const logAuditEvent = (
     action,
     resource,
     resourceId: options.resourceId || req.params.id || req.params.name || req.params.key,
-<<<<<<< HEAD
     userId: (req as any).user?.id || (req as any).user?.username || 'anonymous',
-=======
-    userId:
-      (req as AuthMiddlewareRequest).user?.id ||
-      (req as AuthMiddlewareRequest).user?.username ||
-      'anonymous',
->>>>>>> origin/refiner-promise-handling-personas-11974248204293140303
     ip:
       req.ip ||
       req.connection?.remoteAddress ||

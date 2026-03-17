@@ -166,38 +166,10 @@ export const CommaSeparatedInput: React.FC<CommaSeparatedInputProps> = ({
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> origin/refiner-comma-separated-input-ux-5264879587366086815
-    const newVal = e.target.value;
-    if (newVal.includes(',')) {
-      const parts = newVal.split(',');
-      const textToCommit = parts.slice(0, -1).join(',');
-      const remainingText = parts[parts.length - 1];
-
-      if (textToCommit.trim()) {
-        commitInput(textToCommit);
-      }
-      setInputValue(remainingText);
-    } else {
-      setInputValue(newVal);
-      setShowSuggestions(true);
-      if (internalError) {
-        setInternalError(null);
-      }
-<<<<<<< HEAD
-=======
-=======
->>>>>>> origin/refiner-database-migration-reversibility-3845862468620237629
     setInputValue(e.target.value);
     setShowSuggestions(true);
     if (internalError) {
       setInternalError(null);
->>>>>>> origin/jules-responsive-layout-consistency-5760872167389438897
-=======
->>>>>>> origin/refiner-comma-separated-input-ux-5264879587366086815
     }
   };
 

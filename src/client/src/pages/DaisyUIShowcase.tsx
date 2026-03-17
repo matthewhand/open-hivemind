@@ -1,16 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState } from 'react';
 import { BotChatTimeline } from '../components/BotChatTimeline';
-<<<<<<< HEAD
-<<<<<<< HEAD
-import PageHeader from '../components/DaisyUI/PageHeader';
-import { LayoutTemplate } from 'lucide-react';
-=======
 import BotChatBubbles from '../components/BotChatBubbles';
->>>>>>> origin/jules-responsive-layout-consistency-5760872167389438897
-=======
-import BotChatBubbles from '../components/BotChatBubbles';
->>>>>>> origin/refiner-database-migration-reversibility-3845862468620237629
 
 /**
  * DaisyUI Component Showcase

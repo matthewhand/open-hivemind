@@ -56,17 +56,7 @@ router.get('/system-status', async (req, res) => {
       },
     };
 
-<<<<<<< HEAD
     logAdminAction(req as any, 'VIEW', 'system-status', 'success', 'System status retrieved');
-=======
-    logAdminAction(
-      req as AuditedRequest,
-      'VIEW',
-      'system-status',
-      'success',
-      'System status retrieved'
-    );
->>>>>>> origin/refiner-promise-handling-personas-11974248204293140303
     return res.json({ success: true, data: systemStatus });
   } catch (error) {
     debug('Error getting system status:', error);
@@ -176,17 +166,7 @@ router.get('/env-status', async (req, res) => {
       };
     });
 
-<<<<<<< HEAD
     logAdminAction(req as any, 'VIEW', 'env-status', 'success', 'Environment status retrieved');
-=======
-    logAdminAction(
-      req as AuditedRequest,
-      'VIEW',
-      'env-status',
-      'success',
-      'Environment status retrieved'
-    );
->>>>>>> origin/refiner-promise-handling-personas-11974248204293140303
     return res.json({ success: true, data: envStatus });
   } catch (error) {
     debug('Error getting environment status:', error);

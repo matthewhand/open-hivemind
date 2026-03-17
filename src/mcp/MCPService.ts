@@ -1,12 +1,5 @@
 import Debug from 'debug';
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
 import { SlackMessageProvider } from '@hivemind/message-slack';
->>>>>>> origin/jules-responsive-layout-consistency-5760872167389438897
-=======
-import { SlackMessageProvider } from '@hivemind/message-slack';
->>>>>>> origin/refiner-database-migration-reversibility-3845862468620237629
 import { BotConfigurationManager } from '@config/BotConfigurationManager';
 import { MCPGuard, type MCPGuardConfig } from './MCPGuard';
 
@@ -339,19 +332,12 @@ export class MCPService {
 
     try {
       if (normalized === 'slack') {
-<<<<<<< HEAD
-<<<<<<< HEAD
-        const SlackMessageProvider = {} as any;
-=======
->>>>>>> origin/jules-responsive-layout-consistency-5760872167389438897
-=======
->>>>>>> origin/refiner-database-migration-reversibility-3845862468620237629
         const provider = new SlackMessageProvider();
         return await provider.getForumOwner(forumId);
       }
 
       if (normalized === 'discord') {
-        const DiscordMessageProvider = {} as any; //await import('@hivemind/message-discord');
+        const { DiscordMessageProvider } = await import('@hivemind/message-discord');
         const provider = new DiscordMessageProvider();
         return await provider.getForumOwner(forumId);
       }

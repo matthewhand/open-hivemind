@@ -22,8 +22,6 @@ import {
 import { apiService } from '../services/api';
 import type { Socket } from 'socket.io-client';
 import io from 'socket.io-client';
-import Logger from '../utils/logger';
-
 
 interface EndpointStatus {
   id: string;
@@ -77,7 +75,7 @@ const ApiStatusMonitor: React.FC<ApiStatusMonitorProps> = ({
       setLastRefresh(new Date());
       setLoading(false);
     } catch (error) {
-      Logger.error('Failed to fetch API status:', error);
+      console.error('Failed to fetch API status:', error);
       setLoading(false);
     }
   }, []);
@@ -88,11 +86,7 @@ const ApiStatusMonitor: React.FC<ApiStatusMonitorProps> = ({
     });
 
     newSocket.on('connect', () => {
-<<<<<<< HEAD
-      Logger.log('Connected to WebSocket for API monitoring');
-=======
       console.log('Connected to WebSocket for API monitoring');
->>>>>>> origin/refiner-database-migration-reversibility-3845862468620237629
     });
 
     newSocket.on('api_status_update', (data: { endpoints: EndpointStatus[]; overall: any; timestamp: string }) => {
@@ -125,7 +119,7 @@ const ApiStatusMonitor: React.FC<ApiStatusMonitorProps> = ({
     });
 
     newSocket.on('disconnect', () => {
-      Logger.log('Disconnected from WebSocket');
+      console.log('Disconnected from WebSocket');
     });
 
     setSocket(newSocket);
@@ -197,7 +191,7 @@ const ApiStatusMonitor: React.FC<ApiStatusMonitorProps> = ({
       await apiService.startApiMonitoring();
       setMonitoringActive(true);
     } catch (error) {
-      Logger.error('Failed to start monitoring:', error);
+      console.error('Failed to start monitoring:', error);
     }
   };
 
@@ -206,7 +200,7 @@ const ApiStatusMonitor: React.FC<ApiStatusMonitorProps> = ({
       await apiService.stopApiMonitoring();
       setMonitoringActive(false);
     } catch (error) {
-      Logger.error('Failed to stop monitoring:', error);
+      console.error('Failed to stop monitoring:', error);
     }
   };
 
@@ -240,21 +234,7 @@ const ApiStatusMonitor: React.FC<ApiStatusMonitorProps> = ({
     );
   }
 
-  // Combine 6 separate O(N) reduce passes into a single O(N) pass
-  // to calculate api monitoring statistics and prevent unnecessary O(N) re-computations
-  const { totalAvgResponseTime, totalChecks, successfulChecks } = React.useMemo(() => {
-    return apiStatus.endpoints.reduce(
-      (acc, ep) => {
-        acc.totalAvgResponseTime += ep.averageResponseTime || 0;
-        acc.totalChecks += ep.totalChecks || 0;
-        acc.successfulChecks += ep.successfulChecks || 0;
-        return acc;
-      },
-      { totalAvgResponseTime: 0, totalChecks: 0, successfulChecks: 0 }
-    );
-  }, [apiStatus.endpoints]);
-
-  const accordionItems = React.useMemo(() => [
+  const accordionItems = [
     {
       id: 'monitoring-details',
       title: 'Monitoring Details',
@@ -267,18 +247,19 @@ const ApiStatusMonitor: React.FC<ApiStatusMonitorProps> = ({
             </h4>
             <p className="text-sm">
               • Average Response Time: {formatResponseTime(
-                totalAvgResponseTime / (apiStatus.endpoints.length || 1)
+                apiStatus.endpoints.reduce((sum, ep) => sum + ep.averageResponseTime, 0) / apiStatus.endpoints.length || 0,
               )}
             </p>
             <p className="text-sm">
-              • Total Checks: {totalChecks}
+              • Total Checks: {apiStatus.endpoints.reduce((sum, ep) => sum + ep.totalChecks, 0)}
             </p>
             <p className="text-sm">
-              • Successful Checks: {successfulChecks}
+              • Successful Checks: {apiStatus.endpoints.reduce((sum, ep) => sum + ep.successfulChecks, 0)}
             </p>
             <p className="text-sm">
-              • Overall Success Rate: {totalChecks > 0 ?
-                Math.round((successfulChecks / totalChecks) * 100) : 0}%
+              • Overall Success Rate: {apiStatus.endpoints.reduce((sum, ep) => sum + ep.totalChecks, 0) > 0 ?
+                Math.round((apiStatus.endpoints.reduce((sum, ep) => sum + ep.successfulChecks, 0) /
+                  apiStatus.endpoints.reduce((sum, ep) => sum + ep.totalChecks, 0)) * 100) : 0}%
             </p>
           </div>
           <div className="min-w-[300px] flex-1">
@@ -298,7 +279,7 @@ const ApiStatusMonitor: React.FC<ApiStatusMonitorProps> = ({
         </div>
       ),
     },
-  ], [apiStatus.timestamp, apiStatus.endpoints.length, monitoringActive, socket?.connected, totalAvgResponseTime, totalChecks, successfulChecks]);
+  ];
 
   return (
     <Card>

@@ -6,7 +6,7 @@ import Debug from 'debug';
 
 const debug = Debug('app:auditLogger');
 
-interface AuditEvent {
+export interface AuditEvent {
   id: string;
   timestamp: string;
   user: string;

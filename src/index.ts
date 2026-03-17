@@ -7,11 +7,6 @@ import path from 'path';
 import type { NextFunction, Request, Response } from 'express';
 import swarmRouter from '@src/admin/swarmRoutes';
 import { applyRateLimiting } from '@src/middleware/rateLimiter';
-import { AdvancedMonitor } from '@src/monitoring/AdvancedMonitor';
-import { EnhancedAlertManager } from '@src/monitoring/EnhancedAlertManager';
-import { IntegrationAnomalyDetector } from '@src/monitoring/IntegrationAnomalyDetector';
-import { ProviderMetricsCollector } from '@src/monitoring/ProviderMetricsCollector';
-import { TracingService } from '@src/monitoring/TracingService';
 import { authenticateToken } from '@src/server/middleware/auth';
 import { ipWhitelist } from '@src/server/middleware/security';
 import adminApiRouter from '@src/server/routes/admin';
@@ -45,6 +40,7 @@ import AnomalyDetectionService from '@src/services/AnomalyDetectionService';
 import DemoModeService from '@src/services/DemoModeService';
 import StartupGreetingService from '@src/services/StartupGreetingService';
 import { validateRequiredEnvVars } from '@src/utils/envValidation';
+
 import { getLlmProvider } from '@llm/getLlmProvider';
 import { IdleResponseManager } from '@message/management/IdleResponseManager';
 import Logger from '@common/logger';
@@ -581,13 +577,6 @@ async function main() {
     }
 
     // Register HTTP server with ShutdownCoordinator
-<<<<<<< HEAD
-<<<<<<< HEAD
-
-=======
->>>>>>> origin/jules-responsive-layout-consistency-5760872167389438897
-=======
->>>>>>> origin/refiner-database-migration-reversibility-3845862468620237629
     shutdownCoordinator.registerHttpServer(server);
 
     // Initialize Vite in Development Mode (with HMR)
@@ -642,26 +631,16 @@ async function main() {
       if (fs.existsSync(frontendDistPath)) {
         appLogger.info('📱 Frontend assets served from', { path: frontendDistPath });
       } else {
-        appLogger.warn(
-          '⚠️  Frontend build not found - attempting auto-build via `npm run build:frontend`'
-        );
+        appLogger.warn('⚠️  Frontend build not found - attempting auto-build via `npm run build:frontend`');
         const { execFile } = require('child_process');
-        execFile(
-          'npm',
-          ['run', 'build:frontend'],
-          { cwd: process.cwd() },
-          (err: Error | null, stdout: string, stderr: string) => {
-            if (err) {
-              appLogger.warn(
-                '⚠️  Auto-build failed (devDependencies may be pruned in production). Run `npm run build:frontend` manually.',
-                { error: err.message }
-              );
-            } else {
-              appLogger.info('✅ Frontend auto-build succeeded', { stdout: stdout.trim() });
-            }
-            if (stderr) appLogger.debug('build:frontend stderr', { stderr: stderr.trim() });
+        execFile('npm', ['run', 'build:frontend'], { cwd: process.cwd() }, (err: Error | null, stdout: string, stderr: string) => {
+          if (err) {
+            appLogger.warn('⚠️  Auto-build failed (devDependencies may be pruned in production). Run `npm run build:frontend` manually.', { error: err.message });
+          } else {
+            appLogger.info('✅ Frontend auto-build succeeded', { stdout: stdout.trim() });
           }
-        );
+          if (stderr) appLogger.debug('build:frontend stderr', { stderr: stderr.trim() });
+        });
       }
     });
   } else {

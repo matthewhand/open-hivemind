@@ -9,7 +9,7 @@ import { WebSocketService } from './WebSocketService';
 
 const debug = Debug('app:RealTimeNotificationService');
 
-interface NotificationEvent {
+export interface NotificationEvent {
   id: string;
   timestamp: string;
   type: 'agent' | 'mcp' | 'system' | 'error' | 'config';
@@ -20,13 +20,13 @@ interface NotificationEvent {
   metadata?: Record<string, any>;
 }
 
-interface SubscriptionFilter {
+export interface SubscriptionFilter {
   types?: string[];
   severities?: string[];
   sources?: string[];
 }
 
-class RealTimeNotificationService extends EventEmitter {
+export class RealTimeNotificationService extends EventEmitter {
   private static instance: RealTimeNotificationService | null = null;
   private notifications: NotificationEvent[] = [];
   private maxNotifications = 1000;

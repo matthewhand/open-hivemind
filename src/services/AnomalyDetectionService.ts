@@ -1,23 +1,8 @@
-import * as crypto from 'crypto';
 import { EventEmitter } from 'events';
 import Debug from 'debug';
-<<<<<<< HEAD
-<<<<<<< HEAD
-import { inject, injectable, singleton } from 'tsyringe';
-import { type Anomaly, type DatabaseManager } from '../database/DatabaseManager';
-import { TOKENS } from '../di/container';
-import { type MetricsCollector } from '../monitoring/MetricsCollector';
-import { type AlertEvent, type WebSocketService } from '../server/services/WebSocketService';
-=======
 import { DatabaseManager, type Anomaly } from '../database/DatabaseManager';
 import { MetricsCollector } from '../monitoring/MetricsCollector';
 import { WebSocketService, type AlertEvent } from '../server/services/WebSocketService';
->>>>>>> origin/jules-responsive-layout-consistency-5760872167389438897
-=======
-import { DatabaseManager, type Anomaly } from '../database/DatabaseManager';
-import { MetricsCollector } from '../monitoring/MetricsCollector';
-import { WebSocketService, type AlertEvent } from '../server/services/WebSocketService';
->>>>>>> origin/refiner-database-migration-reversibility-3845862468620237629
 
 const debug = Debug('app:AnomalyDetectionService');
 
@@ -176,7 +161,7 @@ export class AnomalyDetectionService extends EventEmitter {
     const explanation = `Value ${value} deviates from mean ${mean.toFixed(2)} by ${zScore.toFixed(2)} standard deviations (${stdDev.toFixed(2)})`;
 
     return {
-      id: `anomaly_${Date.now()}_${crypto.randomUUID()}`,
+      id: `anomaly_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
       timestamp: new Date(),
       metric,
       value,

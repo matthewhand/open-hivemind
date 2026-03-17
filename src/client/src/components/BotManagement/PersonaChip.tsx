@@ -1,14 +1,6 @@
 import React from 'react';
-<<<<<<< HEAD
 import type { Persona } from '../../types';
 import { Badge } from '../DaisyUI';
-<<<<<<< HEAD
-=======
-import type { Persona } from '../../types/bot';
-import Badge from '../DaisyUI/Badge';
->>>>>>> origin/refiner-barrel-export-audit-4424264890390605711
-=======
->>>>>>> origin/refiner-database-migration-reversibility-3845862468620237629
 
 interface PersonaChipProps {
   persona: Persona;

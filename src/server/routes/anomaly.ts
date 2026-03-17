@@ -1,20 +1,6 @@
 import Debug from 'debug';
 import { Router } from 'express';
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
 import type { AuthMiddlewareRequest } from '../../auth/types';
->>>>>>> origin/jules-responsive-layout-consistency-5760872167389438897
-=======
-import type { AuthMiddlewareRequest } from '../../auth/types';
->>>>>>> origin/refiner-database-migration-reversibility-3845862468620237629
-=======
->>>>>>> origin/refiner-comma-separated-input-ux-5264879587366086815
-=======
-import type { AuthMiddlewareRequest } from '../../auth/types';
->>>>>>> origin/refiner-promise-handling-personas-11974248204293140303
 import { DatabaseManager } from '../../database/DatabaseManager';
 import { AnomalyDetectionService } from '../../services/AnomalyDetectionService';
 
@@ -91,17 +77,7 @@ router.get('/history', async (req, res) => {
 // POST /api/anomalies/:id/resolve - Resolve an anomaly
 router.post('/:id/resolve', async (req, res) => {
   try {
-<<<<<<< HEAD
-<<<<<<< HEAD
-    const { container } = require('../../di/container');
-    const { TOKENS } = require('../../di/container');
-    const service = container.resolve(TOKENS.AnomalyDetectionService);
-=======
     const service = AnomalyDetectionService.getInstance();
->>>>>>> origin/jules-responsive-layout-consistency-5760872167389438897
-=======
-    const service = AnomalyDetectionService.getInstance();
->>>>>>> origin/refiner-database-migration-reversibility-3845862468620237629
     const success = await service.resolveAnomaly(req.params.id);
 
     if (success) {

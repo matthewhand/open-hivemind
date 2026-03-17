@@ -1,7 +1,5 @@
-import { randomBytes } from 'crypto';
 import { promises as fs } from 'fs';
 import { join } from 'path';
-import { randomBytes } from 'crypto';
 import Debug from 'debug';
 import { Router } from 'express';
 import { ErrorUtils } from '@src/types/errors';
@@ -24,8 +22,6 @@ interface AgentConfig {
   };
   isActive: boolean;
   envOverrides?: Record<string, { isOverridden: boolean; redactedValue?: string }>;
-  createdAt: string;
-  updatedAt: string;
 }
 
 interface Persona {
@@ -177,21 +173,7 @@ router.post('/', async (req, res) => {
 
     const newAgent: AgentConfig = {
       ...agentData,
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-      id: `agent_${Date.now()}_${randomBytes(5).toString('hex')}`,
-=======
       id: `agent_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
->>>>>>> origin/jules-responsive-layout-consistency-5760872167389438897
-=======
-      id: `agent_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
->>>>>>> origin/refiner-database-migration-reversibility-3845862468620237629
-=======
-      id: `agent_${Date.now()}_${randomBytes(5).toString('hex')}`,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
->>>>>>> origin/security-secure-id-generation-3529167712319656025
     };
 
     agents.push(newAgent);
@@ -264,7 +246,7 @@ router.delete('/:id', async (req, res) => {
     const filteredAgents = agents.filter((agent) => agent.id !== id);
 
     if (filteredAgents.length === agents.length) {
-      return res.status(200).json({ success: true, message: 'Agent already deleted or not found' });
+      return res.status(404).json({ error: 'Agent not found' });
     }
 
     await saveJsonConfig(AGENTS_CONFIG_FILE, filteredAgents);
@@ -428,9 +410,7 @@ router.delete('/personas/:key', async (req, res) => {
     const filteredPersonas = personas.filter((p) => p.key !== key);
 
     if (filteredPersonas.length === personas.length) {
-      return res
-        .status(200)
-        .json({ success: true, message: 'Persona already deleted or not found' });
+      return res.status(404).json({ error: 'Persona not found' });
     }
 
     await saveJsonConfig(PERSONAS_CONFIG_FILE, filteredPersonas);

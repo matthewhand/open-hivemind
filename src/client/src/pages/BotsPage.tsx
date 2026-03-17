@@ -15,6 +15,8 @@ import SearchFilterBar from '../components/SearchFilterBar';
 import EmptyState from '../components/DaisyUI/EmptyState';
 import { LoadingSpinner } from '../components/DaisyUI/Loading';
 import { apiService } from '../services/api';
+import { withRetry } from '../utils/withRetry';
+import { ErrorService } from '../services/ErrorService';
 import type { BotConfig, ProviderModalState } from '../types/bot';
 import { LLMProviderType, MessageProviderType } from '../types/bot';
 import BotCard from '../components/BotManagement/BotCard';
@@ -37,8 +39,6 @@ const BotsPage: React.FC = () => {
   const [chatHistory, setChatHistory] = useState<any[]>([]);
   const [logFilter, setLogFilter] = useState('');
 
-<<<<<<< HEAD
-=======
   // Create Bot State
   const [showCreateModal, setShowCreateModal] = useState(false);
 
@@ -160,10 +160,6 @@ const BotsPage: React.FC = () => {
     });
   };
 
-<<<<<<< HEAD
->>>>>>> origin/jules-responsive-layout-consistency-5760872167389438897
-=======
->>>>>>> origin/refiner-database-migration-reversibility-3845862468620237629
   const toast = {
     success: useSuccessToast(),
     error: useErrorToast()
@@ -174,10 +170,11 @@ const BotsPage: React.FC = () => {
   const fetchBots = useCallback(async () => {
     try {
       setLoading(true);
-      const json = await apiService.request<any>('/api/bots');
+      const json = await withRetry(() => apiService.get<any>('/api/bots'));
       setBots(json.data?.bots || []);
       setError(null);
     } catch (err) {
+      ErrorService.report(err, { action: 'fetchBots' });
       setError(err instanceof Error ? err.message : 'Failed to fetch bots');
       toast.error('Failed to load bots');
     } finally {
@@ -200,18 +197,19 @@ const BotsPage: React.FC = () => {
 
   const handleCreateBot = async (botData: any) => {
     try {
-      const response = await apiService.request<any>('/api/bots', { method: 'POST', body: JSON.stringify(botData) });
+      const response = await apiService.post<any>('/api/bots', botData);
       setBots(prev => [...prev, response.data.bot]);
       setIsCreateModalOpen(false);
       toast.success('Bot created successfully');
     } catch (err) {
+      ErrorService.report(err, { action: 'createBot', botData });
       toast.error(err instanceof Error ? err.message : 'Failed to create bot');
     }
   };
 
   const handleUpdateBot = async (botData: any) => {
     try {
-      const response = await apiService.request<any>(`/api/bots/${editingBot?.id}`, { method: 'PUT', body: JSON.stringify(botData) });
+      const response = await apiService.put<any>(`/api/bots/${editingBot?.id}`, botData);
       setBots(prev => prev.map(b => b.id === editingBot?.id ? response.data.bot : b));
       setEditingBot(null);
       toast.success('Bot updated successfully');
@@ -221,6 +219,7 @@ const BotsPage: React.FC = () => {
         setPreviewBot(response.data.bot);
       }
     } catch (err) {
+      ErrorService.report(err, { action: 'updateBot', botId: editingBot?.id });
       toast.error(err instanceof Error ? err.message : 'Failed to update bot');
     }
   };
@@ -228,7 +227,7 @@ const BotsPage: React.FC = () => {
   const handleDeleteBot = async () => {
     if (!deletingBot) return;
     try {
-      await apiService.request(`/api/bots/${deletingBot.id}`, { method: 'DELETE' });
+      await apiService.delete(`/api/bots/${deletingBot.id}`);
       setBots(prev => prev.filter(b => b.id !== deletingBot.id));
       if (previewBot?.id === deletingBot.id) {
         setPreviewBot(null);
@@ -236,6 +235,7 @@ const BotsPage: React.FC = () => {
       setDeletingBot(null);
       toast.success('Bot deleted successfully');
     } catch (err) {
+      ErrorService.report(err, { action: 'deleteBot', botId: deletingBot.id });
       toast.error(err instanceof Error ? err.message : 'Failed to delete bot');
     }
   };
@@ -243,7 +243,7 @@ const BotsPage: React.FC = () => {
   const handleToggleBotStatus = async (bot: BotConfig) => {
     try {
       const newStatus = bot.status === 'active' ? 'inactive' : 'active';
-      const response = await apiService.request<any>(`/api/bots/${bot.id}/status`, { method: 'PATCH', body: JSON.stringify({ status: newStatus }) });
+      const response = await apiService.patch<any>(`/api/bots/${bot.id}/status`, { status: newStatus });
       setBots(prev => prev.map(b => b.id === bot.id ? { ...b, status: newStatus } : b));
       
       if (previewBot?.id === bot.id) {
@@ -252,6 +252,7 @@ const BotsPage: React.FC = () => {
       
       toast.success(`Bot ${newStatus === 'active' ? 'activated' : 'deactivated'} successfully`);
     } catch (err) {
+      ErrorService.report(err, { action: 'toggleBotStatus', botId: bot.id });
       toast.error(err instanceof Error ? err.message : 'Failed to update bot status');
     }
   };
@@ -273,15 +274,16 @@ const BotsPage: React.FC = () => {
     
     try {
       // Load initial activity
-      const activityJson = await apiService.request<any>(`/api/bots/${bot.id}/activity?limit=20`);
+      const activityJson = await withRetry(() => apiService.get<any>(`/api/bots/${bot.id}/activity?limit=20`));
       setActivityLogs(activityJson.data?.activity || []);
       
       // Load initial chat
-      const chatJson = await apiService.request<any>(`/api/bots/${bot.id}/chat?limit=20`);
+      const chatJson = await withRetry(() => apiService.get<any>(`/api/bots/${bot.id}/chat?limit=20`));
       setChatHistory(chatJson.data?.messages || []);
     } catch (err) {
+      ErrorService.report(err, { botId: bot.id, action: 'fetchBotPreviewData' });
       // Don't show toast for initial load failures to keep UI clean, but log error
-      Logger.error('Failed to load bot preview data:', err);
+      console.error('Failed to load bot preview data:', err);
     }
   };
 
@@ -346,21 +348,16 @@ const BotsPage: React.FC = () => {
             </div>
           </SearchFilterBar>
 
-          {error && (
-            <div className="alert alert-error shadow-sm">
+          {error && bots.length > 0 && (
+            <div className="alert alert-error shadow-sm mb-4">
               <AlertCircle className="w-5 h-5" />
               <span>{error}</span>
               <button className="btn btn-ghost btn-xs" onClick={fetchBots}>Try Again</button>
             </div>
           )}
 
-          {filteredBots.length === 0 ? (
+          {error && bots.length === 0 ? (
             <EmptyState
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
-=======
->>>>>>> origin/refiner-database-migration-reversibility-3845862468620237629
               icon={<AlertTriangle className="w-16 h-16 text-error/50" />}
               title="Failed to load swarm"
               description="We encountered an error while trying to load your AI agents. Please try again."
@@ -373,10 +370,6 @@ const BotsPage: React.FC = () => {
             />
           ) : filteredBots.length === 0 ? (
             <EmptyState
-<<<<<<< HEAD
->>>>>>> origin/jules-responsive-layout-consistency-5760872167389438897
-=======
->>>>>>> origin/refiner-database-migration-reversibility-3845862468620237629
               icon={<Bot className="w-16 h-16 text-base-content/20" />}
               title={searchQuery ? "No agents found" : "Your swarm is empty"}
               description={searchQuery ? "No agents match your search criteria." : "Start by creating your first specialized AI agent."}
@@ -500,9 +493,10 @@ const BotsPage: React.FC = () => {
                               const limit = e.target.value;
                               if (previewBot) {
                                 try {
-                                  const json = await apiService.request<any>(`/api/bots/${previewBot.id}/activity?limit=${limit}`);
+                                  const json = await withRetry(() => apiService.get<any>(`/api/bots/${previewBot.id}/activity?limit=${limit}`));
                                   setActivityLogs(json.data?.activity || []);
                                 } catch (err) {
+                                  ErrorService.report(err, { botId: previewBot.id, action: 'fetchActivityLogs' });
                                   toast.error('Failed to load bot activity logs');
                                   setActivityLogs([]);
                                 }

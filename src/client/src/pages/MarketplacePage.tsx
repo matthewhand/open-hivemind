@@ -12,7 +12,7 @@ import {
   MessageCircle as MessageIcon,
   Database as MemoryIcon,
   Wrench as ToolIcon,
-  Github as GitHubIcon,
+  GitHub as GitHubIcon,
   AlertCircle as AlertIcon,
   CheckCircle as CheckIcon,
   X as CloseIcon,

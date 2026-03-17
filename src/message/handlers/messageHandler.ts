@@ -336,9 +336,7 @@ export async function handleMessage(
 
         // Track and trim history (skip for stateful providers that manage their own)
         const maxHistoryTokens = Number(botConfig.LLM_MAX_HISTORY_TOKENS || 2000);
-        const providerWantsHistory = llmProvider.supportsHistory
-          ? llmProvider.supportsHistory()
-          : true;
+        const providerWantsHistory = llmProvider.supportsHistory ? llmProvider.supportsHistory() : true;
         const trimmedHistory = providerWantsHistory
           ? trimHistoryToTokenBudget(historyMessages, {
               inputBudgetTokens: maxHistoryTokens,

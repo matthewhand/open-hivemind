@@ -38,11 +38,3 @@ export {
   defaultErrorFactory,
   type IErrorFactory,
 } from './errors';
-<<<<<<< HEAD
-<<<<<<< HEAD
-export { isSafeUrl } from './ssrfGuard';
-export { getRandomDelay } from './getRandomDelay';
-=======
->>>>>>> origin/jules-responsive-layout-consistency-5760872167389438897
-=======
->>>>>>> origin/refiner-database-migration-reversibility-3845862468620237629

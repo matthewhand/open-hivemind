@@ -75,15 +75,9 @@ export class ApiMonitorService extends EventEmitter {
     this.setMaxListeners(20);
   }
 
-<<<<<<< HEAD
   public static getInstance(): ApiMonitorService {
     if (!ApiMonitorService.instance) {
       ApiMonitorService.instance = new ApiMonitorService();
-=======
-  public addEndpoint(config: EndpointConfig): void {
-    if (!config || !config.id || !config.url) {
-      throw new Error('Invalid endpoint configuration');
->>>>>>> origin/refiner-promise-handling-personas-11974248204293140303
     }
     return ApiMonitorService.instance;
   }

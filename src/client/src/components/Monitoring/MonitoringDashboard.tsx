@@ -1,12 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useWebSocket } from '../../contexts/WebSocketContext';
-import Card from '../DaisyUI/Card';
-import Badge from '../DaisyUI/Badge';
-import { Alert } from '../DaisyUI/Alert';
-import Button from '../DaisyUI/Button';
-import PageHeader from '../DaisyUI/PageHeader';
-import StatsCards from '../DaisyUI/StatsCards';
+import { Card, Badge, Alert, Button, PageHeader, StatsCards } from '../DaisyUI';
 import {
   Activity,
   RotateCcw,
@@ -14,7 +9,7 @@ import {
   Cpu,
   Clock,
   ChartBar,
-  AlertCircle,
+  AlertTriangle,
 } from 'lucide-react';
 import SystemHealth from '../SystemHealth';
 import BotStatusCard from '../BotStatusCard';
@@ -23,12 +18,7 @@ import DistributedTraceWaterfall, { TraceSpan } from './DistributedTraceWaterfal
 import BotActivityWaterfallMonitor from './BotActivityWaterfallMonitor';
 import { apiService } from '../../services/api';
 import type { StatusResponse, Bot } from '../../services/api';
-import Logger from '../../utils/logger';
 
-<<<<<<< HEAD
-
-=======
->>>>>>> origin/refiner-database-migration-reversibility-3845862468620237629
 // Mock trace data for the Distributed Trace Waterfall removed since we use dynamic bot data
 
 interface BotWithStatus extends Bot {
@@ -84,11 +74,11 @@ const MonitoringDashboard: React.FC<MonitoringDashboardProps> = ({
       // Refresh all monitoring data
       const [systemData, configData] = await Promise.all([
         apiService.getStatus().catch((err) => {
-          Logger.error('[Monitoring] getStatus failed:', err);
+          console.error('[Monitoring] getStatus failed:', err);
           return { bots: [] } as any;
         }),
         apiService.getConfig().catch((err) => {
-          Logger.error('[Monitoring] getConfig failed:', err);
+          console.error('[Monitoring] getConfig failed:', err);
           return { bots: [] };
         }),
       ]);
@@ -131,7 +121,7 @@ const MonitoringDashboard: React.FC<MonitoringDashboardProps> = ({
         onRefresh();
       }
     } catch (error) {
-      Logger.error('Failed to refresh monitoring data:', error);
+      console.error('Failed to refresh monitoring data:', error);
     } finally {
       setLoading(false);
     }
@@ -183,7 +173,6 @@ const MonitoringDashboard: React.FC<MonitoringDashboardProps> = ({
   };
 
   const overallStatus = getOverallHealthStatus();
-  console.log("Rendering MonitoringDashboard...");
 
   const tabs = [
     { icon: <Heart className="w-5 h-5" />, label: 'Infrastructure Health' },
@@ -215,7 +204,7 @@ const MonitoringDashboard: React.FC<MonitoringDashboardProps> = ({
         ? Math.round((bots.filter(bot => bot.statusData?.status === 'error').length / bots.length) * 100)
         : 0}%`,
       description: 'Bots with errors',
-      icon: <AlertCircle className="w-8 h-8" />,
+      icon: <AlertTriangle className="w-8 h-8" />, // AlertTriangle needs import or use generic
       color: 'error' as const,
     },
     {
@@ -230,8 +219,8 @@ const MonitoringDashboard: React.FC<MonitoringDashboardProps> = ({
     }
   ];
 
-  // Need to import AlertCircle
-  // Added AlertCircle to imports in the file block above (I'll need to make sure it's actually there)
+  // Need to import AlertTriangle
+  // Added AlertTriangle to imports in the file block above (I'll need to make sure it's actually there)
 
   return (
     <div className="flex-1 space-y-6">

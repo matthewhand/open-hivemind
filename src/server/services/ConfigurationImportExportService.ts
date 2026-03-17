@@ -15,7 +15,7 @@ import { ConfigurationVersionService } from './ConfigurationVersionService';
 
 const debug = Debug('app:ConfigurationImportExportService');
 
-interface ExportOptions {
+export interface ExportOptions {
   format: 'json' | 'yaml' | 'csv';
   includeVersions?: boolean;
   includeAuditLogs?: boolean;
@@ -25,7 +25,7 @@ interface ExportOptions {
   encryptionKey?: string;
 }
 
-interface ImportOptions {
+export interface ImportOptions {
   format: 'json' | 'yaml' | 'csv';
   overwrite?: boolean;
   validateOnly?: boolean;
@@ -33,7 +33,7 @@ interface ImportOptions {
   decryptionKey?: string;
 }
 
-interface ExportResult {
+export interface ExportResult {
   success: boolean;
   filePath?: string;
   size?: number;
@@ -41,7 +41,7 @@ interface ExportResult {
   error?: string;
 }
 
-interface ImportResult {
+export interface ImportResult {
   success: boolean;
   importedCount?: number;
   skippedCount?: number;
@@ -50,7 +50,7 @@ interface ImportResult {
   warnings?: string[];
 }
 
-interface BackupMetadata {
+export interface BackupMetadata {
   id: string;
   name: string;
   description?: string;
@@ -146,7 +146,7 @@ export class ConfigurationImportExportService {
 
       // Include versions if requested
       if (options.includeVersions) {
-        const validConfigIds = configs.map((c) => c.id).filter(Boolean) as number[];
+        const validConfigIds = configs.map(c => c.id).filter(Boolean) as number[];
         let versions: any[] = [];
         if (validConfigIds.length > 0) {
           const versionsMap = await this.dbManager.getBotConfigurationVersionsBulk(validConfigIds);
