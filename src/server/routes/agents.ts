@@ -23,8 +23,8 @@ interface AgentConfig {
   };
   isActive: boolean;
   envOverrides?: Record<string, { isOverridden: boolean; redactedValue?: string }>;
-  createdAt: string;
-  updatedAt: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 interface Persona {
@@ -164,7 +164,7 @@ router.get('/', async (req, res) => {
 // POST /api/agents - Create new agent
 router.post('/', async (req, res) => {
   try {
-    const agentData: Omit<AgentConfig, 'id'> = req.body;
+    const agentData: Omit<AgentConfig, 'id' | 'createdAt' | 'updatedAt'> = req.body;
 
     const agents = await loadJsonConfig<AgentConfig[]>(AGENTS_CONFIG_FILE, []);
 
