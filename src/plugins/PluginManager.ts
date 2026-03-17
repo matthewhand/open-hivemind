@@ -212,9 +212,12 @@ function validateRepoUrl(url: string): void {
       'Invalid repository URL protocol. Only http: and https: are allowed.'
     );
   }
-
   // Prevent argument injection via hostname or path
-  if (parsedUrl.hostname.includes(' ') || parsedUrl.pathname.includes(' ')) {
+  // Check for spaces (including URL-encoded %20)
+  if (parsedUrl.hostname.includes(' ') || 
+      parsedUrl.pathname.includes(' ') ||
+      /%20/i.test(parsedUrl.hostname) ||
+      /%20/i.test(parsedUrl.pathname)) {
     throw new PluginValidationError('Invalid repository URL: spaces not allowed.');
   }
 

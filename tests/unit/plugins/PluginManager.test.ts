@@ -311,4 +311,7 @@ describe('listInstalledPlugins', () => {
   it('rejects URLs with spaces in hostname or path', async () => {
     await expect(installPlugin('https://host name.com/repo')).rejects.toThrow(PluginValidationError);
     await expect(installPlugin('https://hostname.com/path with spaces')).rejects.toThrow(PluginValidationError);
+    // URL-encoded spaces should also be blocked
+    await expect(installPlugin('https://hostname%20.com/repo')).rejects.toThrow(PluginValidationError);
+    await expect(installPlugin('https://hostname.com/path%20with%20spaces')).rejects.toThrow(PluginValidationError);
   });
