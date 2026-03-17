@@ -1,7 +1,43 @@
 import { Router, type Request, type Response } from 'express';
 import { getAgent, listAgents } from '@hivemind/llm-letta';
+import { isSafeUrl } from '@hivemind/shared-types';
 
 const router = Router();
+
+/**
+ * Validates the Letta API URL against an allowlist and SSRF protection.
+ */
+async function validateLettaUrl(url: string): Promise<{ isValid: boolean; error?: string }> {
+  try {
+    const parsedUrl = new URL(url);
+    const hostname = parsedUrl.hostname.toLowerCase();
+
+    // 1. Strict allowlist for Letta cloud
+    const isLettaCloud = hostname === 'api.letta.com' || hostname.endsWith('.letta.com');
+
+    // 2. Allow local network if explicitly enabled
+    const allowLocal = process.env.ALLOW_LOCAL_NETWORK_ACCESS === 'true' || process.env.LETTA_ALLOW_LOCAL === 'true';
+
+    if (!isLettaCloud && !allowLocal) {
+      return {
+        isValid: false,
+        error: 'Target URL is not in the allowlist. Only *.letta.com is allowed by default.',
+      };
+    }
+
+    // 3. General SSRF protection (IP-based checks)
+    if (!(await isSafeUrl(url))) {
+      return {
+        isValid: false,
+        error: 'Target URL is blocked for security reasons (private/local network access).',
+      };
+    }
+
+    return { isValid: true };
+  } catch (error) {
+    return { isValid: false, error: 'Invalid URL format' };
+  }
+}
 
 /**
  * GET /api/letta/agents - List available Letta agents
@@ -15,6 +51,15 @@ router.get('/agents', async (req: Request, res: Response) => {
       (req.headers['x-letta-api-url'] as string) ||
       (req.query.apiUrl as string) ||
       'https://api.letta.com/v1';
+
+    // Security Check: SSRF Protection & Allowlist
+    const validation = await validateLettaUrl(apiUrl);
+    if (!validation.isValid) {
+      return res.status(403).json({
+        error: 'Security Warning',
+        message: validation.error,
+      });
+    }
 
     if (!apiKey) {
       return res.status(400).json({
@@ -47,6 +92,15 @@ router.get('/agents/:id', async (req: Request, res: Response) => {
       (req.headers['x-letta-api-url'] as string) ||
       (req.query.apiUrl as string) ||
       'https://api.letta.com/v1';
+
+    // Security Check: SSRF Protection & Allowlist
+    const validation = await validateLettaUrl(apiUrl);
+    if (!validation.isValid) {
+      return res.status(403).json({
+        error: 'Security Warning',
+        message: validation.error,
+      });
+    }
 
     if (!apiKey) {
       return res.status(400).json({
