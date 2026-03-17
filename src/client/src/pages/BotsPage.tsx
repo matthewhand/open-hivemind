@@ -111,7 +111,7 @@ const BotsPage: React.FC = () => {
   // Sync lifecycle error to UI error
   useEffect(() => {
     if (lifecycleError) {
-      setError(lifecycleError.message);
+      setUiError(lifecycleError.message);
     }
   }, [lifecycleError]);
 
