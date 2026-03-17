@@ -1,12 +1,16 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect } from 'react';
-import { Card, Badge, Button, DataTable, LoadingSpinner, EmptyState, StatsCards } from '../DaisyUI';
+import Card from '../DaisyUI/Card';
+import Badge from '../DaisyUI/Badge';
+import Button from '../DaisyUI/Button';
+import DataTable from '../DaisyUI/DataTable';
+import { LoadingSpinner } from '../DaisyUI/Loading';
+import EmptyState from '../DaisyUI/EmptyState';
+import StatsCards from '../DaisyUI/StatsCards';
 import SearchFilterBar from '../SearchFilterBar';
 import { useWebSocket } from '../../hooks/useWebSocket';
 import { apiService, ActivityEvent, ActivityResponse } from '../../services/api';
 import { Clock, Activity, AlertTriangle, MessageSquare, RefreshCw } from 'lucide-react';
-import Logger from '../../utils/logger';
-
 
 interface FilterOptions {
   agent?: string;
@@ -63,7 +67,7 @@ const ActivityMonitor: React.FC = () => {
       }
       setError(null);
     } catch (err: any) {
-      Logger.error('Failed to fetch activity:', err);
+      console.error('Failed to fetch activity:', err);
       setError('Failed to load activity history');
     } finally {
       setLoading(false);

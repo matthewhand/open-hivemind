@@ -1,6 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import Logger from '../../utils/logger';
-
 
 interface Metric {
   name: string;
@@ -27,7 +25,7 @@ const VisualFeedback: React.FC<VisualFeedbackProps> = ({ metrics, initialRating 
     // Here you would typically fetch real-time data
     // For demonstration, we'll just log updates
     const interval = setInterval(() => {
-      Logger.log('Fetching new metrics data...');
+      console.log('Fetching new metrics data...');
     }, 5000);
     return () => clearInterval(interval);
   }, []);

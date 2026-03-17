@@ -22,11 +22,6 @@ jobs:
         with:
           node-version: 20
 <<<<<<< HEAD
-<<<<<<< HEAD
-=======
-<<<<<<< HEAD
-=======
->>>>>>> origin/refiner-database-migration-reversibility-3845862468620237629
           cache: 'pnpm'
 
       - name: Install Playwright browsers
@@ -42,4 +37,3 @@ jobs:
           git add docs/screenshots/*.png
           git commit -m "chore: update documentation screenshots [skip ci]" || echo "No changes to commit"
           git push
->>>>>>> origin/jules-responsive-layout-consistency-5760872167389438897

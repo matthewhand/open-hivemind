@@ -144,17 +144,6 @@ module.exports = [
       '@typescript-eslint/explicit-function-return-type': 'off',
       '@typescript-eslint/explicit-module-boundary-types': 'off',
       'no-console': 'off',
-<<<<<<< HEAD
-<<<<<<< HEAD
-
-      // Enforce specific assertions over weak ones
-
-
-
-=======
->>>>>>> origin/jules-responsive-layout-consistency-5760872167389438897
-=======
->>>>>>> origin/refiner-database-migration-reversibility-3845862468620237629
     },
   },
   // Prettier config override to turn off conflicting rules

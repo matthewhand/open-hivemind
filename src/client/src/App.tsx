@@ -11,6 +11,7 @@ import { BotProvider } from './contexts/BotContext';
 import { WebSocketProvider } from './contexts/WebSocketContext';
 import ScrollToTop from './components/ScrollToTop';
 import { Toaster } from 'react-hot-toast';
+import { IntegrationProvider } from './components/IntegrationLoader';
 
 function App() {
   return (
@@ -22,10 +23,12 @@ function App() {
             <AuthProvider>
               <BotProvider>
                 <WebSocketProvider>
-                  <BrowserRouter>
-                    <ScrollToTop />
-                    <AppRouter />
-                  </BrowserRouter>
+                  <IntegrationProvider>
+                    <BrowserRouter>
+                      <ScrollToTop />
+                      <AppRouter />
+                    </BrowserRouter>
+                  </IntegrationProvider>
                 </WebSocketProvider>
               </BotProvider>
             </AuthProvider>

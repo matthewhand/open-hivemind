@@ -25,11 +25,6 @@ jobs:
           node-version: 20
 <<<<<<< HEAD
 <<<<<<< HEAD
-=======
-<<<<<<< HEAD
-=======
->>>>>>> origin/refiner-database-migration-reversibility-3845862468620237629
-<<<<<<< HEAD
 
       - name: Install dependencies
         run: pnpm install
@@ -64,4 +59,3 @@ jobs:
           name: playwright-report
           path: playwright-report
           if-no-files-found: ignore
->>>>>>> origin/jules-responsive-layout-consistency-5760872167389438897

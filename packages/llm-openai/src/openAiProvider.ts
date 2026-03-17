@@ -1,12 +1,5 @@
 import Debug from 'debug';
 import { OpenAI } from 'openai';
-<<<<<<< HEAD
-<<<<<<< HEAD
-import type { OpenAIConfig } from '@src/types/config';
-=======
->>>>>>> origin/jules-responsive-layout-consistency-5760872167389438897
-=======
->>>>>>> origin/refiner-database-migration-reversibility-3845862468620237629
 import {
   ApiError,
   BaseHivemindError,
@@ -14,6 +7,7 @@ import {
   NetworkError,
   TimeoutError,
 } from '@src/types/errorClasses';
+import { isSafeUrl } from '@hivemind/shared-types';
 import openaiConfig from '@config/openaiConfig';
 import type { ILlmProvider } from '@llm/interfaces/ILlmProvider';
 import type { IMessage } from '@message/interfaces/IMessage';
@@ -97,6 +91,9 @@ export class OpenAiProvider implements ILlmProvider {
     // Validate baseURL
     try {
       new URL(baseURL);
+      if (baseURL !== DEFAULT_BASE_URL && !(await isSafeUrl(baseURL))) {
+        throw new Error('Unsafe URL');
+      }
     } catch {
       baseURL = DEFAULT_BASE_URL;
     }
@@ -163,6 +160,15 @@ export class OpenAiProvider implements ILlmProvider {
     const apiKey = this.config.apiKey || openaiConfig.get('OPENAI_API_KEY');
     let baseURL = this.config.baseUrl || openaiConfig.get('OPENAI_BASE_URL') || DEFAULT_BASE_URL;
     const model = this.config.model || openaiConfig.get('OPENAI_MODEL') || 'gpt-4o'; // Text models like gpt-3.5-turbo-instruct?
+
+    try {
+      new URL(baseURL);
+      if (baseURL !== DEFAULT_BASE_URL && !(await isSafeUrl(baseURL))) {
+        throw new Error('Unsafe URL');
+      }
+    } catch {
+      baseURL = DEFAULT_BASE_URL;
+    }
 
     const openai = new OpenAI({ apiKey, baseURL });
 

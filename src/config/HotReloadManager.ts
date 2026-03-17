@@ -22,7 +22,7 @@ export interface ConfigurationChange {
   rollbackAvailable: boolean;
 }
 
-export interface HotReloadResult {
+interface HotReloadResult {
   success: boolean;
   message: string;
   affectedBots: string[];

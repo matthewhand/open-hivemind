@@ -2,24 +2,20 @@ import { withRetry } from '../utils/withRetry';
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Clock, Download, LayoutList, GitBranch, RefreshCw, X } from 'lucide-react';
-import {
-  Alert,
-  Badge,
-  Button,
-  Card,
-  DataTable,
-  StatsCards,
-  Timeline,
-  Toggle,
-  PageHeader,
-  LoadingSpinner,
-  EmptyState,
-  Input,
-} from '../components/DaisyUI';
+import { Alert } from '../components/DaisyUI/Alert';
+import Badge from '../components/DaisyUI/Badge';
+import Button from '../components/DaisyUI/Button';
+import Card from '../components/DaisyUI/Card';
+import DataTable from '../components/DaisyUI/DataTable';
+import StatsCards from '../components/DaisyUI/StatsCards';
+import Timeline from '../components/DaisyUI/Timeline';
+import Toggle from '../components/DaisyUI/Toggle';
+import PageHeader from '../components/DaisyUI/PageHeader';
+import { LoadingSpinner } from '../components/DaisyUI/Loading';
+import EmptyState from '../components/DaisyUI/EmptyState';
+import Input from '../components/DaisyUI/Input';
 import SearchFilterBar from '../components/SearchFilterBar';
 import { apiService, ActivityEvent, ActivityResponse } from '../services/api';
-import Logger from '../utils/logger';
-
 
 const ActivityPage: React.FC = () => {
   const [data, setData] = useState<ActivityResponse | null>(null);
@@ -69,8 +65,7 @@ const ActivityPage: React.FC = () => {
         () => apiService.getActivity(params),
         maxRetries,
         1000,
-        (err, attempt, max) => {
-           const delayMs = 1000 * Math.pow(2, attempt - 1);
+        (err, attempt, max, delayMs) => {
            console.log(`Retrying fetchActivity in ${delayMs}ms (attempt ${attempt}/${max})`);
            setRetryCount(attempt);
            setRetryDelay(delayMs);
@@ -86,7 +81,7 @@ const ActivityPage: React.FC = () => {
     } catch (err: any) {
       const message = err instanceof Error ? err.message : 'Failed to fetch activity';
       setError(message);
-      Logger.error('Error fetching activity:', err);
+      console.error('Error fetching activity:', err);
     } finally {
       setLoading(false);
     }
@@ -317,7 +312,7 @@ const ActivityPage: React.FC = () => {
       <PageHeader
         title="Activity Feed"
         description="Real-time message flow and events"
-        icon={<Clock className="w-6 h-6" />}
+        icon={Clock}
         actions={
           <div className="flex items-center gap-2">
             {/* View Toggle */}

@@ -5,8 +5,6 @@ import { apiService } from '../services/api';
 import AlertPanel from '../components/Monitoring/AlertPanel';
 import StatusCard from '../components/Monitoring/StatusCard';
 import Modal from '../components/DaisyUI/Modal';
-import Logger from '../utils/logger';
-
 
 interface SystemConfig {
   refreshInterval: number;
@@ -92,7 +90,7 @@ const SystemManagement: React.FC = () => {
       const status = await apiService.getApiEndpointsStatus();
       setApiStatus(status);
     } catch (error) {
-      Logger.error('Failed to fetch API status:', error);
+      console.error('Failed to fetch API status:', error);
     }
   };
 
@@ -106,15 +104,17 @@ const SystemManagement: React.FC = () => {
   const fetchPerformanceData = async () => {
     setIsPerformanceLoading(true);
     try {
-      const [info, overrides] = await Promise.all([
+      const [infoResult, overridesResult] = await Promise.allSettled([
         apiService.getSystemInfo(),
         apiService.getEnvOverrides()
       ]);
+      const info = infoResult.status === 'fulfilled' ? infoResult.value : { systemInfo: {} };
+      const overrides = overridesResult.status === 'fulfilled' ? overridesResult.value : { data: { envVars: {} } };
       setSystemInfo(info.systemInfo);
       // Backend returns { success: true, data: { envVars: ... } }
       setEnvOverrides(overrides.data?.envVars || overrides.envVars);
     } catch (error) {
-      Logger.error('Failed to fetch performance data:', error);
+      console.error('Failed to fetch performance data:', error);
     } finally {
       setIsPerformanceLoading(false);
 
@@ -137,7 +137,7 @@ const SystemManagement: React.FC = () => {
         }
       }));
     } catch (error) {
-      Logger.error('Failed to fetch system config:', error);
+      console.error('Failed to fetch system config:', error);
     }
   };
 
@@ -157,7 +157,7 @@ const SystemManagement: React.FC = () => {
       }));
       setBackups(mappedBackups.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));
     } catch (error) {
-      Logger.error('Failed to fetch backup history:', error);
+      console.error('Failed to fetch backup history:', error);
     }
   };
 
@@ -170,7 +170,7 @@ const SystemManagement: React.FC = () => {
       // Persist to backend (user settings)
       await apiService.updateGlobalConfig({ [key]: value });
     } catch (error) {
-      Logger.error('Failed to update configuration:', error);
+      console.error('Failed to update configuration:', error);
     } finally {
       setIsLoading(false);
     }
@@ -180,7 +180,7 @@ const SystemManagement: React.FC = () => {
     try {
       await apiService.acknowledgeAlert(alertId);
     } catch (error) {
-      Logger.error('Failed to acknowledge alert:', error);
+      console.error('Failed to acknowledge alert:', error);
     }
   };
 
@@ -188,7 +188,7 @@ const SystemManagement: React.FC = () => {
     try {
       await apiService.resolveAlert(alertId);
     } catch (error) {
-      Logger.error('Failed to resolve alert:', error);
+      console.error('Failed to resolve alert:', error);
     }
   };
 
@@ -220,7 +220,7 @@ const SystemManagement: React.FC = () => {
       alert('Backup created successfully');
       await fetchBackupHistory();
     } catch (error) {
-      Logger.error('Failed to create backup:', error);
+      console.error('Failed to create backup:', error);
       alert('Failed to create backup: ' + (error as Error).message);
     } finally {
       setIsCreatingBackup(false);
@@ -234,7 +234,7 @@ const SystemManagement: React.FC = () => {
         alert('System restored successfully. Reloading...');
         setTimeout(() => window.location.reload(), 2000);
       } catch (error) {
-        Logger.error('Failed to restore backup:', error);
+        console.error('Failed to restore backup:', error);
         alert('Failed to restore backup: ' + (error as Error).message);
       }
     }
@@ -247,7 +247,7 @@ const SystemManagement: React.FC = () => {
         alert('Backup deleted');
         setBackups(prev => prev.filter(backup => backup.id !== backupId));
       } catch (error) {
-        Logger.error('Failed to delete backup:', error);
+        console.error('Failed to delete backup:', error);
         alert('Failed to delete backup: ' + (error as Error).message);
       }
     }

@@ -6,11 +6,11 @@ echo "🏗️  Building Netlify deployment..."
 # 1. Build Backend
 echo "🔹 Building backend..."
 # Use existing build script but ensure it doesn't sleep
-BUILD_POST_BUILD_SLEEP_SECONDS=0 pnpm run build:backend
+BUILD_POST_BUILD_SLEEP_SECONDS=0 npm run build:backend
 
 # 2. Build Frontend
 echo "🔹 Building frontend..."
-pnpm run build:frontend
+npm run build:frontend
 
 # 3. Prepare Publish Directory
 echo "🔹 Preparing publish directory..."
@@ -25,13 +25,8 @@ fi
 # 5. Compiling Serverless Function
 echo "🔹 Compiling serverless function..."
 mkdir -p dist/netlify/functions
-<<<<<<< HEAD
-# Use pnpm exec to compile the specific file safely in CI
-pnpm exec tsc src/netlify/functions/server.ts \
-=======
 # Use npx tsc to compile the specific file
 npx tsc src/netlify/functions/server.ts \
->>>>>>> origin/refiner-database-migration-reversibility-3845862468620237629
   --outDir dist/netlify/functions \
   --target es2018 \
   --module commonjs \

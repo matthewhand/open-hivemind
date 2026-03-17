@@ -1,36 +1,34 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect, useCallback } from 'react';
-import { Alert, Toggle, Button } from '../DaisyUI';
+import { Alert } from '../DaisyUI/Alert';
+import Toggle from '../DaisyUI/Toggle';
+import Button from '../DaisyUI/Button';
 import { MessageSquare, Bot, Users, Zap, Info } from 'lucide-react';
 
 interface MessagingConfig {
   onlyWhenSpokenTo: boolean;
   allowBotToBot: boolean;
-  botResponseModifier: number;
   unsolicitedAddressed: boolean;
   unsolicitedUnaddressed: boolean;
   baseChance: number;
   graceWindowMs: number;
   /** Whether the bot injects the user's identity hint when mentioned (MESSAGE_ADD_USER_HINT). */
   addUserHint: boolean;
-  mentionBonus?: number;
-  questionBonus?: number;
-  shortLengthPenalty?: number;
+  semanticRelevanceEnabled: boolean;
+  semanticRelevanceBonus: number;
 }
 
 const SettingsMessaging: React.FC = () => {
   const [settings, setSettings] = useState<MessagingConfig>({
     onlyWhenSpokenTo: true,
     allowBotToBot: false,
-    botResponseModifier: -0.1,
     unsolicitedAddressed: true,
     unsolicitedUnaddressed: false,
     baseChance: 5,
     graceWindowMs: 300000,
     addUserHint: false,
-    mentionBonus: 0.5,
-    questionBonus: 0.2,
-    shortLengthPenalty: 0,
+    semanticRelevanceEnabled: true,
+    semanticRelevanceBonus: 10,
   });
   const [loading, setLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -54,15 +52,13 @@ const SettingsMessaging: React.FC = () => {
       setSettings({
         onlyWhenSpokenTo: data.MESSAGE_ONLY_WHEN_SPOKEN_TO ?? true,
         allowBotToBot: data.MESSAGE_ALLOW_BOT_TO_BOT_UNADDRESSED ?? false,
-        botResponseModifier: data.MESSAGE_BOT_RESPONSE_MODIFIER ?? -0.1,
         unsolicitedAddressed: data.MESSAGE_UNSOLICITED_ADDRESSED ?? true,
         unsolicitedUnaddressed: data.MESSAGE_UNSOLICITED_UNADDRESSED ?? false,
         baseChance: (data.MESSAGE_UNSOLICITED_BASE_CHANCE ?? 0.01) * 100,
         graceWindowMs: data.MESSAGE_ONLY_WHEN_SPOKEN_TO_GRACE_WINDOW_MS ?? 300000,
         addUserHint: data.MESSAGE_ADD_USER_HINT ?? false,
-        mentionBonus: data.MESSAGE_MENTION_BONUS ?? 0.5,
-        questionBonus: data.MESSAGE_QUESTION_BONUS ?? 0.2,
-        shortLengthPenalty: data.MESSAGE_SHORT_LENGTH_PENALTY ?? 0,
+        semanticRelevanceEnabled: data.MESSAGE_SEMANTIC_RELEVANCE_ENABLED ?? true,
+        semanticRelevanceBonus: data.MESSAGE_SEMANTIC_RELEVANCE_BONUS ?? 10,
       });
     } catch {
       setAlert({
@@ -92,15 +88,13 @@ const SettingsMessaging: React.FC = () => {
           message: {
             MESSAGE_ONLY_WHEN_SPOKEN_TO: settings.onlyWhenSpokenTo,
             MESSAGE_ALLOW_BOT_TO_BOT_UNADDRESSED: settings.allowBotToBot,
-            MESSAGE_BOT_RESPONSE_MODIFIER: settings.botResponseModifier,
             MESSAGE_UNSOLICITED_ADDRESSED: settings.unsolicitedAddressed,
             MESSAGE_UNSOLICITED_UNADDRESSED: settings.unsolicitedUnaddressed,
             MESSAGE_UNSOLICITED_BASE_CHANCE: settings.baseChance / 100,
             MESSAGE_ONLY_WHEN_SPOKEN_TO_GRACE_WINDOW_MS: settings.graceWindowMs,
             MESSAGE_ADD_USER_HINT: settings.addUserHint,
-            MESSAGE_MENTION_BONUS: settings.mentionBonus,
-            MESSAGE_QUESTION_BONUS: settings.questionBonus,
-            MESSAGE_SHORT_LENGTH_PENALTY: settings.shortLengthPenalty,
+            MESSAGE_SEMANTIC_RELEVANCE_ENABLED: settings.semanticRelevanceEnabled,
+            MESSAGE_SEMANTIC_RELEVANCE_BONUS: settings.semanticRelevanceBonus,
           },
         }),
       });
@@ -222,33 +216,6 @@ const SettingsMessaging: React.FC = () => {
               <span className="text-sm">Collision avoidance is active to prevent bot storms</span>
             </div>
           )}
-
-
-          <div className="form-control mt-4">
-            <label className="label py-1">
-              <span className="label-text text-sm font-medium">Bot Response Modifier</span>
-              <span className="badge badge-secondary font-mono">{settings.botResponseModifier.toFixed(2)}</span>
-            </label>
-            <input
-              type="range"
-              min="-1.0"
-              max="1.0"
-              step="0.05"
-              value={settings.botResponseModifier}
-              onChange={(e) => handleChange('botResponseModifier', parseFloat(e.target.value))}
-              className="range range-sm range-secondary"
-              disabled={!settings.allowBotToBot}
-            />
-            <div className="w-full flex justify-between text-xs px-2 mt-1 text-base-content/50">
-              <span>-1.0 (Strong Penalty)</span>
-              <span>0.0</span>
-              <span>+1.0 (Strong Bonus)</span>
-            </div>
-            <p className="text-xs text-base-content/60 mt-2">
-              Modifies the base chance to respond when the message is from another bot.
-            </p>
-          </div>
-
         </div>
 
         {/* Unsolicited Replies */}
@@ -291,69 +258,6 @@ const SettingsMessaging: React.FC = () => {
           </div>
         </div>
 
-        {/* Probability Modifiers Legend */}
-        <div className="card bg-base-200/50 p-4 lg:col-span-2">
-          <h6 className="text-md font-semibold mb-4 flex items-center gap-2">
-            <Zap className="w-4 h-4 text-warning" />
-            Dynamic Probability Modifiers Legend
-          </h6>
-          <p className="text-sm text-base-content/70 mb-4">
-            Adjust the modifiers below to fine-tune how the bot calculates its chance to reply.
-          </p>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="form-control">
-              <label className="label py-1">
-                <span className="label-text text-sm font-medium">Mention Bonus</span>
-                <span className="badge badge-ghost font-mono text-xs">+{settings.mentionBonus ?? 0.5}</span>
-              </label>
-              <input
-                type="range"
-                min="0"
-                max="1.0"
-                step="0.1"
-                value={settings.mentionBonus ?? 0.5}
-                onChange={(e) => handleChange('mentionBonus', parseFloat(e.target.value))}
-                className="range range-sm range-warning"
-              />
-              <p className="text-xs text-base-content/60 mt-1">Bonus chance when bot is directly mentioned.</p>
-            </div>
-
-            <div className="form-control">
-              <label className="label py-1">
-                <span className="label-text text-sm font-medium">Question Bonus</span>
-                <span className="badge badge-ghost font-mono text-xs">+{settings.questionBonus ?? 0.2}</span>
-              </label>
-              <input
-                type="range"
-                min="0"
-                max="1.0"
-                step="0.1"
-                value={settings.questionBonus ?? 0.2}
-                onChange={(e) => handleChange('questionBonus', parseFloat(e.target.value))}
-                className="range range-sm range-warning"
-              />
-              <p className="text-xs text-base-content/60 mt-1">Bonus chance when message contains a question mark.</p>
-            </div>
-
-            <div className="form-control md:col-span-2">
-              <label className="label py-1">
-                <span className="label-text text-sm font-medium">Short Length Penalty</span>
-                <span className="badge badge-ghost font-mono text-xs">-{settings.shortLengthPenalty ?? 0}</span>
-              </label>
-              <input
-                type="range"
-                min="0"
-                max="1.0"
-                step="0.1"
-                value={settings.shortLengthPenalty ?? 0}
-                onChange={(e) => handleChange('shortLengthPenalty', parseFloat(e.target.value))}
-                className="range range-sm range-error"
-              />
-              <p className="text-xs text-base-content/60 mt-1">Penalty subtracted if message length is under 10 characters.</p>
-            </div>
-          </div>
-        </div>
-
         {/* Context & Additions */}
         <div className="card bg-base-200/50 p-4">
           <h6 className="text-md font-semibold mb-4 flex items-center gap-2">
@@ -361,7 +265,7 @@ const SettingsMessaging: React.FC = () => {
             Context &amp; Additions
           </h6>
 
-          <div className="form-control">
+          <div className="form-control mb-3">
             <label className="label cursor-pointer py-2">
               <div>
                 <span className="label-text font-medium">Add User Hint</span>
@@ -424,10 +328,7 @@ const SettingsMessaging: React.FC = () => {
               <span>50x</span>
             </div>
             <p className="text-xs text-base-content/60 mt-2">
-              Multiplier to apply when a message is semantically relevant and the bot has posted recently.
-              {settings.semanticRelevanceBonus <= 10 && " (Gentle boost for related topics)"}
-              {settings.semanticRelevanceBonus > 10 && settings.semanticRelevanceBonus <= 30 && " (Moderate boost for solid topic matches)"}
-              {settings.semanticRelevanceBonus > 30 && " (Aggressive boost for near exact matches)"}
+              Multiplier to apply when a message is semantically relevant and the bot has posted recently
             </p>
           </div>
         </div>
@@ -527,11 +428,6 @@ const SettingsMessaging: React.FC = () => {
                   <td>{settings.allowBotToBot ? '✅ true' : '➖ false'}</td>
                 </tr>
                 <tr>
-                  <td>Bot Response Modifier</td>
-                  <td>MESSAGE_BOT_RESPONSE_MODIFIER</td>
-                  <td>{settings.botResponseModifier.toFixed(2)}</td>
-                </tr>
-                <tr>
                   <td>Unsolicited Addressed</td>
                   <td>MESSAGE_UNSOLICITED_ADDRESSED</td>
                   <td>{settings.unsolicitedAddressed ? '✅ true' : '➖ false'}</td>
@@ -555,6 +451,16 @@ const SettingsMessaging: React.FC = () => {
                   <td>Add User Hint</td>
                   <td>MESSAGE_ADD_USER_HINT</td>
                   <td>{settings.addUserHint ? '✅ true' : '➖ false'}</td>
+                </tr>
+                <tr>
+                  <td>Semantic Relevance</td>
+                  <td>MESSAGE_SEMANTIC_RELEVANCE_ENABLED</td>
+                  <td>{settings.semanticRelevanceEnabled ? '✅ true' : '➖ false'}</td>
+                </tr>
+                <tr>
+                  <td>Semantic Relevance Bonus</td>
+                  <td>MESSAGE_SEMANTIC_RELEVANCE_BONUS</td>
+                  <td>{settings.semanticRelevanceBonus}</td>
                 </tr>
               </tbody>
             </table>

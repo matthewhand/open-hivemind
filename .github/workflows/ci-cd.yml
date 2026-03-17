@@ -33,14 +33,7 @@ jobs:
       - name: Audit for hardcoded secrets
         run: pnpm run audit:secrets
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
 >>>>>>> f4fe874f (ci: update workflows to strictly use pnpm instead of npm)
->>>>>>> origin/jules-responsive-layout-consistency-5760872167389438897
-=======
->>>>>>> f4fe874f (ci: update workflows to strictly use pnpm instead of npm)
->>>>>>> origin/refiner-database-migration-reversibility-3845862468620237629
       - name: Run lint
         run: pnpm run lint
 
@@ -58,11 +51,6 @@ jobs:
         run: |
           # Extract passing tests (adapt from existing)
 <<<<<<< HEAD
-<<<<<<< HEAD
-=======
-<<<<<<< HEAD
-=======
->>>>>>> origin/refiner-database-migration-reversibility-3845862468620237629
           PASSING_TESTS=$(pnpm test -- --silent | grep -oP '\d+(?= passed)' || echo 0)
           sed -i "s/Total Tests: [0-9,]\+ passing tests/Total Tests: $PASSING_TESTS passing tests/" README.md
           sed -i "s/badge\/tests-[0-9]\+%20passing/badge\/tests-$PASSING_TESTS%20passing/" README.md
@@ -146,4 +134,3 @@ jobs:
         run: flyctl deploy -c fly.toml --wait-timeout 300
         env:
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
->>>>>>> origin/jules-responsive-layout-consistency-5760872167389438897

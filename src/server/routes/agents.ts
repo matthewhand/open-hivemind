@@ -1,4 +1,3 @@
-import { randomBytes } from 'crypto';
 import { promises as fs } from 'fs';
 import { join } from 'path';
 import Debug from 'debug';
@@ -174,15 +173,7 @@ router.post('/', async (req, res) => {
 
     const newAgent: AgentConfig = {
       ...agentData,
-<<<<<<< HEAD
-<<<<<<< HEAD
-      id: `agent_${Date.now()}_${randomBytes(5).toString('hex')}`,
-=======
       id: `agent_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
->>>>>>> origin/jules-responsive-layout-consistency-5760872167389438897
-=======
-      id: `agent_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
->>>>>>> origin/refiner-database-migration-reversibility-3845862468620237629
     };
 
     agents.push(newAgent);

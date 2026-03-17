@@ -1,4 +1,3 @@
-import Logger from '../utils/logger';
 /**
  * @wip ROADMAP ITEM — NOT ACTIVE
  *
@@ -15,7 +14,6 @@ import { useAppSelector } from '../store/hooks';
 import { selectUser, selectToken } from '../store/slices/authSlice';
 import { AnimatedBox } from '../animations/AnimationComponents';
 import {
-
   SparklesIcon,
   UserIcon,
   HandThumbUpIcon,
@@ -159,7 +157,7 @@ export const IntelligentDashboard: React.FC = () => {
       }));
 
     } catch (error) {
-      Logger.error("Failed to fetch dashboard data", error);
+      console.error("Failed to fetch dashboard data", error);
     } finally {
       setIsLoading(false);
     }
@@ -196,7 +194,7 @@ export const IntelligentDashboard: React.FC = () => {
           body: JSON.stringify({ recommendationId, feedback })
         });
       } catch (e) {
-        Logger.error("Failed to send feedback, reverting optimistic update", e);
+        console.error("Failed to send feedback, reverting optimistic update", e);
         // Rollback to previous state on failure
         setState(prev => ({
           ...prev,
@@ -215,7 +213,7 @@ export const IntelligentDashboard: React.FC = () => {
   };
 
   const applyRecommendation = (recommendation: DashboardRecommendation) => {
-    Logger.log('Applying recommendation:', recommendation);
+    console.log('Applying recommendation:', recommendation);
     // Simulate application or call API
     setState(prev => ({
       ...prev,
@@ -239,7 +237,7 @@ export const IntelligentDashboard: React.FC = () => {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify(newConfig)
-      }).catch(Logger.error);
+      }).catch(console.error);
     }
   };
 

@@ -1,5 +1,3 @@
-import Logger from '../utils/logger';
-
 // DaisyUI Component Usage Tracker
 // This system tracks which DaisyUI components are used throughout the application
 
@@ -151,7 +149,7 @@ class DaisyUIComponentTracker {
         });
       }
     } catch (error) {
-      Logger.error('Failed to import DaisyUI tracking data:', error);
+      console.error('Failed to import DaisyUI tracking data:', error);
     }
   }
 

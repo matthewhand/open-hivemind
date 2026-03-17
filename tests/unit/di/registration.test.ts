@@ -1,7 +1,7 @@
 import 'reflect-metadata';
 import { container } from 'tsyringe';
-import { registerServices } from '../../../src/di/registration';
 import Logger from '../../../src/common/logger';
+import { registerServices } from '../../../src/di/registration';
 
 // Mock all singleton services to prevent real initialization
 jest.mock('../../../src/config/ConfigurationManager', () => ({
@@ -29,7 +29,8 @@ jest.mock('../../../src/config/SecureConfigManager', () => ({
 }));
 
 jest.mock('../../../src/config/ProviderConfigManager', () => ({
-  ProviderConfigManager: {
+  __esModule: true,
+  default: {
     getInstance: jest.fn().mockReturnValue({}),
   },
 }));
@@ -43,11 +44,14 @@ jest.mock('../../../src/common/logger', () => {
     error: jest.fn(),
   };
   return {
-    withContext: jest.fn().mockReturnValue(mockLogger),
-    info: jest.fn(),
-    debug: jest.fn(),
-    warn: jest.fn(),
-    error: jest.fn(),
+    __esModule: true,
+    default: {
+      withContext: jest.fn().mockReturnValue(mockLogger),
+      info: jest.fn(),
+      debug: jest.fn(),
+      warn: jest.fn(),
+      error: jest.fn(),
+    },
   };
 });
 
@@ -57,7 +61,7 @@ describe('DI Service Registration Logging', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     container.reset();
-    mockLogger = (Logger.withContext as jest.Mock)();
+    mockLogger = Logger.withContext('DI');
   });
 
   it('should log service registrations and completion', () => {
@@ -71,21 +75,24 @@ describe('DI Service Registration Logging', () => {
     expect(mockLogger.debug).toHaveBeenCalledWith('Registering BotConfigurationManager instance');
     expect(mockLogger.debug).toHaveBeenCalledWith('Registering UserConfigStore');
     expect(mockLogger.debug).toHaveBeenCalledWith('Registering SecureConfigManager');
-    expect(mockLogger.debug).toHaveBeenCalledWith('Registering BotConfigurationManager class');
-<<<<<<< HEAD
-<<<<<<< HEAD
-    expect(mockLogger.debug).toHaveBeenCalledWith(
-      'Registering UserConfigStore (re-registering instance)'
-    );
-=======
-    expect(mockLogger.debug).toHaveBeenCalledWith('Registering UserConfigStore (re-registering instance)');
->>>>>>> origin/jules-responsive-layout-consistency-5760872167389438897
-=======
-    expect(mockLogger.debug).toHaveBeenCalledWith('Registering UserConfigStore (re-registering instance)');
->>>>>>> origin/refiner-database-migration-reversibility-3845862468620237629
+    expect(mockLogger.warn).toHaveBeenCalledWith('BotConfigurationManager is being registered a second time (useClass); this will override the useValue registration above');
+    expect(mockLogger.warn).toHaveBeenCalledWith('UserConfigStore is being registered a second time; this will override the first registration');
     expect(mockLogger.debug).toHaveBeenCalledWith('Registering ProviderConfigManager');
 
     // Verify completion log (info level)
     expect(mockLogger.info).toHaveBeenCalledWith('✅ DI services registered');
+  });
+
+  it('should check if services are registered', () => {
+    const { areServicesRegistered } = require('../../../src/di/registration');
+
+    // initially not registered
+    expect(areServicesRegistered()).toBe(false);
+
+    // register
+    registerServices();
+
+    // should be registered
+    expect(areServicesRegistered()).toBe(true);
   });
 });

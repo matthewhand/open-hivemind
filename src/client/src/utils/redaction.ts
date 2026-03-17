@@ -1,5 +1,3 @@
-import Logger from '../utils/logger';
-
 /**
  * PII (Personally Identifiable Information) Redaction Utility
  *
@@ -35,7 +33,7 @@ export function configureRedaction(config: Partial<RedactionConfig>): void {
  */
 export function setAdminBypass(enabled: boolean): void {
     if (!globalConfig.allowAdminBypass) {
-        Logger.warn('Admin bypass is not enabled in redaction config');
+        console.warn('Admin bypass is not enabled in redaction config');
         return;
     }
     adminBypassEnabled = enabled;

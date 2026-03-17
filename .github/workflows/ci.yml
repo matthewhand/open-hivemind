@@ -14,23 +14,28 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+      - name: Install pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 8
+      - name: Set up Node.js
       - name: Setup pnpm
         uses: pnpm/action-setup@v3
         with:
           version: 10
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v3
         with:
           node-version: '20'
-          cache: 'pnpm'
       - name: Install dependencies
         run: pnpm install
       - name: Audit for hardcoded secrets
-        run: pnpm run audit:secrets      - name: Run unit tests
+        run: pnpm run audit:secrets
+      - name: Check for documentation drift
+        run: node scripts/check-docs-drift.js
+      - name: Run unit tests
         id: unit-test
         run: |
-          pnpm exec jest 2>&1 | tee unit-test-output.txt
+          pnpm test 2>&1 | tee unit-test-output.txt
           # Extract passing unit test count from output
           UNIT_PASSING_TESTS=$(grep "Tests:" unit-test-output.txt | grep -o "[0-9]\+ passed" | grep -o "[0-9]\+")
           echo "unit_passing_tests=$UNIT_PASSING_TESTS" >> $GITHUB_OUTPUT

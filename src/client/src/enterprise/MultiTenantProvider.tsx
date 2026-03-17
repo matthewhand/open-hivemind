@@ -8,8 +8,6 @@ import {
   ExclamationTriangleIcon,
 } from '@heroicons/react/24/outline';
 import { AnimatedBox } from '../animations/AnimationComponents';
-import Logger from '../utils/logger';
-
 
 export interface Tenant {
   id: string;
@@ -80,7 +78,7 @@ export const MultiTenantProvider: React.FC<MultiTenantProviderProps> = ({ childr
 
     setCurrentTenant(tenant);
     dispatch(setReduxCurrentTenant(tenant));
-    Logger.log(`Switched to tenant: ${tenant.name}`);
+    console.log(`Switched to tenant: ${tenant.name}`);
   };
 
   const createTenant = async (tenantData: Partial<Tenant>): Promise<Tenant> => {
@@ -153,7 +151,7 @@ export const MultiTenantProvider: React.FC<MultiTenantProviderProps> = ({ childr
     if (isAuthenticated && availableTenants.length === 0) {
       const bootstrap = async () => {
         try {
-          Logger.log('Bootstrapping default organization...');
+          console.log('Bootstrapping default organization...');
           const newTenant = await createTenant({
             name: 'Primary Organization',
             domain: 'primary.local',
@@ -175,7 +173,7 @@ export const MultiTenantProvider: React.FC<MultiTenantProviderProps> = ({ childr
           setCurrentTenant(newTenant);
           dispatch(setReduxCurrentTenant(newTenant));
         } catch (err) {
-          Logger.error('Failed to bootstrap org:', err);
+          console.error('Failed to bootstrap org:', err);
         }
       };
       bootstrap();
