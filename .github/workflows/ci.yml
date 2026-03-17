@@ -28,7 +28,7 @@ jobs:
         with:
           node-version: '20'
       - name: Install dependencies
-        run: pnpm install --no-frozen-lockfile
+        run: pnpm install
       - name: Audit for hardcoded secrets
         run: pnpm run audit:secrets
       - name: Run security audit
