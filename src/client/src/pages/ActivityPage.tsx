@@ -88,6 +88,10 @@ const ActivityPage: React.FC = () => {
     }
   }, [selectedBot, selectedProvider, selectedLlmProvider, startDate, endDate, autoRefresh, maxRetries]);
 
+  useEffect(() => {
+    fetchActivity();
+  }, [fetchActivity]);
+
   useInterval(fetchActivity, autoRefresh ? 5000 : null);
 
   const handleClearFilters = () => {

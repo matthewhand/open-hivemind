@@ -71,16 +71,22 @@ const SystemManagement: React.FC = () => {
   const [isPerformanceLoading, setIsPerformanceLoading] = useState(false);
 
 
-  useInterval(fetchApiStatus, activeTab === 'performance' ? 10000 : null);
-
-  const fetchApiStatus = async () => {
+  const fetchApiStatus = React.useCallback(async () => {
     try {
       const status = await apiService.getApiEndpointsStatus();
       setApiStatus(status);
     } catch (error) {
       console.error('Failed to fetch API status:', error);
     }
-  };
+  }, []);
+
+  useInterval(fetchApiStatus, activeTab === 'performance' ? 10000 : null);
+
+  useEffect(() => {
+    if (activeTab === 'performance') {
+      fetchApiStatus();
+    }
+  }, [activeTab, fetchApiStatus]);
 
 
 

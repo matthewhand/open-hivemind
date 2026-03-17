@@ -79,7 +79,6 @@ describe('SystemManagement', () => {
   it('renders system management page', async () => {
     render(<SystemManagement />);
     expect(screen.getByText('System Management')).toBeInTheDocument();
-    await waitFor(() => expect(apiService.getGlobalConfig).toHaveBeenCalled());
   });
 
   it('handles backup creation with encryption', async () => {

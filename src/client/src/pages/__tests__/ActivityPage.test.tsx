@@ -4,25 +4,56 @@ import { vi } from 'vitest';
 import ActivityPage from '../ActivityPage';
 import { apiService } from '../../services/api';
 
-// Mock components to avoid deep rendering issues and dependency on child implementations
-vi.mock('../../components/DaisyUI', () => ({
+vi.mock('../../components/DaisyUI/Alert', () => ({
   Alert: ({ message }: any) => <div data-testid="alert">{message}</div>,
-  Badge: ({ children }: any) => <span data-testid="badge">{children}</span>,
-  Button: ({ children, onClick, disabled, title }: any) => <button onClick={onClick} disabled={disabled} title={title}>{children}</button>,
-  Card: ({ children }: any) => <div data-testid="card">{children}</div>,
-  DataTable: () => <div data-testid="data-table" />,
-  StatsCards: () => <div data-testid="stats-cards" />,
-  Timeline: () => <div data-testid="timeline" />,
-  Toggle: ({ onChange }: any) => <input type="checkbox" data-testid="toggle" onChange={onChange} />,
-  PageHeader: ({ title, actions }: any) => (
+}));
+vi.mock('../../components/DaisyUI/Badge', () => ({
+  default: ({ children }: any) => <span data-testid="badge">{children}</span>,
+}));
+vi.mock('../../components/DaisyUI/Button', () => ({
+  default: ({ children, onClick, disabled, title }: any) => <button onClick={onClick} disabled={disabled} title={title}>{children}</button>,
+}));
+vi.mock('../../components/DaisyUI/Card', () => ({
+  default: ({ children }: any) => <div data-testid="card">{children}</div>,
+}));
+vi.mock('../../components/DaisyUI/DataTable', () => ({
+  default: () => <div data-testid="data-table" />,
+}));
+vi.mock('../../components/DaisyUI/StatsCards', () => ({
+  default: () => <div data-testid="stats-cards" />,
+}));
+vi.mock('../../components/DaisyUI/Timeline', () => ({
+  default: () => <div data-testid="timeline" />,
+}));
+vi.mock('../../components/DaisyUI/Toggle', () => ({
+  default: ({ onChange }: any) => <input type="checkbox" data-testid="toggle" onChange={onChange} />,
+}));
+vi.mock('../../components/DaisyUI/PageHeader', () => ({
+  default: ({ title, actions }: any) => (
     <div data-testid="page-header">
       <h1>{title}</h1>
       {actions}
     </div>
   ),
+}));
+vi.mock('../../components/DaisyUI/Loading', () => ({
   LoadingSpinner: () => <div data-testid="loading-spinner" />,
-  EmptyState: ({ title }: any) => <div data-testid="empty-state">{title}</div>,
+  default: () => <div data-testid="loading-spinner" />,
+}));
+vi.mock('../../components/DaisyUI/EmptyState', () => ({
+  default: ({ title }: any) => <div data-testid="empty-state">{title}</div>,
+}));
+vi.mock('../../components/DaisyUI/Input', () => ({
   Input: ({ type, value, onChange, placeholder }: any) => (
+    <input
+      data-testid={placeholder === 'Start Date' ? 'start-date' : placeholder === 'End Date' ? 'end-date' : 'input'}
+      type={type}
+      value={value}
+      onChange={onChange}
+      placeholder={placeholder}
+    />
+  ),
+  default: ({ type, value, onChange, placeholder }: any) => (
     <input
       data-testid={placeholder === 'Start Date' ? 'start-date' : placeholder === 'End Date' ? 'end-date' : 'input'}
       type={type}

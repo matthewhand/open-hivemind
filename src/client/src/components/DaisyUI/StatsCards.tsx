@@ -358,8 +358,6 @@ export const useSystemStats = () => {
       } finally {
         setIsLoading(false);
       }
-    };
-
   }, []);
 
   React.useEffect(() => { fetchStats(); }, [fetchStats]);
