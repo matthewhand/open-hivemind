@@ -190,7 +190,7 @@ The Enterprise Manager provides an interface to monitor security, compliance, mu
 
 ### [Webhook](/admin/integrations/webhook)
 Configure incoming webhooks for external integrations.
-*   **Endpoint Management**: specific URLs to trigger bot actions from external services.
+*   **Endpoint Management**: Create specific URLs to trigger bot actions from external services.
 *   **Security**: Manage webhook secrets and verification.
 
 ### [Monitoring](/admin/monitoring)
@@ -300,3 +300,16 @@ You can trigger the **Update Screenshots** workflow manually from the Actions ta
 npm run generate-docs
 ```
 This process runs the End-to-End (E2E) tests located in `tests/e2e/screenshot-*.spec.ts`, captures the UI state, and saves the images to `docs/screenshots/`.
+
+## Additional Governance Features
+
+### Access Control
+- **Role-Based Access**: Configure different permission levels for admin, operator, and viewer roles
+- **API Key Management**: Rotate and manage API keys for external service integration
+- **Session Management**: Monitor and control active user sessions
+
+### Compliance Reporting
+- **Audit Trail Export**: Download complete audit logs in JSON or CSV format
+- **Retention Policies**: Configure how long to retain activity and audit data
+- **Compliance Dashboards**: Visual overview of security metrics and compliance status
+
