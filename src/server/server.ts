@@ -177,7 +177,6 @@ export class WebUIServer {
 
     // Protected API routes (authentication required)
     this.app.use('/api/admin', authenticateToken, adminRouter);
-    this.app.use('/api/cache', cacheRouter);
     this.app.use('/api/ai-assist', authenticateToken, aiAssistRouter);
     this.app.use('/api/agents', authenticateToken, agentsRouter);
     this.app.use('/api/bots', authenticateToken, botsRouter);
@@ -237,6 +236,12 @@ export class WebUIServer {
   private setupErrorHandling(): void {
     // Global error handler middleware
     this.app.use(globalErrorHandler);
+
+    // Setup global error handlers for uncaught exceptions and unhandled rejections
+    setupGlobalErrorHandlers();
+
+    // Setup graceful shutdown handlers
+    setupGracefulShutdown();
 
     debug('Error handling setup completed');
   }

@@ -68,12 +68,10 @@ const PersonasPage: React.FC = () => {
       setLoading(true);
       setError(null);
 
-      const [configResult, personasResult] = await Promise.allSettled([
+      const [configResponse, personasResponse] = await Promise.all([
         apiService.getConfig(),
         apiService.getPersonas(),
       ]);
-      const configResponse = configResult.status === 'fulfilled' ? configResult.value : { bots: [] };
-      const personasResponse = personasResult.status === 'fulfilled' ? personasResult.value : [];
 
       const botList = configResponse.bots || [];
       const filledBots = botList.map((b: any) => ({

@@ -56,7 +56,6 @@ describe('errorHandler middleware', () => {
   let mockNext: NextFunction;
 
   beforeEach(() => {
-    (MetricsCollector as any).instance = undefined;
     mockReq = {
       method: 'GET',
       path: '/test',
@@ -130,6 +129,7 @@ describe('errorHandler middleware', () => {
       }));
 
       // Ensure response doesn't contain stack in production
+      const jsonCallArg = (mockRes.json as jest.Mock).mock.calls[0][0];
       expect(jsonCallArg.stack).toBeUndefined();
 
       process.env.NODE_ENV = originalEnv;
@@ -194,7 +194,6 @@ describe('errorHandler middleware', () => {
     });
 
     afterEach(() => {
-      (MetricsCollector as any).instance = undefined;
       process.env.NODE_ENV = originalEnv;
       mockExit.mockRestore();
       mockConsoleError.mockRestore();
@@ -232,7 +231,6 @@ describe('errorHandler middleware', () => {
     });
 
     afterEach(() => {
-      (MetricsCollector as any).instance = undefined;
       process.env.NODE_ENV = originalEnv;
       mockExit.mockRestore();
       mockConsoleError.mockRestore();
@@ -321,10 +319,6 @@ describe('errorHandler middleware', () => {
   });
 
   describe('rateLimitErrorHandler', () => {
-    /**
-     * Currently a stub test since rateLimitErrorHandler is a passthrough stub.
-     * This test ensures it doesn't break when passing through to next().
-     */
     it('should call next', () => {
       rateLimitErrorHandler(mockReq as Request, mockRes as Response, mockNext);
       expect(mockNext).toHaveBeenCalled();

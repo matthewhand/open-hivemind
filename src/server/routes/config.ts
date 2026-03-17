@@ -18,7 +18,7 @@ import { ErrorUtils } from '../../types/errors';
 import { type IProvider } from '../../types/IProvider';
 import { ConfigUpdateSchema } from '../../validation/schemas/configSchema';
 import { validateRequest } from '../../validation/validateRequest';
-import { auditMiddleware, logConfigChange, type AuditedRequest } from '../middleware/audit';
+import { auditMiddleware, logConfigChange } from '../middleware/audit';
 
 /**
  * Validates that a config name is safe to use in file paths.

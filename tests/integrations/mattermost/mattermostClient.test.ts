@@ -29,7 +29,7 @@ describe('MattermostClient', () => {
   });
 
   it('should connect successfully', async () => {
-    const mockApi = (client as any).axios;
+    const mockApi = (client as any).api;
     mockApi.get.mockResolvedValue({
       status: 200,
       data: { username: 'testbot' },
@@ -41,14 +41,14 @@ describe('MattermostClient', () => {
   });
 
   it('should handle connection failure', async () => {
-    const mockApi = (client as any).axios;
+    const mockApi = (client as any).api;
     mockApi.get.mockRejectedValue(new Error('Network error'));
 
     await expect(client.connect()).rejects.toThrow('Mattermost connection failed');
   });
 
   it('should post message successfully', async () => {
-    const mockApi = (client as any).axios;
+    const mockApi = (client as any).api;
     mockApi.get.mockResolvedValue({
       status: 200,
       data: { username: 'testbot' },

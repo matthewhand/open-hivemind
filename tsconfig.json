@@ -36,11 +36,8 @@
       "@webhook/*": ["src/webhook/*"],
       "@integrations/*": ["src/integrations/*"],
       "@types/*": ["src/types/*"],
-      "@hivemind/message-slack/*": ["packages/message-slack/src/*"],
-      "@hivemind/message-slack": ["packages/message-slack/src/index.ts"],
+      "@src/integrations/slack/*": ["packages/adapter-slack/src/*"],
       "@src/integrations/mattermost/*": ["packages/adapter-mattermost/src/*"],
-      "@hivemind/message-mattermost": ["packages/message-mattermost/src/index.ts"],
-      "@hivemind/message-mattermost/*": ["packages/message-mattermost/src/*"],
       "@hivemind/shared-types": ["packages/shared-types/src/index.ts"],
       "@hivemind/shared-types/*": ["packages/shared-types/src/*"],
       "@src/*": ["src/*"],
@@ -67,11 +64,9 @@
     "packages/provider-openai/src/**/*",
     "packages/memory-mem4ai/src/**/*",
     "packages/memory-memvault/src/**/*",
-    "packages/message-discord/src/**/*",
-    "packages/message-slack/src/**/*",
-    "packages/message-mattermost/src/**/*",
-    "packages/llm-letta/src/**/*",
-    "packages/shared-types/src/**/*"
+    "packages/adapter-discord/src/**/*",
+    "packages/adapter-slack/src/**/*",
+    "packages/adapter-mattermost/src/**/*"
   ],
   "exclude": ["tests/**/*", "node_modules", "src/client/**/*"],
   "files": ["src/global.d.ts"]

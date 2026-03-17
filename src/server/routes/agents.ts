@@ -1,6 +1,5 @@
 import { promises as fs } from 'fs';
 import { join } from 'path';
-import { randomBytes } from 'crypto';
 import Debug from 'debug';
 import { Router } from 'express';
 import { ErrorUtils } from '@src/types/errors';
@@ -23,8 +22,6 @@ interface AgentConfig {
   };
   isActive: boolean;
   envOverrides?: Record<string, { isOverridden: boolean; redactedValue?: string }>;
-  createdAt: string;
-  updatedAt: string;
 }
 
 interface Persona {
@@ -164,7 +161,7 @@ router.get('/', async (req, res) => {
 // POST /api/agents - Create new agent
 router.post('/', async (req, res) => {
   try {
-    const agentData: Omit<AgentConfig, 'id' | 'createdAt' | 'updatedAt'> = req.body;
+    const agentData: Omit<AgentConfig, 'id'> = req.body;
 
     const agents = await loadJsonConfig<AgentConfig[]>(AGENTS_CONFIG_FILE, []);
 
@@ -249,7 +246,7 @@ router.delete('/:id', async (req, res) => {
     const filteredAgents = agents.filter((agent) => agent.id !== id);
 
     if (filteredAgents.length === agents.length) {
-      return res.status(200).json({ success: true, message: 'Agent already deleted or not found' });
+      return res.status(404).json({ error: 'Agent not found' });
     }
 
     await saveJsonConfig(AGENTS_CONFIG_FILE, filteredAgents);
@@ -413,9 +410,7 @@ router.delete('/personas/:key', async (req, res) => {
     const filteredPersonas = personas.filter((p) => p.key !== key);
 
     if (filteredPersonas.length === personas.length) {
-      return res
-        .status(200)
-        .json({ success: true, message: 'Persona already deleted or not found' });
+      return res.status(404).json({ error: 'Persona not found' });
     }
 
     await saveJsonConfig(PERSONAS_CONFIG_FILE, filteredPersonas);

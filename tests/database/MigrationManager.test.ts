@@ -228,7 +228,7 @@ describe('MigrationManager', () => {
 
       // @ts-ignore - Accessing private property for testing
       migrationManager.migrations = [
-        { id: '001', name: 'Migration 1', version: 1, up: jest.fn(), down: jest.fn() },
+        { id: '001', name: 'Migration 1', version: 1, up: jest.fn() },
         mockMigration,
       ];
 
@@ -244,8 +244,8 @@ describe('MigrationManager', () => {
       ]);
 
       const migrations = [
-        { id: '001', version: 1, up: jest.fn(), down: jest.fn() },
-        { id: '002', version: 2, up: jest.fn() }, // No down function, irreversible
+        { id: '001', version: 1, up: jest.fn() },
+        { id: '002', version: 2, up: jest.fn() }, // No down function
       ];
 
       // @ts-ignore - Accessing private property for testing

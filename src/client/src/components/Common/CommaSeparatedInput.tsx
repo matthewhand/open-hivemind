@@ -67,13 +67,10 @@ export const CommaSeparatedInput: React.FC<CommaSeparatedInputProps> = ({
     }
   }, [canUndo, disabled, onChange]);
 
-  const commitInput = (forceValue?: string, overrideTrailingText?: string) => {
+  const commitInput = (forceValue?: string) => {
     const textToCommit = forceValue !== undefined ? forceValue : inputValue;
     if (!textToCommit.trim()) {
       setIsTouched(true);
-      if (overrideTrailingText !== undefined) {
-        setInputValue(overrideTrailingText);
-      }
       return;
     }
 
@@ -109,16 +106,13 @@ export const CommaSeparatedInput: React.FC<CommaSeparatedInputProps> = ({
         pushToHistory(next);
         onChange(next);
       }
-      setInputValue(overrideTrailingText !== undefined ? overrideTrailingText : '');
-      setShowSuggestions(overrideTrailingText !== undefined && overrideTrailingText.length > 0);
+      setInputValue('');
+      setShowSuggestions(false);
     }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
-      e.preventDefault();
-      commitInput();
-    } else if (e.key === ',') {
       e.preventDefault();
       commitInput();
     } else if (e.key === 'Backspace' && !inputValue && value.length > 0) {

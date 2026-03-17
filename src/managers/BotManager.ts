@@ -190,7 +190,7 @@ export class BotManager extends EventEmitter {
   }
 
   /**
-   * Helper to map a raw configuration object to a unified BotInstance
+   * Get a specific bot by ID
    */
   public async getBot(botId: string): Promise<BotInstance | null> {
     try {

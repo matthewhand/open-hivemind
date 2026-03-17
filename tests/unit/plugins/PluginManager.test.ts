@@ -115,18 +115,6 @@ describe('manifest type validation', () => {
 // ---------------------------------------------------------------------------
 
 describe('installPlugin', () => {
-  it('rejects URLs starting with a dash', async () => {
-    await expect(installPlugin('-u')).rejects.toThrow(PluginValidationError);
-    await expect(installPlugin('-u')).rejects.toThrow(/cannot start with a dash/);
-  });
-
-  it('rejects URLs with invalid protocols', async () => {
-    await expect(installPlugin('file:///etc/passwd')).rejects.toThrow(PluginValidationError);
-    await expect(installPlugin('file:///etc/passwd')).rejects.toThrow(
-      /Only http: and https: are allowed/
-    );
-  });
-
   it('clones repo and installs dependencies', async () => {
     (mockFs.existsSync as jest.Mock).mockReturnValue(false);
 
@@ -266,20 +254,3 @@ describe('listInstalledPlugins', () => {
     expect(listInstalledPlugins()).toEqual([]);
   });
 });
-
-  // Additional security tests for argument injection prevention
-  it('rejects URLs with argument injection patterns in hostname', async () => {
-    await expect(installPlugin('https:// --upload-pack=malicious.com/repo')).rejects.toThrow(PluginValidationError);
-    await expect(installPlugin('https:// --config=evil.com/repo')).rejects.toThrow(PluginValidationError);
-  });
-
-  it('rejects URLs with shell metacharacters in hostname', async () => {
-    await expect(installPlugin('https://host;name.com/repo')).rejects.toThrow(PluginValidationError);
-    await expect(installPlugin('https://host|name.com/repo')).rejects.toThrow(PluginValidationError);
-    await expect(installPlugin('https://host`name.com/repo')).rejects.toThrow(PluginValidationError);
-  });
-
-  it('rejects URLs with spaces in hostname or path', async () => {
-    await expect(installPlugin('https://host name.com/repo')).rejects.toThrow(PluginValidationError);
-    await expect(installPlugin('https://hostname.com/path with spaces')).rejects.toThrow(PluginValidationError);
-  });

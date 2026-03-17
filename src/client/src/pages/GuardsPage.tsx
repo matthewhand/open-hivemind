@@ -399,7 +399,6 @@ const GuardsPage: React.FC = () => {
                           )}
                         </div>
                       }
-                      id="max-requests"
                       type="number"
                       value={editingProfile.guards.rateLimit?.maxRequests || 100}
                       onChange={e => updateGuard('rateLimit', { maxRequests: parseInt(e.target.value) })}
