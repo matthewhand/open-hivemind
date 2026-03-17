@@ -63,8 +63,7 @@ describe('Mattermost Real Integration', () => {
       `Test message ${Date.now()}`
     );
 
-    expect(messageId).toBeDefined();
-    expect(messageId).not.toBeNull();
+    expect(messageId).toBeTruthy();
     expect(typeof messageId).toBe('string');
   }, 30000);
 

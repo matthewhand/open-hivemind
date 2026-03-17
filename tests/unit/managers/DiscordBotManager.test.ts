@@ -1,11 +1,4 @@
-<<<<<<< HEAD
-import { DiscordBotManager, Bot } from '../../../packages/adapter-discord/src/managers/DiscordBotManager';
-=======
-import {
-  Bot,
-  DiscordBotManager,
-} from '../../../packages/message-discord/src/managers/DiscordBotManager';
->>>>>>> origin/refiner-test-assertion-specificity-7674864057044509285
+import { DiscordBotManager, Bot } from '../../../packages/message-discord/src/managers/DiscordBotManager';
 
 const makeClient = (wsStatus = 0) => ({
   ws: { status: wsStatus },
@@ -16,18 +9,16 @@ const makeClient = (wsStatus = 0) => ({
 
 jest.mock('discord.js', () => ({
   Client: jest.fn().mockImplementation(() => makeClient()),
-  GatewayIntentBits: {
-    Guilds: 1,
-    GuildMessages: 2,
-    MessageContent: 4,
-    GuildMembers: 8,
-    DirectMessages: 16,
-  },
+  GatewayIntentBits: { Guilds: 1, GuildMessages: 2, MessageContent: 4, GuildMembers: 8, DirectMessages: 16 },
   Partials: { Channel: 'Channel' },
 }));
 
 function makeManager(): DiscordBotManager {
-  return new DiscordBotManager({} as any);
+  return new DiscordBotManager({
+    errorTypes: { ConfigError: class extends Error {}, NetworkError: class extends Error {} },
+    getAllBotConfigs: () => [],
+    isBotDisabled: () => false,
+  } as any);
 }
 
 function injectBot(manager: DiscordBotManager, name: string, wsStatus = 0): Bot {
@@ -86,7 +77,7 @@ describe('DiscordBotManager Map-based lookups', () => {
       injectBot(mgr, 'delta');
       expect(await mgr.disconnectBot('delta')).toBe(true);
       expect(mgr.getBotByName('delta')).toBeUndefined();
-      expect(mgr.getAllBots().find((b) => b.botUserName === 'delta')).toBeUndefined();
+      expect(mgr.getAllBots().find(b => b.botUserName === 'delta')).toBeUndefined();
     });
 
     it('returns false when client.destroy throws', async () => {

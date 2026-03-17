@@ -371,7 +371,7 @@ const IntegrationsPanel: React.FC = () => {
                     <div className="flex items-start justify-between mb-3">
                       <div className="flex items-center gap-3 overflow-hidden">
                         <div className="p-2 bg-base-200 rounded-lg text-primary group-hover:bg-primary group-hover:text-primary-content transition-colors">
-                          {React.isValidElement(IconComponent) ? IconComponent : React.createElement(IconComponent as React.ElementType, { className: "w-5 h-5" })}
+                          <IconComponent className="w-5 h-5" />
                         </div>
                         <div className="min-w-0">
                           <h3 className="font-bold text-sm truncate" title={profile.name}>{profile.name}</h3>
@@ -501,7 +501,7 @@ const IntegrationsPanel: React.FC = () => {
                   <div className="flex items-start justify-between mb-3">
                     <div className="flex items-center gap-3 overflow-hidden">
                       <div className="p-2 bg-base-200 rounded-lg text-primary group-hover:bg-primary group-hover:text-primary-content transition-colors">
-                        {React.isValidElement(IconComponent) ? IconComponent : React.createElement(IconComponent as React.ElementType, { className: "w-5 h-5" })}
+                        <IconComponent className="w-5 h-5" />
                       </div>
                       <div className="min-w-0">
                         <h3 className="font-bold text-sm truncate" title={key}>{key}</h3>

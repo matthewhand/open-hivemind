@@ -246,7 +246,7 @@ router.delete('/:id', async (req, res) => {
     const filteredAgents = agents.filter((agent) => agent.id !== id);
 
     if (filteredAgents.length === agents.length) {
-      return res.status(404).json({ error: 'Agent not found' });
+      return res.status(200).json({ success: true, message: 'Agent already deleted or not found' });
     }
 
     await saveJsonConfig(AGENTS_CONFIG_FILE, filteredAgents);
@@ -410,13 +410,9 @@ router.delete('/personas/:key', async (req, res) => {
     const filteredPersonas = personas.filter((p) => p.key !== key);
 
     if (filteredPersonas.length === personas.length) {
-<<<<<<< HEAD
-      return res.status(404).json({ error: 'Persona not found' });
-=======
       return res
         .status(200)
         .json({ success: true, message: 'Persona already deleted or not found' });
->>>>>>> origin/fix/memory-leak-inactivity-11251779731564442311
     }
 
     await saveJsonConfig(PERSONAS_CONFIG_FILE, filteredPersonas);

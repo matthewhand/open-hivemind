@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { test, expect } from '@playwright/test';
 import { setupAuth } from './test-utils';
 
 test('API Rate Limiting UI', async ({ page }) => {
@@ -10,10 +10,7 @@ test('API Rate Limiting UI', async ({ page }) => {
   await page.waitForTimeout(2000);
 
   // Click edit to open modal
-  const editButton = page
-    .locator('.card', { hasText: 'Strict Protection' })
-    .locator('.btn-ghost')
-    .nth(1);
+  const editButton = page.locator('.card', { hasText: 'Strict Protection' }).locator('.btn-ghost').nth(1);
   await editButton.click();
 
   // Wait for modal

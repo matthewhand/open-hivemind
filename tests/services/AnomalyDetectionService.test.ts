@@ -1,16 +1,23 @@
+import { AnomalyDetectionService } from '../../src/services/AnomalyDetectionService';
 import { DatabaseManager } from '../../src/database/DatabaseManager';
 import { WebSocketService } from '../../src/server/services/WebSocketService';
-import { AnomalyDetectionService } from '../../src/services/AnomalyDetectionService';
 
 describe('AnomalyDetectionService', () => {
   let service: AnomalyDetectionService;
   let dbManager: DatabaseManager;
   let wsService: WebSocketService;
 
+  let metricsCollector: any;
+
   beforeEach(() => {
     // Force a fresh instance for clean tests
     (AnomalyDetectionService as any).instance = undefined;
-    service = AnomalyDetectionService.getInstance();
+    dbManager = DatabaseManager.getInstance({ type: 'sqlite', path: ':memory:' });
+    wsService = WebSocketService.getInstance();
+    metricsCollector = {} as any; // Mock metrics collector
+
+    service = new AnomalyDetectionService(dbManager, wsService, metricsCollector);
+    (AnomalyDetectionService as any).instance = service;
 
     // Default config values
     service.updateConfig({
@@ -25,9 +32,6 @@ describe('AnomalyDetectionService', () => {
     (service as any).dataWindows.clear();
     (service as any).anomalies = [];
     (service as any).isDetecting = false;
-
-    dbManager = DatabaseManager.getInstance({ type: 'sqlite', path: ':memory:' });
-    wsService = WebSocketService.getInstance();
 
     jest.spyOn(dbManager, 'storeAnomaly').mockResolvedValue(undefined);
     jest.spyOn(dbManager, 'resolveAnomaly').mockResolvedValue(true);
@@ -73,10 +77,7 @@ describe('AnomalyDetectionService', () => {
       const window = service['dataWindows'].get('responseTime');
       expect(window).toContain(150);
       expect(window!.length).toBe(1);
-      expect(emitSpy).toHaveBeenCalledWith('dataPointAdded', {
-        metric: 'responseTime',
-        value: 150,
-      });
+      expect(emitSpy).toHaveBeenCalledWith('dataPointAdded', { metric: 'responseTime', value: 150 });
     });
 
     test('should not add data point if metric not monitored', () => {
@@ -278,10 +279,7 @@ describe('AnomalyDetectionService', () => {
 
       expect(result).toBe(true);
       expect(service.getAnomalies()[0].resolved).toBe(true);
-      expect(emitSpy).toHaveBeenCalledWith(
-        'anomalyResolved',
-        expect.objectContaining({ id: 'test-anomaly', resolved: true })
-      );
+      expect(emitSpy).toHaveBeenCalledWith('anomalyResolved', expect.objectContaining({ id: 'test-anomaly', resolved: true }));
       expect(dbManager.resolveAnomaly).toHaveBeenCalledWith('test-anomaly');
     });
 
