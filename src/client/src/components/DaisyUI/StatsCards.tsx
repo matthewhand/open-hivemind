@@ -373,7 +373,7 @@ export const useSystemStats = () => {
         setError(null);
       } catch (err) {
         setError('Failed to fetch system stats');
-        console.error('Error fetching stats:', err);
+        Logger.error('Error fetching stats:', err);
       } finally {
         setIsLoading(false);
       }
@@ -387,7 +387,6 @@ export const useSystemStats = () => {
 
   return { stats, isLoading, error, refresh: () => setIsLoading(true) };
 };
-
 
 
 export default StatsCards;
