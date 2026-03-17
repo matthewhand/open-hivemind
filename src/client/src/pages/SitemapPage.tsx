@@ -147,7 +147,7 @@ const SitemapPage: React.FC = () => {
         <PageHeader
           title="Dynamic Sitemap"
           description="Complete navigation structure and page hierarchy"
-          icon={MapIcon}
+          icon={<MapIcon className="w-6 h-6" />}
         />
         <div className="alert alert-error">
           <span>Error loading sitemap: {error}</span>
@@ -171,7 +171,7 @@ const SitemapPage: React.FC = () => {
       <PageHeader
         title="Dynamic Sitemap"
         description="Complete navigation structure and page hierarchy"
-        icon={MapIcon}
+        icon={<MapIcon className="w-6 h-6" />}
         actions={
           <>
             <button className="btn btn-ghost gap-2" onClick={handleDownloadXml}>

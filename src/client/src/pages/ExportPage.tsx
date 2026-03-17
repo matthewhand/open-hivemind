@@ -260,7 +260,7 @@ const ExportPage: React.FC = () => {
       <PageHeader
         title="Export & System Data"
         description="Manage system backups, export configurations, and access API specifications."
-        icon={Archive}
+        icon={<Archive className="w-6 h-6" />}
         gradient="secondary"
       />
 

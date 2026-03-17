@@ -316,7 +316,7 @@ const ActivityPage: React.FC = () => {
       <PageHeader
         title="Activity Feed"
         description="Real-time message flow and events"
-        icon={Clock}
+        icon={<Clock className="w-6 h-6" />}
         actions={
           <div className="flex items-center gap-2">
             {/* View Toggle */}

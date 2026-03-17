@@ -129,7 +129,7 @@ const MessageProvidersPage: React.FC = () => {
       <PageHeader
         title="Message Providers"
         description="Configure messaging platform connections for your bots."
-        icon={MessageIcon}
+        icon={<MessageIcon className="w-6 h-6" />}
         actions={
           <div className="flex gap-2">
             <Button variant="ghost" onClick={fetchProfiles} disabled={loading}>

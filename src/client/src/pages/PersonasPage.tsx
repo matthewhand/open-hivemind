@@ -312,7 +312,7 @@ const PersonasPage: React.FC = () => {
       <PageHeader
         title="Personas (Beta)"
         description="Manage AI personalities and system prompts"
-        icon={Sparkles}
+        icon={<Sparkles className="w-6 h-6" />}
         actions={
           <div className="flex gap-2">
             <Button
