@@ -1,4 +1,4 @@
-import { randomBytes } from 'crypto';
+import { randomUUID } from 'crypto';
 import { EventEmitter } from 'events';
 import Debug from 'debug';
 import { DatabaseManager } from '../../database/DatabaseManager';
@@ -991,7 +991,7 @@ export class RealTimeValidationService extends EventEmitter {
    * Generate report ID
    */
   private generateReportId(): string {
-    return 'val-' + Date.now().toString(36) + '-' + randomBytes(5).toString('hex');
+    return 'val-' + Date.now().toString(36) + '-' + randomUUID();
   }
 
   /**
