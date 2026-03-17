@@ -1,4 +1,4 @@
-import { type Response } from 'express';
+import { Response } from 'express';
 import { ErrorUtils } from '../../types/errors';
 
 export const handleRouteError = (

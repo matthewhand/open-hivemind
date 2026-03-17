@@ -24,6 +24,12 @@ import MattermostClient from './mattermostClient';
 const debug = Debug('app:MattermostService:verbose');
 
 const metrics = MetricsCollector.getInstance();
+const RETRY_CONFIG = {
+  retries: 3,
+  minTimeout: 1000,
+  maxTimeout: 5000,
+  factor: 2,
+};
 
 export class MattermostService extends EventEmitter implements IMessengerService {
   private static instance: MattermostService | undefined;
@@ -141,15 +147,8 @@ export class MattermostService extends EventEmitter implements IMessengerService
     const startTime = Date.now();
     let attemptCount = 0;
 
-    const maxRetries = 3;
-    const baseDelay = 1000;
-    const maxDelay = 5000;
-
-    let result = '';
-    let lastError: any = null;
-
     try {
-      for (let attempt = 1; attempt <= maxRetries + 1; attempt++) {
+      const result = await retry(async (bail, attempt) => {
         attemptCount = attempt;
         debug(`Attempting to send message (attempt ${attempt})`);
 
@@ -171,10 +170,8 @@ export class MattermostService extends EventEmitter implements IMessengerService
           });
 
           debug(`[${botName}] Sent message to channel ${channelId}`);
-          result = post.id;
-          break; // Success
+          return post.id;
         } catch (error: any) {
-          lastError = error;
           debug(`Send message attempt ${attempt} failed: ${error.message}`);
 
           if (
@@ -182,7 +179,9 @@ export class MattermostService extends EventEmitter implements IMessengerService
             error.message?.includes('not_in_channel') ||
             error.message?.includes('missing_scope')
           ) {
-            throw new ValidationError(error.message, 'channelId', channelId);
+            const bailError = new ValidationError(error.message, 'channelId', channelId);
+            bail(bailError);
+            return '';
           }
 
           const hivemindError = ErrorUtils.toHivemindError(error);
@@ -196,25 +195,15 @@ export class MattermostService extends EventEmitter implements IMessengerService
             );
           }
 
-          const isRetryable =
+          if (
             errType === 'network' ||
             errType === 'api' ||
             error.status === 500 ||
             error.status === 502 ||
             error.status === 503 ||
             error.status === 504 ||
-            error.status === 429;
-
-          if (isRetryable && attempt <= maxRetries) {
-            const delay = Math.min(
-              maxDelay,
-              baseDelay * Math.pow(2, attempt - 1) + Math.random() * baseDelay
-            );
-            await new Promise((resolve) => setTimeout(resolve, delay));
-            continue;
-          }
-
-          if (isRetryable) {
+            error.status === 429
+          ) {
             throw new NetworkError(
               error.message || 'Mattermost API Network Error',
               { status: error.status },
@@ -224,7 +213,7 @@ export class MattermostService extends EventEmitter implements IMessengerService
 
           throw hivemindError;
         }
-      }
+      }, RETRY_CONFIG);
 
       const duration = Date.now() - startTime;
       metrics.incrementMessages();
@@ -283,15 +272,8 @@ export class MattermostService extends EventEmitter implements IMessengerService
     const startTime = Date.now();
     let attemptCount = 0;
 
-    const maxRetries = 3;
-    const baseDelay = 1000;
-    const maxDelay = 5000;
-
-    let result: IMessage[] = [];
-    let lastError: any = null;
-
     try {
-      for (let attempt = 1; attempt <= maxRetries + 1; attempt++) {
+      const result = await retry(async (bail, attempt) => {
         attemptCount = attempt;
         debug(`Attempting to fetch messages (attempt ${attempt})`);
 
@@ -321,9 +303,7 @@ export class MattermostService extends EventEmitter implements IMessengerService
             }
 
             const username = user
-              ? `${user.first_name || ''} ${user.last_name || ''}`.trim() ||
-                user.username ||
-                'Unknown'
+              ? `${user.first_name || ''} ${user.last_name || ''}`.trim() || user.username || 'Unknown'
               : 'Unknown';
             const isBot = Boolean(user?.is_bot);
 
@@ -336,10 +316,8 @@ export class MattermostService extends EventEmitter implements IMessengerService
 
           messages.push(...(await Promise.all(messagePromises)));
 
-          result = messages.reverse();
-          break; // Success
+          return messages.reverse();
         } catch (error: any) {
-          lastError = error;
           debug(`Fetch messages attempt ${attempt} failed: ${error.message}`);
 
           if (
@@ -347,7 +325,9 @@ export class MattermostService extends EventEmitter implements IMessengerService
             error.message?.includes('not_in_channel') ||
             error.message?.includes('missing_scope')
           ) {
-            throw new ValidationError(error.message, 'channelId', channelId);
+            const bailError = new ValidationError(error.message, 'channelId', channelId);
+            bail(bailError);
+            return [];
           }
 
           const hivemindError = ErrorUtils.toHivemindError(error);
@@ -361,25 +341,15 @@ export class MattermostService extends EventEmitter implements IMessengerService
             );
           }
 
-          const isRetryable =
+          if (
             errType === 'network' ||
             errType === 'api' ||
             error.status === 500 ||
             error.status === 502 ||
             error.status === 503 ||
             error.status === 504 ||
-            error.status === 429;
-
-          if (isRetryable && attempt <= maxRetries) {
-            const delay = Math.min(
-              maxDelay,
-              baseDelay * Math.pow(2, attempt - 1) + Math.random() * baseDelay
-            );
-            await new Promise((resolve) => setTimeout(resolve, delay));
-            continue;
-          }
-
-          if (isRetryable) {
+            error.status === 429
+          ) {
             throw new NetworkError(
               error.message || 'Mattermost API Network Error',
               { status: error.status },
@@ -389,7 +359,7 @@ export class MattermostService extends EventEmitter implements IMessengerService
 
           throw hivemindError;
         }
-      }
+      }, RETRY_CONFIG);
 
       const duration = Date.now() - startTime;
       metrics.recordResponseTime(duration);

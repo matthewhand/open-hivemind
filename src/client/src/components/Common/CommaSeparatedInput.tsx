@@ -172,18 +172,7 @@ export const CommaSeparatedInput: React.FC<CommaSeparatedInputProps> = ({
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const val = e.target.value;
-
-    // Auto-commit on typing comma and leave trailing text
-    if (val.includes(',')) {
-      const parts = val.split(',');
-      const trailingText = parts.pop() || '';
-      const textToCommit = parts.join(',');
-      commitInput(textToCommit, trailingText);
-      return;
-    }
-
-    setInputValue(val);
+    setInputValue(e.target.value);
     setShowSuggestions(true);
     if (internalError) {
       setInternalError(null);

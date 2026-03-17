@@ -81,7 +81,9 @@ describe('executeCommandSafe', () => {
     it('should kill process and reject when timeout is exceeded', async () => {
       // Note: This test might be slow or flaky in some environments
       // We use a small timeout to verify rejection
-      await expect(executeCommandSafe('sleep', ['2'], { timeout: 100 })).rejects.toThrow();
+      await expect(
+        executeCommandSafe('sleep', ['2'], { timeout: 100 })
+      ).rejects.toThrow();
     });
 
     it('should respect the working directory (cwd) option', async () => {

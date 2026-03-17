@@ -26,20 +26,16 @@ export const auditMiddleware = (req: AuditedRequest, res: Response, next: NextFu
     }
 
     // Extract IP address
-    const reqWithConnection = req as AuditedRequest & {
-      connection?: { remoteAddress?: string };
-      socket?: { remoteAddress?: string };
-    };
     const ipAddress =
       req.ip ||
-      reqWithConnection.connection?.remoteAddress ||
-      reqWithConnection.socket?.remoteAddress ||
-      (req.headers['x-forwarded-for'] as string) ||
-      (req.headers['x-real-ip'] as string) ||
+      (req as any).connection?.remoteAddress ||
+      (req as any).socket?.remoteAddress ||
+      ((req as any).headers?.['x-forwarded-for'] as string) ||
+      ((req as any).headers?.['x-real-ip'] as string) ||
       'unknown';
 
     // Extract user agent
-    const userAgent = (req.headers['user-agent'] as string) || 'unknown';
+    const userAgent = ((req as any).headers?.['user-agent'] as string) || 'unknown';
 
     // Attach to request for use in route handlers
     req.auditUser = user;

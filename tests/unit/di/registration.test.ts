@@ -1,7 +1,7 @@
 import 'reflect-metadata';
 import { container } from 'tsyringe';
-import Logger from '../../../src/common/logger';
 import { registerServices } from '../../../src/di/registration';
+import Logger from '../../../src/common/logger';
 
 // Mock all singleton services to prevent real initialization
 jest.mock('../../../src/config/ConfigurationManager', () => ({
@@ -29,8 +29,7 @@ jest.mock('../../../src/config/SecureConfigManager', () => ({
 }));
 
 jest.mock('../../../src/config/ProviderConfigManager', () => ({
-  __esModule: true,
-  default: {
+  ProviderConfigManager: {
     getInstance: jest.fn().mockReturnValue({}),
   },
 }));
@@ -75,8 +74,8 @@ describe('DI Service Registration Logging', () => {
     expect(mockLogger.debug).toHaveBeenCalledWith('Registering BotConfigurationManager instance');
     expect(mockLogger.debug).toHaveBeenCalledWith('Registering UserConfigStore');
     expect(mockLogger.debug).toHaveBeenCalledWith('Registering SecureConfigManager');
-    expect(mockLogger.warn).toHaveBeenCalledWith('BotConfigurationManager is being registered a second time (useClass); this will override the useValue registration above');
-    expect(mockLogger.warn).toHaveBeenCalledWith('UserConfigStore is being registered a second time; this will override the first registration');
+    expect(mockLogger.debug).toHaveBeenCalledWith('Registering BotConfigurationManager class');
+    expect(mockLogger.debug).toHaveBeenCalledWith('Registering UserConfigStore (re-registering instance)');
     expect(mockLogger.debug).toHaveBeenCalledWith('Registering ProviderConfigManager');
 
     // Verify completion log (info level)

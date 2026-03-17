@@ -21,12 +21,10 @@ const Dashboard: React.FC = () => {
   const fetchData = useCallback(async () => {
     try {
       setError(null);
-      const [configResult, statusResult] = await Promise.allSettled([
+      const [configData, statusData] = await Promise.all([
         apiService.getConfig(),
         apiService.getStatus(),
       ]);
-      const configData = configResult.status === 'fulfilled' ? configResult.value : { bots: [] };
-      const statusData = statusResult.status === 'fulfilled' ? statusResult.value : { bots: [] };
       setBots(configData.bots);
       setStatus(statusData);
       setToastMessage('Dashboard refreshed successfully!');

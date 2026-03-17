@@ -1,18 +1,18 @@
 import { NextFunction, Request, Response } from 'express';
+import { MetricsCollector } from '../../../src/monitoring/MetricsCollector';
+import { ErrorFactory, BaseHivemindError } from '../../../src/types/errorClasses';
+import { errorLogger } from '../../../src/utils/errorLogger';
 import {
-  asyncErrorHandler,
   correlationMiddleware,
-  errorRecoveryMiddleware,
   globalErrorHandler,
+  asyncErrorHandler,
   handleUncaughtException,
   handleUnhandledRejection,
-  rateLimitErrorHandler,
   setupGlobalErrorHandlers,
   setupGracefulShutdown,
+  errorRecoveryMiddleware,
+  rateLimitErrorHandler,
 } from '../../../src/middleware/errorHandler';
-import { MetricsCollector } from '../../../src/monitoring/MetricsCollector';
-import { BaseHivemindError, ErrorFactory } from '../../../src/types/errorClasses';
-import { errorLogger } from '../../../src/utils/errorLogger';
 
 jest.mock('../../../src/monitoring/MetricsCollector', () => ({
   MetricsCollector: {
@@ -117,14 +117,17 @@ describe('errorHandler middleware', () => {
       expect(MetricsCollector.getInstance().incrementErrors).toHaveBeenCalled();
 
       expect(mockRes.status).toHaveBeenCalledWith(500);
-
-      const jsonCallArg = (mockRes.json as jest.Mock).mock.calls[0][0];
-
-      expect(jsonCallArg.error).toBeDefined();
-      expect(jsonCallArg.error.code).toBe('MOCK_ERROR');
-      expect(jsonCallArg.error.message).toBe('Mock error message');
-      expect(jsonCallArg.error.correlationId).toBe('test-corr-id');
-      expect(jsonCallArg.error.details).toEqual({ foo: 'bar' });
+      expect(mockRes.json).toHaveBeenCalledWith(expect.objectContaining({
+        error: 'MockError',
+        code: 'MOCK_ERROR',
+        message: 'Mock error message',
+        correlationId: 'test-corr-id',
+        details: { foo: 'bar' },
+        recovery: {
+          canRecover: false,
+          steps: ['Step 1'],
+        }
+      }));
 
       // Ensure response doesn't contain stack in production
       expect(jsonCallArg.stack).toBeUndefined();
@@ -272,8 +275,8 @@ describe('errorHandler middleware', () => {
 
       setupGlobalErrorHandlers();
 
-      // Expected to be a no-op as it's now managed by ShutdownCoordinator
-      expect(onSpy).not.toHaveBeenCalled();
+      expect(onSpy).toHaveBeenCalledWith('uncaughtException', handleUncaughtException);
+      expect(onSpy).toHaveBeenCalledWith('unhandledRejection', handleUnhandledRejection);
 
       onSpy.mockRestore();
     });
@@ -285,8 +288,8 @@ describe('errorHandler middleware', () => {
 
       setupGracefulShutdown();
 
-      // Expected to be a no-op as it's now managed by ShutdownCoordinator
-      expect(onSpy).not.toHaveBeenCalled();
+      expect(onSpy).toHaveBeenCalledWith('SIGTERM', expect.any(Function));
+      expect(onSpy).toHaveBeenCalledWith('SIGINT', expect.any(Function));
 
       onSpy.mockRestore();
     });

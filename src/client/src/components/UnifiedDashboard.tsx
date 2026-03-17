@@ -262,35 +262,76 @@ const UnifiedDashboard: React.FC = () => {
     [fetchData, successToast, errorToast],
   );
 
-  const statusBots = useMemo(() => status?.bots ?? [], [status]);
+  const statusBots = status?.bots ?? [];
+  const activeBotCount = useMemo(
+    () => statusBots.filter(bot => bot.status?.toLowerCase() === 'active').length,
+    [statusBots],
+  );
+  const activeConnections = useMemo(
+    () => statusBots.filter(bot => bot.connected).length,
+    [statusBots],
+  );
+  const totalMessages = useMemo(
+    () => statusBots.reduce((sum, bot) => sum + (bot.messageCount ?? 0), 0),
+    [statusBots],
+  );
+  const totalErrors = useMemo(
+    () => statusBots.reduce((sum, bot) => sum + (bot.errorCount ?? 0), 0),
+    [statusBots],
+  );
+  const errorRatePercent = totalMessages === 0
+    ? 0
+    : Number(((totalErrors / totalMessages) * 100).toFixed(2));
+  const uptimeSeconds = status?.uptime ?? 0;
+  const uptimeDisplay = formatUptime(uptimeSeconds);
 
-  // Combine 4 separate O(N) filter/reduce passes into a single O(N) pass
-  // to calculate dashboard statistics and prevent unnecessary re-renders.
-  const { activeBotCount, activeConnections, totalMessages, totalErrors } = useMemo(() => {
-    return statusBots.reduce(
-      (acc, bot) => {
-        if (bot.status?.toLowerCase() === 'active') {
-          acc.activeBotCount++;
-        }
-        if (bot.connected) {
-          acc.activeConnections++;
-        }
-        acc.totalMessages += bot.messageCount ?? 0;
-        acc.totalErrors += bot.errorCount ?? 0;
-        return acc;
+  const guardedBots = useMemo(
+    () => bots.filter(bot => bot.mcpGuard?.enabled).length,
+    [bots],
+  );
+
+  const statsCards = useMemo(
+    () => [
+      {
+        id: 'active-bots',
+        title: 'Active Bots',
+        value: activeBotCount,
+        change: bots.length === 0 ? 0 : Math.round((activeBotCount / bots.length) * 100),
+        changeType: (activeBotCount >= bots.length / 2 ? 'increase' : 'decrease') as 'increase' | 'decrease',
+        icon: '🤖',
+        description: `${activeBotCount} of ${bots.length} agents online`,
+        color: 'success' as const,
       },
-      { activeBotCount: 0, activeConnections: 0, totalMessages: 0, totalErrors: 0 }
-    );
-  }, [statusBots]);
-
-  const { statsCards } = useDashboardStats(
-    bots,
-    statusBots,
-    activeBotCount,
-    totalMessages,
-    activeConnections,
-    totalErrors,
-    status?.uptime ?? 0
+      {
+        id: 'total-messages',
+        title: 'Messages Today',
+        value: totalMessages,
+        change: totalMessages > 0 ? Math.min(100, Math.round(totalMessages / 50)) : 0,
+        changeType: (totalMessages > 0 ? 'increase' : 'neutral') as 'increase' | 'neutral',
+        icon: '💬',
+        description: `${activeConnections} live conversations`,
+        color: 'secondary' as const,
+      },
+      {
+        id: 'error-rate',
+        title: 'Error Rate',
+        value: `${errorRatePercent}%`,
+        change: errorRatePercent,
+        changeType: (errorRatePercent <= 2 ? 'decrease' : 'increase') as 'decrease' | 'increase',
+        icon: '🚨',
+        description: `${totalErrors} errors observed`,
+        color: errorRatePercent <= 2 ? 'success' as const : 'warning' as const,
+      },
+      {
+        id: 'uptime',
+        title: 'Cluster Uptime',
+        value: uptimeDisplay,
+        icon: '⏱️',
+        description: `Up since ${uptimeDisplay === '—' ? '—' : 'last restart'}`,
+        color: 'secondary' as const,
+      },
+    ],
+    [activeBotCount, bots.length, totalMessages, activeConnections, errorRatePercent, totalErrors, uptimeDisplay],
   );
 
   const botTableData = useMemo<BotTableRow[]>(() => {

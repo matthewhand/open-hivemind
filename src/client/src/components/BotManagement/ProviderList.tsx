@@ -21,7 +21,7 @@ const ProviderList: React.FC<ProviderListProps> = ({
   onEdit,
   disabled = false,
 }) => {
-  if (!providers || providers.length === 0) {
+  if (providers.length === 0) {
     return (
       <div className={`
         bg-base-200/50 border border-dashed border-base-300

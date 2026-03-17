@@ -176,9 +176,7 @@ router.post('/', async (req, res) => {
 
     const newAgent: AgentConfig = {
       ...agentData,
-      id: `agent_${Date.now()}_${randomBytes(5).toString('hex')}`,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
+      id: `agent_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
     };
 
     agents.push(newAgent);

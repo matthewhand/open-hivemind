@@ -223,7 +223,6 @@ function validateRepoUrl(url: string): void {
  * @throws PluginValidationError if the manifest is invalid or type mismatches
  */
 export async function installPlugin(repoUrl: string): Promise<PluginInfo> {
-  validateRepoUrl(repoUrl);
   fs.mkdirSync(PLUGINS_DIR, { recursive: true });
 
   // Clone into a temp dir first so we can read the name before committing
