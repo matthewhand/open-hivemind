@@ -1,5 +1,5 @@
 import axios from 'axios';
-import MattermostClient from '../../../packages/adapter-mattermost/src/mattermostClient';
+import MattermostClient from '../../../packages/message-mattermost/src/mattermostClient';
 
 jest.mock('axios');
 
