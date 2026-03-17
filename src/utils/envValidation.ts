@@ -38,7 +38,6 @@ export function validateRequiredEnvVars(): void {
 
   // Variables that are ALWAYS required regardless of environment
   // e.g. if we add DATABASE_URL later
-  // if (!process.env.DATABASE_URL) missingVars.push('DATABASE_URL');
 
   if (missingVars.length > 0) {
     Logger.error('---------------------------------------------------------');
