@@ -14,7 +14,7 @@ import {
   MessageCircle as MessageIcon,
   Database as MemoryIcon,
   Wrench as ToolIcon,
-  Github as GitHubIcon,
+  Github as GithubIcon,
   AlertCircle as AlertIcon,
   CheckCircle as CheckIcon,
   X as CloseIcon,
@@ -439,7 +439,7 @@ const MarketplacePage: React.FC = () => {
                   <span className="loading loading-spinner loading-sm"></span>
                 ) : (
                   <>
-                    <GitHubIcon className="w-4 h-4 mr-1" />
+                    <GithubIcon className="w-4 h-4 mr-1" />
                     Install
                   </>
                 )}
