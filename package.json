@@ -33,23 +33,17 @@
     "dev:clean": "rm -rf dist node_modules/.cache",
     "dev:status": "ps aux | grep -E '(node|ts-node)' | grep -v grep",
     "audit:secrets": "bash ./scripts/audit-secrets.sh",
-<<<<<<< HEAD
     "check-docs": "node ./scripts/check-docs-drift.js",
     "validate": "./node_modules/.bin/concurrently \"npm run lint\" \"npm run test\" \"npm run check-docs\"",
-    "test": "NODE_CONFIG_DIR=config/test/ NODE_ENV=test pnpm exec jest --runInBand",
-    "test:coverage": "NODE_CONFIG_DIR=config/test/ NODE_ENV=test pnpm exec jest --coverage --runInBand",
-=======
-    "validate": "./node_modules/.bin/concurrently \"npm run lint\" \"npm run test\"",
-    "test": "NODE_CONFIG_DIR=config/test/ NODE_ENV=test node -r dotenv/config node_modules/.bin/jest --runInBand",
-    "test:coverage": "NODE_CONFIG_DIR=config/test/ NODE_ENV=test node_modules/.bin/jest --coverage --runInBand",
->>>>>>> origin/refiner-database-migration-reversibility-3845862468620237629
+    "test": "NODE_CONFIG_DIR=config/test/ NODE_ENV=test npx jest --runInBand",
+    "test:coverage": "NODE_CONFIG_DIR=config/test/ NODE_ENV=test npx jest --coverage --runInBand",
     "test:real": "NODE_ENV=test jest --config jest.real.config.js",
     "test:real:legacy": "./scripts/run-real-tests.sh",
     "test:debug": "NODE_CONFIG_DIR=config/test/ NODE_ENV=test DEBUG=* jest --verbose --runInBand",
     "test:monitor": "NODE_CONFIG_DIR=config/test/ NODE_ENV=test DEBUG=* jest --verbose --runInBand --watch",
-    "test:e2e": "echo \"Mocha test skipped\"",
-    "test:e2e:ci": "echo \"Mocha test skipped\"",
-    "test:e2e:watch": "echo \"Mocha test skipped\"",
+    "test:e2e": "NODE_CONFIG_DIR=config/test/ NODE_ENV=test node_modules/.bin/mocha tests/e2e/simple-dashboard-test.mjs --timeout 30000",
+    "test:e2e:ci": "NODE_CONFIG_DIR=config/test/ NODE_ENV=test TEST_SERVER_RUNNING=true node_modules/.bin/mocha tests/e2e/simple-dashboard-test.mjs --timeout 30000 --reporter spec",
+    "test:e2e:watch": "NODE_CONFIG_DIR=config/test/ NODE_ENV=test node_modules/.bin/mocha tests/e2e/simple-dashboard-test.mjs --timeout 30000 --watch",
     "test:playwright": "node ./node_modules/.bin/playwright test",
     "generate-docs": "mkdir -p docs/screenshots && node ./node_modules/.bin/playwright test tests/e2e/screenshot-*.spec.ts --project=chromium",
     "docs:screenshots": "npx playwright test tests/e2e/docs-screenshots.spec.ts",
@@ -249,10 +243,6 @@
     "eslint": "^9.34.0",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-import": "^2.32.0",
-<<<<<<< HEAD
-    "eslint-plugin-jest": "^29.15.0",
-=======
->>>>>>> origin/refiner-database-migration-reversibility-3845862468620237629
     "eslint-plugin-prettier": "^5.5.5",
     "eslint-plugin-react-hooks": "^5.2.0",
     "eslint-plugin-react-refresh": "^0.4.20",
