@@ -1,6 +1,6 @@
 import { Router, type Request, type Response } from 'express';
 import { getAgent, listAgents } from '@hivemind/llm-letta';
-import { isSafeUrl } from '../utils/ssrfGuard';
+import { isSafeUrl } from '../../utils/ssrfGuard';
 
 const router = Router();
 
@@ -13,7 +13,7 @@ async function validateLettaUrl(url: string): Promise<{ isValid: boolean; error?
     const hostname = parsedUrl.hostname.toLowerCase();
 
     // 1. Strict allowlist for Letta cloud (must be exactly letta.com or a direct subdomain)
-    const isTrustedLetta = hostname === 'letta.com' || (hostname.endsWith('.letta.com') && hostname[hostname.length - '.letta.com'.length - 1] === '.');
+    const isTrustedLetta = hostname === 'letta.com' || hostname.endsWith('.letta.com');
 
     // 2. Allow local network if explicitly enabled
     const allowLocal =
