@@ -1,13 +1,11 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
-import React, { useEffect, useState, useCallback, useMemo } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { apiService, type Bot, type StatusResponse } from '../services/api';
 import { Alert } from './DaisyUI/Alert';
-import Hero from './DaisyUI/Hero';
 import Button from './DaisyUI/Button';
+import Hero from './DaisyUI/Hero';
 import { SkeletonCard } from './DaisyUI/Skeleton';
-import { apiService } from '../services/api';
-import type { Bot, StatusResponse } from '../services/api';
-import QuickActions from './QuickActions';
 import DashboardBotCard from './DashboardBotCard';
+import QuickActions from './QuickActions';
 
 const Dashboard: React.FC = () => {
   const [bots, setBots] = useState<Bot[]>([]);
@@ -44,37 +42,37 @@ const Dashboard: React.FC = () => {
 
   const getStatusColor = useCallback((botStatus: string) => {
     switch (botStatus.toLowerCase()) {
-    case 'active':
-      return 'success';
-    case 'connecting':
-      return 'warning';
-    case 'inactive':
-    case 'unavailable':
-      return 'error';
-    case 'error':
-      return 'error';
-    default:
-      return 'info';
+      case 'active':
+        return 'success';
+      case 'connecting':
+        return 'warning';
+      case 'inactive':
+      case 'unavailable':
+        return 'error';
+      case 'error':
+        return 'error';
+      default:
+        return 'info';
     }
   }, []);
 
   const getProviderIcon = useCallback((provider: string) => {
     switch (provider.toLowerCase()) {
-    case 'discord':
-      return '💬';
-    case 'slack':
-      return '📢';
-    case 'telegram':
-      return '✈️';
-    case 'mattermost':
-      return '💼';
-    default:
-      return '🤖';
+      case 'discord':
+        return '💬';
+      case 'slack':
+        return '📢';
+      case 'telegram':
+        return '✈️';
+      case 'mattermost':
+        return '💼';
+      default:
+        return '🤖';
     }
   }, []);
 
   const handleRatingChange = useCallback((botName: string, rating: number) => {
-    setBotRatings(prev => ({ ...prev, [botName]: rating }));
+    setBotRatings((prev) => ({ ...prev, [botName]: rating }));
     setToastMessage(`Rated ${botName}: ${rating} stars`);
     setShowToast(true);
   }, []);
@@ -83,7 +81,7 @@ const Dashboard: React.FC = () => {
     if (!status?.bots) return 0;
     // status.bots aligns with bots array based on rendering logic.
     // Optimization: filtering directly on status array is O(N) vs O(N^2)
-    return status.bots.filter(b => b.status === 'active').length;
+    return status.bots.filter((b) => b.status === 'active').length;
   }, [status]);
 
   const totalMessages = useMemo(
@@ -91,9 +89,10 @@ const Dashboard: React.FC = () => {
     [status]
   );
   const uptimeHours = useMemo(() => (status ? Math.floor(status.uptime / 3600) : 0), [status]);
-  const uptimeMinutes = useMemo(() => (status ? Math.floor((status.uptime % 3600) / 60) : 0), [
-    status,
-  ]);
+  const uptimeMinutes = useMemo(
+    () => (status ? Math.floor((status.uptime % 3600) / 60) : 0),
+    [status]
+  );
 
   if (loading) {
     return (
@@ -189,7 +188,13 @@ const Dashboard: React.FC = () => {
         <div className="toast toast-bottom toast-center z-50" role="status" aria-live="polite">
           <div className="alert alert-success">
             <span>{toastMessage}</span>
-            <button className="btn btn-sm btn-ghost" onClick={() => setShowToast(false)}>✕</button>
+            <button
+              className="btn btn-sm btn-ghost"
+              onClick={() => setShowToast(false)}
+              aria-label="Close notification"
+            >
+              ✕
+            </button>
           </div>
         </div>
       )}
@@ -222,12 +227,16 @@ const Dashboard: React.FC = () => {
             </div>
             <div className="stat place-items-center">
               <div className="stat-title">Total Messages</div>
-              <div className="stat-value text-secondary text-2xl">{totalMessages.toLocaleString()}</div>
+              <div className="stat-value text-secondary text-2xl">
+                {totalMessages.toLocaleString()}
+              </div>
               <div className="stat-desc">processed today</div>
             </div>
             <div className="stat place-items-center">
               <div className="stat-title">System Uptime</div>
-              <div className="stat-value text-accent text-2xl">{uptimeHours}h {uptimeMinutes}m</div>
+              <div className="stat-value text-accent text-2xl">
+                {uptimeHours}h {uptimeMinutes}m
+              </div>
               <div className="stat-desc">running smoothly</div>
             </div>
           </div>
@@ -259,13 +268,13 @@ const Dashboard: React.FC = () => {
         {/* System Status Footer */}
         {status && (
           <div className="bg-base-100 rounded-lg shadow p-6">
-            <h3 className="text-xl font-bold mb-4 flex items-center">
-              🖥️ System Information
-            </h3>
+            <h3 className="text-xl font-bold mb-4 flex items-center">🖥️ System Information</h3>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="stat">
                 <div className="stat-title">Uptime</div>
-                <div className="stat-value text-lg">{uptimeHours}h {uptimeMinutes}m</div>
+                <div className="stat-value text-lg">
+                  {uptimeHours}h {uptimeMinutes}m
+                </div>
                 <div className="stat-desc">System running smoothly</div>
               </div>
               <div className="stat">
