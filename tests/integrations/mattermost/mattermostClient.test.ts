@@ -6,7 +6,7 @@ import MattermostClient from '../../../packages/message-mattermost/src/mattermos
 >>>>>>> d5213de3 (Refiner (Import Order and Dependency Hygiene): Align dependency versioning and order)
 
 jest.mock('axios');
-jest.mock('@src/utils/ssrfGuard', () => ({
+jest.mock('@hivemind/shared-types', () => ({
   isSafeUrl: jest.fn().mockResolvedValue(true)
 }));
 
