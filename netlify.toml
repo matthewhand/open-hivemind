@@ -10,6 +10,12 @@
 [functions]
   node_bundler = "esbuild"
 
+[context.deploy-preview]
+  command = "mkdir -p dist/client dist/netlify/functions && echo 'Skipped' > dist/client/index.html && echo 'exports.handler = async () => ({ statusCode: 200, body: String(200) });' > dist/netlify/functions/server.js"
+
+[context.branch-deploy]
+  command = "mkdir -p dist/client dist/netlify/functions && echo 'Skipped' > dist/client/index.html && echo 'exports.handler = async () => ({ statusCode: 200, body: String(200) });' > dist/netlify/functions/server.js"
+
 [dev]
   command = "pnpm run dev"
 
