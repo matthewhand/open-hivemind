@@ -26,7 +26,10 @@ export const auditMiddleware = (req: AuditedRequest, res: Response, next: NextFu
     }
 
     // Extract IP address
-    const reqWithConnection = req as AuditedRequest & { connection?: { remoteAddress?: string }; socket?: { remoteAddress?: string } };
+    const reqWithConnection = req as AuditedRequest & {
+      connection?: { remoteAddress?: string };
+      socket?: { remoteAddress?: string };
+    };
     const ipAddress =
       req.ip ||
       reqWithConnection.connection?.remoteAddress ||
