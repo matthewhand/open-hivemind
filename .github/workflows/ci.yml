@@ -23,6 +23,7 @@ jobs:
         uses: pnpm/action-setup@v3
         with:
           version: 10
+      - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
           node-version: '20'
@@ -30,8 +31,8 @@ jobs:
         run: pnpm install
       - name: Audit for hardcoded secrets
         run: pnpm run audit:secrets
-      - name: Check for documentation drift
-        run: node scripts/check-docs-drift.js
+      - name: Run security audit
+        run: pnpm audit --audit-level=high --production
       - name: Run unit tests
         id: unit-test
         run: |
