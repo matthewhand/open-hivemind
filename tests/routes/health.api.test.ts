@@ -24,8 +24,6 @@ describe('Health Routes - API Monitoring', () => {
   let apiMonitor: ApiMonitorService;
 
   beforeEach(() => {
-    (ApiMonitorService as any).instance = undefined;
-
     app = express();
     app.disable('x-powered-by');
     app.set('case sensitive routing', true);
@@ -66,8 +64,6 @@ describe('Health Routes - API Monitoring', () => {
   });
 
   afterEach(() => {
-    (ApiMonitorService as any).instance = undefined;
-
     apiMonitor.stopAllMonitoring();
   });
 

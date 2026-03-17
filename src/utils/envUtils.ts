@@ -55,36 +55,10 @@ export function getRelevantEnvVars(): Record<string, string> {
     'OPENSWARM_',
     'MESSAGE_',
     'LLM_',
-    'PORT',
-    'NODE_ENV',
-    'LOG_LEVEL',
-    'BASE_URL',
-    'DEBUG',
-    'ADMIN_',
-    'SESSION_',
-    'JWT_',
-    'API_',
-    'ALLOW_',
-    'CORS_',
-    'TRUST_',
-    'RATE_LIMIT_',
-    'REDIS_',
-    'DISABLE_',
-    'TELEGRAM_',
-    'WEBHOOK_',
-    'OLLAMA_',
-    'REPLICATE_',
-    'MEM0_',
-    'MEMVAULT_',
-    'MEM4AI_',
-    'IDLE_RESPONSE_',
-    'DUPLICATE_DETECTOR_',
-    'VITE_',
   ];
 
   Object.keys(process.env).forEach((envVar) => {
-    // If prefix is an exact match for a top-level key like PORT, it still works.
-    if (prefixes.some((prefix) => envVar === prefix || envVar.startsWith(prefix))) {
+    if (prefixes.some((prefix) => envVar.startsWith(prefix))) {
       const rawValue = process.env[envVar] || '';
       // Redact sensitive values (assume anything with 'KEY', 'SECRET', 'TOKEN' is sensitive)
       if (envVar.includes('KEY') || envVar.includes('SECRET') || envVar.includes('TOKEN')) {

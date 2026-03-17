@@ -5,7 +5,8 @@ import Badge from './DaisyUI/Badge';
 import Button from './DaisyUI/Button';
 import Modal from './DaisyUI/Modal';
 import Accordion from './DaisyUI/Accordion';
-import { Progress, Loading } from './DaisyUI/Loading';
+import { Progress } from './DaisyUI/Loading';
+import { Loading } from './DaisyUI/Loading';
 import {
   RotateCcw,
   Settings,

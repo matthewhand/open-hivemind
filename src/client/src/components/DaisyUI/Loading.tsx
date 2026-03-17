@@ -341,6 +341,7 @@ export const StepProgress: React.FC<StepProgressProps> = ({
         ))}
       </ul>
 
+      {/* Progress bar */}
       <div className="mt-4">
         <Progress
           value={currentStep}

@@ -10,7 +10,7 @@ import { ConfigurationValidator, type BotConfig } from './ConfigurationValidator
 
 const debug = Debug('app:BotConfigService');
 
-interface CreateBotConfigRequest {
+export interface CreateBotConfigRequest {
   name: string;
   messageProvider: string;
   llmProvider: string;
@@ -66,11 +66,11 @@ interface CreateBotConfigRequest {
   };
 }
 
-interface UpdateBotConfigRequest extends Partial<CreateBotConfigRequest> {
+export interface UpdateBotConfigRequest extends Partial<CreateBotConfigRequest> {
   isActive?: boolean;
 }
 
-interface BotConfigResponse extends BotConfiguration {
+export interface BotConfigResponse extends BotConfiguration {
   versions?: BotConfigurationVersion[];
   auditLog?: BotConfigurationAudit[];
 }

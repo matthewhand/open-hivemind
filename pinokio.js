@@ -23,7 +23,7 @@ module.exports = {
           default: true,
           icon: "fa-solid fa-gauge-high",
           text: "Open WebUI",
-          href: "http://localhost:3028"
+          href: "http://localhost:5005"
         }
       ];
     }

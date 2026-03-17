@@ -21,9 +21,7 @@ test.describe('API Integration', () => {
     });
 
     await page.reload();
-    // Use domcontentloaded instead of networkidle since some requests might hang
-    await page.waitForLoadState('domcontentloaded');
-    await page.waitForTimeout(2000); // Wait a bit for the app to settle
+    await page.waitForLoadState('networkidle');
     await page.screenshot({ path: 'test-results/api-01-endpoints.png', fullPage: true });
 
     await assertNoErrors(errors, 'API endpoint responses');

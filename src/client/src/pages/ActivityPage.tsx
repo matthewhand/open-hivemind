@@ -66,10 +66,8 @@ const ActivityPage: React.FC = () => {
         maxRetries,
         1000,
         (err, attempt, max) => {
-           const delayMs = 1000 * Math.pow(2, attempt - 1);
-           console.log(`Retrying fetchActivity in ${delayMs}ms (attempt ${attempt}/${max})`);
+           console.log(`Retrying fetchActivity in ${1000 * Math.pow(1.5, attempt - 1)}ms (attempt ${attempt}/${max})`);
            setRetryCount(attempt);
-           setRetryDelay(delayMs);
         }
       );
 
@@ -279,29 +277,32 @@ const ActivityPage: React.FC = () => {
         />
       )}
 
-      {/* Auto-retrying indicator */}
-      {loading && retryCount > 0 && (
-        <Alert
-          status="warning"
-          message={`Auto-retrying (${retryCount}/${maxRetries}) in ${retryDelay}ms...`}
-        />
-      )}
-
-      {/* Manual Retry Button if there are persistent errors */}
-      {error && (
+      {/* Retry Button if there are errors */}
+      {error && retryCount > 0 && (
         <div className="mt-2 text-center">
-          <Button
-            size="sm"
-            variant="secondary"
-            onClick={() => {
-              setRetryCount(0);
-              setRetryDelay(1000);
-              setError(null);
-              fetchActivity();
-            }}
-          >
-            Reset & Retry
-          </Button>
+          {retryCount < maxRetries ? (
+            <Button
+              size="sm"
+              variant="secondary"
+              onClick={fetchActivity}
+              disabled={loading}
+            >
+              Retry ({retryCount}/{maxRetries})
+            </Button>
+          ) : (
+            <Button
+              size="sm"
+              variant="secondary"
+              onClick={() => {
+                setRetryCount(0);
+                setRetryDelay(1000);
+                setError(null);
+                fetchActivity();
+              }}
+            >
+              Reset & Retry
+            </Button>
+          )}
         </div>
       )}
 

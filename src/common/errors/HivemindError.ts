@@ -21,17 +21,17 @@ import { randomUUID } from 'crypto';
 /**
  * Error categories for classification
  */
-type ErrorCategory = 'database' | 'network' | 'validation' | 'configuration' | 'system';
+export type ErrorCategory = 'database' | 'network' | 'validation' | 'configuration' | 'system';
 
 /**
  * Context information for errors
  */
-type ErrorContext = Record<string, unknown>;
+export type ErrorContext = Record<string, unknown>;
 
 /**
  * JSON representation of an error for logging
  */
-interface ErrorJSON {
+export interface ErrorJSON {
   name: string;
   code: string;
   category: ErrorCategory;
@@ -49,7 +49,7 @@ interface ErrorJSON {
  * Extend this class to create domain-specific errors with
  * consistent structure and serialization.
  */
-abstract class HivemindError extends Error {
+export abstract class HivemindError extends Error {
   /**
    * Unique error code for programmatic handling
    */
@@ -162,14 +162,14 @@ abstract class HivemindError extends Error {
 /**
  * Database-related errors
  */
-abstract class DatabaseError extends HivemindError {
+export abstract class DatabaseError extends HivemindError {
   readonly category: ErrorCategory = 'database';
 }
 
 /**
  * Thrown when database is not initialized before use
  */
-class DatabaseNotInitializedError extends DatabaseError {
+export class DatabaseNotInitializedError extends DatabaseError {
   readonly code = 'DB_NOT_INITIALIZED';
 
   constructor(message = 'Database not initialized', context: ErrorContext = {}) {
@@ -180,7 +180,7 @@ class DatabaseNotInitializedError extends DatabaseError {
 /**
  * Thrown when a database connection fails
  */
-class DatabaseConnectionError extends DatabaseError {
+export class DatabaseConnectionError extends DatabaseError {
   readonly code = 'DB_CONNECTION_FAILED';
 
   constructor(
@@ -195,7 +195,7 @@ class DatabaseConnectionError extends DatabaseError {
 /**
  * Thrown when a database query fails
  */
-class DatabaseQueryError extends DatabaseError {
+export class DatabaseQueryError extends DatabaseError {
   readonly code = 'DB_QUERY_FAILED';
 
   constructor(message = 'Database query failed', context: ErrorContext = {}, cause?: Error) {
@@ -206,14 +206,14 @@ class DatabaseQueryError extends DatabaseError {
 /**
  * Network-related errors
  */
-abstract class NetworkError extends HivemindError {
+export abstract class NetworkError extends HivemindError {
   readonly category: ErrorCategory = 'network';
 }
 
 /**
  * Thrown when a bot is not found
  */
-class BotNotFoundError extends NetworkError {
+export class BotNotFoundError extends NetworkError {
   readonly code = 'BOT_NOT_FOUND';
   readonly botName: string;
 
@@ -226,7 +226,7 @@ class BotNotFoundError extends NetworkError {
 /**
  * Thrown when MCP server connection fails
  */
-class MCPConnectionError extends NetworkError {
+export class MCPConnectionError extends NetworkError {
   readonly code = 'MCP_CONNECTION_FAILED';
   readonly serverName: string;
 
@@ -252,14 +252,14 @@ class APIError extends NetworkError {
 /**
  * Validation-related errors
  */
-abstract class ValidationError extends HivemindError {
+export abstract class ValidationError extends HivemindError {
   readonly category: ErrorCategory = 'validation';
 }
 
 /**
  * Thrown when required configuration is missing
  */
-class MissingConfigError extends ValidationError {
+export class MissingConfigError extends ValidationError {
   readonly code = 'MISSING_CONFIG';
   readonly configKey: string;
 
@@ -272,7 +272,7 @@ class MissingConfigError extends ValidationError {
 /**
  * Thrown when input validation fails
  */
-class InputValidationError extends ValidationError {
+export class InputValidationError extends ValidationError {
   readonly code = 'INVALID_INPUT';
   readonly field: string;
   readonly value: unknown;
@@ -291,14 +291,14 @@ class InputValidationError extends ValidationError {
 /**
  * Configuration-related errors
  */
-abstract class ConfigurationError extends HivemindError {
+export abstract class ConfigurationError extends HivemindError {
   readonly category: ErrorCategory = 'configuration';
 }
 
 /**
  * Thrown when configuration is invalid
  */
-class InvalidConfigError extends ConfigurationError {
+export class InvalidConfigError extends ConfigurationError {
   readonly code = 'INVALID_CONFIG';
 
   constructor(message: string, context: ErrorContext = {}) {
@@ -309,14 +309,14 @@ class InvalidConfigError extends ConfigurationError {
 /**
  * System-related errors
  */
-abstract class SystemError extends HivemindError {
+export abstract class SystemError extends HivemindError {
   readonly category: ErrorCategory = 'system';
 }
 
 /**
  * Thrown when an operation times out
  */
-class TimeoutError extends SystemError {
+export class TimeoutError extends SystemError {
   readonly code = 'TIMEOUT';
   readonly operation: string;
   readonly timeoutMs: number;
@@ -335,7 +335,7 @@ class TimeoutError extends SystemError {
 /**
  * Thrown when a feature is not implemented
  */
-class NotImplementedError extends SystemError {
+export class NotImplementedError extends SystemError {
   readonly code = 'NOT_IMPLEMENTED';
   readonly feature: string;
 
@@ -348,14 +348,14 @@ class NotImplementedError extends SystemError {
 /**
  * Helper function to check if an error is a HivemindError
  */
-function isHivemindError(error: unknown): error is HivemindError {
+export function isHivemindError(error: unknown): error is HivemindError {
   return error instanceof HivemindError;
 }
 
 /**
  * Helper function to get error code from any error
  */
-function getErrorCode(error: unknown): string {
+export function getErrorCode(error: unknown): string {
   if (isHivemindError(error)) {
     return error.code;
   }
@@ -365,7 +365,7 @@ function getErrorCode(error: unknown): string {
 /**
  * Helper function to get error category from any error
  */
-function getErrorCategory(error: unknown): ErrorCategory {
+export function getErrorCategory(error: unknown): ErrorCategory {
   if (isHivemindError(error)) {
     return error.category;
   }
@@ -375,14 +375,14 @@ function getErrorCategory(error: unknown): ErrorCategory {
 /**
  * Generate a unique error ID for tracking
  */
-function generateErrorId(): string {
+export function generateErrorId(): string {
   return randomUUID();
 }
 
 /**
  * Wrap any error as a HivemindError
  */
-function wrapError(error: unknown, context: ErrorContext = {}): HivemindError {
+export function wrapError(error: unknown, context: ErrorContext = {}): HivemindError {
   if (isHivemindError(error)) {
     return error;
   }

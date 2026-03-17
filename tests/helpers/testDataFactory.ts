@@ -1,10 +1,7 @@
 import fc from 'fast-check';
 import discordConfig from '../../src/config/discordConfig';
-import flowiseConfig from '../../src/config/flowiseConfig';
 import mattermostConfig from '../../src/config/mattermostConfig';
 import messageConfig from '../../src/config/messageConfig';
-import openaiConfig from '../../src/config/openaiConfig';
-import openWebUIConfig from '../../src/config/openWebUIConfig';
 import slackConfig from '../../src/config/slackConfig';
 import telegramConfig from '../../src/config/telegramConfig';
 import webhookConfig from '../../src/config/webhookConfig';
@@ -216,13 +213,6 @@ export const slackConfigData: ConfigTestData = {
     WELCOME_RESOURCE_URL: 'https://university.example.com/resources',
     REPORT_ISSUE_URL: 'https://university.example.com/report-issue',
     SLACK_MODE: 'socket',
-    SLACK_BOT_JOIN_CHANNEL_MESSAGE:
-      "# Bot joined the {channel} channel! :robot_face:\n\nWelcome! I'm here to assist. [Get Started](action:start_{channel})",
-    SLACK_USER_JOIN_CHANNEL_MESSAGE:
-      "# Welcome, {user}, to the {channel} channel! :wave:\n\nHere’s some quick info:\n- *Purpose*: Support student inquiries related to learning objectives...\n- *Resources*: [Learn More](${process.env.WELCOME_RESOURCE_URL || 'https://university.example.com/resources'})\n\n## Actions\n- [Learning Objectives](action:learn_objectives_{channel})\n- [How-To](action:how_to_{channel})\n- [Contact Support](action:contact_support_{channel})\n- [Report Issue](action:report_issue_{channel})",
-    SLACK_BOT_LEARN_MORE_MESSAGE: 'Here’s more info about channel {channel}!',
-    SLACK_BUTTON_MAPPINGS:
-      '{"learn_objectives_C08BC0X4DFD": "Learning Objectives", "how_to_C08BC0X4DFD": "How-To", "contact_support_C08BC0X4DFD": "Contact Support", "report_issue_C08BC0X4DFD": "Report Issue", "start_C08BC0X4DFD": "Get Started"}',
   },
   envVars: {
     SLACK_BOT_TOKEN: 'xoxb-test-token-123',
@@ -233,10 +223,6 @@ export const slackConfigData: ConfigTestData = {
     SLACK_MODE: 'rtm',
     WELCOME_RESOURCE_URL: 'https://custom.example.com/welcome',
     REPORT_ISSUE_URL: 'https://custom.example.com/report',
-    SLACK_BOT_JOIN_CHANNEL_MESSAGE: 'Custom bot join message {channel}',
-    SLACK_USER_JOIN_CHANNEL_MESSAGE: 'Custom user join message {user} in {channel}',
-    SLACK_BOT_LEARN_MORE_MESSAGE: 'Custom learn more message {channel}',
-    SLACK_BUTTON_MAPPINGS: '{"test_action": "Test Action"}',
   },
   expectedResults: {
     SLACK_BOT_TOKEN: 'xoxb-test-token-123',
@@ -247,117 +233,6 @@ export const slackConfigData: ConfigTestData = {
     SLACK_MODE: 'rtm',
     WELCOME_RESOURCE_URL: 'https://custom.example.com/welcome',
     REPORT_ISSUE_URL: 'https://custom.example.com/report',
-    SLACK_BOT_JOIN_CHANNEL_MESSAGE: 'Custom bot join message {channel}',
-    SLACK_USER_JOIN_CHANNEL_MESSAGE: 'Custom user join message {user} in {channel}',
-    SLACK_BOT_LEARN_MORE_MESSAGE: 'Custom learn more message {channel}',
-    SLACK_BUTTON_MAPPINGS: '{"test_action": "Test Action"}',
-  },
-};
-
-// Flowise Config Test Data
-export const flowiseConfigData: ConfigTestData = {
-  defaults: {
-    FLOWISE_API_ENDPOINT: '',
-    FLOWISE_API_KEY: '',
-    FLOWISE_CONVERSATION_CHATFLOW_ID: '',
-    FLOWISE_COMPLETION_CHATFLOW_ID: '',
-    FLOWISE_USE_REST: true,
-  },
-  envVars: {
-    FLOWISE_API_ENDPOINT: 'http://localhost:3000/api/v1',
-    FLOWISE_API_KEY: 'flowise-test-key-123',
-    FLOWISE_CONVERSATION_CHATFLOW_ID: 'conv-chatflow-123',
-    FLOWISE_COMPLETION_CHATFLOW_ID: 'comp-chatflow-456',
-    FLOWISE_USE_REST: 'false',
-  },
-  expectedResults: {
-    FLOWISE_API_ENDPOINT: 'http://localhost:3000/api/v1',
-    FLOWISE_API_KEY: 'flowise-test-key-123',
-    FLOWISE_CONVERSATION_CHATFLOW_ID: 'conv-chatflow-123',
-    FLOWISE_COMPLETION_CHATFLOW_ID: 'comp-chatflow-456',
-    FLOWISE_USE_REST: false,
-  },
-};
-
-// OpenWebUI Config Test Data
-export const openWebUIConfigData: ConfigTestData = {
-  defaults: {
-    OPEN_WEBUI_API_URL: 'http://host.docker.internal:3000/api/',
-    OPEN_WEBUI_USERNAME: 'admin',
-    OPEN_WEBUI_PASSWORD: 'password123',
-    OPEN_WEBUI_KNOWLEDGE_FILE: '',
-    OPEN_WEBUI_MODEL: 'llama3.2',
-  },
-  envVars: {
-    OPEN_WEBUI_API_URL: 'http://localhost:3000/api/',
-    OPEN_WEBUI_USERNAME: 'testadmin',
-    OPEN_WEBUI_PASSWORD: 'securepassword123',
-    OPEN_WEBUI_KNOWLEDGE_FILE: '/path/to/knowledge.txt',
-    OPEN_WEBUI_MODEL: 'llama3.3',
-  },
-  expectedResults: {
-    OPEN_WEBUI_API_URL: 'http://localhost:3000/api/',
-    OPEN_WEBUI_USERNAME: 'testadmin',
-    OPEN_WEBUI_PASSWORD: 'securepassword123',
-    OPEN_WEBUI_KNOWLEDGE_FILE: '/path/to/knowledge.txt',
-    OPEN_WEBUI_MODEL: 'llama3.3',
-  },
-};
-
-// OpenAI Config Test Data
-export const openaiConfigData: ConfigTestData = {
-  defaults: {
-    OPENAI_API_KEY: '',
-    OPENAI_TEMPERATURE: 0.7,
-    OPENAI_MAX_TOKENS: 150,
-    OPENAI_FREQUENCY_PENALTY: 0.1,
-    OPENAI_PRESENCE_PENALTY: 0.05,
-    OPENAI_BASE_URL: 'https://api.openai.com/v1',
-    OPENAI_TIMEOUT: 10000,
-    OPENAI_ORGANIZATION: '',
-    OPENAI_MODEL: 'gpt-5.2',
-    OPENAI_STOP: [],
-    OPENAI_TOP_P: 1.0,
-    OPENAI_SYSTEM_PROMPT: 'Greetings, human...',
-    OPENAI_RESPONSE_MAX_TOKENS: 100,
-    OPENAI_MAX_RETRIES: 3,
-    OPENAI_FINISH_REASON_RETRY: 'stop',
-    OPENAI_VOICE: 'nova',
-    OPENAI_EMBEDDING_MODELS: [
-      'text-embedding-3-large',
-      'text-embedding-3-small',
-      'text-embedding-ada-002',
-    ],
-  },
-  envVars: {
-    OPENAI_API_KEY: 'sk-test-openai-key',
-    OPENAI_TEMPERATURE: '0.9',
-    OPENAI_MAX_TOKENS: '500',
-    OPENAI_MODEL: 'gpt-4o',
-    OPENAI_BASE_URL: 'https://custom.openai.api/v1',
-  },
-  expectedResults: {
-    OPENAI_API_KEY: 'sk-test-openai-key',
-    OPENAI_TEMPERATURE: 0.9,
-    OPENAI_MAX_TOKENS: 500,
-    OPENAI_FREQUENCY_PENALTY: 0.1,
-    OPENAI_PRESENCE_PENALTY: 0.05,
-    OPENAI_BASE_URL: 'https://custom.openai.api/v1',
-    OPENAI_TIMEOUT: 10000,
-    OPENAI_ORGANIZATION: '',
-    OPENAI_MODEL: 'gpt-4o',
-    OPENAI_STOP: [],
-    OPENAI_TOP_P: 1.0,
-    OPENAI_SYSTEM_PROMPT: 'Greetings, human...',
-    OPENAI_RESPONSE_MAX_TOKENS: 100,
-    OPENAI_MAX_RETRIES: 3,
-    OPENAI_FINISH_REASON_RETRY: 'stop',
-    OPENAI_VOICE: 'nova',
-    OPENAI_EMBEDDING_MODELS: [
-      'text-embedding-3-large',
-      'text-embedding-3-small',
-      'text-embedding-ada-002',
-    ],
   },
 };
 
@@ -400,16 +275,7 @@ export const commandParserTestData = {
  * @returns true if valid, throws error otherwise
  */
 export function validateConfigAgainstSchema(
-  type:
-    | 'discord'
-    | 'message'
-    | 'slack'
-    | 'telegram'
-    | 'mattermost'
-    | 'webhook'
-    | 'flowise'
-    | 'openwebui'
-    | 'openai',
+  type: 'discord' | 'message' | 'slack' | 'telegram' | 'mattermost' | 'webhook',
   data: any
 ): boolean {
   try {
@@ -438,18 +304,6 @@ export function validateConfigAgainstSchema(
         webhookConfig.load(data);
         webhookConfig.validate({ allowed: 'strict' });
         break;
-      case 'flowise':
-        flowiseConfig.load(data);
-        flowiseConfig.validate({ allowed: 'strict' });
-        break;
-      case 'openwebui':
-        openWebUIConfig.load(data);
-        openWebUIConfig.validate({ allowed: 'strict' });
-        break;
-      case 'openai':
-        openaiConfig.load(data);
-        openaiConfig.validate({ allowed: 'strict' });
-        break;
     }
     return true;
   } catch (error) {
@@ -472,17 +326,7 @@ export function validateConfigAgainstSchema(
  * - webhook: WEBHOOK_URL
  */
 export function createTestData(
-  type:
-    | 'discord'
-    | 'message'
-    | 'slack'
-    | 'telegram'
-    | 'mattermost'
-    | 'webhook'
-    | 'flowise'
-    | 'openwebui'
-    | 'openai'
-    | 'command'
+  type: 'discord' | 'message' | 'slack' | 'telegram' | 'mattermost' | 'webhook' | 'command'
 ): any {
   let data;
   switch (type) {
@@ -504,15 +348,6 @@ export function createTestData(
     case 'webhook':
       data = webhookConfigData;
       break;
-    case 'flowise':
-      data = flowiseConfigData;
-      break;
-    case 'openwebui':
-      data = openWebUIConfigData;
-      break;
-    case 'openai':
-      data = openaiConfigData;
-      break;
     case 'command':
       return commandParserTestData;
     default:
@@ -521,16 +356,7 @@ export function createTestData(
 
   // Validate the data against the schema
   validateConfigAgainstSchema(
-    type as
-      | 'discord'
-      | 'message'
-      | 'slack'
-      | 'telegram'
-      | 'mattermost'
-      | 'webhook'
-      | 'flowise'
-      | 'openwebui'
-      | 'openai',
+    type as 'discord' | 'message' | 'slack' | 'telegram' | 'mattermost' | 'webhook',
     data.expectedResults
   );
   return data;
@@ -547,162 +373,6 @@ export const telegramConfigGenerator = fc.record({
   TELEGRAM_ALLOWED_CHATS: fc.array(fc.integer()).map((arr) => arr.join(',')),
   TELEGRAM_BLOCKED_USERS: fc.array(fc.integer()).map((arr) => arr.join(',')),
   TELEGRAM_ENABLE_COMMANDS: fc.boolean(),
-});
-
-/**
- * Property-based test generator for Discord configuration
- */
-export const discordConfigGenerator = fc.record({
-  DISCORD_BOT_TOKEN: fc.string({ minLength: 10 }),
-  DISCORD_CLIENT_ID: fc.string({ minLength: 10 }),
-  DISCORD_GUILD_ID: fc.string({ minLength: 10 }),
-  DISCORD_AUDIO_FILE_PATH: fc.string({ minLength: 3 }),
-  DISCORD_WELCOME_MESSAGE: fc.string(),
-  DISCORD_CHANNEL_ID: fc.string(),
-  DISCORD_DEFAULT_CHANNEL_ID: fc.string(),
-  DISCORD_VOICE_CHANNEL_ID: fc.string(),
-  DISCORD_PRIORITY_CHANNEL: fc.string(),
-  DISCORD_MESSAGE_HISTORY_LIMIT: fc.integer({ min: 1, max: 100 }),
-  DISCORD_UNSOLICITED_CHANCE_MODIFIER: fc.float({ min: Math.fround(0.1), max: Math.fround(2.0) }),
-  DISCORD_MAX_MESSAGE_LENGTH: fc.integer({ min: 100, max: 2000 }),
-  DISCORD_INTER_PART_DELAY_MS: fc.integer({ min: 0, max: 5000 }),
-  DISCORD_TYPING_DELAY_MAX_MS: fc.integer({ min: 0, max: 10000 }),
-  DISCORD_PRIORITY_CHANNEL_BONUS: fc.float({ min: Math.fround(0.1), max: Math.fround(2.0) }),
-  DISCORD_MESSAGE_PROCESSING_DELAY_MS: fc.integer({ min: 0, max: 10000 }),
-  DISCORD_LOGGING_ENABLED: fc.boolean(),
-  DISCORD_CHANNEL_BONUSES: fc.dictionary(fc.string(), fc.float()),
-});
-
-/**
- * Property-based test generator for Message configuration
- */
-export const messageConfigGenerator = fc.record({
-  MESSAGE_PROVIDER: fc.constantFrom(
-    'discord',
-    'slack',
-    'telegram',
-    'mattermost',
-    'console',
-    'webhook'
-  ),
-  MESSAGE_COMMAND_AUTHORISED_USERS: fc.array(fc.string()).map((arr) => arr.join(',')),
-  MESSAGE_FILTER_BY_USER: fc.array(fc.string()).map((arr) => arr.join(',')),
-  MESSAGE_USERNAME_OVERRIDE: fc.string(),
-  BOT_ID: fc.string({ minLength: 3 }),
-  PLATFORM: fc.string(),
-  NAME: fc.string(),
-  MESSAGE_IGNORE_BOTS: fc.boolean(),
-  MESSAGE_ADD_USER_HINT: fc.boolean(),
-  MESSAGE_ONLY_WHEN_SPOKEN_TO: fc.boolean(),
-  MESSAGE_INTERACTIVE_FOLLOWUPS: fc.boolean(),
-  MESSAGE_UNSOLICITED_ADDRESSED: fc.boolean(),
-  MESSAGE_UNSOLICITED_UNADDRESSED: fc.boolean(),
-  MESSAGE_RESPOND_IN_THREAD: fc.boolean(),
-  MESSAGE_COMMAND_INLINE: fc.boolean(),
-  MESSAGE_LLM_FOLLOW_UP: fc.boolean(),
-  MESSAGE_STRIP_BOT_ID: fc.boolean(),
-  DISABLE_DELAYS: fc.boolean(),
-  MESSAGE_SEMANTIC_RELEVANCE_ENABLED: fc.boolean(),
-  MESSAGE_ALLOW_SELF_MENTION: fc.boolean(),
-  MESSAGE_SUPPRESS_DUPLICATES: fc.boolean(),
-  MESSAGE_RATE_LIMIT_PER_CHANNEL: fc.integer({ min: 1, max: 100 }),
-  MESSAGE_MIN_DELAY: fc.integer({ min: 0, max: 5000 }),
-  MESSAGE_MAX_DELAY: fc.integer({ min: 1000, max: 20000 }),
-  MESSAGE_ACTIVITY_TIME_WINDOW: fc.integer({ min: 1000, max: 600000 }),
-  MESSAGE_THREAD_RELATION_WINDOW: fc.integer({ min: 1000, max: 600000 }),
-  MESSAGE_RECENT_ACTIVITY_DECAY_RATE: fc.float({ min: Math.fround(0.1), max: Math.fround(1.0) }),
-  MESSAGE_INTERROBANG_BONUS: fc.float({ min: Math.fround(0.1), max: Math.fround(2.0) }),
-  MESSAGE_BOT_RESPONSE_MODIFIER: fc.float({ min: Math.fround(-1.0), max: Math.fround(1.0) }),
-  MESSAGE_MIN_INTERVAL_MS: fc.integer({ min: 0, max: 10000 }),
-  MESSAGE_HISTORY_LIMIT: fc.integer({ min: 1, max: 100 }),
-  MESSAGE_DELAY_MULTIPLIER: fc.float({ min: Math.fround(0.1), max: Math.fround(5.0) }),
-  MESSAGE_SEMANTIC_RELEVANCE_BONUS: fc.float({ min: Math.fround(0.1), max: Math.fround(20.0) }),
-  MESSAGE_WAKEWORDS: fc.array(fc.string()),
-  CHANNEL_BONUSES: fc.dictionary(fc.string(), fc.float()),
-  CHANNEL_PRIORITIES: fc.dictionary(fc.string(), fc.integer()),
-});
-
-/**
- * Property-based test generator for Slack configuration
- */
-export const slackConfigGenerator = fc.record({
-  SLACK_BOT_TOKEN: fc.string({ minLength: 10 }).map((s) => `xoxb-${s}`),
-  SLACK_APP_TOKEN: fc.string({ minLength: 10 }).map((s) => `xapp-${s}`),
-  SLACK_SIGNING_SECRET: fc.string({ minLength: 10 }),
-  SLACK_JOIN_CHANNELS: fc.array(fc.string({ minLength: 3 })).map((arr) => arr.join(',')),
-  SLACK_DEFAULT_CHANNEL_ID: fc.string(),
-  WELCOME_RESOURCE_URL: fc.webUrl().chain((url) => fc.constant(url || '')),
-  REPORT_ISSUE_URL: fc.webUrl().chain((url) => fc.constant(url || '')),
-  SLACK_MODE: fc.constantFrom('socket', 'rtm', 'events'),
-  SLACK_BOT_JOIN_CHANNEL_MESSAGE: fc.string(),
-  SLACK_USER_JOIN_CHANNEL_MESSAGE: fc.string(),
-  SLACK_BOT_LEARN_MORE_MESSAGE: fc.string(),
-  SLACK_BUTTON_MAPPINGS: fc.string(),
-});
-
-/**
- * Property-based test generator for Mattermost configuration
- */
-export const mattermostConfigGenerator = fc.record({
-  MATTERMOST_SERVER_URL: fc.webUrl().chain((url) => fc.constant(url || '')),
-  MATTERMOST_TOKEN: fc.string({ minLength: 10 }),
-  MATTERMOST_CHANNEL: fc.string(),
-});
-
-/**
- * Property-based test generator for Webhook configuration
- */
-export const webhookConfigGenerator = fc.record({
-  WEBHOOK_ENABLED: fc.boolean(),
-  WEBHOOK_URL: fc.webUrl().chain((url) => fc.constant(url || '')),
-  WEBHOOK_TOKEN: fc.string(),
-  WEBHOOK_IP_WHITELIST: fc.array(fc.ipV4()).map((arr) => arr.join(',')),
-  WEBHOOK_PORT: fc.integer({ min: 1024, max: 65535 }),
-});
-
-/**
- * Property-based test generator for Flowise configuration
- */
-export const flowiseConfigGenerator = fc.record({
-  FLOWISE_API_ENDPOINT: fc.webUrl().chain((url) => fc.constant(url || '')),
-  FLOWISE_API_KEY: fc.string(),
-  FLOWISE_CONVERSATION_CHATFLOW_ID: fc.string(),
-  FLOWISE_COMPLETION_CHATFLOW_ID: fc.string(),
-  FLOWISE_USE_REST: fc.boolean(),
-});
-
-/**
- * Property-based test generator for OpenWebUI configuration
- */
-export const openWebUIConfigGenerator = fc.record({
-  OPEN_WEBUI_API_URL: fc.webUrl().chain((url) => fc.constant(url || '')),
-  OPEN_WEBUI_USERNAME: fc.string(),
-  OPEN_WEBUI_PASSWORD: fc.string(),
-  OPEN_WEBUI_KNOWLEDGE_FILE: fc.string(),
-  OPEN_WEBUI_MODEL: fc.string(),
-});
-
-/**
- * Property-based test generator for OpenAI configuration
- */
-export const openaiConfigGenerator = fc.record({
-  OPENAI_API_KEY: fc.string({ minLength: 10 }),
-  OPENAI_TEMPERATURE: fc.float({ min: Math.fround(0), max: Math.fround(2) }),
-  OPENAI_MAX_TOKENS: fc.integer({ min: 1, max: 8000 }),
-  OPENAI_FREQUENCY_PENALTY: fc.float({ min: Math.fround(-2), max: Math.fround(2) }),
-  OPENAI_PRESENCE_PENALTY: fc.float({ min: Math.fround(-2), max: Math.fround(2) }),
-  OPENAI_BASE_URL: fc.webUrl().chain((url) => fc.constant(url || '')),
-  OPENAI_TIMEOUT: fc.integer({ min: 1000, max: 60000 }),
-  OPENAI_ORGANIZATION: fc.string(),
-  OPENAI_MODEL: fc.string(),
-  OPENAI_STOP: fc.array(fc.string()),
-  OPENAI_TOP_P: fc.float({ min: Math.fround(0), max: Math.fround(1) }),
-  OPENAI_SYSTEM_PROMPT: fc.string(),
-  OPENAI_RESPONSE_MAX_TOKENS: fc.integer({ min: 1, max: 8000 }),
-  OPENAI_MAX_RETRIES: fc.integer({ min: 0, max: 10 }),
-  OPENAI_FINISH_REASON_RETRY: fc.string(),
-  OPENAI_VOICE: fc.string(),
-  OPENAI_EMBEDDING_MODELS: fc.array(fc.string()),
 });
 
 /**

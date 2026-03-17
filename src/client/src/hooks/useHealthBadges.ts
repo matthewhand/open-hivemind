@@ -21,10 +21,10 @@ export const useHealthBadges = (): HealthBadges => {
         const fetchHealthData = async () => {
             try {
                 // Fetch both health and LLM status in parallel
-                const [healthRes, llmRes] = await Promise.allSettled([
+                const [healthRes, llmRes] = await Promise.all([
                     fetch('/api/health/detailed'),
                     fetch('/api/config/llm-status')
-                ]).then(results => results.map(r => r.status === 'fulfilled' ? r.value : { ok: false } as Response));
+                ]);
 
                 let healthState = badges;
 

@@ -184,12 +184,7 @@ const PersonasPage: React.FC = () => {
         }
       }
 
-      const results = await Promise.allSettled(updates);
-      const failures = results.filter(r => r.status === 'rejected');
-      if (failures.length > 0) {
-        console.warn(`Failed to update ${failures.length} bot(s) while saving persona`);
-      }
-
+      await Promise.all(updates);
       await fetchData();
 
       setShowCreateModal(false);
@@ -274,12 +269,7 @@ const PersonasPage: React.FC = () => {
       const updates = deletingPersona.assignedBotIds.map(botId =>
         apiService.updateBot(botId, { persona: 'default', systemInstruction: 'You are a helpful assistant.' }),
       );
-
-      const results = await Promise.allSettled(updates);
-      const failures = results.filter(r => r.status === 'rejected');
-      if (failures.length > 0) {
-        console.warn(`Failed to revert ${failures.length} bot(s) before deleting persona`);
-      }
+      await Promise.all(updates);
 
       // 2. Delete persona
       await apiService.deletePersona(deletingPersona.id);

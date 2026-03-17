@@ -1,25 +1,12 @@
-import * as path from 'path';
-import * as fs from 'fs';
-import * as os from 'os';
 import { redactSensitiveInfo } from '../../../src/common/redactSensitiveInfo';
 import { SecureConfigManager } from '../../../src/config/SecureConfigManager';
 
 describe('Credential Management and Secret Handling', () => {
   describe('Secure Config Manager', () => {
     let configManager: SecureConfigManager;
-    let tmpDir: string;
-
-    beforeAll(() => {
-      tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'hivemind-cred-test-'));
-    });
-
-    afterAll(() => {
-      fs.rmSync(tmpDir, { recursive: true, force: true });
-    });
 
     beforeEach(() => {
-      (SecureConfigManager as any).instance = undefined;
-      configManager = new (SecureConfigManager as any)(tmpDir);
+      configManager = new SecureConfigManager();
     });
 
     test('should store and retrieve configurations securely', async () => {
@@ -73,8 +60,8 @@ describe('Credential Management and Secret Handling', () => {
       // List configurations
       const configIds = await configManager.listConfigs();
 
-      expect(configIds.map((c: any) => c.id)).toContain('test-config-1');
-      expect(configIds.map((c: any) => c.id)).toContain('test-config-2');
+      expect(configIds).toContain('test-config-1');
+      expect(configIds).toContain('test-config-2');
     });
 
     test('should delete configurations', async () => {
@@ -93,7 +80,8 @@ describe('Credential Management and Secret Handling', () => {
       expect(config).not.toBeNull();
 
       // Delete configuration
-      await configManager.deleteConfig('test-config-delete');
+      const deleted = await configManager.deleteConfig('test-config-delete');
+      expect(deleted).toBe(true);
 
       // Verify it's gone
       const deletedConfig = await configManager.getConfig('test-config-delete');

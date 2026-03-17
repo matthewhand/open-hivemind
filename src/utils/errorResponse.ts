@@ -33,7 +33,6 @@ export interface StandardErrorResponse {
     method?: string;
     correlationId?: string;
   };
-  stack?: string; // Only in development
 }
 
 /**

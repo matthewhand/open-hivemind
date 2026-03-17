@@ -11,21 +11,6 @@ test.describe('Distributed Trace Waterfall Screenshots', () => {
       await route.fulfill({ status: 200, json: { authenticated: true, user: { role: 'admin' } } });
     });
 
-    await page.route('**/api/webui/system-status', async (route) => {
-      await route.fulfill({
-        status: 200,
-        json: {
-          bots: { total: 12, active: 8 },
-          database: { stats: { totalMessages: 2847 } },
-          mcp: { connected: 5 },
-        },
-      });
-    });
-
-    await page.route('**/api/dashboard/api/activity*', async (route) => {
-      await route.fulfill({ status: 200, json: { events: [] } });
-    });
-
     await page.route('**/api/config/llm-status', async (route) =>
       route.fulfill({ status: 200, json: { defaultConfigured: true } })
     );
@@ -51,7 +36,7 @@ test.describe('Distributed Trace Waterfall Screenshots', () => {
     );
 
     // Mock dashboard status endpoints
-    await page.route('**/health/detailed', async (route) =>
+    await page.route('**/api/health/detailed', async (route) =>
       route.fulfill({
         status: 200,
         json: {
@@ -71,7 +56,7 @@ test.describe('Distributed Trace Waterfall Screenshots', () => {
       })
     );
 
-    await page.route('**/api/dashboard/status', async (route) =>
+    await page.route('**/api/dashboard/api/status', async (route) =>
       route.fulfill({
         status: 200,
         json: {
@@ -87,58 +72,6 @@ test.describe('Distributed Trace Waterfall Screenshots', () => {
             },
           ],
           uptime: 3600 * 24 * 5,
-        },
-      })
-    );
-
-    // Mock dashboard API activity (for waterfall monitor)
-    await page.route('**/api/dashboard/api/activity*', async (route) =>
-      route.fulfill({
-        status: 200,
-        json: {
-          events: [
-            {
-              id: 'span-req-1',
-              botName: 'CustomerSupportBot',
-              channelId: 'global',
-              provider: 'discord',
-              llmProvider: 'openai',
-              messageType: 'incoming',
-              status: 'success',
-              timestamp: new Date().toISOString(),
-              processingTime: 120,
-              userId: 'user-123',
-              contentLength: 250,
-            },
-            {
-              id: 'authenticateRequest',
-              spanName: 'authenticateRequest',
-              botName: 'CustomerSupportBot',
-              channelId: 'global',
-              provider: 'discord',
-              llmProvider: 'openai',
-              messageType: 'incoming',
-              status: 'success',
-              timestamp: new Date().toISOString(),
-              processingTime: 50,
-              userId: 'user-123',
-              contentLength: 0,
-            },
-            {
-              id: 'trace-req-8f9d3b2a',
-              spanName: 'trace-req-8f9d3b2a',
-              botName: 'CustomerSupportBot',
-              channelId: 'global',
-              provider: 'discord',
-              llmProvider: 'openai',
-              messageType: 'incoming',
-              status: 'success',
-              timestamp: new Date().toISOString(),
-              processingTime: 50,
-              userId: 'user-123',
-              contentLength: 0,
-            }
-          ],
         },
       })
     );

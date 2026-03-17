@@ -1,7 +1,6 @@
 import type { Server as HttpServer } from 'http';
 import Debug from 'debug';
 import type { IMessengerService } from '@message/interfaces/IMessengerService';
-import { createLogger } from '../common/StructuredLogger';
 
 const debug = Debug('app:ShutdownCoordinator');
 
@@ -18,7 +17,7 @@ export const ShutdownPhase = {
   COMPLETE: 'complete',
 } as const;
 
-export type ShutdownPhase = (typeof ShutdownPhase)[keyof typeof ShutdownPhase];
+export type ShutdownPhase = typeof ShutdownPhase[keyof typeof ShutdownPhase];
 
 /**
  * Interface for services that can be shut down gracefully.
@@ -66,7 +65,6 @@ const DEFAULT_TOTAL_TIMEOUT = 40000;
 export class ShutdownCoordinator {
   private static instance: ShutdownCoordinator;
 
-  private readonly logger = createLogger('ShutdownCoordinator');
   private isShuttingDown = false;
   private shutdownPromise: Promise<void> | null = null;
   private currentPhase: ShutdownPhase = ShutdownPhase.IDLE;
@@ -181,19 +179,12 @@ export class ShutdownCoordinator {
 
     // Handle unhandled rejections and exceptions
     process.on('unhandledRejection', (reason, promise) => {
-      this.logger.error(
-        'Unhandled promise rejection:',
-        reason instanceof Error ? reason : new Error(String(reason)),
-        { promise }
-      );
+      console.error('Unhandled promise rejection:', { promise, reason });
       this.initiateShutdown('unhandledRejection', 1);
     });
 
     process.on('uncaughtException', (error) => {
-      this.logger.error(
-        'Uncaught exception:',
-        error instanceof Error ? error : new Error(String(error))
-      );
+      console.error('Uncaught exception:', { error });
       this.initiateShutdown('uncaughtException', 1);
     });
 
@@ -213,12 +204,12 @@ export class ShutdownCoordinator {
 
     this.isShuttingDown = true;
     this.shutdownReason = signal;
-    this.logger.info(`Shutdown initiated by ${signal}`, { signal });
-    this.logger.info('Starting graceful shutdown sequence...');
+    console.log(`\n🛑 Shutdown initiated by ${signal}`);
+    console.log('⏱️  Starting graceful shutdown sequence...');
 
     // Ensure we exit within total timeout
     const forceExitTimer = setTimeout(() => {
-      this.logger.error('Shutdown timed out, forcing exit');
+      console.error('⚠️  Shutdown timed out, forcing exit');
       if (process.env.NODE_ENV !== 'test') {
         process.exit(1);
       }
@@ -226,14 +217,11 @@ export class ShutdownCoordinator {
 
     try {
       await this.executeShutdownSequence();
-      this.logger.info('Graceful shutdown completed successfully');
+      console.log('✅ Graceful shutdown completed successfully');
       clearTimeout(forceExitTimer);
       this.exitProcess(exitCode);
     } catch (error) {
-      this.logger.error(
-        'Error during shutdown:',
-        error instanceof Error ? error : new Error(String(error))
-      );
+      console.error('❌ Error during shutdown:', error);
       clearTimeout(forceExitTimer);
       this.exitProcess(1);
     }
@@ -263,10 +251,7 @@ export class ShutdownCoordinator {
         await this.executePhase(phaseConfig);
         const duration = Date.now() - phaseStart;
         this.phaseResults.set(phaseConfig.name, { success: true, duration });
-        this.logger.info(`Phase '${phaseConfig.name}' completed`, {
-          phase: phaseConfig.name,
-          duration,
-        });
+        console.log(`  ✅ Phase '${phaseConfig.name}' completed in ${duration}ms`);
       } catch (error) {
         const duration = Date.now() - phaseStart;
         this.phaseResults.set(phaseConfig.name, {
@@ -274,16 +259,13 @@ export class ShutdownCoordinator {
           duration,
           error: error instanceof Error ? error : new Error(String(error)),
         });
-        this.logger.error(
-          `Phase '${phaseConfig.name}' failed:`,
-          error instanceof Error ? error : new Error(String(error))
-        );
+        console.error(`  ❌ Phase '${phaseConfig.name}' failed:`, error);
         // Continue with next phase even if one fails
       }
     }
 
     const totalDuration = Date.now() - startTime;
-    this.logger.info('Shutdown completed', { totalDuration });
+    console.log(`\n📊 Shutdown completed in ${totalDuration}ms`);
     this.logPhaseSummary();
     this.currentPhase = ShutdownPhase.COMPLETE;
   }
@@ -340,7 +322,7 @@ export class ShutdownCoordinator {
    * Phase 1: Stop accepting new connections.
    */
   private async phaseStopAccepting(): Promise<void> {
-    this.logger.info('Phase 1: Stop accepting new connections');
+    console.log('  📋 Phase 1: Stop accepting new connections');
 
     if (this.httpServer) {
       // Stop accepting new connections
@@ -363,21 +345,19 @@ export class ShutdownCoordinator {
    * Phase 2: Drain in-flight requests.
    */
   private async phaseDrainRequests(): Promise<void> {
-    this.logger.info('Phase 2: Drain in-flight requests');
+    console.log('  📋 Phase 2: Drain in-flight requests');
 
     // Close WebSocket connections
-    try {
-      const WebSocketServiceModule = require('./services/WebSocketService');
-      const WebSocketService = WebSocketServiceModule.default || WebSocketServiceModule.WebSocketService;
-      if (WebSocketService && typeof WebSocketService.getInstance === 'function') {
-        const wsService = WebSocketService.getInstance();
-        if (wsService && typeof wsService.shutdown === 'function') {
-          await wsService.shutdown();
-          debug('WebSocket service shut down');
-        }
+    const WebSocketService = require('@src/server/services/WebSocketService').default;
+    const wsService = WebSocketService.getInstance();
+
+    if (wsService && typeof wsService.shutdown === 'function') {
+      try {
+        await wsService.shutdown();
+        debug('WebSocket service shut down');
+      } catch (error) {
+        debug('Error shutting down WebSocket service:', error);
       }
-    } catch (error) {
-      debug('Error shutting down WebSocket service:', error);
     }
   }
 
@@ -385,7 +365,7 @@ export class ShutdownCoordinator {
    * Phase 3: Stop background tasks.
    */
   private async phaseStopBackground(): Promise<void> {
-    this.logger.info('Phase 3: Stop background tasks');
+    console.log('  📋 Phase 3: Stop background tasks');
 
     // Stop IdleResponseManager timers
     try {
@@ -399,24 +379,22 @@ export class ShutdownCoordinator {
       debug('Error clearing IdleResponseManager:', error);
     }
 
-    // Stop all registered shutdownable services (background tasks) concurrently
-    const backgroundShutdowns = this.shutdownableServices.map(async (service) => {
+    // Stop all registered shutdownable services (background tasks)
+    for (const service of this.shutdownableServices) {
       try {
         await service.shutdown();
         debug(`Service shut down: ${service.name || service.constructor?.name || 'unknown'}`);
       } catch (error) {
         debug(`Error shutting down service: ${service.name || 'unknown'}`, error);
       }
-    });
-
-    await Promise.allSettled(backgroundShutdowns);
+    }
   }
 
   /**
    * Phase 4: Disconnect external services.
    */
   private async phaseDisconnectExternal(): Promise<void> {
-    this.logger.info('Phase 4: Disconnect external services');
+    console.log('  📋 Phase 4: Disconnect external services');
 
     // Disconnect messenger services in parallel
     const messengerShutdowns = this.messengerServices.map(async (service) => {
@@ -466,7 +444,7 @@ export class ShutdownCoordinator {
    * Phase 5: Final cleanup.
    */
   private async phaseFinalCleanup(): Promise<void> {
-    this.logger.info('Phase 5: Final cleanup');
+    console.log('  📋 Phase 5: Final cleanup');
 
     // Clear any remaining timers/intervals
     // This is a safety net - services should clean up their own timers
@@ -484,14 +462,12 @@ export class ShutdownCoordinator {
    * Log a summary of all phases.
    */
   private logPhaseSummary(): void {
-    this.logger.info('Phase Summary:');
+    console.log('\n📈 Phase Summary:');
     for (const [name, result] of this.phaseResults) {
-      this.logger.info(`Phase result: ${name}`, {
-        phase: name,
-        success: result.success,
-        duration: result.duration,
-        error: result.error?.message,
-      });
+      const status = result.success ? '✅' : '❌';
+      console.log(
+        `  ${status} ${name}: ${result.duration}ms${result.error ? ` (${result.error.message})` : ''}`
+      );
     }
   }
 

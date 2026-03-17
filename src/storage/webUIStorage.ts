@@ -22,11 +22,6 @@ export class WebUIStorage {
   private guardsInitializationInProgress = false;
   private configCache: WebUIConfig | null = null;
 
-  public resetCache(): void {
-    this.configCache = null;
-    this.guardsInitializationInProgress = false;
-  }
-
   constructor() {
     this.configDir = path.join(process.cwd(), 'config', 'user');
     this.configFile = path.join(this.configDir, 'webui-config.json');
@@ -385,6 +380,4 @@ export class WebUIStorage {
 
 // Export singleton instance
 export const webUIStorage = new WebUIStorage();
-
-// Default export for testing resetting state
 export default webUIStorage;

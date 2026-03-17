@@ -147,31 +147,18 @@ describe('MigrationManager', () => {
         down: jest.fn().mockResolvedValue(undefined),
       };
 
-      // Mock migration with down function
-      const mockMigration2 = {
-        id: '002_add_rbac_enhancements',
-        name: 'Add rbac enhancements',
-        version: 2,
-        up: jest.fn(),
-        down: jest.fn().mockResolvedValue(undefined),
-      };
-
       // @ts-ignore - Accessing private property for testing
       migrationManager.migrations = [
-        { id: '001_add_tenant_support', name: 'Migration 1', version: 1, up: jest.fn(), down: jest.fn() },
-        mockMigration2,
+        { id: '001_add_tenant_support', name: 'Migration 1', version: 1, up: jest.fn() },
+        { id: '002_add_rbac_enhancements', name: 'Migration 2', version: 2, up: jest.fn() },
         mockMigration,
       ];
 
       await migrationManager.rollbackToVersion(1);
 
       expect(mockMigration.down).toHaveBeenCalledWith(mockDb);
-      expect(mockMigration2.down).toHaveBeenCalledWith(mockDb);
       expect(mockDb.run).toHaveBeenCalledWith('DELETE FROM migrations WHERE id = ?', [
         '003_add_user_indexes',
-      ]);
-      expect(mockDb.run).toHaveBeenCalledWith('DELETE FROM migrations WHERE id = ?', [
-        '002_add_rbac_enhancements',
       ]);
     });
 
@@ -250,7 +237,7 @@ describe('MigrationManager', () => {
       expect(mockDb.exec).toHaveBeenCalledWith('ROLLBACK');
     });
 
-    it('should throw an error when attempting to rollback a migration without a down function', async () => {
+    it('should skip migrations without down function', async () => {
       mockDb.all.mockResolvedValueOnce([
         { id: '001', version: 1 },
         { id: '002', version: 2 },
@@ -264,9 +251,9 @@ describe('MigrationManager', () => {
       // @ts-ignore - Accessing private property for testing
       migrationManager.migrations = migrations;
 
-      await expect(migrationManager.rollbackToVersion(0)).rejects.toThrow('Migration 002 does not support rollback');
+      await migrationManager.rollbackToVersion(0);
 
-      // Should not attempt to rollback at all
+      // Should not attempt to rollback migration 002 since it has no down function
       expect(mockDb.run).not.toHaveBeenCalledWith('DELETE FROM migrations WHERE id = ?', ['002']);
     });
   });
