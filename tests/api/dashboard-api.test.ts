@@ -13,10 +13,10 @@ import request from 'supertest';
 import { BotConfigurationManager } from '../../src/config/BotConfigurationManager';
 import dashboardRouter from '../../src/server/routes/dashboard';
 
-jest.mock('../../src/auth/middleware', () => ({
-  authenticate: (req: any, res: any, next: any) => next(),
+jest.mock('../../src/server/middleware/auth', () => ({
+  authenticateToken: (req: any, res: any, next: any) => next(),
   requirePermission: () => (req: any, res: any, next: any) => next(),
-  requireAdmin: (req: any, res: any, next: any) => next(),
+  requireRole: () => (req: any, res: any, next: any) => next(),
   optionalAuth: (req: any, res: any, next: any) => next(),
 }));
 

@@ -1,4 +1,8 @@
-import { loadProfiles, saveProfiles, findProfileByKey } from './profileUtils';
+import fs from 'fs';
+import path from 'path';
+import Debug from 'debug';
+
+const debug = Debug('app:messageProfiles');
 
 export interface MessageProfile {
   key: string;
@@ -16,29 +20,56 @@ const DEFAULT_MESSAGE_PROFILES: MessageProfiles = {
   message: [],
 };
 
+const getProfilesPath = (): string => {
+  const configDir = process.env.NODE_CONFIG_DIR || path.join(process.cwd(), 'config');
+  return path.join(configDir, 'message-profiles.json');
+};
+
 export const loadMessageProfiles = (): MessageProfiles => {
-  return loadProfiles<MessageProfiles>({
-    filename: 'message-profiles.json',
-    defaultData: DEFAULT_MESSAGE_PROFILES,
-    profileType: 'message',
-    validateAndMigrate: (parsed) => {
-      if (!parsed || typeof parsed !== 'object') {
-        throw new Error('message profiles must be an object');
+  const filePath = getProfilesPath();
+  try {
+    if (!fs.existsSync(filePath)) {
+      // Create scaffolding if missing
+      const scaffold = { ...DEFAULT_MESSAGE_PROFILES };
+      try {
+        const dir = path.dirname(filePath);
+        if (!fs.existsSync(dir)) {
+          fs.mkdirSync(dir, { recursive: true });
+        }
+        fs.writeFileSync(filePath, JSON.stringify(scaffold, null, 2), 'utf8');
+        debug('Created scaffolding for message profiles at', filePath);
+        return scaffold;
+      } catch (err) {
+        debug('Failed to create scaffolding:', err);
+        return scaffold;
       }
-      return {
-        message: Array.isArray(parsed.message) ? parsed.message : [],
-      };
-    },
-  });
+    }
+    const raw = fs.readFileSync(filePath, 'utf8');
+    const parsed = JSON.parse(raw);
+    if (!parsed || typeof parsed !== 'object') {
+      throw new Error('message profiles must be an object');
+    }
+    return {
+      message: Array.isArray(parsed.message) ? parsed.message : [],
+    };
+  } catch (error) {
+    debug('Failed to load message profiles, using defaults:', error);
+    return { ...DEFAULT_MESSAGE_PROFILES, message: [] };
+  }
 };
 
 export const saveMessageProfiles = (profiles: MessageProfiles): void => {
-  saveProfiles('message-profiles.json', profiles);
+  const filePath = getProfilesPath();
+  const dir = path.dirname(filePath);
+  if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir, { recursive: true });
+  }
+  fs.writeFileSync(filePath, JSON.stringify(profiles, null, 2));
 };
 
 export const getMessageProfileByKey = (key: string): MessageProfile | undefined => {
-  const profiles = loadMessageProfiles().message;
-  return findProfileByKey(profiles, 'key', key);
+  const normalized = key.trim().toLowerCase();
+  return loadMessageProfiles().message.find(profile => profile.key.toLowerCase() === normalized);
 };
 
 export const getMessageProfiles = (): MessageProfiles => loadMessageProfiles();

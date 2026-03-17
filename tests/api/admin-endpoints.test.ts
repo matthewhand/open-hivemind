@@ -54,10 +54,6 @@ jest.mock('../../src/auth/middleware', () => ({
 }));
 
 describe('Admin API Endpoints - COMPLETE TDD SUITE', () => {
-  afterEach(() => {
-    (MCPService as any).instance = undefined;
-  });
-
   let app: express.Application;
   const originalEnv = process.env;
 
@@ -73,8 +69,6 @@ describe('Admin API Endpoints - COMPLETE TDD SUITE', () => {
   });
 
   beforeEach(() => {
-    (MCPService as any).instance = undefined;
-
     jest.clearAllMocks();
     // Mock MCPService to avoid actual network calls
     const mcpServiceInstance = MCPService.getInstance();

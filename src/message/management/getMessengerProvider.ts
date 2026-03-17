@@ -1,6 +1,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
-import { instantiateMessageService, loadPlugin } from '@src/plugins/PluginLoader';
+
+import { loadPlugin, instantiateMessageService } from '@src/plugins/PluginLoader';
 
 const gmpDebug = require('debug')('app:getMessengerProvider');
 
@@ -79,8 +80,8 @@ export function getMessengerProvider() {
 
   // Load each requested message provider dynamically via PluginLoader
   const requestedTypes = [
-    { name: 'discord', wanted: hasDiscord && wantProvider('discord') },
-    { name: 'slack', wanted: hasSlack && wantProvider('slack') },
+    { name: 'discord',    wanted: hasDiscord && wantProvider('discord') },
+    { name: 'slack',      wanted: hasSlack && wantProvider('slack') },
     { name: 'mattermost', wanted: hasMattermost && wantProvider('mattermost') },
   ];
 
