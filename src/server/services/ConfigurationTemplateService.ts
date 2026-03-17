@@ -84,10 +84,10 @@ export class ConfigurationTemplateService {
   private async loadBuiltInTemplates(): Promise<void> {
     try {
       const builtInTemplates = this.getBuiltInTemplates();
+      const existingIds = await this.getAllTemplateIds();
 
       for (const template of builtInTemplates) {
-        const existingTemplate = await this.getTemplateById(template.id);
-        if (!existingTemplate) {
+        if (!existingIds.has(template.id)) {
           await this.saveTemplate(template);
           debug('Loaded built-in template:', template.name);
         }
@@ -590,6 +590,23 @@ export class ConfigurationTemplateService {
       '-' +
       Date.now().toString(36)
     );
+  }
+
+  /**
+   * Get all existing template IDs
+   */
+  private async getAllTemplateIds(): Promise<Set<string>> {
+    try {
+      const files = await fs.readdir(this.templatesDir);
+      return new Set(
+        files
+          .filter((file) => file.endsWith('.json'))
+          .map((file) => file.substring(0, file.length - 5))
+      );
+    } catch (error) {
+      debug('Error getting template IDs:', error);
+      return new Set();
+    }
   }
 
   /**
