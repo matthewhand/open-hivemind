@@ -1,6 +1,10 @@
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 export * from './openAiProvider';
+=======
+export { OpenAiProvider, openAiProvider } from './openAiProvider';
+>>>>>>> origin/refiner-barrel-export-audit-4424264890390605711
 export { default as openAiService, OpenAiService } from './OpenAiService';
 
 import { OpenAiProvider } from './openAiProvider';
