@@ -1,13 +1,13 @@
 import os from 'os';
 import process from 'process';
 import { Router, type NextFunction, type Request, type Response } from 'express';
+import { DatabaseManager } from '../../database/DatabaseManager';
+import { BotManager } from '../../managers/BotManager';
 import { MetricsCollector } from '../../monitoring/MetricsCollector';
 import ApiMonitorService from '../../services/ApiMonitorService';
 import { ErrorLogger } from '../../utils/errorLogger';
 import { globalRecoveryManager } from '../../utils/errorRecovery';
 import { optionalAuth } from '../middleware/auth';
-import { DatabaseManager } from '../../database/DatabaseManager';
-import { BotManager } from '../../managers/BotManager';
 
 const router = Router();
 
@@ -190,7 +190,12 @@ router.get('/ready', (req, res) => {
     const isDbConnected = DatabaseManager.getInstance().isConnected();
     const bots = BotManager.getInstance().getAllBots();
     const botAdaptersHealthy = Array.from(bots.values()).every(
-      (bot: any) => bot.getStatus() === 'active' || bot.getStatus() === 'connected' || bot.getStatus() === 'healthy' || bot.getStatus() === 'idle' || bot.getStatus() === 'warning'
+      (bot: any) =>
+        bot.getStatus() === 'active' ||
+        bot.getStatus() === 'connected' ||
+        bot.getStatus() === 'healthy' ||
+        bot.getStatus() === 'idle' ||
+        bot.getStatus() === 'warning'
     );
     const apiStatuses = ApiMonitorService.getInstance().getAllStatuses();
     const externalApisHealthy = Object.values(apiStatuses).every(

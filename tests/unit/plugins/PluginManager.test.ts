@@ -114,6 +114,18 @@ describe('manifest type validation', () => {
 // ---------------------------------------------------------------------------
 
 describe('installPlugin', () => {
+  it('rejects URLs starting with a dash', async () => {
+    await expect(installPlugin('-u')).rejects.toThrow(PluginValidationError);
+    await expect(installPlugin('-u')).rejects.toThrow(/cannot start with a dash/);
+  });
+
+  it('rejects URLs with invalid protocols', async () => {
+    await expect(installPlugin('file:///etc/passwd')).rejects.toThrow(PluginValidationError);
+    await expect(installPlugin('file:///etc/passwd')).rejects.toThrow(
+      /Only http: and https: are allowed/
+    );
+  });
+
   it('clones repo and installs dependencies', async () => {
     (mockFs.existsSync as jest.Mock).mockReturnValue(false);
 
