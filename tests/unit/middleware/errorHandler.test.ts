@@ -119,13 +119,15 @@ describe('errorHandler middleware', () => {
       expect(mockRes.status).toHaveBeenCalledWith(500);
       expect(mockRes.json).toHaveBeenCalledWith(
         expect.objectContaining({
-          success: false,
-          error: expect.objectContaining({
-            code: 'MOCK_ERROR',
-            message: 'Mock error message',
-            correlationId: 'test-corr-id',
-            details: { foo: 'bar' },
-          }),
+          error: 'MockError',
+          code: 'MOCK_ERROR',
+          message: 'Mock error message',
+          correlationId: 'test-corr-id',
+          details: { foo: 'bar' },
+          recovery: {
+            canRecover: false,
+            steps: ['Step 1'],
+          },
         })
       );
 

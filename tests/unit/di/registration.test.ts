@@ -75,6 +75,10 @@ describe('DI Service Registration Logging', () => {
     expect(mockLogger.debug).toHaveBeenCalledWith('Registering BotConfigurationManager instance');
     expect(mockLogger.debug).toHaveBeenCalledWith('Registering UserConfigStore');
     expect(mockLogger.debug).toHaveBeenCalledWith('Registering SecureConfigManager');
+    expect(mockLogger.debug).toHaveBeenCalledWith('Registering BotConfigurationManager class');
+    expect(mockLogger.debug).toHaveBeenCalledWith(
+      'Registering UserConfigStore (re-registering instance)'
+    );
     expect(mockLogger.debug).toHaveBeenCalledWith('Registering ProviderConfigManager');
 
     // Verify completion log (info level)
