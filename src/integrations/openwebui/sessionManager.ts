@@ -1,6 +1,6 @@
 import axios from 'axios';
 import Debug from 'debug';
-import { isSafeUrl } from '@hivemind/shared-types';
+import { isSafeUrl } from '../../utils/ssrfGuard';
 import openWebUIConfig from './openWebUIConfig';
 
 const debug = Debug('app:sessionManager');
