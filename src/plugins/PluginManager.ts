@@ -176,7 +176,42 @@ function exec(cmd: string, args: string[], cwd: string): void {
 // Public API
 // ---------------------------------------------------------------------------
 
-/**
+function validateRepoUrl(url: string): void {
+  if (!url || typeof url !== 'string') {
+    throw new PluginValidationError('Repository URL is required and must be a string.');
+  }
+
+  const trimmed = url.trim();
+  if (trimmed.startsWith('-')) {
+    throw new PluginValidationError('Invalid repository URL: cannot start with a dash.');
+  }
+
+  let parsedUrl: URL;
+  try {
+    parsedUrl = new URL(trimmed);
+  } catch {
+    throw new PluginValidationError('Invalid repository URL format.');
+  }
+
+  if (parsedUrl.protocol !== 'http:' && parsedUrl.protocol !== 'https:') {
+    throw new PluginValidationError(
+      'Invalid repository URL protocol. Only http: and https: are allowed.'
+    );
+
+  // Prevent argument injection via hostname or path
+  if (parsedUrl.hostname.includes(" ") || parsedUrl.pathname.includes(" ")) {
+    throw new PluginValidationError("Invalid repository URL: spaces not allowed.");
+  }
+  
+  // Prevent command injection through special git URL patterns
+  if (/--[a-z-]+=/i.test(parsedUrl.href)) {
+    throw new PluginValidationError("Invalid repository URL: contains suspicious patterns.");
+  }
+  
+  // Prevent shell metacharacters in hostname
+  if (/[;&|`$()]/.test(parsedUrl.hostname)) {
+    throw new PluginValidationError("Invalid repository URL: contains shell metacharacters.");
+  }
  * Install a community plugin from a git repository URL.
  *
  * Steps:
@@ -188,6 +223,7 @@ function exec(cmd: string, args: string[], cwd: string): void {
  * @throws PluginValidationError if the manifest is invalid or type mismatches
  */
 export async function installPlugin(repoUrl: string): Promise<PluginInfo> {
+  validateRepoUrl(repoUrl);
   fs.mkdirSync(PLUGINS_DIR, { recursive: true });
 
   // Clone into a temp dir first so we can read the name before committing
