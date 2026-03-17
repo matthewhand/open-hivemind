@@ -290,10 +290,6 @@ View the complete navigation structure of the application.
 
 ### [Specifications](/admin/specs)
 Browse and manage persisted specifications and design documents.
-
-![Specifications Page](screenshots/specs-page.png)
-![Specification Detail](screenshots/spec-detail-page.png)
-
 *   **Detailed View**: Read full specifications rendered in Markdown.
 *   **Export**: Download specifications as Markdown, JSON, or YAML.
 

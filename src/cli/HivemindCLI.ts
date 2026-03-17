@@ -1,12 +1,12 @@
 #!/usr/bin/env node
 import { Command } from 'commander';
-import { BotConfigurationManager } from '@config/BotConfigurationManager';
-import { DatabaseManager } from '../database/DatabaseManager';
-import { container, TOKENS } from '../di/container';
 import { BotCommandHandler } from './handlers/BotCommandHandler';
 import { ConfigCommandHandler } from './handlers/ConfigCommandHandler';
 import { DatabaseCommandHandler } from './handlers/DatabaseCommandHandler';
 import { ServerCommandHandler } from './handlers/ServerCommandHandler';
+import { BotConfigurationManager } from '@config/BotConfigurationManager';
+import { DatabaseManager } from '../database/DatabaseManager';
+import { container, TOKENS } from '../di/container';
 
 export class HivemindCLI {
   private program: Command;

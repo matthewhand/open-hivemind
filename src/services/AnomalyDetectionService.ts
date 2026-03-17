@@ -1,10 +1,10 @@
 import { EventEmitter } from 'events';
 import Debug from 'debug';
-import { inject, injectable, singleton } from 'tsyringe';
-import { type Anomaly, type DatabaseManager } from '../database/DatabaseManager';
+import { injectable, singleton, inject } from 'tsyringe';
+import { DatabaseManager, type Anomaly } from '../database/DatabaseManager';
+import { MetricsCollector } from '../monitoring/MetricsCollector';
+import { WebSocketService, type AlertEvent } from '../server/services/WebSocketService';
 import { TOKENS } from '../di/container';
-import { type MetricsCollector } from '../monitoring/MetricsCollector';
-import { type AlertEvent, type WebSocketService } from '../server/services/WebSocketService';
 
 const debug = Debug('app:AnomalyDetectionService');
 

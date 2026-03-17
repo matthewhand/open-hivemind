@@ -67,25 +67,6 @@ export class ConfigurationTemplateService {
   }
 
   /**
-   * Get all template IDs for O(1) existence checks
-   */
-  private async getAllTemplateIds(): Promise<Set<string>> {
-    try {
-      const files = await fs.readdir(this.templatesDir);
-      const ids = files
-        .filter((file) => file.endsWith('.json'))
-        .map((file) => file.replace('.json', ''));
-      return new Set(ids);
-    } catch (error) {
-      if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
-        return new Set();
-      }
-      debug('Error reading templates directory:', error);
-      throw error;
-    }
-  }
-
-  /**
    * Ensure templates directory exists
    */
   private async ensureTemplatesDirectory(): Promise<void> {
@@ -103,10 +84,10 @@ export class ConfigurationTemplateService {
   private async loadBuiltInTemplates(): Promise<void> {
     try {
       const builtInTemplates = this.getBuiltInTemplates();
-      const existingIds = await this.getAllTemplateIds();
 
       for (const template of builtInTemplates) {
-        if (!existingIds.has(template.id)) {
+        const existingTemplate = await this.getTemplateById(template.id);
+        if (!existingTemplate) {
           await this.saveTemplate(template);
           debug('Loaded built-in template:', template.name);
         }

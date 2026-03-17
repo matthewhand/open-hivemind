@@ -368,8 +368,7 @@ export class ShutdownCoordinator {
     // Close WebSocket connections
     try {
       const WebSocketServiceModule = require('./services/WebSocketService');
-      const WebSocketService =
-        WebSocketServiceModule.default || WebSocketServiceModule.WebSocketService;
+      const WebSocketService = WebSocketServiceModule.default || WebSocketServiceModule.WebSocketService;
       if (WebSocketService && typeof WebSocketService.getInstance === 'function') {
         const wsService = WebSocketService.getInstance();
         if (wsService && typeof wsService.shutdown === 'function') {

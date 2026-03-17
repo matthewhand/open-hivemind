@@ -8,23 +8,7 @@ import type { NextFunction, Request, Response } from 'express';
 import swarmRouter from '@src/admin/swarmRoutes';
 import { container } from '@src/di/container';
 import { applyRateLimiting } from '@src/middleware/rateLimiter';
-import { AdvancedMonitor, AdvancedMonitor } from '@src/monitoring/AdvancedMonitor';
-import { EnhancedAlertManager, EnhancedAlertManager } from '@src/monitoring/EnhancedAlertManager';
-import {
-  IntegrationAnomalyDetector,
-  IntegrationAnomalyDetector,
-} from '@src/monitoring/IntegrationAnomalyDetector';
-import {
-  ProviderMetricsCollector,
-  ProviderMetricsCollector,
-} from '@src/monitoring/ProviderMetricsCollector';
-import { TracingService, TracingService } from '@src/monitoring/TracingService';
 import { authenticateToken } from '@src/server/middleware/auth';
-import { AdvancedMonitor } from "@src/monitoring/AdvancedMonitor";
-import { EnhancedAlertManager } from "@src/monitoring/EnhancedAlertManager";
-import { IntegrationAnomalyDetector } from "@src/monitoring/IntegrationAnomalyDetector";
-import { ProviderMetricsCollector } from "@src/monitoring/ProviderMetricsCollector";
-import { TracingService } from "@src/monitoring/TracingService";
 import { ipWhitelist } from '@src/server/middleware/security';
 import adminApiRouter from '@src/server/routes/admin';
 import anomalyRouter from '@src/server/routes/anomaly';
@@ -53,6 +37,11 @@ import validationRouter from '@src/server/routes/validation';
 import { RealTimeValidationService } from '@src/server/services/RealTimeValidationService';
 import WebSocketService from '@src/server/services/WebSocketService';
 import { ShutdownCoordinator } from '@src/server/ShutdownCoordinator';
+import { EnhancedAlertManager } from '@src/monitoring/EnhancedAlertManager';
+import { TracingService } from '@src/monitoring/TracingService';
+import { ProviderMetricsCollector } from '@src/monitoring/ProviderMetricsCollector';
+import { IntegrationAnomalyDetector } from '@src/monitoring/IntegrationAnomalyDetector';
+import { AdvancedMonitor } from '@src/monitoring/AdvancedMonitor';
 
 import AnomalyDetectionService from '@src/services/AnomalyDetectionService';
 import DemoModeService from '@src/services/DemoModeService';
@@ -644,11 +633,11 @@ async function main() {
         name: 'AdvancedMonitor',
         shutdown: () => {
           appLogger.info('🛑 Healthcheck: Shutting down AdvancedMonitor...');
-          am.shutdown();
         },
       });
     }
 
+    shutdownCoordinator.registerHttpServer(server);
 
     // Initialize Vite in Development Mode (with HMR)
     const enableViteDev = process.env.ENABLE_VITE_DEV !== 'false';
