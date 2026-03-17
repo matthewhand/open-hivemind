@@ -373,7 +373,7 @@ export const useSystemStats = () => {
         setError(null);
       } catch (err) {
         setError('Failed to fetch system stats');
-        Logger.error('Error fetching stats:', err);
+        console.error('Error fetching stats:', err);
       } finally {
         setIsLoading(false);
       }
@@ -388,7 +388,6 @@ export const useSystemStats = () => {
   return { stats, isLoading, error, refresh: () => setIsLoading(true) };
 };
 
-=======
-import React from 'react';
-export const StatsCards: React.FC<any> = () => <div />;
+
+
 export default StatsCards;

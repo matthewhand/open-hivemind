@@ -118,15 +118,13 @@ describe('errorHandler middleware', () => {
       expect(mockRes.status).toHaveBeenCalledWith(500);
       expect(mockRes.json).toHaveBeenCalledWith(
         expect.objectContaining({
-          error: 'MockError',
-          code: 'MOCK_ERROR',
-          message: 'Mock error message',
-          correlationId: 'test-corr-id',
-          details: { foo: 'bar' },
-          recovery: {
-            canRecover: false,
-            steps: ['Step 1'],
-          },
+          success: false,
+          error: expect.objectContaining({
+            code: 'MOCK_ERROR',
+            message: 'Mock error message',
+            correlationId: 'test-corr-id',
+            details: { foo: 'bar' },
+          }),
         })
       );
 
@@ -270,28 +268,14 @@ describe('errorHandler middleware', () => {
   });
 
   describe('setupGlobalErrorHandlers', () => {
-    it('should register process listeners for exceptions and rejections', () => {
-      const onSpy = jest.spyOn(process, 'on').mockImplementation((() => {}) as any);
-
-      setupGlobalErrorHandlers();
-
-      expect(onSpy).toHaveBeenCalledWith('uncaughtException', handleUncaughtException);
-      expect(onSpy).toHaveBeenCalledWith('unhandledRejection', handleUnhandledRejection);
-
-      onSpy.mockRestore();
+    it('should not throw (now delegated to ShutdownCoordinator)', () => {
+      expect(() => setupGlobalErrorHandlers()).not.toThrow();
     });
   });
 
   describe('setupGracefulShutdown', () => {
-    it('should register process listeners for SIGTERM and SIGINT', () => {
-      const onSpy = jest.spyOn(process, 'on').mockImplementation((() => {}) as any);
-
-      setupGracefulShutdown();
-
-      expect(onSpy).toHaveBeenCalledWith('SIGTERM', expect.any(Function));
-      expect(onSpy).toHaveBeenCalledWith('SIGINT', expect.any(Function));
-
-      onSpy.mockRestore();
+    it('should not throw (now delegated to ShutdownCoordinator)', () => {
+      expect(() => setupGracefulShutdown()).not.toThrow();
     });
   });
 

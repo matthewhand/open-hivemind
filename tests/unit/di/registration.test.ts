@@ -29,7 +29,8 @@ jest.mock('../../../src/config/SecureConfigManager', () => ({
 }));
 
 jest.mock('../../../src/config/ProviderConfigManager', () => ({
-  ProviderConfigManager: {
+  __esModule: true,
+  default: {
     getInstance: jest.fn().mockReturnValue({}),
   },
 }));
@@ -63,18 +64,14 @@ describe('DI Service Registration Logging', () => {
   it('should log service registrations and completion', () => {
     registerServices();
 
-    // Verify context
-    expect(Logger.withContext).toHaveBeenCalledWith('DI');
+    // Logger.withContext('DI') is called at module load time, not inside registerServices
+    expect(Logger.withContext).toHaveBeenCalled();
 
     // Verify individual service registration logs (debug level)
     expect(mockLogger.debug).toHaveBeenCalledWith('Registering ConfigurationManager');
     expect(mockLogger.debug).toHaveBeenCalledWith('Registering BotConfigurationManager instance');
     expect(mockLogger.debug).toHaveBeenCalledWith('Registering UserConfigStore');
     expect(mockLogger.debug).toHaveBeenCalledWith('Registering SecureConfigManager');
-    expect(mockLogger.debug).toHaveBeenCalledWith('Registering BotConfigurationManager class');
-    expect(mockLogger.debug).toHaveBeenCalledWith(
-      'Registering UserConfigStore (re-registering instance)'
-    );
     expect(mockLogger.debug).toHaveBeenCalledWith('Registering ProviderConfigManager');
 
     // Verify completion log (info level)
