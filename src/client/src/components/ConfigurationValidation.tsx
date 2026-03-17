@@ -1,13 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect } from 'react';
-import Card from './DaisyUI/Card';
-import Badge from './DaisyUI/Badge';
-import Button from './DaisyUI/Button';
-import { Alert } from './DaisyUI/Alert';
-import DataTable from './DaisyUI/DataTable';
-import Accordion from './DaisyUI/Accordion';
-import Divider from './DaisyUI/Divider';
-import { Loading } from './DaisyUI/Loading';
+import { Card, Badge, Button, Alert, DataTable, Accordion, Divider, Loading } from './DaisyUI';
 import {
   CheckCircleIcon,
   XCircleIcon,
@@ -312,13 +305,14 @@ const ConfigurationValidation: React.FC<ConfigurationValidationProps> = ({ bot }
       )}
 
       {/* Configuration Overview */}
-      <Accordion
-        items={[{
-          id: "overview",
-          title: "Configuration Overview",
-          content: <DataTable columns={configTableColumns} data={configTableData} />
-        }]}
-      />
+      <Accordion defaultOpen={false}>
+        <Accordion.Item value="overview">
+          <Accordion.Trigger>Configuration Overview</Accordion.Trigger>
+          <Accordion.Content>
+            <DataTable columns={configTableColumns} data={configTableData} />
+          </Accordion.Content>
+        </Accordion.Item>
+      </Accordion>
     </Card>
   );
 };

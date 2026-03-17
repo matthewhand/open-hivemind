@@ -59,7 +59,7 @@ export const useWebSocket = () => {
     setSocket(newSocket);
 
     return () => {
-      newSocket.disconnect();
+      newSocket.close();
     };
   }, []);
 

@@ -77,7 +77,7 @@ test.describe('Distributed Trace Waterfall Screenshots', () => {
     );
 
     // Mock dashboard API activity (for waterfall monitor)
-    await page.route('**/api/dashboard/api/activity*', async (route) =>
+    await page.route('**/api/dashboard/activity*', async (route) =>
       route.fulfill({
         status: 200,
         json: {

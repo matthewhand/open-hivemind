@@ -1,8 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import Breadcrumbs from '../components/DaisyUI/Breadcrumbs';
-import EmptyState from '../components/DaisyUI/EmptyState';
+import { Breadcrumbs, EmptyState } from '../components/DaisyUI';
 import { Copy, Check, Search } from 'lucide-react';
 import SearchFilterBar from '../components/SearchFilterBar';
 
