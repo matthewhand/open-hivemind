@@ -24,3 +24,7 @@
 **Learning:** Security utilities like `isSafeUrl` must be placed in globally accessible workspace packages (e.g., `@hivemind/shared-types` or a dedicated `utils` package) rather than main `src/` directories so that all child packages can access them without creating dependency cycles or relative import nightmares.
 **Prevention:** Always wrap dynamically generated external HTTP requests (via axios, fetch) with `isSafeUrl` validation checks. Enforce this via a custom ESLint rule if possible.
 >>>>>>> origin/refiner-barrel-export-audit-4424264890390605711
+## 2025-03-18 - [Fix Path Traversal in PluginManager]
+**Vulnerability:** Path traversal and argument injection vulnerabilities in `PluginManager.ts`. Plugin names used to construct file paths for installation, update, and uninstallation were not validated against path traversal payloads (e.g., `../../etc/passwd`). URL pathnames used for git clone validations were not decoded, allowing spaces to bypass argument injection checks.
+**Learning:** Functions that accept user input and use it to interact with the file system must strictly validate that input. If an application expects a specific format (e.g., `type-name`), a regex validator should be enforced early in the lifecycle. URL parsing functions in Node.js (like `new URL()`) do not decode pathnames automatically.
+**Prevention:** Implement strict regex validation for all file system identifiers. Ensure that URL components are decoded using `decodeURIComponent` before performing substring matching for restricted characters.
