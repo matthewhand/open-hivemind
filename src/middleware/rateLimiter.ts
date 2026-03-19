@@ -461,9 +461,9 @@ function getClientKey(req: Request): string {
  * Standard rate limit handler
  */
 function createRateLimitHandler(type: string) {
-  return (req: Request & { rateLimit?: { resetTime?: number } }, res: Response) => {
-    const retryAfter = req.rateLimit?.resetTime
-      ? Math.ceil((req.rateLimit.resetTime - Date.now()) / 1000)
+  return (req: Request, res: Response) => {
+    const retryAfter = (req as any).rateLimit?.resetTime
+      ? Math.ceil(((req as any).rateLimit.resetTime - Date.now()) / 1000)
       : 60;
 
     logger.warn(`Rate limit exceeded for ${type}`, {

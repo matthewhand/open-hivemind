@@ -9,10 +9,6 @@ jest.mock('../../src/server/middleware/auth', () => ({
 }));
 
 describe('AI Dashboard Routes', () => {
-  afterEach(() => {
-    (DatabaseManager as any).instance = undefined;
-  });
-
   let app: express.Application;
 
   beforeAll(async () => {
@@ -28,8 +24,6 @@ describe('AI Dashboard Routes', () => {
   });
 
   beforeEach(() => {
-    (DatabaseManager as any).instance = undefined;
-
     app = express();
     app.use(express.json());
     // Mount the dashboard router at /api/dashboard to simulate server.ts

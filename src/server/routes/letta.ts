@@ -1,46 +1,7 @@
-import dns from 'dns';
-import net from 'net';
-import { Router, type Request, type Response } from 'express';
-import { getAgent, listAgents } from '@hivemind/llm-letta';
-import { isSafeUrl } from '../../utils/ssrfGuard';
+import { Router, Request, Response } from 'express';
+import { listAgents, getAgent } from '@hivemind/llm-letta';
 
 const router = Router();
-
-/**
- * Validates the Letta API URL against an allowlist and SSRF protection.
- */
-async function validateLettaUrl(url: string): Promise<{ isValid: boolean; error?: string }> {
-  try {
-    const parsedUrl = new URL(url);
-    const hostname = parsedUrl.hostname.toLowerCase();
-
-    // 1. Strict allowlist for Letta cloud (must be exactly letta.com or a direct subdomain)
-    const isTrustedLetta = hostname === 'letta.com' || hostname.endsWith('.letta.com');
-
-    // 2. Allow local network if explicitly enabled
-    const allowLocal =
-      process.env.ALLOW_LOCAL_NETWORK_ACCESS === 'true' || process.env.LETTA_ALLOW_LOCAL === 'true';
-
-    if (!isTrustedLetta && !allowLocal) {
-      return {
-        isValid: false,
-        error: 'Target URL is not in the allowlist. Only *.letta.com is allowed by default.',
-      };
-    }
-
-    // 3. General SSRF protection (IP-based checks)
-    if (!(await isSafeUrl(url))) {
-      return {
-        isValid: false,
-        error: 'Target URL is blocked for security reasons (private/local network access).',
-      };
-    }
-
-    return { isValid: true };
-  } catch (error) {
-    return { isValid: false, error: 'Invalid URL format' };
-  }
-}
 
 /**
  * GET /api/letta/agents - List available Letta agents
@@ -49,29 +10,15 @@ async function validateLettaUrl(url: string): Promise<{ isValid: boolean; error?
 router.get('/agents', async (req: Request, res: Response) => {
   try {
     // Get credentials from query params or headers
-    const apiKey = (req.headers['x-letta-api-key'] || req.query.apiKey) as string;
-    const apiUrlInput = (req.headers['x-letta-api-url'] || req.query.apiUrl) as string;
-    const apiUrl = apiUrlInput || 'https://api.letta.com/v1';
-
-    // Security Check: SSRF Protection & Allowlist
-    const validation = await validateLettaUrl(apiUrl);
-    if (!validation.isValid) {
-      return res.status(403).json({
-        error: 'Security Warning',
-        message: validation.error,
-      });
-    }
-
-    const validation = await validateLettaUrl(apiUrl);
-    if (!validation.isValid) {
-      return res.status(403).json({ error: 'Security Warning', message: validation.error });
-    }
+    const apiKey = req.headers['x-letta-api-key'] as string || req.query.apiKey as string;
+    const apiUrl = (req.headers['x-letta-api-url'] as string) ||
+                   (req.query.apiUrl as string) ||
+                   'https://api.letta.com/v1';
 
     if (!apiKey) {
       return res.status(400).json({
         error: 'Missing API key',
-        message:
-          'Please provide Letta API key via x-letta-api-key header or apiKey query parameter',
+        message: 'Please provide Letta API key via x-letta-api-key header or apiKey query parameter'
       });
     }
 
@@ -80,7 +27,10 @@ router.get('/agents', async (req: Request, res: Response) => {
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Unknown error';
     console.error('Letta agents lookup error:', error);
-    return res.status(500).json({ error: 'Letta API Error', message });
+    return res.status(500).json({
+      error: 'Letta API Error',
+      message,
+    });
   }
 });
 
@@ -90,29 +40,15 @@ router.get('/agents', async (req: Request, res: Response) => {
 router.get('/agents/:id', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const apiKey = (req.headers['x-letta-api-key'] || req.query.apiKey) as string;
-    const apiUrlInput = (req.headers['x-letta-api-url'] || req.query.apiUrl) as string;
-    const apiUrl = apiUrlInput || 'https://api.letta.com/v1';
-
-    // Security Check: SSRF Protection & Allowlist
-    const validation = await validateLettaUrl(apiUrl);
-    if (!validation.isValid) {
-      return res.status(403).json({
-        error: 'Security Warning',
-        message: validation.error,
-      });
-    }
-
-    const validation = await validateLettaUrl(apiUrl);
-    if (!validation.isValid) {
-      return res.status(403).json({ error: 'Security Warning', message: validation.error });
-    }
+    const apiKey = req.headers['x-letta-api-key'] as string || req.query.apiKey as string;
+    const apiUrl = (req.headers['x-letta-api-url'] as string) ||
+                   (req.query.apiUrl as string) ||
+                   'https://api.letta.com/v1';
 
     if (!apiKey) {
       return res.status(400).json({
         error: 'Missing API key',
-        message:
-          'Please provide Letta API key via x-letta-api-key header or apiKey query parameter',
+        message: 'Please provide Letta API key via x-letta-api-key header or apiKey query parameter'
       });
     }
 
@@ -121,7 +57,10 @@ router.get('/agents/:id', async (req: Request, res: Response) => {
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Unknown error';
     console.error('Letta agent details error:', error);
-    return res.status(500).json({ error: 'Letta API Error', message });
+    return res.status(500).json({
+      error: 'Letta API Error',
+      message,
+    });
   }
 });
 

@@ -34,31 +34,16 @@ export const useWebSocket = () => {
   const [connected, setConnected] = useState(false);
 
   useEffect(() => {
-    const newSocket = io('/webui', {
-      reconnection: true,
-      reconnectionAttempts: Infinity,
-      reconnectionDelay: 1000,
-      reconnectionDelayMax: 5000,
-      randomizationFactor: 0.5,
-    });
+    const newSocket = io('/webui');
     
     newSocket.on('connect', () => {
       logger.info('WebSocket connected');
       setConnected(true);
     });
 
-    newSocket.on('disconnect', (reason) => {
-      logger.info('WebSocket disconnected', { reason });
+    newSocket.on('disconnect', () => {
+      logger.info('WebSocket disconnected');
       setConnected(false);
-    });
-
-    newSocket.on('reconnect_attempt', (attempt) => {
-      logger.debug(`WebSocket reconnect attempt ${attempt}`);
-    });
-
-    newSocket.on('reconnect', (attempt) => {
-      logger.info(`WebSocket reconnected after ${attempt} attempts`);
-      setConnected(true);
     });
 
     newSocket.on('messageFlowUpdate', (data: MessageFlowEvent[]) => {

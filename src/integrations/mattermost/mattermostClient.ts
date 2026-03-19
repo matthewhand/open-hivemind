@@ -1,6 +1,5 @@
 import axios, { type AxiosInstance } from 'axios';
 import Debug from 'debug';
-import { isSafeUrl } from '../../utils/ssrfGuard';
 
 const debug = Debug('app:mattermost-client');
 
@@ -26,9 +25,6 @@ export default class MattermostClient {
 
   public async connect(): Promise<void> {
     try {
-      if (!(await isSafeUrl(this.axios.defaults.baseURL!))) {
-        throw new Error('Mattermost API URL is not safe to connect to.');
-      }
       const response = await this.axios.get('/users/me');
       this.me = response.data;
       this.connected = true;

@@ -19,7 +19,7 @@ test.describe('Bot Search Screenshots', () => {
               status: 'active',
               messageProvider: 'discord',
               llmProvider: 'openai',
-              createdAt: new Date().toISOString(),
+              createdAt: new Date().toISOString()
             },
             {
               id: 'bot-2',
@@ -28,10 +28,10 @@ test.describe('Bot Search Screenshots', () => {
               status: 'inactive',
               messageProvider: 'slack',
               llmProvider: 'anthropic',
-              createdAt: new Date().toISOString(),
-            },
-          ],
-        },
+              createdAt: new Date().toISOString()
+            }
+          ]
+        }
       });
     });
 

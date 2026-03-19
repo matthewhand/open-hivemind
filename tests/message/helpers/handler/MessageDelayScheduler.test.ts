@@ -10,8 +10,6 @@ describe('MessageDelayScheduler', () => {
   let scheduler: MessageDelayScheduler;
 
   beforeEach(() => {
-    (MessageDelayScheduler as any).instance = undefined;
-
     // Clear instance for singleton test if possible, or just re-get
     // In this simple impl, getInstance returns same object.
     scheduler = MessageDelayScheduler.getInstance();
@@ -20,8 +18,6 @@ describe('MessageDelayScheduler', () => {
   });
 
   afterEach(() => {
-    (MessageDelayScheduler as any).instance = undefined;
-
     jest.useRealTimers();
   });
 

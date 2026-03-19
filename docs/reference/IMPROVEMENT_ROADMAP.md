@@ -88,34 +88,7 @@ Low impact, low urgency - Address within 10-12 weeks
 
 ## 🟡 SIGNIFICANT IMPROVEMENTS
 
-### 4. Memory Provider Expansion & MCP Server Trust
-**Impact:** Enables advanced memory capabilities with multiple provider options and secure MCP server management
-**Effort:** Medium (1-2 weeks)
-**Risk Level:** Medium
-
-**Current State:**
-- Basic memory provider interface exists in `src/memory/IMemoryProvider.ts`
-- Mem0, Mem4ai, and MemVault providers implemented
-- Memory profiles management via `src/server/routes/memoryProfiles.ts`
-
-**New Memory Provider Packages:**
-- `@hivemind/memory-mem4ai` - Open-source, LLM-friendly memory management with adaptive personalization and flexible metadata tagging
-- `@hivemind/memory-memvault` - Open-source RAG memory server built natively in Node.js with Postgres + pgvector; uses hybrid scoring (vector similarity × 0.8) + (recency decay × 0.2)
-
-**MCP Server Trust System:**
-- Add config file listing trusted MCP server repositories
-- UI displays trusted repos with verified badge
-- Non-trusted repos shown with caution/warning in UI
-- Config initially includes this repository (`matthewhand/open-hivemind`) as trusted
-
-**Implementation Plan:**
-1. Create `@hivemind/memory-mem4ai` package with API-based memory provider
-2. Create `@hivemind/memory-memvault` package with PostgreSQL + pgvector provider
-3. Create MCP trusted repos config file (`config/trusted-mcp-repos.json`)
-4. Add trust indicator in WebUI MCP server list
-5. Implement repository verification and caution badges
-
-### 5. Database Integration & Persistence
+### 4. Database Integration & Persistence
 **Impact:** Enables production deployment and data reliability
 **Effort:** High (2-4 weeks)
 **Risk Level:** High
@@ -132,7 +105,7 @@ Low impact, low urgency - Address within 10-12 weeks
 4. Implement connection pooling and health monitoring
 5. Add proper transaction management for data consistency
 
-### 6. Auto-Scaling & Load Balancing
+### 5. Auto-Scaling & Load Balancing
 **Impact:** Enables handling increased load and improves availability
 **Effort:** High (2-3 weeks)
 **Risk Level:** Medium
@@ -149,7 +122,7 @@ Low impact, low urgency - Address within 10-12 weeks
 4. Add Redis-backed rate limiting for production
 5. Implement service mesh (Istio) for advanced routing
 
-### 7. Production Operations Hardening
+### 6. Production Operations Hardening
 **Impact:** Enables reliable production operations
 **Effort:** High (3-4 weeks)
 **Risk Level:** Medium
@@ -170,7 +143,7 @@ Low impact, low urgency - Address within 10-12 weeks
 
 ## 🟢 MODERATE IMPROVEMENTS
 
-### 8. Code Refactoring & Complexity Reduction
+### 7. Code Refactoring & Complexity Reduction
 **Impact:** Improves maintainability and reduces bug potential
 **Effort:** Medium (1-2 weeks)
 **Risk Level:** Low
@@ -187,7 +160,7 @@ Low impact, low urgency - Address within 10-12 weeks
 4. Improve code documentation with consistent JSDoc comments
 5. Implement code complexity analysis and monitoring
 
-### 9. Performance Optimization
+### 8. Performance Optimization
 **Impact:** Improves application responsiveness and resource usage
 **Effort:** Medium (1-2 weeks)
 **Risk Level:** Low
@@ -204,7 +177,7 @@ Low impact, low urgency - Address within 10-12 weeks
 4. Optimize database queries with proper indexing
 5. Implement connection pooling and caching strategies
 
-### 10. Enhanced Monitoring & Observability
+### 9. Enhanced Monitoring & Observability
 **Impact:** Improves operational visibility and troubleshooting
 **Effort:** Medium (1-2 weeks)
 **Risk Level:** Low
@@ -225,7 +198,7 @@ Low impact, low urgency - Address within 10-12 weeks
 
 ## 🔵 EASY WINS
 
-### 11. Dependency Management
+### 10. Dependency Management
 **Impact:** Reduces security vulnerabilities and bundle size
 **Effort:** Low (2-3 days)
 **Risk Level:** Low
@@ -241,7 +214,7 @@ Low impact, low urgency - Address within 10-12 weeks
 3. Implement automated dependency vulnerability scanning
 4. Add dependency update automation and testing
 
-### 12. Code Documentation Consistency
+### 11. Code Documentation Consistency
 **Impact:** Improves developer onboarding and maintenance
 **Effort:** Low (3-5 days)
 **Risk Level:** Low
@@ -257,7 +230,7 @@ Low impact, low urgency - Address within 10-12 weeks
 3. Improve inline comments for complex algorithms
 4. Create automated documentation generation
 
-### 13. Development Workflow Enhancements
+### 12. Development Workflow Enhancements
 **Impact:** Improves developer productivity and code quality
 **Effort:** Low (2-3 days)
 **Risk Level:** Low
@@ -273,7 +246,7 @@ Low impact, low urgency - Address within 10-12 weeks
 3. Implement commit message linting and conventional commits
 4. Add development environment automation scripts
 
-### 14. User Documentation Improvements
+### 13. User Documentation Improvements
 **Impact:** Improves user adoption and reduces support burden
 **Effort:** Low (3-5 days)
 **Risk Level:** Low

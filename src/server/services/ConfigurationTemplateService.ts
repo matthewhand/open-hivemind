@@ -596,23 +596,6 @@ export class ConfigurationTemplateService {
   }
 
   /**
-   * Get all existing template IDs
-   */
-  private async getAllTemplateIds(): Promise<Set<string>> {
-    try {
-      const files = await fs.readdir(this.templatesDir);
-      return new Set(
-        files
-          .filter((file) => file.endsWith('.json'))
-          .map((file) => file.substring(0, file.length - 5))
-      );
-    } catch (error) {
-      debug('Error getting template IDs:', error);
-      return new Set();
-    }
-  }
-
-  /**
    * Check if template matches filter
    */
   private matchesFilter(template: ConfigurationTemplate, filter?: TemplateFilter): boolean {

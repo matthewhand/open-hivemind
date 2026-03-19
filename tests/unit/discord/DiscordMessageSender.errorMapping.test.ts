@@ -1,4 +1,4 @@
-import { DiscordMessageSender } from '../../../packages/message-discord/src/managers/DiscordMessageSender';
+import { DiscordMessageSender } from '../../../packages/adapter-discord/src/managers/DiscordMessageSender';
 import { NetworkError, ValidationError } from '../../../src/types/errorClasses';
 
 describe('DiscordMessageSender Error Mapping', () => {
@@ -11,16 +11,16 @@ describe('DiscordMessageSender Error Mapping', () => {
     mockClient = {
       channels: {
         fetch: jest.fn(),
-      },
+      }
     };
 
     mockBotManager = {
-      getAllBots: jest.fn().mockReturnValue([{ botUserName: 'test-bot', client: mockClient }]),
+      getAllBots: jest.fn().mockReturnValue([{ botUserName: 'test-bot', client: mockClient }])
     };
 
     mockDeps = {
       errorTypes: { ConfigError: Error, ValidationError, NetworkError },
-      logger: { error: jest.fn() },
+      logger: { error: jest.fn() }
     };
 
     discordMessageSender = new DiscordMessageSender(mockBotManager, mockDeps as any);

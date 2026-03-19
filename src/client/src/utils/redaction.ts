@@ -88,7 +88,7 @@ export function redactString(
             if (val.length <= 4) {
                 return '*'.repeat(val.length);
             }
-            return val.substring(0, 2) + '*'.repeat(4) + val.substring(val.length - 2);
+            return val.substring(0, 2) + '*'.repeat(Math.min(val.length - 4, 6)) + val.substring(val.length - 2);
 
         case 'minimal':
             // Only redact if very short
@@ -113,10 +113,8 @@ export function redactEmail(email: string | undefined): string {
     if (!domain) return redactString(email);
 
     const redactedLocal = local.length <= 2 ? '***' : `${local[0]}***${local[local.length - 1]}`;
-    const domainParts = domain.split('.');
-    const tld = domainParts.pop();
-    const domainName = domainParts.join('.');
-    const redactedDomain = domainName.length <= 2 ? '***' : `${domainName[0]}***${domainName[domainName.length - 1]}.${tld || 'com'}`;
+    const [domainName, tld] = domain.split('.');
+    const redactedDomain = domainName.length <= 2 ? '***' : `${domainName[0]}***.${tld || 'com'}`;
 
     return `${redactedLocal}@${redactedDomain}`;
 }
@@ -167,44 +165,14 @@ export function redactUuid(uuid: string | undefined): string {
  * Create a reusable redactor with preset options
  */
 export function createRedactor(defaultOptions?: { level?: RedactionLevel }) {
-    let config = { level: defaultOptions?.level || globalConfig.level };
+    const config = { level: defaultOptions?.level || 'strict' };
 
     return {
-        string: (val: string | undefined) => {
-            const originalGlobalLevel = globalConfig.level;
-            globalConfig.level = config.level;
-            const result = redactString(val);
-            globalConfig.level = originalGlobalLevel;
-            return result;
-        },
-        email: (val: string | undefined) => {
-            const originalGlobalLevel = globalConfig.level;
-            globalConfig.level = config.level;
-            const result = redactEmail(val);
-            globalConfig.level = originalGlobalLevel;
-            return result;
-        },
-        phone: (val: string | undefined) => {
-            const originalGlobalLevel = globalConfig.level;
-            globalConfig.level = config.level;
-            const result = redactPhone(val);
-            globalConfig.level = originalGlobalLevel;
-            return result;
-        },
-        ip: (val: string | undefined) => {
-            const originalGlobalLevel = globalConfig.level;
-            globalConfig.level = config.level;
-            const result = redactIpAddress(val);
-            globalConfig.level = originalGlobalLevel;
-            return result;
-        },
-        uuid: (val: string | undefined) => {
-            const originalGlobalLevel = globalConfig.level;
-            globalConfig.level = config.level;
-            const result = redactUuid(val);
-            globalConfig.level = originalGlobalLevel;
-            return result;
-        },
+        string: (val: string | undefined) => redactString(val),
+        email: (val: string | undefined) => redactEmail(val),
+        phone: (val: string | undefined) => redactPhone(val),
+        ip: (val: string | undefined) => redactIpAddress(val),
+        uuid: (val: string | undefined) => redactUuid(val),
         setLevel: (level: RedactionLevel) => { config.level = level; },
     };
 }

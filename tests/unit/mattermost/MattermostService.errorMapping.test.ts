@@ -1,4 +1,4 @@
-import { MattermostService } from '../../../packages/message-mattermost/src/MattermostService';
+import { MattermostService } from '../../../packages/adapter-mattermost/src/MattermostService';
 import { NetworkError, ValidationError } from '../../../src/types/errorClasses';
 
 describe('MattermostService Error Mapping', () => {

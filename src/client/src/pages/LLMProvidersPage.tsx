@@ -71,14 +71,11 @@ const LLMProvidersPage: React.FC = () => {
   const fetchProfiles = useCallback(async () => {
     try {
       setLoading(true);
-      const [profilesResult, statusResult, globalResult] = await Promise.allSettled([
+      const [profilesRes, statusRes, globalRes] = await Promise.all([
         apiService.get('/api/config/llm-profiles'),
         apiService.get('/api/config/llm-status'),
         apiService.get('/api/config/global'),
       ]);
-      const profilesRes = profilesResult.status === 'fulfilled' ? profilesResult.value : {};
-      const statusRes = statusResult.status === 'fulfilled' ? statusResult.value : {};
-      const globalRes = globalResult.status === 'fulfilled' ? globalResult.value : {};
       setProfiles((profilesRes as any).llm || (profilesRes as any).profiles?.llm || []);
       setDefaultStatus(statusRes);
       const gs = (globalRes as any)._userSettings?.values || {};
@@ -200,7 +197,7 @@ const LLMProvidersPage: React.FC = () => {
       <PageHeader
         title="LLM Providers"
         description="Configure AI provider profiles and assign them to specific use cases."
-        icon={<BrainIcon className="w-6 h-6" />}
+        icon={BrainIcon}
         actions={
           <div className="flex gap-2">
             <Button variant="ghost" onClick={fetchProfiles} disabled={loading}>
