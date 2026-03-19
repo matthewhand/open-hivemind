@@ -106,7 +106,7 @@ const ModelAutocomplete: React.FC<ModelAutocompleteProps> = ({
 
       setSuggestions(models);
     } catch (error) {
-      console.error('Failed to fetch models:', error);
+      Logger.error('Failed to fetch models:', error);
       setFetchError(error instanceof Error ? error.message : 'Failed to fetch models');
     } finally {
       setIsLoading(false);

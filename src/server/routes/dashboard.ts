@@ -304,8 +304,6 @@ router.get('/activity', authenticate, requireAdmin, async (req, res) => {
       limit: 5000,
     });
 
-    const allEvents = storedEvents.map((event) => annotateEvent(event, botMap));
-
     const botFilterSet = new Set(botFilter);
     const providerFilterSet = new Set(providerFilter);
     const llmFilterSet = new Set(llmFilter);
@@ -323,31 +321,44 @@ router.get('/activity', authenticate, requireAdmin, async (req, res) => {
 
     const hasAnyFilter = hasBotFilter || hasProviderFilter || hasLlmFilter || fromTime || toTime;
 
-    const filteredEvents = allEvents.filter((event) => {
+    // ⚡ Bolt Optimization: Apply .filter() before .map()
+    // This avoids allocating, transforming, and garbage-collecting thousands
+    // of unnecessary intermediate annotated event objects (and redactString computations),
+    // significantly reducing memory overhead when filtering large datasets (up to 5000 items).
+    // Build filter options from all events, not just filtered results
+    storedEvents.forEach((event) => {
+      const bot = botMap.get(event.botName);
       agents.add(event.botName);
       messageProviders.add(event.provider);
-      llmProviders.add(event.llmProvider);
-
-      if (!hasAnyFilter) return true;
-
-      if (hasBotFilter && !botFilterSet.has(event.botName)) {
-        return false;
-      }
-      if (hasProviderFilter && !providerFilterSet.has(event.provider)) {
-        return false;
-      }
-      if (hasLlmFilter && !llmFilterSet.has(event.llmProvider)) {
-        return false;
-      }
-      const ts = new Date(event.timestamp).getTime();
-      if (fromTime && ts < fromTime) {
-        return false;
-      }
-      if (toTime && ts > toTime) {
-        return false;
-      }
-      return true;
+      llmProviders.add(bot?.llmProvider || 'unknown');
     });
+
+    const filteredEvents = storedEvents
+      .filter((event) => {
+        const bot = botMap.get(event.botName);
+        const eventLlmProvider = bot?.llmProvider || 'unknown';
+
+        if (!hasAnyFilter) return true;
+
+        if (hasBotFilter && !botFilterSet.has(event.botName)) {
+          return false;
+        }
+        if (hasProviderFilter && !providerFilterSet.has(event.provider)) {
+          return false;
+        }
+        if (hasLlmFilter && !llmFilterSet.has(eventLlmProvider)) {
+          return false;
+        }
+        const ts = new Date(event.timestamp).getTime();
+        if (fromTime && ts < fromTime) {
+          return false;
+        }
+        if (toTime && ts > toTime) {
+          return false;
+        }
+        return true;
+      })
+      .map((event) => annotateEvent(event, botMap));
 
     const timeline = buildTimeline(filteredEvents);
     const agentMetrics = buildAgentMetrics(filteredEvents, ws.getAllBotStats());

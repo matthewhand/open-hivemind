@@ -783,7 +783,7 @@ export const NaturalLanguageInterface: React.FC<NaturalLanguageInterfaceProps> =
             <div className="flex items-center gap-2">
               <div className="indicator">
                 <span className="indicator-item badge badge-primary badge-sm">{commands.length}</span>
-                <button className="btn btn-circle btn-ghost btn-sm">
+                <button className="btn btn-circle btn-ghost btn-sm" aria-label="View command history">
                   <ClockIcon className="w-5 h-5" />
                 </button>
               </div>
@@ -792,6 +792,7 @@ export const NaturalLanguageInterface: React.FC<NaturalLanguageInterfaceProps> =
                   className={`btn btn-circle btn-sm ${isListening ? 'btn-error' : 'btn-ghost'}`}
                   onClick={toggleVoiceInput}
                   disabled={!config.voiceInput}
+                  aria-label={isListening ? 'Stop listening' : 'Start voice input'}
                 >
                   {isListening ? <MicrophoneSolidIcon className="w-5 h-5 animate-pulse" /> : <MicrophoneIcon className="w-5 h-5" />}
                 </button>
@@ -799,6 +800,7 @@ export const NaturalLanguageInterface: React.FC<NaturalLanguageInterfaceProps> =
               <button
                 className="btn btn-circle btn-ghost btn-sm"
                 onClick={() => setShowHelp(!showHelp)}
+                aria-label={showHelp ? 'Hide help' : 'Show help'}
               >
                 <QuestionMarkCircleIcon className="w-5 h-5" />
               </button>
@@ -845,6 +847,7 @@ export const NaturalLanguageInterface: React.FC<NaturalLanguageInterfaceProps> =
                   className="btn btn-circle btn-ghost btn-sm"
                   onClick={() => speakResponse(inputText)}
                   disabled={!inputText}
+                  aria-label="Speak response aloud"
                 >
                   <SpeakerWaveIcon className="w-5 h-5" />
                 </button>
@@ -853,6 +856,7 @@ export const NaturalLanguageInterface: React.FC<NaturalLanguageInterfaceProps> =
                 className="btn btn-circle btn-primary btn-sm"
                 onClick={handleSubmit}
                 disabled={!inputText || isProcessing}
+                aria-label="Submit command"
               >
                 <PaperAirplaneIcon className="w-4 h-4" />
               </button>
