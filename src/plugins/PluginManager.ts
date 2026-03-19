@@ -212,6 +212,9 @@ function validateRepoUrl(url: string): void {
   if (/[;&|`$()]/.test(parsedUrl.hostname)) {
     throw new PluginValidationError("Invalid repository URL: contains shell metacharacters.");
   }
+}
+
+/**
  * Install a community plugin from a git repository URL.
  *
  * Steps:
