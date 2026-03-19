@@ -8,7 +8,7 @@ import DOMPurify from 'dompurify';
 
 // Initialize DOMPurify correctly for both browser and Node/JSDOM environments
 const sanitizer = typeof DOMPurify === 'function'
-  ? (DOMPurify as any)(window)
+  ? (typeof window !== 'undefined' ? (DOMPurify as any)(window) : DOMPurify)
   : DOMPurify;
 
 /**
@@ -31,16 +31,18 @@ const SANITIZE_CONFIG: any = {
 };
 
 // Configure DOMPurify to hook into all sanitization
-sanitizer.addHook('uponSanitizeElement', (node, data) => {
-  // Remove any element with javascript: in attributes
-  if (node instanceof Element) {
-    for (const attr of node.attributes) {
-      if (attr.value.toLowerCase().includes('javascript:')) {
-        node.removeAttribute(attr.name);
+if (sanitizer && typeof sanitizer.addHook === 'function') {
+  sanitizer.addHook('uponSanitizeElement', (node, data) => {
+    // Remove any element with javascript: in attributes
+    if (node instanceof Element) {
+      for (const attr of node.attributes) {
+        if (attr.value.toLowerCase().includes('javascript:')) {
+          node.removeAttribute(attr.name);
+        }
       }
     }
-  }
-});
+  });
+}
 
 /**
  * Sanitize HTML content to prevent XSS attacks
@@ -67,9 +69,13 @@ export function sanitizeText(text: string): string {
     return '';
   }
   
-  const div = document.createElement('div');
-  div.textContent = text;
-  return div.innerHTML;
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#x27;')
+    .replace(/\//g, '&#x2F;');
 }
 
 /**

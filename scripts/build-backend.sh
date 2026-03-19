@@ -17,7 +17,7 @@ fi
 
 echo "[build:backend] starting at $(timestamp) with NODE_OPTIONS=${NODE_OPTIONS}"
 set -x
-npx tsc --noEmitOnError false --skipLibCheck || \
+pnpm exec tsc --noEmitOnError false --skipLibCheck || \
   echo 'TypeScript compilation completed with warnings, but build succeeded'
 set +x
 echo "[build:backend] finished at $(timestamp)"
