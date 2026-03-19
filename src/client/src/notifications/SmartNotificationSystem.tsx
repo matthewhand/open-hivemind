@@ -66,7 +66,7 @@ export const SmartNotificationSystem: React.FC<{ children: React.ReactNode }> = 
   const addNotification = (notification: Omit<Notification, 'id' | 'timestamp' | 'read'>) => {
     const newNotification: Notification = {
       ...notification,
-      id: Math.random().toString(36).substr(2, 9),
+      id: crypto.randomUUID(),
       timestamp: new Date(),
       read: false,
     };
