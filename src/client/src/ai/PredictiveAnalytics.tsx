@@ -463,6 +463,7 @@ export const PredictiveAnalytics: React.FC = () => {
               </div>
               <button
                 className="btn btn-circle btn-ghost btn-sm"
+                aria-label="Refresh predictions"
                 onClick={generatePredictions}
                 disabled={isLoading}
                 aria-label="Refresh predictions"
