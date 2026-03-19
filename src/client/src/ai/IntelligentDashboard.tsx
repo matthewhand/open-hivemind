@@ -300,6 +300,7 @@ export const IntelligentDashboard: React.FC = () => {
                 className="btn btn-circle btn-ghost btn-sm"
                 onClick={fetchData}
                 disabled={isLoading}
+                aria-label="Refresh dashboard data"
               >
                 <ArrowPathIcon className={`w-5 h-5 ${isLoading ? 'animate-spin' : ''}`} />
               </button>

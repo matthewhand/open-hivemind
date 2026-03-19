@@ -39,6 +39,7 @@ export const RedactionDebugToggle: React.FC = () => {
                     onClick={() => setIsVisible(true)}
                     className="btn btn-circle btn-sm btn-ghost opacity-50 hover:opacity-100"
                     title="Redaction Debug Controls"
+                    aria-label="Open redaction debug controls"
                 >
                     <Shield className="w-4 h-4" />
                 </button>
