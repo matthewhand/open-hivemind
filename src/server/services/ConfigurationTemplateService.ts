@@ -101,6 +101,23 @@ export class ConfigurationTemplateService {
   }
 
   /**
+   * Get all template IDs from the filesystem
+   * @returns Set of template IDs (filenames without .json)
+   */
+  private async getAllTemplateIds(): Promise<Set<string>> {
+    try {
+      const files = await fs.readdir(this.templatesDir);
+      const ids = files
+        .filter((file) => file.endsWith('.json'))
+        .map((file) => file.replace('.json', ''));
+      return new Set(ids);
+    } catch (error) {
+      debug('Error getting all template IDs:', error);
+      return new Set();
+    }
+  }
+
+  /**
    * Get built-in template definitions
    */
   private getBuiltInTemplates(): ConfigurationTemplate[] {
