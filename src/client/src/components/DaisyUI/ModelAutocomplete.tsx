@@ -264,6 +264,7 @@ const ModelAutocomplete: React.FC<ModelAutocompleteProps> = ({
             <button
               type="button"
               onClick={fetchModels}
+              onMouseDown={(e) => e.preventDefault()}
               disabled={isLoading}
               className="btn btn-ghost btn-square"
               title="Refresh model list"
