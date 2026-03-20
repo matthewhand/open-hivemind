@@ -37,7 +37,12 @@ export default defineConfig({
   build: {
     rollupOptions: {
       output: {
-        manualChunks: undefined,
+        manualChunks: {
+          // Split large vendor libraries
+          redux: ['@reduxjs/toolkit', 'react-redux'],
+          router: ['react-router-dom'],
+          charts: ['recharts'],
+        },
       },
     },
     chunkSizeWarningLimit: 1000,
