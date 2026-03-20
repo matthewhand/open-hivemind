@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { isSafeUrl } from '@hivemind/shared-types';
+import { isSafeUrl } from '../../../utils/ssrfGuard';
 import flowiseConfig from '@integrations/flowise/flowiseConfig';
 
 /**
