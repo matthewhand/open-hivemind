@@ -37,7 +37,6 @@ module.exports = {
     '^@message/interfaces/messageConfig$': '<rootDir>/src/config/messageConfig.ts',
     '^@webhook/(.*)$': '<rootDir>/src/webhook/$1',
     '^@services/(.*)$': '<rootDir>/src/services/$1',
-    '^@integrations/discord/(.*)$': '<rootDir>/packages/message-discord/src/$1',
     '^@integrations/slack/(.*)$': '<rootDir>/packages/message-slack/src/$1',
     '^@integrations/mattermost/(.*)$': '<rootDir>/packages/message-mattermost/src/$1',
     '^@integrations/(.*)$': '<rootDir>/src/integrations/$1',
@@ -48,10 +47,12 @@ module.exports = {
     '^@hivemind/message-slack/(.*)$': '<rootDir>/packages/message-slack/src/$1',
     '^@hivemind/message-mattermost$': '<rootDir>/packages/message-mattermost/src/index.ts',
     '^@hivemind/message-mattermost/(.*)$': '<rootDir>/packages/message-mattermost/src/$1',
-    '^@hivemind/llm-openai$': '<rootDir>/packages/llm-openai/src/index.ts',
-    '^@hivemind/llm-openai/(.*)$': '<rootDir>/packages/llm-openai/src/$1',
+    '^@hivemind/provider-openai$': '<rootDir>/packages/provider-openai/src/index.ts',
+    '^@hivemind/provider-openai/(.*)$': '<rootDir>/packages/provider-openai/src/$1',
     '^@hivemind/llm-letta$': '<rootDir>/packages/llm-letta/src/index.ts',
     '^@hivemind/llm-letta/(.*)$': '<rootDir>/packages/llm-letta/src/$1',
+    '^@hivemind/llm-openai$': '<rootDir>/packages/llm-openai/src/index.ts',
+    '^@hivemind/llm-openai/(.*)$': '<rootDir>/packages/llm-openai/src/$1',
     '^@slack/web-api$': '<rootDir>/tests/mocks/slackWebApiMock.js',
     '^@slack/socket-mode$': '<rootDir>/tests/mocks/slackSocketModeMock.js',
     '^@slack/rtm-api$': '<rootDir>/tests/mocks/slackRtmApiMock.js',
@@ -62,6 +63,9 @@ module.exports = {
       process.env.RUN_SYSTEM_TESTS === 'true'
         ? '<rootDir>/node_modules/discord.js'
         : '<rootDir>/tests/__mocks__/discord.js.ts',
+    'mem0ai/oss': '<rootDir>/tests/mocks/mem0ai.js',
+    'mem0ai': '<rootDir>/tests/mocks/mem0ai.js',
+    '^pg$': '<rootDir>/tests/mocks/pg.js',
   },
   setupFilesAfterEnv: ['<rootDir>/tests/jest.setup.ts'],
   testPathIgnorePatterns: [

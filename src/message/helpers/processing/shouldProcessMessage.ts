@@ -1,7 +1,8 @@
+import debugFn from 'debug';
 import messageConfig from '@config/messageConfig';
 import type { IMessage } from '@message/interfaces/IMessage';
 
-const debugLogger = require('debug')('app:message:shouldProcessMessage');
+const debug = debugFn('hivemind:message:shouldProcessMessage');
 
 /**
  * Returns the minimum interval in milliseconds for processing messages.
@@ -30,7 +31,7 @@ function getDefaultChannelId(): string {
       return discordChannel;
     }
   } catch (error) {
-    debugLogger('Error getting discord config for default channel:', error);
+    debug('Error getting discord config for default channel:', error);
   }
 
   try {
@@ -41,7 +42,7 @@ function getDefaultChannelId(): string {
       return slackChannel;
     }
   } catch (error) {
-    debugLogger('Error getting slack config for default channel:', error);
+    debug('Error getting slack config for default channel:', error);
   }
 
   return '';
