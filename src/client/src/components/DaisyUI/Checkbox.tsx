@@ -61,7 +61,7 @@ export const Checkbox = memo<CheckboxProps>(({
   const variantClass = getVariantClass();
   const sizeClass = getSizeClass();
 
-  const inputId = id || `checkbox-${Math.random().toString(36).substr(2, 9)}`;
+  const inputId = id || `checkbox-${globalThis.crypto.randomUUID()}`;
 
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     // Reset indeterminate state when user interacts with the checkbox
