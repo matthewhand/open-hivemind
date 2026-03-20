@@ -147,6 +147,7 @@ const Modal: React.FC<ModalProps> = ({
                 className={`btn ${getVariantClass(action.variant)} ${action.loading ? 'loading' : ''}`}
                 onClick={action.onClick}
                 disabled={action.disabled || action.loading}
+                aria-busy={action.loading}
               >
                 {action.loading ? '' : action.label}
               </button>

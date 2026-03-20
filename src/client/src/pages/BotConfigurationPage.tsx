@@ -7,7 +7,7 @@ import Input from '../components/DaisyUI/Input';
 import Select from '../components/DaisyUI/Select';
 import Toggle from '../components/DaisyUI/Toggle';
 import Button from '../components/DaisyUI/Button';
-import Alert from '../components/DaisyUI/Alert';
+import { Alert } from '../components/DaisyUI/Alert';
 import Badge from '../components/DaisyUI/Badge';
 import Modal from '../components/DaisyUI/Modal';
 
@@ -286,7 +286,7 @@ const BotConfigurationPage: React.FC = () => {
       <PageHeader
         title="Global Defaults"
         description="System and provider settings (convict configs)"
-        icon={<Settings className="w-8 h-8" />}
+        icon={Settings}
         gradient="accent"
         actions={
           <div className="flex gap-2">

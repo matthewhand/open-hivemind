@@ -34,16 +34,12 @@ router.use(authenticate, auditMiddleware);
 router.get('/', async (req: Request, res: Response) => {
   const authReq = req as AuthMiddlewareRequest;
   try {
-    const botConfigService = BotConfigService.getInstance();
-    const bots = await botConfigService.getAllBotConfigs();
+    const bots = botConfigManager.getAllBots();
     const warnings = botConfigManager.getWarnings();
 
-    // Get all user overrides at once to avoid N+1 queries
-    const allOverrides = userConfigStore.getAllBotOverrides();
-
-    // Apply user overrides for each bot
+    // Get user overrides for each bot
     const botsWithOverrides = bots.map((bot) => {
-      const overrides = allOverrides.get(bot.name);
+      const overrides = userConfigStore.getBotOverride(bot.name);
       return {
         ...bot,
         overrides: overrides || {},

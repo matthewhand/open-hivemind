@@ -348,8 +348,9 @@ const ModalForm: React.FC<ModalFormProps> = ({
                     type="submit"
                     className="btn btn-primary"
                     disabled={isSubmitting}
+                    aria-busy={isSubmitting}
                   >
-                    {isSubmitting && <span className="loading loading-spinner loading-sm"></span>}
+                    {isSubmitting && <span className="loading loading-spinner loading-sm" aria-hidden="true"></span>}
                     {submitText}
                   </button>
                 )}
@@ -368,8 +369,9 @@ const ModalForm: React.FC<ModalFormProps> = ({
                   type="submit"
                   className="btn btn-primary"
                   disabled={isSubmitting}
+                  aria-busy={isSubmitting}
                 >
-                  {isSubmitting && <span className="loading loading-spinner loading-sm"></span>}
+                  {isSubmitting && <span className="loading loading-spinner loading-sm" aria-hidden="true"></span>}
                   {submitText}
                 </button>
               </>

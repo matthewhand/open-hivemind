@@ -195,7 +195,7 @@ const GuardsPage: React.FC = () => {
       <PageHeader
         title="Guard Profiles"
         description="Manage security and access control profiles for bots"
-        icon={<Shield className="w-8 h-8" />}
+        icon={Shield}
         actions={
           <div className="flex gap-2">
             <button onClick={fetchProfiles} className="btn btn-ghost btn-sm" disabled={loading} title="Refresh">
@@ -399,7 +399,6 @@ const GuardsPage: React.FC = () => {
                           )}
                         </div>
                       }
-                      id="max-requests"
                       type="number"
                       value={editingProfile.guards.rateLimit?.maxRequests || 100}
                       onChange={e => updateGuard('rateLimit', { maxRequests: parseInt(e.target.value) })}
@@ -429,11 +428,9 @@ const GuardsPage: React.FC = () => {
                         updateGuard('rateLimit', { windowMs: seconds * 1000 });
                       }}
                       disabled={!editingProfile.guards.rateLimit?.enabled}
-                      id="window-seconds"
                       min={1}
                       max={3600}
                       placeholder="60"
-                      aria-label="Window (seconds)"
                       helperText={
                         (() => {
                           const seconds = (editingProfile.guards.rateLimit?.windowMs || 60000) / 1000;

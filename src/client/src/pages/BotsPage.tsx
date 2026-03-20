@@ -10,8 +10,6 @@ import {
 } from 'lucide-react';
 import { useSuccessToast, useErrorToast } from '../components/DaisyUI/ToastNotification';
 import Modal, { ConfirmModal } from '../components/DaisyUI/Modal';
-import { useLlmStatus } from '../hooks/useLlmStatus';
-import { usePageLifecycle } from '../hooks/usePageLifecycle';
 import PageHeader from '../components/DaisyUI/PageHeader';
 import SearchFilterBar from '../components/SearchFilterBar';
 import EmptyState from '../components/DaisyUI/EmptyState';
@@ -25,8 +23,6 @@ import BotCard from '../components/BotManagement/BotCard';
 import { CreateBotWizard } from '../components/BotManagement/CreateBotWizard';
 import { BotSettingsModal } from '../components/BotSettingsModal';
 import { useLocation } from 'react-router-dom';
-import { useLlmStatus } from '../hooks/useLlmStatus';
-import { usePageLifecycle } from '../hooks/usePageLifecycle';
 import { PROVIDER_CATEGORIES } from '../config/providers';
 import { BotData } from '../hooks/useBotStats';
 
@@ -68,17 +64,12 @@ const BotsPage: React.FC = () => {
 
   // Define data fetching logic
   const fetchPageData = useCallback(async (_signal: AbortSignal) => {
-    const [configResult, globalResult, personasResult, profilesResult] = await Promise.allSettled([
+    const [configData, globalData, personasData, profilesData] = await Promise.all([
       apiService.getConfig(),
       apiService.getGlobalConfig(),
       apiService.getPersonas(),
       apiService.getLlmProfiles(),
     ]);
-
-    const configData = configResult.status === 'fulfilled' ? configResult.value : { bots: [] };
-    const globalData = globalResult.status === 'fulfilled' ? globalResult.value : {};
-    const personasData = personasResult.status === 'fulfilled' ? personasResult.value : [];
-    const profilesData = profilesResult.status === 'fulfilled' ? profilesResult.value : {};
 
     const personas = personasData || [];
     const llmProfiles = profilesData?.llm || profilesData?.profiles?.llm || [];
@@ -118,7 +109,7 @@ const BotsPage: React.FC = () => {
   // Sync lifecycle error to UI error
   useEffect(() => {
     if (lifecycleError) {
-      setError(lifecycleError.message);
+      setUiError(lifecycleError.message);
     }
   }, [lifecycleError]);
 
@@ -306,7 +297,7 @@ const BotsPage: React.FC = () => {
     );
   }, [activityLogs, logFilter]);
 
-  if (loading && bots.length === 0 && !error) {
+  if (loading && bots.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[400px]">
         <LoadingSpinner size="lg" />
@@ -333,7 +324,7 @@ const BotsPage: React.FC = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Main Content: Bot List */}
-        <div className={`${error && bots.length === 0 ? 'lg:col-span-3' : 'lg:col-span-2'} space-y-4`}>
+        <div className="lg:col-span-2 space-y-4">
           <SearchFilterBar
             searchQuery={searchQuery}
             onSearchChange={setSearchQuery}
@@ -369,7 +360,7 @@ const BotsPage: React.FC = () => {
 
           {error && bots.length === 0 ? (
             <EmptyState
-              icon={AlertTriangle}
+              icon={<AlertTriangle className="w-16 h-16 text-error/50" />}
               title="Failed to load swarm"
               description="We encountered an error while trying to load your AI agents. Please try again."
               actionLabel={
@@ -381,7 +372,7 @@ const BotsPage: React.FC = () => {
             />
           ) : filteredBots.length === 0 ? (
             <EmptyState
-              icon={Bot}
+              icon={<Bot className="w-16 h-16 text-base-content/20" />}
               title={searchQuery ? "No agents found" : "Your swarm is empty"}
               description={searchQuery ? "No agents match your search criteria." : "Start by creating your first specialized AI agent."}
               actionLabel={
@@ -410,7 +401,6 @@ const BotsPage: React.FC = () => {
         </div>
 
         {/* Sidebar: Bot Preview/Details */}
-        {!(error && bots.length === 0) && (
         <div className="lg:col-span-1">
           {previewBot ? (
             <div className="card bg-base-100 shadow-xl border border-base-200 sticky top-6 animate-in fade-in slide-in-from-right-4 duration-300">
@@ -596,7 +586,6 @@ const BotsPage: React.FC = () => {
             </div>
           )}
         </div>
-        )}
       </div>
 
       {/* Modals */}

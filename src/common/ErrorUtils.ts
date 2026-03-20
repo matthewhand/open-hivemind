@@ -14,7 +14,7 @@ export const ErrorClassification = {
   UNKNOWN_ERROR: 'unknown_error',
 } as const;
 
-export type ErrorClassification = (typeof ErrorClassification)[keyof typeof ErrorClassification];
+export type ErrorClassification = typeof ErrorClassification[keyof typeof ErrorClassification];
 
 export class ErrorUtils {
   /**

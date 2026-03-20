@@ -5,7 +5,7 @@ import fs from 'fs';
 import path from 'path';
 
 // Test configuration
-const BASE_URL = process.env.TEST_BASE_URL || 'http://localhost:3028';
+const BASE_URL = process.env.TEST_BASE_URL || 'http://localhost:5005';
 const API_BASE_URL = `${BASE_URL}/dashboard/api`;
 
 describe('Dashboard E2E Tests', function() {
@@ -33,7 +33,7 @@ describe('Dashboard E2E Tests', function() {
         app = serverModule.default || serverModule;
 
         // Start server on test port
-        const testPort = process.env.TEST_PORT || 3028;
+        const testPort = process.env.TEST_PORT || 5005;
         server = http.createServer(app);
         await new Promise((resolve, reject) => {
           server.listen(testPort, (err) => {

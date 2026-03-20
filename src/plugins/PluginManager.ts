@@ -100,15 +100,15 @@ function validateManifestType(name: string, manifest: PluginManifest): void {
   if (!validTypes.includes(namePrefix as any)) {
     throw new PluginValidationError(
       `Package name '${name}' must start with a valid type prefix: ${validTypes.join(', ')}. ` +
-        `Got prefix '${namePrefix}'.`
+      `Got prefix '${namePrefix}'.`
     );
   }
 
   if (manifest.type !== namePrefix) {
     throw new PluginValidationError(
       `Manifest type mismatch for '${name}': ` +
-        `package name prefix is '${namePrefix}' but manifest.type is '${manifest.type}'. ` +
-        `Rename the package or fix the manifest to match.`
+      `package name prefix is '${namePrefix}' but manifest.type is '${manifest.type}'. ` +
+      `Rename the package or fix the manifest to match.`
     );
   }
 }
@@ -122,7 +122,7 @@ function validateManifest(name: string, mod: any): PluginManifest {
   if (!manifest) {
     throw new PluginValidationError(
       `Plugin '${name}' does not export a 'manifest'. ` +
-        `Add: export const manifest: PluginManifest = { ... } to its index.ts.`
+      `Add: export const manifest: PluginManifest = { ... } to its index.ts.`
     );
   }
   if (!manifest.displayName || typeof manifest.displayName !== 'string') {
@@ -176,6 +176,15 @@ function exec(cmd: string, args: string[], cwd: string): void {
 // Public API
 // ---------------------------------------------------------------------------
 
+function validatePluginName(name: string): void {
+  const pluginNameRegex = /^(llm|message|memory|tool)-[a-zA-Z0-9_-]+$/;
+  if (!name || !pluginNameRegex.test(name)) {
+    throw new PluginValidationError(
+      `Invalid plugin name '${name}'. Must match pattern: ${pluginNameRegex}`
+    );
+  }
+}
+
 function validateRepoUrl(url: string): void {
   if (!url || typeof url !== 'string') {
     throw new PluginValidationError('Repository URL is required and must be a string.');
@@ -200,13 +209,13 @@ function validateRepoUrl(url: string): void {
   }
 
   // Prevent argument injection via hostname or path
-  if (parsedUrl.hostname.includes(" ") || parsedUrl.pathname.includes(" ")) {
-    throw new PluginValidationError("Invalid repository URL: spaces not allowed.");
+  if (parsedUrl.hostname.includes(' ') || decodeURIComponent(parsedUrl.pathname).includes(' ')) {
+    throw new PluginValidationError('Invalid repository URL: spaces not allowed.');
   }
 
   // Prevent command injection through special git URL patterns
   if (/--[a-z-]+=/i.test(parsedUrl.href)) {
-    throw new PluginValidationError("Invalid repository URL: contains suspicious patterns.");
+    throw new PluginValidationError('Invalid repository URL: contains suspicious patterns.');
   }
 
   // Prevent shell metacharacters in the entire URL to avoid command injection
@@ -239,6 +248,7 @@ export async function installPlugin(repoUrl: string): Promise<PluginInfo> {
     exec('git', ['clone', '--depth', '1', repoUrl, tempPath], PLUGINS_DIR);
 
     const name = deriveNameFromPath(tempPath);
+    validatePluginName(name);
     const pluginPath = path.join(PLUGINS_DIR, name);
 
     // If already installed, refuse — use updatePlugin instead
@@ -286,6 +296,7 @@ export async function installPlugin(repoUrl: string): Promise<PluginInfo> {
  * @throws Error if the plugin is not found in PLUGINS_DIR
  */
 export async function uninstallPlugin(name: string): Promise<void> {
+  validatePluginName(name);
   const pluginPath = path.join(PLUGINS_DIR, name);
 
   if (!fs.existsSync(pluginPath)) {
@@ -312,6 +323,7 @@ export async function uninstallPlugin(name: string): Promise<void> {
  * @throws PluginValidationError if the updated plugin fails manifest validation
  */
 export async function updatePlugin(name: string): Promise<PluginInfo> {
+  validatePluginName(name);
   const pluginPath = path.join(PLUGINS_DIR, name);
 
   if (!fs.existsSync(pluginPath)) {

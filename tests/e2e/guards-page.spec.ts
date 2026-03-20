@@ -104,8 +104,7 @@ test.describe('Guards Page', () => {
     await modal.getByText('Create Profile').click();
 
     // Verify POST was called with correct data
-    expect(createdProfile).toBeDefined();
-    expect(createdProfile).not.toBeNull();
+    expect(createdProfile).toBeTruthy();
     expect(createdProfile.name).toBe('Copy of Production Guard');
     expect(createdProfile.guards.rateLimit.maxRequests).toBe(100);
 

@@ -74,16 +74,11 @@ const configPath = path.join(configDir, 'providers/telegram.json');
 
 try {
   telegramConfig.loadFile(configPath);
+  telegramConfig.validate({ allowed: 'strict' });
   debug(`Successfully loaded Telegram config from ${configPath}`);
-} catch (error: any) {
-  if (error.code !== 'ENOENT') {
-    debug(`Error reading telegram config from ${configPath}:`, error.message);
-  } else {
-    debug(`Telegram config file not found at ${configPath}, using environment variables and defaults`);
-  }
+} catch {
+  // Fallback to defaults if config file is missing or invalid
+  debug(`Warning: Could not load telegram config from ${configPath}, using defaults`);
 }
-
-// Validation must happen outside the generic try-catch to fail fast if config is malformed
-telegramConfig.validate({ allowed: 'strict' });
 
 export default telegramConfig;

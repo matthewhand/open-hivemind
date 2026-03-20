@@ -48,12 +48,10 @@ const BotCreatePage: React.FC = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [personasResult, profilesResult] = await Promise.allSettled([
+        const [personasData, profilesData] = await Promise.all([
           apiService.getPersonas(),
           apiService.getLlmProfiles(),
         ]);
-        const personasData = personasResult.status === 'fulfilled' ? personasResult.value : [];
-        const profilesData = profilesResult.status === 'fulfilled' ? profilesResult.value : {};
 
         let mcpResponse: any = { data: [] };
         try {
