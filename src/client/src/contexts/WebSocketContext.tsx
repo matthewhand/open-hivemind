@@ -85,16 +85,12 @@ export const WebSocketProvider: React.FC<{ children: ReactNode }> = ({ children 
     newSocket.on('alerts_broadcast', (data) => {
       const incoming = data.alerts || [];
       setAlerts((prev) => {
-        const merged = [...prev];
+        // ⚡ Bolt Optimization: Use Map for O(1) lookups instead of O(n) findIndex
+        const mergedMap = new Map(prev.map(a => [a.id, a]));
         incoming.forEach((inc: AlertEvent) => {
-          const idx = merged.findIndex((a) => a.id === inc.id);
-          if (idx !== -1) {
-            merged[idx] = inc;
-          } else {
-            merged.push(inc);
-          }
+          mergedMap.set(inc.id, inc);
         });
-        return merged
+        return Array.from(mergedMap.values())
           .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
           .slice(0, 50);
       });
