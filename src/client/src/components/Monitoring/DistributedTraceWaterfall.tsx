@@ -222,11 +222,11 @@ export const DistributedTraceWaterfall: React.FC<DistributedTraceWaterfallProps>
 
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-1 join">
-               <button className="btn btn-xs join-item" onClick={() => setPanOffset(Math.max(0, panOffset - 10 / zoomLevel))} disabled={panOffset <= 0} title="Pan Left"><MoveLeft className="w-3 h-3" /></button>
-               <button className="btn btn-xs join-item" onClick={() => setZoomLevel(Math.max(1, zoomLevel - 0.5))} disabled={zoomLevel <= 1} title="Zoom Out"><ZoomOut className="w-3 h-3" /></button>
-               <button className="btn btn-xs join-item" onClick={() => { setZoomLevel(1); setPanOffset(0); }} title="Reset View">1x</button>
-               <button className="btn btn-xs join-item" onClick={() => setZoomLevel(zoomLevel + 0.5)} disabled={zoomLevel >= 5} title="Zoom In"><ZoomIn className="w-3 h-3" /></button>
-               <button className="btn btn-xs join-item" onClick={() => setPanOffset(Math.min(100 - (100 / zoomLevel), panOffset + 10 / zoomLevel))} disabled={panOffset >= 100 - (100 / zoomLevel)} title="Pan Right"><MoveRight className="w-3 h-3" /></button>
+               <button className="btn btn-xs join-item" onClick={() => setPanOffset(Math.max(0, panOffset - 10 / zoomLevel))} disabled={panOffset <= 0} title="Pan Left" aria-label="Pan Left"><MoveLeft className="w-3 h-3" /></button>
+               <button className="btn btn-xs join-item" onClick={() => setZoomLevel(Math.max(1, zoomLevel - 0.5))} disabled={zoomLevel <= 1} title="Zoom Out" aria-label="Zoom Out"><ZoomOut className="w-3 h-3" /></button>
+               <button className="btn btn-xs join-item" onClick={() => { setZoomLevel(1); setPanOffset(0); }} title="Reset View" aria-label="Reset View">1x</button>
+               <button className="btn btn-xs join-item" onClick={() => setZoomLevel(zoomLevel + 0.5)} disabled={zoomLevel >= 5} title="Zoom In" aria-label="Zoom In"><ZoomIn className="w-3 h-3" /></button>
+               <button className="btn btn-xs join-item" onClick={() => setPanOffset(Math.min(100 - (100 / zoomLevel), panOffset + 10 / zoomLevel))} disabled={panOffset >= 100 - (100 / zoomLevel)} title="Pan Right" aria-label="Pan Right"><MoveRight className="w-3 h-3" /></button>
             </div>
 
             <div className="text-sm text-base-content/70 flex items-center gap-4">
