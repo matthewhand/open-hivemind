@@ -420,6 +420,7 @@ const MCPProviderForm: React.FC<MCPProviderFormProps> = ({
                         variant="ghost"
                         className="absolute right-1 top-1 h-8 w-8"
                         onClick={() => toggleEnvVarVisibility(index)}
+                        onMouseDown={(e) => e.preventDefault()}
                       >
                         {envVar.showValue ? <FaEyeSlash className="w-3 h-3" /> : <FaEye className="w-3 h-3" />}
                       </Button>

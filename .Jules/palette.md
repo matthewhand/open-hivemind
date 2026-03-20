@@ -3,7 +3,7 @@
 **Action:** When implementing new UI elements or refactoring existing ones, always ensure that any `<button>` lacking visible, descriptive text content includes an `aria-label` attribute describing its function. When a button toggles state (like expanding a section), use `aria-expanded` in conjunction with a dynamic `aria-label`.
 
 ## 2025-03-17 - Prevent Input Blur on Inline Button Clicks
-**Learning:** When building custom input components with inline action buttons (e.g., clear, undo, or remove tags in `CommaSeparatedInput`), clicking these buttons naturally causes the input field to lose focus. This interrupts the user's flow and can prematurely trigger `onBlur` events.
+**Learning:** When building custom input components with inline action buttons (e.g., clear, undo, or remove tags in `CommaSeparatedInput`) or visibility toggles on password inputs, clicking these buttons naturally causes the input field to lose focus. This interrupts the user's flow, as they may just want to peek at their typed password before continuing to type, and can prematurely trigger `onBlur` events.
 **Action:** Always add `onMouseDown={(e) => e.preventDefault()}` to inline buttons inside or adjacent to inputs. This prevents focus from leaving the input field when the button is clicked, retaining the cursor position and ensuring a smooth user experience.
 
 ## 2025-03-20 - Add Accessible Loading States to Buttons
