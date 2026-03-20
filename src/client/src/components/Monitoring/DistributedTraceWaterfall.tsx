@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { Badge, Card } from '../DaisyUI';
+import Badge from '../DaisyUI/Badge';
+import Card from '../DaisyUI/Card';
 import { Activity, Clock, Server, ChevronRight, ChevronDown, ZoomIn, ZoomOut, MoveLeft, MoveRight, X } from 'lucide-react';
 
 export interface TraceSpan {

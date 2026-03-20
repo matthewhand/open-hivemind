@@ -1,5 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Modal, Checkbox, Button, Card, Form } from '../DaisyUI';
+import Modal from '../DaisyUI/Modal';
+import Checkbox from '../DaisyUI/Checkbox';
+import Button from '../DaisyUI/Button';
+import Card from '../DaisyUI/Card';
+import Form from '../DaisyUI/Form';
 import {
   getPersonas,
   createPersona,
