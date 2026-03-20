@@ -1,4 +1,4 @@
-import { SlackMessageIO } from '../../../packages/message-slack/src/modules/ISlackMessageIO';
+import { SlackMessageIO } from '../../../packages/adapter-slack/src/modules/ISlackMessageIO';
 import { NetworkError, ValidationError } from '../../../src/types/errorClasses';
 
 describe('SlackMessageIO Error Mapping', () => {

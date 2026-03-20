@@ -5,10 +5,6 @@ import DuplicateMessageDetector from '../../../../src/message/helpers/processing
 jest.mock('../../../../src/config/messageConfig');
 
 describe('DuplicateMessageDetector', () => {
-  afterEach(() => {
-    (DuplicateMessageDetector as any).instance = undefined;
-  });
-
   let detector: DuplicateMessageDetector;
   const channelId = 'test-channel';
 
@@ -19,8 +15,6 @@ describe('DuplicateMessageDetector', () => {
   });
 
   beforeEach(() => {
-    (DuplicateMessageDetector as any).instance = undefined;
-
     jest.clearAllMocks();
     // Reset singleton using any cast or finding a way to clear state
     // Since it's a singleton, we might need access to its private map or just use a new channel ID per test

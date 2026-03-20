@@ -356,6 +356,12 @@ const GuardsPage: React.FC = () => {
                       value={editingProfile.guards.mcpGuard.allowedUsers || []}
                       onChange={v => updateGuard('mcpGuard', { allowedUsers: v })}
                       disabled={!editingProfile.guards.mcpGuard.enabled}
+                    validate={item => {
+                      if (!/^[a-zA-Z0-9-_]+$/.test(item)) {
+                        return "User IDs must contain only letters, numbers, dashes, and underscores.";
+                      }
+                      return null;
+                    }}
                     />
                   </div>
                 )}
@@ -368,6 +374,12 @@ const GuardsPage: React.FC = () => {
                     value={editingProfile.guards.mcpGuard.allowedTools || []}
                     onChange={v => updateGuard('mcpGuard', { allowedTools: v })}
                     disabled={!editingProfile.guards.mcpGuard.enabled}
+                    validate={item => {
+                      if (!/^[a-zA-Z0-9-_]+$/.test(item)) {
+                        return "Tool names must contain only letters, numbers, dashes, and underscores.";
+                      }
+                      return null;
+                    }}
                   />
                   <label className="label"><span className="label-text-alt opacity-70">Leave empty to allow all tools (if enabled)</span></label>
                 </div>
