@@ -210,7 +210,7 @@ function validateRepoUrl(url: string): void {
   }
 
   // Prevent shell metacharacters in hostname
-  if (/[;&|`$()<>\n]/.test(url)) {
+  if (/[;&|`$()]/.test(parsedUrl.hostname)) {
     throw new PluginValidationError("Invalid repository URL: contains shell metacharacters.");
   }
 }
