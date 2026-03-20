@@ -169,6 +169,7 @@ const EnhancedDashboard: React.FC = () => {
                     onClick={handleRefresh}
                     disabled={isLoading}
                     aria-label="Refresh dashboard data"
+                    aria-busy={isLoading}
                   >
                     🔄
                   </button>
@@ -190,7 +191,7 @@ const EnhancedDashboard: React.FC = () => {
         minHeight="lg"
         actions={
           <div className="flex flex-col sm:flex-row gap-4">
-            <Button variant="primary" size="lg" onClick={handleRefresh}>
+            <Button variant="primary" size="lg" onClick={handleRefresh} loading={isLoading}>
               Refresh Dashboard
             </Button>
             <Button
@@ -388,7 +389,7 @@ const EnhancedDashboard: React.FC = () => {
               >
                 Configuration
               </Button>
-              <Button variant="accent" size="sm" className="w-full" onClick={handleRefresh}>
+              <Button variant="accent" size="sm" className="w-full" onClick={handleRefresh} loading={isLoading}>
                 Refresh Data
               </Button>
             </div>
