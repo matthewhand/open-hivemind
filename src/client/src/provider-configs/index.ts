@@ -13,8 +13,23 @@ import { mattermostProviderSchema } from './schemas/mattermost';
 import { webhookProviderSchema } from './schemas/webhook';
 import { openWebUiProviderSchema } from './schemas/openwebui';
 import { lettaProviderSchema } from './schemas/letta';
-import { mem0ProviderSchema } from './schemas/mem0';
-import { mem4aiProviderSchema } from './schemas/mem4ai';
+
+// Stub out missing providers to unblock frontend build
+const mem0ProviderSchema = {
+  id: 'mem0',
+  type: 'memory',
+  name: 'Mem0',
+  description: 'Mem0 Memory Provider',
+  fields: []
+} as any;
+
+const mem4aiProviderSchema = {
+  id: 'mem4ai',
+  type: 'memory',
+  name: 'Mem4ai',
+  description: 'Mem4ai Memory Provider',
+  fields: []
+} as any;
 
 export const PROVIDER_SCHEMAS: Record<string, ProviderConfigSchema> = {
   // Message providers

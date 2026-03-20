@@ -14,10 +14,8 @@
         "@slack/socket-mode": "^2.0.3",
         "@slack/rtm-api": "^7.0.2",
         "@slack/webhook": "^7.0.4",
-        "debug": "^4.3.7"
-    },
-    "peerDependencies": {
-        "@hivemind/shared-types": "*"
+        "debug": "^4.3.7",
+        "@hivemind/shared-types": "workspace:*"
     },
     "devDependencies": {
         "typescript": "^5.9.2",
