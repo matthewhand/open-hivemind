@@ -1,9 +1,12 @@
 [build]
-  command = "npm install -g pnpm && pnpm install && pnpm run build:netlify"
+  command = "npm install -g pnpm && pnpm install --no-frozen-lockfile && pnpm run build:netlify"
   # Only build on main branch to avoid unnecessary builds on feature branches
-  ignore = "test \"$BRANCH\" != \"main\""
   functions = "dist/netlify/functions"
   publish = "dist/client"
+
+[build.environment]
+  NODE_VERSION = "20"
+  PNPM_VERSION = "9.15.4"
 
 [dev]
   command = "pnpm run dev"
