@@ -52,7 +52,7 @@ async function loadPersonas(): Promise<{ key: string; name: string; systemPrompt
     }
 
     const files = await fs.promises.readdir(personasDir);
-    const validFiles = files.filter((file) => file.endsWith(".json") && !file.includes(".."));
+    const validFiles = files.filter((file) => file.endsWith('.json'));
 
     const promises = validFiles.map(async (file) => {
       try {

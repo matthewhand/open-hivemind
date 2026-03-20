@@ -22,7 +22,6 @@ jobs:
         uses: pnpm/action-setup@v3
         with:
           version: 10
-      - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
@@ -50,10 +49,10 @@ jobs:
         run: pnpm audit --audit-level=high --production
 
       - name: Run unit tests
-        run: pnpm test --passWithNoTests --coverage --testPathPattern=tests/unit
+        run: pnpm test -- --passWithNoTests --coverage --testPathPattern=tests/unit
 
       - name: Run integration tests
-        run: pnpm test --passWithNoTests --testPathPattern=tests/integration
+        run: pnpm test -- --passWithNoTests --testPathPattern=tests/integration
 
       - name: Build
         run: pnpm run build
@@ -110,9 +109,9 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v3
+      - uses: pnpm/action-setup@v2
         with:
-          version: 10
+          version: 8
       - uses: superfly/flyctl-actions/setup-flyctl@master
       - run: flyctl deploy -c fly.toml --wait-timeout 300
         env:

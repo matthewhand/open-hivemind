@@ -1,7 +1,5 @@
 import Debug from 'debug';
 import { OpenAI } from 'openai';
-import { isSafeUrl } from '@hivemind/shared-types';
-import type { OpenAIConfig } from '@src/types/config';
 import {
   ApiError,
   BaseHivemindError,

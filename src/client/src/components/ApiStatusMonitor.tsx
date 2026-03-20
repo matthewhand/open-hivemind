@@ -1,12 +1,14 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect, useCallback } from 'react';
-import Card from './DaisyUI/Card';
-import Badge from './DaisyUI/Badge';
-import { Alert } from './DaisyUI/Alert';
-import Accordion from './DaisyUI/Accordion';
-import Divider from './DaisyUI/Divider';
-import Button from './DaisyUI/Button';
-import Tooltip from './DaisyUI/Tooltip';
+import {
+  Card,
+  Badge,
+  Alert,
+  Accordion,
+  Divider,
+  Button,
+  Tooltip,
+} from './DaisyUI';
 import {
   CheckCircleIcon,
   ExclamationCircleIcon,

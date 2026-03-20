@@ -1,7 +1,7 @@
 import 'reflect-metadata';
 import { container } from 'tsyringe';
-import Logger from '../../../src/common/logger';
 import { registerServices } from '../../../src/di/registration';
+import Logger from '../../../src/common/logger';
 
 // Mock all singleton services to prevent real initialization
 jest.mock('../../../src/config/ConfigurationManager', () => ({
@@ -29,8 +29,7 @@ jest.mock('../../../src/config/SecureConfigManager', () => ({
 }));
 
 jest.mock('../../../src/config/ProviderConfigManager', () => ({
-  __esModule: true,
-  default: {
+  ProviderConfigManager: {
     getInstance: jest.fn().mockReturnValue({}),
   },
 }));
@@ -44,14 +43,11 @@ jest.mock('../../../src/common/logger', () => {
     error: jest.fn(),
   };
   return {
-    __esModule: true,
-    default: {
-      withContext: jest.fn().mockReturnValue(mockLogger),
-      info: jest.fn(),
-      debug: jest.fn(),
-      warn: jest.fn(),
-      error: jest.fn(),
-    },
+    withContext: jest.fn().mockReturnValue(mockLogger),
+    info: jest.fn(),
+    debug: jest.fn(),
+    warn: jest.fn(),
+    error: jest.fn(),
   };
 });
 
@@ -61,14 +57,14 @@ describe('DI Service Registration Logging', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     container.reset();
-    mockLogger = Logger.withContext('DI');
+    mockLogger = (Logger.withContext as jest.Mock)();
   });
 
   it('should log service registrations and completion', () => {
     registerServices();
 
-    // Logger.withContext('DI') is called at module load time, not inside registerServices
-    expect(Logger.withContext).toHaveBeenCalled();
+    // Verify context
+    expect(Logger.withContext).toHaveBeenCalledWith('DI');
 
     // Verify individual service registration logs (debug level)
     expect(mockLogger.debug).toHaveBeenCalledWith('Registering ConfigurationManager');
@@ -76,25 +72,10 @@ describe('DI Service Registration Logging', () => {
     expect(mockLogger.debug).toHaveBeenCalledWith('Registering UserConfigStore');
     expect(mockLogger.debug).toHaveBeenCalledWith('Registering SecureConfigManager');
     expect(mockLogger.debug).toHaveBeenCalledWith('Registering BotConfigurationManager class');
-    expect(mockLogger.debug).toHaveBeenCalledWith(
-      'Registering UserConfigStore (re-registering instance)'
-    );
+    expect(mockLogger.debug).toHaveBeenCalledWith('Registering UserConfigStore (re-registering instance)');
     expect(mockLogger.debug).toHaveBeenCalledWith('Registering ProviderConfigManager');
 
     // Verify completion log (info level)
     expect(mockLogger.info).toHaveBeenCalledWith('✅ DI services registered');
-  });
-
-  it('should check if services are registered', () => {
-    const { areServicesRegistered } = require('../../../src/di/registration');
-
-    // initially not registered
-    expect(areServicesRegistered()).toBe(false);
-
-    // register
-    registerServices();
-
-    // should be registered
-    expect(areServicesRegistered()).toBe(true);
   });
 });

@@ -1,5 +1,5 @@
 import type { TextareaHTMLAttributes } from 'react';
-import React, { forwardRef, memo } from 'react';
+import React, { forwardRef } from 'react';
 
 interface TextareaProps extends TextareaHTMLAttributes<HTMLTextAreaElement> {
   variant?: 'primary' | 'secondary' | 'accent' | 'info' | 'success' | 'warning' | 'error' | 'ghost';
@@ -8,8 +8,7 @@ interface TextareaProps extends TextareaHTMLAttributes<HTMLTextAreaElement> {
   resize?: 'none' | 'vertical' | 'horizontal' | 'both';
 }
 
-// ⚡ Bolt Optimization: Added React.memo() to prevent unnecessary re-renders of this core primitive UI component.
-const Textarea = memo(forwardRef<HTMLTextAreaElement, TextareaProps>(
+const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
   ({
     className = '',
     variant = 'primary',
@@ -61,7 +60,7 @@ const Textarea = memo(forwardRef<HTMLTextAreaElement, TextareaProps>(
       />
     );
   },
-));
+);
 
 Textarea.displayName = 'Textarea';
 

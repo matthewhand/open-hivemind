@@ -1,4 +1,3 @@
-import { randomUUID } from 'crypto';
 import { EventEmitter } from 'events';
 import Debug from 'debug';
 import { DatabaseManager } from '../../database/DatabaseManager';
@@ -8,7 +7,7 @@ import { ConfigurationValidator } from './ConfigurationValidator';
 
 const debug = Debug('app:RealTimeValidationService');
 
-interface ValidationRule {
+export interface ValidationRule {
   id: string;
   name: string;
   description: string;
@@ -17,7 +16,7 @@ interface ValidationRule {
   validator: (config: any) => ValidationResult;
 }
 
-interface ValidationResult {
+export interface ValidationResult {
   isValid: boolean;
   errors: ValidationError[];
   warnings: ValidationWarning[];
@@ -25,7 +24,7 @@ interface ValidationResult {
   score: number; // 0-100, higher is better
 }
 
-interface ValidationError {
+export interface ValidationError {
   id: string;
   ruleId: string;
   message: string;
@@ -36,7 +35,7 @@ interface ValidationError {
   category: 'required' | 'format' | 'business' | 'security' | 'performance';
 }
 
-interface ValidationWarning {
+export interface ValidationWarning {
   id: string;
   ruleId: string;
   message: string;
@@ -46,7 +45,7 @@ interface ValidationWarning {
   category: 'required' | 'format' | 'business' | 'security' | 'performance';
 }
 
-interface ValidationInfo {
+export interface ValidationInfo {
   id: string;
   ruleId: string;
   message: string;
@@ -56,7 +55,7 @@ interface ValidationInfo {
   category: 'required' | 'format' | 'business' | 'security' | 'performance';
 }
 
-interface ValidationReport {
+export interface ValidationReport {
   id: string;
   timestamp: Date;
   configId?: number;
@@ -67,7 +66,7 @@ interface ValidationReport {
   rulesExecuted: number;
 }
 
-interface ValidationProfile {
+export interface ValidationProfile {
   id: string;
   name: string;
   description: string;
@@ -78,7 +77,7 @@ interface ValidationProfile {
   updatedAt: Date;
 }
 
-interface ValidationSubscription {
+export interface ValidationSubscription {
   id: string;
   configId: number;
   clientId: string;
@@ -991,7 +990,7 @@ export class RealTimeValidationService extends EventEmitter {
    * Generate report ID
    */
   private generateReportId(): string {
-    return 'val-' + Date.now().toString(36) + '-' + randomUUID();
+    return 'val-' + Date.now().toString(36) + '-' + Math.random().toString(36).substr(2, 9);
   }
 
   /**

@@ -1,7 +1,11 @@
 import { useState, useEffect } from 'react';
 import { apiService } from '../services/api';
 
-import type { Spec } from '../types/spec';
+export interface Spec {
+  id: string;
+  name: string;
+  content: string;
+}
 
 export const useSpecs = () => {
   const [specs, setSpecs] = useState<Spec[]>([]);
@@ -11,12 +15,8 @@ export const useSpecs = () => {
   useEffect(() => {
     const fetchSpecs = async () => {
       try {
-        const response = await apiService.request<{ success: boolean; data: Spec[]; error?: string }>('/api/specs');
-        if (response.success && response.data) {
-          setSpecs(response.data);
-        } else {
-          throw new Error(response.error || 'Failed to fetch specs');
-        }
+        const data = await apiService.request<Spec[]>('/api/specs');
+        setSpecs(data);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to fetch specs');
       } finally {
