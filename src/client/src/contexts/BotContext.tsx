@@ -52,7 +52,7 @@ export const BotProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   }, [bots, initialized]);
 
-  const generateId = () => crypto.randomUUID();
+  const generateId = () => globalThis.crypto.randomUUID();
 
   const createBot = useCallback((name: string, description?: string) => {
     const newBot: BotInstance = {

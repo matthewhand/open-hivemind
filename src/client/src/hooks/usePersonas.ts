@@ -71,7 +71,7 @@ export const usePersonas = (): UsePersonasReturn => {
       setError(null);
 
       const newPersona: Persona = {
-        id: `persona-${Date.now()}-${crypto.randomUUID()}`,
+        id: `persona-${Date.now()}-${globalThis.crypto.randomUUID()}`,
         ...request,
         isBuiltIn: false,
         createdAt: new Date().toISOString(),
@@ -162,7 +162,7 @@ export const usePersonas = (): UsePersonasReturn => {
 
       const duplicatedPersona: Persona = {
         ...originalPersona,
-        id: `persona-${Date.now()}-${crypto.randomUUID()}`,
+        id: `persona-${Date.now()}-${globalThis.crypto.randomUUID()}`,
         name: newName,
         isBuiltIn: false,
         createdAt: new Date().toISOString(),

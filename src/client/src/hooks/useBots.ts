@@ -7,7 +7,7 @@ const useBots = () => {
   const [error, setError] = useState<string | null>(null);
 
   // Generate unique ID
-  const generateId = () => crypto.randomUUID();
+  const generateId = () => globalThis.crypto.randomUUID();
 
   // Create new bot
   const createBot = useCallback((name: string, description?: string) => {
