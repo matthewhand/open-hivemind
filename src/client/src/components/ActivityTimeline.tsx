@@ -1,5 +1,9 @@
 import React, { useState } from 'react';
-import { Card, Badge, Button, Alert, Timeline } from './DaisyUI';
+import Card from './DaisyUI/Card';
+import Badge from './DaisyUI/Badge';
+import Button from './DaisyUI/Button';
+import { Alert } from './DaisyUI/Alert';
+import Timeline from './DaisyUI/Timeline';
 import {
   ClockIcon,
   UserIcon,

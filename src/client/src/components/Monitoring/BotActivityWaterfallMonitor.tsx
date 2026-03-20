@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { apiService, ActivityEvent } from '../../services/api';
 import DistributedTraceWaterfall, { TraceSpan } from './DistributedTraceWaterfall';
-import { Alert } from '../DaisyUI';
+import { Alert } from '../DaisyUI/Alert';
 
 export const BotActivityWaterfallMonitor: React.FC = () => {
     const [spans, setSpans] = useState<TraceSpan[]>([]);

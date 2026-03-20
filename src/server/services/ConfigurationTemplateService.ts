@@ -87,10 +87,10 @@ export class ConfigurationTemplateService {
       await this.ensureTemplatesDirectory();
 
       const builtInTemplates = this.getBuiltInTemplates();
-      const existingIds = await this.getAllTemplateIds();
 
       for (const template of builtInTemplates) {
-        if (!existingIds.has(template.id)) {
+        const existingTemplate = await this.getTemplateById(template.id);
+        if (!existingTemplate) {
           await this.saveTemplate(template);
           debug('Loaded built-in template:', template.name);
         }
