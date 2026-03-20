@@ -1,12 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useWebSocket } from '../../contexts/WebSocketContext';
-import Card from '../DaisyUI/Card';
-import Badge from '../DaisyUI/Badge';
-import { Alert } from '../DaisyUI/Alert';
-import Button from '../DaisyUI/Button';
-import PageHeader from '../DaisyUI/PageHeader';
-import StatsCards from '../DaisyUI/StatsCards';
+import { Card, Badge, Alert, Button, PageHeader, StatsCards } from '../DaisyUI';
 import {
   Activity,
   RotateCcw,
@@ -183,7 +178,7 @@ const MonitoringDashboard: React.FC<MonitoringDashboardProps> = ({
     { icon: <Heart className="w-5 h-5" />, label: 'Infrastructure Health' },
     { icon: <Cpu className="w-5 h-5" />, label: 'Bot Status' },
     { icon: <Clock className="w-5 h-5" />, label: 'Activity Monitor' },
-    { icon: <Activity className="w-5 h-5" />, label: 'Bot Activity Trace' },
+    { icon: <Activity className="w-5 h-5" />, label: 'Distributed Tracing' },
   ];
 
   const stats = [
@@ -233,7 +228,7 @@ const MonitoringDashboard: React.FC<MonitoringDashboardProps> = ({
       <PageHeader
         title="System Monitoring"
         description={`Last updated: ${lastRefresh.toLocaleTimeString()}`}
-        icon={ChartBar}
+        icon={<ChartBar className="w-8 h-8" />}
         actions={
           <div className="flex items-center gap-2">
             <select

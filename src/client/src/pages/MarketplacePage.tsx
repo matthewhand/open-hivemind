@@ -1,8 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import Card from '../components/DaisyUI/Card';
-import Button from '../components/DaisyUI/Button';
-import Badge from '../components/DaisyUI/Badge';
-import Breadcrumbs from '../components/DaisyUI/Breadcrumbs';
+import { Card, Button, Badge, Breadcrumbs } from '../components/DaisyUI';
 import {
   Store as StoreIcon,
   Download as DownloadIcon,
