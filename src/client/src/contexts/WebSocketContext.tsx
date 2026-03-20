@@ -27,6 +27,9 @@ const WebSocketContext = createContext<WebSocketContextType | undefined>(undefin
 const rawBaseUrl = import.meta.env.VITE_API_BASE_URL as string | undefined;
 const API_BASE_URL = rawBaseUrl?.replace(/\/$/, '');
 
+// ⚡ Bolt Optimization: Extract comparator to prevent inline instantiation and use fast string comparison
+const sortAlertsDescending = (a: AlertEvent, b: AlertEvent) => b.timestamp.localeCompare(a.timestamp);
+
 export const WebSocketProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [socket, setSocket] = useState<Socket | null>(null);
   const [isConnected, setIsConnected] = useState(false);
@@ -85,17 +88,13 @@ export const WebSocketProvider: React.FC<{ children: ReactNode }> = ({ children 
     newSocket.on('alerts_broadcast', (data) => {
       const incoming = data.alerts || [];
       setAlerts((prev) => {
-        const merged = [...prev];
+        // ⚡ Bolt Optimization: Use Map for O(1) lookups instead of O(n) findIndex
+        const mergedMap = new Map(prev.map(a => [a.id, a]));
         incoming.forEach((inc: AlertEvent) => {
-          const idx = merged.findIndex((a) => a.id === inc.id);
-          if (idx !== -1) {
-            merged[idx] = inc;
-          } else {
-            merged.push(inc);
-          }
+          mergedMap.set(inc.id, inc);
         });
-        return merged
-          .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+        return Array.from(mergedMap.values())
+          .sort(sortAlertsDescending)
           .slice(0, 50);
       });
     });
