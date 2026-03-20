@@ -140,7 +140,7 @@ const LLMProvidersPage: React.FC = () => {
           try {
             await apiService.post('/api/config/llm-profiles', payload);
           } catch (e: any) {
-            if (backup) await apiService.post('/api/config/llm-profiles', backup).catch(() => {});
+            if (backup) await apiService.post('/api/config/llm-profiles', backup).catch(() => { });
             throw e;
           }
         }
@@ -174,7 +174,7 @@ const LLMProvidersPage: React.FC = () => {
   const filteredProfiles = useMemo(() =>
     profiles.filter(p => {
       const matchesSearch = p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                            p.provider.toLowerCase().includes(searchQuery.toLowerCase());
+        p.provider.toLowerCase().includes(searchQuery.toLowerCase());
       return matchesSearch && (filterType === 'all' || p.provider === filterType);
     }), [profiles, searchQuery, filterType]);
 
@@ -197,7 +197,7 @@ const LLMProvidersPage: React.FC = () => {
       <PageHeader
         title="LLM Providers"
         description="Configure AI provider profiles and assign them to specific use cases."
-        icon={BrainIcon}
+        icon={<BrainIcon className="w-8 h-8 text-primary" />}
         actions={
           <div className="flex gap-2">
             <Button variant="ghost" onClick={fetchProfiles} disabled={loading}>
@@ -262,7 +262,7 @@ const LLMProvidersPage: React.FC = () => {
                 value={defaultChatbotProfile}
                 onChange={async (e) => {
                   setDefaultChatbotProfile(e.target.value);
-                  await saveGlobal({ defaultChatbotProfile: e.target.value }).catch(() => {});
+                  await saveGlobal({ defaultChatbotProfile: e.target.value }).catch(() => { });
                 }}
                 disabled={loading}
               >
@@ -290,7 +290,7 @@ const LLMProvidersPage: React.FC = () => {
                 value={webuiIntelligenceProvider}
                 onChange={async (e) => {
                   setWebuiIntelligenceProvider(e.target.value);
-                  await saveGlobal({ webuiIntelligenceProvider: e.target.value }).catch(() => {});
+                  await saveGlobal({ webuiIntelligenceProvider: e.target.value }).catch(() => { });
                 }}
                 disabled={loading}
               >
@@ -317,7 +317,7 @@ const LLMProvidersPage: React.FC = () => {
                 value={defaultEmbeddingProvider}
                 onChange={async (e) => {
                   setDefaultEmbeddingProvider(e.target.value);
-                  await saveLlmConfig({ DEFAULT_EMBEDDING_PROVIDER: e.target.value }).catch(() => {});
+                  await saveLlmConfig({ DEFAULT_EMBEDDING_PROVIDER: e.target.value }).catch(() => { });
                 }}
                 disabled={loading}
               >
@@ -351,7 +351,7 @@ const LLMProvidersPage: React.FC = () => {
             checked={perUseCaseEnabled}
             onChange={async (e) => {
               setPerUseCaseEnabled(e.target.checked);
-              await saveGlobal({ perUseCaseEnabled: e.target.checked }).catch(() => {});
+              await saveGlobal({ perUseCaseEnabled: e.target.checked }).catch(() => { });
             }}
           />
         </div>
