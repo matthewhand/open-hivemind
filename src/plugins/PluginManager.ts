@@ -209,8 +209,8 @@ function validateRepoUrl(url: string): void {
     throw new PluginValidationError("Invalid repository URL: contains suspicious patterns.");
   }
 
-  // Prevent shell metacharacters in hostname
-  if (/[;&|`$()]/.test(parsedUrl.hostname)) {
+  // Prevent shell metacharacters in the entire URL to avoid command injection
+  if (/[;&|`$()]/.test(parsedUrl.href)) {
     throw new PluginValidationError("Invalid repository URL: contains shell metacharacters.");
   }
 }
