@@ -1,6 +1,6 @@
 import axios from 'axios';
 import Debug from 'debug';
-import { isSafeUrl } from '@hivemind/shared-types';
+import { isSafeUrl } from '../../utils/ssrfGuard';
 import type { IMessage } from '@message/interfaces/IMessage';
 import openWebUIConfig from './openWebUIConfig';
 import { getSessionKey } from './sessionManager';
