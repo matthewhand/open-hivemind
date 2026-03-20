@@ -179,19 +179,27 @@ export const selectErrorsByTimeRange = (startTime: string, endTime: string) => (
   );
 
 export const selectErrorStats = (state: { error: ErrorState }) => {
-  const total = state.error.errors.length;
-  const byType = state.error.errors.reduce((acc, err) => {
-    acc[err.type] = (acc[err.type] || 0) + 1;
-    return acc;
-  }, {} as Record<ErrorDetails['type'], number>);
+  const errors = state.error.errors;
+  const total = errors.length;
   
-  const bySeverity = state.error.errors.reduce((acc, err) => {
-    acc[err.severity] = (acc[err.severity] || 0) + 1;
-    return acc;
-  }, {} as Record<ErrorDetails['severity'], number>);
-  
-  const unresolved = state.error.errors.filter(err => !err.resolved).length;
-  const resolved = state.error.errors.filter(err => err.resolved).length;
+  const byType = {} as Record<ErrorDetails['type'], number>;
+  const bySeverity = {} as Record<ErrorDetails['severity'], number>;
+  let unresolved = 0;
+  let resolved = 0;
+
+  // ⚡ Bolt Optimization: Combined 4 separate O(N) array passes (reduce, reduce, filter, filter)
+  // into a single O(N) iteration to improve selector performance.
+  for (let i = 0; i < total; i++) {
+    const err = errors[i];
+    byType[err.type] = (byType[err.type] || 0) + 1;
+    bySeverity[err.severity] = (bySeverity[err.severity] || 0) + 1;
+
+    if (err.resolved) {
+      resolved++;
+    } else {
+      unresolved++;
+    }
+  }
   
   return {
     total,
