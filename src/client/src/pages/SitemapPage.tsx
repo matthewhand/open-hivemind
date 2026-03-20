@@ -177,7 +177,7 @@ const SitemapPage: React.FC = () => {
             <button className="btn btn-ghost gap-2" onClick={handleDownloadXml}>
               <Download className="w-4 h-4" /> XML
             </button>
-            <button className="btn btn-ghost btn-circle" onClick={fetchSitemap} title="Refresh">
+            <button className="btn btn-ghost btn-circle" onClick={fetchSitemap} title="Refresh" aria-label="Refresh sitemap">
               <RefreshCw className="w-4 h-4" />
             </button>
           </>

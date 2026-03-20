@@ -39,6 +39,7 @@ const EnvMonitor: React.FC = () => {
           className="btn btn-ghost btn-sm"
           onClick={fetchEnvOverrides}
           title="Refresh"
+          aria-label="Refresh Environment Variables"
         >
           🔄 Refresh
         </button>

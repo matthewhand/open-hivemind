@@ -198,7 +198,7 @@ const GuardsPage: React.FC = () => {
         icon={Shield}
         actions={
           <div className="flex gap-2">
-            <button onClick={fetchProfiles} className="btn btn-ghost btn-sm" disabled={loading} title="Refresh">
+            <button onClick={fetchProfiles} className="btn btn-ghost btn-sm" disabled={loading} title="Refresh" aria-label="Refresh profiles">
               <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
             </button>
             <button onClick={handleCreate} className="btn btn-primary btn-sm">
