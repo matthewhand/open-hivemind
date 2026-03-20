@@ -416,16 +416,6 @@ router.post(
       const backupFileName = `backup-${backup.name}-${backup.createdAt.getTime()}.json.gz`;
       const backupPath = path.join(process.cwd(), 'config', 'backups', backupFileName);
 
-      // Verify path traversal
-      const resolvedBackupPath = path.resolve(backupPath);
-      const resolvedBackupsDir = path.resolve(path.join(process.cwd(), 'config', 'backups'));
-      if (!resolvedBackupPath.startsWith(resolvedBackupsDir + path.sep)) {
-        return res.status(400).json({
-          success: false,
-          message: 'Path traversal detected in backup name',
-        });
-      }
-
       const result = await importExportService.restoreFromBackup(
         backupPath,
         {
@@ -513,16 +503,6 @@ router.get(
       // Construct backup file path
       const backupFileName = `backup-${backup.name}-${backup.createdAt.getTime()}.json.gz`;
       const backupPath = path.join(process.cwd(), 'config', 'backups', backupFileName);
-
-      // Verify path traversal
-      const resolvedBackupPath = path.resolve(backupPath);
-      const resolvedBackupsDir = path.resolve(path.join(process.cwd(), 'config', 'backups'));
-      if (!resolvedBackupPath.startsWith(resolvedBackupsDir + path.sep)) {
-        return res.status(400).json({
-          success: false,
-          message: 'Path traversal detected in backup name',
-        });
-      }
 
       // Check if file exists
       try {

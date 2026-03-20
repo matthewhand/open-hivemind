@@ -1,6 +1,6 @@
 import { createCipheriv, createDecipheriv, randomBytes, scryptSync } from 'crypto';
 import { promises as fs } from 'fs';
-import { basename, join, resolve, sep } from 'path';
+import { basename, join } from 'path';
 import { createGunzip, createGzip } from 'zlib';
 // @ts-ignore - csv-parse v6 ships its own types but TS can't resolve the /sync subpath
 // @ts-ignore - csv-stringify v6 ships its own types but TS can't resolve the /sync subpath
@@ -682,20 +682,16 @@ export class ConfigurationImportExportService {
       );
 
       if (result.success && result.filePath) {
-        // Sanitize name to prevent path traversal
-        const safeName = name.replace(/[^a-zA-Z0-9_-]/g, '_');
-
         // Move to backups directory
         const backupTimestamp = Date.now();
-        const backupFileName = `backup-${safeName}-${backupTimestamp}.json.gz`;
+        const backupFileName = `backup-${name}-${backupTimestamp}.json.gz`;
         const backupPath = join(this.backupsDir, backupFileName);
-
         await fs.rename(result.filePath, backupPath);
 
         // Create metadata file
         const metadata: BackupMetadata = {
           id: this.generateBackupId(),
-          name: safeName,
+          name,
           description,
           createdAt: new Date(backupTimestamp),
           createdBy: createdBy || 'unknown',
@@ -866,16 +862,6 @@ export class ConfigurationImportExportService {
       const backupFileName = `backup-${backup.name}-${backup.createdAt.getTime()}.json.gz`;
       const backupPath = join(this.backupsDir, backupFileName);
       const metadataPath = join(this.backupsDir, `${backupFileName}.meta`);
-
-      // Verify path traversal
-      const resolvedBackupPath = resolve(backupPath);
-      const resolvedMetadataPath = resolve(metadataPath);
-      const resolvedBackupsDir = resolve(this.backupsDir);
-
-      if (!resolvedBackupPath.startsWith(resolvedBackupsDir + sep) ||
-          !resolvedMetadataPath.startsWith(resolvedBackupsDir + sep)) {
-        throw new Error('Path traversal detected in backup name');
-      }
 
       await fs.unlink(backupPath);
       await fs.unlink(metadataPath);
