@@ -1,6 +1,6 @@
 import fs from 'fs/promises';
 import path from 'path';
-import { Router, type Request, type Response } from 'express';
+import { Router, type NextFunction, type Request, type Response } from 'express';
 import { body, param, validationResult } from 'express-validator';
 import { createLogger } from '@src/common/StructuredLogger';
 import { authenticate, requireAdmin } from '../../auth/middleware';
@@ -27,7 +27,11 @@ const upload = multer({
   limits: {
     fileSize: 50 * 1024 * 1024, // 50MB limit
   },
-  fileFilter: (req: any, file: any, cb: any) => {
+  fileFilter: (
+    req: Request,
+    file: { originalname: string },
+    cb: (error: Error | null, acceptFile?: boolean) => void
+  ) => {
     const allowedTypes = ['.json', '.yaml', '.yml', '.csv', '.gz', '.enc'];
     const ext = path.extname(file.originalname).toLowerCase();
 
@@ -80,7 +84,7 @@ const validateExportOptions = [
 
   body('encryptionKey')
     .optional()
-    .if((value: any, { req }: any) => req.body.encrypt === true)
+    .if((_value: unknown, { req }: any) => req.body.encrypt === true)
     .isLength({ min: 8 })
     .withMessage('Encryption key must be at least 8 characters long'),
 
@@ -138,7 +142,7 @@ const validateBackupCreation = [
 
   body('encryptionKey')
     .optional()
-    .if((value: any, { req }: any) => req.body.encrypt === true)
+    .if((_value: unknown, { req }: any) => req.body.encrypt === true)
     .isLength({ min: 8 })
     .withMessage('Encryption key must be at least 8 characters long'),
 ];
@@ -169,7 +173,7 @@ const validateBackupRestore = [
 /**
  * Error handler middleware
  */
-const handleValidationErrors = (req: Request, res: Response, next: any) => {
+const handleValidationErrors = (req: Request, res: Response, next: NextFunction) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
     return res.status(400).json({
@@ -184,7 +188,7 @@ const handleValidationErrors = (req: Request, res: Response, next: any) => {
 /**
  * Error handling for file uploads
  */
-const handleUploadError = (error: any, req: Request, res: Response, next: any) => {
+const handleUploadError = (error: any, req: Request, res: Response, next: NextFunction) => {
   if (error instanceof multer.MulterError) {
     if (error.code === 'LIMIT_FILE_SIZE') {
       return res.status(400).json({
@@ -270,7 +274,7 @@ router.post(
   handleValidationErrors,
   async (req: AuthMiddlewareRequest, res: Response) => {
     try {
-      if (!(req as unknown as { file?: { path: string } }).file) {
+      if (!req.file) {
         return res.status(400).json({
           success: false,
           message: 'No file uploaded',
@@ -281,14 +285,14 @@ router.post(
       const importedBy = authReq.user?.username || 'unknown';
 
       const result = await importExportService.importConfigurations(
-        (req as unknown as { file?: { path: string } }).file.path,
+        req.file.path,
         req.body,
         importedBy
       );
 
       // Clean up uploaded file
       try {
-        await fs.unlink((req as unknown as { file?: { path: string } }).file.path);
+        await fs.unlink(req.file.path);
       } catch (cleanupError) {
         logger.error(
           'Error cleaning up uploaded file:',
@@ -308,9 +312,9 @@ router.post(
       );
 
       // Clean up uploaded file if it exists
-      if ((req as unknown as { file?: { path: string } }).file) {
+      if (req.file) {
         try {
-          await fs.unlink((req as unknown as { file?: { path: string } }).file.path);
+          await fs.unlink(req.file.path);
         } catch (cleanupError) {
           logger.error(
             'Error cleaning up uploaded file:',
@@ -576,7 +580,7 @@ router.post(
   handleUploadError,
   async (req: AuthMiddlewareRequest, res: Response) => {
     try {
-      if (!(req as unknown as { file?: { path: string } }).file) {
+      if (!req.file) {
         return res.status(400).json({
           success: false,
           message: 'No file uploaded',
@@ -584,7 +588,7 @@ router.post(
       }
 
       const result = await importExportService.importConfigurations(
-        (req as unknown as { file?: { path: string } }).file.path,
+        req.file.path,
         {
           format: req.body.format || 'json',
           validateOnly: true,
@@ -595,7 +599,7 @@ router.post(
 
       // Clean up uploaded file
       try {
-        await fs.unlink((req as unknown as { file?: { path: string } }).file.path);
+        await fs.unlink(req.file.path);
       } catch (cleanupError) {
         logger.error(
           'Error cleaning up uploaded file:',
@@ -615,9 +619,9 @@ router.post(
       );
 
       // Clean up uploaded file if it exists
-      if ((req as unknown as { file?: { path: string } }).file) {
+      if (req.file) {
         try {
-          await fs.unlink((req as unknown as { file?: { path: string } }).file.path);
+          await fs.unlink(req.file.path);
         } catch (cleanupError) {
           logger.error(
             'Error cleaning up uploaded file:',
