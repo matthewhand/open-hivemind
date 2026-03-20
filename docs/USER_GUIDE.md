@@ -178,6 +178,16 @@ General system configuration.
 
 *   **Saving Changes**: When updating settings, click "Save Settings". The button will show a loading state while applying changes.
 
+### [Audit & Governance](/admin/audit)
+The Enterprise Manager provides an interface to monitor security, compliance, multi-cloud setups, integrations, and crucially, audit events.
+
+![Audit & Governance Initial](screenshots/audit-governance-initial.png)
+![Audit & Governance Filtered](screenshots/audit-governance-filtered.png)
+
+*   **Structured Audit Events**: View a detailed, structured log of system activities, actions, and resources.
+*   **Search**: Use the input box to quickly filter audit events by user, resource, or general description.
+*   **Action Filtering**: Narrow down events by specific actions (e.g., CREATE_BOT) using the combobox filter.
+
 ### [Webhook](/admin/integrations/webhook)
 Configure incoming webhooks for external integrations.
 *   **Endpoint Management**: specific URLs to trigger bot actions from external services.

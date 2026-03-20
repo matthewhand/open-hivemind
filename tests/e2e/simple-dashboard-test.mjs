@@ -31,7 +31,7 @@ describe('Dashboard E2E Tests', function() {
         // Import and start the server
         const serverModule = await import('../../dist/src/index.js');
         app = serverModule.default || serverModule;
-        
+
         // Start server on test port
         const testPort = process.env.TEST_PORT || 5005;
         server = http.createServer(app);
@@ -41,7 +41,7 @@ describe('Dashboard E2E Tests', function() {
             else resolve();
           });
         });
-        
+
         // Wait for server to be ready
         await new Promise(resolve => setTimeout(resolve, 2000));
         console.log(`Test server started on port ${testPort}`);
@@ -64,7 +64,7 @@ describe('Dashboard E2E Tests', function() {
       const response = await fetch(BASE_URL);
       expect(response.status).to.equal(200);
       expect(response.headers.get('content-type')).to.include('text/html');
-      
+
       const html = await response.text();
       expect(html).to.include('Open-Hivemind Dashboard');
       expect(html).to.include('Multi-Agent System Control Center');
@@ -72,7 +72,7 @@ describe('Dashboard E2E Tests', function() {
 
     it('should have proper security headers', async function() {
       const response = await fetch(BASE_URL);
-      
+
       expect(response.headers.get('X-Content-Type-Options')).to.equal('nosniff');
       expect(response.headers.get('Content-Security-Policy')).to.include('default-src');
     });
@@ -80,7 +80,7 @@ describe('Dashboard E2E Tests', function() {
     it('should not serve deprecated dashboard routes', async function() {
       const deprecatedRoutes = [
         '/dashboard',
-        '/react-dashboard', 
+        '/react-dashboard',
         '/realtime-dashboard',
         '/bots',
         '/config',
@@ -110,7 +110,7 @@ describe('Dashboard E2E Tests', function() {
       const response = await fetch(`${API_BASE_URL}/status`);
       expect(response.status).to.equal(200);
       expect(response.headers.get('content-type')).to.include('application/json');
-      
+
       const data = await response.json();
       expect(data).to.have.property('bots');
       expect(data).to.have.property('uptime');
@@ -121,7 +121,7 @@ describe('Dashboard E2E Tests', function() {
     it('should have proper bot status structure', async function() {
       const response = await fetch(`${API_BASE_URL}/status`);
       const data = await response.json();
-      
+
       if (data.bots.length > 0) {
         const bot = data.bots[0];
         expect(bot).to.have.property('name');
@@ -149,7 +149,7 @@ describe('Dashboard E2E Tests', function() {
       const response = await fetch(`${BASE_URL}/webui/api/config`);
       expect(response.status).to.equal(200);
       expect(response.headers.get('content-type')).to.include('application/json');
-      
+
       const data = await response.json();
       expect(data).to.have.property('bots');
       expect(Array.isArray(data.bots)).to.be.true;
@@ -158,7 +158,7 @@ describe('Dashboard E2E Tests', function() {
     it('should have proper config structure', async function() {
       const response = await fetch(`${BASE_URL}/webui/api/config`);
       const data = await response.json();
-      
+
       if (data.bots.length > 0) {
         const bot = data.bots[0];
         expect(bot).to.have.property('name');
@@ -185,7 +185,7 @@ describe('Dashboard E2E Tests', function() {
     it('should display system status correctly', async function() {
       const response = await fetch(`${API_BASE_URL}/status`);
       const data = await response.json();
-      
+
       // Verify uptime is reasonable
       expect(data.uptime).to.be.greaterThanOrEqual(0);
       expect(data.uptime).to.be.lessThan(31536000); // Less than 1 year in seconds
@@ -194,7 +194,7 @@ describe('Dashboard E2E Tests', function() {
     it('should handle bot status correctly', async function() {
       const response = await fetch(`${API_BASE_URL}/status`);
       const data = await response.json();
-      
+
       // Check that all bots have valid status
       data.bots.forEach(bot => {
         expect(['active', 'connecting', 'inactive', 'unavailable', 'error']).to.include(bot.status);
@@ -207,10 +207,10 @@ describe('Dashboard E2E Tests', function() {
     it('should calculate metrics correctly', async function() {
       const response = await fetch(`${API_BASE_URL}/status`);
       const data = await response.json();
-      
+
       const totalMessages = data.bots.reduce((sum, bot) => sum + (bot.messageCount || 0), 0);
       const totalErrors = data.bots.reduce((sum, bot) => sum + (bot.errorCount || 0), 0);
-      
+
       expect(totalMessages).to.be.greaterThanOrEqual(0);
       expect(totalErrors).to.be.greaterThanOrEqual(0);
     });
@@ -230,7 +230,7 @@ describe('Dashboard E2E Tests', function() {
       const startTime = Date.now();
       const response = await fetch(`${API_BASE_URL}/status`);
       const endTime = Date.now();
-      
+
       expect(response.status).to.equal(200);
       expect(endTime - startTime).to.be.lessThan(5000); // Less than 5 seconds
     });
@@ -238,7 +238,7 @@ describe('Dashboard E2E Tests', function() {
     it('should handle concurrent requests', async function() {
       const requests = Array(5).fill().map(() => fetch(`${API_BASE_URL}/status`));
       const responses = await Promise.all(requests);
-      
+
       responses.forEach(response => {
         expect(response.status).to.equal(200);
       });

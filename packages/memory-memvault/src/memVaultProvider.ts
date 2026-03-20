@@ -1,9 +1,9 @@
 /**
  * MemVault Memory Provider for Open Hivemind
- * 
+ *
  * Open-source RAG memory server built natively in Node.js with Postgres + pgvector;
  * uses hybrid scoring (vector similarity × 0.8) + (recency decay × 0.2).
- * 
+ *
  * @package @hivemind/memory-memvault
  */
 
@@ -31,7 +31,7 @@ export interface SearchResult {
 
 /**
  * MemVault Memory Provider implementation
- * 
+ *
  * Provides RAG memory with hybrid scoring using vector similarity and recency decay.
  */
 export class MemVaultProvider {
@@ -185,7 +185,7 @@ export class MemVaultProvider {
         const embeddingStr = `[${embedding.join(',')}]`;
 
         const result = await this.pool.query(
-            `INSERT INTO memories (content, embedding, metadata, user_id) 
+            `INSERT INTO memories (content, embedding, metadata, user_id)
              VALUES ($1, $2, $3, $4) 
              RETURNING id, content, metadata, created_at, user_id`,
             [content, embeddingStr, JSON.stringify(metadata || {}), userId || null]
@@ -326,7 +326,7 @@ export class MemVaultProvider {
         const embeddingStr = `[${embedding.join(',')}]`;
 
         const result = await this.pool.query(
-            `UPDATE memories 
+            `UPDATE memories
              SET content = $1, embedding = $2, metadata = $3, updated_at = NOW()
              WHERE id = $4
              RETURNING id, content, metadata, updated_at`,

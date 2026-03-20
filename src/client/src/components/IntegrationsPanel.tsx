@@ -1,6 +1,15 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useEffect, useState } from 'react';
-import { Alert, Button, Card, Input, Select, Toggle, Loading, Textarea, Modal, Badge } from './DaisyUI';
+import { Alert } from './DaisyUI/Alert';
+import Button from './DaisyUI/Button';
+import Card from './DaisyUI/Card';
+import Input from './DaisyUI/Input';
+import Select from './DaisyUI/Select';
+import Toggle from './DaisyUI/Toggle';
+import { Loading } from './DaisyUI/Loading';
+import Textarea from './DaisyUI/Textarea';
+import Modal from './DaisyUI/Modal';
+import Badge from './DaisyUI/Badge';
 import {
   PuzzlePieceIcon,
   ChatBubbleLeftRightIcon,
@@ -290,7 +299,7 @@ const IntegrationsPanel: React.FC = () => {
               className={`join-item w-full input-sm ${isLocked ? 'input-disabled bg-base-200 text-base-content/50' : ''}`}
               placeholder={isReadOnly ? 'Protected Value' : ''}
             />
-            {isLocked && <button className="btn btn-sm btn-square join-item btn-disabled"><LockClosedIcon className="w-4 h-4" /></button>}
+            {isLocked && <button className="btn btn-sm btn-square join-item btn-disabled" aria-label="Locked"><LockClosedIcon className="w-4 h-4" /></button>}
           </div>
         )}
         {type === 'select' && (
@@ -372,7 +381,7 @@ const IntegrationsPanel: React.FC = () => {
                         </div>
                       </div>
                       <div className="flex gap-1">
-                        <Button variant="ghost" size="sm" className="btn-square btn-xs" onClick={() => setProviderModalState({
+                        <Button variant="ghost" size="sm" className="btn-square btn-xs" aria-label={`Edit ${profile.name} provider profile`} onClick={() => setProviderModalState({
                           isOpen: true,
                           isEdit: true,
                           providerType: 'llm',
@@ -380,7 +389,7 @@ const IntegrationsPanel: React.FC = () => {
                         })}>
                           <PencilSquareIcon className="w-4 h-4" />
                         </Button>
-                        <Button variant="ghost" size="sm" className="btn-square btn-xs text-error" onClick={() => handleDeleteProfile(profile.key)}>
+                        <Button variant="ghost" size="sm" className="btn-square btn-xs text-error" aria-label={`Delete ${profile.name} provider profile`} onClick={() => handleDeleteProfile(profile.key)}>
                           <TrashIcon className="w-4 h-4" />
                         </Button>
                       </div>
@@ -409,7 +418,7 @@ const IntegrationsPanel: React.FC = () => {
                  {/* Only allow editing existing config values, but filter for advanced */}
                  <div className="flex items-center justify-between mb-2 col-span-full">
                     <h3 className="font-bold text-sm">Default Configuration</h3>
-                    <Button variant="ghost" size="sm" className="btn-xs" onClick={() => openEditModal('llm')}>
+                    <Button variant="ghost" size="sm" className="btn-xs" aria-label="Edit global LLM configuration" onClick={() => openEditModal('llm')}>
                       <PencilSquareIcon className="w-3 h-3 mr-1" /> Edit Globals
                     </Button>
                  </div>
@@ -504,7 +513,7 @@ const IntegrationsPanel: React.FC = () => {
                         </div>
                       </div>
                     </div>
-                    <Button variant="ghost" size="sm" className="btn-square btn-xs" onClick={() => openEditModal(key)}>
+                    <Button variant="ghost" size="sm" className="btn-square btn-xs" aria-label={`Edit ${key} configuration`} onClick={() => openEditModal(key)}>
                       <PencilSquareIcon className="w-4 h-4" />
                     </Button>
                   </div>

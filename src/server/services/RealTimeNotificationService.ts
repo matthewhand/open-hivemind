@@ -1,10 +1,11 @@
+import { randomUUID } from 'crypto';
 import { EventEmitter } from 'events';
 import Debug from 'debug';
 import { WebSocketService } from './WebSocketService';
 
 const debug = Debug('app:RealTimeNotificationService');
 
-export interface NotificationEvent {
+interface NotificationEvent {
   id: string;
   timestamp: string;
   type: 'agent' | 'mcp' | 'system' | 'error' | 'config';
@@ -15,13 +16,13 @@ export interface NotificationEvent {
   metadata?: Record<string, any>;
 }
 
-export interface SubscriptionFilter {
+interface SubscriptionFilter {
   types?: string[];
   severities?: string[];
   sources?: string[];
 }
 
-export class RealTimeNotificationService extends EventEmitter {
+class RealTimeNotificationService extends EventEmitter {
   private static instance: RealTimeNotificationService | null = null;
   private notifications: NotificationEvent[] = [];
   private maxNotifications = 1000;
@@ -257,6 +258,6 @@ export class RealTimeNotificationService extends EventEmitter {
   }
 
   private generateId(): string {
-    return `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    return `${Date.now()}-${randomUUID()}`;
   }
 }
