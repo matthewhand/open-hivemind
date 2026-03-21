@@ -1,6 +1,9 @@
 import { EventEmitter } from 'events';
 import TimerRegistry from '@src/utils/TimerRegistry';
+import Logger from '@common/logger';
 import type { HealthChecker, HealthCheckResult } from './HealthChecker';
+
+const logger = Logger.withContext('AlertManager');
 
 export interface AlertConfig {
   memoryThreshold: number; // percentage
@@ -70,9 +73,9 @@ export class AlertManager extends EventEmitter {
       type: 'console',
       config: {},
       send: async (alert: Alert) => {
-        console.log(`🚨 ALERT [${alert.severity.toUpperCase()}] ${alert.title}`);
-        console.log(`   ${alert.message}`);
-        console.log(`   Value: ${alert.value} (Threshold: ${alert.threshold})`);
+        logger.info(`🚨 ALERT [${alert.severity.toUpperCase()}] ${alert.title}`);
+        logger.info(`   ${alert.message}`);
+        logger.info(`   Value: ${alert.value} (Threshold: ${alert.threshold})`);
         return true;
       },
     });
@@ -83,12 +86,12 @@ export class AlertManager extends EventEmitter {
 
   public addNotificationChannel(channel: NotificationChannel): void {
     this.notificationChannels.set(channel.name, channel);
-    console.log(`📡 Added notification channel: ${channel.name} (${channel.type})`);
+    logger.info(`📡 Added notification channel: ${channel.name} (${channel.type})`);
   }
 
   public removeNotificationChannel(name: string): void {
     this.notificationChannels.delete(name);
-    console.log(`📡 Removed notification channel: ${name}`);
+    logger.info(`📡 Removed notification channel: ${name}`);
   }
 
   public getActiveAlerts(): Alert[] {
@@ -104,7 +107,7 @@ export class AlertManager extends EventEmitter {
     if (alert && !alert.acknowledged) {
       alert.acknowledged = true;
       this.emit('alertAcknowledged', alert);
-      console.log(`✅ Alert acknowledged: ${alert.title}`);
+      logger.info(`✅ Alert acknowledged: ${alert.title}`);
       return true;
     }
     return false;
@@ -116,7 +119,7 @@ export class AlertManager extends EventEmitter {
       alert.resolved = true;
       alert.resolvedAt = new Date().toISOString();
       this.emit('alertResolved', alert);
-      console.log(`✅ Alert resolved: ${alert.title}`);
+      logger.info(`✅ Alert resolved: ${alert.title}`);
       return true;
     }
     return false;
@@ -165,7 +168,7 @@ export class AlertManager extends EventEmitter {
     try {
       await Promise.allSettled(notificationPromises);
     } catch (error) {
-      console.error('Failed to send notifications:', error);
+      logger.error('Failed to send notifications:', error);
     }
   }
 
@@ -173,12 +176,12 @@ export class AlertManager extends EventEmitter {
     try {
       const success = await channel.send(alert);
       if (success) {
-        console.log(`📤 Notification sent via ${channel.name}`);
+        logger.info(`📤 Notification sent via ${channel.name}`);
       } else {
-        console.error(`❌ Failed to send notification via ${channel.name}`);
+        logger.error(`❌ Failed to send notification via ${channel.name}`);
       }
     } catch (error) {
-      console.error(`❌ Error sending notification via ${channel.name}:`, error);
+      logger.error(`❌ Error sending notification via ${channel.name}:`, error);
     }
   }
 
@@ -355,14 +358,14 @@ export class AlertManager extends EventEmitter {
           const healthCheck = await this.healthChecker.performHealthCheck();
           await this.processHealthCheck(healthCheck);
         } catch (error) {
-          console.error('Health monitoring failed:', error);
+          logger.error('Health monitoring failed:', error);
         }
       },
       30000,
       'AlertManager health monitoring interval'
     );
 
-    console.log('🔍 Health monitoring started');
+    logger.info('🔍 Health monitoring started');
   }
 
   private async processHealthCheck(healthCheck: HealthCheckResult): Promise<void> {
@@ -544,7 +547,7 @@ export class AlertManager extends EventEmitter {
     if (this.monitoringIntervalId) {
       timerRegistry.clear(this.monitoringIntervalId);
       this.monitoringIntervalId = null;
-      console.log('🔍 Health monitoring stopped');
+      logger.info('🔍 Health monitoring stopped');
     }
 
     // Clear all alerts
@@ -555,6 +558,6 @@ export class AlertManager extends EventEmitter {
     // Remove all event listeners
     this.removeAllListeners();
 
-    console.log('✅ AlertManager shutdown complete');
+    logger.info('✅ AlertManager shutdown complete');
   }
 }

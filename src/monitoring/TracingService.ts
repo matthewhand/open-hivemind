@@ -1,5 +1,8 @@
 import { randomUUID } from 'crypto';
 import { EventEmitter } from 'events';
+import Logger from '@common/logger';
+
+const logger = Logger.withContext('TracingService');
 
 /**
  * Trace event types
@@ -95,7 +98,7 @@ export interface TraceExporter {
 export class ConsoleTraceExporter implements TraceExporter {
   async export(spans: TraceSpan[]): Promise<void> {
     for (const span of spans) {
-      console.log(
+      logger.info(
         `[TRACE] ${span.operationName} - ${span.duration?.toFixed(2)}ms - ${span.status}`
       );
     }
@@ -436,7 +439,7 @@ export class TracingService extends EventEmitter {
       try {
         await exporter.export(spansToExport);
       } catch (error) {
-        console.error('Failed to export spans:', error);
+        logger.error('Failed to export spans:', error);
       }
     }
   }
