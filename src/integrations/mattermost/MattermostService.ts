@@ -145,10 +145,8 @@ export class MattermostService extends EventEmitter implements IMessengerService
       }
     }
 
-    const { container } = require('../../di/container');
     const startupGreetingService = require('../../services/StartupGreetingService').default;
-    const serviceInstance = container.resolve(startupGreetingService);
-    serviceInstance.emit('service-ready', this);
+    startupGreetingService.emit('service-ready', this);
   }
 
   public setApp(app: Application): void {

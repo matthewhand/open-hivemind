@@ -1,17 +1,15 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { 
-  Bot, Plus, Edit2, Trash2, Check, RefreshCw, AlertCircle, 
-  Search, Filter, ChevronRight, Activity, MessageSquare, 
+import {
+  Bot, Plus, Edit2, Trash2, Check, RefreshCw, AlertCircle,
+  Search, Filter, ChevronRight, Activity, MessageSquare,
   Settings, ExternalLink, Shield, Info, MoreVertical,
   Cpu, Zap, Copy, Save, X, Terminal, Globe, User, Clock,
-  Key, ShieldCheck, Database, Layout, Command, 
+  Key, ShieldCheck, Database, Layout, Command,
   AlertTriangle, Play, Pause, Square, Trash, MoreHorizontal
 } from 'lucide-react';
 import { useSuccessToast, useErrorToast } from '../components/DaisyUI/ToastNotification';
 import Modal, { ConfirmModal } from '../components/DaisyUI/Modal';
-import { useLlmStatus } from '../hooks/useLlmStatus';
-import { usePageLifecycle } from '../hooks/usePageLifecycle';
 import PageHeader from '../components/DaisyUI/PageHeader';
 import SearchFilterBar from '../components/SearchFilterBar';
 import EmptyState from '../components/DaisyUI/EmptyState';
@@ -25,10 +23,10 @@ import BotCard from '../components/BotManagement/BotCard';
 import { CreateBotWizard } from '../components/BotManagement/CreateBotWizard';
 import { BotSettingsModal } from '../components/BotSettingsModal';
 import { useLocation } from 'react-router-dom';
-import { useLlmStatus } from '../hooks/useLlmStatus';
-import { usePageLifecycle } from '../hooks/usePageLifecycle';
 import { PROVIDER_CATEGORIES } from '../config/providers';
 import { BotData } from '../hooks/useBotStats';
+import { useLlmStatus } from '../hooks/useLlmStatus';
+import { usePageLifecycle } from '../hooks/usePageLifecycle';
 
 const BotsPage: React.FC = () => {
   const [bots, setBots] = useState<BotConfig[]>([]);
@@ -68,17 +66,12 @@ const BotsPage: React.FC = () => {
 
   // Define data fetching logic
   const fetchPageData = useCallback(async (_signal: AbortSignal) => {
-    const [configResult, globalResult, personasResult, profilesResult] = await Promise.allSettled([
+    const [configData, globalData, personasData, profilesData] = await Promise.all([
       apiService.getConfig(),
       apiService.getGlobalConfig(),
       apiService.getPersonas(),
       apiService.getLlmProfiles(),
     ]);
-
-    const configData = configResult.status === 'fulfilled' ? configResult.value : { bots: [] };
-    const globalData = globalResult.status === 'fulfilled' ? globalResult.value : {};
-    const personasData = personasResult.status === 'fulfilled' ? personasResult.value : [];
-    const profilesData = profilesResult.status === 'fulfilled' ? profilesResult.value : {};
 
     const personas = personasData || [];
     const llmProfiles = profilesData?.llm || profilesData?.profiles?.llm || [];
@@ -118,7 +111,7 @@ const BotsPage: React.FC = () => {
   // Sync lifecycle error to UI error
   useEffect(() => {
     if (lifecycleError) {
-      setError(lifecycleError.message);
+      setUiError(lifecycleError.message);
     }
   }, [lifecycleError]);
 
@@ -224,7 +217,7 @@ const BotsPage: React.FC = () => {
       setBots(prev => prev.map(b => b.id === editingBot?.id ? response.data.bot : b));
       setEditingBot(null);
       toast.success('Bot updated successfully');
-      
+
       // Update preview if it's the same bot
       if (previewBot?.id === editingBot?.id) {
         setPreviewBot(response.data.bot);
@@ -256,11 +249,11 @@ const BotsPage: React.FC = () => {
       const newStatus = bot.status === 'active' ? 'inactive' : 'active';
       const response = await apiService.patch<any>(`/api/bots/${bot.id}/status`, { status: newStatus });
       setBots(prev => prev.map(b => b.id === bot.id ? { ...b, status: newStatus } : b));
-      
+
       if (previewBot?.id === bot.id) {
         setPreviewBot(prev => prev ? { ...prev, status: newStatus } : null);
       }
-      
+
       toast.success(`Bot ${newStatus === 'active' ? 'activated' : 'deactivated'} successfully`);
     } catch (err) {
       ErrorService.report(err, { action: 'toggleBotStatus', botId: bot.id });
@@ -270,8 +263,8 @@ const BotsPage: React.FC = () => {
 
   const filteredBots = useMemo(() => {
     return bots.filter(bot => {
-      const matchesSearch = (bot.name?.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                             bot.description?.toLowerCase().includes(searchQuery.toLowerCase()));
+      const matchesSearch = (bot.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        bot.description?.toLowerCase().includes(searchQuery.toLowerCase()));
       const matchesFilter = filterType === 'all' || bot.status === filterType;
       return matchesSearch && matchesFilter;
     });
@@ -282,12 +275,12 @@ const BotsPage: React.FC = () => {
     setPreviewTab('activity');
     setActivityLogs([]);
     setChatHistory([]);
-    
+
     try {
       // Load initial activity
       const activityJson = await withRetry(() => apiService.get<any>(`/api/bots/${bot.id}/activity?limit=20`));
       setActivityLogs(activityJson.data?.activity || []);
-      
+
       // Load initial chat
       const chatJson = await withRetry(() => apiService.get<any>(`/api/bots/${bot.id}/chat?limit=20`));
       setChatHistory(chatJson.data?.messages || []);
@@ -300,13 +293,13 @@ const BotsPage: React.FC = () => {
 
   const filteredLogs = useMemo(() => {
     if (!logFilter) return activityLogs;
-    return activityLogs.filter(log => 
+    return activityLogs.filter(log =>
       log.message?.toLowerCase().includes(logFilter.toLowerCase()) ||
       log.type?.toLowerCase().includes(logFilter.toLowerCase())
     );
   }, [activityLogs, logFilter]);
 
-  if (loading && bots.length === 0 && !error) {
+  if (loading && bots.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[400px]">
         <LoadingSpinner size="lg" />
@@ -317,12 +310,12 @@ const BotsPage: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <PageHeader 
-        title="AI Swarm Management" 
+      <PageHeader
+        title="AI Swarm Management"
         description="Configure, monitor, and deploy your specialized AI agents."
         icon={<Bot className="w-8 h-8 text-primary" />}
         actions={
-          <button 
+          <button
             className="btn btn-primary"
             onClick={() => setIsCreateModalOpen(true)}
           >
@@ -333,14 +326,14 @@ const BotsPage: React.FC = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Main Content: Bot List */}
-        <div className={`${error && bots.length === 0 ? 'lg:col-span-3' : 'lg:col-span-2'} space-y-4`}>
+        <div className="lg:col-span-2 space-y-4">
           <SearchFilterBar
             searchQuery={searchQuery}
             onSearchChange={setSearchQuery}
             placeholder="Search agents by name or purpose..."
           >
             <div className="flex gap-2">
-              <select 
+              <select
                 className="select select-bordered select-sm"
                 value={filterType}
                 onChange={(e) => setFilterType(e.target.value as any)}
@@ -349,7 +342,7 @@ const BotsPage: React.FC = () => {
                 <option value="active">Active Only</option>
                 <option value="inactive">Inactive Only</option>
               </select>
-              <button 
+              <button
                 className="btn btn-ghost btn-sm btn-square"
                 onClick={fetchBots}
                 title="Refresh list"
@@ -369,7 +362,7 @@ const BotsPage: React.FC = () => {
 
           {error && bots.length === 0 ? (
             <EmptyState
-              icon={AlertTriangle}
+              icon={<AlertTriangle className="w-16 h-16 text-error/50" />}
               title="Failed to load swarm"
               description="We encountered an error while trying to load your AI agents. Please try again."
               actionLabel={
@@ -381,7 +374,7 @@ const BotsPage: React.FC = () => {
             />
           ) : filteredBots.length === 0 ? (
             <EmptyState
-              icon={Bot}
+              icon={<Bot className="w-16 h-16 text-base-content/20" />}
               title={searchQuery ? "No agents found" : "Your swarm is empty"}
               description={searchQuery ? "No agents match your search criteria." : "Start by creating your first specialized AI agent."}
               actionLabel={
@@ -410,7 +403,6 @@ const BotsPage: React.FC = () => {
         </div>
 
         {/* Sidebar: Bot Preview/Details */}
-        {!(error && bots.length === 0) && (
         <div className="lg:col-span-1">
           {previewBot ? (
             <div className="card bg-base-100 shadow-xl border border-base-200 sticky top-6 animate-in fade-in slide-in-from-right-4 duration-300">
@@ -471,14 +463,14 @@ const BotsPage: React.FC = () => {
 
                   {/* Tabs Navigation */}
                   <div className="tabs tabs-boxed bg-base-200/50 p-1 flex-nowrap" role="tablist">
-                    <button 
+                    <button
                       className={`tab tab-sm flex-1 gap-2 ${previewTab === 'activity' ? 'tab-active' : ''}`}
                       onClick={() => setPreviewTab('activity')}
                       role="tab"
                     >
                       <Activity className="w-3 h-3" /> <span className="text-[10px] uppercase font-bold">Activity</span>
                     </button>
-                    <button 
+                    <button
                       className={`tab tab-sm flex-1 gap-2 ${previewTab === 'chat' ? 'tab-active' : ''}`}
                       onClick={() => setPreviewTab('chat')}
                       role="tab"
@@ -492,14 +484,14 @@ const BotsPage: React.FC = () => {
                     <div className="space-y-3 max-h-[300px] overflow-y-auto pr-1 custom-scrollbar">
                       <div className="flex items-center justify-end mb-2">
                         <div className="join w-full">
-                          <input 
-                            type="text" 
-                            placeholder="Filter..." 
+                          <input
+                            type="text"
+                            placeholder="Filter..."
                             className="input input-xs input-bordered join-item flex-1"
                             value={logFilter}
                             onChange={(e) => setLogFilter(e.target.value)}
                           />
-                          <select 
+                          <select
                             className="select select-xs select-bordered join-item"
                             onChange={async (e) => {
                               const limit = e.target.value;
@@ -569,13 +561,13 @@ const BotsPage: React.FC = () => {
                   )}
 
                   <div className="card-actions mt-2 pt-4 border-t border-base-200">
-                    <button 
+                    <button
                       className="btn btn-primary btn-sm flex-1"
                       onClick={() => setEditingBot(previewBot)}
                     >
                       <Settings className="w-3 h-3 mr-2" /> Configuration
                     </button>
-                    <button 
+                    <button
                       className={`btn btn-sm btn-square ${previewBot.status === 'active' ? 'btn-error btn-outline' : 'btn-success'}`}
                       onClick={() => handleToggleBotStatus(previewBot)}
                       title={previewBot.status === 'active' ? 'Deactivate' : 'Activate'}
@@ -596,7 +588,6 @@ const BotsPage: React.FC = () => {
             </div>
           )}
         </div>
-        )}
       </div>
 
       {/* Modals */}

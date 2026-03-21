@@ -43,11 +43,11 @@ start-dev: clean
 	if [ ! -f src/client/dist/index.html ]; then \
 	  echo "⚠️  Frontend build missing (src/client/dist/index.html)"; \
 	  echo "🏗️  Building frontend..."; \
-	  (cd src/client && ../../node_modules/.bin/vite build) || { echo "❌ Frontend build failed"; exit 1; }; \
+	  (cd src/client && npx vite build) || { echo "❌ Frontend build failed"; exit 1; }; \
 	else \
 	  echo "✅ Frontend build present"; \
 	fi; \
-	NODE_ENV=development PORT=$$PORT nodemon --exec "./node_modules/.bin/ts-node -r tsconfig-paths/register src/index.ts"
+	NODE_ENV=development PORT=$$PORT nodemon --exec "npx ts-node -r tsconfig-paths/register src/index.ts"
 
 start-prod: build
 	@echo "🌟 Starting Production Server"
@@ -67,8 +67,8 @@ start-dev-hmr: clean
 	if [ ! -f src/client/dist/index.html ]; then \
 	  echo "(Optional) You can also run a production build later via make build"; \
 	fi; \
-	( NODE_ENV=development PORT=$$PORT nodemon --quiet --exec "./node_modules/.bin/ts-node -r tsconfig-paths/register src/index.ts" & echo $$! > .backend.pid ); \
-	( cd src/client && ../../node_modules/.bin/vite --port 5173 --host & echo $$! > ../../.vite.pid ); \
+	( NODE_ENV=development PORT=$$PORT nodemon --quiet --exec "npx ts-node -r tsconfig-paths/register src/index.ts" & echo $$! > .backend.pid ); \
+	( cd src/client && npx vite --port 5173 --host & echo $$! > ../../.vite.pid ); \
 	trap 'echo "\n🛑 Stopping dev services"; kill $$(cat .backend.pid .vite.pid 2>/dev/null) 2>/dev/null || true; rm -f .backend.pid .vite.pid' INT TERM; \
 	wait
 
@@ -76,9 +76,9 @@ build:
 	@echo "🔨 Building Application"
 	@echo "======================"
 	@echo "Frontend build..."
-	@cd src/client && ../../node_modules/.bin/vite build
+	@cd src/client && npx vite build
 	@echo "Backend build..."
-	@npx rimraf dist && mkdir -p dist/scripts && cp src/scripts/* dist/scripts/ && cp -r config dist/ && node node_modules/.bin/tsc
+	@npx rimraf dist && mkdir -p dist/scripts && cp src/scripts/* dist/scripts/ && cp -r config dist/ && npx tsc
 	@echo "Copying frontend to dist..."
 	@mkdir -p dist/client && cp -r src/client/dist dist/client/
 
@@ -102,7 +102,7 @@ ci: lint build test
 test-app:
 	@echo "🧪 Running Application Tests"
 	@echo "============================"
-	@NODE_CONFIG_DIR=config/test/ NODE_ENV=test node -r dotenv/config node_modules/.bin/jest --runInBand --testTimeout=10000
+	@NODE_CONFIG_DIR=config/test/ NODE_ENV=test node -r dotenv/config ./node_modules/jest/bin/jest.js --runInBand --testTimeout=10000
 
 clean:
 	@echo "🧹 Cleaning All Processes and Builds"

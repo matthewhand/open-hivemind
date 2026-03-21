@@ -91,7 +91,7 @@ const MessageProvidersPage: React.FC = () => {
           try {
             await apiService.post('/api/config/message-profiles', payload);
           } catch (createErr: any) {
-            if (backup) await apiService.post('/api/config/message-profiles', backup).catch(() => {});
+            if (backup) await apiService.post('/api/config/message-profiles', backup).catch(() => { });
             throw createErr;
           }
         }
@@ -116,7 +116,7 @@ const MessageProvidersPage: React.FC = () => {
   const filteredProfiles = useMemo(() =>
     profiles.filter(p => {
       const matchesSearch = p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                            p.provider.toLowerCase().includes(searchQuery.toLowerCase());
+        p.provider.toLowerCase().includes(searchQuery.toLowerCase());
       const matchesType = filterType === 'all' || p.provider === filterType;
       return matchesSearch && matchesType;
     }), [profiles, searchQuery, filterType]);
@@ -136,7 +136,7 @@ const MessageProvidersPage: React.FC = () => {
       <PageHeader
         title="Message Providers"
         description="Configure messaging platform connections for your bots."
-        icon={<MessageIcon className="w-6 h-6" />}
+        icon={<MessageIcon className="w-8 h-8 text-primary" />}
         actions={
           <div className="flex gap-2">
             <Button variant="ghost" onClick={fetchProfiles} disabled={loading}>

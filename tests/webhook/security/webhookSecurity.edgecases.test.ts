@@ -48,10 +48,7 @@ describe('webhookSecurity edge cases', () => {
       (_req: Request, res: Response) => res.status(200).send('OK')
     );
     // default baseline. Set WEBHOOK_IP_WHITELIST to allow testing of token validation without IP block
-    setConfig({
-      WEBHOOK_TOKEN: 'secret-token',
-      WEBHOOK_IP_WHITELIST: '::ffff:127.0.0.1,127.0.0.1,::1',
-    });
+    setConfig({ WEBHOOK_TOKEN: 'secret-token', WEBHOOK_IP_WHITELIST: '::ffff:127.0.0.1,127.0.0.1,::1' });
   });
 
   describe('verifyWebhookToken', () => {
@@ -70,7 +67,7 @@ describe('webhookSecurity edge cases', () => {
 
     it('allows when Authorization header uses Bearer token', async () => {
       const { res } = await runRoute(app, 'post', '/secured', {
-        headers: { authorization: 'Bearer secret-token' },
+        headers: { 'authorization': 'Bearer secret-token' },
       });
       expect(res.statusCode).toBe(200);
     });

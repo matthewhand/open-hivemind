@@ -154,9 +154,6 @@ const Pagination: React.FC<PaginationProps> = ({
     }
   };
 
-  if (totalPages <= 1) {
-    return null;
-  }
 
   return (
     <div

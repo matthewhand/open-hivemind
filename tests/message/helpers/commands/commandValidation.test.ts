@@ -23,8 +23,7 @@ describe('command validation', () => {
 
       injectionAttempts.forEach((attempt) => {
         const result = parseCommand(attempt);
-        expect(result).toBeDefined();
-        expect(result).not.toBeNull();
+        expect(result).toBeTruthy();
         // Commands are parsed as-is, security should be handled at execution level
         expect(result?.commandName).toBe('status');
       });
