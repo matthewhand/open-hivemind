@@ -6,6 +6,8 @@ import Select from '../DaisyUI/Select';
 import { Bot, Link as LinkIcon } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
+import Logger from '../../utils/logger';
+
 
 interface LLMConfig {
     defaultLlm: string;
@@ -42,7 +44,7 @@ const SettingsLLM: React.FC = () => {
             setProviders(options);
 
         } catch (err) {
-            console.error('Failed to load LLM settings:', err);
+            Logger.error('Failed to load LLM settings:', err);
             setAlert({
                 type: 'warning',
                 message: 'Could not load LLM settings or providers. Using defaults.',
@@ -68,7 +70,7 @@ const SettingsLLM: React.FC = () => {
             setAlert({ type: 'success', message: 'LLM settings saved successfully!' });
             setTimeout(() => setAlert(null), 5000);
         } catch (err) {
-            console.error('Save failed:', err);
+            Logger.error('Save failed:', err);
             setAlert({
                 type: 'error',
                 message: 'Failed to save LLM settings. Please try again.',
@@ -111,11 +113,12 @@ const SettingsLLM: React.FC = () => {
                 </h6>
 
                 <div className="form-control mb-4 max-w-md">
-                    <label className="label">
+                    <label htmlFor="defaultLlm" className="label">
                         <span className="label-text font-medium">Default LLM</span>
                         <span className="label-text-alt text-base-content/60">Used for features like AI summary</span>
                     </label>
                     <Select
+                        id="defaultLlm"
                         value={settings.defaultLlm}
                         onChange={(e) => setSettings({ defaultLlm: e.target.value })}
                         className="w-full"

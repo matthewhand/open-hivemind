@@ -3,6 +3,8 @@ import type { ComponentType } from 'react';
 import { lazy, Suspense } from 'react';
 import React from 'react';
 import logger from '../utils/logger';
+import Logger from '../utils/logger';
+
 
 // Types for dynamic integration components
 export interface IntegrationUIComponent {
@@ -67,19 +69,16 @@ export class IntegrationLoader {
       // Get list of integration directories
       const integrations = await this.getIntegrationDirectories();
 
-      const integrationPromises = integrations.map(async (integrationId) => {
+      for (const integrationId of integrations) {
         try {
-          return await this.loadIntegrationComponents(integrationId);
+          const components = await this.loadIntegrationComponents(integrationId);
+          allComponents.push(...components);
         } catch (error) {
           Logger.warn(`Failed to load components for integration ${integrationId}:`, error);
-          return [];
         }
-      });
-
-      const results = await Promise.all(integrationPromises);
-      results.forEach((components) => allComponents.push(...components));
+      }
     } catch (error) {
-      console.error('Failed to discover integrations:', error);
+      Logger.error('Failed to discover integrations:', error);
     }
 
     return allComponents;
@@ -114,33 +113,24 @@ export class IntegrationLoader {
       const manifest = await this.loadIntegrationManifest(integrationId);
 
       if (manifest.ui?.components) {
-        const componentPromises = Object.entries(manifest.ui.components).map(
-          async ([componentId, componentInfo]) => {
-            try {
-              const component = await this.loadComponent(integrationId, componentInfo.path);
+        for (const [componentId, componentInfo] of Object.entries(manifest.ui.components)) {
+          try {
+            const component = await this.loadComponent(integrationId, componentInfo.path);
 
-              return {
-                id: `${integrationId}.${componentId}`,
-                name: componentInfo.name,
-                description: componentInfo.description,
-                category: manifest.category,
-                component,
-                enabled: manifest.enabled,
-                requiredProviders: manifest.requiredProviders,
-                icon: componentInfo.icon,
-              };
-            } catch (componentError) {
-              Logger.warn(
-                `Failed to load component ${componentId} for integration ${integrationId}:`,
-                componentError,
-              );
-              return null;
-            }
-          },
-        );
-
-        const loadedResults = await Promise.all(componentPromises);
-        components.push(...loadedResults.filter((c): c is IntegrationUIComponent => c !== null));
+            components.push({
+              id: `${integrationId}.${componentId}`,
+              name: componentInfo.name,
+              description: componentInfo.description,
+              category: manifest.category,
+              component,
+              enabled: manifest.enabled,
+              requiredProviders: manifest.requiredProviders,
+              icon: componentInfo.icon,
+            });
+          } catch (componentError) {
+            Logger.warn(`Failed to load component ${componentId} for integration ${integrationId}:`, componentError);
+          }
+        }
       }
 
       // If no manifest exists, try to auto-discover components
@@ -150,7 +140,7 @@ export class IntegrationLoader {
       }
 
     } catch (error) {
-      console.warn(`Failed to load integration ${integrationId}:`, error);
+      Logger.warn(`Failed to load integration ${integrationId}:`, error);
     }
 
     return components;
@@ -221,30 +211,26 @@ export class IntegrationLoader {
         'Status',
       ];
 
-      const discoveryPromises = commonComponentPaths.map(async (componentPath) => {
+      for (const componentPath of commonComponentPaths) {
         try {
           const component = await this.loadComponent(integrationId, componentPath);
 
-          return {
+          components.push({
             id: `${integrationId}.${componentPath.split('/').pop()}`,
             name: `${this.capitalizeFirst(integrationId)} ${componentPath.split('/').pop()}`,
             description: `${this.capitalizeFirst(integrationId)} ${componentPath.split('/').pop()} component`,
             category: 'bot',
             component,
             enabled: true,
-          };
+          });
         } catch (_componentError) {
           // Component doesn't exist, skip it
           logger.debug(`Component ${componentPath} not found for integration ${integrationId}`);
-          return null;
         }
-      });
-
-      const discoveredResults = await Promise.all(discoveryPromises);
-      components.push(...discoveredResults.filter((c): c is IntegrationUIComponent => c !== null));
+      }
 
     } catch (error) {
-      console.warn(`Failed to auto-discover components for integration ${integrationId}:`, error);
+      Logger.warn(`Failed to auto-discover components for integration ${integrationId}:`, error);
     }
 
     return components;
@@ -319,6 +305,29 @@ export class IntegrationLoader {
 /**
  * Higher-order component for lazy loading integration components with error handling
  */
+// Create a Context for Dependency Injection
+const IntegrationContext = React.createContext<IntegrationLoader | null>(null);
+
+export function IntegrationProvider({ children, loader }: { children: React.ReactNode, loader?: IntegrationLoader }) {
+  // We allow passing an explicit loader instance, or default to a new one
+  const [loaderInstance] = React.useState(() => loader || new IntegrationLoader());
+
+  return (
+    <IntegrationContext.Provider value={loaderInstance}>
+      {children}
+    </IntegrationContext.Provider>
+  );
+}
+
+export function useIntegrationLoader(): IntegrationLoader {
+  const context = React.useContext(IntegrationContext);
+  if (!context) {
+    // For backwards compatibility and places where it's not wrapped in Provider yet
+    return IntegrationLoader.getInstance();
+  }
+  return context;
+}
+
 export function LazyIntegrationComponent({
   integrationId,
   componentPath,
@@ -330,11 +339,13 @@ export function LazyIntegrationComponent({
   fallback?: React.ReactNode;
   onError?: (error: Error) => React.ReactNode;
 }) {
+  const loader = useIntegrationLoader();
+
   const LazyComponent = lazy(() =>
-    IntegrationLoader.getInstance()
+    loader
       .loadComponent(integrationId, componentPath)
       .catch(error => {
-        console.error(`Failed to load integration component ${integrationId}.${componentPath}:`, error);
+        Logger.error(`Failed to load integration component ${integrationId}.${componentPath}:`, error);
         // Return a simple error component
         return {
           default: () => onError(error instanceof Error ? error : new Error('Unknown error')),
@@ -353,6 +364,7 @@ export function LazyIntegrationComponent({
  * Hook for using integration components in React components
  */
 export function useIntegrationComponents() {
+  const loader = useIntegrationLoader();
   const [components, setComponents] = React.useState<IntegrationUIComponent[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<Error | null>(null);
@@ -362,7 +374,6 @@ export function useIntegrationComponents() {
       try {
         setLoading(true);
         setError(null);
-        const loader = IntegrationLoader.getInstance();
         const discoveredComponents = await loader.discoverIntegrations();
         setComponents(discoveredComponents);
       } catch (err) {
@@ -373,13 +384,12 @@ export function useIntegrationComponents() {
     };
 
     loadComponents();
-  }, []);
+  }, [loader]);
 
   const refresh = React.useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
-      const loader = IntegrationLoader.getInstance();
       const refreshedComponents = await loader.refreshIntegrations();
       setComponents(refreshedComponents);
     } catch (err) {
@@ -387,7 +397,7 @@ export function useIntegrationComponents() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [loader]);
 
   const getComponentsByCategory = React.useCallback((category: IntegrationUIComponent['category']) => {
     return components.filter(c => c.category === category);

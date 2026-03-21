@@ -14,8 +14,8 @@ import {
   DownloadCloud as DownloadIcon
 } from 'lucide-react';
 import { Alert } from '../components/DaisyUI/Alert';
-import ToastNotification from '../components/DaisyUI/ToastNotification';
-import Modal from '../components/DaisyUI/Modal';
+import { ToastNotification } from '../components/DaisyUI/ToastNotification';
+import { Modal } from '../components/DaisyUI/Modal';
 import Button from '../components/DaisyUI/Button';
 import Input from '../components/DaisyUI/Input';
 import Textarea from '../components/DaisyUI/Textarea';
@@ -268,7 +268,7 @@ const ExportPage: React.FC = () => {
       <PageHeader
         title="Export & System Data"
         description="Manage system backups, export configurations, and access API specifications."
-        icon={Archive}
+        icon={<Archive className="w-6 h-6" />}
         gradient="secondary"
       />
 

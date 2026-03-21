@@ -12,15 +12,18 @@ test.describe('Distributed Trace Waterfall Screenshots', () => {
     });
 
     await page.route('**/api/webui/system-status', async (route) => {
-      await route.fulfill({ status: 200, json: {
-        bots: { total: 12, active: 8 },
-        database: { stats: { totalMessages: 2847 } },
-        mcp: { connected: 5 }
-      } });
+      await route.fulfill({
+        status: 200,
+        json: {
+          bots: { total: 12, active: 8 },
+          database: { stats: { totalMessages: 2847 } },
+          mcp: { connected: 5 },
+        },
+      });
     });
 
     await page.route('**/api/dashboard/api/activity*', async (route) => {
-       await route.fulfill({ status: 200, json: { events: [] } });
+      await route.fulfill({ status: 200, json: { events: [] } });
     });
 
     await page.route('**/api/config/llm-status', async (route) =>
@@ -89,7 +92,7 @@ test.describe('Distributed Trace Waterfall Screenshots', () => {
     );
 
     // Mock dashboard API activity (for waterfall monitor)
-    await page.route('**/api/dashboard/activity*', async (route) =>
+    await page.route('**/api/dashboard/api/activity*', async (route) =>
       route.fulfill({
         status: 200,
         json: {

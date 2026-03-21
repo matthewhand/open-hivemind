@@ -1,3 +1,4 @@
+import Logger from '../utils/logger';
 /**
  * @wip ROADMAP ITEM — NOT ACTIVE
  *
@@ -15,6 +16,7 @@ import { selectUser } from '../store/slices/authSlice';
 import { AnimatedBox } from '../animations/AnimationComponents';
 import { apiService } from '../services/api';
 import {
+
   ExclamationTriangleIcon,
   ChartBarIcon,
   Cog6ToothIcon,
@@ -476,15 +478,15 @@ export const AnomalyDetection: React.FC<AnomalyDetectionProps> = ({ onAnomalyDet
         }));
       } else {
         // Keep mock data if no real data
-        console.log('No real anomalies found, using mock data');
+        Logger.log('No real anomalies found, using mock data');
       }
     } catch (error: unknown) {
       // Handle authentication errors (401) - user should be redirected to login
       if (error instanceof Error && error.message.includes('401')) {
-        console.warn('Authentication expired, please log in again');
+        Logger.warn('Authentication expired, please log in again');
         // The apiService typically handles redirects, but we can add additional handling here
       } else {
-        console.error('Failed to fetch anomalies', error);
+        Logger.error('Failed to fetch anomalies', error);
       }
     } finally {
       setIsLoading(false);
@@ -546,10 +548,31 @@ export const AnomalyDetection: React.FC<AnomalyDetectionProps> = ({ onAnomalyDet
     }));
   };
 
-  const toggleFeature = (feature: keyof AnomalyConfig) => {
+  const toggleFeature = (feature: 'enabled') => {
     setConfig(prev => ({
       ...prev,
       [feature]: !prev[feature],
+    }));
+  };
+
+  const toggleLearning = () => {
+    setConfig(prev => ({
+      ...prev,
+      learning: { ...prev.learning, enabled: !prev.learning.enabled }
+    }));
+  };
+
+  const toggleAutoResponse = () => {
+    setConfig(prev => ({
+      ...prev,
+      autoResponse: { ...prev.autoResponse, enabled: !prev.autoResponse.enabled }
+    }));
+  };
+
+  const toggleNotifications = () => {
+    setConfig(prev => ({
+      ...prev,
+      notifications: { ...prev.notifications, enabled: !prev.notifications.enabled }
     }));
   };
 
@@ -619,18 +642,14 @@ export const AnomalyDetection: React.FC<AnomalyDetectionProps> = ({ onAnomalyDet
               </div>
               <button
                 className="btn btn-circle btn-ghost btn-sm"
-                aria-label="Run anomaly detection"
                 onClick={runAnomalyDetection}
                 disabled={isLoading}
-                aria-label="Run anomaly detection"
               >
                 <ArrowPathIcon className={`w-5 h-5 ${isLoading ? 'animate-spin' : ''}`} />
               </button>
               <button
-                aria-label="Anomaly detection settings"
                 className="btn btn-circle btn-ghost btn-sm"
                 onClick={() => setShowConfigDialog(!showConfigDialog)}
-                aria-label="Toggle configuration dialog"
               >
                 <Cog6ToothIcon className="w-5 h-5" />
               </button>
@@ -711,7 +730,7 @@ export const AnomalyDetection: React.FC<AnomalyDetectionProps> = ({ onAnomalyDet
                     >
                       {algorithm.isActive ? 'Active' : 'Inactive'}
                     </div>
-                    <button className="btn btn-ghost btn-xs btn-square" aria-label={`Configure ${algorithm.name}`}>
+                    <button className="btn btn-ghost btn-xs btn-square">
                       <Cog6ToothIcon className="w-4 h-4" />
                     </button>
                   </div>
@@ -753,10 +772,10 @@ export const AnomalyDetection: React.FC<AnomalyDetectionProps> = ({ onAnomalyDet
                 id="anomaly-detection-toggle"
                 type="checkbox"
                 className="toggle toggle-primary toggle-sm"
-                checked={config.anomalyDetection}
-                onChange={() => toggleFeature('anomalyDetection')}
+                checked={config.enabled}
+                onChange={() => toggleFeature('enabled')}
                 aria-label="Toggle anomaly detection"
-                aria-pressed={config.anomalyDetection}
+                aria-pressed={config.enabled}
               />
               <span className="label-text">Anomaly Detection</span>
             </label>
@@ -766,7 +785,7 @@ export const AnomalyDetection: React.FC<AnomalyDetectionProps> = ({ onAnomalyDet
                 type="checkbox"
                 className="toggle toggle-primary toggle-sm"
                 checked={config.learning.enabled}
-                onChange={() => toggleFeature('learning')}
+                onChange={toggleLearning}
                 aria-label="Toggle ML learning"
                 aria-pressed={config.learning.enabled}
               />
@@ -778,7 +797,7 @@ export const AnomalyDetection: React.FC<AnomalyDetectionProps> = ({ onAnomalyDet
                 type="checkbox"
                 className="toggle toggle-primary toggle-sm"
                 checked={config.autoResponse.enabled}
-                onChange={() => toggleFeature('autoResponse')}
+                onChange={toggleAutoResponse}
                 aria-label="Toggle auto response"
                 aria-pressed={config.autoResponse.enabled}
               />
@@ -790,7 +809,7 @@ export const AnomalyDetection: React.FC<AnomalyDetectionProps> = ({ onAnomalyDet
                 type="checkbox"
                 className="toggle toggle-primary toggle-sm"
                 checked={config.notifications.enabled}
-                onChange={() => toggleFeature('notifications')}
+                onChange={toggleNotifications}
                 aria-label="Toggle notifications"
                 aria-pressed={config.notifications.enabled}
               />

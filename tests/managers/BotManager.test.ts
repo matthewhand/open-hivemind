@@ -157,8 +157,10 @@ describe('BotManager', () => {
       const bots = await botManager.getAllBots();
 
       expect(bots).toHaveLength(2);
-      expect(bots.some((b) => b.id === 'Configured Bot')).toBeTruthy();
-      expect(bots.some((b) => b.id === 'custom-bot')).toBeTruthy();
+      expect(bots.some((b) => b.id === 'Configured Bot')).toBeDefined();
+      expect(bots.some((b) => b.id === 'Configured Bot')).not.toBeNull();
+      expect(bots.some((b) => b.id === 'custom-bot')).toBeDefined();
+      expect(bots.some((b) => b.id === 'custom-bot')).not.toBeNull();
     });
 
     it('should prioritize custom bots over configured bots with same ID', async () => {
@@ -360,7 +362,12 @@ describe('BotManager', () => {
 
       // Set the default channel in the bot config manually for the test
       mockBotConfigManager.getBot.mockImplementation((id: any) => {
-        if (id === 'Bot 1') return { ...mockBotConfig, name: 'Bot 1', discord: { defaultChannelId: 'default-channel' } };
+        if (id === 'Bot 1')
+          return {
+            ...mockBotConfig,
+            name: 'Bot 1',
+            discord: { defaultChannelId: 'default-channel' },
+          };
         return undefined;
       });
       await botManager.getBotHistory('Bot 1');

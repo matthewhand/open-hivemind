@@ -1,5 +1,7 @@
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
 import type { Tenant } from '../../enterprise/MultiTenantProvider';
+import Logger from '../../utils/logger';
+
 
 const getStorage = () => {
   try {
@@ -7,7 +9,7 @@ const getStorage = () => {
       return window.localStorage;
     }
   } catch (error) {
-    console.warn('localStorage unavailable:', error);
+    Logger.warn('localStorage unavailable:', error);
   }
   return undefined;
 };
@@ -21,7 +23,7 @@ const readJSON = <T>(key: string): T | null => {
   try {
     return JSON.parse(raw) as T;
   } catch (error) {
-    console.warn(`Failed to parse stored value for ${key}`, error);
+    Logger.warn(`Failed to parse stored value for ${key}`, error);
     return null;
   }
 };

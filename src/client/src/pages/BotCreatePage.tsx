@@ -12,7 +12,7 @@ import Select from '../components/DaisyUI/Select';
 import { useLlmStatus } from '../hooks/useLlmStatus';
 import AIAssistButton from '../components/AIAssistButton';
 import { apiService } from '../services/api';
-
+// Hardcoded fallback for Vite build:
 const CONFIG_LIMITS = {
   SYSTEM_INSTRUCTION_MAX_LENGTH: 5000,
   SYSTEM_INSTRUCTION_WARNING_LENGTH: 2000,
@@ -70,7 +70,7 @@ const BotCreatePage: React.FC = () => {
         const servers = mcpResponse?.data || mcpResponse || [];
         setMcpServers(Array.isArray(servers) ? servers : []);
       } catch (err) {
-        console.error('Failed to load data', err);
+        Logger.error('Failed to load data', err);
         setAlert({ type: 'error', message: 'Failed to load configuration data' });
       } finally {
         setLoading(false);
@@ -131,7 +131,7 @@ const BotCreatePage: React.FC = () => {
       <PageHeader
         title="Create New Bot"
         description="Configure a new bot instance with persona and provider settings."
-        icon={Bot}
+        icon={<Bot className="w-6 h-6" />}
         gradient="primary"
         actions={
           <Button variant="ghost" onClick={() => navigate('/admin/bots')}>
@@ -385,7 +385,7 @@ const BotCreatePage: React.FC = () => {
                               onChange={(e) => {
                                 const serverId = server.id || server.name;
                                 if (!serverId) {
-                                  console.warn('Server ID or name is required');
+                                  Logger.warn('Server ID or name is required');
                                   return;
                                 }
                                 setFormData(prev => ({

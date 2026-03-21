@@ -10,9 +10,13 @@ import { telegramProviderSchema } from './schemas/telegram';
 import { mcpProviderSchema } from './schemas/mcp';
 import { flowiseProviderSchema } from './schemas/flowise';
 import { mattermostProviderSchema } from './schemas/mattermost';
-import { webhookProviderSchema } from './schemas/webhook';
 import { openWebUiProviderSchema } from './schemas/openwebui';
 import { lettaProviderSchema } from './schemas/letta';
+import { mem0ProviderSchema } from './schemas/mem0';
+import { mem4aiProviderSchema } from './schemas/mem4ai';
+import { openSwarmProviderSchema } from './schemas/openswarm';
+import { memvaultProviderSchema } from './schemas/memvault';
+import { webhookProviderSchema } from './schemas/webhook';
 
 export const PROVIDER_SCHEMAS: Record<string, ProviderConfigSchema> = {
   // Message providers
@@ -31,7 +35,13 @@ export const PROVIDER_SCHEMAS: Record<string, ProviderConfigSchema> = {
   // MCP providers
   mcp: mcpProviderSchema,
 
+  // Memory providers
+  mem0: mem0ProviderSchema,
+  mem4ai: mem4aiProviderSchema,
+  memvault: memvaultProviderSchema,
+
   // LLM providers (extended)
+  openswarm: openSwarmProviderSchema,
 };
 
 // Helper functions for working with provider schemas

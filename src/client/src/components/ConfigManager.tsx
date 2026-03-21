@@ -21,6 +21,8 @@ import {
   selectConfigError,
 } from '../store/slices/configSlice';
 import LoadingSpinnerComponent from './LoadingSpinner';
+import Logger from '../utils/logger';
+
 
 const ConfigManager: React.FC = () => {
   const config = useAppSelector(selectConfig);
@@ -79,7 +81,7 @@ const ConfigManager: React.FC = () => {
       setValidationErrors({});
       showToast('Configuration saved successfully', 'success');
     } catch (error) {
-      console.error('Failed to save configuration:', error);
+      Logger.error('Failed to save configuration:', error);
       showToast('Failed to save configuration', 'error');
     }
   };
@@ -139,7 +141,7 @@ const ConfigManager: React.FC = () => {
                   variant="ghost"
                   size="sm"
                   className="btn-circle"
-                  onClick={() => console.log('Refresh configs')}
+                  onClick={() => Logger.log('Refresh configs')}
                 >
                   <ArrowPathIcon className="w-5 h-5" />
                 </Button>

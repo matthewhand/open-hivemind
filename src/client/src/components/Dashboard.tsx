@@ -1,11 +1,13 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { apiService, type Bot, type StatusResponse } from '../services/api';
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
+import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { Alert } from './DaisyUI/Alert';
-import Button from './DaisyUI/Button';
 import Hero from './DaisyUI/Hero';
+import Button from './DaisyUI/Button';
 import { SkeletonCard } from './DaisyUI/Skeleton';
-import DashboardBotCard from './DashboardBotCard';
+import { apiService } from '../services/api';
+import type { Bot, StatusResponse } from '../services/api';
 import QuickActions from './QuickActions';
+import DashboardBotCard from './DashboardBotCard';
 
 const Dashboard: React.FC = () => {
   const [bots, setBots] = useState<Bot[]>([]);
@@ -19,10 +21,12 @@ const Dashboard: React.FC = () => {
   const fetchData = useCallback(async () => {
     try {
       setError(null);
-      const [configData, statusData] = await Promise.all([
+      const [configResult, statusResult] = await Promise.allSettled([
         apiService.getConfig(),
         apiService.getStatus(),
       ]);
+      const configData = configResult.status === 'fulfilled' ? configResult.value : { bots: [] };
+      const statusData = statusResult.status === 'fulfilled' ? statusResult.value : { bots: [] };
       setBots(configData.bots);
       setStatus(statusData);
       setToastMessage('Dashboard refreshed successfully!');
@@ -40,37 +44,37 @@ const Dashboard: React.FC = () => {
 
   const getStatusColor = useCallback((botStatus: string) => {
     switch (botStatus.toLowerCase()) {
-      case 'active':
-        return 'success';
-      case 'connecting':
-        return 'warning';
-      case 'inactive':
-      case 'unavailable':
-        return 'error';
-      case 'error':
-        return 'error';
-      default:
-        return 'info';
+    case 'active':
+      return 'success';
+    case 'connecting':
+      return 'warning';
+    case 'inactive':
+    case 'unavailable':
+      return 'error';
+    case 'error':
+      return 'error';
+    default:
+      return 'info';
     }
   }, []);
 
   const getProviderIcon = useCallback((provider: string) => {
     switch (provider.toLowerCase()) {
-      case 'discord':
-        return '💬';
-      case 'slack':
-        return '📢';
-      case 'telegram':
-        return '✈️';
-      case 'mattermost':
-        return '💼';
-      default:
-        return '🤖';
+    case 'discord':
+      return '💬';
+    case 'slack':
+      return '📢';
+    case 'telegram':
+      return '✈️';
+    case 'mattermost':
+      return '💼';
+    default:
+      return '🤖';
     }
   }, []);
 
   const handleRatingChange = useCallback((botName: string, rating: number) => {
-    setBotRatings((prev) => ({ ...prev, [botName]: rating }));
+    setBotRatings(prev => ({ ...prev, [botName]: rating }));
     setToastMessage(`Rated ${botName}: ${rating} stars`);
     setShowToast(true);
   }, []);
@@ -79,7 +83,7 @@ const Dashboard: React.FC = () => {
     if (!status?.bots) return 0;
     // status.bots aligns with bots array based on rendering logic.
     // Optimization: filtering directly on status array is O(N) vs O(N^2)
-    return status.bots.filter((b) => b.status === 'active').length;
+    return status.bots.filter(b => b.status === 'active').length;
   }, [status]);
 
   const totalMessages = useMemo(
@@ -87,40 +91,39 @@ const Dashboard: React.FC = () => {
     [status]
   );
   const uptimeHours = useMemo(() => (status ? Math.floor(status.uptime / 3600) : 0), [status]);
-  const uptimeMinutes = useMemo(
-    () => (status ? Math.floor((status.uptime % 3600) / 60) : 0),
-    [status]
-  );
+  const uptimeMinutes = useMemo(() => (status ? Math.floor((status.uptime % 3600) / 60) : 0), [
+    status,
+  ]);
 
   if (loading) {
     return (
       <div className="min-h-screen bg-base-200">
         {/* Hero Section Skeleton */}
         <div className="min-h-[60vh] bg-base-300 flex items-center justify-center">
-          <div className="text-center space-y-6">
-            <div className="skeleton h-12 w-80 rounded"></div>
-            <div className="skeleton h-6 w-64 rounded"></div>
+          <div className="text-center space-y-6 flex flex-col items-center">
+            <SkeletonRectangle height="3rem" width="20rem" className="rounded" />
+            <SkeletonRectangle height="1.5rem" width="16rem" className="rounded" />
 
             {/* Stats Overview Skeleton */}
-            <div className="stats shadow-lg bg-base-100/90 backdrop-blur">
+            <div className="stats shadow-lg bg-base-100/90 backdrop-blur w-full max-w-3xl">
               <div className="stat place-items-center">
-                <div className="skeleton h-6 w-20 rounded mb-2"></div>
-                <div className="skeleton h-8 w-12 rounded mb-2"></div>
-                <div className="skeleton h-4 w-24 rounded"></div>
+                <SkeletonText lines={1} height="1.5rem" width="5rem" className="mb-2" />
+                <SkeletonText lines={1} height="2rem" width="3rem" className="mb-2" />
+                <SkeletonText lines={1} height="1rem" width="6rem" />
               </div>
               <div className="stat place-items-center">
-                <div className="skeleton h-6 w-24 rounded mb-2"></div>
-                <div className="skeleton h-8 w-16 rounded mb-2"></div>
-                <div className="skeleton h-4 w-20 rounded"></div>
+                <SkeletonText lines={1} height="1.5rem" width="6rem" className="mb-2" />
+                <SkeletonText lines={1} height="2rem" width="4rem" className="mb-2" />
+                <SkeletonText lines={1} height="1rem" width="5rem" />
               </div>
               <div className="stat place-items-center">
-                <div className="skeleton h-6 w-20 rounded mb-2"></div>
-                <div className="skeleton h-8 w-14 rounded mb-2"></div>
-                <div className="skeleton h-4 w-28 rounded"></div>
+                <SkeletonText lines={1} height="1.5rem" width="5rem" className="mb-2" />
+                <SkeletonText lines={1} height="2rem" width="3.5rem" className="mb-2" />
+                <SkeletonText lines={1} height="1rem" width="7rem" />
               </div>
             </div>
 
-            <div className="skeleton h-12 w-48 rounded"></div>
+            <SkeletonRectangle height="3rem" width="12rem" className="rounded mt-4" />
           </div>
         </div>
 
@@ -128,7 +131,7 @@ const Dashboard: React.FC = () => {
         <div className="max-w-7xl mx-auto px-4 py-8">
           {/* Quick Actions Skeleton */}
           <div className="mb-8">
-            <div className="skeleton h-12 w-full rounded"></div>
+            <SkeletonRectangle height="3rem" width="100%" className="rounded" />
           </div>
 
           {/* Bot Cards Grid Skeleton */}
@@ -140,22 +143,22 @@ const Dashboard: React.FC = () => {
 
           {/* System Status Footer Skeleton */}
           <div className="bg-base-100 rounded-lg shadow p-6">
-            <div className="skeleton h-8 w-48 rounded mb-4"></div>
+            <SkeletonText lines={1} height="2rem" width="12rem" className="mb-4" />
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="stat">
-                <div className="skeleton h-4 w-12 rounded mb-2"></div>
-                <div className="skeleton h-6 w-16 rounded mb-2"></div>
-                <div className="skeleton h-3 w-32 rounded"></div>
+                <SkeletonText lines={1} height="1rem" width="3rem" className="mb-2" />
+                <SkeletonText lines={1} height="1.5rem" width="4rem" className="mb-2" />
+                <SkeletonText lines={1} height="0.75rem" width="8rem" />
               </div>
               <div className="stat">
-                <div className="skeleton h-4 w-16 rounded mb-2"></div>
-                <div className="skeleton h-6 w-12 rounded mb-2"></div>
-                <div className="skeleton h-3 w-28 rounded"></div>
+                <SkeletonText lines={1} height="1rem" width="4rem" className="mb-2" />
+                <SkeletonText lines={1} height="1.5rem" width="3rem" className="mb-2" />
+                <SkeletonText lines={1} height="0.75rem" width="7rem" />
               </div>
               <div className="stat">
-                <div className="skeleton h-4 w-20 rounded mb-2"></div>
-                <div className="skeleton h-6 w-18 rounded mb-2"></div>
-                <div className="skeleton h-3 w-30 rounded"></div>
+                <SkeletonText lines={1} height="1rem" width="5rem" className="mb-2" />
+                <SkeletonText lines={1} height="1.5rem" width="4.5rem" className="mb-2" />
+                <SkeletonText lines={1} height="0.75rem" width="7.5rem" />
               </div>
             </div>
           </div>
@@ -186,13 +189,7 @@ const Dashboard: React.FC = () => {
         <div className="toast toast-bottom toast-center z-50" role="status" aria-live="polite">
           <div className="alert alert-success">
             <span>{toastMessage}</span>
-            <button
-              className="btn btn-sm btn-ghost"
-              onClick={() => setShowToast(false)}
-              aria-label="Close notification"
-            >
-              ✕
-            </button>
+            <button className="btn btn-sm btn-ghost" onClick={() => setShowToast(false)} aria-label="Close message">✕</button>
           </div>
         </div>
       )}
@@ -225,16 +222,12 @@ const Dashboard: React.FC = () => {
             </div>
             <div className="stat place-items-center">
               <div className="stat-title">Total Messages</div>
-              <div className="stat-value text-secondary text-2xl">
-                {totalMessages.toLocaleString()}
-              </div>
+              <div className="stat-value text-secondary text-2xl">{totalMessages.toLocaleString()}</div>
               <div className="stat-desc">processed today</div>
             </div>
             <div className="stat place-items-center">
               <div className="stat-title">System Uptime</div>
-              <div className="stat-value text-accent text-2xl">
-                {uptimeHours}h {uptimeMinutes}m
-              </div>
+              <div className="stat-value text-accent text-2xl">{uptimeHours}h {uptimeMinutes}m</div>
               <div className="stat-desc">running smoothly</div>
             </div>
           </div>
@@ -266,13 +259,13 @@ const Dashboard: React.FC = () => {
         {/* System Status Footer */}
         {status && (
           <div className="bg-base-100 rounded-lg shadow p-6">
-            <h3 className="text-xl font-bold mb-4 flex items-center">🖥️ System Information</h3>
+            <h3 className="text-xl font-bold mb-4 flex items-center">
+              🖥️ System Information
+            </h3>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="stat">
                 <div className="stat-title">Uptime</div>
-                <div className="stat-value text-lg">
-                  {uptimeHours}h {uptimeMinutes}m
-                </div>
+                <div className="stat-value text-lg">{uptimeHours}h {uptimeMinutes}m</div>
                 <div className="stat-desc">System running smoothly</div>
               </div>
               <div className="stat">

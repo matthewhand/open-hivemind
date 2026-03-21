@@ -78,6 +78,7 @@ try {
 } catch (error: any) {
   if (error.code !== 'ENOENT') {
     debug(`Error reading telegram config from ${configPath}:`, error.message);
+    throw error;
   } else {
     debug(`Telegram config file not found at ${configPath}, using environment variables and defaults`);
   }

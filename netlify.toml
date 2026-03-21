@@ -1,31 +1,18 @@
 [build]
-  command = "npm install -g pnpm@10.2.0 && pnpm install --frozen-lockfile && pnpm run build:netlify"
+  command = "npm install -g pnpm && pnpm install && pnpm run build:netlify"
+  # Only build on main branch to avoid unnecessary builds on feature branches
+  # ignore = "test \"$BRANCH\" != \"main\""
   functions = "dist/netlify/functions"
   publish = "dist/client"
 
-[build.environment]
-  NODE_VERSION = "20"
-  PNPM_VERSION = "9.15.4"
-
 [dev]
-  command = "npm run dev"
+  command = "pnpm run dev"
 
 [[redirects]]
   from = "/api/*"
   to = "/.netlify/functions/server"
   status = 200
   force = true
-
-[[headers]]
-  for = "/*"
-  [headers.values]
-    X-Frame-Options = "DENY"
-    X-Content-Type-Options = "nosniff"
-    X-XSS-Protection = "1; mode=block"
-    Referrer-Policy = "strict-origin-when-cross-origin"
-    Permissions-Policy = "geolocation=(), microphone=(), camera=(), payment=(), usb=(), magnetism=(), accelerometer=(), gyroscope=()"
-    Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: https:; connect-src 'self' ws: wss:; font-src 'self' data: https://fonts.gstatic.com; object-src 'none'; frame-ancestors 'none'; upgrade-insecure-requests"
-    Strict-Transport-Security = "max-age=31536000; includeSubDomains; preload"
 
 [[redirects]]
   from = "/*"

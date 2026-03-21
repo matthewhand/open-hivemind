@@ -9,6 +9,8 @@ import Toggle from './DaisyUI/Toggle';
 import { Loading } from './DaisyUI/Loading';
 import Textarea from './DaisyUI/Textarea';
 import { CheckCircleIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline';
+import Logger from '../utils/logger';
+
 
 interface ConfigSchema {
   doc?: string;
@@ -70,7 +72,7 @@ const ComprehensiveConfigPanel: React.FC = () => {
           valuesToSave[fieldName] = JSON.parse(jsonStr);
         } catch (e) {
           // Ignore invalid JSON, maybe warn user?
-          console.warn(`Skipping invalid JSON for ${fieldName}`);
+          Logger.warn(`Skipping invalid JSON for ${fieldName}`);
         }
       }
     });

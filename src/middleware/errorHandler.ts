@@ -11,6 +11,7 @@ import type { NextFunction, Request, Response } from 'express';
 import { MetricsCollector } from '../monitoring/MetricsCollector';
 import { ErrorFactory, type BaseHivemindError } from '../types/errorClasses';
 import { errorLogger } from '../utils/errorLogger';
+import { createErrorResponse } from '../utils/errorResponse';
 
 const debug = Debug('app:error:middleware');
 
@@ -20,6 +21,8 @@ declare global {
     interface Request {
       correlationId?: string;
       startTime?: number;
+      retryCount?: number;
+      maxRetries?: number;
     }
   }
 }
@@ -39,25 +42,6 @@ interface ErrorContext {
   body?: any;
   params?: any;
   query?: any;
-}
-
-/**
- * Error response structure
- */
-interface ErrorResponse {
-  error: string;
-  code: string;
-  message?: string;
-  correlationId: string;
-  timestamp: string;
-  details?: Record<string, unknown>;
-  recovery?: {
-    canRecover: boolean;
-    retryDelay?: number;
-    maxRetries?: number;
-    steps?: string[];
-  };
-  stack?: string; // Only in development
 }
 
 /**
@@ -96,11 +80,11 @@ function extractErrorContext(req: Request): ErrorContext {
   return {
     correlationId: req.correlationId || 'unknown',
     requestId: req.headers['x-request-id'] as string,
-    userId: (req as any).user?.id || (req as any).user?.sub,
+    userId: (req as import('../auth/types').AuthMiddlewareRequest).user?.id,
     path: req.path,
     method: req.method,
     userAgent: req.headers['user-agent'],
-    ip: req.ip || req.connection.remoteAddress,
+    ip: req.ip || req.connection?.remoteAddress,
     duration,
     // Sanitize sensitive data
     body: sanitizeRequestBody(req.body),
@@ -142,44 +126,6 @@ function sanitizeRequestBody(body: any): any {
 }
 
 /**
- * Create standardized error response
- */
-function createErrorResponse(
-  error: BaseHivemindError,
-  context: ErrorContext,
-  includeStack = false
-): ErrorResponse {
-  const recovery = error.getRecoveryStrategy();
-
-  const response: ErrorResponse = {
-    error: error.name,
-    code: error.code || 'INTERNAL_ERROR',
-    message: error.message,
-    correlationId: context.correlationId,
-    timestamp: new Date().toISOString(),
-  };
-
-  if (error.details) {
-    response.details = error.details;
-  }
-
-  if (recovery) {
-    response.recovery = {
-      canRecover: recovery.canRecover,
-      retryDelay: recovery.retryDelay,
-      maxRetries: recovery.maxRetries,
-      steps: recovery.recoverySteps,
-    };
-  }
-
-  if (includeStack && error.stack) {
-    response.stack = error.stack;
-  }
-
-  return response;
-}
-
-/**
  * Global error handler middleware
  */
 export function globalErrorHandler(
@@ -209,8 +155,18 @@ export function globalErrorHandler(
   // Determine response status
   const statusCode = hivemindError.statusCode || 500;
 
-  // Create error response
-  const errorResponse = createErrorResponse(hivemindError, context, includeStack);
+  // Create standard error response
+  const errorResponseBuilder = createErrorResponse(
+    hivemindError,
+    context.correlationId
+  ).withRequest(context.path, context.method, context.correlationId);
+
+  const errorResponse = errorResponseBuilder.build();
+
+  if (includeStack && hivemindError.stack) {
+    // Inject stack trace in development mode
+    errorResponse.stack = hivemindError.stack;
+  }
 
   // Ensure correlation ID is set in response headers
   if (req.correlationId && !res.getHeader('X-Correlation-ID')) {
@@ -298,37 +254,19 @@ function emitErrorEvent(error: BaseHivemindError, context: ErrorContext, statusC
 
 /**
  * Setup global error handlers
+ * (Deprecated - Global process handlers are now managed centrally by ShutdownCoordinator
+ * to prevent duplicate registrations and race conditions)
  */
 export function setupGlobalErrorHandlers(): void {
-  // Handle uncaught exceptions
-  process.on('uncaughtException', handleUncaughtException);
-
-  // Handle unhandled promise rejections
-  process.on('unhandledRejection', handleUnhandledRejection);
-
-  debug('Global error handlers setup completed');
+  debug('Global error handlers setup skipped - managed by ShutdownCoordinator');
 }
 
 /**
  * Graceful shutdown handler
+ * (Deprecated - Graceful shutdown is now managed centrally by ShutdownCoordinator)
  */
 export function setupGracefulShutdown(): void {
-  const shutdown = (signal: string): void => {
-    console.log(`\nReceived ${signal}. Starting graceful shutdown...`);
-
-    // Close server, database connections, etc.
-    // This would be implemented by the main application
-
-    setTimeout(() => {
-      console.log('Graceful shutdown completed');
-      process.exit(0);
-    }, 5000); // 5 second timeout
-  };
-
-  process.on('SIGTERM', () => shutdown('SIGTERM'));
-  process.on('SIGINT', () => shutdown('SIGINT'));
-
-  debug('Graceful shutdown handlers setup completed');
+  debug('Graceful shutdown handlers setup skipped - managed by ShutdownCoordinator');
 }
 
 /**
@@ -344,8 +282,8 @@ export function errorRecoveryMiddleware(req: Request, res: Response, next: NextF
   }
 
   // Add retry information to request
-  (req as any).retryCount = retryCount;
-  (req as any).maxRetries = maxRetries;
+  req.retryCount = retryCount;
+  req.maxRetries = maxRetries;
 
   next();
 }

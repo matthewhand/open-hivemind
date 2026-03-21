@@ -27,6 +27,8 @@ import {
   CpuChipIcon,
 } from '@heroicons/react/24/outline';
 import { MicrophoneIcon as MicrophoneSolidIcon } from '@heroicons/react/24/solid';
+import Logger from '../utils/logger';
+
 
 // Web Speech API type declarations
 interface SpeechRecognitionResult {
@@ -414,7 +416,7 @@ export const NaturalLanguageInterface: React.FC<NaturalLanguageInterfaceProps> =
       };
 
       recognitionRef.current.onerror = (event: SpeechRecognitionErrorEvent) => {
-        console.error('Speech recognition error:', event.error);
+        Logger.error('Speech recognition error:', event.error);
         setIsListening(false);
       };
 
@@ -473,12 +475,12 @@ export const NaturalLanguageInterface: React.FC<NaturalLanguageInterfaceProps> =
         // Fallback to mock behavior if backend fails or not configured
         // Distinguish between error types for better user feedback
         if (res.status === 401) {
-          console.warn('AI Assist: Authentication required - user may need to log in');
+          Logger.warn('AI Assist: Authentication required - user may need to log in');
         } else if (res.status === 400) {
           const errorData = await res.json().catch(() => ({}));
-          console.warn('AI Assist: Configuration error:', errorData.error || res.statusText);
+          Logger.warn('AI Assist: Configuration error:', errorData.error || res.statusText);
         } else {
-          console.warn('AI Assist: Backend error, falling back to mock:', res.statusText);
+          Logger.warn('AI Assist: Backend error, falling back to mock:', res.statusText);
         }
 
         // Simulate NLP processing delay
@@ -504,7 +506,7 @@ export const NaturalLanguageInterface: React.FC<NaturalLanguageInterfaceProps> =
         responseText = generateResponse(text, matchedIntent, confidence);
       }
     } catch (error) {
-      console.error('Error calling AI Assist:', error);
+      Logger.error('Error calling AI Assist:', error);
       // Simulate NLP processing delay
       await new Promise(resolve => setTimeout(resolve, 1000));
 
@@ -783,7 +785,7 @@ export const NaturalLanguageInterface: React.FC<NaturalLanguageInterfaceProps> =
             <div className="flex items-center gap-2">
               <div className="indicator">
                 <span className="indicator-item badge badge-primary badge-sm">{commands.length}</span>
-                <button className="btn btn-circle btn-ghost btn-sm" aria-label="View command history">
+                <button className="btn btn-circle btn-ghost btn-sm">
                   <ClockIcon className="w-5 h-5" />
                 </button>
               </div>
@@ -792,7 +794,6 @@ export const NaturalLanguageInterface: React.FC<NaturalLanguageInterfaceProps> =
                   className={`btn btn-circle btn-sm ${isListening ? 'btn-error' : 'btn-ghost'}`}
                   onClick={toggleVoiceInput}
                   disabled={!config.voiceInput}
-                  aria-label={isListening ? 'Stop listening' : 'Start voice input'}
                 >
                   {isListening ? <MicrophoneSolidIcon className="w-5 h-5 animate-pulse" /> : <MicrophoneIcon className="w-5 h-5" />}
                 </button>
@@ -800,7 +801,6 @@ export const NaturalLanguageInterface: React.FC<NaturalLanguageInterfaceProps> =
               <button
                 className="btn btn-circle btn-ghost btn-sm"
                 onClick={() => setShowHelp(!showHelp)}
-                aria-label={showHelp ? 'Hide help' : 'Show help'}
               >
                 <QuestionMarkCircleIcon className="w-5 h-5" />
               </button>
@@ -847,7 +847,6 @@ export const NaturalLanguageInterface: React.FC<NaturalLanguageInterfaceProps> =
                   className="btn btn-circle btn-ghost btn-sm"
                   onClick={() => speakResponse(inputText)}
                   disabled={!inputText}
-                  aria-label="Speak response aloud"
                 >
                   <SpeakerWaveIcon className="w-5 h-5" />
                 </button>
@@ -856,7 +855,6 @@ export const NaturalLanguageInterface: React.FC<NaturalLanguageInterfaceProps> =
                 className="btn btn-circle btn-primary btn-sm"
                 onClick={handleSubmit}
                 disabled={!inputText || isProcessing}
-                aria-label="Submit command"
               >
                 <PaperAirplaneIcon className="w-4 h-4" />
               </button>

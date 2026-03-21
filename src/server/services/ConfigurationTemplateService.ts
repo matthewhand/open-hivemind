@@ -6,7 +6,7 @@ import { ConfigurationValidator } from './ConfigurationValidator';
 
 const debug = Debug('app:ConfigurationTemplateService');
 
-export interface ConfigurationTemplate {
+interface ConfigurationTemplate {
   id: string;
   name: string;
   description: string;
@@ -20,7 +20,7 @@ export interface ConfigurationTemplate {
   usageCount: number;
 }
 
-export interface CreateTemplateRequest {
+interface CreateTemplateRequest {
   name: string;
   description: string;
   category: 'discord' | 'slack' | 'mattermost' | 'webhook' | 'llm' | 'general';
@@ -29,7 +29,7 @@ export interface CreateTemplateRequest {
   createdBy?: string;
 }
 
-export interface UpdateTemplateRequest {
+interface UpdateTemplateRequest {
   name?: string;
   description?: string;
   category?: 'discord' | 'slack' | 'mattermost' | 'webhook' | 'llm' | 'general';
@@ -37,7 +37,7 @@ export interface UpdateTemplateRequest {
   config?: any;
 }
 
-export interface TemplateFilter {
+interface TemplateFilter {
   category?: 'discord' | 'slack' | 'mattermost' | 'webhook' | 'llm' | 'general';
   tags?: string[];
   search?: string;
@@ -83,9 +83,6 @@ export class ConfigurationTemplateService {
    */
   private async loadBuiltInTemplates(): Promise<void> {
     try {
-      // Ensure directory exists before loading
-      await this.ensureTemplatesDirectory();
-
       const builtInTemplates = this.getBuiltInTemplates();
 
       for (const template of builtInTemplates) {
@@ -97,23 +94,6 @@ export class ConfigurationTemplateService {
       }
     } catch (error) {
       debug('Error loading built-in templates:', error);
-    }
-  }
-
-  /**
-   * Get all template IDs from the filesystem
-   * @returns Set of template IDs (filenames without .json)
-   */
-  private async getAllTemplateIds(): Promise<Set<string>> {
-    try {
-      const files = await fs.readdir(this.templatesDir);
-      const ids = files
-        .filter((file) => file.endsWith('.json'))
-        .map((file) => file.replace('.json', ''));
-      return new Set(ids);
-    } catch (error) {
-      debug('Error getting all template IDs:', error);
-      return new Set();
     }
   }
 

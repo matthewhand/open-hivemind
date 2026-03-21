@@ -19,10 +19,12 @@ const ConfigViewer: React.FC = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [configData, sourcesData] = await Promise.all([
+        const [configResult, sourcesResult] = await Promise.allSettled([
           apiService.getConfig(),
           apiService.getConfigSources(),
         ]);
+        const configData = configResult.status === 'fulfilled' ? configResult.value : null;
+        const sourcesData = sourcesResult.status === 'fulfilled' ? sourcesResult.value : null;
         setConfig(configData);
         setSources(sourcesData);
       } catch (err) {

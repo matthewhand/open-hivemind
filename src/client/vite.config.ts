@@ -32,12 +32,18 @@ export default defineConfig({
       '@src': './src',
       '@config': '../config',
       '@webui': './webui/src',
+      '@hivemind/shared-types': '../../packages/shared-types/src/index.ts',
     },
   },
   build: {
     rollupOptions: {
       output: {
-        manualChunks: undefined,
+        manualChunks: {
+          // Split large vendor libraries
+          redux: ['@reduxjs/toolkit', 'react-redux'],
+          router: ['react-router-dom'],
+          charts: ['recharts'],
+        },
       },
     },
     chunkSizeWarningLimit: 1000,

@@ -11,7 +11,7 @@ const useBotProviders = () => {
   const { updateBot } = useBots();
 
   // Generate unique ID
-  const generateId = () => globalThis.crypto.randomUUID();
+  const generateId = () => Math.random().toString(36).substr(2, 9);
 
   // Create message provider
   const createMessageProvider = useCallback((

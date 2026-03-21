@@ -1,5 +1,5 @@
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
-import type { RootState } from '../../store';
+import type { RootState } from '../store';
 import type {
   Bot,
   ConfigResponse,
@@ -56,7 +56,7 @@ export const apiSlice = createApi({
     }),
     
     getStatus: builder.query<StatusResponse, void>({
-      query: () => '/api/dashboard/api/status',
+      query: () => '/api/dashboard/status',
       providesTags: ['Status'],
       // Polling will be handled by a custom hook
     }),

@@ -1,3 +1,4 @@
+import Logger from '../utils/logger';
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import { useState, useCallback, useEffect } from 'react';
 import type {
@@ -7,6 +8,7 @@ import type {
   UpdatePersonaRequest,
 } from '../types';
 import {
+
   PersonaTrait,
   BUILTIN_PERSONAS,
   DEFAULT_PERSONA,
@@ -71,7 +73,7 @@ export const usePersonas = (): UsePersonasReturn => {
       setError(null);
 
       const newPersona: Persona = {
-        id: `persona-${Date.now()}-${globalThis.crypto.randomUUID()}`,
+        id: `persona-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
         ...request,
         isBuiltIn: false,
         createdAt: new Date().toISOString(),
@@ -162,7 +164,7 @@ export const usePersonas = (): UsePersonasReturn => {
 
       const duplicatedPersona: Persona = {
         ...originalPersona,
-        id: `persona-${Date.now()}-${globalThis.crypto.randomUUID()}`,
+        id: `persona-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
         name: newName,
         isBuiltIn: false,
         createdAt: new Date().toISOString(),
@@ -193,7 +195,7 @@ export const usePersonas = (): UsePersonasReturn => {
       ));
 
       // In a real implementation, this would make an API call to update the bot
-      console.log(`Assigning persona "${persona.name}" to bot "${botId}"`);
+      Logger.log(`Assigning persona "${persona.name}" to bot "${botId}"`);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to assign persona to bot';
       setError(errorMessage);

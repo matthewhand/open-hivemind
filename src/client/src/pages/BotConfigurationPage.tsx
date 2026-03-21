@@ -9,7 +9,7 @@ import Toggle from '../components/DaisyUI/Toggle';
 import Button from '../components/DaisyUI/Button';
 import { Alert } from '../components/DaisyUI/Alert';
 import Badge from '../components/DaisyUI/Badge';
-import Modal from '../components/DaisyUI/Modal';
+import { Modal } from '../components/DaisyUI/Modal';
 
 interface ConfigSchema {
   values: Record<string, any>;
@@ -286,7 +286,7 @@ const BotConfigurationPage: React.FC = () => {
       <PageHeader
         title="Global Defaults"
         description="System and provider settings (convict configs)"
-        icon={Settings}
+        icon={<Settings className="w-6 h-6" />}
         gradient="accent"
         actions={
           <div className="flex gap-2">

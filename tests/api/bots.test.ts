@@ -64,7 +64,7 @@ jest.mock('../../src/validation/validateRequest', () => ({
   validateRequest: () => (req: any, res: any, next: any) => next(),
 }));
 
-jest.mock('../../src/validation/schemas/botSchema', () => ({
+jest.mock('../../src/validation/schemas/adminSchema', () => ({
   BotIdParamSchema: { merge: () => ({}) },
   CloneBotSchema: {},
   CreateBotSchema: {},
@@ -79,7 +79,13 @@ app.use('/api/bots', botsRouter);
 const getMockManager = () => BotManager.getInstance() as unknown as Record<string, jest.Mock>;
 
 describe('Bots Routes', () => {
+  afterEach(() => {
+    (BotManager as any).instance = undefined;
+  });
+
   beforeEach(() => {
+    (BotManager as any).instance = undefined;
+
     jest.clearAllMocks();
   });
 

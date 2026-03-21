@@ -271,7 +271,7 @@ const AdvancedThemeSwitcher: React.FC<ThemeSwitcherProps> = ({
     try {
       localStorage.setItem('hivemind-favorite-themes', JSON.stringify(newFavorites));
     } catch (e) {
-      Logger.error('Failed to persist favorites, reverting', e);
+      console.error('Failed to persist favorites, reverting', e);
       setFavoriteThemes(previousFavorites);
     }
   };

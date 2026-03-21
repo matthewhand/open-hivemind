@@ -73,7 +73,7 @@ const GlobalConfigSection: React.FC<GlobalConfigSectionProps> = ({ section }) =>
       try {
         valuesToSave[key] = JSON.parse(jsonStr);
       } catch (e) {
-        console.warn(`Skipping invalid JSON for ${section}.${key}`);
+        Logger.warn(`Skipping invalid JSON for ${section}.${key}`);
       }
     });
 

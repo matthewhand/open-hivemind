@@ -1,5 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import type { AvatarService } from '../provider-configs/types';
+import Logger from '../utils/logger';
+
 
 class ProviderAvatarService implements AvatarService {
   async loadAvatar(providerType: string, config: Record<string, any>): Promise<string | null> {
@@ -15,7 +17,7 @@ class ProviderAvatarService implements AvatarService {
         return null;
       }
     } catch (error) {
-      console.error(`Failed to load avatar for ${providerType}:`, error);
+      Logger.error(`Failed to load avatar for ${providerType}:`, error);
       return null;
     }
   }
@@ -47,7 +49,7 @@ class ProviderAvatarService implements AvatarService {
       // For demo purposes, return a mock avatar URL
       return this.generateMockAvatar('discord', botToken);
     } catch (error) {
-      console.error('Failed to load Discord avatar:', error);
+      Logger.error('Failed to load Discord avatar:', error);
       return this.generateMockAvatar('discord', botToken);
     }
   }
@@ -75,7 +77,7 @@ class ProviderAvatarService implements AvatarService {
       // For demo purposes, return a mock avatar URL
       return this.generateMockAvatar('slack', botToken);
     } catch (error) {
-      console.error('Failed to load Slack avatar:', error);
+      Logger.error('Failed to load Slack avatar:', error);
       return this.generateMockAvatar('slack', botToken);
     }
   }
@@ -103,7 +105,7 @@ class ProviderAvatarService implements AvatarService {
       // For demo purposes, return a mock avatar URL
       return this.generateMockAvatar('telegram', botToken);
     } catch (error) {
-      console.error('Failed to load Telegram avatar:', error);
+      Logger.error('Failed to load Telegram avatar:', error);
       return this.generateMockAvatar('telegram', botToken);
     }
   }

@@ -3,6 +3,8 @@ import React, { createContext, useContext, useState, useEffect, useCallback } fr
 import type { BotInstance} from '../types/bot';
 import { BotStatus, MessageProvider, LLMProvider } from '../types/bot';
 import { apiService } from '../services/api';
+import Logger from '../utils/logger';
+
 
 interface BotContextType {
     bots: BotInstance[];
@@ -39,7 +41,7 @@ export const BotProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         setBots(JSON.parse(stored));
       }
     } catch (err) {
-      console.error('Failed to load bots from storage:', err);
+      Logger.error('Failed to load bots from storage:', err);
     } finally {
       setInitialized(true);
     }
@@ -52,7 +54,7 @@ export const BotProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   }, [bots, initialized]);
 
-  const generateId = () => globalThis.crypto.randomUUID();
+  const generateId = () => Math.random().toString(36).substr(2, 9);
 
   const createBot = useCallback((name: string, description?: string) => {
     const newBot: BotInstance = {

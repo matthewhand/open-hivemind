@@ -17,8 +17,8 @@ fi
 echo "[build:frontend] starting at $(timestamp) with NODE_OPTIONS=${NODE_OPTIONS}"
 pushd src/client >/dev/null
 set -x
-# Use the local workspace bin to avoid npx installation prompts or errors
-NODE_ENV=production node ../../node_modules/vite/bin/vite.js build
+# Use pnpm exec to reliably find binaries in pnpm workspaces without prompts
+NODE_ENV=production pnpm exec vite build
 set +x
 popd >/dev/null
 echo "[build:frontend] finished at $(timestamp)"

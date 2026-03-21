@@ -71,14 +71,11 @@ const LLMProvidersPage: React.FC = () => {
   const fetchProfiles = useCallback(async () => {
     try {
       setLoading(true);
-      const [profilesResult, statusResult, globalResult] = await Promise.allSettled([
+      const [profilesRes, statusRes, globalRes] = await Promise.all([
         apiService.get('/api/config/llm-profiles'),
         apiService.get('/api/config/llm-status'),
         apiService.get('/api/config/global'),
       ]);
-      const profilesRes = profilesResult.status === 'fulfilled' ? profilesResult.value : {};
-      const statusRes = statusResult.status === 'fulfilled' ? statusResult.value : {};
-      const globalRes = globalResult.status === 'fulfilled' ? globalResult.value : {};
       setProfiles((profilesRes as any).llm || (profilesRes as any).profiles?.llm || []);
       setDefaultStatus(statusRes);
       const gs = (globalRes as any)._userSettings?.values || {};
@@ -143,7 +140,7 @@ const LLMProvidersPage: React.FC = () => {
           try {
             await apiService.post('/api/config/llm-profiles', payload);
           } catch (e: any) {
-            if (backup) await apiService.post('/api/config/llm-profiles', backup).catch(() => { });
+            if (backup) await apiService.post('/api/config/llm-profiles', backup).catch(() => {});
             throw e;
           }
         }
@@ -177,7 +174,7 @@ const LLMProvidersPage: React.FC = () => {
   const filteredProfiles = useMemo(() =>
     profiles.filter(p => {
       const matchesSearch = p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        p.provider.toLowerCase().includes(searchQuery.toLowerCase());
+                            p.provider.toLowerCase().includes(searchQuery.toLowerCase());
       return matchesSearch && (filterType === 'all' || p.provider === filterType);
     }), [profiles, searchQuery, filterType]);
 
@@ -200,7 +197,7 @@ const LLMProvidersPage: React.FC = () => {
       <PageHeader
         title="LLM Providers"
         description="Configure AI provider profiles and assign them to specific use cases."
-        icon={<BrainIcon className="w-8 h-8 text-primary" />}
+        icon={<BrainIcon className="w-6 h-6" />}
         actions={
           <div className="flex gap-2">
             <Button variant="ghost" onClick={fetchProfiles} disabled={loading}>
@@ -265,7 +262,7 @@ const LLMProvidersPage: React.FC = () => {
                 value={defaultChatbotProfile}
                 onChange={async (e) => {
                   setDefaultChatbotProfile(e.target.value);
-                  await saveGlobal({ defaultChatbotProfile: e.target.value }).catch(() => { });
+                  await saveGlobal({ defaultChatbotProfile: e.target.value }).catch(() => {});
                 }}
                 disabled={loading}
               >
@@ -293,7 +290,7 @@ const LLMProvidersPage: React.FC = () => {
                 value={webuiIntelligenceProvider}
                 onChange={async (e) => {
                   setWebuiIntelligenceProvider(e.target.value);
-                  await saveGlobal({ webuiIntelligenceProvider: e.target.value }).catch(() => { });
+                  await saveGlobal({ webuiIntelligenceProvider: e.target.value }).catch(() => {});
                 }}
                 disabled={loading}
               >
@@ -320,7 +317,7 @@ const LLMProvidersPage: React.FC = () => {
                 value={defaultEmbeddingProvider}
                 onChange={async (e) => {
                   setDefaultEmbeddingProvider(e.target.value);
-                  await saveLlmConfig({ DEFAULT_EMBEDDING_PROVIDER: e.target.value }).catch(() => { });
+                  await saveLlmConfig({ DEFAULT_EMBEDDING_PROVIDER: e.target.value }).catch(() => {});
                 }}
                 disabled={loading}
               >
@@ -354,7 +351,7 @@ const LLMProvidersPage: React.FC = () => {
             checked={perUseCaseEnabled}
             onChange={async (e) => {
               setPerUseCaseEnabled(e.target.checked);
-              await saveGlobal({ perUseCaseEnabled: e.target.checked }).catch(() => { });
+              await saveGlobal({ perUseCaseEnabled: e.target.checked }).catch(() => {});
             }}
           />
         </div>

@@ -1,9 +1,10 @@
-import crypto from 'crypto';
 import { EventEmitter } from 'events';
 import Debug from 'debug';
+import { injectable, singleton, inject } from 'tsyringe';
 import { DatabaseManager, type Anomaly } from '../database/DatabaseManager';
 import { MetricsCollector } from '../monitoring/MetricsCollector';
 import { WebSocketService, type AlertEvent } from '../server/services/WebSocketService';
+import { TOKENS } from '../di/container';
 
 const debug = Debug('app:AnomalyDetectionService');
 
@@ -15,8 +16,9 @@ export interface DetectionConfig {
   minDataPoints: number; // Minimum points needed for calculation
 }
 
+@singleton()
+@injectable()
 export class AnomalyDetectionService extends EventEmitter {
-  private static instance: AnomalyDetectionService;
   private config: DetectionConfig = {
     enabled: true,
     windowSize: 50,
@@ -33,9 +35,9 @@ export class AnomalyDetectionService extends EventEmitter {
   private metricsCollector: MetricsCollector;
 
   constructor(
-    dbManager: DatabaseManager,
-    wsService: WebSocketService,
-    metricsCollector: MetricsCollector
+    @inject(TOKENS.DatabaseManager) dbManager: DatabaseManager,
+    @inject(TOKENS.WebSocketService) wsService: WebSocketService,
+    @inject(TOKENS.MetricsCollector) metricsCollector: MetricsCollector
   ) {
     super();
     this.dbManager = dbManager;
@@ -46,28 +48,15 @@ export class AnomalyDetectionService extends EventEmitter {
     this.detectionInterval = setInterval(() => this.runDetection(), 30000); // Every 30 seconds
   }
 
-  static getInstance(
-    dbManager?: DatabaseManager,
-    wsService?: WebSocketService,
-    metricsCollector?: MetricsCollector
-  ): AnomalyDetectionService {
-    if (!AnomalyDetectionService.instance) {
-      // Fallback to singletons only if not provided (to avoid hidden dependencies in constructor/methods)
-      AnomalyDetectionService.instance = new AnomalyDetectionService(
-        dbManager || DatabaseManager.getInstance(),
-        wsService || WebSocketService.getInstance(),
-        metricsCollector || MetricsCollector.getInstance()
-      );
-    }
-    return AnomalyDetectionService.instance;
-  }
-
   updateConfig(newConfig: Partial<DetectionConfig>): void {
     this.config = { ...this.config, ...newConfig };
     debug('Anomaly detection config updated');
   }
 
   addDataPoint(metric: string, value: number): void {
+    if (value === null || value === undefined || isNaN(value) || !isFinite(value)) {
+      return;
+    }
     if (!this.config.enabled || !this.config.metricsToMonitor.includes(metric)) {
       return;
     }
@@ -179,7 +168,7 @@ export class AnomalyDetectionService extends EventEmitter {
     const explanation = `Value ${value} deviates from mean ${mean.toFixed(2)} by ${zScore.toFixed(2)} standard deviations (${stdDev.toFixed(2)})`;
 
     return {
-      id: `anomaly_${Date.now()}_${crypto.randomUUID()}`,
+      id: `anomaly_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
       timestamp: new Date(),
       metric,
       value,

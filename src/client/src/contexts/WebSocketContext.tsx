@@ -27,9 +27,6 @@ const WebSocketContext = createContext<WebSocketContextType | undefined>(undefin
 const rawBaseUrl = import.meta.env.VITE_API_BASE_URL as string | undefined;
 const API_BASE_URL = rawBaseUrl?.replace(/\/$/, '');
 
-// ⚡ Bolt Optimization: Extract comparator to prevent inline instantiation and use fast string comparison
-const sortAlertsDescending = (a: AlertEvent, b: AlertEvent) => b.timestamp.localeCompare(a.timestamp);
-
 export const WebSocketProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [socket, setSocket] = useState<Socket | null>(null);
   const socketRef = useRef<Socket | null>(null);
@@ -59,12 +56,7 @@ export const WebSocketProvider: React.FC<{ children: ReactNode }> = ({ children 
       transports: ['websocket', 'polling'],
       auth: {
         token: token
-      },
-      reconnection: true,
-      reconnectionAttempts: Infinity,
-      reconnectionDelay: 1000,
-      reconnectionDelayMax: 5000,
-      randomizationFactor: 0.5,
+      }
     });
 
     newSocket.on('connect', () => {
@@ -72,26 +64,9 @@ export const WebSocketProvider: React.FC<{ children: ReactNode }> = ({ children 
       setIsConnected(true);
     });
 
-    newSocket.on('disconnect', (reason) => {
-      console.log('WebSocket disconnected', reason);
+    newSocket.on('disconnect', () => {
+      console.log('WebSocket disconnected');
       setIsConnected(false);
-    });
-
-    newSocket.on('reconnect_attempt', (attempt) => {
-      console.log(`WebSocket reconnect attempt ${attempt}`);
-    });
-
-    newSocket.on('reconnect', (attempt) => {
-      console.log(`WebSocket reconnected after ${attempt} attempts`);
-      setIsConnected(true);
-    });
-
-    newSocket.on('reconnect_error', (error) => {
-      console.error('WebSocket reconnect error:', error);
-    });
-
-    newSocket.on('reconnect_failed', () => {
-      console.error('WebSocket reconnect failed');
     });
 
     // Message flow events
@@ -111,13 +86,17 @@ export const WebSocketProvider: React.FC<{ children: ReactNode }> = ({ children 
     newSocket.on('alerts_broadcast', (data) => {
       const incoming = data.alerts || [];
       setAlerts((prev) => {
-        // ⚡ Bolt Optimization: Use Map for O(1) lookups instead of O(n) findIndex
-        const mergedMap = new Map(prev.map(a => [a.id, a]));
+        const merged = [...prev];
         incoming.forEach((inc: AlertEvent) => {
-          mergedMap.set(inc.id, inc);
+          const idx = merged.findIndex((a) => a.id === inc.id);
+          if (idx !== -1) {
+            merged[idx] = inc;
+          } else {
+            merged.push(inc);
+          }
         });
-        return Array.from(mergedMap.values())
-          .sort(sortAlertsDescending)
+        return merged
+          .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
           .slice(0, 50);
       });
     });

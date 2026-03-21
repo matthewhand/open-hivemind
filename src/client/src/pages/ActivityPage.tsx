@@ -16,6 +16,8 @@ import EmptyState from '../components/DaisyUI/EmptyState';
 import Input from '../components/DaisyUI/Input';
 import SearchFilterBar from '../components/SearchFilterBar';
 import { apiService, ActivityEvent, ActivityResponse } from '../services/api';
+import Logger from '../utils/logger';
+
 
 const ActivityPage: React.FC = () => {
   const [data, setData] = useState<ActivityResponse | null>(null);
@@ -66,8 +68,10 @@ const ActivityPage: React.FC = () => {
         maxRetries,
         1000,
         (err, attempt, max) => {
-           console.log(`Retrying fetchActivity in ${1000 * Math.pow(1.5, attempt - 1)}ms (attempt ${attempt}/${max})`);
+           const delayMs = 1000 * Math.pow(2, attempt - 1);
+           console.log(`Retrying fetchActivity in ${delayMs}ms (attempt ${attempt}/${max})`);
            setRetryCount(attempt);
+           setRetryDelay(delayMs);
         }
       );
 
@@ -80,7 +84,7 @@ const ActivityPage: React.FC = () => {
     } catch (err: any) {
       const message = err instanceof Error ? err.message : 'Failed to fetch activity';
       setError(message);
-      console.error('Error fetching activity:', err);
+      Logger.error('Error fetching activity:', err);
     } finally {
       setLoading(false);
     }
@@ -277,32 +281,29 @@ const ActivityPage: React.FC = () => {
         />
       )}
 
-      {/* Retry Button if there are errors */}
-      {error && retryCount > 0 && (
+      {/* Auto-retrying indicator */}
+      {loading && retryCount > 0 && (
+        <Alert
+          status="warning"
+          message={`Auto-retrying (${retryCount}/${maxRetries}) in ${retryDelay}ms...`}
+        />
+      )}
+
+      {/* Manual Retry Button if there are persistent errors */}
+      {error && (
         <div className="mt-2 text-center">
-          {retryCount < maxRetries ? (
-            <Button
-              size="sm"
-              variant="secondary"
-              onClick={fetchActivity}
-              disabled={loading}
-            >
-              Retry ({retryCount}/{maxRetries})
-            </Button>
-          ) : (
-            <Button
-              size="sm"
-              variant="secondary"
-              onClick={() => {
-                setRetryCount(0);
-                setRetryDelay(1000);
-                setError(null);
-                fetchActivity();
-              }}
-            >
-              Reset & Retry
-            </Button>
-          )}
+          <Button
+            size="sm"
+            variant="secondary"
+            onClick={() => {
+              setRetryCount(0);
+              setRetryDelay(1000);
+              setError(null);
+              fetchActivity();
+            }}
+          >
+            Reset & Retry
+          </Button>
         </div>
       )}
 
@@ -314,7 +315,7 @@ const ActivityPage: React.FC = () => {
       <PageHeader
         title="Activity Feed"
         description="Real-time message flow and events"
-        icon={Clock}
+        icon={<Clock className="w-6 h-6" />}
         actions={
           <div className="flex items-center gap-2">
             {/* View Toggle */}

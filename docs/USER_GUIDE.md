@@ -136,6 +136,16 @@ Set up safety and security boundaries.
 *   **Tool Permissions**: Control which MCP tools a bot is allowed to use.
 *   **Input Sanitization**: Configure rules to prevent injection attacks or malicious inputs.
 
+### [Marketplace](/admin/marketplace)
+Browse and install external provider packages.
+
+![Package Marketplace](screenshots/marketplace-page.png)
+![Install Package Modal](screenshots/marketplace-install-modal.png)
+
+*   **Package Library**: Discover new integrations for LLMs, messaging platforms, and tools.
+*   **Install from URL**: Connect and install packages directly from GitHub repositories.
+*   **Filter & Search**: Quickly find the packages you need by category or name.
+
 ### [MCP Servers](/admin/mcp/servers)
 Manage Model Context Protocol servers to extend bot capabilities with external tools.
 
@@ -177,16 +187,6 @@ General system configuration.
 ![Settings Saving](screenshots/settings-general-loading.png)
 
 *   **Saving Changes**: When updating settings, click "Save Settings". The button will show a loading state while applying changes.
-
-### [Audit & Governance](/admin/audit)
-The Enterprise Manager provides an interface to monitor security, compliance, multi-cloud setups, integrations, and crucially, audit events.
-
-![Audit & Governance Initial](screenshots/audit-governance-initial.png)
-![Audit & Governance Filtered](screenshots/audit-governance-filtered.png)
-
-*   **Structured Audit Events**: View a detailed, structured log of system activities, actions, and resources.
-*   **Search**: Use the input box to quickly filter audit events by user, resource, or general description.
-*   **Action Filtering**: Narrow down events by specific actions (e.g., CREATE_BOT) using the combobox filter.
 
 ### [Webhook](/admin/integrations/webhook)
 Configure incoming webhooks for external integrations.
@@ -255,7 +255,19 @@ An internal chat interface for admins to experiment with prompts and query syste
 
 ### [UI Components](/admin/showcase)
 A reference for developers extending the WebUI.
+![UI Components Showcase](screenshots/showcase-page.png)
+
 *   **Component Library**: View available UI elements (buttons, inputs, cards) and their usage.
+
+### System Alerts
+Alerts are used throughout the system to communicate important states to the user.
+
+![System Alerts](screenshots/system-alerts.png)
+
+*   **Info**: General information or updates (e.g. software updates).
+*   **Success**: Confirmation of successful actions (e.g. configuration saved).
+*   **Warning**: Notices about potential issues (e.g. rate limits approaching).
+*   **Error**: Critical failures that require attention (e.g. database connection failed).
 
 ### [System Backups & Export](/admin/export)
 Manage system configuration backups and download API documentation.

@@ -1,3 +1,5 @@
+import Logger from '../utils/logger';
+
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 const getEnv = (key: string): string | undefined => {
   // Use a dynamic check to avoid Babel syntax errors with import.meta in CommonJS/Node
@@ -249,7 +251,6 @@ export interface ActivityEvent {
   processingTime?: number;
   status: 'success' | 'error' | 'timeout';
   errorMessage?: string;
-  spanName?: string;
 }
 
 export interface ActivityTimelineBucket {
@@ -374,7 +375,7 @@ class ApiService {
           headers['Authorization'] = `Bearer ${tokens.accessToken}`;
         }
       } catch (e) {
-        console.error('Failed to parse auth token', e);
+        Logger.error('Failed to parse auth token', e);
       }
     }
     return headers;
@@ -447,7 +448,7 @@ class ApiService {
         throw new Error(`Request timed out after ${options?.timeout || 15000}ms`);
       }
       const errorMessage = error instanceof Error ? error.message : String(error);
-      console.error(`API request failed for ${endpoint}:`, errorMessage);
+      Logger.error(`API request failed for ${endpoint}:`, errorMessage);
       throw error;
     }
   }
@@ -610,7 +611,7 @@ class ApiService {
       if (value) { query.append(key, value); }
     });
     const search = query.toString();
-    const endpoint = `/api/dashboard/activity${search ? `?${search}` : ''}`;
+    const endpoint = `/api/dashboard/api/activity${search ? `?${search}` : ''}`;
     return this.request<ActivityResponse>(endpoint);
   }
 

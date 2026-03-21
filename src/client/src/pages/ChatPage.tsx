@@ -5,6 +5,8 @@ import { BotAvatar } from '../components/BotAvatar';
 import { RefreshCw, MessageSquare, Cpu, Check, ChevronDown } from 'lucide-react';
 import EmptyState from '../components/DaisyUI/EmptyState';
 import { useSuccessToast, useErrorToast } from '../components/DaisyUI/ToastNotification';
+import Logger from '../utils/logger';
+
 
 // Define Bot type based on API response
 interface BotData {
@@ -49,7 +51,7 @@ const ChatPage: React.FC = () => {
         setLlmProviders(data.data || []);
       }
     } catch (err) {
-      console.error('Failed to fetch LLM providers:', err);
+      Logger.error('Failed to fetch LLM providers:', err);
     }
   }, []);
 
@@ -100,7 +102,7 @@ const ChatPage: React.FC = () => {
       const data = await apiService.getBots();
       setBots(data);
     } catch (err) {
-      console.error('Failed to fetch bots:', err);
+      Logger.error('Failed to fetch bots:', err);
     } finally {
       setLoading(false);
     }
@@ -113,7 +115,7 @@ const ChatPage: React.FC = () => {
 
       // Map history to ChatMessage
       const mappedMessages: ChatMessage[] = history.map((msg: any) => ({
-        id: msg.id || globalThis.crypto.randomUUID(),
+        id: msg.id || Math.random().toString(),
         content: msg.content,
         timestamp: msg.createdAt || new Date().toISOString(),
         sender: {
@@ -129,7 +131,7 @@ const ChatPage: React.FC = () => {
 
       setMessages(mappedMessages);
     } catch (err) {
-      console.error('Failed to fetch history:', err);
+      Logger.error('Failed to fetch history:', err);
     } finally {
       setHistoryLoading(false);
     }
@@ -145,10 +147,39 @@ const ChatPage: React.FC = () => {
 
   const selectedBot = bots.find(b => b.id === selectedBotId);
 
+  const [isOffline, setIsOffline] = useState(!navigator.onLine);
+
+  useEffect(() => {
+    const handleOnline = () => setIsOffline(false);
+    const handleOffline = () => setIsOffline(true);
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
+
   const handleSendMessage = async (content: string, existingId?: string) => {
     if (!selectedBotId) return;
 
     const tempId = existingId || `temp-${Date.now()}`;
+
+    const tempMessage: ChatMessage = {
+      id: tempId,
+      content,
+      timestamp: new Date().toISOString(),
+      sender: {
+        id: 'current-user',
+        name: 'You',
+        type: 'user',
+      },
+      metadata: {
+        status: 'sending',
+      },
+    };
 
     if (existingId) {
       // If retrying, reset the status to sending
@@ -158,19 +189,6 @@ const ChatPage: React.FC = () => {
           : m
       ));
     } else {
-      const tempMessage: ChatMessage = {
-        id: tempId,
-        content,
-        timestamp: new Date().toISOString(),
-        sender: {
-          id: 'current-user',
-          name: 'You',
-          type: 'user',
-        },
-        metadata: {
-          status: 'sending',
-        },
-      };
       setMessages(prev => [...prev, tempMessage]);
     }
 
@@ -180,11 +198,11 @@ const ChatPage: React.FC = () => {
       // but for this task, the optimistic rollback is the focus.
       await fetchHistory(selectedBotId);
     } catch (err) {
-      console.error('Failed to send message:', err);
+      Logger.error('Failed to send message:', err);
       // Mark optimistic update as failed
       setMessages(prev => prev.map(m =>
         m.id === tempId
-          ? { ...m, metadata: { ...m.metadata, status: 'failed' } }
+          ? { ...m, metadata: { ...m.metadata, status: 'error' } }
           : m
       ));
     }
@@ -207,7 +225,7 @@ const ChatPage: React.FC = () => {
           </h1>
           <p className="text-sm text-base-content/60">Monitor conversations across your bot fleet</p>
         </div>
-        <button onClick={handleRefresh} className="btn btn-ghost btn-circle" title="Refresh" aria-label="Refresh chat">
+        <button onClick={handleRefresh} className="btn btn-ghost btn-circle" title="Refresh">
           <RefreshCw className={`w-5 h-5 ${loading || historyLoading ? 'animate-spin' : ''}`} />
         </button>
       </div>
@@ -316,14 +334,24 @@ const ChatPage: React.FC = () => {
                   <span className="loading loading-spinner loading-lg text-primary"></span>
                 </div>
               )}
-              <ChatInterface
-                messages={messages}
-                onSendMessage={handleSendMessage}
-                placeholder="Type a message..."
-                className="h-full"
-                maxHeight="100%"
-                isLoading={false}
-              />
+              <div className="flex-1 overflow-hidden relative">
+                {isOffline && (
+                  <div className="absolute top-0 left-0 right-0 z-10 bg-error/90 text-error-content text-sm py-1 px-4 text-center font-medium shadow-sm flex items-center justify-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-error-content animate-pulse"></span>
+                    You are currently offline
+                  </div>
+                )}
+                <ChatInterface
+                  messages={messages}
+                  onSendMessage={handleSendMessage}
+                  placeholder={isOffline ? "You are offline" : "Type a message..."}
+                  className="h-full"
+                  maxHeight="100%"
+                  isLoading={false}
+                  disabled={isOffline}
+                  onRetry={handleRetryMessage}
+                />
+              </div>
               {/* Overlay to intercept clicks on input area if needed, but placeholder should suffice */}
             </div>
           ) : (

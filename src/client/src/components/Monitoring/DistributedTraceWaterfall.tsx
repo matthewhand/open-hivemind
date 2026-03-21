@@ -135,6 +135,8 @@ export const DistributedTraceWaterfall: React.FC<DistributedTraceWaterfallProps>
               <button
                 onClick={(e) => toggleExpand(span.id, e)}
                 className="p-1 hover:bg-base-300 rounded mr-1"
+                aria-label={isExpanded ? "Collapse span" : "Expand span"}
+                aria-expanded={isExpanded}
               >
                 {isExpanded ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
               </button>
@@ -262,7 +264,7 @@ export const DistributedTraceWaterfall: React.FC<DistributedTraceWaterfallProps>
               <div className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: getServiceColor(selectedSpan.service) }} />
               <span className="truncate" title={selectedSpan.name}>{selectedSpan.name}</span>
             </h4>
-            <button className="btn btn-ghost btn-xs btn-circle" onClick={() => setSelectedSpanId(null)} aria-label="Close details">
+            <button className="btn btn-ghost btn-xs btn-circle" onClick={() => setSelectedSpanId(null)} aria-label="Close details panel">
               <X className="w-4 h-4" />
             </button>
           </div>

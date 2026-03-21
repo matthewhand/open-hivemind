@@ -306,7 +306,7 @@ describe('Utility Functions Comprehensive Tests', () => {
 
   describe('Emoji Generation Consolidated', () => {
     test('should return a valid emoji from the predefined list', () => {
-      const { getEmoji } = require('../../src/common/getEmoji');
+      const { getEmoji } = require('../../src/utils/common');
       const emoji = getEmoji();
       expect([
         '😀',
@@ -331,7 +331,7 @@ describe('Utility Functions Comprehensive Tests', () => {
     });
 
     test('should return different emojis on multiple calls', () => {
-      const { getEmoji } = require('../../src/common/getEmoji');
+      const { getEmoji } = require('../../src/utils/common');
       const generatedEmojis = new Set();
       for (let i = 0; i < 20; i++) {
         generatedEmojis.add(getEmoji());
@@ -340,7 +340,7 @@ describe('Utility Functions Comprehensive Tests', () => {
     });
 
     test('should handle rapid successive calls', () => {
-      const { getEmoji } = require('../../src/common/getEmoji');
+      const { getEmoji } = require('../../src/utils/common');
       const results = [];
       for (let i = 0; i < 100; i++) {
         results.push(getEmoji());
@@ -608,6 +608,7 @@ describe('Utility Functions Comprehensive Tests', () => {
 
     test('should handle configuration validation with complex data structures', async () => {
       const { AuditLogger } = require('../../src/common/auditLogger');
+      (AuditLogger as any).instance = null;
       const auditLogger = AuditLogger.getInstance();
 
       // Test with complex nested data structures
