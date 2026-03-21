@@ -92,13 +92,15 @@ describe('Personas Routes', () => {
 
   describe('DELETE /api/personas/:id', () => {
     it('should delete a persona', async () => {
+      getMockManager().getPersona.mockReturnValue({ id: 'p1', name: 'To Delete' });
       getMockManager().deletePersona.mockReturnValue(true);
       await request(app).delete('/api/personas/p1').expect(200);
     });
 
-    it('should return 404 if delete fails', async () => {
+    it('should return 200 (idempotent) if persona does not exist', async () => {
+      getMockManager().getPersona.mockReturnValue(undefined);
       getMockManager().deletePersona.mockReturnValue(false);
-      await request(app).delete('/api/personas/p1').expect(404);
+      await request(app).delete('/api/personas/p1').expect(200);
     });
   });
 
