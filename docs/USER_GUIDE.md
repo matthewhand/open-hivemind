@@ -214,9 +214,12 @@ Manage configuration, alerts, and system health.
 *   **Performance Tuning**: Analyze real-time API endpoint status and view system environment details.
 
 ### [Global Defaults](/admin/configuration)
-Set default behaviors for new bots.
-*   **Default LLM**: The fallback provider if none is specified for a bot.
-*   **Default Persona**: The base personality applied to new bots.
+Manage system and provider settings (convict configs) for your application and perform hot-reloads of configurations.
+
+![Global Defaults](screenshots/configuration.png)
+
+*   **View Settings**: Explore configurations categorized by sections (e.g., General, Server) with the total count of settings listed.
+*   **Configuration Modification**: Update your configurations directly from the UI. Fields may be marked as **Sensitive**. Save changes using "Save Configuration" at the bottom of the active section.
 
 ### Demo Mode
 When running the application without configuration (e.g., first launch), a **Demo Mode** banner appears.
