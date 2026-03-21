@@ -74,13 +74,14 @@ async function validateLettaUrl(url: string): Promise<{ isValid: boolean; error?
  */
 router.get('/agents', async (req: Request, res: Response) => {
   try {
-    const apiKey = (req.headers['x-letta-api-key'] as string) || (req.query.apiKey as string);
+    const apiKey = req.headers['x-letta-api-key'] as string;
     const apiUrl =
       (req.headers['x-letta-api-url'] as string) ||
       (req.query.apiUrl as string) ||
       'https://api.letta.com/v1';
 
     if (!apiKey) {
+<<<<<<< HEAD
       return res
         .status(400)
         .json(
@@ -96,6 +97,12 @@ router.get('/agents', async (req: Request, res: Response) => {
       return res
         .status(400)
         .json(ErrorResponses.badRequest(validation.error || 'Invalid Letta API URL').build());
+=======
+      return res.status(400).json({
+        error: 'Missing API key',
+        message: 'Please provide Letta API key via x-letta-api-key header',
+      });
+>>>>>>> origin/fix/letta-api-key-exposure-9323429508419092859
     }
 
     const agents = await listAgents(apiKey, apiUrl);
@@ -113,13 +120,14 @@ router.get('/agents', async (req: Request, res: Response) => {
 router.get('/agents/:id', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const apiKey = (req.headers['x-letta-api-key'] as string) || (req.query.apiKey as string);
+    const apiKey = req.headers['x-letta-api-key'] as string;
     const apiUrl =
       (req.headers['x-letta-api-url'] as string) ||
       (req.query.apiUrl as string) ||
       'https://api.letta.com/v1';
 
     if (!apiKey) {
+<<<<<<< HEAD
       return res
         .status(400)
         .json(
@@ -135,6 +143,12 @@ router.get('/agents/:id', async (req: Request, res: Response) => {
       return res
         .status(400)
         .json(ErrorResponses.badRequest(validation.error || 'Invalid Letta API URL').build());
+=======
+      return res.status(400).json({
+        error: 'Missing API key',
+        message: 'Please provide Letta API key via x-letta-api-key header',
+      });
+>>>>>>> origin/fix/letta-api-key-exposure-9323429508419092859
     }
 
     const agent = await getAgent(id, apiKey, apiUrl);
