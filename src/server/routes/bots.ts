@@ -60,7 +60,11 @@ router.get('/', async (req, res) => {
     return res.json(result);
   } catch (error: any) {
     logger.error('Failed to retrieve bots', { error: error.message });
+<<<<<<< HEAD
     return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: 'Failed to retrieve bots' });
+=======
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: error.message });
+>>>>>>> origin/janitor/code-health-activity-logger-8768188016948875412
   }
 });
 
@@ -92,7 +96,11 @@ router.get('/:id', validateRequest(BotIdParamSchema), async (req, res) => {
     return res.json({ success: true, bot });
   } catch (error: any) {
     logger.error('Failed to retrieve bot', { id: req.params.id, error: error.message });
+<<<<<<< HEAD
     return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: 'Failed to retrieve bot' });
+=======
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: error.message });
+>>>>>>> origin/janitor/code-health-activity-logger-8768188016948875412
   }
 });
 
@@ -411,7 +419,11 @@ router.get('/:id/activity', validateRequest(BotActivityQuerySchema), async (req,
     return res.json({ success: true, data: { activity } });
   } catch (error: any) {
     logger.error('Failed to retrieve bot activity', { id: req.params.id, error: error.message });
+<<<<<<< HEAD
     return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: 'Failed to retrieve bot activity' });
+=======
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: error.message });
+>>>>>>> origin/janitor/code-health-activity-logger-8768188016948875412
   }
 });
 
