@@ -1,5 +1,5 @@
-import SlackMessage from '@integrations/slack/SlackMessage';
-import { SlackMessageProcessor } from '@integrations/slack/SlackMessageProcessor';
+import SlackMessage from '@hivemind/message-slack/SlackMessage';
+import { SlackMessageProcessor } from '@hivemind/message-slack/SlackMessageProcessor';
 
 describe('SlackMessageProcessor.enrichSlackMessage', () => {
   let processor: SlackMessageProcessor;

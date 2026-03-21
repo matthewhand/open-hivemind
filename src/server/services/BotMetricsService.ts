@@ -4,7 +4,7 @@ import Debug from 'debug';
 
 const debug = Debug('app:BotMetricsService');
 
-export interface BotMetrics {
+interface BotMetrics {
   messageCount: number;
   errorCount: number;
   lastActive?: string;

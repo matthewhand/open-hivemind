@@ -36,7 +36,7 @@ const SpecDetailPage: React.FC = () => {
       content = `
 topic: ${spec.topic}
 author: ${spec.author}
-timestamp: ${spec.timestamp}
+date: ${spec.date}
 tags:
 ${spec.tags.map(tag => `  - ${tag}`).join('\n')}
 content: |
@@ -113,7 +113,7 @@ ${spec.content.replace(/^/gm, '  ')}
                 </Button>
                 <div>
                   <h1 className="text-3xl font-bold">{spec.topic}</h1>
-                  <p className="opacity-70">By {spec.author} • {new Date(spec.timestamp).toLocaleDateString()}</p>
+                  <p className="opacity-70">By {spec.author} • {new Date(spec.date).toLocaleDateString()}</p>
                 </div>
               </div>
               <Dropdown
@@ -145,7 +145,7 @@ ${spec.content.replace(/^/gm, '  ')}
             <div className="divider mt-8"></div>
             <div className="flex justify-between items-center">
               <p className="text-sm opacity-70">
-                Last updated: {new Date(spec.timestamp).toLocaleString()}
+                Last updated: {new Date(spec.date).toLocaleString()}
               </p>
               <div className="flex gap-2">
                 <Button size="sm" className="btn-ghost">

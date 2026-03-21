@@ -183,7 +183,7 @@ const MonitoringDashboard: React.FC<MonitoringDashboardProps> = ({
     { icon: <Heart className="w-5 h-5" />, label: 'Infrastructure Health' },
     { icon: <Cpu className="w-5 h-5" />, label: 'Bot Status' },
     { icon: <Clock className="w-5 h-5" />, label: 'Activity Monitor' },
-    { icon: <Activity className="w-5 h-5" />, label: 'Distributed Tracing' },
+    { icon: <Activity className="w-5 h-5" />, label: 'Bot Activity Trace' },
   ];
 
   const stats = [
@@ -233,7 +233,7 @@ const MonitoringDashboard: React.FC<MonitoringDashboardProps> = ({
       <PageHeader
         title="System Monitoring"
         description={`Last updated: ${lastRefresh.toLocaleTimeString()}`}
-        icon={<ChartBar className="w-8 h-8" />}
+        icon={<ChartBar className="w-5 h-5" />}
         actions={
           <div className="flex items-center gap-2">
             <select

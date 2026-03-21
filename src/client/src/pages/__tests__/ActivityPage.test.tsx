@@ -56,35 +56,14 @@ vi.mock('../../components/SearchFilterBar', () => ({
 }));
 
 // Mock lucide-react icons
-vi.mock('lucide-react', async (importOriginal) => {
-  const actual = await importOriginal();
-  return {
-    ...actual,
-    Clock: () => <span />,
-    Download: () => <span />,
-    LayoutList: () => <span />,
-    GitBranch: () => <span />,
-    RefreshCw: () => <span />,
-    X: () => <span />,
-    Search: () => <span />,
-    Bot: () => <span />,
-    MessageCircle: () => <span />,
-    AlertTriangle: () => <span />,
-    CheckCircle: () => <span />,
-    Activity: () => <span />,
-    XCircle: () => <span />,
-    Server: () => <span />,
-    Zap: () => <span />,
-    Cpu: () => <span />,
-    Network: () => <span />,
-    Database: () => <span />,
-    Lock: () => <span />,
-    Unlock: () => <span />,
-    Check: () => <span />,
-    Info: () => <span />,
-    Pause: () => <span />,
-  };
-});
+vi.mock('lucide-react', () => ({
+  Clock: () => <span />,
+  Download: () => <span />,
+  LayoutList: () => <span />,
+  GitBranch: () => <span />,
+  RefreshCw: () => <span />,
+  X: () => <span />,
+}));
 
 describe('ActivityPage', () => {
   let getActivityMock: any;

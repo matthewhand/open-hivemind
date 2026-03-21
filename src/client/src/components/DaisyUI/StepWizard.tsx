@@ -52,7 +52,7 @@ const StepWizard: React.FC<StepWizardProps> = ({
       const isValid = await currentStepData.validation();
       return isValid;
     } catch (error) {
-      Logger.error('Step validation failed:', error);
+      console.error('Step validation failed:', error);
       return false;
     } finally {
       setIsValidating(false);

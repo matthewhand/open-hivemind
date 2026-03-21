@@ -377,3 +377,18 @@ export class MemVaultProvider {
 }
 
 export default MemVaultProvider;
+
+// ---------------------------------------------------------------------------
+// Factory and manifest
+// ---------------------------------------------------------------------------
+
+export function create(config: MemVaultConfig): MemVaultProvider {
+    return new MemVaultProvider(config);
+}
+
+export const manifest = {
+    displayName: 'MemVault',
+    description: 'RAG memory via PostgreSQL + pgvector with hybrid vector/recency scoring',
+    type: 'memory',
+    minVersion: '1.0.0',
+};

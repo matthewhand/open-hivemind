@@ -1,6 +1,5 @@
 import { ERROR_CODES, HTTP_STATUS } from '../../types/constants';
 import { Router } from 'express';
-import { createLogger } from '../../common/StructuredLogger';
 import { BotManager, type CreateBotRequest } from '../../managers/BotManager';
 import {
   BotActivityQuerySchema,
@@ -15,7 +14,6 @@ import { ActivityLogger } from '../services/ActivityLogger';
 import { WebSocketService } from '../services/WebSocketService';
 
 const router = Router();
-const logger = createLogger('botsRouter');
 const manager = BotManager.getInstance();
 const wsService = WebSocketService.getInstance();
 
@@ -59,18 +57,7 @@ router.get('/', async (req, res) => {
 
     return res.json(result);
   } catch (error: any) {
-<<<<<<< HEAD
-    logger.error('Failed to retrieve bots', { error: error.message });
-<<<<<<< HEAD
-    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: 'Failed to retrieve bots' });
-=======
     return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: error.message });
->>>>>>> origin/janitor/code-health-activity-logger-8768188016948875412
-=======
-
-    logger.error('Failed to retrieve bots', { error: error.message });
-    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: 'Failed to retrieve bots' });
->>>>>>> origin/fix-anomaly-route-types-3952225614007405228
   }
 });
 
@@ -101,18 +88,7 @@ router.get('/:id', validateRequest(BotIdParamSchema), async (req, res) => {
     }
     return res.json({ success: true, bot });
   } catch (error: any) {
-<<<<<<< HEAD
-    logger.error('Failed to retrieve bot', { id: req.params.id, error: error.message });
-<<<<<<< HEAD
-    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: 'Failed to retrieve bot' });
-=======
     return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: error.message });
->>>>>>> origin/janitor/code-health-activity-logger-8768188016948875412
-=======
-
-    logger.error('Failed to retrieve bot', { id: req.params.id, error: error.message });
-    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: 'Failed to retrieve bot' });
->>>>>>> origin/fix-anomaly-route-types-3952225614007405228
   }
 });
 
@@ -430,18 +406,7 @@ router.get('/:id/activity', validateRequest(BotActivityQuerySchema), async (req,
 
     return res.json({ success: true, data: { activity } });
   } catch (error: any) {
-<<<<<<< HEAD
-    logger.error('Failed to retrieve bot activity', { id: req.params.id, error: error.message });
-<<<<<<< HEAD
-    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: 'Failed to retrieve bot activity' });
-=======
     return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: error.message });
->>>>>>> origin/janitor/code-health-activity-logger-8768188016948875412
-=======
-
-    logger.error('Failed to retrieve bot activity', { id: req.params.id, error: error.message });
-    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: 'Failed to retrieve bot activity' });
->>>>>>> origin/fix-anomaly-route-types-3952225614007405228
   }
 });
 

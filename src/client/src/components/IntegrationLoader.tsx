@@ -67,17 +67,14 @@ export class IntegrationLoader {
       // Get list of integration directories
       const integrations = await this.getIntegrationDirectories();
 
-      const integrationPromises = integrations.map(async (integrationId) => {
+      for (const integrationId of integrations) {
         try {
-          return await this.loadIntegrationComponents(integrationId);
+          const components = await this.loadIntegrationComponents(integrationId);
+          allComponents.push(...components);
         } catch (error) {
-          Logger.warn(`Failed to load components for integration ${integrationId}:`, error);
-          return [];
+          console.warn(`Failed to load components for integration ${integrationId}:`, error);
         }
-      });
-
-      const results = await Promise.all(integrationPromises);
-      results.forEach((components) => allComponents.push(...components));
+      }
     } catch (error) {
       console.error('Failed to discover integrations:', error);
     }
@@ -114,33 +111,24 @@ export class IntegrationLoader {
       const manifest = await this.loadIntegrationManifest(integrationId);
 
       if (manifest.ui?.components) {
-        const componentPromises = Object.entries(manifest.ui.components).map(
-          async ([componentId, componentInfo]) => {
-            try {
-              const component = await this.loadComponent(integrationId, componentInfo.path);
+        for (const [componentId, componentInfo] of Object.entries(manifest.ui.components)) {
+          try {
+            const component = await this.loadComponent(integrationId, componentInfo.path);
 
-              return {
-                id: `${integrationId}.${componentId}`,
-                name: componentInfo.name,
-                description: componentInfo.description,
-                category: manifest.category,
-                component,
-                enabled: manifest.enabled,
-                requiredProviders: manifest.requiredProviders,
-                icon: componentInfo.icon,
-              };
-            } catch (componentError) {
-              Logger.warn(
-                `Failed to load component ${componentId} for integration ${integrationId}:`,
-                componentError,
-              );
-              return null;
-            }
-          },
-        );
-
-        const loadedResults = await Promise.all(componentPromises);
-        components.push(...loadedResults.filter((c): c is IntegrationUIComponent => c !== null));
+            components.push({
+              id: `${integrationId}.${componentId}`,
+              name: componentInfo.name,
+              description: componentInfo.description,
+              category: manifest.category,
+              component,
+              enabled: manifest.enabled,
+              requiredProviders: manifest.requiredProviders,
+              icon: componentInfo.icon,
+            });
+          } catch (componentError) {
+            console.warn(`Failed to load component ${componentId} for integration ${integrationId}:`, componentError);
+          }
+        }
       }
 
       // If no manifest exists, try to auto-discover components
@@ -221,27 +209,23 @@ export class IntegrationLoader {
         'Status',
       ];
 
-      const discoveryPromises = commonComponentPaths.map(async (componentPath) => {
+      for (const componentPath of commonComponentPaths) {
         try {
           const component = await this.loadComponent(integrationId, componentPath);
 
-          return {
+          components.push({
             id: `${integrationId}.${componentPath.split('/').pop()}`,
             name: `${this.capitalizeFirst(integrationId)} ${componentPath.split('/').pop()}`,
             description: `${this.capitalizeFirst(integrationId)} ${componentPath.split('/').pop()} component`,
             category: 'bot',
             component,
             enabled: true,
-          };
+          });
         } catch (_componentError) {
           // Component doesn't exist, skip it
           logger.debug(`Component ${componentPath} not found for integration ${integrationId}`);
-          return null;
         }
-      });
-
-      const discoveredResults = await Promise.all(discoveryPromises);
-      components.push(...discoveredResults.filter((c): c is IntegrationUIComponent => c !== null));
+      }
 
     } catch (error) {
       console.warn(`Failed to auto-discover components for integration ${integrationId}:`, error);

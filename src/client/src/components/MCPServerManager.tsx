@@ -1,15 +1,15 @@
-import React, { useEffect, useState } from 'react';
-import {
-  ArrowPathIcon,
-  LinkIcon,
-  PlusIcon,
-  WrenchScrewdriverIcon,
-} from '@heroicons/react/24/outline';
+import React, { useState, useEffect } from 'react';
+import Button from './DaisyUI/Button';
+import Modal from './DaisyUI/Modal';
+import Card from './DaisyUI/Card';
 import { Alert } from './DaisyUI/Alert';
 import Badge from './DaisyUI/Badge';
-import Button from './DaisyUI/Button';
-import Card from './DaisyUI/Card';
-import Modal from './DaisyUI/Modal';
+import {
+  PlusIcon,
+  LinkIcon,
+  ArrowPathIcon,
+  WrenchScrewdriverIcon,
+} from '@heroicons/react/24/outline';
 
 interface MCPServer {
   name: string;
@@ -33,9 +33,7 @@ const getAuthHeaders = (): Record<string, string> => {
       const parsed = JSON.parse(stored) as { accessToken?: string };
       if (parsed.accessToken) headers['Authorization'] = `Bearer ${parsed.accessToken}`;
     }
-  } catch {
-    /* ignore */
-  }
+  } catch { /* ignore */ }
   return headers;
 };
 
@@ -57,33 +55,21 @@ const MCPServerManager: React.FC = () => {
       setLoading(true);
       setError(null);
       const response = await fetch('/api/admin/mcp-servers', { headers: getAuthHeaders() });
-      if (!response.ok) {
-        throw new Error('Failed to fetch MCP servers');
-      }
+      if (!response.ok) { throw new Error('Failed to fetch MCP servers'); }
       const data = await response.json();
 
       const serverList: MCPServer[] = [];
       if (data.servers) {
         Object.entries(data.servers).forEach(([name, server]: [string, unknown]) => {
           const serverObj = server as { serverUrl?: string; apiKey?: string };
-          serverList.push({
-            name,
-            serverUrl: serverObj.serverUrl || '',
-            apiKey: serverObj.apiKey || '',
-            connected: true,
-          });
+          serverList.push({ name, serverUrl: serverObj.serverUrl || '', apiKey: serverObj.apiKey || '', connected: true });
         });
       }
       if (data.configurations) {
         data.configurations.forEach((config: unknown) => {
           const configObj = config as { name?: string; serverUrl?: string; apiKey?: string };
-          if (!serverList.find((s) => s.name === configObj.name) && configObj.name) {
-            serverList.push({
-              name: configObj.name,
-              serverUrl: configObj.serverUrl || '',
-              apiKey: configObj.apiKey || '',
-              connected: false,
-            });
+          if (!serverList.find(s => s.name === configObj.name) && configObj.name) {
+            serverList.push({ name: configObj.name, serverUrl: configObj.serverUrl || '', apiKey: configObj.apiKey || '', connected: false });
           }
         });
       }
@@ -95,9 +81,7 @@ const MCPServerManager: React.FC = () => {
     }
   };
 
-  useEffect(() => {
-    fetchServers();
-  }, []);
+  useEffect(() => { fetchServers(); }, []);
 
   const handleConnectServer = async () => {
     try {
@@ -106,9 +90,7 @@ const MCPServerManager: React.FC = () => {
         headers: getAuthHeaders(),
         body: JSON.stringify(formData),
       });
-      if (!response.ok) {
-        throw new Error('Failed to connect to MCP server');
-      }
+      if (!response.ok) { throw new Error('Failed to connect to MCP server'); }
       setToastMessage('MCP server connected successfully');
       setToastType('success');
       setConnectDialogOpen(false);
@@ -121,18 +103,14 @@ const MCPServerManager: React.FC = () => {
   };
 
   const handleDisconnectServer = async (serverName: string) => {
-    if (!confirm(`Disconnect from "${serverName}"?`)) {
-      return;
-    }
+    if (!confirm(`Disconnect from "${serverName}"?`)) { return; }
     try {
       const response = await fetch('/api/admin/mcp-servers/disconnect', {
         method: 'POST',
         headers: getAuthHeaders(),
         body: JSON.stringify({ name: serverName }),
       });
-      if (!response.ok) {
-        throw new Error('Failed to disconnect');
-      }
+      if (!response.ok) { throw new Error('Failed to disconnect'); }
       setToastMessage('MCP server disconnected');
       setToastType('success');
       fetchServers();
@@ -145,12 +123,8 @@ const MCPServerManager: React.FC = () => {
   const handleViewTools = async (server: MCPServer) => {
     setSelectedServer(server);
     try {
-      const response = await fetch(`/api/admin/mcp-servers/${server.name}/tools`, {
-        headers: getAuthHeaders(),
-      });
-      if (!response.ok) {
-        throw new Error('Failed to fetch tools');
-      }
+      const response = await fetch(`/api/admin/mcp-servers/${server.name}/tools`, { headers: getAuthHeaders() });
+      if (!response.ok) { throw new Error('Failed to fetch tools'); }
       const data = await response.json();
       setServerTools(data.tools || []);
       setToolsDialogOpen(true);
@@ -161,11 +135,7 @@ const MCPServerManager: React.FC = () => {
   };
 
   if (loading) {
-    return (
-      <div className="flex justify-center items-center min-h-[200px]">
-        <span className="loading loading-spinner loading-lg"></span>
-      </div>
-    );
+    return <div className="flex justify-center items-center min-h-[200px]"><span className="loading loading-spinner loading-lg"></span></div>;
   }
 
   return (
@@ -176,23 +146,8 @@ const MCPServerManager: React.FC = () => {
           <h2 className="text-2xl font-bold">MCP Server Management</h2>
         </div>
         <div className="flex gap-2">
-          <Button
-            variant="ghost"
-            onClick={fetchServers}
-            startIcon={<ArrowPathIcon className="w-5 h-5" />}
-          >
-            Refresh
-          </Button>
-          <Button
-            variant="primary"
-            onClick={() => {
-              setFormData({ name: '', serverUrl: '', apiKey: '' });
-              setConnectDialogOpen(true);
-            }}
-            startIcon={<PlusIcon className="w-5 h-5" />}
-          >
-            Connect Server
-          </Button>
+          <Button variant="ghost" onClick={fetchServers} startIcon={<ArrowPathIcon className="w-5 h-5" />}>Refresh</Button>
+          <Button variant="primary" onClick={() => { setFormData({ name: '', serverUrl: '', apiKey: '' }); setConnectDialogOpen(true); }} startIcon={<PlusIcon className="w-5 h-5" />}>Connect Server</Button>
         </div>
       </div>
 
@@ -201,45 +156,18 @@ const MCPServerManager: React.FC = () => {
       <div className="overflow-x-auto">
         <table className="table w-full">
           <thead>
-            <tr>
-              <th>Name</th>
-              <th>Server URL</th>
-              <th>Status</th>
-              <th>Actions</th>
-            </tr>
+            <tr><th>Name</th><th>Server URL</th><th>Status</th><th>Actions</th></tr>
           </thead>
           <tbody>
-            {servers.map((server) => (
+            {servers.map(server => (
               <tr key={server.name} className="hover">
-                <td>
-                  <div className="flex items-center gap-2">
-                    <WrenchScrewdriverIcon className="w-5 h-5 text-base-content/70" />
-                    <span className="font-medium">{server.name}</span>
-                  </div>
-                </td>
-                <td>
-                  <span className="font-mono text-sm">{server.serverUrl}</span>
-                </td>
-                <td>
-                  <Badge variant={server.connected ? 'success' : 'secondary'}>
-                    {server.connected ? 'Connected' : 'Disconnected'}
-                  </Badge>
-                </td>
+                <td><div className="flex items-center gap-2"><WrenchScrewdriverIcon className="w-5 h-5 text-base-content/70" /><span className="font-medium">{server.name}</span></div></td>
+                <td><span className="font-mono text-sm">{server.serverUrl}</span></td>
+                <td><Badge variant={server.connected ? 'success' : 'secondary'}>{server.connected ? 'Connected' : 'Disconnected'}</Badge></td>
                 <td>
                   <div className="flex gap-2">
-                    {server.connected && (
-                      <Button size="sm" variant="ghost" onClick={() => handleViewTools(server)}>
-                        <WrenchScrewdriverIcon className="w-4 h-4" />
-                      </Button>
-                    )}
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      className="text-error"
-                      onClick={() => handleDisconnectServer(server.name)}
-                    >
-                      <LinkIcon className="w-4 h-4" />
-                    </Button>
+                    {server.connected && <Button size="sm" variant="ghost" onClick={() => handleViewTools(server)}><WrenchScrewdriverIcon className="w-4 h-4" /></Button>}
+                    <Button size="sm" variant="ghost" className="text-error" onClick={() => handleDisconnectServer(server.name)}><LinkIcon className="w-4 h-4" /></Button>
                   </div>
                 </td>
               </tr>
@@ -248,74 +176,36 @@ const MCPServerManager: React.FC = () => {
         </table>
       </div>
 
-      <Modal
-        isOpen={connectDialogOpen}
-        onClose={() => setConnectDialogOpen(false)}
-        title="Connect to MCP Server"
-      >
+      <Modal isOpen={connectDialogOpen} onClose={() => setConnectDialogOpen(false)} title="Connect to MCP Server">
         <div className="space-y-4">
           <div className="form-control">
-            <label className="label">
-              <span className="label-text">Server Name</span>
-            </label>
-            <input
-              type="text"
-              className="input input-bordered"
-              value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              required
-            />
+            <label className="label"><span className="label-text">Server Name</span></label>
+            <input type="text" className="input input-bordered" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} required />
           </div>
           <div className="form-control">
-            <label className="label">
-              <span className="label-text">Server URL</span>
-            </label>
-            <input
-              type="text"
-              className="input input-bordered"
-              value={formData.serverUrl}
-              onChange={(e) => setFormData({ ...formData, serverUrl: e.target.value })}
-              required
-            />
-            <label className="label">
-              <span className="label-text-alt">The URL of the MCP server</span>
-            </label>
+            <label className="label"><span className="label-text">Server URL</span></label>
+            <input type="text" className="input input-bordered" value={formData.serverUrl} onChange={e => setFormData({ ...formData, serverUrl: e.target.value })} required />
+            <label className="label"><span className="label-text-alt">The URL of the MCP server</span></label>
           </div>
           <div className="form-control">
-            <label className="label">
-              <span className="label-text">API Key (Optional)</span>
-            </label>
-            <input
-              type="password"
-              className="input input-bordered"
-              value={formData.apiKey}
-              onChange={(e) => setFormData({ ...formData, apiKey: e.target.value })}
-            />
+            <label className="label"><span className="label-text">API Key (Optional)</span></label>
+            <input type="password" className="input input-bordered" value={formData.apiKey} onChange={e => setFormData({ ...formData, apiKey: e.target.value })} />
           </div>
           <div className="modal-action">
             <Button onClick={() => setConnectDialogOpen(false)}>Cancel</Button>
-            <Button variant="primary" onClick={handleConnectServer}>
-              Connect Server
-            </Button>
+            <Button variant="primary" onClick={handleConnectServer}>Connect Server</Button>
           </div>
         </div>
       </Modal>
 
-      <Modal
-        isOpen={toolsDialogOpen}
-        onClose={() => setToolsDialogOpen(false)}
-        title={`Tools - ${selectedServer?.name}`}
-      >
+      <Modal isOpen={toolsDialogOpen} onClose={() => setToolsDialogOpen(false)} title={`Tools - ${selectedServer?.name}`}>
         <div className="py-4">
           {serverTools.length > 0 ? (
             <ul className="menu bg-base-200 w-full rounded-box">
-              {serverTools.map((tool) => (
+              {serverTools.map(tool => (
                 <li key={tool.name}>
                   <div className="flex flex-col items-start gap-1 p-4">
-                    <div className="flex items-center gap-2 font-bold">
-                      <WrenchScrewdriverIcon className="w-4 h-4" />
-                      {tool.name}
-                    </div>
+                    <div className="flex items-center gap-2 font-bold"><WrenchScrewdriverIcon className="w-4 h-4" />{tool.name}</div>
                     <p className="text-sm opacity-70">{tool.description}</p>
                   </div>
                 </li>
@@ -325,22 +215,14 @@ const MCPServerManager: React.FC = () => {
             <p className="text-base-content/70">No tools available for this server.</p>
           )}
         </div>
-        <div className="modal-action">
-          <Button onClick={() => setToolsDialogOpen(false)}>Close</Button>
-        </div>
+        <div className="modal-action"><Button onClick={() => setToolsDialogOpen(false)}>Close</Button></div>
       </Modal>
 
       {toastMessage && (
         <div className="toast toast-bottom toast-center z-50" role="status" aria-live="polite">
           <div className={`alert ${toastType === 'success' ? 'alert-success' : 'alert-error'}`}>
             <span>{toastMessage}</span>
-            <button
-              className="btn btn-sm btn-ghost"
-              onClick={() => setToastMessage('')}
-              aria-label="Close message"
-            >
-              ✕
-            </button>
+            <button className="btn btn-sm btn-ghost" onClick={() => setToastMessage('')}>✕</button>
           </div>
         </div>
       )}

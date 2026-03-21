@@ -3,7 +3,6 @@ import { UserConfigStore } from './UserConfigStore';
 import { WebSocketService } from '@src/server/services/WebSocketService';
 import { ErrorUtils } from '@src/types/errors';
 import type { BotOverride } from '@src/types/config';
-import crypto from 'crypto';
 import Debug from 'debug';
 import fs from 'fs';
 import path from 'path';
@@ -129,7 +128,7 @@ export class HotReloadManager {
     this.isReloading = true;
 
     try {
-      const changeId = `change_${Date.now()}_${crypto.randomUUID()}`;
+      const changeId = `change_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
       const fullChange: ConfigurationChange = {
         ...change,
         id: changeId,
@@ -274,7 +273,7 @@ export class HotReloadManager {
   private async createRollbackSnapshot(change: ConfigurationChange): Promise<string | null> {
     try {
       const manager = BotConfigurationManager.getInstance();
-      const snapshotId = `rollback_${Date.now()}_${crypto.randomUUID()}`;
+      const snapshotId = `rollback_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
       if (change.botName) {
         // Single bot snapshot

@@ -205,20 +205,28 @@ archive/
 .specify/
 .kilocode/
 AGENTS.md
-\nconfig/.key
 
 # Sensitive config files - never commit
 config/.key
 config/secure/
+config/backups/
 config/providers/
+config/user/
 scripts/benchmarks/temp-import-bench.json
 
 # Development artifacts
 .letta/
-config/backups/
+patch_*.py
+after-fix.*
+*.patch.py
 .pending_prs.json
 current_prs.json
 patch_yml2.js
 scratch.js
 scripts/merge_pr.py
 package-lock.json
+
+# Compiled TypeScript artifacts in src/ (tsc output)
+src/**/*.js
+src/**/*.d.ts
+src/**/*.d.ts.map

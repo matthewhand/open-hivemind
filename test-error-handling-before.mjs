@@ -19,7 +19,7 @@ import { chromium } from 'playwright';
     localStorage.setItem('auth_user', user);
   }, { token: fakeToken, user: fakeUser });
 
-  await page.goto('http://localhost:3030/admin/bots', { waitUntil: 'domcontentloaded' });
+  await page.goto('http://localhost:5173/admin/bots', { waitUntil: 'domcontentloaded' });
   await page.waitForTimeout(4000);
 
   await page.screenshot({ path: 'before-click-bots.png' });
@@ -31,9 +31,10 @@ import { chromium } from 'playwright';
     body: JSON.stringify({ error: 'Internal Server Error' })
   }));
 
-  await page.goto('http://localhost:5173/admin/bots', { waitUntil: 'domcontentloaded' });
-  await page.waitForTimeout(3000); // Wait for animations
-  await page.screenshot({ path: 'after-fix-bots-error.png' });
+  await page.reload({ waitUntil: 'domcontentloaded' });
+  await page.waitForTimeout(3000);
+
+  await page.screenshot({ path: 'after-fix-sidebar-error.png' });
 
   await browser.close();
 })();

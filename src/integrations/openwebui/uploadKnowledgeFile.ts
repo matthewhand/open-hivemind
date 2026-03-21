@@ -1,7 +1,7 @@
 import fs from 'fs';
 import axios from 'axios';
 import Debug from 'debug';
-import { isSafeUrl } from '../../utils/ssrfGuard';
+import { isSafeUrl } from '@src/utils/ssrfGuard';
 import openWebUIConfig from './openWebUIConfig';
 import { getSessionKey } from './sessionManager';
 

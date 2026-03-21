@@ -3,14 +3,14 @@ import { BotConfigurationManager } from '../../config/BotConfigurationManager';
 import { getLlmDefaultStatus } from '../../config/llmDefaultStatus';
 import { CONFIG_LIMITS } from '../../types/config';
 
-export interface ValidationResult {
+interface ValidationResult {
   isValid: boolean;
   errors: string[];
   warnings: string[];
   suggestions: string[];
 }
 
-export interface TestResult {
+interface TestResult {
   success: boolean;
   message: string;
   details?: any;
@@ -92,7 +92,6 @@ export interface BotConfig {
   createdAt?: string;
   updatedAt?: string;
   isActive?: boolean;
-  enabled?: boolean;
 }
 
 export class ConfigurationValidator {

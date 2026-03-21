@@ -7,7 +7,6 @@ import {
   NetworkError,
   TimeoutError,
 } from '@src/types/errorClasses';
-import { isSafeUrl } from '@src/utils/ssrfGuard';
 import openaiConfig from '@config/openaiConfig';
 import type { ILlmProvider } from '@llm/interfaces/ILlmProvider';
 import type { IMessage } from '@message/interfaces/IMessage';

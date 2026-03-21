@@ -69,7 +69,7 @@ jobs:
     - name: Install dependencies
       run: |
         cd webui/client
-        pnpm install --no-frozen-lockfile
+        pnpm install
 
     - name: Install Playwright Browsers
       run: |

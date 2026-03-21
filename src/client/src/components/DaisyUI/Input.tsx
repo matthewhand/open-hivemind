@@ -106,7 +106,6 @@ export const Input = memo(forwardRef<HTMLInputElement, InputProps>(
                 type="button"
                 className="btn btn-ghost btn-xs btn-circle text-base-content/60 hover:text-base-content focus:outline-none focus-visible:ring-2 focus-visible:ring-primary pointer-events-auto"
                 onClick={() => setShowPassword(!showPassword)}
-                onMouseDown={(e) => e.preventDefault()}
                 aria-label={showPassword ? 'Hide password' : 'Show password'}
               >
                 {showPassword ? (

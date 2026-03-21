@@ -1,7 +1,5 @@
-import 'reflect-metadata';
 import fs from 'fs/promises';
 import path from 'path';
-import { injectable, singleton } from 'tsyringe';
 import Logger from '@common/logger';
 
 const appLogger = Logger.withContext('GreetingStateManager');
@@ -14,15 +12,21 @@ type GreetingState = Record<
   }
 >;
 
-@singleton()
-@injectable()
 export class GreetingStateManager {
+  private static instance: GreetingStateManager;
   private stateFilePath: string;
   private state: GreetingState = {};
   private initialized = false;
 
   public constructor() {
     this.stateFilePath = path.join(process.cwd(), 'data', 'greeting-state.json');
+  }
+
+  public static getInstance(): GreetingStateManager {
+    if (!GreetingStateManager.instance) {
+      GreetingStateManager.instance = new GreetingStateManager();
+    }
+    return GreetingStateManager.instance;
   }
 
   /**

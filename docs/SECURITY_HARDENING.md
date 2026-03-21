@@ -309,9 +309,7 @@ const getAllowedOrigins = (): string[] => {
     default:
       // Development: Allow localhost variants
       return [
-        'http://localhost:3000',
         'http://localhost:3028',
-        'http://127.0.0.1:3000',
         'http://127.0.0.1:3028'
       ];
   }

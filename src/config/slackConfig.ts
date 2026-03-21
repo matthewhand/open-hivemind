@@ -122,14 +122,15 @@ try {
   slackConfig.loadFile(configPath);
   debug(`Successfully loaded Slack config from ${configPath}`);
 } catch (error: any) {
-  if (error.code !== 'ENOENT') {
-    debug(`Error reading slack config from ${configPath}:`, error.message);
+  if (error.code === 'ENOENT') {
+    debug(`Warning: Could not load slackConfig from ${configPath}, file not found. Using defaults and env vars.`);
   } else {
-    debug(`Slack config file not found at ${configPath}, using environment variables and defaults`);
+    // Re-throw parsing errors
+    throw error;
   }
 }
 
-// Validation must happen outside the generic try-catch to fail fast if config is malformed
+// Validate configuration (fail fast if invalid)
 slackConfig.validate({ allowed: 'strict' });
 
 export default slackConfig;

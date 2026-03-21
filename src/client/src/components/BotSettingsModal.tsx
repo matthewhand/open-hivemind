@@ -6,11 +6,7 @@ import {
 import { Bot as ApiBot, Persona as ApiPersona } from '../services/api';
 
 // Extended Bot type with UI-specific fields
-<<<<<<< HEAD
 interface BotConfig extends ApiBot {
-=======
-type BotConfig = BaseBotConfig & {
->>>>>>> origin/docco-update-screenshots-6307953588415915921
     id: string; // BotsPage ensures ID is present
     envOverrides?: any;
     provider?: string; // Legacy/Aliased field

@@ -29,7 +29,7 @@ jobs:
           cache: 'pnpm'
 
       - name: Install dependencies
-        run: pnpm install --no-frozen-lockfile
+        run: pnpm install
 
       - name: Build project
         run: pnpm run build
@@ -40,7 +40,7 @@ jobs:
           echo "=== WebSocket tests currently disabled due to stalling issues ==="
           echo "=== Files renamed to .disabled to prevent CI stalls ==="
           # If we need to test them, run with extreme timeout limits
-          # NODE_CONFIG_DIR=config/test NODE_ENV=test node -r dotenv/config ./node_modules/jest/bin/jest.js \
+          # NODE_CONFIG_DIR=config/test NODE_ENV=test node -r dotenv/config node_modules/.bin/jest \
           #   tests/unit/webui/websocket.test.ts.disabled \
           #   --testTimeout=5000 \
           #   --verbose \
@@ -69,14 +69,14 @@ jobs:
           cache: 'pnpm'
 
       - name: Install dependencies
-        run: pnpm install --no-frozen-lockfile
+        run: pnpm install
 
       - name: Build project
         run: pnpm run build
 
       - name: Run E2E tests
         run: |
-          NODE_CONFIG_DIR=config/test NODE_ENV=test node -r dotenv/config ./node_modules/jest/bin/jest.js \
+          NODE_CONFIG_DIR=config/test NODE_ENV=test node -r dotenv/config node_modules/.bin/jest \
             tests/e2e/ \
             --testTimeout=30000 \
             --verbose \
@@ -104,14 +104,14 @@ jobs:
           cache: 'pnpm'
 
       - name: Install dependencies
-        run: pnpm install --no-frozen-lockfile
+        run: pnpm install
 
       - name: Build project
         run: pnpm run build
 
       - name: Run admin tests
         run: |
-          NODE_CONFIG_DIR=config/test NODE_ENV=test node -r dotenv/config ./node_modules/jest/bin/jest.js \
+          NODE_CONFIG_DIR=config/test NODE_ENV=test node -r dotenv/config node_modules/.bin/jest \
             tests/admin/ \
             --testTimeout=15000 \
             --verbose \

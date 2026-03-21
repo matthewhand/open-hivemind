@@ -11,7 +11,7 @@ export interface User {
   createdAt: string;
   lastLogin: string | null;
   passwordHash?: string; // Only included when needed for auth operations
-  tenantId?: string; // Used for multi-tenant applications
+  tenantId?: string; // Optional tenant ID for multi-tenant deployments
 }
 
 export interface AuthToken {
@@ -53,6 +53,7 @@ export interface AuthMiddlewareRequest<
   body: ReqBody;
   params: Params;
   query: ReqQuery;
+  file?: any;
 }
 
 export interface PermissionCheck {

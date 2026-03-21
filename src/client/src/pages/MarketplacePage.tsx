@@ -14,15 +14,7 @@ import {
   MessageCircle as MessageIcon,
   Database as MemoryIcon,
   Wrench as ToolIcon,
-<<<<<<< HEAD
-  Github as GithubIcon,
-=======
-
-  Github as GithubIcon,
-
   Github as GitHubIcon,
-
->>>>>>> origin/fix-anomaly-route-types-3952225614007405228
   AlertCircle as AlertIcon,
   CheckCircle as CheckIcon,
   X as CloseIcon,
@@ -447,7 +439,7 @@ const MarketplacePage: React.FC = () => {
                   <span className="loading loading-spinner loading-sm"></span>
                 ) : (
                   <>
-                    <GithubIcon className="w-4 h-4 mr-1" />
+                    <GitHubIcon className="w-4 h-4 mr-1" />
                     Install
                   </>
                 )}

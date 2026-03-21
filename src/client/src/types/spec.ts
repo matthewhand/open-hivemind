@@ -3,7 +3,7 @@ export interface Spec {
   id: string;
   topic: string;
   author: string;
-  timestamp: string;
+  date: string;
   tags: string[];
   content: string;
   version?: string;

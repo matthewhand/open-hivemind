@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Card from './DaisyUI/Card';
 import Badge from './DaisyUI/Badge';
 import { Alert } from './DaisyUI/Alert';
@@ -20,7 +20,6 @@ import {
 import { apiService } from '../services/api';
 import type { Socket } from 'socket.io-client';
 import io from 'socket.io-client';
-import Logger from '../utils/logger';
 
 interface EndpointStatus {
   id: string;
@@ -74,24 +73,27 @@ const ApiStatusMonitor: React.FC<ApiStatusMonitorProps> = ({
       setLastRefresh(new Date());
       setLoading(false);
     } catch (error) {
-      Logger.error('Failed to fetch API status:', error);
+      console.error('Failed to fetch API status:', error);
       setLoading(false);
     }
   }, []);
 
-  useEffect(() => {
-    fetchApiStatus();
-
+  const setupWebSocket = useCallback(() => {
     const newSocket = io({
       path: '/webui/socket.io',
+      reconnection: true,
+      reconnectionAttempts: Infinity,
+      reconnectionDelay: 1000,
+      reconnectionDelayMax: 5000,
+      randomizationFactor: 0.5,
     });
 
     newSocket.on('connect', () => {
-      Logger.log('Connected to WebSocket for API monitoring');
+      console.log('Connected to WebSocket for API monitoring');
     });
 
     newSocket.on('reconnect_attempt', (attempt) => {
-      Logger.log(`API Monitoring WebSocket reconnect attempt ${attempt}`);
+      console.log(`API Monitoring WebSocket reconnect attempt ${attempt}`);
     });
 
     newSocket.on('api_status_update', (data: { endpoints: EndpointStatus[]; overall: any; timestamp: string }) => {
@@ -101,10 +103,8 @@ const ApiStatusMonitor: React.FC<ApiStatusMonitorProps> = ({
 
     newSocket.on('api_health_check_result', (data: { result: any; timestamp: string }) => {
       // Update specific endpoint status
-      setApiStatus((currentStatus) => {
-        if (!currentStatus) return currentStatus;
-
-        const updatedEndpoints = currentStatus.endpoints.map(endpoint => {
+      if (apiStatus) {
+        const updatedEndpoints = apiStatus.endpoints.map(endpoint => {
           if (endpoint.id === data.result.endpointId) {
             return {
               ...endpoint,
@@ -117,33 +117,34 @@ const ApiStatusMonitor: React.FC<ApiStatusMonitorProps> = ({
           }
           return endpoint;
         });
-
-        return {
-          ...currentStatus,
+        setApiStatus({
+          ...apiStatus,
           endpoints: updatedEndpoints,
           timestamp: data.timestamp,
-        };
-      });
+        });
+      }
     });
 
     newSocket.on('disconnect', () => {
-      Logger.log('Disconnected from WebSocket');
+      console.log('Disconnected from WebSocket');
     });
 
     setSocket(newSocket);
 
-    let interval: NodeJS.Timeout | undefined;
-    if (refreshInterval > 0) {
-      interval = setInterval(fetchApiStatus, refreshInterval);
-    }
-
     return () => {
-      newSocket.disconnect();
-      if (interval) {
-        clearInterval(interval);
-      }
+      newSocket.close();
     };
-  }, [fetchApiStatus, refreshInterval]);
+  }, [apiStatus]);
+
+  useEffect(() => {
+    fetchApiStatus();
+    setupWebSocket();
+
+    if (refreshInterval > 0) {
+      const interval = setInterval(fetchApiStatus, refreshInterval);
+      return () => clearInterval(interval);
+    }
+  }, [fetchApiStatus, setupWebSocket, refreshInterval]);
 
   const getStatusIcon = (status: string) => {
     const className = 'w-5 h-5';
@@ -197,7 +198,7 @@ const ApiStatusMonitor: React.FC<ApiStatusMonitorProps> = ({
       await apiService.startApiMonitoring();
       setMonitoringActive(true);
     } catch (error) {
-      Logger.error('Failed to start monitoring:', error);
+      console.error('Failed to start monitoring:', error);
     }
   };
 
@@ -206,13 +207,13 @@ const ApiStatusMonitor: React.FC<ApiStatusMonitorProps> = ({
       await apiService.stopApiMonitoring();
       setMonitoringActive(false);
     } catch (error) {
-      Logger.error('Failed to stop monitoring:', error);
+      console.error('Failed to stop monitoring:', error);
     }
   };
 
-  const handleRefresh = useCallback(() => {
+  const handleRefresh = () => {
     fetchApiStatus();
-  }, [fetchApiStatus]);
+  };
 
   if (loading) {
     return (
@@ -240,32 +241,21 @@ const ApiStatusMonitor: React.FC<ApiStatusMonitorProps> = ({
     );
   }
 
-  // ⚡ Bolt Optimization: Calculate metrics in a single pass instead of 5 separate .reduce() calls
-  const metrics = useMemo(() => {
-    let totalChecks = 0;
-    let successfulChecks = 0;
-    let totalResponseTime = 0;
-    const len = apiStatus.endpoints.length;
-
-    for (let i = 0; i < len; i++) {
-      const ep = apiStatus.endpoints[i];
-      totalChecks += ep.totalChecks;
-      successfulChecks += ep.successfulChecks;
-      totalResponseTime += ep.averageResponseTime;
-    }
-
-    const averageResponseTime = len > 0 ? totalResponseTime / len : 0;
-    const successRate = totalChecks > 0 ? Math.round((successfulChecks / totalChecks) * 100) : 0;
-
-    return {
-      averageResponseTime,
-      totalChecks,
-      successfulChecks,
-      successRate,
-    };
+  // Combine 6 separate O(N) reduce passes into a single O(N) pass
+  // to calculate api monitoring statistics and prevent unnecessary O(N) re-computations
+  const { totalAvgResponseTime, totalChecks, successfulChecks } = React.useMemo(() => {
+    return apiStatus.endpoints.reduce(
+      (acc, ep) => {
+        acc.totalAvgResponseTime += ep.averageResponseTime || 0;
+        acc.totalChecks += ep.totalChecks || 0;
+        acc.successfulChecks += ep.successfulChecks || 0;
+        return acc;
+      },
+      { totalAvgResponseTime: 0, totalChecks: 0, successfulChecks: 0 }
+    );
   }, [apiStatus.endpoints]);
 
-  const accordionItems = [
+  const accordionItems = React.useMemo(() => [
     {
       id: 'monitoring-details',
       title: 'Monitoring Details',
@@ -277,16 +267,19 @@ const ApiStatusMonitor: React.FC<ApiStatusMonitorProps> = ({
               Performance Metrics
             </h4>
             <p className="text-sm">
-              • Average Response Time: {formatResponseTime(metrics.averageResponseTime)}
+              • Average Response Time: {formatResponseTime(
+                totalAvgResponseTime / (apiStatus.endpoints.length || 1)
+              )}
             </p>
             <p className="text-sm">
-              • Total Checks: {metrics.totalChecks}
+              • Total Checks: {totalChecks}
             </p>
             <p className="text-sm">
-              • Successful Checks: {metrics.successfulChecks}
+              • Successful Checks: {successfulChecks}
             </p>
             <p className="text-sm">
-              • Overall Success Rate: {metrics.successRate}%
+              • Overall Success Rate: {totalChecks > 0 ?
+                Math.round((successfulChecks / totalChecks) * 100) : 0}%
             </p>
           </div>
           <div className="min-w-[300px] flex-1">
@@ -306,7 +299,7 @@ const ApiStatusMonitor: React.FC<ApiStatusMonitorProps> = ({
         </div>
       ),
     },
-  ];
+  ], [apiStatus.timestamp, apiStatus.endpoints.length, monitoringActive, socket?.connected, totalAvgResponseTime, totalChecks, successfulChecks]);
 
   return (
     <Card>

@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, memo } from 'react';
+import React, { useRef, useEffect } from 'react';
 
 export interface CheckboxProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'size'> {
   /** The label text to display next to the checkbox */
@@ -17,8 +17,7 @@ export interface CheckboxProps extends Omit<React.InputHTMLAttributes<HTMLInputE
   onChange?: (event: React.ChangeEvent<HTMLInputElement>) => void;
 }
 
-// ⚡ Bolt Optimization: Added React.memo() to prevent unnecessary re-renders of this core primitive UI component.
-export const Checkbox = memo<CheckboxProps>(({
+export const Checkbox: React.FC<CheckboxProps> = ({
   label,
   children,
   variant,
@@ -61,7 +60,7 @@ export const Checkbox = memo<CheckboxProps>(({
   const variantClass = getVariantClass();
   const sizeClass = getSizeClass();
 
-  const inputId = id || `checkbox-${globalThis.crypto.randomUUID()}`;
+  const inputId = id || `checkbox-${Math.random().toString(36).substr(2, 9)}`;
 
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     // Reset indeterminate state when user interacts with the checkbox
@@ -97,6 +96,6 @@ export const Checkbox = memo<CheckboxProps>(({
       </label>
     </div>
   );
-});
+};
 
 export default Checkbox;

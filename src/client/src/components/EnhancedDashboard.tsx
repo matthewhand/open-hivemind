@@ -1,16 +1,18 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useEffect, useState } from 'react';
+import StatsCards from '../components/DaisyUI/StatsCards';
 import Badge from '../components/DaisyUI/Badge';
 import Button from '../components/DaisyUI/Button';
-import Card from '../components/DaisyUI/Card';
 import DataTable from '../components/DaisyUI/DataTable';
-import Hero from '../components/DaisyUI/Hero';
-import NavbarWithSearch from '../components/DaisyUI/NavbarWithSearch';
-import ProgressBar from '../components/DaisyUI/ProgressBar';
-import StatsCards from '../components/DaisyUI/StatsCards';
 import Timeline from '../components/DaisyUI/Timeline';
-import Tooltip from '../components/DaisyUI/Tooltip';
+import ProgressBar from '../components/DaisyUI/ProgressBar';
 import VisualFeedback from '../components/DaisyUI/VisualFeedback';
-import { apiService, type Bot, type StatusResponse } from '../services/api';
+import NavbarWithSearch from '../components/DaisyUI/NavbarWithSearch';
+import Tooltip from '../components/DaisyUI/Tooltip';
+import Card from '../components/DaisyUI/Card';
+import Hero from '../components/DaisyUI/Hero';
+import { apiService } from '../services/api';
+import type { Bot, StatusResponse } from '../services/api';
 
 interface DashboardStats {
   totalBots: number;
@@ -66,7 +68,7 @@ const EnhancedDashboard: React.FC = () => {
       setBots(botData);
 
       // Calculate stats
-      const activeBots = botData.filter((bot) => bot.status === 'active').length;
+      const activeBots = botData.filter(bot => bot.status === 'active').length;
       const totalMessages = botData.reduce((sum, bot) => sum + (bot.messageCount || 0), 0);
       const totalErrors = botData.reduce((sum, bot) => sum + (bot.errorCount || 0), 0);
 
@@ -81,6 +83,7 @@ const EnhancedDashboard: React.FC = () => {
       setLastUpdated(new Date());
       setToastMessage('Dashboard data refreshed successfully');
       setToastType('success');
+
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to fetch dashboard data';
       setError(errorMessage);
@@ -110,15 +113,14 @@ const EnhancedDashboard: React.FC = () => {
   };
 
   // Filter bots based on search query
-  const filteredBots = bots.filter(
-    (bot) =>
-      bot.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      bot.provider.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      bot.llmProvider.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredBots = bots.filter(bot =>
+    bot.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    bot.provider.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    bot.llmProvider.toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
   // Transform bot data for DataTable
-  const tableData = filteredBots.map((bot) => ({
+  const tableData = filteredBots.map(bot => ({
     id: bot.id,
     name: bot.name,
     status: bot.status,
@@ -168,7 +170,6 @@ const EnhancedDashboard: React.FC = () => {
                     className="btn btn-ghost btn-sm"
                     onClick={handleRefresh}
                     disabled={isLoading}
-                    aria-label="Refresh dashboard data"
                   >
                     🔄
                   </button>
@@ -193,15 +194,10 @@ const EnhancedDashboard: React.FC = () => {
             <Button variant="primary" size="lg" onClick={handleRefresh}>
               Refresh Dashboard
             </Button>
-            <Button
-              variant="secondary"
-              className="btn-outline"
-              size="lg"
-              onClick={() => {
-                setToastMessage('Feature coming soon!');
-                setToastType('info');
-              }}
-            >
+            <Button variant="secondary" className="btn-outline" size="lg" onClick={() => {
+              setToastMessage('Feature coming soon!');
+              setToastType('info');
+            }}>
               Add New Bot
             </Button>
           </div>
@@ -210,8 +206,15 @@ const EnhancedDashboard: React.FC = () => {
       />
 
       <div className="container mx-auto p-6 space-y-6">
+
         {/* Error Display */}
-        {error && <VisualFeedback type="error" message={error} visible={true} />}
+        {error && (
+          <VisualFeedback
+            type="error"
+            message={error}
+            visible={true}
+          />
+        )}
 
         {/* Stats Cards */}
         {stats && (
@@ -222,10 +225,7 @@ const EnhancedDashboard: React.FC = () => {
                 title: 'Total Bots',
                 value: stats.totalBots,
                 icon: '🤖',
-                description:
-                  stats.activeBots === stats.totalBots
-                    ? '100% Active'
-                    : `${Math.round((stats.activeBots / stats.totalBots) * 100)}% Active`,
+                description: stats.activeBots === stats.totalBots ? '100% Active' : `${Math.round((stats.activeBots / stats.totalBots) * 100)}% Active`,
                 color: 'primary',
               },
               {
@@ -273,9 +273,7 @@ const EnhancedDashboard: React.FC = () => {
               <ProgressBar
                 value={stats.totalErrors}
                 max={Math.max(stats.totalMessages / 10, 10)} // Error rate relative to messages
-                color={
-                  stats.totalErrors === 0 ? 'success' : stats.totalErrors < 5 ? 'warning' : 'error'
-                }
+                color={stats.totalErrors === 0 ? 'success' : stats.totalErrors < 5 ? 'warning' : 'error'}
                 showPercentage={false}
                 label={stats.totalErrors === 0 ? 'No errors' : `${stats.totalErrors} errors`}
               />
@@ -288,9 +286,7 @@ const EnhancedDashboard: React.FC = () => {
 
             <Card title="System Health">
               <div className="flex items-center gap-2">
-                <div
-                  className={`badge ${stats.totalErrors === 0 ? 'badge-success' : 'badge-warning'}`}
-                >
+                <div className={`badge ${stats.totalErrors === 0 ? 'badge-success' : 'badge-warning'}`}>
                   {stats.totalErrors === 0 ? 'Healthy' : 'Issues Detected'}
                 </div>
               </div>
@@ -300,17 +296,17 @@ const EnhancedDashboard: React.FC = () => {
 
         {/* Main Content Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
           {/* Bot Table - Takes up 2/3 of the space */}
           <div className="lg:col-span-2">
-            <Card
-              title="Bot Status"
-              actions={
-                <div className="flex gap-2">
-                  <Badge variant="info" text={`${filteredBots.length} bots`} />
-                  {searchQuery && <Badge variant="secondary" text={`Filtered: "${searchQuery}"`} />}
-                </div>
-              }
-            >
+            <Card title="Bot Status" actions={
+              <div className="flex gap-2">
+                <Badge variant="info" text={`${filteredBots.length} bots`} />
+                {searchQuery && (
+                  <Badge variant="secondary" text={`Filtered: "${searchQuery}"`} />
+                )}
+              </div>
+            }>
               {filteredBots.length > 0 ? (
                 <DataTable
                   data={tableData}
@@ -318,20 +314,16 @@ const EnhancedDashboard: React.FC = () => {
                   className="w-full"
                   renderCell={(key, value, row) => {
                     if (key === 'status') {
-                      return (
-                        <Badge
-                          variant={value === 'active' ? 'success' : 'error'}
-                          text={value as string}
-                        />
-                      );
+                      return <Badge
+                        variant={value === 'active' ? 'success' : 'error'}
+                        text={value as string}
+                      />;
                     }
                     if (key === 'connected') {
-                      return (
-                        <Badge
-                          variant={value === 'Yes' ? 'success' : 'error'}
-                          text={value as string}
-                        />
-                      );
+                      return <Badge
+                        variant={value === 'Yes' ? 'success' : 'error'}
+                        text={value as string}
+                      />;
                     }
                     if (key === 'errorCount') {
                       const count = value as number;
@@ -366,26 +358,16 @@ const EnhancedDashboard: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <Card title="Quick Actions">
             <div className="space-y-2">
-              <Button
-                variant="primary"
-                size="sm"
-                className="w-full"
-                onClick={() => {
-                  setToastMessage('Feature coming soon!');
-                  setToastType('info');
-                }}
-              >
+              <Button variant="primary" size="sm" className="w-full" onClick={() => {
+                setToastMessage('Feature coming soon!');
+                setToastType('info');
+              }}>
                 Add New Bot
               </Button>
-              <Button
-                variant="secondary"
-                size="sm"
-                className="w-full"
-                onClick={() => {
-                  setToastMessage('Settings opened!');
-                  setToastType('info');
-                }}
-              >
+              <Button variant="secondary" size="sm" className="w-full" onClick={() => {
+                setToastMessage('Settings opened!');
+                setToastType('info');
+              }}>
                 Configuration
               </Button>
               <Button variant="accent" size="sm" className="w-full" onClick={handleRefresh}>
@@ -407,10 +389,7 @@ const EnhancedDashboard: React.FC = () => {
               {stats && (
                 <div className="flex justify-between">
                   <span>Uptime:</span>
-                  <Badge
-                    variant="success"
-                    text={`${Math.floor(stats.uptime / 3600)}h ${Math.floor((stats.uptime % 3600) / 60)}m`}
-                  />
+                  <Badge variant="success" text={`${Math.floor(stats.uptime / 3600)}h ${Math.floor((stats.uptime % 3600) / 60)}m`} />
                 </div>
               )}
             </div>
@@ -421,17 +400,9 @@ const EnhancedDashboard: React.FC = () => {
       {/* Toast Notifications */}
       {toastMessage && (
         <div className="toast toast-bottom toast-center z-50" role="status" aria-live="polite">
-          <div
-            className={`alert ${toastType === 'success' ? 'alert-success' : toastType === 'error' ? 'alert-error' : toastType === 'warning' ? 'alert-warning' : 'alert-info'}`}
-          >
+          <div className={`alert ${toastType === 'success' ? 'alert-success' : toastType === 'error' ? 'alert-error' : toastType === 'warning' ? 'alert-warning' : 'alert-info'}`}>
             <span>{toastMessage}</span>
-            <button
-              className="btn btn-sm btn-ghost"
-              onClick={() => setToastMessage('')}
-              aria-label="Close message"
-            >
-              ✕
-            </button>
+            <button className="btn btn-sm btn-ghost" onClick={() => setToastMessage('')}>✕</button>
           </div>
         </div>
       )}

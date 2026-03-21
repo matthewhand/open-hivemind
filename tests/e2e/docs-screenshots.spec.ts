@@ -10,7 +10,7 @@ test.describe('Documentation Screenshots', () => {
     await navigateAndWaitReady(page, '/admin/bots');
 
     // Wait for content to load properly
-    await page.waitForSelector('h1:has-text("Bot Management")');
+    await page.waitForSelector('h1:has-text("AI Swarm Management")', { timeout: 10000 });
 
     // Screenshot Bots Page
     await page.screenshot({ path: 'docs/screenshots/bots-page.png', fullPage: true });

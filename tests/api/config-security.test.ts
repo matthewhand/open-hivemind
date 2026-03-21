@@ -38,18 +38,16 @@ jest.mock('../../src/config/UserConfigStore', () => ({
 
 // Mock config files
 const configMocks = [
-  // Note: ollamaConfig removed - no dedicated config file exists
   'messageConfig',
   'llmConfig',
   'discordConfig',
   'slackConfig',
   'openaiConfig',
   'flowiseConfig',
-
+  'ollamaConfig',
   'mattermostConfig',
   'openWebUIConfig',
   'webhookConfig',
-  'telegramConfig',
 ];
 
 configMocks.forEach((cfg) => {

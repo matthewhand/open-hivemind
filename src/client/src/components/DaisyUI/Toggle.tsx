@@ -1,4 +1,4 @@
-import React, { memo } from 'react';
+import React from 'react';
 import classNames from 'classnames';
 
 
@@ -8,8 +8,7 @@ export interface ToggleProps extends Omit<React.InputHTMLAttributes<HTMLInputEle
     color?: 'primary' | 'secondary' | 'accent' | 'success' | 'warning' | 'info' | 'error';
 }
 
-// ⚡ Bolt Optimization: Added React.memo() to prevent unnecessary re-renders of this core primitive UI component.
-const Toggle = memo<ToggleProps>(({
+const Toggle: React.FC<ToggleProps> = ({
   label,
   size = 'md',
   color,
@@ -50,6 +49,6 @@ const Toggle = memo<ToggleProps>(({
   }
 
   return toggleInput;
-});
+};
 
 export default Toggle;

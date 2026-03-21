@@ -1,12 +1,9 @@
 import Debug from 'debug';
 import { Router } from 'express';
-import type { AuthMiddlewareRequest } from '../../auth/types';
 import { DatabaseManager } from '../../database/DatabaseManager';
 import { AnomalyDetectionService } from '../../services/AnomalyDetectionService';
 
 const debug = Debug('app:webui:anomaly');
-const router = Router();
-
 /**
  * Checks if an error is a database connection error.
  */
@@ -24,81 +21,81 @@ function isConnectionError(error: unknown): boolean {
   return false;
 }
 
-// GET /api/anomalies - Get active anomalies
-router.get('/', async (req: AuthMiddlewareRequest, res) => {
-  try {
-    const dbManager = DatabaseManager.getInstance();
-    if (!dbManager.isConnected()) {
-      res.status(503).json({ error: 'Database not connected' });
-      return;
+export function createAnomalyRouter(
+  anomalyService: AnomalyDetectionService,
+  dbManager: DatabaseManager
+): Router {
+  const router = Router();
+
+  // GET /api/anomalies - Get active anomalies
+  router.get('/', async (req, res) => {
+    try {
+      if (!dbManager.isConnected()) {
+        res.status(503).json({ error: 'Database not connected' });
+        return;
+      }
+
+      // Get tenantId from request user if available (assuming req.user is populated by authenticateToken)
+      // The authenticateToken middleware usually populates req.user
+      const tenantId = (req as AuthMiddlewareRequest).user?.tenantId;
+
+      const anomalies = await dbManager.getActiveAnomalies(tenantId);
+      res.json(anomalies || []);
+    } catch (error) {
+      debug('Error fetching active anomalies:', error);
+      // Return 503 for connection-related errors, 500 for other errors
+      if (isConnectionError(error)) {
+        res.status(503).json({ error: 'Database connection error' });
+      } else {
+        res.status(500).json({ error: 'Failed to fetch active anomalies' });
+      }
     }
+  });
 
-    // Get tenantId from request user if available (assuming req.user is populated by authenticateToken)
-    // The authenticateToken middleware usually populates req.user
-<<<<<<< HEAD
-    const tenantId = req.user?.tenantId;
-=======
-    const tenantId = (req as any).user?.tenantId;
->>>>>>> origin/docco-update-screenshots-6307953588415915921
+  // GET /api/anomalies/history - Get all anomalies
+  router.get('/history', async (req, res) => {
+    try {
+      if (!dbManager.isConnected()) {
+        res.status(503).json({ error: 'Database not connected' });
+        return;
+      }
 
-    const anomalies = await dbManager.getActiveAnomalies(tenantId);
-    res.json(anomalies || []);
-  } catch (error) {
-    debug('Error fetching active anomalies:', error);
-    // Return 503 for connection-related errors, 500 for other errors
-    if (isConnectionError(error)) {
-      res.status(503).json({ error: 'Database connection error' });
-    } else {
-      res.status(500).json({ error: 'Failed to fetch active anomalies' });
+      const tenantId = (req as AuthMiddlewareRequest).user?.tenantId;
+
+      const anomalies = await dbManager.getAnomalies(tenantId);
+      res.json(anomalies || []);
+    } catch (error) {
+      debug('Error fetching anomaly history:', error);
+      // Return 503 for connection-related errors, 500 for other errors
+      if (isConnectionError(error)) {
+        res.status(503).json({ error: 'Database connection error' });
+      } else {
+        res.status(500).json({ error: 'Failed to fetch anomaly history' });
+      }
     }
-  }
-});
+  });
 
-// GET /api/anomalies/history - Get all anomalies
-router.get('/history', async (req: AuthMiddlewareRequest, res) => {
-  try {
-    const dbManager = DatabaseManager.getInstance();
-    if (!dbManager.isConnected()) {
-      res.status(503).json({ error: 'Database not connected' });
-      return;
+  // POST /api/anomalies/:id/resolve - Resolve an anomaly
+  router.post('/:id/resolve', async (req, res) => {
+    try {
+      const success = await anomalyService.resolveAnomaly(req.params.id);
+
+      if (success) {
+        res.json({ success: true });
+      } else {
+        res.status(404).json({ error: 'Anomaly not found' });
+      }
+    } catch (error) {
+      debug('Error resolving anomaly:', error);
+      res.status(500).json({ error: 'Failed to resolve anomaly' });
     }
+  });
 
-<<<<<<< HEAD
-    const tenantId = req.user?.tenantId;
-=======
-    const tenantId = (req as any).user?.tenantId;
->>>>>>> origin/docco-update-screenshots-6307953588415915921
+  return router;
+}
 
-    const anomalies = await dbManager.getAnomalies(tenantId);
-    res.json(anomalies || []);
-  } catch (error) {
-    debug('Error fetching anomaly history:', error);
-    // Return 503 for connection-related errors, 500 for other errors
-    if (isConnectionError(error)) {
-      res.status(503).json({ error: 'Database connection error' });
-    } else {
-      res.status(500).json({ error: 'Failed to fetch anomaly history' });
-    }
-  }
-});
-
-// POST /api/anomalies/:id/resolve - Resolve an anomaly
-router.post('/:id/resolve', async (req: AuthMiddlewareRequest, res) => {
-  try {
-    const service = AnomalyDetectionService.getInstance();
-
-    // Check for explicit tenantId if service is enhanced, otherwise just pass the id.
-    const success = await service.resolveAnomaly(req.params.id);
-
-    if (success) {
-      res.json({ success: true });
-    } else {
-      res.status(404).json({ error: 'Anomaly not found' });
-    }
-  } catch (error) {
-    debug('Error resolving anomaly:', error);
-    res.status(500).json({ error: 'Failed to resolve anomaly' });
-  }
-});
-
-export default router;
+// Retain a default export that uses the global instances to avoid breaking any other imports that rely on it.
+export default createAnomalyRouter(
+  AnomalyDetectionService.getInstance(),
+  DatabaseManager.getInstance()
+);

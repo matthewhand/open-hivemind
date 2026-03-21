@@ -1,5 +1,9 @@
 import axios from 'axios';
+<<<<<<< HEAD
+import MattermostClient from '../../../src/integrations/mattermost/mattermostClient';
+=======
 import MattermostClient from '../../../packages/message-mattermost/src/mattermostClient';
+>>>>>>> d5213de3 (Refiner (Import Order and Dependency Hygiene): Align dependency versioning and order)
 
 jest.mock('axios');
 jest.mock('@src/utils/ssrfGuard', () => ({
@@ -111,10 +115,10 @@ describe('MattermostClient', () => {
   it('should get channel info', async () => {
     const mockApi = (client as any).axios;
     mockApi.get.mockResolvedValue({
-      data: { id: 'abcdefghijklmnopqrstuvwxyz', name: 'general' },
+      data: { id: 'channel123', name: 'general' },
     });
 
-    const channel = await client.getChannelInfo('abcdefghijklmnopqrstuvwxyz');
+    const channel = await client.getChannelInfo('channel123');
 
     expect(channel?.name).toBe('general');
   });

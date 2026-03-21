@@ -2,6 +2,7 @@ import { ERROR_CODES, HEALTH_THRESHOLDS, HTTP_STATUS } from '../../types/constan
 import os from 'os';
 import process from 'process';
 import { Router, type NextFunction, type Request, type Response } from 'express';
+import { DatabaseManager } from '../../database/DatabaseManager';
 import { MetricsCollector } from '../../monitoring/MetricsCollector';
 import ApiMonitorService from '../../services/ApiMonitorService';
 import { ErrorLogger } from '../../utils/errorLogger';
@@ -13,18 +14,10 @@ const router = Router();
 // Basic health check
 router.get('/', (req, res) => {
   const memoryUsage = process.memoryUsage();
-<<<<<<< HEAD
-<<<<<<< HEAD
-  return res.status(HTTP_STATUS.OK).json({
-    status: 'healthy',
-=======
-=======
 
->>>>>>> origin/fix-anomaly-route-types-3952225614007405228
   let dbStatus = 'unknown';
   try {
-    // Requires importing DatabaseManager at the top
-    const dbManager = require('../../database/DatabaseManager').DatabaseManager.getInstance();
+    const dbManager = DatabaseManager.getInstance();
     dbStatus = dbManager.isConnected() ? 'healthy' : 'unhealthy';
   } catch (error) {
     dbStatus = 'error';
@@ -35,14 +28,12 @@ router.get('/', (req, res) => {
 
   return res.status(statusCode).json({
     status: status,
-<<<<<<< HEAD
->>>>>>> origin/janitor/code-health-activity-logger-8768188016948875412
-=======
-
->>>>>>> origin/fix-anomaly-route-types-3952225614007405228
     timestamp: new Date().toISOString(),
     version: '1.0.0',
     uptime: process.uptime(),
+    checks: {
+      database: dbStatus,
+    },
     memory: {
       used: Math.round(memoryUsage.heapUsed / 1024 / 1024),
       total: Math.round(memoryUsage.heapTotal / 1024 / 1024),
@@ -211,18 +202,9 @@ router.get('/alerts', (req, res) => {
 // Readiness probe
 router.get('/ready', (req, res) => {
   // Check if all dependencies are ready
-<<<<<<< HEAD
-<<<<<<< HEAD
-  return res.status(HTTP_STATUS.OK).json({
-    ready: true,
-=======
-=======
-
-  // Check if all dependencies are ready
->>>>>>> origin/fix-anomaly-route-types-3952225614007405228
   let dbReady = false;
   try {
-    const dbManager = require('../../database/DatabaseManager').DatabaseManager.getInstance();
+    const dbManager = DatabaseManager.getInstance();
     dbReady = dbManager.isConnected();
   } catch (error) {
     dbReady = false;
@@ -234,15 +216,10 @@ router.get('/ready', (req, res) => {
 
   return res.status(statusCode).json({
     ready: isReady,
-<<<<<<< HEAD
->>>>>>> origin/janitor/code-health-activity-logger-8768188016948875412
-=======
->>>>>>> origin/fix-anomaly-route-types-3952225614007405228
     timestamp: new Date().toISOString(),
     checks: {
       database: dbReady,
-      external_apis: true, // Would need actual API checks
-      configuration: true,
+      configuration: true, // Assumed true if app initialized enough to reach here, unless deeper config checks added
     },
   });
 });

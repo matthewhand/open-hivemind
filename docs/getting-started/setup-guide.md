@@ -47,10 +47,10 @@ Pinokio keeps the service running in the background and remembers whether
    docker pull matthewhand/open-hivemind:latest
    docker run --rm \
      --env-file .env \
-     -p 3000:3000 \
+     -p 3028:3028 \
      matthewhand/open-hivemind:latest
    ```
-   This exposes the WebUI at `http://localhost:3000`. Override ports or volumes
+   This exposes the WebUI at `http://localhost:3028`. Override ports or volumes
    with additional flags as needed.
 3. Prefer Compose? Update `docker-compose.yml` to use the same image (or build
    locally) and launch with `docker-compose up -d`. Environment variables from

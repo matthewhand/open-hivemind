@@ -1,106 +1,10 @@
 import { expect, test } from '@playwright/test';
-import { navigateAndWaitReady, setupTestWithErrorDetection, setupAuth } from './test-utils';
+import { navigateAndWaitReady, setupTestWithErrorDetection } from './test-utils';
 
 test.describe('Marketplace Page', () => {
-  test.beforeEach(async ({ page }) => {
-    // Setup authentication
-    await setupAuth(page);
-
-    // Mock successful authentication check
-    await page.route('/api/auth/check', async (route) => {
-      await route.fulfill({ status: 200, json: { authenticated: true, user: { role: 'admin' } } });
-    });
-
-    // Mock background polling endpoints
-    await page.route('/api/health/detailed', async (route) =>
-      route.fulfill({ status: 200, json: { status: 'ok' } })
-    );
-    await page.route('/api/config/llm-status', async (route) =>
-      route.fulfill({
-        status: 200,
-        json: {
-          defaultConfigured: true,
-          defaultProviders: [],
-          botsMissingLlmProvider: [],
-          hasMissing: false,
-        },
-      })
-    );
-    await page.route('/api/config/global', async (route) =>
-      route.fulfill({ status: 200, json: {} })
-    );
-    await page.route('/api/config/llm-profiles', async (route) =>
-      route.fulfill({ status: 200, json: [] })
-    );
-    await page.route('/api/admin/guard-profiles', async (route) =>
-      route.fulfill({ status: 200, json: [] })
-    );
-    await page.route('/api/demo/status', async (route) =>
-      route.fulfill({ status: 200, json: { enabled: false } })
-    );
-    await page.route('/api/csrf-token', async (route) =>
-      route.fulfill({ status: 200, json: { csrfToken: 'mock-token' } })
-    );
-
-    // Mock Marketplace API
-    await page.route('/api/marketplace/packages', async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify([
-            {
-              name: 'open-hivemind/local-llm',
-              displayName: 'Local LLM Provider',
-              description: 'Provides connection to local LLM instances',
-              version: '1.0.0',
-              type: 'llm',
-              status: 'built-in',
-              repoUrl: 'https://github.com/open-hivemind/local-llm'
-            },
-            {
-              name: 'community/advanced-tools',
-              displayName: 'Advanced Tools Pack',
-              description: 'Collection of advanced tools for your bots',
-              version: '2.1.0',
-              type: 'tool',
-              status: 'available',
-              repoUrl: 'https://github.com/community/advanced-tools'
-            }
-          ]
-        )
-      });
-    });
-  });
-
   test('Capture Marketplace Page', async ({ page }) => {
     // Setup authentication and error detection
     await setupTestWithErrorDetection(page);
-
-    // Mock packages endpoint since it requires valid token processing
-    await page.route('**/api/marketplace/packages', async (route) => {
-      await route.fulfill({
-        status: 200,
-        json: [
-          {
-            name: '@hivemind/message-discord',
-            displayName: 'Discord Integration',
-            description: 'Connect bots to Discord',
-            type: 'message',
-            version: '1.0.0',
-            status: 'built-in'
-          },
-          {
-            name: 'custom-llm-provider',
-            displayName: 'Custom LLM',
-            description: 'A custom LLM provider',
-            type: 'llm',
-            version: '1.0.0',
-            status: 'installed',
-            repoUrl: 'https://github.com/user/custom-llm'
-          }
-        ]
-      });
-    });
 
     // Navigate to Marketplace page
     await navigateAndWaitReady(page, '/admin/marketplace');
@@ -127,11 +31,6 @@ test.describe('Marketplace Page', () => {
   test('Capture Install from URL Modal', async ({ page }) => {
     // Setup authentication and error detection
     await setupTestWithErrorDetection(page);
-
-    // Mock packages endpoint since it requires valid token processing
-    await page.route('**/api/marketplace/packages', async (route) => {
-      await route.fulfill({ status: 200, json: [] });
-    });
 
     // Navigate to Marketplace page
     await navigateAndWaitReady(page, '/admin/marketplace');
@@ -164,24 +63,6 @@ test.describe('Marketplace Page', () => {
   test('Filter packages by type', async ({ page }) => {
     // Setup authentication and error detection
     await setupTestWithErrorDetection(page);
-
-    // Mock packages endpoint since it requires valid token processing
-    await page.route('**/api/marketplace/packages', async (route) => {
-      await route.fulfill({
-        status: 200,
-        json: [
-          {
-            name: 'custom-llm-provider',
-            displayName: 'Custom LLM',
-            description: 'A custom LLM provider',
-            type: 'llm',
-            version: '1.0.0',
-            status: 'installed',
-            repoUrl: 'https://github.com/user/custom-llm'
-          }
-        ]
-      });
-    });
 
     // Navigate to Marketplace page
     await navigateAndWaitReady(page, '/admin/marketplace');

@@ -256,46 +256,27 @@ const UnifiedDashboard: React.FC = () => {
     [fetchData, successToast, errorToast],
   );
 
-  const statusBots = status?.bots ?? [];
-<<<<<<< HEAD
-  const activeBotCount = useMemo(
-    () => statusBots.filter(bot => bot.status?.toLowerCase() === 'active').length,
-    [statusBots],
-  );
-  const activeConnections = useMemo(
-    () => statusBots.filter(bot => bot.connected).length,
-    [statusBots],
-  );
-  const totalMessages = useMemo(
-    () => statusBots.reduce((sum, bot) => sum + (bot.messageCount ?? 0), 0),
-    [statusBots],
-  );
-  const totalErrors = useMemo(
-    () => statusBots.reduce((sum, bot) => sum + (bot.errorCount ?? 0), 0),
-    [statusBots],
-  );
-=======
+  const statusBots = useMemo(() => status?.bots ?? [], [status]);
+
+  // Combine 4 separate O(N) filter/reduce passes into a single O(N) pass
+  // to calculate dashboard statistics and prevent unnecessary re-renders.
   const { activeBotCount, activeConnections, totalMessages, totalErrors } = useMemo(() => {
-    let _activeCount = 0;
-    let _connections = 0;
-    let _messages = 0;
-    let _errors = 0;
-
-    for (const bot of statusBots) {
-      if (bot.status?.toLowerCase() === 'active') _activeCount++;
-      if (bot.connected) _connections++;
-      _messages += bot.messageCount ?? 0;
-      _errors += bot.errorCount ?? 0;
-    }
-
-    return {
-      activeBotCount: _activeCount,
-      activeConnections: _connections,
-      totalMessages: _messages,
-      totalErrors: _errors,
-    };
+    return statusBots.reduce(
+      (acc, bot) => {
+        if (bot.status?.toLowerCase() === 'active') {
+          acc.activeBotCount++;
+        }
+        if (bot.connected) {
+          acc.activeConnections++;
+        }
+        acc.totalMessages += bot.messageCount ?? 0;
+        acc.totalErrors += bot.errorCount ?? 0;
+        return acc;
+      },
+      { activeBotCount: 0, activeConnections: 0, totalMessages: 0, totalErrors: 0 }
+    );
   }, [statusBots]);
->>>>>>> origin/docco-update-screenshots-6307953588415915921
+
   const errorRatePercent = totalMessages === 0
     ? 0
     : Number(((totalErrors / totalMessages) * 100).toFixed(2));

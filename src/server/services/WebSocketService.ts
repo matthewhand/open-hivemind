@@ -1,4 +1,3 @@
-import { randomUUID } from 'crypto';
 import type { Server as HttpServer } from 'http';
 import os from 'os';
 import Debug from 'debug';
@@ -26,7 +25,7 @@ export interface MessageFlowEvent {
   errorMessage?: string;
 }
 
-export interface PerformanceMetric {
+interface PerformanceMetric {
   timestamp: string;
   responseTime: number;
   memoryUsage: number;
@@ -156,7 +155,7 @@ export class WebSocketService {
   public recordMessageFlow(event: Omit<MessageFlowEvent, 'id' | 'timestamp'>): void {
     const messageEvent: MessageFlowEvent = {
       ...event,
-      id: `msg_${Date.now()}_${randomUUID()}`,
+      id: `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
       timestamp: new Date().toISOString(),
     };
 
@@ -188,7 +187,7 @@ export class WebSocketService {
   ): void {
     const alertEvent: AlertEvent = {
       ...alert,
-      id: `alert_${Date.now()}_${randomUUID()}`,
+      id: `alert_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
       timestamp: new Date().toISOString(),
       status: 'active',
     };

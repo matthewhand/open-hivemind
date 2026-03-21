@@ -232,8 +232,6 @@ export interface BotConfig {
   openswarm?: OpenSwarmConfig;
   /** Letta configuration */
   letta?: LettaConfig;
-  /** Whether the bot is enabled */
-  enabled?: boolean;
   /** Index signature for compatibility with Record<string, unknown> */
   [key: string]: unknown;
 }
