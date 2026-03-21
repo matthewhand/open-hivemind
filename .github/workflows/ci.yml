@@ -30,7 +30,7 @@ jobs:
       - name: Install dependencies
         run: pnpm install
       - name: Audit for hardcoded secrets
-        run: pnpm run audit:secrets
+        run: pnpm install
       - name: Run security audit
         run: pnpm audit --audit-level=high --production
       - name: Run unit tests

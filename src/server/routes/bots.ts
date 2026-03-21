@@ -58,10 +58,7 @@ router.get('/', async (req, res) => {
 
     return res.json(result);
   } catch (error: any) {
-    logger.error(
-      'Failed to retrieve bots',
-      error instanceof Error ? error : new Error(String(error))
-    );
+    logger.error('Failed to retrieve bots', { error: error.message });
     return res.status(500).json({ error: 'Failed to retrieve bots' });
   }
 });
@@ -93,11 +90,7 @@ router.get('/:id', validateRequest(BotIdParamSchema), async (req, res) => {
     }
     return res.json({ success: true, bot });
   } catch (error: any) {
-    logger.error(
-      'Failed to retrieve bot',
-      error instanceof Error ? error : new Error(String(error)),
-      { id: req.params.id }
-    );
+    logger.error('Failed to retrieve bot', { id: req.params.id, error: error.message });
     return res.status(500).json({ error: 'Failed to retrieve bot' });
   }
 });
@@ -416,11 +409,7 @@ router.get('/:id/activity', validateRequest(BotActivityQuerySchema), async (req,
 
     return res.json({ success: true, data: { activity } });
   } catch (error: any) {
-    logger.error(
-      'Failed to retrieve bot activity',
-      error instanceof Error ? error : new Error(String(error)),
-      { id: req.params.id }
-    );
+    logger.error('Failed to retrieve bot activity', { id: req.params.id, error: error.message });
     return res.status(500).json({ error: 'Failed to retrieve bot activity' });
   }
 });
