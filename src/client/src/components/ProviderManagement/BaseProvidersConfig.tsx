@@ -1,6 +1,27 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useEffect, useState } from 'react';
 import {
+<<<<<<< HEAD
+=======
+  Card,
+  Button,
+  ModalForm,
+  Input,
+  Select,
+  Alert,
+  Badge,
+} from '../DaisyUI';
+import {
+  PlusIcon,
+  PencilIcon,
+  TrashIcon,
+  ArrowTopRightOnSquareIcon,
+  Bars3Icon,
+} from '@heroicons/react/24/outline';
+import ProviderConfig from '../ProviderConfig';
+import {
+  DndContext,
+>>>>>>> origin/docco-update-screenshots-6307953588415915921
   closestCenter,
   DndContext,
   KeyboardSensor,
@@ -17,6 +38,7 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+<<<<<<< HEAD
 import {
   ArrowTopRightOnSquareIcon,
   Bars3Icon,
@@ -32,6 +54,8 @@ import Input from '../DaisyUI/Input';
 import ModalForm from '../DaisyUI/ModalForm';
 import Select from '../DaisyUI/Select';
 import ProviderConfig from '../ProviderConfig';
+=======
+>>>>>>> origin/docco-update-screenshots-6307953588415915921
 
 export interface ProviderItem {
   id: string;
@@ -149,6 +173,10 @@ const SortableProviderCard: React.FC<SortableProviderCardProps> = ({
   );
 };
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> origin/docco-update-screenshots-6307953588415915921
 const BaseProvidersConfig: React.FC<BaseProvidersConfigProps> = ({
   apiEndpoint,
   providerTypeOptions,
@@ -382,7 +410,15 @@ const BaseProvidersConfig: React.FC<BaseProvidersConfigProps> = ({
           </Button>
         </div>
       ) : (
+<<<<<<< HEAD
         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+=======
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragEnd={handleDragEnd}
+        >
+>>>>>>> origin/docco-update-screenshots-6307953588415915921
           <SortableContext
             items={providers.map((p) => p.id)}
             strategy={verticalListSortingStrategy}

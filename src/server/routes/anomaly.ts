@@ -35,7 +35,11 @@ router.get('/', async (req: AuthMiddlewareRequest, res) => {
 
     // Get tenantId from request user if available (assuming req.user is populated by authenticateToken)
     // The authenticateToken middleware usually populates req.user
+<<<<<<< HEAD
     const tenantId = req.user?.tenantId;
+=======
+    const tenantId = (req as any).user?.tenantId;
+>>>>>>> origin/docco-update-screenshots-6307953588415915921
 
     const anomalies = await dbManager.getActiveAnomalies(tenantId);
     res.json(anomalies || []);
@@ -59,7 +63,11 @@ router.get('/history', async (req: AuthMiddlewareRequest, res) => {
       return;
     }
 
+<<<<<<< HEAD
     const tenantId = req.user?.tenantId;
+=======
+    const tenantId = (req as any).user?.tenantId;
+>>>>>>> origin/docco-update-screenshots-6307953588415915921
 
     const anomalies = await dbManager.getAnomalies(tenantId);
     res.json(anomalies || []);
