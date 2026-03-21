@@ -251,6 +251,14 @@ An internal chat interface for admins to experiment with prompts and query syste
 
 ---
 
+
+### [Integrations](/admin/integrations/llm)
+A detailed view of all system integrations and configurations.
+
+![Integrations Page](screenshots/integrations-llm.png)
+
+*   **Integration Settings**: Manage specific settings for various providers like LLMs.
+
 ## Developer & Tools
 
 ### [UI Components](/admin/showcase)

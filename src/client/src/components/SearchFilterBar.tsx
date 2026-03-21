@@ -1,7 +1,8 @@
 import React from 'react';
 import { Search, X } from 'lucide-react';
 import Input from './DaisyUI/Input';
-import Select, { SelectOption } from './DaisyUI/Select';
+import Select from './DaisyUI/Select';
+import type { SelectOption } from './DaisyUI/Select';
 
 export interface FilterConfig {
   key: string;

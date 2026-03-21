@@ -3,6 +3,28 @@ import express from 'express';
 import { SlackService } from '@hivemind/message-slack/SlackService';
 import { WebClient } from '@slack/web-api';
 
+jest.mock('@src/services/GreetingStateManager', () => ({
+  GreetingStateManager: {
+    getInstance: jest.fn().mockReturnValue({
+      initialize: jest.fn().mockResolvedValue(true),
+      hasGreetingBeenSent: jest.fn().mockReturnValue(false),
+      markGreetingAsSent: jest.fn().mockResolvedValue(true)
+    })
+  }
+}));
+
+jest.mock('@src/services/StartupGreetingService', () => ({
+  __esModule: true,
+  default: {
+    emit: jest.fn(),
+    getInstance: jest.fn().mockReturnValue({
+      emit: jest.fn()
+    })
+  }
+}));
+
+
+
 // Top-level mocks
 jest.mock('fs');
 jest.mock('@slack/web-api', () => ({
@@ -105,7 +127,7 @@ describe('SlackService', () => {
     delete process.env.SLACK_SIGNING_SECRET;
     process.env.SLACK_BOT_TOKEN = 'xoxb-test-token';
 
-    (fs.readFileSync as jest.Mock).mockReturnValue(
+    (fs.readFileSync as jest.Mock).mockImplementation(() =>
       JSON.stringify({
         slack: {
           instances: [
