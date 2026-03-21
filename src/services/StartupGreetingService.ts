@@ -5,6 +5,7 @@ import { getLlmProvider } from '@llm/getLlmProvider';
 import type { IMessengerService } from '@message/interfaces/IMessengerService';
 import Logger from '@common/logger';
 import { GreetingStateManager } from './GreetingStateManager';
+import { container } from 'tsyringe';
 
 const appLogger = Logger.withContext('StartupGreetingService');
 
@@ -23,13 +24,12 @@ export class StartupGreetingService extends EventEmitter {
   ) {
     super();
     appLogger.info('StartupGreetingService initialized');
-    this.greetingStateManager = GreetingStateManager.getInstance();
     this.on('service-ready', this.handleServiceReady.bind(this));
   }
 
   public static getInstance(): StartupGreetingService {
     if (!StartupGreetingService.instance) {
-      const greetingStateManager = GreetingStateManager.getInstance();
+      const greetingStateManager = container.resolve(GreetingStateManager);
       StartupGreetingService.instance = new StartupGreetingService(greetingStateManager);
     }
     return StartupGreetingService.instance;

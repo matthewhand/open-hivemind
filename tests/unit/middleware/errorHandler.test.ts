@@ -132,6 +132,7 @@ describe('errorHandler middleware', () => {
       );
 
       // Ensure response doesn't contain stack in production
+      const jsonCallArg = (mockRes.json as jest.Mock).mock.calls[0][0];
       expect(jsonCallArg.stack).toBeUndefined();
 
       process.env.NODE_ENV = originalEnv;
