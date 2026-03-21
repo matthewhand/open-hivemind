@@ -41,7 +41,7 @@ export const Rating: React.FC<RatingProps> = ({
   ...props
 }) => {
   const [hoverValue, setHoverValue] = useState<number | null>(null);
-  const groupName = name || `rating-${Math.random().toString(36).substr(2, 9)}`;
+  const groupName = name || `rating-${crypto.randomUUID()}`;
 
   const getSizeClass = () => {
     switch (size) {

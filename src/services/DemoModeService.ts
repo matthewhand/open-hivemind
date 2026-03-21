@@ -11,6 +11,7 @@ import { inject, injectable, singleton } from 'tsyringe';
 import { type BotConfigurationManager } from '../config/BotConfigurationManager';
 import { type UserConfigStore } from '../config/UserConfigStore';
 import { TOKENS } from '../di/container';
+import crypto from 'crypto';
 
 const debug = Debug('app:DemoModeService');
 
@@ -319,7 +320,7 @@ export class DemoModeService {
 
     if (!this.conversations.has(key)) {
       this.conversations.set(key, {
-        id: `conv-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        id: `conv-${Date.now()}-${crypto.randomBytes(8).toString('hex')}`,
         channelId,
         botName,
         messages: [],
@@ -345,7 +346,7 @@ export class DemoModeService {
     const conversation = this.getOrCreateConversation(channelId, botName);
 
     const message: DemoMessage = {
-      id: `msg-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      id: `msg-${Date.now()}-${crypto.randomBytes(8).toString('hex')}`,
       timestamp: new Date().toISOString(),
       botName,
       channelId,

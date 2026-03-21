@@ -46,7 +46,7 @@ export const ToastProvider: React.FC<ToastProviderProps> = ({
   const [toasts, setToasts] = useState<Toast[]>([]);
 
   const addToast = useCallback((toastData: Omit<Toast, 'id'>) => {
-    const id = `toast-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    const id = `toast-${Date.now()}-${crypto.randomUUID()}`;
     const toast: Toast = {
       id,
       duration: 5000, // 5 seconds default
