@@ -1,8 +1,8 @@
-import type { PluginManifest } from '../../../src/plugins/PluginLoader';
-import { LettaProvider } from './lettaProvider';
-
 export { LettaProvider, LettaProviderConfig } from './lettaProvider';
 export { listAgents, getAgent, type AgentSummary } from './agentBrowser';
+
+import { LettaProvider } from './lettaProvider';
+import type { PluginManifest } from '../../../src/plugins/PluginLoader';
 
 /** Standard factory — preferred entry point for PluginLoader */
 export function create(config?: any): LettaProvider {

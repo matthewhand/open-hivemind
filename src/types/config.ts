@@ -774,12 +774,7 @@ export interface LettaConfig {
   conversationId?: string;
 }
 
-export type LlmProviderConfig =
-  | OpenAIConfig
-  | FlowiseConfig
-  | OpenWebUIConfig
-  | OpenSwarmConfig
-  | LettaConfig;
+export type LlmProviderConfig = OpenAIConfig | FlowiseConfig | OpenWebUIConfig | OpenSwarmConfig | LettaConfig;
 
 /**
  * Union type for all configuration types

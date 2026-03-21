@@ -23,7 +23,7 @@ test.describe('Guards Page Rate Limit Screenshots', () => {
                   banDurationMinutes: 60,
                 },
               },
-            },
+            }
           ],
         },
       });

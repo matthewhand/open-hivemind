@@ -2,6 +2,7 @@ import crypto from 'crypto';
 import fs, { promises as fsPromises } from 'fs';
 import path from 'path';
 import readline from 'readline';
+import crypto from 'crypto';
 import Debug from 'debug';
 
 const debug = Debug('app:auditLogger');
