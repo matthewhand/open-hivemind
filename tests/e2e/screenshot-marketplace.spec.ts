@@ -154,11 +154,16 @@ test.describe('Marketplace Page', () => {
     await page.waitForTimeout(500);
 
     // Screenshot Install Modal
-    await page.screenshot({ path: 'docs/screenshots/marketplace-install-modal.png', fullPage: true });
+    await page.screenshot({
+      path: 'docs/screenshots/marketplace-install-modal.png',
+      fullPage: true,
+    });
 
     // Verify modal has correct content
     await expect(modal.locator('h3:has-text("Install Package from GitHub")')).toBeVisible();
-    await expect(modal.locator('input[type="text"]')).toHaveValue('https://github.com/user/custom-provider');
+    await expect(modal.locator('input[type="text"]')).toHaveValue(
+      'https://github.com/user/custom-provider'
+    );
   });
 
   test('Filter packages by type', async ({ page }) => {
