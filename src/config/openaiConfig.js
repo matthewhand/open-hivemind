@@ -112,7 +112,7 @@ try {
     openaiConfig.validate({ allowed: 'strict' });
     debug(`Successfully loaded OpenAI config from ${configPath}`);
 }
-catch (_a) {
+catch {
     // Fallback to defaults/env vars if config file is missing or invalid
     debug(`Warning: Could not load openai config from ${configPath}, using env vars and defaults`);
 }

@@ -77,7 +77,7 @@ export class AuthManager {
           type: 'auth',
           data: { secret },
           createdAt: new Date().toISOString(),
-        } as any)
+        } as unknown as Record<string, unknown>)
         .catch((err) => {
           debug(`Failed to store ${prefix} secret securely:`, err);
         });
@@ -111,10 +111,15 @@ export class AuthManager {
     if (!password) {
       password = crypto.randomBytes(16).toString('hex');
       this.generatedPassword = password;
+      // eslint-disable-next-line no-console
       console.warn('================================================================');
+      // eslint-disable-next-line no-console
       console.warn('WARNING: No ADMIN_PASSWORD environment variable found.');
+      // eslint-disable-next-line no-console
       console.warn(`Generated temporary admin password: ${password}`);
+      // eslint-disable-next-line no-console
       console.warn('Please change this password immediately or set ADMIN_PASSWORD.');
+      // eslint-disable-next-line no-console
       console.warn('================================================================');
     }
 

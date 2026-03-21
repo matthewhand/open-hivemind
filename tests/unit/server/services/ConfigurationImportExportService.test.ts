@@ -1,4 +1,4 @@
-import fs from 'fs';
+import { promises as fs } from 'fs';
 import { AuditLogger } from '../../../../src/common/auditLogger';
 import { UserConfigStore } from '../../../../src/config/UserConfigStore';
 import { DatabaseManager } from '../../../../src/database/DatabaseManager';

@@ -104,7 +104,7 @@ export class ConfigurationTemplateService {
    * Get all template IDs from the filesystem
    * @returns Set of template IDs (filenames without .json)
    */
-  public async getAllTemplateIds(): Promise<Set<string>> {
+  private async getAllTemplateIds(): Promise<Set<string>> {
     try {
       const files = await fs.readdir(this.templatesDir);
       const ids = files

@@ -1,9 +1,10 @@
 import { Router, type Request, type Response } from 'express';
+import type { IProviderInstaller } from '@src/types/installer';
 import { providerRegistry } from '../registries/ProviderRegistry';
 
 const swarmRouter = Router();
 
-const getInstaller = () => {
+const getInstaller = (): IProviderInstaller => {
   const installer = providerRegistry.getInstaller('openswarm');
   if (!installer) {
     throw new Error('OpenSwarm installer not registered');
@@ -24,8 +25,9 @@ swarmRouter.get('/check', async (_req: Request, res: Response) => {
       swarmInstalled,
       webUIUrl: installer.getWebUIUrl ? installer.getWebUIUrl() : '',
     });
-  } catch (error: any) {
-    res.status(500).json({ ok: false, error: error.message });
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : String(error);
+    res.status(500).json({ ok: false, error: message });
   }
 });
 
@@ -35,8 +37,9 @@ swarmRouter.post('/install', async (_req: Request, res: Response) => {
     const installer = getInstaller();
     const result = await installer.install();
     res.json({ ok: result.success, message: result.message });
-  } catch (error: any) {
-    res.status(500).json({ ok: false, error: error.message });
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : String(error);
+    res.status(500).json({ ok: false, error: message });
   }
 });
 
@@ -65,8 +68,9 @@ swarmRouter.post('/start', async (req: Request, res: Response) => {
     const installer = getInstaller();
     const result = await installer.start({ port });
     return res.json({ ok: result.success, message: result.message });
-  } catch (error: any) {
-    return res.status(500).json({ ok: false, error: error.message });
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : String(error);
+    return res.status(500).json({ ok: false, error: message });
   }
 });
 

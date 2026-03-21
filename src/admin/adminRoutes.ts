@@ -52,7 +52,7 @@ async function loadPersonas(): Promise<{ key: string; name: string; systemPrompt
     }
 
     const files = await fs.promises.readdir(personasDir);
-    const validFiles = files.filter((file) => file.endsWith(".json") && !file.includes(".."));
+    const validFiles = files.filter((file) => file.endsWith('.json') && !file.includes('..'));
 
     const promises = validFiles.map(async (file) => {
       try {
@@ -161,9 +161,10 @@ adminRouter.get(
       const schema = provider.getSchema();
       const serialized = serializeSchema(schema);
       return res.json({ ok: true, schema: serialized });
-    } catch (e: any) {
+    } catch (e: unknown) {
       debug(`Failed to get schema for provider ${providerId}`, e);
-      return res.status(500).json({ ok: false, error: e.message || String(e) });
+      const message = e instanceof Error ? e.message : String(e);
+      return res.status(500).json({ ok: false, error: message });
     }
   }
 );
