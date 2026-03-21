@@ -7,6 +7,7 @@ import {
   CodeBracketIcon,
   ListBulletIcon,
 } from '@heroicons/react/24/outline';
+import logger from '../utils/logger';
 import Breadcrumbs from '../components/DaisyUI/Breadcrumbs';
 import { Alert } from '../components/DaisyUI/Alert';
 import Modal from '../components/DaisyUI/Modal';
@@ -72,7 +73,7 @@ const MCPToolsPage: React.FC = () => {
           setFilteredTools(allTools);
         }
       } catch (err) {
-        console.error('Failed to fetch MCP tools:', err);
+        logger.error('Failed to fetch MCP tools:', err);
         setAlert({ type: 'error', message: 'Failed to load tools from server' });
       } finally {
         setLoading(false);
@@ -182,7 +183,7 @@ const MCPToolsPage: React.FC = () => {
       }
 
       const json = await res.json();
-      console.log('Tool execution result:', json);
+      logger.info('Tool execution result:', json);
 
       // Update usage count
       setTools(prev => prev.map(t =>
@@ -194,7 +195,7 @@ const MCPToolsPage: React.FC = () => {
       handleCloseRunModal();
       setAlert({ type: 'success', message: `Tool executed! Result: ${JSON.stringify(json.result).substring(0, 100)}...` });
     } catch (error: any) {
-      console.error('Tool execution error:', error);
+      logger.error('Tool execution error:', error);
       setAlert({ type: 'error', message: `Failed to execute tool: ${error.message}` });
       handleCloseRunModal();
     } finally {

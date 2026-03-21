@@ -15,6 +15,7 @@ import {
   TrashIcon,
   MagnifyingGlassIcon,
 } from '@heroicons/react/24/outline';
+import logger from '../utils/logger';
 import { useAppSelector } from '../store/hooks';
 import {
   selectConfig,
@@ -79,7 +80,7 @@ const ConfigManager: React.FC = () => {
       setValidationErrors({});
       showToast('Configuration saved successfully', 'success');
     } catch (error) {
-      console.error('Failed to save configuration:', error);
+      logger.error('Failed to save configuration:', error);
       showToast('Failed to save configuration', 'error');
     }
   };
@@ -139,7 +140,7 @@ const ConfigManager: React.FC = () => {
                   variant="ghost"
                   size="sm"
                   className="btn-circle"
-                  onClick={() => console.log('Refresh configs')}
+                  onClick={() => logger.info('Refresh configs')}
                 >
                   <ArrowPathIcon className="w-5 h-5" />
                 </Button>

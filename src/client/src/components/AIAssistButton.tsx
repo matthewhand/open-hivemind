@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Sparkles, Loader2 } from 'lucide-react';
 import { apiService } from '../services/api';
+import logger from '../utils/logger';
 
 /**
  * Props for the AIAssistButton component.
@@ -40,7 +41,7 @@ const AIAssistButton: React.FC<AIAssistButtonProps> = ({
       if (err.message && err.message.includes('not configured')) {
         alert('AI Assistance is not configured. Please go to LLM Providers page to configure it.');
       } else {
-        console.error('AI Gen error:', err);
+        logger.error('AI Gen error:', err);
       }
     } finally {
       setLoading(false);

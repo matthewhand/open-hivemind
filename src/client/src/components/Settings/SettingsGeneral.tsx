@@ -6,6 +6,7 @@ import Select from '../DaisyUI/Select';
 import Toggle from '../DaisyUI/Toggle';
 import Button from '../DaisyUI/Button';
 import { Settings as SettingsIcon, ShieldCheck, Activity } from 'lucide-react';
+import logger from '../../utils/logger';
 
 interface GeneralConfig {
   instanceName: string;
@@ -57,7 +58,7 @@ const SettingsGeneral: React.FC = () => {
         }));
       }
     } catch (e) {
-      console.warn('Failed to load timezones:', e);
+      logger.warn('Failed to load timezones:', e);
     }
     // Fallback options
     return [

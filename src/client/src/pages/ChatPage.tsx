@@ -5,6 +5,7 @@ import { BotAvatar } from '../components/BotAvatar';
 import { RefreshCw, MessageSquare, Cpu, Check, ChevronDown } from 'lucide-react';
 import EmptyState from '../components/DaisyUI/EmptyState';
 import { useSuccessToast, useErrorToast } from '../components/DaisyUI/ToastNotification';
+import logger from '../utils/logger';
 
 // Define Bot type based on API response
 interface BotData {
@@ -49,7 +50,7 @@ const ChatPage: React.FC = () => {
         setLlmProviders(data.data || []);
       }
     } catch (err) {
-      console.error('Failed to fetch LLM providers:', err);
+      logger.error('Failed to fetch LLM providers:', err);
     }
   }, []);
 
@@ -100,7 +101,7 @@ const ChatPage: React.FC = () => {
       const data = await apiService.getBots();
       setBots(data);
     } catch (err) {
-      console.error('Failed to fetch bots:', err);
+      logger.error('Failed to fetch bots:', err);
     } finally {
       setLoading(false);
     }
@@ -129,7 +130,7 @@ const ChatPage: React.FC = () => {
 
       setMessages(mappedMessages);
     } catch (err) {
-      console.error('Failed to fetch history:', err);
+      logger.error('Failed to fetch history:', err);
     } finally {
       setHistoryLoading(false);
     }
@@ -180,7 +181,7 @@ const ChatPage: React.FC = () => {
       // but for this task, the optimistic rollback is the focus.
       await fetchHistory(selectedBotId);
     } catch (err) {
-      console.error('Failed to send message:', err);
+      logger.error('Failed to send message:', err);
       // Mark optimistic update as failed
       setMessages(prev => prev.map(m =>
         m.id === tempId

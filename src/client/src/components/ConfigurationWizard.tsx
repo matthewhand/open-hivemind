@@ -15,6 +15,7 @@ import {
   ServerIcon,
   CloudArrowUpIcon,
 } from '@heroicons/react/24/outline';
+import logger from '../utils/logger';
 import { apiService } from '../services/api';
 import type { Bot } from '../services/api';
 
@@ -73,7 +74,7 @@ const ConfigurationWizard: React.FC = () => {
       const response = await apiService.getConfig();
       setExistingBots(response.bots);
     } catch (err) {
-      console.error('Failed to load existing bots:', err);
+      logger.error('Failed to load existing bots:', err);
     }
   };
 

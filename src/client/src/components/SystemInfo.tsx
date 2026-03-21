@@ -23,6 +23,7 @@ import {
   PlayIcon,
   XMarkIcon,
 } from '@heroicons/react/24/outline';
+import logger from '../utils/logger';
 import { useAppSelector } from '../store/hooks';
 
 const SystemInfo: React.FC = () => {
@@ -73,10 +74,10 @@ const SystemInfo: React.FC = () => {
       }
 
       const data = await response.json();
-      console.log(`System ${action} initiated:`, data);
+      logger.info(`System ${action} initiated:`, data);
       setLogs(prev => [...prev, `[${new Date().toISOString()}] System ${action} initiated: ${data.message || 'Success'}`]);
     } catch (error) {
-      console.error(`Failed to ${action} system:`, error);
+      logger.error(`Failed to ${action} system:`, error);
       setLogs(prev => [...prev, `[${new Date().toISOString()}] Failed to ${action}: ${error instanceof Error ? error.message : 'Unknown error'}`]);
     } finally {
       setIsLoading(false);

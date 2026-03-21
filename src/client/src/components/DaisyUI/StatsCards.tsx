@@ -5,6 +5,7 @@ import {
   HardDrive, AlertTriangle, TrendingUp, TrendingDown, Minus,
   Users, Activity, Settings, Database, Wifi,
 } from 'lucide-react';
+import logger from '../../utils/logger';
 import { animate } from 'framer-motion';
 
 interface StatItem {
@@ -354,7 +355,7 @@ export const useSystemStats = () => {
         setError(null);
       } catch (err) {
         setError('Failed to fetch system stats');
-        console.error('Error fetching stats:', err);
+        logger.error('Error fetching stats:', err);
       } finally {
         setIsLoading(false);
       }

@@ -17,6 +17,7 @@ import {
   StopIcon,
   SignalIcon,
 } from '@heroicons/react/24/outline';
+import logger from '../utils/logger';
 import { apiService } from '../services/api';
 import type { Socket } from 'socket.io-client';
 import io from 'socket.io-client';
@@ -73,7 +74,7 @@ const ApiStatusMonitor: React.FC<ApiStatusMonitorProps> = ({
       setLastRefresh(new Date());
       setLoading(false);
     } catch (error) {
-      console.error('Failed to fetch API status:', error);
+      logger.error('Failed to fetch API status:', error);
       setLoading(false);
     }
   }, []);
@@ -86,7 +87,7 @@ const ApiStatusMonitor: React.FC<ApiStatusMonitorProps> = ({
     });
 
     newSocket.on('connect', () => {
-      console.log('Connected to WebSocket for API monitoring');
+      logger.info('Connected to WebSocket for API monitoring');
     });
 
     newSocket.on('api_status_update', (data: { endpoints: EndpointStatus[]; overall: any; timestamp: string }) => {
@@ -122,7 +123,7 @@ const ApiStatusMonitor: React.FC<ApiStatusMonitorProps> = ({
     });
 
     newSocket.on('disconnect', () => {
-      console.log('Disconnected from WebSocket');
+      logger.info('Disconnected from WebSocket');
     });
 
     setSocket(newSocket);
@@ -192,7 +193,7 @@ const ApiStatusMonitor: React.FC<ApiStatusMonitorProps> = ({
       await apiService.startApiMonitoring();
       setMonitoringActive(true);
     } catch (error) {
-      console.error('Failed to start monitoring:', error);
+      logger.error('Failed to start monitoring:', error);
     }
   };
 
@@ -201,7 +202,7 @@ const ApiStatusMonitor: React.FC<ApiStatusMonitorProps> = ({
       await apiService.stopApiMonitoring();
       setMonitoringActive(false);
     } catch (error) {
-      console.error('Failed to stop monitoring:', error);
+      logger.error('Failed to stop monitoring:', error);
     }
   };
 

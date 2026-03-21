@@ -8,6 +8,7 @@ import {
   Key, ShieldCheck, Database, Layout, Command,
   AlertTriangle, Play, Pause, Square, Trash, MoreHorizontal
 } from 'lucide-react';
+import logger from '../utils/logger';
 import { useSuccessToast, useErrorToast } from '../components/DaisyUI/ToastNotification';
 import Modal, { ConfirmModal } from '../components/DaisyUI/Modal';
 import PageHeader from '../components/DaisyUI/PageHeader';
@@ -287,7 +288,7 @@ const BotsPage: React.FC = () => {
     } catch (err) {
       ErrorService.report(err, { botId: bot.id, action: 'fetchBotPreviewData' });
       // Don't show toast for initial load failures to keep UI clean, but log error
-      console.error('Failed to load bot preview data:', err);
+      logger.error('Failed to load bot preview data:', err);
     }
   };
 

@@ -13,6 +13,7 @@ import {
   Trash2,
   User,
 } from 'lucide-react';
+import logger from '../utils/logger';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Alert } from '../components/DaisyUI/Alert';
 import Badge from '../components/DaisyUI/Badge';
@@ -133,7 +134,7 @@ const PersonasPage: React.FC = () => {
       await navigator.clipboard.writeText(text);
       successToast('Copied!', 'System prompt copied to clipboard');
     } catch (err) {
-      console.error('Failed to copy', err);
+      logger.error('Failed to copy', err);
       errorToast('Error', 'Failed to copy to clipboard');
     }
   };
@@ -212,7 +213,7 @@ const PersonasPage: React.FC = () => {
       setEditingPersona(null);
       setCloningPersonaId(null);
     } catch (err) {
-      console.error(err);
+      logger.error(err);
       setError('Failed to save persona changes');
     } finally {
       setLoading(false);

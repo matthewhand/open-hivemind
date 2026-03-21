@@ -6,6 +6,7 @@ import Input from '../DaisyUI/Input';
 import Toggle from '../DaisyUI/Toggle';
 import { Shield, Plus, Trash2 } from 'lucide-react';
 import SecureConfigManager from '../SecureConfigManager';
+import logger from '../../utils/logger';
 
 const SettingsSecurity: React.FC = () => {
   const [settings, setSettings] = useState({
@@ -45,7 +46,7 @@ const SettingsSecurity: React.FC = () => {
         corsOrigins: config.cors?.origins?.value || ['http://localhost:3000'],
       }));
     } catch (error) {
-      console.error('Failed to load security settings:', error);
+      logger.error('Failed to load security settings:', error);
     } finally {
       setLoading(false);
     }

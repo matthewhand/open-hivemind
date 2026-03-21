@@ -3,6 +3,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
+import logger from '../utils/logger';
 
 interface DemoStatus {
     isDemoMode: boolean;
@@ -26,7 +27,7 @@ const DemoModeBanner: React.FC = () => {
                     setDemoStatus(data);
                 }
             } catch (error) {
-                console.debug('Could not check demo mode status:', error);
+                logger.debug('Could not check demo mode status:', error);
             } finally {
                 setIsLoading(false);
             }

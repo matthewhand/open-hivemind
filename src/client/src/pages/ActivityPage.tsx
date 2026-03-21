@@ -81,7 +81,7 @@ const ActivityPage: React.FC = () => {
     } catch (err: any) {
       const message = err instanceof Error ? err.message : 'Failed to fetch activity';
       setError(message);
-      console.error('Error fetching activity:', err);
+      logger.error('Error fetching activity:', err);
     } finally {
       setLoading(false);
     }

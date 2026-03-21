@@ -11,6 +11,7 @@ import Timeline from '../components/DaisyUI/Timeline';
 import Tooltip from '../components/DaisyUI/Tooltip';
 import VisualFeedback from '../components/DaisyUI/VisualFeedback';
 import { apiService, type Bot, type StatusResponse } from '../services/api';
+import logger from '../utils/logger';
 
 interface DashboardStats {
   totalBots: number;
@@ -102,7 +103,7 @@ const EnhancedDashboard: React.FC = () => {
   const handleSearch = (query: string) => {
     setSearchQuery(query);
     // In a real app, this might trigger a search API call
-    console.log('Searching for:', query);
+    logger.info('Searching for:', query);
   };
 
   const handleRefresh = () => {

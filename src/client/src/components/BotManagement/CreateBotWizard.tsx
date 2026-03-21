@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Bot, MessageSquare, Cpu, User, Shield, ArrowRight, ArrowLeft, Check, AlertCircle, CheckCircle2 } from 'lucide-react';
 import Input from '../DaisyUI/Input';
+import logger from '../../utils/logger';
 
 interface CreateBotWizardProps {
     onCancel: () => void;
@@ -45,7 +46,7 @@ export const CreateBotWizard: React.FC<CreateBotWizardProps> = ({
                     setGuardProfiles(data.data || []);
                 }
             } catch (e) {
-                console.error('Failed to fetch guard profiles', e);
+                logger.error('Failed to fetch guard profiles', e);
             }
         };
         fetchGuardProfiles();

@@ -13,6 +13,7 @@ import {
   Clock,
   DownloadCloud as DownloadIcon
 } from 'lucide-react';
+import logger from '../utils/logger';
 import { Alert } from '../components/DaisyUI/Alert';
 import ToastNotification from '../components/DaisyUI/ToastNotification';
 import Modal from '../components/DaisyUI/Modal';
@@ -50,7 +51,7 @@ const ExportPage: React.FC = () => {
       const data = await apiService.listSystemBackups();
       setBackups(data);
     } catch (err) {
-      console.error('Failed to fetch backups:', err);
+      logger.error('Failed to fetch backups:', err);
       setToast({ title: 'Error', message: 'Failed to load backups', type: 'error' });
     } finally {
       setLoading(false);

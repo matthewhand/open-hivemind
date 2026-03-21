@@ -14,6 +14,7 @@ import {
   PlayIcon,
   StopIcon,
 } from '@heroicons/react/24/outline';
+import logger from '../utils/logger';
 import { apiService } from '../services/api';
 
 interface EndpointConfig {
@@ -69,7 +70,7 @@ const ApiEndpointConfig: React.FC<ApiEndpointConfigProps> = ({ onEndpointsChange
       setEndpoints([]);
       setLoading(false);
     } catch (error) {
-      console.error('Failed to fetch endpoints:', error);
+      logger.error('Failed to fetch endpoints:', error);
       setLoading(false);
     }
   };
@@ -147,7 +148,7 @@ const ApiEndpointConfig: React.FC<ApiEndpointConfigProps> = ({ onEndpointsChange
       fetchEndpoints();
       onEndpointsChange?.();
     } catch (error) {
-      console.error('Failed to save endpoint:', error);
+      logger.error('Failed to save endpoint:', error);
       showToast('Failed to save endpoint', 'error');
     }
   };
@@ -159,7 +160,7 @@ const ApiEndpointConfig: React.FC<ApiEndpointConfigProps> = ({ onEndpointsChange
       fetchEndpoints();
       onEndpointsChange?.();
     } catch (error) {
-      console.error('Failed to delete endpoint:', error);
+      logger.error('Failed to delete endpoint:', error);
       showToast('Failed to delete endpoint', 'error');
     }
   };
@@ -170,7 +171,7 @@ const ApiEndpointConfig: React.FC<ApiEndpointConfigProps> = ({ onEndpointsChange
       fetchEndpoints();
       onEndpointsChange?.();
     } catch (error) {
-      console.error('Failed to toggle endpoint:', error);
+      logger.error('Failed to toggle endpoint:', error);
     }
   };
 

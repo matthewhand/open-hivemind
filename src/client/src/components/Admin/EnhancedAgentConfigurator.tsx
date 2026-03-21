@@ -12,6 +12,7 @@ import {
   XCircleIcon,
   ExclamationTriangleIcon,
 } from '@heroicons/react/24/outline';
+import logger from '../../utils/logger';
 import Modal from '../DaisyUI/Modal';
 import Pagination from '../DaisyUI/Pagination';
 import AgentForm from './AgentForm';
@@ -96,7 +97,7 @@ const EnhancedAgentConfigurator: React.FC = () => {
       setMcpServers(mcpData.servers || []);
     } catch (err) {
       setError('Failed to fetch configuration data');
-      console.error('Error fetching data:', err);
+      logger.error('Error fetching data:', err);
     } finally {
       setLoading(false);
     }

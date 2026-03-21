@@ -4,7 +4,7 @@
  * In production, debug and info logs are suppressed to keep the console clean.
  */
 
-const IS_DEV = import.meta.env.DEV;
+const IS_DEV = typeof process !== "undefined" && process.env && process.env.NODE_ENV !== "production";
 
 export const logger = {
   /**

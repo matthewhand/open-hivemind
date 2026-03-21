@@ -6,6 +6,7 @@ import {
   ChartBarIcon,
   PresentationChartLineIcon,
 } from '@heroicons/react/24/outline';
+import logger from '../../utils/logger';
 import {
   LineChart,
   Line,
@@ -124,7 +125,7 @@ const ActivityMonitor: React.FC = () => {
       const data = await response.json();
       setAgents(data.agents || []);
     } catch (err) {
-      console.error('Error fetching agents:', err);
+      logger.error('Error fetching agents:', err);
     }
   };
 
@@ -178,7 +179,7 @@ const ActivityMonitor: React.FC = () => {
       }
     } catch (err) {
       setError(`Failed to fetch activity data: ${err}`);
-      console.error('Error fetching activity data:', err);
+      logger.error('Error fetching activity data:', err);
     } finally {
       setLoading(false);
     }

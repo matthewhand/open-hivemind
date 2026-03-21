@@ -79,7 +79,7 @@ export class IntegrationLoader {
       const results = await Promise.all(integrationPromises);
       results.forEach((components) => allComponents.push(...components));
     } catch (error) {
-      console.error('Failed to discover integrations:', error);
+      logger.error('Failed to discover integrations:', error);
     }
 
     return allComponents;
@@ -150,7 +150,7 @@ export class IntegrationLoader {
       }
 
     } catch (error) {
-      console.warn(`Failed to load integration ${integrationId}:`, error);
+      logger.warn(`Failed to load integration ${integrationId}:`, error);
     }
 
     return components;
@@ -244,7 +244,7 @@ export class IntegrationLoader {
       components.push(...discoveredResults.filter((c): c is IntegrationUIComponent => c !== null));
 
     } catch (error) {
-      console.warn(`Failed to auto-discover components for integration ${integrationId}:`, error);
+      logger.warn(`Failed to auto-discover components for integration ${integrationId}:`, error);
     }
 
     return components;
@@ -334,7 +334,7 @@ export function LazyIntegrationComponent({
     IntegrationLoader.getInstance()
       .loadComponent(integrationId, componentPath)
       .catch(error => {
-        console.error(`Failed to load integration component ${integrationId}.${componentPath}:`, error);
+        logger.error(`Failed to load integration component ${integrationId}.${componentPath}:`, error);
         // Return a simple error component
         return {
           default: () => onError(error instanceof Error ? error : new Error('Unknown error')),

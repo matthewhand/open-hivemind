@@ -1,4 +1,5 @@
 import React from 'react';
+import logger from '../utils/logger';
 
 type ErrorBoundaryProps = {
   children: React.ReactNode;
@@ -24,7 +25,7 @@ export default class ErrorBoundary extends React.Component<ErrorBoundaryProps, E
   componentDidCatch(error: Error, info: React.ErrorInfo) {
     // Lightweight client-side logging; keep it simple to avoid recursion
 
-    console.error('ErrorBoundary caught an error', { error, info });
+    logger.error('ErrorBoundary caught an error', { error, info });
   }
 
   handleReload = () => {

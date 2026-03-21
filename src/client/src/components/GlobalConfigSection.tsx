@@ -8,6 +8,7 @@ import Select from './DaisyUI/Select';
 import Toggle from './DaisyUI/Toggle';
 import { Loading } from './DaisyUI/Loading';
 import Textarea from './DaisyUI/Textarea';
+import logger from '../utils/logger';
 
 interface ConfigSchema {
   doc?: string;
@@ -73,7 +74,7 @@ const GlobalConfigSection: React.FC<GlobalConfigSectionProps> = ({ section }) =>
       try {
         valuesToSave[key] = JSON.parse(jsonStr);
       } catch (e) {
-        console.warn(`Skipping invalid JSON for ${section}.${key}`);
+        logger.warn(`Skipping invalid JSON for ${section}.${key}`);
       }
     });
 

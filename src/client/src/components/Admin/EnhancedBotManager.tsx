@@ -13,6 +13,7 @@ import {
   EyeIcon,
   DocumentDuplicateIcon,
 } from '@heroicons/react/24/outline';
+import logger from '../../utils/logger';
 import Button from '../DaisyUI/Button';
 import Badge from '../DaisyUI/Badge';
 import Modal from '../DaisyUI/Modal';
@@ -120,7 +121,7 @@ const EnhancedBotManager: React.FC<EnhancedBotManagerProps> = ({ onBotSelect }) 
         setGuardProfiles(gpData.data || []);
       }
     } catch (err) {
-      console.error('Error loading options:', err);
+      logger.error('Error loading options:', err);
     }
   };
 

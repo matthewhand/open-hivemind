@@ -16,6 +16,7 @@ import {
   ChartBar,
   AlertTriangle,
 } from 'lucide-react';
+import logger from '../../utils/logger';
 import SystemHealth from '../SystemHealth';
 import BotStatusCard from '../BotStatusCard';
 import ActivityMonitor from './ActivityMonitor';
@@ -79,11 +80,11 @@ const MonitoringDashboard: React.FC<MonitoringDashboardProps> = ({
       // Refresh all monitoring data
       const [systemData, configData] = await Promise.all([
         apiService.getStatus().catch((err) => {
-          console.error('[Monitoring] getStatus failed:', err);
+          logger.error('[Monitoring] getStatus failed:', err);
           return { bots: [] } as any;
         }),
         apiService.getConfig().catch((err) => {
-          console.error('[Monitoring] getConfig failed:', err);
+          logger.error('[Monitoring] getConfig failed:', err);
           return { bots: [] };
         }),
       ]);
@@ -126,7 +127,7 @@ const MonitoringDashboard: React.FC<MonitoringDashboardProps> = ({
         onRefresh();
       }
     } catch (error) {
-      console.error('Failed to refresh monitoring data:', error);
+      logger.error('Failed to refresh monitoring data:', error);
     } finally {
       setLoading(false);
     }
