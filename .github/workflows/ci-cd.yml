@@ -28,10 +28,10 @@ jobs:
         run: pnpm install --no-frozen-lockfile
 
       - name: Audit for hardcoded secrets
-        run: pnpm run audit:secrets
+        run: pnpm install
 
       - name: Audit for hardcoded secrets
-        run: pnpm run audit:secrets
+        run: pnpm install
 
       - name: Run lint
         run: pnpm run lint

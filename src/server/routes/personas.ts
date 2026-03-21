@@ -1,10 +1,12 @@
 import { Router } from 'express';
 // Note: We'll likely need to create schemas for these, assuming minimal validation for now or generic object
 import { z } from 'zod';
+import { createLogger } from '../../common/StructuredLogger';
 import { PersonaManager } from '../../managers/PersonaManager';
 import { validateRequest } from '../../validation/validateRequest';
 
 const router = Router();
+const logger = createLogger('personasRouter');
 const manager = PersonaManager.getInstance();
 
 // Schema for create/update
@@ -43,7 +45,8 @@ router.get('/', (req, res) => {
     const personas = manager.getAllPersonas();
     return res.json(personas);
   } catch (error: any) {
-    return res.status(500).json({ error: error.message });
+    logger.error('Failed to retrieve personas', { error: error.message });
+    return res.status(500).json({ error: 'Failed to retrieve personas' });
   }
 });
 
@@ -56,7 +59,8 @@ router.get('/:id', (req, res) => {
     }
     return res.json(persona);
   } catch (error: any) {
-    return res.status(500).json({ error: error.message });
+    logger.error('Failed to retrieve persona', { id: req.params.id, error: error.message });
+    return res.status(500).json({ error: 'Failed to retrieve persona' });
   }
 });
 
