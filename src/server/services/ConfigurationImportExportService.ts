@@ -585,21 +585,43 @@ export class ConfigurationImportExportService {
         const validConfigIds = new Set<number>();
         const invalidConfigIds = new Set<number>();
 
+        // Pre-fetch unique valid configuration IDs in bulk
+        const uniqueIdsToCheck = new Set<number>();
+        for (const version of importData.versions) {
+          const configId = version.botConfigurationId;
+          if (!validConfigIds.has(configId) && !invalidConfigIds.has(configId)) {
+            uniqueIdsToCheck.add(configId);
+          }
+        }
+
+        const BATCH_SIZE = 50;
+        const idsArray = Array.from(uniqueIdsToCheck);
+
+        for (let i = 0; i < idsArray.length; i += BATCH_SIZE) {
+          const batch = idsArray.slice(i, i + BATCH_SIZE);
+          await Promise.all(
+            batch.map(async (configId) => {
+              try {
+                const config = await this.dbManager.getBotConfiguration(configId);
+                if (config) {
+                  validConfigIds.add(configId);
+                } else {
+                  invalidConfigIds.add(configId);
+                }
+              } catch (error) {
+                result.warnings?.push(
+                  `Error fetching configuration ${configId}: ${(error as any).message}`
+                );
+                invalidConfigIds.add(configId);
+              }
+            })
+          );
+        }
+
         for (const version of importData.versions) {
           try {
             const configId = version.botConfigurationId;
-            let isValid = validConfigIds.has(configId);
-
-            if (!isValid && !invalidConfigIds.has(configId)) {
-              // Check if configuration exists
-              const config = await this.dbManager.getBotConfiguration(configId);
-              if (config) {
-                validConfigIds.add(configId);
-                isValid = true;
-              } else {
-                invalidConfigIds.add(configId);
-              }
-            }
+            const isValid = validConfigIds.has(configId);
 
             if (isValid) {
               await this.dbManager.createBotConfigurationVersion(version);

@@ -134,7 +134,12 @@ describe('ConfigurationImportExportService - Version Caching', () => {
     (service as any).dbManager = dbManagerMock;
 
     // Mock fs.readFile to return standard format JSON
+<<<<<<< HEAD
     (fs.readFile as jest.Mock).mockImplementation((path) => {
+=======
+    const fsPromises = require('fs').promises;
+    (fsPromises.readFile as jest.Mock).mockImplementation((path) => {
+>>>>>>> origin/bolt-perf-import-versions-2860027145998444086
       return Promise.resolve(JSON.stringify({
         configurations: [],
         versions: [
