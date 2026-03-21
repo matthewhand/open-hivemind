@@ -1,3 +1,4 @@
+import { ERROR_CODES, HTTP_STATUS } from '../../types/constants';
 import { Router } from 'express';
 // Note: We'll likely need to create schemas for these, assuming minimal validation for now or generic object
 import { z } from 'zod';
@@ -45,8 +46,12 @@ router.get('/', (req, res) => {
     const personas = manager.getAllPersonas();
     return res.json(personas);
   } catch (error: any) {
+<<<<<<< HEAD
     logger.error('Failed to retrieve personas', { error: error.message });
     return res.status(500).json({ error: 'Failed to retrieve personas' });
+=======
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: error.message });
+>>>>>>> origin/refine-eliminate-magic-numbers-3883502303364983467
   }
 });
 
@@ -55,12 +60,16 @@ router.get('/:id', (req, res) => {
   try {
     const persona = manager.getPersona(req.params.id);
     if (!persona) {
-      return res.status(404).json({ error: 'Persona not found' });
+      return res.status(HTTP_STATUS.NOT_FOUND).json({ error: 'Persona not found' });
     }
     return res.json(persona);
   } catch (error: any) {
+<<<<<<< HEAD
     logger.error('Failed to retrieve persona', { id: req.params.id, error: error.message });
     return res.status(500).json({ error: 'Failed to retrieve persona' });
+=======
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: error.message });
+>>>>>>> origin/refine-eliminate-magic-numbers-3883502303364983467
   }
 });
 
@@ -71,14 +80,14 @@ router.post('/', validateRequest(CreatePersonaSchema), async (req, res) => {
     const allPersonas = manager.getAllPersonas();
     const existingPersona = allPersonas.find((p) => p.name === req.body.name);
     if (existingPersona) {
-      return res.status(200).json(existingPersona);
+      return res.status(HTTP_STATUS.OK).json(existingPersona);
     }
 
     // Basic validation until strict schema is hooked up globally if needed
     const newPersona = manager.createPersona(req.body);
-    return res.status(201).json(newPersona);
+    return res.status(HTTP_STATUS.CREATED).json(newPersona);
   } catch (error: any) {
-    return res.status(400).json({ error: error.message });
+    return res.status(HTTP_STATUS.BAD_REQUEST).json({ error: error.message });
   }
 });
 
@@ -90,17 +99,17 @@ router.post('/:id/clone', (req, res) => {
       const allPersonas = manager.getAllPersonas();
       const existingPersona = allPersonas.find((p) => p.name === req.body.name);
       if (existingPersona) {
-        return res.status(200).json(existingPersona);
+        return res.status(HTTP_STATUS.OK).json(existingPersona);
       }
     }
 
     const clonedPersona = manager.clonePersona(req.params.id, req.body);
-    return res.status(201).json(clonedPersona);
+    return res.status(HTTP_STATUS.CREATED).json(clonedPersona);
   } catch (error: any) {
-    if (error.message.includes('not found')) {
-      return res.status(404).json({ error: error.message });
+    if (error.message.includes(ERROR_CODES.NOT_FOUND)) {
+      return res.status(HTTP_STATUS.NOT_FOUND).json({ error: error.message });
     }
-    return res.status(400).json({ error: error.message });
+    return res.status(HTTP_STATUS.BAD_REQUEST).json({ error: error.message });
   }
 });
 
@@ -110,7 +119,7 @@ router.put('/:id', async (req, res) => {
     const updatedPersona = manager.updatePersona(req.params.id, req.body);
     return res.json(updatedPersona);
   } catch (error: any) {
-    return res.status(400).json({ error: error.message });
+    return res.status(HTTP_STATUS.BAD_REQUEST).json({ error: error.message });
   }
 });
 
@@ -119,13 +128,13 @@ router.delete('/:id', (req, res) => {
   try {
     const existingPersona = manager.getPersona(req.params.id);
     if (!existingPersona) {
-      return res.json({ success: true }); // Idempotency: return 200 if already gone
+      return res.json({ success: true }); // Idempotency: return HTTP_STATUS.OK if already gone
     }
 
     manager.deletePersona(req.params.id);
     return res.json({ success: true });
   } catch (error: any) {
-    return res.status(400).json({ error: error.message });
+    return res.status(HTTP_STATUS.BAD_REQUEST).json({ error: error.message });
   }
 });
 
