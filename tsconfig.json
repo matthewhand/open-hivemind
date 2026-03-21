@@ -68,8 +68,7 @@
     "packages/memory-memvault/src/**/*",
     "packages/message-discord/src/**/*",
     "packages/message-slack/src/**/*",
-    "packages/message-mattermost/src/**/*",
-    "packages/shared-types/src/**/*"
+    "packages/message-mattermost/src/**/*"
   ],
   "exclude": ["tests/**/*", "node_modules", "src/client/**/*"],
   "files": ["src/global.d.ts"]

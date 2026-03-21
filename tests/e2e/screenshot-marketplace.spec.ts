@@ -76,32 +76,6 @@ test.describe('Marketplace Page', () => {
     // Setup authentication and error detection
     await setupTestWithErrorDetection(page);
 
-    // Mock packages endpoint since it requires valid token processing
-    await page.route('**/api/marketplace/packages', async (route) => {
-      await route.fulfill({
-        status: 200,
-        json: [
-          {
-            name: '@hivemind/message-discord',
-            displayName: 'Discord Integration',
-            description: 'Connect bots to Discord',
-            type: 'message',
-            version: '1.0.0',
-            status: 'built-in'
-          },
-          {
-            name: 'custom-llm-provider',
-            displayName: 'Custom LLM',
-            description: 'A custom LLM provider',
-            type: 'llm',
-            version: '1.0.0',
-            status: 'installed',
-            repoUrl: 'https://github.com/user/custom-llm'
-          }
-        ]
-      });
-    });
-
     // Navigate to Marketplace page
     await navigateAndWaitReady(page, '/admin/marketplace');
 
@@ -128,11 +102,6 @@ test.describe('Marketplace Page', () => {
     // Setup authentication and error detection
     await setupTestWithErrorDetection(page);
 
-    // Mock packages endpoint since it requires valid token processing
-    await page.route('**/api/marketplace/packages', async (route) => {
-      await route.fulfill({ status: 200, json: [] });
-    });
-
     // Navigate to Marketplace page
     await navigateAndWaitReady(page, '/admin/marketplace');
 
@@ -154,34 +123,21 @@ test.describe('Marketplace Page', () => {
     await page.waitForTimeout(500);
 
     // Screenshot Install Modal
-    await page.screenshot({ path: 'docs/screenshots/marketplace-install-modal.png', fullPage: true });
+    await page.screenshot({
+      path: 'docs/screenshots/marketplace-install-modal.png',
+      fullPage: true,
+    });
 
     // Verify modal has correct content
     await expect(modal.locator('h3:has-text("Install Package from GitHub")')).toBeVisible();
-    await expect(modal.locator('input[type="text"]')).toHaveValue('https://github.com/user/custom-provider');
+    await expect(modal.locator('input[type="text"]')).toHaveValue(
+      'https://github.com/user/custom-provider'
+    );
   });
 
   test('Filter packages by type', async ({ page }) => {
     // Setup authentication and error detection
     await setupTestWithErrorDetection(page);
-
-    // Mock packages endpoint since it requires valid token processing
-    await page.route('**/api/marketplace/packages', async (route) => {
-      await route.fulfill({
-        status: 200,
-        json: [
-          {
-            name: 'custom-llm-provider',
-            displayName: 'Custom LLM',
-            description: 'A custom LLM provider',
-            type: 'llm',
-            version: '1.0.0',
-            status: 'installed',
-            repoUrl: 'https://github.com/user/custom-llm'
-          }
-        ]
-      });
-    });
 
     // Navigate to Marketplace page
     await navigateAndWaitReady(page, '/admin/marketplace');

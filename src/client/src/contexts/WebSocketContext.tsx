@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars, react-refresh/only-export-components, no-empty, no-case-declarations */
 import type { ReactNode } from 'react';
-import React, { createContext, useContext, useEffect, useState, useRef, useCallback } from 'react';
+import React, { createContext, useContext, useEffect, useState } from 'react';
 import type { Socket } from 'socket.io-client';
 import { io } from 'socket.io-client';
 import type {
@@ -28,20 +28,16 @@ const WebSocketContext = createContext<WebSocketContextType | undefined>(undefin
 const rawBaseUrl = import.meta.env.VITE_API_BASE_URL as string | undefined;
 const API_BASE_URL = rawBaseUrl?.replace(/\/$/, '');
 
-// ⚡ Bolt Optimization: Extract comparator to prevent inline instantiation and use fast string comparison
-const sortAlertsDescending = (a: AlertEvent, b: AlertEvent) => b.timestamp.localeCompare(a.timestamp);
-
 export const WebSocketProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [socket, setSocket] = useState<Socket | null>(null);
-  const socketRef = useRef<Socket | null>(null);
   const [isConnected, setIsConnected] = useState(false);
   const [messageFlow, setMessageFlow] = useState<MessageFlowEvent[]>([]);
   const [alerts, setAlerts] = useState<AlertEvent[]>([]);
   const [performanceMetrics, setPerformanceMetrics] = useState<PerformanceMetric[]>([]);
   const [botStats, setBotStats] = useState<BotStat[]>([]);
 
-  const connect = useCallback(() => {
-    if (socketRef.current?.connected) { return; }
+  const connect = () => {
+    if (socket?.connected) { return; }
 
     const connectionTarget = API_BASE_URL && API_BASE_URL.length > 0 ? API_BASE_URL : undefined;
     const tokenString = localStorage.getItem('auth_tokens');
@@ -112,13 +108,17 @@ export const WebSocketProvider: React.FC<{ children: ReactNode }> = ({ children 
     newSocket.on('alerts_broadcast', (data) => {
       const incoming = data.alerts || [];
       setAlerts((prev) => {
-        // ⚡ Bolt Optimization: Use Map for O(1) lookups instead of O(n) findIndex
-        const mergedMap = new Map(prev.map(a => [a.id, a]));
+        const merged = [...prev];
         incoming.forEach((inc: AlertEvent) => {
-          mergedMap.set(inc.id, inc);
+          const idx = merged.findIndex((a) => a.id === inc.id);
+          if (idx !== -1) {
+            merged[idx] = inc;
+          } else {
+            merged.push(inc);
+          }
         });
-        return Array.from(mergedMap.values())
-          .sort(sortAlertsDescending)
+        return merged
+          .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
           .slice(0, 50);
       });
     });
@@ -164,24 +164,22 @@ export const WebSocketProvider: React.FC<{ children: ReactNode }> = ({ children 
       logger.error('WebSocket error:', error);
     });
 
-    socketRef.current = newSocket;
     setSocket(newSocket);
-  }, []);
+  };
 
-  const disconnect = useCallback(() => {
-    if (socketRef.current) {
-      socketRef.current.disconnect();
-      socketRef.current = null;
+  const disconnect = () => {
+    if (socket) {
+      socket.disconnect();
       setSocket(null);
       setIsConnected(false);
     }
-  }, []);
+  };
 
   useEffect(() => {
     return () => {
       disconnect();
     };
-  }, [disconnect]);
+  }, []);
 
   const value: WebSocketContextType = {
     socket,

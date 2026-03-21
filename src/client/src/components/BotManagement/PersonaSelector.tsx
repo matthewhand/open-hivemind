@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useMemo } from 'react';
-import type { Persona, PersonaCategory} from '../../types';
-import { DEFAULT_PERSONA } from '../../types';
+import type { Persona, PersonaCategory } from '../../types/bot';
+import { DEFAULT_PERSONA } from '../../types/bot';
 import Card from '../DaisyUI/Card';
 import Button from '../DaisyUI/Button';
 import Input from '../DaisyUI/Input';

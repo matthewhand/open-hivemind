@@ -619,18 +619,14 @@ export const AnomalyDetection: React.FC<AnomalyDetectionProps> = ({ onAnomalyDet
               </div>
               <button
                 className="btn btn-circle btn-ghost btn-sm"
-                aria-label="Run anomaly detection"
                 onClick={runAnomalyDetection}
                 disabled={isLoading}
-                aria-label="Run anomaly detection"
               >
                 <ArrowPathIcon className={`w-5 h-5 ${isLoading ? 'animate-spin' : ''}`} />
               </button>
               <button
-                aria-label="Anomaly detection settings"
                 className="btn btn-circle btn-ghost btn-sm"
                 onClick={() => setShowConfigDialog(!showConfigDialog)}
-                aria-label="Toggle configuration dialog"
               >
                 <Cog6ToothIcon className="w-5 h-5" />
               </button>
@@ -711,7 +707,7 @@ export const AnomalyDetection: React.FC<AnomalyDetectionProps> = ({ onAnomalyDet
                     >
                       {algorithm.isActive ? 'Active' : 'Inactive'}
                     </div>
-                    <button className="btn btn-ghost btn-xs btn-square" aria-label={`Configure ${algorithm.name}`}>
+                    <button className="btn btn-ghost btn-xs btn-square">
                       <Cog6ToothIcon className="w-4 h-4" />
                     </button>
                   </div>

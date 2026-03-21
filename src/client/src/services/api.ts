@@ -249,7 +249,6 @@ export interface ActivityEvent {
   processingTime?: number;
   status: 'success' | 'error' | 'timeout';
   errorMessage?: string;
-  spanName?: string;
 }
 
 export interface ActivityTimelineBucket {
@@ -610,7 +609,7 @@ class ApiService {
       if (value) { query.append(key, value); }
     });
     const search = query.toString();
-    const endpoint = `/api/dashboard/activity${search ? `?${search}` : ''}`;
+    const endpoint = `/api/dashboard/api/activity${search ? `?${search}` : ''}`;
     return this.request<ActivityResponse>(endpoint);
   }
 

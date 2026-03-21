@@ -11,6 +11,7 @@ import type {
   IMessengerService,
   IServiceDependencies,
 } from '@hivemind/shared-types';
+import type { PluginManifest } from '../../../src/plugins/PluginLoader';
 import { Discord, DiscordService } from './DiscordService';
 
 export { DiscordService, Discord };
@@ -41,8 +42,6 @@ export const adapterMetadata = {
   version: '1.0.0',
   platform: 'discord' as const,
 };
-
-import type { PluginManifest } from '../../../src/plugins/PluginLoader';
 
 /** Standard factory alias — PluginLoader uses create() as the single entry point */
 export const create = createDiscordService;

@@ -55,9 +55,6 @@ export class WebUIStorage {
       console.error('Error loading web UI config:', error);
     }
 
-    // For unit tests, it's possible fs existsSync returns true but mock doesn't handle read
-    // resulting in undefined, triggering this fallback
-
     // Return default configuration
     const defaultConfig = {
       agents: [],

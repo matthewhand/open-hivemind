@@ -1,6 +1,14 @@
+import { execFileSync } from 'child_process';
 import * as fs from 'fs';
 import * as path from 'path';
-import { execFileSync } from 'child_process';
+import { loadPlugin, PLUGINS_DIR } from '@src/plugins/PluginLoader';
+import {
+  installPlugin,
+  listInstalledPlugins,
+  PluginValidationError,
+  uninstallPlugin,
+  updatePlugin,
+} from '@src/plugins/PluginManager';
 
 // Mock fs and child_process so tests don't touch the real filesystem or run git
 jest.mock('fs');
@@ -14,15 +22,6 @@ jest.mock('@src/plugins/PluginLoader', () => ({
   PLUGINS_DIR: '/mock/plugins',
   loadPlugin: jest.fn(),
 }));
-
-import { loadPlugin, PLUGINS_DIR } from '@src/plugins/PluginLoader';
-import {
-  installPlugin,
-  uninstallPlugin,
-  updatePlugin,
-  listInstalledPlugins,
-  PluginValidationError,
-} from '@src/plugins/PluginManager';
 
 const mockLoadPlugin = loadPlugin as jest.MockedFunction<typeof loadPlugin>;
 
@@ -67,13 +66,13 @@ describe('manifest type validation', () => {
       create: jest.fn(),
     });
 
-    await expect(
-      installPlugin('https://github.com/user/llm-myprovider')
-    ).rejects.toThrow(PluginValidationError);
+    await expect(installPlugin('https://github.com/user/llm-myprovider')).rejects.toThrow(
+      PluginValidationError
+    );
 
-    await expect(
-      installPlugin('https://github.com/user/llm-myprovider')
-    ).rejects.toThrow(/Manifest type mismatch/);
+    await expect(installPlugin('https://github.com/user/llm-myprovider')).rejects.toThrow(
+      /Manifest type mismatch/
+    );
   });
 
   it('rejects when package name has invalid type prefix', async () => {
@@ -81,21 +80,21 @@ describe('manifest type validation', () => {
       JSON.stringify({ name: 'unknown-myprovider', version: '1.0.0' })
     );
 
-    await expect(
-      installPlugin('https://github.com/user/unknown-myprovider')
-    ).rejects.toThrow(PluginValidationError);
+    await expect(installPlugin('https://github.com/user/unknown-myprovider')).rejects.toThrow(
+      PluginValidationError
+    );
   });
 
   it('rejects when manifest is missing entirely', async () => {
     mockLoadPlugin.mockReturnValue({ create: jest.fn() }); // no manifest
 
-    await expect(
-      installPlugin('https://github.com/user/llm-myprovider')
-    ).rejects.toThrow(PluginValidationError);
+    await expect(installPlugin('https://github.com/user/llm-myprovider')).rejects.toThrow(
+      PluginValidationError
+    );
 
-    await expect(
-      installPlugin('https://github.com/user/llm-myprovider')
-    ).rejects.toThrow(/does not export a 'manifest'/);
+    await expect(installPlugin('https://github.com/user/llm-myprovider')).rejects.toThrow(
+      /does not export a 'manifest'/
+    );
   });
 
   it('accepts when manifest.type matches name prefix', async () => {
@@ -115,17 +114,37 @@ describe('manifest type validation', () => {
 // ---------------------------------------------------------------------------
 
 describe('installPlugin', () => {
+  it('rejects URLs starting with a dash', async () => {
+    await expect(installPlugin('-u')).rejects.toThrow(PluginValidationError);
+    await expect(installPlugin('-u')).rejects.toThrow(/cannot start with a dash/);
+  });
+
+  it('rejects URLs with invalid protocols', async () => {
+    await expect(installPlugin('file:///etc/passwd')).rejects.toThrow(PluginValidationError);
+    await expect(installPlugin('file:///etc/passwd')).rejects.toThrow(
+      /Only http: and https: are allowed/
+    );
+  });
+
   it('clones repo and installs dependencies', async () => {
     (mockFs.existsSync as jest.Mock).mockReturnValue(false);
 
     await installPlugin('https://github.com/user/llm-myprovider');
 
     expect(mockExecFileSync).toHaveBeenCalledWith(
-      'git', ['clone', '--depth', '1', 'https://github.com/user/llm-myprovider', expect.stringContaining('_install_')],
+      'git',
+      [
+        'clone',
+        '--depth',
+        '1',
+        'https://github.com/user/llm-myprovider',
+        expect.stringContaining('_install_'),
+      ],
       expect.any(Object)
     );
     expect(mockExecFileSync).toHaveBeenCalledWith(
-      'pnpm', ['install', '--prod', '--ignore-scripts'],
+      'pnpm',
+      ['install', '--prod', '--ignore-scripts'],
       expect.any(Object)
     );
   });
@@ -133,9 +152,9 @@ describe('installPlugin', () => {
   it('throws if plugin is already installed', async () => {
     (mockFs.existsSync as jest.Mock).mockReturnValueOnce(true); // pluginPath already exists
 
-    await expect(
-      installPlugin('https://github.com/user/llm-myprovider')
-    ).rejects.toThrow(/already installed/);
+    await expect(installPlugin('https://github.com/user/llm-myprovider')).rejects.toThrow(
+      /already installed/
+    );
   });
 
   it('cleans up temp dir on failure', async () => {
@@ -143,16 +162,18 @@ describe('installPlugin', () => {
     (mockFs.existsSync as jest.Mock).mockImplementation((p: string) =>
       String(p).includes('_install_')
     );
-    mockExecFileSync.mockImplementationOnce(() => { throw new Error('git failed'); });
+    mockExecFileSync.mockImplementationOnce(() => {
+      throw new Error('git failed');
+    });
 
-    await expect(
-      installPlugin('https://github.com/user/llm-myprovider')
-    ).rejects.toThrow('git failed');
-
-    expect(mockFs.rmSync).toHaveBeenCalledWith(
-      expect.stringContaining('_install_'),
-      { recursive: true, force: true }
+    await expect(installPlugin('https://github.com/user/llm-myprovider')).rejects.toThrow(
+      'git failed'
     );
+
+    expect(mockFs.rmSync).toHaveBeenCalledWith(expect.stringContaining('_install_'), {
+      recursive: true,
+      force: true,
+    });
   });
 });
 
@@ -164,15 +185,23 @@ describe('uninstallPlugin', () => {
   it('removes plugin directory and registry entry', async () => {
     (mockFs.existsSync as jest.Mock).mockReturnValue(true);
     (mockFs.readFileSync as jest.Mock).mockReturnValue(
-      JSON.stringify([{ name: 'llm-myprovider', repoUrl: 'https://...', installedAt: '', updatedAt: '', version: '1.0.0' }])
+      JSON.stringify([
+        {
+          name: 'llm-myprovider',
+          repoUrl: 'https://...',
+          installedAt: '',
+          updatedAt: '',
+          version: '1.0.0',
+        },
+      ])
     );
 
     await uninstallPlugin('llm-myprovider');
 
-    expect(mockFs.rmSync).toHaveBeenCalledWith(
-      path.join(PLUGINS_DIR, 'llm-myprovider'),
-      { recursive: true, force: true }
-    );
+    expect(mockFs.rmSync).toHaveBeenCalledWith(path.join(PLUGINS_DIR, 'llm-myprovider'), {
+      recursive: true,
+      force: true,
+    });
     expect(mockFs.writeFileSync).toHaveBeenCalledWith(
       expect.stringContaining('registry.json'),
       expect.not.stringContaining('llm-myprovider')
@@ -194,13 +223,25 @@ describe('updatePlugin', () => {
   it('runs git pull and pnpm install then re-validates manifest', async () => {
     (mockFs.existsSync as jest.Mock).mockReturnValue(true);
     (mockFs.readFileSync as jest.Mock).mockReturnValue(
-      JSON.stringify([{ name: 'llm-myprovider', repoUrl: 'https://github.com/user/llm-myprovider', installedAt: '2026-01-01', updatedAt: '2026-01-01', version: '1.0.0' }])
+      JSON.stringify([
+        {
+          name: 'llm-myprovider',
+          repoUrl: 'https://github.com/user/llm-myprovider',
+          installedAt: '2026-01-01',
+          updatedAt: '2026-01-01',
+          version: '1.0.0',
+        },
+      ])
     );
 
     const result = await updatePlugin('llm-myprovider');
 
     expect(mockExecFileSync).toHaveBeenCalledWith('git', ['pull', '--ff-only'], expect.any(Object));
-    expect(mockExecFileSync).toHaveBeenCalledWith('pnpm', ['install', '--prod', '--ignore-scripts'], expect.any(Object));
+    expect(mockExecFileSync).toHaveBeenCalledWith(
+      'pnpm',
+      ['install', '--prod', '--ignore-scripts'],
+      expect.any(Object)
+    );
     expect(result.name).toBe('llm-myprovider');
   });
 
@@ -254,3 +295,20 @@ describe('listInstalledPlugins', () => {
     expect(listInstalledPlugins()).toEqual([]);
   });
 });
+
+  // Additional security tests for argument injection prevention
+  it('rejects URLs with argument injection patterns in hostname', async () => {
+    await expect(installPlugin('https:// --upload-pack=malicious.com/repo')).rejects.toThrow(PluginValidationError);
+    await expect(installPlugin('https:// --config=evil.com/repo')).rejects.toThrow(PluginValidationError);
+  });
+
+  it('rejects URLs with shell metacharacters in hostname', async () => {
+    await expect(installPlugin('https://host;name.com/repo')).rejects.toThrow(PluginValidationError);
+    await expect(installPlugin('https://host|name.com/repo')).rejects.toThrow(PluginValidationError);
+    await expect(installPlugin('https://host`name.com/repo')).rejects.toThrow(PluginValidationError);
+  });
+
+  it('rejects URLs with spaces in hostname or path', async () => {
+    await expect(installPlugin('https://host name.com/repo')).rejects.toThrow(PluginValidationError);
+    await expect(installPlugin('https://hostname.com/path with spaces')).rejects.toThrow(PluginValidationError);
+  });

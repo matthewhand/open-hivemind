@@ -73,7 +73,7 @@ export const BotActivityWaterfallMonitor: React.FC = () => {
                     newSpans.push({
                         id: event.id,
                         parentId: botId,
-                        name: event.spanName || `${event.messageType === 'incoming' ? 'Received' : 'Sent'} Message`,
+                        name: `${event.messageType === 'incoming' ? 'Received' : 'Sent'} Message`,
                         service: 'message',
                         startTime: eventTime,
                         duration: processingTimeMs,

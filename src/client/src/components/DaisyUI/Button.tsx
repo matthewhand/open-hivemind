@@ -87,7 +87,7 @@ export const Button = memo(({
 
   const buttonContent = (
     <>
-      {loading && <span className={`loading loading-spinner ${getSpinnerSizeClass()} ${hasTextContent ? 'mr-2' : ''}`.trim()} aria-hidden="true"></span>}
+      {loading && <span className={`loading loading-spinner ${getSpinnerSizeClass()} ${hasTextContent ? 'mr-2' : ''}`.trim()}></span>}
       {(icon || startIcon) && !loading && <span className="mr-2">{icon || startIcon}</span>}
       {loading && loadingText ? loadingText : children}
       {(iconRight || endIcon) && !loading && <span className="ml-2">{iconRight || endIcon}</span>}
@@ -98,7 +98,6 @@ export const Button = memo(({
     <button
       className={`${baseClasses} ${variantClass} ${sizeClass} ${loadingClass} ${disabledClass} ${className}`.trim()}
       disabled={disabled || loading}
-      aria-busy={loading}
       onClick={handleClick}
       {...props}
     >

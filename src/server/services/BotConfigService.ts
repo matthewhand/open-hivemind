@@ -183,16 +183,10 @@ export class BotConfigService {
         return null;
       }
 
-      // ⚡ Bolt Optimization: Fetch versions and audit logs concurrently using Promise.all
-      const [versions, auditLog] = await Promise.all([
-        this.dbManager.getBotConfigurationVersions(id),
-        this.dbManager.getBotConfigurationAudit(id),
-      ]);
-
       return {
         ...config,
-        versions,
-        auditLog,
+        versions: await this.dbManager.getBotConfigurationVersions(id),
+        auditLog: await this.dbManager.getBotConfigurationAudit(id),
       };
     } catch (error) {
       debug('Error getting bot configuration:', error);
@@ -212,16 +206,10 @@ export class BotConfigService {
         return null;
       }
 
-      // ⚡ Bolt Optimization: Fetch versions and audit logs concurrently using Promise.all
-      const [versions, auditLog] = await Promise.all([
-        this.dbManager.getBotConfigurationVersions(config.id!),
-        this.dbManager.getBotConfigurationAudit(config.id!),
-      ]);
-
       return {
         ...config,
-        versions,
-        auditLog,
+        versions: await this.dbManager.getBotConfigurationVersions(config.id!),
+        auditLog: await this.dbManager.getBotConfigurationAudit(config.id!),
       };
     } catch (error) {
       debug('Error getting bot configuration by name:', error);

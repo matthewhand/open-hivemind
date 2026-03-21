@@ -264,16 +264,6 @@ A detailed view of all system integrations and configurations.
 
 ## Developer & Tools
 
-### [Package Marketplace](/admin/marketplace)
-Browse and install community packages to extend your bot's capabilities.
-
-![Marketplace Page](screenshots/marketplace-page.png)
-![Install from URL](screenshots/marketplace-install-modal.png)
-
-*   **Browse by Category**: Filter packages by their type, such as LLM, Message, Memory, or Tool packages.
-*   **Install from URL**: Connect your bot to custom community packages hosted on a GitHub repository or accessible via URL.
-*   **Package Management**: View built-in packages that are pre-configured or manage packages you've installed previously.
-
 ### [UI Components](/admin/showcase)
 A reference for developers extending the WebUI.
 *   **Component Library**: View available UI elements (buttons, inputs, cards) and their usage.
