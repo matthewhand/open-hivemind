@@ -24,6 +24,9 @@ jobs:
 <<<<<<< HEAD
           cache: 'pnpm'
 
+      - name: Install dependencies
+        run: pnpm install
+
       - name: Install Playwright browsers
         run: pnpm dlx playwright install chromium
 

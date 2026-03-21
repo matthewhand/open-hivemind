@@ -71,11 +71,6 @@ router.get('/agents', async (req: Request, res: Response) => {
       (req.query.apiUrl as string) ||
       'https://api.letta.com/v1';
 
-    const validation = await validateLettaUrl(apiUrl);
-    if (!validation.isValid) {
-      return res.status(403).json({ error: 'Security Warning', message: validation.error });
-    }
-
     if (!apiKey) {
       return res.status(400).json({
         error: 'Missing API key',
@@ -103,11 +98,6 @@ router.get('/agents/:id', async (req: Request, res: Response) => {
       (req.headers['x-letta-api-url'] as string) ||
       (req.query.apiUrl as string) ||
       'https://api.letta.com/v1';
-
-    const validation = await validateLettaUrl(apiUrl);
-    if (!validation.isValid) {
-      return res.status(403).json({ error: 'Security Warning', message: validation.error });
-    }
 
     if (!apiKey) {
       return res.status(400).json({
