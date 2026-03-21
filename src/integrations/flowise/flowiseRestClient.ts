@@ -1,8 +1,8 @@
 import axios from 'axios';
 import Debug from 'debug';
-import { isSafeUrl } from '../../utils/ssrfGuard';
 import { ConfigurationManager } from '@config/ConfigurationManager';
 import flowiseConfig from '@integrations/flowise/flowiseConfig';
+import { isSafeUrl } from '../../utils/ssrfGuard';
 
 const debug = Debug('app:flowiseClient');
 
