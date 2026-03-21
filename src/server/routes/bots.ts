@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { createLogger } from '../../common/StructuredLogger';
 import { BotManager, type CreateBotRequest } from '../../managers/BotManager';
 import {
   BotActivityQuerySchema,
@@ -13,6 +14,7 @@ import { ActivityLogger } from '../services/ActivityLogger';
 import { WebSocketService } from '../services/WebSocketService';
 
 const router = Router();
+const logger = createLogger('botsRouter');
 const manager = BotManager.getInstance();
 const wsService = WebSocketService.getInstance();
 
@@ -56,7 +58,8 @@ router.get('/', async (req, res) => {
 
     return res.json(result);
   } catch (error: any) {
-    return res.status(500).json({ error: error.message });
+    logger.error('Failed to retrieve bots', { error: error.message });
+    return res.status(500).json({ error: 'Failed to retrieve bots' });
   }
 });
 
@@ -87,7 +90,8 @@ router.get('/:id', validateRequest(BotIdParamSchema), async (req, res) => {
     }
     return res.json({ success: true, bot });
   } catch (error: any) {
-    return res.status(500).json({ error: error.message });
+    logger.error('Failed to retrieve bot', { id: req.params.id, error: error.message });
+    return res.status(500).json({ error: 'Failed to retrieve bot' });
   }
 });
 
@@ -117,7 +121,9 @@ router.post('/', validateRequest(CreateBotSchema), async (req, res) => {
     const allBots = await manager.getAllBots();
     const existingBot = allBots.find((b) => b.name === request.name);
     if (existingBot) {
-      return res.status(200).json({ success: true, message: 'Bot already exists', bot: existingBot });
+      return res
+        .status(200)
+        .json({ success: true, message: 'Bot already exists', bot: existingBot });
     }
 
     const bot = await manager.createBot(request);
@@ -234,7 +240,9 @@ router.post('/:id/clone', validateRequest(CloneBotSchema), async (req, res) => {
     const allBots = await manager.getAllBots();
     const existingBot = allBots.find((b) => b.name === newName);
     if (existingBot) {
-      return res.status(200).json({ success: true, message: 'Bot clone already exists', bot: existingBot });
+      return res
+        .status(200)
+        .json({ success: true, message: 'Bot clone already exists', bot: existingBot });
     }
 
     const newBot = await manager.cloneBot(id, newName);
@@ -401,7 +409,8 @@ router.get('/:id/activity', validateRequest(BotActivityQuerySchema), async (req,
 
     return res.json({ success: true, data: { activity } });
   } catch (error: any) {
-    return res.status(500).json({ error: error.message });
+    logger.error('Failed to retrieve bot activity', { id: req.params.id, error: error.message });
+    return res.status(500).json({ error: 'Failed to retrieve bot activity' });
   }
 });
 
