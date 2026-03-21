@@ -585,31 +585,29 @@ export class ConfigurationImportExportService {
       // Process templates if included
       if (importData.templates && !options.validateOnly) {
         const BATCH_SIZE = 50;
-        const existingTemplateIds = new Set<string>();
+
+        // Fetch all existing template IDs once
+        let allExistingTemplateIds: Set<string>;
+        try {
+          allExistingTemplateIds = await this.templateService.getAllTemplateIds();
+        } catch (error) {
+          result.warnings?.push(`Error fetching existing templates: ${(error as any).message}`);
+          allExistingTemplateIds = new Set();
+        }
+
+        const newlyCreatedTemplateIds = new Set<string>();
 
         for (let i = 0; i < importData.templates.length; i += BATCH_SIZE) {
           const batch = importData.templates.slice(i, i + BATCH_SIZE);
 
-          // Pre-fetch a batch of required templates concurrently with individual error handling
-          await Promise.all(
-            batch.map(async (t: any) => {
-              try {
-                const existing = await this.templateService.getTemplateById(t.id);
-                if (existing) {
-                  existingTemplateIds.add(t.id);
-                }
-              } catch (error) {
-                result.warnings?.push(
-                  `Error checking template ${t.id || 'unknown'}: ${(error as any).message}`
-                );
-              }
-            })
-          );
-
           // Create new templates concurrently within the batch
           await Promise.all(
             batch
-              .filter((template: any) => !existingTemplateIds.has(template.id))
+              .filter(
+                (template: any) =>
+                  !allExistingTemplateIds.has(template.id) &&
+                  !newlyCreatedTemplateIds.has(template.id)
+              )
               .map(async (template: any) => {
                 try {
                   await this.templateService.createTemplate({
@@ -620,7 +618,7 @@ export class ConfigurationImportExportService {
                     config: template.config,
                     createdBy: importedBy,
                   });
-                  existingTemplateIds.add(template.id);
+                  newlyCreatedTemplateIds.add(template.id);
                 } catch (error) {
                   result.warnings?.push(`Error processing template: ${(error as any).message}`);
                 }
