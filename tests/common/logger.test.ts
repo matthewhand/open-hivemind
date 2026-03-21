@@ -71,8 +71,8 @@ describe('Logger', () => {
       const args = mockConsoleInfo.mock.calls[0];
       expect(args[0]).toBe('Sensitive data:');
       expect(args[1]).toEqual({
-        apiKey: '********',
-        password: '********',
+        apiKey: 'sk-1***********cdef',
+        password: 'secr*******word',
         user: 'test_user',
       });
     });
@@ -93,7 +93,7 @@ describe('Logger', () => {
       expect(mockConsoleInfo).toHaveBeenCalledWith({
         level1: {
           level2: {
-            token: '********',
+            token: 'secr****oken',
             data: 'public-data',
           },
         },

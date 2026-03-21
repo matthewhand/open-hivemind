@@ -1,8 +1,4 @@
-<<<<<<< HEAD
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-=======
-import React, { useState, useRef, useEffect, useCallback } from 'react';
->>>>>>> origin/docco-update-screenshots-6307953588415915921
 
 export interface CommaSeparatedInputProps {
   value: string[];
@@ -222,7 +218,6 @@ export const CommaSeparatedInput: React.FC<CommaSeparatedInputProps> = ({
           displayError ? 'border-error focus-within:ring-error' : 'focus-within:ring-primary'
         }`}
       >
-<<<<<<< HEAD
         {value.map((v) => {
           const customColorClass = tagColor ? tagColor(v) : 'bg-base-200 text-base-content';
           return (
@@ -244,28 +239,6 @@ export const CommaSeparatedInput: React.FC<CommaSeparatedInputProps> = ({
                 </button>
               )}
             </span>
-=======
-        {value.map(v => {
-        const customColorClass = tagColor ? tagColor(v) : 'bg-base-200 text-base-content';
-        return (
-        <span
-          key={v}
-          data-testid="chip"
-          className={`flex items-center gap-1 px-2 py-1 text-sm rounded-md ${customColorClass}`}
-        >
-          {v}
-          {!disabled && (
-            <button
-              type="button"
-              className="text-base-content/50 hover:text-base-content"
-              onClick={() => handleRemove(v)}
-              aria-label={`Remove ${v}`}
-            >
-              &times;
-            </button>
-          )}
-          </span>
->>>>>>> origin/docco-update-screenshots-6307953588415915921
           );
         })}
         <input
@@ -343,7 +316,6 @@ export const CommaSeparatedInput: React.FC<CommaSeparatedInputProps> = ({
       )}
 
       {/* Autocomplete Dropdown */}
-<<<<<<< HEAD
       {!disabled &&
         showSuggestions &&
         filteredSuggestions.length > 0 &&
@@ -364,25 +336,6 @@ export const CommaSeparatedInput: React.FC<CommaSeparatedInputProps> = ({
             ))}
           </ul>
         )}
-=======
-      {!disabled && showSuggestions && filteredSuggestions.length > 0 && inputValue.trim().length > 0 && (
-        <ul className="absolute left-0 right-0 top-full mt-1 max-h-48 overflow-auto rounded-md bg-base-100 shadow-lg ring-1 ring-base-content/5 z-50">
-          {filteredSuggestions.map(s => (
-            <li
-              key={s}
-              onMouseDown={(e) => {
-                // Prevent input blur before click fires
-                e.preventDefault();
-                handleSuggestionClick(s);
-              }}
-              className="cursor-pointer select-none px-4 py-2 hover:bg-base-200 text-sm text-base-content"
-            >
-              {s}
-            </li>
-          ))}
-        </ul>
-      )}
->>>>>>> origin/docco-update-screenshots-6307953588415915921
     </div>
   );
 };
