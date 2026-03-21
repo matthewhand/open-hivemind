@@ -65,10 +65,4 @@ export { default as Pagination } from './Pagination';
 // Component Tracking
 export { trackDaisyUIComponent, daisyUITracker } from '../../utils/DaisyUIComponentTracker';
 
-<<<<<<< HEAD
 export { CommaSeparatedInput } from '../Common/CommaSeparatedInput';
-=======
-// Advanced Components
-export { default as ModelAutocomplete } from './ModelAutocomplete';
-export { default as CommaSeparatedInput } from './CommaSeparatedInput';
->>>>>>> origin/docco-update-screenshots-6307953588415915921

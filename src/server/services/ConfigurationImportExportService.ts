@@ -496,29 +496,6 @@ export class ConfigurationImportExportService {
         warnings: [],
       };
 
-      // Bulk fetch existing configurations to prevent N+1 queries
-      const configIds = importData.configurations
-        .map((c: any) => c.id)
-        .filter((id: any) => id != null);
-
-      const existingConfigsMap = new Map<number, any>();
-      let bulkFetchSucceeded = false;
-
-      if (configIds.length > 0) {
-        try {
-          const existingConfigs = await this.dbManager.getBotConfigurationsBulk(configIds);
-          for (const ec of existingConfigs) {
-            if (ec.id) {
-              existingConfigsMap.set(ec.id, ec);
-            }
-          }
-          bulkFetchSucceeded = true;
-        } catch (error) {
-          debug('Failed to bulk fetch existing configurations:', error);
-          // Non-fatal, will fall back to individual queries if bulk fetch fails
-        }
-      }
-
       // Process configurations
       for (const config of importData.configurations) {
         try {
@@ -545,14 +522,9 @@ export class ConfigurationImportExportService {
           }
 
           // Check if configuration exists
-          let existingConfig = null;
-          if (config.id) {
-            if (bulkFetchSucceeded) {
-              existingConfig = existingConfigsMap.get(config.id) || null;
-            } else {
-              existingConfig = await this.dbManager.getBotConfiguration(config.id);
-            }
-          }
+          const existingConfig = config.id
+            ? await this.dbManager.getBotConfiguration(config.id)
+            : null;
 
           if (existingConfig && !options.overwrite) {
             result.skippedCount = (result.skippedCount || 0) + 1;
@@ -585,45 +557,21 @@ export class ConfigurationImportExportService {
         const validConfigIds = new Set<number>();
         const invalidConfigIds = new Set<number>();
 
-        // Pre-fetch unique valid configuration IDs in bulk
-        const uniqueIdsToCheck = new Set<number>();
-        for (const version of importData.versions) {
-          const configId = version.botConfigurationId;
-          if (!configId) continue;
-          if (!validConfigIds.has(configId) && !invalidConfigIds.has(configId)) {
-            uniqueIdsToCheck.add(configId);
-          }
-        }
-
-        const BATCH_SIZE = 50;
-        const idsArray = Array.from(uniqueIdsToCheck);
-
-        for (let i = 0; i < idsArray.length; i += BATCH_SIZE) {
-          const batch = idsArray.slice(i, i + BATCH_SIZE);
-          await Promise.all(
-            batch.map(async (configId) => {
-              try {
-                const config = await this.dbManager.getBotConfiguration(configId);
-                if (config) {
-                  validConfigIds.add(configId);
-                } else {
-                  invalidConfigIds.add(configId);
-                }
-              } catch (error) {
-                result.warnings?.push(
-                  `Error fetching configuration ${configId}: ${(error as any).message}`
-                );
-                invalidConfigIds.add(configId);
-              }
-            })
-          );
-        }
-
         for (const version of importData.versions) {
           try {
             const configId = version.botConfigurationId;
-          if (!configId) continue;
-            const isValid = validConfigIds.has(configId);
+            let isValid = validConfigIds.has(configId);
+
+            if (!isValid && !invalidConfigIds.has(configId)) {
+              // Check if configuration exists
+              const config = await this.dbManager.getBotConfiguration(configId);
+              if (config) {
+                validConfigIds.add(configId);
+                isValid = true;
+              } else {
+                invalidConfigIds.add(configId);
+              }
+            }
 
             if (isValid) {
               await this.dbManager.createBotConfigurationVersion(version);
@@ -637,29 +585,31 @@ export class ConfigurationImportExportService {
       // Process templates if included
       if (importData.templates && !options.validateOnly) {
         const BATCH_SIZE = 50;
-
-        // Fetch all existing template IDs once
-        let allExistingTemplateIds: Set<string>;
-        try {
-          allExistingTemplateIds = await this.templateService.getAllTemplateIds();
-        } catch (error) {
-          result.warnings?.push(`Error fetching existing templates: ${(error as any).message}`);
-          allExistingTemplateIds = new Set();
-        }
-
-        const newlyCreatedTemplateIds = new Set<string>();
+        const existingTemplateIds = new Set<string>();
 
         for (let i = 0; i < importData.templates.length; i += BATCH_SIZE) {
           const batch = importData.templates.slice(i, i + BATCH_SIZE);
 
+          // Pre-fetch a batch of required templates concurrently with individual error handling
+          await Promise.all(
+            batch.map(async (t: any) => {
+              try {
+                const existing = await this.templateService.getTemplateById(t.id);
+                if (existing) {
+                  existingTemplateIds.add(t.id);
+                }
+              } catch (error) {
+                result.warnings?.push(
+                  `Error checking template ${t.id || 'unknown'}: ${(error as any).message}`
+                );
+              }
+            })
+          );
+
           // Create new templates concurrently within the batch
           await Promise.all(
             batch
-              .filter(
-                (template: any) =>
-                  !allExistingTemplateIds.has(template.id) &&
-                  !newlyCreatedTemplateIds.has(template.id)
-              )
+              .filter((template: any) => !existingTemplateIds.has(template.id))
               .map(async (template: any) => {
                 try {
                   await this.templateService.createTemplate({
@@ -670,7 +620,7 @@ export class ConfigurationImportExportService {
                     config: template.config,
                     createdBy: importedBy,
                   });
-                  newlyCreatedTemplateIds.add(template.id);
+                  existingTemplateIds.add(template.id);
                 } catch (error) {
                   result.warnings?.push(`Error processing template: ${(error as any).message}`);
                 }

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Search, X } from 'lucide-react';
 import Input from './DaisyUI/Input';
 import Select, { SelectOption } from './DaisyUI/Select';
@@ -53,11 +53,11 @@ export const SearchFilterBar: React.FC<SearchFilterBarProps> = ({
     };
   }, [localSearch, searchValue]);
 
-  const handleClearSearch = useCallback(() => {
+  const handleClearSearch = () => {
     setLocalSearch('');
     onSearchChange('');
     if (onClear) onClear();
-  }, [onSearchChange, onClear]);
+  };
 
   return (
     <div className={`flex flex-col sm:flex-row gap-4 justify-between items-center bg-base-100 p-4 rounded-lg shadow-sm border border-base-200 ${className}`}>

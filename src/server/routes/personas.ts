@@ -48,19 +48,10 @@ router.get('/', (req, res) => {
   } catch (error: any) {
 <<<<<<< HEAD
     logger.error('Failed to retrieve personas', { error: error.message });
-<<<<<<< HEAD
-    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: 'Failed to retrieve personas' });
-=======
-    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: error.message });
->>>>>>> origin/janitor/code-health-activity-logger-8768188016948875412
-=======
-
-    logger.error('Failed to retrieve personas', { error: error.message });
     return res.status(500).json({ error: 'Failed to retrieve personas' });
-
+=======
     return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: error.message });
-
->>>>>>> origin/fix-anomaly-route-types-3952225614007405228
+>>>>>>> origin/refine-eliminate-magic-numbers-3883502303364983467
   }
 });
 
@@ -75,19 +66,10 @@ router.get('/:id', (req, res) => {
   } catch (error: any) {
 <<<<<<< HEAD
     logger.error('Failed to retrieve persona', { id: req.params.id, error: error.message });
-<<<<<<< HEAD
-    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: 'Failed to retrieve persona' });
-=======
-    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: error.message });
->>>>>>> origin/janitor/code-health-activity-logger-8768188016948875412
-=======
-
-    logger.error('Failed to retrieve persona', { id: req.params.id, error: error.message });
     return res.status(500).json({ error: 'Failed to retrieve persona' });
-
+=======
     return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: error.message });
-
->>>>>>> origin/fix-anomaly-route-types-3952225614007405228
+>>>>>>> origin/refine-eliminate-magic-numbers-3883502303364983467
   }
 });
 

@@ -260,11 +260,11 @@ const Dashboard: React.FC = () => {
 
         {/* Bot Cards Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-          {bots.map((bot) => (
+          {bots.map((bot, index) => (
             <DashboardBotCard
               key={bot.name}
               bot={bot}
-              botStatusData={status?.bots.find((b) => b.id === bot.id)}
+              botStatusData={status?.bots[index]}
               rating={botRatings[bot.name] || 0}
               onRatingChange={handleRatingChange}
               getProviderIcon={getProviderIcon}

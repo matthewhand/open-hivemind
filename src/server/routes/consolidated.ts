@@ -20,7 +20,7 @@ router.get('/system-status', async (req, res) => {
     const dbManager = DatabaseManager.getInstance();
 
     const bots = botManager.getAllBots();
-    const activeBots = bots.filter((bot) => bot.enabled !== false);
+    const activeBots = bots.filter((bot) => (bot as any).enabled !== false);
 
     let dbStats = null;
     try {
@@ -56,13 +56,7 @@ router.get('/system-status', async (req, res) => {
       },
     };
 
-    logAdminAction(
-      req as AuditedRequest,
-      'VIEW',
-      'system-status',
-      'success',
-      'System status retrieved'
-    );
+    logAdminAction(req as AuditedRequest, 'VIEW', 'system-status', 'success', 'System status retrieved');
     return res.json({ success: true, data: systemStatus });
   } catch (error) {
     debug('Error getting system status:', error);
@@ -172,13 +166,7 @@ router.get('/env-status', async (req, res) => {
       };
     });
 
-    logAdminAction(
-      req as AuditedRequest,
-      'VIEW',
-      'env-status',
-      'success',
-      'Environment status retrieved'
-    );
+    logAdminAction(req as AuditedRequest, 'VIEW', 'env-status', 'success', 'Environment status retrieved');
     return res.json({ success: true, data: envStatus });
   } catch (error) {
     debug('Error getting environment status:', error);
@@ -384,7 +372,7 @@ router.get('/metrics', async (req, res) => {
       const botManager = BotConfigurationManager.getInstance();
       const bots = botManager.getAllBots();
       metrics.application.bots.total = bots.length;
-      metrics.application.bots.active = bots.filter((bot) => bot.enabled !== false).length;
+      metrics.application.bots.active = bots.filter((bot) => (bot as any).enabled !== false).length;
     } catch (error) {
       debug('Error getting bot metrics:', error);
     }

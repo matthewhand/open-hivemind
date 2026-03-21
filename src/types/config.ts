@@ -232,8 +232,6 @@ export interface BotConfig {
   openswarm?: OpenSwarmConfig;
   /** Letta configuration */
   letta?: LettaConfig;
-  /** Whether the bot is enabled */
-  enabled?: boolean;
   /** Index signature for compatibility with Record<string, unknown> */
   [key: string]: unknown;
 }
@@ -774,12 +772,7 @@ export interface LettaConfig {
   conversationId?: string;
 }
 
-export type LlmProviderConfig =
-  | OpenAIConfig
-  | FlowiseConfig
-  | OpenWebUIConfig
-  | OpenSwarmConfig
-  | LettaConfig;
+export type LlmProviderConfig = OpenAIConfig | FlowiseConfig | OpenWebUIConfig | OpenSwarmConfig | LettaConfig;
 
 /**
  * Union type for all configuration types

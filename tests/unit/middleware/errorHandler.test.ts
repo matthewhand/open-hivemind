@@ -132,7 +132,7 @@ describe('errorHandler middleware', () => {
       );
 
       // Ensure response doesn't contain stack in production
-      expect(jsonCallArg.stack).toBeUndefined();
+      expect(mockRes.json).toHaveBeenCalledWith(expect.not.objectContaining({ stack: expect.anything() }));
 
       process.env.NODE_ENV = originalEnv;
     });

@@ -14,17 +14,13 @@ const router = Router();
 router.get('/', (req, res) => {
   const memoryUsage = process.memoryUsage();
 <<<<<<< HEAD
-<<<<<<< HEAD
-  return res.status(HTTP_STATUS.OK).json({
+  return res.status(200).json({
     status: 'healthy',
 =======
-=======
 
->>>>>>> origin/fix-anomaly-route-types-3952225614007405228
   let dbStatus = 'unknown';
   try {
-    // Requires importing DatabaseManager at the top
-    const dbManager = require('../../database/DatabaseManager').DatabaseManager.getInstance();
+    const dbManager = DatabaseManager.getInstance();
     dbStatus = dbManager.isConnected() ? 'healthy' : 'unhealthy';
   } catch (error) {
     dbStatus = 'error';
@@ -35,11 +31,7 @@ router.get('/', (req, res) => {
 
   return res.status(statusCode).json({
     status: status,
-<<<<<<< HEAD
->>>>>>> origin/janitor/code-health-activity-logger-8768188016948875412
-=======
-
->>>>>>> origin/fix-anomaly-route-types-3952225614007405228
+>>>>>>> origin/refine-eliminate-magic-numbers-3883502303364983467
     timestamp: new Date().toISOString(),
     version: '1.0.0',
     uptime: process.uptime(),
@@ -212,17 +204,13 @@ router.get('/alerts', (req, res) => {
 router.get('/ready', (req, res) => {
   // Check if all dependencies are ready
 <<<<<<< HEAD
-<<<<<<< HEAD
-  return res.status(HTTP_STATUS.OK).json({
+  // For now, we'll assume the service is ready if it's responding
+  return res.json({
     ready: true,
 =======
-=======
-
-  // Check if all dependencies are ready
->>>>>>> origin/fix-anomaly-route-types-3952225614007405228
   let dbReady = false;
   try {
-    const dbManager = require('../../database/DatabaseManager').DatabaseManager.getInstance();
+    const dbManager = DatabaseManager.getInstance();
     dbReady = dbManager.isConnected();
   } catch (error) {
     dbReady = false;
@@ -234,13 +222,10 @@ router.get('/ready', (req, res) => {
 
   return res.status(statusCode).json({
     ready: isReady,
-<<<<<<< HEAD
->>>>>>> origin/janitor/code-health-activity-logger-8768188016948875412
-=======
->>>>>>> origin/fix-anomaly-route-types-3952225614007405228
+>>>>>>> origin/refine-eliminate-magic-numbers-3883502303364983467
     timestamp: new Date().toISOString(),
     checks: {
-      database: dbReady,
+      database: true, // Would need actual database check
       external_apis: true, // Would need actual API checks
       configuration: true,
     },

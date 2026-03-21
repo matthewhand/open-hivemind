@@ -294,14 +294,6 @@ Browse and manage persisted specifications and design documents.
 ### [Static Pages](/admin/static)
 Access a catalog of static HTML pages served by the system, like the Enhanced Homepage or Screensaver.
 
-To view these static pages, navigate to **Developer & Tools > Static Pages** in the admin sidebar. Click on "Open Page" for any of the cards to launch the corresponding static page in a new browser tab.
-
-![Static Pages](screenshots/static-pages.png)
-
-*   **Enhanced Homepage**: Beautiful landing page with enhanced UI and animations.
-*   **Loading Page**: Elegant loading screen with progress indicators.
-*   **Screensaver**: Interactive screensaver display for idle states.
-
 ---
 
 ## Documentation Maintenance

@@ -237,7 +237,7 @@ router.put('/:id', (req: Request, res: Response) => {
       ...profiles[profileIndex],
       name: name && typeof name === 'string' ? name : profiles[profileIndex].name,
       description: description !== undefined ? description : profiles[profileIndex].description,
-      guards: safeGuards as any,
+      guards: safeGuards,
     };
 
     profiles[profileIndex] = updatedProfile;

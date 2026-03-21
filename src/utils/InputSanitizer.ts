@@ -174,17 +174,7 @@ export class InputSanitizer {
    * @param type - Expected type ('string', 'number', 'boolean')
    * @returns Sanitized value or null if invalid
    */
-  static sanitizeConfigValue(value: unknown, type: 'string'): string | null;
-  static sanitizeConfigValue(value: unknown, type: 'number'): number | null;
-  static sanitizeConfigValue(value: unknown, type: 'boolean'): boolean | null;
-  static sanitizeConfigValue(
-    value: unknown,
-    type: 'string' | 'number' | 'boolean'
-  ): string | number | boolean | null {
-    if (value === null || value === undefined) {
-      return null;
-    }
-
+  static sanitizeConfigValue(value: any, type: 'string' | 'number' | 'boolean'): any {
     switch (type) {
       case 'string':
         if (typeof value === 'string') {

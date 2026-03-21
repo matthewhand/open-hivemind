@@ -61,16 +61,10 @@ router.get('/', async (req, res) => {
   } catch (error: any) {
 <<<<<<< HEAD
     logger.error('Failed to retrieve bots', { error: error.message });
-<<<<<<< HEAD
-    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: 'Failed to retrieve bots' });
+    return res.status(500).json({ error: 'Failed to retrieve bots' });
 =======
     return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: error.message });
->>>>>>> origin/janitor/code-health-activity-logger-8768188016948875412
-=======
-
-    logger.error('Failed to retrieve bots', { error: error.message });
-    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: 'Failed to retrieve bots' });
->>>>>>> origin/fix-anomaly-route-types-3952225614007405228
+>>>>>>> origin/refine-eliminate-magic-numbers-3883502303364983467
   }
 });
 
@@ -103,16 +97,10 @@ router.get('/:id', validateRequest(BotIdParamSchema), async (req, res) => {
   } catch (error: any) {
 <<<<<<< HEAD
     logger.error('Failed to retrieve bot', { id: req.params.id, error: error.message });
-<<<<<<< HEAD
-    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: 'Failed to retrieve bot' });
+    return res.status(500).json({ error: 'Failed to retrieve bot' });
 =======
     return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: error.message });
->>>>>>> origin/janitor/code-health-activity-logger-8768188016948875412
-=======
-
-    logger.error('Failed to retrieve bot', { id: req.params.id, error: error.message });
-    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: 'Failed to retrieve bot' });
->>>>>>> origin/fix-anomaly-route-types-3952225614007405228
+>>>>>>> origin/refine-eliminate-magic-numbers-3883502303364983467
   }
 });
 
@@ -432,16 +420,10 @@ router.get('/:id/activity', validateRequest(BotActivityQuerySchema), async (req,
   } catch (error: any) {
 <<<<<<< HEAD
     logger.error('Failed to retrieve bot activity', { id: req.params.id, error: error.message });
-<<<<<<< HEAD
-    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: 'Failed to retrieve bot activity' });
+    return res.status(500).json({ error: 'Failed to retrieve bot activity' });
 =======
     return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: error.message });
->>>>>>> origin/janitor/code-health-activity-logger-8768188016948875412
-=======
-
-    logger.error('Failed to retrieve bot activity', { id: req.params.id, error: error.message });
-    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: 'Failed to retrieve bot activity' });
->>>>>>> origin/fix-anomaly-route-types-3952225614007405228
+>>>>>>> origin/refine-eliminate-magic-numbers-3883502303364983467
   }
 });
 

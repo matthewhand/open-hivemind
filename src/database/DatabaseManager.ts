@@ -1199,56 +1199,6 @@ export class DatabaseManager {
     }
   }
 
-  /**
-   * Get multiple bot configurations by their IDs in a single query
-   */
-  async getBotConfigurationsBulk(ids: number[]): Promise<BotConfiguration[]> {
-    this.ensureConnected();
-
-    if (ids.length === 0) {
-      return [];
-    }
-
-    try {
-      const placeholders = ids.map(() => '?').join(',');
-      const rows = await this.db!.all(
-        `SELECT * FROM bot_configurations WHERE id IN (${placeholders})`,
-        ids
-      );
-
-      return rows.map((row) => {
-        // Hydrate JSON strings into objects if necessary (SQLite strings vs Postgres JSON)
-        const parseIfString = (val: any) => (typeof val === 'string' ? JSON.parse(val) : val);
-
-        return {
-          id: row.id,
-          name: row.name,
-          messageProvider: row.messageProvider,
-          llmProvider: row.llmProvider,
-          persona: row.persona,
-          systemInstruction: row.systemInstruction,
-          mcpServers: row.mcpServers ? parseIfString(row.mcpServers) : null,
-          mcpGuard: row.mcpGuard ? parseIfString(row.mcpGuard) : null,
-          discord: row.discord ? parseIfString(row.discord) : null,
-          slack: row.slack ? parseIfString(row.slack) : null,
-          mattermost: row.mattermost ? parseIfString(row.mattermost) : null,
-          openai: row.openai ? parseIfString(row.openai) : null,
-          flowise: row.flowise ? parseIfString(row.flowise) : null,
-          openwebui: row.openwebui ? parseIfString(row.openwebui) : null,
-          openswarm: row.openswarm ? parseIfString(row.openswarm) : null,
-          isActive: row.isActive === 1,
-          createdAt: new Date(row.createdAt),
-          updatedAt: new Date(row.updatedAt),
-          createdBy: row.createdBy,
-          updatedBy: row.updatedBy,
-        };
-      });
-    } catch (error) {
-      debug('Error getting bot configurations in bulk:', error);
-      throw new Error(`Failed to get bot configurations in bulk: ${error}`);
-    }
-  }
-
   async getBotConfigurationByName(name: string): Promise<BotConfiguration | null> {
     this.ensureConnected();
 
@@ -1257,9 +1207,6 @@ export class DatabaseManager {
 
       if (!row) return null;
 
-      // Hydrate JSON strings into objects if necessary (SQLite strings vs Postgres JSON)
-      const parseIfString = (val: any) => (typeof val === 'string' ? JSON.parse(val) : val);
-
       return {
         id: row.id,
         name: row.name,
@@ -1267,15 +1214,15 @@ export class DatabaseManager {
         llmProvider: row.llmProvider,
         persona: row.persona,
         systemInstruction: row.systemInstruction,
-        mcpServers: row.mcpServers ? parseIfString(row.mcpServers) : null,
-        mcpGuard: row.mcpGuard ? parseIfString(row.mcpGuard) : null,
-        discord: row.discord ? parseIfString(row.discord) : null,
-        slack: row.slack ? parseIfString(row.slack) : null,
-        mattermost: row.mattermost ? parseIfString(row.mattermost) : null,
-        openai: row.openai ? parseIfString(row.openai) : null,
-        flowise: row.flowise ? parseIfString(row.flowise) : null,
-        openwebui: row.openwebui ? parseIfString(row.openwebui) : null,
-        openswarm: row.openswarm ? parseIfString(row.openswarm) : null,
+        mcpServers: row.mcpServers,
+        mcpGuard: row.mcpGuard,
+        discord: row.discord,
+        slack: row.slack,
+        mattermost: row.mattermost,
+        openai: row.openai,
+        flowise: row.flowise,
+        openwebui: row.openwebui,
+        openswarm: row.openswarm,
         isActive: row.isActive === 1,
         createdAt: new Date(row.createdAt),
         updatedAt: new Date(row.updatedAt),

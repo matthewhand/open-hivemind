@@ -3,7 +3,6 @@ import { join } from 'path';
 import cors from 'cors';
 import Debug from 'debug';
 import express from 'express';
-import { Logger } from '../common/logger';
 import { correlationMiddleware, globalErrorHandler } from '../middleware/errorHandler';
 import { applyRateLimiting } from '../middleware/rateLimiter';
 // Error handling imports
@@ -14,10 +13,10 @@ import { csrfProtection, csrfTokenHandler } from './middleware/csrf';
 import { securityHeaders } from './middleware/security';
 import activityRouter from './routes/activity';
 import adminRouter from './routes/admin';
+import cacheRouter from './routes/cache';
 import agentsRouter from './routes/agents';
 import aiAssistRouter from './routes/ai-assist';
 import botsRouter from './routes/bots';
-import cacheRouter from './routes/cache';
 import configRouter from './routes/config';
 import consolidatedRouter from './routes/consolidated';
 import dashboardRouter from './routes/dashboard';
@@ -33,7 +32,6 @@ import sitemapRouter from './routes/sitemap';
 import specsRouter from './routes/specs';
 
 const debug = Debug('app:webui:server');
-const serverLog = Logger.withContext('webui:server');
 
 const resolveFrontendDistPath = (): string => {
   const candidates = [
@@ -244,25 +242,25 @@ export class WebUIServer {
       try {
         this.server = this.app.listen(this.port, () => {
           debug(`WebUI server started on port ${this.port}`);
-          serverLog.info('🚀 Hivemind WebUI available at:');
-          serverLog.info(`   Admin Dashboard: http://localhost:${this.port}/admin`);
-          serverLog.info(`   WebUI Interface: http://localhost:${this.port}/webui`);
-          serverLog.info(`   API Endpoints:   http://localhost:${this.port}/api`);
-          serverLog.info(`   Health Check:    http://localhost:${this.port}/health`);
+          console.log('🚀 Hivemind WebUI available at:');
+          console.log(`   Admin Dashboard: http://localhost:${this.port}/admin`);
+          console.log(`   WebUI Interface: http://localhost:${this.port}/webui`);
+          console.log(`   API Endpoints:   http://localhost:${this.port}/api`);
+          console.log(`   Health Check:    http://localhost:${this.port}/health`);
           resolve();
         });
 
         this.server.on('error', (error: any) => {
           if (error.code === 'EADDRINUSE') {
-            serverLog.error(`❌ Port ${this.port} is already in use`);
+            console.error(`❌ Port ${this.port} is already in use`);
             reject(new Error(`Port ${this.port} is already in use`));
           } else {
-            serverLog.error('❌ Server error:', error);
+            console.error('❌ Server error:', error);
             reject(error);
           }
         });
       } catch (error) {
-        serverLog.error('❌ Failed to start WebUI server:', error);
+        console.error('❌ Failed to start WebUI server:', error);
         reject(error);
       }
     });
