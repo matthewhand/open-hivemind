@@ -65,7 +65,7 @@ async function validateLettaUrl(url: string): Promise<{ isValid: boolean; error?
  */
 router.get('/agents', async (req: Request, res: Response) => {
   try {
-    const apiKey = (req.headers['x-letta-api-key'] as string) || (req.query.apiKey as string);
+    const apiKey = req.headers['x-letta-api-key'] as string;
     const apiUrl =
       (req.headers['x-letta-api-url'] as string) ||
       (req.query.apiUrl as string) ||
@@ -74,7 +74,7 @@ router.get('/agents', async (req: Request, res: Response) => {
     if (!apiKey) {
       return res.status(400).json({
         error: 'Missing API key',
-        message: 'Please provide Letta API key via x-letta-api-key header or apiKey query parameter',
+        message: 'Please provide Letta API key via x-letta-api-key header',
       });
     }
 
@@ -93,7 +93,7 @@ router.get('/agents', async (req: Request, res: Response) => {
 router.get('/agents/:id', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const apiKey = (req.headers['x-letta-api-key'] as string) || (req.query.apiKey as string);
+    const apiKey = req.headers['x-letta-api-key'] as string;
     const apiUrl =
       (req.headers['x-letta-api-url'] as string) ||
       (req.query.apiUrl as string) ||
@@ -102,7 +102,7 @@ router.get('/agents/:id', async (req: Request, res: Response) => {
     if (!apiKey) {
       return res.status(400).json({
         error: 'Missing API key',
-        message: 'Please provide Letta API key via x-letta-api-key header or apiKey query parameter',
+        message: 'Please provide Letta API key via x-letta-api-key header',
       });
     }
 
