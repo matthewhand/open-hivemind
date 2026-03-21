@@ -1,4 +1,4 @@
-import convict from 'convict';
+import type convict from 'convict';
 declare const llmConfig: convict.Config<{
     LLM_PROVIDER: string;
     LLM_PARALLEL_EXECUTION: boolean;

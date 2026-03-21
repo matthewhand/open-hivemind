@@ -1,4 +1,4 @@
-import convict from 'convict';
+import type convict from 'convict';
 export interface OpenAIConfig {
     OPENAI_API_KEY: string;
     OPENAI_TEMPERATURE: number;

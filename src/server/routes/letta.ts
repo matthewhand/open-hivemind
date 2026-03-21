@@ -1,8 +1,8 @@
-import { Router, Request, Response } from 'express';
-import { getAgent, listAgents } from '@hivemind/llm-letta';
-import { isSafeUrl, isPrivateIP } from '../../utils/ssrfGuard';
 import dns from 'dns';
 import net from 'net';
+import { Router, type Request, type Response } from 'express';
+import { getAgent, listAgents } from '@hivemind/llm-letta';
+import { isPrivateIP, isSafeUrl } from '../../utils/ssrfGuard';
 
 const router = Router();
 
@@ -23,8 +23,7 @@ async function validateLettaUrl(url: string): Promise<{ isValid: boolean; error?
 
     // 2. Allow local network if explicitly enabled
     const allowLocal =
-      process.env.ALLOW_LOCAL_NETWORK_ACCESS === 'true' ||
-      process.env.LETTA_ALLOW_LOCAL === 'true';
+      process.env.ALLOW_LOCAL_NETWORK_ACCESS === 'true' || process.env.LETTA_ALLOW_LOCAL === 'true';
 
     if (!isLettaCloud && !allowLocal) {
       return {
@@ -36,13 +35,19 @@ async function validateLettaUrl(url: string): Promise<{ isValid: boolean; error?
     // 3. Always block private/reserved IPs regardless of allowLocal
     if (net.isIP(hostname)) {
       if (isPrivateIP(hostname)) {
-        return { isValid: false, error: 'Target URL is blocked for security reasons (private/local network access).' };
+        return {
+          isValid: false,
+          error: 'Target URL is blocked for security reasons (private/local network access).',
+        };
       }
     } else {
       try {
         const { address } = await dns.promises.lookup(hostname);
         if (isPrivateIP(address)) {
-          return { isValid: false, error: 'Target URL is blocked for security reasons (private/local network access).' };
+          return {
+            isValid: false,
+            error: 'Target URL is blocked for security reasons (private/local network access).',
+          };
         }
       } catch {
         return { isValid: false, error: 'Target URL hostname could not be resolved.' };
@@ -51,7 +56,10 @@ async function validateLettaUrl(url: string): Promise<{ isValid: boolean; error?
 
     // 4. For non-local URLs also run full isSafeUrl check
     if (!allowLocal && !(await isSafeUrl(url))) {
-      return { isValid: false, error: 'Target URL is blocked for security reasons (private/local network access).' };
+      return {
+        isValid: false,
+        error: 'Target URL is blocked for security reasons (private/local network access).',
+      };
     }
 
     return { isValid: true };
@@ -74,7 +82,8 @@ router.get('/agents', async (req: Request, res: Response) => {
     if (!apiKey) {
       return res.status(400).json({
         error: 'Missing API key',
-        message: 'Please provide Letta API key via x-letta-api-key header or apiKey query parameter',
+        message:
+          'Please provide Letta API key via x-letta-api-key header or apiKey query parameter',
       });
     }
 
@@ -102,7 +111,8 @@ router.get('/agents/:id', async (req: Request, res: Response) => {
     if (!apiKey) {
       return res.status(400).json({
         error: 'Missing API key',
-        message: 'Please provide Letta API key via x-letta-api-key header or apiKey query parameter',
+        message:
+          'Please provide Letta API key via x-letta-api-key header or apiKey query parameter',
       });
     }
 

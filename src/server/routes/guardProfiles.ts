@@ -150,7 +150,7 @@ router.post('/', (req: Request, res: Response) => {
             ? {
                 enabled: Boolean(guards.contentFilter.enabled),
                 strictness: ['low', 'medium', 'high'].includes(guards.contentFilter.strictness)
-                  ? guards.contentFilter.strictness as 'low' | 'medium' | 'high'
+                  ? (guards.contentFilter.strictness as 'low' | 'medium' | 'high')
                   : 'low',
                 ...(guards.contentFilter.blockedTerms &&
                 Array.isArray(guards.contentFilter.blockedTerms)
@@ -199,7 +199,10 @@ router.put('/:id', (req: Request, res: Response) => {
       mcpGuard:
         guards?.mcpGuard && typeof guards.mcpGuard === 'object'
           ? {
-              enabled: guards.mcpGuard.enabled !== undefined ? Boolean(guards.mcpGuard.enabled) : existingGuards.mcpGuard.enabled,
+              enabled:
+                guards.mcpGuard.enabled !== undefined
+                  ? Boolean(guards.mcpGuard.enabled)
+                  : existingGuards.mcpGuard.enabled,
               type: ['owner', 'custom'].includes(guards.mcpGuard.type)
                 ? (guards.mcpGuard.type as 'owner' | 'custom')
                 : existingGuards.mcpGuard.type,
@@ -214,19 +217,32 @@ router.put('/:id', (req: Request, res: Response) => {
       rateLimit:
         guards?.rateLimit && typeof guards.rateLimit === 'object'
           ? {
-              enabled: guards.rateLimit.enabled !== undefined ? Boolean(guards.rateLimit.enabled) : existingGuards.rateLimit?.enabled || false,
-              maxRequests: guards.rateLimit.maxRequests !== undefined ? Number(guards.rateLimit.maxRequests) || 100 : existingGuards.rateLimit?.maxRequests || 100,
-              windowMs: guards.rateLimit.windowMs !== undefined ? Number(guards.rateLimit.windowMs) || 60000 : existingGuards.rateLimit?.windowMs || 60000,
+              enabled:
+                guards.rateLimit.enabled !== undefined
+                  ? Boolean(guards.rateLimit.enabled)
+                  : existingGuards.rateLimit?.enabled || false,
+              maxRequests:
+                guards.rateLimit.maxRequests !== undefined
+                  ? Number(guards.rateLimit.maxRequests) || 100
+                  : existingGuards.rateLimit?.maxRequests || 100,
+              windowMs:
+                guards.rateLimit.windowMs !== undefined
+                  ? Number(guards.rateLimit.windowMs) || 60000
+                  : existingGuards.rateLimit?.windowMs || 60000,
             }
           : existingGuards.rateLimit || { enabled: false, maxRequests: 100, windowMs: 60000 },
       contentFilter:
         guards?.contentFilter && typeof guards.contentFilter === 'object'
           ? {
-              enabled: guards.contentFilter.enabled !== undefined ? Boolean(guards.contentFilter.enabled) : existingGuards.contentFilter?.enabled || false,
+              enabled:
+                guards.contentFilter.enabled !== undefined
+                  ? Boolean(guards.contentFilter.enabled)
+                  : existingGuards.contentFilter?.enabled || false,
               strictness: ['low', 'medium', 'high'].includes(guards.contentFilter.strictness)
                 ? (guards.contentFilter.strictness as 'low' | 'medium' | 'high')
                 : existingGuards.contentFilter?.strictness || 'low',
-              ...(guards.contentFilter.blockedTerms && Array.isArray(guards.contentFilter.blockedTerms)
+              ...(guards.contentFilter.blockedTerms &&
+              Array.isArray(guards.contentFilter.blockedTerms)
                 ? { blockedTerms: guards.contentFilter.blockedTerms }
                 : { blockedTerms: existingGuards.contentFilter?.blockedTerms || [] }),
             }

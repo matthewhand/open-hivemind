@@ -100,15 +100,15 @@ function validateManifestType(name: string, manifest: PluginManifest): void {
   if (!validTypes.includes(namePrefix as any)) {
     throw new PluginValidationError(
       `Package name '${name}' must start with a valid type prefix: ${validTypes.join(', ')}. ` +
-      `Got prefix '${namePrefix}'.`
+        `Got prefix '${namePrefix}'.`
     );
   }
 
   if (manifest.type !== namePrefix) {
     throw new PluginValidationError(
       `Manifest type mismatch for '${name}': ` +
-      `package name prefix is '${namePrefix}' but manifest.type is '${manifest.type}'. ` +
-      `Rename the package or fix the manifest to match.`
+        `package name prefix is '${namePrefix}' but manifest.type is '${manifest.type}'. ` +
+        `Rename the package or fix the manifest to match.`
     );
   }
 }
@@ -122,7 +122,7 @@ function validateManifest(name: string, mod: any): PluginManifest {
   if (!manifest) {
     throw new PluginValidationError(
       `Plugin '${name}' does not export a 'manifest'. ` +
-      `Add: export const manifest: PluginManifest = { ... } to its index.ts.`
+        `Add: export const manifest: PluginManifest = { ... } to its index.ts.`
     );
   }
   if (!manifest.displayName || typeof manifest.displayName !== 'string') {
@@ -220,7 +220,7 @@ function validateRepoUrl(url: string): void {
 
   // Prevent shell metacharacters in the entire URL to avoid command injection
   if (/[;&|`$()]/.test(parsedUrl.href)) {
-    throw new PluginValidationError("Invalid repository URL: contains shell metacharacters.");
+    throw new PluginValidationError('Invalid repository URL: contains shell metacharacters.');
   }
 }
 

@@ -1,10 +1,10 @@
 import Debug from 'debug';
 import { Router, type Request, type Response } from 'express';
+import { container } from 'tsyringe';
 import { authenticate, requireAdmin } from '../../auth/middleware';
 import { getTrustedMcpReposConfig } from '../../config/trustedMcpRepos';
 import { DatabaseManager } from '../../database/DatabaseManager';
 import { MCPService } from '../../mcp/MCPService';
-import { container } from 'tsyringe';
 import ApiMonitorService from '../../services/ApiMonitorService';
 import { webUIStorage } from '../../storage/webUIStorage';
 import { getRelevantEnvVars } from '../../utils/envUtils';

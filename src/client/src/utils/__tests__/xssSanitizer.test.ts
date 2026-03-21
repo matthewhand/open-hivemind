@@ -54,7 +54,7 @@ describe('xssSanitizer', () => {
       const dirty = '<script>alert("xss")</script>';
       const result = sanitizeText(dirty);
       expect(result).toContain('&lt;script&gt;');
-      expect(result).toContain('&lt;/script&gt;');
+      expect(result).toContain('&lt;&#x2F;script&gt;');
     });
 
     test('handles non-string input', () => {

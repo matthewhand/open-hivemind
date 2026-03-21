@@ -26,7 +26,7 @@ export async function withRetry<T>(
     }
 
     // Check if the error is transient before retrying
-    const isTransient = error.message && (error.message.toLowerCase().includes('network') || error.message.toLowerCase().includes('timeout') || error.message.toLowerCase().includes('fetch'));
+    const isTransient = error.message && (error.message.toLowerCase().includes('network') || error.message.toLowerCase().includes('timeout') || error.message.toLowerCase().includes('fetch') || error.message.toLowerCase().includes('fail'));
     if (!isTransient && error.name !== 'TypeError') { throw error; }
 
     const currentAttempt = maxRetries - retries + 1;

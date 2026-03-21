@@ -43,6 +43,7 @@ vi.mock('../DaisyUI', () => ({
     useSuccessToast: () => vi.fn(),
     useErrorToast: () => vi.fn(),
     Notifications: () => <div>Notifications</div>,
+    useToast: () => ({ toasts: [], addToast: vi.fn(), removeToast: vi.fn(), clearAll: vi.fn() })
   },
   LoadingSpinner: () => <div className="loading-spinner">Loading...</div>,
 }));
