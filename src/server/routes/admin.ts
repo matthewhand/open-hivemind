@@ -8,7 +8,7 @@ import { container } from 'tsyringe';
 import ApiMonitorService from '../../services/ApiMonitorService';
 import { webUIStorage } from '../../storage/webUIStorage';
 import { getRelevantEnvVars } from '../../utils/envUtils';
-import { isSafeUrl } from '@hivemind/shared-types';
+import { isSafeUrl } from '../../utils/ssrfGuard';
 import {
   LlmProviderSchema,
   McpServerConnectSchema,
