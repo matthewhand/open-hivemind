@@ -1,7 +1,7 @@
 import * as fs from 'fs';
 import express from 'express';
-import { WebClient } from '@slack/web-api';
 import { SlackService } from '@hivemind/message-slack/SlackService';
+import { WebClient } from '@slack/web-api';
 
 // Top-level mocks
 jest.mock('fs');

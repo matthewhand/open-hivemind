@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { expect, test } from '@playwright/test';
 import { setupAuth } from '../../tests/e2e/test-utils';
 
 test('capture rollback UI screenshots', async ({ page }) => {
