@@ -222,3 +222,14 @@ patch_yml2.js
 scratch.js
 scripts/merge_pr.py
 package-lock.json
+check_all_pages.js
+fix_botspage.js
+fix_merge_conflicts.mjs
+patch_botspage.js
+patch_others.js
+test_esbuild.js
+test_netlify_toml.py
+test_redirects.py
+test.py
+fix_icons.js
+test_files.js
