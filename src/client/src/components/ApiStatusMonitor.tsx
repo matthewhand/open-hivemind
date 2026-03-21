@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import Card from './DaisyUI/Card';
 import Badge from './DaisyUI/Badge';
 import { Alert } from './DaisyUI/Alert';
@@ -235,6 +235,31 @@ const ApiStatusMonitor: React.FC<ApiStatusMonitorProps> = ({
     );
   }
 
+  // ⚡ Bolt Optimization: Calculate metrics in a single pass instead of 5 separate .reduce() calls
+  const metrics = useMemo(() => {
+    let totalChecks = 0;
+    let successfulChecks = 0;
+    let totalResponseTime = 0;
+    const len = apiStatus.endpoints.length;
+
+    for (let i = 0; i < len; i++) {
+      const ep = apiStatus.endpoints[i];
+      totalChecks += ep.totalChecks;
+      successfulChecks += ep.successfulChecks;
+      totalResponseTime += ep.averageResponseTime;
+    }
+
+    const averageResponseTime = len > 0 ? totalResponseTime / len : 0;
+    const successRate = totalChecks > 0 ? Math.round((successfulChecks / totalChecks) * 100) : 0;
+
+    return {
+      averageResponseTime,
+      totalChecks,
+      successfulChecks,
+      successRate,
+    };
+  }, [apiStatus.endpoints]);
+
   const accordionItems = [
     {
       id: 'monitoring-details',
@@ -247,20 +272,16 @@ const ApiStatusMonitor: React.FC<ApiStatusMonitorProps> = ({
               Performance Metrics
             </h4>
             <p className="text-sm">
-              • Average Response Time: {formatResponseTime(
-                apiStatus.endpoints.reduce((sum, ep) => sum + ep.averageResponseTime, 0) / apiStatus.endpoints.length || 0,
-              )}
+              • Average Response Time: {formatResponseTime(metrics.averageResponseTime)}
             </p>
             <p className="text-sm">
-              • Total Checks: {apiStatus.endpoints.reduce((sum, ep) => sum + ep.totalChecks, 0)}
+              • Total Checks: {metrics.totalChecks}
             </p>
             <p className="text-sm">
-              • Successful Checks: {apiStatus.endpoints.reduce((sum, ep) => sum + ep.successfulChecks, 0)}
+              • Successful Checks: {metrics.successfulChecks}
             </p>
             <p className="text-sm">
-              • Overall Success Rate: {apiStatus.endpoints.reduce((sum, ep) => sum + ep.totalChecks, 0) > 0 ?
-                Math.round((apiStatus.endpoints.reduce((sum, ep) => sum + ep.successfulChecks, 0) /
-                  apiStatus.endpoints.reduce((sum, ep) => sum + ep.totalChecks, 0)) * 100) : 0}%
+              • Overall Success Rate: {metrics.successRate}%
             </p>
           </div>
           <div className="min-w-[300px] flex-1">
