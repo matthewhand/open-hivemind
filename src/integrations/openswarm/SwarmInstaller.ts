@@ -1,6 +1,7 @@
 import { exec, spawn } from 'child_process';
 import path from 'path';
 import { promisify } from 'util';
+import Logger from '../../common/logger';
 import { type IToolInstaller } from '../../types/IToolInstaller';
 
 const execAsync = promisify(exec);
@@ -71,7 +72,7 @@ export class SwarmInstaller implements IToolInstaller {
         return { success: true, message: 'OpenSwarm already installed' };
       }
 
-      console.log('Installing OpenSwarm via pip...');
+      Logger.info('Installing OpenSwarm via pip...');
       await execAsync('pip install open-swarm');
 
       return { success: true, message: 'OpenSwarm installed successfully via pip' };
