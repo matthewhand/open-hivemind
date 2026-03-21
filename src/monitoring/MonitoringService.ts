@@ -1,7 +1,10 @@
 import type { NextFunction, Request, Response } from 'express';
+import Logger from '@common/logger';
 import { AlertManager, type AlertConfig, type NotificationChannel } from './AlertManager';
 import { HealthChecker } from './HealthChecker';
 import { MetricsCollector } from './MetricsCollector';
+
+const logger = Logger.withContext('MonitoringService');
 
 export interface MonitoringConfig {
   healthCheck: {
@@ -91,27 +94,27 @@ export class MonitoringService {
   private setupEventListeners(): void {
     // Health check events
     this.alertManager.on('healthCheck', (healthCheck) => {
-      console.log(`💓 Health check completed: ${healthCheck.status}`);
+      logger.info(`💓 Health check completed: ${healthCheck.status}`);
     });
 
     // Alert events
     this.alertManager.on('alertCreated', (alert) => {
-      console.log(`🚨 Alert created: ${alert.title} (${alert.severity})`);
+      logger.info(`🚨 Alert created: ${alert.title} (${alert.severity})`);
     });
 
     this.alertManager.on('alertAcknowledged', (alert) => {
-      console.log(`✅ Alert acknowledged: ${alert.title}`);
+      logger.info(`✅ Alert acknowledged: ${alert.title}`);
     });
 
     this.alertManager.on('alertResolved', (alert) => {
-      console.log(`✅ Alert resolved: ${alert.title}`);
+      logger.info(`✅ Alert resolved: ${alert.title}`);
     });
 
     // Metrics events
     this.metricsCollector.on('metricRecorded', (data) => {
       // Optional: log specific metric events
       if (data.name === 'memory_percentage' && data.value > 80) {
-        console.log(`⚠️ High memory usage: ${data.value}%`);
+        logger.info(`⚠️ High memory usage: ${data.value}%`);
       }
     });
 
@@ -122,55 +125,55 @@ export class MonitoringService {
 
   public async start(): Promise<void> {
     if (this.isRunning) {
-      console.log('Monitoring service already running');
+      logger.info('Monitoring service already running');
       return;
     }
 
-    console.log('🔧 Starting monitoring service...');
+    logger.info('🔧 Starting monitoring service...');
 
     try {
       // Start metrics collection
       if (this.config.metrics.enabled) {
         this.metricsCollector.startCollection();
-        console.log('📊 Metrics collection started');
+        logger.info('📊 Metrics collection started');
       }
 
       // Health checking is started automatically by AlertManager
       if (this.config.healthCheck.enabled) {
-        console.log('💓 Health checking started');
+        logger.info('💓 Health checking started');
       }
 
       this.isRunning = true;
-      console.log('✅ Monitoring service started successfully');
+      logger.info('✅ Monitoring service started successfully');
 
       // Perform initial health check
       const initialHealth = await this.healthChecker.performHealthCheck();
-      console.log(`🔍 Initial health status: ${initialHealth.status}`);
+      logger.info(`🔍 Initial health status: ${initialHealth.status}`);
     } catch (error) {
-      console.error('❌ Failed to start monitoring service:', error);
+      logger.error('❌ Failed to start monitoring service:', error);
       throw error;
     }
   }
 
   public stop(): void {
     if (!this.isRunning) {
-      console.log('Monitoring service not running');
+      logger.info('Monitoring service not running');
       return;
     }
 
-    console.log('🔧 Stopping monitoring service...');
+    logger.info('🔧 Stopping monitoring service...');
 
     try {
       // Stop metrics collection
       if (this.config.metrics.enabled) {
         this.metricsCollector.stopCollection();
-        console.log('📊 Metrics collection stopped');
+        logger.info('📊 Metrics collection stopped');
       }
 
       this.isRunning = false;
-      console.log('✅ Monitoring service stopped');
+      logger.info('✅ Monitoring service stopped');
     } catch (error) {
-      console.error('❌ Error stopping monitoring service:', error);
+      logger.error('❌ Error stopping monitoring service:', error);
     }
   }
 
@@ -179,7 +182,7 @@ export class MonitoringService {
    * This is more comprehensive than stop() - it shuts down all sub-components.
    */
   public shutdown(): void {
-    console.log('🔧 Shutting down monitoring service...');
+    logger.info('🔧 Shutting down monitoring service...');
 
     // Stop the service first
     this.stop();
@@ -187,20 +190,20 @@ export class MonitoringService {
     // Shutdown sub-components
     if (this.alertManager) {
       this.alertManager.shutdown();
-      console.log('🚨 AlertManager shutdown complete');
+      logger.info('🚨 AlertManager shutdown complete');
     }
 
     if (this.healthChecker) {
       this.healthChecker.shutdown();
-      console.log('💓 HealthChecker shutdown complete');
+      logger.info('💓 HealthChecker shutdown complete');
     }
 
     if (this.metricsCollector) {
       this.metricsCollector.shutdown();
-      console.log('📊 MetricsCollector shutdown complete');
+      logger.info('📊 MetricsCollector shutdown complete');
     }
 
-    console.log('✅ MonitoringService shutdown complete');
+    logger.info('✅ MonitoringService shutdown complete');
   }
 
   public getHealthMiddleware() {
@@ -214,7 +217,7 @@ export class MonitoringService {
           )
           .json(healthCheck);
       } catch (error) {
-        console.error('Health check endpoint error:', error);
+        logger.error('Health check endpoint error:', error);
         res.status(500).json({
           status: 'error',
           message: 'Health check failed',
@@ -236,7 +239,7 @@ export class MonitoringService {
           metrics,
         });
       } catch (error) {
-        console.error('Metrics endpoint error:', error);
+        logger.error('Metrics endpoint error:', error);
         res.status(500).json({
           status: 'error',
           message: 'Failed to retrieve metrics',
@@ -258,7 +261,7 @@ export class MonitoringService {
           alerts,
         });
       } catch (error) {
-        console.error('Alerts endpoint error:', error);
+        logger.error('Alerts endpoint error:', error);
         res.status(500).json({
           status: 'error',
           message: 'Failed to retrieve alerts',
@@ -302,7 +305,7 @@ export class MonitoringService {
           });
         }
       } catch (error) {
-        console.error('Alert action endpoint error:', error);
+        logger.error('Alert action endpoint error:', error);
         res.status(500).json({
           status: 'error',
           message: 'Failed to process alert action',
