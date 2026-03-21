@@ -75,9 +75,9 @@
     "@hivemind/provider-letta": "dist/packages/provider-letta/src",
     "@hivemind/memory-mem4ai": "dist/packages/memory-mem4ai/src",
     "@hivemind/memory-memvault": "dist/packages/memory-memvault/src",
-    "@hivemind/adapter-discord": "dist/packages/adapter-discord/src",
-    "@hivemind/adapter-slack": "dist/packages/adapter-slack/src",
-    "@hivemind/adapter-mattermost": "dist/packages/adapter-mattermost/src"
+    "@hivemind/message-discord": "dist/packages/message-discord/src",
+    "@hivemind/message-slack": "dist/packages/message-slack/src",
+    "@hivemind/message-mattermost": "dist/packages/message-mattermost/src"
   },
   "keywords": [],
   "author": "matthewhand+dot+au+at+gmail+dot+com",
