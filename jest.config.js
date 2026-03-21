@@ -75,6 +75,6 @@ module.exports = {
     'tests/integrations/.*\.real\.test\.[tj]s$',
   ],
   transformIgnorePatterns: [
-    '/node_modules/(?!chai|other-esm-dependency|node-fetch|data-uri-to-buffer|@modelcontextprotocol/sdk|fetch-blob|uuid)',
+    '/node_modules/(?!chai|other-esm-dependency|node-fetch|data-uri-to-buffer|@modelcontextprotocol/sdk|fetch-blob|uuid|@exodus|html-encoding-sniffer|jsdom|@whatwg-node|whatwg-url|whatwg-mimetype|whatwg-encoding|.*@exodus.*|@asamuzakjp|.*@asamuzakjp.*|@csstools|.*@csstools.*|.*parse5.*)',
   ],
 };

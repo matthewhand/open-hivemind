@@ -58,15 +58,15 @@ export async function readFile(filePath: string): Promise<string> {
   }
 
   // Use async file operations for consistency
-  const stat = fs.promises.stat;
-  const readFileAsync = fs.promises.readFile;
+  const stat = fs.promises ? fs.promises.stat : require('fs/promises').stat;
+  const readFileAsync = fs.promises ? fs.promises.readFile : require('fs/promises').readFile;
 
   const stats = await stat(filePath);
   if (stats.isDirectory()) {
     throw new Error('Path is a directory, not a file');
   }
 
-  const content = await fs.promises.readFile(filePath, 'utf8');
+  const content = await readFileAsync(filePath, 'utf8');
   debug('File content: ' + content);
   return content;
 }
