@@ -13,11 +13,6 @@ const router = Router();
 // Basic health check
 router.get('/', (req, res) => {
   const memoryUsage = process.memoryUsage();
-<<<<<<< HEAD
-  return res.status(200).json({
-    status: 'healthy',
-=======
-
   let dbStatus = 'unknown';
   try {
     const dbManager = DatabaseManager.getInstance();
@@ -31,7 +26,6 @@ router.get('/', (req, res) => {
 
   return res.status(statusCode).json({
     status: status,
->>>>>>> origin/refine-eliminate-magic-numbers-3883502303364983467
     timestamp: new Date().toISOString(),
     version: '1.0.0',
     uptime: process.uptime(),
@@ -203,11 +197,6 @@ router.get('/alerts', (req, res) => {
 // Readiness probe
 router.get('/ready', (req, res) => {
   // Check if all dependencies are ready
-<<<<<<< HEAD
-  // For now, we'll assume the service is ready if it's responding
-  return res.json({
-    ready: true,
-=======
   let dbReady = false;
   try {
     const dbManager = DatabaseManager.getInstance();
@@ -222,7 +211,6 @@ router.get('/ready', (req, res) => {
 
   return res.status(statusCode).json({
     ready: isReady,
->>>>>>> origin/refine-eliminate-magic-numbers-3883502303364983467
     timestamp: new Date().toISOString(),
     checks: {
       database: true, // Would need actual database check
