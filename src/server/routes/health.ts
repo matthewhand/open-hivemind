@@ -1,9 +1,9 @@
-import { ERROR_CODES, HEALTH_THRESHOLDS, HTTP_STATUS } from '../../types/constants';
 import os from 'os';
 import process from 'process';
 import { Router, type NextFunction, type Request, type Response } from 'express';
 import { MetricsCollector } from '../../monitoring/MetricsCollector';
 import ApiMonitorService from '../../services/ApiMonitorService';
+import { HEALTH_THRESHOLDS, HTTP_STATUS } from '../../types/constants';
 import { ErrorLogger } from '../../utils/errorLogger';
 import { globalRecoveryManager } from '../../utils/errorRecovery';
 import { optionalAuth } from '../middleware/auth';
@@ -12,12 +12,6 @@ const router = Router();
 
 // Basic health check
 router.get('/', (req, res) => {
-  const memoryUsage = process.memoryUsage();
-<<<<<<< HEAD
-  return res.status(200).json({
-    status: 'healthy',
-=======
-
   let dbStatus = 'unknown';
   try {
     const dbManager = DatabaseManager.getInstance();
@@ -27,14 +21,10 @@ router.get('/', (req, res) => {
   }
 
   const status = dbStatus === 'healthy' ? 'healthy' : 'degraded';
-  const statusCode = status === 'healthy' ? HTTP_STATUS.OK : HTTP_STATUS.OK; // Even degraded, we return 200 for basic health. /ready will return HTTP_STATUS.SERVICE_UNAVAILABLE if not ready.
+  const statusCode = HTTP_STATUS.OK; // Even degraded, we return 200 for basic health. /ready will return HTTP_STATUS.SERVICE_UNAVAILABLE if not ready.
 
   return res.status(statusCode).json({
     status: status,
->>>>>>> origin/refine-eliminate-magic-numbers-3883502303364983467
-    timestamp: new Date().toISOString(),
-    version: '1.0.0',
-    uptime: process.uptime(),
     memory: {
       used: Math.round(memoryUsage.heapUsed / 1024 / 1024),
       total: Math.round(memoryUsage.heapTotal / 1024 / 1024),
@@ -203,11 +193,6 @@ router.get('/alerts', (req, res) => {
 // Readiness probe
 router.get('/ready', (req, res) => {
   // Check if all dependencies are ready
-<<<<<<< HEAD
-  // For now, we'll assume the service is ready if it's responding
-  return res.json({
-    ready: true,
-=======
   let dbReady = false;
   try {
     const dbManager = DatabaseManager.getInstance();
@@ -222,7 +207,6 @@ router.get('/ready', (req, res) => {
 
   return res.status(statusCode).json({
     ready: isReady,
->>>>>>> origin/refine-eliminate-magic-numbers-3883502303364983467
     timestamp: new Date().toISOString(),
     checks: {
       database: true, // Would need actual database check
@@ -736,7 +720,11 @@ function getRecoveryHealthStatus(
   if (openCircuitBreakers > 0) {
     return 'unhealthy';
   }
-  if (circuitBreakers.some((cb) => cb.circuitBreaker.failureCount > HEALTH_THRESHOLDS.HIGH_FAILURE_COUNT)) {
+  if (
+    circuitBreakers.some(
+      (cb) => cb.circuitBreaker.failureCount > HEALTH_THRESHOLDS.HIGH_FAILURE_COUNT
+    )
+  ) {
     return 'degraded';
   }
   return 'healthy';
@@ -753,7 +741,9 @@ function getRecoveryRecommendations(recoveryStats: Record<string, any>): string[
     );
   }
 
-  const highFailureCircuits = circuitBreakers.filter((cb) => cb.circuitBreaker.failureCount > HEALTH_THRESHOLDS.HIGH_FAILURE_COUNT);
+  const highFailureCircuits = circuitBreakers.filter(
+    (cb) => cb.circuitBreaker.failureCount > HEALTH_THRESHOLDS.HIGH_FAILURE_COUNT
+  );
   if (highFailureCircuits.length > 0) {
     recommendations.push(
       `${highFailureCircuits.length} circuit breaker(s) have high failure rates.`

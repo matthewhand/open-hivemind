@@ -1,7 +1,7 @@
-import { ERROR_CODES, HTTP_STATUS } from '../../types/constants';
 import { Router } from 'express';
 import { createLogger } from '../../common/StructuredLogger';
 import { BotManager, type CreateBotRequest } from '../../managers/BotManager';
+import { ERROR_CODES, HTTP_STATUS } from '../../types/constants';
 import {
   BotActivityQuerySchema,
   BotHistoryQuerySchema,
@@ -59,12 +59,8 @@ router.get('/', async (req, res) => {
 
     return res.json(result);
   } catch (error: any) {
-<<<<<<< HEAD
     logger.error('Failed to retrieve bots', { error: error.message });
-    return res.status(500).json({ error: 'Failed to retrieve bots' });
-=======
-    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: error.message });
->>>>>>> origin/refine-eliminate-magic-numbers-3883502303364983467
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: 'Failed to retrieve bots' });
   }
 });
 
@@ -95,12 +91,8 @@ router.get('/:id', validateRequest(BotIdParamSchema), async (req, res) => {
     }
     return res.json({ success: true, bot });
   } catch (error: any) {
-<<<<<<< HEAD
     logger.error('Failed to retrieve bot', { id: req.params.id, error: error.message });
-    return res.status(500).json({ error: 'Failed to retrieve bot' });
-=======
-    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: error.message });
->>>>>>> origin/refine-eliminate-magic-numbers-3883502303364983467
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: 'Failed to retrieve bot' });
   }
 });
 
@@ -177,7 +169,9 @@ router.put('/:id', validateRequest(UpdateBotSchema), async (req, res) => {
     const bot = await manager.updateBot(id, updates);
     return res.json({ success: true, message: 'Bot updated', bot });
   } catch (error: any) {
-    const status = error.message.includes(ERROR_CODES.NOT_FOUND) ? HTTP_STATUS.NOT_FOUND : HTTP_STATUS.BAD_REQUEST;
+    const status = error.message.includes(ERROR_CODES.NOT_FOUND)
+      ? HTTP_STATUS.NOT_FOUND
+      : HTTP_STATUS.BAD_REQUEST;
     return res.status(status).json({ error: error.message });
   }
 });
@@ -210,7 +204,9 @@ router.delete('/:id', validateRequest(BotIdParamSchema), async (req, res) => {
     await manager.deleteBot(id);
     return res.json({ success: true, message: 'Bot deleted' });
   } catch (error: any) {
-    const status = error.message.includes(ERROR_CODES.NOT_FOUND) ? HTTP_STATUS.NOT_FOUND : HTTP_STATUS.BAD_REQUEST;
+    const status = error.message.includes(ERROR_CODES.NOT_FOUND)
+      ? HTTP_STATUS.NOT_FOUND
+      : HTTP_STATUS.BAD_REQUEST;
     return res.status(status).json({ error: error.message });
   }
 });
@@ -255,9 +251,13 @@ router.post('/:id/clone', validateRequest(CloneBotSchema), async (req, res) => {
     }
 
     const newBot = await manager.cloneBot(id, newName);
-    return res.status(HTTP_STATUS.CREATED).json({ success: true, message: 'Bot cloned', bot: newBot });
+    return res
+      .status(HTTP_STATUS.CREATED)
+      .json({ success: true, message: 'Bot cloned', bot: newBot });
   } catch (error: any) {
-    const status = error.message.includes(ERROR_CODES.NOT_FOUND) ? HTTP_STATUS.NOT_FOUND : HTTP_STATUS.BAD_REQUEST;
+    const status = error.message.includes(ERROR_CODES.NOT_FOUND)
+      ? HTTP_STATUS.NOT_FOUND
+      : HTTP_STATUS.BAD_REQUEST;
     return res.status(status).json({ error: error.message });
   }
 });
@@ -284,7 +284,9 @@ router.post('/:id/start', validateRequest(BotIdParamSchema), async (req, res) =>
     await manager.startBot(id);
     return res.json({ success: true, message: 'Bot started' });
   } catch (error: any) {
-    const status = error.message.includes(ERROR_CODES.NOT_FOUND) ? HTTP_STATUS.NOT_FOUND : HTTP_STATUS.BAD_REQUEST;
+    const status = error.message.includes(ERROR_CODES.NOT_FOUND)
+      ? HTTP_STATUS.NOT_FOUND
+      : HTTP_STATUS.BAD_REQUEST;
     return res.status(status).json({ error: error.message });
   }
 });
@@ -311,7 +313,9 @@ router.post('/:id/stop', validateRequest(BotIdParamSchema), async (req, res) => 
     await manager.stopBot(id);
     return res.json({ success: true, message: 'Bot stopped' });
   } catch (error: any) {
-    const status = error.message.includes(ERROR_CODES.NOT_FOUND) ? HTTP_STATUS.NOT_FOUND : HTTP_STATUS.BAD_REQUEST;
+    const status = error.message.includes(ERROR_CODES.NOT_FOUND)
+      ? HTTP_STATUS.NOT_FOUND
+      : HTTP_STATUS.BAD_REQUEST;
     return res.status(status).json({ error: error.message });
   }
 });
@@ -350,7 +354,9 @@ router.get('/:id/history', validateRequest(BotHistoryQuerySchema), async (req, r
     const history = await manager.getBotHistory(id, channelId, limit);
     return res.json({ success: true, data: { history } });
   } catch (error: any) {
-    const status = error.message.includes(ERROR_CODES.NOT_FOUND) ? HTTP_STATUS.NOT_FOUND : HTTP_STATUS.BAD_REQUEST;
+    const status = error.message.includes(ERROR_CODES.NOT_FOUND)
+      ? HTTP_STATUS.NOT_FOUND
+      : HTTP_STATUS.BAD_REQUEST;
     return res.status(status).json({ error: error.message });
   }
 });
@@ -418,12 +424,10 @@ router.get('/:id/activity', validateRequest(BotActivityQuerySchema), async (req,
 
     return res.json({ success: true, data: { activity } });
   } catch (error: any) {
-<<<<<<< HEAD
     logger.error('Failed to retrieve bot activity', { id: req.params.id, error: error.message });
-    return res.status(500).json({ error: 'Failed to retrieve bot activity' });
-=======
-    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: error.message });
->>>>>>> origin/refine-eliminate-magic-numbers-3883502303364983467
+    return res
+      .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
+      .json({ error: 'Failed to retrieve bot activity' });
   }
 });
 
