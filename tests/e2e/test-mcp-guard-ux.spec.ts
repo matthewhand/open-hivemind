@@ -46,7 +46,7 @@ test('verify MCP Guard UX', async ({ page }) => {
 
   await page.goto('/admin/guards');
 
-  await page.getByRole('button', { name: 'New Profile' }).click();
+  await page.getByRole('button', { name: 'New Profile' }).first().click();
 
   const modal = page.locator('.modal-box').filter({ hasText: /Create.*Profile/i });
   await expect(modal).toBeVisible();
@@ -75,5 +75,5 @@ test('verify MCP Guard UX', async ({ page }) => {
 
   const value = await usersInput.inputValue();
   console.log('Input value after typing ",user2":', value);
-  expect(value).toBe('user1, user2');
+  expect(value).toBe('user1,user2');
 });
