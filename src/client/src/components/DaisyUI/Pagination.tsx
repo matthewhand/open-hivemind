@@ -97,10 +97,7 @@ const Pagination: React.FC<PaginationProps> = ({
       const isNearEnd = currentPage >= totalPages - half;
 
       pages.push(1);
-<<<<<<< HEAD
 
-=======
->>>>>>> origin/docco-update-screenshots-6307953588415915921
       if (isNearStart) {
         for (let i = 2; i <= maxVisiblePages - 2; i++) {
           pages.push(i);

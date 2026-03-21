@@ -27,10 +27,6 @@ import enterpriseRouter from '@src/server/routes/enterprise';
 import guardsRouter from '@src/server/routes/guards';
 // Root health endpoint (for frontend polling)
 
-<<<<<<< HEAD
-=======
-
->>>>>>> origin/docco-update-screenshots-6307953588415915921
 import hotReloadRouter from '@src/server/routes/hotReload';
 import importExportRouter from '@src/server/routes/importExport';
 import integrationsRouter from '@src/server/routes/integrations';
@@ -287,11 +283,6 @@ app.use('/api/demo', demoRouter); // Demo mode routes
 app.use('/api/health', healthRoute); // Health API endpoints
 app.use('/health', healthRoute);
 
-<<<<<<< HEAD
-=======
-app.get('/metrics', (req, res) => res.redirect('/api/health/metrics/prometheus')); // Prometheus metrics at root
-
->>>>>>> origin/docco-update-screenshots-6307953588415915921
 app.use(sitemapRouter); // Sitemap routes at root level
 
 // Legacy route redirects - everything now unified under /

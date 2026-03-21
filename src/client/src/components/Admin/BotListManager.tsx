@@ -25,12 +25,6 @@ type BotConfig = BaseBotConfig & {
     source: string;
     discord?: Record<string, unknown | RedactedValue>;
     slack?: Record<string, unknown | RedactedValue>;
-<<<<<<< HEAD
-=======
-    llmProfile?: string;
-    persona?: string;
-    [key: string]: unknown;
->>>>>>> origin/docco-update-screenshots-6307953588415915921
 };
 
 interface BotListResponse {
