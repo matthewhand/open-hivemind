@@ -1,7 +1,7 @@
 import axios from 'axios';
 import Debug from 'debug';
 import type { KnownBlock } from '@slack/web-api';
-import { isSafeUrl } from '@hivemind/shared-types';
+import { isSafeUrl } from '@hivemind/shared-types/src/ssrfGuard';
 import { ConfigurationError, NetworkError, ValidationError } from '@src/types/errorClasses';
 import { ErrorUtils } from '@src/types/errors';
 import type { IMessage } from '@message/interfaces/IMessage';

@@ -1,3 +1,4 @@
+import { isSafeUrl } from '../utils/ssrfGuard';
 import { EventEmitter } from 'events';
 import Debug from 'debug';
 import type { Response } from 'node-fetch';
@@ -341,6 +342,7 @@ export class ApiMonitorService extends EventEmitter {
     const timeoutId = setTimeout(() => controller.abort(), config.timeout || 10000);
 
     try {
+    if (!(await isSafeUrl(config.url))) { throw new Error('Blocked unsafe URL'); }
       const fetchImpl = await resolveFetch();
       const response = await fetchImpl(config.url, {
         method: config.method,

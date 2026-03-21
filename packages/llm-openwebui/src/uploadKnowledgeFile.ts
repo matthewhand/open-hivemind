@@ -1,7 +1,7 @@
 import fs from 'fs';
 import axios from 'axios';
 import Debug from 'debug';
-import { isSafeUrl } from '@hivemind/shared-types';
+import { isSafeUrl } from '@hivemind/shared-types/src/ssrfGuard';
 import openWebUIConfig from './openWebUIConfig';
 import { getSessionKey } from './sessionManager';
 

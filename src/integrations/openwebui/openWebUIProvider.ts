@@ -2,6 +2,7 @@ import axios from 'axios';
 import Debug from 'debug';
 import type { IMessage } from '@src/message/interfaces/IMessage';
 import type { ILlmProvider } from '@llm/interfaces/ILlmProvider';
+import { isSafeUrl } from '../../utils/ssrfGuard';
 import openWebUIConfig from './openWebUIConfig';
 
 const debug = Debug('app:openWebUIProvider');
@@ -33,6 +34,11 @@ export const openWebUIProvider: ILlmProvider = {
   ): Promise<string> {
     debug('Generating chat completion with OpenWebUI:', { userMessage, historyMessages });
 
+    // Security Check: SSRF Protection for baseURL
+    if (!(await isSafeUrl(openWebUIClient.defaults.baseURL!))) {
+      throw new Error('OpenWebUI API URL is not safe to connect to.');
+    }
+
     const messages = [
       ...historyMessages.map((msg) => ({ role: 'user', content: msg.getText() })),
       { role: 'user', content: userMessage },
@@ -53,6 +59,11 @@ export const openWebUIProvider: ILlmProvider = {
 
   async generateCompletion(prompt: string): Promise<string> {
     debug('Generating non-chat completion with OpenWebUI:', { prompt });
+
+    // Security Check: SSRF Protection for baseURL
+    if (!(await isSafeUrl(openWebUIClient.defaults.baseURL!))) {
+      throw new Error('OpenWebUI API URL is not safe to connect to.');
+    }
 
     try {
       const response = await openWebUIClient.post('/completions', {

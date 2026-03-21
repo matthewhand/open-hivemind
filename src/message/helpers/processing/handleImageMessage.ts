@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { isSafeUrl } from '../../../utils/ssrfGuard';
 
 /**
  * A map that stores the association between prediction IDs and image URLs.
@@ -56,6 +57,13 @@ export async function handleImageMessage(message: any): Promise<boolean> {
     if (attachments.size > 0) {
       const imageUrl = attachments.first().url;
       console.debug('Image URL: ' + imageUrl);
+
+      // Security Check: SSRF Protection
+      if (!(await isSafeUrl(imageUrl))) {
+        console.warn(`[handleImageMessage] Blocked unsafe image URL: ${imageUrl}`);
+        return false;
+      }
+
       const prediction = await createPrediction(imageUrl);
       if (!process.env.REPLICATE_WEBHOOK_URL) {
         // Handle synchronous prediction result

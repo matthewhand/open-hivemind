@@ -1,6 +1,6 @@
 import axios from 'axios';
 import Debug from 'debug';
-import { isSafeUrl } from '@hivemind/shared-types';
+import { isSafeUrl } from '@hivemind/shared-types/src/ssrfGuard';
 import { ConfigurationManager } from '@config/ConfigurationManager';
 import flowiseConfig from '@integrations/flowise/flowiseConfig';
 

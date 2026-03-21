@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { isSafeUrl } from '@hivemind/shared-types';
+import { isSafeUrl } from '@hivemind/shared-types/src/ssrfGuard';
 import type { ILlmProvider } from '@llm/interfaces/ILlmProvider';
 import { LLMResponse } from '@llm/interfaces/LLMResponse';
 import type { IMessage } from '@message/interfaces/IMessage';
