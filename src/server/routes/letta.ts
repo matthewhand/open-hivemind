@@ -1,5 +1,4 @@
 import { Router, Request, Response } from 'express';
-import { listAgents, getAgent } from '@hivemind/llm-letta';
 
 const router = Router();
 
@@ -22,6 +21,8 @@ router.get('/agents', async (req: Request, res: Response) => {
       });
     }
 
+    // @ts-ignore
+    const { listAgents } = await import('@hivemind/llm-letta');
     const agents = await listAgents(apiKey, apiUrl);
     return res.json(agents);
   } catch (error) {
@@ -52,6 +53,8 @@ router.get('/agents/:id', async (req: Request, res: Response) => {
       });
     }
 
+    // @ts-ignore
+    const { getAgent } = await import('@hivemind/llm-letta');
     const agent = await getAgent(id, apiKey, apiUrl);
     return res.json(agent);
   } catch (error) {
