@@ -1,3 +1,4 @@
+import { ERROR_CODES, HEALTH_THRESHOLDS, HTTP_STATUS } from '../../types/constants';
 import os from 'os';
 import process from 'process';
 import { Router, type NextFunction, type Request, type Response } from 'express';
@@ -12,8 +13,33 @@ const router = Router();
 // Basic health check
 router.get('/', (req, res) => {
   const memoryUsage = process.memoryUsage();
-  return res.status(200).json({
+<<<<<<< HEAD
+<<<<<<< HEAD
+  return res.status(HTTP_STATUS.OK).json({
     status: 'healthy',
+=======
+=======
+
+>>>>>>> origin/fix-anomaly-route-types-3952225614007405228
+  let dbStatus = 'unknown';
+  try {
+    // Requires importing DatabaseManager at the top
+    const dbManager = require('../../database/DatabaseManager').DatabaseManager.getInstance();
+    dbStatus = dbManager.isConnected() ? 'healthy' : 'unhealthy';
+  } catch (error) {
+    dbStatus = 'error';
+  }
+
+  const status = dbStatus === 'healthy' ? 'healthy' : 'degraded';
+  const statusCode = status === 'healthy' ? HTTP_STATUS.OK : HTTP_STATUS.OK; // Even degraded, we return 200 for basic health. /ready will return HTTP_STATUS.SERVICE_UNAVAILABLE if not ready.
+
+  return res.status(statusCode).json({
+    status: status,
+<<<<<<< HEAD
+>>>>>>> origin/janitor/code-health-activity-logger-8768188016948875412
+=======
+
+>>>>>>> origin/fix-anomaly-route-types-3952225614007405228
     timestamp: new Date().toISOString(),
     version: '1.0.0',
     uptime: process.uptime(),
@@ -185,12 +211,36 @@ router.get('/alerts', (req, res) => {
 // Readiness probe
 router.get('/ready', (req, res) => {
   // Check if all dependencies are ready
-  // For now, we'll assume the service is ready if it's responding
-  return res.json({
+<<<<<<< HEAD
+<<<<<<< HEAD
+  return res.status(HTTP_STATUS.OK).json({
     ready: true,
+=======
+=======
+
+  // Check if all dependencies are ready
+>>>>>>> origin/fix-anomaly-route-types-3952225614007405228
+  let dbReady = false;
+  try {
+    const dbManager = require('../../database/DatabaseManager').DatabaseManager.getInstance();
+    dbReady = dbManager.isConnected();
+  } catch (error) {
+    dbReady = false;
+  }
+
+  // We are ready if critical dependencies are up
+  const isReady = dbReady;
+  const statusCode = isReady ? HTTP_STATUS.OK : HTTP_STATUS.SERVICE_UNAVAILABLE;
+
+  return res.status(statusCode).json({
+    ready: isReady,
+<<<<<<< HEAD
+>>>>>>> origin/janitor/code-health-activity-logger-8768188016948875412
+=======
+>>>>>>> origin/fix-anomaly-route-types-3952225614007405228
     timestamp: new Date().toISOString(),
     checks: {
-      database: true, // Would need actual database check
+      database: dbReady,
       external_apis: true, // Would need actual API checks
       configuration: true,
     },
@@ -310,7 +360,7 @@ router.get('/api-endpoints/:id', (req, res) => {
   const status = apiMonitor.getEndpointStatus(req.params.id);
 
   if (!status) {
-    return res.status(404).json({
+    return res.status(HTTP_STATUS.NOT_FOUND).json({
       error: 'Endpoint not found',
       message: `No endpoint found with ID: ${req.params.id}`,
     });
@@ -338,7 +388,7 @@ router.post('/cleanup', (req, res) => {
 
     // Validate required fields
     if (!config.id || !config.name || !config.url) {
-      return res.status(400).json({
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({
         error: 'Missing required fields',
         message: 'id, name, and url are required',
       });
@@ -354,13 +404,13 @@ router.post('/cleanup', (req, res) => {
 
     apiMonitor.addEndpoint(config);
 
-    return res.status(201).json({
+    return res.status(HTTP_STATUS.CREATED).json({
       message: 'Endpoint added successfully',
       endpoint: apiMonitor.getEndpoint(config.id),
       timestamp: new Date().toISOString(),
     });
   } catch (error) {
-    return res.status(400).json({
+    return res.status(HTTP_STATUS.BAD_REQUEST).json({
       error: 'Failed to add endpoint',
       message: error instanceof Error ? error.message : 'Unknown error',
       timestamp: new Date().toISOString(),
@@ -384,7 +434,7 @@ router.post('/api-endpoints', (req, res) => {
 
     // Validate required fields
     if (!config.id || !config.name || !config.url) {
-      return res.status(400).json({
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({
         error: 'Missing required fields',
         message: 'id, name, and url are required',
       });
@@ -400,13 +450,13 @@ router.post('/api-endpoints', (req, res) => {
 
     apiMonitor.addEndpoint(config);
 
-    return res.status(201).json({
+    return res.status(HTTP_STATUS.CREATED).json({
       message: 'Endpoint added successfully',
       endpoint: apiMonitor.getEndpoint(config.id),
       timestamp: new Date().toISOString(),
     });
   } catch (error) {
-    return res.status(400).json({
+    return res.status(HTTP_STATUS.BAD_REQUEST).json({
       error: 'Failed to add endpoint',
       message: error instanceof Error ? error.message : 'Unknown error',
       timestamp: new Date().toISOString(),
@@ -427,7 +477,7 @@ router.put('/api-endpoints/:id', (req, res) => {
       timestamp: new Date().toISOString(),
     });
   } catch (error) {
-    return res.status(404).json({
+    return res.status(HTTP_STATUS.NOT_FOUND).json({
       error: 'Failed to update endpoint',
       message: error instanceof Error ? error.message : 'Endpoint not found',
       timestamp: new Date().toISOString(),
@@ -442,7 +492,7 @@ router.delete('/api-endpoints/:id', (req, res) => {
   try {
     const endpoint = apiMonitor.getEndpoint(req.params.id);
     if (!endpoint) {
-      return res.status(404).json({
+      return res.status(HTTP_STATUS.NOT_FOUND).json({
         error: 'Failed to remove endpoint',
         message: 'Endpoint not found',
         timestamp: new Date().toISOString(),
@@ -456,7 +506,7 @@ router.delete('/api-endpoints/:id', (req, res) => {
       timestamp: new Date().toISOString(),
     });
   } catch (error) {
-    return res.status(404).json({
+    return res.status(HTTP_STATUS.NOT_FOUND).json({
       error: 'Failed to remove endpoint',
       message: error instanceof Error ? error.message : 'Endpoint not found',
       timestamp: new Date().toISOString(),
@@ -491,14 +541,14 @@ router.use((err: any, req: Request, res: Response, next: NextFunction) => {
   if (isParseError && req.path?.startsWith('/api-endpoints')) {
     const method = typeof req.method === 'string' ? req.method.toUpperCase() : req.method;
     if (method === 'PUT') {
-      return res.status(404).json({
+      return res.status(HTTP_STATUS.NOT_FOUND).json({
         error: 'Failed to update endpoint',
         message: 'Endpoint not found or payload invalid',
         timestamp: new Date().toISOString(),
       });
     }
 
-    return res.status(400).json({
+    return res.status(HTTP_STATUS.BAD_REQUEST).json({
       error: 'Invalid JSON payload',
       message: 'Request body could not be parsed',
       timestamp: new Date().toISOString(),
@@ -622,13 +672,13 @@ function calculateHealthStatus(
   }
 
   // Check error rate
-  if (errorRate > 10) {
+  if (errorRate > HEALTH_THRESHOLDS.RECENT_ERRORS_WARNING) {
     status = 'unhealthy';
     errorHealth = 'critical';
-  } else if (errorRate > 5) {
+  } else if (errorRate > HEALTH_THRESHOLDS.ERROR_RATE_DEGRADED) {
     status = status === 'healthy' ? 'degraded' : status;
     errorHealth = 'poor';
-  } else if (errorRate > 1) {
+  } else if (errorRate > HEALTH_THRESHOLDS.ERROR_RATE_WARNING) {
     errorHealth = 'fair';
   }
 
@@ -664,7 +714,7 @@ function getErrorRecommendations(
 ): string[] {
   const recommendations: string[] = [];
 
-  if (recentErrors > 5) {
+  if (recentErrors > HEALTH_THRESHOLDS.ERROR_RATE_DEGRADED) {
     recommendations.push(
       'High error rate detected. Check system logs and consider scaling resources.'
     );
@@ -701,7 +751,7 @@ function getRecoveryHealthStatus(
   if (openCircuitBreakers > 0) {
     return 'unhealthy';
   }
-  if (circuitBreakers.some((cb) => cb.circuitBreaker.failureCount > 3)) {
+  if (circuitBreakers.some((cb) => cb.circuitBreaker.failureCount > HEALTH_THRESHOLDS.HIGH_FAILURE_COUNT)) {
     return 'degraded';
   }
   return 'healthy';
@@ -718,7 +768,7 @@ function getRecoveryRecommendations(recoveryStats: Record<string, any>): string[
     );
   }
 
-  const highFailureCircuits = circuitBreakers.filter((cb) => cb.circuitBreaker.failureCount > 3);
+  const highFailureCircuits = circuitBreakers.filter((cb) => cb.circuitBreaker.failureCount > HEALTH_THRESHOLDS.HIGH_FAILURE_COUNT);
   if (highFailureCircuits.length > 0) {
     recommendations.push(
       `${highFailureCircuits.length} circuit breaker(s) have high failure rates.`
@@ -786,7 +836,7 @@ function detectErrorAnomalies(
   if (totalErrors > 0) {
     Object.entries(errorStats).forEach(([type, count]) => {
       const percentage = (count / totalErrors) * 100;
-      if (percentage > 50 && type !== 'unknown') {
+      if (percentage > HEALTH_THRESHOLDS.DOMINANT_ERROR_PERCENTAGE && type !== 'unknown') {
         anomalies.push({
           type,
           anomaly: `Dominant error type (${percentage.toFixed(1)}% of all errors)`,
@@ -796,7 +846,7 @@ function detectErrorAnomalies(
   }
 
   // Check for sudden error bursts
-  if (recentErrors > 10) {
+  if (recentErrors > HEALTH_THRESHOLDS.RECENT_ERRORS_WARNING) {
     anomalies.push({
       type: 'burst',
       anomaly: `High error frequency: ${recentErrors} errors in last minute`,
@@ -812,14 +862,14 @@ function generatePatternRecommendations(
 ): string[] {
   const recommendations: string[] = [];
 
-  if (recentErrors > 10) {
+  if (recentErrors > HEALTH_THRESHOLDS.RECENT_ERRORS_WARNING) {
     recommendations.push(
       'Implement rate limiting and circuit breakers to prevent cascading failures.'
     );
   }
 
   const validationErrors = errorStats['validation'] || 0;
-  if (validationErrors > 3) {
+  if (validationErrors > HEALTH_THRESHOLDS.VALIDATION_ERRORS_WARNING) {
     recommendations.push(
       'Review input validation logic and provide better error messages to users.'
     );

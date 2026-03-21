@@ -1,18 +1,17 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
-import React, { useState, useEffect } from 'react';
-
-import { FunnelIcon } from '@heroicons/react/24/outline';
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import React, { useEffect, useState } from 'react';
 import {
-  ShieldCheckIcon,
+  ArrowPathIcon,
+  ChartBarIcon,
+  CheckCircleIcon,
   CloudIcon,
+  ExclamationCircleIcon,
+  ExclamationTriangleIcon,
+  FunnelIcon,
+  PlusIcon,
   PuzzlePieceIcon,
   ScaleIcon,
-  ChartBarIcon,
-  PlusIcon,
-  ArrowPathIcon,
-  CheckCircleIcon,
-  ExclamationTriangleIcon,
-  ExclamationCircleIcon,
+  ShieldCheckIcon,
 } from '@heroicons/react/24/outline';
 
 interface ComplianceRule {
@@ -93,14 +92,14 @@ const EnterpriseManager: React.FC = () => {
     config: {} as Record<string, any>,
   });
 
-
   // Audit Query states
   const [auditSearchTerm, setAuditSearchTerm] = useState('');
   const [auditActionFilter, setAuditActionFilter] = useState('all');
   const [auditResultFilter, setAuditResultFilter] = useState('all');
 
-  const filteredAuditEvents = auditEvents.filter(event => {
-    const matchesSearch = auditSearchTerm === '' ||
+  const filteredAuditEvents = auditEvents.filter((event) => {
+    const matchesSearch =
+      auditSearchTerm === '' ||
       event.user.toLowerCase().includes(auditSearchTerm.toLowerCase()) ||
       event.resource.toLowerCase().includes(auditSearchTerm.toLowerCase()) ||
       event.details.toLowerCase().includes(auditSearchTerm.toLowerCase());
@@ -111,7 +110,7 @@ const EnterpriseManager: React.FC = () => {
     return matchesSearch && matchesAction && matchesResult;
   });
 
-  const uniqueActions = Array.from(new Set(auditEvents.map(e => e.action)));
+  const uniqueActions = Array.from(new Set(auditEvents.map((e) => e.action)));
 
   const [cloudForm, setCloudForm] = useState({
     name: '',
@@ -301,7 +300,7 @@ const EnterpriseManager: React.FC = () => {
         config: integrationForm.config,
       };
 
-      setIntegrations(prev => [...prev, newIntegration]);
+      setIntegrations((prev) => [...prev, newIntegration]);
       setSuccess('Integration added successfully!');
       setAddIntegrationDialog(false);
       setIntegrationForm({ name: '', type: 'webhook', provider: '', config: {} });
@@ -330,19 +329,19 @@ const EnterpriseManager: React.FC = () => {
         resources: [],
       };
 
-      setCloudProviders(prev => [...prev, newProvider]);
+      setCloudProviders((prev) => [...prev, newProvider]);
       setSuccess('Cloud provider added successfully!');
       setAddCloudProviderDialog(false);
       setCloudForm({ name: '', type: 'aws', region: '', credentials: {} });
 
       // Simulate configuration completion
       setTimeout(() => {
-        setCloudProviders(prev =>
-          prev.map(provider =>
+        setCloudProviders((prev) =>
+          prev.map((provider) =>
             provider.id === newProvider.id
               ? { ...provider, status: 'connected' as const }
-              : provider,
-          ),
+              : provider
+          )
         );
       }, 3000);
     } catch (err) {
@@ -354,292 +353,307 @@ const EnterpriseManager: React.FC = () => {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-    case 'active':
-    case 'connected':
-    case 'compliant':
-      return 'badge-success';
-    case 'inactive':
-    case 'disconnected':
-    case 'non-compliant':
-      return 'badge-error';
-    case 'configuring':
-    case 'checking':
-      return 'badge-warning';
-    default:
-      return 'badge-ghost';
+      case 'active':
+      case 'connected':
+      case 'compliant':
+        return 'badge-success';
+      case 'inactive':
+      case 'disconnected':
+      case 'non-compliant':
+        return 'badge-error';
+      case 'configuring':
+      case 'checking':
+        return 'badge-warning';
+      default:
+        return 'badge-ghost';
     }
   };
 
   const getSeverityColor = (severity: string) => {
     switch (severity) {
-    case 'critical':
-      return 'badge-error';
-    case 'high':
-      return 'badge-warning';
-    case 'medium':
-      return 'badge-info';
-    case 'low':
-      return 'badge-success';
-    default:
-      return 'badge-ghost';
+      case 'critical':
+        return 'badge-error';
+      case 'high':
+        return 'badge-warning';
+      case 'medium':
+        return 'badge-info';
+      case 'low':
+        return 'badge-success';
+      default:
+        return 'badge-ghost';
     }
   };
 
   const renderTabContent = () => {
     switch (activeTab) {
-    case 0: // Security & Compliance
-      return (
-        <div>
-          <h2 className="text-xl font-semibold mb-4">Compliance Rules</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {complianceRules.map((rule) => (
-              <div key={rule.id} className="card bg-base-100 shadow-xl">
-                <div className="card-body">
-                  <div className="flex justify-between items-start mb-2">
-                    <div>
-                      <h3 className="card-title text-base">{rule.name}</h3>
-                      <p className="text-sm text-base-content/70">{rule.category}</p>
-                    </div>
-                    <div className="flex gap-1 flex-wrap justify-end">
-                      <div className={`badge ${getSeverityColor(rule.severity)} badge-sm`}>
-                        {rule.severity}
+      case 0: // Security & Compliance
+        return (
+          <div>
+            <h2 className="text-xl font-semibold mb-4">Compliance Rules</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {complianceRules.map((rule) => (
+                <div key={rule.id} className="card bg-base-100 shadow-xl">
+                  <div className="card-body">
+                    <div className="flex justify-between items-start mb-2">
+                      <div>
+                        <h3 className="card-title text-base">{rule.name}</h3>
+                        <p className="text-sm text-base-content/70">{rule.category}</p>
                       </div>
-                      <div className={`badge ${getStatusColor(rule.status)} badge-sm`}>
-                        {rule.status}
+                      <div className="flex gap-1 flex-wrap justify-end">
+                        <div className={`badge ${getSeverityColor(rule.severity)} badge-sm`}>
+                          {rule.severity}
+                        </div>
+                        <div className={`badge ${getStatusColor(rule.status)} badge-sm`}>
+                          {rule.status}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                  <p className="text-sm mb-2">{rule.description}</p>
-                  {rule.remediation && (
-                    <div className="alert alert-warning text-sm py-2">
-                      <ExclamationTriangleIcon className="w-4 h-4" />
-                      <span>{rule.remediation}</span>
-                    </div>
-                  )}
-                  <div className="text-xs text-base-content/50 mt-2">
+                    <p className="text-sm mb-2">{rule.description}</p>
+                    {rule.remediation && (
+                      <div className="alert alert-warning text-sm py-2">
+                        <ExclamationTriangleIcon className="w-4 h-4" />
+                        <span>{rule.remediation}</span>
+                      </div>
+                    )}
+                    <div className="text-xs text-base-content/50 mt-2">
                       Last checked: {new Date(rule.lastChecked).toLocaleString()}
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      );
-
-    case 1: // Multi-Cloud
-      return (
-        <div>
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-semibold">Cloud Providers</h2>
-            <button
-              className="btn btn-primary btn-sm"
-              onClick={() => setAddCloudProviderDialog(true)}
-              disabled={loading}
-            >
-              <PlusIcon className="w-4 h-4 mr-1" />
-                Add Provider
-            </button>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {cloudProviders.map((provider) => (
-              <div key={provider.id} className="card bg-base-100 shadow-xl">
-                <div className="card-body">
-                  <div className="flex justify-between items-start mb-2">
-                    <div>
-                      <h3 className="card-title text-base">{provider.name}</h3>
-                      <p className="text-sm text-base-content/70">
-                        {provider.type.toUpperCase()} • {provider.region}
-                      </p>
-                    </div>
-                    <div className={`badge ${getStatusColor(provider.status)}`}>
-                      {provider.status}
                     </div>
                   </div>
-                  <p className="text-sm font-semibold mb-1">Resources:</p>
-                  <div className="flex flex-wrap gap-1">
-                    {provider.resources.map((resource, index) => (
-                      <div key={index} className="badge badge-outline badge-sm">
-                        {resource.type}: {resource.count}
-                      </div>
-                    ))}
-                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      );
-
-    case 2: // Integrations
-      return (
-        <div>
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-semibold">Enterprise Integrations</h2>
-            <button
-              className="btn btn-primary btn-sm"
-              onClick={() => setAddIntegrationDialog(true)}
-              disabled={loading}
-            >
-              <PlusIcon className="w-4 h-4 mr-1" />
-                Add Integration
-            </button>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {integrations.map((integration) => (
-              <div key={integration.id} className="card bg-base-100 shadow-xl">
-                <div className="card-body">
-                  <div className="flex justify-between items-start mb-2">
-                    <div>
-                      <h3 className="card-title text-base">{integration.name}</h3>
-                      <p className="text-sm text-base-content/70">
-                        {integration.provider} • {integration.type}
-                      </p>
-                    </div>
-                    <div className={`badge ${getStatusColor(integration.status)} badge-sm`}>
-                      {integration.status}
-                    </div>
-                  </div>
-                  <p className="text-sm mb-2">
-                      Last sync: {new Date(integration.lastSync).toLocaleString()}
-                  </p>
-                  <div className="card-actions justify-end">
-                    <button className="btn btn-xs btn-outline">Configure</button>
-                    <button className="btn btn-xs btn-outline">Test</button>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      );
-
-
-    case 3: // Audit & Governance
-      return (
-        <div>
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-semibold">Audit Events</h2>
-            <div className="flex gap-2">
-              <div className="form-control">
-                <div className="input-group">
-                  <input
-                    type="text"
-                    placeholder="Search user, resource..."
-                    className="input input-sm input-bordered"
-                    value={auditSearchTerm}
-                    onChange={(e) => setAuditSearchTerm(e.target.value)}
-                  />
-                </div>
-              </div>
-              <select
-                className="select select-sm select-bordered"
-                value={auditActionFilter}
-                onChange={(e) => setAuditActionFilter(e.target.value)}
-              >
-                <option value="all">All Actions</option>
-                {uniqueActions.map(action => (
-                  <option key={action} value={action}>{action}</option>
-                ))}
-              </select>
-              <select
-                className="select select-sm select-bordered"
-                value={auditResultFilter}
-                onChange={(e) => setAuditResultFilter(e.target.value)}
-              >
-                <option value="all">All Results</option>
-                <option value="success">Success</option>
-                <option value="failure">Failure</option>
-                <option value="warning">Warning</option>
-              </select>
-              <button
-                className="btn btn-sm btn-outline"
-                onClick={() => {
-                  setAuditSearchTerm('');
-                  setAuditActionFilter('all');
-                  setAuditResultFilter('all');
-                }}
-                disabled={!auditSearchTerm && auditActionFilter === 'all' && auditResultFilter === 'all'}
-              >
-                <FunnelIcon className="w-4 h-4 mr-1" /> Clear Filters
-              </button>
+              ))}
             </div>
           </div>
-          <div className="overflow-x-auto bg-base-100 rounded-box shadow">
-            <table className="table table-zebra w-full">
-              <thead>
-                <tr>
-                  <th>Timestamp</th>
-                  <th>User</th>
-                  <th>Action</th>
-                  <th>Resource</th>
-                  <th>Details</th>
-                  <th>Result</th>
-                  <th>IP Address</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredAuditEvents.map((event) => (
-                  <tr key={event.id}>
-                    <td className="text-sm">{new Date(event.timestamp).toLocaleString()}</td>
-                    <td>{event.user}</td>
-                    <td><div className="badge badge-ghost badge-sm">{event.action}</div></td>
-                    <td>{event.resource}</td>
-                    <td className="text-xs max-w-xs truncate" title={event.details}>{event.details}</td>
-                    <td>
-                      <div className={`badge ${getStatusColor(event.result)} badge-sm`}>
-                        {event.result}
+        );
+
+      case 1: // Multi-Cloud
+        return (
+          <div>
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-semibold">Cloud Providers</h2>
+              <button
+                className="btn btn-primary btn-sm"
+                onClick={() => setAddCloudProviderDialog(true)}
+                disabled={loading}
+                aria-label="Add Cloud Provider"
+              >
+                <PlusIcon className="w-4 h-4 mr-1" />
+                Add Provider
+              </button>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {cloudProviders.map((provider) => (
+                <div key={provider.id} className="card bg-base-100 shadow-xl">
+                  <div className="card-body">
+                    <div className="flex justify-between items-start mb-2">
+                      <div>
+                        <h3 className="card-title text-base">{provider.name}</h3>
+                        <p className="text-sm text-base-content/70">
+                          {provider.type.toUpperCase()} • {provider.region}
+                        </p>
                       </div>
-                    </td>
-                    <td className="font-mono text-xs">{event.ipAddress}</td>
-                  </tr>
-                ))}
-                {filteredAuditEvents.length === 0 && (
-                  <tr>
-                    <td colSpan={7} className="text-center py-4">No audit events match the current structured query.</td>
-                  </tr>
-                )}
-              </tbody>
-
-            </table>
-          </div>
-        </div>
-      );
-
-    case 4: // Performance Optimization
-      return (
-        <div>
-          <h2 className="text-xl font-semibold mb-4">Performance Metrics</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {performanceMetrics.map((metric) => (
-              <div key={metric.id} className="card bg-base-100 shadow-xl">
-                <div className="card-body">
-                  <div className="flex justify-between items-start mb-2">
-                    <h3 className="card-title text-base">{metric.name}</h3>
-                    <div className={`badge ${getStatusColor(metric.status)} badge-sm`}>
-                      {metric.status}
+                      <div className={`badge ${getStatusColor(provider.status)}`}>
+                        {provider.status}
+                      </div>
+                    </div>
+                    <p className="text-sm font-semibold mb-1">Resources:</p>
+                    <div className="flex flex-wrap gap-1">
+                      {provider.resources.map((resource, index) => (
+                        <div key={index} className="badge badge-outline badge-sm">
+                          {resource.type}: {resource.count}
+                        </div>
+                      ))}
                     </div>
                   </div>
-                  <div className="text-3xl font-bold mb-1">
-                    {metric.value} <span className="text-lg font-normal text-base-content/70">{metric.unit}</span>
-                  </div>
-                  <div className="flex items-center mb-2 text-sm text-base-content/70">
-                    <span className="mr-2">Threshold: {metric.threshold} {metric.unit}</span>
-                    {metric.trend === 'up' && <span className="text-error">↗</span>}
-                    {metric.trend === 'down' && <span className="text-success">↘</span>}
-                    {metric.trend === 'stable' && <span>→</span>}
-                  </div>
-                  <div className="card-actions justify-end">
-                    <button className="btn btn-sm btn-outline">Optimize</button>
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+
+      case 2: // Integrations
+        return (
+          <div>
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-semibold">Enterprise Integrations</h2>
+              <button
+                className="btn btn-primary btn-sm"
+                onClick={() => setAddIntegrationDialog(true)}
+                disabled={loading}
+                aria-label="Add Enterprise Integration"
+              >
+                <PlusIcon className="w-4 h-4 mr-1" />
+                Add Integration
+              </button>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {integrations.map((integration) => (
+                <div key={integration.id} className="card bg-base-100 shadow-xl">
+                  <div className="card-body">
+                    <div className="flex justify-between items-start mb-2">
+                      <div>
+                        <h3 className="card-title text-base">{integration.name}</h3>
+                        <p className="text-sm text-base-content/70">
+                          {integration.provider} • {integration.type}
+                        </p>
+                      </div>
+                      <div className={`badge ${getStatusColor(integration.status)} badge-sm`}>
+                        {integration.status}
+                      </div>
+                    </div>
+                    <p className="text-sm mb-2">
+                      Last sync: {new Date(integration.lastSync).toLocaleString()}
+                    </p>
+                    <div className="card-actions justify-end">
+                      <button className="btn btn-xs btn-outline" aria-label={`Configure ${integration.name}`}>Configure</button>
+                      <button className="btn btn-xs btn-outline" aria-label={`Test ${integration.name}`}>Test</button>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
-        </div>
-      );
+        );
 
-    default:
-      return null;
+      case 3: // Audit & Governance
+        return (
+          <div>
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-semibold">Audit Events</h2>
+              <div className="flex gap-2">
+                <div className="form-control">
+                  <div className="input-group">
+                    <input
+                      type="text"
+                      placeholder="Search user, resource..."
+                      className="input input-sm input-bordered"
+                      value={auditSearchTerm}
+                      onChange={(e) => setAuditSearchTerm(e.target.value)}
+                    />
+                  </div>
+                </div>
+                <select
+                  className="select select-sm select-bordered"
+                  value={auditActionFilter}
+                  onChange={(e) => setAuditActionFilter(e.target.value)}
+                >
+                  <option value="all">All Actions</option>
+                  {uniqueActions.map((action) => (
+                    <option key={action} value={action}>
+                      {action}
+                    </option>
+                  ))}
+                </select>
+                <select
+                  className="select select-sm select-bordered"
+                  value={auditResultFilter}
+                  onChange={(e) => setAuditResultFilter(e.target.value)}
+                >
+                  <option value="all">All Results</option>
+                  <option value="success">Success</option>
+                  <option value="failure">Failure</option>
+                  <option value="warning">Warning</option>
+                </select>
+                <button
+                  className="btn btn-sm btn-outline"
+                  onClick={() => {
+                    setAuditSearchTerm('');
+                    setAuditActionFilter('all');
+                    setAuditResultFilter('all');
+                  }}
+                  disabled={
+                    !auditSearchTerm && auditActionFilter === 'all' && auditResultFilter === 'all'
+                  }
+                >
+                  <FunnelIcon className="w-4 h-4 mr-1" /> Clear Filters
+                </button>
+              </div>
+            </div>
+            <div className="overflow-x-auto bg-base-100 rounded-box shadow">
+              <table className="table table-zebra w-full">
+                <thead>
+                  <tr>
+                    <th>Timestamp</th>
+                    <th>User</th>
+                    <th>Action</th>
+                    <th>Resource</th>
+                    <th>Details</th>
+                    <th>Result</th>
+                    <th>IP Address</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredAuditEvents.map((event) => (
+                    <tr key={event.id}>
+                      <td className="text-sm">{new Date(event.timestamp).toLocaleString()}</td>
+                      <td>{event.user}</td>
+                      <td>
+                        <div className="badge badge-ghost badge-sm">{event.action}</div>
+                      </td>
+                      <td>{event.resource}</td>
+                      <td className="text-xs max-w-xs truncate" title={event.details}>
+                        {event.details}
+                      </td>
+                      <td>
+                        <div className={`badge ${getStatusColor(event.result)} badge-sm`}>
+                          {event.result}
+                        </div>
+                      </td>
+                      <td className="font-mono text-xs">{event.ipAddress}</td>
+                    </tr>
+                  ))}
+                  {filteredAuditEvents.length === 0 && (
+                    <tr>
+                      <td colSpan={7} className="text-center py-4">
+                        No audit events match the current structured query.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        );
+
+      case 4: // Performance Optimization
+        return (
+          <div>
+            <h2 className="text-xl font-semibold mb-4">Performance Metrics</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {performanceMetrics.map((metric) => (
+                <div key={metric.id} className="card bg-base-100 shadow-xl">
+                  <div className="card-body">
+                    <div className="flex justify-between items-start mb-2">
+                      <h3 className="card-title text-base">{metric.name}</h3>
+                      <div className={`badge ${getStatusColor(metric.status)} badge-sm`}>
+                        {metric.status}
+                      </div>
+                    </div>
+                    <div className="text-3xl font-bold mb-1">
+                      {metric.value}{' '}
+                      <span className="text-lg font-normal text-base-content/70">
+                        {metric.unit}
+                      </span>
+                    </div>
+                    <div className="flex items-center mb-2 text-sm text-base-content/70">
+                      <span className="mr-2">
+                        Threshold: {metric.threshold} {metric.unit}
+                      </span>
+                      {metric.trend === 'up' && <span className="text-error">↗</span>}
+                      {metric.trend === 'down' && <span className="text-success">↘</span>}
+                      {metric.trend === 'stable' && <span>→</span>}
+                    </div>
+                    <div className="card-actions justify-end">
+                      <button className="btn btn-sm btn-outline" aria-label={`Optimize ${metric.name}`}>Optimize</button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+
+      default:
+        return null;
     }
   };
 
@@ -647,11 +661,7 @@ const EnterpriseManager: React.FC = () => {
     <div className="container mx-auto p-4">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold">Enterprise Manager</h1>
-        <button
-          className="btn btn-outline"
-          onClick={loadEnterpriseData}
-          disabled={loading}
-        >
+        <button className="btn btn-outline" onClick={loadEnterpriseData} disabled={loading} aria-label="Refresh Enterprise Data">
           <ArrowPathIcon className={`w-5 h-5 mr-2 ${loading ? 'animate-spin' : ''}`} />
           Refresh
         </button>
@@ -662,9 +672,13 @@ const EnterpriseManager: React.FC = () => {
         <div className="alert alert-error mb-4">
           <ExclamationCircleIcon className="w-6 h-6" />
           <span>{error}</span>
-          <button onClick={() => setError(null)} className="btn btn-sm btn-ghost" aria-label="Close modal">
-              ✕
-            </button>
+          <button
+            onClick={() => setError(null)}
+            className="btn btn-sm btn-ghost"
+            aria-label="Close error message"
+          >
+            ✕
+          </button>
         </div>
       )}
 
@@ -672,46 +686,35 @@ const EnterpriseManager: React.FC = () => {
         <div className="alert alert-success mb-4">
           <CheckCircleIcon className="w-6 h-6" />
           <span>{success}</span>
-          <button onClick={() => setSuccess(null)} className="btn btn-sm btn-ghost" aria-label="Close modal">
-              ✕
-            </button>
+          <button
+            onClick={() => setSuccess(null)}
+            className="btn btn-sm btn-ghost"
+            aria-label="Close success message"
+          >
+            ✕
+          </button>
         </div>
       )}
 
       {/* Tabs */}
       <div className="tabs tabs-boxed mb-6 bg-base-200 p-1">
-        <a
-          className={`tab ${activeTab === 0 ? 'tab-active' : ''}`}
-          onClick={() => setActiveTab(0)}
-        >
+        <a className={`tab ${activeTab === 0 ? 'tab-active' : ''}`} onClick={() => setActiveTab(0)}>
           <ShieldCheckIcon className="w-4 h-4 mr-2" />
           Security & Compliance
         </a>
-        <a
-          className={`tab ${activeTab === 1 ? 'tab-active' : ''}`}
-          onClick={() => setActiveTab(1)}
-        >
+        <a className={`tab ${activeTab === 1 ? 'tab-active' : ''}`} onClick={() => setActiveTab(1)}>
           <CloudIcon className="w-4 h-4 mr-2" />
           Multi-Cloud
         </a>
-        <a
-          className={`tab ${activeTab === 2 ? 'tab-active' : ''}`}
-          onClick={() => setActiveTab(2)}
-        >
+        <a className={`tab ${activeTab === 2 ? 'tab-active' : ''}`} onClick={() => setActiveTab(2)}>
           <PuzzlePieceIcon className="w-4 h-4 mr-2" />
           Integrations
         </a>
-        <a
-          className={`tab ${activeTab === 3 ? 'tab-active' : ''}`}
-          onClick={() => setActiveTab(3)}
-        >
+        <a className={`tab ${activeTab === 3 ? 'tab-active' : ''}`} onClick={() => setActiveTab(3)}>
           <ScaleIcon className="w-4 h-4 mr-2" />
           Audit & Governance
         </a>
-        <a
-          className={`tab ${activeTab === 4 ? 'tab-active' : ''}`}
-          onClick={() => setActiveTab(4)}
-        >
+        <a className={`tab ${activeTab === 4 ? 'tab-active' : ''}`} onClick={() => setActiveTab(4)}>
           <ChartBarIcon className="w-4 h-4 mr-2" />
           Performance
         </a>
@@ -732,7 +735,7 @@ const EnterpriseManager: React.FC = () => {
               type="text"
               className="input input-bordered w-full"
               value={integrationForm.name}
-              onChange={(e) => setIntegrationForm(prev => ({ ...prev, name: e.target.value }))}
+              onChange={(e) => setIntegrationForm((prev) => ({ ...prev, name: e.target.value }))}
             />
           </div>
           <div className="form-control w-full mb-4">
@@ -742,7 +745,12 @@ const EnterpriseManager: React.FC = () => {
             <select
               className="select select-bordered w-full"
               value={integrationForm.type}
-              onChange={(e) => setIntegrationForm(prev => ({ ...prev, type: e.target.value as Integration['type'] }))}
+              onChange={(e) =>
+                setIntegrationForm((prev) => ({
+                  ...prev,
+                  type: e.target.value as Integration['type'],
+                }))
+              }
             >
               <option value="webhook">Webhook</option>
               <option value="api">API</option>
@@ -759,11 +767,15 @@ const EnterpriseManager: React.FC = () => {
               type="text"
               className="input input-bordered w-full"
               value={integrationForm.provider}
-              onChange={(e) => setIntegrationForm(prev => ({ ...prev, provider: e.target.value }))}
+              onChange={(e) =>
+                setIntegrationForm((prev) => ({ ...prev, provider: e.target.value }))
+              }
             />
           </div>
           <div className="modal-action">
-            <button className="btn" onClick={() => setAddIntegrationDialog(false)}>Cancel</button>
+            <button className="btn" onClick={() => setAddIntegrationDialog(false)}>
+              Cancel
+            </button>
             <button
               className="btn btn-primary"
               onClick={handleAddIntegration}
@@ -774,7 +786,7 @@ const EnterpriseManager: React.FC = () => {
           </div>
         </div>
         <form method="dialog" className="modal-backdrop">
-          <button onClick={() => setAddIntegrationDialog(false)}>close</button>
+          <button onClick={() => setAddIntegrationDialog(false)} aria-label="Close dialog">close</button>
         </form>
       </dialog>
 
@@ -790,7 +802,7 @@ const EnterpriseManager: React.FC = () => {
               type="text"
               className="input input-bordered w-full"
               value={cloudForm.name}
-              onChange={(e) => setCloudForm(prev => ({ ...prev, name: e.target.value }))}
+              onChange={(e) => setCloudForm((prev) => ({ ...prev, name: e.target.value }))}
             />
           </div>
           <div className="form-control w-full mb-4">
@@ -800,7 +812,9 @@ const EnterpriseManager: React.FC = () => {
             <select
               className="select select-bordered w-full"
               value={cloudForm.type}
-              onChange={(e) => setCloudForm(prev => ({ ...prev, type: e.target.value as CloudProvider['type'] }))}
+              onChange={(e) =>
+                setCloudForm((prev) => ({ ...prev, type: e.target.value as CloudProvider['type'] }))
+              }
             >
               <option value="aws">Amazon Web Services</option>
               <option value="azure">Microsoft Azure</option>
@@ -817,11 +831,13 @@ const EnterpriseManager: React.FC = () => {
               type="text"
               className="input input-bordered w-full"
               value={cloudForm.region}
-              onChange={(e) => setCloudForm(prev => ({ ...prev, region: e.target.value }))}
+              onChange={(e) => setCloudForm((prev) => ({ ...prev, region: e.target.value }))}
             />
           </div>
           <div className="modal-action">
-            <button className="btn" onClick={() => setAddCloudProviderDialog(false)}>Cancel</button>
+            <button className="btn" onClick={() => setAddCloudProviderDialog(false)}>
+              Cancel
+            </button>
             <button
               className="btn btn-primary"
               onClick={handleAddCloudProvider}
@@ -832,7 +848,7 @@ const EnterpriseManager: React.FC = () => {
           </div>
         </div>
         <form method="dialog" className="modal-backdrop">
-          <button onClick={() => setAddCloudProviderDialog(false)}>close</button>
+          <button onClick={() => setAddCloudProviderDialog(false)} aria-label="Close dialog">close</button>
         </form>
       </dialog>
     </div>

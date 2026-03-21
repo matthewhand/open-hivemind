@@ -25,7 +25,7 @@ function isConnectionError(error: unknown): boolean {
 }
 
 // GET /api/anomalies - Get active anomalies
-router.get('/', async (req, res) => {
+router.get('/', async (req: AuthMiddlewareRequest, res) => {
   try {
     const dbManager = DatabaseManager.getInstance();
     if (!dbManager.isConnected()) {
@@ -35,7 +35,11 @@ router.get('/', async (req, res) => {
 
     // Get tenantId from request user if available (assuming req.user is populated by authenticateToken)
     // The authenticateToken middleware usually populates req.user
+<<<<<<< HEAD
+    const tenantId = req.user?.tenantId;
+=======
     const tenantId = (req as any).user?.tenantId;
+>>>>>>> origin/docco-update-screenshots-6307953588415915921
 
     const anomalies = await dbManager.getActiveAnomalies(tenantId);
     res.json(anomalies || []);
@@ -51,7 +55,7 @@ router.get('/', async (req, res) => {
 });
 
 // GET /api/anomalies/history - Get all anomalies
-router.get('/history', async (req, res) => {
+router.get('/history', async (req: AuthMiddlewareRequest, res) => {
   try {
     const dbManager = DatabaseManager.getInstance();
     if (!dbManager.isConnected()) {
@@ -59,7 +63,11 @@ router.get('/history', async (req, res) => {
       return;
     }
 
+<<<<<<< HEAD
+    const tenantId = req.user?.tenantId;
+=======
     const tenantId = (req as any).user?.tenantId;
+>>>>>>> origin/docco-update-screenshots-6307953588415915921
 
     const anomalies = await dbManager.getAnomalies(tenantId);
     res.json(anomalies || []);
@@ -75,9 +83,11 @@ router.get('/history', async (req, res) => {
 });
 
 // POST /api/anomalies/:id/resolve - Resolve an anomaly
-router.post('/:id/resolve', async (req, res) => {
+router.post('/:id/resolve', async (req: AuthMiddlewareRequest, res) => {
   try {
     const service = AnomalyDetectionService.getInstance();
+
+    // Check for explicit tenantId if service is enhanced, otherwise just pass the id.
     const success = await service.resolveAnomaly(req.params.id);
 
     if (success) {

@@ -1,13 +1,21 @@
-import React, { useState, useEffect } from 'react';
-import { Button, Modal, Card, Alert, Badge, Input, Textarea, Select, Toggle } from '../DaisyUI';
+import React, { useEffect, useState } from 'react';
 import {
-  PlusIcon,
-  PencilIcon,
-  TrashIcon,
   ArrowPathIcon,
+  PencilIcon,
+  PlusIcon,
   ShieldCheckIcon,
+  TrashIcon,
 } from '@heroicons/react/24/outline';
 import { CommaSeparatedInput } from '../Common/CommaSeparatedInput';
+import { Alert } from '../DaisyUI/Alert';
+import Badge from '../DaisyUI/Badge';
+import Button from '../DaisyUI/Button';
+import Card from '../DaisyUI/Card';
+import Input from '../DaisyUI/Input';
+import Modal from '../DaisyUI/Modal';
+import Select from '../DaisyUI/Select';
+import Textarea from '../DaisyUI/Textarea';
+import Toggle from '../DaisyUI/Toggle';
 
 interface GuardrailProfile {
   key: string;
@@ -43,7 +51,9 @@ const GuardrailProfileManager: React.FC = () => {
       setLoading(true);
       setError(null);
       const response = await fetch('/api/config/guardrails');
-      if (!response.ok) { throw new Error('Failed to fetch guardrail profiles'); }
+      if (!response.ok) {
+        throw new Error('Failed to fetch guardrail profiles');
+      }
       const data = await response.json();
       setProfiles(data.profiles || []);
     } catch (err) {
@@ -59,7 +69,14 @@ const GuardrailProfileManager: React.FC = () => {
 
   const openCreateDialog = () => {
     setEditingProfile(null);
-    setFormData({ key: '', name: '', description: '', enabled: true, type: 'owner', allowedUserIds: [] });
+    setFormData({
+      key: '',
+      name: '',
+      description: '',
+      enabled: true,
+      type: 'owner',
+      allowedUserIds: [],
+    });
     setEditDialogOpen(true);
   };
 
@@ -85,20 +102,20 @@ const GuardrailProfileManager: React.FC = () => {
         mcpGuard: {
           enabled: formData.enabled,
           type: formData.type,
-          allowedUserIds: formData.type === 'custom'
-            ? formData.allowedUserIds
-            : undefined,
+          allowedUserIds: formData.type === 'custom' ? formData.allowedUserIds : undefined,
         },
       };
 
       if (editingProfile) {
-        const updated = profiles.map(p => p.key === editingProfile.key ? profileData : p);
+        const updated = profiles.map((p) => (p.key === editingProfile.key ? profileData : p));
         const response = await fetch('/api/config/guardrails', {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ profiles: updated }),
         });
-        if (!response.ok) { throw new Error('Failed to update profile'); }
+        if (!response.ok) {
+          throw new Error('Failed to update profile');
+        }
       } else {
         const response = await fetch('/api/config/guardrails', {
           method: 'POST',
@@ -122,10 +139,14 @@ const GuardrailProfileManager: React.FC = () => {
   };
 
   const handleDelete = async (key: string) => {
-    if (!confirm(`Delete profile "${key}"?`)) { return; }
+    if (!confirm(`Delete profile "${key}"?`)) {
+      return;
+    }
     try {
       const response = await fetch(`/api/config/guardrails/${key}`, { method: 'DELETE' });
-      if (!response.ok) { throw new Error('Failed to delete profile'); }
+      if (!response.ok) {
+        throw new Error('Failed to delete profile');
+      }
       setToastMessage('Profile deleted');
       setToastType('success');
       fetchProfiles();
@@ -136,7 +157,11 @@ const GuardrailProfileManager: React.FC = () => {
   };
 
   if (loading) {
-    return <div className="flex justify-center items-center min-h-[200px]"><span className="loading loading-spinner loading-lg"></span></div>;
+    return (
+      <div className="flex justify-center items-center min-h-[200px]">
+        <span className="loading loading-spinner loading-lg"></span>
+      </div>
+    );
   }
 
   return (
@@ -147,10 +172,18 @@ const GuardrailProfileManager: React.FC = () => {
           <h2 className="text-2xl font-bold">Guardrail Profiles</h2>
         </div>
         <div className="flex gap-2">
-          <Button variant="ghost" onClick={fetchProfiles} startIcon={<ArrowPathIcon className="w-5 h-5" />}>
+          <Button
+            variant="ghost"
+            onClick={fetchProfiles}
+            startIcon={<ArrowPathIcon className="w-5 h-5" />}
+          >
             Refresh
           </Button>
-          <Button variant="primary" onClick={openCreateDialog} startIcon={<PlusIcon className="w-5 h-5" />}>
+          <Button
+            variant="primary"
+            onClick={openCreateDialog}
+            startIcon={<PlusIcon className="w-5 h-5" />}
+          >
             Add Profile
           </Button>
         </div>
@@ -159,11 +192,13 @@ const GuardrailProfileManager: React.FC = () => {
       {error && <Alert status="error" message={error} onClose={() => setError(null)} />}
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {profiles.map(profile => (
+        {profiles.map((profile) => (
           <Card key={profile.key} className="bg-base-200 shadow-sm">
             <div className="card-body">
               <h3 className="card-title">{profile.name}</h3>
-              <p className="text-sm text-base-content/70">{profile.description || 'No description'}</p>
+              <p className="text-sm text-base-content/70">
+                {profile.description || 'No description'}
+              </p>
               <div className="flex gap-2 mt-2">
                 <Badge variant={profile.mcpGuard.enabled ? 'success' : 'secondary'}>
                   {profile.mcpGuard.enabled ? 'Enabled' : 'Disabled'}
@@ -174,7 +209,12 @@ const GuardrailProfileManager: React.FC = () => {
                 <Button variant="ghost" size="sm" onClick={() => openEditDialog(profile)}>
                   <PencilIcon className="w-4 h-4" />
                 </Button>
-                <Button variant="ghost" size="sm" className="text-error" onClick={() => handleDelete(profile.key)}>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-error"
+                  onClick={() => handleDelete(profile.key)}
+                >
                   <TrashIcon className="w-4 h-4" />
                 </Button>
               </div>
@@ -201,7 +241,7 @@ const GuardrailProfileManager: React.FC = () => {
               label="Key"
               type="text"
               value={formData.key}
-              onChange={e => setFormData({ ...formData, key: e.target.value })}
+              onChange={(e) => setFormData({ ...formData, key: e.target.value })}
               disabled={!!editingProfile}
               placeholder="my-profile"
             />
@@ -211,14 +251,14 @@ const GuardrailProfileManager: React.FC = () => {
               label="Name"
               type="text"
               value={formData.name}
-              onChange={e => setFormData({ ...formData, name: e.target.value })}
+              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
             />
           </div>
           <div className="form-control">
             <Textarea
               label="Description"
               value={formData.description}
-              onChange={e => setFormData({ ...formData, description: e.target.value })}
+              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
             />
           </div>
           <div className="form-control">
@@ -227,7 +267,7 @@ const GuardrailProfileManager: React.FC = () => {
               <Toggle
                 variant="primary"
                 checked={formData.enabled}
-                onChange={e => setFormData({ ...formData, enabled: e.target.checked })}
+                onChange={(e) => setFormData({ ...formData, enabled: e.target.checked })}
               />
             </div>
           </div>
@@ -235,28 +275,36 @@ const GuardrailProfileManager: React.FC = () => {
             <Select
               label="Guard Type"
               value={formData.type}
-              onChange={e => setFormData({ ...formData, type: e.target.value as 'owner' | 'custom' })}
+              onChange={(e) =>
+                setFormData({ ...formData, type: e.target.value as 'owner' | 'custom' })
+              }
               options={[
                 { value: 'owner', label: 'Owner Only' },
-                { value: 'custom', label: 'Custom Allow List' }
+                { value: 'custom', label: 'Custom Allow List' },
               ]}
             />
           </div>
           {formData.type === 'custom' && (
             <div className="form-control">
-              <label className="label"><span className="label-text">Allowed User IDs</span></label>
+              <label className="label">
+                <span className="label-text">Allowed User IDs</span>
+              </label>
               <CommaSeparatedInput
                 id="allowed-users"
                 value={formData.allowedUserIds}
-                onChange={v => setFormData({ ...formData, allowedUserIds: v })}
+                onChange={(v) => setFormData({ ...formData, allowedUserIds: v })}
                 placeholder="user1, user2"
               />
-              <label className="label"><span className="label-text-alt">Comma-separated user IDs</span></label>
+              <label className="label">
+                <span className="label-text-alt">Comma-separated user IDs</span>
+              </label>
             </div>
           )}
           <div className="modal-action">
             <Button onClick={() => setEditDialogOpen(false)}>Cancel</Button>
-            <Button variant="primary" onClick={handleSave}>Save</Button>
+            <Button variant="primary" onClick={handleSave}>
+              Save
+            </Button>
           </div>
         </div>
       </Modal>
@@ -265,7 +313,11 @@ const GuardrailProfileManager: React.FC = () => {
         <div className="toast toast-bottom toast-center z-50" role="status" aria-live="polite">
           <div className={`alert ${toastType === 'success' ? 'alert-success' : 'alert-error'}`}>
             <span>{toastMessage}</span>
-            <button className="btn btn-sm btn-ghost" onClick={() => setToastMessage('')} aria-label="Close modal">
+            <button
+              className="btn btn-sm btn-ghost"
+              onClick={() => setToastMessage('')}
+              aria-label="Close message"
+            >
               ✕
             </button>
           </div>

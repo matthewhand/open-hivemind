@@ -1,6 +1,14 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars, react-refresh/only-export-components, no-empty, no-case-declarations */
 import React, { useState, useEffect } from 'react';
-import { Card, Badge, Button, Modal, Input, Alert, Loading, Toggle, Tooltip } from './DaisyUI';
+import Card from './DaisyUI/Card';
+import Badge from './DaisyUI/Badge';
+import Button from './DaisyUI/Button';
+import Modal from './DaisyUI/Modal';
+import Input from './DaisyUI/Input';
+import { Alert } from './DaisyUI/Alert';
+import { Loading } from './DaisyUI/Loading';
+import Toggle from './DaisyUI/Toggle';
+import Tooltip from './DaisyUI/Tooltip';
 import {
   PlusIcon,
   PencilIcon,
@@ -197,12 +205,12 @@ const SecureConfigManager: React.FC<SecureConfigManagerProps> = ({ onRefresh }) 
 
               <div className="flex gap-2">
                 <Tooltip content="Edit Configuration">
-                  <Button variant="ghost" size="sm" className="btn-circle" onClick={() => handleOpenDialog(config)}>
+                  <Button variant="ghost" size="sm" className="btn-circle" onClick={() => handleOpenDialog(config)} aria-label={`Edit ${config.name} configuration`}>
                     <PencilIcon className="w-4 h-4" />
                   </Button>
                 </Tooltip>
                 <Tooltip content="Delete Configuration">
-                  <Button variant="ghost" size="sm" className="btn-circle text-error" onClick={() => handleDeleteConfig(config.id)}>
+                  <Button variant="ghost" size="sm" className="btn-circle text-error" onClick={() => handleDeleteConfig(config.id)} aria-label={`Delete ${config.name} configuration`}>
                     <TrashIcon className="w-4 h-4" />
                   </Button>
                 </Tooltip>

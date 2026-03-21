@@ -194,36 +194,50 @@ router.put('/:id', (req: Request, res: Response) => {
       });
     }
 
-    // Merge updates with validation to prevent prototype pollution
-    const safeGuards =
-      guards && typeof guards === 'object'
-        ? (Object.keys(guards) as Array<keyof typeof guards>)
-            .filter((key) => !['__proto__', 'constructor', 'prototype'].includes(key))
-            .reduce((acc, key) => {
-              const existingValue =
-                profiles[profileIndex].guards[
-                  key as keyof (typeof profiles)[typeof profileIndex]['guards']
-                ];
-              const newValue = guards[key as keyof typeof guards];
-              if (
-                typeof newValue === 'object' &&
-                newValue !== null &&
-                typeof existingValue === 'object' &&
-                existingValue !== null
-              ) {
-                (acc as any)[key] = { ...existingValue, ...newValue };
-              } else {
-                (acc as any)[key] = newValue;
-              }
-              return acc;
-            }, {} as Record<string, unknown>)
-        : profiles[profileIndex].guards;
+    const existingGuards = profiles[profileIndex].guards;
+    const safeGuards = {
+      mcpGuard:
+        guards?.mcpGuard && typeof guards.mcpGuard === 'object'
+          ? {
+              enabled: guards.mcpGuard.enabled !== undefined ? Boolean(guards.mcpGuard.enabled) : existingGuards.mcpGuard.enabled,
+              type: ['owner', 'custom'].includes(guards.mcpGuard.type)
+                ? (guards.mcpGuard.type as 'owner' | 'custom')
+                : existingGuards.mcpGuard.type,
+              ...(guards.mcpGuard.allowedUsers && Array.isArray(guards.mcpGuard.allowedUsers)
+                ? { allowedUsers: guards.mcpGuard.allowedUsers }
+                : { allowedUsers: existingGuards.mcpGuard.allowedUsers || [] }),
+              ...(guards.mcpGuard.allowedTools && Array.isArray(guards.mcpGuard.allowedTools)
+                ? { allowedTools: guards.mcpGuard.allowedTools }
+                : { allowedTools: existingGuards.mcpGuard.allowedTools || [] }),
+            }
+          : existingGuards.mcpGuard,
+      rateLimit:
+        guards?.rateLimit && typeof guards.rateLimit === 'object'
+          ? {
+              enabled: guards.rateLimit.enabled !== undefined ? Boolean(guards.rateLimit.enabled) : existingGuards.rateLimit?.enabled || false,
+              maxRequests: guards.rateLimit.maxRequests !== undefined ? Number(guards.rateLimit.maxRequests) || 100 : existingGuards.rateLimit?.maxRequests || 100,
+              windowMs: guards.rateLimit.windowMs !== undefined ? Number(guards.rateLimit.windowMs) || 60000 : existingGuards.rateLimit?.windowMs || 60000,
+            }
+          : existingGuards.rateLimit || { enabled: false, maxRequests: 100, windowMs: 60000 },
+      contentFilter:
+        guards?.contentFilter && typeof guards.contentFilter === 'object'
+          ? {
+              enabled: guards.contentFilter.enabled !== undefined ? Boolean(guards.contentFilter.enabled) : existingGuards.contentFilter?.enabled || false,
+              strictness: ['low', 'medium', 'high'].includes(guards.contentFilter.strictness)
+                ? (guards.contentFilter.strictness as 'low' | 'medium' | 'high')
+                : existingGuards.contentFilter?.strictness || 'low',
+              ...(guards.contentFilter.blockedTerms && Array.isArray(guards.contentFilter.blockedTerms)
+                ? { blockedTerms: guards.contentFilter.blockedTerms }
+                : { blockedTerms: existingGuards.contentFilter?.blockedTerms || [] }),
+            }
+          : existingGuards.contentFilter || { enabled: false, strictness: 'low' },
+    };
 
     const updatedProfile = {
       ...profiles[profileIndex],
       name: name && typeof name === 'string' ? name : profiles[profileIndex].name,
       description: description !== undefined ? description : profiles[profileIndex].description,
-      guards: safeGuards,
+      guards: safeGuards as any,
     };
 
     profiles[profileIndex] = updatedProfile;

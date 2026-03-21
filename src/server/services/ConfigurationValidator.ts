@@ -92,6 +92,7 @@ export interface BotConfig {
   createdAt?: string;
   updatedAt?: string;
   isActive?: boolean;
+  enabled?: boolean;
 }
 
 export class ConfigurationValidator {

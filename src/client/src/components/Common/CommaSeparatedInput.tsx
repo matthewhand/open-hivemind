@@ -1,4 +1,8 @@
+<<<<<<< HEAD
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+=======
 import React, { useState, useRef, useEffect, useCallback } from 'react';
+>>>>>>> origin/docco-update-screenshots-6307953588415915921
 
 export interface CommaSeparatedInputProps {
   value: string[];
@@ -67,16 +71,19 @@ export const CommaSeparatedInput: React.FC<CommaSeparatedInputProps> = ({
     }
   }, [canUndo, disabled, onChange]);
 
-  const commitInput = (forceValue?: string) => {
+  const commitInput = (forceValue?: string, overrideTrailingText?: string) => {
     const textToCommit = forceValue !== undefined ? forceValue : inputValue;
     if (!textToCommit.trim()) {
       setIsTouched(true);
+      if (overrideTrailingText !== undefined) {
+        setInputValue(overrideTrailingText);
+      }
       return;
     }
 
     const current = textToCommit
       .split(',')
-      .map(s => s.trim())
+      .map((s) => s.trim())
       .filter(Boolean);
 
     const next = [...value];
@@ -106,13 +113,16 @@ export const CommaSeparatedInput: React.FC<CommaSeparatedInputProps> = ({
         pushToHistory(next);
         onChange(next);
       }
-      setInputValue('');
-      setShowSuggestions(false);
+      setInputValue(overrideTrailingText !== undefined ? overrideTrailingText : '');
+      setShowSuggestions(overrideTrailingText !== undefined && overrideTrailingText.length > 0);
     }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
+      e.preventDefault();
+      commitInput();
+    } else if (e.key === ',') {
       e.preventDefault();
       commitInput();
     } else if (e.key === 'Backspace' && !inputValue && value.length > 0) {
@@ -127,7 +137,7 @@ export const CommaSeparatedInput: React.FC<CommaSeparatedInputProps> = ({
 
   const handleRemove = (itemToRemove: string) => {
     if (disabled) return;
-    const next = value.filter(item => item !== itemToRemove);
+    const next = value.filter((item) => item !== itemToRemove);
     pushToHistory(next);
     onChange(next);
   };
@@ -148,7 +158,7 @@ export const CommaSeparatedInput: React.FC<CommaSeparatedInputProps> = ({
 
     const current = pastedText
       .split(',')
-      .map(s => s.trim())
+      .map((s) => s.trim())
       .filter(Boolean);
 
     const next = [...value];
@@ -166,7 +176,27 @@ export const CommaSeparatedInput: React.FC<CommaSeparatedInputProps> = ({
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setInputValue(e.target.value);
+    const newVal = e.target.value;
+
+    // Auto-commit if user types a comma
+    if (newVal.endsWith(',')) {
+      const parts = newVal.split(',');
+      const itemToCommit = parts[0];
+
+      // If there's something to commit, commit it
+      if (itemToCommit.trim()) {
+        commitInput(itemToCommit);
+        // Put any trailing text (after the comma) back in the input field
+        const trailing = parts.slice(1).join(',').trim();
+        setInputValue(trailing);
+      } else {
+        // Just empty the input if they typed a comma with no text
+        setInputValue('');
+      }
+      return;
+    }
+
+    setInputValue(newVal);
     setShowSuggestions(true);
     if (internalError) {
       setInternalError(null);
@@ -178,9 +208,8 @@ export const CommaSeparatedInput: React.FC<CommaSeparatedInputProps> = ({
     commitInput(suggestion);
   };
 
-  const filteredSuggestions = suggestions.filter(s =>
-    !value.includes(s) &&
-    s.toLowerCase().includes(inputValue.toLowerCase())
+  const filteredSuggestions = suggestions.filter(
+    (s) => !value.includes(s) && s.toLowerCase().includes(inputValue.toLowerCase())
   );
 
   const displayError = (isTouched && internalError) || error;
@@ -193,6 +222,29 @@ export const CommaSeparatedInput: React.FC<CommaSeparatedInputProps> = ({
           displayError ? 'border-error focus-within:ring-error' : 'focus-within:ring-primary'
         }`}
       >
+<<<<<<< HEAD
+        {value.map((v) => {
+          const customColorClass = tagColor ? tagColor(v) : 'bg-base-200 text-base-content';
+          return (
+            <span
+              key={v}
+              data-testid="chip"
+              className={`flex items-center gap-1 px-2 py-1 text-sm rounded-md ${customColorClass}`}
+            >
+              {v}
+              {!disabled && (
+                <button
+                  type="button"
+                  className="text-base-content/50 hover:text-base-content"
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => handleRemove(v)}
+                  aria-label={`Remove ${v}`}
+                >
+                  &times;
+                </button>
+              )}
+            </span>
+=======
         {value.map(v => {
         const customColorClass = tagColor ? tagColor(v) : 'bg-base-200 text-base-content';
         return (
@@ -213,6 +265,7 @@ export const CommaSeparatedInput: React.FC<CommaSeparatedInputProps> = ({
             </button>
           )}
           </span>
+>>>>>>> origin/docco-update-screenshots-6307953588415915921
           );
         })}
         <input
@@ -232,33 +285,53 @@ export const CommaSeparatedInput: React.FC<CommaSeparatedInputProps> = ({
           aria-invalid={!!displayError}
           aria-describedby={displayError ? errorId : undefined}
         />
-      <div className="flex items-center gap-1">
-        {!disabled && canUndo && (
-          <button
-            type="button"
-            onClick={handleUndo}
-            className="p-1 mx-1 rounded-full text-base-content/40 hover:text-primary hover:bg-primary/10 focus:outline-none transition-colors"
-            title="Undo last change (Ctrl+Z)"
-            aria-label="Undo"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M3 7v6h6" />
-              <path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13" />
-            </svg>
-          </button>
-        )}
-        {!disabled && value.length > 0 && (
-          <button
-            type="button"
-            onClick={handleClearAll}
-            className="p-1 mx-1 rounded-full text-base-content/40 hover:text-error hover:bg-error/10 focus:outline-none transition-colors"
-            title="Clear all"
-            aria-label="Clear all items"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 20 20" fill="currentColor">
-              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-            </svg>
-          </button>
+        <div className="flex items-center gap-1">
+          {!disabled && canUndo && (
+            <button
+              type="button"
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={handleUndo}
+              className="p-1 mx-1 rounded-full text-base-content/40 hover:text-primary hover:bg-primary/10 focus:outline-none transition-colors"
+              title="Undo last change (Ctrl+Z)"
+              aria-label="Undo"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="w-4 h-4"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M3 7v6h6" />
+                <path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13" />
+              </svg>
+            </button>
+          )}
+          {!disabled && value.length > 0 && (
+            <button
+              type="button"
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={handleClearAll}
+              className="p-1 mx-1 rounded-full text-base-content/40 hover:text-error hover:bg-error/10 focus:outline-none transition-colors"
+              title="Clear all"
+              aria-label="Clear all items"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="w-4 h-4"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+              >
+                <path
+                  fillRule="evenodd"
+                  d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                  clipRule="evenodd"
+                />
+              </svg>
+            </button>
           )}
         </div>
       </div>
@@ -270,6 +343,28 @@ export const CommaSeparatedInput: React.FC<CommaSeparatedInputProps> = ({
       )}
 
       {/* Autocomplete Dropdown */}
+<<<<<<< HEAD
+      {!disabled &&
+        showSuggestions &&
+        filteredSuggestions.length > 0 &&
+        inputValue.trim().length > 0 && (
+          <ul className="absolute left-0 right-0 top-full mt-1 max-h-48 overflow-auto rounded-md bg-base-100 shadow-lg ring-1 ring-base-content/5 z-50">
+            {filteredSuggestions.map((s) => (
+              <li
+                key={s}
+                onMouseDown={(e) => {
+                  // Prevent input blur before click fires
+                  e.preventDefault();
+                  handleSuggestionClick(s);
+                }}
+                className="cursor-pointer select-none px-4 py-2 hover:bg-base-200 text-sm text-base-content"
+              >
+                {s}
+              </li>
+            ))}
+          </ul>
+        )}
+=======
       {!disabled && showSuggestions && filteredSuggestions.length > 0 && inputValue.trim().length > 0 && (
         <ul className="absolute left-0 right-0 top-full mt-1 max-h-48 overflow-auto rounded-md bg-base-100 shadow-lg ring-1 ring-base-content/5 z-50">
           {filteredSuggestions.map(s => (
@@ -287,6 +382,7 @@ export const CommaSeparatedInput: React.FC<CommaSeparatedInputProps> = ({
           ))}
         </ul>
       )}
+>>>>>>> origin/docco-update-screenshots-6307953588415915921
     </div>
   );
 };

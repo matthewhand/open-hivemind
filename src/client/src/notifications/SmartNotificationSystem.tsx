@@ -1,6 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars, react-refresh/only-export-components, no-empty, no-case-declarations */
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { Card, Badge, Button, ToastNotification } from '../components/DaisyUI';
+import Card from '../components/DaisyUI/Card';
+import Badge from '../components/DaisyUI/Badge';
+import Button from '../components/DaisyUI/Button';
+import ToastNotification from '../components/DaisyUI/ToastNotification';
 import {
   BellIcon,
   CheckCircleIcon,
@@ -66,7 +69,7 @@ export const SmartNotificationSystem: React.FC<{ children: React.ReactNode }> = 
   const addNotification = (notification: Omit<Notification, 'id' | 'timestamp' | 'read'>) => {
     const newNotification: Notification = {
       ...notification,
-      id: Math.random().toString(36).substr(2, 9),
+      id: globalThis.crypto.randomUUID(),
       timestamp: new Date(),
       read: false,
     };

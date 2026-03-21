@@ -38,12 +38,9 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks: {
-          // Split large vendor libraries
-          react: ['react', 'react-dom'],
+          vendor: ['react', 'react-dom', 'react-router-dom'],
           redux: ['@reduxjs/toolkit', 'react-redux'],
-          router: ['react-router-dom'],
           charts: ['recharts'],
-          daisyui: ['daisyui'],
         },
       },
     },

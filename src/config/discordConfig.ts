@@ -223,12 +223,16 @@ const configPath = path.join(configDir, 'providers/discord.json');
 
 try {
   discordConfig.loadFile(configPath);
-  discordConfig.validate({ allowed: 'strict' });
   debug(`Successfully loaded Discord config from ${configPath}`);
-} catch (error) {
-  // Fallback to defaults if config file is missing or invalid
-  debug(`Warning: Could not load discord config from ${configPath}, using defaults`);
-  debug('Using default discord configuration due to error:', error);
+} catch (error: any) {
+  if (error.code !== 'ENOENT') {
+    debug(`Error reading discord config from ${configPath}:`, error.message);
+  } else {
+    debug(`Discord config file not found at ${configPath}, using environment variables and defaults`);
+  }
 }
+
+// Validation must happen outside the generic try-catch to fail fast if config is malformed
+discordConfig.validate({ allowed: 'strict' });
 
 export default discordConfig;

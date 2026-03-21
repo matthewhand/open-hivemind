@@ -1,18 +1,16 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import {
-  Alert,
-  Badge,
-  Button,
-  Card,
-  DataTable,
-  Modal,
-  ProgressBar,
-  StatsCards,
-  ToastNotification,
-  LoadingSpinner,
-} from './DaisyUI';
+import { Alert } from './DaisyUI/Alert';
+import Badge from './DaisyUI/Badge';
+import Button from './DaisyUI/Button';
+import Card from './DaisyUI/Card';
+import DataTable from './DaisyUI/DataTable';
+import Modal from './DaisyUI/Modal';
+import ProgressBar from './DaisyUI/ProgressBar';
+import StatsCards from './DaisyUI/StatsCards';
+import ToastNotification from './DaisyUI/ToastNotification';
+import { LoadingSpinner } from './DaisyUI/Loading';
 import type { Bot, StatusResponse } from '../services/api';
 import { apiService } from '../services/api';
 import { CreateBotWizard } from './BotManagement/CreateBotWizard';
@@ -259,6 +257,7 @@ const UnifiedDashboard: React.FC = () => {
   );
 
   const statusBots = status?.bots ?? [];
+<<<<<<< HEAD
   const activeBotCount = useMemo(
     () => statusBots.filter(bot => bot.status?.toLowerCase() === 'active').length,
     [statusBots],
@@ -275,6 +274,28 @@ const UnifiedDashboard: React.FC = () => {
     () => statusBots.reduce((sum, bot) => sum + (bot.errorCount ?? 0), 0),
     [statusBots],
   );
+=======
+  const { activeBotCount, activeConnections, totalMessages, totalErrors } = useMemo(() => {
+    let _activeCount = 0;
+    let _connections = 0;
+    let _messages = 0;
+    let _errors = 0;
+
+    for (const bot of statusBots) {
+      if (bot.status?.toLowerCase() === 'active') _activeCount++;
+      if (bot.connected) _connections++;
+      _messages += bot.messageCount ?? 0;
+      _errors += bot.errorCount ?? 0;
+    }
+
+    return {
+      activeBotCount: _activeCount,
+      activeConnections: _connections,
+      totalMessages: _messages,
+      totalErrors: _errors,
+    };
+  }, [statusBots]);
+>>>>>>> origin/docco-update-screenshots-6307953588415915921
   const errorRatePercent = totalMessages === 0
     ? 0
     : Number(((totalErrors / totalMessages) * 100).toFixed(2));

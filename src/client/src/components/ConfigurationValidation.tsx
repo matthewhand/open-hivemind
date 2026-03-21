@@ -1,6 +1,13 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect } from 'react';
-import { Card, Badge, Button, Alert, DataTable, Accordion, Divider, Loading } from './DaisyUI';
+import Card from './DaisyUI/Card';
+import Badge from './DaisyUI/Badge';
+import Button from './DaisyUI/Button';
+import { Alert } from './DaisyUI/Alert';
+import DataTable from './DaisyUI/DataTable';
+import Accordion from './DaisyUI/Accordion';
+import Divider from './DaisyUI/Divider';
+import { Loading } from './DaisyUI/Loading';
 import {
   CheckCircleIcon,
   XCircleIcon,
