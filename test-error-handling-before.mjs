@@ -31,16 +31,9 @@ import { chromium } from 'playwright';
     body: JSON.stringify({ error: 'Internal Server Error' })
   }));
 
-<<<<<<<< HEAD:test-error-handling-before.mjs
-  await page.reload({ waitUntil: 'domcontentloaded' });
-  await page.waitForTimeout(3000);
-
-  await page.screenshot({ path: 'after-fix-sidebar-error.png' });
-========
   await page.goto('http://localhost:5173/admin/bots', { waitUntil: 'domcontentloaded' });
   await page.waitForTimeout(3000); // Wait for animations
   await page.screenshot({ path: 'after-fix-bots-error.png' });
->>>>>>>> 6c9b86703 (Refiner (Frontend Build): Fix tsc build failure on Netlify by using npx tsc):test-error-handling.mjs
 
   await browser.close();
 })();
