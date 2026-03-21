@@ -38,18 +38,27 @@ export class WebUIStorage {
   }
 
   /**
+   * Clear configuration cache
+   */
+  public clearCache(): void {
+    this.configCache = null;
+  }
+
+  /**
    * Load configuration from file
    */
-  public loadConfig(): WebUIConfig {
-    if (this.configCache) {
+  public loadConfig(forceReload = false): WebUIConfig {
+    if (this.configCache && !forceReload) {
       return this.configCache;
     }
 
     try {
       if (fs.existsSync(this.configFile)) {
         const data = fs.readFileSync(this.configFile, 'utf8');
-        this.configCache = JSON.parse(data);
-        return this.configCache!;
+        if (data) {
+          this.configCache = JSON.parse(data);
+          return this.configCache!;
+        }
       }
     } catch (error) {
       console.error('Error loading web UI config:', error);
