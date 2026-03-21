@@ -26,7 +26,7 @@ fi
 echo "🔹 Compiling serverless function..."
 mkdir -p dist/netlify/functions
 # Use npx tsc to compile the specific file
-npx esbuild src/netlify/functions/server.ts --bundle --platform=node --target=node18 --external:better-sqlite3 --external:pg-native --outfile=dist/netlify/functions/server.js
+npx esbuild src/netlify/functions/server.ts --bundle --platform=node --target=node18 --external:better-sqlite3 --external:pg-native --external:discord.js --external:@slack/* --outfile=dist/netlify/functions/server.js
 
 # 6. Verification
 echo "🔹 Build artifacts:"
