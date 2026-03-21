@@ -97,8 +97,8 @@ const Dashboard: React.FC = () => {
     return {
       activeBots: activeCount,
       totalMessages: messageSum,
-      uptimeHours: Math.floor(status.uptime / 3600),
-      uptimeMinutes: Math.floor((status.uptime % 3600) / 60),
+      uptimeHours: Math.floor((status.uptime ?? 0) / 3600),
+      uptimeMinutes: Math.floor(((status.uptime ?? 0) % 3600) / 60),
     };
   }, [status]);
 

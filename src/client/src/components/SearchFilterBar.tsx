@@ -51,7 +51,7 @@ export const SearchFilterBar: React.FC<SearchFilterBarProps> = ({
     return () => {
       clearTimeout(handler);
     };
-  }, [localSearch, onSearchChange, searchValue]);
+  }, [localSearch, searchValue]);
 
   const handleClearSearch = () => {
     setLocalSearch('');
