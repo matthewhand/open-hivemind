@@ -13,8 +13,6 @@ const router = Router();
 // Basic health check
 router.get('/', (req, res) => {
   const memoryUsage = process.memoryUsage();
-  return res.status(HTTP_STATUS.OK).json({
-    status: 'healthy',
   let dbStatus = 'unknown';
   try {
     // Requires importing DatabaseManager at the top
@@ -200,8 +198,6 @@ router.get('/alerts', (req, res) => {
 // Readiness probe
 router.get('/ready', (req, res) => {
   // Check if all dependencies are ready
-  return res.status(HTTP_STATUS.OK).json({
-    ready: true,
   let dbReady = false;
   try {
     const dbManager = require('../../database/DatabaseManager').DatabaseManager.getInstance();
