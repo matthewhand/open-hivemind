@@ -193,7 +193,7 @@ router.put('/:id', adminRateLimiter, (req: Request, res: Response) => {
       ...profiles[profileIndex],
       name: name && typeof name === 'string' ? name : profiles[profileIndex].name,
       description: description !== undefined ? description : profiles[profileIndex].description,
-      guards: safeGuards,
+      guards: safeGuards as any,
     };
 
     profiles[profileIndex] = updatedProfile;
