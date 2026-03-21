@@ -109,7 +109,7 @@ router.get('/tool-usage-guards', (req: Request, res: Response) => {
       message: 'Tool usage guards retrieved successfully',
     });
   } catch (error: unknown) {
-    const hivemindError = ErrorUtils.toHivemindError(error);
+      const hivemindError = ErrorUtils.toHivemindError(error);
     return res.status(500).json({
       error: 'Failed to retrieve tool usage guards',
       message: hivemindError.message || 'An error occurred while retrieving tool usage guards',
@@ -165,7 +165,7 @@ router.post(
         message: 'Tool usage guard created successfully',
       });
     } catch (error: unknown) {
-    const hivemindError = ErrorUtils.toHivemindError(error);
+      const hivemindError = ErrorUtils.toHivemindError(error);
       return res.status(500).json({
         error: 'Failed to create tool usage guard',
         message: hivemindError.message || 'An error occurred while creating tool usage guard',
@@ -203,7 +203,7 @@ router.put(
         message: 'Tool usage guard updated successfully',
       });
     } catch (error: unknown) {
-    const hivemindError = ErrorUtils.toHivemindError(error);
+      const hivemindError = ErrorUtils.toHivemindError(error);
       return res.status(500).json({
         error: 'Failed to update tool usage guard',
         message: hivemindError.message || 'An error occurred while updating tool usage guard',
@@ -244,7 +244,7 @@ router.delete(
         message: 'Tool usage guard deleted successfully',
       });
     } catch (error: unknown) {
-    const hivemindError = ErrorUtils.toHivemindError(error);
+      const hivemindError = ErrorUtils.toHivemindError(error);
       return res.status(500).json({
         error: 'Failed to delete tool usage guard',
         message: hivemindError.message || 'An error occurred while deleting tool usage guard',
@@ -271,7 +271,7 @@ router.post(
         message: 'Tool usage guard status updated successfully',
       });
     } catch (error: unknown) {
-    const hivemindError = ErrorUtils.toHivemindError(error);
+      const hivemindError = ErrorUtils.toHivemindError(error);
       return res.status(500).json({
         error: 'Failed to update guard status',
         message: hivemindError.message || 'An error occurred while updating guard status',
@@ -289,7 +289,7 @@ router.get('/llm-providers', (req: Request, res: Response) => {
       message: 'LLM providers retrieved successfully',
     });
   } catch (error: unknown) {
-    const hivemindError = ErrorUtils.toHivemindError(error);
+      const hivemindError = ErrorUtils.toHivemindError(error);
     return res.status(500).json({
       error: 'Failed to retrieve LLM providers',
       message: hivemindError.message || 'An error occurred while retrieving LLM providers',
@@ -355,7 +355,7 @@ router.post(
         message: 'LLM provider created successfully',
       });
     } catch (error: unknown) {
-    const hivemindError = ErrorUtils.toHivemindError(error);
+      const hivemindError = ErrorUtils.toHivemindError(error);
       return res.status(500).json({
         error: 'Failed to create LLM provider',
         message: hivemindError.message || 'An error occurred while creating LLM provider',
@@ -397,7 +397,7 @@ router.put(
         message: 'LLM provider updated successfully',
       });
     } catch (error: unknown) {
-    const hivemindError = ErrorUtils.toHivemindError(error);
+      const hivemindError = ErrorUtils.toHivemindError(error);
       return res.status(500).json({
         error: 'Failed to update LLM provider',
         message: hivemindError.message || 'An error occurred while updating LLM provider',
@@ -440,7 +440,7 @@ router.delete(
         message: 'LLM provider deleted successfully',
       });
     } catch (error: unknown) {
-    const hivemindError = ErrorUtils.toHivemindError(error);
+      const hivemindError = ErrorUtils.toHivemindError(error);
       return res.status(500).json({
         error: 'Failed to delete LLM provider',
         message: hivemindError.message || 'An error occurred while deleting LLM provider',
@@ -479,7 +479,7 @@ router.post(
         message: 'LLM provider status updated successfully',
       });
     } catch (error: unknown) {
-    const hivemindError = ErrorUtils.toHivemindError(error);
+      const hivemindError = ErrorUtils.toHivemindError(error);
       return res.status(500).json({
         error: 'Failed to update provider status',
         message: hivemindError.message || 'An error occurred while updating provider status',
@@ -498,7 +498,7 @@ router.get('/messenger-providers', (req: Request, res: Response) => {
       message: 'Messenger providers retrieved successfully',
     });
   } catch (error: unknown) {
-    const hivemindError = ErrorUtils.toHivemindError(error);
+      const hivemindError = ErrorUtils.toHivemindError(error);
     return res.status(500).json({
       error: 'Failed to retrieve messenger providers',
       message: hivemindError.message || 'An error occurred while retrieving messenger providers',
@@ -563,7 +563,7 @@ router.post(
         message: 'Messenger provider created successfully',
       });
     } catch (error: unknown) {
-    const hivemindError = ErrorUtils.toHivemindError(error);
+      const hivemindError = ErrorUtils.toHivemindError(error);
       return res.status(500).json({
         error: 'Failed to create messenger provider',
         message: hivemindError.message || 'An error occurred while creating messenger provider',
@@ -622,7 +622,7 @@ router.put(
         message: 'Messenger provider updated successfully',
       });
     } catch (error: unknown) {
-    const hivemindError = ErrorUtils.toHivemindError(error);
+      const hivemindError = ErrorUtils.toHivemindError(error);
       return res.status(500).json({
         error: 'Failed to update messenger provider',
         message: hivemindError.message || 'An error occurred while updating messenger provider',
@@ -662,7 +662,7 @@ router.delete(
         message: 'Messenger provider deleted successfully',
       });
     } catch (error: unknown) {
-    const hivemindError = ErrorUtils.toHivemindError(error);
+      const hivemindError = ErrorUtils.toHivemindError(error);
       return res.status(500).json({
         error: 'Failed to delete messenger provider',
         message: hivemindError.message || 'An error occurred while deleting messenger provider',
@@ -698,7 +698,7 @@ router.post(
         message: 'Messenger provider status updated successfully',
       });
     } catch (error: unknown) {
-    const hivemindError = ErrorUtils.toHivemindError(error);
+      const hivemindError = ErrorUtils.toHivemindError(error);
       return res.status(500).json({
         error: 'Failed to update provider status',
         message: hivemindError.message || 'An error occurred while updating provider status',
@@ -750,7 +750,7 @@ router.get('/personas', (req: Request, res: Response) => {
       message: 'Personas retrieved successfully',
     });
   } catch (error: unknown) {
-    const hivemindError = ErrorUtils.toHivemindError(error);
+      const hivemindError = ErrorUtils.toHivemindError(error);
     return res.status(500).json({
       error: 'Failed to retrieve personas',
       message: hivemindError.message || 'An error occurred while retrieving personas',
@@ -791,7 +791,7 @@ router.post('/personas', validateRequest(PersonaSchema), (req: Request, res: Res
       message: 'Persona created successfully',
     });
   } catch (error: unknown) {
-    const hivemindError = ErrorUtils.toHivemindError(error);
+      const hivemindError = ErrorUtils.toHivemindError(error);
     return res.status(500).json({
       error: 'Failed to create persona',
       message: hivemindError.message || 'An error occurred while creating persona',
@@ -816,7 +816,7 @@ router.put(
         message: 'Persona updated successfully',
       });
     } catch (error: unknown) {
-    const hivemindError = ErrorUtils.toHivemindError(error);
+      const hivemindError = ErrorUtils.toHivemindError(error);
       return res.status(500).json({
         error: 'Failed to update persona',
         message: hivemindError.message || 'An error occurred while updating persona',
@@ -841,7 +841,7 @@ router.delete(
         message: 'Persona deleted successfully',
       });
     } catch (error: unknown) {
-    const hivemindError = ErrorUtils.toHivemindError(error);
+      const hivemindError = ErrorUtils.toHivemindError(error);
       return res.status(500).json({
         error: 'Failed to delete persona',
         message: hivemindError.message || 'An error occurred while deleting persona',
@@ -900,7 +900,7 @@ router.post(
         message: `Successfully tested connection to MCP server. Found ${tools.length} tools.`,
       });
     } catch (error: unknown) {
-    const hivemindError = ErrorUtils.toHivemindError(error);
+      const hivemindError = ErrorUtils.toHivemindError(error);
       return res.status(500).json({
         error: 'Failed to connect to MCP server',
         message: hivemindError.message || 'An error occurred while connecting to MCP server',
@@ -959,7 +959,7 @@ router.post(
         message: `Successfully connected to MCP server: ${name}`,
       });
     } catch (error: unknown) {
-    const hivemindError = ErrorUtils.toHivemindError(error);
+      const hivemindError = ErrorUtils.toHivemindError(error);
       return res.status(500).json({
         error: 'Failed to connect to MCP server',
         message: hivemindError.message || 'An error occurred while connecting to MCP server',
@@ -992,7 +992,7 @@ router.post(
         message: `Successfully disconnected from MCP server: ${name}`,
       });
     } catch (error: unknown) {
-    const hivemindError = ErrorUtils.toHivemindError(error);
+      const hivemindError = ErrorUtils.toHivemindError(error);
       return res.status(500).json({
         error: 'Failed to disconnect from MCP server',
         message: hivemindError.message || 'An error occurred while disconnecting from MCP server',
@@ -1020,7 +1020,7 @@ router.delete(
         message: `Successfully deleted MCP server: ${name}`,
       });
     } catch (error: unknown) {
-    const hivemindError = ErrorUtils.toHivemindError(error);
+      const hivemindError = ErrorUtils.toHivemindError(error);
       return res.status(500).json({
         error: 'Failed to delete MCP server',
         message: hivemindError.message || 'An error occurred while deleting MCP server',
@@ -1051,7 +1051,7 @@ router.get('/mcp-servers', (req: Request, res: Response) => {
       message: 'Connected MCP servers retrieved successfully',
     });
   } catch (error: unknown) {
-    const hivemindError = ErrorUtils.toHivemindError(error);
+      const hivemindError = ErrorUtils.toHivemindError(error);
     return res.status(500).json({
       error: 'Failed to retrieve MCP servers',
       message: hivemindError.message || 'An error occurred while retrieving MCP servers',
@@ -1083,7 +1083,7 @@ router.get(
         message: `Tools retrieved successfully from MCP server: ${name}`,
       });
     } catch (error: unknown) {
-    const hivemindError = ErrorUtils.toHivemindError(error);
+      const hivemindError = ErrorUtils.toHivemindError(error);
       return res.status(500).json({
         error: 'Failed to retrieve tools',
         message: hivemindError.message || 'An error occurred while retrieving tools',
@@ -1103,7 +1103,7 @@ router.get('/env-overrides', (req: Request, res: Response) => {
       message: 'Environment variable overrides retrieved successfully',
     });
   } catch (error: unknown) {
-    const hivemindError = ErrorUtils.toHivemindError(error);
+      const hivemindError = ErrorUtils.toHivemindError(error);
     return res.status(500).json({
       error: 'Failed to retrieve environment variable overrides',
       message: hivemindError.message || 'An error occurred while retrieving environment variable overrides',
@@ -1174,7 +1174,7 @@ router.get('/providers', async (req: Request, res: Response) => {
       llmProviders,
     });
   } catch (error) {
-    const hivemindError = ErrorUtils.toHivemindError(error);
+      const hivemindError = ErrorUtils.toHivemindError(error);
     debug('Error fetching providers:', hivemindError);
     return res.status(500).json({ error: 'Failed to fetch providers', message: hivemindError.message || 'An error occurred while fetching providers' });
   }
@@ -1201,7 +1201,7 @@ router.get('/system-info', async (req: Request, res: Response) => {
 
     return res.json({ systemInfo });
   } catch (error) {
-    const hivemindError = ErrorUtils.toHivemindError(error);
+      const hivemindError = ErrorUtils.toHivemindError(error);
     debug('Error fetching system info:', hivemindError);
     return res.status(500).json({ error: 'Failed to fetch system info', message: hivemindError.message || 'An error occurred while fetching system info' });
   }
