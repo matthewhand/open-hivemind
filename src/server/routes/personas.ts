@@ -5,6 +5,7 @@ import { z } from 'zod';
 import { createLogger } from '../../common/StructuredLogger';
 import { PersonaManager } from '../../managers/PersonaManager';
 import { validateRequest } from '../../validation/validateRequest';
+import { ErrorResponses } from '../../utils/errorResponse';
 
 const router = Router();
 const logger = createLogger('personasRouter');
@@ -46,12 +47,8 @@ router.get('/', (req, res) => {
     const personas = manager.getAllPersonas();
     return res.json(personas);
   } catch (error: any) {
-<<<<<<< HEAD
     logger.error('Failed to retrieve personas', { error: error.message });
-    return res.status(500).json({ error: 'Failed to retrieve personas' });
-=======
-    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: error.message });
->>>>>>> origin/refine-eliminate-magic-numbers-3883502303364983467
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json(ErrorResponses.internalServerError(error.message).build());
   }
 });
 
@@ -64,12 +61,8 @@ router.get('/:id', (req, res) => {
     }
     return res.json(persona);
   } catch (error: any) {
-<<<<<<< HEAD
     logger.error('Failed to retrieve persona', { id: req.params.id, error: error.message });
-    return res.status(500).json({ error: 'Failed to retrieve persona' });
-=======
-    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: error.message });
->>>>>>> origin/refine-eliminate-magic-numbers-3883502303364983467
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json(ErrorResponses.internalServerError(error.message).build());
   }
 });
 
