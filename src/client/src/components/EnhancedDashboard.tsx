@@ -404,7 +404,9 @@ const EnhancedDashboard: React.FC = () => {
         <div className="toast toast-bottom toast-center z-50" role="status" aria-live="polite">
           <div className={`alert ${toastType === 'success' ? 'alert-success' : toastType === 'error' ? 'alert-error' : toastType === 'warning' ? 'alert-warning' : 'alert-info'}`}>
             <span>{toastMessage}</span>
-            <button className="btn btn-sm btn-ghost" onClick={() => setToastMessage('')}>✕</button>
+            <button className="btn btn-sm btn-ghost" onClick={() => setToastMessage('')} aria-label="Close modal">
+              ✕
+            </button>
           </div>
         </div>
       )}

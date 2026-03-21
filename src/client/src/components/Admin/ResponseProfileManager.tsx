@@ -235,7 +235,9 @@ const ResponseProfileManager: React.FC = () => {
         <div className="toast toast-bottom toast-center z-50" role="status" aria-live="polite">
           <div className={`alert ${toastType === 'success' ? 'alert-success' : 'alert-error'}`}>
             <span>{toastMessage}</span>
-            <button className="btn btn-sm btn-ghost" onClick={() => setToastMessage('')}>✕</button>
+            <button className="btn btn-sm btn-ghost" onClick={() => setToastMessage('')} aria-label="Close modal">
+              ✕
+            </button>
           </div>
         </div>
       )}

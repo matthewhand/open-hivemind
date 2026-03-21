@@ -189,7 +189,9 @@ const Dashboard: React.FC = () => {
         <div className="toast toast-bottom toast-center z-50" role="status" aria-live="polite">
           <div className="alert alert-success">
             <span>{toastMessage}</span>
-            <button className="btn btn-sm btn-ghost" onClick={() => setShowToast(false)}>✕</button>
+            <button className="btn btn-sm btn-ghost" onClick={() => setShowToast(false)} aria-label="Close modal">
+              ✕
+            </button>
           </div>
         </div>
       )}

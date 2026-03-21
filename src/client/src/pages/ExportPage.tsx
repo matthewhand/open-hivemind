@@ -503,7 +503,9 @@ const ExportPage: React.FC = () => {
         <div className="toast toast-top toast-end">
           <div className={`alert ${toast.type === 'success' ? 'alert-success' : 'alert-error'}`}>
             <span>{toast.title ? `${toast.title}: ` : ''}{toast.message}</span>
-            <button onClick={() => setToast(null)} className="btn btn-sm btn-ghost">✕</button>
+            <button onClick={() => setToast(null)} className="btn btn-sm btn-ghost" aria-label="Close modal">
+              ✕
+            </button>
           </div>
         </div>
       )}
