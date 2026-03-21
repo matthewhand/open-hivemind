@@ -443,7 +443,7 @@ async function main() {
   await startupDiagnostics.logStartupDiagnostics();
 
   // Initialize Demo Mode Service
-  const demoService = DemoModeService.getInstance();
+  const demoService = container.resolve<DemoModeService>(DemoModeService);
   demoService.initialize();
 
   if (demoService.isInDemoMode()) {

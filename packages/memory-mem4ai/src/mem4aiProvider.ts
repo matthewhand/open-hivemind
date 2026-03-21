@@ -85,11 +85,11 @@ export class Mem4aiProvider {
 
             this.debug('Memory added successfully', { id: response.id });
             return {
-                id: response.id,
-                content: response.content,
-                metadata: response.metadata,
-                timestamp: response.created_at,
-                tags: response.tags,
+                id: response.id as string,
+                content: response.content as string,
+                metadata: response.metadata as Record<string, unknown>,
+                timestamp: response.created_at as number,
+                tags: (response.tags as string[]) || [],
             };
         } catch (error) {
             this.debug('Failed to add memory', error);

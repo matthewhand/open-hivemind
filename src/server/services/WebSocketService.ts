@@ -4,7 +4,7 @@ import os from 'os';
 import Debug from 'debug';
 import { Server as SocketIOServer } from 'socket.io';
 import { BotConfigurationManager } from '../../config/BotConfigurationManager';
-import ApiMonitorService, { type EndpointStatus } from '../../services/ApiMonitorService';
+import { ApiMonitorService, type EndpointStatus } from '../../services/ApiMonitorService';
 import { ActivityLogger } from './ActivityLogger';
 import { BotMetricsService } from './BotMetricsService';
 import 'reflect-metadata';

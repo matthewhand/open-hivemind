@@ -67,11 +67,19 @@ export class ApiMonitorService extends EventEmitter {
   private statuses = new Map<string, EndpointStatus>();
   private monitoringIntervals = new Map<string, NodeJS.Timeout>();
   private isMonitoring = false;
+  private static instance: ApiMonitorService;
 
   constructor() {
     super();
     // Increase max listeners for monitoring service
     this.setMaxListeners(20);
+  }
+
+  public static getInstance(): ApiMonitorService {
+    if (!ApiMonitorService.instance) {
+      ApiMonitorService.instance = new ApiMonitorService();
+    }
+    return ApiMonitorService.instance;
   }
 
   public addEndpoint(config: EndpointConfig): void {

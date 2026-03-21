@@ -14,11 +14,7 @@ import {
   MessageCircle as MessageIcon,
   Database as MemoryIcon,
   Wrench as ToolIcon,
-<<<<<<< HEAD
-  Github as GithubIcon,
-=======
   Github as GitHubIcon,
->>>>>>> origin/refiner-barrel-tree-shaking-4565069490293258776
   AlertCircle as AlertIcon,
   CheckCircle as CheckIcon,
   X as CloseIcon,
