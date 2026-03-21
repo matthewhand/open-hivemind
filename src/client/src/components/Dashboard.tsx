@@ -77,22 +77,32 @@ const Dashboard: React.FC = () => {
     setShowToast(true);
   }, []);
 
-  const activeBots = useMemo(() => {
-    if (!status?.bots) return 0;
-    // status.bots aligns with bots array based on rendering logic.
-    // Optimization: filtering directly on status array is O(N) vs O(N^2)
-    return status.bots.filter((b) => b.status === 'active').length;
-  }, [status]);
+  // ⚡ Bolt Optimization: Combined multiple O(N) filtering and reduce passes into a single pass.
+  const { activeBots, totalMessages, uptimeHours, uptimeMinutes } = useMemo(() => {
+    if (!status) {
+      return { activeBots: 0, totalMessages: 0, uptimeHours: 0, uptimeMinutes: 0 };
+    }
 
-  const totalMessages = useMemo(
-    () => status?.bots.reduce((sum, bot) => sum + (bot.messageCount || 0), 0) || 0,
-    [status]
-  );
-  const uptimeHours = useMemo(() => (status ? Math.floor(status.uptime / 3600) : 0), [status]);
-  const uptimeMinutes = useMemo(
-    () => (status ? Math.floor((status.uptime % 3600) / 60) : 0),
-    [status]
-  );
+    let activeCount = 0;
+    let messageSum = 0;
+
+    if (status.bots) {
+      for (let i = 0; i < status.bots.length; i++) {
+        const bot = status.bots[i];
+        if (bot.status === 'active') {
+          activeCount++;
+        }
+        messageSum += (bot.messageCount || 0);
+      }
+    }
+
+    return {
+      activeBots: activeCount,
+      totalMessages: messageSum,
+      uptimeHours: Math.floor(status.uptime / 3600),
+      uptimeMinutes: Math.floor((status.uptime % 3600) / 60),
+    };
+  }, [status]);
 
   if (loading) {
     return (
