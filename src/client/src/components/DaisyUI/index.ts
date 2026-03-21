@@ -65,6 +65,4 @@ export { default as Pagination } from './Pagination';
 // Component Tracking
 export { trackDaisyUIComponent, daisyUITracker } from '../../utils/DaisyUIComponentTracker';
 
-// Advanced Components
-export { default as ModelAutocomplete } from './ModelAutocomplete';
 export { CommaSeparatedInput } from '../Common/CommaSeparatedInput';
