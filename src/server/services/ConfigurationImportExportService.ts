@@ -496,6 +496,29 @@ export class ConfigurationImportExportService {
         warnings: [],
       };
 
+      // Bulk fetch existing configurations to prevent N+1 queries
+      const configIds = importData.configurations
+        .map((c: any) => c.id)
+        .filter((id: any) => id != null);
+
+      const existingConfigsMap = new Map<number, any>();
+      let bulkFetchSucceeded = false;
+
+      if (configIds.length > 0) {
+        try {
+          const existingConfigs = await this.dbManager.getBotConfigurationsBulk(configIds);
+          for (const ec of existingConfigs) {
+            if (ec.id) {
+              existingConfigsMap.set(ec.id, ec);
+            }
+          }
+          bulkFetchSucceeded = true;
+        } catch (error) {
+          debug('Failed to bulk fetch existing configurations:', error);
+          // Non-fatal, will fall back to individual queries if bulk fetch fails
+        }
+      }
+
       // Process configurations
       for (const config of importData.configurations) {
         try {
@@ -522,9 +545,14 @@ export class ConfigurationImportExportService {
           }
 
           // Check if configuration exists
-          const existingConfig = config.id
-            ? await this.dbManager.getBotConfiguration(config.id)
-            : null;
+          let existingConfig = null;
+          if (config.id) {
+            if (bulkFetchSucceeded) {
+              existingConfig = existingConfigsMap.get(config.id) || null;
+            } else {
+              existingConfig = await this.dbManager.getBotConfiguration(config.id);
+            }
+          }
 
           if (existingConfig && !options.overwrite) {
             result.skippedCount = (result.skippedCount || 0) + 1;
