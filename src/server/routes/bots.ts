@@ -1,3 +1,4 @@
+import { ERROR_CODES, HTTP_STATUS } from '../../types/constants';
 import { Router } from 'express';
 import { BotManager, type CreateBotRequest } from '../../managers/BotManager';
 import {
@@ -56,7 +57,7 @@ router.get('/', async (req, res) => {
 
     return res.json(result);
   } catch (error: any) {
-    return res.status(500).json({ error: error.message });
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: error.message });
   }
 });
 
@@ -83,11 +84,11 @@ router.get('/:id', validateRequest(BotIdParamSchema), async (req, res) => {
     const { id } = req.params;
     const bot = await manager.getBot(id);
     if (!bot) {
-      return res.status(404).json({ error: 'Bot not found' });
+      return res.status(HTTP_STATUS.NOT_FOUND).json({ error: 'Bot not found' });
     }
     return res.json({ success: true, bot });
   } catch (error: any) {
-    return res.status(500).json({ error: error.message });
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: error.message });
   }
 });
 
@@ -118,14 +119,14 @@ router.post('/', validateRequest(CreateBotSchema), async (req, res) => {
     const existingBot = allBots.find((b) => b.name === request.name);
     if (existingBot) {
       return res
-        .status(200)
+        .status(HTTP_STATUS.OK)
         .json({ success: true, message: 'Bot already exists', bot: existingBot });
     }
 
     const bot = await manager.createBot(request);
-    return res.status(201).json({ success: true, message: 'Bot created', bot });
+    return res.status(HTTP_STATUS.CREATED).json({ success: true, message: 'Bot created', bot });
   } catch (error: any) {
-    return res.status(400).json({ error: error.message });
+    return res.status(HTTP_STATUS.BAD_REQUEST).json({ error: error.message });
   }
 });
 
@@ -164,7 +165,7 @@ router.put('/:id', validateRequest(UpdateBotSchema), async (req, res) => {
     const bot = await manager.updateBot(id, updates);
     return res.json({ success: true, message: 'Bot updated', bot });
   } catch (error: any) {
-    const status = error.message.includes('not found') ? 404 : 400;
+    const status = error.message.includes(ERROR_CODES.NOT_FOUND) ? HTTP_STATUS.NOT_FOUND : HTTP_STATUS.BAD_REQUEST;
     return res.status(status).json({ error: error.message });
   }
 });
@@ -197,7 +198,7 @@ router.delete('/:id', validateRequest(BotIdParamSchema), async (req, res) => {
     await manager.deleteBot(id);
     return res.json({ success: true, message: 'Bot deleted' });
   } catch (error: any) {
-    const status = error.message.includes('not found') ? 404 : 400;
+    const status = error.message.includes(ERROR_CODES.NOT_FOUND) ? HTTP_STATUS.NOT_FOUND : HTTP_STATUS.BAD_REQUEST;
     return res.status(status).json({ error: error.message });
   }
 });
@@ -237,14 +238,14 @@ router.post('/:id/clone', validateRequest(CloneBotSchema), async (req, res) => {
     const existingBot = allBots.find((b) => b.name === newName);
     if (existingBot) {
       return res
-        .status(200)
+        .status(HTTP_STATUS.OK)
         .json({ success: true, message: 'Bot clone already exists', bot: existingBot });
     }
 
     const newBot = await manager.cloneBot(id, newName);
-    return res.status(201).json({ success: true, message: 'Bot cloned', bot: newBot });
+    return res.status(HTTP_STATUS.CREATED).json({ success: true, message: 'Bot cloned', bot: newBot });
   } catch (error: any) {
-    const status = error.message.includes('not found') ? 404 : 400;
+    const status = error.message.includes(ERROR_CODES.NOT_FOUND) ? HTTP_STATUS.NOT_FOUND : HTTP_STATUS.BAD_REQUEST;
     return res.status(status).json({ error: error.message });
   }
 });
@@ -271,7 +272,7 @@ router.post('/:id/start', validateRequest(BotIdParamSchema), async (req, res) =>
     await manager.startBot(id);
     return res.json({ success: true, message: 'Bot started' });
   } catch (error: any) {
-    const status = error.message.includes('not found') ? 404 : 400;
+    const status = error.message.includes(ERROR_CODES.NOT_FOUND) ? HTTP_STATUS.NOT_FOUND : HTTP_STATUS.BAD_REQUEST;
     return res.status(status).json({ error: error.message });
   }
 });
@@ -298,7 +299,7 @@ router.post('/:id/stop', validateRequest(BotIdParamSchema), async (req, res) => 
     await manager.stopBot(id);
     return res.json({ success: true, message: 'Bot stopped' });
   } catch (error: any) {
-    const status = error.message.includes('not found') ? 404 : 400;
+    const status = error.message.includes(ERROR_CODES.NOT_FOUND) ? HTTP_STATUS.NOT_FOUND : HTTP_STATUS.BAD_REQUEST;
     return res.status(status).json({ error: error.message });
   }
 });
@@ -337,7 +338,7 @@ router.get('/:id/history', validateRequest(BotHistoryQuerySchema), async (req, r
     const history = await manager.getBotHistory(id, channelId, limit);
     return res.json({ success: true, data: { history } });
   } catch (error: any) {
-    const status = error.message.includes('not found') ? 404 : 400;
+    const status = error.message.includes(ERROR_CODES.NOT_FOUND) ? HTTP_STATUS.NOT_FOUND : HTTP_STATUS.BAD_REQUEST;
     return res.status(status).json({ error: error.message });
   }
 });
@@ -380,7 +381,7 @@ router.get('/:id/activity', validateRequest(BotActivityQuerySchema), async (req,
 
     const bot = await manager.getBot(id);
     if (!bot) {
-      return res.status(404).json({ error: 'Bot not found' });
+      return res.status(HTTP_STATUS.NOT_FOUND).json({ error: 'Bot not found' });
     }
 
     const events = await ActivityLogger.getInstance().getEvents({
@@ -405,7 +406,7 @@ router.get('/:id/activity', validateRequest(BotActivityQuerySchema), async (req,
 
     return res.json({ success: true, data: { activity } });
   } catch (error: any) {
-    return res.status(500).json({ error: error.message });
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: error.message });
   }
 });
 
