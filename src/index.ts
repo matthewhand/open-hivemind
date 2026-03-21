@@ -6,7 +6,11 @@ import { createServer } from 'http';
 import path from 'path';
 import type { NextFunction, Request, Response } from 'express';
 import swarmRouter from '@src/admin/swarmRoutes';
+import { registerServices } from '@src/di/registration';
 import { container } from '@src/di/container';
+
+// Ensure DI services are registered before application startup
+registerServices();
 import { applyRateLimiting } from '@src/middleware/rateLimiter';
 import { authenticateToken } from '@src/server/middleware/auth';
 import { ipWhitelist } from '@src/server/middleware/security';
