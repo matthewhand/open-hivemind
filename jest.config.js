@@ -53,6 +53,8 @@ module.exports = {
     '^@hivemind/llm-letta/(.*)$': '<rootDir>/packages/llm-letta/src/$1',
     '^@hivemind/llm-openai$': '<rootDir>/packages/llm-openai/src/index.ts',
     '^@hivemind/llm-openai/(.*)$': '<rootDir>/packages/llm-openai/src/$1',
+    '^@hivemind/llm-flowise$': '<rootDir>/packages/llm-flowise/src/index.ts',
+    '^@hivemind/llm-flowise/(.*)$': '<rootDir>/packages/llm-flowise/src/$1',
     '^@slack/web-api$': '<rootDir>/tests/mocks/slackWebApiMock.js',
     '^@slack/socket-mode$': '<rootDir>/tests/mocks/slackSocketModeMock.js',
     '^@slack/rtm-api$': '<rootDir>/tests/mocks/slackRtmApiMock.js',
