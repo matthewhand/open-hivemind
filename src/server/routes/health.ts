@@ -14,12 +14,17 @@ const router = Router();
 router.get('/', (req, res) => {
   const memoryUsage = process.memoryUsage();
 <<<<<<< HEAD
+<<<<<<< HEAD
   return res.status(HTTP_STATUS.OK).json({
     status: 'healthy',
 =======
+=======
+
+>>>>>>> origin/fix-anomaly-route-types-3952225614007405228
   let dbStatus = 'unknown';
   try {
-    const dbManager = DatabaseManager.getInstance();
+    // Requires importing DatabaseManager at the top
+    const dbManager = require('../../database/DatabaseManager').DatabaseManager.getInstance();
     dbStatus = dbManager.isConnected() ? 'healthy' : 'unhealthy';
   } catch (error) {
     dbStatus = 'error';
@@ -30,7 +35,11 @@ router.get('/', (req, res) => {
 
   return res.status(statusCode).json({
     status: status,
+<<<<<<< HEAD
 >>>>>>> origin/janitor/code-health-activity-logger-8768188016948875412
+=======
+
+>>>>>>> origin/fix-anomaly-route-types-3952225614007405228
     timestamp: new Date().toISOString(),
     version: '1.0.0',
     uptime: process.uptime(),
@@ -203,12 +212,17 @@ router.get('/alerts', (req, res) => {
 router.get('/ready', (req, res) => {
   // Check if all dependencies are ready
 <<<<<<< HEAD
+<<<<<<< HEAD
   return res.status(HTTP_STATUS.OK).json({
     ready: true,
 =======
+=======
+
+  // Check if all dependencies are ready
+>>>>>>> origin/fix-anomaly-route-types-3952225614007405228
   let dbReady = false;
   try {
-    const dbManager = DatabaseManager.getInstance();
+    const dbManager = require('../../database/DatabaseManager').DatabaseManager.getInstance();
     dbReady = dbManager.isConnected();
   } catch (error) {
     dbReady = false;
@@ -220,10 +234,13 @@ router.get('/ready', (req, res) => {
 
   return res.status(statusCode).json({
     ready: isReady,
+<<<<<<< HEAD
 >>>>>>> origin/janitor/code-health-activity-logger-8768188016948875412
+=======
+>>>>>>> origin/fix-anomaly-route-types-3952225614007405228
     timestamp: new Date().toISOString(),
     checks: {
-      database: true, // Would need actual database check
+      database: dbReady,
       external_apis: true, // Would need actual API checks
       configuration: true,
     },

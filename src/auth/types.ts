@@ -11,6 +11,7 @@ export interface User {
   createdAt: string;
   lastLogin: string | null;
   passwordHash?: string; // Only included when needed for auth operations
+  tenantId?: string; // Used for multi-tenant applications
 }
 
 export interface AuthToken {

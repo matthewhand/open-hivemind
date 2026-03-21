@@ -14,7 +14,15 @@ import {
   MessageCircle as MessageIcon,
   Database as MemoryIcon,
   Wrench as ToolIcon,
+<<<<<<< HEAD
   Github as GithubIcon,
+=======
+
+  Github as GithubIcon,
+
+  Github as GitHubIcon,
+
+>>>>>>> origin/fix-anomaly-route-types-3952225614007405228
   AlertCircle as AlertIcon,
   CheckCircle as CheckIcon,
   X as CloseIcon,
