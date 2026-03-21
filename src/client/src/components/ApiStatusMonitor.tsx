@@ -205,9 +205,9 @@ const ApiStatusMonitor: React.FC<ApiStatusMonitorProps> = ({
     }
   };
 
-  const handleRefresh = () => {
+  const handleRefresh = useCallback(() => {
     fetchApiStatus();
-  };
+  }, [fetchApiStatus]);
 
   if (loading) {
     return (
