@@ -1,4 +1,5 @@
 import { withRetry } from '../utils/withRetry';
+import logger from '../utils/logger';
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Clock, Download, LayoutList, GitBranch, RefreshCw, X } from 'lucide-react';
@@ -66,7 +67,7 @@ const ActivityPage: React.FC = () => {
         maxRetries,
         1000,
         (err, attempt, max) => {
-           console.log(`Retrying fetchActivity in ${1000 * Math.pow(1.5, attempt - 1)}ms (attempt ${attempt}/${max})`);
+           logger.debug(`Retrying fetchActivity in ${1000 * Math.pow(1.5, attempt - 1)}ms (attempt ${attempt}/${max})`);
            setRetryCount(attempt);
         }
       );
