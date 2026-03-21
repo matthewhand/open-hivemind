@@ -12,7 +12,6 @@ import {
 import openaiConfig from '@config/openaiConfig';
 import type { ILlmProvider } from '@llm/interfaces/ILlmProvider';
 import type { IMessage } from '@message/interfaces/IMessage';
-import type { OpenAIConfig } from '@src/types/config';
 
 const debug = Debug('app:openAiProvider');
 
