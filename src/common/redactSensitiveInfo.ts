@@ -22,6 +22,7 @@ export function redactSensitiveInfo(key: string, value: any): string {
     'auth_token',
     'secret',
     'token',
+    'private_key',
   ];
   try {
     const lowerKey = key.toLowerCase();
