@@ -24,3 +24,7 @@
 **Learning:** Security utilities like `isSafeUrl` must be placed in globally accessible workspace packages (e.g., `@hivemind/shared-types` or a dedicated `utils` package) rather than main `src/` directories so that all child packages can access them without creating dependency cycles or relative import nightmares.
 **Prevention:** Always wrap dynamically generated external HTTP requests (via axios, fetch) with `isSafeUrl` validation checks. Enforce this via a custom ESLint rule if possible.
 >>>>>>> origin/refiner-barrel-export-audit-4424264890390605711
+## 2025-03-12 - Insecure Random ID Generation
+**Vulnerability:** ID generation functions in various components (`auditLogger.ts`, `HotReloadManager.ts`, `SyntheticMessage.ts`) used `Math.random().toString(36).substr(2, 9)`, which generates predictable and low-entropy IDs. This can lead to ID collision and potentially allow attackers to guess session, configuration change, or message IDs.
+**Learning:** Functions that generate sensitive or unique identifiers (like logs, internal audit IDs, state configuration changes) should never rely on insecure random generation like `Math.random()`. Instead, `crypto.randomUUID()` provides cryptographically strong and unique IDs.
+**Prevention:** Always use `crypto.randomUUID()` or another cryptographically secure pseudorandom number generator (CSPRNG) when creating system-level IDs, audit logs, or session-related tokens.

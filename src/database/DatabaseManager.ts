@@ -1,3 +1,4 @@
+import crypto from 'crypto';
 import 'reflect-metadata';
 import { promises as fs } from 'fs';
 import { join } from 'path';
@@ -845,7 +846,7 @@ export class DatabaseManager {
         VALUES (?, ?, ?, ?, ?, ?, ?)
       `,
         [
-          `${Date.now()}-${Math.random()}`, // Generate unique messageId
+          crypto.randomUUID(), // Generate unique messageId
           channelId,
           content,
           userId,

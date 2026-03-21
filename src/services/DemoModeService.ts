@@ -1,3 +1,4 @@
+import crypto from 'crypto';
 /**
  * DemoModeService - Manages demo/simulation mode when no configuration is provided
  *
@@ -319,7 +320,7 @@ export class DemoModeService {
 
     if (!this.conversations.has(key)) {
       this.conversations.set(key, {
-        id: `conv-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        id: `conv-${Date.now()}-${crypto.randomUUID()}`,
         channelId,
         botName,
         messages: [],
@@ -345,7 +346,7 @@ export class DemoModeService {
     const conversation = this.getOrCreateConversation(channelId, botName);
 
     const message: DemoMessage = {
-      id: `msg-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      id: `msg-${Date.now()}-${crypto.randomUUID()}`,
       timestamp: new Date().toISOString(),
       botName,
       channelId,

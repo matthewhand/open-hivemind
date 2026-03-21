@@ -113,7 +113,7 @@ const ChatPage: React.FC = () => {
 
       // Map history to ChatMessage
       const mappedMessages: ChatMessage[] = history.map((msg: any) => ({
-        id: msg.id || Math.random().toString(),
+        id: msg.id || globalThis.crypto.randomUUID(),
         content: msg.content,
         timestamp: msg.createdAt || new Date().toISOString(),
         sender: {
