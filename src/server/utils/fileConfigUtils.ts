@@ -17,7 +17,11 @@ export const ensureDataDir = async () => {
 };
 
 // Load configurations
-export const loadJsonConfig = async <T>(filePath: string, defaultValue: T, debugInstance = debug): Promise<T> => {
+export const loadJsonConfig = async <T>(
+  filePath: string,
+  defaultValue: T,
+  debugInstance = debug
+): Promise<T> => {
   try {
     const data = await fs.readFile(filePath, 'utf8');
     return JSON.parse(data);

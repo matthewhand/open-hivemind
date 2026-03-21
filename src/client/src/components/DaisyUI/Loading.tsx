@@ -8,12 +8,11 @@ interface LoadingSpinnerProps {
   className?: string;
 }
 
-export const LoadingSpinner: React.FC<LoadingSpinnerProps & { 'aria-hidden'?: boolean | 'true' | 'false' }> = ({
+export const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({
   size = 'md',
   variant = 'spinner',
   color = 'primary',
   className = '',
-  'aria-hidden': ariaHidden,
 }) => {
   const getSizeClass = () => {
     switch (size) {
@@ -42,8 +41,7 @@ export const LoadingSpinner: React.FC<LoadingSpinnerProps & { 'aria-hidden'?: bo
   return (
     <span
       className={`loading ${getVariantClass()} ${getSizeClass()} ${getColorClass()} ${className}`}
-      aria-hidden={ariaHidden}
-      aria-label={ariaHidden ? undefined : "Loading"}
+      aria-label="Loading"
     />
   );
 };

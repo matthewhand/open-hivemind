@@ -79,7 +79,7 @@ export const RangeSlider: React.FC<RangeSliderProps> = ({
   const sizeClass = getSizeClass();
   const disabledClass = disabled ? 'range-disabled' : '';
 
-  const sliderId = id || `range-slider-${globalThis.crypto.randomUUID()}`;
+  const sliderId = id || `range-slider-${Math.random().toString(36).substr(2, 9)}`;
 
   return (
     <div className={`form-control ${className}`.trim()}>

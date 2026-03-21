@@ -206,9 +206,8 @@ const Settings: React.FC = () => {
           onClick={handleSaveSettings}
           disabled={saveStatus === 'saving'}
           aria-label="Save Settings"
-          aria-busy={saveStatus === 'saving'}
         >
-          {saveStatus === 'saving' ? <span className="loading loading-spinner" aria-hidden="true"></span> : null}
+          {saveStatus === 'saving' ? <span className="loading loading-spinner"></span> : null}
           {saveStatus === 'saving' ? 'Saving...' : 'Save Settings'}
         </button>
         <button

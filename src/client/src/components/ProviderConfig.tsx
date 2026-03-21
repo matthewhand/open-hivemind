@@ -99,7 +99,6 @@ const ProviderConfig: React.FC<ProviderConfigProps> = ({
                 type="button"
                 className="btn btn-ghost btn-xs"
                 onClick={() => toggleSensitiveData(key)}
-                onMouseDown={(e) => e.preventDefault()}
                 aria-label={showData ? `Hide ${label}` : `Show ${label}`}
               >
                 {showData ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -141,7 +140,6 @@ const ProviderConfig: React.FC<ProviderConfigProps> = ({
                 type="button"
                 className="btn btn-square"
                 onClick={() => toggleSensitiveData(key)}
-                onMouseDown={(e) => e.preventDefault()}
                 aria-label={showData ? `Hide ${label}` : `Show ${label}`}
               >
                 {showData ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}

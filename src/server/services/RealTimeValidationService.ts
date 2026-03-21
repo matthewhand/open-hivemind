@@ -8,7 +8,7 @@ import { ConfigurationValidator } from './ConfigurationValidator';
 
 const debug = Debug('app:RealTimeValidationService');
 
-export interface ValidationRule {
+interface ValidationRule {
   id: string;
   name: string;
   description: string;
@@ -17,7 +17,7 @@ export interface ValidationRule {
   validator: (config: any) => ValidationResult;
 }
 
-export interface ValidationResult {
+interface ValidationResult {
   isValid: boolean;
   errors: ValidationError[];
   warnings: ValidationWarning[];
@@ -25,7 +25,7 @@ export interface ValidationResult {
   score: number; // 0-100, higher is better
 }
 
-export interface ValidationError {
+interface ValidationError {
   id: string;
   ruleId: string;
   message: string;
@@ -36,7 +36,7 @@ export interface ValidationError {
   category: 'required' | 'format' | 'business' | 'security' | 'performance';
 }
 
-export interface ValidationWarning {
+interface ValidationWarning {
   id: string;
   ruleId: string;
   message: string;
@@ -46,7 +46,7 @@ export interface ValidationWarning {
   category: 'required' | 'format' | 'business' | 'security' | 'performance';
 }
 
-export interface ValidationInfo {
+interface ValidationInfo {
   id: string;
   ruleId: string;
   message: string;
@@ -56,7 +56,7 @@ export interface ValidationInfo {
   category: 'required' | 'format' | 'business' | 'security' | 'performance';
 }
 
-export interface ValidationReport {
+interface ValidationReport {
   id: string;
   timestamp: Date;
   configId?: number;
@@ -67,7 +67,7 @@ export interface ValidationReport {
   rulesExecuted: number;
 }
 
-export interface ValidationProfile {
+interface ValidationProfile {
   id: string;
   name: string;
   description: string;
@@ -78,7 +78,7 @@ export interface ValidationProfile {
   updatedAt: Date;
 }
 
-export interface ValidationSubscription {
+interface ValidationSubscription {
   id: string;
   configId: number;
   clientId: string;

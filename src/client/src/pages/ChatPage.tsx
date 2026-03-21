@@ -113,7 +113,7 @@ const ChatPage: React.FC = () => {
 
       // Map history to ChatMessage
       const mappedMessages: ChatMessage[] = history.map((msg: any) => ({
-        id: msg.id || globalThis.crypto.randomUUID(),
+        id: msg.id || Math.random().toString(),
         content: msg.content,
         timestamp: msg.createdAt || new Date().toISOString(),
         sender: {
@@ -207,7 +207,7 @@ const ChatPage: React.FC = () => {
           </h1>
           <p className="text-sm text-base-content/60">Monitor conversations across your bot fleet</p>
         </div>
-        <button onClick={handleRefresh} className="btn btn-ghost btn-circle" title="Refresh" aria-label="Refresh chat">
+        <button onClick={handleRefresh} className="btn btn-ghost btn-circle" title="Refresh">
           <RefreshCw className={`w-5 h-5 ${loading || historyLoading ? 'animate-spin' : ''}`} />
         </button>
       </div>

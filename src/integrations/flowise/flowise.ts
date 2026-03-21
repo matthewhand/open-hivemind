@@ -1,6 +1,6 @@
 import axios from 'axios';
 import Debug from 'debug';
-import { isSafeUrl } from '@src/utils/ssrfGuard';
+import { isSafeUrl } from '../../utils/ssrfGuard';
 
 const debug = Debug('app:flowiseCommand');
 
