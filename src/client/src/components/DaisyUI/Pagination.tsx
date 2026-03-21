@@ -93,13 +93,8 @@ const Pagination: React.FC<PaginationProps> = ({
       const isNearEnd = currentPage >= totalPages - half;
 
       pages.push(1);
-<<<<<<< HEAD
-      if (currentPage <= 4) {
-        for (let i = 2; i <= 5; i++) {
-=======
       if (isNearStart) {
         for (let i = 2; i <= maxVisiblePages - 2; i++) {
->>>>>>> origin/main
           pages.push(i);
         }
         pages.push('...next');

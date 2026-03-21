@@ -449,59 +449,6 @@ const MCPServersPage: React.FC = () => {
               <div className="card-actions justify-between mt-auto pt-4 border-t border-base-200">
                 <div className="flex gap-1">
                   {server.status === 'running' ? (
-<<<<<<< HEAD
-                    <Tooltip message="Disconnect">
-                      <button
-                        className="btn btn-ghost btn-sm btn-circle text-error"
-                        aria-label={`Disconnect ${server.name}`}
-                        onClick={() => handleServerAction(server.id, 'stop')}
-                      >
-                        <StopIcon className="w-5 h-5" />
-                      </button>
-                    </Tooltip>
-                  ) : (
-                    <Tooltip message={server.status === 'stopped' ? "Connect" : "Retry Connection"}>
-                      <button
-                        className="btn btn-ghost btn-sm btn-circle text-success"
-                        aria-label={server.status === 'stopped' ? `Connect ${server.name}` : `Retry Connection ${server.name}`}
-                        onClick={() => handleServerAction(server.id, 'start')}
-                      >
-                          {server.status === 'error' ? <ArrowPathIcon className="w-5 h-5" /> : <PlayIcon className="w-5 h-5" />}
-                      </button>
-                    </Tooltip>
-                  )}
-                  {server.toolCount > 0 && (
-                     <Tooltip message="View Tools">
-                       <button
-                          className="btn btn-ghost btn-sm btn-circle"
-                          aria-label={`View Tools for ${server.name}`}
-                          onClick={() => handleViewTools(server)}
-                       >
-                          <WrenchScrewdriverIcon className="w-5 h-5" />
-                       </button>
-                     </Tooltip>
-                  )}
-                </div>
-                <div className="flex gap-1">
-                  <Tooltip message="Edit Configuration">
-                    <button
-                      className="btn btn-ghost btn-sm btn-circle"
-                      aria-label={`Edit ${server.name}`}
-                      onClick={() => handleEditServer(server)}
-                    >
-                      <PencilIcon className="w-5 h-5" />
-                    </button>
-                  </Tooltip>
-                  <Tooltip message="Delete">
-                    <button
-                      className="btn btn-ghost btn-sm btn-circle text-error"
-                      aria-label={`Delete ${server.name}`}
-                      onClick={() => handleDeleteServer(server.id)}
-                    >
-                      <TrashIcon className="w-5 h-5" />
-                    </button>
-                  </Tooltip>
-=======
                     <button
                       className="btn btn-ghost btn-sm btn-circle text-error tooltip"
                       data-tip="Disconnect"
@@ -548,7 +495,6 @@ const MCPServersPage: React.FC = () => {
                   >
                     <TrashIcon className="w-5 h-5" />
                   </button>
->>>>>>> origin/main
                 </div>
               </div>
             </div>

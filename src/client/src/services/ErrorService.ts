@@ -1,6 +1,3 @@
-<<<<<<< HEAD
-export class ErrorService {
-=======
 /**
  * A centralized service for reporting errors, which can be extended to integrate
  * with third-party tracking services like Sentry, DataDog, etc.
@@ -19,7 +16,6 @@ export class ErrorService {
    *   ErrorService.report(err, { component: 'UserList', action: 'fetchUsers' });
    * }
    */
->>>>>>> origin/main
   static report(error: any, context?: Record<string, any>) {
     console.error('[ErrorService Reported]', error, context);
     // Future integration point for Sentry or other error tracking
