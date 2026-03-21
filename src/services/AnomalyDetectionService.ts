@@ -161,7 +161,7 @@ export class AnomalyDetectionService extends EventEmitter {
     const explanation = `Value ${value} deviates from mean ${mean.toFixed(2)} by ${zScore.toFixed(2)} standard deviations (${stdDev.toFixed(2)})`;
 
     return {
-      id: `anomaly_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      id: `anomaly_${Date.now()}_${crypto.randomUUID()}`,
       timestamp: new Date(),
       metric,
       value,

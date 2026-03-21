@@ -1,3 +1,4 @@
+import { v4 as uuidv4 } from "uuid";
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars, react-refresh/only-export-components, no-empty, no-case-declarations */
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import type { BotInstance} from '../types/bot';
@@ -52,7 +53,7 @@ export const BotProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   }, [bots, initialized]);
 
-  const generateId = () => Math.random().toString(36).substr(2, 9);
+  const generateId = () => uuidv4();
 
   const createBot = useCallback((name: string, description?: string) => {
     const newBot: BotInstance = {

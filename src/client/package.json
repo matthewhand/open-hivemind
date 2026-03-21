@@ -23,6 +23,7 @@
     "framer-motion": "^12.34.3",
     "lucide-react": "^0.460.0",
     "prop-types": "^15.8.1",
+    "uuid": "^11.1.0",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
     "react-markdown": "^10.1.0",

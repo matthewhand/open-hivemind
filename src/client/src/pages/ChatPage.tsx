@@ -1,3 +1,4 @@
+import { v4 as uuidv4 } from "uuid";
 import React, { useState, useEffect, useCallback } from 'react';
 import { apiService } from '../services/api';
 import ChatInterface, { ChatMessage } from '../components/DaisyUI/Chat';
@@ -113,7 +114,7 @@ const ChatPage: React.FC = () => {
 
       // Map history to ChatMessage
       const mappedMessages: ChatMessage[] = history.map((msg: any) => ({
-        id: msg.id || Math.random().toString(),
+        id: msg.id || uuidv4(),
         content: msg.content,
         timestamp: msg.createdAt || new Date().toISOString(),
         sender: {

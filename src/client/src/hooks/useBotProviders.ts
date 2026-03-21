@@ -1,3 +1,4 @@
+import { v4 as uuidv4 } from "uuid";
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import { useCallback } from 'react';
 import type {
@@ -11,7 +12,7 @@ const useBotProviders = () => {
   const { updateBot } = useBots();
 
   // Generate unique ID
-  const generateId = () => Math.random().toString(36).substr(2, 9);
+  const generateId = () => uuidv4();
 
   // Create message provider
   const createMessageProvider = useCallback((

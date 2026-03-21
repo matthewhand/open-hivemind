@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
-import React, { useState } from 'react';
+import React, { useState, useId } from 'react';
 
 export interface RatingProps {
   /** Current rating value (0-max, can be decimal for half-stars) */
@@ -40,8 +40,9 @@ export const Rating: React.FC<RatingProps> = ({
   name,
   ...props
 }) => {
+  const reactId = useId();
   const [hoverValue, setHoverValue] = useState<number | null>(null);
-  const groupName = name || `rating-${Math.random().toString(36).substr(2, 9)}`;
+  const groupName = name || `rating-${reactId}`;
 
   const getSizeClass = () => {
     switch (size) {

@@ -1,3 +1,4 @@
+import { v4 as uuidv4 } from "uuid";
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import { useState, useCallback, useEffect } from 'react';
 import type {
@@ -71,7 +72,7 @@ export const usePersonas = (): UsePersonasReturn => {
       setError(null);
 
       const newPersona: Persona = {
-        id: `persona-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        id: `persona-${Date.now()}-${uuidv4()}`,
         ...request,
         isBuiltIn: false,
         createdAt: new Date().toISOString(),
@@ -162,7 +163,7 @@ export const usePersonas = (): UsePersonasReturn => {
 
       const duplicatedPersona: Persona = {
         ...originalPersona,
-        id: `persona-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        id: `persona-${Date.now()}-${uuidv4()}`,
         name: newName,
         isBuiltIn: false,
         createdAt: new Date().toISOString(),

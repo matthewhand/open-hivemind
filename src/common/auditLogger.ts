@@ -301,7 +301,7 @@ export class AuditLogger {
   }
 
   private generateId(): string {
-    return `audit_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    return `audit_${Date.now()}_${crypto.randomUUID()}`;
   }
 
   public getLogFilePath(): string {

@@ -1,3 +1,4 @@
+import { v4 as uuidv4 } from "uuid";
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars, react-refresh/only-export-components, no-empty, no-case-declarations */
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
 
@@ -46,7 +47,7 @@ export const ToastProvider: React.FC<ToastProviderProps> = ({
   const [toasts, setToasts] = useState<Toast[]>([]);
 
   const addToast = useCallback((toastData: Omit<Toast, 'id'>) => {
-    const id = `toast-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    const id = `toast-${Date.now()}-${uuidv4()}`;
     const toast: Toast = {
       id,
       duration: 5000, // 5 seconds default

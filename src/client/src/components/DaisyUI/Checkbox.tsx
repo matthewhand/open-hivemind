@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, memo } from 'react';
+import React, { useRef, useEffect, memo, useId } from 'react';
 
 export interface CheckboxProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'size'> {
   /** The label text to display next to the checkbox */
@@ -58,10 +58,11 @@ export const Checkbox = memo<CheckboxProps>(({
   };
 
   const baseClasses = 'checkbox';
+  const reactId = useId();
   const variantClass = getVariantClass();
   const sizeClass = getSizeClass();
 
-  const inputId = id || `checkbox-${Math.random().toString(36).substr(2, 9)}`;
+  const inputId = id || `checkbox-${reactId}`;
 
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     // Reset indeterminate state when user interacts with the checkbox

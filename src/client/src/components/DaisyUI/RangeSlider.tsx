@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useId } from 'react';
 
 export interface RangeSliderProps {
   /** Current value of the slider */
@@ -76,10 +76,11 @@ export const RangeSlider: React.FC<RangeSliderProps> = ({
 
   const baseClasses = 'range';
   const variantClass = getVariantClass();
+  const reactId = useId();
   const sizeClass = getSizeClass();
   const disabledClass = disabled ? 'range-disabled' : '';
 
-  const sliderId = id || `range-slider-${Math.random().toString(36).substr(2, 9)}`;
+  const sliderId = id || `range-slider-${reactId}`;
 
   return (
     <div className={`form-control ${className}`.trim()}>

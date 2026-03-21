@@ -1,3 +1,4 @@
+import { v4 as uuidv4 } from "uuid";
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars, react-refresh/only-export-components, no-empty, no-case-declarations */
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import Card from '../components/DaisyUI/Card';
@@ -69,7 +70,7 @@ export const SmartNotificationSystem: React.FC<{ children: React.ReactNode }> = 
   const addNotification = (notification: Omit<Notification, 'id' | 'timestamp' | 'read'>) => {
     const newNotification: Notification = {
       ...notification,
-      id: Math.random().toString(36).substr(2, 9),
+      id: uuidv4(),
       timestamp: new Date(),
       read: false,
     };
