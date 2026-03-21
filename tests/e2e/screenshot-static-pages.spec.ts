@@ -13,7 +13,7 @@ test.describe('Static Pages Screenshots', () => {
     await page.waitForSelector('h1:has-text("Static Pages")');
 
     // Wait a bit for UI to settle
-    await page.waitForTimeout(500);
+    await page.waitForLoadState('networkidle');
 
     // Screenshot Static Pages
     await page.screenshot({ path: 'docs/screenshots/static-pages.png', fullPage: true });

@@ -55,7 +55,7 @@ test.describe('Marketplace Page', () => {
               version: '1.0.0',
               type: 'llm',
               status: 'built-in',
-              githubUrl: 'https://github.com/open-hivemind/local-llm'
+              repoUrl: 'https://github.com/open-hivemind/local-llm'
             },
             {
               name: 'community/advanced-tools',
@@ -64,7 +64,7 @@ test.describe('Marketplace Page', () => {
               version: '2.1.0',
               type: 'tool',
               status: 'available',
-              githubUrl: 'https://github.com/community/advanced-tools'
+              repoUrl: 'https://github.com/community/advanced-tools'
             }
           ]
         )

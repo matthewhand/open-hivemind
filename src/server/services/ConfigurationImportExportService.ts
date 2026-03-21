@@ -589,6 +589,7 @@ export class ConfigurationImportExportService {
         const uniqueIdsToCheck = new Set<number>();
         for (const version of importData.versions) {
           const configId = version.botConfigurationId;
+          if (!configId) continue;
           if (!validConfigIds.has(configId) && !invalidConfigIds.has(configId)) {
             uniqueIdsToCheck.add(configId);
           }
@@ -621,6 +622,7 @@ export class ConfigurationImportExportService {
         for (const version of importData.versions) {
           try {
             const configId = version.botConfigurationId;
+          if (!configId) continue;
             const isValid = validConfigIds.has(configId);
 
             if (isValid) {
