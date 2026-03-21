@@ -75,7 +75,13 @@ function isPrivateIPv6(ip: string): boolean {
   if (ip === '::' || ip === '0:0:0:0:0:0:0:0') return true;
   const firstBlock = ip.split(':')[0].toLowerCase();
   if (firstBlock.startsWith('fc') || firstBlock.startsWith('fd')) return true;
-  if (firstBlock.startsWith('fe8') || firstBlock.startsWith('fe9') || firstBlock.startsWith('fea') || firstBlock.startsWith('feb')) return true;
+  if (
+    firstBlock.startsWith('fe8') ||
+    firstBlock.startsWith('fe9') ||
+    firstBlock.startsWith('fea') ||
+    firstBlock.startsWith('feb')
+  )
+    return true;
   if (ip.toLowerCase().startsWith('::ffff:')) {
     const ipv4Part = ip.split(':').pop();
     if (ipv4Part && net.isIPv4(ipv4Part)) return isPrivateIPv4(ipv4Part);
