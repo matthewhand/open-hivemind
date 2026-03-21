@@ -151,7 +151,7 @@ export class BotCommandHandler implements CommandHandler {
       console.log(`   Provider: ${bot.messageProvider} → ${bot.llmProvider}`);
 
       if (verbose) {
-        console.log(`   Enabled: ${(bot as any).enabled ? chalk.green('Yes') : chalk.red('No')}`);
+        console.log(`   Enabled: ${bot.enabled ? chalk.green('Yes') : chalk.red('No')}`);
         console.log(`   Created: ${(bot as any).createdAt || 'Unknown'}`);
       }
       console.log();
