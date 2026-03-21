@@ -10,10 +10,11 @@ export interface SecureConfig {
   id: string;
   name: string;
   type?: string;
-  createdAt?: string;
   data: any;
   updatedAt: string;
   checksum: string;
+  createdAt?: string;
+  rotationInterval?: number;
 }
 
 /**
@@ -158,10 +159,39 @@ export class SecureConfigManager {
         );
       }
 
+      // Check if rotation is required based on rotationInterval
+      // Ensure the config actually contains keys before warning about rotation
+      const hasConfiguredKeys = config.data && Object.keys(config.data).length > 0;
+      if (hasConfiguredKeys && config.rotationInterval && config.rotationInterval > 0) {
+        const lastUpdated = new Date(config.updatedAt).getTime();
+        const now = Date.now();
+        const daysSinceUpdate = (now - lastUpdated) / (1000 * 60 * 60 * 24);
+
+        if (daysSinceUpdate >= config.rotationInterval) {
+          debug(`[WARNING] Secure configuration '${config.name}' (ID: ${config.id}) is due for credential rotation (Interval: ${config.rotationInterval} days, Days since update: ${Math.floor(daysSinceUpdate)} days).`);
+          // In a fully automated system, this could trigger an event/webhook to automatically rotate secrets.
+        }
+      }
+
       return config;
     } catch (error: unknown) {
       const hivemindError = ErrorUtils.toHivemindError(error) as any;
       debug(`Failed to retrieve configuration ${id}:`, hivemindError.message);
+      return null;
+    }
+  }
+
+  public getDecryptedMainConfig(env: string): any {
+    try {
+      const configPath = path.join(this.mainConfigDir, `${env}.json.enc`);
+      if (fs.existsSync(configPath)) {
+        const encryptedData = fs.readFileSync(configPath, 'utf8');
+        const decryptedData = this.decrypt(encryptedData);
+        return JSON.parse(decryptedData);
+      }
+      return null;
+    } catch (error) {
+      debug(`Failed to read decrypted main config for env ${env}:`, error);
       return null;
     }
   }
@@ -194,20 +224,25 @@ export class SecureConfigManager {
   public async listConfigs(): Promise<Omit<SecureConfig, 'data'>[]> {
     try {
       const files = await fs.promises.readdir(this.configDir);
-      const configs: Omit<SecureConfig, 'data'>[] = [];
-
-      for (const file of files) {
-        if (file.endsWith('.enc')) {
+      const configPromises = files
+        .filter(file => file.endsWith('.enc'))
+        .map(async (file) => {
           const id = file.replace('.enc', '');
           const config = await this.getConfig(id);
           if (config) {
             const { data, ...metadata } = config;
-            configs.push(metadata);
+            return metadata;
           }
-        }
-      }
+          return null;
+        });
 
-      return configs;
+      // Use allSettled so a single corrupt file doesn't abort the entire listing
+      const results = await Promise.allSettled(configPromises);
+      return results
+        .filter((r): r is PromiseFulfilledResult<Omit<SecureConfig, 'data'>> =>
+          r.status === 'fulfilled' && r.value !== null
+        )
+        .map(r => r.value);
     } catch (error: unknown) {
       debug('Failed to list configurations:', error);
       return [];
@@ -217,20 +252,41 @@ export class SecureConfigManager {
   /**
    * Create a full backup of all secure configurations
    */
+  public async listBackups(): Promise<any[]> {
+    try {
+      if (!fs.existsSync(this.backupDir)) return [];
+      const files = await fs.promises.readdir(this.backupDir);
+      return files.filter(f => f.endsWith('.enc'));
+    } catch {
+      return [];
+    }
+  }
+
   public async createBackup(): Promise<string> {
     try {
       const configs = await fs.promises.readdir(this.configDir);
       const backupId = `backup_${new Date().toISOString().replace(/[:.]/g, '-')}`;
       const backupPath = path.join(this.backupDir, `${backupId}.json`);
 
-      const allConfigs: Record<string, SecureConfig> = {};
-      for (const file of configs) {
-        if (file.endsWith('.enc')) {
+      const configPromises = configs
+        .filter(file => file.endsWith('.enc'))
+        .map(async (file) => {
           const id = file.replace('.enc', '');
           const config = await this.getConfig(id);
           if (config) {
-            allConfigs[id] = config;
+            return { id, config };
           }
+          return null;
+        });
+
+      // Use allSettled so a single corrupt file doesn't abort the entire backup
+      const results = await Promise.allSettled(configPromises);
+      const allConfigs: Record<string, SecureConfig> = {};
+      for (const result of results) {
+        if (result.status === 'fulfilled' && result.value) {
+          allConfigs[result.value.id] = result.value.config;
+        } else if (result.status === 'rejected') {
+          debug('Skipping config during backup due to error:', result.reason);
         }
       }
 
@@ -318,9 +374,9 @@ export class SecureConfigManager {
       const { data } = fullBackupData;
 
       // Restore configurations
-      for (const config of Object.values(data)) {
-        await this.storeConfig(config as SecureConfig);
-      }
+      await Promise.all(
+        Object.values(data).map(config => this.storeConfig(config as SecureConfig))
+      );
 
       debug(`Backup ${backupId} restored successfully`);
     } catch (error: unknown) {

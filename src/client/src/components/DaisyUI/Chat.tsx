@@ -1,7 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
 
-const AVATAR_INITIALS_MAX_LENGTH = 2;
-
 export interface ChatMessage {
   id: string;
   content: string;
@@ -49,53 +47,20 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
   maxHeight = '600px',
 }) => {
   const [inputValue, setInputValue] = useState('');
-  const [isAutoScroll, setIsAutoScroll] = useState(true);
-  const [hasNewMessages, setHasNewMessages] = useState(false);
-  const [unreadStartIndex, setUnreadStartIndex] = useState<number | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const scrollContainerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const scrollToBottom = (force = false) => {
-    if (messagesEndRef.current && (isAutoScroll || force)) {
+  const scrollToBottom = () => {
+    if (messagesEndRef.current) {
       setTimeout(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-        if (force) {
-          setIsAutoScroll(true);
-          setHasNewMessages(false);
-          setUnreadStartIndex(null);
-        }
       }, 0);
-    } else if (!isAutoScroll) {
-      setHasNewMessages(true);
-    }
-  };
-
-  const handleScroll = () => {
-    if (!scrollContainerRef.current) return;
-
-    const { scrollTop, scrollHeight, clientHeight } = scrollContainerRef.current;
-    const isAtBottom = Math.abs(scrollHeight - clientHeight - scrollTop) < 50;
-
-    if (isAtBottom) {
-      setIsAutoScroll(true);
-      setHasNewMessages(false);
-      setUnreadStartIndex(null);
-    } else {
-      setIsAutoScroll(false);
     }
   };
 
   useEffect(() => {
-    if (!isAutoScroll && messages.length > 0) {
-      if (unreadStartIndex === null) {
-        setUnreadStartIndex(messages.length - 1);
-      }
-    } else if (isAutoScroll) {
-       setUnreadStartIndex(null);
-    }
     scrollToBottom();
-  }, [messages, isAutoScroll]);
+  }, [messages]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -121,7 +86,6 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
   };
 
   const renderMessage = (message: ChatMessage, index: number) => {
-    const showUnreadDivider = unreadStartIndex === index;
     const isCurrentUser = message.sender.id === currentUserId;
     const isBot = message.sender.type === 'bot';
     const isSystem = message.sender.type === 'system';
@@ -134,40 +98,29 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
 
     if (isSystem) {
       return (
-        <React.Fragment key={message.id}>
-          {showUnreadDivider && (
-            <div className="divider text-secondary text-sm font-medium my-4">New Messages</div>
-          )}
-          <div className="flex justify-center my-4">
-            <div className="badge badge-neutral badge-outline">
-              {message.content}
-            </div>
+        <div key={message.id} className="flex justify-center my-4">
+          <div className="badge badge-neutral badge-outline">
+            {message.content}
           </div>
-        </React.Fragment>
+        </div>
       );
     }
 
     return (
-      <React.Fragment key={message.id}>
-        {showUnreadDivider && (
-          <div className="divider text-secondary text-sm font-medium my-4">New Messages</div>
-        )}
-        <div className={`chat ${isCurrentUser ? 'chat-end' : 'chat-start'} ${isGrouped ? 'mt-1' : 'mt-4'}`}>
+      <div key={message.id} className={`chat ${isCurrentUser ? 'chat-end' : 'chat-start'} ${isGrouped ? 'mt-1' : 'mt-4'}`}>
         {!isGrouped && (
-          <div className="chat-image avatar">
-            <div className="w-10 rounded-full">
-              {message.sender.avatar ? (
+          <div className={`chat-image avatar ${!message.sender.avatar ? 'placeholder' : ''}`}>
+            {message.sender.avatar ? (
+              <div className="w-10 rounded-full">
                 <img alt={message.sender.name} src={message.sender.avatar} />
-              ) : (
-                <div className={'avatar placeholder'}>
-                  <div className={`bg-${isBot ? 'secondary' : 'primary'} text-${isBot ? 'secondary' : 'primary'}-content rounded-full w-10`}>
-                    <span className="text-xs">
-                      {isBot ? '🤖' : (message.sender.name || '?').charAt(0).toUpperCase()}
-                    </span>
-                  </div>
-                </div>
-              )}
-            </div>
+              </div>
+            ) : (
+              <div className={`bg-${isBot ? 'secondary' : 'primary'} text-${isBot ? 'secondary' : 'primary'}-content rounded-full w-10`}>
+                <span className="text-xl">
+                  {isBot ? '🤖' : (message.sender.name || '?').charAt(0).toUpperCase()}
+                </span>
+              </div>
+            )}
           </div>
         )}
 
@@ -190,7 +143,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
           : isBot
             ? 'chat-bubble-secondary'
             : 'chat-bubble-accent'
-        } ${message.metadata?.status === 'failed' ? 'chat-bubble-error' : ''}`}>
+          } ${message.metadata?.status === 'failed' ? 'chat-bubble-error' : ''}`}>
           {message.type === 'code' ? (
             <div className="mockup-code text-sm">
               <pre><code>{message.content}</code></pre>
@@ -240,9 +193,8 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
           </div>
         )}
       </div>
-    </React.Fragment>
-  );
-};
+    );
+  };
 
   return (
     <div className={`flex flex-col bg-base-100 ${className}`} style={{ height: maxHeight }}>
@@ -264,7 +216,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
 
         <div className="flex items-center gap-2">
           <div className="dropdown dropdown-end">
-            <div tabIndex={0} role="button" className="btn btn-ghost btn-sm btn-circle">
+            <div tabIndex={0} role="button" className="btn btn-ghost btn-sm btn-circle" aria-label="Chat options">
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"></path>
               </svg>
@@ -293,13 +245,9 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
             {/* Typing Indicator */}
             {showTypingIndicator && typingUsers.length > 0 && (
               <div className="chat chat-start">
-                <div className="chat-image avatar">
-                  <div className="w-10 rounded-full">
-                    <div className="avatar placeholder">
-                      <div className="bg-secondary text-secondary-content rounded-full w-10">
-                        <span className="text-xs">🤖</span>
-                      </div>
-                    </div>
+                <div className="chat-image avatar placeholder">
+                  <div className="bg-secondary text-secondary-content rounded-full w-10">
+                    <span className="text-xl">🤖</span>
                   </div>
                 </div>
                 <div className="chat-bubble chat-bubble-secondary">
@@ -310,21 +258,6 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
 
             <div ref={messagesEndRef} />
           </>
-        )}
-
-        {/* Floating Scroll to Bottom Button */}
-        {!isAutoScroll && hasNewMessages && (
-          <div className="sticky bottom-4 left-0 right-0 flex justify-center pointer-events-none z-10">
-            <button
-              className="btn btn-sm btn-secondary shadow-lg pointer-events-auto flex items-center gap-2 animate-bounce"
-              onClick={() => scrollToBottom(true)}
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
-              </svg>
-              New Messages
-            </button>
-          </div>
         )}
       </div>
 
@@ -369,78 +302,5 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
   );
 };
 
-// Quick Actions Component for common bot commands
-interface QuickActionsProps {
-  onActionClick: (action: string) => void;
-  actions?: { label: string; command: string; icon?: string }[];
-}
-
-export const ChatQuickActions: React.FC<QuickActionsProps> = ({
-  onActionClick,
-  actions = [
-    { label: 'Status', command: '/status', icon: '📊' },
-    { label: 'Help', command: '/help', icon: '❓' },
-    { label: 'Restart', command: '/restart', icon: '🔄' },
-    { label: 'Settings', command: '/settings', icon: '⚙️' },
-  ],
-}) => {
-  return (
-    <div className="flex gap-2 p-2 bg-base-200 rounded-lg">
-      {actions.map((action, index) => (
-        <button
-          key={index}
-          className="btn btn-sm btn-ghost"
-          onClick={() => onActionClick(action.command)}
-        >
-          {action.icon && <span className="mr-1">{action.icon}</span>}
-          {action.label}
-        </button>
-      ))}
-    </div>
-  );
-};
-
-// Chat Statistics Component
-interface ChatStatsProps {
-  totalMessages: number;
-  activeUsers: number;
-  uptime: string;
-  responseTime: string;
-}
-
-export const ChatStats: React.FC<ChatStatsProps> = ({
-  totalMessages,
-  activeUsers,
-  uptime,
-  responseTime,
-}) => {
-  return (
-    <div className="stats stats-vertical lg:stats-horizontal shadow">
-      <div className="stat">
-        <div className="stat-title">Messages</div>
-        <div className="stat-value text-primary">{totalMessages.toLocaleString()}</div>
-        <div className="stat-desc">Total processed</div>
-      </div>
-
-      <div className="stat">
-        <div className="stat-title">Active Users</div>
-        <div className="stat-value text-secondary">{activeUsers}</div>
-        <div className="stat-desc">Currently chatting</div>
-      </div>
-
-      <div className="stat">
-        <div className="stat-title">Uptime</div>
-        <div className="stat-value text-accent">{uptime}</div>
-        <div className="stat-desc">System running</div>
-      </div>
-
-      <div className="stat">
-        <div className="stat-title">Response Time</div>
-        <div className="stat-value text-info">{responseTime}</div>
-        <div className="stat-desc">Average response</div>
-      </div>
-    </div>
-  );
-};
 
 export default ChatInterface;

@@ -177,9 +177,6 @@ describe('Bots Router', () => {
   });
 
   it('GET /api/bots/:id/activity should return activity logs', async () => {
-    // mockManager.getBot is used but apparently undefined in this block.
-    // Let's add it to the mock
-    mockManager.getBot = jest.fn().mockResolvedValue({ id: 'bot1', name: 'Bot 1' });
     const res = await request(app).get('/api/bots/bot1/activity');
     expect(res.status).toBe(200);
     expect(res.body.data.activity).toEqual([]);
@@ -202,7 +199,7 @@ describe('Bots Router', () => {
     it('should return 400 if name is missing', async () => {
       const res = await request(app).post('/api/bots').send({ messageProvider: 'discord' });
       expect(res.status).toBe(400);
-      expect(res.body.error).toBe('Bot name is required');
+      expect(res.body.error).toBe('Validation failed');
     });
   });
 
@@ -263,7 +260,7 @@ describe('Bots Router', () => {
     it('should return 400 if newName is missing', async () => {
       const res = await request(app).post('/api/bots/test-bot/clone').send({});
       expect(res.status).toBe(400);
-      expect(res.body.error).toBe('New bot name is required');
+      expect(res.body.error).toBe('Validation failed');
     });
   });
 

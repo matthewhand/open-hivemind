@@ -28,7 +28,8 @@ export type LlmProvider =
   | 'perplexity'
   | 'replicate'
   | 'n8n'
-  | 'openswarm';
+  | 'openswarm'
+  | 'letta';
 
 /**
  * Slack connection modes
@@ -229,6 +230,8 @@ export interface BotConfig {
   openwebui?: OpenWebUIConfig;
   /** OpenSwarm configuration */
   openswarm?: OpenSwarmConfig;
+  /** Letta configuration */
+  letta?: LettaConfig;
   /** Index signature for compatibility with Record<string, unknown> */
   [key: string]: unknown;
 }
@@ -757,7 +760,12 @@ export type PlatformConfig = DiscordConfig | SlackConfig | MattermostConfig;
 /**
  * Union type for all LLM provider configurations
  */
-export type LlmProviderConfig = OpenAIConfig | FlowiseConfig | OpenWebUIConfig | OpenSwarmConfig;
+export interface LettaConfig {
+  agentId?: string;
+  systemPrompt?: string;
+}
+
+export type LlmProviderConfig = OpenAIConfig | FlowiseConfig | OpenWebUIConfig | OpenSwarmConfig | LettaConfig;
 
 /**
  * Union type for all configuration types

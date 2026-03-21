@@ -201,7 +201,36 @@ export class DiscordMessageSender {
         });
       } catch {}
       return message.id;
-    } catch (error: unknown) {
+    } catch (error: any) {
+      if (error?.name === 'DiscordAPIError') {
+        const code = error.code;
+        // 50013 = Missing Permissions, 10003 = Unknown Channel, 50001 = Missing Access
+        if (code === 50013 || code === 10003 || code === 50001) {
+          const validationError = new ValidationError(
+            `Discord API validation error: ${error.message}`,
+            'DISCORD_API_VALIDATION_ERROR'
+          );
+
+          log(
+            `Validation error sending to ${selectedChannelId}${threadId ? `/${threadId}` : ''}: ${validationError.message}`
+          );
+          this.deps.logger.error(
+            `[${effectiveSenderName}] Discord send message validation error:`,
+            validationError
+          );
+          try {
+            webSocketService?.recordAlert({
+              level: 'error',
+              title: 'Discord sendMessage validation failed',
+              message: validationError.message,
+              botName: botInfo.botUserName,
+              metadata: { channelId: selectedChannelId, errorType: 'ValidationError', code },
+            });
+          } catch {}
+          return '';
+        }
+      }
+
       if (error instanceof ValidationError) {
         log(
           `Validation error sending to ${selectedChannelId}${threadId ? `/${threadId}` : ''}: ${(error as Error).message}`

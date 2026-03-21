@@ -1,7 +1,8 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars, react-refresh/only-export-components, no-empty, no-case-declarations */
-import type { ComponentType} from 'react';
+/* eslint-disable react-refresh/only-export-components, no-case-declarations */
+import type { ComponentType } from 'react';
 import { lazy, Suspense } from 'react';
 import React from 'react';
+import logger from '../utils/logger';
 
 // Types for dynamic integration components
 export interface IntegrationUIComponent {
@@ -9,7 +10,7 @@ export interface IntegrationUIComponent {
   name: string;
   description?: string;
   category: 'bot' | 'provider' | 'analytics' | 'utility';
-  component: ComponentType<any>;
+  component: ComponentType<any>; // eslint-disable-line @typescript-eslint/no-explicit-any
   enabled: boolean;
   requiredProviders?: string[];
   icon?: string;
@@ -90,7 +91,7 @@ export class IntegrationLoader {
     return [
       'discord',
       'slack',
-      'webhook',
+      'telegram',
       'openai',
       'flowise',
       'mattermost',
@@ -173,7 +174,7 @@ export class IntegrationLoader {
       return defaultManifest;
 
     } catch (error) {
-      // Return default manifest on error
+      logger.debug(`Failed to load manifest for integration ${integrationId}, using default:`, error);
       const defaultManifest: IntegrationManifest = {
         id: integrationId,
         name: this.capitalizeFirst(integrationId),
@@ -220,8 +221,9 @@ export class IntegrationLoader {
             component,
             enabled: true,
           });
-        } catch (componentError) {
+        } catch (_componentError) {
           // Component doesn't exist, skip it
+          logger.debug(`Component ${componentPath} not found for integration ${integrationId}`);
         }
       }
 
@@ -235,7 +237,7 @@ export class IntegrationLoader {
   /**
    * Dynamically load a React component from an integration
    */
-  private async loadComponent(integrationId: string, componentPath: string): Promise<ComponentType<any>> {
+  private async loadComponent(integrationId: string, componentPath: string): Promise<ComponentType<any>> { // eslint-disable-line @typescript-eslint/no-explicit-any
     try {
       // Try to dynamically import the component
       const modulePath = `../../integrations/${integrationId}/${componentPath}`;

@@ -18,31 +18,44 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Set up Node.js
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 10
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-          cache: 'npm'
+          cache: 'pnpm'
 
       - name: Install dependencies
-        run: npm ci
+        run: pnpm install
 
+      - name: Audit for hardcoded secrets
+        run: pnpm run audit:secrets
+
+      - name: Audit for hardcoded secrets
+        run: pnpm run audit:secrets
+
+>>>>>>> f4fe874f (ci: update workflows to strictly use pnpm instead of npm)
       - name: Run lint
-        run: npm run lint
+        run: pnpm run lint
 
       - name: Check types
-        run: npm run check-types
+<<<<<<< HEAD
+        run: pnpm run check-types
+<<<<<<< HEAD
 
       - name: Run security audit
-        run: npm audit --audit-level=high --production
+        run: pnpm audit --audit-level=high --production
 
       - name: Run unit tests
-        run: npm test -- --passWithNoTests --coverage --testPathPattern=tests/unit
+        run: pnpm test -- --passWithNoTests --coverage --testPathPattern=tests/unit
 
       - name: Run integration tests
-        run: npm test -- --passWithNoTests --testPathPattern=tests/integration
+        run: pnpm test -- --passWithNoTests --testPathPattern=tests/integration
 
       - name: Build
-        run: npm run build
+        run: pnpm run build
 
       - name: Test bundle size
         run: |

@@ -53,6 +53,7 @@ const SettingsGeneral: React.FC = () => {
         }));
       }
     } catch (e) {
+      console.warn('Failed to load timezones:', e);
     }
     // Fallback options
     return [
@@ -64,6 +65,7 @@ const SettingsGeneral: React.FC = () => {
       { value: 'Australia/Sydney', label: 'Sydney' },
     ];
   }, []);
+
 
   const fetchSettings = useCallback(async () => {
     try {

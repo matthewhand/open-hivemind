@@ -13,7 +13,6 @@ interface SystemConfig {
   enableDebugMode: boolean;
   enableAutoBackup: boolean;
   backupInterval: number;
-  maxRetainedBackups: number;
   alertThresholds: {
     cpu: number;
     memory: number;
@@ -33,17 +32,6 @@ interface BackupRecord {
   createdAt: string;
 }
 
-
-const calculateAlertStats = (alerts: any[]) => {
-  return alerts.reduce((acc, a) => {
-    if (a.level === 'critical') acc.critical++;
-    else if (a.level === 'warning') acc.warning++;
-    else if (a.level === 'error') acc.error++;
-    else if (a.level === 'info') acc.info++;
-    return acc;
-  }, { critical: 0, warning: 0, error: 0, info: 0, total: alerts.length });
-};
-
 const SystemManagement: React.FC = () => {
   const { alerts, performanceMetrics } = useWebSocket();
   const [systemConfig, setSystemConfig] = useState<SystemConfig>({
@@ -53,7 +41,6 @@ const SystemManagement: React.FC = () => {
     enableDebugMode: false,
     enableAutoBackup: true,
     backupInterval: 24 * 60 * 60 * 1000,
-    maxRetainedBackups: 10,
     alertThresholds: {
       cpu: 80,
       memory: 85,
@@ -229,24 +216,6 @@ const SystemManagement: React.FC = () => {
         encryptionKey: useEncryption ? encryptionKey : undefined
       });
       alert('Backup created successfully');
-
-      // Enforce backup retention policy
-      try {
-        const backupList = await apiService.listSystemBackups();
-        if (backupList.length > systemConfig.maxRetainedBackups) {
-          // Assuming backups are returned sorted newest to oldest, or we can sort them to be safe
-          const sortedBackups = backupList.sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-          const backupsToDelete = sortedBackups.slice(systemConfig.maxRetainedBackups);
-
-          for (const backup of backupsToDelete) {
-            await apiService.deleteSystemBackup(backup.id);
-          }
-          console.log(`Enforced retention policy: deleted ${backupsToDelete.length} old backups.`);
-        }
-      } catch (retentionError) {
-        console.error('Failed to enforce backup retention policy:', retentionError);
-      }
-
       await fetchBackupHistory();
     } catch (error) {
       console.error('Failed to create backup:', error);
@@ -256,7 +225,7 @@ const SystemManagement: React.FC = () => {
     }
   };
 
-  const handleRestoreBackup = React.useCallback(async (backupId: string) => {
+  const handleRestoreBackup = async (backupId: string) => {
     if (confirm('Are you sure you want to restore this backup? This will overwrite current configuration.')) {
       try {
         await apiService.restoreSystemBackup(backupId);
@@ -269,7 +238,7 @@ const SystemManagement: React.FC = () => {
     }
   };
 
-  const handleDeleteBackup = React.useCallback(async (backupId: string) => {
+  const handleDeleteBackup = async (backupId: string) => {
     if (confirm('Are you sure you want to delete this backup?')) {
       try {
         await apiService.deleteSystemBackup(backupId);
@@ -293,24 +262,21 @@ const SystemManagement: React.FC = () => {
     }
   };
 
-
-  const alertStats = React.useMemo(() => calculateAlertStats(alerts), [alerts]);
-
   const currentMetric = performanceMetrics[performanceMetrics.length - 1] || {
     cpuUsage: 0, memoryUsage: 0, activeConnections: 0, messageRate: 0, errorRate: 0, responseTime: 0
   };
 
-  const systemMetricsCards = React.useMemo(() => [
+  const systemMetricsCards = [
     {
       title: 'Alert Management',
       subtitle: 'Active system alerts',
-      status: alertStats.error > 0 ? 'error' :
-        alertStats.warning > 0 ? 'warning' : 'healthy',
+      status: alerts.some(a => a.level === 'error') ? 'error' :
+        alerts.some(a => a.level === 'warning') ? 'warning' : 'healthy',
       metrics: [
-        { label: 'Critical', value: alertStats.critical, icon: '🚨' },
-        { label: 'Warnings', value: alertStats.warning, icon: '⚠️' },
-        { label: 'Info', value: alertStats.info, icon: 'ℹ️' },
-        { label: 'Total', value: alertStats.total, icon: '✅' },
+        { label: 'Critical', value: alerts.filter(a => a.level === 'critical').length, icon: '🚨' },
+        { label: 'Warnings', value: alerts.filter(a => a.level === 'warning').length, icon: '⚠️' },
+        { label: 'Info', value: alerts.filter(a => a.level === 'info').length, icon: 'ℹ️' },
+        { label: 'Total', value: alerts.length, icon: '✅' },
       ],
     },
     {
@@ -475,20 +441,6 @@ const SystemManagement: React.FC = () => {
                     max="168"
                   />
                 </div>
-
-                <div className="form-control">
-                  <label className="label">
-                    <span className="label-text">Max Retained Backups</span>
-                  </label>
-                  <input
-                    type="number"
-                    className="input input-bordered"
-                    value={systemConfig.maxRetainedBackups}
-                    onChange={(e) => handleConfigUpdate('maxRetainedBackups', Number(e.target.value))}
-                    min="1"
-                    max="100"
-                  />
-                </div>
               </div>
 
               <div className="space-y-4">
@@ -627,22 +579,14 @@ const SystemManagement: React.FC = () => {
           {activeTab === 'performance' && (
             <div className="space-y-6">
               <div className="flex justify-between items-center">
+
                 <h3 className="text-xl font-semibold">System Performance & Monitoring</h3>
-                <div className="flex gap-2">
-                  <button
-                    className="btn btn-sm btn-ghost"
-                    onClick={fetchPerformanceData}
-                    disabled={isPerformanceLoading}
-                  >
-                    {isPerformanceLoading ? <span className="loading loading-spinner loading-xs"></span> : '🔄 Refresh'}
-                  </button>
-                  <button
-                    className="btn btn-warning btn-sm"
-                    onClick={handleClearCache}
-                  >
-                    Clear System Cache
-                  </button>
-                </div>
+                <button
+                  className="btn btn-warning btn-sm"
+                  onClick={handleClearCache}
+                >
+                  Clear System Cache
+                </button>
               </div>
 
               {apiStatus && (
@@ -669,8 +613,15 @@ const SystemManagement: React.FC = () => {
                 </div>
               )}
 
-              <div className="mt-8">
-                <h3 className="text-xl font-semibold mb-4">System Information & Database Status</h3>
+              <div className="flex justify-between items-center mt-8">
+                <h3 className="text-xl font-semibold">Performance Tuning & System Info</h3>
+                <button
+                  className="btn btn-sm btn-ghost"
+                  onClick={fetchPerformanceData}
+                  disabled={isPerformanceLoading}
+                >
+                  {isPerformanceLoading ? <span className="loading loading-spinner loading-xs"></span> : '🔄 Refresh'}
+                </button>
               </div>
 
               {systemInfo && (

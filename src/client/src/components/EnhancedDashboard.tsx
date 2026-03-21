@@ -64,7 +64,7 @@ const EnhancedDashboard: React.FC = () => {
       setIsLoading(true);
       setError(null);
 
-      const response = await apiService.get<StatusResponse>('/api/dashboard/status');
+      const response = await apiService.get<StatusResponse>('/api/dashboard/api/status');
       const { bots: botData, uptime } = response.data;
 
       setBots(botData);
@@ -401,7 +401,7 @@ const EnhancedDashboard: React.FC = () => {
 
       {/* Toast Notifications */}
       {toastMessage && (
-        <div className="toast toast-bottom toast-center z-50">
+        <div className="toast toast-bottom toast-center z-50" role="status" aria-live="polite">
           <div className={`alert ${toastType === 'success' ? 'alert-success' : toastType === 'error' ? 'alert-error' : toastType === 'warning' ? 'alert-warning' : 'alert-info'}`}>
             <span>{toastMessage}</span>
             <button className="btn btn-sm btn-ghost" onClick={() => setToastMessage('')}>✕</button>

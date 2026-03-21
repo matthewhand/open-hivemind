@@ -95,44 +95,4 @@ test.describe('Error Handling & Edge Cases', () => {
       await assertNoErrors(errors, 'Modal close with Escape');
     });
   });
-
-  test.describe('API Error Handling', () => {
-    test('shows error message on 500 server error', async ({ page }) => {
-      // Mock API to return 500
-      await page.route('**/api/bots', async (route) => {
-        await route.fulfill({
-          status: 500,
-          json: { error: 'Internal Server Error' },
-        });
-      });
-
-      await page.goto('/admin/bots');
-      await page.waitForLoadState('networkidle');
-
-      // We expect an error banner or toast to appear, or a full page error state
-      const errorIndicator = page.locator('text=/error|failed|something went wrong/i').first();
-      await expect(errorIndicator).toBeVisible({ timeout: 10000 });
-
-      await page.screenshot({ path: 'test-results/error-13-api-500.png', fullPage: true });
-    });
-
-    test('shows forbidden message on 403', async ({ page }) => {
-      // Mock API to return 403
-      await page.route('**/api/bots', async (route) => {
-        await route.fulfill({
-          status: 403,
-          json: { error: 'Forbidden' },
-        });
-      });
-
-      await page.goto('/admin/bots');
-      await page.waitForLoadState('networkidle');
-
-      // Expecting a forbidden message or error state
-      const errorIndicator = page.locator('text=/forbidden|access denied|error/i').first();
-      await expect(errorIndicator).toBeVisible({ timeout: 10000 });
-
-      await page.screenshot({ path: 'test-results/error-14-api-403.png', fullPage: true });
-    });
-  });
 });

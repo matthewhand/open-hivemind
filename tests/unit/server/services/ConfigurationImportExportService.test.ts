@@ -109,3 +109,57 @@ describe('ConfigurationImportExportService - Backup Retention', () => {
     expect(result.filePath).toBeDefined();
   });
 });
+
+describe('ConfigurationImportExportService - Version Caching', () => {
+  let service: any;
+  let dbManagerMock: any;
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+
+    // Reset singleton instance to ensure clean state
+    (ConfigurationImportExportService as any).instance = undefined;
+    service = ConfigurationImportExportService.getInstance();
+
+    // Setup DB Manager mock specifically for caching tests
+    dbManagerMock = {
+      getBotConfiguration: jest.fn().mockImplementation((id) => {
+        if (id === 1 || id === 2) {
+          return Promise.resolve({ id, name: `Config ${id}` });
+        }
+        return Promise.resolve(null);
+      }),
+      createBotConfigurationVersion: jest.fn().mockResolvedValue(1),
+    };
+    (service as any).dbManager = dbManagerMock;
+
+    // Mock fs.readFile to return standard format JSON
+    (fs.promises.readFile as jest.Mock).mockImplementation((path) => {
+      return Promise.resolve(JSON.stringify({
+        configurations: [],
+        versions: [
+          { botConfigurationId: 1, version: '1.0' },
+          { botConfigurationId: 1, version: '1.1' },
+          { botConfigurationId: 1, version: '1.2' },
+          { botConfigurationId: 2, version: '1.0' },
+          { botConfigurationId: 2, version: '1.1' },
+          { botConfigurationId: 3, version: '1.0' }, // Invalid ID
+          { botConfigurationId: 3, version: '1.1' },
+        ]
+      }));
+    });
+  });
+
+  test('should cache getBotConfiguration calls when processing versions to prevent N+1 query', async () => {
+    const result = await service.importConfigurations('/fake/path.json', { format: 'json' });
+
+    // Assert that the db manager was called exactly once per unique botConfigurationId
+    expect(dbManagerMock.getBotConfiguration).toHaveBeenCalledTimes(3);
+    expect(dbManagerMock.getBotConfiguration).toHaveBeenCalledWith(1);
+    expect(dbManagerMock.getBotConfiguration).toHaveBeenCalledWith(2);
+    expect(dbManagerMock.getBotConfiguration).toHaveBeenCalledWith(3);
+
+    // Valid versions should be created (5 valid versions total)
+    expect(dbManagerMock.createBotConfigurationVersion).toHaveBeenCalledTimes(5);
+  });
+});

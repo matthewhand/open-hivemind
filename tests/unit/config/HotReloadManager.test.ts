@@ -12,7 +12,13 @@ jest.mock('../../../src/config/UserConfigStore');
 jest.mock('../../../src/server/services/WebSocketService');
 jest.mock('../../../src/types/errors');
 jest.mock('fs');
-
+jest.mock('debug', () => {
+  const debugMock = jest.fn();
+  const debug = () => debugMock;
+  debug.default = debug;
+  debug.debug = debug;
+  return debug;
+});
 
 describe('HotReloadManager', () => {
   let hotReloadManager: HotReloadManager;
@@ -39,7 +45,6 @@ describe('HotReloadManager', () => {
 
     const mockWebSocketService = {
       recordAlert: jest.fn(),
-      broadcastConfigChange: jest.fn(),
     };
     (WebSocketService.getInstance as jest.Mock).mockReturnValue(mockWebSocketService);
 
@@ -148,12 +153,72 @@ describe('HotReloadManager', () => {
       expect(result.affectedBots).toContain('test-bot');
     });
 
-    it('should add warnings when global changes fail for some bots', async () => {
-      const mockStore = UserConfigStore.getInstance();
-      (mockStore.setBotOverride as jest.Mock).mockImplementation((botName) => {
-        if (botName === 'test-bot-2') throw new Error('Store error');
+    it('should apply global changes to all bots concurrently', async () => {
+      const mockManager = BotConfigurationManager.getInstance();
+      (mockManager.getAllBots as jest.Mock).mockReturnValue([
+        { name: 'bot1' },
+        { name: 'bot2' },
+        { name: 'bot3' }
+      ]);
+
+      let inFlight = 0;
+      let maxInFlight = 0;
+
+      const spy = jest.spyOn(hotReloadManager as any, 'applyBotChange').mockImplementation(async () => {
+        inFlight++;
+        maxInFlight = Math.max(maxInFlight, inFlight);
+        await new Promise(resolve => setTimeout(resolve, 10)); // simulate async work
+        inFlight--;
+        return true;
       });
+
       const globalChange = {
+        type: 'update' as const,
+        changes: { messageProvider: 'slack' }
+      };
+
+      const result = await hotReloadManager.applyConfigurationChange(globalChange);
+
+      expect(result.success).toBe(true);
+      expect(result.affectedBots).toEqual(['bot1', 'bot2', 'bot3']); // Check they all succeeded
+      expect(maxInFlight).toBe(3); // Prove they ran concurrently
+
+      spy.mockRestore();
+    });
+
+    it('should handle mixed success/failure concurrently', async () => {
+      const mockManager = BotConfigurationManager.getInstance();
+      (mockManager.getAllBots as jest.Mock).mockReturnValue([
+        { name: 'bot1' },
+        { name: 'bot2' },
+        { name: 'bot3' }
+      ]);
+
+      const spy = jest.spyOn(hotReloadManager as any, 'applyBotChange').mockImplementation(async (botName) => {
+        return botName !== 'bot2'; // bot2 fails
+      });
+
+      const globalChange = {
+        type: 'update' as const,
+        changes: { messageProvider: 'slack' }
+      };
+
+      const result = await hotReloadManager.applyConfigurationChange(globalChange);
+
+      // Even if some fail, global apply succeeds overall but returns warnings
+      expect(result.success).toBe(true);
+      expect(result.affectedBots).toEqual(['bot1', 'bot3']);
+      expect(result.warnings).toContain("Failed to apply changes to bot 'bot2'");
+
+      spy.mockRestore();
+    });
+
+    it('should add warnings when global changes fail for some bots', async () => {
+       const mockStore = UserConfigStore.getInstance();
+       (mockStore.setBotOverride as jest.Mock).mockImplementation((botName) => {
+         if (botName === 'test-bot-2') throw new Error('Store error');
+       });
+       const globalChange = {
         type: 'update' as const,
         changes: { messageProvider: 'slack' }
       };
@@ -207,6 +272,40 @@ describe('HotReloadManager', () => {
       expect(result).toBe(true);
     });
 
+    it('should restore global snapshot concurrently', async () => {
+      const mockManager = BotConfigurationManager.getInstance();
+      (mockManager.getAllBots as jest.Mock).mockReturnValue([
+        { name: 'bot1' },
+        { name: 'bot2' },
+        { name: 'bot3' }
+      ]);
+
+      const change = {
+        type: 'update' as const,
+        changes: { messageProvider: 'slack' }
+      };
+
+      const applyResult = await hotReloadManager.applyConfigurationChange(change);
+
+      let inFlight = 0;
+      let maxInFlight = 0;
+
+      const spy = jest.spyOn(hotReloadManager as any, 'applyBotChange').mockImplementation(async () => {
+        inFlight++;
+        maxInFlight = Math.max(maxInFlight, inFlight);
+        await new Promise(resolve => setTimeout(resolve, 10)); // simulate async work
+        inFlight--;
+        return true;
+      });
+
+      const result = await hotReloadManager.rollbackToSnapshot(applyResult.rollbackId as string);
+
+      expect(result).toBe(true);
+      expect(maxInFlight).toBe(3); // Prove they rolled back concurrently
+
+      spy.mockRestore();
+    });
+
     it('should handle rollback error gracefully', async () => {
       const change = {
         type: 'update' as const,
@@ -216,7 +315,7 @@ describe('HotReloadManager', () => {
       const applyResult = await hotReloadManager.applyConfigurationChange(change);
       const managerAny = hotReloadManager as any;
       jest.spyOn(managerAny.rollbackSnapshots, 'get').mockImplementation(() => {
-        throw new Error('Rollback Get Error');
+         throw new Error('Rollback Get Error');
       });
       const result = await hotReloadManager.rollbackToSnapshot(applyResult.rollbackId as string);
       expect(result).toBe(false);
@@ -296,24 +395,24 @@ describe('HotReloadManager', () => {
         changes: { messageProvider: 'slack' }
       };
       await hotReloadManager.applyConfigurationChange(change);
-      await hotReloadManager.applyConfigurationChange({ ...change, changes: { llmProvider: 'openai' } });
+      await hotReloadManager.applyConfigurationChange({...change, changes: { llmProvider: 'openai' }});
       expect(hotReloadManager.getChangeHistory(1)).toHaveLength(1);
     });
   });
 
   describe('applyBotChange detail', () => {
     it('should sanitize changes and handle mcpGuard custom logic', async () => {
-      const change = {
+       const change = {
         type: 'update' as const,
         botName: 'test-bot',
         changes: {
-          invalidField: 'shouldBeIgnored',
-          messageProvider: 'discord',
-          mcpGuard: {
-            enabled: true,
-            type: 'custom',
-            allowedUsers: ['user1', 'user2']
-          }
+            invalidField: 'shouldBeIgnored',
+            messageProvider: 'discord',
+            mcpGuard: {
+                enabled: true,
+                type: 'custom',
+                allowedUsers: ['user1', 'user2']
+            }
         }
       };
       const result = await hotReloadManager.applyConfigurationChange(change);
@@ -321,15 +420,15 @@ describe('HotReloadManager', () => {
     });
 
     it('should handle mcpGuard string allowedUsers logic', async () => {
-      const change = {
+       const change = {
         type: 'update' as const,
         botName: 'test-bot',
         changes: {
-          mcpGuard: {
-            enabled: true,
-            type: 'owner',
-            allowedUsers: 'user1, user2'
-          }
+            mcpGuard: {
+                enabled: true,
+                type: 'owner',
+                allowedUsers: 'user1, user2'
+            }
         }
       };
       const result = await hotReloadManager.applyConfigurationChange(change);

@@ -292,11 +292,12 @@ export async function handleMessage(
         delayKey = `${channelId}:${resolvedBotId}`;
 
         // If we are responding, attempt to lock this channel for this bot to prevent double-replying.
-        didLock = await processingLocks.lock(channelId, resolvedBotId);
-        if (!didLock) {
+        if (processingLocks.isLocked(channelId, resolvedBotId)) {
           logger(`Could not acquire lock for channel ${channelId}, skipping.`);
           return null;
         }
+        processingLocks.lock(channelId, resolvedBotId);
+        didLock = true;
 
         // Calculate and apply delays
         const density = IncomingMessageDensity.getInstance().getDensity(channelId);
@@ -304,16 +305,10 @@ export async function handleMessage(
           historyMessages.length > 0 &&
           historyMessages[historyMessages.length - 1].getAuthorId() === botId;
 
-        const delayMs = timingManager.calculateResponseDelay(
-          replyDecision.meta?.chance || 0,
-          density,
-          isFollowUp,
-          botConfig
-        );
-
-        if (delayMs > 0) {
-          logger(`Waiting ${delayMs}ms before processing...`);
-          await new Promise((resolve) => setTimeout(resolve, delayMs));
+        const minDelay = Number(botConfig.MESSAGE_MIN_DELAY || 0);
+        if (minDelay > 0) {
+          logger(`Waiting ${minDelay}ms before processing...`);
+          await new Promise((resolve) => setTimeout(resolve, minDelay));
         }
 
         // Set up typing indicators
@@ -339,9 +334,15 @@ export async function handleMessage(
           activeAgentName
         );
 
-        // Track and trim history
+        // Track and trim history (skip for stateful providers that manage their own)
         const maxHistoryTokens = Number(botConfig.LLM_MAX_HISTORY_TOKENS || 2000);
-        const trimmedHistory = trimHistoryToTokenBudget(historyMessages, maxHistoryTokens);
+        const providerWantsHistory = llmProvider.supportsHistory ? llmProvider.supportsHistory() : true;
+        const trimmedHistory = providerWantsHistory
+          ? trimHistoryToTokenBudget(historyMessages, {
+              inputBudgetTokens: maxHistoryTokens,
+              promptText: processedMessage,
+            })
+          : { trimmed: [] as IMessage[] };
 
         // Generate response
         const startTime = Date.now();
@@ -349,18 +350,16 @@ export async function handleMessage(
 
         if (botConfig.MESSAGE_LLM_DIRECT) {
           llmResponse = await generateChatCompletionDirect(
+            botConfig as any,
             processedMessage,
-            trimmedHistory,
-            systemPrompt,
-            botConfig
+            trimmedHistory.trimmed,
+            systemPrompt
           );
         } else {
-          llmResponse = await llmProvider.generateChatResponse(
+          llmResponse = await llmProvider.generateChatCompletion(
             processedMessage,
-            trimmedHistory,
-            systemPrompt,
-            Number(botConfig.LLM_MAX_TOKENS || 150),
-            Number(botConfig.LLM_TEMPERATURE || 0.7)
+            trimmedHistory.trimmed,
+            { systemPrompt, maxTokens: Number(botConfig.LLM_MAX_TOKENS || 150), temperature: Number(botConfig.LLM_TEMPERATURE || 0.7) }
           );
         }
 

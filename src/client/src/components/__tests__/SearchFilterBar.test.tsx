@@ -52,7 +52,7 @@ describe('SearchFilterBar', () => {
     expect(handleClear).toHaveBeenCalled();
   });
 
-  it('clear button should have pointer-events-auto and stacking context classes', () => {
+  it('clear button tooltip should have pointer-events-auto and stacking context classes', () => {
     render(
       <SearchFilterBar
         searchValue="test"
@@ -60,9 +60,10 @@ describe('SearchFilterBar', () => {
       />
     );
     const clearButton = screen.getByLabelText('Clear search');
-    expect(clearButton).toHaveClass('pointer-events-auto');
-    expect(clearButton).toHaveClass('relative');
-    expect(clearButton).toHaveClass('z-10');
+    const tooltipWrapper = clearButton.closest('.tooltip');
+    expect(tooltipWrapper).toHaveClass('pointer-events-auto');
+    expect(tooltipWrapper).toHaveClass('relative');
+    expect(tooltipWrapper).toHaveClass('z-10');
   });
 
   it('input should have pr-10 class for padding', () => {

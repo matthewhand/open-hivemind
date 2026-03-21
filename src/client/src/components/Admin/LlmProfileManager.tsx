@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Button, IconButton, Modal, Card, Alert, Badge } from '../DaisyUI';
+import { Button, Modal, Card, Alert, Badge } from '../DaisyUI';
 import {
   PlusIcon,
   PencilIcon,
@@ -16,7 +16,7 @@ interface ProviderProfile {
     config: Record<string, unknown>;
 }
 
-const LLM_PROVIDERS = ['openai', 'flowise', 'openwebui', 'openswarm', 'perplexity', 'replicate', 'n8n'];
+const LLM_PROVIDERS = ['openai', 'anthropic', 'flowise', 'openwebui', 'openswarm', 'letta'];
 
 const LlmProfileManager: React.FC = () => {
   const [profiles, setProfiles] = useState<ProviderProfile[]>([]);
@@ -160,8 +160,8 @@ const LlmProfileManager: React.FC = () => {
                 <Badge variant="neutral">{Object.keys(profile.config || {}).length} config keys</Badge>
               </div>
               <div className="card-actions justify-end mt-4">
-                <IconButton variant="ghost" size="sm" aria-label="Edit profile" onClick={() => openEditDialog(profile)} icon={<PencilIcon className="w-4 h-4" />} />
-                <IconButton variant="ghost" size="sm" className="text-error" aria-label="Delete profile" onClick={() => handleDelete(profile.key)} icon={<TrashIcon className="w-4 h-4" />} />
+                <Button variant="ghost" size="sm" onClick={() => openEditDialog(profile)}><PencilIcon className="w-4 h-4" /></Button>
+                <Button variant="ghost" size="sm" className="text-error" onClick={() => handleDelete(profile.key)}><TrashIcon className="w-4 h-4" /></Button>
               </div>
             </div>
           </Card>
@@ -210,7 +210,7 @@ const LlmProfileManager: React.FC = () => {
       </Modal>
 
       {toastMessage && (
-        <div className="toast toast-bottom toast-center z-50">
+        <div className="toast toast-bottom toast-center z-50" role="status" aria-live="polite">
           <div className={`alert ${toastType === 'success' ? 'alert-success' : 'alert-error'}`}>
             <span>{toastMessage}</span>
             <button className="btn btn-sm btn-ghost" onClick={() => setToastMessage('')}>✕</button>

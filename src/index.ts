@@ -22,10 +22,10 @@ import enterpriseRouter from '@src/server/routes/enterprise';
 import guardsRouter from '@src/server/routes/guards';
 // Root health endpoint (for frontend polling)
 
-import { prometheusMetricsHandler } from '@src/server/routes/health';
 import hotReloadRouter from '@src/server/routes/hotReload';
 import importExportRouter from '@src/server/routes/importExport';
 import integrationsRouter from '@src/server/routes/integrations';
+import lettaRouter from '@src/server/routes/letta';
 import openapiRouter from '@src/server/routes/openapi';
 import personasRouter from '@src/server/routes/personas';
 import secureConfigRouter from '@src/server/routes/secureConfig';
@@ -38,6 +38,8 @@ import { ShutdownCoordinator } from '@src/server/ShutdownCoordinator';
 import AnomalyDetectionService from '@src/services/AnomalyDetectionService';
 import DemoModeService from '@src/services/DemoModeService';
 import StartupGreetingService from '@src/services/StartupGreetingService';
+import { validateRequiredEnvVars } from '@src/utils/envValidation';
+
 import { getLlmProvider } from '@llm/getLlmProvider';
 import { IdleResponseManager } from '@message/management/IdleResponseManager';
 import Logger from '@common/logger';
@@ -264,6 +266,7 @@ app.use('/api/auth', authRouter);
 app.use('/api/admin', adminApiRouter);
 app.use('/api/anomalies', authenticateToken, anomalyRouter);
 app.use('/api/integrations', integrationsRouter);
+app.use('/api/letta', lettaRouter);
 app.use('/api/guards', authenticateToken, guardsRouter);
 app.use('/api', openapiRouter);
 app.use('/api/specs', authenticateToken, specsRouter);
@@ -272,8 +275,6 @@ app.use('/api/personas', personasRouter);
 app.use('/api/demo', demoRouter); // Demo mode routes
 app.use('/api/health', healthRoute); // Health API endpoints
 app.use('/health', healthRoute);
-
-app.get('/metrics', prometheusMetricsHandler); // Prometheus metrics at root
 
 app.use(sitemapRouter); // Sitemap routes at root level
 
@@ -418,6 +419,9 @@ async function startBot(messengerService: any) {
 }
 
 async function main() {
+  // Validate critical environment variables before proceeding
+  validateRequiredEnvVars();
+
   // Unified application startup with enhanced diagnostics
   appLogger.info('🚀 Starting Open Hivemind Unified Server');
 
@@ -501,22 +505,30 @@ async function main() {
       appLogger.info('🤖 Starting messenger bots', {
         services: filteredMessengers.map((s: any) => s.providerName).join(', '),
       });
-      await Promise.all(
+      const startResults = await Promise.allSettled(
         filteredMessengers.map(async (service) => {
           await startBot(service);
           appLogger.info('✅ Bot started', { provider: service.providerName });
         })
       );
+      const failures = startResults.filter((r) => r.status === 'rejected');
+      if (failures.length > 0) {
+        appLogger.error(`Failed to start ${failures.length} messenger bot(s)`, { failures });
+      }
     } else {
       appLogger.info(
         '🤖 No specific messenger service configured - starting all available services'
       );
-      await Promise.all(
+      const startResults = await Promise.allSettled(
         messengerServices.map(async (service) => {
           await startBot(service);
           appLogger.info('✅ Bot started', { provider: service.providerName });
         })
       );
+      const failures = startResults.filter((r) => r.status === 'rejected');
+      if (failures.length > 0) {
+        appLogger.error(`Failed to start ${failures.length} messenger bot(s)`, { failures });
+      }
     }
   }
 
@@ -617,7 +629,16 @@ async function main() {
       if (fs.existsSync(frontendDistPath)) {
         appLogger.info('📱 Frontend assets served from', { path: frontendDistPath });
       } else {
-        appLogger.warn('⚠️  Frontend build not found - run `npm run build` to create WebUI assets');
+        appLogger.warn('⚠️  Frontend build not found - attempting auto-build via `npm run build:frontend`');
+        const { execFile } = require('child_process');
+        execFile('npm', ['run', 'build:frontend'], { cwd: process.cwd() }, (err: Error | null, stdout: string, stderr: string) => {
+          if (err) {
+            appLogger.warn('⚠️  Auto-build failed (devDependencies may be pruned in production). Run `npm run build:frontend` manually.', { error: err.message });
+          } else {
+            appLogger.info('✅ Frontend auto-build succeeded', { stdout: stdout.trim() });
+          }
+          if (stderr) appLogger.debug('build:frontend stderr', { stderr: stderr.trim() });
+        });
       }
     });
   } else {
@@ -651,8 +672,30 @@ async function main() {
   // Setup signal handlers for graceful shutdown
   shutdownCoordinator.setupSignalHandlers();
 
+  // Setup process global handlers for unhandled promises
+  process.on('unhandledRejection', (reason, promise) => {
+    appLogger.error('Unhandled Rejection at:', { promise, reason });
+  });
+
+  process.on('uncaughtException', (error) => {
+    appLogger.error('Uncaught Exception:', { error });
+    // Give logging time to write before exit
+    setTimeout(() => process.exit(1), 1000);
+  });
+
   // Startup complete
   appLogger.info('🎉 Open Hivemind Unified Server startup complete!');
+
+  // Re-print temp password so it's visible after all startup noise
+  const { AuthManager } = require('./auth/AuthManager');
+  const generatedPwd = AuthManager.getInstance().getGeneratedPassword();
+  if (generatedPwd) {
+    console.warn('================================================================');
+    console.warn('⚠️  REMINDER: Temporary admin password (set ADMIN_PASSWORD to remove this):');
+    console.warn(`   Username: admin`);
+    console.warn(`   Password: ${generatedPwd}`);
+    console.warn('================================================================');
+  }
 }
 
 main().catch((error) => {

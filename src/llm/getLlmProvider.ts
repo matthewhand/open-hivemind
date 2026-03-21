@@ -4,7 +4,7 @@ import { MetricsCollector } from '@src/monitoring/MetricsCollector';
 import type { IConfigAccessor } from '@src/types/configAccessor';
 import llmConfig from '@config/llmConfig';
 import { FlowiseProvider } from '@integrations/flowise/flowiseProvider';
-import { OpenWebUIProvider } from '@integrations/openwebui/openWebUIProvider';
+import * as openWebUIImport from '@integrations/openwebui/runInference';
 import type { ILlmProvider } from '@llm/interfaces/ILlmProvider';
 import type { IMessage } from '@message/interfaces/IMessage';
 
@@ -24,6 +24,7 @@ function withTokenCounting(provider: ILlmProvider, _instanceId: string): ILlmPro
     name: provider.name,
     supportsChatCompletion: provider.supportsChatCompletion,
     supportsCompletion: provider.supportsCompletion,
+    supportsHistory: provider.supportsHistory,
     // Add instance ID to provider object if interface allows, to help tracking?
     // For now we map it.
     generateChatCompletion: async (
@@ -51,6 +52,33 @@ function withTokenCounting(provider: ILlmProvider, _instanceId: string): ILlmPro
     },
   };
 }
+
+const openWebUI: ILlmProvider = {
+  name: 'openwebui',
+  supportsChatCompletion: () => true,
+  supportsCompletion: () => false,
+  generateChatCompletion: async (
+    userMessage: string,
+    historyMessages: IMessage[],
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    metadata?: Record<string, any>
+  ): Promise<string> => {
+    if (openWebUIImport.generateChatCompletion.length === 3) {
+      const result = await openWebUIImport.generateChatCompletion(
+        userMessage,
+        historyMessages,
+        metadata
+      );
+      return result.text || '';
+    } else {
+      const result = await openWebUIImport.generateChatCompletion(userMessage, historyMessages);
+      return result.text || '';
+    }
+  },
+  generateCompletion: async () => {
+    throw new Error('Non-chat completion not supported by OpenWebUI');
+  },
+};
 
 export function getLlmProvider(): ILlmProvider[] {
   const providerManager = ProviderConfigManager.getInstance();
@@ -84,9 +112,15 @@ export function getLlmProvider(): ILlmProvider[] {
             debug(`Initialized Flowise provider instance: ${config.name}`);
             break;
           case 'openwebui':
-            instance = new OpenWebUIProvider(config.config);
+            instance = openWebUI; // Singleton/Stateless
             debug(`Initialized OpenWebUI provider instance: ${config.name}`);
             break;
+          case 'letta': {
+            const { LettaProvider } = require('@hivemind/provider-letta');
+            instance = LettaProvider.getInstance(config.config);
+            debug(`Initialized Letta provider instance: ${config.name}`);
+            break;
+          }
           default:
             debug(`Unknown LLM provider type: ${config.type}`);
         }
@@ -140,8 +174,13 @@ export function getLlmProvider(): ILlmProvider[] {
             instance = new FlowiseProvider();
             break;
           case 'openwebui':
-            instance = new OpenWebUIProvider();
+            instance = openWebUI;
             break;
+          case 'letta': {
+            const { LettaProvider } = require('@hivemind/provider-letta');
+            instance = LettaProvider.getInstance();
+            break;
+          }
         }
         if (instance) {
           const wrappedInstance = withTokenCounting(instance, 'legacy');

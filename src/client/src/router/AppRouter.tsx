@@ -46,6 +46,8 @@ const MessageProvidersPage = lazy(() => import('../pages/MessageProvidersPage'))
 const LLMProvidersPage = lazy(() => import('../pages/LLMProvidersPage'));
 const SpecsPage = lazy(() => import('../pages/SpecsPage'));
 const SpecDetailPage = lazy(() => import('../pages/SpecDetailPage'));
+const AuditPage = lazy(() => import('../pages/AuditPage'));
+
 
 interface LoadingFallbackProps {
   message?: string;
@@ -192,6 +194,8 @@ const AppRouter: React.FC = () => {
           <Route path="showcase" element={<DaisyUIShowcase />} />
           <Route path="specs" element={<SpecsPage />} />
           <Route path="specs/:id" element={<SpecDetailPage />} />
+          <Route path="audit" element={<AuditPage />} />
+
 
         </Route>
 

@@ -1,103 +1,79 @@
 import * as fs from 'fs';
 import * as path from 'path';
-import { executeCommand, executeCommandSafe, readFile } from '../../src/utils/utils';
+import { promisify } from 'util';
+import { executeCommandSafe, readFile } from '../../src/utils/utils';
 
 // Mock fs for controlled testing
-jest.mock('fs', () => {
-  const mockFsStatSync = jest.fn();
-  const mockStatFn = jest.fn().mockImplementation((path) => {
-    try {
-      const defaultStats = { isFile: () => true, isDirectory: () => false };
-      const stats = mockFsStatSync(path);
-      return Promise.resolve(stats || defaultStats);
-    } catch (e) {
-      return Promise.reject(e);
+jest.mock('fs');
+const mockFs = fs as jest.Mocked<typeof fs>;
+
+// Mock the promisified readFile function
+const mockReadFile = jest.fn();
+jest.mock('util', () => ({
+  ...jest.requireActual('util'),
+  promisify: jest.fn().mockImplementation((fn) => {
+    if (fn && fn.name === 'readFile') {
+      return mockReadFile;
     }
-  });
+    return jest.requireActual('util').promisify(fn);
+  }),
+}));
 
-  const mockReadFileFn = jest.fn();
-  const mockExistsSync = jest.fn();
-  const mockReadFileSync = jest.fn();
-
-  const mockObj = {
-    __esModule: true,
-    existsSync: mockExistsSync,
-    readFileSync: mockReadFileSync,
-    statSync: mockFsStatSync,
-    promises: {
-      stat: mockStatFn,
-      readFile: mockReadFileFn,
-    }
-  };
-  return {
-    ...mockObj,
-    default: mockObj
-  };
-});
-
-const mockFs = fs as unknown as jest.Mocked<typeof fs> & {
-  promises: {
-    stat: jest.Mock;
-    readFile: jest.Mock;
-  }
-};
-const mockReadFile = mockFs.promises.readFile;
-
-describe('executeCommand', () => {
+describe('executeCommandSafe', () => {
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
   describe('Basic functionality', () => {
     it('should execute a command and return output', async () => {
-      const output = await executeCommand('echo hello');
+      const output = await executeCommandSafe('echo', ['hello']);
       expect(output.trim()).toBe('hello');
     });
 
     it('should execute commands with arguments', async () => {
-      const output = await executeCommand('echo "hello world"');
+      const output = await executeCommandSafe('echo', ['hello world']);
       expect(output.trim()).toBe('hello world');
     });
 
     it('should handle multiline output', async () => {
-      const output = await executeCommandSafe('printf', ['line1\\nline2']);
+      const output = await executeCommandSafe('printf', ['line1\nline2']);
       expect(output.trim()).toBe('line1\nline2');
     });
   });
 
   describe('Error handling', () => {
     it.each([
-      ['invalidcommand', 'should handle command errors gracefully'],
-      ['exit 1', 'should handle commands that exit with non-zero status'],
-      ['ls /nonexistent/directory', 'should handle commands with stderr output'],
-      ['', 'should handle empty commands'],
-    ])('%s', async (command, description) => {
-      await expect(executeCommand(command)).rejects.toThrow();
+      ['invalidcommand', [], 'should handle command errors gracefully'],
+      ['exit', ['1'], 'should handle commands that exit with non-zero status'],
+      ['ls', ['/nonexistent/directory'], 'should handle commands with stderr output'],
+      ['', [], 'should handle empty commands'],
+    ])('%s %p', async (command, args, description) => {
+      await expect(executeCommandSafe(command, args)).rejects.toThrow();
     });
 
     it('should handle null/undefined commands', async () => {
-      await expect(executeCommand(null as any)).rejects.toThrow();
-      await expect(executeCommand(undefined as any)).rejects.toThrow();
+      await expect(executeCommandSafe(null as any)).rejects.toThrow();
+      await expect(executeCommandSafe(undefined as any)).rejects.toThrow();
     });
   });
 
   describe('Command execution options', () => {
     it('should handle commands with different working directories', async () => {
       // Test that commands can be executed from different directories
-      const output = await executeCommand('pwd');
+      const output = await executeCommandSafe('pwd', []);
       expect(typeof output).toBe('string');
       expect(output.length).toBeGreaterThan(0);
     });
 
     it('should handle environment variables', async () => {
-      const output = await executeCommandSafe('sh', ['-c', 'echo $HOME']);
+      const output = await executeCommandSafe('echo', [process.env.HOME || '']);
       expect(typeof output).toBe('string');
     });
 
     it('should handle timeout scenarios', async () => {
       // Test with a command that should complete quickly
       const startTime = Date.now();
-      await executeCommand('echo "quick command"');
+      await executeCommandSafe('echo', ['quick command']);
       const duration = Date.now() - startTime;
       expect(duration).toBeLessThan(5000); // Should complete in under 5 seconds
     });
@@ -105,7 +81,7 @@ describe('executeCommand', () => {
 
   describe('Output formatting', () => {
     it('should preserve whitespace in output', async () => {
-      const output = await executeCommand('echo "  spaced  "');
+      const output = await executeCommandSafe('echo', ['  spaced  ']);
       expect(output).toBe('  spaced  \n');
     });
 
@@ -115,7 +91,7 @@ describe('executeCommand', () => {
     });
 
     it('should handle unicode characters', async () => {
-      const output = await executeCommand('echo "unicode: 🚀 ✅ 🎉"');
+      const output = await executeCommandSafe('echo', ['unicode: 🚀 ✅ 🎉']);
       expect(output.trim()).toBe('unicode: 🚀 ✅ 🎉');
     });
   });
@@ -220,7 +196,7 @@ describe('readFile', () => {
         'large files',
         (content: string) => expect(content.length).toBe(10000),
       ],
-      ['binary.dat', '\x00\x01\x02\x03\xFF', 'binary-like content', () => { }],
+      ['binary.dat', '\x00\x01\x02\x03\xFF', 'binary-like content', () => {}],
       [
         'multiline.txt',
         'Line 1\nLine 2\r\nLine 3\n\nLine 5',
@@ -238,7 +214,7 @@ describe('readFile', () => {
 
   describe('Performance', () => {
     it('should read files efficiently', async () => {
-      mockReadFile.mockResolvedValue('Performance test content');
+      mockFs.readFileSync.mockReturnValue('Performance test content');
       mockFs.existsSync.mockReturnValue(true);
 
       const startTime = Date.now();

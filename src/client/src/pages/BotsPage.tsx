@@ -1,6 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { useOptimisticList } from '../hooks/useOptimisticList';
 import { 
   Bot, Plus, Edit2, Trash2, Check, RefreshCw, AlertCircle, 
   Search, Filter, ChevronRight, Activity, MessageSquare, 
@@ -13,72 +12,20 @@ import { useSuccessToast, useErrorToast } from '../components/DaisyUI/ToastNotif
 import Modal, { ConfirmModal } from '../components/DaisyUI/Modal';
 import PageHeader from '../components/DaisyUI/PageHeader';
 import SearchFilterBar from '../components/SearchFilterBar';
-import { PROVIDER_CATEGORIES } from '../config/providers';
-import { useLlmStatus } from '../hooks/useLlmStatus';
-import { usePageLifecycle } from '../hooks/usePageLifecycle';
+import EmptyState from '../components/DaisyUI/EmptyState';
+import { LoadingSpinner } from '../components/DaisyUI/Loading';
 import { apiService } from '../services/api';
-import { ErrorService } from '../services/ErrorService';
 import { withRetry } from '../utils/withRetry';
-import toast from 'react-hot-toast';
-
-/**
- * Represents the configuration and runtime state of a generic bot instance.
- */
-interface BotData {
-  id: string;
-  name: string;
-  provider: string; // Message Provider Name
-  messageProvider?: string; // Alternative field from API
-  llmProvider: string; // LLM Provider Name
-  persona?: string; // Bot Persona
-  status: string;
-  connected: boolean;
-  messageCount: number;
-  errorCount: number;
-  config?: any; // Bot specific config overrides
-  envOverrides?: any;
-}
-
-
-const getStatusIcon = (status: string, connected?: boolean) => {
-  if (status === 'active' && connected) return <span className="text-success text-lg">🟢</span>;
-  if (status === 'active') return <span className="text-warning text-lg">🟡</span>;
-  if (status === 'error') return <span className="text-error text-lg">🔴</span>;
-  return <span className="text-base-content/30 text-lg">⚪</span>;
-};
-
-const getStatusText = (status: string, connected?: boolean) => {
-  if (status === 'active' && connected) return 'Online';
-  if (status === 'active') return 'Starting...';
-  if (status === 'error') return 'Error';
-  return 'Offline';
-};
-
-const getStatusBadgeClass = (status: string, connected?: boolean) => {
-  if (status === 'active' && connected) return 'badge-success badge-outline';
-  if (status === 'active') return 'badge-warning badge-outline';
-  if (status === 'error') return 'badge-error badge-outline';
-  return 'badge-ghost badge-outline';
-};
-
-const formatTimeAgo = (dateStr: string) => {
-  if (!dateStr) return 'Never';
-  const date = new Date(dateStr);
-  const seconds = Math.floor((new Date().getTime() - date.getTime()) / 1000);
-
-  if (seconds < 60) return 'Just now';
-  if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`;
-  if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`;
-  return `${Math.floor(seconds / 86400)}d ago`;
-};
-
-const redactString = (str?: string) => {
-  if (!str || str.length <= 4) return str;
-  return str.substring(0, 2) + '*'.repeat(Math.min(str.length - 4, 8)) + str.substring(str.length - 2);
-};
+import { ErrorService } from '../services/ErrorService';
+import type { BotConfig, ProviderModalState } from '../types/bot';
+import { LLMProviderType, MessageProviderType } from '../types/bot';
+import BotCard from '../components/BotManagement/BotCard';
+import { CreateBotWizard } from '../components/BotManagement/CreateBotWizard';
+import { BotSettingsModal } from '../components/BotSettingsModal';
+import { useLocation } from 'react-router-dom';
 
 const BotsPage: React.FC = () => {
-  const { items: bots, setItems: setBots, isUpdating, executeOptimistic } = useOptimisticList<BotConfig>([]);
+  const [bots, setBots] = useState<BotConfig[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -91,7 +38,6 @@ const BotsPage: React.FC = () => {
   const [activityLogs, setActivityLogs] = useState<any[]>([]);
   const [chatHistory, setChatHistory] = useState<any[]>([]);
   const [logFilter, setLogFilter] = useState('');
-  const [previewTab, setPreviewTab] = useState<'activity' | 'chat'>('activity');
 
   // Create Bot State
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -144,7 +90,6 @@ const BotsPage: React.FC = () => {
   // Use Page Lifecycle Hook
   const {
     data,
-    loading,
     error: lifecycleError,
     refetch,
   } = usePageLifecycle({
@@ -154,7 +99,6 @@ const BotsPage: React.FC = () => {
   });
 
   // Derived state
-  const bots = data?.bots || [];
 
   const personas = data?.personas || [];
   const llmProfiles = data?.llmProfiles || [];
@@ -166,9 +110,6 @@ const BotsPage: React.FC = () => {
       setUiError(lifecycleError.message);
     }
   }, [lifecycleError]);
-
-  const setError = setUiError;
-  const error = uiError;
 
   // Fetch logs and chat history when previewing a bot
   useEffect(() => {
@@ -219,6 +160,11 @@ const BotsPage: React.FC = () => {
     });
   };
 
+  const toast = {
+    success: useSuccessToast(),
+    error: useErrorToast()
+  };
+
   const location = useLocation();
 
   const fetchBots = useCallback(async () => {
@@ -250,54 +196,35 @@ const BotsPage: React.FC = () => {
   }, [location.state]);
 
   const handleCreateBot = async (botData: any) => {
-    const tempId = 'temp-' + Date.now();
-    const optimisticBot = { ...botData, id: tempId, status: 'active', connected: false, messageCount: 0, errorCount: 0 };
-
-    setIsCreateModalOpen(false);
-
-    await executeOptimistic({
-      type: 'create',
-      optimisticItem: optimisticBot,
-      apiCall: () => apiService.post<any>('/api/bots', botData),
-      successMessage: 'Bot created successfully',
-      rollbackMessage: 'Failed to create bot',
-      onError: (err) => {
-        setIsCreateModalOpen(true);
-        ErrorService.report(err, { action: 'createBot', botData });
-      }
-    });
+    try {
+      const response = await apiService.post<any>('/api/bots', botData);
+      setBots(prev => [...prev, response.data.bot]);
+      setIsCreateModalOpen(false);
+      toast.success('Bot created successfully');
+    } catch (err) {
+      ErrorService.report(err, { action: 'createBot', botData });
+      toast.error(err instanceof Error ? err.message : 'Failed to create bot');
+    }
   };
 
   const handleUpdateBot = async (botData: any) => {
-    const currentBotId = editingBot?.id;
-    if (!currentBotId) return;
+    try {
+      const response = await apiService.put<any>(`/api/bots/${editingBot?.id}`, botData);
+      setBots(prev => prev.map(b => b.id === editingBot?.id ? response.data.bot : b));
+      setEditingBot(null);
+      toast.success('Bot updated successfully');
 
-    const originalBot = bots.find(b => b.id === currentBotId);
-    if (!originalBot) return;
-
-    const optimisticBot = { ...originalBot, ...botData };
-    setEditingBot(null);
-
-    await executeOptimistic({
-      type: 'update',
-      optimisticItem: optimisticBot,
-      originalItem: originalBot,
-      apiCall: () => apiService.put<any>(`/api/bots/${currentBotId}`, botData),
-      successMessage: 'Bot updated successfully',
-      rollbackMessage: 'Failed to update bot',
-      onSuccess: (res) => {
-        if (previewBot?.id === currentBotId) {
-          setPreviewBot(res.data.bot);
-        }
-      },
-      onError: (err) => {
-        setEditingBot(originalBot);
-        ErrorService.report(err, { action: 'updateBot', botId: currentBotId });
+      // Update preview if it's the same bot
+      if (previewBot?.id === editingBot?.id) {
+        setPreviewBot(response.data.bot);
       }
-    });
+    } catch (err) {
+      ErrorService.report(err, { action: 'updateBot', botId: editingBot?.id });
+      toast.error(err instanceof Error ? err.message : 'Failed to update bot');
+    }
   };
 
-  const handleDeleteBot = React.useCallback(async () => {
+  const handleDeleteBot = async () => {
     if (!deletingBot) return;
     try {
       await apiService.delete(`/api/bots/${deletingBot.id}`);
@@ -328,7 +255,7 @@ const BotsPage: React.FC = () => {
       ErrorService.report(err, { action: 'toggleBotStatus', botId: bot.id });
       toast.error(err instanceof Error ? err.message : 'Failed to update bot status');
     }
-  }, [previewBot?.id, toast]);
+  };
 
   const filteredBots = useMemo(() => {
     return bots.filter(bot => {
@@ -339,7 +266,7 @@ const BotsPage: React.FC = () => {
     });
   }, [bots, searchQuery, filterType]);
 
-  const handlePreviewBot = React.useCallback(async (bot: BotConfig) => {
+  const handlePreviewBot = async (bot: BotConfig) => {
     setPreviewBot(bot);
     setPreviewTab('activity');
     setActivityLogs([]);
@@ -368,83 +295,14 @@ const BotsPage: React.FC = () => {
     );
   }, [activityLogs, logFilter]);
 
-    try {
-      setActionLoading(deleteModal.bot.id);
-      await apiService.deleteBot(deleteModal.bot.id);
-
-      setDeleteModal({ isOpen: false, bot: null });
-      setDeleteConfirmation('');
-      await refetch();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to delete bot');
-    } finally {
-      setActionLoading(null);
-    }
-  };
-
-  const handleCloneClick = (bot: BotData) => {
-    setCloneModal({ isOpen: true, bot });
-    setCloneName(`${bot.name} (Copy)`);
-  };
-
-  const handleCloneSubmit = async () => {
-    if (!cloneModal.bot) {
-      return;
-    }
-    try {
-      setActionLoading('clone');
-      await apiService.cloneBot(cloneModal.bot.id, cloneName);
-      await refetch();
-      setCloneModal({ isOpen: false, bot: null });
-      setCloneName('');
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to clone bot');
-    } finally {
-      setActionLoading(null);
-    }
-  };
-
-  const handleClone = async (bot: BotData) => {
-    handleCloneClick(bot);
-  };
-
-  const handleUpdatePersona = async (bot: BotData, persona: string) => {
-    try {
-      setActionLoading(bot.id);
-      await apiService.updateBot(bot.id, { persona });
-      await refetch();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to update persona');
-    } finally {
-      setActionLoading(null);
-    }
-  };
-
-  const getStatusBadge = (status: string, connected: boolean) => {
-    if (status === 'active' && connected) {
-      return (
-        <span className="badge badge-success gap-1 text-xs font-semibold">
-          <span className="w-1.5 h-1.5 rounded-full bg-green-900 animate-pulse" /> Running
-        </span>
-      );
-    } else if (status === 'active' && !connected) {
-      return <span className="badge badge-warning gap-1 text-xs font-semibold">Disconnected</span>;
-    } else {
-      return <span className="badge badge-ghost text-xs font-semibold opacity-50">Disabled</span>;
-    }
-  };
-
-  const redact = (str: string) => {
-    if (!str) {
-      return '';
-    }
-    if (str.length <= 4) {
-      return '****';
-    }
+  if (loading && bots.length === 0) {
     return (
-      str.substring(0, 2) + '*'.repeat(Math.min(str.length - 4, 8)) + str.substring(str.length - 2)
+      <div className="flex flex-col items-center justify-center min-h-[400px]">
+        <LoadingSpinner size="lg" />
+        <p className="mt-4 text-base-content/60 animate-pulse">Loading your AI Swarm...</p>
+      </div>
     );
-  };
+  }
 
   return (
     <div className="space-y-6">
@@ -514,7 +372,9 @@ const BotsPage: React.FC = () => {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {filteredBots.map(bot => (
-                <BotCard key={bot.id} bot={bot} isUpdating={isUpdating(bot.id)}
+                <BotCard
+                  key={bot.id}
+                  bot={bot}
                   isSelected={previewBot?.id === bot.id}
                   onPreview={() => handlePreviewBot(bot)}
                   onEdit={() => setEditingBot(bot)}
@@ -732,340 +592,15 @@ const BotsPage: React.FC = () => {
         />
       )}
 
-      {/* Delete Confirmation Modal */}
-      <Modal
-        isOpen={deleteModal.isOpen}
-        onClose={() => {
-          setDeleteModal({ isOpen: false, bot: null });
-          setDeleteConfirmation('');
-        }}
-        title="Delete Bot"
-        size="sm"
-      >
-        <div className="space-y-4">
-          <p>
-            Are you sure you want to delete <strong>{deleteModal.bot?.name}</strong>?
-          </p>
-          <p className="text-sm text-base-content/60">This action cannot be undone.</p>
-
-          <div className="form-control w-full">
-            <label className="label">
-              <span className="label-text">
-                Type <strong>{deleteModal.bot?.name}</strong> to confirm.
-              </span>
-            </label>
-            <input
-              type="text"
-              className="input input-bordered w-full"
-              placeholder={deleteModal.bot?.name}
-              value={deleteConfirmation}
-              onChange={(e) => setDeleteConfirmation(e.target.value)}
-            />
-          </div>
-
-          <div className="flex justify-end gap-2 mt-6">
-            <button
-              className="btn btn-ghost"
-              onClick={() => {
-                setDeleteModal({ isOpen: false, bot: null });
-                setDeleteConfirmation('');
-              }}
-            >
-              Cancel
-            </button>
-            <button
-              className="btn btn-error"
-              onClick={handleDelete}
-              disabled={
-                actionLoading === deleteModal.bot?.id ||
-                deleteConfirmation !== deleteModal.bot?.name
-              }
-            >
-              {actionLoading === deleteModal.bot?.id ? (
-                <span className="loading loading-spinner loading-xs" />
-              ) : (
-                'Delete'
-              )}
-            </button>
-          </div>
-        </div>
-      </Modal>
-
-      {/* Clone Bot Modal */}
-      <Modal
-        isOpen={cloneModal.isOpen}
-        onClose={() => {
-          setCloneModal({ isOpen: false, bot: null });
-          setCloneName('');
-        }}
-        title="Clone Bot"
-        size="sm"
-      >
-        <div className="space-y-4">
-          <p>Enter a name for the new bot.</p>
-          <div className="form-control w-full">
-            <label className="label">
-              <span className="label-text">Bot Name</span>
-            </label>
-            <input
-              type="text"
-              className="input input-bordered w-full"
-              placeholder="New Bot Name"
-              value={cloneName}
-              onChange={(e) => setCloneName(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && handleCloneSubmit()}
-            />
-          </div>
-          <div className="flex justify-end gap-2 mt-6">
-            <button
-              className="btn btn-ghost"
-              onClick={() => {
-                setCloneModal({ isOpen: false, bot: null });
-                setCloneName('');
-              }}
-            >
-              Cancel
-            </button>
-            <button
-              className="btn btn-primary"
-              onClick={handleCloneSubmit}
-              disabled={actionLoading === 'clone' || !cloneName.trim()}
-            >
-              {actionLoading === 'clone' ? (
-                <span className="loading loading-spinner loading-xs" />
-              ) : (
-                'Clone'
-              )}
-            </button>
-          </div>
-        </div>
-      </Modal>
-
-      {/* Preview Modal */}
-      <Modal
-        isOpen={!!previewBot}
-        onClose={() => setPreviewBot(null)}
-        title={previewBot?.name || 'Bot Details'}
-        size="lg"
-      >
-        {previewBot && (
-          <div className="space-y-6">
-            <div className="flex items-center gap-4">
-              <div className="avatar placeholder">
-                <div className="bg-primary text-primary-content w-16 rounded-full flex items-center justify-center">
-                  <Bot className="w-8 h-8" />
-                </div>
-              </div>
-              <div>
-                <h3 className="text-xl font-bold">{previewBot.name}</h3>
-                <p className="text-base-content/60">ID: {previewBot.id}</p>
-                <div className="mt-2">
-                  {getStatusBadge(previewBot.status, previewBot.connected)}
-                </div>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="card bg-base-200">
-                <div className="card-body p-4">
-                  <div className="flex justify-between items-center mb-2">
-                    <h4 className="font-semibold flex items-center gap-2">
-                      <MessageSquare className="w-4 h-4" /> Message Provider
-                    </h4>
-                    <button
-                      className="btn btn-xs btn-ghost gap-1"
-                      onClick={() => (window.location.href = '/admin/integrations/message')}
-                      title="Configure Message Provider"
-                    >
-                      <Settings className="w-3 h-3" /> Config
-                    </button>
-                  </div>
-                  <p className="text-lg font-bold mb-1">
-                    {previewBot.messageProvider || previewBot.provider || 'None'}
-                  </p>
-                  {/* Display redacted config details if available */}
-                  {previewBot.config && previewBot.config[previewBot.provider] && (
-                    <div className="text-xs font-mono opacity-70 mt-2 p-2 bg-base-300 rounded">
-                      {Object.entries(previewBot.config[previewBot.provider]).map(([key, val]) => (
-                        <div key={key} className="flex justify-between">
-                          <span>{key}:</span>
-                          <span>{redact(String(val))}</span>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </div>
-              <div className="card bg-base-200">
-                <div className="card-body p-4">
-                  <div className="flex justify-between items-center mb-2">
-                    <h4 className="font-semibold flex items-center gap-2">
-                      <Cpu className="w-4 h-4" /> LLM Provider
-                    </h4>
-                    <button
-                      className="btn btn-xs btn-ghost gap-1"
-                      onClick={() => (window.location.href = '/admin/integrations/llm')}
-                      title="Configure LLM Provider"
-                    >
-                      <Settings className="w-3 h-3" /> Config
-                    </button>
-                  </div>
-                  <p className="text-lg font-bold mb-1">{previewBot.llmProvider || 'None'}</p>
-                  {/* Display redacted config details if available */}
-                  {previewBot.config && previewBot.config.llm && (
-                    <div className="text-xs font-mono opacity-70 mt-2 p-2 bg-base-300 rounded">
-                      {Object.entries(previewBot.config.llm).map(([key, val]) => (
-                        <div key={key} className="flex justify-between">
-                          <span>{key}:</span>
-                          <span>{redact(String(val))}</span>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            <div className="stats bg-base-200 w-full shadow-sm">
-              <div className="stat">
-                <div className="stat-title">Messages</div>
-                <div className="stat-value text-primary">{previewBot.messageCount || 0}</div>
-              </div>
-              <div className="stat">
-                <div className="stat-title">Errors</div>
-                <div className={`stat-value ${(previewBot.errorCount || 0) > 0 ? 'text-error' : ''}`}>{previewBot.errorCount || 0}</div>
-              </div>
-            </div>
-
-            {/* Tabs Navigation */}
-            <div className="tabs tabs-boxed flex-wrap gap-1 mb-4" role="tablist" aria-label="Bot preview sections">
-              <button
-                className={`tab flex-1 ${previewTab === 'activity' ? 'tab-active' : ''}`}
-                onClick={() => setPreviewTab('activity')}
-                role="tab"
-                aria-selected={previewTab === 'activity'}
-                aria-controls="activity-panel"
-                id="activity-tab"
-              >
-                <Activity className="w-4 h-4 mr-2" /> Recent Activity
-              </button>
-              <button
-                className={`tab flex-1 ${previewTab === 'chat' ? 'tab-active' : ''}`}
-                onClick={() => setPreviewTab('chat')}
-                role="tab"
-                aria-selected={previewTab === 'chat'}
-                aria-controls="chat-panel"
-                id="chat-tab"
-              >
-                <MessageSquare className="w-4 h-4 mr-2" /> Chat History
-              </button>
-            </div>
-
-            {previewTab === 'activity' && (
-              <div role="tabpanel" id="activity-panel" aria-labelledby="activity-tab">
-                <div className="flex items-center justify-end mb-3">
-                  <div className="form-control w-full flex flex-col items-end">
-                    <div className="join">
-                      <input
-                        type="text"
-                        placeholder="Filter logs..."
-                        className="input input-xs input-bordered w-32 join-item"
-                        value={logFilter}
-                        onChange={(e) => setLogFilter(e.target.value)}
-                      />
-                      <select
-                        className="select select-xs select-bordered join-item"
-                        onChange={(e) => {
-                          const limit = e.target.value;
-                          if (previewBot) {
-                            withRetry(() => apiService.get<any>(`/api/bots/${previewBot.id}/activity?limit=${limit}`))
-                              .then((json) => {
-                                setActivityLogs(json.data?.activity || []);
-                              })
-                              .catch((err) => {
-                                ErrorService.report(err, { botId: previewBot.id, action: 'fetchActivityLogs' });
-                                toast.error('Failed to load bot activity logs');
-                                setError(err instanceof Error ? err.message : 'Failed to fetch bot activity logs');
-                                setActivityLogs([]);
-                              });
-                          }
-                        }}
-                      >
-                        <option value="20">Last 20</option>
-                        <option value="50">Last 50</option>
-                        <option value="100">Last 100</option>
-                      </select>
-                    </div>
-                  </div>
-                </div>
-                <div className="bg-base-300 rounded-lg p-4 h-48 overflow-y-auto font-mono text-xs">
-                  {activityLogs.length > 0 ? (
-                    activityLogs
-                      .filter(
-                        (log) =>
-                          !logFilter ||
-                          log.action?.toLowerCase().includes(logFilter.toLowerCase()) ||
-                          log.details?.toLowerCase().includes(logFilter.toLowerCase())
-                      )
-                      .map((log) => (
-                        <div
-                          key={log.id}
-                          className="mb-1 border-b border-base-content/5 pb-1 last:border-0"
-                        >
-                          <span className="opacity-50 mr-2">
-                            [{new Date(log.timestamp).toLocaleTimeString()}]
-                          </span>
-                          <span
-                            className={
-                              log.metadata?.type === 'RUNTIME'
-                                ? 'text-info'
-                                : log.action?.includes('ERROR') || log.result === 'failure'
-                                  ? 'text-error'
-                                  : 'text-base-content'
-                            }
-                          >
-                            <span className="font-bold mr-1">[{log.action}]</span>
-                            {log.details}
-                          </span>
-                        </div>
-                      ))
-                  ) : (
-                    <div className="text-center opacity-50 py-12 flex flex-col items-center">
-                      <Activity className="w-8 h-8 mb-2 opacity-20" />
-                      <span>No recent activity found</span>
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {previewTab === 'chat' && (
-              <div role="tabpanel" id="chat-panel" aria-labelledby="chat-tab">
-                <div className="bg-base-300 rounded-lg">
-                  <BotChatBubbles
-                    messages={chatHistory}
-                    botName={previewBot.name}
-                    loading={chatLoading}
-                  />
-                </div>
-              </div>
-            )}
-
-            <div className="flex justify-end gap-2">
-              <button className="btn btn-ghost" onClick={() => setPreviewBot(null)}>
-                Close
-              </button>
-              <button
-                className="btn btn-primary"
-                onClick={() => (window.location.href = '/admin/integrations/llm')}
-              >
-                <Settings className="w-4 h-4 mr-2" />
-                Configure Providers
-              </button>
-            </div>
-          </div>
-        )}
-      </Modal>
+      <ConfirmModal
+        isOpen={!!deletingBot}
+        title="Delete Agent"
+        message={`Are you sure you want to delete ${deletingBot?.name}? This action cannot be undone.`}
+        confirmText="Delete Bot"
+        variant="error"
+        onConfirm={handleDeleteBot}
+        onCancel={() => setDeletingBot(null)}
+      />
     </div>
   );
 };

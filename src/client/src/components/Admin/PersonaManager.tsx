@@ -107,9 +107,15 @@ const PersonaManager: React.FC = () => {
 
   const handleDeleteSelected = async () => {
     try {
-      await Promise.all(Array.from(selectedPersonas).map(key => deletePersona(key)));
-      setToastMessage('Selected personas deleted successfully');
-      setToastType('success');
+      const results = await Promise.allSettled(Array.from(selectedPersonas).map(key => deletePersona(key)));
+      const failures = results.filter(r => r.status === 'rejected');
+      if (failures.length > 0) {
+        setToastMessage(`Deleted personas, but failed to delete ${failures.length} item(s)`);
+        setToastType('warning');
+      } else {
+        setToastMessage('Selected personas deleted successfully');
+        setToastType('success');
+      }
       setSelectedPersonas(new Set());
       loadPersonas();
     } catch {
@@ -227,10 +233,10 @@ const PersonaManager: React.FC = () => {
       </Modal>
 
       {toastMessage && (
-        <div className="toast toast-bottom toast-center z-50">
+        <div className="toast toast-bottom toast-center z-50" role="status" aria-live="polite">
           <div className={`alert ${toastType === 'success' ? 'alert-success' : toastType === 'error' ? 'alert-error' : toastType === 'warning' ? 'alert-warning' : 'alert-info'}`}>
             <span>{toastMessage}</span>
-            <button className="btn btn-sm btn-ghost" onClick={() => setToastMessage('')}>✕</button>
+            <button className="btn btn-sm btn-ghost" onClick={() => setToastMessage('')} aria-label="Close notification">✕</button>
           </div>
         </div>
       )}

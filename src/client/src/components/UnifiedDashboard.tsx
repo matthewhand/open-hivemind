@@ -43,9 +43,11 @@ const MESSAGE_PROVIDER_OPTIONS = [
 
 const LLM_PROVIDER_OPTIONS = [
   { value: 'openai', label: 'OpenAI' },
+  { value: 'anthropic', label: 'Anthropic' },
   { value: 'flowise', label: 'Flowise' },
   { value: 'openwebui', label: 'Open WebUI' },
-  { value: 'replicate', label: 'Replicate' },
+  { value: 'openswarm', label: 'OpenSwarm' },
+  { value: 'letta', label: 'Letta' },
 ] as const;
 
 const providerIconMap: Record<string, string> = {
@@ -184,7 +186,7 @@ const UnifiedDashboard: React.FC = () => {
 
       // If no bots are configured, default to getting started
       if (!configData.bots || configData.bots.length === 0) {
-        setActiveTab('getting-started');
+        setActiveTab(prev => prev === 'status' ? 'getting-started' : prev);
       }
 
       setError(null);
@@ -256,23 +258,27 @@ const UnifiedDashboard: React.FC = () => {
     [fetchData, successToast, errorToast],
   );
 
-  const statusBots = status?.bots ?? [];
-  const activeBotCount = useMemo(
-    () => statusBots.filter(bot => bot.status?.toLowerCase() === 'active').length,
-    [statusBots],
-  );
-  const activeConnections = useMemo(
-    () => statusBots.filter(bot => bot.connected).length,
-    [statusBots],
-  );
-  const totalMessages = useMemo(
-    () => statusBots.reduce((sum, bot) => sum + (bot.messageCount ?? 0), 0),
-    [statusBots],
-  );
-  const totalErrors = useMemo(
-    () => statusBots.reduce((sum, bot) => sum + (bot.errorCount ?? 0), 0),
-    [statusBots],
-  );
+  const statusBots = useMemo(() => status?.bots ?? [], [status]);
+
+  // Combine 4 separate O(N) filter/reduce passes into a single O(N) pass
+  // to calculate dashboard statistics and prevent unnecessary re-renders.
+  const { activeBotCount, activeConnections, totalMessages, totalErrors } = useMemo(() => {
+    return statusBots.reduce(
+      (acc, bot) => {
+        if (bot.status?.toLowerCase() === 'active') {
+          acc.activeBotCount++;
+        }
+        if (bot.connected) {
+          acc.activeConnections++;
+        }
+        acc.totalMessages += bot.messageCount ?? 0;
+        acc.totalErrors += bot.errorCount ?? 0;
+        return acc;
+      },
+      { activeBotCount: 0, activeConnections: 0, totalMessages: 0, totalErrors: 0 }
+    );
+  }, [statusBots]);
+
   const errorRatePercent = totalMessages === 0
     ? 0
     : Number(((totalErrors / totalMessages) * 100).toFixed(2));

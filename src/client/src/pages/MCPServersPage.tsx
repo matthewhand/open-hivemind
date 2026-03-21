@@ -57,7 +57,6 @@ const MCPServersPage: React.FC = () => {
   const [viewingServerName, setViewingServerName] = useState('');
   const [isEditing, setIsEditing] = useState(false);
   const [isTesting, setIsTesting] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
   const [alert, setAlert] = useState<{ type: 'success' | 'error', message: string } | null>(null);
 
   // Search and Filter State
@@ -301,7 +300,6 @@ const MCPServersPage: React.FC = () => {
     }
 
     try {
-      setIsSaving(true);
       if (isEditing) {
         // For editing, we disconnect and reconnect
         await fetch('/api/admin/mcp-servers/disconnect', {
@@ -332,8 +330,6 @@ const MCPServersPage: React.FC = () => {
       await fetchServers();
     } catch (err) {
       setAlert({ type: 'error', message: err instanceof Error ? err.message : 'Failed to save server' });
-    } finally {
-      setIsSaving(false);
     }
   };
 
@@ -445,57 +441,52 @@ const MCPServersPage: React.FC = () => {
               <div className="card-actions justify-between mt-auto pt-4 border-t border-base-200">
                 <div className="flex gap-1">
                   {server.status === 'running' ? (
-                    <Tooltip message="Disconnect">
-                      <button
-                        className="btn btn-ghost btn-sm btn-circle text-error"
-                        aria-label={`Disconnect ${server.name}`}
-                        onClick={() => handleServerAction(server.id, 'stop')}
-                      >
-                        <StopIcon className="w-5 h-5" />
-                      </button>
-                    </Tooltip>
+                    <button
+                      className="btn btn-ghost btn-sm btn-circle text-error tooltip"
+                      data-tip="Disconnect"
+                      aria-label={`Disconnect ${server.name}`}
+                      onClick={() => handleServerAction(server.id, 'stop')}
+                    >
+                      <StopIcon className="w-5 h-5" />
+                    </button>
                   ) : (
-                    <Tooltip message={server.status === 'stopped' ? "Connect" : "Retry Connection"}>
-                      <button
-                        className="btn btn-ghost btn-sm btn-circle text-success"
-                        aria-label={server.status === 'stopped' ? `Connect ${server.name}` : `Retry Connection ${server.name}`}
-                        onClick={() => handleServerAction(server.id, 'start')}
-                      >
-                          {server.status === 'error' ? <ArrowPathIcon className="w-5 h-5" /> : <PlayIcon className="w-5 h-5" />}
-                      </button>
-                    </Tooltip>
+                    <button
+                      className="btn btn-ghost btn-sm btn-circle text-success tooltip"
+                      data-tip={server.status === 'stopped' ? "Connect" : "Retry Connection"}
+                      aria-label={server.status === 'stopped' ? `Connect ${server.name}` : `Retry Connection ${server.name}`}
+                      onClick={() => handleServerAction(server.id, 'start')}
+                    >
+                        {server.status === 'error' ? <ArrowPathIcon className="w-5 h-5" /> : <PlayIcon className="w-5 h-5" />}
+                    </button>
                   )}
                   {server.toolCount > 0 && (
-                     <Tooltip message="View Tools">
-                       <button
-                          className="btn btn-ghost btn-sm btn-circle"
-                          aria-label={`View Tools for ${server.name}`}
-                          onClick={() => handleViewTools(server)}
-                       >
-                          <WrenchScrewdriverIcon className="w-5 h-5" />
-                       </button>
-                     </Tooltip>
+                     <button
+                        className="btn btn-ghost btn-sm btn-circle tooltip"
+                        data-tip="View Tools"
+                        aria-label={`View Tools for ${server.name}`}
+                        onClick={() => handleViewTools(server)}
+                     >
+                        <WrenchScrewdriverIcon className="w-5 h-5" />
+                     </button>
                   )}
                 </div>
                 <div className="flex gap-1">
-                  <Tooltip message="Edit Configuration">
-                    <button
-                      className="btn btn-ghost btn-sm btn-circle"
-                      aria-label={`Edit ${server.name}`}
-                      onClick={() => handleEditServer(server)}
-                    >
-                      <PencilIcon className="w-5 h-5" />
-                    </button>
-                  </Tooltip>
-                  <Tooltip message="Delete">
-                    <button
-                      className="btn btn-ghost btn-sm btn-circle text-error"
-                      aria-label={`Delete ${server.name}`}
-                      onClick={() => handleDeleteServer(server.id)}
-                    >
-                      <TrashIcon className="w-5 h-5" />
-                    </button>
-                  </Tooltip>
+                  <button
+                    className="btn btn-ghost btn-sm btn-circle tooltip"
+                    data-tip="Edit Configuration"
+                    aria-label={`Edit ${server.name}`}
+                    onClick={() => handleEditServer(server)}
+                  >
+                    <PencilIcon className="w-5 h-5" />
+                  </button>
+                  <button
+                    className="btn btn-ghost btn-sm btn-circle text-error tooltip"
+                    data-tip="Delete"
+                    aria-label={`Delete ${server.name}`}
+                    onClick={() => handleDeleteServer(server.id)}
+                  >
+                    <TrashIcon className="w-5 h-5" />
+                  </button>
                 </div>
               </div>
             </div>
@@ -673,16 +664,15 @@ const MCPServersPage: React.FC = () => {
           <button
             className="btn btn-ghost mr-auto"
             onClick={handleTestConnection}
-            disabled={isTesting || isSaving}
+            disabled={isTesting}
           >
             {isTesting ? <span className="loading loading-spinner loading-xs"></span> : null}
             Test Connection
           </button>
-          <button className="btn btn-ghost" onClick={() => setDialogOpen(false)} disabled={isTesting || isSaving}>
+          <button className="btn btn-ghost" onClick={() => setDialogOpen(false)}>
             Cancel
           </button>
-          <button className="btn btn-primary" onClick={handleSaveServer} disabled={isTesting || isSaving}>
-            {isSaving ? <span className="loading loading-spinner loading-xs mr-2"></span> : null}
+          <button className="btn btn-primary" onClick={handleSaveServer}>
             {isEditing ? 'Update' : 'Add'} Server
           </button>
         </div>

@@ -64,6 +64,8 @@ const Dashboard: React.FC = () => {
       return '💬';
     case 'slack':
       return '📢';
+    case 'telegram':
+      return '✈️';
     case 'mattermost':
       return '💼';
     default:
@@ -184,7 +186,7 @@ const Dashboard: React.FC = () => {
     <div className="min-h-screen bg-base-200">
       {/* Toast Notification */}
       {showToast && (
-        <div className="toast toast-bottom toast-center z-50">
+        <div className="toast toast-bottom toast-center z-50" role="status" aria-live="polite">
           <div className="alert alert-success">
             <span>{toastMessage}</span>
             <button className="btn btn-sm btn-ghost" onClick={() => setShowToast(false)}>✕</button>

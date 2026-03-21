@@ -1,8 +1,8 @@
-const mockWebClient = {
-  chat: { postMessage: jest.fn().mockResolvedValue({ ts: '123' }) },
-  users: { info: jest.fn().mockResolvedValue({ user: { id: 'U123', name: 'testuser' } }) },
-  conversations: { info: jest.fn().mockResolvedValue({ channel: { id: 'C123', name: 'testchannel' } }) }
-};
-module.exports = {
-  WebClient: jest.fn(() => mockWebClient)
-};
+class WebClient {
+  constructor() {
+    this.chat = { postMessage: jest.fn().mockResolvedValue({ ts: '123' }) };
+    this.conversations = { history: jest.fn().mockResolvedValue({ messages: [] }) };
+    this.users = { info: jest.fn().mockResolvedValue({ user: { id: 'U123' } }) };
+  }
+}
+module.exports = { WebClient };
