@@ -53,7 +53,10 @@ test.describe('Webhook Integration Screenshots', () => {
     await page.goto('/admin/integrations/webhook');
 
     // Wait for the page to load by waiting for the breadcrumb or body
-    await page.waitForTimeout(4000);
+    await expect(page.locator('h1, h2, h3').filter({ hasText: /Webhook/i }).first()).toBeVisible({ timeout: 10000 }).catch(() => {});
+
+    // Check for some text that usually appears on integrations/webhooks
+    await page.waitForTimeout(2000);
 
     // Take screenshot
     await page.screenshot({ path: 'docs/screenshots/webhook-integration.png', fullPage: true });
