@@ -17,13 +17,15 @@ export interface BotInstance {
   envOverrides?: Record<string, any>;
 }
 
-export enum BotStatus {
-  ACTIVE = 'active',
-  INACTIVE = 'inactive',
-  ERROR = 'error',
-  STARTING = 'starting',
-  STOPPING = 'stopping'
-}
+export const BotStatus = {
+  ACTIVE: 'active',
+  INACTIVE: 'inactive',
+  ERROR: 'error',
+  STARTING: 'starting',
+  STOPPING: 'stopping'
+} as const;
+
+export type BotStatus = typeof BotStatus[keyof typeof BotStatus];
 
 export interface MessageProvider {
   id: string;
@@ -42,22 +44,26 @@ export interface LLMProvider {
   enabled: boolean;
 }
 
-export enum MessageProviderType {
-  DISCORD = 'discord',
-  SLACK = 'slack',
-  MATTERMOST = 'mattermost',
-  WEBHOOK = 'webhook',
-}
+export const MessageProviderType = {
+  DISCORD: 'discord',
+  SLACK: 'slack',
+  MATTERMOST: 'mattermost',
+  WEBHOOK: 'webhook',
+} as const;
 
-export enum LLMProviderType {
-  OPENAI = 'openai',
-  FLOWISE = 'flowise',
-  OPENWEBUI = 'openwebui',
-  PERPLEXITY = 'perplexity',
-  REPLICATE = 'replicate',
-  N8N = 'n8n',
-  OPENSWARM = 'openswarm',
-}
+export type MessageProviderType = typeof MessageProviderType[keyof typeof MessageProviderType];
+
+export const LLMProviderType = {
+  OPENAI: 'openai',
+  FLOWISE: 'flowise',
+  OPENWEBUI: 'openwebui',
+  PERPLEXITY: 'perplexity',
+  REPLICATE: 'replicate',
+  N8N: 'n8n',
+  OPENSWARM: 'openswarm',
+} as const;
+
+export type LLMProviderType = typeof LLMProviderType[keyof typeof LLMProviderType];
 
 export interface Persona {
   id: string;
@@ -70,14 +76,16 @@ export interface Persona {
   updatedAt: string;
 }
 
-export enum PersonaCategory {
-  PROFESSIONAL = 'professional',
-  CREATIVE = 'creative',
-  TECHNICAL = 'technical',
-  CASUAL = 'casual',
-  EDUCATIONAL = 'educational',
-  ENTERTAINMENT = 'entertainment'
-}
+export const PersonaCategory = {
+  PROFESSIONAL: 'professional',
+  CREATIVE: 'creative',
+  TECHNICAL: 'technical',
+  CASUAL: 'casual',
+  EDUCATIONAL: 'educational',
+  ENTERTAINMENT: 'entertainment'
+} as const;
+
+export type PersonaCategory = typeof PersonaCategory[keyof typeof PersonaCategory];
 
 export interface PersonaTrait {
   name: string;

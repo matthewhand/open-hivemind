@@ -1,7 +1,5 @@
 [build]
-  command = "npm run build:netlify"
-  # Only build on main branch to avoid unnecessary builds on feature branches
-  ignore = "test \"$BRANCH\" != \"main\""
+  command = "pnpm install --no-frozen-lockfile && npm run build:netlify"
   functions = "dist/netlify/functions"
   publish = "dist/client"
 
@@ -18,3 +16,7 @@
   from = "/*"
   to = "/index.html"
   status = 200
+
+[build.environment]
+  NODE_VERSION = "20"
+  PNPM_VERSION = "9.15.4"

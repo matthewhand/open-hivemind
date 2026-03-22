@@ -55,7 +55,7 @@ const PageHeader: React.FC<PageHeaderProps> = ({
         <div className="flex items-start gap-4">
           {icon && (
             <div className={`p-3 rounded-xl ${iconBgMap[gradient]} backdrop-blur-sm shadow-sm`}>
-              {icon}
+              {React.isValidElement(icon) ? icon : (typeof icon === 'function' || typeof icon === 'object' ? React.createElement(icon as any) : icon)}
             </div>
           )}
           <div>

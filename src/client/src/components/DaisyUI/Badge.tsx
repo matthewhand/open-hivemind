@@ -59,7 +59,7 @@ export const Badge: React.FC<BadgeProps> = ({
   const badgeContent = (
     <>
       {avatar && <span className="avatar placeholder">{avatar}</span>}
-      {icon && <span className="mr-1">{icon}</span>}
+      {icon && <span className="mr-1">{React.isValidElement(icon) ? icon : (typeof icon === 'function' || typeof icon === 'object' ? React.createElement(icon as any) : icon)}</span>}
       {children}
     </>
   );

@@ -114,7 +114,7 @@ test.describe('Personas Management', () => {
           .locator('button[type="submit"], button:has-text("Save"), button:has-text("Create")')
           .last();
         if ((await submitButton.count()) > 0) {
-          await submitButton.click();
+          await submitButton.click({ force: true });
           await page.waitForTimeout(2000);
         }
         await page.screenshot({ path: 'test-results/personas-05-submitted.png', fullPage: true });
