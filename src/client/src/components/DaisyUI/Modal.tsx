@@ -344,7 +344,7 @@ export const InfoModal: React.FC<Omit<BaseModalProps, 'children'> & {
     >
       <div className="py-4">
         <div className="flex items-start gap-4">
-          <div className="text-4xl">{icon}</div>
+          <div className="text-4xl">{React.isValidElement(icon) ? icon : (typeof icon === 'function' || typeof icon === 'object' ? React.createElement(icon as any) : icon)}</div>
           <div className="flex-1">
             <p className="text-base mb-4">{message}</p>
             {details && (
