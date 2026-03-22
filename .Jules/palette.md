@@ -5,3 +5,7 @@
 ## 2025-03-17 - Prevent Input Blur on Inline Button Clicks
 **Learning:** When building custom input components with inline action buttons (e.g., clear, undo, or remove tags in `CommaSeparatedInput`), clicking these buttons naturally causes the input field to lose focus. This interrupts the user's flow and can prematurely trigger `onBlur` events.
 **Action:** Always add `onMouseDown={(e) => e.preventDefault()}` to inline buttons inside or adjacent to inputs. This prevents focus from leaving the input field when the button is clicked, retaining the cursor position and ensuring a smooth user experience.
+
+## 2025-03-21 - Add ARIA Labels to List Actions
+**Learning:** This application renders many lists of entities (e.g., integrations, metrics) with repetitive action buttons like "Configure" or "Test". For screen reader users, hearing "Configure, Test, Configure, Test" without context is confusing.
+**Action:** When mapping over lists to render action buttons, always use dynamic `aria-label`s that include the entity's name (e.g., `aria-label={"Configure " + integration.name}`) to provide clear context for screen readers.
