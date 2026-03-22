@@ -62,6 +62,11 @@ router.get('/agents', async (req: Request, res: Response) => {
       });
     }
 
+    const validationCheck = await validateLettaUrl(apiUrl);
+    if (!validationCheck.isValid) {
+      return res.status(403).json({ error: 'Security Warning', message: validationCheck.error });
+    }
+
     if (!apiKey) {
       return res.status(400).json({
         error: 'Missing API key',
@@ -96,6 +101,11 @@ router.get('/agents/:id', async (req: Request, res: Response) => {
         error: 'Security Warning',
         message: validation.error,
       });
+    }
+
+    const validationCheck = await validateLettaUrl(apiUrl);
+    if (!validationCheck.isValid) {
+      return res.status(403).json({ error: 'Security Warning', message: validationCheck.error });
     }
 
     if (!apiKey) {
