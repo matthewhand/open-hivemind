@@ -25,7 +25,8 @@ export interface BadgeProps {
   role?: string;
 }
 
-export const Badge: React.FC<BadgeProps> = ({
+// ⚡ Bolt Optimization: Added React.memo() to prevent unnecessary re-renders of this core primitive UI component.
+export const Badge: React.FC<BadgeProps> = React.memo(({
   children,
   variant = 'neutral',
   size = 'normal',
@@ -74,6 +75,8 @@ export const Badge: React.FC<BadgeProps> = ({
       {badgeContent}
     </span>
   );
-};
+});
+
+Badge.displayName = 'Badge';
 
 export default Badge;
