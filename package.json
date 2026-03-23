@@ -46,6 +46,7 @@
     "generate-docs": "mkdir -p docs/screenshots && npx playwright test tests/e2e/screenshot-*.spec.ts --project=chromium",
     "docs:screenshots": "npx playwright test tests/e2e/docs-screenshots.spec.ts",
     "playwright:serve": "RUNTIME_BUILD_ON_START=true NODE_ENV=production bash ./scripts/start-runtime.sh",
+    "audit:secrets": "bash ./scripts/audit-secrets.sh",
     "ncu": "ncu",
     "dev:only": "npm run dev",
     "dev:only:backend": "npm run dev:backend",
