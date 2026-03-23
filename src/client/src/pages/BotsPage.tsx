@@ -24,8 +24,6 @@ import { LLMProviderType, MessageProviderType } from '../types/bot';
 import BotCard from '../components/BotManagement/BotCard';
 import { CreateBotWizard } from '../components/BotManagement/CreateBotWizard';
 import { BotSettingsModal } from '../components/BotSettingsModal';
-import { useLlmStatus } from '../hooks/useLlmStatus';
-import { usePageLifecycle } from '../hooks/usePageLifecycle';
 import { useLocation } from 'react-router-dom';
 
 const BotsPage: React.FC = () => {
@@ -171,10 +169,8 @@ const BotsPage: React.FC = () => {
     });
   };
 
-  const toast = {
-    success: useSuccessToast(),
-    error: useErrorToast()
-  };
+  const successToast = useSuccessToast();
+  const errorToast = useErrorToast();
 
   const location = useLocation();
 
@@ -187,11 +183,11 @@ const BotsPage: React.FC = () => {
     } catch (err) {
       ErrorService.report(err, { action: 'fetchBots' });
       setError(err instanceof Error ? err.message : 'Failed to fetch bots');
-      toast.error('Failed to load bots');
+      errorToast('Failed to load bots');
     } finally {
       setLoading(false);
     }
-  }, [toast]);
+  }, [errorToast]);
 
   useEffect(() => {
     fetchBots();
@@ -206,24 +202,13 @@ const BotsPage: React.FC = () => {
     }
   }, [location.state]);
 
-  const handleCreateBot = async (botData: any) => {
-    try {
-      const response = await apiService.post<any>('/api/bots', botData);
-      setBots(prev => [...prev, response.data.bot]);
-      setIsCreateModalOpen(false);
-      toast.success('Bot created successfully');
-    } catch (err) {
-      ErrorService.report(err, { action: 'createBot', botData });
-      toast.error(err instanceof Error ? err.message : 'Failed to create bot');
-    }
-  };
 
   const handleUpdateBot = async (botData: any) => {
     try {
       const response = await apiService.put<any>(`/api/bots/${editingBot?.id}`, botData);
       setBots(prev => prev.map(b => b.id === editingBot?.id ? response.data.bot : b));
       setEditingBot(null);
-      toast.success('Bot updated successfully');
+      successToast('Bot updated successfully');
       
       // Update preview if it's the same bot
       if (previewBot?.id === editingBot?.id) {
@@ -231,7 +216,7 @@ const BotsPage: React.FC = () => {
       }
     } catch (err) {
       ErrorService.report(err, { action: 'updateBot', botId: editingBot?.id });
-      toast.error(err instanceof Error ? err.message : 'Failed to update bot');
+      errorToast(err instanceof Error ? err.message : 'Failed to update bot');
     }
   };
 
@@ -244,10 +229,10 @@ const BotsPage: React.FC = () => {
         setPreviewBot(null);
       }
       setDeletingBot(null);
-      toast.success('Bot deleted successfully');
+      successToast('Bot deleted successfully');
     } catch (err) {
       ErrorService.report(err, { action: 'deleteBot', botId: deletingBot.id });
-      toast.error(err instanceof Error ? err.message : 'Failed to delete bot');
+      errorToast(err instanceof Error ? err.message : 'Failed to delete bot');
     }
   };
 
@@ -261,10 +246,10 @@ const BotsPage: React.FC = () => {
         setPreviewBot(prev => prev ? { ...prev, status: newStatus } : null);
       }
       
-      toast.success(`Bot ${newStatus === 'active' ? 'activated' : 'deactivated'} successfully`);
+      successToast(`Bot ${newStatus === 'active' ? 'activated' : 'deactivated'} successfully`);
     } catch (err) {
       ErrorService.report(err, { action: 'toggleBotStatus', botId: bot.id });
-      toast.error(err instanceof Error ? err.message : 'Failed to update bot status');
+      errorToast(err instanceof Error ? err.message : 'Failed to update bot status');
     }
   };
 
@@ -509,7 +494,7 @@ const BotsPage: React.FC = () => {
                                   setActivityLogs(json.data?.activity || []);
                                 } catch (err) {
                                   ErrorService.report(err, { botId: previewBot.id, action: 'fetchActivityLogs' });
-                                  toast.error('Failed to load bot activity logs');
+                                  errorToast('Failed to load bot activity logs');
                                   setActivityLogs([]);
                                 }
                               }
@@ -601,11 +586,24 @@ const BotsPage: React.FC = () => {
 
       {/* Modals */}
       {isCreateModalOpen && (
-        <CreateBotWizard
+        <Modal
           isOpen={isCreateModalOpen}
           onClose={() => setIsCreateModalOpen(false)}
-          onSubmit={handleCreateBot}
-        />
+          title="Create New Bot"
+          size="lg"
+        >
+          <CreateBotWizard
+            onCancel={() => setIsCreateModalOpen(false)}
+            onSuccess={async () => {
+              setIsCreateModalOpen(false);
+              successToast('Bot created successfully');
+              await fetchBots();
+            }}
+            personas={personas}
+            llmProfiles={llmProfiles}
+            defaultLlmConfigured={defaultLlmConfigured}
+          />
+        </Modal>
       )}
 
       {editingBot && (

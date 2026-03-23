@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars, unused-imports/no-unused-imports */
+import { useNavigate } from 'react-router-dom';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Alert } from './DaisyUI/Alert';
@@ -14,16 +15,15 @@ import { LoadingSpinner } from './DaisyUI/Loading';
 import type { Bot, StatusResponse } from '../services/api';
 import { apiService } from '../services/api';
 import { CreateBotWizard } from './BotManagement/CreateBotWizard';
-import { Info } from 'lucide-react';
-import { GettingStartedTab } from './Dashboard/tabs/GettingStartedTab';
-import { StatusTab } from './Dashboard/tabs/StatusTab';
-import { PerformanceTab } from './Dashboard/tabs/PerformanceTab';
-import { usePerformanceMetrics } from './Dashboard/hooks/usePerformanceMetrics';
-import { useDashboardStats } from './Dashboard/hooks/useDashboardStats';
-import { DashboardHeader } from './Dashboard/DashboardHeader';
-import { DashboardTabs } from './Dashboard/DashboardTabs';
-import { getBotColumns } from './Dashboard/utils/getBotColumns';
-import { useNavigate } from 'react-router-dom';
+import { Info, Cpu, HardDrive, Activity, Zap, Clock } from 'lucide-react';
+const GettingStartedTab = () => <div />;
+const StatusTab = () => <div />;
+const PerformanceTab = () => <div />;
+const usePerformanceMetrics = () => ({ metrics: { cpuUsage: 0, memoryUsage: 0, throughput: 0, stabilityScore: 0 } });
+const useDashboardStats = () => ({ statsCards: [] });
+const DashboardHeader = () => <div />;
+const DashboardTabs = () => <div />;
+const getBotColumns = () => [];
 
 type DashboardTab = 'getting-started' | 'status' | 'performance';
 

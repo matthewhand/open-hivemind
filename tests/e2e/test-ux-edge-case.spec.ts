@@ -3,6 +3,7 @@ import { setupAuth } from './test-utils';
 
 test.describe('Edge Case Test Coverage Gaps - Max Length UX', () => {
   test('Bot card should not break layout with extremely long names', async ({ page }) => {
+    page.on('console', msg => console.log(msg.text()));
     await setupAuth(page);
 
     // Create a mock bot with a 100-character name
