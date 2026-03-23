@@ -3,6 +3,7 @@ export type { ProviderConfigSchema, ProviderConfigField, ProviderConfigFormProps
 
 // Registry of all available provider schemas
 
+import type { ProviderConfigSchema } from './types';
 import { discordProviderSchema } from './schemas/discord';
 import { slackProviderSchema } from './schemas/slack';
 import { openAIProviderSchema } from './schemas/openai';
