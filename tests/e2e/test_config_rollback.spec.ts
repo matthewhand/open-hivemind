@@ -39,6 +39,7 @@ test.describe('Configuration Rollback', () => {
     await page.route('/api/config/llm-status', async (route) =>
       route.fulfill({ status: 200, json: { configured: true, hasMissing: false } })
     );
+    await page.route("/api/dashboard/status", async (route) => route.fulfill({ status: 200, json: { bots: [] } }));
   });
 
   test('verifies configuration rollback UI', async ({ page }) => {
@@ -47,8 +48,9 @@ test.describe('Configuration Rollback', () => {
       await route.fulfill({ status: 200, json: { rollbacks: [] } });
     });
 
-    await page.goto('/admin/configuration');
-    await page.waitForLoadState('networkidle');
+    await page.route("/api/config/hot-reload/rollbacks", async (route) => route.fulfill({ status: 200, json: { rollbacks: [] } }));
+    await page.goto("/admin/configuration");
+    await page.waitForLoadState("domcontentloaded"); await page.waitForTimeout(500);
 
     // Wait for the button to be disabled when there are no rollbacks
     const rollbackButton = page.locator('button:has-text("Rollbacks")');
@@ -63,7 +65,7 @@ test.describe('Configuration Rollback', () => {
 
     // Refresh to get new mock
     await page.locator('button:has-text("Reload")').click();
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState("domcontentloaded"); await page.waitForTimeout(500);
 
     await expect(rollbackButton).toBeEnabled();
     await expect(rollbackButton).toContainText('1'); // Badge with count

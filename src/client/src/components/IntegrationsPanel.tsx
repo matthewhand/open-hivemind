@@ -92,7 +92,7 @@ const IntegrationsPanel: React.FC = () => {
       setLoading(true);
       const [configRes, botsRes, profilesRes] = await Promise.all([
         fetch('/api/config/global'),
-        fetch('/api/dashboard/api/status'), // Using status endpoint for bots list
+        fetch('/api/dashboard/status'), // Using status endpoint for bots list
         fetch('/api/config/llm-profiles'),
       ]);
 

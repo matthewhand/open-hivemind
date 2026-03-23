@@ -17,7 +17,7 @@ const ConfigPage: React.FC = () => {
       <PageHeader
         title="Integrations & Configuration"
         description="Manage system integrations and global defaults."
-        icon={Plug}
+        icon={<Plug className="w-5 h-5" />}
         gradient="secondary"
       />
 
