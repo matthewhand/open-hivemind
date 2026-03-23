@@ -662,7 +662,9 @@ const EnterpriseManager: React.FC = () => {
         <div className="alert alert-error mb-4">
           <ExclamationCircleIcon className="w-6 h-6" />
           <span>{error}</span>
-          <button onClick={() => setError(null)} className="btn btn-sm btn-ghost">✕</button>
+          <button onClick={() => setError(null)} className="btn btn-sm btn-ghost" aria-label="Close notification">
+              ✕
+            </button>
         </div>
       )}
 
@@ -670,7 +672,9 @@ const EnterpriseManager: React.FC = () => {
         <div className="alert alert-success mb-4">
           <CheckCircleIcon className="w-6 h-6" />
           <span>{success}</span>
-          <button onClick={() => setSuccess(null)} className="btn btn-sm btn-ghost">✕</button>
+          <button onClick={() => setSuccess(null)} className="btn btn-sm btn-ghost" aria-label="Close notification">
+              ✕
+            </button>
         </div>
       )}
 
