@@ -1,5 +1,4 @@
 import { useState, useCallback } from 'react';
-import { v4 as uuidv4 } from 'uuid';
 import type { BotInstance, BotStatus } from '../types/bot';
 
 const useBots = () => {
@@ -8,7 +7,7 @@ const useBots = () => {
   const [error, setError] = useState<string | null>(null);
 
   // Generate unique ID
-  const generateId = () => uuidv4();
+  const generateId = () => Math.random().toString(36).substr(2, 9);
 
   // Create new bot
   const createBot = useCallback((name: string, description?: string) => {
