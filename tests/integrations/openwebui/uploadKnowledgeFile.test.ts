@@ -50,15 +50,22 @@ describe('openwebui/uploadKnowledgeFile', () => {
       getSessionKey: jest.fn().mockResolvedValue('sk-abc'),
     }));
 
-    // Mock fs.existsSync and fs.createReadStream
+    // Mock fs.promises.access and fs.createReadStream
     jest.doMock('fs', () => {
-      const existsSync = jest.fn().mockReturnValue(exists);
+      const access = exists
+        ? jest.fn().mockResolvedValue(undefined)
+        : jest.fn().mockRejectedValue(new Error('ENOENT'));
       const createReadStream = jest.fn().mockReturnValue({ _fakeStream: true });
       return {
         __esModule: true,
-        default: { existsSync, createReadStream },
-        existsSync,
+        default: {
+          promises: { access },
+          createReadStream,
+          constants: { F_OK: 0 },
+        },
+        promises: { access },
         createReadStream,
+        constants: { F_OK: 0 },
       };
     });
 
