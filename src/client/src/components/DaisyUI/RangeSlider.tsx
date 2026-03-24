@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useCallback, useState } from 'react';
 
 export interface RangeSliderProps {
   /** Current value of the slider */
@@ -52,14 +52,17 @@ export const RangeSlider: React.FC<RangeSliderProps> = ({
 
   const currentValue = onChange ? initialValue : internalValue;
 
-  const handleChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
-    const newValue = parseFloat(event.target.value);
-    if (onChange) {
-      onChange(newValue);
-    } else {
-      setInternalValue(newValue);
-    }
-  }, [onChange]);
+  const handleChange = useCallback(
+    (event: React.ChangeEvent<HTMLInputElement>) => {
+      const newValue = parseFloat(event.target.value);
+      if (onChange) {
+        onChange(newValue);
+      } else {
+        setInternalValue(newValue);
+      }
+    },
+    [onChange]
+  );
 
   const getVariantClass = () => {
     return `range-${variant}`;
@@ -67,10 +70,14 @@ export const RangeSlider: React.FC<RangeSliderProps> = ({
 
   const getSizeClass = () => {
     switch (size) {
-    case 'xs': return 'range-xs';
-    case 'sm': return 'range-sm';
-    case 'lg': return 'range-lg';
-    default: return '';
+      case 'xs':
+        return 'range-xs';
+      case 'sm':
+        return 'range-sm';
+      case 'lg':
+        return 'range-lg';
+      default:
+        return '';
     }
   };
 
@@ -79,16 +86,15 @@ export const RangeSlider: React.FC<RangeSliderProps> = ({
   const sizeClass = getSizeClass();
   const disabledClass = disabled ? 'range-disabled' : '';
 
-  const sliderId = id || `range-slider-${Math.random().toString(36).substr(2, 9)}`;
+  const generatedId = React.useId();
+  const sliderId = id || `range-slider-${generatedId}`;
 
   return (
     <div className={`form-control ${className}`.trim()}>
       {label && (
         <label htmlFor={sliderId} className="label">
           <span className="label-text">{label}</span>
-          {showValue && (
-            <span className="label-text-alt">{valueFormatter(currentValue)}</span>
-          )}
+          {showValue && <span className="label-text-alt">{valueFormatter(currentValue)}</span>}
         </label>
       )}
       <input
