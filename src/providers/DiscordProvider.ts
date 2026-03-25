@@ -1,6 +1,6 @@
 import fs from 'fs';
 import path from 'path';
-import { Discord, type DiscordService } from '@hivemind/message-discord';
+import type { DiscordService } from '@hivemind/message-discord/src/DiscordService';
 import discordConfig, { type DiscordConfig } from '../config/discordConfig';
 import type { IBotInfo } from '../types/botInfo';
 import { type IMessageProvider } from '../types/IProvider';
@@ -14,6 +14,7 @@ export class DiscordProvider implements IMessageProvider<DiscordConfig> {
   private discordService: DiscordService;
 
   constructor(discordService?: DiscordService) {
+    const { Discord } = require('@hivemind/message-discord');
     this.discordService = discordService || (Discord as any).DiscordService.getInstance();
   }
 

@@ -1,6 +1,6 @@
 import fs from 'fs';
 import path from 'path';
-import { SlackService } from '@hivemind/message-slack';
+import type SlackService from '@hivemind/message-slack/src/SlackService';
 import slackConfig, { type SlackConfig } from '../config/slackConfig';
 import { type IMessageProvider } from '../types/IProvider';
 
@@ -14,7 +14,8 @@ export class SlackProvider implements IMessageProvider<SlackConfig> {
   private slackService: SlackService;
 
   constructor(slackService?: SlackService) {
-    this.slackService = slackService || SlackService.getInstance();
+    const { SlackService: importedSlackService } = require('@hivemind/message-slack');
+    this.slackService = slackService || importedSlackService.getInstance();
   }
 
   getSchema() {
