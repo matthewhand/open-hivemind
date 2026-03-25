@@ -135,7 +135,7 @@ const AnalyticsDashboard: React.FC = () => {
               onClick={fetchAnalyticsData}
               disabled={isLoading}
             >
-              {isLoading ? <span className="loading loading-spinner loading-sm"></span> : '🔄'} Refresh
+              {isLoading ? <span className="loading loading-spinner loading-sm" aria-hidden="true"></span> : '🔄'} Refresh
             </button>
           </div>
         </div>

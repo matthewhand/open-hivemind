@@ -286,7 +286,7 @@ const ActivityPage: React.FC = () => {
               size="sm"
               variant="secondary"
               onClick={fetchActivity}
-              disabled={loading}
+              disabled={loading} aria-busy={loading}
             >
               Retry ({retryCount}/{maxRetries})
             </Button>
@@ -350,7 +350,7 @@ const ActivityPage: React.FC = () => {
               variant="ghost"
               size="sm"
               onClick={fetchActivity}
-              disabled={loading}
+              disabled={loading} aria-busy={loading}
             >
               <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
             </Button>

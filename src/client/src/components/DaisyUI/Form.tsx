@@ -646,7 +646,7 @@ export const Form: React.FC<FormProps> = ({
             disabled={isSubmitting || loading}
           >
             {(isSubmitting || loading) && (
-              <span className="loading loading-spinner loading-sm"></span>
+              <span className="loading loading-spinner loading-sm" aria-hidden="true"></span>
             )}
             {submitText}
           </button>

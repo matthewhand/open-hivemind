@@ -67,7 +67,7 @@ ${spec.content.replace(/^/gm, '  ')}
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="loading loading-spinner loading-lg"></div>
+        <div className="loading loading-spinner loading-lg" aria-hidden="true"></div>
       </div>
     );
   }

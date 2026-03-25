@@ -321,7 +321,7 @@ const SystemManagement: React.FC = () => {
               onClick={openBackupModal}
               disabled={isCreatingBackup}
             >
-              {isCreatingBackup ? <span className="loading loading-spinner loading-sm"></span> : '💾'} Create Backup
+              {isCreatingBackup ? <span className="loading loading-spinner loading-sm" aria-hidden="true"></span> : '💾'} Create Backup
             </button>
           </div>
         </div>
@@ -622,7 +622,7 @@ const SystemManagement: React.FC = () => {
                   onClick={fetchPerformanceData}
                   disabled={isPerformanceLoading}
                 >
-                  {isPerformanceLoading ? <span className="loading loading-spinner loading-xs"></span> : '🔄 Refresh'}
+                  {isPerformanceLoading ? <span className="loading loading-spinner loading-xs" aria-hidden="true"></span> : '🔄 Refresh'}
                 </button>
               </div>
 
@@ -768,7 +768,7 @@ const SystemManagement: React.FC = () => {
                   </div>
                 ) : (
                   <div className="flex justify-center py-8">
-                    <span className="loading loading-dots loading-lg"></span>
+                    <span className="loading loading-dots loading-lg" aria-hidden="true"></span>
                   </div>
                 )}
               </div>

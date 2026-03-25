@@ -150,7 +150,7 @@ const SecureConfigManager: React.FC<SecureConfigManagerProps> = ({ onRefresh }) 
     return (
       <Card>
         <div className="flex justify-center items-center py-8">
-          <span className="loading loading-spinner loading-lg"></span>
+          <span className="loading loading-spinner loading-lg" aria-hidden="true"></span>
           <p className="ml-4">Loading secure configurations...</p>
         </div>
       </Card>

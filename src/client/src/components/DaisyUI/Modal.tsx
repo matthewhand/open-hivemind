@@ -305,7 +305,7 @@ export const LoadingModal: React.FC<Omit<BaseModalProps, 'children'> & {
       {...props}
     >
       <div className="text-center py-8">
-        <span className="loading loading-spinner loading-lg text-primary"></span>
+        <span className="loading loading-spinner loading-lg text-primary" aria-hidden="true"></span>
         <p className="mt-4 text-base-content/70">{message}</p>
       </div>
     </Modal>

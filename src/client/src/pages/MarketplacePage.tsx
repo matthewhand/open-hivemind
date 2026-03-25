@@ -212,7 +212,7 @@ const MarketplacePage: React.FC = () => {
             variant="outline"
             size="sm"
             onClick={fetchPackages}
-            disabled={loading}
+            disabled={loading} aria-busy={loading}
           >
             <RefreshCw className={`w-4 h-4 mr-1 ${loading ? 'animate-spin' : ''}`} />
             Refresh
@@ -285,7 +285,7 @@ const MarketplacePage: React.FC = () => {
       {/* Loading State */}
       {loading && (
         <div className="flex items-center justify-center py-12">
-          <span className="loading loading-spinner loading-lg text-primary"></span>
+          <span className="loading loading-spinner loading-lg text-primary" aria-hidden="true"></span>
         </div>
       )}
 
@@ -348,7 +348,7 @@ const MarketplacePage: React.FC = () => {
                           disabled={isBusy}
                         >
                           {actionInProgress === `update-${pkg.name}` ? (
-                            <span className="loading loading-spinner loading-xs"></span>
+                            <span className="loading loading-spinner loading-xs" aria-hidden="true"></span>
                           ) : (
                             <UpdateIcon className="w-4 h-4" />
                           )}
@@ -361,7 +361,7 @@ const MarketplacePage: React.FC = () => {
                           disabled={isBusy}
                         >
                           {actionInProgress === `uninstall-${pkg.name}` ? (
-                            <span className="loading loading-spinner loading-xs"></span>
+                            <span className="loading loading-spinner loading-xs" aria-hidden="true"></span>
                           ) : (
                             <UninstallIcon className="w-4 h-4 text-error" />
                           )}
@@ -436,7 +436,7 @@ const MarketplacePage: React.FC = () => {
                 disabled={!githubUrl.trim() || actionInProgress === 'install-url'}
               >
                 {actionInProgress === 'install-url' ? (
-                  <span className="loading loading-spinner loading-sm"></span>
+                  <span className="loading loading-spinner loading-sm" aria-hidden="true"></span>
                 ) : (
                   <>
                     <GitHubIcon className="w-4 h-4 mr-1" />

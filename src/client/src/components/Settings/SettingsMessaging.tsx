@@ -115,7 +115,7 @@ const SettingsMessaging: React.FC = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <span className="loading loading-spinner loading-lg"></span>
+        <span className="loading loading-spinner loading-lg" aria-hidden="true"></span>
       </div>
     );
   }

@@ -185,7 +185,7 @@ const SystemHealth: React.FC<SystemHealthProps> = ({
       <Card>
         <Card.Body>
           <div className="flex justify-center items-center py-8">
-            <span className="loading loading-spinner loading-lg"></span>
+            <span className="loading loading-spinner loading-lg" aria-hidden="true"></span>
             <span className="ml-2 text-base-content/70">
               Loading system health data...
             </span>

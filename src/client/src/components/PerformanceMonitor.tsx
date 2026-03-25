@@ -138,7 +138,7 @@ const PerformanceMonitor: React.FC = () => {
 
       {isFetching && (
         <div className="flex items-center gap-3 mt-6">
-          <span className="loading loading-spinner loading-sm"></span>
+          <span className="loading loading-spinner loading-sm" aria-hidden="true"></span>
           <p className="text-sm text-base-content/70">
             Updating metrics...
           </p>

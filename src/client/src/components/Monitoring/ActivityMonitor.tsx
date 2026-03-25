@@ -254,7 +254,7 @@ const ActivityMonitor: React.FC = () => {
           size="sm"
           variant="ghost"
           onClick={fetchActivity}
-          disabled={loading}
+          disabled={loading} aria-busy={loading}
         >
           <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
           Refresh

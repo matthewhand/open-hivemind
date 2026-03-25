@@ -203,7 +203,7 @@ const LLMProvidersPage: React.FC = () => {
         icon={<BrainIcon className="w-6 h-6" />}
         actions={
           <div className="flex gap-2">
-            <Button variant="ghost" onClick={fetchProfiles} disabled={loading}>
+            <Button variant="ghost" onClick={fetchProfiles} disabled={loading} aria-busy={loading}>
               <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} /> Refresh
             </Button>
             <Button variant="primary" onClick={handleAddProfile}>
@@ -267,7 +267,7 @@ const LLMProvidersPage: React.FC = () => {
                   setDefaultChatbotProfile(e.target.value);
                   await saveGlobal({ defaultChatbotProfile: e.target.value }).catch(() => {});
                 }}
-                disabled={loading}
+                disabled={loading} aria-busy={loading}
               >
                 <option value="">Use System Default</option>
                 {chatProfiles.map((p) => (
@@ -295,7 +295,7 @@ const LLMProvidersPage: React.FC = () => {
                   setWebuiIntelligenceProvider(e.target.value);
                   await saveGlobal({ webuiIntelligenceProvider: e.target.value }).catch(() => {});
                 }}
-                disabled={loading}
+                disabled={loading} aria-busy={loading}
               >
                 <option value="">None (Disabled)</option>
                 {chatProfiles.map((p) => (
@@ -322,7 +322,7 @@ const LLMProvidersPage: React.FC = () => {
                   setDefaultEmbeddingProvider(e.target.value);
                   await saveLlmConfig({ DEFAULT_EMBEDDING_PROVIDER: e.target.value }).catch(() => {});
                 }}
-                disabled={loading}
+                disabled={loading} aria-busy={loading}
               >
                 <option value="">None Selected</option>
                 {embeddingProfiles.map((p) => (

@@ -467,7 +467,7 @@ export const CreateBotWizard: React.FC<CreateBotWizardProps> = ({
 
             {/* Footer Actions */}
             <div className="modal-action mt-6 flex justify-between">
-                <button className="btn btn-ghost" onClick={step === 1 ? onCancel : handleBack} disabled={loading}>
+                <button className="btn btn-ghost" onClick={step === 1 ? onCancel : handleBack} disabled={loading} aria-busy={loading}>
                     {step === 1 ? 'Cancel' : <><ArrowLeft className="w-4 h-4" /> Back</>}
                 </button>
 
@@ -476,8 +476,8 @@ export const CreateBotWizard: React.FC<CreateBotWizardProps> = ({
                         Next <ArrowRight className="w-4 h-4" />
                     </button>
                 ) : (
-                    <button className="btn btn-success btn-wide" onClick={handleSubmit} disabled={loading}>
-                        {loading ? <span className="loading loading-spinner" /> : <><Check className="w-4 h-4" /> Finish & Create</>}
+                    <button className="btn btn-success btn-wide" onClick={handleSubmit} disabled={loading} aria-busy={loading}>
+                        {loading ? <span className="loading loading-spinner" aria-hidden="true" /> : <><Check className="w-4 h-4" /> Finish & Create</>}
                     </button>
                 )}
             </div>

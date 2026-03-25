@@ -136,7 +136,7 @@ const SitemapPage: React.FC = () => {
   if (loading) {
     return (
       <div className="p-6 text-center">
-        <span className="loading loading-spinner loading-lg"></span>
+        <span className="loading loading-spinner loading-lg" aria-hidden="true"></span>
         <p className="mt-2">Loading sitemap...</p>
       </div>
     );

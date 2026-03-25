@@ -171,7 +171,7 @@ const MetricChart: React.FC<MetricChartProps> = ({
           </div>
           <div className="flex flex-col items-end gap-2">
             {isLoading && (
-              <div className="loading loading-spinner loading-sm"></div>
+              <div className="loading loading-spinner loading-sm" aria-hidden="true"></div>
             )}
             <div className={`flex items-center gap-1 ${trendColor}`}>
               {trend === 'up' && <span className="text-lg">↑</span>}

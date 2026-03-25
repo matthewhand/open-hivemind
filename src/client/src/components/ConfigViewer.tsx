@@ -106,7 +106,7 @@ const ConfigViewer: React.FC = () => {
   if (loading) {
     return (
       <div className="flex justify-center items-center min-h-[400px]">
-        <span className="loading loading-spinner loading-lg"></span>
+        <span className="loading loading-spinner loading-lg" aria-hidden="true"></span>
       </div>
     );
   }

@@ -385,7 +385,7 @@ const ConfigurationWizard: React.FC = () => {
           Back
         </Button>
         {activeStep === steps.length - 1 ? (
-          <Button onClick={handleDeploy} disabled={loading} variant="primary" className="flex items-center gap-2">
+          <Button onClick={handleDeploy} disabled={loading} aria-busy={loading} variant="primary" className="flex items-center gap-2">
             <CloudArrowUpIcon className="w-4 h-4" />
             {loading ? 'Deploying...' : 'Deploy Bot'}
           </Button>

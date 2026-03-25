@@ -117,7 +117,7 @@ export const BotActivityWaterfallMonitor: React.FC = () => {
     }, []);
 
     if (loading) {
-        return <div className="flex h-64 items-center justify-center"><span className="loading loading-spinner loading-lg text-primary"></span></div>;
+        return <div className="flex h-64 items-center justify-center"><span className="loading loading-spinner loading-lg text-primary" aria-hidden="true"></span></div>;
     }
 
     if (error) {

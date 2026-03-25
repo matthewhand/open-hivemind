@@ -157,7 +157,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
           {/* Message status indicators */}
           {message.metadata?.status === 'sending' && (
             <div className="flex items-center mt-2 text-xs opacity-60">
-              <span className="loading loading-dots loading-xs mr-1"></span>
+              <span className="loading loading-dots loading-xs mr-1" aria-hidden="true"></span>
               Sending...
             </div>
           )}
@@ -251,7 +251,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
                   </div>
                 </div>
                 <div className="chat-bubble chat-bubble-secondary">
-                  <span className="loading loading-dots loading-sm"></span>
+                  <span className="loading loading-dots loading-sm" aria-hidden="true"></span>
                 </div>
               </div>
             )}
