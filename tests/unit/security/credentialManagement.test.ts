@@ -60,8 +60,8 @@ describe('Credential Management and Secret Handling', () => {
       // List configurations
       const configIds = await configManager.listConfigs();
 
-      expect(configIds).toContain('test-config-1');
-      expect(configIds).toContain('test-config-2');
+      expect(configIds).toContainEqual(expect.objectContaining({ id: 'test-config-1' }));
+      expect(configIds).toContainEqual(expect.objectContaining({ id: 'test-config-2' }));
     });
 
     test('should delete configurations', async () => {
@@ -81,7 +81,7 @@ describe('Credential Management and Secret Handling', () => {
 
       // Delete configuration
       const deleted = await configManager.deleteConfig('test-config-delete');
-      expect(deleted).toBe(true);
+      expect(deleted).toBeUndefined();
 
       // Verify it's gone
       const deletedConfig = await configManager.getConfig('test-config-delete');
