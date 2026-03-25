@@ -263,8 +263,9 @@ router.post(
   validateImportOptions,
   handleValidationErrors,
   async (req: AuthMiddlewareRequest, res: Response) => {
+    const uploadReq = req as any;
     try {
-      if (!req.file) {
+      if (!uploadReq.file) {
         return res.status(400).json({
           success: false,
           message: 'No file uploaded',
@@ -274,14 +275,14 @@ router.post(
       const importedBy = req.user?.username || 'unknown';
 
       const result = await importExportService.importConfigurations(
-        req.file.path,
+        uploadReq.file.path,
         req.body,
         importedBy
       );
 
       // Clean up uploaded file
       try {
-        await fs.unlink(req.file.path);
+        await fs.unlink(uploadReq.file.path);
       } catch (cleanupError) {
         console.error('Error cleaning up uploaded file:', cleanupError);
       }
@@ -295,9 +296,9 @@ router.post(
       console.error('Error importing configurations:', error);
 
       // Clean up uploaded file if it exists
-      if (req.file) {
+      if (uploadReq.file) {
         try {
-          await fs.unlink(req.file.path);
+          await fs.unlink(uploadReq.file.path);
         } catch (cleanupError) {
           console.error('Error cleaning up uploaded file:', cleanupError);
         }
@@ -534,15 +535,16 @@ router.post(
   upload.single('file'),
   handleUploadError,
   async (req: AuthMiddlewareRequest, res: Response) => {
+    const uploadReq = req as any;
     try {
-      if (!req.file) {
+      if (!uploadReq.file) {
         return res.status(400).json({
           success: false,
           message: 'No file uploaded',
         });
       }
 
-      const result = await importExportService.importConfigurations(req.file.path, {
+      const result = await importExportService.importConfigurations(uploadReq.file.path, {
         format: req.body.format || 'json',
         validateOnly: true,
         skipValidation: false,
@@ -551,7 +553,7 @@ router.post(
 
       // Clean up uploaded file
       try {
-        await fs.unlink(req.file.path);
+        await fs.unlink(uploadReq.file.path);
       } catch (cleanupError) {
         console.error('Error cleaning up uploaded file:', cleanupError);
       }
@@ -565,9 +567,9 @@ router.post(
       console.error('Error validating file:', error);
 
       // Clean up uploaded file if it exists
-      if (req.file) {
+      if (uploadReq.file) {
         try {
-          await fs.unlink(req.file.path);
+          await fs.unlink(uploadReq.file.path);
         } catch (cleanupError) {
           console.error('Error cleaning up uploaded file:', cleanupError);
         }

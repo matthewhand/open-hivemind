@@ -46,7 +46,7 @@ router.get('/', (req, res) => {
     const personas = manager.getAllPersonas();
     return res.json(personas);
   } catch (error: any) {
-    logger.error('Failed to retrieve personas', { error: error.message });
+    logger.error('Failed to retrieve personas', { error: error.message } as any);
     return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: 'Failed to retrieve personas' });
   }
 });
@@ -60,7 +60,7 @@ router.get('/:id', (req, res) => {
     }
     return res.json(persona);
   } catch (error: any) {
-    logger.error('Failed to retrieve persona', { id: req.params.id, error: error.message });
+    logger.error('Failed to retrieve persona', { id: req.params.id, error: error.message } as any);
     return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: 'Failed to retrieve persona' });
   }
 });

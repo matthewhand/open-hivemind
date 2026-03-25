@@ -11,9 +11,9 @@ export class SlackProvider implements IMessageProvider<SlackConfig> {
   docsUrl = 'https://api.slack.com/apps';
   helpText =
     'Create a Slack app, enable Socket Mode or Events, and generate the bot and app tokens.';
-  private slackService: SlackService;
+  private slackService: any;
 
-  constructor(slackService?: SlackService) {
+  constructor(slackService?: any) {
     this.slackService = slackService || SlackService.getInstance();
   }
 

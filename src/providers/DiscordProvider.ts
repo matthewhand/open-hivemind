@@ -11,9 +11,9 @@ export class DiscordProvider implements IMessageProvider<DiscordConfig> {
   type = 'messenger' as const;
   docsUrl = 'https://discord.com/developers/applications';
   helpText = 'Create a Discord application, add a bot, and copy the bot token from the Bot tab.';
-  private discordService: DiscordService;
+  private discordService: any;
 
-  constructor(discordService?: DiscordService) {
+  constructor(discordService?: any) {
     this.discordService = discordService || (Discord as any).DiscordService.getInstance();
   }
 
