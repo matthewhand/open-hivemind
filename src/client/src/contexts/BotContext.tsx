@@ -1,24 +1,25 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars, react-refresh/only-export-components, no-empty, no-case-declarations */
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import type { BotInstance} from '../types/bot';
-import { BotStatus, MessageProvider, LLMProvider } from '../types/bot';
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars, no-empty, no-case-declarations */
+import React, { createContext, useCallback, useContext, useEffect, useState } from 'react';
+import { v4 as uuidv4 } from 'uuid';
 import { apiService } from '../services/api';
+import type { BotInstance } from '../types/bot';
+import { BotStatus, MessageProvider, LLMProvider } from '../types/bot';
 
 interface BotContextType {
-    bots: BotInstance[];
-    loading: boolean;
-    error: string | null;
-    createBot: (name: string, description?: string) => BotInstance;
-    updateBot: (botId: string, updates: Partial<BotInstance>) => void;
-    deleteBot: (botId: string) => void;
-    cloneBot: (botId: string) => BotInstance | null;
-    startBot: (botId: string) => Promise<boolean>;
-    stopBot: (botId: string) => Promise<boolean>;
-    getBot: (botId: string) => BotInstance | null;
-    addMessageProvider: (botId: string, type: string, name: string, config: any) => void;
-    addLLMProvider: (botId: string, type: string, name: string, config: any) => void;
-    removeProvider: (botId: string, providerId: string) => void;
-    clearError: () => void;
+  bots: BotInstance[];
+  loading: boolean;
+  error: string | null;
+  createBot: (name: string, description?: string) => BotInstance;
+  updateBot: (botId: string, updates: Partial<BotInstance>) => void;
+  deleteBot: (botId: string) => void;
+  cloneBot: (botId: string) => BotInstance | null;
+  startBot: (botId: string) => Promise<boolean>;
+  stopBot: (botId: string) => Promise<boolean>;
+  getBot: (botId: string) => BotInstance | null;
+  addMessageProvider: (botId: string, type: string, name: string, config: any) => void;
+  addLLMProvider: (botId: string, type: string, name: string, config: any) => void;
+  removeProvider: (botId: string, providerId: string) => void;
+  clearError: () => void;
 }
 
 const BotContext = createContext<BotContextType | undefined>(undefined);
@@ -52,7 +53,7 @@ export const BotProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   }, [bots, initialized]);
 
-  const generateId = () => Math.random().toString(36).substr(2, 9);
+  const generateId = () => uuidv4();
 
   const createBot = useCallback((name: string, description?: string) => {
     const newBot: BotInstance = {
@@ -68,107 +69,151 @@ export const BotProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       envOverrides: {},
     };
 
-    setBots(prev => [...prev, newBot]);
+    setBots((prev) => [...prev, newBot]);
     return newBot;
   }, []);
 
   const updateBot = useCallback((botId: string, updates: Partial<BotInstance>) => {
-    setBots(prev => prev.map(bot =>
-      bot.id === botId
-        ? { ...bot, ...updates, updatedAt: new Date().toISOString() }
-        : bot,
-    ));
+    setBots((prev) =>
+      prev.map((bot) =>
+        bot.id === botId ? { ...bot, ...updates, updatedAt: new Date().toISOString() } : bot
+      )
+    );
   }, []);
 
   const deleteBot = useCallback((botId: string) => {
-    setBots(prev => prev.filter(bot => bot.id !== botId));
+    setBots((prev) => prev.filter((bot) => bot.id !== botId));
   }, []);
 
-  const cloneBot = useCallback((botId: string) => {
-    const bot = bots.find(b => b.id === botId);
-    if (!bot) {return null;}
-
-    const clonedBot: BotInstance = {
-      ...bot,
-      id: generateId(),
-      name: `${bot.name} (Clone)`,
-      status: BotStatus.INACTIVE,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
-
-    setBots(prev => [...prev, clonedBot]);
-    return clonedBot;
-  }, [bots]);
-
-  const startBot = useCallback(async (botId: string) => {
-    const previousStatus = bots.find(b => b.id === botId)?.status;
-    try {
-      setLoading(true);
-      setError(null);
-
-      // Validation: Check for providers
-      const bot = bots.find(b => b.id === botId);
-      if (!bot) {throw new Error('Bot not found');}
-      if (bot.messageProviders.length === 0 && bot.llmProviders.length === 0) {
-        throw new Error('Cannot start bot: No providers configured');
+  const cloneBot = useCallback(
+    (botId: string) => {
+      const bot = bots.find((b) => b.id === botId);
+      if (!bot) {
+        return null;
       }
 
-      // Optimistic UI update: show STARTING state while API call is in progress
-      updateBot(botId, { status: BotStatus.STARTING });
+      const clonedBot: BotInstance = {
+        ...bot,
+        id: generateId(),
+        name: `${bot.name} (Clone)`,
+        status: BotStatus.INACTIVE,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
 
-      await apiService.startBot(botId);
+      setBots((prev) => [...prev, clonedBot]);
+      return clonedBot;
+    },
+    [bots]
+  );
 
-      updateBot(botId, { status: BotStatus.ACTIVE, lastActive: new Date().toISOString() });
-      return true;
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : 'Failed to start';
-      setError(msg);
-      // Revert to previous status or mark as error
-      updateBot(botId, { status: BotStatus.ERROR, error: msg });
-      return false;
-    } finally {
-      setLoading(false);
-    }
-  }, [bots, updateBot]);
+  const startBot = useCallback(
+    async (botId: string) => {
+      const previousStatus = bots.find((b) => b.id === botId)?.status;
+      try {
+        setLoading(true);
+        setError(null);
 
-  const stopBot = useCallback(async (botId: string) => {
-    try {
-      setLoading(true);
-      setError(null);
+        // Validation: Check for providers
+        const bot = bots.find((b) => b.id === botId);
+        if (!bot) {
+          throw new Error('Bot not found');
+        }
+        if (bot.messageProviders.length === 0 && bot.llmProviders.length === 0) {
+          throw new Error('Cannot start bot: No providers configured');
+        }
 
-      // Optimistic UI update: show STOPPING state while API call is in progress
-      updateBot(botId, { status: BotStatus.STOPPING });
+        // Optimistic UI update: show STARTING state while API call is in progress
+        updateBot(botId, { status: BotStatus.STARTING });
 
-      await apiService.stopBot(botId);
+        await apiService.startBot(botId);
 
-      updateBot(botId, { status: BotStatus.INACTIVE });
-      return true;
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : 'Failed to stop bot';
-      setError(msg);
-      // Revert to ACTIVE since the stop failed
-      updateBot(botId, { status: BotStatus.ACTIVE });
-      return false;
-    } finally {
-      setLoading(false);
-    }
-  }, [updateBot]);
+        updateBot(botId, { status: BotStatus.ACTIVE, lastActive: new Date().toISOString() });
+        return true;
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : 'Failed to start';
+        setError(msg);
+        // Revert to previous status or mark as error
+        updateBot(botId, { status: BotStatus.ERROR, error: msg });
+        return false;
+      } finally {
+        setLoading(false);
+      }
+    },
+    [bots, updateBot]
+  );
 
-  const getBot = useCallback((botId: string) => {
-    return bots.find(b => b.id === botId) || null;
-  }, [bots]);
+  const stopBot = useCallback(
+    async (botId: string) => {
+      try {
+        setLoading(true);
+        setError(null);
 
-  const addMessageProvider = useCallback((botId: string, type: string, name: string, config: any) => {
-    setBots(prev => {
-      const target = prev.find(b => b.id === botId);
+        // Optimistic UI update: show STOPPING state while API call is in progress
+        updateBot(botId, { status: BotStatus.STOPPING });
 
-      return prev.map(bot => {
-        if (bot.id !== botId) {return bot;}
+        await apiService.stopBot(botId);
+
+        updateBot(botId, { status: BotStatus.INACTIVE });
+        return true;
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : 'Failed to stop bot';
+        setError(msg);
+        // Revert to ACTIVE since the stop failed
+        updateBot(botId, { status: BotStatus.ACTIVE });
+        return false;
+      } finally {
+        setLoading(false);
+      }
+    },
+    [updateBot]
+  );
+
+  const getBot = useCallback(
+    (botId: string) => {
+      return bots.find((b) => b.id === botId) || null;
+    },
+    [bots]
+  );
+
+  const addMessageProvider = useCallback(
+    (botId: string, type: string, name: string, config: any) => {
+      setBots((prev) => {
+        const target = prev.find((b) => b.id === botId);
+
+        return prev.map((bot) => {
+          if (bot.id !== botId) {
+            return bot;
+          }
+          return {
+            ...bot,
+            messageProviders: [
+              ...bot.messageProviders,
+              {
+                id: generateId(),
+                type: type as any,
+                name,
+                config,
+                enabled: true,
+              },
+            ],
+          };
+        });
+      });
+    },
+    []
+  );
+
+  const addLLMProvider = useCallback((botId: string, type: string, name: string, config: any) => {
+    setBots((prev) =>
+      prev.map((bot) => {
+        if (bot.id !== botId) {
+          return bot;
+        }
         return {
           ...bot,
-          messageProviders: [
-            ...bot.messageProviders,
+          llmProviders: [
+            ...bot.llmProviders,
             {
               id: generateId(),
               type: type as any,
@@ -178,59 +223,46 @@ export const BotProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             },
           ],
         };
-      });
-    });
-  }, []);
-
-  const addLLMProvider = useCallback((botId: string, type: string, name: string, config: any) => {
-    setBots(prev => prev.map(bot => {
-      if (bot.id !== botId) {return bot;}
-      return {
-        ...bot,
-        llmProviders: [
-          ...bot.llmProviders,
-          {
-            id: generateId(),
-            type: type as any,
-            name,
-            config,
-            enabled: true,
-          },
-        ],
-      };
-    }));
+      })
+    );
   }, []);
 
   const removeProvider = useCallback((botId: string, providerId: string) => {
-    setBots(prev => prev.map(bot => {
-      if (bot.id !== botId) {return bot;}
-      return {
-        ...bot,
-        messageProviders: bot.messageProviders.filter(p => p.id !== providerId),
-        llmProviders: bot.llmProviders.filter(p => p.id !== providerId),
-      };
-    }));
+    setBots((prev) =>
+      prev.map((bot) => {
+        if (bot.id !== botId) {
+          return bot;
+        }
+        return {
+          ...bot,
+          messageProviders: bot.messageProviders.filter((p) => p.id !== providerId),
+          llmProviders: bot.llmProviders.filter((p) => p.id !== providerId),
+        };
+      })
+    );
   }, []);
 
   const clearError = () => setError(null);
 
   return (
-    <BotContext.Provider value={{
-      bots,
-      loading,
-      error,
-      createBot,
-      updateBot,
-      deleteBot,
-      cloneBot,
-      startBot,
-      stopBot,
-      getBot,
-      addMessageProvider,
-      addLLMProvider,
-      removeProvider,
-      clearError,
-    }}>
+    <BotContext.Provider
+      value={{
+        bots,
+        loading,
+        error,
+        createBot,
+        updateBot,
+        deleteBot,
+        cloneBot,
+        startBot,
+        stopBot,
+        getBot,
+        addMessageProvider,
+        addLLMProvider,
+        removeProvider,
+        clearError,
+      }}
+    >
       {children}
     </BotContext.Provider>
   );
