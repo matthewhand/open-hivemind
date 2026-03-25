@@ -461,6 +461,7 @@ const PersonasPage: React.FC = () => {
                         className="btn btn-ghost btn-xs btn-circle text-base-content/40 hover:text-primary"
                         onClick={() => handleCopyPrompt(persona.systemPrompt)}
                         title="Copy System Prompt"
+                        aria-label="Copy System Prompt"
                       >
                         <Copy className="w-3 h-3" />
                       </button>

@@ -351,6 +351,7 @@ const BotsPage: React.FC = () => {
                 className="btn btn-ghost btn-sm btn-square"
                 onClick={fetchBots}
                 title="Refresh list"
+                aria-label="Refresh list"
               >
                 <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
               </button>
@@ -426,7 +427,7 @@ const BotsPage: React.FC = () => {
                       </div>
                     </div>
                   </div>
-                  <button className="btn btn-ghost btn-sm btn-square" onClick={() => setPreviewBot(null)}>
+                  <button className="btn btn-ghost btn-sm btn-square" onClick={() => setPreviewBot(null)} aria-label="Close preview">
                     <X className="w-4 h-4" />
                   </button>
                 </div>
@@ -577,6 +578,7 @@ const BotsPage: React.FC = () => {
                       className={`btn btn-sm btn-square ${previewBot.status === 'active' ? 'btn-error btn-outline' : 'btn-success'}`}
                       onClick={() => handleToggleBotStatus(previewBot)}
                       title={previewBot.status === 'active' ? 'Deactivate' : 'Activate'}
+                      aria-label={previewBot.status === 'active' ? 'Deactivate' : 'Activate'}
                     >
                       {previewBot.status === 'active' ? <Pause className="w-3 h-3" /> : <Play className="w-3 h-3" />}
                     </button>

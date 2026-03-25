@@ -290,6 +290,7 @@ const BotTemplatesPage: React.FC = () => {
                     className="btn btn-ghost btn-square"
                     onClick={() => handleCopyTemplate(template)}
                     title="Copy template JSON"
+                    aria-label="Copy template JSON"
                   >
                     {copied ? <Check className="w-4 h-4 text-success" /> : <Copy className="w-4 h-4" />}
                   </button>
