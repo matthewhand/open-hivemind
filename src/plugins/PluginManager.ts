@@ -42,29 +42,32 @@ export class PluginValidationError extends Error {
 
 const REGISTRY_FILE = path.join(PLUGINS_DIR, 'registry.json');
 
-function readRegistry(): PluginRegistryEntry[] {
-  if (!fs.existsSync(REGISTRY_FILE)) return [];
+async function readRegistry(): Promise<PluginRegistryEntry[]> {
   try {
-    return JSON.parse(fs.readFileSync(REGISTRY_FILE, 'utf-8'));
-  } catch {
+    const content = await fs.promises.readFile(REGISTRY_FILE, 'utf-8');
+    return JSON.parse(content);
+  } catch (e: any) {
+    if (e.code === 'ENOENT') {
+      return [];
+    }
     debug('Failed to parse registry.json — returning empty');
     return [];
   }
 }
 
-function writeRegistry(entries: PluginRegistryEntry[]): void {
-  fs.mkdirSync(PLUGINS_DIR, { recursive: true });
-  fs.writeFileSync(REGISTRY_FILE, JSON.stringify(entries, null, 2));
+async function writeRegistry(entries: PluginRegistryEntry[]): Promise<void> {
+  await fs.promises.mkdir(PLUGINS_DIR, { recursive: true });
+  await fs.promises.writeFile(REGISTRY_FILE, JSON.stringify(entries, null, 2));
 }
 
-function updateRegistry(entry: PluginRegistryEntry): void {
-  const entries = readRegistry().filter((e) => e.name !== entry.name);
+async function updateRegistry(entry: PluginRegistryEntry): Promise<void> {
+  const entries = (await readRegistry()).filter((e) => e.name !== entry.name);
   entries.push(entry);
-  writeRegistry(entries);
+  await writeRegistry(entries);
 }
 
-function removeFromRegistry(name: string): void {
-  writeRegistry(readRegistry().filter((e) => e.name !== name));
+async function removeFromRegistry(name: string): Promise<void> {
+  await writeRegistry((await readRegistry()).filter((e) => e.name !== name));
 }
 
 // ---------------------------------------------------------------------------
@@ -148,18 +151,20 @@ function validateManifest(name: string, mod: any): PluginManifest {
 // Package helpers
 // ---------------------------------------------------------------------------
 
-function readPackageVersion(pluginPath: string): string {
+async function readPackageVersion(pluginPath: string): Promise<string> {
   try {
-    const pkg = JSON.parse(fs.readFileSync(path.join(pluginPath, 'package.json'), 'utf-8'));
+    const content = await fs.promises.readFile(path.join(pluginPath, 'package.json'), 'utf-8');
+    const pkg = JSON.parse(content);
     return pkg.version ?? '0.0.0';
   } catch {
     return '0.0.0';
   }
 }
 
-function deriveNameFromPath(pluginPath: string): string {
+async function deriveNameFromPath(pluginPath: string): Promise<string> {
   try {
-    const pkg = JSON.parse(fs.readFileSync(path.join(pluginPath, 'package.json'), 'utf-8'));
+    const content = await fs.promises.readFile(path.join(pluginPath, 'package.json'), 'utf-8');
+    const pkg = JSON.parse(content);
     // Strip @hivemind/ or @scope/ prefix if present
     return pkg.name?.replace(/^@[^/]+\//, '') ?? path.basename(pluginPath);
   } catch {
@@ -228,7 +233,7 @@ function validateRepoUrl(url: string): void {
  */
 export async function installPlugin(repoUrl: string): Promise<PluginInfo> {
   validateRepoUrl(repoUrl);
-  fs.mkdirSync(PLUGINS_DIR, { recursive: true });
+  await fs.promises.mkdir(PLUGINS_DIR, { recursive: true });
 
   // Clone into a temp dir first so we can read the name before committing
   const tempName = `_install_${Date.now()}`;
@@ -238,19 +243,24 @@ export async function installPlugin(repoUrl: string): Promise<PluginInfo> {
     debug('Cloning %s → %s', repoUrl, tempPath);
     exec('git', ['clone', '--depth', '1', repoUrl, tempPath], PLUGINS_DIR);
 
-    const name = deriveNameFromPath(tempPath);
+    const name = await deriveNameFromPath(tempPath);
     const pluginPath = path.join(PLUGINS_DIR, name);
 
     // If already installed, refuse — use updatePlugin instead
-    if (fs.existsSync(pluginPath)) {
-      fs.rmSync(tempPath, { recursive: true, force: true });
+    try {
+      await fs.promises.access(pluginPath);
+      await fs.promises.rm(tempPath, { recursive: true, force: true });
       throw new Error(
         `Plugin '${name}' is already installed at ${pluginPath}. Use updatePlugin('${name}') to upgrade.`
       );
+    } catch (e: any) {
+      if (e.code !== 'ENOENT') {
+        throw e;
+      }
     }
 
     // Move temp dir to final location
-    fs.renameSync(tempPath, pluginPath);
+    await fs.promises.rename(tempPath, pluginPath);
 
     debug('Running pnpm install --prod in %s', pluginPath);
     exec('pnpm', ['install', '--prod', '--ignore-scripts'], pluginPath);
@@ -259,17 +269,20 @@ export async function installPlugin(repoUrl: string): Promise<PluginInfo> {
     const mod = loadPlugin(name);
     const manifest = validateManifest(name, mod);
 
-    const version = readPackageVersion(pluginPath);
+    const version = await readPackageVersion(pluginPath);
     const now = new Date().toISOString();
     const entry: PluginRegistryEntry = { name, repoUrl, installedAt: now, updatedAt: now, version };
-    updateRegistry(entry);
+    await updateRegistry(entry);
 
     debug('Installed plugin %s@%s', name, version);
     return { ...entry, manifest, pluginPath };
   } catch (err) {
     // Clean up temp dir on failure
-    if (fs.existsSync(tempPath)) {
-      fs.rmSync(tempPath, { recursive: true, force: true });
+    try {
+      await fs.promises.access(tempPath);
+      await fs.promises.rm(tempPath, { recursive: true, force: true });
+    } catch {
+      // Temp path doesn't exist, nothing to clean up
     }
     throw err;
   }
@@ -288,13 +301,18 @@ export async function installPlugin(repoUrl: string): Promise<PluginInfo> {
 export async function uninstallPlugin(name: string): Promise<void> {
   const pluginPath = path.join(PLUGINS_DIR, name);
 
-  if (!fs.existsSync(pluginPath)) {
-    throw new Error(`Plugin '${name}' not found at ${pluginPath}. Is it installed?`);
+  try {
+    await fs.promises.access(pluginPath);
+  } catch (e: any) {
+    if (e.code === 'ENOENT') {
+      throw new Error(`Plugin '${name}' not found at ${pluginPath}. Is it installed?`);
+    }
+    throw e;
   }
 
   evictFromCache(pluginPath);
-  fs.rmSync(pluginPath, { recursive: true, force: true });
-  removeFromRegistry(name);
+  await fs.promises.rm(pluginPath, { recursive: true, force: true });
+  await removeFromRegistry(name);
 
   debug('Uninstalled plugin %s', name);
 }
@@ -314,8 +332,13 @@ export async function uninstallPlugin(name: string): Promise<void> {
 export async function updatePlugin(name: string): Promise<PluginInfo> {
   const pluginPath = path.join(PLUGINS_DIR, name);
 
-  if (!fs.existsSync(pluginPath)) {
-    throw new Error(`Plugin '${name}' not found at ${pluginPath}. Install it first.`);
+  try {
+    await fs.promises.access(pluginPath);
+  } catch (e: any) {
+    if (e.code === 'ENOENT') {
+      throw new Error(`Plugin '${name}' not found at ${pluginPath}. Install it first.`);
+    }
+    throw e;
   }
 
   debug('Pulling latest for %s', name);
@@ -328,8 +351,8 @@ export async function updatePlugin(name: string): Promise<PluginInfo> {
   const mod = loadPlugin(name);
   const manifest = validateManifest(name, mod);
 
-  const version = readPackageVersion(pluginPath);
-  const existing = readRegistry().find((e) => e.name === name);
+  const version = await readPackageVersion(pluginPath);
+  const existing = (await readRegistry()).find((e) => e.name === name);
   const entry: PluginRegistryEntry = {
     name,
     repoUrl: existing?.repoUrl ?? '',
@@ -337,7 +360,7 @@ export async function updatePlugin(name: string): Promise<PluginInfo> {
     updatedAt: new Date().toISOString(),
     version,
   };
-  updateRegistry(entry);
+  await updateRegistry(entry);
 
   debug('Updated plugin %s@%s', name, version);
   return { ...entry, manifest, pluginPath };
@@ -347,17 +370,24 @@ export async function updatePlugin(name: string): Promise<PluginInfo> {
  * List all installed community plugins.
  * Combines registry entries with any manually-dropped directories not in registry.
  */
-export function listInstalledPlugins(): PluginInfo[] {
+export async function listInstalledPlugins(): Promise<PluginInfo[]> {
   const results: PluginInfo[] = [];
 
-  if (!fs.existsSync(PLUGINS_DIR)) return results;
+  try {
+    await fs.promises.access(PLUGINS_DIR);
+  } catch (e: any) {
+    if (e.code === 'ENOENT') {
+      return results;
+    }
+    throw e;
+  }
 
-  const registry = readRegistry();
+  const registry = await readRegistry();
   const registryMap = new Map(registry.map((e) => [e.name, e]));
 
   // Scan directory — includes manually installed plugins not in registry
-  const dirs = fs
-    .readdirSync(PLUGINS_DIR, { withFileTypes: true })
+  const dirEntries = await fs.promises.readdir(PLUGINS_DIR, { withFileTypes: true });
+  const dirs = dirEntries
     .filter((d) => d.isDirectory() && d.name !== '_install_' && !d.name.startsWith('_install_'))
     .map((d) => d.name);
 
@@ -369,7 +399,7 @@ export function listInstalledPlugins(): PluginInfo[] {
       if (!manifest) continue;
 
       const registryEntry = registryMap.get(name);
-      const version = readPackageVersion(pluginPath);
+      const version = await readPackageVersion(pluginPath);
       const now = new Date().toISOString();
 
       results.push({

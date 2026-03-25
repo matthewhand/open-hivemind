@@ -72,13 +72,13 @@ let schemaSources: Record<string, any> = { ...coreSchemaSources };
 let globalConfigs: Record<string, any> = { ...schemaSources };
 
 // Helper to load dynamic configs from files
-const loadDynamicConfigs = () => {
+const loadDynamicConfigs = async () => {
   try {
     const configDir = process.env.NODE_CONFIG_DIR || path.join(process.cwd(), 'config');
     const providersDir = path.join(configDir, 'providers');
 
-    if (fs.existsSync(providersDir)) {
-      const files = fs.readdirSync(providersDir);
+    try {
+      const files = await fs.promises.readdir(providersDir);
 
       files.forEach((file) => {
         // Match pattern: type-name.json e.g. openai-dev.json
@@ -108,6 +108,10 @@ const loadDynamicConfigs = () => {
           }
         }
       });
+    } catch (e: any) {
+      if (e.code !== 'ENOENT') {
+        throw e;
+      }
     }
   } catch (e) {
     console.error('Failed to load dynamic configs:', e);
@@ -115,7 +119,7 @@ const loadDynamicConfigs = () => {
 };
 
 // Initialize configuration from registry
-export const reloadGlobalConfigs = () => {
+export const reloadGlobalConfigs = async () => {
   const providers = providerRegistry.getAll();
   providers.forEach((p) => {
     schemaSources[p.id] = p.getConfig();
@@ -125,7 +129,7 @@ export const reloadGlobalConfigs = () => {
   globalConfigs = { ...schemaSources };
 
   // Load dynamic configs
-  loadDynamicConfigs();
+  await loadDynamicConfigs();
 
   debug(
     'Global configs reloaded with providers:',
@@ -299,7 +303,7 @@ router.get('/sources', async (req, res) => {
     const configDir = path.join(process.cwd(), 'config');
     const configFiles: any[] = [];
 
-    if (fs.existsSync(configDir)) {
+    try {
       const files = await fs.promises.readdir(configDir);
       const statPromises = files
         .filter((file) => file.endsWith('.json') || file.endsWith('.js') || file.endsWith('.ts'))
@@ -317,6 +321,10 @@ router.get('/sources', async (req, res) => {
 
       const fileStats = await Promise.all(statPromises);
       configFiles.push(...fileStats);
+    } catch (e: any) {
+      if (e.code !== 'ENOENT') {
+        throw e;
+      }
     }
 
     return res.json({
