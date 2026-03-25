@@ -123,7 +123,8 @@ export class Mem4aiProvider {
         try {
             const response = await this.makeRequest(`/memories/search?${params}`, 'GET');
 
-            const results: SearchResult[] = response.results.map((result: Record<string, unknown>) => ({
+            const resultsArray = (response.results as Array<Record<string, unknown>>) || [];
+            const results: SearchResult[] = resultsArray.map((result: Record<string, unknown>) => ({
                 id: result.id as string,
                 content: result.content as string,
                 score: result.score as number,
@@ -152,7 +153,8 @@ export class Mem4aiProvider {
         try {
             const response = await this.makeRequest(`/memories?${params}`, 'GET');
 
-            const memories: MemoryEntry[] = response.memories.map((mem: Record<string, unknown>) => ({
+            const memoriesArray = (response.memories as Array<Record<string, unknown>>) || [];
+            const memories: MemoryEntry[] = memoriesArray.map((mem: Record<string, unknown>) => ({
                 id: mem.id as string,
                 content: mem.content as string,
                 metadata: mem.metadata as Record<string, unknown> | undefined,
@@ -200,11 +202,11 @@ export class Mem4aiProvider {
 
             this.debug('Memory updated', { id });
             return {
-                id: response.id,
-                content: response.content,
-                metadata: response.metadata,
-                timestamp: response.updated_at,
-                tags: response.tags,
+                id: response.id as string,
+                content: response.content as string,
+                metadata: response.metadata as Record<string, unknown> | undefined,
+                timestamp: response.updated_at as number | undefined,
+                tags: (response.tags as string[]) || [],
             };
         } catch (error) {
             this.debug('Failed to update memory', error);
@@ -255,7 +257,7 @@ export class Mem4aiProvider {
                 throw new Error(`Mem4ai API error: ${response.status} - ${error}`);
             }
 
-            return await response.json() as Promise<unknown>;
+            return (await response.json()) as Record<string, unknown>;
         } finally {
             clearTimeout(timeout);
         }
