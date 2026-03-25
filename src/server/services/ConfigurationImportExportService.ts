@@ -8,6 +8,7 @@ import Debug from 'debug';
 import { AuditLogger } from '../../common/auditLogger';
 import { SecureConfigManager } from '../../config/SecureConfigManager';
 import { UserConfigStore } from '../../config/UserConfigStore';
+import { PathSecurityUtils } from '@src/utils/PathSecurityUtils';
 import { DatabaseManager } from '../../database/DatabaseManager';
 import { ConfigurationTemplateService } from './ConfigurationTemplateService';
 import { ConfigurationValidator } from './ConfigurationValidator';
@@ -941,21 +942,14 @@ export class ConfigurationImportExportService {
   /**
    * Get safe backup path and filename.
    * Ensures the filename is sanitized and the path stays within the backups directory.
+   * Uses PathSecurityUtils for consistent security validation.
    */
   private getSafeBackupPath(name: string, createdAt: Date): string {
-    const sanitizedName = basename(name);
+    const sanitizedName = PathSecurityUtils.sanitizeFilename(name);
     const backupFileName = `backup-${sanitizedName}-${createdAt.getTime()}.json.gz`;
-    const backupPath = join(this.backupsDir, backupFileName);
 
-    // Security check to prevent path traversal
-    const resolvedPath = path.resolve(backupPath);
-    const resolvedBackupsDir = path.resolve(this.backupsDir);
-
-    if (!resolvedPath.startsWith(resolvedBackupsDir + path.sep) && resolvedPath !== resolvedBackupsDir) {
-      throw new Error('Invalid backup name: Path traversal detected');
-    }
-
-    return backupPath;
+    // Use PathSecurityUtils for consistent path validation
+    return PathSecurityUtils.getSafePath(this.backupsDir, backupFileName);
   }
 
   /**
