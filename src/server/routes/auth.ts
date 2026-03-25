@@ -3,6 +3,7 @@ import { Router, type Request, type Response } from 'express';
 import { AuthManager } from '../../auth/AuthManager';
 import { authenticate, requireAdmin } from '../../auth/middleware';
 import type { AuthMiddlewareRequest, LoginCredentials, RegisterData } from '../../auth/types';
+import { authLimiter } from '../middleware/rateLimiter';
 import {
   ChangePasswordSchema,
   LoginSchema,
@@ -40,7 +41,7 @@ const authManager = AuthManager.getInstance();
  *       401:
  *         description: Authentication failed
  */
-router.post('/login', validateRequest(LoginSchema), async (req: Request, res: Response) => {
+router.post('/login', authLimiter, validateRequest(LoginSchema), async (req: Request, res: Response) => {
   try {
     const credentials: LoginCredentials = req.body;
     // Normal authentication flow
@@ -89,6 +90,7 @@ router.post('/login', validateRequest(LoginSchema), async (req: Request, res: Re
  */
 router.post(
   '/register',
+  authLimiter,
   authenticate,
   requireAdmin,
   validateRequest(RegisterSchema),
@@ -137,6 +139,7 @@ router.post(
  */
 router.post(
   '/refresh',
+  authLimiter,
   validateRequest(RefreshTokenSchema),
   async (req: Request, res: Response) => {
     try {
