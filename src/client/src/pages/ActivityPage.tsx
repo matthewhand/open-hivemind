@@ -424,6 +424,7 @@ const ActivityPage: React.FC = () => {
                className="btn-square"
                onClick={handleClearFilters}
                title="Clear All Filters"
+               aria-label="Clear All Filters"
              >
                <X className="w-4 h-4" />
              </Button>

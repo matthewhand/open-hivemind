@@ -267,6 +267,7 @@ const ModelAutocomplete: React.FC<ModelAutocompleteProps> = ({
               disabled={isLoading}
               className="btn btn-ghost btn-square"
               title="Refresh model list"
+              aria-label="Refresh model list"
             >
               {isLoading ? (
                 <LoadingSpinner size="sm" />

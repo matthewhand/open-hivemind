@@ -280,6 +280,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
               type="button"
               className="btn btn-ghost btn-square"
               title="Attach file"
+              aria-label="Attach file"
             >
               📎
             </button>

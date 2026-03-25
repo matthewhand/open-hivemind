@@ -250,13 +250,14 @@ const GuardsPage: React.FC = () => {
                       onClick={() => handleDuplicateProfile(profile)}
                       className="btn btn-ghost btn-xs btn-square"
                       title="Duplicate Profile"
+                      aria-label="Duplicate Profile"
                     >
                       <Copy className="w-4 h-4" />
                     </button>
-                    <button onClick={() => handleEdit(profile)} className="btn btn-ghost btn-xs btn-square">
+                    <button onClick={() => handleEdit(profile)} className="btn btn-ghost btn-xs btn-square" aria-label="Edit profile">
                       <Edit2 className="w-4 h-4" />
                     </button>
-                    <button onClick={() => handleDeleteProfile(profile)} className="btn btn-ghost btn-xs btn-square text-error">
+                    <button onClick={() => handleDeleteProfile(profile)} className="btn btn-ghost btn-xs btn-square text-error" aria-label="Delete profile">
                       <Trash2 className="w-4 h-4" />
                     </button>
                   </div>

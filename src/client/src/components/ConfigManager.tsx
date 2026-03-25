@@ -139,6 +139,7 @@ const ConfigManager: React.FC = () => {
                   variant="ghost"
                   size="sm"
                   className="btn-circle"
+                  aria-label="Refresh configurations"
                   onClick={() => console.log('Refresh configs')}
                 >
                   <ArrowPathIcon className="w-5 h-5" />
@@ -227,6 +228,7 @@ const ConfigManager: React.FC = () => {
                         variant="ghost"
                         size="sm"
                         className="btn-circle text-error"
+                        aria-label="Delete configuration"
                         onClick={(e) => {
                           e.stopPropagation();
                           handleDeleteConfig(config);

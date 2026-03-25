@@ -260,6 +260,7 @@ export const CreateBotWizard: React.FC<CreateBotWizardProps> = ({
                                         className="btn btn-square join-item"
                                         onClick={() => window.open('/admin/config', '_blank')}
                                         title="Manage Providers"
+                                        aria-label="Manage Providers"
                                     >
                                         +
                                     </button>

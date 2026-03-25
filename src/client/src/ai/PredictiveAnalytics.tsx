@@ -465,6 +465,7 @@ export const PredictiveAnalytics: React.FC = () => {
                 className="btn btn-circle btn-ghost btn-sm"
                 onClick={generatePredictions}
                 disabled={isLoading}
+                aria-label="Refresh predictions"
               >
                 <ArrowPathIcon className={`w-5 h-5 ${isLoading ? 'animate-spin' : ''}`} />
               </button>
