@@ -189,6 +189,7 @@ The Enterprise Manager provides an interface to monitor security, compliance, mu
 *   **Action Filtering**: Narrow down events by specific actions (e.g., CREATE_BOT) using the combobox filter.
 
 ### [Webhook](/admin/integrations/webhook)
+![Webhook Integration](screenshots/webhook-integration.png)
 Configure incoming webhooks for external integrations.
 *   **Endpoint Management**: specific URLs to trigger bot actions from external services.
 *   **Security**: Manage webhook secrets and verification.

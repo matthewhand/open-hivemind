@@ -13,7 +13,7 @@ import {
   Clock,
   DownloadCloud as DownloadIcon
 } from 'lucide-react';
-import Alert from '../components/DaisyUI/Alert';
+import { Alert } from '../components/DaisyUI/Alert';
 import ToastNotification from '../components/DaisyUI/ToastNotification';
 import Modal from '../components/DaisyUI/Modal';
 import Button from '../components/DaisyUI/Button';
