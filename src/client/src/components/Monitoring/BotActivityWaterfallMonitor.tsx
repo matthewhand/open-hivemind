@@ -90,7 +90,12 @@ export const BotActivityWaterfallMonitor: React.FC = () => {
                 });
 
                 // Update container durations to bound all children
-                const maxTime = Math.max(...newSpans.filter(s => s.parentId).map(s => s.startTime + s.duration));
+                // ⚡ Bolt Optimization: Replace chained .filter().map() and spread operator in Math.max() with a single O(N) .reduce() pass
+                // to prevent 'Maximum call stack size exceeded' errors and avoid unnecessary array allocations.
+                const maxTime = newSpans.reduce(
+                    (max, s) => s.parentId ? Math.max(max, s.startTime + s.duration) : max,
+                    -Infinity
+                );
                 const overallDuration = Math.max(maxTime - minTime, 1000);
 
                 newSpans.forEach(span => {
