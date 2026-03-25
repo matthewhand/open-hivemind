@@ -3,6 +3,7 @@ import { Router, type Request, type Response } from 'express';
 import { AuthManager } from '../../auth/AuthManager';
 import { authenticate, requireAdmin } from '../../auth/middleware';
 import type { AuthMiddlewareRequest, LoginCredentials, RegisterData } from '../../auth/types';
+import { authRateLimiter } from '../../middleware/rateLimiter';
 import {
   ChangePasswordSchema,
   LoginSchema,
@@ -40,7 +41,7 @@ const authManager = AuthManager.getInstance();
  *       401:
  *         description: Authentication failed
  */
-router.post('/login', validateRequest(LoginSchema), async (req: Request, res: Response) => {
+router.post('/login', authRateLimiter, validateRequest(LoginSchema), async (req: Request, res: Response) => {
   try {
     const credentials: LoginCredentials = req.body;
     // Normal authentication flow
@@ -137,6 +138,7 @@ router.post(
  */
 router.post(
   '/refresh',
+  authRateLimiter,
   validateRequest(RefreshTokenSchema),
   async (req: Request, res: Response) => {
     try {
@@ -222,7 +224,7 @@ router.post(
  *       401:
  *         description: Unauthorized
  */
-router.post('/verify', async (req: Request, res: Response) => {
+router.post('/verify', authRateLimiter, async (req: Request, res: Response) => {
   try {
     const { token } = req.body;
     if (!token) return res.status(400).json({ success: false, error: 'Token required' });
