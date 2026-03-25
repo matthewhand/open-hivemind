@@ -119,7 +119,7 @@ const GlobalConfigSection: React.FC<GlobalConfigSectionProps> = ({ section }) =>
         }),
       });
       const data = await res.json();
-      if (!res.ok || data.ok === false) {
+      if (!res.ok || data.success === false) {
         throw new Error(data.message || data.error || 'Connection test failed');
       }
       setTestStatus({ type: 'success', message: data.message || 'Connection successful' });

@@ -19,13 +19,13 @@ swarmRouter.get('/check', async (_req: Request, res: Response) => {
     const swarmInstalled = await installer.checkInstalled();
 
     res.json({
-      ok: true,
+      success: true,
       pythonAvailable,
       swarmInstalled,
       webUIUrl: installer.getWebUIUrl ? installer.getWebUIUrl() : '',
     });
   } catch (error: any) {
-    res.status(500).json({ ok: false, error: error.message });
+    res.status(500).json({ success: false, error: error.message });
   }
 });
 
@@ -34,9 +34,9 @@ swarmRouter.post('/install', async (_req: Request, res: Response) => {
   try {
     const installer = getInstaller();
     const result = await installer.install();
-    res.json({ ok: result.success, message: result.message });
+    res.json({ success: result.success, message: result.message });
   } catch (error: any) {
-    res.status(500).json({ ok: false, error: error.message });
+    res.status(500).json({ success: false, error: error.message });
   }
 });
 
@@ -52,21 +52,21 @@ swarmRouter.post('/start', async (req: Request, res: Response) => {
         typeof rawPort !== 'number' &&
         (typeof rawPort !== 'string' || !/^\d+$/.test(String(rawPort).trim()))
       ) {
-        return res.status(400).json({ ok: false, error: 'Invalid port format' });
+        return res.status(400).json({ success: false, error: 'Invalid port format' });
       }
 
       port = parseInt(String(rawPort).trim(), 10);
 
       if (port < 1 || port > 65535) {
-        return res.status(400).json({ ok: false, error: 'Port must be between 1 and 65535' });
+        return res.status(400).json({ success: false, error: 'Port must be between 1 and 65535' });
       }
     }
 
     const installer = getInstaller();
     const result = await installer.start({ port });
-    return res.json({ ok: result.success, message: result.message });
+    return res.json({ success: result.success, message: result.message });
   } catch (error: any) {
-    return res.status(500).json({ ok: false, error: error.message });
+    return res.status(500).json({ success: false, error: error.message });
   }
 });
 
