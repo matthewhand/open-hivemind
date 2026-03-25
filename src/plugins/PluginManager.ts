@@ -202,6 +202,7 @@ function validateRepoUrl(url: string): void {
     throw new PluginValidationError(
       'Invalid repository URL protocol. Only http: and https: are allowed.'
     );
+  }
 
   // Prevent argument injection via hostname or path
   if (parsedUrl.hostname.includes(" ") || parsedUrl.pathname.includes(" ")) {
@@ -217,6 +218,9 @@ function validateRepoUrl(url: string): void {
   if (/[;&|`$()]/.test(parsedUrl.hostname)) {
     throw new PluginValidationError("Invalid repository URL: contains shell metacharacters.");
   }
+}
+
+/**
  * Install a community plugin from a git repository URL.
  *
  * Steps:
