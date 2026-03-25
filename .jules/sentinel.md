@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 ## 2025-02-26 - Add SSRF Protection to Outbound Requests
 
 **Vulnerability:** External APIs calls to configurable or dynamic endpoints were made via `axios` without validating the URL, potentially leading to Server-Side Request Forgery (SSRF).
@@ -18,9 +17,7 @@
 **Vulnerability:** The `MattermostClient` created an Axios instance with a user-provided `serverUrl` without using the existing `isSafeUrl` protection guard.
 **Learning:** The rest of the codebase has a standard pattern of wrapping out-bound API calls with `isSafeUrl` from `@src/utils/ssrfGuard`. A newly introduced client or one missed during a previous audit can expose the server to SSRF if the configuration is altered.
 **Prevention:** Apply the `isSafeUrl` verification check during the initial connection or before making HTTP calls with configured URLs.
-=======
 ## 2026-03-11 - SSRF Prevention in LLM Packages
 **Vulnerability:** Multiple LLM provider packages (e.g., openwebui, flowise, openswarm, openai) were vulnerable to Server-Side Request Forgery (SSRF) because they used configured or dynamically generated URLs for `axios` requests without validating if those URLs pointed to private or reserved IP ranges.
 **Learning:** Security utilities like `isSafeUrl` must be placed in globally accessible workspace packages (e.g., `@hivemind/shared-types` or a dedicated `utils` package) rather than main `src/` directories so that all child packages can access them without creating dependency cycles or relative import nightmares.
 **Prevention:** Always wrap dynamically generated external HTTP requests (via axios, fetch) with `isSafeUrl` validation checks. Enforce this via a custom ESLint rule if possible.
->>>>>>> origin/refiner-barrel-export-audit-4424264890390605711
