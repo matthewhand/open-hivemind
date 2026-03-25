@@ -434,6 +434,7 @@ const EnterpriseManager: React.FC = () => {
                 className="btn btn-primary btn-sm"
                 onClick={() => setAddCloudProviderDialog(true)}
                 disabled={loading}
+                aria-label="Add a new cloud provider"
               >
                 <PlusIcon className="w-4 h-4 mr-1" />
                 Add Provider
@@ -478,6 +479,7 @@ const EnterpriseManager: React.FC = () => {
                 className="btn btn-primary btn-sm"
                 onClick={() => setAddIntegrationDialog(true)}
                 disabled={loading}
+                aria-label="Add a new enterprise integration"
               >
                 <PlusIcon className="w-4 h-4 mr-1" />
                 Add Integration
@@ -502,8 +504,8 @@ const EnterpriseManager: React.FC = () => {
                       Last sync: {new Date(integration.lastSync).toLocaleString()}
                     </p>
                     <div className="card-actions justify-end">
-                      <button className="btn btn-xs btn-outline">Configure</button>
-                      <button className="btn btn-xs btn-outline">Test</button>
+                      <button className="btn btn-xs btn-outline" aria-label={`Configure ${integration.name}`}>Configure</button>
+                      <button className="btn btn-xs btn-outline" aria-label={`Test ${integration.name}`}>Test</button>
                     </div>
                   </div>
                 </div>
@@ -561,6 +563,7 @@ const EnterpriseManager: React.FC = () => {
                   disabled={
                     !auditSearchTerm && auditActionFilter === 'all' && auditResultFilter === 'all'
                   }
+                  aria-label="Clear audit filters"
                 >
                   <FunnelIcon className="w-4 h-4 mr-1" /> Clear Filters
                 </button>
@@ -641,7 +644,7 @@ const EnterpriseManager: React.FC = () => {
                       {metric.trend === 'stable' && <span>→</span>}
                     </div>
                     <div className="card-actions justify-end">
-                      <button className="btn btn-sm btn-outline">Optimize</button>
+                      <button className="btn btn-sm btn-outline" aria-label={`Optimize ${metric.name}`}>Optimize</button>
                     </div>
                   </div>
                 </div>
@@ -659,7 +662,7 @@ const EnterpriseManager: React.FC = () => {
     <div className="container mx-auto p-4">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold">Enterprise Manager</h1>
-        <button className="btn btn-outline" onClick={loadEnterpriseData} disabled={loading}>
+        <button className="btn btn-outline" onClick={loadEnterpriseData} disabled={loading} aria-label="Refresh enterprise data">
           <ArrowPathIcon className={`w-5 h-5 mr-2 ${loading ? 'animate-spin' : ''}`} />
           Refresh
         </button>
