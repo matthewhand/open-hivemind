@@ -129,16 +129,6 @@ function getInstalledPlugins(): MarketplacePackage[] {
 }
 
 // ---------------------------------------------------------------------------
-// Caching
-// ---------------------------------------------------------------------------
-
-// ⚡ Bolt Optimization: Cache marketplace packages to avoid expensive synchronous fs.readdirSync
-// and package.json parsing on every request. Cache is invalidated on install/update/uninstall.
-let cachedPackages: MarketplacePackage[] | null = null;
-let cacheTimestamp = 0;
-const CACHE_TTL = 60000; // 1 minute
-
-// ---------------------------------------------------------------------------
 // Routes
 // ---------------------------------------------------------------------------
 
@@ -146,38 +136,22 @@ const CACHE_TTL = 60000; // 1 minute
 router.use(authenticateToken);
 
 /**
- * Helper to fetch and cache all available packages
- */
-function getAllPackagesCached(): MarketplacePackage[] {
-  if (cachedPackages && Date.now() - cacheTimestamp < CACHE_TTL) {
-    return cachedPackages;
-  }
-
-  const builtIn = scanBuiltInPackages();
-  const installed = getInstalledPlugins();
-
-  // Merge: built-in packages take precedence, then installed plugins
-  const packageMap = new Map<string, MarketplacePackage>();
-
-  for (const pkg of [...builtIn, ...installed]) {
-    packageMap.set(pkg.name, pkg);
-  }
-
-  const packages = Array.from(packageMap.values());
-
-  cachedPackages = packages;
-  cacheTimestamp = Date.now();
-
-  return packages;
-}
-
-/**
  * GET /api/marketplace/packages
  * List all available packages (built-in + installed)
  */
 router.get('/packages', (req, res) => {
   try {
-    const packages = getAllPackagesCached();
+    const builtIn = scanBuiltInPackages();
+    const installed = getInstalledPlugins();
+
+    // Merge: built-in packages take precedence, then installed plugins
+    const packageMap = new Map<string, MarketplacePackage>();
+
+    for (const pkg of [...builtIn, ...installed]) {
+      packageMap.set(pkg.name, pkg);
+    }
+
+    const packages = Array.from(packageMap.values());
     debug('Returning %d packages', packages.length);
 
     return res.json(packages);
@@ -194,9 +168,10 @@ router.get('/packages', (req, res) => {
 router.get('/packages/:name', (req, res) => {
   try {
     const name = req.params.name;
-    const packages = getAllPackagesCached();
+    const builtIn = scanBuiltInPackages();
+    const installed = getInstalledPlugins();
 
-    const pkg = packages.find((p) => p.name === name);
+    const pkg = [...installed, ...builtIn].find((p) => p.name === name);
 
     if (!pkg) {
       return res.status(404).json({ error: 'Package not found' });
@@ -225,9 +200,6 @@ router.post('/install', requireRole('admin'), async (req, res) => {
     debug('Installing plugin from %s', repoUrl);
 
     const plugin = await installPlugin(repoUrl);
-
-    // Invalidate cache
-    cachedPackages = null;
 
     return res.status(201).json({
       success: true,
@@ -261,9 +233,6 @@ router.post('/uninstall/:name', requireRole('admin'), async (req, res) => {
 
     await uninstallPlugin(name);
 
-    // Invalidate cache
-    cachedPackages = null;
-
     return res.json({ success: true, message: `Plugin ${name} uninstalled` });
   } catch (err: any) {
     debug('Uninstall error: %s', err);
@@ -282,9 +251,6 @@ router.post('/update/:name', requireRole('admin'), async (req, res) => {
     debug('Updating plugin %s', name);
 
     const plugin = await updatePlugin(name);
-
-    // Invalidate cache
-    cachedPackages = null;
 
     return res.json({
       success: true,
