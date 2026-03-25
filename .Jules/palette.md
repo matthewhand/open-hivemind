@@ -5,3 +5,7 @@
 ## 2025-03-17 - Prevent Input Blur on Inline Button Clicks
 **Learning:** When building custom input components with inline action buttons (e.g., clear, undo, or remove tags in `CommaSeparatedInput`), clicking these buttons naturally causes the input field to lose focus. This interrupts the user's flow and can prematurely trigger `onBlur` events.
 **Action:** Always add `onMouseDown={(e) => e.preventDefault()}` to inline buttons inside or adjacent to inputs. This prevents focus from leaving the input field when the button is clicked, retaining the cursor position and ensuring a smooth user experience.
+
+## 2024-05-23 - Screen reader accessibility of icon-only buttons
+**Learning:** Icon-only buttons with just a `title` attribute are often not sufficiently announced by screen readers depending on the configuration and user agent.
+**Action:** Always provide an explicit `aria-label` attribute on icon-only buttons, even if a `title` attribute is present. The `title` acts as a visual tooltip, while `aria-label` ensures a consistent accessible name.
