@@ -136,23 +136,51 @@ async function getInstalledPlugins(): Promise<MarketplacePackage[]> {
 // All marketplace routes require authentication
 router.use(authenticateToken);
 
+// ⚡ Bolt Optimization: Cache expensive file system reads and module loading
+let cachedPackages: MarketplacePackage[] | null = null;
+let cacheTimestamp: number = 0;
+const CACHE_TTL_MS = 30000; // 30 seconds
+
+async function getPackages(): Promise<MarketplacePackage[]> {
+  const now = Date.now();
+
+  // Return cached result if still valid
+  if (cachedPackages && (now - cacheTimestamp) < CACHE_TTL_MS) {
+    debug('Returning cached packages (%d items, age: %dms)', cachedPackages.length, now - cacheTimestamp);
+    return cachedPackages;
+  }
+
+  // Cache miss or expired - scan filesystem
+  debug('Cache miss or expired, scanning packages');
+  const builtIn = await scanBuiltInPackages();
+  const installed = await getInstalledPlugins();
+
+  // Merge: built-in packages take precedence, then installed plugins
+  const packageMap = new Map<string, MarketplacePackage>();
+
+  for (const pkg of [...builtIn, ...installed]) {
+    packageMap.set(pkg.name, pkg);
+  }
+
+  cachedPackages = Array.from(packageMap.values());
+  cacheTimestamp = now;
+
+  return cachedPackages;
+}
+
+function invalidateCache(): void {
+  debug('Invalidating marketplace cache');
+  cachedPackages = null;
+  cacheTimestamp = 0;
+}
+
 /**
  * GET /api/marketplace/packages
  * List all available packages (built-in + installed)
  */
 router.get('/packages', async (req, res) => {
   try {
-    const builtIn = await scanBuiltInPackages();
-    const installed = await getInstalledPlugins();
-
-    // Merge: built-in packages take precedence, then installed plugins
-    const packageMap = new Map<string, MarketplacePackage>();
-
-    for (const pkg of [...builtIn, ...installed]) {
-      packageMap.set(pkg.name, pkg);
-    }
-
-    const packages = Array.from(packageMap.values());
+    const packages = await getPackages();
     debug('Returning %d packages', packages.length);
 
     return res.json(packages);
@@ -169,10 +197,9 @@ router.get('/packages', async (req, res) => {
 router.get('/packages/:name', async (req, res) => {
   try {
     const name = req.params.name;
-    const builtIn = await scanBuiltInPackages();
-    const installed = await getInstalledPlugins();
+    const packages = await getPackages();
 
-    const pkg = [...installed, ...builtIn].find((p) => p.name === name);
+    const pkg = packages.find((p) => p.name === name);
 
     if (!pkg) {
       return res.status(404).json({ error: 'Package not found' });
@@ -201,6 +228,9 @@ router.post('/install', requireRole('admin'), async (req, res) => {
     debug('Installing plugin from %s', repoUrl);
 
     const plugin = await installPlugin(repoUrl);
+
+    // ⚡ Bolt Optimization: Invalidate cache after install
+    invalidateCache();
 
     return res.status(201).json({
       success: true,
@@ -234,6 +264,9 @@ router.post('/uninstall/:name', requireRole('admin'), async (req, res) => {
 
     await uninstallPlugin(name);
 
+    // ⚡ Bolt Optimization: Invalidate cache after uninstall
+    invalidateCache();
+
     return res.json({ success: true, message: `Plugin ${name} uninstalled` });
   } catch (err: any) {
     debug('Uninstall error: %s', err);
@@ -252,6 +285,9 @@ router.post('/update/:name', requireRole('admin'), async (req, res) => {
     debug('Updating plugin %s', name);
 
     const plugin = await updatePlugin(name);
+
+    // ⚡ Bolt Optimization: Invalidate cache after update
+    invalidateCache();
 
     return res.json({
       success: true,
