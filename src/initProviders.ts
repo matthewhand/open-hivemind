@@ -6,7 +6,8 @@ import { providerRegistry } from './registries/ProviderRegistry';
 export async function initProviders() {
   const providersDir = path.join(__dirname, 'providers');
 
-  if (fs.existsSync(providersDir)) {
+  try {
+    await fs.promises.access(providersDir, fs.constants.F_OK);
     const files = await fs.promises.readdir(providersDir);
     for (const file of files) {
       // Filter for .ts and .js files, excluding definition files and tests
@@ -51,8 +52,12 @@ export async function initProviders() {
         }
       }
     }
-  } else {
-    console.warn(`Providers directory not found at ${providersDir}`);
+  } catch (err: any) {
+    if (err.code === 'ENOENT') {
+      console.warn(`Providers directory not found at ${providersDir}`);
+    } else {
+      throw err;
+    }
   }
 
   // Register Tool Installers
