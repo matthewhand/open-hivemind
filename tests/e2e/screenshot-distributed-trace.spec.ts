@@ -301,7 +301,7 @@ test.describe('Distributed Trace Waterfall Screenshots', () => {
 
     // Take screenshot
     await page.screenshot({
-      path: 'docs/screenshots/distributed-trace-waterfall.png',
+      path: 'docs/screenshots/distributed-trace-waterfall-admin.png',
       fullPage: true,
     });
   });
