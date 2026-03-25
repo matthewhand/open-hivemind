@@ -54,7 +54,9 @@ export class ActivityLogger {
 
   public async getEvents(options: ActivityFilter = {}): Promise<MessageFlowEvent[]> {
     try {
-      if (!fs.existsSync(this.logFile)) {
+      try {
+        await fs.promises.access(this.logFile);
+      } catch {
         return [];
       }
 
