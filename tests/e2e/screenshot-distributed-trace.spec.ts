@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { expect, test } from '@playwright/test';
 
 test.describe('Distributed Trace Waterfall Screenshots', () => {
   test('capture distributed trace waterfall screenshot', async ({ page }) => {
@@ -18,7 +18,6 @@ test.describe('Distributed Trace Waterfall Screenshots', () => {
       });
     });
 
-<<<<<<< HEAD
     await page.route('**/api/webui/system-status', async (route) => {
       await route.fulfill({
         status: 200,
@@ -59,8 +58,8 @@ test.describe('Distributed Trace Waterfall Screenshots', () => {
     );
 
     // Mock dashboard status endpoints
-    await page.route('**/health/detailed', async (route) =>
-      route.fulfill({
+    await page.route('**/health/detailed', async (route) => {
+      await route.fulfill({
         status: 200,
         json: {
           status: 'healthy',
@@ -75,23 +74,12 @@ test.describe('Distributed Trace Waterfall Screenshots', () => {
             hostname: 'prod-server-01',
             loadAverage: [0.5, 0.4, 0.3],
           },
-=======
-    await page.route('/api/dashboard/system-status', async (route) => {
-      await route.fulfill({
-        status: 200,
-        json: {
-          status: 'healthy',
-          uptime: 3600,
-          memoryUsage: { heapUsed: 100, heapTotal: 200, rss: 300 },
-          activeConnections: 10,
->>>>>>> origin/docco-update-screenshots-6307953588415915921
         },
       });
     });
 
-<<<<<<< HEAD
-    await page.route('**/api/dashboard/status', async (route) =>
-      route.fulfill({
+    await page.route('**/api/dashboard/status', async (route) => {
+      await route.fulfill({
         status: 200,
         json: {
           bots: [
@@ -103,7 +91,24 @@ test.describe('Distributed Trace Waterfall Screenshots', () => {
               connected: true,
               messageCount: 1542,
               errorCount: 2,
-=======
+            },
+          ],
+        },
+      });
+    });
+
+    await page.route('/api/dashboard/system-status', async (route) => {
+      await route.fulfill({
+        status: 200,
+        json: {
+          status: 'healthy',
+          uptime: 3600,
+          memoryUsage: { heapUsed: 100, heapTotal: 200, rss: 300 },
+          activeConnections: 10,
+        },
+      });
+    });
+
     await page.route('/api/dashboard/system-metrics', async (route) => {
       await route.fulfill({
         status: 200,
@@ -193,17 +198,15 @@ test.describe('Distributed Trace Waterfall Screenshots', () => {
                   status: 'success',
                 },
               ],
->>>>>>> origin/docco-update-screenshots-6307953588415915921
             },
           ],
         },
       });
     });
 
-<<<<<<< HEAD
     // Mock dashboard API activity (for waterfall monitor)
-    await page.route('**/api/dashboard/activity*', async (route) =>
-      route.fulfill({
+    await page.route('**/api/dashboard/activity*', async (route) => {
+      await route.fulfill({
         status: 200,
         json: {
           events: [
@@ -247,21 +250,21 @@ test.describe('Distributed Trace Waterfall Screenshots', () => {
               processingTime: 50,
               userId: 'user-123',
               contentLength: 0,
-            }
+            },
           ],
         },
-      })
-    );
+      });
+    });
 
-    await page.route('**/api/config', async (route) =>
-      route.fulfill({
+    await page.route('**/api/config', async (route) => {
+      await route.fulfill({
         status: 200,
         json: { bots: [] },
-      })
-    );
+      });
+    });
 
-    await page.route('**/health/api-endpoints', async (route) =>
-      route.fulfill({
+    await page.route('**/health/api-endpoints', async (route) => {
+      await route.fulfill({
         status: 200,
         json: {
           overall: {
@@ -270,8 +273,8 @@ test.describe('Distributed Trace Waterfall Screenshots', () => {
           },
           endpoints: [],
         },
-      })
-    );
+      });
+    });
 
     // Navigate to Monitoring Dashboard
     await page.setViewportSize({ width: 1280, height: 1200 });
@@ -301,12 +304,5 @@ test.describe('Distributed Trace Waterfall Screenshots', () => {
       path: 'docs/screenshots/distributed-trace-waterfall.png',
       fullPage: true,
     });
-=======
-    // Go to system management directly to traces tab or default
-    await page.goto('/admin/system');
-
-    // Screenshot full page ignoring failures
-    await page.screenshot({ path: 'docs/screenshots/distributed-trace-waterfall.png', fullPage: true });
->>>>>>> origin/docco-update-screenshots-6307953588415915921
   });
 });
