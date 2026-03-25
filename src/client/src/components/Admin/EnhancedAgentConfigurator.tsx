@@ -196,7 +196,7 @@ const EnhancedAgentConfigurator: React.FC = () => {
   const paginatedAgents = agents.slice(startIndex, endIndex);
 
   if (loading) {
-    return <div className="flex justify-center items-center min-h-[200px]"><span className="loading loading-spinner loading-lg"></span></div>;
+    return <div className="flex justify-center items-center min-h-[200px]"><span className="loading loading-spinner loading-lg" aria-hidden="true"></span></div>;
   }
 
   return (

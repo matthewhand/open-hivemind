@@ -139,7 +139,7 @@ const MessageProvidersPage: React.FC = () => {
         icon={<MessageIcon className="w-6 h-6" />}
         actions={
           <div className="flex gap-2">
-            <Button variant="ghost" onClick={fetchProfiles} disabled={loading}>
+            <Button variant="ghost" onClick={fetchProfiles} disabled={loading} aria-busy={loading}>
               <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} /> Refresh
             </Button>
             <Button variant="primary" onClick={handleAddProfile}>

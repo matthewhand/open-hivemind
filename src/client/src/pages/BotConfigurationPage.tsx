@@ -299,7 +299,7 @@ const BotConfigurationPage: React.FC = () => {
               <History className="w-4 h-4" />
               Rollbacks {rollbacks.length > 0 && <Badge variant="primary" size="sm">{rollbacks.length}</Badge>}
             </Button>
-            <Button onClick={fetchConfigs} variant="ghost" className="gap-2" disabled={loading}>
+            <Button onClick={fetchConfigs} variant="ghost" className="gap-2" disabled={loading} aria-busy={loading}>
               <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} /> Reload
             </Button>
           </div>
@@ -392,7 +392,7 @@ const BotConfigurationPage: React.FC = () => {
       {/* Config Accordion */}
       {loading ? (
         <div className="flex items-center justify-center py-12">
-          <span className="loading loading-spinner loading-lg" />
+          <span className="loading loading-spinner loading-lg" aria-hidden="true" />
         </div>
       ) : configNames.length === 0 ? (
         <div className="card bg-base-100 border border-base-300">

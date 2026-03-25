@@ -32,7 +32,7 @@ const GlobalConfigurationManager: React.FC = () => {
     }
   };
 
-  if (loading) {return <div className="flex justify-center items-center min-h-[200px]"><span className="loading loading-spinner loading-lg"></span></div>;}
+  if (loading) {return <div className="flex justify-center items-center min-h-[200px]"><span className="loading loading-spinner loading-lg" aria-hidden="true"></span></div>;}
   if (error) {return <Alert status="error" message={error} />;}
 
   return (

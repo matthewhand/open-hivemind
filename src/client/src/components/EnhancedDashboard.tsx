@@ -142,7 +142,7 @@ const EnhancedDashboard: React.FC = () => {
   if (isLoading && !stats) {
     return (
       <div className="min-h-screen bg-base-100 flex items-center justify-center">
-        <span className="loading loading-spinner loading-lg"></span>
+        <span className="loading loading-spinner loading-lg" aria-hidden="true"></span>
       </div>
     );
   }

@@ -220,7 +220,7 @@ const ChatPage: React.FC = () => {
           </div>
           <div className="flex-1 overflow-y-auto">
             {loading && bots.length === 0 ? (
-              <div className="flex justify-center p-4"><span className="loading loading-spinner" /></div>
+              <div className="flex justify-center p-4"><span className="loading loading-spinner" aria-hidden="true" /></div>
             ) : (
               <ul className="menu w-full p-2 gap-1">
                 {bots.map(bot => (
@@ -251,7 +251,7 @@ const ChatPage: React.FC = () => {
                             >
                               <Cpu className="w-3 h-3" />
                               {swappingProvider === bot.id ? (
-                                <span className="loading loading-spinner loading-xs" />
+                                <span className="loading loading-spinner loading-xs" aria-hidden="true" />
                               ) : (
                                 <>
                                   <span className="truncate max-w-[80px]">{bot.llmProvider || 'Default'}</span>
@@ -313,7 +313,7 @@ const ChatPage: React.FC = () => {
             <div className="flex-1 flex flex-col h-full relative">
               {historyLoading && (
                 <div className="absolute inset-0 bg-base-100/50 z-20 flex items-center justify-center">
-                  <span className="loading loading-spinner loading-lg text-primary"></span>
+                  <span className="loading loading-spinner loading-lg text-primary" aria-hidden="true"></span>
                 </div>
               )}
               <ChatInterface

@@ -234,10 +234,10 @@ const ConfigurationValidation: React.FC<ConfigurationValidationProps> = ({ bot }
         <Button
           size="sm"
           onClick={() => validateConfiguration(bot)}
-          disabled={loading}
+          disabled={loading} aria-busy={loading}
           className="flex items-center gap-2"
         >
-          {loading ? <span className="loading loading-spinner loading-sm"></span> : <ArrowPathIcon className="w-4 h-4" />}
+          {loading ? <span className="loading loading-spinner loading-sm" aria-hidden="true"></span> : <ArrowPathIcon className="w-4 h-4" />}
           Re-validate
         </Button>
       </div>

@@ -165,9 +165,9 @@ const ConfigurationEditor: React.FC<ConfigurationEditorProps> = ({ bot, onSave }
             variant="primary"
             startIcon={<SaveIcon />}
             onClick={() => setShowSaveModal(true)}
-            disabled={loading}
+            disabled={loading} aria-busy={loading}
           >
-            {loading ? <span className="loading loading-spinner loading-sm"></span> : 'Save Configuration'}
+            {loading ? <span className="loading loading-spinner loading-sm" aria-hidden="true"></span> : 'Save Configuration'}
           </Button>
         </div>
       </div>
@@ -435,9 +435,9 @@ const ConfigurationEditor: React.FC<ConfigurationEditorProps> = ({ bot, onSave }
           <Button
             variant="primary"
             onClick={handleSave}
-            disabled={loading}
+            disabled={loading} aria-busy={loading}
           >
-            {loading ? <span className="loading loading-spinner loading-sm"></span> : 'Save Configuration'}
+            {loading ? <span className="loading loading-spinner loading-sm" aria-hidden="true"></span> : 'Save Configuration'}
           </Button>
         </div>
       </Modal>
