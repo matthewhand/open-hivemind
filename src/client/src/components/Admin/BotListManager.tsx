@@ -171,7 +171,6 @@ const BotListManager: React.FC = () => {
                       variant="ghost"
                       onClick={() => handleViewBot(bot)}
                       startIcon={<PencilIcon className="w-4 h-4" />}
-                      aria-label={`View ${bot.name}`}
                     >
                                             View
                     </Button>

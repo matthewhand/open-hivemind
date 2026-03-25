@@ -197,21 +197,25 @@ function validateRepoUrl(url: string): void {
     throw new PluginValidationError(
       'Invalid repository URL protocol. Only http: and https: are allowed.'
     );
+  }
 
   // Prevent argument injection via hostname or path
-  if (parsedUrl.hostname.includes(" ") || parsedUrl.pathname.includes(" ")) {
-    throw new PluginValidationError("Invalid repository URL: spaces not allowed.");
+  if (parsedUrl.hostname.includes(' ') || parsedUrl.pathname.includes(' ')) {
+    throw new PluginValidationError('Invalid repository URL: spaces not allowed.');
   }
 
   // Prevent command injection through special git URL patterns
   if (/--[a-z-]+=/i.test(parsedUrl.href)) {
-    throw new PluginValidationError("Invalid repository URL: contains suspicious patterns.");
+    throw new PluginValidationError('Invalid repository URL: contains suspicious patterns.');
   }
 
   // Prevent shell metacharacters in hostname
   if (/[;&|`$()]/.test(parsedUrl.hostname)) {
-    throw new PluginValidationError("Invalid repository URL: contains shell metacharacters.");
+    throw new PluginValidationError('Invalid repository URL: contains shell metacharacters.');
   }
+}
+
+/**
  * Install a community plugin from a git repository URL.
  *
  * Steps:

@@ -113,7 +113,6 @@ const TemplateManager: React.FC = () => {
                   size="sm"
                   onClick={() => handleSelectTemplate(template)}
                   startIcon={<DocumentDuplicateIcon className="w-4 h-4" />}
-                  aria-label={`Use template ${template.name}`}
                 >
                                     Use Template
                 </Button>
