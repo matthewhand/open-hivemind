@@ -398,7 +398,7 @@ const DataTable = <T extends Record<string, any>>({
 
       {isInfiniteScroll && currentPage < totalPages && (
         <div ref={loadMoreRef} className="py-8 flex justify-center">
-          <span className="loading loading-spinner loading-md text-primary"></span>
+          <span className="loading loading-spinner loading-md text-primary" aria-hidden="true"></span>
         </div>
       )}
 

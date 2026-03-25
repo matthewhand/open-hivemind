@@ -466,7 +466,7 @@ const EnhancedBotManager: React.FC<EnhancedBotManagerProps> = ({ onBotSelect }) 
             variant="ghost"
             startIcon={<ArrowPathIcon className="w-5 h-5" />}
             onClick={loadData}
-            disabled={loading}
+            disabled={loading} aria-busy={loading}
           >
             Refresh
           </Button>
@@ -691,7 +691,7 @@ const EnhancedBotManager: React.FC<EnhancedBotManagerProps> = ({ onBotSelect }) 
             onClick={openEditDialog ? handleEditBot : handleCreateBot}
             disabled={loading || !isFormValid()}
           >
-            {loading ? <span className="loading loading-spinner loading-sm"></span> : (openEditDialog ? 'Update Bot' : 'Create Bot')}
+            {loading ? <span className="loading loading-spinner loading-sm" aria-hidden="true"></span> : (openEditDialog ? 'Update Bot' : 'Create Bot')}
           </Button>
         </div>
       </Modal>
@@ -716,9 +716,9 @@ const EnhancedBotManager: React.FC<EnhancedBotManagerProps> = ({ onBotSelect }) 
           <button
             className="btn btn-error"
             onClick={handleDeleteBot}
-            disabled={loading}
+            disabled={loading} aria-busy={loading}
           >
-            {loading ? <span className="loading loading-spinner loading-sm"></span> : 'Delete'}
+            {loading ? <span className="loading loading-spinner loading-sm" aria-hidden="true"></span> : 'Delete'}
           </button>
         </div>
       </Modal>

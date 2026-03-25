@@ -41,7 +41,7 @@ export const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({
   return (
     <span
       className={`loading ${getVariantClass()} ${getSizeClass()} ${getColorClass()} ${className}`}
-      aria-label="Loading"
+      aria-hidden="true"
     />
   );
 };

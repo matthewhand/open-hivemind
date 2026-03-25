@@ -423,7 +423,7 @@ const MCPServersPage: React.FC = () => {
   if (loading) {
     return (
       <div className="p-6 text-center">
-        <span className="loading loading-spinner loading-lg"></span>
+        <span className="loading loading-spinner loading-lg" aria-hidden="true"></span>
         <p className="mt-2">Loading MCP servers...</p>
       </div>
     );
@@ -812,7 +812,7 @@ const MCPServersPage: React.FC = () => {
             onClick={handleTestConnection}
             disabled={isTesting}
           >
-            {isTesting ? <span className="loading loading-spinner loading-xs"></span> : null}
+            {isTesting ? <span className="loading loading-spinner loading-xs" aria-hidden="true"></span> : null}
             Test Connection
           </button>
           <button className="btn btn-ghost" onClick={() => setDialogOpen(false)}>

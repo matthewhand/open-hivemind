@@ -608,7 +608,7 @@ const MCPProviderForm: React.FC<MCPProviderFormProps> = ({
                 disabled={!validation.isValid || isLoading}
               >
                 {isLoading ? (
-                  <span className="loading loading-spinner loading-sm"></span>
+                  <span className="loading loading-spinner loading-sm" aria-hidden="true"></span>
                 ) : null}
                 {provider ? 'Save Changes' : 'Create Provider'}
               </Button>

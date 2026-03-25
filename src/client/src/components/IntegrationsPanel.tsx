@@ -548,7 +548,7 @@ const IntegrationsPanel: React.FC = () => {
   if (loading && !config) {
     return (
       <div className="flex flex-col items-center justify-center p-12 gap-4">
-        <span className="loading loading-spinner loading-lg text-primary" />
+        <span className="loading loading-spinner loading-lg text-primary" aria-hidden="true" />
         <span className="text-base-content/50">Loading integrations...</span>
       </div>
     );

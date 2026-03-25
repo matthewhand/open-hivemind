@@ -349,7 +349,7 @@ const ModalForm: React.FC<ModalFormProps> = ({
                     className="btn btn-primary"
                     disabled={isSubmitting}
                   >
-                    {isSubmitting && <span className="loading loading-spinner loading-sm"></span>}
+                    {isSubmitting && <span className="loading loading-spinner loading-sm" aria-hidden="true"></span>}
                     {submitText}
                   </button>
                 )}
@@ -369,7 +369,7 @@ const ModalForm: React.FC<ModalFormProps> = ({
                   className="btn btn-primary"
                   disabled={isSubmitting}
                 >
-                  {isSubmitting && <span className="loading loading-spinner loading-sm"></span>}
+                  {isSubmitting && <span className="loading loading-spinner loading-sm" aria-hidden="true"></span>}
                   {submitText}
                 </button>
               </>

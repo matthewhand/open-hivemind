@@ -198,7 +198,7 @@ const ToolUsageGuardsConfig: React.FC = () => {
   if (loading) {
     return (
       <div className="flex justify-center items-center min-h-[200px]">
-        <span className="loading loading-spinner loading-lg"></span>
+        <span className="loading loading-spinner loading-lg" aria-hidden="true"></span>
       </div>
     );
   }

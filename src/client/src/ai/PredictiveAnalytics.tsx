@@ -539,7 +539,7 @@ export const PredictiveAnalytics: React.FC = () => {
                 disabled={state.isTraining}
               >
                 {state.isTraining ? (
-                  <span className="loading loading-spinner loading-sm"></span>
+                  <span className="loading loading-spinner loading-sm" aria-hidden="true"></span>
                 ) : (
                   <ArrowPathIcon className="w-4 h-4" />
                 )}

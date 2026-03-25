@@ -367,7 +367,7 @@ export const D3Analytics: React.FC<D3AnalyticsProps> = ({
         }}
       >
         <div className="flex flex-col items-center gap-2">
-          <span className="loading loading-spinner loading-lg"></span>
+          <span className="loading loading-spinner loading-lg" aria-hidden="true"></span>
           <p>Loading Analytics Charts...</p>
         </div>
       </AnimatedBox>

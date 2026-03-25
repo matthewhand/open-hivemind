@@ -311,10 +311,10 @@ const MonitoringDashboard: React.FC<MonitoringDashboardProps> = ({
               variant="secondary"
               className="btn-outline flex items-center gap-2"
               onClick={handleRefresh}
-              disabled={loading}
+              disabled={loading} aria-busy={loading}
             >
               {loading ? (
-                <span className="loading loading-spinner loading-sm"></span>
+                <span className="loading loading-spinner loading-sm" aria-hidden="true"></span>
               ) : (
                 <RotateCcw className="w-4 h-4" />
               )}

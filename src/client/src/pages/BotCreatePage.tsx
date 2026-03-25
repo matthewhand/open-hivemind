@@ -153,7 +153,7 @@ const BotCreatePage: React.FC = () => {
         <div className="card-body">
           {loading ? (
             <div className="flex justify-center py-12">
-              <span className="loading loading-spinner loading-lg"></span>
+              <span className="loading loading-spinner loading-lg" aria-hidden="true"></span>
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="space-y-8">

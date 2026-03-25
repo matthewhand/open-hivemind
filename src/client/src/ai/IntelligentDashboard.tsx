@@ -408,7 +408,7 @@ export const IntelligentDashboard: React.FC = () => {
           </h3>
           {isLoading ? (
             <div className="flex justify-center p-8">
-              <span className="loading loading-spinner loading-lg text-primary"></span>
+              <span className="loading loading-spinner loading-lg text-primary" aria-hidden="true"></span>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

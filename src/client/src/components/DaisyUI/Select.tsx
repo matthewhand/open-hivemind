@@ -84,7 +84,7 @@ const Select = forwardRef<HTMLSelectElement, SelectProps>(
           ))}
         </select>
         {loading && (
-          <span className="loading loading-spinner absolute right-3 top-1/2 -translate-y-1/2"></span>
+          <span className="loading loading-spinner absolute right-3 top-1/2 -translate-y-1/2" aria-hidden="true"></span>
         )}
       </div>
     );

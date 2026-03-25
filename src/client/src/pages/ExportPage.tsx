@@ -322,7 +322,7 @@ const ExportPage: React.FC = () => {
                 {loading ? (
                   <tr>
                     <td colSpan={5} className="text-center py-8">
-                      <span className="loading loading-spinner loading-md"></span>
+                      <span className="loading loading-spinner loading-md" aria-hidden="true"></span>
                     </td>
                   </tr>
                 ) : backups.length === 0 ? (
