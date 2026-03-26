@@ -204,14 +204,20 @@ function validateRepoUrl(url: string): void {
     );
   }
 
-  // Prevent argument injection via hostname or path
+  let decodedHostname: string;
+  let decodedPathname: string;
   let decodedHref: string;
+
   try {
+    decodedHostname = decodeURIComponent(parsedUrl.hostname);
+    decodedPathname = decodeURIComponent(parsedUrl.pathname);
     decodedHref = decodeURIComponent(parsedUrl.href);
   } catch {
     throw new PluginValidationError("Invalid repository URL: malformed URI sequence.");
   }
-  if (decodedHref.includes(" ")) {
+
+  // Prevent argument injection via hostname or path
+  if (decodedHostname.includes(" ") || decodedPathname.includes(" ")) {
     throw new PluginValidationError("Invalid repository URL: spaces not allowed.");
   }
 
@@ -220,8 +226,8 @@ function validateRepoUrl(url: string): void {
     throw new PluginValidationError("Invalid repository URL: contains suspicious patterns.");
   }
 
-  // Prevent shell metacharacters in hostname and path
-  if (/[;&|`$()<>]/.test(decodedHref)) {
+  // Prevent shell metacharacters in hostname
+  if (/[;&|`$()]/.test(decodedHostname)) {
     throw new PluginValidationError("Invalid repository URL: contains shell metacharacters.");
   }
 }
