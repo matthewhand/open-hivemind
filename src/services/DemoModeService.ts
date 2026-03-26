@@ -9,8 +9,8 @@ import crypto from 'crypto';
 import 'reflect-metadata';
 import Debug from 'debug';
 import { inject, injectable, singleton } from 'tsyringe';
-import { BotConfigurationManager } from '../config/BotConfigurationManager';
-import { UserConfigStore } from '../config/UserConfigStore';
+import { type BotConfigurationManager } from '../config/BotConfigurationManager';
+import { type UserConfigStore } from '../config/UserConfigStore';
 import { TOKENS } from '../di/container';
 
 const debug = Debug('app:DemoModeService');
