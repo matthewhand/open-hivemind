@@ -9,56 +9,54 @@ import { setupAuth } from './test-utils';
 test.describe('Marketplace CRUD Lifecycle', () => {
   test.setTimeout(90000);
 
+  // The component calls setPackages(data) directly from fetch response,
+  // so the API must return a bare array, not { packages: [...] }.
+  // MarketplacePackage: { name, displayName, description, type, version, status, repoUrl?, ... }
   const mockPackages = [
     {
       name: 'openai-provider',
+      displayName: 'OpenAI Provider',
       description: 'OpenAI LLM provider for open-hivemind',
       version: '1.2.0',
       type: 'llm',
       status: 'built-in',
-      author: 'open-hivemind',
-      homepage: 'https://github.com/open-hivemind/openai-provider',
-      installedVersion: '1.2.0',
+      repoUrl: 'https://github.com/open-hivemind/openai-provider',
     },
     {
       name: 'discord-connector',
+      displayName: 'Discord Connector',
       description: 'Discord message provider integration',
       version: '2.0.1',
       type: 'message',
       status: 'installed',
-      author: 'community',
-      homepage: 'https://github.com/community/discord-connector',
-      installedVersion: '2.0.0',
+      repoUrl: 'https://github.com/community/discord-connector',
     },
     {
       name: 'redis-memory',
+      displayName: 'Redis Memory',
       description: 'Redis-backed memory store for conversation history',
       version: '0.9.5',
       type: 'memory',
       status: 'available',
-      author: 'community',
-      homepage: 'https://github.com/community/redis-memory',
-      installedVersion: null,
+      repoUrl: 'https://github.com/community/redis-memory',
     },
     {
       name: 'web-search-tool',
+      displayName: 'Web Search Tool',
       description: 'Web search tool using DuckDuckGo API',
       version: '1.0.0',
       type: 'tool',
       status: 'available',
-      author: 'open-hivemind',
-      homepage: 'https://github.com/open-hivemind/web-search-tool',
-      installedVersion: null,
+      repoUrl: 'https://github.com/open-hivemind/web-search-tool',
     },
     {
       name: 'anthropic-provider',
+      displayName: 'Anthropic Provider',
       description: 'Anthropic Claude LLM provider',
       version: '1.5.0',
       type: 'llm',
       status: 'installed',
-      author: 'open-hivemind',
-      homepage: 'https://github.com/open-hivemind/anthropic-provider',
-      installedVersion: '1.5.0',
+      repoUrl: 'https://github.com/open-hivemind/anthropic-provider',
     },
   ];
 
@@ -97,7 +95,7 @@ test.describe('Marketplace CRUD Lifecycle', () => {
 
   test('list packages with different statuses', async ({ page }) => {
     await page.route('**/api/marketplace/packages', (route) =>
-      route.fulfill({ status: 200, json: { packages: mockPackages } })
+      route.fulfill({ status: 200, json: mockPackages })
     );
 
     await page.goto('/admin/marketplace');
@@ -111,7 +109,7 @@ test.describe('Marketplace CRUD Lifecycle', () => {
 
   test('search packages by name', async ({ page }) => {
     await page.route('**/api/marketplace/packages', (route) =>
-      route.fulfill({ status: 200, json: { packages: mockPackages } })
+      route.fulfill({ status: 200, json: mockPackages })
     );
 
     await page.goto('/admin/marketplace');
@@ -129,14 +127,14 @@ test.describe('Marketplace CRUD Lifecycle', () => {
 
   test('filter by type tabs (All, LLM, Message, Memory, Tool)', async ({ page }) => {
     await page.route('**/api/marketplace/packages', (route) =>
-      route.fulfill({ status: 200, json: { packages: mockPackages } })
+      route.fulfill({ status: 200, json: mockPackages })
     );
 
     await page.goto('/admin/marketplace');
     await expect(page.getByText('openai-provider').first()).toBeVisible();
 
-    // Look for type filter tabs
-    const llmTab = page.locator('[role="tab"]:has-text("LLM"), button:has-text("LLM")').first();
+    // Look for type filter tabs (button.tab elements with uppercase text)
+    const llmTab = page.locator('button.tab:has-text("LLM")').first();
     if ((await llmTab.count()) > 0) {
       await llmTab.click();
       await page.waitForTimeout(300);
@@ -147,7 +145,7 @@ test.describe('Marketplace CRUD Lifecycle', () => {
     }
 
     // Switch to All tab
-    const allTab = page.locator('[role="tab"]:has-text("All"), button:has-text("All")').first();
+    const allTab = page.locator('button.tab:has-text("All")').first();
     if ((await allTab.count()) > 0) {
       await allTab.click();
       await page.waitForTimeout(300);
@@ -158,7 +156,7 @@ test.describe('Marketplace CRUD Lifecycle', () => {
     let packages = [...mockPackages];
 
     await page.route('**/api/marketplace/packages', (route) =>
-      route.fulfill({ status: 200, json: { packages } })
+      route.fulfill({ status: 200, json: packages })
     );
     await page.route('**/api/marketplace/install', async (route) => {
       const body = route.request().postDataJSON();
@@ -204,7 +202,7 @@ test.describe('Marketplace CRUD Lifecycle', () => {
 
   test('install package from URL validation (empty URL disabled)', async ({ page }) => {
     await page.route('**/api/marketplace/packages', (route) =>
-      route.fulfill({ status: 200, json: { packages: mockPackages } })
+      route.fulfill({ status: 200, json: mockPackages })
     );
 
     await page.goto('/admin/marketplace');
@@ -230,7 +228,7 @@ test.describe('Marketplace CRUD Lifecycle', () => {
     let packages = mockPackages.map((p) => ({ ...p }));
 
     await page.route('**/api/marketplace/packages', (route) =>
-      route.fulfill({ status: 200, json: { packages } })
+      route.fulfill({ status: 200, json: packages })
     );
     await page.route('**/api/marketplace/update/*', async (route) => {
       const urlParts = route.request().url().split('/');
@@ -260,7 +258,7 @@ test.describe('Marketplace CRUD Lifecycle', () => {
     let packages = mockPackages.map((p) => ({ ...p }));
 
     await page.route('**/api/marketplace/packages', (route) =>
-      route.fulfill({ status: 200, json: { packages } })
+      route.fulfill({ status: 200, json: packages })
     );
     await page.route('**/api/marketplace/uninstall/*', async (route) => {
       const urlParts = route.request().url().split('/');
@@ -291,7 +289,7 @@ test.describe('Marketplace CRUD Lifecycle', () => {
     let fetchCount = 0;
     await page.route('**/api/marketplace/packages', (route) => {
       fetchCount++;
-      return route.fulfill({ status: 200, json: { packages: mockPackages } });
+      return route.fulfill({ status: 200, json: mockPackages });
     });
 
     await page.goto('/admin/marketplace');
@@ -308,7 +306,7 @@ test.describe('Marketplace CRUD Lifecycle', () => {
 
   test('package cards show correct metadata', async ({ page }) => {
     await page.route('**/api/marketplace/packages', (route) =>
-      route.fulfill({ status: 200, json: { packages: mockPackages } })
+      route.fulfill({ status: 200, json: mockPackages })
     );
 
     await page.goto('/admin/marketplace');
@@ -332,7 +330,7 @@ test.describe('Marketplace CRUD Lifecycle', () => {
 
   test('error handling when install fails', async ({ page }) => {
     await page.route('**/api/marketplace/packages', (route) =>
-      route.fulfill({ status: 200, json: { packages: mockPackages } })
+      route.fulfill({ status: 200, json: mockPackages })
     );
     await page.route('**/api/marketplace/install', async (route) => {
       await route.fulfill({
@@ -371,7 +369,7 @@ test.describe('Marketplace CRUD Lifecycle', () => {
 
   test('empty state when no packages match filter', async ({ page }) => {
     await page.route('**/api/marketplace/packages', (route) =>
-      route.fulfill({ status: 200, json: { packages: mockPackages } })
+      route.fulfill({ status: 200, json: mockPackages })
     );
 
     await page.goto('/admin/marketplace');

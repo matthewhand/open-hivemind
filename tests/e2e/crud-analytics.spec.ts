@@ -180,26 +180,21 @@ test.describe('Analytics Dashboard CRUD Lifecycle', () => {
 
   test('refresh button triggers re-fetch', async ({ page }) => {
     let fetchCount = 0;
-    await page.route('**/api/dashboard/analytics*', (route) => {
+    // The monitoring page calls apiService.getStatus() -> /api/dashboard/status
+    // and apiService.getConfig() -> /api/config
+    await page.route('**/api/dashboard/status', (route) => {
       fetchCount++;
-      return route.fulfill({ status: 200, json: mockAnalytics });
+      return route.fulfill({ status: 200, json: mockStatus });
     });
-    await page.route('**/api/dashboard/api/analytics*', (route) => {
-      fetchCount++;
-      return route.fulfill({ status: 200, json: mockAnalytics });
-    });
-    await page.route('**/api/dashboard/status*', (route) =>
-      route.fulfill({ status: 200, json: mockStatus })
-    );
-    await page.route('**/api/dashboard/api/status*', (route) =>
-      route.fulfill({ status: 200, json: mockStatus })
+    await page.route('**/api/config', (route) =>
+      route.fulfill({ status: 200, json: { bots: mockStatus.bots } })
     );
 
     await page.goto('/admin/monitoring');
     await page.waitForTimeout(1000);
 
     const initialCount = fetchCount;
-    const refreshBtn = page.locator('button:has-text("Refresh"), button[title*="Refresh"], button[aria-label*="Refresh"]').first();
+    const refreshBtn = page.locator('button:has-text("Refresh")').first();
     if ((await refreshBtn.count()) > 0) {
       await refreshBtn.click();
       await page.waitForTimeout(500);
@@ -243,65 +238,48 @@ test.describe('Analytics Dashboard CRUD Lifecycle', () => {
   });
 
   test('bot performance table with data', async ({ page }) => {
-    await page.route('**/api/dashboard/analytics*', (route) =>
-      route.fulfill({ status: 200, json: mockAnalytics })
-    );
-    await page.route('**/api/dashboard/api/analytics*', (route) =>
-      route.fulfill({ status: 200, json: mockAnalytics })
-    );
-    await page.route('**/api/dashboard/status*', (route) =>
+    // The monitoring page calls apiService.getStatus() -> /api/dashboard/status
+    // and apiService.getConfig() -> /api/config (bots array)
+    // It then renders bot status in the "Bot Status" tab
+    await page.route('**/api/dashboard/status', (route) =>
       route.fulfill({ status: 200, json: mockStatus })
     );
-    await page.route('**/api/dashboard/api/status*', (route) =>
-      route.fulfill({ status: 200, json: mockStatus })
+    await page.route('**/api/config', (route) =>
+      route.fulfill({ status: 200, json: { bots: mockStatus.bots } })
     );
 
     await page.goto('/admin/monitoring');
     await page.waitForTimeout(1000);
 
-    // Look for bot performance table or card list
-    const performanceTable = page.getByRole('table').first();
-    const performanceSection = page.getByText(/bot.*performance/i).or(page.getByText(/agent.*performance/i)).first();
-
-    if ((await performanceSection.count()) > 0) {
-      await expect(performanceSection).toBeVisible();
+    // Click on "Bot Status" tab to see bot names
+    const botStatusTab = page.locator('[role="tab"]:has-text("Bot Status")').first();
+    if ((await botStatusTab.count()) > 0) {
+      await botStatusTab.click();
+      await page.waitForTimeout(500);
     }
 
     // Verify bot names appear
     await expect(page.getByText('SupportBot').first()).toBeVisible({ timeout: 5000 });
     await expect(page.getByText('SalesBot').first()).toBeVisible();
-
-    if ((await performanceTable.count()) > 0) {
-      await expect(performanceTable).toBeVisible();
-    }
   });
 
   test('loading state during fetch', async ({ page }) => {
-    // Delay the analytics response to observe loading state
-    await page.route('**/api/dashboard/analytics*', async (route) => {
+    // Delay the status response to observe loading state
+    await page.route('**/api/dashboard/status', async (route) => {
       await new Promise((r) => setTimeout(r, 2000));
-      await route.fulfill({ status: 200, json: mockAnalytics });
+      await route.fulfill({ status: 200, json: mockStatus });
     });
-    await page.route('**/api/dashboard/api/analytics*', async (route) => {
-      await new Promise((r) => setTimeout(r, 2000));
-      await route.fulfill({ status: 200, json: mockAnalytics });
-    });
-    await page.route('**/api/dashboard/status*', (route) =>
-      route.fulfill({ status: 200, json: mockStatus })
-    );
-    await page.route('**/api/dashboard/api/status*', (route) =>
-      route.fulfill({ status: 200, json: mockStatus })
+    await page.route('**/api/config', (route) =>
+      route.fulfill({ status: 200, json: { bots: [] } })
     );
 
     await page.goto('/admin/monitoring');
 
-    // Check for loading indicators (spinners, skeletons, loading text)
-    const loadingIndicator = page.locator('[class*="loading"], [class*="spinner"], .skeleton, [class*="skeleton"], [role="progressbar"]').first();
-    if ((await loadingIndicator.count()) > 0) {
-      await expect(loadingIndicator).toBeVisible({ timeout: 3000 });
-    }
+    // The page should render immediately (no full-page loading state)
+    // Just verify the page loads and eventually shows content
+    await expect(page.getByText('System Monitoring')).toBeVisible({ timeout: 5000 });
 
-    // Wait for data to eventually load
+    // Wait for delayed data to load
     await page.waitForTimeout(3000);
     await expect(page.locator('body')).toBeVisible();
   });

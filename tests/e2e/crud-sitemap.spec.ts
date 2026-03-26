@@ -10,75 +10,78 @@ import { setupAuth } from './test-utils';
 test.describe('Sitemap Page CRUD Lifecycle', () => {
   test.setTimeout(90000);
 
+  // The page fetches /sitemap.json and expects SitemapData shape:
+  // { generated, baseUrl, totalUrls, urls: SitemapUrl[] }
+  // SitemapUrl: { url, fullUrl, changefreq, priority, lastmod, description, access }
   const mockSitemap = {
+    generated: '2026-03-26T06:00:00Z',
+    baseUrl: 'http://localhost:3028',
+    totalUrls: 7,
     urls: [
       {
-        path: '/admin/dashboard',
+        url: '/admin/dashboard',
+        fullUrl: 'http://localhost:3028/admin/dashboard',
         description: 'Main admin dashboard',
-        accessLevel: 'Authenticated',
+        access: 'authenticated',
         priority: 1.0,
-        changeFrequency: 'daily',
-        lastModified: '2026-03-25T12:00:00Z',
-        category: 'Admin',
+        changefreq: 'daily',
+        lastmod: '2026-03-25T12:00:00Z',
       },
       {
-        path: '/admin/bots',
+        url: '/admin/bots',
+        fullUrl: 'http://localhost:3028/admin/bots',
         description: 'Bot management page',
-        accessLevel: 'Authenticated',
+        access: 'authenticated',
         priority: 0.9,
-        changeFrequency: 'daily',
-        lastModified: '2026-03-25T11:00:00Z',
-        category: 'Admin',
+        changefreq: 'daily',
+        lastmod: '2026-03-25T11:00:00Z',
       },
       {
-        path: '/admin/settings',
+        url: '/admin/settings',
+        fullUrl: 'http://localhost:3028/admin/settings',
         description: 'System settings',
-        accessLevel: 'Owner',
+        access: 'owner',
         priority: 0.8,
-        changeFrequency: 'weekly',
-        lastModified: '2026-03-24T09:00:00Z',
-        category: 'Admin',
+        changefreq: 'weekly',
+        lastmod: '2026-03-24T09:00:00Z',
       },
       {
-        path: '/docs',
+        url: '/docs',
+        fullUrl: 'http://localhost:3028/docs',
         description: 'Public documentation',
-        accessLevel: 'Public',
+        access: 'public',
         priority: 0.7,
-        changeFrequency: 'weekly',
-        lastModified: '2026-03-23T08:00:00Z',
-        category: 'Documentation',
+        changefreq: 'weekly',
+        lastmod: '2026-03-23T08:00:00Z',
       },
       {
-        path: '/docs/api',
+        url: '/docs/api',
+        fullUrl: 'http://localhost:3028/docs/api',
         description: 'API reference documentation',
-        accessLevel: 'Public',
+        access: 'public',
         priority: 0.6,
-        changeFrequency: 'monthly',
-        lastModified: '2026-03-20T10:00:00Z',
-        category: 'Documentation',
+        changefreq: 'monthly',
+        lastmod: '2026-03-20T10:00:00Z',
       },
       {
-        path: '/admin/personas',
+        url: '/admin/personas',
+        fullUrl: 'http://localhost:3028/admin/personas',
         description: 'Persona management',
-        accessLevel: 'Authenticated',
+        access: 'authenticated',
         priority: 0.8,
-        changeFrequency: 'daily',
-        lastModified: '2026-03-25T10:30:00Z',
-        category: 'Admin',
+        changefreq: 'daily',
+        lastmod: '2026-03-25T10:30:00Z',
       },
       {
-        path: '/admin/mcp/servers',
+        url: '/admin/mcp/servers',
+        fullUrl: 'http://localhost:3028/admin/mcp/servers',
         description: 'MCP server configuration',
-        accessLevel: 'Owner',
+        access: 'owner',
         priority: 0.7,
-        changeFrequency: 'weekly',
-        lastModified: '2026-03-22T15:00:00Z',
-        category: 'Admin',
+        changefreq: 'weekly',
+        lastmod: '2026-03-22T15:00:00Z',
       },
     ],
-    totalUrls: 7,
-    lastGenerated: '2026-03-26T06:00:00Z',
-    categories: ['Admin', 'Documentation'],
   };
 
   function mockCommonEndpoints(page: import('@playwright/test').Page) {
@@ -115,12 +118,9 @@ test.describe('Sitemap Page CRUD Lifecycle', () => {
   });
 
   test('load sitemap with URL categories', async ({ page }) => {
-    await page.route('**/api/sitemap*', (route) => {
-      if (route.request().url().includes('.xml')) {
-        return route.fulfill({ status: 200, contentType: 'application/xml', body: '<urlset></urlset>' });
-      }
-      return route.fulfill({ status: 200, json: mockSitemap });
-    });
+    await page.route('**/sitemap.json*', (route) =>
+      route.fulfill({ status: 200, json: mockSitemap })
+    );
 
     await page.goto('/admin/sitemap');
     await page.waitForTimeout(1000);
@@ -132,7 +132,7 @@ test.describe('Sitemap Page CRUD Lifecycle', () => {
   });
 
   test('search URLs by path or description', async ({ page }) => {
-    await page.route('**/api/sitemap*', (route) =>
+    await page.route('**/sitemap.json*', (route) =>
       route.fulfill({ status: 200, json: mockSitemap })
     );
 
@@ -153,46 +153,33 @@ test.describe('Sitemap Page CRUD Lifecycle', () => {
   });
 
   test('filter by access level (All, Public, Authenticated, Owner)', async ({ page }) => {
-    await page.route('**/api/sitemap*', (route) =>
+    await page.route('**/sitemap.json*', (route) =>
       route.fulfill({ status: 200, json: mockSitemap })
     );
 
     await page.goto('/admin/sitemap');
     await expect(page.getByText('/admin/dashboard').first()).toBeVisible({ timeout: 5000 });
 
-    // Look for access level filter (select or button group)
-    const accessFilter = page.locator('select:has(option:has-text("Public")), select:has(option:has-text("All"))').first();
-    const accessButtons = page.locator('button:has-text("Public"), button:has-text("Authenticated"), button:has-text("Owner")');
+    // Look for access level filter select (options: All Pages, Public Only, Authenticated, Owner Only)
+    const accessFilter = page.locator('select').filter({ has: page.locator('option:has-text("Public Only")') }).first();
 
     if ((await accessFilter.count()) > 0) {
       // Filter by Public
-      await accessFilter.selectOption({ label: 'Public' });
+      await accessFilter.selectOption('public');
       await page.waitForTimeout(300);
 
       // Filter by Owner
-      await accessFilter.selectOption({ label: 'Owner' });
+      await accessFilter.selectOption('owner');
       await page.waitForTimeout(300);
 
       // Reset to All
-      await accessFilter.selectOption({ index: 0 });
+      await accessFilter.selectOption('all');
       await page.waitForTimeout(300);
-    } else if ((await accessButtons.count()) > 0) {
-      const publicBtn = page.locator('button:has-text("Public")').first();
-      if ((await publicBtn.count()) > 0) {
-        await publicBtn.click();
-        await page.waitForTimeout(300);
-      }
-
-      const ownerBtn = page.locator('button:has-text("Owner")').first();
-      if ((await ownerBtn.count()) > 0) {
-        await ownerBtn.click();
-        await page.waitForTimeout(300);
-      }
     }
   });
 
   test('combined search + access filter', async ({ page }) => {
-    await page.route('**/api/sitemap*', (route) =>
+    await page.route('**/sitemap.json*', (route) =>
       route.fulfill({ status: 200, json: mockSitemap })
     );
 
@@ -207,9 +194,9 @@ test.describe('Sitemap Page CRUD Lifecycle', () => {
     }
 
     // Apply access filter
-    const accessFilter = page.locator('select:has(option:has-text("Owner"))').first();
+    const accessFilter = page.locator('select').filter({ has: page.locator('option:has-text("Owner Only")') }).first();
     if ((await accessFilter.count()) > 0) {
-      await accessFilter.selectOption({ label: 'Owner' });
+      await accessFilter.selectOption('owner');
       await page.waitForTimeout(300);
     }
 
@@ -218,25 +205,27 @@ test.describe('Sitemap Page CRUD Lifecycle', () => {
   });
 
   test('download XML button', async ({ page }) => {
-    await page.route('**/api/sitemap*', (route) => {
-      if (route.request().url().includes('.xml') || route.request().url().includes('download') || route.request().url().includes('format=xml')) {
-        return route.fulfill({
-          status: 200,
-          contentType: 'application/xml',
-          headers: { 'Content-Disposition': 'attachment; filename="sitemap.xml"' },
-          body: '<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"></urlset>',
-        });
-      }
-      return route.fulfill({ status: 200, json: mockSitemap });
-    });
+    await page.route('**/sitemap.json*', (route) =>
+      route.fulfill({ status: 200, json: mockSitemap })
+    );
+    await page.route('**/sitemap.xml*', (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: 'application/xml',
+        headers: { 'Content-Disposition': 'attachment; filename="sitemap.xml"' },
+        body: '<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"></urlset>',
+      })
+    );
 
     await page.goto('/admin/sitemap');
     await page.waitForTimeout(1000);
 
-    const downloadBtn = page.locator('button:has-text("Download"), button:has-text("XML"), button[title*="Download"], a:has-text("Download")').first();
+    // The page opens /sitemap.xml in a new window via window.open()
+    const downloadBtn = page.locator('button:has-text("XML")').first();
     if ((await downloadBtn.count()) > 0) {
-      const [download] = await Promise.all([
-        page.waitForEvent('download').catch(() => null),
+      // Clicking XML button triggers window.open (popup), catch it
+      const [popup] = await Promise.all([
+        page.waitForEvent('popup').catch(() => null),
         downloadBtn.click(),
       ]);
       await page.waitForTimeout(300);
@@ -245,7 +234,7 @@ test.describe('Sitemap Page CRUD Lifecycle', () => {
 
   test('refresh button', async ({ page }) => {
     let fetchCount = 0;
-    await page.route('**/api/sitemap*', (route) => {
+    await page.route('**/sitemap.json*', (route) => {
       fetchCount++;
       return route.fulfill({ status: 200, json: mockSitemap });
     });
@@ -263,7 +252,7 @@ test.describe('Sitemap Page CRUD Lifecycle', () => {
   });
 
   test('URL count and last generated timestamp stats', async ({ page }) => {
-    await page.route('**/api/sitemap*', (route) =>
+    await page.route('**/sitemap.json*', (route) =>
       route.fulfill({ status: 200, json: mockSitemap })
     );
 
@@ -284,7 +273,7 @@ test.describe('Sitemap Page CRUD Lifecycle', () => {
   });
 
   test('priority badges display', async ({ page }) => {
-    await page.route('**/api/sitemap*', (route) =>
+    await page.route('**/sitemap.json*', (route) =>
       route.fulfill({ status: 200, json: mockSitemap })
     );
 
@@ -305,7 +294,7 @@ test.describe('Sitemap Page CRUD Lifecycle', () => {
   });
 
   test('access level badges', async ({ page }) => {
-    await page.route('**/api/sitemap*', (route) =>
+    await page.route('**/sitemap.json*', (route) =>
       route.fulfill({ status: 200, json: mockSitemap })
     );
 
@@ -330,7 +319,7 @@ test.describe('Sitemap Page CRUD Lifecycle', () => {
   });
 
   test('empty state when filters match nothing', async ({ page }) => {
-    await page.route('**/api/sitemap*', (route) =>
+    await page.route('**/sitemap.json*', (route) =>
       route.fulfill({ status: 200, json: mockSitemap })
     );
 
@@ -352,7 +341,7 @@ test.describe('Sitemap Page CRUD Lifecycle', () => {
   });
 
   test('open URL button verifies external link', async ({ page }) => {
-    await page.route('**/api/sitemap*', (route) =>
+    await page.route('**/sitemap.json*', (route) =>
       route.fulfill({ status: 200, json: mockSitemap })
     );
 
