@@ -389,8 +389,13 @@ export class SlackService extends EventEmitter implements IMessengerService {
       }
     }
 
-    const startupGreetingService = require('@src/services/StartupGreetingService').default;
-    startupGreetingService.emit('service-ready', this);
+    try {
+      const { container } = require('tsyringe');
+      const startupGreetingService = container.resolve(require('@src/services/StartupGreetingService').default);
+      startupGreetingService.emit('service-ready', this);
+    } catch (error) {
+      debug('Failed to emit service-ready, could not resolve StartupGreetingService:', error);
+    }
   }
 
   public setApp(app: Application): void {
