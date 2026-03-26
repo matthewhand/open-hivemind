@@ -205,17 +205,23 @@ function validateRepoUrl(url: string): void {
   }
 
   // Prevent argument injection via hostname or path
-  if (parsedUrl.hostname.includes(" ") || parsedUrl.pathname.includes(" ")) {
+  let decodedHref: string;
+  try {
+    decodedHref = decodeURIComponent(parsedUrl.href);
+  } catch {
+    throw new PluginValidationError("Invalid repository URL: malformed URI sequence.");
+  }
+  if (decodedHref.includes(" ")) {
     throw new PluginValidationError("Invalid repository URL: spaces not allowed.");
   }
 
   // Prevent command injection through special git URL patterns
-  if (/--[a-z-]+=/i.test(parsedUrl.href)) {
+  if (/--[a-z-]+=/i.test(decodedHref)) {
     throw new PluginValidationError("Invalid repository URL: contains suspicious patterns.");
   }
 
-  // Prevent shell metacharacters in hostname
-  if (/[;&|`$()]/.test(parsedUrl.hostname)) {
+  // Prevent shell metacharacters in hostname and path
+  if (/[;&|`$()<>]/.test(decodedHref)) {
     throw new PluginValidationError("Invalid repository URL: contains shell metacharacters.");
   }
 }
