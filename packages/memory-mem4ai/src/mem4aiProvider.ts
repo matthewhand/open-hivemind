@@ -255,7 +255,7 @@ export class Mem4aiProvider {
                 throw new Error(`Mem4ai API error: ${response.status} - ${error}`);
             }
 
-            return await response.json() as Promise<unknown>;
+            return await response.json() as Record<string, unknown>;
         } finally {
             clearTimeout(timeout);
         }
