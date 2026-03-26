@@ -94,6 +94,6 @@ module.exports = {
     'tests/integrations/.*\.real\.test\.[tj]s$',
   ],
   transformIgnorePatterns: [
-    '/node_modules/(?!chai|other-esm-dependency|node-fetch|data-uri-to-buffer|@modelcontextprotocol/sdk|fetch-blob|uuid)',
+    '/node_modules/(?!chai|other-esm-dependency|node-fetch|data-uri-to-buffer|@modelcontextprotocol/sdk|fetch-blob|uuid|jsdom|cssstyle|data-urls|html-encoding-sniffer|whatwg-encoding|whatwg-url|tr46|webidl-conversions|w3c-xmlserializer|saxes|xml-name-validator|decimal.js|nwsapi|rrweb-cssom|tough-cookie|entities)',
   ],
 };
