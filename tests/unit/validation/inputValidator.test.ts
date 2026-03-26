@@ -1,3 +1,26 @@
+// Mock jsdom before importing the module (jsdom uses ESM that Jest can't parse)
+jest.mock('jsdom', () => ({
+  JSDOM: class {
+    window = {
+      document: { createElement: () => ({}) },
+    };
+  },
+}));
+
+// Mock dompurify to simulate DOMPurify behavior (strips all tags, removes script content)
+jest.mock('dompurify', () => {
+  const sanitize = (input: string, _opts?: any) => {
+    // Remove script/style tags and their content entirely (like real DOMPurify)
+    let result = input.replace(/<(script|style)[^>]*>[\s\S]*?<\/\1>/gi, '');
+    // Strip remaining HTML tags but keep text content
+    result = result.replace(/<[^>]*>/g, '');
+    return result;
+  };
+  const factory = () => ({ sanitize });
+  factory.sanitize = sanitize;
+  return { __esModule: true, default: factory };
+});
+
 import {
   SanitizationOptions,
   sanitizeObject,
