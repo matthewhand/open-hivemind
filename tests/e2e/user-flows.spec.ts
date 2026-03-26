@@ -13,8 +13,51 @@ import {
 test.describe('User Flows', () => {
   test.setTimeout(120000);
 
+  async function mockCommonEndpoints(page: import('@playwright/test').Page) {
+    // Catch-all first (lowest priority)
+    await page.route('**/api/**', (route) =>
+      route.fulfill({ status: 200, json: {} })
+    );
+    await Promise.all([
+      page.route('**/api/health/detailed', (route) =>
+        route.fulfill({ status: 200, json: { status: 'healthy' } })
+      ),
+      page.route('**/health/detailed', (route) =>
+        route.fulfill({ status: 200, json: { status: 'healthy' } })
+      ),
+      page.route('**/api/config/llm-status', (route) =>
+        route.fulfill({
+          status: 200,
+          json: { defaultConfigured: true, defaultProviders: [], botsMissingLlmProvider: [], hasMissing: false },
+        })
+      ),
+      page.route('**/api/config/global', (route) => route.fulfill({ status: 200, json: {} })),
+      page.route('**/api/config', (route) =>
+        route.fulfill({ status: 200, json: { bots: [] } })
+      ),
+      page.route('**/api/personas', (route) => route.fulfill({ status: 200, json: [] })),
+      page.route('**/api/csrf-token', (route) =>
+        route.fulfill({ status: 200, json: { token: 'mock-csrf-token' } })
+      ),
+      page.route('**/api/health', (route) => route.fulfill({ status: 200, json: { status: 'ok' } })),
+      page.route('**/api/dashboard/api/status', (route) =>
+        route.fulfill({ status: 200, json: { bots: [], uptime: 100 } })
+      ),
+      page.route('**/api/admin/guard-profiles', (route) =>
+        route.fulfill({ status: 200, json: { data: [] } })
+      ),
+      page.route('**/api/demo/status', (route) =>
+        route.fulfill({ status: 200, json: { active: false } })
+      ),
+      page.route('**/api/bots', (route) =>
+        route.fulfill({ status: 200, json: { data: { bots: [] } } })
+      ),
+    ]);
+  }
+
   test('complete bot creation flow without errors', async ({ page }) => {
     const errors = await setupTestWithErrorDetection(page);
+    await mockCommonEndpoints(page);
     await navigateAndWaitReady(page, '/admin/bots');
 
     // Open create modal
@@ -42,11 +85,12 @@ test.describe('User Flows', () => {
 
   test('complete navigation flow without errors', async ({ page }) => {
     const errors = await setupTestWithErrorDetection(page);
+    await mockCommonEndpoints(page);
 
     // Navigate through main sections
     await navigateAndWaitReady(page, '/admin/overview');
     await navigateAndWaitReady(page, '/admin/bots');
-    await navigateAndWaitReady(page, '/admin/config');
+    await navigateAndWaitReady(page, '/admin/configuration');
     await navigateAndWaitReady(page, '/admin/settings');
     await navigateAndWaitReady(page, '/admin/personas');
 
@@ -56,6 +100,7 @@ test.describe('User Flows', () => {
 
   test('complete settings modification flow without errors', async ({ page }) => {
     const errors = await setupTestWithErrorDetection(page);
+    await mockCommonEndpoints(page);
     await navigateAndWaitReady(page, '/admin/settings');
 
     // Interact with settings

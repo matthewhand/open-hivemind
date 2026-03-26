@@ -1,18 +1,24 @@
 import { expect, test } from '@playwright/test';
-import { setupAuth } from '../../tests/e2e/test-utils';
+import { setupAuth } from './test-utils';
 
 test('capture rollback UI screenshots', async ({ page }) => {
   await setupAuth(page);
   await page.setViewportSize({ width: 1280, height: 800 });
 
   // Common mocks
-  await page.route('/api/auth/check', async (route) => {
-    await route.fulfill({ status: 200, json: { authenticated: true, user: { role: 'admin' } } });
-  });
-  await page.route('/api/health/detailed', async (route) =>
+  await page.route('**/api/health/detailed', async (route) =>
     route.fulfill({ status: 200, json: { status: 'ok' } })
   );
-  await page.route('/api/config/global', async (route) =>
+  await page.route('**/api/config', async (route) =>
+    route.fulfill({ status: 200, json: { bots: [] } })
+  );
+  await page.route('**/api/demo/status', async (route) =>
+    route.fulfill({ status: 200, json: { active: false } })
+  );
+  await page.route('**/api/admin/guard-profiles', async (route) =>
+    route.fulfill({ status: 200, json: { data: [] } })
+  );
+  await page.route('**/api/config/global', async (route) =>
     route.fulfill({
       status: 200,
       json: {
@@ -32,15 +38,15 @@ test('capture rollback UI screenshots', async ({ page }) => {
       },
     })
   );
-  await page.route('/api/csrf-token', async (route) =>
+  await page.route('**/api/csrf-token', async (route) =>
     route.fulfill({ status: 200, json: { csrfToken: 'mock-token' } })
   );
-  await page.route('/api/config/llm-status', async (route) =>
+  await page.route('**/api/config/llm-status', async (route) =>
     route.fulfill({ status: 200, json: { configured: true, hasMissing: false } })
   );
 
   // 1. Mock empty rollbacks
-  await page.route('/api/config/hot-reload/rollbacks', async (route) => {
+  await page.route('**/api/config/hot-reload/rollbacks', async (route) => {
     await route.fulfill({ status: 200, json: { rollbacks: [] } });
   });
 
@@ -53,7 +59,7 @@ test('capture rollback UI screenshots', async ({ page }) => {
   await page.screenshot({ path: '/home/jules/verification/config-rollback-empty-fixed.png' });
 
   // 2. Mock rollbacks available
-  await page.route('/api/config/hot-reload/rollbacks', async (route) => {
+  await page.route('**/api/config/hot-reload/rollbacks', async (route) => {
     await route.fulfill({ status: 200, json: { rollbacks: ['rollback_1711234567890_xxyyzz'] } });
   });
 

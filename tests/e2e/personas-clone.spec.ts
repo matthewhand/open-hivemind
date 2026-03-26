@@ -19,11 +19,29 @@ test.describe('Personas Cloning', () => {
     await page.route('**/api/health', async (route) => {
       await route.fulfill({ json: { status: 'healthy' } });
     });
+    await page.route('**/api/health/detailed', async (route) => {
+      await route.fulfill({ json: { status: 'healthy' } });
+    });
     await page.route('**/health', async (route) => {
       await route.fulfill({ json: { status: 'healthy' } });
     });
     await page.route('**/api/dashboard/api/status', async (route) => {
       await route.fulfill({ json: { bots: [], uptime: 100 } });
+    });
+    await page.route('**/api/config/llm-status', async (route) => {
+      await route.fulfill({
+        status: 200,
+        json: { defaultConfigured: true, defaultProviders: [], botsMissingLlmProvider: [], hasMissing: false },
+      });
+    });
+    await page.route('**/api/config/global', async (route) => {
+      await route.fulfill({ status: 200, json: {} });
+    });
+    await page.route('**/api/admin/guard-profiles', async (route) => {
+      await route.fulfill({ status: 200, json: { data: [] } });
+    });
+    await page.route('**/api/demo/status', async (route) => {
+      await route.fulfill({ status: 200, json: { active: false } });
     });
 
     // Initial personas list

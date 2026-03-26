@@ -14,9 +14,26 @@ test.describe('Activity Monitor Screenshots', () => {
     await setupAuth(page);
 
     // Mock API endpoints for dashboard
-    await page.route('**/api/auth/check', async (route) => {
-      await route.fulfill({ status: 200, json: { authenticated: true, user: { role: 'admin' } } });
-    });
+    await page.route('**/api/config', async (route) =>
+      route.fulfill({
+        status: 200,
+        json: {
+          bots: [
+            { name: 'CustomerSupport', messageProvider: 'discord', llmProvider: 'openai' },
+            { name: 'DevAssistant', messageProvider: 'slack', llmProvider: 'anthropic' },
+          ],
+        },
+      })
+    );
+    await page.route('**/api/demo/status', async (route) =>
+      route.fulfill({ status: 200, json: { active: false } })
+    );
+    await page.route('**/api/admin/guard-profiles', async (route) =>
+      route.fulfill({ status: 200, json: { data: [] } })
+    );
+    await page.route('**/api/csrf-token', async (route) =>
+      route.fulfill({ status: 200, json: { token: 'mock-csrf-token' } })
+    );
 
     await page.route('**/api/config/llm-status', async (route) =>
       route.fulfill({ status: 200, json: { defaultConfigured: true } })
@@ -68,18 +85,6 @@ test.describe('Activity Monitor Screenshots', () => {
             stats: { total: 0, online: 0, slow: 0, offline: 0, error: 0 },
           },
           endpoints: [],
-        },
-      })
-    );
-
-    await page.route('**/api/config', async (route) =>
-      route.fulfill({
-        status: 200,
-        json: {
-          bots: [
-            { name: 'CustomerSupport', messageProvider: 'discord', llmProvider: 'openai' },
-            { name: 'DevAssistant', messageProvider: 'slack', llmProvider: 'anthropic' },
-          ],
         },
       })
     );
