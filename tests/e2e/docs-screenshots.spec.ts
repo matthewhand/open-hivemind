@@ -6,6 +6,38 @@ test.describe('Documentation Screenshots', () => {
     // Setup authentication and error detection
     await setupTestWithErrorDetection(page);
 
+    // Mock API endpoints
+    await page.route('**/api/health/detailed', async (route) =>
+      route.fulfill({ status: 200, json: { status: 'healthy' } })
+    );
+    await page.route('**/api/config/llm-status', async (route) =>
+      route.fulfill({
+        status: 200,
+        json: { defaultConfigured: true, defaultProviders: [], botsMissingLlmProvider: [], hasMissing: false },
+      })
+    );
+    await page.route('**/api/config/global', async (route) =>
+      route.fulfill({ status: 200, json: {} })
+    );
+    await page.route('**/api/config', async (route) =>
+      route.fulfill({ status: 200, json: { bots: [] } })
+    );
+    await page.route('**/api/personas', async (route) =>
+      route.fulfill({ status: 200, json: [] })
+    );
+    await page.route('**/api/csrf-token', async (route) =>
+      route.fulfill({ status: 200, json: { token: 'mock-csrf-token' } })
+    );
+    await page.route('**/api/demo/status', async (route) =>
+      route.fulfill({ status: 200, json: { active: false } })
+    );
+    await page.route('**/api/admin/guard-profiles', async (route) =>
+      route.fulfill({ status: 200, json: { data: [] } })
+    );
+    await page.route('**/api/bots', async (route) =>
+      route.fulfill({ status: 200, json: { data: { bots: [] } } })
+    );
+
     // Navigate to Bots page
     await navigateAndWaitReady(page, '/admin/bots');
 
@@ -62,6 +94,26 @@ test.describe('Documentation Screenshots', () => {
   test('Create and Duplicate Bot', async ({ page }) => {
     // Setup authentication and error detection
     await setupTestWithErrorDetection(page);
+
+    // Mock common API endpoints
+    await page.route('**/api/health/detailed', async (route) =>
+      route.fulfill({ status: 200, json: { status: 'healthy' } })
+    );
+    await page.route('**/api/config/llm-status', async (route) =>
+      route.fulfill({
+        status: 200,
+        json: { defaultConfigured: true, defaultProviders: [], botsMissingLlmProvider: [], hasMissing: false },
+      })
+    );
+    await page.route('**/api/csrf-token', async (route) =>
+      route.fulfill({ status: 200, json: { token: 'mock-csrf-token' } })
+    );
+    await page.route('**/api/demo/status', async (route) =>
+      route.fulfill({ status: 200, json: { active: false } })
+    );
+    await page.route('**/api/admin/guard-profiles', async (route) =>
+      route.fulfill({ status: 200, json: { data: [] } })
+    );
 
     // Mock Data
     const mockBot = {
