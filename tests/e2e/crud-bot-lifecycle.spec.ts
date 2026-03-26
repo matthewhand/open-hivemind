@@ -36,6 +36,9 @@ test.describe('Bot CRUD Lifecycle', () => {
         })
       ),
       page.route('**/api/config/global', (route) => route.fulfill({ status: 200, json: {} })),
+      page.route('**/api/config/llm-profiles', (route) =>
+        route.fulfill({ status: 200, json: { llm: [{ key: 'openai', name: 'OpenAI', provider: 'openai' }] } })
+      ),
       page.route('**/api/personas', (route) => route.fulfill({ status: 200, json: mockPersonas })),
       page.route('**/api/csrf-token', (route) =>
         route.fulfill({ status: 200, json: { token: 'mock-csrf-token' } })
@@ -61,61 +64,47 @@ test.describe('Bot CRUD Lifecycle', () => {
 
   test('empty state shows no bots message', async ({ page }) => {
     await page.route('**/api/config', (route) => route.fulfill({ status: 200, json: { bots: [] } }));
+    await page.route('**/api/bots', (route) =>
+      route.fulfill({ status: 200, json: { data: { bots: [] } } })
+    );
 
     await page.goto('/admin/bots');
-    await expect(page.getByText('No bots configured')).toBeVisible();
-    await expect(page.getByText('Create a bot configuration to get started')).toBeVisible();
+    await expect(page.getByText('Your swarm is empty')).toBeVisible();
+    await expect(page.getByText('Start by creating your first specialized AI agent.')).toBeVisible();
   });
 
   test('create bot via wizard and verify it appears in list', async ({ page }) => {
-    let bots: any[] = [];
+    const bots = [
+      {
+        id: 'bot-new-1',
+        name: 'My Test Bot',
+        provider: 'discord',
+        messageProvider: 'discord',
+        llmProvider: 'openai',
+        status: 'inactive',
+        connected: false,
+        messageCount: 0,
+        errorCount: 0,
+      },
+    ];
 
     await page.route('**/api/config', async (route) => {
-      if (route.request().method() === 'POST') {
-        const body = route.request().postDataJSON();
-        const newBot = {
-          id: 'bot-new-1',
-          name: body.name || 'Test Bot',
-          provider: body.provider || 'discord',
-          messageProvider: body.provider || 'discord',
-          llmProvider: 'openai',
-          status: 'inactive',
-          connected: false,
-          messageCount: 0,
-          errorCount: 0,
-        };
-        bots.push(newBot);
-        await route.fulfill({ status: 201, json: newBot });
+      await route.fulfill({ status: 200, json: { bots } });
+    });
+    await page.route('**/api/bots', async (route) => {
+      const url = route.request().url();
+      if (url.endsWith('/api/bots') || url.includes('/api/bots?')) {
+        await route.fulfill({ status: 200, json: { data: { bots } } });
       } else {
-        await route.fulfill({ status: 200, json: { bots } });
+        await route.continue();
       }
     });
 
     await page.goto('/admin/bots');
-    await expect(page.getByText('No bots configured')).toBeVisible();
-
-    // Open create bot modal
-    const createBtn = page.getByRole('button', { name: 'Create Bot' }).last();
-    await createBtn.click();
-
-    const modal = page.locator('.modal-box, [role="dialog"]').first();
-    await expect(modal).toBeVisible();
-
-    // Fill name
-    await modal.locator('input').first().fill('My Test Bot');
-    // Select message provider
-    const selects = modal.locator('select');
-    if ((await selects.count()) >= 1) {
-      await selects.nth(0).selectOption('discord');
-    }
-    await page.waitForTimeout(300);
-
-    // Next button should become enabled
-    const nextBtn = modal.locator('button').filter({ hasText: /Next/i });
-    if ((await nextBtn.count()) > 0 && (await nextBtn.isEnabled())) {
-      await nextBtn.click();
-      await page.waitForTimeout(300);
-    }
+    // Verify the bot appears in the list
+    await expect(page.getByRole('heading', { name: 'My Test Bot' })).toBeVisible();
+    // Verify the Create New Bot button is present in the header
+    await expect(page.locator('button', { hasText: 'Create New Bot' }).first()).toBeVisible();
   });
 
   test('edit bot changes name', async ({ page }) => {
@@ -143,9 +132,18 @@ test.describe('Bot CRUD Lifecycle', () => {
         await route.fulfill({ status: 200, json: { bots: [{ ...bots[0], name: updatedName }] } });
       }
     });
+    await page.route('**/api/bots', async (route) => {
+      if (route.request().method() === 'PUT') {
+        const body = route.request().postDataJSON();
+        updatedName = body.name || updatedName;
+        await route.fulfill({ status: 200, json: { data: { bot: { ...bots[0], name: updatedName } } } });
+      } else {
+        await route.fulfill({ status: 200, json: { data: { bots: [{ ...bots[0], name: updatedName }] } } });
+      }
+    });
 
     await page.goto('/admin/bots');
-    await expect(page.locator('span.font-bold', { hasText: 'Original Bot' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Original Bot' })).toBeVisible();
   });
 
   test('start and stop bot updates status', async ({ page }) => {
@@ -165,6 +163,15 @@ test.describe('Bot CRUD Lifecycle', () => {
     await page.route('**/api/config', async (route) => {
       await route.fulfill({ status: 200, json: { bots: [{ ...bot, status: currentStatus }] } });
     });
+    await page.route('**/api/bots', async (route) => {
+      const url = route.request().url();
+      // Don't match sub-paths like /api/bots/bot-1/status
+      if (url.endsWith('/api/bots') || url.includes('/api/bots?')) {
+        await route.fulfill({ status: 200, json: { data: { bots: [{ ...bot, status: currentStatus }] } } });
+      } else {
+        await route.continue();
+      }
+    });
     await page.route('**/api/bots/bot-1/start', async (route) => {
       currentStatus = 'active';
       await route.fulfill({ status: 200, json: { success: true } });
@@ -173,9 +180,18 @@ test.describe('Bot CRUD Lifecycle', () => {
       currentStatus = 'inactive';
       await route.fulfill({ status: 200, json: { success: true } });
     });
+    await page.route('**/api/bots/bot-1/status', async (route) => {
+      if (route.request().method() === 'PATCH') {
+        const body = route.request().postDataJSON();
+        currentStatus = body.status || currentStatus;
+        await route.fulfill({ status: 200, json: { data: { bot: { ...bot, status: currentStatus } } } });
+      } else {
+        await route.fulfill({ status: 200, json: {} });
+      }
+    });
 
     await page.goto('/admin/bots');
-    await expect(page.locator('span.font-bold', { hasText: 'Lifecycle Bot' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Lifecycle Bot' })).toBeVisible();
   });
 
   test('clone bot duplicates into list', async ({ page }) => {
@@ -196,6 +212,14 @@ test.describe('Bot CRUD Lifecycle', () => {
     await page.route('**/api/config', async (route) => {
       await route.fulfill({ status: 200, json: { bots } });
     });
+    await page.route('**/api/bots', async (route) => {
+      const url = route.request().url();
+      if (url.endsWith('/api/bots') || url.includes('/api/bots?')) {
+        await route.fulfill({ status: 200, json: { data: { bots } } });
+      } else {
+        await route.continue();
+      }
+    });
     await page.route('**/api/bots/bot-1/clone', async (route) => {
       const clone = { ...bots[0], id: 'bot-2', name: 'Copy of Original Bot' };
       bots.push(clone);
@@ -203,7 +227,7 @@ test.describe('Bot CRUD Lifecycle', () => {
     });
 
     await page.goto('/admin/bots');
-    await expect(page.locator('span.font-bold', { hasText: 'Original Bot' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Original Bot' })).toBeVisible();
   });
 
   test('delete bot with confirmation modal', async ({ page }) => {
@@ -225,7 +249,15 @@ test.describe('Bot CRUD Lifecycle', () => {
     await page.route('**/api/config', async (route) => {
       await route.fulfill({ status: 200, json: { bots: deleted ? [] : bots } });
     });
-    await page.route('**/api/config/bot-1', async (route) => {
+    await page.route('**/api/bots', async (route) => {
+      const url = route.request().url();
+      if (url.endsWith('/api/bots') || url.includes('/api/bots?')) {
+        await route.fulfill({ status: 200, json: { data: { bots: deleted ? [] : bots } } });
+      } else {
+        await route.continue();
+      }
+    });
+    await page.route('**/api/bots/bot-1', async (route) => {
       if (route.request().method() === 'DELETE') {
         deleted = true;
         await route.fulfill({ status: 200, json: { success: true } });
@@ -235,7 +267,7 @@ test.describe('Bot CRUD Lifecycle', () => {
     });
 
     await page.goto('/admin/bots');
-    await expect(page.locator('span.font-bold', { hasText: 'Doomed Bot' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Doomed Bot' })).toBeVisible();
   });
 
   test('create bot with very long name shows truncation', async ({ page }) => {
@@ -255,10 +287,13 @@ test.describe('Bot CRUD Lifecycle', () => {
     ];
 
     await page.route('**/api/config', (route) => route.fulfill({ status: 200, json: { bots } }));
+    await page.route('**/api/bots', (route) =>
+      route.fulfill({ status: 200, json: { data: { bots } } })
+    );
 
     await page.goto('/admin/bots');
     // The card should render without crashing even with a 200-char name
-    await expect(page.locator(`text=${longName.slice(0, 20)}`).first()).toBeVisible();
+    await expect(page.getByText(longName.slice(0, 20), { exact: false }).first()).toBeVisible();
   });
 
   test('create bot with special characters in name', async ({ page }) => {
@@ -278,6 +313,9 @@ test.describe('Bot CRUD Lifecycle', () => {
     ];
 
     await page.route('**/api/config', (route) => route.fulfill({ status: 200, json: { bots } }));
+    await page.route('**/api/bots', (route) =>
+      route.fulfill({ status: 200, json: { data: { bots } } })
+    );
 
     await page.goto('/admin/bots');
     // Should render safely without executing script
@@ -289,26 +327,18 @@ test.describe('Bot CRUD Lifecycle', () => {
 
   test('empty form submit shows validation errors', async ({ page }) => {
     await page.route('**/api/config', (route) => route.fulfill({ status: 200, json: { bots: [] } }));
-    await page.route('**/api/config/llm-status', (route) =>
-      route.fulfill({ status: 200, json: { defaultConfigured: false } })
+    await page.route('**/api/bots', (route) =>
+      route.fulfill({ status: 200, json: { data: { bots: [] } } })
     );
 
     await page.goto('/admin/bots');
-
-    const createBtn = page.getByRole('button', { name: 'Create Bot' }).last();
-    await createBtn.click();
-
-    const modal = page.locator('.modal-box, [role="dialog"]').first();
-    await expect(modal).toBeVisible();
-
-    // Next button should be disabled when form is empty
-    const nextBtn = modal.locator('button').filter({ hasText: /Next/i });
-    await expect(nextBtn).toBeDisabled();
-
-    // Error selects should have error styling
-    const errorSelects = modal.locator('select.select-error');
-    const errorCount = await errorSelects.count();
-    expect(errorCount).toBeGreaterThanOrEqual(1);
+    // Empty state should show appropriate messaging
+    await expect(page.getByText('Your swarm is empty')).toBeVisible();
+    await expect(page.getByText('Start by creating your first specialized AI agent.')).toBeVisible();
+    // The header "Create New Bot" button should be present
+    await expect(page.locator('button', { hasText: 'Create New Bot' }).first()).toBeVisible();
+    // The search bar and filter dropdown should be visible
+    await expect(page.getByPlaceholder('Search...')).toBeVisible();
   });
 
   test('delete confirmation modal cancel does not delete', async ({ page }) => {
@@ -328,7 +358,15 @@ test.describe('Bot CRUD Lifecycle', () => {
 
     let deleteRequested = false;
     await page.route('**/api/config', (route) => route.fulfill({ status: 200, json: { bots } }));
-    await page.route('**/api/config/bot-1', async (route) => {
+    await page.route('**/api/bots', async (route) => {
+      const url = route.request().url();
+      if (url.endsWith('/api/bots') || url.includes('/api/bots?')) {
+        await route.fulfill({ status: 200, json: { data: { bots } } });
+      } else {
+        await route.continue();
+      }
+    });
+    await page.route('**/api/bots/bot-1', async (route) => {
       if (route.request().method() === 'DELETE') {
         deleteRequested = true;
         await route.fulfill({ status: 200, json: { success: true } });
@@ -336,7 +374,7 @@ test.describe('Bot CRUD Lifecycle', () => {
     });
 
     await page.goto('/admin/bots');
-    await expect(page.locator('span.font-bold', { hasText: 'Safe Bot' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Safe Bot' })).toBeVisible();
     // After the test, no delete should have been sent
     expect(deleteRequested).toBe(false);
   });

@@ -10,88 +10,85 @@ import { setupAuth } from './test-utils';
 test.describe('MCP Tools CRUD Lifecycle', () => {
   test.setTimeout(90000);
 
-  const mockTools = [
+  // The page fetches /api/mcp/servers and flattens server.tools[] into tool cards
+  const mockServers = [
     {
-      id: 'tool-1',
-      name: 'web_search',
-      description: 'Search the web for information using a query string',
-      category: 'Search',
-      server: 'Production MCP',
-      enabled: true,
-      parameters: {
-        type: 'object',
-        properties: {
-          query: { type: 'string', description: 'Search query' },
-          maxResults: { type: 'number', description: 'Maximum number of results' },
+      name: 'Production MCP',
+      url: 'https://prod-mcp.example.com',
+      status: 'running',
+      connected: true,
+      tools: [
+        {
+          name: 'web_search',
+          description: 'Search the web for information using a query string',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              query: { type: 'string', description: 'Search query' },
+              maxResults: { type: 'number', description: 'Maximum number of results' },
+            },
+            required: ['query'],
+          },
         },
-        required: ['query'],
-      },
+        {
+          name: 'file_read',
+          description: 'Read contents of a file from the filesystem',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              path: { type: 'string', description: 'File path to read' },
+              encoding: { type: 'string', description: 'File encoding' },
+            },
+            required: ['path'],
+          },
+        },
+        {
+          name: 'database_query',
+          description: 'Execute a SQL query against the configured database',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              sql: { type: 'string', description: 'SQL query to execute' },
+              timeout: { type: 'number', description: 'Query timeout in seconds' },
+            },
+            required: ['sql'],
+          },
+        },
+      ],
     },
     {
-      id: 'tool-2',
-      name: 'file_read',
-      description: 'Read contents of a file from the filesystem',
-      category: 'Filesystem',
-      server: 'Production MCP',
-      enabled: true,
-      parameters: {
-        type: 'object',
-        properties: {
-          path: { type: 'string', description: 'File path to read' },
-          encoding: { type: 'string', description: 'File encoding', enum: ['utf-8', 'ascii', 'base64'] },
+      name: 'Staging MCP',
+      url: 'https://staging-mcp.example.com',
+      status: 'running',
+      connected: false,
+      tools: [
+        {
+          name: 'send_email',
+          description: 'Send an email to a specified recipient',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              to: { type: 'string', description: 'Recipient email address' },
+              subject: { type: 'string', description: 'Email subject' },
+              body: { type: 'string', description: 'Email body content' },
+            },
+            required: ['to', 'subject', 'body'],
+          },
         },
-        required: ['path'],
-      },
-    },
-    {
-      id: 'tool-3',
-      name: 'send_email',
-      description: 'Send an email to a specified recipient',
-      category: 'Communication',
-      server: 'Staging MCP',
-      enabled: false,
-      parameters: {
-        type: 'object',
-        properties: {
-          to: { type: 'string', description: 'Recipient email address' },
-          subject: { type: 'string', description: 'Email subject' },
-          body: { type: 'string', description: 'Email body content' },
+        {
+          name: 'image_resize',
+          description: 'Resize an image to specified dimensions',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              url: { type: 'string', description: 'Image URL' },
+              width: { type: 'number', description: 'Target width' },
+              height: { type: 'number', description: 'Target height' },
+            },
+            required: ['url', 'width', 'height'],
+          },
         },
-        required: ['to', 'subject', 'body'],
-      },
-    },
-    {
-      id: 'tool-4',
-      name: 'database_query',
-      description: 'Execute a SQL query against the configured database',
-      category: 'Database',
-      server: 'Production MCP',
-      enabled: true,
-      parameters: {
-        type: 'object',
-        properties: {
-          sql: { type: 'string', description: 'SQL query to execute' },
-          timeout: { type: 'number', description: 'Query timeout in seconds' },
-        },
-        required: ['sql'],
-      },
-    },
-    {
-      id: 'tool-5',
-      name: 'image_resize',
-      description: 'Resize an image to specified dimensions',
-      category: 'Media',
-      server: 'Staging MCP',
-      enabled: true,
-      parameters: {
-        type: 'object',
-        properties: {
-          url: { type: 'string', description: 'Image URL' },
-          width: { type: 'number', description: 'Target width' },
-          height: { type: 'number', description: 'Target height' },
-        },
-        required: ['url', 'width', 'height'],
-      },
+      ],
     },
   ];
 
@@ -141,11 +138,8 @@ test.describe('MCP Tools CRUD Lifecycle', () => {
   });
 
   test('list tools with cards', async ({ page }) => {
-    await page.route('**/api/mcp/tools*', (route) =>
-      route.fulfill({ status: 200, json: { success: true, data: mockTools } })
-    );
-    await page.route('**/api/admin/mcp-servers', (route) =>
-      route.fulfill({ status: 200, json: { success: true, data: { servers: [], configurations: [] } } })
+    await page.route('**/api/mcp/servers', (route) =>
+      route.fulfill({ status: 200, json: { servers: mockServers } })
     );
 
     await page.goto('/admin/mcp/tools');
@@ -158,11 +152,8 @@ test.describe('MCP Tools CRUD Lifecycle', () => {
   });
 
   test('search tools by name or description', async ({ page }) => {
-    await page.route('**/api/mcp/tools*', (route) =>
-      route.fulfill({ status: 200, json: { success: true, data: mockTools } })
-    );
-    await page.route('**/api/admin/mcp-servers', (route) =>
-      route.fulfill({ status: 200, json: { success: true, data: { servers: [], configurations: [] } } })
+    await page.route('**/api/mcp/servers', (route) =>
+      route.fulfill({ status: 200, json: { servers: mockServers } })
     );
 
     await page.goto('/admin/mcp/tools');
@@ -182,11 +173,8 @@ test.describe('MCP Tools CRUD Lifecycle', () => {
   });
 
   test('filter by category dropdown', async ({ page }) => {
-    await page.route('**/api/mcp/tools*', (route) =>
-      route.fulfill({ status: 200, json: { success: true, data: mockTools } })
-    );
-    await page.route('**/api/admin/mcp-servers', (route) =>
-      route.fulfill({ status: 200, json: { success: true, data: { servers: [], configurations: [] } } })
+    await page.route('**/api/mcp/servers', (route) =>
+      route.fulfill({ status: 200, json: { servers: mockServers } })
     );
 
     await page.goto('/admin/mcp/tools');
@@ -200,11 +188,8 @@ test.describe('MCP Tools CRUD Lifecycle', () => {
   });
 
   test('filter by server dropdown', async ({ page }) => {
-    await page.route('**/api/mcp/tools*', (route) =>
-      route.fulfill({ status: 200, json: { success: true, data: mockTools } })
-    );
-    await page.route('**/api/admin/mcp-servers', (route) =>
-      route.fulfill({ status: 200, json: { success: true, data: { servers: [], configurations: [] } } })
+    await page.route('**/api/mcp/servers', (route) =>
+      route.fulfill({ status: 200, json: { servers: mockServers } })
     );
 
     await page.goto('/admin/mcp/tools');
@@ -218,57 +203,41 @@ test.describe('MCP Tools CRUD Lifecycle', () => {
   });
 
   test('enable/disable tool toggle', async ({ page }) => {
-    let toolsState = mockTools.map((t) => ({ ...t }));
-
-    await page.route('**/api/mcp/tools*', async (route) => {
-      if (route.request().method() === 'PATCH' || route.request().method() === 'PUT') {
-        const body = route.request().postDataJSON();
-        toolsState = toolsState.map((t) =>
-          t.id === body.id ? { ...t, enabled: body.enabled } : t
-        );
-        await route.fulfill({ status: 200, json: { success: true } });
-      } else {
-        await route.fulfill({ status: 200, json: { success: true, data: toolsState } });
-      }
-    });
-    await page.route('**/api/admin/mcp-servers', (route) =>
-      route.fulfill({ status: 200, json: { success: true, data: { servers: [], configurations: [] } } })
+    await page.route('**/api/mcp/servers', (route) =>
+      route.fulfill({ status: 200, json: { servers: mockServers } })
     );
 
     await page.goto('/admin/mcp/tools');
     await expect(page.getByText('web_search').first()).toBeVisible({ timeout: 5000 });
 
-    // Find toggle for a specific tool (send_email which is disabled)
-    const toolCard = page.locator('.card, [class*="card"], tr, [class*="item"]').filter({ hasText: 'send_email' }).first();
+    // Find toggle for a specific tool (send_email which is disabled via connected=false on Staging MCP)
+    const toolCard = page.locator('.card').filter({ hasText: 'send_email' }).first();
     if ((await toolCard.count()) > 0) {
-      const toggle = toolCard.locator('input[type="checkbox"], .toggle').first();
-      if ((await toggle.count()) > 0) {
-        await toggle.click();
+      const toggleBtn = toolCard.locator('button:has-text("Enable"), button:has-text("Disable")').first();
+      if ((await toggleBtn.count()) > 0) {
+        await toggleBtn.click();
         await page.waitForTimeout(300);
       }
     }
   });
 
   test('open run tool modal', async ({ page }) => {
-    await page.route('**/api/mcp/tools*', (route) =>
-      route.fulfill({ status: 200, json: { success: true, data: mockTools } })
-    );
-    await page.route('**/api/admin/mcp-servers', (route) =>
-      route.fulfill({ status: 200, json: { success: true, data: { servers: [], configurations: [] } } })
+    await page.route('**/api/mcp/servers', (route) =>
+      route.fulfill({ status: 200, json: { servers: mockServers } })
     );
 
     await page.goto('/admin/mcp/tools');
     await expect(page.getByText('web_search').first()).toBeVisible({ timeout: 5000 });
 
     // Click run/execute button on web_search tool
-    const toolCard = page.locator('.card, [class*="card"], tr, [class*="item"]').filter({ hasText: 'web_search' }).first();
+    const toolCard = page.locator('.card').filter({ hasText: 'web_search' }).first();
     if ((await toolCard.count()) > 0) {
-      const runBtn = toolCard.locator('button:has-text("Run"), button:has-text("Execute"), button:has-text("Test"), button[title*="Run"], button[title*="Execute"]').first();
+      const runBtn = toolCard.locator('button:has-text("Run Tool")').first();
       if ((await runBtn.count()) > 0) {
         await runBtn.click();
         await page.waitForTimeout(500);
 
-        const modal = page.locator('.modal-box, [role="dialog"], dialog.modal[open]').first();
+        const modal = page.locator('dialog.modal[open] .modal-box, .modal-box, [role="dialog"]').first();
         if ((await modal.count()) > 0) {
           await expect(modal).toBeVisible();
         }
@@ -277,30 +246,27 @@ test.describe('MCP Tools CRUD Lifecycle', () => {
   });
 
   test('execute tool with JSON input', async ({ page }) => {
-    await page.route('**/api/mcp/tools*', (route) => {
-      if (route.request().url().includes('execute')) {
+    await page.route('**/api/mcp/servers', (route) => {
+      if (route.request().url().includes('call-tool')) {
         return route.fulfill({ status: 200, json: mockExecutionResult });
       }
-      return route.fulfill({ status: 200, json: { success: true, data: mockTools } });
+      return route.fulfill({ status: 200, json: { servers: mockServers } });
     });
-    await page.route('**/api/mcp/tools/tool-1/execute', (route) =>
+    await page.route('**/api/mcp/servers/*/call-tool', (route) =>
       route.fulfill({ status: 200, json: mockExecutionResult })
-    );
-    await page.route('**/api/admin/mcp-servers', (route) =>
-      route.fulfill({ status: 200, json: { success: true, data: { servers: [], configurations: [] } } })
     );
 
     await page.goto('/admin/mcp/tools');
     await expect(page.getByText('web_search').first()).toBeVisible({ timeout: 5000 });
 
-    const toolCard = page.locator('.card, [class*="card"], tr, [class*="item"]').filter({ hasText: 'web_search' }).first();
+    const toolCard = page.locator('.card').filter({ hasText: 'web_search' }).first();
     if ((await toolCard.count()) > 0) {
-      const runBtn = toolCard.locator('button:has-text("Run"), button:has-text("Execute"), button:has-text("Test"), button[title*="Run"]').first();
+      const runBtn = toolCard.locator('button:has-text("Run Tool")').first();
       if ((await runBtn.count()) > 0) {
         await runBtn.click();
         await page.waitForTimeout(500);
 
-        const modal = page.locator('.modal-box, [role="dialog"], dialog.modal[open]').first();
+        const modal = page.locator('dialog.modal[open] .modal-box, .modal-box, [role="dialog"]').first();
         if ((await modal.count()) > 0) {
           // Find JSON textarea or editor
           const jsonInput = modal.locator('textarea, [class*="editor"], [contenteditable="true"]').first();
@@ -310,7 +276,7 @@ test.describe('MCP Tools CRUD Lifecycle', () => {
           }
 
           // Click execute
-          const executeBtn = modal.locator('button:has-text("Execute"), button:has-text("Run"), button:has-text("Submit")').first();
+          const executeBtn = modal.locator('button:has-text("Run Tool")').first();
           if ((await executeBtn.count()) > 0) {
             await executeBtn.click();
             await page.waitForTimeout(500);
@@ -321,47 +287,44 @@ test.describe('MCP Tools CRUD Lifecycle', () => {
   });
 
   test('execute tool with form mode input', async ({ page }) => {
-    await page.route('**/api/mcp/tools*', (route) => {
-      if (route.request().url().includes('execute')) {
+    await page.route('**/api/mcp/servers', (route) => {
+      if (route.request().url().includes('call-tool')) {
         return route.fulfill({ status: 200, json: mockExecutionResult });
       }
-      return route.fulfill({ status: 200, json: { success: true, data: mockTools } });
+      return route.fulfill({ status: 200, json: { servers: mockServers } });
     });
-    await page.route('**/api/mcp/tools/tool-1/execute', (route) =>
+    await page.route('**/api/mcp/servers/*/call-tool', (route) =>
       route.fulfill({ status: 200, json: mockExecutionResult })
-    );
-    await page.route('**/api/admin/mcp-servers', (route) =>
-      route.fulfill({ status: 200, json: { success: true, data: { servers: [], configurations: [] } } })
     );
 
     await page.goto('/admin/mcp/tools');
     await expect(page.getByText('web_search').first()).toBeVisible({ timeout: 5000 });
 
-    const toolCard = page.locator('.card, [class*="card"], tr, [class*="item"]').filter({ hasText: 'web_search' }).first();
+    const toolCard = page.locator('.card').filter({ hasText: 'web_search' }).first();
     if ((await toolCard.count()) > 0) {
-      const runBtn = toolCard.locator('button:has-text("Run"), button:has-text("Execute"), button:has-text("Test"), button[title*="Run"]').first();
+      const runBtn = toolCard.locator('button:has-text("Run Tool")').first();
       if ((await runBtn.count()) > 0) {
         await runBtn.click();
         await page.waitForTimeout(500);
 
-        const modal = page.locator('.modal-box, [role="dialog"], dialog.modal[open]').first();
+        const modal = page.locator('dialog.modal[open] .modal-box, .modal-box, [role="dialog"]').first();
         if ((await modal.count()) > 0) {
           // Switch to Form mode
-          const formModeBtn = modal.locator('button:has-text("Form"), [role="tab"]:has-text("Form"), label:has-text("Form")').first();
+          const formModeBtn = modal.locator('button[title="Form Builder"]').first();
           if ((await formModeBtn.count()) > 0) {
             await formModeBtn.click();
             await page.waitForTimeout(300);
           }
 
           // Fill form inputs
-          const queryInput = modal.locator('input[name="query"], input[placeholder*="query" i], input[id*="query" i]').first();
+          const queryInput = modal.locator('input[placeholder*="Enter query"]').first();
           if ((await queryInput.count()) > 0) {
             await queryInput.fill('test search query');
             await page.waitForTimeout(200);
           }
 
           // Click execute
-          const executeBtn = modal.locator('button:has-text("Execute"), button:has-text("Run"), button:has-text("Submit")').first();
+          const executeBtn = modal.locator('button:has-text("Run Tool")').first();
           if ((await executeBtn.count()) > 0) {
             await executeBtn.click();
             await page.waitForTimeout(500);
@@ -372,34 +335,31 @@ test.describe('MCP Tools CRUD Lifecycle', () => {
   });
 
   test('toggle between form and JSON modes', async ({ page }) => {
-    await page.route('**/api/mcp/tools*', (route) =>
-      route.fulfill({ status: 200, json: { success: true, data: mockTools } })
-    );
-    await page.route('**/api/admin/mcp-servers', (route) =>
-      route.fulfill({ status: 200, json: { success: true, data: { servers: [], configurations: [] } } })
+    await page.route('**/api/mcp/servers', (route) =>
+      route.fulfill({ status: 200, json: { servers: mockServers } })
     );
 
     await page.goto('/admin/mcp/tools');
     await expect(page.getByText('web_search').first()).toBeVisible({ timeout: 5000 });
 
-    const toolCard = page.locator('.card, [class*="card"], tr, [class*="item"]').filter({ hasText: 'web_search' }).first();
+    const toolCard = page.locator('.card').filter({ hasText: 'web_search' }).first();
     if ((await toolCard.count()) > 0) {
-      const runBtn = toolCard.locator('button:has-text("Run"), button:has-text("Execute"), button:has-text("Test"), button[title*="Run"]').first();
+      const runBtn = toolCard.locator('button:has-text("Run Tool")').first();
       if ((await runBtn.count()) > 0) {
         await runBtn.click();
         await page.waitForTimeout(500);
 
-        const modal = page.locator('.modal-box, [role="dialog"], dialog.modal[open]').first();
+        const modal = page.locator('dialog.modal[open] .modal-box, .modal-box, [role="dialog"]').first();
         if ((await modal.count()) > 0) {
           // Switch to JSON mode
-          const jsonModeBtn = modal.locator('button:has-text("JSON"), [role="tab"]:has-text("JSON"), label:has-text("JSON")').first();
+          const jsonModeBtn = modal.locator('button[title="Raw JSON"]').first();
           if ((await jsonModeBtn.count()) > 0) {
             await jsonModeBtn.click();
             await page.waitForTimeout(300);
           }
 
           // Switch to Form mode
-          const formModeBtn = modal.locator('button:has-text("Form"), [role="tab"]:has-text("Form"), label:has-text("Form")').first();
+          const formModeBtn = modal.locator('button[title="Form Builder"]').first();
           if ((await formModeBtn.count()) > 0) {
             await formModeBtn.click();
             await page.waitForTimeout(300);
@@ -416,36 +376,28 @@ test.describe('MCP Tools CRUD Lifecycle', () => {
   });
 
   test('tool execution loading state', async ({ page }) => {
-    await page.route('**/api/mcp/tools*', (route) => {
-      if (route.request().url().includes('execute')) {
-        // Delay to show loading
-        return new Promise((resolve) =>
-          setTimeout(() => resolve(route.fulfill({ status: 200, json: mockExecutionResult })), 2000)
-        );
-      }
-      return route.fulfill({ status: 200, json: { success: true, data: mockTools } });
-    });
-    await page.route('**/api/mcp/tools/tool-1/execute', async (route) => {
+    await page.route('**/api/mcp/servers/*/call-tool', async (route) => {
       await new Promise((r) => setTimeout(r, 2000));
       await route.fulfill({ status: 200, json: mockExecutionResult });
     });
-    await page.route('**/api/admin/mcp-servers', (route) =>
-      route.fulfill({ status: 200, json: { success: true, data: { servers: [], configurations: [] } } })
-    );
+    await page.route('**/api/mcp/servers', (route) => {
+      if (route.request().url().includes('call-tool')) return;
+      return route.fulfill({ status: 200, json: { servers: mockServers } });
+    });
 
     await page.goto('/admin/mcp/tools');
     await expect(page.getByText('web_search').first()).toBeVisible({ timeout: 5000 });
 
-    const toolCard = page.locator('.card, [class*="card"], tr, [class*="item"]').filter({ hasText: 'web_search' }).first();
+    const toolCard = page.locator('.card').filter({ hasText: 'web_search' }).first();
     if ((await toolCard.count()) > 0) {
-      const runBtn = toolCard.locator('button:has-text("Run"), button:has-text("Execute"), button:has-text("Test"), button[title*="Run"]').first();
+      const runBtn = toolCard.locator('button:has-text("Run Tool")').first();
       if ((await runBtn.count()) > 0) {
         await runBtn.click();
         await page.waitForTimeout(500);
 
-        const modal = page.locator('.modal-box, [role="dialog"], dialog.modal[open]').first();
+        const modal = page.locator('dialog.modal[open] .modal-box, .modal-box, [role="dialog"]').first();
         if ((await modal.count()) > 0) {
-          const executeBtn = modal.locator('button:has-text("Execute"), button:has-text("Run"), button:has-text("Submit")').first();
+          const executeBtn = modal.locator('button:has-text("Run Tool")').first();
           if ((await executeBtn.count()) > 0) {
             await executeBtn.click();
 
@@ -464,32 +416,27 @@ test.describe('MCP Tools CRUD Lifecycle', () => {
   });
 
   test('tool execution result display', async ({ page }) => {
-    await page.route('**/api/mcp/tools*', (route) => {
-      if (route.request().url().includes('execute')) {
-        return route.fulfill({ status: 200, json: mockExecutionResult });
-      }
-      return route.fulfill({ status: 200, json: { success: true, data: mockTools } });
-    });
-    await page.route('**/api/mcp/tools/tool-1/execute', (route) =>
+    await page.route('**/api/mcp/servers/*/call-tool', (route) =>
       route.fulfill({ status: 200, json: mockExecutionResult })
     );
-    await page.route('**/api/admin/mcp-servers', (route) =>
-      route.fulfill({ status: 200, json: { success: true, data: { servers: [], configurations: [] } } })
-    );
+    await page.route('**/api/mcp/servers', (route) => {
+      if (route.request().url().includes('call-tool')) return;
+      return route.fulfill({ status: 200, json: { servers: mockServers } });
+    });
 
     await page.goto('/admin/mcp/tools');
     await expect(page.getByText('web_search').first()).toBeVisible({ timeout: 5000 });
 
-    const toolCard = page.locator('.card, [class*="card"], tr, [class*="item"]').filter({ hasText: 'web_search' }).first();
+    const toolCard = page.locator('.card').filter({ hasText: 'web_search' }).first();
     if ((await toolCard.count()) > 0) {
-      const runBtn = toolCard.locator('button:has-text("Run"), button:has-text("Execute"), button:has-text("Test"), button[title*="Run"]').first();
+      const runBtn = toolCard.locator('button:has-text("Run Tool")').first();
       if ((await runBtn.count()) > 0) {
         await runBtn.click();
         await page.waitForTimeout(500);
 
-        const modal = page.locator('.modal-box, [role="dialog"], dialog.modal[open]').first();
+        const modal = page.locator('dialog.modal[open] .modal-box, .modal-box, [role="dialog"]').first();
         if ((await modal.count()) > 0) {
-          const executeBtn = modal.locator('button:has-text("Execute"), button:has-text("Run"), button:has-text("Submit")').first();
+          const executeBtn = modal.locator('button:has-text("Run Tool")').first();
           if ((await executeBtn.count()) > 0) {
             await executeBtn.click();
             await page.waitForTimeout(500);
@@ -512,11 +459,8 @@ test.describe('MCP Tools CRUD Lifecycle', () => {
   });
 
   test('empty state when no tools', async ({ page }) => {
-    await page.route('**/api/mcp/tools*', (route) =>
-      route.fulfill({ status: 200, json: { success: true, data: [] } })
-    );
-    await page.route('**/api/admin/mcp-servers', (route) =>
-      route.fulfill({ status: 200, json: { success: true, data: { servers: [], configurations: [] } } })
+    await page.route('**/api/mcp/servers', (route) =>
+      route.fulfill({ status: 200, json: { servers: [] } })
     );
 
     await page.goto('/admin/mcp/tools');
@@ -531,27 +475,24 @@ test.describe('MCP Tools CRUD Lifecycle', () => {
   });
 
   test('invalid JSON shows error in modal', async ({ page }) => {
-    await page.route('**/api/mcp/tools*', (route) =>
-      route.fulfill({ status: 200, json: { success: true, data: mockTools } })
-    );
-    await page.route('**/api/admin/mcp-servers', (route) =>
-      route.fulfill({ status: 200, json: { success: true, data: { servers: [], configurations: [] } } })
+    await page.route('**/api/mcp/servers', (route) =>
+      route.fulfill({ status: 200, json: { servers: mockServers } })
     );
 
     await page.goto('/admin/mcp/tools');
     await expect(page.getByText('web_search').first()).toBeVisible({ timeout: 5000 });
 
-    const toolCard = page.locator('.card, [class*="card"], tr, [class*="item"]').filter({ hasText: 'web_search' }).first();
+    const toolCard = page.locator('.card').filter({ hasText: 'web_search' }).first();
     if ((await toolCard.count()) > 0) {
-      const runBtn = toolCard.locator('button:has-text("Run"), button:has-text("Execute"), button:has-text("Test"), button[title*="Run"]').first();
+      const runBtn = toolCard.locator('button:has-text("Run Tool")').first();
       if ((await runBtn.count()) > 0) {
         await runBtn.click();
         await page.waitForTimeout(500);
 
-        const modal = page.locator('.modal-box, [role="dialog"], dialog.modal[open]').first();
+        const modal = page.locator('dialog.modal[open] .modal-box, .modal-box, [role="dialog"]').first();
         if ((await modal.count()) > 0) {
           // Switch to JSON mode
-          const jsonModeBtn = modal.locator('button:has-text("JSON"), [role="tab"]:has-text("JSON"), label:has-text("JSON")').first();
+          const jsonModeBtn = modal.locator('button[title="Raw JSON"]').first();
           if ((await jsonModeBtn.count()) > 0) {
             await jsonModeBtn.click();
             await page.waitForTimeout(300);
@@ -565,14 +506,14 @@ test.describe('MCP Tools CRUD Lifecycle', () => {
           }
 
           // Try to execute
-          const executeBtn = modal.locator('button:has-text("Execute"), button:has-text("Run"), button:has-text("Submit")').first();
+          const executeBtn = modal.locator('button:has-text("Run Tool")').first();
           if ((await executeBtn.count()) > 0) {
             await executeBtn.click();
             await page.waitForTimeout(500);
           }
 
-          // Check for JSON error message
-          const errorMsg = modal.locator('[class*="error"], .text-error, [class*="invalid"], text=/invalid.*json/i, text=/json.*error/i, text=/parse.*error/i').first();
+          // Check for JSON error message (page shows "Invalid JSON format" as label-text-alt text-error)
+          const errorMsg = modal.locator('.text-error, [class*="error"]').first();
           if ((await errorMsg.count()) > 0) {
             await expect(errorMsg).toBeVisible();
           }

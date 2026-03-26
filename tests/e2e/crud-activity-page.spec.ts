@@ -103,6 +103,9 @@ test.describe('Activity Page CRUD Lifecycle', () => {
       ),
       page.route('**/api/config/global', (route) => route.fulfill({ status: 200, json: {} })),
       page.route('**/api/config', (route) => route.fulfill({ status: 200, json: { bots: [] } })),
+      page.route('**/api/config/llm-profiles', (route) =>
+        route.fulfill({ status: 200, json: { llm: [] } })
+      ),
       page.route('**/api/personas', (route) => route.fulfill({ status: 200, json: [] })),
       page.route('**/api/csrf-token', (route) =>
         route.fulfill({ status: 200, json: { token: 'mock-csrf-token' } })
@@ -123,25 +126,25 @@ test.describe('Activity Page CRUD Lifecycle', () => {
     await mockCommonEndpoints(page);
   });
 
+  /** Helper: wait for table data to render by checking for a cell with bot name */
+  async function waitForTableData(page: import('@playwright/test').Page) {
+    // Wait for a table cell containing 'SupportBot' to be visible (not the hidden <option>)
+    await expect(page.locator('table td', { hasText: 'SupportBot' }).first()).toBeVisible();
+  }
+
   test('load activity events in table view', async ({ page }) => {
     await page.route('**/api/dashboard/api/activity*', (route) =>
-      route.fulfill({ status: 200, json: mockActivityResponse })
-    );
-    await page.route('**/api/dashboard/activity*', (route) =>
       route.fulfill({ status: 200, json: mockActivityResponse })
     );
 
     await page.goto('/admin/activity');
     await expect(page.getByRole('table').first()).toBeVisible();
-    await expect(page.getByText('SupportBot').first()).toBeVisible();
-    await expect(page.getByText('SalesBot').first()).toBeVisible();
+    await waitForTableData(page);
+    await expect(page.locator('table td', { hasText: 'SalesBot' }).first()).toBeVisible();
   });
 
   test('toggle to timeline view and back', async ({ page }) => {
     await page.route('**/api/dashboard/api/activity*', (route) =>
-      route.fulfill({ status: 200, json: mockActivityResponse })
-    );
-    await page.route('**/api/dashboard/activity*', (route) =>
       route.fulfill({ status: 200, json: mockActivityResponse })
     );
 
@@ -149,13 +152,13 @@ test.describe('Activity Page CRUD Lifecycle', () => {
     await expect(page.getByRole('table').first()).toBeVisible();
 
     // Look for timeline toggle
-    const timelineBtn = page.locator('button:has-text("Timeline"), button[title*="Timeline"], [role="tab"]:has-text("Timeline")').first();
+    const timelineBtn = page.getByRole('button', { name: 'Timeline' });
     if ((await timelineBtn.count()) > 0) {
       await timelineBtn.click();
       await page.waitForTimeout(500);
 
       // Toggle back to table
-      const tableBtn = page.locator('button:has-text("Table"), button[title*="Table"], [role="tab"]:has-text("Table")').first();
+      const tableBtn = page.getByRole('button', { name: 'Table' });
       if ((await tableBtn.count()) > 0) {
         await tableBtn.click();
         await page.waitForTimeout(500);
@@ -168,14 +171,11 @@ test.describe('Activity Page CRUD Lifecycle', () => {
     await page.route('**/api/dashboard/api/activity*', (route) =>
       route.fulfill({ status: 200, json: mockActivityResponse })
     );
-    await page.route('**/api/dashboard/activity*', (route) =>
-      route.fulfill({ status: 200, json: mockActivityResponse })
-    );
 
     await page.goto('/admin/activity');
-    await expect(page.getByText('SupportBot').first()).toBeVisible();
+    await waitForTableData(page);
 
-    const searchInput = page.locator('input[placeholder*="search" i], input[placeholder*="filter" i], input[type="search"]').first();
+    const searchInput = page.getByPlaceholder('Filter activity...');
     if ((await searchInput.count()) > 0) {
       await searchInput.fill('SalesBot');
       await page.waitForTimeout(300);
@@ -186,14 +186,11 @@ test.describe('Activity Page CRUD Lifecycle', () => {
     await page.route('**/api/dashboard/api/activity*', (route) =>
       route.fulfill({ status: 200, json: mockActivityResponse })
     );
-    await page.route('**/api/dashboard/activity*', (route) =>
-      route.fulfill({ status: 200, json: mockActivityResponse })
-    );
 
     await page.goto('/admin/activity');
-    await expect(page.getByText('SupportBot').first()).toBeVisible();
+    await waitForTableData(page);
 
-    const botFilter = page.locator('select:has(option:has-text("SupportBot")), select[id*="bot" i], select[name*="bot" i]').first();
+    const botFilter = page.getByLabel('Filter by bot');
     if ((await botFilter.count()) > 0) {
       await botFilter.selectOption({ label: 'SupportBot' });
       await page.waitForTimeout(300);
@@ -204,14 +201,11 @@ test.describe('Activity Page CRUD Lifecycle', () => {
     await page.route('**/api/dashboard/api/activity*', (route) =>
       route.fulfill({ status: 200, json: mockActivityResponse })
     );
-    await page.route('**/api/dashboard/activity*', (route) =>
-      route.fulfill({ status: 200, json: mockActivityResponse })
-    );
 
     await page.goto('/admin/activity');
-    await expect(page.getByText('SupportBot').first()).toBeVisible();
+    await waitForTableData(page);
 
-    const providerFilter = page.locator('select:has(option:has-text("discord")), select:has(option:has-text("Discord")), select[id*="provider" i]').first();
+    const providerFilter = page.getByLabel('Filter by provider');
     if ((await providerFilter.count()) > 0) {
       await providerFilter.selectOption({ index: 1 });
       await page.waitForTimeout(300);
@@ -222,16 +216,13 @@ test.describe('Activity Page CRUD Lifecycle', () => {
     await page.route('**/api/dashboard/api/activity*', (route) =>
       route.fulfill({ status: 200, json: mockActivityResponse })
     );
-    await page.route('**/api/dashboard/activity*', (route) =>
-      route.fulfill({ status: 200, json: mockActivityResponse })
-    );
 
     await page.goto('/admin/activity');
-    await expect(page.getByText('SupportBot').first()).toBeVisible();
+    await waitForTableData(page);
 
-    // Look for date inputs
-    const startDate = page.locator('input[type="date"], input[type="datetime-local"]').first();
-    const endDate = page.locator('input[type="date"], input[type="datetime-local"]').last();
+    // Look for date inputs by placeholder
+    const startDate = page.getByPlaceholder('Start Date');
+    const endDate = page.getByPlaceholder('End Date');
     if ((await startDate.count()) > 0 && (await endDate.count()) > 0) {
       await startDate.fill('2026-03-25');
       await page.waitForTimeout(200);
@@ -244,22 +235,19 @@ test.describe('Activity Page CRUD Lifecycle', () => {
     await page.route('**/api/dashboard/api/activity*', (route) =>
       route.fulfill({ status: 200, json: mockActivityResponse })
     );
-    await page.route('**/api/dashboard/activity*', (route) =>
-      route.fulfill({ status: 200, json: mockActivityResponse })
-    );
 
     await page.goto('/admin/activity');
-    await expect(page.getByText('SupportBot').first()).toBeVisible();
+    await waitForTableData(page);
 
     // Apply a filter first
-    const searchInput = page.locator('input[placeholder*="search" i], input[placeholder*="filter" i], input[type="search"]').first();
+    const searchInput = page.getByPlaceholder('Filter activity...');
     if ((await searchInput.count()) > 0) {
       await searchInput.fill('SalesBot');
       await page.waitForTimeout(300);
     }
 
-    // Click clear/reset
-    const clearBtn = page.locator('button:has-text("Clear"), button:has-text("Reset"), button[title*="Clear"]').first();
+    // Click clear/reset - the button has title "Clear All Filters"
+    const clearBtn = page.getByTitle('Clear All Filters');
     if ((await clearBtn.count()) > 0) {
       await clearBtn.click();
       await page.waitForTimeout(300);
@@ -275,22 +263,11 @@ test.describe('Activity Page CRUD Lifecycle', () => {
     await page.route('**/api/dashboard/api/activity*', (route) =>
       route.fulfill({ status: 200, json: mockActivityResponse })
     );
-    await page.route('**/api/dashboard/activity*', (route) =>
-      route.fulfill({ status: 200, json: mockActivityResponse })
-    );
-    await page.route('**/api/dashboard/activity/export*', (route) =>
-      route.fulfill({
-        status: 200,
-        contentType: 'text/csv',
-        headers: { 'Content-Disposition': 'attachment; filename="activity.csv"' },
-        body: 'id,timestamp,botName,status\nevt-1,2026-03-26T11:58:00Z,SupportBot,success\n',
-      })
-    );
 
     await page.goto('/admin/activity');
-    await expect(page.getByText('SupportBot').first()).toBeVisible();
+    await waitForTableData(page);
 
-    const exportBtn = page.locator('button:has-text("Export"), button:has-text("CSV"), button[title*="Export"]').first();
+    const exportBtn = page.getByRole('button', { name: 'Export' });
     if ((await exportBtn.count()) > 0) {
       const [download] = await Promise.all([
         page.waitForEvent('download').catch(() => null),
@@ -306,15 +283,11 @@ test.describe('Activity Page CRUD Lifecycle', () => {
       fetchCount++;
       return route.fulfill({ status: 200, json: mockActivityResponse });
     });
-    await page.route('**/api/dashboard/activity*', (route) => {
-      fetchCount++;
-      return route.fulfill({ status: 200, json: mockActivityResponse });
-    });
 
     await page.goto('/admin/activity');
-    await expect(page.getByText('SupportBot').first()).toBeVisible();
+    await waitForTableData(page);
 
-    const autoRefreshToggle = page.locator('input[type="checkbox"][id*="auto" i], label:has-text("Auto") input[type="checkbox"], button:has-text("Auto")').first();
+    const autoRefreshToggle = page.getByLabel('Auto');
     if ((await autoRefreshToggle.count()) > 0) {
       // Toggle on
       await autoRefreshToggle.click();
@@ -332,16 +305,14 @@ test.describe('Activity Page CRUD Lifecycle', () => {
       fetchCount++;
       return route.fulfill({ status: 200, json: mockActivityResponse });
     });
-    await page.route('**/api/dashboard/activity*', (route) => {
-      fetchCount++;
-      return route.fulfill({ status: 200, json: mockActivityResponse });
-    });
 
     await page.goto('/admin/activity');
-    await expect(page.getByText('SupportBot').first()).toBeVisible();
+    await waitForTableData(page);
 
     const initialCount = fetchCount;
-    const refreshBtn = page.locator('button:has-text("Refresh"), button[title*="Refresh"]').first();
+    // The refresh button is an icon-only button (no text) between Auto toggle and Export button
+    // It has aria-busy attribute and is a ghost button with no text content
+    const refreshBtn = page.locator('button.btn-ghost.btn-sm[aria-busy]').filter({ hasNotText: /Export|Table|Timeline/ }).first();
     if ((await refreshBtn.count()) > 0) {
       await refreshBtn.click();
       await page.waitForTimeout(500);
@@ -354,32 +325,17 @@ test.describe('Activity Page CRUD Lifecycle', () => {
     await page.route('**/api/dashboard/api/activity*', (route) =>
       route.fulfill({ status: 200, json: mockActivityResponse })
     );
-    await page.route('**/api/dashboard/activity*', (route) =>
-      route.fulfill({ status: 200, json: mockActivityResponse })
-    );
 
     await page.goto('/admin/activity');
 
+    // Wait for stats cards to load
+    await waitForTableData(page);
+
     // Check for stats cards: Total Events, Successful, Errors, Active Bots
-    const totalEventsCard = page.getByText('Total Events').first();
-    if ((await totalEventsCard.count()) > 0) {
-      await expect(totalEventsCard).toBeVisible();
-    }
-
-    const successCard = page.getByText(/Success/i).first();
-    if ((await successCard.count()) > 0) {
-      await expect(successCard).toBeVisible();
-    }
-
-    const errorCard = page.getByText(/Error/i).first();
-    if ((await errorCard.count()) > 0) {
-      await expect(errorCard).toBeVisible();
-    }
-
-    const activeBotsCard = page.getByText(/Active Bot/i).first();
-    if ((await activeBotsCard.count()) > 0) {
-      await expect(activeBotsCard).toBeVisible();
-    }
+    await expect(page.getByText('Total Events')).toBeVisible();
+    await expect(page.getByText('Successful')).toBeVisible();
+    await expect(page.getByText('Errors', { exact: true }).first()).toBeVisible();
+    await expect(page.getByText('Active Bots')).toBeVisible();
   });
 
   test('empty state when no events match filters', async ({ page }) => {
@@ -397,51 +353,44 @@ test.describe('Activity Page CRUD Lifecycle', () => {
     await page.route('**/api/dashboard/api/activity*', (route) =>
       route.fulfill({ status: 200, json: emptyResponse })
     );
-    await page.route('**/api/dashboard/activity*', (route) =>
-      route.fulfill({ status: 200, json: emptyResponse })
-    );
 
     await page.goto('/admin/activity');
 
-    // Page should show empty state or zero counts
+    // Page should show empty state
     await expect(page.locator('body')).toBeVisible();
-    const emptyText = page.locator('text=/no.*event/i, text=/no.*activity/i, text=/no.*data/i, text=/no.*results/i').first();
-    if ((await emptyText.count()) > 0) {
-      await expect(emptyText).toBeVisible();
-    }
+    // Wait for loading to finish and check for empty state text
+    await expect(page.getByText('No activity yet')).toBeVisible();
   });
 
   test('combined filters: bot + provider + date range', async ({ page }) => {
     await page.route('**/api/dashboard/api/activity*', (route) =>
       route.fulfill({ status: 200, json: mockActivityResponse })
     );
-    await page.route('**/api/dashboard/activity*', (route) =>
-      route.fulfill({ status: 200, json: mockActivityResponse })
-    );
 
     await page.goto('/admin/activity');
-    await expect(page.getByText('SupportBot').first()).toBeVisible();
+    await waitForTableData(page);
 
     // Apply bot filter
-    const botFilter = page.locator('select:has(option:has-text("SupportBot")), select[id*="bot" i], select[name*="bot" i]').first();
+    const botFilter = page.getByLabel('Filter by bot');
     if ((await botFilter.count()) > 0) {
       await botFilter.selectOption({ label: 'SupportBot' });
       await page.waitForTimeout(200);
     }
 
     // Apply provider filter
-    const providerFilter = page.locator('select:has(option:has-text("discord")), select:has(option:has-text("Discord")), select[id*="provider" i]').first();
+    const providerFilter = page.getByLabel('Filter by provider');
     if ((await providerFilter.count()) > 0) {
       await providerFilter.selectOption({ index: 1 });
       await page.waitForTimeout(200);
     }
 
     // Apply date range
-    const dateInputs = page.locator('input[type="date"], input[type="datetime-local"]');
-    if ((await dateInputs.count()) >= 2) {
-      await dateInputs.first().fill('2026-03-25');
+    const startDateInput = page.getByPlaceholder('Start Date');
+    const endDateInput = page.getByPlaceholder('End Date');
+    if ((await startDateInput.count()) > 0 && (await endDateInput.count()) > 0) {
+      await startDateInput.fill('2026-03-25');
       await page.waitForTimeout(200);
-      await dateInputs.last().fill('2026-03-26');
+      await endDateInput.fill('2026-03-26');
       await page.waitForTimeout(300);
     }
 
