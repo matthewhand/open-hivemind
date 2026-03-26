@@ -1,3 +1,13 @@
 packages:
   - 'src/client'
   - 'packages/*'
+allowBuilds:
+  bcrypt: false
+  better-sqlite3: false
+  esbuild: false
+  ffmpeg-static: false
+  protobufjs: false
+  puppeteer: false
+  sharp: false
+  sqlite3: false
+  workerd: false
