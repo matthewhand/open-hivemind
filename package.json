@@ -279,5 +279,14 @@
     "fast-xml-parser": "^5.4.1",
     "tar": "^7.5.9",
     "yaml": "^2.4.2"
+  },
+  "pnpm": {
+    "overrides": {
+      "@modelcontextprotocol/sdk": "^1.25.2",
+      "tar": "^7.5.11",
+      "fast-xml-parser": "^4.5.5",
+      "undici": "^6.24.0",
+      "picomatch": "^2.3.2"
+    }
   }
 }
