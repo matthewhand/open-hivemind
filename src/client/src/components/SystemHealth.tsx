@@ -340,7 +340,7 @@ const SystemHealth: React.FC<SystemHealthProps> = ({
                 >
                   {apiHealth?.overall.status || 'Unknown'}
                 </Badge>
-                {apiHealth && (
+                {apiHealth?.overall?.stats && (
                   <span className="text-sm">
                     {apiHealth.overall.stats.online} / {apiHealth.overall.stats.total} Online
                   </span>

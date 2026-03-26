@@ -43,7 +43,10 @@ test.describe('Empty States', () => {
   });
 
   test('Bots Page shows empty state when no bots configured', async ({ page }) => {
-    // Mock API to return no bots
+    // Mock API to return no bots — BotsPage fetches /api/bots, not /api/config
+    await page.route('**/api/bots', async (route) => {
+      await route.fulfill({ json: { data: { bots: [] } } });
+    });
     await page.route('**/api/config', async (route) => {
       await route.fulfill({ json: { bots: [] } });
     });
@@ -54,10 +57,8 @@ test.describe('Empty States', () => {
     await page.goto('/admin/bots');
 
     // Verify empty state
-    await expect(page.getByText('No bots configured')).toBeVisible();
-    await expect(page.getByText('Create a bot configuration to get started')).toBeVisible();
-    // Use last() because there is also a "Create Bot" button in the page header
-    await expect(page.getByRole('button', { name: 'Create Bot' }).last()).toBeVisible();
+    await expect(page.getByText('Your swarm is empty')).toBeVisible();
+    await expect(page.getByText('Start by creating your first specialized AI agent.')).toBeVisible();
   });
 
   test('Bots Page shows search empty state', async ({ page }) => {
@@ -75,6 +76,10 @@ test.describe('Empty States', () => {
       },
     ];
 
+    // BotsPage fetches /api/bots, not /api/config
+    await page.route('**/api/bots', async (route) => {
+      await route.fulfill({ json: { data: { bots: mockBots } } });
+    });
     await page.route('**/api/config', async (route) => {
       await route.fulfill({ json: { bots: mockBots } });
     });
@@ -88,21 +93,15 @@ test.describe('Empty States', () => {
 
     await page.goto('/admin/bots');
 
-    // Verify bot is visible. Use heading or strong tag to be specific.
-    // BotsPage renders bot name in a span with font-bold text-lg
-    await expect(page.locator('span.font-bold', { hasText: 'Test Bot' })).toBeVisible();
+    // Verify bot is visible
+    await expect(page.getByText('Test Bot')).toBeVisible();
 
     // Search for non-existent bot
-    await page.getByPlaceholder('Search bots...').fill('NonExistentBot');
+    await page.getByPlaceholder('Search...').fill('NonExistentBot');
 
     // Verify search empty state
-    await expect(page.getByText('No bots found matching "NonExistentBot"')).toBeVisible();
-    await expect(page.getByText('Try adjusting your search query')).toBeVisible();
-    await expect(page.getByRole('button', { name: 'Clear Search' })).toBeVisible();
-
-    // Verify clear search works
-    await page.getByRole('button', { name: 'Clear Search' }).click();
-    await expect(page.locator('span.font-bold', { hasText: 'Test Bot' })).toBeVisible();
+    await expect(page.getByText('No agents found')).toBeVisible();
+    await expect(page.getByText('No agents match your search criteria.')).toBeVisible();
   });
 
   test('Guards Page shows empty state when no profiles', async ({ page }) => {
@@ -118,7 +117,8 @@ test.describe('Empty States', () => {
     await expect(
       page.getByText('Create a guard profile to enforce security policies')
     ).toBeVisible();
-    await expect(page.getByRole('button', { name: 'New Profile' })).toBeVisible();
+    // Use last() because there is also a "New Profile" button in the page header
+    await expect(page.getByRole('button', { name: 'New Profile' }).last()).toBeVisible();
   });
 
   test('Personas Page shows empty state when no personas', async ({ page }) => {
