@@ -169,9 +169,12 @@ const BotsPage: React.FC = () => {
     });
   };
 
+  const toastSuccess = useSuccessToast();
+  const toastError = useErrorToast();
+
   const toast = {
-    success: useSuccessToast(),
-    error: useErrorToast()
+    success: toastSuccess,
+    error: toastError
   };
 
   const location = useLocation();
@@ -185,11 +188,12 @@ const BotsPage: React.FC = () => {
     } catch (err) {
       ErrorService.report(err, { action: 'fetchBots' });
       setError(err instanceof Error ? err.message : 'Failed to fetch bots');
-      toast.error('Failed to load bots');
+      toastError('Failed to load bots');
     } finally {
       setLoading(false);
     }
-  }, [toast]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     fetchBots();
