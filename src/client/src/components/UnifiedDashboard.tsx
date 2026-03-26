@@ -14,7 +14,7 @@ import { LoadingSpinner } from './DaisyUI/Loading';
 import type { Bot, StatusResponse } from '../services/api';
 import { apiService } from '../services/api';
 import { CreateBotWizard } from './BotManagement/CreateBotWizard';
-import { Info } from 'lucide-react';
+import { Activity, Clock, Cpu, HardDrive, Info, PlusCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 type DashboardTab = 'getting-started' | 'status' | 'performance';
@@ -283,15 +283,16 @@ const UnifiedDashboard: React.FC = () => {
     );
   }, [statusBots]);
 
-  const { statsCards } = useDashboardStats(
-    bots,
-    statusBots,
-    activeBotCount,
-    totalMessages,
-    activeConnections,
-    totalErrors,
-    status?.uptime ?? 0
-  );
+  const statsCards = useMemo(() => [
+    { id: 'total-bots', title: 'Total Bots', value: bots.length, icon: '🤖', color: 'primary' as const },
+    { id: 'active-bots', title: 'Active Bots', value: activeBotCount, icon: '✅', color: 'success' as const },
+    { id: 'connections', title: 'Connections', value: activeConnections, icon: '🔗', color: 'info' as const },
+    { id: 'messages', title: 'Messages', value: totalMessages, icon: '💬', color: 'secondary' as const },
+    { id: 'errors', title: 'Errors', value: totalErrors, icon: '⚠️', color: totalErrors > 0 ? 'error' as const : 'success' as const },
+    { id: 'uptime', title: 'Uptime', value: `${Math.floor((status?.uptime ?? 0) / 3600)}h`, icon: '⏱️', color: 'accent' as const },
+  ], [bots.length, activeBotCount, activeConnections, totalMessages, totalErrors, status?.uptime]);
+
+  const guardedBots = useMemo(() => bots.filter(b => b.mcpGuard?.enabled).length, [bots]);
 
   const botTableData = useMemo<BotTableRow[]>(() => {
     return bots.map((bot, index) => {
@@ -315,7 +316,15 @@ const UnifiedDashboard: React.FC = () => {
     });
   }, [bots, statusBots]);
 
-  const botColumns = useMemo(() => getBotColumns(), []);
+  const botColumns = useMemo(() => [
+    { key: 'name' as const, title: 'Bot Name', sortable: true },
+    { key: 'provider' as const, title: 'Provider', sortable: true },
+    { key: 'llm' as const, title: 'LLM', sortable: true },
+    { key: 'status' as const, title: 'Status', sortable: true },
+    { key: 'messageCount' as const, title: 'Messages', sortable: true },
+    { key: 'errorCount' as const, title: 'Errors', sortable: true },
+    { key: 'lastActivity' as const, title: 'Last Activity' },
+  ], []);
 
   const performanceMetrics = useMemo(() => {
     const cpuUsage = Math.min(92, activeConnections * 14 + 28);
@@ -375,16 +384,23 @@ const UnifiedDashboard: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      {/* Dashboard Header with Gradient */}
-      <DashboardHeader
-        handleOpenCreateModal={handleOpenCreateModal}
-        isModalDataLoading={isModalDataLoading}
-        handleRefresh={handleRefresh}
-        refreshing={refreshing}
-      />
+      {/* Dashboard Header */}
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-bold">Dashboard</h1>
+        <div className="flex gap-2">
+          <Button onClick={handleRefresh} loading={refreshing} variant="ghost" size="sm">Refresh</Button>
+          <Button onClick={handleOpenCreateModal} loading={isModalDataLoading} variant="primary" size="sm"><PlusCircle className="w-4 h-4 mr-1" />Create Bot</Button>
+        </div>
+      </div>
 
       {/* Tabs */}
-      <DashboardTabs activeTab={activeTab} setActiveTab={setActiveTab} />
+      <div className="tabs tabs-boxed">
+        {(['getting-started', 'status', 'performance'] as DashboardTab[]).map((tab) => (
+          <button key={tab} className={`tab ${activeTab === tab ? 'tab-active' : ''}`} onClick={() => setActiveTab(tab)}>
+            {tab === 'getting-started' ? 'Getting Started' : tab === 'status' ? 'Status' : 'Performance'}
+          </button>
+        ))}
+      </div>
 
       {loading ? (
         <div className="flex justify-center py-20">
