@@ -376,6 +376,15 @@ export const NaturalLanguageInterface: React.FC<NaturalLanguageInterfaceProps> =
   const [isListening, setIsListening] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [commands, setCommands] = useState<NLCommand[]>(mockCommands);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [_context, _setContext] = useState<NLContext>({
+    currentPage: 'dashboard',
+    selectedWidgets: [],
+    timeRange: { start: new Date(Date.now() - 24 * 60 * 60 * 1000), end: new Date() },
+    filters: {},
+    userRole: 'admin',
+    permissions: ['view-dashboard', 'manage-widgets'],
+  });
   const [showHelp, setShowHelp] = useState(false);
   const [voiceSupported, setVoiceSupported] = useState(false);
   const recognitionRef = useRef<SpeechRecognition | null>(null);

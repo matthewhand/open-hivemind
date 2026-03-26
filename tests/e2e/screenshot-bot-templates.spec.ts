@@ -101,13 +101,8 @@ test.describe('Bot Templates Page Screenshots', () => {
     const searchInput = page.getByPlaceholder('Search templates...');
     await searchInput.fill('Code');
     await page.waitForTimeout(300);
-<<<<<<< HEAD
-    await expect(page.getByText('Code Reviewer')).toBeVisible();
-    await expect(page.getByText('Helpful Assistant')).toBeHidden();
-=======
     await expect(page.locator('h2.card-title').filter({ hasText: 'Code Reviewer' })).toBeVisible();
     await expect(page.locator('h2.card-title').filter({ hasText: 'Helpful Assistant' })).toBeHidden();
->>>>>>> origin/docco-update-screenshots-6307953588415915921
 
     // Clear search
     await searchInput.clear();
@@ -122,9 +117,8 @@ test.describe('Bot Templates Page Screenshots', () => {
     await page.waitForTimeout(300);
 
     // Verify filtering
-<<<<<<< HEAD
-    await expect(page.getByText('Helpful Assistant')).toBeVisible(); // Discord bot
-    await expect(page.getByText('Code Reviewer')).toBeHidden(); // Slack bot
+    await expect(page.locator('h2.card-title').filter({ hasText: 'Helpful Assistant' })).toBeVisible(); // Discord bot
+    await expect(page.locator('h2.card-title').filter({ hasText: 'Code Reviewer' })).toBeHidden(); // Slack bot
 
     // Test Interaction: Open Diff Viewer
     await page.locator('button[title="Compare Versions"]').first().click();
@@ -135,9 +129,5 @@ test.describe('Bot Templates Page Screenshots', () => {
 
     // Take screenshot of diff viewer
     await page.screenshot({ path: 'docs/screenshots/template-version-diff-viewer.png' });
-=======
-    await expect(page.locator('h2.card-title').filter({ hasText: 'Helpful Assistant' })).toBeVisible(); // Discord bot
-    await expect(page.locator('h2.card-title').filter({ hasText: 'Code Reviewer' })).toBeHidden(); // Slack bot
->>>>>>> origin/docco-update-screenshots-6307953588415915921
   });
 });
