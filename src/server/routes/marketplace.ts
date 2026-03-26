@@ -40,26 +40,33 @@ const _PLUGINS_DIR = path.resolve(__dirname, '../../../../plugins');
 /**
  * Scan built-in packages directory for available providers.
  */
-async function scanBuiltInPackages(): Promise<MarketplacePackage[]> {
+function scanBuiltInPackages(): MarketplacePackage[] {
   const packages: MarketplacePackage[] = [];
 
-  try {
-    const dirs = await fs.promises.readdir(PACKAGES_DIR, { withFileTypes: true });
-    const packageDirs = dirs.filter((d) => d.isDirectory()).map((d) => d.name);
+  if (!fs.existsSync(PACKAGES_DIR)) {
+    debug('packages/ directory not found');
+    return packages;
+  }
 
-    for (const dir of packageDirs) {
-      const pkgPath = path.join(PACKAGES_DIR, dir);
-      const pkgJsonPath = path.join(pkgPath, 'package.json');
+  const dirs = fs
+    .readdirSync(PACKAGES_DIR, { withFileTypes: true })
+    .filter((d) => d.isDirectory())
+    .map((d) => d.name);
 
-      try {
-        const pkgJsonContent = await fs.promises.readFile(pkgJsonPath, 'utf-8');
-        const pkgJson = JSON.parse(pkgJsonContent);
-        const indexPath = path.join(pkgPath, 'src', 'index.ts');
+  for (const dir of dirs) {
+    const pkgPath = path.join(PACKAGES_DIR, dir);
+    const pkgJsonPath = path.join(pkgPath, 'package.json');
 
-        // Try to load manifest from the package
-        let manifest: PluginManifest | undefined;
+    if (!fs.existsSync(pkgJsonPath)) continue;
+
+    try {
+      const pkgJson = JSON.parse(fs.readFileSync(pkgJsonPath, 'utf-8'));
+      const indexPath = path.join(pkgPath, 'src', 'index.ts');
+
+      // Try to load manifest from the package
+      let manifest: PluginManifest | undefined;
+      if (fs.existsSync(indexPath)) {
         try {
-          await fs.promises.access(indexPath);
           // Clear require cache to get fresh manifest
           delete require.cache[require.resolve(indexPath)];
           const mod = require(indexPath);
@@ -67,33 +74,25 @@ async function scanBuiltInPackages(): Promise<MarketplacePackage[]> {
         } catch (e) {
           debug('Could not load manifest from %s: %s', dir, e);
         }
-
-        // Derive type from package name prefix
-        const namePrefix = dir.split('-')[0];
-        const validTypes = ['llm', 'message', 'memory', 'tool'] as const;
-        const type = validTypes.includes(namePrefix as any)
-          ? (namePrefix as MarketplacePackage['type'])
-          : 'tool';
-
-        packages.push({
-          name: dir,
-          displayName: manifest?.displayName || pkgJson.name || dir,
-          description: manifest?.description || pkgJson.description || 'No description available',
-          type: manifest?.type || type,
-          version: pkgJson.version || '0.0.0',
-          status: 'built-in',
-        });
-      } catch (e: any) {
-        if (e.code !== 'ENOENT') {
-          debug('Failed to read package %s: %s', dir, e);
-        }
       }
-    }
-  } catch (e: any) {
-    if (e.code !== 'ENOENT') {
-      debug('Failed to read packages directory: %s', e);
-    } else {
-      debug('packages/ directory not found');
+
+      // Derive type from package name prefix
+      const namePrefix = dir.split('-')[0];
+      const validTypes = ['llm', 'message', 'memory', 'tool'] as const;
+      const type = validTypes.includes(namePrefix as any)
+        ? (namePrefix as MarketplacePackage['type'])
+        : 'tool';
+
+      packages.push({
+        name: dir,
+        displayName: manifest?.displayName || pkgJson.name || dir,
+        description: manifest?.description || pkgJson.description || 'No description available',
+        type: manifest?.type || type,
+        version: pkgJson.version || '0.0.0',
+        status: 'built-in',
+      });
+    } catch (e) {
+      debug('Failed to read package %s: %s', dir, e);
     }
   }
 
@@ -103,11 +102,11 @@ async function scanBuiltInPackages(): Promise<MarketplacePackage[]> {
 /**
  * Get installed community plugins.
  */
-async function getInstalledPlugins(): Promise<MarketplacePackage[]> {
+function getInstalledPlugins(): MarketplacePackage[] {
   const plugins: MarketplacePackage[] = [];
 
   try {
-    const installed = await listInstalledPlugins();
+    const installed = listInstalledPlugins();
 
     for (const plugin of installed) {
       plugins.push({
@@ -140,10 +139,10 @@ router.use(authenticateToken);
  * GET /api/marketplace/packages
  * List all available packages (built-in + installed)
  */
-router.get('/packages', async (req, res) => {
+router.get('/packages', (req, res) => {
   try {
-    const builtIn = await scanBuiltInPackages();
-    const installed = await getInstalledPlugins();
+    const builtIn = scanBuiltInPackages();
+    const installed = getInstalledPlugins();
 
     // Merge: built-in packages take precedence, then installed plugins
     const packageMap = new Map<string, MarketplacePackage>();
@@ -166,11 +165,11 @@ router.get('/packages', async (req, res) => {
  * GET /api/marketplace/packages/:name
  * Get single package details
  */
-router.get('/packages/:name', async (req, res) => {
+router.get('/packages/:name', (req, res) => {
   try {
     const name = req.params.name;
-    const builtIn = await scanBuiltInPackages();
-    const installed = await getInstalledPlugins();
+    const builtIn = scanBuiltInPackages();
+    const installed = getInstalledPlugins();
 
     const pkg = [...installed, ...builtIn].find((p) => p.name === name);
 
