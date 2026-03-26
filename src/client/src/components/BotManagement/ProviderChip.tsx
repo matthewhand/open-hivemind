@@ -6,7 +6,6 @@ import type {
 } from '../../types';
 import Badge from '../DaisyUI/Badge';
 import { X as XIcon, Edit as EditIcon } from 'lucide-react';
-import Tooltip from '../DaisyUI/Tooltip';
 
 interface ProviderChipProps {
   provider: MessageProvider | LLMProvider;
@@ -123,28 +122,26 @@ const ProviderChip: React.FC<ProviderChipProps> = ({
           <div className="flex gap-1 ml-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
             {/* Edit Button */}
             {onEdit && !disabled && (
-              <Tooltip content="Edit provider" position="top">
-                <button
-                  onClick={onEdit}
-                  className="btn btn-xs btn-circle btn-ghost"
-                  aria-label={`Edit ${provider.name} provider`}
-                >
-                  <EditIcon className="w-3 h-3" />
-                </button>
-              </Tooltip>
+              <button
+                onClick={onEdit}
+                className="btn btn-xs btn-circle btn-ghost"
+                title="Edit provider"
+                aria-label={`Edit ${provider.name} provider`}
+              >
+                <EditIcon className="w-3 h-3" />
+              </button>
             )}
 
             {/* Remove Button */}
             {onRemove && !disabled && (
-              <Tooltip content="Remove provider" position="top">
-                <button
-                  onClick={onRemove}
-                  className="btn btn-xs btn-circle btn-ghost"
-                  aria-label={`Remove ${provider.name} provider`}
-                >
-                  <XIcon className="w-3 h-3" />
-                </button>
-              </Tooltip>
+              <button
+                onClick={onRemove}
+                className="btn btn-xs btn-circle btn-ghost"
+                title="Remove provider"
+                aria-label={`Remove ${provider.name} provider`}
+              >
+                <XIcon className="w-3 h-3" />
+              </button>
             )}
           </div>
         </div>

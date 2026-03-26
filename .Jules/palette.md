@@ -1,3 +1,11 @@
-## 2024-03-26 - Added Tooltips to Action Icons
-**Learning:** Icon-only action buttons (like Edit/Remove) without tooltips or explicit descriptive text can create ambiguity for users, especially for new users who are unfamiliar with standard icons. Adding tooltips to these buttons with clear actions ("Edit provider", "Remove provider") significantly improves the micro-UX and accessibility by surfacing hidden context.
-**Action:** When adding new icon-only buttons to interactive elements like chips or cards, always wrap them in a Tooltip or ensure `aria-label`s are visually accessible on hover/focus to clarify their intent.
+## 2025-03-07 - Add ARIA Labels to Icon-Only Buttons
+**Learning:** This application heavily utilizes custom DaisyUI wrapper components, often creating `<button>` elements that only contain HeroIcons or Lucide React icons. By default, these icon-only buttons are invisible to screen readers, causing accessibility issues where users cannot determine the button's purpose (e.g., delete, edit, close, expand).
+**Action:** When implementing new UI elements or refactoring existing ones, always ensure that any `<button>` lacking visible, descriptive text content includes an `aria-label` attribute describing its function. When a button toggles state (like expanding a section), use `aria-expanded` in conjunction with a dynamic `aria-label`.
+
+## 2025-03-17 - Prevent Input Blur on Inline Button Clicks
+**Learning:** When building custom input components with inline action buttons (e.g., clear, undo, or remove tags in `CommaSeparatedInput`), clicking these buttons naturally causes the input field to lose focus. This interrupts the user's flow and can prematurely trigger `onBlur` events.
+**Action:** Always add `onMouseDown={(e) => e.preventDefault()}` to inline buttons inside or adjacent to inputs. This prevents focus from leaving the input field when the button is clicked, retaining the cursor position and ensuring a smooth user experience.
+
+## 2025-03-21 - Add ARIA Labels to List Actions
+**Learning:** This application renders many lists of entities (e.g., integrations, metrics) with repetitive action buttons like "Configure" or "Test". For screen reader users, hearing "Configure, Test, Configure, Test" without context is confusing.
+**Action:** When mapping over lists to render action buttons, always use dynamic `aria-label`s that include the entity's name (e.g., `aria-label={"Configure " + integration.name}`) to provide clear context for screen readers.

@@ -3,10 +3,10 @@ import { Router } from 'express';
 import { getLlmProfileByKey } from '../../config/llmProfiles';
 import { UserConfigStore } from '../../config/UserConfigStore';
 import { FlowiseProvider } from '../../integrations/flowise/flowiseProvider';
+import { ErrorUtils } from '../../types/errors';
 import * as openWebUIImport from '../../integrations/openwebui/runInference';
 import type { ILlmProvider } from '../../llm/interfaces/ILlmProvider';
 import { IMessage } from '../../message/interfaces/IMessage';
-import { ErrorUtils } from '../../types/errors';
 
 const debug = Debug('app:ai-assist');
 const router = Router();
@@ -142,9 +142,7 @@ router.post('/generate', async (req, res) => {
     } catch (error: unknown) {
       const hivemindError = ErrorUtils.toHivemindError(error);
       debug(`Failed to initialize provider ${profile.name}:`, hivemindError);
-      return res.status(500).json({
-        error: `Failed to initialize provider: ${hivemindError instanceof Error ? hivemindError.message : String(hivemindError)}`,
-      });
+      return res.status(500).json({ error: `Failed to initialize provider: ${hivemindError instanceof Error ? hivemindError.message : String(hivemindError)}` });
     }
 
     if (!instance) {

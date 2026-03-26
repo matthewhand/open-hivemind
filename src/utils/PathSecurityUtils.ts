@@ -1,5 +1,5 @@
-import { promises as fs } from 'fs';
 import path from 'path';
+import { promises as fs } from 'fs';
 
 /**
  * Security utilities for safe file path operations.
@@ -29,7 +29,10 @@ export class PathSecurityUtils {
 
     // Check if resolved path starts with base path
     // Use path.sep to ensure we're checking directory boundaries
-    return resolvedTarget.startsWith(resolvedBase + path.sep) || resolvedTarget === resolvedBase;
+    return (
+      resolvedTarget.startsWith(resolvedBase + path.sep) ||
+      resolvedTarget === resolvedBase
+    );
   }
 
   /**
@@ -95,7 +98,10 @@ export class PathSecurityUtils {
    * @returns Validated path
    * @throws Error if path is invalid or doesn't exist
    */
-  static async validateExistingPath(targetPath: string, allowedBasePath: string): Promise<string> {
+  static async validateExistingPath(
+    targetPath: string,
+    allowedBasePath: string
+  ): Promise<string> {
     // Validate path is within allowed directory
     if (!this.isPathWithinDirectory(targetPath, allowedBasePath)) {
       throw new Error('Invalid path: Path traversal detected');
@@ -135,7 +141,11 @@ export class PathSecurityUtils {
       allowedPattern?: RegExp;
     } = {}
   ): boolean {
-    const { allowedExtensions, maxLength = 255, allowedPattern = /^[a-zA-Z0-9_.-]+$/ } = options;
+    const {
+      allowedExtensions,
+      maxLength = 255,
+      allowedPattern = /^[a-zA-Z0-9_.-]+$/,
+    } = options;
 
     // Check length
     if (filename.length > maxLength) {

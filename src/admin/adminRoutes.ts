@@ -293,8 +293,7 @@ adminRouter.post('/slack-bots', requireAdmin, async (req: AuditedRequest, res: R
 
 adminRouter.post('/discord-bots', requireAdmin, async (req: AuditedRequest, res: Response) => {
   const provider = providerRegistry.get('discord') as IMessageProvider;
-  if (!provider)
-    return res.status(404).json({ success: false, error: 'Discord provider not found' });
+  if (!provider) return res.status(404).json({ success: false, error: 'Discord provider not found' });
   try {
     const { name, token, llm } = req.body || {};
     if (!token) {

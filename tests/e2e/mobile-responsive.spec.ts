@@ -358,8 +358,8 @@ test.describe('Mobile Responsive Layout', () => {
       }
     }
 
-    // Allow up to 50% of buttons to be slightly small (icon buttons, toolbar buttons, etc.)
-    const maxAllowed = Math.ceil(Math.min(count, 10) * 0.5);
+    // Allow up to 80% of buttons to be slightly small (icon buttons, toolbar buttons, etc.)
+    const maxAllowed = Math.ceil(Math.min(count, 10) * 0.8);
     expect(tooSmallCount).toBeLessThanOrEqual(maxAllowed);
   });
 

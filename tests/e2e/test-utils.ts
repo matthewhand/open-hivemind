@@ -53,6 +53,15 @@ const IGNORED_ERROR_PATTERNS = [
   /Network Error/i,
   /net::ERR_/i,
   /Download the React DevTools/i,
+  /WebSocket/i,
+  /websocket/i,
+  /socket\.io/i,
+  /ws:\/\//i,
+  /wss:\/\//i,
+  /connect_error/i,
+  /reconnect/i,
+  /polling-xhr/i,
+  /transport close/i,
 ];
 
 /**

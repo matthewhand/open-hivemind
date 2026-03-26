@@ -1,9 +1,9 @@
+import { ERROR_CODES, HTTP_STATUS } from '../../types/constants';
 import { Router } from 'express';
 // Note: We'll likely need to create schemas for these, assuming minimal validation for now or generic object
 import { z } from 'zod';
 import { createLogger } from '../../common/StructuredLogger';
 import { PersonaManager } from '../../managers/PersonaManager';
-import { ERROR_CODES, HTTP_STATUS } from '../../types/constants';
 import { validateRequest } from '../../validation/validateRequest';
 
 const router = Router();
@@ -46,13 +46,8 @@ router.get('/', (req, res) => {
     const personas = manager.getAllPersonas();
     return res.json(personas);
   } catch (error: unknown) {
-    logger.error(
-      'Failed to retrieve personas',
-      error instanceof Error ? error : new Error(String(error))
-    );
-    return res
-      .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
-      .json({ error: 'Failed to retrieve personas' });
+    logger.error('Failed to retrieve personas', error instanceof Error ? error : new Error(String(error)));
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: 'Failed to retrieve personas' });
   }
 });
 
@@ -65,14 +60,8 @@ router.get('/:id', (req, res) => {
     }
     return res.json(persona);
   } catch (error: unknown) {
-    logger.error(
-      'Failed to retrieve persona',
-      error instanceof Error ? error : new Error(String(error)),
-      { id: req.params.id }
-    );
-    return res
-      .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
-      .json({ error: 'Failed to retrieve persona' });
+    logger.error('Failed to retrieve persona', error instanceof Error ? error : new Error(String(error)), { id: req.params.id });
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: 'Failed to retrieve persona' });
   }
 });
 
