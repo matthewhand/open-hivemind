@@ -142,7 +142,7 @@ router.post('/generate', async (req, res) => {
     } catch (error: unknown) {
       const hivemindError = ErrorUtils.toHivemindError(error);
       debug(`Failed to initialize provider ${profile.name}:`, hivemindError);
-      return res.status(500).json({ error: `Failed to initialize provider: ${hivemindError.message}` });
+      return res.status(500).json({ error: `Failed to initialize provider: ${ErrorUtils.getMessage(hivemindError)}` });
     }
 
     if (!instance) {
@@ -172,7 +172,7 @@ router.post('/generate', async (req, res) => {
     debug('Error in AI Assist generation:', hivemindError);
     return res.status(500).json({
       error: 'Failed to generate response',
-      message: hivemindError.message,
+      message: ErrorUtils.getMessage(hivemindError),
     });
   }
 });

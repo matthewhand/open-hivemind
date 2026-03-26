@@ -14,6 +14,8 @@ type MulterFile = {
   size: number;
 };
 
+type AuthMulterRequest = AuthMiddlewareRequest & { file?: MulterFile };
+
 const multer = require('multer');
 
 const router = Router();
@@ -262,7 +264,7 @@ router.post(
   handleUploadError,
   validateImportOptions,
   handleValidationErrors,
-  async (req: AuthMiddlewareRequest, res: Response) => {
+  async (req: AuthMulterRequest, res: Response) => {
     try {
       if (!req.file) {
         return res.status(400).json({
@@ -533,7 +535,7 @@ router.post(
   authenticate,
   upload.single('file'),
   handleUploadError,
-  async (req: AuthMiddlewareRequest, res: Response) => {
+  async (req: AuthMulterRequest, res: Response) => {
     try {
       if (!req.file) {
         return res.status(400).json({
