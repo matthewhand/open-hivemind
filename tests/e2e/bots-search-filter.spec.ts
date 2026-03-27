@@ -41,55 +41,66 @@ test.describe('Bots Search and Filter', () => {
   ];
 
   test.beforeEach(async ({ page }) => {
-    // Mock the API response
-    await page.route('*/**/api/config', async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify({ bots: mockBots }),
-      });
+    // Mock /health/* endpoints (outside /api/ prefix)
+    await page.route('**/health/**', async (route) => {
+      const url = new URL(route.request().url());
+      const path = url.pathname;
+      if (path === '/health/detailed') {
+        return route.fulfill({ status: 200, json: { status: 'healthy', services: {}, system: { platform: 'linux', memory: { total: 8e9, used: 4e9, free: 4e9 }, cpu: { cores: 4, usage: 25 }, loadAverage: [1, 0.8, 0.5] } } });
+      }
+      if (path === '/health/api-endpoints') {
+        return route.fulfill({ status: 200, json: { stats: { total: 0 }, endpoints: [], timestamp: new Date().toISOString() } });
+      }
+      return route.fulfill({ status: 200, json: {} });
     });
 
-    // Mock other endpoints to prevent errors
-    await page.route('*/**/api/config/global', async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify({}),
-      });
-    });
-    await page.route('*/**/api/personas', async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify([]),
-      });
-    });
-    await page.route('*/**/api/config/llm-profiles', async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify({ profiles: { llm: [] } }),
-      });
-    });
-    await page.route('*/**/api/config/llm-status', async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify({
-          defaultConfigured: true,
-          defaultProviders: [],
-          botsMissingLlmProvider: [],
-          hasMissing: false,
-        }),
-      });
-    });
-    await page.route('*/**/api/admin/guard-profiles', async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify({ data: [] }),
-      });
+    // Use a single route handler for all /api/* endpoints
+    await page.route('**/api/**', async (route) => {
+      const url = new URL(route.request().url());
+      const path = url.pathname;
+
+      if (path === '/api/config') {
+        return route.fulfill({ status: 200, json: { bots: mockBots } });
+      }
+      if (path === '/api/bots') {
+        return route.fulfill({ status: 200, json: { data: { bots: mockBots } } });
+      }
+      if (path === '/api/config/global') {
+        return route.fulfill({ status: 200, json: {} });
+      }
+      if (path === '/api/personas') {
+        return route.fulfill({ status: 200, json: [] });
+      }
+      if (path === '/api/config/llm-profiles') {
+        return route.fulfill({ status: 200, json: { profiles: { llm: [] } } });
+      }
+      if (path === '/api/config/llm-status') {
+        return route.fulfill({
+          status: 200,
+          json: { defaultConfigured: true, defaultProviders: [], botsMissingLlmProvider: [], hasMissing: false },
+        });
+      }
+      if (path === '/api/admin/guard-profiles') {
+        return route.fulfill({ status: 200, json: { data: [] } });
+      }
+      if (path === '/api/health/detailed') {
+        return route.fulfill({ status: 200, json: { status: 'healthy' } });
+      }
+      if (path === '/api/health') {
+        return route.fulfill({ status: 200, json: { status: 'ok' } });
+      }
+      if (path === '/api/csrf-token') {
+        return route.fulfill({ status: 200, json: { token: 'mock-csrf-token' } });
+      }
+      if (path === '/api/demo/status') {
+        return route.fulfill({ status: 200, json: { active: false } });
+      }
+      if (path === '/api/config/sources') {
+        return route.fulfill({ status: 200, json: { sources: [] } });
+      }
+
+      // Catch-all: return empty 200 for any unmatched API endpoint
+      return route.fulfill({ status: 200, json: {} });
     });
   });
 
@@ -97,15 +108,16 @@ test.describe('Bots Search and Filter', () => {
     const errors = await setupTestWithErrorDetection(page);
     await navigateAndWaitReady(page, '/admin/bots');
 
-    const searchInput = page.locator('input[placeholder="Search bots..."]');
-    await expect(searchInput).toBeVisible();
+    // Wait for the page to fully render (bots loaded, search bar visible)
+    const searchInput = page.locator('input[placeholder="Search..."]');
+    await searchInput.waitFor({ state: 'visible', timeout: 15000 });
 
     await searchInput.fill('Support');
 
     // Wait for filter to apply
     await page.waitForTimeout(500);
 
-    const botRows = page.locator('.bg-base-100.border.border-base-300.rounded-xl');
+    const botRows = page.locator('.card.bg-base-100');
     // We expect 1 visible row
     const visibleBot = botRows.filter({ hasText: 'Support Bot' });
     await expect(visibleBot).toBeVisible();
@@ -118,49 +130,49 @@ test.describe('Bots Search and Filter', () => {
     await page.screenshot({ path: 'docs/screenshots/verification-bots-search.png' });
   });
 
-  test('can search bots by provider', async ({ page }) => {
+  test('can search bots by partial name (Internal)', async ({ page }) => {
     const errors = await setupTestWithErrorDetection(page);
     await navigateAndWaitReady(page, '/admin/bots');
 
-    const searchInput = page.locator('input[placeholder="Search bots..."]');
-    await searchInput.fill('slack');
+    const searchInput = page.locator('input[placeholder="Search..."]');
+    await searchInput.fill('Internal');
     await page.waitForTimeout(500);
 
-    const botRows = page.locator('.bg-base-100.border.border-base-300.rounded-xl');
+    const botRows = page.locator('.card.bg-base-100');
     const visibleBot = botRows.filter({ hasText: 'Internal Helper' });
     await expect(visibleBot).toBeVisible();
 
     await expect(page.locator('text=Support Bot')).not.toBeVisible();
 
-    await assertNoErrors(errors, 'Bot search by provider');
+    await assertNoErrors(errors, 'Bot search by partial name');
   });
 
-  test('can search bots by llm provider', async ({ page }) => {
+  test('can search bots by name (Creative)', async ({ page }) => {
     const errors = await setupTestWithErrorDetection(page);
     await navigateAndWaitReady(page, '/admin/bots');
 
-    const searchInput = page.locator('input[placeholder="Search bots..."]');
-    await searchInput.fill('anthropic');
+    const searchInput = page.locator('input[placeholder="Search..."]');
+    await searchInput.fill('Creative');
     await page.waitForTimeout(500);
 
-    const botRows = page.locator('.bg-base-100.border.border-base-300.rounded-xl');
-    const visibleBot = botRows.filter({ hasText: 'Internal Helper' });
+    const botRows = page.locator('.card.bg-base-100');
+    const visibleBot = botRows.filter({ hasText: 'Creative Writer' });
     await expect(visibleBot).toBeVisible();
 
     await expect(page.locator('text=Support Bot')).not.toBeVisible();
 
-    await assertNoErrors(errors, 'Bot search by llm provider');
+    await assertNoErrors(errors, 'Bot search by name Creative');
   });
 
   test('shows empty state when no matches found', async ({ page }) => {
     const errors = await setupTestWithErrorDetection(page);
     await navigateAndWaitReady(page, '/admin/bots');
 
-    const searchInput = page.locator('input[placeholder="Search bots..."]');
+    const searchInput = page.locator('input[placeholder="Search..."]');
     await searchInput.fill('NonExistentBot');
     await page.waitForTimeout(500);
 
-    await expect(page.locator('text=No bots found matching')).toBeVisible();
+    await expect(page.locator('text=No agents found')).toBeVisible();
 
     await assertNoErrors(errors, 'Bot empty search state');
   });

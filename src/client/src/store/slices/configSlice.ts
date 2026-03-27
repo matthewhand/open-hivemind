@@ -173,13 +173,29 @@ export const selectConfigByKey = (key: string) => (state: { config: ConfigState 
 export const selectConfigByType = (type: ConfigSource['type']) => (state: { config: ConfigState }) =>
   state.config.sources.filter(source => source.type === type);
 
-export const selectConfigSummary = (state: { config: ConfigState }) => ({
-  totalSources: state.config.sources.length,
-  envVars: state.config.sources.filter(s => s.type === 'env').length,
-  fileConfigs: state.config.sources.filter(s => s.type === 'file').length,
-  defaults: state.config.sources.filter(s => s.type === 'default').length,
-  sensitive: state.config.sources.filter(s => s.isSensitive).length,
-  errors: state.config.validation.errors.length,
-  warnings: state.config.validation.warnings.length,
-  isValid: state.config.validation.isValid,
-});
+export const selectConfigSummary = (state: { config: ConfigState }) => {
+  const sources = state.config.sources;
+  let envVars = 0;
+  let fileConfigs = 0;
+  let defaults = 0;
+  let sensitive = 0;
+
+  for (let i = 0; i < sources.length; i++) {
+    const s = sources[i];
+    if (s.type === 'env') envVars++;
+    else if (s.type === 'file') fileConfigs++;
+    else if (s.type === 'default') defaults++;
+    if (s.isSensitive) sensitive++;
+  }
+
+  return {
+    totalSources: sources.length,
+    envVars,
+    fileConfigs,
+    defaults,
+    sensitive,
+    errors: state.config.validation.errors.length,
+    warnings: state.config.validation.warnings.length,
+    isValid: state.config.validation.isValid,
+  };
+};

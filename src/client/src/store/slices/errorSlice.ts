@@ -180,18 +180,24 @@ export const selectErrorsByTimeRange = (startTime: string, endTime: string) => (
 
 export const selectErrorStats = (state: { error: ErrorState }) => {
   const total = state.error.errors.length;
-  const byType = state.error.errors.reduce((acc, err) => {
-    acc[err.type] = (acc[err.type] || 0) + 1;
-    return acc;
-  }, {} as Record<ErrorDetails['type'], number>);
-  
-  const bySeverity = state.error.errors.reduce((acc, err) => {
-    acc[err.severity] = (acc[err.severity] || 0) + 1;
-    return acc;
-  }, {} as Record<ErrorDetails['severity'], number>);
+  const byType = {} as Record<ErrorDetails['type'], number>;
+  const bySeverity = {} as Record<ErrorDetails['severity'], number>;
+  let unresolved = 0;
+  let resolved = 0;
 
-  const unresolved = state.error.errors.filter(err => !err.resolved).length;
-  const resolved = state.error.errors.filter(err => err.resolved).length;
+  // ⚡ Bolt Optimization: Combine 4 separate O(N) array passes (reduce/filter) into a single O(N) pass
+  for (let i = 0; i < total; i++) {
+    const err = state.error.errors[i];
+
+    byType[err.type] = (byType[err.type] || 0) + 1;
+    bySeverity[err.severity] = (bySeverity[err.severity] || 0) + 1;
+
+    if (err.resolved) {
+      resolved++;
+    } else {
+      unresolved++;
+    }
+  }
   
   return {
     total,
