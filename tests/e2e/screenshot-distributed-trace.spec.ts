@@ -1,12 +1,9 @@
 import { expect, test } from '@playwright/test';
-import { setupAuth } from './test-utils';
 
 test.describe('Distributed Trace Waterfall Screenshots', () => {
   test('capture distributed trace waterfall screenshot', async ({ page }) => {
-    await setupAuth(page);
-
     // Intercept API calls to mock data
-    await page.route('**/api/config', async (route) => {
+    await page.route('/api/config', async (route) => {
       await route.fulfill({
         status: 200,
         json: {
@@ -152,6 +149,13 @@ test.describe('Distributed Trace Waterfall Screenshots', () => {
       });
     });
 
+    await page.route('**/api/config', async (route) => {
+      await route.fulfill({
+        status: 200,
+        json: { bots: [] },
+      });
+    });
+
     await page.route('**/health/api-endpoints', async (route) => {
       await route.fulfill({
         status: 200,
@@ -170,7 +174,7 @@ test.describe('Distributed Trace Waterfall Screenshots', () => {
     await page.goto('/admin/monitoring');
 
     // Verification - wait for dashboard to load
-    await expect(page.getByRole('heading', { name: 'System Monitoring' })).toBeVisible();
+    await expect(page.getByText('Ecosystem Status')).toBeVisible();
 
     // Click the new Distributed Tracing tab
     await page.getByRole('tab', { name: 'Distributed Tracing' }).click();

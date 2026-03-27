@@ -185,28 +185,34 @@ export class StartupDiagnostics {
       'config/webhooks.json',
     ];
 
-    const configStatus = await Promise.all(
-      configPaths.map(
-        async (
-          configPath
-        ): Promise<{ path: string; exists: boolean; size?: number; error?: string }> => {
-          try {
-            const fullPath = path.join(process.cwd(), configPath);
-            const stats = await fs.promises.stat(fullPath);
-            return { path: configPath, exists: true, size: stats.size };
-          } catch (error: any) {
-            if (error.code === 'ENOENT') {
-              return { path: configPath, exists: false };
-            }
-            return {
-              path: configPath,
-              exists: false,
-              error: error instanceof Error ? error.message : String(error),
-            };
-          }
+    const configStatus: { path: string; exists: boolean; size?: number; error?: string }[] = [];
+
+    for (const configPath of configPaths) {
+      try {
+        const fullPath = path.join(process.cwd(), configPath);
+        const exists = fs.existsSync(fullPath);
+
+        if (exists) {
+          const stats = fs.statSync(fullPath);
+          configStatus.push({
+            path: configPath,
+            exists: true,
+            size: stats.size,
+          });
+        } else {
+          configStatus.push({
+            path: configPath,
+            exists: false,
+          });
         }
-      )
-    );
+      } catch (error) {
+        configStatus.push({
+          path: configPath,
+          exists: false,
+          error: error instanceof Error ? error.message : String(error),
+        });
+      }
+    }
 
     const existingConfigs = configStatus.filter((c) => c.exists);
     const missingConfigs = configStatus.filter((c) => !c.exists);

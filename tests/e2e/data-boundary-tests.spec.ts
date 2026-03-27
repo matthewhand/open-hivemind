@@ -615,24 +615,16 @@ test.describe('Data Boundary Tests', () => {
 
       const numberInputs = page.locator('input[type="number"]');
       if ((await numberInputs.count()) > 0) {
-        // Number inputs should handle NaN gracefully
-        // Playwright fill() may clear the value or reject non-numeric text
-        await numberInputs.first().evaluate((el: HTMLInputElement) => {
-          el.value = 'NaN';
-          el.dispatchEvent(new Event('input', { bubbles: true }));
-        });
+        await numberInputs.first().fill('NaN');
         await page.waitForTimeout(100);
+        // Number inputs typically reject non-numeric text
         const value = await numberInputs.first().inputValue();
-        // The value should either be empty, the previous value, or 'NaN' but the UI should not crash
-        expect(typeof value).toBe('string');
+        expect(value).not.toBe('NaN');
 
-        await numberInputs.first().evaluate((el: HTMLInputElement) => {
-          el.value = 'Infinity';
-          el.dispatchEvent(new Event('input', { bubbles: true }));
-        });
+        await numberInputs.first().fill('Infinity');
         await page.waitForTimeout(100);
         const value2 = await numberInputs.first().inputValue();
-        expect(typeof value2).toBe('string');
+        expect(value2).not.toBe('Infinity');
       }
       expect(page.url()).toContain('/admin');
     });

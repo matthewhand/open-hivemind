@@ -217,18 +217,18 @@ function validateRepoUrl(url: string): void {
   }
 
   // Prevent argument injection via hostname or path
-  if (decodedHostname.includes(' ') || decodedPathname.includes(' ')) {
-    throw new PluginValidationError('Invalid repository URL: spaces not allowed.');
+  if (decodedHostname.includes(" ") || decodedPathname.includes(" ")) {
+    throw new PluginValidationError("Invalid repository URL: spaces not allowed.");
   }
 
   // Prevent command injection through special git URL patterns
   if (/--[a-z-]+=/i.test(decodedHref)) {
-    throw new PluginValidationError('Invalid repository URL: contains suspicious patterns.');
+    throw new PluginValidationError("Invalid repository URL: contains suspicious patterns.");
   }
 
   // Prevent shell metacharacters in hostname
   if (/[;&|`$()]/.test(decodedHostname)) {
-    throw new PluginValidationError('Invalid repository URL: contains shell metacharacters.');
+    throw new PluginValidationError("Invalid repository URL: contains shell metacharacters.");
   }
 }
 

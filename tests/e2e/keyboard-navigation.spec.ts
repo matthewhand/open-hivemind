@@ -458,29 +458,19 @@ test.describe('Keyboard Navigation', () => {
       await page.goto('/admin/settings');
       await page.waitForTimeout(500);
 
-      // Find a visible checkbox input
-      const toggle = page.locator('input[type="checkbox"]:visible').first();
+      // Find a checkbox or toggle switch
+      const toggle = page.locator(
+        'input[type="checkbox"], [role="switch"], .toggle'
+      ).first();
 
-      if (await toggle.count() > 0) {
+      if (await toggle.isVisible().catch(() => false)) {
         const initialChecked = await toggle.isChecked().catch(() => false);
-
-        // Focus the parent label/container which handles click events for DaisyUI toggles
-        const parent = toggle.locator('xpath=ancestor::label[1]').first();
-        if (await parent.count() > 0) {
-          await parent.focus();
-        } else {
-          await toggle.focus();
-        }
+        await toggle.focus();
         await page.keyboard.press('Space');
-        await page.waitForTimeout(300);
+        await page.waitForTimeout(200);
 
         const afterChecked = await toggle.isChecked().catch(() => !initialChecked);
-        // DaisyUI toggles may not respond to Space the same way native checkboxes do
-        // Verify at least that the page didn't crash
-        expect(typeof afterChecked).toBe('boolean');
-      } else {
-        // No checkboxes found, just verify the page loaded
-        expect(page.url()).toContain('/admin');
+        expect(afterChecked).not.toBe(initialChecked);
       }
     });
 

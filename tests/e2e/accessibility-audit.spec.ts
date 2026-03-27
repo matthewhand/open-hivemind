@@ -66,42 +66,6 @@ test.describe('Accessibility Audit', () => {
   ];
 
   async function mockCommonEndpoints(page: import('@playwright/test').Page) {
-    // Mock /health/* endpoints that live outside /api/ prefix
-    await page.route('**/health/**', (route) => {
-      const url = new URL(route.request().url());
-      const path = url.pathname;
-
-      if (path === '/health/detailed') {
-        return route.fulfill({
-          status: 200,
-          json: {
-            status: 'healthy',
-            version: '1.0.0',
-            uptime: 86400,
-            services: { database: 'healthy', cache: 'healthy' },
-            system: {
-              platform: 'linux',
-              memory: { total: 8000000000, used: 4000000000, free: 4000000000 },
-              cpu: { cores: 4, usage: 25 },
-              loadAverage: [1.0, 0.8, 0.5],
-            },
-          },
-        });
-      }
-      if (path === '/health/api-endpoints') {
-        return route.fulfill({
-          status: 200,
-          json: {
-            stats: { total: 0, healthy: 0, unhealthy: 0, degraded: 0, unknown: 0 },
-            endpoints: [],
-            timestamp: new Date().toISOString(),
-          },
-        });
-      }
-
-      return route.fulfill({ status: 200, json: {} });
-    });
-
     // Use a single route handler that matches all API requests and dispatches
     // based on URL path. This avoids glob pattern conflicts and ensures
     // deterministic route matching.
@@ -297,10 +261,9 @@ test.describe('Accessibility Audit', () => {
 
     test('Navigation has role="navigation" or <nav>', async ({ page }) => {
       await page.goto('/admin/bots');
-      // Wait for the sidebar navigation to actually render (not just a timeout)
-      const navElements = page.locator('nav, [role="navigation"]');
-      await navElements.first().waitFor({ state: 'attached', timeout: 15000 });
+      await page.waitForTimeout(500);
 
+      const navElements = page.locator('nav, [role="navigation"]');
       const count = await navElements.count();
       expect(count).toBeGreaterThan(0);
     });
@@ -982,8 +945,6 @@ test.describe('Accessibility Audit', () => {
     for (const pg of pages) {
       test(`${pg.name}: interactive elements have no negative tabindex (except intentional)`, async ({ page }) => {
         await page.goto(pg.path);
-        // Wait for page content to render before inspecting DOM
-        await page.locator('main').first().waitFor({ state: 'attached', timeout: 15000 }).catch(() => {});
         await page.waitForTimeout(500);
 
         const negativeTabIndex = await page.evaluate(() => {
@@ -992,22 +953,6 @@ test.describe('Accessibility Audit', () => {
           );
           const issues: string[] = [];
 
-          // Known patterns where tabindex="-1" is legitimate:
-          // - Elements managed by roving tabindex (tabs, menus, toolbars)
-          // - Elements inside [role="tablist"], [role="menu"], [role="toolbar"]
-          // - Hidden modal/dialog content not currently visible
-          // - Focus-trap sentinel elements
-          // - Third-party component internals (e.g. headless UI, radix)
-          const knownPatterns = [
-            '[role="tablist"]',
-            '[role="menu"]',
-            '[role="toolbar"]',
-            '[role="dialog"]',
-            '[data-headlessui-state]',
-            '[data-radix-collection-item]',
-            '.modal',
-          ];
-
           interactives.forEach((el) => {
             const tabIndex = el.getAttribute('tabindex');
             if (tabIndex !== null && parseInt(tabIndex) < 0) {
@@ -1015,15 +960,8 @@ test.describe('Accessibility Audit', () => {
               // but not for elements that should be in natural tab order
               const isHidden =
                 el.getAttribute('aria-hidden') === 'true' ||
-                (el as HTMLElement).style.display === 'none' ||
-                (el as HTMLElement).offsetParent === null;
-
-              // Check if element is inside a known focus-management container
-              const isInKnownPattern = knownPatterns.some(
-                (selector) => el.closest(selector) !== null
-              );
-
-              if (!isHidden && !isInKnownPattern) {
+                (el as HTMLElement).style.display === 'none';
+              if (!isHidden) {
                 issues.push(
                   `${el.tagName} with negative tabindex: ${el.outerHTML.substring(0, 80)}`
                 );
@@ -1034,12 +972,10 @@ test.describe('Accessibility Audit', () => {
           return issues;
         });
 
-        // Log but don't hard-fail (tabindex=-1 has valid uses in focus management)
+        // Log but don't hard-fail (tabindex=-1 has valid uses)
         if (negativeTabIndex.length > 0) {
           console.warn('Negative tabindex elements:', negativeTabIndex);
         }
-        // Pass: tabindex=-1 is a common and valid pattern for focus management
-        expect(true).toBeTruthy();
       });
     }
 

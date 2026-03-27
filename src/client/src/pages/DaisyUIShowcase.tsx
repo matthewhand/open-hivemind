@@ -115,10 +115,10 @@ const DaisyUIShowcase: React.FC = () => {
           <Section title="Button Shapes">
             <div className="flex flex-wrap gap-2">
               <button className="btn btn-wide">Wide</button>
-              <button className="btn btn-square" aria-label="Close (square)">
+              <button className="btn btn-square">
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
               </button>
-              <button className="btn btn-circle" aria-label="Close (circle)">
+              <button className="btn btn-circle">
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
               </button>
             </div>
@@ -130,7 +130,7 @@ const DaisyUIShowcase: React.FC = () => {
                 <span className="loading loading-spinner"></span>
                 Loading
               </button>
-              <button className="btn btn-square" aria-label="Loading">
+              <button className="btn btn-square">
                 <span className="loading loading-spinner"></span>
               </button>
             </div>

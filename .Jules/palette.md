@@ -9,7 +9,3 @@
 ## 2025-03-21 - Add ARIA Labels to List Actions
 **Learning:** This application renders many lists of entities (e.g., integrations, metrics) with repetitive action buttons like "Configure" or "Test". For screen reader users, hearing "Configure, Test, Configure, Test" without context is confusing.
 **Action:** When mapping over lists to render action buttons, always use dynamic `aria-label`s that include the entity's name (e.g., `aria-label={"Configure " + integration.name}`) to provide clear context for screen readers.
-
-## 2024-05-15 - Fixed Form Control Labels in EnterpriseManager Modal
-**Learning:** Found that multiple `input` and `select` fields in custom modals (like "Add Integration" and "Add Cloud Provider" in `EnterpriseManager.tsx`) were wrapped in `<label>` elements but lacked proper `id` and `htmlFor` associations, causing screen readers to miss the label text completely.
-**Action:** Always ensure that form controls within custom DaisyUI/Tailwind modal dialogs explicitly use `htmlFor` on labels mapped to matching `id` attributes on the input fields, rather than relying on structural nesting, to guarantee robust keyboard and screen-reader accessibility.
