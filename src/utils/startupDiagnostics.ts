@@ -187,32 +187,38 @@ export class StartupDiagnostics {
 
     const configStatus: { path: string; exists: boolean; size?: number; error?: string }[] = [];
 
-    for (const configPath of configPaths) {
+    // ⚡ Bolt Optimization: Replace synchronous fs calls with async alternatives and execute them concurrently to prevent event loop blocking during startup and improve speed.
+    const configPromises = configPaths.map(async (configPath) => {
       try {
         const fullPath = path.join(process.cwd(), configPath);
-        const exists = fs.existsSync(fullPath);
 
-        if (exists) {
-          const stats = fs.statSync(fullPath);
-          configStatus.push({
+        try {
+          const stats = await fs.promises.stat(fullPath);
+          return {
             path: configPath,
             exists: true,
             size: stats.size,
-          });
-        } else {
-          configStatus.push({
-            path: configPath,
-            exists: false,
-          });
+          };
+        } catch (error: any) {
+          if (error.code === 'ENOENT') {
+            return {
+              path: configPath,
+              exists: false,
+            };
+          } else {
+            throw error;
+          }
         }
       } catch (error) {
-        configStatus.push({
+        return {
           path: configPath,
           exists: false,
           error: error instanceof Error ? error.message : String(error),
-        });
+        };
       }
-    }
+    });
+
+    configStatus.push(...(await Promise.all(configPromises)));
 
     const existingConfigs = configStatus.filter((c) => c.exists);
     const missingConfigs = configStatus.filter((c) => !c.exists);

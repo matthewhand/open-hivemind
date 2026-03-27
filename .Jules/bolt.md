@@ -1,0 +1,3 @@
+## 2024-05-24 - Async FS during Startup
+**Learning:** Even during application startup phases, using parallel asynchronous execution (`Promise.all` with `fs.promises`) over synchronous event-blocking operations (`fs.existsSync` and `fs.statSync`) yields better performance metrics, ensuring the system remains responsive during complex configuration checks.
+**Action:** When refactoring synchronous I/O loops to asynchronous operations, always evaluate if the operations are independent and can be executed concurrently using `Promise.all` rather than converting a `for...of` loop directly into a sequential `await` loop.
