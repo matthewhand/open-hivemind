@@ -69,6 +69,12 @@ describe('openwebui/uploadKnowledgeFile', () => {
       };
     });
 
+    // Mock ssrfGuard to allow all URLs in tests
+    jest.doMock('../../../src/utils/ssrfGuard', () => ({
+      __esModule: true,
+      isSafeUrl: jest.fn().mockResolvedValue(true),
+    }));
+
     // Mock axios to ensure both axios.post and axios.create().post use same mock
     jest.doMock('axios', () => {
       const axiosMock: any = { post: axiosPost };
