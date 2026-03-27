@@ -186,22 +186,26 @@ export class StartupDiagnostics {
     ];
 
     const configStatus = await Promise.all(
-      configPaths.map(async (configPath): Promise<{ path: string; exists: boolean; size?: number; error?: string }> => {
-        try {
-          const fullPath = path.join(process.cwd(), configPath);
-          const stats = await fs.promises.stat(fullPath);
-          return { path: configPath, exists: true, size: stats.size };
-        } catch (error: any) {
-          if (error.code === 'ENOENT') {
-            return { path: configPath, exists: false };
+      configPaths.map(
+        async (
+          configPath
+        ): Promise<{ path: string; exists: boolean; size?: number; error?: string }> => {
+          try {
+            const fullPath = path.join(process.cwd(), configPath);
+            const stats = await fs.promises.stat(fullPath);
+            return { path: configPath, exists: true, size: stats.size };
+          } catch (error: any) {
+            if (error.code === 'ENOENT') {
+              return { path: configPath, exists: false };
+            }
+            return {
+              path: configPath,
+              exists: false,
+              error: error instanceof Error ? error.message : String(error),
+            };
           }
-          return {
-            path: configPath,
-            exists: false,
-            error: error instanceof Error ? error.message : String(error),
-          };
         }
-      })
+      )
     );
 
     const existingConfigs = configStatus.filter((c) => c.exists);
