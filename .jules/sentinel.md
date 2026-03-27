@@ -21,7 +21,3 @@
 **Vulnerability:** Multiple LLM provider packages (e.g., openwebui, flowise, openswarm, openai) were vulnerable to Server-Side Request Forgery (SSRF) because they used configured or dynamically generated URLs for `axios` requests without validating if those URLs pointed to private or reserved IP ranges.
 **Learning:** Security utilities like `isSafeUrl` must be placed in globally accessible workspace packages (e.g., `@hivemind/shared-types` or a dedicated `utils` package) rather than main `src/` directories so that all child packages can access them without creating dependency cycles or relative import nightmares.
 **Prevention:** Always wrap dynamically generated external HTTP requests (via axios, fetch) with `isSafeUrl` validation checks. Enforce this via a custom ESLint rule if possible.
-## 2024-05-24 - [Insecure PRNG for ID Generation]
-**Vulnerability:** Found `Math.random().toString(36)` used for generating IDs in `SmartNotificationSystem.tsx` and `ChatPage.tsx`.
-**Learning:** React render IDs or client-generated object IDs using `Math.random()` can cause state mismanagement and potentially predictable identifiers, violating secure cryptographic generation principles.
-**Prevention:** Use `crypto.randomUUID()` in secure contexts or `uuidv4()` from the `uuid` package for generating unique IDs instead of `Math.random()`.
