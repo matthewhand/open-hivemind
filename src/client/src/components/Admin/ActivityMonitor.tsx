@@ -22,7 +22,10 @@ import {
   Cell,
 } from 'recharts';
 import { format, subDays, subHours } from 'date-fns';
-import { Badge, Alert, Button, Pagination } from '../DaisyUI';
+import Badge from '../DaisyUI/Badge';
+import { Alert } from '../DaisyUI/Alert';
+import Button from '../DaisyUI/Button';
+import Pagination from '../DaisyUI/Pagination';
 
 interface ActivityFilter {
   agentId?: string;
@@ -415,7 +418,7 @@ const ActivityMonitor: React.FC = () => {
                 variant="ghost"
                 startIcon={<ArrowPathIcon className="w-5 h-5" />}
                 onClick={fetchData}
-                disabled={loading}
+                disabled={loading} aria-busy={loading}
               >
                 Refresh
               </Button>
@@ -431,7 +434,7 @@ const ActivityMonitor: React.FC = () => {
 
           {loading ? (
             <div className="flex justify-center py-8">
-              <span className="loading loading-spinner loading-lg"></span>
+              <span className="loading loading-spinner loading-lg" aria-hidden="true"></span>
             </div>
           ) : (
             <div className="overflow-x-auto">
@@ -663,7 +666,7 @@ const ActivityMonitor: React.FC = () => {
           variant="ghost"
           startIcon={<ArrowPathIcon className="w-5 h-5" />}
           onClick={fetchData}
-          disabled={loading}
+          disabled={loading} aria-busy={loading}
         >
           Refresh
         </Button>

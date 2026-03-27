@@ -34,7 +34,7 @@ export class SecureConfigManager {
     this.configDir = path.join(process.cwd(), 'config', 'secure');
     this.backupDir = path.join(process.cwd(), 'config', 'backups');
     this.keyPath = path.join(process.cwd(), 'config', '.key');
-    
+
     this.ensureDirectories();
 
     // Generate or load encryption key

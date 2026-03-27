@@ -7,13 +7,19 @@ test.describe('Configuration Rollback', () => {
     await page.setViewportSize({ width: 1280, height: 800 });
 
     // Common mocks
-    await page.route('/api/auth/check', async (route) => {
-      await route.fulfill({ status: 200, json: { authenticated: true, user: { role: 'admin' } } });
-    });
-    await page.route('/api/health/detailed', async (route) =>
+    await page.route('**/api/health/detailed', async (route) =>
       route.fulfill({ status: 200, json: { status: 'ok' } })
     );
-    await page.route('/api/config/global', async (route) =>
+    await page.route('**/api/config', async (route) =>
+      route.fulfill({ status: 200, json: { bots: [] } })
+    );
+    await page.route('**/api/demo/status', async (route) =>
+      route.fulfill({ status: 200, json: { active: false } })
+    );
+    await page.route('**/api/admin/guard-profiles', async (route) =>
+      route.fulfill({ status: 200, json: { data: [] } })
+    );
+    await page.route('**/api/config/global', async (route) =>
       route.fulfill({
         status: 200,
         json: {
@@ -33,10 +39,10 @@ test.describe('Configuration Rollback', () => {
         },
       })
     );
-    await page.route('/api/csrf-token', async (route) =>
+    await page.route('**/api/csrf-token', async (route) =>
       route.fulfill({ status: 200, json: { csrfToken: 'mock-token' } })
     );
-    await page.route('/api/config/llm-status', async (route) =>
+    await page.route('**/api/config/llm-status', async (route) =>
       route.fulfill({ status: 200, json: { configured: true, hasMissing: false } })
     );
     await page.route("/api/dashboard/status", async (route) => route.fulfill({ status: 200, json: { bots: [] } }));
@@ -44,7 +50,7 @@ test.describe('Configuration Rollback', () => {
 
   test('verifies configuration rollback UI', async ({ page }) => {
     // 1. Mock empty rollbacks
-    await page.route('/api/config/hot-reload/rollbacks', async (route) => {
+    await page.route('**/api/config/hot-reload/rollbacks', async (route) => {
       await route.fulfill({ status: 200, json: { rollbacks: [] } });
     });
 
@@ -59,7 +65,7 @@ test.describe('Configuration Rollback', () => {
     await page.screenshot({ path: 'docs/screenshots/config-rollback-empty.png' });
 
     // 2. Mock rollbacks available
-    await page.route('/api/config/hot-reload/rollbacks', async (route) => {
+    await page.route('**/api/config/hot-reload/rollbacks', async (route) => {
       await route.fulfill({ status: 200, json: { rollbacks: ['rollback_1711234567890_xxyyzz'] } });
     });
 
@@ -87,7 +93,7 @@ test.describe('Configuration Rollback', () => {
 
     // Setup mock for actual rollback
     await page.route(
-      '/api/config/hot-reload/rollback/rollback_1711234567890_xxyyzz',
+      '**/api/config/hot-reload/rollback/rollback_1711234567890_xxyyzz',
       async (route) => {
         // Return updated state after rollback
         await page.route('/api/config/hot-reload/rollbacks', async (r) => {

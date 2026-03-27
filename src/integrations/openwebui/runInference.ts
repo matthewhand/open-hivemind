@@ -1,10 +1,10 @@
 import axios from 'axios';
 import Debug from 'debug';
 import type { IMessage } from '@message/interfaces/IMessage';
+import { isSafeUrl } from '../../utils/ssrfGuard';
 import openWebUIConfig from './openWebUIConfig';
 import { getSessionKey } from './sessionManager';
 import { getKnowledgeFileId } from './uploadKnowledgeFile';
-import { isSafeUrl } from '@src/utils/ssrfGuard';
 
 const debug = Debug('app:runInference');
 

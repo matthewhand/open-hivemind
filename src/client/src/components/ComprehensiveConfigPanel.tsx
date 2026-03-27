@@ -1,6 +1,13 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useEffect, useState } from 'react';
-import { Alert, Button, Card, Input, Select, Toggle, Loading, Textarea } from './DaisyUI';
+import { Alert } from './DaisyUI/Alert';
+import Button from './DaisyUI/Button';
+import Card from './DaisyUI/Card';
+import Input from './DaisyUI/Input';
+import Select from './DaisyUI/Select';
+import Toggle from './DaisyUI/Toggle';
+import { Loading } from './DaisyUI/Loading';
+import Textarea from './DaisyUI/Textarea';
 import { CheckCircleIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline';
 
 interface ConfigSchema {
@@ -193,7 +200,7 @@ const ComprehensiveConfigPanel: React.FC = () => {
     );
   };
 
-  if (loading) {return <div className="flex justify-center p-8"><span className="loading loading-spinner loading-lg"></span></div>;}
+  if (loading) {return <div className="flex justify-center p-8"><span className="loading loading-spinner loading-lg" aria-hidden="true"></span></div>;}
   if (error) {return <Alert status="error" message={error} />;}
   if (!config) {return <Alert status="warning" message="No configuration found" />;}
 

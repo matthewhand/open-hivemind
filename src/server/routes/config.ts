@@ -18,7 +18,7 @@ import { ErrorUtils } from '../../types/errors';
 import { type IProvider } from '../../types/IProvider';
 import { ConfigUpdateSchema } from '../../validation/schemas/configSchema';
 import { validateRequest } from '../../validation/validateRequest';
-import { auditMiddleware, logConfigChange } from '../middleware/audit';
+import { auditMiddleware, logConfigChange, type AuditedRequest } from '../middleware/audit';
 
 /**
  * Validates that a config name is safe to use in file paths.
@@ -72,13 +72,13 @@ let schemaSources: Record<string, any> = { ...coreSchemaSources };
 let globalConfigs: Record<string, any> = { ...schemaSources };
 
 // Helper to load dynamic configs from files
-const loadDynamicConfigs = () => {
+const loadDynamicConfigs = async () => {
   try {
     const configDir = process.env.NODE_CONFIG_DIR || path.join(process.cwd(), 'config');
     const providersDir = path.join(configDir, 'providers');
 
-    if (fs.existsSync(providersDir)) {
-      const files = fs.readdirSync(providersDir);
+    try {
+      const files = await fs.promises.readdir(providersDir);
 
       files.forEach((file) => {
         // Match pattern: type-name.json e.g. openai-dev.json
@@ -108,6 +108,10 @@ const loadDynamicConfigs = () => {
           }
         }
       });
+    } catch (e: any) {
+      if (e.code !== 'ENOENT') {
+        throw e;
+      }
     }
   } catch (e) {
     console.error('Failed to load dynamic configs:', e);
@@ -115,7 +119,7 @@ const loadDynamicConfigs = () => {
 };
 
 // Initialize configuration from registry
-export const reloadGlobalConfigs = () => {
+export const reloadGlobalConfigs = async () => {
   const providers = providerRegistry.getAll();
   providers.forEach((p) => {
     schemaSources[p.id] = p.getConfig();
@@ -125,7 +129,7 @@ export const reloadGlobalConfigs = () => {
   globalConfigs = { ...schemaSources };
 
   // Load dynamic configs
-  loadDynamicConfigs();
+  await loadDynamicConfigs();
 
   debug(
     'Global configs reloaded with providers:',
@@ -299,7 +303,7 @@ router.get('/sources', async (req, res) => {
     const configDir = path.join(process.cwd(), 'config');
     const configFiles: any[] = [];
 
-    if (fs.existsSync(configDir)) {
+    try {
       const files = await fs.promises.readdir(configDir);
       const statPromises = files
         .filter((file) => file.endsWith('.json') || file.endsWith('.js') || file.endsWith('.ts'))
@@ -317,6 +321,10 @@ router.get('/sources', async (req, res) => {
 
       const fileStats = await Promise.all(statPromises);
       configFiles.push(...fileStats);
+    } catch (e: any) {
+      if (e.code !== 'ENOENT') {
+        throw e;
+      }
     }
 
     return res.json({
@@ -366,13 +374,19 @@ router.post('/llm-profiles', (req, res) => {
     const newProfile = req.body;
 
     if (!newProfile.key || newProfile.key.trim() === '') {
-      return res.status(400).json({ error: 'LLM profile key is required', code: 'INVALID_REQUEST' });
+      return res
+        .status(400)
+        .json({ error: 'LLM profile key is required', code: 'INVALID_REQUEST' });
     }
     if (!newProfile.name || newProfile.name.trim() === '') {
-      return res.status(400).json({ error: 'LLM profile name is required', code: 'INVALID_REQUEST' });
+      return res
+        .status(400)
+        .json({ error: 'LLM profile name is required', code: 'INVALID_REQUEST' });
     }
     if (!newProfile.provider || newProfile.provider.trim() === '') {
-      return res.status(400).json({ error: 'LLM profile provider is required', code: 'INVALID_REQUEST' });
+      return res
+        .status(400)
+        .json({ error: 'LLM profile provider is required', code: 'INVALID_REQUEST' });
     }
 
     const modelType = newProfile.modelType || 'chat';
@@ -423,7 +437,9 @@ router.put('/llm-profiles/:key', (req, res) => {
       return res.status(400).json({ error: 'LLM profile provider is required' });
     }
     if (updates.modelType && !['chat', 'embedding', 'both'].includes(updates.modelType)) {
-      return res.status(400).json({ error: 'LLM profile modelType must be chat, embedding, or both' });
+      return res
+        .status(400)
+        .json({ error: 'LLM profile modelType must be chat, embedding, or both' });
     }
 
     const profiles = getLlmProfiles();
@@ -460,7 +476,9 @@ router.delete('/llm-profiles/:key', (req, res) => {
   try {
     const { key } = req.params;
     const profiles = getLlmProfiles();
-    const index = profiles.llm.findIndex((profile) => profile.key.toLowerCase() === key.toLowerCase());
+    const index = profiles.llm.findIndex(
+      (profile) => profile.key.toLowerCase() === key.toLowerCase()
+    );
 
     if (index === -1) {
       return res.status(404).json({ error: `LLM profile with key '${key}' not found` });
@@ -607,7 +625,7 @@ router.put('/global', validateRequest(ConfigUpdateSchema), async (req, res) => {
 
       if (process.env.NODE_ENV !== 'test') {
         logConfigChange(
-          req as any,
+          req as AuditedRequest,
           'UPDATE',
           'config/general',
           'success',
@@ -685,7 +703,7 @@ router.put('/global', validateRequest(ConfigUpdateSchema), async (req, res) => {
 
     if (process.env.NODE_ENV !== 'test') {
       logConfigChange(
-        req as any,
+        req as AuditedRequest,
         'UPDATE',
         `config/${configName}`,
         'success',

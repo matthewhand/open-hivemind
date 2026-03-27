@@ -1,7 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Breadcrumbs, EmptyState } from '../components/DaisyUI';
+import Breadcrumbs from '../components/DaisyUI/Breadcrumbs';
+import EmptyState from '../components/DaisyUI/EmptyState';
 import { Copy, Check, Search } from 'lucide-react';
 import SearchFilterBar from '../components/SearchFilterBar';
 
@@ -157,7 +158,7 @@ const BotTemplatesPage: React.FC = () => {
   if (loading) {
     return (
       <div className="p-6 text-center">
-        <span className="loading loading-spinner loading-lg"></span>
+        <span className="loading loading-spinner loading-lg" aria-hidden="true"></span>
         <p className="mt-2">Loading templates...</p>
       </div>
     );
@@ -289,6 +290,7 @@ const BotTemplatesPage: React.FC = () => {
                     className="btn btn-ghost btn-square"
                     onClick={() => handleCopyTemplate(template)}
                     title="Copy template JSON"
+                    aria-label="Copy template JSON"
                   >
                     {copied ? <Check className="w-4 h-4 text-success" /> : <Copy className="w-4 h-4" />}
                   </button>

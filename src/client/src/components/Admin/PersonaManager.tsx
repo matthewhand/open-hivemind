@@ -1,5 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Modal, Checkbox, Button, Card, Form } from '../DaisyUI';
+import Modal from '../DaisyUI/Modal';
+import Checkbox from '../DaisyUI/Checkbox';
+import Button from '../DaisyUI/Button';
+import Card from '../DaisyUI/Card';
+import Form from '../DaisyUI/Form';
 import {
   getPersonas,
   createPersona,
@@ -125,7 +129,7 @@ const PersonaManager: React.FC = () => {
   };
 
   if (loading) {
-    return <div className="flex justify-center items-center min-h-[200px]"><span className="loading loading-spinner loading-lg"></span></div>;
+    return <div className="flex justify-center items-center min-h-[200px]"><span className="loading loading-spinner loading-lg" aria-hidden="true"></span></div>;
   }
 
   if (error) {
@@ -184,6 +188,7 @@ const PersonaManager: React.FC = () => {
                   variant="ghost"
                   size="sm"
                   className="btn-square"
+                  aria-label={`Edit ${persona.name} persona`}
                   onClick={() => handleOpenModal(persona)}
                 >
                   <PencilIcon className="w-4 h-4" />
@@ -192,6 +197,7 @@ const PersonaManager: React.FC = () => {
                   variant="ghost"
                   size="sm"
                   className="btn-square text-error hover:bg-error hover:text-error-content"
+                  aria-label={`Delete ${persona.name} persona`}
                   onClick={() => handleDeletePersona(persona.key)}
                 >
                   <TrashIcon className="w-4 h-4" />

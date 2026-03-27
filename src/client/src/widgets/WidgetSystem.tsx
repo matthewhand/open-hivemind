@@ -285,12 +285,14 @@ const WidgetRenderer: React.FC<{ widget: WidgetConfig; editable?: boolean; onEdi
         >
           <button
             className="btn btn-xs btn-circle btn-ghost bg-base-100 shadow-sm"
+            aria-label="Edit widget"
             onClick={onEdit}
           >
             <PencilIcon className="w-3 h-3" />
           </button>
           <button
             className="btn btn-xs btn-circle btn-ghost bg-base-100 shadow-sm text-error"
+            aria-label="Delete widget"
             onClick={onDelete}
           >
             <XMarkIcon className="w-3 h-3" />

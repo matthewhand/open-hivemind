@@ -1,6 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useEffect, useState } from 'react';
-import { Alert, Loading, Badge, Input, Accordion } from './DaisyUI';
+import { Alert } from './DaisyUI/Alert';
+import { Loading } from './DaisyUI/Loading';
+import Badge from './DaisyUI/Badge';
+import Input from './DaisyUI/Input';
+import Accordion from './DaisyUI/Accordion';
 import { MagnifyingGlassIcon } from '@heroicons/react/24/outline';
 import { apiService } from '../services/api';
 import type { ConfigResponse, ConfigSourcesResponse } from '../services/api';
@@ -15,10 +19,12 @@ const ConfigViewer: React.FC = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [configData, sourcesData] = await Promise.all([
+        const [configResult, sourcesResult] = await Promise.allSettled([
           apiService.getConfig(),
           apiService.getConfigSources(),
         ]);
+        const configData = configResult.status === 'fulfilled' ? configResult.value : null;
+        const sourcesData = sourcesResult.status === 'fulfilled' ? sourcesResult.value : null;
         setConfig(configData);
         setSources(sourcesData);
       } catch (err) {
@@ -100,7 +106,7 @@ const ConfigViewer: React.FC = () => {
   if (loading) {
     return (
       <div className="flex justify-center items-center min-h-[400px]">
-        <span className="loading loading-spinner loading-lg"></span>
+        <span className="loading loading-spinner loading-lg" aria-hidden="true"></span>
       </div>
     );
   }

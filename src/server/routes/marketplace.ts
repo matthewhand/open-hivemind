@@ -40,33 +40,26 @@ const _PLUGINS_DIR = path.resolve(__dirname, '../../../../plugins');
 /**
  * Scan built-in packages directory for available providers.
  */
-function scanBuiltInPackages(): MarketplacePackage[] {
+async function scanBuiltInPackages(): Promise<MarketplacePackage[]> {
   const packages: MarketplacePackage[] = [];
 
-  if (!fs.existsSync(PACKAGES_DIR)) {
-    debug('packages/ directory not found');
-    return packages;
-  }
+  try {
+    const dirs = await fs.promises.readdir(PACKAGES_DIR, { withFileTypes: true });
+    const packageDirs = dirs.filter((d) => d.isDirectory()).map((d) => d.name);
 
-  const dirs = fs
-    .readdirSync(PACKAGES_DIR, { withFileTypes: true })
-    .filter((d) => d.isDirectory())
-    .map((d) => d.name);
+    for (const dir of packageDirs) {
+      const pkgPath = path.join(PACKAGES_DIR, dir);
+      const pkgJsonPath = path.join(pkgPath, 'package.json');
 
-  for (const dir of dirs) {
-    const pkgPath = path.join(PACKAGES_DIR, dir);
-    const pkgJsonPath = path.join(pkgPath, 'package.json');
+      try {
+        const pkgJsonContent = await fs.promises.readFile(pkgJsonPath, 'utf-8');
+        const pkgJson = JSON.parse(pkgJsonContent);
+        const indexPath = path.join(pkgPath, 'src', 'index.ts');
 
-    if (!fs.existsSync(pkgJsonPath)) continue;
-
-    try {
-      const pkgJson = JSON.parse(fs.readFileSync(pkgJsonPath, 'utf-8'));
-      const indexPath = path.join(pkgPath, 'src', 'index.ts');
-
-      // Try to load manifest from the package
-      let manifest: PluginManifest | undefined;
-      if (fs.existsSync(indexPath)) {
+        // Try to load manifest from the package
+        let manifest: PluginManifest | undefined;
         try {
+          await fs.promises.access(indexPath);
           // Clear require cache to get fresh manifest
           delete require.cache[require.resolve(indexPath)];
           const mod = require(indexPath);
@@ -74,25 +67,33 @@ function scanBuiltInPackages(): MarketplacePackage[] {
         } catch (e) {
           debug('Could not load manifest from %s: %s', dir, e);
         }
+
+        // Derive type from package name prefix
+        const namePrefix = dir.split('-')[0];
+        const validTypes = ['llm', 'message', 'memory', 'tool'] as const;
+        const type = validTypes.includes(namePrefix as any)
+          ? (namePrefix as MarketplacePackage['type'])
+          : 'tool';
+
+        packages.push({
+          name: dir,
+          displayName: manifest?.displayName || pkgJson.name || dir,
+          description: manifest?.description || pkgJson.description || 'No description available',
+          type: manifest?.type || type,
+          version: pkgJson.version || '0.0.0',
+          status: 'built-in',
+        });
+      } catch (e: any) {
+        if (e.code !== 'ENOENT') {
+          debug('Failed to read package %s: %s', dir, e);
+        }
       }
-
-      // Derive type from package name prefix
-      const namePrefix = dir.split('-')[0];
-      const validTypes = ['llm', 'message', 'memory', 'tool'] as const;
-      const type = validTypes.includes(namePrefix as any)
-        ? (namePrefix as MarketplacePackage['type'])
-        : 'tool';
-
-      packages.push({
-        name: dir,
-        displayName: manifest?.displayName || pkgJson.name || dir,
-        description: manifest?.description || pkgJson.description || 'No description available',
-        type: manifest?.type || type,
-        version: pkgJson.version || '0.0.0',
-        status: 'built-in',
-      });
-    } catch (e) {
-      debug('Failed to read package %s: %s', dir, e);
+    }
+  } catch (e: any) {
+    if (e.code !== 'ENOENT') {
+      debug('Failed to read packages directory: %s', e);
+    } else {
+      debug('packages/ directory not found');
     }
   }
 
@@ -102,11 +103,11 @@ function scanBuiltInPackages(): MarketplacePackage[] {
 /**
  * Get installed community plugins.
  */
-function getInstalledPlugins(): MarketplacePackage[] {
+async function getInstalledPlugins(): Promise<MarketplacePackage[]> {
   const plugins: MarketplacePackage[] = [];
 
   try {
-    const installed = listInstalledPlugins();
+    const installed = await listInstalledPlugins();
 
     for (const plugin of installed) {
       plugins.push({
@@ -135,23 +136,51 @@ function getInstalledPlugins(): MarketplacePackage[] {
 // All marketplace routes require authentication
 router.use(authenticateToken);
 
+// ⚡ Bolt Optimization: Cache expensive file system reads and module loading
+let cachedPackages: MarketplacePackage[] | null = null;
+let cacheTimestamp: number = 0;
+const CACHE_TTL_MS = 30000; // 30 seconds
+
+async function getPackages(): Promise<MarketplacePackage[]> {
+  const now = Date.now();
+
+  // Return cached result if still valid
+  if (cachedPackages && (now - cacheTimestamp) < CACHE_TTL_MS) {
+    debug('Returning cached packages (%d items, age: %dms)', cachedPackages.length, now - cacheTimestamp);
+    return cachedPackages;
+  }
+
+  // Cache miss or expired - scan filesystem
+  debug('Cache miss or expired, scanning packages');
+  const builtIn = await scanBuiltInPackages();
+  const installed = await getInstalledPlugins();
+
+  // Merge: built-in packages take precedence, then installed plugins
+  const packageMap = new Map<string, MarketplacePackage>();
+
+  for (const pkg of [...builtIn, ...installed]) {
+    packageMap.set(pkg.name, pkg);
+  }
+
+  cachedPackages = Array.from(packageMap.values());
+  cacheTimestamp = now;
+
+  return cachedPackages;
+}
+
+function invalidateCache(): void {
+  debug('Invalidating marketplace cache');
+  cachedPackages = null;
+  cacheTimestamp = 0;
+}
+
 /**
  * GET /api/marketplace/packages
  * List all available packages (built-in + installed)
  */
-router.get('/packages', (req, res) => {
+router.get('/packages', async (req, res) => {
   try {
-    const builtIn = scanBuiltInPackages();
-    const installed = getInstalledPlugins();
-
-    // Merge: built-in packages take precedence, then installed plugins
-    const packageMap = new Map<string, MarketplacePackage>();
-
-    for (const pkg of [...builtIn, ...installed]) {
-      packageMap.set(pkg.name, pkg);
-    }
-
-    const packages = Array.from(packageMap.values());
+    const packages = await getPackages();
     debug('Returning %d packages', packages.length);
 
     return res.json(packages);
@@ -165,13 +194,12 @@ router.get('/packages', (req, res) => {
  * GET /api/marketplace/packages/:name
  * Get single package details
  */
-router.get('/packages/:name', (req, res) => {
+router.get('/packages/:name', async (req, res) => {
   try {
     const name = req.params.name;
-    const builtIn = scanBuiltInPackages();
-    const installed = getInstalledPlugins();
+    const packages = await getPackages();
 
-    const pkg = [...installed, ...builtIn].find((p) => p.name === name);
+    const pkg = packages.find((p) => p.name === name);
 
     if (!pkg) {
       return res.status(404).json({ error: 'Package not found' });
@@ -200,6 +228,9 @@ router.post('/install', requireRole('admin'), async (req, res) => {
     debug('Installing plugin from %s', repoUrl);
 
     const plugin = await installPlugin(repoUrl);
+
+    // ⚡ Bolt Optimization: Invalidate cache after install
+    invalidateCache();
 
     return res.status(201).json({
       success: true,
@@ -233,6 +264,9 @@ router.post('/uninstall/:name', requireRole('admin'), async (req, res) => {
 
     await uninstallPlugin(name);
 
+    // ⚡ Bolt Optimization: Invalidate cache after uninstall
+    invalidateCache();
+
     return res.json({ success: true, message: `Plugin ${name} uninstalled` });
   } catch (err: any) {
     debug('Uninstall error: %s', err);
@@ -251,6 +285,9 @@ router.post('/update/:name', requireRole('admin'), async (req, res) => {
     debug('Updating plugin %s', name);
 
     const plugin = await updatePlugin(name);
+
+    // ⚡ Bolt Optimization: Invalidate cache after update
+    invalidateCache();
 
     return res.json({
       success: true,

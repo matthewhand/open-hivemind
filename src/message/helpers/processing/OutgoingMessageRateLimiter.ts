@@ -36,7 +36,7 @@ export class OutgoingMessageRateLimiter {
     const entries = Array.from(this.byChannel.entries())
       .map(([key, timestamps]) => ({
         key,
-        lastTimestamp: timestamps.length > 0 ? Math.max(...timestamps) : 0,
+        lastTimestamp: timestamps.length > 0 ? timestamps.reduce((a, b) => Math.max(a, b), -Infinity) : 0,
       }))
       .sort((a, b) => a.lastTimestamp - b.lastTimestamp);
 
@@ -74,7 +74,7 @@ export class OutgoingMessageRateLimiter {
       return 0;
     }
 
-    const oldest = Math.min(...valid);
+    const oldest = valid.reduce((a, b) => Math.min(a, b), Infinity);
     const waitMs = windowMs - (now - oldest) + 250; // buffer
     const clamped = Math.max(250, waitMs);
     debug(`Backoff for ${channelId}: ${clamped}ms (count=${valid.length}/${maxPerWindow})`);

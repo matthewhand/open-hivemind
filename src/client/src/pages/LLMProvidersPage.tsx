@@ -1,7 +1,14 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useModal } from '../hooks/useModal';
-import { Card, Button, Badge, Alert, PageHeader, StatsCards, EmptyState, LoadingSpinner } from '../components/DaisyUI';
+import Card from '../components/DaisyUI/Card';
+import Button from '../components/DaisyUI/Button';
+import Badge from '../components/DaisyUI/Badge';
+import { Alert } from '../components/DaisyUI/Alert';
+import PageHeader from '../components/DaisyUI/PageHeader';
+import StatsCards from '../components/DaisyUI/StatsCards';
+import EmptyState from '../components/DaisyUI/EmptyState';
+import { LoadingSpinner } from '../components/DaisyUI/Loading';
 import SearchFilterBar from '../components/SearchFilterBar';
 import {
   Brain as BrainIcon,
@@ -64,11 +71,14 @@ const LLMProvidersPage: React.FC = () => {
   const fetchProfiles = useCallback(async () => {
     try {
       setLoading(true);
-      const [profilesRes, statusRes, globalRes] = await Promise.all([
+      const [profilesResult, statusResult, globalResult] = await Promise.allSettled([
         apiService.get('/api/config/llm-profiles'),
         apiService.get('/api/config/llm-status'),
         apiService.get('/api/config/global'),
       ]);
+      const profilesRes = profilesResult.status === 'fulfilled' ? profilesResult.value : {};
+      const statusRes = statusResult.status === 'fulfilled' ? statusResult.value : {};
+      const globalRes = globalResult.status === 'fulfilled' ? globalResult.value : {};
       setProfiles((profilesRes as any).llm || (profilesRes as any).profiles?.llm || []);
       setDefaultStatus(statusRes);
       const gs = (globalRes as any)._userSettings?.values || {};
@@ -190,10 +200,10 @@ const LLMProvidersPage: React.FC = () => {
       <PageHeader
         title="LLM Providers"
         description="Configure AI provider profiles and assign them to specific use cases."
-        icon={BrainIcon}
+        icon={<BrainIcon className="w-6 h-6" />}
         actions={
           <div className="flex gap-2">
-            <Button variant="ghost" onClick={fetchProfiles} disabled={loading}>
+            <Button variant="ghost" onClick={fetchProfiles} disabled={loading} aria-busy={loading}>
               <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} /> Refresh
             </Button>
             <Button variant="primary" onClick={handleAddProfile}>
@@ -257,7 +267,7 @@ const LLMProvidersPage: React.FC = () => {
                   setDefaultChatbotProfile(e.target.value);
                   await saveGlobal({ defaultChatbotProfile: e.target.value }).catch(() => {});
                 }}
-                disabled={loading}
+                disabled={loading} aria-busy={loading}
               >
                 <option value="">Use System Default</option>
                 {chatProfiles.map((p) => (
@@ -285,7 +295,7 @@ const LLMProvidersPage: React.FC = () => {
                   setWebuiIntelligenceProvider(e.target.value);
                   await saveGlobal({ webuiIntelligenceProvider: e.target.value }).catch(() => {});
                 }}
-                disabled={loading}
+                disabled={loading} aria-busy={loading}
               >
                 <option value="">None (Disabled)</option>
                 {chatProfiles.map((p) => (
@@ -312,7 +322,7 @@ const LLMProvidersPage: React.FC = () => {
                   setDefaultEmbeddingProvider(e.target.value);
                   await saveLlmConfig({ DEFAULT_EMBEDDING_PROVIDER: e.target.value }).catch(() => {});
                 }}
-                disabled={loading}
+                disabled={loading} aria-busy={loading}
               >
                 <option value="">None Selected</option>
                 {embeddingProfiles.map((p) => (

@@ -1,6 +1,13 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useEffect, useState } from 'react';
-import { Alert, Button, Card, Input, Select, Toggle, Loading, Textarea } from './DaisyUI';
+import { Alert } from './DaisyUI/Alert';
+import Button from './DaisyUI/Button';
+import Card from './DaisyUI/Card';
+import Input from './DaisyUI/Input';
+import Select from './DaisyUI/Select';
+import Toggle from './DaisyUI/Toggle';
+import { Loading } from './DaisyUI/Loading';
+import Textarea from './DaisyUI/Textarea';
 
 interface ConfigSchema {
   doc?: string;
@@ -190,7 +197,7 @@ const GlobalConfigSection: React.FC<GlobalConfigSectionProps> = ({ section }) =>
 
   if (loading) {return (
     <div className="flex flex-col items-center justify-center p-12 gap-4">
-      <span className="loading loading-infinity loading-lg text-primary" />
+      <span className="loading loading-infinity loading-lg text-primary" aria-hidden="true" />
       <span className="text-base-content/50">Loading settings...</span>
     </div>
   );}

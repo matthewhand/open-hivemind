@@ -150,7 +150,7 @@ router.post('/', (req: Request, res: Response) => {
             ? {
                 enabled: Boolean(guards.contentFilter.enabled),
                 strictness: ['low', 'medium', 'high'].includes(guards.contentFilter.strictness)
-                  ? guards.contentFilter.strictness as 'low' | 'medium' | 'high'
+                  ? (guards.contentFilter.strictness as 'low' | 'medium' | 'high')
                   : 'low',
                 ...(guards.contentFilter.blockedTerms &&
                 Array.isArray(guards.contentFilter.blockedTerms)
@@ -199,31 +199,34 @@ router.put('/:id', (req: Request, res: Response) => {
       guards && typeof guards === 'object'
         ? (Object.keys(guards) as Array<keyof typeof guards>)
             .filter((key) => !['__proto__', 'constructor', 'prototype'].includes(key))
-            .reduce((acc, key) => {
-              const existingValue =
-                profiles[profileIndex].guards[
-                  key as keyof (typeof profiles)[typeof profileIndex]['guards']
-                ];
-              const newValue = guards[key as keyof typeof guards];
-              if (
-                typeof newValue === 'object' &&
-                newValue !== null &&
-                typeof existingValue === 'object' &&
-                existingValue !== null
-              ) {
-                (acc as any)[key] = { ...existingValue, ...newValue };
-              } else {
-                (acc as any)[key] = newValue;
-              }
-              return acc;
-            }, {} as Record<string, unknown>)
+            .reduce(
+              (acc, key) => {
+                const existingValue =
+                  profiles[profileIndex].guards[
+                    key as keyof (typeof profiles)[typeof profileIndex]['guards']
+                  ];
+                const newValue = guards[key as keyof typeof guards];
+                if (
+                  typeof newValue === 'object' &&
+                  newValue !== null &&
+                  typeof existingValue === 'object' &&
+                  existingValue !== null
+                ) {
+                  (acc as any)[key] = { ...existingValue, ...newValue };
+                } else {
+                  (acc as any)[key] = newValue;
+                }
+                return acc;
+              },
+              {} as Record<string, unknown>
+            )
         : profiles[profileIndex].guards;
 
     const updatedProfile = {
       ...profiles[profileIndex],
       name: name && typeof name === 'string' ? name : profiles[profileIndex].name,
       description: description !== undefined ? description : profiles[profileIndex].description,
-      guards: safeGuards,
+      guards: safeGuards as any,
     };
 
     profiles[profileIndex] = updatedProfile;

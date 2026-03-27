@@ -305,7 +305,7 @@ export const LoadingModal: React.FC<Omit<BaseModalProps, 'children'> & {
       {...props}
     >
       <div className="text-center py-8">
-        <span className="loading loading-spinner loading-lg text-primary"></span>
+        <span className="loading loading-spinner loading-lg text-primary" aria-hidden="true"></span>
         <p className="mt-4 text-base-content/70">{message}</p>
       </div>
     </Modal>
@@ -344,7 +344,7 @@ export const InfoModal: React.FC<Omit<BaseModalProps, 'children'> & {
     >
       <div className="py-4">
         <div className="flex items-start gap-4">
-          <div className="text-4xl">{icon}</div>
+          <div className="text-4xl">{React.isValidElement(icon) ? icon : (typeof icon === 'function' || typeof icon === 'object' ? React.createElement(icon as any) : icon)}</div>
           <div className="flex-1">
             <p className="text-base mb-4">{message}</p>
             {details && (

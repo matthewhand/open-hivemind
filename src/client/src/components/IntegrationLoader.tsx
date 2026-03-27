@@ -67,14 +67,17 @@ export class IntegrationLoader {
       // Get list of integration directories
       const integrations = await this.getIntegrationDirectories();
 
-      for (const integrationId of integrations) {
+      const integrationPromises = integrations.map(async (integrationId) => {
         try {
-          const components = await this.loadIntegrationComponents(integrationId);
-          allComponents.push(...components);
+          return await this.loadIntegrationComponents(integrationId);
         } catch (error) {
-          console.warn(`Failed to load components for integration ${integrationId}:`, error);
+          Logger.warn(`Failed to load components for integration ${integrationId}:`, error);
+          return [];
         }
-      }
+      });
+
+      const results = await Promise.all(integrationPromises);
+      results.forEach((components) => allComponents.push(...components));
     } catch (error) {
       console.error('Failed to discover integrations:', error);
     }
@@ -111,24 +114,33 @@ export class IntegrationLoader {
       const manifest = await this.loadIntegrationManifest(integrationId);
 
       if (manifest.ui?.components) {
-        for (const [componentId, componentInfo] of Object.entries(manifest.ui.components)) {
-          try {
-            const component = await this.loadComponent(integrationId, componentInfo.path);
+        const componentPromises = Object.entries(manifest.ui.components).map(
+          async ([componentId, componentInfo]) => {
+            try {
+              const component = await this.loadComponent(integrationId, componentInfo.path);
 
-            components.push({
-              id: `${integrationId}.${componentId}`,
-              name: componentInfo.name,
-              description: componentInfo.description,
-              category: manifest.category,
-              component,
-              enabled: manifest.enabled,
-              requiredProviders: manifest.requiredProviders,
-              icon: componentInfo.icon,
-            });
-          } catch (componentError) {
-            console.warn(`Failed to load component ${componentId} for integration ${integrationId}:`, componentError);
-          }
-        }
+              return {
+                id: `${integrationId}.${componentId}`,
+                name: componentInfo.name,
+                description: componentInfo.description,
+                category: manifest.category,
+                component,
+                enabled: manifest.enabled,
+                requiredProviders: manifest.requiredProviders,
+                icon: componentInfo.icon,
+              };
+            } catch (componentError) {
+              Logger.warn(
+                `Failed to load component ${componentId} for integration ${integrationId}:`,
+                componentError,
+              );
+              return null;
+            }
+          },
+        );
+
+        const loadedResults = await Promise.all(componentPromises);
+        components.push(...loadedResults.filter((c): c is IntegrationUIComponent => c !== null));
       }
 
       // If no manifest exists, try to auto-discover components
@@ -209,23 +221,27 @@ export class IntegrationLoader {
         'Status',
       ];
 
-      for (const componentPath of commonComponentPaths) {
+      const discoveryPromises = commonComponentPaths.map(async (componentPath) => {
         try {
           const component = await this.loadComponent(integrationId, componentPath);
 
-          components.push({
+          return {
             id: `${integrationId}.${componentPath.split('/').pop()}`,
             name: `${this.capitalizeFirst(integrationId)} ${componentPath.split('/').pop()}`,
             description: `${this.capitalizeFirst(integrationId)} ${componentPath.split('/').pop()} component`,
             category: 'bot',
             component,
             enabled: true,
-          });
+          };
         } catch (_componentError) {
           // Component doesn't exist, skip it
           logger.debug(`Component ${componentPath} not found for integration ${integrationId}`);
+          return null;
         }
-      }
+      });
+
+      const discoveredResults = await Promise.all(discoveryPromises);
+      components.push(...discoveredResults.filter((c): c is IntegrationUIComponent => c !== null));
 
     } catch (error) {
       console.warn(`Failed to auto-discover components for integration ${integrationId}:`, error);
@@ -303,6 +319,29 @@ export class IntegrationLoader {
 /**
  * Higher-order component for lazy loading integration components with error handling
  */
+// Create a Context for Dependency Injection
+const IntegrationContext = React.createContext<IntegrationLoader | null>(null);
+
+export function IntegrationProvider({ children, loader }: { children: React.ReactNode, loader?: IntegrationLoader }) {
+  // We allow passing an explicit loader instance, or default to a new one
+  const [loaderInstance] = React.useState(() => loader || new IntegrationLoader());
+
+  return (
+    <IntegrationContext.Provider value={loaderInstance}>
+      {children}
+    </IntegrationContext.Provider>
+  );
+}
+
+export function useIntegrationLoader(): IntegrationLoader {
+  const context = React.useContext(IntegrationContext);
+  if (!context) {
+    // For backwards compatibility and places where it's not wrapped in Provider yet
+    return IntegrationLoader.getInstance();
+  }
+  return context;
+}
+
 export function LazyIntegrationComponent({
   integrationId,
   componentPath,
@@ -314,8 +353,10 @@ export function LazyIntegrationComponent({
   fallback?: React.ReactNode;
   onError?: (error: Error) => React.ReactNode;
 }) {
+  const loader = useIntegrationLoader();
+
   const LazyComponent = lazy(() =>
-    IntegrationLoader.getInstance()
+    loader
       .loadComponent(integrationId, componentPath)
       .catch(error => {
         console.error(`Failed to load integration component ${integrationId}.${componentPath}:`, error);
@@ -337,6 +378,7 @@ export function LazyIntegrationComponent({
  * Hook for using integration components in React components
  */
 export function useIntegrationComponents() {
+  const loader = useIntegrationLoader();
   const [components, setComponents] = React.useState<IntegrationUIComponent[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<Error | null>(null);
@@ -346,7 +388,6 @@ export function useIntegrationComponents() {
       try {
         setLoading(true);
         setError(null);
-        const loader = IntegrationLoader.getInstance();
         const discoveredComponents = await loader.discoverIntegrations();
         setComponents(discoveredComponents);
       } catch (err) {
@@ -357,13 +398,12 @@ export function useIntegrationComponents() {
     };
 
     loadComponents();
-  }, []);
+  }, [loader]);
 
   const refresh = React.useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
-      const loader = IntegrationLoader.getInstance();
       const refreshedComponents = await loader.refreshIntegrations();
       setComponents(refreshedComponents);
     } catch (err) {
@@ -371,7 +411,7 @@ export function useIntegrationComponents() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [loader]);
 
   const getComponentsByCategory = React.useCallback((category: IntegrationUIComponent['category']) => {
     return components.filter(c => c.category === category);

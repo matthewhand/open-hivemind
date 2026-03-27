@@ -226,7 +226,7 @@ Context: The app currently fails to render a website. This checklist captures ro
 - Acceptance: `docker build` succeeds; container serves UI and healthcheck passes.
 
 3) Standardize ports across code, docs, and compose
-- Problem: Code defaulted to 3028; Docker and docs referenced 3000; README mentioned 5005 in places. Led to “nothing there” when visiting the wrong port.
+- Problem: Code defaults to 3028; Docker and docs reference 3000; README mentions 5005 in places. Leads to “nothing there” when visiting the wrong port.
 - Fix:
   - Choose a default port (e.g., 3028) and make Docker EXPOSE/healthcheck, compose, and docs match. Or switch app default to 3000 and update `.env`/tests/docs consistently.
 - Files: `Dockerfile`, `docker-compose.yml`, `README.md`, `.env`

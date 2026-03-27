@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Search, X } from 'lucide-react';
 import Input from './DaisyUI/Input';
 import Select, { SelectOption } from './DaisyUI/Select';
@@ -32,23 +32,45 @@ export const SearchFilterBar: React.FC<SearchFilterBarProps> = ({
   onClear,
   children
 }) => {
-  const handleClearSearch = () => {
+  const [localSearch, setLocalSearch] = useState(searchValue);
+
+  // Sync local state when external value changes
+  useEffect(() => {
+    setLocalSearch(searchValue);
+  }, [searchValue]);
+
+  // Debounce the onSearchChange callback
+  // ⚡ Bolt Optimization: Added debouncing to search input to reduce expensive re-renders and re-filtering across lists
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      if (localSearch !== searchValue) {
+        onSearchChange(localSearch);
+      }
+    }, 300);
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [localSearch, searchValue]);
+
+  const handleClearSearch = useCallback(() => {
+    setLocalSearch('');
     onSearchChange('');
     if (onClear) onClear();
-  };
+  }, [onSearchChange, onClear]);
 
   return (
     <div className={`flex flex-col sm:flex-row gap-4 justify-between items-center bg-base-100 p-4 rounded-lg shadow-sm border border-base-200 ${className}`}>
       <div className="w-full sm:flex-1">
         <Input
           placeholder={searchPlaceholder}
-          value={searchValue}
-          onChange={(e) => onSearchChange(e.target.value)}
+          value={localSearch}
+          onChange={(e) => setLocalSearch(e.target.value)}
           prefix={<Search className="w-4 h-4 text-base-content/50" />}
           className="pl-10 pr-10 w-full"
           size="sm"
           suffix={
-            searchValue ? (
+            localSearch ? (
               <button
                 onClick={handleClearSearch}
                 className="btn btn-ghost btn-xs btn-circle pointer-events-auto relative z-10 animate-in fade-in zoom-in duration-200"

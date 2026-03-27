@@ -1,6 +1,8 @@
 import messageConfig from '@config/messageConfig';
 import type { IMessage } from '@message/interfaces/IMessage';
 
+const debugLogger = require('debug')('app:message:shouldProcessMessage');
+
 /**
  * Returns the minimum interval in milliseconds for processing messages.
  * If the configuration key MESSAGE_MIN_INTERVAL_MS is not set, defaults to 1000.
@@ -28,7 +30,7 @@ function getDefaultChannelId(): string {
       return discordChannel;
     }
   } catch (error) {
-    debug('Error getting discord config for default channel:', error);
+    debugLogger('Error getting discord config for default channel:', error);
   }
 
   try {
@@ -39,7 +41,7 @@ function getDefaultChannelId(): string {
       return slackChannel;
     }
   } catch (error) {
-    debug('Error getting slack config for default channel:', error);
+    debugLogger('Error getting slack config for default channel:', error);
   }
 
   return '';

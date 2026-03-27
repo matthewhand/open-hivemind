@@ -28,7 +28,3 @@ MemoryManager — Mem0Provider, Mem4aiProvider, MemVaultProvider exist but none 
 AnomalyDetectionService.test.ts — disabled (.disabled suffix); anomaly detection has zero test coverage
 patch*.js files in repo root (patch2.js–patch6.js) — leftover one-off migration scripts committed to main; should be removed or moved to scripts/migrations/
 E2E screenshot specs — ~30 screenshot-only spec files in tests/e2e/; they inflate CI time with no assertion value beyond page renders; should be consolidated or gated behind a --screenshots flag
-Optimistic UI Persistence — failed ChatPage messages lost on session refresh; should persist to localStorage/indexedDB
-Autonomous API Retry — ChatPage manual retry only; should monitor 'online' events and auto-flush message queue with backoff
-Offline Visibility — no global connection status in ChatPage; user-visible 'Offline' banner missing
-Global API Resilience — apiService lacks global auto-retry for transient 5xx/network errors; each consumer reimplements basic retry manually

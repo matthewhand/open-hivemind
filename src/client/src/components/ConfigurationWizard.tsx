@@ -1,6 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect } from 'react';
-import { Card, Button, Input, Select, Alert, Badge } from './DaisyUI';
+import Card from './DaisyUI/Card';
+import Button from './DaisyUI/Button';
+import Input from './DaisyUI/Input';
+import Select from './DaisyUI/Select';
+import { Alert } from './DaisyUI/Alert';
+import Badge from './DaisyUI/Badge';
 import {
   ArrowRightIcon,
   ArrowLeftIcon,
@@ -380,7 +385,7 @@ const ConfigurationWizard: React.FC = () => {
           Back
         </Button>
         {activeStep === steps.length - 1 ? (
-          <Button onClick={handleDeploy} disabled={loading} variant="primary" className="flex items-center gap-2">
+          <Button onClick={handleDeploy} disabled={loading} aria-busy={loading} variant="primary" className="flex items-center gap-2">
             <CloudArrowUpIcon className="w-4 h-4" />
             {loading ? 'Deploying...' : 'Deploy Bot'}
           </Button>

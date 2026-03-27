@@ -250,7 +250,7 @@ export const MultiTenantProvider: React.FC<MultiTenantProviderProps> = ({ childr
       <AnimatedBox animation="fade-in" duration={300}>
         <div className="min-h-screen flex items-center justify-center bg-base-200">
           <div className="flex flex-col items-center gap-4">
-            <span className="loading loading-spinner loading-lg text-primary"></span>
+            <span className="loading loading-spinner loading-lg text-primary" aria-hidden="true"></span>
             <p className="text-base-content/70">Setting up your organization...</p>
           </div>
         </div>

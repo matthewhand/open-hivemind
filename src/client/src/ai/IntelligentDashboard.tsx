@@ -300,6 +300,7 @@ export const IntelligentDashboard: React.FC = () => {
                 className="btn btn-circle btn-ghost btn-sm"
                 onClick={fetchData}
                 disabled={isLoading}
+                aria-label="Refresh"
               >
                 <ArrowPathIcon className={`w-5 h-5 ${isLoading ? 'animate-spin' : ''}`} />
               </button>
@@ -407,7 +408,7 @@ export const IntelligentDashboard: React.FC = () => {
           </h3>
           {isLoading ? (
             <div className="flex justify-center p-8">
-              <span className="loading loading-spinner loading-lg text-primary"></span>
+              <span className="loading loading-spinner loading-lg text-primary" aria-hidden="true"></span>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -433,12 +434,14 @@ export const IntelligentDashboard: React.FC = () => {
                         <button
                           className={`btn btn-ghost btn-xs btn-square ${state.userFeedback[recommendation.id] === 'liked' ? 'text-primary' : ''}`}
                           onClick={() => handleRecommendationFeedback(recommendation.id, 'liked')}
+                          aria-label="Like recommendation"
                         >
                           <HandThumbUpIcon className="w-4 h-4" />
                         </button>
                         <button
                           className={`btn btn-ghost btn-xs btn-square ${state.userFeedback[recommendation.id] === 'disliked' ? 'text-error' : ''}`}
                           onClick={() => handleRecommendationFeedback(recommendation.id, 'disliked')}
+                          aria-label="Dislike recommendation"
                         >
                           <HandThumbDownIcon className="w-4 h-4" />
                         </button>

@@ -1,14 +1,12 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect } from 'react';
-import {
-  Card,
-  Loading,
-  Badge,
-  Alert,
-  Accordion,
-  Divider,
-  Progress,
-} from './DaisyUI';
+import Card from './DaisyUI/Card';
+import { Loading } from './DaisyUI/Loading';
+import Badge from './DaisyUI/Badge';
+import { Alert } from './DaisyUI/Alert';
+import Accordion from './DaisyUI/Accordion';
+import Divider from './DaisyUI/Divider';
+import { Progress } from './DaisyUI/Loading';
 import {
   CheckCircle,
   AlertTriangle,
@@ -187,7 +185,7 @@ const SystemHealth: React.FC<SystemHealthProps> = ({
       <Card>
         <Card.Body>
           <div className="flex justify-center items-center py-8">
-            <span className="loading loading-spinner loading-lg"></span>
+            <span className="loading loading-spinner loading-lg" aria-hidden="true"></span>
             <span className="ml-2 text-base-content/70">
               Loading system health data...
             </span>
@@ -342,7 +340,7 @@ const SystemHealth: React.FC<SystemHealthProps> = ({
                 >
                   {apiHealth?.overall.status || 'Unknown'}
                 </Badge>
-                {apiHealth && (
+                {apiHealth?.overall?.stats && (
                   <span className="text-sm">
                     {apiHealth.overall.stats.online} / {apiHealth.overall.stats.total} Online
                   </span>

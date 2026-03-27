@@ -7,7 +7,9 @@ import {
   CodeBracketIcon,
   ListBulletIcon,
 } from '@heroicons/react/24/outline';
-import { Breadcrumbs, Alert, Modal } from '../components/DaisyUI';
+import Breadcrumbs from '../components/DaisyUI/Breadcrumbs';
+import { Alert } from '../components/DaisyUI/Alert';
+import Modal from '../components/DaisyUI/Modal';
 
 interface MCPTool {
   id: string;
@@ -281,7 +283,7 @@ const MCPToolsPage: React.FC = () => {
   if (loading) {
     return (
       <div className="p-6 text-center">
-        <span className="loading loading-spinner loading-lg"></span>
+        <span className="loading loading-spinner loading-lg" aria-hidden="true"></span>
         <p className="mt-2">Loading MCP tools...</p>
       </div>
     );

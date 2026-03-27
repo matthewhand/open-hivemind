@@ -111,6 +111,15 @@ const DataTable = <T extends Record<string, any>>({
 
   const totalPages = Math.ceil(filteredData.length / pageSize);
 
+  // Prevent out-of-bounds page state when filters reduce total pages
+  React.useEffect(() => {
+    if (totalPages > 0 && currentPage > totalPages) {
+      setCurrentPage(1);
+    } else if (totalPages === 0 && currentPage !== 1) {
+      setCurrentPage(1);
+    }
+  }, [totalPages, currentPage]);
+
   // Infinite Scroll Observer
   React.useEffect(() => {
     if (!isInfiniteScroll || !loadMoreRef.current) return;
@@ -389,7 +398,7 @@ const DataTable = <T extends Record<string, any>>({
 
       {isInfiniteScroll && currentPage < totalPages && (
         <div ref={loadMoreRef} className="py-8 flex justify-center">
-          <span className="loading loading-spinner loading-md text-primary"></span>
+          <span className="loading loading-spinner loading-md text-primary" aria-hidden="true"></span>
         </div>
       )}
 

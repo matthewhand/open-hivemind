@@ -793,9 +793,11 @@ const configPath = path.join(configDir, 'providers/message.json');
 try {
   messageConfig.loadFile(configPath);
 } catch (error: any) {
-  // Use debug-style logging to avoid noisy console.* during tests
-  debug(`Warning: Could not load message config from ${configPath}, using defaults`);
-  debug('Error loading config: %s', error?.message || String(error));
+  if (error.code !== 'ENOENT') {
+    debug(`Error reading message config from ${configPath}:`, error.message);
+  } else {
+    debug(`Message config file not found at ${configPath}, using environment variables and defaults`);
+  }
 }
 
 // Apply env overrides with strict parsing and normalization, so malformed JSON throws here

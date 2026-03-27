@@ -13,7 +13,15 @@ import {
   Clock,
   DownloadCloud as DownloadIcon
 } from 'lucide-react';
-import { Alert, ToastNotification, Modal, Button, Input, Textarea, PageHeader, EmptyState, StatsCards } from '../components/DaisyUI';
+import { Alert } from '../components/DaisyUI/Alert';
+import ToastNotification from '../components/DaisyUI/ToastNotification';
+import Modal from '../components/DaisyUI/Modal';
+import Button from '../components/DaisyUI/Button';
+import Input from '../components/DaisyUI/Input';
+import Textarea from '../components/DaisyUI/Textarea';
+import PageHeader from '../components/DaisyUI/PageHeader';
+import EmptyState from '../components/DaisyUI/EmptyState';
+import StatsCards from '../components/DaisyUI/StatsCards';
 import SearchFilterBar from '../components/SearchFilterBar';
 import { apiService } from '../services/api';
 
@@ -314,7 +322,7 @@ const ExportPage: React.FC = () => {
                 {loading ? (
                   <tr>
                     <td colSpan={5} className="text-center py-8">
-                      <span className="loading loading-spinner loading-md"></span>
+                      <span className="loading loading-spinner loading-md" aria-hidden="true"></span>
                     </td>
                   </tr>
                 ) : backups.length === 0 ? (
@@ -503,7 +511,9 @@ const ExportPage: React.FC = () => {
         <div className="toast toast-top toast-end">
           <div className={`alert ${toast.type === 'success' ? 'alert-success' : 'alert-error'}`}>
             <span>{toast.title ? `${toast.title}: ` : ''}{toast.message}</span>
-            <button onClick={() => setToast(null)} className="btn btn-sm btn-ghost">✕</button>
+            <button onClick={() => setToast(null)} className="btn btn-sm btn-ghost" aria-label="Close modal">
+              ✕
+            </button>
           </div>
         </div>
       )}

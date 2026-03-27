@@ -1,14 +1,12 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect } from 'react';
-import {
-  Card,
-  Badge,
-  Button,
-  Input,
-  Select,
-  Modal,
-  Loading,
-} from './DaisyUI';
+import Card from './DaisyUI/Card';
+import Badge from './DaisyUI/Badge';
+import Button from './DaisyUI/Button';
+import Input from './DaisyUI/Input';
+import Select from './DaisyUI/Select';
+import Modal from './DaisyUI/Modal';
+import { Loading } from './DaisyUI/Loading';
 import {
   PlusIcon,
   PencilIcon,
@@ -186,7 +184,7 @@ const ApiEndpointConfig: React.FC<ApiEndpointConfigProps> = ({ onEndpointsChange
     return (
       <Card>
         <div className="flex items-center gap-2">
-          <span className="loading loading-spinner loading-md"></span>
+          <span className="loading loading-spinner loading-md" aria-hidden="true"></span>
           <p>Loading endpoints...</p>
         </div>
       </Card>
@@ -241,6 +239,7 @@ const ApiEndpointConfig: React.FC<ApiEndpointConfigProps> = ({ onEndpointsChange
                       size="sm"
                       variant="ghost"
                       className="btn-circle"
+                      aria-label={endpoint.enabled ? 'Disable endpoint' : 'Enable endpoint'}
                       onClick={() => handleToggle(endpoint.id, !endpoint.enabled)}
                     >
                       {endpoint.enabled ? (
@@ -253,6 +252,7 @@ const ApiEndpointConfig: React.FC<ApiEndpointConfigProps> = ({ onEndpointsChange
                       size="sm"
                       variant="ghost"
                       className="btn-circle"
+                      aria-label="Edit endpoint"
                       onClick={() => handleOpenDialog(endpoint)}
                     >
                       <PencilIcon className="w-4 h-4" />
@@ -261,6 +261,7 @@ const ApiEndpointConfig: React.FC<ApiEndpointConfigProps> = ({ onEndpointsChange
                       size="sm"
                       variant="ghost"
                       className="btn-circle text-error"
+                      aria-label="Delete endpoint"
                       onClick={() => handleDelete(endpoint.id)}
                     >
                       <TrashIcon className="w-4 h-4" />

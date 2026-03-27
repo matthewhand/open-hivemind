@@ -353,7 +353,7 @@ export const ThreeJSNetwork: React.FC<ThreeJSNetworkProps> = ({
         }}
       >
         <div className="flex flex-col items-center gap-2">
-          <span className="loading loading-spinner loading-lg"></span>
+          <span className="loading loading-spinner loading-lg" aria-hidden="true"></span>
           <p>Loading 3D Network Visualization...</p>
         </div>
       </AnimatedBox>

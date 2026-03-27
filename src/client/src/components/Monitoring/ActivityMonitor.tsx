@@ -1,6 +1,12 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect } from 'react';
-import { Card, Badge, Button, DataTable, LoadingSpinner, EmptyState, StatsCards } from '../DaisyUI';
+import Card from '../DaisyUI/Card';
+import Badge from '../DaisyUI/Badge';
+import Button from '../DaisyUI/Button';
+import DataTable from '../DaisyUI/DataTable';
+import { LoadingSpinner } from '../DaisyUI/Loading';
+import EmptyState from '../DaisyUI/EmptyState';
+import StatsCards from '../DaisyUI/StatsCards';
 import SearchFilterBar from '../SearchFilterBar';
 import { useWebSocket } from '../../hooks/useWebSocket';
 import { apiService, ActivityEvent, ActivityResponse } from '../../services/api';
@@ -248,7 +254,7 @@ const ActivityMonitor: React.FC = () => {
           size="sm"
           variant="ghost"
           onClick={fetchActivity}
-          disabled={loading}
+          disabled={loading} aria-busy={loading}
         >
           <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
           Refresh

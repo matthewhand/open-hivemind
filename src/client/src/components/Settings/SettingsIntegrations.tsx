@@ -1,6 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect, useCallback } from 'react';
-import { Alert, Badge, Button, Card, Toggle } from '../DaisyUI';
+import { Alert } from '../DaisyUI/Alert';
+import Badge from '../DaisyUI/Badge';
+import Button from '../DaisyUI/Button';
+import Card from '../DaisyUI/Card';
+import Toggle from '../DaisyUI/Toggle';
 import { Puzzle, CheckCircle, XCircle, AlertTriangle } from 'lucide-react';
 
 interface Integration {
@@ -124,7 +128,7 @@ const SettingsIntegrations: React.FC = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <span className="loading loading-spinner loading-lg"></span>
+        <span className="loading loading-spinner loading-lg" aria-hidden="true"></span>
       </div>
     );
   }

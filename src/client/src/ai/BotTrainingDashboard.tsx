@@ -305,10 +305,10 @@ export const BotTrainingDashboard: React.FC = () => {
                     <div className="flex gap-2">
                       {session.status === 'training' && (
                         <>
-                          <button className="btn btn-square btn-sm btn-ghost">
+                          <button className="btn btn-square btn-sm btn-ghost" aria-label="Pause training">
                             <PauseIcon className="w-5 h-5" />
                           </button>
-                          <button className="btn btn-square btn-sm btn-ghost text-error">
+                          <button className="btn btn-square btn-sm btn-ghost text-error" aria-label="Stop training">
                             <XCircleIcon className="w-5 h-5" />
                           </button>
                         </>

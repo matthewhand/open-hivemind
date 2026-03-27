@@ -1,9 +1,12 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect } from 'react';
-import { Badge, Alert, Button, Modal } from '../DaisyUI';
+import Badge from '../DaisyUI/Badge';
+import { Alert } from '../DaisyUI/Alert';
+import Button from '../DaisyUI/Button';
+import Modal from '../DaisyUI/Modal';
+import AdminPageLayout from './AdminPageLayout';
 import {
   CpuChipIcon,
-  ArrowPathIcon,
   PencilIcon,
   CheckCircleIcon,
   ExclamationCircleIcon,
@@ -94,29 +97,15 @@ const BotListManager: React.FC = () => {
     return <span>{String(value)}</span>;
   };
 
-  if (loading) {return <div className="flex justify-center items-center min-h-[200px]"><span className="loading loading-spinner loading-lg"></span></div>;}
-
   return (
-    <div className="p-6">
-      <div className="flex justify-between items-center mb-6">
-        <div>
-          <h2 className="text-2xl font-bold">Configured Bots</h2>
-          <p className="text-base-content/60">
-                        View and manage all bots configured via environment variables or JSON files.
-          </p>
-        </div>
-        <div className="flex gap-2">
-          <Button variant="ghost" onClick={fetchBots} startIcon={<ArrowPathIcon className="w-5 h-5" />}>
-                        Refresh
-          </Button>
-        </div>
-      </div>
-
-      {error && (
-        <div className="mb-4">
-          <Alert status="error" message={error} onClose={() => setError(null)} />
-        </div>
-      )}
+    <AdminPageLayout
+      title="Configured Bots"
+      description="View and manage all bots configured via environment variables or JSON files."
+      onRefresh={fetchBots}
+      error={error}
+      onErrorClose={() => setError(null)}
+      loading={loading}
+    >
 
       {warnings.length > 0 && (
         <div className="mb-4 space-y-2">
@@ -182,6 +171,7 @@ const BotListManager: React.FC = () => {
                       variant="ghost"
                       onClick={() => handleViewBot(bot)}
                       startIcon={<PencilIcon className="w-4 h-4" />}
+                      aria-label={`View ${bot.name}`}
                     >
                                             View
                     </Button>
@@ -226,7 +216,7 @@ const BotListManager: React.FC = () => {
           </div>
         )}
       </Modal>
-    </div>
+    </AdminPageLayout>
   );
 };
 

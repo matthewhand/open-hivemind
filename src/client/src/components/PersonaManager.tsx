@@ -1,14 +1,12 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect } from 'react';
-import {
-  Card,
-  Button,
-  ModalForm,
-  Input,
-  Textarea,
-  Alert,
-  DataTable,
-} from './DaisyUI';
+import Card from './DaisyUI/Card';
+import Button from './DaisyUI/Button';
+import ModalForm from './DaisyUI/ModalForm';
+import Input from './DaisyUI/Input';
+import Textarea from './DaisyUI/Textarea';
+import { Alert } from './DaisyUI/Alert';
+import DataTable from './DaisyUI/DataTable';
 import {
   PlusIcon,
   PencilIcon,
@@ -172,7 +170,7 @@ const PersonaManager: React.FC = () => {
   };
 
   if (loading) {
-    return <div className="flex justify-center items-center min-h-[200px]"><span className="loading loading-spinner loading-lg"></span></div>;
+    return <div className="flex justify-center items-center min-h-[200px]"><span className="loading loading-spinner loading-lg" aria-hidden="true"></span></div>;
   }
 
   const columns = [

@@ -1,6 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars, react-refresh/only-export-components, no-empty, no-case-declarations */
 import React, { createContext, useContext, useState } from 'react';
-import { Card, Badge, Button, LoadingSpinner } from '../components/DaisyUI';
+import Card from '../components/DaisyUI/Card';
+import Badge from '../components/DaisyUI/Badge';
+import Button from '../components/DaisyUI/Button';
+import { LoadingSpinner } from '../components/DaisyUI/Loading';
 import { LanguageIcon, GlobeAltIcon } from '@heroicons/react/24/outline';
 
 type Language = 'en' | 'es' | 'fr' | 'de' | 'zh';
@@ -90,6 +93,7 @@ export const I18nProvider: React.FC<{ children: React.ReactNode }> = ({ children
         <Button
           variant="ghost"
           className="btn-circle bg-base-100 shadow-lg border border-base-200"
+          aria-label="Select language"
         >
           {loading ? <LoadingSpinner size="xs" /> : <GlobeAltIcon className="w-6 h-6" />}
         </Button>

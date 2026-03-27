@@ -1,6 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { PlusIcon, PencilIcon, TrashIcon, ServerStackIcon } from '@heroicons/react/24/outline';
-import { Button, Modal, Card, Alert, Badge } from '../DaisyUI';
+import Button from '../DaisyUI/Button';
+import Modal from '../DaisyUI/Modal';
+import Card from '../DaisyUI/Card';
+import { Alert } from '../DaisyUI/Alert';
+import Badge from '../DaisyUI/Badge';
 
 interface McpServerConfig {
     name: string;
@@ -149,7 +153,7 @@ const MCPServerProfileManager: React.FC = () => {
   if (loading) {
     return (
       <div className="flex justify-center items-center py-12">
-        <span className="loading loading-spinner loading-lg"></span>
+        <span className="loading loading-spinner loading-lg" aria-hidden="true"></span>
       </div>
     );
   }

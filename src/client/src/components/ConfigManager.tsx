@@ -1,6 +1,15 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState } from 'react';
-import { Card, Badge, Button, Input, Select, Modal, Alert, Toggle, Tooltip, Loading } from './DaisyUI';
+import Card from './DaisyUI/Card';
+import Badge from './DaisyUI/Badge';
+import Button from './DaisyUI/Button';
+import Input from './DaisyUI/Input';
+import Select from './DaisyUI/Select';
+import Modal from './DaisyUI/Modal';
+import { Alert } from './DaisyUI/Alert';
+import Toggle from './DaisyUI/Toggle';
+import Tooltip from './DaisyUI/Tooltip';
+import { Loading } from './DaisyUI/Loading';
 import {
   ArrowPathIcon,
   TrashIcon,
@@ -130,6 +139,7 @@ const ConfigManager: React.FC = () => {
                   variant="ghost"
                   size="sm"
                   className="btn-circle"
+                  aria-label="Refresh configurations"
                   onClick={() => console.log('Refresh configs')}
                 >
                   <ArrowPathIcon className="w-5 h-5" />
@@ -218,6 +228,7 @@ const ConfigManager: React.FC = () => {
                         variant="ghost"
                         size="sm"
                         className="btn-circle text-error"
+                        aria-label="Delete configuration"
                         onClick={(e) => {
                           e.stopPropagation();
                           handleDeleteConfig(config);

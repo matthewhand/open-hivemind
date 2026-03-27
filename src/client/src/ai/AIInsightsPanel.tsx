@@ -485,6 +485,7 @@ export const AIInsightsPanel: React.FC<AIInsightsPanelProps> = ({
                 <button
                   className="btn btn-ghost btn-sm btn-circle"
                   onClick={() => toggleInsightExpansion(insight.id)}
+                  aria-label="Toggle insight details"
                 >
                   {expandedInsights.has(insight.id) ? (
                     <ChevronUpIcon className="w-5 h-5" />

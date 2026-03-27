@@ -11,7 +11,7 @@ import {
   MESSAGE_PROVIDER_CONFIGS,
   LLM_PROVIDER_CONFIGS,
 } from '../../types/bot';
-import { Button } from '../DaisyUI';
+import Button from '../DaisyUI/Button';
 import { X as XIcon } from 'lucide-react';
 import { ProviderConfigForm } from '../ProviderConfigForm';
 import type { ProviderConfigSchema } from '../../provider-configs';
@@ -88,21 +88,21 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
 
     let isActive = true;
 
-    apiService
-      .get('/api/config/global')
-      .then((config: any) => {
-        if (!isActive) {
-          return;
-        }
+    const fetchConfig = async () => {
+      try {
+        const config: any = await apiService.get('/api/config/global');
+        if (!isActive) return;
 
         const models = config?.openai?.values?.OPENAI_EMBEDDING_MODELS;
         setOpenAiEmbeddingModels(Array.isArray(models) ? models.filter((value): value is string => typeof value === 'string' && value.trim() !== '') : []);
-      })
-      .catch(() => {
+      } catch (error) {
         if (isActive) {
           setOpenAiEmbeddingModels([]);
         }
-      });
+      }
+    };
+
+    fetchConfig();
 
     return () => {
       isActive = false;
@@ -328,133 +328,6 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
     }
   };
 
-  const renderField = (field: FieldConfig) => {
-    const error = errors[field.name];
-    const value = formData[field.name] || '';
-
-    const fieldClasses = `
-      w-full
-      ${error ? 'input-error' : ''}
-      ${field.type === 'textarea' ? 'textarea' : 'input'}
-      input-bordered
-    `;
-
-    switch (field.type) {
-      case 'password':
-        return (
-          <div key={field.name}>
-            <label className="label">
-              <span className="label-text font-medium">{field.label}</span>
-              {field.required && <span className="label-text-alt text-error">*</span>}
-            </label>
-            <input
-              type="password"
-              className={fieldClasses}
-              placeholder={field.placeholder}
-              value={value}
-              onChange={(e) => handleFieldChange(field.name, e.target.value)}
-            />
-            {error && <label className="label"><span className="label-text-alt text-error">{error}</span></label>}
-          </div>
-        );
-
-      case 'number':
-        return (
-          <div key={field.name}>
-            <label className="label">
-              <span className="label-text font-medium">{field.label}</span>
-              {field.required && <span className="label-text-alt text-error">*</span>}
-            </label>
-            <input
-              type="number"
-              className={fieldClasses}
-              placeholder={field.placeholder}
-              value={value}
-              onChange={(e) => handleFieldChange(field.name, e.target.value)}
-              min={field.validation?.min}
-              max={field.validation?.max}
-              step={field.name === 'temperature' ? '0.1' : '1'}
-            />
-            {error && <label className="label"><span className="label-text-alt text-error">{error}</span></label>}
-          </div>
-        );
-
-      case 'select':
-        return (
-          <div key={field.name}>
-            <label className="label">
-              <span className="label-text font-medium">{field.label}</span>
-              {field.required && <span className="label-text-alt text-error">*</span>}
-            </label>
-            <select
-              className={`${fieldClasses} select`}
-              value={value}
-              onChange={(e) => handleFieldChange(field.name, e.target.value)}
-            >
-              <option value="">Select {field.label.toLowerCase()}</option>
-              {field.options?.map(option => (
-                <option key={option.value} value={option.value}>{option.label}</option>
-              ))}
-            </select>
-            {error && <label className="label"><span className="label-text-alt text-error">{error}</span></label>}
-          </div>
-        );
-
-      case 'textarea':
-        return (
-          <div key={field.name}>
-            <label className="label">
-              <span className="label-text font-medium">{field.label}</span>
-              {field.required && <span className="label-text-alt text-error">*</span>}
-            </label>
-            <textarea
-              className={fieldClasses}
-              placeholder={field.placeholder}
-              value={value}
-              onChange={(e) => handleFieldChange(field.name, e.target.value)}
-              rows={4}
-            />
-            {error && <label className="label"><span className="label-text-alt text-error">{error}</span></label>}
-          </div>
-        );
-
-      case 'checkbox':
-        return (
-          <div key={field.name} className="form-control">
-            <label className="label cursor-pointer">
-              <span className="label-text font-medium">{field.label}</span>
-              <input
-                type="checkbox"
-                className="toggle toggle-primary"
-                checked={!!value}
-                onChange={(e) => handleFieldChange(field.name, e.target.checked)}
-              />
-            </label>
-            {error && <label className="label"><span className="label-text-alt text-error">{error}</span></label>}
-          </div>
-        );
-
-      default:
-        // text and others
-        return (
-          <div key={field.name}>
-            <label className="label">
-              <span className="label-text font-medium">{field.label}</span>
-              {field.required && <span className="label-text-alt text-error">*</span>}
-            </label>
-            <input
-              type="text"
-              className={fieldClasses}
-              placeholder={field.placeholder}
-              value={value}
-              onChange={(e) => handleFieldChange(field.name, e.target.value)}
-            />
-            {error && <label className="label"><span className="label-text-alt text-error">{error}</span></label>}
-          </div>
-        );
-    }
-  };
-
   if (!modalState.isOpen) { return null; }
 
   // Get ALL configs to iterate types for tabs
@@ -475,8 +348,8 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
           </h3>
           <button
             className="btn btn-sm btn-circle btn-ghost"
-            onClick={onClose}
             aria-label="Close modal"
+            onClick={onClose}
           >
             <XIcon className="w-4 h-4" />
           </button>
@@ -522,7 +395,7 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
                   aria-selected={isActive}
                   aria-label={`Select ${typeConfig.displayName || typeConfig.name}`}
                 >
-                  <span>{typeConfig.icon}</span>
+                  <span>{typeof typeConfig.icon === 'string' ? typeConfig.icon : '•'}</span>
                   {typeConfig.displayName || typeConfig.name}
                 </button>
               );
@@ -587,7 +460,7 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
 
           {/* Provider-specific fields */}
           <div className="space-y-4 mb-6">
-            {currentSchema ? (
+            {currentSchema && (
               <ProviderConfigForm
                 providerType={selectedType}
                 schema={currentSchema}
@@ -615,8 +488,6 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
                   }
                 }}
               />
-            ) : (
-              allFields.map(renderField)
             )}
           </div>
 

@@ -1,23 +1,32 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { User, Plus, Edit2, Trash2, Sparkles, RefreshCw, Info, AlertTriangle, Shield, Copy, Search, X, Eye } from 'lucide-react';
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import {
-  Alert,
-  Badge,
-  Button,
-  Card,
-  Input,
-  Select,
-  Modal,
-  PageHeader,
-  StatsCards,
-  LoadingSpinner,
-  EmptyState,
-  ToastNotification,
-} from '../components/DaisyUI';
+  AlertTriangle,
+  Copy,
+  Edit2,
+  Eye,
+  Info,
+  Plus,
+  RefreshCw,
+  Search,
+  Shield,
+  Sparkles,
+  Trash2,
+  User,
+} from 'lucide-react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { Alert } from '../components/DaisyUI/Alert';
+import Badge from '../components/DaisyUI/Badge';
+import Button from '../components/DaisyUI/Button';
+import Card from '../components/DaisyUI/Card';
+import Input from '../components/DaisyUI/Input';
+import EmptyState from '../components/DaisyUI/EmptyState';
+import { LoadingSpinner } from '../components/DaisyUI/Loading';
+import Modal from '../components/DaisyUI/Modal';
+import PageHeader from '../components/DaisyUI/PageHeader';
+import StatsCards from '../components/DaisyUI/StatsCards';
+import ToastNotification from '../components/DaisyUI/ToastNotification';
 import SearchFilterBar from '../components/SearchFilterBar';
-import type { Persona as ApiPersona, Bot } from '../services/api';
-import { apiService } from '../services/api';
+import { apiService, type Persona as ApiPersona, type Bot } from '../services/api';
 
 // Extend UI Persona type to include assigned bots for display
 interface Persona extends ApiPersona {
@@ -70,10 +79,13 @@ const PersonasPage: React.FC = () => {
       setLoading(true);
       setError(null);
 
-      const [configResponse, personasResponse] = await Promise.all([
+      const [configResult, personasResult] = await Promise.allSettled([
         apiService.getConfig(),
         apiService.getPersonas(),
       ]);
+      const configResponse =
+        configResult.status === 'fulfilled' ? configResult.value : { bots: [] };
+      const personasResponse = personasResult.status === 'fulfilled' ? personasResult.value : [];
 
       const botList = configResponse.bots || [];
       const filledBots = botList.map((b: any) => ({
@@ -82,12 +94,10 @@ const PersonasPage: React.FC = () => {
       }));
       setBots(filledBots);
 
-      const mappedPersonas = personasResponse.map(p => {
+      const mappedPersonas = personasResponse.map((p) => {
         // Find assigned bots
         // Match by persona ID stored in bot.persona OR matches persona name (legacy)
-        const assigned = filledBots.filter((b: any) =>
-          b.persona === p.id || b.persona === p.name,
-        );
+        const assigned = filledBots.filter((b: any) => b.persona === p.id || b.persona === p.name);
         return {
           ...p,
           assignedBotNames: assigned.map((b: any) => b.name),
@@ -110,7 +120,7 @@ const PersonasPage: React.FC = () => {
 
   // Derive filtered personas
   const filteredPersonas = useMemo(() => {
-    return personas.filter(p => {
+    return personas.filter((p) => {
       const matchesSearch =
         p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         (p.description && p.description.toLowerCase().includes(searchQuery.toLowerCase()));
@@ -130,7 +140,9 @@ const PersonasPage: React.FC = () => {
   };
 
   const handleSavePersona = async () => {
-    if (!personaName.trim()) { return; }
+    if (!personaName.trim()) {
+      return;
+    }
 
     setLoading(true);
     try {
@@ -161,28 +173,35 @@ const PersonasPage: React.FC = () => {
       const updates = [];
       const newPersonaId = savedPersona.id;
 
+      // ⚡ Bolt Optimization: Replace O(N*M) nested loop search with O(N+M) map lookup
+      const botsById = new Map(bots.map((b: any) => [b.id, b]));
+
       // 1. Assign to selected bots
       for (const botId of selectedBotIds) {
         // Only update if not already assigned
-        const bot = bots.find((b: any) => b.id === botId);
+        const bot = botsById.get(botId);
         if (bot && bot.persona !== newPersonaId) {
-          updates.push(apiService.updateBot(botId, {
-            persona: newPersonaId,
-            systemInstruction: personaPrompt, // Ensure prompt sync
-          }));
+          updates.push(
+            apiService.updateBot(botId, {
+              persona: newPersonaId,
+              systemInstruction: personaPrompt, // Ensure prompt sync
+            })
+          );
         }
       }
 
       // 2. Unassign from deselected bots (only if editing)
       if (editingPersona) {
         const originallyAssigned = editingPersona.assignedBotIds;
-        const toUnassign = originallyAssigned.filter(id => !selectedBotIds.includes(id));
+        const toUnassign = originallyAssigned.filter((id) => !selectedBotIds.includes(id));
 
         for (const botId of toUnassign) {
-          updates.push(apiService.updateBot(botId, {
-            persona: 'default', // Revert to default
-            systemInstruction: 'You are a helpful assistant.', // Default prompt
-          }));
+          updates.push(
+            apiService.updateBot(botId, {
+              persona: 'default', // Revert to default
+              systemInstruction: 'You are a helpful assistant.', // Default prompt
+            })
+          );
         }
       }
 
@@ -253,8 +272,10 @@ const PersonasPage: React.FC = () => {
   };
 
   const handleDeletePersona = (personaId: string) => {
-    const persona = personas.find(p => p.id === personaId);
-    if (!persona) { return; }
+    const persona = personas.find((p) => p.id === personaId);
+    if (!persona) {
+      return;
+    }
     if (persona.isBuiltIn) {
       setError('Cannot delete built-in personas');
       return;
@@ -264,12 +285,17 @@ const PersonasPage: React.FC = () => {
   };
 
   const confirmDelete = async () => {
-    if (!deletingPersona) { return; }
+    if (!deletingPersona) {
+      return;
+    }
     setLoading(true);
     try {
       // 1. Revert bots
-      const updates = deletingPersona.assignedBotIds.map(botId =>
-        apiService.updateBot(botId, { persona: 'default', systemInstruction: 'You are a helpful assistant.' }),
+      const updates = deletingPersona.assignedBotIds.map((botId) =>
+        apiService.updateBot(botId, {
+          persona: 'default',
+          systemInstruction: 'You are a helpful assistant.',
+        })
       );
       await Promise.all(updates);
 
@@ -291,22 +317,34 @@ const PersonasPage: React.FC = () => {
     const custom = personas.reduce((acc, p) => acc + (p.isBuiltIn ? 0 : 1), 0);
 
     return [
-      { id: 'total', title: 'Total Personas', value: personas.length, icon: '✨', color: 'primary' as const },
-      { id: 'active', title: 'Assigned Bots', value: active, icon: '🤖', color: 'secondary' as const },
-      { id: 'custom', title: 'Custom Personas', value: custom, icon: 'user', color: 'accent' as const },
+      {
+        id: 'total',
+        title: 'Total Personas',
+        value: personas.length,
+        icon: '✨',
+        color: 'primary' as const,
+      },
+      {
+        id: 'active',
+        title: 'Assigned Bots',
+        value: active,
+        icon: '🤖',
+        color: 'secondary' as const,
+      },
+      {
+        id: 'custom',
+        title: 'Custom Personas',
+        value: custom,
+        icon: 'user',
+        color: 'accent' as const,
+      },
     ];
   }, [personas]);
 
   return (
     <div className="space-y-6">
       {/* Error Alert */}
-      {error && (
-        <Alert
-          status="error"
-          message={error}
-          onClose={() => setError(null)}
-        />
-      )}
+      {error && <Alert status="error" message={error} onClose={() => setError(null)} />}
 
       {/* Header */}
       <PageHeader
@@ -315,17 +353,10 @@ const PersonasPage: React.FC = () => {
         icon={Sparkles}
         actions={
           <div className="flex gap-2">
-            <Button
-              variant="ghost"
-              onClick={fetchData}
-              disabled={loading}
-            >
+            <Button variant="ghost" onClick={fetchData} disabled={loading} aria-busy={loading}>
               <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} /> Refresh
             </Button>
-            <Button
-              variant="primary"
-              onClick={openCreateModal}
-            >
+            <Button variant="primary" onClick={openCreateModal}>
               <Plus className="w-4 h-4" /> Create Persona
             </Button>
           </div>
@@ -340,7 +371,10 @@ const PersonasPage: React.FC = () => {
         <Info className="w-5 h-5" />
         <div>
           <h3 className="font-bold text-xs opacity-70 uppercase tracking-wider">Note</h3>
-          <div className="text-sm">Personas define the personality and base instructions for your bots. You can assign the same persona to multiple bots. Changes here update all assigned bots.</div>
+          <div className="text-sm">
+            Personas define the personality and base instructions for your bots. You can assign the
+            same persona to multiple bots. Changes here update all assigned bots.
+          </div>
         </div>
       </div>
 
@@ -355,8 +389,8 @@ const PersonasPage: React.FC = () => {
             value: selectedCategory,
             onChange: setSelectedCategory,
             options: categoryOptions,
-            className: "w-full sm:w-1/3 md:w-1/4"
-          }
+            className: 'w-full sm:w-1/3 md:w-1/4',
+          },
         ]}
       />
 
@@ -381,22 +415,35 @@ const PersonasPage: React.FC = () => {
           title="No personas found"
           description="Try adjusting your search or filters"
           actionLabel="Clear Filters"
-          onAction={() => { setSearchQuery(''); setSelectedCategory('all'); }}
+          onAction={() => {
+            setSearchQuery('');
+            setSelectedCategory('all');
+          }}
           variant="noResults"
         />
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
-          {filteredPersonas.map(persona => (
-            <Card key={persona.id} data-testid="persona-card" className={`hover:shadow-md transition-all flex flex-col h-full ${persona.isBuiltIn ? 'border-l-4 border-l-primary/30' : ''}`}>
+          {filteredPersonas.map((persona) => (
+            <Card
+              key={persona.id}
+              data-testid="persona-card"
+              className={`hover:shadow-md transition-all flex flex-col h-full ${persona.isBuiltIn ? 'border-l-4 border-l-primary/30' : ''}`}
+            >
               <div className="flex items-start justify-between mb-3">
                 <div className="flex items-center gap-3">
-                  <div className={`p-2 rounded-full ${persona.isBuiltIn ? 'bg-primary/10 text-primary' : 'bg-base-200'}`}>
+                  <div
+                    className={`p-2 rounded-full ${persona.isBuiltIn ? 'bg-primary/10 text-primary' : 'bg-base-200'}`}
+                  >
                     <User className="w-5 h-5" />
                   </div>
                   <div>
                     <div className="flex items-center gap-2">
                       <h3 className="font-semibold text-lg">{persona.name}</h3>
-                      {persona.isBuiltIn && <Badge size="small" variant="neutral" style="outline">Built-in</Badge>}
+                      {persona.isBuiltIn && (
+                        <Badge size="small" variant="neutral" style="outline">
+                          Built-in
+                        </Badge>
+                      )}
                     </div>
                     <p className="text-xs text-base-content/60">{persona.category}</p>
                   </div>
@@ -407,12 +454,15 @@ const PersonasPage: React.FC = () => {
                 <p className="text-sm text-base-content/70 mb-3">{persona.description}</p>
                 <div className="bg-base-200/50 p-3 rounded-lg mb-3">
                   <div className="flex items-center justify-between mb-1">
-                    <h4 className="text-xs font-bold text-base-content/40 uppercase">System Prompt</h4>
+                    <h4 className="text-xs font-bold text-base-content/40 uppercase">
+                      System Prompt
+                    </h4>
                     <div className="flex items-center gap-2">
                       <button
                         className="btn btn-ghost btn-xs btn-circle text-base-content/40 hover:text-primary"
                         onClick={() => handleCopyPrompt(persona.systemPrompt)}
                         title="Copy System Prompt"
+                        aria-label="Copy System Prompt"
                       >
                         <Copy className="w-3 h-3" />
                       </button>
@@ -424,12 +474,14 @@ const PersonasPage: React.FC = () => {
                 </div>
 
                 <div className="flex items-center justify-between mb-2">
-                  <h4 className="text-xs font-medium text-base-content/50 uppercase">Assigned Bots</h4>
+                  <h4 className="text-xs font-medium text-base-content/50 uppercase">
+                    Assigned Bots
+                  </h4>
                 </div>
 
                 {persona.assignedBotNames.length > 0 ? (
                   <div className="flex flex-wrap gap-1">
-                    {persona.assignedBotNames.slice(0, 3).map(botName => (
+                    {persona.assignedBotNames.slice(0, 3).map((botName) => (
                       <Badge key={botName} variant="secondary" size="small" style="outline">
                         {botName}
                       </Badge>
@@ -446,10 +498,20 @@ const PersonasPage: React.FC = () => {
               </div>
 
               <div className="flex items-center justify-end pt-3 border-t border-base-200 mt-auto gap-2">
-                <Button variant="ghost" size="sm" onClick={() => openViewModal(persona)} title="View Details">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => openViewModal(persona)}
+                  title="View Details"
+                >
                   <Eye className="w-4 h-4 mr-1" /> View
                 </Button>
-                <Button variant="ghost" size="sm" onClick={() => openCloneModal(persona)} title="Clone Persona">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => openCloneModal(persona)}
+                  title="Clone Persona"
+                >
                   <Copy className="w-4 h-4 mr-1" /> Clone
                 </Button>
                 {!persona.isBuiltIn && (
@@ -476,8 +538,19 @@ const PersonasPage: React.FC = () => {
       {/* Create/Edit Modal */}
       <Modal
         isOpen={showCreateModal || showEditModal}
-        onClose={() => { setShowCreateModal(false); setShowEditModal(false); }}
-        title={isViewMode ? `View Persona: ${editingPersona?.name}` : (editingPersona ? `Edit Persona: ${editingPersona.name}` : (cloningPersonaId ? 'Clone Persona' : 'Create New Persona'))}
+        onClose={() => {
+          setShowCreateModal(false);
+          setShowEditModal(false);
+        }}
+        title={
+          isViewMode
+            ? `View Persona: ${editingPersona?.name}`
+            : editingPersona
+              ? `Edit Persona: ${editingPersona.name}`
+              : cloningPersonaId
+                ? 'Clone Persona'
+                : 'Create New Persona'
+        }
         size="lg"
       >
         <div className="space-y-4">
@@ -511,7 +584,9 @@ const PersonasPage: React.FC = () => {
           </div>
 
           <div className="form-control">
-            <label className="label"><span className="label-text">Category</span></label>
+            <label className="label">
+              <span className="label-text">Category</span>
+            </label>
             <select
               className="select select-bordered"
               value={personaCategory}
@@ -532,7 +607,10 @@ const PersonasPage: React.FC = () => {
             <label className="label">
               <span className="label-text flex items-center gap-2">
                 System Prompt
-                <div className="tooltip tooltip-right" data-tip="The core instruction set that governs the AI's behavior, tone, and capabilities.">
+                <div
+                  className="tooltip tooltip-right"
+                  data-tip="The core instruction set that governs the AI's behavior, tone, and capabilities."
+                >
                   <Info className="w-3 h-3 text-base-content/40" />
                 </div>
               </span>
@@ -552,29 +630,37 @@ const PersonasPage: React.FC = () => {
             <label className="label">
               <span className="label-text flex items-center gap-2">
                 Assign to Bots
-                <div className="tooltip tooltip-right" data-tip="Select which bots should use this persona. They will be updated immediately upon saving.">
+                <div
+                  className="tooltip tooltip-right"
+                  data-tip="Select which bots should use this persona. They will be updated immediately upon saving."
+                >
                   <Info className="w-3 h-3 text-base-content/40" />
                 </div>
               </span>
               <span className="label-text-alt text-base-content/60">Optional</span>
             </label>
             <div className="bg-base-200 rounded-box p-2 max-h-40 overflow-y-auto">
-              {bots.length === 0 ? <div className="p-2 text-sm opacity-50">No bots available</div> :
+              {bots.length === 0 ? (
+                <div className="p-2 text-sm opacity-50">No bots available</div>
+              ) : (
                 bots.map((bot: any) => {
                   const isEnvLocked = bot.envOverrides?.persona;
                   return (
                     <label
                       key={bot.id}
                       className={`cursor-pointer label justify-start gap-3 rounded-lg ${isEnvLocked || isViewMode ? 'opacity-50 cursor-not-allowed' : 'hover:bg-base-300'}`}
-                      title={isEnvLocked ? "Persona is locked by environment variable" : ""}
+                      title={isEnvLocked ? 'Persona is locked by environment variable' : ''}
                     >
                       <input
                         type="checkbox"
                         className="checkbox checkbox-sm checkbox-primary"
                         checked={selectedBotIds.includes(bot.id)}
                         onChange={(e) => {
-                          if (e.target.checked) { setSelectedBotIds([...selectedBotIds, bot.id]); }
-                          else { setSelectedBotIds(selectedBotIds.filter(id => id !== bot.id)); }
+                          if (e.target.checked) {
+                            setSelectedBotIds([...selectedBotIds, bot.id]);
+                          } else {
+                            setSelectedBotIds(selectedBotIds.filter((id) => id !== bot.id));
+                          }
                         }}
                         disabled={!!isEnvLocked || isViewMode}
                       />
@@ -584,24 +670,41 @@ const PersonasPage: React.FC = () => {
                           {isEnvLocked && <Shield className="w-3 h-3 text-warning" />}
                         </span>
                         <span className="text-xs opacity-50">
-                          Current: {bot.persona ? (
-                            personas.find(p => p.id === bot.persona || p.name === bot.persona)?.name || bot.persona
-                          ) : 'default'}
+                          Current:{' '}
+                          {bot.persona
+                            ? personas.find((p) => p.id === bot.persona || p.name === bot.persona)
+                                ?.name || bot.persona
+                            : 'default'}
                         </span>
                       </div>
                     </label>
                   );
-                })}
+                })
+              )}
             </div>
           </div>
 
           <div className="flex justify-end gap-2 mt-6">
-            <Button variant="ghost" onClick={() => { setShowCreateModal(false); setShowEditModal(false); }}>
+            <Button
+              variant="ghost"
+              onClick={() => {
+                setShowCreateModal(false);
+                setShowEditModal(false);
+              }}
+            >
               {isViewMode ? 'Close' : 'Cancel'}
             </Button>
             {!isViewMode && (
-              <Button variant="primary" onClick={handleSavePersona} disabled={loading}>
-                {loading ? <LoadingSpinner size="sm" /> : (editingPersona ? 'Save Changes' : (cloningPersonaId ? 'Clone Persona' : 'Create Persona'))}
+              <Button variant="primary" onClick={handleSavePersona} disabled={loading} aria-busy={loading}>
+                {loading ? (
+                  <LoadingSpinner size="sm" />
+                ) : editingPersona ? (
+                  'Save Changes'
+                ) : cloningPersonaId ? (
+                  'Clone Persona'
+                ) : (
+                  'Create Persona'
+                )}
               </Button>
             )}
           </div>
@@ -611,7 +714,10 @@ const PersonasPage: React.FC = () => {
       {/* Delete Confirmation Modal */}
       <Modal
         isOpen={showDeleteModal}
-        onClose={() => { setShowDeleteModal(false); setDeletingPersona(null); }}
+        onClose={() => {
+          setShowDeleteModal(false);
+          setDeletingPersona(null);
+        }}
         title="Delete Persona"
         size="sm"
       >
@@ -637,7 +743,10 @@ const PersonasPage: React.FC = () => {
           <div className="flex justify-end gap-2 pt-4">
             <Button
               variant="ghost"
-              onClick={() => { setShowDeleteModal(false); setDeletingPersona(null); }}
+              onClick={() => {
+                setShowDeleteModal(false);
+                setDeletingPersona(null);
+              }}
             >
               Cancel
             </Button>
@@ -645,7 +754,7 @@ const PersonasPage: React.FC = () => {
               variant="primary"
               className="btn-error"
               onClick={confirmDelete}
-              disabled={loading}
+              disabled={loading} aria-busy={loading}
             >
               {loading ? <LoadingSpinner size="sm" /> : 'Delete Persona'}
             </Button>

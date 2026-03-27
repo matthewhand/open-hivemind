@@ -1,6 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useMemo, useState } from 'react';
-import { Card, Alert, Button, Loading, Select } from '../DaisyUI';
+import Card from '../DaisyUI/Card';
+import { Alert } from '../DaisyUI/Alert';
+import Button from '../DaisyUI/Button';
+import { Loading } from '../DaisyUI/Loading';
+import Select from '../DaisyUI/Select';
 import { ArrowPathIcon } from '@heroicons/react/24/outline';
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, Legend, CartesianGrid } from 'recharts';
 import { useGetActivityQuery } from '../../store/slices/apiSlice';
@@ -109,7 +113,7 @@ const ActivityLog: React.FC = () => {
 
         {isLoading ? (
           <div className="flex justify-center py-8">
-            <span className="loading loading-spinner loading-lg"></span>
+            <span className="loading loading-spinner loading-lg" aria-hidden="true"></span>
           </div>
         ) : error ? (
           <Alert variant="error">Failed to load activity log</Alert>

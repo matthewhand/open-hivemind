@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { apiService, ActivityEvent } from '../../services/api';
 import DistributedTraceWaterfall, { TraceSpan } from './DistributedTraceWaterfall';
-import { Alert } from '../DaisyUI';
+import { Alert } from '../DaisyUI/Alert';
 
 export const BotActivityWaterfallMonitor: React.FC = () => {
     const [spans, setSpans] = useState<TraceSpan[]>([]);
@@ -90,7 +90,10 @@ export const BotActivityWaterfallMonitor: React.FC = () => {
                 });
 
                 // Update container durations to bound all children
-                const maxTime = Math.max(...newSpans.filter(s => s.parentId).map(s => s.startTime + s.duration));
+                const maxTime = newSpans.reduce(
+                    (max, s) => s.parentId ? Math.max(max, s.startTime + s.duration) : max,
+                    -Infinity
+                );
                 const overallDuration = Math.max(maxTime - minTime, 1000);
 
                 newSpans.forEach(span => {
@@ -114,7 +117,7 @@ export const BotActivityWaterfallMonitor: React.FC = () => {
     }, []);
 
     if (loading) {
-        return <div className="flex h-64 items-center justify-center"><span className="loading loading-spinner loading-lg text-primary"></span></div>;
+        return <div className="flex h-64 items-center justify-center"><span className="loading loading-spinner loading-lg text-primary" aria-hidden="true"></span></div>;
     }
 
     if (error) {

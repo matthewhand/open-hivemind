@@ -1,6 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect } from 'react';
-import { Card, Badge, Button, Alert, Loading } from './DaisyUI';
+import Card from './DaisyUI/Card';
+import Badge from './DaisyUI/Badge';
+import Button from './DaisyUI/Button';
+import { Alert } from './DaisyUI/Alert';
+import { Loading } from './DaisyUI/Loading';
 import {
   ArrowTrendingUpIcon,
   ArrowTrendingDownIcon,
@@ -119,7 +123,7 @@ const ConfigurationAnalytics: React.FC = () => {
   if (loading && metrics.length === 0) {
     return (
       <div className="flex justify-center items-center min-h-96">
-        <span className="loading loading-spinner loading-lg"></span>
+        <span className="loading loading-spinner loading-lg" aria-hidden="true"></span>
       </div>
     );
   }
@@ -132,7 +136,7 @@ const ConfigurationAnalytics: React.FC = () => {
           variant="secondary"
           buttonStyle="outline"
           onClick={loadAnalytics}
-          disabled={loading}
+          disabled={loading} aria-busy={loading}
           className="flex items-center gap-2"
         >
           <ArrowPathIcon className="w-4 h-4" />

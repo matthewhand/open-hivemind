@@ -1,6 +1,13 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect } from 'react';
-import { Card, Badge, Button, Alert, DataTable, Accordion, Divider, Loading } from './DaisyUI';
+import Card from './DaisyUI/Card';
+import Badge from './DaisyUI/Badge';
+import Button from './DaisyUI/Button';
+import { Alert } from './DaisyUI/Alert';
+import DataTable from './DaisyUI/DataTable';
+import Accordion from './DaisyUI/Accordion';
+import Divider from './DaisyUI/Divider';
+import { Loading } from './DaisyUI/Loading';
 import {
   CheckCircleIcon,
   XCircleIcon,
@@ -227,10 +234,10 @@ const ConfigurationValidation: React.FC<ConfigurationValidationProps> = ({ bot }
         <Button
           size="sm"
           onClick={() => validateConfiguration(bot)}
-          disabled={loading}
+          disabled={loading} aria-busy={loading}
           className="flex items-center gap-2"
         >
-          {loading ? <span className="loading loading-spinner loading-sm"></span> : <ArrowPathIcon className="w-4 h-4" />}
+          {loading ? <span className="loading loading-spinner loading-sm" aria-hidden="true"></span> : <ArrowPathIcon className="w-4 h-4" />}
           Re-validate
         </Button>
       </div>

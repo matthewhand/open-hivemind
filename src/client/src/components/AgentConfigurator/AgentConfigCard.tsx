@@ -52,7 +52,7 @@ const AgentConfigCard: React.FC<AgentConfigCardProps> = ({
               {uiState?.messageProvider || 'No message provider selected'} · {uiState?.llmProvider || 'No LLM selected'}
             </p>
           </div>
-          {pending && <span className="loading loading-spinner loading-md"></span>}
+          {pending && <span className="loading loading-spinner loading-md" aria-hidden="true"></span>}
         </div>
 
         {/* Provider Configuration Section */}

@@ -189,7 +189,7 @@ export const selectErrorStats = (state: { error: ErrorState }) => {
     acc[err.severity] = (acc[err.severity] || 0) + 1;
     return acc;
   }, {} as Record<ErrorDetails['severity'], number>);
-  
+
   const unresolved = state.error.errors.filter(err => !err.resolved).length;
   const resolved = state.error.errors.filter(err => err.resolved).length;
   

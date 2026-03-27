@@ -13,12 +13,10 @@ import {
   EyeIcon,
   DocumentDuplicateIcon,
 } from '@heroicons/react/24/outline';
-import {
-  Button,
-  Badge,
-  Modal,
-  Alert,
-} from '../DaisyUI';
+import Button from '../DaisyUI/Button';
+import Badge from '../DaisyUI/Badge';
+import Modal from '../DaisyUI/Modal';
+import { Alert } from '../DaisyUI/Alert';
 import type { Bot, CreateBotRequest } from '../../services/botDataProvider';
 import { botDataProvider } from '../../services/botDataProvider';
 import { useLlmStatus } from '../../hooks/useLlmStatus';
@@ -468,7 +466,7 @@ const EnhancedBotManager: React.FC<EnhancedBotManagerProps> = ({ onBotSelect }) 
             variant="ghost"
             startIcon={<ArrowPathIcon className="w-5 h-5" />}
             onClick={loadData}
-            disabled={loading}
+            disabled={loading} aria-busy={loading}
           >
             Refresh
           </Button>
@@ -693,7 +691,7 @@ const EnhancedBotManager: React.FC<EnhancedBotManagerProps> = ({ onBotSelect }) 
             onClick={openEditDialog ? handleEditBot : handleCreateBot}
             disabled={loading || !isFormValid()}
           >
-            {loading ? <span className="loading loading-spinner loading-sm"></span> : (openEditDialog ? 'Update Bot' : 'Create Bot')}
+            {loading ? <span className="loading loading-spinner loading-sm" aria-hidden="true"></span> : (openEditDialog ? 'Update Bot' : 'Create Bot')}
           </Button>
         </div>
       </Modal>
@@ -718,9 +716,9 @@ const EnhancedBotManager: React.FC<EnhancedBotManagerProps> = ({ onBotSelect }) 
           <button
             className="btn btn-error"
             onClick={handleDeleteBot}
-            disabled={loading}
+            disabled={loading} aria-busy={loading}
           >
-            {loading ? <span className="loading loading-spinner loading-sm"></span> : 'Delete'}
+            {loading ? <span className="loading loading-spinner loading-sm" aria-hidden="true"></span> : 'Delete'}
           </button>
         </div>
       </Modal>

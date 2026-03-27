@@ -124,7 +124,7 @@ export const Input = memo(forwardRef<HTMLInputElement, InputProps>(
 
             {loading && (
               <div className="flex items-center">
-                <span className="loading loading-spinner w-4 h-4"></span>
+                <span className="loading loading-spinner w-4 h-4" aria-hidden="true"></span>
               </div>
             )}
           </div>

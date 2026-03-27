@@ -174,7 +174,17 @@ export class InputSanitizer {
    * @param type - Expected type ('string', 'number', 'boolean')
    * @returns Sanitized value or null if invalid
    */
-  static sanitizeConfigValue(value: any, type: 'string' | 'number' | 'boolean'): any {
+  static sanitizeConfigValue(value: unknown, type: 'string'): string | null;
+  static sanitizeConfigValue(value: unknown, type: 'number'): number | null;
+  static sanitizeConfigValue(value: unknown, type: 'boolean'): boolean | null;
+  static sanitizeConfigValue(
+    value: unknown,
+    type: 'string' | 'number' | 'boolean'
+  ): string | number | boolean | null {
+    if (value === null || value === undefined) {
+      return null;
+    }
+
     switch (type) {
       case 'string':
         if (typeof value === 'string') {
@@ -230,7 +240,7 @@ export class RateLimiter {
     const entries = Array.from(this.attempts.entries())
       .map(([key, timestamps]) => ({
         key,
-        lastAttempt: timestamps.length > 0 ? Math.max(...timestamps) : 0,
+        lastAttempt: timestamps.length > 0 ? timestamps.reduce((a, b) => Math.max(a, b), -Infinity) : 0,
       }))
       .sort((a, b) => a.lastAttempt - b.lastAttempt);
 

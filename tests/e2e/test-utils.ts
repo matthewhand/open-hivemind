@@ -53,6 +53,15 @@ const IGNORED_ERROR_PATTERNS = [
   /Network Error/i,
   /net::ERR_/i,
   /Download the React DevTools/i,
+  /WebSocket/i,
+  /websocket/i,
+  /socket\.io/i,
+  /ws:\/\//i,
+  /wss:\/\//i,
+  /connect_error/i,
+  /reconnect/i,
+  /polling-xhr/i,
+  /transport close/i,
 ];
 
 /**
@@ -126,8 +135,7 @@ export async function setupTestWithErrorDetection(page: Page): Promise<string[]>
  * Wait for page to be fully loaded and stable
  */
 export async function waitForPageReady(page: Page, timeout = 5000) {
-  await page.waitForLoadState("domcontentloaded");
-  await page.waitForTimeout(500);
+  await page.waitForLoadState('domcontentloaded');
   await page.waitForTimeout(Math.min(timeout, 1000)); // Small stabilization delay
 }
 

@@ -7,6 +7,7 @@ import { SecureConfigManager } from '../../config/SecureConfigManager';
 import { UserConfigStore } from '../../config/UserConfigStore';
 import { DatabaseManager } from '../../database/DatabaseManager';
 import { ConfigurationError } from '../../types/errorClasses';
+import { ErrorUtils } from '../../types/errors';
 import { auditMiddleware, logConfigChange, type AuditedRequest } from '../middleware/audit';
 import {
   sanitizeBotConfig,
@@ -34,12 +35,16 @@ router.use(authenticate, auditMiddleware);
 router.get('/', async (req: Request, res: Response) => {
   const authReq = req as AuthMiddlewareRequest;
   try {
-    const bots = botConfigManager.getAllBots();
+    const botConfigService = BotConfigService.getInstance();
+    const bots = await botConfigService.getAllBotConfigs();
     const warnings = botConfigManager.getWarnings();
 
-    // Get user overrides for each bot
+    // Get all user overrides at once to avoid N+1 queries
+    const allOverrides = userConfigStore.getAllBotOverrides();
+
+    // Apply user overrides for each bot
     const botsWithOverrides = bots.map((bot) => {
-      const overrides = userConfigStore.getBotOverride(bot.name);
+      const overrides = allOverrides.get(bot.name);
       return {
         ...bot,
         overrides: overrides || {},
@@ -61,11 +66,13 @@ router.get('/', async (req: Request, res: Response) => {
       },
       timestamp: new Date().toISOString(),
     });
-  } catch (error: any) {
-    debug('Error getting bot configurations:', error);
+  } catch (error: unknown) {
+    const hivemindError = ErrorUtils.toHivemindError(error);
+    const errorMessage = ErrorUtils.getMessage(hivemindError);
+    debug('Error getting bot configurations:', hivemindError);
     return res.status(500).json({
       error: 'Failed to get bot configurations',
-      message: error.message || 'An error occurred while retrieving bot configurations',
+      message: errorMessage || 'An error occurred while retrieving bot configurations',
     });
   }
 });
@@ -133,8 +140,9 @@ router.get('/templates', async (req: Request, res: Response) => {
       success: true,
       data: templates,
     });
-  } catch (error: any) {
-    debug('Error fetching templates:', error);
+  } catch (error: unknown) {
+    const hivemindError = ErrorUtils.toHivemindError(error);
+    debug('Error fetching templates:', hivemindError);
     res.status(500).json({ success: false, error: 'Failed to fetch templates' });
   }
 });
@@ -172,11 +180,13 @@ router.get('/:botId', async (req: Request, res: Response) => {
         },
       },
     });
-  } catch (error: any) {
-    debug('Error getting bot configuration:', error);
+  } catch (error: unknown) {
+    const hivemindError = ErrorUtils.toHivemindError(error);
+    const errorMessage = ErrorUtils.getMessage(hivemindError);
+    debug('Error getting bot configuration:', hivemindError);
     return res.status(500).json({
       error: 'Failed to get bot configuration',
-      message: error.message || 'An error occurred while retrieving bot configuration',
+      message: errorMessage || 'An error occurred while retrieving bot configuration',
     });
   }
 });
@@ -216,26 +226,28 @@ router.post(
         data: { bot: newBot },
         message: 'Bot configuration created successfully',
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const hivemindError = ErrorUtils.toHivemindError(error);
+      const errorMessage = ErrorUtils.getMessage(hivemindError);
       if (error instanceof ConfigurationError) {
         debug('Database not configured for bot configuration creation');
-        logConfigChange(req, 'CREATE', req.body?.name || 'unknown', 'failure', error.message);
+        logConfigChange(req, 'CREATE', req.body?.name || 'unknown', 'failure', errorMessage);
         return res.status(503).json({
           error: 'Database not configured',
-          message: error.message,
+          message: errorMessage,
         });
       }
-      debug('Error creating bot configuration:', error);
+      debug('Error creating bot configuration:', hivemindError);
       logConfigChange(
         req,
         'CREATE',
         req.body?.name || 'unknown',
         'failure',
-        `Failed to create bot configuration: ${error.message}`
+        `Failed to create bot configuration: ${errorMessage}`
       );
       return res.status(400).json({
         error: 'Failed to create bot configuration',
-        message: error.message || 'An error occurred while creating bot configuration',
+        message: errorMessage || 'An error occurred while creating bot configuration',
       });
     }
   }
@@ -349,26 +361,28 @@ router.put(
         message: 'Bot configuration update requires approval.',
         approvalRequestId,
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const hivemindError = ErrorUtils.toHivemindError(error);
+      const errorMessage = ErrorUtils.getMessage(hivemindError);
       if (error instanceof ConfigurationError) {
         debug('Database not configured for bot configuration update');
-        logConfigChange(req, 'UPDATE', req.params.botId, 'failure', error.message);
+        logConfigChange(req, 'UPDATE', req.params.botId, 'failure', errorMessage);
         return res.status(503).json({
           error: 'Database not configured',
-          message: error.message,
+          message: errorMessage,
         });
       }
-      debug('Error updating bot configuration:', error);
+      debug('Error updating bot configuration:', hivemindError);
       logConfigChange(
         req,
         'UPDATE',
         req.params.botId,
         'failure',
-        `Failed to update bot configuration: ${error.message}`
+        `Failed to update bot configuration: ${errorMessage}`
       );
       return res.status(400).json({
         error: 'Failed to update bot configuration',
-        message: error.message || 'An error occurred while updating bot configuration',
+        message: errorMessage || 'An error occurred while updating bot configuration',
       });
     }
   }
@@ -434,8 +448,9 @@ router.post(
         try {
           const diff = JSON.parse(approvalRequest.diff);
           updates = diff.new || {};
-        } catch (error) {
-          debug('Error parsing approval request diff:', error);
+        } catch (error: unknown) {
+          const hivemindError = ErrorUtils.toHivemindError(error);
+          debug('Error parsing approval request diff:', hivemindError);
           logConfigChange(req, 'UPDATE', botId, 'failure', 'Failed to parse approval request diff');
           return res.status(400).json({
             error: 'Invalid approval request diff format',
@@ -532,18 +547,20 @@ router.post(
         data: { bot: updatedBot },
         message: 'Bot configuration updated successfully',
       });
-    } catch (error: any) {
-      debug('Error applying bot configuration update:', error);
+    } catch (error: unknown) {
+      const hivemindError = ErrorUtils.toHivemindError(error);
+      const errorMessage = ErrorUtils.getMessage(hivemindError);
+      debug('Error applying bot configuration update:', hivemindError);
       logConfigChange(
         req,
         'UPDATE',
         botId,
         'failure',
-        `Failed to apply bot configuration update: ${error.message}`
+        `Failed to apply bot configuration update: ${errorMessage}`
       );
       return res.status(400).json({
         error: 'Failed to apply bot configuration update',
-        message: error.message || 'An error occurred while applying bot configuration update',
+        message: errorMessage || 'An error occurred while applying bot configuration update',
       });
     }
   }
