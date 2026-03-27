@@ -18,11 +18,11 @@ import { Alert } from '../components/DaisyUI/Alert';
 import Badge from '../components/DaisyUI/Badge';
 import Button from '../components/DaisyUI/Button';
 import Card from '../components/DaisyUI/Card';
-import Input from '../components/DaisyUI/Input';
 import EmptyState from '../components/DaisyUI/EmptyState';
 import { LoadingSpinner } from '../components/DaisyUI/Loading';
 import Modal from '../components/DaisyUI/Modal';
 import PageHeader from '../components/DaisyUI/PageHeader';
+import Input from '../components/DaisyUI/Input';
 import StatsCards from '../components/DaisyUI/StatsCards';
 import ToastNotification from '../components/DaisyUI/ToastNotification';
 import SearchFilterBar from '../components/SearchFilterBar';
@@ -353,7 +353,7 @@ const PersonasPage: React.FC = () => {
         icon={Sparkles}
         actions={
           <div className="flex gap-2">
-            <Button variant="ghost" onClick={fetchData} disabled={loading} aria-busy={loading}>
+            <Button variant="ghost" onClick={fetchData} disabled={loading}>
               <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} /> Refresh
             </Button>
             <Button variant="primary" onClick={openCreateModal}>
@@ -462,7 +462,6 @@ const PersonasPage: React.FC = () => {
                         className="btn btn-ghost btn-xs btn-circle text-base-content/40 hover:text-primary"
                         onClick={() => handleCopyPrompt(persona.systemPrompt)}
                         title="Copy System Prompt"
-                        aria-label="Copy System Prompt"
                       >
                         <Copy className="w-3 h-3" />
                       </button>
@@ -673,7 +672,7 @@ const PersonasPage: React.FC = () => {
                           Current:{' '}
                           {bot.persona
                             ? personas.find((p) => p.id === bot.persona || p.name === bot.persona)
-                                ?.name || bot.persona
+                              ?.name || bot.persona
                             : 'default'}
                         </span>
                       </div>
@@ -695,7 +694,7 @@ const PersonasPage: React.FC = () => {
               {isViewMode ? 'Close' : 'Cancel'}
             </Button>
             {!isViewMode && (
-              <Button variant="primary" onClick={handleSavePersona} disabled={loading} aria-busy={loading}>
+              <Button variant="primary" onClick={handleSavePersona} disabled={loading}>
                 {loading ? (
                   <LoadingSpinner size="sm" />
                 ) : editingPersona ? (
@@ -754,7 +753,7 @@ const PersonasPage: React.FC = () => {
               variant="primary"
               className="btn-error"
               onClick={confirmDelete}
-              disabled={loading} aria-busy={loading}
+              disabled={loading}
             >
               {loading ? <LoadingSpinner size="sm" /> : 'Delete Persona'}
             </Button>
