@@ -1,6 +1,5 @@
 import express from 'express';
 import request from 'supertest';
-import { DatabaseManager } from '../../src/database/DatabaseManager';
 import dashboardRouter from '../../src/server/routes/dashboard';
 
 // Mock auth middleware to bypass authentication
@@ -8,33 +7,54 @@ jest.mock('../../src/server/middleware/auth', () => ({
   authenticateToken: (req: any, res: any, next: any) => next(),
 }));
 
-describe('AI Dashboard Routes', () => {
-  afterEach(() => {
-    (DatabaseManager as any).instance = undefined;
-  });
+// Mock AnalyticsService
+jest.mock('../../src/services/AnalyticsService', () => ({
+  AnalyticsService: {
+    getInstance: jest.fn(),
+  },
+}));
 
+const mockAnalyticsServiceInstance = {
+  getStats: jest.fn(),
+  getBehaviorPatterns: jest.fn(),
+  getUserSegments: jest.fn(),
+  getRecommendations: jest.fn(),
+};
+
+describe('AI Dashboard Routes', () => {
   let app: express.Application;
 
-  beforeAll(async () => {
-    const db = DatabaseManager.getInstance({
-      type: 'sqlite',
-      path: ':memory:',
-    });
-    await db.connect();
-  });
-
-  afterAll(async () => {
-    await DatabaseManager.getInstance().disconnect();
-  });
-
   beforeEach(() => {
-    (DatabaseManager as any).instance = undefined;
-
+    jest.clearAllMocks();
     app = express();
     app.use(express.json());
     // Mount the dashboard router at /api/dashboard to simulate server.ts
     // The internal routes are /api/ai/..., so the full path is /api/dashboard/api/ai/...
     app.use('/api/dashboard', dashboardRouter);
+
+    const { AnalyticsService } = require('../../src/services/AnalyticsService');
+    (AnalyticsService.getInstance as jest.Mock).mockReturnValue(mockAnalyticsServiceInstance);
+
+    // Setup default mock returns for analytics endpoints
+    mockAnalyticsServiceInstance.getStats.mockReturnValue({
+      learningProgress: 50,
+      behaviorPatternsCount: 3,
+      userSegmentsCount: 2,
+      totalMessages: 100,
+      totalErrors: 5,
+      avgProcessingTime: 500,
+      activeBots: 2,
+      activeUsers: 10,
+    });
+    mockAnalyticsServiceInstance.getBehaviorPatterns.mockReturnValue([
+      { id: 'pattern-1', name: 'Test Pattern', description: 'Test', frequency: 0.5, confidence: 0.8, trend: 'stable', segments: [], recommendedWidgets: [], priority: 1 },
+    ]);
+    mockAnalyticsServiceInstance.getUserSegments.mockReturnValue([
+      { id: 'segment-1', name: 'Test Segment', description: 'Test', criteria: { behaviorPatterns: [], usageFrequency: 'daily', featureUsage: [], engagementLevel: 'high' }, characteristics: { preferredWidgets: [], optimalLayout: 'grid', themePreference: 'dark', notificationFrequency: 5 }, size: 10, confidence: 0.9 },
+    ]);
+    mockAnalyticsServiceInstance.getRecommendations.mockReturnValue([
+      { id: 'rec-1', type: 'widget', title: 'Test Recommendation', description: 'Test', confidence: 0.9, impact: 'high', reasoning: 'Test reasoning' },
+    ]);
   });
 
   it('GET /api/dashboard/api/ai/config returns default configuration', async () => {
@@ -46,7 +66,9 @@ describe('AI Dashboard Routes', () => {
 
   it('POST /api/dashboard/api/ai/config updates configuration', async () => {
     const newConfig = { enabled: false, learningRate: 0.5 };
-    const response = await request(app).post('/api/dashboard/api/ai/config').send(newConfig);
+    const response = await request(app)
+      .post('/api/dashboard/api/ai/config')
+      .send(newConfig);
 
     expect(response.status).toBe(200);
     expect(response.body.enabled).toBe(false);
@@ -83,7 +105,9 @@ describe('AI Dashboard Routes', () => {
 
   it('POST /api/dashboard/api/ai/feedback accepts feedback', async () => {
     const feedback = { recommendationId: 'rec-1', feedback: 'liked' };
-    const response = await request(app).post('/api/dashboard/api/ai/feedback').send(feedback);
+    const response = await request(app)
+      .post('/api/dashboard/api/ai/feedback')
+      .send(feedback);
 
     expect(response.status).toBe(200);
     expect(response.body.success).toBe(true);

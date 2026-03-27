@@ -11,6 +11,9 @@ jest.mock('../../src/storage/webUIStorage', () => ({
     _messengerProviders: [
       { id: 'msg1', name: 'Messenger 1', type: 'discord', config: {}, isActive: true },
     ],
+    _toolUsageGuards: [
+      { id: 'guard1', name: 'Test Guard', toolId: 'test_tool', guardType: 'owner_only', isActive: true },
+    ],
 
     getPersonas: jest.fn(() => []),
     savePersona: jest.fn(),
@@ -42,6 +45,26 @@ jest.mock('../../src/storage/webUIStorage', () => ({
     deleteMessengerProvider: jest.fn(function (id: string) {
       this._messengerProviders = this._messengerProviders.filter((p: any) => p.id !== id);
     }),
+
+    getToolUsageGuards: jest.fn(function () {
+      return this._toolUsageGuards;
+    }),
+    saveToolUsageGuard: jest.fn(function (guard: any) {
+      const idx = this._toolUsageGuards.findIndex((g: any) => g.id === guard.id);
+      if (idx >= 0) this._toolUsageGuards[idx] = guard;
+      else this._toolUsageGuards.push(guard);
+    }),
+    deleteToolUsageGuard: jest.fn(function (id: string) {
+      this._toolUsageGuards = this._toolUsageGuards.filter((g: any) => g.id !== id);
+    }),
+    toggleToolUsageGuard: jest.fn(function (id: string, isActive: boolean) {
+      const guard = this._toolUsageGuards.find((g: any) => g.id === id);
+      if (guard) {
+        guard.isActive = isActive;
+        return true;
+      }
+      return false;
+    }),
   },
 }));
 
@@ -65,17 +88,6 @@ app.use(express.json());
 app.use('/api/admin', adminRoutes);
 
 describe('Admin Routes', () => {
-  const originalEnv = process.env;
-
-  beforeAll(() => {
-    process.env = { ...originalEnv };
-    process.env.ALLOW_LOCAL_NETWORK_ACCESS = 'true';
-  });
-
-  afterAll(() => {
-    process.env = originalEnv;
-  });
-
   beforeEach(() => {
     jest.clearAllMocks();
     const { webUIStorage } = require('../../src/storage/webUIStorage');
@@ -84,6 +96,9 @@ describe('Admin Routes', () => {
     ];
     webUIStorage._messengerProviders = [
       { id: 'msg1', name: 'Messenger 1', type: 'discord', config: {}, isActive: true },
+    ];
+    webUIStorage._toolUsageGuards = [
+      { id: 'guard1', name: 'Test Guard', toolId: 'test_tool', guardType: 'owner_only', isActive: true },
     ];
   });
 
@@ -129,8 +144,8 @@ describe('Admin Routes', () => {
         .send(invalidData)
         .expect(400);
 
-      expect(response.body.error).toBe('Validation failed');
-      expect(response.body.issues).toBeDefined();
+      expect(response.body.error).toBe('Validation error');
+      expect(response.body.message).toContain('Name, type, and config are required');
     });
 
     test('PUT /api/admin/llm-providers/:id should update provider', async () => {
@@ -157,6 +172,7 @@ describe('Admin Routes', () => {
       const response = await request(app).delete('/api/admin/llm-providers/llm1').expect(200);
 
       expect(response.body.success).toBe(true);
+      expect(response.body.message).toContain('deleted successfully');
     });
 
     test('POST /api/admin/llm-providers/:id/toggle should toggle status', async () => {
@@ -166,6 +182,7 @@ describe('Admin Routes', () => {
         .expect(200);
 
       expect(response.body.success).toBe(true);
+      expect(response.body.message).toContain('status updated successfully');
     });
   });
 
@@ -210,8 +227,8 @@ describe('Admin Routes', () => {
         .send(invalidData)
         .expect(400);
 
-      expect(response.body.error).toBe('Validation failed');
-      expect(response.body.issues).toBeDefined();
+      expect(response.body.error).toBe('Validation error');
+      expect(response.body.message).toContain('Name, type, and config are required');
     });
   });
 
@@ -234,6 +251,7 @@ describe('Admin Routes', () => {
       const response = await request(app).post('/api/admin/personas').send(personaData).expect(200);
 
       expect(response.body.success).toBe(true);
+      expect(response.body.message).toContain('created successfully');
     });
 
     test('POST /api/admin/personas should validate key format', async () => {
@@ -245,8 +263,8 @@ describe('Admin Routes', () => {
 
       const response = await request(app).post('/api/admin/personas').send(invalidData).expect(400);
 
-      expect(response.body.error).toBe('Validation failed');
-      expect(response.body.issues).toBeDefined();
+      expect(response.body.error).toBe('Validation error');
+      expect(response.body.message).toContain('Key must contain only alphanumeric characters');
     });
 
     test('PUT /api/admin/personas/:key should update persona', async () => {
@@ -261,12 +279,14 @@ describe('Admin Routes', () => {
         .expect(200);
 
       expect(response.body.success).toBe(true);
+      expect(response.body.message).toContain('updated successfully');
     });
 
     test('DELETE /api/admin/personas/:key should delete persona', async () => {
       const response = await request(app).delete('/api/admin/personas/test_persona').expect(200);
 
       expect(response.body.success).toBe(true);
+      expect(response.body.message).toContain('deleted successfully');
     });
   });
 
@@ -292,6 +312,7 @@ describe('Admin Routes', () => {
         .expect(200);
 
       expect(response.body.success).toBe(true);
+      expect(response.body.message).toContain('Successfully connected');
     });
 
     test('POST /api/admin/mcp-servers/connect should validate URL format', async () => {
@@ -305,8 +326,8 @@ describe('Admin Routes', () => {
         .send(invalidData)
         .expect(400);
 
-      expect(response.body.error).toBe('Validation failed');
-      expect(response.body.issues).toBeDefined();
+      expect(response.body.error).toBe('Validation error');
+      expect(response.body.message).toContain('Server URL must be a valid URL');
     });
 
     test('POST /api/admin/mcp-servers/disconnect should disconnect from server', async () => {
@@ -320,6 +341,7 @@ describe('Admin Routes', () => {
         .expect(200);
 
       expect(response.body.success).toBe(true);
+      expect(response.body.message).toContain('Successfully disconnected');
     });
   });
 
@@ -363,8 +385,8 @@ describe('Admin Routes', () => {
         .send(invalidData)
         .expect(400);
 
-      expect(response.body.error).toBe('Validation failed');
-      expect(response.body.issues).toBeDefined();
+      expect(response.body.error).toBe('Validation error');
+      expect(response.body.message).toContain('guardType must be one of');
     });
 
     test('PUT /api/admin/tool-usage-guards/:id should update guard', async () => {
@@ -391,6 +413,7 @@ describe('Admin Routes', () => {
       const response = await request(app).delete('/api/admin/tool-usage-guards/guard1').expect(200);
 
       expect(response.body.success).toBe(true);
+      expect(response.body.message).toContain('deleted successfully');
     });
 
     test('POST /api/admin/tool-usage-guards/:id/toggle should toggle guard status', async () => {
@@ -400,6 +423,7 @@ describe('Admin Routes', () => {
         .expect(200);
 
       expect(response.body.success).toBe(true);
+      expect(response.body.message).toContain('status updated successfully');
     });
   });
 

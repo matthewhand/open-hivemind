@@ -6,7 +6,6 @@ import { FlowiseProvider } from '../../integrations/flowise/flowiseProvider';
 import * as openWebUIImport from '../../integrations/openwebui/runInference';
 import type { ILlmProvider } from '../../llm/interfaces/ILlmProvider';
 import { IMessage } from '../../message/interfaces/IMessage';
-import { ErrorUtils } from '../../types/errors';
 
 const debug = Debug('app:ai-assist');
 const router = Router();
@@ -123,7 +122,7 @@ router.post('/generate', async (req, res) => {
       switch (profile.provider.toLowerCase()) {
         case 'openai':
           // Dynamic require for OpenAI provider
-          const { OpenAiProvider } = require('@hivemind/llm-openai');
+          const { OpenAiProvider } = require('@hivemind/provider-openai');
           instance = new OpenAiProvider(profile.config);
           debug(`Initialized OpenAI provider instance for AI Assist: ${profile.name}`);
           break;
@@ -139,12 +138,9 @@ router.post('/generate', async (req, res) => {
           debug(`Unknown LLM provider type for AI Assist: ${profile.provider}`);
           return res.status(400).json({ error: `Unsupported provider type: ${profile.provider}` });
       }
-    } catch (error: unknown) {
-      const hivemindError = ErrorUtils.toHivemindError(error);
-      debug(`Failed to initialize provider ${profile.name}:`, hivemindError);
-      return res.status(500).json({
-        error: `Failed to initialize provider: ${hivemindError instanceof Error ? hivemindError.message : String(hivemindError)}`,
-      });
+    } catch (error: any) {
+      debug(`Failed to initialize provider ${profile.name}:`, error);
+      return res.status(500).json({ error: `Failed to initialize provider: ${error.message}` });
     }
 
     if (!instance) {
@@ -169,12 +165,11 @@ router.post('/generate', async (req, res) => {
     }
 
     return res.json({ result });
-  } catch (error: unknown) {
-    const hivemindError = ErrorUtils.toHivemindError(error);
-    debug('Error in AI Assist generation:', hivemindError);
+  } catch (error: any) {
+    debug('Error in AI Assist generation:', error);
     return res.status(500).json({
       error: 'Failed to generate response',
-      message: hivemindError instanceof Error ? hivemindError.message : String(hivemindError),
+      message: error.message,
     });
   }
 });

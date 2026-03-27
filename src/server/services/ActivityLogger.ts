@@ -1,6 +1,5 @@
 import fs from 'fs';
 import path from 'path';
-import readline from 'readline';
 import Debug from 'debug';
 import { type MessageFlowEvent } from './WebSocketService';
 
@@ -22,18 +21,14 @@ export class ActivityLogger {
   private constructor() {
     // Store in config/user/activity.jsonl as it is a persistent location for user data
     const configDir = path.join(process.cwd(), 'config', 'user');
-    this.logFile = path.join(configDir, 'activity.jsonl');
-    // Initialize directory asynchronously
-    this.initializeDirectory();
-  }
-
-  private async initializeDirectory(): Promise<void> {
-    const configDir = path.dirname(this.logFile);
-    try {
-      await fs.promises.mkdir(configDir, { recursive: true });
-    } catch (e) {
-      debug('Failed to create config/user directory: %O', e);
+    if (!fs.existsSync(configDir)) {
+      try {
+        fs.mkdirSync(configDir, { recursive: true });
+      } catch (e) {
+        debug('Failed to create config/user directory: %O', e);
+      }
     }
+    this.logFile = path.join(configDir, 'activity.jsonl');
   }
 
   public static getInstance(): ActivityLogger {
@@ -52,44 +47,32 @@ export class ActivityLogger {
     });
   }
 
-  public async getEvents(options: ActivityFilter = {}): Promise<MessageFlowEvent[]> {
+  public getEvents(options: ActivityFilter = {}): MessageFlowEvent[] {
     try {
-      try {
-        await fs.promises.access(this.logFile);
-      } catch {
+      if (!fs.existsSync(this.logFile)) {
         return [];
       }
 
-      const fileStream = fs.createReadStream(this.logFile, { encoding: 'utf8' });
-      const rl = readline.createInterface({
-        input: fileStream,
-        crlfDelay: Infinity,
-      });
+      // Read file content
+      // TODO: For production with large files, use readline or streams
+      const content = fs.readFileSync(this.logFile, 'utf8');
+      const lines = content.split('\n').filter((line) => line.trim());
 
-      const bufferSize = options.limit ? options.limit : Infinity;
-      const isBufferLimited = bufferSize !== Infinity;
-      const events: MessageFlowEvent[] = isBufferLimited
-        ? new Array<MessageFlowEvent>(bufferSize)
-        : [];
-      let count = 0;
+      const events: MessageFlowEvent[] = [];
 
-      const startTimeMs = options.startTime ? options.startTime.getTime() : 0;
-      const endTimeMs = options.endTime ? options.endTime.getTime() : Infinity;
-
-      for await (const line of rl) {
-        if (!line.trim()) {
-          continue;
-        }
-
+      // Process in reverse to get newest first, allowing early exit
+      for (let i = lines.length - 1; i >= 0; i--) {
         try {
-          const event = JSON.parse(line) as MessageFlowEvent;
+          const event = JSON.parse(lines[i]) as MessageFlowEvent;
           const eventTime = new Date(event.timestamp).getTime();
 
-          if (eventTime > endTimeMs) {
-            continue;
+          if (options.startTime && eventTime < options.startTime.getTime()) {
+            // Since we scan from newest to oldest, if we hit a time before startTime,
+            // all remaining events are also before startTime.
+            break;
           }
 
-          if (eventTime < startTimeMs) {
+          if (options.endTime && eventTime > options.endTime.getTime()) {
             continue;
           }
 
@@ -101,31 +84,26 @@ export class ActivityLogger {
             continue;
           }
 
-          if (isBufferLimited) {
-            events[count % bufferSize] = event;
-          } else {
-            // We know it is a dynamic array here
-            (events as MessageFlowEvent[]).push(event);
+          // Note: MessageFlowEvent doesn't strictly have llmProvider in definition in WebSocketService
+          // but dashboard.ts annotates it. We rely on what's logged.
+          // If the logged event has it, we can filter.
+          // But looking at WebSocketService, MessageFlowEvent doesn't have llmProvider.
+          // It's added in dashboard.ts via annotateEvent.
+          // So filtering by llmProvider here might not work if it's not in the log.
+          // We will handle llmProvider filtering in the dashboard router after annotation.
+
+          events.push(event);
+
+          if (options.limit && events.length >= options.limit) {
+            break;
           }
-          count++;
         } catch (e) {
-          debug('Failed to parse activity log line: %O', e);
           continue;
         }
       }
 
-      // Convert circular buffer [Oldest ... Newest]
-      if (isBufferLimited) {
-        const results: MessageFlowEvent[] = [];
-        const totalElements = Math.min(count, bufferSize);
-        for (let i = 0; i < totalElements; i++) {
-          const index = count > bufferSize ? (count + i) % bufferSize : i;
-          results.push(events[index]);
-        }
-        return results;
-      }
-
-      return events;
+      // Return in chronological order (oldest to newest)
+      return events.reverse();
     } catch (error) {
       debug('Failed to read activity log: %O', error);
       return [];
