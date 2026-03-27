@@ -168,6 +168,7 @@ const EnhancedDashboard: React.FC = () => {
                     className="btn btn-ghost btn-sm"
                     onClick={handleRefresh}
                     disabled={isLoading}
+                    aria-label="Refresh dashboard"
                   >
                     🔄
                   </button>

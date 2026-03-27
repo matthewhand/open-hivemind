@@ -38,10 +38,12 @@ router.post('/', async (req, res) => {
     const { id, topic, tags, author, timestamp, version, content } = req.body;
 
     // Validate content field
-    if (!content || typeof content !== "string" || content.trim().length === 0) {
-      return res
-        .status(400)
-        .json({ success: false, error: "Content is required and must be a non-empty string", message: "Validation failed" });
+    if (!content || typeof content !== 'string' || content.trim().length === 0) {
+      return res.status(400).json({
+        success: false,
+        error: 'Content is required and must be a non-empty string',
+        message: 'Validation failed',
+      });
     }
     const newSpec: SpecMetadata = { id, topic, tags, author, timestamp, version };
 
