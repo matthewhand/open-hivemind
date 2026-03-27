@@ -1,22 +1,13 @@
 [build]
-  command = "pnpm install --no-frozen-lockfile && pnpm run build:netlify"
+  command = "npm run build:netlify"
   functions = "dist/netlify/functions"
   publish = "dist/client"
 
-[build.environment]
-  NODE_VERSION = "20"
-  PNPM_VERSION = "9.15.4"
+[context.deploy-preview]
+  command = "mkdir -p dist/client && echo 'Deploy skipped to save quota' > dist/client/index.html && mkdir -p dist/netlify/functions"
+
+[context.branch-deploy]
+  command = "mkdir -p dist/client && echo 'Deploy skipped to save quota' > dist/client/index.html && mkdir -p dist/netlify/functions"
 
 [dev]
   command = "npm run dev"
-
-[[redirects]]
-  from = "/api/*"
-  to = "/.netlify/functions/server"
-  status = 200
-  force = true
-
-[[redirects]]
-  from = "/*"
-  to = "/index.html"
-  status = 200
