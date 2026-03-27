@@ -1,9 +1,9 @@
-import { ERROR_CODES, HEALTH_THRESHOLDS, HTTP_STATUS } from '../../types/constants';
 import os from 'os';
 import process from 'process';
 import { Router, type NextFunction, type Request, type Response } from 'express';
 import { MetricsCollector } from '../../monitoring/MetricsCollector';
 import ApiMonitorService from '../../services/ApiMonitorService';
+import { HEALTH_THRESHOLDS, HTTP_STATUS } from '../../types/constants';
 import { ErrorLogger } from '../../utils/errorLogger';
 import { globalRecoveryManager } from '../../utils/errorRecovery';
 import { optionalAuth } from '../middleware/auth';
@@ -725,7 +725,11 @@ function getRecoveryHealthStatus(
   if (openCircuitBreakers > 0) {
     return 'unhealthy';
   }
-  if (circuitBreakers.some((cb) => cb.circuitBreaker.failureCount > HEALTH_THRESHOLDS.HIGH_FAILURE_COUNT)) {
+  if (
+    circuitBreakers.some(
+      (cb) => cb.circuitBreaker.failureCount > HEALTH_THRESHOLDS.HIGH_FAILURE_COUNT
+    )
+  ) {
     return 'degraded';
   }
   return 'healthy';
@@ -742,7 +746,9 @@ function getRecoveryRecommendations(recoveryStats: Record<string, any>): string[
     );
   }
 
-  const highFailureCircuits = circuitBreakers.filter((cb) => cb.circuitBreaker.failureCount > HEALTH_THRESHOLDS.HIGH_FAILURE_COUNT);
+  const highFailureCircuits = circuitBreakers.filter(
+    (cb) => cb.circuitBreaker.failureCount > HEALTH_THRESHOLDS.HIGH_FAILURE_COUNT
+  );
   if (highFailureCircuits.length > 0) {
     recommendations.push(
       `${highFailureCircuits.length} circuit breaker(s) have high failure rates.`

@@ -1,14 +1,14 @@
 import { createCipheriv, createDecipheriv, randomBytes, scryptSync } from 'crypto';
 import { promises as fs } from 'fs';
-import path, { basename, join } from 'path';
+import { basename, join } from 'path';
 import { createGunzip, createGzip } from 'zlib';
 // @ts-ignore - csv-parse v6 ships its own types but TS can't resolve the /sync subpath
 // @ts-ignore - csv-stringify v6 ships its own types but TS can't resolve the /sync subpath
 import Debug from 'debug';
+import { PathSecurityUtils } from '@src/utils/PathSecurityUtils';
 import { AuditLogger } from '../../common/auditLogger';
 import { SecureConfigManager } from '../../config/SecureConfigManager';
 import { UserConfigStore } from '../../config/UserConfigStore';
-import { PathSecurityUtils } from '@src/utils/PathSecurityUtils';
 import { DatabaseManager } from '../../database/DatabaseManager';
 import { ConfigurationTemplateService } from './ConfigurationTemplateService';
 import { ConfigurationValidator } from './ConfigurationValidator';
@@ -623,7 +623,7 @@ export class ConfigurationImportExportService {
         for (const version of importData.versions) {
           try {
             const configId = version.botConfigurationId;
-          if (!configId) continue;
+            if (!configId) continue;
             const isValid = validConfigIds.has(configId);
 
             if (isValid) {

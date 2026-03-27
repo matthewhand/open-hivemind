@@ -1,10 +1,9 @@
+import { randomUUID } from 'crypto';
 import { promises as fs } from 'fs';
 import { join } from 'path';
-import { randomUUID } from 'crypto';
 import Debug from 'debug';
 import { Router } from 'express';
 import { ErrorUtils } from '@src/types/errors';
-import crypto from 'crypto';
 
 const debug = Debug('app:webui:agents');
 const router = Router();

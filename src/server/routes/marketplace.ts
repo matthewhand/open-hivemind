@@ -145,8 +145,12 @@ async function getPackages(): Promise<MarketplacePackage[]> {
   const now = Date.now();
 
   // Return cached result if still valid
-  if (cachedPackages && (now - cacheTimestamp) < CACHE_TTL_MS) {
-    debug('Returning cached packages (%d items, age: %dms)', cachedPackages.length, now - cacheTimestamp);
+  if (cachedPackages && now - cacheTimestamp < CACHE_TTL_MS) {
+    debug(
+      'Returning cached packages (%d items, age: %dms)',
+      cachedPackages.length,
+      now - cacheTimestamp
+    );
     return cachedPackages;
   }
 
