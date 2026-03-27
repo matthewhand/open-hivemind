@@ -32,8 +32,8 @@ export interface Mem0Config {
   llmModel?: string;
   /** Embedder model */
   embedderModel?: string;
-  /** Vector store provider: 'memory' (in-memory) or external */
-  vectorStoreProvider?: 'memory' | 'qdrant' | 'pinecone';
+  /** Vector store provider: 'memory' (in-memory), 'pgvector', or 'pinecone' */
+  vectorStoreProvider?: 'memory' | 'pgvector' | 'pinecone';
   /** History database path */
   historyDbPath?: string;
   /** Custom LLM base URL */
@@ -42,6 +42,29 @@ export interface Mem0Config {
   userId?: string;
   /** Agent ID scope for memories */
   agentId?: string;
+  /** Custom embedder base URL (for OpenAI-compatible endpoints) */
+  embedderBaseUrl?: string;
+  /** Reference to LLM provider for embeddings (resolved by caller) */
+  embeddingProviderId?: string;
+  /** LLM profile key for embeddings (resolved by caller) */
+  llmProfileKey?: string;
+  // --- pgvector configuration ---
+  /** PostgreSQL host for pgvector */
+  pgvectorHost?: string;
+  /** PostgreSQL port for pgvector */
+  pgvectorPort?: number;
+  /** PostgreSQL user for pgvector */
+  pgvectorUser?: string;
+  /** PostgreSQL password for pgvector */
+  pgvectorPassword?: string;
+  /** PostgreSQL database name for pgvector */
+  pgvectorDatabase?: string;
+  /** Collection name for pgvector */
+  pgvectorCollection?: string;
+  /** Embedding dimensions for pgvector */
+  embeddingModelDims?: number;
+  /** Disable SQLite history tracking */
+  disableHistory?: boolean;
 }
 
 // ---------------------------------------------------------------------------
@@ -86,17 +109,37 @@ export class Mem0Provider {
     }
 
     if (config?.vectorStoreProvider) {
-      mem0Config.vectorStore = {
-        provider: config.vectorStoreProvider,
-        config: {
-          collectionName: 'hivemind-memories',
-          dimension: 1536,
-        },
-      };
+      if (config.vectorStoreProvider === 'pgvector') {
+        // pgvector configuration
+        mem0Config.vectorStore = {
+          provider: 'pgvector',
+          config: {
+            collectionName: config.pgvectorCollection ?? 'mem0_memories',
+            embeddingModelDims: config.embeddingModelDims ?? 1536,
+            user: config.pgvectorUser ?? 'hivemind',
+            password: config.pgvectorPassword,
+            host: config.pgvectorHost ?? 'localhost',
+            port: config.pgvectorPort ?? 5432,
+            dbname: config.pgvectorDatabase ?? 'hivemind',
+          },
+        };
+      } else {
+        // Other vector stores (memory, pinecone)
+        mem0Config.vectorStore = {
+          provider: config.vectorStoreProvider,
+          config: {
+            collectionName: 'hivemind-memories',
+            dimension: 1536,
+          },
+        };
+      }
     }
 
     if (config?.historyDbPath) {
       mem0Config.historyDbPath = config.historyDbPath;
+    }
+    if (config?.disableHistory !== undefined) {
+      mem0Config.disableHistory = config.disableHistory;
     }
 
     this.memory = new Memory(mem0Config);

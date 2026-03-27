@@ -271,7 +271,7 @@ const AdvancedThemeSwitcher: React.FC<ThemeSwitcherProps> = ({
     try {
       localStorage.setItem('hivemind-favorite-themes', JSON.stringify(newFavorites));
     } catch (e) {
-      Logger.error('Failed to persist favorites, reverting', e);
+      console.error('Failed to persist favorites, reverting', e);
       setFavoriteThemes(previousFavorites);
     }
   };
@@ -439,8 +439,8 @@ const AdvancedThemeSwitcher: React.FC<ThemeSwitcherProps> = ({
       <div className="relative group">
         <div
           className={`cursor-pointer rounded-lg p-2 border-2 transition-all duration-200 hover:scale-105 ${isSelected
-              ? 'border-primary shadow-lg scale-105'
-              : 'border-base-300 hover:border-primary/50'
+            ? 'border-primary shadow-lg scale-105'
+            : 'border-base-300 hover:border-primary/50'
             }`}
           onClick={() => showPreview ? previewThemeChange(theme.value) : confirmThemeChange(theme.value)}
         >
