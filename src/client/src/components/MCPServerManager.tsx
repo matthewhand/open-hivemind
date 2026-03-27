@@ -9,7 +9,7 @@ import { Alert } from './DaisyUI/Alert';
 import Badge from './DaisyUI/Badge';
 import Button from './DaisyUI/Button';
 import Card from './DaisyUI/Card';
-import Modal from './DaisyUI/Modal';
+import Modal, { ConfirmModal } from './DaisyUI/Modal';
 
 interface MCPServer {
   name: string;
@@ -49,6 +49,9 @@ const MCPServerManager: React.FC = () => {
   const [serverTools, setServerTools] = useState<MCPTool[]>([]);
   const [toastMessage, setToastMessage] = useState('');
   const [toastType, setToastType] = useState<'success' | 'error'>('success');
+  const [confirmModal, setConfirmModal] = useState<{
+    isOpen: boolean; title: string; message: string; onConfirm: () => void;
+  }>({ isOpen: false, title: '', message: '', onConfirm: () => {} });
 
   const [formData, setFormData] = useState({ name: '', serverUrl: '', apiKey: '' });
 
@@ -121,25 +124,30 @@ const MCPServerManager: React.FC = () => {
   };
 
   const handleDisconnectServer = async (serverName: string) => {
-    if (!confirm(`Disconnect from "${serverName}"?`)) {
-      return;
-    }
-    try {
-      const response = await fetch('/api/admin/mcp-servers/disconnect', {
-        method: 'POST',
-        headers: getAuthHeaders(),
-        body: JSON.stringify({ name: serverName }),
-      });
-      if (!response.ok) {
-        throw new Error('Failed to disconnect');
-      }
-      setToastMessage('MCP server disconnected');
-      setToastType('success');
-      fetchServers();
-    } catch (err) {
-      setToastMessage(err instanceof Error ? err.message : 'Failed to disconnect');
-      setToastType('error');
-    }
+    setConfirmModal({
+      isOpen: true,
+      title: 'Disconnect Server',
+      message: `Disconnect from "${serverName}"?`,
+      onConfirm: async () => {
+        setConfirmModal(prev => ({ ...prev, isOpen: false }));
+        try {
+          const response = await fetch('/api/admin/mcp-servers/disconnect', {
+            method: 'POST',
+            headers: getAuthHeaders(),
+            body: JSON.stringify({ name: serverName }),
+          });
+          if (!response.ok) {
+            throw new Error('Failed to disconnect');
+          }
+          setToastMessage('MCP server disconnected');
+          setToastType('success');
+          fetchServers();
+        } catch (err) {
+          setToastMessage(err instanceof Error ? err.message : 'Failed to disconnect');
+          setToastType('error');
+        }
+      },
+    });
   };
 
   const handleViewTools = async (server: MCPServer) => {
@@ -344,6 +352,17 @@ const MCPServerManager: React.FC = () => {
           </div>
         </div>
       )}
+
+      <ConfirmModal
+        isOpen={confirmModal.isOpen}
+        onClose={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))}
+        title={confirmModal.title}
+        message={confirmModal.message}
+        onConfirm={confirmModal.onConfirm}
+        confirmVariant="warning"
+        confirmText="Disconnect"
+        cancelText="Cancel"
+      />
     </Card>
   );
 };

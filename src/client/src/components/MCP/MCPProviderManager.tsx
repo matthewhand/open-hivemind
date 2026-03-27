@@ -1,7 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Alert, Badge, Button, Card, Collapse, Divider, Input, Modal, Progress, Select, Tabs, Toggle, Tooltip } from 'react-daisyui';
 import { FaPlus, FaTrash, FaPlay, FaStop, FaRedo, FaCheck, FaExclamationTriangle, FaInfoCircle, FaCog, FaTerminal, FaClock, FaMemory, FaVial, FaDownload, FaUpload } from 'react-icons/fa';
+import { ConfirmModal } from '../DaisyUI/Modal';
+import { useSuccessToast, useErrorToast } from '../DaisyUI/ToastNotification';
 import type { MCPProviderConfig, MCPProviderStatus, MCPProviderTestResult, MCPProviderTemplate } from '../../types/mcp';
 import MCPProviderManager from '../../../config/MCPProviderManager';
 import { mcpProviderSchema } from '../../provider-configs/schemas/mcp';
@@ -20,6 +22,8 @@ interface ProviderWithStatus extends MCPProviderConfig {
 }
 
 const MCPProviderManagerComponent: React.FC<MCPProviderManagerProps> = ({ className = '' }) => {
+  const successToast = useSuccessToast();
+  const errorToast = useErrorToast();
   const [providers, setProviders] = useState<ProviderWithStatus[]>([]);
   const [templates, setTemplates] = useState<MCPProviderTemplate[]>([]);
   const [selectedProvider, setSelectedProvider] = useState<ProviderWithStatus | null>(null);
@@ -28,6 +32,10 @@ const MCPProviderManagerComponent: React.FC<MCPProviderManagerProps> = ({ classN
   const [activeTab, setActiveTab] = useState('providers');
   const [testResults, setTestResults] = useState<Record<string, MCPProviderTestResult>>({});
   const [manager] = useState(() => new MCPProviderManager());
+  const [confirmModal, setConfirmModal] = useState<{
+    isOpen: boolean; title: string; message: string; onConfirm: () => void;
+  }>({ isOpen: false, title: '', message: '', onConfirm: () => {} });
+  const closeConfirmModal = useCallback(() => setConfirmModal(prev => ({ ...prev, isOpen: false })), []);
   const [isSaving, setIsSaving] = useState(false);
 
   // Form state for create/edit
@@ -118,17 +126,21 @@ const MCPProviderManagerComponent: React.FC<MCPProviderManagerProps> = ({ classN
   };
 
   const handleDeleteProvider = async (providerId: string) => {
-    if (!confirm('Are you sure you want to delete this MCP provider?')) {
-      return;
-    }
-
-    try {
-      await manager.removeProvider(providerId);
-      await loadProviders();
-    } catch (error) {
-      console.error('Failed to delete provider:', error);
-      alert('Failed to delete provider: ' + (error instanceof Error ? error.message : String(error)));
-    }
+    setConfirmModal({
+      isOpen: true,
+      title: 'Delete MCP Provider',
+      message: 'Are you sure you want to delete this MCP provider?',
+      onConfirm: async () => {
+        closeConfirmModal();
+        try {
+          await manager.removeProvider(providerId);
+          await loadProviders();
+        } catch (error) {
+          console.error('Failed to delete provider:', error);
+          errorToast('Delete Failed', 'Failed to delete provider: ' + (error instanceof Error ? error.message : String(error)));
+        }
+      },
+    });
   };
 
   const handleStartProvider = async (providerId: string) => {
@@ -141,7 +153,7 @@ const MCPProviderManagerComponent: React.FC<MCPProviderManagerProps> = ({ classN
       await loadProviders();
     } catch (error) {
       console.error('Failed to start provider:', error);
-      alert('Failed to start provider: ' + (error instanceof Error ? error.message : String(error)));
+      errorToast('Start Failed', 'Failed to start provider: ' + (error instanceof Error ? error.message : String(error)));
     } finally {
       setProviders(prev => prev.map(p =>
         p.id === providerId ? { ...p, isStarting: false } : p,
@@ -159,7 +171,7 @@ const MCPProviderManagerComponent: React.FC<MCPProviderManagerProps> = ({ classN
       await loadProviders();
     } catch (error) {
       console.error('Failed to stop provider:', error);
-      alert('Failed to stop provider: ' + (error instanceof Error ? error.message : String(error)));
+      errorToast('Stop Failed', 'Failed to stop provider: ' + (error instanceof Error ? error.message : String(error)));
     } finally {
       setProviders(prev => prev.map(p =>
         p.id === providerId ? { ...p, isStopping: false } : p,
@@ -180,7 +192,7 @@ const MCPProviderManagerComponent: React.FC<MCPProviderManagerProps> = ({ classN
       }));
     } catch (error) {
       console.error('Failed to test provider:', error);
-      alert('Failed to test provider: ' + (error instanceof Error ? error.message : String(error)));
+      errorToast('Test Failed', 'Failed to test provider: ' + (error instanceof Error ? error.message : String(error)));
     } finally {
       setProviders(prev => prev.map(p =>
         p.id === providerId ? { ...p, isTesting: false } : p,
@@ -202,7 +214,7 @@ const MCPProviderManagerComponent: React.FC<MCPProviderManagerProps> = ({ classN
       URL.revokeObjectURL(url);
     } catch (error) {
       console.error('Failed to export providers:', error);
-      alert('Failed to export providers');
+      errorToast('Export Failed', 'Failed to export providers');
     }
   };
 
@@ -216,10 +228,10 @@ const MCPProviderManagerComponent: React.FC<MCPProviderManagerProps> = ({ classN
         const data = e.target?.result as string;
         await manager.importProviders(data);
         await loadProviders();
-        alert('Providers imported successfully');
+        successToast('Import Successful', 'Providers imported successfully');
       } catch (error) {
         console.error('Failed to import providers:', error);
-        alert('Failed to import providers: ' + (error instanceof Error ? error.message : String(error)));
+        errorToast('Import Failed', 'Failed to import providers: ' + (error instanceof Error ? error.message : String(error)));
       }
     };
     reader.readAsText(file);
@@ -618,6 +630,17 @@ const MCPProviderManagerComponent: React.FC<MCPProviderManagerProps> = ({ classN
             loadProviders();
           }
         }}
+      />
+
+      <ConfirmModal
+        isOpen={confirmModal.isOpen}
+        onClose={closeConfirmModal}
+        title={confirmModal.title}
+        message={confirmModal.message}
+        onConfirm={confirmModal.onConfirm}
+        confirmVariant="error"
+        confirmText="Delete"
+        cancelText="Cancel"
       />
     </div>
   );

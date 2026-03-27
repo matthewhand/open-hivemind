@@ -4,6 +4,7 @@ import { Alert } from './DaisyUI/Alert';
 import Badge from './DaisyUI/Badge';
 import Button from './DaisyUI/Button';
 import Card from './DaisyUI/Card';
+import { ConfirmModal } from './DaisyUI/Modal';
 import Input from './DaisyUI/Input';
 import Select from './DaisyUI/Select';
 
@@ -43,6 +44,9 @@ const ToolUsageGuardsConfig: React.FC = () => {
       type: 'success',
     }
   );
+  const [confirmModal, setConfirmModal] = useState<{
+    isOpen: boolean; title: string; message: string; onConfirm: () => void;
+  }>({ isOpen: false, title: '', message: '', onConfirm: () => {} });
 
   const guardTypes = [
     { value: 'owner', label: 'Owner Only' },
@@ -143,32 +147,36 @@ const ToolUsageGuardsConfig: React.FC = () => {
   };
 
   const handleDeleteGuard = async (guardId: string) => {
-    if (!confirm('Are you sure you want to delete this tool usage guard?')) {
-      return;
-    }
+    setConfirmModal({
+      isOpen: true,
+      title: 'Delete Tool Usage Guard',
+      message: 'Are you sure you want to delete this tool usage guard?',
+      onConfirm: async () => {
+        setConfirmModal(prev => ({ ...prev, isOpen: false }));
+        try {
+          const response = await fetch(`/api/admin/tool-usage-guards/${guardId}`, {
+            method: 'DELETE',
+          });
 
-    try {
-      const response = await fetch(`/api/admin/tool-usage-guards/${guardId}`, {
-        method: 'DELETE',
-      });
+          if (!response.ok) {
+            throw new Error('Failed to delete tool usage guard');
+          }
 
-      if (!response.ok) {
-        throw new Error('Failed to delete tool usage guard');
-      }
-
-      setToast({
-        show: true,
-        message: 'Tool usage guard deleted successfully',
-        type: 'success',
-      });
-      fetchGuards();
-    } catch (err) {
-      setToast({
-        show: true,
-        message: err instanceof Error ? err.message : 'Failed to delete tool usage guard',
-        type: 'error',
-      });
-    }
+          setToast({
+            show: true,
+            message: 'Tool usage guard deleted successfully',
+            type: 'success',
+          });
+          fetchGuards();
+        } catch (err) {
+          setToast({
+            show: true,
+            message: err instanceof Error ? err.message : 'Failed to delete tool usage guard',
+            type: 'error',
+          });
+        }
+      },
+    });
   };
 
   const handleToggleActive = async (guardId: string, isActive: boolean) => {
@@ -386,6 +394,17 @@ const ToolUsageGuardsConfig: React.FC = () => {
           </div>
         </div>
       )}
+
+      <ConfirmModal
+        isOpen={confirmModal.isOpen}
+        onClose={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))}
+        title={confirmModal.title}
+        message={confirmModal.message}
+        onConfirm={confirmModal.onConfirm}
+        confirmVariant="error"
+        confirmText="Delete"
+        cancelText="Cancel"
+      />
     </div>
   );
 };

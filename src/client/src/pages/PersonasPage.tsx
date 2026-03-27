@@ -24,7 +24,7 @@ import { LoadingSpinner } from '../components/DaisyUI/Loading';
 import Modal from '../components/DaisyUI/Modal';
 import PageHeader from '../components/DaisyUI/PageHeader';
 import StatsCards from '../components/DaisyUI/StatsCards';
-import ToastNotification from '../components/DaisyUI/ToastNotification';
+import ToastNotification, { useInfoToast } from '../components/DaisyUI/ToastNotification';
 import SearchFilterBar from '../components/SearchFilterBar';
 import { apiService, type Persona as ApiPersona, type Bot } from '../services/api';
 
@@ -46,6 +46,7 @@ const categoryOptions = [
 ];
 
 const PersonasPage: React.FC = () => {
+  const infoToast = useInfoToast();
   const [bots, setBots] = useState<Bot[]>([]); // Bot type from API
   const [personas, setPersonas] = useState<Persona[]>([]);
   const [loading, setLoading] = useState(true);
@@ -246,7 +247,7 @@ const PersonasPage: React.FC = () => {
 
   const openEditModal = (persona: Persona) => {
     if (persona.isBuiltIn) {
-      alert('Cannot edit built-in personas directly. Clone them instead.');
+      infoToast('Built-in Persona', 'Cannot edit built-in personas directly. Clone them instead.');
       return;
     }
     setPersonaName(persona.name);
