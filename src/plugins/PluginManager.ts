@@ -213,7 +213,7 @@ function validateRepoUrl(url: string): void {
     decodedPathname = decodeURIComponent(parsedUrl.pathname);
     decodedHref = decodeURIComponent(parsedUrl.href);
   } catch {
-    throw new PluginValidationError("Invalid repository URL: malformed URI sequence.");
+    throw new PluginValidationError('Invalid repository URL: malformed URI sequence.');
   }
 
   // Prevent argument injection via hostname or path
