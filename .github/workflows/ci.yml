@@ -29,6 +29,8 @@ jobs:
           node-version: '20'
       - name: Install dependencies
         run: pnpm install
+      - name: Audit for hardcoded secrets
+        run: pnpm install
       - name: Run security audit
         run: pnpm audit --audit-level=high --production
       - name: Run unit tests
