@@ -168,13 +168,13 @@ const ConfigurationWizard: React.FC = () => {
           <h3 className="text-lg font-semibold">Basic Bot Configuration</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="form-control">
-              <label className="label"><span className="label-text">Bot Name *</span></label>
-              <Input value={wizardData.botName} onChange={(e) => setWizardData(prev => ({ ...prev, botName: e.target.value }))} />
+              <label htmlFor="wizard-bot-name" className="label"><span className="label-text">Bot Name *</span></label>
+              <Input id="wizard-bot-name" value={wizardData.botName} onChange={(e) => setWizardData(prev => ({ ...prev, botName: e.target.value }))} />
               <label className="label"><span className="label-text-alt">Unique name for your bot</span></label>
             </div>
             <div className="form-control">
-              <label className="label"><span className="label-text">Environment</span></label>
-              <Select value={wizardData.environment} onChange={(e) => setWizardData(prev => ({ ...prev, environment: e.target.value }))} options={[
+              <label htmlFor="wizard-environment" className="label"><span className="label-text">Environment</span></label>
+              <Select id="wizard-environment" value={wizardData.environment} onChange={(e) => setWizardData(prev => ({ ...prev, environment: e.target.value }))} options={[
                 { value: 'development', label: 'Development' },
                 { value: 'staging', label: 'Staging' },
                 { value: 'production', label: 'Production' },
@@ -190,8 +190,8 @@ const ConfigurationWizard: React.FC = () => {
           <h3 className="text-lg font-semibold">Service Providers</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="form-control">
-              <label className="label"><span className="label-text">Message Provider *</span></label>
-              <Select value={wizardData.messageProvider} onChange={(e) => setWizardData(prev => ({ ...prev, messageProvider: e.target.value }))} options={[
+              <label htmlFor="wizard-message-provider" className="label"><span className="label-text">Message Provider *</span></label>
+              <Select id="wizard-message-provider" value={wizardData.messageProvider} onChange={(e) => setWizardData(prev => ({ ...prev, messageProvider: e.target.value }))} options={[
                 { value: '', label: 'Select a provider' },
                 { value: 'discord', label: 'Discord' },
                 { value: 'slack', label: 'Slack' },
@@ -199,8 +199,8 @@ const ConfigurationWizard: React.FC = () => {
               ]} />
             </div>
             <div className="form-control">
-              <label className="label"><span className="label-text">LLM Provider *</span></label>
-              <Select value={wizardData.llmProvider} onChange={(e) => setWizardData(prev => ({ ...prev, llmProvider: e.target.value }))} options={[
+              <label htmlFor="wizard-llm-provider" className="label"><span className="label-text">LLM Provider *</span></label>
+              <Select id="wizard-llm-provider" value={wizardData.llmProvider} onChange={(e) => setWizardData(prev => ({ ...prev, llmProvider: e.target.value }))} options={[
                 { value: '', label: 'Select a provider' },
                 { value: 'openai', label: 'OpenAI' },
                 { value: 'flowise', label: 'Flowise' },
@@ -222,17 +222,17 @@ const ConfigurationWizard: React.FC = () => {
               <p className="font-medium">Discord Settings</p>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="form-control md:col-span-2">
-                  <label className="label"><span className="label-text">Bot Token *</span></label>
-                  <Input type="password" value={wizardData.discordToken || ''} onChange={(e) => setWizardData(prev => ({ ...prev, discordToken: e.target.value }))} />
+                  <label htmlFor="wizard-discord-token" className="label"><span className="label-text">Bot Token *</span></label>
+                  <Input id="wizard-discord-token" type="password" value={wizardData.discordToken || ''} onChange={(e) => setWizardData(prev => ({ ...prev, discordToken: e.target.value }))} />
                   <label className="label"><span className="label-text-alt">Required: Bot token from Discord Developer Portal</span></label>
                 </div>
                 <div className="form-control">
-                  <label className="label"><span className="label-text">Client ID</span></label>
-                  <Input value={wizardData.discordClientId || ''} onChange={(e) => setWizardData(prev => ({ ...prev, discordClientId: e.target.value }))} />
+                  <label htmlFor="wizard-discord-client-id" className="label"><span className="label-text">Client ID</span></label>
+                  <Input id="wizard-discord-client-id" value={wizardData.discordClientId || ''} onChange={(e) => setWizardData(prev => ({ ...prev, discordClientId: e.target.value }))} />
                 </div>
                 <div className="form-control">
-                  <label className="label"><span className="label-text">Guild ID</span></label>
-                  <Input value={wizardData.discordGuildId || ''} onChange={(e) => setWizardData(prev => ({ ...prev, discordGuildId: e.target.value }))} />
+                  <label htmlFor="wizard-discord-guild-id" className="label"><span className="label-text">Guild ID</span></label>
+                  <Input id="wizard-discord-guild-id" value={wizardData.discordGuildId || ''} onChange={(e) => setWizardData(prev => ({ ...prev, discordGuildId: e.target.value }))} />
                 </div>
               </div>
             </div>
@@ -243,13 +243,13 @@ const ConfigurationWizard: React.FC = () => {
               <p className="font-medium">Slack Settings</p>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="form-control">
-                  <label className="label"><span className="label-text">Bot Token *</span></label>
-                  <Input type="password" value={wizardData.slackToken || ''} onChange={(e) => setWizardData(prev => ({ ...prev, slackToken: e.target.value }))} />
+                  <label htmlFor="wizard-slack-token" className="label"><span className="label-text">Bot Token *</span></label>
+                  <Input id="wizard-slack-token" type="password" value={wizardData.slackToken || ''} onChange={(e) => setWizardData(prev => ({ ...prev, slackToken: e.target.value }))} />
                   <label className="label"><span className="label-text-alt">Required: Bot token from Slack App settings</span></label>
                 </div>
                 <div className="form-control">
-                  <label className="label"><span className="label-text">App Token</span></label>
-                  <Input type="password" value={wizardData.slackAppToken || ''} onChange={(e) => setWizardData(prev => ({ ...prev, slackAppToken: e.target.value }))} />
+                  <label htmlFor="wizard-slack-app-token" className="label"><span className="label-text">App Token</span></label>
+                  <Input id="wizard-slack-app-token" type="password" value={wizardData.slackAppToken || ''} onChange={(e) => setWizardData(prev => ({ ...prev, slackAppToken: e.target.value }))} />
                 </div>
               </div>
             </div>
@@ -260,12 +260,12 @@ const ConfigurationWizard: React.FC = () => {
               <p className="font-medium">Mattermost Settings</p>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="form-control md:col-span-2">
-                  <label className="label"><span className="label-text">Server URL *</span></label>
-                  <Input value={wizardData.mattermostServerUrl || ''} onChange={(e) => setWizardData(prev => ({ ...prev, mattermostServerUrl: e.target.value }))} placeholder="https://mattermost.example.com" />
+                  <label htmlFor="wizard-mattermost-url" className="label"><span className="label-text">Server URL *</span></label>
+                  <Input id="wizard-mattermost-url" value={wizardData.mattermostServerUrl || ''} onChange={(e) => setWizardData(prev => ({ ...prev, mattermostServerUrl: e.target.value }))} placeholder="https://mattermost.example.com" />
                 </div>
                 <div className="form-control md:col-span-2">
-                  <label className="label"><span className="label-text">Access Token *</span></label>
-                  <Input type="password" value={wizardData.mattermostToken || ''} onChange={(e) => setWizardData(prev => ({ ...prev, mattermostToken: e.target.value }))} />
+                  <label htmlFor="wizard-mattermost-token" className="label"><span className="label-text">Access Token *</span></label>
+                  <Input id="wizard-mattermost-token" type="password" value={wizardData.mattermostToken || ''} onChange={(e) => setWizardData(prev => ({ ...prev, mattermostToken: e.target.value }))} />
                 </div>
               </div>
             </div>
@@ -276,22 +276,22 @@ const ConfigurationWizard: React.FC = () => {
               <p className="font-medium">LLM Settings</p>
               {wizardData.llmProvider === 'openai' && (
                 <div className="form-control">
-                  <label className="label"><span className="label-text">OpenAI API Key *</span></label>
-                  <Input type="password" value={wizardData.openaiKey || ''} onChange={(e) => setWizardData(prev => ({ ...prev, openaiKey: e.target.value }))} />
+                  <label htmlFor="wizard-openai-key" className="label"><span className="label-text">OpenAI API Key *</span></label>
+                  <Input id="wizard-openai-key" type="password" value={wizardData.openaiKey || ''} onChange={(e) => setWizardData(prev => ({ ...prev, openaiKey: e.target.value }))} />
                   <label className="label"><span className="label-text-alt">Required: Get this from OpenAI API settings</span></label>
                 </div>
               )}
               {wizardData.llmProvider === 'flowise' && (
                 <div className="form-control">
-                  <label className="label"><span className="label-text">Flowise API Key (Optional)</span></label>
-                  <Input type="password" value={wizardData.flowiseApiKey || ''} onChange={(e) => setWizardData(prev => ({ ...prev, flowiseApiKey: e.target.value }))} />
+                  <label htmlFor="wizard-flowise-key" className="label"><span className="label-text">Flowise API Key (Optional)</span></label>
+                  <Input id="wizard-flowise-key" type="password" value={wizardData.flowiseApiKey || ''} onChange={(e) => setWizardData(prev => ({ ...prev, flowiseApiKey: e.target.value }))} />
                   <label className="label"><span className="label-text-alt">Optional: Only required if your Flowise instance requires authentication</span></label>
                 </div>
               )}
               {wizardData.llmProvider === 'openwebui' && (
                 <div className="form-control">
-                  <label className="label"><span className="label-text">OpenWebUI API Key *</span></label>
-                  <Input type="password" value={wizardData.openwebuiApiKey || ''} onChange={(e) => setWizardData(prev => ({ ...prev, openwebuiApiKey: e.target.value }))} />
+                  <label htmlFor="wizard-openwebui-key" className="label"><span className="label-text">OpenWebUI API Key *</span></label>
+                  <Input id="wizard-openwebui-key" type="password" value={wizardData.openwebuiApiKey || ''} onChange={(e) => setWizardData(prev => ({ ...prev, openwebuiApiKey: e.target.value }))} />
                 </div>
               )}
             </div>

@@ -56,7 +56,7 @@
     "test:only": "npm run test",
     "test:only:backend": "npm run test:backend",
     "test:only:frontend": "npm run test:frontend",
-    "audit:secrets": "echo 'No secrets audit configured yet' && exit 0"
+    "audit:secrets": "echo 'Secrets audit skipped - implement a real secrets audit command later'"
   },
   "_moduleAliases": {
     "@src": "dist/src",
