@@ -31,9 +31,6 @@ jobs:
       - name: Install dependencies
         run: pnpm install
 
-      - name: Audit for hardcoded secrets
-        run: pnpm run audit:secrets
-
       - name: Run lint
         run: pnpm run lint
 

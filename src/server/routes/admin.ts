@@ -1,15 +1,15 @@
-import { ErrorUtils } from '../../common/ErrorUtils';
 import Debug from 'debug';
 import { Router, type Request, type Response } from 'express';
 import { container } from 'tsyringe';
-import { isSafeUrl } from '../../utils/ssrfGuard';
 import { authenticate, requireAdmin } from '../../auth/middleware';
+import { ErrorUtils } from '../../common/ErrorUtils';
 import { getTrustedMcpReposConfig } from '../../config/trustedMcpRepos';
 import { DatabaseManager } from '../../database/DatabaseManager';
 import { MCPService } from '../../mcp/MCPService';
 import ApiMonitorService from '../../services/ApiMonitorService';
 import { webUIStorage } from '../../storage/webUIStorage';
 import { getRelevantEnvVars } from '../../utils/envUtils';
+import { isSafeUrl } from '../../utils/ssrfGuard';
 import {
   LlmProviderSchema,
   McpServerConnectSchema,
@@ -109,7 +109,7 @@ router.get('/tool-usage-guards', (req: Request, res: Response) => {
       message: 'Tool usage guards retrieved successfully',
     });
   } catch (error: unknown) {
-      const hivemindError = ErrorUtils.toHivemindError(error);
+    const hivemindError = ErrorUtils.toHivemindError(error);
     return res.status(500).json({
       error: 'Failed to retrieve tool usage guards',
       message: hivemindError.message || 'An error occurred while retrieving tool usage guards',
@@ -289,7 +289,7 @@ router.get('/llm-providers', (req: Request, res: Response) => {
       message: 'LLM providers retrieved successfully',
     });
   } catch (error: unknown) {
-      const hivemindError = ErrorUtils.toHivemindError(error);
+    const hivemindError = ErrorUtils.toHivemindError(error);
     return res.status(500).json({
       error: 'Failed to retrieve LLM providers',
       message: hivemindError.message || 'An error occurred while retrieving LLM providers',
@@ -498,7 +498,7 @@ router.get('/messenger-providers', (req: Request, res: Response) => {
       message: 'Messenger providers retrieved successfully',
     });
   } catch (error: unknown) {
-      const hivemindError = ErrorUtils.toHivemindError(error);
+    const hivemindError = ErrorUtils.toHivemindError(error);
     return res.status(500).json({
       error: 'Failed to retrieve messenger providers',
       message: hivemindError.message || 'An error occurred while retrieving messenger providers',
@@ -750,7 +750,7 @@ router.get('/personas', (req: Request, res: Response) => {
       message: 'Personas retrieved successfully',
     });
   } catch (error: unknown) {
-      const hivemindError = ErrorUtils.toHivemindError(error);
+    const hivemindError = ErrorUtils.toHivemindError(error);
     return res.status(500).json({
       error: 'Failed to retrieve personas',
       message: hivemindError.message || 'An error occurred while retrieving personas',
@@ -791,7 +791,7 @@ router.post('/personas', validateRequest(PersonaSchema), (req: Request, res: Res
       message: 'Persona created successfully',
     });
   } catch (error: unknown) {
-      const hivemindError = ErrorUtils.toHivemindError(error);
+    const hivemindError = ErrorUtils.toHivemindError(error);
     return res.status(500).json({
       error: 'Failed to create persona',
       message: hivemindError.message || 'An error occurred while creating persona',
@@ -1051,7 +1051,7 @@ router.get('/mcp-servers', (req: Request, res: Response) => {
       message: 'Connected MCP servers retrieved successfully',
     });
   } catch (error: unknown) {
-      const hivemindError = ErrorUtils.toHivemindError(error);
+    const hivemindError = ErrorUtils.toHivemindError(error);
     return res.status(500).json({
       error: 'Failed to retrieve MCP servers',
       message: hivemindError.message || 'An error occurred while retrieving MCP servers',
@@ -1103,10 +1103,12 @@ router.get('/env-overrides', (req: Request, res: Response) => {
       message: 'Environment variable overrides retrieved successfully',
     });
   } catch (error: unknown) {
-      const hivemindError = ErrorUtils.toHivemindError(error);
+    const hivemindError = ErrorUtils.toHivemindError(error);
     return res.status(500).json({
       error: 'Failed to retrieve environment variable overrides',
-      message: hivemindError.message || 'An error occurred while retrieving environment variable overrides',
+      message:
+        hivemindError.message ||
+        'An error occurred while retrieving environment variable overrides',
     });
   }
 });
@@ -1174,9 +1176,12 @@ router.get('/providers', async (req: Request, res: Response) => {
       llmProviders,
     });
   } catch (error) {
-      const hivemindError = ErrorUtils.toHivemindError(error);
+    const hivemindError = ErrorUtils.toHivemindError(error);
     debug('Error fetching providers:', hivemindError);
-    return res.status(500).json({ error: 'Failed to fetch providers', message: hivemindError.message || 'An error occurred while fetching providers' });
+    return res.status(500).json({
+      error: 'Failed to fetch providers',
+      message: hivemindError.message || 'An error occurred while fetching providers',
+    });
   }
 });
 
@@ -1201,9 +1206,12 @@ router.get('/system-info', async (req: Request, res: Response) => {
 
     return res.json({ systemInfo });
   } catch (error) {
-      const hivemindError = ErrorUtils.toHivemindError(error);
+    const hivemindError = ErrorUtils.toHivemindError(error);
     debug('Error fetching system info:', hivemindError);
-    return res.status(500).json({ error: 'Failed to fetch system info', message: hivemindError.message || 'An error occurred while fetching system info' });
+    return res.status(500).json({
+      error: 'Failed to fetch system info',
+      message: hivemindError.message || 'An error occurred while fetching system info',
+    });
   }
 });
 
