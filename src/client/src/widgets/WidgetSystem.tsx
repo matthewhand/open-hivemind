@@ -9,6 +9,7 @@ import {
 } from '@heroicons/react/24/outline';
 import { useAppSelector } from '../store/hooks';
 import { AdaptiveGrid } from '../components/ResponsiveComponents';
+import { ConfirmModal } from '../components/DaisyUI/Modal';
 
 export interface WidgetConfig {
   id: string;
@@ -315,6 +316,9 @@ export const WidgetSystem: React.FC<WidgetSystemProps> = ({
   const [widgets, setWidgets] = useState<WidgetConfig[]>(externalWidgets || defaultWidgets);
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [editingWidget, setEditingWidget] = useState<WidgetConfig | null>(null);
+  const [confirmModal, setConfirmModal] = useState<{
+    isOpen: boolean; title: string; message: string; onConfirm: () => void;
+  }>({ isOpen: false, title: '', message: '', onConfirm: () => {} });
   const dragStateRef = useRef<DragState>({
     isDragging: false,
     draggedWidget: null,
@@ -334,11 +338,17 @@ export const WidgetSystem: React.FC<WidgetSystemProps> = ({
   };
 
   const handleWidgetDelete = (widgetId: string) => {
-    if (window.confirm('Are you sure you want to delete this widget?')) {
-      const newWidgets = widgets.filter(w => w.id !== widgetId);
-      setWidgets(newWidgets);
-      onWidgetDelete(widgetId);
-    }
+    setConfirmModal({
+      isOpen: true,
+      title: 'Delete Widget',
+      message: 'Are you sure you want to delete this widget?',
+      onConfirm: () => {
+        setConfirmModal(prev => ({ ...prev, isOpen: false }));
+        const newWidgets = widgets.filter(w => w.id !== widgetId);
+        setWidgets(newWidgets);
+        onWidgetDelete(widgetId);
+      },
+    });
   };
 
   const handleAddWidget = (newWidget: Omit<WidgetConfig, 'id'>) => {
@@ -557,6 +567,17 @@ export const WidgetSystem: React.FC<WidgetSystemProps> = ({
           </div>
         </div>
       )}
+
+      <ConfirmModal
+        isOpen={confirmModal.isOpen}
+        onClose={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))}
+        title={confirmModal.title}
+        message={confirmModal.message}
+        onConfirm={confirmModal.onConfirm}
+        confirmVariant="error"
+        confirmText="Delete"
+        cancelText="Cancel"
+      />
     </div>
   );
 };

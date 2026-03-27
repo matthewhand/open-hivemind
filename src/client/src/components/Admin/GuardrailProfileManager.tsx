@@ -12,7 +12,7 @@ import Badge from '../DaisyUI/Badge';
 import Button from '../DaisyUI/Button';
 import Card from '../DaisyUI/Card';
 import Input from '../DaisyUI/Input';
-import Modal from '../DaisyUI/Modal';
+import Modal, { ConfirmModal } from '../DaisyUI/Modal';
 import Select from '../DaisyUI/Select';
 import Textarea from '../DaisyUI/Textarea';
 import Toggle from '../DaisyUI/Toggle';
@@ -36,6 +36,9 @@ const GuardrailProfileManager: React.FC = () => {
   const [editingProfile, setEditingProfile] = useState<GuardrailProfile | null>(null);
   const [toastMessage, setToastMessage] = useState('');
   const [toastType, setToastType] = useState<'success' | 'error'>('success');
+  const [confirmModal, setConfirmModal] = useState<{
+    isOpen: boolean; title: string; message: string; onConfirm: () => void;
+  }>({ isOpen: false, title: '', message: '', onConfirm: () => {} });
 
   const [formData, setFormData] = useState({
     key: '',
@@ -139,21 +142,26 @@ const GuardrailProfileManager: React.FC = () => {
   };
 
   const handleDelete = async (key: string) => {
-    if (!confirm(`Delete profile "${key}"?`)) {
-      return;
-    }
-    try {
-      const response = await fetch(`/api/config/guardrails/${key}`, { method: 'DELETE' });
-      if (!response.ok) {
-        throw new Error('Failed to delete profile');
-      }
-      setToastMessage('Profile deleted');
-      setToastType('success');
-      fetchProfiles();
-    } catch (err) {
-      setToastMessage(err instanceof Error ? err.message : 'Delete failed');
-      setToastType('error');
-    }
+    setConfirmModal({
+      isOpen: true,
+      title: 'Delete Profile',
+      message: `Delete profile "${key}"?`,
+      onConfirm: async () => {
+        setConfirmModal(prev => ({ ...prev, isOpen: false }));
+        try {
+          const response = await fetch(`/api/config/guardrails/${key}`, { method: 'DELETE' });
+          if (!response.ok) {
+            throw new Error('Failed to delete profile');
+          }
+          setToastMessage('Profile deleted');
+          setToastType('success');
+          fetchProfiles();
+        } catch (err) {
+          setToastMessage(err instanceof Error ? err.message : 'Delete failed');
+          setToastType('error');
+        }
+      },
+    });
   };
 
   if (loading) {
@@ -323,6 +331,17 @@ const GuardrailProfileManager: React.FC = () => {
           </div>
         </div>
       )}
+
+      <ConfirmModal
+        isOpen={confirmModal.isOpen}
+        onClose={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))}
+        title={confirmModal.title}
+        message={confirmModal.message}
+        onConfirm={confirmModal.onConfirm}
+        confirmVariant="error"
+        confirmText="Delete"
+        cancelText="Cancel"
+      />
     </Card>
   );
 };

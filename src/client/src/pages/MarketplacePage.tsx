@@ -19,6 +19,7 @@ import {
   CheckCircle as CheckIcon,
   X as CloseIcon,
 } from 'lucide-react';
+import { ConfirmModal } from '../components/DaisyUI/Modal';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -76,6 +77,9 @@ const MarketplacePage: React.FC = () => {
   const [githubUrl, setGithubUrl] = useState('');
   const [actionInProgress, setActionInProgress] = useState<string | null>(null);
   const [actionMessage, setActionMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [confirmModal, setConfirmModal] = useState<{
+    isOpen: boolean; title: string; message: string; onConfirm: () => void;
+  }>({ isOpen: false, title: '', message: '', onConfirm: () => {} });
 
   // Fetch packages
   useEffect(() => {
@@ -164,26 +168,32 @@ const MarketplacePage: React.FC = () => {
 
   // Uninstall package
   const handleUninstall = async (name: string) => {
-    if (!confirm(`Are you sure you want to uninstall ${name}?`)) return;
+    setConfirmModal({
+      isOpen: true,
+      title: 'Uninstall Package',
+      message: `Are you sure you want to uninstall ${name}?`,
+      onConfirm: async () => {
+        setConfirmModal(prev => ({ ...prev, isOpen: false }));
+        setActionInProgress(`uninstall-${name}`);
+        setActionMessage(null);
 
-    setActionInProgress(`uninstall-${name}`);
-    setActionMessage(null);
+        try {
+          const response = await fetch(`/api/marketplace/uninstall/${name}`, { method: 'POST' });
+          const data = await response.json();
 
-    try {
-      const response = await fetch(`/api/marketplace/uninstall/${name}`, { method: 'POST' });
-      const data = await response.json();
+          if (!response.ok) {
+            throw new Error(data.message || 'Uninstall failed');
+          }
 
-      if (!response.ok) {
-        throw new Error(data.message || 'Uninstall failed');
-      }
-
-      setActionMessage({ type: 'success', text: `Uninstalled ${name} successfully!` });
-      await fetchPackages();
-    } catch (err: any) {
-      setActionMessage({ type: 'error', text: err.message || 'Uninstall failed' });
-    } finally {
-      setActionInProgress(null);
-    }
+          setActionMessage({ type: 'success', text: `Uninstalled ${name} successfully!` });
+          await fetchPackages();
+        } catch (err: any) {
+          setActionMessage({ type: 'error', text: err.message || 'Uninstall failed' });
+        } finally {
+          setActionInProgress(null);
+        }
+      },
+    });
   };
 
   // Breadcrumbs
@@ -455,6 +465,17 @@ const MarketplacePage: React.FC = () => {
           ></div>
         </dialog>
       )}
+
+      <ConfirmModal
+        isOpen={confirmModal.isOpen}
+        onClose={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))}
+        title={confirmModal.title}
+        message={confirmModal.message}
+        onConfirm={confirmModal.onConfirm}
+        confirmVariant="error"
+        confirmText="Uninstall"
+        cancelText="Cancel"
+      />
     </div>
   );
 };

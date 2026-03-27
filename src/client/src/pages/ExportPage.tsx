@@ -15,7 +15,7 @@ import {
 } from 'lucide-react';
 import { Alert } from '../components/DaisyUI/Alert';
 import ToastNotification from '../components/DaisyUI/ToastNotification';
-import Modal from '../components/DaisyUI/Modal';
+import Modal, { ConfirmModal } from '../components/DaisyUI/Modal';
 import Button from '../components/DaisyUI/Button';
 import Input from '../components/DaisyUI/Input';
 import Textarea from '../components/DaisyUI/Textarea';
@@ -43,6 +43,9 @@ const ExportPage: React.FC = () => {
   const [newBackupDesc, setNewBackupDesc] = useState('');
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [confirmModal, setConfirmModal] = useState<{
+    isOpen: boolean; title: string; message: string; onConfirm: () => void; confirmVariant?: 'primary' | 'error' | 'warning';
+  }>({ isOpen: false, title: '', message: '', onConfirm: () => {} });
 
   const fetchBackups = useCallback(async () => {
     try {
@@ -82,31 +85,47 @@ const ExportPage: React.FC = () => {
   };
 
   const handleDeleteBackup = async (id: string) => {
-    if (!window.confirm('Are you sure you want to delete this backup? This action cannot be undone.')) return;
-    try {
-      setActionLoading(id);
-      await apiService.deleteSystemBackup(id);
-      setToast({ title: 'Success', message: 'Backup deleted successfully', type: 'success' });
-      fetchBackups();
-    } catch (err) {
-      setToast({ title: 'Error', message: 'Failed to delete backup', type: 'error' });
-    } finally {
-      setActionLoading(null);
-    }
+    setConfirmModal({
+      isOpen: true,
+      title: 'Delete Backup',
+      message: 'Are you sure you want to delete this backup? This action cannot be undone.',
+      confirmVariant: 'error',
+      onConfirm: async () => {
+        setConfirmModal(prev => ({ ...prev, isOpen: false }));
+        try {
+          setActionLoading(id);
+          await apiService.deleteSystemBackup(id);
+          setToast({ title: 'Success', message: 'Backup deleted successfully', type: 'success' });
+          fetchBackups();
+        } catch (err) {
+          setToast({ title: 'Error', message: 'Failed to delete backup', type: 'error' });
+        } finally {
+          setActionLoading(null);
+        }
+      },
+    });
   };
 
   const handleRestoreBackup = async (id: string) => {
-    if (!window.confirm('Are you sure you want to restore this backup? Current configuration will be overwritten.')) return;
-    try {
-      setActionLoading(id);
-      await apiService.restoreSystemBackup(id, { overwrite: true });
-      setToast({ title: 'Success', message: 'System restored successfully. Reloading...', type: 'success' });
-      setTimeout(() => window.location.reload(), 2000);
-    } catch (err) {
-      setToast({ title: 'Error', message: 'Failed to restore backup', type: 'error' });
-    } finally {
-      setActionLoading(null);
-    }
+    setConfirmModal({
+      isOpen: true,
+      title: 'Restore Backup',
+      message: 'Are you sure you want to restore this backup? Current configuration will be overwritten.',
+      confirmVariant: 'warning',
+      onConfirm: async () => {
+        setConfirmModal(prev => ({ ...prev, isOpen: false }));
+        try {
+          setActionLoading(id);
+          await apiService.restoreSystemBackup(id, { overwrite: true });
+          setToast({ title: 'Success', message: 'System restored successfully. Reloading...', type: 'success' });
+          setTimeout(() => window.location.reload(), 2000);
+        } catch (err) {
+          setToast({ title: 'Error', message: 'Failed to restore backup', type: 'error' });
+        } finally {
+          setActionLoading(null);
+        }
+      },
+    });
   };
 
   const handleDownloadBackup = async (id: string, name: string) => {
@@ -517,6 +536,17 @@ const ExportPage: React.FC = () => {
           </div>
         </div>
       )}
+
+      <ConfirmModal
+        isOpen={confirmModal.isOpen}
+        onClose={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))}
+        title={confirmModal.title}
+        message={confirmModal.message}
+        onConfirm={confirmModal.onConfirm}
+        confirmVariant={confirmModal.confirmVariant}
+        confirmText="Confirm"
+        cancelText="Cancel"
+      />
     </div>
   );
 };

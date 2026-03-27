@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import Card from './DaisyUI/Card';
 import Badge from './DaisyUI/Badge';
 import Button from './DaisyUI/Button';
-import Modal from './DaisyUI/Modal';
+import Modal, { ConfirmModal } from './DaisyUI/Modal';
 import Input from './DaisyUI/Input';
 import { Alert } from './DaisyUI/Alert';
 import { Loading } from './DaisyUI/Loading';
@@ -45,6 +45,9 @@ const SecureConfigManager: React.FC<SecureConfigManagerProps> = ({ onRefresh }) 
     encryptSensitive: true,
   });
   const [backupFile, setBackupFile] = useState('');
+  const [confirmModal, setConfirmModal] = useState<{
+    isOpen: boolean; title: string; message: string; onConfirm: () => void;
+  }>({ isOpen: false, title: '', message: '', onConfirm: () => {} });
 
   // Mock data
   useEffect(() => {
@@ -107,14 +110,22 @@ const SecureConfigManager: React.FC<SecureConfigManagerProps> = ({ onRefresh }) 
 
   const handleDeleteConfig = async (configId: string) => {
     const config = configs.find(c => c.id === configId);
-    if (!config || !confirm(`Are you sure you want to delete configuration "${config.name}"?`)) {return;}
-    try {
-      setConfigs(configs.filter(c => c.id !== configId));
-      showToast(`Configuration "${config.name}" deleted successfully`, 'success');
-      onRefresh?.();
-    } catch {
-      showToast('Failed to delete configuration', 'error');
-    }
+    if (!config) {return;}
+    setConfirmModal({
+      isOpen: true,
+      title: 'Delete Configuration',
+      message: `Are you sure you want to delete configuration "${config.name}"?`,
+      onConfirm: () => {
+        setConfirmModal(prev => ({ ...prev, isOpen: false }));
+        try {
+          setConfigs(configs.filter(c => c.id !== configId));
+          showToast(`Configuration "${config.name}" deleted successfully`, 'success');
+          onRefresh?.();
+        } catch {
+          showToast('Failed to delete configuration', 'error');
+        }
+      },
+    });
   };
 
   const handleBackup = async () => {
@@ -305,6 +316,17 @@ const SecureConfigManager: React.FC<SecureConfigManagerProps> = ({ onRefresh }) 
           </div>
         </div>
       )}
+
+      <ConfirmModal
+        isOpen={confirmModal.isOpen}
+        onClose={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))}
+        title={confirmModal.title}
+        message={confirmModal.message}
+        onConfirm={confirmModal.onConfirm}
+        confirmVariant="error"
+        confirmText="Delete"
+        cancelText="Cancel"
+      />
     </>
   );
 };

@@ -10,6 +10,8 @@ import StatsCards from '../components/DaisyUI/StatsCards';
 import EmptyState from '../components/DaisyUI/EmptyState';
 import { LoadingSpinner } from '../components/DaisyUI/Loading';
 import SearchFilterBar from '../components/SearchFilterBar';
+import { ConfirmModal } from '../components/DaisyUI/Modal';
+import { useErrorToast } from '../components/DaisyUI/ToastNotification';
 import {
   MessageSquare as MessageIcon,
   Plus as AddIcon,
@@ -28,12 +30,16 @@ import { getProviderSchema } from '../provider-configs';
 
 const MessageProvidersPage: React.FC = () => {
   const { modalState, openAddModal, openEditModal, closeModal } = useModal();
+  const errorToast = useErrorToast();
   const [profiles, setProfiles] = useState<any[]>([]);
   const [expandedProfile, setExpandedProfile] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterType, setFilterType] = useState('all');
+  const [confirmModal, setConfirmModal] = useState<{
+    isOpen: boolean; title: string; message: string; onConfirm: () => void;
+  }>({ isOpen: false, title: '', message: '', onConfirm: () => {} });
 
   const fetchProfiles = useCallback(async () => {
     try {
@@ -62,13 +68,20 @@ const MessageProvidersPage: React.FC = () => {
   };
 
   const handleDeleteProfile = async (key: string) => {
-    if (!window.confirm(`Delete profile "${key}"?`)) return;
-    try {
-      await apiService.delete(`/api/config/message-profiles/${key}`);
-      fetchProfiles();
-    } catch (err: any) {
-      alert(`Failed to delete: ${err.message}`);
-    }
+    setConfirmModal({
+      isOpen: true,
+      title: 'Delete Profile',
+      message: `Delete profile "${key}"?`,
+      onConfirm: async () => {
+        setConfirmModal(prev => ({ ...prev, isOpen: false }));
+        try {
+          await apiService.delete(`/api/config/message-profiles/${key}`);
+          fetchProfiles();
+        } catch (err: any) {
+          errorToast('Delete Failed', `Failed to delete: ${err.message}`);
+        }
+      },
+    });
   };
 
   const handleProviderSubmit = async (providerData: any) => {
@@ -102,7 +115,7 @@ const MessageProvidersPage: React.FC = () => {
       closeModal();
       fetchProfiles();
     } catch (err: any) {
-      alert(`Failed to save profile: ${err.message}`);
+      errorToast('Save Failed', `Failed to save profile: ${err.message}`);
     }
   };
 
@@ -250,6 +263,17 @@ const MessageProvidersPage: React.FC = () => {
         existingProviders={profiles}
         onClose={closeModal}
         onSubmit={handleProviderSubmit}
+      />
+
+      <ConfirmModal
+        isOpen={confirmModal.isOpen}
+        onClose={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))}
+        title={confirmModal.title}
+        message={confirmModal.message}
+        onConfirm={confirmModal.onConfirm}
+        confirmVariant="error"
+        confirmText="Delete"
+        cancelText="Cancel"
       />
     </div>
   );

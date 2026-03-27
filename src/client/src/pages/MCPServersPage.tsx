@@ -15,7 +15,7 @@ import {
 import { Alert } from '../components/DaisyUI/Alert';
 import Breadcrumbs from '../components/DaisyUI/Breadcrumbs';
 import EmptyState from '../components/DaisyUI/EmptyState';
-import Modal from '../components/DaisyUI/Modal';
+import Modal, { ConfirmModal } from '../components/DaisyUI/Modal';
 import { AdaptiveGrid } from '../components/ResponsiveComponents';
 import SearchFilterBar from '../components/SearchFilterBar';
 
@@ -75,6 +75,9 @@ const MCPServersPage: React.FC = () => {
   const [trustedRepositories, setTrustedRepositories] = useState<TrustedRepository[]>([]);
   const [cautionRepositories, setCautionRepositories] = useState<TrustedRepository[]>([]);
   const [showTrustIndicator, setShowTrustIndicator] = useState(true);
+  const [confirmModal, setConfirmModal] = useState<{
+    isOpen: boolean; title: string; message: string; onConfirm: () => void;
+  }>({ isOpen: false, title: '', message: '', onConfirm: () => {} });
 
   // Search and Filter State
   const [searchTerm, setSearchTerm] = useState('');
@@ -393,31 +396,33 @@ const MCPServersPage: React.FC = () => {
   };
 
   const handleDeleteServer = async (serverId: string) => {
-    if (
-      window.confirm(
-        'Are you sure you want to delete this server configuration? This action cannot be undone.'
-      )
-    ) {
-      try {
-        const response = await fetch(`/api/admin/mcp-servers/${encodeURIComponent(serverId)}`, {
-          method: 'DELETE',
-          headers: getAuthHeaders(),
-        });
+    setConfirmModal({
+      isOpen: true,
+      title: 'Delete Server',
+      message: 'Are you sure you want to delete this server configuration? This action cannot be undone.',
+      onConfirm: async () => {
+        setConfirmModal(prev => ({ ...prev, isOpen: false }));
+        try {
+          const response = await fetch(`/api/admin/mcp-servers/${encodeURIComponent(serverId)}`, {
+            method: 'DELETE',
+            headers: getAuthHeaders(),
+          });
 
-        if (!response.ok) {
-          const data = await response.json();
-          throw new Error(data.message || 'Failed to delete server');
+          if (!response.ok) {
+            const data = await response.json();
+            throw new Error(data.message || 'Failed to delete server');
+          }
+
+          setAlert({ type: 'success', message: 'Server deleted successfully' });
+          await fetchServers();
+        } catch (err) {
+          setAlert({
+            type: 'error',
+            message: err instanceof Error ? err.message : 'Failed to delete server',
+          });
         }
-
-        setAlert({ type: 'success', message: 'Server deleted successfully' });
-        await fetchServers();
-      } catch (err) {
-        setAlert({
-          type: 'error',
-          message: err instanceof Error ? err.message : 'Failed to delete server',
-        });
-      }
-    }
+      },
+    });
   };
 
   if (loading) {
@@ -823,6 +828,17 @@ const MCPServersPage: React.FC = () => {
           </button>
         </div>
       </Modal>
+
+      <ConfirmModal
+        isOpen={confirmModal.isOpen}
+        onClose={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))}
+        title={confirmModal.title}
+        message={confirmModal.message}
+        onConfirm={confirmModal.onConfirm}
+        confirmVariant="error"
+        confirmText="Delete"
+        cancelText="Cancel"
+      />
     </div>
   );
 };

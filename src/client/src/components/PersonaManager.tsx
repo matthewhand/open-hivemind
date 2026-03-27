@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import Card from './DaisyUI/Card';
 import Button from './DaisyUI/Button';
+import { ConfirmModal } from './DaisyUI/Modal';
 import ModalForm from './DaisyUI/ModalForm';
 import Input from './DaisyUI/Input';
 import Textarea from './DaisyUI/Textarea';
@@ -28,6 +29,9 @@ const PersonaManager: React.FC = () => {
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [selectedPersona, setSelectedPersona] = useState<Persona | null>(null);
   const [toast, setToast] = useState({ show: false, message: '', type: 'success' as 'success' | 'error' });
+  const [confirmModal, setConfirmModal] = useState<{
+    isOpen: boolean; title: string; message: string; onConfirm: () => void;
+  }>({ isOpen: false, title: '', message: '', onConfirm: () => {} });
 
   // Form state
   const [formData, setFormData] = useState({
@@ -120,26 +124,32 @@ const PersonaManager: React.FC = () => {
   };
 
   const handleDeletePersona = async (personaKey: string) => {
-    if (!confirm(`Are you sure you want to delete persona "${personaKey}"?`)) {return;}
+    setConfirmModal({
+      isOpen: true,
+      title: 'Delete Persona',
+      message: `Are you sure you want to delete persona "${personaKey}"?`,
+      onConfirm: async () => {
+        setConfirmModal(prev => ({ ...prev, isOpen: false }));
+        try {
+          const response = await fetch(`/api/admin/personas/${personaKey}`, {
+            method: 'DELETE',
+          });
 
-    try {
-      const response = await fetch(`/api/admin/personas/${personaKey}`, {
-        method: 'DELETE',
-      });
+          if (!response.ok) {
+            throw new Error('Failed to delete persona');
+          }
 
-      if (!response.ok) {
-        throw new Error('Failed to delete persona');
-      }
-
-      setToast({ show: true, message: 'Persona deleted successfully', type: 'success' });
-      fetchPersonas();
-    } catch (err) {
-      setToast({
-        show: true,
-        message: err instanceof Error ? err.message : 'Failed to delete persona',
-        type: 'error',
-      });
-    }
+          setToast({ show: true, message: 'Persona deleted successfully', type: 'success' });
+          fetchPersonas();
+        } catch (err) {
+          setToast({
+            show: true,
+            message: err instanceof Error ? err.message : 'Failed to delete persona',
+            type: 'error',
+          });
+        }
+      },
+    });
   };
 
   const openEditDialog = (persona: Persona) => {
@@ -376,6 +386,17 @@ const PersonaManager: React.FC = () => {
           </div>
         </div>
       )}
+
+      <ConfirmModal
+        isOpen={confirmModal.isOpen}
+        onClose={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))}
+        title={confirmModal.title}
+        message={confirmModal.message}
+        onConfirm={confirmModal.onConfirm}
+        confirmVariant="error"
+        confirmText="Delete"
+        cancelText="Cancel"
+      />
     </div>
   );
 };
