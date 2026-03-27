@@ -36,7 +36,8 @@ export class OutgoingMessageRateLimiter {
     const entries = Array.from(this.byChannel.entries())
       .map(([key, timestamps]) => ({
         key,
-        lastTimestamp: timestamps.length > 0 ? timestamps.reduce((a, b) => Math.max(a, b), -Infinity) : 0,
+        lastTimestamp:
+          timestamps.length > 0 ? timestamps.reduce((a, b) => Math.max(a, b), -Infinity) : 0,
       }))
       .sort((a, b) => a.lastTimestamp - b.lastTimestamp);
 

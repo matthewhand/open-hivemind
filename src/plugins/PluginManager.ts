@@ -204,19 +204,31 @@ function validateRepoUrl(url: string): void {
     );
   }
 
+  let decodedHostname: string;
+  let decodedPathname: string;
+  let decodedHref: string;
+
+  try {
+    decodedHostname = decodeURIComponent(parsedUrl.hostname);
+    decodedPathname = decodeURIComponent(parsedUrl.pathname);
+    decodedHref = decodeURIComponent(parsedUrl.href);
+  } catch {
+    throw new PluginValidationError("Invalid repository URL: malformed URI sequence.");
+  }
+
   // Prevent argument injection via hostname or path
-  if (parsedUrl.hostname.includes(" ") || parsedUrl.pathname.includes(" ")) {
-    throw new PluginValidationError("Invalid repository URL: spaces not allowed.");
+  if (decodedHostname.includes(' ') || decodedPathname.includes(' ')) {
+    throw new PluginValidationError('Invalid repository URL: spaces not allowed.');
   }
 
   // Prevent command injection through special git URL patterns
-  if (/--[a-z-]+=/i.test(parsedUrl.href)) {
-    throw new PluginValidationError("Invalid repository URL: contains suspicious patterns.");
+  if (/--[a-z-]+=/i.test(decodedHref)) {
+    throw new PluginValidationError('Invalid repository URL: contains suspicious patterns.');
   }
 
   // Prevent shell metacharacters in hostname
-  if (/[;&|`$()]/.test(parsedUrl.hostname)) {
-    throw new PluginValidationError("Invalid repository URL: contains shell metacharacters.");
+  if (/[;&|`$()]/.test(decodedHostname)) {
+    throw new PluginValidationError('Invalid repository URL: contains shell metacharacters.');
   }
 }
 
