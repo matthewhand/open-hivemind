@@ -42,7 +42,7 @@ router.get('/', async (req: Request, res: Response) => {
       data: configs,
       count: configs.length,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     debug('Failed to list secure configs:', error);
     return res.status(500).json({
       success: false,
@@ -71,7 +71,7 @@ router.get('/:id', async (req: Request, res: Response) => {
       success: true,
       data: config,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     debug(`Failed to get secure config ${req.params.id}:`, error);
     return res.status(500).json({
       success: false,
@@ -125,14 +125,14 @@ router.post('/', async (req: AuditedRequest, res: Response) => {
       message: 'Configuration stored securely',
       data: { id, name, type },
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     debug('Failed to create secure config:', error);
     logConfigChange(
       req,
       'CREATE',
       `secure-config/${req.body?.id || 'unknown'}`,
       'failure',
-      `Failed to create secure configuration: ${error.message}`
+      `Failed to create secure configuration: ${error instanceof Error ? error.message : String(error)}`
     );
     return res.status(500).json({
       success: false,
@@ -201,14 +201,14 @@ router.put('/:id', async (req: AuditedRequest, res: Response) => {
       message: 'Configuration updated successfully',
       data: { id, name, type },
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     debug(`Failed to update secure config ${req.params.id}:`, error);
     logConfigChange(
       req,
       'UPDATE',
       `secure-config/${req.params.id}`,
       'failure',
-      `Failed to update secure configuration: ${error.message}`
+      `Failed to update secure configuration: ${error instanceof Error ? error.message : String(error)}`
     );
     return res.status(500).json({
       success: false,
@@ -253,14 +253,14 @@ router.delete('/:id', async (req: AuditedRequest, res: Response) => {
       success: true,
       message: 'Configuration deleted successfully',
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     debug(`Failed to delete secure config ${req.params.id}:`, error);
     logConfigChange(
       req,
       'DELETE',
       `secure-config/${req.params.id}`,
       'failure',
-      `Failed to delete secure configuration: ${error.message}`
+      `Failed to delete secure configuration: ${error instanceof Error ? error.message : String(error)}`
     );
     return res.status(500).json({
       success: false,
@@ -290,14 +290,14 @@ router.post('/backup', async (req: AuditedRequest, res: Response) => {
       message: 'Backup created successfully',
       data: { backupId },
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     debug('Failed to create backup:', error);
     logConfigChange(
       req,
       'CREATE',
       'secure-config/backup',
       'failure',
-      `Failed to create backup: ${error.message}`
+      `Failed to create backup: ${error instanceof Error ? error.message : String(error)}`
     );
     return res.status(500).json({
       success: false,
@@ -319,7 +319,7 @@ router.get('/backups/list', async (req: Request, res: Response) => {
       data: backups,
       count: backups.length,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     debug('Failed to list backups:', error);
     return res.status(500).json({
       success: false,
@@ -349,14 +349,14 @@ router.post('/restore/:backupId', async (req: AuditedRequest, res: Response) => 
       success: true,
       message: `Successfully restored from backup ${backupId}`,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     debug(`Failed to restore backup ${req.params.backupId}:`, error);
     logConfigChange(
       req,
       'UPDATE',
       'secure-config/global',
       'failure',
-      `Failed to restore from backup ${req.params.backupId}: ${error.message}`
+      `Failed to restore from backup ${req.params.backupId}: ${error instanceof Error ? error.message : String(error)}`
     );
     return res.status(500).json({
       success: false,

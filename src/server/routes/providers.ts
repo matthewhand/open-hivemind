@@ -30,10 +30,10 @@ router.get('/memory', async (_req: Request, res: Response) => {
       count: results.length,
       providers: results,
     });
-  } catch (err: any) {
+  } catch (err: unknown) {
     return res.status(500).json({
       error: 'Failed to retrieve memory providers',
-      message: err.message,
+      message: err instanceof Error ? err.message : String(err),
     });
   }
 });
@@ -82,10 +82,10 @@ router.get('/tool', async (_req: Request, res: Response) => {
       count: results.length,
       providers: results,
     });
-  } catch (err: any) {
+  } catch (err: unknown) {
     return res.status(500).json({
       error: 'Failed to retrieve tool providers',
-      message: err.message,
+      message: err instanceof Error ? err.message : String(err),
     });
   }
 });

@@ -39,9 +39,9 @@ interface ErrorContext {
   userAgent?: string;
   ip?: string;
   duration?: number;
-  body?: any;
-  params?: any;
-  query?: any;
+  body?: Record<string, unknown>;
+  params?: Record<string, string>;
+  query?: Record<string, unknown>;
 }
 
 /**
@@ -78,7 +78,7 @@ function extractErrorContext(req: Request): ErrorContext {
 /**
  * Sanitize request body to remove sensitive information
  */
-function sanitizeRequestBody(body: any): any {
+function sanitizeRequestBody(body: unknown): Record<string, unknown> | unknown {
   if (!body || typeof body !== 'object') {
     return body;
   }
@@ -166,7 +166,7 @@ export function globalErrorHandler(
  * Handle async errors in route handlers
  */
 export function asyncErrorHandler(
-  fn: (req: Request, res: Response, next: NextFunction) => Promise<any>
+  fn: (req: Request, res: Response, next: NextFunction) => Promise<unknown>
 ) {
   return (req: Request, res: Response, next: NextFunction): void => {
     Promise.resolve(fn(req, res, next)).catch(next);
@@ -226,7 +226,7 @@ export function handleUnhandledRejection(reason: unknown, promise: Promise<unkno
  */
 function emitErrorEvent(error: BaseHivemindError, context: ErrorContext, statusCode: number): void {
   // Emit to any monitoring systems or event emitters
-  (process as any).emit('hivemind:error', {
+  (process as NodeJS.EventEmitter).emit('hivemind:error', {
     error: error.toJSON(),
     context,
     statusCode,
