@@ -1,6 +1,6 @@
 import React from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import Breadcrumbs from '../components/DaisyUI/Breadcrumbs';
+
 import SettingsGeneral from '../components/Settings/SettingsGeneral';
 import SettingsSecurity from '../components/Settings/SettingsSecurity';
 import SettingsMessaging from '../components/Settings/SettingsMessaging';
@@ -22,9 +22,6 @@ const SystemSettings: React.FC = () => {
     navigate('/onboarding');
   };
 
-  const breadcrumbItems = [
-    { label: 'Settings', href: '/admin/settings', isActive: true },
-  ];
 
   const tabs = [
     { id: 'general', label: 'General', component: <SettingsGeneral /> },
@@ -44,8 +41,6 @@ const SystemSettings: React.FC = () => {
 
   return (
     <div className="p-6">
-      <Breadcrumbs items={breadcrumbItems} />
-
       <PageHeader
         title="Settings"
         description="Configure your Open-Hivemind instance settings and preferences"

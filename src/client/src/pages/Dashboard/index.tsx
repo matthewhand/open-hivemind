@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Dashboard from '../../components/Dashboard';
-import Breadcrumbs from '../../components/DaisyUI/Breadcrumbs';
+
 import Carousel from '../../components/DaisyUI/Carousel';
 
 const DashboardPage: React.FC = () => {
@@ -31,8 +31,6 @@ const DashboardPage: React.FC = () => {
     return null; // brief blank while checking onboarding status
   }
 
-  const breadcrumbItems = [{ label: 'Dashboard', href: '/dashboard', isActive: true }];
-
   const carouselItems = [
     {
       image: '', // Using styled content below instead
@@ -56,7 +54,6 @@ const DashboardPage: React.FC = () => {
 
   return (
     <div>
-      <Breadcrumbs items={breadcrumbItems} />
       <div className="mb-8">
         <Carousel items={carouselItems} autoplay={true} interval={6000} variant="full-width" />
       </div>

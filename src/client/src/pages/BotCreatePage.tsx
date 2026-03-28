@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Bot, Save, ArrowLeft, Gamepad2, Hash, MessageSquare, Send, Check } from 'lucide-react';
-import Breadcrumbs from '../components/DaisyUI/Breadcrumbs';
+
 import { SkeletonList } from '../components/DaisyUI/Skeleton';
 import { Alert } from '../components/DaisyUI/Alert';
 import PageHeader from '../components/DaisyUI/PageHeader';
@@ -80,10 +80,6 @@ const BotCreatePage: React.FC = () => {
     fetchData();
   }, []);
 
-  const breadcrumbItems = [
-    { label: 'Bots', href: '/admin/bots' },
-    { label: 'Create Bot', href: '/admin/bots/create', isActive: true },
-  ];
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -127,8 +123,6 @@ const BotCreatePage: React.FC = () => {
   const chatCapableProfiles = llmProfiles.filter((profile: any) => profile?.modelType !== 'embedding');
   return (
     <div className="space-y-6">
-      <Breadcrumbs items={breadcrumbItems} />
-
       <PageHeader
         title="Create New Bot"
         description="Configure a new bot instance with persona and provider settings."

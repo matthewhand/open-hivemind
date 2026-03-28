@@ -4,7 +4,7 @@ import Card from '../components/DaisyUI/Card';
 import Button from '../components/DaisyUI/Button';
 import Input from '../components/DaisyUI/Input';
 import Badge from '../components/DaisyUI/Badge';
-import Breadcrumbs from '../components/DaisyUI/Breadcrumbs';
+
 import Pagination from '../components/DaisyUI/Pagination';
 import { SkeletonPage } from '../components/DaisyUI/Skeleton';
 import { MagnifyingGlassIcon, PlusIcon, BookOpenIcon } from '@heroicons/react/24/outline';
@@ -45,7 +45,6 @@ const SpecsPage: React.FC = () => {
     navigate(`/admin/specs/${id}`);
   };
 
-  const breadcrumbItems = [{ label: 'Specifications', href: '/admin/specs', isActive: true }];
 
   if (loading) {
     return <SkeletonPage variant="cards" statsCount={0} showFilters />;
@@ -69,9 +68,7 @@ const SpecsPage: React.FC = () => {
 
   return (
     <div className="container mx-auto p-6">
-      <Breadcrumbs items={breadcrumbItems} />
-
-      <div className="mt-6 mb-8">
+      <div className="mb-8">
         <h1 className="text-3xl font-bold mb-2">Specifications</h1>
         <p className="opacity-70">View, search, and manage persisted specifications</p>
       </div>
