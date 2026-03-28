@@ -8,6 +8,8 @@ import Badge from '../components/DaisyUI/Badge';
 import Button from '../components/DaisyUI/Button';
 import Card from '../components/DaisyUI/Card';
 import DataTable from '../components/DaisyUI/DataTable';
+import ResponsiveDataView from '../components/DaisyUI/ResponsiveDataView';
+import type { RDVColumn } from '../components/DaisyUI/ResponsiveDataView';
 import StatsCards from '../components/DaisyUI/StatsCards';
 import Timeline from '../components/DaisyUI/Timeline';
 import Toggle from '../components/DaisyUI/Toggle';
@@ -174,45 +176,43 @@ const ActivityPage: React.FC = () => {
     return <Badge variant={variants[status] || 'primary'} size="small">{status}</Badge>;
   };
 
-  const columns = [
+  const columns: RDVColumn<ActivityEvent>[] = [
     {
-      key: 'timestamp' as keyof ActivityEvent,
+      key: 'timestamp',
       title: 'Time',
       sortable: true,
       width: '180px',
       render: (value: string) => <span className="font-mono text-sm">{new Date(value).toLocaleString()}</span>,
     },
     {
-      key: 'botName' as keyof ActivityEvent,
+      key: 'botName',
       title: 'Bot',
       sortable: true,
-      filterable: true,
+      prominent: true,
       render: (value: string) => <span className="font-medium">{value}</span>,
     },
     {
-      key: 'status' as keyof ActivityEvent,
+      key: 'status',
       title: 'Status',
       sortable: true,
-      filterable: true,
+      prominent: true,
       width: '100px',
       render: (value: string) => getStatusBadge(value),
     },
     {
-      key: 'provider' as keyof ActivityEvent,
+      key: 'provider',
       title: 'Provider',
       sortable: true,
-      filterable: true,
       render: (value: string) => <Badge variant="neutral" size="small">{value}</Badge>,
     },
     {
-      key: 'llmProvider' as keyof ActivityEvent,
+      key: 'llmProvider',
       title: 'LLM',
       sortable: true,
-      filterable: true,
       render: (value: string) => <Badge variant="primary" size="small" style="outline">{value}</Badge>,
     },
     {
-      key: 'processingTime' as keyof ActivityEvent,
+      key: 'processingTime',
       title: 'Duration',
       sortable: true,
       width: '100px',
@@ -448,13 +448,12 @@ const ActivityPage: React.FC = () => {
       ) : (
         <Card>
           {viewMode === 'table' ? (
-            <DataTable
+            <ResponsiveDataView
               data={filteredEvents}
               columns={columns}
               loading={loading}
-              pagination={{ pageSize: 25, showSizeChanger: true, pageSizeOptions: [10, 25, 50, 100] }}
-              searchable={false} // We use SearchFilterBar
-              exportable={false} // We have our own export button
+              pagination={{ pageSize: 25, pageSizeOptions: [10, 25, 50, 100] }}
+              searchable={false}
             />
           ) : (
             <div className="p-4">

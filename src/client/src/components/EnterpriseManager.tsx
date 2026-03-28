@@ -13,6 +13,8 @@ import {
   ScaleIcon,
   ShieldCheckIcon,
 } from '@heroicons/react/24/outline';
+import ResponsiveDataView from './DaisyUI/ResponsiveDataView';
+import type { RDVColumn } from './DaisyUI/ResponsiveDataView';
 
 interface ComplianceRule {
   id: string;
@@ -569,48 +571,50 @@ const EnterpriseManager: React.FC = () => {
                 </button>
               </div>
             </div>
-            <div className="overflow-x-auto bg-base-100 rounded-box shadow">
-              <table className="table table-zebra w-full">
-                <thead>
-                  <tr>
-                    <th>Timestamp</th>
-                    <th>User</th>
-                    <th>Action</th>
-                    <th>Resource</th>
-                    <th>Details</th>
-                    <th>Result</th>
-                    <th>IP Address</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredAuditEvents.map((event) => (
-                    <tr key={event.id}>
-                      <td className="text-sm">{new Date(event.timestamp).toLocaleString()}</td>
-                      <td>{event.user}</td>
-                      <td>
-                        <div className="badge badge-ghost badge-sm">{event.action}</div>
-                      </td>
-                      <td>{event.resource}</td>
-                      <td className="text-xs max-w-xs truncate" title={event.details}>
-                        {event.details}
-                      </td>
-                      <td>
-                        <div className={`badge ${getStatusColor(event.result)} badge-sm`}>
-                          {event.result}
-                        </div>
-                      </td>
-                      <td className="font-mono text-xs">{event.ipAddress}</td>
-                    </tr>
-                  ))}
-                  {filteredAuditEvents.length === 0 && (
-                    <tr>
-                      <td colSpan={7} className="text-center py-4">
-                        No audit events match the current structured query.
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
+            <div className="bg-base-100 rounded-box shadow">
+              <ResponsiveDataView<AuditEvent>
+                data={filteredAuditEvents}
+                columns={[
+                  {
+                    key: 'timestamp',
+                    title: 'Timestamp',
+                    sortable: true,
+                    render: (value: string) => <span className="text-sm">{new Date(value).toLocaleString()}</span>,
+                  },
+                  { key: 'user', title: 'User', prominent: true },
+                  {
+                    key: 'action',
+                    title: 'Action',
+                    render: (value: string) => <div className="badge badge-ghost badge-sm">{value}</div>,
+                  },
+                  { key: 'resource', title: 'Resource' },
+                  {
+                    key: 'details',
+                    title: 'Details',
+                    render: (value: string) => (
+                      <span className="text-xs max-w-xs truncate" title={value}>{value}</span>
+                    ),
+                  },
+                  {
+                    key: 'result',
+                    title: 'Result',
+                    render: (value: string) => (
+                      <div className={`badge ${getStatusColor(value)} badge-sm`}>{value}</div>
+                    ),
+                  },
+                  {
+                    key: 'ipAddress',
+                    title: 'IP Address',
+                    render: (value: string) => <span className="font-mono text-xs">{value}</span>,
+                  },
+                ] as RDVColumn<AuditEvent>[]}
+                rowKey={(e) => e.id}
+                emptyState={
+                  <div className="text-center py-4 opacity-50">
+                    No audit events match the current structured query.
+                  </div>
+                }
+              />
             </div>
           </div>
         );

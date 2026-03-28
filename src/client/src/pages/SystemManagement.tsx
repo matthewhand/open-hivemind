@@ -6,6 +6,8 @@ import AlertPanel from '../components/Monitoring/AlertPanel';
 import StatusCard from '../components/Monitoring/StatusCard';
 import Modal, { ConfirmModal } from '../components/DaisyUI/Modal';
 import { useSuccessToast, useErrorToast, useWarningToast } from '../components/DaisyUI/ToastNotification';
+import ResponsiveDataView from '../components/DaisyUI/ResponsiveDataView';
+import type { RDVColumn, RowAction } from '../components/DaisyUI/ResponsiveDataView';
 
 interface SystemConfig {
   refreshInterval: number;
@@ -561,55 +563,37 @@ const SystemManagement: React.FC = () => {
             <div className="space-y-6">
               <h3 className="text-xl font-semibold">Backup History</h3>
 
-              <div className="overflow-x-auto">
-                <table className="table table-zebra w-full">
-                  <thead>
-                    <tr>
-                      <th>Timestamp</th>
-                      <th>Type</th>
-                      <th>Size</th>
-                      <th>Status</th>
-                      <th>Description</th>
-                      <th>Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {backups.map((backup) => (
-                      <tr key={backup.id}>
-                        <td>{new Date(backup.timestamp).toLocaleString()}</td>
-                        <td>
-                          <span className={`badge ${backup.type === 'manual' ? 'badge-info' : 'badge-neutral'}`}>
-                            {backup.type}
-                          </span>
-                        </td>
-                        <td>{backup.size}</td>
-                        <td>
-                          <span className="badge badge-success">
-                            {backup.status}
-                          </span>
-                        </td>
-                        <td>{backup.description}</td>
-                        <td>
-                          <div className="flex gap-2">
-                            <button
-                              className="btn btn-xs btn-primary"
-                              onClick={() => handleRestoreBackup(backup.id)}
-                            >
-                              Restore
-                            </button>
-                            <button
-                              className="btn btn-xs btn-error"
-                              onClick={() => handleDeleteBackup(backup.id)}
-                            >
-                              Delete
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+              <ResponsiveDataView<BackupRecord>
+                data={backups}
+                columns={[
+                  {
+                    key: 'timestamp',
+                    title: 'Timestamp',
+                    prominent: true,
+                    sortable: true,
+                    render: (value: string) => new Date(value).toLocaleString(),
+                  },
+                  {
+                    key: 'type',
+                    title: 'Type',
+                    render: (value: string) => (
+                      <span className={`badge ${value === 'manual' ? 'badge-info' : 'badge-neutral'}`}>{value}</span>
+                    ),
+                  },
+                  { key: 'size', title: 'Size' },
+                  {
+                    key: 'status',
+                    title: 'Status',
+                    render: (value: string) => <span className="badge badge-success">{value}</span>,
+                  },
+                  { key: 'description', title: 'Description' },
+                ] as RDVColumn<BackupRecord>[]}
+                actions={[
+                  { label: 'Restore', variant: 'primary', onClick: (b) => handleRestoreBackup(b.id) },
+                  { label: 'Delete', variant: 'error', onClick: (b) => handleDeleteBackup(b.id) },
+                ] as RowAction<BackupRecord>[]}
+                rowKey={(b) => b.id}
+              />
             </div>
           )}
 
@@ -724,45 +708,45 @@ const SystemManagement: React.FC = () => {
               <div className="card bg-base-200">
                 <div className="card-body p-4">
                   <h4 className="card-title text-sm">API Endpoints Status</h4>
-                  <div className="overflow-x-auto">
-                    <table className="table table-xs w-full">
-                      <thead>
-                        <tr>
-                          <th>Endpoint</th>
-                          <th>Status</th>
-                          <th>Response Time</th>
-                          <th>Failures</th>
-                          <th>Last Checked</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {apiStatus?.endpoints?.map((endpoint: any) => (
-                          <tr key={endpoint.id}>
-                            <td>
-                              <div className="font-bold">{endpoint.name}</div>
-                              <div className="text-xs opacity-50">{endpoint.url}</div>
-                            </td>
-                            <td>
-                              <div className={`badge ${
-                                endpoint.status === 'online' ? 'badge-success' :
-                                endpoint.status === 'slow' ? 'badge-warning' : 'badge-error'
-                              }`}>
-                                {endpoint.status}
-                              </div>
-                            </td>
-                            <td>{endpoint.responseTime}ms</td>
-                            <td>{endpoint.consecutiveFailures}</td>
-                            <td>{new Date(endpoint.lastChecked).toLocaleTimeString()}</td>
-                          </tr>
-                        ))}
-                        {!apiStatus?.endpoints?.length && (
-                          <tr>
-                            <td colSpan={5} className="text-center">No endpoint data available</td>
-                          </tr>
-                        )}
-                      </tbody>
-                    </table>
-                  </div>
+                  <ResponsiveDataView
+                    data={apiStatus?.endpoints || []}
+                    columns={[
+                      {
+                        key: 'name' as any,
+                        title: 'Endpoint',
+                        prominent: true,
+                        render: (_v: any, row: any) => (
+                          <div>
+                            <div className="font-bold">{row.name}</div>
+                            <div className="text-xs opacity-50">{row.url}</div>
+                          </div>
+                        ),
+                      },
+                      {
+                        key: 'status' as any,
+                        title: 'Status',
+                        render: (value: string) => (
+                          <div className={`badge ${
+                            value === 'online' ? 'badge-success' :
+                            value === 'slow' ? 'badge-warning' : 'badge-error'
+                          }`}>{value}</div>
+                        ),
+                      },
+                      {
+                        key: 'responseTime' as any,
+                        title: 'Response Time',
+                        render: (value: number) => `${value}ms`,
+                      },
+                      { key: 'consecutiveFailures' as any, title: 'Failures' },
+                      {
+                        key: 'lastChecked' as any,
+                        title: 'Last Checked',
+                        render: (value: string) => new Date(value).toLocaleTimeString(),
+                      },
+                    ]}
+                    rowKey={(row: any) => row.id}
+                    emptyState={<div className="text-center py-4 opacity-50">No endpoint data available</div>}
+                  />
                 </div>
               </div>
 
@@ -776,31 +760,16 @@ const SystemManagement: React.FC = () => {
                 </p>
 
                 {envOverrides ? (
-                  <div className="overflow-x-auto bg-base-300 rounded-lg p-2">
-                    <table className="table table-xs w-full">
-                      <thead>
-                        <tr>
-                          <th>Variable</th>
-                          <th>Value</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {Object.entries(envOverrides).length > 0 ? (
-                          Object.entries(envOverrides).map(([key, value]) => (
-                            <tr key={key}>
-                              <td className="font-mono font-bold text-primary">{key}</td>
-                              <td className="font-mono break-all">{value}</td>
-                            </tr>
-                          ))
-                        ) : (
-                          <tr>
-                            <td colSpan={2} className="text-center py-4 opacity-50">
-                              No environment overrides detected.
-                            </td>
-                          </tr>
-                        )}
-                      </tbody>
-                    </table>
+                  <div className="bg-base-300 rounded-lg p-2">
+                    <ResponsiveDataView
+                      data={Object.entries(envOverrides).map(([k, v]) => ({ variable: k, value: v as string }))}
+                      columns={[
+                        { key: 'variable' as any, title: 'Variable', prominent: true, render: (v: string) => <span className="font-mono font-bold text-primary">{v}</span> },
+                        { key: 'value' as any, title: 'Value', render: (v: string) => <span className="font-mono break-all">{v}</span> },
+                      ]}
+                      rowKey={(row: any) => row.variable}
+                      emptyState={<div className="text-center py-4 opacity-50">No environment overrides detected.</div>}
+                    />
                   </div>
                 ) : (
                   <div className="flex justify-center py-8">

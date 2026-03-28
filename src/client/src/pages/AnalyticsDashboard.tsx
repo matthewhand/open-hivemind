@@ -5,6 +5,7 @@ import { apiService, ActivityResponse } from '../services/api';
 import MetricChart from '../components/Monitoring/MetricChart';
 import StatusCard from '../components/Monitoring/StatusCard';
 import { redactString } from '../utils/redaction';
+import ResponsiveDataView from '../components/DaisyUI/ResponsiveDataView';
 
 const AnalyticsDashboard: React.FC = () => {
   const { messageFlow, performanceMetrics } = useWebSocket();
@@ -184,35 +185,25 @@ const AnalyticsDashboard: React.FC = () => {
         <div className="card bg-base-100 shadow-xl">
           <div className="card-body">
             <h2 className="card-title mb-4">Bot Performance</h2>
-            <div className="overflow-x-auto">
-              <table className="table table-zebra w-full">
-                <thead>
-                  <tr>
-                    <th>Bot Name</th>
-                    <th>Messages</th>
-                    <th>Errors</th>
-                    <th>Success %</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {botStats.map((bot) => (
-                    <tr key={bot.name}>
-                      <td>{bot.name}</td>
-                      <td>{bot.messages}</td>
-                      <td>{bot.errors}</td>
-                      <td>
-                        <span className={`text-${parseFloat(bot.successRate) > 98 ? 'success' : 'warning'}`}>
-                          {bot.successRate}%
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
-                  {botStats.length === 0 && (
-                    <tr><td colSpan={4} className="text-center text-neutral-content/50">No bot activity found</td></tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
+            <ResponsiveDataView
+              data={botStats}
+              columns={[
+                { key: 'name' as any, title: 'Bot Name', prominent: true },
+                { key: 'messages' as any, title: 'Messages' },
+                { key: 'errors' as any, title: 'Errors' },
+                {
+                  key: 'successRate' as any,
+                  title: 'Success %',
+                  render: (value: string) => (
+                    <span className={`text-${parseFloat(value) > 98 ? 'success' : 'warning'}`}>
+                      {value}%
+                    </span>
+                  ),
+                },
+              ]}
+              rowKey={(bot: any) => bot.name}
+              emptyState={<p className="text-center text-neutral-content/50 py-4">No bot activity found</p>}
+            />
           </div>
         </div>
 
