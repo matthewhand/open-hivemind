@@ -170,7 +170,14 @@ router.get('/detailed/services', optionalAuth, async (_req: Request, res: Respon
     const activeLlm = llmProviders.filter((p: any) => p.status === 'active' || p.connected);
     const llmCount = llmProviders.length;
     const activeCount = activeLlm.length;
-    const llmStatus = llmCount === 0 ? 'down' : activeCount === llmCount ? 'healthy' : activeCount > 0 ? 'degraded' : 'down';
+    const llmStatus =
+      llmCount === 0
+        ? 'down'
+        : activeCount === llmCount
+          ? 'healthy'
+          : activeCount > 0
+            ? 'degraded'
+            : 'down';
     services.push({
       name: 'LLM Providers',
       status: llmStatus as 'healthy' | 'degraded' | 'down',
@@ -200,7 +207,14 @@ router.get('/detailed/services', optionalAuth, async (_req: Request, res: Respon
     const activeMsg = msgProviders.filter((p: any) => p.status === 'active' || p.connected);
     const msgCount = msgProviders.length;
     const activeMsgCount = activeMsg.length;
-    const msgStatus = msgCount === 0 ? 'down' : activeMsgCount === msgCount ? 'healthy' : activeMsgCount > 0 ? 'degraded' : 'down';
+    const msgStatus =
+      msgCount === 0
+        ? 'down'
+        : activeMsgCount === msgCount
+          ? 'healthy'
+          : activeMsgCount > 0
+            ? 'degraded'
+            : 'down';
     services.push({
       name: 'Message Providers',
       status: msgStatus as 'healthy' | 'degraded' | 'down',
@@ -228,13 +242,17 @@ router.get('/detailed/services', optionalAuth, async (_req: Request, res: Respon
     const registry = ProviderRegistry.getInstance();
     const memProviders = registry.getMemoryProviders?.() || [];
     const activeMem = memProviders.filter((p: any) => p.status === 'active' || p.connected);
-    const memStatus = memProviders.length === 0 ? 'down' : activeMem.length > 0 ? 'healthy' : 'down';
+    const memStatus =
+      memProviders.length === 0 ? 'down' : activeMem.length > 0 ? 'healthy' : 'down';
     services.push({
       name: 'Memory Provider',
       status: memStatus as 'healthy' | 'degraded' | 'down',
       latencyMs: Date.now() - memStart,
       lastChecked: now,
-      details: activeMem.length > 0 ? `${activeMem.length} provider(s) active` : 'No memory providers active',
+      details:
+        activeMem.length > 0
+          ? `${activeMem.length} provider(s) active`
+          : 'No memory providers active',
     });
   } catch {
     const hasMem0 = !!process.env.MEM0_API_KEY || !!process.env.MEM0_BASE_URL;

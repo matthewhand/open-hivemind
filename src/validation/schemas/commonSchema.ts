@@ -20,8 +20,7 @@ export const keyString = (field = 'Key') =>
     });
 
 /** Validates a generic ID path parameter */
-export const idParam = (field = 'id') =>
-  z.string().min(1, { message: `${field} is required` });
+export const idParam = (field = 'id') => z.string().min(1, { message: `${field} is required` });
 
 /** Validates pagination query parameters */
 export const PaginationQuerySchema = z.object({
@@ -56,9 +55,7 @@ export const NameParamSchema = z.object({
 /** Schema for reorder endpoints that accept an array of IDs */
 export const ReorderSchema = z.object({
   body: z.object({
-    ids: z
-      .array(z.string().min(1))
-      .min(1, { message: 'ids must be a non-empty array' }),
+    ids: z.array(z.string().min(1)).min(1, { message: 'ids must be a non-empty array' }),
   }),
 });
 

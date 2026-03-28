@@ -243,11 +243,7 @@ router.get('/api/audit', async (req, res) => {
       dateTo,
     });
 
-    const auditEvents = await auditLogger.getAuditEvents(
-      Number(limit),
-      Number(offset),
-      filter,
-    );
+    const auditEvents = await auditLogger.getAuditEvents(Number(limit), Number(offset), filter);
 
     return res.json({
       success: true,
@@ -267,14 +263,10 @@ router.get('/api/audit', async (req, res) => {
 // Export audit events as CSV (no pagination cap)
 router.get('/api/audit/export', async (req, res) => {
   try {
-    const {
-      search,
-      action,
-      resource,
-      user,
-      dateFrom,
-      dateTo,
-    } = req.query as Record<string, string | undefined>;
+    const { search, action, resource, user, dateFrom, dateTo } = req.query as Record<
+      string,
+      string | undefined
+    >;
 
     const auditLogger = AuditLogger.getInstance();
 
@@ -310,7 +302,7 @@ router.get('/api/audit/export', async (req, res) => {
         escCsv(e.result),
         escCsv(e.details),
         escCsv(e.ipAddress),
-      ].join(','),
+      ].join(',')
     );
 
     const csv = [header, ...rows].join('\n');
@@ -318,7 +310,7 @@ router.get('/api/audit/export', async (req, res) => {
     res.setHeader('Content-Type', 'text/csv; charset=utf-8');
     res.setHeader(
       'Content-Disposition',
-      `attachment; filename="audit-log-${new Date().toISOString().slice(0, 10)}.csv"`,
+      `attachment; filename="audit-log-${new Date().toISOString().slice(0, 10)}.csv"`
     );
     return res.send(csv);
   } catch (error) {
