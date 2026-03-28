@@ -8,6 +8,7 @@
 import type { Response } from 'express';
 import { BaseHivemindError } from '../types/errorClasses';
 import { ErrorUtils, type HivemindError } from '../types/errors';
+import { HTTP_STATUS } from '../types/constants';
 
 /**
  * Standard error response structure
@@ -48,44 +49,6 @@ export interface StandardSuccessResponse<T = any> {
     version?: string;
   };
 }
-
-/**
- * HTTP Status Code mappings for error types
- */
-export const HTTP_STATUS_CODES = {
-  // Success
-  OK: 200,
-  CREATED: 201,
-  ACCEPTED: 202,
-  NO_CONTENT: 204,
-
-  // Redirection
-  MOVED_PERMANENTLY: 301,
-  FOUND: 302,
-  NOT_MODIFIED: 304,
-
-  // Client Errors
-  BAD_REQUEST: 400,
-  UNAUTHORIZED: 401,
-  FORBIDDEN: 403,
-  NOT_FOUND: 404,
-  METHOD_NOT_ALLOWED: 405,
-  NOT_ACCEPTABLE: 406,
-  REQUEST_TIMEOUT: 408,
-  CONFLICT: 409,
-  GONE: 410,
-  PAYLOAD_TOO_LARGE: 413,
-  UNSUPPORTED_MEDIA_TYPE: 415,
-  TOO_MANY_REQUESTS: 429,
-
-  // Server Errors
-  INTERNAL_SERVER_ERROR: 500,
-  NOT_IMPLEMENTED: 501,
-  BAD_GATEWAY: 502,
-  SERVICE_UNAVAILABLE: 503,
-  GATEWAY_TIMEOUT: 504,
-  NETWORK_AUTHENTICATION_REQUIRED: 511,
-} as const;
 
 /**
  * Error response builder class
@@ -169,21 +132,21 @@ export class ErrorResponseBuilder {
     // Check for specific status codes
     switch (error.code) {
       case 'VALIDATION_ERROR':
-        return HTTP_STATUS_CODES.BAD_REQUEST;
+        return HTTP_STATUS.BAD_REQUEST;
       case 'AUTH_ERROR':
-        return HTTP_STATUS_CODES.UNAUTHORIZED;
+        return HTTP_STATUS.UNAUTHORIZED;
       case 'AUTHZ_ERROR':
-        return HTTP_STATUS_CODES.FORBIDDEN;
+        return HTTP_STATUS.FORBIDDEN;
       case 'NOT_FOUND':
-        return HTTP_STATUS_CODES.NOT_FOUND;
+        return HTTP_STATUS.NOT_FOUND;
       case 'RATE_LIMIT_ERROR':
-        return HTTP_STATUS_CODES.TOO_MANY_REQUESTS;
+        return HTTP_STATUS.TOO_MANY_REQUESTS;
       case 'TIMEOUT_ERROR':
-        return HTTP_STATUS_CODES.REQUEST_TIMEOUT;
+        return HTTP_STATUS.REQUEST_TIMEOUT;
       case 'CONFIG_ERROR':
-        return HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR;
+        return HTTP_STATUS.INTERNAL_SERVER_ERROR;
       case 'DATABASE_ERROR':
-        return HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR;
+        return HTTP_STATUS.INTERNAL_SERVER_ERROR;
       case 'NETWORK_ERROR':
         // Check if it's a client or server error
         if (error.details && typeof error.details === 'object' && 'response' in error.details) {
@@ -195,9 +158,9 @@ export class ErrorResponseBuilder {
             }
           }
         }
-        return HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR;
+        return HTTP_STATUS.INTERNAL_SERVER_ERROR;
       default:
-        return HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR;
+        return HTTP_STATUS.INTERNAL_SERVER_ERROR;
     }
   }
 
@@ -316,7 +279,7 @@ export function sendSuccessResponse<T>(
     res.setHeader('X-Correlation-ID', correlationId);
   }
 
-  return res.status(HTTP_STATUS_CODES.OK).json(successResponse);
+  return res.status(HTTP_STATUS.OK).json(successResponse);
 }
 
 /**
@@ -558,7 +521,7 @@ export const ResponseUtils = {
       res.setHeader('X-Correlation-ID', correlationId);
     }
 
-    return res.status(HTTP_STATUS_CODES.CREATED).json(response);
+    return res.status(HTTP_STATUS.CREATED).json(response);
   },
 
   /**
@@ -571,7 +534,7 @@ export const ResponseUtils = {
       res.setHeader('X-Correlation-ID', correlationId);
     }
 
-    return res.status(HTTP_STATUS_CODES.ACCEPTED).json(response);
+    return res.status(HTTP_STATUS.ACCEPTED).json(response);
   },
 
   /**
@@ -582,7 +545,7 @@ export const ResponseUtils = {
       res.setHeader('X-Correlation-ID', correlationId);
     }
 
-    return res.status(HTTP_STATUS_CODES.NO_CONTENT).send();
+    return res.status(HTTP_STATUS.NO_CONTENT).send();
   },
 };
 
@@ -593,5 +556,5 @@ export default {
   sendSuccessResponse,
   ErrorResponses,
   ResponseUtils,
-  HTTP_STATUS_CODES,
+  HTTP_STATUS,
 };

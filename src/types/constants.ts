@@ -3,18 +3,44 @@ export const ERROR_CODES = {
   NOT_FOUND: 'not found',
 } as const;
 
+export type ErrorCode = typeof ERROR_CODES[keyof typeof ERROR_CODES];
+
 export const HTTP_STATUS = {
+  // Success
   OK: 200,
   CREATED: 201,
+  ACCEPTED: 202,
   NO_CONTENT: 204,
+
+  // Redirection
+  MOVED_PERMANENTLY: 301,
+  FOUND: 302,
+  NOT_MODIFIED: 304,
+
+  // Client Errors
   BAD_REQUEST: 400,
   UNAUTHORIZED: 401,
   FORBIDDEN: 403,
   NOT_FOUND: 404,
+  METHOD_NOT_ALLOWED: 405,
+  NOT_ACCEPTABLE: 406,
+  REQUEST_TIMEOUT: 408,
   CONFLICT: 409,
+  GONE: 410,
+  PAYLOAD_TOO_LARGE: 413,
+  UNSUPPORTED_MEDIA_TYPE: 415,
+  TOO_MANY_REQUESTS: 429,
+
+  // Server Errors
   INTERNAL_SERVER_ERROR: 500,
+  NOT_IMPLEMENTED: 501,
+  BAD_GATEWAY: 502,
   SERVICE_UNAVAILABLE: 503,
+  GATEWAY_TIMEOUT: 504,
+  NETWORK_AUTHENTICATION_REQUIRED: 511,
 } as const;
+
+export type HttpStatus = typeof HTTP_STATUS[keyof typeof HTTP_STATUS];
 
 export const HEALTH_THRESHOLDS = {
   HIGH_FAILURE_COUNT: 3,
@@ -25,3 +51,5 @@ export const HEALTH_THRESHOLDS = {
   RECENT_ERRORS_DEGRADED: 5,
   DOMINANT_ERROR_PERCENTAGE: 50,
 } as const;
+
+export type HealthThreshold = typeof HEALTH_THRESHOLDS[keyof typeof HEALTH_THRESHOLDS];
