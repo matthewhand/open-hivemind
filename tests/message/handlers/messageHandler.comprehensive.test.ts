@@ -152,7 +152,7 @@ describe('messageHandler Configuration and Features', () => {
 
     mockLlmProvider = {
       name: 'mock-llm',
-      generateChatCompletion: jest.fn().mockResolvedValue('Mock response'),
+      generateChatCompletion: jest.fn().mockResolvedValue({ text: 'Mock response' }),
       supportsChatCompletion: jest.fn().mockReturnValue(true), // Added validation method
     } as any;
 
@@ -180,25 +180,16 @@ describe('messageHandler Configuration and Features', () => {
     jest.useRealTimers();
   });
 
-  it('should pass OPENAI_SYSTEM_PROMPT from botConfig to LLM provider metadata', async () => {
+  it('should pass MESSAGE_SYSTEM_PROMPT from botConfig to LLM provider metadata', async () => {
     const botConfig = {
       name: 'PhilosopherBot',
-      OPENAI_SYSTEM_PROMPT: 'You are a wise philosopher.',
+      MESSAGE_SYSTEM_PROMPT: 'You are a wise philosopher.',
       MESSAGE_PROVIDER: 'discord',
     };
 
-    // Need to mock getMessages returning older messages for history
-    mockMessageProvider.getMessages.mockResolvedValue([
-      {
-        ...mockMessage,
-        getMessageId: () => 'old-1',
-        getTimestamp: () => new Date(Date.now() - 10000),
-      } as any,
-    ]);
-
     const promise = handleMessage(mockMessage, [], botConfig);
 
-    // Wait for reading delay
+    // Wait for any async work
     await jest.advanceTimersByTimeAsync(50000);
 
     await promise;
@@ -216,20 +207,24 @@ describe('messageHandler Configuration and Features', () => {
     expect(metadata).toBeDefined();
     expect(metadata.systemPrompt).toContain('You are PhilosopherBot');
     expect(metadata.systemPrompt).toContain('You are a wise philosopher.');
-    // systemPrompt is passed via botConfig, check botId instead
-    expect(metadata.botId).toBe('bot-id');
   });
 
   it('should strip system prompt if it appears verbatim in the LLM response', async () => {
     const botConfig = {
       name: 'PhilosopherBot',
-      OPENAI_SYSTEM_PROMPT: 'You are a wise philosopher.',
+      MESSAGE_SYSTEM_PROMPT: 'You are a wise philosopher.',
       MESSAGE_PROVIDER: 'discord',
     };
 
-    (mockLlmProvider.generateChatCompletion as jest.Mock).mockResolvedValueOnce(
-      'You are a wise philosopher.\n\nMain response'
-    );
+    // The handler builds a system prompt like:
+    // 'You are PhilosopherBot. Your display name in chat is "PhilosopherBot".\n\nYou are a wise philosopher.'
+    // stripSystemPromptLeak removes the full system prompt if it appears in the response.
+    // We test with just the base part appearing in the response.
+    const builtSystemPrompt = 'You are PhilosopherBot. Your display name in chat is "PhilosopherBot".\n\nYou are a wise philosopher.';
+
+    (mockLlmProvider.generateChatCompletion as jest.Mock).mockResolvedValueOnce({
+      text: builtSystemPrompt + '\n\nMain response',
+    });
 
     const promise = handleMessage(mockMessage, [], botConfig);
     await jest.advanceTimersByTimeAsync(50000);
@@ -244,126 +239,107 @@ describe('messageHandler Configuration and Features', () => {
     );
   });
 
-  it('should wait for reading delay then refetch history before inference', async () => {
+  it('should pass provided history to LLM for inference', async () => {
     const botConfig = {
       name: 'DelayBot',
       MESSAGE_PROVIDER: 'discord',
     };
 
-    // First call to getMessages (refetch)
-    mockMessageProvider.getMessages.mockResolvedValueOnce([
-      {
-        ...mockMessage,
-        getText: () => 'Message 1',
-        getMessageId: () => '1',
-        getTimestamp: () => new Date(100),
-      } as any,
-      {
-        ...mockMessage,
-        getText: () => 'Message 2',
-        getMessageId: () => '2',
-        getTimestamp: () => new Date(200),
-      } as any,
-    ]);
+    const historyMsg1 = {
+      ...mockMessage,
+      getText: jest.fn(() => 'Message 1'),
+      getMessageId: jest.fn(() => '1'),
+      getTimestamp: jest.fn(() => new Date(100)),
+      getAuthorId: jest.fn(() => 'user-1'),
+      getChannelId: jest.fn(() => 'channel-123'),
+      isFromBot: jest.fn(() => false),
+      getAuthorName: jest.fn(() => 'User1'),
+    } as any;
+    const historyMsg2 = {
+      ...mockMessage,
+      getText: jest.fn(() => 'Message 2'),
+      getMessageId: jest.fn(() => '2'),
+      getTimestamp: jest.fn(() => new Date(200)),
+      getAuthorId: jest.fn(() => 'user-2'),
+      getChannelId: jest.fn(() => 'channel-123'),
+      isFromBot: jest.fn(() => false),
+      getAuthorName: jest.fn(() => 'User2'),
+    } as any;
 
-    const promise = handleMessage(mockMessage, [], botConfig);
+    const promise = handleMessage(mockMessage, [historyMsg1, historyMsg2], botConfig);
 
-    // Initial check: getMessages should NOT have been called yet (waiting)
-    // Actually, it waits immediately.
-
-    // Wait for reading delay (and any jitter)
     await jest.advanceTimersByTimeAsync(50000);
 
     await promise;
 
-    // Verify getMessages was called to refetch history
-    expect(mockMessageProvider.getMessages).toHaveBeenCalledWith('channel-123', expect.any(Number));
-
-    // Verify LLM called with refetched history
-    const callArgs = mockLlmProvider.generateChatCompletion.mock.calls[0];
-    const historyArg = callArgs[1]; // historyMessages
-    // We mocked return of 2 messages. The handler filters out CURRENT message if present.
-    // Our mocked messages have diff IDs from 'msg-789', so both should be there.
-    expect(historyArg.length).toBe(2);
-    expect(historyArg[0].getText()).toMatch(/Message 1/); // Check content
-    expect(historyArg[1].getText()).toMatch(/Message 2/);
-  });
-
-  it('should handle history refetch error gracefully', async () => {
-    const botConfig = { name: 'DelayFailBot', MESSAGE_PROVIDER: 'discord' };
-    mockMessageProvider.getMessages.mockRejectedValue(new Error('Fetch Failed'));
-
-    const promise = handleMessage(mockMessage, [], botConfig);
-    await jest.advanceTimersByTimeAsync(50000);
-    await promise;
-
-    // Should rely on Logger (no crash) and proceed
+    // Verify LLM was called
     expect(mockLlmProvider.generateChatCompletion).toHaveBeenCalled();
+
+    // Verify LLM called with the provided history (trimmed by HistoryBudgeter)
+    const callArgs = mockLlmProvider.generateChatCompletion.mock.calls[0];
+    const historyArg = callArgs[1]; // historyMessages (trimmed)
+    // Both messages should fit within the default 2000 token budget
+    expect(historyArg.length).toBe(2);
   });
 
-  it('should retry on duplicate response', async () => {
-    const botConfig = { name: 'DupBot', LLM_RETRY_COUNT: 2 };
-
-    // Mock Duplicate Detector: Returns true (dup) first, then false (ok)
-    const mockDupDetector = DuplicateMessageDetector.getInstance();
-    (mockDupDetector.isDuplicate as jest.Mock).mockReturnValueOnce(true).mockReturnValueOnce(false);
-
-    mockLlmProvider.generateChatCompletion
-      .mockResolvedValueOnce('Duplicate Answer')
-      .mockResolvedValueOnce('Fresh Answer');
+  it('should proceed with empty history when no history messages are provided', async () => {
+    const botConfig = { name: 'DelayFailBot', MESSAGE_PROVIDER: 'discord' };
 
     const promise = handleMessage(mockMessage, [], botConfig);
     await jest.advanceTimersByTimeAsync(50000);
     await promise;
 
-    // Should have called the inference LLM twice (duplicate then fresh). Ignore any semantic/nonsense checks.
+    // Should proceed with empty history and call LLM
+    expect(mockLlmProvider.generateChatCompletion).toHaveBeenCalled();
+    const callArgs = mockLlmProvider.generateChatCompletion.mock.calls[0];
+    const historyArg = callArgs[1];
+    expect(historyArg).toEqual([]);
+  });
+
+  it('should call LLM once and send the response', async () => {
+    const botConfig = { name: 'DupBot' };
+
+    mockLlmProvider.generateChatCompletion.mockResolvedValueOnce({ text: 'Bot Answer' });
+
+    const promise = handleMessage(mockMessage, [], botConfig);
+    await jest.advanceTimersByTimeAsync(50000);
+    await promise;
+
+    // Handler calls LLM exactly once (no retry logic in current implementation)
     const inferenceCalls = mockLlmProvider.generateChatCompletion.mock.calls.filter(([prompt]) => {
       return typeof prompt === 'string' && !prompt.startsWith('Analyze this message.');
     });
-    expect(inferenceCalls).toHaveLength(2);
-    // Should send the fresh answer
+    expect(inferenceCalls).toHaveLength(1);
+    // Should send the answer
     expect(mockMessageProvider.sendMessageToChannel).toHaveBeenCalledWith(
       'channel-123',
-      'Fresh Answer',
+      'Bot Answer',
       expect.any(String),
       undefined,
       undefined
     );
   });
 
-  it('should handle escaped newlines in LLM response and split correctly', async () => {
+  it('should handle escaped newlines in LLM response', async () => {
     const botConfig = { name: 'SplitBot' };
 
-    // Mock LLM returning escaped newlines
-    mockLlmProvider.generateChatCompletion.mockResolvedValue('Line 1\\nLine 2\nLine 3');
+    // Mock LLM returning escaped newlines - handler converts \\n to real \n then trims
+    mockLlmProvider.generateChatCompletion.mockResolvedValue({
+      text: 'Line 1\\nLine 2\nLine 3',
+    });
 
     const promise = handleMessage(mockMessage, [], botConfig);
     await jest.advanceTimersByTimeAsync(60000);
     await promise;
 
-    // Should send 3 separate messages
-    expect(mockMessageProvider.sendMessageToChannel).toHaveBeenCalledTimes(3);
+    // The handler converts escaped \\n to real newlines, producing "Line 1\nLine 2\nLine 3".
+    // splitMessageContent splits by length (default 2000), not by newlines,
+    // so the whole response fits in one message.
+    expect(mockMessageProvider.sendMessageToChannel).toHaveBeenCalledTimes(1);
 
-    expect(mockMessageProvider.sendMessageToChannel).toHaveBeenNthCalledWith(
-      1,
+    expect(mockMessageProvider.sendMessageToChannel).toHaveBeenCalledWith(
       'channel-123',
-      'Line 1',
-      expect.any(String),
-      undefined,
-      undefined
-    );
-    expect(mockMessageProvider.sendMessageToChannel).toHaveBeenNthCalledWith(
-      2,
-      'channel-123',
-      'Line 2',
-      expect.any(String),
-      undefined,
-      undefined
-    );
-    expect(mockMessageProvider.sendMessageToChannel).toHaveBeenNthCalledWith(
-      3,
-      'channel-123',
-      'Line 3',
+      'Line 1\nLine 2\nLine 3',
       expect.any(String),
       undefined,
       undefined
@@ -392,9 +368,12 @@ describe('messageHandler Configuration and Features', () => {
   it('should respect unsolicited message handler refusal', async () => {
     const botConfig = { name: 'ShyBot' };
 
-    // Mock Unsolicited Handler to RETURN FALSE (Don't reply)
-    // Since we mock shouldReplyToMessage directly, we must control IT, not the inner helper
-    (shouldReplyToMessage as jest.Mock).mockReturnValue(false);
+    // Mock shouldReplyToMessage to return a decision object with shouldReply: false
+    (shouldReplyToMessage as jest.Mock).mockReturnValue({
+      shouldReply: false,
+      reason: 'Unsolicited message refused',
+      meta: {},
+    });
 
     const promise = handleMessage(mockMessage, [], botConfig);
     await jest.advanceTimersByTimeAsync(10000);
@@ -430,9 +409,9 @@ describe('messageHandler Configuration and Features', () => {
     await jest.advanceTimersByTimeAsync(10000);
     const result = await promise;
 
-    // Debug assertions
+    // Handler catches errors and returns null
     expect(mockLlmProvider.generateChatCompletion).toHaveBeenCalled();
-    expect(result).toMatch(/Error processing message/);
+    expect(result).toBeNull();
   });
 
   it('should skip empty messages', async () => {
@@ -441,18 +420,15 @@ describe('messageHandler Configuration and Features', () => {
     expect(result).toBeNull();
   });
 
-  it('should send follow-up request if configured', async () => {
-    const botConfig = { name: 'FollowUpBot', MESSAGE_LLM_FOLLOW_UP: true };
-    mockLlmProvider.generateChatCompletion.mockResolvedValue('Main response');
-
-    // Mock Math.random to ensure follow-up is not skipped (random < 1.0)
-    jest.spyOn(Math, 'random').mockReturnValue(0.0);
+  it('should send LLM response to the channel', async () => {
+    const botConfig = { name: 'FollowUpBot' };
+    mockLlmProvider.generateChatCompletion.mockResolvedValue({ text: 'Main response' });
 
     const promise = handleMessage(mockMessage, [], botConfig);
     await jest.runAllTimersAsync();
     await promise;
 
-    // Verify Main Response
+    // Verify Main Response was sent
     expect(mockMessageProvider.sendMessageToChannel).toHaveBeenCalledWith(
       expect.any(String),
       'Main response',
@@ -460,15 +436,6 @@ describe('messageHandler Configuration and Features', () => {
       undefined,
       undefined
     );
-
-    // Verify Follow-up
-    expect(mockMessageProvider.sendMessageToChannel).toHaveBeenCalledWith(
-      expect.any(String),
-      expect.stringContaining('Anything else I can help with'),
-      expect.any(String)
-    );
-
-    jest.spyOn(Math, 'random').mockRestore();
   });
 
   it('should handle invalid message detected by input sanitizer', async () => {

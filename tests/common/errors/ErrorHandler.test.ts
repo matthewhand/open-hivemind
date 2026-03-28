@@ -1,4 +1,5 @@
-import { ErrorHandler, PerformanceMonitor } from '@src/common/errors/ErrorHandler';
+import { ErrorHandler } from '@src/common/errors/ErrorHandler';
+import { PerformanceMonitor } from '@src/common/errors/PerformanceMonitor';
 import 'jest';
 
 describe('ErrorHandler', () => {

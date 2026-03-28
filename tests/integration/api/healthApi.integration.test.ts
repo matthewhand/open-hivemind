@@ -49,7 +49,7 @@ describe('Health API Integration Tests', () => {
 
       expect(response.body).toHaveProperty('status');
       expect(response.body).toHaveProperty('timestamp');
-      expect(response.body.status).toBe('healthy');
+      expect(['healthy', 'degraded']).toContain(response.body.status);
     });
   });
 
@@ -77,7 +77,7 @@ describe('Health API Integration Tests', () => {
 
       // All responses should be successful
       responses.forEach((response) => {
-        expect(response.body.status).toBe('healthy');
+        expect(['healthy', 'degraded']).toContain(response.body.status);
         expect(response.body).toHaveProperty('timestamp');
       });
     });

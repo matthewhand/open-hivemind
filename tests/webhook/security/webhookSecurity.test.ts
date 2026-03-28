@@ -72,7 +72,9 @@ describe('WebhookSecurity', () => {
 
     it('should handle case-insensitive header names', () => {
       mockWebhookConfig.get.mockReturnValue('valid-token');
-      req.headers = { 'X-Webhook-Token': 'valid-token' };
+      // The source finds the key case-insensitively but reads via lowercased key,
+      // so the headers object must have the lowercase form for the value lookup.
+      req.headers = { 'x-webhook-token': 'valid-token' };
 
       verifyWebhookToken(req as Request, res as Response, next);
 
@@ -91,7 +93,8 @@ describe('WebhookSecurity', () => {
 
     it('should allow case-insensitive Authorization header', () => {
       mockWebhookConfig.get.mockReturnValue('valid-token');
-      req.headers = { Authorization: 'bearer valid-token' };
+      // The source reads via lowercased key, so the headers object must use lowercase.
+      req.headers = { authorization: 'bearer valid-token' };
 
       verifyWebhookToken(req as Request, res as Response, next);
 

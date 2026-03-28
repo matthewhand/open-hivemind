@@ -29,7 +29,7 @@ describe('ConfigurationImportExportService Path Security', () => {
     service = ConfigurationImportExportService.getInstance();
   });
 
-  it('getBackupFilePath should return null and not throw for malicious backup names', async () => {
+  it('getBackupFilePath should sanitize malicious backup names to safe paths', async () => {
     const maliciousName = '../../etc/passwd';
     const createdAt = new Date(1600000000000);
 
@@ -52,9 +52,13 @@ describe('ConfigurationImportExportService Path Security', () => {
 
     const result = await service.getBackupFilePath('malicious-id');
 
-    // Depending on implementation, it might throw or return null.
-    // If it's caught in getBackupFilePath's try-catch, it returns null.
-    expect(result).toBeNull();
+    // PathSecurityUtils.sanitizeFilename strips directory components via path.basename
+    // '../../etc/passwd' becomes 'passwd', resulting in a safe path within backups dir
+    expect(result).not.toBeNull();
+    expect(result).toContain('backup-passwd-1600000000000.json.gz');
+    expect(path.isAbsolute(result!)).toBe(true);
+    // Verify the path is within the backups directory
+    expect(result).toContain('config/backups');
   });
 
   it('getBackupFilePath should return a valid path for safe names', async () => {
