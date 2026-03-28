@@ -16,7 +16,6 @@ import { BotManager } from '../../managers/BotManager';
 import { providerRegistry } from '../../registries/ProviderRegistry';
 import { ErrorUtils } from '../../types/errors';
 import { type IProvider } from '../../types/IProvider';
-import { ConfigUpdateSchema } from '../../validation/schemas/configSchema';
 import {
   CreateLlmProfileSchema,
   CreateMemoryProfileSchema,
@@ -27,6 +26,7 @@ import {
   ToolProfileKeyParamSchema,
   UpdateLlmProfileSchema,
 } from '../../validation/schemas/configProfilesSchema';
+import { ConfigUpdateSchema } from '../../validation/schemas/configSchema';
 import { validateRequest } from '../../validation/validateRequest';
 import { auditMiddleware, logConfigChange, type AuditedRequest } from '../middleware/audit';
 
@@ -744,11 +744,10 @@ router.post('/message-profiles', validateRequest(CreateMessageProfileSchema), (r
   }
 });
 
-
 // -- Memory Profiles CRUD --
-// eslint-disable-next-line @typescript-eslint/no-var-requires
+
 const memoryProfilesModule = require('../../config/memoryProfiles');
-// eslint-disable-next-line @typescript-eslint/no-var-requires
+
 const toolProfilesModule = require('../../config/toolProfiles');
 
 router.get('/memory-profiles', (_req, res) => {
@@ -758,7 +757,8 @@ router.get('/memory-profiles', (_req, res) => {
   } catch (error: unknown) {
     const hivemindError = ErrorUtils.toHivemindError(error) as any;
     return res.status(hivemindError.statusCode || 500).json({
-      error: hivemindError.message, code: 'MEMORY_PROFILES_GET_ERROR',
+      error: hivemindError.message,
+      code: 'MEMORY_PROFILES_GET_ERROR',
     });
   }
 });
@@ -767,13 +767,19 @@ router.post('/memory-profiles', validateRequest(CreateMemoryProfileSchema), (req
   try {
     const newProfile = req.body;
     const profiles = memoryProfilesModule.getMemoryProfiles();
-    if (profiles.memory.find((p: any) => p.key === newProfile.key)) return res.status(409).json({ error: `Memory profile with key '${newProfile.key}' already exists`, code: 'CONFLICT' });
+    if (profiles.memory.find((p: any) => p.key === newProfile.key))
+      return res.status(409).json({
+        error: `Memory profile with key '${newProfile.key}' already exists`,
+        code: 'CONFLICT',
+      });
     profiles.memory.push(newProfile);
     memoryProfilesModule.saveMemoryProfiles(profiles);
     return res.status(201).json({ success: true, profile: newProfile });
   } catch (error: unknown) {
     const hivemindError = ErrorUtils.toHivemindError(error) as any;
-    return res.status(hivemindError.statusCode || 500).json({ error: hivemindError.message, code: 'MEMORY_PROFILES_CREATE_ERROR' });
+    return res
+      .status(hivemindError.statusCode || 500)
+      .json({ error: hivemindError.message, code: 'MEMORY_PROFILES_CREATE_ERROR' });
   }
 });
 
@@ -782,13 +788,18 @@ router.put('/memory-profiles/:key', validateRequest(MemoryProfileKeyParamSchema)
     const { key } = req.params;
     const profiles = memoryProfilesModule.getMemoryProfiles();
     const index = profiles.memory.findIndex((p: any) => p.key === key);
-    if (index === -1) return res.status(404).json({ error: `Memory profile '${key}' not found`, code: 'NOT_FOUND' });
+    if (index === -1)
+      return res
+        .status(404)
+        .json({ error: `Memory profile '${key}' not found`, code: 'NOT_FOUND' });
     profiles.memory[index] = { ...profiles.memory[index], ...req.body, key };
     memoryProfilesModule.saveMemoryProfiles(profiles);
     return res.json({ success: true, profile: profiles.memory[index] });
   } catch (error: unknown) {
     const hivemindError = ErrorUtils.toHivemindError(error) as any;
-    return res.status(hivemindError.statusCode || 500).json({ error: hivemindError.message, code: 'MEMORY_PROFILES_UPDATE_ERROR' });
+    return res
+      .status(hivemindError.statusCode || 500)
+      .json({ error: hivemindError.message, code: 'MEMORY_PROFILES_UPDATE_ERROR' });
   }
 });
 
@@ -797,13 +808,18 @@ router.delete('/memory-profiles/:key', validateRequest(MemoryProfileKeyParamSche
     const { key } = req.params;
     const profiles = memoryProfilesModule.getMemoryProfiles();
     const index = profiles.memory.findIndex((p: any) => p.key === key);
-    if (index === -1) return res.status(404).json({ error: `Memory profile '${key}' not found`, code: 'NOT_FOUND' });
+    if (index === -1)
+      return res
+        .status(404)
+        .json({ error: `Memory profile '${key}' not found`, code: 'NOT_FOUND' });
     profiles.memory.splice(index, 1);
     memoryProfilesModule.saveMemoryProfiles(profiles);
     return res.json({ success: true, message: `Memory profile '${key}' deleted` });
   } catch (error: unknown) {
     const hivemindError = ErrorUtils.toHivemindError(error) as any;
-    return res.status(hivemindError.statusCode || 500).json({ error: hivemindError.message, code: 'MEMORY_PROFILES_DELETE_ERROR' });
+    return res
+      .status(hivemindError.statusCode || 500)
+      .json({ error: hivemindError.message, code: 'MEMORY_PROFILES_DELETE_ERROR' });
   }
 });
 
@@ -816,7 +832,8 @@ router.get('/tool-profiles', (_req, res) => {
   } catch (error: unknown) {
     const hivemindError = ErrorUtils.toHivemindError(error) as any;
     return res.status(hivemindError.statusCode || 500).json({
-      error: hivemindError.message, code: 'TOOL_PROFILES_GET_ERROR',
+      error: hivemindError.message,
+      code: 'TOOL_PROFILES_GET_ERROR',
     });
   }
 });
@@ -825,13 +842,19 @@ router.post('/tool-profiles', validateRequest(CreateToolProfileSchema), (req, re
   try {
     const newProfile = req.body;
     const profiles = toolProfilesModule.getToolProfiles();
-    if (profiles.tool.find((p: any) => p.key === newProfile.key)) return res.status(409).json({ error: `Tool profile with key '${newProfile.key}' already exists`, code: 'CONFLICT' });
+    if (profiles.tool.find((p: any) => p.key === newProfile.key))
+      return res.status(409).json({
+        error: `Tool profile with key '${newProfile.key}' already exists`,
+        code: 'CONFLICT',
+      });
     profiles.tool.push(newProfile);
     toolProfilesModule.saveToolProfiles(profiles);
     return res.status(201).json({ success: true, profile: newProfile });
   } catch (error: unknown) {
     const hivemindError = ErrorUtils.toHivemindError(error) as any;
-    return res.status(hivemindError.statusCode || 500).json({ error: hivemindError.message, code: 'TOOL_PROFILES_CREATE_ERROR' });
+    return res
+      .status(hivemindError.statusCode || 500)
+      .json({ error: hivemindError.message, code: 'TOOL_PROFILES_CREATE_ERROR' });
   }
 });
 
@@ -840,13 +863,16 @@ router.put('/tool-profiles/:key', validateRequest(ToolProfileKeyParamSchema), (r
     const { key } = req.params;
     const profiles = toolProfilesModule.getToolProfiles();
     const index = profiles.tool.findIndex((p: any) => p.key === key);
-    if (index === -1) return res.status(404).json({ error: `Tool profile '${key}' not found`, code: 'NOT_FOUND' });
+    if (index === -1)
+      return res.status(404).json({ error: `Tool profile '${key}' not found`, code: 'NOT_FOUND' });
     profiles.tool[index] = { ...profiles.tool[index], ...req.body, key };
     toolProfilesModule.saveToolProfiles(profiles);
     return res.json({ success: true, profile: profiles.tool[index] });
   } catch (error: unknown) {
     const hivemindError = ErrorUtils.toHivemindError(error) as any;
-    return res.status(hivemindError.statusCode || 500).json({ error: hivemindError.message, code: 'TOOL_PROFILES_UPDATE_ERROR' });
+    return res
+      .status(hivemindError.statusCode || 500)
+      .json({ error: hivemindError.message, code: 'TOOL_PROFILES_UPDATE_ERROR' });
   }
 });
 
@@ -855,13 +881,16 @@ router.delete('/tool-profiles/:key', validateRequest(ToolProfileKeyParamSchema),
     const { key } = req.params;
     const profiles = toolProfilesModule.getToolProfiles();
     const index = profiles.tool.findIndex((p: any) => p.key === key);
-    if (index === -1) return res.status(404).json({ error: `Tool profile '${key}' not found`, code: 'NOT_FOUND' });
+    if (index === -1)
+      return res.status(404).json({ error: `Tool profile '${key}' not found`, code: 'NOT_FOUND' });
     profiles.tool.splice(index, 1);
     toolProfilesModule.saveToolProfiles(profiles);
     return res.json({ success: true, message: `Tool profile '${key}' deleted` });
   } catch (error: unknown) {
     const hivemindError = ErrorUtils.toHivemindError(error) as any;
-    return res.status(hivemindError.statusCode || 500).json({ error: hivemindError.message, code: 'TOOL_PROFILES_DELETE_ERROR' });
+    return res
+      .status(hivemindError.statusCode || 500)
+      .json({ error: hivemindError.message, code: 'TOOL_PROFILES_DELETE_ERROR' });
   }
 });
 

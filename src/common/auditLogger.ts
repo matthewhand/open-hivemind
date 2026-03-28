@@ -325,9 +325,8 @@ export class AuditLogger {
     if (opts.dateTo) {
       // dateTo is inclusive — treat as end-of-day if only a date string
       const raw = opts.dateTo;
-      const to = raw.length === 10
-        ? new Date(raw + 'T23:59:59.999Z').getTime()
-        : new Date(raw).getTime();
+      const to =
+        raw.length === 10 ? new Date(raw + 'T23:59:59.999Z').getTime() : new Date(raw).getTime();
       if (!isNaN(to)) {
         checks.push((e) => new Date(e.timestamp).getTime() <= to);
       }
@@ -340,7 +339,7 @@ export class AuditLogger {
           e.user.toLowerCase().includes(q) ||
           e.action.toLowerCase().includes(q) ||
           e.resource.toLowerCase().includes(q) ||
-          e.details.toLowerCase().includes(q),
+          e.details.toLowerCase().includes(q)
       );
     }
 
@@ -352,7 +351,7 @@ export class AuditLogger {
    * Return ALL matching events (no pagination cap). Intended for CSV export.
    */
   public async getAllMatchingEvents(
-    filter?: (event: AuditEvent) => boolean,
+    filter?: (event: AuditEvent) => boolean
   ): Promise<AuditEvent[]> {
     try {
       if (!fs.existsSync(this.logFilePath)) {

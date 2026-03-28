@@ -84,7 +84,8 @@ export function introspectRoutes(app: Application): RouteGroup[] {
   const groupMap = new Map<string, RouteInfo[]>();
   for (const route of routeInfos) {
     const segments = route.path.split('/').filter(Boolean);
-    const prefix = segments.length >= 2 ? `/${segments[0]}/${segments[1]}` : `/${segments[0] || ''}`;
+    const prefix =
+      segments.length >= 2 ? `/${segments[0]}/${segments[1]}` : `/${segments[0] || ''}`;
     if (!groupMap.has(prefix)) {
       groupMap.set(prefix, []);
     }

@@ -10,9 +10,7 @@ export const UpdateAccessControlSchema = z.object({
       message: 'Invalid access type. Must be owner, users, or ip',
     }),
     users: z
-      .array(
-        z.string().regex(emailRegex, { message: 'Invalid email format in users array' })
-      )
+      .array(z.string().regex(emailRegex, { message: 'Invalid email format in users array' }))
       .optional(),
     ips: z
       .array(
