@@ -36,6 +36,23 @@ jest.mock('@src/config/slackConfig', () => ({
   },
 }));
 
+jest.mock('@src/services/StartupGreetingService', () => ({
+  StartupGreetingService: jest.fn(),
+}));
+
+jest.mock('tsyringe', () => {
+  const actual = jest.requireActual('tsyringe');
+  return {
+    ...actual,
+    container: {
+      ...actual.container,
+      resolve: jest.fn(() => ({
+        emit: jest.fn(),
+      })),
+    },
+  };
+});
+
 jest.mock('@hivemind/message-slack/SlackBotManager', () => {
   return jest.fn().mockImplementation(
     (): SlackBotManagerMock => ({

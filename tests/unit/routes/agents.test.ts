@@ -88,7 +88,11 @@ describe('Agents Routes', () => {
 
     it('should return existing agent if name already exists', async () => {
       mockReadFile.mockResolvedValue(JSON.stringify([sampleAgent]));
-      const res = await request(app).post('/agents').send({ name: 'TestBot' });
+      const res = await request(app).post('/agents').send({
+        name: 'TestBot',
+        messageProvider: 'discord',
+        llmProvider: 'openai',
+      });
       expect(res.status).toBe(200);
       expect(res.body.agent.id).toBe('agent_123');
     });
@@ -142,7 +146,7 @@ describe('Agents Routes', () => {
     it('should return 400 if name or systemPrompt is missing', async () => {
       const res = await request(app).post('/agents/personas').send({});
       expect(res.status).toBe(400);
-      expect(res.body.error).toContain('required');
+      expect(res.body.error).toBe('Validation failed');
     });
 
     it('should create a new persona', async () => {

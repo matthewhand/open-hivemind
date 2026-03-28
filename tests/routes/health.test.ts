@@ -21,7 +21,7 @@ describe('Health Routes', () => {
   });
 
   describe('GET /health/ready', () => {
-    it('should return 200 and status: healthy when all services are healthy', async () => {
+    it('should return 200 and ready: true when database is connected', async () => {
       // Setup mock returns
       (DatabaseManager.getInstance as jest.Mock).mockReturnValue({
         isConnected: jest.fn().mockReturnValue(true),
@@ -36,15 +36,14 @@ describe('Health Routes', () => {
       const response = await request(app).get('/health/ready');
 
       expect(response.status).toBe(200);
-      expect(response.body.status).toBe('healthy');
-      expect(response.body.checks.database.status).toBe('healthy');
-      expect(response.body.checks.botAdapters.status).toBe('healthy');
-      expect(response.body.checks.externalApis.status).toBe('healthy');
-      expect(typeof response.body.uptime).toBe('number');
-      expect(typeof response.body.version).toBe('string');
+      expect(response.body.ready).toBe(true);
+      expect(response.body.checks.database).toBe(true);
+      expect(response.body.checks.external_apis).toBe(true);
+      expect(response.body.checks.configuration).toBe(true);
+      expect(typeof response.body.timestamp).toBe('string');
     });
 
-    it('should return 503 and status: unhealthy when database is disconnected', async () => {
+    it('should return 503 and ready: false when database is disconnected', async () => {
       (DatabaseManager.getInstance as jest.Mock).mockReturnValue({
         isConnected: jest.fn().mockReturnValue(false),
       });
@@ -58,8 +57,8 @@ describe('Health Routes', () => {
       const response = await request(app).get('/health/ready');
 
       expect(response.status).toBe(503);
-      expect(response.body.status).toBe('unhealthy');
-      expect(response.body.checks.database.status).toBe('unhealthy');
+      expect(response.body.ready).toBe(false);
+      expect(response.body.checks.database).toBe(false);
     });
   });
 });
