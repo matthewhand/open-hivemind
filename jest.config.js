@@ -1,16 +1,4 @@
-module.exports = {
-  collectCoverage: true,
-  coverageDirectory: "coverage",
-  coverageReporters: ["html", "text", "lcov"],
-  coverageThreshold: {
-    global: {
-      branches: 61,
-      functions: 69,
-      lines: 73,
-      statements: 72,
-    },
-  },
-  forceExit: true,
+const unitIntegrationProject = {
   displayName: 'unit-integration',
   roots: ['<rootDir>/tests', '<rootDir>/packages'],
   preset: 'ts-jest',
@@ -54,14 +42,6 @@ module.exports = {
     '^@hivemind/llm-letta/(.*)$': '<rootDir>/packages/llm-letta/src/$1',
     '^@hivemind/shared-types$': '<rootDir>/packages/shared-types/src/index.ts',
     '^@hivemind/shared-types/(.*)$': '<rootDir>/packages/shared-types/src/$1',
-    '^@hivemind/message-slack$': '<rootDir>/packages/message-slack/src/index.ts',
-    '^@hivemind/message-slack/(.*)$': '<rootDir>/packages/message-slack/src/$1',
-    '^@hivemind/message-discord$': '<rootDir>/packages/message-discord/src/index.ts',
-    '^@hivemind/message-discord/(.*)$': '<rootDir>/packages/message-discord/src/$1',
-    '^@hivemind/message-mattermost$': '<rootDir>/packages/message-mattermost/src/index.ts',
-    '^@hivemind/message-mattermost/(.*)$': '<rootDir>/packages/message-mattermost/src/$1',
-    '^@hivemind/llm-openai$': '<rootDir>/packages/llm-openai/src/index.ts',
-    '^@hivemind/llm-openai/(.*)$': '<rootDir>/packages/llm-openai/src/$1',
     '^@hivemind/llm-openswarm$': '<rootDir>/packages/llm-openswarm/src/index.ts',
     '^@hivemind/llm-openswarm/(.*)$': '<rootDir>/packages/llm-openswarm/src/$1',
     '^@hivemind/llm-openwebui$': '<rootDir>/packages/llm-openwebui/src/index.ts',
@@ -96,4 +76,60 @@ module.exports = {
   transformIgnorePatterns: [
     '/node_modules/(?!chai|other-esm-dependency|node-fetch|data-uri-to-buffer|@modelcontextprotocol/sdk|fetch-blob|uuid|jsdom|cssstyle|data-urls|html-encoding-sniffer|whatwg-encoding|whatwg-url|tr46|webidl-conversions|w3c-xmlserializer|saxes|xml-name-validator|decimal.js|nwsapi|rrweb-cssom|tough-cookie|entities)',
   ],
+};
+
+const realIntegrationProject = {
+  displayName: 'real-integration',
+  roots: ['<rootDir>/tests'],
+  preset: 'ts-jest',
+  testEnvironment: 'node',
+  transform: {
+    '^.+\.tsx?$': 'babel-jest',
+    '^.+\.jsx?$': 'babel-jest',
+    '^.+\.js$': 'babel-jest',
+  },
+  testRegex: '(\.|/)(real\.test)\.[tj]sx?$',
+  moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json', 'node'],
+  moduleNameMapper: {
+    '^@src/integrations/slack/(.*)$': '<rootDir>/packages/message-slack/src/$1',
+    '^@src/integrations/mattermost/(.*)$': '<rootDir>/packages/message-mattermost/src/$1',
+    '^@src/(.*)$': '<rootDir>/src/$1',
+    '^@config/(.*)$': '<rootDir>/src/config/$1',
+    '^@integrations/slack/(.*)$': '<rootDir>/packages/message-slack/src/$1',
+    '^@integrations/(.*)$': '<rootDir>/src/integrations/$1',
+    '^@types/(.*)$': '<rootDir>/src/types/$1',
+    '^@hivemind/message-discord$': '<rootDir>/packages/message-discord/src/index.ts',
+    '^@hivemind/message-discord/(.*)$': '<rootDir>/packages/message-discord/src/$1',
+    '^@hivemind/message-slack$': '<rootDir>/packages/message-slack/src/index.ts',
+    '^@hivemind/message-slack/(.*)$': '<rootDir>/packages/message-slack/src/$1',
+    '^@hivemind/message-mattermost$': '<rootDir>/packages/message-mattermost/src/index.ts',
+    '^@hivemind/message-mattermost/(.*)$': '<rootDir>/packages/message-mattermost/src/$1',
+  },
+  setupFilesAfterEnv: ['<rootDir>/tests/real.setup.ts'],
+  testPathIgnorePatterns: ['/node_modules/', '/dist/', '/tests/unit/', '/tests/integration/'],
+};
+
+const projects = [
+  unitIntegrationProject
+];
+
+if (process.env.RUN_REAL_TESTS === 'true') {
+  projects.push(realIntegrationProject);
+}
+
+module.exports = {
+  collectCoverage: true,
+  coverageDirectory: 'coverage',
+  coverageReporters: ['html', 'text', 'lcov'],
+  coverageThreshold: {
+    global: {
+      branches: 61,
+      functions: 69,
+      lines: 73,
+      statements: 72,
+    },
+  },
+  forceExit: true,
+
+  projects,
 };
