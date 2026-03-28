@@ -24,7 +24,7 @@ import { LoadingSpinner } from '../components/DaisyUI/Loading';
 import Modal from '../components/DaisyUI/Modal';
 import PageHeader from '../components/DaisyUI/PageHeader';
 import StatsCards from '../components/DaisyUI/StatsCards';
-import ToastNotification, { useInfoToast } from '../components/DaisyUI/ToastNotification';
+import { useInfoToast, useSuccessToast, useErrorToast } from '../components/DaisyUI/ToastNotification';
 import SearchFilterBar from '../components/SearchFilterBar';
 import { apiService, type Persona as ApiPersona, type Bot } from '../services/api';
 import { useApiQuery } from '../hooks/useApiQuery';
@@ -53,8 +53,8 @@ const PersonasPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const successToast = ToastNotification.useSuccessToast();
-  const errorToast = ToastNotification.useErrorToast();
+  const successToast = useSuccessToast();
+  const errorToast = useErrorToast();
 
   // Filter State
   const [searchQuery, setSearchQuery] = useState('');

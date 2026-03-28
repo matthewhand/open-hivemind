@@ -9,7 +9,7 @@ import DataTable from './DaisyUI/DataTable';
 import Modal from './DaisyUI/Modal';
 import ProgressBar from './DaisyUI/ProgressBar';
 import StatsCards from './DaisyUI/StatsCards';
-import ToastNotification from './DaisyUI/ToastNotification';
+import { useSuccessToast, useErrorToast } from './DaisyUI/ToastNotification';
 import { LoadingSpinner } from './DaisyUI/Loading';
 import type { Bot, StatusResponse } from '../services/api';
 import { apiService } from '../services/api';
@@ -134,8 +134,8 @@ const UnifiedDashboard: React.FC = () => {
   const [isCreatingBot, setIsCreatingBot] = useState(false);
   const [isModalDataLoading, setIsModalDataLoading] = useState(false);
 
-  const successToast = ToastNotification.useSuccessToast();
-  const errorToast = ToastNotification.useErrorToast();
+  const successToast = useSuccessToast();
+  const errorToast = useErrorToast();
 
   // ⚡ Bolt Optimization: Lazy load modal data
   // We defer fetching personas and llmProfiles until the user attempts to open
