@@ -147,7 +147,7 @@ export const CacheProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             <Button
               size="sm"
               variant="ghost"
-              className="w-full text-error btn-outline border-error hover:bg-error hover:text-white"
+              className="w-full text-error btn-outline border-error hover:bg-error hover:text-error-content"
               onClick={clear}
               disabled={loading || stats.size === 0}
             >

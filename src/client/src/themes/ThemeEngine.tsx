@@ -57,7 +57,12 @@ export const ThemeEngineProvider: React.FC<ThemeEngineProviderProps> = ({ childr
     document.documentElement.setAttribute('data-high-contrast',
       effectiveTheme === 'high-contrast' ? 'true' : 'false',
     );
-  }, [effectiveTheme]);
+    try {
+      localStorage.setItem('hivemind-theme', uiState.theme);
+    } catch {
+      // localStorage may be unavailable
+    }
+  }, [effectiveTheme, uiState.theme]);
 
   const handleThemeChange = (theme: ThemeMode) => {
     dispatch(setTheme(theme));

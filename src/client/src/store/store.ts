@@ -40,8 +40,9 @@ setupListeners(store.dispatch);
 
 // Initialize UI state from localStorage
 const initializeApp = () => {
-  // Load theme and other UI settings
-  const savedTheme = localStorage.getItem('theme') as 'light' | 'dark' | 'high-contrast' | 'auto' || 'auto';
+  // Load theme from the canonical 'hivemind-theme' key.
+  // Fall back to 'auto' so that system preference is respected on first visit.
+  const savedTheme = (localStorage.getItem('hivemind-theme') as 'light' | 'dark' | 'high-contrast' | 'auto') || 'auto';
   store.dispatch({ type: 'ui/setTheme', payload: savedTheme });
 
   // Load other settings

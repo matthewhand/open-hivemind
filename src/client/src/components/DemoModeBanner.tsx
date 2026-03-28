@@ -44,27 +44,27 @@ const DemoModeBanner: React.FC = () => {
     }
 
     return (
-        <div className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white px-4 py-3 relative">
+        <div className="bg-primary text-primary-content px-4 py-3 relative">
             <div className="container mx-auto flex items-center justify-between">
                 <div className="flex items-center space-x-3">
                     <span className="text-2xl">🎭</span>
                     <div>
                         <span className="font-semibold">Demo Mode Active</span>
-                        <span className="ml-2 text-purple-200">
+                        <span className="ml-2 opacity-80">
                             — Experience the platform without configuration!
                         </span>
                     </div>
                 </div>
 
                 <div className="flex items-center space-x-4">
-                    <div className="text-sm text-purple-200">
+                    <div className="text-sm opacity-80">
                         <span className="mr-3">🤖 {demoStatus.botCount} Demo Bots</span>
                         <span className="mr-3">💬 {demoStatus.conversationCount} Conversations</span>
                     </div>
 
                     <button
                         onClick={() => setIsDismissed(true)}
-                        className="text-purple-200 hover:text-white transition-colors"
+                        className="opacity-80 hover:opacity-100 transition-opacity"
                         aria-label="Dismiss banner"
                     >
                         ✕
@@ -72,9 +72,9 @@ const DemoModeBanner: React.FC = () => {
                 </div>
             </div>
 
-            <div className="container mx-auto mt-2 text-sm text-purple-200">
+            <div className="container mx-auto mt-2 text-sm opacity-80">
                 💡 Configure your API keys in the{' '}
-                <a href="/admin/settings" className="underline hover:text-white">
+                <a href="/admin/settings" className="underline hover:opacity-100">
                     Settings
                 </a>
                 {' '}to enable production mode with real AI responses.

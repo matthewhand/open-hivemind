@@ -1,10 +1,26 @@
 <!doctype html>
-<html lang="en" data-theme="night">
+<html lang="en">
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Open-Hivemind</title>
+    <script>
+      // Apply theme BEFORE any rendering to prevent flash of wrong theme.
+      // Reads from localStorage; falls back to OS preference; defaults to 'dark'.
+      (function() {
+        var STORAGE_KEY = 'hivemind-theme';
+        var stored = null;
+        try { stored = localStorage.getItem(STORAGE_KEY); } catch(e) {}
+        var theme;
+        if (stored && stored !== 'auto') {
+          theme = stored;
+        } else {
+          theme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        }
+        document.documentElement.setAttribute('data-theme', theme);
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

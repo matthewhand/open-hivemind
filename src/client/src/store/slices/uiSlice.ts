@@ -111,17 +111,17 @@ const uiSlice = createSlice({
     // Theme management
     setTheme: (state, action: PayloadAction<UIState['theme']>) => {
       state.theme = action.payload;
-      localStorage.setItem('theme', action.payload);
-      document.documentElement.setAttribute('data-theme', action.payload);
+      localStorage.setItem('hivemind-theme', action.payload);
+      // data-theme is applied reactively by the useTheme hook
     },
-    
+
     toggleDarkMode: (state) => {
       const themes: UIState['theme'][] = ['light', 'dark', 'high-contrast', 'auto'];
       const currentIndex = themes.indexOf(state.theme);
       const nextIndex = (currentIndex + 1) % themes.length;
       state.theme = themes[nextIndex];
-      localStorage.setItem('theme', state.theme);
-      document.documentElement.setAttribute('data-theme', state.theme);
+      localStorage.setItem('hivemind-theme', state.theme);
+      // data-theme is applied reactively by the useTheme hook
     },
     
     // Sidebar management
@@ -345,7 +345,9 @@ const uiSlice = createSlice({
       ];
       
       settings.forEach(setting => {
-        const value = localStorage.getItem(setting);
+        // Theme uses the canonical 'hivemind-theme' key
+        const storageKey = setting === 'theme' ? 'hivemind-theme' : setting;
+        const value = localStorage.getItem(storageKey);
         if (value !== null) {
           try {
             if (setting === 'sidebarCollapsed' || 
