@@ -5,13 +5,13 @@
  * using the new error types, with proper logging and correlation tracking.
  */
 
-import crypto from 'crypto';
 import Debug from 'debug';
 import type { NextFunction, Request, Response } from 'express';
 import { MetricsCollector } from '../monitoring/MetricsCollector';
 import { ErrorFactory, type BaseHivemindError } from '../types/errorClasses';
 import { errorLogger } from '../utils/errorLogger';
 import { createErrorResponse } from '../utils/errorResponse';
+import { correlationIdMiddleware } from './correlationId';
 
 const debug = Debug('app:error:middleware');
 
@@ -45,31 +45,13 @@ interface ErrorContext {
 }
 
 /**
- * Middleware to add correlation ID to requests
+ * Middleware to add correlation ID to requests.
+ *
+ * Delegates to the AsyncLocalStorage-backed implementation in
+ * `./correlationId.ts` so the ID is available via `getCorrelationId()`
+ * anywhere in the call stack without explicit parameter passing.
  */
-export function correlationMiddleware(req: Request, res: Response, next: NextFunction): void {
-  // Generate correlation ID if not already present
-  req.correlationId =
-    (req.headers['x-correlation-id'] as string) ||
-    (req.headers['x-request-id'] as string) ||
-    generateCorrelationId();
-
-  // Add correlation ID to response headers
-  res.setHeader('X-Correlation-ID', req.correlationId);
-
-  // Record start time for duration tracking
-  req.startTime = Date.now();
-
-  debug(`Request ${req.method} ${req.path} - Correlation ID: ${req.correlationId}`);
-  next();
-}
-
-/**
- * Generate a unique correlation ID
- */
-function generateCorrelationId(): string {
-  return `corr_${Date.now()}_${crypto.randomBytes(8).toString('hex')}`;
-}
+export const correlationMiddleware = correlationIdMiddleware;
 
 /**
  * Extract error context from request
