@@ -806,7 +806,7 @@ const MCPServersPage: React.FC = () => {
         <div className="space-y-4">
           {alert && (
             <div
-              className={`alert ${alert.type === 'success' ? 'bg-green-600' : 'bg-red-600'} text-white mb-4 flex flex-row items-center gap-2 border-none`}
+              className={`alert ${alert.type === 'success' ? 'alert-success' : 'alert-error'} mb-4 flex flex-row items-center gap-2`}
             >
               {alert.type === 'success' ? (
                 <CheckCircleIcon className="w-6 h-6" />

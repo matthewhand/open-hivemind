@@ -4,9 +4,8 @@ import App from './App';
 import './index.css';
 import ErrorBoundary from './components/ErrorBoundary';
 
-// Initialize theme from localStorage or default to 'dark' (dark mode)
-const savedTheme = localStorage.getItem('hivemind-theme') || 'dark';
-document.documentElement.setAttribute('data-theme', savedTheme);
+// Theme is already applied by the inline script in index.html to prevent flash.
+// This ensures React's first render sees the correct data-theme attribute.
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
