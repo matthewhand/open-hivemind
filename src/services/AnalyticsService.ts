@@ -95,11 +95,11 @@ export class AnalyticsService {
   /**
    * Get behavior patterns based on actual usage data
    */
-  public getBehaviorPatterns(options: ActivityFilter = {}): BehaviorPattern[] {
-    const events = this.activityLogger.getEvents({ ...options, limit: options.limit || 5000 });
+  public async getBehaviorPatterns(options: ActivityFilter = {}): Promise<BehaviorPattern[]> {
+    const events = await this.activityLogger.getEvents({ ...options, limit: options.limit || 5000 });
 
     if (events.length === 0) {
-      return this.getDefaultBehaviorPatterns();
+      return await this.getDefaultBehaviorPatterns();
     }
 
     const patterns: BehaviorPattern[] = [];
@@ -137,30 +137,30 @@ export class AnalyticsService {
     }
 
     // Pattern 3: Provider usage patterns
-    const providerPatterns = this.analyzeProviderPatterns(events);
+    const providerPatterns = await this.analyzeProviderPatterns(events);
     patterns.push(...providerPatterns);
 
     // Pattern 4: Time-based usage patterns
-    const timePatterns = this.analyzeTimePatterns(events);
+    const timePatterns = await this.analyzeTimePatterns(events);
     patterns.push(...timePatterns);
 
     // Pattern 5: Response time patterns
-    const responsePattern = this.analyzeResponseTimePattern(events);
+    const responsePattern = await this.analyzeResponseTimePattern(events);
     if (responsePattern) {
       patterns.push(responsePattern);
     }
 
-    return patterns.length > 0 ? patterns : this.getDefaultBehaviorPatterns();
+    return patterns.length > 0 ? patterns : await this.getDefaultBehaviorPatterns();
   }
 
   /**
    * Get user segments based on actual activity
    */
-  public getUserSegments(options: ActivityFilter = {}): UserSegment[] {
-    const events = this.activityLogger.getEvents({ ...options, limit: options.limit || 5000 });
+  public async getUserSegments(options: ActivityFilter = {}): Promise<UserSegment[]> {
+    const events = await this.activityLogger.getEvents({ ...options, limit: options.limit || 5000 });
 
     if (events.length === 0) {
-      return this.getDefaultUserSegments();
+      return await this.getDefaultUserSegments();
     }
 
     const segments: UserSegment[] = [];
@@ -238,21 +238,21 @@ export class AnalyticsService {
       });
     }
 
-    return segments.length > 0 ? segments : this.getDefaultUserSegments();
+    return segments.length > 0 ? segments : await this.getDefaultUserSegments();
   }
 
   /**
    * Get recommendations based on actual patterns
    */
-  public getRecommendations(options: ActivityFilter = {}): DashboardRecommendation[] {
-    const events = this.activityLogger.getEvents({ ...options, limit: options.limit || 5000 });
-    const patterns = this.getBehaviorPatterns(options);
-    const segments = this.getUserSegments(options);
+  public async getRecommendations(options: ActivityFilter = {}): Promise<DashboardRecommendation[]> {
+    const events = await this.activityLogger.getEvents({ ...options, limit: options.limit || 5000 });
+    const patterns = await this.getBehaviorPatterns(options);
+    const segments = await this.getUserSegments(options);
 
     const recommendations: DashboardRecommendation[] = [];
 
     if (events.length === 0) {
-      return this.getDefaultRecommendations();
+      return await this.getDefaultRecommendations();
     }
 
     // Recommendation based on error rate
@@ -330,16 +330,16 @@ export class AnalyticsService {
       }
     });
 
-    return recommendations.length > 0 ? recommendations : this.getDefaultRecommendations();
+    return recommendations.length > 0 ? recommendations : await this.getDefaultRecommendations();
   }
 
   /**
    * Get analytics stats
    */
-  public getStats(options: ActivityFilter = {}): AnalyticsStats {
-    const events = this.activityLogger.getEvents({ ...options, limit: options.limit || 10000 });
-    const patterns = this.getBehaviorPatterns(options);
-    const segments = this.getUserSegments(options);
+  public async getStats(options: ActivityFilter = {}): Promise<AnalyticsStats> {
+    const events = await this.activityLogger.getEvents({ ...options, limit: options.limit || 10000 });
+    const patterns = await this.getBehaviorPatterns(options);
+    const segments = await this.getUserSegments(options);
 
     const totalMessages = events.length;
     const totalErrors = events.filter((e) => e.status === 'error' || e.status === 'timeout').length;
@@ -380,8 +380,8 @@ export class AnalyticsService {
   /**
    * Get time-series data for analytics
    */
-  public getTimeSeries(options: ActivityFilter = {}): TimeSeriesBucket[] {
-    const events = this.activityLogger.getEvents({ ...options, limit: options.limit || 10000 });
+  public async getTimeSeries(options: ActivityFilter = {}): Promise<TimeSeriesBucket[]> {
+    const events = await this.activityLogger.getEvents({ ...options, limit: options.limit || 10000 });
 
     if (events.length === 0) {
       return [];
@@ -484,7 +484,7 @@ export class AnalyticsService {
     return 'stable';
   }
 
-  private analyzeProviderPatterns(events: MessageFlowEvent[]): BehaviorPattern[] {
+  private async analyzeProviderPatterns(events: MessageFlowEvent[]): Promise<BehaviorPattern[]> {
     const patterns: BehaviorPattern[] = [];
     const providerCounts = new Map<string, number>();
 
@@ -512,7 +512,7 @@ export class AnalyticsService {
     return patterns;
   }
 
-  private analyzeTimePatterns(events: MessageFlowEvent[]): BehaviorPattern[] {
+  private async analyzeTimePatterns(events: MessageFlowEvent[]): Promise<BehaviorPattern[]> {
     const patterns: BehaviorPattern[] = [];
     const hourCounts = new Map<number, number>();
 
@@ -557,7 +557,7 @@ export class AnalyticsService {
     return patterns;
   }
 
-  private analyzeResponseTimePattern(events: MessageFlowEvent[]): BehaviorPattern | null {
+  private async analyzeResponseTimePattern(events: MessageFlowEvent[]): Promise<BehaviorPattern | null> {
     const eventsWithTime = events.filter((e) => e.processingTime && e.processingTime > 0);
     if (eventsWithTime.length < 5) return null;
 
@@ -647,7 +647,7 @@ export class AnalyticsService {
   // Default Fallback Data
   // ----------------------------------------------------------------------------
 
-  private getDefaultBehaviorPatterns(): BehaviorPattern[] {
+  private async getDefaultBehaviorPatterns(): Promise<BehaviorPattern[]> {
     return [
       {
         id: 'pattern-default',
@@ -663,7 +663,7 @@ export class AnalyticsService {
     ];
   }
 
-  private getDefaultUserSegments(): UserSegment[] {
+  private async getDefaultUserSegments(): Promise<UserSegment[]> {
     return [
       {
         id: 'segment-default',
@@ -687,7 +687,7 @@ export class AnalyticsService {
     ];
   }
 
-  private getDefaultRecommendations(): DashboardRecommendation[] {
+  private async getDefaultRecommendations(): Promise<DashboardRecommendation[]> {
     return [
       {
         id: 'rec-getting-started',

@@ -33,7 +33,7 @@ describe('Health API Integration Tests', () => {
     // Initialize and connect database
     dbManager = DatabaseManager.getInstance({
       type: 'sqlite',
-      path: ':memory:',
+      path: ':memory:'
     });
     await dbManager.connect();
 
