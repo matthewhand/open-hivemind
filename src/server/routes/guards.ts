@@ -19,7 +19,7 @@ router.get('/', (req: Request, res: Response) => {
       data: { guards },
       message: 'Guards retrieved successfully',
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error retrieving guards:', error);
     debug('Error retrieving guards:', error);
     return res.status(500).json({
@@ -64,7 +64,7 @@ router.post('/', validateRequest(UpdateAccessControlSchema), (req: Request, res:
 
     // Get existing guards to find the access-control guard
     const guards = webUIStorage.getGuards();
-    const accessGuard = guards.find((g: any) => g.id === 'access-control');
+    const accessGuard = guards.find((g: Record<string, unknown>) => g.id === 'access-control');
 
     if (!accessGuard) {
       // Should not happen if getGuards initializes defaults, but just in case
@@ -88,7 +88,7 @@ router.post('/', validateRequest(UpdateAccessControlSchema), (req: Request, res:
       success: true,
       message: 'Access control saved successfully',
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     debug('Error saving access control:', error);
     return res.status(500).json({
       error: 'Failed to save access control',
@@ -105,7 +105,7 @@ router.post('/:id/toggle', validateRequest(ToggleGuardSchema), (req: Request, re
 
     // Check if guard exists
     const guards = webUIStorage.getGuards();
-    const guard = guards.find((g: any) => g.id === id);
+    const guard = guards.find((g: Record<string, unknown>) => g.id === id);
 
     if (!guard) {
       return res.status(404).json({
@@ -120,7 +120,7 @@ router.post('/:id/toggle', validateRequest(ToggleGuardSchema), (req: Request, re
       success: true,
       message: `Guard ${guard.name} ${enabled ? 'enabled' : 'disabled'} successfully`,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     debug('Error toggling guard:', error);
     return res.status(500).json({
       error: 'Failed to toggle guard',

@@ -13,12 +13,15 @@ import openaiConfig from '@config/openaiConfig';
 import type { ILlmProvider } from '@llm/interfaces/ILlmProvider';
 import type { IMessage } from '@message/interfaces/IMessage';
 import { getCircuitBreaker } from '@common/CircuitBreaker';
+import { withTimeout } from '@common/withTimeout';
 
 const debug = Debug('app:openAiProvider');
 
 const DEFAULT_BASE_URL = 'https://api.openai.com/v1';
 const MAX_RETRIES = 3;
 const RETRY_DELAY_BASE_MS = 1000;
+/** Default timeout for LLM chat completion calls (30 seconds). */
+const DEFAULT_LLM_TIMEOUT_MS = 30_000;
 
 const delay = (ms: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -115,6 +118,7 @@ export class OpenAiProvider implements ILlmProvider {
       { role: 'user' as const, content: userMessage },
     ];
 
+    // Retry loop wrapped with circuit breaker
     return circuitBreaker.execute(async () => {
       for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
         try {
@@ -134,12 +138,17 @@ export class OpenAiProvider implements ILlmProvider {
             openaiConfig.get('OPENAI_MAX_TOKENS') ||
             150;
 
-          const response = await openai.chat.completions.create({
-            model,
-            messages,
-            max_tokens: maxTokens,
-            temperature: effectiveTemperature,
-          });
+          const llmTimeoutMs = (typeof timeout === 'number' ? timeout : DEFAULT_LLM_TIMEOUT_MS);
+          const response = await withTimeout(
+            (signal) => openai.chat.completions.create({
+              model,
+              messages,
+              max_tokens: maxTokens,
+              temperature: effectiveTemperature,
+            }, { signal }),
+            llmTimeoutMs,
+            'OpenAI chat completion',
+          );
 
           debug('OpenAI Response:', JSON.stringify(response, null, 2));
           const content = response.choices[0]?.message?.content;
@@ -178,11 +187,15 @@ export class OpenAiProvider implements ILlmProvider {
     const openai = new OpenAI({ apiKey, baseURL });
 
     return circuitBreaker.execute(async () => {
-      const response = await openai.completions.create({
-        model,
-        prompt,
-        max_tokens: 150,
-      });
+      const response = await withTimeout(
+        (signal) => openai.completions.create({
+          model,
+          prompt,
+          max_tokens: 150,
+        }, { signal }),
+        DEFAULT_LLM_TIMEOUT_MS,
+        'OpenAI completion',
+      );
       return response.choices[0]?.text || '';
     });
   }

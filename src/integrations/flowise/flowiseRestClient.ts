@@ -4,8 +4,12 @@ import { ConfigurationManager } from '@config/ConfigurationManager';
 import flowiseConfig from '@integrations/flowise/flowiseConfig';
 import { isSafeUrl } from '../../utils/ssrfGuard';
 import { getCircuitBreaker } from '@common/CircuitBreaker';
+import { withTimeout } from '@common/withTimeout';
 
 const debug = Debug('app:flowiseClient');
+
+/** Default timeout for Flowise REST calls (30 seconds). */
+const DEFAULT_FLOWISE_TIMEOUT_MS = 30_000;
 
 const circuitBreaker = getCircuitBreaker({
   name: 'flowise',
@@ -53,7 +57,11 @@ export async function getFlowiseResponse(channelId: string, question: string): P
         throw new Error('Flowise API URL is not safe to connect to.');
       }
 
-      const response = await axios.post(targetUrl, payload, { headers });
+      const response = await withTimeout(
+        (signal) => axios.post(targetUrl, payload, { headers, signal }),
+        DEFAULT_FLOWISE_TIMEOUT_MS,
+        'Flowise REST prediction',
+      );
       const { text, chatId: newChatId } = response.data;
 
       debug('Received response from Flowise:', { text, newChatId });

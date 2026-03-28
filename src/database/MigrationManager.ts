@@ -1,19 +1,20 @@
+import type { Database } from 'sqlite';
 import { Logger } from '@common/logger';
 
 export interface Migration {
   id: string;
   name: string;
-  up: (db: any) => Promise<void>;
-  down?: (db: any) => Promise<void>;
+  up: (db: Database) => Promise<void>;
+  down?: (db: Database) => Promise<void>;
   version: number;
 }
 
 export class MigrationManager {
   private migrations: Migration[] = [];
   private executedMigrations = new Set<string>();
-  private db: any;
+  private db: Database;
 
-  constructor(db: any) {
+  constructor(db: Database) {
     this.db = db;
     this.loadMigrations();
   }
@@ -25,7 +26,7 @@ export class MigrationManager {
         id: '001_add_tenant_support',
         name: 'Add tenant support to existing tables',
         version: 1,
-        up: async (db: any) => {
+        up: async (db: Database) => {
           // Add tenantId columns to existing tables
           await db.exec('ALTER TABLE bot_configurations ADD COLUMN tenantId TEXT');
           await db.exec('ALTER TABLE bot_configuration_versions ADD COLUMN tenantId TEXT');
@@ -57,7 +58,7 @@ export class MigrationManager {
         id: '002_add_rbac_enhancements',
         name: 'Add RBAC enhancements to roles table',
         version: 2,
-        up: async (db: any) => {
+        up: async (db: Database) => {
           await db.exec('ALTER TABLE roles ADD COLUMN description TEXT');
           await db.exec('ALTER TABLE roles ADD COLUMN level INTEGER DEFAULT 0');
           await db.exec('ALTER TABLE roles ADD COLUMN isActive BOOLEAN DEFAULT 1');
@@ -77,7 +78,7 @@ export class MigrationManager {
         id: '003_add_user_indexes',
         name: 'Add user indexes',
         version: 3,
-        up: async (db: any) => {
+        up: async (db: Database) => {
           await db.exec('CREATE INDEX IF NOT EXISTS idx_users_tenant ON users(tenantId)');
           await db.exec('CREATE INDEX IF NOT EXISTS idx_audits_tenant ON audits(tenantId)');
           await db.exec('CREATE INDEX IF NOT EXISTS idx_audits_user ON audits(userId)');
@@ -87,7 +88,7 @@ export class MigrationManager {
         id: '004_add_anomaly_tracking',
         name: 'Add anomaly tracking tables',
         version: 4,
-        up: async (db: any) => {
+        up: async (db: Database) => {
           await db.exec(`
             CREATE TABLE IF NOT EXISTS anomaly_detection (
               id TEXT PRIMARY KEY,
@@ -129,7 +130,7 @@ export class MigrationManager {
         id: '005_add_monitoring_support',
         name: 'Add monitoring and health check support',
         version: 5,
-        up: async (db: any) => {
+        up: async (db: Database) => {
           await db.exec(`
             CREATE TABLE IF NOT EXISTS health_checks (
               id TEXT PRIMARY KEY,
@@ -177,7 +178,7 @@ export class MigrationManager {
         id: '006_add_audit_enhancements',
         name: 'Add audit log enhancements',
         version: 6,
-        up: async (db: any) => {
+        up: async (db: Database) => {
           await db.exec('ALTER TABLE audits ADD COLUMN resourceId TEXT');
           await db.exec('ALTER TABLE audits ADD COLUMN ipAddress TEXT');
           await db.exec('ALTER TABLE audits ADD COLUMN userAgent TEXT');
@@ -197,7 +198,7 @@ export class MigrationManager {
         id: '007_add_notifications',
         name: 'Add notification system',
         version: 7,
-        up: async (db: any) => {
+        up: async (db: Database) => {
           await db.exec(`
             CREATE TABLE IF NOT EXISTS notifications (
               id TEXT PRIMARY KEY,
@@ -229,7 +230,7 @@ export class MigrationManager {
         id: '008_add_caching_support',
         name: 'Add caching system support',
         version: 8,
-        up: async (db: any) => {
+        up: async (db: Database) => {
           await db.exec(`
             CREATE TABLE IF NOT EXISTS cache_entries (
               key TEXT PRIMARY KEY,
@@ -249,7 +250,7 @@ export class MigrationManager {
         id: '009_add_job_queue',
         name: 'Add job queue system',
         version: 9,
-        up: async (db: any) => {
+        up: async (db: Database) => {
           await db.exec(`
             CREATE TABLE IF NOT EXISTS job_queue (
               id TEXT PRIMARY KEY,
@@ -278,7 +279,7 @@ export class MigrationManager {
         id: '010_add_event_streaming',
         name: 'Add event streaming support',
         version: 10,
-        up: async (db: any) => {
+        up: async (db: Database) => {
           await db.exec(`
             CREATE TABLE IF NOT EXISTS event_stream (
               id TEXT PRIMARY KEY,
@@ -306,14 +307,14 @@ export class MigrationManager {
         id: '011_add_cron_timezone_support',
         name: 'Add timezone support to cron scheduling tables',
         version: 11,
-        up: async (db: any) => {
+        up: async (db: Database) => {
           await db.exec("ALTER TABLE bot_scheduling ADD COLUMN timezone TEXT DEFAULT 'UTC'");
           await db.exec("ALTER TABLE bot_backup_schedules ADD COLUMN timezone TEXT DEFAULT 'UTC'");
           await db.exec(
             "ALTER TABLE bot_data_purging_schedules ADD COLUMN timezone TEXT DEFAULT 'UTC'"
           );
         },
-        down: async (db: any) => {
+        down: async (db: Database) => {
           // SQLite doesn't support DROP COLUMN cleanly in all versions. We omit down or leave empty for safety,
           // or ideally we would recreate the table without the column. For simplicity, we'll leave it as a no-op down.
         },
@@ -335,7 +336,7 @@ export class MigrationManager {
 
   async getExecutedMigrations(): Promise<string[]> {
     const rows = await this.db.all('SELECT id FROM migrations ORDER BY version');
-    return rows.map((row: any) => row.id);
+    return rows.map((row: Record<string, unknown>) => row.id as string);
   }
 
   async runMigrations(): Promise<void> {

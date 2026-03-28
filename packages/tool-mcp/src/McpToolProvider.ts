@@ -11,8 +11,12 @@ import type {
   McpToolCallResponse,
 } from './types';
 import { getCircuitBreaker, type CircuitBreaker as CircuitBreakerType } from '@common/CircuitBreaker';
+import { withTimeout } from '@common/withTimeout';
 
 const debug = Debug('app:tool-mcp');
+
+/** Default timeout for MCP tool operations (10 seconds). */
+const DEFAULT_MCP_TIMEOUT_MS = 10_000;
 
 export class McpToolProvider implements IToolProvider {
   public readonly name: string;
@@ -43,7 +47,12 @@ export class McpToolProvider implements IToolProvider {
     return this.circuitBreaker.execute(async () => {
       try {
         debug(`Listing tools from MCP server: ${this.name}`);
-        const response: McpToolsListResponse = await this.client.listTools();
+        const timeoutMs = this.config.timeout ?? DEFAULT_MCP_TIMEOUT_MS;
+        const response: McpToolsListResponse = await withTimeout(
+          () => this.client.listTools(),
+          timeoutMs,
+          `MCP listTools (${this.name})`,
+        );
 
         this.cachedTools = response.tools.map((tool) => ({
           name: tool.name,
@@ -74,10 +83,15 @@ export class McpToolProvider implements IToolProvider {
       try {
         debug(`Executing tool ${toolName} on MCP server ${this.name}`);
 
-        const response: McpToolCallResponse = await this.client.callTool({
-          name: toolName,
-          arguments: args,
-        });
+        const timeoutMs = this.config.timeout ?? DEFAULT_MCP_TIMEOUT_MS;
+        const response: McpToolCallResponse = await withTimeout(
+          () => this.client.callTool({
+            name: toolName,
+            arguments: args,
+          }),
+          timeoutMs,
+          `MCP executeTool ${toolName} (${this.name})`,
+        );
 
         debug(`Tool ${toolName} executed successfully on ${this.name}`);
 

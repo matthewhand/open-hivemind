@@ -5,13 +5,13 @@
  * using the new error types, with proper logging and correlation tracking.
  */
 
-import crypto from 'crypto';
 import Debug from 'debug';
 import type { NextFunction, Request, Response } from 'express';
 import { MetricsCollector } from '../monitoring/MetricsCollector';
 import { ErrorFactory, type BaseHivemindError } from '../types/errorClasses';
 import { errorLogger } from '../utils/errorLogger';
 import { createErrorResponse } from '../utils/errorResponse';
+import { correlationIdMiddleware } from './correlationId';
 
 const debug = Debug('app:error:middleware');
 
@@ -39,37 +39,19 @@ interface ErrorContext {
   userAgent?: string;
   ip?: string;
   duration?: number;
-  body?: any;
-  params?: any;
-  query?: any;
+  body?: Record<string, unknown>;
+  params?: Record<string, string>;
+  query?: Record<string, unknown>;
 }
 
 /**
- * Middleware to add correlation ID to requests
+ * Middleware to add correlation ID to requests.
+ *
+ * Delegates to the AsyncLocalStorage-backed implementation in
+ * `./correlationId.ts` so the ID is available via `getCorrelationId()`
+ * anywhere in the call stack without explicit parameter passing.
  */
-export function correlationMiddleware(req: Request, res: Response, next: NextFunction): void {
-  // Generate correlation ID if not already present
-  req.correlationId =
-    (req.headers['x-correlation-id'] as string) ||
-    (req.headers['x-request-id'] as string) ||
-    generateCorrelationId();
-
-  // Add correlation ID to response headers
-  res.setHeader('X-Correlation-ID', req.correlationId);
-
-  // Record start time for duration tracking
-  req.startTime = Date.now();
-
-  debug(`Request ${req.method} ${req.path} - Correlation ID: ${req.correlationId}`);
-  next();
-}
-
-/**
- * Generate a unique correlation ID
- */
-function generateCorrelationId(): string {
-  return `corr_${Date.now()}_${crypto.randomBytes(8).toString('hex')}`;
-}
+export const correlationMiddleware = correlationIdMiddleware;
 
 /**
  * Extract error context from request
@@ -96,7 +78,7 @@ function extractErrorContext(req: Request): ErrorContext {
 /**
  * Sanitize request body to remove sensitive information
  */
-function sanitizeRequestBody(body: any): any {
+function sanitizeRequestBody(body: unknown): Record<string, unknown> | unknown {
   if (!body || typeof body !== 'object') {
     return body;
   }
@@ -184,7 +166,7 @@ export function globalErrorHandler(
  * Handle async errors in route handlers
  */
 export function asyncErrorHandler(
-  fn: (req: Request, res: Response, next: NextFunction) => Promise<any>
+  fn: (req: Request, res: Response, next: NextFunction) => Promise<unknown>
 ) {
   return (req: Request, res: Response, next: NextFunction): void => {
     Promise.resolve(fn(req, res, next)).catch(next);
@@ -244,7 +226,7 @@ export function handleUnhandledRejection(reason: unknown, promise: Promise<unkno
  */
 function emitErrorEvent(error: BaseHivemindError, context: ErrorContext, statusCode: number): void {
   // Emit to any monitoring systems or event emitters
-  (process as any).emit('hivemind:error', {
+  (process as NodeJS.EventEmitter).emit('hivemind:error', {
     error: error.toJSON(),
     context,
     statusCode,

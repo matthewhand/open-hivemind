@@ -8,6 +8,8 @@ import errorReducer from './slices/errorSlice';
 import uiReducer from './slices/uiSlice';
 import performanceReducer from './slices/performanceSlice';
 import websocketReducer from './slices/websocketSlice';
+import { loadState, saveState } from './stateVersioning';
+import { OfflineActionQueue, createOfflineMiddleware } from './offlineQueue';
 
 const rootReducer = combineReducers({
   [apiSlice.reducerPath]: apiSlice.reducer,
@@ -20,21 +22,40 @@ const rootReducer = combineReducers({
   websocket: websocketReducer,
 });
 
+// --- Offline queue instance (singleton) ---
+export const offlineQueue = new OfflineActionQueue();
+
 export const setupStore = (preloadedState?: Partial<RootState>) => {
+  // Merge persisted state (if any) under any explicitly provided preloaded state.
+  const persisted = loadState();
+  const merged = persisted
+    ? { ...persisted, ...preloadedState } as Partial<RootState>
+    : preloadedState;
+
   return configureStore({
     reducer: rootReducer,
-    preloadedState,
+    preloadedState: merged,
     middleware: (getDefaultMiddleware) =>
       getDefaultMiddleware({
         serializableCheck: {
           ignoredActions: ['persist/PERSIST'],
         },
-      }).concat(apiSlice.middleware),
+      })
+        .concat(apiSlice.middleware)
+        .concat(createOfflineMiddleware(offlineQueue)),
     devTools: process.env.NODE_ENV !== 'production',
   });
 };
 
 export const store = setupStore();
+
+// Persist state on every change.
+store.subscribe(() => {
+  saveState(store.getState() as unknown as Record<string, unknown>);
+});
+
+// Start listening for online/offline events to replay queued actions.
+offlineQueue.startListening(store.dispatch);
 
 setupListeners(store.dispatch);
 

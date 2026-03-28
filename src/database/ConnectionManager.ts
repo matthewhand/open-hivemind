@@ -9,6 +9,15 @@ interface ConnectionOptions {
   timeout?: number;
 }
 
+/** Result shape returned by executeQuery (INSERT/UPDATE/DELETE). */
+export interface QueryResult {
+  lastID: number;
+  changes: number;
+}
+
+/** Primitive types accepted as SQL bind parameters. */
+export type SqlParam = string | number | boolean | null | Buffer;
+
 export class ConnectionManager extends EventEmitter {
   private db: Database | null = null;
   private isConnected = false;
@@ -73,7 +82,7 @@ export class ConnectionManager extends EventEmitter {
     return this.isConnected;
   }
 
-  async executeQuery(query: string, params?: any[]): Promise<any> {
+  async executeQuery(query: string, params?: SqlParam[]): Promise<QueryResult> {
     if (!this.isConnected || !this.db) {
       throw new Error('Database not connected');
     }
@@ -101,7 +110,7 @@ export class ConnectionManager extends EventEmitter {
     });
   }
 
-  async selectQuery(query: string, params?: any[]): Promise<any[]> {
+  async selectQuery(query: string, params?: SqlParam[]): Promise<Record<string, unknown>[]> {
     if (!this.isConnected || !this.db) {
       throw new Error('Database not connected');
     }

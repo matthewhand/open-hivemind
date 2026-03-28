@@ -4,7 +4,7 @@ import Debug from 'debug';
 import jwt from 'jsonwebtoken';
 import { AuthenticationError, ValidationError } from '@src/types/errorClasses';
 import { SecureConfigManager } from '@config/SecureConfigManager';
-import type { AuthToken, LoginCredentials, RegisterData, User, UserRole } from './types';
+import type { AuthToken, JWTPayload, LoginCredentials, RegisterData, User, UserRole } from './types';
 
 const debug = Debug('app:AuthManager');
 
@@ -77,7 +77,7 @@ export class AuthManager {
           type: 'auth',
           data: { secret },
           createdAt: new Date().toISOString(),
-        } as any)
+        })
         .catch((err) => {
           debug(`Failed to store ${prefix} secret securely:`, err);
         });
@@ -264,7 +264,7 @@ export class AuthManager {
     }
 
     try {
-      const payload = jwt.verify(refreshToken, this.jwtRefreshSecret) as any;
+      const payload = jwt.verify(refreshToken, this.jwtRefreshSecret) as JWTPayload;
       const user = this.users.get(payload.userId);
 
       if (!user || !user.isActive) {
@@ -326,7 +326,7 @@ export class AuthManager {
   /**
    * Verify JWT access token
    */
-  public verifyAccessToken(token: string): any {
+  public verifyAccessToken(token: string): string | jwt.JwtPayload {
     try {
       return jwt.verify(token, this.jwtSecret);
     } catch {

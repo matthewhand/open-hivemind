@@ -2,6 +2,7 @@ import Debug from 'debug';
 import { MCPService } from '@src/mcp/MCPService';
 import { BotConfigurationManager } from '@config/BotConfigurationManager';
 import { getMcpServerProfileByKey } from '@config/mcpServerProfiles';
+import { withTimeout } from '@common/withTimeout';
 
 const debug = Debug('app:ToolManager');
 
@@ -132,18 +133,19 @@ export class ToolManager {
         return { toolName, success: false, error: msg };
       }
 
-      // Execute with timeout.
+      // Execute with AbortController-based timeout.
       const timeoutMs = DEFAULT_TOOL_TIMEOUT_MS;
-      const result = await Promise.race([
-        mcpService.executeTool(serverName, toolName, args, {
+      const result = await withTimeout(
+        () => mcpService.executeTool(serverName, toolName, args, {
           botName,
           userId: context?.userId,
           messageProvider: context?.messageProvider,
           forumId: context?.forumId,
           forumOwnerId: context?.forumOwnerId,
         }),
-        this.timeoutPromise(timeoutMs, toolName),
-      ]);
+        timeoutMs,
+        `Tool "${toolName}"`,
+      );
 
       const elapsed = Date.now() - startTime;
       debug(`[${botName}] Tool "${toolName}" completed in ${elapsed}ms`);
@@ -197,7 +199,7 @@ export class ToolManager {
     const names = new Set<string>();
 
     // Direct MCP servers list on the bot config.
-    const mcpServers = (botConfig as any).mcpServers ?? (botConfig as any).MCP_SERVERS;
+    const mcpServers = (botConfig as Record<string, unknown>).mcpServers ?? (botConfig as Record<string, unknown>).MCP_SERVERS;
     if (Array.isArray(mcpServers)) {
       for (const s of mcpServers) {
         if (typeof s === 'object' && s.name) {
@@ -208,7 +210,7 @@ export class ToolManager {
 
     // MCP server profile (a named bundle of servers).
     const profileKey =
-      (botConfig as any).mcpServerProfile ?? (botConfig as any).MCP_SERVER_PROFILE;
+      (botConfig as Record<string, unknown>).mcpServerProfile ?? (botConfig as Record<string, unknown>).MCP_SERVER_PROFILE;
     if (profileKey) {
       const profile = getMcpServerProfileByKey(profileKey);
       if (profile) {
@@ -238,12 +240,5 @@ export class ToolManager {
     return null;
   }
 
-  /** Creates a promise that rejects after `ms` milliseconds. */
-  private timeoutPromise(ms: number, toolName: string): Promise<never> {
-    return new Promise((_resolve, reject) => {
-      setTimeout(() => {
-        reject(new Error(`Tool "${toolName}" timed out after ${ms}ms`));
-      }, ms);
-    });
-  }
+  // timeoutPromise replaced by withTimeout (AbortController-based) above.
 }
