@@ -69,7 +69,7 @@ const BotTemplatesPage: React.FC = () => {
         setTemplates(templatesArray);
       }
     } catch (error) {
-      console.error('Failed to fetch templates:', error);
+      // Silent: empty state shown
     } finally {
       setLoading(false);
     }
@@ -109,7 +109,7 @@ const BotTemplatesPage: React.FC = () => {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch (err) {
-      console.error('Failed to copy:', err);
+      // Clipboard may not be available
     }
   };
 

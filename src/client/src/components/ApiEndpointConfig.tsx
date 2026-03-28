@@ -69,7 +69,7 @@ const ApiEndpointConfig: React.FC<ApiEndpointConfigProps> = ({ onEndpointsChange
       setEndpoints([]);
       setLoading(false);
     } catch (error) {
-      console.error('Failed to fetch endpoints:', error);
+      // Silent: empty state shown
       setLoading(false);
     }
   };
@@ -147,7 +147,7 @@ const ApiEndpointConfig: React.FC<ApiEndpointConfigProps> = ({ onEndpointsChange
       fetchEndpoints();
       onEndpointsChange?.();
     } catch (error) {
-      console.error('Failed to save endpoint:', error);
+      // showToast below provides feedback
       showToast('Failed to save endpoint', 'error');
     }
   };
@@ -159,7 +159,7 @@ const ApiEndpointConfig: React.FC<ApiEndpointConfigProps> = ({ onEndpointsChange
       fetchEndpoints();
       onEndpointsChange?.();
     } catch (error) {
-      console.error('Failed to delete endpoint:', error);
+      // showToast below provides feedback
       showToast('Failed to delete endpoint', 'error');
     }
   };
@@ -170,7 +170,7 @@ const ApiEndpointConfig: React.FC<ApiEndpointConfigProps> = ({ onEndpointsChange
       fetchEndpoints();
       onEndpointsChange?.();
     } catch (error) {
-      console.error('Failed to toggle endpoint:', error);
+      showToast('Failed to toggle endpoint', 'error');
     }
   };
 

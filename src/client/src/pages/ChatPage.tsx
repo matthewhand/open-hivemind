@@ -55,7 +55,7 @@ const ChatPage: React.FC = () => {
         setLlmProviders(data.data || []);
       }
     } catch (err) {
-      console.error('Failed to fetch LLM providers:', err);
+      showError('Failed to fetch LLM providers');
     }
   }, []);
 
@@ -129,7 +129,7 @@ const ChatPage: React.FC = () => {
 
       setMessages(mappedMessages);
     } catch (err) {
-      console.error('Failed to fetch history:', err);
+      showError('Failed to fetch chat history');
     } finally {
       setHistoryLoading(false);
     }
@@ -193,7 +193,7 @@ const ChatPage: React.FC = () => {
       // but for this task, the optimistic rollback is the focus.
       await fetchHistory(selectedBotId);
     } catch (err) {
-      console.error('Failed to send message:', err);
+      showError('Failed to send message');
       // Mark optimistic update as failed
       setMessages(prev => prev.map(m =>
         m.id === tempId

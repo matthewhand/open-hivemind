@@ -144,7 +144,7 @@ const ModalForm: React.FC<ModalFormProps> = ({
       await onSubmit(formData);
       onClose();
     } catch (error) {
-      console.error('Form submission error:', error);
+      // Error handled by form validation UI
     } finally {
       setIsSubmitting(false);
     }
