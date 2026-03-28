@@ -3,7 +3,7 @@ export const ERROR_CODES = {
   NOT_FOUND: 'not found',
 } as const;
 
-export type ErrorCode = typeof ERROR_CODES[keyof typeof ERROR_CODES];
+export type ErrorCode = (typeof ERROR_CODES)[keyof typeof ERROR_CODES];
 
 export const HTTP_STATUS = {
   // Success
@@ -40,7 +40,7 @@ export const HTTP_STATUS = {
   NETWORK_AUTHENTICATION_REQUIRED: 511,
 } as const;
 
-export type HttpStatus = typeof HTTP_STATUS[keyof typeof HTTP_STATUS];
+export type HttpStatus = (typeof HTTP_STATUS)[keyof typeof HTTP_STATUS];
 
 export const HEALTH_THRESHOLDS = {
   HIGH_FAILURE_COUNT: 3,
@@ -52,4 +52,4 @@ export const HEALTH_THRESHOLDS = {
   DOMINANT_ERROR_PERCENTAGE: 50,
 } as const;
 
-export type HealthThreshold = typeof HEALTH_THRESHOLDS[keyof typeof HEALTH_THRESHOLDS];
+export type HealthThreshold = (typeof HEALTH_THRESHOLDS)[keyof typeof HEALTH_THRESHOLDS];

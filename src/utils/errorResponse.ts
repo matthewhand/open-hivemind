@@ -6,9 +6,9 @@
  */
 
 import type { Response } from 'express';
+import { HTTP_STATUS, type HttpStatus } from '../types/constants';
 import { BaseHivemindError } from '../types/errorClasses';
 import { ErrorUtils, type HivemindError } from '../types/errors';
-import { HTTP_STATUS } from '../types/constants';
 
 /**
  * Standard error response structure
@@ -126,7 +126,7 @@ export class ErrorResponseBuilder {
   /**
    * Get the appropriate HTTP status code for this error
    */
-  getStatusCode(): number {
+  getStatusCode(): HttpStatus | number {
     const error = this.response.error;
 
     // Check for specific status codes
