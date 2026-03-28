@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { createLogger } from '../../common/StructuredLogger';
 import { BotManager, type CreateBotRequest } from '../../managers/BotManager';
 import { ERROR_CODES, HTTP_STATUS } from '../../types/constants';
+import { ReorderSchema } from '../../validation/schemas/commonSchema';
 import {
   BotActivityQuerySchema,
   BotHistoryQuerySchema,
@@ -89,14 +90,9 @@ router.get('/', async (req, res) => {
  *       200:
  *         description: Bots reordered
  */
-router.put('/reorder', async (req, res) => {
+router.put('/reorder', validateRequest(ReorderSchema), async (req, res) => {
   try {
     const { ids } = req.body;
-    if (!Array.isArray(ids) || ids.length === 0) {
-      return res
-        .status(HTTP_STATUS.BAD_REQUEST)
-        .json({ error: 'ids must be a non-empty array of bot IDs' });
-    }
 
     const fsModule = await import('fs');
     const pathModule = await import('path');

@@ -7,7 +7,14 @@ import type { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdi
 import { ErrorUtils } from '@src/types/errors';
 import MCPProviderManager from '../../config/MCPProviderManager';
 import type { MCPProviderConfig } from '../../types/mcp';
-import { AddMCPServerSchema, CallMCPToolSchema } from '../../validation/schemas/mcpSchema';
+import {
+  AddMCPServerSchema,
+  CallMCPToolSchema,
+  CreateMCPProviderSchema,
+  MCPProviderIdParamSchema,
+  MCPServerNameParamSchema,
+  UpdateMCPProviderSchema,
+} from '../../validation/schemas/mcpSchema';
 import { validateRequest } from '../../validation/validateRequest';
 
 const debug = Debug('app:webui:mcp');
@@ -227,7 +234,7 @@ router.post('/servers', validateRequest(AddMCPServerSchema), async (req, res) =>
 });
 
 // POST /api/mcp/servers/:name/connect - Connect to MCP server
-router.post('/servers/:name/connect', async (req, res) => {
+router.post('/servers/:name/connect', validateRequest(MCPServerNameParamSchema), async (req, res) => {
   try {
     const { name } = req.params;
 
@@ -286,7 +293,7 @@ router.post('/servers/:name/connect', async (req, res) => {
 });
 
 // POST /api/mcp/servers/:name/disconnect - Disconnect from MCP server
-router.post('/servers/:name/disconnect', async (req, res) => {
+router.post('/servers/:name/disconnect', validateRequest(MCPServerNameParamSchema), async (req, res) => {
   try {
     const { name } = req.params;
 
@@ -326,7 +333,7 @@ router.post('/servers/:name/disconnect', async (req, res) => {
 });
 
 // DELETE /api/mcp/servers/:name - Remove MCP server
-router.delete('/servers/:name', async (req, res) => {
+router.delete('/servers/:name', validateRequest(MCPServerNameParamSchema), async (req, res) => {
   try {
     const { name } = req.params;
 
@@ -366,7 +373,7 @@ router.delete('/servers/:name', async (req, res) => {
 });
 
 // GET /api/mcp/servers/:name/tools - Get tools from MCP server
-router.get('/servers/:name/tools', async (req, res) => {
+router.get('/servers/:name/tools', validateRequest(MCPServerNameParamSchema), async (req, res) => {
   try {
     const { name } = req.params;
 
@@ -510,7 +517,7 @@ router.get('/providers', async (req, res) => {
 });
 
 // GET /api/mcp/providers/:id - Get MCP provider by ID
-router.get('/providers/:id', async (req, res) => {
+router.get('/providers/:id', validateRequest(MCPProviderIdParamSchema), async (req, res) => {
   try {
     const { id } = req.params;
     const provider = mcpProviderManager.getProvider(id);
@@ -552,7 +559,7 @@ router.get('/providers/:id', async (req, res) => {
 });
 
 // POST /api/mcp/providers - Create new MCP provider
-router.post('/providers', async (req, res) => {
+router.post('/providers', validateRequest(CreateMCPProviderSchema), async (req, res) => {
   try {
     const providerConfig: MCPProviderConfig = req.body;
 
@@ -605,7 +612,7 @@ router.post('/providers', async (req, res) => {
 });
 
 // PUT /api/mcp/providers/:id - Update MCP provider
-router.put('/providers/:id', async (req, res) => {
+router.put('/providers/:id', validateRequest(UpdateMCPProviderSchema), async (req, res) => {
   try {
     const { id } = req.params;
     const updates: Partial<MCPProviderConfig> = req.body;
@@ -659,7 +666,7 @@ router.put('/providers/:id', async (req, res) => {
 });
 
 // DELETE /api/mcp/providers/:id - Delete MCP provider
-router.delete('/providers/:id', async (req, res) => {
+router.delete('/providers/:id', validateRequest(MCPProviderIdParamSchema), async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -698,7 +705,7 @@ router.delete('/providers/:id', async (req, res) => {
 });
 
 // POST /api/mcp/providers/:id/start - Start MCP provider
-router.post('/providers/:id/start', async (req, res) => {
+router.post('/providers/:id/start', validateRequest(MCPProviderIdParamSchema), async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -737,7 +744,7 @@ router.post('/providers/:id/start', async (req, res) => {
 });
 
 // POST /api/mcp/providers/:id/stop - Stop MCP provider
-router.post('/providers/:id/stop', async (req, res) => {
+router.post('/providers/:id/stop', validateRequest(MCPProviderIdParamSchema), async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -776,7 +783,7 @@ router.post('/providers/:id/stop', async (req, res) => {
 });
 
 // POST /api/mcp/providers/:id/test - Test MCP provider
-router.post('/providers/:id/test', async (req, res) => {
+router.post('/providers/:id/test', validateRequest(MCPProviderIdParamSchema), async (req, res) => {
   try {
     const { id } = req.params;
 

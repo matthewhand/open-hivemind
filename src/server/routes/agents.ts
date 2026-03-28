@@ -4,6 +4,15 @@ import { join } from 'path';
 import Debug from 'debug';
 import { Router } from 'express';
 import { ErrorUtils } from '@src/types/errors';
+import {
+  AgentIdParamSchema,
+  AgentPersonaKeyParamSchema,
+  CreateAgentPersonaSchema,
+  CreateAgentSchema,
+  UpdateAgentPersonaSchema,
+  UpdateAgentSchema,
+} from '../../validation/schemas/agentsSchema';
+import { validateRequest } from '../../validation/validateRequest';
 
 const debug = Debug('app:webui:agents');
 const router = Router();
@@ -33,7 +42,7 @@ interface Persona {
   systemPrompt: string;
 }
 
-interface MCPServer {
+interface _MCPServer {
   name: string;
   url: string;
   apiKey?: string;
@@ -44,7 +53,7 @@ interface MCPServer {
 // Agent Configuration Management
 const AGENTS_CONFIG_FILE = join(process.cwd(), 'data', 'agents.json');
 const PERSONAS_CONFIG_FILE = join(process.cwd(), 'data', 'personas.json');
-const MCP_SERVERS_CONFIG_FILE = join(process.cwd(), 'data', 'mcp-servers.json');
+const _MCP_SERVERS_CONFIG_FILE = join(process.cwd(), 'data', 'mcp-servers.json');
 
 // Ensure data directory exists
 const ensureDataDir = async () => {
@@ -165,7 +174,7 @@ router.get('/', async (req, res) => {
 });
 
 // POST /api/agents - Create new agent
-router.post('/', async (req, res) => {
+router.post('/', validateRequest(CreateAgentSchema), async (req, res) => {
   try {
     const agentData: Omit<AgentConfig, 'id' | 'createdAt' | 'updatedAt'> = req.body;
 
@@ -209,7 +218,7 @@ router.post('/', async (req, res) => {
 });
 
 // PUT /api/agents/:id - Update agent
-router.put('/:id', async (req, res) => {
+router.put('/:id', validateRequest(UpdateAgentSchema), async (req, res) => {
   try {
     const { id } = req.params;
     const updates: Partial<AgentConfig> = req.body;
@@ -246,7 +255,7 @@ router.put('/:id', async (req, res) => {
 });
 
 // DELETE /api/agents/:id - Delete agent
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', validateRequest(AgentIdParamSchema), async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -325,13 +334,9 @@ router.get('/personas', async (req, res) => {
 });
 
 // POST /api/agents/personas - Create new persona
-router.post('/personas', async (req, res) => {
+router.post('/personas', validateRequest(CreateAgentPersonaSchema), async (req, res) => {
   try {
     const { name, systemPrompt } = req.body;
-
-    if (!name || !systemPrompt) {
-      return res.status(400).json({ error: 'Name and system prompt are required' });
-    }
 
     const personas = await loadJsonConfig<Persona[]>(PERSONAS_CONFIG_FILE, []);
     const key = name.toLowerCase().replace(/[^a-z0-9]/g, '_');
@@ -369,7 +374,7 @@ router.post('/personas', async (req, res) => {
 });
 
 // PUT /api/agents/personas/:key - Update persona
-router.put('/personas/:key', async (req, res) => {
+router.put('/personas/:key', validateRequest(UpdateAgentPersonaSchema), async (req, res) => {
   try {
     const { key } = req.params;
     const { name, systemPrompt } = req.body;
@@ -406,7 +411,7 @@ router.put('/personas/:key', async (req, res) => {
 });
 
 // DELETE /api/agents/personas/:key - Delete persona
-router.delete('/personas/:key', async (req, res) => {
+router.delete('/personas/:key', validateRequest(AgentPersonaKeyParamSchema), async (req, res) => {
   try {
     const { key } = req.params;
 

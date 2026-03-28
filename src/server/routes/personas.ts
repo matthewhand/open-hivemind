@@ -1,9 +1,14 @@
 import { Router } from 'express';
-// Note: We'll likely need to create schemas for these, assuming minimal validation for now or generic object
 import { z } from 'zod';
 import { createLogger } from '../../common/StructuredLogger';
 import { PersonaManager } from '../../managers/PersonaManager';
 import { ERROR_CODES, HTTP_STATUS } from '../../types/constants';
+import { ReorderSchema } from '../../validation/schemas/commonSchema';
+import {
+  ClonePersonaSchema,
+  PersonaIdParamSchema,
+  UpdatePersonaRouteSchema,
+} from '../../validation/schemas/personasSchema';
 import { validateRequest } from '../../validation/validateRequest';
 
 const router = Router();
@@ -36,10 +41,6 @@ const CreatePersonaSchema = z.object({
   }),
 });
 
-const UpdatePersonaSchema = z.object({
-  body: CreatePersonaSchema.shape.body.partial(),
-});
-
 // GET /api/personas
 router.get('/', (req, res) => {
   try {
@@ -57,14 +58,9 @@ router.get('/', (req, res) => {
 });
 
 // PUT /api/personas/reorder
-router.put('/reorder', (req, res) => {
+router.put('/reorder', validateRequest(ReorderSchema), (req, res) => {
   try {
     const { ids } = req.body;
-    if (!Array.isArray(ids) || ids.length === 0) {
-      return res
-        .status(HTTP_STATUS.BAD_REQUEST)
-        .json({ error: 'ids must be a non-empty array of persona IDs' });
-    }
 
     const fsModule = require('fs');
     const pathModule = require('path');
@@ -93,7 +89,7 @@ router.put('/reorder', (req, res) => {
 });
 
 // GET /api/personas/:id
-router.get('/:id', (req, res) => {
+router.get('/:id', validateRequest(PersonaIdParamSchema), (req, res) => {
   try {
     const persona = manager.getPersona(req.params.id);
     if (!persona) {
@@ -131,7 +127,7 @@ router.post('/', validateRequest(CreatePersonaSchema), async (req, res) => {
 });
 
 // POST /api/personas/:id/clone
-router.post('/:id/clone', (req, res) => {
+router.post('/:id/clone', validateRequest(ClonePersonaSchema), (req, res) => {
   try {
     if (req.body.name) {
       // Idempotency check: see if cloned persona already exists
@@ -153,7 +149,7 @@ router.post('/:id/clone', (req, res) => {
 });
 
 // PUT /api/personas/:id
-router.put('/:id', async (req, res) => {
+router.put('/:id', validateRequest(UpdatePersonaRouteSchema), async (req, res) => {
   try {
     const updatedPersona = manager.updatePersona(req.params.id, req.body);
     return res.json(updatedPersona);
@@ -163,7 +159,7 @@ router.put('/:id', async (req, res) => {
 });
 
 // DELETE /api/personas/:id
-router.delete('/:id', (req, res) => {
+router.delete('/:id', validateRequest(PersonaIdParamSchema), (req, res) => {
   try {
     const existingPersona = manager.getPersona(req.params.id);
     if (!existingPersona) {

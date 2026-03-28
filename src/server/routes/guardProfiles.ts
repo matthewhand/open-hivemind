@@ -6,6 +6,12 @@ import {
   saveGuardrailProfiles,
   type GuardrailProfile,
 } from '../../config/guardrailProfiles';
+import {
+  CreateGuardProfileSchema,
+  GuardProfileIdParamSchema,
+  UpdateGuardProfileSchema,
+} from '../../validation/schemas/guardProfilesSchema';
+import { validateRequest } from '../../validation/validateRequest';
 
 const router = Router();
 
@@ -35,7 +41,7 @@ router.get('/', (req: Request, res: Response) => {
 });
 
 // GET /:id - Get a specific profile
-router.get('/:id', (req: Request, res: Response) => {
+router.get('/:id', validateRequest(GuardProfileIdParamSchema), (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const profiles = loadGuardrailProfiles();
@@ -85,25 +91,9 @@ interface GuardBody {
 }
 
 // POST / - Create a new profile
-router.post('/', (req: Request, res: Response) => {
+router.post('/', validateRequest(CreateGuardProfileSchema), (req: Request, res: Response) => {
   try {
     const { name, description, guards } = req.body as GuardBody;
-
-    if (!name || typeof name !== 'string') {
-      return res.status(400).json({
-        success: false,
-        error: 'Validation error',
-        message: 'Name is required and must be a string',
-      });
-    }
-
-    if (!guards || typeof guards !== 'object') {
-      return res.status(400).json({
-        success: false,
-        error: 'Validation error',
-        message: 'Guards configuration is required',
-      });
-    }
 
     const profiles = loadGuardrailProfiles();
 
@@ -179,7 +169,7 @@ router.post('/', (req: Request, res: Response) => {
 });
 
 // PUT /:id - Update a profile
-router.put('/:id', (req: Request, res: Response) => {
+router.put('/:id', validateRequest(UpdateGuardProfileSchema), (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const { name, description, guards } = req.body as Partial<GuardBody>;
@@ -247,7 +237,7 @@ router.put('/:id', (req: Request, res: Response) => {
 });
 
 // DELETE /:id - Delete a profile
-router.delete('/:id', (req: Request, res: Response) => {
+router.delete('/:id', validateRequest(GuardProfileIdParamSchema), (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const profiles = loadGuardrailProfiles();
