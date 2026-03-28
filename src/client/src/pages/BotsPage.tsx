@@ -19,6 +19,7 @@ import { LoadingSpinner } from '../components/DaisyUI/Loading';
 import { apiService } from '../services/api';
 import { withRetry } from '../utils/withRetry';
 import { ErrorService } from '../services/ErrorService';
+import { useApiQuery } from '../hooks/useApiQuery';
 import type { BotConfig } from '../types/bot';
 import BotCard from '../components/BotManagement/BotCard';
 import { CreateBotWizard } from '../components/BotManagement/CreateBotWizard';
@@ -149,26 +150,39 @@ const BotsPage: React.FC = () => {
 
   const location = useLocation();
 
-  // Primary bot data source: /api/bots endpoint (runtime state)
-  const fetchBots = useCallback(async () => {
-    try {
-      setBotsLoading(true);
-      const json = await withRetry(() => apiService.get<any>('/api/bots'));
-      setBots(json.data?.bots || []);
-      setError(null);
-    } catch (err) {
-      ErrorService.report(err, { action: 'fetchBots' });
-      setError(err instanceof Error ? err.message : 'Failed to fetch bots');
-      toastError('Failed to load bots');
-    } finally {
-      setBotsLoading(false);
+  // Primary bot data source: /api/bots endpoint (runtime state) — via cache layer
+  const {
+    data: botsResponse,
+    loading: botsQueryLoading,
+    error: botsQueryError,
+    refetch: refetchBots,
+  } = useApiQuery<any>('/api/bots', { ttl: 30_000 });
+
+  // Sync cached query results into local state so mutation handlers still work
+  useEffect(() => {
+    if (botsResponse) {
+      setBots(botsResponse.data?.bots || []);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [botsResponse]);
 
   useEffect(() => {
-    fetchBots();
-  }, [fetchBots]);
+    setBotsLoading(botsQueryLoading);
+  }, [botsQueryLoading]);
+
+  useEffect(() => {
+    if (botsQueryError) {
+      ErrorService.report(botsQueryError, { action: 'fetchBots' });
+      setError(botsQueryError.message);
+      toastError('Failed to load bots');
+    } else {
+      setError(null);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [botsQueryError]);
+
+  const fetchBots = useCallback(async () => {
+    await refetchBots();
+  }, [refetchBots]);
 
   // Handle bot creation from URL state
   useEffect(() => {
