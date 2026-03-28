@@ -304,11 +304,11 @@ const DataTable = <T extends Record<string, any>>({
         <table className="table table-zebra w-full">
           <thead>
             <tr>
-              {selectable && <th><div className="skeleton h-4 w-4"></div></th>}
+              {selectable && <th><span className="sr-only">Select</span><div className="skeleton h-4 w-4"></div></th>}
               {columns.map((col, index) => (
-                <th key={index}><div className="skeleton h-4 w-24"></div></th>
+                <th key={index}><span className="sr-only">{col.title}</span><div className="skeleton h-4 w-24"></div></th>
               ))}
-              {actions && actions.length > 0 && <th><div className="skeleton h-4 w-16" /></th>}
+              {actions && actions.length > 0 && <th><span className="sr-only">Actions</span><div className="skeleton h-4 w-16" /></th>}
             </tr>
           </thead>
           <tbody>
@@ -353,6 +353,8 @@ const DataTable = <T extends Record<string, any>>({
             <input
               type="text"
               placeholder="Search..."
+              aria-label="Search table data"
+              role="searchbox"
               className="input input-bordered input-sm w-full max-w-xs"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}

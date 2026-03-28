@@ -140,7 +140,7 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose }) => {
         <ul
           ref={listRef}
           className="max-h-72 overflow-y-auto py-2"
-          role="listbox"
+          role="listbox" aria-label="Command results"
         >
           {filtered.length === 0 && (
             <li className="px-4 py-6 text-center text-base-content/50">
