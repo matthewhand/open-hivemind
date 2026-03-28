@@ -680,7 +680,7 @@ export interface SlackProviderMetadata {
 /**
  * Slack message subtypes
  */
-export const SLACK_MESSAGE_SUBTYPES = {
+export const SlackMessageSubtype = {
   BOT_MESSAGE: 'bot_message',
   MESSAGE_CHANGED: 'message_changed',
   MESSAGE_DELETED: 'message_deleted',
@@ -691,7 +691,7 @@ export const SLACK_MESSAGE_SUBTYPES = {
 /**
  * Slack channel types
  */
-export const SLACK_CHANNEL_TYPES = {
+export const SlackChannelType = {
   PUBLIC_CHANNEL: 'public_channel',
   PRIVATE_CHANNEL: 'private_channel',
   IM: 'im',
@@ -701,7 +701,7 @@ export const SLACK_CHANNEL_TYPES = {
 /**
  * Slack event types
  */
-export const SLACK_EVENT_TYPES = {
+export const SlackEventType = {
   MESSAGE: 'message',
   APP_MENTION: 'app_mention',
   MEMBER_JOINED_CHANNEL: 'member_joined_channel',
@@ -709,6 +709,6 @@ export const SLACK_EVENT_TYPES = {
 } as const;
 
 export type SlackMessageSubtype =
-  (typeof SLACK_MESSAGE_SUBTYPES)[keyof typeof SLACK_MESSAGE_SUBTYPES];
-export type SlackChannelType = (typeof SLACK_CHANNEL_TYPES)[keyof typeof SLACK_CHANNEL_TYPES];
-export type SlackEventType = (typeof SLACK_EVENT_TYPES)[keyof typeof SLACK_EVENT_TYPES];
+  (typeof SlackMessageSubtype)[keyof typeof SlackMessageSubtype];
+export type SlackChannelType = (typeof SlackChannelType)[keyof typeof SlackChannelType];
+export type SlackEventType = (typeof SlackEventType)[keyof typeof SlackEventType];

@@ -287,7 +287,7 @@ export const FLOWISE_DEFAULTS = {
 /**
  * Flowise error codes
  */
-export const FLOWISE_ERROR_CODES = {
+export const FlowiseErrorCode = {
   MISSING_CONFIG: 'FLOWISE_MISSING_CONFIG',
   INVALID_RESPONSE: 'FLOWISE_INVALID_RESPONSE',
   API_ERROR: 'FLOWISE_API_ERROR',
@@ -295,4 +295,4 @@ export const FLOWISE_ERROR_CODES = {
   NETWORK_ERROR: 'FLOWISE_NETWORK_ERROR',
 } as const;
 
-export type FlowiseErrorCode = (typeof FLOWISE_ERROR_CODES)[keyof typeof FLOWISE_ERROR_CODES];
+export type FlowiseErrorCode = (typeof FlowiseErrorCode)[keyof typeof FlowiseErrorCode];
