@@ -109,13 +109,13 @@ const EnhancedBotManager: React.FC<EnhancedBotManagerProps> = ({ onBotSelect }) 
         botDataProvider.getProviders(),
         botDataProvider.getPersonas(),
         botDataProvider.getMCPServers(),
-        fetch('/api/admin/guard-profiles')
+        fetch('/api/admin/guard-profiles').catch(() => null)
       ]);
       setProviders(providersData);
       setPersonas(personasData);
       setMcpServers(mcpData);
 
-      if (gpResponse.ok) {
+      if (gpResponse && gpResponse.ok) {
         const gpData = await gpResponse.json();
         setGuardProfiles(gpData.data || []);
       }
