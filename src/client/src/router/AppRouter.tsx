@@ -53,6 +53,7 @@ const SpecDetailPage = lazy(() => import('../pages/SpecDetailPage'));
 const AuditPage = lazy(() => import('../pages/AuditPage'));
 const AdminHealthPage = lazy(() => import('../pages/AdminHealthPage'));
 const WebhookEventsPage = lazy(() => import('../pages/WebhookEventsPage'));
+const OnboardingPage = lazy(() => import('../pages/OnboardingPage'));
 
 
 interface LoadingFallbackProps {
@@ -90,6 +91,7 @@ const AppRouter: React.FC = () => {
       <Routes>
         <Route path="/" element={<RouteErrorBoundary pageName="Loading"><LoadingPage /></RouteErrorBoundary>} />
         <Route path="/login" element={<RouteErrorBoundary pageName="Login"><Login /></RouteErrorBoundary>} />
+        <Route path="/onboarding" element={<RouteErrorBoundary pageName="Onboarding"><OnboardingPage /></RouteErrorBoundary>} />
 
         {/* User Dashboard Routes - Wrapped in MainLayout */}
         <Route element={

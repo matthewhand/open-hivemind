@@ -1,9 +1,36 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Dashboard from '../../components/Dashboard';
 import Breadcrumbs from '../../components/DaisyUI/Breadcrumbs';
 import Carousel from '../../components/DaisyUI/Carousel';
 
 const DashboardPage: React.FC = () => {
+  const navigate = useNavigate();
+  const [checked, setChecked] = useState(false);
+
+  useEffect(() => {
+    const checkOnboarding = async () => {
+      try {
+        const res = await fetch('/api/onboarding/status');
+        if (res.ok) {
+          const data = await res.json();
+          if (!data.completed) {
+            navigate('/onboarding', { replace: true });
+            return;
+          }
+        }
+      } catch {
+        // If the endpoint is unavailable, proceed to dashboard normally
+      }
+      setChecked(true);
+    };
+    checkOnboarding();
+  }, [navigate]);
+
+  if (!checked) {
+    return null; // brief blank while checking onboarding status
+  }
+
   const breadcrumbItems = [{ label: 'Dashboard', href: '/dashboard', isActive: true }];
 
   const carouselItems = [
