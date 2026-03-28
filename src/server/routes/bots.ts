@@ -69,6 +69,58 @@ router.get('/', async (req, res) => {
 
 /**
  * @openapi
+ * /api/bots/reorder:
+ *   put:
+ *     summary: Reorder bots
+ *     tags: [Bots]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               ids:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *             required: [ids]
+ *     responses:
+ *       200:
+ *         description: Bots reordered
+ */
+router.put('/reorder', async (req, res) => {
+  try {
+    const { ids } = req.body;
+    if (!Array.isArray(ids) || ids.length === 0) {
+      return res
+        .status(HTTP_STATUS.BAD_REQUEST)
+        .json({ error: 'ids must be a non-empty array of bot IDs' });
+    }
+
+    const fsModule = await import('fs');
+    const pathModule = await import('path');
+    const orderFilePath = pathModule.join(process.cwd(), 'config', 'user', 'bot-order.json');
+    const orderDir = pathModule.dirname(orderFilePath);
+    if (!fsModule.existsSync(orderDir)) {
+      fsModule.mkdirSync(orderDir, { recursive: true });
+    }
+    fsModule.writeFileSync(orderFilePath, JSON.stringify(ids, null, 2));
+
+    return res.json({ success: true, message: 'Bot order updated' });
+  } catch (error: unknown) {
+    logger.error(
+      'Failed to reorder bots',
+      error instanceof Error ? error : new Error(String(error))
+    );
+    return res
+      .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
+      .json({ error: 'Failed to reorder bots' });
+  }
+});
+
+/**
+ * @openapi
  * /api/bots/{id}:
  *   get:
  *     summary: Get a single bot

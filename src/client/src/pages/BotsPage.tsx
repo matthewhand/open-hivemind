@@ -6,7 +6,8 @@ import {
   Settings, ExternalLink, Shield, Info, MoreVertical,
   Cpu, Zap, Copy, Save, X, Terminal, Globe, User, Clock,
   Key, ShieldCheck, Database, Layout, Command,
-  AlertTriangle, Play, Pause, Square, Trash, MoreHorizontal, Download
+  AlertTriangle, Play, Pause, Square, Trash, MoreHorizontal, Download,
+  GripVertical, ChevronUp, ChevronDown
 } from 'lucide-react';
 import { useSuccessToast, useErrorToast } from '../components/DaisyUI/ToastNotification';
 import Modal, { ConfirmModal } from '../components/DaisyUI/Modal';
@@ -30,6 +31,8 @@ import { BotData } from '../hooks/useBotStats';
 import useUrlParams from '../hooks/useUrlParams';
 import { useBulkSelection } from '../hooks/useBulkSelection';
 import BulkActionBar from '../components/BulkActionBar';
+import { useDragAndDrop } from '../hooks/useDragAndDrop';
+import { useIsBelowBreakpoint } from '../hooks/useBreakpoint';
 
 const BotsPage: React.FC = () => {
   const [bots, setBots] = useState<BotConfig[]>([]);
@@ -271,6 +274,29 @@ const BotsPage: React.FC = () => {
   const bulk = useBulkSelection(filteredBotIds);
 
   const [bulkDeleting, setBulkDeleting] = useState(false);
+  const isMobile = useIsBelowBreakpoint('md');
+
+  const handleReorder = useCallback(async (reordered: BotConfig[]) => {
+    setBots(reordered);
+    try {
+      const ids = reordered.map(b => b.id);
+      await apiService.put('/api/bots/reorder', { ids });
+    } catch { /* persist error ignored */ }
+  }, []);
+
+  const {
+    onDragStart: onBotDragStart,
+    onDragOver: onBotDragOver,
+    onDragEnd: onBotDragEnd,
+    onDrop: onBotDrop,
+    onMoveUp: onBotMoveUp,
+    onMoveDown: onBotMoveDown,
+    getItemStyle: getBotItemStyle,
+  } = useDragAndDrop({
+    items: filteredBots,
+    idAccessor: (b) => b.id,
+    onReorder: handleReorder,
+  });
 
   const handleBulkDelete = async () => {
     if (bulk.selectedCount === 0) return;
@@ -466,9 +492,18 @@ const BotsPage: React.FC = () => {
                 ]}
               />
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {filteredBots.map(bot => (
-                  <div key={bot.id} className="relative">
-                    <div className="absolute top-2 left-2 z-10">
+                {filteredBots.map((bot, index) => (
+                  <div
+                    key={bot.id}
+                    className="relative"
+                    draggable={!isMobile}
+                    onDragStart={onBotDragStart(index)}
+                    onDragOver={onBotDragOver(index)}
+                    onDragEnd={onBotDragEnd}
+                    onDrop={onBotDrop(index)}
+                    style={getBotItemStyle(index)}
+                  >
+                    <div className="absolute top-2 left-2 z-10 flex items-center gap-1">
                       <input
                         type="checkbox"
                         className="checkbox checkbox-sm checkbox-primary"
@@ -477,6 +512,33 @@ const BotsPage: React.FC = () => {
                         onClick={(e) => e.stopPropagation()}
                         aria-label={`Select ${bot.name}`}
                       />
+                      {isMobile ? (
+                        <span className="flex flex-col">
+                          <button
+                            className="btn btn-ghost btn-xs btn-square p-0"
+                            onClick={() => onBotMoveUp(index)}
+                            disabled={index === 0}
+                            aria-label="Move up"
+                          >
+                            <ChevronUp className="w-3 h-3" />
+                          </button>
+                          <button
+                            className="btn btn-ghost btn-xs btn-square p-0"
+                            onClick={() => onBotMoveDown(index)}
+                            disabled={index === filteredBots.length - 1}
+                            aria-label="Move down"
+                          >
+                            <ChevronDown className="w-3 h-3" />
+                          </button>
+                        </span>
+                      ) : (
+                        <span
+                          className="cursor-grab active:cursor-grabbing text-base-content/40 hover:text-base-content/70"
+                          title="Drag to reorder"
+                        >
+                          <GripVertical className="w-4 h-4" />
+                        </span>
+                      )}
                     </div>
                     <BotCard
                       bot={bot}
