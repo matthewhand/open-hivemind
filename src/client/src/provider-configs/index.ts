@@ -15,6 +15,8 @@ import { openWebUiProviderSchema } from './schemas/openwebui';
 import { lettaProviderSchema } from './schemas/letta';
 import { mem0ProviderSchema } from './schemas/mem0';
 import { mem4aiProviderSchema } from './schemas/mem4ai';
+import { mcpToolsSchema } from './schemas/mcp-tools';
+import { customToolsSchema } from './schemas/custom-tools';
 
 export const PROVIDER_SCHEMAS: Record<string, ProviderConfigSchema> = {
   // Message providers
@@ -32,11 +34,13 @@ export const PROVIDER_SCHEMAS: Record<string, ProviderConfigSchema> = {
   // MCP providers
   mcp: mcpProviderSchema,
 
+  // Tool providers
+  'mcp-tools': mcpToolsSchema,
+  'custom-http': customToolsSchema,
+
   // Memory providers
   mem0: mem0ProviderSchema,
   mem4ai: mem4aiProviderSchema,
-
-  // LLM providers (extended)
 };
 
 // Helper functions for working with provider schemas
