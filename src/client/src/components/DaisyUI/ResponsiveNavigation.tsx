@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
-import { useMediaQuery } from '../../hooks/useResponsive';
+import { useMediaQuery } from '../../hooks/useBreakpoint';
 import { EnhancedDrawer } from './Drawer';
 import { Menu as MenuIcon, X } from 'lucide-react';
 import DemoModeBanner from '../DemoModeBanner';
 import LlmStatusBanner from '../LlmStatusBanner';
-import AutoBreadcrumbs from './AutoBreadcrumbs';
+import Breadcrumbs from './Breadcrumbs';
 import RateLimitIndicator from './RateLimitIndicator';
 import { useRateLimitToast } from '../../hooks/useRateLimitToast';
 
@@ -97,7 +97,7 @@ const ResponsiveNavigation: React.FC<ResponsiveNavigationProps> = ({
         <main className="flex-1 p-6">
           {/* White content card */}
           <div className="bg-base-100 rounded-xl border border-base-content/10 shadow-sm min-h-[calc(100vh-48px)] p-6">
-            <AutoBreadcrumbs />
+            <Breadcrumbs />
             <div className="mb-4">
               <LlmStatusBanner />
             </div>

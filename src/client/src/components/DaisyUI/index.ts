@@ -3,8 +3,8 @@ export { default as Accordion } from './Accordion';
 export { Alert } from './Alert';
 export { default as Avatar } from './Avatar';
 export { default as Badge } from './Badge';
-export { default as AutoBreadcrumbs } from './AutoBreadcrumbs';
-export { default as Breadcrumbs } from './Breadcrumbs';
+export { default as Breadcrumbs, AutoBreadcrumbs } from './Breadcrumbs';
+export type { BreadcrumbItem, BreadcrumbsProps } from './Breadcrumbs';
 export { default as Hero } from './Hero';
 export { default as Button } from './Button';
 export { default as Card } from './Card';
@@ -15,8 +15,8 @@ export { default as DataTable } from './DataTable';
 export { default as ResponsiveDataView } from './ResponsiveDataView';
 export type { RDVColumn, RowAction, ResponsiveDataViewProps } from './ResponsiveDataView';
 export { default as Table } from './Table';
-export { Loading, LoadingSpinner, LoadingOverlay, StepProgress, Progress, SkeletonAvatar, SkeletonTable, SkeletonStats, LoadingSkeletonCard } from './Loading';
-export { Skeleton, SkeletonText, SkeletonCard, SkeletonList, SkeletonGrid, SkeletonTableLayout, SkeletonTimeline, SkeletonMessageList, SkeletonStatsCards, SkeletonPage } from './Skeleton';
+export { Loading, LoadingSpinner, LoadingOverlay, StepProgress, Progress, LoadingSpinnerWithMessage } from './Loading';
+export { Skeleton, SkeletonAvatar, SkeletonText, SkeletonCircle, SkeletonRectangle, SkeletonCard, SkeletonCard as LoadingSkeletonCard, SkeletonList, SkeletonGrid, SkeletonTableLayout, SkeletonTableLayout as SkeletonTable, SkeletonTimeline, SkeletonMessageList, SkeletonStatsCards, SkeletonStatsCards as SkeletonStats, SkeletonPage } from './Skeleton';
 export { default as Modal } from './Modal';
 export { default as ModalForm } from './ModalForm';
 export { default as StatsCards } from './StatsCards';
@@ -68,4 +68,5 @@ export { default as Pagination } from './Pagination';
 // Component Tracking
 export { trackDaisyUIComponent, daisyUITracker } from '../../utils/DaisyUIComponentTracker';
 
-export { CommaSeparatedInput } from '../Common/CommaSeparatedInput';
+export { CommaSeparatedInput } from './CommaSeparatedInput';
+export type { CommaSeparatedInputProps } from './CommaSeparatedInput';
