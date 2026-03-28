@@ -176,7 +176,7 @@ const BotsPage: React.FC = () => {
   const handleCreateBot = async (botData: any) => {
     try {
       const response = await apiService.post<any>('/api/bots', botData);
-      setBots(prev => [...prev, response.data.bot]);
+      setBots(prev => [...prev, response?.data?.bot]);
       setIsCreateModalOpen(false);
       toast.success('Bot created successfully');
     } catch (err) {
@@ -188,13 +188,13 @@ const BotsPage: React.FC = () => {
   const handleUpdateBot = async (botData: any) => {
     try {
       const response = await apiService.put<any>(`/api/bots/${editingBot?.id}`, botData);
-      setBots(prev => prev.map(b => b.id === editingBot?.id ? response.data.bot : b));
+      setBots(prev => prev.map(b => b.id === editingBot?.id ? response?.data?.bot : b));
       setEditingBot(null);
       toast.success('Bot updated successfully');
 
       // Update preview if it's the same bot
       if (previewBot?.id === editingBot?.id) {
-        setPreviewBot(response.data.bot);
+        setPreviewBot(response?.data?.bot);
       }
     } catch (err) {
       ErrorService.report(err, { action: 'updateBot', botId: editingBot?.id });

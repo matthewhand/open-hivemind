@@ -25,7 +25,7 @@ const Dashboard: React.FC = () => {
       ]);
       const configData = configResult.status === 'fulfilled' ? configResult.value : { bots: [] };
       const statusData = statusResult.status === 'fulfilled' ? statusResult.value : { bots: [] };
-      setBots(configData.bots);
+      setBots(configData?.bots ?? []);
       setStatus(statusData);
       setToastMessage('Dashboard refreshed successfully!');
       setShowToast(true);
@@ -266,7 +266,7 @@ const Dashboard: React.FC = () => {
             <DashboardBotCard
               key={bot.name}
               bot={bot}
-              botStatusData={status?.bots.find((b) => b.id === bot.id)}
+              botStatusData={status?.bots?.find((b) => b.id === bot.id)}
               rating={botRatings[bot.name] || 0}
               onRatingChange={handleRatingChange}
               getProviderIcon={getProviderIcon}

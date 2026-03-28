@@ -266,8 +266,8 @@ const SystemHealth: React.FC<SystemHealthProps> = ({
         {apiHealth && (
           <div className="mb-6">
             <Alert
-              status={apiHealth.overall.status}
-              message={apiHealth.overall.message || `System Status: ${metrics?.status}`}
+              status={apiHealth?.overall?.status}
+              message={apiHealth?.overall?.message || `System Status: ${metrics?.status}`}
             />
           </div>
         )}
@@ -335,10 +335,10 @@ const SystemHealth: React.FC<SystemHealthProps> = ({
               </div>
               <div className="flex items-center gap-4 mt-2">
                 <Badge
-                  variant={getStatusColor(apiHealth?.overall.status || 'unknown') as any}
+                  variant={getStatusColor(apiHealth?.overall?.status || 'unknown') as any}
                   size="lg"
                 >
-                  {apiHealth?.overall.status || 'Unknown'}
+                  {apiHealth?.overall?.status || 'Unknown'}
                 </Badge>
                 {apiHealth?.overall?.stats && (
                   <span className="text-sm">

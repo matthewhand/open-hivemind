@@ -340,7 +340,7 @@ const AgentConfigurator: React.FC<AgentConfiguratorProps> = ({ title = 'Agent Co
 
   const statusByName = useMemo(() => {
     const map = new Map<string, StatusResponse['bots'][number]>();
-    statusData?.bots.forEach((botStatus) => {
+    statusData?.bots?.forEach((botStatus) => {
       map.set(botStatus.name, botStatus);
     });
     return map;
