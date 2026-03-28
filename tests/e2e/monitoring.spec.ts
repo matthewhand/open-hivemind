@@ -76,12 +76,7 @@ test.describe('Monitoring page', () => {
       if (path === '/api/config/llm-status') {
         return route.fulfill({
           status: 200,
-          json: {
-            defaultConfigured: true,
-            defaultProviders: [],
-            botsMissingLlmProvider: [],
-            hasMissing: false,
-          },
+          json: { defaultConfigured: true, defaultProviders: [], botsMissingLlmProvider: [], hasMissing: false },
         });
       }
       if (path === '/api/config/global') {

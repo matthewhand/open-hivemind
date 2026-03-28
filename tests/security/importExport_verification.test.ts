@@ -1,6 +1,6 @@
-import path from 'path';
 import express from 'express';
 import request from 'supertest';
+import path from 'path';
 import { ConfigurationImportExportService } from '../../src/server/services/ConfigurationImportExportService';
 
 // Mock auth middleware to bypass checks

@@ -146,7 +146,7 @@ test.describe('Distributed Trace Waterfall Screenshots', () => {
               processingTime: 50,
               userId: 'user-123',
               contentLength: 0,
-            },
+            }
           ],
         },
       });

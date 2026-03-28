@@ -1,6 +1,5 @@
 import express from 'express';
 import request from 'supertest';
-import router from '../../../src/server/routes/specs';
 
 const mockReadFile = jest.fn();
 const mockWriteFile = jest.fn();
@@ -15,6 +14,8 @@ jest.mock('fs', () => ({
     readdir: (...args: any[]) => mockReaddir(...args),
   },
 }));
+
+import router from '../../../src/server/routes/specs';
 
 describe('Specs Routes', () => {
   let app: express.Application;
@@ -100,7 +101,9 @@ describe('Specs Routes', () => {
     });
 
     it('should return 400 for invalid spec data', async () => {
-      const res = await request(app).post('/specs').send({ id: 'invalid id!', content: 'test' });
+      const res = await request(app)
+        .post('/specs')
+        .send({ id: 'invalid id!', content: 'test' });
       expect(res.status).toBe(400);
       expect(res.body.success).toBe(false);
     });

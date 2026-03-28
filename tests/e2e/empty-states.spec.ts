@@ -58,9 +58,7 @@ test.describe('Empty States', () => {
 
     // Verify empty state
     await expect(page.getByText('Your swarm is empty')).toBeVisible();
-    await expect(
-      page.getByText('Start by creating your first specialized AI agent.')
-    ).toBeVisible();
+    await expect(page.getByText('Start by creating your first specialized AI agent.')).toBeVisible();
   });
 
   test('Bots Page shows search empty state', async ({ page }) => {

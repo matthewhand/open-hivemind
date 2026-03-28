@@ -53,12 +53,7 @@ test.describe('MCP Servers CRUD Lifecycle', () => {
       page.route('**/api/config/llm-status', (route) =>
         route.fulfill({
           status: 200,
-          json: {
-            defaultConfigured: true,
-            defaultProviders: [],
-            botsMissingLlmProvider: [],
-            hasMissing: false,
-          },
+          json: { defaultConfigured: true, defaultProviders: [], botsMissingLlmProvider: [], hasMissing: false },
         })
       ),
       page.route('**/api/config/global', (route) => route.fulfill({ status: 200, json: {} })),
@@ -67,18 +62,14 @@ test.describe('MCP Servers CRUD Lifecycle', () => {
       page.route('**/api/csrf-token', (route) =>
         route.fulfill({ status: 200, json: { token: 'mock-csrf-token' } })
       ),
-      page.route('**/api/health', (route) =>
-        route.fulfill({ status: 200, json: { status: 'ok' } })
-      ),
+      page.route('**/api/health', (route) => route.fulfill({ status: 200, json: { status: 'ok' } })),
       page.route('**/api/dashboard/api/status', (route) =>
         route.fulfill({ status: 200, json: { bots: [], uptime: 100 } })
       ),
       page.route('**/api/admin/guard-profiles', (route) =>
         route.fulfill({ status: 200, json: { data: [] } })
       ),
-      page.route('**/api/demo/status', (route) =>
-        route.fulfill({ status: 200, json: { active: false } })
-      ),
+      page.route('**/api/demo/status', (route) => route.fulfill({ status: 200, json: { active: false } })),
     ]);
   }
 
@@ -86,15 +77,13 @@ test.describe('MCP Servers CRUD Lifecycle', () => {
     return {
       success: true,
       data: {
-        servers: servers
-          .filter((s) => s.connected)
-          .map((s) => ({
-            name: s.name,
-            url: s.url,
-            connected: s.connected,
-            tools: s.tools,
-            lastConnected: s.lastConnected,
-          })),
+        servers: servers.filter((s) => s.connected).map((s) => ({
+          name: s.name,
+          url: s.url,
+          connected: s.connected,
+          tools: s.tools,
+          lastConnected: s.lastConnected,
+        })),
         configurations: servers.map((s) => ({
           name: s.name,
           serverUrl: s.url,
@@ -147,9 +136,7 @@ test.describe('MCP Servers CRUD Lifecycle', () => {
 
     await page.goto('/admin/mcp/servers');
 
-    const addBtn = page
-      .locator('button:has-text("Add"), button:has-text("New"), button:has-text("Create")')
-      .first();
+    const addBtn = page.locator('button:has-text("Add"), button:has-text("New"), button:has-text("Create")').first();
     if ((await addBtn.count()) > 0) {
       await addBtn.click();
       await page.waitForTimeout(500);
@@ -158,23 +145,17 @@ test.describe('MCP Servers CRUD Lifecycle', () => {
       if ((await modal.count()) > 0) {
         await expect(modal).toBeVisible();
 
-        const nameInput = modal
-          .locator('input[placeholder*="name" i], input[name*="name" i], input')
-          .first();
+        const nameInput = modal.locator('input[placeholder*="name" i], input[name*="name" i], input').first();
         if ((await nameInput.count()) > 0) {
           await nameInput.fill('Analytics MCP');
         }
 
-        const urlInput = modal
-          .locator('input[placeholder*="url" i], input[name*="url" i], input[type="url"]')
-          .first();
+        const urlInput = modal.locator('input[placeholder*="url" i], input[name*="url" i], input[type="url"]').first();
         if ((await urlInput.count()) > 0) {
           await urlInput.fill('https://analytics-mcp.example.com');
         }
 
-        const apiKeyInput = modal
-          .locator('input[placeholder*="key" i], input[name*="apiKey" i], input[type="password"]')
-          .first();
+        const apiKeyInput = modal.locator('input[placeholder*="key" i], input[name*="apiKey" i], input[type="password"]').first();
         if ((await apiKeyInput.count()) > 0) {
           await apiKeyInput.fill('sk-test-key-12345');
         }
@@ -201,9 +182,7 @@ test.describe('MCP Servers CRUD Lifecycle', () => {
 
     await page.goto('/admin/mcp/servers');
 
-    const addBtn = page
-      .locator('button:has-text("Add"), button:has-text("New"), button:has-text("Create")')
-      .first();
+    const addBtn = page.locator('button:has-text("Add"), button:has-text("New"), button:has-text("Create")').first();
     if ((await addBtn.count()) > 0) {
       await addBtn.click();
       await page.waitForTimeout(500);
@@ -238,9 +217,7 @@ test.describe('MCP Servers CRUD Lifecycle', () => {
 
     await page.goto('/admin/mcp/servers');
 
-    const addBtn = page
-      .locator('button:has-text("Add"), button:has-text("New"), button:has-text("Create")')
-      .first();
+    const addBtn = page.locator('button:has-text("Add"), button:has-text("New"), button:has-text("Create")').first();
     if ((await addBtn.count()) > 0) {
       await addBtn.click();
       await page.waitForTimeout(500);
@@ -264,7 +241,9 @@ test.describe('MCP Servers CRUD Lifecycle', () => {
     await page.route('**/api/admin/mcp-servers', async (route) => {
       if (route.request().method() === 'PUT' || route.request().method() === 'PATCH') {
         const body = route.request().postDataJSON();
-        servers = servers.map((s) => (s.name === body.name ? { ...s, ...body } : s));
+        servers = servers.map((s) =>
+          s.name === body.name ? { ...s, ...body } : s
+        );
         await route.fulfill({ status: 200, json: { success: true, message: 'Server updated' } });
       } else {
         await route.fulfill({ status: 200, json: buildServerResponse(servers) });
@@ -282,9 +261,7 @@ test.describe('MCP Servers CRUD Lifecycle', () => {
     await expect(page.locator('.card', { hasText: 'Production MCP' })).toBeVisible();
 
     const card = page.locator('.card', { hasText: 'Production MCP' });
-    const editBtn = card
-      .locator('button[title*="Edit"], button[title*="Configure"], button:has-text("Edit")')
-      .first();
+    const editBtn = card.locator('button[title*="Edit"], button[title*="Configure"], button:has-text("Edit")').first();
     if ((await editBtn.count()) > 0) {
       await editBtn.click();
       await page.waitForTimeout(500);
@@ -309,9 +286,7 @@ test.describe('MCP Servers CRUD Lifecycle', () => {
     const stoppedCard = page.locator('.card', { hasText: 'Staging MCP' });
     await expect(stoppedCard).toBeVisible();
 
-    const startBtn = stoppedCard
-      .locator('button[title*="Start"], button[title*="Connect"]')
-      .first();
+    const startBtn = stoppedCard.locator('button[title*="Start"], button[title*="Connect"]').first();
     if ((await startBtn.count()) > 0) {
       await startBtn.click();
       await page.waitForTimeout(500);
@@ -329,10 +304,7 @@ test.describe('MCP Servers CRUD Lifecycle', () => {
       currentServers = currentServers.map((s) =>
         s.name === body.name ? { ...s, status: 'stopped', connected: false } : s
       );
-      await route.fulfill({
-        status: 200,
-        json: { success: true, message: 'Server disconnected successfully' },
-      });
+      await route.fulfill({ status: 200, json: { success: true, message: 'Server disconnected successfully' } });
     });
 
     await page.goto('/admin/mcp/servers');
@@ -366,9 +338,7 @@ test.describe('MCP Servers CRUD Lifecycle', () => {
     const runningCard = page.locator('.card', { hasText: 'Production MCP' });
     await expect(runningCard).toBeVisible();
 
-    const restartBtn = runningCard
-      .locator('button[title*="Restart"], button[title*="Reconnect"]')
-      .first();
+    const restartBtn = runningCard.locator('button[title*="Restart"], button[title*="Reconnect"]').first();
     if ((await restartBtn.count()) > 0) {
       await restartBtn.click();
       await page.waitForTimeout(500);
@@ -415,11 +385,7 @@ test.describe('MCP Servers CRUD Lifecycle', () => {
     await page.goto('/admin/mcp/servers');
     await expect(page.locator('.card', { hasText: 'Production MCP' })).toBeVisible();
 
-    const searchInput = page
-      .locator(
-        'input[placeholder*="search" i], input[placeholder*="filter" i], input[type="search"]'
-      )
-      .first();
+    const searchInput = page.locator('input[placeholder*="search" i], input[placeholder*="filter" i], input[type="search"]').first();
     if ((await searchInput.count()) > 0) {
       await searchInput.fill('Production');
       await page.waitForTimeout(300);
@@ -436,9 +402,7 @@ test.describe('MCP Servers CRUD Lifecycle', () => {
     await page.goto('/admin/mcp/servers');
     await expect(page.locator('.card', { hasText: 'Production MCP' })).toBeVisible();
 
-    const statusFilter = page
-      .locator('select:has(option[value="running"]), select:has(option:has-text("Running"))')
-      .first();
+    const statusFilter = page.locator('select:has(option[value="running"]), select:has(option:has-text("Running"))').first();
     if ((await statusFilter.count()) > 0) {
       await statusFilter.selectOption('running');
       await page.waitForTimeout(300);
@@ -456,11 +420,7 @@ test.describe('MCP Servers CRUD Lifecycle', () => {
           success: true,
           data: [
             { name: 'web_search', description: 'Search the web', parameters: { query: 'string' } },
-            {
-              name: 'file_read',
-              description: 'Read files from disk',
-              parameters: { path: 'string' },
-            },
+            { name: 'file_read', description: 'Read files from disk', parameters: { path: 'string' } },
           ],
         },
       });
@@ -470,9 +430,7 @@ test.describe('MCP Servers CRUD Lifecycle', () => {
     const card = page.locator('.card', { hasText: 'Production MCP' });
     await expect(card).toBeVisible();
 
-    const toolsBtn = card
-      .locator('button[title*="Tools"], button:has-text("Tools"), button[title*="View Tools"]')
-      .first();
+    const toolsBtn = card.locator('button[title*="Tools"], button:has-text("Tools"), button[title*="View Tools"]').first();
     if ((await toolsBtn.count()) > 0) {
       await toolsBtn.click();
       await page.waitForTimeout(500);
@@ -495,9 +453,7 @@ test.describe('MCP Servers CRUD Lifecycle', () => {
     await page.goto('/admin/mcp/servers');
     // Should show empty state or prompt to add a server
     await expect(page.locator('body')).toBeVisible();
-    const emptyText = page
-      .locator('text=/no.*server/i, text=/get.*started/i, text=/add.*first/i')
-      .first();
+    const emptyText = page.locator('text=/no.*server/i, text=/get.*started/i, text=/add.*first/i').first();
     if ((await emptyText.count()) > 0) {
       await expect(emptyText).toBeVisible();
     }

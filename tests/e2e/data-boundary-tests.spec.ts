@@ -17,27 +17,18 @@ test.describe('Data Boundary Tests', () => {
       page.route('**/api/config/llm-status', (route) =>
         route.fulfill({
           status: 200,
-          json: {
-            defaultConfigured: true,
-            defaultProviders: [],
-            botsMissingLlmProvider: [],
-            hasMissing: false,
-          },
+          json: { defaultConfigured: true, defaultProviders: [], botsMissingLlmProvider: [], hasMissing: false },
         })
       ),
       page.route('**/api/config/global', (route) => route.fulfill({ status: 200, json: {} })),
       page.route('**/api/csrf-token', (route) =>
         route.fulfill({ status: 200, json: { token: 'mock-csrf-token' } })
       ),
-      page.route('**/api/health', (route) =>
-        route.fulfill({ status: 200, json: { status: 'ok' } })
-      ),
+      page.route('**/api/health', (route) => route.fulfill({ status: 200, json: { status: 'ok' } })),
       page.route('**/api/dashboard/api/status', (route) =>
         route.fulfill({ status: 200, json: { bots: [], uptime: 100 } })
       ),
-      page.route('**/api/demo/status', (route) =>
-        route.fulfill({ status: 200, json: { active: false } })
-      ),
+      page.route('**/api/demo/status', (route) => route.fulfill({ status: 200, json: { active: false } })),
       page.route('**/api/personas', (route) => route.fulfill({ status: 200, json: [] })),
       page.route('**/api/admin/guard-profiles', (route) =>
         route.fulfill({ status: 200, json: { data: [] } })
@@ -56,23 +47,15 @@ test.describe('Data Boundary Tests', () => {
 
   test.describe('String Boundaries', () => {
     test('empty string in required field shows validation error', async ({ page }) => {
-      await page.route('**/api/config', (route) =>
-        route.fulfill({ status: 200, json: { bots: [] } })
-      );
+      await page.route('**/api/config', (route) => route.fulfill({ status: 200, json: { bots: [] } }));
       await page.route('**/api/admin/llm-profiles', (route) =>
-        route.fulfill({
-          status: 200,
-          json: { data: [{ key: 'openai', name: 'OpenAI', provider: 'openai' }] },
-        })
+        route.fulfill({ status: 200, json: { data: [{ key: 'openai', name: 'OpenAI', provider: 'openai' }] } })
       );
 
       await page.goto('/admin/bots');
       await page.waitForTimeout(500);
 
-      const createBtn = page
-        .locator('button')
-        .filter({ hasText: /create|new|add/i })
-        .first();
+      const createBtn = page.locator('button').filter({ hasText: /create|new|add/i }).first();
       if ((await createBtn.count()) > 0) {
         await createBtn.click();
         await page.waitForTimeout(500);
@@ -85,10 +68,7 @@ test.describe('Data Boundary Tests', () => {
         await nameInput.fill('');
         await nameInput.blur();
 
-        const submitBtn = modal
-          .locator('button')
-          .filter({ hasText: /next|create|save/i })
-          .first();
+        const submitBtn = modal.locator('button').filter({ hasText: /next|create|save/i }).first();
         if ((await submitBtn.count()) > 0) {
           // Button should be disabled or clicking it should show validation error
           const isDisabled = await submitBtn.isDisabled();
@@ -107,31 +87,20 @@ test.describe('Data Boundary Tests', () => {
       await page.route('**/api/config', async (route) => {
         if (route.request().method() === 'POST') {
           const body = route.request().postDataJSON();
-          createdBot = {
-            id: 'bot-single',
-            name: body.name,
-            provider: 'discord',
-            status: 'inactive',
-          };
+          createdBot = { id: 'bot-single', name: body.name, provider: 'discord', status: 'inactive' };
           await route.fulfill({ status: 201, json: createdBot });
         } else {
           await route.fulfill({ status: 200, json: { bots: createdBot ? [createdBot] : [] } });
         }
       });
       await page.route('**/api/admin/llm-profiles', (route) =>
-        route.fulfill({
-          status: 200,
-          json: { data: [{ key: 'openai', name: 'OpenAI', provider: 'openai' }] },
-        })
+        route.fulfill({ status: 200, json: { data: [{ key: 'openai', name: 'OpenAI', provider: 'openai' }] } })
       );
 
       await page.goto('/admin/bots');
       await page.waitForTimeout(500);
 
-      const createBtn = page
-        .locator('button')
-        .filter({ hasText: /create|new|add/i })
-        .first();
+      const createBtn = page.locator('button').filter({ hasText: /create|new|add/i }).first();
       if ((await createBtn.count()) > 0) {
         await createBtn.click();
         await page.waitForTimeout(500);
@@ -184,23 +153,15 @@ test.describe('Data Boundary Tests', () => {
     });
 
     test('name with only spaces shows validation error or is trimmed', async ({ page }) => {
-      await page.route('**/api/config', (route) =>
-        route.fulfill({ status: 200, json: { bots: [] } })
-      );
+      await page.route('**/api/config', (route) => route.fulfill({ status: 200, json: { bots: [] } }));
       await page.route('**/api/admin/llm-profiles', (route) =>
-        route.fulfill({
-          status: 200,
-          json: { data: [{ key: 'openai', name: 'OpenAI', provider: 'openai' }] },
-        })
+        route.fulfill({ status: 200, json: { data: [{ key: 'openai', name: 'OpenAI', provider: 'openai' }] } })
       );
 
       await page.goto('/admin/bots');
       await page.waitForTimeout(500);
 
-      const createBtn = page
-        .locator('button')
-        .filter({ hasText: /create|new|add/i })
-        .first();
+      const createBtn = page.locator('button').filter({ hasText: /create|new|add/i }).first();
       if ((await createBtn.count()) > 0) {
         await createBtn.click();
         await page.waitForTimeout(500);
@@ -210,10 +171,7 @@ test.describe('Data Boundary Tests', () => {
           await modal.locator('input').first().blur();
           await page.waitForTimeout(200);
 
-          const submitBtn = modal
-            .locator('button')
-            .filter({ hasText: /next|create|save/i })
-            .first();
+          const submitBtn = modal.locator('button').filter({ hasText: /next|create|save/i }).first();
           if ((await submitBtn.count()) > 0) {
             const isDisabled = await submitBtn.isDisabled();
             // Either button is disabled or clicking triggers validation
@@ -353,10 +311,7 @@ test.describe('Data Boundary Tests', () => {
         }
       });
       await page.route('**/api/admin/llm-profiles', (route) =>
-        route.fulfill({
-          status: 200,
-          json: { data: [{ key: 'openai', name: 'OpenAI', provider: 'openai' }] },
-        })
+        route.fulfill({ status: 200, json: { data: [{ key: 'openai', name: 'OpenAI', provider: 'openai' }] } })
       );
 
       // Listen for dialog events (alert would trigger this)
@@ -369,10 +324,7 @@ test.describe('Data Boundary Tests', () => {
       await page.goto('/admin/bots');
       await page.waitForTimeout(500);
 
-      const createBtn = page
-        .locator('button')
-        .filter({ hasText: /create|new|add/i })
-        .first();
+      const createBtn = page.locator('button').filter({ hasText: /create|new|add/i }).first();
       if ((await createBtn.count()) > 0) {
         await createBtn.click();
         await page.waitForTimeout(500);
@@ -401,19 +353,13 @@ test.describe('Data Boundary Tests', () => {
         }
       });
       await page.route('**/api/admin/llm-profiles', (route) =>
-        route.fulfill({
-          status: 200,
-          json: { data: [{ key: 'openai', name: 'OpenAI', provider: 'openai' }] },
-        })
+        route.fulfill({ status: 200, json: { data: [{ key: 'openai', name: 'OpenAI', provider: 'openai' }] } })
       );
 
       await page.goto('/admin/bots');
       await page.waitForTimeout(500);
 
-      const createBtn = page
-        .locator('button')
-        .filter({ hasText: /create|new|add/i })
-        .first();
+      const createBtn = page.locator('button').filter({ hasText: /create|new|add/i }).first();
       if ((await createBtn.count()) > 0) {
         await createBtn.click();
         await page.waitForTimeout(500);
@@ -430,14 +376,9 @@ test.describe('Data Boundary Tests', () => {
     test('script injection is escaped in input', async ({ page }) => {
       const scriptInjection = '<script>alert("xss")</script>';
 
-      await page.route('**/api/config', (route) =>
-        route.fulfill({ status: 200, json: { bots: [] } })
-      );
+      await page.route('**/api/config', (route) => route.fulfill({ status: 200, json: { bots: [] } }));
       await page.route('**/api/admin/llm-profiles', (route) =>
-        route.fulfill({
-          status: 200,
-          json: { data: [{ key: 'openai', name: 'OpenAI', provider: 'openai' }] },
-        })
+        route.fulfill({ status: 200, json: { data: [{ key: 'openai', name: 'OpenAI', provider: 'openai' }] } })
       );
 
       let alertTriggered = false;
@@ -449,10 +390,7 @@ test.describe('Data Boundary Tests', () => {
       await page.goto('/admin/bots');
       await page.waitForTimeout(500);
 
-      const createBtn = page
-        .locator('button')
-        .filter({ hasText: /create|new|add/i })
-        .first();
+      const createBtn = page.locator('button').filter({ hasText: /create|new|add/i }).first();
       if ((await createBtn.count()) > 0) {
         await createBtn.click();
         await page.waitForTimeout(500);
@@ -466,9 +404,7 @@ test.describe('Data Boundary Tests', () => {
       expect(alertTriggered).toBe(false);
     });
 
-    test('very long description (10000 chars) renders with truncation or scroll', async ({
-      page,
-    }) => {
+    test('very long description (10000 chars) renders with truncation or scroll', async ({ page }) => {
       const longDesc = 'L'.repeat(10000);
 
       await page.route('**/api/personas', (route) =>
@@ -491,9 +427,7 @@ test.describe('Data Boundary Tests', () => {
           ],
         })
       );
-      await page.route('**/api/config', (route) =>
-        route.fulfill({ status: 200, json: { bots: [] } })
-      );
+      await page.route('**/api/config', (route) => route.fulfill({ status: 200, json: { bots: [] } }));
       await page.route('**/api/admin/llm-profiles', (route) =>
         route.fulfill({ status: 200, json: { data: [] } })
       );
@@ -506,23 +440,15 @@ test.describe('Data Boundary Tests', () => {
     });
 
     test('newlines in text input are handled correctly', async ({ page }) => {
-      await page.route('**/api/config', (route) =>
-        route.fulfill({ status: 200, json: { bots: [] } })
-      );
+      await page.route('**/api/config', (route) => route.fulfill({ status: 200, json: { bots: [] } }));
       await page.route('**/api/admin/llm-profiles', (route) =>
-        route.fulfill({
-          status: 200,
-          json: { data: [{ key: 'openai', name: 'OpenAI', provider: 'openai' }] },
-        })
+        route.fulfill({ status: 200, json: { data: [{ key: 'openai', name: 'OpenAI', provider: 'openai' }] } })
       );
 
       await page.goto('/admin/bots');
       await page.waitForTimeout(500);
 
-      const createBtn = page
-        .locator('button')
-        .filter({ hasText: /create|new|add/i })
-        .first();
+      const createBtn = page.locator('button').filter({ hasText: /create|new|add/i }).first();
       if ((await createBtn.count()) > 0) {
         await createBtn.click();
         await page.waitForTimeout(500);
@@ -538,23 +464,15 @@ test.describe('Data Boundary Tests', () => {
     });
 
     test('tab characters in input are handled', async ({ page }) => {
-      await page.route('**/api/config', (route) =>
-        route.fulfill({ status: 200, json: { bots: [] } })
-      );
+      await page.route('**/api/config', (route) => route.fulfill({ status: 200, json: { bots: [] } }));
       await page.route('**/api/admin/llm-profiles', (route) =>
-        route.fulfill({
-          status: 200,
-          json: { data: [{ key: 'openai', name: 'OpenAI', provider: 'openai' }] },
-        })
+        route.fulfill({ status: 200, json: { data: [{ key: 'openai', name: 'OpenAI', provider: 'openai' }] } })
       );
 
       await page.goto('/admin/bots');
       await page.waitForTimeout(500);
 
-      const createBtn = page
-        .locator('button')
-        .filter({ hasText: /create|new|add/i })
-        .first();
+      const createBtn = page.locator('button').filter({ hasText: /create|new|add/i }).first();
       if ((await createBtn.count()) > 0) {
         await createBtn.click();
         await page.waitForTimeout(500);
@@ -568,23 +486,15 @@ test.describe('Data Boundary Tests', () => {
     });
 
     test('null byte in input is handled safely', async ({ page }) => {
-      await page.route('**/api/config', (route) =>
-        route.fulfill({ status: 200, json: { bots: [] } })
-      );
+      await page.route('**/api/config', (route) => route.fulfill({ status: 200, json: { bots: [] } }));
       await page.route('**/api/admin/llm-profiles', (route) =>
-        route.fulfill({
-          status: 200,
-          json: { data: [{ key: 'openai', name: 'OpenAI', provider: 'openai' }] },
-        })
+        route.fulfill({ status: 200, json: { data: [{ key: 'openai', name: 'OpenAI', provider: 'openai' }] } })
       );
 
       await page.goto('/admin/bots');
       await page.waitForTimeout(500);
 
-      const createBtn = page
-        .locator('button')
-        .filter({ hasText: /create|new|add/i })
-        .first();
+      const createBtn = page.locator('button').filter({ hasText: /create|new|add/i }).first();
       if ((await createBtn.count()) > 0) {
         await createBtn.click();
         await page.waitForTimeout(500);
@@ -598,23 +508,15 @@ test.describe('Data Boundary Tests', () => {
     });
 
     test('backslash and quotes in input are handled', async ({ page }) => {
-      await page.route('**/api/config', (route) =>
-        route.fulfill({ status: 200, json: { bots: [] } })
-      );
+      await page.route('**/api/config', (route) => route.fulfill({ status: 200, json: { bots: [] } }));
       await page.route('**/api/admin/llm-profiles', (route) =>
-        route.fulfill({
-          status: 200,
-          json: { data: [{ key: 'openai', name: 'OpenAI', provider: 'openai' }] },
-        })
+        route.fulfill({ status: 200, json: { data: [{ key: 'openai', name: 'OpenAI', provider: 'openai' }] } })
       );
 
       await page.goto('/admin/bots');
       await page.waitForTimeout(500);
 
-      const createBtn = page
-        .locator('button')
-        .filter({ hasText: /create|new|add/i })
-        .first();
+      const createBtn = page.locator('button').filter({ hasText: /create|new|add/i }).first();
       if ((await createBtn.count()) > 0) {
         await createBtn.click();
         await page.waitForTimeout(500);
@@ -637,9 +539,7 @@ test.describe('Data Boundary Tests', () => {
     test('port number boundaries: 0, 1, 65535, 65536, -1', async ({ page }) => {
       const portValues = [0, 1, 65535, 65536, -1];
 
-      await page.route('**/api/config', (route) =>
-        route.fulfill({ status: 200, json: { bots: [] } })
-      );
+      await page.route('**/api/config', (route) => route.fulfill({ status: 200, json: { bots: [] } }));
       await page.route('**/api/admin/llm-profiles', (route) =>
         route.fulfill({ status: 200, json: { data: [] } })
       );
@@ -661,9 +561,7 @@ test.describe('Data Boundary Tests', () => {
     });
 
     test('rate limit values: 0, 1, 999999', async ({ page }) => {
-      await page.route('**/api/config', (route) =>
-        route.fulfill({ status: 200, json: { bots: [] } })
-      );
+      await page.route('**/api/config', (route) => route.fulfill({ status: 200, json: { bots: [] } }));
       await page.route('**/api/admin/llm-profiles', (route) =>
         route.fulfill({ status: 200, json: { data: [] } })
       );
@@ -685,9 +583,7 @@ test.describe('Data Boundary Tests', () => {
     });
 
     test('timeout values: 0, negative, very large', async ({ page }) => {
-      await page.route('**/api/config', (route) =>
-        route.fulfill({ status: 200, json: { bots: [] } })
-      );
+      await page.route('**/api/config', (route) => route.fulfill({ status: 200, json: { bots: [] } }));
       await page.route('**/api/admin/llm-profiles', (route) =>
         route.fulfill({ status: 200, json: { data: [] } })
       );
@@ -709,9 +605,7 @@ test.describe('Data Boundary Tests', () => {
     });
 
     test('NaN and Infinity in numeric fields', async ({ page }) => {
-      await page.route('**/api/config', (route) =>
-        route.fulfill({ status: 200, json: { bots: [] } })
-      );
+      await page.route('**/api/config', (route) => route.fulfill({ status: 200, json: { bots: [] } }));
       await page.route('**/api/admin/llm-profiles', (route) =>
         route.fulfill({ status: 200, json: { data: [] } })
       );
@@ -754,19 +648,7 @@ test.describe('Data Boundary Tests', () => {
         route.fulfill({
           status: 200,
           json: {
-            bots: [
-              {
-                id: 'b1',
-                name: 'Bot',
-                provider: 'discord',
-                messageProvider: 'discord',
-                llmProvider: 'openai',
-                status: 'active',
-                connected: true,
-                messageCount: 0,
-                errorCount: 0,
-              },
-            ],
+            bots: [{ id: 'b1', name: 'Bot', provider: 'discord', messageProvider: 'discord', llmProvider: 'openai', status: 'active', connected: true, messageCount: 0, errorCount: 0 }],
           },
         })
       );
@@ -840,9 +722,7 @@ test.describe('Data Boundary Tests', () => {
 
   test.describe('API Key Formats', () => {
     test('empty API key shows validation error', async ({ page }) => {
-      await page.route('**/api/config', (route) =>
-        route.fulfill({ status: 200, json: { bots: [] } })
-      );
+      await page.route('**/api/config', (route) => route.fulfill({ status: 200, json: { bots: [] } }));
       await page.route('**/api/admin/llm-profiles', (route) =>
         route.fulfill({ status: 200, json: { data: [] } })
       );
@@ -851,9 +731,7 @@ test.describe('Data Boundary Tests', () => {
       await page.waitForTimeout(500);
 
       // Look for API key input fields
-      const apiKeyInput = page
-        .locator('input[type="password"], input[placeholder*="key" i], input[placeholder*="API" i]')
-        .first();
+      const apiKeyInput = page.locator('input[type="password"], input[placeholder*="key" i], input[placeholder*="API" i]').first();
       if ((await apiKeyInput.count()) > 0) {
         await apiKeyInput.fill('');
         await apiKeyInput.blur();
@@ -865,9 +743,7 @@ test.describe('Data Boundary Tests', () => {
     test('very long API key (1000 chars) is accepted or truncated', async ({ page }) => {
       const longKey = 'sk-' + 'a'.repeat(997);
 
-      await page.route('**/api/config', (route) =>
-        route.fulfill({ status: 200, json: { bots: [] } })
-      );
+      await page.route('**/api/config', (route) => route.fulfill({ status: 200, json: { bots: [] } }));
       await page.route('**/api/admin/llm-profiles', (route) =>
         route.fulfill({ status: 200, json: { data: [] } })
       );
@@ -875,9 +751,7 @@ test.describe('Data Boundary Tests', () => {
       await page.goto('/admin/config');
       await page.waitForTimeout(500);
 
-      const apiKeyInput = page
-        .locator('input[type="password"], input[placeholder*="key" i], input[placeholder*="API" i]')
-        .first();
+      const apiKeyInput = page.locator('input[type="password"], input[placeholder*="key" i], input[placeholder*="API" i]').first();
       if ((await apiKeyInput.count()) > 0) {
         await apiKeyInput.fill(longKey);
         await page.waitForTimeout(200);
@@ -891,9 +765,7 @@ test.describe('Data Boundary Tests', () => {
     test('API key with special characters is handled', async ({ page }) => {
       const specialKey = 'sk-test_key!@#$%^&*()+=[]{}|;:,.<>?';
 
-      await page.route('**/api/config', (route) =>
-        route.fulfill({ status: 200, json: { bots: [] } })
-      );
+      await page.route('**/api/config', (route) => route.fulfill({ status: 200, json: { bots: [] } }));
       await page.route('**/api/admin/llm-profiles', (route) =>
         route.fulfill({ status: 200, json: { data: [] } })
       );
@@ -901,9 +773,7 @@ test.describe('Data Boundary Tests', () => {
       await page.goto('/admin/config');
       await page.waitForTimeout(500);
 
-      const apiKeyInput = page
-        .locator('input[type="password"], input[placeholder*="key" i], input[placeholder*="API" i]')
-        .first();
+      const apiKeyInput = page.locator('input[type="password"], input[placeholder*="key" i], input[placeholder*="API" i]').first();
       if ((await apiKeyInput.count()) > 0) {
         await apiKeyInput.fill(specialKey);
         await page.waitForTimeout(200);
@@ -918,9 +788,7 @@ test.describe('Data Boundary Tests', () => {
 
   test.describe('URL Boundaries', () => {
     test('empty URL in MCP server form', async ({ page }) => {
-      await page.route('**/api/config', (route) =>
-        route.fulfill({ status: 200, json: { bots: [] } })
-      );
+      await page.route('**/api/config', (route) => route.fulfill({ status: 200, json: { bots: [] } }));
       await page.route('**/api/admin/llm-profiles', (route) =>
         route.fulfill({ status: 200, json: { data: [] } })
       );
@@ -929,9 +797,7 @@ test.describe('Data Boundary Tests', () => {
       await page.goto('/admin/config');
       await page.waitForTimeout(500);
 
-      const urlInput = page
-        .locator('input[type="url"], input[placeholder*="url" i], input[placeholder*="endpoint" i]')
-        .first();
+      const urlInput = page.locator('input[type="url"], input[placeholder*="url" i], input[placeholder*="endpoint" i]').first();
       if ((await urlInput.count()) > 0) {
         await urlInput.fill('');
         await urlInput.blur();
@@ -941,9 +807,7 @@ test.describe('Data Boundary Tests', () => {
     });
 
     test('invalid URL format (no protocol) is handled', async ({ page }) => {
-      await page.route('**/api/config', (route) =>
-        route.fulfill({ status: 200, json: { bots: [] } })
-      );
+      await page.route('**/api/config', (route) => route.fulfill({ status: 200, json: { bots: [] } }));
       await page.route('**/api/admin/llm-profiles', (route) =>
         route.fulfill({ status: 200, json: { data: [] } })
       );
@@ -952,9 +816,7 @@ test.describe('Data Boundary Tests', () => {
       await page.goto('/admin/config');
       await page.waitForTimeout(500);
 
-      const urlInput = page
-        .locator('input[type="url"], input[placeholder*="url" i], input[placeholder*="endpoint" i]')
-        .first();
+      const urlInput = page.locator('input[type="url"], input[placeholder*="url" i], input[placeholder*="endpoint" i]').first();
       if ((await urlInput.count()) > 0) {
         await urlInput.fill('not-a-valid-url');
         await urlInput.blur();
@@ -964,9 +826,7 @@ test.describe('Data Boundary Tests', () => {
     });
 
     test('URL with port is accepted', async ({ page }) => {
-      await page.route('**/api/config', (route) =>
-        route.fulfill({ status: 200, json: { bots: [] } })
-      );
+      await page.route('**/api/config', (route) => route.fulfill({ status: 200, json: { bots: [] } }));
       await page.route('**/api/admin/llm-profiles', (route) =>
         route.fulfill({ status: 200, json: { data: [] } })
       );
@@ -975,9 +835,7 @@ test.describe('Data Boundary Tests', () => {
       await page.goto('/admin/config');
       await page.waitForTimeout(500);
 
-      const urlInput = page
-        .locator('input[type="url"], input[placeholder*="url" i], input[placeholder*="endpoint" i]')
-        .first();
+      const urlInput = page.locator('input[type="url"], input[placeholder*="url" i], input[placeholder*="endpoint" i]').first();
       if ((await urlInput.count()) > 0) {
         await urlInput.fill('http://localhost:3000');
         await page.waitForTimeout(200);
@@ -988,9 +846,7 @@ test.describe('Data Boundary Tests', () => {
     });
 
     test('URL with path and query params is accepted', async ({ page }) => {
-      await page.route('**/api/config', (route) =>
-        route.fulfill({ status: 200, json: { bots: [] } })
-      );
+      await page.route('**/api/config', (route) => route.fulfill({ status: 200, json: { bots: [] } }));
       await page.route('**/api/admin/llm-profiles', (route) =>
         route.fulfill({ status: 200, json: { data: [] } })
       );
@@ -999,9 +855,7 @@ test.describe('Data Boundary Tests', () => {
       await page.goto('/admin/config');
       await page.waitForTimeout(500);
 
-      const urlInput = page
-        .locator('input[type="url"], input[placeholder*="url" i], input[placeholder*="endpoint" i]')
-        .first();
+      const urlInput = page.locator('input[type="url"], input[placeholder*="url" i], input[placeholder*="endpoint" i]').first();
       if ((await urlInput.count()) > 0) {
         await urlInput.fill('https://api.example.com/v1?key=value&other=test#section');
         await page.waitForTimeout(200);
@@ -1014,9 +868,7 @@ test.describe('Data Boundary Tests', () => {
     test('very long URL (2000 chars) is handled', async ({ page }) => {
       const longUrl = 'https://api.example.com/' + 'a'.repeat(1975);
 
-      await page.route('**/api/config', (route) =>
-        route.fulfill({ status: 200, json: { bots: [] } })
-      );
+      await page.route('**/api/config', (route) => route.fulfill({ status: 200, json: { bots: [] } }));
       await page.route('**/api/admin/llm-profiles', (route) =>
         route.fulfill({ status: 200, json: { data: [] } })
       );
@@ -1025,9 +877,7 @@ test.describe('Data Boundary Tests', () => {
       await page.goto('/admin/config');
       await page.waitForTimeout(500);
 
-      const urlInput = page
-        .locator('input[type="url"], input[placeholder*="url" i], input[placeholder*="endpoint" i]')
-        .first();
+      const urlInput = page.locator('input[type="url"], input[placeholder*="url" i], input[placeholder*="endpoint" i]').first();
       if ((await urlInput.count()) > 0) {
         await urlInput.fill(longUrl);
         await page.waitForTimeout(200);
@@ -1036,9 +886,7 @@ test.describe('Data Boundary Tests', () => {
     });
 
     test('URL with unicode domain is handled', async ({ page }) => {
-      await page.route('**/api/config', (route) =>
-        route.fulfill({ status: 200, json: { bots: [] } })
-      );
+      await page.route('**/api/config', (route) => route.fulfill({ status: 200, json: { bots: [] } }));
       await page.route('**/api/admin/llm-profiles', (route) =>
         route.fulfill({ status: 200, json: { data: [] } })
       );
@@ -1047,9 +895,7 @@ test.describe('Data Boundary Tests', () => {
       await page.goto('/admin/config');
       await page.waitForTimeout(500);
 
-      const urlInput = page
-        .locator('input[type="url"], input[placeholder*="url" i], input[placeholder*="endpoint" i]')
-        .first();
+      const urlInput = page.locator('input[type="url"], input[placeholder*="url" i], input[placeholder*="endpoint" i]').first();
       if ((await urlInput.count()) > 0) {
         await urlInput.fill('https://\u4F8B\u3048.jp/api');
         await page.waitForTimeout(200);
@@ -1058,9 +904,7 @@ test.describe('Data Boundary Tests', () => {
     });
 
     test('javascript: protocol URL is rejected', async ({ page }) => {
-      await page.route('**/api/config', (route) =>
-        route.fulfill({ status: 200, json: { bots: [] } })
-      );
+      await page.route('**/api/config', (route) => route.fulfill({ status: 200, json: { bots: [] } }));
       await page.route('**/api/admin/llm-profiles', (route) =>
         route.fulfill({ status: 200, json: { data: [] } })
       );
@@ -1075,9 +919,7 @@ test.describe('Data Boundary Tests', () => {
       await page.goto('/admin/config');
       await page.waitForTimeout(500);
 
-      const urlInput = page
-        .locator('input[type="url"], input[placeholder*="url" i], input[placeholder*="endpoint" i]')
-        .first();
+      const urlInput = page.locator('input[type="url"], input[placeholder*="url" i], input[placeholder*="endpoint" i]').first();
       if ((await urlInput.count()) > 0) {
         await urlInput.fill('javascript:alert(1)');
         await urlInput.blur();
@@ -1088,9 +930,7 @@ test.describe('Data Boundary Tests', () => {
     });
 
     test('file:/// protocol URL is rejected', async ({ page }) => {
-      await page.route('**/api/config', (route) =>
-        route.fulfill({ status: 200, json: { bots: [] } })
-      );
+      await page.route('**/api/config', (route) => route.fulfill({ status: 200, json: { bots: [] } }));
       await page.route('**/api/admin/llm-profiles', (route) =>
         route.fulfill({ status: 200, json: { data: [] } })
       );
@@ -1099,9 +939,7 @@ test.describe('Data Boundary Tests', () => {
       await page.goto('/admin/config');
       await page.waitForTimeout(500);
 
-      const urlInput = page
-        .locator('input[type="url"], input[placeholder*="url" i], input[placeholder*="endpoint" i]')
-        .first();
+      const urlInput = page.locator('input[type="url"], input[placeholder*="url" i], input[placeholder*="endpoint" i]').first();
       if ((await urlInput.count()) > 0) {
         await urlInput.fill('file:///etc/passwd');
         await urlInput.blur();
@@ -1117,9 +955,7 @@ test.describe('Data Boundary Tests', () => {
 
   test.describe('Cross-Form Boundary Tests', () => {
     test('persona form handles all string edge cases', async ({ page }) => {
-      await page.route('**/api/config', (route) =>
-        route.fulfill({ status: 200, json: { bots: [] } })
-      );
+      await page.route('**/api/config', (route) => route.fulfill({ status: 200, json: { bots: [] } }));
       await page.route('**/api/admin/llm-profiles', (route) =>
         route.fulfill({ status: 200, json: { data: [] } })
       );
@@ -1151,10 +987,7 @@ test.describe('Data Boundary Tests', () => {
       await page.goto('/admin/personas');
       await page.waitForTimeout(500);
 
-      const createBtn = page
-        .locator('button')
-        .filter({ hasText: /create|new|add/i })
-        .first();
+      const createBtn = page.locator('button').filter({ hasText: /create|new|add/i }).first();
       if ((await createBtn.count()) > 0) {
         await createBtn.click();
         await page.waitForTimeout(500);
@@ -1185,15 +1018,10 @@ test.describe('Data Boundary Tests', () => {
     });
 
     test('LLM provider form handles boundary inputs', async ({ page }) => {
-      await page.route('**/api/config', (route) =>
-        route.fulfill({ status: 200, json: { bots: [] } })
-      );
+      await page.route('**/api/config', (route) => route.fulfill({ status: 200, json: { bots: [] } }));
       await page.route('**/api/admin/llm-profiles', async (route) => {
         if (route.request().method() === 'POST') {
-          await route.fulfill({
-            status: 201,
-            json: { key: 'test', name: 'Test', provider: 'openai' },
-          });
+          await route.fulfill({ status: 201, json: { key: 'test', name: 'Test', provider: 'openai' } });
         } else {
           await route.fulfill({ status: 200, json: { data: [] } });
         }
@@ -1203,10 +1031,7 @@ test.describe('Data Boundary Tests', () => {
       await page.waitForTimeout(500);
 
       // Try to find and interact with LLM provider form elements
-      const addBtn = page
-        .locator('button')
-        .filter({ hasText: /add|create|new/i })
-        .first();
+      const addBtn = page.locator('button').filter({ hasText: /add|create|new/i }).first();
       if ((await addBtn.count()) > 0) {
         await addBtn.click();
         await page.waitForTimeout(500);
@@ -1229,18 +1054,13 @@ test.describe('Data Boundary Tests', () => {
     });
 
     test('MCP server form handles URL and name edge cases', async ({ page }) => {
-      await page.route('**/api/config', (route) =>
-        route.fulfill({ status: 200, json: { bots: [] } })
-      );
+      await page.route('**/api/config', (route) => route.fulfill({ status: 200, json: { bots: [] } }));
       await page.route('**/api/admin/llm-profiles', (route) =>
         route.fulfill({ status: 200, json: { data: [] } })
       );
       await page.route('**/api/mcp/servers', async (route) => {
         if (route.request().method() === 'POST') {
-          await route.fulfill({
-            status: 201,
-            json: { id: 'mcp-1', name: 'Test', url: 'http://localhost:3000' },
-          });
+          await route.fulfill({ status: 201, json: { id: 'mcp-1', name: 'Test', url: 'http://localhost:3000' } });
         } else {
           await route.fulfill({ status: 200, json: [] });
         }
@@ -1256,10 +1076,7 @@ test.describe('Data Boundary Tests', () => {
         await page.waitForTimeout(500);
       }
 
-      const addBtn = page
-        .locator('button')
-        .filter({ hasText: /add|create|new/i })
-        .first();
+      const addBtn = page.locator('button').filter({ hasText: /add|create|new/i }).first();
       if ((await addBtn.count()) > 0) {
         await addBtn.click();
         await page.waitForTimeout(500);
@@ -1293,9 +1110,7 @@ test.describe('Data Boundary Tests', () => {
     });
 
     test('settings form handles boundary values across all fields', async ({ page }) => {
-      await page.route('**/api/config', (route) =>
-        route.fulfill({ status: 200, json: { bots: [] } })
-      );
+      await page.route('**/api/config', (route) => route.fulfill({ status: 200, json: { bots: [] } }));
       await page.route('**/api/admin/llm-profiles', (route) =>
         route.fulfill({ status: 200, json: { data: [] } })
       );
@@ -1319,9 +1134,7 @@ test.describe('Data Boundary Tests', () => {
       await page.waitForTimeout(1000);
 
       // Test text inputs with edge cases
-      const textInputs = page
-        .locator('input[type="text"]:visible, input:not([type]):visible')
-        .first();
+      const textInputs = page.locator('input[type="text"]:visible, input:not([type]):visible').first();
       if ((await textInputs.count()) > 0) {
         // Very long value
         await textInputs.fill('X'.repeat(500));
@@ -1351,9 +1164,7 @@ test.describe('Data Boundary Tests', () => {
     });
 
     test('marketplace install URL handles boundary cases', async ({ page }) => {
-      await page.route('**/api/config', (route) =>
-        route.fulfill({ status: 200, json: { bots: [] } })
-      );
+      await page.route('**/api/config', (route) => route.fulfill({ status: 200, json: { bots: [] } }));
       await page.route('**/api/admin/llm-profiles', (route) =>
         route.fulfill({ status: 200, json: { data: [] } })
       );

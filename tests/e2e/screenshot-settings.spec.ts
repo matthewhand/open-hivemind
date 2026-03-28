@@ -2,7 +2,9 @@ import { expect, test } from '@playwright/test';
 import { setupAuth } from './test-utils';
 
 test.describe('Settings Screenshots', () => {
-  test('Capture Settings Page and Verify Tab Navigation with Real API Data', async ({ page }) => {
+  test('Capture Settings Page and Verify Tab Navigation with Real API Data', async ({
+    page,
+  }) => {
     // Setup authentication
     await setupAuth(page);
 
@@ -13,12 +15,7 @@ test.describe('Settings Screenshots', () => {
     await page.route('**/api/config/llm-status', async (route) =>
       route.fulfill({
         status: 200,
-        json: {
-          defaultConfigured: true,
-          defaultProviders: [],
-          botsMissingLlmProvider: [],
-          hasMissing: false,
-        },
+        json: { defaultConfigured: true, defaultProviders: [], botsMissingLlmProvider: [], hasMissing: false },
       })
     );
     await page.route('**/api/config/global', async (route) => {

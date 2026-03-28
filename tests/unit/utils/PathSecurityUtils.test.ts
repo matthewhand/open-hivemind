@@ -96,10 +96,12 @@ describe('PathSecurityUtils', () => {
     });
 
     it('uses custom pattern when provided', () => {
-      expect(PathSecurityUtils.isValidFilename('HELLO', { allowedPattern: /^[A-Z]+$/ })).toBe(true);
-      expect(PathSecurityUtils.isValidFilename('hello', { allowedPattern: /^[A-Z]+$/ })).toBe(
-        false
-      );
+      expect(
+        PathSecurityUtils.isValidFilename('HELLO', { allowedPattern: /^[A-Z]+$/ })
+      ).toBe(true);
+      expect(
+        PathSecurityUtils.isValidFilename('hello', { allowedPattern: /^[A-Z]+$/ })
+      ).toBe(false);
     });
   });
 });

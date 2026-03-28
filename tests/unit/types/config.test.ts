@@ -1,13 +1,13 @@
 import {
-  isBotConfig,
   isDiscordConfig,
-  isFlowiseConfig,
-  isMattermostConfig,
-  isMcpGuardConfig,
-  isMcpServerConfig,
-  isOpenAIConfig,
-  isSecureConfig,
   isSlackConfig,
+  isMattermostConfig,
+  isOpenAIConfig,
+  isFlowiseConfig,
+  isBotConfig,
+  isSecureConfig,
+  isMcpServerConfig,
+  isMcpGuardConfig,
 } from '../../../src/types/config';
 
 describe('Config Type Guards', () => {
@@ -77,9 +77,7 @@ describe('Config Type Guards', () => {
 
   describe('isMattermostConfig', () => {
     it('returns true for a valid MattermostConfig', () => {
-      expect(isMattermostConfig({ serverUrl: 'https://mm.example.com', token: 'mm-token' })).toBe(
-        true
-      );
+      expect(isMattermostConfig({ serverUrl: 'https://mm.example.com', token: 'mm-token' })).toBe(true);
     });
 
     it('returns false for null', () => {
@@ -197,21 +195,15 @@ describe('Config Type Guards', () => {
     });
 
     it('returns false when name is not a string', () => {
-      expect(isBotConfig({ name: 123, messageProvider: 'discord', llmProvider: 'openai' })).toBe(
-        false
-      );
+      expect(isBotConfig({ name: 123, messageProvider: 'discord', llmProvider: 'openai' })).toBe(false);
     });
 
     it('returns false when messageProvider is not a string', () => {
-      expect(isBotConfig({ name: 'testbot', messageProvider: 123, llmProvider: 'openai' })).toBe(
-        false
-      );
+      expect(isBotConfig({ name: 'testbot', messageProvider: 123, llmProvider: 'openai' })).toBe(false);
     });
 
     it('returns false when llmProvider is not a string', () => {
-      expect(isBotConfig({ name: 'testbot', messageProvider: 'discord', llmProvider: 123 })).toBe(
-        false
-      );
+      expect(isBotConfig({ name: 'testbot', messageProvider: 'discord', llmProvider: 123 })).toBe(false);
     });
 
     it('returns false for non-object types', () => {

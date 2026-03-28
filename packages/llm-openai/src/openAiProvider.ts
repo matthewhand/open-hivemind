@@ -30,14 +30,7 @@ export class OpenAiProvider implements ILlmProvider {
     maxTokens?: number;
   };
 
-  constructor(
-    config?: OpenAIConfig & {
-      timeout?: number;
-      organization?: string;
-      temperature?: number;
-      maxTokens?: number;
-    }
-  ) {
+  constructor(config?: OpenAIConfig & { timeout?: number; organization?: string; temperature?: number; maxTokens?: number }) {
     this.config = config || { apiKey: '' };
   }
 

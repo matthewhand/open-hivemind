@@ -73,34 +73,23 @@ test.describe('Chat Page CRUD Lifecycle', () => {
       page.route('**/api/config/llm-status', (route) =>
         route.fulfill({
           status: 200,
-          json: {
-            defaultConfigured: true,
-            defaultProviders: [],
-            botsMissingLlmProvider: [],
-            hasMissing: false,
-          },
+          json: { defaultConfigured: true, defaultProviders: [], botsMissingLlmProvider: [], hasMissing: false },
         })
       ),
       page.route('**/api/config/global', (route) => route.fulfill({ status: 200, json: {} })),
-      page.route('**/api/config', (route) =>
-        route.fulfill({ status: 200, json: { bots: mockBots } })
-      ),
+      page.route('**/api/config', (route) => route.fulfill({ status: 200, json: { bots: mockBots } })),
       page.route('**/api/personas', (route) => route.fulfill({ status: 200, json: [] })),
       page.route('**/api/csrf-token', (route) =>
         route.fulfill({ status: 200, json: { token: 'mock-csrf-token' } })
       ),
-      page.route('**/api/health', (route) =>
-        route.fulfill({ status: 200, json: { status: 'ok' } })
-      ),
+      page.route('**/api/health', (route) => route.fulfill({ status: 200, json: { status: 'ok' } })),
       page.route('**/api/dashboard/api/status', (route) =>
         route.fulfill({ status: 200, json: { bots: mockBots, uptime: 100 } })
       ),
       page.route('**/api/admin/guard-profiles', (route) =>
         route.fulfill({ status: 200, json: { data: [] } })
       ),
-      page.route('**/api/demo/status', (route) =>
-        route.fulfill({ status: 200, json: { active: false } })
-      ),
+      page.route('**/api/demo/status', (route) => route.fulfill({ status: 200, json: { active: false } })),
       page.route('**/api/admin/llm-profiles', (route) =>
         route.fulfill({
           status: 200,
@@ -121,7 +110,9 @@ test.describe('Chat Page CRUD Lifecycle', () => {
   });
 
   test('load bot list in dropdown', async ({ page }) => {
-    await page.route('**/api/bots', (route) => route.fulfill({ status: 200, json: mockBots }));
+    await page.route('**/api/bots', (route) =>
+      route.fulfill({ status: 200, json: mockBots })
+    );
     await page.route('**/api/bots/*/history*', (route) =>
       route.fulfill({ status: 200, json: mockHistory })
     );
@@ -130,9 +121,7 @@ test.describe('Chat Page CRUD Lifecycle', () => {
     await expect(page.locator('body')).toBeVisible();
 
     // Look for bot selector dropdown or list
-    const botSelector = page
-      .locator('select:has(option:has-text("Support Bot")), [role="listbox"], [role="combobox"]')
-      .first();
+    const botSelector = page.locator('select:has(option:has-text("Support Bot")), [role="listbox"], [role="combobox"]').first();
     if ((await botSelector.count()) > 0) {
       await expect(botSelector).toBeVisible();
     } else {
@@ -145,7 +134,9 @@ test.describe('Chat Page CRUD Lifecycle', () => {
   });
 
   test('select a bot, verify history loads', async ({ page }) => {
-    await page.route('**/api/bots', (route) => route.fulfill({ status: 200, json: mockBots }));
+    await page.route('**/api/bots', (route) =>
+      route.fulfill({ status: 200, json: mockBots })
+    );
     await page.route('**/api/bots/bot-1/history*', (route) =>
       route.fulfill({ status: 200, json: mockHistory })
     );
@@ -179,7 +170,9 @@ test.describe('Chat Page CRUD Lifecycle', () => {
   test('send a message, verify optimistic update appears', async ({ page }) => {
     let messages = [...mockHistory.data.history];
 
-    await page.route('**/api/bots', (route) => route.fulfill({ status: 200, json: mockBots }));
+    await page.route('**/api/bots', (route) =>
+      route.fulfill({ status: 200, json: mockBots })
+    );
     await page.route('**/api/bots/*/history*', (route) =>
       route.fulfill({ status: 200, json: mockHistory })
     );
@@ -203,19 +196,13 @@ test.describe('Chat Page CRUD Lifecycle', () => {
     await page.waitForTimeout(500);
 
     // Type and send a message
-    const chatInput = page
-      .locator(
-        'input[placeholder*="message" i], textarea[placeholder*="message" i], input[placeholder*="type" i], textarea[placeholder*="type" i]'
-      )
-      .first();
+    const chatInput = page.locator('input[placeholder*="message" i], textarea[placeholder*="message" i], input[placeholder*="type" i], textarea[placeholder*="type" i]').first();
     if ((await chatInput.count()) > 0) {
       await chatInput.fill('How do I reset my password?');
       await page.waitForTimeout(200);
 
       // Press Enter or click Send
-      const sendBtn = page
-        .locator('button:has-text("Send"), button[type="submit"], button[aria-label*="send" i]')
-        .first();
+      const sendBtn = page.locator('button:has-text("Send"), button[type="submit"], button[aria-label*="send" i]').first();
       if ((await sendBtn.count()) > 0) {
         await sendBtn.click();
       } else {
@@ -232,7 +219,9 @@ test.describe('Chat Page CRUD Lifecycle', () => {
   });
 
   test('message failure shows error state', async ({ page }) => {
-    await page.route('**/api/bots', (route) => route.fulfill({ status: 200, json: mockBots }));
+    await page.route('**/api/bots', (route) =>
+      route.fulfill({ status: 200, json: mockBots })
+    );
     await page.route('**/api/bots/*/history*', (route) =>
       route.fulfill({ status: 200, json: mockHistory })
     );
@@ -246,18 +235,12 @@ test.describe('Chat Page CRUD Lifecycle', () => {
     await page.goto('/admin/chat');
     await page.waitForTimeout(500);
 
-    const chatInput = page
-      .locator(
-        'input[placeholder*="message" i], textarea[placeholder*="message" i], input[placeholder*="type" i], textarea[placeholder*="type" i]'
-      )
-      .first();
+    const chatInput = page.locator('input[placeholder*="message" i], textarea[placeholder*="message" i], input[placeholder*="type" i], textarea[placeholder*="type" i]').first();
     if ((await chatInput.count()) > 0) {
       await chatInput.fill('This will fail');
       await page.waitForTimeout(200);
 
-      const sendBtn = page
-        .locator('button:has-text("Send"), button[type="submit"], button[aria-label*="send" i]')
-        .first();
+      const sendBtn = page.locator('button:has-text("Send"), button[type="submit"], button[aria-label*="send" i]').first();
       if ((await sendBtn.count()) > 0) {
         await sendBtn.click();
       } else {
@@ -267,9 +250,7 @@ test.describe('Chat Page CRUD Lifecycle', () => {
 
       // Error should be indicated (red text, error toast, retry button)
       await expect(page.locator('body')).toBeVisible();
-      const errorIndicator = page
-        .locator('[class*="error"], .toast, [role="alert"], text=/fail|error|retry/i')
-        .first();
+      const errorIndicator = page.locator('[class*="error"], .toast, [role="alert"], text=/fail|error|retry/i').first();
       if ((await errorIndicator.count()) > 0) {
         await expect(errorIndicator).toBeVisible();
       }
@@ -291,7 +272,9 @@ test.describe('Chat Page CRUD Lifecycle', () => {
       },
     };
 
-    await page.route('**/api/bots', (route) => route.fulfill({ status: 200, json: mockBots }));
+    await page.route('**/api/bots', (route) =>
+      route.fulfill({ status: 200, json: mockBots })
+    );
     await page.route('**/api/bots/bot-1/history*', (route) =>
       route.fulfill({ status: 200, json: mockHistory })
     );
@@ -322,7 +305,9 @@ test.describe('Chat Page CRUD Lifecycle', () => {
   });
 
   test('LLM provider dropdown selection (hot-swap)', async ({ page }) => {
-    await page.route('**/api/bots', (route) => route.fulfill({ status: 200, json: mockBots }));
+    await page.route('**/api/bots', (route) =>
+      route.fulfill({ status: 200, json: mockBots })
+    );
     await page.route('**/api/bots/*/history*', (route) =>
       route.fulfill({ status: 200, json: mockHistory })
     );
@@ -331,11 +316,7 @@ test.describe('Chat Page CRUD Lifecycle', () => {
     await page.waitForTimeout(500);
 
     // Look for LLM provider selector
-    const llmSelector = page
-      .locator(
-        'select:has(option:has-text("OpenAI")), select:has(option:has-text("Anthropic")), select[name*="llm" i], select[id*="provider" i]'
-      )
-      .first();
+    const llmSelector = page.locator('select:has(option:has-text("OpenAI")), select:has(option:has-text("Anthropic")), select[name*="llm" i], select[id*="provider" i]').first();
     if ((await llmSelector.count()) > 0) {
       await llmSelector.selectOption({ index: 1 });
       await page.waitForTimeout(300);
@@ -345,7 +326,9 @@ test.describe('Chat Page CRUD Lifecycle', () => {
 
   test('refresh history button', async ({ page }) => {
     let fetchCount = 0;
-    await page.route('**/api/bots', (route) => route.fulfill({ status: 200, json: mockBots }));
+    await page.route('**/api/bots', (route) =>
+      route.fulfill({ status: 200, json: mockBots })
+    );
     await page.route('**/api/bots/*/history*', (route) => {
       fetchCount++;
       return route.fulfill({ status: 200, json: mockHistory });
@@ -373,7 +356,9 @@ test.describe('Chat Page CRUD Lifecycle', () => {
   });
 
   test('empty state when no bots configured', async ({ page }) => {
-    await page.route('**/api/bots', (route) => route.fulfill({ status: 200, json: [] }));
+    await page.route('**/api/bots', (route) =>
+      route.fulfill({ status: 200, json: [] })
+    );
     await page.route('**/api/config', (route) =>
       route.fulfill({ status: 200, json: { bots: [] } })
     );
@@ -382,18 +367,16 @@ test.describe('Chat Page CRUD Lifecycle', () => {
     await page.waitForTimeout(500);
 
     await expect(page.locator('body')).toBeVisible();
-    const emptyText = page
-      .locator(
-        'text=/no.*bot/i, text=/no.*agent/i, text=/get.*started/i, text=/configure.*bot/i, text=/select.*bot/i'
-      )
-      .first();
+    const emptyText = page.locator('text=/no.*bot/i, text=/no.*agent/i, text=/get.*started/i, text=/configure.*bot/i, text=/select.*bot/i').first();
     if ((await emptyText.count()) > 0) {
       await expect(emptyText).toBeVisible();
     }
   });
 
   test('empty history for new bot', async ({ page }) => {
-    await page.route('**/api/bots', (route) => route.fulfill({ status: 200, json: mockBots }));
+    await page.route('**/api/bots', (route) =>
+      route.fulfill({ status: 200, json: mockBots })
+    );
     await page.route('**/api/bots/*/history*', (route) =>
       route.fulfill({ status: 200, json: emptyHistory })
     );
@@ -403,18 +386,16 @@ test.describe('Chat Page CRUD Lifecycle', () => {
 
     await expect(page.locator('body')).toBeVisible();
     // Empty history may show placeholder text
-    const emptyHistoryText = page
-      .locator(
-        'text=/no.*message/i, text=/start.*conversation/i, text=/no.*history/i, text=/empty/i'
-      )
-      .first();
+    const emptyHistoryText = page.locator('text=/no.*message/i, text=/start.*conversation/i, text=/no.*history/i, text=/empty/i').first();
     if ((await emptyHistoryText.count()) > 0) {
       await expect(emptyHistoryText).toBeVisible();
     }
   });
 
   test('message timestamp display', async ({ page }) => {
-    await page.route('**/api/bots', (route) => route.fulfill({ status: 200, json: mockBots }));
+    await page.route('**/api/bots', (route) =>
+      route.fulfill({ status: 200, json: mockBots })
+    );
     await page.route('**/api/bots/*/history*', (route) =>
       route.fulfill({ status: 200, json: mockHistory })
     );
@@ -428,9 +409,7 @@ test.describe('Chat Page CRUD Lifecycle', () => {
       await expect(msgContent).toBeVisible();
 
       // Look for timestamp display near messages (could be time, date, or relative)
-      const timestamps = page.locator(
-        'time, [class*="timestamp"], [class*="time"], [class*="date"]'
-      );
+      const timestamps = page.locator('time, [class*="timestamp"], [class*="time"], [class*="date"]');
       if ((await timestamps.count()) > 0) {
         await expect(timestamps.first()).toBeVisible();
       }

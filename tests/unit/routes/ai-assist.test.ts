@@ -1,8 +1,5 @@
 import express from 'express';
 import request from 'supertest';
-import { getLlmProfileByKey } from '../../../src/config/llmProfiles';
-import { UserConfigStore } from '../../../src/config/UserConfigStore';
-import router from '../../../src/server/routes/ai-assist';
 
 // Mock dependencies before importing the router
 jest.mock('../../../src/config/llmProfiles', () => ({
@@ -45,6 +42,10 @@ jest.mock('../../../src/message/interfaces/IMessage', () => {
     },
   };
 });
+
+import { getLlmProfileByKey } from '../../../src/config/llmProfiles';
+import { UserConfigStore } from '../../../src/config/UserConfigStore';
+import router from '../../../src/server/routes/ai-assist';
 
 describe('AI Assist Route - POST /generate', () => {
   let app: express.Application;

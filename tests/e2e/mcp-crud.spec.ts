@@ -12,12 +12,7 @@ test.describe('MCP Servers Page - CRUD Operations', () => {
     await page.route('**/api/config/llm-status', (route) =>
       route.fulfill({
         status: 200,
-        json: {
-          defaultConfigured: true,
-          defaultProviders: [],
-          botsMissingLlmProvider: [],
-          hasMissing: false,
-        },
+        json: { defaultConfigured: true, defaultProviders: [], botsMissingLlmProvider: [], hasMissing: false },
       })
     );
     await page.route('**/api/config/global', (route) => route.fulfill({ status: 200, json: {} }));
@@ -30,9 +25,7 @@ test.describe('MCP Servers Page - CRUD Operations', () => {
     await page.route('**/api/admin/guard-profiles', (route) =>
       route.fulfill({ status: 200, json: { data: [] } })
     );
-    await page.route('**/api/config', (route) =>
-      route.fulfill({ status: 200, json: { bots: [] } })
-    );
+    await page.route('**/api/config', (route) => route.fulfill({ status: 200, json: { bots: [] } }));
 
     // Mock initial list of servers
     await page.route('**/api/admin/mcp-servers', async (route) => {

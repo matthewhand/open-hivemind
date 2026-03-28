@@ -11,12 +11,7 @@ test('API Rate Limiting UI', async ({ page }) => {
   await page.route('**/api/config/llm-status', (route) =>
     route.fulfill({
       status: 200,
-      json: {
-        defaultConfigured: true,
-        defaultProviders: [],
-        botsMissingLlmProvider: [],
-        hasMissing: false,
-      },
+      json: { defaultConfigured: true, defaultProviders: [], botsMissingLlmProvider: [], hasMissing: false },
     })
   );
   await page.route('**/api/config/global', (route) => route.fulfill({ status: 200, json: {} }));

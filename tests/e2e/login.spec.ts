@@ -47,14 +47,7 @@ test.describe('Login', () => {
     await page.route('**/api/config', async (route) => route.fulfill({ json: { bots: [] } }));
     await page.route('**/api/config/global', async (route) => route.fulfill({ json: {} }));
     await page.route('**/api/config/llm-status', async (route) =>
-      route.fulfill({
-        json: {
-          defaultConfigured: false,
-          defaultProviders: [],
-          botsMissingLlmProvider: [],
-          hasMissing: false,
-        },
-      })
+      route.fulfill({ json: { defaultConfigured: false, defaultProviders: [], botsMissingLlmProvider: [], hasMissing: false } })
     );
     await page.route('**/api/config/llm-profiles', async (route) =>
       route.fulfill({ json: { profiles: { llm: [] } } })

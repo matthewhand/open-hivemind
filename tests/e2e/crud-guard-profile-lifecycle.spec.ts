@@ -38,12 +38,7 @@ test.describe('Guard Profile CRUD Lifecycle', () => {
       page.route('**/api/config/llm-status', (route) =>
         route.fulfill({
           status: 200,
-          json: {
-            defaultConfigured: true,
-            defaultProviders: [],
-            botsMissingLlmProvider: [],
-            hasMissing: false,
-          },
+          json: { defaultConfigured: true, defaultProviders: [], botsMissingLlmProvider: [], hasMissing: false },
         })
       ),
       page.route('**/api/config/global', (route) => route.fulfill({ status: 200, json: {} })),
@@ -52,15 +47,11 @@ test.describe('Guard Profile CRUD Lifecycle', () => {
       page.route('**/api/csrf-token', (route) =>
         route.fulfill({ status: 200, json: { token: 'mock-csrf-token' } })
       ),
-      page.route('**/api/health', (route) =>
-        route.fulfill({ status: 200, json: { status: 'ok' } })
-      ),
+      page.route('**/api/health', (route) => route.fulfill({ status: 200, json: { status: 'ok' } })),
       page.route('**/api/dashboard/api/status', (route) =>
         route.fulfill({ status: 200, json: { bots: [], uptime: 100 } })
       ),
-      page.route('**/api/demo/status', (route) =>
-        route.fulfill({ status: 200, json: { active: false } })
-      ),
+      page.route('**/api/demo/status', (route) => route.fulfill({ status: 200, json: { active: false } })),
     ]);
   }
 
@@ -111,18 +102,14 @@ test.describe('Guard Profile CRUD Lifecycle', () => {
     await expect(page.getByText('Production Guard')).toBeVisible();
 
     // Look for create button
-    const createBtn = page
-      .locator('button:has-text("Create"), button:has-text("New Profile"), button:has-text("Add")')
-      .first();
+    const createBtn = page.locator('button:has-text("Create"), button:has-text("New Profile"), button:has-text("Add")').first();
     if ((await createBtn.count()) > 0) {
       await createBtn.click();
       await page.waitForTimeout(500);
 
       const modal = page.locator('.modal-box, [role="dialog"], dialog.modal[open]').first();
       if ((await modal.count()) > 0) {
-        const nameInput = modal
-          .locator('input[placeholder*="Production"], input[placeholder*="name" i], input')
-          .first();
+        const nameInput = modal.locator('input[placeholder*="Production"], input[placeholder*="name" i], input').first();
         if ((await nameInput.count()) > 0) {
           await nameInput.fill('Staging Guard');
         }

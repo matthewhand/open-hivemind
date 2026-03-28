@@ -18,9 +18,7 @@ test('verify MCP Guard UX', async ({ page }) => {
       },
     })
   );
-  await page.route('**/api/config/global', async (route) =>
-    route.fulfill({ status: 200, json: {} })
-  );
+  await page.route('**/api/config/global', async (route) => route.fulfill({ status: 200, json: {} }));
   await page.route('**/api/config/llm-profiles', async (route) =>
     route.fulfill({ status: 200, json: [] })
   );

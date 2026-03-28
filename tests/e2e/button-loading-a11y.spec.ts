@@ -5,7 +5,9 @@ test('AIAssistButton Loading State Accessibility', async ({ page }) => {
   await setupAuth(page);
 
   // Catch-all for API requests (registered first = lowest priority)
-  await page.route('**/api/**', (route) => route.fulfill({ status: 200, json: {} }));
+  await page.route('**/api/**', (route) =>
+    route.fulfill({ status: 200, json: {} })
+  );
   // Mock specific API endpoints (registered after = higher priority)
   await page.route('**/api/health/detailed', (route) =>
     route.fulfill({ status: 200, json: { status: 'healthy' } })
@@ -16,12 +18,7 @@ test('AIAssistButton Loading State Accessibility', async ({ page }) => {
   await page.route('**/api/config/llm-status', (route) =>
     route.fulfill({
       status: 200,
-      json: {
-        defaultConfigured: true,
-        defaultProviders: [],
-        botsMissingLlmProvider: [],
-        hasMissing: false,
-      },
+      json: { defaultConfigured: true, defaultProviders: [], botsMissingLlmProvider: [], hasMissing: false },
     })
   );
   await page.route('**/api/config/global', (route) => route.fulfill({ status: 200, json: {} }));
@@ -50,11 +47,7 @@ test('AIAssistButton Loading State Accessibility', async ({ page }) => {
   await page.waitForTimeout(2000);
 
   // Look for any AI assist button (may use different aria-label or text)
-  const button = page
-    .locator(
-      'button[aria-label="Generate Name"], button:has-text("Generate"), button[aria-label*="AI"]'
-    )
-    .first();
+  const button = page.locator('button[aria-label="Generate Name"], button:has-text("Generate"), button[aria-label*="AI"]').first();
 
   if (await button.isVisible().catch(() => false)) {
     // We mock the API call so it hangs forever so we can inspect the loading state
@@ -76,12 +69,7 @@ test('AIAssistButton Loading State Accessibility', async ({ page }) => {
 
     // Since button might be disabled, let's just grab the attributes from any button that is disabled
     const disabledButton = page.locator('button[disabled]');
-    if (
-      await disabledButton
-        .first()
-        .isVisible()
-        .catch(() => false)
-    ) {
+    if (await disabledButton.first().isVisible().catch(() => false)) {
       const ariaLabel = await disabledButton.first().getAttribute('aria-label');
       const ariaBusy = await disabledButton.first().getAttribute('aria-busy');
 

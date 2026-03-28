@@ -1,4 +1,4 @@
-import { commandParser, jsonParser, messageParser, numberParser } from '@src/utils/parsers';
+import { commandParser, messageParser, jsonParser, numberParser } from '@src/utils/parsers';
 
 describe('parsers', () => {
   describe('commandParser', () => {
