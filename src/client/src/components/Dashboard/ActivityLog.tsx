@@ -10,7 +10,7 @@ import { ArrowPathIcon } from '@heroicons/react/24/outline';
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, Legend, CartesianGrid } from 'recharts';
 import { useGetActivityQuery } from '../../store/slices/apiSlice';
 import type { ActivityResponse } from '../../services/api';
-import ResponsiveDataView from '../DaisyUI/ResponsiveDataView';
+import DataTable from '../DaisyUI/DataTable';
 
 interface ActivityFilters {
   bot?: string;
@@ -234,7 +234,7 @@ const AgentMetricsTable: React.FC<AgentMetricsTableProps> = ({ metrics }) => {
   }
 
   return (
-    <ResponsiveDataView
+    <DataTable
       data={metrics}
       columns={[
         { key: 'botName' as any, title: 'Agent', prominent: true },

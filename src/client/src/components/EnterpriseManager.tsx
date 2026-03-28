@@ -13,8 +13,8 @@ import {
   ScaleIcon,
   ShieldCheckIcon,
 } from '@heroicons/react/24/outline';
-import ResponsiveDataView from './DaisyUI/ResponsiveDataView';
-import type { RDVColumn } from './DaisyUI/ResponsiveDataView';
+import DataTable from './DaisyUI/DataTable';
+import type { RDVColumn } from './DaisyUI/DataTable';
 
 interface ComplianceRule {
   id: string;
@@ -572,7 +572,7 @@ const EnterpriseManager: React.FC = () => {
               </div>
             </div>
             <div className="bg-base-100 rounded-box shadow">
-              <ResponsiveDataView<AuditEvent>
+              <DataTable<AuditEvent>
                 data={filteredAuditEvents}
                 columns={[
                   {
