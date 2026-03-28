@@ -25,6 +25,12 @@ jest.mock('../../src/server/services/ActivityLogger', () => ({
   },
 }));
 
+jest.mock('../../src/services/AnalyticsService', () => ({
+  AnalyticsService: {
+    getInstance: jest.fn(),
+  },
+}));
+
 const mockManagerInstance = {
   getAllBots: jest.fn(),
 };

@@ -4,9 +4,39 @@ import { DatabaseManager } from '../../src/database/DatabaseManager';
 import dashboardRouter from '../../src/server/routes/dashboard';
 
 // Mock auth middleware to bypass authentication
-jest.mock('../../src/server/middleware/auth', () => ({
-  authenticateToken: (req: any, res: any, next: any) => next(),
+jest.mock('../../src/auth/middleware', () => ({
+  authenticate: (req: any, res: any, next: any) => next(),
+  requireAdmin: (req: any, res: any, next: any) => next(),
 }));
+
+// Mock AnalyticsService
+jest.mock('../../src/services/AnalyticsService', () => ({
+  AnalyticsService: {
+    getInstance: jest.fn(),
+  },
+}));
+
+const mockAnalyticsServiceInstance = {
+  getStats: jest.fn().mockReturnValue({
+    learningProgress: 50,
+    behaviorPatternsCount: 3,
+    userSegmentsCount: 2,
+    totalMessages: 100,
+    totalErrors: 5,
+    avgProcessingTime: 500,
+    activeBots: 2,
+    activeUsers: 10,
+  }),
+  getBehaviorPatterns: jest.fn().mockReturnValue([
+    { id: 'pattern-1', name: 'Test Pattern', description: 'Test', frequency: 0.5, confidence: 0.8, trend: 'stable', segments: [], recommendedWidgets: [], priority: 1 },
+  ]),
+  getUserSegments: jest.fn().mockReturnValue([
+    { id: 'segment-1', name: 'Test Segment', description: 'Test', criteria: { behaviorPatterns: [], usageFrequency: 'daily', featureUsage: [], engagementLevel: 'high' }, characteristics: { preferredWidgets: [], optimalLayout: 'grid', themePreference: 'dark', notificationFrequency: 5 }, size: 10, confidence: 0.9 },
+  ]),
+  getRecommendations: jest.fn().mockReturnValue([
+    { id: 'rec-1', type: 'widget', title: 'Test Recommendation', description: 'Test', confidence: 0.9, impact: 'high', reasoning: 'Test reasoning' },
+  ]),
+};
 
 describe('AI Dashboard Routes', () => {
   afterEach(() => {
@@ -28,7 +58,11 @@ describe('AI Dashboard Routes', () => {
   });
 
   beforeEach(() => {
+    jest.clearAllMocks();
     (DatabaseManager as any).instance = undefined;
+
+    const { AnalyticsService } = require('../../src/services/AnalyticsService');
+    (AnalyticsService.getInstance as jest.Mock).mockReturnValue(mockAnalyticsServiceInstance);
 
     app = express();
     app.use(express.json());

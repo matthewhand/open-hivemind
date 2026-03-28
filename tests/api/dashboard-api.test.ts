@@ -31,6 +31,26 @@ jest.mock('../../src/server/services/WebSocketService', () => ({
   },
 }));
 
+jest.mock('../../src/services/AnalyticsService', () => ({
+  AnalyticsService: {
+    getInstance: jest.fn().mockReturnValue({
+      getStats: jest.fn().mockReturnValue({
+        learningProgress: 50,
+        behaviorPatternsCount: 3,
+        userSegmentsCount: 2,
+        totalMessages: 100,
+        totalErrors: 5,
+        avgProcessingTime: 500,
+        activeBots: 2,
+        activeUsers: 10,
+      }),
+      getBehaviorPatterns: jest.fn().mockReturnValue([]),
+      getUserSegments: jest.fn().mockReturnValue([]),
+      getRecommendations: jest.fn().mockReturnValue([]),
+    }),
+  },
+}));
+
 describe('Dashboard API Endpoints - COMPLETE TDD SUITE', () => {
   let app: express.Application;
   let mockBotConfigManager: jest.Mocked<BotConfigurationManager>;
