@@ -208,6 +208,8 @@ export interface BotConfig {
   mcpServers?: McpServerConfig[];
   /** MCP tool usage guard configuration */
   mcpGuard?: McpGuardConfig;
+  /** Tool profile keys listing which tool profiles to enable for this bot */
+  toolProfiles?: string[];
   /** Rate limiter configuration */
   rateLimit?: {
     enabled: boolean;

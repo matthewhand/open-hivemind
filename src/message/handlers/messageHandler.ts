@@ -4,6 +4,7 @@ import { ErrorHandler } from '@src/common/errors/ErrorHandler';
 import { PerformanceMonitor } from '@src/common/errors/PerformanceMonitor';
 import { getLlmProvider } from '@src/llm/getLlmProvider';
 import { InputSanitizer } from '@src/utils/InputSanitizer';
+import { toolAugmentedCompletion } from '@src/services/toolAugmentedCompletion';
 import { generateChatCompletionDirect } from '@integrations/openwebui/directClient';
 import { ChannelDelayManager } from '@message/helpers/handler/ChannelDelayManager';
 import type { IMessage } from '@message/interfaces/IMessage';
@@ -359,17 +360,34 @@ export async function handleMessage(
             systemPrompt
           );
         } else {
-          llmResponse = await llmProvider.generateChatCompletion(
-            processedMessage,
-            trimmedHistory.trimmed,
-            {
+          // Use tool-augmented completion which transparently handles
+          // tool calling when the bot has MCP servers configured, and
+          // falls back to the standard path when there are no tools.
+          const botNameForTools = botConfig.name || botConfig.BOT_ID || '';
+          const toolResult = await toolAugmentedCompletion({
+            botName: botNameForTools,
+            llmProvider,
+            userMessage: processedMessage,
+            historyMessages: trimmedHistory.trimmed,
+            metadata: {
               systemPrompt,
               maxTokens: Number(botConfig.LLM_MAX_TOKENS || 150),
               temperature: Number(botConfig.LLM_TEMPERATURE || 0.7),
               channelId: message.getChannelId(),
               userId: message.getAuthorId(),
-            }
-          );
+            },
+            systemPrompt,
+            toolContext: {
+              userId: message.getAuthorId(),
+              channelId: message.getChannelId(),
+              messageProvider: providerType,
+            },
+          });
+          // Normalise to { text: string } so the downstream `.text` checks work
+          // regardless of whether the provider returned a string or an object.
+          llmResponse = typeof toolResult === 'string'
+            ? { text: toolResult }
+            : toolResult;
         }
 
         stopTyping = true;
