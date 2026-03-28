@@ -1,5 +1,19 @@
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
-import type { Tenant } from '../../enterprise/MultiTenantProvider';
+
+/** Tenant type -- formerly in enterprise/MultiTenantProvider (removed as dead code). */
+export interface Tenant {
+  id: string;
+  name: string;
+  domain: string;
+  plan: 'free' | 'pro' | 'enterprise';
+  maxBots: number;
+  maxUsers: number;
+  storageQuota: number;
+  features: string[];
+  isActive: boolean;
+  createdAt: string;
+  expiresAt?: string;
+}
 
 const getStorage = () => {
   try {
