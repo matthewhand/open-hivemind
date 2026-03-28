@@ -7,7 +7,7 @@ import PageHeader from '../components/DaisyUI/PageHeader';
 import SearchFilterBar from '../components/SearchFilterBar';
 import EmptyState from '../components/DaisyUI/EmptyState';
 import { SkeletonTableLayout } from '../components/DaisyUI/Skeleton';
-import { CommaSeparatedInput } from '../components/Common/CommaSeparatedInput';
+import { CommaSeparatedInput } from '../components/DaisyUI/CommaSeparatedInput';
 import Input from '../components/DaisyUI/Input';
 import Textarea from '../components/DaisyUI/Textarea';
 import Select from '../components/DaisyUI/Select';
