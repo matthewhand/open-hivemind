@@ -1,7 +1,11 @@
 import { createCipheriv, createDecipheriv, randomBytes, scryptSync } from 'crypto';
 import { promises as fs } from 'fs';
 <<<<<<< HEAD
+<<<<<<< HEAD
 import { basename, join } from 'path';
+=======
+import * as path from 'path';
+>>>>>>> af29c671d (🔒 fix: path traversal hardening for backups and templates (final v2))
 =======
 import * as path from 'path';
 >>>>>>> af29c671d (🔒 fix: path traversal hardening for backups and templates (final v2))
@@ -950,8 +954,13 @@ export class ConfigurationImportExportService {
    */
   private getSafeBackupPath(name: string, createdAt: Date): string {
 <<<<<<< HEAD
+<<<<<<< HEAD
     const sanitizedName = PathSecurityUtils.sanitizeFilename(name);
     const backupFileName = `backup-${sanitizedName}-${createdAt.getTime()}.json.gz`;
+=======
+    const backupFileName = `backup-${path.basename(name)}-${createdAt.getTime()}.json.gz`;
+    const backupPath = path.join(this.backupsDir, backupFileName);
+>>>>>>> af29c671d (🔒 fix: path traversal hardening for backups and templates (final v2))
 =======
     const backupFileName = `backup-${path.basename(name)}-${createdAt.getTime()}.json.gz`;
     const backupPath = path.join(this.backupsDir, backupFileName);
