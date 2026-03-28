@@ -7,7 +7,6 @@ import Input from './DaisyUI/Input';
 import Select from './DaisyUI/Select';
 import Textarea from './DaisyUI/Textarea';
 import Modal from './DaisyUI/Modal';
-import { Loading } from './DaisyUI/Loading';
 import Tooltip from './DaisyUI/Tooltip';
 import Badge from './DaisyUI/Badge';
 import {
@@ -127,6 +126,20 @@ const ConfigurationEditor: React.FC<ConfigurationEditorProps> = ({ bot, onSave }
 
   const hasEnvironmentOverrides = bot?.envOverrides && Object.keys(bot.envOverrides).length > 0;
 
+  const EnvOverrideLabel = () => hasEnvironmentOverrides ? (
+    <label className="label">
+      <span className="label-text-alt">
+        <Lock className="w-3 h-3 inline mr-1" />
+        Controlled by environment variables
+      </span>
+    </label>
+  ) : null;
+
+  const envOverrideProps = hasEnvironmentOverrides ? {
+    disabled: true,
+    className: 'bg-base-200'
+  } : {};
+
   if (!bot) {
     return (
       <div className="flex justify-center items-center min-h-[200px]">
@@ -228,17 +241,9 @@ const ConfigurationEditor: React.FC<ConfigurationEditorProps> = ({ bot, onSave }
                 value={config.messageProvider}
                 onChange={(e) => setConfig(prev => ({ ...prev, messageProvider: e.target.value }))}
                 placeholder="Select message provider"
-                disabled={hasEnvironmentOverrides}
-                className={hasEnvironmentOverrides ? 'bg-base-200' : ''}
+                {...envOverrideProps}
               />
-              {hasEnvironmentOverrides && (
-                <label className="label">
-                  <span className="label-text-alt">
-                    <Lock className="w-3 h-3 inline mr-1" />
-                    Controlled by environment variables
-                  </span>
-                </label>
-              )}
+              <EnvOverrideLabel />
             </div>
 
             <div className="form-control w-full">
@@ -253,17 +258,9 @@ const ConfigurationEditor: React.FC<ConfigurationEditorProps> = ({ bot, onSave }
                 value={config.llmProvider}
                 onChange={(e) => setConfig(prev => ({ ...prev, llmProvider: e.target.value }))}
                 placeholder="Select LLM provider"
-                disabled={hasEnvironmentOverrides}
-                className={hasEnvironmentOverrides ? 'bg-base-200' : ''}
+                {...envOverrideProps}
               />
-              {hasEnvironmentOverrides && (
-                <label className="label">
-                  <span className="label-text-alt">
-                    <Lock className="w-3 h-3 inline mr-1" />
-                    Controlled by environment variables
-                  </span>
-                </label>
-              )}
+              <EnvOverrideLabel />
             </div>
 
             <div className="form-control w-full">
@@ -277,17 +274,9 @@ const ConfigurationEditor: React.FC<ConfigurationEditorProps> = ({ bot, onSave }
                 value={config.persona}
                 onChange={(e) => setConfig(prev => ({ ...prev, persona: e.target.value }))}
                 placeholder="Enter persona name"
-                disabled={hasEnvironmentOverrides}
-                className={hasEnvironmentOverrides ? 'bg-base-200' : ''}
+                {...envOverrideProps}
               />
-              {hasEnvironmentOverrides && (
-                <label className="label">
-                  <span className="label-text-alt">
-                    <Lock className="w-3 h-3 inline mr-1" />
-                    Controlled by environment variables
-                  </span>
-                </label>
-              )}
+              <EnvOverrideLabel />
             </div>
 
             <div className="form-control w-full">
@@ -319,17 +308,9 @@ const ConfigurationEditor: React.FC<ConfigurationEditorProps> = ({ bot, onSave }
               onChange={(e) => setConfig(prev => ({ ...prev, systemInstruction: e.target.value }))}
               placeholder="Enter custom system instructions to override or extend the persona"
               rows={4}
-              disabled={hasEnvironmentOverrides}
-              className={hasEnvironmentOverrides ? 'bg-base-200' : ''}
+              {...envOverrideProps}
             />
-            {hasEnvironmentOverrides && (
-              <label className="label">
-                <span className="label-text-alt">
-                  <Lock className="w-3 h-3 inline mr-1" />
-                  Controlled by environment variables
-                </span>
-              </label>
-            )}
+            <EnvOverrideLabel />
           </div>
         </div>
       </Card>
@@ -385,7 +366,7 @@ const ConfigurationEditor: React.FC<ConfigurationEditorProps> = ({ bot, onSave }
               <p className="mb-2">This bot configuration is partially controlled by environment variables:</p>
               <div className="space-y-1">
                 {Object.entries(bot.envOverrides!)
-                  .map(([key, value]) => (
+                  .map(([key]) => (
                     <div key={key} className="flex items-center gap-2 text-xs">
                       <Lock className="w-3 h-3" />
                       <code className="bg-base-300 px-2 py-1 rounded">{key}</code>
