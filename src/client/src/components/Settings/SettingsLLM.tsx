@@ -5,6 +5,7 @@ import Button from '../DaisyUI/Button';
 import Select from '../DaisyUI/Select';
 import { Bot, Link as LinkIcon } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { safeArray } from '../../utils/safeArray';
 import axios from 'axios';
 
 interface LLMConfig {
@@ -34,7 +35,7 @@ const SettingsLLM: React.FC = () => {
 
             // Fetch available LLM providers from the API
             const providersRes = await axios.get('/api/admin/llm-providers');
-            const availableProviders = providersRes.data.providers || [];
+            const availableProviders = safeArray<any>(providersRes.data?.providers || providersRes.data);
             const options = availableProviders.map((p: any) => ({
                 value: p.key,
                 label: p.label,

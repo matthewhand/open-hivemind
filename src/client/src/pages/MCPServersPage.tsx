@@ -108,7 +108,7 @@ const MCPServersPage: React.FC = () => {
       const data = await response.json();
 
       // Map API response to MCPServer format
-      const connectedServers: MCPServer[] = (data.data?.servers || []).map(
+      const connectedServers: MCPServer[] = safeArray<any>(data.data?.servers).map(
         (server: any, index: number) => ({
           id: server.name || `server-${index}`,
           name: server.name || 'Unknown',
@@ -122,7 +122,7 @@ const MCPServersPage: React.FC = () => {
       );
 
       // Also include stored configurations that might not be connected
-      const storedConfigs: MCPServer[] = (data.data?.configurations || [])
+      const storedConfigs: MCPServer[] = safeArray<any>(data.data?.configurations)
         .map((config: any, index: number) => {
           // Check if this config is already in connectedServers
           const existing = connectedServers.find((s) => s.name === config.name);

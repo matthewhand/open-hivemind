@@ -29,6 +29,7 @@ import ToastNotification, { useInfoToast } from '../components/DaisyUI/ToastNoti
 import SearchFilterBar from '../components/SearchFilterBar';
 import { apiService, type Persona as ApiPersona, type Bot } from '../services/api';
 import { useApiQuery } from '../hooks/useApiQuery';
+import { safeArray } from '../utils/safeArray';
 import { useBulkSelection } from '../hooks/useBulkSelection';
 import BulkActionBar from '../components/BulkActionBar';
 
@@ -102,14 +103,14 @@ const PersonasPage: React.FC = () => {
 
   // Derive bots and personas from cached responses
   useEffect(() => {
-    const botList = configResponse?.bots || [];
+    const botList = safeArray<any>(configResponse?.bots);
     const filledBots = botList.map((b: any) => ({
       ...b,
       id: b.id || b.name,
     }));
     setBots(filledBots);
 
-    const rawPersonas = personasResponse || [];
+    const rawPersonas = safeArray<ApiPersona>(personasResponse?.data || personasResponse);
     const mappedPersonas = rawPersonas.map((p) => {
       const assigned = filledBots.filter((b: any) => b.persona === p.id || b.persona === p.name);
       return {
