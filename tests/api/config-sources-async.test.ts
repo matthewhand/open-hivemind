@@ -48,7 +48,6 @@ jest.mock('../../src/config/messageConfig', () => ({
   getSchema: () => ({}),
 }));
 jest.mock('../../src/config/openaiConfig', () => ({ getSchema: () => ({}) }));
-jest.mock('../../src/config/openWebUIConfig', () => ({ getSchema: () => ({}) }));
 jest.mock('../../src/config/slackConfig', () => ({ getSchema: () => ({}) }));
 jest.mock('../../src/config/webhookConfig', () => ({ getSchema: () => ({}) }));
 
