@@ -68,4 +68,5 @@ export { default as Pagination } from './Pagination';
 // Component Tracking
 export { trackDaisyUIComponent, daisyUITracker } from '../../utils/DaisyUIComponentTracker';
 
-export { CommaSeparatedInput } from '../Common/CommaSeparatedInput';
+export { CommaSeparatedInput } from './CommaSeparatedInput';
+export type { CommaSeparatedInputProps } from './CommaSeparatedInput';
