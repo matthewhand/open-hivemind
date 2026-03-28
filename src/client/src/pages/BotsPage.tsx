@@ -27,13 +27,20 @@ import { BotSettingsModal } from '../components/BotSettingsModal';
 import { useLocation } from 'react-router-dom';
 import { PROVIDER_CATEGORIES } from '../config/providers';
 import { BotData } from '../hooks/useBotStats';
+import useUrlParams from '../hooks/useUrlParams';
 
 const BotsPage: React.FC = () => {
   const [bots, setBots] = useState<BotConfig[]>([]);
   const [botsLoading, setBotsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [filterType, setFilterType] = useState<'all' | 'active' | 'inactive'>('all');
+  const { values: urlParams, setValue: setUrlParam } = useUrlParams({
+    search: { type: 'string', default: '', debounce: 300 },
+    status: { type: 'string', default: 'all' },
+  });
+  const searchQuery = urlParams.search;
+  const setSearchQuery = (v: string) => setUrlParam('search', v);
+  const filterType = urlParams.status as 'all' | 'active' | 'inactive';
+  const setFilterType = (v: 'all' | 'active' | 'inactive') => setUrlParam('status', v);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [editingBot, setEditingBot] = useState<BotConfig | null>(null);
   const [deletingBot, setDeletingBot] = useState<BotConfig | null>(null);

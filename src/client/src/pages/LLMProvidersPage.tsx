@@ -35,6 +35,7 @@ import type { LLMProviderType } from '../types/bot';
 import { LLM_PROVIDER_CONFIGS } from '../types/bot';
 import ProviderConfigModal from '../components/ProviderConfiguration/ProviderConfigModal';
 import { apiService } from '../services/api';
+import useUrlParams from '../hooks/useUrlParams';
 import { useApiQuery } from '../hooks/useApiQuery';
 
 type LlmModelType = 'chat' | 'embedding' | 'both';
@@ -69,8 +70,14 @@ const LLMProvidersPage: React.FC = () => {
   const [perUseCaseEnabled, setPerUseCaseEnabled] = useState<boolean>(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [filterType, setFilterType] = useState('all');
+  const { values: urlParams, setValue: setUrlParam } = useUrlParams({
+    search: { type: 'string', default: '', debounce: 300 },
+    type: { type: 'string', default: 'all' },
+  });
+  const searchQuery = urlParams.search;
+  const setSearchQuery = (v: string) => setUrlParam('search', v);
+  const filterType = urlParams.type;
+  const setFilterType = (v: string) => setUrlParam('type', v);
   const [confirmModal, setConfirmModal] = useState<{
     isOpen: boolean; title: string; message: string; onConfirm: () => void;
   }>({ isOpen: false, title: '', message: '', onConfirm: () => {} });
