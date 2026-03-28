@@ -2,8 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import Card from './DaisyUI/Card';
 import Button from './DaisyUI/Button';
-import { ConfirmModal } from './DaisyUI/Modal';
-import ModalForm from './DaisyUI/ModalForm';
+import Modal, { ConfirmModal } from './DaisyUI/Modal';
 import Input from './DaisyUI/Input';
 import Textarea from './DaisyUI/Textarea';
 import { Alert } from './DaisyUI/Alert';
@@ -265,12 +264,14 @@ const PersonaManager: React.FC = () => {
       />
 
       {/* Create Persona Dialog */}
-      <ModalForm
-        open={createDialogOpen}
+      <Modal
+        isOpen={createDialogOpen}
         title="Create New Persona"
         onClose={() => setCreateDialogOpen(false)}
-        onSubmit={handleCreatePersona}
-        submitLabel="Create Persona"
+        actions={[
+          { label: 'Cancel', onClick: () => setCreateDialogOpen(false), variant: 'ghost' },
+          { label: 'Create Persona', onClick: handleCreatePersona, variant: 'primary' },
+        ]}
       >
         <div className="space-y-4">
           <div>
@@ -318,15 +319,17 @@ const PersonaManager: React.FC = () => {
             </label>
           </div>
         </div>
-      </ModalForm>
+      </Modal>
 
-      {/* Edit Persona Dialog */}
-      <ModalForm
-        open={editDialogOpen}
+      {/* Edit Persona Dialog */
+      <Modal
+        isOpen={editDialogOpen}
         title="Edit Persona"
         onClose={() => setEditDialogOpen(false)}
-        onSubmit={handleEditPersona}
-        submitLabel="Update Persona"
+        actions={[
+          { label: 'Cancel', onClick: () => setEditDialogOpen(false), variant: 'ghost' },
+          { label: 'Update Persona', onClick: handleEditPersona, variant: 'primary' },
+        ]}
       >
         <div className="space-y-4">
           <div>
@@ -375,9 +378,9 @@ const PersonaManager: React.FC = () => {
             </label>
           </div>
         </div>
-      </ModalForm>
+      </Modal>
 
-      {/* Toast Notifications */}
+      {/* Toast Notifications */
       {toast.show && (
         <div className="toast toast-bottom toast-center z-50" role="status" aria-live="polite">
           <div className={`alert ${toast.type === 'success' ? 'alert-success' : 'alert-error'}`}>
