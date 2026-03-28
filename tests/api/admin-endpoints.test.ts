@@ -301,7 +301,7 @@ describe('Admin API Endpoints - COMPLETE TDD SUITE', () => {
     it('should handle connection failures gracefully', async () => {
       const failingConfig = {
         name: 'failing-server',
-        serverUrl: 'http://invalid-url:9999',
+        serverUrl: 'http://localhost:9999', // use localhost so ssrf protection allows it in test but connect fails
         apiKey: 'test-key',
       };
 
