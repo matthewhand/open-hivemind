@@ -29,11 +29,11 @@ export { default as EmptyState } from './EmptyState';
 
 
 // Navigation Components
-export { default as DrawerNavigation } from './DrawerNavigation';
-export { default as MobileDrawer } from './MobileDrawer';
 export { default as NavbarWithSearch } from './NavbarWithSearch';
 export { default as HamburgerMenu } from './HamburgerMenu';
 export { default as Drawer } from './Drawer';
+export { EnhancedDrawer } from './Drawer';
+export type { DrawerNavItem, DrawerProps } from './Drawer';
 export { default as Menu } from './Menu';
 
 // Form & Input Components

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useMediaQuery } from '../../hooks/useResponsive';
-import EnhancedDrawer from './EnhancedDrawer';
+import { EnhancedDrawer } from './Drawer';
 import { Menu as MenuIcon, X } from 'lucide-react';
 import DemoModeBanner from '../DemoModeBanner';
 import LlmStatusBanner from '../LlmStatusBanner';
