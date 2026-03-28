@@ -321,9 +321,9 @@ const BotsPage: React.FC = () => {
         {/* Main Content: Bot List */}
         <div className={`${error && bots.length === 0 ? 'lg:col-span-3' : 'lg:col-span-2'} space-y-4`}>
           <SearchFilterBar
-            searchQuery={searchQuery}
+            searchValue={searchQuery}
             onSearchChange={setSearchQuery}
-            placeholder="Search agents by name or purpose..."
+            searchPlaceholder="Search agents by name or purpose..."
           >
             <div className="flex gap-2">
               <select
