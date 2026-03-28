@@ -95,8 +95,8 @@ export class AnalyticsService {
   /**
    * Get behavior patterns based on actual usage data
    */
-  public getBehaviorPatterns(options: ActivityFilter = {}): BehaviorPattern[] {
-    const events = this.activityLogger.getEvents({ ...options, limit: options.limit || 5000 });
+  public async getBehaviorPatterns(options: ActivityFilter = {}): Promise<BehaviorPattern[]> {
+    const events = await this.activityLogger.getEvents({ ...options, limit: options.limit || 5000 });
 
     if (events.length === 0) {
       return this.getDefaultBehaviorPatterns();
@@ -156,8 +156,8 @@ export class AnalyticsService {
   /**
    * Get user segments based on actual activity
    */
-  public getUserSegments(options: ActivityFilter = {}): UserSegment[] {
-    const events = this.activityLogger.getEvents({ ...options, limit: options.limit || 5000 });
+  public async getUserSegments(options: ActivityFilter = {}): Promise<UserSegment[]> {
+    const events = await this.activityLogger.getEvents({ ...options, limit: options.limit || 5000 });
 
     if (events.length === 0) {
       return this.getDefaultUserSegments();
@@ -244,10 +244,10 @@ export class AnalyticsService {
   /**
    * Get recommendations based on actual patterns
    */
-  public getRecommendations(options: ActivityFilter = {}): DashboardRecommendation[] {
-    const events = this.activityLogger.getEvents({ ...options, limit: options.limit || 5000 });
-    const patterns = this.getBehaviorPatterns(options);
-    const segments = this.getUserSegments(options);
+  public async getRecommendations(options: ActivityFilter = {}): Promise<DashboardRecommendation[]> {
+    const events = await this.activityLogger.getEvents({ ...options, limit: options.limit || 5000 });
+    const patterns = await this.getBehaviorPatterns(options);
+    const segments = await this.getUserSegments(options);
 
     const recommendations: DashboardRecommendation[] = [];
 
@@ -336,10 +336,10 @@ export class AnalyticsService {
   /**
    * Get analytics stats
    */
-  public getStats(options: ActivityFilter = {}): AnalyticsStats {
-    const events = this.activityLogger.getEvents({ ...options, limit: options.limit || 10000 });
-    const patterns = this.getBehaviorPatterns(options);
-    const segments = this.getUserSegments(options);
+  public async getStats(options: ActivityFilter = {}): Promise<AnalyticsStats> {
+    const events = await this.activityLogger.getEvents({ ...options, limit: options.limit || 10000 });
+    const patterns = await this.getBehaviorPatterns(options);
+    const segments = await this.getUserSegments(options);
 
     const totalMessages = events.length;
     const totalErrors = events.filter((e) => e.status === 'error' || e.status === 'timeout').length;
