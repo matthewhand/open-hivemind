@@ -7,7 +7,7 @@ import {
   Cpu, Zap, Copy, Save, X, Terminal, Globe, User, Clock,
   Key, ShieldCheck, Database, Layout, Command,
   AlertTriangle, Play, Pause, Square, Trash, MoreHorizontal, Download,
-  GripVertical, ChevronUp, ChevronDown
+  GripVertical, ChevronUp, ChevronDown, Upload
 } from 'lucide-react';
 import { useSuccessToast, useErrorToast } from '../components/DaisyUI/ToastNotification';
 import Modal, { ConfirmModal } from '../components/DaisyUI/Modal';
@@ -23,6 +23,7 @@ import { ErrorService } from '../services/ErrorService';
 import { useApiQuery } from '../hooks/useApiQuery';
 import type { BotConfig } from '../types/bot';
 import BotCard from '../components/BotManagement/BotCard';
+import ImportBotsModal from '../components/BotManagement/ImportBotsModal';
 import { CreateBotWizard } from '../components/BotManagement/CreateBotWizard';
 import { BotSettingsModal } from '../components/BotSettingsModal';
 import { useLocation } from 'react-router-dom';
@@ -59,6 +60,7 @@ const BotsPage: React.FC = () => {
 
   // Create Bot State
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
 
   // Get LLM status to check if system default is configured
   const { status: llmStatus } = useLlmStatus();
@@ -328,6 +330,37 @@ const BotsPage: React.FC = () => {
     URL.revokeObjectURL(url);
   };
 
+  const handleExportAll = useCallback(async () => {
+    try {
+      const data = await apiService.get<any>('/api/bots/export');
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `all-bots-export-${new Date().toISOString().slice(0, 10)}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+      toastSuccess('Exported all bots');
+    } catch (err) {
+      toastError('Failed to export bots');
+    }
+  }, [toastSuccess, toastError]);
+
+  const handleExportSingleBot = useCallback(async (bot: BotConfig) => {
+    try {
+      const data = await apiService.get<any>(`/api/bots/${bot.id}/export`);
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `bot-${bot.name.replace(/\s+/g, '-').toLowerCase()}-export.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      toastError('Failed to export bot');
+    }
+  }, [toastError]);
+
   // Fetch preview panel data for a bot
   const fetchPreviewActivity = useCallback(async (botId: string, limit = 20) => {
     setActivityError(null);
@@ -387,12 +420,28 @@ const BotsPage: React.FC = () => {
         description="Configure, monitor, and deploy your specialized AI agents."
         icon={<Bot className="w-8 h-8 text-primary" />}
         actions={
-          <button
-            className="btn btn-primary"
-            onClick={() => setIsCreateModalOpen(true)}
-          >
-            <Plus className="w-4 h-4 mr-2" /> Create New Bot
-          </button>
+          <div className="flex gap-2">
+            <button
+              className="btn btn-ghost btn-sm"
+              onClick={handleExportAll}
+              title="Export all bots"
+            >
+              <Download className="w-4 h-4 mr-1" /> Export All
+            </button>
+            <button
+              className="btn btn-ghost btn-sm"
+              onClick={() => setIsImportModalOpen(true)}
+              title="Import bots from file"
+            >
+              <Upload className="w-4 h-4 mr-1" /> Import
+            </button>
+            <button
+              className="btn btn-primary"
+              onClick={() => setIsCreateModalOpen(true)}
+            >
+              <Plus className="w-4 h-4 mr-2" /> Create New Bot
+            </button>
+          </div>
         }
       />
 
@@ -737,6 +786,14 @@ const BotsPage: React.FC = () => {
                       <Settings className="w-3 h-3 mr-2" /> Configuration
                     </button>
                     <button
+                      className="btn btn-sm btn-square btn-ghost"
+                      onClick={() => handleExportSingleBot(previewBot)}
+                      title="Export bot config"
+                      aria-label="Export bot config"
+                    >
+                      <Download className="w-3 h-3" />
+                    </button>
+                    <button
                       className={`btn btn-sm btn-square ${previewBot.status === 'active' ? 'btn-error btn-outline' : 'btn-success'}`}
                       onClick={() => handleToggleBotStatus(previewBot)}
                       title={previewBot.status === 'active' ? 'Deactivate' : 'Activate'}
@@ -795,6 +852,16 @@ const BotsPage: React.FC = () => {
           onViewDetails={(bot) => setPreviewBot(bot as any)}
         />
       )}
+
+      <ImportBotsModal
+        isOpen={isImportModalOpen}
+        onClose={() => setIsImportModalOpen(false)}
+        existingBotNames={bots.map(b => b.name)}
+        onImportComplete={() => {
+          setIsImportModalOpen(false);
+          fetchBots();
+        }}
+      />
 
       <ConfirmModal
         isOpen={!!deletingBot}
