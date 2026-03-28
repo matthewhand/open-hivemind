@@ -11,8 +11,8 @@ import Button from './DaisyUI/Button';
 import { SkeletonList } from './DaisyUI/Skeleton';
 import Card from './DaisyUI/Card';
 import Modal, { ConfirmModal } from './DaisyUI/Modal';
-import ResponsiveDataView from './DaisyUI/ResponsiveDataView';
-import type { RDVColumn, RowAction } from './DaisyUI/ResponsiveDataView';
+import DataTable from './DaisyUI/DataTable';
+import type { RDVColumn, RowAction } from './DaisyUI/DataTable';
 
 interface MCPServer {
   name: string;
@@ -209,7 +209,7 @@ const MCPServerManager: React.FC = () => {
 
       {error && <Alert status="error" message={error} onClose={() => setError(null)} />}
 
-      <ResponsiveDataView<MCPServer>
+      <DataTable<MCPServer>
         data={servers}
         columns={[
           {

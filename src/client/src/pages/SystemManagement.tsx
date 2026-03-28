@@ -6,8 +6,8 @@ import AlertPanel from '../components/Monitoring/AlertPanel';
 import StatusCard from '../components/Monitoring/StatusCard';
 import Modal, { ConfirmModal } from '../components/DaisyUI/Modal';
 import { useSuccessToast, useErrorToast, useWarningToast } from '../components/DaisyUI/ToastNotification';
-import ResponsiveDataView from '../components/DaisyUI/ResponsiveDataView';
-import type { RDVColumn, RowAction } from '../components/DaisyUI/ResponsiveDataView';
+import DataTable from '../components/DaisyUI/DataTable';
+import type { RDVColumn, RowAction } from '../components/DaisyUI/DataTable';
 
 interface SystemConfig {
   refreshInterval: number;
@@ -563,7 +563,7 @@ const SystemManagement: React.FC = () => {
             <div className="space-y-6">
               <h3 className="text-xl font-semibold">Backup History</h3>
 
-              <ResponsiveDataView<BackupRecord>
+              <DataTable<BackupRecord>
                 data={backups}
                 columns={[
                   {
@@ -708,7 +708,7 @@ const SystemManagement: React.FC = () => {
               <div className="card bg-base-200">
                 <div className="card-body p-4">
                   <h4 className="card-title text-sm">API Endpoints Status</h4>
-                  <ResponsiveDataView
+                  <DataTable
                     data={apiStatus?.endpoints || []}
                     columns={[
                       {
@@ -761,7 +761,7 @@ const SystemManagement: React.FC = () => {
 
                 {envOverrides ? (
                   <div className="bg-base-300 rounded-lg p-2">
-                    <ResponsiveDataView
+                    <DataTable
                       data={Object.entries(envOverrides).map(([k, v]) => ({ variable: k, value: v as string }))}
                       columns={[
                         { key: 'variable' as any, title: 'Variable', prominent: true, render: (v: string) => <span className="font-mono font-bold text-primary">{v}</span> },

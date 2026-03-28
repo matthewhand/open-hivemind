@@ -22,8 +22,8 @@ import EmptyState from '../components/DaisyUI/EmptyState';
 import StatsCards from '../components/DaisyUI/StatsCards';
 import SearchFilterBar from '../components/SearchFilterBar';
 import { apiService } from '../services/api';
-import ResponsiveDataView from '../components/DaisyUI/ResponsiveDataView';
-import type { RDVColumn, RowAction } from '../components/DaisyUI/ResponsiveDataView';
+import DataTable from '../components/DaisyUI/DataTable';
+import type { RDVColumn, RowAction } from '../components/DaisyUI/DataTable';
 import { useSuccessToast, useErrorToast } from '../components/DaisyUI/ToastNotification';
 
 interface Backup {
@@ -376,7 +376,7 @@ const ExportPage: React.FC = () => {
           />
 
           <div className="mt-4">
-            <ResponsiveDataView<Backup>
+            <DataTable<Backup>
               data={filteredBackups}
               columns={backupColumns}
               actions={backupActions}

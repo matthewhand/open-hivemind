@@ -8,8 +8,7 @@ import Badge from '../components/DaisyUI/Badge';
 import Button from '../components/DaisyUI/Button';
 import Card from '../components/DaisyUI/Card';
 import DataTable from '../components/DaisyUI/DataTable';
-import ResponsiveDataView from '../components/DaisyUI/ResponsiveDataView';
-import type { RDVColumn } from '../components/DaisyUI/ResponsiveDataView';
+import type { RDVColumn } from '../components/DaisyUI/DataTable';
 import StatsCards from '../components/DaisyUI/StatsCards';
 import Timeline from '../components/DaisyUI/Timeline';
 import Toggle from '../components/DaisyUI/Toggle';
@@ -505,7 +504,7 @@ const ActivityPage: React.FC = () => {
       ) : (
         <Card>
           {viewMode === 'table' ? (
-            <ResponsiveDataView
+            <DataTable
               data={filteredEvents}
               columns={columns}
               loading={loading}
