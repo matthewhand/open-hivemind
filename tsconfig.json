@@ -52,7 +52,9 @@
       "@hivemind/message-slack": ["packages/message-slack/src/index.ts"],
       "@hivemind/message-slack/*": ["packages/message-slack/src/*"],
       "@hivemind/message-mattermost": ["packages/message-mattermost/src/index.ts"],
-      "@hivemind/message-mattermost/*": ["packages/message-mattermost/src/*"]
+      "@hivemind/message-mattermost/*": ["packages/message-mattermost/src/*"],
+      "@hivemind/memory-mem0": ["packages/memory-mem0/src/index.ts"],
+      "@hivemind/memory-mem0/*": ["packages/memory-mem0/src/*"]
     },
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true
