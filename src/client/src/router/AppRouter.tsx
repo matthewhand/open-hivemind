@@ -51,6 +51,7 @@ const ToolProvidersPage = lazy(() => import('../pages/ToolProvidersPage'));
 const SpecsPage = lazy(() => import('../pages/SpecsPage'));
 const SpecDetailPage = lazy(() => import('../pages/SpecDetailPage'));
 const AuditPage = lazy(() => import('../pages/AuditPage'));
+const WebhookEventsPage = lazy(() => import('../pages/WebhookEventsPage'));
 
 
 interface LoadingFallbackProps {
@@ -215,6 +216,7 @@ const AppRouter: React.FC = () => {
           <Route path="specs" element={<RouteErrorBoundary pageName="Specs"><SpecsPage /></RouteErrorBoundary>} />
           <Route path="specs/:id" element={<RouteErrorBoundary pageName="Spec Detail"><SpecDetailPage /></RouteErrorBoundary>} />
           <Route path="audit" element={<RouteErrorBoundary pageName="Audit"><AuditPage /></RouteErrorBoundary>} />
+          <Route path="webhooks" element={<RouteErrorBoundary pageName="Webhook Events"><WebhookEventsPage /></RouteErrorBoundary>} />
 
 
         </Route>
