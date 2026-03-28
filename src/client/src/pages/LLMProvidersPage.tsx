@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import Logger from '../utils/logger';
 import Card from '../components/DaisyUI/Card';
 import Badge from '../components/DaisyUI/Badge';
 import {
@@ -89,7 +90,7 @@ const LLMProvidersPage: React.FC = () => {
       setPerUseCaseEnabled(!!gs.perUseCaseEnabled);
       if ((statusRes as any).libraryStatus) setLibraryStatus((statusRes as any).libraryStatus);
     } catch (err: any) {
-      console.error('Failed to load extra LLM data', err);
+      Logger.error('Failed to load extra LLM data', err);
     } finally {
       setExtraLoading(false);
     }
@@ -242,7 +243,7 @@ const LLMProvidersPage: React.FC = () => {
                   setDefaultChatbotProfile(e.target.value);
                   await saveGlobal({ defaultChatbotProfile: e.target.value }).catch(() => { });
                 }}
-                disabled={loading}
+                disabled={loading} aria-busy={loading}
               >
                 <option value="">Use System Default</option>
                 {chatProfiles.map((p) => (
@@ -270,7 +271,7 @@ const LLMProvidersPage: React.FC = () => {
                   setWebuiIntelligenceProvider(e.target.value);
                   await saveGlobal({ webuiIntelligenceProvider: e.target.value }).catch(() => { });
                 }}
-                disabled={loading}
+                disabled={loading} aria-busy={loading}
               >
                 <option value="">None (Disabled)</option>
                 {chatProfiles.map((p) => (
@@ -297,7 +298,7 @@ const LLMProvidersPage: React.FC = () => {
                   setDefaultEmbeddingProvider(e.target.value);
                   await saveLlmConfig({ DEFAULT_EMBEDDING_PROVIDER: e.target.value }).catch(() => { });
                 }}
-                disabled={loading}
+                disabled={loading} aria-busy={loading}
               >
                 <option value="">None Selected</option>
                 {embeddingProfiles.map((p) => (

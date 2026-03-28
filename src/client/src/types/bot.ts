@@ -112,7 +112,7 @@ export interface UpdatePersonaRequest {
 
 export interface ProviderModalState {
   isOpen: boolean;
-  providerType: MessageProviderType | LLMProviderType | 'message' | 'llm';
+  providerType: MessageProviderType | LLMProviderType | 'message' | 'llm' | 'memory';
   provider?: MessageProvider | LLMProvider;
   mode: 'create' | 'edit';
   botId?: string | null;

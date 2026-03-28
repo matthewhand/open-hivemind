@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import Logger from '../../utils/logger';
 import { Bot, MessageSquare, Cpu, User, Shield, ArrowRight, ArrowLeft, Check, AlertCircle, CheckCircle2 } from 'lucide-react';
 import Input from '../DaisyUI/Input';
 import Modal from '../DaisyUI/Modal';
@@ -68,7 +69,7 @@ export const CreateBotWizard: React.FC<CreateBotWizardProps> = (props) => {
                     setGuardProfiles(data.data || []);
                 }
             } catch (e) {
-                console.error('Failed to fetch guard profiles', e);
+                Logger.error('Failed to fetch guard profiles', e);
             }
         };
         fetchGuardProfiles();
@@ -83,7 +84,7 @@ export const CreateBotWizard: React.FC<CreateBotWizardProps> = (props) => {
                         setFetchedPersonas(Array.isArray(data) ? data : []);
                     }
                 } catch (e) {
-                    console.error('Failed to fetch personas', e);
+                    Logger.error('Failed to fetch personas', e);
                 }
             };
             fetchPersonas();
@@ -99,7 +100,7 @@ export const CreateBotWizard: React.FC<CreateBotWizardProps> = (props) => {
                         setFetchedLlmProfiles(data?.llm || data?.profiles?.llm || data?.data || []);
                     }
                 } catch (e) {
-                    console.error('Failed to fetch LLM profiles', e);
+                    Logger.error('Failed to fetch LLM profiles', e);
                 }
             };
             fetchLlmProfiles();
@@ -115,7 +116,7 @@ export const CreateBotWizard: React.FC<CreateBotWizardProps> = (props) => {
                         setFetchedDefaultLlmConfigured(data?.defaultConfigured ?? true);
                     }
                 } catch (e) {
-                    console.error('Failed to fetch LLM status', e);
+                    Logger.error('Failed to fetch LLM status', e);
                 }
             };
             fetchLlmStatus();

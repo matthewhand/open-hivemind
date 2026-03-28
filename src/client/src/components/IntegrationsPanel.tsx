@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useEffect, useState } from 'react';
+import Logger from '../utils/logger';
 import { Alert } from './DaisyUI/Alert';
 import Button from './DaisyUI/Button';
 import Card from './DaisyUI/Card';
@@ -118,7 +119,7 @@ const IntegrationsPanel: React.FC = () => {
       setBots(botsData?.bots || []);
       setLlmProfiles(Array.isArray(profilesData) ? profilesData : profilesData?.llm || profilesData?.profiles?.llm || []);
     } catch (err: any) {
-      console.error('IntegrationsPanel fetch error:', err);
+      Logger.error('IntegrationsPanel fetch error:', err);
       setError(err.message);
     } finally {
       setLoading(false);
@@ -605,8 +606,9 @@ const IntegrationsPanel: React.FC = () => {
         <div className="space-y-6 max-h-[70vh] overflow-y-auto px-1">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="form-control">
-              <label className="label"><span className="label-text">Provider Type</span></label>
+              <label htmlFor="integration-provider-type" className="label"><span className="label-text">Provider Type</span></label>
               <Select
+                id="integration-provider-type"
                 value={newIntegrationType}
                 onChange={(e) => {
                   const type = e.target.value;
@@ -623,12 +625,13 @@ const IntegrationsPanel: React.FC = () => {
               />
             </div>
             <div className="form-control">
-              <label className="label"><span className="label-text">Instance ID</span></label>
+              <label htmlFor="integration-instance-id" className="label"><span className="label-text">Instance ID</span></label>
               <div className="join w-full">
                 <span className="btn btn-sm btn-static join-item bg-base-200 border-base-300 font-mono text-xs px-2">
                   {newIntegrationType ? `${newIntegrationType}-` : 'type-'}
                 </span>
                 <Input
+                  id="integration-instance-id"
                   value={newIntegrationName}
                   onChange={(e) => setNewIntegrationName(e.target.value)}
                   placeholder="production"
