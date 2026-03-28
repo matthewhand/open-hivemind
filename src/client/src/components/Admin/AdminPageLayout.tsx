@@ -1,6 +1,7 @@
 import React from 'react';
 import Button from '../DaisyUI/Button';
 import { Alert } from '../DaisyUI/Alert';
+import { SkeletonList } from '../DaisyUI/Skeleton';
 import { ArrowPathIcon } from '@heroicons/react/24/outline';
 
 interface AdminPageLayoutProps {
@@ -24,8 +25,8 @@ const AdminPageLayout: React.FC<AdminPageLayoutProps> = ({
 }) => {
   if (loading) {
     return (
-      <div className="flex justify-center items-center min-h-[200px]">
-        <span className="loading loading-spinner loading-lg" aria-hidden="true"></span>
+      <div className="min-h-[200px] p-6">
+        <SkeletonList items={5} />
       </div>
     );
   }

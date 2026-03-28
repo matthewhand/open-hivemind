@@ -20,7 +20,7 @@ import {
   selectConfig,
   selectConfigError,
 } from '../store/slices/configSlice';
-import LoadingSpinnerComponent from './LoadingSpinner';
+import { SkeletonPage } from './DaisyUI/Skeleton';
 
 const ConfigManager: React.FC = () => {
   const config = useAppSelector(selectConfig);
@@ -117,7 +117,7 @@ const ConfigManager: React.FC = () => {
   });
 
   if (config.isLoading) {
-    return <LoadingSpinnerComponent message="Loading configurations..." />;
+    return <SkeletonPage variant="list" statsCount={0} />;
   }
 
   return (

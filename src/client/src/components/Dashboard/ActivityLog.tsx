@@ -3,6 +3,7 @@ import React, { useMemo, useState } from 'react';
 import Card from '../DaisyUI/Card';
 import { Alert } from '../DaisyUI/Alert';
 import Button from '../DaisyUI/Button';
+import { SkeletonTimeline } from '../DaisyUI/Skeleton';
 import { Loading } from '../DaisyUI/Loading';
 import Select from '../DaisyUI/Select';
 import { ArrowPathIcon } from '@heroicons/react/24/outline';
@@ -113,9 +114,7 @@ const ActivityLog: React.FC = () => {
         </div>
 
         {isLoading ? (
-          <div className="flex justify-center py-8">
-            <span className="loading loading-spinner loading-lg" aria-hidden="true"></span>
-          </div>
+          <SkeletonTimeline items={4} />
         ) : error ? (
           <Alert variant="error">Failed to load activity log</Alert>
         ) : (

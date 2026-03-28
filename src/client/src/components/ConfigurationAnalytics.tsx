@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import Card from './DaisyUI/Card';
 import Badge from './DaisyUI/Badge';
 import Button from './DaisyUI/Button';
+import { SkeletonGrid } from './DaisyUI/Skeleton';
 import { Alert } from './DaisyUI/Alert';
 import { Loading } from './DaisyUI/Loading';
 import {
@@ -122,8 +123,8 @@ const ConfigurationAnalytics: React.FC = () => {
 
   if (loading && metrics.length === 0) {
     return (
-      <div className="flex justify-center items-center min-h-96">
-        <span className="loading loading-spinner loading-lg" aria-hidden="true"></span>
+      <div className="min-h-96 p-4">
+        <SkeletonGrid count={4} showImage={false} />
       </div>
     );
   }

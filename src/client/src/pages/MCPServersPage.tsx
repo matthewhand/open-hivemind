@@ -13,6 +13,7 @@ import {
   WrenchScrewdriverIcon,
 } from '@heroicons/react/24/outline';
 import { Alert } from '../components/DaisyUI/Alert';
+import { SkeletonGrid } from '../components/DaisyUI/Skeleton';
 import Breadcrumbs from '../components/DaisyUI/Breadcrumbs';
 import EmptyState from '../components/DaisyUI/EmptyState';
 import Modal, { ConfirmModal } from '../components/DaisyUI/Modal';
@@ -463,9 +464,8 @@ const MCPServersPage: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="p-6 text-center">
-        <span className="loading loading-spinner loading-lg" aria-hidden="true"></span>
-        <p className="mt-2">Loading MCP servers...</p>
+      <div className="p-6">
+        <SkeletonGrid count={4} showImage={false} />
       </div>
     );
   }

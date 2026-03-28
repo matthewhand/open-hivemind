@@ -10,7 +10,7 @@ import Modal from './DaisyUI/Modal';
 import ProgressBar from './DaisyUI/ProgressBar';
 import StatsCards from './DaisyUI/StatsCards';
 import ToastNotification from './DaisyUI/ToastNotification';
-import { LoadingSpinner } from './DaisyUI/Loading';
+import { SkeletonPage } from './DaisyUI/Skeleton';
 import type { Bot, StatusResponse } from '../services/api';
 import { apiService } from '../services/api';
 import { CreateBotWizard } from './BotManagement/CreateBotWizard';
@@ -403,9 +403,7 @@ const UnifiedDashboard: React.FC = () => {
       </div>
 
       {loading ? (
-        <div className="flex justify-center py-20">
-          <LoadingSpinner size="lg" />
-        </div>
+        <SkeletonPage variant="cards" statsCount={4} />
       ) : (
         <>
           {/* Getting Started Tab */}

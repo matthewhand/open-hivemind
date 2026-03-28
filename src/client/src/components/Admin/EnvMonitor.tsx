@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import Badge from '../DaisyUI/Badge';
 import { Alert } from '../DaisyUI/Alert';
+import { SkeletonList } from '../DaisyUI/Skeleton';
 import { getEnvOverrides } from '../../services/agentService';
 import ResponsiveDataView from '../DaisyUI/ResponsiveDataView';
 
@@ -26,7 +27,7 @@ const EnvMonitor: React.FC = () => {
   }, []);
 
   if (loading) {
-    return <div className="flex justify-center items-center min-h-[200px]"><span className="loading loading-spinner loading-lg" aria-hidden="true"></span></div>;
+    return <div className="min-h-[200px] p-4"><SkeletonList items={4} /></div>;
   }
 
   if (error) {

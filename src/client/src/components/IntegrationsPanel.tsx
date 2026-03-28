@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { Alert } from './DaisyUI/Alert';
 import Button from './DaisyUI/Button';
 import Card from './DaisyUI/Card';
+import { SkeletonGrid } from './DaisyUI/Skeleton';
 import Input from './DaisyUI/Input';
 import Select from './DaisyUI/Select';
 import Toggle from './DaisyUI/Toggle';
@@ -561,9 +562,8 @@ const IntegrationsPanel: React.FC = () => {
 
   if (loading && !config) {
     return (
-      <div className="flex flex-col items-center justify-center p-12 gap-4">
-        <span className="loading loading-spinner loading-lg text-primary" aria-hidden="true" />
-        <span className="text-base-content/50">Loading integrations...</span>
+      <div className="p-6">
+        <SkeletonGrid count={4} showImage={false} />
       </div>
     );
   }

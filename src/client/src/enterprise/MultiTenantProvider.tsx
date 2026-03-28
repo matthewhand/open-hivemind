@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars, react-refresh/only-export-components, no-empty, no-case-declarations, react-hooks/rules-of-hooks */
 import React, { createContext, useState } from 'react';
+import { SkeletonPage } from '../components/DaisyUI/Skeleton';
 import { useAppDispatch } from '../store/hooks';
 import { setCurrentTenant as setReduxCurrentTenant } from '../store/slices/authSlice';
 import { useAuth } from '../contexts/AuthContext';
@@ -248,11 +249,8 @@ export const MultiTenantProvider: React.FC<MultiTenantProviderProps> = ({ childr
   if (availableTenants.length === 0) {
     return (
       <AnimatedBox animation="fade-in" duration={300}>
-        <div className="min-h-screen flex items-center justify-center bg-base-200">
-          <div className="flex flex-col items-center gap-4">
-            <span className="loading loading-spinner loading-lg text-primary" aria-hidden="true"></span>
-            <p className="text-base-content/70">Setting up your organization...</p>
-          </div>
+        <div className="min-h-screen bg-base-200 p-6">
+          <SkeletonPage variant="cards" statsCount={3} />
         </div>
       </AnimatedBox>
     );

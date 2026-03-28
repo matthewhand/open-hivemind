@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useEffect, useRef, useState, useCallback } from 'react';
+import { SkeletonGrid } from '../components/DaisyUI/Skeleton';
 import { useAppSelector } from '../store/hooks';
 import { selectDashboard } from '../store/slices/dashboardSlice';
 import { AnimatedBox } from '../animations/AnimationComponents';
@@ -352,9 +353,8 @@ export const ThreeJSNetwork: React.FC<ThreeJSNetworkProps> = ({
           borderRadius: 2,
         }}
       >
-        <div className="flex flex-col items-center gap-2">
-          <span className="loading loading-spinner loading-lg" aria-hidden="true"></span>
-          <p>Loading 3D Network Visualization...</p>
+        <div className="p-4 w-full">
+          <SkeletonGrid count={3} showImage={false} columns="grid-cols-1" />
         </div>
       </AnimatedBox>
     );

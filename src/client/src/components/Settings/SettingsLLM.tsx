@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Alert } from '../DaisyUI/Alert';
 import Button from '../DaisyUI/Button';
+import { SkeletonList } from '../DaisyUI/Skeleton';
 import Select from '../DaisyUI/Select';
 import { Bot, Link as LinkIcon } from 'lucide-react';
 import { Link } from 'react-router-dom';
@@ -80,8 +81,8 @@ const SettingsLLM: React.FC = () => {
 
     if (loading) {
         return (
-            <div className="flex items-center justify-center py-12">
-                <span className="loading loading-spinner loading-lg" aria-hidden="true"></span>
+            <div className="py-6 px-4">
+                <SkeletonList items={4} />
             </div>
         );
     }

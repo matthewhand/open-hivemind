@@ -25,6 +25,7 @@ import { format, subDays, subHours } from 'date-fns';
 import Badge from '../DaisyUI/Badge';
 import { Alert } from '../DaisyUI/Alert';
 import Button from '../DaisyUI/Button';
+import { SkeletonTableLayout } from '../DaisyUI/Skeleton';
 import Pagination from '../DaisyUI/Pagination';
 import ResponsiveDataView from '../DaisyUI/ResponsiveDataView';
 
@@ -434,9 +435,7 @@ const ActivityMonitor: React.FC = () => {
           </div>
 
           {loading ? (
-            <div className="flex justify-center py-8">
-              <span className="loading loading-spinner loading-lg" aria-hidden="true"></span>
-            </div>
+            <SkeletonTableLayout rows={6} columns={5} />
           ) : (
             <ResponsiveDataView
               data={activities}

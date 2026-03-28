@@ -5,6 +5,7 @@ import ChatInterface, { ChatMessage } from '../components/DaisyUI/Chat';
 import { BotAvatar } from '../components/BotAvatar';
 import { RefreshCw, MessageSquare, Cpu, Check, ChevronDown, Menu as MenuIcon, X } from 'lucide-react';
 import EmptyState from '../components/DaisyUI/EmptyState';
+import { SkeletonList, SkeletonMessageList } from '../components/DaisyUI/Skeleton';
 import { useSuccessToast, useErrorToast } from '../components/DaisyUI/ToastNotification';
 import { useMediaQuery } from '../hooks/useResponsive';
 
@@ -252,7 +253,7 @@ const ChatPage: React.FC = () => {
           </div>
           <div className="flex-1 overflow-y-auto">
             {loading && bots.length === 0 ? (
-              <div className="flex justify-center p-4"><span className="loading loading-spinner" aria-hidden="true" /></div>
+              <div className="p-4"><SkeletonList items={4} showAvatar /></div>
             ) : (
               <ul className="menu w-full p-2 gap-1">
                 {bots.map(bot => (
@@ -344,8 +345,8 @@ const ChatPage: React.FC = () => {
           {selectedBot ? (
             <div className="flex-1 flex flex-col h-full relative">
               {historyLoading && (
-                <div className="absolute inset-0 bg-base-100/50 z-20 flex items-center justify-center">
-                  <span className="loading loading-spinner loading-lg text-primary" aria-hidden="true"></span>
+                <div className="absolute inset-0 bg-base-100/50 z-20">
+                  <SkeletonMessageList messages={4} />
                 </div>
               )}
               <ChatInterface

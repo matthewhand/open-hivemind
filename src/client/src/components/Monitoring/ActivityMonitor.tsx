@@ -4,7 +4,7 @@ import Card from '../DaisyUI/Card';
 import Badge from '../DaisyUI/Badge';
 import Button from '../DaisyUI/Button';
 import DataTable from '../DaisyUI/DataTable';
-import { LoadingSpinner } from '../DaisyUI/Loading';
+import { SkeletonTimeline } from '../DaisyUI/Skeleton';
 import EmptyState from '../DaisyUI/EmptyState';
 import StatsCards from '../DaisyUI/StatsCards';
 import SearchFilterBar from '../SearchFilterBar';
@@ -319,9 +319,7 @@ const ActivityMonitor: React.FC = () => {
       </SearchFilterBar>
 
       {loading && !allMessages.length ? (
-         <div className="flex justify-center py-12">
-           <LoadingSpinner size="lg" />
-         </div>
+         <SkeletonTimeline items={5} />
       ) : filteredMessages.length === 0 ? (
         <EmptyState
           icon={Activity}

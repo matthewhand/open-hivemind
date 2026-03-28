@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useEffect, useRef, useState } from 'react';
+import { SkeletonGrid } from '../components/DaisyUI/Skeleton';
 import * as d3 from 'd3';
 import { useAppSelector } from '../store/hooks';
 import { selectPerformance } from '../store/slices/performanceSlice';
@@ -366,9 +367,8 @@ export const D3Analytics: React.FC<D3AnalyticsProps> = ({
           borderRadius: 2,
         }}
       >
-        <div className="flex flex-col items-center gap-2">
-          <span className="loading loading-spinner loading-lg" aria-hidden="true"></span>
-          <p>Loading Analytics Charts...</p>
+        <div className="p-4 w-full">
+          <SkeletonGrid count={4} showImage={false} columns="grid-cols-1 md:grid-cols-2" />
         </div>
       </AnimatedBox>
     );

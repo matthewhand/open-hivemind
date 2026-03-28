@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import { Alert } from './DaisyUI/Alert';
 import { Loading } from './DaisyUI/Loading';
+import { SkeletonList } from './DaisyUI/Skeleton';
 import Badge from './DaisyUI/Badge';
 import Input from './DaisyUI/Input';
 import Accordion from './DaisyUI/Accordion';
@@ -105,8 +106,8 @@ const ConfigViewer: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center min-h-[400px]">
-        <span className="loading loading-spinner loading-lg" aria-hidden="true"></span>
+      <div className="min-h-[400px] p-4">
+        <SkeletonList items={6} />
       </div>
     );
   }

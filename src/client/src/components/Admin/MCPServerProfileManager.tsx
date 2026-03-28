@@ -3,6 +3,7 @@ import { PlusIcon, PencilIcon, TrashIcon, ServerStackIcon } from '@heroicons/rea
 import Button from '../DaisyUI/Button';
 import Modal from '../DaisyUI/Modal';
 import Card from '../DaisyUI/Card';
+import { SkeletonList } from '../DaisyUI/Skeleton';
 import { Alert } from '../DaisyUI/Alert';
 import Badge from '../DaisyUI/Badge';
 
@@ -152,8 +153,8 @@ const MCPServerProfileManager: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center py-12">
-        <span className="loading loading-spinner loading-lg" aria-hidden="true"></span>
+      <div className="py-6 px-4">
+        <SkeletonList items={4} />
       </div>
     );
   }

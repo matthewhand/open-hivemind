@@ -3,6 +3,7 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Breadcrumbs from '../components/DaisyUI/Breadcrumbs';
 import EmptyState from '../components/DaisyUI/EmptyState';
+import { SkeletonGrid } from '../components/DaisyUI/Skeleton';
 import { Copy, Check, Search } from 'lucide-react';
 import Carousel from '../components/DaisyUI/Carousel';
 import SearchFilterBar from '../components/SearchFilterBar';
@@ -169,9 +170,8 @@ const BotTemplatesPage: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="p-6 text-center">
-        <span className="loading loading-spinner loading-lg" aria-hidden="true"></span>
-        <p className="mt-2">Loading templates...</p>
+      <div className="p-6">
+        <SkeletonGrid count={6} showImage />
       </div>
     );
   }

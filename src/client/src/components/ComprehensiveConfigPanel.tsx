@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { Alert } from './DaisyUI/Alert';
 import Button from './DaisyUI/Button';
 import Card from './DaisyUI/Card';
+import { SkeletonList } from './DaisyUI/Skeleton';
 import Input from './DaisyUI/Input';
 import Select from './DaisyUI/Select';
 import Toggle from './DaisyUI/Toggle';
@@ -200,7 +201,7 @@ const ComprehensiveConfigPanel: React.FC = () => {
     );
   };
 
-  if (loading) {return <div className="flex justify-center p-8"><span className="loading loading-spinner loading-lg" aria-hidden="true"></span></div>;}
+  if (loading) {return <div className="p-8"><SkeletonList items={5} /></div>;}
   if (error) {return <Alert status="error" message={error} />;}
   if (!config) {return <Alert status="warning" message="No configuration found" />;}
 
