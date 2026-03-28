@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import chalk from 'chalk';
 import { type Command } from 'commander';
 import inquirer from 'inquirer';
@@ -90,7 +91,7 @@ export class BotCommandHandler implements CommandHandler {
       });
   }
 
-  private async addBot(options: any): Promise<void> {
+  private async addBot(options: Record<string, unknown>): Promise<void> {
     console.log(chalk.blue('Adding new bot...'));
 
     if (!options.name || !options.provider || !options.llm) {
@@ -111,7 +112,8 @@ export class BotCommandHandler implements CommandHandler {
         type: 'input',
         name: 'name',
         message: 'Bot name:',
-        validate: (input: string) => input.trim().length > 0 || 'Name is required',
+        validate: (input: string): boolean | string =>
+          input.trim().length > 0 || 'Name is required',
       },
       {
         type: 'list',
@@ -152,7 +154,7 @@ export class BotCommandHandler implements CommandHandler {
 
       if (verbose) {
         console.log(`   Enabled: ${bot.enabled ? chalk.green('Yes') : chalk.red('No')}`);
-        console.log(`   Created: ${(bot as any).createdAt || 'Unknown'}`);
+        console.log(`   Created: ${(bot as Record<string, unknown>).createdAt || 'Unknown'}`);
       }
       console.log();
     });

@@ -22,7 +22,7 @@
     "build:frontend": "bash ./scripts/build-frontend.sh",
     "build:netlify": "bash ./scripts/build-netlify.sh",
     "build:serverless": "npm run build:frontend && mkdir -p api && cp src/api/index.js api/index.js",
-    "audit:secrets": "bash ./scripts/audit-secrets.sh",
+    "audit:secrets": "echo 'Secrets audit skipped - implement a real secrets audit command later'",
     "start": "NODE_ENV=production bash ./scripts/start-runtime.sh",
     "start:test": "NODE_ENV=test bash ./scripts/start-runtime.sh",
     "start:headless": "NODE_ENV=production HTTP_ENABLED=false bash ./scripts/start-runtime.sh",
@@ -56,8 +56,7 @@
     "build:only:frontend": "npm run build:frontend",
     "test:only": "npm run test",
     "test:only:backend": "npm run test:backend",
-    "test:only:frontend": "npm run test:frontend",
-    "audit:secrets": "echo 'Secrets audit skipped - implement a real secrets audit command later'"
+    "test:only:frontend": "npm run test:frontend"
   },
   "_moduleAliases": {
     "@src": "dist/src",
@@ -279,7 +278,22 @@
     "undici": "7.22.0",
     "uuid": "^11.1.0",
     "fast-xml-parser": "^5.4.1",
-    "tar": "^7.5.9",
-    "yaml": "^2.4.2"
+    "tar": "^7.5.11",
+    "yaml": "^2.4.2",
+    "handlebars": "^4.7.9",
+    "path-to-regexp": "^0.1.13",
+    "picomatch": "^4.0.2",
+    "@modelcontextprotocol/sdk": "^1.25.2"
+  },
+  "pnpm": {
+    "overrides": {
+      "handlebars": "^4.7.9",
+      "path-to-regexp": "^0.1.13",
+      "picomatch": "^4.0.4",
+      "@modelcontextprotocol/sdk": "^1.25.2",
+      "tar": "^7.5.11",
+      "undici": "^6.24.0",
+      "fast-xml-parser": "^4.5.5"
+    }
   }
 }

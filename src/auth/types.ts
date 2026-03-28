@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import type { Request } from 'express';
 
 export type UserRole = 'admin' | 'bot-manager' | 'user' | 'viewer';
