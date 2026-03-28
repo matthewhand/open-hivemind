@@ -79,6 +79,7 @@ module.exports = {
     '^pg$': '<rootDir>/tests/mocks/pg.js',
     '^@modelcontextprotocol/sdk$': '<rootDir>/tests/mocks/modelcontextprotocol-sdk.ts',
   },
+  setupFiles: ["<rootDir>/tests/accessibility/jsdom-polyfills.ts"],
   setupFilesAfterEnv: ['<rootDir>/tests/jest.setup.ts'],
   testPathIgnorePatterns: [
     '/node_modules/',
