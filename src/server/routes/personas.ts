@@ -64,12 +64,7 @@ router.put('/reorder', validateRequest(ReorderSchema), (req, res) => {
 
     const fsModule = require('fs');
     const pathModule = require('path');
-    const orderFilePath = pathModule.join(
-      process.cwd(),
-      'config',
-      'user',
-      'persona-order.json',
-    );
+    const orderFilePath = pathModule.join(process.cwd(), 'config', 'user', 'persona-order.json');
     const orderDir = pathModule.dirname(orderFilePath);
     if (!fsModule.existsSync(orderDir)) {
       fsModule.mkdirSync(orderDir, { recursive: true });
@@ -80,7 +75,7 @@ router.put('/reorder', validateRequest(ReorderSchema), (req, res) => {
   } catch (error: unknown) {
     logger.error(
       'Failed to reorder personas',
-      error instanceof Error ? error : new Error(String(error)),
+      error instanceof Error ? error : new Error(String(error))
     );
     return res
       .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)

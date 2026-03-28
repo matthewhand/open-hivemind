@@ -1,7 +1,10 @@
 import Debug from 'debug';
 import { Router, type Request, type Response } from 'express';
 import { webUIStorage } from '../../storage/webUIStorage';
-import { ToggleGuardSchema, UpdateAccessControlSchema } from '../../validation/schemas/guardsSchema';
+import {
+  ToggleGuardSchema,
+  UpdateAccessControlSchema,
+} from '../../validation/schemas/guardsSchema';
 import { validateRequest } from '../../validation/validateRequest';
 
 const router = Router();

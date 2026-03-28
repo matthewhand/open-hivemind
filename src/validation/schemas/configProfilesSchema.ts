@@ -2,15 +2,9 @@ import { z } from 'zod';
 
 // ── Shared profile schema shapes ─────────────────────────────────────────────
 
-const profileKeyField = z
-  .string()
-  .min(1, { message: 'Profile key is required' })
-  .max(100);
+const profileKeyField = z.string().min(1, { message: 'Profile key is required' }).max(100);
 
-const profileNameField = z
-  .string()
-  .min(1, { message: 'Profile name is required' })
-  .max(200);
+const profileNameField = z.string().min(1, { message: 'Profile name is required' }).max(200);
 
 const profileProviderField = z
   .string()

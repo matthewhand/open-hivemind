@@ -10,13 +10,13 @@ const router = Router();
 export interface WebhookEvent {
   id: string;
   timestamp: string;
-  source: string;        // discord, slack, mattermost, telegram, generic
-  endpoint: string;      // the path that was hit
+  source: string; // discord, slack, mattermost, telegram, generic
+  endpoint: string; // the path that was hit
   method: string;
   statusCode: number;
-  duration: number;      // ms
+  duration: number; // ms
   payloadPreview: string; // first N chars of the JSON body
-  payload: unknown;      // full payload (stored in memory)
+  payload: unknown; // full payload (stored in memory)
   headers: Record<string, string>;
   error?: string;
 }
@@ -57,7 +57,9 @@ export function recordWebhookEvent(opts: {
     method: opts.method,
     statusCode: opts.statusCode,
     duration: opts.duration,
-    payloadPreview: payloadStr.slice(0, PAYLOAD_PREVIEW_LENGTH) + (payloadStr.length > PAYLOAD_PREVIEW_LENGTH ? '...' : ''),
+    payloadPreview:
+      payloadStr.slice(0, PAYLOAD_PREVIEW_LENGTH) +
+      (payloadStr.length > PAYLOAD_PREVIEW_LENGTH ? '...' : ''),
     payload: opts.payload ?? null,
     headers: opts.headers ?? {},
     error: opts.error,
@@ -81,20 +83,20 @@ router.get('/events', (req, res) => {
     let filtered = events;
 
     if (source) {
-      filtered = filtered.filter(e => e.source.toLowerCase() === source.toLowerCase());
+      filtered = filtered.filter((e) => e.source.toLowerCase() === source.toLowerCase());
     }
     if (status === 'success') {
-      filtered = filtered.filter(e => e.statusCode >= 200 && e.statusCode < 400);
+      filtered = filtered.filter((e) => e.statusCode >= 200 && e.statusCode < 400);
     } else if (status === 'failed') {
-      filtered = filtered.filter(e => e.statusCode >= 400);
+      filtered = filtered.filter((e) => e.statusCode >= 400);
     }
     if (startDate) {
       const start = new Date(startDate).getTime();
-      filtered = filtered.filter(e => new Date(e.timestamp).getTime() >= start);
+      filtered = filtered.filter((e) => new Date(e.timestamp).getTime() >= start);
     }
     if (endDate) {
       const end = new Date(endDate).getTime();
-      filtered = filtered.filter(e => new Date(e.timestamp).getTime() <= end);
+      filtered = filtered.filter((e) => new Date(e.timestamp).getTime() <= end);
     }
 
     const total = filtered.length;
@@ -124,7 +126,7 @@ router.get('/events', (req, res) => {
 
 router.get('/events/:id', (req, res) => {
   try {
-    const event = events.find(e => e.id === req.params.id);
+    const event = events.find((e) => e.id === req.params.id);
     if (!event) {
       return res.status(404).json({ success: false, error: 'Event not found' });
     }
@@ -139,7 +141,7 @@ router.get('/events/:id', (req, res) => {
 
 router.post('/events/:id/retry', async (req, res) => {
   try {
-    const original = events.find(e => e.id === req.params.id);
+    const original = events.find((e) => e.id === req.params.id);
     if (!original) {
       return res.status(404).json({ success: false, error: 'Event not found' });
     }

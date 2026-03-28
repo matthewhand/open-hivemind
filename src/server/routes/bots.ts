@@ -2,7 +2,6 @@ import { Router } from 'express';
 import { createLogger } from '../../common/StructuredLogger';
 import { BotManager, type CreateBotRequest } from '../../managers/BotManager';
 import { ERROR_CODES, HTTP_STATUS } from '../../types/constants';
-import { ReorderSchema } from '../../validation/schemas/commonSchema';
 import {
   BotActivityQuerySchema,
   BotHistoryQuerySchema,
@@ -11,6 +10,7 @@ import {
   CreateBotSchema,
   UpdateBotSchema,
 } from '../../validation/schemas/botsSchema';
+import { ReorderSchema } from '../../validation/schemas/commonSchema';
 import { validateRequest } from '../../validation/validateRequest';
 import { ActivityLogger } from '../services/ActivityLogger';
 import { WebSocketService } from '../services/WebSocketService';
@@ -109,9 +109,7 @@ router.put('/reorder', validateRequest(ReorderSchema), async (req, res) => {
       'Failed to reorder bots',
       error instanceof Error ? error : new Error(String(error))
     );
-    return res
-      .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
-      .json({ error: 'Failed to reorder bots' });
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: 'Failed to reorder bots' });
   }
 });
 
@@ -122,8 +120,13 @@ const EXPORT_SCHEMA_VERSION = 1;
 function sanitizeBotForExport(bot: any): any {
   const { envOverrides, ...rest } = bot;
   const sensitiveKeys = [
-    'token', 'apikey', 'bottoken', 'apptoken',
-    'signingsecret', 'accesstoken', 'secret',
+    'token',
+    'apikey',
+    'bottoken',
+    'apptoken',
+    'signingsecret',
+    'accesstoken',
+    'secret',
   ];
   const cleanConfig: Record<string, unknown> = {};
   if (rest.config && typeof rest.config === 'object') {
@@ -158,7 +161,10 @@ router.get('/export', async (_req, res) => {
       bots: sanitized,
     });
   } catch (error: unknown) {
-    logger.error('Failed to export bots', error instanceof Error ? error : new Error(String(error)));
+    logger.error(
+      'Failed to export bots',
+      error instanceof Error ? error : new Error(String(error))
+    );
     return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: 'Failed to export bots' });
   }
 });
@@ -186,13 +192,20 @@ router.post('/import', async (req, res) => {
   try {
     const { bots: incoming } = req.body;
     if (!Array.isArray(incoming) || incoming.length === 0) {
-      return res.status(HTTP_STATUS.BAD_REQUEST).json({ error: 'Request body must contain a non-empty "bots" array' });
+      return res
+        .status(HTTP_STATUS.BAD_REQUEST)
+        .json({ error: 'Request body must contain a non-empty "bots" array' });
     }
 
     const existingBots = await manager.getAllBots();
     const existingByName = new Map(existingBots.map((b) => [b.name.toLowerCase(), b]));
 
-    const report = { created: [] as string[], updated: [] as string[], skipped: [] as string[], errors: [] as string[] };
+    const report = {
+      created: [] as string[],
+      updated: [] as string[],
+      skipped: [] as string[],
+      errors: [] as string[],
+    };
 
     for (const bot of incoming) {
       try {
@@ -225,7 +238,10 @@ router.post('/import', async (req, res) => {
 
     return res.json({ success: true, report });
   } catch (error: unknown) {
-    logger.error('Failed to import bots', error instanceof Error ? error : new Error(String(error)));
+    logger.error(
+      'Failed to import bots',
+      error instanceof Error ? error : new Error(String(error))
+    );
     return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: 'Failed to import bots' });
   }
 });
@@ -627,7 +643,9 @@ router.get('/:id/export', validateRequest(BotIdParamSchema), async (req, res) =>
   try {
     const bot = await manager.getBot(req.params.id);
     if (!bot) {
-      return res.status(HTTP_STATUS.NOT_FOUND).json({ error: 'Bot not found', code: ERROR_CODES.NOT_FOUND });
+      return res
+        .status(HTTP_STATUS.NOT_FOUND)
+        .json({ error: 'Bot not found', code: ERROR_CODES.NOT_FOUND });
     }
     const sanitized = sanitizeBotForExport(bot);
     return res.json({
