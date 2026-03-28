@@ -1,5 +1,5 @@
 import fs from 'fs/promises';
-import path from 'path';
+import * as path from 'path';
 import { Router, type Request, type Response } from 'express';
 import { body, param, validationResult } from 'express-validator';
 import { authenticate, requireAdmin } from '../../auth/middleware';

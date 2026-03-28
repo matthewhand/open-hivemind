@@ -47,7 +47,7 @@ export const useMCPServerData = () => {
       }
       const data = await response.json();
 
-      const connectedServers: MCPServer[] = (data.data?.servers || []).map(
+      const connectedServers: MCPServer[] = (Array.isArray(data.data?.servers) ? data.data.servers : []).map(
         (server: any, index: number) => ({
           id: server.name || `server-${index}`,
           name: server.name || 'Unknown',
@@ -60,7 +60,7 @@ export const useMCPServerData = () => {
         })
       );
 
-      const storedConfigs: MCPServer[] = (data.data?.configurations || [])
+      const storedConfigs: MCPServer[] = (Array.isArray(data.data?.configurations) ? data.data.configurations : [])
         .map((config: any, index: number) => {
           const existing = connectedServers.find((s) => s.name === config.name);
           if (existing) return null;

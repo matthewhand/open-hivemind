@@ -620,7 +620,7 @@ const ProviderConfig: React.FC<ProviderConfigProps> = ({
 
       {sections.map((section, sectionIndex) => (
         <div key={sectionIndex} className="collapse collapse-arrow bg-base-200">
-          <input type="checkbox" defaultChecked />
+          <input type="checkbox" defaultChecked aria-label={`Toggle section ${section.title}`} />
           <div className="collapse-title text-xl font-medium flex items-center gap-2">
             {section.icon}
             {section.title}

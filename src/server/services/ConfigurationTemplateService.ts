@@ -1,5 +1,9 @@
 import { promises as fs } from 'fs';
+<<<<<<< HEAD
 import { join } from 'path';
+=======
+import * as path from 'path';
+>>>>>>> af29c671d (🔒 fix: path traversal hardening for backups and templates (final v2))
 import Debug from 'debug';
 import { DatabaseManager } from '../../database/DatabaseManager';
 import { ConfigurationValidator } from './ConfigurationValidator';
@@ -54,7 +58,7 @@ export class ConfigurationTemplateService {
   private constructor(templatesDir?: string) {
     this.dbManager = DatabaseManager.getInstance();
     this.configValidator = new ConfigurationValidator();
-    this.templatesDir = templatesDir || join(process.cwd(), 'config', 'templates');
+    this.templatesDir = templatesDir || path.join(process.cwd(), 'config', 'templates');
     this.ensureTemplatesDirectory();
     this.loadBuiltInTemplates();
   }

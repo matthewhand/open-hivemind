@@ -245,7 +245,7 @@ const StepWizard: React.FC<StepWizardProps> = ({
       {completedSteps.size > 0 && (
         <div className="mt-8">
           <div className="collapse collapse-arrow bg-base-200">
-            <input type="checkbox" />
+            <input type="checkbox" aria-label="Toggle Review Completed Steps" />
             <div className="collapse-title text-xl font-medium">
               Review Completed Steps ({completedSteps.size}/{steps.length})
             </div>

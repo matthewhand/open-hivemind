@@ -37,7 +37,7 @@ const SettingsLLM: React.FC = () => {
 
             // Fetch available LLM providers from the API
             const providersRes = await axios.get('/api/admin/llm-providers');
-            const availableProviders = providersRes.data.providers || [];
+            const availableProviders = Array.isArray(providersRes.data?.providers) ? providersRes.data.providers : (Array.isArray(providersRes.data) ? providersRes.data : []);
             const options = availableProviders.map((p: any) => ({
                 value: p.key,
                 label: p.label,

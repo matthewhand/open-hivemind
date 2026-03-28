@@ -403,7 +403,7 @@ const SettingsMessaging: React.FC = () => {
 
       {/* Environment Variables Reference */}
       <div className="collapse collapse-arrow bg-base-200/30">
-        <input type="checkbox" />
+        <input type="checkbox" aria-label="Toggle Environment Variables Reference" />
         <div className="collapse-title text-sm font-medium">
           Environment Variables Reference
         </div>

@@ -53,11 +53,11 @@ export const usePersonasData = () => {
   } = useApiQuery<ApiPersona[]>('/api/personas', { ttl: 30_000 });
 
   useEffect(() => {
-    const botList = configResponse?.bots || [];
+    const botList = Array.isArray(configResponse?.bots) ? configResponse?.bots : [];
     const filledBots = botList.map((b: any) => ({ ...b, id: b.id || b.name }));
     setBots(filledBots);
 
-    const rawPersonas = personasResponse || [];
+    const rawPersonas = Array.isArray(personasResponse) ? personasResponse : (personasResponse?.data || []);
     const mappedPersonas = rawPersonas.map((p) => {
       const assigned = filledBots.filter((b: any) => b.persona === p.id || b.persona === p.name);
       return {
