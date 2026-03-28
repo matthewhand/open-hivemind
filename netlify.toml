@@ -7,12 +7,6 @@
   NODE_VERSION = "20"
   PNPM_VERSION = "9.15.4"
 
-[context.deploy-preview]
-  command = "mkdir -p dist/client && echo 'Deploy skipped to save quota' > dist/client/index.html && mkdir -p dist/netlify/functions"
-
-[context.branch-deploy]
-  command = "mkdir -p dist/client && echo 'Deploy skipped to save quota' > dist/client/index.html && mkdir -p dist/netlify/functions"
-
 [dev]
   command = "npm run dev"
 

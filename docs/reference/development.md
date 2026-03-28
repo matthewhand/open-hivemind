@@ -1,6 +1,6 @@
 # Development Guide
 
-Navigation: [Docs Index](../README.md) | [User Guide](user-guide.md) | [Todo](todo.md)
+Navigation: [Docs Index](../README.md) | [User Guide](../USER_GUIDE.md) | [Todo](todo.md)
 
 
 ## Project Overview and Architecture
@@ -67,20 +67,6 @@ Open-Hivemind is an advanced, multi-agent bot ecosystem built with TypeScript. T
   Future enhancements will focus on dynamic agent role specialization and improved inter-agent communication.
 - **Community Engagement:**  
   Contributions are welcomed that extend the framework’s capabilities while adhering to strict testing and code quality standards.
-
-## Configuration Files
-
-All root-level technical configuration files (package.json, tsconfig, eslint, jest, docker, etc.) are documented in detail in the [Configuration Reference](./configuration-files.md).
-
-This includes:
-- **Project Manifest**: package.json, tsconfig.json
-- **Build & Transpilation**: babel.config.js
-- **Code Quality**: eslint.config.js, .prettierrc.json
-- **Testing**: jest.config.js, playwright.config.ts
-- **Build Automation**: Makefile
-- **Containerization**: Dockerfile, docker-compose.yml
-
-For detailed explanations of each configuration file's purpose, options, and when to modify them, see the [Configuration Reference](./configuration-files.md).
 
 ---
 

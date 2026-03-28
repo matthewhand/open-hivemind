@@ -1,5 +1,4 @@
 import React, { useState, useCallback } from 'react';
-import Logger from '../../utils/logger';
 import Input from './Input';
 
 export interface Step {
@@ -46,7 +45,7 @@ const StepWizard: React.FC<StepWizardProps> = ({
 
   const validateCurrentStep = async (): Promise<boolean> => {
     const currentStepData = steps[activeStep];
-    if (!currentStepData.validation) { return true; }
+    if (!currentStepData.validation) {return true;}
 
     setIsValidating(true);
     try {
@@ -62,7 +61,7 @@ const StepWizard: React.FC<StepWizardProps> = ({
 
   const handleNext = async () => {
     const isValid = await validateCurrentStep();
-    if (!isValid) { return; }
+    if (!isValid) {return;}
 
     setCompletedSteps(prev => new Set([...prev, activeStep]));
 
@@ -87,7 +86,7 @@ const StepWizard: React.FC<StepWizardProps> = ({
 
   const canGoToStep = (stepIndex: number): boolean => {
     // Can always go back to completed steps or current step
-    if (stepIndex <= activeStep) { return true; }
+    if (stepIndex <= activeStep) {return true;}
     // Can only go forward if all previous steps are completed
     for (let i = 0; i < stepIndex; i++) {
       if (!completedSteps.has(i) && !steps[i].optional) {
@@ -98,16 +97,16 @@ const StepWizard: React.FC<StepWizardProps> = ({
   };
 
   const getStepStatus = (stepIndex: number): 'completed' | 'active' | 'pending' | 'error' => {
-    if (completedSteps.has(stepIndex)) { return 'completed'; }
-    if (stepIndex === activeStep) { return 'active'; }
-    if (stepIndex < activeStep) { return 'error'; } // Skipped required step
+    if (completedSteps.has(stepIndex)) {return 'completed';}
+    if (stepIndex === activeStep) {return 'active';}
+    if (stepIndex < activeStep) {return 'error';} // Skipped required step
     return 'pending';
   };
 
   const getStepIcon = (step: Step, status: string, index: number) => {
-    if (status === 'completed') { return '✓'; }
-    if (status === 'error') { return '✗'; }
-    if (step.icon) { return step.icon; }
+    if (status === 'completed') {return '✓';}
+    if (status === 'error') {return '✗';}
+    if (step.icon) {return step.icon;}
     return index + 1;
   };
 
@@ -139,10 +138,11 @@ const StepWizard: React.FC<StepWizardProps> = ({
           return (
             <div
               key={step.id}
-              className={`step ${status === 'completed' ? 'step-primary' :
+              className={`step ${
+                status === 'completed' ? 'step-primary' :
                   status === 'active' ? 'step-primary' :
                     status === 'error' ? 'step-error' : ''
-                } ${canNavigate ? 'cursor-pointer' : 'cursor-not-allowed opacity-50'}`}
+              } ${canNavigate ? 'cursor-pointer' : 'cursor-not-allowed opacity-50'}`}
               data-content={getStepIcon(step, status, index)}
               onClick={() => canNavigate && handleStepChange(index)}
             >

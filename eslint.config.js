@@ -146,13 +146,6 @@ module.exports = [
       'no-console': 'off',
     },
   },
-  // CLI handlers — console is the intended output mechanism
-  {
-    files: ['src/cli/**/*.ts', 'src/cli/**/*.js'],
-    rules: {
-      'no-console': 'off',
-    },
-  },
   // Prettier config override to turn off conflicting rules
   eslintConfigPrettier,
 ];

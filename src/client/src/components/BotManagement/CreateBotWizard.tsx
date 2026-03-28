@@ -4,13 +4,12 @@ import Input from '../DaisyUI/Input';
 import Modal from '../DaisyUI/Modal';
 
 interface CreateBotWizardProps {
-    /** @deprecated Use onCancel instead */
-    isOpen?: boolean;
-    /** @deprecated Use onCancel instead */
-    onClose?: () => void;
-    /** @deprecated Use direct API submission instead */
+    isOpen: boolean;
+    onClose: () => void;
     onSubmit?: (data: any) => void;
+    /** @deprecated Use isOpen/onClose/onSubmit instead */
     onCancel?: () => void;
+    /** @deprecated Use isOpen/onClose/onSubmit instead */
     onSuccess?: () => void;
     personas?: any[];
     llmProfiles?: any[];
@@ -49,7 +48,6 @@ export const CreateBotWizard: React.FC<CreateBotWizardProps> = (props) => {
         description: '',
         messageProvider: '',
         llmProvider: '',
-        memoryProvider: 'none',
         persona: 'default',
         mcpGuardProfile: '',
         guards: {
@@ -156,7 +154,6 @@ export const CreateBotWizard: React.FC<CreateBotWizardProps> = (props) => {
                 description: formData.description,
                 messageProvider: formData.messageProvider,
                 ...(formData.llmProvider ? { llmProvider: formData.llmProvider } : {}),
-                ...(formData.memoryProvider !== 'none' ? { memoryProvider: formData.memoryProvider } : {}),
                 persona: formData.persona,
                 mcpGuardProfile: formData.mcpGuardProfile,
                 config: {
@@ -168,7 +165,7 @@ export const CreateBotWizard: React.FC<CreateBotWizardProps> = (props) => {
 
             if (onSubmit) {
                 await onSubmit(payload);
-                handleSuccess?.();
+                handleSuccess();
             } else {
                 const response = await fetch('/api/bots', {
                     method: 'POST',
@@ -181,7 +178,7 @@ export const CreateBotWizard: React.FC<CreateBotWizardProps> = (props) => {
                     throw new Error(data.error || 'Failed to create bot');
                 }
 
-                handleSuccess?.();
+                handleSuccess();
             }
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Failed to create bot');
@@ -231,7 +228,7 @@ export const CreateBotWizard: React.FC<CreateBotWizardProps> = (props) => {
     };
 
     return (
-        <Modal isOpen={isOpen ?? true} onClose={handleCancel ?? (() => {})} title="Create New Bot" size="lg">
+        <Modal isOpen={isOpen} onClose={handleCancel} title="Create New Bot" size="lg">
         <div className="flex flex-col h-full max-h-[70vh]">
             {/* Steps Indicator with Validation Status */}
             <ul className="steps w-full mb-8">
@@ -380,22 +377,6 @@ export const CreateBotWizard: React.FC<CreateBotWizardProps> = (props) => {
                                     )}
                                 </label>
                             </div>
-
-                            <div className="form-control">
-                                <label className="label">
-                                    <span className="label-text">Memory Provider</span>
-                                </label>
-                                <select
-                                    className="select select-bordered w-full"
-                                    value={formData.memoryProvider}
-                                    onChange={e => setFormData({ ...formData, memoryProvider: e.target.value })}
-                                >
-                                    <option value="none">None (Stateless)</option>
-                                    <option value="memvault">MemVault (pgvector)</option>
-                                    <option value="mem0">Mem0.ai (in-memory test)</option>
-                                    <option value="mem4ai">Mem4ai</option>
-                                </select>
-                            </div>
                         </div>
                     </div>
                 )}
@@ -529,9 +510,6 @@ export const CreateBotWizard: React.FC<CreateBotWizardProps> = (props) => {
 
                                     <span className="opacity-70">LLM Provider:</span>
                                     <span className="font-semibold">{getLlmProviderName()}</span>
-
-                                    <span className="opacity-70">Memory:</span>
-                                    <span className="font-semibold">{formData.memoryProvider === 'none' ? 'None' : formData.memoryProvider}</span>
 
                                     <span className="opacity-70">Persona:</span>
                                     <span className="font-semibold">{getPersonaName()}</span>

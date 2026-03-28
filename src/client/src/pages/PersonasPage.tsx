@@ -18,11 +18,11 @@ import { Alert } from '../components/DaisyUI/Alert';
 import Badge from '../components/DaisyUI/Badge';
 import Button from '../components/DaisyUI/Button';
 import Card from '../components/DaisyUI/Card';
+import Input from '../components/DaisyUI/Input';
 import EmptyState from '../components/DaisyUI/EmptyState';
 import { LoadingSpinner } from '../components/DaisyUI/Loading';
 import Modal from '../components/DaisyUI/Modal';
 import PageHeader from '../components/DaisyUI/PageHeader';
-import Input from '../components/DaisyUI/Input';
 import StatsCards from '../components/DaisyUI/StatsCards';
 import ToastNotification, { useInfoToast } from '../components/DaisyUI/ToastNotification';
 import SearchFilterBar from '../components/SearchFilterBar';
@@ -674,7 +674,7 @@ const PersonasPage: React.FC = () => {
                           Current:{' '}
                           {bot.persona
                             ? personas.find((p) => p.id === bot.persona || p.name === bot.persona)
-                              ?.name || bot.persona
+                                ?.name || bot.persona
                             : 'default'}
                         </span>
                       </div>

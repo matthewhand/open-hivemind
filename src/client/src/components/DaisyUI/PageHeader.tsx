@@ -1,12 +1,12 @@
 import React from 'react';
 
 interface PageHeaderProps {
-  title: string;
-  description?: string;
-  icon?: React.ReactNode | React.ElementType;
-  actions?: React.ReactNode;
-  gradient?: 'primary' | 'secondary' | 'accent' | 'success' | 'warning' | 'error';
-  className?: string;
+    title: string;
+    description?: string;
+    icon?: React.ReactNode;
+    actions?: React.ReactNode;
+    gradient?: 'primary' | 'secondary' | 'accent' | 'success' | 'warning' | 'error';
+    className?: string;
 }
 
 const gradientMap = {
@@ -55,9 +55,7 @@ const PageHeader: React.FC<PageHeaderProps> = ({
         <div className="flex items-start gap-4">
           {icon && (
             <div className={`p-3 rounded-xl ${iconBgMap[gradient]} backdrop-blur-sm shadow-sm`}>
-              {React.isValidElement(icon)
-                ? icon
-                : React.createElement(icon as React.ElementType, { className: 'w-8 h-8' })}
+              {React.isValidElement(icon) ? icon : (typeof icon === 'function' || (typeof icon === 'object' && icon !== null && ('$$typeof' in icon || 'render' in icon))) ? React.createElement(icon as React.ElementType) : icon as React.ReactNode}
             </div>
           )}
           <div>
