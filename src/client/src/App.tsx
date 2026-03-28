@@ -12,6 +12,7 @@ import { WebSocketProvider } from './contexts/WebSocketContext';
 import ScrollToTop from './components/ScrollToTop';
 import { Toaster } from 'react-hot-toast';
 import { IntegrationProvider } from './components/IntegrationLoader';
+import KeyboardShortcutsProvider from './components/KeyboardShortcutsProvider';
 
 function App() {
   return (
@@ -26,6 +27,7 @@ function App() {
                   <IntegrationProvider>
                     <BrowserRouter>
                       <ScrollToTop />
+                      <KeyboardShortcutsProvider />
                       <AppRouter />
                     </BrowserRouter>
                   </IntegrationProvider>
