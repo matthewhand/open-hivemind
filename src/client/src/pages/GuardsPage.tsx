@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
-import React, { useState, useEffect, useCallback } from 'react';
-import { Shield, Plus, Edit2, Trash2, RefreshCw, Save, AlertTriangle, Copy } from 'lucide-react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { Shield, Plus, Edit2, Trash2, RefreshCw, Save, AlertTriangle, Copy, ToggleLeft } from 'lucide-react';
 import { useSuccessToast, useErrorToast } from '../components/DaisyUI/ToastNotification';
 import Modal, { ConfirmModal } from '../components/DaisyUI/Modal';
 import PageHeader from '../components/DaisyUI/PageHeader';
@@ -12,6 +12,9 @@ import Input from '../components/DaisyUI/Input';
 import Textarea from '../components/DaisyUI/Textarea';
 import Select from '../components/DaisyUI/Select';
 import Toggle from '../components/DaisyUI/Toggle';
+import useUrlParams from '../hooks/useUrlParams';
+import { useBulkSelection } from '../hooks/useBulkSelection';
+import BulkActionBar from '../components/BulkActionBar';
 
 interface McpGuardConfig {
   enabled: boolean;
@@ -45,7 +48,11 @@ const GuardsPage: React.FC = () => {
   const [profiles, setProfiles] = useState<GuardrailProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [searchValue, setSearchValue] = useState('');
+  const { values: urlParams, setValue: setUrlParam } = useUrlParams({
+    search: { type: 'string', default: '', debounce: 300 },
+  });
+  const searchValue = urlParams.search;
+  const setSearchValue = (v: string) => setUrlParam('search', v);
 
   const showSuccess = useSuccessToast();
   const showError = useErrorToast();
@@ -190,6 +197,57 @@ const GuardsPage: React.FC = () => {
     profile.name.toLowerCase().includes(searchValue.toLowerCase())
   );
 
+  // Bulk selection
+  const filteredProfileIds = useMemo(() => filteredProfiles.map(p => p.id), [filteredProfiles]);
+  const bulk = useBulkSelection(filteredProfileIds);
+  const [bulkDeleting, setBulkDeleting] = useState(false);
+
+  const handleBulkDeleteProfiles = async () => {
+    if (bulk.selectedCount === 0) return;
+    setBulkDeleting(true);
+    try {
+      const ids = Array.from(bulk.selectedIds);
+      await Promise.allSettled(
+        ids.map(id =>
+          fetch(`${API_BASE}/guard-profiles/${id}`, { method: 'DELETE' })
+        )
+      );
+      bulk.clearSelection();
+      showSuccess('Selected profiles deleted');
+      fetchProfiles();
+    } catch (err) {
+      showError('Failed to delete some profiles');
+    } finally {
+      setBulkDeleting(false);
+    }
+  };
+
+  const handleBulkToggleGuards = async (enable: boolean) => {
+    if (bulk.selectedCount === 0) return;
+    try {
+      const ids = Array.from(bulk.selectedIds);
+      const updates = ids.map(id => {
+        const profile = profiles.find(p => p.id === id);
+        if (!profile) return Promise.resolve();
+        const updated = JSON.parse(JSON.stringify(profile));
+        updated.guards.mcpGuard.enabled = enable;
+        if (updated.guards.rateLimit) updated.guards.rateLimit.enabled = enable;
+        if (updated.guards.contentFilter) updated.guards.contentFilter.enabled = enable;
+        return fetch(`${API_BASE}/guard-profiles/${id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(updated),
+        });
+      });
+      await Promise.allSettled(updates);
+      bulk.clearSelection();
+      showSuccess(`Guards ${enable ? 'enabled' : 'disabled'} for selected profiles`);
+      fetchProfiles();
+    } catch (err) {
+      showError('Failed to update some profiles');
+    }
+  };
+
   return (
     <div className="space-y-6">
       <PageHeader
@@ -237,12 +295,61 @@ const GuardsPage: React.FC = () => {
           onAction={() => setSearchValue('')}
         />
       ) : (
+        <>
+          <div className="flex items-center gap-2 mb-2">
+            <input
+              type="checkbox"
+              className="checkbox checkbox-sm checkbox-primary"
+              checked={bulk.isAllSelected}
+              onChange={() => bulk.toggleAll(filteredProfileIds)}
+              aria-label="Select all profiles"
+            />
+            <span className="text-xs text-base-content/60">Select all</span>
+          </div>
+          <BulkActionBar
+            selectedCount={bulk.selectedCount}
+            onClearSelection={bulk.clearSelection}
+            actions={[
+              {
+                key: 'enable',
+                label: 'Enable All Guards',
+                icon: <ToggleLeft className="w-4 h-4" />,
+                variant: 'success',
+                onClick: () => handleBulkToggleGuards(true),
+              },
+              {
+                key: 'disable',
+                label: 'Disable All Guards',
+                icon: <ToggleLeft className="w-4 h-4" />,
+                variant: 'warning',
+                onClick: () => handleBulkToggleGuards(false),
+              },
+              {
+                key: 'delete',
+                label: 'Delete',
+                icon: <Trash2 className="w-4 h-4" />,
+                variant: 'error',
+                onClick: handleBulkDeleteProfiles,
+                loading: bulkDeleting,
+              },
+            ]}
+          />
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredProfiles.map(profile => (
             <div key={profile.id} className="card bg-base-100 border border-base-200 shadow-sm hover:shadow-md transition-shadow">
               <div className="card-body">
                 <div className="flex justify-between items-start">
-                  <h3 className="card-title text-lg">{profile.name}</h3>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      className="checkbox checkbox-sm checkbox-primary"
+                      checked={bulk.isSelected(profile.id)}
+                      onChange={(e) => bulk.toggleItem(profile.id, e as any)}
+                      onClick={(e) => e.stopPropagation()}
+                      aria-label={`Select ${profile.name}`}
+                    />
+                    <h3 className="card-title text-lg">{profile.name}</h3>
+                  </div>
                   <div className="flex gap-1">
                     <button
                       onClick={() => handleDuplicateProfile(profile)}
@@ -274,6 +381,7 @@ const GuardsPage: React.FC = () => {
             </div>
           ))}
         </div>
+        </>
       )}
 
       {/* Edit Modal */}

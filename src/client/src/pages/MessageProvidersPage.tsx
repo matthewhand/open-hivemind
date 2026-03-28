@@ -27,6 +27,7 @@ import {
 import ProviderConfigModal from '../components/ProviderConfiguration/ProviderConfigModal';
 import { apiService } from '../services/api';
 import { getProviderSchema } from '../provider-configs';
+import useUrlParams from '../hooks/useUrlParams';
 
 const MessageProvidersPage: React.FC = () => {
   const { modalState, openAddModal, openEditModal, closeModal } = useModal();
@@ -35,8 +36,14 @@ const MessageProvidersPage: React.FC = () => {
   const [expandedProfile, setExpandedProfile] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [filterType, setFilterType] = useState('all');
+  const { values: urlParams, setValue: setUrlParam } = useUrlParams({
+    search: { type: 'string', default: '', debounce: 300 },
+    type: { type: 'string', default: 'all' },
+  });
+  const searchQuery = urlParams.search;
+  const setSearchQuery = (v: string) => setUrlParam('search', v);
+  const filterType = urlParams.type;
+  const setFilterType = (v: string) => setUrlParam('type', v);
   const [confirmModal, setConfirmModal] = useState<{
     isOpen: boolean; title: string; message: string; onConfirm: () => void;
   }>({ isOpen: false, title: '', message: '', onConfirm: () => {} });

@@ -14,6 +14,7 @@ import {
   User,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import useUrlParams from '../hooks/useUrlParams';
 import { Alert } from '../components/DaisyUI/Alert';
 import Badge from '../components/DaisyUI/Badge';
 import Button from '../components/DaisyUI/Button';
@@ -28,6 +29,9 @@ import StatsCards from '../components/DaisyUI/StatsCards';
 import ToastNotification, { useInfoToast } from '../components/DaisyUI/ToastNotification';
 import SearchFilterBar from '../components/SearchFilterBar';
 import { apiService, type Persona as ApiPersona, type Bot } from '../services/api';
+import { useApiQuery } from '../hooks/useApiQuery';
+import { useBulkSelection } from '../hooks/useBulkSelection';
+import BulkActionBar from '../components/BulkActionBar';
 
 // Extend UI Persona type to include assigned bots for display
 interface Persona extends ApiPersona {
@@ -56,9 +60,15 @@ const PersonasPage: React.FC = () => {
   const successToast = ToastNotification.useSuccessToast();
   const errorToast = ToastNotification.useErrorToast();
 
-  // Filter State
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  // Filter State (URL-persisted)
+  const { values: urlParams, setValue: setUrlParam } = useUrlParams({
+    search: { type: 'string', default: '', debounce: 300 },
+    category: { type: 'string', default: 'all' },
+  });
+  const searchQuery = urlParams.search;
+  const setSearchQuery = (v: string) => setUrlParam('search', v);
+  const selectedCategory = urlParams.category;
+  const setSelectedCategory = (v: string) => setUrlParam('category', v);
 
   // Modals
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -76,49 +86,55 @@ const PersonasPage: React.FC = () => {
   const [selectedBotIds, setSelectedBotIds] = useState<string[]>([]); // Bot IDs are strings in new API
   const [personaCategory, setPersonaCategory] = useState<ApiPersona['category']>('general');
 
-  const fetchData = useCallback(async () => {
-    try {
-      setLoading(true);
-      setError(null);
+  // Cached queries for config and personas
+  const {
+    data: configResponse,
+    loading: configLoading,
+    error: configError,
+    refetch: refetchConfig,
+  } = useApiQuery<any>('/api/config', { ttl: 30_000 });
 
-      const [configResult, personasResult] = await Promise.allSettled([
-        apiService.getConfig(),
-        apiService.getPersonas(),
-      ]);
-      const configResponse =
-        configResult.status === 'fulfilled' ? configResult.value : { bots: [] };
-      const personasResponse = personasResult.status === 'fulfilled' ? personasResult.value : [];
+  const {
+    data: personasResponse,
+    loading: personasLoading,
+    error: personasError,
+    refetch: refetchPersonas,
+  } = useApiQuery<ApiPersona[]>('/api/personas', { ttl: 30_000 });
 
-      const botList = configResponse.bots || [];
-      const filledBots = botList.map((b: any) => ({
-        ...b,
-        id: b.id || b.name, // Fallback to name if ID missing (shouldn't happen for active bots)
-      }));
-      setBots(filledBots);
+  // Derive bots and personas from cached responses
+  useEffect(() => {
+    const botList = configResponse?.bots || [];
+    const filledBots = botList.map((b: any) => ({
+      ...b,
+      id: b.id || b.name,
+    }));
+    setBots(filledBots);
 
-      const mappedPersonas = personasResponse.map((p) => {
-        // Find assigned bots
-        // Match by persona ID stored in bot.persona OR matches persona name (legacy)
-        const assigned = filledBots.filter((b: any) => b.persona === p.id || b.persona === p.name);
-        return {
-          ...p,
-          assignedBotNames: assigned.map((b: any) => b.name),
-          assignedBotIds: assigned.map((b: any) => b.id),
-        };
-      });
+    const rawPersonas = personasResponse || [];
+    const mappedPersonas = rawPersonas.map((p) => {
+      const assigned = filledBots.filter((b: any) => b.persona === p.id || b.persona === p.name);
+      return {
+        ...p,
+        assignedBotNames: assigned.map((b: any) => b.name),
+        assignedBotIds: assigned.map((b: any) => b.id),
+      };
+    });
+    setPersonas(mappedPersonas);
+  }, [configResponse, personasResponse]);
 
-      setPersonas(mappedPersonas);
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to fetch data';
-      setError(message);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  // Sync loading/error state
+  useEffect(() => {
+    setLoading(configLoading || personasLoading);
+  }, [configLoading, personasLoading]);
 
   useEffect(() => {
-    fetchData();
-  }, [fetchData]);
+    const err = configError || personasError;
+    setError(err ? err.message : null);
+  }, [configError, personasError]);
+
+  const fetchData = useCallback(async () => {
+    await Promise.all([refetchConfig(), refetchPersonas()]);
+  }, [refetchConfig, refetchPersonas]);
 
   // Derive filtered personas
   const filteredPersonas = useMemo(() => {
@@ -130,6 +146,37 @@ const PersonasPage: React.FC = () => {
       return matchesSearch && matchesCategory;
     });
   }, [personas, searchQuery, selectedCategory]);
+
+  // Bulk selection
+  const filteredPersonaIds = useMemo(() => filteredPersonas.filter(p => !p.isBuiltIn).map(p => p.id), [filteredPersonas]);
+  const bulk = useBulkSelection(filteredPersonaIds);
+  const [bulkDeleting, setBulkDeleting] = useState(false);
+
+  const handleBulkDeletePersonas = async () => {
+    if (bulk.selectedCount === 0) return;
+    setBulkDeleting(true);
+    try {
+      const ids = Array.from(bulk.selectedIds);
+      // Revert bots for each persona, then delete
+      for (const id of ids) {
+        const persona = personas.find(p => p.id === id);
+        if (persona) {
+          const updates = persona.assignedBotIds.map((botId) =>
+            apiService.updateBot(botId, { persona: 'default', systemInstruction: 'You are a helpful assistant.' })
+          );
+          await Promise.allSettled(updates);
+          await apiService.deletePersona(id);
+        }
+      }
+      await fetchData();
+      bulk.clearSelection();
+      successToast('Selected personas deleted');
+    } catch (err) {
+      errorToast('Error', 'Failed to delete some personas');
+    } finally {
+      setBulkDeleting(false);
+    }
+  };
 
   const handleCopyPrompt = async (text: string) => {
     try {
@@ -422,7 +469,32 @@ const PersonasPage: React.FC = () => {
           variant="noResults"
         />
       ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
+        <>
+          <div className="flex items-center gap-2 mb-2">
+            <input
+              type="checkbox"
+              className="checkbox checkbox-sm checkbox-primary"
+              checked={bulk.isAllSelected}
+              onChange={() => bulk.toggleAll(filteredPersonaIds)}
+              aria-label="Select all personas"
+            />
+            <span className="text-xs text-base-content/60">Select all (custom only)</span>
+          </div>
+          <BulkActionBar
+            selectedCount={bulk.selectedCount}
+            onClearSelection={bulk.clearSelection}
+            actions={[
+              {
+                key: 'delete',
+                label: 'Delete',
+                icon: <Trash2 className="w-4 h-4" />,
+                variant: 'error',
+                onClick: handleBulkDeletePersonas,
+                loading: bulkDeleting,
+              },
+            ]}
+          />
+          <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
           {filteredPersonas.map((persona) => (
             <Card
               key={persona.id}
@@ -431,6 +503,16 @@ const PersonasPage: React.FC = () => {
             >
               <div className="flex items-start justify-between mb-3">
                 <div className="flex items-center gap-3">
+                  {!persona.isBuiltIn && (
+                    <input
+                      type="checkbox"
+                      className="checkbox checkbox-sm checkbox-primary"
+                      checked={bulk.isSelected(persona.id)}
+                      onChange={(e) => bulk.toggleItem(persona.id, e as any)}
+                      onClick={(e) => e.stopPropagation()}
+                      aria-label={`Select ${persona.name}`}
+                    />
+                  )}
                   <div
                     className={`p-2 rounded-full ${persona.isBuiltIn ? 'bg-primary/10 text-primary' : 'bg-base-200'}`}
                   >
@@ -533,6 +615,7 @@ const PersonasPage: React.FC = () => {
             </Card>
           ))}
         </div>
+        </>
       )}
 
       {/* Create/Edit Modal */}

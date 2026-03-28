@@ -10,6 +10,7 @@ import { ArrowPathIcon } from '@heroicons/react/24/outline';
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, Legend, CartesianGrid } from 'recharts';
 import { useGetActivityQuery } from '../../store/slices/apiSlice';
 import type { ActivityResponse } from '../../services/api';
+import ResponsiveDataView from '../DaisyUI/ResponsiveDataView';
 
 interface ActivityFilters {
   bot?: string;
@@ -233,36 +234,20 @@ const AgentMetricsTable: React.FC<AgentMetricsTableProps> = ({ metrics }) => {
   }
 
   return (
-    <div className="overflow-x-auto">
-      <table className="table table-sm table-zebra">
-        <thead>
-          <tr>
-            <th>Agent</th>
-            <th>Provider</th>
-            <th>LLM</th>
-            <th className="text-right">Events</th>
-            <th className="text-right">Errors</th>
-            <th className="text-right">Total Messages</th>
-            <th>Last Activity</th>
-            <th>Recent Errors</th>
-          </tr>
-        </thead>
-        <tbody>
-          {metrics.map(metric => (
-            <tr key={metric.botName} className="hover">
-              <td>{metric.botName}</td>
-              <td>{metric.messageProvider}</td>
-              <td>{metric.llmProvider}</td>
-              <td className="text-right">{metric.events}</td>
-              <td className="text-right">{metric.errors}</td>
-              <td className="text-right">{metric.totalMessages}</td>
-              <td>{formatTimestamp(metric.lastActivity)}</td>
-              <td>{(metric.recentErrors ?? []).slice(-3).join(', ') || '—'}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+    <ResponsiveDataView
+      data={metrics}
+      columns={[
+        { key: 'botName' as any, title: 'Agent', prominent: true },
+        { key: 'messageProvider' as any, title: 'Provider' },
+        { key: 'llmProvider' as any, title: 'LLM' },
+        { key: 'events' as any, title: 'Events' },
+        { key: 'errors' as any, title: 'Errors' },
+        { key: 'totalMessages' as any, title: 'Total Messages' },
+        { key: 'lastActivity' as any, title: 'Last Activity', render: (v: string) => formatTimestamp(v) },
+        { key: 'recentErrors' as any, title: 'Recent Errors', render: (v: string[]) => (v ?? []).slice(-3).join(', ') || '\u2014' },
+      ]}
+      rowKey={(m: any) => m.botName}
+    />
   );
 };
 

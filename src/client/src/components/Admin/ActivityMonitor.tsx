@@ -27,6 +27,7 @@ import { Alert } from '../DaisyUI/Alert';
 import Button from '../DaisyUI/Button';
 import { SkeletonTableLayout } from '../DaisyUI/Skeleton';
 import Pagination from '../DaisyUI/Pagination';
+import ResponsiveDataView from '../DaisyUI/ResponsiveDataView';
 
 interface ActivityFilter {
   agentId?: string;
@@ -436,63 +437,58 @@ const ActivityMonitor: React.FC = () => {
           {loading ? (
             <SkeletonTableLayout rows={6} columns={5} />
           ) : (
-            <div className="overflow-x-auto">
-              <table className="table table-zebra w-full">
-                <thead>
-                  <tr>
-                    <th>Timestamp</th>
-                    <th>Agent</th>
-                    <th>Provider</th>
-                    <th>LLM</th>
-                    <th>Type</th>
-                    <th>Status</th>
-                    <th>Response Time</th>
-                    <th>Length</th>
-                    <th>MCP Tools</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {activities.map((activity) => (
-                    <tr key={activity.id}>
-                      <td title={activity.timestamp}>
-                        {format(new Date(activity.timestamp), 'HH:mm:ss')}
-                      </td>
-                      <td>{activity.agentName}</td>
-                      <td>
-                        <Badge>{activity.messageProvider}</Badge>
-                      </td>
-                      <td>
-                        <Badge variant="secondary">{activity.llmProvider}</Badge>
-                      </td>
-                      <td>
-                        <Badge variant={activity.messageType === 'incoming' ? 'primary' : 'neutral'}>
-                          {activity.messageType}
-                        </Badge>
-                      </td>
-                      <td>
-                        <Badge variant={
-                          activity.status === 'success' ? 'success' :
-                            activity.status === 'error' ? 'error' : 'warning'
-                        }>
-                          {activity.status}
-                        </Badge>
-                      </td>
-                      <td>
-                        {activity.processingTime ? `${activity.processingTime}ms` : '-'}
-                      </td>
-                      <td>{activity.contentLength}</td>
-                      <td>
-                        {activity.mcpToolsUsed?.length ? (
-                          <span title={activity.mcpToolsUsed.join(', ')}>
-                            <Badge>{activity.mcpToolsUsed.length} tools</Badge>
-                          </span>
-                        ) : '-'}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+            <ResponsiveDataView
+              data={activities}
+              columns={[
+                {
+                  key: 'timestamp' as any,
+                  title: 'Timestamp',
+                  render: (value: string) => <span title={value}>{format(new Date(value), 'HH:mm:ss')}</span>,
+                },
+                { key: 'agentName' as any, title: 'Agent', prominent: true },
+                {
+                  key: 'messageProvider' as any,
+                  title: 'Provider',
+                  render: (value: string) => <Badge>{value}</Badge>,
+                },
+                {
+                  key: 'llmProvider' as any,
+                  title: 'LLM',
+                  render: (value: string) => <Badge variant="secondary">{value}</Badge>,
+                },
+                {
+                  key: 'messageType' as any,
+                  title: 'Type',
+                  render: (value: string) => (
+                    <Badge variant={value === 'incoming' ? 'primary' : 'neutral'}>{value}</Badge>
+                  ),
+                },
+                {
+                  key: 'status' as any,
+                  title: 'Status',
+                  render: (value: string) => (
+                    <Badge variant={value === 'success' ? 'success' : value === 'error' ? 'error' : 'warning'}>
+                      {value}
+                    </Badge>
+                  ),
+                },
+                {
+                  key: 'processingTime' as any,
+                  title: 'Response Time',
+                  render: (value: number) => value ? `${value}ms` : '-',
+                },
+                { key: 'contentLength' as any, title: 'Length' },
+                {
+                  key: 'mcpToolsUsed' as any,
+                  title: 'MCP Tools',
+                  render: (value: string[]) =>
+                    value?.length ? (
+                      <span title={value.join(', ')}><Badge>{value.length} tools</Badge></span>
+                    ) : '-',
+                },
+              ]}
+              rowKey={(a: any) => a.id}
+            />
           )}
 
           {pagination.totalPages > 1 && (

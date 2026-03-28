@@ -8,6 +8,8 @@ import Badge from '../components/DaisyUI/Badge';
 import Button from '../components/DaisyUI/Button';
 import Card from '../components/DaisyUI/Card';
 import DataTable from '../components/DaisyUI/DataTable';
+import ResponsiveDataView from '../components/DaisyUI/ResponsiveDataView';
+import type { RDVColumn } from '../components/DaisyUI/ResponsiveDataView';
 import StatsCards from '../components/DaisyUI/StatsCards';
 import Timeline from '../components/DaisyUI/Timeline';
 import Toggle from '../components/DaisyUI/Toggle';
@@ -17,6 +19,8 @@ import EmptyState from '../components/DaisyUI/EmptyState';
 import Input from '../components/DaisyUI/Input';
 import SearchFilterBar from '../components/SearchFilterBar';
 import { apiService, ActivityEvent, ActivityResponse } from '../services/api';
+import useUrlParams from '../hooks/useUrlParams';
+import { useApiQuery } from '../hooks/useApiQuery';
 
 const ActivityPage: React.FC = () => {
   const [data, setData] = useState<ActivityResponse | null>(null);
@@ -25,13 +29,27 @@ const ActivityPage: React.FC = () => {
   const [viewMode, setViewMode] = useState<'table' | 'timeline'>('table');
   const [autoRefresh, setAutoRefresh] = useState(false);
 
-  // Filter State
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedBot, setSelectedBot] = useState<string>('all');
-  const [selectedProvider, setSelectedProvider] = useState<string>('all');
-  const [selectedLlmProvider, setSelectedLlmProvider] = useState<string>('all');
-  const [startDate, setStartDate] = useState('');
-  const [endDate, setEndDate] = useState('');
+  // Filter State (URL-persisted)
+  const { values: urlParams, setValue: setUrlParam } = useUrlParams({
+    search: { type: 'string', default: '', debounce: 300 },
+    bot: { type: 'string', default: 'all' },
+    provider: { type: 'string', default: 'all' },
+    llm: { type: 'string', default: 'all' },
+    from: { type: 'string', default: '' },
+    to: { type: 'string', default: '' },
+  });
+  const searchQuery = urlParams.search;
+  const setSearchQuery = (v: string) => setUrlParam('search', v);
+  const selectedBot = urlParams.bot;
+  const setSelectedBot = (v: string) => setUrlParam('bot', v);
+  const selectedProvider = urlParams.provider;
+  const setSelectedProvider = (v: string) => setUrlParam('provider', v);
+  const selectedLlmProvider = urlParams.llm;
+  const setSelectedLlmProvider = (v: string) => setUrlParam('llm', v);
+  const startDate = urlParams.from;
+  const setStartDate = (v: string) => setUrlParam('from', v);
+  const endDate = urlParams.to;
+  const setEndDate = (v: string) => setUrlParam('to', v);
 
   // Cache initial filters to populate dropdowns even when filtered
   const [availableFilters, setAvailableFilters] = useState<ActivityResponse['filters'] | null>(null);
@@ -41,55 +59,56 @@ const ActivityPage: React.FC = () => {
   const [maxRetries, setMaxRetries] = useState(3);
   const [retryDelay, setRetryDelay] = useState(1000); // 1 second initial delay
 
-  /**
-   * Fetch activity data with exponential backoff retry logic
-   * - Retries up to 3 times for network/timeout errors
-   * - Uses exponential backoff (1s, 2s, 4s delays)
-   * - Resets retry state on success
-   */
+  // Build activity endpoint URL from filter state
+  const activityUrl = useMemo(() => {
+    const query = new URLSearchParams();
+    if (selectedBot !== 'all') query.append('bot', selectedBot);
+    if (selectedProvider !== 'all') query.append('messageProvider', selectedProvider);
+    if (selectedLlmProvider !== 'all') query.append('llmProvider', selectedLlmProvider);
+    if (startDate) query.append('from', new Date(startDate).toISOString());
+    if (endDate) query.append('to', new Date(endDate).toISOString());
+    const search = query.toString();
+    return `/api/dashboard/api/activity${search ? `?${search}` : ''}`;
+  }, [selectedBot, selectedProvider, selectedLlmProvider, startDate, endDate]);
 
-  const fetchActivity = useCallback(async () => {
-    // Don't set loading on auto-refresh to avoid flickering
-    if (!autoRefresh) setLoading(true);
-    setError(null);
-    setRetryCount(0); // Reset before attempt
+  // Use cached query with optional polling
+  const {
+    data: activityResult,
+    loading: activityLoading,
+    error: activityError,
+    refetch: refetchActivity,
+  } = useApiQuery<ActivityResponse>(activityUrl, {
+    ttl: 15_000,
+    pollInterval: autoRefresh ? 5000 : undefined,
+  });
 
-    const params: any = {};
-    if (selectedBot !== 'all') params.bot = selectedBot;
-    if (selectedProvider !== 'all') params.messageProvider = selectedProvider;
-    if (selectedLlmProvider !== 'all') params.llmProvider = selectedLlmProvider;
-    if (startDate) params.from = new Date(startDate).toISOString();
-    if (endDate) params.to = new Date(endDate).toISOString();
-
-    try {
-      const result = await withRetry(
-        () => apiService.getActivity(params),
-        maxRetries,
-        1000,
-        (err, attempt, max) => {
-           logger.debug(`Retrying fetchActivity in ${1000 * Math.pow(1.5, attempt - 1)}ms (attempt ${attempt}/${max})`);
-           setRetryCount(attempt);
-        }
-      );
-
-      setData(result);
-      if (result.filters) {
-        setAvailableFilters(prev => prev || result.filters);
+  // Sync into local state
+  useEffect(() => {
+    if (activityResult) {
+      setData(activityResult);
+      if (activityResult.filters) {
+        setAvailableFilters(prev => prev || activityResult.filters);
       }
       setRetryCount(0);
       setRetryDelay(1000);
-    } catch (err: any) {
-      const message = err instanceof Error ? err.message : 'Failed to fetch activity';
-      setError(message);
-      console.error('Error fetching activity:', err);
-    } finally {
-      setLoading(false);
     }
-  }, [selectedBot, selectedProvider, selectedLlmProvider, startDate, endDate, autoRefresh, maxRetries]);
+  }, [activityResult]);
 
   useEffect(() => {
-    fetchActivity();
-  }, [fetchActivity]); // fetchActivity depends on filters, so this runs when filters change
+    if (!autoRefresh) setLoading(activityLoading);
+  }, [activityLoading, autoRefresh]);
+
+  useEffect(() => {
+    if (activityError) {
+      setError(activityError.message);
+    } else {
+      setError(null);
+    }
+  }, [activityError]);
+
+  const fetchActivity = useCallback(async () => {
+    await refetchActivity();
+  }, [refetchActivity]);
 
   const handleClearFilters = () => {
     setSearchQuery('');
@@ -174,45 +193,43 @@ const ActivityPage: React.FC = () => {
     return <Badge variant={variants[status] || 'primary'} size="small">{status}</Badge>;
   };
 
-  const columns = [
+  const columns: RDVColumn<ActivityEvent>[] = [
     {
-      key: 'timestamp' as keyof ActivityEvent,
+      key: 'timestamp',
       title: 'Time',
       sortable: true,
       width: '180px',
       render: (value: string) => <span className="font-mono text-sm">{new Date(value).toLocaleString()}</span>,
     },
     {
-      key: 'botName' as keyof ActivityEvent,
+      key: 'botName',
       title: 'Bot',
       sortable: true,
-      filterable: true,
+      prominent: true,
       render: (value: string) => <span className="font-medium">{value}</span>,
     },
     {
-      key: 'status' as keyof ActivityEvent,
+      key: 'status',
       title: 'Status',
       sortable: true,
-      filterable: true,
+      prominent: true,
       width: '100px',
       render: (value: string) => getStatusBadge(value),
     },
     {
-      key: 'provider' as keyof ActivityEvent,
+      key: 'provider',
       title: 'Provider',
       sortable: true,
-      filterable: true,
       render: (value: string) => <Badge variant="neutral" size="small">{value}</Badge>,
     },
     {
-      key: 'llmProvider' as keyof ActivityEvent,
+      key: 'llmProvider',
       title: 'LLM',
       sortable: true,
-      filterable: true,
       render: (value: string) => <Badge variant="primary" size="small" style="outline">{value}</Badge>,
     },
     {
-      key: 'processingTime' as keyof ActivityEvent,
+      key: 'processingTime',
       title: 'Duration',
       sortable: true,
       width: '100px',
@@ -446,13 +463,12 @@ const ActivityPage: React.FC = () => {
       ) : (
         <Card>
           {viewMode === 'table' ? (
-            <DataTable
+            <ResponsiveDataView
               data={filteredEvents}
               columns={columns}
               loading={loading}
-              pagination={{ pageSize: 25, showSizeChanger: true, pageSizeOptions: [10, 25, 50, 100] }}
-              searchable={false} // We use SearchFilterBar
-              exportable={false} // We have our own export button
+              pagination={{ pageSize: 25, pageSizeOptions: [10, 25, 50, 100] }}
+              searchable={false}
             />
           ) : (
             <div className="p-4">

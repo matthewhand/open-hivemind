@@ -9,12 +9,19 @@ import Pagination from '../components/DaisyUI/Pagination';
 import { SkeletonPage } from '../components/DaisyUI/Skeleton';
 import { MagnifyingGlassIcon, PlusIcon, BookOpenIcon } from '@heroicons/react/24/outline';
 import useSpecs from '../hooks/useSpecs';
+import useUrlParams from '../hooks/useUrlParams';
 
 const SpecsPage: React.FC = () => {
   const navigate = useNavigate();
   const { specs, loading, error } = useSpecs();
-  const [searchTerm, setSearchTerm] = useState('');
-  const [page, setPage] = useState(1);
+  const { values: urlParams, setValue: setUrlParam } = useUrlParams({
+    search: { type: 'string', default: '', debounce: 300 },
+    page: { type: 'number', default: 1 },
+  });
+  const searchTerm = urlParams.search;
+  const setSearchTerm = (v: string) => { setUrlParam('search', v); setUrlParam('page', 1); };
+  const page = urlParams.page;
+  const setPage = (v: number) => setUrlParam('page', v);
   const [pageSize] = useState(10);
 
   const filteredSpecs = specs.filter(spec =>

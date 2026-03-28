@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import useUrlParams from '../hooks/useUrlParams';
 import Card from '../components/DaisyUI/Card';
 import { SkeletonGrid } from '../components/DaisyUI/Skeleton';
 import Button from '../components/DaisyUI/Button';
@@ -72,8 +73,14 @@ const MarketplacePage: React.FC = () => {
   const [packages, setPackages] = useState<MarketplacePackage[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [filter, setFilter] = useState<FilterType>('all');
-  const [searchQuery, setSearchQuery] = useState('');
+  const { values: urlParams, setValue: setUrlParam } = useUrlParams({
+    search: { type: 'string', default: '', debounce: 300 },
+    type: { type: 'string', default: 'all' },
+  });
+  const filter = urlParams.type as FilterType;
+  const setFilter = (v: FilterType) => setUrlParam('type', v);
+  const searchQuery = urlParams.search;
+  const setSearchQuery = (v: string) => setUrlParam('search', v);
   const [installModalOpen, setInstallModalOpen] = useState(false);
   const [githubUrl, setGithubUrl] = useState('');
   const [actionInProgress, setActionInProgress] = useState<string | null>(null);

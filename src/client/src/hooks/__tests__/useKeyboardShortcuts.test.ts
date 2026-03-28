@@ -140,6 +140,22 @@ describe('useKeyboardShortcuts', () => {
     expect(stopPropagation).toHaveBeenCalled();
   });
 
+  it('should trigger global shortcuts even when typing in input fields', () => {
+    const action = jest.fn();
+    const shortcuts = [{ key: 'k', ctrlKey: true, global: true, action, description: 'Open palette' }];
+    renderHook(() => useKeyboardShortcuts(shortcuts));
+
+    const input = document.createElement('input');
+    document.body.appendChild(input);
+    input.focus();
+
+    act(() => {
+      fireEvent.keyDown(input, { key: 'k', ctrlKey: true, bubbles: true });
+    });
+
+    expect(action).toHaveBeenCalled();
+  });
+
   it('should cleanup event listener on unmount', () => {
     const action = jest.fn();
     const shortcuts = [{ key: 'a', action, description: 'Test shortcut' }];

@@ -11,6 +11,8 @@ export { default as Carousel } from './Carousel';
 export { default as Diff } from './Diff';
 export { default as Indicator } from './Indicator';
 export { default as DataTable } from './DataTable';
+export { default as ResponsiveDataView } from './ResponsiveDataView';
+export type { RDVColumn, RowAction, ResponsiveDataViewProps } from './ResponsiveDataView';
 export { default as Table } from './Table';
 export { Loading, LoadingSpinner, LoadingOverlay, StepProgress, Progress, SkeletonAvatar, SkeletonTable, SkeletonStats, LoadingSkeletonCard } from './Loading';
 export { Skeleton, SkeletonText, SkeletonCard, SkeletonList, SkeletonGrid, SkeletonTableLayout, SkeletonTimeline, SkeletonMessageList, SkeletonStatsCards, SkeletonPage } from './Skeleton';
