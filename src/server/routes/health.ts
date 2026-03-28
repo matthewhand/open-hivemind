@@ -3,6 +3,8 @@ import process from 'process';
 import { Router, type NextFunction, type Request, type Response } from 'express';
 import { MetricsCollector } from '../../monitoring/MetricsCollector';
 import ApiMonitorService from '../../services/ApiMonitorService';
+import { validateRequest } from '../../validation/validateRequest';
+import { CleanupConfigSchema, ApiEndpointConfigSchema, EndpointIdParamSchema } from '../../validation/schemas/healthSchema';
 import { HEALTH_THRESHOLDS, HTTP_STATUS } from '../../types/constants';
 import { ErrorLogger } from '../../utils/errorLogger';
 import { globalRecoveryManager } from '../../utils/errorRecovery';
@@ -470,7 +472,7 @@ router.get('/api-endpoints/:id', (req, res) => {
 });
 
 // Cleanup endpoint (admin only)
-router.post('/cleanup', (req, res) => {
+router.post('/cleanup', validateRequest(CleanupConfigSchema), (req, res) => {
   const apiMonitor = ApiMonitorService.getInstance();
 
   try {
@@ -516,7 +518,7 @@ router.post('/cleanup', (req, res) => {
 });
 
 // Add new endpoint to monitor
-router.post('/api-endpoints', (req, res) => {
+router.post('/api-endpoints', validateRequest(ApiEndpointConfigSchema), (req, res) => {
   const apiMonitor = ApiMonitorService.getInstance();
 
   try {
@@ -562,7 +564,7 @@ router.post('/api-endpoints', (req, res) => {
 });
 
 // Update endpoint configuration
-router.put('/api-endpoints/:id', (req, res) => {
+router.put('/api-endpoints/:id', validateRequest(EndpointIdParamSchema), (req, res) => {
   const apiMonitor = ApiMonitorService.getInstance();
 
   try {
@@ -612,7 +614,7 @@ router.delete('/api-endpoints/:id', (req, res) => {
 });
 
 // Start monitoring all endpoints
-router.post('/api-endpoints/start', (req, res) => {
+router.post('/api-endpoints/start', validateRequest(CleanupConfigSchema), (req, res) => {
   const apiMonitor = ApiMonitorService.getInstance();
   apiMonitor.startAllMonitoring();
 
@@ -623,7 +625,7 @@ router.post('/api-endpoints/start', (req, res) => {
 });
 
 // Stop monitoring all endpoints
-router.post('/api-endpoints/stop', (req, res) => {
+router.post('/api-endpoints/stop', validateRequest(CleanupConfigSchema), (req, res) => {
   const apiMonitor = ApiMonitorService.getInstance();
   apiMonitor.stopAllMonitoring();
 

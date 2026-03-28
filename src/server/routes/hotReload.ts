@@ -2,11 +2,13 @@ import Debug from 'debug';
 import { Router } from 'express';
 import { WebSocketService } from '@src/server/services/WebSocketService';
 import { HotReloadManager, type ConfigurationChange } from '@config/HotReloadManager';
+import { validateRequest } from '../../validation/validateRequest';
+import { HotReloadChangeSchema, SnapshotIdParamSchema } from '../../validation/schemas/hotReloadSchema';
 
 const debug = Debug('app:hotReloadRoutes');
 const router = Router();
 
-router.post('/api/config/hot-reload', async (req, res) => {
+router.post('/api/config/hot-reload', validateRequest(HotReloadChangeSchema), async (req, res) => {
   try {
     const changeData: Omit<
       ConfigurationChange,
@@ -88,7 +90,7 @@ router.get('/api/config/hot-reload/rollbacks', (req, res) => {
   }
 });
 
-router.post('/api/config/hot-reload/rollback/:snapshotId', async (req, res) => {
+router.post('/api/config/hot-reload/rollback/:snapshotId', validateRequest(SnapshotIdParamSchema), async (req, res) => {
   try {
     const { snapshotId } = req.params;
     const hotReloadManager = HotReloadManager.getInstance();

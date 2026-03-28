@@ -2,6 +2,9 @@ import Debug from 'debug';
 import { Router, type Request, type Response } from 'express';
 import { SecureConfigManager, type SecureConfig } from '@config/SecureConfigManager';
 import { auditMiddleware, logConfigChange, type AuditedRequest } from '../middleware/audit';
+import { validateRequest } from '../../validation/validateRequest';
+import { CreateSecureConfigSchema, UpdateSecureConfigSchema, SecureConfigIdParamSchema, BackupIdParamSchema } from '../../validation/schemas/secureConfigSchema';
+import { ConfigBackupSchema } from '../../validation/schemas/configSchema';
 
 const debug = Debug('app:SecureConfigRoutes');
 const router = Router();
@@ -84,7 +87,7 @@ router.get('/:id', async (req: Request, res: Response) => {
  * POST /webui/api/secure-config
  * Create a new secure configuration
  */
-router.post('/', async (req: AuditedRequest, res: Response) => {
+router.post('/', validateRequest(CreateSecureConfigSchema), async (req: AuditedRequest, res: Response) => {
   try {
     const { id, name, type, data } = req.body;
 
@@ -145,7 +148,7 @@ router.post('/', async (req: AuditedRequest, res: Response) => {
  * PUT /webui/api/secure-config/:id
  * Update an existing secure configuration
  */
-router.put('/:id', async (req: AuditedRequest, res: Response) => {
+router.put('/:id', validateRequest(UpdateSecureConfigSchema), async (req: AuditedRequest, res: Response) => {
   try {
     const { id } = req.params;
     const { name, type, data } = req.body;
@@ -273,7 +276,7 @@ router.delete('/:id', async (req: AuditedRequest, res: Response) => {
  * POST /webui/api/secure-config/backup
  * Create a backup of all secure configurations
  */
-router.post('/backup', async (req: AuditedRequest, res: Response) => {
+router.post('/backup', validateRequest(ConfigBackupSchema), async (req: AuditedRequest, res: Response) => {
   try {
     const backupId = await secureConfigManager.createBackup();
 
@@ -332,7 +335,7 @@ router.get('/backups/list', async (req: Request, res: Response) => {
  * POST /webui/api/secure-config/restore/:backupId
  * Restore from a specific backup
  */
-router.post('/restore/:backupId', async (req: AuditedRequest, res: Response) => {
+router.post('/restore/:backupId', validateRequest(BackupIdParamSchema), async (req: AuditedRequest, res: Response) => {
   try {
     const { backupId } = req.params;
     await secureConfigManager.restoreBackup(backupId);
