@@ -26,6 +26,15 @@ interface ConfigurationEditorProps {
   onSave?: (bot: Bot) => void;
 }
 
+const EnvOverrideLabel = ({ active }: { active?: boolean | null }) => active ? (
+  <label className="label">
+    <span className="label-text-alt">
+      <Lock className="w-3 h-3 inline mr-1" />
+      Controlled by environment variables
+    </span>
+  </label>
+) : null;
+
 const ConfigurationEditor: React.FC<ConfigurationEditorProps> = ({ bot, onSave }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -125,15 +134,6 @@ const ConfigurationEditor: React.FC<ConfigurationEditorProps> = ({ bot, onSave }
   };
 
   const hasEnvironmentOverrides = bot?.envOverrides && Object.keys(bot.envOverrides).length > 0;
-
-  const EnvOverrideLabel = () => hasEnvironmentOverrides ? (
-    <label className="label">
-      <span className="label-text-alt">
-        <Lock className="w-3 h-3 inline mr-1" />
-        Controlled by environment variables
-      </span>
-    </label>
-  ) : null;
 
   const envOverrideProps = hasEnvironmentOverrides ? {
     disabled: true,
@@ -243,7 +243,7 @@ const ConfigurationEditor: React.FC<ConfigurationEditorProps> = ({ bot, onSave }
                 placeholder="Select message provider"
                 {...envOverrideProps}
               />
-              <EnvOverrideLabel />
+              <EnvOverrideLabel active={hasEnvironmentOverrides} />
             </div>
 
             <div className="form-control w-full">
@@ -310,7 +310,7 @@ const ConfigurationEditor: React.FC<ConfigurationEditorProps> = ({ bot, onSave }
               rows={4}
               {...envOverrideProps}
             />
-            <EnvOverrideLabel />
+            <EnvOverrideLabel active={hasEnvironmentOverrides} />
           </div>
         </div>
       </Card>
