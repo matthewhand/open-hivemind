@@ -9,6 +9,9 @@ import {
 } from '../../validation/schemas/secureConfigSchema';
 import { validateRequest } from '../../validation/validateRequest';
 import { auditMiddleware, logConfigChange, type AuditedRequest } from '../middleware/audit';
+import { validateRequest } from '../../validation/validateRequest';
+import { CreateSecureConfigSchema, UpdateSecureConfigSchema, SecureConfigIdParamSchema, BackupIdParamSchema } from '../../validation/schemas/secureConfigSchema';
+import { ConfigBackupSchema } from '../../validation/schemas/configSchema';
 
 const debug = Debug('app:SecureConfigRoutes');
 const router = Router();
@@ -264,7 +267,7 @@ router.delete(
  * POST /webui/api/secure-config/backup
  * Create a backup of all secure configurations
  */
-router.post('/backup', async (req: AuditedRequest, res: Response) => {
+router.post('/backup', validateRequest(ConfigBackupSchema), async (req: AuditedRequest, res: Response) => {
   try {
     const backupId = await secureConfigManager.createBackup();
 

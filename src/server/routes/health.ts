@@ -3,6 +3,8 @@ import process from 'process';
 import { Router, type NextFunction, type Request, type Response } from 'express';
 import { MetricsCollector } from '../../monitoring/MetricsCollector';
 import ApiMonitorService from '../../services/ApiMonitorService';
+import { validateRequest } from '../../validation/validateRequest';
+import { CleanupConfigSchema, ApiEndpointConfigSchema, EndpointIdParamSchema } from '../../validation/schemas/healthSchema';
 import { HEALTH_THRESHOLDS, HTTP_STATUS } from '../../types/constants';
 import { ErrorLogger } from '../../utils/errorLogger';
 import { globalRecoveryManager } from '../../utils/errorRecovery';
@@ -765,7 +767,7 @@ router.delete('/api-endpoints/:id', validateRequest(DeleteApiEndpointSchema), (r
 });
 
 // Start monitoring all endpoints
-router.post('/api-endpoints/start', (req, res) => {
+router.post('/api-endpoints/start', validateRequest(CleanupConfigSchema), (req, res) => {
   const apiMonitor = ApiMonitorService.getInstance();
   apiMonitor.startAllMonitoring();
 
@@ -776,7 +778,7 @@ router.post('/api-endpoints/start', (req, res) => {
 });
 
 // Stop monitoring all endpoints
-router.post('/api-endpoints/stop', (req, res) => {
+router.post('/api-endpoints/stop', validateRequest(CleanupConfigSchema), (req, res) => {
   const apiMonitor = ApiMonitorService.getInstance();
   apiMonitor.stopAllMonitoring();
 
