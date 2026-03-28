@@ -158,6 +158,9 @@ const Drawer: React.FC<DrawerProps> = ({
             }
           }}
           disabled={item.disabled}
+          aria-expanded={hasChildren ? isExpanded : undefined}
+          aria-current={isActive ? 'page' : undefined}
+          role="menuitem"
           className={`flex items-center w-full px-3 py-2.5 rounded-lg border-none text-[14px] font-medium text-left transition-colors duration-150 ease-in-out ${
             isActive
               ? 'bg-primary text-primary-content'
@@ -166,6 +169,7 @@ const Drawer: React.FC<DrawerProps> = ({
         >
           <span
             className={`mr-3 ${isActive ? 'text-primary-content' : 'text-base-content/60'}`}
+            aria-hidden="true"
           >
             {item.icon}
           </span>
@@ -205,8 +209,10 @@ const Drawer: React.FC<DrawerProps> = ({
   /* ---- render ---- */
 
   return (
-    <div
+    <aside
       className={`h-full flex flex-col bg-base-300 text-base-content ${className}`}
+      role="navigation"
+      aria-label="Sidebar navigation"
     >
       {/* Header */}
       <div className="p-4 border-b border-base-content/10 flex items-center gap-3">
@@ -222,7 +228,7 @@ const Drawer: React.FC<DrawerProps> = ({
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 p-2 overflow-y-auto">
+      <nav className="flex-1 p-2 overflow-y-auto" aria-label="Main menu">
         <ul className="list-none m-0 p-0">
           {navItems.map((item) => renderNavItem(item))}
         </ul>
@@ -242,19 +248,19 @@ const Drawer: React.FC<DrawerProps> = ({
             localStorage.setItem('hivemind-theme', newTheme);
           }}
           className="bg-base-content/5 border-none rounded-md py-1.5 px-2.5 cursor-pointer flex items-center gap-1 text-base-content transition-colors duration-150 hover:bg-base-content/10"
-          title="Toggle theme"
+          aria-label="Toggle theme"
         >
-          <Sun size={14} className="theme-sun hidden" />
-          <Moon size={14} />
+          <Sun size={14} className="theme-sun hidden" aria-hidden="true" />
+          <Moon size={14} aria-hidden="true" />
           <span className="text-[11px]">Theme</span>
         </button>
 
-        <span className="flex items-center gap-1.5 text-success">
-          <span className="w-1.5 h-1.5 bg-success rounded-full"></span>
+        <span className="flex items-center gap-1.5 text-success" role="status" aria-label="Connection status: Online">
+          <span className="w-1.5 h-1.5 bg-success rounded-full" aria-hidden="true"></span>
           Online
         </span>
       </div>
-    </div>
+    </aside>
   );
 };
 

@@ -356,6 +356,7 @@ const DataTable = <T extends Record<string, any>>({
               className="input input-bordered input-sm w-full max-w-xs"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
+              aria-label="Search table data"
             />
           </div>
         )}
@@ -396,6 +397,7 @@ const DataTable = <T extends Record<string, any>>({
             className="select select-bordered select-sm"
             value={pageSize}
             disabled={isInfiniteScroll}
+            aria-label="Rows per page"
             onChange={(e) => {
               setPageSize(Number(e.target.value));
               setCurrentPage(1);
@@ -505,6 +507,9 @@ const DataTable = <T extends Record<string, any>>({
               key={resolveKey(row, idx)}
               className={`card bg-base-100 shadow-sm border border-base-200 ${onRowClick ? 'cursor-pointer active:bg-base-200' : ''}`}
               onClick={() => onRowClick?.(row, idx)}
+              onKeyDown={(e) => { if (onRowClick && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); onRowClick(row, idx); } }}
+              tabIndex={onRowClick ? 0 : undefined}
+              role={onRowClick ? 'button' : undefined}
             >
               <div className="card-body p-4 gap-2">
                 {/* Prominent fields */}
@@ -574,11 +579,15 @@ const DataTable = <T extends Record<string, any>>({
                   className={col.sortable ? 'cursor-pointer hover:bg-base-200' : ''}
                   style={{ width: col.width }}
                   onClick={() => col.sortable && handleSort(col.key)}
+                  tabIndex={col.sortable ? 0 : undefined}
+                  aria-sort={col.sortable && sortField === col.key ? (sortDirection === 'asc' ? 'ascending' : 'descending') : col.sortable ? 'none' : undefined}
+                  aria-label={col.sortable ? `Sort by ${col.title}` : undefined}
+                  onKeyDown={(e) => { if (col.sortable && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); handleSort(col.key); } }}
                 >
                   <div className="flex items-center gap-2">
                     {col.title}
                     {col.sortable && (
-                      <span className="text-xs">
+                      <span className="text-xs" aria-hidden="true">
                         {sortField === col.key
                           ? sortDirection === 'asc' ? '\u2191' : '\u2193'
                           : '\u2195'}

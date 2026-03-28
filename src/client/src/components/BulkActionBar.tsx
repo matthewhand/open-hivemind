@@ -28,7 +28,7 @@ const BulkActionBar: React.FC<BulkActionBarProps> = ({
   if (selectedCount === 0) return null;
 
   return (
-    <div className="alert alert-info shadow-md flex flex-wrap items-center gap-2">
+    <div className="alert alert-info shadow-md flex flex-wrap items-center gap-2" role="toolbar" aria-label={`Bulk actions: ${selectedCount} ${selectedCount === 1 ? 'item' : 'items'} selected`} aria-live="polite">
       <div className="flex items-center gap-2 font-semibold">
         <span className="badge badge-primary badge-lg">{selectedCount}</span>
         <span>{selectedCount === 1 ? 'item' : 'items'} selected</span>
