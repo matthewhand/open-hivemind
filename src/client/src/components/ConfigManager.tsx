@@ -79,7 +79,7 @@ const ConfigManager: React.FC = () => {
       setValidationErrors({});
       showToast('Configuration saved successfully', 'success');
     } catch (error) {
-      console.error('Failed to save configuration:', error);
+      // showToast below provides feedback
       showToast('Failed to save configuration', 'error');
     }
   };

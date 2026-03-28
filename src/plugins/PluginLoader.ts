@@ -167,3 +167,28 @@ export function instantiateMemoryProvider(mod: any, config?: any): any {
     'Memory plugin does not export create(), a Provider class, or a default constructor.'
   );
 }
+
+/**
+ * Instantiate a tool provider from a loaded module.
+ *
+ * Contract (preferred): module exports `create(config)` → IToolProvider
+ * Fallback: known Provider class patterns.
+ */
+export function instantiateToolProvider(mod: any, config?: any): any {
+  // Preferred: explicit factory
+  if (typeof mod.create === 'function') {
+    return mod.create(config);
+  }
+  // Fallback: *Provider constructor
+  const ctor = Object.keys(mod).find((k) => k.endsWith('Provider') && typeof mod[k] === 'function');
+  if (ctor) {
+    return new mod[ctor](config);
+  }
+  // Fallback: default export
+  if (typeof mod.default === 'function') {
+    return new mod.default(config);
+  }
+  throw new Error(
+    'Tool plugin does not export create(), a Provider class, or a default constructor.'
+  );
+}

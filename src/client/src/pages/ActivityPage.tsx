@@ -8,8 +8,7 @@ import Badge from '../components/DaisyUI/Badge';
 import Button from '../components/DaisyUI/Button';
 import Card from '../components/DaisyUI/Card';
 import DataTable from '../components/DaisyUI/DataTable';
-import ResponsiveDataView from '../components/DaisyUI/ResponsiveDataView';
-import type { RDVColumn } from '../components/DaisyUI/ResponsiveDataView';
+import type { RDVColumn } from '../components/DaisyUI/DataTable';
 import StatsCards from '../components/DaisyUI/StatsCards';
 import Timeline from '../components/DaisyUI/Timeline';
 import Toggle from '../components/DaisyUI/Toggle';
@@ -117,6 +116,34 @@ const ActivityPage: React.FC = () => {
     setSelectedLlmProvider('all');
     setStartDate('');
     setEndDate('');
+  };
+
+  // Quick time range presets (salvaged from dead Admin/ActivityMonitor)
+  const handleQuickTimeRange = (range: '1h' | '6h' | '24h' | '7d' | '30d') => {
+    const now = new Date();
+    const toDate = now.toISOString().split('T')[0];
+    let fromDate: Date;
+
+    switch (range) {
+      case '1h':
+        fromDate = new Date(now.getTime() - 60 * 60 * 1000);
+        break;
+      case '6h':
+        fromDate = new Date(now.getTime() - 6 * 60 * 60 * 1000);
+        break;
+      case '24h':
+        fromDate = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+        break;
+      case '7d':
+        fromDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+        break;
+      case '30d':
+        fromDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+        break;
+    }
+
+    setStartDate(fromDate.toISOString().split('T')[0]);
+    setEndDate(toDate);
   };
 
   useEffect(() => {
@@ -418,7 +445,21 @@ const ActivityPage: React.FC = () => {
           }
         ]}
       >
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
+          <div className="join">
+            {(['1h', '6h', '24h', '7d', '30d'] as const).map((range) => (
+              <Button
+                key={range}
+                size="sm"
+                variant="ghost"
+                className="join-item btn-xs"
+                onClick={() => handleQuickTimeRange(range)}
+                title={`Last ${range}`}
+              >
+                {range}
+              </Button>
+            ))}
+          </div>
           <Input
             type="date"
             value={startDate}
@@ -463,7 +504,7 @@ const ActivityPage: React.FC = () => {
       ) : (
         <Card>
           {viewMode === 'table' ? (
-            <ResponsiveDataView
+            <DataTable
               data={filteredEvents}
               columns={columns}
               loading={loading}

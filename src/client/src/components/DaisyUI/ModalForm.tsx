@@ -1,19 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect } from 'react';
 import Input from './Input';
-
-interface FormField {
-  name: string;
-  label: string;
-  type: 'text' | 'email' | 'password' | 'number' | 'textarea' | 'select' | 'checkbox' | 'radio' | 'file';
-  placeholder?: string;
-  required?: boolean;
-  options?: Array<{ value: string; label: string }>;
-  validation?: (value: any) => string | null;
-  disabled?: boolean;
-  helperText?: string;
-  multiple?: boolean;
-}
+import type { FormField } from './formTypes';
 
 interface ModalFormProps {
   isOpen: boolean;
@@ -144,7 +132,7 @@ const ModalForm: React.FC<ModalFormProps> = ({
       await onSubmit(formData);
       onClose();
     } catch (error) {
-      console.error('Form submission error:', error);
+      // Error handled by form validation UI
     } finally {
       setIsSubmitting(false);
     }

@@ -7,7 +7,14 @@ import type { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdi
 import { ErrorUtils } from '@src/types/errors';
 import MCPProviderManager from '../../config/MCPProviderManager';
 import type { MCPProviderConfig } from '../../types/mcp';
-import { AddMCPServerSchema, CallMCPToolSchema } from '../../validation/schemas/mcpSchema';
+import {
+  AddMCPServerSchema,
+  CallMCPToolSchema,
+  CreateMCPProviderSchema,
+  MCPProviderIdParamSchema,
+  MCPServerNameParamSchema,
+  UpdateMCPProviderSchema,
+} from '../../validation/schemas/mcpSchema';
 import { validateRequest } from '../../validation/validateRequest';
 
 const debug = Debug('app:webui:mcp');
@@ -227,106 +234,114 @@ router.post('/servers', validateRequest(AddMCPServerSchema), async (req, res) =>
 });
 
 // POST /api/mcp/servers/:name/connect - Connect to MCP server
-router.post('/servers/:name/connect', async (req, res) => {
-  try {
-    const { name } = req.params;
-
-    const servers = await loadMCPServers();
-    const server = servers.find((s) => s.name === name);
-
-    if (!server) {
-      return res.status(404).json({ error: 'MCP server not found' });
-    }
-
-    if (connectedClients.has(name)) {
-      return res.status(400).json({ error: 'MCP server already connected' });
-    }
-
+router.post(
+  '/servers/:name/connect',
+  validateRequest(MCPServerNameParamSchema),
+  async (req, res) => {
     try {
-      const mcpClient = await connectToMCPServer(server);
+      const { name } = req.params;
 
-      // Update server config with connection info
-      const serverIndex = servers.findIndex((s) => s.name === name);
-      servers[serverIndex] = mcpClient.server;
-      await saveMCPServers(servers);
+      const servers = await loadMCPServers();
+      const server = servers.find((s) => s.name === name);
 
-      return res.json({
-        server: mcpClient.server,
-        message: 'Successfully connected to MCP server',
+      if (!server) {
+        return res.status(404).json({ error: 'MCP server not found' });
+      }
+
+      if (connectedClients.has(name)) {
+        return res.status(400).json({ error: 'MCP server already connected' });
+      }
+
+      try {
+        const mcpClient = await connectToMCPServer(server);
+
+        // Update server config with connection info
+        const serverIndex = servers.findIndex((s) => s.name === name);
+        servers[serverIndex] = mcpClient.server;
+        await saveMCPServers(servers);
+
+        return res.json({
+          server: mcpClient.server,
+          message: 'Successfully connected to MCP server',
+        });
+      } catch (error) {
+        // Update server config with error
+        const serverIndex = servers.findIndex((s) => s.name === name);
+        servers[serverIndex] = {
+          ...server,
+          connected: false,
+          error: String(error),
+        };
+        await saveMCPServers(servers);
+
+        return res.status(500).json({ error: `Failed to connect to MCP server: ${error}` });
+      }
+    } catch (error: unknown) {
+      const hivemindError = ErrorUtils.toHivemindError(error) as any;
+      const errorInfo = ErrorUtils.classifyError(hivemindError);
+
+      debug('Error connecting to MCP server:', {
+        message: hivemindError.message,
+        code: hivemindError.code,
+        type: errorInfo.type,
+        severity: errorInfo.severity,
       });
-    } catch (error) {
-      // Update server config with error
-      const serverIndex = servers.findIndex((s) => s.name === name);
-      servers[serverIndex] = {
-        ...server,
-        connected: false,
-        error: String(error),
-      };
-      await saveMCPServers(servers);
 
-      return res.status(500).json({ error: `Failed to connect to MCP server: ${error}` });
+      return res.status(hivemindError.statusCode || 500).json({
+        error: hivemindError.message,
+        code: hivemindError.code || 'MCP_SERVER_CONNECT_ERROR',
+        timestamp: new Date().toISOString(),
+      });
     }
-  } catch (error: unknown) {
-    const hivemindError = ErrorUtils.toHivemindError(error) as any;
-    const errorInfo = ErrorUtils.classifyError(hivemindError);
-
-    debug('Error connecting to MCP server:', {
-      message: hivemindError.message,
-      code: hivemindError.code,
-      type: errorInfo.type,
-      severity: errorInfo.severity,
-    });
-
-    return res.status(hivemindError.statusCode || 500).json({
-      error: hivemindError.message,
-      code: hivemindError.code || 'MCP_SERVER_CONNECT_ERROR',
-      timestamp: new Date().toISOString(),
-    });
   }
-});
+);
 
 // POST /api/mcp/servers/:name/disconnect - Disconnect from MCP server
-router.post('/servers/:name/disconnect', async (req, res) => {
-  try {
-    const { name } = req.params;
+router.post(
+  '/servers/:name/disconnect',
+  validateRequest(MCPServerNameParamSchema),
+  async (req, res) => {
+    try {
+      const { name } = req.params;
 
-    await disconnectFromMCPServer(name);
+      await disconnectFromMCPServer(name);
 
-    // Update server config
-    const servers = await loadMCPServers();
-    const serverIndex = servers.findIndex((s) => s.name === name);
+      // Update server config
+      const servers = await loadMCPServers();
+      const serverIndex = servers.findIndex((s) => s.name === name);
 
-    if (serverIndex !== -1) {
-      servers[serverIndex] = {
-        ...servers[serverIndex],
-        connected: false,
-        error: undefined,
-      };
-      await saveMCPServers(servers);
+      if (serverIndex !== -1) {
+        servers[serverIndex] = {
+          ...servers[serverIndex],
+          connected: false,
+          error: undefined,
+        };
+        await saveMCPServers(servers);
+      }
+
+      return res.json({ message: 'Successfully disconnected from MCP server' });
+    } catch (error: unknown) {
+      const hivemindError = ErrorUtils.toHivemindError(error) as any;
+      const errorInfo = ErrorUtils.classifyError(hivemindError);
+
+      debug('Error disconnecting from MCP server:', {
+        message: hivemindError.message,
+        code: hivemindError.code,
+        type: errorInfo.type,
+        severity: errorInfo.severity,
+      });
+
+      return res.status(hivemindError.statusCode || 500).json({
+        error: hivemindError.message,
+        code: hivemindError.code || 'MCP_SERVER_DISCONNECT_ERROR',
+        timestamp: new Date().toISOString(),
+      });
     }
-
-    return res.json({ message: 'Successfully disconnected from MCP server' });
-  } catch (error: unknown) {
-    const hivemindError = ErrorUtils.toHivemindError(error) as any;
-    const errorInfo = ErrorUtils.classifyError(hivemindError);
-
-    debug('Error disconnecting from MCP server:', {
-      message: hivemindError.message,
-      code: hivemindError.code,
-      type: errorInfo.type,
-      severity: errorInfo.severity,
-    });
-
-    return res.status(hivemindError.statusCode || 500).json({
-      error: hivemindError.message,
-      code: hivemindError.code || 'MCP_SERVER_DISCONNECT_ERROR',
-      timestamp: new Date().toISOString(),
-    });
   }
-});
+);
 
 // DELETE /api/mcp/servers/:name - Remove MCP server
-router.delete('/servers/:name', async (req, res) => {
+router.delete('/servers/:name', validateRequest(MCPServerNameParamSchema), async (req, res) => {
   try {
     const { name } = req.params;
 
@@ -366,7 +381,7 @@ router.delete('/servers/:name', async (req, res) => {
 });
 
 // GET /api/mcp/servers/:name/tools - Get tools from MCP server
-router.get('/servers/:name/tools', async (req, res) => {
+router.get('/servers/:name/tools', validateRequest(MCPServerNameParamSchema), async (req, res) => {
   try {
     const { name } = req.params;
 
@@ -510,7 +525,7 @@ router.get('/providers', async (req, res) => {
 });
 
 // GET /api/mcp/providers/:id - Get MCP provider by ID
-router.get('/providers/:id', async (req, res) => {
+router.get('/providers/:id', validateRequest(MCPProviderIdParamSchema), async (req, res) => {
   try {
     const { id } = req.params;
     const provider = mcpProviderManager.getProvider(id);
@@ -552,7 +567,7 @@ router.get('/providers/:id', async (req, res) => {
 });
 
 // POST /api/mcp/providers - Create new MCP provider
-router.post('/providers', async (req, res) => {
+router.post('/providers', validateRequest(CreateMCPProviderSchema), async (req, res) => {
   try {
     const providerConfig: MCPProviderConfig = req.body;
 
@@ -605,7 +620,7 @@ router.post('/providers', async (req, res) => {
 });
 
 // PUT /api/mcp/providers/:id - Update MCP provider
-router.put('/providers/:id', async (req, res) => {
+router.put('/providers/:id', validateRequest(UpdateMCPProviderSchema), async (req, res) => {
   try {
     const { id } = req.params;
     const updates: Partial<MCPProviderConfig> = req.body;
@@ -659,7 +674,7 @@ router.put('/providers/:id', async (req, res) => {
 });
 
 // DELETE /api/mcp/providers/:id - Delete MCP provider
-router.delete('/providers/:id', async (req, res) => {
+router.delete('/providers/:id', validateRequest(MCPProviderIdParamSchema), async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -698,7 +713,7 @@ router.delete('/providers/:id', async (req, res) => {
 });
 
 // POST /api/mcp/providers/:id/start - Start MCP provider
-router.post('/providers/:id/start', async (req, res) => {
+router.post('/providers/:id/start', validateRequest(MCPProviderIdParamSchema), async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -737,7 +752,7 @@ router.post('/providers/:id/start', async (req, res) => {
 });
 
 // POST /api/mcp/providers/:id/stop - Stop MCP provider
-router.post('/providers/:id/stop', async (req, res) => {
+router.post('/providers/:id/stop', validateRequest(MCPProviderIdParamSchema), async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -776,7 +791,7 @@ router.post('/providers/:id/stop', async (req, res) => {
 });
 
 // POST /api/mcp/providers/:id/test - Test MCP provider
-router.post('/providers/:id/test', async (req, res) => {
+router.post('/providers/:id/test', validateRequest(MCPProviderIdParamSchema), async (req, res) => {
   try {
     const { id } = req.params;
 

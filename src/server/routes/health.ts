@@ -127,6 +127,188 @@ router.get('/detailed', optionalAuth, (req: Request, res: Response) => {
   return res.json(healthData);
 });
 
+// Service-level health check endpoint for the health check widget
+router.get('/detailed/services', optionalAuth, async (_req: Request, res: Response) => {
+  const services: Array<{
+    name: string;
+    status: 'healthy' | 'degraded' | 'down';
+    latencyMs: number;
+    lastChecked: string;
+    details: string;
+  }> = [];
+
+  const now = new Date().toISOString();
+
+  // Check Database connectivity
+  const dbStart = Date.now();
+  try {
+    const dbManager = require('../../database/DatabaseManager').DatabaseManager.getInstance();
+    const isConnected = dbManager.isConnected();
+    services.push({
+      name: 'Database',
+      status: isConnected ? 'healthy' : 'down',
+      latencyMs: Date.now() - dbStart,
+      lastChecked: now,
+      details: isConnected ? 'Connected and responding' : 'Database connection lost',
+    });
+  } catch {
+    services.push({
+      name: 'Database',
+      status: 'down',
+      latencyMs: Date.now() - dbStart,
+      lastChecked: now,
+      details: 'Database unavailable or not configured',
+    });
+  }
+
+  // Check LLM providers
+  const llmStart = Date.now();
+  try {
+    const { ProviderRegistry } = require('../../registries/ProviderRegistry');
+    const registry = ProviderRegistry.getInstance();
+    const llmProviders = registry.getLlmProviders?.() || [];
+    const activeLlm = llmProviders.filter((p: any) => p.status === 'active' || p.connected);
+    const llmCount = llmProviders.length;
+    const activeCount = activeLlm.length;
+    const llmStatus =
+      llmCount === 0
+        ? 'down'
+        : activeCount === llmCount
+          ? 'healthy'
+          : activeCount > 0
+            ? 'degraded'
+            : 'down';
+    services.push({
+      name: 'LLM Providers',
+      status: llmStatus as 'healthy' | 'degraded' | 'down',
+      latencyMs: Date.now() - llmStart,
+      lastChecked: now,
+      details: `${activeCount}/${llmCount} providers active`,
+    });
+  } catch {
+    const hasOpenAI = !!process.env.OPENAI_API_KEY;
+    const hasAnthropic = !!process.env.ANTHROPIC_API_KEY;
+    const hasAny = hasOpenAI || hasAnthropic;
+    services.push({
+      name: 'LLM Providers',
+      status: hasAny ? 'healthy' : 'down',
+      latencyMs: Date.now() - llmStart,
+      lastChecked: now,
+      details: hasAny ? 'Provider API key(s) configured' : 'No LLM providers configured',
+    });
+  }
+
+  // Check Message providers
+  const msgStart = Date.now();
+  try {
+    const { ProviderRegistry } = require('../../registries/ProviderRegistry');
+    const registry = ProviderRegistry.getInstance();
+    const msgProviders = registry.getMessageProviders?.() || [];
+    const activeMsg = msgProviders.filter((p: any) => p.status === 'active' || p.connected);
+    const msgCount = msgProviders.length;
+    const activeMsgCount = activeMsg.length;
+    const msgStatus =
+      msgCount === 0
+        ? 'down'
+        : activeMsgCount === msgCount
+          ? 'healthy'
+          : activeMsgCount > 0
+            ? 'degraded'
+            : 'down';
+    services.push({
+      name: 'Message Providers',
+      status: msgStatus as 'healthy' | 'degraded' | 'down',
+      latencyMs: Date.now() - msgStart,
+      lastChecked: now,
+      details: `${activeMsgCount}/${msgCount} providers connected`,
+    });
+  } catch {
+    const hasDiscord = !!process.env.DISCORD_BOT_TOKEN;
+    const hasSlack = !!process.env.SLACK_BOT_TOKEN;
+    const hasAny = hasDiscord || hasSlack;
+    services.push({
+      name: 'Message Providers',
+      status: hasAny ? 'healthy' : 'down',
+      latencyMs: Date.now() - msgStart,
+      lastChecked: now,
+      details: hasAny ? 'Message provider token(s) configured' : 'No message providers configured',
+    });
+  }
+
+  // Check Memory providers (from registry)
+  const memStart = Date.now();
+  try {
+    const { ProviderRegistry } = require('../../registries/ProviderRegistry');
+    const registry = ProviderRegistry.getInstance();
+    const memProviders = registry.getMemoryProviders();
+    const memCount = memProviders.size;
+    if (memCount > 0) {
+      services.push({
+        name: 'Memory Provider',
+        status: 'healthy',
+        latencyMs: Date.now() - memStart,
+        lastChecked: now,
+        details: `${memCount} provider(s) registered`,
+      });
+    } else {
+      // Fallback: env var hint
+      const hasMem0 = !!process.env.MEM0_API_KEY || !!process.env.MEM0_BASE_URL;
+      services.push({
+        name: 'Memory Provider',
+        status: hasMem0 ? 'healthy' : 'down',
+        latencyMs: Date.now() - memStart,
+        lastChecked: now,
+        details: hasMem0 ? 'Memory provider configured (env)' : 'No memory provider configured',
+      });
+    }
+  } catch {
+    const hasMem0 = !!process.env.MEM0_API_KEY || !!process.env.MEM0_BASE_URL;
+    services.push({
+      name: 'Memory Provider',
+      status: hasMem0 ? 'healthy' : 'down',
+      latencyMs: Date.now() - memStart,
+      lastChecked: now,
+      details: hasMem0 ? 'Memory provider configured' : 'No memory provider configured',
+    });
+  }
+
+  // Check Tool providers (from registry)
+  const toolStart = Date.now();
+  try {
+    const { ProviderRegistry } = require('../../registries/ProviderRegistry');
+    const registry = ProviderRegistry.getInstance();
+    const toolProviders = registry.getToolProviders();
+    const toolCount = toolProviders.size;
+    if (toolCount > 0) {
+      services.push({
+        name: 'Tool Providers',
+        status: 'healthy',
+        latencyMs: Date.now() - toolStart,
+        lastChecked: now,
+        details: `${toolCount} provider(s) registered`,
+      });
+    } else {
+      services.push({
+        name: 'Tool Providers',
+        status: 'down',
+        latencyMs: Date.now() - toolStart,
+        lastChecked: now,
+        details: 'No tool providers configured',
+      });
+    }
+  } catch {
+    services.push({
+      name: 'Tool Providers',
+      status: 'down',
+      latencyMs: Date.now() - toolStart,
+      lastChecked: now,
+      details: 'Tool provider registry unavailable',
+    });
+  }
+
+  return res.json({ services });
+});
+
 // System metrics endpoint
 router.get('/metrics', (req, res) => {
   const uptime = process.uptime();
@@ -158,32 +340,87 @@ router.get('/metrics', (req, res) => {
   return res.json(metricsData);
 });
 
+// Configurable alert thresholds (inspired by EnhancedAlertManager patterns
+// that were removed during dead code cleanup). Override via environment variables.
+const ALERT_THRESHOLDS = {
+  memoryWarning: parseInt(process.env.ALERT_MEMORY_WARNING || '80', 10),
+  memoryCritical: parseInt(process.env.ALERT_MEMORY_CRITICAL || '95', 10),
+  cpuWarning: parseInt(process.env.ALERT_CPU_WARNING || '80', 10),
+  cpuCritical: parseInt(process.env.ALERT_CPU_CRITICAL || '95', 10),
+  recentRestartSeconds: 30,
+  errorRateWarning: parseFloat(process.env.ALERT_ERROR_RATE_WARNING || '5'),
+};
+
 // Alerts endpoint
 router.get('/alerts', (req, res) => {
   const memoryUsage = process.memoryUsage();
   const memoryPercentage = (memoryUsage.heapUsed / memoryUsage.heapTotal) * 100;
+  const cpuUsage = process.cpuUsage();
   const uptime = process.uptime();
 
   const alerts = [];
+  const now = new Date().toISOString();
 
-  // Check for high memory usage
-  if (memoryPercentage > 80) {
+  // Check for high memory usage with tiered severity
+  if (memoryPercentage > ALERT_THRESHOLDS.memoryCritical) {
+    alerts.push({
+      level: 'critical',
+      message: 'Critical memory usage detected',
+      details: `Memory usage is at ${Math.round(memoryPercentage)}% (threshold: ${ALERT_THRESHOLDS.memoryCritical}%)`,
+      timestamp: now,
+      type: 'memory',
+    });
+  } else if (memoryPercentage > ALERT_THRESHOLDS.memoryWarning) {
     alerts.push({
       level: 'warning',
       message: 'High memory usage detected',
-      details: `Memory usage is at ${Math.round(memoryPercentage)}%`,
-      timestamp: new Date().toISOString(),
+      details: `Memory usage is at ${Math.round(memoryPercentage)}% (threshold: ${ALERT_THRESHOLDS.memoryWarning}%)`,
+      timestamp: now,
       type: 'memory',
     });
   }
 
-  // Check for low uptime (less than 30 seconds might indicate recent restart)
-  if (uptime < 30) {
+  // Check for high CPU usage (cumulative user+system time as % of wall clock)
+  const cpuTotalMs = (cpuUsage.user + cpuUsage.system) / 1000;
+  const cpuPercent = uptime > 0 ? (cpuTotalMs / (uptime * 1000)) * 100 : 0;
+  if (cpuPercent > ALERT_THRESHOLDS.cpuCritical) {
+    alerts.push({
+      level: 'critical',
+      message: 'Critical CPU usage detected',
+      details: `CPU usage is at ${Math.round(cpuPercent)}% (threshold: ${ALERT_THRESHOLDS.cpuCritical}%)`,
+      timestamp: now,
+      type: 'cpu',
+    });
+  } else if (cpuPercent > ALERT_THRESHOLDS.cpuWarning) {
+    alerts.push({
+      level: 'warning',
+      message: 'High CPU usage detected',
+      details: `CPU usage is at ${Math.round(cpuPercent)}% (threshold: ${ALERT_THRESHOLDS.cpuWarning}%)`,
+      timestamp: now,
+      type: 'cpu',
+    });
+  }
+
+  // Check for high error rate
+  const recentErrors = ErrorLogger.getInstance().getRecentErrorCount(60000);
+  const errorRate = calculateErrorRate(recentErrors, 60);
+  if (errorRate > ALERT_THRESHOLDS.errorRateWarning) {
+    alerts.push({
+      level: errorRate > ALERT_THRESHOLDS.errorRateWarning * 2 ? 'critical' : 'warning',
+      message: 'Elevated error rate detected',
+      details: `Error rate is ${errorRate.toFixed(2)}/s (threshold: ${ALERT_THRESHOLDS.errorRateWarning}/s)`,
+      timestamp: now,
+      type: 'error_rate',
+    });
+  }
+
+  // Check for low uptime (recent restart indicator)
+  if (uptime < ALERT_THRESHOLDS.recentRestartSeconds) {
     alerts.push({
       level: 'info',
       message: 'Service recently started',
       details: `Uptime is ${Math.round(uptime)} seconds`,
-      timestamp: new Date().toISOString(),
+      timestamp: now,
       type: 'uptime',
     });
   }
@@ -191,7 +428,8 @@ router.get('/alerts', (req, res) => {
   return res.json({
     alerts: alerts,
     count: alerts.length,
-    timestamp: new Date().toISOString(),
+    thresholds: ALERT_THRESHOLDS,
+    timestamp: now,
   });
 });
 

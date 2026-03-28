@@ -6,8 +6,8 @@ import AlertPanel from '../components/Monitoring/AlertPanel';
 import StatusCard from '../components/Monitoring/StatusCard';
 import Modal, { ConfirmModal } from '../components/DaisyUI/Modal';
 import { useSuccessToast, useErrorToast, useWarningToast } from '../components/DaisyUI/ToastNotification';
-import ResponsiveDataView from '../components/DaisyUI/ResponsiveDataView';
-import type { RDVColumn, RowAction } from '../components/DaisyUI/ResponsiveDataView';
+import DataTable from '../components/DaisyUI/DataTable';
+import type { RDVColumn, RowAction } from '../components/DaisyUI/DataTable';
 
 interface SystemConfig {
   refreshInterval: number;
@@ -95,7 +95,7 @@ const SystemManagement: React.FC = () => {
       const status = await apiService.getApiEndpointsStatus();
       setApiStatus(status);
     } catch (error) {
-      console.error('Failed to fetch API status:', error);
+      errorToast('API Status', 'Failed to fetch API status');
     }
   }, []);
 
@@ -112,7 +112,7 @@ const SystemManagement: React.FC = () => {
       // Backend returns { success: true, data: { envVars: ... } }
       setEnvOverrides(overrides.data?.envVars || overrides.envVars);
     } catch (error) {
-      console.error('Failed to fetch performance data:', error);
+      errorToast('Performance Data', 'Failed to fetch performance metrics');
     } finally {
       setIsPerformanceLoading(false);
     }
@@ -134,7 +134,7 @@ const SystemManagement: React.FC = () => {
         }
       }));
     } catch (error) {
-      console.error('Failed to fetch system config:', error);
+      errorToast('System Config', 'Failed to fetch system configuration');
     }
   }, []);
 
@@ -154,7 +154,7 @@ const SystemManagement: React.FC = () => {
       }));
       setBackups(mappedBackups.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));
     } catch (error) {
-      console.error('Failed to fetch backup history:', error);
+      errorToast('Backup History', 'Failed to fetch backup history');
     }
   }, []);
 
@@ -187,7 +187,7 @@ const SystemManagement: React.FC = () => {
       // Persist to backend (user settings)
       await apiService.updateGlobalConfig({ [key]: value });
     } catch (error) {
-      console.error('Failed to update configuration:', error);
+      errorToast('Config Update', 'Failed to update configuration');
     } finally {
       setIsLoading(false);
     }
@@ -197,7 +197,7 @@ const SystemManagement: React.FC = () => {
     try {
       await apiService.acknowledgeAlert(alertId);
     } catch (error) {
-      console.error('Failed to acknowledge alert:', error);
+      errorToast('Alert', 'Failed to acknowledge alert');
     }
   };
 
@@ -205,7 +205,7 @@ const SystemManagement: React.FC = () => {
     try {
       await apiService.resolveAlert(alertId);
     } catch (error) {
-      console.error('Failed to resolve alert:', error);
+      errorToast('Alert', 'Failed to resolve alert');
     }
   };
 
@@ -237,7 +237,7 @@ const SystemManagement: React.FC = () => {
       successToast('Backup Created', 'Backup created successfully');
       await fetchBackupHistory();
     } catch (error) {
-      console.error('Failed to create backup:', error);
+      /* errorToast below */
       errorToast('Backup Failed', 'Failed to create backup: ' + (error as Error).message);
     } finally {
       setIsCreatingBackup(false);
@@ -257,7 +257,7 @@ const SystemManagement: React.FC = () => {
           successToast('System Restored', 'System restored successfully. Reloading...');
           setTimeout(() => window.location.reload(), 2000);
         } catch (error) {
-          console.error('Failed to restore backup:', error);
+          /* errorToast below */
           errorToast('Restore Failed', 'Failed to restore backup: ' + (error as Error).message);
         }
       },
@@ -277,7 +277,7 @@ const SystemManagement: React.FC = () => {
           successToast('Backup Deleted', 'Backup deleted');
           setBackups(prev => prev.filter(backup => backup.id !== backupId));
         } catch (error) {
-          console.error('Failed to delete backup:', error);
+          /* errorToast below */
           errorToast('Delete Failed', 'Failed to delete backup: ' + (error as Error).message);
         }
       },
@@ -563,7 +563,7 @@ const SystemManagement: React.FC = () => {
             <div className="space-y-6">
               <h3 className="text-xl font-semibold">Backup History</h3>
 
-              <ResponsiveDataView<BackupRecord>
+              <DataTable<BackupRecord>
                 data={backups}
                 columns={[
                   {
@@ -708,7 +708,7 @@ const SystemManagement: React.FC = () => {
               <div className="card bg-base-200">
                 <div className="card-body p-4">
                   <h4 className="card-title text-sm">API Endpoints Status</h4>
-                  <ResponsiveDataView
+                  <DataTable
                     data={apiStatus?.endpoints || []}
                     columns={[
                       {
@@ -761,7 +761,7 @@ const SystemManagement: React.FC = () => {
 
                 {envOverrides ? (
                   <div className="bg-base-300 rounded-lg p-2">
-                    <ResponsiveDataView
+                    <DataTable
                       data={Object.entries(envOverrides).map(([k, v]) => ({ variable: k, value: v as string }))}
                       columns={[
                         { key: 'variable' as any, title: 'Variable', prominent: true, render: (v: string) => <span className="font-mono font-bold text-primary">{v}</span> },

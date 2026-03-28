@@ -42,7 +42,7 @@ const AIAssistButton: React.FC<AIAssistButtonProps> = ({
       if (err.message && err.message.includes('not configured')) {
         warningToast('AI Not Configured', 'AI Assistance is not configured. Please go to LLM Providers page to configure it.');
       } else {
-        console.error('AI Gen error:', err);
+        warningToast('AI Generation failed');
       }
     } finally {
       setLoading(false);

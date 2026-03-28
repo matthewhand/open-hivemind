@@ -461,7 +461,7 @@ function getClientKey(req: Request): string {
  * Standard rate limit handler
  */
 function createRateLimitHandler(type: string) {
-  return (req: Request & { rateLimit?: { resetTime?: number } }, res: Response) => {
+  return (req: Request & { rateLimit?: { resetTime?: number; limit?: number } }, res: Response) => {
     const retryAfter = req.rateLimit?.resetTime
       ? Math.ceil((req.rateLimit.resetTime - Date.now()) / 1000)
       : 60;
@@ -472,6 +472,14 @@ function createRateLimitHandler(type: string) {
       method: req.method,
       userAgent: req.headers['user-agent']?.substring(0, 100),
     });
+
+    // Set Retry-After and legacy X-RateLimit headers for frontend consumption
+    res.setHeader('Retry-After', String(retryAfter));
+    res.setHeader('X-RateLimit-Limit', String(req.rateLimit?.limit ?? 0));
+    res.setHeader('X-RateLimit-Remaining', '0');
+    if (req.rateLimit?.resetTime) {
+      res.setHeader('X-RateLimit-Reset', String(req.rateLimit.resetTime));
+    }
 
     res.status(429).json({
       error: 'Too many requests',

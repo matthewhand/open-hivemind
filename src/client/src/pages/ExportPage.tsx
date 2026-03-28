@@ -22,8 +22,9 @@ import EmptyState from '../components/DaisyUI/EmptyState';
 import StatsCards from '../components/DaisyUI/StatsCards';
 import SearchFilterBar from '../components/SearchFilterBar';
 import { apiService } from '../services/api';
-import ResponsiveDataView from '../components/DaisyUI/ResponsiveDataView';
-import type { RDVColumn, RowAction } from '../components/DaisyUI/ResponsiveDataView';
+import DataTable from '../components/DaisyUI/DataTable';
+import type { RDVColumn, RowAction } from '../components/DaisyUI/DataTable';
+import { useSuccessToast, useErrorToast } from '../components/DaisyUI/ToastNotification';
 
 interface Backup {
   id: string;
@@ -35,7 +36,8 @@ interface Backup {
 }
 
 const ExportPage: React.FC = () => {
-  const [toast, setToast] = useState<{ title: string, message?: string, type: 'success' | 'error' } | null>(null);
+  const successToast = useSuccessToast();
+  const errorToast = useErrorToast();
   const [backups, setBackups] = useState<Backup[]>([]);
   const [loading, setLoading] = useState(false);
   const [createModalOpen, setCreateModalOpen] = useState(false);
@@ -53,8 +55,7 @@ const ExportPage: React.FC = () => {
       const data = await apiService.listSystemBackups();
       setBackups(data);
     } catch (err) {
-      console.error('Failed to fetch backups:', err);
-      setToast({ title: 'Error', message: 'Failed to load backups', type: 'error' });
+      errorToast('Error', 'Failed to load backups');
     } finally {
       setLoading(false);
     }
@@ -72,13 +73,13 @@ const ExportPage: React.FC = () => {
         name: newBackupName,
         description: newBackupDesc,
       });
-      setToast({ title: 'Success', message: 'Backup created successfully', type: 'success' });
+      successToast('Success', 'Backup created successfully');
       setCreateModalOpen(false);
       setNewBackupName('');
       setNewBackupDesc('');
       fetchBackups();
     } catch (err) {
-      setToast({ title: 'Error', message: err instanceof Error ? err.message : 'Failed to create backup', type: 'error' });
+      errorToast('Error', err instanceof Error ? err.message : 'Failed to create backup');
     } finally {
       setActionLoading(null);
     }
@@ -95,10 +96,10 @@ const ExportPage: React.FC = () => {
         try {
           setActionLoading(id);
           await apiService.deleteSystemBackup(id);
-          setToast({ title: 'Success', message: 'Backup deleted successfully', type: 'success' });
+          successToast('Success', 'Backup deleted successfully');
           fetchBackups();
         } catch (err) {
-          setToast({ title: 'Error', message: 'Failed to delete backup', type: 'error' });
+          errorToast('Error', 'Failed to delete backup');
         } finally {
           setActionLoading(null);
         }
@@ -117,10 +118,10 @@ const ExportPage: React.FC = () => {
         try {
           setActionLoading(id);
           await apiService.restoreSystemBackup(id, { overwrite: true });
-          setToast({ title: 'Success', message: 'System restored successfully. Reloading...', type: 'success' });
+          successToast('Success', 'System restored. Reloading...');
           setTimeout(() => window.location.reload(), 2000);
         } catch (err) {
-          setToast({ title: 'Error', message: 'Failed to restore backup', type: 'error' });
+          errorToast('Error', 'Failed to restore backup');
         } finally {
           setActionLoading(null);
         }
@@ -141,7 +142,7 @@ const ExportPage: React.FC = () => {
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
     } catch (err) {
-      setToast({ title: 'Error', message: 'Failed to download backup', type: 'error' });
+      errorToast('Error', 'Failed to download backup');
     } finally {
       setActionLoading(null);
     }
@@ -160,9 +161,9 @@ const ExportPage: React.FC = () => {
       a.click();
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
-      setToast({ title: 'Success', message: `Configuration exported successfully as ${exportFormat.toUpperCase()}`, type: 'success' });
+      successToast('Success', `Configuration exported as ${exportFormat.toUpperCase()}`);
     } catch (err) {
-      setToast({ title: 'Error', message: 'Failed to export configuration', type: 'error' });
+      errorToast('Error', 'Failed to export configuration');
     }
   };
 
@@ -183,13 +184,9 @@ const ExportPage: React.FC = () => {
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
 
-      setToast({ title: 'Success', message: `OpenAPI ${format.toUpperCase()} spec downloaded successfully`, type: 'success' });
+      successToast('Success', `OpenAPI ${format.toUpperCase()} spec downloaded`);
     } catch (error) {
-      setToast({
-        title: 'Error',
-        message: error instanceof Error ? error.message : 'Failed to download OpenAPI spec',
-        type: 'error',
-      });
+      errorToast('Error', error instanceof Error ? error.message : 'Failed to download OpenAPI spec');
     }
   };
 
@@ -379,7 +376,7 @@ const ExportPage: React.FC = () => {
           />
 
           <div className="mt-4">
-            <ResponsiveDataView<Backup>
+            <DataTable<Backup>
               data={filteredBackups}
               columns={backupColumns}
               actions={backupActions}
@@ -508,17 +505,6 @@ const ExportPage: React.FC = () => {
           </div>
         </div>
       </Modal>
-
-      {toast && (
-        <div className="toast toast-top toast-end">
-          <div className={`alert ${toast.type === 'success' ? 'alert-success' : 'alert-error'}`}>
-            <span>{toast.title ? `${toast.title}: ` : ''}{toast.message}</span>
-            <button onClick={() => setToast(null)} className="btn btn-sm btn-ghost" aria-label="Close modal">
-              ✕
-            </button>
-          </div>
-        </div>
-      )}
 
       <ConfirmModal
         isOpen={confirmModal.isOpen}

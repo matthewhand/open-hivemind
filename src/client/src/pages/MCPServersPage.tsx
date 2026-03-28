@@ -14,7 +14,7 @@ import {
 } from '@heroicons/react/24/outline';
 import { Alert } from '../components/DaisyUI/Alert';
 import { SkeletonGrid } from '../components/DaisyUI/Skeleton';
-import Breadcrumbs from '../components/DaisyUI/Breadcrumbs';
+
 import EmptyState from '../components/DaisyUI/EmptyState';
 import Modal, { ConfirmModal } from '../components/DaisyUI/Modal';
 import SearchFilterBar from '../components/SearchFilterBar';
@@ -92,10 +92,6 @@ const MCPServersPage: React.FC = () => {
   const statusFilter = urlParams.status;
   const setStatusFilter = (v: string) => setUrlParam('status', v);
 
-  const breadcrumbItems = [
-    { label: 'MCP', href: '/admin/mcp' },
-    { label: 'Servers', href: '/admin/mcp/servers', isActive: true },
-  ];
 
   // Fetch real MCP servers from API
   const fetchServers = useCallback(async () => {
@@ -650,9 +646,7 @@ const MCPServersPage: React.FC = () => {
 
   return (
     <div className="p-6">
-      <Breadcrumbs items={breadcrumbItems} />
-
-      <div className="flex justify-between items-center mt-4 mb-8">
+      <div className="flex justify-between items-center mb-8">
         <div>
           <h1 className="text-3xl font-bold mb-2">MCP Servers</h1>
           <p className="text-base-content/70">

@@ -7,7 +7,7 @@ import {
   CodeBracketIcon,
   ListBulletIcon,
 } from '@heroicons/react/24/outline';
-import Breadcrumbs from '../components/DaisyUI/Breadcrumbs';
+
 import { SkeletonGrid } from '../components/DaisyUI/Skeleton';
 import { Alert } from '../components/DaisyUI/Alert';
 import Modal from '../components/DaisyUI/Modal';
@@ -44,10 +44,6 @@ const MCPToolsPage: React.FC = () => {
   const setServerFilter = (v: string) => setUrlParam('server', v);
   const [alert, setAlert] = useState<{ type: 'success' | 'error', message: string } | null>(null);
 
-  const breadcrumbItems = [
-    { label: 'MCP', href: '/admin/mcp' },
-    { label: 'Tools', href: '/admin/mcp/tools', isActive: true },
-  ];
 
   useEffect(() => {
     const fetchTools = async () => {
@@ -82,7 +78,7 @@ const MCPToolsPage: React.FC = () => {
           setFilteredTools(allTools);
         }
       } catch (err) {
-        console.error('Failed to fetch MCP tools:', err);
+        // Error shown via alert UI
         setAlert({ type: 'error', message: 'Failed to load tools from server' });
       } finally {
         setLoading(false);
@@ -204,7 +200,7 @@ const MCPToolsPage: React.FC = () => {
       handleCloseRunModal();
       setAlert({ type: 'success', message: `Tool executed! Result: ${JSON.stringify(json.result).substring(0, 100)}...` });
     } catch (error: any) {
-      console.error('Tool execution error:', error);
+      // Error shown via alert UI
       setAlert({ type: 'error', message: `Failed to execute tool: ${error.message}` });
       handleCloseRunModal();
     } finally {
@@ -300,9 +296,7 @@ const MCPToolsPage: React.FC = () => {
 
   return (
     <div className="p-6">
-      <Breadcrumbs items={breadcrumbItems} />
-
-      <div className="mt-4 mb-8">
+      <div className="mb-8">
         <h1 className="text-3xl font-bold mb-2">
           MCP Tools
         </h1>

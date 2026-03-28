@@ -14,6 +14,7 @@ import { SkeletonPage } from './DaisyUI/Skeleton';
 import type { Bot, StatusResponse } from '../services/api';
 import { apiService } from '../services/api';
 import { CreateBotWizard } from './BotManagement/CreateBotWizard';
+import HealthCheckWidget from './Dashboard/HealthCheckWidget';
 import { Activity, Clock, Cpu, HardDrive, Info, PlusCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
@@ -542,6 +543,8 @@ const UnifiedDashboard: React.FC = () => {
             )}
 
             <StatsCards stats={statsCards} isLoading={loading} />
+
+            <HealthCheckWidget compact={true} />
 
             <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
               <Card className="bg-base-100 shadow">

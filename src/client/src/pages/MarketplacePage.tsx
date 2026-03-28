@@ -4,7 +4,7 @@ import Card from '../components/DaisyUI/Card';
 import { SkeletonGrid } from '../components/DaisyUI/Skeleton';
 import Button from '../components/DaisyUI/Button';
 import Badge from '../components/DaisyUI/Badge';
-import Breadcrumbs from '../components/DaisyUI/Breadcrumbs';
+
 import {
   Store as StoreIcon,
   Download as DownloadIcon,
@@ -204,18 +204,11 @@ const MarketplacePage: React.FC = () => {
     });
   };
 
-  // Breadcrumbs
-  const breadcrumbItems = [
-    { label: 'Admin', href: '/admin/overview' },
-    { label: 'Marketplace', href: '/admin/marketplace', isActive: true },
-  ];
 
   return (
     <div className="p-6">
-      <Breadcrumbs items={breadcrumbItems} />
-
       {/* Header */}
-      <div className="flex items-center justify-between mt-4 mb-6">
+      <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
           <StoreIcon className="w-8 h-8 text-primary" />
           <div>

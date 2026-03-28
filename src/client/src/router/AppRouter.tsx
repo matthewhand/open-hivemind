@@ -8,7 +8,7 @@ import MainLayout from '../layouts/MainLayout';
 import DashboardPage from '../pages/Dashboard';
 import UberLayout from '../layouts/UberLayout';
 import LoadingPage from '../pages/LoadingPage';
-import RouteErrorBoundary from '../components/RouteErrorBoundary';
+import { RouteErrorBoundary } from '../components/ErrorBoundary';
 
 const Login = lazy(() => import('../components/Login'));
 import { useAuth } from '../contexts/AuthContext';
@@ -51,6 +51,10 @@ const ToolProvidersPage = lazy(() => import('../pages/ToolProvidersPage'));
 const SpecsPage = lazy(() => import('../pages/SpecsPage'));
 const SpecDetailPage = lazy(() => import('../pages/SpecDetailPage'));
 const AuditPage = lazy(() => import('../pages/AuditPage'));
+const AdminHealthPage = lazy(() => import('../pages/AdminHealthPage'));
+const WebhookEventsPage = lazy(() => import('../pages/WebhookEventsPage'));
+const OnboardingPage = lazy(() => import('../pages/OnboardingPage'));
+const ApiDocsPage = lazy(() => import('../pages/ApiDocsPage'));
 
 
 interface LoadingFallbackProps {
@@ -88,6 +92,7 @@ const AppRouter: React.FC = () => {
       <Routes>
         <Route path="/" element={<RouteErrorBoundary pageName="Loading"><LoadingPage /></RouteErrorBoundary>} />
         <Route path="/login" element={<RouteErrorBoundary pageName="Login"><Login /></RouteErrorBoundary>} />
+        <Route path="/onboarding" element={<RouteErrorBoundary pageName="Onboarding"><OnboardingPage /></RouteErrorBoundary>} />
 
         {/* User Dashboard Routes - Wrapped in MainLayout */}
         <Route element={
@@ -215,6 +220,10 @@ const AppRouter: React.FC = () => {
           <Route path="specs" element={<RouteErrorBoundary pageName="Specs"><SpecsPage /></RouteErrorBoundary>} />
           <Route path="specs/:id" element={<RouteErrorBoundary pageName="Spec Detail"><SpecDetailPage /></RouteErrorBoundary>} />
           <Route path="audit" element={<RouteErrorBoundary pageName="Audit"><AuditPage /></RouteErrorBoundary>} />
+          <Route path="health" element={<RouteErrorBoundary pageName="Health"><AdminHealthPage /></RouteErrorBoundary>} />
+
+          <Route path="webhooks" element={<RouteErrorBoundary pageName="Webhook Events"><WebhookEventsPage /></RouteErrorBoundary>} />
+          <Route path="api-docs" element={<RouteErrorBoundary pageName="API Docs"><ApiDocsPage /></RouteErrorBoundary>} />
 
 
         </Route>

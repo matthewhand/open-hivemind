@@ -1,6 +1,11 @@
 import Debug from 'debug';
 import { Router, type Request, type Response } from 'express';
 import { webUIStorage } from '../../storage/webUIStorage';
+import {
+  ToggleGuardSchema,
+  UpdateAccessControlSchema,
+} from '../../validation/schemas/guardsSchema';
+import { validateRequest } from '../../validation/validateRequest';
 
 const router = Router();
 const debug = Debug('app:webui:guards');
@@ -25,9 +30,9 @@ router.get('/', (req: Request, res: Response) => {
 });
 
 // Email validation regex
-const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const _emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 // IP address or CIDR notation validation regex
-const ipRegex = /^(\d{1,3}\.){3}\d{1,3}(\/\d{1,2})?$/;
+const _ipRegex = /^(\d{1,3}\.){3}\d{1,3}(\/\d{1,2})?$/;
 
 /**
  * Validate IP address octets are in valid range (0-255)
@@ -41,56 +46,14 @@ const validateIpOctets = (ip: string): boolean => {
 };
 
 // POST / - Update access control guard config
-router.post('/', (req: Request, res: Response) => {
+router.post('/', validateRequest(UpdateAccessControlSchema), (req: Request, res: Response) => {
   try {
     const accessConfig = req.body;
 
-    // Validation
-    if (!accessConfig || typeof accessConfig !== 'object' || Array.isArray(accessConfig)) {
-      return res.status(400).json({
-        error: 'Validation error',
-        message: 'Invalid access configuration',
-      });
-    }
-
-    // Validate type field
-    if (!['owner', 'users', 'ip'].includes(accessConfig.type)) {
-      return res.status(400).json({
-        error: 'Validation error',
-        message: 'Invalid access type. Must be owner, users, or ip',
-      });
-    }
-
-    // Validate users array
-    if (accessConfig.users && !Array.isArray(accessConfig.users)) {
-      return res.status(400).json({
-        error: 'Validation error',
-        message: 'Users must be an array',
-      });
-    }
-
-    if (accessConfig.users) {
-      for (const user of accessConfig.users) {
-        if (typeof user !== 'string' || !emailRegex.test(user)) {
-          return res.status(400).json({
-            error: 'Validation error',
-            message: 'Invalid email format in users array',
-          });
-        }
-      }
-    }
-
-    // Validate ips array
-    if (accessConfig.ips && !Array.isArray(accessConfig.ips)) {
-      return res.status(400).json({
-        error: 'Validation error',
-        message: 'IPs must be an array',
-      });
-    }
-
+    // Additional IP octet validation (beyond regex)
     if (accessConfig.ips) {
       for (const ip of accessConfig.ips) {
-        if (typeof ip !== 'string' || !ipRegex.test(ip) || !validateIpOctets(ip)) {
+        if (!validateIpOctets(ip)) {
           return res.status(400).json({
             error: 'Validation error',
             message: 'Invalid IP address or CIDR notation in ips array',
@@ -135,17 +98,10 @@ router.post('/', (req: Request, res: Response) => {
 });
 
 // POST /:id/toggle - Toggle guard enabled status
-router.post('/:id/toggle', (req: Request, res: Response) => {
+router.post('/:id/toggle', validateRequest(ToggleGuardSchema), (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const { enabled } = req.body;
-
-    if (typeof enabled !== 'boolean') {
-      return res.status(400).json({
-        error: 'Validation error',
-        message: 'Enabled status is required and must be a boolean',
-      });
-    }
 
     // Check if guard exists
     const guards = webUIStorage.getGuards();

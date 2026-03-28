@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import Breadcrumbs from '../components/DaisyUI/Breadcrumbs';
+
 import EmptyState from '../components/DaisyUI/EmptyState';
 import { SkeletonGrid } from '../components/DaisyUI/Skeleton';
 import { Copy, Check, Search } from 'lucide-react';
@@ -42,10 +42,6 @@ const BotTemplatesPage: React.FC = () => {
   const setSearchTerm = (v: string) => setUrlParam('search', v);
   const [copied, setCopied] = useState(false);
 
-  const breadcrumbItems = [
-    { label: 'Bots', href: '/admin/bots' },
-    { label: 'Templates', href: '/admin/bots/templates', isActive: true },
-  ];
 
   const fetchTemplates = useCallback(async () => {
     try {
@@ -69,7 +65,7 @@ const BotTemplatesPage: React.FC = () => {
         setTemplates(templatesArray);
       }
     } catch (error) {
-      console.error('Failed to fetch templates:', error);
+      // Silent: empty state shown
     } finally {
       setLoading(false);
     }
@@ -109,7 +105,7 @@ const BotTemplatesPage: React.FC = () => {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch (err) {
-      console.error('Failed to copy:', err);
+      // Clipboard may not be available
     }
   };
 
@@ -178,9 +174,6 @@ const BotTemplatesPage: React.FC = () => {
 
   return (
     <div className="p-6">
-      <Breadcrumbs items={breadcrumbItems} />
-
-
 
 
       <div className="mt-4 mb-8">

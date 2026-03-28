@@ -5,13 +5,15 @@ import { apiService, ActivityResponse } from '../services/api';
 import MetricChart from '../components/Monitoring/MetricChart';
 import StatusCard from '../components/Monitoring/StatusCard';
 import { redactString } from '../utils/redaction';
-import ResponsiveDataView from '../components/DaisyUI/ResponsiveDataView';
+import DataTable from '../components/DaisyUI/DataTable';
+import { useErrorToast } from '../components/DaisyUI/ToastNotification';
 
 const AnalyticsDashboard: React.FC = () => {
   const { messageFlow, performanceMetrics } = useWebSocket();
   const [activityData, setActivityData] = useState<ActivityResponse | null>(null);
   const [timeRange, setTimeRange] = useState('24h');
   const [isLoading, setIsLoading] = useState(true);
+  const errorToast = useErrorToast();
 
   // Filter message flow for valid timestamps
   const validMessageFlow = messageFlow.filter(e => e && e.timestamp);
@@ -32,7 +34,7 @@ const AnalyticsDashboard: React.FC = () => {
       });
       setActivityData(data);
     } catch (error) {
-      console.error('Failed to fetch analytics data:', error);
+      errorToast('Analytics Error', 'Failed to fetch analytics data');
     } finally {
       setIsLoading(false);
     }
@@ -185,7 +187,7 @@ const AnalyticsDashboard: React.FC = () => {
         <div className="card bg-base-100 shadow-xl">
           <div className="card-body">
             <h2 className="card-title mb-4">Bot Performance</h2>
-            <ResponsiveDataView
+            <DataTable
               data={botStats}
               columns={[
                 { key: 'name' as any, title: 'Bot Name', prominent: true },

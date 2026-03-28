@@ -6,7 +6,8 @@ import {
   Settings, ExternalLink, Shield, Info, MoreVertical,
   Cpu, Zap, Copy, Save, X, Terminal, Globe, User, Clock,
   Key, ShieldCheck, Database, Layout, Command,
-  AlertTriangle, Play, Pause, Square, Trash, MoreHorizontal, Download
+  AlertTriangle, Play, Pause, Square, Trash, MoreHorizontal, Download,
+  GripVertical, ChevronUp, ChevronDown, Upload
 } from 'lucide-react';
 import { useSuccessToast, useErrorToast } from '../components/DaisyUI/ToastNotification';
 import Modal, { ConfirmModal } from '../components/DaisyUI/Modal';
@@ -22,6 +23,7 @@ import { ErrorService } from '../services/ErrorService';
 import { useApiQuery } from '../hooks/useApiQuery';
 import type { BotConfig } from '../types/bot';
 import BotCard from '../components/BotManagement/BotCard';
+import ImportBotsModal from '../components/BotManagement/ImportBotsModal';
 import { CreateBotWizard } from '../components/BotManagement/CreateBotWizard';
 import { BotSettingsModal } from '../components/BotSettingsModal';
 import { useLocation } from 'react-router-dom';
@@ -30,6 +32,8 @@ import { BotData } from '../hooks/useBotStats';
 import useUrlParams from '../hooks/useUrlParams';
 import { useBulkSelection } from '../hooks/useBulkSelection';
 import BulkActionBar from '../components/BulkActionBar';
+import { useDragAndDrop } from '../hooks/useDragAndDrop';
+import { useIsBelowBreakpoint } from '../hooks/useBreakpoint';
 
 const BotsPage: React.FC = () => {
   const [bots, setBots] = useState<BotConfig[]>([]);
@@ -56,6 +60,7 @@ const BotsPage: React.FC = () => {
 
   // Create Bot State
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
 
   // Get LLM status to check if system default is configured
   const { status: llmStatus } = useLlmStatus();
@@ -271,6 +276,29 @@ const BotsPage: React.FC = () => {
   const bulk = useBulkSelection(filteredBotIds);
 
   const [bulkDeleting, setBulkDeleting] = useState(false);
+  const isMobile = useIsBelowBreakpoint('md');
+
+  const handleReorder = useCallback(async (reordered: BotConfig[]) => {
+    setBots(reordered);
+    try {
+      const ids = reordered.map(b => b.id);
+      await apiService.put('/api/bots/reorder', { ids });
+    } catch { /* persist error ignored */ }
+  }, []);
+
+  const {
+    onDragStart: onBotDragStart,
+    onDragOver: onBotDragOver,
+    onDragEnd: onBotDragEnd,
+    onDrop: onBotDrop,
+    onMoveUp: onBotMoveUp,
+    onMoveDown: onBotMoveDown,
+    getItemStyle: getBotItemStyle,
+  } = useDragAndDrop({
+    items: filteredBots,
+    idAccessor: (b) => b.id,
+    onReorder: handleReorder,
+  });
 
   const handleBulkDelete = async () => {
     if (bulk.selectedCount === 0) return;
@@ -301,6 +329,37 @@ const BotsPage: React.FC = () => {
     a.click();
     URL.revokeObjectURL(url);
   };
+
+  const handleExportAll = useCallback(async () => {
+    try {
+      const data = await apiService.get<any>('/api/bots/export');
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `all-bots-export-${new Date().toISOString().slice(0, 10)}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+      toastSuccess('Exported all bots');
+    } catch (err) {
+      toastError('Failed to export bots');
+    }
+  }, [toastSuccess, toastError]);
+
+  const handleExportSingleBot = useCallback(async (bot: BotConfig) => {
+    try {
+      const data = await apiService.get<any>(`/api/bots/${bot.id}/export`);
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `bot-${bot.name.replace(/\s+/g, '-').toLowerCase()}-export.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      toastError('Failed to export bot');
+    }
+  }, [toastError]);
 
   // Fetch preview panel data for a bot
   const fetchPreviewActivity = useCallback(async (botId: string, limit = 20) => {
@@ -361,12 +420,28 @@ const BotsPage: React.FC = () => {
         description="Configure, monitor, and deploy your specialized AI agents."
         icon={<Bot className="w-8 h-8 text-primary" />}
         actions={
-          <button
-            className="btn btn-primary"
-            onClick={() => setIsCreateModalOpen(true)}
-          >
-            <Plus className="w-4 h-4 mr-2" /> Create New Bot
-          </button>
+          <div className="flex gap-2">
+            <button
+              className="btn btn-ghost btn-sm"
+              onClick={handleExportAll}
+              title="Export all bots"
+            >
+              <Download className="w-4 h-4 mr-1" /> Export All
+            </button>
+            <button
+              className="btn btn-ghost btn-sm"
+              onClick={() => setIsImportModalOpen(true)}
+              title="Import bots from file"
+            >
+              <Upload className="w-4 h-4 mr-1" /> Import
+            </button>
+            <button
+              className="btn btn-primary"
+              onClick={() => setIsCreateModalOpen(true)}
+            >
+              <Plus className="w-4 h-4 mr-2" /> Create New Bot
+            </button>
+          </div>
         }
       />
 
@@ -466,9 +541,18 @@ const BotsPage: React.FC = () => {
                 ]}
               />
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {filteredBots.map(bot => (
-                  <div key={bot.id} className="relative">
-                    <div className="absolute top-2 left-2 z-10">
+                {filteredBots.map((bot, index) => (
+                  <div
+                    key={bot.id}
+                    className="relative"
+                    draggable={!isMobile}
+                    onDragStart={onBotDragStart(index)}
+                    onDragOver={onBotDragOver(index)}
+                    onDragEnd={onBotDragEnd}
+                    onDrop={onBotDrop(index)}
+                    style={getBotItemStyle(index)}
+                  >
+                    <div className="absolute top-2 left-2 z-10 flex items-center gap-1">
                       <input
                         type="checkbox"
                         className="checkbox checkbox-sm checkbox-primary"
@@ -477,6 +561,33 @@ const BotsPage: React.FC = () => {
                         onClick={(e) => e.stopPropagation()}
                         aria-label={`Select ${bot.name}`}
                       />
+                      {isMobile ? (
+                        <span className="flex flex-col">
+                          <button
+                            className="btn btn-ghost btn-xs btn-square p-0"
+                            onClick={() => onBotMoveUp(index)}
+                            disabled={index === 0}
+                            aria-label="Move up"
+                          >
+                            <ChevronUp className="w-3 h-3" />
+                          </button>
+                          <button
+                            className="btn btn-ghost btn-xs btn-square p-0"
+                            onClick={() => onBotMoveDown(index)}
+                            disabled={index === filteredBots.length - 1}
+                            aria-label="Move down"
+                          >
+                            <ChevronDown className="w-3 h-3" />
+                          </button>
+                        </span>
+                      ) : (
+                        <span
+                          className="cursor-grab active:cursor-grabbing text-base-content/40 hover:text-base-content/70"
+                          title="Drag to reorder"
+                        >
+                          <GripVertical className="w-4 h-4" />
+                        </span>
+                      )}
                     </div>
                     <BotCard
                       bot={bot}
@@ -675,6 +786,14 @@ const BotsPage: React.FC = () => {
                       <Settings className="w-3 h-3 mr-2" /> Configuration
                     </button>
                     <button
+                      className="btn btn-sm btn-square btn-ghost"
+                      onClick={() => handleExportSingleBot(previewBot)}
+                      title="Export bot config"
+                      aria-label="Export bot config"
+                    >
+                      <Download className="w-3 h-3" />
+                    </button>
+                    <button
                       className={`btn btn-sm btn-square ${previewBot.status === 'active' ? 'btn-error btn-outline' : 'btn-success'}`}
                       onClick={() => handleToggleBotStatus(previewBot)}
                       title={previewBot.status === 'active' ? 'Deactivate' : 'Activate'}
@@ -733,6 +852,16 @@ const BotsPage: React.FC = () => {
           onViewDetails={(bot) => setPreviewBot(bot as any)}
         />
       )}
+
+      <ImportBotsModal
+        isOpen={isImportModalOpen}
+        onClose={() => setIsImportModalOpen(false)}
+        existingBotNames={bots.map(b => b.name)}
+        onImportComplete={() => {
+          setIsImportModalOpen(false);
+          fetchBots();
+        }}
+      />
 
       <ConfirmModal
         isOpen={!!deletingBot}

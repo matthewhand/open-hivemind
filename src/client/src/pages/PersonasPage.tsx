@@ -1,9 +1,12 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import {
   AlertTriangle,
+  ChevronDown,
+  ChevronUp,
   Copy,
   Edit2,
   Eye,
+  GripVertical,
   Info,
   Plus,
   RefreshCw,
@@ -32,6 +35,8 @@ import { apiService, type Persona as ApiPersona, type Bot } from '../services/ap
 import { useApiQuery } from '../hooks/useApiQuery';
 import { useBulkSelection } from '../hooks/useBulkSelection';
 import BulkActionBar from '../components/BulkActionBar';
+import { useDragAndDrop } from '../hooks/useDragAndDrop';
+import { useIsBelowBreakpoint } from '../hooks/useBreakpoint';
 
 // Extend UI Persona type to include assigned bots for display
 interface Persona extends ApiPersona {
@@ -151,6 +156,29 @@ const PersonasPage: React.FC = () => {
   const filteredPersonaIds = useMemo(() => filteredPersonas.filter(p => !p.isBuiltIn).map(p => p.id), [filteredPersonas]);
   const bulk = useBulkSelection(filteredPersonaIds);
   const [bulkDeleting, setBulkDeleting] = useState(false);
+  const isMobile = useIsBelowBreakpoint('md');
+
+  const handlePersonaReorder = useCallback(async (reordered: Persona[]) => {
+    setPersonas(reordered);
+    try {
+      const ids = reordered.map(p => p.id);
+      await apiService.put('/api/personas/reorder', { ids });
+    } catch { /* persist error ignored */ }
+  }, []);
+
+  const {
+    onDragStart: onPersonaDragStart,
+    onDragOver: onPersonaDragOver,
+    onDragEnd: onPersonaDragEnd,
+    onDrop: onPersonaDrop,
+    onMoveUp: onPersonaMoveUp,
+    onMoveDown: onPersonaMoveDown,
+    getItemStyle: getPersonaItemStyle,
+  } = useDragAndDrop({
+    items: filteredPersonas,
+    idAccessor: (p) => p.id,
+    onReorder: handlePersonaReorder,
+  });
 
   const handleBulkDeletePersonas = async () => {
     if (bulk.selectedCount === 0) return;
@@ -183,7 +211,7 @@ const PersonasPage: React.FC = () => {
       await navigator.clipboard.writeText(text);
       successToast('Copied!', 'System prompt copied to clipboard');
     } catch (err) {
-      console.error('Failed to copy', err);
+      // errorToast shown below
       errorToast('Error', 'Failed to copy to clipboard');
     }
   };
@@ -262,7 +290,7 @@ const PersonasPage: React.FC = () => {
       setEditingPersona(null);
       setCloningPersonaId(null);
     } catch (err) {
-      console.error(err);
+      errorToast('Save Failed', 'Failed to save persona changes');
       setError('Failed to save persona changes');
     } finally {
       setLoading(false);
@@ -495,14 +523,47 @@ const PersonasPage: React.FC = () => {
             ]}
           />
           <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
-          {filteredPersonas.map((persona) => (
+          {filteredPersonas.map((persona, index) => (
             <Card
               key={persona.id}
               data-testid="persona-card"
+              draggable={!isMobile}
+              onDragStart={onPersonaDragStart(index)}
+              onDragOver={onPersonaDragOver(index)}
+              onDragEnd={onPersonaDragEnd}
+              onDrop={onPersonaDrop(index)}
+              style={getPersonaItemStyle(index)}
               className={`hover:shadow-md transition-all flex flex-col h-full ${persona.isBuiltIn ? 'border-l-4 border-l-primary/30' : ''}`}
             >
               <div className="flex items-start justify-between mb-3">
                 <div className="flex items-center gap-3">
+                  {isMobile ? (
+                    <span className="flex flex-col">
+                      <button
+                        className="btn btn-ghost btn-xs btn-square p-0"
+                        onClick={() => onPersonaMoveUp(index)}
+                        disabled={index === 0}
+                        aria-label="Move up"
+                      >
+                        <ChevronUp className="w-3 h-3" />
+                      </button>
+                      <button
+                        className="btn btn-ghost btn-xs btn-square p-0"
+                        onClick={() => onPersonaMoveDown(index)}
+                        disabled={index === filteredPersonas.length - 1}
+                        aria-label="Move down"
+                      >
+                        <ChevronDown className="w-3 h-3" />
+                      </button>
+                    </span>
+                  ) : (
+                    <span
+                      className="cursor-grab active:cursor-grabbing text-base-content/40 hover:text-base-content/70"
+                      title="Drag to reorder"
+                    >
+                      <GripVertical className="w-4 h-4" />
+                    </span>
+                  )}
                   {!persona.isBuiltIn && (
                     <input
                       type="checkbox"

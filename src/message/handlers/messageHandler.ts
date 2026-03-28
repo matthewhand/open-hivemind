@@ -4,6 +4,7 @@ import { ErrorHandler } from '@src/common/errors/ErrorHandler';
 import { PerformanceMonitor } from '@src/common/errors/PerformanceMonitor';
 import { getLlmProvider } from '@src/llm/getLlmProvider';
 import { InputSanitizer } from '@src/utils/InputSanitizer';
+import { toolAugmentedCompletion } from '@src/services/toolAugmentedCompletion';
 import { generateChatCompletionDirect } from '@integrations/openwebui/directClient';
 import { ChannelDelayManager } from '@message/helpers/handler/ChannelDelayManager';
 import type { IMessage } from '@message/interfaces/IMessage';
@@ -25,6 +26,7 @@ import { stripBotId } from '../helpers/processing/stripBotId';
 // New utilities
 import TokenTracker from '../helpers/processing/TokenTracker';
 import TypingActivity from '../helpers/processing/TypingActivity';
+import { MemoryManager } from '@src/services/MemoryManager';
 import processingLocks from '../processing/processingLocks';
 
 const timingManager = MessageDelayScheduler.getInstance();
@@ -329,11 +331,27 @@ export async function handleMessage(
           }, 30000);
         }
 
+        // Retrieve relevant memories (if memory provider is configured for this bot)
+        const memoryManager = MemoryManager.getInstance();
+        let memoryContext = '';
+        try {
+          const memories = await memoryManager.retrieveRelevantMemories(
+            botConfig.name || resolvedBotId,
+            processedMessage,
+          );
+          memoryContext = memoryManager.formatMemoriesForPrompt(memories);
+        } catch (memErr) {
+          logger('Memory retrieval failed (non-fatal): %O', memErr);
+        }
+
         // Prepare LLM request
-        const systemPrompt = buildSystemPromptWithBotName(
+        const baseSystemPrompt = buildSystemPromptWithBotName(
           botConfig.MESSAGE_SYSTEM_PROMPT || '',
           activeAgentName
         );
+        const systemPrompt = memoryContext
+          ? `${baseSystemPrompt}\n\n${memoryContext}`
+          : baseSystemPrompt;
 
         // Track and trim history (skip for stateful providers that manage their own)
         const maxHistoryTokens = Number(botConfig.LLM_MAX_HISTORY_TOKENS || 2000);
@@ -359,17 +377,34 @@ export async function handleMessage(
             systemPrompt
           );
         } else {
-          llmResponse = await llmProvider.generateChatCompletion(
-            processedMessage,
-            trimmedHistory.trimmed,
-            {
+          // Use tool-augmented completion which transparently handles
+          // tool calling when the bot has MCP servers configured, and
+          // falls back to the standard path when there are no tools.
+          const botNameForTools = botConfig.name || botConfig.BOT_ID || '';
+          const toolResult = await toolAugmentedCompletion({
+            botName: botNameForTools,
+            llmProvider,
+            userMessage: processedMessage,
+            historyMessages: trimmedHistory.trimmed,
+            metadata: {
               systemPrompt,
               maxTokens: Number(botConfig.LLM_MAX_TOKENS || 150),
               temperature: Number(botConfig.LLM_TEMPERATURE || 0.7),
               channelId: message.getChannelId(),
               userId: message.getAuthorId(),
-            }
-          );
+            },
+            systemPrompt,
+            toolContext: {
+              userId: message.getAuthorId(),
+              channelId: message.getChannelId(),
+              messageProvider: providerType,
+            },
+          });
+          // Normalise to { text: string } so the downstream `.text` checks work
+          // regardless of whether the provider returned a string or an object.
+          llmResponse = typeof toolResult === 'string'
+            ? { text: toolResult }
+            : toolResult;
         }
 
         stopTyping = true;
@@ -413,6 +448,18 @@ export async function handleMessage(
             idleResponseManager.recordBotResponse(serviceName, channelId);
           }
         }
+
+        // Store conversation memories (user message + assistant response)
+        const memBotName = botConfig.name || resolvedBotId;
+        const memMeta = {
+          channelId,
+          userId: message.getAuthorId(),
+        };
+        // Fire-and-forget — memory writes must not slow down or break responses.
+        memoryManager.storeConversationMemory(memBotName, processedMessage, 'user', memMeta)
+          .catch((e: unknown) => logger('Memory store (user) failed: %O', e));
+        memoryManager.storeConversationMemory(memBotName, llmResponse.text, 'assistant', memMeta)
+          .catch((e: unknown) => logger('Memory store (assistant) failed: %O', e));
 
         const endTime = Date.now();
         const processingTime = endTime - startTime;

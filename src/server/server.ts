@@ -16,6 +16,7 @@ import activityRouter from './routes/activity';
 import adminRouter from './routes/admin';
 import agentsRouter from './routes/agents';
 import aiAssistRouter from './routes/ai-assist';
+import apiDocsRouter from './routes/apiDocs';
 import botsRouter from './routes/bots';
 import cacheRouter from './routes/cache';
 import configRouter from './routes/config';
@@ -28,9 +29,12 @@ import healthRouter from './routes/health';
 import hotReloadRouter from './routes/hotReload';
 import importExportRouter from './routes/importExport';
 import mcpRouter from './routes/mcp';
+import onboardingRouter from './routes/onboarding';
 import personasRouter from './routes/personas';
+import providersRouter from './routes/providers';
 import sitemapRouter from './routes/sitemap';
 import specsRouter from './routes/specs';
+import webhookEventsRouter from './routes/webhookEvents';
 
 const debug = Debug('app:webui:server');
 const serverLog = Logger.withContext('webui:server');
@@ -108,6 +112,16 @@ export class WebUIServer {
       credentials: true,
       optionsSuccessStatus: 200,
       allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin'],
+      exposedHeaders: [
+        'X-RateLimit-Limit',
+        'X-RateLimit-Remaining',
+        'X-RateLimit-Reset',
+        'RateLimit-Limit',
+        'RateLimit-Remaining',
+        'RateLimit-Reset',
+        'RateLimit-Policy',
+        'Retry-After',
+      ],
       methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
       maxAge: 86400,
     };
@@ -172,6 +186,7 @@ export class WebUIServer {
     // Public API routes (optional auth)
     this.app.use('/api/health', optionalAuth, healthRouter);
     this.app.use('/api/errors', optionalAuth, errorsRouter);
+    this.app.use('/api/docs', optionalAuth, apiDocsRouter);
 
     // Protected API routes (authentication required)
     this.app.use('/api/admin', authenticateToken, adminRouter);
@@ -189,6 +204,9 @@ export class WebUIServer {
     this.app.use('/api/hot-reload', authenticateToken, hotReloadRouter);
     this.app.use('/api/specs', authenticateToken, specsRouter);
     this.app.use('/api/import-export', authenticateToken, importExportRouter);
+    this.app.use('/api/webhooks', authenticateToken, webhookEventsRouter);
+    this.app.use('/api/onboarding', authenticateToken, onboardingRouter);
+    this.app.use('/api/providers', authenticateToken, providersRouter);
     this.app.use('/api/guards', authenticateToken, guardsRouter);
 
     // WebUI application routes (serve React app)
