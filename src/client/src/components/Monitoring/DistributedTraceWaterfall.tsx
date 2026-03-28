@@ -135,8 +135,6 @@ export const DistributedTraceWaterfall: React.FC<DistributedTraceWaterfallProps>
               <button
                 onClick={(e) => toggleExpand(span.id, e)}
                 className="p-1 hover:bg-base-300 rounded mr-1"
-                aria-expanded={isExpanded}
-                aria-label={isExpanded ? `Collapse ${span.name}` : `Expand ${span.name}`}
               >
                 {isExpanded ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
               </button>
@@ -225,11 +223,11 @@ export const DistributedTraceWaterfall: React.FC<DistributedTraceWaterfallProps>
 
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-1 join">
-               <button className="btn btn-xs join-item" onClick={() => setPanOffset(Math.max(0, panOffset - 10 / zoomLevel))} disabled={panOffset <= 0} title="Pan Left" aria-label="Pan Left"><MoveLeft className="w-3 h-3" /></button>
-               <button className="btn btn-xs join-item" onClick={() => setZoomLevel(Math.max(1, zoomLevel - 0.5))} disabled={zoomLevel <= 1} title="Zoom Out" aria-label="Zoom Out"><ZoomOut className="w-3 h-3" /></button>
-               <button className="btn btn-xs join-item" onClick={() => { setZoomLevel(1); setPanOffset(0); }} title="Reset View" aria-label="Reset View">1x</button>
-               <button className="btn btn-xs join-item" onClick={() => setZoomLevel(zoomLevel + 0.5)} disabled={zoomLevel >= 5} title="Zoom In" aria-label="Zoom In"><ZoomIn className="w-3 h-3" /></button>
-               <button className="btn btn-xs join-item" onClick={() => setPanOffset(Math.min(100 - (100 / zoomLevel), panOffset + 10 / zoomLevel))} disabled={panOffset >= 100 - (100 / zoomLevel)} title="Pan Right" aria-label="Pan Right"><MoveRight className="w-3 h-3" /></button>
+               <button className="btn btn-xs join-item" onClick={() => setPanOffset(Math.max(0, panOffset - 10 / zoomLevel))} disabled={panOffset <= 0} title="Pan Left"><MoveLeft className="w-3 h-3" /></button>
+               <button className="btn btn-xs join-item" onClick={() => setZoomLevel(Math.max(1, zoomLevel - 0.5))} disabled={zoomLevel <= 1} title="Zoom Out"><ZoomOut className="w-3 h-3" /></button>
+               <button className="btn btn-xs join-item" onClick={() => { setZoomLevel(1); setPanOffset(0); }} title="Reset View">1x</button>
+               <button className="btn btn-xs join-item" onClick={() => setZoomLevel(zoomLevel + 0.5)} disabled={zoomLevel >= 5} title="Zoom In"><ZoomIn className="w-3 h-3" /></button>
+               <button className="btn btn-xs join-item" onClick={() => setPanOffset(Math.min(100 - (100 / zoomLevel), panOffset + 10 / zoomLevel))} disabled={panOffset >= 100 - (100 / zoomLevel)} title="Pan Right"><MoveRight className="w-3 h-3" /></button>
             </div>
 
             <div className="text-sm text-base-content/70 flex items-center gap-4">
@@ -264,7 +262,7 @@ export const DistributedTraceWaterfall: React.FC<DistributedTraceWaterfallProps>
               <div className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: getServiceColor(selectedSpan.service) }} />
               <span className="truncate" title={selectedSpan.name}>{selectedSpan.name}</span>
             </h4>
-            <button className="btn btn-ghost btn-xs btn-circle" onClick={() => setSelectedSpanId(null)} aria-label="Close span details">
+            <button className="btn btn-ghost btn-xs btn-circle" onClick={() => setSelectedSpanId(null)}>
               <X className="w-4 h-4" />
             </button>
           </div>
