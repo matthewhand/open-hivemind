@@ -200,6 +200,8 @@ export interface BotConfig {
   mcpGuardProfile?: string;
   /** MCP server profile name */
   mcpServerProfile?: string;
+  /** Memory provider profile name for conversation memory */
+  memoryProfile?: string;
   /** Bot persona key */
   persona?: string;
   /** Bot system instruction/prompt */
@@ -588,6 +590,8 @@ export interface BotOverride {
   mcpGuardProfile?: string;
   /** MCP server profile override */
   mcpServerProfile?: string;
+  /** Memory provider profile override */
+  memoryProfile?: string;
   /** Persona override */
   persona?: string;
   /** System instruction override */
