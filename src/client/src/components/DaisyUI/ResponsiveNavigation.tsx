@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useMediaQuery } from '../../hooks/useResponsive';
+import { useMediaQuery } from '../../hooks/useBreakpoint';
 import EnhancedDrawer from './EnhancedDrawer';
 import { Menu as MenuIcon, X } from 'lucide-react';
 import DemoModeBanner from '../DemoModeBanner';

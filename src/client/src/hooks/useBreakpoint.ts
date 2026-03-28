@@ -59,3 +59,31 @@ export const useIsBelowBreakpoint = (bp: Breakpoint, debounceMs = 150): boolean 
   const order: Breakpoint[] = ['xs', 'sm', 'md', 'lg', 'xl', '2xl'];
   return order.indexOf(current) < order.indexOf(bp);
 };
+
+/** Reactive CSS media-query hook using the native matchMedia API. */
+export const useMediaQuery = (query: { maxWidth?: number; minWidth?: number }): boolean => {
+  const [matches, setMatches] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const mediaQueryList = window.matchMedia(
+      query.maxWidth
+        ? `(max-width: ${query.maxWidth}px)`
+        : query.minWidth
+          ? `(min-width: ${query.minWidth}px)`
+          : '',
+    );
+
+    setMatches(mediaQueryList.matches);
+
+    const handleChange = (e: MediaQueryListEvent) => {
+      setMatches(e.matches);
+    };
+
+    mediaQueryList.addEventListener('change', handleChange);
+    return () => mediaQueryList.removeEventListener('change', handleChange);
+  }, [query.maxWidth, query.minWidth]);
+
+  return matches;
+};
