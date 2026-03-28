@@ -26,15 +26,13 @@ const SpecsPage: React.FC = () => {
   const setPage = (v: number) => setUrlParam('page', v);
   const [pageSize] = useState(10);
 
-  const filteredSpecs = specs.filter(spec =>
-    spec.topic.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    spec.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase())),
+  const filteredSpecs = specs.filter(
+    (spec) =>
+      spec.topic.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      spec.tags.some((tag) => tag.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
-  const paginatedSpecs = filteredSpecs.slice(
-    (page - 1) * pageSize,
-    page * pageSize,
-  );
+  const paginatedSpecs = filteredSpecs.slice((page - 1) * pageSize, page * pageSize);
 
   const totalPages = Math.ceil(filteredSpecs.length / pageSize);
 
@@ -133,11 +131,7 @@ const SpecsPage: React.FC = () => {
               </div>
 
               <div className="card-actions justify-end">
-                <Button
-                  size="sm"
-                  className="btn-ghost"
-                  onClick={() => handleViewSpec(spec.id)}
-                >
+                <Button size="sm" className="btn-ghost" onClick={() => handleViewSpec(spec.id)}>
                   View Details
                 </Button>
               </div>
@@ -149,11 +143,7 @@ const SpecsPage: React.FC = () => {
       {/* Pagination */}
       {totalPages > 1 && (
         <div className="flex justify-center">
-          <Pagination
-            current={page}
-            total={totalPages}
-            onPageChange={setPage}
-          />
+          <Pagination current={page} total={totalPages} onPageChange={setPage} />
         </div>
       )}
 
@@ -163,7 +153,9 @@ const SpecsPage: React.FC = () => {
           <BookOpenIcon className="w-16 h-16 mx-auto text-primary mb-4 opacity-50" />
           <h3 className="text-xl font-semibold mb-2">No specifications found</h3>
           <p className="opacity-70 mb-4">
-            {searchTerm ? 'Try adjusting your search terms' : 'Get started by creating your first specification'}
+            {searchTerm
+              ? 'Try adjusting your search terms'
+              : 'Get started by creating your first specification'}
           </p>
           <Button className="btn-primary" onClick={handleNotImplemented}>
             <PlusIcon className="w-4 h-4 mr-2" />

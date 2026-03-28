@@ -18,36 +18,38 @@ const SpecDetailPage: React.FC = () => {
   const { spec, loading, error } = useSpec(id);
 
   const handleExport = (format: 'md' | 'json' | 'yaml') => {
-    if (!spec) {return;}
+    if (!spec) {
+      return;
+    }
 
     let content = '';
     let mimeType = '';
     let filename = '';
 
     switch (format) {
-    case 'md':
-      content = spec.content;
-      mimeType = 'text/markdown';
-      filename = `${spec.topic}.md`;
-      break;
-    case 'json':
-      content = JSON.stringify(spec, null, 2);
-      mimeType = 'application/json';
-      filename = `${spec.topic}.json`;
-      break;
-    case 'yaml':
-      content = `
+      case 'md':
+        content = spec.content;
+        mimeType = 'text/markdown';
+        filename = `${spec.topic}.md`;
+        break;
+      case 'json':
+        content = JSON.stringify(spec, null, 2);
+        mimeType = 'application/json';
+        filename = `${spec.topic}.json`;
+        break;
+      case 'yaml':
+        content = `
 topic: ${spec.topic}
 author: ${spec.author}
 timestamp: ${spec.timestamp}
 tags:
-${spec.tags.map(tag => `  - ${tag}`).join('\n')}
+${spec.tags.map((tag) => `  - ${tag}`).join('\n')}
 content: |
 ${spec.content.replace(/^/gm, '  ')}
         `.trim();
-      mimeType = 'text/yaml';
-      filename = `${spec.topic}.yaml`;
-      break;
+        mimeType = 'text/yaml';
+        filename = `${spec.topic}.yaml`;
+        break;
     }
 
     const blob = new Blob([content], { type: mimeType });
@@ -103,17 +105,15 @@ ${spec.content.replace(/^/gm, '  ')}
             {/* Header */}
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-4">
-                <Button
-                  size="sm"
-                  className="btn-ghost"
-                  onClick={() => window.history.back()}
-                >
+                <Button size="sm" className="btn-ghost" onClick={() => window.history.back()}>
                   <ArrowLeftIcon className="w-4 h-4 mr-2" />
                   Back
                 </Button>
                 <div>
                   <h1 className="text-3xl font-bold">{spec.topic}</h1>
-                  <p className="opacity-70">By {spec.author} • {new Date(spec.timestamp).toLocaleDateString()}</p>
+                  <p className="opacity-70">
+                    By {spec.author} • {new Date(spec.timestamp).toLocaleDateString()}
+                  </p>
                 </div>
               </div>
               <Dropdown

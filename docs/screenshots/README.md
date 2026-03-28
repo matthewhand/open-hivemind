@@ -36,5 +36,7 @@ Currently, the screenshot suite covers:
 - API Guard Policies & Rate Limiting Views
 - `memory-providers-list.png` — Memory Providers admin page showing configured memory provider list
 - `tool-providers-list.png` — Tool Providers admin page showing configured tool provider list
+- Specifications Listing & Empty State (`specs-baseline.png`)
+- Specification Action Feedback (`specs-action-clicked.png`)
 
 For detailed implementation instructions regarding Playwright commands, see the repository root `AGENTS.md` and `tests/e2e/` specifications.
