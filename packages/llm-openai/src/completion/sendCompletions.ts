@@ -2,19 +2,27 @@ import Debug from 'debug';
 import { OpenAI } from 'openai';
 import { ErrorUtils, HivemindError } from '@src/types/errors';
 import openaiConfig from '@config/openaiConfig';
+import { withTimeout } from '@common/withTimeout';
 
 const debug = Debug('app:sendCompletions');
+
+/** Default timeout for LLM completion calls (30 seconds). */
+const DEFAULT_LLM_TIMEOUT_MS = 30_000;
 
 export async function sendCompletion(): Promise<void> {
   const openai = new OpenAI({ apiKey: openaiConfig.get('OPENAI_API_KEY')! });
 
   try {
-    const response = await openai.completions.create({
-      model: openaiConfig.get('OPENAI_MODEL')!,
-      prompt: 'Your prompt here',
-      max_tokens: openaiConfig.get('OPENAI_MAX_TOKENS')!,
-      temperature: openaiConfig.get('OPENAI_TEMPERATURE')!,
-    });
+    const response = await withTimeout(
+      (signal) => openai.completions.create({
+        model: openaiConfig.get('OPENAI_MODEL')!,
+        prompt: 'Your prompt here',
+        max_tokens: openaiConfig.get('OPENAI_MAX_TOKENS')!,
+        temperature: openaiConfig.get('OPENAI_TEMPERATURE')!,
+      }, { signal }),
+      DEFAULT_LLM_TIMEOUT_MS,
+      'OpenAI sendCompletion',
+    );
 
     if (!response.choices || !response.choices.length) {
       throw new Error('No completion choices returned.');

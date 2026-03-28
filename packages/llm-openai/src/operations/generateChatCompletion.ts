@@ -3,8 +3,12 @@ import Debug from 'debug';
 import type { IMessage } from '@src/message/interfaces/IMessage';
 import { ErrorUtils, HivemindError } from '@src/types/errors';
 import openaiConfig from '@config/openaiConfig';
+import { withTimeout } from '@common/withTimeout';
 
 const debug = Debug('app:OpenAiService');
+
+/** Default timeout for LLM chat completion calls (30 seconds). */
+const DEFAULT_LLM_TIMEOUT_MS = 30_000;
 
 /**
  * Fetch the first available OpenAI model.
@@ -64,21 +68,26 @@ export async function generateChatCompletion(
       })),
     ];
 
-    // API request details
-    const response = await axios.post(
-      'https://api.openai.com/v1/chat/completions',
-      {
-        model,
-        messages: chatParams,
-        temperature: openaiConfig.get('OPENAI_TEMPERATURE') || 0.7,
-        max_tokens: openaiConfig.get('OPENAI_MAX_TOKENS') || 150,
-      },
-      {
-        headers: {
-          Authorization: `Bearer ${openaiConfig.get('OPENAI_API_KEY')}`,
-          'Content-Type': 'application/json',
+    // API request details with AbortController timeout
+    const response = await withTimeout(
+      (signal) => axios.post(
+        'https://api.openai.com/v1/chat/completions',
+        {
+          model,
+          messages: chatParams,
+          temperature: openaiConfig.get('OPENAI_TEMPERATURE') || 0.7,
+          max_tokens: openaiConfig.get('OPENAI_MAX_TOKENS') || 150,
         },
-      }
+        {
+          headers: {
+            Authorization: `Bearer ${openaiConfig.get('OPENAI_API_KEY')}`,
+            'Content-Type': 'application/json',
+          },
+          signal,
+        },
+      ),
+      DEFAULT_LLM_TIMEOUT_MS,
+      'OpenAI generateChatCompletion (axios)',
     );
     options.setBusy(false);
 

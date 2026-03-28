@@ -5,17 +5,20 @@ import { isSafeUrl } from '../../utils/ssrfGuard';
 import openWebUIConfig from './openWebUIConfig';
 import { getSessionKey } from './sessionManager';
 import { getKnowledgeFileId } from './uploadKnowledgeFile';
+import { withTimeout } from '@common/withTimeout';
+import { getCircuitBreaker } from '@common/CircuitBreaker';
 
 const debug = Debug('app:runInference');
 
-/**
- * Executes inference using Open WebUI with the provided user message, chat history, and metadata.
- *
- * @param userMessage - The input from the user.
- * @param historyMessages - The message history.
- * @param metadata - Optional metadata for additional context.
- * @returns A promise resolving to the inference result with a text property.
- */
+const DEFAULT_INFERENCE_TIMEOUT_MS = 30_000;
+
+const circuitBreaker = getCircuitBreaker({
+  name: 'openwebui',
+  failureThreshold: 5,
+  resetTimeoutMs: 30_000,
+  halfOpenMaxAttempts: 3,
+});
+
 export async function generateChatCompletion(
   userMessage: string,
   historyMessages: IMessage[],
@@ -35,45 +38,49 @@ export async function generateChatCompletion(
   debug('History Messages:', historyMessages);
   debug('Metadata:', metadata);
 
-  try {
-    const sessionKey = await getSessionKey();
-    const headers = {
-      Authorization: 'Bearer ' + sessionKey,
-      'Content-Type': 'application/json',
-    };
+  return circuitBreaker.execute(async () => {
+    try {
+      const sessionKey = await getSessionKey();
+      const headers = {
+        Authorization: 'Bearer ' + sessionKey,
+        'Content-Type': 'application/json',
+      };
 
-    const url = apiUrl + '/chat/completions';
-    const payload: any = {
-      prompt: userMessage,
-      knowledgeFileId,
-      history: historyMessages.map((msg) => msg.getText()), // Convert to plain text
-      metadata: metadata || {}, // Include metadata in payload
-    };
-    // Optional model override (for task routing).
-    if (metadata && (metadata.modelOverride || metadata.model)) {
-      payload.model = metadata.modelOverride || metadata.model;
+      const url = apiUrl + '/chat/completions';
+      const payload: any = {
+        prompt: userMessage,
+        knowledgeFileId,
+        history: historyMessages.map((msg) => msg.getText()),
+        metadata: metadata || {},
+      };
+      if (metadata && (metadata.modelOverride || metadata.model)) {
+        payload.model = metadata.modelOverride || metadata.model;
+      }
+      if (
+        metadata &&
+        typeof metadata.systemPrompt === 'string' &&
+        metadata.systemPrompt.trim() !== ''
+      ) {
+        payload.systemPrompt = metadata.systemPrompt;
+      }
+
+      if (!(await isSafeUrl(url))) {
+        throw new Error('OpenWebUI API URL is not safe to connect to.');
+      }
+
+      const response = await withTimeout(
+        (signal) => axios.post(url, payload, { headers, signal }),
+        DEFAULT_INFERENCE_TIMEOUT_MS,
+        'OpenWebUI inference',
+      );
+
+      debug('Inference result:', response.data);
+      const responseText =
+        typeof response.data === 'string' ? response.data : response.data.text || 'No response';
+      return { text: responseText };
+    } catch (error) {
+      debug('Inference request failed:', error);
+      throw new Error('Inference failed. Please try again.');
     }
-    if (
-      metadata &&
-      typeof metadata.systemPrompt === 'string' &&
-      metadata.systemPrompt.trim() !== ''
-    ) {
-      payload.systemPrompt = metadata.systemPrompt;
-    }
-
-    if (!(await isSafeUrl(url))) {
-      throw new Error('OpenWebUI API URL is not safe to connect to.');
-    }
-
-    const response = await axios.post(url, payload, { headers, timeout: 15000 });
-
-    debug('Inference result:', response.data);
-    // Assume OpenWebUI returns a string or object with a text field; adjust as needed
-    const responseText =
-      typeof response.data === 'string' ? response.data : response.data.text || 'No response';
-    return { text: responseText };
-  } catch (error) {
-    debug('Inference request failed:', error);
-    throw new Error('Inference failed. Please try again.');
-  }
+  });
 }

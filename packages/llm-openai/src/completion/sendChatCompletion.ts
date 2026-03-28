@@ -3,8 +3,12 @@ import { OpenAI } from 'openai';
 import type { IMessage } from '@src/message/interfaces/IMessage';
 import { ErrorUtils, HivemindError } from '@src/types/errors';
 import openaiConfig from '@config/openaiConfig';
+import { withTimeout } from '@common/withTimeout';
 
 const debug = Debug('app:sendChatCompletion');
+
+/** Default timeout for LLM completion calls (30 seconds). */
+const DEFAULT_LLM_TIMEOUT_MS = 30_000;
 
 /**
  * Sends a chat completion request using OpenAI API.
@@ -19,11 +23,15 @@ export async function sendChatCompletion(messages: IMessage[]): Promise<string> 
   debug(`Generated prompt: ${prompt}`);
 
   try {
-    const response = await openai.completions.create({
-      model: openaiConfig.get<'OPENAI_MODEL'>('OPENAI_MODEL')!,
-      prompt,
-      max_tokens: openaiConfig.get<'OPENAI_MAX_TOKENS'>('OPENAI_MAX_TOKENS')!,
-    });
+    const response = await withTimeout(
+      (signal) => openai.completions.create({
+        model: openaiConfig.get<'OPENAI_MODEL'>('OPENAI_MODEL')!,
+        prompt,
+        max_tokens: openaiConfig.get<'OPENAI_MAX_TOKENS'>('OPENAI_MAX_TOKENS')!,
+      }, { signal }),
+      DEFAULT_LLM_TIMEOUT_MS,
+      'OpenAI sendChatCompletion',
+    );
 
     if (!response.choices || !response.choices.length) {
       throw new Error('No response from OpenAI');
