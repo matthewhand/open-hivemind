@@ -22,18 +22,14 @@ export class ActivityLogger {
   private constructor() {
     // Store in config/user/activity.jsonl as it is a persistent location for user data
     const configDir = path.join(process.cwd(), 'config', 'user');
-    this.logFile = path.join(configDir, 'activity.jsonl');
-    // Initialize directory asynchronously
-    this.initializeDirectory();
-  }
-
-  private async initializeDirectory(): Promise<void> {
-    const configDir = path.dirname(this.logFile);
-    try {
-      await fs.promises.mkdir(configDir, { recursive: true });
-    } catch (e) {
-      debug('Failed to create config/user directory: %O', e);
+    if (!fs.existsSync(configDir)) {
+      try {
+        fs.mkdirSync(configDir, { recursive: true });
+      } catch (e) {
+        debug('Failed to create config/user directory: %O', e);
+      }
     }
+    this.logFile = path.join(configDir, 'activity.jsonl');
   }
 
   public static getInstance(): ActivityLogger {

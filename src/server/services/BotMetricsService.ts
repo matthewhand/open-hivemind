@@ -15,17 +15,11 @@ export class BotMetricsService {
   private metricsPath: string;
   private metrics: Record<string, BotMetrics> = {};
   private saveInterval: NodeJS.Timeout | null = null;
-  private initPromise: Promise<void> | null = null;
 
   private constructor() {
     // Store metrics in config/user/bot-metrics.json
     this.metricsPath = path.join(process.cwd(), 'config', 'user', 'bot-metrics.json');
-    // Don't load synchronously in constructor
-    this.initPromise = this.initialize();
-  }
-
-  private async initialize(): Promise<void> {
-    await this.loadMetrics();
+    this.loadMetrics();
     this.startAutoSave();
   }
 
@@ -36,28 +30,15 @@ export class BotMetricsService {
     return BotMetricsService.instance;
   }
 
-  /**
-   * Wait for initialization to complete.
-   * Call this before using metrics methods if you need to ensure data is loaded.
-   */
-  public async waitForInitialization(): Promise<void> {
-    if (this.initPromise) {
-      await this.initPromise;
-    }
-  }
-
-  private async loadMetrics(): Promise<void> {
+  private loadMetrics(): void {
     try {
-      await fs.promises.access(this.metricsPath, fs.constants.F_OK);
-      const data = await fs.promises.readFile(this.metricsPath, 'utf-8');
-      this.metrics = JSON.parse(data);
-      debug('Loaded bot metrics from disk');
-    } catch (error: any) {
-      if (error.code === 'ENOENT') {
-        debug('No existing metrics file found, starting fresh');
-      } else {
-        debug('Failed to load bot metrics:', error);
+      if (fs.existsSync(this.metricsPath)) {
+        const data = fs.readFileSync(this.metricsPath, 'utf-8');
+        this.metrics = JSON.parse(data);
+        debug('Loaded bot metrics from disk');
       }
+    } catch (error) {
+      debug('Failed to load bot metrics:', error);
       this.metrics = {};
     }
   }
