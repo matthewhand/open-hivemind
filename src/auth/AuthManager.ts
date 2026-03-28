@@ -2,6 +2,7 @@ import crypto from 'crypto';
 import bcrypt from 'bcrypt';
 import Debug from 'debug';
 import jwt from 'jsonwebtoken';
+import type { SecureConfig } from '@src/types/config';
 import { AuthenticationError, ValidationError } from '@src/types/errorClasses';
 import { SecureConfigManager } from '@config/SecureConfigManager';
 import type { AuthToken, LoginCredentials, RegisterData, User, UserRole } from './types';
@@ -77,7 +78,7 @@ export class AuthManager {
           type: 'auth',
           data: { secret },
           createdAt: new Date().toISOString(),
-        } as any)
+        } as unknown as SecureConfig)
         .catch((err) => {
           debug(`Failed to store ${prefix} secret securely:`, err);
         });
@@ -111,11 +112,11 @@ export class AuthManager {
     if (!password) {
       password = crypto.randomBytes(16).toString('hex');
       this.generatedPassword = password;
-      console.warn('================================================================');
-      console.warn('WARNING: No ADMIN_PASSWORD environment variable found.');
-      console.warn(`Generated temporary admin password: ${password}`);
-      console.warn('Please change this password immediately or set ADMIN_PASSWORD.');
-      console.warn('================================================================');
+      debug('================================================================');
+      debug('WARNING: No ADMIN_PASSWORD environment variable found.');
+      debug(`Generated temporary admin password: ${password}`);
+      debug('Please change this password immediately or set ADMIN_PASSWORD.');
+      debug('================================================================');
     }
 
     const defaultAdmin: User = {
@@ -264,7 +265,7 @@ export class AuthManager {
     }
 
     try {
-      const payload = jwt.verify(refreshToken, this.jwtRefreshSecret) as any;
+      const payload = jwt.verify(refreshToken, this.jwtRefreshSecret) as jwt.JwtPayload;
       const user = this.users.get(payload.userId);
 
       if (!user || !user.isActive) {
@@ -326,9 +327,13 @@ export class AuthManager {
   /**
    * Verify JWT access token
    */
-  public verifyAccessToken(token: string): any {
+  public verifyAccessToken(token: string): jwt.JwtPayload {
     try {
-      return jwt.verify(token, this.jwtSecret);
+      const result = jwt.verify(token, this.jwtSecret);
+      if (typeof result === 'string') {
+        throw new Error('Invalid token payload');
+      }
+      return result;
     } catch {
       throw new Error('Invalid access token');
     }
