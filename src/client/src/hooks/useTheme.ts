@@ -4,7 +4,7 @@ import { setTheme as setThemeAction, selectTheme } from '../store/slices/uiSlice
 
 const STORAGE_KEY = 'hivemind-theme';
 
-type ThemeValue = 'light' | 'dark' | 'high-contrast' | 'auto';
+export type ThemeValue = 'light' | 'dark' | 'high-contrast' | 'auto';
 
 function resolveEffectiveTheme(theme: ThemeValue, systemPreference: 'light' | 'dark'): string {
   if (theme === 'auto') return systemPreference;
@@ -47,6 +47,10 @@ export function useTheme() {
   // Keep <html data-theme> and localStorage in sync
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', effectiveTheme);
+    document.documentElement.setAttribute(
+      'data-high-contrast',
+      effectiveTheme === 'high-contrast' ? 'true' : 'false',
+    );
     try {
       localStorage.setItem(STORAGE_KEY, theme);
     } catch {
