@@ -16,7 +16,6 @@ import { Alert } from '../components/DaisyUI/Alert';
 import Breadcrumbs from '../components/DaisyUI/Breadcrumbs';
 import EmptyState from '../components/DaisyUI/EmptyState';
 import Modal, { ConfirmModal } from '../components/DaisyUI/Modal';
-import { AdaptiveGrid } from '../components/ResponsiveComponents';
 import SearchFilterBar from '../components/SearchFilterBar';
 
 interface Tool {
