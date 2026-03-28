@@ -226,21 +226,36 @@ router.post('/api/integrations', (req, res) => {
   }
 });
 
-// Get audit events
+// Get audit events — supports composable query-param filters
 router.get('/api/audit', async (req, res) => {
   try {
-    const { limit = 50, offset = 0, user, action } = req.query;
+    const {
+      limit = '200',
+      offset = '0',
+      search,
+      action,
+      resource,
+      user,
+      dateFrom,
+      dateTo,
+    } = req.query as Record<string, string | undefined>;
 
     const auditLogger = AuditLogger.getInstance();
 
-    let auditEvents;
-    if (user) {
-      auditEvents = await auditLogger.getAuditEventsByUser(user as string, Number(limit));
-    } else if (action) {
-      auditEvents = await auditLogger.getAuditEventsByAction(action as string, Number(limit));
-    } else {
-      auditEvents = await auditLogger.getAuditEvents(Number(limit), Number(offset));
-    }
+    const filter = auditLogger.buildFilter({
+      search,
+      action,
+      resource,
+      user,
+      dateFrom,
+      dateTo,
+    });
+
+    const auditEvents = await auditLogger.getAuditEvents(
+      Number(limit),
+      Number(offset),
+      filter,
+    );
 
     return res.json({
       success: true,
@@ -252,6 +267,73 @@ router.get('/api/audit', async (req, res) => {
     return res.status(500).json({
       success: false,
       message: 'Failed to get audit events',
+      error: error instanceof Error ? error.message : 'Unknown error',
+    });
+  }
+});
+
+// Export audit events as CSV (no pagination cap)
+router.get('/api/audit/export', async (req, res) => {
+  try {
+    const {
+      search,
+      action,
+      resource,
+      user,
+      dateFrom,
+      dateTo,
+    } = req.query as Record<string, string | undefined>;
+
+    const auditLogger = AuditLogger.getInstance();
+
+    const filter = auditLogger.buildFilter({
+      search,
+      action,
+      resource,
+      user,
+      dateFrom,
+      dateTo,
+    });
+
+    const events = await auditLogger.getAllMatchingEvents(filter);
+
+    // Build CSV
+    const header = 'id,timestamp,user,action,resource,result,details,ipAddress';
+    const escCsv = (v: string | undefined) => {
+      if (!v) return '';
+      // Escape double-quotes and wrap in quotes if the value contains commas, quotes, or newlines
+      if (/[",\n\r]/.test(v)) {
+        return `"${v.replace(/"/g, '""')}"`;
+      }
+      return v;
+    };
+
+    const rows = events.map((e) =>
+      [
+        escCsv(e.id),
+        escCsv(e.timestamp),
+        escCsv(e.user),
+        escCsv(e.action),
+        escCsv(e.resource),
+        escCsv(e.result),
+        escCsv(e.details),
+        escCsv(e.ipAddress),
+      ].join(','),
+    );
+
+    const csv = [header, ...rows].join('\n');
+
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader(
+      'Content-Disposition',
+      `attachment; filename="audit-log-${new Date().toISOString().slice(0, 10)}.csv"`,
+    );
+    return res.send(csv);
+  } catch (error) {
+    debug('Audit export API error:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to export audit events',
       error: error instanceof Error ? error.message : 'Unknown error',
     });
   }
