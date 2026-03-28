@@ -89,8 +89,8 @@ ${spec.content.replace(/^/gm, '  ')}
   }
 
   const breadcrumbItems = [
-    { label: 'Specs', href: '/specs' },
-    { label: spec.topic, href: `/specs/${id}`, isActive: true },
+    { label: 'Specs', href: '/admin/specs' },
+    { label: spec.topic, href: `/admin/specs/${id}`, isActive: true },
   ];
 
   return (

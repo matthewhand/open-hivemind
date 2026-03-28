@@ -74,7 +74,7 @@ const DemoModeBanner: React.FC = () => {
 
             <div className="container mx-auto mt-2 text-sm text-purple-200">
                 💡 Configure your API keys in the{' '}
-                <a href="/#/settings" className="underline hover:text-white">
+                <a href="/admin/settings" className="underline hover:text-white">
                     Settings
                 </a>
                 {' '}to enable production mode with real AI responses.

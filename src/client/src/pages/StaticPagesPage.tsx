@@ -6,7 +6,7 @@ import Breadcrumbs from '../components/DaisyUI/Breadcrumbs';
 import { ArrowTopRightOnSquareIcon, HomeIcon, ClockIcon, ComputerDesktopIcon } from '@heroicons/react/24/outline';
 
 const StaticPagesPage: React.FC = () => {
-  const breadcrumbItems = [{ label: 'Static Pages', href: '/static', isActive: true }];
+  const breadcrumbItems = [{ label: 'Static Pages', href: '/admin/static', isActive: true }];
 
   const staticPages = [
     {
