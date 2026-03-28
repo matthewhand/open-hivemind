@@ -28,6 +28,8 @@ import TokenTracker from '../helpers/processing/TokenTracker';
 import TypingActivity from '../helpers/processing/TypingActivity';
 import { MemoryManager } from '@src/services/MemoryManager';
 import processingLocks from '../processing/processingLocks';
+import { PipelineMetrics, pipelineEventEmitter } from '../PipelineMetrics';
+import { PipelineMetricsAggregator } from '../PipelineMetricsAggregator';
 
 const timingManager = MessageDelayScheduler.getInstance();
 const idleResponseManager = IdleResponseManager.getInstance();
@@ -74,6 +76,8 @@ export async function handleMessage(
 ): Promise<string | null> {
   return await PerformanceMonitor.measureAsync(
     async () => {
+      const pipelineMetrics = new PipelineMetrics();
+      pipelineMetrics.startStage('receive');
       const channelId = message.getChannelId();
       let resolvedBotId = botConfig.BOT_ID || botConfig.name || 'unknown-bot';
       let delayKey: string | null = null;
@@ -122,8 +126,10 @@ export async function handleMessage(
           logger('Empty message content, skipping processing.');
           return null;
         }
+        pipelineMetrics.endStage('receive', { channelId, hasText: true });
 
         // Sanitize input
+        pipelineMetrics.startStage('validate');
         const sanitizedText = InputSanitizer.sanitizeMessage(text);
         const validation = InputSanitizer.validateMessage(sanitizedText);
         if (!validation.isValid) {
@@ -252,6 +258,7 @@ export async function handleMessage(
           botConfig
         );
         const decisionTimestamp = Date.now();
+        pipelineMetrics.endStage('validate', { shouldReply: replyDecision.shouldReply, reason: replyDecision.reason });
 
         // Safely extract human-readable names for logging
         const authorName = (() => {
@@ -285,7 +292,7 @@ export async function handleMessage(
             // Prose explanation at info level with context
             let prose = replyDecision.meta?.prose || replyDecision.reason;
             prose = await summarizeLogWithLlm(prose);
-            console.info(`🚫 ${botConfig.name} skips @${authorName} in ${channelName}: ${prose}`);
+            console.info(`\u{1F6AB} ${botConfig.name} skips @${authorName} in ${channelName}: ${prose}`);
           }
           return null;
         }
@@ -332,6 +339,7 @@ export async function handleMessage(
         }
 
         // Retrieve relevant memories (if memory provider is configured for this bot)
+        pipelineMetrics.startStage('memory_search');
         const memoryManager = MemoryManager.getInstance();
         let memoryContext = '';
         try {
@@ -343,6 +351,7 @@ export async function handleMessage(
         } catch (memErr) {
           logger('Memory retrieval failed (non-fatal): %O', memErr);
         }
+        pipelineMetrics.endStage('memory_search', { hasMemories: memoryContext.length > 0 });
 
         // Prepare LLM request
         const baseSystemPrompt = buildSystemPromptWithBotName(
@@ -354,6 +363,7 @@ export async function handleMessage(
           : baseSystemPrompt;
 
         // Track and trim history (skip for stateful providers that manage their own)
+        pipelineMetrics.startStage('history');
         const maxHistoryTokens = Number(botConfig.LLM_MAX_HISTORY_TOKENS || 2000);
         const providerWantsHistory = llmProvider.supportsHistory
           ? llmProvider.supportsHistory()
@@ -364,8 +374,10 @@ export async function handleMessage(
               promptText: processedMessage,
             })
           : { trimmed: [] as IMessage[] };
+        pipelineMetrics.endStage('history', { trimmedCount: trimmedHistory.trimmed.length });
 
         // Generate response
+        pipelineMetrics.startStage('llm_inference');
         const startTime = Date.now();
         let llmResponse: any;
 
@@ -406,6 +418,7 @@ export async function handleMessage(
             ? { text: toolResult }
             : toolResult;
         }
+        pipelineMetrics.endStage('llm_inference', { hasResponse: !!(llmResponse && llmResponse.text) });
 
         stopTyping = true;
         if (typingInterval) clearInterval(typingInterval);
@@ -416,18 +429,20 @@ export async function handleMessage(
           return null;
         }
 
+        pipelineMetrics.startStage('format');
         let responseText = stripSystemPromptLeak(llmResponse.text, systemPrompt);
 
         // Clean up formatting
         responseText = responseText.replace(/\\n/g, '\n').trim();
 
-        if (responseText) {
-          // Split into parts if needed and send
-          const parts = splitMessageContent(
-            responseText,
-            Number(botConfig.MESSAGE_MAX_LENGTH || 2000)
-          );
+        // Split into parts if needed
+        const parts = responseText
+          ? splitMessageContent(responseText, Number(botConfig.MESSAGE_MAX_LENGTH || 2000))
+          : [];
+        pipelineMetrics.endStage('format', { parts: parts.length });
 
+        if (responseText) {
+          pipelineMetrics.startStage('send');
           for (const part of parts) {
             const finalReplyId = botConfig.MESSAGE_REPLY_IN_THREAD
               ? message.getMessageId()
@@ -447,23 +462,33 @@ export async function handleMessage(
 
             idleResponseManager.recordBotResponse(serviceName, channelId);
           }
+          pipelineMetrics.endStage('send', { partsSent: parts.length });
         }
 
         // Store conversation memories (user message + assistant response)
+        pipelineMetrics.startStage('memory_store');
         const memBotName = botConfig.name || resolvedBotId;
         const memMeta = {
           channelId,
           userId: message.getAuthorId(),
         };
-        // Fire-and-forget — memory writes must not slow down or break responses.
+        // Fire-and-forget \u2014 memory writes must not slow down or break responses.
         memoryManager.storeConversationMemory(memBotName, processedMessage, 'user', memMeta)
           .catch((e: unknown) => logger('Memory store (user) failed: %O', e));
         memoryManager.storeConversationMemory(memBotName, llmResponse.text, 'assistant', memMeta)
           .catch((e: unknown) => logger('Memory store (assistant) failed: %O', e));
+        pipelineMetrics.endStage('memory_store');
 
         const endTime = Date.now();
         const processingTime = endTime - startTime;
         logger(`Message processed in ${processingTime}ms`);
+
+        // Emit pipeline metrics for monitoring
+        const metricsJson = pipelineMetrics.toJSON();
+        logger('Pipeline metrics: %O', metricsJson);
+        pipelineEventEmitter.emit('pipeline:complete', metricsJson);
+        PipelineMetricsAggregator.getInstance().record(metricsJson as any);
+
         return llmResponse.text;
       } catch (error: unknown) {
         ErrorHandler.handle(error, 'messageHandler.handleMessage');
@@ -471,7 +496,7 @@ export async function handleMessage(
           ? ` | provider: ${botConfig.llmProvider} | model: ${botConfig.llmModel || 'default'}`
           : '';
         console.info(
-          `❌ INFERENCE/PROCESSING FAILED | error: ${error instanceof Error ? error.message : String(error)}${modelInfo}`
+          `\u274C INFERENCE/PROCESSING FAILED | error: ${error instanceof Error ? error.message : String(error)}${modelInfo}`
         );
         console.error(
           `Error processing message: ${error instanceof Error ? error.message : String(error)}`
