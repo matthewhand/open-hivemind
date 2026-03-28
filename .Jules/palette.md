@@ -13,3 +13,7 @@
 ## 2024-05-15 - Fixed Form Control Labels in EnterpriseManager Modal
 **Learning:** Found that multiple `input` and `select` fields in custom modals (like "Add Integration" and "Add Cloud Provider" in `EnterpriseManager.tsx`) were wrapped in `<label>` elements but lacked proper `id` and `htmlFor` associations, causing screen readers to miss the label text completely.
 **Action:** Always ensure that form controls within custom DaisyUI/Tailwind modal dialogs explicitly use `htmlFor` on labels mapped to matching `id` attributes on the input fields, rather than relying on structural nesting, to guarantee robust keyboard and screen-reader accessibility.
+
+## 2023-11-20 - Custom Checkboxes as Switches
+**Learning:** Standard `<input type="checkbox">` toggles created with CSS libraries like DaisyUI do not announce themselves as toggle switches to screen readers. They just announce as checkboxes unless explicitly given `role="switch"` and `aria-checked`. Relying implicitly on surrounding labels (`<label><input /></label>`) without proper IDs (`htmlFor` and `id`) also hurts accurate screen reader announcements when focus changes directly to the switch.
+**Action:** When implementing visual toggle switches using checkbox primitives, always add `role="switch"`, dynamically calculate `aria-checked`, and use `React.useId()` to robustly map `htmlFor` to the input `id`.

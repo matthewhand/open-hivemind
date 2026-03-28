@@ -1,5 +1,5 @@
 import Debug from 'debug';
-import type { NextFunction, Request, Response } from 'express';
+import type { NextFunction, Request, RequestHandler, Response } from 'express';
 import { AuthenticationError, AuthorizationError } from '../types/errorClasses';
 import { AuthManager } from './AuthManager';
 import type { AuthMiddlewareRequest, User, UserRole } from './types';
@@ -20,7 +20,7 @@ export class AuthMiddleware {
    */
   public authenticate = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     // Helper to check for localhost
-    const isLocalhostRequest = () => {
+    const isLocalhostRequest = (): boolean => {
       const clientIP = req.ip ?? req.connection?.remoteAddress ?? req.socket?.remoteAddress ?? '';
       const host = req.get('host');
       const origin = req.get('origin');
@@ -54,7 +54,7 @@ export class AuthMiddleware {
     const allowLocalBypass = process.env.ALLOW_LOCALHOST_ADMIN === 'true';
     const isLocalhost = isLocalhostRequest();
 
-    const bypassAuth = () => {
+    const bypassAuth = (): void => {
       debug(`Bypassing authentication for localhost request: ${req.method} ${req.path}`);
       // Create a default admin user for localhost access
       const defaultUser: User = {
@@ -248,17 +248,17 @@ export const authenticate = async (
   return middleware.authenticate(req, res, next);
 };
 
-export const requireRole = (requiredRole: UserRole) => {
+export const requireRole = (requiredRole: UserRole): RequestHandler => {
   const middleware = new AuthMiddleware();
   return middleware.requireRole(requiredRole);
 };
 
-export const requirePermission = (permission: string) => {
+export const requirePermission = (permission: string): RequestHandler => {
   const middleware = new AuthMiddleware();
   return middleware.requirePermission(permission);
 };
 
-export const requireAdmin = (() => {
+export const requireAdmin: RequestHandler = ((): RequestHandler => {
   const middleware = new AuthMiddleware();
   return middleware.requireAdmin;
 })();
