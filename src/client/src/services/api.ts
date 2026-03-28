@@ -277,10 +277,51 @@ export interface ActivityResponse {
   }>;
 }
 
+export interface RateLimitInfo {
+  limit: number;
+  remaining: number;
+  resetTime: number;
+}
+
+export type RateLimitListener = (info: RateLimitInfo) => void;
+
 class ApiService {
   private csrfToken: string | null = null;
   private csrfTokenPromise: Promise<string> | null = null;
   private inflightGets = new Map<string, Promise<any>>();
+  private rateLimitListeners = new Set<RateLimitListener>();
+
+  /**
+   * Subscribe to rate limit header updates from API responses
+   */
+  public onRateLimitUpdate(listener: RateLimitListener): () => void {
+    this.rateLimitListeners.add(listener);
+    return () => { this.rateLimitListeners.delete(listener); };
+  }
+
+  /**
+   * Extract rate limit headers from a response and notify listeners
+   */
+  private extractRateLimitHeaders(response: Response): void {
+    // Try standard headers first (RateLimit-*), then legacy (X-RateLimit-*)
+    const limit = response.headers.get('RateLimit-Limit')
+      ?? response.headers.get('X-RateLimit-Limit');
+    const remaining = response.headers.get('RateLimit-Remaining')
+      ?? response.headers.get('X-RateLimit-Remaining');
+    const reset = response.headers.get('RateLimit-Reset')
+      ?? response.headers.get('X-RateLimit-Reset');
+
+    if (limit !== null && remaining !== null) {
+      const info: RateLimitInfo = {
+        limit: parseInt(limit, 10) || 0,
+        remaining: parseInt(remaining, 10) || 0,
+        resetTime: reset ? parseInt(reset, 10) || 0 : 0,
+      };
+      this.rateLimitListeners.forEach(listener => {
+        try { listener(info); } catch { /* ignore listener errors */ }
+      });
+    }
+  }
 
   /**
    * Fetch CSRF token from the server and cache it
@@ -425,7 +466,24 @@ class ApiService {
       });
       clearTimeout(id);
 
+      // Always extract rate limit headers, even from error responses
+      this.extractRateLimitHeaders(response);
+
       if (!response.ok) {
+        // Special handling for 429 Too Many Requests
+        if (response.status === 429) {
+          const retryAfter = response.headers.get('Retry-After');
+          const retrySeconds = retryAfter ? parseInt(retryAfter, 10) : 60;
+          const body = await response.json().catch(() => ({})) as Record<string, unknown>;
+          const err = new Error(
+            (body.message as string) || `Rate limit exceeded. Retry after ${retrySeconds} seconds.`
+          );
+          (err as any).status = 429;
+          (err as any).retryAfter = retrySeconds;
+          (err as any).code = 'RATE_LIMIT_EXCEEDED';
+          throw err;
+        }
+
         const errorText = await response.text().catch(() => response.statusText);
         throw new Error(`API request failed (${response.status}): ${errorText.slice(0, 200)}`);
       }

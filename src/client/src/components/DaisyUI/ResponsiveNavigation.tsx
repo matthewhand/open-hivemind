@@ -4,6 +4,8 @@ import EnhancedDrawer from './EnhancedDrawer';
 import { Menu as MenuIcon, X } from 'lucide-react';
 import DemoModeBanner from '../DemoModeBanner';
 import LlmStatusBanner from '../LlmStatusBanner';
+import RateLimitIndicator from './RateLimitIndicator';
+import { useRateLimitToast } from '../../hooks/useRateLimitToast';
 
 interface NavItem {
   id: string;
@@ -30,6 +32,9 @@ const ResponsiveNavigation: React.FC<ResponsiveNavigationProps> = ({
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const isMobile = !useMediaQuery({ minWidth: 1024 });
 
+  // Show toast when rate limit is exhausted
+  useRateLimitToast();
+
   return (
     <div className={`min-h-screen flex bg-base-200 ${className}`}>
 
@@ -49,6 +54,9 @@ const ResponsiveNavigation: React.FC<ResponsiveNavigationProps> = ({
       {isMobile && (
         <header className="fixed top-0 left-0 right-0 h-14 bg-base-300 border-b border-base-content/10 flex items-center justify-between px-4 z-50">
           <span className="font-semibold text-base-content truncate min-w-0">Hivemind</span>
+          <div className="flex items-center gap-2">
+            <RateLimitIndicator />
+          </div>
           <button
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
             className="btn btn-ghost btn-square min-h-[44px] min-w-[44px]"
@@ -76,7 +84,12 @@ const ResponsiveNavigation: React.FC<ResponsiveNavigationProps> = ({
       <div
         className={`flex-1 min-h-screen flex flex-col transition-all duration-300 ${isMobile ? 'mt-14 ml-0' : 'mt-0 ml-[240px]'}`}
       >
-        {/* Demo Mode Banner - Full width relative to content wrapper */}
+        {/* Rate limit indicator and Demo Mode Banner - Full width relative to content wrapper */}
+        {!isMobile && (
+          <div className="flex justify-end px-6 pt-2">
+            <RateLimitIndicator />
+          </div>
+        )}
         <DemoModeBanner />
 
         {/* MAIN CONTENT - With padding */}
