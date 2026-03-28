@@ -43,6 +43,7 @@ export { default as FileUpload } from './FileUpload';
 export { default as Dropdown } from './Dropdown';
 export { default as RangeSlider } from './RangeSlider';
 export { default as Form } from './Form';
+export type { FormField, FormFieldSet, SelectOption } from './formTypes';
 export { default as Input } from './Input';
 export { default as Radio } from './Radio';
 export { default as Rating } from './Rating';
