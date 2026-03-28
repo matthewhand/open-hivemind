@@ -29,6 +29,8 @@ import ToastNotification, { useInfoToast } from '../components/DaisyUI/ToastNoti
 import SearchFilterBar from '../components/SearchFilterBar';
 import { apiService, type Persona as ApiPersona, type Bot } from '../services/api';
 import { useApiQuery } from '../hooks/useApiQuery';
+import { useBulkSelection } from '../hooks/useBulkSelection';
+import BulkActionBar from '../components/BulkActionBar';
 
 // Extend UI Persona type to include assigned bots for display
 interface Persona extends ApiPersona {
@@ -143,6 +145,37 @@ const PersonasPage: React.FC = () => {
       return matchesSearch && matchesCategory;
     });
   }, [personas, searchQuery, selectedCategory]);
+
+  // Bulk selection
+  const filteredPersonaIds = useMemo(() => filteredPersonas.filter(p => !p.isBuiltIn).map(p => p.id), [filteredPersonas]);
+  const bulk = useBulkSelection(filteredPersonaIds);
+  const [bulkDeleting, setBulkDeleting] = useState(false);
+
+  const handleBulkDeletePersonas = async () => {
+    if (bulk.selectedCount === 0) return;
+    setBulkDeleting(true);
+    try {
+      const ids = Array.from(bulk.selectedIds);
+      // Revert bots for each persona, then delete
+      for (const id of ids) {
+        const persona = personas.find(p => p.id === id);
+        if (persona) {
+          const updates = persona.assignedBotIds.map((botId) =>
+            apiService.updateBot(botId, { persona: 'default', systemInstruction: 'You are a helpful assistant.' })
+          );
+          await Promise.allSettled(updates);
+          await apiService.deletePersona(id);
+        }
+      }
+      await fetchData();
+      bulk.clearSelection();
+      successToast('Selected personas deleted');
+    } catch (err) {
+      errorToast('Error', 'Failed to delete some personas');
+    } finally {
+      setBulkDeleting(false);
+    }
+  };
 
   const handleCopyPrompt = async (text: string) => {
     try {
@@ -437,7 +470,32 @@ const PersonasPage: React.FC = () => {
           variant="noResults"
         />
       ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
+        <>
+          <div className="flex items-center gap-2 mb-2">
+            <input
+              type="checkbox"
+              className="checkbox checkbox-sm checkbox-primary"
+              checked={bulk.isAllSelected}
+              onChange={() => bulk.toggleAll(filteredPersonaIds)}
+              aria-label="Select all personas"
+            />
+            <span className="text-xs text-base-content/60">Select all (custom only)</span>
+          </div>
+          <BulkActionBar
+            selectedCount={bulk.selectedCount}
+            onClearSelection={bulk.clearSelection}
+            actions={[
+              {
+                key: 'delete',
+                label: 'Delete',
+                icon: <Trash2 className="w-4 h-4" />,
+                variant: 'error',
+                onClick: handleBulkDeletePersonas,
+                loading: bulkDeleting,
+              },
+            ]}
+          />
+          <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
           {filteredPersonas.map((persona) => (
             <Card
               key={persona.id}
@@ -446,6 +504,16 @@ const PersonasPage: React.FC = () => {
             >
               <div className="flex items-start justify-between mb-3">
                 <div className="flex items-center gap-3">
+                  {!persona.isBuiltIn && (
+                    <input
+                      type="checkbox"
+                      className="checkbox checkbox-sm checkbox-primary"
+                      checked={bulk.isSelected(persona.id)}
+                      onChange={(e) => bulk.toggleItem(persona.id, e as any)}
+                      onClick={(e) => e.stopPropagation()}
+                      aria-label={`Select ${persona.name}`}
+                    />
+                  )}
                   <div
                     className={`p-2 rounded-full ${persona.isBuiltIn ? 'bg-primary/10 text-primary' : 'bg-base-200'}`}
                   >
@@ -548,6 +616,7 @@ const PersonasPage: React.FC = () => {
             </Card>
           ))}
         </div>
+        </>
       )}
 
       {/* Create/Edit Modal */}
