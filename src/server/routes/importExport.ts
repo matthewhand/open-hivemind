@@ -6,6 +6,8 @@ import { authenticate, requireAdmin } from '../../auth/middleware';
 import type { AuthMiddlewareRequest } from '../../auth/types';
 import { ConfigurationImportExportService } from '../services/ConfigurationImportExportService';
 import Debug from 'debug';
+import { validateRequest } from '../../validation/validateRequest';
+import { BackupIdParamSchema } from '../../validation/schemas/importExportSchema';
 const debug = Debug('app:server:routes:importExport');
 
 type MulterFile = {
@@ -453,6 +455,7 @@ router.post(
 router.delete(
   '/backups/:backupId',
   requireAdmin,
+  validateRequest(BackupIdParamSchema),
   async (req: AuthMiddlewareRequest, res: Response) => {
     try {
       const { backupId } = req.params;

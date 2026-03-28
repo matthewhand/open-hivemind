@@ -1,6 +1,8 @@
 import Debug from 'debug';
 import { Router } from 'express';
 import { v4 as uuidv4 } from 'uuid';
+import { validateRequest } from '../../validation/validateRequest';
+import { RetryWebhookEventSchema } from '../../validation/schemas/webhookEventsSchema';
 
 const debug = Debug('app:webui:webhook-events');
 const router = Router();
@@ -139,7 +141,7 @@ router.get('/events/:id', (req, res) => {
 
 // ── POST /api/webhooks/events/:id/retry — replay a failed event ─────────────
 
-router.post('/events/:id/retry', async (req, res) => {
+router.post('/events/:id/retry', validateRequest(RetryWebhookEventSchema), async (req, res) => {
   try {
     const original = events.find((e) => e.id === req.params.id);
     if (!original) {

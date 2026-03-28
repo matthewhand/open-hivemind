@@ -65,7 +65,10 @@ describe('AI Assist Route - POST /generate', () => {
   it('should return 400 when prompt is missing', async () => {
     const res = await request(app).post('/generate').send({});
     expect(res.status).toBe(400);
-    expect(res.body.error).toBe('Prompt is required');
+    expect(res.body.error).toBe('Validation failed');
+    expect(res.body.issues).toEqual(
+      expect.arrayContaining([expect.objectContaining({ message: expect.stringContaining('required') })])
+    );
   });
 
   it('should return 400 when prompt exceeds max length', async () => {
@@ -73,7 +76,10 @@ describe('AI Assist Route - POST /generate', () => {
       .post('/generate')
       .send({ prompt: 'x'.repeat(33000) });
     expect(res.status).toBe(400);
-    expect(res.body.error).toContain('Prompt exceeds maximum length');
+    expect(res.body.error).toBe('Validation failed');
+    expect(res.body.issues).toEqual(
+      expect.arrayContaining([expect.objectContaining({ message: expect.stringContaining('Prompt exceeds maximum length') })])
+    );
   });
 
   it('should return 400 when system prompt exceeds max length', async () => {
@@ -81,7 +87,10 @@ describe('AI Assist Route - POST /generate', () => {
       .post('/generate')
       .send({ prompt: 'hello', systemPrompt: 'x'.repeat(17000) });
     expect(res.status).toBe(400);
-    expect(res.body.error).toContain('System prompt exceeds maximum length');
+    expect(res.body.error).toBe('Validation failed');
+    expect(res.body.issues).toEqual(
+      expect.arrayContaining([expect.objectContaining({ message: expect.stringContaining('System prompt exceeds maximum length') })])
+    );
   });
 
   it('should return 400 when provider is not configured', async () => {

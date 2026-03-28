@@ -7,6 +7,12 @@ import { HEALTH_THRESHOLDS, HTTP_STATUS } from '../../types/constants';
 import { ErrorLogger } from '../../utils/errorLogger';
 import { globalRecoveryManager } from '../../utils/errorRecovery';
 import { optionalAuth } from '../middleware/auth';
+import { validateRequest } from '../../validation/validateRequest';
+import {
+  CreateApiEndpointSchema,
+  UpdateApiEndpointSchema,
+  DeleteApiEndpointSchema,
+} from '../../validation/schemas/healthSchema';
 
 const router = Router();
 
@@ -585,26 +591,11 @@ router.get('/api-endpoints/:id', (req, res) => {
 });
 
 // Cleanup endpoint (admin only)
-router.post('/cleanup', (req, res) => {
+router.post('/cleanup', validateRequest(CreateApiEndpointSchema), (req, res) => {
   const apiMonitor = ApiMonitorService.getInstance();
 
   try {
     const config = req.body;
-
-    if (!config || Object.keys(config).length === 0) {
-      return res.json({
-        message: 'No endpoint data provided',
-        timestamp: new Date().toISOString(),
-      });
-    }
-
-    // Validate required fields
-    if (!config.id || !config.name || !config.url) {
-      return res.status(HTTP_STATUS.BAD_REQUEST).json({
-        error: 'Missing required fields',
-        message: 'id, name, and url are required',
-      });
-    }
 
     // Set defaults
     config.method = config.method || 'GET';
@@ -631,26 +622,11 @@ router.post('/cleanup', (req, res) => {
 });
 
 // Add new endpoint to monitor
-router.post('/api-endpoints', (req, res) => {
+router.post('/api-endpoints', validateRequest(CreateApiEndpointSchema), (req, res) => {
   const apiMonitor = ApiMonitorService.getInstance();
 
   try {
     const config = req.body;
-
-    if (!config || Object.keys(config).length === 0) {
-      return res.json({
-        message: 'No endpoint data provided',
-        timestamp: new Date().toISOString(),
-      });
-    }
-
-    // Validate required fields
-    if (!config.id || !config.name || !config.url) {
-      return res.status(HTTP_STATUS.BAD_REQUEST).json({
-        error: 'Missing required fields',
-        message: 'id, name, and url are required',
-      });
-    }
 
     // Set defaults
     config.method = config.method || 'GET';
@@ -677,7 +653,7 @@ router.post('/api-endpoints', (req, res) => {
 });
 
 // Update endpoint configuration
-router.put('/api-endpoints/:id', (req, res) => {
+router.put('/api-endpoints/:id', validateRequest(UpdateApiEndpointSchema), (req, res) => {
   const apiMonitor = ApiMonitorService.getInstance();
 
   try {
@@ -698,7 +674,7 @@ router.put('/api-endpoints/:id', (req, res) => {
 });
 
 // Remove endpoint from monitoring
-router.delete('/api-endpoints/:id', (req, res) => {
+router.delete('/api-endpoints/:id', validateRequest(DeleteApiEndpointSchema), (req, res) => {
   const apiMonitor = ApiMonitorService.getInstance();
 
   try {

@@ -6,6 +6,12 @@ import { authenticate, requireAdmin } from '../../auth/middleware';
 import { AnalyticsService } from '../../services/AnalyticsService';
 import { ActivityLogger } from '../services/ActivityLogger';
 import Debug from 'debug';
+import { validateRequest } from '../../validation/validateRequest';
+import {
+  UpdateDashboardConfigSchema,
+  SubmitAIFeedbackSchema,
+  AlertIdParamSchema,
+} from '../../validation/schemas/dashboardSchema';
 const debug = Debug('app:server:routes:dashboard');
 
 type AnnotatedEvent = MessageFlowEvent & { llmProvider: string };
@@ -169,7 +175,7 @@ router.get('/ai/config', authenticate, requireAdmin, (req, res) => {
   res.json(dashboardConfig);
 });
 
-router.post('/ai/config', authenticate, requireAdmin, (req, res) => {
+router.post('/ai/config', authenticate, requireAdmin, validateRequest(UpdateDashboardConfigSchema), (req, res) => {
   dashboardConfig = { ...dashboardConfig, ...req.body };
   res.json(dashboardConfig);
 });
@@ -255,7 +261,7 @@ router.get('/ai/recommendations', authenticate, requireAdmin, async (req, res) =
   }
 });
 
-router.post('/ai/feedback', authenticate, requireAdmin, async (req, res) => {
+router.post('/ai/feedback', authenticate, requireAdmin, validateRequest(SubmitAIFeedbackSchema), async (req, res) => {
   const { recommendationId, feedback, metadata } = req.body;
   try {
     const db = DatabaseManager.getInstance();
@@ -422,7 +428,7 @@ router.get('/activity', authenticate, requireAdmin, async (req, res) => {
   }
 });
 
-router.post('/alerts/:id/acknowledge', authenticate, requireAdmin, (req, res) => {
+router.post('/alerts/:id/acknowledge', authenticate, requireAdmin, validateRequest(AlertIdParamSchema), (req, res) => {
   try {
     const { id } = req.params;
     const ws = WebSocketService.getInstance();
@@ -438,7 +444,7 @@ router.post('/alerts/:id/acknowledge', authenticate, requireAdmin, (req, res) =>
   }
 });
 
-router.post('/alerts/:id/resolve', authenticate, requireAdmin, (req, res) => {
+router.post('/alerts/:id/resolve', authenticate, requireAdmin, validateRequest(AlertIdParamSchema), (req, res) => {
   try {
     const { id } = req.params;
     const ws = WebSocketService.getInstance();

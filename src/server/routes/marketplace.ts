@@ -10,6 +10,11 @@ import {
   updatePlugin,
 } from '@src/plugins/PluginManager';
 import { authenticateToken, requireRole } from '@src/server/middleware/auth';
+import { validateRequest } from '../../validation/validateRequest';
+import {
+  InstallPluginSchema,
+  PluginNameParamSchema,
+} from '../../validation/schemas/marketplaceSchema';
 
 const debug = Debug('app:marketplace');
 const router = Router();
@@ -221,13 +226,9 @@ router.get('/packages/:name', async (req, res) => {
  * Install a community plugin from GitHub URL
  * Body: { repoUrl: string }
  */
-router.post('/install', requireRole('admin'), async (req, res) => {
+router.post('/install', requireRole('admin'), validateRequest(InstallPluginSchema), async (req, res) => {
   try {
     const { repoUrl } = req.body;
-
-    if (!repoUrl || typeof repoUrl !== 'string') {
-      return res.status(400).json({ error: 'Missing or invalid repoUrl' });
-    }
 
     debug('Installing plugin from %s', repoUrl);
 
@@ -260,7 +261,7 @@ router.post('/install', requireRole('admin'), async (req, res) => {
  * POST /api/marketplace/uninstall/:name
  * Uninstall a community plugin
  */
-router.post('/uninstall/:name', requireRole('admin'), async (req, res) => {
+router.post('/uninstall/:name', requireRole('admin'), validateRequest(PluginNameParamSchema), async (req, res) => {
   try {
     const name = req.params.name;
 
@@ -282,7 +283,7 @@ router.post('/uninstall/:name', requireRole('admin'), async (req, res) => {
  * POST /api/marketplace/update/:name
  * Update a community plugin to latest version
  */
-router.post('/update/:name', requireRole('admin'), async (req, res) => {
+router.post('/update/:name', requireRole('admin'), validateRequest(PluginNameParamSchema), async (req, res) => {
   try {
     const name = req.params.name;
 

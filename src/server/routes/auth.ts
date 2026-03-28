@@ -12,6 +12,7 @@ import {
   RegisterSchema,
   UpdateUserSchema,
   UserIdParamSchema,
+  VerifyTokenSchema,
 } from '../../validation/schemas/authSchema';
 import { validateRequest } from '../../validation/validateRequest';
 
@@ -229,10 +230,9 @@ router.post(
  *       401:
  *         description: Unauthorized
  */
-router.post('/verify', authRateLimiter, async (req: Request, res: Response) => {
+router.post('/verify', authRateLimiter, validateRequest(VerifyTokenSchema), async (req: Request, res: Response) => {
   try {
     const { token } = req.body;
-    if (!token) return res.status(400).json({ success: false, error: 'Token required' });
     const payload = authManager.verifyAccessToken(token);
     const user = authManager.getUser(payload.userId);
     if (!user) return res.status(401).json({ success: false, error: 'User not found' });

@@ -2,6 +2,13 @@ import Debug from 'debug';
 import { Router, type Request, type Response } from 'express';
 import { SecureConfigManager, type SecureConfig } from '@config/SecureConfigManager';
 import { auditMiddleware, logConfigChange, type AuditedRequest } from '../middleware/audit';
+import { validateRequest } from '../../validation/validateRequest';
+import {
+  CreateSecureConfigSchema,
+  UpdateSecureConfigSchema,
+  DeleteSecureConfigSchema,
+  RestoreSecureConfigBackupSchema,
+} from '../../validation/schemas/secureConfigSchema';
 
 const debug = Debug('app:SecureConfigRoutes');
 const router = Router();
@@ -84,23 +91,9 @@ router.get('/:id', async (req: Request, res: Response) => {
  * POST /webui/api/secure-config
  * Create a new secure configuration
  */
-router.post('/', async (req: AuditedRequest, res: Response) => {
+router.post('/', validateRequest(CreateSecureConfigSchema), async (req: AuditedRequest, res: Response) => {
   try {
     const { id, name, type, data } = req.body;
-
-    if (!id || !name || !type || !data) {
-      logConfigChange(
-        req,
-        'CREATE',
-        `secure-config/${id}`,
-        'failure',
-        'Missing required fields: id, name, type, data'
-      );
-      return res.status(400).json({
-        success: false,
-        error: 'Missing required fields: id, name, type, data',
-      });
-    }
 
     const config: Omit<SecureConfig, 'updatedAt' | 'checksum'> = {
       id,
@@ -145,24 +138,10 @@ router.post('/', async (req: AuditedRequest, res: Response) => {
  * PUT /webui/api/secure-config/:id
  * Update an existing secure configuration
  */
-router.put('/:id', async (req: AuditedRequest, res: Response) => {
+router.put('/:id', validateRequest(UpdateSecureConfigSchema), async (req: AuditedRequest, res: Response) => {
   try {
     const { id } = req.params;
     const { name, type, data } = req.body;
-
-    if (!name || !type || !data) {
-      logConfigChange(
-        req,
-        'UPDATE',
-        `secure-config/${id}`,
-        'failure',
-        'Missing required fields: name, type, data'
-      );
-      return res.status(400).json({
-        success: false,
-        error: 'Missing required fields: name, type, data',
-      });
-    }
 
     // Check if config exists
     const existingConfig = await secureConfigManager.getConfig(id);
@@ -221,7 +200,7 @@ router.put('/:id', async (req: AuditedRequest, res: Response) => {
  * DELETE /webui/api/secure-config/:id
  * Delete a secure configuration
  */
-router.delete('/:id', async (req: AuditedRequest, res: Response) => {
+router.delete('/:id', validateRequest(DeleteSecureConfigSchema), async (req: AuditedRequest, res: Response) => {
   try {
     const { id } = req.params;
 
@@ -332,7 +311,7 @@ router.get('/backups/list', async (req: Request, res: Response) => {
  * POST /webui/api/secure-config/restore/:backupId
  * Restore from a specific backup
  */
-router.post('/restore/:backupId', async (req: AuditedRequest, res: Response) => {
+router.post('/restore/:backupId', validateRequest(RestoreSecureConfigBackupSchema), async (req: AuditedRequest, res: Response) => {
   try {
     const { backupId } = req.params;
     await secureConfigManager.restoreBackup(backupId);

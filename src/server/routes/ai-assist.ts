@@ -7,6 +7,8 @@ import * as openWebUIImport from '../../integrations/openwebui/runInference';
 import type { ILlmProvider } from '../../llm/interfaces/ILlmProvider';
 import { IMessage } from '../../message/interfaces/IMessage';
 import { ErrorUtils } from '../../types/errors';
+import { validateRequest } from '../../validation/validateRequest';
+import { GenerateAIAssistSchema } from '../../validation/schemas/aiAssistSchema';
 
 const debug = Debug('app:ai-assist');
 const router = Router();
@@ -84,24 +86,9 @@ const openWebUI: ILlmProvider = {
 const MAX_PROMPT_LENGTH = 32000; // ~8k tokens approximate limit
 const MAX_SYSTEM_PROMPT_LENGTH = 16000;
 
-router.post('/generate', async (req, res) => {
+router.post('/generate', validateRequest(GenerateAIAssistSchema), async (req, res) => {
   try {
     const { prompt, systemPrompt } = req.body;
-    if (!prompt) {
-      return res.status(400).json({ error: 'Prompt is required' });
-    }
-
-    // Input validation for prompt sizes
-    if (prompt.length > MAX_PROMPT_LENGTH) {
-      return res
-        .status(400)
-        .json({ error: `Prompt exceeds maximum length of ${MAX_PROMPT_LENGTH} characters` });
-    }
-    if (systemPrompt && systemPrompt.length > MAX_SYSTEM_PROMPT_LENGTH) {
-      return res.status(400).json({
-        error: `System prompt exceeds maximum length of ${MAX_SYSTEM_PROMPT_LENGTH} characters`,
-      });
-    }
 
     const userConfig = UserConfigStore.getInstance();
     const settings = userConfig.getGeneralSettings();

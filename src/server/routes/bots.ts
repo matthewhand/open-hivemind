@@ -11,6 +11,7 @@ import {
   UpdateBotSchema,
 } from '../../validation/schemas/botsSchema';
 import { ReorderSchema } from '../../validation/schemas/commonSchema';
+import { ImportBotsSchema } from '../../validation/schemas/importExportSchema';
 import { validateRequest } from '../../validation/validateRequest';
 import { ActivityLogger } from '../services/ActivityLogger';
 import { WebSocketService } from '../services/WebSocketService';
@@ -193,14 +194,9 @@ router.get('/export', async (_req, res) => {
  *       200:
  *         description: Import report
  */
-router.post('/import', async (req, res) => {
+router.post('/import', validateRequest(ImportBotsSchema), async (req, res) => {
   try {
     const { bots: incoming } = req.body;
-    if (!Array.isArray(incoming) || incoming.length === 0) {
-      return res
-        .status(HTTP_STATUS.BAD_REQUEST)
-        .json({ error: 'Request body must contain a non-empty "bots" array' });
-    }
 
     const existingBots = await manager.getAllBots();
     const existingByName = new Map(existingBots.map((b) => [b.name.toLowerCase(), b]));

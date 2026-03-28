@@ -88,13 +88,19 @@ describe('Demo Routes', () => {
     it('should return 400 when message is missing', async () => {
       const res = await request(app).post('/demo/chat').send({ botName: 'Bot' });
       expect(res.status).toBe(400);
-      expect(res.body.error).toBe('message is required');
+      expect(res.body.error).toBe('Validation failed');
+      expect(res.body.issues).toEqual(
+        expect.arrayContaining([expect.objectContaining({ path: expect.arrayContaining(['message']) })])
+      );
     });
 
     it('should return 400 when botName is missing', async () => {
       const res = await request(app).post('/demo/chat').send({ message: 'hi' });
       expect(res.status).toBe(400);
-      expect(res.body.error).toBe('botName is required');
+      expect(res.body.error).toBe('Validation failed');
+      expect(res.body.issues).toEqual(
+        expect.arrayContaining([expect.objectContaining({ path: expect.arrayContaining(['botName']) })])
+      );
     });
 
     it('should return 400 when demo mode is inactive', async () => {
