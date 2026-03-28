@@ -30,6 +30,7 @@ export type {
 export type { IAdapterFactory, IAdapterConfig, IAdapterModule } from './IAdapterFactory';
 export type { ILlmProvider } from './ILlmProvider';
 export type { IMemoryProvider, MemoryEntry, MemorySearchResult } from './IMemoryProvider';
+export type { IToolProvider, ToolDefinition, ToolResult, ToolExecutionContext } from './IToolProvider';
 export {
   BaseError,
   ValidationError,
