@@ -119,6 +119,121 @@ router.put('/reorder', async (req, res) => {
   }
 });
 
+// ── Export / Import ─────────────────────────────────────────────────────
+
+const EXPORT_SCHEMA_VERSION = 1;
+
+function sanitizeBotForExport(bot: any): any {
+  const { envOverrides, ...rest } = bot;
+  const sensitiveKeys = [
+    'token', 'apikey', 'bottoken', 'apptoken',
+    'signingsecret', 'accesstoken', 'secret',
+  ];
+  const cleanConfig: Record<string, unknown> = {};
+  if (rest.config && typeof rest.config === 'object') {
+    for (const [k, v] of Object.entries(rest.config as Record<string, unknown>)) {
+      if (sensitiveKeys.some((sk) => k.toLowerCase().includes(sk))) {
+        cleanConfig[k] = '***REDACTED***';
+      } else {
+        cleanConfig[k] = v;
+      }
+    }
+  }
+  return { ...rest, config: cleanConfig };
+}
+
+/**
+ * @openapi
+ * /api/bots/export:
+ *   get:
+ *     summary: Export all bots (sensitive fields redacted)
+ *     tags: [Bots]
+ *     responses:
+ *       200:
+ *         description: Exported bots payload
+ */
+router.get('/export', async (_req, res) => {
+  try {
+    const bots = await manager.getAllBots();
+    const sanitized = bots.map(sanitizeBotForExport);
+    return res.json({
+      schemaVersion: EXPORT_SCHEMA_VERSION,
+      exportedAt: new Date().toISOString(),
+      bots: sanitized,
+    });
+  } catch (error: unknown) {
+    logger.error('Failed to export bots', error instanceof Error ? error : new Error(String(error)));
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: 'Failed to export bots' });
+  }
+});
+
+/**
+ * @openapi
+ * /api/bots/import:
+ *   post:
+ *     summary: Import bots with create/update report
+ *     tags: [Bots]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               bots:
+ *                 type: array
+ *     responses:
+ *       200:
+ *         description: Import report
+ */
+router.post('/import', async (req, res) => {
+  try {
+    const { bots: incoming } = req.body;
+    if (!Array.isArray(incoming) || incoming.length === 0) {
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({ error: 'Request body must contain a non-empty "bots" array' });
+    }
+
+    const existingBots = await manager.getAllBots();
+    const existingByName = new Map(existingBots.map((b) => [b.name.toLowerCase(), b]));
+
+    const report = { created: [] as string[], updated: [] as string[], skipped: [] as string[], errors: [] as string[] };
+
+    for (const bot of incoming) {
+      try {
+        if (!bot.name) {
+          report.errors.push('Skipped bot with no name');
+          continue;
+        }
+        // Strip fields that should not be imported directly
+        const { id, status, messageCount, errorCount, ...importData } = bot;
+
+        const existing = existingByName.get(bot.name.toLowerCase());
+        if (existing) {
+          await manager.updateBot(existing.id, importData);
+          report.updated.push(bot.name);
+        } else {
+          await manager.createBot(importData as CreateBotRequest);
+          report.created.push(bot.name);
+        }
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : String(err);
+        report.errors.push(`${bot.name || 'unknown'}: ${msg}`);
+      }
+    }
+
+    ActivityLogger.log(req, 'import_bots', {
+      created: report.created.length,
+      updated: report.updated.length,
+      errors: report.errors.length,
+    });
+
+    return res.json({ success: true, report });
+  } catch (error: unknown) {
+    logger.error('Failed to import bots', error instanceof Error ? error : new Error(String(error)));
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: 'Failed to import bots' });
+  }
+});
+
 /**
  * @openapi
  * /api/bots/{id}:
@@ -491,6 +606,42 @@ router.get('/:id/activity', validateRequest(BotActivityQuerySchema), async (req,
     return res
       .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
       .json({ error: 'Failed to retrieve bot activity' });
+  }
+});
+
+/**
+ * @openapi
+ * /api/bots/{id}/export:
+ *   get:
+ *     summary: Export a single bot (sensitive fields redacted)
+ *     tags: [Bots]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Single bot export payload
+ *       404:
+ *         description: Bot not found
+ */
+router.get('/:id/export', validateRequest(BotIdParamSchema), async (req, res) => {
+  try {
+    const bot = await manager.getBot(req.params.id);
+    if (!bot) {
+      return res.status(HTTP_STATUS.NOT_FOUND).json({ error: 'Bot not found', code: ERROR_CODES.NOT_FOUND });
+    }
+    const sanitized = sanitizeBotForExport(bot);
+    return res.json({
+      schemaVersion: EXPORT_SCHEMA_VERSION,
+      exportedAt: new Date().toISOString(),
+      bots: [sanitized],
+    });
+  } catch (error: unknown) {
+    logger.error('Failed to export bot', error instanceof Error ? error : new Error(String(error)));
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: 'Failed to export bot' });
   }
 });
 
