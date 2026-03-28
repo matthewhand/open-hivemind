@@ -22,6 +22,9 @@ const configRateLimit = isTestEnv
 // Valid guard types
 const VALID_GUARD_TYPES = ['access', 'rate', 'content', 'permission', 'custom'];
 
+// System-critical guards that cannot be disabled or deleted
+const SYSTEM_GUARDS = ['access-control', 'rate-limiter', 'content-filter'];
+
 /**
  * Validation middleware for guard creation/updates
  */
@@ -39,20 +42,14 @@ export const validateGuardInput = [
     .isIn(VALID_GUARD_TYPES)
     .withMessage(`Guard type must be one of: ${VALID_GUARD_TYPES.join(', ')}`),
 
-  body('config')
-    .optional()
-    .isObject()
-    .withMessage('Config must be an object'),
+  body('config').optional().isObject().withMessage('Config must be an object'),
 
   body('config.type')
     .optional()
     .isIn(['users', 'ip', 'roles', 'none'])
     .withMessage('Config type must be one of: users, ip, roles, none'),
 
-  body('config.users')
-    .optional()
-    .isArray()
-    .withMessage('Users must be an array'),
+  body('config.users').optional().isArray().withMessage('Users must be an array'),
 
   body('config.users.*')
     .optional()
@@ -61,25 +58,13 @@ export const validateGuardInput = [
     .notEmpty()
     .withMessage('User IDs must be non-empty strings'),
 
-  body('config.ips')
-    .optional()
-    .isArray()
-    .withMessage('IPs must be an array'),
+  body('config.ips').optional().isArray().withMessage('IPs must be an array'),
 
-  body('config.ips.*')
-    .optional()
-    .isIP()
-    .withMessage('Invalid IP address format'),
+  body('config.ips.*').optional().isIP().withMessage('Invalid IP address format'),
 
-  body('config.roles')
-    .optional()
-    .isArray()
-    .withMessage('Roles must be an array'),
+  body('config.roles').optional().isArray().withMessage('Roles must be an array'),
 
-  body('enabled')
-    .optional()
-    .isBoolean()
-    .withMessage('Enabled must be a boolean'),
+  body('enabled').optional().isBoolean().withMessage('Enabled must be a boolean'),
 ];
 
 /**
@@ -116,157 +101,135 @@ router.get('/', (req: Request, res: Response) => {
 });
 
 // POST / - Update access control configuration
-router.post('/', configRateLimit, validateGuardInput, handleValidationErrors, (req: Request, res: Response) => {
-  try {
-    const accessConfig = req.body;
+router.post(
+  '/',
+  configRateLimit,
+  validateGuardInput,
+  handleValidationErrors,
+  (req: Request, res: Response) => {
+    try {
+      const { name, type, config, enabled, lastUpdated } = req.body;
 
-    // Validate required config structure
-    if (accessConfig.config && typeof accessConfig.config !== 'object') {
-      return res.status(400).json({
-        error: 'Validation error',
-        message: 'Config must be a valid object',
-      });
-    }
+      // Retrieve current guards
+      const guards = webUIStorage.getGuards();
+      const accessGuardIndex = guards.findIndex((g: any) => g.id === 'access-control');
 
-    // Validate IP addresses if provided
-    if (accessConfig.config?.ips) {
-      const ipRegex = /^(\d{1,3}\.){3}\d{1,3}$|^([0-9a-fA-F:]+)$/;
-      const invalidIps = accessConfig.config.ips.filter((ip: string) => !ipRegex.test(ip));
-      if (invalidIps.length > 0) {
-        return res.status(400).json({
-          error: 'Validation error',
-          message: `Invalid IP addresses: ${invalidIps.join(', ')}`,
+      if (accessGuardIndex === -1) {
+        // Should not happen as default guards are initialized, but handle it
+        return res.status(404).json({
+          error: 'Access Control guard not found',
+          message: 'The access control guard configuration is missing.',
         });
       }
-    }
 
-    // Validate user IDs if provided
-    if (accessConfig.config?.users) {
-      if (!Array.isArray(accessConfig.config.users)) {
-        return res.status(400).json({
-          error: 'Validation error',
-          message: 'Users must be an array',
+      // Check for concurrent modification (simple version)
+      const currentGuard = guards[accessGuardIndex];
+      if (lastUpdated && currentGuard.lastUpdated !== lastUpdated) {
+        return res.status(409).json({
+          error: 'Concurrent modification',
+          message:
+            'The guard configuration has been modified by another request. Please refresh and try again.',
         });
       }
-      const invalidUsers = accessConfig.config.users.filter((u: any) => typeof u !== 'string' || u.trim() === '');
-      if (invalidUsers.length > 0) {
-        return res.status(400).json({
-          error: 'Validation error',
-          message: 'User IDs must be non-empty strings',
-        });
-      }
-    }
 
-    // Retrieve current guards
-    const guards = webUIStorage.getGuards();
-    const accessGuardIndex = guards.findIndex((g: any) => g.id === 'access-control');
+      // Build the update from only valid fields
+      const configUpdate: Record<string, any> = {};
+      if (name !== undefined) configUpdate.name = name;
+      if (type !== undefined) configUpdate.type = type;
+      if (enabled !== undefined) configUpdate.enabled = enabled;
+      if (config !== undefined) configUpdate.config = config;
 
-    if (accessGuardIndex === -1) {
-      // Should not happen as default guards are initialized, but handle it
-      return res.status(404).json({
-        error: 'Access Control guard not found',
-        message: 'The access control guard configuration is missing.',
+      // Update the config of the access-control guard
+      guards[accessGuardIndex].config = {
+        ...guards[accessGuardIndex].config,
+        ...configUpdate,
+      };
+
+      // Update lastUpdated timestamp
+      guards[accessGuardIndex].lastUpdated = new Date().toISOString();
+
+      // Save the updated guard
+      webUIStorage.saveGuard(guards[accessGuardIndex]);
+
+      return res.json({
+        success: true,
+        message: 'Access control configuration saved successfully',
+        data: { guard: guards[accessGuardIndex] },
+      });
+    } catch (error: any) {
+      debug('Error saving access control:', error);
+      return res.status(500).json({
+        error: 'Failed to save access control',
+        message: error.message || 'An error occurred while saving access control',
       });
     }
-
-    // Check for concurrent modification (simple version)
-    const currentGuard = guards[accessGuardIndex];
-    if (accessConfig.lastUpdated && currentGuard.lastUpdated !== accessConfig.lastUpdated) {
-      return res.status(409).json({
-        error: 'Concurrent modification',
-        message: 'The guard configuration has been modified by another request. Please refresh and try again.',
-      });
-    }
-
-    // Update the config of the access-control guard
-    guards[accessGuardIndex].config = {
-      ...guards[accessGuardIndex].config,
-      ...accessConfig,
-    };
-
-    // Update lastUpdated timestamp
-    guards[accessGuardIndex].lastUpdated = new Date().toISOString();
-
-    // Save the updated guard
-    webUIStorage.saveGuard(guards[accessGuardIndex]);
-
-    return res.json({
-      success: true,
-      message: 'Access control configuration saved successfully',
-      data: { guard: guards[accessGuardIndex] },
-    });
-  } catch (error: any) {
-    debug('Error saving access control:', error);
-    return res.status(500).json({
-      error: 'Failed to save access control',
-      message: error.message || 'An error occurred while saving access control',
-    });
   }
-});
+);
 
 // POST /:id/toggle - Toggle guard status
-router.post('/:id/toggle', configRateLimit, [
-  body('enabled')
-    .isBoolean()
-    .withMessage('Enabled status must be a boolean'),
-], handleValidationErrors, (req: Request, res: Response) => {
-  try {
-    const { id } = req.params;
-    const { enabled } = req.body;
+router.post(
+  '/:id/toggle',
+  configRateLimit,
+  [body('enabled').isBoolean().withMessage('Enabled status must be a boolean')],
+  handleValidationErrors,
+  (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      const { enabled } = req.body;
 
-    // Validate guard ID
-    if (!id || typeof id !== 'string' || id.trim() === '') {
-      return res.status(400).json({
-        error: 'Validation error',
-        message: 'Guard ID is required',
-      });
-    }
+      // Validate guard ID
+      if (!id || typeof id !== 'string' || id.trim() === '') {
+        return res.status(400).json({
+          error: 'Validation error',
+          message: 'Guard ID is required',
+        });
+      }
 
-    // Prevent toggling system-critical guards
-    const systemGuards = ['rate-limiter'];
-    if (systemGuards.includes(id) && !enabled) {
-      return res.status(403).json({
-        error: 'Permission denied',
-        message: `Cannot disable system-critical guard: ${id}`,
-      });
-    }
+      // Prevent toggling system-critical guards
+      if (SYSTEM_GUARDS.includes(id) && !enabled) {
+        return res.status(403).json({
+          error: 'Permission denied',
+          message: `Cannot disable system-critical guard: ${id}`,
+        });
+      }
 
-    const guards = webUIStorage.getGuards();
-    const guard = guards.find((g: any) => g.id === id);
+      const guards = webUIStorage.getGuards();
+      const guard = guards.find((g: any) => g.id === id);
 
-    if (!guard) {
-      return res.status(404).json({
-        error: 'Guard not found',
-        message: `Guard with ID ${id} not found`,
-      });
-    }
+      if (!guard) {
+        return res.status(404).json({
+          error: 'Guard not found',
+          message: `Guard with ID ${id} not found`,
+        });
+      }
 
-    // Check if already in desired state
-    if (guard.enabled === enabled) {
-      return res.status(200).json({
+      // Check if already in desired state
+      if (guard.enabled === enabled) {
+        return res.status(200).json({
+          success: true,
+          message: `Guard ${guard.name} is already ${enabled ? 'enabled' : 'disabled'}`,
+          data: { guard },
+        });
+      }
+
+      guard.enabled = enabled;
+      guard.lastUpdated = new Date().toISOString();
+      webUIStorage.saveGuard(guard);
+
+      return res.json({
         success: true,
-        message: `Guard ${guard.name} is already ${enabled ? 'enabled' : 'disabled'}`,
+        message: `Guard ${guard.name} ${enabled ? 'enabled' : 'disabled'} successfully`,
         data: { guard },
       });
+    } catch (error: any) {
+      debug('Error toggling guard:', error);
+      return res.status(500).json({
+        error: 'Failed to toggle guard',
+        message: error.message || 'An error occurred while toggling guard',
+      });
     }
-
-    guard.enabled = enabled;
-    guard.lastUpdated = new Date().toISOString();
-    webUIStorage.saveGuard(guard);
-
-    return res.json({
-      success: true,
-      message: `Guard ${guard.name} ${enabled ? 'enabled' : 'disabled'} successfully`,
-      data: { guard },
-    });
-  } catch (error: any) {
-    debug('Error toggling guard:', error);
-    return res.status(500).json({
-      error: 'Failed to toggle guard',
-      message: error.message || 'An error occurred while toggling guard',
-    });
   }
-});
+);
 
 // DELETE /:id - Delete a custom guard
 router.delete('/:id', configRateLimit, (req: Request, res: Response) => {
@@ -282,8 +245,7 @@ router.delete('/:id', configRateLimit, (req: Request, res: Response) => {
     }
 
     // Prevent deletion of system guards
-    const systemGuards = ['access-control', 'rate-limiter', 'content-filter'];
-    if (systemGuards.includes(id)) {
+    if (SYSTEM_GUARDS.includes(id)) {
       return res.status(403).json({
         error: 'Permission denied',
         message: `Cannot delete system guard: ${id}. System guards cannot be removed.`,
@@ -301,10 +263,10 @@ router.delete('/:id', configRateLimit, (req: Request, res: Response) => {
     }
 
     const deletedGuard = guards[guardIndex];
-    
+
     // Remove the guard from the array
     guards.splice(guardIndex, 1);
-    
+
     // Save the updated guards array
     webUIStorage.saveConfig({ ...webUIStorage.loadConfig(), guards });
 
@@ -323,76 +285,84 @@ router.delete('/:id', configRateLimit, (req: Request, res: Response) => {
 });
 
 // POST / - Create a new custom guard
-router.post('/create', configRateLimit, [
-  body('name')
-    .trim()
-    .notEmpty()
-    .withMessage('Guard name is required')
-    .isLength({ min: 1, max: 100 })
-    .withMessage('Guard name must be between 1 and 100 characters')
-    .matches(/^[a-zA-Z0-9_\-\s]+$/)
-    .withMessage('Guard name can only contain letters, numbers, spaces, underscores, and hyphens'),
+router.post(
+  '/create',
+  configRateLimit,
+  [
+    body('name')
+      .trim()
+      .notEmpty()
+      .withMessage('Guard name is required')
+      .isLength({ min: 1, max: 100 })
+      .withMessage('Guard name must be between 1 and 100 characters')
+      .matches(/^[a-zA-Z0-9_\-\s]+$/)
+      .withMessage(
+        'Guard name can only contain letters, numbers, spaces, underscores, and hyphens'
+      ),
 
-  body('type')
-    .trim()
-    .notEmpty()
-    .withMessage('Guard type is required')
-    .isIn(VALID_GUARD_TYPES)
-    .withMessage(`Guard type must be one of: ${VALID_GUARD_TYPES.join(', ')}`),
+    body('type')
+      .trim()
+      .notEmpty()
+      .withMessage('Guard type is required')
+      .isIn(VALID_GUARD_TYPES)
+      .withMessage(`Guard type must be one of: ${VALID_GUARD_TYPES.join(', ')}`),
 
-  body('description')
-    .optional()
-    .trim()
-    .isLength({ max: 500 })
-    .withMessage('Description must be less than 500 characters'),
+    body('description')
+      .optional()
+      .trim()
+      .isLength({ max: 500 })
+      .withMessage('Description must be less than 500 characters'),
 
-  body('config')
-    .optional()
-    .isObject()
-    .withMessage('Config must be an object'),
-], handleValidationErrors, (req: Request, res: Response) => {
-  try {
-    const data = matchedData(req);
-    const { name, type, description, config = {} } = data;
+    body('config').optional().isObject().withMessage('Config must be an object'),
+  ],
+  handleValidationErrors,
+  (req: Request, res: Response) => {
+    try {
+      const data = matchedData(req);
+      const { name, type, description, config = {} } = data;
 
-    // Generate a unique ID from the name
-    const id = name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9\-]/g, '');
+      // Generate a unique ID from the name
+      const id = name
+        .toLowerCase()
+        .replace(/\s+/g, '-')
+        .replace(/[^a-z0-9\-]/g, '');
 
-    // Check if guard with this ID already exists
-    const guards = webUIStorage.getGuards();
-    if (guards.some((g: any) => g.id === id)) {
-      return res.status(409).json({
-        error: 'Conflict',
-        message: `A guard with ID '${id}' already exists`,
+      // Check if guard with this ID already exists
+      const guards = webUIStorage.getGuards();
+      if (guards.some((g: any) => g.id === id)) {
+        return res.status(409).json({
+          error: 'Conflict',
+          message: `A guard with ID '${id}' already exists`,
+        });
+      }
+
+      // Create the new guard
+      const newGuard = {
+        id,
+        name,
+        type,
+        description: description || `${name} guard`,
+        enabled: true,
+        config,
+        createdAt: new Date().toISOString(),
+        lastUpdated: new Date().toISOString(),
+      };
+
+      webUIStorage.saveGuard(newGuard);
+
+      return res.status(201).json({
+        success: true,
+        message: 'Guard created successfully',
+        data: { guard: newGuard },
+      });
+    } catch (error: any) {
+      debug('Error creating guard:', error);
+      return res.status(500).json({
+        error: 'Failed to create guard',
+        message: error.message || 'An error occurred while creating guard',
       });
     }
-
-    // Create the new guard
-    const newGuard = {
-      id,
-      name,
-      type,
-      description: description || `${name} guard`,
-      enabled: true,
-      config,
-      createdAt: new Date().toISOString(),
-      lastUpdated: new Date().toISOString(),
-    };
-
-    webUIStorage.saveGuard(newGuard);
-
-    return res.status(201).json({
-      success: true,
-      message: 'Guard created successfully',
-      data: { guard: newGuard },
-    });
-  } catch (error: any) {
-    debug('Error creating guard:', error);
-    return res.status(500).json({
-      error: 'Failed to create guard',
-      message: error.message || 'An error occurred while creating guard',
-    });
   }
-});
+);
 
 export default router;
