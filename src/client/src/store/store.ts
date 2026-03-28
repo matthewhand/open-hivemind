@@ -10,6 +10,8 @@ import performanceReducer from './slices/performanceSlice';
 import websocketReducer from './slices/websocketSlice';
 import { loadState, saveState } from './stateVersioning';
 import { OfflineActionQueue, createOfflineMiddleware } from './offlineQueue';
+import Debug from 'debug';
+const debug = Debug('app:client:store:store');
 
 const rootReducer = combineReducers({
   [apiSlice.reducerPath]: apiSlice.reducer,
@@ -93,7 +95,7 @@ const initializeApp = () => {
           payload: parsedValue,
         });
       } catch (e) {
-        console.error(`Failed to load setting ${setting}:`, e);
+        debug('ERROR:', `Failed to load setting ${setting}:`, e);
       }
     }
   });

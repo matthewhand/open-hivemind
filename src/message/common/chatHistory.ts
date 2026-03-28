@@ -1,6 +1,8 @@
 // src/message/common/chatHistory.ts
 
 import type { IMessage } from '@src/message/interfaces/IMessage';
+import Debug from 'debug';
+const debug = Debug('app:message:common:chatHistory');
 
 /**
  * ChatHistory - Tracks messages sent by the bot for timing and activity purposes.
@@ -41,7 +43,7 @@ export class ChatHistory {
    */
   public getRecentMessages(timeframe: number): IMessage[] {
     if (timeframe <= 0) {
-      console.error('[ChatHistory] Invalid timeframe provided:', timeframe);
+      debug('ERROR:', '[ChatHistory] Invalid timeframe provided:', timeframe);
       return [];
     }
     const currentTime = Date.now();

@@ -12,6 +12,8 @@ import { SkeletonGrid } from '../components/DaisyUI/Skeleton';
 import { Alert } from '../components/DaisyUI/Alert';
 import Modal from '../components/DaisyUI/Modal';
 import useUrlParams from '../hooks/useUrlParams';
+import Debug from 'debug';
+const debug = Debug('app:client:pages:MCPToolsPage');
 
 interface MCPTool {
   id: string;
@@ -188,7 +190,7 @@ const MCPToolsPage: React.FC = () => {
       }
 
       const json = await res.json();
-      console.log('Tool execution result:', json);
+      debug('Tool execution result:', json);
 
       // Update usage count
       setTools(prev => prev.map(t =>

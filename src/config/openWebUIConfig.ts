@@ -45,9 +45,9 @@ try {
   openWebUIConfig.loadFile(configPath);
 } catch (error: any) {
   if (error.code !== 'ENOENT') {
-    console.warn(`Error reading openwebui config from ${configPath}:`, error.message);
+    debug('WARN:', `Error reading openwebui config from ${configPath}:`, error.message);
   } else {
-    console.warn(`OpenWebUI config file not found at ${configPath}, using environment variables and defaults`);
+    debug('WARN:', `OpenWebUI config file not found at ${configPath}, using environment variables and defaults`);
   }
 }
 

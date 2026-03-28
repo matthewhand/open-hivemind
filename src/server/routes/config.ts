@@ -111,7 +111,7 @@ const loadDynamicConfigs = async () => {
             try {
               newConfig.validate({ allowed: 'warn' });
             } catch (e) {
-              console.warn(`Validation warning for ${name}:`, e);
+              debug('WARN:', `Validation warning for ${name}:`, e);
             }
 
             globalConfigs[name] = newConfig;
@@ -124,7 +124,7 @@ const loadDynamicConfigs = async () => {
       }
     }
   } catch (e) {
-    console.error('Failed to load dynamic configs:', e);
+    debug('ERROR:', 'Failed to load dynamic configs:', e);
   }
 };
 

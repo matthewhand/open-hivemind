@@ -67,7 +67,7 @@ async function initializeRedis(): Promise<void> {
 
     const redisUrl = process.env.REDIS_URL;
     if (!redisUrl) {
-      console.warn('REDIS_URL not set, using in-memory rate limiting');
+      debug('WARN:', 'REDIS_URL not set, using in-memory rate limiting');
       return;
     }
 
@@ -109,7 +109,7 @@ async function initializeRedis(): Promise<void> {
     redisAvailable = true;
     debug('Redis client initialized successfully');
   } catch (err) {
-    console.warn('Redis initialization failed, using in-memory rate limiting:', err);
+    debug('WARN:', 'Redis initialization failed, using in-memory rate limiting:', err);
     redisAvailable = false;
   }
 }

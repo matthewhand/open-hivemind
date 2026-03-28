@@ -1,6 +1,8 @@
 import { Readable } from 'stream';
 import { Router, type Request, type Response } from 'express';
 import { SitemapStream, streamToPromise } from 'sitemap';
+import Debug from 'debug';
+const debug = Debug('app:server:routes:sitemap');
 
 const router = Router();
 
@@ -404,7 +406,7 @@ router.get('/sitemap.xml', async (req: Request, res: Response) => {
     res.header('Content-Type', 'application/xml');
     res.send(sitemapXml.toString());
   } catch (error) {
-    console.error('Error generating sitemap:', error);
+    debug('ERROR:', 'Error generating sitemap:', error);
     res.status(500).json({ error: 'Failed to generate sitemap' });
   }
 });
@@ -434,7 +436,7 @@ router.get('/sitemap.json', (req: Request, res: Response) => {
 
     res.json(sitemap);
   } catch (error) {
-    console.error('Error generating JSON sitemap:', error);
+    debug('ERROR:', 'Error generating JSON sitemap:', error);
     res.status(500).json({ error: 'Failed to generate sitemap' });
   }
 });
@@ -534,7 +536,7 @@ router.get('/sitemap', (req: Request, res: Response) => {
 
     res.send(html);
   } catch (error) {
-    console.error('Error generating HTML sitemap:', error);
+    debug('ERROR:', 'Error generating HTML sitemap:', error);
     res.status(500).send('Failed to generate sitemap');
   }
 });

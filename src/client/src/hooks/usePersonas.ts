@@ -7,6 +7,8 @@ import {
   type PersonaCategory,
   type UpdatePersonaRequest,
 } from '../types';
+import Debug from 'debug';
+const debug = Debug('app:client:hooks:usePersonas');
 
 interface UsePersonasReturn {
   personas: Persona[];
@@ -199,7 +201,7 @@ export const usePersonas = (): UsePersonasReturn => {
         );
 
         // In a real implementation, this would make an API call to update the bot
-        console.log(`Assigning persona "${persona.name}" to bot "${botId}"`);
+        debug(`Assigning persona "${persona.name}" to bot "${botId}"`);
       } catch (err) {
         const errorMessage = err instanceof Error ? err.message : 'Failed to assign persona to bot';
         setError(errorMessage);

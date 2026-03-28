@@ -20,6 +20,8 @@ import EmptyState from '../components/DaisyUI/EmptyState';
 import { Alert } from '../components/DaisyUI/Alert';
 import useUrlParams from '../hooks/useUrlParams';
 import { useApiQuery } from '../hooks/useApiQuery';
+import Debug from 'debug';
+const debug = Debug('app:client:pages:AuditPage');
 
 /** Shape returned by GET /api/audit */
 interface AuditEvent {
@@ -239,7 +241,7 @@ const AuditPage: React.FC = () => {
       a.remove();
       URL.revokeObjectURL(url);
     } catch (err) {
-      console.error('CSV export error:', err);
+      debug('ERROR:', 'CSV export error:', err);
     } finally {
       setExporting(false);
     }

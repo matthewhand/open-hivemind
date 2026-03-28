@@ -38,7 +38,7 @@ function getAllowedOrigins(): string[] {
   }
 
   // In production without CORS_ORIGIN set, be restrictive
-  console.warn('WARNING: CORS_ORIGIN not set in production. CORS will be restrictive.');
+  debug('WARN:', 'WARNING: CORS_ORIGIN not set in production. CORS will be restrictive.');
   return [];
 }
 
@@ -59,13 +59,13 @@ function isValidOriginFormat(origin: string): boolean {
 const validatedOrigins = allowedOrigins.filter((origin) => {
   if (origin === '*') {
     if (process.env.NODE_ENV === 'production') {
-      console.warn('WARNING: Wildcard CORS origin (*) is not recommended in production');
+      debug('WARN:', 'WARNING: Wildcard CORS origin (*) is not recommended in production');
     }
     return true;
   }
   const isValid = isValidOriginFormat(origin);
   if (!isValid) {
-    console.warn(`WARNING: Invalid CORS origin format: ${origin}`);
+    debug('WARN:', `WARNING: Invalid CORS origin format: ${origin}`);
   }
   return isValid;
 });

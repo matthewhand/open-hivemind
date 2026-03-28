@@ -1,4 +1,6 @@
 import React from 'react';
+import Debug from 'debug';
+const debug = Debug('app:client:components:ErrorBoundary');
 
 interface ErrorBoundaryProps {
   children: React.ReactNode;
@@ -34,7 +36,7 @@ class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundarySta
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
     const context = this.props.pageName ?? 'Unknown';
-    console.error(`[ErrorBoundary] Error in "${context}":`, error, errorInfo);
+    debug('ERROR:', `[ErrorBoundary] Error in "${context}":`, error, errorInfo);
   }
 
   /** Reset component state so the children re-mount (soft retry). */

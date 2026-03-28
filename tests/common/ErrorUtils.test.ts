@@ -89,16 +89,12 @@ describe('ErrorUtils', () => {
 
   describe('handleError', () => {
     it('should not throw when handling an error', () => {
-      const spy = jest.spyOn(console, 'error').mockImplementation();
       expect(() => ErrorUtils.handleError(new Error('test'))).not.toThrow();
-      spy.mockRestore();
     });
 
-    it('should log warnings for validation errors', () => {
-      const spy = jest.spyOn(console, 'warn').mockImplementation();
-      ErrorUtils.handleError(new Error('validation failed'));
-      expect(spy).toHaveBeenCalled();
-      spy.mockRestore();
+    it('should not throw for validation errors', () => {
+      // Logging is now handled via structured Debug logger, not console.warn
+      expect(() => ErrorUtils.handleError(new Error('validation failed'))).not.toThrow();
     });
   });
 });

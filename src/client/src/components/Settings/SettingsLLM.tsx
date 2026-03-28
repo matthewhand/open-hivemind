@@ -7,6 +7,8 @@ import Select from '../DaisyUI/Select';
 import { Bot, Link as LinkIcon } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
+import Debug from 'debug';
+const debug = Debug('app:client:components:Settings:SettingsLLM');
 
 interface LLMConfig {
     defaultLlm: string;
@@ -43,7 +45,7 @@ const SettingsLLM: React.FC = () => {
             setProviders(options);
 
         } catch (err) {
-            console.error('Failed to load LLM settings:', err);
+            debug('ERROR:', 'Failed to load LLM settings:', err);
             setAlert({
                 type: 'warning',
                 message: 'Could not load LLM settings or providers. Using defaults.',
@@ -69,7 +71,7 @@ const SettingsLLM: React.FC = () => {
             setAlert({ type: 'success', message: 'LLM settings saved successfully!' });
             setTimeout(() => setAlert(null), 5000);
         } catch (err) {
-            console.error('Save failed:', err);
+            debug('ERROR:', 'Save failed:', err);
             setAlert({
                 type: 'error',
                 message: 'Failed to save LLM settings. Please try again.',

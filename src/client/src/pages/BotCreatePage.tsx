@@ -13,6 +13,8 @@ import Select from '../components/DaisyUI/Select';
 import { useLlmStatus } from '../hooks/useLlmStatus';
 import AIAssistButton from '../components/AIAssistButton';
 import { apiService } from '../services/api';
+import Debug from 'debug';
+const debug = Debug('app:client:pages:BotCreatePage');
 
 const CONFIG_LIMITS = {
   SYSTEM_INSTRUCTION_MAX_LENGTH: 5000,
@@ -380,7 +382,7 @@ const BotCreatePage: React.FC = () => {
                               onChange={(e) => {
                                 const serverId = server.id || server.name;
                                 if (!serverId) {
-                                  console.warn('Server ID or name is required');
+                                  debug('WARN:', 'Server ID or name is required');
                                   return;
                                 }
                                 setFormData(prev => ({

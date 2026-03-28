@@ -1,5 +1,7 @@
 import convict from 'convict';
 import path from 'path';
+import Debug from 'debug';
+const debug = Debug('app:config:webhookConfig');
 
 const webhookConfig = convict({
   WEBHOOK_ENABLED: {
@@ -41,9 +43,9 @@ try {
   webhookConfig.loadFile(configPath);
 } catch (error: any) {
   if (error.code !== 'ENOENT') {
-    console.warn(`Error reading webhook config from ${configPath}:`, error.message);
+    debug('WARN:', `Error reading webhook config from ${configPath}:`, error.message);
   } else {
-    console.warn(`Webhook config file not found at ${configPath}, using environment variables and defaults`);
+    debug('WARN:', `Webhook config file not found at ${configPath}, using environment variables and defaults`);
   }
 }
 

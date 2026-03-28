@@ -111,11 +111,11 @@ export class AuthManager {
     if (!password) {
       password = crypto.randomBytes(16).toString('hex');
       this.generatedPassword = password;
-      console.warn('================================================================');
-      console.warn('WARNING: No ADMIN_PASSWORD environment variable found.');
-      console.warn(`Generated temporary admin password: ${password}`);
-      console.warn('Please change this password immediately or set ADMIN_PASSWORD.');
-      console.warn('================================================================');
+      debug('WARN:', '================================================================');
+      debug('WARN:', 'WARNING: No ADMIN_PASSWORD environment variable found.');
+      debug('WARN:', `Generated temporary admin password: ${password}`);
+      debug('WARN:', 'Please change this password immediately or set ADMIN_PASSWORD.');
+      debug('WARN:', '================================================================');
     }
 
     const defaultAdmin: User = {

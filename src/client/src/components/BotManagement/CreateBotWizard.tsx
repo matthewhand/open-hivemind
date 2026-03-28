@@ -4,6 +4,8 @@ import Input from '../DaisyUI/Input';
 import Modal from '../DaisyUI/Modal';
 import { useConfigDiff } from '../../hooks/useConfigDiff';
 import { ConfigDiffViewer, ConfigDiffConfirmDialog } from '../ConfigDiffViewer';
+import Debug from 'debug';
+const debug = Debug('app:client:components:BotManagement:CreateBotWizard');
 
 interface CreateBotWizardProps {
     isOpen: boolean;
@@ -84,7 +86,7 @@ export const CreateBotWizard: React.FC<CreateBotWizardProps> = (props) => {
                     setGuardProfiles(data.data || []);
                 }
             } catch (e) {
-                console.error('Failed to fetch guard profiles', e);
+                debug('ERROR:', 'Failed to fetch guard profiles', e);
             }
         };
         fetchGuardProfiles();
@@ -99,7 +101,7 @@ export const CreateBotWizard: React.FC<CreateBotWizardProps> = (props) => {
                         setFetchedPersonas(Array.isArray(data) ? data : []);
                     }
                 } catch (e) {
-                    console.error('Failed to fetch personas', e);
+                    debug('ERROR:', 'Failed to fetch personas', e);
                 }
             };
             fetchPersonas();
@@ -115,7 +117,7 @@ export const CreateBotWizard: React.FC<CreateBotWizardProps> = (props) => {
                         setFetchedLlmProfiles(data?.llm || data?.profiles?.llm || data?.data || []);
                     }
                 } catch (e) {
-                    console.error('Failed to fetch LLM profiles', e);
+                    debug('ERROR:', 'Failed to fetch LLM profiles', e);
                 }
             };
             fetchLlmProfiles();
@@ -131,7 +133,7 @@ export const CreateBotWizard: React.FC<CreateBotWizardProps> = (props) => {
                         setFetchedDefaultLlmConfigured(data?.defaultConfigured ?? true);
                     }
                 } catch (e) {
-                    console.error('Failed to fetch LLM status', e);
+                    debug('ERROR:', 'Failed to fetch LLM status', e);
                 }
             };
             fetchLlmStatus();

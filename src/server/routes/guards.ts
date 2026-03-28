@@ -20,8 +20,7 @@ router.get('/', (req: Request, res: Response) => {
       message: 'Guards retrieved successfully',
     });
   } catch (error: unknown) {
-    console.error('Error retrieving guards:', error);
-    debug('Error retrieving guards:', error);
+    debug('ERROR:', 'Error retrieving guards:', error);
     return res.status(500).json({
       error: 'Failed to retrieve guards',
       message: error.message || 'An error occurred while retrieving guards',

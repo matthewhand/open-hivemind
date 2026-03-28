@@ -93,19 +93,13 @@ describe('ProviderRegistry — memory providers', () => {
   });
 
   test('duplicate registration overwrites previous memory provider', () => {
-    const spy = jest.spyOn(console, 'warn').mockImplementation();
-
     const p1 = makeMockMemoryProvider({ id: 'first' });
     const p2 = makeMockMemoryProvider({ id: 'second' });
     registry.registerMemoryProvider('mem0', p1);
     registry.registerMemoryProvider('mem0', p2);
 
     expect(registry.getMemoryProvider('mem0')!.id).toBe('second');
-    expect(console.warn).toHaveBeenCalledWith(
-      expect.stringContaining("Memory provider 'mem0' already registered")
-    );
-
-    spy.mockRestore();
+    // Warning is now emitted via structured Debug logger, not console.warn
   });
 
   test('removing non-existent memory provider does not throw', () => {
@@ -166,19 +160,13 @@ describe('ProviderRegistry — tool providers', () => {
   });
 
   test('duplicate registration overwrites previous tool provider', () => {
-    const spy = jest.spyOn(console, 'warn').mockImplementation();
-
     const p1 = makeMockToolProvider({ id: 'first' });
     const p2 = makeMockToolProvider({ id: 'second' });
     registry.registerToolProvider('mcp-github', p1);
     registry.registerToolProvider('mcp-github', p2);
 
     expect(registry.getToolProvider('mcp-github')!.id).toBe('second');
-    expect(console.warn).toHaveBeenCalledWith(
-      expect.stringContaining("Tool provider 'mcp-github' already registered")
-    );
-
-    spy.mockRestore();
+    // Warning is now emitted via structured Debug logger, not console.warn
   });
 
   test('removing non-existent tool provider does not throw', () => {

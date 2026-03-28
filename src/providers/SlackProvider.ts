@@ -3,6 +3,8 @@ import path from 'path';
 import { SlackService } from '@hivemind/message-slack';
 import slackConfig, { type SlackConfig } from '../config/slackConfig';
 import { type IMessageProvider } from '../types/IProvider';
+import Debug from 'debug';
+const debug = Debug('app:providers:SlackProvider');
 
 export class SlackProvider implements IMessageProvider<SlackConfig> {
   id = 'slack';
@@ -94,7 +96,7 @@ export class SlackProvider implements IMessageProvider<SlackConfig> {
       await fs.promises.mkdir(path.dirname(messengersPath), { recursive: true });
       await fs.promises.writeFile(messengersPath, JSON.stringify(cfg, null, 2), 'utf8');
     } catch (e) {
-      console.error('Failed writing messengers.json', e);
+      debug('ERROR:', 'Failed writing messengers.json', e);
     }
 
     // Runtime add

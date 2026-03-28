@@ -23,6 +23,8 @@ import DistributedTraceWaterfall, { TraceSpan } from './DistributedTraceWaterfal
 import BotActivityWaterfallMonitor from './BotActivityWaterfallMonitor';
 import { apiService } from '../../services/api';
 import type { StatusResponse, Bot } from '../../services/api';
+import Debug from 'debug';
+const debug = Debug('app:client:components:Monitoring:MonitoringDashboard');
 
 const mockSpans: TraceSpan[] = [
   {
@@ -141,11 +143,11 @@ const MonitoringDashboard: React.FC<MonitoringDashboardProps> = ({
       // Refresh all monitoring data
       const [systemData, configData] = await Promise.all([
         apiService.getStatus().catch((err) => {
-          console.error('[Monitoring] getStatus failed:', err);
+          debug('ERROR:', '[Monitoring] getStatus failed:', err);
           return { bots: [] } as any;
         }),
         apiService.getConfig().catch((err) => {
-          console.error('[Monitoring] getConfig failed:', err);
+          debug('ERROR:', '[Monitoring] getConfig failed:', err);
           return { bots: [] };
         }),
       ]);
@@ -188,7 +190,7 @@ const MonitoringDashboard: React.FC<MonitoringDashboardProps> = ({
         onRefresh();
       }
     } catch (error) {
-      console.error('Failed to refresh monitoring data:', error);
+      debug('ERROR:', 'Failed to refresh monitoring data:', error);
     } finally {
       setLoading(false);
     }

@@ -1,5 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
+import Debug from 'debug';
+const debug = Debug('app:client:store:slices:uiSlice');
 
 export interface UIState {
   theme: 'light' | 'dark' | 'high-contrast' | 'auto';
@@ -249,7 +251,7 @@ const uiSlice = createSlice({
           const value = JSON.parse(localStorage.getItem(key) || '');
           state.userPreferences[prefKey] = value;
         } catch (e) {
-          console.error(`Failed to load user preference ${prefKey}:`, e);
+          debug('ERROR:', `Failed to load user preference ${prefKey}:`, e);
         }
       });
     },
@@ -365,7 +367,7 @@ const uiSlice = createSlice({
               (state as any)[setting] = value;
             }
           } catch (e) {
-            console.error(`Failed to load setting ${setting}:`, e);
+            debug('ERROR:', `Failed to load setting ${setting}:`, e);
           }
         }
       });
