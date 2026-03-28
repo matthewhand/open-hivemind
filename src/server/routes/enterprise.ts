@@ -1,6 +1,12 @@
 import Debug from 'debug';
 import { Router } from 'express';
 import { AuditLogger } from '../../common/auditLogger';
+import {
+  CreateCloudProviderSchema,
+  CreateEnterpriseIntegrationSchema,
+  PerformanceOptimizeSchema,
+} from '../../validation/schemas/enterpriseSchema';
+import { validateRequest } from '../../validation/validateRequest';
 
 const debug = Debug('app:enterpriseRoutes');
 const router = Router();
@@ -101,16 +107,9 @@ router.get('/api/cloud-providers', (req, res) => {
 });
 
 // Add cloud provider
-router.post('/api/cloud-providers', (req, res) => {
+router.post('/api/cloud-providers', validateRequest(CreateCloudProviderSchema), (req, res) => {
   try {
     const { name, type, region, _credentials } = req.body;
-
-    if (!name || !type || !region) {
-      return res.status(400).json({
-        success: false,
-        message: 'Name, type, and region are required',
-      });
-    }
 
     // In a real implementation, this would configure the cloud provider
     // For now, simulate creation
@@ -188,16 +187,9 @@ router.get('/api/integrations', (req, res) => {
 });
 
 // Add integration
-router.post('/api/integrations', (req, res) => {
+router.post('/api/integrations', validateRequest(CreateEnterpriseIntegrationSchema), (req, res) => {
   try {
     const { name, type, provider, config } = req.body;
-
-    if (!name || !type || !provider) {
-      return res.status(400).json({
-        success: false,
-        message: 'Name, type, and provider are required',
-      });
-    }
 
     // In a real implementation, this would create the integration
     // For now, simulate creation
@@ -415,7 +407,7 @@ router.get('/api/governance/policies', (req, res) => {
 });
 
 // Optimize performance
-router.post('/api/performance/optimize', (req, res) => {
+router.post('/api/performance/optimize', validateRequest(PerformanceOptimizeSchema), (req, res) => {
   try {
     const { target, type } = req.body;
 

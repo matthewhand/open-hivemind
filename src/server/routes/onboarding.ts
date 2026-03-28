@@ -1,6 +1,8 @@
 import { Router } from 'express';
 import { createLogger } from '../../common/StructuredLogger';
 import { BotManager } from '../../managers/BotManager';
+import { OnboardingStepSchema } from '../../validation/schemas/onboardingSchema';
+import { validateRequest } from '../../validation/validateRequest';
 
 const router = Router();
 const logger = createLogger('onboardingRouter');
@@ -95,13 +97,10 @@ router.post('/reset', (_req, res) => {
  *       200:
  *         description: Step updated
  */
-router.post('/step', (req, res) => {
+router.post('/step', validateRequest(OnboardingStepSchema), (req, res) => {
   const { step } = req.body;
-  if (typeof step === 'number' && step >= 1 && step <= 5) {
-    onboardingStep = step;
-    return res.json({ completed: false, step: onboardingStep });
-  }
-  return res.status(400).json({ error: 'Invalid step number (must be 1-5)' });
+  onboardingStep = step;
+  return res.json({ completed: false, step: onboardingStep });
 });
 
 export default router;
