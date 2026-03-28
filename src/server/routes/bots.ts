@@ -28,8 +28,7 @@ const wsService = WebSocketService.getInstance();
  */
 router.get('/', async (req, res) => {
   try {
-    const bots = await manager.getAllBots();
-    const statuses = await manager.getBotsStatus();
+    const [bots, statuses] = await Promise.all([manager.getAllBots(), manager.getBotsStatus()]);
     const statusMap = new Map(statuses.map((s) => [s.id, s.isRunning]));
 
     const result = bots.map((bot) => {
