@@ -2,6 +2,8 @@ import { promises as fs } from 'fs';
 import path from 'path';
 import { Router } from 'express';
 import { z } from 'zod';
+import Debug from 'debug';
+const debug = Debug('app:server:routes:specs');
 
 const router = Router();
 
@@ -75,7 +77,7 @@ router.post('/', async (req, res) => {
       .status(201)
       .json({ success: true, data: newSpec, message: 'Specification saved successfully' });
   } catch (error) {
-    console.error('Failed to save spec:', error);
+    debug('ERROR:', 'Failed to save spec:', error);
     return res.status(500).json({
       success: false,
       error: 'Failed to save specification',

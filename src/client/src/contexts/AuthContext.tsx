@@ -1,6 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars, react-refresh/only-export-components, no-empty, no-case-declarations */
 import type { ReactNode } from 'react';
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import Debug from 'debug';
+const debug = Debug('app:client:contexts:AuthContext');
 
 export interface User {
   id: string;
@@ -56,13 +58,13 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         } else {
           // Token is expired, try to refresh it silently
           refreshToken().catch((error) => {
-            console.warn('Failed to refresh expired token on load:', error);
+            debug('WARN:', 'Failed to refresh expired token on load:', error);
             // Don't logout here - just don't set the user
             // The app will handle being in an unauthenticated state
           });
         }
       } catch (error) {
-        console.error('Failed to parse stored auth data:', error);
+        debug('ERROR:', 'Failed to parse stored auth data:', error);
         // Don't logout - just don't set the user
       }
     } else if (import.meta.env.DEV && import.meta.env.VITE_AUTO_LOGIN === 'true') {
@@ -171,7 +173,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
       return false;
     } catch (error) {
-      console.error('Login error:', error);
+      debug('ERROR:', 'Login error:', error);
       return false;
     }
   };
@@ -224,7 +226,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
       return false;
     } catch (error) {
-      console.error('Token refresh error:', error);
+      debug('ERROR:', 'Token refresh error:', error);
       logout();
       return false;
     }
@@ -263,7 +265,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
       return null;
     } catch (error) {
-      console.error('Token verification error:', error);
+      debug('ERROR:', 'Token verification error:', error);
       return null;
     }
   };

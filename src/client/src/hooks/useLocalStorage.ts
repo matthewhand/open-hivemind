@@ -1,4 +1,6 @@
 import { useState } from 'react';
+import Debug from 'debug';
+const debug = Debug('app:client:hooks:useLocalStorage');
 
 export function useLocalStorage<T>(key: string, initialValue: T): [T, (value: T | ((prev: T) => T)) => void] {
   // Get from local storage then parse stored json or return initialValue
@@ -7,7 +9,7 @@ export function useLocalStorage<T>(key: string, initialValue: T): [T, (value: T 
       const item = window.localStorage.getItem(key);
       return item ? JSON.parse(item) : initialValue;
     } catch (error) {
-      console.error('Error reading from localStorage:', error);
+      debug('ERROR:', 'Error reading from localStorage:', error);
       return initialValue;
     }
   });
@@ -20,7 +22,7 @@ export function useLocalStorage<T>(key: string, initialValue: T): [T, (value: T 
       setStoredValue(valueToStore);
       window.localStorage.setItem(key, JSON.stringify(valueToStore));
     } catch (error) {
-      console.error('Error saving to localStorage:', error);
+      debug('ERROR:', 'Error saving to localStorage:', error);
     }
   };
 

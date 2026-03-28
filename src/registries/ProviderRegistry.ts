@@ -6,6 +6,8 @@ import {
   type IToolProvider,
 } from '../types/IProvider';
 import { type IToolInstaller } from '../types/IToolInstaller';
+import Debug from 'debug';
+const debug = Debug('app:registries:ProviderRegistry');
 
 export class ProviderRegistry {
   private static instance: ProviderRegistry;
@@ -25,7 +27,7 @@ export class ProviderRegistry {
 
   public register(provider: IProvider): void {
     if (this.providers.has(provider.id)) {
-      console.warn(`Provider with id ${provider.id} already registered. Overwriting.`);
+      debug('WARN:', `Provider with id ${provider.id} already registered. Overwriting.`);
     }
     this.providers.set(provider.id, provider);
   }
@@ -50,7 +52,7 @@ export class ProviderRegistry {
 
   public registerMemoryProvider(name: string, provider: IMemoryProvider): void {
     if (this.memoryProviders.has(name)) {
-      console.warn(`Memory provider '${name}' already registered. Overwriting.`);
+      debug('WARN:', `Memory provider '${name}' already registered. Overwriting.`);
     }
     this.memoryProviders.set(name, provider);
   }
@@ -71,7 +73,7 @@ export class ProviderRegistry {
 
   public registerToolProvider(name: string, provider: IToolProvider): void {
     if (this.toolProviders.has(name)) {
-      console.warn(`Tool provider '${name}' already registered. Overwriting.`);
+      debug('WARN:', `Tool provider '${name}' already registered. Overwriting.`);
     }
     this.toolProviders.set(name, provider);
   }

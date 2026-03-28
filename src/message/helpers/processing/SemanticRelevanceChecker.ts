@@ -113,7 +113,7 @@ export async function isOnTopic(conversationContext: string, newMessage: string)
     return result;
   } catch (err) {
     debug('Semantic relevance check failed:', err);
-    console.warn('🎯 SEMANTIC | check failed, assuming off-topic');
+    debug('WARN:', '🎯 SEMANTIC | check failed, assuming off-topic');
     return false; // Fail closed - don't boost if check fails
   }
 }

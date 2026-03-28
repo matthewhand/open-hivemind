@@ -1,3 +1,5 @@
+import Debug from 'debug';
+const debug = Debug('app:common:ErrorUtils');
 export interface HivemindError {
   message: string;
   code?: string;
@@ -113,9 +115,9 @@ export class ErrorUtils {
     const classification = this.classifyError(hivemindError);
 
     if (classification.logLevel === 'error') {
-      console.error('Application error:', hivemindError);
+      debug('ERROR:', 'Application error:', hivemindError);
     } else if (classification.logLevel === 'warn') {
-      console.warn('Application warning:', hivemindError);
+      debug('WARN:', 'Application warning:', hivemindError);
     } else {
       console.info('Application info:', hivemindError);
     }

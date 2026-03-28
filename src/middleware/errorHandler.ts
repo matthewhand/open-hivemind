@@ -189,7 +189,7 @@ export function handleUncaughtException(error: Error): void {
 
   // In production, exit gracefully after logging
   if (process.env.NODE_ENV === 'production') {
-    console.error('Uncaught Exception:', error);
+    debug('ERROR:', 'Uncaught Exception:', error);
     process.exit(1);
   } else {
     // In development, re-throw for debugging
@@ -213,11 +213,11 @@ export function handleUnhandledRejection(reason: unknown, promise: Promise<unkno
 
   // In production, exit gracefully after logging
   if (process.env.NODE_ENV === 'production') {
-    console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+    debug('ERROR:', 'Unhandled Rejection at:', promise, 'reason:', reason);
     process.exit(1);
   } else {
     // In development, log but don't exit
-    console.error('Unhandled Rejection:', reason);
+    debug('ERROR:', 'Unhandled Rejection:', reason);
   }
 }
 

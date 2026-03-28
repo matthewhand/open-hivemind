@@ -1,3 +1,5 @@
+import Debug from 'debug';
+const debug = Debug('app:client:services:api');
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 const getEnv = (key: string): string | undefined => {
   // Use a dynamic check to avoid Babel syntax errors with import.meta in CommonJS/Node
@@ -414,7 +416,7 @@ class ApiService {
           headers['Authorization'] = `Bearer ${tokens.accessToken}`;
         }
       } catch (e) {
-        console.error('Failed to parse auth token', e);
+        debug('ERROR:', 'Failed to parse auth token', e);
       }
     }
     return headers;
@@ -504,7 +506,7 @@ class ApiService {
         throw new Error(`Request timed out after ${options?.timeout || 15000}ms`);
       }
       const errorMessage = error instanceof Error ? error.message : String(error);
-      console.error(`API request failed for ${endpoint}:`, errorMessage);
+      debug('ERROR:', `API request failed for ${endpoint}:`, errorMessage);
       throw error;
     }
   }

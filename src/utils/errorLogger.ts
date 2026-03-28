@@ -6,6 +6,7 @@
  */
 
 import Debug from 'debug';
+const debug = Debug('app:utils:errorLogger');
 import { MetricsCollector } from '../monitoring/MetricsCollector';
 import { BaseHivemindError } from '../types/errorClasses';
 import { ErrorUtils, type HivemindError } from '../types/errors';
@@ -310,13 +311,13 @@ export class ErrorLogger {
         console.info(message, meta);
         break;
       case 'warn':
-        console.warn(message, meta);
+        debug('WARN:', message, meta);
         break;
       case 'error':
       case 'fatal':
-        console.error(message, meta);
+        debug('ERROR:', message, meta);
         if (logEntry.error.stack) {
-          console.error(logEntry.error.stack);
+          debug('ERROR:', logEntry.error.stack);
         }
         break;
     }
@@ -333,7 +334,7 @@ export class ErrorLogger {
     // In a real implementation, this would write to a file
     // For now, we'll use console.log with a file-like format
     const logLine = JSON.stringify(logEntry) + '\n';
-    console.log(`[FILE:${level.toUpperCase()}]`, logLine);
+    debug(`[FILE:${level.toUpperCase()}]`, logLine);
   }
 
   /**

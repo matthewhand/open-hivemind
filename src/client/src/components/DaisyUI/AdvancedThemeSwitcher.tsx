@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import Input from './Input';
+import Debug from 'debug';
+const debug = Debug('app:client:components:DaisyUI:AdvancedThemeSwitcher');
 
 interface ThemeOption {
   value: string;
@@ -277,7 +279,7 @@ const AdvancedThemeSwitcher: React.FC<ThemeSwitcherProps> = ({
     try {
       localStorage.setItem('hivemind-favorite-themes', JSON.stringify(newFavorites));
     } catch (e) {
-      console.error('Failed to persist favorites, reverting', e);
+      debug('ERROR:', 'Failed to persist favorites, reverting', e);
       setFavoriteThemes(previousFavorites);
     }
   };

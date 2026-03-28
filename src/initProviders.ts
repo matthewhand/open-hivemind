@@ -54,13 +54,13 @@ export async function initProviders() {
             }
           }
         } catch (e) {
-          console.error(`Failed to load provider from ${file}`, e);
+          debug('ERROR:', `Failed to load provider from ${file}`, e);
         }
       }
     }
   } catch (err: any) {
     if (err.code === 'ENOENT') {
-      console.warn(`Providers directory not found at ${providersDir}`);
+      debug('WARN:', `Providers directory not found at ${providersDir}`);
     } else {
       throw err;
     }

@@ -5,6 +5,8 @@ import { body, param, validationResult } from 'express-validator';
 import { authenticate, requireAdmin } from '../../auth/middleware';
 import type { AuthMiddlewareRequest } from '../../auth/types';
 import { ConfigurationImportExportService } from '../services/ConfigurationImportExportService';
+import Debug from 'debug';
+const debug = Debug('app:server:routes:importExport');
 
 type MulterFile = {
   path: string;
@@ -243,7 +245,7 @@ router.post(
         });
       }
     } catch (error) {
-      console.error('Error exporting configurations:', error);
+      debug('ERROR:', 'Error exporting configurations:', error);
       return res.status(500).json({
         success: false,
         message: 'Failed to export configurations',
@@ -285,7 +287,7 @@ router.post(
       try {
         await fs.unlink(req.file.path);
       } catch (cleanupError) {
-        console.error('Error cleaning up uploaded file:', cleanupError);
+        debug('ERROR:', 'Error cleaning up uploaded file:', cleanupError);
       }
 
       return res.json({
@@ -294,14 +296,14 @@ router.post(
         data: result,
       });
     } catch (error) {
-      console.error('Error importing configurations:', error);
+      debug('ERROR:', 'Error importing configurations:', error);
 
       // Clean up uploaded file if it exists
       if (req.file) {
         try {
           await fs.unlink(req.file.path);
         } catch (cleanupError) {
-          console.error('Error cleaning up uploaded file:', cleanupError);
+          debug('ERROR:', 'Error cleaning up uploaded file:', cleanupError);
         }
       }
 
@@ -360,7 +362,7 @@ router.post(
         });
       }
     } catch (error) {
-      console.error('Error creating backup:', error);
+      debug('ERROR:', 'Error creating backup:', error);
       return res.status(500).json({
         success: false,
         message: 'Failed to create backup',
@@ -383,7 +385,7 @@ router.get('/backups', requireAdmin, async (req: AuthMiddlewareRequest, res: Res
       count: backups.length,
     });
   } catch (error) {
-    console.error('Error listing backups:', error);
+    debug('ERROR:', 'Error listing backups:', error);
     return res.status(500).json({
       success: false,
       message: 'Failed to list backups',
@@ -434,7 +436,7 @@ router.post(
         data: result,
       });
     } catch (error) {
-      console.error('Error restoring from backup:', error);
+      debug('ERROR:', 'Error restoring from backup:', error);
       return res.status(500).json({
         success: false,
         message: 'Failed to restore from backup',
@@ -468,7 +470,7 @@ router.delete(
         });
       }
     } catch (error) {
-      console.error('Error deleting backup:', error);
+      debug('ERROR:', 'Error deleting backup:', error);
       return res.status(500).json({
         success: false,
         message: 'Failed to delete backup',
@@ -516,7 +518,7 @@ router.get(
       res.setHeader('Content-Disposition', `attachment; filename="${backupFileName}"`);
       return res.sendFile(backupPath);
     } catch (error) {
-      console.error('Error downloading backup:', error);
+      debug('ERROR:', 'Error downloading backup:', error);
       return res.status(500).json({
         success: false,
         message: 'Failed to download backup',
@@ -555,7 +557,7 @@ router.post(
       try {
         await fs.unlink(req.file.path);
       } catch (cleanupError) {
-        console.error('Error cleaning up uploaded file:', cleanupError);
+        debug('ERROR:', 'Error cleaning up uploaded file:', cleanupError);
       }
 
       return res.json({
@@ -564,14 +566,14 @@ router.post(
         data: result,
       });
     } catch (error) {
-      console.error('Error validating file:', error);
+      debug('ERROR:', 'Error validating file:', error);
 
       // Clean up uploaded file if it exists
       if (req.file) {
         try {
           await fs.unlink(req.file.path);
         } catch (cleanupError) {
-          console.error('Error cleaning up uploaded file:', cleanupError);
+          debug('ERROR:', 'Error cleaning up uploaded file:', cleanupError);
         }
       }
 

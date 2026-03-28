@@ -103,7 +103,7 @@ export class AuditLogger {
           await fsPromises.appendFile(this.logFilePath, data);
         } catch (error) {
           debug('Failed to write to audit log:', error);
-          console.error('AUDIT LOG WRITE ERROR:', error);
+          debug('ERROR:', 'AUDIT LOG WRITE ERROR:', error);
           // In case of write error, we lose these logs.
           // In a robust system we might retry or write to a fallback,
           // but for now we just log the error to stderr.
@@ -152,7 +152,7 @@ export class AuditLogger {
       this.processQueue();
     } catch (error) {
       debug('Failed to queue audit event:', error);
-      console.error('AUDIT LOG ERROR:', event, error);
+      debug('ERROR:', 'AUDIT LOG ERROR:', event, error);
     }
   }
 

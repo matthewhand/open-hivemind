@@ -1,4 +1,6 @@
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
+import Debug from 'debug';
+const debug = Debug('app:client:store:slices:authSlice');
 
 /** Tenant type -- formerly in enterprise/MultiTenantProvider (removed as dead code). */
 export interface Tenant {
@@ -21,7 +23,7 @@ const getStorage = () => {
       return window.localStorage;
     }
   } catch (error) {
-    console.warn('localStorage unavailable:', error);
+    debug('WARN:', 'localStorage unavailable:', error);
   }
   return undefined;
 };
@@ -35,7 +37,7 @@ const readJSON = <T>(key: string): T | null => {
   try {
     return JSON.parse(raw) as T;
   } catch (error) {
-    console.warn(`Failed to parse stored value for ${key}`, error);
+    debug('WARN:', `Failed to parse stored value for ${key}`, error);
     return null;
   }
 };

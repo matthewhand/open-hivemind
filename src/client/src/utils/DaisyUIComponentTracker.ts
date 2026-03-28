@@ -1,3 +1,5 @@
+import Debug from 'debug';
+const debug = Debug('app:client:utils:DaisyUIComponentTracker');
 // DaisyUI Component Usage Tracker
 // This system tracks which DaisyUI components are used throughout the application
 
@@ -149,7 +151,7 @@ class DaisyUIComponentTracker {
         });
       }
     } catch (error) {
-      console.error('Failed to import DaisyUI tracking data:', error);
+      debug('ERROR:', 'Failed to import DaisyUI tracking data:', error);
     }
   }
 

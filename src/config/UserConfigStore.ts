@@ -2,6 +2,8 @@ import { promises as fs } from 'fs';
 import path from 'path';
 import type { BotConfiguration } from '../database/DatabaseManager';
 import type { BotOverride, MessageProvider, LlmProvider, McpServerConfig, McpGuardConfig } from '@src/types/config';
+import Debug from 'debug';
+const debug = Debug('app:config:UserConfigStore');
 
 interface ToolConfig {
   guards?: {
@@ -74,7 +76,7 @@ export class UserConfigStore {
       await fs.mkdir(configDir, { recursive: true });
       await fs.writeFile(this.configPath, JSON.stringify(this.config, null, 2), 'utf-8');
     } catch (error) {
-      console.error('Failed to save user config:', error);
+      debug('ERROR:', 'Failed to save user config:', error);
       throw error;
     }
   }
