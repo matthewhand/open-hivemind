@@ -104,17 +104,17 @@ const EnhancedBotManager: React.FC<EnhancedBotManagerProps> = ({ onBotSelect }) 
 
   const loadOptions = async () => {
     try {
-      const [providersData, personasData, mcpData] = await Promise.all([
+      // ⚡ Bolt Optimization: Parallelize independent API calls to reduce total wait time
+      const [providersData, personasData, mcpData, gpResponse] = await Promise.all([
         botDataProvider.getProviders(),
         botDataProvider.getPersonas(),
         botDataProvider.getMCPServers(),
+        fetch('/api/admin/guard-profiles')
       ]);
       setProviders(providersData);
       setPersonas(personasData);
       setMcpServers(mcpData);
 
-      // Fetch guard profiles
-      const gpResponse = await fetch('/api/admin/guard-profiles');
       if (gpResponse.ok) {
         const gpData = await gpResponse.json();
         setGuardProfiles(gpData.data || []);
