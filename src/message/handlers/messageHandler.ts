@@ -5,6 +5,7 @@ import { PerformanceMonitor } from '@src/common/errors/PerformanceMonitor';
 import { getLlmProvider } from '@src/llm/getLlmProvider';
 import { InputSanitizer } from '@src/utils/InputSanitizer';
 import { toolAugmentedCompletion } from '@src/services/toolAugmentedCompletion';
+import { getQuotaManager } from '@src/middleware/quotaMiddleware';
 import { generateChatCompletionDirect } from '@integrations/openwebui/directClient';
 import { ChannelDelayManager } from '@message/helpers/handler/ChannelDelayManager';
 import type { IMessage } from '@message/interfaces/IMessage';
@@ -365,6 +366,23 @@ export async function handleMessage(
             })
           : { trimmed: [] as IMessage[] };
 
+        // ── Quota enforcement: check before expensive LLM inference ──
+        if (process.env.DISABLE_QUOTA !== 'true') {
+          const quotaManager = getQuotaManager();
+          const quotaEntityId = userId || channelId;
+          const quotaEntityType = userId ? 'user' as const : 'channel' as const;
+          const quotaStatus = await quotaManager.checkQuota(quotaEntityId, quotaEntityType);
+          if (!quotaStatus.allowed) {
+            logger(
+              `Quota exceeded for ${quotaEntityType}:${quotaEntityId} — ` +
+              `min=${quotaStatus.used.minute} hr=${quotaStatus.used.hour} day=${quotaStatus.used.day}`
+            );
+            return null;
+          }
+          // Consume one request unit now; tokens are consumed after inference
+          await quotaManager.consumeQuota(quotaEntityId, quotaEntityType);
+        }
+
         // Generate response
         const startTime = Date.now();
         let llmResponse: any;
@@ -405,6 +423,21 @@ export async function handleMessage(
           llmResponse = typeof toolResult === 'string'
             ? { text: toolResult }
             : toolResult;
+        }
+
+        // ── Quota: consume token usage after inference completes ──
+        if (process.env.DISABLE_QUOTA !== 'true' && llmResponse?.text) {
+          try {
+            const quotaManager = getQuotaManager();
+            const quotaEntityId = userId || channelId;
+            const quotaEntityType = userId ? 'user' as const : 'channel' as const;
+            // Estimate tokens from response length (rough: 1 token ~ 4 chars)
+            const estimatedTokens = llmResponse.usage?.total_tokens
+              ?? Math.ceil((llmResponse.text?.length ?? 0) / 4);
+            await quotaManager.consumeTokens(quotaEntityId, quotaEntityType, estimatedTokens);
+          } catch (tokenErr) {
+            logger('Failed to record token quota (non-fatal):', tokenErr);
+          }
         }
 
         stopTyping = true;
