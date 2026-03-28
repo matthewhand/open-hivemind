@@ -281,32 +281,87 @@ router.get('/metrics', (req, res) => {
   return res.json(metricsData);
 });
 
+// Configurable alert thresholds (inspired by EnhancedAlertManager patterns
+// that were removed during dead code cleanup). Override via environment variables.
+const ALERT_THRESHOLDS = {
+  memoryWarning: parseInt(process.env.ALERT_MEMORY_WARNING || '80', 10),
+  memoryCritical: parseInt(process.env.ALERT_MEMORY_CRITICAL || '95', 10),
+  cpuWarning: parseInt(process.env.ALERT_CPU_WARNING || '80', 10),
+  cpuCritical: parseInt(process.env.ALERT_CPU_CRITICAL || '95', 10),
+  recentRestartSeconds: 30,
+  errorRateWarning: parseFloat(process.env.ALERT_ERROR_RATE_WARNING || '5'),
+};
+
 // Alerts endpoint
 router.get('/alerts', (req, res) => {
   const memoryUsage = process.memoryUsage();
   const memoryPercentage = (memoryUsage.heapUsed / memoryUsage.heapTotal) * 100;
+  const cpuUsage = process.cpuUsage();
   const uptime = process.uptime();
 
   const alerts = [];
+  const now = new Date().toISOString();
 
-  // Check for high memory usage
-  if (memoryPercentage > 80) {
+  // Check for high memory usage with tiered severity
+  if (memoryPercentage > ALERT_THRESHOLDS.memoryCritical) {
+    alerts.push({
+      level: 'critical',
+      message: 'Critical memory usage detected',
+      details: `Memory usage is at ${Math.round(memoryPercentage)}% (threshold: ${ALERT_THRESHOLDS.memoryCritical}%)`,
+      timestamp: now,
+      type: 'memory',
+    });
+  } else if (memoryPercentage > ALERT_THRESHOLDS.memoryWarning) {
     alerts.push({
       level: 'warning',
       message: 'High memory usage detected',
-      details: `Memory usage is at ${Math.round(memoryPercentage)}%`,
-      timestamp: new Date().toISOString(),
+      details: `Memory usage is at ${Math.round(memoryPercentage)}% (threshold: ${ALERT_THRESHOLDS.memoryWarning}%)`,
+      timestamp: now,
       type: 'memory',
     });
   }
 
-  // Check for low uptime (less than 30 seconds might indicate recent restart)
-  if (uptime < 30) {
+  // Check for high CPU usage (cumulative user+system time as % of wall clock)
+  const cpuTotalMs = (cpuUsage.user + cpuUsage.system) / 1000;
+  const cpuPercent = uptime > 0 ? (cpuTotalMs / (uptime * 1000)) * 100 : 0;
+  if (cpuPercent > ALERT_THRESHOLDS.cpuCritical) {
+    alerts.push({
+      level: 'critical',
+      message: 'Critical CPU usage detected',
+      details: `CPU usage is at ${Math.round(cpuPercent)}% (threshold: ${ALERT_THRESHOLDS.cpuCritical}%)`,
+      timestamp: now,
+      type: 'cpu',
+    });
+  } else if (cpuPercent > ALERT_THRESHOLDS.cpuWarning) {
+    alerts.push({
+      level: 'warning',
+      message: 'High CPU usage detected',
+      details: `CPU usage is at ${Math.round(cpuPercent)}% (threshold: ${ALERT_THRESHOLDS.cpuWarning}%)`,
+      timestamp: now,
+      type: 'cpu',
+    });
+  }
+
+  // Check for high error rate
+  const recentErrors = ErrorLogger.getInstance().getRecentErrorCount(60000);
+  const errorRate = calculateErrorRate(recentErrors, 60);
+  if (errorRate > ALERT_THRESHOLDS.errorRateWarning) {
+    alerts.push({
+      level: errorRate > ALERT_THRESHOLDS.errorRateWarning * 2 ? 'critical' : 'warning',
+      message: 'Elevated error rate detected',
+      details: `Error rate is ${errorRate.toFixed(2)}/s (threshold: ${ALERT_THRESHOLDS.errorRateWarning}/s)`,
+      timestamp: now,
+      type: 'error_rate',
+    });
+  }
+
+  // Check for low uptime (recent restart indicator)
+  if (uptime < ALERT_THRESHOLDS.recentRestartSeconds) {
     alerts.push({
       level: 'info',
       message: 'Service recently started',
       details: `Uptime is ${Math.round(uptime)} seconds`,
-      timestamp: new Date().toISOString(),
+      timestamp: now,
       type: 'uptime',
     });
   }
@@ -314,7 +369,8 @@ router.get('/alerts', (req, res) => {
   return res.json({
     alerts: alerts,
     count: alerts.length,
-    timestamp: new Date().toISOString(),
+    thresholds: ALERT_THRESHOLDS,
+    timestamp: now,
   });
 });
 
