@@ -4,6 +4,7 @@ import * as path from 'path';
 import Debug from 'debug';
 import type { ILlmProvider, IMessengerService } from '@hivemind/shared-types';
 import type { AnyConfig } from '../types/config';
+import type { PluginSecurityPolicy, SecurePluginManifest, PluginCapability } from './PluginSecurity';
 
 const debug = Debug('app:pluginLoader');
 
@@ -77,6 +78,61 @@ export function loadPlugin(name: string): PluginModule {
     `Plugin '${name}' not found. ` +
       `Check that @hivemind/${name} is installed or the plugin exists in ${PLUGINS_DIR}.`
   );
+}
+
+/**
+ * Load a plugin with security verification.
+ *
+ * Calls `loadPlugin` then runs the module's manifest through the security
+ * policy to verify its signature and set trust / capability grants.
+ *
+ * @param name - Plugin package name.
+ * @param securityPolicy - The active security policy instance.
+ * @returns The loaded module (same as `loadPlugin`).
+ */
+export function loadPluginWithSecurity(
+  name: string,
+  securityPolicy: PluginSecurityPolicy
+): PluginModule {
+  const mod = loadPlugin(name);
+
+  // Determine if built-in (resolved from @hivemind/ namespace)
+  let isBuiltIn = false;
+  try {
+    require.resolve(`@hivemind/${name}`);
+    isBuiltIn = true;
+  } catch {
+    // Not a built-in package
+  }
+
+  if (isBuiltIn) {
+    securityPolicy.registerBuiltIn(name);
+  }
+
+  // Run signature verification and trust assignment
+  const manifest = (mod.manifest ?? {}) as SecurePluginManifest;
+  securityPolicy.verifyAndSetTrust(name, manifest);
+
+  return mod;
+}
+
+/**
+ * Guard that checks whether a plugin holds a required capability before
+ * allowing a provider registration to proceed.
+ *
+ * @throws Error if the capability is denied.
+ */
+export function requireCapability(
+  securityPolicy: PluginSecurityPolicy,
+  pluginName: string,
+  capability: PluginCapability
+): void {
+  if (!securityPolicy.hasCapability(pluginName, capability)) {
+    throw new Error(
+      `Plugin '${pluginName}' does not have the '${capability}' capability. ` +
+        `Grant it via the admin dashboard or sign the plugin manifest.`
+    );
+  }
 }
 
 /**
