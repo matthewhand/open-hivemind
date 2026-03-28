@@ -19,11 +19,14 @@ Welcome to the Open-Hivemind User Guide. This document provides a detailed walkt
   - [MCP Tools](#mcp-tools)
 - [System](#system)
   - [Settings Overview](#settings-overview)
+  - [Audit & Governance](#audit--governance)
   - [Webhook](#webhook)
   - [Monitoring](#monitoring)
+  - [System Management](#system-management)
   - [Global Defaults](#global-defaults)
   - [Demo Mode](#demo-mode)
 - [AI & Analytics](#ai--analytics)
+  - [Integrations](#integrations)
 - [Developer & Tools](#developer--tools)
 - [Documentation Maintenance](#documentation-maintenance)
 
@@ -68,7 +71,7 @@ Create and manage individual bot instances. Connect your AI assistants to platfo
 
 *   **Dedicated Create Page**: Access a full-page interface for creating bots at `/admin/bots/create`.
 *   **Duplicate Bot**: Quickly clone an existing bot configuration.
-![Duplicate Bot Modal](images/clone-bot-modal.png)
+![Duplicate Bot Modal](screenshots/clone-bot-modal.png)
 *   **View Activity**: Monitor real-time logs and message flow for each bot via details modal.
 ![Bot Activity Logs](screenshots/bot-details-modal.png)
 *   **Link Persona / Providers**: Assign specific personalities, LLM providers, and platforms to the bot.
@@ -107,6 +110,10 @@ Manage connections to Large Language Model providers.
 
 ### [Message Platforms](/admin/providers/message)
 Connect your bots to messaging services.
+
+![Message Platforms List](screenshots/message-add-provider-modal.png)
+![Add Message Provider](screenshots/message-add-provider-modal.png)
+
 *   **Discord**: Add your Discord Bot Token and configure server settings.
 *   **Slack**: Set up your Slack App Token and Bot Token.
 *   **Mattermost**: Configure your Mattermost URL and Bot Token.
@@ -170,7 +177,22 @@ General system configuration.
 *   **Health & Monitoring**: Enable and configure periodic health checks for external services.
 *   **Deep Linking**: Settings tabs (General, Messaging, Security) are reflected in the URL for easy sharing.
 
+![Settings Saving](screenshots/settings-general-loading.png)
+
+*   **Saving Changes**: When updating settings, click "Save Settings". The button will show a loading state while applying changes.
+
+### [Audit & Governance](/admin/audit)
+The Enterprise Manager provides an interface to monitor security, compliance, multi-cloud setups, integrations, and crucially, audit events.
+
+![Audit & Governance Initial](screenshots/audit-governance-initial.png)
+![Audit & Governance Filtered](screenshots/audit-governance-filtered.png)
+
+*   **Structured Audit Events**: View a detailed, structured log of system activities, actions, and resources.
+*   **Search**: Use the input box to quickly filter audit events by user, resource, or general description.
+*   **Action Filtering**: Narrow down events by specific actions (e.g., CREATE_BOT) using the combobox filter.
+
 ### [Webhook](/admin/integrations/webhook)
+![Webhook Integration](screenshots/webhook-integration.png)
 Configure incoming webhooks for external integrations.
 *   **Endpoint Management**: specific URLs to trigger bot actions from external services.
 *   **Security**: Manage webhook secrets and verification.
@@ -185,10 +207,23 @@ A comprehensive dashboard for tracking ecosystem status, bot status, and real-ti
 *   **Infrastructure Health**: Real-time metrics for CPU, Memory, and API endpoint status.
 *   **Bot Status**: Detailed connectivity and health scores for all configured bots.
 
+### [System Management](/admin/system-management)
+Manage configuration, alerts, and system health.
+
+![System Management](screenshots/system-management-page.png)
+
+*   **Alert Management**: Monitor and acknowledge system alerts.
+*   **System Configuration**: Fine-tune settings like refresh intervals, log levels, and resource thresholds.
+*   **Backup History**: Create and restore manual backups, and view automatic backup logs.
+*   **Performance Tuning**: Analyze real-time API endpoint status and view system environment details.
+
 ### [Global Defaults](/admin/configuration)
-Set default behaviors for new bots.
-*   **Default LLM**: The fallback provider if none is specified for a bot.
-*   **Default Persona**: The base personality applied to new bots.
+Manage system and provider settings (convict configs) for your application and perform hot-reloads of configurations.
+
+![Global Defaults](screenshots/configuration.png)
+
+*   **View Settings**: Explore configurations categorized by sections (e.g., General, Server) with the total count of settings listed.
+*   **Configuration Modification**: Update your configurations directly from the UI. Fields may be marked as **Sensitive**. Save changes using "Save Configuration" at the bottom of the active section.
 
 ### Demo Mode
 When running the application without configuration (e.g., first launch), a **Demo Mode** banner appears.
@@ -223,6 +258,14 @@ An internal chat interface for admins to experiment with prompts and query syste
 
 ---
 
+
+### [Integrations](/admin/integrations/llm)
+A detailed view of all system integrations and configurations.
+
+![Integrations Page](screenshots/integrations-llm.png)
+
+*   **Integration Settings**: Manage specific settings for various providers like LLMs.
+
 ## Developer & Tools
 
 ### [UI Components](/admin/showcase)
@@ -232,8 +275,8 @@ A reference for developers extending the WebUI.
 ### [System Backups & Export](/admin/export)
 Manage system configuration backups and download API documentation.
 
-![System Backups & Export](images/export-page.png)
-![Create Backup Modal](images/create-backup-modal.png)
+![System Backups & Export](screenshots/export-page.png)
+![Create Backup Modal](screenshots/create-backup-modal.png)
 
 *   **Backup Overview**: View key metrics including total backups and storage usage.
 *   **System Backups**: Create, restore, and delete full system configuration backups.
@@ -255,6 +298,14 @@ Browse and manage persisted specifications and design documents.
 
 ### [Static Pages](/admin/static)
 Access a catalog of static HTML pages served by the system, like the Enhanced Homepage or Screensaver.
+
+To view these static pages, navigate to **Developer & Tools > Static Pages** in the admin sidebar. Click on "Open Page" for any of the cards to launch the corresponding static page in a new browser tab.
+
+![Static Pages](screenshots/static-pages.png)
+
+*   **Enhanced Homepage**: Beautiful landing page with enhanced UI and animations.
+*   **Loading Page**: Elegant loading screen with progress indicators.
+*   **Screensaver**: Interactive screensaver display for idle states.
 
 ---
 
