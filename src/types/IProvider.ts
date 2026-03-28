@@ -121,3 +121,28 @@ export interface IMemoryProvider {
   /** Delete all memories for a user/agent */
   deleteAll(options?: { userId?: string; agentId?: string }): Promise<void>;
 }
+
+/**
+ * Tool provider interface for external tool integrations.
+ * Implementations: MCP servers, custom tool providers, etc.
+ */
+export interface IToolProvider {
+  /** Provider identifier */
+  id: string;
+  /** Display name */
+  label: string;
+  /** Provider type */
+  type: 'tool';
+
+  /** List available tools */
+  listTools(): Promise<Array<{ name: string; description?: string }>>;
+
+  /** Execute a specific tool by name */
+  executeTool(
+    toolName: string,
+    params?: Record<string, any>
+  ): Promise<{ result: any; error?: string }>;
+
+  /** Check if provider is connected and healthy */
+  healthCheck(): Promise<{ healthy: boolean; details?: string }>;
+}

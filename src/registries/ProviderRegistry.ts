@@ -1,10 +1,18 @@
-import { type ILLMProvider, type IMessageProvider, type IProvider } from '../types/IProvider';
+import {
+  type ILLMProvider,
+  type IMemoryProvider,
+  type IMessageProvider,
+  type IProvider,
+  type IToolProvider,
+} from '../types/IProvider';
 import { type IToolInstaller } from '../types/IToolInstaller';
 
 export class ProviderRegistry {
   private static instance: ProviderRegistry;
   private providers: Map<string, IProvider> = new Map();
   private installers: Map<string, IToolInstaller> = new Map();
+  private memoryProviders: Map<string, IMemoryProvider> = new Map();
+  private toolProviders: Map<string, IToolProvider> = new Map();
 
   private constructor() {}
 
@@ -37,6 +45,50 @@ export class ProviderRegistry {
   public getLLMProviders(): ILLMProvider[] {
     return this.getAll().filter((p) => p.type === 'llm') as ILLMProvider[];
   }
+
+  // --- Memory providers ---
+
+  public registerMemoryProvider(name: string, provider: IMemoryProvider): void {
+    if (this.memoryProviders.has(name)) {
+      console.warn(`Memory provider '${name}' already registered. Overwriting.`);
+    }
+    this.memoryProviders.set(name, provider);
+  }
+
+  public getMemoryProvider(name: string): IMemoryProvider | undefined {
+    return this.memoryProviders.get(name);
+  }
+
+  public getMemoryProviders(): Map<string, IMemoryProvider> {
+    return this.memoryProviders;
+  }
+
+  public removeMemoryProvider(name: string): void {
+    this.memoryProviders.delete(name);
+  }
+
+  // --- Tool providers ---
+
+  public registerToolProvider(name: string, provider: IToolProvider): void {
+    if (this.toolProviders.has(name)) {
+      console.warn(`Tool provider '${name}' already registered. Overwriting.`);
+    }
+    this.toolProviders.set(name, provider);
+  }
+
+  public getToolProvider(name: string): IToolProvider | undefined {
+    return this.toolProviders.get(name);
+  }
+
+  public getToolProviders(): Map<string, IToolProvider> {
+    return this.toolProviders;
+  }
+
+  public removeToolProvider(name: string): void {
+    this.toolProviders.delete(name);
+  }
+
+  // --- Tool installers ---
 
   public registerInstaller(installer: IToolInstaller): void {
     this.installers.set(installer.id, installer);
