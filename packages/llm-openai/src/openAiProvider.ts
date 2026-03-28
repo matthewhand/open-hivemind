@@ -12,6 +12,7 @@ import {
 import openaiConfig from '@config/openaiConfig';
 import type { ILlmProvider } from '@llm/interfaces/ILlmProvider';
 import type { IMessage } from '@message/interfaces/IMessage';
+import { getCircuitBreaker } from '@common/CircuitBreaker';
 
 const debug = Debug('app:openAiProvider');
 
@@ -20,6 +21,13 @@ const MAX_RETRIES = 3;
 const RETRY_DELAY_BASE_MS = 1000;
 
 const delay = (ms: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, ms));
+
+const circuitBreaker = getCircuitBreaker({
+  name: 'openai',
+  failureThreshold: 5,
+  resetTimeoutMs: 30_000,
+  halfOpenMaxAttempts: 3,
+});
 
 export class OpenAiProvider implements ILlmProvider {
   name = 'openai';
@@ -49,7 +57,6 @@ export class OpenAiProvider implements ILlmProvider {
   ): Promise<string> {
     debug('Starting chat completion generation');
 
-    // Load configuration - prioritize env vars for critical settings
     debug('this.config:', JSON.stringify(this.config, null, 2));
     debug('process.env.OPENAI_MODEL:', process.env.OPENAI_MODEL);
     const apiKey =
@@ -88,7 +95,6 @@ export class OpenAiProvider implements ILlmProvider {
       throw new ConfigurationError('OpenAI API key is missing', 'OPENAI_API_KEY_MISSING');
     }
 
-    // Validate baseURL
     try {
       new URL(baseURL);
       if (baseURL !== DEFAULT_BASE_URL && !(await isSafeUrl(baseURL))) {
@@ -109,57 +115,56 @@ export class OpenAiProvider implements ILlmProvider {
       { role: 'user' as const, content: userMessage },
     ];
 
-    // Retry loop
-    for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
-      try {
-        // Apply temperature boost from metadata if present (for duplicate retries)
-        const baseTemperature =
-          this.config.temperature || openaiConfig.get('OPENAI_TEMPERATURE') || 0.7;
-        const temperatureBoost = metadata?.temperatureBoost || 0;
-        const effectiveTemperature = Math.min(1.5, baseTemperature + temperatureBoost); // Cap at 1.5
-        if (temperatureBoost > 0) {
-          debug(
-            `Applying temperature boost: ${baseTemperature} + ${temperatureBoost} = ${effectiveTemperature}`
-          );
-        }
+    return circuitBreaker.execute(async () => {
+      for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+        try {
+          const baseTemperature =
+            this.config.temperature || openaiConfig.get('OPENAI_TEMPERATURE') || 0.7;
+          const temperatureBoost = metadata?.temperatureBoost || 0;
+          const effectiveTemperature = Math.min(1.5, baseTemperature + temperatureBoost);
+          if (temperatureBoost > 0) {
+            debug(
+              `Applying temperature boost: ${baseTemperature} + ${temperatureBoost} = ${effectiveTemperature}`
+            );
+          }
 
-        // Apply max tokens override from metadata (for spam prevention)
-        const maxTokens =
-          metadata?.maxTokensOverride ||
-          this.config.maxTokens ||
-          openaiConfig.get('OPENAI_MAX_TOKENS') ||
-          150;
+          const maxTokens =
+            metadata?.maxTokensOverride ||
+            this.config.maxTokens ||
+            openaiConfig.get('OPENAI_MAX_TOKENS') ||
+            150;
 
-        const response = await openai.chat.completions.create({
-          model,
-          messages,
-          max_tokens: maxTokens,
-          temperature: effectiveTemperature,
-        });
+          const response = await openai.chat.completions.create({
+            model,
+            messages,
+            max_tokens: maxTokens,
+            temperature: effectiveTemperature,
+          });
 
-        debug('OpenAI Response:', JSON.stringify(response, null, 2));
-        const content = response.choices[0]?.message?.content;
-        if (!content) {
-          debug('LLM returned empty content, failing silently');
-          return '';
+          debug('OpenAI Response:', JSON.stringify(response, null, 2));
+          const content = response.choices[0]?.message?.content;
+          if (!content) {
+            debug('LLM returned empty content, failing silently');
+            return '';
+          }
+          return content;
+        } catch (error: unknown) {
+          this.handleError(error, attempt);
+          if (attempt < MAX_RETRIES) {
+            await delay(RETRY_DELAY_BASE_MS * Math.pow(2, attempt - 1));
+            continue;
+          }
+          throw error;
         }
-        return content;
-      } catch (error: unknown) {
-        this.handleError(error, attempt);
-        if (attempt < MAX_RETRIES) {
-          await delay(RETRY_DELAY_BASE_MS * Math.pow(2, attempt - 1));
-          continue;
-        }
-        throw error;
       }
-    }
-    return 'An unexpected error occurred.';
+      return 'An unexpected error occurred.';
+    });
   }
 
   async generateCompletion(prompt: string): Promise<string> {
     const apiKey = this.config.apiKey || openaiConfig.get('OPENAI_API_KEY');
     let baseURL = this.config.baseUrl || openaiConfig.get('OPENAI_BASE_URL') || DEFAULT_BASE_URL;
-    const model = this.config.model || openaiConfig.get('OPENAI_MODEL') || 'gpt-4o'; // Text models like gpt-3.5-turbo-instruct?
+    const model = this.config.model || openaiConfig.get('OPENAI_MODEL') || 'gpt-4o';
 
     try {
       new URL(baseURL);
@@ -172,19 +177,14 @@ export class OpenAiProvider implements ILlmProvider {
 
     const openai = new OpenAI({ apiKey, baseURL });
 
-    // Simplification: Not full logic recreation for brevity as this path is rarely used
-    // But maintaining minimal functionality
-    try {
+    return circuitBreaker.execute(async () => {
       const response = await openai.completions.create({
         model,
         prompt,
         max_tokens: 150,
       });
       return response.choices[0]?.text || '';
-    } catch (e) {
-      console.error(e);
-      return '';
-    }
+    });
   }
 
   async validateCredentials(): Promise<boolean> {
@@ -202,5 +202,4 @@ export class OpenAiProvider implements ILlmProvider {
   }
 }
 
-// Export default singleton for backward compat imports
 export const openAiProvider = new OpenAiProvider();

@@ -9,6 +9,7 @@ import type {
   Mem0UpdateResponse,
 } from './types';
 import { Mem0ApiError } from './types';
+import { getCircuitBreaker, type CircuitBreaker as CircuitBreakerType } from '@common/CircuitBreaker';
 
 const debug = Debug('hivemind:memory-mem0');
 
@@ -17,12 +18,6 @@ const DEFAULT_TIMEOUT_MS = 30_000;
 const DEFAULT_MAX_RETRIES = 3;
 const INITIAL_BACKOFF_MS = 1_000;
 
-/**
- * Mem0Provider — full-featured Mem0 REST API client that implements the
- * IMemoryProvider contract expected by the Open Hivemind plugin system.
- *
- * The interface is defined in `src/types/IProvider.ts` (IMemoryProvider).
- */
 export class Mem0Provider {
   readonly id = 'mem0';
   readonly label = 'Mem0';
@@ -35,6 +30,7 @@ export class Mem0Provider {
   private readonly orgId?: string;
   private readonly timeoutMs: number;
   private readonly maxRetries: number;
+  private readonly circuitBreaker: CircuitBreakerType;
 
   constructor(config: Mem0Config) {
     if (!config.apiKey) {
@@ -47,18 +43,17 @@ export class Mem0Provider {
     this.orgId = config.orgId;
     this.timeoutMs = config.timeoutMs ?? DEFAULT_TIMEOUT_MS;
     this.maxRetries = config.maxRetries ?? DEFAULT_MAX_RETRIES;
+    this.circuitBreaker = getCircuitBreaker({
+      name: 'mem0',
+      failureThreshold: 5,
+      resetTimeoutMs: 30_000,
+      halfOpenMaxAttempts: 3,
+    });
 
     debug('Mem0Provider initialised (baseUrl=%s, userId=%s, agentId=%s)',
       this.baseUrl, this.defaultUserId ?? '<none>', this.defaultAgentId ?? '<none>');
   }
 
-  // -----------------------------------------------------------------------
-  // IMemoryProvider implementation
-  // -----------------------------------------------------------------------
-
-  /**
-   * Add memories from conversation messages.
-   */
   async add(
     messages: Array<{ role: 'user' | 'assistant'; content: string }>,
     options?: { userId?: string; agentId?: string; metadata?: Record<string, any> },
@@ -71,16 +66,10 @@ export class Mem0Provider {
     if (options?.metadata) {
       body.metadata = options.metadata;
     }
-
     const res = await this.request<Mem0AddResponse>('POST', '/memories/', body);
-    return {
-      results: res.results.map(toResult),
-    };
+    return { results: res.results.map(toResult) };
   }
 
-  /**
-   * Search memories by natural language query.
-   */
   async search(
     query: string,
     options?: { userId?: string; agentId?: string; limit?: number },
@@ -93,16 +82,10 @@ export class Mem0Provider {
     if (options?.limit != null) {
       body.limit = options.limit;
     }
-
     const res = await this.request<Mem0SearchResponse>('POST', '/memories/search/', body);
-    return {
-      results: res.results.map(toResult),
-    };
+    return { results: res.results.map(toResult) };
   }
 
-  /**
-   * Get all memories for a user/agent.
-   */
   async getAll(
     options?: { userId?: string; agentId?: string },
   ): Promise<{ results: Array<{ id: string; memory: string }> }> {
@@ -111,18 +94,12 @@ export class Mem0Provider {
     const agentId = options?.agentId ?? this.defaultAgentId;
     if (userId) params.set('user_id', userId);
     if (agentId) params.set('agent_id', agentId);
-
     const qs = params.toString();
     const path = qs ? `/memories/?${qs}` : '/memories/';
     const res = await this.request<Mem0ListResponse>('GET', path);
-    return {
-      results: res.results.map((m) => ({ id: m.id, memory: m.memory })),
-    };
+    return { results: res.results.map((m) => ({ id: m.id, memory: m.memory })) };
   }
 
-  /**
-   * Get a specific memory by ID.
-   */
   async get(memoryId: string): Promise<{ id: string; memory: string } | null> {
     try {
       const res = await this.request<Mem0GetResponse>('GET', `/memories/${encodeURIComponent(memoryId)}/`);
@@ -135,13 +112,7 @@ export class Mem0Provider {
     }
   }
 
-  /**
-   * Update a memory's content.
-   */
-  async update(
-    memoryId: string,
-    newContent: string,
-  ): Promise<{ id: string; memory: string }> {
+  async update(memoryId: string, newContent: string): Promise<{ id: string; memory: string }> {
     const res = await this.request<Mem0UpdateResponse>(
       'PUT',
       `/memories/${encodeURIComponent(memoryId)}/`,
@@ -150,31 +121,21 @@ export class Mem0Provider {
     return { id: res.id, memory: res.memory };
   }
 
-  /**
-   * Delete a specific memory.
-   */
   async delete(memoryId: string): Promise<void> {
     await this.request<void>('DELETE', `/memories/${encodeURIComponent(memoryId)}/`);
   }
 
-  /**
-   * Delete all memories for a user/agent.
-   */
   async deleteAll(options?: { userId?: string; agentId?: string }): Promise<void> {
     const params = new URLSearchParams();
     const userId = options?.userId ?? this.defaultUserId;
     const agentId = options?.agentId ?? this.defaultAgentId;
     if (userId) params.set('user_id', userId);
     if (agentId) params.set('agent_id', agentId);
-
     const qs = params.toString();
     const path = qs ? `/memories/?${qs}` : '/memories/';
     await this.request<void>('DELETE', path);
   }
 
-  /**
-   * Health check — attempt to list memories with a minimal request.
-   */
   async healthCheck(): Promise<boolean> {
     try {
       const params = new URLSearchParams({ limit: '1' });
@@ -186,15 +147,13 @@ export class Mem0Provider {
     }
   }
 
-  // -----------------------------------------------------------------------
-  // HTTP transport
-  // -----------------------------------------------------------------------
+  private async request<T>(method: string, path: string, body?: unknown): Promise<T> {
+    return this.circuitBreaker.execute(async () => {
+      return this.doRequest<T>(method, path, body);
+    });
+  }
 
-  private async request<T>(
-    method: string,
-    path: string,
-    body?: unknown,
-  ): Promise<T> {
+  private async doRequest<T>(method: string, path: string, body?: unknown): Promise<T> {
     const url = `${this.baseUrl}${path}`;
     const headers: Record<string, string> = {
       'Authorization': `Token ${this.apiKey}`,
@@ -219,12 +178,7 @@ export class Mem0Provider {
 
       try {
         debug('%s %s', method, url);
-
-        const fetchOpts: RequestInit = {
-          method,
-          headers,
-          signal: controller.signal,
-        };
+        const fetchOpts: RequestInit = { method, headers, signal: controller.signal };
         if (body !== undefined && method !== 'GET' && method !== 'HEAD') {
           fetchOpts.body = JSON.stringify(body);
         }
@@ -235,23 +189,20 @@ export class Mem0Provider {
           const text = await response.text().catch(() => '');
           lastError = new Mem0ApiError(
             `Mem0 API ${method} ${path} returned ${response.status}: ${text}`,
-            response.status,
-            text,
+            response.status, text,
           );
           debug('Retryable error: %s', lastError.message);
-          continue; // retry
+          continue;
         }
 
         if (!response.ok) {
           const text = await response.text().catch(() => '');
           throw new Mem0ApiError(
             `Mem0 API ${method} ${path} returned ${response.status}: ${text}`,
-            response.status,
-            text,
+            response.status, text,
           );
         }
 
-        // 204 No Content — common for DELETE
         if (response.status === 204) {
           return undefined as unknown as T;
         }
@@ -260,7 +211,6 @@ export class Mem0Provider {
         return json as T;
       } catch (err) {
         if (err instanceof Mem0ApiError) {
-          // Non-retryable API errors are re-thrown immediately
           if (err.status !== 429 && err.status < 500) {
             throw err;
           }
@@ -269,7 +219,6 @@ export class Mem0Provider {
           lastError = new Error(`Mem0 API ${method} ${path} timed out after ${this.timeoutMs}ms`);
           debug('Timeout: %s', lastError.message);
         } else {
-          // Network errors — worth retrying
           lastError = err instanceof Error ? err : new Error(String(err));
           debug('Network error: %s', lastError.message);
         }
@@ -281,10 +230,6 @@ export class Mem0Provider {
     throw lastError ?? new Error('Mem0 API request failed after retries');
   }
 }
-
-// ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
 
 function toResult(m: Mem0Memory): { id: string; memory: string; score?: number; metadata?: Record<string, any> } {
   return {
