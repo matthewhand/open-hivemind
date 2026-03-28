@@ -25,6 +25,7 @@ import { stripBotId } from '../helpers/processing/stripBotId';
 // New utilities
 import TokenTracker from '../helpers/processing/TokenTracker';
 import TypingActivity from '../helpers/processing/TypingActivity';
+import { MemoryManager } from '@src/services/MemoryManager';
 import processingLocks from '../processing/processingLocks';
 
 const timingManager = MessageDelayScheduler.getInstance();
@@ -329,11 +330,27 @@ export async function handleMessage(
           }, 30000);
         }
 
+        // Retrieve relevant memories (if memory provider is configured for this bot)
+        const memoryManager = MemoryManager.getInstance();
+        let memoryContext = '';
+        try {
+          const memories = await memoryManager.retrieveRelevantMemories(
+            botConfig.name || resolvedBotId,
+            processedMessage,
+          );
+          memoryContext = memoryManager.formatMemoriesForPrompt(memories);
+        } catch (memErr) {
+          logger('Memory retrieval failed (non-fatal): %O', memErr);
+        }
+
         // Prepare LLM request
-        const systemPrompt = buildSystemPromptWithBotName(
+        const baseSystemPrompt = buildSystemPromptWithBotName(
           botConfig.MESSAGE_SYSTEM_PROMPT || '',
           activeAgentName
         );
+        const systemPrompt = memoryContext
+          ? `${baseSystemPrompt}\n\n${memoryContext}`
+          : baseSystemPrompt;
 
         // Track and trim history (skip for stateful providers that manage their own)
         const maxHistoryTokens = Number(botConfig.LLM_MAX_HISTORY_TOKENS || 2000);
@@ -413,6 +430,18 @@ export async function handleMessage(
             idleResponseManager.recordBotResponse(serviceName, channelId);
           }
         }
+
+        // Store conversation memories (user message + assistant response)
+        const memBotName = botConfig.name || resolvedBotId;
+        const memMeta = {
+          channelId,
+          userId: message.getAuthorId(),
+        };
+        // Fire-and-forget — memory writes must not slow down or break responses.
+        memoryManager.storeConversationMemory(memBotName, processedMessage, 'user', memMeta)
+          .catch((e: unknown) => logger('Memory store (user) failed: %O', e));
+        memoryManager.storeConversationMemory(memBotName, llmResponse.text, 'assistant', memMeta)
+          .catch((e: unknown) => logger('Memory store (assistant) failed: %O', e));
 
         const endTime = Date.now();
         const processingTime = endTime - startTime;
