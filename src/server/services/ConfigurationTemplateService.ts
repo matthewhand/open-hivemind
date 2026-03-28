@@ -1,7 +1,8 @@
 import { promises as fs } from 'fs';
-import { join } from 'path';
+import { basename, join } from 'path';
 import Debug from 'debug';
 import { DatabaseManager } from '../../database/DatabaseManager';
+import { PathSecurityUtils } from '../utils/pathSecurity';
 import { ConfigurationValidator } from './ConfigurationValidator';
 
 const debug = Debug('app:ConfigurationTemplateService');
@@ -375,7 +376,7 @@ export class ConfigurationTemplateService {
         throw new Error('Cannot delete built-in templates');
       }
 
-      const filePath = join(this.templatesDir, `${templateId}.json`);
+      const filePath = this.getSafeTemplatePath(templateId);
       await fs.unlink(filePath);
 
       debug('Deleted template:', template.name);
@@ -391,7 +392,7 @@ export class ConfigurationTemplateService {
    */
   async getTemplateById(templateId: string): Promise<ConfigurationTemplate | null> {
     try {
-      const filePath = join(this.templatesDir, `${templateId}.json`);
+      const filePath = this.getSafeTemplatePath(templateId);
       const data = await fs.readFile(filePath, 'utf-8');
       const template = JSON.parse(data);
 
@@ -433,7 +434,7 @@ export class ConfigurationTemplateService {
         .filter((file) => file.endsWith('.json'))
         .map(async (file) => {
           try {
-            const filePath = join(this.templatesDir, file);
+            const filePath = PathSecurityUtils.getSafePath(this.templatesDir, file);
             const data = await fs.readFile(filePath, 'utf-8');
             const template = JSON.parse(data);
 
@@ -590,10 +591,17 @@ export class ConfigurationTemplateService {
   }
 
   /**
+   * Get safe template path
+   */
+  private getSafeTemplatePath(templateId: string): string {
+    return PathSecurityUtils.getSafePath(this.templatesDir, `${templateId}.json`);
+  }
+
+  /**
    * Save template to file
    */
   private async saveTemplate(template: ConfigurationTemplate): Promise<void> {
-    const filePath = join(this.templatesDir, `${template.id}.json`);
+    const filePath = this.getSafeTemplatePath(template.id);
     const data = JSON.stringify(template, null, 2);
     await fs.writeFile(filePath, data, 'utf-8');
   }

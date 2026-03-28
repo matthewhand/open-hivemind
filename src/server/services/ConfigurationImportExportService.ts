@@ -12,6 +12,7 @@ import { DatabaseManager } from '../../database/DatabaseManager';
 import { ConfigurationTemplateService } from './ConfigurationTemplateService';
 import { ConfigurationValidator } from './ConfigurationValidator';
 import { ConfigurationVersionService } from './ConfigurationVersionService';
+import { PathSecurityUtils } from '../utils/pathSecurity';
 
 const debug = Debug('app:ConfigurationImportExportService');
 
@@ -734,8 +735,8 @@ export class ConfigurationImportExportService {
       if (result.success && result.filePath) {
         // Move to backups directory
         const backupTimestamp = Date.now();
-        const backupFileName = `backup-${name}-${backupTimestamp}.json.gz`;
-        const backupPath = join(this.backupsDir, backupFileName);
+        const backupPath = this.getSafeBackupPath(name, new Date(backupTimestamp));
+        const backupFileName = basename(backupPath);
         await fs.rename(result.filePath, backupPath);
 
         // Create metadata file
@@ -777,8 +778,8 @@ export class ConfigurationImportExportService {
             for (const oldBackup of backupsToDelete) {
               if (enableColdStorage) {
                 debug(`Archiving old backup to cold storage: ${oldBackup.id} (${oldBackup.name})`);
-                const oldBackupFileName = `backup-${oldBackup.name}-${new Date(oldBackup.createdAt).getTime()}.json.gz`;
-                const oldBackupPath = join(this.backupsDir, oldBackupFileName);
+                const oldBackupPath = this.getSafeBackupPath(oldBackup.name, oldBackup.createdAt);
+                const oldBackupFileName = basename(oldBackupPath);
                 const coldDir = join(process.cwd(), 'config', 'backups', 'cold');
                 await fs.mkdir(coldDir, { recursive: true });
 
@@ -909,8 +910,8 @@ export class ConfigurationImportExportService {
         return false;
       }
 
-      const backupFileName = `backup-${backup.name}-${backup.createdAt.getTime()}.json.gz`;
-      const backupPath = join(this.backupsDir, backupFileName);
+      const backupPath = this.getSafeBackupPath(backup.name, backup.createdAt);
+      const backupFileName = basename(backupPath);
       const metadataPath = join(this.backupsDir, `${backupFileName}.meta`);
 
       await fs.unlink(backupPath);
@@ -936,6 +937,35 @@ export class ConfigurationImportExportService {
    */
   private generateBackupId(): string {
     return 'backup-' + Date.now().toString(36) + '-' + randomBytes(8).toString('hex');
+  }
+
+  /**
+   * Get safe backup path and filename.
+   * Ensures the filename is sanitized and the path stays within the backups directory.
+   */
+  private getSafeBackupPath(name: string, createdAt: Date): string {
+    const backupFileName = `backup-${name}-${createdAt.getTime()}.json.gz`;
+    return PathSecurityUtils.getSafePath(this.backupsDir, backupFileName);
+  }
+
+  /**
+   * Get the full path for a backup file by ID.
+   * Returns null if backup metadata is not found or path is unsafe.
+   */
+  public async getBackupFilePath(backupId: string): Promise<string | null> {
+    try {
+      const backups = await this.listBackups();
+      const backup = backups.find((b) => b.id === backupId);
+
+      if (!backup) {
+        return null;
+      }
+
+      return this.getSafeBackupPath(backup.name, backup.createdAt);
+    } catch (error) {
+      debug('Error getting backup file path:', error);
+      return null;
+    }
   }
 
   /**

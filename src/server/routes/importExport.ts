@@ -404,20 +404,15 @@ router.post(
       const { backupId } = req.params;
       const restoredBy = req.user?.username || 'unknown';
 
-      // Get backup metadata
-      const backups = await importExportService.listBackups();
-      const backup = backups.find((b) => b.id === backupId);
+      // Get safe backup file path
+      const backupPath = await importExportService.getBackupFilePath(backupId);
 
-      if (!backup) {
+      if (!backupPath) {
         return res.status(404).json({
           success: false,
-          message: 'Backup not found',
+          message: 'Backup not found or invalid',
         });
       }
-
-      // Construct backup file path
-      const backupFileName = `backup-${backup.name}-${backup.createdAt.getTime()}.json.gz`;
-      const backupPath = path.join(process.cwd(), 'config', 'backups', backupFileName);
 
       const result = await importExportService.restoreFromBackup(
         backupPath,
@@ -492,20 +487,17 @@ router.get(
     try {
       const { backupId } = req.params;
 
-      // Get backup metadata
-      const backups = await importExportService.listBackups();
-      const backup = backups.find((b) => b.id === backupId);
+      // Get safe backup file path
+      const backupPath = await importExportService.getBackupFilePath(backupId);
 
-      if (!backup) {
+      if (!backupPath) {
         return res.status(404).json({
           success: false,
-          message: 'Backup not found',
+          message: 'Backup not found or invalid',
         });
       }
 
-      // Construct backup file path
-      const backupFileName = `backup-${backup.name}-${backup.createdAt.getTime()}.json.gz`;
-      const backupPath = path.join(process.cwd(), 'config', 'backups', backupFileName);
+      const backupFileName = path.basename(backupPath);
 
       // Check if file exists
       try {
