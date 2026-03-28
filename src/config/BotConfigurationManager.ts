@@ -362,7 +362,7 @@ export class BotConfigurationManager {
 
     // Auto-discover unique bot names from BOTS_ prefixes
     const discoveredBots = this.discoverBotNamesFromEnv();
-    const fileBots = this.discoverBotNamesFromFiles();
+    const fileBots = this.discoverBotNamesFromFiles(); // Sync version for constructor
 
     // Merge explicit list with discovered list
     const explicitBots = botsEnv ? botsEnv.split(',').map((n) => n.trim()).filter(Boolean) : [];
@@ -415,6 +415,25 @@ export class BotConfigurationManager {
       return files.filter((f) => f.endsWith('.json')).map((f) => f.replace('.json', ''));
     } catch (e) {
       debug(`Error reading bots directory: ${e}`);
+      return [];
+    }
+  }
+
+  /**
+   * Async version of discoverBotNamesFromFiles
+   */
+  private async discoverBotNamesFromFilesAsync(): Promise<string[]> {
+    const configDir = process.env.NODE_CONFIG_DIR || path.join(process.cwd(), 'config');
+    const botsDir = path.join(configDir, 'bots');
+
+    try {
+      await fs.promises.access(botsDir, fs.constants.F_OK);
+      const files = await fs.promises.readdir(botsDir);
+      return files.filter((f) => f.endsWith('.json')).map((f) => f.replace('.json', ''));
+    } catch (e) {
+      if ((e as any).code !== 'ENOENT') {
+        debug(`Error reading bots directory: ${e}`);
+      }
       return [];
     }
   }
@@ -1056,19 +1075,22 @@ export class BotConfigurationManager {
     const safeName = config.name.toLowerCase().replace(/[^a-z0-9_-]/g, '_');
     const filePath = path.join(botsDir, `${safeName}.json`);
 
-    if (fs.existsSync(filePath)) {
+    try {
+      await fs.promises.access(filePath, fs.constants.F_OK);
       throw new Error(`Bot with defined filename ${safeName}.json already exists`);
+    } catch (e) {
+      if (e instanceof Error && e.message.includes('already exists')) {
+        throw e;
+      }
     }
 
-    if (!fs.existsSync(botsDir)) {
-      fs.mkdirSync(botsDir, { recursive: true });
-    }
+    await fs.promises.mkdir(botsDir, { recursive: true });
 
     // Write config
-    fs.writeFileSync(filePath, JSON.stringify(config, null, 2));
+    await fs.promises.writeFile(filePath, JSON.stringify(config, null, 2));
 
     // Reload to pick up new bot
-    this.reload();
+    await this.reloadAsync();
   }
 
   /**
@@ -1121,10 +1143,11 @@ export class BotConfigurationManager {
     // These overrides take precedence over env vars
     let currentConfig: Record<string, unknown> = {};
 
-    if (fs.existsSync(filePath)) {
-      try {
-        currentConfig = JSON.parse(fs.readFileSync(filePath, 'utf8'));
-      } catch (e) {
+    try {
+      await fs.promises.access(filePath, fs.constants.F_OK);
+      currentConfig = JSON.parse(await fs.promises.readFile(filePath, 'utf8'));
+    } catch (e) {
+      if ((e as any).code !== 'ENOENT') {
         debug(`Failed to read existing bot config ${filePath}: ${e}`);
       }
     }
@@ -1137,15 +1160,13 @@ export class BotConfigurationManager {
       _updatedAt: new Date().toISOString(),
     };
 
-    if (!fs.existsSync(botsDir)) {
-      fs.mkdirSync(botsDir, { recursive: true });
-    }
+    await fs.promises.mkdir(botsDir, { recursive: true });
 
-    fs.writeFileSync(filePath, JSON.stringify(mergedConfig, null, 2));
+    await fs.promises.writeFile(filePath, JSON.stringify(mergedConfig, null, 2));
     debug(`Updated bot config for ${name} at ${filePath}`);
 
     // Reload to apply changes
-    this.reload();
+    await this.reloadAsync();
   }
 
   /**
@@ -1157,10 +1178,11 @@ export class BotConfigurationManager {
     const safeName = name.toLowerCase().replace(/[^a-z0-9_-]/g, '_');
     const filePath = path.join(botsDir, `${safeName}.json`);
 
-    if (fs.existsSync(filePath)) {
-      fs.unlinkSync(filePath);
+    try {
+      await fs.promises.access(filePath, fs.constants.F_OK);
+      await fs.promises.unlink(filePath);
       debug(`Deleted bot config for ${name} at ${filePath}`);
-    } else {
+    } catch (e) {
       // Check if it's an environment variable bot
       const envBotNames = this.discoverBotNamesFromEnv();
       const canonical = (n: string): string => String(n || '').trim().toLowerCase().replace(/[_\s]+/g, '-');
@@ -1177,7 +1199,7 @@ export class BotConfigurationManager {
       }
     }
 
-    this.reload();
+    await this.reloadAsync();
   }
 
   /**
@@ -1185,6 +1207,144 @@ export class BotConfigurationManager {
    */
   public reload(): void {
     this.loadConfiguration();
+  }
+
+  /**
+   * Async version of reload
+   */
+  public async reloadAsync(): Promise<void> {
+    this.bots.clear();
+    this.warnings = [];
+
+    const botsEnv = process.env.BOTS;
+    const discoveredBots = this.discoverBotNamesFromEnv();
+    const fileBots = await this.discoverBotNamesFromFilesAsync();
+
+    const explicitBots = botsEnv ? botsEnv.split(',').map((n) => n.trim()).filter(Boolean) : [];
+    const canonical = (n: string): string => String(n || '').trim().toLowerCase().replace(/[_\s]+/g, '-');
+
+    const byCanonical = new Map<string, string>();
+    for (const name of discoveredBots) { byCanonical.set(canonical(name), name); }
+    for (const name of fileBots) { byCanonical.set(canonical(name), name); }
+    for (const name of explicitBots) { byCanonical.set(canonical(name), name); }
+    const allBotNames = Array.from(byCanonical.values());
+
+    if (allBotNames.length > 0) {
+      for (const botName of allBotNames) {
+        const config = await this.createBotConfigAsync(botName);
+        if (config) { this.bots.set(botName, config); }
+      }
+    }
+
+    this.loadLegacyConfiguration();
+    this.validateConfigurationInternal();
+  }
+
+  /**
+   * Async version of createBotConfig
+   */
+  private async createBotConfigAsync(botName: string): Promise<BotConfig | null> {
+    if (!botName || typeof botName !== 'string' || botName.trim() === '') {
+      return null;
+    }
+
+    const upperName = botName.toUpperCase();
+    const upperEnvName = upperName.replace(/[^A-Z0-9]/g, '_');
+    const botConfig = convict(botSchema);
+    const envVars = Object.keys(process.env);
+    const prefixA = `BOTS_${upperName}_`;
+    const prefixB = `BOTS_${upperEnvName}_`;
+
+    const botEnvVars = envVars.filter(key => {
+      const k = key.toUpperCase();
+      return k.startsWith(prefixA.toUpperCase()) || k.startsWith(prefixB.toUpperCase());
+    });
+
+    for (const envVar of botEnvVars) {
+      const envUpper = envVar.toUpperCase();
+      const prefixToUse = envUpper.startsWith(prefixA.toUpperCase()) ? prefixA : prefixB;
+      const suffix = envVar.slice(prefixToUse.length);
+      const value = process.env[envVar];
+
+      if (value !== undefined) {
+        try {
+          botConfig.set(suffix, value);
+        } catch (error: unknown) {
+          this.warnings.push(`Invalid value for ${envVar}: ${error instanceof Error ? error.message : String(error)}`);
+        }
+      }
+    }
+
+    const configDir = process.env.NODE_CONFIG_DIR || path.join(__dirname, '../../config');
+    const botConfigPath = path.join(configDir, `bots/${botName}.json`);
+
+    try {
+      await fs.promises.access(botConfigPath, fs.constants.F_OK);
+      const fileData = await fs.promises.readFile(botConfigPath, 'utf8');
+      botConfig.load(JSON.parse(fileData));
+    } catch (e) {
+      if ((e as any).code !== 'ENOENT') {
+        debug(`Error loading bot config file ${botConfigPath}: ${e}`);
+      }
+    }
+
+    botConfig.validate({ allowed: 'warn' });
+
+    const llmProvider = botConfig.get('LLM_PROVIDER') as LlmProvider;
+    let llmModel: string | undefined;
+
+    if (llmProvider === 'openai') {
+      llmModel = botConfig.get('OPENAI_MODEL');
+    } else if (llmProvider === 'openswarm') {
+      llmModel = botConfig.get('OPENSWARM_TEAM');
+    }
+
+    const config: BotConfig = {
+      name: botName,
+      messageProvider: botConfig.get('MESSAGE_PROVIDER') as MessageProvider,
+      llmProvider,
+      llmModel,
+      llmProfile: (botConfig.get('LLM_PROFILE') as string) || undefined,
+      responseProfile: (botConfig.get('RESPONSE_PROFILE') as string) || undefined,
+      persona: botConfig.get('PERSONA') as string || 'default',
+      systemInstruction: botConfig.get('SYSTEM_INSTRUCTION') as string,
+      mcpServers: botConfig.get('MCP_SERVERS') as McpServerConfig[] || [],
+      mcpGuard: botConfig.get('MCP_GUARD') as McpGuardConfig || { enabled: false, type: 'owner' },
+      mcpGuardProfile: (botConfig.get('MCP_GUARD_PROFILE') as string) || undefined,
+    };
+
+    const discordToken = botConfig.get('DISCORD_BOT_TOKEN');
+    if (discordToken) {
+      config.discord = {
+        token: discordToken,
+        clientId: botConfig.get('DISCORD_CLIENT_ID'),
+        guildId: botConfig.get('DISCORD_GUILD_ID'),
+        channelId: botConfig.get('DISCORD_CHANNEL_ID'),
+        voiceChannelId: botConfig.get('DISCORD_VOICE_CHANNEL_ID'),
+      };
+    }
+
+    const openaiApiKey = botConfig.get('OPENAI_API_KEY');
+    if (openaiApiKey) {
+      config.openai = {
+        apiKey: openaiApiKey,
+        model: botConfig.get('OPENAI_MODEL'),
+        baseUrl: botConfig.get('OPENAI_BASE_URL'),
+        systemPrompt: botConfig.get('OPENAI_SYSTEM_PROMPT'),
+      };
+    }
+
+    if (config.llmProvider === 'letta') {
+      config.letta = {
+        agentId: botConfig.get('LETTA_AGENT_ID') || undefined,
+        systemPrompt: botConfig.get('LETTA_SYSTEM_PROMPT') || undefined,
+        sessionMode: (botConfig.get('LETTA_SESSION_MODE') || 'default') as LettaSessionMode,
+        conversationId: botConfig.get('LETTA_CONVERSATION_ID') || undefined,
+      };
+    }
+
+    this.applyUserOverrides(botName, config);
+    return config;
   }
 
   /**

@@ -1,4 +1,4 @@
-import { existsSync } from 'fs';
+import * as fs from 'fs';
 import { join } from 'path';
 import cors from 'cors';
 import Debug from 'debug';
@@ -35,15 +35,18 @@ import specsRouter from './routes/specs';
 const debug = Debug('app:webui:server');
 const serverLog = Logger.withContext('webui:server');
 
-const resolveFrontendDistPath = (): string => {
+const resolveFrontendDistPath = async (): Promise<string> => {
   const candidates = [
     join(process.cwd(), 'dist', 'client', 'dist'),
     join(process.cwd(), 'src', 'client', 'dist'),
   ];
 
   for (const candidate of candidates) {
-    if (existsSync(candidate)) {
+    try {
+      await fs.promises.access(candidate, fs.constants.F_OK);
       return candidate;
+    } catch {
+      // Continue to next candidate
     }
   }
 
@@ -59,10 +62,8 @@ export class WebUIServer {
   constructor(port = 3000) {
     this.port = port;
     this.app = express();
-    this.frontendDistPath = resolveFrontendDistPath();
-    if (!existsSync(this.frontendDistPath)) {
-      debug('Frontend dist directory not found at %s', this.frontendDistPath);
-    }
+    // Default path, will be refined in start()
+    this.frontendDistPath = join(process.cwd(), 'dist', 'client', 'dist');
     this.setupMiddleware();
     this.setupRoutes();
     this.setupErrorHandling();
@@ -240,6 +241,15 @@ export class WebUIServer {
   }
 
   public async start(): Promise<void> {
+    // Resolve the actual dist path asynchronously before starting
+    (this as any).frontendDistPath = await resolveFrontendDistPath();
+
+    try {
+      await fs.promises.access(this.frontendDistPath, fs.constants.F_OK);
+    } catch {
+      debug('Frontend dist directory not found at %s', this.frontendDistPath);
+    }
+
     return new Promise((resolve, reject) => {
       try {
         this.server = this.app.listen(this.port, () => {

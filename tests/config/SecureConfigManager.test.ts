@@ -362,7 +362,7 @@ describe('Main Configuration Encryption', () => {
     fs.writeFileSync(testConfigPath, JSON.stringify(testConfig));
 
     const secureManager = SecureConfigManager.getInstance();
-    const decrypted = secureManager.getDecryptedMainConfig(testEnv);
+    const decrypted = await secureManager.getDecryptedMainConfig(testEnv);
     expect(decrypted).toEqual(testConfig);
 
     // Now encrypt it
@@ -373,18 +373,18 @@ describe('Main Configuration Encryption', () => {
     fs.unlinkSync(testConfigPath);
 
     // Verify decryption from encrypted file
-    const decryptedFromEnc = secureManager.getDecryptedMainConfig(testEnv);
+    const decryptedFromEnc = await secureManager.getDecryptedMainConfig(testEnv);
     expect(decryptedFromEnc).toEqual(testConfig);
 
     // Verify fallback to plain if encrypted fails
     fs.writeFileSync(testEncPath, 'invalid'); // Corrupt encrypted file
-    const fallbackDecrypted = secureManager.getDecryptedMainConfig(testEnv);
+    const fallbackDecrypted = await secureManager.getDecryptedMainConfig(testEnv);
     expect(fallbackDecrypted).toBeNull(); // Should return null on failure, but since plain doesn't exist, null
   });
 
-  test('should handle non-existent main config files', () => {
+  test('should handle non-existent main config files', async () => {
     const secureManager = SecureConfigManager.getInstance();
-    const result = secureManager.getDecryptedMainConfig('nonexistent');
+    const result = await secureManager.getDecryptedMainConfig('nonexistent');
     expect(result).toBeNull();
   });
 
@@ -398,7 +398,7 @@ describe('Main Configuration Encryption', () => {
     };
     fs.writeFileSync(testEncPath, JSON.stringify(corruptedEnc));
 
-    const result = secureManager.getDecryptedMainConfig(testEnv);
+    const result = await secureManager.getDecryptedMainConfig(testEnv);
     expect(result).toBeNull();
   });
 });

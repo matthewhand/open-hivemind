@@ -70,18 +70,20 @@ const httpLogger = Logger.withContext('http');
 const frontendLogger = Logger.withContext('frontend');
 const skipMessengers = process.env.SKIP_MESSENGERS === 'true';
 
-const resolveFrontendDistPath = (): string => {
+const resolveFrontendDistPath = async (): Promise<string> => {
   const candidates = [
     path.join(process.cwd(), 'dist/client/dist'),
     path.join(process.cwd(), 'src/client/dist'),
   ];
 
   for (const candidate of candidates) {
-    const exists = fs.existsSync(candidate);
-    frontendLogger.debug('Evaluating frontend dist path candidate', { candidate, exists });
-    if (exists) {
+    try {
+      await fs.promises.access(candidate, fs.constants.F_OK);
+      frontendLogger.debug('Evaluating frontend dist path candidate', { candidate, exists: true });
       frontendLogger.debug('Using frontend dist path', { candidate });
       return candidate;
+    } catch {
+      frontendLogger.debug('Evaluating frontend dist path candidate', { candidate, exists: false });
     }
   }
 
@@ -90,15 +92,22 @@ const resolveFrontendDistPath = (): string => {
   return fallback;
 };
 
-const frontendDistPath = resolveFrontendDistPath();
-const frontendAssetsPath = path.join(frontendDistPath, 'assets');
+let frontendDistPath = path.join(process.cwd(), 'dist/client/dist');
+let frontendAssetsPath = path.join(frontendDistPath, 'assets');
 
 // Vite Dev Server Instance (only used in dev)
 let viteServer: any;
 
-if (!fs.existsSync(frontendDistPath)) {
-  frontendLogger.warn('Frontend dist directory not found', { path: frontendDistPath });
-}
+// Check if frontend exists asynchronously and resolve path
+(async () => {
+  frontendDistPath = await resolveFrontendDistPath();
+  frontendAssetsPath = path.join(frontendDistPath, 'assets');
+  try {
+    await fs.promises.access(frontendDistPath, fs.constants.F_OK);
+  } catch {
+    frontendLogger.warn('Frontend dist directory not found', { path: frontendDistPath });
+  }
+})();
 
 // Initialize ShutdownCoordinator for graceful shutdown
 const shutdownCoordinator = ShutdownCoordinator.getInstance();
@@ -172,11 +181,12 @@ app.use((req: Request, res: Response, next: NextFunction) => {
 
 // Serve unified dashboard at root
 if (process.env.NODE_ENV !== 'development') {
-  app.get('/', (req: Request, res: Response) => {
+  app.get('/', async (req: Request, res: Response) => {
     const indexPath = path.join(frontendDistPath, 'index.html');
     appLogger.debug('Handling root request for frontend shell', { frontendDistPath, indexPath });
 
-    if (fs.existsSync(indexPath)) {
+    try {
+      await fs.promises.access(indexPath, fs.constants.F_OK);
       appLogger.debug('Serving frontend index.html');
       res.sendFile(indexPath, (err) => {
         if (err) {
@@ -186,7 +196,7 @@ if (process.env.NODE_ENV !== 'development') {
           appLogger.info('Frontend served successfully');
         }
       });
-    } else {
+    } catch {
       appLogger.error('Frontend index.html not found', { indexPath });
       res.status(404).send('Frontend not found - please run npm run build:frontend');
     }
@@ -421,6 +431,23 @@ async function startBot(messengerService: any) {
 }
 
 async function main() {
+  // Initialize secure configuration manager early
+  try {
+    const { SecureConfigManager } = require('./config/SecureConfigManager');
+    await SecureConfigManager.getInstance().initialize();
+  } catch (err) {
+    appLogger.error('Failed to initialize SecureConfigManager', { error: err });
+  }
+
+  // Initialize configuration manager early
+  try {
+    const { ConfigurationManager } = require('./config/ConfigurationManager');
+    await ConfigurationManager.getInstance().initialize();
+  } catch (err) {
+    appLogger.error('Failed to initialize ConfigurationManager', { error: err });
+    // Continue as some configs might be from env vars
+  }
+
   // Validate critical environment variables before proceeding
   validateRequiredEnvVars();
 
@@ -623,15 +650,16 @@ async function main() {
     });
 
     appLogger.info('🌐 Starting HTTP server', { port, host: '0.0.0.0' });
-    server.listen(port, '0.0.0.0', () => {
+    server.listen(port, '0.0.0.0', async () => {
       appLogger.info('✅ HTTP server listening', { port });
       appLogger.info('🔌 WebSocket service ready', { endpoint: '/webui/socket.io' });
       appLogger.info('🌍 WebUI available', { url: `http://localhost:${port}` });
       appLogger.info('📡 API endpoints available', { baseUrl: `http://localhost:${port}/api` });
 
-      if (fs.existsSync(frontendDistPath)) {
+      try {
+        await fs.promises.access(frontendDistPath, fs.constants.F_OK);
         appLogger.info('📱 Frontend assets served from', { path: frontendDistPath });
-      } else {
+      } catch {
         appLogger.warn(
           '⚠️  Frontend build not found - attempting auto-build via `npm run build:frontend`'
         );

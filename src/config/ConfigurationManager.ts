@@ -110,23 +110,36 @@ export class ConfigurationManager implements IConfigurationManager {
     // Validate schema before loading files - use 'warn' to allow extra params from config files
     schema.validate({ allowed: 'warn' });
 
+    const env = process.env.NODE_ENV || 'default';
+
+    // Late initialization in initialize() to avoid async in constructor
+    this.configs['environment'] = schema;
+    debug('ConfigurationManager instance created');
+  }
+
+  /**
+   * Initializes the configuration manager by loading external configs
+   */
+  public async initialize(): Promise<void> {
     const secureManager = SecureConfigManager.getInstance();
     const env = process.env.NODE_ENV || 'default';
-    const fileConfig = secureManager.getDecryptedMainConfig(env);
+
+    // Check if the decrypted main config is already async or needs to be awaited
+    const fileConfig = await secureManager.getDecryptedMainConfig(env);
+
     if (fileConfig) {
-      schema.load(fileConfig);
+      this.configs['environment'].load(fileConfig);
       // Use 'warn' to allow extra config params that aren't in the minimal schema
-      schema.validate({ allowed: 'warn' });
+      this.configs['environment'].validate({ allowed: 'warn' });
     }
 
     // Final validation with warnings for undeclared params
-    schema.validate({ allowed: 'warn' });
+    this.configs['environment'].validate({ allowed: 'warn' });
 
     // Access all configuration values to trigger env var loading
-    schema.getProperties();
+    this.configs['environment'].getProperties();
 
-    this.configs['environment'] = schema;
-    debug('ConfigurationManager initialized in development environment');
+    debug('ConfigurationManager initialized successfully');
   }
 
   /**
@@ -140,7 +153,6 @@ export class ConfigurationManager implements IConfigurationManager {
   public static getInstance(): ConfigurationManager {
     if (!ConfigurationManager.instance) {
       ConfigurationManager.instance = new ConfigurationManager();
-      debug('ConfigurationManager instance created');
     }
     return ConfigurationManager.instance!;
   }

@@ -3,7 +3,25 @@ import * as fs from 'fs';
 import * as path from 'path';
 
 // Mock fs and path
-jest.mock('fs');
+jest.mock('fs', () => ({
+  existsSync: jest.fn(),
+  readdirSync: jest.fn(),
+  readFileSync: jest.fn(),
+  writeFileSync: jest.fn(),
+  unlinkSync: jest.fn(),
+  mkdirSync: jest.fn(),
+  promises: {
+    access: jest.fn(),
+    readdir: jest.fn(),
+    readFile: jest.fn(),
+    writeFile: jest.fn(),
+    unlink: jest.fn(),
+    mkdir: jest.fn(),
+  },
+  constants: {
+    F_OK: 0,
+  },
+}));
 jest.mock('path');
 
 describe('BotConfigurationManager', () => {
@@ -197,6 +215,24 @@ describe('BotConfigurationManager', () => {
       process.env.BOTS_NEW_BOT_DISCORD_BOT_TOKEN = 'new-token';
 
       manager.reload();
+      expect(manager.getAllBots()).toHaveLength(2);
+    });
+
+    it('should reload configuration asynchronously', async () => {
+      process.env.BOTS = 'async-reload-bot';
+      process.env.BOTS_ASYNC_RELOAD_BOT_DISCORD_BOT_TOKEN = 'async-token';
+
+      const manager = BotConfigurationManager.getInstance();
+      expect(manager.getAllBots()).toHaveLength(1);
+
+      process.env.BOTS = 'async-reload-bot,new-async-bot';
+      process.env.BOTS_NEW_ASYNC_BOT_DISCORD_BOT_TOKEN = 'new-async-token';
+
+      // Mock async discovery
+      (fs.promises.access as jest.Mock).mockResolvedValue(undefined);
+      (fs.promises.readdir as jest.Mock).mockResolvedValue([]);
+
+      await manager.reloadAsync();
       expect(manager.getAllBots()).toHaveLength(2);
     });
   });

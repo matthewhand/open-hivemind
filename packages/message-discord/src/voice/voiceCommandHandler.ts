@@ -31,9 +31,7 @@ export class VoiceCommandHandler {
 
     try {
       const tempDir = './temp';
-      if (!fs.existsSync(tempDir)) {
-        fs.mkdirSync(tempDir, { recursive: true });
-      }
+      await fs.promises.mkdir(tempDir, { recursive: true });
 
       const wavPath = await convertOpusToWav(opusBuffer, tempDir);
       const transcription = await transcribeAudio(wavPath);
@@ -43,7 +41,7 @@ export class VoiceCommandHandler {
         await this.speakResponse(response);
       }
 
-      fs.unlinkSync(wavPath);
+      await fs.promises.unlink(wavPath);
     } catch (error: unknown) {
       const hivemindError = ErrorUtils.toHivemindError(error);
       const classification = ErrorUtils.classifyError(hivemindError);
@@ -85,43 +83,45 @@ export class VoiceCommandHandler {
       });
 
       const buffer = Buffer.from(await response.arrayBuffer());
-      fs.writeFileSync(tempPath, buffer);
+      await fs.promises.writeFile(tempPath, buffer);
 
       const player = createAudioPlayer();
       const resource = createAudioResource(tempPath);
       player.play(resource);
       this.connection.subscribe(player);
 
-      player.on(AudioPlayerStatus.Idle, () => {
+      player.on(AudioPlayerStatus.Idle, async () => {
         try {
-          if (fs.existsSync(tempPath)) {
-            fs.unlinkSync(tempPath);
-          }
+          await fs.promises.access(tempPath, fs.constants.F_OK);
+          await fs.promises.unlink(tempPath);
         } catch (error: unknown) {
+          // If file doesn't exist or can't be deleted, we log but don't throw
           const hivemindError = ErrorUtils.toHivemindError(error);
-          debug(`Failed to delete temporary file: ${ErrorUtils.getMessage(hivemindError)}`);
+          if ((error as any).code !== 'ENOENT') {
+            debug(`Failed to delete temporary file: ${ErrorUtils.getMessage(hivemindError)}`);
+          }
         }
       });
 
       // Also handle error cases
-      player.on('error', () => {
+      player.on('error', async () => {
         try {
-          if (fs.existsSync(tempPath)) {
-            fs.unlinkSync(tempPath);
-          }
+          await fs.promises.access(tempPath, fs.constants.F_OK);
+          await fs.promises.unlink(tempPath);
         } catch (error: unknown) {
           const hivemindError = ErrorUtils.toHivemindError(error);
-          debug(
-            `Failed to delete temporary file on error: ${ErrorUtils.getMessage(hivemindError)}`
-          );
+          if ((error as any).code !== 'ENOENT') {
+            debug(
+              `Failed to delete temporary file on error: ${ErrorUtils.getMessage(hivemindError)}`
+            );
+          }
         }
       });
     } catch (error: unknown) {
       // Clean up temp file if it was created
       try {
-        if (fs.existsSync(tempPath)) {
-          fs.unlinkSync(tempPath);
-        }
+        await fs.promises.access(tempPath, fs.constants.F_OK);
+        await fs.promises.unlink(tempPath);
       } catch (cleanupError: unknown) {
         const hivemindCleanupError = ErrorUtils.toHivemindError(cleanupError);
         debug(

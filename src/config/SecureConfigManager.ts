@@ -34,12 +34,22 @@ export class SecureConfigManager {
     this.configDir = path.join(process.cwd(), 'config', 'secure');
     this.backupDir = path.join(process.cwd(), 'config', 'backups');
     this.keyPath = path.join(process.cwd(), 'config', '.key');
-
-    this.ensureDirectories();
-
-    // Generate or load encryption key
-    this.encryptionKey = this.getOrCreateEncryptionKey();
     this.mainConfigDir = path.join(process.cwd(), 'config');
+
+    // Default encryption key, will be refined in initialize()
+    this.encryptionKey = Buffer.alloc(32);
+  }
+
+  /**
+   * Initializes the SecureConfigManager by ensuring directories and loading the encryption key
+   */
+  public async initialize(): Promise<void> {
+    await this.ensureDirectories();
+
+    // Late load encryption key to avoid async in constructor
+    (this as any).encryptionKey = await this.getOrCreateEncryptionKey();
+
+    debug('SecureConfigManager initialized successfully');
   }
 
   public static getInstance(): SecureConfigManager {
@@ -140,7 +150,9 @@ export class SecureConfigManager {
   public async getConfig(id: string): Promise<SecureConfig | null> {
     try {
       const filePath = this.getSecureFilePath(id);
-      if (!fs.existsSync(filePath)) {
+      try {
+        await fs.promises.access(filePath, fs.constants.F_OK);
+      } catch {
         return null;
       }
 
@@ -181,15 +193,18 @@ export class SecureConfigManager {
     }
   }
 
-  public getDecryptedMainConfig(env: string): any {
+  public async getDecryptedMainConfig(env: string): Promise<any> {
     try {
       const configPath = path.join(this.mainConfigDir, `${env}.json.enc`);
-      if (fs.existsSync(configPath)) {
-        const encryptedData = fs.readFileSync(configPath, 'utf8');
-        const decryptedData = this.decrypt(encryptedData);
-        return JSON.parse(decryptedData);
+      try {
+        await fs.promises.access(configPath, fs.constants.F_OK);
+      } catch {
+        return null;
       }
-      return null;
+
+      const encryptedData = await fs.promises.readFile(configPath, 'utf8');
+      const decryptedData = this.decrypt(encryptedData);
+      return JSON.parse(decryptedData);
     } catch (error) {
       debug(`Failed to read decrypted main config for env ${env}:`, error);
       return null;
@@ -202,9 +217,14 @@ export class SecureConfigManager {
   public async deleteConfig(id: string): Promise<void> {
     try {
       const filePath = this.getSecureFilePath(id);
-      if (fs.existsSync(filePath)) {
+      try {
+        await fs.promises.access(filePath, fs.constants.F_OK);
         await fs.promises.unlink(filePath);
         debug(`Configuration ${id} deleted`);
+      } catch (err) {
+        if ((err as any).code !== 'ENOENT') {
+          throw err;
+        }
       }
     } catch (error: unknown) {
       const hivemindError = ErrorUtils.toHivemindError(error) as any;
@@ -254,7 +274,11 @@ export class SecureConfigManager {
    */
   public async listBackups(): Promise<any[]> {
     try {
-      if (!fs.existsSync(this.backupDir)) return [];
+      try {
+        await fs.promises.access(this.backupDir, fs.constants.F_OK);
+      } catch {
+        return [];
+      }
       const files = await fs.promises.readdir(this.backupDir);
       return files.filter(f => f.endsWith('.enc'));
     } catch {
@@ -347,7 +371,9 @@ export class SecureConfigManager {
         );
       }
 
-      if (!fs.existsSync(backupPath)) {
+      try {
+        await fs.promises.access(backupPath, fs.constants.F_OK);
+      } catch {
         throw ErrorUtils.createError(
           `Backup ${backupId} not found`,
           'validation',
@@ -397,22 +423,21 @@ export class SecureConfigManager {
     }
   }
 
-  private ensureDirectories(): void {
-    [this.configDir, this.backupDir].forEach(dir => {
-      if (!fs.existsSync(dir)) {
-        fs.mkdirSync(dir, { recursive: true });
-      }
-    });
+  private async ensureDirectories(): Promise<void> {
+    for (const dir of [this.configDir, this.backupDir]) {
+      await fs.promises.mkdir(dir, { recursive: true });
+    }
   }
 
-  private getOrCreateEncryptionKey(): Buffer {
-    if (fs.existsSync(this.keyPath)) {
-      return fs.readFileSync(this.keyPath);
+  private async getOrCreateEncryptionKey(): Promise<Buffer> {
+    try {
+      await fs.promises.access(this.keyPath, fs.constants.F_OK);
+      return await fs.promises.readFile(this.keyPath);
+    } catch {
+      const key = crypto.randomBytes(32);
+      await fs.promises.writeFile(this.keyPath, key);
+      return key;
     }
-    
-    const key = crypto.randomBytes(32);
-    fs.writeFileSync(this.keyPath, key);
-    return key;
   }
 
   public encrypt(text: string): string {

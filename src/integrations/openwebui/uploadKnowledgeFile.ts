@@ -53,8 +53,10 @@ async function performUpload(): Promise<void> {
     throw new Error('Knowledge file path is missing in the configuration.');
   }
 
-  if (!fs.existsSync(knowledgeFile)) {
-    debug('Knowledge file not found:', knowledgeFile);
+  try {
+    await fs.promises.access(knowledgeFile, fs.constants.F_OK);
+  } catch (err) {
+    debug('Knowledge file not found:', knowledgeFile, err);
     throw new Error('Knowledge file does not exist at: ' + knowledgeFile);
   }
 
