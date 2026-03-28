@@ -41,6 +41,10 @@ export const TOKENS = {
   ConnectionManager: 'ConnectionManager',
   MigrationManager: 'MigrationManager',
   SchemaManager: 'SchemaManager',
+  ActivityRepository: 'ActivityRepository',
+  BotRepository: 'BotRepository',
+  ConfigRepository: 'ConfigRepository',
+  SessionRepository: 'SessionRepository',
 
   // Server Services
   WebSocketService: 'WebSocketService',
