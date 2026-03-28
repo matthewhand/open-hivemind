@@ -139,9 +139,10 @@ router.use(authenticateToken);
  * GET /api/marketplace/packages
  * List all available packages (built-in + installed)
  */
-router.get('/packages', async (req, res) => {
+router.get('/packages', (req, res) => {
   try {
-    const [builtIn, installed] = await Promise.all([scanBuiltInPackages(), getInstalledPlugins()]);
+    const builtIn = scanBuiltInPackages();
+    const installed = getInstalledPlugins();
 
     // Merge: built-in packages take precedence, then installed plugins
     const packageMap = new Map<string, MarketplacePackage>();
