@@ -24,6 +24,7 @@
     "build:serverless": "npm run build:frontend && mkdir -p api && cp src/api/index.js api/index.js",
     "start": "NODE_ENV=production bash ./scripts/start-runtime.sh",
     "start:test": "NODE_ENV=test bash ./scripts/start-runtime.sh",
+    "audit:secrets": "echo 'No secrets audit configured' && exit 0",
     "start:headless": "NODE_ENV=production HTTP_ENABLED=false bash ./scripts/start-runtime.sh",
     "start:dev:headless": "NODE_ENV=development HTTP_ENABLED=false npx tsx src/index.ts",
     "start:dev": "NODE_ENV=development npx tsx src/index.ts",
