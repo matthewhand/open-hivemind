@@ -112,11 +112,16 @@ export class AuthManager {
     if (!password) {
       password = crypto.randomBytes(16).toString('hex');
       this.generatedPassword = password;
-      debug('================================================================');
-      debug('WARNING: No ADMIN_PASSWORD environment variable found.');
-      debug(`Generated temporary admin password: ${password}`);
-      debug('Please change this password immediately or set ADMIN_PASSWORD.');
-      debug('================================================================');
+      // eslint-disable-next-line no-console -- operators must see the generated password on stdout
+      console.warn('================================================================');
+      // eslint-disable-next-line no-console
+      console.warn('WARNING: No ADMIN_PASSWORD environment variable found.');
+      // eslint-disable-next-line no-console
+      console.warn(`Generated temporary admin password: ${password}`);
+      // eslint-disable-next-line no-console
+      console.warn('Please change this password immediately or set ADMIN_PASSWORD.');
+      // eslint-disable-next-line no-console
+      console.warn('================================================================');
     }
 
     const defaultAdmin: User = {

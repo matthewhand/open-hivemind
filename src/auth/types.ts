@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import type { Request } from 'express';
 
 export type UserRole = 'admin' | 'bot-manager' | 'user' | 'viewer';
@@ -45,8 +44,8 @@ export interface JWTPayload {
 
 export interface AuthMiddlewareRequest<
   Params = Record<string, string>,
-  ResBody = any,
-  ReqBody = any,
+  ResBody = unknown,
+  ReqBody = unknown,
   ReqQuery = Record<string, unknown>,
 > extends Request<Params, ResBody, ReqBody, ReqQuery> {
   user?: User;
