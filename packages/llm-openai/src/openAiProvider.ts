@@ -60,7 +60,6 @@ export class OpenAiProvider implements ILlmProvider {
   ): Promise<string> {
     debug('Starting chat completion generation');
 
-    // Load configuration - prioritize env vars for critical settings
     debug('this.config:', JSON.stringify(this.config, null, 2));
     debug('process.env.OPENAI_MODEL:', process.env.OPENAI_MODEL);
     const apiKey =
@@ -99,7 +98,6 @@ export class OpenAiProvider implements ILlmProvider {
       throw new ConfigurationError('OpenAI API key is missing', 'OPENAI_API_KEY_MISSING');
     }
 
-    // Validate baseURL
     try {
       new URL(baseURL);
       if (baseURL !== DEFAULT_BASE_URL && !(await isSafeUrl(baseURL))) {

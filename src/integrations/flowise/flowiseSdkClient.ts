@@ -20,8 +20,8 @@ export async function getFlowiseSdkResponse(prompt: string, chatflowId: string):
   const client = new FlowiseClient({ baseUrl: flowiseConfig.get('FLOWISE_API_ENDPOINT') });
   const apiKey = flowiseConfig.get('FLOWISE_API_KEY');
 
-  return circuitBreaker.execute(async () => {
-    try {
+  try {
+    return await circuitBreaker.execute(async () => {
       debug('Sending request to Flowise SDK API with prompt:', prompt);
       const completion = await withTimeout(
         () => client.createPrediction({
@@ -45,9 +45,10 @@ export async function getFlowiseSdkResponse(prompt: string, chatflowId: string):
 
       debug('Flowise SDK unavailable, returning empty string');
       return '';
-    } catch (error: any) {
-      debug('Error using Flowise SDK:', error);
-      throw error;
-    }
-  });
+    });
+  } catch (error: any) {
+    debug('Error using Flowise SDK:', error);
+    debug('Flowise SDK unavailable, returning empty string');
+    return '';
+  }
 }
