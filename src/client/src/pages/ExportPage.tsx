@@ -22,6 +22,8 @@ import EmptyState from '../components/DaisyUI/EmptyState';
 import StatsCards from '../components/DaisyUI/StatsCards';
 import SearchFilterBar from '../components/SearchFilterBar';
 import { apiService } from '../services/api';
+import ResponsiveDataView from '../components/DaisyUI/ResponsiveDataView';
+import type { RDVColumn, RowAction } from '../components/DaisyUI/ResponsiveDataView';
 
 interface Backup {
   id: string;
@@ -207,6 +209,58 @@ const ExportPage: React.FC = () => {
     );
   }, [backups, searchQuery]);
 
+  const backupColumns: RDVColumn<Backup>[] = [
+    {
+      key: 'name',
+      title: 'Name',
+      prominent: true,
+      render: (value: string) => (
+        <div className="flex items-center gap-2 font-bold">
+          <Archive className="w-4 h-4 text-base-content/40" />
+          {value}
+        </div>
+      ),
+    },
+    {
+      key: 'description',
+      title: 'Description',
+      render: (value: string) => (
+        <span className="text-sm text-base-content/70 truncate max-w-xs" title={value}>
+          {value || '-'}
+        </span>
+      ),
+    },
+    { key: 'size', title: 'Size', render: (value: number) => <span className="font-mono text-sm">{formatBytes(value)}</span> },
+    { key: 'createdAt', title: 'Created', render: (value: string) => <span className="text-sm">{new Date(value).toLocaleString()}</span> },
+  ];
+
+  const backupActions: RowAction<Backup>[] = [
+    {
+      label: 'Restore',
+      icon: <RotateCcw className="w-4 h-4" />,
+      variant: 'warning',
+      onClick: (b) => handleRestoreBackup(b.id),
+      disabled: (b) => actionLoading === b.id,
+      tooltip: 'Restore',
+    },
+    {
+      label: 'Download',
+      icon: <Download className="w-4 h-4" />,
+      variant: 'primary',
+      onClick: (b) => handleDownloadBackup(b.id, b.name),
+      disabled: (b) => actionLoading === b.id,
+      tooltip: 'Download',
+    },
+    {
+      label: 'Delete',
+      icon: <Trash2 className="w-4 h-4" />,
+      variant: 'error',
+      onClick: (b) => handleDeleteBackup(b.id),
+      disabled: (b) => actionLoading === b.id,
+      tooltip: 'Delete',
+    },
+  ];
+
   const totalSize = useMemo(() => {
     return backups.reduce((acc, b) => acc + b.size, 0);
   }, [backups]);
@@ -324,104 +378,35 @@ const ExportPage: React.FC = () => {
             searchPlaceholder="Search backups..."
           />
 
-          <div className="overflow-x-auto mt-4">
-            <table className="table table-zebra w-full">
-              <thead>
-                <tr>
-                  <th>Name</th>
-                  <th>Description</th>
-                  <th>Size</th>
-                  <th>Created</th>
-                  <th className="text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {loading ? (
-                  <tr>
-                    <td colSpan={5} className="text-center py-8">
-                      <span className="loading loading-spinner loading-md" aria-hidden="true"></span>
-                    </td>
-                  </tr>
-                ) : backups.length === 0 ? (
-                  <tr>
-                    <td colSpan={5}>
-                      <EmptyState
-                        title="No backups found"
-                        description="Create your first backup to secure your configuration."
-                        icon={Archive}
-                        variant="noData"
-                        actionLabel="Create Backup"
-                        onAction={() => setCreateModalOpen(true)}
-                      />
-                    </td>
-                  </tr>
-                ) : filteredBackups.length === 0 ? (
-                  <tr>
-                    <td colSpan={5}>
-                      <EmptyState
-                        title="No backups match your search"
-                        description="Try adjusting your search query."
-                        icon={Search}
-                        variant="noResults"
-                        actionLabel="Clear Search"
-                        onAction={() => setSearchQuery('')}
-                      />
-                    </td>
-                  </tr>
+          <div className="mt-4">
+            <ResponsiveDataView<Backup>
+              data={filteredBackups}
+              columns={backupColumns}
+              actions={backupActions}
+              loading={loading}
+              rowKey={(b) => b.id}
+              emptyState={
+                backups.length === 0 ? (
+                  <EmptyState
+                    title="No backups found"
+                    description="Create your first backup to secure your configuration."
+                    icon={Archive}
+                    variant="noData"
+                    actionLabel="Create Backup"
+                    onAction={() => setCreateModalOpen(true)}
+                  />
                 ) : (
-                  filteredBackups.map((backup) => (
-                    <tr key={backup.id} className="hover">
-                      <td className="font-bold">
-                        <div className="flex items-center gap-2">
-                          <Archive className="w-4 h-4 text-base-content/40" />
-                          {backup.name}
-                        </div>
-                      </td>
-                      <td className="text-sm text-base-content/70 truncate max-w-xs" title={backup.description}>
-                        {backup.description || '-'}
-                      </td>
-                      <td className="font-mono text-sm">{formatBytes(backup.size)}</td>
-                      <td className="text-sm">{new Date(backup.createdAt).toLocaleString()}</td>
-                      <td className="flex justify-end gap-2">
-                        <div className="tooltip tooltip-left" data-tip="Restore">
-                          <Button
-                            size="xs"
-                            variant="ghost"
-                            onClick={() => handleRestoreBackup(backup.id)}
-                            disabled={actionLoading === backup.id}
-                            className="text-warning hover:bg-warning/10"
-                          >
-                            <RotateCcw className="w-4 h-4" />
-                          </Button>
-                        </div>
-                        <div className="tooltip tooltip-left" data-tip="Download">
-                          <Button
-                            size="xs"
-                            variant="ghost"
-                            onClick={() => handleDownloadBackup(backup.id, backup.name)}
-                            disabled={actionLoading === backup.id}
-                            className="text-primary hover:bg-primary/10"
-                          >
-                            <Download className="w-4 h-4" />
-                          </Button>
-                        </div>
-                        <div className="tooltip tooltip-left" data-tip="Delete">
-                          <Button
-                            size="xs"
-                            variant="ghost"
-                            onClick={() => handleDeleteBackup(backup.id)}
-                            disabled={actionLoading === backup.id}
-                            className="text-error hover:bg-error/10"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
+                  <EmptyState
+                    title="No backups match your search"
+                    description="Try adjusting your search query."
+                    icon={Search}
+                    variant="noResults"
+                    actionLabel="Clear Search"
+                    onAction={() => setSearchQuery('')}
+                  />
+                )
+              }
+            />
           </div>
         </div>
       </div>

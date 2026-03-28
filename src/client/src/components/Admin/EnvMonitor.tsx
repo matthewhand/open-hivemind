@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import Badge from '../DaisyUI/Badge';
 import { Alert } from '../DaisyUI/Alert';
 import { getEnvOverrides } from '../../services/agentService';
+import ResponsiveDataView from '../DaisyUI/ResponsiveDataView';
 
 const EnvMonitor: React.FC = () => {
   const [envVars, setEnvVars] = useState<Record<string, string>>({});
@@ -48,30 +49,27 @@ const EnvMonitor: React.FC = () => {
       {Object.keys(envVars).length === 0 ? (
         <Alert status="info" message="No environment variable overrides detected" />
       ) : (
-        <div className="overflow-x-auto">
-          <table className="table table-sm w-full">
-            <thead>
-              <tr>
-                <th>Environment Variable</th>
-                <th>Value</th>
-              </tr>
-            </thead>
-            <tbody>
-              {Object.entries(envVars).map(([key, value]) => (
-                <tr key={key}>
-                  <td>
-                    <code className="badge badge-outline font-mono text-xs">{key}</code>
-                  </td>
-                  <td>
-                    <Badge variant="primary">
-                      <code className="font-mono text-xs">{value}</code>
-                    </Badge>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <ResponsiveDataView
+          data={Object.entries(envVars).map(([k, v]) => ({ variable: k, value: v }))}
+          columns={[
+            {
+              key: 'variable' as any,
+              title: 'Environment Variable',
+              prominent: true,
+              render: (v: string) => <code className="badge badge-outline font-mono text-xs">{v}</code>,
+            },
+            {
+              key: 'value' as any,
+              title: 'Value',
+              render: (v: string) => (
+                <Badge variant="primary">
+                  <code className="font-mono text-xs">{v}</code>
+                </Badge>
+              ),
+            },
+          ]}
+          rowKey={(row: any) => row.variable}
+        />
       )}
     </div>
   );

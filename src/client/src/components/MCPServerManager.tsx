@@ -10,6 +10,8 @@ import Badge from './DaisyUI/Badge';
 import Button from './DaisyUI/Button';
 import Card from './DaisyUI/Card';
 import Modal, { ConfirmModal } from './DaisyUI/Modal';
+import ResponsiveDataView from './DaisyUI/ResponsiveDataView';
+import type { RDVColumn, RowAction } from './DaisyUI/ResponsiveDataView';
 
 interface MCPServer {
   name: string;
@@ -206,55 +208,54 @@ const MCPServerManager: React.FC = () => {
 
       {error && <Alert status="error" message={error} onClose={() => setError(null)} />}
 
-      <div className="overflow-x-auto">
-        <table className="table w-full">
-          <thead>
-            <tr>
-              <th>Name</th>
-              <th>Server URL</th>
-              <th>Status</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {servers.map((server) => (
-              <tr key={server.name} className="hover">
-                <td>
-                  <div className="flex items-center gap-2">
-                    <WrenchScrewdriverIcon className="w-5 h-5 text-base-content/70" />
-                    <span className="font-medium">{server.name}</span>
-                  </div>
-                </td>
-                <td>
-                  <span className="font-mono text-sm">{server.serverUrl}</span>
-                </td>
-                <td>
-                  <Badge variant={server.connected ? 'success' : 'secondary'}>
-                    {server.connected ? 'Connected' : 'Disconnected'}
-                  </Badge>
-                </td>
-                <td>
-                  <div className="flex gap-2">
-                    {server.connected && (
-                      <Button size="sm" variant="ghost" onClick={() => handleViewTools(server)}>
-                        <WrenchScrewdriverIcon className="w-4 h-4" />
-                      </Button>
-                    )}
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      className="text-error"
-                      onClick={() => handleDisconnectServer(server.name)}
-                    >
-                      <LinkIcon className="w-4 h-4" />
-                    </Button>
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      <ResponsiveDataView<MCPServer>
+        data={servers}
+        columns={[
+          {
+            key: 'name',
+            title: 'Name',
+            prominent: true,
+            render: (value: string) => (
+              <div className="flex items-center gap-2">
+                <WrenchScrewdriverIcon className="w-5 h-5 text-base-content/70" />
+                <span className="font-medium">{value}</span>
+              </div>
+            ),
+          },
+          {
+            key: 'serverUrl',
+            title: 'Server URL',
+            render: (value: string) => <span className="font-mono text-sm">{value}</span>,
+          },
+          {
+            key: 'connected',
+            title: 'Status',
+            render: (value: boolean) => (
+              <Badge variant={value ? 'success' : 'secondary'}>
+                {value ? 'Connected' : 'Disconnected'}
+              </Badge>
+            ),
+          },
+        ] as RDVColumn<MCPServer>[]}
+        actions={[
+          {
+            label: 'View Tools',
+            icon: <WrenchScrewdriverIcon className="w-4 h-4" />,
+            variant: 'ghost',
+            onClick: (server) => handleViewTools(server),
+            hidden: (server) => !server.connected,
+            tooltip: 'View Tools',
+          },
+          {
+            label: 'Disconnect',
+            icon: <LinkIcon className="w-4 h-4" />,
+            variant: 'error',
+            onClick: (server) => handleDisconnectServer(server.name),
+            tooltip: 'Disconnect',
+          },
+        ] as RowAction<MCPServer>[]}
+        rowKey={(server) => server.name}
+      />
 
       <Modal
         isOpen={connectDialogOpen}
