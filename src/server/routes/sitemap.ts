@@ -34,11 +34,19 @@ const getRouteDefinitions = (): SitemapUrl[] => {
       changefreq: 'daily',
       priority: 1.0,
       lastmod: now,
-      description: 'Admin Dashboard',
+      description: 'Main Admin Dashboard',
       access: 'authenticated',
     },
 
     // Dashboard pages
+    {
+      url: '/dashboard',
+      changefreq: 'daily',
+      priority: 1.0,
+      lastmod: now,
+      description: 'User Dashboard',
+      access: 'authenticated',
+    },
     {
       url: '/admin/overview',
       changefreq: 'daily',
@@ -78,7 +86,7 @@ const getRouteDefinitions = (): SitemapUrl[] => {
       changefreq: 'daily',
       priority: 0.8,
       lastmod: now,
-      description: 'Interactive Chat Interface',
+      description: 'Chat Interface',
       access: 'authenticated',
     },
 
@@ -173,11 +181,19 @@ const getRouteDefinitions = (): SitemapUrl[] => {
     },
     {
       url: '/admin/analytics',
-      changefreq: 'daily',
+      changefreq: 'hourly',
       priority: 0.7,
       lastmod: now,
       description: 'System Analytics',
       access: 'authenticated',
+    },
+    {
+      url: '/admin/system-management',
+      changefreq: 'weekly',
+      priority: 0.6,
+      lastmod: now,
+      description: 'System Management',
+      access: 'owner',
     },
 
     // AI Features
@@ -271,14 +287,14 @@ const getRouteDefinitions = (): SitemapUrl[] => {
       priority: 0.5,
       lastmod: now,
       description: 'Data Export Tools',
-      access: 'authenticated',
+      access: 'owner',
     },
     {
       url: '/admin/static',
       changefreq: 'weekly',
       priority: 0.4,
       lastmod: now,
-      description: 'Static Pages and Resources',
+      description: 'Static Pages',
       access: 'authenticated',
     },
     {
@@ -296,6 +312,14 @@ const getRouteDefinitions = (): SitemapUrl[] => {
       lastmod: now,
       description: 'Specifications Library',
       access: 'authenticated',
+    },
+    {
+      url: '/admin/sitemap',
+      changefreq: 'weekly',
+      priority: 0.4,
+      lastmod: now,
+      description: 'Application Sitemap',
+      access: 'public',
     },
 
     // Legacy interfaces
@@ -464,23 +488,33 @@ router.get('/sitemap', (req: Request, res: Response) => {
         (r) =>
           r.url.startsWith('/admin') &&
           !r.url.startsWith('/admin/ai') &&
-          !r.url.includes('integrations')
+          !r.url.startsWith('/admin/integrations') &&
+          !r.url.startsWith('/admin/mcp') &&
+          !r.url.startsWith('/admin/monitoring')
       ),
       baseUrl
     )}
     ${generateSectionHTML(
-      'AI Features',
+      'AI & Intelligence',
       routes.filter((r) => r.url.startsWith('/admin/ai')),
       baseUrl
     )}
     ${generateSectionHTML(
-      'Integrations',
-      routes.filter((r) => r.url.includes('integrations')),
+      'Integrations & MCP',
+      routes.filter(
+        (r) => r.url.startsWith('/admin/integrations') || r.url.startsWith('/admin/mcp')
+      ),
       baseUrl
     )}
     ${generateSectionHTML(
-      'Legacy Interfaces',
-      routes.filter((r) => r.url.startsWith('/webui')),
+      'Monitoring & System',
+      routes.filter(
+        (r) =>
+          r.url.startsWith('/admin/monitoring') ||
+          r.url === '/admin/activity' ||
+          r.url === '/admin/analytics' ||
+          r.url === '/admin/system-management'
+      ),
       baseUrl
     )}
     ${generateSectionHTML(
@@ -492,7 +526,7 @@ router.get('/sitemap', (req: Request, res: Response) => {
     )}
     ${generateSectionHTML(
       'Root Pages',
-      routes.filter((r) => r.url === '/'),
+      routes.filter((r) => r.url === '/' || r.url === '/webui' || r.url === '/dashboard'),
       baseUrl
     )}
 </body>

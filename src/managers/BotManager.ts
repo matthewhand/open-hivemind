@@ -3,7 +3,6 @@ import { EventEmitter } from 'events';
 import fs from 'fs';
 import path from 'path';
 import Debug from 'debug';
-import { BotConfig } from '@src/types/config';
 import { BotConfigurationManager } from '@config/BotConfigurationManager';
 import { SecureConfigManager } from '@config/SecureConfigManager';
 import { UserConfigStore } from '@config/UserConfigStore';
@@ -12,7 +11,7 @@ import type { MCPGuardConfig } from '../mcp/MCPGuard';
 import type { MCPConfig } from '../mcp/MCPService';
 import { getMessengerServiceByProvider } from '../message/ProviderRegistry';
 import { webUIStorage } from '../storage/webUIStorage';
-import { AppError, ErrorUtils, HivemindError } from '../types/errors';
+import { ErrorUtils } from '../types/errors';
 import { checkBotEnvOverrides } from '../utils/envUtils';
 
 const debug = Debug('app:BotManager');
@@ -122,7 +121,7 @@ export class BotManager extends EventEmitter {
         });
         debug(`Loaded ${this.customBots.size} custom bots`);
       }
-    } catch (error: HivemindError) {
+    } catch (error: unknown) {
       debug('Error loading custom bots:', ErrorUtils.getMessage(error));
     }
   }
@@ -140,7 +139,7 @@ export class BotManager extends EventEmitter {
       const bots = Object.fromEntries(this.customBots);
       fs.writeFileSync(this.botsFilePath, JSON.stringify(bots, null, 2));
       debug(`Saved ${this.customBots.size} custom bots`);
-    } catch (error: HivemindError) {
+    } catch (error: unknown) {
       debug('Error saving custom bots:', ErrorUtils.getMessage(error));
       throw ErrorUtils.createError('Failed to save custom bots', 'configuration');
     }
@@ -156,22 +155,7 @@ export class BotManager extends EventEmitter {
 
       // Add configured bots first
       for (const bot of configuredBots) {
-        const botInstance: BotInstance = {
-          // Use bot name as stable ID - random UUIDs break getBot() lookups
-          id: bot.name,
-          name: bot.name,
-          messageProvider: bot.messageProvider,
-          llmProvider: bot.llmProvider,
-          isActive: true, // Configured bots are considered active
-          createdAt: new Date().toISOString(),
-          lastModified: new Date().toISOString(),
-          config: this.sanitizeConfig(bot),
-          persona: bot.persona || 'default',
-          systemInstruction: bot.systemInstruction,
-          mcpServers: bot.mcpServers || [],
-          mcpGuard: bot.mcpGuard || { enabled: false, type: 'owner' },
-          envOverrides: checkBotEnvOverrides(bot.name),
-        };
+        const botInstance = this.mapConfigToBotInstance(bot);
         botMap.set(botInstance.id, botInstance);
       }
 
@@ -184,10 +168,32 @@ export class BotManager extends EventEmitter {
       const botInstances = Array.from(botMap.values());
       debug(`Retrieved ${botInstances.length} bot instances`);
       return botInstances;
-    } catch (error: HivemindError) {
+    } catch (error: unknown) {
       debug('Error getting all bots:', ErrorUtils.getMessage(error));
       throw ErrorUtils.createError('Failed to retrieve bot instances', 'configuration');
     }
+  }
+
+  /**
+   * Helper to map a raw configuration object to a unified BotInstance
+   */
+  private mapConfigToBotInstance(bot: any): BotInstance {
+    return {
+      // Use bot name as stable ID - random UUIDs break getBot() lookups
+      id: bot.name,
+      name: bot.name,
+      messageProvider: bot.messageProvider,
+      llmProvider: bot.llmProvider,
+      isActive: true, // Configured bots are considered active
+      createdAt: new Date().toISOString(),
+      lastModified: new Date().toISOString(),
+      config: this.sanitizeConfig(bot),
+      persona: bot.persona || 'default',
+      systemInstruction: bot.systemInstruction,
+      mcpServers: bot.mcpServers || [],
+      mcpGuard: bot.mcpGuard || { enabled: false, type: 'owner' },
+      envOverrides: checkBotEnvOverrides(bot.name),
+    };
   }
 
   /**
@@ -202,18 +208,17 @@ export class BotManager extends EventEmitter {
         return bot;
       }
 
-      // Check configured bots
-      const bots = await this.getAllBots();
-      const bot = bots.find((b) => b.id === botId);
+      // Check configured bots - O(1) lookup instead of O(N) iteration
+      const configuredBot = this.botConfigManager.getBot(botId);
 
-      if (bot) {
-        debug(`Retrieved configured bot: ${bot.name} (${bot.id})`);
-      } else {
-        debug(`Bot not found: ${botId}`);
+      if (configuredBot) {
+        debug(`Retrieved configured bot: ${configuredBot.name} (${botId})`);
+        return this.mapConfigToBotInstance(configuredBot);
       }
 
-      return bot || null;
-    } catch (error: HivemindError) {
+      debug(`Bot not found: ${botId}`);
+      return null;
+    } catch (error: unknown) {
       debug('Error getting bot:', ErrorUtils.getMessage(error));
       throw ErrorUtils.createError('Failed to retrieve bot instance', 'configuration');
     }
@@ -258,7 +263,7 @@ export class BotManager extends EventEmitter {
       this.emit('botCreated', botInstance);
 
       return botInstance;
-    } catch (error: HivemindError) {
+    } catch (error: unknown) {
       debug('Error creating bot:', ErrorUtils.getMessage(error));
       throw ErrorUtils.createError(
         `Failed to create bot: ${ErrorUtils.getMessage(error)}`,
@@ -340,7 +345,7 @@ export class BotManager extends EventEmitter {
         this.emit('botCloned', { sourceBot, clonedBot });
         return clonedBot;
       }
-    } catch (error: HivemindError) {
+    } catch (error: unknown) {
       debug('Error cloning bot:', ErrorUtils.getMessage(error));
       throw ErrorUtils.createError(
         `Failed to clone bot: ${ErrorUtils.getMessage(error)}`,
@@ -395,7 +400,7 @@ export class BotManager extends EventEmitter {
       this.emit('botUpdated', updatedBot);
 
       return updatedBot;
-    } catch (error: HivemindError) {
+    } catch (error: unknown) {
       debug('Error updating bot:', ErrorUtils.getMessage(error));
       throw ErrorUtils.createError(
         `Failed to update bot: ${ErrorUtils.getMessage(error)}`,
@@ -407,11 +412,11 @@ export class BotManager extends EventEmitter {
   /**
    * Delete a bot instance
    */
-  public async deleteBot(botId: string): Promise<boolean> {
+  public async deleteBot(botId: string): Promise<void> {
     try {
       const bot = await this.getBot(botId);
       if (!bot) {
-        return false;
+        throw new Error(`Bot not found: ${botId}`);
       }
 
       // Check if it's a custom bot
@@ -439,9 +444,7 @@ export class BotManager extends EventEmitter {
 
       // Emit event for real-time updates
       this.emit('botDeleted', bot);
-
-      return true;
-    } catch (error: HivemindError) {
+    } catch (error: unknown) {
       debug('Error deleting bot:', ErrorUtils.getMessage(error));
       throw ErrorUtils.createError(
         `Failed to delete bot: ${ErrorUtils.getMessage(error)}`,
@@ -469,8 +472,11 @@ export class BotManager extends EventEmitter {
 
       // Update bot status in memory
       const updatedBot = { ...bot, isActive: true, lastModified: new Date().toISOString() };
-      this.customBots.set(botId, updatedBot);
-      this.saveCustomBots();
+      const isCustomBot = this.customBots.has(botId);
+      if (isCustomBot) {
+        this.customBots.set(botId, updatedBot);
+        this.saveCustomBots();
+      }
 
       await this.startBotById(botId);
 
@@ -502,7 +508,7 @@ export class BotManager extends EventEmitter {
       this.emit('botStarted', updatedBot);
 
       return true;
-    } catch (error: HivemindError) {
+    } catch (error: unknown) {
       debug('Error starting bot:', ErrorUtils.getMessage(error));
       throw ErrorUtils.createError(
         `Failed to start bot: ${ErrorUtils.getMessage(error)}`,
@@ -528,8 +534,11 @@ export class BotManager extends EventEmitter {
 
       // Update bot status in memory
       const updatedBot = { ...bot, isActive: false, lastModified: new Date().toISOString() };
-      this.customBots.set(botId, updatedBot);
-      this.saveCustomBots();
+      const isCustomBot = this.customBots.has(botId);
+      if (isCustomBot) {
+        this.customBots.set(botId, updatedBot);
+        this.saveCustomBots();
+      }
 
       // Use integration-agnostic shutdown
       try {
@@ -548,7 +557,7 @@ export class BotManager extends EventEmitter {
             try {
               await service.stop();
               debug(`Stopped service for bot: ${bot.name} (${botId})`);
-            } catch (serviceError: HivemindError) {
+            } catch (serviceError: any) {
               debug(
                 `Error stopping service for bot ${bot.name}:`,
                 ErrorUtils.getMessage(serviceError)
@@ -568,7 +577,7 @@ export class BotManager extends EventEmitter {
             try {
               await connection.close();
               debug(`Closed connection for bot: ${bot.name} (${botId})`);
-            } catch (connectionError: HivemindError) {
+            } catch (connectionError: any) {
               debug(
                 `Error closing connection for bot ${bot.name}:`,
                 ErrorUtils.getMessage(connectionError)
@@ -584,7 +593,7 @@ export class BotManager extends EventEmitter {
       this.emit('botStopped', updatedBot);
 
       return true;
-    } catch (error: HivemindError) {
+    } catch (error: unknown) {
       debug('Error stopping bot:', ErrorUtils.getMessage(error));
       throw ErrorUtils.createError(
         `Failed to stop bot: ${ErrorUtils.getMessage(error)}`,
@@ -776,7 +785,7 @@ export class BotManager extends EventEmitter {
           } else {
             debug(`Skipping inactive bot: ${bot.name}`);
           }
-        } catch (error: HivemindError) {
+        } catch (error: unknown) {
           debug(`Failed to start bot ${bot.name}:`, ErrorUtils.getMessage(error));
           this.emit('botError', { botId: bot.id, error });
         }
@@ -788,7 +797,7 @@ export class BotManager extends EventEmitter {
       debug(`Bot startup completed: ${runningBots}/${allBots.length} bots running`);
 
       this.emit('allBotsStarted', { total: allBots.length, running: runningBots });
-    } catch (error: HivemindError) {
+    } catch (error: unknown) {
       debug('Error starting all bots:', ErrorUtils.getMessage(error));
       throw error;
     }
@@ -806,7 +815,7 @@ export class BotManager extends EventEmitter {
         try {
           await this.stopBotById(bot.id);
           debug(`Stopped bot: ${bot.name}`);
-        } catch (error: HivemindError) {
+        } catch (error: unknown) {
           debug(`Failed to stop bot ${bot.name}:`, ErrorUtils.getMessage(error));
           this.emit('botError', { botId: bot.id, error });
         }
@@ -816,7 +825,7 @@ export class BotManager extends EventEmitter {
 
       debug('All bots stopped');
       this.emit('allBotsStopped');
-    } catch (error: HivemindError) {
+    } catch (error: unknown) {
       debug('Error stopping all bots:', ErrorUtils.getMessage(error));
       throw error;
     }
@@ -1079,7 +1088,7 @@ export class BotManager extends EventEmitter {
             issues.push('Bot health check failed');
           }
         }
-      } catch (error: HivemindError) {
+      } catch (error: unknown) {
         status = 'unhealthy';
         issues.push(`Health check error: ${ErrorUtils.getMessage(error)}`);
       }
@@ -1093,7 +1102,19 @@ export class BotManager extends EventEmitter {
       };
     });
 
-    return Promise.all(healthChecks);
+    const results = await Promise.allSettled(healthChecks);
+    return results.map((result) => {
+      if (result.status === 'fulfilled') {
+        return result.value;
+      }
+      return {
+        botId: 'unknown',
+        name: 'unknown',
+        status: 'unhealthy',
+        lastCheck: new Date(),
+        issues: ['Health check failed to execute'],
+      };
+    });
   }
 
   /**
@@ -1122,7 +1143,7 @@ export class BotManager extends EventEmitter {
         default:
           return true; // Unknown provider, assume healthy
       }
-    } catch (error: HivemindError) {
+    } catch (error: unknown) {
       debug(`Health check failed for bot ${bot.name}:`, ErrorUtils.getMessage(error));
       return false;
     }

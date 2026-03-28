@@ -16,10 +16,11 @@ interface WebUIConfig {
   lastUpdated: string;
 }
 
-class WebUIStorage {
+export class WebUIStorage {
   private configDir: string;
   private configFile: string;
   private guardsInitializationInProgress = false;
+  private configCache: WebUIConfig | null = null;
 
   constructor() {
     this.configDir = path.join(process.cwd(), 'config', 'user');
@@ -40,17 +41,22 @@ class WebUIStorage {
    * Load configuration from file
    */
   public loadConfig(): WebUIConfig {
+    if (this.configCache) {
+      return this.configCache;
+    }
+
     try {
       if (fs.existsSync(this.configFile)) {
         const data = fs.readFileSync(this.configFile, 'utf8');
-        return JSON.parse(data);
+        this.configCache = JSON.parse(data);
+        return this.configCache!;
       }
     } catch (error) {
       console.error('Error loading web UI config:', error);
     }
 
     // Return default configuration
-    return {
+    const defaultConfig = {
       agents: [],
       mcpServers: [],
       llmProviders: [],
@@ -59,6 +65,9 @@ class WebUIStorage {
       guards: [],
       lastUpdated: new Date().toISOString(),
     };
+
+    this.configCache = defaultConfig;
+    return defaultConfig;
   }
 
   /**
@@ -69,6 +78,7 @@ class WebUIStorage {
       config.lastUpdated = new Date().toISOString();
       this.ensureConfigDir();
       fs.writeFileSync(this.configFile, JSON.stringify(config, null, 2));
+      this.configCache = config;
     } catch (error) {
       console.error('Error saving web UI config:', error);
       throw new Error(
@@ -311,10 +321,12 @@ class WebUIStorage {
           config.guards = defaultGuards;
         } else {
           // Merge defaults: if a guard with same ID exists, keep it, otherwise add default
+          // ⚡ Bolt Optimization: Use Set for O(1) lookups instead of O(n) array search
+          const existingIds = new Set(config.guards.map((g: { id: string }) => g.id));
           for (const defaultGuard of defaultGuards) {
-            const exists = config.guards.find((g: any) => g.id === defaultGuard.id);
-            if (!exists) {
+            if (!existingIds.has(defaultGuard.id)) {
               config.guards.push(defaultGuard);
+              existingIds.add(defaultGuard.id);
             }
           }
         }
@@ -363,85 +375,6 @@ class WebUIStorage {
       guard.enabled = enabled;
       this.saveConfig(config);
     }
-  }
-
-  // ========================================
-  // Tool Usage Guards - Stored in separate file
-  // ========================================
-
-  private toolUsageGuardsFile: string = path.join(process.cwd(), 'config', 'tool-usage-guards.json');
-
-  /**
-   * Get all tool usage guards
-   */
-  public getToolUsageGuards(): any[] {
-    try {
-      if (fs.existsSync(this.toolUsageGuardsFile)) {
-        const data = fs.readFileSync(this.toolUsageGuardsFile, 'utf8');
-        return JSON.parse(data);
-      }
-    } catch (error) {
-      console.error('Error loading tool usage guards:', error);
-    }
-    return [];
-  }
-
-  /**
-   * Save a tool usage guard (create or update)
-   */
-  public saveToolUsageGuard(guard: any): void {
-    try {
-      const guards = this.getToolUsageGuards();
-      const existingIndex = guards.findIndex((g: any) => g.id === guard.id);
-
-      if (existingIndex >= 0) {
-        guards[existingIndex] = guard;
-      } else {
-        guards.push(guard);
-      }
-
-      this.ensureConfigDir();
-      fs.writeFileSync(this.toolUsageGuardsFile, JSON.stringify(guards, null, 2));
-    } catch (error) {
-      console.error('Error saving tool usage guard:', error);
-      throw new Error(
-        `Failed to save tool usage guard: ${error instanceof Error ? error.message : String(error)}`
-      );
-    }
-  }
-
-  /**
-   * Delete a tool usage guard by ID
-   */
-  public deleteToolUsageGuard(guardId: string): void {
-    try {
-      const guards = this.getToolUsageGuards();
-      const filteredGuards = guards.filter((g: any) => g.id !== guardId);
-
-      this.ensureConfigDir();
-      fs.writeFileSync(this.toolUsageGuardsFile, JSON.stringify(filteredGuards, null, 2));
-    } catch (error) {
-      console.error('Error deleting tool usage guard:', error);
-      throw new Error(
-        `Failed to delete tool usage guard: ${error instanceof Error ? error.message : String(error)}`
-      );
-    }
-  }
-
-  /**
-   * Toggle a tool usage guard's active status
-   */
-  public toggleToolUsageGuard(guardId: string, isActive: boolean): boolean {
-    const guards = this.getToolUsageGuards();
-    const guard = guards.find((g: any) => g.id === guardId);
-
-    if (guard) {
-      guard.isActive = isActive;
-      this.ensureConfigDir();
-      fs.writeFileSync(this.toolUsageGuardsFile, JSON.stringify(guards, null, 2));
-      return true;
-    }
-    return false;
   }
 }
 

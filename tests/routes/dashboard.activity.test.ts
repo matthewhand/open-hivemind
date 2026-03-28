@@ -44,13 +44,6 @@ const mockActivityLoggerInstance = {
   getEvents: jest.fn(),
 };
 
-const mockAnalyticsServiceInstance = {
-  getStats: jest.fn(),
-  getBehaviorPatterns: jest.fn(),
-  getUserSegments: jest.fn(),
-  getRecommendations: jest.fn(),
-};
-
 describe('dashboard activity route', () => {
   let app: express.Application;
 
@@ -62,33 +55,10 @@ describe('dashboard activity route', () => {
     const { BotConfigurationManager } = require('@src/config/BotConfigurationManager');
     const WebSocketService = require('@src/server/services/WebSocketService').default;
     const { ActivityLogger } = require('../../src/server/services/ActivityLogger');
-    const { AnalyticsService } = require('../../src/services/AnalyticsService');
 
     (BotConfigurationManager.getInstance as jest.Mock).mockReturnValue(mockManagerInstance);
     (WebSocketService.getInstance as jest.Mock).mockReturnValue(mockWsInstance);
     (ActivityLogger.getInstance as jest.Mock).mockReturnValue(mockActivityLoggerInstance);
-    (AnalyticsService.getInstance as jest.Mock).mockReturnValue(mockAnalyticsServiceInstance);
-
-    // Setup default mock returns for analytics endpoints
-    mockAnalyticsServiceInstance.getStats.mockReturnValue({
-      learningProgress: 50,
-      behaviorPatternsCount: 3,
-      userSegmentsCount: 2,
-      totalMessages: 100,
-      totalErrors: 5,
-      avgProcessingTime: 500,
-      activeBots: 2,
-      activeUsers: 10,
-    });
-    mockAnalyticsServiceInstance.getBehaviorPatterns.mockReturnValue([
-      { id: 'pattern-1', name: 'Test Pattern', description: 'Test', frequency: 0.5, confidence: 0.8, trend: 'stable', segments: [], recommendedWidgets: [], priority: 1 },
-    ]);
-    mockAnalyticsServiceInstance.getUserSegments.mockReturnValue([
-      { id: 'segment-1', name: 'Test Segment', description: 'Test', criteria: { behaviorPatterns: [], usageFrequency: 'daily', featureUsage: [], engagementLevel: 'high' }, characteristics: { preferredWidgets: [], optimalLayout: 'grid', themePreference: 'dark', notificationFrequency: 5 }, size: 10, confidence: 0.9 },
-    ]);
-    mockAnalyticsServiceInstance.getRecommendations.mockReturnValue([
-      { id: 'rec-1', type: 'widget', title: 'Test Recommendation', description: 'Test', confidence: 0.9, impact: 'high', reasoning: 'Test reasoning' },
-    ]);
   });
 
   it('returns activity data with filters and timeline', async () => {
@@ -105,8 +75,8 @@ describe('dashboard activity route', () => {
         id: '1',
         botName: 'AgentA',
         provider: 'slack',
-        channelId: 'C1',
-        userId: 'U1',
+        channelId: 'channel-C123',
+        userId: 'user-U1234',
         messageType: 'incoming',
         contentLength: 20,
         status: 'success',
@@ -116,8 +86,8 @@ describe('dashboard activity route', () => {
         id: '2',
         botName: 'AgentB',
         provider: 'discord',
-        channelId: 'C2',
-        userId: 'U2',
+        channelId: 'channel-C999',
+        userId: 'user-U9999',
         messageType: 'outgoing',
         contentLength: 35,
         status: 'error',
@@ -131,10 +101,12 @@ describe('dashboard activity route', () => {
       AgentB: { messageCount: 9, errors: ['Boom'] },
     });
 
-    const response = await request(app).get('/dashboard/api/activity');
+    const response = await request(app).get('/dashboard/activity');
 
     expect(response.status).toBe(200);
     expect(response.body.events).toHaveLength(2);
+    expect(response.body.events[0].userId).toBe('******1234');
+    expect(response.body.events[0].channelId).toBe('********C123');
     expect(response.body.filters.agents).toEqual(expect.arrayContaining(['AgentA', 'AgentB']));
     expect(response.body.timeline.length).toBeGreaterThan(0);
     expect(response.body.agentMetrics).toEqual(
@@ -156,8 +128,8 @@ describe('dashboard activity route', () => {
         id: '1',
         botName: 'AgentA',
         provider: 'slack',
-        channelId: 'C1',
-        userId: 'U1',
+        channelId: 'channel-secret',
+        userId: 'user-secret',
         messageType: 'incoming',
         contentLength: 20,
         status: 'success',
@@ -168,16 +140,19 @@ describe('dashboard activity route', () => {
     mockWsInstance.getAllBotStats.mockReturnValue({ AgentA: { messageCount: 3, errors: [] } });
 
     const response = await request(app)
-      .get('/dashboard/api/activity')
+      .get('/dashboard/activity')
       .query({ bot: 'AgentA', messageProvider: 'slack', llmProvider: 'openai', from: ts, to: ts });
 
     expect(response.status).toBe(200);
     expect(response.body.events).toHaveLength(1);
+    expect(response.body.events[0].userId).toBe('*******cret');
 
     // Also verify getEvents was called with correct filter
-    expect(mockActivityLoggerInstance.getEvents).toHaveBeenCalledWith(expect.objectContaining({
-      startTime: expect.any(Date),
-      endTime: expect.any(Date)
-    }));
+    expect(mockActivityLoggerInstance.getEvents).toHaveBeenCalledWith(
+      expect.objectContaining({
+        startTime: expect.any(Date),
+        endTime: expect.any(Date),
+      })
+    );
   });
 });
