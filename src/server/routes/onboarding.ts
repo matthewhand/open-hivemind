@@ -40,7 +40,10 @@ router.get('/status', async (_req, res) => {
 
     return res.json({ completed: false, step: onboardingStep });
   } catch (err) {
-    logger.error('Failed to get onboarding status', err instanceof Error ? err : new Error(String(err)));
+    logger.error(
+      'Failed to get onboarding status',
+      err instanceof Error ? err : new Error(String(err))
+    );
     return res.json({ completed: false, step: 1 });
   }
 });

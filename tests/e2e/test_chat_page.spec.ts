@@ -203,16 +203,11 @@ test.describe('ChatPage Optimistic Message Rollback', () => {
     // Dispatch the offline event manually since context.setOffline may not trigger window events
     await page.evaluate(() => window.dispatchEvent(new Event('offline')));
 
-    // Wait for the UI to reflect offline status
-    await page.waitForTimeout(1000);
-
     // Check for any offline indicator (text, disabled input, etc.)
     const offlineText = page.getByText(/offline/i).first();
     const offlinePlaceholder = page.getByPlaceholder(/offline/i).first();
 
-    if (await offlineText.isVisible().catch(() => false)) {
-      await expect(offlineText).toBeVisible();
-    }
+    await expect(offlineText).toBeVisible({ timeout: 10000 }).catch(() => {});
 
     // Screenshot offline mode
     await page.screenshot({ path: 'docs/screenshots/chatpage-offline.png' });
@@ -220,12 +215,9 @@ test.describe('ChatPage Optimistic Message Rollback', () => {
     // Simulate online
     await context.setOffline(false);
     await page.evaluate(() => window.dispatchEvent(new Event('online')));
-    await page.waitForTimeout(1000);
 
     // The input should be available again
     const chatInput = page.locator('input[type="text"], textarea').last();
-    if (await chatInput.isVisible().catch(() => false)) {
-      await expect(chatInput).toBeEnabled();
-    }
+    await expect(chatInput).toBeEnabled({ timeout: 10000 });
   });
 });

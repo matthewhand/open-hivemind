@@ -96,7 +96,10 @@ export class AnalyticsService {
    * Get behavior patterns based on actual usage data
    */
   public async getBehaviorPatterns(options: ActivityFilter = {}): Promise<BehaviorPattern[]> {
-    const events = await this.activityLogger.getEvents({ ...options, limit: options.limit || 5000 });
+    const events = await this.activityLogger.getEvents({
+      ...options,
+      limit: options.limit || 5000,
+    });
 
     if (events.length === 0) {
       return this.getDefaultBehaviorPatterns();
@@ -157,7 +160,10 @@ export class AnalyticsService {
    * Get user segments based on actual activity
    */
   public async getUserSegments(options: ActivityFilter = {}): Promise<UserSegment[]> {
-    const events = await this.activityLogger.getEvents({ ...options, limit: options.limit || 5000 });
+    const events = await this.activityLogger.getEvents({
+      ...options,
+      limit: options.limit || 5000,
+    });
 
     if (events.length === 0) {
       return this.getDefaultUserSegments();
@@ -244,8 +250,13 @@ export class AnalyticsService {
   /**
    * Get recommendations based on actual patterns
    */
-  public async getRecommendations(options: ActivityFilter = {}): Promise<DashboardRecommendation[]> {
-    const events = await this.activityLogger.getEvents({ ...options, limit: options.limit || 5000 });
+  public async getRecommendations(
+    options: ActivityFilter = {}
+  ): Promise<DashboardRecommendation[]> {
+    const events = await this.activityLogger.getEvents({
+      ...options,
+      limit: options.limit || 5000,
+    });
     const patterns = await this.getBehaviorPatterns(options);
     const segments = await this.getUserSegments(options);
 
@@ -337,7 +348,10 @@ export class AnalyticsService {
    * Get analytics stats
    */
   public async getStats(options: ActivityFilter = {}): Promise<AnalyticsStats> {
-    const events = await this.activityLogger.getEvents({ ...options, limit: options.limit || 10000 });
+    const events = await this.activityLogger.getEvents({
+      ...options,
+      limit: options.limit || 10000,
+    });
     const patterns = await this.getBehaviorPatterns(options);
     const segments = await this.getUserSegments(options);
 
@@ -381,7 +395,10 @@ export class AnalyticsService {
    * Get time-series data for analytics
    */
   public async getTimeSeries(options: ActivityFilter = {}): Promise<TimeSeriesBucket[]> {
-    const events = await this.activityLogger.getEvents({ ...options, limit: options.limit || 10000 });
+    const events = await this.activityLogger.getEvents({
+      ...options,
+      limit: options.limit || 10000,
+    });
 
     if (events.length === 0) {
       return [];

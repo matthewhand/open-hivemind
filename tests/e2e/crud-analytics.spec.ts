@@ -109,21 +109,13 @@ test.describe('Analytics Dashboard CRUD Lifecycle', () => {
 
     // Verify stats cards are visible with key metric values
     const totalMessagesText = page.getByText('12,543').or(page.getByText('12543'));
-
-    // Check if the element appears in DOM before asserting to avoid silent passes
-    if (await totalMessagesText.first().isVisible({ timeout: 5000 }).catch(() => false)) {
-      await expect(totalMessagesText.first()).toBeVisible();
-    }
+    await expect(totalMessagesText.first()).toBeVisible({ timeout: 10000 });
 
     const avgResponseText = page.getByText('1.45').or(page.getByText('1.45s'));
-    if ((await avgResponseText.count()) > 0) {
-      await expect(avgResponseText.first()).toBeVisible();
-    }
+    await expect(avgResponseText.first()).toBeVisible({ timeout: 10000 });
 
     const activeUsersText = page.getByText('328');
-    if ((await activeUsersText.count()) > 0) {
-      await expect(activeUsersText.first()).toBeVisible();
-    }
+    await expect(activeUsersText.first()).toBeVisible({ timeout: 10000 });
   });
 
   test('time range selector changes displayed data (1h, 24h, 7d, 30d)', async ({ page }) => {
@@ -154,41 +146,25 @@ test.describe('Analytics Dashboard CRUD Lifecycle', () => {
     await expect(page.locator('body')).toBeVisible();
 
     // Look for time range buttons or select
-    const timeRangeButtons = page.locator('button:has-text("1h"), button:has-text("24h"), button:has-text("7d"), button:has-text("30d")');
-    const timeRangeSelect = page.locator('select:has(option:has-text("24h")), select:has(option:has-text("7 days"))').first();
+    // Since this is a test environment, the UI should be deterministic. We expect buttons.
+    const btn7d = page.locator('button:has-text("7d"), button:has-text("7 days")').first();
+    await expect(btn7d).toBeVisible({ timeout: 10000 });
+    await btn7d.click();
 
-    if ((await timeRangeButtons.count()) > 0) {
-      const btn7d = page.locator('button:has-text("7d"), button:has-text("7 days")').first();
-      if ((await btn7d.count()) > 0) {
-        await btn7d.click();
+    const text7d = page.getByText('87,250').or(page.getByText('87250')).first();
+    await expect(text7d).toBeVisible({ timeout: 10000 });
 
-        const text7d = page.getByText('87,250').or(page.getByText('87250')).first();
-        if (await text7d.isVisible({ timeout: 5000 }).catch(() => false)) {
-            await expect(text7d).toBeVisible();
-        }
-      }
+    const btn1h = page.locator('button:has-text("1h"), button:has-text("1 hour")').first();
+    await btn1h.click();
 
-      const btn1h = page.locator('button:has-text("1h"), button:has-text("1 hour")').first();
-      if ((await btn1h.count()) > 0) {
-        await btn1h.click();
+    const text1h = page.getByText('12,543').or(page.getByText('12543')).first();
+    await expect(text1h).toBeVisible({ timeout: 10000 });
 
-        const text1h = page.getByText('12,543').or(page.getByText('12543')).first();
-        if (await text1h.isVisible({ timeout: 5000 }).catch(() => false)) {
-            await expect(text1h).toBeVisible();
-        }
-      }
+    const btn30d = page.locator('button:has-text("30d"), button:has-text("30 days")').first();
+    await btn30d.click();
 
-      const btn30d = page.locator('button:has-text("30d"), button:has-text("30 days")').first();
-      if ((await btn30d.count()) > 0) {
-        await btn30d.click();
-        // Just verify it doesn't crash, actual state depends on implementation details
-        await expect(page.locator('body')).toBeVisible();
-      }
-    } else if ((await timeRangeSelect.count()) > 0) {
-      await timeRangeSelect.selectOption({ index: 2 });
-      // Just verify it doesn't crash
-      await expect(page.locator('body')).toBeVisible();
-    }
+    // Just verify it doesn't crash, actual state depends on implementation details
+    await expect(page.locator('body')).toBeVisible();
   });
 
   test('refresh button triggers re-fetch', async ({ page }) => {
@@ -211,13 +187,13 @@ test.describe('Analytics Dashboard CRUD Lifecycle', () => {
     const initialCount = fetchCount;
     const refreshBtn = page.locator('button:has-text("Refresh")').first();
 
-    if ((await refreshBtn.count()) > 0) {
-      // Use response wait instead of hardcoded timeout
-      const responsePromise = page.waitForResponse('**/api/dashboard/status');
-      await refreshBtn.click();
-      await responsePromise;
-      expect(fetchCount).toBeGreaterThan(initialCount);
-    }
+    await expect(refreshBtn).toBeVisible({ timeout: 10000 });
+
+    // Use response wait instead of hardcoded timeout
+    const responsePromise = page.waitForResponse('**/api/dashboard/status');
+    await refreshBtn.click();
+    await responsePromise;
+    expect(fetchCount).toBeGreaterThan(initialCount);
   });
 
   test('charts render (message volume, response time)', async ({ page }) => {
@@ -241,20 +217,14 @@ test.describe('Analytics Dashboard CRUD Lifecycle', () => {
 
     // Check for chart containers (canvas for Chart.js, svg for Recharts/D3, or custom wrappers)
     const charts = page.locator('canvas, svg[class*="chart"], [class*="chart"], [class*="Chart"], [data-testid*="chart"]');
-    if ((await charts.count()) > 0) {
-      await expect(charts.first()).toBeVisible();
-    }
+    await expect(charts.first()).toBeVisible({ timeout: 10000 });
 
     // Look for chart headings
     const messageVolumeHeading = page.getByText(/message.*volume/i).or(page.getByText(/messages.*over.*time/i)).first();
-    if ((await messageVolumeHeading.count()) > 0) {
-      await expect(messageVolumeHeading).toBeVisible();
-    }
+    await expect(messageVolumeHeading).toBeVisible({ timeout: 10000 });
 
     const responseTimeHeading = page.getByText(/response.*time/i).first();
-    if ((await responseTimeHeading.count()) > 0) {
-      await expect(responseTimeHeading).toBeVisible();
-    }
+    await expect(responseTimeHeading).toBeVisible({ timeout: 10000 });
   });
 
   test('bot performance table with data', async ({ page }) => {
@@ -275,13 +245,13 @@ test.describe('Analytics Dashboard CRUD Lifecycle', () => {
 
     // Click on "Bot Status" tab to see bot names
     const botStatusTab = page.locator('[role="tab"]:has-text("Bot Status")').first();
-    if ((await botStatusTab.count()) > 0) {
-      await botStatusTab.click();
-    }
+    // Wait for the tab to appear and be clickable
+    await expect(botStatusTab).toBeVisible({ timeout: 10000 });
+    await botStatusTab.click();
 
     // Verify bot names appear
-    await expect(page.getByText('SupportBot').first()).toBeVisible({ timeout: 5000 });
-    await expect(page.getByText('SalesBot').first()).toBeVisible();
+    await expect(page.getByText('SupportBot').first()).toBeVisible({ timeout: 10000 });
+    await expect(page.getByText('SalesBot').first()).toBeVisible({ timeout: 10000 });
   });
 
   test('loading state during fetch', async ({ page }) => {
@@ -310,9 +280,7 @@ test.describe('Analytics Dashboard CRUD Lifecycle', () => {
     await expect(page.locator('body')).toBeVisible();
 
     const supportBot = page.getByText('SupportBot').first();
-    if (await supportBot.isVisible({ timeout: 5000 }).catch(() => false)) {
-      await expect(supportBot).toBeVisible();
-    }
+    await expect(supportBot).toBeVisible({ timeout: 10000 });
   });
 
   test('empty state when no data for time range', async ({ page }) => {
@@ -347,14 +315,10 @@ test.describe('Analytics Dashboard CRUD Lifecycle', () => {
     // Should show zeros or empty state messaging
     await expect(page.locator('body')).toBeVisible();
     const emptyText = page.locator('text=/no.*data/i, text=/no.*activity/i, text=/no.*metrics/i').first();
-    if ((await emptyText.count()) > 0) {
-      await expect(emptyText).toBeVisible();
-    }
+    await expect(emptyText).toBeVisible({ timeout: 10000 });
 
     // Stats should show zero values
     const zeroValue = page.getByText('0').first();
-    if ((await zeroValue.count()) > 0) {
-      await expect(zeroValue).toBeVisible();
-    }
+    await expect(zeroValue).toBeVisible({ timeout: 10000 });
   });
 });
