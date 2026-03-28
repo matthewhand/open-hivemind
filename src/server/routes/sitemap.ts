@@ -1,7 +1,7 @@
 import { Readable } from 'stream';
 import { Router, type Request, type Response } from 'express';
 import { SitemapStream, streamToPromise } from 'sitemap';
-import { createLogger, toError } from '@src/common/StructuredLogger';
+import { createLogger } from '@src/common/StructuredLogger';
 
 const router = Router();
 const logger = createLogger('routes:sitemap');
@@ -408,7 +408,7 @@ router.get('/sitemap.xml', async (req: Request, res: Response) => {
   } catch (error) {
     logger.error(
       'Error generating sitemap:',
-      toError(error)
+      error instanceof Error ? error : new Error(String(error))
     );
     res.status(500).json({ error: 'Failed to generate sitemap' });
   }
@@ -441,7 +441,7 @@ router.get('/sitemap.json', (req: Request, res: Response) => {
   } catch (error) {
     logger.error(
       'Error generating JSON sitemap:',
-      toError(error)
+      error instanceof Error ? error : new Error(String(error))
     );
     res.status(500).json({ error: 'Failed to generate sitemap' });
   }
@@ -544,7 +544,7 @@ router.get('/sitemap', (req: Request, res: Response) => {
   } catch (error) {
     logger.error(
       'Error generating HTML sitemap:',
-      toError(error)
+      error instanceof Error ? error : new Error(String(error))
     );
     res.status(500).send('Failed to generate sitemap');
   }

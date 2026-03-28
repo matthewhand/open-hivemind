@@ -190,12 +190,12 @@ const ChatPage: React.FC = () => {
     }
   };
 
-  const handleRetryMessage = useCallback((messageId: string) => {
+  const handleRetryMessage = (messageId: string) => {
     const messageToRetry = messages.find(m => m.id === messageId);
-    if (!messageToRetry) return;
-    setMessages(prev => prev.filter(m => m.id !== messageId));
-    handleSendMessage(messageToRetry.content);
-  }, [messages, handleSendMessage]);
+    if (messageToRetry) {
+      handleSendMessage(messageToRetry.content, messageId);
+    }
+  };
 
   return (
     <div className="flex flex-col h-full bg-base-200">
@@ -319,7 +319,6 @@ const ChatPage: React.FC = () => {
               <ChatInterface
                 messages={messages}
                 onSendMessage={handleSendMessage}
-                onRetryMessage={handleRetryMessage}
                 placeholder="Type a message..."
                 className="h-full"
                 maxHeight="100%"
@@ -330,7 +329,7 @@ const ChatPage: React.FC = () => {
           ) : (
             <div className="flex-1 flex flex-col items-center justify-center p-8 text-center bg-base-200/50">
               <EmptyState
-                icon={<MessageSquare className="w-12 h-12" />}
+                icon={MessageSquare}
                 title="Select a Bot"
                 description="Choose a bot from the sidebar to view its real-time chat history and activity."
                 variant="noData"

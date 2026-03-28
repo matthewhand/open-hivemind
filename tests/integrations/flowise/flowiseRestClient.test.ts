@@ -1,16 +1,16 @@
 import axios from 'axios';
 import { ConfigurationManager } from '@config/ConfigurationManager';
-import flowiseConfig from '@hivemind/llm-flowise/flowiseConfig';
+import flowiseConfig from '@integrations/flowise/flowiseConfig';
 import {
   getFlowiseResponse,
   getFlowiseResponseFallback,
-} from '@hivemind/llm-flowise/flowiseRestClient';
+} from '@integrations/flowise/flowiseRestClient';
 
 jest.mock('axios');
 const mockedAxios = axios as jest.Mocked<typeof axios>;
 
-jest.mock('@hivemind/llm-flowise/flowiseConfig', () => {
-  const actual = jest.requireActual('@hivemind/llm-flowise/flowiseConfig');
+jest.mock('@integrations/flowise/flowiseConfig', () => {
+  const actual = jest.requireActual('@integrations/flowise/flowiseConfig');
   return {
     __esModule: true,
     default: {

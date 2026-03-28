@@ -1,6 +1,5 @@
 import Debug from 'debug';
 import { Router } from 'express';
-import type { AuthMiddlewareRequest } from '../../auth/types';
 import { DatabaseManager } from '../../database/DatabaseManager';
 import { AnomalyDetectionService } from '../../services/AnomalyDetectionService';
 

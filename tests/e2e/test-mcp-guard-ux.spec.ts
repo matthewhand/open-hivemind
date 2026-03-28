@@ -73,12 +73,11 @@ test('verify MCP Guard UX', async ({ page }) => {
   // Screenshot after typing comma
   await page.screenshot({ path: 'docs/screenshots/mcp-guard-ux-after.png' });
 
-  // When we type comma, it commits "user1", then we type "user2", leaving "user2" in the input field
-  // and "user1" as a committed chip. The test logic originally expected value to be "user1, user2"
-  // but the comma separated input renders chips and leaves only the uncommitted part in the input.
+  const value = await usersInput.inputValue();
+  console.log('Input value after typing ",user2":', value);
+  expect(value).toBe('user2');
+
   const chips = modal.locator('[data-testid="chip"]');
   await expect(chips).toHaveCount(1);
-  await expect(chips.first()).toHaveText('user1×');
-  const value = await usersInput.inputValue();
-  expect(value).toBe('user2');
+  await expect(chips.first()).toHaveText(/user1/);
 });

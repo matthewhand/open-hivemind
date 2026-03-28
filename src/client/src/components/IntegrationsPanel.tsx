@@ -30,7 +30,7 @@ import {
 
 import { PROVIDER_CATEGORIES } from '../config/providers';
 import ProviderConfigModal from './ProviderConfiguration/ProviderConfigModal';
-import { LLM_PROVIDER_CONFIGS, LLMProviderType, ProviderModalState } from '../types';
+import { LLM_PROVIDER_CONFIGS, LLMProviderType, ProviderModalState } from '../types/bot';
 
 interface ConfigSchema {
   doc?: string;
@@ -99,14 +99,11 @@ const IntegrationsPanel: React.FC = () => {
   const fetchData = async () => {
     try {
       setLoading(true);
-      const [configResult, botsResult, profilesResult] = await Promise.allSettled([
+      const [configRes, botsRes, profilesRes] = await Promise.all([
         fetch('/api/config/global'),
         fetch('/api/dashboard/api/status'), // Using status endpoint for bots list
         fetch('/api/config/llm-profiles'),
       ]);
-      const configRes = configResult.status === 'fulfilled' ? configResult.value : { ok: false, json: async () => ({}) } as unknown as Response;
-      const botsRes = botsResult.status === 'fulfilled' ? botsResult.value : { ok: false, json: async () => ({ bots: [] }) } as unknown as Response;
-      const profilesRes = profilesResult.status === 'fulfilled' ? profilesResult.value : { ok: false, json: async () => ({ llm: [] }) } as unknown as Response;
 
       if (!configRes.ok) { throw new Error('Failed to fetch configuration'); }
       const configData = await configRes.json();
@@ -302,7 +299,7 @@ const IntegrationsPanel: React.FC = () => {
               className={`join-item w-full input-sm ${isLocked ? 'input-disabled bg-base-200 text-base-content/50' : ''}`}
               placeholder={isReadOnly ? 'Protected Value' : ''}
             />
-            {isLocked && <button className="btn btn-sm btn-square join-item btn-disabled"><LockClosedIcon className="w-4 h-4" /></button>}
+            {isLocked && <button className="btn btn-sm btn-square join-item btn-disabled" aria-label="Locked"><LockClosedIcon className="w-4 h-4" /></button>}
           </div>
         )}
         {type === 'select' && (
@@ -384,7 +381,7 @@ const IntegrationsPanel: React.FC = () => {
                         </div>
                       </div>
                       <div className="flex gap-1">
-                        <Button variant="ghost" size="sm" className="btn-square btn-xs" onClick={() => setProviderModalState({
+                        <Button variant="ghost" size="sm" className="btn-square btn-xs" aria-label={`Edit ${profile.name} provider profile`} onClick={() => setProviderModalState({
                           isOpen: true,
                           isEdit: true,
                           providerType: 'llm',
@@ -392,7 +389,7 @@ const IntegrationsPanel: React.FC = () => {
                         })}>
                           <PencilSquareIcon className="w-4 h-4" />
                         </Button>
-                        <Button variant="ghost" size="sm" className="btn-square btn-xs text-error" onClick={() => handleDeleteProfile(profile.key)}>
+                        <Button variant="ghost" size="sm" className="btn-square btn-xs text-error" aria-label={`Delete ${profile.name} provider profile`} onClick={() => handleDeleteProfile(profile.key)}>
                           <TrashIcon className="w-4 h-4" />
                         </Button>
                       </div>
@@ -421,7 +418,7 @@ const IntegrationsPanel: React.FC = () => {
                  {/* Only allow editing existing config values, but filter for advanced */}
                  <div className="flex items-center justify-between mb-2 col-span-full">
                     <h3 className="font-bold text-sm">Default Configuration</h3>
-                    <Button variant="ghost" size="sm" className="btn-xs" onClick={() => openEditModal('llm')}>
+                    <Button variant="ghost" size="sm" className="btn-xs" aria-label="Edit global LLM configuration" onClick={() => openEditModal('llm')}>
                       <PencilSquareIcon className="w-3 h-3 mr-1" /> Edit Globals
                     </Button>
                  </div>
@@ -516,7 +513,7 @@ const IntegrationsPanel: React.FC = () => {
                         </div>
                       </div>
                     </div>
-                    <Button variant="ghost" size="sm" className="btn-square btn-xs" onClick={() => openEditModal(key)}>
+                    <Button variant="ghost" size="sm" className="btn-square btn-xs" aria-label={`Edit ${key} configuration`} onClick={() => openEditModal(key)}>
                       <PencilSquareIcon className="w-4 h-4" />
                     </Button>
                   </div>

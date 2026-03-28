@@ -312,7 +312,7 @@ const PersonasPage: React.FC = () => {
       <PageHeader
         title="Personas (Beta)"
         description="Manage AI personalities and system prompts"
-        icon={<Sparkles className="w-12 h-12" />}
+        icon={Sparkles}
         actions={
           <div className="flex gap-2">
             <Button
@@ -367,7 +367,7 @@ const PersonasPage: React.FC = () => {
         </div>
       ) : personas.length === 0 ? (
         <EmptyState
-          icon={<Sparkles className="w-12 h-12" />}
+          icon={Sparkles}
           title="No personas configured"
           description="Create your first persona to get started"
           actionLabel="Create Persona"
@@ -377,7 +377,7 @@ const PersonasPage: React.FC = () => {
         />
       ) : filteredPersonas.length === 0 ? (
         <EmptyState
-          icon={<Search className="w-12 h-12" />}
+          icon={Search}
           title="No personas found"
           description="Try adjusting your search or filters"
           actionLabel="Clear Filters"

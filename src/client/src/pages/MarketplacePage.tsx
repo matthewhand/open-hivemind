@@ -1,5 +1,8 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Card, Button, Badge, Breadcrumbs } from '../components/DaisyUI';
+import Card from '../components/DaisyUI/Card';
+import Button from '../components/DaisyUI/Button';
+import Badge from '../components/DaisyUI/Badge';
+import Breadcrumbs from '../components/DaisyUI/Breadcrumbs';
 import {
   Store as StoreIcon,
   Download as DownloadIcon,
@@ -11,7 +14,7 @@ import {
   MessageCircle as MessageIcon,
   Database as MemoryIcon,
   Wrench as ToolIcon,
-  Github as GithubIcon,
+  Github as GitHubIcon,
   AlertCircle as AlertIcon,
   CheckCircle as CheckIcon,
   X as CloseIcon,
@@ -106,7 +109,7 @@ const MarketplacePage: React.FC = () => {
     });
   }, [packages, filter, searchQuery]);
 
-  // Install from Github URL
+  // Install from GitHub URL
   const handleInstallFromUrl = async () => {
     if (!githubUrl.trim()) return;
 
@@ -397,11 +400,11 @@ const MarketplacePage: React.FC = () => {
       {installModalOpen && (
         <dialog className="modal modal-open">
           <div className="modal-box">
-            <h3 className="font-bold text-lg mb-4">Install Package from Github</h3>
+            <h3 className="font-bold text-lg mb-4">Install Package from GitHub</h3>
 
             <div className="form-control w-full">
               <label className="label">
-                <span className="label-text">Github Repository URL</span>
+                <span className="label-text">GitHub Repository URL</span>
               </label>
               <input
                 type="text"
@@ -412,7 +415,7 @@ const MarketplacePage: React.FC = () => {
               />
               <label className="label">
                 <span className="label-text-alt text-base-content/50">
-                  Enter the full Github URL of the provider package
+                  Enter the full GitHub URL of the provider package
                 </span>
               </label>
             </div>
@@ -436,7 +439,7 @@ const MarketplacePage: React.FC = () => {
                   <span className="loading loading-spinner loading-sm"></span>
                 ) : (
                   <>
-                    <GithubIcon className="w-4 h-4 mr-1" />
+                    <GitHubIcon className="w-4 h-4 mr-1" />
                     Install
                   </>
                 )}

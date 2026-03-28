@@ -42,26 +42,19 @@ const SecureConfigManager: React.FC<SecureConfigManagerProps> = ({ onRefresh }) 
   const [formData, setFormData] = useState({
     name: '',
     data: {},
-    rotationInterval: 0,
     encryptSensitive: true,
   });
   const [backupFile, setBackupFile] = useState('');
 
-  const fetchConfigs = async () => {
-    try {
-      setLoading(true);
-      const response = await apiService.getSecureConfigs();
-      setConfigs(response.data || []);
-    } catch (error) {
-      console.error('Failed to load secure configs:', error);
-      showToast('Failed to load secure configurations', 'error');
-    } finally {
-      setLoading(false);
-    }
-  };
-
+  // Mock data
   useEffect(() => {
-    fetchConfigs();
+    const mockConfigs: SecureConfig[] = [
+      { id: '1', name: 'discord-tokens', data: { 'bot1_token': '••••••••', 'bot2_token': '••••••••', 'webhook_secret': '••••••••' }, createdAt: '2024-01-15T10:00:00Z', updatedAt: '2024-01-19T14:30:00Z', encrypted: true },
+      { id: '2', name: 'api-keys', data: { 'openai_key': '••••••••', 'database_url': '••••••••', 'redis_password': '••••••••' }, createdAt: '2024-01-16T09:15:00Z', updatedAt: '2024-01-18T16:45:00Z', encrypted: true },
+      { id: '3', name: 'ssl-certificates', data: { 'cert_path': '/path/to/cert.pem', 'key_path': '/path/to/key.pem', 'ca_bundle': '••••••••' }, createdAt: '2024-01-17T11:20:00Z', updatedAt: '2024-01-17T11:20:00Z', encrypted: false },
+    ];
+    setConfigs(mockConfigs);
+    setLoading(false);
   }, []);
 
   const showToast = (message: string, type: 'success' | 'error' | 'info') => {
@@ -70,26 +63,14 @@ const SecureConfigManager: React.FC<SecureConfigManagerProps> = ({ onRefresh }) 
   };
 
   const resetForm = () => {
-    setFormData({ name: '', data: {}, rotationInterval: 0, encryptSensitive: true });
+    setFormData({ name: '', data: {}, encryptSensitive: true });
     setEditingConfig(null);
   };
 
-  const handleOpenDialog = async (config?: SecureConfig) => {
+  const handleOpenDialog = (config?: SecureConfig) => {
     if (config) {
-      try {
-        const response = await apiService.getSecureConfig(config.id);
-        const fullConfig = response.data;
-        setEditingConfig(fullConfig);
-        setFormData({
-          name: fullConfig.name,
-          data: fullConfig.data || {},
-          rotationInterval: fullConfig.rotationInterval || 0,
-          encryptSensitive: fullConfig.encrypted ?? true
-        });
-      } catch (error) {
-        showToast('Failed to load configuration details', 'error');
-        return;
-      }
+      setEditingConfig(config);
+      setFormData({ name: config.name, data: config.data, encryptSensitive: config.encrypted });
     } else {
       resetForm();
     }
@@ -109,28 +90,17 @@ const SecureConfigManager: React.FC<SecureConfigManagerProps> = ({ onRefresh }) 
 
     try {
       if (editingConfig) {
-        await apiService.updateSecureConfig(editingConfig.id, {
-          name: formData.name,
-          data: formData.data,
-          rotationInterval: formData.rotationInterval > 0 ? formData.rotationInterval : undefined,
-          type: editingConfig.type || 'custom',
-        });
+        const updatedConfigs = configs.map(c => c.id === editingConfig.id ? { ...c, ...formData, updatedAt: new Date().toISOString() } : c);
+        setConfigs(updatedConfigs);
         showToast(`Configuration "${formData.name}" updated successfully`, 'success');
       } else {
-        const id = formData.name.toLowerCase().replace(/[^a-z0-9_-]/g, '-');
-        await apiService.createSecureConfig({
-          id,
-          name: formData.name,
-          data: formData.data,
-          rotationInterval: formData.rotationInterval > 0 ? formData.rotationInterval : undefined,
-          type: 'custom',
-        });
+        const newConfig: SecureConfig = { id: Date.now().toString(), name: formData.name, data: formData.data, encrypted: formData.encryptSensitive, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() };
+        setConfigs([...configs, newConfig]);
         showToast(`Configuration "${formData.name}" created successfully`, 'success');
       }
       handleCloseDialog();
-      fetchConfigs();
       onRefresh?.();
-    } catch (error) {
+    } catch {
       showToast('Failed to save configuration', 'error');
     }
   };
@@ -139,11 +109,10 @@ const SecureConfigManager: React.FC<SecureConfigManagerProps> = ({ onRefresh }) 
     const config = configs.find(c => c.id === configId);
     if (!config || !confirm(`Are you sure you want to delete configuration "${config.name}"?`)) {return;}
     try {
-      await apiService.deleteSecureConfig(configId);
+      setConfigs(configs.filter(c => c.id !== configId));
       showToast(`Configuration "${config.name}" deleted successfully`, 'success');
-      fetchConfigs();
       onRefresh?.();
-    } catch (error) {
+    } catch {
       showToast('Failed to delete configuration', 'error');
     }
   };
@@ -227,25 +196,24 @@ const SecureConfigManager: React.FC<SecureConfigManagerProps> = ({ onRefresh }) 
                   <Badge variant={config.encrypted ? 'error' : 'success'} size="sm" style="outline">
                     {config.encrypted ? 'Encrypted' : 'Plain Text'}
                   </Badge>
-                  {config.rotationInterval && config.rotationInterval > 0 && (
-                    <Badge variant="info" size="sm" style="outline" className="ml-2">
-                      Rotation: {config.rotationInterval}d
-                    </Badge>
-                  )}
                 </div>
                 <p className="text-sm text-base-content/70">
-                  {config.data ? Object.keys(config.data).length : 0} keys • {config.data ? formatBytes(config.data) : 0} bytes
+                  {Object.keys(config.data).length} keys • {formatBytes(config.data)} bytes
                 </p>
                 <p className="text-xs text-base-content/60">Updated: {formatDate(config.updatedAt)}</p>
               </div>
 
               <div className="flex gap-2">
-                <Button variant="ghost" size="sm" className="btn-circle" onClick={() => handleOpenDialog(config)} aria-label="Edit Configuration">
-                  <PencilIcon className="w-4 h-4" />
-                </Button>
-                <Button variant="ghost" size="sm" className="btn-circle text-error" onClick={() => handleDeleteConfig(config.id)} aria-label="Delete Configuration">
-                  <TrashIcon className="w-4 h-4" />
-                </Button>
+                <Tooltip content="Edit Configuration">
+                  <Button variant="ghost" size="sm" className="btn-circle" onClick={() => handleOpenDialog(config)}>
+                    <PencilIcon className="w-4 h-4" />
+                  </Button>
+                </Tooltip>
+                <Tooltip content="Delete Configuration">
+                  <Button variant="ghost" size="sm" className="btn-circle text-error" onClick={() => handleDeleteConfig(config.id)}>
+                    <TrashIcon className="w-4 h-4" />
+                  </Button>
+                </Tooltip>
               </div>
             </div>
           ))}
@@ -264,23 +232,6 @@ const SecureConfigManager: React.FC<SecureConfigManagerProps> = ({ onRefresh }) 
           <div className="form-control">
             <label className="label"><span className="label-text">Configuration Name *</span></label>
             <Input value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} placeholder="e.g., discord-tokens, api-keys" />
-          </div>
-
-          <div className="form-control">
-            <label className="label">
-              <span className="label-text">Rotation Interval (days)</span>
-              <span className="label-text-alt text-base-content/60">Optional</span>
-            </label>
-            <Input
-              type="number"
-              min="0"
-              value={formData.rotationInterval}
-              onChange={(e) => setFormData({ ...formData, rotationInterval: parseInt(e.target.value) || 0 })}
-              placeholder="e.g., 30 for monthly rotation"
-            />
-            <label className="label">
-              <span className="label-text-alt">Set to 0 to disable rotation warnings</span>
-            </label>
           </div>
 
           <Toggle label="Encrypt sensitive data" checked={formData.encryptSensitive} onChange={(e) => setFormData({ ...formData, encryptSensitive: e.target.checked })} color="primary" />

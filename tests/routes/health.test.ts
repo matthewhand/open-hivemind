@@ -1,23 +1,15 @@
 import express from 'express';
 import request from 'supertest';
+import healthRouter from '../../src/server/routes/health';
 import { DatabaseManager } from '../../src/database/DatabaseManager';
 import { BotManager } from '../../src/managers/BotManager';
-import healthRouter from '../../src/server/routes/health';
 import ApiMonitorService from '../../src/services/ApiMonitorService';
-import { container } from 'tsyringe';
 
 // Mock dependencies
 jest.mock('../../src/database/DatabaseManager');
 jest.mock('../../src/managers/BotManager');
 jest.mock('../../src/monitoring/MetricsCollector');
 jest.mock('../../src/services/ApiMonitorService');
-jest.mock('tsyringe', () => ({
-  container: {
-    resolve: jest.fn(),
-  },
-  singleton: () => jest.fn(),
-  injectable: () => jest.fn(),
-}));
 
 describe('Health Routes', () => {
   let app: express.Express;
@@ -37,7 +29,7 @@ describe('Health Routes', () => {
       (BotManager.getInstance as jest.Mock).mockReturnValue({
         getAllBots: jest.fn().mockReturnValue(new Map()),
       });
-      (container.resolve as jest.Mock).mockReturnValue({
+      (ApiMonitorService.getInstance as jest.Mock).mockReturnValue({
         getAllStatuses: jest.fn().mockReturnValue({}),
       });
 
@@ -59,7 +51,7 @@ describe('Health Routes', () => {
       (BotManager.getInstance as jest.Mock).mockReturnValue({
         getAllBots: jest.fn().mockReturnValue(new Map()),
       });
-      (container.resolve as jest.Mock).mockReturnValue({
+      (ApiMonitorService.getInstance as jest.Mock).mockReturnValue({
         getAllStatuses: jest.fn().mockReturnValue({}),
       });
 

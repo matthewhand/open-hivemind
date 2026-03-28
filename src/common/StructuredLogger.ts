@@ -60,14 +60,6 @@ interface ErrorInfo {
 }
 
 /**
- * Coerce an unknown catch value to an Error instance.
- * Use in catch blocks: `logger.error('msg', toError(e))`
- */
-export function toError(value: unknown): Error {
-  return value instanceof Error ? value : new Error(String(value));
-}
-
-/**
  * Extract error information from an Error object
  */
 function extractErrorInfo(error: Error): ErrorInfo {

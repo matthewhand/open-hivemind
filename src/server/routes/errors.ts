@@ -1,5 +1,5 @@
 import { Router, type Request, type Response } from 'express';
-import { createLogger, toError } from '@src/common/StructuredLogger';
+import { createLogger } from '@src/common/StructuredLogger';
 import { ErrorFactory } from '../../types/errorClasses';
 import { errorLogger } from '../../utils/errorLogger';
 import { authenticateToken } from '../middleware/auth';
@@ -81,7 +81,7 @@ router.post('/frontend', async (req: Request, res: Response) => {
   } catch (error) {
     logger.error(
       'Failed to process frontend error report:',
-      toError(error)
+      error instanceof Error ? error : new Error(String(error))
     );
 
     // Log the processing error
@@ -111,7 +111,7 @@ router.get('/stats', authenticateToken, async (req: Request, res: Response) => {
   } catch (error) {
     logger.error(
       'Failed to get error stats:',
-      toError(error)
+      error instanceof Error ? error : new Error(String(error))
     );
     return res.status(500).json({ error: 'Failed to retrieve error statistics' });
   }
@@ -126,7 +126,7 @@ router.get('/recent', authenticateToken, async (req: Request, res: Response) => 
   } catch (error) {
     logger.error(
       'Failed to get recent errors:',
-      toError(error)
+      error instanceof Error ? error : new Error(String(error))
     );
     return res.status(500).json({ error: 'Failed to retrieve recent errors' });
   }

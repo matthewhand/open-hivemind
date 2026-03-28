@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { createLogger, toError } from '@src/common/StructuredLogger';
+import { createLogger } from '@src/common/StructuredLogger';
 import { requireAdmin } from '../../auth/middleware';
 import { authenticateToken } from '../middleware/auth';
 import { clearAllSystemCaches } from '../utils/cacheManager'; // We'll implement this
@@ -30,7 +30,7 @@ router.post('/clear', async (req, res) => {
   } catch (error) {
     logger.error(
       'Failed to clear cache:',
-      toError(error)
+      error instanceof Error ? error : new Error(String(error))
     );
     res.status(500).json({ success: false, error: 'Failed to clear cache' });
   }

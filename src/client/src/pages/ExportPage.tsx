@@ -268,7 +268,7 @@ const ExportPage: React.FC = () => {
       <PageHeader
         title="Export & System Data"
         description="Manage system backups, export configurations, and access API specifications."
-        icon={<Archive className="w-12 h-12" />}
+        icon={Archive}
         gradient="secondary"
       />
 
@@ -331,7 +331,7 @@ const ExportPage: React.FC = () => {
                       <EmptyState
                         title="No backups found"
                         description="Create your first backup to secure your configuration."
-                        icon={<Archive className="w-12 h-12" />}
+                        icon={Archive}
                         variant="noData"
                         actionLabel="Create Backup"
                         onAction={() => setCreateModalOpen(true)}
@@ -344,7 +344,7 @@ const ExportPage: React.FC = () => {
                       <EmptyState
                         title="No backups match your search"
                         description="Try adjusting your search query."
-                        icon={<Search className="w-12 h-12" />}
+                        icon={Search}
                         variant="noResults"
                         actionLabel="Clear Search"
                         onAction={() => setSearchQuery('')}

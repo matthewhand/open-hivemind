@@ -3,7 +3,6 @@ import { BotConfigurationManager } from '../../../src/config/BotConfigurationMan
 import { UserConfigStore } from '../../../src/config/UserConfigStore';
 import { WebSocketService } from '../../../src/server/services/WebSocketService';
 import { ErrorUtils } from '../../../src/types/errors';
-import { resetSingleton } from '../../helpers/singletonReset';
 import fs from 'fs';
 import path from 'path';
 
@@ -26,7 +25,7 @@ describe('HotReloadManager', () => {
 
   beforeEach(() => {
     // @ts-ignore
-    resetSingleton(HotReloadManager);
+    HotReloadManager.instance = undefined;
     jest.clearAllMocks();
     (fs.existsSync as jest.Mock).mockReturnValue(true);
     const mockWatcher = { close: jest.fn() };

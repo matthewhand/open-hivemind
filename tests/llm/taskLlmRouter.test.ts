@@ -43,7 +43,7 @@ jest.mock('@hivemind/llm-openai', () => ({
 }));
 
 // Mock Flowise provider
-jest.mock('@hivemind/llm-flowise/flowiseProvider', () => ({
+jest.mock('@integrations/flowise/flowiseProvider', () => ({
   __esModule: true,
   FlowiseProvider: jest.fn().mockImplementation((_cfg: any) => ({
     name: 'flowise',
@@ -55,7 +55,7 @@ jest.mock('@hivemind/llm-flowise/flowiseProvider', () => ({
 }));
 
 // Mock OpenWebUI
-jest.mock('@hivemind/llm-openwebui/runInference', () => ({
+jest.mock('@integrations/openwebui/runInference', () => ({
   __esModule: true,
   generateChatCompletion: jest.fn().mockResolvedValue({ text: 'openwebui' }),
 }));

@@ -324,7 +324,7 @@ const ActivityMonitor: React.FC = () => {
          </div>
       ) : filteredMessages.length === 0 ? (
         <EmptyState
-          icon={<Activity className="w-12 h-12" />}
+          icon={Activity}
           title="No activity found"
           description="Try adjusting your filters or check back later."
           actionLabel="Refresh"
