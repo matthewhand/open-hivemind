@@ -821,6 +821,17 @@ class ApiService {
   }> {
     return this.request('/health/detailed');
   }
+  async getServiceHealth(): Promise<{
+    services: Array<{
+      name: string;
+      status: 'healthy' | 'degraded' | 'down';
+      latencyMs: number;
+      lastChecked: string;
+      details: string;
+    }>;
+  }> {
+    return this.request('/health/detailed/services');
+  }
   async getGlobalConfig(): Promise<Record<string, any>> {
     return this.request('/api/config/global');
   }

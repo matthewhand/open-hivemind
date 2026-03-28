@@ -127,6 +127,129 @@ router.get('/detailed', optionalAuth, (req: Request, res: Response) => {
   return res.json(healthData);
 });
 
+// Service-level health check endpoint for the health check widget
+router.get('/detailed/services', optionalAuth, async (_req: Request, res: Response) => {
+  const services: Array<{
+    name: string;
+    status: 'healthy' | 'degraded' | 'down';
+    latencyMs: number;
+    lastChecked: string;
+    details: string;
+  }> = [];
+
+  const now = new Date().toISOString();
+
+  // Check Database connectivity
+  const dbStart = Date.now();
+  try {
+    const dbManager = require('../../database/DatabaseManager').DatabaseManager.getInstance();
+    const isConnected = dbManager.isConnected();
+    services.push({
+      name: 'Database',
+      status: isConnected ? 'healthy' : 'down',
+      latencyMs: Date.now() - dbStart,
+      lastChecked: now,
+      details: isConnected ? 'Connected and responding' : 'Database connection lost',
+    });
+  } catch {
+    services.push({
+      name: 'Database',
+      status: 'down',
+      latencyMs: Date.now() - dbStart,
+      lastChecked: now,
+      details: 'Database unavailable or not configured',
+    });
+  }
+
+  // Check LLM providers
+  const llmStart = Date.now();
+  try {
+    const { ProviderRegistry } = require('../../registries/providerRegistry');
+    const registry = ProviderRegistry.getInstance();
+    const llmProviders = registry.getLlmProviders?.() || [];
+    const activeLlm = llmProviders.filter((p: any) => p.status === 'active' || p.connected);
+    const llmCount = llmProviders.length;
+    const activeCount = activeLlm.length;
+    const llmStatus = llmCount === 0 ? 'down' : activeCount === llmCount ? 'healthy' : activeCount > 0 ? 'degraded' : 'down';
+    services.push({
+      name: 'LLM Providers',
+      status: llmStatus as 'healthy' | 'degraded' | 'down',
+      latencyMs: Date.now() - llmStart,
+      lastChecked: now,
+      details: `${activeCount}/${llmCount} providers active`,
+    });
+  } catch {
+    const hasOpenAI = !!process.env.OPENAI_API_KEY;
+    const hasAnthropic = !!process.env.ANTHROPIC_API_KEY;
+    const hasAny = hasOpenAI || hasAnthropic;
+    services.push({
+      name: 'LLM Providers',
+      status: hasAny ? 'healthy' : 'down',
+      latencyMs: Date.now() - llmStart,
+      lastChecked: now,
+      details: hasAny ? 'Provider API key(s) configured' : 'No LLM providers configured',
+    });
+  }
+
+  // Check Message providers
+  const msgStart = Date.now();
+  try {
+    const { ProviderRegistry } = require('../../registries/providerRegistry');
+    const registry = ProviderRegistry.getInstance();
+    const msgProviders = registry.getMessageProviders?.() || [];
+    const activeMsg = msgProviders.filter((p: any) => p.status === 'active' || p.connected);
+    const msgCount = msgProviders.length;
+    const activeMsgCount = activeMsg.length;
+    const msgStatus = msgCount === 0 ? 'down' : activeMsgCount === msgCount ? 'healthy' : activeMsgCount > 0 ? 'degraded' : 'down';
+    services.push({
+      name: 'Message Providers',
+      status: msgStatus as 'healthy' | 'degraded' | 'down',
+      latencyMs: Date.now() - msgStart,
+      lastChecked: now,
+      details: `${activeMsgCount}/${msgCount} providers connected`,
+    });
+  } catch {
+    const hasDiscord = !!process.env.DISCORD_BOT_TOKEN;
+    const hasSlack = !!process.env.SLACK_BOT_TOKEN;
+    const hasAny = hasDiscord || hasSlack;
+    services.push({
+      name: 'Message Providers',
+      status: hasAny ? 'healthy' : 'down',
+      latencyMs: Date.now() - msgStart,
+      lastChecked: now,
+      details: hasAny ? 'Message provider token(s) configured' : 'No message providers configured',
+    });
+  }
+
+  // Check Memory provider
+  const memStart = Date.now();
+  try {
+    const { ProviderRegistry } = require('../../registries/providerRegistry');
+    const registry = ProviderRegistry.getInstance();
+    const memProviders = registry.getMemoryProviders?.() || [];
+    const activeMem = memProviders.filter((p: any) => p.status === 'active' || p.connected);
+    const memStatus = memProviders.length === 0 ? 'down' : activeMem.length > 0 ? 'healthy' : 'down';
+    services.push({
+      name: 'Memory Provider',
+      status: memStatus as 'healthy' | 'degraded' | 'down',
+      latencyMs: Date.now() - memStart,
+      lastChecked: now,
+      details: activeMem.length > 0 ? `${activeMem.length} provider(s) active` : 'No memory providers active',
+    });
+  } catch {
+    const hasMem0 = !!process.env.MEM0_API_KEY || !!process.env.MEM0_BASE_URL;
+    services.push({
+      name: 'Memory Provider',
+      status: hasMem0 ? 'healthy' : 'down',
+      latencyMs: Date.now() - memStart,
+      lastChecked: now,
+      details: hasMem0 ? 'Memory provider configured' : 'No memory provider configured',
+    });
+  }
+
+  return res.json({ services });
+});
+
 // System metrics endpoint
 router.get('/metrics', (req, res) => {
   const uptime = process.uptime();
