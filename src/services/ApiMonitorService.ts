@@ -63,10 +63,18 @@ export interface HealthCheckResult {
 @singleton()
 @injectable()
 export class ApiMonitorService extends EventEmitter {
+  private static instance: ApiMonitorService;
   private endpoints = new Map<string, EndpointConfig>();
   private statuses = new Map<string, EndpointStatus>();
   private monitoringIntervals = new Map<string, NodeJS.Timeout>();
   private isMonitoring = false;
+
+  public static getInstance(): ApiMonitorService {
+    if (!ApiMonitorService.instance) {
+      ApiMonitorService.instance = new ApiMonitorService();
+    }
+    return ApiMonitorService.instance;
+  }
 
   constructor() {
     super();
