@@ -2,6 +2,7 @@ import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import SystemManagement from '../SystemManagement';
 import { apiService } from '../../services/api';
+import ToastNotification from '../../components/DaisyUI/ToastNotification';
 import * as WebSocketContext from '../../contexts/WebSocketContext';
 
 // Mock apiService
@@ -27,7 +28,7 @@ jest.mock('../../contexts/WebSocketContext', () => ({
 
 // Mock Modal component to avoid JSDOM <dialog> issues
 jest.mock('../../components/DaisyUI/Modal', () => {
-  return ({ isOpen, children, title, actions }: any) => (
+  const Modal = ({ isOpen, children, title, actions }: any) => (
     isOpen ? (
       <div role="dialog" aria-modal="true">
         <h3>{title}</h3>
@@ -40,6 +41,22 @@ jest.mock('../../components/DaisyUI/Modal', () => {
       </div>
     ) : null
   );
+
+  const ConfirmModal = ({ isOpen, title, message, onConfirm, confirmText = 'Confirm' }: any) => (
+    isOpen ? (
+      <div role="dialog" aria-modal="true">
+        <h3>{title}</h3>
+        <p>{message}</p>
+        <button onClick={onConfirm}>{confirmText}</button>
+      </div>
+    ) : null
+  );
+
+  return {
+    __esModule: true,
+    default: Modal,
+    ConfirmModal
+  };
 });
 
 describe('SystemManagement', () => {
@@ -53,6 +70,7 @@ describe('SystemManagement', () => {
     botStats: [],
     connect: jest.fn(),
     disconnect: jest.fn(),
+    subscribe: jest.fn(() => jest.fn()),
   };
 
   beforeEach(() => {
@@ -77,13 +95,13 @@ describe('SystemManagement', () => {
   });
 
   it('renders system management page', async () => {
-    render(<SystemManagement />);
+    render(<ToastNotification><SystemManagement /></ToastNotification>);
     expect(screen.getByText('System Management')).toBeInTheDocument();
     await waitFor(() => expect(apiService.getGlobalConfig).toHaveBeenCalled());
   });
 
   it('handles backup creation with encryption', async () => {
-    render(<SystemManagement />);
+    render(<ToastNotification><SystemManagement /></ToastNotification>);
 
     // Find create backup button
     const createButton = screen.getByRole('button', { name: /Create Backup/i });
@@ -114,7 +132,7 @@ describe('SystemManagement', () => {
   });
 
   it('handles performance tab interactions', async () => {
-    render(<SystemManagement />);
+    render(<ToastNotification><SystemManagement /></ToastNotification>);
 
     // Click Performance Tuning tab
     const perfTab = screen.getByText('Performance Tuning');
@@ -129,6 +147,10 @@ describe('SystemManagement', () => {
     // Test clear cache
     const clearButton = screen.getByText('Clear System Cache');
     fireEvent.click(clearButton);
+
+    // In ConfirmModal mock, button text is 'Confirm'
+    const confirmButton = screen.getByText('Confirm');
+    fireEvent.click(confirmButton);
 
     await waitFor(() => expect(apiService.clearCache).toHaveBeenCalled());
   });

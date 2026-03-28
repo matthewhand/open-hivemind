@@ -36,7 +36,7 @@ interface BackupRecord {
 }
 
 const SystemManagement: React.FC = () => {
-  const { alerts, performanceMetrics } = useWebSocket();
+  const { alerts, performanceMetrics, subscribe } = useWebSocket();
   const successToast = useSuccessToast();
   const errorToast = useErrorToast();
   const warningToast = useWarningToast();
@@ -163,20 +163,31 @@ const SystemManagement: React.FC = () => {
     fetchBackupHistory();
   }, [fetchSystemConfig, fetchBackupHistory]);
 
-  // Performance monitoring polling
+  // Performance monitoring using WebSocket subscription
   useEffect(() => {
     if (activeTab === 'performance') {
       fetchApiStatus();
-      const interval = setInterval(fetchApiStatus, 10000); // Refresh every 10s
-      return () => clearInterval(interval);
-    }
-  }, [activeTab, fetchApiStatus]);
-
-  useEffect(() => {
-    if (activeTab === 'performance') {
       fetchPerformanceData();
+
+      // Subscribe to WebSocket updates for real-time status
+      const unsubscribeApi = subscribe('api_status_update', (data) => {
+        if (data) {
+          setApiStatus(data);
+        }
+      });
+
+      const unsubscribeSys = subscribe('system_metrics_update', (data) => {
+        if (data) {
+          setSystemInfo(data);
+        }
+      });
+
+      return () => {
+        unsubscribeApi();
+        unsubscribeSys();
+      };
     }
-  }, [activeTab, fetchPerformanceData]);
+  }, [activeTab, fetchApiStatus, fetchPerformanceData, subscribe]);
 
   const handleConfigUpdate = async (key: keyof SystemConfig, value: any) => {
     setIsLoading(true);

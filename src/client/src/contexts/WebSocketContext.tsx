@@ -12,6 +12,8 @@ import { logger } from '../utils/logger';
 
 type BotStat = { name: string; messageCount: number; errorCount: number };
 
+type SubscriptionCallback = (data: any) => void;
+
 interface WebSocketContextType {
   socket: Socket | null;
   isConnected: boolean;
@@ -21,6 +23,7 @@ interface WebSocketContextType {
   botStats: BotStat[];
   connect: () => void;
   disconnect: () => void;
+  subscribe: (topic: string, callback: SubscriptionCallback) => () => void;
 }
 
 const WebSocketContext = createContext<WebSocketContextType | undefined>(undefined);
@@ -35,6 +38,23 @@ export const WebSocketProvider: React.FC<{ children: ReactNode }> = ({ children 
   const [alerts, setAlerts] = useState<AlertEvent[]>([]);
   const [performanceMetrics, setPerformanceMetrics] = useState<PerformanceMetric[]>([]);
   const [botStats, setBotStats] = useState<BotStat[]>([]);
+  // Use a ref to store callbacks so we don't need to re-create the subscribe method
+  const subscribers = React.useRef<Record<string, Set<SubscriptionCallback>>>({});
+
+  const subscribe = React.useCallback((topic: string, callback: SubscriptionCallback) => {
+    if (!subscribers.current[topic]) {
+      subscribers.current[topic] = new Set();
+    }
+    subscribers.current[topic].add(callback);
+
+    return () => {
+      subscribers.current[topic]?.delete(callback);
+    };
+  }, []);
+
+  const notifySubscribers = (topic: string, data: any) => {
+    subscribers.current[topic]?.forEach((cb) => cb(data));
+  };
 
   const connect = () => {
     if (socket?.connected) { return; }
@@ -91,6 +111,21 @@ export const WebSocketProvider: React.FC<{ children: ReactNode }> = ({ children 
       logger.error('WebSocket reconnect failed');
     });
 
+    // Generic event forwarder for topic-based subscriptions
+    const eventsToForward = [
+      'message_flow_update', 'message_flow_broadcast',
+      'alerts_update', 'alerts_broadcast', 'alert_update',
+      'performance_metrics_update', 'performance_metrics_broadcast',
+      'bot_stats_broadcast', 'bot_status_update',
+      'system_metrics_update', 'api_status_update', 'config_validation_update'
+    ];
+
+    eventsToForward.forEach(event => {
+      newSocket.on(event, (data) => {
+        notifySubscribers(event, data);
+      });
+    });
+
     // Message flow events
     newSocket.on('message_flow_update', (data) => {
       setMessageFlow(data.messages || []);
@@ -141,7 +176,9 @@ export const WebSocketProvider: React.FC<{ children: ReactNode }> = ({ children 
     });
 
     newSocket.on('performance_metrics_broadcast', (data) => {
-      setPerformanceMetrics(prev => [...prev, data.current].slice(-60));
+      if (data.current) {
+        setPerformanceMetrics(prev => [...prev, data.current].slice(-60));
+      }
     });
 
     // Bot stats
@@ -190,6 +227,7 @@ export const WebSocketProvider: React.FC<{ children: ReactNode }> = ({ children 
     botStats,
     connect,
     disconnect,
+    subscribe,
   };
 
   return (
