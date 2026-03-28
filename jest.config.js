@@ -66,12 +66,6 @@ module.exports = {
     '^@hivemind/llm-openswarm/(.*)$': '<rootDir>/packages/llm-openswarm/src/$1',
     '^@hivemind/llm-openwebui$': '<rootDir>/packages/llm-openwebui/src/index.ts',
     '^@hivemind/llm-openwebui/(.*)$': '<rootDir>/packages/llm-openwebui/src/$1',
-    '^@hivemind/memory-mem0$': '<rootDir>/packages/memory-mem0/src/index.ts',
-    '^@hivemind/memory-mem0/(.*)$': '<rootDir>/packages/memory-mem0/src/$1',
-    '^@hivemind/memory-mem4ai$': '<rootDir>/packages/memory-mem4ai/src/index.ts',
-    '^@hivemind/memory-mem4ai/(.*)$': '<rootDir>/packages/memory-mem4ai/src/$1',
-    '^@hivemind/memory-memvault$': '<rootDir>/packages/memory-memvault/src/index.ts',
-    '^@hivemind/memory-memvault/(.*)$': '<rootDir>/packages/memory-memvault/src/$1',
     '^@slack/web-api$': '<rootDir>/tests/mocks/slackWebApiMock.js',
     '^@slack/socket-mode$': '<rootDir>/tests/mocks/slackSocketModeMock.js',
     '^@slack/rtm-api$': '<rootDir>/tests/mocks/slackRtmApiMock.js',
@@ -82,8 +76,6 @@ module.exports = {
       process.env.RUN_SYSTEM_TESTS === 'true'
         ? '<rootDir>/node_modules/discord.js'
         : '<rootDir>/tests/__mocks__/discord.js.ts',
-    'mem0ai/oss': '<rootDir>/tests/mocks/mem0ai.js',
-    'mem0ai': '<rootDir>/tests/mocks/mem0ai.js',
     '^pg$': '<rootDir>/tests/mocks/pg.js',
   },
   setupFilesAfterEnv: ['<rootDir>/tests/jest.setup.ts'],

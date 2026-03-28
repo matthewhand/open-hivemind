@@ -73,8 +73,6 @@
     "@server": "dist/src/server",
     "@hivemind/provider-openai": "dist/packages/provider-openai/src",
     "@hivemind/provider-letta": "dist/packages/provider-letta/src",
-    "@hivemind/memory-mem4ai": "dist/packages/memory-mem4ai/src",
-    "@hivemind/memory-memvault": "dist/packages/memory-memvault/src",
     "@hivemind/adapter-discord": "dist/packages/adapter-discord/src",
     "@hivemind/adapter-slack": "dist/packages/adapter-slack/src",
     "@hivemind/adapter-mattermost": "dist/packages/adapter-mattermost/src",

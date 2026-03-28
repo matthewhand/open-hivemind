@@ -29,6 +29,7 @@ export type {
 } from './IServiceDependencies';
 export type { IAdapterFactory, IAdapterConfig, IAdapterModule } from './IAdapterFactory';
 export type { ILlmProvider } from './ILlmProvider';
+export type { IMemoryProvider, MemoryEntry, MemorySearchResult } from './IMemoryProvider';
 export {
   BaseError,
   ValidationError,
