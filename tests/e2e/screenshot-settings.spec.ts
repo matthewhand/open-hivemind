@@ -18,10 +18,13 @@ test.describe('Settings Screenshots', () => {
         json: { defaultConfigured: true, defaultProviders: [], botsMissingLlmProvider: [], hasMissing: false },
       })
     );
+    let resolvePutPromise: () => void;
+    const putPromise = new Promise<void>((resolve) => { resolvePutPromise = resolve; });
+
     await page.route('**/api/config/global', async (route) => {
       if (route.request().method() === 'PUT') {
-        // Delay to capture loading spinner
-        await new Promise((f) => setTimeout(f, 3000));
+        // Wait indefinitely until resolvePutPromise is called to capture loading spinner
+        await putPromise;
         await route.fulfill({ status: 200, json: {} });
       } else {
         await route.fulfill({ status: 200, json: { general: { values: {} } } });
@@ -51,16 +54,19 @@ test.describe('Settings Screenshots', () => {
     const saveButton = page.getByRole('button', { name: 'Save Settings' });
 
     // Trigger the save action
-    saveButton.click();
+    await saveButton.click();
 
     // Wait for the button to have the loading class applied
-    await page.waitForFunction(() => {
-      const btn = document.querySelector('button.btn-primary');
-      return btn && btn.classList.contains('loading');
-    });
+    await expect(saveButton).toHaveClass(/loading/);
 
     // Screenshot while loading
     await page.screenshot({ path: 'docs/screenshots/settings-general-loading.png' });
+
+    // Resolve the promise to let the request complete
+    resolvePutPromise!();
+
+    // Wait for the loading class to be removed, indicating the request completed
+    await expect(saveButton).not.toHaveClass(/loading/);
 
     // Check Secure Configuration Manager on Security tab
     await page.goto('/admin/settings?tab=security');

@@ -300,12 +300,14 @@ test.describe('Error Recovery and Resilience', () => {
 
   test('double-click submit button — only one request sent', async ({ page }) => {
     let requestCount = 0;
+    let resolvePostPromise: () => void;
+    const postPromise = new Promise<void>((resolve) => { resolvePostPromise = resolve; });
 
     await page.route('**/api/config', async (route) => {
       if (route.request().method() === 'POST') {
         requestCount++;
         // Simulate slow response
-        await new Promise((resolve) => setTimeout(resolve, 500));
+        await postPromise;
         await route.fulfill({ status: 201, json: { id: 'new-bot', name: 'Test' } });
       } else {
         await route.fulfill({ status: 200, json: { bots: [] } });
@@ -347,7 +349,12 @@ test.describe('Error Recovery and Resilience', () => {
           // Double-click rapidly
           await submitBtn.click();
           await submitBtn.click();
-          await page.waitForTimeout(1500);
+
+          resolvePostPromise!();
+
+          if (await submitBtn.isVisible().catch(() => false)) {
+            await expect(submitBtn).toBeVisible();
+          }
 
           // Button should be disabled after first click (loading state)
           // or only one POST request should have been made

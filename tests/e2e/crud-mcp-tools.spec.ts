@@ -376,8 +376,11 @@ test.describe('MCP Tools CRUD Lifecycle', () => {
   });
 
   test('tool execution loading state', async ({ page }) => {
+    let resolveExecutionPromise: () => void;
+    const executionPromise = new Promise<void>((resolve) => { resolveExecutionPromise = resolve; });
+
     await page.route('**/api/mcp/servers/*/call-tool', async (route) => {
-      await new Promise((r) => setTimeout(r, 2000));
+      await executionPromise;
       await route.fulfill({ status: 200, json: mockExecutionResult });
     });
     await page.route('**/api/mcp/servers', (route) => {
@@ -393,9 +396,10 @@ test.describe('MCP Tools CRUD Lifecycle', () => {
       const runBtn = toolCard.locator('button:has-text("Run Tool")').first();
       if ((await runBtn.count()) > 0) {
         await runBtn.click();
-        await page.waitForTimeout(500);
 
         const modal = page.locator('dialog.modal[open] .modal-box, .modal-box, [role="dialog"]').first();
+        await expect(modal).toBeVisible();
+
         if ((await modal.count()) > 0) {
           const executeBtn = modal.locator('button:has-text("Run Tool")').first();
           if ((await executeBtn.count()) > 0) {
@@ -407,8 +411,16 @@ test.describe('MCP Tools CRUD Lifecycle', () => {
               await expect(loading).toBeVisible({ timeout: 3000 });
             }
 
-            // Wait for result
-            await page.waitForTimeout(3000);
+            // Resolve promise
+            resolveExecutionPromise!();
+
+            // Wait for result to appear
+            const resultArea = modal.locator('pre, code, [class*="result"], [class*="output"], textarea[readonly]').first();
+            if ((await resultArea.count()) > 0) {
+               if (await resultArea.isVisible({ timeout: 5000 }).catch(() => false)) {
+                 await expect(resultArea).toBeVisible();
+               }
+            }
           }
         }
       }
@@ -432,19 +444,19 @@ test.describe('MCP Tools CRUD Lifecycle', () => {
       const runBtn = toolCard.locator('button:has-text("Run Tool")').first();
       if ((await runBtn.count()) > 0) {
         await runBtn.click();
-        await page.waitForTimeout(500);
 
         const modal = page.locator('dialog.modal[open] .modal-box, .modal-box, [role="dialog"]').first();
+        await expect(modal).toBeVisible();
+
         if ((await modal.count()) > 0) {
           const executeBtn = modal.locator('button:has-text("Run Tool")').first();
           if ((await executeBtn.count()) > 0) {
             await executeBtn.click();
-            await page.waitForTimeout(500);
 
-            // Check for result output area
+            // Check for result output area to become visible
             const resultArea = modal.locator('pre, code, [class*="result"], [class*="output"], textarea[readonly]').first();
             if ((await resultArea.count()) > 0) {
-              await expect(resultArea).toBeVisible();
+              await expect(resultArea).toBeVisible({ timeout: 5000 });
             }
 
             // Check for execution time display
