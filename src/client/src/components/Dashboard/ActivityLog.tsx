@@ -33,9 +33,9 @@ const ActivityLog: React.FC = () => {
     setAppliedFilters({});
   };
 
-  const uniqueMessageProviders = useMemo(() => data?.filters.messageProviders ?? [], [data]);
-  const uniqueLlmProviders = useMemo(() => data?.filters.llmProviders ?? [], [data]);
-  const uniqueAgents = useMemo(() => data?.filters.agents ?? [], [data]);
+  const uniqueMessageProviders = useMemo(() => data?.filters?.messageProviders ?? [], [data]);
+  const uniqueLlmProviders = useMemo(() => data?.filters?.llmProviders ?? [], [data]);
+  const uniqueAgents = useMemo(() => data?.filters?.agents ?? [], [data]);
 
   const messageTimeline = useMemo(() => buildTimelineSeries(data, 'messageProviders', uniqueMessageProviders), [data, uniqueMessageProviders]);
   const llmTimeline = useMemo(() => buildTimelineSeries(data, 'llmProviders', uniqueLlmProviders), [data, uniqueLlmProviders]);
@@ -133,7 +133,7 @@ const ActivityLog: React.FC = () => {
             </div>
             <div className="md:col-span-2">
               <h3 className="text-lg font-semibold mb-4">Recent Events</h3>
-              {data?.events.length ? (
+              {data?.events?.length ? (
                 <ul className="menu bg-base-200 w-full rounded-box">
                   {data.events.slice().reverse().map((event, index) => (
                     <li key={event.id}>
@@ -208,13 +208,13 @@ const TimelineChart: React.FC<TimelineChartProps> = ({ data, seriesKeys }) => {
 };
 
 function buildTimelineSeries(data: ActivityResponse | undefined, field: 'messageProviders' | 'llmProviders', keys: string[]) {
-  if (!data || !data.timeline.length || keys.length === 0) {
+  if (!data || !data.timeline?.length || keys.length === 0) {
     return [];
   }
   return data.timeline.map(bucket => {
     const entry: Record<string, number | string> = { timestamp: bucket.timestamp };
     keys.forEach(key => {
-      entry[key] = bucket[field][key] || 0;
+      entry[key] = (bucket[field] ?? {})[key] || 0;
     });
     return entry;
   });
@@ -258,7 +258,7 @@ const AgentMetricsTable: React.FC<AgentMetricsTableProps> = ({ metrics }) => {
               <td className="text-right">{metric.errors}</td>
               <td className="text-right">{metric.totalMessages}</td>
               <td>{formatTimestamp(metric.lastActivity)}</td>
-              <td>{metric.recentErrors.slice(-3).join(', ') || '—'}</td>
+              <td>{(metric.recentErrors ?? []).slice(-3).join(', ') || '—'}</td>
             </tr>
           ))}
         </tbody>

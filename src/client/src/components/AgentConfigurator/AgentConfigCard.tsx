@@ -249,8 +249,8 @@ const AgentConfigCard: React.FC<AgentConfigCardProps> = ({
                 <span className="label-text">MCP Tool Guard</span>
                 <input
                   type="checkbox"
-                  className={`toggle ${uiState?.mcpGuard.enabled ? 'toggle-primary' : ''}`}
-                  checked={uiState?.mcpGuard.enabled || false}
+                  className={`toggle ${uiState?.mcpGuard?.enabled ? 'toggle-primary' : ''}`}
+                  checked={uiState?.mcpGuard?.enabled || false}
                   onChange={(e) => onGuardToggle(bot, e.target.checked)}
                   disabled={metadata.mcpGuard?.locked || pending || guardrailProfileActive}
                 />
@@ -258,7 +258,7 @@ const AgentConfigCard: React.FC<AgentConfigCardProps> = ({
               <FieldHelper metadata={metadata.mcpGuard} fallback="Restrict who can trigger MCP tools" />
             </div>
 
-            {uiState?.mcpGuard.enabled && (
+            {uiState?.mcpGuard?.enabled && (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
                 <div className="form-control">
                   <label className="label">

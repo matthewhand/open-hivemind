@@ -51,7 +51,7 @@ const AnalyticsDashboard: React.FC = () => {
   // Message Volume (from timeline or events)
   const messageVolumeData = activityData?.timeline?.map(bucket => ({
     timestamp: bucket.timestamp,
-    value: Object.values(bucket.messageProviders).reduce((a, b) => a + b, 0),
+    value: Object.values(bucket.messageProviders ?? {}).reduce((a, b) => a + b, 0),
     label: 'Messages'
   })) || [];
 
@@ -59,7 +59,7 @@ const AnalyticsDashboard: React.FC = () => {
   const uniqueUsers = new Set(events.map(e => e.userId)).size;
 
   // Bot Performance Stats
-  const botStats = activityData?.agentMetrics?.map(am => ({
+  const botStats = (activityData?.agentMetrics ?? []).map(am => ({
     name: am.botName,
     messages: am.totalMessages,
     errors: am.errors,
@@ -76,7 +76,7 @@ const AnalyticsDashboard: React.FC = () => {
       metrics: [
         { label: 'Messages', value: events.length.toLocaleString(), icon: '💬' },
         { label: 'Throughput', value: currentMetric.messageRate.toFixed(1), unit: '/s' },
-        { label: 'Errors', value: activityData?.agentMetrics?.reduce((acc, m) => acc + m.errors, 0) || 0, icon: '❌' },
+        { label: 'Errors', value: (activityData?.agentMetrics ?? []).reduce((acc, m) => acc + (m.errors ?? 0), 0), icon: '❌' },
       ],
     },
     {
@@ -85,7 +85,7 @@ const AnalyticsDashboard: React.FC = () => {
       status: 'healthy',
       metrics: [
         { label: 'Active Users', value: uniqueUsers, icon: '👥' },
-        { label: 'Active Bots', value: activityData?.filters.agents.length || 0, icon: '🤖' },
+        { label: 'Active Bots', value: activityData?.filters?.agents?.length ?? 0, icon: '🤖' },
       ]
     },
     {
