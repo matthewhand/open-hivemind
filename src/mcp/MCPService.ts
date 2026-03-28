@@ -1,5 +1,5 @@
 import Debug from 'debug';
-import { SlackMessageProvider } from '@hivemind/message-slack';
+import { SlackMessageProvider } from '@hivemind/adapter-slack';
 import { BotConfigurationManager } from '@config/BotConfigurationManager';
 import { MCPGuard, type MCPGuardConfig } from './MCPGuard';
 
@@ -25,7 +25,7 @@ export class MCPService {
   private clients = new Map<string, any>();
   private tools = new Map<string, MCPTool[]>();
 
-  private constructor() {}
+  private constructor() { }
 
   /**
    * Gets the singleton instance of MCPService.
@@ -48,7 +48,7 @@ export class MCPService {
   /**
    * Test connection to an MCP server without storing the client
    */
-  public async testConnection(config: MCPConfig): Promise<MCPTool[]> {
+  public async testConnection(config: MCPConfig): Promise<boolean> {
     try {
       debug(`Testing connection to MCP server: ${config.name} at ${config.serverUrl}`);
 
@@ -68,19 +68,13 @@ export class MCPService {
       });
 
       // Try to list tools to verify connection works
-      const tools = await client.listTools();
-
-      // Add server name to each tool for identification
-      const mcpTools: MCPTool[] = tools.tools.map((tool: any) => ({
-        ...tool,
-        serverName: config.name,
-      }));
+      await client.listTools();
 
       // If we got here, connection is successful
       // Since SDK doesn't have disconnect, we just let it go out of scope
       // Ideally we would close the transport if accessible
 
-      return mcpTools;
+      return true;
     } catch (error) {
       debug(`Error testing connection to MCP server ${config.name}:`, error);
       throw new Error(
@@ -89,6 +83,9 @@ export class MCPService {
     }
   }
 
+  /**
+   * Connect to an MCP server and discover its tools
+   */
   /**
    * Connects to an MCP server and discovers available tools.
    *
@@ -149,6 +146,8 @@ export class MCPService {
       );
     }
   }
+
+
 
   /**
    * Disconnect from an MCP server
@@ -214,6 +213,9 @@ export class MCPService {
     return Array.from(this.clients.keys());
   }
 
+  /**
+   * Execute a tool from a connected MCP server
+   */
   /**
    * Executes a tool on a connected MCP server.
    *
@@ -337,7 +339,7 @@ export class MCPService {
       }
 
       if (normalized === 'discord') {
-        const { DiscordMessageProvider } = await import('@hivemind/message-discord');
+        const { DiscordMessageProvider } = await import('@hivemind/adapter-discord');
         const provider = new DiscordMessageProvider();
         return await provider.getForumOwner(forumId);
       }

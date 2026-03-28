@@ -6,37 +6,16 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.9+-blue.svg)](https://www.typescriptlang.org/)
 [![Docker](https://img.shields.io/badge/docker-ready-blue.svg)](https://hub.docker.com/)
 
-Open-Hivemind is a **multi-agent orchestration framework** that transcends the traditional "one bot, one platform" model. Instead of deploying a single chatbot, you deploy a coordinated network of unique personas across Discord, Slack, and Mattermost simultaneously.
-
-Think of it less as a bot and more as a **digital ecosystem**. You can have as many bots as you want—each with its own distinct personality, memory, and directives—living alongside your human users in the same channels.
-
-## Why Open-Hivemind?
-
-Unlike standard chatbots that simply wait for a command and reply, Open-Hivemind agents are designed for **immersive, human-like interaction**. They possess a degree of autonomy and social awareness that makes them feel like active participants in a community rather than just tools.
-
-### 🧠 Selective Engagement
-Bots don't always respond. Just like a human, they "listen" to the conversation and decide whether to chime in based on probability, relevance, and their specific personality traits. They aren't just request-response machines; they have agency.
-
-### 🗣️ Natural Conversation Dynamics
-*   **Engagement:** While they may stay quiet in the background, directly addressing a bot or asking a question significantly increases the chance of a response.
-*   **Momentum:** Once a bot is "engaged" in a conversation, it tends to stay engaged, maintaining the flow of dialogue without needing to be constantly re-prompted.
-*   **Context Awareness:** They remember what was said previously, allowing for coherent, multi-turn discussions.
-
-### 🚦 Social Awareness & Crowd Control
-In a channel with dozens of active bots, chaos could easily ensue. Open-Hivemind implements "social anxiety" logic:
-*   **Avoid Overcrowding:** If a conversation is already populated by too many other bots or is moving too fast, a bot will be less likely to join in, preventing a "pile-on" effect.
-*   **Politeness:** Bots respect the flow of conversation and try not to interrupt or talk over one another excessively.
+Open-Hivemind is a **multi-agent orchestration framework** for deploying a coordinated network of LLM-powered bots across Discord, Slack, and Mattermost. Each running bot behaves like a neuron in a shared digital consciousness: they share recent context, keep a unified voice, and can be independently tuned via personas, system instructions, and guarded access to external tools.
 
 ## Core Functionality
 
-![Chat Monitor — real-time view of all bot activity across platforms](docs/screenshots/chat-monitor.png)
-
-*   **Multi-Agent Orchestration**: Deploy coordinated bots across Discord, Slack, and Mattermost from a single dashboard.
-*   **Unified Voice**: Maintain consistent identities across different platforms.
-*   **Shared Context**: Bots share a collective memory, allowing for sophisticated interactions.
-*   **WebUI Management**: Easily configure LLMs, personas, and bots via a user-friendly interface—no code required.
-*   **Safety & Compliance**: Built-in guards, rate limiting, and duplicate response suppression ensure stability.
-*   **Extensible**: Supports MCP servers and custom tool integrations for advanced capabilities.
+*   **Multi-Agent Orchestration**: Deploy coordinated bots across Discord, Slack, and Mattermost.
+*   **Unified Voice**: Consistent identity across platforms.
+*   **Shared Context**: Maintain conversation history and context across interactions.
+*   **WebUI Management**: Configure LLMs, personas, and bots via a user-friendly interface.
+*   **Safety & Compliance**: Built-in guards, rate limiting, and duplicate response suppression.
+*   **Extensible**: Supports MCP servers and custom tool integrations.
 
 ## Installation & Quick Start
 
@@ -82,12 +61,12 @@ For developers who want to modify the code or run locally without Docker.
 
 2.  **Install dependencies:**
     ```bash
-    pnpm install
+    npm install
     ```
 
 3.  **Start the development server:**
     ```bash
-    pnpm run dev
+    npm run dev
     ```
 
 Access the WebUI at `http://localhost:3028`.
@@ -100,38 +79,15 @@ Once the application is running, open your browser to `http://localhost:3028`.
 2.  **Configure Message Platform**: Go to **Configuration > Message Platforms** to add your bot tokens for Discord, Slack, or Mattermost.
 3.  **Create a Bot**: Head to **Configuration > Bots** and click **Create Bot**. Give it a name, assign a persona (optional), and link it to your configured providers.
 
-For a detailed walkthrough of every menu item and feature, please refer to the [User Guide](docs/USER_GUIDE.md).
+For a detailed walkthrough of every menu item and feature, please refer to the [User Guide](USERGUIDE.md).
 
 ## Documentation
 
-*   [User Guide](docs/USER_GUIDE.md): Detailed explanation of all WebUI features.
-*   [Developer Guide](docs/architecture/development.md): Deep dives into platform specifics and local development.
-*   [Quick Start / Installation Guide](docs/operations/deployment.md): Advanced deployment options and configurations.
+*   [User Guide](USERGUIDE.md): Detailed explanation of all WebUI features.
+*   [Installation Guide](docs/installation.md): Advanced deployment options and configurations.
+*   [Package Documentation](PACKAGE.md): Deep dives into platform specifics.
+*   [Configuration Reference](docs/reference/configuration-files.md): Technical reference for all configuration files (package.json, tsconfig, eslint, jest, docker, etc.).
 
 ## License
 
 Released under the [MIT License](LICENSE).
-
-
-## Security & Environment Configuration
-
-Security is paramount in Open-Hivemind. While you can manage a significant portion of configuration via the WebUI, core security, cryptographic secrets, and system behavior are defined via environment variables (usually stored in your `.env` file).
-
-### Critical Security Variables
-If you deploy this publicly, **these variables must be set.**
-
-*   **`NODE_ENV`**: Determines operational mode. Always set to `production` in deployed environments to enforce strict validation and secure defaults.
-*   **`ADMIN_PASSWORD`**: Provides a robust fallback admin password for initial login.
-*   **`SESSION_SECRET`**: Cryptographic key used to encrypt stateful user sessions.
-*   **`JWT_SECRET`** & **`JWT_REFRESH_SECRET`**: Keys used to sign and verify API access tokens.
-
-### Configuration Variables
-Open-Hivemind leverages a myriad of environment variables for system configuration. Here are the core categories:
-
-*   **System Controls**: `PORT`, `BASE_URL`, `LOG_LEVEL`, `REDIS_URL`, `DEMO_MODE`
-*   **Security & Network Limits**: `ADMIN_IP_WHITELIST`, `ALLOW_LOCALHOST_ADMIN`, `ALLOW_LOCAL_NETWORK_ACCESS`, `CORS_ORIGIN`, `TRUST_PROXY`, `RATE_LIMIT_API_MAX`
-*   **Bot Registries (Multi-bot setup)**: Prefix dynamically instantiated bots via `BOTS_<NAME>_DISCORD_BOT_TOKEN` etc.
-*   **Global Fallbacks**: `DISCORD_BOT_TOKEN`, `SLACK_BOT_TOKEN`, `OPENAI_API_KEY`, `LLM_PROVIDER`, `MESSAGE_PROVIDER`
-*   **Behavior Tuning**: `MESSAGE_ACTIVITY_TIME_WINDOW`, `MESSAGE_MENTION_BONUS`, `MESSAGE_RECENT_ACTIVITY_DECAY_RATE`
-
-For a comprehensive, documented list of every supported variable, consult the `.env.sample` file included in the root of the repository.

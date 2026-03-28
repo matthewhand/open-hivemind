@@ -16,6 +16,8 @@ This document explains the available startup modes, what code paths they exercis
 | Legacy Script | `./dev-start.sh dev` | Depends | Maybe | 3028/5173 | Yes | Deprecated multi-path logic |
 | Vite Only | `npm run dev:frontend` | Yes | Yes | 5173 | No | Backend APIs unavailable unless started separately |
 
+> **Note**: For detailed documentation on the [Makefile](../reference/configuration-files.md#6-build-automation) and [Docker](../reference/configuration-files.md#7-containerization) configurations, see the [Configuration Reference](../reference/configuration-files.md).
+
 ## How Frontend Resolution Works
 
 In `src/index.ts`, the function `resolveFrontendDistPath()` checks these locations in order:
@@ -116,6 +118,17 @@ Be sure it comes AFTER API route mounts but BEFORE final JSON 404 logic.
 2. Consider adding an `.env.development` with `PORT=3028`.
 3. Decide if `/webui` should support client-side routing fallback.
 4. Use `start-dev-hmr` when actively iterating on React components.
+
+## Configuration Reference
+
+For detailed documentation on all build and deployment configurations:
+
+- **[Makefile](../reference/configuration-files.md#6-build-automation)**: All Make targets for development, build, test, and quality gates
+- **[Dockerfile](../reference/configuration-files.md#7-containerization)**: Multi-stage Docker build configuration
+- **[docker-compose.yml](../reference/configuration-files.md#7-containerization)**: Production orchestration with monitoring
+- **[package.json](../reference/configuration-files.md#1-project-manifest)**: npm scripts and workspace configuration
+
+See the [Technical Configuration Reference](../reference/configuration-files.md) for comprehensive documentation of all configuration files.
 
 ## Future Enhancements (Suggested)
 

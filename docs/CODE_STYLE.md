@@ -350,12 +350,14 @@ The project uses Husky for pre-commit hooks that automatically:
 
 ## Configuration Files
 
-| File | Purpose |
-|------|---------|
-| `.prettierrc.json` | Prettier formatting configuration |
-| `.prettierignore` | Files to exclude from Prettier |
-| `eslint.config.js` | ESLint linting configuration |
-| `tsconfig.json` | TypeScript compiler configuration |
+| File | Purpose | Documentation |
+|------|---------|---------------|
+| `.prettierrc.json` | Prettier formatting configuration | [Configuration Reference](./reference/configuration-files.md#4-code-quality) |
+| `.prettierignore` | Files to exclude from Prettier | [Configuration Reference](./reference/configuration-files.md#4-code-quality) |
+| `eslint.config.js` | ESLint linting configuration | [Configuration Reference](./reference/configuration-files.md#4-code-quality) |
+| `tsconfig.json` | TypeScript compiler configuration | [Configuration Reference](./reference/configuration-files.md#2-typescript-configuration) |
+
+> **Note**: For comprehensive documentation of all configuration files including package.json, jest.config.js, Dockerfile, Makefile, and more, see the [Technical Configuration Reference](./reference/configuration-files.md).
 
 ## Editor Setup
 
