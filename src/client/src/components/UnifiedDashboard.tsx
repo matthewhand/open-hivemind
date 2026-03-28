@@ -266,21 +266,26 @@ const UnifiedDashboard: React.FC = () => {
 
   // Combine 4 separate O(N) filter/reduce passes into a single O(N) pass
   // to calculate dashboard statistics and prevent unnecessary re-renders.
+  // ⚡ Bolt Optimization: Use explicit loop instead of reduce for maximum performance without function closures
   const { activeBotCount, activeConnections, totalMessages, totalErrors } = useMemo(() => {
-    return statusBots.reduce(
-      (acc, bot) => {
-        if (bot.status?.toLowerCase() === 'active') {
-          acc.activeBotCount++;
-        }
-        if (bot.connected) {
-          acc.activeConnections++;
-        }
-        acc.totalMessages += bot.messageCount ?? 0;
-        acc.totalErrors += bot.errorCount ?? 0;
-        return acc;
-      },
-      { activeBotCount: 0, activeConnections: 0, totalMessages: 0, totalErrors: 0 }
-    );
+    let activeBotCount = 0;
+    let activeConnections = 0;
+    let totalMessages = 0;
+    let totalErrors = 0;
+
+    for (let i = 0; i < statusBots.length; i++) {
+      const bot = statusBots[i];
+      if (bot.status?.toLowerCase() === 'active') {
+        activeBotCount++;
+      }
+      if (bot.connected) {
+        activeConnections++;
+      }
+      totalMessages += bot.messageCount ?? 0;
+      totalErrors += bot.errorCount ?? 0;
+    }
+
+    return { activeBotCount, activeConnections, totalMessages, totalErrors };
   }, [statusBots]);
 
   const { statsCards } = useDashboardStats(
