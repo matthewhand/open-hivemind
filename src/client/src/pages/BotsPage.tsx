@@ -6,7 +6,7 @@ import {
   Settings, ExternalLink, Shield, Info, MoreVertical,
   Cpu, Zap, Copy, Save, X, Terminal, Globe, User, Clock,
   Key, ShieldCheck, Database, Layout, Command,
-  AlertTriangle, Play, Pause, Square, Trash, MoreHorizontal
+  AlertTriangle, Play, Pause, Square, Trash, MoreHorizontal, Download
 } from 'lucide-react';
 import { useSuccessToast, useErrorToast } from '../components/DaisyUI/ToastNotification';
 import Modal, { ConfirmModal } from '../components/DaisyUI/Modal';
@@ -28,6 +28,8 @@ import { useLocation } from 'react-router-dom';
 import { PROVIDER_CATEGORIES } from '../config/providers';
 import { BotData } from '../hooks/useBotStats';
 import useUrlParams from '../hooks/useUrlParams';
+import { useBulkSelection } from '../hooks/useBulkSelection';
+import BulkActionBar from '../components/BulkActionBar';
 
 const BotsPage: React.FC = () => {
   const [bots, setBots] = useState<BotConfig[]>([]);
@@ -264,6 +266,42 @@ const BotsPage: React.FC = () => {
     });
   }, [bots, searchQuery, filterType]);
 
+  // Bulk selection
+  const filteredBotIds = useMemo(() => filteredBots.map(b => b.id), [filteredBots]);
+  const bulk = useBulkSelection(filteredBotIds);
+
+  const [bulkDeleting, setBulkDeleting] = useState(false);
+
+  const handleBulkDelete = async () => {
+    if (bulk.selectedCount === 0) return;
+    setBulkDeleting(true);
+    try {
+      const ids = Array.from(bulk.selectedIds);
+      await Promise.allSettled(ids.map(id => apiService.delete(`/api/bots/${id}`)));
+      setBots(prev => prev.filter(b => !bulk.selectedIds.has(b.id)));
+      if (previewBot && bulk.selectedIds.has(previewBot.id)) {
+        setPreviewBot(null);
+      }
+      bulk.clearSelection();
+      toastSuccess('Selected bots deleted');
+    } catch (err) {
+      toastError('Failed to delete some bots');
+    } finally {
+      setBulkDeleting(false);
+    }
+  };
+
+  const handleBulkExport = () => {
+    const selectedBots = bots.filter(b => bulk.selectedIds.has(b.id));
+    const blob = new Blob([JSON.stringify(selectedBots, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `bots-export-${new Date().toISOString().slice(0, 10)}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   // Fetch preview panel data for a bot
   const fetchPreviewActivity = useCallback(async (botId: string, limit = 20) => {
     setActivityError(null);
@@ -400,19 +438,63 @@ const BotsPage: React.FC = () => {
               }
             />
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {filteredBots.map(bot => (
-                <BotCard
-                  key={bot.id}
-                  bot={bot}
-                  isSelected={previewBot?.id === bot.id}
-                  onPreview={() => handlePreviewBot(bot)}
-                  onEdit={() => setEditingBot(bot)}
-                  onDelete={() => setDeletingBot(bot)}
-                  onToggleStatus={() => handleToggleBotStatus(bot)}
+            <>
+              <div className="flex items-center gap-2 mb-2">
+                <input
+                  type="checkbox"
+                  className="checkbox checkbox-sm checkbox-primary"
+                  checked={bulk.isAllSelected}
+                  onChange={() => bulk.toggleAll(filteredBotIds)}
+                  aria-label="Select all bots"
                 />
-              ))}
-            </div>
+                <span className="text-xs text-base-content/60">Select all</span>
+              </div>
+              <BulkActionBar
+                selectedCount={bulk.selectedCount}
+                onClearSelection={bulk.clearSelection}
+                actions={[
+                  {
+                    key: 'export',
+                    label: 'Export',
+                    icon: <Download className="w-4 h-4" />,
+                    variant: 'primary',
+                    onClick: handleBulkExport,
+                  },
+                  {
+                    key: 'delete',
+                    label: 'Delete',
+                    icon: <Trash2 className="w-4 h-4" />,
+                    variant: 'error',
+                    onClick: handleBulkDelete,
+                    loading: bulkDeleting,
+                  },
+                ]}
+              />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {filteredBots.map(bot => (
+                  <div key={bot.id} className="relative">
+                    <div className="absolute top-2 left-2 z-10">
+                      <input
+                        type="checkbox"
+                        className="checkbox checkbox-sm checkbox-primary"
+                        checked={bulk.isSelected(bot.id)}
+                        onChange={(e) => bulk.toggleItem(bot.id, e as any)}
+                        onClick={(e) => e.stopPropagation()}
+                        aria-label={`Select ${bot.name}`}
+                      />
+                    </div>
+                    <BotCard
+                      bot={bot}
+                      isSelected={previewBot?.id === bot.id}
+                      onPreview={() => handlePreviewBot(bot)}
+                      onEdit={() => setEditingBot(bot)}
+                      onDelete={() => setDeletingBot(bot)}
+                      onToggleStatus={() => handleToggleBotStatus(bot)}
+                    />
+                  </div>
+                ))}
+              </div>
+            </>
           )}
         </div>
 

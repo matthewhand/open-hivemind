@@ -37,6 +37,8 @@ import ProviderConfigModal from '../components/ProviderConfiguration/ProviderCon
 import { apiService } from '../services/api';
 import useUrlParams from '../hooks/useUrlParams';
 import { useApiQuery } from '../hooks/useApiQuery';
+import { useBulkSelection } from '../hooks/useBulkSelection';
+import BulkActionBar from '../components/BulkActionBar';
 
 type LlmModelType = 'chat' | 'embedding' | 'both';
 
@@ -230,6 +232,28 @@ const LLMProvidersPage: React.FC = () => {
                             p.provider.toLowerCase().includes(searchQuery.toLowerCase());
       return matchesSearch && (filterType === 'all' || p.provider === filterType);
     }), [profiles, searchQuery, filterType]);
+
+  // Bulk selection
+  const filteredProfileKeys = useMemo(() => filteredProfiles.map(p => p.key), [filteredProfiles]);
+  const bulk = useBulkSelection(filteredProfileKeys);
+  const [bulkDeleting, setBulkDeleting] = useState(false);
+
+  const handleBulkDeleteProfiles = async () => {
+    if (bulk.selectedCount === 0) return;
+    setBulkDeleting(true);
+    try {
+      const keys = Array.from(bulk.selectedIds);
+      await Promise.allSettled(
+        keys.map(key => apiService.delete(`/api/config/llm-profiles/${key}`))
+      );
+      bulk.clearSelection();
+      fetchProfiles();
+    } catch (err: any) {
+      errorToast('Bulk Delete Failed', 'Failed to delete some profiles');
+    } finally {
+      setBulkDeleting(false);
+    }
+  };
 
   const providerTypes = useMemo(() => {
     const types = new Set(profiles.map(p => p.provider));
@@ -447,12 +471,45 @@ const LLMProvidersPage: React.FC = () => {
           variant="noResults"
         />
       ) : (
+        <>
+          <div className="flex items-center gap-2 mb-2">
+            <input
+              type="checkbox"
+              className="checkbox checkbox-sm checkbox-primary"
+              checked={bulk.isAllSelected}
+              onChange={() => bulk.toggleAll(filteredProfileKeys)}
+              aria-label="Select all profiles"
+            />
+            <span className="text-xs text-base-content/60">Select all</span>
+          </div>
+          <BulkActionBar
+            selectedCount={bulk.selectedCount}
+            onClearSelection={bulk.clearSelection}
+            actions={[
+              {
+                key: 'delete',
+                label: 'Delete',
+                icon: <DeleteIcon className="w-4 h-4" />,
+                variant: 'error',
+                onClick: handleBulkDeleteProfiles,
+                loading: bulkDeleting,
+              },
+            ]}
+          />
         <div className="grid grid-cols-1 gap-4">
           {filteredProfiles.map((profile) => (
             <Card key={profile.key} className="bg-base-100 shadow-sm border border-base-200 transition-all hover:shadow-md">
               <div className="card-body p-0">
                 <div className="p-4 flex items-center justify-between cursor-pointer" onClick={() => toggleExpand(profile.key)}>
                   <div className="flex items-center gap-4">
+                    <input
+                      type="checkbox"
+                      className="checkbox checkbox-sm checkbox-primary"
+                      checked={bulk.isSelected(profile.key)}
+                      onChange={(e) => { e.stopPropagation(); bulk.toggleItem(profile.key, e as any); }}
+                      onClick={(e) => e.stopPropagation()}
+                      aria-label={`Select ${profile.name}`}
+                    />
                     <div className="p-3 bg-primary/10 text-primary rounded-xl">
                       {getProviderIcon(profile.provider)}
                     </div>
@@ -526,6 +583,7 @@ const LLMProvidersPage: React.FC = () => {
             </Card>
           ))}
         </div>
+        </>
       )}
 
       <ProviderConfigModal

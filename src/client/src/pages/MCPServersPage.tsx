@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { Search, Server } from 'lucide-react';
-import React, { useCallback, useEffect, useState } from 'react';
+import { Search, Server, Trash2 as LucideTrash2 } from 'lucide-react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ArrowPathIcon,
   CheckCircleIcon,
@@ -18,6 +18,8 @@ import EmptyState from '../components/DaisyUI/EmptyState';
 import Modal, { ConfirmModal } from '../components/DaisyUI/Modal';
 import SearchFilterBar from '../components/SearchFilterBar';
 import useUrlParams from '../hooks/useUrlParams';
+import { useBulkSelection } from '../hooks/useBulkSelection';
+import BulkActionBar from '../components/BulkActionBar';
 
 interface Tool {
   name: string;
@@ -171,6 +173,34 @@ const MCPServersPage: React.FC = () => {
 
     return matchesSearch && matchesStatus;
   });
+
+  // Bulk selection
+  const filteredServerIds = useMemo(() => filteredServers.map(s => s.id), [filteredServers]);
+  const bulk = useBulkSelection(filteredServerIds);
+  const [bulkDeleting, setBulkDeleting] = useState(false);
+
+  const handleBulkDeleteServers = async () => {
+    if (bulk.selectedCount === 0) return;
+    setBulkDeleting(true);
+    try {
+      const ids = Array.from(bulk.selectedIds);
+      await Promise.allSettled(
+        ids.map(id =>
+          fetch(`/api/admin/mcp-servers/${encodeURIComponent(id)}`, {
+            method: 'DELETE',
+            headers: getAuthHeaders(),
+          })
+        )
+      );
+      bulk.clearSelection();
+      setAlert({ type: 'success', message: 'Selected servers deleted' });
+      await fetchServers();
+    } catch (err) {
+      setAlert({ type: 'error', message: 'Failed to delete some servers' });
+    } finally {
+      setBulkDeleting(false);
+    }
+  };
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -471,12 +501,47 @@ const MCPServersPage: React.FC = () => {
     }
 
     return (
+      <>
+        <div className="flex items-center gap-2 mb-2">
+          <input
+            type="checkbox"
+            className="checkbox checkbox-sm checkbox-primary"
+            checked={bulk.isAllSelected}
+            onChange={() => bulk.toggleAll(filteredServerIds)}
+            aria-label="Select all servers"
+          />
+          <span className="text-xs text-base-content/60">Select all</span>
+        </div>
+        <BulkActionBar
+          selectedCount={bulk.selectedCount}
+          onClearSelection={bulk.clearSelection}
+          actions={[
+            {
+              key: 'delete',
+              label: 'Delete',
+              icon: <LucideTrash2 className="w-4 h-4" />,
+              variant: 'error',
+              onClick: handleBulkDeleteServers,
+              loading: bulkDeleting,
+            },
+          ]}
+        />
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {filteredServers.map((server) => (
           <div key={server.id} className="card bg-base-100 shadow-xl h-full border border-base-200">
             <div className="card-body">
               <div className="flex justify-between items-start mb-2">
-                <h2 className="card-title text-lg font-bold">{server.name}</h2>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    className="checkbox checkbox-sm checkbox-primary"
+                    checked={bulk.isSelected(server.id)}
+                    onChange={(e) => bulk.toggleItem(server.id, e as any)}
+                    onClick={(e) => e.stopPropagation()}
+                    aria-label={`Select ${server.name}`}
+                  />
+                  <h2 className="card-title text-lg font-bold">{server.name}</h2>
+                </div>
                 <div className={`badge ${getStatusColor(server.status)}`}>{server.status}</div>
               </div>
 
@@ -579,6 +644,7 @@ const MCPServersPage: React.FC = () => {
           </div>
         ))}
       </div>
+      </>
     );
   };
 
