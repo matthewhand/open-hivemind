@@ -7,7 +7,7 @@ import { RefreshCw, MessageSquare, Cpu, Check, ChevronDown, Menu as MenuIcon, X 
 import EmptyState from '../components/DaisyUI/EmptyState';
 import { SkeletonList, SkeletonMessageList } from '../components/DaisyUI/Skeleton';
 import { useSuccessToast, useErrorToast } from '../components/DaisyUI/ToastNotification';
-import { useMediaQuery } from '../hooks/useResponsive';
+import { useMediaQuery } from '../hooks/useBreakpoint';
 
 // Define Bot type based on API response
 interface BotData {
