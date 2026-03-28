@@ -3,7 +3,7 @@ import type { LucideIcon } from 'lucide-react';
 import Button from './Button';
 
 interface EmptyStateProps {
-  icon: any;
+  icon: React.ReactNode | React.ElementType;
   title: string;
   description: string;
   actionLabel?: string | React.ReactNode;

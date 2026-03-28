@@ -353,7 +353,7 @@ const PersonasPage: React.FC = () => {
         icon={Sparkles}
         actions={
           <div className="flex gap-2">
-            <Button variant="ghost" onClick={fetchData} disabled={loading}>
+            <Button variant="ghost" onClick={fetchData} disabled={loading} aria-busy={loading}>
               <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} /> Refresh
             </Button>
             <Button variant="primary" onClick={openCreateModal}>
@@ -462,6 +462,7 @@ const PersonasPage: React.FC = () => {
                         className="btn btn-ghost btn-xs btn-circle text-base-content/40 hover:text-primary"
                         onClick={() => handleCopyPrompt(persona.systemPrompt)}
                         title="Copy System Prompt"
+                        aria-label="Copy System Prompt"
                       >
                         <Copy className="w-3 h-3" />
                       </button>
@@ -694,7 +695,7 @@ const PersonasPage: React.FC = () => {
               {isViewMode ? 'Close' : 'Cancel'}
             </Button>
             {!isViewMode && (
-              <Button variant="primary" onClick={handleSavePersona} disabled={loading}>
+              <Button variant="primary" onClick={handleSavePersona} disabled={loading} aria-busy={loading}>
                 {loading ? (
                   <LoadingSpinner size="sm" />
                 ) : editingPersona ? (
@@ -753,7 +754,7 @@ const PersonasPage: React.FC = () => {
               variant="primary"
               className="btn-error"
               onClick={confirmDelete}
-              disabled={loading}
+              disabled={loading} aria-busy={loading}
             >
               {loading ? <LoadingSpinner size="sm" /> : 'Delete Persona'}
             </Button>
