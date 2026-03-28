@@ -16,7 +16,7 @@ export const ErrorClassification = {
 
 export type ErrorClassification = (typeof ErrorClassification)[keyof typeof ErrorClassification];
 
-class ErrorUtils {
+export class ErrorUtils {
   /**
    * Converts an unknown error to a standardized HivemindError format.
    *

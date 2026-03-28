@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect, useCallback } from 'react';
-import { Shield, Plus, Edit2, Trash2, Check, RefreshCw, AlertCircle, Save, X, Settings, AlertTriangle, Copy } from 'lucide-react';
+import { Shield, Plus, Edit2, Trash2, RefreshCw, Save, AlertTriangle, Copy } from 'lucide-react';
 import { useSuccessToast, useErrorToast } from '../components/DaisyUI/ToastNotification';
 import Modal, { ConfirmModal } from '../components/DaisyUI/Modal';
 import PageHeader from '../components/DaisyUI/PageHeader';
@@ -195,10 +195,10 @@ const GuardsPage: React.FC = () => {
       <PageHeader
         title="Guard Profiles"
         description="Manage security and access control profiles for bots"
-        icon={<Shield className="w-8 h-8" />}
+        icon={<Shield className="w-8 h-8 text-primary" />}
         actions={
           <div className="flex gap-2">
-            <button onClick={fetchProfiles} className="btn btn-ghost btn-sm" disabled={loading} title="Refresh">
+            <button onClick={fetchProfiles} className="btn btn-ghost btn-sm" disabled={loading} aria-busy={loading} title="Refresh" aria-label="Refresh profiles">
               <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
             </button>
             <button onClick={handleCreate} className="btn btn-primary btn-sm">
@@ -250,13 +250,14 @@ const GuardsPage: React.FC = () => {
                       onClick={() => handleDuplicateProfile(profile)}
                       className="btn btn-ghost btn-xs btn-square"
                       title="Duplicate Profile"
+                      aria-label="Duplicate Profile"
                     >
                       <Copy className="w-4 h-4" />
                     </button>
-                    <button onClick={() => handleEdit(profile)} className="btn btn-ghost btn-xs btn-square">
+                    <button onClick={() => handleEdit(profile)} className="btn btn-ghost btn-xs btn-square" aria-label="Edit profile">
                       <Edit2 className="w-4 h-4" />
                     </button>
-                    <button onClick={() => handleDeleteProfile(profile)} className="btn btn-ghost btn-xs btn-square text-error">
+                    <button onClick={() => handleDeleteProfile(profile)} className="btn btn-ghost btn-xs btn-square text-error" aria-label="Delete profile">
                       <Trash2 className="w-4 h-4" />
                     </button>
                   </div>
@@ -356,6 +357,12 @@ const GuardsPage: React.FC = () => {
                       value={editingProfile.guards.mcpGuard.allowedUsers || []}
                       onChange={v => updateGuard('mcpGuard', { allowedUsers: v })}
                       disabled={!editingProfile.guards.mcpGuard.enabled}
+                    validate={item => {
+                      if (!/^[a-zA-Z0-9-_]+$/.test(item)) {
+                        return "User IDs must contain only letters, numbers, dashes, and underscores.";
+                      }
+                      return null;
+                    }}
                     />
                   </div>
                 )}
@@ -368,6 +375,12 @@ const GuardsPage: React.FC = () => {
                     value={editingProfile.guards.mcpGuard.allowedTools || []}
                     onChange={v => updateGuard('mcpGuard', { allowedTools: v })}
                     disabled={!editingProfile.guards.mcpGuard.enabled}
+                    validate={item => {
+                      if (!/^[a-zA-Z0-9-_]+$/.test(item)) {
+                        return "Tool names must contain only letters, numbers, dashes, and underscores.";
+                      }
+                      return null;
+                    }}
                   />
                   <label className="label"><span className="label-text-alt opacity-70">Leave empty to allow all tools (if enabled)</span></label>
                 </div>
@@ -399,7 +412,6 @@ const GuardsPage: React.FC = () => {
                           )}
                         </div>
                       }
-                      id="max-requests"
                       type="number"
                       value={editingProfile.guards.rateLimit?.maxRequests || 100}
                       onChange={e => updateGuard('rateLimit', { maxRequests: parseInt(e.target.value) })}
@@ -429,11 +441,9 @@ const GuardsPage: React.FC = () => {
                         updateGuard('rateLimit', { windowMs: seconds * 1000 });
                       }}
                       disabled={!editingProfile.guards.rateLimit?.enabled}
-                      id="window-seconds"
                       min={1}
                       max={3600}
                       placeholder="60"
-                      aria-label="Window (seconds)"
                       helperText={
                         (() => {
                           const seconds = (editingProfile.guards.rateLimit?.windowMs || 60000) / 1000;

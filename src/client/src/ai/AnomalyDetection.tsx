@@ -492,23 +492,31 @@ export const AnomalyDetection: React.FC<AnomalyDetectionProps> = ({ onAnomalyDet
   };
 
   const updateMetrics = () => {
+    // ⚡ Bolt Optimization: Calculate metrics in a single pass instead of 4 separate .reduce() calls
+    const metricsResult = state.events.reduce(
+      (acc, event) => {
+        acc.bySeverity[event.severity] = (acc.bySeverity[event.severity] || 0) + 1;
+        acc.byType[event.type] = (acc.byType[event.type] || 0) + 1;
+        acc.byAlgorithm[event.algorithm] = (acc.byAlgorithm[event.algorithm] || 0) + 1;
+        acc.totalConfidence += event.confidence;
+        return acc;
+      },
+      {
+        bySeverity: {} as Record<AnomalyEvent['severity'], number>,
+        byType: {} as Record<AnomalyEvent['type'], number>,
+        byAlgorithm: {} as Record<string, number>,
+        totalConfidence: 0,
+      }
+    );
+
     const metrics: AnomalyMetrics = {
       totalEvents: state.events.length,
-      bySeverity: state.events.reduce((acc, event) => {
-        acc[event.severity] = (acc[event.severity] || 0) + 1;
-        return acc;
-      }, {} as Record<AnomalyEvent['severity'], number>),
-      byType: state.events.reduce((acc, event) => {
-        acc[event.type] = (acc[event.type] || 0) + 1;
-        return acc;
-      }, {} as Record<AnomalyEvent['type'], number>),
-      byAlgorithm: state.events.reduce((acc, event) => {
-        acc[event.algorithm] = (acc[event.algorithm] || 0) + 1;
-        return acc;
-      }, {} as Record<string, number>),
+      bySeverity: metricsResult.bySeverity,
+      byType: metricsResult.byType,
+      byAlgorithm: metricsResult.byAlgorithm,
       falsePositiveRate: 0.05,
       detectionRate: 0.85,
-      averageConfidence: state.events.reduce((sum, e) => sum + e.confidence, 0) / state.events.length,
+      averageConfidence: state.events.length > 0 ? metricsResult.totalConfidence / state.events.length : 0,
       responseTime: 150,
     };
 
@@ -621,12 +629,14 @@ export const AnomalyDetection: React.FC<AnomalyDetectionProps> = ({ onAnomalyDet
                 className="btn btn-circle btn-ghost btn-sm"
                 onClick={runAnomalyDetection}
                 disabled={isLoading}
+                aria-label="Refresh anomaly detection"
               >
                 <ArrowPathIcon className={`w-5 h-5 ${isLoading ? 'animate-spin' : ''}`} />
               </button>
               <button
                 className="btn btn-circle btn-ghost btn-sm"
                 onClick={() => setShowConfigDialog(!showConfigDialog)}
+                aria-label="Toggle configuration"
               >
                 <Cog6ToothIcon className="w-5 h-5" />
               </button>
@@ -707,7 +717,7 @@ export const AnomalyDetection: React.FC<AnomalyDetectionProps> = ({ onAnomalyDet
                     >
                       {algorithm.isActive ? 'Active' : 'Inactive'}
                     </div>
-                    <button className="btn btn-ghost btn-xs btn-square">
+                    <button className="btn btn-ghost btn-xs btn-square" aria-label="Configure algorithm">
                       <Cog6ToothIcon className="w-4 h-4" />
                     </button>
                   </div>

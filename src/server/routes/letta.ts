@@ -1,43 +1,111 @@
+import dns from 'dns';
+import net from 'net';
 import { Router, type Request, type Response } from 'express';
 import { getAgent, listAgents } from '@hivemind/llm-letta';
 import { createLogger } from '@src/common/StructuredLogger';
+import { ErrorResponses } from '../../utils/errorResponse';
+import { isPrivateIP, isSafeUrl } from '../../utils/ssrfGuard';
 
 const router = Router();
 const logger = createLogger('routes:letta');
 
 /**
+ * Validates the Letta API URL against an allowlist and SSRF protection.
+ */
+async function validateLettaUrl(url: string): Promise<{ isValid: boolean; error?: string }> {
+  try {
+    const parsedUrl = new URL(url);
+    const hostname = parsedUrl.hostname.toLowerCase();
+
+    // 1. Strict allowlist for Letta cloud (prevent subdomain bypass e.g. letta.com.attacker.com)
+    const hostParts = hostname.split('.');
+    const isLettaCloud =
+      hostParts.length >= 2 &&
+      hostParts[hostParts.length - 1] === 'com' &&
+      hostParts[hostParts.length - 2] === 'letta';
+
+    // 2. Allow local network if explicitly enabled
+    const allowLocal =
+      process.env.ALLOW_LOCAL_NETWORK_ACCESS === 'true' || process.env.LETTA_ALLOW_LOCAL === 'true';
+
+    if (!isLettaCloud && !allowLocal) {
+      return {
+        isValid: false,
+        error: 'Target URL is not in the allowlist. Only *.letta.com is allowed by default.',
+      };
+    }
+
+    // 3. Always block private/reserved IPs regardless of allowLocal
+    if (net.isIP(hostname)) {
+      if (isPrivateIP(hostname)) {
+        return {
+          isValid: false,
+          error: 'Target URL is blocked for security reasons (private/local network access).',
+        };
+      }
+    } else {
+      try {
+        const { address } = await dns.promises.lookup(hostname);
+        if (isPrivateIP(address)) {
+          return {
+            isValid: false,
+            error: 'Target URL is blocked for security reasons (private/local network access).',
+          };
+        }
+      } catch {
+        return { isValid: false, error: 'Target URL hostname could not be resolved.' };
+      }
+    }
+
+    // 4. For non-local URLs also run full isSafeUrl check
+    if (!allowLocal && !(await isSafeUrl(url))) {
+      return {
+        isValid: false,
+        error: 'Target URL is blocked for security reasons (private/local network access).',
+      };
+    }
+
+    return { isValid: true };
+  } catch (error) {
+    return { isValid: false, error: 'Invalid URL format' };
+  }
+}
+
+/**
  * GET /api/letta/agents - List available Letta agents
- * This endpoint proxies the request to Letta API using the provided credentials
  */
 router.get('/agents', async (req: Request, res: Response) => {
   try {
-    // Get credentials from query params or headers
-    const apiKey = (req.headers['x-letta-api-key'] as string) || (req.query.apiKey as string);
+    const apiKey = req.headers['x-letta-api-key'] as string;
     const apiUrl =
       (req.headers['x-letta-api-url'] as string) ||
       (req.query.apiUrl as string) ||
       'https://api.letta.com/v1';
 
     if (!apiKey) {
-      return res.status(400).json({
-        error: 'Missing API key',
-        message:
-          'Please provide Letta API key via x-letta-api-key header or apiKey query parameter',
-      });
+      return res
+        .status(400)
+        .json(
+          ErrorResponses.badRequest(
+            'Please provide Letta API key via x-letta-api-key header or apiKey query parameter',
+            { error: 'Missing API key' }
+          ).build()
+        );
+    }
+
+    const validation = await validateLettaUrl(apiUrl);
+    if (!validation.isValid) {
+      return res
+        .status(400)
+        .json(ErrorResponses.badRequest(validation.error || 'Invalid Letta API URL').build());
     }
 
     const agents = await listAgents(apiKey, apiUrl);
     return res.json(agents);
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Unknown error';
-    logger.error(
-      'Letta agents lookup error:',
-      error instanceof Error ? error : new Error(String(error))
-    );
-    return res.status(500).json({
-      error: 'Letta API Error',
-      message,
-    });
+    logger.error('Letta agents lookup error:', error instanceof Error ? error : new Error(String(error)));
+    return res.status(500).json(ErrorResponses.internalServerError(message).build());
   }
 });
 
@@ -47,32 +115,36 @@ router.get('/agents', async (req: Request, res: Response) => {
 router.get('/agents/:id', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const apiKey = (req.headers['x-letta-api-key'] as string) || (req.query.apiKey as string);
+    const apiKey = req.headers['x-letta-api-key'] as string;
     const apiUrl =
       (req.headers['x-letta-api-url'] as string) ||
       (req.query.apiUrl as string) ||
       'https://api.letta.com/v1';
 
     if (!apiKey) {
-      return res.status(400).json({
-        error: 'Missing API key',
-        message:
-          'Please provide Letta API key via x-letta-api-key header or apiKey query parameter',
-      });
+      return res
+        .status(400)
+        .json(
+          ErrorResponses.badRequest(
+            'Please provide Letta API key via x-letta-api-key header or apiKey query parameter',
+            { error: 'Missing API key' }
+          ).build()
+        );
+    }
+
+    const validation = await validateLettaUrl(apiUrl);
+    if (!validation.isValid) {
+      return res
+        .status(400)
+        .json(ErrorResponses.badRequest(validation.error || 'Invalid Letta API URL').build());
     }
 
     const agent = await getAgent(id, apiKey, apiUrl);
     return res.json(agent);
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Unknown error';
-    logger.error(
-      'Letta agent details error:',
-      error instanceof Error ? error : new Error(String(error))
-    );
-    return res.status(500).json({
-      error: 'Letta API Error',
-      message,
-    });
+    logger.error('Letta agent details error:', error instanceof Error ? error : new Error(String(error)));
+    return res.status(500).json(ErrorResponses.internalServerError(message).build());
   }
 });
 

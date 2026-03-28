@@ -1,7 +1,7 @@
 import Debug from 'debug';
 import { Router, type Request, type Response } from 'express';
-import { createLogger } from '@src/common/StructuredLogger';
 import { webUIStorage } from '../../storage/webUIStorage';
+import { createLogger } from '@src/common/StructuredLogger';
 
 const router = Router();
 const debug = Debug('app:webui:guards');
@@ -17,10 +17,7 @@ router.get('/', (req: Request, res: Response) => {
       message: 'Guards retrieved successfully',
     });
   } catch (error: any) {
-    logger.error(
-      'Error retrieving guards:',
-      error instanceof Error ? error : new Error(String(error))
-    );
+    logger.error('Error retrieving guards:', error instanceof Error ? error : new Error(String(error)));
     debug('Error retrieving guards:', error);
     return res.status(500).json({
       error: 'Failed to retrieve guards',

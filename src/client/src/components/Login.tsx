@@ -108,7 +108,7 @@ const Login: React.FC = () => {
               className="w-full mt-6"
             >
               {isLoading ? (
-                <><span className="loading loading-spinner loading-sm mr-2"></span> Signing in...</>
+                <><span className="loading loading-spinner loading-sm mr-2" aria-hidden="true"></span> Signing in...</>
               ) : (
                 'Sign In'
               )}

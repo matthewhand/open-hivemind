@@ -4,7 +4,7 @@ import Debug from 'debug';
 
 const debug = Debug('app:BotMetricsService');
 
-interface BotMetrics {
+export interface BotMetrics {
   messageCount: number;
   errorCount: number;
   lastActive?: string;
@@ -15,11 +15,17 @@ export class BotMetricsService {
   private metricsPath: string;
   private metrics: Record<string, BotMetrics> = {};
   private saveInterval: NodeJS.Timeout | null = null;
+  private initPromise: Promise<void> | null = null;
 
   private constructor() {
     // Store metrics in config/user/bot-metrics.json
     this.metricsPath = path.join(process.cwd(), 'config', 'user', 'bot-metrics.json');
-    this.loadMetrics();
+    // Don't load synchronously in constructor
+    this.initPromise = this.initialize();
+  }
+
+  private async initialize(): Promise<void> {
+    await this.loadMetrics();
     this.startAutoSave();
   }
 
@@ -30,15 +36,28 @@ export class BotMetricsService {
     return BotMetricsService.instance;
   }
 
-  private loadMetrics(): void {
+  /**
+   * Wait for initialization to complete.
+   * Call this before using metrics methods if you need to ensure data is loaded.
+   */
+  public async waitForInitialization(): Promise<void> {
+    if (this.initPromise) {
+      await this.initPromise;
+    }
+  }
+
+  private async loadMetrics(): Promise<void> {
     try {
-      if (fs.existsSync(this.metricsPath)) {
-        const data = fs.readFileSync(this.metricsPath, 'utf-8');
-        this.metrics = JSON.parse(data);
-        debug('Loaded bot metrics from disk');
+      await fs.promises.access(this.metricsPath, fs.constants.F_OK);
+      const data = await fs.promises.readFile(this.metricsPath, 'utf-8');
+      this.metrics = JSON.parse(data);
+      debug('Loaded bot metrics from disk');
+    } catch (error: any) {
+      if (error.code === 'ENOENT') {
+        debug('No existing metrics file found, starting fresh');
+      } else {
+        debug('Failed to load bot metrics:', error);
       }
-    } catch (error) {
-      debug('Failed to load bot metrics:', error);
       this.metrics = {};
     }
   }

@@ -348,8 +348,8 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
           </h3>
           <button
             className="btn btn-sm btn-circle btn-ghost"
-            onClick={onClose}
             aria-label="Close modal"
+            onClick={onClose}
           >
             <XIcon className="w-4 h-4" />
           </button>

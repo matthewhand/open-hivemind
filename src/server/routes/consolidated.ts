@@ -20,7 +20,7 @@ router.get('/system-status', async (req, res) => {
     const dbManager = DatabaseManager.getInstance();
 
     const bots = botManager.getAllBots();
-    const activeBots = bots.filter((bot) => (bot as any).enabled !== false);
+    const activeBots = bots.filter((bot) => bot.enabled !== false);
 
     let dbStats = null;
     try {
@@ -384,7 +384,7 @@ router.get('/metrics', async (req, res) => {
       const botManager = BotConfigurationManager.getInstance();
       const bots = botManager.getAllBots();
       metrics.application.bots.total = bots.length;
-      metrics.application.bots.active = bots.filter((bot) => (bot as any).enabled !== false).length;
+      metrics.application.bots.active = bots.filter((bot) => bot.enabled !== false).length;
     } catch (error) {
       debug('Error getting bot metrics:', error);
     }

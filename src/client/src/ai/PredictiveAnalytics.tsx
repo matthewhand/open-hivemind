@@ -465,6 +465,7 @@ export const PredictiveAnalytics: React.FC = () => {
                 className="btn btn-circle btn-ghost btn-sm"
                 onClick={generatePredictions}
                 disabled={isLoading}
+                aria-label="Refresh predictions"
               >
                 <ArrowPathIcon className={`w-5 h-5 ${isLoading ? 'animate-spin' : ''}`} />
               </button>
@@ -538,7 +539,7 @@ export const PredictiveAnalytics: React.FC = () => {
                 disabled={state.isTraining}
               >
                 {state.isTraining ? (
-                  <span className="loading loading-spinner loading-sm"></span>
+                  <span className="loading loading-spinner loading-sm" aria-hidden="true"></span>
                 ) : (
                   <ArrowPathIcon className="w-4 h-4" />
                 )}

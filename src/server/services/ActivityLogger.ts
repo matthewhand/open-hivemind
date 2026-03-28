@@ -6,7 +6,7 @@ import { type MessageFlowEvent } from './WebSocketService';
 
 const debug = Debug('app:ActivityLogger');
 
-interface ActivityFilter {
+export interface ActivityFilter {
   startTime?: Date;
   endTime?: Date;
   limit?: number;
@@ -22,14 +22,18 @@ export class ActivityLogger {
   private constructor() {
     // Store in config/user/activity.jsonl as it is a persistent location for user data
     const configDir = path.join(process.cwd(), 'config', 'user');
-    if (!fs.existsSync(configDir)) {
-      try {
-        fs.mkdirSync(configDir, { recursive: true });
-      } catch (e) {
-        debug('Failed to create config/user directory: %O', e);
-      }
-    }
     this.logFile = path.join(configDir, 'activity.jsonl');
+    // Initialize directory asynchronously
+    this.initializeDirectory();
+  }
+
+  private async initializeDirectory(): Promise<void> {
+    const configDir = path.dirname(this.logFile);
+    try {
+      await fs.promises.mkdir(configDir, { recursive: true });
+    } catch (e) {
+      debug('Failed to create config/user directory: %O', e);
+    }
   }
 
   public static getInstance(): ActivityLogger {
@@ -50,7 +54,9 @@ export class ActivityLogger {
 
   public async getEvents(options: ActivityFilter = {}): Promise<MessageFlowEvent[]> {
     try {
-      if (!fs.existsSync(this.logFile)) {
+      try {
+        await fs.promises.access(this.logFile);
+      } catch {
         return [];
       }
 

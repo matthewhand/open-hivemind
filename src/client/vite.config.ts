@@ -39,11 +39,9 @@ export default defineConfig({
       output: {
         manualChunks: {
           // Split large vendor libraries
-          react: ['react', 'react-dom'],
           redux: ['@reduxjs/toolkit', 'react-redux'],
           router: ['react-router-dom'],
           charts: ['recharts'],
-          daisyui: ['daisyui'],
         },
       },
     },

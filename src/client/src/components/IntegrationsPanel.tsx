@@ -8,8 +8,9 @@ import Select from './DaisyUI/Select';
 import Toggle from './DaisyUI/Toggle';
 import { LoadingSpinner as Loading } from './DaisyUI/Loading';
 import Textarea from './DaisyUI/Textarea';
-import Modal from './DaisyUI/Modal';
+import Modal, { ConfirmModal } from './DaisyUI/Modal';
 import Badge from './DaisyUI/Badge';
+import { useErrorToast } from './DaisyUI/ToastNotification';
 import {
   PuzzlePieceIcon,
   ChatBubbleLeftRightIcon,
@@ -64,6 +65,7 @@ const PROVIDER_ICONS: Record<string, any> = {
 
 
 const IntegrationsPanel: React.FC = () => {
+  const errorToast = useErrorToast();
   const [config, setConfig] = useState<GlobalConfig | null>(null);
   const [bots, setBots] = useState<any[]>([]);
   const [llmProfiles, setLlmProfiles] = useState<any[]>([]);
@@ -92,6 +94,11 @@ const IntegrationsPanel: React.FC = () => {
     provider: null,
   });
 
+  // Confirm modal state
+  const [confirmModal, setConfirmModal] = useState<{
+    isOpen: boolean; title: string; message: string; onConfirm: () => void;
+  }>({ isOpen: false, title: '', message: '', onConfirm: () => {} });
+
   useEffect(() => {
     fetchData();
   }, []);
@@ -99,11 +106,14 @@ const IntegrationsPanel: React.FC = () => {
   const fetchData = async () => {
     try {
       setLoading(true);
-      const [configRes, botsRes, profilesRes] = await Promise.all([
+      const [configResult, botsResult, profilesResult] = await Promise.allSettled([
         fetch('/api/config/global'),
         fetch('/api/dashboard/api/status'), // Using status endpoint for bots list
         fetch('/api/config/llm-profiles'),
       ]);
+      const configRes = configResult.status === 'fulfilled' ? configResult.value : { ok: false, json: async () => ({}) } as unknown as Response;
+      const botsRes = botsResult.status === 'fulfilled' ? botsResult.value : { ok: false, json: async () => ({ bots: [] }) } as unknown as Response;
+      const profilesRes = profilesResult.status === 'fulfilled' ? profilesResult.value : { ok: false, json: async () => ({ llm: [] }) } as unknown as Response;
 
       if (!configRes.ok) { throw new Error('Failed to fetch configuration'); }
       const configData = await configRes.json();
@@ -163,7 +173,7 @@ const IntegrationsPanel: React.FC = () => {
       setIsModalOpen(false);
       setSelectedConfigName(null);
     } catch (err: any) {
-      alert(err.message);
+      errorToast('Save Failed', err.message);
     } finally {
       setSaving(false);
     }
@@ -196,7 +206,7 @@ const IntegrationsPanel: React.FC = () => {
       setNewIntegrationName('');
       setNewConfigValues({});
     } catch (err: any) {
-      alert(err.message);
+      errorToast('Create Failed', err.message);
     } finally {
       setSaving(false);
     }
@@ -230,23 +240,30 @@ const IntegrationsPanel: React.FC = () => {
       await fetchData();
       setProviderModalState({ ...providerModalState, isOpen: false });
     } catch (err: any) {
-      alert(`Failed to save profile: ${err.message}`);
+      errorToast('Save Failed', `Failed to save profile: ${err.message}`);
     } finally {
       setSaving(false);
     }
   };
 
   const handleDeleteProfile = async (key: string) => {
-    if (!window.confirm(`Are you sure you want to delete profile "${key}"?`)) return;
-    try {
-      setSaving(true);
-      await fetch(`/api/config/llm-profiles/${key}`, { method: 'DELETE' });
-      await fetchData();
-    } catch (err: any) {
-      alert(`Failed to delete profile: ${err.message}`);
-    } finally {
-      setSaving(false);
-    }
+    setConfirmModal({
+      isOpen: true,
+      title: 'Delete Profile',
+      message: `Are you sure you want to delete profile "${key}"?`,
+      onConfirm: async () => {
+        setConfirmModal(prev => ({ ...prev, isOpen: false }));
+        try {
+          setSaving(true);
+          await fetch(`/api/config/llm-profiles/${key}`, { method: 'DELETE' });
+          await fetchData();
+        } catch (err: any) {
+          errorToast('Delete Failed', `Failed to delete profile: ${err.message}`);
+        } finally {
+          setSaving(false);
+        }
+      },
+    });
   };
 
   const openEditModal = (configName: string) => {
@@ -545,7 +562,7 @@ const IntegrationsPanel: React.FC = () => {
   if (loading && !config) {
     return (
       <div className="flex flex-col items-center justify-center p-12 gap-4">
-        <span className="loading loading-spinner loading-lg text-primary" />
+        <span className="loading loading-spinner loading-lg text-primary" aria-hidden="true" />
         <span className="text-base-content/50">Loading integrations...</span>
       </div>
     );
@@ -605,8 +622,9 @@ const IntegrationsPanel: React.FC = () => {
         <div className="space-y-6 max-h-[70vh] overflow-y-auto px-1">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="form-control">
-              <label className="label"><span className="label-text">Provider Type</span></label>
+              <label htmlFor="integration-provider-type" className="label"><span className="label-text">Provider Type</span></label>
               <Select
+                id="integration-provider-type"
                 value={newIntegrationType}
                 onChange={(e) => {
                   const type = e.target.value;
@@ -623,12 +641,13 @@ const IntegrationsPanel: React.FC = () => {
               />
             </div>
             <div className="form-control">
-              <label className="label"><span className="label-text">Instance ID</span></label>
+              <label htmlFor="integration-instance-id" className="label"><span className="label-text">Instance ID</span></label>
               <div className="join w-full">
                 <span className="btn btn-sm btn-static join-item bg-base-200 border-base-300 font-mono text-xs px-2">
                   {newIntegrationType ? `${newIntegrationType}-` : 'type-'}
                 </span>
                 <Input
+                  id="integration-instance-id"
                   value={newIntegrationName}
                   onChange={(e) => setNewIntegrationName(e.target.value)}
                   placeholder="production"
@@ -680,6 +699,17 @@ const IntegrationsPanel: React.FC = () => {
         existingProviders={llmProfiles}
         onClose={() => setProviderModalState({ ...providerModalState, isOpen: false })}
         onSubmit={handleProfileSubmit}
+      />
+
+      <ConfirmModal
+        isOpen={confirmModal.isOpen}
+        onClose={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))}
+        title={confirmModal.title}
+        message={confirmModal.message}
+        onConfirm={confirmModal.onConfirm}
+        confirmVariant="error"
+        confirmText="Delete"
+        cancelText="Cancel"
       />
     </div>
   );

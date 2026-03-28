@@ -1,10 +1,11 @@
 import { Router } from 'express';
-import { createLogger } from '@src/common/StructuredLogger';
 import { DatabaseManager } from '@src/database/DatabaseManager';
 import WebSocketService, { type MessageFlowEvent } from '@src/server/services/WebSocketService';
 import { BotConfigurationManager } from '@config/BotConfigurationManager';
 import { authenticate, requireAdmin } from '../../auth/middleware';
+import { AnalyticsService } from '../../services/AnalyticsService';
 import { ActivityLogger } from '../services/ActivityLogger';
+import { createLogger } from '@src/common/StructuredLogger';
 
 type AnnotatedEvent = MessageFlowEvent & { llmProvider: string };
 
@@ -174,44 +175,84 @@ router.post('/ai/config', authenticate, requireAdmin, (req, res) => {
 });
 
 router.get('/ai/stats', authenticate, requireAdmin, (req, res) => {
-  res.json({
-    learningProgress: 75,
-    behaviorPatternsCount: mockBehaviorPatterns.length,
-    userSegmentsCount: mockUserSegments.length,
-  });
+  try {
+    const analytics = AnalyticsService.getInstance();
+    const from = parseDate(req.query.from);
+    const to = parseDate(req.query.to);
+
+    const stats = analytics.getStats({
+      startTime: from || undefined,
+      endTime: to || undefined,
+    });
+
+    res.json({
+      learningProgress: stats.learningProgress,
+      behaviorPatternsCount: stats.behaviorPatternsCount,
+      userSegmentsCount: stats.userSegmentsCount,
+      totalMessages: stats.totalMessages,
+      totalErrors: stats.totalErrors,
+      avgProcessingTime: stats.avgProcessingTime,
+      activeBots: stats.activeBots,
+      activeUsers: stats.activeUsers,
+    });
+  } catch (error) {
+    console.error('AI stats API error:', error);
+    res.status(500).json({ error: 'Failed to get AI stats' });
+  }
 });
 
 router.get('/ai/segments', authenticate, requireAdmin, (req, res) => {
-  res.json(mockUserSegments);
+  try {
+    const analytics = AnalyticsService.getInstance();
+    const from = parseDate(req.query.from);
+    const to = parseDate(req.query.to);
+
+    const segments = analytics.getUserSegments({
+      startTime: from || undefined,
+      endTime: to || undefined,
+    });
+
+    res.json(segments);
+  } catch (error) {
+    console.error('AI segments API error:', error);
+    res.status(500).json({ error: 'Failed to get user segments' });
+  }
 });
 
 router.get('/ai/patterns', authenticate, requireAdmin, (req, res) => {
-  res.json(mockBehaviorPatterns);
+  try {
+    const analytics = AnalyticsService.getInstance();
+    const from = parseDate(req.query.from);
+    const to = parseDate(req.query.to);
+
+    const patterns = analytics.getBehaviorPatterns({
+      startTime: from || undefined,
+      endTime: to || undefined,
+    });
+
+    res.json(patterns);
+  } catch (error) {
+    console.error('AI patterns API error:', error);
+    res.status(500).json({ error: 'Failed to get behavior patterns' });
+  }
 });
 
 router.get('/ai/recommendations', authenticate, requireAdmin, (req, res) => {
-  const recommendations: DashboardRecommendation[] = [
-    {
-      id: `rec-1`,
-      type: 'widget',
-      title: `Add Performance Widget`,
-      description: `Based on your frequent usage of system stats`,
-      confidence: 0.85,
-      impact: 'high',
-      reasoning: 'You check system stats daily',
-      preview: { widgetId: 'performance-monitor', type: 'preview' },
-    },
-    {
-      id: `rec-2`,
-      type: 'layout',
-      title: 'Optimize Dashboard Layout',
-      description: `Switch to grid-3x3 layout`,
-      confidence: 0.9,
-      impact: 'medium',
-      reasoning: `Based on your Power Users usage pattern`,
-    },
-  ];
-  res.json(recommendations);
+  try {
+    const analytics = AnalyticsService.getInstance();
+    const from = parseDate(req.query.from);
+    const to = parseDate(req.query.to);
+
+    const recommendations = analytics.getRecommendations({
+      startTime: from || undefined,
+      endTime: to || undefined,
+    });
+
+    res.json(recommendations);
+  } catch (error) {
+    console.error('AI recommendations API error:', error);
+    res.status(500).json({ error: 'Failed to get recommendations' });
+  }
 });
 
 router.post('/ai/feedback', authenticate, requireAdmin, async (req, res) => {
@@ -221,10 +262,7 @@ router.post('/ai/feedback', authenticate, requireAdmin, async (req, res) => {
     await db.storeAIFeedback({ recommendationId, feedback, metadata });
     res.json({ success: true });
   } catch (error) {
-    logger.error(
-      'Error storing AI feedback:',
-      error instanceof Error ? error : new Error(String(error))
-    );
+    logger.error('Error storing AI feedback:', error instanceof Error ? error : new Error(String(error)));
     res.status(500).json({ error: 'Failed to store feedback' });
   }
 });
@@ -261,9 +299,7 @@ router.get('/status', authenticate, requireAdmin, (req, res) => {
     try {
       bots = manager.getAllBots();
     } catch (e) {
-      logger.warn('Failed to load bots for status', {
-        error: e instanceof Error ? e.message : String(e),
-      });
+      logger.warn('Failed to load bots for status', { error: e instanceof Error ? e.message : String(e) });
       bots = [];
     }
 
@@ -311,8 +347,6 @@ router.get('/activity', authenticate, requireAdmin, async (req, res) => {
       limit: 5000,
     });
 
-    const allEvents = storedEvents.map((event) => annotateEvent(event, botMap));
-
     const botFilterSet = new Set(botFilter);
     const providerFilterSet = new Set(providerFilter);
     const llmFilterSet = new Set(llmFilter);
@@ -330,31 +364,44 @@ router.get('/activity', authenticate, requireAdmin, async (req, res) => {
 
     const hasAnyFilter = hasBotFilter || hasProviderFilter || hasLlmFilter || fromTime || toTime;
 
-    const filteredEvents = allEvents.filter((event) => {
+    // ⚡ Bolt Optimization: Apply .filter() before .map()
+    // This avoids allocating, transforming, and garbage-collecting thousands
+    // of unnecessary intermediate annotated event objects (and redactString computations),
+    // significantly reducing memory overhead when filtering large datasets (up to 5000 items).
+    // Build filter options from all events, not just filtered results
+    storedEvents.forEach((event) => {
+      const bot = botMap.get(event.botName);
       agents.add(event.botName);
       messageProviders.add(event.provider);
-      llmProviders.add(event.llmProvider);
-
-      if (!hasAnyFilter) return true;
-
-      if (hasBotFilter && !botFilterSet.has(event.botName)) {
-        return false;
-      }
-      if (hasProviderFilter && !providerFilterSet.has(event.provider)) {
-        return false;
-      }
-      if (hasLlmFilter && !llmFilterSet.has(event.llmProvider)) {
-        return false;
-      }
-      const ts = new Date(event.timestamp).getTime();
-      if (fromTime && ts < fromTime) {
-        return false;
-      }
-      if (toTime && ts > toTime) {
-        return false;
-      }
-      return true;
+      llmProviders.add(bot?.llmProvider || 'unknown');
     });
+
+    const filteredEvents = storedEvents
+      .filter((event) => {
+        const bot = botMap.get(event.botName);
+        const eventLlmProvider = bot?.llmProvider || 'unknown';
+
+        if (!hasAnyFilter) return true;
+
+        if (hasBotFilter && !botFilterSet.has(event.botName)) {
+          return false;
+        }
+        if (hasProviderFilter && !providerFilterSet.has(event.provider)) {
+          return false;
+        }
+        if (hasLlmFilter && !llmFilterSet.has(eventLlmProvider)) {
+          return false;
+        }
+        const ts = new Date(event.timestamp).getTime();
+        if (fromTime && ts < fromTime) {
+          return false;
+        }
+        if (toTime && ts > toTime) {
+          return false;
+        }
+        return true;
+      })
+      .map((event) => annotateEvent(event, botMap));
 
     const timeline = buildTimeline(filteredEvents);
     const agentMetrics = buildAgentMetrics(filteredEvents, ws.getAllBotStats());
@@ -386,10 +433,7 @@ router.post('/alerts/:id/acknowledge', authenticate, requireAdmin, (req, res) =>
       res.status(404).json({ success: false, message: 'Alert not found' });
     }
   } catch (error) {
-    logger.error(
-      'Acknowledge alert error:',
-      error instanceof Error ? error : new Error(String(error))
-    );
+    logger.error('Acknowledge alert error:', error instanceof Error ? error : new Error(String(error)));
     res.status(500).json({ error: 'Failed to acknowledge alert' });
   }
 });

@@ -12,7 +12,7 @@ import {
   XCircleIcon,
   ExclamationTriangleIcon,
 } from '@heroicons/react/24/outline';
-import Modal from '../DaisyUI/Modal';
+import Modal, { ConfirmModal } from '../DaisyUI/Modal';
 import Pagination from '../DaisyUI/Pagination';
 import AgentForm from './AgentForm';
 
@@ -67,6 +67,9 @@ const EnhancedAgentConfigurator: React.FC = () => {
   const [editingAgent, setEditingAgent] = useState<Agent | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize] = useState(12);
+  const [confirmModal, setConfirmModal] = useState<{
+    isOpen: boolean; title: string; message: string; onConfirm: () => void;
+  }>({ isOpen: false, title: '', message: '', onConfirm: () => {} });
 
   useEffect(() => {
     fetchData();
@@ -138,17 +141,23 @@ const EnhancedAgentConfigurator: React.FC = () => {
   };
 
   const handleDeleteAgent = async (agentId: string) => {
-    if (!confirm('Are you sure you want to delete this agent?')) {return;}
-
-    try {
-      const response = await fetch(`/api/admin/agents/${agentId}`, {
-        method: 'DELETE',
-      });
-      if (!response.ok) {throw new Error('Failed to delete agent');}
-      fetchData();
-    } catch (err) {
-      setError(`Failed to delete agent: ${err}`);
-    }
+    setConfirmModal({
+      isOpen: true,
+      title: 'Delete Agent',
+      message: 'Are you sure you want to delete this agent?',
+      onConfirm: async () => {
+        setConfirmModal(prev => ({ ...prev, isOpen: false }));
+        try {
+          const response = await fetch(`/api/admin/agents/${agentId}`, {
+            method: 'DELETE',
+          });
+          if (!response.ok) {throw new Error('Failed to delete agent');}
+          fetchData();
+        } catch (err) {
+          setError(`Failed to delete agent: ${err}`);
+        }
+      },
+    });
   };
 
   const handleToggleAgent = async (agent: Agent) => {
@@ -196,7 +205,7 @@ const EnhancedAgentConfigurator: React.FC = () => {
   const paginatedAgents = agents.slice(startIndex, endIndex);
 
   if (loading) {
-    return <div className="flex justify-center items-center min-h-[200px]"><span className="loading loading-spinner loading-lg"></span></div>;
+    return <div className="flex justify-center items-center min-h-[200px]"><span className="loading loading-spinner loading-lg" aria-hidden="true"></span></div>;
   }
 
   return (
@@ -392,6 +401,17 @@ const EnhancedAgentConfigurator: React.FC = () => {
           onCancel={() => setOpenCreateDialog(false)}
         />
       </Modal>
+
+      <ConfirmModal
+        isOpen={confirmModal.isOpen}
+        onClose={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))}
+        title={confirmModal.title}
+        message={confirmModal.message}
+        onConfirm={confirmModal.onConfirm}
+        confirmVariant="error"
+        confirmText="Delete"
+        cancelText="Cancel"
+      />
     </div>
   );
 };

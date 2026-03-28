@@ -93,6 +93,7 @@ export const I18nProvider: React.FC<{ children: React.ReactNode }> = ({ children
         <Button
           variant="ghost"
           className="btn-circle bg-base-100 shadow-lg border border-base-200"
+          aria-label="Select language"
         >
           {loading ? <LoadingSpinner size="xs" /> : <GlobeAltIcon className="w-6 h-6" />}
         </Button>

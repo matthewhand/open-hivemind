@@ -1,7 +1,10 @@
 import { EventEmitter } from 'events';
+import Logger from '@common/logger';
 import { BusinessKpiCollector } from './BusinessKpiCollector';
 import { IntegrationAnomalyDetector, type IntegrationAnomaly } from './IntegrationAnomalyDetector';
 import { ProviderMetricsCollector } from './ProviderMetricsCollector';
+
+const logger = Logger.withContext('EnhancedAlertManager');
 
 /**
  * Alert level
@@ -577,7 +580,7 @@ export class EnhancedAlertManager extends EventEmitter {
     // Implementation depends on channel type
     switch (channel.type) {
       case 'console':
-        console.log(`[ALERT ${alert.level.toUpperCase()}] ${alert.title}: ${alert.message}`);
+        logger.info(`[ALERT ${alert.level.toUpperCase()}] ${alert.title}: ${alert.message}`);
         break;
       case 'slack':
       case 'discord':

@@ -8,6 +8,7 @@ import type {
   PerformanceMetric,
 } from '../../../src/webui/services/WebSocketService';
 import type { AlertEvent } from '../types/Alert';
+import { logger } from '../utils/logger';
 
 type BotStat = { name: string; messageCount: number; errorCount: number };
 
@@ -46,7 +47,7 @@ export const WebSocketProvider: React.FC<{ children: ReactNode }> = ({ children 
         const tokens = JSON.parse(tokenString);
         token = tokens.accessToken;
       } catch (e) {
-        console.error('Failed to parse auth token', e);
+        logger.error('Failed to parse auth token', e);
       }
     }
 
@@ -64,30 +65,30 @@ export const WebSocketProvider: React.FC<{ children: ReactNode }> = ({ children 
     });
 
     newSocket.on('connect', () => {
-      console.log('WebSocket connected');
+      logger.info('WebSocket connected');
       setIsConnected(true);
     });
 
     newSocket.on('disconnect', (reason) => {
-      console.log('WebSocket disconnected', reason);
+      logger.info('WebSocket disconnected', reason);
       setIsConnected(false);
     });
 
     newSocket.on('reconnect_attempt', (attempt) => {
-      console.log(`WebSocket reconnect attempt ${attempt}`);
+      logger.info(`WebSocket reconnect attempt ${attempt}`);
     });
 
     newSocket.on('reconnect', (attempt) => {
-      console.log(`WebSocket reconnected after ${attempt} attempts`);
+      logger.info(`WebSocket reconnected after ${attempt} attempts`);
       setIsConnected(true);
     });
 
     newSocket.on('reconnect_error', (error) => {
-      console.error('WebSocket reconnect error:', error);
+      logger.error('WebSocket reconnect error:', error);
     });
 
     newSocket.on('reconnect_failed', () => {
-      console.error('WebSocket reconnect failed');
+      logger.error('WebSocket reconnect failed');
     });
 
     // Message flow events
@@ -150,17 +151,17 @@ export const WebSocketProvider: React.FC<{ children: ReactNode }> = ({ children 
 
     // Bot status updates
     newSocket.on('bot_status_update', (data) => {
-      console.log('Bot status update:', data);
+      logger.info('Bot status update:', data);
     });
 
     // System metrics
     newSocket.on('system_metrics_update', (data) => {
-      console.log('System metrics update:', data);
+      logger.info('System metrics update:', data);
     });
 
     // Error handling
     newSocket.on('error', (error) => {
-      console.error('WebSocket error:', error);
+      logger.error('WebSocket error:', error);
     });
 
     setSocket(newSocket);

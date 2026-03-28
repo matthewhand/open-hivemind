@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { expect, test } from '@playwright/test';
 import { setupAuth } from './test-utils';
 
 test.describe('Edge Case Test Coverage Gaps - Max Length UX', () => {
@@ -8,7 +8,7 @@ test.describe('Edge Case Test Coverage Gaps - Max Length UX', () => {
     // Create a mock bot with a 100-character name
     const superLongName = 'VeryLongBotNameWithoutSpaces'.repeat(5); // 140 chars
 
-    await page.route('/api/bots', async (route) => {
+    await page.route('**/api/bots', async (route) => {
       await route.fulfill({
         status: 200,
         json: {
@@ -25,19 +25,37 @@ test.describe('Edge Case Test Coverage Gaps - Max Length UX', () => {
                 messageCount: 0,
                 errorCount: 0,
                 provider: 'discord',
-                persona: 'default'
-              }
-            ]
-          }
-        }
+                persona: 'default',
+              },
+            ],
+          },
+        },
       });
     });
 
-    await page.route('/api/config', async (route) => route.fulfill({ status: 200, json: {} }));
-    await page.route('/api/config/global', async (route) => route.fulfill({ status: 200, json: {} }));
-    await page.route('/api/personas', async (route) => route.fulfill({ status: 200, json: [] }));
-    await page.route('/api/llm/profiles', async (route) => route.fulfill({ status: 200, json: [] }));
-    await page.route('/api/config/llm-status', async (route) => route.fulfill({ status: 200, json: { configured: true, hasMissing: false } }));
+    await page.route('**/api/config', async (route) => route.fulfill({ status: 200, json: { bots: [] } }));
+    await page.route('**/api/config/global', async (route) =>
+      route.fulfill({ status: 200, json: {} })
+    );
+    await page.route('**/api/personas', async (route) => route.fulfill({ status: 200, json: [] }));
+    await page.route('**/api/llm/profiles', async (route) =>
+      route.fulfill({ status: 200, json: [] })
+    );
+    await page.route('**/api/config/llm-status', async (route) =>
+      route.fulfill({ status: 200, json: { defaultConfigured: true, defaultProviders: [], botsMissingLlmProvider: [], hasMissing: false } })
+    );
+    await page.route('**/api/health/detailed', async (route) =>
+      route.fulfill({ status: 200, json: { status: 'healthy' } })
+    );
+    await page.route('**/api/csrf-token', async (route) =>
+      route.fulfill({ status: 200, json: { token: 'mock-csrf-token' } })
+    );
+    await page.route('**/api/demo/status', async (route) =>
+      route.fulfill({ status: 200, json: { active: false } })
+    );
+    await page.route('**/api/admin/guard-profiles', async (route) =>
+      route.fulfill({ status: 200, json: { data: [] } })
+    );
 
     await page.goto('/admin/bots');
 

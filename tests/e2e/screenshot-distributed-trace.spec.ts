@@ -3,53 +3,66 @@ import { setupAuth } from './test-utils';
 
 test.describe('Distributed Trace Waterfall Screenshots', () => {
   test('capture distributed trace waterfall screenshot', async ({ page }) => {
-    // Setup authentication
     await setupAuth(page);
 
-    // Mock API endpoints
-    await page.route('**/api/auth/check', async (route) => {
-      await route.fulfill({ status: 200, json: { authenticated: true, user: { role: 'admin' } } });
+    // Intercept API calls to mock data
+    await page.route('**/api/config', async (route) => {
+      await route.fulfill({
+        status: 200,
+        json: {
+          authEnabled: false,
+          demoMode: false,
+          version: '1.0.0',
+          features: {
+            telemetry: true,
+            distributedTracing: true,
+          },
+        },
+      });
     });
 
     await page.route('**/api/webui/system-status', async (route) => {
-      await route.fulfill({ status: 200, json: {
-        bots: { total: 12, active: 8 },
-        database: { stats: { totalMessages: 2847 } },
-        mcp: { connected: 5 }
-      } });
+      await route.fulfill({
+        status: 200,
+        json: {
+          bots: { total: 12, active: 8 },
+          database: { stats: { totalMessages: 2847 } },
+          mcp: { connected: 5 },
+        },
+      });
     });
 
     await page.route('**/api/dashboard/api/activity*', async (route) => {
-       await route.fulfill({ status: 200, json: { events: [] } });
+      await route.fulfill({ status: 200, json: { events: [] } });
     });
 
-    await page.route('**/api/config/llm-status', async (route) =>
-      route.fulfill({ status: 200, json: { defaultConfigured: true } })
-    );
+    await page.route('**/api/config/llm-status', async (route) => {
+      await route.fulfill({ status: 200, json: { defaultConfigured: true } });
+    });
 
-    await page.route('**/api/config/global', async (route) =>
-      route.fulfill({ status: 200, json: { bots: [] } })
-    );
+    await page.route('**/api/config/global', async (route) => {
+      await route.fulfill({ status: 200, json: { bots: [] } });
+    });
 
-    await page.route('**/api/config/llm-profiles', async (route) =>
-      route.fulfill({ status: 200, json: [] })
-    );
+    await page.route('**/api/config/llm-profiles', async (route) => {
+      await route.fulfill({ status: 200, json: [] });
+    });
 
-    await page.route('**/api/admin/guard-profiles', async (route) =>
-      route.fulfill({ status: 200, json: [] })
-    );
+    await page.route('**/api/admin/guard-profiles', async (route) => {
+      await route.fulfill({ status: 200, json: [] });
+    });
 
-    await page.route('**/api/demo/status', async (route) =>
-      route.fulfill({ status: 200, json: { enabled: false } })
-    );
+    await page.route('**/api/demo/status', async (route) => {
+      await route.fulfill({ status: 200, json: { enabled: false } });
+    });
 
-    await page.route('**/api/csrf-token', async (route) =>
-      route.fulfill({ status: 200, json: { csrfToken: 'mock-token' } })
-    );
+    await page.route('**/api/csrf-token', async (route) => {
+      await route.fulfill({ status: 200, json: { csrfToken: 'mock-token' } });
+    });
 
     // Mock dashboard status endpoints
-    await page.route('**/api/health/detailed', async (route) =>
-      route.fulfill({
+    await page.route('**/health/detailed', async (route) => {
+      await route.fulfill({
         status: 200,
         json: {
           status: 'healthy',
@@ -65,11 +78,11 @@ test.describe('Distributed Trace Waterfall Screenshots', () => {
             loadAverage: [0.5, 0.4, 0.3],
           },
         },
-      })
-    );
+      });
+    });
 
-    await page.route('**/api/dashboard/api/status', async (route) =>
-      route.fulfill({
+    await page.route('**/api/dashboard/status', async (route) => {
+      await route.fulfill({
         status: 200,
         json: {
           bots: [
@@ -83,20 +96,64 @@ test.describe('Distributed Trace Waterfall Screenshots', () => {
               errorCount: 2,
             },
           ],
-          uptime: 3600 * 24 * 5,
         },
-      })
-    );
+      });
+    });
 
-    await page.route('**/api/config', async (route) =>
-      route.fulfill({
+    // Mock dashboard API activity (for waterfall monitor)
+    await page.route('**/api/dashboard/activity*', async (route) => {
+      await route.fulfill({
         status: 200,
-        json: { bots: [] },
-      })
-    );
+        json: {
+          events: [
+            {
+              id: 'span-req-1',
+              botName: 'CustomerSupportBot',
+              channelId: 'global',
+              provider: 'discord',
+              llmProvider: 'openai',
+              messageType: 'incoming',
+              status: 'success',
+              timestamp: new Date().toISOString(),
+              processingTime: 120,
+              userId: 'user-123',
+              contentLength: 250,
+            },
+            {
+              id: 'authenticateRequest',
+              spanName: 'authenticateRequest',
+              botName: 'CustomerSupportBot',
+              channelId: 'global',
+              provider: 'discord',
+              llmProvider: 'openai',
+              messageType: 'incoming',
+              status: 'success',
+              timestamp: new Date().toISOString(),
+              processingTime: 50,
+              userId: 'user-123',
+              contentLength: 0,
+            },
+            {
+              id: 'trace-req-8f9d3b2a',
+              spanName: 'trace-req-8f9d3b2a',
+              botName: 'CustomerSupportBot',
+              channelId: 'global',
+              provider: 'discord',
+              llmProvider: 'openai',
+              messageType: 'incoming',
+              status: 'success',
+              timestamp: new Date().toISOString(),
+              processingTime: 50,
+              userId: 'user-123',
+              contentLength: 0,
+            }
+          ],
+        },
+      });
+    });
 
-    await page.route('**/health/api-endpoints', async (route) =>
-      route.fulfill({
+    await page.route('**/health/api-endpoints', async (route) => {
+      await route.fulfill({
         status: 200,
         json: {
           overall: {
@@ -105,15 +162,15 @@ test.describe('Distributed Trace Waterfall Screenshots', () => {
           },
           endpoints: [],
         },
-      })
-    );
+      });
+    });
 
     // Navigate to Monitoring Dashboard
     await page.setViewportSize({ width: 1280, height: 1200 });
     await page.goto('/admin/monitoring');
 
     // Verification - wait for dashboard to load
-    await expect(page.getByText('Ecosystem Status')).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'System Monitoring' })).toBeVisible();
 
     // Click the new Distributed Tracing tab
     await page.getByRole('tab', { name: 'Distributed Tracing' }).click();

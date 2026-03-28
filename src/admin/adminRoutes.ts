@@ -110,7 +110,7 @@ adminRouter.get('/status', async (_req: Request, res: Response) => {
       }));
     } catch {}
     res.json({
-      ok: true,
+      success: true,
       slackBots,
       discordBots,
       discordCount: discordBots.length,
@@ -118,12 +118,12 @@ adminRouter.get('/status', async (_req: Request, res: Response) => {
       discordInfo,
     });
   } catch {
-    res.json({ ok: true, bots: [] });
+    res.json({ success: true, bots: [] });
   }
 });
 
 adminRouter.get('/personas', async (_req: Request, res: Response) => {
-  res.json({ ok: true, personas: await loadPersonas() });
+  res.json({ success: true, personas: await loadPersonas() });
 });
 
 adminRouter.get('/llm-providers', (_req: Request, res: Response) => {
@@ -133,7 +133,7 @@ adminRouter.get('/llm-providers', (_req: Request, res: Response) => {
     docsUrl: p.docsUrl,
     helpText: p.helpText,
   }));
-  res.json({ ok: true, providers });
+  res.json({ success: true, providers });
 });
 
 adminRouter.get('/messenger-providers', (_req: Request, res: Response) => {
@@ -143,7 +143,7 @@ adminRouter.get('/messenger-providers', (_req: Request, res: Response) => {
     docsUrl: p.docsUrl,
     helpText: p.helpText,
   }));
-  res.json({ ok: true, providers });
+  res.json({ success: true, providers });
 });
 
 adminRouter.get(
@@ -154,16 +154,16 @@ adminRouter.get(
     const provider = providerRegistry.get(providerId);
 
     if (!provider) {
-      return res.status(404).json({ ok: false, error: `Provider '${providerId}' not found` });
+      return res.status(404).json({ success: false, error: `Provider '${providerId}' not found` });
     }
 
     try {
       const schema = provider.getSchema();
       const serialized = serializeSchema(schema);
-      return res.json({ ok: true, schema: serialized });
+      return res.json({ success: true, schema: serialized });
     } catch (e: any) {
       debug(`Failed to get schema for provider ${providerId}`, e);
-      return res.status(500).json({ ok: false, error: e.message || String(e) });
+      return res.status(500).json({ success: false, error: e.message || String(e) });
     }
   }
 );
@@ -179,7 +179,7 @@ adminRouter.post(
     if (!provider || provider.type !== 'messenger') {
       return res
         .status(404)
-        .json({ ok: false, error: `Message provider '${providerId}' not found` });
+        .json({ success: false, error: `Message provider '${providerId}' not found` });
     }
 
     try {
@@ -192,7 +192,7 @@ adminRouter.post(
         'success',
         `Created ${provider.label} bot`
       );
-      return res.json({ ok: true, message: `Created ${provider.label} bot` });
+      return res.json({ success: true, message: `Created ${provider.label} bot` });
     } catch (e) {
       const message = (e as Error)?.message || String(e);
       logAdminAction(
@@ -202,7 +202,7 @@ adminRouter.post(
         'failure',
         `Failed to create ${provider.label} bot: ${message}`
       );
-      return res.status(500).json({ ok: false, error: message });
+      return res.status(500).json({ success: false, error: message });
     }
   }
 );
@@ -267,7 +267,7 @@ adminRouter.post(
 
 adminRouter.post('/slack-bots', requireAdmin, async (req: AuditedRequest, res: Response) => {
   const provider = providerRegistry.get('slack') as IMessageProvider;
-  if (!provider) return res.status(404).json({ ok: false, error: 'Slack provider not found' });
+  if (!provider) return res.status(404).json({ success: false, error: 'Slack provider not found' });
   try {
     await provider.addBot(req.body);
     logAdminAction(
@@ -277,7 +277,7 @@ adminRouter.post('/slack-bots', requireAdmin, async (req: AuditedRequest, res: R
       'success',
       'Created Slack bot'
     );
-    return res.json({ ok: true });
+    return res.json({ success: true });
   } catch (e) {
     const message = (e as Error)?.message || String(e);
     logAdminAction(
@@ -287,13 +287,14 @@ adminRouter.post('/slack-bots', requireAdmin, async (req: AuditedRequest, res: R
       'failure',
       `Failed to create Slack bot: ${message}`
     );
-    return res.status(500).json({ ok: false, error: message });
+    return res.status(500).json({ success: false, error: message });
   }
 });
 
 adminRouter.post('/discord-bots', requireAdmin, async (req: AuditedRequest, res: Response) => {
   const provider = providerRegistry.get('discord') as IMessageProvider;
-  if (!provider) return res.status(404).json({ ok: false, error: 'Discord provider not found' });
+  if (!provider)
+    return res.status(404).json({ success: false, error: 'Discord provider not found' });
   try {
     const { name, token, llm } = req.body || {};
     if (!token) {
@@ -304,7 +305,7 @@ adminRouter.post('/discord-bots', requireAdmin, async (req: AuditedRequest, res:
         'failure',
         'Missing required field: token'
       );
-      return res.status(400).json({ ok: false, error: 'token is required' });
+      return res.status(400).json({ success: false, error: 'token is required' });
     }
 
     const configDir = process.env.NODE_CONFIG_DIR || path.join(__dirname, '../../config');
@@ -351,7 +352,7 @@ adminRouter.post('/discord-bots', requireAdmin, async (req: AuditedRequest, res:
         'success',
         `Created Discord bot ${name || 'unnamed'} with runtime initialization`
       );
-      return res.json({ ok: true, note: 'Added and saved.' });
+      return res.json({ success: true, note: 'Added and saved.' });
     } catch (e) {
       debug('Discord runtime add failed; config persisted:', e);
     }
@@ -362,7 +363,7 @@ adminRouter.post('/discord-bots', requireAdmin, async (req: AuditedRequest, res:
       'success',
       'Created Discord bot'
     );
-    return res.json({ ok: true, note: 'Saved. Restart app to initialize Discord bot.' });
+    return res.json({ success: true, note: 'Saved. Restart app to initialize Discord bot.' });
   } catch (e) {
     const message = (e as Error)?.message || String(e);
     logAdminAction(
@@ -372,7 +373,7 @@ adminRouter.post('/discord-bots', requireAdmin, async (req: AuditedRequest, res:
       'failure',
       `Failed to create Discord bot: ${message}`
     );
-    return res.status(500).json({ ok: false, error: message });
+    return res.status(500).json({ success: false, error: message });
   }
 });
 
@@ -393,7 +394,7 @@ adminRouter.post('/reload', requireAdmin, async (req: AuditedRequest, res: Respo
       cfg = JSON.parse(content);
     } catch (e) {
       if ((e as { code?: string }).code === 'ENOENT') {
-        return res.status(400).json({ ok: false, error: 'messengers.json not found' });
+        return res.status(400).json({ success: false, error: 'messengers.json not found' });
       }
       throw e;
     }
@@ -456,7 +457,7 @@ adminRouter.post('/reload', requireAdmin, async (req: AuditedRequest, res: Respo
       'success',
       `Reloaded bots from messengers.json: ${addedSlack} Slack bots, ${addedDiscord} Discord bots added`
     );
-    return res.json({ ok: true, addedSlack, addedDiscord });
+    return res.json({ success: true, addedSlack, addedDiscord });
   } catch (e) {
     const message = (e as Error)?.message || String(e);
     logAdminAction(
@@ -466,7 +467,7 @@ adminRouter.post('/reload', requireAdmin, async (req: AuditedRequest, res: Respo
       'failure',
       `Failed to reload bots: ${message}`
     );
-    return res.status(500).json({ ok: false, error: message });
+    return res.status(500).json({ success: false, error: message });
   }
 });
 

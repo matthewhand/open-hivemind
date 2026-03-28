@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
-import React, { useState } from 'react';
+import React from 'react';
 import { useParams } from 'react-router-dom';
 import Card from '../components/DaisyUI/Card';
 import Button from '../components/DaisyUI/Button';
@@ -36,7 +36,7 @@ const SpecDetailPage: React.FC = () => {
       content = `
 topic: ${spec.topic}
 author: ${spec.author}
-date: ${spec.date}
+timestamp: ${spec.timestamp}
 tags:
 ${spec.tags.map(tag => `  - ${tag}`).join('\n')}
 content: |
@@ -67,7 +67,7 @@ ${spec.content.replace(/^/gm, '  ')}
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="loading loading-spinner loading-lg"></div>
+        <div className="loading loading-spinner loading-lg" aria-hidden="true"></div>
       </div>
     );
   }
@@ -89,8 +89,8 @@ ${spec.content.replace(/^/gm, '  ')}
   }
 
   const breadcrumbItems = [
-    { label: 'Specs', href: '/specs' },
-    { label: spec.topic, href: `/specs/${id}`, isActive: true },
+    { label: 'Specs', href: '/admin/specs' },
+    { label: spec.topic, href: `/admin/specs/${id}`, isActive: true },
   ];
 
   return (
@@ -113,7 +113,7 @@ ${spec.content.replace(/^/gm, '  ')}
                 </Button>
                 <div>
                   <h1 className="text-3xl font-bold">{spec.topic}</h1>
-                  <p className="opacity-70">By {spec.author} • {new Date(spec.date).toLocaleDateString()}</p>
+                  <p className="opacity-70">By {spec.author} • {new Date(spec.timestamp).toLocaleDateString()}</p>
                 </div>
               </div>
               <Dropdown
@@ -145,7 +145,7 @@ ${spec.content.replace(/^/gm, '  ')}
             <div className="divider mt-8"></div>
             <div className="flex justify-between items-center">
               <p className="text-sm opacity-70">
-                Last updated: {new Date(spec.date).toLocaleString()}
+                Last updated: {new Date(spec.timestamp).toLocaleString()}
               </p>
               <div className="flex gap-2">
                 <Button size="sm" className="btn-ghost">

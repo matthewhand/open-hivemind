@@ -10,6 +10,8 @@ import StatsCards from '../components/DaisyUI/StatsCards';
 import EmptyState from '../components/DaisyUI/EmptyState';
 import { LoadingSpinner } from '../components/DaisyUI/Loading';
 import SearchFilterBar from '../components/SearchFilterBar';
+import { ConfirmModal } from '../components/DaisyUI/Modal';
+import { useErrorToast } from '../components/DaisyUI/ToastNotification';
 import {
   Brain as BrainIcon,
   Plus as AddIcon,
@@ -55,6 +57,7 @@ const isEmbeddingCapable = (profile: any): boolean => {
 
 const LLMProvidersPage: React.FC = () => {
   const { modalState, openAddModal, openEditModal, closeModal } = useModal();
+  const errorToast = useErrorToast();
   const [profiles, setProfiles] = useState<any[]>([]);
   const [defaultStatus, setDefaultStatus] = useState<any>(null);
   const [expandedProfile, setExpandedProfile] = useState<string | null>(null);
@@ -67,6 +70,9 @@ const LLMProvidersPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterType, setFilterType] = useState('all');
+  const [confirmModal, setConfirmModal] = useState<{
+    isOpen: boolean; title: string; message: string; onConfirm: () => void;
+  }>({ isOpen: false, title: '', message: '', onConfirm: () => {} });
 
   const fetchProfiles = useCallback(async () => {
     try {
@@ -117,11 +123,18 @@ const LLMProvidersPage: React.FC = () => {
   };
 
   const handleDeleteProfile = async (key: string) => {
-    if (!window.confirm(`Delete profile "${key}"?`)) return;
-    try {
-      await apiService.delete(`/api/config/llm-profiles/${key}`);
-      fetchProfiles();
-    } catch (err: any) { alert(`Failed to delete: ${err.message}`); }
+    setConfirmModal({
+      isOpen: true,
+      title: 'Delete Profile',
+      message: `Delete profile "${key}"?`,
+      onConfirm: async () => {
+        setConfirmModal(prev => ({ ...prev, isOpen: false }));
+        try {
+          await apiService.delete(`/api/config/llm-profiles/${key}`);
+          fetchProfiles();
+        } catch (err: any) { errorToast('Delete Failed', `Failed to delete: ${err.message}`); }
+      },
+    });
   };
 
   const handleProviderSubmit = async (providerData: any) => {
@@ -152,7 +165,7 @@ const LLMProvidersPage: React.FC = () => {
       }
       closeModal();
       fetchProfiles();
-    } catch (err: any) { alert(`Failed to save: ${err.message}`); }
+    } catch (err: any) { errorToast('Save Failed', `Failed to save: ${err.message}`); }
   };
 
   const getProviderIcon = (type: string) => {
@@ -203,7 +216,7 @@ const LLMProvidersPage: React.FC = () => {
         icon={<BrainIcon className="w-6 h-6" />}
         actions={
           <div className="flex gap-2">
-            <Button variant="ghost" onClick={fetchProfiles} disabled={loading}>
+            <Button variant="ghost" onClick={fetchProfiles} disabled={loading} aria-busy={loading}>
               <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} /> Refresh
             </Button>
             <Button variant="primary" onClick={handleAddProfile}>
@@ -267,7 +280,7 @@ const LLMProvidersPage: React.FC = () => {
                   setDefaultChatbotProfile(e.target.value);
                   await saveGlobal({ defaultChatbotProfile: e.target.value }).catch(() => {});
                 }}
-                disabled={loading}
+                disabled={loading} aria-busy={loading}
               >
                 <option value="">Use System Default</option>
                 {chatProfiles.map((p) => (
@@ -295,7 +308,7 @@ const LLMProvidersPage: React.FC = () => {
                   setWebuiIntelligenceProvider(e.target.value);
                   await saveGlobal({ webuiIntelligenceProvider: e.target.value }).catch(() => {});
                 }}
-                disabled={loading}
+                disabled={loading} aria-busy={loading}
               >
                 <option value="">None (Disabled)</option>
                 {chatProfiles.map((p) => (
@@ -322,7 +335,7 @@ const LLMProvidersPage: React.FC = () => {
                   setDefaultEmbeddingProvider(e.target.value);
                   await saveLlmConfig({ DEFAULT_EMBEDDING_PROVIDER: e.target.value }).catch(() => {});
                 }}
-                disabled={loading}
+                disabled={loading} aria-busy={loading}
               >
                 <option value="">None Selected</option>
                 {embeddingProfiles.map((p) => (
@@ -483,6 +496,17 @@ const LLMProvidersPage: React.FC = () => {
         existingProviders={profiles}
         onClose={closeModal}
         onSubmit={handleProviderSubmit}
+      />
+
+      <ConfirmModal
+        isOpen={confirmModal.isOpen}
+        onClose={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))}
+        title={confirmModal.title}
+        message={confirmModal.message}
+        onConfirm={confirmModal.onConfirm}
+        confirmVariant="error"
+        confirmText="Delete"
+        cancelText="Cancel"
       />
     </div>
   );

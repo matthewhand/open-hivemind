@@ -9,6 +9,7 @@ import {
 } from '@heroicons/react/24/outline';
 import { useAppSelector } from '../store/hooks';
 import { AdaptiveGrid } from '../components/ResponsiveComponents';
+import { ConfirmModal } from '../components/DaisyUI/Modal';
 
 export interface WidgetConfig {
   id: string;
@@ -285,12 +286,14 @@ const WidgetRenderer: React.FC<{ widget: WidgetConfig; editable?: boolean; onEdi
         >
           <button
             className="btn btn-xs btn-circle btn-ghost bg-base-100 shadow-sm"
+            aria-label="Edit widget"
             onClick={onEdit}
           >
             <PencilIcon className="w-3 h-3" />
           </button>
           <button
             className="btn btn-xs btn-circle btn-ghost bg-base-100 shadow-sm text-error"
+            aria-label="Delete widget"
             onClick={onDelete}
           >
             <XMarkIcon className="w-3 h-3" />
@@ -313,6 +316,9 @@ export const WidgetSystem: React.FC<WidgetSystemProps> = ({
   const [widgets, setWidgets] = useState<WidgetConfig[]>(externalWidgets || defaultWidgets);
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [editingWidget, setEditingWidget] = useState<WidgetConfig | null>(null);
+  const [confirmModal, setConfirmModal] = useState<{
+    isOpen: boolean; title: string; message: string; onConfirm: () => void;
+  }>({ isOpen: false, title: '', message: '', onConfirm: () => {} });
   const dragStateRef = useRef<DragState>({
     isDragging: false,
     draggedWidget: null,
@@ -332,11 +338,17 @@ export const WidgetSystem: React.FC<WidgetSystemProps> = ({
   };
 
   const handleWidgetDelete = (widgetId: string) => {
-    if (window.confirm('Are you sure you want to delete this widget?')) {
-      const newWidgets = widgets.filter(w => w.id !== widgetId);
-      setWidgets(newWidgets);
-      onWidgetDelete(widgetId);
-    }
+    setConfirmModal({
+      isOpen: true,
+      title: 'Delete Widget',
+      message: 'Are you sure you want to delete this widget?',
+      onConfirm: () => {
+        setConfirmModal(prev => ({ ...prev, isOpen: false }));
+        const newWidgets = widgets.filter(w => w.id !== widgetId);
+        setWidgets(newWidgets);
+        onWidgetDelete(widgetId);
+      },
+    });
   };
 
   const handleAddWidget = (newWidget: Omit<WidgetConfig, 'id'>) => {
@@ -391,10 +403,11 @@ export const WidgetSystem: React.FC<WidgetSystemProps> = ({
             <h3 className="font-bold text-lg">Add New Widget</h3>
             <div className="py-4 space-y-4">
               <div className="form-control w-full">
-                <label className="label">
+                <label htmlFor="add-widget-title" className="label">
                   <span className="label-text">Widget Title</span>
                 </label>
                 <input
+                  id="add-widget-title"
                   type="text"
                   className="input input-bordered w-full"
                   defaultValue="New Widget"
@@ -405,10 +418,11 @@ export const WidgetSystem: React.FC<WidgetSystemProps> = ({
               </div>
 
               <div className="form-control w-full">
-                <label className="label">
+                <label htmlFor="add-widget-type" className="label">
                   <span className="label-text">Widget Type</span>
                 </label>
                 <select
+                  id="add-widget-type"
                   className="select select-bordered w-full"
                   defaultValue="metric"
                 >
@@ -420,10 +434,11 @@ export const WidgetSystem: React.FC<WidgetSystemProps> = ({
               </div>
 
               <div className="form-control w-full">
-                <label className="label">
+                <label htmlFor="add-widget-datasource" className="label">
                   <span className="label-text">Data Source</span>
                 </label>
                 <input
+                  id="add-widget-datasource"
                   type="text"
                   className="input input-bordered w-full"
                   defaultValue="performance.responseTime"
@@ -434,10 +449,11 @@ export const WidgetSystem: React.FC<WidgetSystemProps> = ({
               </div>
 
               <div className="form-control w-full">
-                <label className="label">
+                <label htmlFor="add-widget-refresh" className="label">
                   <span className="label-text">Refresh Interval (ms)</span>
                 </label>
                 <input
+                  id="add-widget-refresh"
                   type="number"
                   className="input input-bordered w-full"
                   defaultValue={5000}
@@ -471,10 +487,11 @@ export const WidgetSystem: React.FC<WidgetSystemProps> = ({
             <h3 className="font-bold text-lg">Edit Widget</h3>
             <div className="py-4 space-y-4">
               <div className="form-control w-full">
-                <label className="label">
+                <label htmlFor="edit-widget-title" className="label">
                   <span className="label-text">Widget Title</span>
                 </label>
                 <input
+                  id="edit-widget-title"
                   type="text"
                   className="input input-bordered w-full"
                   defaultValue={editingWidget.title}
@@ -485,10 +502,11 @@ export const WidgetSystem: React.FC<WidgetSystemProps> = ({
               </div>
 
               <div className="form-control w-full">
-                <label className="label">
+                <label htmlFor="edit-widget-description" className="label">
                   <span className="label-text">Description</span>
                 </label>
                 <textarea
+                  id="edit-widget-description"
                   className="textarea textarea-bordered w-full"
                   defaultValue={editingWidget.description || ''}
                   rows={3}
@@ -499,10 +517,11 @@ export const WidgetSystem: React.FC<WidgetSystemProps> = ({
               </div>
 
               <div className="form-control w-full">
-                <label className="label">
+                <label htmlFor="edit-widget-type" className="label">
                   <span className="label-text">Widget Type</span>
                 </label>
                 <select
+                  id="edit-widget-type"
                   className="select select-bordered w-full"
                   value={editingWidget.type}
                   onChange={(event) => {
@@ -548,6 +567,17 @@ export const WidgetSystem: React.FC<WidgetSystemProps> = ({
           </div>
         </div>
       )}
+
+      <ConfirmModal
+        isOpen={confirmModal.isOpen}
+        onClose={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))}
+        title={confirmModal.title}
+        message={confirmModal.message}
+        onConfirm={confirmModal.onConfirm}
+        confirmVariant="error"
+        confirmText="Delete"
+        cancelText="Cancel"
+      />
     </div>
   );
 };

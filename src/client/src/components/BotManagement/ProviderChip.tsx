@@ -5,6 +5,7 @@ import type {
   LLMProvider,
 } from '../../types';
 import Badge from '../DaisyUI/Badge';
+import Tooltip from '../DaisyUI/Tooltip';
 import { X as XIcon, Edit as EditIcon } from 'lucide-react';
 
 interface ProviderChipProps {
@@ -122,26 +123,28 @@ const ProviderChip: React.FC<ProviderChipProps> = ({
           <div className="flex gap-1 ml-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
             {/* Edit Button */}
             {onEdit && !disabled && (
-              <button
-                onClick={onEdit}
-                className="btn btn-xs btn-circle btn-ghost"
-                title="Edit provider"
-                aria-label={`Edit ${provider.name} provider`}
-              >
-                <EditIcon className="w-3 h-3" />
-              </button>
+              <Tooltip content="Edit provider">
+                <button
+                  onClick={onEdit}
+                  className="btn btn-xs btn-circle btn-ghost"
+                  aria-label={`Edit ${provider.name} provider`}
+                >
+                  <EditIcon className="w-3 h-3" />
+                </button>
+              </Tooltip>
             )}
 
             {/* Remove Button */}
             {onRemove && !disabled && (
-              <button
-                onClick={onRemove}
-                className="btn btn-xs btn-circle btn-ghost"
-                title="Remove provider"
-                aria-label={`Remove ${provider.name} provider`}
-              >
-                <XIcon className="w-3 h-3" />
-              </button>
+              <Tooltip content="Remove provider">
+                <button
+                  onClick={onRemove}
+                  className="btn btn-xs btn-circle btn-ghost"
+                  aria-label={`Remove ${provider.name} provider`}
+                >
+                  <XIcon className="w-3 h-3" />
+                </button>
+              </Tooltip>
             )}
           </div>
         </div>

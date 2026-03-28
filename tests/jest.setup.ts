@@ -1,3 +1,4 @@
+import '@testing-library/jest-dom';
 import 'reflect-metadata';
 import { Server } from 'http';
 import express from 'express';

@@ -1,10 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useWebSocket } from '../contexts/WebSocketContext';
 import { apiService } from '../services/api';
 import AlertPanel from '../components/Monitoring/AlertPanel';
 import StatusCard from '../components/Monitoring/StatusCard';
-import Modal from '../components/DaisyUI/Modal';
+import Modal, { ConfirmModal } from '../components/DaisyUI/Modal';
+import { useSuccessToast, useErrorToast, useWarningToast } from '../components/DaisyUI/ToastNotification';
 
 interface SystemConfig {
   refreshInterval: number;
@@ -34,6 +35,23 @@ interface BackupRecord {
 
 const SystemManagement: React.FC = () => {
   const { alerts, performanceMetrics } = useWebSocket();
+  const successToast = useSuccessToast();
+  const errorToast = useErrorToast();
+  const warningToast = useWarningToast();
+
+  // Confirm modal state
+  const [confirmModal, setConfirmModal] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    onConfirm: () => void;
+    confirmVariant?: 'primary' | 'error' | 'warning';
+  }>({ isOpen: false, title: '', message: '', onConfirm: () => {} });
+
+  const closeConfirmModal = useCallback(() => {
+    setConfirmModal(prev => ({ ...prev, isOpen: false }));
+  }, []);
+
   const [systemConfig, setSystemConfig] = useState<SystemConfig>({
     refreshInterval: 5000,
     logLevel: 'info',
@@ -70,38 +88,16 @@ const SystemManagement: React.FC = () => {
   const [isPerformanceLoading, setIsPerformanceLoading] = useState(false);
 
 
-  useEffect(() => {
-    fetchSystemConfig();
-    fetchBackupHistory();
-  }, []);
-
-
-  // Performance monitoring polling
-  useEffect(() => {
-    if (activeTab === 'performance') {
-      fetchApiStatus();
-      const interval = setInterval(fetchApiStatus, 10000); // Refresh every 10s
-      return () => clearInterval(interval);
-    }
-  }, [activeTab]);
-
-  const fetchApiStatus = async () => {
+  const fetchApiStatus = useCallback(async () => {
     try {
       const status = await apiService.getApiEndpointsStatus();
       setApiStatus(status);
     } catch (error) {
       console.error('Failed to fetch API status:', error);
     }
-  };
+  }, []);
 
-
-  useEffect(() => {
-    if (activeTab === 'performance') {
-      fetchPerformanceData();
-    }
-  }, [activeTab]);
-
-  const fetchPerformanceData = async () => {
+  const fetchPerformanceData = useCallback(async () => {
     setIsPerformanceLoading(true);
     try {
       const [infoResult, overridesResult] = await Promise.allSettled([
@@ -117,11 +113,10 @@ const SystemManagement: React.FC = () => {
       console.error('Failed to fetch performance data:', error);
     } finally {
       setIsPerformanceLoading(false);
-
     }
-  };
+  }, []);
 
-  const fetchSystemConfig = async () => {
+  const fetchSystemConfig = useCallback(async () => {
     try {
       const globalConfig = await apiService.getGlobalConfig();
       const userSettings = globalConfig._userSettings?.values || {};
@@ -139,9 +134,9 @@ const SystemManagement: React.FC = () => {
     } catch (error) {
       console.error('Failed to fetch system config:', error);
     }
-  };
+  }, []);
 
-  const fetchBackupHistory = async () => {
+  const fetchBackupHistory = useCallback(async () => {
     try {
       const backupList = await apiService.listSystemBackups();
       // Map API response to local interface
@@ -159,7 +154,27 @@ const SystemManagement: React.FC = () => {
     } catch (error) {
       console.error('Failed to fetch backup history:', error);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    fetchSystemConfig();
+    fetchBackupHistory();
+  }, [fetchSystemConfig, fetchBackupHistory]);
+
+  // Performance monitoring polling
+  useEffect(() => {
+    if (activeTab === 'performance') {
+      fetchApiStatus();
+      const interval = setInterval(fetchApiStatus, 10000); // Refresh every 10s
+      return () => clearInterval(interval);
+    }
+  }, [activeTab, fetchApiStatus]);
+
+  useEffect(() => {
+    if (activeTab === 'performance') {
+      fetchPerformanceData();
+    }
+  }, [activeTab, fetchPerformanceData]);
 
   const handleConfigUpdate = async (key: keyof SystemConfig, value: any) => {
     setIsLoading(true);
@@ -200,11 +215,11 @@ const SystemManagement: React.FC = () => {
 
   const confirmCreateBackup = async () => {
     if (useEncryption && !encryptionKey) {
-      alert('Encryption key is required when encryption is enabled');
+      warningToast('Validation Error', 'Encryption key is required when encryption is enabled');
       return;
     }
     if (useEncryption && encryptionKey.length < 8) {
-      alert('Encryption key must be at least 8 characters long');
+      warningToast('Validation Error', 'Encryption key must be at least 8 characters long');
       return;
     }
 
@@ -217,51 +232,72 @@ const SystemManagement: React.FC = () => {
         encrypt: useEncryption,
         encryptionKey: useEncryption ? encryptionKey : undefined
       });
-      alert('Backup created successfully');
+      successToast('Backup Created', 'Backup created successfully');
       await fetchBackupHistory();
     } catch (error) {
       console.error('Failed to create backup:', error);
-      alert('Failed to create backup: ' + (error as Error).message);
+      errorToast('Backup Failed', 'Failed to create backup: ' + (error as Error).message);
     } finally {
       setIsCreatingBackup(false);
     }
   };
 
   const handleRestoreBackup = async (backupId: string) => {
-    if (confirm('Are you sure you want to restore this backup? This will overwrite current configuration.')) {
-      try {
-        await apiService.restoreSystemBackup(backupId);
-        alert('System restored successfully. Reloading...');
-        setTimeout(() => window.location.reload(), 2000);
-      } catch (error) {
-        console.error('Failed to restore backup:', error);
-        alert('Failed to restore backup: ' + (error as Error).message);
-      }
-    }
+    setConfirmModal({
+      isOpen: true,
+      title: 'Restore Backup',
+      message: 'Are you sure you want to restore this backup? This will overwrite current configuration.',
+      confirmVariant: 'warning',
+      onConfirm: async () => {
+        closeConfirmModal();
+        try {
+          await apiService.restoreSystemBackup(backupId);
+          successToast('System Restored', 'System restored successfully. Reloading...');
+          setTimeout(() => window.location.reload(), 2000);
+        } catch (error) {
+          console.error('Failed to restore backup:', error);
+          errorToast('Restore Failed', 'Failed to restore backup: ' + (error as Error).message);
+        }
+      },
+    });
   };
 
   const handleDeleteBackup = async (backupId: string) => {
-    if (confirm('Are you sure you want to delete this backup?')) {
-      try {
-        await apiService.deleteSystemBackup(backupId);
-        alert('Backup deleted');
-        setBackups(prev => prev.filter(backup => backup.id !== backupId));
-      } catch (error) {
-        console.error('Failed to delete backup:', error);
-        alert('Failed to delete backup: ' + (error as Error).message);
-      }
-    }
+    setConfirmModal({
+      isOpen: true,
+      title: 'Delete Backup',
+      message: 'Are you sure you want to delete this backup?',
+      confirmVariant: 'error',
+      onConfirm: async () => {
+        closeConfirmModal();
+        try {
+          await apiService.deleteSystemBackup(backupId);
+          successToast('Backup Deleted', 'Backup deleted');
+          setBackups(prev => prev.filter(backup => backup.id !== backupId));
+        } catch (error) {
+          console.error('Failed to delete backup:', error);
+          errorToast('Delete Failed', 'Failed to delete backup: ' + (error as Error).message);
+        }
+      },
+    });
   };
 
   const handleClearCache = async () => {
-    if (confirm('Are you sure you want to clear the system cache? This may temporarily impact performance.')) {
-      try {
-        await apiService.clearCache();
-        alert('Cache cleared successfully');
-      } catch (error) {
-        alert('Failed to clear cache: ' + (error as Error).message);
-      }
-    }
+    setConfirmModal({
+      isOpen: true,
+      title: 'Clear Cache',
+      message: 'Are you sure you want to clear the system cache? This may temporarily impact performance.',
+      confirmVariant: 'warning',
+      onConfirm: async () => {
+        closeConfirmModal();
+        try {
+          await apiService.clearCache();
+          successToast('Cache Cleared', 'Cache cleared successfully');
+        } catch (error) {
+          errorToast('Cache Error', 'Failed to clear cache: ' + (error as Error).message);
+        }
+      },
+    });
   };
 
   const currentMetric = performanceMetrics[performanceMetrics.length - 1] || {
@@ -321,7 +357,7 @@ const SystemManagement: React.FC = () => {
               onClick={openBackupModal}
               disabled={isCreatingBackup}
             >
-              {isCreatingBackup ? <span className="loading loading-spinner loading-sm"></span> : '💾'} Create Backup
+              {isCreatingBackup ? <span className="loading loading-spinner loading-sm" aria-hidden="true"></span> : '💾'} Create Backup
             </button>
           </div>
         </div>
@@ -622,7 +658,7 @@ const SystemManagement: React.FC = () => {
                   onClick={fetchPerformanceData}
                   disabled={isPerformanceLoading}
                 >
-                  {isPerformanceLoading ? <span className="loading loading-spinner loading-xs"></span> : '🔄 Refresh'}
+                  {isPerformanceLoading ? <span className="loading loading-spinner loading-xs" aria-hidden="true"></span> : '🔄 Refresh'}
                 </button>
               </div>
 
@@ -768,7 +804,7 @@ const SystemManagement: React.FC = () => {
                   </div>
                 ) : (
                   <div className="flex justify-center py-8">
-                    <span className="loading loading-dots loading-lg"></span>
+                    <span className="loading loading-dots loading-lg" aria-hidden="true"></span>
                   </div>
                 )}
               </div>
@@ -832,6 +868,17 @@ const SystemManagement: React.FC = () => {
           )}
         </div>
       </Modal>
+
+      <ConfirmModal
+        isOpen={confirmModal.isOpen}
+        onClose={closeConfirmModal}
+        title={confirmModal.title}
+        message={confirmModal.message}
+        onConfirm={confirmModal.onConfirm}
+        confirmVariant={confirmModal.confirmVariant}
+        confirmText="Confirm"
+        cancelText="Cancel"
+      />
     </div>
   );
 };

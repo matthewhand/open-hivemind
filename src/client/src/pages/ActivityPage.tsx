@@ -1,4 +1,5 @@
 import { withRetry } from '../utils/withRetry';
+import logger from '../utils/logger';
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Clock, Download, LayoutList, GitBranch, RefreshCw, X } from 'lucide-react';
@@ -65,10 +66,9 @@ const ActivityPage: React.FC = () => {
         () => apiService.getActivity(params),
         maxRetries,
         1000,
-        (err, attempt, max, delayMs) => {
-           console.log(`Retrying fetchActivity in ${delayMs}ms (attempt ${attempt}/${max})`);
+        (err, attempt, max) => {
+           logger.debug(`Retrying fetchActivity in ${1000 * Math.pow(1.5, attempt - 1)}ms (attempt ${attempt}/${max})`);
            setRetryCount(attempt);
-           setRetryDelay(delayMs);
         }
       );
 
@@ -278,29 +278,32 @@ const ActivityPage: React.FC = () => {
         />
       )}
 
-      {/* Auto-retrying indicator */}
-      {loading && retryCount > 0 && (
-        <Alert
-          status="warning"
-          message={`Auto-retrying (${retryCount}/${maxRetries}) in ${retryDelay}ms...`}
-        />
-      )}
-
-      {/* Manual Retry Button if there are persistent errors */}
-      {error && (
+      {/* Retry Button if there are errors */}
+      {error && retryCount > 0 && (
         <div className="mt-2 text-center">
-          <Button
-            size="sm"
-            variant="secondary"
-            onClick={() => {
-              setRetryCount(0);
-              setRetryDelay(1000);
-              setError(null);
-              fetchActivity();
-            }}
-          >
-            Reset & Retry
-          </Button>
+          {retryCount < maxRetries ? (
+            <Button
+              size="sm"
+              variant="secondary"
+              onClick={fetchActivity}
+              disabled={loading} aria-busy={loading}
+            >
+              Retry ({retryCount}/{maxRetries})
+            </Button>
+          ) : (
+            <Button
+              size="sm"
+              variant="secondary"
+              onClick={() => {
+                setRetryCount(0);
+                setRetryDelay(1000);
+                setError(null);
+                fetchActivity();
+              }}
+            >
+              Reset & Retry
+            </Button>
+          )}
         </div>
       )}
 
@@ -347,7 +350,7 @@ const ActivityPage: React.FC = () => {
               variant="ghost"
               size="sm"
               onClick={fetchActivity}
-              disabled={loading}
+              disabled={loading} aria-busy={loading}
             >
               <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
             </Button>
@@ -421,6 +424,7 @@ const ActivityPage: React.FC = () => {
                className="btn-square"
                onClick={handleClearFilters}
                title="Clear All Filters"
+               aria-label="Clear All Filters"
              >
                <X className="w-4 h-4" />
              </Button>

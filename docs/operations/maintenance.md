@@ -59,8 +59,8 @@ NODE_ENV=development
 DEBUG=app:*
 
 # Frontend
-VITE_API_URL=http://localhost:3028
-VITE_WS_URL=ws://localhost:3028
+VITE_API_URL=http://localhost:3000
+VITE_WS_URL=ws://localhost:3000
 ```
 
 ## 🚀 Daily Development Workflow

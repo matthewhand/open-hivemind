@@ -42,7 +42,7 @@ const SpecsPage: React.FC = () => {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="loading loading-spinner loading-lg"></div>
+        <div className="loading loading-spinner loading-lg" aria-hidden="true"></div>
       </div>
     );
   }
@@ -110,7 +110,7 @@ const SpecsPage: React.FC = () => {
 
               <h3 className="card-title text-lg mb-2">{spec.topic}</h3>
               <p className="text-sm opacity-70 mb-4 line-clamp-3">
-                By {spec.author} • {new Date(spec.date).toLocaleDateString()}
+                By {spec.author} • {new Date(spec.timestamp).toLocaleDateString()}
               </p>
 
               <div className="flex flex-wrap gap-1 mb-4">

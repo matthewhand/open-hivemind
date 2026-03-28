@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useWebSocket } from '../contexts/WebSocketContext';
-import { apiService, ActivityResponse, ActivityEvent } from '../services/api';
+import { apiService, ActivityResponse } from '../services/api';
 import MetricChart from '../components/Monitoring/MetricChart';
 import StatusCard from '../components/Monitoring/StatusCard';
 import { redactString } from '../utils/redaction';
@@ -15,11 +15,7 @@ const AnalyticsDashboard: React.FC = () => {
   // Filter message flow for valid timestamps
   const validMessageFlow = messageFlow.filter(e => e && e.timestamp);
 
-  useEffect(() => {
-    fetchAnalyticsData();
-  }, [timeRange]);
-
-  const fetchAnalyticsData = async () => {
+  const fetchAnalyticsData = useCallback(async () => {
     setIsLoading(true);
     try {
       // Calculate from date based on range
@@ -39,7 +35,11 @@ const AnalyticsDashboard: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [timeRange]);
+
+  useEffect(() => {
+    fetchAnalyticsData();
+  }, [fetchAnalyticsData]);
 
   const currentMetric = performanceMetrics[performanceMetrics.length - 1] || {
     cpuUsage: 0, memoryUsage: 0, activeConnections: 0, messageRate: 0, errorRate: 0, responseTime: 0
@@ -51,7 +51,7 @@ const AnalyticsDashboard: React.FC = () => {
   // Message Volume (from timeline or events)
   const messageVolumeData = activityData?.timeline?.map(bucket => ({
     timestamp: bucket.timestamp,
-    value: Object.values(bucket.messageProviders).reduce((a, b) => a + b, 0),
+    value: Object.values(bucket.messageProviders ?? {}).reduce((a, b) => a + b, 0),
     label: 'Messages'
   })) || [];
 
@@ -59,7 +59,7 @@ const AnalyticsDashboard: React.FC = () => {
   const uniqueUsers = new Set(events.map(e => e.userId)).size;
 
   // Bot Performance Stats
-  const botStats = activityData?.agentMetrics?.map(am => ({
+  const botStats = (activityData?.agentMetrics ?? []).map(am => ({
     name: am.botName,
     messages: am.totalMessages,
     errors: am.errors,
@@ -76,7 +76,7 @@ const AnalyticsDashboard: React.FC = () => {
       metrics: [
         { label: 'Messages', value: events.length.toLocaleString(), icon: '💬' },
         { label: 'Throughput', value: currentMetric.messageRate.toFixed(1), unit: '/s' },
-        { label: 'Errors', value: activityData?.agentMetrics?.reduce((acc, m) => acc + m.errors, 0) || 0, icon: '❌' },
+        { label: 'Errors', value: (activityData?.agentMetrics ?? []).reduce((acc, m) => acc + (m.errors ?? 0), 0), icon: '❌' },
       ],
     },
     {
@@ -85,7 +85,7 @@ const AnalyticsDashboard: React.FC = () => {
       status: 'healthy',
       metrics: [
         { label: 'Active Users', value: uniqueUsers, icon: '👥' },
-        { label: 'Active Bots', value: activityData?.filters.agents.length || 0, icon: '🤖' },
+        { label: 'Active Bots', value: activityData?.filters?.agents?.length ?? 0, icon: '🤖' },
       ]
     },
     {
@@ -135,7 +135,7 @@ const AnalyticsDashboard: React.FC = () => {
               onClick={fetchAnalyticsData}
               disabled={isLoading}
             >
-              {isLoading ? <span className="loading loading-spinner loading-sm"></span> : '🔄'} Refresh
+              {isLoading ? <span className="loading loading-spinner loading-sm" aria-hidden="true"></span> : '🔄'} Refresh
             </button>
           </div>
         </div>

@@ -1,11 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { 
-  Bot, Plus, Edit2, Trash2, Check, RefreshCw, AlertCircle, 
-  Search, Filter, ChevronRight, Activity, MessageSquare, 
+import {
+  Bot, Plus, Edit2, Trash2, Check, RefreshCw, AlertCircle,
+  Search, Filter, ChevronRight, Activity, MessageSquare,
   Settings, ExternalLink, Shield, Info, MoreVertical,
   Cpu, Zap, Copy, Save, X, Terminal, Globe, User, Clock,
-  Key, ShieldCheck, Database, Layout, Command, 
+  Key, ShieldCheck, Database, Layout, Command,
   AlertTriangle, Play, Pause, Square, Trash, MoreHorizontal
 } from 'lucide-react';
 import { useSuccessToast, useErrorToast } from '../components/DaisyUI/ToastNotification';
@@ -20,15 +20,16 @@ import { apiService } from '../services/api';
 import { withRetry } from '../utils/withRetry';
 import { ErrorService } from '../services/ErrorService';
 import type { BotConfig, ProviderModalState } from '../types/bot';
-import { LLMProviderType, MessageProviderType } from '../types/bot';
 import BotCard from '../components/BotManagement/BotCard';
 import { CreateBotWizard } from '../components/BotManagement/CreateBotWizard';
 import { BotSettingsModal } from '../components/BotSettingsModal';
 import { useLocation } from 'react-router-dom';
+import { PROVIDER_CATEGORIES } from '../config/providers';
+import { BotData } from '../hooks/useBotStats';
 
 const BotsPage: React.FC = () => {
   const [bots, setBots] = useState<BotConfig[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [botsLoading, setBotsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterType, setFilterType] = useState<'all' | 'active' | 'inactive'>('all');
@@ -40,6 +41,8 @@ const BotsPage: React.FC = () => {
   const [activityLogs, setActivityLogs] = useState<any[]>([]);
   const [chatHistory, setChatHistory] = useState<any[]>([]);
   const [logFilter, setLogFilter] = useState('');
+  const [activityError, setActivityError] = useState<string | null>(null);
+  const [chatError, setChatError] = useState<string | null>(null);
 
   // Create Bot State
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -62,16 +65,14 @@ const BotsPage: React.FC = () => {
   });
   const [cloneName, setCloneName] = useState('');
 
-  // Define data fetching logic
+  // Fetch page-level config (personas, llmProfiles, globalConfig) — NOT bots
   const fetchPageData = useCallback(async (_signal: AbortSignal) => {
-    const [configResult, globalResult, personasResult, profilesResult] = await Promise.allSettled([
-      apiService.getConfig(),
+    const [globalResult, personasResult, profilesResult] = await Promise.allSettled([
       apiService.getGlobalConfig(),
       apiService.getPersonas(),
       apiService.getLlmProfiles(),
     ]);
 
-    const configData = configResult.status === 'fulfilled' ? configResult.value : { bots: [] };
     const globalData = globalResult.status === 'fulfilled' ? globalResult.value : {};
     const personasData = personasResult.status === 'fulfilled' ? personasResult.value : [];
     const profilesData = profilesResult.status === 'fulfilled' ? profilesResult.value : {};
@@ -87,29 +88,31 @@ const BotsPage: React.FC = () => {
     }
 
     return {
-      bots: (configData.bots || []) as unknown as BotData[],
       personas,
       llmProfiles,
       globalConfig,
     };
   }, []);
 
-  // Use Page Lifecycle Hook
+  // Use Page Lifecycle Hook for config data only
   const {
     data,
+    loading: configLoading,
     error: lifecycleError,
     refetch,
   } = usePageLifecycle({
     title: 'Bot Management',
     fetchData: fetchPageData,
-    initialData: { bots: [], personas: [], llmProfiles: [], globalConfig: {} },
+    initialData: { personas: [], llmProfiles: [], globalConfig: {} },
   });
 
   // Derived state
-
   const personas = data?.personas || [];
   const llmProfiles = data?.llmProfiles || [];
   const globalConfig = data?.globalConfig || {};
+
+  // Unified loading state: true while either bots or config data is still loading
+  const loading = botsLoading || configLoading;
 
   // Sync lifecycle error to UI error
   useEffect(() => {
@@ -117,44 +120,6 @@ const BotsPage: React.FC = () => {
       setError(lifecycleError.message);
     }
   }, [lifecycleError]);
-
-  // Fetch logs and chat history when previewing a bot
-  useEffect(() => {
-    if (previewBot) {
-      // Fetch activity logs
-      const fetchActivity = async () => {
-        try {
-          const json = await withRetry(() => apiService.get<any>(`/api/bots/${previewBot.id}/activity?limit=20`));
-          setActivityLogs(json.data?.activity || []);
-        } catch (err) {
-          ErrorService.report(err, { botId: previewBot.id, action: 'fetchActivityLogs' });
-          toast.error('Failed to load bot activity logs');
-          setActivityLogs([]);
-        }
-      };
-
-      fetchActivity();
-
-      // Fetch chat history
-      const fetchChatHistory = async () => {
-        setChatLoading(true);
-        try {
-          const json = await withRetry(() => apiService.get<any>(`/api/bots/${previewBot.id}/history?limit=20`));
-          setChatHistory(json.data?.history || []);
-        } catch (err) {
-          ErrorService.report(err, { botId: previewBot.id, action: 'fetchChatHistory' });
-          toast.error('Failed to load chat history');
-          setChatHistory([]);
-        } finally {
-          setChatLoading(false);
-        }
-      };
-      fetchChatHistory();
-    } else {
-      setActivityLogs([]);
-      setChatHistory([]);
-    }
-  }, [previewBot]);
 
   const getIntegrationOptions = (category: 'llm' | 'message') => {
     const allKeys = Object.keys(globalConfig);
@@ -167,27 +132,32 @@ const BotsPage: React.FC = () => {
     });
   };
 
+  const toastSuccess = useSuccessToast();
+  const toastError = useErrorToast();
+
   const toast = {
-    success: useSuccessToast(),
-    error: useErrorToast()
+    success: toastSuccess,
+    error: toastError
   };
 
   const location = useLocation();
 
+  // Primary bot data source: /api/bots endpoint (runtime state)
   const fetchBots = useCallback(async () => {
     try {
-      setLoading(true);
+      setBotsLoading(true);
       const json = await withRetry(() => apiService.get<any>('/api/bots'));
       setBots(json.data?.bots || []);
       setError(null);
     } catch (err) {
       ErrorService.report(err, { action: 'fetchBots' });
       setError(err instanceof Error ? err.message : 'Failed to fetch bots');
-      toast.error('Failed to load bots');
+      toastError('Failed to load bots');
     } finally {
-      setLoading(false);
+      setBotsLoading(false);
     }
-  }, [toast]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     fetchBots();
@@ -205,7 +175,7 @@ const BotsPage: React.FC = () => {
   const handleCreateBot = async (botData: any) => {
     try {
       const response = await apiService.post<any>('/api/bots', botData);
-      setBots(prev => [...prev, response.data.bot]);
+      setBots(prev => [...prev, response?.data?.bot]);
       setIsCreateModalOpen(false);
       toast.success('Bot created successfully');
     } catch (err) {
@@ -217,13 +187,13 @@ const BotsPage: React.FC = () => {
   const handleUpdateBot = async (botData: any) => {
     try {
       const response = await apiService.put<any>(`/api/bots/${editingBot?.id}`, botData);
-      setBots(prev => prev.map(b => b.id === editingBot?.id ? response.data.bot : b));
+      setBots(prev => prev.map(b => b.id === editingBot?.id ? response?.data?.bot : b));
       setEditingBot(null);
       toast.success('Bot updated successfully');
-      
+
       // Update preview if it's the same bot
       if (previewBot?.id === editingBot?.id) {
-        setPreviewBot(response.data.bot);
+        setPreviewBot(response?.data?.bot);
       }
     } catch (err) {
       ErrorService.report(err, { action: 'updateBot', botId: editingBot?.id });
@@ -252,11 +222,11 @@ const BotsPage: React.FC = () => {
       const newStatus = bot.status === 'active' ? 'inactive' : 'active';
       const response = await apiService.patch<any>(`/api/bots/${bot.id}/status`, { status: newStatus });
       setBots(prev => prev.map(b => b.id === bot.id ? { ...b, status: newStatus } : b));
-      
+
       if (previewBot?.id === bot.id) {
         setPreviewBot(prev => prev ? { ...prev, status: newStatus } : null);
       }
-      
+
       toast.success(`Bot ${newStatus === 'active' ? 'activated' : 'deactivated'} successfully`);
     } catch (err) {
       ErrorService.report(err, { action: 'toggleBotStatus', botId: bot.id });
@@ -266,37 +236,56 @@ const BotsPage: React.FC = () => {
 
   const filteredBots = useMemo(() => {
     return bots.filter(bot => {
-      const matchesSearch = (bot.name?.toLowerCase().includes(searchQuery.toLowerCase()) || 
+      const matchesSearch = (bot.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
                              bot.description?.toLowerCase().includes(searchQuery.toLowerCase()));
       const matchesFilter = filterType === 'all' || bot.status === filterType;
       return matchesSearch && matchesFilter;
     });
   }, [bots, searchQuery, filterType]);
 
+  // Fetch preview panel data for a bot
+  const fetchPreviewActivity = useCallback(async (botId: string, limit = 20) => {
+    setActivityError(null);
+    try {
+      const activityJson = await withRetry(() => apiService.get<any>(`/api/bots/${botId}/activity?limit=${limit}`));
+      setActivityLogs(activityJson.data?.activity || []);
+    } catch (err) {
+      ErrorService.report(err, { botId, action: 'fetchActivityLogs' });
+      setActivityError('Failed to load activity');
+      setActivityLogs([]);
+    }
+  }, []);
+
+  const fetchPreviewChat = useCallback(async (botId: string) => {
+    setChatError(null);
+    try {
+      const chatJson = await withRetry(() => apiService.get<any>(`/api/bots/${botId}/chat?limit=20`));
+      setChatHistory(chatJson.data?.messages || []);
+    } catch (err) {
+      ErrorService.report(err, { botId, action: 'fetchChatHistory' });
+      setChatError('Failed to load chat history');
+      setChatHistory([]);
+    }
+  }, []);
+
   const handlePreviewBot = async (bot: BotConfig) => {
     setPreviewBot(bot);
     setPreviewTab('activity');
     setActivityLogs([]);
     setChatHistory([]);
-    
-    try {
-      // Load initial activity
-      const activityJson = await withRetry(() => apiService.get<any>(`/api/bots/${bot.id}/activity?limit=20`));
-      setActivityLogs(activityJson.data?.activity || []);
-      
-      // Load initial chat
-      const chatJson = await withRetry(() => apiService.get<any>(`/api/bots/${bot.id}/chat?limit=20`));
-      setChatHistory(chatJson.data?.messages || []);
-    } catch (err) {
-      ErrorService.report(err, { botId: bot.id, action: 'fetchBotPreviewData' });
-      // Don't show toast for initial load failures to keep UI clean, but log error
-      console.error('Failed to load bot preview data:', err);
-    }
+    setActivityError(null);
+    setChatError(null);
+
+    // Fetch both in parallel
+    await Promise.allSettled([
+      fetchPreviewActivity(bot.id),
+      fetchPreviewChat(bot.id),
+    ]);
   };
 
   const filteredLogs = useMemo(() => {
     if (!logFilter) return activityLogs;
-    return activityLogs.filter(log => 
+    return activityLogs.filter(log =>
       log.message?.toLowerCase().includes(logFilter.toLowerCase()) ||
       log.type?.toLowerCase().includes(logFilter.toLowerCase())
     );
@@ -313,12 +302,12 @@ const BotsPage: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <PageHeader 
-        title="AI Swarm Management" 
+      <PageHeader
+        title="AI Swarm Management"
         description="Configure, monitor, and deploy your specialized AI agents."
         icon={<Bot className="w-8 h-8 text-primary" />}
         actions={
-          <button 
+          <button
             className="btn btn-primary"
             onClick={() => setIsCreateModalOpen(true)}
           >
@@ -331,12 +320,12 @@ const BotsPage: React.FC = () => {
         {/* Main Content: Bot List */}
         <div className={`${error && bots.length === 0 ? 'lg:col-span-3' : 'lg:col-span-2'} space-y-4`}>
           <SearchFilterBar
-            searchQuery={searchQuery}
+            searchValue={searchQuery}
             onSearchChange={setSearchQuery}
-            placeholder="Search agents by name or purpose..."
+            searchPlaceholder="Search agents by name or purpose..."
           >
             <div className="flex gap-2">
-              <select 
+              <select
                 className="select select-bordered select-sm"
                 value={filterType}
                 onChange={(e) => setFilterType(e.target.value as any)}
@@ -345,12 +334,13 @@ const BotsPage: React.FC = () => {
                 <option value="active">Active Only</option>
                 <option value="inactive">Inactive Only</option>
               </select>
-              <button 
+              <button
                 className="btn btn-ghost btn-sm btn-square"
                 onClick={fetchBots}
                 title="Refresh list"
+                aria-label="Refresh list"
               >
-                <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+                <RefreshCw className={`w-4 h-4 ${botsLoading ? 'animate-spin' : ''}`} />
               </button>
             </div>
           </SearchFilterBar>
@@ -368,7 +358,7 @@ const BotsPage: React.FC = () => {
               icon={AlertTriangle}
               title="Failed to load swarm"
               description="We encountered an error while trying to load your AI agents. Please try again."
-              action={
+              actionLabel={
                 <button className="btn btn-outline btn-error" onClick={fetchBots}>
                   <RefreshCw className="w-4 h-4 mr-2" />
                   Retry Connection
@@ -380,7 +370,7 @@ const BotsPage: React.FC = () => {
               icon={Bot}
               title={searchQuery ? "No agents found" : "Your swarm is empty"}
               description={searchQuery ? "No agents match your search criteria." : "Start by creating your first specialized AI agent."}
-              action={
+              actionLabel={
                 !searchQuery && (
                   <button className="btn btn-primary" onClick={() => setIsCreateModalOpen(true)}>
                     Create First Bot
@@ -424,7 +414,7 @@ const BotsPage: React.FC = () => {
                       </div>
                     </div>
                   </div>
-                  <button className="btn btn-ghost btn-sm btn-square" onClick={() => setPreviewBot(null)}>
+                  <button className="btn btn-ghost btn-sm btn-square" onClick={() => setPreviewBot(null)} aria-label="Close preview">
                     <X className="w-4 h-4" />
                   </button>
                 </div>
@@ -467,14 +457,14 @@ const BotsPage: React.FC = () => {
 
                   {/* Tabs Navigation */}
                   <div className="tabs tabs-boxed bg-base-200/50 p-1 flex-nowrap" role="tablist">
-                    <button 
+                    <button
                       className={`tab tab-sm flex-1 gap-2 ${previewTab === 'activity' ? 'tab-active' : ''}`}
                       onClick={() => setPreviewTab('activity')}
                       role="tab"
                     >
                       <Activity className="w-3 h-3" /> <span className="text-[10px] uppercase font-bold">Activity</span>
                     </button>
-                    <button 
+                    <button
                       className={`tab tab-sm flex-1 gap-2 ${previewTab === 'chat' ? 'tab-active' : ''}`}
                       onClick={() => setPreviewTab('chat')}
                       role="tab"
@@ -488,26 +478,19 @@ const BotsPage: React.FC = () => {
                     <div className="space-y-3 max-h-[300px] overflow-y-auto pr-1 custom-scrollbar">
                       <div className="flex items-center justify-end mb-2">
                         <div className="join w-full">
-                          <input 
-                            type="text" 
-                            placeholder="Filter..." 
+                          <input
+                            type="text"
+                            placeholder="Filter..."
                             className="input input-xs input-bordered join-item flex-1"
                             value={logFilter}
                             onChange={(e) => setLogFilter(e.target.value)}
                           />
-                          <select 
+                          <select
                             className="select select-xs select-bordered join-item"
                             onChange={async (e) => {
-                              const limit = e.target.value;
+                              const limit = parseInt(e.target.value, 10);
                               if (previewBot) {
-                                try {
-                                  const json = await withRetry(() => apiService.get<any>(`/api/bots/${previewBot.id}/activity?limit=${limit}`));
-                                  setActivityLogs(json.data?.activity || []);
-                                } catch (err) {
-                                  ErrorService.report(err, { botId: previewBot.id, action: 'fetchActivityLogs' });
-                                  toast.error('Failed to load bot activity logs');
-                                  setActivityLogs([]);
-                                }
+                                await fetchPreviewActivity(previewBot.id, limit);
                               }
                             }}
                           >
@@ -518,7 +501,18 @@ const BotsPage: React.FC = () => {
                         </div>
                       </div>
 
-                      {filteredLogs.length === 0 ? (
+                      {activityError ? (
+                        <div className="text-center py-6">
+                          <AlertCircle className="w-8 h-8 mx-auto mb-2 text-error" />
+                          <p className="text-xs text-error mb-2">{activityError}</p>
+                          <button
+                            className="btn btn-ghost btn-xs"
+                            onClick={() => previewBot && fetchPreviewActivity(previewBot.id)}
+                          >
+                            <RefreshCw className="w-3 h-3 mr-1" /> Retry
+                          </button>
+                        </div>
+                      ) : filteredLogs.length === 0 ? (
                         <div className="text-center py-8 opacity-40">
                           <Activity className="w-8 h-8 mx-auto mb-2" />
                           <p className="text-xs">No activity recorded</p>
@@ -542,7 +536,18 @@ const BotsPage: React.FC = () => {
                   {/* Chat History Panel */}
                   {previewTab === 'chat' && (
                     <div className="space-y-3 max-h-[300px] overflow-y-auto pr-1 custom-scrollbar">
-                      {chatHistory.length === 0 ? (
+                      {chatError ? (
+                        <div className="text-center py-6">
+                          <AlertCircle className="w-8 h-8 mx-auto mb-2 text-error" />
+                          <p className="text-xs text-error mb-2">{chatError}</p>
+                          <button
+                            className="btn btn-ghost btn-xs"
+                            onClick={() => previewBot && fetchPreviewChat(previewBot.id)}
+                          >
+                            <RefreshCw className="w-3 h-3 mr-1" /> Retry
+                          </button>
+                        </div>
+                      ) : chatHistory.length === 0 ? (
                         <div className="text-center py-8 opacity-40">
                           <MessageSquare className="w-8 h-8 mx-auto mb-2" />
                           <p className="text-xs">No recent chat history</p>
@@ -565,16 +570,17 @@ const BotsPage: React.FC = () => {
                   )}
 
                   <div className="card-actions mt-2 pt-4 border-t border-base-200">
-                    <button 
+                    <button
                       className="btn btn-primary btn-sm flex-1"
                       onClick={() => setEditingBot(previewBot)}
                     >
                       <Settings className="w-3 h-3 mr-2" /> Configuration
                     </button>
-                    <button 
+                    <button
                       className={`btn btn-sm btn-square ${previewBot.status === 'active' ? 'btn-error btn-outline' : 'btn-success'}`}
                       onClick={() => handleToggleBotStatus(previewBot)}
                       title={previewBot.status === 'active' ? 'Deactivate' : 'Activate'}
+                      aria-label={previewBot.status === 'active' ? 'Deactivate' : 'Activate'}
                     >
                       {previewBot.status === 'active' ? <Pause className="w-3 h-3" /> : <Play className="w-3 h-3" />}
                     </button>

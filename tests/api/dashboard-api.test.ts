@@ -13,11 +13,9 @@ import request from 'supertest';
 import { BotConfigurationManager } from '../../src/config/BotConfigurationManager';
 import dashboardRouter from '../../src/server/routes/dashboard';
 
-jest.mock('../../src/server/middleware/auth', () => ({
-  authenticateToken: (req: any, res: any, next: any) => next(),
-  requirePermission: () => (req: any, res: any, next: any) => next(),
-  requireRole: () => (req: any, res: any, next: any) => next(),
-  optionalAuth: (req: any, res: any, next: any) => next(),
+jest.mock('../../src/auth/middleware', () => ({
+  authenticate: (req: any, res: any, next: any) => next(),
+  requireAdmin: (req: any, res: any, next: any) => next(),
 }));
 
 jest.mock('../../src/server/services/WebSocketService', () => ({
@@ -27,6 +25,26 @@ jest.mock('../../src/server/services/WebSocketService', () => ({
       getBotStats: jest.fn().mockReturnValue({ messageCount: 0, errors: [] }),
       getMessageFlow: jest.fn().mockReturnValue([]),
       getAllBotStats: jest.fn().mockReturnValue({}),
+    }),
+  },
+}));
+
+jest.mock('../../src/services/AnalyticsService', () => ({
+  AnalyticsService: {
+    getInstance: jest.fn().mockReturnValue({
+      getStats: jest.fn().mockReturnValue({
+        learningProgress: 50,
+        behaviorPatternsCount: 3,
+        userSegmentsCount: 2,
+        totalMessages: 100,
+        totalErrors: 5,
+        avgProcessingTime: 500,
+        activeBots: 2,
+        activeUsers: 10,
+      }),
+      getBehaviorPatterns: jest.fn().mockReturnValue([]),
+      getUserSegments: jest.fn().mockReturnValue([]),
+      getRecommendations: jest.fn().mockReturnValue([]),
     }),
   },
 }));

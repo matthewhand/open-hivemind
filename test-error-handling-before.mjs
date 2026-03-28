@@ -31,10 +31,9 @@ import { chromium } from 'playwright';
     body: JSON.stringify({ error: 'Internal Server Error' })
   }));
 
-  await page.reload({ waitUntil: 'domcontentloaded' });
-  await page.waitForTimeout(3000);
-
-  await page.screenshot({ path: 'after-fix-sidebar-error.png' });
+  await page.goto('http://localhost:5173/admin/bots', { waitUntil: 'domcontentloaded' });
+  await page.waitForTimeout(3000); // Wait for animations
+  await page.screenshot({ path: 'after-fix-bots-error.png' });
 
   await browser.close();
 })();

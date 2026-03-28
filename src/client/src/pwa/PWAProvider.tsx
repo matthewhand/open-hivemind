@@ -149,7 +149,7 @@ export const PWAProvider: React.FC<{ children: React.ReactNode }> = ({ children 
                     variant="primary"
                     fullWidth
                     onClick={updatePWA}
-                    disabled={loading}
+                    disabled={loading} aria-busy={loading}
                   >
                     {loading ? <LoadingSpinner size="xs" /> : 'Update Now'}
                   </Button>

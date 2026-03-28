@@ -371,9 +371,9 @@ const BotStatusCard: React.FC<BotStatusCardProps> = ({
               variant="secondary"
               className="btn-outline flex items-center gap-2"
               onClick={handleRefreshClick}
-              disabled={loading}
+              disabled={loading} aria-busy={loading}
             >
-              {loading ? <span className="loading loading-spinner loading-xs"></span> : <RotateCcw className="w-4 h-4" />}
+              {loading ? <span className="loading loading-spinner loading-xs" aria-hidden="true"></span> : <RotateCcw className="w-4 h-4" />}
               Refresh
             </Button>
           </div>

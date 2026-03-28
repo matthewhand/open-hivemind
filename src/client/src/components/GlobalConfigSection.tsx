@@ -119,7 +119,7 @@ const GlobalConfigSection: React.FC<GlobalConfigSectionProps> = ({ section }) =>
         }),
       });
       const data = await res.json();
-      if (!res.ok || data.ok === false) {
+      if (!res.ok || data.success === false) {
         throw new Error(data.message || data.error || 'Connection test failed');
       }
       setTestStatus({ type: 'success', message: data.message || 'Connection successful' });
@@ -197,7 +197,7 @@ const GlobalConfigSection: React.FC<GlobalConfigSectionProps> = ({ section }) =>
 
   if (loading) {return (
     <div className="flex flex-col items-center justify-center p-12 gap-4">
-      <span className="loading loading-infinity loading-lg text-primary" />
+      <span className="loading loading-infinity loading-lg text-primary" aria-hidden="true" />
       <span className="text-base-content/50">Loading settings...</span>
     </div>
   );}

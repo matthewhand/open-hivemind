@@ -1,8 +1,8 @@
 import { Router } from 'express';
-import { createLogger } from '@src/common/StructuredLogger';
 import { requireAdmin } from '../../auth/middleware';
 import { authenticateToken } from '../middleware/auth';
 import { clearAllSystemCaches } from '../utils/cacheManager'; // We'll implement this
+import { createLogger } from '@src/common/StructuredLogger';
 
 const router = Router();
 const logger = createLogger('routes:cache');
@@ -28,10 +28,7 @@ router.post('/clear', async (req, res) => {
     await clearAllSystemCaches();
     res.json({ success: true, message: 'Cache cleared successfully' });
   } catch (error) {
-    logger.error(
-      'Failed to clear cache:',
-      error instanceof Error ? error : new Error(String(error))
-    );
+    logger.error('Failed to clear cache:', error instanceof Error ? error : new Error(String(error)));
     res.status(500).json({ success: false, error: 'Failed to clear cache' });
   }
 });

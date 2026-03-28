@@ -63,6 +63,14 @@ export interface HealthCheckResult {
 @singleton()
 @injectable()
 export class ApiMonitorService extends EventEmitter {
+  private static instance: ApiMonitorService;
+
+  public static getInstance(): ApiMonitorService {
+    if (!ApiMonitorService.instance) {
+      ApiMonitorService.instance = new ApiMonitorService();
+    }
+    return ApiMonitorService.instance;
+  }
   private endpoints = new Map<string, EndpointConfig>();
   private statuses = new Map<string, EndpointStatus>();
   private monitoringIntervals = new Map<string, NodeJS.Timeout>();
@@ -76,7 +84,7 @@ export class ApiMonitorService extends EventEmitter {
 
   public addEndpoint(config: EndpointConfig): void {
     if (!config || !config.id || !config.url) {
-      throw new Error("Invalid endpoint configuration");
+      throw new Error('Invalid endpoint configuration');
     }
     this.endpoints.set(config.id, config);
     this.initializeEndpointStatus(config);

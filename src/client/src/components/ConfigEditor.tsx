@@ -158,7 +158,7 @@ const ConfigEditor: React.FC<ConfigEditorProps> = ({ configName, configData, onS
               onClick={handleSave}
               disabled={saving}
             >
-              {saving ? <span className="loading loading-spinner loading-xs" /> : <Save className="w-4 h-4" />}
+              {saving ? <span className="loading loading-spinner loading-xs" aria-hidden="true" /> : <Save className="w-4 h-4" />}
                         Save Changes
             </button>
           )}

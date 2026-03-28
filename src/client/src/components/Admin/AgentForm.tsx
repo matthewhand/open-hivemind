@@ -1,5 +1,5 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
-import React, { useState } from 'react';
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import React from 'react';
 import type { FormField, FormFieldSet } from '../DaisyUI/Form';
 import { Form } from '../DaisyUI/Form';
 
@@ -63,10 +63,6 @@ const AgentForm: React.FC<AgentFormProps> = ({
   onCancel,
   loading = false,
 }) => {
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [_guardUserInput, _setGuardUserInput] = useState(
-    agent?.mcpGuard?.allowedUserIds?.join(', ') || '',
-  );
 
   const formFields: FormField[] = [
     {

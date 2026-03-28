@@ -432,7 +432,7 @@ async function main() {
     await initProviders();
   }
   // Reload global configs to include provider schemas
-  reloadGlobalConfigs();
+  await reloadGlobalConfigs();
 
   // Run comprehensive startup diagnostics
   await startupDiagnostics.logStartupDiagnostics();

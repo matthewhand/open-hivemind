@@ -184,7 +184,7 @@ const ApiEndpointConfig: React.FC<ApiEndpointConfigProps> = ({ onEndpointsChange
     return (
       <Card>
         <div className="flex items-center gap-2">
-          <span className="loading loading-spinner loading-md"></span>
+          <span className="loading loading-spinner loading-md" aria-hidden="true"></span>
           <p>Loading endpoints...</p>
         </div>
       </Card>
@@ -239,6 +239,7 @@ const ApiEndpointConfig: React.FC<ApiEndpointConfigProps> = ({ onEndpointsChange
                       size="sm"
                       variant="ghost"
                       className="btn-circle"
+                      aria-label={endpoint.enabled ? 'Disable endpoint' : 'Enable endpoint'}
                       onClick={() => handleToggle(endpoint.id, !endpoint.enabled)}
                     >
                       {endpoint.enabled ? (
@@ -251,6 +252,7 @@ const ApiEndpointConfig: React.FC<ApiEndpointConfigProps> = ({ onEndpointsChange
                       size="sm"
                       variant="ghost"
                       className="btn-circle"
+                      aria-label="Edit endpoint"
                       onClick={() => handleOpenDialog(endpoint)}
                     >
                       <PencilIcon className="w-4 h-4" />
@@ -259,6 +261,7 @@ const ApiEndpointConfig: React.FC<ApiEndpointConfigProps> = ({ onEndpointsChange
                       size="sm"
                       variant="ghost"
                       className="btn-circle text-error"
+                      aria-label="Delete endpoint"
                       onClick={() => handleDelete(endpoint.id)}
                     >
                       <TrashIcon className="w-4 h-4" />

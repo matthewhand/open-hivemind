@@ -1,6 +1,6 @@
 import axios from 'axios';
-import { isSafeUrl } from '@hivemind/shared-types';
 import flowiseConfig from '@integrations/flowise/flowiseConfig';
+import { isSafeUrl } from '../../../utils/ssrfGuard';
 
 /**
  * Fetches and returns a list of available chat flows from the Flowise API.

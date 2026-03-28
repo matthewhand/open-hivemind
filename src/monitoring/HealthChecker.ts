@@ -1,5 +1,8 @@
 import { promises as fs } from 'fs';
 import { performance } from 'perf_hooks';
+import Logger from '@common/logger';
+
+const logger = Logger.withContext('HealthChecker');
 
 export interface HealthCheckResult {
   status: 'healthy' | 'degraded' | 'unhealthy';
@@ -78,7 +81,7 @@ export class HealthChecker {
 
       return healthCheck;
     } catch (error) {
-      console.error('Health check failed:', error);
+      logger.error('Health check failed:', error);
       return this.createErrorHealthCheck(error);
     }
   }
@@ -191,7 +194,7 @@ export class HealthChecker {
       // Error Rate (placeholder)
       metrics.errorRate = Math.random() * 5;
     } catch (error) {
-      console.error('Failed to collect metrics:', error);
+      logger.error('Failed to collect metrics:', error);
     }
 
     return metrics;
@@ -358,6 +361,6 @@ export class HealthChecker {
   public shutdown(): void {
     this.healthHistory = [];
     this.lastCheckTime = 0;
-    console.log('💓 HealthChecker shutdown complete');
+    logger.info('💓 HealthChecker shutdown complete');
   }
 }

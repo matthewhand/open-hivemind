@@ -185,7 +185,7 @@ const SystemHealth: React.FC<SystemHealthProps> = ({
       <Card>
         <Card.Body>
           <div className="flex justify-center items-center py-8">
-            <span className="loading loading-spinner loading-lg"></span>
+            <span className="loading loading-spinner loading-lg" aria-hidden="true"></span>
             <span className="ml-2 text-base-content/70">
               Loading system health data...
             </span>
@@ -266,8 +266,8 @@ const SystemHealth: React.FC<SystemHealthProps> = ({
         {apiHealth && (
           <div className="mb-6">
             <Alert
-              status={apiHealth.overall.status}
-              message={apiHealth.overall.message || `System Status: ${metrics?.status}`}
+              status={apiHealth?.overall?.status}
+              message={apiHealth?.overall?.message || `System Status: ${metrics?.status}`}
             />
           </div>
         )}
@@ -335,12 +335,12 @@ const SystemHealth: React.FC<SystemHealthProps> = ({
               </div>
               <div className="flex items-center gap-4 mt-2">
                 <Badge
-                  variant={getStatusColor(apiHealth?.overall.status || 'unknown') as any}
+                  variant={getStatusColor(apiHealth?.overall?.status || 'unknown') as any}
                   size="lg"
                 >
-                  {apiHealth?.overall.status || 'Unknown'}
+                  {apiHealth?.overall?.status || 'Unknown'}
                 </Badge>
-                {apiHealth && (
+                {apiHealth?.overall?.stats && (
                   <span className="text-sm">
                     {apiHealth.overall.stats.online} / {apiHealth.overall.stats.total} Online
                   </span>

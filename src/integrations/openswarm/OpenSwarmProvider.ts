@@ -1,6 +1,6 @@
 import axios from 'axios';
-import { isSafeUrl } from '@hivemind/shared-types';
 import type { ILlmProvider } from '@llm/interfaces/ILlmProvider';
+import { isSafeUrl } from '../../utils/ssrfGuard';
 
 export class OpenSwarmProvider implements ILlmProvider {
   name = 'openswarm';
@@ -50,9 +50,10 @@ export class OpenSwarmProvider implements ILlmProvider {
       );
 
       return response.data.choices[0]?.message?.content || 'No response';
-    } catch (error: any) {
-      console.error('OpenSwarm API error:', error.message);
-      return `Error: ${error.message}`;
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      console.error('OpenSwarm API error:', errorMessage);
+      return `Error: ${errorMessage}`;
     }
   }
 

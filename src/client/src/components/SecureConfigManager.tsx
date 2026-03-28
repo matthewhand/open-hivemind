@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import Card from './DaisyUI/Card';
 import Badge from './DaisyUI/Badge';
 import Button from './DaisyUI/Button';
-import Modal from './DaisyUI/Modal';
+import Modal, { ConfirmModal } from './DaisyUI/Modal';
 import Input from './DaisyUI/Input';
 import { Alert } from './DaisyUI/Alert';
 import { Loading } from './DaisyUI/Loading';
@@ -45,6 +45,9 @@ const SecureConfigManager: React.FC<SecureConfigManagerProps> = ({ onRefresh }) 
     encryptSensitive: true,
   });
   const [backupFile, setBackupFile] = useState('');
+  const [confirmModal, setConfirmModal] = useState<{
+    isOpen: boolean; title: string; message: string; onConfirm: () => void;
+  }>({ isOpen: false, title: '', message: '', onConfirm: () => {} });
 
   // Mock data
   useEffect(() => {
@@ -107,14 +110,22 @@ const SecureConfigManager: React.FC<SecureConfigManagerProps> = ({ onRefresh }) 
 
   const handleDeleteConfig = async (configId: string) => {
     const config = configs.find(c => c.id === configId);
-    if (!config || !confirm(`Are you sure you want to delete configuration "${config.name}"?`)) {return;}
-    try {
-      setConfigs(configs.filter(c => c.id !== configId));
-      showToast(`Configuration "${config.name}" deleted successfully`, 'success');
-      onRefresh?.();
-    } catch {
-      showToast('Failed to delete configuration', 'error');
-    }
+    if (!config) {return;}
+    setConfirmModal({
+      isOpen: true,
+      title: 'Delete Configuration',
+      message: `Are you sure you want to delete configuration "${config.name}"?`,
+      onConfirm: () => {
+        setConfirmModal(prev => ({ ...prev, isOpen: false }));
+        try {
+          setConfigs(configs.filter(c => c.id !== configId));
+          showToast(`Configuration "${config.name}" deleted successfully`, 'success');
+          onRefresh?.();
+        } catch {
+          showToast('Failed to delete configuration', 'error');
+        }
+      },
+    });
   };
 
   const handleBackup = async () => {
@@ -150,7 +161,7 @@ const SecureConfigManager: React.FC<SecureConfigManagerProps> = ({ onRefresh }) 
     return (
       <Card>
         <div className="flex justify-center items-center py-8">
-          <span className="loading loading-spinner loading-lg"></span>
+          <span className="loading loading-spinner loading-lg" aria-hidden="true"></span>
           <p className="ml-4">Loading secure configurations...</p>
         </div>
       </Card>
@@ -205,12 +216,12 @@ const SecureConfigManager: React.FC<SecureConfigManagerProps> = ({ onRefresh }) 
 
               <div className="flex gap-2">
                 <Tooltip content="Edit Configuration">
-                  <Button variant="ghost" size="sm" className="btn-circle" onClick={() => handleOpenDialog(config)}>
+                  <Button variant="ghost" size="sm" className="btn-circle" onClick={() => handleOpenDialog(config)} aria-label={`Edit ${config.name} configuration`}>
                     <PencilIcon className="w-4 h-4" />
                   </Button>
                 </Tooltip>
                 <Tooltip content="Delete Configuration">
-                  <Button variant="ghost" size="sm" className="btn-circle text-error" onClick={() => handleDeleteConfig(config.id)}>
+                  <Button variant="ghost" size="sm" className="btn-circle text-error" onClick={() => handleDeleteConfig(config.id)} aria-label={`Delete ${config.name} configuration`}>
                     <TrashIcon className="w-4 h-4" />
                   </Button>
                 </Tooltip>
@@ -230,8 +241,8 @@ const SecureConfigManager: React.FC<SecureConfigManagerProps> = ({ onRefresh }) 
       <Modal isOpen={dialogOpen} onClose={handleCloseDialog} title={editingConfig ? 'Edit Secure Configuration' : 'Add New Secure Configuration'}>
         <div className="space-y-4 py-4">
           <div className="form-control">
-            <label className="label"><span className="label-text">Configuration Name *</span></label>
-            <Input value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} placeholder="e.g., discord-tokens, api-keys" />
+            <label htmlFor="secure-config-name" className="label"><span className="label-text">Configuration Name *</span></label>
+            <Input id="secure-config-name" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} placeholder="e.g., discord-tokens, api-keys" />
           </div>
 
           <Toggle label="Encrypt sensitive data" checked={formData.encryptSensitive} onChange={(e) => setFormData({ ...formData, encryptSensitive: e.target.checked })} color="primary" />
@@ -239,8 +250,9 @@ const SecureConfigManager: React.FC<SecureConfigManagerProps> = ({ onRefresh }) 
           <Alert status="info" message="Configuration data should be provided as JSON. Sensitive values will be automatically encrypted if encryption is enabled." />
 
           <div className="form-control">
-            <label className="label"><span className="label-text">Configuration Data (JSON)</span></label>
+            <label htmlFor="secure-config-data" className="label"><span className="label-text">Configuration Data (JSON)</span></label>
             <textarea
+              id="secure-config-data"
               className="textarea textarea-bordered font-mono"
               rows={8}
               value={JSON.stringify(formData.data, null, 2)}
@@ -282,8 +294,8 @@ const SecureConfigManager: React.FC<SecureConfigManagerProps> = ({ onRefresh }) 
         <div className="space-y-4 py-4">
           <p className="text-sm">Restore configurations from a backup file. This will replace all existing secure configurations.</p>
           <div className="form-control">
-            <label className="label"><span className="label-text">Backup File Path</span></label>
-            <Input value={backupFile} onChange={(e) => setBackupFile(e.target.value)} placeholder="/path/to/backup.enc" />
+            <label htmlFor="secure-config-backup-path" className="label"><span className="label-text">Backup File Path</span></label>
+            <Input id="secure-config-backup-path" value={backupFile} onChange={(e) => setBackupFile(e.target.value)} placeholder="/path/to/backup.enc" />
           </div>
           <Alert status="error" message="Warning: This will replace all existing secure configurations. Make sure you have a current backup before proceeding." />
         </div>
@@ -304,6 +316,17 @@ const SecureConfigManager: React.FC<SecureConfigManagerProps> = ({ onRefresh }) 
           </div>
         </div>
       )}
+
+      <ConfirmModal
+        isOpen={confirmModal.isOpen}
+        onClose={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))}
+        title={confirmModal.title}
+        message={confirmModal.message}
+        onConfirm={confirmModal.onConfirm}
+        confirmVariant="error"
+        confirmText="Delete"
+        cancelText="Cancel"
+      />
     </>
   );
 };

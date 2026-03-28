@@ -2,7 +2,6 @@ import fs from 'fs/promises';
 import path from 'path';
 import { Router, type Request, type Response } from 'express';
 import { body, param, validationResult } from 'express-validator';
-import { createLogger } from '@src/common/StructuredLogger';
 import { authenticate, requireAdmin } from '../../auth/middleware';
 import type { AuthMiddlewareRequest } from '../../auth/types';
 import { ConfigurationImportExportService } from '../services/ConfigurationImportExportService';
@@ -15,7 +14,10 @@ type MulterFile = {
   size: number;
 };
 
+type AuthMulterRequest = AuthMiddlewareRequest & { file?: MulterFile };
+
 const multer = require('multer');
+import { createLogger } from '@src/common/StructuredLogger';
 
 const router = Router();
 const importExportService = ConfigurationImportExportService.getInstance();
@@ -243,10 +245,7 @@ router.post(
         });
       }
     } catch (error) {
-      logger.error(
-        'Error exporting configurations:',
-        error instanceof Error ? error : new Error(String(error))
-      );
+      logger.error('Error exporting configurations:', error instanceof Error ? error : new Error(String(error)));
       return res.status(500).json({
         success: false,
         message: 'Failed to export configurations',
@@ -267,7 +266,7 @@ router.post(
   handleUploadError,
   validateImportOptions,
   handleValidationErrors,
-  async (req: AuthMiddlewareRequest, res: Response) => {
+  async (req: AuthMulterRequest, res: Response) => {
     try {
       if (!req.file) {
         return res.status(400).json({
@@ -288,10 +287,7 @@ router.post(
       try {
         await fs.unlink(req.file.path);
       } catch (cleanupError) {
-        logger.error(
-          'Error cleaning up uploaded file:',
-          cleanupError instanceof Error ? cleanupError : new Error(String(cleanupError))
-        );
+        logger.error('Error cleaning up uploaded file:', cleanupError instanceof Error ? cleanupError : new Error(String(cleanupError)));
       }
 
       return res.json({
@@ -300,20 +296,14 @@ router.post(
         data: result,
       });
     } catch (error) {
-      logger.error(
-        'Error importing configurations:',
-        error instanceof Error ? error : new Error(String(error))
-      );
+      logger.error('Error importing configurations:', error instanceof Error ? error : new Error(String(error)));
 
       // Clean up uploaded file if it exists
       if (req.file) {
         try {
           await fs.unlink(req.file.path);
         } catch (cleanupError) {
-          logger.error(
-            'Error cleaning up uploaded file:',
-            cleanupError instanceof Error ? cleanupError : new Error(String(cleanupError))
-          );
+          logger.error('Error cleaning up uploaded file:', cleanupError instanceof Error ? cleanupError : new Error(String(cleanupError)));
         }
       }
 
@@ -372,10 +362,7 @@ router.post(
         });
       }
     } catch (error) {
-      logger.error(
-        'Error creating backup:',
-        error instanceof Error ? error : new Error(String(error))
-      );
+      logger.error('Error creating backup:', error instanceof Error ? error : new Error(String(error)));
       return res.status(500).json({
         success: false,
         message: 'Failed to create backup',
@@ -398,10 +385,7 @@ router.get('/backups', requireAdmin, async (req: AuthMiddlewareRequest, res: Res
       count: backups.length,
     });
   } catch (error) {
-    logger.error(
-      'Error listing backups:',
-      error instanceof Error ? error : new Error(String(error))
-    );
+    logger.error('Error listing backups:', error instanceof Error ? error : new Error(String(error)));
     return res.status(500).json({
       success: false,
       message: 'Failed to list backups',
@@ -424,20 +408,15 @@ router.post(
       const { backupId } = req.params;
       const restoredBy = req.user?.username || 'unknown';
 
-      // Get backup metadata
-      const backups = await importExportService.listBackups();
-      const backup = backups.find((b) => b.id === backupId);
+      // Get safe backup file path
+      const backupPath = await importExportService.getBackupFilePath(backupId);
 
-      if (!backup) {
+      if (!backupPath) {
         return res.status(404).json({
           success: false,
-          message: 'Backup not found',
+          message: 'Backup not found or invalid',
         });
       }
-
-      // Construct backup file path
-      const backupFileName = `backup-${backup.name}-${backup.createdAt.getTime()}.json.gz`;
-      const backupPath = path.join(process.cwd(), 'config', 'backups', backupFileName);
 
       const result = await importExportService.restoreFromBackup(
         backupPath,
@@ -457,10 +436,7 @@ router.post(
         data: result,
       });
     } catch (error) {
-      logger.error(
-        'Error restoring from backup:',
-        error instanceof Error ? error : new Error(String(error))
-      );
+      logger.error('Error restoring from backup:', error instanceof Error ? error : new Error(String(error)));
       return res.status(500).json({
         success: false,
         message: 'Failed to restore from backup',
@@ -494,10 +470,7 @@ router.delete(
         });
       }
     } catch (error) {
-      logger.error(
-        'Error deleting backup:',
-        error instanceof Error ? error : new Error(String(error))
-      );
+      logger.error('Error deleting backup:', error instanceof Error ? error : new Error(String(error)));
       return res.status(500).json({
         success: false,
         message: 'Failed to delete backup',
@@ -518,20 +491,17 @@ router.get(
     try {
       const { backupId } = req.params;
 
-      // Get backup metadata
-      const backups = await importExportService.listBackups();
-      const backup = backups.find((b) => b.id === backupId);
+      // Get safe backup file path
+      const backupPath = await importExportService.getBackupFilePath(backupId);
 
-      if (!backup) {
+      if (!backupPath) {
         return res.status(404).json({
           success: false,
-          message: 'Backup not found',
+          message: 'Backup not found or invalid',
         });
       }
 
-      // Construct backup file path
-      const backupFileName = `backup-${backup.name}-${backup.createdAt.getTime()}.json.gz`;
-      const backupPath = path.join(process.cwd(), 'config', 'backups', backupFileName);
+      const backupFileName = path.basename(backupPath);
 
       // Check if file exists
       try {
@@ -548,10 +518,7 @@ router.get(
       res.setHeader('Content-Disposition', `attachment; filename="${backupFileName}"`);
       return res.sendFile(backupPath);
     } catch (error) {
-      logger.error(
-        'Error downloading backup:',
-        error instanceof Error ? error : new Error(String(error))
-      );
+      logger.error('Error downloading backup:', error instanceof Error ? error : new Error(String(error)));
       return res.status(500).json({
         success: false,
         message: 'Failed to download backup',
@@ -570,7 +537,7 @@ router.post(
   authenticate,
   upload.single('file'),
   handleUploadError,
-  async (req: AuthMiddlewareRequest, res: Response) => {
+  async (req: AuthMulterRequest, res: Response) => {
     try {
       if (!req.file) {
         return res.status(400).json({
@@ -590,10 +557,7 @@ router.post(
       try {
         await fs.unlink(req.file.path);
       } catch (cleanupError) {
-        logger.error(
-          'Error cleaning up uploaded file:',
-          cleanupError instanceof Error ? cleanupError : new Error(String(cleanupError))
-        );
+        logger.error('Error cleaning up uploaded file:', cleanupError instanceof Error ? cleanupError : new Error(String(cleanupError)));
       }
 
       return res.json({
@@ -602,20 +566,14 @@ router.post(
         data: result,
       });
     } catch (error) {
-      logger.error(
-        'Error validating file:',
-        error instanceof Error ? error : new Error(String(error))
-      );
+      logger.error('Error validating file:', error instanceof Error ? error : new Error(String(error)));
 
       // Clean up uploaded file if it exists
       if (req.file) {
         try {
           await fs.unlink(req.file.path);
         } catch (cleanupError) {
-          logger.error(
-            'Error cleaning up uploaded file:',
-            cleanupError instanceof Error ? cleanupError : new Error(String(cleanupError))
-          );
+          logger.error('Error cleaning up uploaded file:', cleanupError instanceof Error ? cleanupError : new Error(String(cleanupError)));
         }
       }
 

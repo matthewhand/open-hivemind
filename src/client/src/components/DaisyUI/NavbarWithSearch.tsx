@@ -399,7 +399,7 @@ const NavbarWithSearch: React.FC<NavbarWithSearchProps> = ({
             <li><a>⚠️ High memory usage detected</a></li>
             <li><a>✅ MCP Server update completed</a></li>
             <li><a>📊 Weekly report generated</a></li>
-            <li><a href="/admin/notifications" className="btn btn-sm btn-primary">View All</a></li>
+            <li><a href="/admin/monitoring" className="btn btn-sm btn-primary">View All</a></li>
           </ul>
         </div>
 
@@ -447,12 +447,12 @@ const NavbarWithSearch: React.FC<NavbarWithSearchProps> = ({
           </div>
           <ul tabIndex={0} className="menu menu-sm dropdown-content mt-3 z-[1] p-2 shadow bg-base-100 rounded-box w-52">
             <li className="menu-title">{userName}</li>
-            <li><a href="/profile">👤 Profile</a></li>
-            <li><a href="/settings">⚙️ Settings</a></li>
-            <li><a href="/help">❓ Help & Support</a></li>
-            <li><a href="/docs">📚 Documentation</a></li>
+            <li><a href="/admin/settings">👤 Profile</a></li>
+            <li><a href="/admin/settings">⚙️ Settings</a></li>
+            <li><a href="https://github.com/open-hivemind/open-hivemind" target="_blank" rel="noopener noreferrer">❓ Help & Support</a></li>
+            <li><a href="https://github.com/open-hivemind/open-hivemind" target="_blank" rel="noopener noreferrer">📚 Documentation</a></li>
             <li className="divider"></li>
-            <li><a href="/logout" className="text-error">🚪 Sign out</a></li>
+            <li><a href="/login" className="text-error">🚪 Sign out</a></li>
           </ul>
         </div>
       </div>

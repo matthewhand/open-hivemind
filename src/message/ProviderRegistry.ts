@@ -50,46 +50,69 @@ function isMessengerService(obj: any): obj is IMessengerService {
  * Discover available providers by scanning the integrations directory.
  * This is called lazily on first access.
  */
-function discoverProviders(): void {
+// Promise to track async initialization
+let initializationPromise: Promise<void> | null = null;
+
+async function discoverProviders(): Promise<void> {
   if (initialized) return;
-  initialized = true;
 
-  const integrationsDir = path.join(__dirname, '..', 'integrations');
-
-  if (!fs.existsSync(integrationsDir)) {
-    debug('Integrations directory not found');
-    return;
+  // If initialization is already in progress, wait for it
+  if (initializationPromise) {
+    return initializationPromise;
   }
 
-  const entries = fs.readdirSync(integrationsDir, { withFileTypes: true });
+  // Start initialization
+  initializationPromise = (async () => {
+    initialized = true;
 
-  for (const entry of entries) {
-    if (!entry.isDirectory()) continue;
+    const integrationsDir = path.join(__dirname, '..', 'integrations');
 
-    const providerName = entry.name.toLowerCase();
-    const pascalName = providerName.charAt(0).toUpperCase() + providerName.slice(1);
-    const serviceFileName = `${pascalName}Service`;
-    const providerDir = path.join(integrationsDir, entry.name);
+    try {
+      await fs.promises.access(integrationsDir, fs.constants.F_OK);
+    } catch (err: any) {
+      if (err.code === 'ENOENT') {
+        debug('Integrations directory not found');
+        return;
+      }
+      throw err;
+    }
 
-    // Look for {Name}Service.ts or {Name}Service.js
-    const possiblePaths = [
-      path.join(providerDir, `${serviceFileName}.ts`),
-      path.join(providerDir, `${serviceFileName}.js`),
-    ];
+    const entries = await fs.promises.readdir(integrationsDir, { withFileTypes: true });
 
-    for (const filePath of possiblePaths) {
-      if (fs.existsSync(filePath)) {
-        discoveredProviders.set(providerName, {
-          modulePath: path.relative(__dirname, filePath).replace(/\.(ts|js)$/, ''),
-          serviceExport: serviceFileName,
-        });
-        debug(`Discovered provider: ${providerName} -> ${serviceFileName}`);
-        break;
+    for (const entry of entries) {
+      if (!entry.isDirectory()) continue;
+
+      const providerName = entry.name.toLowerCase();
+      const pascalName = providerName.charAt(0).toUpperCase() + providerName.slice(1);
+      const serviceFileName = `${pascalName}Service`;
+      const providerDir = path.join(integrationsDir, entry.name);
+
+      // Look for {Name}Service.ts or {Name}Service.js
+      const possiblePaths = [
+        path.join(providerDir, `${serviceFileName}.ts`),
+        path.join(providerDir, `${serviceFileName}.js`),
+      ];
+
+      for (const filePath of possiblePaths) {
+        try {
+          await fs.promises.access(filePath, fs.constants.F_OK);
+          discoveredProviders.set(providerName, {
+            modulePath: path.relative(__dirname, filePath).replace(/\.(ts|js)$/, ''),
+            serviceExport: serviceFileName,
+          });
+          debug(`Discovered provider: ${providerName} -> ${serviceFileName}`);
+          break;
+        } catch (err: any) {
+          // File doesn't exist, try next path
+          continue;
+        }
       }
     }
-  }
 
-  debug(`Provider discovery complete: ${discoveredProviders.size} providers found`);
+    debug(`Provider discovery complete: ${discoveredProviders.size} providers found`);
+  })();
+
+  return initializationPromise;
 }
 
 /**
@@ -99,7 +122,7 @@ function discoverProviders(): void {
 export async function getMessengerServiceByProvider(
   providerName: string
 ): Promise<IMessengerService | null> {
-  discoverProviders();
+  await discoverProviders();
 
   const normalizedName = providerName.toLowerCase();
 
@@ -147,16 +170,16 @@ export async function getMessengerServiceByProvider(
 /**
  * Get list of all discovered provider names.
  */
-export function getRegisteredProviders(): string[] {
-  discoverProviders();
+export async function getRegisteredProviders(): Promise<string[]> {
+  await discoverProviders();
   return Array.from(discoveredProviders.keys());
 }
 
 /**
  * Check if a provider is discovered.
  */
-export function isProviderRegistered(providerName: string): boolean {
-  discoverProviders();
+export async function isProviderRegistered(providerName: string): Promise<boolean> {
+  await discoverProviders();
   return discoveredProviders.has(providerName.toLowerCase());
 }
 
@@ -181,8 +204,9 @@ export function unloadProvider(providerName: string): void {
 /**
  * Force re-discovery of providers (useful after adding new integrations).
  */
-export function refreshProviders(): void {
+export async function refreshProviders(): Promise<void> {
   initialized = false;
+  initializationPromise = null;
   discoveredProviders.clear();
-  discoverProviders();
+  await discoverProviders();
 }

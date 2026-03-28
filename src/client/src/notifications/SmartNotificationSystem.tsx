@@ -69,7 +69,7 @@ export const SmartNotificationSystem: React.FC<{ children: React.ReactNode }> = 
   const addNotification = (notification: Omit<Notification, 'id' | 'timestamp' | 'read'>) => {
     const newNotification: Notification = {
       ...notification,
-      id: Math.random().toString(36).substr(2, 9),
+      id: crypto.randomUUID(),
       timestamp: new Date(),
       read: false,
     };
@@ -119,6 +119,7 @@ export const SmartNotificationSystem: React.FC<{ children: React.ReactNode }> = 
           <Button
             variant="ghost"
             className="btn-circle bg-base-100 shadow-lg border border-base-200"
+            aria-label="Toggle notifications"
             onClick={() => setIsOpen(!isOpen)}
           >
             <BellIcon className="w-6 h-6" />

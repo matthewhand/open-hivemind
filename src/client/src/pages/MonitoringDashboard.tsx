@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect } from 'react';
 import { useWebSocket } from '../contexts/WebSocketContext';
-import { apiService } from '../services/api';
 import StatusCard from '../components/Monitoring/StatusCard';
 import MetricChart from '../components/Monitoring/MetricChart';
 import AlertPanel from '../components/Monitoring/AlertPanel';
@@ -17,7 +16,8 @@ const MonitoringDashboard: React.FC = () => {
     return () => {
       disconnect();
     };
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [connect, disconnect]);
 
   const currentMetric = performanceMetrics[performanceMetrics.length - 1] || {
     cpuUsage: 0,

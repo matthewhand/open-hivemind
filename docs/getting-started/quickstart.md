@@ -26,7 +26,7 @@ docker pull matthewhand/open-hivemind:latest
 # run with your environment file
 docker run --rm \
   --env-file .env \
-  -p 3028:3028 \
+  -p 3000:3000 \
   matthewhand/open-hivemind:latest
 ```
 Prefer Compose? Update `docker-compose.yml` to use the same image instead of
