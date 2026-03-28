@@ -30,6 +30,7 @@ import importExportRouter from './routes/importExport';
 import mcpRouter from './routes/mcp';
 import personasRouter from './routes/personas';
 import sitemapRouter from './routes/sitemap';
+import onboardingRouter from './routes/onboarding';
 import specsRouter from './routes/specs';
 import webhookEventsRouter from './routes/webhookEvents';
 
@@ -191,6 +192,7 @@ export class WebUIServer {
     this.app.use('/api/specs', authenticateToken, specsRouter);
     this.app.use('/api/import-export', authenticateToken, importExportRouter);
     this.app.use('/api/webhooks', authenticateToken, webhookEventsRouter);
+    this.app.use('/api/onboarding', authenticateToken, onboardingRouter);
     this.app.use('/api/guards', authenticateToken, guardsRouter);
 
     // WebUI application routes (serve React app)
