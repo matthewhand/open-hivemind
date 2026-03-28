@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useId } from 'react';
 import classNames from 'classnames';
 
 
@@ -9,6 +9,7 @@ export interface ToggleProps extends Omit<React.InputHTMLAttributes<HTMLInputEle
 }
 
 const Toggle: React.FC<ToggleProps> = ({
+  id,
   label,
   size = 'md',
   color,
@@ -17,6 +18,9 @@ const Toggle: React.FC<ToggleProps> = ({
   onChange,
   ...props
 }) => {
+
+  const reactId = useId();
+  const toggleId = id || reactId;
 
   const toggleClasses = classNames(
     'toggle',
@@ -30,8 +34,11 @@ const Toggle: React.FC<ToggleProps> = ({
   const toggleInput = (
     <input
       type="checkbox"
+      role="switch"
+      id={toggleId}
       className={toggleClasses}
       checked={checked}
+      aria-checked={checked}
       onChange={onChange}
       {...props}
     />
@@ -40,7 +47,7 @@ const Toggle: React.FC<ToggleProps> = ({
   if (label) {
     return (
       <div className="form-control">
-        <label className="label cursor-pointer">
+        <label htmlFor={toggleId} className="label cursor-pointer">
           <span className="label-text">{label}</span>
           {toggleInput}
         </label>
