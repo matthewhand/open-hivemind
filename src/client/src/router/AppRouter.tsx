@@ -8,7 +8,7 @@ import MainLayout from '../layouts/MainLayout';
 import DashboardPage from '../pages/Dashboard';
 import UberLayout from '../layouts/UberLayout';
 import LoadingPage from '../pages/LoadingPage';
-import RouteErrorBoundary from '../components/RouteErrorBoundary';
+import { RouteErrorBoundary } from '../components/ErrorBoundary';
 
 const Login = lazy(() => import('../components/Login'));
 import { useAuth } from '../contexts/AuthContext';
