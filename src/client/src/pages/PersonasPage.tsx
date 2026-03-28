@@ -27,6 +27,7 @@ import StatsCards from '../components/DaisyUI/StatsCards';
 import ToastNotification, { useInfoToast } from '../components/DaisyUI/ToastNotification';
 import SearchFilterBar from '../components/SearchFilterBar';
 import { apiService, type Persona as ApiPersona, type Bot } from '../services/api';
+import { useApiQuery } from '../hooks/useApiQuery';
 
 // Extend UI Persona type to include assigned bots for display
 interface Persona extends ApiPersona {
@@ -75,49 +76,55 @@ const PersonasPage: React.FC = () => {
   const [selectedBotIds, setSelectedBotIds] = useState<string[]>([]); // Bot IDs are strings in new API
   const [personaCategory, setPersonaCategory] = useState<ApiPersona['category']>('general');
 
-  const fetchData = useCallback(async () => {
-    try {
-      setLoading(true);
-      setError(null);
+  // Cached queries for config and personas
+  const {
+    data: configResponse,
+    loading: configLoading,
+    error: configError,
+    refetch: refetchConfig,
+  } = useApiQuery<any>('/api/config', { ttl: 30_000 });
 
-      const [configResult, personasResult] = await Promise.allSettled([
-        apiService.getConfig(),
-        apiService.getPersonas(),
-      ]);
-      const configResponse =
-        configResult.status === 'fulfilled' ? configResult.value : { bots: [] };
-      const personasResponse = personasResult.status === 'fulfilled' ? personasResult.value : [];
+  const {
+    data: personasResponse,
+    loading: personasLoading,
+    error: personasError,
+    refetch: refetchPersonas,
+  } = useApiQuery<ApiPersona[]>('/api/personas', { ttl: 30_000 });
 
-      const botList = configResponse.bots || [];
-      const filledBots = botList.map((b: any) => ({
-        ...b,
-        id: b.id || b.name, // Fallback to name if ID missing (shouldn't happen for active bots)
-      }));
-      setBots(filledBots);
+  // Derive bots and personas from cached responses
+  useEffect(() => {
+    const botList = configResponse?.bots || [];
+    const filledBots = botList.map((b: any) => ({
+      ...b,
+      id: b.id || b.name,
+    }));
+    setBots(filledBots);
 
-      const mappedPersonas = personasResponse.map((p) => {
-        // Find assigned bots
-        // Match by persona ID stored in bot.persona OR matches persona name (legacy)
-        const assigned = filledBots.filter((b: any) => b.persona === p.id || b.persona === p.name);
-        return {
-          ...p,
-          assignedBotNames: assigned.map((b: any) => b.name),
-          assignedBotIds: assigned.map((b: any) => b.id),
-        };
-      });
+    const rawPersonas = personasResponse || [];
+    const mappedPersonas = rawPersonas.map((p) => {
+      const assigned = filledBots.filter((b: any) => b.persona === p.id || b.persona === p.name);
+      return {
+        ...p,
+        assignedBotNames: assigned.map((b: any) => b.name),
+        assignedBotIds: assigned.map((b: any) => b.id),
+      };
+    });
+    setPersonas(mappedPersonas);
+  }, [configResponse, personasResponse]);
 
-      setPersonas(mappedPersonas);
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to fetch data';
-      setError(message);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  // Sync loading/error state
+  useEffect(() => {
+    setLoading(configLoading || personasLoading);
+  }, [configLoading, personasLoading]);
 
   useEffect(() => {
-    fetchData();
-  }, [fetchData]);
+    const err = configError || personasError;
+    setError(err ? err.message : null);
+  }, [configError, personasError]);
+
+  const fetchData = useCallback(async () => {
+    await Promise.all([refetchConfig(), refetchPersonas()]);
+  }, [refetchConfig, refetchPersonas]);
 
   // Derive filtered personas
   const filteredPersonas = useMemo(() => {
