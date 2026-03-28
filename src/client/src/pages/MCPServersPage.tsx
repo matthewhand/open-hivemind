@@ -17,6 +17,7 @@ import Breadcrumbs from '../components/DaisyUI/Breadcrumbs';
 import EmptyState from '../components/DaisyUI/EmptyState';
 import Modal, { ConfirmModal } from '../components/DaisyUI/Modal';
 import SearchFilterBar from '../components/SearchFilterBar';
+import useUrlParams from '../hooks/useUrlParams';
 
 interface Tool {
   name: string;
@@ -78,9 +79,15 @@ const MCPServersPage: React.FC = () => {
     isOpen: boolean; title: string; message: string; onConfirm: () => void;
   }>({ isOpen: false, title: '', message: '', onConfirm: () => {} });
 
-  // Search and Filter State
-  const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState('All');
+  // Search and Filter State (URL-persisted)
+  const { values: urlParams, setValue: setUrlParam } = useUrlParams({
+    search: { type: 'string', default: '', debounce: 300 },
+    status: { type: 'string', default: 'All' },
+  });
+  const searchTerm = urlParams.search;
+  const setSearchTerm = (v: string) => setUrlParam('search', v);
+  const statusFilter = urlParams.status;
+  const setStatusFilter = (v: string) => setUrlParam('status', v);
 
   const breadcrumbItems = [
     { label: 'MCP', href: '/admin/mcp' },

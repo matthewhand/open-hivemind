@@ -12,6 +12,7 @@ import Input from '../components/DaisyUI/Input';
 import Textarea from '../components/DaisyUI/Textarea';
 import Select from '../components/DaisyUI/Select';
 import Toggle from '../components/DaisyUI/Toggle';
+import useUrlParams from '../hooks/useUrlParams';
 
 interface McpGuardConfig {
   enabled: boolean;
@@ -45,7 +46,11 @@ const GuardsPage: React.FC = () => {
   const [profiles, setProfiles] = useState<GuardrailProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [searchValue, setSearchValue] = useState('');
+  const { values: urlParams, setValue: setUrlParam } = useUrlParams({
+    search: { type: 'string', default: '', debounce: 300 },
+  });
+  const searchValue = urlParams.search;
+  const setSearchValue = (v: string) => setUrlParam('search', v);
 
   const showSuccess = useSuccessToast();
   const showError = useErrorToast();

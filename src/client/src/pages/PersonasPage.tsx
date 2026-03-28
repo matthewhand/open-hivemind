@@ -14,6 +14,7 @@ import {
   User,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import useUrlParams from '../hooks/useUrlParams';
 import { Alert } from '../components/DaisyUI/Alert';
 import Badge from '../components/DaisyUI/Badge';
 import Button from '../components/DaisyUI/Button';
@@ -55,9 +56,15 @@ const PersonasPage: React.FC = () => {
   const successToast = ToastNotification.useSuccessToast();
   const errorToast = ToastNotification.useErrorToast();
 
-  // Filter State
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  // Filter State (URL-persisted)
+  const { values: urlParams, setValue: setUrlParam } = useUrlParams({
+    search: { type: 'string', default: '', debounce: 300 },
+    category: { type: 'string', default: 'all' },
+  });
+  const searchQuery = urlParams.search;
+  const setSearchQuery = (v: string) => setUrlParam('search', v);
+  const selectedCategory = urlParams.category;
+  const setSelectedCategory = (v: string) => setUrlParam('category', v);
 
   // Modals
   const [showCreateModal, setShowCreateModal] = useState(false);

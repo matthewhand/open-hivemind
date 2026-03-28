@@ -6,6 +6,7 @@ import EmptyState from '../components/DaisyUI/EmptyState';
 import { Copy, Check, Search } from 'lucide-react';
 import Carousel from '../components/DaisyUI/Carousel';
 import SearchFilterBar from '../components/SearchFilterBar';
+import useUrlParams from '../hooks/useUrlParams';
 
 interface BotTemplate {
   id: string;
@@ -23,11 +24,21 @@ const BotTemplatesPage: React.FC = () => {
   const [templates, setTemplates] = useState<BotTemplate[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Filter States
-  const [selectedPlatform, setSelectedPlatform] = useState<string>('All');
-  const [selectedPersona, setSelectedPersona] = useState<string>('All');
-  const [selectedLlmProvider, setSelectedLlmProvider] = useState<string>('All');
-  const [searchTerm, setSearchTerm] = useState('');
+  // Filter States (URL-persisted)
+  const { values: urlParams, setValue: setUrlParam } = useUrlParams({
+    search: { type: 'string', default: '', debounce: 300 },
+    platform: { type: 'string', default: 'All' },
+    persona: { type: 'string', default: 'All' },
+    llm: { type: 'string', default: 'All' },
+  });
+  const selectedPlatform = urlParams.platform;
+  const setSelectedPlatform = (v: string) => setUrlParam('platform', v);
+  const selectedPersona = urlParams.persona;
+  const setSelectedPersona = (v: string) => setUrlParam('persona', v);
+  const selectedLlmProvider = urlParams.llm;
+  const setSelectedLlmProvider = (v: string) => setUrlParam('llm', v);
+  const searchTerm = urlParams.search;
+  const setSearchTerm = (v: string) => setUrlParam('search', v);
   const [copied, setCopied] = useState(false);
 
   const breadcrumbItems = [

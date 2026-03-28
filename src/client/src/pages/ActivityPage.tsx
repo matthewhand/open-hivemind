@@ -17,6 +17,7 @@ import EmptyState from '../components/DaisyUI/EmptyState';
 import Input from '../components/DaisyUI/Input';
 import SearchFilterBar from '../components/SearchFilterBar';
 import { apiService, ActivityEvent, ActivityResponse } from '../services/api';
+import useUrlParams from '../hooks/useUrlParams';
 
 const ActivityPage: React.FC = () => {
   const [data, setData] = useState<ActivityResponse | null>(null);
@@ -25,13 +26,27 @@ const ActivityPage: React.FC = () => {
   const [viewMode, setViewMode] = useState<'table' | 'timeline'>('table');
   const [autoRefresh, setAutoRefresh] = useState(false);
 
-  // Filter State
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedBot, setSelectedBot] = useState<string>('all');
-  const [selectedProvider, setSelectedProvider] = useState<string>('all');
-  const [selectedLlmProvider, setSelectedLlmProvider] = useState<string>('all');
-  const [startDate, setStartDate] = useState('');
-  const [endDate, setEndDate] = useState('');
+  // Filter State (URL-persisted)
+  const { values: urlParams, setValue: setUrlParam } = useUrlParams({
+    search: { type: 'string', default: '', debounce: 300 },
+    bot: { type: 'string', default: 'all' },
+    provider: { type: 'string', default: 'all' },
+    llm: { type: 'string', default: 'all' },
+    from: { type: 'string', default: '' },
+    to: { type: 'string', default: '' },
+  });
+  const searchQuery = urlParams.search;
+  const setSearchQuery = (v: string) => setUrlParam('search', v);
+  const selectedBot = urlParams.bot;
+  const setSelectedBot = (v: string) => setUrlParam('bot', v);
+  const selectedProvider = urlParams.provider;
+  const setSelectedProvider = (v: string) => setUrlParam('provider', v);
+  const selectedLlmProvider = urlParams.llm;
+  const setSelectedLlmProvider = (v: string) => setUrlParam('llm', v);
+  const startDate = urlParams.from;
+  const setStartDate = (v: string) => setUrlParam('from', v);
+  const endDate = urlParams.to;
+  const setEndDate = (v: string) => setUrlParam('to', v);
 
   // Cache initial filters to populate dropdowns even when filtered
   const [availableFilters, setAvailableFilters] = useState<ActivityResponse['filters'] | null>(null);

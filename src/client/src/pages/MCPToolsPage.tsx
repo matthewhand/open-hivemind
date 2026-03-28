@@ -10,6 +10,7 @@ import {
 import Breadcrumbs from '../components/DaisyUI/Breadcrumbs';
 import { Alert } from '../components/DaisyUI/Alert';
 import Modal from '../components/DaisyUI/Modal';
+import useUrlParams from '../hooks/useUrlParams';
 
 interface MCPTool {
   id: string;
@@ -29,9 +30,17 @@ const MCPToolsPage: React.FC = () => {
   const [tools, setTools] = useState<MCPTool[]>([]);
   const [filteredTools, setFilteredTools] = useState<MCPTool[]>([]);
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [categoryFilter, setCategoryFilter] = useState('all');
-  const [serverFilter, setServerFilter] = useState('all');
+  const { values: urlParams, setValue: setUrlParam } = useUrlParams({
+    search: { type: 'string', default: '', debounce: 300 },
+    category: { type: 'string', default: 'all' },
+    server: { type: 'string', default: 'all' },
+  });
+  const searchTerm = urlParams.search;
+  const setSearchTerm = (v: string) => setUrlParam('search', v);
+  const categoryFilter = urlParams.category;
+  const setCategoryFilter = (v: string) => setUrlParam('category', v);
+  const serverFilter = urlParams.server;
+  const setServerFilter = (v: string) => setUrlParam('server', v);
   const [alert, setAlert] = useState<{ type: 'success' | 'error', message: string } | null>(null);
 
   const breadcrumbItems = [
