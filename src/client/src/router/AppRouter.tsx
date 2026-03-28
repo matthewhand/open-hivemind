@@ -45,8 +45,6 @@ const MarketplacePage = lazy(() => import('../pages/MarketplacePage'));
 const ProvidersPage = lazy(() => import('../pages/ProvidersPage'));
 const MessageProvidersPage = lazy(() => import('../pages/MessageProvidersPage'));
 const LLMProvidersPage = lazy(() => import('../pages/LLMProvidersPage'));
-const MemoryProvidersPage = lazy(() => import('../pages/MemoryProvidersPage'));
-const ToolProvidersPage = lazy(() => import('../pages/ToolProvidersPage'));
 const SpecsPage = lazy(() => import('../pages/SpecsPage'));
 const SpecDetailPage = lazy(() => import('../pages/SpecDetailPage'));
 const AuditPage = lazy(() => import('../pages/AuditPage'));
@@ -127,8 +125,8 @@ const AppRouter: React.FC = () => {
           <Route path="providers" element={<ProvidersPage />} />
           <Route path="providers/message" element={<MessageProvidersPage />} />
           <Route path="providers/llm" element={<LLMProvidersPage />} />
-          <Route path="providers/memory" element={<MemoryProvidersPage />} />
-          <Route path="providers/tool" element={<ToolProvidersPage />} />
+          <Route path="providers/memory" element={<LLMProvidersPage />} />
+          <Route path="providers/tool" element={<LLMProvidersPage />} />
 
           {/* Marketplace Route */}
           <Route path="marketplace" element={<MarketplacePage />} />
