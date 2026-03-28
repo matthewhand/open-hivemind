@@ -75,10 +75,13 @@ describe('Error Handling Integration Tests', () => {
         .send(incompleteErrorReport)
         .expect(400);
 
-      expect(response.body).toEqual({
-        error: 'Invalid error report: missing required fields',
-        required: ['message', 'correlationId'],
-      });
+      expect(response.body.error).toBe('Validation failed');
+      expect(response.body.issues).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ path: expect.arrayContaining(['message']) }),
+          expect.objectContaining({ path: expect.arrayContaining(['correlationId']) }),
+        ])
+      );
     });
 
     test('should handle malformed JSON in frontend error report', async () => {

@@ -4,6 +4,8 @@ import { BotConfigurationManager } from '../../config/BotConfigurationManager';
 import { DatabaseManager } from '../../database/DatabaseManager';
 import { auditMiddleware, logAdminAction, type AuditedRequest } from '../middleware/audit';
 import { authenticateToken, requirePermission } from '../middleware/auth';
+import { validateRequest } from '../../validation/validateRequest';
+import { ValidateConfigBodySchema } from '../../validation/schemas/consolidatedSchema';
 
 const debug = Debug('app:webui:consolidated');
 const router = Router();
@@ -190,16 +192,9 @@ router.get('/env-status', async (req, res) => {
 });
 
 // POST /api/webui/validate-config - Validate bot configuration
-router.post('/validate-config', async (req, res) => {
+router.post('/validate-config', validateRequest(ValidateConfigBodySchema), async (req, res) => {
   try {
     const { botConfig } = req.body;
-
-    if (!botConfig) {
-      return res.status(400).json({
-        success: false,
-        error: 'Bot configuration is required',
-      });
-    }
 
     const validation = {
       isValid: true,
