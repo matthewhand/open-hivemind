@@ -10,21 +10,20 @@ import type {
   McpToolsListResponse,
   McpToolCallResponse,
 } from './types';
+import { getCircuitBreaker, type CircuitBreaker as CircuitBreakerType } from '@common/CircuitBreaker';
+import { withTimeout } from '@common/withTimeout';
 
 const debug = Debug('app:tool-mcp');
 
-/**
- * MCP Tool Provider — connects to a Model Context Protocol server and
- * exposes its tools through the standard IToolProvider interface.
- *
- * Uses the official `@modelcontextprotocol/sdk` package, loaded dynamically
- * so the dependency stays optional at runtime.
- */
+/** Default timeout for MCP tool operations (10 seconds). */
+const DEFAULT_MCP_TIMEOUT_MS = 10_000;
+
 export class McpToolProvider implements IToolProvider {
   public readonly name: string;
   private config: McpToolProviderConfig;
   private client: any = null;
   private cachedTools: ToolDefinition[] = [];
+  private readonly circuitBreaker: CircuitBreakerType;
 
   constructor(config: McpToolProviderConfig) {
     this.config = {
@@ -34,42 +33,45 @@ export class McpToolProvider implements IToolProvider {
       ...config,
     };
     this.name = config.name || 'mcp';
+    this.circuitBreaker = getCircuitBreaker({
+      name: `mcp-${this.name}`,
+      failureThreshold: 5,
+      resetTimeoutMs: 30_000,
+      halfOpenMaxAttempts: 3,
+    });
   }
 
-  // ---------------------------------------------------------------------------
-  // IToolProvider
-  // ---------------------------------------------------------------------------
-
-  /**
-   * Connect to the MCP server and return the list of available tools.
-   */
   public async listTools(): Promise<ToolDefinition[]> {
     await this.ensureConnected();
 
-    try {
-      debug(`Listing tools from MCP server: ${this.name}`);
-      const response: McpToolsListResponse = await this.client.listTools();
+    return this.circuitBreaker.execute(async () => {
+      try {
+        debug(`Listing tools from MCP server: ${this.name}`);
+        const timeoutMs = this.config.timeout ?? DEFAULT_MCP_TIMEOUT_MS;
+        const response: McpToolsListResponse = await withTimeout(
+          () => this.client.listTools(),
+          timeoutMs,
+          `MCP listTools (${this.name})`,
+        );
 
-      this.cachedTools = response.tools.map((tool) => ({
-        name: tool.name,
-        description: tool.description,
-        inputSchema: tool.inputSchema,
-        serverName: this.name,
-      }));
+        this.cachedTools = response.tools.map((tool) => ({
+          name: tool.name,
+          description: tool.description,
+          inputSchema: tool.inputSchema,
+          serverName: this.name,
+        }));
 
-      debug(`Discovered ${this.cachedTools.length} tools from ${this.name}`);
-      return this.cachedTools;
-    } catch (error) {
-      debug(`Error listing tools from ${this.name}:`, error);
-      throw new Error(
-        `Failed to list tools from MCP server ${this.name}: ${error instanceof Error ? error.message : String(error)}`
-      );
-    }
+        debug(`Discovered ${this.cachedTools.length} tools from ${this.name}`);
+        return this.cachedTools;
+      } catch (error) {
+        debug(`Error listing tools from ${this.name}:`, error);
+        throw new Error(
+          `Failed to list tools from MCP server ${this.name}: ${error instanceof Error ? error.message : String(error)}`
+        );
+      }
+    });
   }
 
-  /**
-   * Execute a named tool on the connected MCP server.
-   */
   public async executeTool(
     toolName: string,
     args: Record<string, unknown>,
@@ -77,31 +79,35 @@ export class McpToolProvider implements IToolProvider {
   ): Promise<ToolResult> {
     await this.ensureConnected();
 
-    try {
-      debug(`Executing tool ${toolName} on MCP server ${this.name}`);
+    return this.circuitBreaker.execute(async () => {
+      try {
+        debug(`Executing tool ${toolName} on MCP server ${this.name}`);
 
-      const response: McpToolCallResponse = await this.client.callTool({
-        name: toolName,
-        arguments: args,
-      });
+        const timeoutMs = this.config.timeout ?? DEFAULT_MCP_TIMEOUT_MS;
+        const response: McpToolCallResponse = await withTimeout(
+          () => this.client.callTool({
+            name: toolName,
+            arguments: args,
+          }),
+          timeoutMs,
+          `MCP executeTool ${toolName} (${this.name})`,
+        );
 
-      debug(`Tool ${toolName} executed successfully on ${this.name}`);
+        debug(`Tool ${toolName} executed successfully on ${this.name}`);
 
-      return {
-        content: response.content,
-        isError: response.isError ?? false,
-      };
-    } catch (error) {
-      debug(`Error executing tool ${toolName} on ${this.name}:`, error);
-      throw new Error(
-        `Failed to execute tool ${toolName} on MCP server ${this.name}: ${error instanceof Error ? error.message : String(error)}`
-      );
-    }
+        return {
+          content: response.content,
+          isError: response.isError ?? false,
+        };
+      } catch (error) {
+        debug(`Error executing tool ${toolName} on ${this.name}:`, error);
+        throw new Error(
+          `Failed to execute tool ${toolName} on MCP server ${this.name}: ${error instanceof Error ? error.message : String(error)}`
+        );
+      }
+    });
   }
 
-  /**
-   * Test whether the MCP server is reachable by attempting to list tools.
-   */
   public async healthCheck(): Promise<boolean> {
     try {
       await this.ensureConnected();
@@ -112,20 +118,12 @@ export class McpToolProvider implements IToolProvider {
     }
   }
 
-  // ---------------------------------------------------------------------------
-  // Connection management
-  // ---------------------------------------------------------------------------
-
-  /**
-   * Ensure the internal MCP client is connected, creating it if necessary.
-   */
   private async ensureConnected(): Promise<void> {
     if (this.client) {
       return;
     }
 
     try {
-      // Dynamic import so the MCP SDK stays optional at install time
       const { Client } = require('@modelcontextprotocol/sdk');
 
       this.client = new Client({
@@ -150,9 +148,6 @@ export class McpToolProvider implements IToolProvider {
     }
   }
 
-  /**
-   * Disconnect from the MCP server and release resources.
-   */
   public async disconnect(): Promise<void> {
     if (this.client) {
       debug(`Disconnecting from MCP server ${this.name}`);

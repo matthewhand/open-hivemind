@@ -3,17 +3,21 @@ import Debug from 'debug';
 import { ConfigurationManager } from '@config/ConfigurationManager';
 import flowiseConfig from '@integrations/flowise/flowiseConfig';
 import { isSafeUrl } from '../../utils/ssrfGuard';
+import { getCircuitBreaker } from '@common/CircuitBreaker';
+import { withTimeout } from '@common/withTimeout';
 
 const debug = Debug('app:flowiseClient');
 
-/**
- * Fetches chat completions from the Flowise API.
- * Sends only the latest message (question) and does not include history.
- *
- * @param {string} channelId - The channel or conversation ID.
- * @param {string} question - The latest question/message from the user.
- * @returns {Promise<string>} The Flowise response text.
- */
+/** Default timeout for Flowise REST calls (30 seconds). */
+const DEFAULT_FLOWISE_TIMEOUT_MS = 30_000;
+
+const circuitBreaker = getCircuitBreaker({
+  name: 'flowise',
+  failureThreshold: 5,
+  resetTimeoutMs: 30_000,
+  halfOpenMaxAttempts: 3,
+});
+
 export async function getFlowiseResponse(channelId: string, question: string): Promise<string> {
   if (!question.trim()) {
     debug('Empty question provided. Aborting request.');
@@ -38,59 +42,57 @@ export async function getFlowiseResponse(channelId: string, question: string): P
   }
 
   const headers = { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' };
-  const payload: Record<string, any> = { question }; // Send only the latest question
+  const payload: Record<string, any> = { question };
 
   if (chatId) {
     payload.chatId = chatId;
   }
 
-  try {
-    debug('Sending request to Flowise:', { baseURL, chatflowId, payload });
-    const targetUrl = `${baseURL}/prediction/${chatflowId}`;
+  return circuitBreaker.execute(async () => {
+    try {
+      debug('Sending request to Flowise:', { baseURL, chatflowId, payload });
+      const targetUrl = `${baseURL}/prediction/${chatflowId}`;
 
-    if (!(await isSafeUrl(targetUrl))) {
-      throw new Error('Flowise API URL is not safe to connect to.');
-    }
+      if (!(await isSafeUrl(targetUrl))) {
+        throw new Error('Flowise API URL is not safe to connect to.');
+      }
 
-    const response = await axios.post(targetUrl, payload, { headers });
-    const { text, chatId: newChatId } = response.data;
-
-    debug('Received response from Flowise:', { text, newChatId });
-
-    if (newChatId && newChatId !== chatId) {
-      configManager.setSession('flowise', channelId, newChatId);
-      debug(`Updated chatId for channelId: ${channelId} to ${newChatId}`);
-    }
-
-    if (!text || typeof text !== 'string' || !text.trim()) {
-      debug('Flowise returned an invalid or empty text response.');
-      throw new Error('Flowise response is empty or invalid.');
-    }
-
-    return text;
-  } catch (error: unknown) {
-    if (axios.isAxiosError(error)) {
-      debug(
-        'Flowise API error with status:',
-        error.response?.status,
-        'response data:',
-        error.response?.data
+      const response = await withTimeout(
+        (signal) => axios.post(targetUrl, payload, { headers, signal }),
+        DEFAULT_FLOWISE_TIMEOUT_MS,
+        'Flowise REST prediction',
       );
-    } else {
-      debug('Error communicating with Flowise API:', error);
+      const { text, chatId: newChatId } = response.data;
+
+      debug('Received response from Flowise:', { text, newChatId });
+
+      if (newChatId && newChatId !== chatId) {
+        configManager.setSession('flowise', channelId, newChatId);
+        debug(`Updated chatId for channelId: ${channelId} to ${newChatId}`);
+      }
+
+      if (!text || typeof text !== 'string' || !text.trim()) {
+        debug('Flowise returned an invalid or empty text response.');
+        throw new Error('Flowise response is empty or invalid.');
+      }
+
+      return text;
+    } catch (error: unknown) {
+      if (axios.isAxiosError(error)) {
+        debug(
+          'Flowise API error with status:',
+          error.response?.status,
+          'response data:',
+          error.response?.data
+        );
+      } else {
+        debug('Error communicating with Flowise API:', error);
+      }
+      throw new Error('Failed to fetch response from Flowise.');
     }
-    throw new Error('Failed to fetch response from Flowise.');
-  }
+  });
 }
 
-/**
- * Fallback to fetch chat completions from the Flowise API.
- * This method sends only the latest question/message to the API.
- *
- * @param {string} channelId - The channel or conversation ID.
- * @param {string} question - The question/message from the user.
- * @returns {Promise<string>} The Flowise response text.
- */
 export async function getFlowiseResponseFallback(
   channelId: string,
   question: string

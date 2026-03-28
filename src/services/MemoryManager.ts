@@ -3,8 +3,12 @@ import type { IMemoryProvider } from '@src/types/IProvider';
 import { getMemoryProfileByKey } from '@src/config/memoryProfiles';
 import { BotConfigurationManager } from '@src/config/BotConfigurationManager';
 import { loadPlugin, instantiateMemoryProvider } from '@src/plugins';
+import { withTimeout } from '@common/withTimeout';
 
 const debug = Debug('app:MemoryManager');
+
+/** Default timeout for memory provider calls (5 seconds). */
+const DEFAULT_MEMORY_TIMEOUT_MS = 5_000;
 
 /**
  * Result from a memory search operation.
@@ -157,11 +161,15 @@ export class MemoryManager {
     };
 
     try {
-      await provider.add([{ role, content: message }], {
-        agentId: botName,
-        userId: (metadata?.userId as string) ?? undefined,
-        metadata: memMeta,
-      });
+      await withTimeout(
+        () => provider.add([{ role, content: message }], {
+          agentId: botName,
+          userId: (metadata?.userId as string) ?? undefined,
+          metadata: memMeta,
+        }),
+        DEFAULT_MEMORY_TIMEOUT_MS,
+        'Memory store',
+      );
       debug('Stored %s memory for bot "%s"', role, botName);
     } catch (err) {
       // Memory storage should never break the message pipeline.
@@ -190,10 +198,14 @@ export class MemoryManager {
     }
 
     try {
-      const response = await provider.search(query, {
-        agentId: botName,
-        limit,
-      });
+      const response = await withTimeout(
+        () => provider.search(query, {
+          agentId: botName,
+          limit,
+        }),
+        DEFAULT_MEMORY_TIMEOUT_MS,
+        'Memory search',
+      );
       return (response.results ?? []).map((r) => ({
         id: r.id,
         memory: r.memory,

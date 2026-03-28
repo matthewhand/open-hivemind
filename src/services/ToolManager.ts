@@ -2,6 +2,7 @@ import Debug from 'debug';
 import { MCPService } from '@src/mcp/MCPService';
 import { BotConfigurationManager } from '@config/BotConfigurationManager';
 import { getMcpServerProfileByKey } from '@config/mcpServerProfiles';
+import { withTimeout } from '@common/withTimeout';
 
 const debug = Debug('app:ToolManager');
 
@@ -132,18 +133,19 @@ export class ToolManager {
         return { toolName, success: false, error: msg };
       }
 
-      // Execute with timeout.
+      // Execute with AbortController-based timeout.
       const timeoutMs = DEFAULT_TOOL_TIMEOUT_MS;
-      const result = await Promise.race([
-        mcpService.executeTool(serverName, toolName, args, {
+      const result = await withTimeout(
+        () => mcpService.executeTool(serverName, toolName, args, {
           botName,
           userId: context?.userId,
           messageProvider: context?.messageProvider,
           forumId: context?.forumId,
           forumOwnerId: context?.forumOwnerId,
         }),
-        this.timeoutPromise(timeoutMs, toolName),
-      ]);
+        timeoutMs,
+        `Tool "${toolName}"`,
+      );
 
       const elapsed = Date.now() - startTime;
       debug(`[${botName}] Tool "${toolName}" completed in ${elapsed}ms`);
@@ -238,12 +240,5 @@ export class ToolManager {
     return null;
   }
 
-  /** Creates a promise that rejects after `ms` milliseconds. */
-  private timeoutPromise(ms: number, toolName: string): Promise<never> {
-    return new Promise((_resolve, reject) => {
-      setTimeout(() => {
-        reject(new Error(`Tool "${toolName}" timed out after ${ms}ms`));
-      }, ms);
-    });
-  }
+  // timeoutPromise replaced by withTimeout (AbortController-based) above.
 }
