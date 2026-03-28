@@ -125,12 +125,13 @@ const StepWizard: React.FC<StepWizardProps> = ({
             className="progress progress-primary w-full"
             value={progressPercentage}
             max="100"
+            aria-label={`Wizard progress: ${Math.round(progressPercentage)}% complete`}
           />
         </div>
       )}
 
       {/* Steps Navigation */}
-      <div className={`steps w-full mb-8 ${variant === 'vertical' ? 'steps-vertical' : ''}`}>
+      <div className={`steps w-full mb-8 ${variant === 'vertical' ? 'steps-vertical' : ''}`} role="tablist" aria-label="Wizard steps">
         {steps.map((step, index) => {
           const status = getStepStatus(index);
           const canNavigate = canGoToStep(index);
@@ -145,6 +146,11 @@ const StepWizard: React.FC<StepWizardProps> = ({
               } ${canNavigate ? 'cursor-pointer' : 'cursor-not-allowed opacity-50'}`}
               data-content={getStepIcon(step, status, index)}
               onClick={() => canNavigate && handleStepChange(index)}
+              onKeyDown={(e) => { if (canNavigate && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); handleStepChange(index); } }}
+              tabIndex={canNavigate ? 0 : -1}
+              role="tab"
+              aria-selected={status === 'active'}
+              aria-current={status === 'active' ? 'step' : undefined}
             >
               <div className="text-left">
                 <div className="font-medium">{step.title}</div>

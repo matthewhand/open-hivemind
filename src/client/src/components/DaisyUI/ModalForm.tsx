@@ -241,11 +241,11 @@ const ModalForm: React.FC<ModalFormProps> = ({
   if (!isOpen) {return null;}
 
   return (
-    <div className="modal modal-open">
+    <div className="modal modal-open" role="dialog" aria-modal="true" aria-labelledby="modal-form-title">
       <div className={`modal-box ${getSizeClass()}`}>
         {/* Header */}
         <div className="flex items-center justify-between mb-4">
-          <h3 className="font-bold text-lg">{title}</h3>
+          <h3 id="modal-form-title" className="font-bold text-lg">{title}</h3>
           <button
             className="btn btn-sm btn-circle btn-ghost"
             onClick={onClose}
@@ -296,7 +296,7 @@ const ModalForm: React.FC<ModalFormProps> = ({
 
                 {errors[field.name] && (
                   <label className="label">
-                    <span className="label-text-alt text-error">{errors[field.name]}</span>
+                    <span className="label-text-alt text-error" role="alert">{errors[field.name]}</span>
                   </label>
                 )}
 

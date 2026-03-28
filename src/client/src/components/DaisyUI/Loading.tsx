@@ -110,9 +110,10 @@ export const Progress: React.FC<ProgressProps> = ({
         className={`progress ${getVariantClass()} ${getSizeClass()} flex-1`}
         value={indeterminate ? undefined : percentage}
         max="100"
+        aria-label={indeterminate ? 'Loading in progress' : `Progress: ${Math.round(percentage)}%`}
       />
       {showValue && !indeterminate && (
-        <span className="text-sm font-medium min-w-[3rem] text-right">
+        <span className="text-sm font-medium min-w-[3rem] text-right" aria-hidden="true">
           {Math.round(percentage)}%
         </span>
       )}
@@ -138,7 +139,7 @@ export const LoadingOverlay: React.FC<LoadingOverlayProps> = ({
     <div className={`relative ${className}`}>
       {children}
       {isLoading && (
-        <div className="absolute inset-0 bg-base-100/80 backdrop-blur-sm flex items-center justify-center z-10">
+        <div className="absolute inset-0 bg-base-100/80 backdrop-blur-sm flex items-center justify-center z-10" role="status" aria-live="polite">
           <div className="text-center">
             <LoadingSpinner size="lg" />
             <p className="mt-2 text-base-content/70">{message}</p>

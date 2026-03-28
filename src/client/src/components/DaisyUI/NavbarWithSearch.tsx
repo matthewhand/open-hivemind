@@ -153,7 +153,7 @@ const NavbarWithSearch: React.FC<NavbarWithSearchProps> = ({
   ];
 
   return (
-    <div className="navbar bg-base-100 shadow-lg border-b border-base-200">
+    <nav className="navbar bg-base-100 shadow-lg border-b border-base-200" aria-label="Main navigation">
       {/* Navbar Start */}
       <div className="navbar-start">
         {/* Mobile Menu */}
@@ -236,7 +236,7 @@ const NavbarWithSearch: React.FC<NavbarWithSearchProps> = ({
 
       {/* Navbar Center - Search */}
       <div className="navbar-center hidden lg:flex">
-        <form onSubmit={(e) => { e.preventDefault(); handleSearchSubmitWithOptions(searchQuery); }} className="form-control relative">
+        <form onSubmit={(e) => { e.preventDefault(); handleSearchSubmitWithOptions(searchQuery); }} className="form-control relative" role="search" aria-label="Site search">
           <div className={`input-group ${isSearchFocused ? 'input-group-lg' : ''}`}>
             <input
               ref={searchInputRef}
@@ -248,6 +248,10 @@ const NavbarWithSearch: React.FC<NavbarWithSearchProps> = ({
               onFocus={handleFocus}
               onBlur={handleBlur}
               onKeyDown={handleKeyDown}
+              role="combobox"
+              aria-expanded={showSuggestions}
+              aria-autocomplete="list"
+              aria-label="Search the site"
             />
             {searchQuery && (
               <button
@@ -276,7 +280,7 @@ const NavbarWithSearch: React.FC<NavbarWithSearchProps> = ({
           {showSuggestions && (
             <div
               ref={suggestionsRef}
-              className="absolute top-full mt-2 w-full bg-base-100 rounded-box shadow-xl border border-base-300 z-30 max-h-80 overflow-y-auto"
+              className="absolute top-full mt-2 w-full bg-base-100 rounded-box shadow-xl border border-base-300 z-30 max-h-80 overflow-y-auto" role="listbox" aria-label="Search suggestions"
             >
               {searchQuery && filteredSuggestions.length > 0 && (
                 <div className="p-2">
@@ -456,7 +460,7 @@ const NavbarWithSearch: React.FC<NavbarWithSearchProps> = ({
           </ul>
         </div>
       </div>
-    </div>
+    </nav>
   );
 };
 

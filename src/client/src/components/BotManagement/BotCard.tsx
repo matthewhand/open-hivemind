@@ -213,27 +213,29 @@ const BotCard: React.FC<BotCardProps> = ({
             <button
               className="btn btn-sm btn-ghost btn-circle"
               onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-              aria-label="More Options"
+              aria-label="More options"
+              aria-haspopup="true"
+              aria-expanded={isDropdownOpen}
             >
-              <MoreIcon className="w-4 h-4" />
+              <MoreIcon className="w-4 h-4" aria-hidden="true" />
             </button>
             {isDropdownOpen && (
-              <ul className="dropdown-content menu p-2 shadow-lg bg-base-100 rounded-box w-52 z-10">
+              <ul className="dropdown-content menu p-2 shadow-lg bg-base-100 rounded-box w-52 z-10" role="menu" aria-label="Bot actions">
                 <li>
-                  <a onClick={handleConfigureBot} className="flex items-center gap-2">
-                    <SettingsIcon className="w-4 h-4" />
+                  <a onClick={handleConfigureBot} className="flex items-center gap-2" role="menuitem">
+                    <SettingsIcon className="w-4 h-4" aria-hidden="true" />
                     Configure
                   </a>
                 </li>
                 <li>
-                  <a onClick={handleCloneBot} className="flex items-center gap-2">
-                    <CloneIcon className="w-4 h-4" />
+                  <a onClick={handleCloneBot} className="flex items-center gap-2" role="menuitem">
+                    <CloneIcon className="w-4 h-4" aria-hidden="true" />
                     Clone
                   </a>
                 </li>
                 <li>
-                  <a onClick={handleDeleteBot} className="flex items-center gap-2 text-error">
-                    <DeleteIcon className="w-4 h-4" />
+                  <a onClick={handleDeleteBot} className="flex items-center gap-2 text-error" role="menuitem">
+                    <DeleteIcon className="w-4 h-4" aria-hidden="true" />
                     Delete
                   </a>
                 </li>

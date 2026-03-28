@@ -117,6 +117,7 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose }) => {
       <div
         className="relative w-full max-w-lg bg-base-100 rounded-xl shadow-2xl border border-base-300 overflow-hidden"
         role="dialog"
+        aria-modal="true"
         aria-label="Command palette"
         onKeyDown={handleKeyDown}
       >
