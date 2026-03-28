@@ -230,7 +230,7 @@ router.post('/import', async (req, res) => {
       }
     }
 
-    ActivityLogger.log(req, 'import_bots', {
+    logger.info('Bot import completed', {
       created: report.created.length,
       updated: report.updated.length,
       errors: report.errors.length,
