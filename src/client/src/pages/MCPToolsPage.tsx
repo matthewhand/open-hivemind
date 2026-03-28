@@ -82,7 +82,7 @@ const MCPToolsPage: React.FC = () => {
           setFilteredTools(allTools);
         }
       } catch (err) {
-        console.error('Failed to fetch MCP tools:', err);
+        // Error shown via alert UI
         setAlert({ type: 'error', message: 'Failed to load tools from server' });
       } finally {
         setLoading(false);
@@ -204,7 +204,7 @@ const MCPToolsPage: React.FC = () => {
       handleCloseRunModal();
       setAlert({ type: 'success', message: `Tool executed! Result: ${JSON.stringify(json.result).substring(0, 100)}...` });
     } catch (error: any) {
-      console.error('Tool execution error:', error);
+      // Error shown via alert UI
       setAlert({ type: 'error', message: `Failed to execute tool: ${error.message}` });
       handleCloseRunModal();
     } finally {

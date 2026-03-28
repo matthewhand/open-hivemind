@@ -32,7 +32,7 @@ function App() {
       <Provider store={store}>
         <ReduxProvider>
           <ThemeSync>
-            <ToastNotification position="top-right" maxToasts={5}>
+            <ToastNotification position="bottom-right" maxToasts={5}>
               <AuthProvider>
                 <BotProvider>
                   <WebSocketProvider>

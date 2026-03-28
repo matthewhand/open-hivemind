@@ -71,7 +71,7 @@ const BotCreatePage: React.FC = () => {
         const servers = mcpResponse?.data || mcpResponse || [];
         setMcpServers(Array.isArray(servers) ? servers : []);
       } catch (err) {
-        console.error('Failed to load data', err);
+        // Error shown via alert UI
         setAlert({ type: 'error', message: 'Failed to load configuration data' });
       } finally {
         setLoading(false);

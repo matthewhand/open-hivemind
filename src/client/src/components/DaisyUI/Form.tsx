@@ -261,7 +261,7 @@ export const Form: React.FC<FormProps> = ({
       setIsSubmitting(true);
       await onSubmit(formData);
     } catch (error) {
-      console.error('Form submission error:', error);
+      // Error handled by form validation UI
     } finally {
       setIsSubmitting(false);
     }

@@ -183,7 +183,7 @@ const PersonasPage: React.FC = () => {
       await navigator.clipboard.writeText(text);
       successToast('Copied!', 'System prompt copied to clipboard');
     } catch (err) {
-      console.error('Failed to copy', err);
+      // errorToast shown below
       errorToast('Error', 'Failed to copy to clipboard');
     }
   };
@@ -262,7 +262,7 @@ const PersonasPage: React.FC = () => {
       setEditingPersona(null);
       setCloningPersonaId(null);
     } catch (err) {
-      console.error(err);
+      errorToast('Save Failed', 'Failed to save persona changes');
       setError('Failed to save persona changes');
     } finally {
       setLoading(false);

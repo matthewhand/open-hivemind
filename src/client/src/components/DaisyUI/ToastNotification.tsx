@@ -57,7 +57,7 @@ export const ToastProvider: React.FC<ToastProviderProps> = ({
       const id = `toast-${Date.now()}-${uuidv4()}`;
       const toast: Toast = {
         id,
-        duration: 5000, // 5 seconds default
+        duration: toastData.type === 'error' ? 8000 : 5000,
         ...toastData,
       };
 
