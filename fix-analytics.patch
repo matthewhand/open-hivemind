@@ -1,0 +1,101 @@
+--- src/services/AnalyticsService.ts	2025-02-27 12:00:00.000000000 -0800
++++ src/services/AnalyticsService.ts	2025-02-27 12:00:00.000000000 -0800
+@@ -98,7 +98,7 @@
+   /**
+    * Get behavior patterns based on actual usage data
+    */
+-  public getBehaviorPatterns(options: ActivityFilter = {}): BehaviorPattern[] {
+-    const events = this.activityLogger.getEvents({ ...options, limit: options.limit || 5000 });
++  public async getBehaviorPatterns(options: ActivityFilter = {}): Promise<BehaviorPattern[]> {
++    const events = await this.activityLogger.getEvents({ ...options, limit: options.limit || 5000 });
+
+     if (events.length === 0) {
+@@ -159,7 +159,7 @@
+   /**
+    * Get user segments based on actual activity
+    */
+-  public getUserSegments(options: ActivityFilter = {}): UserSegment[] {
+-    const events = this.activityLogger.getEvents({ ...options, limit: options.limit || 5000 });
++  public async getUserSegments(options: ActivityFilter = {}): Promise<UserSegment[]> {
++    const events = await this.activityLogger.getEvents({ ...options, limit: options.limit || 5000 });
+
+     if (events.length === 0) {
+@@ -247,9 +247,9 @@
+   /**
+    * Get recommendations based on actual patterns
+    */
+-  public getRecommendations(options: ActivityFilter = {}): DashboardRecommendation[] {
+-    const events = this.activityLogger.getEvents({ ...options, limit: options.limit || 5000 });
+-    const patterns = this.getBehaviorPatterns(options);
+-    const segments = this.getUserSegments(options);
++  public async getRecommendations(options: ActivityFilter = {}): Promise<DashboardRecommendation[]> {
++    const events = await this.activityLogger.getEvents({ ...options, limit: options.limit || 5000 });
++    const patterns = await this.getBehaviorPatterns(options);
++    const segments = await this.getUserSegments(options);
+
+     const recommendations: DashboardRecommendation[] = [];
+@@ -339,9 +339,9 @@
+   /**
+    * Get analytics stats
+    */
+-  public getStats(options: ActivityFilter = {}): AnalyticsStats {
+-    const events = this.activityLogger.getEvents({ ...options, limit: options.limit || 10000 });
+-    const patterns = this.getBehaviorPatterns(options);
+-    const segments = this.getUserSegments(options);
++  public async getStats(options: ActivityFilter = {}): Promise<AnalyticsStats> {
++    const events = await this.activityLogger.getEvents({ ...options, limit: options.limit || 10000 });
++    const patterns = await this.getBehaviorPatterns(options);
++    const segments = await this.getUserSegments(options);
+
+     const totalMessages = events.length;
+@@ -383,7 +383,7 @@
+   /**
+    * Get time-series data for analytics
+    */
+-  public getTimeSeries(options: ActivityFilter = {}): TimeSeriesBucket[] {
+-    const events = this.activityLogger.getEvents({ ...options, limit: options.limit || 10000 });
++  public async getTimeSeries(options: ActivityFilter = {}): Promise<TimeSeriesBucket[]> {
++    const events = await this.activityLogger.getEvents({ ...options, limit: options.limit || 10000 });
+
+     if (events.length === 0) {
+--- src/server/routes/dashboard.ts	2025-02-27 12:00:00.000000000 -0800
++++ src/server/routes/dashboard.ts	2025-02-27 12:00:00.000000000 -0800
+@@ -183,15 +183,16 @@
+     }
+
+     const analyticsService = container.resolve(AnalyticsService);
+-    const stats = analyticsService.getStats({ startDate: params.startDate, endDate: params.endDate });
++    const stats = await analyticsService.getStats({ startDate: params.startDate, endDate: params.endDate });
+
+     res.json({
+       status: 'success',
+       data: {
+-        learningProgress: stats.learningProgress,
+-        behaviorPatternsCount: stats.behaviorPatternsCount,
+-        userSegmentsCount: stats.userSegmentsCount,
+-        totalMessages: stats.totalMessages,
+-        totalErrors: stats.totalErrors,
+-        avgProcessingTime: stats.avgProcessingTime,
+-        activeBots: stats.activeBots,
+-        activeUsers: stats.activeUsers
++        learningProgress: stats.learningProgress,
++        behaviorPatternsCount: stats.behaviorPatternsCount,
++        userSegmentsCount: stats.userSegmentsCount,
++        totalMessages: stats.totalMessages,
++        totalErrors: stats.totalErrors,
++        avgProcessingTime: stats.avgProcessingTime,
++        activeBots: stats.activeBots,
++        activeUsers: stats.activeUsers
+       },
+     });
+   } catch (error: any) {
+--- src/server/routes/onboarding.ts	2025-02-27 12:00:00.000000000 -0800
++++ src/server/routes/onboarding.ts	2025-02-27 12:00:00.000000000 -0800
+@@ -38,7 +38,7 @@
+       });
+     } catch (error: any) {
+-      logger.error('Failed to complete setup:', { error: error.message });
++      logger.error('Failed to complete setup:', new Error(error.message));
+       res.status(500).json({ error: 'Failed to complete setup' });
+     }
+   });
