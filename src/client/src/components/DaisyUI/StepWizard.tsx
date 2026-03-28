@@ -1,4 +1,5 @@
 import React, { useState, useCallback } from 'react';
+import Logger from '../../utils/logger';
 import Input from './Input';
 
 export interface Step {
@@ -52,7 +53,7 @@ const StepWizard: React.FC<StepWizardProps> = ({
       const isValid = await currentStepData.validation();
       return isValid;
     } catch (error) {
-      console.error('Step validation failed:', error);
+      Logger.error('Step validation failed:', error);
       return false;
     } finally {
       setIsValidating(false);
