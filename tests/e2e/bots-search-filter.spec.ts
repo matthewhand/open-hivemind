@@ -46,10 +46,25 @@ test.describe('Bots Search and Filter', () => {
       const url = new URL(route.request().url());
       const path = url.pathname;
       if (path === '/health/detailed') {
-        return route.fulfill({ status: 200, json: { status: 'healthy', services: {}, system: { platform: 'linux', memory: { total: 8e9, used: 4e9, free: 4e9 }, cpu: { cores: 4, usage: 25 }, loadAverage: [1, 0.8, 0.5] } } });
+        return route.fulfill({
+          status: 200,
+          json: {
+            status: 'healthy',
+            services: {},
+            system: {
+              platform: 'linux',
+              memory: { total: 8e9, used: 4e9, free: 4e9 },
+              cpu: { cores: 4, usage: 25 },
+              loadAverage: [1, 0.8, 0.5],
+            },
+          },
+        });
       }
       if (path === '/health/api-endpoints') {
-        return route.fulfill({ status: 200, json: { stats: { total: 0 }, endpoints: [], timestamp: new Date().toISOString() } });
+        return route.fulfill({
+          status: 200,
+          json: { stats: { total: 0 }, endpoints: [], timestamp: new Date().toISOString() },
+        });
       }
       return route.fulfill({ status: 200, json: {} });
     });
@@ -77,7 +92,12 @@ test.describe('Bots Search and Filter', () => {
       if (path === '/api/config/llm-status') {
         return route.fulfill({
           status: 200,
-          json: { defaultConfigured: true, defaultProviders: [], botsMissingLlmProvider: [], hasMissing: false },
+          json: {
+            defaultConfigured: true,
+            defaultProviders: [],
+            botsMissingLlmProvider: [],
+            hasMissing: false,
+          },
         });
       }
       if (path === '/api/admin/guard-profiles') {

@@ -1,4 +1,4 @@
-import { isHivemindError, isAppError } from '../../../src/types/errors';
+import { isAppError, isHivemindError } from '../../../src/types/errors';
 
 describe('Error Type Guards', () => {
   describe('isHivemindError', () => {

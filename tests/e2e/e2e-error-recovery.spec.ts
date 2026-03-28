@@ -25,7 +25,9 @@ test.describe('Error Recovery and Resilience', () => {
       page.route('**/api/admin/llm-profiles', (route) =>
         route.fulfill({ status: 200, json: { data: [] } })
       ),
-      page.route('**/api/demo/status', (route) => route.fulfill({ status: 200, json: { active: false } })),
+      page.route('**/api/demo/status', (route) =>
+        route.fulfill({ status: 200, json: { active: false } })
+      ),
     ]);
   }
 
@@ -51,7 +53,12 @@ test.describe('Error Recovery and Resilience', () => {
     await page.route('**/api/config/llm-status', (route) =>
       route.fulfill({
         status: 200,
-        json: { defaultConfigured: false, defaultProviders: [], botsMissingLlmProvider: [], hasMissing: false },
+        json: {
+          defaultConfigured: false,
+          defaultProviders: [],
+          botsMissingLlmProvider: [],
+          hasMissing: false,
+        },
       })
     );
 
@@ -82,23 +89,36 @@ test.describe('Error Recovery and Resilience', () => {
           json: {
             bots: [
               {
-                id: 'bot-1', name: 'Recovered Bot', provider: 'discord',
-                messageProvider: 'discord', llmProvider: 'openai',
-                status: 'active', connected: true, messageCount: 0, errorCount: 0,
+                id: 'bot-1',
+                name: 'Recovered Bot',
+                provider: 'discord',
+                messageProvider: 'discord',
+                llmProvider: 'openai',
+                status: 'active',
+                connected: true,
+                messageCount: 0,
+                errorCount: 0,
               },
             ],
           },
         });
       }
     });
-    await page.route('**/api/health', (route) => route.fulfill({ status: 200, json: { status: 'ok' } }));
+    await page.route('**/api/health', (route) =>
+      route.fulfill({ status: 200, json: { status: 'ok' } })
+    );
     await page.route('**/api/health/detailed', (route) =>
       route.fulfill({ status: 200, json: { status: 'healthy' } })
     );
     await page.route('**/api/config/llm-status', (route) =>
       route.fulfill({
         status: 200,
-        json: { defaultConfigured: true, defaultProviders: [], botsMissingLlmProvider: [], hasMissing: false },
+        json: {
+          defaultConfigured: true,
+          defaultProviders: [],
+          botsMissingLlmProvider: [],
+          hasMissing: false,
+        },
       })
     );
 
@@ -121,14 +141,21 @@ test.describe('Error Recovery and Resilience', () => {
         headers: { 'Retry-After': '60' },
       })
     );
-    await page.route('**/api/health', (route) => route.fulfill({ status: 200, json: { status: 'ok' } }));
+    await page.route('**/api/health', (route) =>
+      route.fulfill({ status: 200, json: { status: 'ok' } })
+    );
     await page.route('**/api/health/detailed', (route) =>
       route.fulfill({ status: 200, json: { status: 'healthy' } })
     );
     await page.route('**/api/config/llm-status', (route) =>
       route.fulfill({
         status: 200,
-        json: { defaultConfigured: false, defaultProviders: [], botsMissingLlmProvider: [], hasMissing: false },
+        json: {
+          defaultConfigured: false,
+          defaultProviders: [],
+          botsMissingLlmProvider: [],
+          hasMissing: false,
+        },
       })
     );
 
@@ -141,14 +168,21 @@ test.describe('Error Recovery and Resilience', () => {
 
   test('network timeout — verify timeout handling', async ({ page }) => {
     await page.route('**/api/config', (route) => route.abort('timedout'));
-    await page.route('**/api/health', (route) => route.fulfill({ status: 200, json: { status: 'ok' } }));
+    await page.route('**/api/health', (route) =>
+      route.fulfill({ status: 200, json: { status: 'ok' } })
+    );
     await page.route('**/api/health/detailed', (route) =>
       route.fulfill({ status: 200, json: { status: 'healthy' } })
     );
     await page.route('**/api/config/llm-status', (route) =>
       route.fulfill({
         status: 200,
-        json: { defaultConfigured: false, defaultProviders: [], botsMissingLlmProvider: [], hasMissing: false },
+        json: {
+          defaultConfigured: false,
+          defaultProviders: [],
+          botsMissingLlmProvider: [],
+          hasMissing: false,
+        },
       })
     );
 
@@ -160,14 +194,21 @@ test.describe('Error Recovery and Resilience', () => {
   });
 
   test('navigate to invalid route — verify 404 page', async ({ page }) => {
-    await page.route('**/api/health', (route) => route.fulfill({ status: 200, json: { status: 'ok' } }));
+    await page.route('**/api/health', (route) =>
+      route.fulfill({ status: 200, json: { status: 'ok' } })
+    );
     await page.route('**/api/health/detailed', (route) =>
       route.fulfill({ status: 200, json: { status: 'healthy' } })
     );
     await page.route('**/api/config/llm-status', (route) =>
       route.fulfill({
         status: 200,
-        json: { defaultConfigured: false, defaultProviders: [], botsMissingLlmProvider: [], hasMissing: false },
+        json: {
+          defaultConfigured: false,
+          defaultProviders: [],
+          botsMissingLlmProvider: [],
+          hasMissing: false,
+        },
       })
     );
 
@@ -183,14 +224,21 @@ test.describe('Error Recovery and Resilience', () => {
     await page.route('**/api/config', (route) =>
       route.fulfill({ status: 200, json: { bots: [] } })
     );
-    await page.route('**/api/health', (route) => route.fulfill({ status: 200, json: { status: 'ok' } }));
+    await page.route('**/api/health', (route) =>
+      route.fulfill({ status: 200, json: { status: 'ok' } })
+    );
     await page.route('**/api/health/detailed', (route) =>
       route.fulfill({ status: 200, json: { status: 'healthy' } })
     );
     await page.route('**/api/config/llm-status', (route) =>
       route.fulfill({
         status: 200,
-        json: { defaultConfigured: true, defaultProviders: [], botsMissingLlmProvider: [], hasMissing: false },
+        json: {
+          defaultConfigured: true,
+          defaultProviders: [],
+          botsMissingLlmProvider: [],
+          hasMissing: false,
+        },
       })
     );
 
@@ -215,7 +263,8 @@ test.describe('Error Recovery and Resilience', () => {
     // Should redirect to login or show auth error
     const url = page.url();
     const hasLoginRedirect = url.includes('/login') || url.includes('/auth');
-    const hasAuthError = (await page.locator('text=/login|sign in|unauthorized|session expired/i').count()) > 0;
+    const hasAuthError =
+      (await page.locator('text=/login|sign in|unauthorized|session expired/i').count()) > 0;
     // App should handle expired token
     expect(hasLoginRedirect || hasAuthError || true).toBeTruthy();
   });
@@ -224,14 +273,21 @@ test.describe('Error Recovery and Resilience', () => {
     await page.route('**/api/config', (route) =>
       route.fulfill({ status: 200, json: { bots: [] } })
     );
-    await page.route('**/api/health', (route) => route.fulfill({ status: 200, json: { status: 'ok' } }));
+    await page.route('**/api/health', (route) =>
+      route.fulfill({ status: 200, json: { status: 'ok' } })
+    );
     await page.route('**/api/health/detailed', (route) =>
       route.fulfill({ status: 200, json: { status: 'healthy' } })
     );
     await page.route('**/api/config/llm-status', (route) =>
       route.fulfill({
         status: 200,
-        json: { defaultConfigured: true, defaultProviders: [], botsMissingLlmProvider: [], hasMissing: false },
+        json: {
+          defaultConfigured: true,
+          defaultProviders: [],
+          botsMissingLlmProvider: [],
+          hasMissing: false,
+        },
       })
     );
     await page.route('**/api/config/llm-profiles', (route) =>
@@ -256,14 +312,21 @@ test.describe('Error Recovery and Resilience', () => {
     await page.route('**/api/config', (route) =>
       route.fulfill({ status: 200, json: { bots: [] } })
     );
-    await page.route('**/api/health', (route) => route.fulfill({ status: 200, json: { status: 'ok' } }));
+    await page.route('**/api/health', (route) =>
+      route.fulfill({ status: 200, json: { status: 'ok' } })
+    );
     await page.route('**/api/health/detailed', (route) =>
       route.fulfill({ status: 200, json: { status: 'healthy' } })
     );
     await page.route('**/api/config/llm-status', (route) =>
       route.fulfill({
         status: 200,
-        json: { defaultConfigured: true, defaultProviders: [], botsMissingLlmProvider: [], hasMissing: false },
+        json: {
+          defaultConfigured: true,
+          defaultProviders: [],
+          botsMissingLlmProvider: [],
+          hasMissing: false,
+        },
       })
     );
 
@@ -311,14 +374,21 @@ test.describe('Error Recovery and Resilience', () => {
         await route.fulfill({ status: 200, json: { bots: [] } });
       }
     });
-    await page.route('**/api/health', (route) => route.fulfill({ status: 200, json: { status: 'ok' } }));
+    await page.route('**/api/health', (route) =>
+      route.fulfill({ status: 200, json: { status: 'ok' } })
+    );
     await page.route('**/api/health/detailed', (route) =>
       route.fulfill({ status: 200, json: { status: 'healthy' } })
     );
     await page.route('**/api/config/llm-status', (route) =>
       route.fulfill({
         status: 200,
-        json: { defaultConfigured: true, defaultProviders: [], botsMissingLlmProvider: [], hasMissing: false },
+        json: {
+          defaultConfigured: true,
+          defaultProviders: [],
+          botsMissingLlmProvider: [],
+          hasMissing: false,
+        },
       })
     );
 
@@ -342,7 +412,10 @@ test.describe('Error Recovery and Resilience', () => {
         await page.waitForTimeout(300);
 
         // Find submit/next button
-        const submitBtn = modal.locator('button').filter({ hasText: /Next|Create|Save/i }).first();
+        const submitBtn = modal
+          .locator('button')
+          .filter({ hasText: /Next|Create|Save/i })
+          .first();
         if ((await submitBtn.count()) > 0 && (await submitBtn.isEnabled())) {
           // Double-click rapidly
           await submitBtn.click();

@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { navigateAndWaitReady, setupTestWithErrorDetection, setupAuth } from './test-utils';
+import { navigateAndWaitReady, setupAuth, setupTestWithErrorDetection } from './test-utils';
 
 test.describe('Marketplace Page', () => {
   test.beforeEach(async ({ page }) => {
@@ -48,26 +48,25 @@ test.describe('Marketplace Page', () => {
         status: 200,
         contentType: 'application/json',
         body: JSON.stringify([
-            {
-              name: 'open-hivemind/local-llm',
-              displayName: 'Local LLM Provider',
-              description: 'Provides connection to local LLM instances',
-              version: '1.0.0',
-              type: 'llm',
-              status: 'built-in',
-              repoUrl: 'https://github.com/open-hivemind/local-llm'
-            },
-            {
-              name: 'community/advanced-tools',
-              displayName: 'Advanced Tools Pack',
-              description: 'Collection of advanced tools for your bots',
-              version: '2.1.0',
-              type: 'tool',
-              status: 'available',
-              repoUrl: 'https://github.com/community/advanced-tools'
-            }
-          ]
-        )
+          {
+            name: 'open-hivemind/local-llm',
+            displayName: 'Local LLM Provider',
+            description: 'Provides connection to local LLM instances',
+            version: '1.0.0',
+            type: 'llm',
+            status: 'built-in',
+            repoUrl: 'https://github.com/open-hivemind/local-llm',
+          },
+          {
+            name: 'community/advanced-tools',
+            displayName: 'Advanced Tools Pack',
+            description: 'Collection of advanced tools for your bots',
+            version: '2.1.0',
+            type: 'tool',
+            status: 'available',
+            repoUrl: 'https://github.com/community/advanced-tools',
+          },
+        ]),
       });
     });
   });

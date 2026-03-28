@@ -13,7 +13,12 @@ test.describe('Documentation Screenshots', () => {
     await page.route('**/api/config/llm-status', async (route) =>
       route.fulfill({
         status: 200,
-        json: { defaultConfigured: true, defaultProviders: [], botsMissingLlmProvider: [], hasMissing: false },
+        json: {
+          defaultConfigured: true,
+          defaultProviders: [],
+          botsMissingLlmProvider: [],
+          hasMissing: false,
+        },
       })
     );
     await page.route('**/api/config/global', async (route) =>
@@ -22,9 +27,7 @@ test.describe('Documentation Screenshots', () => {
     await page.route('**/api/config', async (route) =>
       route.fulfill({ status: 200, json: { bots: [] } })
     );
-    await page.route('**/api/personas', async (route) =>
-      route.fulfill({ status: 200, json: [] })
-    );
+    await page.route('**/api/personas', async (route) => route.fulfill({ status: 200, json: [] }));
     await page.route('**/api/csrf-token', async (route) =>
       route.fulfill({ status: 200, json: { token: 'mock-csrf-token' } })
     );
@@ -102,7 +105,12 @@ test.describe('Documentation Screenshots', () => {
     await page.route('**/api/config/llm-status', async (route) =>
       route.fulfill({
         status: 200,
-        json: { defaultConfigured: true, defaultProviders: [], botsMissingLlmProvider: [], hasMissing: false },
+        json: {
+          defaultConfigured: true,
+          defaultProviders: [],
+          botsMissingLlmProvider: [],
+          hasMissing: false,
+        },
       })
     );
     await page.route('**/api/csrf-token', async (route) =>

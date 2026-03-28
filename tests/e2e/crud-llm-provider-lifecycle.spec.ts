@@ -40,14 +40,18 @@ test.describe('LLM Provider CRUD Lifecycle', () => {
       page.route('**/api/csrf-token', (route) =>
         route.fulfill({ status: 200, json: { token: 'mock-csrf-token' } })
       ),
-      page.route('**/api/health', (route) => route.fulfill({ status: 200, json: { status: 'ok' } })),
+      page.route('**/api/health', (route) =>
+        route.fulfill({ status: 200, json: { status: 'ok' } })
+      ),
       page.route('**/api/dashboard/api/status', (route) =>
         route.fulfill({ status: 200, json: { bots: [], uptime: 100 } })
       ),
       page.route('**/api/admin/guard-profiles', (route) =>
         route.fulfill({ status: 200, json: { data: [] } })
       ),
-      page.route('**/api/demo/status', (route) => route.fulfill({ status: 200, json: { active: false } })),
+      page.route('**/api/demo/status', (route) =>
+        route.fulfill({ status: 200, json: { active: false } })
+      ),
     ]);
   }
 
@@ -63,7 +67,12 @@ test.describe('LLM Provider CRUD Lifecycle', () => {
     await page.route('**/api/config/llm-status', (route) =>
       route.fulfill({
         status: 200,
-        json: { defaultConfigured: true, defaultProviders: ['openai'], botsMissingLlmProvider: [], hasMissing: false },
+        json: {
+          defaultConfigured: true,
+          defaultProviders: ['openai'],
+          botsMissingLlmProvider: [],
+          hasMissing: false,
+        },
       })
     );
     await page.route('**/api/config/llm-profiles', (route) =>
@@ -93,7 +102,10 @@ test.describe('LLM Provider CRUD Lifecycle', () => {
           isDefault: false,
         };
         profiles.push(newProfile);
-        await route.fulfill({ status: 201, json: { data: newProfile, message: 'Profile created' } });
+        await route.fulfill({
+          status: 201,
+          json: { data: newProfile, message: 'Profile created' },
+        });
       } else {
         await route.fulfill({ status: 200, json: { data: profiles } });
       }
@@ -101,7 +113,12 @@ test.describe('LLM Provider CRUD Lifecycle', () => {
     await page.route('**/api/config/llm-status', (route) =>
       route.fulfill({
         status: 200,
-        json: { defaultConfigured: true, defaultProviders: ['openai'], botsMissingLlmProvider: [], hasMissing: false },
+        json: {
+          defaultConfigured: true,
+          defaultProviders: ['openai'],
+          botsMissingLlmProvider: [],
+          hasMissing: false,
+        },
       })
     );
     await page.route('**/api/config/llm-profiles', (route) =>
@@ -111,7 +128,9 @@ test.describe('LLM Provider CRUD Lifecycle', () => {
     await page.goto('/admin/config');
 
     // Look for add/create button
-    const addBtn = page.locator('button:has-text("Add"), button:has-text("Create"), button:has-text("New")').first();
+    const addBtn = page
+      .locator('button:has-text("Add"), button:has-text("Create"), button:has-text("New")')
+      .first();
     if ((await addBtn.count()) > 0) {
       await addBtn.click();
       await page.waitForTimeout(500);
@@ -125,7 +144,12 @@ test.describe('LLM Provider CRUD Lifecycle', () => {
     await page.route('**/api/config/llm-status', (route) =>
       route.fulfill({
         status: 200,
-        json: { defaultConfigured: true, defaultProviders: ['openai'], botsMissingLlmProvider: [], hasMissing: false },
+        json: {
+          defaultConfigured: true,
+          defaultProviders: ['openai'],
+          botsMissingLlmProvider: [],
+          hasMissing: false,
+        },
       })
     );
     await page.route('**/api/config/llm-profiles', (route) =>
@@ -154,7 +178,12 @@ test.describe('LLM Provider CRUD Lifecycle', () => {
     await page.route('**/api/config/llm-status', (route) =>
       route.fulfill({
         status: 200,
-        json: { defaultConfigured: true, defaultProviders: ['openai'], botsMissingLlmProvider: [], hasMissing: false },
+        json: {
+          defaultConfigured: true,
+          defaultProviders: ['openai'],
+          botsMissingLlmProvider: [],
+          hasMissing: false,
+        },
       })
     );
     await page.route('**/api/config/llm-profiles', (route) =>
@@ -182,9 +211,7 @@ test.describe('LLM Provider CRUD Lifecycle', () => {
     await page.route('**/api/admin/llm-profiles', async (route) => {
       if (route.request().method() === 'PUT') {
         const body = route.request().postDataJSON();
-        currentProfiles = currentProfiles.map((p) =>
-          p.key === body.key ? { ...p, ...body } : p
-        );
+        currentProfiles = currentProfiles.map((p) => (p.key === body.key ? { ...p, ...body } : p));
         await route.fulfill({ status: 200, json: { data: body, message: 'Profile updated' } });
       } else {
         await route.fulfill({ status: 200, json: { data: currentProfiles } });
@@ -193,7 +220,12 @@ test.describe('LLM Provider CRUD Lifecycle', () => {
     await page.route('**/api/config/llm-status', (route) =>
       route.fulfill({
         status: 200,
-        json: { defaultConfigured: true, defaultProviders: ['openai'], botsMissingLlmProvider: [], hasMissing: false },
+        json: {
+          defaultConfigured: true,
+          defaultProviders: ['openai'],
+          botsMissingLlmProvider: [],
+          hasMissing: false,
+        },
       })
     );
     await page.route('**/api/config/llm-profiles', (route) =>
@@ -232,7 +264,12 @@ test.describe('LLM Provider CRUD Lifecycle', () => {
     await page.route('**/api/config/llm-status', (route) =>
       route.fulfill({
         status: 200,
-        json: { defaultConfigured: true, defaultProviders: ['openai'], botsMissingLlmProvider: [], hasMissing: false },
+        json: {
+          defaultConfigured: true,
+          defaultProviders: ['openai'],
+          botsMissingLlmProvider: [],
+          hasMissing: false,
+        },
       })
     );
     await page.route('**/api/config/llm-profiles', (route) =>
@@ -250,7 +287,12 @@ test.describe('LLM Provider CRUD Lifecycle', () => {
     await page.route('**/api/config/llm-status', (route) =>
       route.fulfill({
         status: 200,
-        json: { defaultConfigured: false, defaultProviders: [], botsMissingLlmProvider: [], hasMissing: false },
+        json: {
+          defaultConfigured: false,
+          defaultProviders: [],
+          botsMissingLlmProvider: [],
+          hasMissing: false,
+        },
       })
     );
     await page.route('**/api/config/llm-profiles', (route) =>
@@ -260,7 +302,9 @@ test.describe('LLM Provider CRUD Lifecycle', () => {
     await page.goto('/admin/config');
 
     // Try to find an API key input and fill with invalid value
-    const apiKeyInput = page.locator('input[type="password"], input[placeholder*="API"], input[name*="apiKey"]').first();
+    const apiKeyInput = page
+      .locator('input[type="password"], input[placeholder*="API"], input[name*="apiKey"]')
+      .first();
     if ((await apiKeyInput.count()) > 0) {
       await apiKeyInput.fill('not-a-valid-key');
       await page.waitForTimeout(300);
@@ -274,7 +318,12 @@ test.describe('LLM Provider CRUD Lifecycle', () => {
     await page.route('**/api/config/llm-status', (route) =>
       route.fulfill({
         status: 200,
-        json: { defaultConfigured: true, defaultProviders: ['openai'], botsMissingLlmProvider: [], hasMissing: false },
+        json: {
+          defaultConfigured: true,
+          defaultProviders: ['openai'],
+          botsMissingLlmProvider: [],
+          hasMissing: false,
+        },
       })
     );
     await page.route('**/api/config/llm-profiles', (route) =>

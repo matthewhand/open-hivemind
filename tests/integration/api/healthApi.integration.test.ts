@@ -6,6 +6,7 @@
 import express from 'express';
 import request from 'supertest';
 import { ConfigurationManager } from '../../../src/config/ConfigurationManager';
+import { DatabaseManager } from '../../../src/database/DatabaseManager';
 import { getWebUIServer } from '../../../src/server/server';
 
 describe('Health API Integration Tests', () => {
@@ -19,6 +20,7 @@ describe('Health API Integration Tests', () => {
 
   let app: express.Application;
   let server: any;
+  let dbManager: DatabaseManager;
 
   beforeAll(async () => {
     // Set up test configuration
@@ -27,6 +29,13 @@ describe('Health API Integration Tests', () => {
 
     // Initialize configuration
     ConfigurationManager.getInstance();
+
+    // Initialize and connect database
+    dbManager = DatabaseManager.getInstance({
+      type: 'sqlite',
+      path: ':memory:',
+    });
+    await dbManager.connect();
 
     // Create and start server
     const webUIServer = getWebUIServer(0); // Use random available port
@@ -37,6 +46,11 @@ describe('Health API Integration Tests', () => {
 
   afterAll(async () => {
     // If we manually started the server, we need to close it if WebUIServer doesn't handle it in supertest context
+
+    if (dbManager) {
+      await dbManager.disconnect();
+    }
+
     // Actually supertest manages its own server if we pass it the app, but here we explicitly start it.
     if (server && server.close) {
       await new Promise((resolve) => server.close(resolve));

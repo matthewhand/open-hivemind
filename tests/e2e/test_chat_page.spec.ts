@@ -113,8 +113,15 @@ test.describe('ChatPage Optimistic Message Rollback', () => {
     // The rollback will mark the optimistic message as failed (Retry button, error indicator, or message removal)
     await page.waitForTimeout(1500);
     // The message should either show a retry indicator or be removed
-    const retryVisible = await page.getByText('Retry').isVisible().catch(() => false);
-    const errorVisible = await page.getByText(/failed|error/i).first().isVisible().catch(() => false);
+    const retryVisible = await page
+      .getByText('Retry')
+      .isVisible()
+      .catch(() => false);
+    const errorVisible = await page
+      .getByText(/failed|error/i)
+      .first()
+      .isVisible()
+      .catch(() => false);
     // At minimum, the sending indicator should be gone
     await expect(page.getByText('Sending...')).not.toBeVisible({ timeout: 2000 });
 

@@ -1,6 +1,6 @@
-import { AnomalyDetectionService } from '../../src/services/AnomalyDetectionService';
 import { DatabaseManager } from '../../src/database/DatabaseManager';
 import { WebSocketService } from '../../src/server/services/WebSocketService';
+import { AnomalyDetectionService } from '../../src/services/AnomalyDetectionService';
 
 describe('AnomalyDetectionService', () => {
   let service: AnomalyDetectionService;
@@ -89,10 +89,7 @@ describe('AnomalyDetectionService', () => {
   });
 
   test('should get active anomalies', () => {
-    service['anomalies'] = [
-      { resolved: false } as any,
-      { resolved: true } as any,
-    ];
+    service['anomalies'] = [{ resolved: false } as any, { resolved: true } as any];
 
     const active = service.getActiveAnomalies();
 
@@ -187,7 +184,7 @@ describe('AnomalyDetectionService', () => {
     await service.runDetection();
 
     // We need to wait a tick for the Promise.allSettled and catch block to resolve
-    await new Promise(resolve => setTimeout(resolve, 10));
+    await new Promise((resolve) => setTimeout(resolve, 10));
 
     // Verify error was handled and detection finished
     expect(service['isDetecting']).toBe(false);
@@ -206,5 +203,4 @@ describe('AnomalyDetectionService', () => {
     // Call it to get coverage on this stub method
     service['integrateWithMetrics']();
   });
-
 });

@@ -36,9 +36,7 @@ test.describe('Bot Creation Form Validation', () => {
     await page.route('**/api/config', (route) =>
       route.fulfill({ status: 200, json: { bots: [] } })
     );
-    await page.route('**/api/config/global', (route) =>
-      route.fulfill({ status: 200, json: {} })
-    );
+    await page.route('**/api/config/global', (route) => route.fulfill({ status: 200, json: {} }));
     await page.route('**/api/config/llm-profiles', (route) =>
       route.fulfill({
         status: 200,
@@ -87,7 +85,10 @@ test.describe('Bot Creation Form Validation', () => {
       if (route.request().method() === 'GET') {
         return route.fulfill({ status: 200, json: { data: { bots: [] } } });
       }
-      return route.fulfill({ status: 200, json: { data: { bot: { id: 'new-bot', name: 'Test Bot' } } } });
+      return route.fulfill({
+        status: 200,
+        json: { data: { bot: { id: 'new-bot', name: 'Test Bot' } } },
+      });
     });
     await page.route('**/api/bots/*/activity*', (route) =>
       route.fulfill({ status: 200, json: { data: { activity: [] } } })

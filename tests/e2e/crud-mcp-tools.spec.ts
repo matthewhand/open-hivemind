@@ -97,7 +97,11 @@ test.describe('MCP Tools CRUD Lifecycle', () => {
     result: {
       data: [
         { title: 'Example result 1', url: 'https://example.com/1', snippet: 'First search result' },
-        { title: 'Example result 2', url: 'https://example.com/2', snippet: 'Second search result' },
+        {
+          title: 'Example result 2',
+          url: 'https://example.com/2',
+          snippet: 'Second search result',
+        },
       ],
       totalResults: 2,
     },
@@ -112,7 +116,12 @@ test.describe('MCP Tools CRUD Lifecycle', () => {
       page.route('**/api/config/llm-status', (route) =>
         route.fulfill({
           status: 200,
-          json: { defaultConfigured: true, defaultProviders: [], botsMissingLlmProvider: [], hasMissing: false },
+          json: {
+            defaultConfigured: true,
+            defaultProviders: [],
+            botsMissingLlmProvider: [],
+            hasMissing: false,
+          },
         })
       ),
       page.route('**/api/config/global', (route) => route.fulfill({ status: 200, json: {} })),
@@ -121,14 +130,18 @@ test.describe('MCP Tools CRUD Lifecycle', () => {
       page.route('**/api/csrf-token', (route) =>
         route.fulfill({ status: 200, json: { token: 'mock-csrf-token' } })
       ),
-      page.route('**/api/health', (route) => route.fulfill({ status: 200, json: { status: 'ok' } })),
+      page.route('**/api/health', (route) =>
+        route.fulfill({ status: 200, json: { status: 'ok' } })
+      ),
       page.route('**/api/dashboard/api/status', (route) =>
         route.fulfill({ status: 200, json: { bots: [], uptime: 100 } })
       ),
       page.route('**/api/admin/guard-profiles', (route) =>
         route.fulfill({ status: 200, json: { data: [] } })
       ),
-      page.route('**/api/demo/status', (route) => route.fulfill({ status: 200, json: { active: false } })),
+      page.route('**/api/demo/status', (route) =>
+        route.fulfill({ status: 200, json: { active: false } })
+      ),
     ]);
   }
 
@@ -159,7 +172,11 @@ test.describe('MCP Tools CRUD Lifecycle', () => {
     await page.goto('/admin/mcp/tools');
     await expect(page.getByText('web_search').first()).toBeVisible({ timeout: 5000 });
 
-    const searchInput = page.locator('input[placeholder*="search" i], input[placeholder*="filter" i], input[type="search"]').first();
+    const searchInput = page
+      .locator(
+        'input[placeholder*="search" i], input[placeholder*="filter" i], input[type="search"]'
+      )
+      .first();
     if ((await searchInput.count()) > 0) {
       await searchInput.fill('email');
       await page.waitForTimeout(300);
@@ -180,7 +197,11 @@ test.describe('MCP Tools CRUD Lifecycle', () => {
     await page.goto('/admin/mcp/tools');
     await expect(page.getByText('web_search').first()).toBeVisible({ timeout: 5000 });
 
-    const categoryFilter = page.locator('select:has(option:has-text("Search")), select:has(option:has-text("Category")), select[id*="category" i]').first();
+    const categoryFilter = page
+      .locator(
+        'select:has(option:has-text("Search")), select:has(option:has-text("Category")), select[id*="category" i]'
+      )
+      .first();
     if ((await categoryFilter.count()) > 0) {
       await categoryFilter.selectOption({ label: 'Search' });
       await page.waitForTimeout(300);
@@ -195,7 +216,11 @@ test.describe('MCP Tools CRUD Lifecycle', () => {
     await page.goto('/admin/mcp/tools');
     await expect(page.getByText('web_search').first()).toBeVisible({ timeout: 5000 });
 
-    const serverFilter = page.locator('select:has(option:has-text("Production MCP")), select:has(option:has-text("Server")), select[id*="server" i]').first();
+    const serverFilter = page
+      .locator(
+        'select:has(option:has-text("Production MCP")), select:has(option:has-text("Server")), select[id*="server" i]'
+      )
+      .first();
     if ((await serverFilter.count()) > 0) {
       await serverFilter.selectOption({ label: 'Staging MCP' });
       await page.waitForTimeout(300);
@@ -213,7 +238,9 @@ test.describe('MCP Tools CRUD Lifecycle', () => {
     // Find toggle for a specific tool (send_email which is disabled via connected=false on Staging MCP)
     const toolCard = page.locator('.card').filter({ hasText: 'send_email' }).first();
     if ((await toolCard.count()) > 0) {
-      const toggleBtn = toolCard.locator('button:has-text("Enable"), button:has-text("Disable")').first();
+      const toggleBtn = toolCard
+        .locator('button:has-text("Enable"), button:has-text("Disable")')
+        .first();
       if ((await toggleBtn.count()) > 0) {
         await toggleBtn.click();
         await page.waitForTimeout(300);
@@ -237,7 +264,9 @@ test.describe('MCP Tools CRUD Lifecycle', () => {
         await runBtn.click();
         await page.waitForTimeout(500);
 
-        const modal = page.locator('dialog.modal[open] .modal-box, .modal-box, [role="dialog"]').first();
+        const modal = page
+          .locator('dialog.modal[open] .modal-box, .modal-box, [role="dialog"]')
+          .first();
         if ((await modal.count()) > 0) {
           await expect(modal).toBeVisible();
         }
@@ -266,10 +295,14 @@ test.describe('MCP Tools CRUD Lifecycle', () => {
         await runBtn.click();
         await page.waitForTimeout(500);
 
-        const modal = page.locator('dialog.modal[open] .modal-box, .modal-box, [role="dialog"]').first();
+        const modal = page
+          .locator('dialog.modal[open] .modal-box, .modal-box, [role="dialog"]')
+          .first();
         if ((await modal.count()) > 0) {
           // Find JSON textarea or editor
-          const jsonInput = modal.locator('textarea, [class*="editor"], [contenteditable="true"]').first();
+          const jsonInput = modal
+            .locator('textarea, [class*="editor"], [contenteditable="true"]')
+            .first();
           if ((await jsonInput.count()) > 0) {
             await jsonInput.fill('{"query": "test search", "maxResults": 5}');
             await page.waitForTimeout(200);
@@ -307,7 +340,9 @@ test.describe('MCP Tools CRUD Lifecycle', () => {
         await runBtn.click();
         await page.waitForTimeout(500);
 
-        const modal = page.locator('dialog.modal[open] .modal-box, .modal-box, [role="dialog"]').first();
+        const modal = page
+          .locator('dialog.modal[open] .modal-box, .modal-box, [role="dialog"]')
+          .first();
         if ((await modal.count()) > 0) {
           // Switch to Form mode
           const formModeBtn = modal.locator('button[title="Form Builder"]').first();
@@ -349,7 +384,9 @@ test.describe('MCP Tools CRUD Lifecycle', () => {
         await runBtn.click();
         await page.waitForTimeout(500);
 
-        const modal = page.locator('dialog.modal[open] .modal-box, .modal-box, [role="dialog"]').first();
+        const modal = page
+          .locator('dialog.modal[open] .modal-box, .modal-box, [role="dialog"]')
+          .first();
         if ((await modal.count()) > 0) {
           // Switch to JSON mode
           const jsonModeBtn = modal.locator('button[title="Raw JSON"]').first();
@@ -395,14 +432,18 @@ test.describe('MCP Tools CRUD Lifecycle', () => {
         await runBtn.click();
         await page.waitForTimeout(500);
 
-        const modal = page.locator('dialog.modal[open] .modal-box, .modal-box, [role="dialog"]').first();
+        const modal = page
+          .locator('dialog.modal[open] .modal-box, .modal-box, [role="dialog"]')
+          .first();
         if ((await modal.count()) > 0) {
           const executeBtn = modal.locator('button:has-text("Run Tool")').first();
           if ((await executeBtn.count()) > 0) {
             await executeBtn.click();
 
             // Check for loading indicator in modal
-            const loading = modal.locator('[class*="loading"], [class*="spinner"], .skeleton, [role="progressbar"]').first();
+            const loading = modal
+              .locator('[class*="loading"], [class*="spinner"], .skeleton, [role="progressbar"]')
+              .first();
             if ((await loading.count()) > 0) {
               await expect(loading).toBeVisible({ timeout: 3000 });
             }
@@ -434,7 +475,9 @@ test.describe('MCP Tools CRUD Lifecycle', () => {
         await runBtn.click();
         await page.waitForTimeout(500);
 
-        const modal = page.locator('dialog.modal[open] .modal-box, .modal-box, [role="dialog"]').first();
+        const modal = page
+          .locator('dialog.modal[open] .modal-box, .modal-box, [role="dialog"]')
+          .first();
         if ((await modal.count()) > 0) {
           const executeBtn = modal.locator('button:has-text("Run Tool")').first();
           if ((await executeBtn.count()) > 0) {
@@ -442,13 +485,18 @@ test.describe('MCP Tools CRUD Lifecycle', () => {
             await page.waitForTimeout(500);
 
             // Check for result output area
-            const resultArea = modal.locator('pre, code, [class*="result"], [class*="output"], textarea[readonly]').first();
+            const resultArea = modal
+              .locator('pre, code, [class*="result"], [class*="output"], textarea[readonly]')
+              .first();
             if ((await resultArea.count()) > 0) {
               await expect(resultArea).toBeVisible();
             }
 
             // Check for execution time display
-            const execTime = page.getByText('245').or(page.getByText(/245\s*ms/)).first();
+            const execTime = page
+              .getByText('245')
+              .or(page.getByText(/245\s*ms/))
+              .first();
             if ((await execTime.count()) > 0) {
               await expect(execTime).toBeVisible();
             }
@@ -468,7 +516,11 @@ test.describe('MCP Tools CRUD Lifecycle', () => {
 
     // Should show empty state
     await expect(page.locator('body')).toBeVisible();
-    const emptyText = page.locator('text=/no.*tool/i, text=/no.*available/i, text=/get.*started/i, text=/connect.*server/i').first();
+    const emptyText = page
+      .locator(
+        'text=/no.*tool/i, text=/no.*available/i, text=/get.*started/i, text=/connect.*server/i'
+      )
+      .first();
     if ((await emptyText.count()) > 0) {
       await expect(emptyText).toBeVisible();
     }
@@ -489,7 +541,9 @@ test.describe('MCP Tools CRUD Lifecycle', () => {
         await runBtn.click();
         await page.waitForTimeout(500);
 
-        const modal = page.locator('dialog.modal[open] .modal-box, .modal-box, [role="dialog"]').first();
+        const modal = page
+          .locator('dialog.modal[open] .modal-box, .modal-box, [role="dialog"]')
+          .first();
         if ((await modal.count()) > 0) {
           // Switch to JSON mode
           const jsonModeBtn = modal.locator('button[title="Raw JSON"]').first();
@@ -499,7 +553,9 @@ test.describe('MCP Tools CRUD Lifecycle', () => {
           }
 
           // Enter invalid JSON
-          const jsonInput = modal.locator('textarea, [class*="editor"], [contenteditable="true"]').first();
+          const jsonInput = modal
+            .locator('textarea, [class*="editor"], [contenteditable="true"]')
+            .first();
           if ((await jsonInput.count()) > 0) {
             await jsonInput.fill('{invalid json content missing quotes}');
             await page.waitForTimeout(200);

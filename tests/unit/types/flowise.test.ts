@@ -1,8 +1,8 @@
 import {
+  isFlowiseApiError,
+  isFlowiseError,
   isFlowisePredictionResponse,
   isFlowiseSdkCompletion,
-  isFlowiseError,
-  isFlowiseApiError,
 } from '../../../src/types/flowise';
 
 describe('Flowise Type Guards', () => {

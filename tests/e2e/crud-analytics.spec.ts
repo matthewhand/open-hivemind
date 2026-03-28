@@ -33,10 +33,34 @@ test.describe('Analytics Dashboard CRUD Lifecycle', () => {
       { timestamp: '2026-03-26T05:00:00Z', avgMs: 1250 },
     ],
     botPerformance: [
-      { name: 'SupportBot', messages: 5200, avgResponseTime: 1.2, errorRate: 0.02, status: 'healthy' },
-      { name: 'SalesBot', messages: 3800, avgResponseTime: 1.6, errorRate: 0.05, status: 'healthy' },
-      { name: 'CodingAssistant', messages: 2100, avgResponseTime: 2.1, errorRate: 0.08, status: 'degraded' },
-      { name: 'OnboardingBot', messages: 1443, avgResponseTime: 0.9, errorRate: 0.01, status: 'healthy' },
+      {
+        name: 'SupportBot',
+        messages: 5200,
+        avgResponseTime: 1.2,
+        errorRate: 0.02,
+        status: 'healthy',
+      },
+      {
+        name: 'SalesBot',
+        messages: 3800,
+        avgResponseTime: 1.6,
+        errorRate: 0.05,
+        status: 'healthy',
+      },
+      {
+        name: 'CodingAssistant',
+        messages: 2100,
+        avgResponseTime: 2.1,
+        errorRate: 0.08,
+        status: 'degraded',
+      },
+      {
+        name: 'OnboardingBot',
+        messages: 1443,
+        avgResponseTime: 0.9,
+        errorRate: 0.01,
+        status: 'healthy',
+      },
     ],
     timeRange: '24h',
   };
@@ -69,7 +93,12 @@ test.describe('Analytics Dashboard CRUD Lifecycle', () => {
       page.route('**/api/config/llm-status', (route) =>
         route.fulfill({
           status: 200,
-          json: { defaultConfigured: true, defaultProviders: [], botsMissingLlmProvider: [], hasMissing: false },
+          json: {
+            defaultConfigured: true,
+            defaultProviders: [],
+            botsMissingLlmProvider: [],
+            hasMissing: false,
+          },
         })
       ),
       page.route('**/api/config/global', (route) => route.fulfill({ status: 200, json: {} })),
@@ -78,11 +107,15 @@ test.describe('Analytics Dashboard CRUD Lifecycle', () => {
       page.route('**/api/csrf-token', (route) =>
         route.fulfill({ status: 200, json: { token: 'mock-csrf-token' } })
       ),
-      page.route('**/api/health', (route) => route.fulfill({ status: 200, json: { status: 'ok' } })),
+      page.route('**/api/health', (route) =>
+        route.fulfill({ status: 200, json: { status: 'ok' } })
+      ),
       page.route('**/api/admin/guard-profiles', (route) =>
         route.fulfill({ status: 200, json: { data: [] } })
       ),
-      page.route('**/api/demo/status', (route) => route.fulfill({ status: 200, json: { active: false } })),
+      page.route('**/api/demo/status', (route) =>
+        route.fulfill({ status: 200, json: { active: false } })
+      ),
     ]);
   }
 
@@ -151,8 +184,12 @@ test.describe('Analytics Dashboard CRUD Lifecycle', () => {
     await page.waitForTimeout(1000);
 
     // Look for time range buttons or select
-    const timeRangeButtons = page.locator('button:has-text("1h"), button:has-text("24h"), button:has-text("7d"), button:has-text("30d")');
-    const timeRangeSelect = page.locator('select:has(option:has-text("24h")), select:has(option:has-text("7 days"))').first();
+    const timeRangeButtons = page.locator(
+      'button:has-text("1h"), button:has-text("24h"), button:has-text("7d"), button:has-text("30d")'
+    );
+    const timeRangeSelect = page
+      .locator('select:has(option:has-text("24h")), select:has(option:has-text("7 days"))')
+      .first();
 
     if ((await timeRangeButtons.count()) > 0) {
       const btn7d = page.locator('button:has-text("7d"), button:has-text("7 days")').first();
@@ -220,13 +257,18 @@ test.describe('Analytics Dashboard CRUD Lifecycle', () => {
     await page.waitForTimeout(1000);
 
     // Check for chart containers (canvas for Chart.js, svg for Recharts/D3, or custom wrappers)
-    const charts = page.locator('canvas, svg[class*="chart"], [class*="chart"], [class*="Chart"], [data-testid*="chart"]');
+    const charts = page.locator(
+      'canvas, svg[class*="chart"], [class*="chart"], [class*="Chart"], [data-testid*="chart"]'
+    );
     if ((await charts.count()) > 0) {
       await expect(charts.first()).toBeVisible();
     }
 
     // Look for chart headings
-    const messageVolumeHeading = page.getByText(/message.*volume/i).or(page.getByText(/messages.*over.*time/i)).first();
+    const messageVolumeHeading = page
+      .getByText(/message.*volume/i)
+      .or(page.getByText(/messages.*over.*time/i))
+      .first();
     if ((await messageVolumeHeading.count()) > 0) {
       await expect(messageVolumeHeading).toBeVisible();
     }
@@ -316,7 +358,9 @@ test.describe('Analytics Dashboard CRUD Lifecycle', () => {
 
     // Should show zeros or empty state messaging
     await expect(page.locator('body')).toBeVisible();
-    const emptyText = page.locator('text=/no.*data/i, text=/no.*activity/i, text=/no.*metrics/i').first();
+    const emptyText = page
+      .locator('text=/no.*data/i, text=/no.*activity/i, text=/no.*metrics/i')
+      .first();
     if ((await emptyText.count()) > 0) {
       await expect(emptyText).toBeVisible();
     }

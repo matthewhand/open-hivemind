@@ -1,4 +1,8 @@
-import { CircuitBreaker, FallbackManager, DEFAULT_CIRCUIT_BREAKER_CONFIG } from '@src/utils/errorRecovery';
+import {
+  CircuitBreaker,
+  DEFAULT_CIRCUIT_BREAKER_CONFIG,
+  FallbackManager,
+} from '@src/utils/errorRecovery';
 
 describe('errorRecovery', () => {
   describe('CircuitBreaker', () => {
