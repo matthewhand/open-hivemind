@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import Card from '../components/DaisyUI/Card';
+import { SkeletonGrid } from '../components/DaisyUI/Skeleton';
 import Button from '../components/DaisyUI/Button';
 import Badge from '../components/DaisyUI/Badge';
 import Breadcrumbs from '../components/DaisyUI/Breadcrumbs';
@@ -294,9 +295,7 @@ const MarketplacePage: React.FC = () => {
 
       {/* Loading State */}
       {loading && (
-        <div className="flex items-center justify-center py-12">
-          <span className="loading loading-spinner loading-lg text-primary" aria-hidden="true"></span>
-        </div>
+        <SkeletonGrid count={6} showImage />
       )}
 
       {/* Empty State */}

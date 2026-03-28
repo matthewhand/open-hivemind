@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import GlobalConfigSection from '../GlobalConfigSection';
 import { Alert } from '../DaisyUI/Alert';
+import { SkeletonList } from '../DaisyUI/Skeleton';
 
 const GlobalConfigurationManager: React.FC = () => {
   const [sections, setSections] = useState<string[]>([]);
@@ -32,7 +33,7 @@ const GlobalConfigurationManager: React.FC = () => {
     }
   };
 
-  if (loading) {return <div className="flex justify-center items-center min-h-[200px]"><span className="loading loading-spinner loading-lg" aria-hidden="true"></span></div>;}
+  if (loading) {return <div className="min-h-[200px] p-4"><SkeletonList items={5} /></div>;}
   if (error) {return <Alert status="error" message={error} />;}
 
   return (

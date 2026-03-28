@@ -8,6 +8,7 @@ import {
   ListBulletIcon,
 } from '@heroicons/react/24/outline';
 import Breadcrumbs from '../components/DaisyUI/Breadcrumbs';
+import { SkeletonGrid } from '../components/DaisyUI/Skeleton';
 import { Alert } from '../components/DaisyUI/Alert';
 import Modal from '../components/DaisyUI/Modal';
 
@@ -282,9 +283,8 @@ const MCPToolsPage: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="p-6 text-center">
-        <span className="loading loading-spinner loading-lg" aria-hidden="true"></span>
-        <p className="mt-2">Loading MCP tools...</p>
+      <div className="p-6">
+        <SkeletonGrid count={6} showImage={false} />
       </div>
     );
   }

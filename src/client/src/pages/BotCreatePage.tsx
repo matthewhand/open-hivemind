@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Bot, Save, ArrowLeft, Gamepad2, Hash, MessageSquare, Send, Check } from 'lucide-react';
 import Breadcrumbs from '../components/DaisyUI/Breadcrumbs';
+import { SkeletonList } from '../components/DaisyUI/Skeleton';
 import { Alert } from '../components/DaisyUI/Alert';
 import PageHeader from '../components/DaisyUI/PageHeader';
 import Button from '../components/DaisyUI/Button';
@@ -152,8 +153,8 @@ const BotCreatePage: React.FC = () => {
       <div className="card bg-base-100 shadow-xl max-w-4xl mx-auto">
         <div className="card-body">
           {loading ? (
-            <div className="flex justify-center py-12">
-              <span className="loading loading-spinner loading-lg" aria-hidden="true"></span>
+            <div className="py-6">
+              <SkeletonList items={6} />
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="space-y-8">

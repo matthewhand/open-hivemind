@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import Badge from '../components/DaisyUI/Badge';
 import Button from '../components/DaisyUI/Button';
 import Card from '../components/DaisyUI/Card';
+import { SkeletonPage } from '../components/DaisyUI/Skeleton';
 import DataTable from '../components/DaisyUI/DataTable';
 import Hero from '../components/DaisyUI/Hero';
 import NavbarWithSearch from '../components/DaisyUI/NavbarWithSearch';
@@ -141,8 +142,8 @@ const EnhancedDashboard: React.FC = () => {
 
   if (isLoading && !stats) {
     return (
-      <div className="min-h-screen bg-base-100 flex items-center justify-center">
-        <span className="loading loading-spinner loading-lg" aria-hidden="true"></span>
+      <div className="min-h-screen bg-base-100 p-6">
+        <SkeletonPage variant="cards" statsCount={4} />
       </div>
     );
   }

@@ -3,6 +3,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Settings, Save, RefreshCw, AlertCircle, CheckCircle, History } from 'lucide-react';
 import PageHeader from '../components/DaisyUI/PageHeader';
 import Accordion from '../components/DaisyUI/Accordion';
+import { SkeletonList } from '../components/DaisyUI/Skeleton';
 import Input from '../components/DaisyUI/Input';
 import Select from '../components/DaisyUI/Select';
 import Toggle from '../components/DaisyUI/Toggle';
@@ -391,9 +392,7 @@ const BotConfigurationPage: React.FC = () => {
 
       {/* Config Accordion */}
       {loading ? (
-        <div className="flex items-center justify-center py-12">
-          <span className="loading loading-spinner loading-lg" aria-hidden="true" />
-        </div>
+        <SkeletonList items={6} />
       ) : configNames.length === 0 ? (
         <div className="card bg-base-100 border border-base-300">
           <div className="card-body text-center py-12">

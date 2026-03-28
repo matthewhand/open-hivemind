@@ -3,6 +3,7 @@ import Modal from '../DaisyUI/Modal';
 import Checkbox from '../DaisyUI/Checkbox';
 import Button from '../DaisyUI/Button';
 import Card from '../DaisyUI/Card';
+import { SkeletonList } from '../DaisyUI/Skeleton';
 import Form from '../DaisyUI/Form';
 import {
   getPersonas,
@@ -129,7 +130,7 @@ const PersonaManager: React.FC = () => {
   };
 
   if (loading) {
-    return <div className="flex justify-center items-center min-h-[200px]"><span className="loading loading-spinner loading-lg" aria-hidden="true"></span></div>;
+    return <div className="min-h-[200px] p-4"><SkeletonList items={4} /></div>;
   }
 
   if (error) {

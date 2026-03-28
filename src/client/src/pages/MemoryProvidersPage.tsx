@@ -7,7 +7,7 @@ import { Alert } from '../components/DaisyUI/Alert';
 import PageHeader from '../components/DaisyUI/PageHeader';
 import StatsCards from '../components/DaisyUI/StatsCards';
 import EmptyState from '../components/DaisyUI/EmptyState';
-import { LoadingSpinner } from '../components/DaisyUI/Loading';
+import { SkeletonTableLayout } from '../components/DaisyUI/Skeleton';
 import SearchFilterBar from '../components/SearchFilterBar';
 import { ConfirmModal } from '../components/DaisyUI/Modal';
 import { useErrorToast } from '../components/DaisyUI/ToastNotification';
@@ -157,7 +157,7 @@ const MemoryProvidersPage: React.FC = () => {
         filters={[{ key: 'type', value: filterType, onChange: setFilterType, options: [{ label: 'All Types', value: 'all' }, ...providerTypes], className: 'w-48' }]}
       />
       {loading ? (
-        <div className="flex justify-center py-12"><LoadingSpinner size="lg" /></div>
+        <SkeletonTableLayout rows={6} columns={4} />
       ) : profiles.length === 0 ? (
         <EmptyState icon={MemoryIcon} title="No Profiles Created" description="Create a profile to configure memory storage for your bots." actionLabel="Create Profile" actionIcon={AddIcon} onAction={handleAddProfile} variant="noData" />
       ) : filteredProfiles.length === 0 ? (

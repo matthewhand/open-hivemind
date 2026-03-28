@@ -2,7 +2,7 @@
 import React, { lazy, Suspense } from 'react';
 import { Routes, Route, Navigate, Outlet } from 'react-router-dom';
 
-import { LoadingSpinner } from '../components/DaisyUI/Loading';
+import { SkeletonPage } from '../components/DaisyUI/Skeleton';
 
 import MainLayout from '../layouts/MainLayout';
 import DashboardPage from '../pages/Dashboard';
@@ -56,12 +56,9 @@ interface LoadingFallbackProps {
   message?: string;
 }
 
-const LoadingFallback: React.FC<LoadingFallbackProps> = ({ message = 'Loading...' }) => (
-  <div className="flex flex-col justify-center items-center min-h-[60vh] gap-4">
-    <LoadingSpinner size="lg" />
-    <span className="text-base-content/70">
-      {message}
-    </span>
+const LoadingFallback: React.FC<LoadingFallbackProps> = ({ message: _message = 'Loading...' }) => (
+  <div className="min-h-[60vh] p-6">
+    <SkeletonPage variant="cards" statsCount={3} />
   </div>
 );
 

@@ -20,6 +20,7 @@ import {
   HandThumbDownIcon,
   ArrowPathIcon,
 } from '@heroicons/react/24/outline';
+import { SkeletonGrid } from '../components/DaisyUI/Skeleton';
 
 // Interfaces match server
 interface BehaviorPattern {
@@ -407,9 +408,7 @@ export const IntelligentDashboard: React.FC = () => {
             AI Recommendations ({state.recommendations.length})
           </h3>
           {isLoading ? (
-            <div className="flex justify-center p-8">
-              <span className="loading loading-spinner loading-lg text-primary" aria-hidden="true"></span>
-            </div>
+            <SkeletonGrid count={4} showImage={false} columns="grid-cols-1 md:grid-cols-2" />
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {state.recommendations.map(recommendation => (

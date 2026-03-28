@@ -6,6 +6,7 @@ import Button from '../components/DaisyUI/Button';
 import Badge from '../components/DaisyUI/Badge';
 import Dropdown from '../components/DaisyUI/Dropdown';
 import Breadcrumbs from '../components/DaisyUI/Breadcrumbs';
+import { SkeletonList } from '../components/DaisyUI/Skeleton';
 import { ArrowLeftIcon, ArrowDownTrayIcon } from '@heroicons/react/24/outline';
 import ReactMarkdown from 'react-markdown';
 import useSpec from '../hooks/useSpec';
@@ -66,8 +67,8 @@ ${spec.content.replace(/^/gm, '  ')}
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="loading loading-spinner loading-lg" aria-hidden="true"></div>
+      <div className="p-6">
+        <SkeletonList items={6} />
       </div>
     );
   }

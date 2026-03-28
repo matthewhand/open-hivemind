@@ -21,6 +21,7 @@ import Card from '../components/DaisyUI/Card';
 import Input from '../components/DaisyUI/Input';
 import EmptyState from '../components/DaisyUI/EmptyState';
 import { LoadingSpinner } from '../components/DaisyUI/Loading';
+import { SkeletonPage } from '../components/DaisyUI/Skeleton';
 import Modal from '../components/DaisyUI/Modal';
 import PageHeader from '../components/DaisyUI/PageHeader';
 import StatsCards from '../components/DaisyUI/StatsCards';
@@ -397,9 +398,7 @@ const PersonasPage: React.FC = () => {
 
       {/* Persona List */}
       {loading ? (
-        <div className="flex items-center justify-center py-12">
-          <LoadingSpinner size="lg" />
-        </div>
+        <SkeletonPage variant="list" statsCount={0} showFilters={false} />
       ) : personas.length === 0 ? (
         <EmptyState
           icon={Sparkles}

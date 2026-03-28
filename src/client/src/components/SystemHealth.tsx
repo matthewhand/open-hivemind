@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import Card from './DaisyUI/Card';
 import { Loading } from './DaisyUI/Loading';
+import { SkeletonList } from './DaisyUI/Skeleton';
 import Badge from './DaisyUI/Badge';
 import { Alert } from './DaisyUI/Alert';
 import Accordion from './DaisyUI/Accordion';
@@ -184,11 +185,8 @@ const SystemHealth: React.FC<SystemHealthProps> = ({
     return (
       <Card>
         <Card.Body>
-          <div className="flex justify-center items-center py-8">
-            <span className="loading loading-spinner loading-lg" aria-hidden="true"></span>
-            <span className="ml-2 text-base-content/70">
-              Loading system health data...
-            </span>
+          <div className="py-6 px-4">
+            <SkeletonList items={5} />
           </div>
         </Card.Body>
       </Card>

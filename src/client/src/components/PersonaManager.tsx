@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import Card from './DaisyUI/Card';
 import Button from './DaisyUI/Button';
+import { SkeletonList } from './DaisyUI/Skeleton';
 import Modal, { ConfirmModal } from './DaisyUI/Modal';
 import Input from './DaisyUI/Input';
 import Textarea from './DaisyUI/Textarea';
@@ -179,7 +180,7 @@ const PersonaManager: React.FC = () => {
   };
 
   if (loading) {
-    return <div className="flex justify-center items-center min-h-[200px]"><span className="loading loading-spinner loading-lg" aria-hidden="true"></span></div>;
+    return <div className="min-h-[200px] p-4"><SkeletonList items={4} /></div>;
   }
 
   const columns = [

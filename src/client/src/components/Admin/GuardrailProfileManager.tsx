@@ -11,6 +11,7 @@ import { Alert } from '../DaisyUI/Alert';
 import Badge from '../DaisyUI/Badge';
 import Button from '../DaisyUI/Button';
 import Card from '../DaisyUI/Card';
+import { SkeletonList } from '../DaisyUI/Skeleton';
 import Input from '../DaisyUI/Input';
 import Modal, { ConfirmModal } from '../DaisyUI/Modal';
 import Select from '../DaisyUI/Select';
@@ -166,8 +167,8 @@ const GuardrailProfileManager: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center min-h-[200px]">
-        <span className="loading loading-spinner loading-lg" aria-hidden="true"></span>
+      <div className="min-h-[200px] p-4">
+        <SkeletonList items={4} />
       </div>
     );
   }

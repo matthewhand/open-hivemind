@@ -8,6 +8,7 @@ import Input from './DaisyUI/Input';
 import Select from './DaisyUI/Select';
 import { Alert } from './DaisyUI/Alert';
 import { Loading } from './DaisyUI/Loading';
+import { SkeletonGrid } from './DaisyUI/Skeleton';
 import Checkbox from './DaisyUI/Checkbox';
 import Tooltip from './DaisyUI/Tooltip';
 import {
@@ -253,9 +254,8 @@ const BotManager: React.FC = () => {
 
   if (isLoading && rawBots.length === 0) {
     return (
-      <div className="flex justify-center items-center py-16">
-        <span className="loading loading-spinner loading-lg" aria-hidden="true"></span>
-        <p className="ml-4">Loading bots...</p>
+      <div className="py-6">
+        <SkeletonGrid count={4} showImage={false} />
       </div>
     );
   }

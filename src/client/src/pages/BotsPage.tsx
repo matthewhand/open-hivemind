@@ -15,7 +15,7 @@ import { usePageLifecycle } from '../hooks/usePageLifecycle';
 import PageHeader from '../components/DaisyUI/PageHeader';
 import SearchFilterBar from '../components/SearchFilterBar';
 import EmptyState from '../components/DaisyUI/EmptyState';
-import { LoadingSpinner } from '../components/DaisyUI/Loading';
+import { SkeletonPage } from '../components/DaisyUI/Skeleton';
 import { apiService } from '../services/api';
 import { withRetry } from '../utils/withRetry';
 import { ErrorService } from '../services/ErrorService';
@@ -292,12 +292,7 @@ const BotsPage: React.FC = () => {
   }, [activityLogs, logFilter]);
 
   if (loading && bots.length === 0 && !error) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[400px]">
-        <LoadingSpinner size="lg" />
-        <p className="mt-4 text-base-content/60 animate-pulse">Loading your AI Swarm...</p>
-      </div>
-    );
+    return <SkeletonPage variant="cards" statsCount={4} showFilters />;
   }
 
   return (

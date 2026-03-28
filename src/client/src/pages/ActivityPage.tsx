@@ -12,7 +12,7 @@ import StatsCards from '../components/DaisyUI/StatsCards';
 import Timeline from '../components/DaisyUI/Timeline';
 import Toggle from '../components/DaisyUI/Toggle';
 import PageHeader from '../components/DaisyUI/PageHeader';
-import { LoadingSpinner } from '../components/DaisyUI/Loading';
+import { SkeletonPage } from '../components/DaisyUI/Skeleton';
 import EmptyState from '../components/DaisyUI/EmptyState';
 import Input from '../components/DaisyUI/Input';
 import SearchFilterBar from '../components/SearchFilterBar';
@@ -434,9 +434,7 @@ const ActivityPage: React.FC = () => {
 
       {/* Content */}
       {loading && !data ? (
-        <div className="flex items-center justify-center py-12">
-          <LoadingSpinner size="lg" />
-        </div>
+        <SkeletonPage variant="table" statsCount={0} showFilters={false} />
       ) : filteredEvents.length === 0 ? (
         <EmptyState
           icon={Clock}

@@ -6,6 +6,7 @@ import Input from '../components/DaisyUI/Input';
 import Badge from '../components/DaisyUI/Badge';
 import Breadcrumbs from '../components/DaisyUI/Breadcrumbs';
 import Pagination from '../components/DaisyUI/Pagination';
+import { SkeletonPage } from '../components/DaisyUI/Skeleton';
 import { MagnifyingGlassIcon, PlusIcon, BookOpenIcon } from '@heroicons/react/24/outline';
 import useSpecs from '../hooks/useSpecs';
 
@@ -40,11 +41,7 @@ const SpecsPage: React.FC = () => {
   const breadcrumbItems = [{ label: 'Specifications', href: '/admin/specs', isActive: true }];
 
   if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="loading loading-spinner loading-lg" aria-hidden="true"></div>
-      </div>
-    );
+    return <SkeletonPage variant="cards" statsCount={0} showFilters />;
   }
 
   if (error) {

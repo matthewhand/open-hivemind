@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Alert } from '../DaisyUI/Alert';
 import Button from '../DaisyUI/Button';
+import { SkeletonList } from '../DaisyUI/Skeleton';
 import Input from '../DaisyUI/Input';
 import Toggle from '../DaisyUI/Toggle';
 import { Shield, Plus, Trash2 } from 'lucide-react';
@@ -102,8 +103,8 @@ const SettingsSecurity: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-12">
-        <span className="loading loading-spinner loading-lg" aria-hidden="true"></span>
+      <div className="py-6 px-4">
+        <SkeletonList items={4} />
       </div>
     );
   }

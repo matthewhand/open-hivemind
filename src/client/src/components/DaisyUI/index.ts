@@ -13,7 +13,7 @@ export { default as Indicator } from './Indicator';
 export { default as DataTable } from './DataTable';
 export { default as Table } from './Table';
 export { Loading, LoadingSpinner, LoadingOverlay, StepProgress, Progress, SkeletonAvatar, SkeletonTable, SkeletonStats, LoadingSkeletonCard } from './Loading';
-export { Skeleton, SkeletonText, SkeletonCard, SkeletonList } from './Skeleton';
+export { Skeleton, SkeletonText, SkeletonCard, SkeletonList, SkeletonGrid, SkeletonTableLayout, SkeletonTimeline, SkeletonMessageList, SkeletonStatsCards, SkeletonPage } from './Skeleton';
 export { default as Modal } from './Modal';
 export { default as ModalForm } from './ModalForm';
 export { default as StatsCards } from './StatsCards';

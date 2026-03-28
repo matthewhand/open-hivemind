@@ -8,6 +8,7 @@ import {
 import PageHeader from '../components/DaisyUI/PageHeader';
 import SearchFilterBar from '../components/SearchFilterBar';
 import EmptyState from '../components/DaisyUI/EmptyState';
+import { SkeletonList } from '../components/DaisyUI/Skeleton';
 import { SelectOption } from '../components/DaisyUI/Select';
 
 interface SitemapUrl {
@@ -133,9 +134,8 @@ const SitemapPage: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="p-6 text-center">
-        <span className="loading loading-spinner loading-lg" aria-hidden="true"></span>
-        <p className="mt-2">Loading sitemap...</p>
+      <div className="p-6">
+        <SkeletonList items={8} />
       </div>
     );
   }
