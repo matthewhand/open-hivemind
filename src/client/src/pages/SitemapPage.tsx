@@ -5,8 +5,6 @@ import {
   RefreshCw,
   Map as MapIcon,
 } from 'lucide-react';
-import Breadcrumbs from '../components/DaisyUI/Breadcrumbs';
-import { Alert } from '../components/DaisyUI/Alert';
 import PageHeader from '../components/DaisyUI/PageHeader';
 import SearchFilterBar from '../components/SearchFilterBar';
 import EmptyState from '../components/DaisyUI/EmptyState';

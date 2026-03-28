@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect } from 'react';
 import { useWebSocket } from '../contexts/WebSocketContext';
-import { apiService, ActivityResponse, ActivityEvent } from '../services/api';
+import { apiService, ActivityResponse } from '../services/api';
 import MetricChart from '../components/Monitoring/MetricChart';
 import StatusCard from '../components/Monitoring/StatusCard';
 import { redactString } from '../utils/redaction';

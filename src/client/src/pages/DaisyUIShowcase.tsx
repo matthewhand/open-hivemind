@@ -1,8 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState } from 'react';
 import { BotChatTimeline } from '../components/BotChatTimeline';
-import PageHeader from '../components/DaisyUI/PageHeader';
-import { LayoutTemplate } from 'lucide-react';
 
 /**
  * DaisyUI Component Showcase

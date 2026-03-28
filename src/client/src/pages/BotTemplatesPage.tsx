@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import Breadcrumbs from '../components/DaisyUI/Breadcrumbs';
 import EmptyState from '../components/DaisyUI/EmptyState';
 import { Copy, Check, Search } from 'lucide-react';
+import Carousel from '../components/DaisyUI/Carousel';
 import SearchFilterBar from '../components/SearchFilterBar';
 
 interface BotTemplate {

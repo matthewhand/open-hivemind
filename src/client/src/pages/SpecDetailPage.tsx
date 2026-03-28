@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
-import React, { useState } from 'react';
+import React from 'react';
 import { useParams } from 'react-router-dom';
 import Card from '../components/DaisyUI/Card';
 import Button from '../components/DaisyUI/Button';
