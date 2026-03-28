@@ -4,6 +4,7 @@ import { Provider } from 'react-redux';
 import { store } from './store/store';
 import ReduxProvider from './components/ReduxProvider';
 import ErrorBoundary from './components/ErrorBoundary';
+import HydrationErrorBoundary from './store/hydrationErrorBoundary';
 import AppRouter from './router/AppRouter';
 import { AuthProvider } from './contexts/AuthContext';
 import ToastNotification from './components/DaisyUI/ToastNotification';
@@ -27,27 +28,29 @@ function ThemeSync({ children }: { children: React.ReactNode }) {
 function App() {
   return (
     <ErrorBoundary>
-      <Provider store={store}>
-        <ReduxProvider>
-          <ThemeSync>
-            <ToastNotification position="bottom-right" maxToasts={5}>
-              <AuthProvider>
-                <BotProvider>
-                  <WebSocketProvider>
-                    <IntegrationProvider>
-                      <BrowserRouter>
-                        <ScrollToTop />
-                        <KeyboardShortcutsProvider />
-                        <AppRouter />
-                      </BrowserRouter>
-                    </IntegrationProvider>
-                  </WebSocketProvider>
-                </BotProvider>
-              </AuthProvider>
-            </ToastNotification>
-          </ThemeSync>
-        </ReduxProvider>
-      </Provider>
+      <HydrationErrorBoundary>
+        <Provider store={store}>
+          <ReduxProvider>
+            <ThemeSync>
+              <ToastNotification position="bottom-right" maxToasts={5}>
+                <AuthProvider>
+                  <BotProvider>
+                    <WebSocketProvider>
+                      <IntegrationProvider>
+                        <BrowserRouter>
+                          <ScrollToTop />
+                          <KeyboardShortcutsProvider />
+                          <AppRouter />
+                        </BrowserRouter>
+                      </IntegrationProvider>
+                    </WebSocketProvider>
+                  </BotProvider>
+                </AuthProvider>
+              </ToastNotification>
+            </ThemeSync>
+          </ReduxProvider>
+        </Provider>
+      </HydrationErrorBoundary>
     </ErrorBoundary>
   );
 }
