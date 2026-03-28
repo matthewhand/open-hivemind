@@ -225,11 +225,11 @@ export class AuthManager {
       (u) => u.username === credentials.username && u.isActive
     );
 
-    if (!user) {
+    if (!user || !user.passwordHash) {
       throw new AuthenticationError('Invalid credentials', 'INVALID_CREDENTIALS');
     }
 
-    const isValidPassword = await this.verifyPassword(credentials.password, user.passwordHash!);
+    const isValidPassword = await this.verifyPassword(credentials.password, user.passwordHash);
     if (!isValidPassword) {
       throw new AuthenticationError('Invalid credentials', 'INVALID_CREDENTIALS');
     }

@@ -1,5 +1,5 @@
 import Debug from 'debug';
-import type { NextFunction, Request, Response } from 'express';
+import type { NextFunction, Request, RequestHandler, Response } from 'express';
 import { AuthManager } from './AuthManager';
 import { SessionStore } from './SessionStore';
 
@@ -105,7 +105,7 @@ export class SessionManager {
   /**
    * Session middleware for Express
    */
-  public sessionMiddleware() {
+  public sessionMiddleware(): RequestHandler {
     return async (req: Request, res: Response, next: NextFunction) => {
       const authHeader = req.headers['authorization'];
       const token = authHeader && authHeader.split(' ')[1];
