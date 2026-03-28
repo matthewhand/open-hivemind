@@ -56,6 +56,42 @@ router.get('/', (req, res) => {
   }
 });
 
+// PUT /api/personas/reorder
+router.put('/reorder', (req, res) => {
+  try {
+    const { ids } = req.body;
+    if (!Array.isArray(ids) || ids.length === 0) {
+      return res
+        .status(HTTP_STATUS.BAD_REQUEST)
+        .json({ error: 'ids must be a non-empty array of persona IDs' });
+    }
+
+    const fsModule = require('fs');
+    const pathModule = require('path');
+    const orderFilePath = pathModule.join(
+      process.cwd(),
+      'config',
+      'user',
+      'persona-order.json',
+    );
+    const orderDir = pathModule.dirname(orderFilePath);
+    if (!fsModule.existsSync(orderDir)) {
+      fsModule.mkdirSync(orderDir, { recursive: true });
+    }
+    fsModule.writeFileSync(orderFilePath, JSON.stringify(ids, null, 2));
+
+    return res.json({ success: true, message: 'Persona order updated' });
+  } catch (error: unknown) {
+    logger.error(
+      'Failed to reorder personas',
+      error instanceof Error ? error : new Error(String(error)),
+    );
+    return res
+      .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
+      .json({ error: 'Failed to reorder personas' });
+  }
+});
+
 // GET /api/personas/:id
 router.get('/:id', (req, res) => {
   try {
