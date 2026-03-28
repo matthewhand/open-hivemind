@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { PencilIcon, PlusIcon, TrashIcon } from '@heroicons/react/24/outline';
 import { Alert } from './DaisyUI/Alert';
 import Badge from './DaisyUI/Badge';
@@ -8,6 +8,8 @@ import Card from './DaisyUI/Card';
 import { ConfirmModal } from './DaisyUI/Modal';
 import Input from './DaisyUI/Input';
 import Select from './DaisyUI/Select';
+import { useConfigDiff } from '../hooks/useConfigDiff';
+import { ConfigDiffConfirmDialog } from './ConfigDiffViewer';
 
 interface ToolUsageGuard {
   id: string;
@@ -38,6 +40,16 @@ const ToolUsageGuardsConfig: React.FC = () => {
       ownerOnly: false,
     },
   });
+  const [showDiffConfirm, setShowDiffConfirm] = useState(false);
+
+  const formDataAsRecord = useMemo(() => formData as unknown as Record<string, unknown>, [formData]);
+  const { hasChanges, diff, setOriginalConfig, resetToOriginal } = useConfigDiff(formDataAsRecord);
+
+  const handleUndoAll = () => {
+    const original = resetToOriginal();
+    setFormData(original as Partial<ToolUsageGuard>);
+  };
+
   const [toast, setToast] = useState<{ show: boolean; message: string; type: 'success' | 'error' }>(
     {
       show: false,
@@ -91,6 +103,16 @@ const ToolUsageGuardsConfig: React.FC = () => {
       }
     );
     setOpenDialog(true);
+    // Snapshot original for diff tracking
+    setTimeout(() => {
+      const snapshot = guard || {
+        name: '',
+        toolName: '',
+        guardType: 'owner',
+        config: { allowedUsers: [], allowedRoles: [], ownerOnly: false },
+      };
+      setOriginalConfig(snapshot as unknown as Record<string, unknown>);
+    }, 0);
   };
 
   const handleCloseDialog = () => {
@@ -286,7 +308,13 @@ const ToolUsageGuardsConfig: React.FC = () => {
         open={openDialog}
         title={editingGuard ? 'Edit Tool Usage Guard' : 'Add New Tool Usage Guard'}
         onClose={handleCloseDialog}
-        onSubmit={handleSaveGuard}
+        onSubmit={() => {
+          if (editingGuard && hasChanges) {
+            setShowDiffConfirm(true);
+          } else {
+            handleSaveGuard();
+          }
+        }}
         submitLabel={editingGuard ? 'Update' : 'Create'}
       >
         <div className="space-y-4">
@@ -395,6 +423,14 @@ const ToolUsageGuardsConfig: React.FC = () => {
           </div>
         </div>
       )}
+
+      <ConfigDiffConfirmDialog
+        isOpen={showDiffConfirm}
+        diff={diff}
+        onConfirm={() => { setShowDiffConfirm(false); handleSaveGuard(); }}
+        onCancel={() => setShowDiffConfirm(false)}
+        title="Confirm Guard Changes"
+      />
 
       <ConfirmModal
         isOpen={confirmModal.isOpen}

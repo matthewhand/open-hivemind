@@ -1,9 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     X, Save, MessageSquare, Cpu, Info, Edit2, Plus,
     Trash2, Copy, Shield, Eye, Settings
 } from 'lucide-react';
 import { Bot as ApiBot, Persona as ApiPersona } from '../services/api';
+import { useConfigDiff } from '../hooks/useConfigDiff';
+import { ConfigDiffConfirmDialog } from './ConfigDiffViewer';
 
 // Extended Bot type with UI-specific fields
 interface BotConfig extends ApiBot {
@@ -47,6 +49,36 @@ export const BotSettingsModal: React.FC<BotSettingsModalProps> = ({
     onDelete,
     onViewDetails
 }) => {
+    const botConfig = {
+        messageProvider: (bot as any).messageProvider || bot.provider || '',
+        llmProvider: bot.llmProvider || '',
+        persona: bot.persona || '',
+    } as Record<string, unknown>;
+
+    const { hasChanges, diff, setOriginalConfig } = useConfigDiff(botConfig);
+    const [showDiffConfirm, setShowDiffConfirm] = useState(false);
+    const [pendingChange, setPendingChange] = useState<{ key: string; value: any } | null>(null);
+
+    useEffect(() => {
+        if (isOpen) {
+            setOriginalConfig(botConfig);
+        }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [isOpen]);
+
+    const handleConfigChangeWithConfirm = (key: string, value: any) => {
+        setPendingChange({ key, value });
+        setShowDiffConfirm(true);
+    };
+
+    const handleConfirmChange = async () => {
+        if (pendingChange) {
+            await onUpdateConfig(bot, pendingChange.key, pendingChange.value);
+        }
+        setShowDiffConfirm(false);
+        setPendingChange(null);
+    };
+
     if (!isOpen) return null;
 
     const isEnvProtected = bot.envOverrides && Object.keys(bot.envOverrides).length > 0;
@@ -261,8 +293,26 @@ export const BotSettingsModal: React.FC<BotSettingsModalProps> = ({
                 </div>
 
                 <div className="modal-action">
+                    {hasChanges && (
+                        <div className="mr-auto flex items-center gap-2">
+                            <span className="badge badge-warning badge-sm">{diff.length} unsaved change{diff.length !== 1 ? 's' : ''}</span>
+                        </div>
+                    )}
                     <button className="btn" onClick={onClose}>Close</button>
                 </div>
+
+                <ConfigDiffConfirmDialog
+                    isOpen={showDiffConfirm}
+                    diff={pendingChange ? [{
+                        path: pendingChange.key,
+                        type: 'changed',
+                        oldValue: botConfig[pendingChange.key],
+                        newValue: pendingChange.value,
+                    }] : diff}
+                    onConfirm={handleConfirmChange}
+                    onCancel={() => { setShowDiffConfirm(false); setPendingChange(null); }}
+                    title="Confirm Configuration Change"
+                />
             </div>
             <form method="dialog" className="modal-backdrop">
                 <button onClick={onClose}>close</button>
