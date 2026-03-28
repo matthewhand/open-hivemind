@@ -85,20 +85,7 @@ const ChatPage: React.FC = () => {
     }
   };
 
-  useEffect(() => {
-    fetchBots();
-    fetchLlmProviders();
-  }, [fetchLlmProviders]);
-
-  useEffect(() => {
-    if (selectedBotId) {
-      fetchHistory(selectedBotId);
-    } else {
-      setMessages([]);
-    }
-  }, [selectedBotId]);
-
-  const fetchBots = async () => {
+  const fetchBots = useCallback(async () => {
     try {
       setLoading(true);
       const data = await apiService.getBots();
@@ -108,9 +95,9 @@ const ChatPage: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const fetchHistory = async (botId: string) => {
+  const fetchHistory = useCallback(async (botId: string) => {
     try {
       setHistoryLoading(true);
       const history = await apiService.getBotHistory(botId, 50);
@@ -137,7 +124,20 @@ const ChatPage: React.FC = () => {
     } finally {
       setHistoryLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    fetchBots();
+    fetchLlmProviders();
+  }, [fetchBots, fetchLlmProviders]);
+
+  useEffect(() => {
+    if (selectedBotId) {
+      fetchHistory(selectedBotId);
+    } else {
+      setMessages([]);
+    }
+  }, [selectedBotId, fetchHistory]);
 
   const handleRefresh = () => {
     if (selectedBotId) {

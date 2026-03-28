@@ -17,7 +17,8 @@ const MonitoringDashboard: React.FC = () => {
     return () => {
       disconnect();
     };
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [connect, disconnect]);
 
   const currentMetric = performanceMetrics[performanceMetrics.length - 1] || {
     cpuUsage: 0,

@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Breadcrumbs from '../components/DaisyUI/Breadcrumbs';
 import EmptyState from '../components/DaisyUI/EmptyState';
@@ -34,7 +34,7 @@ const BotTemplatesPage: React.FC = () => {
     { label: 'Templates', href: '/admin/bots/templates', isActive: true },
   ];
 
-  const fetchTemplates = async () => {
+  const fetchTemplates = useCallback(async () => {
     try {
       const res = await fetch('/api/bot-config/templates');
       if (res.ok) {
@@ -60,11 +60,11 @@ const BotTemplatesPage: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchTemplates();
-  }, []);
+  }, [fetchTemplates]);
 
   const handleUseTemplate = (template: BotTemplate) => {
     // In real app, this would pre-populate the create form

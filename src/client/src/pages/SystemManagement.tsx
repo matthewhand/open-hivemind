@@ -88,38 +88,16 @@ const SystemManagement: React.FC = () => {
   const [isPerformanceLoading, setIsPerformanceLoading] = useState(false);
 
 
-  useEffect(() => {
-    fetchSystemConfig();
-    fetchBackupHistory();
-  }, []);
-
-
-  // Performance monitoring polling
-  useEffect(() => {
-    if (activeTab === 'performance') {
-      fetchApiStatus();
-      const interval = setInterval(fetchApiStatus, 10000); // Refresh every 10s
-      return () => clearInterval(interval);
-    }
-  }, [activeTab]);
-
-  const fetchApiStatus = async () => {
+  const fetchApiStatus = useCallback(async () => {
     try {
       const status = await apiService.getApiEndpointsStatus();
       setApiStatus(status);
     } catch (error) {
       console.error('Failed to fetch API status:', error);
     }
-  };
+  }, []);
 
-
-  useEffect(() => {
-    if (activeTab === 'performance') {
-      fetchPerformanceData();
-    }
-  }, [activeTab]);
-
-  const fetchPerformanceData = async () => {
+  const fetchPerformanceData = useCallback(async () => {
     setIsPerformanceLoading(true);
     try {
       const [infoResult, overridesResult] = await Promise.allSettled([
@@ -135,11 +113,10 @@ const SystemManagement: React.FC = () => {
       console.error('Failed to fetch performance data:', error);
     } finally {
       setIsPerformanceLoading(false);
-
     }
-  };
+  }, []);
 
-  const fetchSystemConfig = async () => {
+  const fetchSystemConfig = useCallback(async () => {
     try {
       const globalConfig = await apiService.getGlobalConfig();
       const userSettings = globalConfig._userSettings?.values || {};
@@ -157,9 +134,9 @@ const SystemManagement: React.FC = () => {
     } catch (error) {
       console.error('Failed to fetch system config:', error);
     }
-  };
+  }, []);
 
-  const fetchBackupHistory = async () => {
+  const fetchBackupHistory = useCallback(async () => {
     try {
       const backupList = await apiService.listSystemBackups();
       // Map API response to local interface
@@ -177,7 +154,27 @@ const SystemManagement: React.FC = () => {
     } catch (error) {
       console.error('Failed to fetch backup history:', error);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    fetchSystemConfig();
+    fetchBackupHistory();
+  }, [fetchSystemConfig, fetchBackupHistory]);
+
+  // Performance monitoring polling
+  useEffect(() => {
+    if (activeTab === 'performance') {
+      fetchApiStatus();
+      const interval = setInterval(fetchApiStatus, 10000); // Refresh every 10s
+      return () => clearInterval(interval);
+    }
+  }, [activeTab, fetchApiStatus]);
+
+  useEffect(() => {
+    if (activeTab === 'performance') {
+      fetchPerformanceData();
+    }
+  }, [activeTab, fetchPerformanceData]);
 
   const handleConfigUpdate = async (key: keyof SystemConfig, value: any) => {
     setIsLoading(true);

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   ExternalLink,
   Download,
@@ -40,7 +40,7 @@ const SitemapPage: React.FC = () => {
     { label: 'Sitemap', href: '/admin/sitemap', isActive: true },
   ];
 
-  const fetchSitemap = async () => {
+  const fetchSitemap = useCallback(async () => {
     setLoading(true);
     setError(null);
 
@@ -59,11 +59,11 @@ const SitemapPage: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [accessFilter]);
 
   useEffect(() => {
     fetchSitemap();
-  }, [accessFilter]);
+  }, [fetchSitemap]);
 
   const getAccessColor = (access: string) => {
     switch (access) {
