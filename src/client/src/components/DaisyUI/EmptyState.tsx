@@ -3,7 +3,7 @@ import type { LucideIcon } from 'lucide-react';
 import Button from './Button';
 
 interface EmptyStateProps {
-  icon: React.ReactNode | React.ElementType;
+  icon: LucideIcon;
   title: string;
   description: string;
   actionLabel?: string | React.ReactNode;
@@ -112,7 +112,7 @@ const EmptyState: React.FC<EmptyStateProps> = ({
             shadow-lg shadow-current/5
           `}
         >
-          {React.isValidElement(Icon) ? Icon : React.createElement(Icon as any, { className: "w-12 h-12", strokeWidth: 1.5 })}
+          <Icon className="w-12 h-12" strokeWidth={1.5} />
         </div>
 
         <h3 className="text-xl font-semibold mb-2 text-base-content">

@@ -2,7 +2,6 @@ import crypto from 'crypto';
 import bcrypt from 'bcrypt';
 import Debug from 'debug';
 import jwt from 'jsonwebtoken';
-import type { SecureConfig } from '@src/types/config';
 import { AuthenticationError, ValidationError } from '@src/types/errorClasses';
 import { SecureConfigManager } from '@config/SecureConfigManager';
 import type { AuthToken, LoginCredentials, RegisterData, User, UserRole } from './types';
@@ -78,7 +77,7 @@ export class AuthManager {
           type: 'auth',
           data: { secret },
           createdAt: new Date().toISOString(),
-        } as unknown as SecureConfig)
+        } as any)
         .catch((err) => {
           debug(`Failed to store ${prefix} secret securely:`, err);
         });
@@ -112,15 +111,10 @@ export class AuthManager {
     if (!password) {
       password = crypto.randomBytes(16).toString('hex');
       this.generatedPassword = password;
-      // eslint-disable-next-line no-console -- operators must see the generated password on stdout
       console.warn('================================================================');
-      // eslint-disable-next-line no-console
       console.warn('WARNING: No ADMIN_PASSWORD environment variable found.');
-      // eslint-disable-next-line no-console
       console.warn(`Generated temporary admin password: ${password}`);
-      // eslint-disable-next-line no-console
       console.warn('Please change this password immediately or set ADMIN_PASSWORD.');
-      // eslint-disable-next-line no-console
       console.warn('================================================================');
     }
 
@@ -230,11 +224,11 @@ export class AuthManager {
       (u) => u.username === credentials.username && u.isActive
     );
 
-    if (!user || !user.passwordHash) {
+    if (!user) {
       throw new AuthenticationError('Invalid credentials', 'INVALID_CREDENTIALS');
     }
 
-    const isValidPassword = await this.verifyPassword(credentials.password, user.passwordHash);
+    const isValidPassword = await this.verifyPassword(credentials.password, user.passwordHash!);
     if (!isValidPassword) {
       throw new AuthenticationError('Invalid credentials', 'INVALID_CREDENTIALS');
     }
@@ -270,7 +264,7 @@ export class AuthManager {
     }
 
     try {
-      const payload = jwt.verify(refreshToken, this.jwtRefreshSecret) as jwt.JwtPayload;
+      const payload = jwt.verify(refreshToken, this.jwtRefreshSecret) as any;
       const user = this.users.get(payload.userId);
 
       if (!user || !user.isActive) {
@@ -332,13 +326,9 @@ export class AuthManager {
   /**
    * Verify JWT access token
    */
-  public verifyAccessToken(token: string): jwt.JwtPayload {
+  public verifyAccessToken(token: string): any {
     try {
-      const result = jwt.verify(token, this.jwtSecret);
-      if (typeof result === 'string') {
-        throw new Error('Invalid token payload');
-      }
-      return result;
+      return jwt.verify(token, this.jwtSecret);
     } catch {
       throw new Error('Invalid access token');
     }

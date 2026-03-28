@@ -44,8 +44,8 @@ export interface JWTPayload {
 
 export interface AuthMiddlewareRequest<
   Params = Record<string, string>,
-  ResBody = unknown,
-  ReqBody = unknown,
+  ResBody = any,
+  ReqBody = any,
   ReqQuery = Record<string, unknown>,
 > extends Request<Params, ResBody, ReqBody, ReqQuery> {
   user?: User;

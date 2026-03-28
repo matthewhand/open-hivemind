@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import {
     X, Save, MessageSquare, Cpu, Info, Edit2, Plus,
-    Trash2, Copy, Shield, Eye, Settings, Database
+    Trash2, Copy, Shield, Eye, Settings
 } from 'lucide-react';
 import { Bot as ApiBot, Persona as ApiPersona } from '../services/api';
 
@@ -11,7 +11,6 @@ interface BotConfig extends ApiBot {
     envOverrides?: any;
     provider?: string; // Legacy/Aliased field
     status?: string;
-    memoryProvider?: 'none' | 'memvault' | 'mem0' | 'mem4ai';
 }
 
 // Define LLMProfile locally as it's not exported from API
@@ -19,7 +18,6 @@ interface LLMProfile {
     key: string;
     name: string;
     provider: string;
-    modelType?: string;
 }
 
 interface BotSettingsModalProps {
@@ -204,50 +202,6 @@ export const BotSettingsModal: React.FC<BotSettingsModalProps> = ({
                                                 if (newP) { onUpdatePersona(bot, newP); }
                                             }}>
                                                 <Plus className="w-4 h-4" /> New Persona
-                                            </a>
-                                        </li>
-                                    </ul>
-                                )}
-                            </div>
-                        </div>
-
-                        {/* Memory Provider */}
-                        <div className="form-control w-full">
-                            <label className="label">
-                                <span className="label-text flex items-center gap-2">
-                                    <Database className="w-4 h-4 opacity-70" /> Memory Interface
-                                    {bot.envOverrides?.memoryProvider && (
-                                        <div className="tooltip tooltip-right" data-tip="Locked by environment variable">
-                                            <Shield className="w-3 h-3 text-warning" />
-                                        </div>
-                                    )}
-                                </span>
-                                <span className="label-text-alt opacity-60">Storage backend</span>
-                            </label>
-                            <div className={`dropdown w-full ${bot.envOverrides?.memoryProvider ? 'dropdown-disabled' : ''}`}>
-                                <div tabIndex={0} role="button" className={`btn btn-outline border-base-300 w-full justify-between font-normal ${bot.envOverrides?.memoryProvider ? 'btn-disabled opacity-50' : ''}`}>
-                                    {bot.memoryProvider === 'memvault' ? 'MemVault (pgvector)' : bot.memoryProvider === 'mem0' ? 'Mem0.ai (in-memory)' : bot.memoryProvider === 'mem4ai' ? 'Mem4ai' : 'None (Stateless)'} <Edit2 className="w-4 h-4 opacity-50" />
-                                </div>
-                                {!bot.envOverrides?.memoryProvider && (
-                                    <ul tabIndex={0} className="dropdown-content z-[10] menu p-2 shadow-lg bg-base-200 rounded-box w-full max-h-60 overflow-y-auto">
-                                        <li>
-                                            <a onClick={() => { onUpdateConfig(bot, 'memoryProvider', 'none'); (document.activeElement as HTMLElement)?.blur(); }} className={!bot.memoryProvider || bot.memoryProvider === 'none' ? 'active' : ''}>
-                                                None (Stateless)
-                                            </a>
-                                        </li>
-                                        <li>
-                                            <a onClick={() => { onUpdateConfig(bot, 'memoryProvider', 'memvault'); (document.activeElement as HTMLElement)?.blur(); }} className={bot.memoryProvider === 'memvault' ? 'active' : ''}>
-                                                MemVault (pgvector)
-                                            </a>
-                                        </li>
-                                        <li>
-                                            <a onClick={() => { onUpdateConfig(bot, 'memoryProvider', 'mem0'); (document.activeElement as HTMLElement)?.blur(); }} className={bot.memoryProvider === 'mem0' ? 'active' : ''}>
-                                                Mem0.ai (in-memory test)
-                                            </a>
-                                        </li>
-                                        <li>
-                                            <a onClick={() => { onUpdateConfig(bot, 'memoryProvider', 'mem4ai'); (document.activeElement as HTMLElement)?.blur(); }} className={bot.memoryProvider === 'mem4ai' ? 'active' : ''}>
-                                                Mem4ai
                                             </a>
                                         </li>
                                     </ul>
