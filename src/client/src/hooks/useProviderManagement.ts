@@ -3,7 +3,8 @@ import { useState, useEffect, useCallback } from 'react';
 import { useModal } from './useModal';
 import { useErrorToast } from '../components/DaisyUI/ToastNotification';
 import { apiService } from '../services/api';
-import type { ProfileItem } from '../types/bot';
+import type { ProfileItem, MessageProvider, LLMProvider } from '../types/bot';
+import { MessageProviderType, LLMProviderType } from '../types/bot';
 
 export type { ProfileItem };
 
@@ -42,14 +43,17 @@ export function useProviderManagement({ providerType, profilesPath, onBeforeSave
   }, [openAddModal, providerType]);
 
   const handleEditProfile = useCallback((profile: ProfileItem) => {
-    openEditModal('global', providerType, {
+    const base = {
       id: profile.key,
       name: profile.name,
       type: profile.provider,
-      config: profile.config,
-      ...(providerType === 'llm' ? { modelType: profile.modelType } : {}),
+      config: profile.config || {},
       enabled: true,
-    } as any);
+    };
+    const provider: MessageProvider | LLMProvider = providerType === 'llm'
+      ? { ...base, type: profile.provider as LLMProviderType, modelType: profile.modelType ?? 'chat' }
+      : { ...base, type: profile.provider as MessageProviderType };
+    openEditModal('global', providerType, provider);
   }, [openEditModal, providerType]);
 
   const handleDeleteProfile = useCallback(async (key: string) => {
