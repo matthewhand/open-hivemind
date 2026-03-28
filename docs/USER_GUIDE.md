@@ -19,11 +19,14 @@ Welcome to the Open-Hivemind User Guide. This document provides a detailed walkt
   - [MCP Tools](#mcp-tools)
 - [System](#system)
   - [Settings Overview](#settings-overview)
+  - [Audit & Governance](#audit--governance)
   - [Webhook](#webhook)
   - [Monitoring](#monitoring)
+  - [System Management](#system-management)
   - [Global Defaults](#global-defaults)
   - [Demo Mode](#demo-mode)
 - [AI & Analytics](#ai--analytics)
+  - [Integrations](#integrations)
 - [Developer & Tools](#developer--tools)
 - [Documentation Maintenance](#documentation-maintenance)
 
@@ -67,8 +70,8 @@ Create and manage individual bot instances. Connect your AI assistants to platfo
 ![Bots Page](screenshots/bots-page.png)
 
 *   **Dedicated Create Page**: Access a full-page interface for creating bots at `/admin/bots/create`.
-*   **Search & Filter**: Quickly find bots by searching their names or filtering by their active/inactive status. <!-- screenshot: bot-search-filtered.png -->
 *   **Duplicate Bot**: Quickly clone an existing bot configuration.
+![Duplicate Bot Modal](screenshots/clone-bot-modal.png)
 *   **View Activity**: Monitor real-time logs and message flow for each bot via details modal.
 ![Bot Activity Logs](screenshots/bot-details-modal.png)
 *   **Link Persona / Providers**: Assign specific personalities, LLM providers, and platforms to the bot.
