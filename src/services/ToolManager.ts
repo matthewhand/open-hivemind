@@ -199,7 +199,7 @@ export class ToolManager {
     const names = new Set<string>();
 
     // Direct MCP servers list on the bot config.
-    const mcpServers = (botConfig as any).mcpServers ?? (botConfig as any).MCP_SERVERS;
+    const mcpServers = (botConfig as Record<string, unknown>).mcpServers ?? (botConfig as Record<string, unknown>).MCP_SERVERS;
     if (Array.isArray(mcpServers)) {
       for (const s of mcpServers) {
         if (typeof s === 'object' && s.name) {
@@ -210,7 +210,7 @@ export class ToolManager {
 
     // MCP server profile (a named bundle of servers).
     const profileKey =
-      (botConfig as any).mcpServerProfile ?? (botConfig as any).MCP_SERVER_PROFILE;
+      (botConfig as Record<string, unknown>).mcpServerProfile ?? (botConfig as Record<string, unknown>).MCP_SERVER_PROFILE;
     if (profileKey) {
       const profile = getMcpServerProfileByKey(profileKey);
       if (profile) {

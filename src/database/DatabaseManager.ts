@@ -1059,7 +1059,7 @@ export class DatabaseManager {
 
     try {
       let query = `SELECT * FROM bot_metrics`;
-      const params: any[] = [];
+      const params: (string | number | boolean | null)[] = [];
 
       if (botName) {
         query += ` WHERE botName = ?`;
@@ -1103,8 +1103,8 @@ export class DatabaseManager {
       ]);
 
       const providers: Record<string, number> = {};
-      providerStats.forEach((row: any) => {
-        providers[row.provider] = row.count;
+      providerStats.forEach((row: Record<string, unknown>) => {
+        providers[row.provider as string] = row.count as number;
       });
 
       return {
@@ -1219,7 +1219,7 @@ export class DatabaseManager {
 
       return rows.map((row) => {
         // Hydrate JSON strings into objects if necessary (SQLite strings vs Postgres JSON)
-        const parseIfString = (val: any) => (typeof val === 'string' ? JSON.parse(val) : val);
+        const parseIfString = (val: unknown) => (typeof val === 'string' ? JSON.parse(val) : val);
 
         return {
           id: row.id,
@@ -1259,7 +1259,7 @@ export class DatabaseManager {
       if (!row) return null;
 
       // Hydrate JSON strings into objects if necessary (SQLite strings vs Postgres JSON)
-      const parseIfString = (val: any) => (typeof val === 'string' ? JSON.parse(val) : val);
+      const parseIfString = (val: unknown) => (typeof val === 'string' ? JSON.parse(val) : val);
 
       return {
         id: row.id,
@@ -1787,7 +1787,7 @@ export class DatabaseManager {
 
     try {
       let query = `SELECT * FROM anomalies`;
-      const params: any[] = [];
+      const params: (string | number | boolean | null)[] = [];
 
       if (tenantId) {
         query += ` WHERE tenantId = ?`;
@@ -1825,7 +1825,7 @@ export class DatabaseManager {
 
     try {
       let query = `SELECT * FROM anomalies WHERE resolved = 0`;
-      const params: any[] = [];
+      const params: (string | number | boolean | null)[] = [];
 
       if (tenantId) {
         query += ` AND tenantId = ?`;
@@ -1863,7 +1863,7 @@ export class DatabaseManager {
 
     try {
       let query = `UPDATE anomalies SET resolved = 1 WHERE id = ?`;
-      const params: any[] = [id];
+      const params: (string | number | boolean | null)[] = [id];
 
       if (tenantId) {
         query += ` AND tenantId = ?`;
@@ -2006,7 +2006,7 @@ export class DatabaseManager {
 
     try {
       let query = `SELECT * FROM approval_requests WHERE 1=1`;
-      const params: any[] = [];
+      const params: (string | number | boolean | null)[] = [];
 
       if (resourceType) {
         query += ` AND resourceType = ?`;

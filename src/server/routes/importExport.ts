@@ -1,6 +1,6 @@
 import fs from 'fs/promises';
 import path from 'path';
-import { Router, type Request, type Response } from 'express';
+import { Router, type NextFunction, type Request, type Response } from 'express';
 import { body, param, validationResult } from 'express-validator';
 import { authenticate, requireAdmin } from '../../auth/middleware';
 import type { AuthMiddlewareRequest } from '../../auth/types';
@@ -27,7 +27,7 @@ const upload = multer({
   limits: {
     fileSize: 50 * 1024 * 1024, // 50MB limit
   },
-  fileFilter: (req: any, file: any, cb: any) => {
+  fileFilter: (_req: unknown, file: { originalname: string }, cb: (error: Error | null, acceptFile?: boolean) => void) => {
     const allowedTypes = ['.json', '.yaml', '.yml', '.csv', '.gz', '.enc'];
     const ext = path.extname(file.originalname).toLowerCase();
 
@@ -80,7 +80,7 @@ const validateExportOptions = [
 
   body('encryptionKey')
     .optional()
-    .if((value: any, { req }: any) => req.body.encrypt === true)
+    .if((_value: unknown, { req }: { req: { body?: { encrypt?: boolean } } }) => req.body?.encrypt === true)
     .isLength({ min: 8 })
     .withMessage('Encryption key must be at least 8 characters long'),
 
@@ -138,7 +138,7 @@ const validateBackupCreation = [
 
   body('encryptionKey')
     .optional()
-    .if((value: any, { req }: any) => req.body.encrypt === true)
+    .if((_value: unknown, { req }: { req: { body?: { encrypt?: boolean } } }) => req.body?.encrypt === true)
     .isLength({ min: 8 })
     .withMessage('Encryption key must be at least 8 characters long'),
 ];
@@ -169,7 +169,7 @@ const validateBackupRestore = [
 /**
  * Error handler middleware
  */
-const handleValidationErrors = (req: Request, res: Response, next: any) => {
+const handleValidationErrors = (req: Request, res: Response, next: NextFunction) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
     return res.status(400).json({
@@ -184,7 +184,7 @@ const handleValidationErrors = (req: Request, res: Response, next: any) => {
 /**
  * Error handling for file uploads
  */
-const handleUploadError = (error: any, req: Request, res: Response, next: any) => {
+const handleUploadError = (error: unknown, req: Request, res: Response, next: NextFunction) => {
   if (error instanceof multer.MulterError) {
     if (error.code === 'LIMIT_FILE_SIZE') {
       return res.status(400).json({
@@ -199,7 +199,7 @@ const handleUploadError = (error: any, req: Request, res: Response, next: any) =
   } else if (error) {
     return res.status(400).json({
       success: false,
-      message: error.message,
+      message: error instanceof Error ? error.message : String(error),
     });
   }
   return next();
@@ -247,7 +247,7 @@ router.post(
       return res.status(500).json({
         success: false,
         message: 'Failed to export configurations',
-        error: (error as any).message,
+        error: error instanceof Error ? error.message : String(error),
       });
     }
   }
@@ -308,7 +308,7 @@ router.post(
       return res.status(500).json({
         success: false,
         message: 'Failed to import configurations',
-        error: (error as any).message,
+        error: error instanceof Error ? error.message : String(error),
       });
     }
   }
@@ -364,7 +364,7 @@ router.post(
       return res.status(500).json({
         success: false,
         message: 'Failed to create backup',
-        error: (error as any).message,
+        error: error instanceof Error ? error.message : String(error),
       });
     }
   }
@@ -387,7 +387,7 @@ router.get('/backups', requireAdmin, async (req: AuthMiddlewareRequest, res: Res
     return res.status(500).json({
       success: false,
       message: 'Failed to list backups',
-      error: (error as any).message,
+      error: error instanceof Error ? error.message : String(error),
     });
   }
 });
@@ -438,7 +438,7 @@ router.post(
       return res.status(500).json({
         success: false,
         message: 'Failed to restore from backup',
-        error: (error as any).message,
+        error: error instanceof Error ? error.message : String(error),
       });
     }
   }
@@ -472,7 +472,7 @@ router.delete(
       return res.status(500).json({
         success: false,
         message: 'Failed to delete backup',
-        error: (error as any).message,
+        error: error instanceof Error ? error.message : String(error),
       });
     }
   }
@@ -520,7 +520,7 @@ router.get(
       return res.status(500).json({
         success: false,
         message: 'Failed to download backup',
-        error: (error as any).message,
+        error: error instanceof Error ? error.message : String(error),
       });
     }
   }
@@ -578,7 +578,7 @@ router.post(
       return res.status(500).json({
         success: false,
         message: 'Failed to validate file',
-        error: (error as any).message,
+        error: error instanceof Error ? error.message : String(error),
       });
     }
   }

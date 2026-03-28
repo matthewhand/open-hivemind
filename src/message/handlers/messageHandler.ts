@@ -73,7 +73,7 @@ const historyTuner = AdaptiveHistoryTuner.getInstance();
 export async function handleMessage(
   message: IMessage,
   historyMessages: IMessage[] = [],
-  botConfig: any
+  botConfig: Record<string, unknown>
 ): Promise<string | null> {
   return await PerformanceMonitor.measureAsync(
     async () => {
@@ -165,8 +165,8 @@ export async function handleMessage(
 
         // Delegate platform-specific identity/routing to the integration layer.
         const resolvedAgentContext =
-          typeof (messageProvider as any)?.resolveAgentContext === 'function'
-            ? (messageProvider as any).resolveAgentContext({
+          typeof (messageProvider as Record<string, unknown>)?.resolveAgentContext === 'function'
+            ? (messageProvider as Record<string, unknown>).resolveAgentContext({
                 botConfig,
                 agentDisplayName: activeAgentName,
               })
@@ -240,13 +240,13 @@ export async function handleMessage(
           new Set(
             (resolvedAgentContext?.nameCandidates || [activeAgentName, botConfig?.name])
               .filter(Boolean)
-              .map((v: any) => String(v))
+              .map((v: unknown) => String(v))
           )
         );
 
         const defaultChannelId =
-          typeof (messageProvider as any).getDefaultChannel === 'function'
-            ? (messageProvider as any).getDefaultChannel()
+          typeof (messageProvider as Record<string, unknown>).getDefaultChannel === 'function'
+            ? (messageProvider as Record<string, unknown>).getDefaultChannel()
             : undefined;
 
         const replyDecision = await shouldReplyToMessage(
@@ -277,7 +277,7 @@ export async function handleMessage(
         const channelName = (() => {
           try {
             // Try to get channel name from the original message if Discord
-            const orig = (message as any).getOriginalMessage?.();
+            const orig = (message as unknown as Record<string, unknown>).getOriginalMessage?.();
             if (orig?.channel?.name) {
               return `#${orig.channel.name}`;
             }
@@ -397,11 +397,11 @@ export async function handleMessage(
         // Generate response
         pipelineMetrics.startStage('llm_inference');
         const startTime = Date.now();
-        let llmResponse: any;
+        let llmResponse: { text: string } | null;
 
         if (botConfig.MESSAGE_LLM_DIRECT) {
           llmResponse = await generateChatCompletionDirect(
-            botConfig as any,
+            botConfig as Record<string, unknown>,
             processedMessage,
             trimmedHistory.trimmed,
             systemPrompt
