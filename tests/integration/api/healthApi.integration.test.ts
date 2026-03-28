@@ -7,6 +7,7 @@ import express from 'express';
 import request from 'supertest';
 import { ConfigurationManager } from '../../../src/config/ConfigurationManager';
 import { getWebUIServer } from '../../../src/server/server';
+import { DatabaseManager } from '../../../src/database/DatabaseManager';
 
 describe('Health API Integration Tests', () => {
   afterEach(() => {
@@ -28,6 +29,13 @@ describe('Health API Integration Tests', () => {
     // Initialize configuration
     ConfigurationManager.getInstance();
 
+    // Initialize database
+    const dbManager = DatabaseManager.getInstance({
+      type: 'sqlite',
+      path: ':memory:',
+    });
+    await dbManager.connect();
+
     // Create and start server
     const webUIServer = getWebUIServer(0); // Use random available port
     await webUIServer.start();
@@ -41,6 +49,10 @@ describe('Health API Integration Tests', () => {
     if (server && server.close) {
       await new Promise((resolve) => server.close(resolve));
     }
+
+    // Disconnect database
+    const dbManager = DatabaseManager.getInstance();
+    await dbManager.disconnect();
   });
 
   describe('GET /api/health', () => {
