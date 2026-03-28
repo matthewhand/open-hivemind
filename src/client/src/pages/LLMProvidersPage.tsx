@@ -35,6 +35,7 @@ import type { LLMProviderType } from '../types/bot';
 import { LLM_PROVIDER_CONFIGS } from '../types/bot';
 import ProviderConfigModal from '../components/ProviderConfiguration/ProviderConfigModal';
 import { apiService } from '../services/api';
+import { useApiQuery } from '../hooks/useApiQuery';
 
 type LlmModelType = 'chat' | 'embedding' | 'both';
 
@@ -74,34 +75,63 @@ const LLMProvidersPage: React.FC = () => {
     isOpen: boolean; title: string; message: string; onConfirm: () => void;
   }>({ isOpen: false, title: '', message: '', onConfirm: () => {} });
 
-  const fetchProfiles = useCallback(async () => {
-    try {
-      setLoading(true);
-      const [profilesResult, statusResult, globalResult] = await Promise.allSettled([
-        apiService.get('/api/config/llm-profiles'),
-        apiService.get('/api/config/llm-status'),
-        apiService.get('/api/config/global'),
-      ]);
-      const profilesRes = profilesResult.status === 'fulfilled' ? profilesResult.value : {};
-      const statusRes = statusResult.status === 'fulfilled' ? statusResult.value : {};
-      const globalRes = globalResult.status === 'fulfilled' ? globalResult.value : {};
-      setProfiles((profilesRes as any).llm || (profilesRes as any).profiles?.llm || []);
+  // Cached queries for LLM profiles, status, and global config
+  const {
+    data: profilesRes,
+    loading: profilesLoading,
+    error: profilesError,
+    refetch: refetchProfiles,
+  } = useApiQuery<any>('/api/config/llm-profiles', { ttl: 30_000 });
+
+  const {
+    data: statusRes,
+    loading: statusLoading,
+    refetch: refetchStatus,
+  } = useApiQuery<any>('/api/config/llm-status', { ttl: 30_000 });
+
+  const {
+    data: globalRes,
+    loading: globalLoading,
+    refetch: refetchGlobal,
+  } = useApiQuery<any>('/api/config/global', { ttl: 30_000 });
+
+  // Derive state from cached responses
+  useEffect(() => {
+    if (profilesRes) {
+      setProfiles(profilesRes.llm || profilesRes.profiles?.llm || []);
+    }
+  }, [profilesRes]);
+
+  useEffect(() => {
+    if (statusRes) {
       setDefaultStatus(statusRes);
-      const gs = (globalRes as any)._userSettings?.values || {};
-      const llmValues = (globalRes as any).llm?.values || {};
+      if (statusRes.libraryStatus) setLibraryStatus(statusRes.libraryStatus);
+    }
+  }, [statusRes]);
+
+  useEffect(() => {
+    if (globalRes) {
+      const gs = globalRes._userSettings?.values || {};
+      const llmValues = globalRes.llm?.values || {};
       setWebuiIntelligenceProvider(gs.webuiIntelligenceProvider || '');
       setDefaultChatbotProfile(gs.defaultChatbotProfile || '');
       setDefaultEmbeddingProvider(llmValues.DEFAULT_EMBEDDING_PROVIDER || gs.defaultEmbeddingProfile || '');
       setPerUseCaseEnabled(!!gs.perUseCaseEnabled);
-      if ((statusRes as any).libraryStatus) setLibraryStatus((statusRes as any).libraryStatus);
-    } catch (err: any) {
-      setError(err.message || 'Failed to load configuration');
-    } finally {
-      setLoading(false);
     }
-  }, []);
+  }, [globalRes]);
 
-  useEffect(() => { fetchProfiles(); }, [fetchProfiles]);
+  // Sync loading/error
+  useEffect(() => {
+    setLoading(profilesLoading || statusLoading || globalLoading);
+  }, [profilesLoading, statusLoading, globalLoading]);
+
+  useEffect(() => {
+    if (profilesError) setError(profilesError.message);
+  }, [profilesError]);
+
+  const fetchProfiles = useCallback(async () => {
+    await Promise.all([refetchProfiles(), refetchStatus(), refetchGlobal()]);
+  }, [refetchProfiles, refetchStatus, refetchGlobal]);
 
   const saveGlobal = async (patch: Record<string, any>) => {
     await apiService.put('/api/config/global', patch);

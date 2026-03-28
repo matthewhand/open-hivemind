@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { apiService } from '../services/api';
+import { useApiQuery } from '../hooks/useApiQuery';
 import ChatInterface, { ChatMessage } from '../components/DaisyUI/Chat';
 import { BotAvatar } from '../components/BotAvatar';
 import { RefreshCw, MessageSquare, Cpu, Check, ChevronDown, Menu as MenuIcon, X } from 'lucide-react';
@@ -85,17 +86,24 @@ const ChatPage: React.FC = () => {
     }
   };
 
+  // Fetch bots via cache layer
+  const {
+    data: botsData,
+    loading: botsLoading,
+    refetch: refetchBots,
+  } = useApiQuery<BotData[]>('/api/bots', { ttl: 30_000 });
+
+  useEffect(() => {
+    if (botsData) setBots(Array.isArray(botsData) ? botsData : []);
+  }, [botsData]);
+
+  useEffect(() => {
+    setLoading(botsLoading);
+  }, [botsLoading]);
+
   const fetchBots = useCallback(async () => {
-    try {
-      setLoading(true);
-      const data = await apiService.getBots();
-      setBots(data);
-    } catch (err) {
-      console.error('Failed to fetch bots:', err);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+    await refetchBots();
+  }, [refetchBots]);
 
   const fetchHistory = useCallback(async (botId: string) => {
     try {

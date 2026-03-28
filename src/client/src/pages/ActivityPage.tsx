@@ -17,6 +17,7 @@ import EmptyState from '../components/DaisyUI/EmptyState';
 import Input from '../components/DaisyUI/Input';
 import SearchFilterBar from '../components/SearchFilterBar';
 import { apiService, ActivityEvent, ActivityResponse } from '../services/api';
+import { useApiQuery } from '../hooks/useApiQuery';
 
 const ActivityPage: React.FC = () => {
   const [data, setData] = useState<ActivityResponse | null>(null);
@@ -41,55 +42,56 @@ const ActivityPage: React.FC = () => {
   const [maxRetries, setMaxRetries] = useState(3);
   const [retryDelay, setRetryDelay] = useState(1000); // 1 second initial delay
 
-  /**
-   * Fetch activity data with exponential backoff retry logic
-   * - Retries up to 3 times for network/timeout errors
-   * - Uses exponential backoff (1s, 2s, 4s delays)
-   * - Resets retry state on success
-   */
+  // Build activity endpoint URL from filter state
+  const activityUrl = useMemo(() => {
+    const query = new URLSearchParams();
+    if (selectedBot !== 'all') query.append('bot', selectedBot);
+    if (selectedProvider !== 'all') query.append('messageProvider', selectedProvider);
+    if (selectedLlmProvider !== 'all') query.append('llmProvider', selectedLlmProvider);
+    if (startDate) query.append('from', new Date(startDate).toISOString());
+    if (endDate) query.append('to', new Date(endDate).toISOString());
+    const search = query.toString();
+    return `/api/dashboard/api/activity${search ? `?${search}` : ''}`;
+  }, [selectedBot, selectedProvider, selectedLlmProvider, startDate, endDate]);
 
-  const fetchActivity = useCallback(async () => {
-    // Don't set loading on auto-refresh to avoid flickering
-    if (!autoRefresh) setLoading(true);
-    setError(null);
-    setRetryCount(0); // Reset before attempt
+  // Use cached query with optional polling
+  const {
+    data: activityResult,
+    loading: activityLoading,
+    error: activityError,
+    refetch: refetchActivity,
+  } = useApiQuery<ActivityResponse>(activityUrl, {
+    ttl: 15_000,
+    pollInterval: autoRefresh ? 5000 : undefined,
+  });
 
-    const params: any = {};
-    if (selectedBot !== 'all') params.bot = selectedBot;
-    if (selectedProvider !== 'all') params.messageProvider = selectedProvider;
-    if (selectedLlmProvider !== 'all') params.llmProvider = selectedLlmProvider;
-    if (startDate) params.from = new Date(startDate).toISOString();
-    if (endDate) params.to = new Date(endDate).toISOString();
-
-    try {
-      const result = await withRetry(
-        () => apiService.getActivity(params),
-        maxRetries,
-        1000,
-        (err, attempt, max) => {
-           logger.debug(`Retrying fetchActivity in ${1000 * Math.pow(1.5, attempt - 1)}ms (attempt ${attempt}/${max})`);
-           setRetryCount(attempt);
-        }
-      );
-
-      setData(result);
-      if (result.filters) {
-        setAvailableFilters(prev => prev || result.filters);
+  // Sync into local state
+  useEffect(() => {
+    if (activityResult) {
+      setData(activityResult);
+      if (activityResult.filters) {
+        setAvailableFilters(prev => prev || activityResult.filters);
       }
       setRetryCount(0);
       setRetryDelay(1000);
-    } catch (err: any) {
-      const message = err instanceof Error ? err.message : 'Failed to fetch activity';
-      setError(message);
-      console.error('Error fetching activity:', err);
-    } finally {
-      setLoading(false);
     }
-  }, [selectedBot, selectedProvider, selectedLlmProvider, startDate, endDate, autoRefresh, maxRetries]);
+  }, [activityResult]);
 
   useEffect(() => {
-    fetchActivity();
-  }, [fetchActivity]); // fetchActivity depends on filters, so this runs when filters change
+    if (!autoRefresh) setLoading(activityLoading);
+  }, [activityLoading, autoRefresh]);
+
+  useEffect(() => {
+    if (activityError) {
+      setError(activityError.message);
+    } else {
+      setError(null);
+    }
+  }, [activityError]);
+
+  const fetchActivity = useCallback(async () => {
+    await refetchActivity();
+  }, [refetchActivity]);
 
   const handleClearFilters = () => {
     setSearchQuery('');
