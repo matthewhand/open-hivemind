@@ -758,6 +758,8 @@ const UnifiedDashboard: React.FC = () => {
         size="lg"
       >
         <CreateBotWizard
+          isOpen={isCreateModalOpen}
+          onClose={() => setIsCreateModalOpen(false)}
           onCancel={() => setIsCreateModalOpen(false)}
           onSuccess={async () => {
             setIsCreateModalOpen(false);

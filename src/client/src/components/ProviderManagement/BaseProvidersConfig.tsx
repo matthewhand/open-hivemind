@@ -28,9 +28,8 @@ import { Alert } from '../DaisyUI/Alert';
 import Badge from '../DaisyUI/Badge';
 import Button from '../DaisyUI/Button';
 import Card from '../DaisyUI/Card';
-import { ConfirmModal } from '../DaisyUI/Modal';
+import Modal, { ConfirmModal } from '../DaisyUI/Modal';
 import Input from '../DaisyUI/Input';
-import ModalForm from '../DaisyUI/ModalForm';
 import Select from '../DaisyUI/Select';
 import ProviderConfig from '../ProviderConfig';
 
@@ -410,28 +409,26 @@ const BaseProvidersConfig: React.FC<BaseProvidersConfigProps> = ({
         </DndContext>
       )}
 
-      <ModalForm
-        open={openDialog}
-        title={
-          <div className="flex justify-between items-center w-full pr-8">
-            <span>{editingProvider ? 'Edit Provider' : 'Add New Provider'}</span>
-            {activeProviderDocs && (
-              <a
-                href={activeProviderDocs}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-sm font-normal text-primary hover:underline flex items-center gap-1"
-              >
-                Help & Guides <ArrowTopRightOnSquareIcon className="w-4 h-4" />
-              </a>
-            )}
-          </div>
-        }
+      <Modal
+        isOpen={openDialog}
+        title={editingProvider ? 'Edit Provider' : 'Add New Provider'}
         onClose={handleCloseDialog}
-        onSubmit={handleSaveProvider}
-        submitLabel={editingProvider ? 'Update' : 'Create'}
+        actions={[
+          { label: 'Cancel', onClick: handleCloseDialog, variant: 'ghost' },
+          { label: editingProvider ? 'Update' : 'Create', onClick: handleSaveProvider, variant: 'primary' },
+        ]}
       >
         <div className="space-y-4">
+          {activeProviderDocs && (
+            <a
+              href={activeProviderDocs}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-sm font-normal text-primary hover:underline flex items-center gap-1"
+            >
+              Help & Guides <ArrowTopRightOnSquareIcon className="w-4 h-4" />
+            </a>
+          )}
           <Input
             label="Provider Name"
             value={formData.name || editingProvider?.name || ''}
@@ -479,7 +476,7 @@ const BaseProvidersConfig: React.FC<BaseProvidersConfigProps> = ({
             </div>
           )}
         </div>
-      </ModalForm>
+      </Modal>
 
       {toast.show && (
         <div className="toast toast-bottom toast-center z-50" role="status" aria-live="polite">

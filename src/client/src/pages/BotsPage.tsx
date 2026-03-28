@@ -19,7 +19,7 @@ import { LoadingSpinner } from '../components/DaisyUI/Loading';
 import { apiService } from '../services/api';
 import { withRetry } from '../utils/withRetry';
 import { ErrorService } from '../services/ErrorService';
-import type { BotConfig, ProviderModalState } from '../types/bot';
+import type { BotConfig } from '../types/bot';
 import BotCard from '../components/BotManagement/BotCard';
 import { CreateBotWizard } from '../components/BotManagement/CreateBotWizard';
 import { BotSettingsModal } from '../components/BotSettingsModal';
@@ -613,9 +613,26 @@ const BotsPage: React.FC = () => {
       {editingBot && (
         <BotSettingsModal
           isOpen={!!editingBot}
-          bot={editingBot}
+          bot={editingBot as any}
           onClose={() => setEditingBot(null)}
-          onUpdate={handleUpdateBot}
+          personas={personas}
+          llmProfiles={llmProfiles}
+          integrationOptions={{ message: getIntegrationOptions('message') }}
+          onUpdateConfig={async (bot, key, value) => {
+            await handleUpdateBot({ ...bot, [key]: value });
+          }}
+          onUpdatePersona={async (bot, personaId) => {
+            await handleUpdateBot({ ...bot, persona: personaId });
+          }}
+          onClone={(bot) => {
+            setEditingBot(null);
+            handleCreateBot({ ...bot, name: `${bot.name}-copy`, id: undefined });
+          }}
+          onDelete={(bot) => {
+            setEditingBot(null);
+            setDeletingBot(bot as any);
+          }}
+          onViewDetails={(bot) => setPreviewBot(bot as any)}
         />
       )}
 
@@ -624,9 +641,9 @@ const BotsPage: React.FC = () => {
         title="Delete Agent"
         message={`Are you sure you want to delete ${deletingBot?.name}? This action cannot be undone.`}
         confirmText="Delete Bot"
-        variant="error"
+        confirmVariant="error"
         onConfirm={handleDeleteBot}
-        onCancel={() => setDeletingBot(null)}
+        onClose={() => setDeletingBot(null)}
       />
     </div>
   );
