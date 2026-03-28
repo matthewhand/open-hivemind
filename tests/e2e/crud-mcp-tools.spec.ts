@@ -97,7 +97,11 @@ test.describe('MCP Tools CRUD Lifecycle', () => {
     result: {
       data: [
         { title: 'Example result 1', url: 'https://example.com/1', snippet: 'First search result' },
-        { title: 'Example result 2', url: 'https://example.com/2', snippet: 'Second search result' },
+        {
+          title: 'Example result 2',
+          url: 'https://example.com/2',
+          snippet: 'Second search result',
+        },
       ],
       totalResults: 2,
     },
@@ -112,7 +116,12 @@ test.describe('MCP Tools CRUD Lifecycle', () => {
       page.route('**/api/config/llm-status', (route) =>
         route.fulfill({
           status: 200,
-          json: { defaultConfigured: true, defaultProviders: [], botsMissingLlmProvider: [], hasMissing: false },
+          json: {
+            defaultConfigured: true,
+            defaultProviders: [],
+            botsMissingLlmProvider: [],
+            hasMissing: false,
+          },
         })
       ),
       page.route('**/api/config/global', (route) => route.fulfill({ status: 200, json: {} })),
@@ -121,14 +130,18 @@ test.describe('MCP Tools CRUD Lifecycle', () => {
       page.route('**/api/csrf-token', (route) =>
         route.fulfill({ status: 200, json: { token: 'mock-csrf-token' } })
       ),
-      page.route('**/api/health', (route) => route.fulfill({ status: 200, json: { status: 'ok' } })),
+      page.route('**/api/health', (route) =>
+        route.fulfill({ status: 200, json: { status: 'ok' } })
+      ),
       page.route('**/api/dashboard/api/status', (route) =>
         route.fulfill({ status: 200, json: { bots: [], uptime: 100 } })
       ),
       page.route('**/api/admin/guard-profiles', (route) =>
         route.fulfill({ status: 200, json: { data: [] } })
       ),
-      page.route('**/api/demo/status', (route) => route.fulfill({ status: 200, json: { active: false } })),
+      page.route('**/api/demo/status', (route) =>
+        route.fulfill({ status: 200, json: { active: false } })
+      ),
     ]);
   }
 
@@ -143,7 +156,6 @@ test.describe('MCP Tools CRUD Lifecycle', () => {
     );
 
     await page.goto('/admin/mcp/tools');
-    await page.waitForTimeout(1000);
 
     await expect(page.getByText('web_search').first()).toBeVisible({ timeout: 5000 });
     await expect(page.getByText('file_read').first()).toBeVisible();
@@ -159,14 +171,19 @@ test.describe('MCP Tools CRUD Lifecycle', () => {
     await page.goto('/admin/mcp/tools');
     await expect(page.getByText('web_search').first()).toBeVisible({ timeout: 5000 });
 
-    const searchInput = page.locator('input[placeholder*="search" i], input[placeholder*="filter" i], input[type="search"]').first();
-    if ((await searchInput.count()) > 0) {
+    const searchInput = page
+      .locator(
+        'input[placeholder*="search" i], input[placeholder*="filter" i], input[type="search"]'
+      )
+      .first();
+    await searchInput.waitFor({ state: 'visible', timeout: 5000 }).catch(() => null);
+    if (await searchInput.isVisible()) {
       await searchInput.fill('email');
-      await page.waitForTimeout(300);
 
       // send_email should still be visible
       const emailTool = page.getByText('send_email').first();
-      if ((await emailTool.count()) > 0) {
+      await emailTool.waitFor({ state: 'visible', timeout: 5000 }).catch(() => null);
+      if (await emailTool.isVisible()) {
         await expect(emailTool).toBeVisible();
       }
     }
@@ -180,10 +197,14 @@ test.describe('MCP Tools CRUD Lifecycle', () => {
     await page.goto('/admin/mcp/tools');
     await expect(page.getByText('web_search').first()).toBeVisible({ timeout: 5000 });
 
-    const categoryFilter = page.locator('select:has(option:has-text("Search")), select:has(option:has-text("Category")), select[id*="category" i]').first();
-    if ((await categoryFilter.count()) > 0) {
+    const categoryFilter = page
+      .locator(
+        'select:has(option:has-text("Search")), select:has(option:has-text("Category")), select[id*="category" i]'
+      )
+      .first();
+    await categoryFilter.waitFor({ state: 'visible', timeout: 5000 }).catch(() => null);
+    if (await categoryFilter.isVisible()) {
       await categoryFilter.selectOption({ label: 'Search' });
-      await page.waitForTimeout(300);
     }
   });
 
@@ -195,10 +216,14 @@ test.describe('MCP Tools CRUD Lifecycle', () => {
     await page.goto('/admin/mcp/tools');
     await expect(page.getByText('web_search').first()).toBeVisible({ timeout: 5000 });
 
-    const serverFilter = page.locator('select:has(option:has-text("Production MCP")), select:has(option:has-text("Server")), select[id*="server" i]').first();
-    if ((await serverFilter.count()) > 0) {
+    const serverFilter = page
+      .locator(
+        'select:has(option:has-text("Production MCP")), select:has(option:has-text("Server")), select[id*="server" i]'
+      )
+      .first();
+    await serverFilter.waitFor({ state: 'visible', timeout: 5000 }).catch(() => null);
+    if (await serverFilter.isVisible()) {
       await serverFilter.selectOption({ label: 'Staging MCP' });
-      await page.waitForTimeout(300);
     }
   });
 
@@ -212,11 +237,14 @@ test.describe('MCP Tools CRUD Lifecycle', () => {
 
     // Find toggle for a specific tool (send_email which is disabled via connected=false on Staging MCP)
     const toolCard = page.locator('.card').filter({ hasText: 'send_email' }).first();
-    if ((await toolCard.count()) > 0) {
-      const toggleBtn = toolCard.locator('button:has-text("Enable"), button:has-text("Disable")').first();
-      if ((await toggleBtn.count()) > 0) {
+    await toolCard.waitFor({ state: 'visible', timeout: 5000 }).catch(() => null);
+    if (await toolCard.isVisible()) {
+      const toggleBtn = toolCard
+        .locator('button:has-text("Enable"), button:has-text("Disable")')
+        .first();
+      await toggleBtn.waitFor({ state: 'visible', timeout: 5000 }).catch(() => null);
+      if (await toggleBtn.isVisible()) {
         await toggleBtn.click();
-        await page.waitForTimeout(300);
       }
     }
   });
@@ -231,14 +259,18 @@ test.describe('MCP Tools CRUD Lifecycle', () => {
 
     // Click run/execute button on web_search tool
     const toolCard = page.locator('.card').filter({ hasText: 'web_search' }).first();
-    if ((await toolCard.count()) > 0) {
+    await toolCard.waitFor({ state: 'visible', timeout: 5000 }).catch(() => null);
+    if (await toolCard.isVisible()) {
       const runBtn = toolCard.locator('button:has-text("Run Tool")').first();
-      if ((await runBtn.count()) > 0) {
+      await runBtn.waitFor({ state: 'visible', timeout: 5000 }).catch(() => null);
+      if (await runBtn.isVisible()) {
         await runBtn.click();
-        await page.waitForTimeout(500);
 
-        const modal = page.locator('dialog.modal[open] .modal-box, .modal-box, [role="dialog"]').first();
-        if ((await modal.count()) > 0) {
+        const modal = page
+          .locator('dialog.modal[open] .modal-box, .modal-box, [role="dialog"]')
+          .first();
+        await modal.waitFor({ state: 'visible', timeout: 5000 }).catch(() => null);
+        if (await modal.isVisible()) {
           await expect(modal).toBeVisible();
         }
       }
@@ -260,26 +292,32 @@ test.describe('MCP Tools CRUD Lifecycle', () => {
     await expect(page.getByText('web_search').first()).toBeVisible({ timeout: 5000 });
 
     const toolCard = page.locator('.card').filter({ hasText: 'web_search' }).first();
-    if ((await toolCard.count()) > 0) {
+    await toolCard.waitFor({ state: 'visible', timeout: 5000 }).catch(() => null);
+    if (await toolCard.isVisible()) {
       const runBtn = toolCard.locator('button:has-text("Run Tool")').first();
-      if ((await runBtn.count()) > 0) {
+      await runBtn.waitFor({ state: 'visible', timeout: 5000 }).catch(() => null);
+      if (await runBtn.isVisible()) {
         await runBtn.click();
-        await page.waitForTimeout(500);
 
-        const modal = page.locator('dialog.modal[open] .modal-box, .modal-box, [role="dialog"]').first();
-        if ((await modal.count()) > 0) {
+        const modal = page
+          .locator('dialog.modal[open] .modal-box, .modal-box, [role="dialog"]')
+          .first();
+        await modal.waitFor({ state: 'visible', timeout: 5000 }).catch(() => null);
+        if (await modal.isVisible()) {
           // Find JSON textarea or editor
-          const jsonInput = modal.locator('textarea, [class*="editor"], [contenteditable="true"]').first();
-          if ((await jsonInput.count()) > 0) {
+          const jsonInput = modal
+            .locator('textarea, [class*="editor"], [contenteditable="true"]')
+            .first();
+          await jsonInput.waitFor({ state: 'visible', timeout: 5000 }).catch(() => null);
+          if (await jsonInput.isVisible()) {
             await jsonInput.fill('{"query": "test search", "maxResults": 5}');
-            await page.waitForTimeout(200);
           }
 
           // Click execute
           const executeBtn = modal.locator('button:has-text("Run Tool")').first();
-          if ((await executeBtn.count()) > 0) {
+          await executeBtn.waitFor({ state: 'visible', timeout: 5000 }).catch(() => null);
+          if (await executeBtn.isVisible()) {
             await executeBtn.click();
-            await page.waitForTimeout(500);
           }
         }
       }
@@ -301,33 +339,37 @@ test.describe('MCP Tools CRUD Lifecycle', () => {
     await expect(page.getByText('web_search').first()).toBeVisible({ timeout: 5000 });
 
     const toolCard = page.locator('.card').filter({ hasText: 'web_search' }).first();
-    if ((await toolCard.count()) > 0) {
+    await toolCard.waitFor({ state: 'visible', timeout: 5000 }).catch(() => null);
+    if (await toolCard.isVisible()) {
       const runBtn = toolCard.locator('button:has-text("Run Tool")').first();
-      if ((await runBtn.count()) > 0) {
+      await runBtn.waitFor({ state: 'visible', timeout: 5000 }).catch(() => null);
+      if (await runBtn.isVisible()) {
         await runBtn.click();
-        await page.waitForTimeout(500);
 
-        const modal = page.locator('dialog.modal[open] .modal-box, .modal-box, [role="dialog"]').first();
-        if ((await modal.count()) > 0) {
+        const modal = page
+          .locator('dialog.modal[open] .modal-box, .modal-box, [role="dialog"]')
+          .first();
+        await modal.waitFor({ state: 'visible', timeout: 5000 }).catch(() => null);
+        if (await modal.isVisible()) {
           // Switch to Form mode
           const formModeBtn = modal.locator('button[title="Form Builder"]').first();
-          if ((await formModeBtn.count()) > 0) {
+          await formModeBtn.waitFor({ state: 'visible', timeout: 5000 }).catch(() => null);
+          if (await formModeBtn.isVisible()) {
             await formModeBtn.click();
-            await page.waitForTimeout(300);
           }
 
           // Fill form inputs
           const queryInput = modal.locator('input[placeholder*="Enter query"]').first();
-          if ((await queryInput.count()) > 0) {
+          await queryInput.waitFor({ state: 'visible', timeout: 5000 }).catch(() => null);
+          if (await queryInput.isVisible()) {
             await queryInput.fill('test search query');
-            await page.waitForTimeout(200);
           }
 
           // Click execute
           const executeBtn = modal.locator('button:has-text("Run Tool")').first();
-          if ((await executeBtn.count()) > 0) {
+          await executeBtn.waitFor({ state: 'visible', timeout: 5000 }).catch(() => null);
+          if (await executeBtn.isVisible()) {
             await executeBtn.click();
-            await page.waitForTimeout(500);
           }
         }
       }
@@ -343,32 +385,36 @@ test.describe('MCP Tools CRUD Lifecycle', () => {
     await expect(page.getByText('web_search').first()).toBeVisible({ timeout: 5000 });
 
     const toolCard = page.locator('.card').filter({ hasText: 'web_search' }).first();
-    if ((await toolCard.count()) > 0) {
+    await toolCard.waitFor({ state: 'visible', timeout: 5000 }).catch(() => null);
+    if (await toolCard.isVisible()) {
       const runBtn = toolCard.locator('button:has-text("Run Tool")').first();
-      if ((await runBtn.count()) > 0) {
+      await runBtn.waitFor({ state: 'visible', timeout: 5000 }).catch(() => null);
+      if (await runBtn.isVisible()) {
         await runBtn.click();
-        await page.waitForTimeout(500);
 
-        const modal = page.locator('dialog.modal[open] .modal-box, .modal-box, [role="dialog"]').first();
-        if ((await modal.count()) > 0) {
+        const modal = page
+          .locator('dialog.modal[open] .modal-box, .modal-box, [role="dialog"]')
+          .first();
+        await modal.waitFor({ state: 'visible', timeout: 5000 }).catch(() => null);
+        if (await modal.isVisible()) {
           // Switch to JSON mode
           const jsonModeBtn = modal.locator('button[title="Raw JSON"]').first();
-          if ((await jsonModeBtn.count()) > 0) {
+          await jsonModeBtn.waitFor({ state: 'visible', timeout: 5000 }).catch(() => null);
+          if (await jsonModeBtn.isVisible()) {
             await jsonModeBtn.click();
-            await page.waitForTimeout(300);
           }
 
           // Switch to Form mode
           const formModeBtn = modal.locator('button[title="Form Builder"]').first();
-          if ((await formModeBtn.count()) > 0) {
+          await formModeBtn.waitFor({ state: 'visible', timeout: 5000 }).catch(() => null);
+          if (await formModeBtn.isVisible()) {
             await formModeBtn.click();
-            await page.waitForTimeout(300);
           }
 
           // Switch back to JSON mode
-          if ((await jsonModeBtn.count()) > 0) {
+          await jsonModeBtn.waitFor({ state: 'visible', timeout: 5000 }).catch(() => null);
+          if (await jsonModeBtn.isVisible()) {
             await jsonModeBtn.click();
-            await page.waitForTimeout(300);
           }
         }
       }
@@ -389,26 +435,33 @@ test.describe('MCP Tools CRUD Lifecycle', () => {
     await expect(page.getByText('web_search').first()).toBeVisible({ timeout: 5000 });
 
     const toolCard = page.locator('.card').filter({ hasText: 'web_search' }).first();
-    if ((await toolCard.count()) > 0) {
+    await toolCard.waitFor({ state: 'visible', timeout: 5000 }).catch(() => null);
+    if (await toolCard.isVisible()) {
       const runBtn = toolCard.locator('button:has-text("Run Tool")').first();
-      if ((await runBtn.count()) > 0) {
+      await runBtn.waitFor({ state: 'visible', timeout: 5000 }).catch(() => null);
+      if (await runBtn.isVisible()) {
         await runBtn.click();
-        await page.waitForTimeout(500);
 
-        const modal = page.locator('dialog.modal[open] .modal-box, .modal-box, [role="dialog"]').first();
-        if ((await modal.count()) > 0) {
+        const modal = page
+          .locator('dialog.modal[open] .modal-box, .modal-box, [role="dialog"]')
+          .first();
+        await modal.waitFor({ state: 'visible', timeout: 5000 }).catch(() => null);
+        if (await modal.isVisible()) {
           const executeBtn = modal.locator('button:has-text("Run Tool")').first();
-          if ((await executeBtn.count()) > 0) {
+          await executeBtn.waitFor({ state: 'visible', timeout: 5000 }).catch(() => null);
+          if (await executeBtn.isVisible()) {
             await executeBtn.click();
 
             // Check for loading indicator in modal
-            const loading = modal.locator('[class*="loading"], [class*="spinner"], .skeleton, [role="progressbar"]').first();
-            if ((await loading.count()) > 0) {
+            const loading = modal
+              .locator('[class*="loading"], [class*="spinner"], .skeleton, [role="progressbar"]')
+              .first();
+            await loading.waitFor({ state: 'visible', timeout: 5000 }).catch(() => null);
+            if (await loading.isVisible()) {
               await expect(loading).toBeVisible({ timeout: 3000 });
             }
 
             // Wait for result
-            await page.waitForTimeout(3000);
           }
         }
       }
@@ -428,28 +481,39 @@ test.describe('MCP Tools CRUD Lifecycle', () => {
     await expect(page.getByText('web_search').first()).toBeVisible({ timeout: 5000 });
 
     const toolCard = page.locator('.card').filter({ hasText: 'web_search' }).first();
-    if ((await toolCard.count()) > 0) {
+    await toolCard.waitFor({ state: 'visible', timeout: 5000 }).catch(() => null);
+    if (await toolCard.isVisible()) {
       const runBtn = toolCard.locator('button:has-text("Run Tool")').first();
-      if ((await runBtn.count()) > 0) {
+      await runBtn.waitFor({ state: 'visible', timeout: 5000 }).catch(() => null);
+      if (await runBtn.isVisible()) {
         await runBtn.click();
-        await page.waitForTimeout(500);
 
-        const modal = page.locator('dialog.modal[open] .modal-box, .modal-box, [role="dialog"]').first();
-        if ((await modal.count()) > 0) {
+        const modal = page
+          .locator('dialog.modal[open] .modal-box, .modal-box, [role="dialog"]')
+          .first();
+        await modal.waitFor({ state: 'visible', timeout: 5000 }).catch(() => null);
+        if (await modal.isVisible()) {
           const executeBtn = modal.locator('button:has-text("Run Tool")').first();
-          if ((await executeBtn.count()) > 0) {
+          await executeBtn.waitFor({ state: 'visible', timeout: 5000 }).catch(() => null);
+          if (await executeBtn.isVisible()) {
             await executeBtn.click();
-            await page.waitForTimeout(500);
 
             // Check for result output area
-            const resultArea = modal.locator('pre, code, [class*="result"], [class*="output"], textarea[readonly]').first();
-            if ((await resultArea.count()) > 0) {
+            const resultArea = modal
+              .locator('pre, code, [class*="result"], [class*="output"], textarea[readonly]')
+              .first();
+            await resultArea.waitFor({ state: 'visible', timeout: 5000 }).catch(() => null);
+            if (await resultArea.isVisible()) {
               await expect(resultArea).toBeVisible();
             }
 
             // Check for execution time display
-            const execTime = page.getByText('245').or(page.getByText(/245\s*ms/)).first();
-            if ((await execTime.count()) > 0) {
+            const execTime = page
+              .getByText('245')
+              .or(page.getByText(/245\s*ms/))
+              .first();
+            await execTime.waitFor({ state: 'visible', timeout: 5000 }).catch(() => null);
+            if (await execTime.isVisible()) {
               await expect(execTime).toBeVisible();
             }
           }
@@ -464,12 +528,16 @@ test.describe('MCP Tools CRUD Lifecycle', () => {
     );
 
     await page.goto('/admin/mcp/tools');
-    await page.waitForTimeout(1000);
 
     // Should show empty state
     await expect(page.locator('body')).toBeVisible();
-    const emptyText = page.locator('text=/no.*tool/i, text=/no.*available/i, text=/get.*started/i, text=/connect.*server/i').first();
-    if ((await emptyText.count()) > 0) {
+    const emptyText = page
+      .locator(
+        'text=/no.*tool/i, text=/no.*available/i, text=/get.*started/i, text=/connect.*server/i'
+      )
+      .first();
+    await emptyText.waitFor({ state: 'visible', timeout: 5000 }).catch(() => null);
+    if (await emptyText.isVisible()) {
       await expect(emptyText).toBeVisible();
     }
   });
@@ -483,38 +551,45 @@ test.describe('MCP Tools CRUD Lifecycle', () => {
     await expect(page.getByText('web_search').first()).toBeVisible({ timeout: 5000 });
 
     const toolCard = page.locator('.card').filter({ hasText: 'web_search' }).first();
-    if ((await toolCard.count()) > 0) {
+    await toolCard.waitFor({ state: 'visible', timeout: 5000 }).catch(() => null);
+    if (await toolCard.isVisible()) {
       const runBtn = toolCard.locator('button:has-text("Run Tool")').first();
-      if ((await runBtn.count()) > 0) {
+      await runBtn.waitFor({ state: 'visible', timeout: 5000 }).catch(() => null);
+      if (await runBtn.isVisible()) {
         await runBtn.click();
-        await page.waitForTimeout(500);
 
-        const modal = page.locator('dialog.modal[open] .modal-box, .modal-box, [role="dialog"]').first();
-        if ((await modal.count()) > 0) {
+        const modal = page
+          .locator('dialog.modal[open] .modal-box, .modal-box, [role="dialog"]')
+          .first();
+        await modal.waitFor({ state: 'visible', timeout: 5000 }).catch(() => null);
+        if (await modal.isVisible()) {
           // Switch to JSON mode
           const jsonModeBtn = modal.locator('button[title="Raw JSON"]').first();
-          if ((await jsonModeBtn.count()) > 0) {
+          await jsonModeBtn.waitFor({ state: 'visible', timeout: 5000 }).catch(() => null);
+          if (await jsonModeBtn.isVisible()) {
             await jsonModeBtn.click();
-            await page.waitForTimeout(300);
           }
 
           // Enter invalid JSON
-          const jsonInput = modal.locator('textarea, [class*="editor"], [contenteditable="true"]').first();
-          if ((await jsonInput.count()) > 0) {
+          const jsonInput = modal
+            .locator('textarea, [class*="editor"], [contenteditable="true"]')
+            .first();
+          await jsonInput.waitFor({ state: 'visible', timeout: 5000 }).catch(() => null);
+          if (await jsonInput.isVisible()) {
             await jsonInput.fill('{invalid json content missing quotes}');
-            await page.waitForTimeout(200);
           }
 
           // Try to execute
           const executeBtn = modal.locator('button:has-text("Run Tool")').first();
-          if ((await executeBtn.count()) > 0) {
+          await executeBtn.waitFor({ state: 'visible', timeout: 5000 }).catch(() => null);
+          if (await executeBtn.isVisible()) {
             await executeBtn.click();
-            await page.waitForTimeout(500);
           }
 
           // Check for JSON error message (page shows "Invalid JSON format" as label-text-alt text-error)
           const errorMsg = modal.locator('.text-error, [class*="error"]').first();
-          if ((await errorMsg.count()) > 0) {
+          await errorMsg.waitFor({ state: 'visible', timeout: 5000 }).catch(() => null);
+          if (await errorMsg.isVisible()) {
             await expect(errorMsg).toBeVisible();
           }
         }

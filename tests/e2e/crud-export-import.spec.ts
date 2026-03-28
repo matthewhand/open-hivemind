@@ -44,7 +44,12 @@ test.describe('Export/Import CRUD Lifecycle', () => {
       page.route('**/api/config/llm-status', (route) =>
         route.fulfill({
           status: 200,
-          json: { defaultConfigured: true, defaultProviders: [], botsMissingLlmProvider: [], hasMissing: false },
+          json: {
+            defaultConfigured: true,
+            defaultProviders: [],
+            botsMissingLlmProvider: [],
+            hasMissing: false,
+          },
         })
       ),
       page.route('**/api/config/global', (route) => route.fulfill({ status: 200, json: {} })),
@@ -53,14 +58,18 @@ test.describe('Export/Import CRUD Lifecycle', () => {
       page.route('**/api/csrf-token', (route) =>
         route.fulfill({ status: 200, json: { token: 'mock-csrf-token' } })
       ),
-      page.route('**/api/health', (route) => route.fulfill({ status: 200, json: { status: 'ok' } })),
+      page.route('**/api/health', (route) =>
+        route.fulfill({ status: 200, json: { status: 'ok' } })
+      ),
       page.route('**/api/dashboard/api/status', (route) =>
         route.fulfill({ status: 200, json: { bots: [], uptime: 100 } })
       ),
       page.route('**/api/admin/guard-profiles', (route) =>
         route.fulfill({ status: 200, json: { data: [] } })
       ),
-      page.route('**/api/demo/status', (route) => route.fulfill({ status: 200, json: { active: false } })),
+      page.route('**/api/demo/status', (route) =>
+        route.fulfill({ status: 200, json: { active: false } })
+      ),
     ]);
   }
 
@@ -104,7 +113,10 @@ test.describe('Export/Import CRUD Lifecycle', () => {
           createdBy: 'admin',
         };
         backups.push(newBackup);
-        await route.fulfill({ status: 200, json: { success: true, message: 'Backup created successfully' } });
+        await route.fulfill({
+          status: 200,
+          json: { success: true, message: 'Backup created successfully' },
+        });
       } else {
         await route.fulfill({ status: 200, json: {} });
       }
@@ -117,28 +129,36 @@ test.describe('Export/Import CRUD Lifecycle', () => {
     await page.waitForLoadState('domcontentloaded');
 
     const createBtn = page.locator('button:has-text("Create Backup")').first();
-    if ((await createBtn.count()) > 0) {
+    await createBtn.waitFor({ state: 'visible', timeout: 5000 }).catch(() => null);
+    if (await createBtn.isVisible()) {
       await createBtn.click();
-      await page.waitForTimeout(500);
 
-      const modal = page.locator('.modal-box').filter({ hasText: /Create.*Backup/i }).first();
-      if ((await modal.count()) > 0) {
+      const modal = page
+        .locator('.modal-box')
+        .filter({ hasText: /Create.*Backup/i })
+        .first();
+      await modal.waitFor({ state: 'visible', timeout: 5000 }).catch(() => null);
+      if (await modal.isVisible()) {
         await expect(modal).toBeVisible();
 
         const nameInput = modal.getByLabel(/Backup Name/i).or(modal.locator('input').first());
-        if ((await nameInput.count()) > 0) {
+        await nameInput.waitFor({ state: 'visible', timeout: 5000 }).catch(() => null);
+        if (await nameInput.isVisible()) {
           await nameInput.fill('Manual Pre-Release Backup');
         }
 
-        const descInput = modal.getByLabel(/Description/i).or(modal.locator('textarea, input').last());
-        if ((await descInput.count()) > 0) {
+        const descInput = modal
+          .getByLabel(/Description/i)
+          .or(modal.locator('textarea, input').last());
+        await descInput.waitFor({ state: 'visible', timeout: 5000 }).catch(() => null);
+        if (await descInput.isVisible()) {
           await descInput.fill('Backup before v3.1 release');
         }
 
         const submitBtn = modal.locator('button:has-text("Create"), button[type="submit"]').first();
-        if ((await submitBtn.count()) > 0) {
+        await submitBtn.waitFor({ state: 'visible', timeout: 5000 }).catch(() => null);
+        if (await submitBtn.isVisible()) {
           await submitBtn.click();
-          await page.waitForTimeout(500);
         }
       }
     }
@@ -169,14 +189,16 @@ test.describe('Export/Import CRUD Lifecycle', () => {
     await page.waitForLoadState('domcontentloaded');
     await expect(page.getByText('Weekly Backup').first()).toBeVisible();
 
-    const downloadBtn = page.locator('button:has-text("Download"), button[title*="Download"]').first();
-    if ((await downloadBtn.count()) > 0) {
+    const downloadBtn = page
+      .locator('button:has-text("Download"), button[title*="Download"]')
+      .first();
+    await downloadBtn.waitFor({ state: 'visible', timeout: 5000 }).catch(() => null);
+    if (await downloadBtn.isVisible()) {
       const [download] = await Promise.all([
         page.waitForEvent('download').catch(() => null),
         downloadBtn.click(),
       ]);
       // Download may or may not trigger depending on UI implementation
-      await page.waitForTimeout(300);
     }
   });
 
@@ -185,10 +207,16 @@ test.describe('Export/Import CRUD Lifecycle', () => {
       route.fulfill({ status: 200, json: { success: true, data: mockBackups } })
     );
     await page.route('**/api/config/import', async (route) => {
-      await route.fulfill({ status: 200, json: { success: true, message: 'Configuration restored' } });
+      await route.fulfill({
+        status: 200,
+        json: { success: true, message: 'Configuration restored' },
+      });
     });
     await page.route('**/api/import-export/backups/backup-001/restore', async (route) => {
-      await route.fulfill({ status: 200, json: { success: true, message: 'Backup restored successfully' } });
+      await route.fulfill({
+        status: 200,
+        json: { success: true, message: 'Backup restored successfully' },
+      });
     });
     await page.route('**/api/config/export', (route) =>
       route.fulfill({ status: 200, json: { export: 'mock-data' } })
@@ -199,17 +227,20 @@ test.describe('Export/Import CRUD Lifecycle', () => {
     await expect(page.getByText('Weekly Backup').first()).toBeVisible();
 
     const restoreBtn = page.locator('button:has-text("Restore"), button[title*="Restore"]').first();
-    if ((await restoreBtn.count()) > 0) {
+    await restoreBtn.waitFor({ state: 'visible', timeout: 5000 }).catch(() => null);
+    if (await restoreBtn.isVisible()) {
       await restoreBtn.click();
-      await page.waitForTimeout(500);
 
       // Look for confirmation dialog
       const confirmModal = page.locator('.modal-box, [role="dialog"], dialog.modal[open]').first();
-      if ((await confirmModal.count()) > 0) {
-        const confirmBtn = confirmModal.locator('button:has-text("Confirm"), button:has-text("Restore"), button:has-text("Yes")').first();
-        if ((await confirmBtn.count()) > 0) {
+      await confirmModal.waitFor({ state: 'visible', timeout: 5000 }).catch(() => null);
+      if (await confirmModal.isVisible()) {
+        const confirmBtn = confirmModal
+          .locator('button:has-text("Confirm"), button:has-text("Restore"), button:has-text("Yes")')
+          .first();
+        await confirmBtn.waitFor({ state: 'visible', timeout: 5000 }).catch(() => null);
+        if (await confirmBtn.isVisible()) {
           await confirmBtn.click();
-          await page.waitForTimeout(500);
         }
       }
     }
@@ -240,18 +271,26 @@ test.describe('Export/Import CRUD Lifecycle', () => {
     await expect(page.getByText('Post-Migration').first()).toBeVisible();
 
     // Find delete button near Post-Migration row
-    const row = page.locator('tr, .card, [class*="row"]').filter({ hasText: 'Post-Migration' }).first();
-    const deleteBtn = row.locator('button:has-text("Delete"), button[title*="Delete"], button.text-error').first();
-    if ((await deleteBtn.count()) > 0) {
+    const row = page
+      .locator('tr, .card, [class*="row"]')
+      .filter({ hasText: 'Post-Migration' })
+      .first();
+    const deleteBtn = row
+      .locator('button:has-text("Delete"), button[title*="Delete"], button.text-error')
+      .first();
+    await deleteBtn.waitFor({ state: 'visible', timeout: 5000 }).catch(() => null);
+    if (await deleteBtn.isVisible()) {
       await deleteBtn.click();
-      await page.waitForTimeout(500);
 
       const confirmModal = page.locator('.modal-box, [role="dialog"], dialog.modal[open]').first();
-      if ((await confirmModal.count()) > 0) {
-        const confirmBtn = confirmModal.locator('button:has-text("Delete"), button:has-text("Confirm")').first();
-        if ((await confirmBtn.count()) > 0) {
+      await confirmModal.waitFor({ state: 'visible', timeout: 5000 }).catch(() => null);
+      if (await confirmModal.isVisible()) {
+        const confirmBtn = confirmModal
+          .locator('button:has-text("Delete"), button:has-text("Confirm")')
+          .first();
+        await confirmBtn.waitFor({ state: 'visible', timeout: 5000 }).catch(() => null);
+        if (await confirmBtn.isVisible()) {
           await confirmBtn.click();
-          await page.waitForTimeout(500);
         }
       }
     }
@@ -269,10 +308,14 @@ test.describe('Export/Import CRUD Lifecycle', () => {
     await page.waitForLoadState('domcontentloaded');
     await expect(page.getByText('Weekly Backup').first()).toBeVisible();
 
-    const searchInput = page.locator('input[placeholder*="search" i], input[placeholder*="filter" i], input[type="search"]').first();
-    if ((await searchInput.count()) > 0) {
+    const searchInput = page
+      .locator(
+        'input[placeholder*="search" i], input[placeholder*="filter" i], input[type="search"]'
+      )
+      .first();
+    await searchInput.waitFor({ state: 'visible', timeout: 5000 }).catch(() => null);
+    if (await searchInput.isVisible()) {
       await searchInput.fill('Weekly');
-      await page.waitForTimeout(300);
       await expect(page.getByText('Weekly Backup').first()).toBeVisible();
     }
   });
@@ -312,8 +355,11 @@ test.describe('Export/Import CRUD Lifecycle', () => {
 
     // Page should load without errors even with no backups
     await expect(page.locator('body')).toBeVisible();
-    const emptyText = page.locator('text=/no.*backup/i, text=/no.*data/i, text=/empty/i, text=/get.*started/i').first();
-    if ((await emptyText.count()) > 0) {
+    const emptyText = page
+      .locator('text=/no.*backup/i, text=/no.*data/i, text=/empty/i, text=/get.*started/i')
+      .first();
+    await emptyText.waitFor({ state: 'visible', timeout: 5000 }).catch(() => null);
+    if (await emptyText.isVisible()) {
       await expect(emptyText).toBeVisible();
     }
   });
@@ -340,21 +386,26 @@ test.describe('Export/Import CRUD Lifecycle', () => {
     await page.waitForLoadState('domcontentloaded');
 
     const createBtn = page.locator('button:has-text("Create Backup")').first();
-    if ((await createBtn.count()) > 0) {
+    await createBtn.waitFor({ state: 'visible', timeout: 5000 }).catch(() => null);
+    if (await createBtn.isVisible()) {
       await createBtn.click();
-      await page.waitForTimeout(500);
 
-      const modal = page.locator('.modal-box').filter({ hasText: /Create.*Backup/i }).first();
-      if ((await modal.count()) > 0) {
+      const modal = page
+        .locator('.modal-box')
+        .filter({ hasText: /Create.*Backup/i })
+        .first();
+      await modal.waitFor({ state: 'visible', timeout: 5000 }).catch(() => null);
+      if (await modal.isVisible()) {
         const nameInput = modal.getByLabel(/Backup Name/i).or(modal.locator('input').first());
-        if ((await nameInput.count()) > 0) {
+        await nameInput.waitFor({ state: 'visible', timeout: 5000 }).catch(() => null);
+        if (await nameInput.isVisible()) {
           await nameInput.fill('Failing Backup');
         }
 
         const submitBtn = modal.locator('button:has-text("Create"), button[type="submit"]').first();
-        if ((await submitBtn.count()) > 0) {
+        await submitBtn.waitFor({ state: 'visible', timeout: 5000 }).catch(() => null);
+        if (await submitBtn.isVisible()) {
           await submitBtn.click();
-          await page.waitForTimeout(1000);
           // Page should handle the error gracefully
           await expect(page.locator('body')).toBeVisible();
         }

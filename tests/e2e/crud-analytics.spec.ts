@@ -33,10 +33,34 @@ test.describe('Analytics Dashboard CRUD Lifecycle', () => {
       { timestamp: '2026-03-26T05:00:00Z', avgMs: 1250 },
     ],
     botPerformance: [
-      { name: 'SupportBot', messages: 5200, avgResponseTime: 1.2, errorRate: 0.02, status: 'healthy' },
-      { name: 'SalesBot', messages: 3800, avgResponseTime: 1.6, errorRate: 0.05, status: 'healthy' },
-      { name: 'CodingAssistant', messages: 2100, avgResponseTime: 2.1, errorRate: 0.08, status: 'degraded' },
-      { name: 'OnboardingBot', messages: 1443, avgResponseTime: 0.9, errorRate: 0.01, status: 'healthy' },
+      {
+        name: 'SupportBot',
+        messages: 5200,
+        avgResponseTime: 1.2,
+        errorRate: 0.02,
+        status: 'healthy',
+      },
+      {
+        name: 'SalesBot',
+        messages: 3800,
+        avgResponseTime: 1.6,
+        errorRate: 0.05,
+        status: 'healthy',
+      },
+      {
+        name: 'CodingAssistant',
+        messages: 2100,
+        avgResponseTime: 2.1,
+        errorRate: 0.08,
+        status: 'degraded',
+      },
+      {
+        name: 'OnboardingBot',
+        messages: 1443,
+        avgResponseTime: 0.9,
+        errorRate: 0.01,
+        status: 'healthy',
+      },
     ],
     timeRange: '24h',
   };
@@ -69,7 +93,12 @@ test.describe('Analytics Dashboard CRUD Lifecycle', () => {
       page.route('**/api/config/llm-status', (route) =>
         route.fulfill({
           status: 200,
-          json: { defaultConfigured: true, defaultProviders: [], botsMissingLlmProvider: [], hasMissing: false },
+          json: {
+            defaultConfigured: true,
+            defaultProviders: [],
+            botsMissingLlmProvider: [],
+            hasMissing: false,
+          },
         })
       ),
       page.route('**/api/config/global', (route) => route.fulfill({ status: 200, json: {} })),
@@ -78,11 +107,15 @@ test.describe('Analytics Dashboard CRUD Lifecycle', () => {
       page.route('**/api/csrf-token', (route) =>
         route.fulfill({ status: 200, json: { token: 'mock-csrf-token' } })
       ),
-      page.route('**/api/health', (route) => route.fulfill({ status: 200, json: { status: 'ok' } })),
+      page.route('**/api/health', (route) =>
+        route.fulfill({ status: 200, json: { status: 'ok' } })
+      ),
       page.route('**/api/admin/guard-profiles', (route) =>
         route.fulfill({ status: 200, json: { data: [] } })
       ),
-      page.route('**/api/demo/status', (route) => route.fulfill({ status: 200, json: { active: false } })),
+      page.route('**/api/demo/status', (route) =>
+        route.fulfill({ status: 200, json: { active: false } })
+      ),
     ]);
   }
 
@@ -106,21 +139,23 @@ test.describe('Analytics Dashboard CRUD Lifecycle', () => {
     );
 
     await page.goto('/admin/monitoring');
-    await page.waitForTimeout(1000);
 
     // Verify stats cards are visible with key metric values
     const totalMessagesText = page.getByText('12,543').or(page.getByText('12543'));
-    if ((await totalMessagesText.count()) > 0) {
+    await totalMessagesText.waitFor({ state: 'visible', timeout: 5000 }).catch(() => null);
+    if (await totalMessagesText.isVisible()) {
       await expect(totalMessagesText.first()).toBeVisible();
     }
 
     const avgResponseText = page.getByText('1.45').or(page.getByText('1.45s'));
-    if ((await avgResponseText.count()) > 0) {
+    await avgResponseText.waitFor({ state: 'visible', timeout: 5000 }).catch(() => null);
+    if (await avgResponseText.isVisible()) {
       await expect(avgResponseText.first()).toBeVisible();
     }
 
     const activeUsersText = page.getByText('328');
-    if ((await activeUsersText.count()) > 0) {
+    await activeUsersText.waitFor({ state: 'visible', timeout: 5000 }).catch(() => null);
+    if (await activeUsersText.isVisible()) {
       await expect(activeUsersText.first()).toBeVisible();
     }
   });
@@ -148,33 +183,40 @@ test.describe('Analytics Dashboard CRUD Lifecycle', () => {
     );
 
     await page.goto('/admin/monitoring');
-    await page.waitForTimeout(1000);
 
     // Look for time range buttons or select
-    const timeRangeButtons = page.locator('button:has-text("1h"), button:has-text("24h"), button:has-text("7d"), button:has-text("30d")');
-    const timeRangeSelect = page.locator('select:has(option:has-text("24h")), select:has(option:has-text("7 days"))').first();
+    const timeRangeButtons = page.locator(
+      'button:has-text("1h"), button:has-text("24h"), button:has-text("7d"), button:has-text("30d")'
+    );
+    const timeRangeSelect = page
+      .locator('select:has(option:has-text("24h")), select:has(option:has-text("7 days"))')
+      .first();
 
-    if ((await timeRangeButtons.count()) > 0) {
+    await timeRangeButtons.waitFor({ state: 'visible', timeout: 5000 }).catch(() => null);
+
+    if (await timeRangeButtons.isVisible()) {
       const btn7d = page.locator('button:has-text("7d"), button:has-text("7 days")').first();
-      if ((await btn7d.count()) > 0) {
+      await btn7d.waitFor({ state: 'visible', timeout: 5000 }).catch(() => null);
+      if (await btn7d.isVisible()) {
         await btn7d.click();
-        await page.waitForTimeout(500);
       }
 
       const btn1h = page.locator('button:has-text("1h"), button:has-text("1 hour")').first();
-      if ((await btn1h.count()) > 0) {
+      await btn1h.waitFor({ state: 'visible', timeout: 5000 }).catch(() => null);
+      if (await btn1h.isVisible()) {
         await btn1h.click();
-        await page.waitForTimeout(500);
       }
 
       const btn30d = page.locator('button:has-text("30d"), button:has-text("30 days")').first();
-      if ((await btn30d.count()) > 0) {
+      await btn30d.waitFor({ state: 'visible', timeout: 5000 }).catch(() => null);
+      if (await btn30d.isVisible()) {
         await btn30d.click();
-        await page.waitForTimeout(500);
       }
-    } else if ((await timeRangeSelect.count()) > 0) {
-      await timeRangeSelect.selectOption({ index: 2 });
-      await page.waitForTimeout(500);
+    } else {
+      await timeRangeSelect.waitFor({ state: 'visible', timeout: 5000 }).catch(() => null);
+      if (await timeRangeSelect.isVisible()) {
+        await timeRangeSelect.selectOption({ index: 2 });
+      }
     }
   });
 
@@ -191,13 +233,14 @@ test.describe('Analytics Dashboard CRUD Lifecycle', () => {
     );
 
     await page.goto('/admin/monitoring');
-    await page.waitForTimeout(1000);
 
     const initialCount = fetchCount;
     const refreshBtn = page.locator('button:has-text("Refresh")').first();
-    if ((await refreshBtn.count()) > 0) {
+    await refreshBtn.waitFor({ state: 'visible', timeout: 5000 }).catch(() => null);
+    if (await refreshBtn.isVisible()) {
+      const responsePromise = page.waitForResponse('**/api/dashboard/status').catch(() => null);
       await refreshBtn.click();
-      await page.waitForTimeout(500);
+      await responsePromise;
       expect(fetchCount).toBeGreaterThan(initialCount);
     }
   });
@@ -217,22 +260,29 @@ test.describe('Analytics Dashboard CRUD Lifecycle', () => {
     );
 
     await page.goto('/admin/monitoring');
-    await page.waitForTimeout(1000);
 
     // Check for chart containers (canvas for Chart.js, svg for Recharts/D3, or custom wrappers)
-    const charts = page.locator('canvas, svg[class*="chart"], [class*="chart"], [class*="Chart"], [data-testid*="chart"]');
-    if ((await charts.count()) > 0) {
+    const charts = page.locator(
+      'canvas, svg[class*="chart"], [class*="chart"], [class*="Chart"], [data-testid*="chart"]'
+    );
+    await charts.waitFor({ state: 'visible', timeout: 5000 }).catch(() => null);
+    if (await charts.isVisible()) {
       await expect(charts.first()).toBeVisible();
     }
 
     // Look for chart headings
-    const messageVolumeHeading = page.getByText(/message.*volume/i).or(page.getByText(/messages.*over.*time/i)).first();
-    if ((await messageVolumeHeading.count()) > 0) {
+    const messageVolumeHeading = page
+      .getByText(/message.*volume/i)
+      .or(page.getByText(/messages.*over.*time/i))
+      .first();
+    await messageVolumeHeading.waitFor({ state: 'visible', timeout: 5000 }).catch(() => null);
+    if (await messageVolumeHeading.isVisible()) {
       await expect(messageVolumeHeading).toBeVisible();
     }
 
     const responseTimeHeading = page.getByText(/response.*time/i).first();
-    if ((await responseTimeHeading.count()) > 0) {
+    await responseTimeHeading.waitFor({ state: 'visible', timeout: 5000 }).catch(() => null);
+    if (await responseTimeHeading.isVisible()) {
       await expect(responseTimeHeading).toBeVisible();
     }
   });
@@ -249,14 +299,11 @@ test.describe('Analytics Dashboard CRUD Lifecycle', () => {
     );
 
     await page.goto('/admin/monitoring');
-    await page.waitForTimeout(1000);
 
     // Click on "Bot Status" tab to see bot names
     const botStatusTab = page.locator('[role="tab"]:has-text("Bot Status")').first();
-    if ((await botStatusTab.count()) > 0) {
-      await botStatusTab.click();
-      await page.waitForTimeout(500);
-    }
+    await botStatusTab.waitFor({ state: 'visible' });
+    await botStatusTab.click();
 
     // Verify bot names appear
     await expect(page.getByText('SupportBot').first()).toBeVisible({ timeout: 5000 });
@@ -280,7 +327,6 @@ test.describe('Analytics Dashboard CRUD Lifecycle', () => {
     await expect(page.getByText('System Monitoring')).toBeVisible({ timeout: 5000 });
 
     // Wait for delayed data to load
-    await page.waitForTimeout(3000);
     await expect(page.locator('body')).toBeVisible();
   });
 
@@ -312,18 +358,21 @@ test.describe('Analytics Dashboard CRUD Lifecycle', () => {
     );
 
     await page.goto('/admin/monitoring');
-    await page.waitForTimeout(1000);
 
     // Should show zeros or empty state messaging
     await expect(page.locator('body')).toBeVisible();
-    const emptyText = page.locator('text=/no.*data/i, text=/no.*activity/i, text=/no.*metrics/i').first();
-    if ((await emptyText.count()) > 0) {
+    const emptyText = page
+      .locator('text=/no.*data/i, text=/no.*activity/i, text=/no.*metrics/i')
+      .first();
+    await emptyText.waitFor({ state: 'visible', timeout: 5000 }).catch(() => null);
+    if (await emptyText.isVisible()) {
       await expect(emptyText).toBeVisible();
     }
 
     // Stats should show zero values
     const zeroValue = page.getByText('0').first();
-    if ((await zeroValue.count()) > 0) {
+    await zeroValue.waitFor({ state: 'visible', timeout: 5000 }).catch(() => null);
+    if (await zeroValue.isVisible()) {
       await expect(zeroValue).toBeVisible();
     }
   });
