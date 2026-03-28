@@ -164,7 +164,7 @@ router.get('/detailed/services', optionalAuth, async (_req: Request, res: Respon
   // Check LLM providers
   const llmStart = Date.now();
   try {
-    const { ProviderRegistry } = require('../../registries/providerRegistry');
+    const { ProviderRegistry } = require('../../registries/ProviderRegistry');
     const registry = ProviderRegistry.getInstance();
     const llmProviders = registry.getLlmProviders?.() || [];
     const activeLlm = llmProviders.filter((p: any) => p.status === 'active' || p.connected);
@@ -201,7 +201,7 @@ router.get('/detailed/services', optionalAuth, async (_req: Request, res: Respon
   // Check Message providers
   const msgStart = Date.now();
   try {
-    const { ProviderRegistry } = require('../../registries/providerRegistry');
+    const { ProviderRegistry } = require('../../registries/ProviderRegistry');
     const registry = ProviderRegistry.getInstance();
     const msgProviders = registry.getMessageProviders?.() || [];
     const activeMsg = msgProviders.filter((p: any) => p.status === 'active' || p.connected);
@@ -235,25 +235,32 @@ router.get('/detailed/services', optionalAuth, async (_req: Request, res: Respon
     });
   }
 
-  // Check Memory provider
+  // Check Memory providers (from registry)
   const memStart = Date.now();
   try {
-    const { ProviderRegistry } = require('../../registries/providerRegistry');
+    const { ProviderRegistry } = require('../../registries/ProviderRegistry');
     const registry = ProviderRegistry.getInstance();
-    const memProviders = registry.getMemoryProviders?.() || [];
-    const activeMem = memProviders.filter((p: any) => p.status === 'active' || p.connected);
-    const memStatus =
-      memProviders.length === 0 ? 'down' : activeMem.length > 0 ? 'healthy' : 'down';
-    services.push({
-      name: 'Memory Provider',
-      status: memStatus as 'healthy' | 'degraded' | 'down',
-      latencyMs: Date.now() - memStart,
-      lastChecked: now,
-      details:
-        activeMem.length > 0
-          ? `${activeMem.length} provider(s) active`
-          : 'No memory providers active',
-    });
+    const memProviders = registry.getMemoryProviders();
+    const memCount = memProviders.size;
+    if (memCount > 0) {
+      services.push({
+        name: 'Memory Provider',
+        status: 'healthy',
+        latencyMs: Date.now() - memStart,
+        lastChecked: now,
+        details: `${memCount} provider(s) registered`,
+      });
+    } else {
+      // Fallback: env var hint
+      const hasMem0 = !!process.env.MEM0_API_KEY || !!process.env.MEM0_BASE_URL;
+      services.push({
+        name: 'Memory Provider',
+        status: hasMem0 ? 'healthy' : 'down',
+        latencyMs: Date.now() - memStart,
+        lastChecked: now,
+        details: hasMem0 ? 'Memory provider configured (env)' : 'No memory provider configured',
+      });
+    }
   } catch {
     const hasMem0 = !!process.env.MEM0_API_KEY || !!process.env.MEM0_BASE_URL;
     services.push({
@@ -262,6 +269,40 @@ router.get('/detailed/services', optionalAuth, async (_req: Request, res: Respon
       latencyMs: Date.now() - memStart,
       lastChecked: now,
       details: hasMem0 ? 'Memory provider configured' : 'No memory provider configured',
+    });
+  }
+
+  // Check Tool providers (from registry)
+  const toolStart = Date.now();
+  try {
+    const { ProviderRegistry } = require('../../registries/ProviderRegistry');
+    const registry = ProviderRegistry.getInstance();
+    const toolProviders = registry.getToolProviders();
+    const toolCount = toolProviders.size;
+    if (toolCount > 0) {
+      services.push({
+        name: 'Tool Providers',
+        status: 'healthy',
+        latencyMs: Date.now() - toolStart,
+        lastChecked: now,
+        details: `${toolCount} provider(s) registered`,
+      });
+    } else {
+      services.push({
+        name: 'Tool Providers',
+        status: 'down',
+        latencyMs: Date.now() - toolStart,
+        lastChecked: now,
+        details: 'No tool providers configured',
+      });
+    }
+  } catch {
+    services.push({
+      name: 'Tool Providers',
+      status: 'down',
+      latencyMs: Date.now() - toolStart,
+      lastChecked: now,
+      details: 'Tool provider registry unavailable',
     });
   }
 
