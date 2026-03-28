@@ -1,9 +1,15 @@
 /**
  * Memory Provider interface for persistent memory storage.
  *
- * Extracted from the common patterns across memory-mem0, memory-mem4ai, and
- * memory-memvault providers. Future memory provider packages should implement
- * this contract so they can be used interchangeably by the plugin system.
+ * Canonical definition — all memory provider packages should implement this
+ * contract so they can be used interchangeably by the plugin system.
+ *
+ * This is the superset interface that unifies:
+ *   - The simple content-based API (addMemory, searchMemories, etc.)
+ *   - The conversation-context API (add with messages array, search, etc.)
+ *
+ * Providers may implement either style; callers should use the style that
+ * matches their use-case.
  */
 
 // ---------------------------------------------------------------------------
@@ -35,6 +41,13 @@ export interface MemorySearchResult {
   results: MemoryEntry[];
 }
 
+/** Options shared across memory operations that scope by user/agent/session. */
+export interface MemoryScopeOptions {
+  userId?: string;
+  agentId?: string;
+  sessionId?: string;
+}
+
 // ---------------------------------------------------------------------------
 // Provider interface
 // ---------------------------------------------------------------------------
@@ -42,44 +55,59 @@ export interface MemorySearchResult {
 /**
  * Contract that all memory providers must implement.
  *
- * Methods mirror the common surface area found across Mem0, Mem4ai, and
- * MemVault: add, search, list, get-by-id, update, delete, and health-check.
+ * Methods mirror the common surface area found across Mem0, Mem4ai, MemVault,
+ * Zep, and Letta: add, search, list, get-by-id, update, delete, bulk-delete,
+ * and health-check.
  */
 export interface IMemoryProvider {
   /**
-   * Add a new memory.
-   * @returns The created entry (or entries wrapped in a search result).
+   * Add a new memory from plain text content.
+   *
+   * @param content  The text to store.
+   * @param metadata Optional key-value metadata to attach.
+   * @param options  Scoping options (userId, agentId, sessionId).
+   * @returns The created entry with its assigned id.
    */
   addMemory(
     content: string,
     metadata?: Record<string, unknown>,
-    userId?: string
+    options?: MemoryScopeOptions
   ): Promise<MemoryEntry>;
 
   /**
    * Search memories by natural-language query.
-   * @param query  Free-text search string.
-   * @param limit  Maximum number of results to return.
-   * @param userId Optional scope to a single user.
+   *
+   * @param query   Free-text search string.
+   * @param options Search parameters: limit, threshold, and scope.
    */
-  searchMemories(query: string, limit?: number, userId?: string): Promise<MemoryEntry[]>;
+  searchMemories(
+    query: string,
+    options?: { limit?: number; threshold?: number } & MemoryScopeOptions
+  ): Promise<MemorySearchResult>;
 
   /**
-   * List memories, optionally scoped to a user.
-   * @param limit  Maximum number of results.
-   * @param userId Optional user scope.
+   * List memories, optionally scoped to a user/agent.
+   *
+   * @param options Listing parameters: limit and scope.
    */
-  getMemories(limit?: number, userId?: string): Promise<MemoryEntry[]>;
+  getMemories(
+    options?: { limit?: number } & MemoryScopeOptions
+  ): Promise<MemoryEntry[]>;
 
   /**
-   * Delete a single memory by ID.
-   * @returns `true` if the deletion succeeded.
+   * Retrieve a single memory by ID.
+   *
+   * @param id The memory's unique identifier.
+   * @returns The entry, or null if not found.
    */
-  deleteMemory(id: string): Promise<boolean>;
+  getMemory(id: string): Promise<MemoryEntry | null>;
 
   /**
-   * Update the content (and optionally metadata) of an existing memory.
-   * @returns The updated entry.
+   * Update the content and optionally the metadata of an existing memory.
+   *
+   * @param id       The memory's unique identifier.
+   * @param content  New text content.
+   * @param metadata Optional replacement metadata.
    */
   updateMemory(
     id: string,
@@ -88,8 +116,21 @@ export interface IMemoryProvider {
   ): Promise<MemoryEntry>;
 
   /**
-   * Lightweight connectivity/readiness probe.
-   * @returns `true` when the backing store is reachable.
+   * Delete a single memory by ID.
+   *
+   * @param id The memory's unique identifier.
    */
-  healthCheck(): Promise<boolean>;
+  deleteMemory(id: string): Promise<void>;
+
+  /**
+   * Delete all memories matching the given scope.
+   *
+   * @param options Scope to constrain the deletion.
+   */
+  deleteAll(options?: MemoryScopeOptions): Promise<void>;
+
+  /**
+   * Lightweight connectivity/readiness probe.
+   */
+  healthCheck(): Promise<{ status: 'ok' | 'error'; details?: Record<string, unknown> }>;
 }
