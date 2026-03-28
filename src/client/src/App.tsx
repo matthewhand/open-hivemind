@@ -10,7 +10,6 @@ import ToastNotification from './components/DaisyUI/ToastNotification';
 import { BotProvider } from './contexts/BotContext';
 import { WebSocketProvider } from './contexts/WebSocketContext';
 import ScrollToTop from './components/ScrollToTop';
-import { Toaster } from 'react-hot-toast';
 import { IntegrationProvider } from './components/IntegrationLoader';
 import KeyboardShortcutsProvider from './components/KeyboardShortcutsProvider';
 import { useTheme } from './hooks/useTheme';
@@ -28,7 +27,6 @@ function ThemeSync({ children }: { children: React.ReactNode }) {
 function App() {
   return (
     <ErrorBoundary>
-      <Toaster position="top-right" />
       <Provider store={store}>
         <ReduxProvider>
           <ThemeSync>

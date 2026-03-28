@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import toast from 'react-hot-toast';
+import { useErrorToast } from '../components/DaisyUI/ToastNotification';
 import { useRateLimit } from './useRateLimit';
 
 /**
@@ -9,6 +9,7 @@ import { useRateLimit } from './useRateLimit';
 export function useRateLimitToast(): void {
   const { isExhausted, remaining, limit, resetTime } = useRateLimit();
   const lastToastRef = useRef(0);
+  const showError = useErrorToast();
 
   useEffect(() => {
     if (!isExhausted || limit === 0) return;
@@ -26,14 +27,12 @@ export function useRateLimitToast(): void {
     const seconds = retrySeconds % 60;
     const timeStr = minutes > 0 ? `${minutes}m ${seconds}s` : `${seconds}s`;
 
-    toast.error(
-      `Rate limit reached (${remaining}/${limit}). Please wait ${timeStr} before making more requests.`,
-      {
-        duration: 8000,
-        id: 'rate-limit-exhausted',
-      }
+    showError(
+      'Rate limit reached',
+      `${remaining}/${limit} requests remaining. Please wait ${timeStr} before making more requests.`,
+      { duration: 8000 }
     );
-  }, [isExhausted, remaining, limit, resetTime]);
+  }, [isExhausted, remaining, limit, resetTime, showError]);
 }
 
 export default useRateLimitToast;
