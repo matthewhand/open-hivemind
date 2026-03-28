@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import Logger from '../../utils/logger';
 import Input from './Input';
 
 interface ThemeOption {
@@ -439,8 +440,8 @@ const AdvancedThemeSwitcher: React.FC<ThemeSwitcherProps> = ({
       <div className="relative group">
         <div
           className={`cursor-pointer rounded-lg p-2 border-2 transition-all duration-200 hover:scale-105 ${isSelected
-              ? 'border-primary shadow-lg scale-105'
-              : 'border-base-300 hover:border-primary/50'
+            ? 'border-primary shadow-lg scale-105'
+            : 'border-base-300 hover:border-primary/50'
             }`}
           onClick={() => showPreview ? previewThemeChange(theme.value) : confirmThemeChange(theme.value)}
         >

@@ -6,7 +6,7 @@ import Card from './DaisyUI/Card';
 import Input from './DaisyUI/Input';
 import Select from './DaisyUI/Select';
 import Toggle from './DaisyUI/Toggle';
-import { LoadingSpinner as Loading } from './DaisyUI/Loading';
+import { Loading } from './DaisyUI/Loading';
 import Textarea from './DaisyUI/Textarea';
 import Modal, { ConfirmModal } from './DaisyUI/Modal';
 import Badge from './DaisyUI/Badge';
@@ -27,11 +27,13 @@ import {
   CheckCircle,
   AlertCircle,
   Bot,
+  Database,
 } from 'lucide-react';
 
 import { PROVIDER_CATEGORIES } from '../config/providers';
 import ProviderConfigModal from './ProviderConfiguration/ProviderConfigModal';
-import { LLM_PROVIDER_CONFIGS, LLMProviderType, ProviderModalState } from '../types/bot';
+import { LLM_PROVIDER_CONFIGS, LLMProviderType, ProviderModalState } from '../types';
+import { apiService } from '../services/api';
 
 interface ConfigSchema {
   doc?: string;
@@ -106,30 +108,24 @@ const IntegrationsPanel: React.FC = () => {
   const fetchData = async () => {
     try {
       setLoading(true);
-      const [configResult, botsResult, profilesResult] = await Promise.allSettled([
-        fetch('/api/config/global'),
-        fetch('/api/dashboard/api/status'), // Using status endpoint for bots list
-        fetch('/api/config/llm-profiles'),
+      const [configData, botsData, profilesData] = await Promise.all([
+        apiService.get('/api/config/global').catch(() => ({})),
+        apiService.get('/api/dashboard/status').catch((e) => {
+          console.warn('Failed to load bot status for IntegrationsPanel', e);
+          return { bots: [] };
+        }),
+        apiService.get('/api/config/llm-profiles').catch(() => []),
       ]);
-      const configRes = configResult.status === 'fulfilled' ? configResult.value : { ok: false, json: async () => ({}) } as unknown as Response;
-      const botsRes = botsResult.status === 'fulfilled' ? botsResult.value : { ok: false, json: async () => ({ bots: [] }) } as unknown as Response;
-      const profilesRes = profilesResult.status === 'fulfilled' ? profilesResult.value : { ok: false, json: async () => ({ llm: [] }) } as unknown as Response;
 
-      if (!configRes.ok) { throw new Error('Failed to fetch configuration'); }
-      const configData = await configRes.json();
-      setConfig(configData);
-      setAdvancedMode(configData._userSettings?.values?.['webui.advancedMode'] || false);
+      // If we got nothing, fallback to at least an empty object for config
+      // to avoid infinite loading states.
+      setConfig(configData && Object.keys(configData).length > 0 ? configData : { _mock: true });
 
-      if (botsRes.ok) {
-        const botsData = await botsRes.json();
-        setBots(botsData.bots || []);
-      }
-
-      if (profilesRes.ok) {
-        const profilesData = await profilesRes.json();
-        setLlmProfiles(profilesData.llm || profilesData.profiles?.llm || []);
-      }
+      setAdvancedMode(configData?._userSettings?.values?.['webui.advancedMode'] || false);
+      setBots(botsData?.bots || []);
+      setLlmProfiles(Array.isArray(profilesData) ? profilesData : profilesData?.llm || profilesData?.profiles?.llm || []);
     } catch (err: any) {
+      console.error('IntegrationsPanel fetch error:', err);
       setError(err.message);
     } finally {
       setLoading(false);
@@ -224,7 +220,7 @@ const IntegrationsPanel: React.FC = () => {
 
       if (providerModalState.isEdit && providerModalState.provider?.id) {
         // Delete old profile first if name/key changed or just to be safe
-         await fetch(`/api/config/llm-profiles/${providerModalState.provider.id}`, { method: 'DELETE' });
+        await fetch(`/api/config/llm-profiles/${providerModalState.provider.id}`, { method: 'DELETE' });
       }
 
       const res = await fetch('/api/config/llm-profiles', {
@@ -382,7 +378,7 @@ const IntegrationsPanel: React.FC = () => {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mb-6">
             {llmProfiles.map(profile => {
-              const Icon = PROVIDER_ICONS[profile.provider] || Brain;
+              const IconComponent = PROVIDER_ICONS[profile.provider] || Brain;
               const connectedBots = getConnectedBots(profile.key, 'llm');
               return (
                 <Card key={profile.key} className="bg-base-100 shadow-sm hover:shadow-md transition-all border border-base-200 group">
@@ -390,7 +386,7 @@ const IntegrationsPanel: React.FC = () => {
                     <div className="flex items-start justify-between mb-3">
                       <div className="flex items-center gap-3 overflow-hidden">
                         <div className="p-2 bg-base-200 rounded-lg text-primary group-hover:bg-primary group-hover:text-primary-content transition-colors">
-                          <Icon className="w-5 h-5" />
+                          <IconComponent className="w-5 h-5" />
                         </div>
                         <div className="min-w-0">
                           <h3 className="font-bold text-sm truncate" title={profile.name}>{profile.name}</h3>
@@ -432,31 +428,31 @@ const IntegrationsPanel: React.FC = () => {
             </div>
             <div className="collapse-content">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
-                 {/* Only allow editing existing config values, but filter for advanced */}
-                 <div className="flex items-center justify-between mb-2 col-span-full">
-                    <h3 className="font-bold text-sm">Default Configuration</h3>
-                    <Button variant="ghost" size="sm" className="btn-xs" aria-label="Edit global LLM configuration" onClick={() => openEditModal('llm')}>
-                      <PencilSquareIcon className="w-3 h-3 mr-1" /> Edit Globals
-                    </Button>
-                 </div>
+                {/* Only allow editing existing config values, but filter for advanced */}
+                <div className="flex items-center justify-between mb-2 col-span-full">
+                  <h3 className="font-bold text-sm">Default Configuration</h3>
+                  <Button variant="ghost" size="sm" className="btn-xs" aria-label="Edit global LLM configuration" onClick={() => openEditModal('llm')}>
+                    <PencilSquareIcon className="w-3 h-3 mr-1" /> Edit Globals
+                  </Button>
+                </div>
 
-                 {Object.entries(llmConfig.values).map(([key, value]) => {
-                   const isAdvanced = key.includes('PARALLEL') || key.includes('EXECUTION');
-                   if (isAdvanced && !advancedMode) return null;
+                {Object.entries(llmConfig.values).map(([key, value]) => {
+                  const isAdvanced = key.includes('PARALLEL') || key.includes('EXECUTION');
+                  if (isAdvanced && !advancedMode) return null;
 
-                   return (
-                     <div key={key} className="flex justify-between items-center p-2 bg-base-100 rounded border border-base-200">
-                       <span className="text-xs font-mono opacity-70">{key}</span>
-                       <span className="font-bold text-sm">{String(value)}</span>
-                     </div>
-                   );
-                 })}
+                  return (
+                    <div key={key} className="flex justify-between items-center p-2 bg-base-100 rounded border border-base-200">
+                      <span className="text-xs font-mono opacity-70">{key}</span>
+                      <span className="font-bold text-sm">{String(value)}</span>
+                    </div>
+                  );
+                })}
 
-                 {!advancedMode && (
-                   <div className="col-span-full text-center text-xs opacity-50 italic">
-                     Enable "Advanced Mode" in System Settings to see more options.
-                   </div>
-                 )}
+                {!advancedMode && (
+                  <div className="col-span-full text-center text-xs opacity-50 italic">
+                    Enable "Advanced Mode" in System Settings to see more options.
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -507,7 +503,7 @@ const IntegrationsPanel: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
           {sectionItems.map(key => {
             const type = baseProviders.find(base => key === base || key.startsWith(`${base}-`)) || key;
-            const Icon = PROVIDER_ICONS[type] || PuzzlePieceIcon;
+            const IconComponent = PROVIDER_ICONS[type] || PuzzlePieceIcon;
             const item = config[key];
             const isLocked = Object.values(item.schema).some((s: any) => s.locked);
             const isActive = isConfigured(item);
@@ -520,7 +516,7 @@ const IntegrationsPanel: React.FC = () => {
                   <div className="flex items-start justify-between mb-3">
                     <div className="flex items-center gap-3 overflow-hidden">
                       <div className="p-2 bg-base-200 rounded-lg text-primary group-hover:bg-primary group-hover:text-primary-content transition-colors">
-                        <Icon className="w-5 h-5" />
+                        <IconComponent className="w-5 h-5" />
                       </div>
                       <div className="min-w-0">
                         <h3 className="font-bold text-sm truncate" title={key}>{key}</h3>
@@ -573,6 +569,7 @@ const IntegrationsPanel: React.FC = () => {
     <div className="animate-in fade-in duration-500 pb-20">
       {renderSection('LLM Providers', 'llm')}
       {renderSection('Message Providers', 'message')}
+      {renderSection('Memory Providers', 'memory')}
 
       {/* Edit Modal (Global Config) */}
       <Modal
@@ -600,11 +597,11 @@ const IntegrationsPanel: React.FC = () => {
               })}
             </div>
           )}
-           {!advancedMode && selectedConfigName === 'llm' && (
-             <div className="text-center text-xs opacity-50 italic mt-2">
-               Some settings are hidden. Enable "Advanced Mode" in System Settings to see them.
-             </div>
-           )}
+          {!advancedMode && selectedConfigName === 'llm' && (
+            <div className="text-center text-xs opacity-50 italic mt-2">
+              Some settings are hidden. Enable "Advanced Mode" in System Settings to see them.
+            </div>
+          )}
         </div>
         <div className="modal-action border-t border-base-200 pt-4 mt-4">
           <Button variant="ghost" onClick={() => setIsModalOpen(false)}>Cancel</Button>
@@ -622,9 +619,8 @@ const IntegrationsPanel: React.FC = () => {
         <div className="space-y-6 max-h-[70vh] overflow-y-auto px-1">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="form-control">
-              <label htmlFor="integration-provider-type" className="label"><span className="label-text">Provider Type</span></label>
+              <label className="label"><span className="label-text">Provider Type</span></label>
               <Select
-                id="integration-provider-type"
                 value={newIntegrationType}
                 onChange={(e) => {
                   const type = e.target.value;
@@ -641,13 +637,12 @@ const IntegrationsPanel: React.FC = () => {
               />
             </div>
             <div className="form-control">
-              <label htmlFor="integration-instance-id" className="label"><span className="label-text">Instance ID</span></label>
+              <label className="label"><span className="label-text">Instance ID</span></label>
               <div className="join w-full">
                 <span className="btn btn-sm btn-static join-item bg-base-200 border-base-300 font-mono text-xs px-2">
                   {newIntegrationType ? `${newIntegrationType}-` : 'type-'}
                 </span>
                 <Input
-                  id="integration-instance-id"
                   value={newIntegrationName}
                   onChange={(e) => setNewIntegrationName(e.target.value)}
                   placeholder="production"

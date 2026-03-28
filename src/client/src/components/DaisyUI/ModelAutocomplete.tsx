@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import Logger from '../../utils/logger';
 import Badge from './Badge';
 import { LoadingSpinner } from './Loading';
 import { Alert } from './Alert';
@@ -58,7 +59,7 @@ const ModelAutocomplete: React.FC<ModelAutocompleteProps> = ({
 
   // Fetch available models from provider API
   const fetchModels = useCallback(async () => {
-    if (!apiKey || providerType === 'custom') {return;}
+    if (!apiKey || providerType === 'custom') { return; }
 
     setIsLoading(true);
     setFetchError(null);
@@ -71,14 +72,14 @@ const ModelAutocomplete: React.FC<ModelAutocompleteProps> = ({
 
       // Configure endpoint and headers based on provider
       switch (providerType) {
-      case 'openai':
-        endpoint = `${baseUrl || 'https://api.openai.com/v1'}/models`;
-        headers['Authorization'] = `Bearer ${apiKey}`;
-        break;
+        case 'openai':
+          endpoint = `${baseUrl || 'https://api.openai.com/v1'}/models`;
+          headers['Authorization'] = `Bearer ${apiKey}`;
+          break;
 
-      default:
-        setIsLoading(false);
-        return;
+        default:
+          setIsLoading(false);
+          return;
       }
 
       const response = await fetch(endpoint, { headers });
@@ -93,14 +94,14 @@ const ModelAutocomplete: React.FC<ModelAutocompleteProps> = ({
       let models: ModelOption[] = [];
 
       switch (providerType) {
-      case 'openai':
-        models = data.data?.map((model: any) => ({
-          id: model.id,
-          name: model.id,
-          description: `Owned by ${model.owned_by}`,
-          provider: 'openai',
-        })) || [];
-        break;
+        case 'openai':
+          models = data.data?.map((model: any) => ({
+            id: model.id,
+            name: model.id,
+            description: `Owned by ${model.owned_by}`,
+            provider: 'openai',
+          })) || [];
+          break;
 
       }
 
@@ -185,29 +186,29 @@ const ModelAutocomplete: React.FC<ModelAutocompleteProps> = ({
 
   // Handle keyboard navigation
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (!isOpen || filteredSuggestions.length === 0) {return;}
+    if (!isOpen || filteredSuggestions.length === 0) { return; }
 
     switch (e.key) {
-    case 'ArrowDown':
-      e.preventDefault();
-      setSelectedIndex(prev =>
-        prev < filteredSuggestions.length - 1 ? prev + 1 : prev,
-      );
-      break;
-    case 'ArrowUp':
-      e.preventDefault();
-      setSelectedIndex(prev => prev > 0 ? prev - 1 : prev);
-      break;
-    case 'Enter':
-      e.preventDefault();
-      if (selectedIndex >= 0) {
-        handleSuggestionSelect(filteredSuggestions[selectedIndex]);
-      }
-      break;
-    case 'Escape':
-      setIsOpen(false);
-      setSelectedIndex(-1);
-      break;
+      case 'ArrowDown':
+        e.preventDefault();
+        setSelectedIndex(prev =>
+          prev < filteredSuggestions.length - 1 ? prev + 1 : prev,
+        );
+        break;
+      case 'ArrowUp':
+        e.preventDefault();
+        setSelectedIndex(prev => prev > 0 ? prev - 1 : prev);
+        break;
+      case 'Enter':
+        e.preventDefault();
+        if (selectedIndex >= 0) {
+          handleSuggestionSelect(filteredSuggestions[selectedIndex]);
+        }
+        break;
+      case 'Escape':
+        setIsOpen(false);
+        setSelectedIndex(-1);
+        break;
     }
   };
 
@@ -247,9 +248,8 @@ const ModelAutocomplete: React.FC<ModelAutocompleteProps> = ({
             onFocus={() => setIsOpen(true)}
             placeholder={placeholder}
             disabled={disabled}
-            className={`input input-bordered w-full ${
-              validationWarning ? 'input-warning' : ''
-            } ${isValidating ? 'loading' : ''}`}
+            className={`input input-bordered w-full ${validationWarning ? 'input-warning' : ''
+              } ${isValidating ? 'loading' : ''}`}
           />
 
           {/* Loading indicator */}
@@ -299,9 +299,8 @@ const ModelAutocomplete: React.FC<ModelAutocompleteProps> = ({
               filteredSuggestions.map((suggestion, index) => (
                 <div
                   key={suggestion.id}
-                  className={`menu-item flex items-center justify-between p-2 rounded cursor-pointer hover:bg-base-200 ${
-                    index === selectedIndex ? 'bg-base-200' : ''
-                  } ${suggestion.id === value ? 'bg-primary/10 border-l-4 border-primary' : ''}`}
+                  className={`menu-item flex items-center justify-between p-2 rounded cursor-pointer hover:bg-base-200 ${index === selectedIndex ? 'bg-base-200' : ''
+                    } ${suggestion.id === value ? 'bg-primary/10 border-l-4 border-primary' : ''}`}
                   onClick={() => handleSuggestionSelect(suggestion)}
                 >
                   <div className="flex-1 min-w-0">
