@@ -5,7 +5,7 @@ import Card from '../components/DaisyUI/Card';
 import Button from '../components/DaisyUI/Button';
 import Badge from '../components/DaisyUI/Badge';
 import Dropdown from '../components/DaisyUI/Dropdown';
-import Breadcrumbs from '../components/DaisyUI/Breadcrumbs';
+
 import { SkeletonList } from '../components/DaisyUI/Skeleton';
 import { ArrowLeftIcon, ArrowDownTrayIcon } from '@heroicons/react/24/outline';
 import ReactMarkdown from 'react-markdown';
@@ -89,15 +89,8 @@ ${spec.content.replace(/^/gm, '  ')}
     );
   }
 
-  const breadcrumbItems = [
-    { label: 'Specs', href: '/admin/specs' },
-    { label: spec.topic, href: `/admin/specs/${id}`, isActive: true },
-  ];
-
   return (
     <div className="container mx-auto p-6 max-w-4xl">
-      <Breadcrumbs items={breadcrumbItems} />
-
       <div className="mt-6">
         <Card className="shadow-lg">
           <div className="card-body">
