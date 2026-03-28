@@ -10,8 +10,10 @@ import { SkeletonPage } from '../components/DaisyUI/Skeleton';
 import { MagnifyingGlassIcon, PlusIcon, BookOpenIcon } from '@heroicons/react/24/outline';
 import useSpecs from '../hooks/useSpecs';
 import useUrlParams from '../hooks/useUrlParams';
+import { useInfoToast } from '../components/DaisyUI/ToastNotification';
 
 const SpecsPage: React.FC = () => {
+  const infoToast = useInfoToast();
   const navigate = useNavigate();
   const { specs, loading, error } = useSpecs();
   const { values: urlParams, setValue: setUrlParam } = useUrlParams({
@@ -45,6 +47,9 @@ const SpecsPage: React.FC = () => {
     navigate(`/admin/specs/${id}`);
   };
 
+  const handleNotImplemented = () => {
+    infoToast('Coming Soon', 'This feature is currently under development.');
+  };
 
   if (loading) {
     return <SkeletonPage variant="cards" statsCount={0} showFilters />;
@@ -84,7 +89,7 @@ const SpecsPage: React.FC = () => {
             onChange={handleSearch}
           />
         </div>
-        <Button className="btn-primary">
+        <Button className="btn-primary" onClick={handleNotImplemented}>
           <PlusIcon className="w-4 h-4 mr-2" />
           Add Specification
         </Button>
@@ -160,7 +165,7 @@ const SpecsPage: React.FC = () => {
           <p className="opacity-70 mb-4">
             {searchTerm ? 'Try adjusting your search terms' : 'Get started by creating your first specification'}
           </p>
-          <Button className="btn-primary">
+          <Button className="btn-primary" onClick={handleNotImplemented}>
             <PlusIcon className="w-4 h-4 mr-2" />
             Create Specification
           </Button>

@@ -10,8 +10,10 @@ import { SkeletonList } from '../components/DaisyUI/Skeleton';
 import { ArrowLeftIcon, ArrowDownTrayIcon } from '@heroicons/react/24/outline';
 import ReactMarkdown from 'react-markdown';
 import useSpec from '../hooks/useSpec';
+import { useInfoToast } from '../components/DaisyUI/ToastNotification';
 
 const SpecDetailPage: React.FC = () => {
+  const infoToast = useInfoToast();
   const { id } = useParams<{ id: string }>();
   const { spec, loading, error } = useSpec(id);
 
@@ -64,6 +66,10 @@ ${spec.content.replace(/^/gm, '  ')}
     { label: 'JSON', onClick: () => handleExport('json') },
     { label: 'YAML', onClick: () => handleExport('yaml') },
   ];
+
+  const handleNotImplemented = () => {
+    infoToast('This feature is currently under development.', 'Coming Soon');
+  };
 
   if (loading) {
     return (
@@ -142,10 +148,10 @@ ${spec.content.replace(/^/gm, '  ')}
                 Last updated: {new Date(spec.timestamp).toLocaleString()}
               </p>
               <div className="flex gap-2">
-                <Button size="sm" className="btn-ghost">
+                <Button size="sm" className="btn-ghost" onClick={handleNotImplemented}>
                   Edit
                 </Button>
-                <Button size="sm" className="btn-ghost">
+                <Button size="sm" className="btn-ghost" onClick={handleNotImplemented}>
                   Share
                 </Button>
               </div>
