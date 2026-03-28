@@ -33,6 +33,7 @@ import sitemapRouter from './routes/sitemap';
 import onboardingRouter from './routes/onboarding';
 import specsRouter from './routes/specs';
 import webhookEventsRouter from './routes/webhookEvents';
+import apiDocsRouter from './routes/apiDocs';
 
 const debug = Debug('app:webui:server');
 const serverLog = Logger.withContext('webui:server');
@@ -174,6 +175,7 @@ export class WebUIServer {
     // Public API routes (optional auth)
     this.app.use('/api/health', optionalAuth, healthRouter);
     this.app.use('/api/errors', optionalAuth, errorsRouter);
+    this.app.use('/api/docs', optionalAuth, apiDocsRouter);
 
     // Protected API routes (authentication required)
     this.app.use('/api/admin', authenticateToken, adminRouter);

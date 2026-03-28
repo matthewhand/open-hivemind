@@ -54,6 +54,7 @@ const AuditPage = lazy(() => import('../pages/AuditPage'));
 const AdminHealthPage = lazy(() => import('../pages/AdminHealthPage'));
 const WebhookEventsPage = lazy(() => import('../pages/WebhookEventsPage'));
 const OnboardingPage = lazy(() => import('../pages/OnboardingPage'));
+const ApiDocsPage = lazy(() => import('../pages/ApiDocsPage'));
 
 
 interface LoadingFallbackProps {
@@ -222,6 +223,7 @@ const AppRouter: React.FC = () => {
           <Route path="health" element={<RouteErrorBoundary pageName="Health"><AdminHealthPage /></RouteErrorBoundary>} />
 
           <Route path="webhooks" element={<RouteErrorBoundary pageName="Webhook Events"><WebhookEventsPage /></RouteErrorBoundary>} />
+          <Route path="api-docs" element={<RouteErrorBoundary pageName="API Docs"><ApiDocsPage /></RouteErrorBoundary>} />
 
 
         </Route>
