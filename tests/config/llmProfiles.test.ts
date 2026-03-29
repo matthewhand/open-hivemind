@@ -1,8 +1,7 @@
-jest.mock('fs', () => ({
-  existsSync: jest.fn(),
-  readFileSync: jest.fn(),
-  writeFileSync: jest.fn(),
-  mkdirSync: jest.fn(),
+jest.mock('../../src/config/profileUtils', () => ({
+  loadProfiles: jest.fn(),
+  saveProfiles: jest.fn(),
+  findProfileByKey: jest.fn(),
 }));
 
 jest.mock('../../src/config/UserConfigStore', () => ({
@@ -15,8 +14,8 @@ jest.mock('../../src/config/llmConfig', () => ({
   get: jest.fn(),
 }));
 
-import * as fs from 'fs';
 import llmConfig from '../../src/config/llmConfig';
+import * as profileUtils from '../../src/config/profileUtils';
 import { UserConfigStore } from '../../src/config/UserConfigStore';
 import {
   getDefaultEmbeddingProfileKey,
@@ -25,7 +24,6 @@ import {
   resolveEmbeddingProfileKey,
 } from '../../src/config/llmProfiles';
 
-const mockedFs = fs as jest.Mocked<typeof fs>;
 const mockedUserConfigStore = UserConfigStore as jest.Mocked<typeof UserConfigStore>;
 const mockedLlmConfig = llmConfig as jest.Mocked<typeof llmConfig>;
 
@@ -33,34 +31,36 @@ describe('llmProfiles embedding helpers', () => {
   beforeEach(() => {
     jest.resetAllMocks();
 
-    mockedFs.existsSync.mockReturnValue(true);
-    mockedFs.readFileSync.mockReturnValue(
-      JSON.stringify({
-        llm: [
-          {
-            key: 'chat-openai',
-            name: 'Chat OpenAI',
-            provider: 'openai',
-            modelType: 'chat',
-            config: { model: 'gpt-4o' },
-          },
-          {
-            key: 'embed-openai',
-            name: 'Embedding OpenAI',
-            provider: 'openai',
-            modelType: 'embedding',
-            config: { model: 'text-embedding-3-large' },
-          },
-          {
-            key: 'hybrid-openai',
-            name: 'Hybrid OpenAI',
-            provider: 'openai',
-            modelType: 'both',
-            config: { model: 'gpt-4.1-mini' },
-          },
-        ],
-      })
-    );
+    const mockProfiles = {
+      llm: [
+        {
+          key: 'chat-openai',
+          name: 'Chat OpenAI',
+          provider: 'openai',
+          modelType: 'chat',
+          config: { model: 'gpt-4o' },
+        },
+        {
+          key: 'embed-openai',
+          name: 'Embedding OpenAI',
+          provider: 'openai',
+          modelType: 'embedding',
+          config: { model: 'text-embedding-3-large' },
+        },
+        {
+          key: 'hybrid-openai',
+          name: 'Hybrid OpenAI',
+          provider: 'openai',
+          modelType: 'both',
+          config: { model: 'gpt-4.1-mini' },
+        },
+      ],
+    };
+    (profileUtils.loadProfiles as jest.Mock).mockReturnValue(mockProfiles);
+    (profileUtils.findProfileByKey as jest.Mock).mockImplementation((profiles, key, value) => {
+      if (!profiles) return undefined;
+      return profiles.find((p: any) => p[key] === value);
+    });
 
     mockedUserConfigStore.getInstance.mockReturnValue({
       getGeneralSettings: () => ({
