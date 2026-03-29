@@ -13,7 +13,6 @@
 import React, { useState } from 'react';
 import Card from './DaisyUI/Card';
 import Button from './DaisyUI/Button';
-import { Loading } from './DaisyUI/Loading';
 import Tooltip from './DaisyUI/Tooltip';
 import { ConfirmModal } from './DaisyUI/Modal';
 import {
