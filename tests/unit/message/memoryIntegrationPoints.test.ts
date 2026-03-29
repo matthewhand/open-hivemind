@@ -1,6 +1,8 @@
 /**
- * Integration tests verifying memory providers work end-to-end
- * through the message handler pipeline.
+ * Unit tests verifying handleMessage's memory call sites (integration points).
+ *
+ * These are NOT integration tests -- every dependency is mocked.
+ * They verify that handleMessage calls MemoryManager at the right times.
  *
  * Flow under test:
  *   user message -> memory retrieval -> prompt injection -> LLM call -> memory storage
@@ -188,7 +190,7 @@ beforeEach(() => {
 // Tests
 // ---------------------------------------------------------------------------
 
-describe('Memory pipeline integration', () => {
+describe('handleMessage memory integration points', () => {
   // -----------------------------------------------------------------------
   // 1. Memory context injection
   // -----------------------------------------------------------------------

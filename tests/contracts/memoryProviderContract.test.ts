@@ -26,6 +26,7 @@ jest.mock('debug', () => {
 
 import type { IMemoryProvider, MemoryEntry } from '@hivemind/shared-types/IMemoryProvider';
 import { Mem0Provider } from '../../packages/memory-mem0/src/Mem0Provider';
+import { Mem4aiProvider } from '../../packages/memory-mem4ai/src/Mem4aiProvider';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -268,6 +269,14 @@ runMemoryProviderContractTests('Mem0Provider', () => {
   return new Mem0Provider({
     apiKey: 'test-api-key',
     baseUrl: 'https://api.mem0.test/v1',
+    userId: 'test-user',
+  });
+});
+
+runMemoryProviderContractTests('Mem4aiProvider', () => {
+  return new Mem4aiProvider({
+    apiKey: 'test-api-key',
+    apiUrl: 'https://api.mem4ai.test/v1',
     userId: 'test-user',
   });
 });
