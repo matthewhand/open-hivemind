@@ -76,7 +76,7 @@ const envSchema = z
 
 /**
  * Validates the presence and format of strictly required environment variables at startup using Zod.
- * Logs a fatal error and terminates the process if validation fails.
+ * Throws an error if validation fails, allowing the caller to decide how to handle it.
  */
 export function validateRequiredEnvVars(): void {
   const result = envSchema.safeParse(process.env);
@@ -93,7 +93,12 @@ export function validateRequiredEnvVars(): void {
 
     Logger.error('---------------------------------------------------------');
     Logger.error('Please configure them correctly in your .env file or deployment settings.');
-    Logger.error('System cannot start securely. Exiting now.');
-    process.exit(1);
+    Logger.error('System cannot start securely.');
+
+    // Throw error instead of calling process.exit() - let the caller decide
+    throw new Error(
+      'Environment validation failed: ' +
+        result.error.issues.map((i) => `${i.path.join('.')}: ${i.message}`).join(', ')
+    );
   }
 }

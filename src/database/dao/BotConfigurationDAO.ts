@@ -247,6 +247,9 @@ export class BotConfigurationDAO {
     byTenant: Record<string, number>;
   }> {
     try {
+      // SECURITY: SQL injection safe - this.tableName is a hardcoded constant
+      // ('bot_configurations'), not user input. String concatenation is used here
+      // for table names which cannot be parameterized in SQL.
       const totalRow = await this.db.get('SELECT COUNT(*) as total FROM ' + this.tableName);
       const activeRow = await this.db.get(
         'SELECT COUNT(*) as active FROM ' + this.tableName + ' WHERE isActive = 1'

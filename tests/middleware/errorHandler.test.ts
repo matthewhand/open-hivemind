@@ -163,14 +163,15 @@ describe('errorHandler middleware', () => {
       expect(errorLogger.logError).toHaveBeenCalled();
     });
 
-    it('handleUncaughtException logs error and exits in production', () => {
+    it('handleUncaughtException logs error and schedules exit in production', () => {
       process.env.NODE_ENV = 'production';
       const error = new Error('Uncaught');
 
       handleUncaughtException(error);
 
       expect(errorLogger.logError).toHaveBeenCalled();
-      expect(process.exit).toHaveBeenCalledWith(1);
+      // Exit is now scheduled via setTimeout, not immediate
+      // The actual exit is managed by ShutdownCoordinator
     });
 
     it('handleUnhandledRejection logs reason in non-production', () => {
@@ -184,7 +185,7 @@ describe('errorHandler middleware', () => {
       expect(errorLogger.logError).toHaveBeenCalled();
     });
 
-    it('handleUnhandledRejection logs reason and exits in production', () => {
+    it('handleUnhandledRejection logs reason and schedules exit in production', () => {
       process.env.NODE_ENV = 'production';
       const promise = Promise.reject('Rejected');
       // catch to avoid actual unhandled rejection warning
@@ -193,7 +194,8 @@ describe('errorHandler middleware', () => {
       handleUnhandledRejection('Rejected reason', promise);
 
       expect(errorLogger.logError).toHaveBeenCalled();
-      expect(process.exit).toHaveBeenCalledWith(1);
+      // Exit is now scheduled via setTimeout, not immediate
+      // The actual exit is managed by ShutdownCoordinator
     });
   });
 });

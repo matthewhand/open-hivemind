@@ -1,7 +1,7 @@
 /**
  * Tests for envValidation.ts
- * Since validateRequiredEnvVars calls process.exit(1) on failure,
- * we must mock process.exit and the Logger.
+ * Since validateRequiredEnvVars throws an error on validation failure,
+ * we must mock the Logger.
  */
 
 jest.mock('@src/common/logger', () => ({
@@ -13,72 +13,62 @@ import { validateRequiredEnvVars } from '@src/utils/envValidation';
 
 describe('validateRequiredEnvVars', () => {
   const originalEnv = { ...process.env };
-  let mockExit: jest.SpyInstance;
 
   beforeEach(() => {
     jest.resetModules();
     process.env = { ...originalEnv };
-    mockExit = jest.spyOn(process, 'exit').mockImplementation((() => {}) as any);
   });
 
   afterEach(() => {
     process.env = originalEnv;
-    mockExit.mockRestore();
   });
 
   it('does nothing in non-production environment', () => {
     process.env.NODE_ENV = 'development';
-    validateRequiredEnvVars();
-    expect(mockExit).not.toHaveBeenCalled();
+    expect(() => validateRequiredEnvVars()).not.toThrow();
   });
 
-  it('exits in production when SESSION_SECRET is missing', () => {
+  it('throws in production when SESSION_SECRET is missing', () => {
     process.env.NODE_ENV = 'production';
     process.env.JWT_SECRET = 'secret';
     process.env.JWT_REFRESH_SECRET = 'refresh';
     process.env.DISCORD_BOT_TOKEN = 'token';
     delete process.env.SESSION_SECRET;
 
-    validateRequiredEnvVars();
-    expect(mockExit).toHaveBeenCalledWith(1);
+    expect(() => validateRequiredEnvVars()).toThrow('Environment validation failed');
   });
 
-  it('exits in production when SESSION_SECRET is empty', () => {
+  it('throws in production when SESSION_SECRET is empty', () => {
     process.env.NODE_ENV = 'production';
     process.env.JWT_SECRET = 'secret';
     process.env.JWT_REFRESH_SECRET = 'refresh';
     process.env.DISCORD_BOT_TOKEN = 'token';
     process.env.SESSION_SECRET = '  ';
 
-    validateRequiredEnvVars();
-    expect(mockExit).toHaveBeenCalledWith(1);
+    expect(() => validateRequiredEnvVars()).toThrow('Environment validation failed');
   });
 
-  it('exits when PORT is invalid', () => {
+  it('throws when PORT is invalid', () => {
     process.env.PORT = 'invalid-port';
-    validateRequiredEnvVars();
-    expect(mockExit).toHaveBeenCalledWith(1);
+    expect(() => validateRequiredEnvVars()).toThrow('Environment validation failed');
   });
 
-  it('does not exit when PORT is valid', () => {
+  it('does not throw when PORT is valid', () => {
     process.env.PORT = '3000';
-    validateRequiredEnvVars();
-    expect(mockExit).not.toHaveBeenCalled();
+    expect(() => validateRequiredEnvVars()).not.toThrow();
   });
 
-  it('exits when HTTP_ENABLED is invalid', () => {
+  it('throws when HTTP_ENABLED is invalid', () => {
     process.env.HTTP_ENABLED = 'yes';
-    validateRequiredEnvVars();
-    expect(mockExit).toHaveBeenCalledWith(1);
+    expect(() => validateRequiredEnvVars()).toThrow('Environment validation failed');
   });
 
-  it('does not exit when HTTP_ENABLED is valid', () => {
+  it('does not throw when HTTP_ENABLED is valid', () => {
     process.env.HTTP_ENABLED = 'true';
-    validateRequiredEnvVars();
-    expect(mockExit).not.toHaveBeenCalled();
+    expect(() => validateRequiredEnvVars()).not.toThrow();
   });
 
-  it('exits in production when no bot tokens are configured', () => {
+  it('throws in production when no bot tokens are configured', () => {
     process.env.NODE_ENV = 'production';
     process.env.SESSION_SECRET = 'sess';
     process.env.JWT_SECRET = 'secret';
@@ -94,19 +84,17 @@ describe('validateRequiredEnvVars', () => {
       }
     }
 
-    validateRequiredEnvVars();
-    expect(mockExit).toHaveBeenCalledWith(1);
+    expect(() => validateRequiredEnvVars()).toThrow('Environment validation failed');
   });
 
-  it('does not exit when all production vars and a bot token are present', () => {
+  it('does not throw when all production vars and a bot token are present', () => {
     process.env.NODE_ENV = 'production';
     process.env.SESSION_SECRET = 'sess';
     process.env.JWT_SECRET = 'secret';
     process.env.JWT_REFRESH_SECRET = 'refresh';
     process.env.DISCORD_BOT_TOKEN = 'token';
 
-    validateRequiredEnvVars();
-    expect(mockExit).not.toHaveBeenCalled();
+    expect(() => validateRequiredEnvVars()).not.toThrow();
   });
 
   it('accepts a dynamic bot token as sufficient', () => {
@@ -119,7 +107,6 @@ describe('validateRequiredEnvVars', () => {
     delete process.env.MATTERMOST_TOKEN;
     process.env.BOTS_ALPHA_DISCORD_BOT_TOKEN = 'dynamic-token';
 
-    validateRequiredEnvVars();
-    expect(mockExit).not.toHaveBeenCalled();
+    expect(() => validateRequiredEnvVars()).not.toThrow();
   });
 });

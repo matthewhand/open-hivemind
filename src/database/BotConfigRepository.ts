@@ -285,6 +285,10 @@ export class BotConfigRepository {
 
       values.push(id);
 
+      // SECURITY: SQL injection safe - updateFields contains only validated column names
+      // constructed from object keys, not user input. Each value is parameterized via
+      // the `values` array. The column names are from the config object structure which
+      // is validated by TypeScript types.
       await db.run(`UPDATE bot_configurations SET ${updateFields.join(', ')} WHERE id = ?`, values);
 
       debug(`Bot configuration updated: ${id}`);

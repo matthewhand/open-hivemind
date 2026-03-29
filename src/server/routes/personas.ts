@@ -15,7 +15,6 @@ import { validateRequest } from '../../validation/validateRequest';
 
 const router = Router();
 const logger = createLogger('personasRouter');
-const manager = PersonaManager.getInstance();
 
 const MAX_SYSTEM_PROMPT_LENGTH = 8000;
 
@@ -51,8 +50,9 @@ const CreatePersonaSchema = z.object({
 });
 
 // GET /api/personas
-router.get('/', (req, res) => {
+router.get('/', async (req, res) => {
   try {
+    const manager = await PersonaManager.getInstance();
     const personas = manager.getAllPersonas();
     return res.json(personas);
   } catch (error: unknown) {

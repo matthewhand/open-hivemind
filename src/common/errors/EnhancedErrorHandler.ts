@@ -245,7 +245,7 @@ export class EnhancedErrorHandler {
    */
   private static detectErrorType(error: Error, context?: ErrorContext): ErrorType {
     const msg = error.message.toLowerCase();
-    const errorCode = (error as any).code;
+    const errorCode = error && typeof error === 'object' && 'code' in error ? String(error.code) : undefined;
 
     // Network errors
     if (errorCode === 'ECONNREFUSED' || errorCode === 'ENOTFOUND' || msg.includes('network')) {
@@ -599,7 +599,7 @@ export class EnhancedErrorHandler {
    */
   private static getRetryDelay(error: Error | null, errorType: ErrorType): number | undefined {
     // Check for Retry-After header
-    const retryAfter = (error as any)?.retryAfter;
+    const retryAfter = error && typeof error === 'object' && 'retryAfter' in error ? Number(error.retryAfter) : undefined;
     if (retryAfter) return retryAfter;
 
     // Default delays by error type
@@ -621,12 +621,12 @@ export class EnhancedErrorHandler {
    * Get HTTP status code
    */
   private static getStatusCode(error: Error | null, errorType: ErrorType): number | undefined {
-    if (error && (error as any).statusCode) {
-      return (error as any).statusCode;
+    if (error && typeof error === 'object' && 'statusCode' in error) {
+      return Number(error.statusCode);
     }
 
-    if (error && (error as any).status) {
-      return (error as any).status;
+    if (error && typeof error === 'object' && 'status' in error) {
+      return Number(error.status);
     }
 
     switch (errorType) {

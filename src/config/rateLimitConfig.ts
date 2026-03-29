@@ -4,6 +4,10 @@
  * Integrates with guard profiles for per-bot rate limiting
  */
 
+import { Logger } from '@common/logger';
+
+const logger = Logger.withContext('rateLimitConfig');
+
 interface RateLimitConfig {
   // Default rate limit: 100 requests per 15 minutes
   default: {
@@ -125,7 +129,7 @@ export function getBotRateLimitSettings(botName: string): BotRateLimitSettings |
   } catch (error) {
     // If there's an error loading bot config or guard profile, return undefined
     // This allows the system to fall back to default rate limiting
-    console.error(`Failed to get rate limit settings for bot ${botName}:`, error);
+    logger.error('Failed to get rate limit settings for bot', { botName, error });
     return undefined;
   }
 }
@@ -150,7 +154,7 @@ export function getAllBotRateLimitSettings(): Map<string, BotRateLimitSettings> 
       }
     }
   } catch (error) {
-    console.error('Failed to load bot rate limit settings:', error);
+    logger.error('Failed to load bot rate limit settings', { error });
   }
 
   return settings;

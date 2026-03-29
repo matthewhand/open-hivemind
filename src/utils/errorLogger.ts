@@ -156,7 +156,7 @@ export class ErrorLogger {
     this.checkErrorPatterns(error, context);
 
     this.debug(
-      `Error logged: ${(error as any).name || 'Unknown'} - ${ErrorUtils.getMessage(error)}`,
+      `Error logged: ${error instanceof Error ? error.name : 'Unknown'} - ${ErrorUtils.getMessage(error)}`,
       {
         correlationId: context.correlationId,
         level: logLevel,
@@ -180,7 +180,7 @@ export class ErrorLogger {
         code: ErrorUtils.getCode(error) || 'UNKNOWN',
         type: this.getErrorType(error),
         stack: error instanceof Error ? error.stack : undefined,
-        details: error && typeof error === 'object' ? (error as any).details : undefined,
+        details: error && typeof error === 'object' && 'details' in error ? error.details as Record<string, unknown> : undefined,
         context: error instanceof BaseHivemindError ? error.context : undefined,
       },
       request: {
@@ -347,8 +347,8 @@ export class ErrorLogger {
     }
 
     // Emit structured log for monitoring systems
-    if ((process as any).emit) {
-      (process as any).emit('hivemind:log', {
+    if ('emit' in process && typeof process.emit === 'function') {
+      process.emit('hivemind:log', {
         type: 'error',
         level,
         entry: logEntry,
@@ -400,8 +400,8 @@ export class ErrorLogger {
       this.debug(`Error spike detected for type ${errorType}: ${count} occurrences`);
 
       // Emit alert for monitoring
-      if ((process as any).emit) {
-        (process as any).emit('hivemind:alert', {
+      if ('emit' in process && typeof process.emit === 'function') {
+        process.emit('hivemind:alert', {
           type: 'error_spike',
           errorType,
           count,
@@ -418,8 +418,8 @@ export class ErrorLogger {
     if (recentErrors > 5) {
       this.debug(`High error rate detected: ${recentErrors} errors in last minute`);
 
-      if ((process as any).emit) {
-        (process as any).emit('hivemind:alert', {
+      if ('emit' in process && typeof process.emit === 'function') {
+        process.emit('hivemind:alert', {
           type: 'high_error_rate',
           count: recentErrors,
           timeframe: '1 minute',

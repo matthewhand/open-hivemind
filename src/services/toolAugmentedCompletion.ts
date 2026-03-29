@@ -142,8 +142,8 @@ async function callLLMWithTools(
   // to avoid hard coupling. The provider's config tells us the API key
   // and base URL.
   try {
-    const { OpenAI } = require('openai');
-    const openaiConfig = require('@config/openaiConfig').default;
+    const { OpenAI } = await import('openai');
+    const openaiConfig = (await import('@config/openaiConfig')).default;
 
     const apiKey =
       metadata?.openaiApiKey || openaiConfig.get('OPENAI_API_KEY') || process.env.OPENAI_API_KEY;

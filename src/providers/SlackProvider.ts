@@ -184,21 +184,18 @@ export class SlackProvider implements IMessageProvider<SlackConfig> {
   }
 
   async sendMessage(channelId: string, message: string, senderName?: string): Promise<string> {
-    // Delegate to SlackService.sendMessageToChannel
     const slack = this.slackService;
     if (typeof (slack as any).sendMessageToChannel === 'function') {
       return await (slack as any).sendMessageToChannel(channelId, message, senderName);
     }
 
-    // TODO: Implement direct Slack API call if SlackService doesn't expose sendMessageToChannel
     throw new Error(
-      'SlackProvider.sendMessage not fully implemented. ' +
-        'SlackService needs to expose a sendMessageToChannel method.'
+      'SlackProvider.sendMessage: SlackService does not expose sendMessageToChannel method. ' +
+        'This indicates a configuration or initialization issue.'
     );
   }
 
   async getMessages(channelId: string, limit?: number): Promise<any[]> {
-    // Delegate to SlackService.fetchMessages
     const slack = this.slackService;
     if (typeof (slack as any).fetchMessages === 'function') {
       return await (slack as any).fetchMessages(channelId, limit);
@@ -207,8 +204,7 @@ export class SlackProvider implements IMessageProvider<SlackConfig> {
       return await (slack as any).getMessages(channelId, limit);
     }
 
-    // TODO: Implement direct Slack API call or enhance SlackService
-    debug('SlackProvider.getMessages not fully implemented');
+    debug('SlackProvider.getMessages: SlackService does not expose fetchMessages or getMessages');
     return [];
   }
 
@@ -222,20 +218,25 @@ export class SlackProvider implements IMessageProvider<SlackConfig> {
   }
 
   getClientId(): string {
-    // Delegate to SlackService.getClientId
     const slack = this.slackService;
     if (typeof (slack as any).getClientId === 'function') {
       return (slack as any).getClientId();
     }
 
-    // TODO: Return the actual Slack bot user ID
-    // For now, return a generic identifier
+    // Fallback to generic identifier if service method not available
     return 'slack';
   }
 
   async getForumOwner(forumId: string): Promise<string> {
-    // Delegate to SlackService if it has a getForumOwner/getChannelOwner method
     const slack = this.slackService;
+
+    // Try new getChannelOwnerId method
+    if (typeof (slack as any).getChannelOwnerId === 'function') {
+      const ownerId = await (slack as any).getChannelOwnerId(forumId);
+      return ownerId || '';
+    }
+
+    // Legacy method names
     if (typeof (slack as any).getForumOwner === 'function') {
       return await (slack as any).getForumOwner(forumId);
     }
@@ -243,8 +244,7 @@ export class SlackProvider implements IMessageProvider<SlackConfig> {
       return await (slack as any).getChannelOwner(forumId);
     }
 
-    // TODO: Query Slack API to get channel creator/owner
-    debug('SlackProvider.getForumOwner not fully implemented');
+    debug('SlackProvider.getForumOwner: SlackService does not expose channel owner lookup method');
     return '';
   }
 

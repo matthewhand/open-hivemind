@@ -69,11 +69,11 @@ export class HotReloadManager {
           });
           this.configWatchers.set(configPath, watcher);
         } catch (error: unknown) {
-          const hivemindError = ErrorUtils.toHivemindError(error) as any;
+          const hivemindError = ErrorUtils.toHivemindError(error);
           const errorInfo = ErrorUtils.classifyError(hivemindError);
           debug(`Failed to watch config path ${configPath}:`, {
             error: hivemindError.message,
-            errorCode: (hivemindError as any).code,
+            errorCode: ErrorUtils.getCode(hivemindError),
             errorType: errorInfo.type,
             severity: errorInfo.severity,
             configPath,
@@ -406,7 +406,7 @@ export class HotReloadManager {
           continue;
         }
 
-        (sanitizedChanges as any)[key] = value;
+        sanitizedChanges[key] = value;
       }
 
       if (Object.keys(sanitizedChanges).length > 0) {

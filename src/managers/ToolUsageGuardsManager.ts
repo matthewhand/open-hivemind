@@ -50,24 +50,27 @@ export class ToolUsageGuardsManager extends EventEmitter {
   private constructor() {
     super();
     this.guardsFilePath = path.join(process.cwd(), 'config', 'user', 'tool-usage-guards.json');
-    this.loadGuards();
+    // Note: loadGuards is now async but called from constructor
+    // We'll handle initialization separately
     debug('ToolUsageGuardsManager initialized');
   }
 
-  public static getInstance(): ToolUsageGuardsManager {
+  public static async getInstance(): Promise<ToolUsageGuardsManager> {
     if (!ToolUsageGuardsManager.instance) {
       ToolUsageGuardsManager.instance = new ToolUsageGuardsManager();
+      await ToolUsageGuardsManager.instance.loadGuards();
     }
     return ToolUsageGuardsManager.instance;
   }
 
-  private loadGuards(): void {
+  private async loadGuards(): Promise<void> {
     try {
       // Clear existing guards (for reload functionality)
       this.guards.clear();
 
-      if (fs.existsSync(this.guardsFilePath)) {
-        const data = fs.readFileSync(this.guardsFilePath, 'utf8');
+      try {
+        await fs.promises.access(this.guardsFilePath);
+        const data = await fs.promises.readFile(this.guardsFilePath, 'utf8');
         const guardsData = JSON.parse(data);
 
         Object.values(guardsData).forEach((guard: any) => {
@@ -76,7 +79,8 @@ export class ToolUsageGuardsManager extends EventEmitter {
           }
         });
         debug(`Loaded ${this.guards.size} tool usage guards`);
-      } else {
+      } catch (err: any) {
+        if (err.code !== 'ENOENT') throw err;
         debug('No tool usage guards file found, starting with empty guards');
       }
     } catch (error: any) {
@@ -87,17 +91,19 @@ export class ToolUsageGuardsManager extends EventEmitter {
   /**
    * Reload guards from disk (useful for runtime refresh without restart)
    */
-  public reloadGuards(): void {
+  public async reloadGuards(): Promise<void> {
     debug('Reloading tool usage guards from disk');
-    this.loadGuards();
+    await this.loadGuards();
     this.emit('guardsReloaded');
   }
 
-  private saveGuards(): void {
+  private async saveGuards(): Promise<void> {
     try {
       const guardsDir = path.dirname(this.guardsFilePath);
-      if (!fs.existsSync(guardsDir)) {
-        fs.mkdirSync(guardsDir, { recursive: true });
+      try {
+        await fs.promises.access(guardsDir);
+      } catch {
+        await fs.promises.mkdir(guardsDir, { recursive: true });
       }
 
       const guardsData: Record<string, ToolUsageGuard> = {};
@@ -105,7 +111,7 @@ export class ToolUsageGuardsManager extends EventEmitter {
         guardsData[id] = guard;
       }
 
-      fs.writeFileSync(this.guardsFilePath, JSON.stringify(guardsData, null, 2));
+      await fs.promises.writeFile(this.guardsFilePath, JSON.stringify(guardsData, null, 2));
       debug(`Saved ${this.guards.size} tool usage guards`);
     } catch (error: any) {
       debug('Error saving tool usage guards:', ErrorUtils.getMessage(error));
@@ -131,7 +137,7 @@ export class ToolUsageGuardsManager extends EventEmitter {
     );
   }
 
-  public createGuard(request: CreateToolUsageGuardRequest): ToolUsageGuard {
+  public async createGuard(request: CreateToolUsageGuardRequest): Promise<ToolUsageGuard> {
     const id = crypto.randomUUID();
     const newGuard: ToolUsageGuard = {
       id,
@@ -147,12 +153,12 @@ export class ToolUsageGuardsManager extends EventEmitter {
     };
 
     this.guards.set(id, newGuard);
-    this.saveGuards();
+    await this.saveGuards();
     this.emit('guardCreated', newGuard);
     return newGuard;
   }
 
-  public updateGuard(id: string, updates: UpdateToolUsageGuardRequest): ToolUsageGuard {
+  public async updateGuard(id: string, updates: UpdateToolUsageGuardRequest): Promise<ToolUsageGuard> {
     const existing = this.guards.get(id);
     if (!existing) {
       throw ErrorUtils.createError(`Tool usage guard with ID ${id} not found`, 'not_found');
@@ -171,24 +177,24 @@ export class ToolUsageGuardsManager extends EventEmitter {
     };
 
     this.guards.set(id, updated);
-    this.saveGuards();
+    await this.saveGuards();
     this.emit('guardUpdated', updated);
     return updated;
   }
 
-  public deleteGuard(id: string): boolean {
+  public async deleteGuard(id: string): Promise<boolean> {
     const existing = this.guards.get(id);
     if (!existing) {
       return false;
     }
 
     this.guards.delete(id);
-    this.saveGuards();
+    await this.saveGuards();
     this.emit('guardDeleted', id);
     return true;
   }
 
-  public toggleGuard(id: string, isActive: boolean): ToolUsageGuard {
+  public async toggleGuard(id: string, isActive: boolean): Promise<ToolUsageGuard> {
     const existing = this.guards.get(id);
     if (!existing) {
       throw ErrorUtils.createError(`Tool usage guard with ID ${id} not found`, 'not_found');
@@ -201,7 +207,7 @@ export class ToolUsageGuardsManager extends EventEmitter {
     };
 
     this.guards.set(id, updated);
-    this.saveGuards();
+    await this.saveGuards();
     this.emit('guardToggled', updated);
     return updated;
   }

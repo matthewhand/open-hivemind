@@ -49,21 +49,14 @@ import { initProviders } from './initProviders';
 import { reloadGlobalConfigs } from './server/routes/config';
 import startupDiagnostics from './utils/startupDiagnostics';
 
-require('dotenv/config');
-
-// In production we rely on compiled output and module-alias mappings (pointing to dist/*)
-// In development (ts-node) we instead leverage tsconfig "paths" via tsconfig-paths/register
-// which is injected in the nodemon/ts-node execution command. Avoid loading module-alias
-// in development because its _moduleAliases in package.json point to dist/, which does not
-// exist (or is stale) when running directly from src.
-const express = require('express');
-
-const debug = require('debug');
-const messengerProviderModule = require('@message/management/getMessengerProvider');
-const debugEnvVarsModule = require('@config/debugEnvVars');
-const messageConfigModule = require('@config/messageConfig');
-const webhookConfigModule = require('@config/webhookConfig');
-const healthRouteModule = require('./server/routes/health');
+import 'dotenv/config';
+import express from 'express';
+import debug from 'debug';
+import * as messengerProviderModule from '@message/management/getMessengerProvider';
+import * as debugEnvVarsModule from '@config/debugEnvVars';
+import * as messageConfigModule from '@config/messageConfig';
+import * as webhookConfigModule from '@config/webhookConfig';
+import * as healthRouteModule from './server/routes/health';
 
 const indexLog = debug('app:index');
 const appLogger = Logger.withContext('app:index');
@@ -97,9 +90,8 @@ const frontendAssetsPath = path.join(frontendDistPath, 'assets');
 // Vite Dev Server Instance (only used in dev)
 let viteServer: any;
 
-if (!fs.existsSync(frontendDistPath)) {
-  frontendLogger.warn('Frontend dist directory not found', { path: frontendDistPath });
-}
+// Check if frontend dist exists (async check will be done in main())
+let frontendDistExists = false;
 
 // Initialize ShutdownCoordinator for graceful shutdown
 const shutdownCoordinator = ShutdownCoordinator.getInstance();
@@ -161,6 +153,7 @@ app.use((req: Request, res: Response, next: NextFunction) => {
   }
 
   // Security headers
+  // SECURITY: See src/server/middleware/security.ts for detailed CSP explanation
   res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader(
     'Content-Security-Policy',
@@ -309,7 +302,7 @@ async function startBot(messengerService: any) {
     messengerService.providerName || messengerService.constructor?.name || 'Unknown';
 
   try {
-    const messageHandlerModule = require('@message/handlers/messageHandler');
+    const messageHandlerModule = await import('@message/handlers/messageHandler');
     debugEnvVarsModule.debugEnvVars();
     indexLog('[DEBUG] Starting bot initialization...');
     if (typeof messengerService.setApp === 'function') {
@@ -423,6 +416,15 @@ async function startBot(messengerService: any) {
 }
 
 async function main() {
+  // Check if frontend dist exists
+  try {
+    await fs.promises.access(frontendDistPath);
+    frontendDistExists = true;
+  } catch {
+    frontendLogger.warn('Frontend dist directory not found', { path: frontendDistPath });
+    frontendDistExists = false;
+  }
+
   // Register DI services before anything resolves from the container
   registerServices();
 
@@ -570,7 +572,7 @@ async function main() {
       });
     }
 
-    const ApiMonitorService = require('@src/services/ApiMonitorService').ApiMonitorService;
+    const { ApiMonitorService } = await import('@src/services/ApiMonitorService');
     const ams = container.resolve(ApiMonitorService) as any;
     if (ams && typeof ams.shutdown === 'function') {
       shutdownCoordinator.registerService({
@@ -634,13 +636,16 @@ async function main() {
       appLogger.info('🌍 WebUI available', { url: `http://localhost:${port}` });
       appLogger.info('📡 API endpoints available', { baseUrl: `http://localhost:${port}/api` });
 
-      if (fs.existsSync(frontendDistPath)) {
+      if (frontendDistExists) {
         appLogger.info('📱 Frontend assets served from', { path: frontendDistPath });
       } else {
         appLogger.warn(
           '⚠️  Frontend build not found - attempting auto-build via `npm run build:frontend`'
         );
-        const { execFile } = require('child_process');
+        // SECURITY: Command injection safe - using execFile() with argument array.
+        // execFile() does not spawn a shell, so arguments are passed directly to npm.
+        // No user input is involved - command and args are hardcoded.
+        const { execFile } = await import('child_process');
         execFile(
           'npm',
           ['run', 'build:frontend'],
@@ -665,7 +670,7 @@ async function main() {
 
   const isWebhookEnabled = webhookConfig.get('WEBHOOK_ENABLED') || false;
   if (isWebhookEnabled) {
-    const webhookServiceModule = require('@webhook/webhookService');
+    const webhookServiceModule = await import('@webhook/webhookService');
     appLogger.info('🪝 Webhook service enabled - registering routes');
     for (const messengerService of messengerServices) {
       const channelId = messengerService.getDefaultChannel
@@ -684,7 +689,7 @@ async function main() {
   }
 
   // Print legend for decision logs
-  const StartupLegendService = require('./services/StartupLegendService').default;
+  const { default: StartupLegendService } = await import('./services/StartupLegendService');
   StartupLegendService.printLegend();
 
   // Setup signal handlers for graceful shutdown
@@ -694,20 +699,25 @@ async function main() {
   appLogger.info('🎉 Open Hivemind Unified Server startup complete!');
 
   // Re-print temp password so it's visible after all startup noise
-  const { AuthManager } = require('./auth/AuthManager');
+  const { AuthManager } = await import('./auth/AuthManager');
   const generatedPwd = AuthManager.getInstance().getGeneratedPassword();
   if (generatedPwd) {
-    console.warn('================================================================');
-    console.warn('⚠️  REMINDER: Temporary admin password (set ADMIN_PASSWORD to remove this):');
-    console.warn(`   Username: admin`);
-    console.warn(`   Password: ${generatedPwd}`);
-    console.warn('================================================================');
+    appLogger.warn('================================================================');
+    appLogger.warn('⚠️  REMINDER: Temporary admin password (set ADMIN_PASSWORD to remove this):');
+    appLogger.warn(`   Username: admin`);
+    appLogger.warn(`   Password: ${generatedPwd}`);
+    appLogger.warn('================================================================');
   }
 }
 
 main().catch((error) => {
   appLogger.error('Unexpected error in main execution', { error });
-  process.exit(1);
+  // Use ShutdownCoordinator for graceful shutdown instead of hard exit
+  const coordinator = ShutdownCoordinator.getInstance();
+  coordinator.initiateShutdown('main_error', 1).catch((shutdownError) => {
+    appLogger.error('Error during shutdown after main failure', { shutdownError });
+    process.exit(1);
+  });
 });
 
 export default app;

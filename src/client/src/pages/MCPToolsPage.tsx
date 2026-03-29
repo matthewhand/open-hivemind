@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { useVirtualizer } from '@tanstack/react-virtual';
 import {
   WrenchScrewdriverIcon as ToolIcon,
   PlayIcon as RunIcon,
@@ -740,6 +741,19 @@ const MCPToolsPage: React.FC = () => {
     );
   };
 
+  // Ref for virtualizer parent
+  const parentRef = useRef<HTMLDivElement>(null);
+
+  // Virtualizer for main grid (only when there are many items)
+  const shouldVirtualize = filteredTools.length > 50;
+  const gridRowVirtualizer = useVirtualizer({
+    count: Math.ceil(filteredTools.length / 3), // 3 columns
+    getScrollElement: () => parentRef.current,
+    estimateSize: () => 400, // Estimated card height
+    overscan: 2,
+    enabled: shouldVirtualize,
+  });
+
   if (loading) {
     return (
       <div className="p-6">
@@ -886,9 +900,47 @@ const MCPToolsPage: React.FC = () => {
         Showing {filteredTools.length} of {tools.length} tools
       </p>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredTools.map((tool) => renderToolCard(tool, false))}
-      </div>
+      {shouldVirtualize ? (
+        <div ref={parentRef} className="overflow-auto" style={{ height: '800px' }}>
+          <div
+            style={{
+              height: `${gridRowVirtualizer.getTotalSize()}px`,
+              width: '100%',
+              position: 'relative',
+            }}
+          >
+            {gridRowVirtualizer.getVirtualItems().map((virtualRow) => {
+              const startIndex = virtualRow.index * 3;
+              const rowTools = filteredTools.slice(startIndex, startIndex + 3);
+
+              return (
+                <div
+                  key={virtualRow.key}
+                  style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    width: '100%',
+                    transform: `translateY(${virtualRow.start}px)`,
+                  }}
+                >
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-1">
+                    {rowTools.map((tool) => (
+                      <div key={tool.id}>
+                        {renderToolCard(tool, false)}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filteredTools.map((tool) => renderToolCard(tool, false))}
+        </div>
+      )}
 
       {filteredTools.length === 0 && !loading && (
         <div className="text-center mt-12">

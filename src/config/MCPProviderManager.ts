@@ -185,7 +185,7 @@ export class MCPProviderManager extends EventEmitter implements IMCPProviderMana
       return testResult;
 
     } catch (error: unknown) {
-      const hivemindError = ErrorUtils.toHivemindError(error) as any;
+      const hivemindError = ErrorUtils.toHivemindError(error);
       const errorInfo = ErrorUtils.classifyError(hivemindError);
       const endTime = new Date();
       const testResult: MCPProviderTestResult = {
@@ -249,7 +249,7 @@ export class MCPProviderManager extends EventEmitter implements IMCPProviderMana
       debug(`MCP provider started: ${provider.name} (${id})`);
 
     } catch (error: unknown) {
-      const hivemindError = ErrorUtils.toHivemindError(error) as any;
+      const hivemindError = ErrorUtils.toHivemindError(error);
       const errorInfo = ErrorUtils.classifyError(hivemindError);
       this.statuses.set(id, {
         id,
@@ -463,7 +463,7 @@ export class MCPProviderManager extends EventEmitter implements IMCPProviderMana
 
       debug(`Imported ${providers.length} MCP providers`);
     } catch (error: unknown) {
-      const hivemindError = ErrorUtils.toHivemindError(error) as any;
+      const hivemindError = ErrorUtils.toHivemindError(error);
       const errorInfo = ErrorUtils.classifyError(hivemindError);
       debug('Failed to import MCP providers:', {
         error: hivemindError.message,
@@ -811,7 +811,19 @@ export class MCPProviderManager extends EventEmitter implements IMCPProviderMana
     if (interval) {
       clearInterval(interval);
       this.healthCheckIntervals.delete(providerId);
+      debug(`Stopped health check for provider: ${providerId}`);
     }
+  }
+
+  /**
+   * Stop all health checks (for graceful shutdown)
+   */
+  private stopAllHealthChecks(): void {
+    for (const [providerId, interval] of this.healthCheckIntervals.entries()) {
+      clearInterval(interval);
+      debug(`Stopped health check for provider: ${providerId}`);
+    }
+    this.healthCheckIntervals.clear();
   }
 
   private async performHealthCheck(providerId: string): Promise<void> {
@@ -850,7 +862,7 @@ export class MCPProviderManager extends EventEmitter implements IMCPProviderMana
         status.error = undefined;
       }
     } catch (error: unknown) {
-      const hivemindError = ErrorUtils.toHivemindError(error) as any;
+      const hivemindError = ErrorUtils.toHivemindError(error);
       const errorInfo = ErrorUtils.classifyError(hivemindError);
       debug(`Health check failed for MCP provider ${providerId}:`, {
         error: hivemindError.message,
@@ -880,6 +892,38 @@ export class MCPProviderManager extends EventEmitter implements IMCPProviderMana
     // This would require actual memory monitoring implementation
     // For now, return 0 as a placeholder
     return 0;
+  }
+
+  /**
+   * Shutdown all providers and cleanup resources
+   */
+  public async shutdown(): Promise<void> {
+    debug('Shutting down MCPProviderManager...');
+
+    // Stop all health checks
+    this.stopAllHealthChecks();
+
+    // Stop all running providers
+    const stopPromises: Promise<void>[] = [];
+    for (const providerId of this.processes.keys()) {
+      stopPromises.push(
+        this.stopProvider(providerId).catch((err) => {
+          debug(`Error stopping provider ${providerId}:`, err);
+        })
+      );
+    }
+
+    await Promise.allSettled(stopPromises);
+
+    // Clear all data structures
+    this.providers.clear();
+    this.processes.clear();
+    this.statuses.clear();
+
+    // Remove all event listeners
+    this.removeAllListeners();
+
+    debug('MCPProviderManager shutdown completed');
   }
 }
 

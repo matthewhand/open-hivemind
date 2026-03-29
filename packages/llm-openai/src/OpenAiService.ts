@@ -5,6 +5,7 @@
  * configuration sources like 'openaiConfig' and 'llmConfig'.
  */
 import Debug from 'debug';
+import { Logger } from '@common/logger';
 import { OpenAI, type ClientOptions } from 'openai';
 import type { ChatCompletionMessageParam } from 'openai/resources/chat/completions';
 import type { IMessage } from '@src/message/interfaces/IMessage';
@@ -23,6 +24,7 @@ import { withTimeout } from '@common/withTimeout';
 import { listModels } from './operations/listModels';
 
 const debug = Debug('app:OpenAiService');
+const logger = Logger.withContext('OpenAiService');
 
 // Guard: Validate openaiConfig object
 if (!openaiConfig || typeof openaiConfig.get !== 'function') {
@@ -153,7 +155,7 @@ export class OpenAiService {
       { role: 'user', content: message },
     ];
 
-    console.debug('[DEBUG] Chat parameters:', JSON.stringify(chatParams, null, 2));
+    logger.debug('Chat parameters', { chatParams });
 
     try {
       const response = await withTimeout(

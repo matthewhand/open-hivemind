@@ -175,6 +175,8 @@ export function asyncErrorHandler(
 
 /**
  * Handle uncaught exceptions
+ * Note: This handler is deprecated in favor of ShutdownCoordinator's signal handlers.
+ * ShutdownCoordinator provides comprehensive graceful shutdown orchestration.
  */
 export function handleUncaughtException(error: Error): void {
   const hivemindError = ErrorFactory.createError(error);
@@ -187,10 +189,15 @@ export function handleUncaughtException(error: Error): void {
 
   MetricsCollector.getInstance().incrementErrors();
 
-  // In production, exit gracefully after logging
+  // In production, use ShutdownCoordinator for graceful shutdown
   if (process.env.NODE_ENV === 'production') {
     debug('ERROR:', 'Uncaught Exception:', error);
-    process.exit(1);
+    // Give the ShutdownCoordinator 5 seconds to handle this, then force exit
+    // The ShutdownCoordinator should already have handlers registered via setupSignalHandlers()
+    setTimeout(() => {
+      debug('ERROR:', 'Uncaught exception handler timeout - forcing exit');
+      process.exit(1);
+    }, 5000).unref();
   } else {
     // In development, re-throw for debugging
     throw error;
@@ -199,6 +206,8 @@ export function handleUncaughtException(error: Error): void {
 
 /**
  * Handle unhandled promise rejections
+ * Note: This handler is deprecated in favor of ShutdownCoordinator's signal handlers.
+ * ShutdownCoordinator provides comprehensive graceful shutdown orchestration.
  */
 export function handleUnhandledRejection(reason: unknown, promise: Promise<unknown>): void {
   const hivemindError = ErrorFactory.createError(reason);
@@ -211,10 +220,15 @@ export function handleUnhandledRejection(reason: unknown, promise: Promise<unkno
 
   MetricsCollector.getInstance().incrementErrors();
 
-  // In production, exit gracefully after logging
+  // In production, use ShutdownCoordinator for graceful shutdown
   if (process.env.NODE_ENV === 'production') {
     debug('ERROR:', 'Unhandled Rejection at:', promise, 'reason:', reason);
-    process.exit(1);
+    // Give the ShutdownCoordinator 5 seconds to handle this, then force exit
+    // The ShutdownCoordinator should already have handlers registered via setupSignalHandlers()
+    setTimeout(() => {
+      debug('ERROR:', 'Unhandled rejection handler timeout - forcing exit');
+      process.exit(1);
+    }, 5000).unref();
   } else {
     // In development, log but don't exit
     debug('ERROR:', 'Unhandled Rejection:', reason);

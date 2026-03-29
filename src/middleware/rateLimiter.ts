@@ -61,8 +61,8 @@ async function initializeRedis(): Promise<void> {
   }
 
   try {
-    const redis = require('redis');
-    const rateLimitRedis = require('rate-limit-redis');
+    const redis = await import('redis');
+    const rateLimitRedis = await import('rate-limit-redis');
     RedisStore = rateLimitRedis.RedisStore;
 
     const redisUrl = process.env.REDIS_URL;
@@ -635,7 +635,7 @@ function getBotNameFromRequest(req: Request): string | undefined {
 /**
  * Middleware to apply rate limiting based on route type and bot configuration
  */
-export const applyRateLimiting = (req: Request, res: Response, next: NextFunction) => {
+export const applyRateLimiting = async (req: Request, res: Response, next: NextFunction) => {
   if (shouldSkipRateLimit(req)) {
     return next();
   }
@@ -647,7 +647,7 @@ export const applyRateLimiting = (req: Request, res: Response, next: NextFunctio
   // Check if this is a bot-specific request and if the bot has custom rate limits
   const botName = getBotNameFromRequest(req);
   if (botName) {
-    const botLimiter = getBotRateLimiter(botName);
+    const botLimiter = await getBotRateLimiter(botName);
     if (botLimiter) {
       debug(`Applying bot-specific rate limiter for ${botName}`);
       return botLimiter(req, res, next);
@@ -699,10 +699,10 @@ export function createRateLimiter(options: {
 /**
  * Create a bot-specific rate limiter using guard profile settings
  */
-export function createBotRateLimiter(botName: string): ReturnType<typeof rateLimit> | null {
+export async function createBotRateLimiter(botName: string): Promise<ReturnType<typeof rateLimit> | null> {
   try {
     // Lazy import to avoid circular dependencies
-    const { getBotRateLimitSettings } = require('../config/rateLimitConfig');
+    const { getBotRateLimitSettings } = await import('../config/rateLimitConfig');
     const settings = getBotRateLimitSettings(botName);
 
     if (!settings || !settings.enabled) {
@@ -765,12 +765,12 @@ const botRateLimiters = new Map<string, ReturnType<typeof rateLimit>>();
 /**
  * Get or create a bot-specific rate limiter
  */
-export function getBotRateLimiter(botName: string): ReturnType<typeof rateLimit> | null {
+export async function getBotRateLimiter(botName: string): Promise<ReturnType<typeof rateLimit> | null> {
   if (botRateLimiters.has(botName)) {
     return botRateLimiters.get(botName)!;
   }
 
-  const limiter = createBotRateLimiter(botName);
+  const limiter = await createBotRateLimiter(botName);
   if (limiter) {
     botRateLimiters.set(botName, limiter);
   }

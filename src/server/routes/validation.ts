@@ -16,6 +16,23 @@ const router = Router();
 const validationService = RealTimeValidationService.getInstance();
 
 /**
+ * Helper to safely extract error response properties
+ */
+function getErrorResponse(error: unknown): {
+  message: string;
+  code: string;
+  timestamp: Date;
+} {
+  const message = ErrorUtils.getMessage(error);
+  const code = ErrorUtils.getCode(error) || 'VALIDATION_ERROR';
+  const timestamp = (error && typeof error === 'object' && 'timestamp' in error)
+    ? (error.timestamp as Date)
+    : new Date();
+
+  return { message, code, timestamp };
+}
+
+/**
  * Validation middleware for rule creation
  */
 interface BotValidationResult {
@@ -259,16 +276,21 @@ const handleValidationErrors = (req: Request, res: Response, next: NextFunction)
       new Error('Validation failed'),
       'Request validation failed',
       'VALIDATION_ERROR'
-    ) as any;
+    );
 
     debug('ERROR:', 'Validation error:', hivemindError);
 
+    const { message, code, timestamp } = getErrorResponse(hivemindError);
+    const details = (hivemindError && typeof hivemindError === 'object' && 'details' in hivemindError)
+      ? hivemindError.details
+      : undefined;
+
     return res.status(HTTP_STATUS.BAD_REQUEST).json({
       success: false,
-      error: hivemindError.message,
-      code: hivemindError.code,
-      details: hivemindError.details,
-      timestamp: hivemindError.timestamp,
+      error: message,
+      code,
+      details,
+      timestamp,
     });
   }
   return next();
@@ -432,7 +454,7 @@ router.get('/api/validation/schema', (_req: AuthMiddlewareRequest, res: Response
       error,
       'Failed to get validation schema',
       'VALIDATION_ERROR'
-    ) as any;
+    );
 
     debug('ERROR:', 'Error in', 'Validation schema endpoint');
 
@@ -466,15 +488,16 @@ router.get('/api/validation/rules', async (req: AuthMiddlewareRequest, res: Resp
       error,
       'Failed to get validation rules',
       'VALIDATION_ERROR'
-    ) as any;
+    );
 
     debug('ERROR:', 'Error in', 'Get validation rules endpoint');
 
+    const { message, code, timestamp } = getErrorResponse(hivemindError);
     return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
       success: false,
-      error: hivemindError.message,
-      code: hivemindError.code,
-      timestamp: hivemindError.timestamp,
+      error: message,
+      code,
+      timestamp,
     });
   }
 });
@@ -508,7 +531,7 @@ router.get(
         error,
         'Failed to get validation rule',
         'VALIDATION_ERROR'
-      ) as any;
+      );
 
       debug('ERROR:', 'Error in', 'Get validation rule endpoint');
 
@@ -546,7 +569,7 @@ router.post(
       // For now, we'll just create a placeholder validator
       const rule = {
         ...req.body,
-        validator: (config: any) => ({
+        validator: (config: unknown) => ({
           isValid: true,
           errors: [],
           warnings: [],
@@ -567,7 +590,7 @@ router.post(
         error,
         'Failed to create validation rule',
         'VALIDATION_ERROR'
-      ) as any;
+      );
 
       debug('ERROR:', 'Error in', 'Create validation rule endpoint');
 
@@ -611,7 +634,7 @@ router.delete(
         error,
         'Failed to delete validation rule',
         'VALIDATION_ERROR'
-      ) as any;
+      );
 
       debug('ERROR:', 'Error in', 'Delete validation rule endpoint');
 
@@ -642,15 +665,16 @@ router.get('/api/validation/profiles', async (req: AuthMiddlewareRequest, res: R
       error,
       'Failed to get validation profiles',
       'VALIDATION_ERROR'
-    ) as any;
+    );
 
     debug('ERROR:', 'Error in', 'Get validation profiles endpoint');
 
+    const { message, code, timestamp } = getErrorResponse(hivemindError);
     return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
       success: false,
-      error: hivemindError.message,
-      code: hivemindError.code,
-      timestamp: hivemindError.timestamp,
+      error: message,
+      code,
+      timestamp,
     });
   }
 });
@@ -684,7 +708,7 @@ router.get(
         error,
         'Failed to get validation profile',
         'VALIDATION_ERROR'
-      ) as any;
+      );
 
       debug('ERROR:', 'Error in', 'Get validation profile endpoint');
 
@@ -751,7 +775,7 @@ router.post(
         error,
         'Failed to create validation profile',
         'VALIDATION_ERROR'
-      ) as any;
+      );
 
       debug('ERROR:', 'Error in', 'Create validation profile endpoint');
 
@@ -795,7 +819,7 @@ router.delete(
         error,
         'Failed to delete validation profile',
         'VALIDATION_ERROR'
-      ) as any;
+      );
 
       debug('ERROR:', 'Error in', 'Delete validation profile endpoint');
 
@@ -828,12 +852,12 @@ router.post(
         message: 'Configuration validated successfully',
         data: report,
       });
-    } catch (error) {
+    } catch (error: unknown) {
       debug('ERROR:', 'Error validating configuration:', error);
       return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
         success: false,
         message: 'Failed to validate configuration',
-        error: (error as any).message,
+        error: ErrorUtils.getMessage(error),
       });
     }
   }
@@ -863,7 +887,7 @@ router.post(
         error,
         'Failed to validate configuration data',
         'VALIDATION_ERROR'
-      ) as any;
+      );
 
       debug('ERROR:', 'Error in', 'Validate configuration data endpoint');
 
@@ -901,7 +925,7 @@ router.post(
         error,
         'Failed to subscribe to validation',
         'VALIDATION_ERROR'
-      ) as any;
+      );
 
       debug('ERROR:', 'Error in', 'Subscribe to validation endpoint');
 
@@ -947,7 +971,7 @@ router.delete(
         error,
         'Failed to unsubscribe from validation',
         'VALIDATION_ERROR'
-      ) as any;
+      );
 
       debug('ERROR:', 'Error in', 'Unsubscribe from validation endpoint');
 
@@ -993,7 +1017,7 @@ router.get(
         error,
         'Failed to get validation history',
         'VALIDATION_ERROR'
-      ) as any;
+      );
 
       debug('ERROR:', 'Error in', 'Get validation history endpoint');
 
@@ -1024,15 +1048,16 @@ router.get('/api/validation/statistics', async (req: AuthMiddlewareRequest, res:
       error,
       'Failed to get validation statistics',
       'VALIDATION_ERROR'
-    ) as any;
+    );
 
     debug('ERROR:', 'Error in', 'Get validation statistics endpoint');
 
+    const { message, code, timestamp } = getErrorResponse(hivemindError);
     return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
       success: false,
-      error: hivemindError.message,
-      code: hivemindError.code,
-      timestamp: hivemindError.timestamp,
+      error: message,
+      code,
+      timestamp,
     });
   }
 });

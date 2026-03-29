@@ -36,28 +36,31 @@ export class WebUIStorage {
   /**
    * Ensure the configuration directory exists
    */
-  private ensureConfigDir(): void {
-    if (!fs.existsSync(this.configDir)) {
-      fs.mkdirSync(this.configDir, { recursive: true });
+  private async ensureConfigDir(): Promise<void> {
+    try {
+      await fs.promises.access(this.configDir);
+    } catch {
+      await fs.promises.mkdir(this.configDir, { recursive: true });
     }
   }
 
   /**
    * Load configuration from file
    */
-  public loadConfig(): WebUIConfig {
+  public async loadConfig(): Promise<WebUIConfig> {
     if (this.configCache) {
       return this.configCache;
     }
 
     try {
-      if (fs.existsSync(this.configFile)) {
-        const data = fs.readFileSync(this.configFile, 'utf8');
-        this.configCache = JSON.parse(data);
-        return this.configCache!;
+      await fs.promises.access(this.configFile);
+      const data = await fs.promises.readFile(this.configFile, 'utf8');
+      this.configCache = JSON.parse(data);
+      return this.configCache!;
+    } catch (error: any) {
+      if (error.code !== 'ENOENT') {
+        debug('ERROR:', 'Error loading web UI config:', error);
       }
-    } catch (error) {
-      debug('ERROR:', 'Error loading web UI config:', error);
     }
 
     // Return default configuration
@@ -115,8 +118,8 @@ export class WebUIStorage {
   /**
    * Get all agents
    */
-  public getAgents(): any[] {
-    const config = this.loadConfig();
+  public async getAgents(): Promise<any[]> {
+    const config = await this.loadConfig();
     return config.agents;
   }
 
@@ -124,7 +127,7 @@ export class WebUIStorage {
    * Add or update an agent
    */
   public async saveAgent(agent: any): Promise<void> {
-    const config = this.loadConfig();
+    const config = await this.loadConfig();
     const existingIndex = config.agents.findIndex((a: any) => a.id === agent.id);
 
     if (existingIndex >= 0) {
@@ -140,7 +143,7 @@ export class WebUIStorage {
    * Delete an agent
    */
   public async deleteAgent(agentId: string): Promise<void> {
-    const config = this.loadConfig();
+    const config = await this.loadConfig();
     config.agents = config.agents.filter((a: any) => a.id !== agentId);
     await this.saveConfig(config);
   }
@@ -148,8 +151,8 @@ export class WebUIStorage {
   /**
    * Get all MCP servers
    */
-  public getMcps(): any[] {
-    const config = this.loadConfig();
+  public async getMcps(): Promise<any[]> {
+    const config = await this.loadConfig();
     return config.mcpServers;
   }
 
@@ -157,7 +160,7 @@ export class WebUIStorage {
    * Add or update an MCP server
    */
   public async saveMcp(mcp: any): Promise<void> {
-    const config = this.loadConfig();
+    const config = await this.loadConfig();
     const existingIndex = config.mcpServers.findIndex((m: any) => m.name === mcp.name);
 
     if (existingIndex >= 0) {
@@ -173,7 +176,7 @@ export class WebUIStorage {
    * Delete an MCP server
    */
   public async deleteMcp(mcpName: string): Promise<void> {
-    const config = this.loadConfig();
+    const config = await this.loadConfig();
     config.mcpServers = config.mcpServers.filter((m: any) => m.name !== mcpName);
     await this.saveConfig(config);
   }
@@ -181,8 +184,8 @@ export class WebUIStorage {
   /**
    * Get all personas
    */
-  public getPersonas(): any[] {
-    const config = this.loadConfig();
+  public async getPersonas(): Promise<any[]> {
+    const config = await this.loadConfig();
     return config.personas;
   }
 
@@ -190,7 +193,7 @@ export class WebUIStorage {
    * Add or update a persona
    */
   public async savePersona(persona: any): Promise<void> {
-    const config = this.loadConfig();
+    const config = await this.loadConfig();
     const existingIndex = config.personas.findIndex((p: any) => p.key === persona.key);
 
     if (existingIndex >= 0) {
@@ -206,15 +209,15 @@ export class WebUIStorage {
    * Delete a persona
    */
   public async deletePersona(personaKey: string): Promise<void> {
-    const config = this.loadConfig();
+    const config = await this.loadConfig();
     config.personas = config.personas.filter((p: any) => p.key !== personaKey);
     await this.saveConfig(config);
   }
   /**
    * Get all LLM providers
    */
-  public getLlmProviders(): any[] {
-    const config = this.loadConfig();
+  public async getLlmProviders(): Promise<any[]> {
+    const config = await this.loadConfig();
     return config.llmProviders || [];
   }
 
@@ -222,7 +225,7 @@ export class WebUIStorage {
    * Add or update an LLM provider
    */
   public async saveLlmProvider(provider: any): Promise<void> {
-    const config = this.loadConfig();
+    const config = await this.loadConfig();
     if (!config.llmProviders) {
       config.llmProviders = [];
     }
@@ -242,7 +245,7 @@ export class WebUIStorage {
    * Delete an LLM provider
    */
   public async deleteLlmProvider(providerId: string): Promise<void> {
-    const config = this.loadConfig();
+    const config = await this.loadConfig();
     if (!config.llmProviders) {
       return;
     }
@@ -254,8 +257,8 @@ export class WebUIStorage {
   /**
    * Get all messenger providers
    */
-  public getMessengerProviders(): any[] {
-    const config = this.loadConfig();
+  public async getMessengerProviders(): Promise<any[]> {
+    const config = await this.loadConfig();
     return config.messengerProviders || [];
   }
 
@@ -263,7 +266,7 @@ export class WebUIStorage {
    * Add or update a messenger provider
    */
   public async saveMessengerProvider(provider: any): Promise<void> {
-    const config = this.loadConfig();
+    const config = await this.loadConfig();
     if (!config.messengerProviders) {
       config.messengerProviders = [];
     }
@@ -283,7 +286,7 @@ export class WebUIStorage {
    * Delete a messenger provider
    */
   public async deleteMessengerProvider(providerId: string): Promise<void> {
-    const config = this.loadConfig();
+    const config = await this.loadConfig();
     if (!config.messengerProviders) {
       return;
     }
@@ -295,8 +298,8 @@ export class WebUIStorage {
   /**
    * Get all guards
    */
-  public getGuards(): any[] {
-    const config = this.loadConfig();
+  public async getGuards(): Promise<any[]> {
+    const config = await this.loadConfig();
 
     // Initialize default guards if they don't exist or if guards array is missing
     if (!config.guards || config.guards.length === 0) {
@@ -356,7 +359,7 @@ export class WebUIStorage {
    * Save a guard
    */
   public async saveGuard(guard: any): Promise<void> {
-    const config = this.loadConfig();
+    const config = await this.loadConfig();
     if (!config.guards) {
       config.guards = [];
     }
@@ -376,7 +379,7 @@ export class WebUIStorage {
    * Toggle a guard
    */
   public async toggleGuard(id: string, enabled: boolean): Promise<void> {
-    const config = this.loadConfig();
+    const config = await this.loadConfig();
     if (!config.guards) {
       return;
     }

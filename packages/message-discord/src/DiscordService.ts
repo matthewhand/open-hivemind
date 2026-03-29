@@ -2,6 +2,7 @@ import { EventEmitter } from 'events';
 import * as fs from 'fs';
 import * as path from 'path';
 import Debug from 'debug';
+import { Logger } from '@common/logger';
 import {
   GatewayIntentBits,
   type Client,
@@ -30,6 +31,7 @@ import { DiscordMessageSender } from './managers/DiscordMessageSender';
 const SafeGatewayIntentBits: any = (GatewayIntentBits as any) || {};
 
 const log = Debug('app:discordService');
+const logger = Logger.withContext('DiscordService');
 
 /**
  * DiscordService - High-level Discord integration service implementing IMessengerService
@@ -151,11 +153,10 @@ export class DiscordService extends EventEmitter implements IMessengerService {
     console.info(
       `║  GRACE_WINDOW_MS                        : ${graceWindowMs}ms (${(graceWindowMs / 60000).toFixed(1)}min)`
     );
-    console.info(`║  DEFAULT_CHANNEL_ID                     : ${defaultChannel || '(not set)'}`);
-    console.info('╚══════════════════════════════════════════════════════════════╝\n');
+    logger.info(`║  DEFAULT_CHANNEL_ID                     : ${defaultChannel || '(not set)'}`);
+    logger.info('╚══════════════════════════════════════════════════════════════╝\n');
 
-    console.log('!!! EMITTING service-ready FOR DiscordService !!!');
-    console.log('!!! DiscordService EMITTER INSTANCE:', this);
+    logger.debug('Emitting service-ready for DiscordService');
 
     // Emit service-ready event via injected startup greeting service
     if (this.deps.startupGreetingService) {

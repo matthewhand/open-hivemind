@@ -10,6 +10,7 @@ import { AuditLogger } from '../../common/auditLogger';
 import { SecureConfigManager } from '../../config/SecureConfigManager';
 import { UserConfigStore } from '../../config/UserConfigStore';
 import { DatabaseManager } from '../../database/DatabaseManager';
+import { ErrorUtils } from '../../types/errors';
 import { ConfigurationTemplateService } from './ConfigurationTemplateService';
 import { ConfigurationValidator } from './ConfigurationValidator';
 import { ConfigurationVersionService } from './ConfigurationVersionService';
@@ -136,7 +137,7 @@ export class ConfigurationImportExportService {
       }
 
       // Prepare export data
-      const exportData: any = {
+      const exportData: Record<string, unknown> = {
         metadata: {
           id: this.generateExportId(),
           name: baseFileName,
@@ -237,7 +238,7 @@ export class ConfigurationImportExportService {
       debug('Error exporting configurations:', error);
       return {
         success: false,
-        error: (error as any).message,
+        error: ErrorUtils.getMessage(error),
       };
     }
   }
@@ -268,7 +269,7 @@ export class ConfigurationImportExportService {
       }
 
       // Prepare export data
-      const exportData: any = {
+      const exportData: Record<string, unknown> = {
         metadata: {
           id: this.generateExportId(),
           name: baseFileName,
@@ -331,7 +332,7 @@ export class ConfigurationImportExportService {
       debug('Error exporting main configuration:', error);
       return {
         success: false,
-        error: (error as any).message,
+        error: ErrorUtils.getMessage(error),
       };
     }
   }
@@ -392,7 +393,7 @@ export class ConfigurationImportExportService {
       }
 
       // Parse data based on format
-      let importData: any;
+      let importData: unknown;
       const format = this.detectFormat(filePath);
 
       switch (format) {
@@ -429,7 +430,7 @@ export class ConfigurationImportExportService {
       debug('Error importing main configuration:', error);
       return {
         success: false,
-        errors: [(error as any).message],
+        errors: [ErrorUtils.getMessage(error)],
       };
     }
   }
@@ -466,7 +467,7 @@ export class ConfigurationImportExportService {
       }
 
       // Parse data based on format
-      let importData: any;
+      let importData: unknown;
       const format = this.detectFormat(filePath);
 
       switch (format) {
@@ -574,7 +575,7 @@ export class ConfigurationImportExportService {
           result.importedCount = (result.importedCount || 0) + 1;
         } catch (error) {
           result.errors?.push(
-            `Error processing configuration ${config.name || 'unknown'}: ${(error as any).message}`
+            `Error processing configuration ${config.name || 'unknown'}: ${ErrorUtils.getMessage(error)}`
           );
           result.errorCount = (result.errorCount || 0) + 1;
         }
@@ -612,7 +613,7 @@ export class ConfigurationImportExportService {
                 }
               } catch (error) {
                 result.warnings?.push(
-                  `Error fetching configuration ${configId}: ${(error as any).message}`
+                  `Error fetching configuration ${configId}: ${ErrorUtils.getMessage(error)}`
                 );
                 invalidConfigIds.add(configId);
               }
@@ -630,7 +631,7 @@ export class ConfigurationImportExportService {
               await this.dbManager.createBotConfigurationVersion(version);
             }
           } catch (error) {
-            result.warnings?.push(`Error processing version: ${(error as any).message}`);
+            result.warnings?.push(`Error processing version: ${ErrorUtils.getMessage(error)}`);
           }
         }
       }
@@ -644,7 +645,7 @@ export class ConfigurationImportExportService {
         try {
           allExistingTemplateIds = await this.templateService.getAllTemplateIds();
         } catch (error) {
-          result.warnings?.push(`Error fetching existing templates: ${(error as any).message}`);
+          result.warnings?.push(`Error fetching existing templates: ${ErrorUtils.getMessage(error)}`);
           allExistingTemplateIds = new Set();
         }
 
@@ -673,7 +674,7 @@ export class ConfigurationImportExportService {
                   });
                   newlyCreatedTemplateIds.add(template.id);
                 } catch (error) {
-                  result.warnings?.push(`Error processing template: ${(error as any).message}`);
+                  result.warnings?.push(`Error processing template: ${ErrorUtils.getMessage(error)}`);
                 }
               })
           );
@@ -686,7 +687,7 @@ export class ConfigurationImportExportService {
       debug('Error importing configurations:', error);
       return {
         success: false,
-        errors: [(error as any).message],
+        errors: [ErrorUtils.getMessage(error)],
       };
     }
   }
@@ -834,7 +835,7 @@ export class ConfigurationImportExportService {
       debug('Error creating backup:', error);
       return {
         success: false,
-        error: (error as any).message,
+        error: ErrorUtils.getMessage(error),
       };
     }
   }
@@ -861,7 +862,7 @@ export class ConfigurationImportExportService {
       debug('Error restoring from backup:', error);
       return {
         success: false,
-        errors: [(error as any).message],
+        errors: [ErrorUtils.getMessage(error)],
       };
     }
   }
@@ -1084,7 +1085,7 @@ export class ConfigurationImportExportService {
 
     for (let i = 1; i < lines.length; i++) {
       const values = lines[i].split(',');
-      const config: any = {};
+      const config: Record<string, string> = {};
 
       for (let j = 0; j < headers.length; j++) {
         const header = headers[j].trim();

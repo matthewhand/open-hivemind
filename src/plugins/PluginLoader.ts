@@ -52,10 +52,10 @@ export interface PluginModule {
  * Returns the raw module object. Callers use `mod.create(config)` or
  * fall back to known class names for packages that predate the factory contract.
  */
-export function loadPlugin(name: string): PluginModule {
+export async function loadPlugin(name: string): Promise<PluginModule> {
   // 1. Try built-in workspace package
   try {
-    const mod = require(`@hivemind/${name}`);
+    const mod = await import(`@hivemind/${name}`);
     debug('Loaded built-in plugin: @hivemind/%s', name);
     return mod;
   } catch (e: unknown) {
@@ -64,18 +64,19 @@ export function loadPlugin(name: string): PluginModule {
 
   // 2. Try community plugins dir
   const pluginPath = path.join(PLUGINS_DIR, name);
-  if (fs.existsSync(pluginPath)) {
+  try {
+    await fs.promises.access(pluginPath);
     try {
-      // Bust require cache on reload (e.g. after update)
-      const resolved = require.resolve(pluginPath);
-      delete require.cache[resolved];
-      const mod = require(pluginPath);
+      // Dynamic import doesn't use require cache, so no need to bust cache
+      const mod = await import(pluginPath);
       debug('Loaded community plugin: %s', pluginPath);
       return mod;
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : String(e);
       throw new Error(`Failed to load community plugin '${name}': ${msg}`);
     }
+  } catch (err: any) {
+    if (err.code !== 'ENOENT') throw err;
   }
 
   throw new Error(
@@ -94,16 +95,16 @@ export function loadPlugin(name: string): PluginModule {
  * @param securityPolicy - The active security policy instance.
  * @returns The loaded module (same as `loadPlugin`).
  */
-export function loadPluginWithSecurity(
+export async function loadPluginWithSecurity(
   name: string,
   securityPolicy: PluginSecurityPolicy
-): PluginModule {
-  const mod = loadPlugin(name);
+): Promise<PluginModule> {
+  const mod = await loadPlugin(name);
 
   // Determine if built-in (resolved from @hivemind/ namespace)
   let isBuiltIn = false;
   try {
-    require.resolve(`@hivemind/${name}`);
+    await import(`@hivemind/${name}`);
     isBuiltIn = true;
   } catch {
     // Not a built-in package

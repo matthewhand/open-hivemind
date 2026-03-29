@@ -274,21 +274,21 @@ export class BotConfigService {
         mcpGuard: updates.mcpGuard ? JSON.stringify(updates.mcpGuard) : existingConfig.mcpGuard,
         discord: updates.discord
           ? JSON.stringify(updates.discord)
-          : (existingConfig.discord as any),
-        slack: updates.slack ? JSON.stringify(updates.slack) : (existingConfig.slack as any),
+          : existingConfig.discord,
+        slack: updates.slack ? JSON.stringify(updates.slack) : existingConfig.slack,
         mattermost: updates.mattermost
           ? JSON.stringify(updates.mattermost)
-          : (existingConfig.mattermost as any),
-        openai: updates.openai ? JSON.stringify(updates.openai) : (existingConfig.openai as any),
+          : existingConfig.mattermost,
+        openai: updates.openai ? JSON.stringify(updates.openai) : existingConfig.openai,
         flowise: updates.flowise
           ? JSON.stringify(updates.flowise)
-          : (existingConfig.flowise as any),
+          : existingConfig.flowise,
         openwebui: updates.openwebui
           ? JSON.stringify(updates.openwebui)
-          : (existingConfig.openwebui as any),
+          : existingConfig.openwebui,
         openswarm: updates.openswarm
           ? JSON.stringify(updates.openswarm)
-          : (existingConfig.openswarm as any),
+          : existingConfig.openswarm,
         isActive: updates.isActive ?? existingConfig.isActive,
         createdAt: existingConfig.createdAt.toISOString(),
         updatedAt: new Date().toISOString(),
@@ -300,7 +300,7 @@ export class BotConfigService {
       }
 
       // Update configuration in database
-      const updateData: any = {
+      const updateData: Record<string, unknown> = {
         updatedAt: new Date(),
         updatedBy,
       };

@@ -43,8 +43,19 @@ export class AnomalyDetectionService extends EventEmitter {
     this.wsService = wsService;
     this.metricsCollector = metricsCollector;
     this.setMaxListeners(15);
-    // Start periodic detection
-    this.detectionInterval = setInterval(() => this.runDetection(), THIRTY_SECONDS_MS); // Every 30 seconds
+    // Start periodic detection - will be started explicitly
+  }
+
+  /**
+   * Start the anomaly detection interval
+   */
+  public start(): void {
+    if (this.detectionInterval) {
+      debug('Anomaly detection already started');
+      return;
+    }
+    this.detectionInterval = setInterval(() => this.runDetection(), THIRTY_SECONDS_MS);
+    debug('Anomaly detection started');
   }
 
   static getInstance(

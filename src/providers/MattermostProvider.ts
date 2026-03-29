@@ -93,6 +93,123 @@ export class MattermostProvider implements IMessageProvider<MattermostConfig> {
     throw new Error('Method not implemented.');
   }
 
+  /**
+   * Sends a message to a specific channel.
+   * @param channelId - The unique identifier of the target channel
+   * @param message - The text content to send
+   * @param senderName - Optional display name for the message sender
+   * @returns A promise that resolves to the sent message's ID
+   */
+  async sendMessage(channelId: string, message: string, senderName?: string): Promise<string> {
+    return await this.mattermostService.sendMessageToChannel(channelId, message, senderName);
+  }
+
+  /**
+   * Retrieves messages from a specific channel.
+   * @param channelId - The unique identifier of the channel
+   * @param limit - Optional maximum number of messages to retrieve
+   * @returns A promise that resolves to an array of messages
+   */
+  async getMessages(channelId: string, limit?: number): Promise<any[]> {
+    return await this.mattermostService.getMessagesFromChannel(channelId, limit);
+  }
+
+  /**
+   * Sends a message to a channel with an optional agent name.
+   * @param channelId - The unique identifier of the target channel
+   * @param message - The text content to send
+   * @param active_agent_name - Optional name of the active agent sending the message
+   * @param threadId - Optional thread ID to reply in a specific thread
+   * @returns A promise that resolves to the sent message's ID
+   */
+  async sendMessageToChannel(
+    channelId: string,
+    message: string,
+    active_agent_name?: string,
+    threadId?: string
+  ): Promise<string> {
+    return await this.mattermostService.sendMessageToChannel(channelId, message, active_agent_name, threadId);
+  }
+
+  /**
+   * Gets the unique client identifier for this provider.
+   * @returns The client ID for this provider
+   */
+  getClientId(): string {
+    return this.mattermostService.getClientId();
+  }
+
+  /**
+   * Gets the owner/creator of a message forum (channel, group, etc.)
+   * @param forumId - The unique identifier of the forum (channel, group, etc.)
+   * @returns A promise that resolves to the user ID of the forum owner
+   */
+  async getForumOwner(forumId: string): Promise<string> {
+    return await this.mattermostService.getChannelOwnerId(forumId);
+  }
+
+  /**
+   * Reloads the provider configuration and reconnects bots.
+   * @returns A promise that resolves with the number of bots added
+   */
+  async reload(): Promise<{ added: number }> {
+    const fs = await import('fs');
+    const path = await import('path');
+
+    const configDir = process.env.NODE_CONFIG_DIR || path.join(process.cwd(), 'config');
+    const messengersPath = path.join(configDir, 'providers', 'messengers.json');
+
+    let cfg: any;
+    try {
+      const content = await fs.promises.readFile(messengersPath, 'utf8');
+      cfg = JSON.parse(content);
+    } catch (e: any) {
+      return { added: 0 };
+    }
+
+    let added = 0;
+    const mattermost = this.mattermostService;
+    const existing = new Set(mattermost.getBotNames());
+    const instances = cfg.mattermost?.instances || [];
+
+    for (const inst of instances) {
+      const nm = inst.name || '';
+      if (!nm || !existing.has(nm)) {
+        const nameToUse = nm || `MattermostBot${Date.now()}`;
+
+        const reconManager = new ReconnectionManager(
+          `mattermost-${nameToUse}`,
+          async () => {
+            // Initialize bot instance
+            const botConfig = {
+              name: nameToUse,
+              messageProvider: 'mattermost',
+              mattermost: {
+                serverUrl: inst.serverUrl,
+                token: inst.token,
+                channel: inst.channel || 'town-square',
+                userId: inst.userId || '',
+                username: inst.username || '',
+              },
+              llmProvider: inst.llm,
+            };
+
+            // Re-initialize the service with the new bot
+            await mattermost.initialize();
+          }
+        );
+
+        this.reconManagers.set(nameToUse, reconManager);
+        reconManager.start().catch((err) => {
+          // Errors are handled by ReconnectionManager
+        });
+        added++;
+      }
+    }
+
+    return { added };
+  }
+
   async healthCheck(): Promise<{
     status: 'healthy' | 'degraded' | 'down';
     connected: boolean;

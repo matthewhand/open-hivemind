@@ -205,9 +205,9 @@ router.put('/:id', validateRequest(UpdateGuardProfileSchema), (req: Request, res
                   typeof existingValue === 'object' &&
                   existingValue !== null
                 ) {
-                  (acc as any)[key] = { ...existingValue, ...newValue };
+                  acc[key] = { ...existingValue, ...newValue };
                 } else {
-                  (acc as any)[key] = newValue;
+                  acc[key] = newValue;
                 }
                 return acc;
               },
@@ -219,7 +219,7 @@ router.put('/:id', validateRequest(UpdateGuardProfileSchema), (req: Request, res
       ...profiles[profileIndex],
       name: name && typeof name === 'string' ? name : profiles[profileIndex].name,
       description: description !== undefined ? description : profiles[profileIndex].description,
-      guards: safeGuards as any,
+      guards: safeGuards as typeof profiles[typeof profileIndex]['guards'],
     };
 
     profiles[profileIndex] = updatedProfile;

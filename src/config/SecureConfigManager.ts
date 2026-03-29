@@ -34,19 +34,25 @@ export class SecureConfigManager {
     this.configDir = path.join(process.cwd(), 'config', 'secure');
     this.backupDir = path.join(process.cwd(), 'config', 'backups');
     this.keyPath = path.join(process.cwd(), 'config', '.key');
-
-    this.ensureDirectories();
-
-    // Generate or load encryption key
-    this.encryptionKey = this.getOrCreateEncryptionKey();
     this.mainConfigDir = path.join(process.cwd(), 'config');
+
+    // Note: ensureDirectories and getOrCreateEncryptionKey are now async
+    // We'll need to initialize them separately
+    // For now, use a placeholder buffer that will be replaced during initialization
+    this.encryptionKey = Buffer.alloc(32);
   }
 
-  public static getInstance(): SecureConfigManager {
+  public static async getInstance(): Promise<SecureConfigManager> {
     if (!SecureConfigManager.instance) {
       SecureConfigManager.instance = new SecureConfigManager();
+      await SecureConfigManager.instance.initialize();
     }
     return SecureConfigManager.instance;
+  }
+
+  private async initialize(): Promise<void> {
+    await this.ensureDirectories();
+    this.encryptionKey = await this.getOrCreateEncryptionKey();
   }
 
   /**
@@ -123,9 +129,9 @@ export class SecureConfigManager {
       await fs.promises.writeFile(filePath, encryptedData, 'utf8');
       debug(`Configuration ${config.id} stored successfully`);
     } catch (error: any) {
-      const hivemindError = ErrorUtils.toHivemindError(error) as any;
+      const hivemindError = ErrorUtils.toHivemindError(error);
       debug(`Failed to store configuration ${config.id}:`, hivemindError.message);
-      throw (ErrorUtils as any).createError(
+      throw ErrorUtils.createError(
         `Failed to store secure configuration: ${hivemindError.message}`,
         'unknown',
         'SECURE_CONFIG_STORE_FAILED',
@@ -181,7 +187,7 @@ export class SecureConfigManager {
 
       return config;
     } catch (error: any) {
-      const hivemindError = ErrorUtils.toHivemindError(error) as any;
+      const hivemindError = ErrorUtils.toHivemindError(error);
       debug(`Failed to retrieve configuration ${id}:`, hivemindError.message);
       return null;
     }
@@ -240,9 +246,9 @@ export class SecureConfigManager {
         if (err.code !== 'ENOENT') throw err;
       }
     } catch (error: any) {
-      const hivemindError = ErrorUtils.toHivemindError(error) as any;
+      const hivemindError = ErrorUtils.toHivemindError(error);
       debug(`Failed to delete configuration ${id}:`, hivemindError.message);
-      throw (ErrorUtils as any).createError(
+      throw ErrorUtils.createError(
         `Failed to delete secure configuration: ${hivemindError.message}`,
         'unknown',
         'SECURE_CONFIG_DELETE_FAILED',
@@ -287,11 +293,12 @@ export class SecureConfigManager {
    */
   public async listBackups(): Promise<any[]> {
     try {
-      if (!fs.existsSync(this.backupDir)) return [];
+      await fs.promises.access(this.backupDir);
       const files = await fs.promises.readdir(this.backupDir);
       return files.filter(f => f.endsWith('.enc'));
-    } catch {
-      return [];
+    } catch (err: any) {
+      if (err.code === 'ENOENT') return [];
+      throw err;
     }
   }
 
@@ -344,15 +351,15 @@ export class SecureConfigManager {
       debug(`Backup ${backupId} created with ${Object.keys(allConfigs).length} configurations`);
       return backupId;
     } catch (error: any) {
-      const hivemindError = ErrorUtils.toHivemindError(error) as any;
-      const errorInfo = ErrorUtils.classifyError(hivemindError) as any;
+      const hivemindError = ErrorUtils.toHivemindError(error);
+      const errorInfo = ErrorUtils.classifyError(hivemindError);
       debug('Failed to create backup:', {
         error: hivemindError.message,
         errorCode: hivemindError.code,
         errorType: errorInfo.type,
         severity: errorInfo.severity,
       });
-      throw (ErrorUtils as any).createError(
+      throw ErrorUtils.createError(
         `Backup creation failed: ${hivemindError.message}`,
         errorInfo.type,
         'SECURE_CONFIG_BACKUP_CREATE_FAILED',
@@ -380,13 +387,18 @@ export class SecureConfigManager {
         );
       }
 
-      if (!fs.existsSync(backupPath)) {
-        throw ErrorUtils.createError(
-          `Backup ${backupId} not found`,
-          'validation',
-          'SECURE_CONFIG_BACKUP_NOT_FOUND',
-          404,
-        );
+      try {
+        await fs.promises.access(backupPath);
+      } catch (err: any) {
+        if (err.code === 'ENOENT') {
+          throw ErrorUtils.createError(
+            `Backup ${backupId} not found`,
+            'validation',
+            'SECURE_CONFIG_BACKUP_NOT_FOUND',
+            404,
+          );
+        }
+        throw err;
       }
 
       const encryptedBackup = await fs.promises.readFile(backupPath, 'utf8');
@@ -413,15 +425,15 @@ export class SecureConfigManager {
 
       debug(`Backup ${backupId} restored successfully`);
     } catch (error: any) {
-      const hivemindError = ErrorUtils.toHivemindError(error) as any;
-      const errorInfo = ErrorUtils.classifyError(hivemindError) as any;
+      const hivemindError = ErrorUtils.toHivemindError(error);
+      const errorInfo = ErrorUtils.classifyError(hivemindError);
       debug(`Failed to restore backup ${backupId}:`, {
         error: hivemindError.message,
         errorCode: hivemindError.code,
         errorType: errorInfo.type,
         severity: errorInfo.severity,
       });
-      throw (ErrorUtils as any).createError(
+      throw ErrorUtils.createError(
         `Backup restoration failed: ${hivemindError.message}`,
         errorInfo.type,
         'SECURE_CONFIG_BACKUP_RESTORE_FAILED',
@@ -430,22 +442,27 @@ export class SecureConfigManager {
     }
   }
 
-  private ensureDirectories(): void {
-    [this.configDir, this.backupDir].forEach(dir => {
-      if (!fs.existsSync(dir)) {
-        fs.mkdirSync(dir, { recursive: true });
+  private async ensureDirectories(): Promise<void> {
+    for (const dir of [this.configDir, this.backupDir]) {
+      try {
+        await fs.promises.access(dir);
+      } catch {
+        await fs.promises.mkdir(dir, { recursive: true });
       }
-    });
+    }
   }
 
-  private getOrCreateEncryptionKey(): Buffer {
-    if (fs.existsSync(this.keyPath)) {
-      return fs.readFileSync(this.keyPath);
+  private async getOrCreateEncryptionKey(): Promise<Buffer> {
+    try {
+      await fs.promises.access(this.keyPath);
+      return await fs.promises.readFile(this.keyPath);
+    } catch (err: any) {
+      if (err.code !== 'ENOENT') throw err;
+
+      const key = crypto.randomBytes(32);
+      await fs.promises.writeFile(this.keyPath, key);
+      return key;
     }
-    
-    const key = crypto.randomBytes(32);
-    fs.writeFileSync(this.keyPath, key);
-    return key;
   }
 
   public encrypt(text: string): string {

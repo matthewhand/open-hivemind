@@ -633,25 +633,47 @@ export async function handleMessage(
         if (typingInterval) {
           try {
             clearInterval(typingInterval);
-          } catch {}
+          } catch (error) {
+            logger('Failed to clear typing interval', {
+              error: error instanceof Error ? error.message : String(error),
+              channelId
+            });
+          }
           typingInterval = null;
         }
         if (typingTimeout) {
           try {
             clearTimeout(typingTimeout);
-          } catch {}
+          } catch (error) {
+            logger('Failed to clear typing timeout', {
+              error: error instanceof Error ? error.message : String(error),
+              channelId
+            });
+          }
           typingTimeout = null;
         }
         // Always unlock the channel after processing
         if (didLock) {
           try {
             processingLocks.unlock(channelId, resolvedBotId);
-          } catch {}
+          } catch (error) {
+            logger('Failed to unlock processing lock', {
+              error: error instanceof Error ? error.message : String(error),
+              channelId,
+              botId: resolvedBotId
+            });
+          }
         }
         if (isLeaderInvocation && delayKey) {
           try {
             channelDelayManager.clear(delayKey);
-          } catch {}
+          } catch (error) {
+            logger('Failed to clear channel delay', {
+              error: error instanceof Error ? error.message : String(error),
+              delayKey,
+              channelId
+            });
+          }
         }
       }
     },

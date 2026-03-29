@@ -214,4 +214,19 @@ export class ToolPreferencesService {
 
     return stats;
   }
+
+  /**
+   * Shutdown and cleanup resources
+   */
+  public async shutdown(): Promise<void> {
+    if (this.saveTimeout) {
+      clearTimeout(this.saveTimeout);
+      this.saveTimeout = null;
+    }
+    // Final save before shutdown
+    await this.saveData().catch(err => {
+      debug('Failed to save data during shutdown: %O', err);
+    });
+    debug('ToolPreferencesService shutdown completed');
+  }
 }

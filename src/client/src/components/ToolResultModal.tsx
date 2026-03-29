@@ -54,6 +54,23 @@ const ToolResultModal: React.FC<ToolResultModalProps> = ({ isOpen, onClose, resu
     URL.revokeObjectURL(url);
   };
 
+  /**
+   * SECURITY: Renders JSON with syntax highlighting using dangerouslySetInnerHTML
+   *
+   * Why needed: Provides syntax highlighting for JSON tool results in the UI
+   *
+   * Sanitization: Input is sanitized through JSON.stringify(), which escapes all
+   * HTML special characters (<, >, &, etc.). The only HTML added is from our own
+   * regex replacements which add <span> tags with predefined class names.
+   *
+   * Data sources: Tool execution results from MCP servers. While these are external,
+   * they are JSON.stringify'd which prevents any HTML/script injection. The regex
+   * patterns only match JSON tokens (strings, numbers, keywords) and wrap them in
+   * safe <span> elements with DaisyUI classes.
+   *
+   * Risk: LOW - JSON.stringify() acts as the sanitizer, converting any potential
+   * HTML/script content into escaped text before our highlighting regex runs.
+   */
   const renderJsonWithHighlighting = (obj: any) => {
     const jsonString = JSON.stringify(obj, null, 2);
 
@@ -142,6 +159,7 @@ const ToolResultModal: React.FC<ToolResultModalProps> = ({ isOpen, onClose, resu
           </div>
           <div className="mockup-code bg-base-300 max-h-48 overflow-auto">
             <pre className="px-4 py-2">
+              {/* SECURITY: Safe use of dangerouslySetInnerHTML - see renderJsonWithHighlighting() */}
               <code
                 dangerouslySetInnerHTML={{
                   __html: renderJsonWithHighlighting(result.arguments),
@@ -220,6 +238,7 @@ const ToolResultModal: React.FC<ToolResultModalProps> = ({ isOpen, onClose, resu
             </div>
             <div className="mockup-code bg-base-300 max-h-96 overflow-auto">
               <pre className="px-4 py-2">
+                {/* SECURITY: Safe use of dangerouslySetInnerHTML - see renderJsonWithHighlighting() */}
                 <code
                   dangerouslySetInnerHTML={{
                     __html: renderJsonWithHighlighting(result.result),

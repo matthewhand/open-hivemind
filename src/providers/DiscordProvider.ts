@@ -155,21 +155,18 @@ export class DiscordProvider implements IMessageProvider<DiscordConfig> {
   }
 
   async sendMessage(channelId: string, message: string, senderName?: string): Promise<string> {
-    // Delegate to DiscordService if it has a sendMessage method
     const ds = this.discordService;
     if (ds && typeof (ds as any).sendMessage === 'function') {
       return await (ds as any).sendMessage(channelId, message, senderName);
     }
 
-    // TODO: Implement direct Discord API call or enhance DiscordService
     throw new Error(
-      'DiscordProvider.sendMessage not fully implemented. ' +
-        'DiscordService needs to expose a sendMessage method.'
+      'DiscordProvider.sendMessage: DiscordService does not expose sendMessage method. ' +
+        'This indicates a configuration or initialization issue.'
     );
   }
 
   async getMessages(channelId: string, limit?: number): Promise<any[]> {
-    // Delegate to DiscordService if it has a getMessages/fetchMessages method
     const ds = this.discordService;
     if (ds && typeof (ds as any).fetchMessages === 'function') {
       return await (ds as any).fetchMessages(channelId, limit);
@@ -178,8 +175,7 @@ export class DiscordProvider implements IMessageProvider<DiscordConfig> {
       return await (ds as any).getMessages(channelId, limit);
     }
 
-    // TODO: Implement direct Discord API call or enhance DiscordService
-    debug('DiscordProvider.getMessages not fully implemented');
+    debug('DiscordProvider.getMessages: DiscordService does not expose fetchMessages or getMessages');
     return [];
   }
 
@@ -199,20 +195,25 @@ export class DiscordProvider implements IMessageProvider<DiscordConfig> {
   }
 
   getClientId(): string {
-    // Delegate to DiscordService if it has a getClientId method
     const ds = this.discordService;
     if (ds && typeof (ds as any).getClientId === 'function') {
       return (ds as any).getClientId();
     }
 
-    // TODO: Return the actual Discord bot client ID
-    // For now, return a generic identifier
+    // Fallback to generic identifier if service method not available
     return 'discord';
   }
 
   async getForumOwner(forumId: string): Promise<string> {
-    // Delegate to DiscordService if it has a getForumOwner/getChannelOwner method
     const ds = this.discordService;
+
+    // Try getChannelOwnerId method (existing in DiscordService)
+    if (ds && typeof (ds as any).getChannelOwnerId === 'function') {
+      const ownerId = await (ds as any).getChannelOwnerId(forumId);
+      return ownerId || '';
+    }
+
+    // Legacy method names
     if (ds && typeof (ds as any).getForumOwner === 'function') {
       return await (ds as any).getForumOwner(forumId);
     }
@@ -220,8 +221,7 @@ export class DiscordProvider implements IMessageProvider<DiscordConfig> {
       return await (ds as any).getChannelOwner(forumId);
     }
 
-    // TODO: Query Discord API to get channel/guild owner
-    debug('DiscordProvider.getForumOwner not fully implemented');
+    debug('DiscordProvider.getForumOwner: DiscordService does not expose channel owner lookup method');
     return '';
   }
 

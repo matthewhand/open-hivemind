@@ -2,6 +2,7 @@ import { EventEmitter } from 'events';
 import * as fs from 'fs';
 import * as path from 'path';
 import Debug from 'debug';
+import { Logger } from '@common/logger';
 import express, { type Application } from 'express';
 import type { KnownBlock } from '@slack/web-api';
 import BotConfigurationManager from '@src/config/BotConfigurationManager';
@@ -36,6 +37,7 @@ import { SlackSignatureVerifier } from './SlackSignatureVerifier';
 import { SlackWelcomeHandler } from './SlackWelcomeHandler';
 
 const debug = Debug('app:SlackService:verbose');
+const logger = Logger.withContext('SlackService');
 
 // Metrics and retry configuration
 const metrics = MetricsCollector.getInstance();
@@ -308,14 +310,14 @@ export class SlackService extends EventEmitter implements IMessengerService {
     } catch (error: unknown) {
       if (error instanceof BaseHivemindError) {
         debug(`Legacy configuration loading failed: ${error.message}`);
-        console.error('Slack legacy configuration loading error:', error);
+        logger.error('Slack legacy configuration loading error', { error });
       } else {
         const configError = new ConfigurationError(
           `Failed to load legacy configuration: ${error instanceof Error ? error.message : 'Unknown error'}`,
           'SLACK_LEGACY_CONFIG_ERROR'
         );
         debug(`Legacy configuration loading failed: ${configError.message}`);
-        console.error('Slack legacy configuration loading error:', configError);
+        logger.error('Slack legacy configuration loading error', { error: configError });
       }
 
       // Do not re-throw, allow service to initialize without legacy bots if file is malformed.
@@ -342,7 +344,7 @@ export class SlackService extends EventEmitter implements IMessengerService {
         SlackService.instance = new SlackService();
       } catch (error: unknown) {
         debug('Failed to create SlackService instance:', error);
-        console.error('Slack service instance creation error:', error);
+        logger.error('Slack service instance creation error', { error });
 
         if (error instanceof BaseHivemindError) {
           throw error;
@@ -850,6 +852,29 @@ export class SlackService extends EventEmitter implements IMessengerService {
       return (purpose || topic || null) as string | null;
     } catch (error) {
       debug(`Failed to fetch Slack channel topic for ${channelId}: ${error}`);
+      return null;
+    }
+  }
+
+  public async getChannelOwnerId(channelId: string): Promise<string | null> {
+    try {
+      const firstBot = Array.from(this.botManagers.keys())[0];
+      const botManager = this.botManagers.get(firstBot);
+      const botInfo = botManager?.getAllBots?.()[0];
+      if (!botInfo?.webClient) {
+        return null;
+      }
+
+      const info = await botInfo.webClient.conversations.info({ channel: channelId });
+      if (!info?.ok || !info.channel) {
+        return null;
+      }
+
+      // Slack channels have a 'creator' field that indicates who created the channel
+      const creator = (info.channel as any).creator;
+      return creator || null;
+    } catch (error) {
+      debug(`Failed to fetch Slack channel owner for ${channelId}: ${error}`);
       return null;
     }
   }

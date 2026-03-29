@@ -333,7 +333,13 @@ class ApiService {
         resetTime: reset ? parseInt(reset, 10) || 0 : 0,
       };
       this.rateLimitListeners.forEach(listener => {
-        try { listener(info); } catch { /* ignore listener errors */ }
+        try {
+          listener(info);
+        } catch (error) {
+          debug('ERROR:', 'Rate limit listener error', {
+            error: error instanceof Error ? error.message : String(error)
+          });
+        }
       });
     }
   }
