@@ -1,16 +1,13 @@
-import Debug from 'debug';
 import { Router, type Request, type Response } from 'express';
 import { container } from 'tsyringe';
-import { authenticate, requireAdmin } from '../../auth/middleware';
-import { ErrorUtils } from '../../common/ErrorUtils';
-import { getTrustedMcpReposConfig } from '../../config/trustedMcpRepos';
-import { DatabaseManager } from '../../database/DatabaseManager';
-import { ToolUsageGuardsManager } from '../../managers/ToolUsageGuardsManager';
-import { MCPService } from '../../mcp/MCPService';
-import ApiMonitorService from '../../services/ApiMonitorService';
-import { webUIStorage } from '../../storage/webUIStorage';
-import { getRelevantEnvVars } from '../../utils/envUtils';
-import { isSafeUrl } from '../../utils/ssrfGuard';
+import { ErrorUtils } from '../../../common/ErrorUtils';
+import { getTrustedMcpReposConfig } from '../../../config/trustedMcpRepos';
+import { DatabaseManager } from '../../../database/DatabaseManager';
+import { MCPService } from '../../../mcp/MCPService';
+import ApiMonitorService from '../../../services/ApiMonitorService';
+import { webUIStorage } from '../../../storage/webUIStorage';
+import { getRelevantEnvVars } from '../../../utils/envUtils';
+import { isSafeUrl } from '../../../utils/ssrfGuard';
 import {
   LlmProviderSchema,
   McpServerBulkDisconnectSchema,
@@ -18,41 +15,18 @@ import {
   McpServerDisconnectSchema,
   McpServerTestSchema,
   MessengerProviderSchema,
-  PersonaKeyParamSchema,
-  PersonaSchema,
   ServerNameParamSchema,
   TestConnectionSchema,
   ToggleIdParamSchema,
   ToggleProviderSchema,
-  ToolUsageGuardSchema,
   UpdateLlmProviderSchema,
   UpdateMessengerProviderSchema,
-  UpdatePersonaSchema,
-  UpdateToolUsageGuardSchema,
-} from '../../validation/schemas/adminSchema';
-import { validateRequest } from '../../validation/validateRequest';
-import activityRouter from './activity';
-import agentsRouter from './agents';
-import guardProfilesRouter from './guardProfiles';
-import mcpRouter from './mcp';
-import {
-  getModelsForProvider,
-  getChatModels,
-  getEmbeddingModels,
-  getSupportedProviders,
-} from '../data/llmModels';
+} from '../../../validation/schemas/adminSchema';
+import { validateRequest } from '../../../validation/validateRequest';
 
 const router = Router();
-const debug = Debug('app:webui:admin');
 
 const isTestEnv = process.env.NODE_ENV === 'test';
-
-// Apply authentication middleware to all admin routes (skip in tests)
-if (!isTestEnv) {
-  router.use(authenticate, requireAdmin);
-}
-
-// Apply rate limiting to configuration endpoints
 const rateLimit = require('express-rate-limit').default;
 const configRateLimit = isTestEnv
   ? (_req: Request, _res: Response, next: any) => next()
@@ -63,213 +37,6 @@ const configRateLimit = isTestEnv
       standardHeaders: true,
     });
 
-// Apply rate limiting to sensitive configuration operations
-router.use('/', configRateLimit);
-
-// Mount sub-routes
-router.use('/agents', agentsRouter);
-router.use('/mcp', mcpRouter);
-router.use('/activity', activityRouter);
-router.use('/guard-profiles', guardProfilesRouter);
-
-/**
- * @openapi
- * /api/admin/tool-usage-guards:
- *   get:
- *     summary: Retrieve tool usage guards
- *     tags: [Admin]
- *     responses:
- *       200:
- *         description: List of tool usage guards
- */
-router.get('/tool-usage-guards', (req: Request, res: Response) => {
-  try {
-    const guardsManager = ToolUsageGuardsManager.getInstance();
-    const guards = guardsManager.getAllGuards();
-
-    return res.json({
-      success: true,
-      data: { guards },
-      message: 'Tool usage guards retrieved successfully',
-    });
-  } catch (error: unknown) {
-    const hivemindError = ErrorUtils.toHivemindError(error);
-    return res.status(500).json({
-      error: 'Failed to retrieve tool usage guards',
-      message: hivemindError.message || 'An error occurred while retrieving tool usage guards',
-    });
-  }
-});
-
-/**
- * @openapi
- * /api/admin/tool-usage-guards:
- *   post:
- *     summary: Create a new tool usage guard
- *     tags: [Admin]
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               name: { type: string }
- *               toolId: { type: string }
- *               guardType: { type: string, enum: [owner_only, user_list, role_based] }
- *             required: [name, toolId, guardType]
- *     responses:
- *       200:
- *         description: Created tool usage guard
- */
-router.post(
-  '/tool-usage-guards',
-  configRateLimit,
-  validateRequest(ToolUsageGuardSchema),
-  async (req: Request, res: Response) => {
-    try {
-      const { name, description, toolId, guardType, allowedUsers, allowedRoles, isActive } =
-        req.body;
-
-      const guardsManager = ToolUsageGuardsManager.getInstance();
-      const newGuard = guardsManager.createGuard({
-        name,
-        description,
-        toolId,
-        guardType,
-        allowedUsers,
-        allowedRoles,
-        isActive,
-      });
-
-      return res.json({
-        success: true,
-        data: { guard: newGuard },
-        message: 'Tool usage guard created successfully',
-      });
-    } catch (error: unknown) {
-      const hivemindError = ErrorUtils.toHivemindError(error);
-      return res.status(500).json({
-        error: 'Failed to create tool usage guard',
-        message: hivemindError.message || 'An error occurred while creating tool usage guard',
-      });
-    }
-  }
-);
-
-// PUT /tool-usage-guards/:id - Update an existing tool usage guard
-router.put(
-  '/tool-usage-guards/:id',
-  configRateLimit,
-  validateRequest(UpdateToolUsageGuardSchema),
-  async (req: Request, res: Response) => {
-    try {
-      const { id } = req.params;
-      const { name, description, toolId, guardType, allowedUsers, allowedRoles, isActive } =
-        req.body;
-
-      const guardsManager = ToolUsageGuardsManager.getInstance();
-      const updatedGuard = guardsManager.updateGuard(id, {
-        name,
-        description,
-        toolId,
-        guardType,
-        allowedUsers,
-        allowedRoles,
-        isActive,
-      });
-
-      return res.json({
-        success: true,
-        data: { guard: updatedGuard },
-        message: 'Tool usage guard updated successfully',
-      });
-    } catch (error: unknown) {
-      const hivemindError = ErrorUtils.toHivemindError(error);
-      const statusCode = error instanceof Error && error.message.includes('not found') ? 404 : 500;
-      return res.status(statusCode).json({
-        error: 'Failed to update tool usage guard',
-        message: hivemindError.message || 'An error occurred while updating tool usage guard',
-      });
-    }
-  }
-);
-
-/**
- * @openapi
- * /api/admin/tool-usage-guards/{id}:
- *   delete:
- *     summary: Delete a tool usage guard
- *     tags: [Admin]
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: string
- *     responses:
- *       200:
- *         description: Deleted tool usage guard
- */
-router.delete(
-  '/tool-usage-guards/:id',
-  configRateLimit,
-  validateRequest(ToggleIdParamSchema),
-  async (req: Request, res: Response) => {
-    try {
-      const { id } = req.params;
-
-      const guardsManager = ToolUsageGuardsManager.getInstance();
-      const deleted = guardsManager.deleteGuard(id);
-
-      if (!deleted) {
-        return res.status(404).json({
-          error: 'Tool usage guard not found',
-          message: `No tool usage guard found with ID: ${id}`,
-        });
-      }
-
-      return res.json({
-        success: true,
-        message: 'Tool usage guard deleted successfully',
-      });
-    } catch (error: unknown) {
-      const hivemindError = ErrorUtils.toHivemindError(error);
-      return res.status(500).json({
-        error: 'Failed to delete tool usage guard',
-        message: hivemindError.message || 'An error occurred while deleting tool usage guard',
-      });
-    }
-  }
-);
-
-// POST /tool-usage-guards/:id/toggle - Toggle tool usage guard active status
-router.post(
-  '/tool-usage-guards/:id/toggle',
-  configRateLimit,
-  validateRequest(ToggleProviderSchema),
-  async (req: Request, res: Response) => {
-    try {
-      const { id } = req.params;
-      const { isActive } = req.body;
-
-      const guardsManager = ToolUsageGuardsManager.getInstance();
-      guardsManager.toggleGuard(id, isActive);
-
-      return res.json({
-        success: true,
-        message: 'Tool usage guard status updated successfully',
-      });
-    } catch (error: unknown) {
-      const hivemindError = ErrorUtils.toHivemindError(error);
-      const statusCode = error instanceof Error && error.message.includes('not found') ? 404 : 500;
-      return res.status(statusCode).json({
-        error: 'Failed to update guard status',
-        message: hivemindError.message || 'An error occurred while updating guard status',
-      });
-    }
-  }
-);
 // GET /llm-providers - Get all LLM providers
 router.get('/llm-providers', (req: Request, res: Response) => {
   try {
@@ -932,149 +699,6 @@ router.post(
   }
 );
 
-/**
- * @openapi
- * /api/admin/personas:
- *   get:
- *     summary: Retrieve personas
- *     tags: [Admin]
- *     responses:
- *       200:
- *         description: List of personas
- */
-router.get('/personas', (req: Request, res: Response) => {
-  try {
-    // Get personas from persistent storage
-    const storedPersonas = webUIStorage.getPersonas();
-
-    // Default personas - in a real implementation, these would be stored in a database
-    const defaultPersonas = [
-      {
-        key: 'default',
-        name: 'Default Assistant',
-        systemPrompt: 'You are a helpful AI assistant.',
-      },
-      {
-        key: 'developer',
-        name: 'Developer Assistant',
-        systemPrompt: 'You are an expert software developer assistant.',
-      },
-      {
-        key: 'support',
-        name: 'Support Agent',
-        systemPrompt: 'You are a customer support agent.',
-      },
-    ];
-
-    // Combine stored and default personas
-    const allPersonas = [...storedPersonas, ...defaultPersonas];
-
-    return res.json({
-      success: true,
-      data: { personas: allPersonas },
-      message: 'Personas retrieved successfully',
-    });
-  } catch (error: unknown) {
-    const hivemindError = ErrorUtils.toHivemindError(error);
-    return res.status(500).json({
-      error: 'Failed to retrieve personas',
-      message: hivemindError.message || 'An error occurred while retrieving personas',
-    });
-  }
-});
-
-/**
- * @openapi
- * /api/admin/personas:
- *   post:
- *     summary: Save a new persona
- *     tags: [Admin]
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               key: { type: string }
- *               name: { type: string }
- *               systemPrompt: { type: string }
- *             required: [key, name, systemPrompt]
- *     responses:
- *       200:
- *         description: Created persona
- */
-router.post('/personas', validateRequest(PersonaSchema), async (req: Request, res: Response) => {
-  try {
-    const { key, name, systemPrompt } = req.body;
-
-    // Save to persistent storage
-    await webUIStorage.savePersona({ key, name, systemPrompt });
-
-    return res.json({
-      success: true,
-      message: 'Persona created successfully',
-    });
-  } catch (error: unknown) {
-    const hivemindError = ErrorUtils.toHivemindError(error);
-    return res.status(500).json({
-      error: 'Failed to create persona',
-      message: hivemindError.message || 'An error occurred while creating persona',
-    });
-  }
-});
-
-// Update an existing persona
-router.put(
-  '/personas/:key',
-  validateRequest(UpdatePersonaSchema),
-  async (req: Request, res: Response) => {
-    try {
-      const { key } = req.params;
-      const { name, systemPrompt } = req.body;
-
-      // Save to persistent storage
-      await webUIStorage.savePersona({ key, name, systemPrompt });
-
-      return res.json({
-        success: true,
-        message: 'Persona updated successfully',
-      });
-    } catch (error: unknown) {
-      const hivemindError = ErrorUtils.toHivemindError(error);
-      return res.status(500).json({
-        error: 'Failed to update persona',
-        message: hivemindError.message || 'An error occurred while updating persona',
-      });
-    }
-  }
-);
-
-// Delete a persona
-router.delete(
-  '/personas/:key',
-  validateRequest(PersonaKeyParamSchema),
-  async (req: Request, res: Response) => {
-    try {
-      const { key } = req.params;
-
-      // Delete from persistent storage
-      await webUIStorage.deletePersona(key);
-
-      return res.json({
-        success: true,
-        message: 'Persona deleted successfully',
-      });
-    } catch (error: unknown) {
-      const hivemindError = ErrorUtils.toHivemindError(error);
-      return res.status(500).json({
-        error: 'Failed to delete persona',
-        message: hivemindError.message || 'An error occurred while deleting persona',
-      });
-    }
-  }
-);
-
 // Test connection to an MCP server
 router.post(
   '/mcp-servers/test',
@@ -1590,7 +1214,6 @@ router.get('/providers', (req: Request, res: Response) => {
     });
   } catch (error) {
     const hivemindError = ErrorUtils.toHivemindError(error);
-    debug('Error fetching providers:', hivemindError);
     return res.status(500).json({
       error: 'Failed to fetch providers',
       message: hivemindError.message || 'An error occurred while fetching providers',
@@ -1620,7 +1243,6 @@ router.get('/system-info', async (req: Request, res: Response) => {
     return res.json({ systemInfo });
   } catch (error) {
     const hivemindError = ErrorUtils.toHivemindError(error);
-    debug('Error fetching system info:', hivemindError);
     return res.status(500).json({
       error: 'Failed to fetch system info',
       message: hivemindError.message || 'An error occurred while fetching system info',
