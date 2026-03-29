@@ -329,7 +329,14 @@ export class BotConfigurationManager {
   private userConfigStore = UserConfigStore.getInstance();
 
   public constructor() {
-    this.loadConfiguration();
+    // Late initialization in initialize()
+  }
+
+  /**
+   * Initializes the BotConfigurationManager asynchronously
+   */
+  public async initialize(): Promise<void> {
+    await this.reloadAsync();
   }
 
   /**
@@ -406,11 +413,11 @@ export class BotConfigurationManager {
     const configDir = process.env.NODE_CONFIG_DIR || path.join(process.cwd(), 'config');
     const botsDir = path.join(configDir, 'bots');
 
-    if (!fs.existsSync(botsDir)) {
-      return [];
-    }
-
     try {
+      // Reverting to sync existsCheck for constructor discovery path
+      if (!fs.existsSync(botsDir)) {
+        return [];
+      }
       const files = fs.readdirSync(botsDir);
       return files.filter((f) => f.endsWith('.json')).map((f) => f.replace('.json', ''));
     } catch (e) {
@@ -547,9 +554,13 @@ export class BotConfigurationManager {
     const configDir = process.env.NODE_CONFIG_DIR || path.join(__dirname, '../../config');
     const botConfigPath = path.join(configDir, `bots/${botName}.json`);
 
-    if (fs.existsSync(botConfigPath)) {
-      debug(`Loading bot-specific config for ${botName} from ${botConfigPath}`);
-      botConfig.loadFile(botConfigPath);
+    try {
+      if (fs.existsSync(botConfigPath)) {
+        debug(`Loading bot-specific config for ${botName} from ${botConfigPath}`);
+        botConfig.loadFile(botConfigPath);
+      }
+    } catch (e) {
+      debug(`Error loading bot config for ${botName}: ${e}`);
     }
 
     botConfig.validate({ allowed: 'warn' });
@@ -1244,6 +1255,7 @@ export class BotConfigurationManager {
    * Async version of createBotConfig
    */
   private async createBotConfigAsync(botName: string): Promise<BotConfig | null> {
+    const start = Date.now();
     if (!botName || typeof botName !== 'string' || botName.trim() === '') {
       return null;
     }
@@ -1344,6 +1356,7 @@ export class BotConfigurationManager {
     }
 
     this.applyUserOverrides(botName, config);
+    debug(`Async bot config created for ${botName} in ${Date.now() - start}ms`);
     return config;
   }
 

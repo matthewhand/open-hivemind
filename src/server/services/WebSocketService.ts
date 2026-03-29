@@ -162,8 +162,10 @@ export class WebSocketService {
 
     this.messageFlow.push(messageEvent);
 
-    // Log to persistent storage
-    ActivityLogger.getInstance().log(messageEvent);
+    // Log to persistent storage (async)
+    ActivityLogger.getInstance().log(messageEvent).catch(err => {
+      debug('Failed to log message flow event:', err);
+    });
 
     // Per-bot message count
     const key = event.botName || 'unknown';

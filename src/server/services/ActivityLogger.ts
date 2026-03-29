@@ -20,16 +20,18 @@ export class ActivityLogger {
   private logFile: string;
 
   private constructor() {
-    // Store in config/user/activity.jsonl as it is a persistent location for user data
-    const configDir = path.join(process.cwd(), 'config', 'user');
-    if (!fs.existsSync(configDir)) {
-      try {
-        fs.mkdirSync(configDir, { recursive: true });
-      } catch (e) {
-        debug('Failed to create config/user directory: %O', e);
-      }
+    // Late initialization in initialize()
+    this.logFile = path.join(process.cwd(), 'config', 'user', 'activity.jsonl');
+  }
+
+  public async initialize(): Promise<void> {
+    const configDir = path.dirname(this.logFile);
+    try {
+      await fs.promises.mkdir(configDir, { recursive: true });
+      debug('ActivityLogger initialized at %s', this.logFile);
+    } catch (e) {
+      debug('Failed to create config/user directory: %O', e);
     }
-    this.logFile = path.join(configDir, 'activity.jsonl');
   }
 
   public static getInstance(): ActivityLogger {
@@ -39,18 +41,20 @@ export class ActivityLogger {
     return ActivityLogger.instance;
   }
 
-  public log(event: MessageFlowEvent): void {
+  public async log(event: MessageFlowEvent): Promise<void> {
     const line = JSON.stringify(event) + '\n';
-    fs.appendFile(this.logFile, line, 'utf8', (error) => {
-      if (error) {
-        debug('Failed to log activity: %O', error);
-      }
-    });
+    try {
+      await fs.promises.appendFile(this.logFile, line, 'utf8');
+    } catch (error) {
+      debug('Failed to log activity: %O', error);
+    }
   }
 
   public async getEvents(options: ActivityFilter = {}): Promise<MessageFlowEvent[]> {
     try {
-      if (!fs.existsSync(this.logFile)) {
+      try {
+        await fs.promises.access(this.logFile, fs.constants.F_OK);
+      } catch {
         return [];
       }
 

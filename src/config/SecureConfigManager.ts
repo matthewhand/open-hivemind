@@ -25,7 +25,7 @@ export class SecureConfigManager {
   private static instance: SecureConfigManager;
   private readonly configDir: string;
   private readonly backupDir: string;
-  private readonly encryptionKey: Buffer;
+  private encryptionKey: Buffer;
   private readonly algorithm = 'aes-256-gcm';
   private readonly keyPath: string;
   private readonly mainConfigDir: string;
@@ -47,7 +47,7 @@ export class SecureConfigManager {
     await this.ensureDirectories();
 
     // Late load encryption key to avoid async in constructor
-    (this as any).encryptionKey = await this.getOrCreateEncryptionKey();
+    this.encryptionKey = await this.getOrCreateEncryptionKey();
 
     debug('SecureConfigManager initialized successfully');
   }

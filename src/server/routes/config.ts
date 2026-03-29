@@ -115,7 +115,7 @@ const loadDynamicConfigs = () => {
 };
 
 // Initialize configuration from registry
-export const reloadGlobalConfigs = () => {
+export const reloadGlobalConfigs = async () => {
   const providers = providerRegistry.getAll();
   providers.forEach((p) => {
     schemaSources[p.id] = p.getConfig();
@@ -125,12 +125,55 @@ export const reloadGlobalConfigs = () => {
   globalConfigs = { ...schemaSources };
 
   // Load dynamic configs
-  loadDynamicConfigs();
+  await loadDynamicConfigsAsync();
 
   debug(
     'Global configs reloaded with providers:',
     providers.map((p) => p.id)
   );
+};
+
+// Async version of loadDynamicConfigs
+const loadDynamicConfigsAsync = async () => {
+  try {
+    const configDir = process.env.NODE_CONFIG_DIR || path.join(process.cwd(), 'config');
+    const providersDir = path.join(configDir, 'providers');
+
+    try {
+      await fs.promises.access(providersDir, fs.constants.F_OK);
+      const files = await fs.promises.readdir(providersDir);
+
+      for (const file of files) {
+        const match = file.match(/^([a-z]+)-(.+)\.json$/);
+        if (match) {
+          const type = match[1];
+          const name = match[0].replace('.json', '');
+
+          if (schemaSources[type] && !globalConfigs[name]) {
+            debug(`Loading dynamic config: ${name} (type: ${type})`);
+            const convict = require('convict');
+            const newConfig = convict(schemaSources[type].getSchema());
+
+            const fileData = await fs.promises.readFile(path.join(providersDir, file), 'utf8');
+            newConfig.load(JSON.parse(fileData));
+            try {
+              newConfig.validate({ allowed: 'warn' });
+            } catch (e) {
+              console.warn(`Validation warning for ${name}:`, e);
+            }
+
+            globalConfigs[name] = newConfig;
+          }
+        }
+      }
+    } catch (e) {
+      if ((e as any).code !== 'ENOENT') {
+        throw e;
+      }
+    }
+  } catch (e) {
+    console.error('Failed to load dynamic configs:', e);
+  }
 };
 
 // Apply audit middleware to all config routes (except in test)
@@ -299,7 +342,8 @@ router.get('/sources', async (req, res) => {
     const configDir = path.join(process.cwd(), 'config');
     const configFiles: any[] = [];
 
-    if (fs.existsSync(configDir)) {
+    try {
+      await fs.promises.access(configDir, fs.constants.F_OK);
       const files = await fs.promises.readdir(configDir);
       const statPromises = files
         .filter((file) => file.endsWith('.json') || file.endsWith('.js') || file.endsWith('.ts'))
@@ -317,6 +361,8 @@ router.get('/sources', async (req, res) => {
 
       const fileStats = await Promise.all(statPromises);
       configFiles.push(...fileStats);
+    } catch {
+      // ignore
     }
 
     return res.json({

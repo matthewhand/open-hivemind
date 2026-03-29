@@ -57,7 +57,7 @@ export class WebUIServer {
   private app: express.Application;
   private server: any;
   private port: number;
-  private readonly frontendDistPath: string;
+  private frontendDistPath: string;
 
   constructor(port = 3000) {
     this.port = port;
@@ -242,7 +242,7 @@ export class WebUIServer {
 
   public async start(): Promise<void> {
     // Resolve the actual dist path asynchronously before starting
-    (this as any).frontendDistPath = await resolveFrontendDistPath();
+    this.frontendDistPath = await resolveFrontendDistPath();
 
     try {
       await fs.promises.access(this.frontendDistPath, fs.constants.F_OK);
