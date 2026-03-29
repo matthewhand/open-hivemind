@@ -24,6 +24,7 @@ function makeMockMemoryProvider(overrides: Partial<IMemoryProvider> = {}): IMemo
     update: jest.fn().mockResolvedValue({ id: '1', memory: '' }),
     delete: jest.fn().mockResolvedValue(undefined),
     deleteAll: jest.fn().mockResolvedValue(undefined),
+    healthCheck: jest.fn().mockResolvedValue(true),
     ...overrides,
   };
 }

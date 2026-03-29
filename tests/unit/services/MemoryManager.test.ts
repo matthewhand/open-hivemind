@@ -45,6 +45,7 @@ function makeProvider(overrides?: Partial<Record<string, jest.Mock>>) {
     update: jest.fn(),
     delete: jest.fn(),
     deleteAll: jest.fn(),
+    healthCheck: jest.fn().mockResolvedValue(true),
     ...overrides,
   };
 }
