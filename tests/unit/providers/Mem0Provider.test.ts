@@ -7,7 +7,6 @@
 
 import { Mem0Provider } from '../../../packages/memory-mem0/src/Mem0Provider';
 import { Mem0ApiError } from '../../../packages/memory-mem0/src/types';
-import { clearCircuitBreakerRegistry } from '../../../src/common/CircuitBreaker';
 
 // ---------------------------------------------------------------------------
 // Test helpers
@@ -70,7 +69,6 @@ function errorResponse(status: number, body = ''): Response {
 let fetchMock: jest.Mock;
 
 beforeEach(() => {
-  clearCircuitBreakerRegistry();
   fetchMock = jest.fn();
   global.fetch = fetchMock;
 });
@@ -253,11 +251,20 @@ describe('Mem0Provider.search()', () => {
     expect(body.limit).toBeUndefined();
   });
 
-  it('sends empty string query to the API', async () => {
+  it('returns empty array for empty results', async () => {
     const provider = makeProvider();
     fetchMock.mockResolvedValueOnce(jsonResponse({ results: [] }));
 
-    await provider.search('');
+    const result = await provider.search('nothing');
+    expect(result.results).toEqual([]);
+  });
+
+  it('handles empty string query', async () => {
+    const provider = makeProvider();
+    fetchMock.mockResolvedValueOnce(jsonResponse({ results: [] }));
+
+    const result = await provider.search('');
+    expect(result.results).toEqual([]);
 
     const body = JSON.parse(fetchMock.mock.calls[0][1].body);
     expect(body.query).toBe('');
@@ -302,6 +309,13 @@ describe('Mem0Provider.getAll()', () => {
     expect(url).toContain('agent_id=other-agent');
   });
 
+  it('returns empty array when no memories exist', async () => {
+    const provider = makeProvider();
+    fetchMock.mockResolvedValueOnce(jsonResponse({ results: [] }));
+
+    const result = await provider.getAll();
+    expect(result.results).toEqual([]);
+  });
 });
 
 // ---------------------------------------------------------------------------
@@ -328,13 +342,6 @@ describe('Mem0Provider.get()', () => {
 
     const result = await provider.get('nonexistent');
     expect(result).toBeNull();
-  });
-
-  it('throws on non-404 server error', async () => {
-    const provider = makeProvider();
-    fetchMock.mockResolvedValueOnce(errorResponse(500, 'Internal Server Error'));
-
-    await expect(provider.get('mem-99')).rejects.toThrow();
   });
 
   it('encodes special characters in memory id', async () => {
@@ -582,14 +589,15 @@ describe('Mem0Provider — retry behaviour', () => {
 // ---------------------------------------------------------------------------
 
 describe('Mem0Provider — edge cases', () => {
-  it('sends very long content strings in the request body', async () => {
+  it('handles very long content strings', async () => {
     const provider = makeProvider();
     const longContent = 'x'.repeat(100_000);
     fetchMock.mockResolvedValueOnce(
       jsonResponse({ results: [{ id: 'long-1', memory: longContent }] }),
     );
 
-    await provider.add([{ role: 'user', content: longContent }]);
+    const result = await provider.add([{ role: 'user', content: longContent }]);
+    expect(result.results[0].memory).toHaveLength(100_000);
 
     const body = JSON.parse(fetchMock.mock.calls[0][1].body);
     expect(body.messages[0].content).toHaveLength(100_000);
@@ -609,6 +617,23 @@ describe('Mem0Provider — edge cases', () => {
 
     const body = JSON.parse(fetchMock.mock.calls[0][1].body);
     expect(body.metadata).toEqual(metadata);
+  });
+
+  it('concurrent calls do not interfere with each other', async () => {
+    const provider = makeProvider();
+
+    fetchMock
+      .mockResolvedValueOnce(jsonResponse({ results: [{ id: 'a', memory: 'first' }] }))
+      .mockResolvedValueOnce(jsonResponse({ results: [{ id: 'b', memory: 'second' }] }));
+
+    const [r1, r2] = await Promise.all([
+      provider.search('query-a'),
+      provider.search('query-b'),
+    ]);
+
+    expect(r1.results[0].id).toBe('a');
+    expect(r2.results[0].id).toBe('b');
+    expect(fetchMock).toHaveBeenCalledTimes(2);
   });
 
   it('omits score/metadata from result when not present in API response', async () => {

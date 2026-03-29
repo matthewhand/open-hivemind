@@ -47,23 +47,6 @@ export class ApprovalRepository {
     }
   }
 
-  private mapRowToApprovalRequest(row: Record<string, any>): ApprovalRequest {
-    return {
-      id: row.id,
-      resourceType: row.resourceType,
-      resourceId: row.resourceId,
-      changeType: row.changeType,
-      requestedBy: row.requestedBy,
-      diff: row.diff,
-      status: row.status,
-      reviewedBy: row.reviewedBy,
-      reviewedAt: row.reviewedAt ? new Date(row.reviewedAt) : undefined,
-      reviewComments: row.reviewComments,
-      createdAt: new Date(row.createdAt),
-      tenantId: row.tenantId,
-    };
-  }
-
   async getApprovalRequest(id: number): Promise<ApprovalRequest | null> {
     this.ensureConnected();
 
@@ -73,7 +56,20 @@ export class ApprovalRepository {
 
       if (!row) return null;
 
-      return this.mapRowToApprovalRequest(row);
+      return {
+        id: row.id,
+        resourceType: row.resourceType,
+        resourceId: row.resourceId,
+        changeType: row.changeType,
+        requestedBy: row.requestedBy,
+        diff: row.diff,
+        status: row.status,
+        reviewedBy: row.reviewedBy,
+        reviewedAt: row.reviewedAt ? new Date(row.reviewedAt) : undefined,
+        reviewComments: row.reviewComments,
+        createdAt: new Date(row.createdAt),
+        tenantId: row.tenantId,
+      };
     } catch (error) {
       debug('Error getting approval request:', error);
       throw new Error(`Failed to get approval request: ${error}`);
@@ -111,7 +107,20 @@ export class ApprovalRepository {
 
       const rows = await db.all(query, params);
 
-      return rows.map((row) => this.mapRowToApprovalRequest(row));
+      return rows.map((row) => ({
+        id: row.id,
+        resourceType: row.resourceType,
+        resourceId: row.resourceId,
+        changeType: row.changeType,
+        requestedBy: row.requestedBy,
+        diff: row.diff,
+        status: row.status,
+        reviewedBy: row.reviewedBy,
+        reviewedAt: row.reviewedAt ? new Date(row.reviewedAt) : undefined,
+        reviewComments: row.reviewComments,
+        createdAt: new Date(row.createdAt),
+        tenantId: row.tenantId,
+      }));
     } catch (error) {
       debug('Error getting approval requests:', error);
       throw new Error(`Failed to get approval requests: ${error}`);

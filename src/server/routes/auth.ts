@@ -4,7 +4,6 @@ import { AuthManager } from '../../auth/AuthManager';
 import { authenticate, requireAdmin } from '../../auth/middleware';
 import type { AuthMiddlewareRequest, LoginCredentials, RegisterData } from '../../auth/types';
 import { authRateLimiter } from '../../middleware/rateLimiter';
-import { validate } from '../middleware/validate';
 import {
   ChangePasswordSchema,
   LoginSchema,
@@ -14,8 +13,9 @@ import {
   UpdateUserSchema,
   UserIdParamSchema,
   VerifyTokenSchema,
-} from '../schemas/auth.schemas';
+} from '../../validation/schemas/authSchema';
 import { ApiResponse } from '../utils/apiResponse';
+import { validateRequest } from '../../validation/validateRequest';
 
 const debug = Debug('app:AuthRoutes');
 const router = Router();
@@ -46,7 +46,7 @@ const authManager = AuthManager.getInstance();
 router.post(
   '/login',
   authRateLimiter,
-  validate(LoginSchema),
+  validateRequest(LoginSchema),
   async (req: Request, res: Response) => {
     try {
       const credentials: LoginCredentials = req.body;
@@ -92,7 +92,7 @@ router.post(
   '/register',
   authenticate,
   requireAdmin,
-  validate(RegisterSchema),
+  validateRequest(RegisterSchema),
   async (req: Request, res: Response) => {
     const authReq = req as AuthMiddlewareRequest;
     try {
@@ -132,7 +132,7 @@ router.post(
 router.post(
   '/refresh',
   authRateLimiter,
-  validate(RefreshTokenSchema),
+  validateRequest(RefreshTokenSchema),
   async (req: Request, res: Response) => {
     try {
       const { refreshToken } = req.body;
@@ -172,7 +172,7 @@ router.post(
 router.post(
   '/logout',
   authenticate,
-  validate(LogoutSchema),
+  validateRequest(LogoutSchema),
   async (req: Request, res: Response) => {
     const authReq = req as AuthMiddlewareRequest;
     try {
@@ -204,22 +204,17 @@ router.post(
  *       401:
  *         description: Unauthorized
  */
-router.post(
-  '/verify',
-  authRateLimiter,
-  validate(VerifyTokenSchema),
-  async (req: Request, res: Response) => {
-    try {
-      const { token } = req.body;
-      const payload = authManager.verifyAccessToken(token);
-      const user = authManager.getUser((payload as any).userId);
-      if (!user) return res.status(401).json(ApiResponse.error('User not found', undefined, 401));
-      return res.json(ApiResponse.success({ user }));
-    } catch (error: any) {
-      return res.status(401).json(ApiResponse.error('Invalid token', undefined, 401));
-    }
+router.post('/verify', authRateLimiter, validateRequest(VerifyTokenSchema), async (req: Request, res: Response) => {
+  try {
+    const { token } = req.body;
+    const payload = authManager.verifyAccessToken(token);
+    const user = authManager.getUser((payload as any).userId);
+    if (!user) return res.status(401).json(ApiResponse.error('User not found', undefined, 401));
+    return res.json(ApiResponse.success({ user }));
+  } catch (error: any) {
+    return res.status(401).json(ApiResponse.error('Invalid token', undefined, 401));
   }
-);
+});
 
 router.get('/me', authenticate, (req: Request, res: Response) => {
   const authReq = req as AuthMiddlewareRequest;
@@ -233,7 +228,7 @@ router.get('/me', authenticate, (req: Request, res: Response) => {
 router.put(
   '/password',
   authenticate,
-  validate(ChangePasswordSchema),
+  validateRequest(ChangePasswordSchema),
   async (req: Request, res: Response) => {
     const authReq = req as AuthMiddlewareRequest;
     try {
@@ -307,7 +302,7 @@ router.get(
   '/users/:userId',
   authenticate,
   requireAdmin,
-  validate(UserIdParamSchema),
+  validateRequest(UserIdParamSchema),
   (req: Request, res: Response) => {
     const authReq = req as AuthMiddlewareRequest;
     try {
@@ -334,7 +329,7 @@ router.put(
   '/users/:userId',
   authenticate,
   requireAdmin,
-  validate(UserIdParamSchema.merge(UpdateUserSchema)),
+  validateRequest(UserIdParamSchema.merge(UpdateUserSchema)),
   async (req: Request, res: Response) => {
     const authReq = req as AuthMiddlewareRequest;
     try {
@@ -367,7 +362,7 @@ router.delete(
   '/users/:userId',
   authenticate,
   requireAdmin,
-  validate(UserIdParamSchema),
+  validateRequest(UserIdParamSchema),
   (req: Request, res: Response) => {
     const authReq = req as AuthMiddlewareRequest;
     try {

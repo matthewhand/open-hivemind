@@ -7,8 +7,6 @@ import {
   type GuardrailProfile,
 } from '../../config/guardrailProfiles';
 import {
-  BulkDeleteGuardProfilesSchema,
-  BulkToggleGuardProfilesSchema,
   CreateGuardProfileSchema,
   GuardProfileIdParamSchema,
   UpdateGuardProfileSchema,
@@ -267,95 +265,5 @@ router.delete('/:id', validateRequest(GuardProfileIdParamSchema), (req: Request,
     });
   }
 });
-
-// POST /bulk/delete - Delete multiple profiles atomically
-router.post(
-  '/bulk/delete',
-  validateRequest(BulkDeleteGuardProfilesSchema),
-  (req: Request, res: Response) => {
-    try {
-      const { ids } = req.body as { ids: string[] };
-      const profiles = loadGuardrailProfiles();
-
-      // Filter out profiles with matching IDs
-      const filteredProfiles = profiles.filter((p) => !ids.includes(p.id));
-      const deletedCount = profiles.length - filteredProfiles.length;
-
-      // Save atomically
-      saveGuardrailProfiles(filteredProfiles);
-
-      return res.json({
-        success: true,
-        message: `${deletedCount} guard profile(s) deleted successfully`,
-        data: {
-          deletedCount,
-          requestedCount: ids.length,
-        },
-      });
-    } catch (error: unknown) {
-      return res.status(500).json({
-        success: false,
-        error: 'Failed to delete guard profiles',
-        message: error instanceof Error ? error.message : String(error),
-      });
-    }
-  }
-);
-
-// POST /bulk/toggle - Toggle multiple profiles atomically
-router.post(
-  '/bulk/toggle',
-  validateRequest(BulkToggleGuardProfilesSchema),
-  (req: Request, res: Response) => {
-    try {
-      const { ids, enabled } = req.body as { ids: string[]; enabled: boolean };
-      const profiles = loadGuardrailProfiles();
-
-      let updatedCount = 0;
-
-      // Update all matching profiles
-      const updatedProfiles = profiles.map((profile) => {
-        if (ids.includes(profile.id)) {
-          updatedCount++;
-          return {
-            ...profile,
-            guards: {
-              ...profile.guards,
-              mcpGuard: profile.guards.mcpGuard
-                ? { ...profile.guards.mcpGuard, enabled }
-                : profile.guards.mcpGuard,
-              rateLimit: profile.guards.rateLimit
-                ? { ...profile.guards.rateLimit, enabled }
-                : profile.guards.rateLimit,
-              contentFilter: profile.guards.contentFilter
-                ? { ...profile.guards.contentFilter, enabled }
-                : profile.guards.contentFilter,
-            },
-          };
-        }
-        return profile;
-      });
-
-      // Save atomically
-      saveGuardrailProfiles(updatedProfiles);
-
-      return res.json({
-        success: true,
-        message: `${updatedCount} guard profile(s) ${enabled ? 'enabled' : 'disabled'} successfully`,
-        data: {
-          updatedCount,
-          requestedCount: ids.length,
-          enabled,
-        },
-      });
-    } catch (error: unknown) {
-      return res.status(500).json({
-        success: false,
-        error: 'Failed to toggle guard profiles',
-        message: error instanceof Error ? error.message : String(error),
-      });
-    }
-  }
-);
 
 export default router;

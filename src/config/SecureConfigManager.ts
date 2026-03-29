@@ -122,10 +122,10 @@ export class SecureConfigManager {
       
       await fs.promises.writeFile(filePath, encryptedData, 'utf8');
       debug(`Configuration ${config.id} stored successfully`);
-    } catch (error: any) {
-      const hivemindError = ErrorUtils.toHivemindError(error) as any;
+    } catch (error: unknown) {
+      const hivemindError = ErrorUtils.toHivemindError(error);
       debug(`Failed to store configuration ${config.id}:`, hivemindError.message);
-      throw (ErrorUtils as any).createError(
+      throw ErrorUtils.createError(
         `Failed to store secure configuration: ${hivemindError.message}`,
         'unknown',
         'SECURE_CONFIG_STORE_FAILED',
@@ -140,17 +140,11 @@ export class SecureConfigManager {
   public async getConfig(id: string): Promise<SecureConfig | null> {
     try {
       const filePath = this.getSecureFilePath(id);
-      let encryptedData: string;
-      try {
-        await fs.promises.access(filePath);
-        encryptedData = await fs.promises.readFile(filePath, 'utf8');
-      } catch (err: any) {
-        if (err.code === 'ENOENT') {
-          return null;
-        }
-        throw err;
+      if (!fs.existsSync(filePath)) {
+        return null;
       }
 
+      const encryptedData = await fs.promises.readFile(filePath, 'utf8');
       const decryptedData = this.decrypt(encryptedData);
       const config: SecureConfig = JSON.parse(decryptedData);
 
@@ -175,51 +169,27 @@ export class SecureConfigManager {
 
         if (daysSinceUpdate >= config.rotationInterval) {
           debug(`[WARNING] Secure configuration '${config.name}' (ID: ${config.id}) is due for credential rotation (Interval: ${config.rotationInterval} days, Days since update: ${Math.floor(daysSinceUpdate)} days).`);
-          // In a automated system, this could trigger an event/webhook.
+          // In a fully automated system, this could trigger an event/webhook to automatically rotate secrets.
         }
       }
 
       return config;
-    } catch (error: any) {
-      const hivemindError = ErrorUtils.toHivemindError(error) as any;
+    } catch (error: unknown) {
+      const hivemindError = ErrorUtils.toHivemindError(error);
       debug(`Failed to retrieve configuration ${id}:`, hivemindError.message);
       return null;
     }
   }
 
-  public async getDecryptedMainConfig(env: string): Promise<Record<string, unknown> | null> {
+  public getDecryptedMainConfig(env: string): Record<string, unknown> {
     try {
       const configPath = path.join(this.mainConfigDir, `${env}.json.enc`);
-      try {
-        await fs.promises.access(configPath);
-        const encryptedData = await fs.promises.readFile(configPath, 'utf8');
+      if (fs.existsSync(configPath)) {
+        const encryptedData = fs.readFileSync(configPath, 'utf8');
         const decryptedData = this.decrypt(encryptedData);
         return JSON.parse(decryptedData);
-      } catch (err: any) {
-        if (err.code !== 'ENOENT') {
-          throw err;
-        }
-        return null;
       }
-    } catch (error) {
-      debug(`Failed to read decrypted main config for env ${env}:`, error);
       return null;
-    }
-  }
-
-  /**
-   * Synchronous version of getDecryptedMainConfig for use in constructors
-   * and other synchronous contexts that cannot await.
-   */
-  public getDecryptedMainConfigSync(env: string): Record<string, unknown> | null {
-    try {
-      const configPath = path.join(this.mainConfigDir, `${env}.json.enc`);
-      if (!fs.existsSync(configPath)) {
-        return null;
-      }
-      const encryptedData = fs.readFileSync(configPath, 'utf8');
-      const decryptedData = this.decrypt(encryptedData);
-      return JSON.parse(decryptedData);
     } catch (error) {
       debug(`Failed to read decrypted main config for env ${env}:`, error);
       return null;
@@ -232,17 +202,14 @@ export class SecureConfigManager {
   public async deleteConfig(id: string): Promise<void> {
     try {
       const filePath = this.getSecureFilePath(id);
-      try {
-        await fs.promises.access(filePath);
+      if (fs.existsSync(filePath)) {
         await fs.promises.unlink(filePath);
         debug(`Configuration ${id} deleted`);
-      } catch (err: any) {
-        if (err.code !== 'ENOENT') throw err;
       }
-    } catch (error: any) {
-      const hivemindError = ErrorUtils.toHivemindError(error) as any;
+    } catch (error: unknown) {
+      const hivemindError = ErrorUtils.toHivemindError(error);
       debug(`Failed to delete configuration ${id}:`, hivemindError.message);
-      throw (ErrorUtils as any).createError(
+      throw ErrorUtils.createError(
         `Failed to delete secure configuration: ${hivemindError.message}`,
         'unknown',
         'SECURE_CONFIG_DELETE_FAILED',
@@ -343,16 +310,16 @@ export class SecureConfigManager {
 
       debug(`Backup ${backupId} created with ${Object.keys(allConfigs).length} configurations`);
       return backupId;
-    } catch (error: any) {
-      const hivemindError = ErrorUtils.toHivemindError(error) as any;
-      const errorInfo = ErrorUtils.classifyError(hivemindError) as any;
+    } catch (error: unknown) {
+      const hivemindError = ErrorUtils.toHivemindError(error);
+      const errorInfo = ErrorUtils.classifyError(hivemindError);
       debug('Failed to create backup:', {
         error: hivemindError.message,
         errorCode: hivemindError.code,
         errorType: errorInfo.type,
         severity: errorInfo.severity,
       });
-      throw (ErrorUtils as any).createError(
+      throw ErrorUtils.createError(
         `Backup creation failed: ${hivemindError.message}`,
         errorInfo.type,
         'SECURE_CONFIG_BACKUP_CREATE_FAILED',
@@ -412,16 +379,16 @@ export class SecureConfigManager {
       );
 
       debug(`Backup ${backupId} restored successfully`);
-    } catch (error: any) {
-      const hivemindError = ErrorUtils.toHivemindError(error) as any;
-      const errorInfo = ErrorUtils.classifyError(hivemindError) as any;
+    } catch (error: unknown) {
+      const hivemindError = ErrorUtils.toHivemindError(error);
+      const errorInfo = ErrorUtils.classifyError(hivemindError);
       debug(`Failed to restore backup ${backupId}:`, {
         error: hivemindError.message,
         errorCode: hivemindError.code,
         errorType: errorInfo.type,
         severity: errorInfo.severity,
       });
-      throw (ErrorUtils as any).createError(
+      throw ErrorUtils.createError(
         `Backup restoration failed: ${hivemindError.message}`,
         errorInfo.type,
         'SECURE_CONFIG_BACKUP_RESTORE_FAILED',

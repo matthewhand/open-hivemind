@@ -415,15 +415,6 @@ export class HotReloadManager {
         // Reload configuration so changes take effect immediately
         const manager = BotConfigurationManager.getInstance();
         manager.reload();
-
-        // Clear bot rate limiter cache to pick up new guard profile settings
-        try {
-          const { clearBotRateLimiters } = require('../middleware/rateLimiter');
-          clearBotRateLimiters();
-          debug('Cleared bot rate limiter cache after configuration reload');
-        } catch (error) {
-          debug('Failed to clear bot rate limiter cache:', error);
-        }
       }
 
       return true;

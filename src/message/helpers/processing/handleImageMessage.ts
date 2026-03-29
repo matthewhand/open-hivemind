@@ -1,6 +1,5 @@
 import axios from 'axios';
 import Debug from 'debug';
-
 const debug = Debug('app:message:helpers:processing:handleImageMessage');
 
 /**
@@ -36,8 +35,7 @@ export async function createPrediction(imageUrl: string): Promise<any> {
     });
     return response.data;
   } catch (error: any) {
-    debug(
-      'ERROR:',
+    debug('ERROR:',
       'Failed to create prediction:',
       error.response ? error.response.data : error.message
     );

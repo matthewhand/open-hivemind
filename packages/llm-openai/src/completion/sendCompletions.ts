@@ -1,0 +1,51 @@
+import Debug from 'debug';
+import { OpenAI } from 'openai';
+import { ErrorUtils, HivemindError } from '@src/types/errors';
+import openaiConfig from '@config/openaiConfig';
+import { withTimeout } from '@common/withTimeout';
+
+const debug = Debug('app:sendCompletions');
+
+/** Default timeout for LLM completion calls (30 seconds). */
+const DEFAULT_LLM_TIMEOUT_MS = 30_000;
+
+export async function sendCompletion(): Promise<void> {
+  const openai = new OpenAI({ apiKey: openaiConfig.get('OPENAI_API_KEY')! });
+
+  try {
+    const response = await withTimeout(
+      (signal) => openai.completions.create({
+        model: openaiConfig.get('OPENAI_MODEL')!,
+        prompt: 'Your prompt here',
+        max_tokens: openaiConfig.get('OPENAI_MAX_TOKENS')!,
+        temperature: openaiConfig.get('OPENAI_TEMPERATURE')!,
+      }, { signal }),
+      DEFAULT_LLM_TIMEOUT_MS,
+      'OpenAI sendCompletion',
+    );
+
+    if (!response.choices || !response.choices.length) {
+      throw new Error('No completion choices returned.');
+    }
+
+    debug('Completion generated:', response.choices[0].text.trim());
+  } catch (error: unknown) {
+    const hivemindError = ErrorUtils.toHivemindError(error);
+    const classification = ErrorUtils.classifyError(hivemindError);
+
+    debug('Error generating completion:', ErrorUtils.getMessage(hivemindError));
+
+    // Log with appropriate level
+    if (classification.logLevel === 'error') {
+      console.error('OpenAI completion error:', hivemindError);
+    }
+
+    throw ErrorUtils.createError(
+      `Failed to generate completion: ${ErrorUtils.getMessage(hivemindError)}`,
+      classification.type,
+      'OPENAI_COMPLETION_ERROR',
+      ErrorUtils.getStatusCode(hivemindError),
+      { originalError: error }
+    );
+  }
+}

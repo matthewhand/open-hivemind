@@ -2,7 +2,6 @@ import 'reflect-metadata';
 import fs from 'fs/promises';
 import path from 'path';
 import { injectable, singleton } from 'tsyringe';
-import { TWENTY_FOUR_HOURS_MS } from '@common/constants/time';
 import Logger from '@common/logger';
 
 const appLogger = Logger.withContext('GreetingStateManager');
@@ -87,7 +86,7 @@ export class GreetingStateManager {
 
     // Check if entry is expired (24 hours)
     const now = Date.now();
-    const twentyFourHours = TWENTY_FOUR_HOURS_MS;
+    const twentyFourHours = 24 * 60 * 60 * 1000;
 
     if (now - entry.timestamp > twentyFourHours) {
       // Entry is expired, remove it and return false
@@ -135,7 +134,7 @@ export class GreetingStateManager {
    */
   private cleanupExpiredEntries(): void {
     const now = Date.now();
-    const twentyFourHours = TWENTY_FOUR_HOURS_MS;
+    const twentyFourHours = 24 * 60 * 60 * 1000;
     let cleanedCount = 0;
 
     for (const [serviceId, entry] of Object.entries(this.state)) {

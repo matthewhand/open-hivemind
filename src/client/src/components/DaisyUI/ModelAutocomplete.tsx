@@ -249,7 +249,7 @@ const ModelAutocomplete: React.FC<ModelAutocompleteProps> = ({
             disabled={disabled}
             className={`input input-bordered w-full ${
               validationWarning ? 'input-warning' : ''
-            }`}
+            } ${isValidating ? 'loading' : ''}`}
           />
 
           {/* Loading indicator */}

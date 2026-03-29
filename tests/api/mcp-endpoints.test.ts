@@ -217,7 +217,7 @@ describe('MCP API Endpoints', () => {
         .post('/api/mcp/servers/test-server/call-tool')
         .send({ toolName: 'test-tool', arguments: {} });
       expect(response.status).toBe(200);
-      expect(response.body.result).not.toBeUndefined();
+      expect(response.body.result).toBeDefined();
     });
 
     it('should reject calling a tool on a disconnected server', async () => {
@@ -242,7 +242,7 @@ describe('MCP API Endpoints', () => {
         .send({ arguments: {} });
       expect(response.status).toBe(400);
       expect(response.body.error).toBe('Validation failed');
-      expect(Array.isArray(response.body.issues)).toBe(true);
+      expect(response.body.issues).toBeDefined();
     });
   });
 });

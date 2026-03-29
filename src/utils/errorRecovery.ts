@@ -191,13 +191,7 @@ export class RetryHandler {
         // Check if error is retryable
         if (!this.isRetryableError(lastError) && attempt < this.config.maxRetries) {
           debug(`Error is not retryable: ${lastError.message}`);
-          return {
-            success: false,
-            error: lastError,
-            attempts: attempt + 1,
-            totalDuration: Date.now() - startTime,
-            strategy: 'retry',
-          };
+          break;
         }
 
         // Don't wait on the last attempt

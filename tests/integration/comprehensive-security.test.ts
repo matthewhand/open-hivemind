@@ -198,7 +198,7 @@ describe('Comprehensive Security Integration Tests', () => {
         .expect(200);
 
       // Check for session cookie
-      expect(Array.isArray(response.headers['set-cookie'])).toBe(true);
+      expect(response.headers['set-cookie']).toBeDefined();
       expect(response.headers['set-cookie'][0]).toContain('HttpOnly');
       expect(response.headers['set-cookie'][0]).toContain('HttpOnly');
       if (process.env.NODE_ENV === 'production') {

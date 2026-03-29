@@ -1,7 +1,6 @@
 import { randomUUID } from 'crypto';
 import { EventEmitter } from 'events';
 import Debug from 'debug';
-import { injectable, singleton } from 'tsyringe';
 import { DatabaseManager } from '../../database/DatabaseManager';
 import { BotConfigService } from './BotConfigService';
 import { ConfigurationTemplateService } from './ConfigurationTemplateService';
@@ -89,8 +88,6 @@ interface ValidationSubscription {
   createdAt: Date;
 }
 
-@singleton()
-@injectable()
 export class RealTimeValidationService extends EventEmitter {
   private static instance: RealTimeValidationService;
   private configValidator: ConfigurationValidator;
@@ -104,7 +101,7 @@ export class RealTimeValidationService extends EventEmitter {
   private maxHistorySize = 100;
   private validationInterval: NodeJS.Timeout | null = null;
 
-  public constructor() {
+  private constructor() {
     super();
     this.configValidator = new ConfigurationValidator();
     this.botConfigService = BotConfigService.getInstance();

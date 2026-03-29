@@ -1,8 +1,7 @@
 // src/message/common/chatHistory.ts
 
-import Debug from 'debug';
 import type { IMessage } from '@src/message/interfaces/IMessage';
-
+import Debug from 'debug';
 const debug = Debug('app:message:common:chatHistory');
 
 /**

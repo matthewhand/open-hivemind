@@ -1,11 +1,8 @@
 import { promises as fs } from 'fs';
 import path from 'path';
-import Debug from 'debug';
 import { Router } from 'express';
 import { z } from 'zod';
-import { SpecSchema } from '../../validation/schemas/miscSchema';
-import { validateRequest } from '../../validation/validateRequest';
-
+import Debug from 'debug';
 const debug = Debug('app:server:routes:specs');
 
 const router = Router();
@@ -38,7 +35,7 @@ async function saveSpecsIndex(index: SpecMetadata[]) {
   await fs.writeFile(indexPath, JSON.stringify(index, null, 2));
 }
 
-router.post('/', validateRequest(SpecSchema), async (req, res) => {
+router.post('/', async (req, res) => {
   try {
     const { id, topic, tags, author, timestamp, version, content } = req.body;
 

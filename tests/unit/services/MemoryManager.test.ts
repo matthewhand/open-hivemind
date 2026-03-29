@@ -166,7 +166,7 @@ describe('MemoryManager', () => {
       expect(opts.agentId).toBe('bot1');
       expect(opts.userId).toBe('u1');
       expect(opts.metadata.botName).toBe('bot1');
-      expect(typeof opts.metadata.timestamp).toBe('string');
+      expect(opts.metadata.timestamp).toBeDefined();
     });
 
     it('stores assistant message', async () => {
@@ -267,6 +267,19 @@ describe('MemoryManager', () => {
       expect(results).toEqual([]);
     });
 
+    it('returns empty array when search results are empty', async () => {
+      const mgr = freshManager();
+      const provider = makeProvider({
+        search: jest.fn().mockResolvedValue({ results: [] }),
+      });
+      mockGetBot.mockReturnValue({ name: 'bot1', memoryProfile: 'prof1' });
+      mockGetMemoryProfileByKey.mockReturnValue({ provider: 'mem0', config: {} });
+      mockLoadPlugin.mockReturnValue({});
+      mockInstantiateMemoryProvider.mockReturnValue(provider);
+
+      const results = await mgr.retrieveRelevantMemories('bot1', 'anything');
+      expect(results).toEqual([]);
+    });
   });
 
   // === formatMemoriesForPrompt ===

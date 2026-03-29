@@ -1,50 +1,49 @@
 /**
- * Tool Provider interface for exposing executable tools to the AI system.
+ * Tool Provider interface for exposing external tools to bots.
  *
- * Implementations wrap external tool registries (MCP servers, LangChain tools,
- * custom function catalogs, etc.) behind a uniform list-and-execute contract.
+ * Tool providers connect to external systems (MCP servers, HTTP APIs, etc.)
+ * and make their capabilities available as callable tools during bot
+ * conversations.
  */
 
 // ---------------------------------------------------------------------------
 // Data types
 // ---------------------------------------------------------------------------
 
-/** JSON Schema subset describing a tool's input parameters. */
-export interface ToolInputSchema {
-  type: 'object';
-  properties?: Record<string, unknown>;
-  required?: string[];
-  [key: string]: unknown;
-}
-
-/** Descriptor for a single tool a provider can execute. */
+/** Describes a single tool that can be invoked. */
 export interface ToolDefinition {
-  /** Machine-readable tool name (unique within the provider). */
+  /** Unique name used to invoke the tool */
   name: string;
-  /** Human-readable description shown to the LLM / user. */
-  description: string;
-  /** JSON Schema describing the tool's expected input. */
-  inputSchema: ToolInputSchema;
+  /** Human-readable description of what the tool does */
+  description?: string;
+  /** JSON Schema describing the expected input arguments */
+  inputSchema?: Record<string, unknown>;
+  /** Name of the server/provider that owns this tool */
+  serverName?: string;
 }
 
-/** Contextual information passed alongside a tool invocation. */
-export interface ToolExecutionContext {
-  /** The user who triggered the tool call. */
-  userId?: string;
-  /** Active session identifier. */
-  sessionId?: string;
-  /** Maximum wall-clock milliseconds the tool may run. */
-  timeout?: number;
-}
-
-/** Outcome of a single tool execution. */
+/** Result returned after executing a tool. */
 export interface ToolResult {
-  /** Whether the tool completed successfully. */
-  success: boolean;
-  /** The tool's output payload (structure is tool-specific). */
-  output?: unknown;
-  /** Human-readable error message when success is false. */
-  error?: string;
+  /** The output content from the tool execution */
+  content: unknown;
+  /** Whether the tool execution encountered an error */
+  isError?: boolean;
+  /** Optional metadata about the execution */
+  metadata?: Record<string, unknown>;
+}
+
+/** Context passed alongside tool execution requests. */
+export interface ToolExecutionContext {
+  /** The bot requesting the tool execution */
+  botName?: string;
+  /** Message provider the request originated from */
+  messageProvider?: string;
+  /** Forum/channel ID for guard checks */
+  forumId?: string;
+  /** Owner of the forum for permission checks */
+  forumOwnerId?: string;
+  /** User ID of the person who triggered the tool call */
+  userId?: string;
 }
 
 // ---------------------------------------------------------------------------
@@ -53,19 +52,27 @@ export interface ToolResult {
 
 /**
  * Contract that all tool providers must implement.
+ *
+ * Mirrors the common surface area across MCP servers, HTTP tool endpoints,
+ * and other future tool integration patterns: list tools, execute a tool,
+ * and check health.
  */
 export interface IToolProvider {
+  /** Provider name for identification */
+  name: string;
+
   /**
-   * List the tools this provider currently exposes.
+   * Discover available tools from the provider.
+   * @returns Array of tool definitions exposed by this provider.
    */
   listTools(): Promise<ToolDefinition[]>;
 
   /**
-   * Execute a named tool with the given arguments.
-   *
-   * @param toolName The `name` field from one of the definitions returned by `listTools()`.
-   * @param args     Key-value arguments matching the tool's `inputSchema`.
-   * @param context  Optional execution context (user, session, timeout).
+   * Execute a specific tool by name.
+   * @param toolName Name of the tool to execute.
+   * @param args     Arguments to pass to the tool.
+   * @param context  Optional execution context for guard/permission checks.
+   * @returns The result produced by the tool.
    */
   executeTool(
     toolName: string,
@@ -75,6 +82,7 @@ export interface IToolProvider {
 
   /**
    * Lightweight connectivity/readiness probe.
+   * @returns `true` when the provider backend is reachable.
    */
-  healthCheck(): Promise<{ status: 'ok' | 'error'; details?: Record<string, unknown> }>;
+  healthCheck(): Promise<boolean>;
 }

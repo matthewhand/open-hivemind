@@ -130,7 +130,6 @@ const PersonaSelector: React.FC<PersonaSelectorProps> = ({
                   size="sm"
                   onClick={clearFilters}
                   className="px-2"
-                  aria-label="Clear filters"
                 >
                   <ClearIcon className="w-4 h-4" />
                 </Button>
@@ -272,7 +271,6 @@ const PersonaSelector: React.FC<PersonaSelectorProps> = ({
             variant="ghost"
             onClick={clearFilters}
             className="px-3"
-            aria-label="Clear filters"
           >
             <FilterIcon className="w-4 h-4" />
           </Button>

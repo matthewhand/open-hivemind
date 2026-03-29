@@ -6,9 +6,6 @@ This directory contains all documentation for Open Hivemind, organized by topic.
 - [User Guide](USER_GUIDE.md)
 - [Bot Management](admin/bots.md)
 - [Backups & System Data](admin/export.md)
-- [Provider Setup Guide](getting-started/provider-setup-guide.md) - Connect LLM and Messenger providers
-- [Provider Troubleshooting](getting-started/provider-troubleshooting.md) - Fix common provider issues
-- [API Keys Quick Reference](reference/api-keys-quick-reference.md) - Fast access to provider documentation
 
 ## 🏗️ Architecture & Core Concepts
 - [Architecture Overview](architecture/overview.md)

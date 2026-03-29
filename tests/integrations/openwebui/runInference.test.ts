@@ -3,7 +3,6 @@ import Debug from 'debug';
 import { generateChatCompletion } from '../../../src/integrations/openwebui/runInference';
 import * as sessionManager from '../../../src/integrations/openwebui/sessionManager';
 import * as uploadKnowledgeFile from '../../../src/integrations/openwebui/uploadKnowledgeFile';
-import { resetAllCircuitBreakers } from '../../../src/common/CircuitBreaker';
 
 // Silence debug logs during tests
 jest.mock('debug', () => () => jest.fn());
@@ -25,7 +24,6 @@ describe('runInference.generateChatCompletion', () => {
     }) as any;
 
   beforeEach(() => {
-    resetAllCircuitBreakers();
     jest.clearAllMocks();
   });
 

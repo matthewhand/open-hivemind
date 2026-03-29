@@ -1,8 +1,7 @@
 import { Readable } from 'stream';
-import Debug from 'debug';
 import { Router, type Request, type Response } from 'express';
 import { SitemapStream, streamToPromise } from 'sitemap';
-
+import Debug from 'debug';
 const debug = Debug('app:server:routes:sitemap');
 
 const router = Router();

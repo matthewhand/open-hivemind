@@ -145,6 +145,7 @@ describe('ProviderRegistry', () => {
 
       const service = await getMessengerServiceByProvider('validprovider');
 
+      expect(service).toBeDefined();
       expect(service).toBe(mockServiceInstance);
       expect(await isProviderRegistered('validprovider')).toBe(true);
       expect(getLoadedProviders()).toContain('validprovider');

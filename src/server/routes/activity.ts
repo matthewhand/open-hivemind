@@ -1,8 +1,8 @@
 import Debug from 'debug';
 import { Router } from 'express';
 import { DatabaseManager } from '../../database/DatabaseManager';
-import { LogActivitySchema } from '../../validation/schemas/activitySchema';
 import { validateRequest } from '../../validation/validateRequest';
+import { LogActivitySchema } from '../../validation/schemas/activitySchema';
 
 const debug = Debug('app:webui:activity');
 const router = Router();

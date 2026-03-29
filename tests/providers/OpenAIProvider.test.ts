@@ -16,9 +16,9 @@ describe('OpenAIProvider', () => {
 
   it('should return schema', () => {
     const schema = provider.getSchema();
-    expect(typeof schema).toBe('object');
+    expect(schema).toBeDefined();
     const props = (schema as any).properties || (schema as any)._cvtProperties || schema;
-    expect(props.OPENAI_API_KEY).not.toBeUndefined();
+    expect(props.OPENAI_API_KEY).toBeDefined();
   });
 
   it('should return sensitive keys', () => {

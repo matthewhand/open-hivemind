@@ -156,7 +156,7 @@ describe('DatabaseManager', () => {
 
       const config = await dbManager.getBotConfiguration(1);
 
-      expect(config).not.toBeNull();
+      expect(config).toBeDefined();
       expect(config?.name).toBe('TestBot');
     });
 

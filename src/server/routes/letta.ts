@@ -1,11 +1,10 @@
 import dns from 'dns';
 import net from 'net';
-import Debug from 'debug';
 import { Router, type Request, type Response } from 'express';
 import { getAgent, listAgents } from '@hivemind/llm-letta';
 import { ErrorResponses } from '../../utils/errorResponse';
 import { isPrivateIP, isSafeUrl } from '../../utils/ssrfGuard';
-
+import Debug from 'debug';
 const debug = Debug('app:server:routes:letta');
 
 const router = Router();

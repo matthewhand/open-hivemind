@@ -2,13 +2,9 @@ import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
 import Debug from 'debug';
-import type { ILlmProvider, IMemoryProvider, IMessengerService, IToolProvider } from '@hivemind/shared-types';
+import type { ILlmProvider, IMessengerService } from '@hivemind/shared-types';
 import type { AnyConfig } from '../types/config';
-import type {
-  PluginCapability,
-  PluginSecurityPolicy,
-  SecurePluginManifest,
-} from './PluginSecurity';
+import type { PluginSecurityPolicy, SecurePluginManifest, PluginCapability } from './PluginSecurity';
 
 const debug = Debug('app:pluginLoader');
 
@@ -32,7 +28,7 @@ export interface PluginManifest {
   /** Minimum open-hivemind core version required, e.g. "1.0.0" */
   minVersion?: string;
   /** Provider type — derivable from package name prefix but explicit here for safety */
-  type: 'llm' | 'message' | 'memory' | 'tool' | 'bot' | 'guard' | 'persona';
+  type: 'llm' | 'message' | 'memory' | 'tool';
 }
 
 export interface PluginModule {
@@ -139,86 +135,59 @@ export function requireCapability(
   }
 }
 
-// ---------------------------------------------------------------------------
-// Generic provider instantiation
-// ---------------------------------------------------------------------------
-
 /**
- * Generic provider instantiation logic shared by all provider types.
+ * Instantiate an LLM provider from a loaded module.
  *
- * Resolution order:
- *   1. `mod.create(config)` — preferred explicit factory
- *   2. `mod.<Name>Provider.getInstance(config)` — singleton pattern
- *   3. `new mod.<Name>Provider(config)` — constructor
- *   4. `new mod.default(config)` or `mod.default(config)` — default export
- *
- * @param mod          The loaded plugin module.
- * @param config       Optional configuration to pass to the factory/constructor.
- * @param typeSuffix   Class-name suffix to look for (default: 'Provider').
- * @param errorPrefix  Human-readable prefix for the error message.
+ * Contract (preferred): module exports `create(config)` → ILlmProvider
+ * Fallback: known class name patterns for pre-factory packages.
  */
-function instantiateProvider<T>(
-  mod: PluginModule,
-  config: AnyConfig | any | undefined,
-  errorPrefix: string,
-  typeSuffix = 'Provider'
-): T {
+export function instantiateLlmProvider(mod: PluginModule, config?: AnyConfig | any): ILlmProvider {
   // Preferred: explicit factory
   if (typeof mod.create === 'function') {
     return mod.create(config);
   }
   // Fallback: singleton getInstance
-  const singletonKey = Object.keys(mod).find(
-    (k) => k.endsWith(typeSuffix) && typeof mod[k]?.getInstance === 'function'
+  const name = Object.keys(mod).find(
+    (k) => k.endsWith('Provider') && typeof mod[k]?.getInstance === 'function'
   );
-  if (singletonKey && typeof mod[singletonKey].getInstance === 'function') {
-    return mod[singletonKey].getInstance(config);
+  if (name && typeof mod[name].getInstance === 'function') {
+    return mod[name].getInstance(config);
   }
   // Fallback: constructor
-  const ctor = Object.keys(mod).find(
-    (k) => k.endsWith(typeSuffix) && typeof mod[k] === 'function'
-  );
+  const ctor = Object.keys(mod).find((k) => k.endsWith('Provider') && typeof mod[k] === 'function');
   if (ctor && typeof mod[ctor] === 'function') {
     return new mod[ctor](config);
   }
   // Fallback: default export
   if (typeof mod.default === 'function') {
+    // Handling cases where default could be a class constructor or a factory
     try {
       return new (mod.default as any)(config);
-    } catch {
+    } catch (e) {
       return mod.default(config);
     }
   }
-  throw new Error(
-    `${errorPrefix} does not export create(), a ${typeSuffix} class, or a default constructor.`
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Typed instantiation helpers
-// ---------------------------------------------------------------------------
-
-/**
- * Instantiate an LLM provider from a loaded module.
- */
-export function instantiateLlmProvider(mod: PluginModule, config?: AnyConfig | any): ILlmProvider {
-  return instantiateProvider<ILlmProvider>(mod, config, 'Plugin');
+  throw new Error('Plugin does not export create(), a Provider class, or a default constructor.');
 }
 
 /**
  * Instantiate a message service from a loaded module.
+ *
+ * Contract (preferred): module exports `create(config)` → IMessengerService
+ * Fallback: known Service singleton patterns.
  */
 export function instantiateMessageService(
   mod: PluginModule,
   config?: AnyConfig | any
 ): IMessengerService {
-  // Message services use 'Service' suffix rather than 'Provider'
+  // Preferred: explicit factory
   if (typeof mod.create === 'function') {
     return mod.create(config);
   }
   if (typeof mod.default === 'function') {
     return mod.default(config);
   }
+  // Fallback: *Service.getInstance()
   const svcKey = Object.keys(mod).find(
     (k) => k.endsWith('Service') && typeof mod[k]?.getInstance === 'function'
   );
@@ -232,31 +201,42 @@ export function instantiateMessageService(
 
 /**
  * Instantiate a memory provider from a loaded module.
+ *
+ * Contract (preferred): module exports `create(config)` → IMemoryProvider
+ * Fallback: known Provider class patterns.
  */
-export function instantiateMemoryProvider(mod: PluginModule, config?: AnyConfig | any): IMemoryProvider {
-  return instantiateProvider<IMemoryProvider>(mod, config, 'Memory plugin');
+export function instantiateMemoryProvider(mod: any, config?: any): any {
+  // Preferred: explicit factory
+  if (typeof mod.create === 'function') {
+    return mod.create(config);
+  }
+  // Fallback: *Provider constructor
+  const ctor = Object.keys(mod).find((k) => k.endsWith('Provider') && typeof mod[k] === 'function');
+  if (ctor) {
+    return new mod[ctor](config);
+  }
+  // Fallback: default export
+  if (typeof mod.default === 'function') {
+    return new mod.default(config);
+  }
+  throw new Error(
+    'Memory plugin does not export create(), a Provider class, or a default constructor.'
+  );
 }
 
 /**
  * Instantiate a tool provider from a loaded module.
- */
-export function instantiateToolProvider(mod: PluginModule, config?: AnyConfig | any): IToolProvider {
-  return instantiateProvider<IToolProvider>(mod, config, 'Tool plugin');
-}
-
-/**
- * Instantiate a bot from a loaded module.
  *
- * Contract (preferred): module exports `create(config)` → Bot instance
- * Fallback: known Bot class patterns.
+ * Contract (preferred): module exports `create(config)` → IToolProvider
+ * Fallback: known Provider class patterns.
  */
-export function instantiateBot(mod: any, config?: any): any {
+export function instantiateToolProvider(mod: any, config?: any): any {
   // Preferred: explicit factory
   if (typeof mod.create === 'function') {
     return mod.create(config);
   }
-  // Fallback: Bot constructor
-  const ctor = Object.keys(mod).find((k) => k.includes('Bot') && typeof mod[k] === 'function');
+  // Fallback: *Provider constructor
+  const ctor = Object.keys(mod).find((k) => k.endsWith('Provider') && typeof mod[k] === 'function');
   if (ctor) {
     return new mod[ctor](config);
   }
@@ -265,56 +245,6 @@ export function instantiateBot(mod: any, config?: any): any {
     return new mod.default(config);
   }
   throw new Error(
-    'Bot plugin does not export create(), a Bot class, or a default constructor.'
-  );
-}
-
-/**
- * Instantiate a guard from a loaded module.
- *
- * Contract (preferred): module exports `create(config)` → Guard instance
- * Fallback: known Guard class patterns.
- */
-export function instantiateGuard(mod: any, config?: any): any {
-  // Preferred: explicit factory
-  if (typeof mod.create === 'function') {
-    return mod.create(config);
-  }
-  // Fallback: Guard constructor
-  const ctor = Object.keys(mod).find((k) => k.includes('Guard') && typeof mod[k] === 'function');
-  if (ctor) {
-    return new mod[ctor](config);
-  }
-  // Fallback: default export
-  if (typeof mod.default === 'function') {
-    return new mod.default(config);
-  }
-  throw new Error(
-    'Guard plugin does not export create(), a Guard class, or a default constructor.'
-  );
-}
-
-/**
- * Instantiate a persona from a loaded module.
- *
- * Contract (preferred): module exports `create(config)` → Persona instance
- * Fallback: known Persona class patterns.
- */
-export function instantiatePersona(mod: any, config?: any): any {
-  // Preferred: explicit factory
-  if (typeof mod.create === 'function') {
-    return mod.create(config);
-  }
-  // Fallback: Persona constructor
-  const ctor = Object.keys(mod).find((k) => k.includes('Persona') && typeof mod[k] === 'function');
-  if (ctor) {
-    return new mod[ctor](config);
-  }
-  // Fallback: default export
-  if (typeof mod.default === 'function') {
-    return new mod.default(config);
-  }
-  throw new Error(
-    'Persona plugin does not export create(), a Persona class, or a default constructor.'
+    'Tool plugin does not export create(), a Provider class, or a default constructor.'
   );
 }

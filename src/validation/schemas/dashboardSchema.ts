@@ -23,24 +23,3 @@ export const AlertIdParamSchema = z.object({
     id: idParam('Alert ID'),
   }),
 });
-
-/** GET /api/dashboard/activity/export */
-export const ExportActivitySchema = z.object({
-  query: z.object({
-    format: z.enum(['csv', 'json']).default('csv'),
-    bot: z.string().optional(),
-    messageProvider: z.string().optional(),
-    llmProvider: z.string().optional(),
-    from: z.string().optional(),
-    to: z.string().optional(),
-  }),
-});
-
-/** GET /api/dashboard/analytics/export */
-export const ExportAnalyticsSchema = z.object({
-  query: z.object({
-    format: z.enum(['csv', 'json']).default('csv'),
-    from: z.string().optional(),
-    to: z.string().optional(),
-  }),
-});

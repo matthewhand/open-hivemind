@@ -8,7 +8,7 @@ export const ConfigUpdateSchema = z.object({
       configName: z.string().optional(), // Now accepts any string or omitted for user config
       updates: z.record(z.any()).optional(), // Optional - can send updates directly
     })
-    .catchall(z.any()), // Allow additional properties for direct update format
+    .passthrough(), // Allow additional properties for direct update format
 });
 
 // Schema for restoring configuration from backup

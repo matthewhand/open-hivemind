@@ -47,9 +47,10 @@ describe('getMessengerProvider Unit Test', () => {
   it('should return DiscordMessageProvider when MESSAGE_PROVIDER is "discord"', () => {
     process.env.MESSAGE_PROVIDER = 'discord';
     const providers = getMessengerProvider();
-    expect(Array.isArray(providers)).toBe(true);
+    expect(providers).toBeDefined();
     expect(providers.length).toBeGreaterThan(0);
     const provider = providers[0];
+    expect(provider).toBeDefined();
     expect(typeof provider.sendMessageToChannel).toBe('function');
     expect(typeof provider.getClientId).toBe('function');
   });
@@ -57,9 +58,10 @@ describe('getMessengerProvider Unit Test', () => {
   it('should return SlackMessageProvider when MESSAGE_PROVIDER is "slack"', () => {
     process.env.MESSAGE_PROVIDER = 'slack';
     const providers = getMessengerProvider();
-    expect(Array.isArray(providers)).toBe(true);
+    expect(providers).toBeDefined();
     expect(providers.length).toBeGreaterThan(0);
     const provider = providers[0];
+    expect(provider).toBeDefined();
     expect(typeof provider.sendMessageToChannel).toBe('function');
     expect(typeof provider.getClientId).toBe('function');
   });

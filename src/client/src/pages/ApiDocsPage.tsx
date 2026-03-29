@@ -146,11 +146,10 @@ const TryItPanel: React.FC<{ route: RouteInfo }> = ({ route }) => {
         </div>
       )}
       <button
-        className="btn btn-sm btn-primary"
+        className={`btn btn-sm btn-primary ${loading ? 'loading' : ''}`}
         onClick={send}
         disabled={loading}
       >
-        {loading && <span className="loading loading-spinner" aria-hidden="true"></span>}
         {loading ? 'Sending...' : 'Send Request'}
       </button>
       {response !== null && (

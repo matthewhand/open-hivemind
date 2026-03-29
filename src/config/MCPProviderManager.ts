@@ -3,7 +3,6 @@ import { EventEmitter } from 'events';
 import type { ChildProcess } from 'child_process';
 import { spawn } from 'child_process';
 import { v4 as uuidv4 } from 'uuid';
-import { injectable, singleton } from 'tsyringe';
 import { ErrorUtils } from '@src/types/errors';
 import type {
   MCPProviderConfig,
@@ -14,7 +13,6 @@ import type {
   MCPProviderManager as IMCPProviderManager,
   MCPProviderStats,
 } from '../types/mcp';
-import { isMCPProviderType } from '../types/mcp';
 
 
 
@@ -26,8 +24,6 @@ const debug = Debug('app:MCPProviderManager');
  * Manages lifecycle, configuration, and testing of MCP (Model Context Protocol)
  * servers that provide external tool capabilities to bots.
  */
-@singleton()
-@injectable()
 export class MCPProviderManager extends EventEmitter implements IMCPProviderManager {
   private providers = new Map<string, MCPProviderConfig>();
   private processes = new Map<string, ChildProcess>();
@@ -343,7 +339,7 @@ export class MCPProviderManager extends EventEmitter implements IMCPProviderMana
       errors.push('Command is required');
     }
 
-    if (!config.type || !isMCPProviderType(config.type)) {
+    if (!config.type || !['desktop', 'cloud'].includes(config.type)) {
       errors.push('Provider type must be either "desktop" or "cloud"');
     }
 

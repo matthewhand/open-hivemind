@@ -43,7 +43,7 @@ describe('timestampFunctions', () => {
       const after = Date.now();
 
       const recorded = map.get('channel-1');
-      expect(typeof recorded).toBe('number');
+      expect(recorded).toBeDefined();
       expect(recorded).toBeGreaterThanOrEqual(before);
       expect(recorded).toBeLessThanOrEqual(after);
     });

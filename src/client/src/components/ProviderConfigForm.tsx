@@ -9,7 +9,6 @@ import Button from './DaisyUI/Button';
 import { Alert } from './DaisyUI/Alert';
 import Badge from './DaisyUI/Badge';
 import Debug from 'debug';
-import { getApiKeyFormatHint } from '../utils/apiKeyValidation';
 const debug = Debug('app:client:components:ProviderConfigForm');
 
 interface FieldError {
@@ -337,19 +336,11 @@ export const ProviderConfigForm: React.FC<ProviderConfigFormProps> = ({
       }
     };
 
-    // Get format hint for API key fields
-    const formatHint = (field.name === 'apiKey' || field.name === 'botToken') && schema.providerType
-      ? getApiKeyFormatHint(schema.providerType)
-      : null;
-
     return (
       <div className="space-y-1">
         {renderInput()}
         {error && (
           <p className="text-xs text-red-500 mt-1">{error}</p>
-        )}
-        {!error && formatHint && (field.type === 'password' || field.name === 'apiKey' || field.name === 'botToken') && (
-          <p className="text-xs text-base-content/50 mt-1 italic">{formatHint}</p>
         )}
       </div>
     );

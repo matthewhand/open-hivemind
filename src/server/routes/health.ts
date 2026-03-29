@@ -6,13 +6,13 @@ import ApiMonitorService from '../../services/ApiMonitorService';
 import { HEALTH_THRESHOLDS, HTTP_STATUS } from '../../types/constants';
 import { ErrorLogger } from '../../utils/errorLogger';
 import { globalRecoveryManager } from '../../utils/errorRecovery';
-import {
-  ApiEndpointConfigSchema,
-  CleanupConfigSchema,
-  EndpointIdParamSchema,
-} from '../../validation/schemas/healthSchema';
-import { validateRequest } from '../../validation/validateRequest';
 import { optionalAuth } from '../middleware/auth';
+import { validateRequest } from '../../validation/validateRequest';
+import {
+  CreateApiEndpointSchema,
+  UpdateApiEndpointSchema,
+  DeleteApiEndpointSchema,
+} from '../../validation/schemas/healthSchema';
 
 const router = Router();
 
@@ -170,7 +170,7 @@ router.get('/detailed/services', optionalAuth, async (_req: Request, res: Respon
   // Check LLM providers
   const llmStart = Date.now();
   try {
-    const { ProviderRegistry } = require('../../registries/providerRegistry');
+    const { ProviderRegistry } = require('../../registries/ProviderRegistry');
     const registry = ProviderRegistry.getInstance();
     const llmProviders = registry.getLlmProviders?.() || [];
     const activeLlm = llmProviders.filter((p: any) => p.status === 'active' || p.connected);
@@ -207,7 +207,7 @@ router.get('/detailed/services', optionalAuth, async (_req: Request, res: Respon
   // Check Message providers
   const msgStart = Date.now();
   try {
-    const { ProviderRegistry } = require('../../registries/providerRegistry');
+    const { ProviderRegistry } = require('../../registries/ProviderRegistry');
     const registry = ProviderRegistry.getInstance();
     const msgProviders = registry.getMessageProviders?.() || [];
     const activeMsg = msgProviders.filter((p: any) => p.status === 'active' || p.connected);
@@ -241,25 +241,32 @@ router.get('/detailed/services', optionalAuth, async (_req: Request, res: Respon
     });
   }
 
-  // Check Memory provider
+  // Check Memory providers (from registry)
   const memStart = Date.now();
   try {
-    const { ProviderRegistry } = require('../../registries/providerRegistry');
+    const { ProviderRegistry } = require('../../registries/ProviderRegistry');
     const registry = ProviderRegistry.getInstance();
-    const memProviders = registry.getMemoryProviders?.() || [];
-    const activeMem = memProviders.filter((p: any) => p.status === 'active' || p.connected);
-    const memStatus =
-      memProviders.length === 0 ? 'down' : activeMem.length > 0 ? 'healthy' : 'down';
-    services.push({
-      name: 'Memory Provider',
-      status: memStatus as 'healthy' | 'degraded' | 'down',
-      latencyMs: Date.now() - memStart,
-      lastChecked: now,
-      details:
-        activeMem.length > 0
-          ? `${activeMem.length} provider(s) active`
-          : 'No memory providers active',
-    });
+    const memProviders = registry.getMemoryProviders();
+    const memCount = memProviders.size;
+    if (memCount > 0) {
+      services.push({
+        name: 'Memory Provider',
+        status: 'healthy',
+        latencyMs: Date.now() - memStart,
+        lastChecked: now,
+        details: `${memCount} provider(s) registered`,
+      });
+    } else {
+      // Fallback: env var hint
+      const hasMem0 = !!process.env.MEM0_API_KEY || !!process.env.MEM0_BASE_URL;
+      services.push({
+        name: 'Memory Provider',
+        status: hasMem0 ? 'healthy' : 'down',
+        latencyMs: Date.now() - memStart,
+        lastChecked: now,
+        details: hasMem0 ? 'Memory provider configured (env)' : 'No memory provider configured',
+      });
+    }
   } catch {
     const hasMem0 = !!process.env.MEM0_API_KEY || !!process.env.MEM0_BASE_URL;
     services.push({
@@ -268,6 +275,40 @@ router.get('/detailed/services', optionalAuth, async (_req: Request, res: Respon
       latencyMs: Date.now() - memStart,
       lastChecked: now,
       details: hasMem0 ? 'Memory provider configured' : 'No memory provider configured',
+    });
+  }
+
+  // Check Tool providers (from registry)
+  const toolStart = Date.now();
+  try {
+    const { ProviderRegistry } = require('../../registries/ProviderRegistry');
+    const registry = ProviderRegistry.getInstance();
+    const toolProviders = registry.getToolProviders();
+    const toolCount = toolProviders.size;
+    if (toolCount > 0) {
+      services.push({
+        name: 'Tool Providers',
+        status: 'healthy',
+        latencyMs: Date.now() - toolStart,
+        lastChecked: now,
+        details: `${toolCount} provider(s) registered`,
+      });
+    } else {
+      services.push({
+        name: 'Tool Providers',
+        status: 'down',
+        latencyMs: Date.now() - toolStart,
+        lastChecked: now,
+        details: 'No tool providers configured',
+      });
+    }
+  } catch {
+    services.push({
+      name: 'Tool Providers',
+      status: 'down',
+      latencyMs: Date.now() - toolStart,
+      lastChecked: now,
+      details: 'Tool provider registry unavailable',
     });
   }
 
@@ -305,32 +346,87 @@ router.get('/metrics', (req, res) => {
   return res.json(metricsData);
 });
 
+// Configurable alert thresholds (inspired by EnhancedAlertManager patterns
+// that were removed during dead code cleanup). Override via environment variables.
+const ALERT_THRESHOLDS = {
+  memoryWarning: parseInt(process.env.ALERT_MEMORY_WARNING || '80', 10),
+  memoryCritical: parseInt(process.env.ALERT_MEMORY_CRITICAL || '95', 10),
+  cpuWarning: parseInt(process.env.ALERT_CPU_WARNING || '80', 10),
+  cpuCritical: parseInt(process.env.ALERT_CPU_CRITICAL || '95', 10),
+  recentRestartSeconds: 30,
+  errorRateWarning: parseFloat(process.env.ALERT_ERROR_RATE_WARNING || '5'),
+};
+
 // Alerts endpoint
 router.get('/alerts', (req, res) => {
   const memoryUsage = process.memoryUsage();
   const memoryPercentage = (memoryUsage.heapUsed / memoryUsage.heapTotal) * 100;
+  const cpuUsage = process.cpuUsage();
   const uptime = process.uptime();
 
   const alerts = [];
+  const now = new Date().toISOString();
 
-  // Check for high memory usage
-  if (memoryPercentage > 80) {
+  // Check for high memory usage with tiered severity
+  if (memoryPercentage > ALERT_THRESHOLDS.memoryCritical) {
+    alerts.push({
+      level: 'critical',
+      message: 'Critical memory usage detected',
+      details: `Memory usage is at ${Math.round(memoryPercentage)}% (threshold: ${ALERT_THRESHOLDS.memoryCritical}%)`,
+      timestamp: now,
+      type: 'memory',
+    });
+  } else if (memoryPercentage > ALERT_THRESHOLDS.memoryWarning) {
     alerts.push({
       level: 'warning',
       message: 'High memory usage detected',
-      details: `Memory usage is at ${Math.round(memoryPercentage)}%`,
-      timestamp: new Date().toISOString(),
+      details: `Memory usage is at ${Math.round(memoryPercentage)}% (threshold: ${ALERT_THRESHOLDS.memoryWarning}%)`,
+      timestamp: now,
       type: 'memory',
     });
   }
 
-  // Check for low uptime (less than 30 seconds might indicate recent restart)
-  if (uptime < 30) {
+  // Check for high CPU usage (cumulative user+system time as % of wall clock)
+  const cpuTotalMs = (cpuUsage.user + cpuUsage.system) / 1000;
+  const cpuPercent = uptime > 0 ? (cpuTotalMs / (uptime * 1000)) * 100 : 0;
+  if (cpuPercent > ALERT_THRESHOLDS.cpuCritical) {
+    alerts.push({
+      level: 'critical',
+      message: 'Critical CPU usage detected',
+      details: `CPU usage is at ${Math.round(cpuPercent)}% (threshold: ${ALERT_THRESHOLDS.cpuCritical}%)`,
+      timestamp: now,
+      type: 'cpu',
+    });
+  } else if (cpuPercent > ALERT_THRESHOLDS.cpuWarning) {
+    alerts.push({
+      level: 'warning',
+      message: 'High CPU usage detected',
+      details: `CPU usage is at ${Math.round(cpuPercent)}% (threshold: ${ALERT_THRESHOLDS.cpuWarning}%)`,
+      timestamp: now,
+      type: 'cpu',
+    });
+  }
+
+  // Check for high error rate
+  const recentErrors = ErrorLogger.getInstance().getRecentErrorCount(60000);
+  const errorRate = calculateErrorRate(recentErrors, 60);
+  if (errorRate > ALERT_THRESHOLDS.errorRateWarning) {
+    alerts.push({
+      level: errorRate > ALERT_THRESHOLDS.errorRateWarning * 2 ? 'critical' : 'warning',
+      message: 'Elevated error rate detected',
+      details: `Error rate is ${errorRate.toFixed(2)}/s (threshold: ${ALERT_THRESHOLDS.errorRateWarning}/s)`,
+      timestamp: now,
+      type: 'error_rate',
+    });
+  }
+
+  // Check for low uptime (recent restart indicator)
+  if (uptime < ALERT_THRESHOLDS.recentRestartSeconds) {
     alerts.push({
       level: 'info',
       message: 'Service recently started',
       details: `Uptime is ${Math.round(uptime)} seconds`,
-      timestamp: new Date().toISOString(),
+      timestamp: now,
       type: 'uptime',
     });
   }
@@ -338,7 +434,8 @@ router.get('/alerts', (req, res) => {
   return res.json({
     alerts: alerts,
     count: alerts.length,
-    timestamp: new Date().toISOString(),
+    thresholds: ALERT_THRESHOLDS,
+    timestamp: now,
   });
 });
 
@@ -494,26 +591,11 @@ router.get('/api-endpoints/:id', (req, res) => {
 });
 
 // Cleanup endpoint (admin only)
-router.post('/cleanup', validateRequest(CleanupConfigSchema), (req, res) => {
+router.post('/cleanup', validateRequest(CreateApiEndpointSchema), (req, res) => {
   const apiMonitor = ApiMonitorService.getInstance();
 
   try {
     const config = req.body;
-
-    if (!config || Object.keys(config).length === 0) {
-      return res.json({
-        message: 'No endpoint data provided',
-        timestamp: new Date().toISOString(),
-      });
-    }
-
-    // Validate required fields
-    if (!config.id || !config.name || !config.url) {
-      return res.status(HTTP_STATUS.BAD_REQUEST).json({
-        error: 'Missing required fields',
-        message: 'id, name, and url are required',
-      });
-    }
 
     // Set defaults
     config.method = config.method || 'GET';
@@ -540,26 +622,11 @@ router.post('/cleanup', validateRequest(CleanupConfigSchema), (req, res) => {
 });
 
 // Add new endpoint to monitor
-router.post('/api-endpoints', validateRequest(ApiEndpointConfigSchema), (req, res) => {
+router.post('/api-endpoints', validateRequest(CreateApiEndpointSchema), (req, res) => {
   const apiMonitor = ApiMonitorService.getInstance();
 
   try {
     const config = req.body;
-
-    if (!config || Object.keys(config).length === 0) {
-      return res.json({
-        message: 'No endpoint data provided',
-        timestamp: new Date().toISOString(),
-      });
-    }
-
-    // Validate required fields
-    if (!config.id || !config.name || !config.url) {
-      return res.status(HTTP_STATUS.BAD_REQUEST).json({
-        error: 'Missing required fields',
-        message: 'id, name, and url are required',
-      });
-    }
 
     // Set defaults
     config.method = config.method || 'GET';
@@ -586,7 +653,7 @@ router.post('/api-endpoints', validateRequest(ApiEndpointConfigSchema), (req, re
 });
 
 // Update endpoint configuration
-router.put('/api-endpoints/:id', validateRequest(EndpointIdParamSchema), (req, res) => {
+router.put('/api-endpoints/:id', validateRequest(UpdateApiEndpointSchema), (req, res) => {
   const apiMonitor = ApiMonitorService.getInstance();
 
   try {
@@ -607,7 +674,7 @@ router.put('/api-endpoints/:id', validateRequest(EndpointIdParamSchema), (req, r
 });
 
 // Remove endpoint from monitoring
-router.delete('/api-endpoints/:id', (req, res) => {
+router.delete('/api-endpoints/:id', validateRequest(DeleteApiEndpointSchema), (req, res) => {
   const apiMonitor = ApiMonitorService.getInstance();
 
   try {
@@ -636,7 +703,7 @@ router.delete('/api-endpoints/:id', (req, res) => {
 });
 
 // Start monitoring all endpoints
-router.post('/api-endpoints/start', validateRequest(CleanupConfigSchema), (req, res) => {
+router.post('/api-endpoints/start', (req, res) => {
   const apiMonitor = ApiMonitorService.getInstance();
   apiMonitor.startAllMonitoring();
 
@@ -647,7 +714,7 @@ router.post('/api-endpoints/start', validateRequest(CleanupConfigSchema), (req, 
 });
 
 // Stop monitoring all endpoints
-router.post('/api-endpoints/stop', validateRequest(CleanupConfigSchema), (req, res) => {
+router.post('/api-endpoints/stop', (req, res) => {
   const apiMonitor = ApiMonitorService.getInstance();
   apiMonitor.stopAllMonitoring();
 

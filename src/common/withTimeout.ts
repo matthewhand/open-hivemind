@@ -14,7 +14,7 @@
 export async function withTimeout<T>(
   operation: (signal: AbortSignal) => Promise<T>,
   timeoutMs: number,
-  operationName: string
+  operationName: string,
 ): Promise<T> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);

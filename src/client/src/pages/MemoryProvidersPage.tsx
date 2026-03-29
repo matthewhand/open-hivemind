@@ -188,9 +188,9 @@ const MemoryProvidersPage: React.FC = () => {
                     </div>
                   </div>
                   <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
-                    <Button size="sm" variant="ghost" onClick={() => handleEditProfile(profile)} aria-label={`Edit ${profile.name} profile`}><EditIcon className="w-4 h-4" /></Button>
-                    <Button size="sm" variant="ghost" className="text-error hover:bg-error/10" onClick={() => handleDeleteProfile(profile.key)} aria-label={`Delete ${profile.name} profile`}><DeleteIcon className="w-4 h-4" /></Button>
-                    <Button size="sm" variant="ghost" onClick={() => toggleExpand(profile.key)} aria-label={expandedProfile === profile.key ? 'Collapse details' : 'Expand details'}>
+                    <Button size="sm" variant="ghost" onClick={() => handleEditProfile(profile)}><EditIcon className="w-4 h-4" /></Button>
+                    <Button size="sm" variant="ghost" className="text-error hover:bg-error/10" onClick={() => handleDeleteProfile(profile.key)}><DeleteIcon className="w-4 h-4" /></Button>
+                    <Button size="sm" variant="ghost" onClick={() => toggleExpand(profile.key)}>
                       {expandedProfile === profile.key ? <CollapseIcon className="w-4 h-4" /> : <ExpandIcon className="w-4 h-4" />}
                     </Button>
                   </div>

@@ -51,23 +51,6 @@ export class AnomalyRepository {
     }
   }
 
-  private mapRowToAnomaly(row: Record<string, any>): Anomaly {
-    return {
-      id: row.id,
-      timestamp: new Date(row.timestamp),
-      metric: row.metric,
-      value: row.value,
-      expectedMean: row.expectedMean,
-      standardDeviation: row.standardDeviation,
-      zScore: row.zScore,
-      threshold: row.threshold,
-      severity: row.severity,
-      explanation: row.explanation,
-      resolved: !!row.resolved,
-      tenantId: row.tenantId,
-    };
-  }
-
   async getAnomalies(tenantId?: string): Promise<Anomaly[]> {
     const db = this.getDb();
     if (!db || !this.isConnected()) {
@@ -87,7 +70,20 @@ export class AnomalyRepository {
 
       const rows = await db.all(query, params);
 
-      return rows.map((row) => this.mapRowToAnomaly(row));
+      return rows.map((row) => ({
+        id: row.id,
+        timestamp: new Date(row.timestamp),
+        metric: row.metric,
+        value: row.value,
+        expectedMean: row.expectedMean,
+        standardDeviation: row.standardDeviation,
+        zScore: row.zScore,
+        threshold: row.threshold,
+        severity: row.severity,
+        explanation: row.explanation,
+        resolved: !!row.resolved,
+        tenantId: row.tenantId,
+      }));
     } catch (error) {
       debug('Error getting anomalies:', error);
       throw error;
@@ -113,7 +109,20 @@ export class AnomalyRepository {
 
       const rows = await db.all(query, params);
 
-      return rows.map((row) => this.mapRowToAnomaly(row));
+      return rows.map((row) => ({
+        id: row.id,
+        timestamp: new Date(row.timestamp),
+        metric: row.metric,
+        value: row.value,
+        expectedMean: row.expectedMean,
+        standardDeviation: row.standardDeviation,
+        zScore: row.zScore,
+        threshold: row.threshold,
+        severity: row.severity,
+        explanation: row.explanation,
+        resolved: !!row.resolved,
+        tenantId: row.tenantId,
+      }));
     } catch (error) {
       debug('Error getting active anomalies:', error);
       throw error;

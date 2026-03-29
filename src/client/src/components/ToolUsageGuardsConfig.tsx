@@ -5,7 +5,7 @@ import Badge from './DaisyUI/Badge';
 import Button from './DaisyUI/Button';
 import { SkeletonList } from './DaisyUI/Skeleton';
 import Card from './DaisyUI/Card';
-import Modal, { ConfirmModal } from './DaisyUI/Modal';
+import { ConfirmModal } from './DaisyUI/Modal';
 import Input from './DaisyUI/Input';
 import Select from './DaisyUI/Select';
 import { useConfigDiff } from '../hooks/useConfigDiff';
@@ -14,14 +14,14 @@ import { ConfigDiffConfirmDialog } from './ConfigDiffViewer';
 interface ToolUsageGuard {
   id: string;
   name: string;
-  description?: string;
-  toolId: string;
-  guardType: 'owner_only' | 'user_list' | 'role_based';
-  allowedUsers: string[];
-  allowedRoles: string[];
+  toolName: string;
+  guardType: 'owner' | 'userList' | 'role';
+  config: {
+    allowedUsers?: string[];
+    allowedRoles?: string[];
+    ownerOnly?: boolean;
+  };
   isActive: boolean;
-  createdAt?: string;
-  updatedAt?: string;
 }
 
 const ToolUsageGuardsConfig: React.FC = () => {
@@ -32,11 +32,13 @@ const ToolUsageGuardsConfig: React.FC = () => {
   const [editingGuard, setEditingGuard] = useState<ToolUsageGuard | null>(null);
   const [formData, setFormData] = useState<Partial<ToolUsageGuard>>({
     name: '',
-    toolId: '',
-    guardType: 'owner_only',
-    allowedUsers: [],
-    allowedRoles: [],
-    isActive: true,
+    toolName: '',
+    guardType: 'owner',
+    config: {
+      allowedUsers: [],
+      allowedRoles: [],
+      ownerOnly: false,
+    },
   });
   const [showDiffConfirm, setShowDiffConfirm] = useState(false);
 
@@ -60,9 +62,9 @@ const ToolUsageGuardsConfig: React.FC = () => {
   }>({ isOpen: false, title: '', message: '', onConfirm: () => {} });
 
   const guardTypes = [
-    { value: 'owner_only', label: 'Owner Only' },
-    { value: 'user_list', label: 'Specific Users' },
-    { value: 'role_based', label: 'User Roles' },
+    { value: 'owner', label: 'Owner Only' },
+    { value: 'userList', label: 'Specific Users' },
+    { value: 'role', label: 'User Roles' },
   ];
 
   const fetchGuards = async () => {
@@ -74,7 +76,7 @@ const ToolUsageGuardsConfig: React.FC = () => {
         throw new Error('Failed to fetch tool usage guards');
       }
       const data = await response.json();
-      setGuards(data.data?.guards || []);
+      setGuards(data.guards || []);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch tool usage guards');
     } finally {
@@ -91,11 +93,13 @@ const ToolUsageGuardsConfig: React.FC = () => {
     setFormData(
       guard || {
         name: '',
-        toolId: '',
-        guardType: 'owner_only',
-        allowedUsers: [],
-        allowedRoles: [],
-        isActive: true,
+        toolName: '',
+        guardType: 'owner',
+        config: {
+          allowedUsers: [],
+          allowedRoles: [],
+          ownerOnly: false,
+        },
       }
     );
     setOpenDialog(true);
@@ -103,11 +107,9 @@ const ToolUsageGuardsConfig: React.FC = () => {
     setTimeout(() => {
       const snapshot = guard || {
         name: '',
-        toolId: '',
-        guardType: 'owner_only',
-        allowedUsers: [],
-        allowedRoles: [],
-        isActive: true,
+        toolName: '',
+        guardType: 'owner',
+        config: { allowedUsers: [], allowedRoles: [], ownerOnly: false },
       };
       setOriginalConfig(snapshot as unknown as Record<string, unknown>);
     }, 0);
@@ -118,11 +120,13 @@ const ToolUsageGuardsConfig: React.FC = () => {
     setEditingGuard(null);
     setFormData({
       name: '',
-      toolId: '',
-      guardType: 'owner_only',
-      allowedUsers: [],
-      allowedRoles: [],
-      isActive: true,
+      toolName: '',
+      guardType: 'owner',
+      config: {
+        allowedUsers: [],
+        allowedRoles: [],
+        ownerOnly: false,
+      },
     });
   };
 
@@ -252,7 +256,7 @@ const ToolUsageGuardsConfig: React.FC = () => {
               <div className="flex justify-between items-start">
                 <div>
                   <h3 className="card-title">{guard.name}</h3>
-                  <p className="text-sm text-base-content/70 mt-1">Tool: {guard.toolId}</p>
+                  <p className="text-sm text-base-content/70 mt-1">Tool: {guard.toolName}</p>
                   <div className="mt-2">
                     <Badge variant="primary">{guard.guardType}</Badge>
                   </div>
@@ -266,7 +270,6 @@ const ToolUsageGuardsConfig: React.FC = () => {
                     shape="circle"
                     color="ghost"
                     onClick={() => handleOpenDialog(guard)}
-                    aria-label={`Edit ${guard.name} guard`}
                   >
                     <PencilIcon className="w-4 h-4" />
                   </Button>
@@ -277,7 +280,6 @@ const ToolUsageGuardsConfig: React.FC = () => {
                     variant="secondary"
                     className="btn-outline"
                     onClick={() => handleDeleteGuard(guard.id)}
-                    aria-label={`Delete ${guard.name} guard`}
                   >
                     <TrashIcon className="w-4 h-4" />
                   </Button>
@@ -302,29 +304,18 @@ const ToolUsageGuardsConfig: React.FC = () => {
         ))}
       </div>
 
-      <Modal
-        isOpen={openDialog}
+      <ModalForm
+        open={openDialog}
         title={editingGuard ? 'Edit Tool Usage Guard' : 'Add New Tool Usage Guard'}
         onClose={handleCloseDialog}
-        size="lg"
-        actions={[
-          {
-            label: 'Cancel',
-            onClick: handleCloseDialog,
-            variant: 'ghost',
-          },
-          {
-            label: editingGuard ? 'Update' : 'Create',
-            onClick: () => {
-              if (editingGuard && hasChanges) {
-                setShowDiffConfirm(true);
-              } else {
-                handleSaveGuard();
-              }
-            },
-            variant: 'primary',
-          },
-        ]}
+        onSubmit={() => {
+          if (editingGuard && hasChanges) {
+            setShowDiffConfirm(true);
+          } else {
+            handleSaveGuard();
+          }
+        }}
+        submitLabel={editingGuard ? 'Update' : 'Create'}
       >
         <div className="space-y-4">
           <Input
@@ -335,45 +326,59 @@ const ToolUsageGuardsConfig: React.FC = () => {
           />
 
           <Input
-            label="Tool ID"
-            value={formData.toolId || ''}
-            onChange={(e) => setFormData({ ...formData, toolId: e.target.value })}
+            label="Tool Name"
+            value={formData.toolName || ''}
+            onChange={(e) => setFormData({ ...formData, toolName: e.target.value })}
             fullWidth
-            helperText="ID of the tool to guard"
-          />
-
-          <Input
-            label="Description"
-            value={formData.description || ''}
-            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-            fullWidth
-            helperText="Optional description of this guard"
+            helperText="Name of the tool to guard"
           />
 
           <Select
             label="Guard Type"
-            value={formData.guardType || 'owner_only'}
+            value={formData.guardType || 'owner'}
             onChange={(e) =>
               setFormData({
                 ...formData,
-                guardType: e.target.value as 'owner_only' | 'user_list' | 'role_based',
+                guardType: e.target.value as 'owner' | 'userList' | 'role',
               })
             }
             options={guardTypes}
             fullWidth
           />
 
-          {formData.guardType === 'user_list' && (
+          {formData.guardType === 'owner' && (
+            <div className="form-control">
+              <label className="label cursor-pointer justify-start gap-4">
+                <span className="label-text">Owner Only</span>
+                <input
+                  type="checkbox"
+                  className="toggle toggle-primary"
+                  checked={formData.config?.ownerOnly || false}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      config: { ...formData.config, ownerOnly: e.target.checked },
+                    })
+                  }
+                />
+              </label>
+            </div>
+          )}
+
+          {formData.guardType === 'userList' && (
             <Input
               label="Allowed Users"
-              value={formData.allowedUsers?.join(', ') || ''}
+              value={formData.config?.allowedUsers?.join(', ') || ''}
               onChange={(e) =>
                 setFormData({
                   ...formData,
-                  allowedUsers: e.target.value
-                    .split(',')
-                    .map((u) => u.trim())
-                    .filter((u) => u),
+                  config: {
+                    ...formData.config,
+                    allowedUsers: e.target.value
+                      .split(',')
+                      .map((u) => u.trim())
+                      .filter((u) => u),
+                  },
                 })
               }
               fullWidth
@@ -381,17 +386,20 @@ const ToolUsageGuardsConfig: React.FC = () => {
             />
           )}
 
-          {formData.guardType === 'role_based' && (
+          {formData.guardType === 'role' && (
             <Input
               label="Allowed Roles"
-              value={formData.allowedRoles?.join(', ') || ''}
+              value={formData.config?.allowedRoles?.join(', ') || ''}
               onChange={(e) =>
                 setFormData({
                   ...formData,
-                  allowedRoles: e.target.value
-                    .split(',')
-                    .map((r) => r.trim())
-                    .filter((r) => r),
+                  config: {
+                    ...formData.config,
+                    allowedRoles: e.target.value
+                      .split(',')
+                      .map((r) => r.trim())
+                      .filter((r) => r),
+                  },
                 })
               }
               fullWidth
@@ -399,7 +407,7 @@ const ToolUsageGuardsConfig: React.FC = () => {
             />
           )}
         </div>
-      </Modal>
+      </ModalForm>
 
       {toast.show && (
         <div className="toast toast-bottom toast-center z-50" role="status" aria-live="polite">

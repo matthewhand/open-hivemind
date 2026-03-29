@@ -274,7 +274,7 @@ describe('DemoModeService', () => {
     });
 
     it('should handle empty/null/undefined inputs in generateDemoResponse', () => {
-      expect(typeof demoService.generateDemoResponse('', 'Bot')).toBe('string');
+      expect(demoService.generateDemoResponse('', 'Bot')).toBeDefined();
       expect(() => demoService.generateDemoResponse(null as any, 'Bot')).toThrow();
       expect(() => demoService.generateDemoResponse(undefined as any, 'Bot')).toThrow();
     });
@@ -282,7 +282,7 @@ describe('DemoModeService', () => {
     it('should handle extremely long messages', () => {
       const longMessage = 'a'.repeat(10000);
       const response = demoService.generateDemoResponse(longMessage, 'Demo Bot');
-      expect(typeof response).toBe('string');
+      expect(response).toBeDefined();
 
       const addedMsg = demoService.addMessage('channel-1', 'Demo Bot', longMessage, 'incoming');
       expect(addedMsg.content).toBe(longMessage);

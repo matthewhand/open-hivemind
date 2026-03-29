@@ -147,7 +147,7 @@ describe('ApiMonitorService', () => {
     it('should initialize endpoint status correctly', () => {
       service.addEndpoint(testEndpoint);
       const status = service.getEndpointStatus(testEndpoint.id);
-      expect(status).not.toBeUndefined();
+      expect(status).toBeDefined();
       expect(status?.id).toBe(testEndpoint.id);
       expect(status?.status).toBe('offline');
       expect(status?.consecutiveFailures).toBe(0);
@@ -342,7 +342,7 @@ describe('ApiMonitorService', () => {
       } as any;
 
       service.addEndpoint(endpoint);
-      expect(service.getEndpoint(longId)).not.toBeUndefined();
+      expect(service.getEndpoint(longId)).toBeDefined();
       expect(service.getEndpoint(longId)?.url).toBe(longUrl);
     });
 

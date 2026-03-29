@@ -45,6 +45,7 @@ describe('correlationIdMiddleware', () => {
     const next: NextFunction = () => {
       try {
         // req.correlationId should be set
+        expect((req as any).correlationId).toBeDefined();
         expect((req as any).correlationId).toMatch(/^corr_/);
 
         // Response header should be set
@@ -128,7 +129,7 @@ describe('correlationIdMiddleware', () => {
 
         // Full context should also be available
         const ctx = getCorrelationContext();
-        expect(ctx).not.toBeUndefined();
+        expect(ctx).toBeDefined();
         expect(ctx!.correlationId).toBe((req as any).correlationId);
         expect(typeof ctx!.startTime).toBe('number');
 

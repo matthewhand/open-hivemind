@@ -112,7 +112,7 @@ export class ConfigurationManager implements IConfigurationManager {
 
     const secureManager = SecureConfigManager.getInstance();
     const env = process.env.NODE_ENV || 'default';
-    const fileConfig = secureManager.getDecryptedMainConfigSync(env);
+    const fileConfig = secureManager.getDecryptedMainConfig(env);
     if (fileConfig) {
       schema.load(fileConfig);
       // Use 'warn' to allow extra config params that aren't in the minimal schema

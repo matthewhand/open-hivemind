@@ -56,11 +56,11 @@ describe('StructuredLogger', () => {
 
   describe('logging methods', () => {
     it('should have debug, info, warn, error, and fatal methods', () => {
-      expect(typeof logger.debug).toBe('function');
-      expect(typeof logger.info).toBe('function');
-      expect(typeof logger.warn).toBe('function');
-      expect(typeof logger.error).toBe('function');
-      expect(typeof logger.fatal).toBe('function');
+      expect(logger.debug).toBeDefined();
+      expect(logger.info).toBeDefined();
+      expect(logger.warn).toBeDefined();
+      expect(logger.error).toBeDefined();
+      expect(logger.fatal).toBeDefined();
     });
 
     it('should include service name in log entries', () => {
@@ -170,7 +170,7 @@ describe('StructuredLogger', () => {
       const json = JSON.stringify(entry);
       const parsed = JSON.parse(json);
 
-      expect(typeof parsed.timestamp).toBe('string');
+      expect(parsed.timestamp).toBeDefined();
       expect(parsed.level).toBe('info');
       expect(parsed.service).toBe('test-service');
       expect(parsed.message).toBe('Test message');

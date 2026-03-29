@@ -1,14 +1,12 @@
 import fs from 'fs';
 import path from 'path';
-import Debug from 'debug';
 import { SlackService } from '@hivemind/message-slack';
 import slackConfig, { type SlackConfig } from '../config/slackConfig';
 import { type IMessageProvider } from '../types/IProvider';
-import { ReconnectionManager } from './ReconnectionManager';
+import Debug from 'debug';
 const debug = Debug('app:providers:SlackProvider');
 
 export class SlackProvider implements IMessageProvider<SlackConfig> {
-  private reconManagers: Map<string, ReconnectionManager> = new Map();
   id = 'slack';
   label = 'Slack';
   type = 'messenger' as const;
@@ -38,14 +36,12 @@ export class SlackProvider implements IMessageProvider<SlackConfig> {
     const botNames = slack.getBotNames();
     const bots = botNames.map((name: string) => {
       const cfg: any = slack.getBotConfig(name) || {};
-      const reconManager = this.reconManagers.get(name);
       return {
         provider: 'slack',
         name,
         defaultChannel: cfg?.slack?.defaultChannelId || '',
         mode: cfg?.slack?.mode || 'socket',
-        connected: reconManager ? reconManager.getStatus().state === 'connected' : true,
-        status: reconManager ? reconManager.getStatus() : { state: 'connected' },
+        connected: true,
       };
     });
     return {
@@ -119,18 +115,7 @@ export class SlackProvider implements IMessageProvider<SlackConfig> {
     };
 
     if ((slack as any).addBot) {
-      const reconManager = new ReconnectionManager(
-        `slack-${name}`,
-        async () => {
-          await (slack as any).addBot(instanceCfg);
-        }
-      );
-      this.reconManagers.set(name, reconManager);
-
-      // Start the bot connection with reconnection management
-      reconManager.start().catch((err) => {
-        debug(`Failed to start Slack bot ${name}: ${err.message}`);
-      });
+      await (slack as any).addBot(instanceCfg);
     }
   }
 
@@ -152,9 +137,8 @@ export class SlackProvider implements IMessageProvider<SlackConfig> {
     for (const inst of instances) {
       const nm = inst.name || '';
       if (!nm || !existing.has(nm)) {
-        const nameToUse = nm || `Bot${Date.now()}`;
         const instanceCfg = {
-          name: nameToUse,
+          name: nm || `Bot${Date.now()}`,
           slack: {
             botToken: inst.token,
             signingSecret: inst.signingSecret || '',
@@ -166,204 +150,11 @@ export class SlackProvider implements IMessageProvider<SlackConfig> {
           llm: inst.llm,
         };
         if ((slack as any).addBot) {
-          const reconManager = new ReconnectionManager(
-            `slack-${nameToUse}`,
-            async () => {
-              await (slack as any).addBot(instanceCfg);
-            }
-          );
-          this.reconManagers.set(nameToUse, reconManager);
-          reconManager.start().catch((err) => {
-            debug(`Failed to start Slack bot ${nameToUse} on reload: ${err.message}`);
-          });
+          await (slack as any).addBot(instanceCfg);
           added++;
         }
       }
     }
     return { added };
-  }
-
-  async sendMessage(channelId: string, message: string, senderName?: string): Promise<string> {
-    // Delegate to SlackService.sendMessageToChannel
-    const slack = this.slackService;
-    if (typeof (slack as any).sendMessageToChannel === 'function') {
-      return await (slack as any).sendMessageToChannel(channelId, message, senderName);
-    }
-
-    // TODO: Implement direct Slack API call if SlackService doesn't expose sendMessageToChannel
-    throw new Error(
-      'SlackProvider.sendMessage not fully implemented. ' +
-        'SlackService needs to expose a sendMessageToChannel method.'
-    );
-  }
-
-  async getMessages(channelId: string, limit?: number): Promise<any[]> {
-    // Delegate to SlackService.fetchMessages
-    const slack = this.slackService;
-    if (typeof (slack as any).fetchMessages === 'function') {
-      return await (slack as any).fetchMessages(channelId, limit);
-    }
-    if (typeof (slack as any).getMessages === 'function') {
-      return await (slack as any).getMessages(channelId, limit);
-    }
-
-    // TODO: Implement direct Slack API call or enhance SlackService
-    debug('SlackProvider.getMessages not fully implemented');
-    return [];
-  }
-
-  async sendMessageToChannel(
-    channelId: string,
-    message: string,
-    active_agent_name?: string
-  ): Promise<string> {
-    // For Slack, this is the primary method
-    return await this.sendMessage(channelId, message, active_agent_name);
-  }
-
-  getClientId(): string {
-    // Delegate to SlackService.getClientId
-    const slack = this.slackService;
-    if (typeof (slack as any).getClientId === 'function') {
-      return (slack as any).getClientId();
-    }
-
-    // TODO: Return the actual Slack bot user ID
-    // For now, return a generic identifier
-    return 'slack';
-  }
-
-  async getForumOwner(forumId: string): Promise<string> {
-    // Delegate to SlackService if it has a getForumOwner/getChannelOwner method
-    const slack = this.slackService;
-    if (typeof (slack as any).getForumOwner === 'function') {
-      return await (slack as any).getForumOwner(forumId);
-    }
-    if (typeof (slack as any).getChannelOwner === 'function') {
-      return await (slack as any).getChannelOwner(forumId);
-    }
-
-    // TODO: Query Slack API to get channel creator/owner
-    debug('SlackProvider.getForumOwner not fully implemented');
-    return '';
-  }
-
-  async healthCheck(): Promise<{
-    status: 'healthy' | 'degraded' | 'down';
-    connected: boolean;
-    lastPing?: Date;
-    details?: string;
-    error?: string;
-  }> {
-    try {
-      const slack = this.slackService;
-
-      // Check if service is initialized
-      if (!slack) {
-        return {
-          status: 'down',
-          connected: false,
-          details: 'Slack service not initialized',
-        };
-      }
-
-      // Get all bot names
-      const botNames = slack.getBotNames();
-
-      if (botNames.length === 0) {
-        return {
-          status: 'down',
-          connected: false,
-          details: 'No Slack bots configured',
-        };
-      }
-
-      // Check each bot's connection status
-      const botStatuses = await Promise.allSettled(
-        botNames.map(async (name: string) => {
-          const cfg: any = slack.getBotConfig(name) || {};
-          const botToken = cfg?.slack?.botToken;
-
-          if (!botToken) {
-            return {
-              name,
-              connected: false,
-              error: 'No bot token configured',
-            };
-          }
-
-          try {
-            // Use Slack Web API to test the connection
-            const startTime = Date.now();
-            const response = await fetch('https://slack.com/api/auth.test', {
-              method: 'POST',
-              headers: {
-                'Authorization': `Bearer ${botToken}`,
-                'Content-Type': 'application/json',
-              },
-            });
-
-            const data = await response.json();
-            const latency = Date.now() - startTime;
-
-            if (data.ok) {
-              return {
-                name,
-                connected: true,
-                botId: data.user_id,
-                teamName: data.team,
-                latency,
-              };
-            } else {
-              return {
-                name,
-                connected: false,
-                error: data.error || 'Unknown error',
-              };
-            }
-          } catch (e: any) {
-            return {
-              name,
-              connected: false,
-              error: e.message || 'Failed to connect to Slack API',
-            };
-          }
-        })
-      );
-
-      const checkedBots = botStatuses.map((r) =>
-        r.status === 'fulfilled' ? r.value : { name: 'unknown', connected: false, error: 'Health check failed' }
-      );
-
-      const connectedCount = checkedBots.filter((b) => b.connected).length;
-      const totalCount = botNames.length;
-
-      let status: 'healthy' | 'degraded' | 'down';
-      if (connectedCount === totalCount) {
-        status = 'healthy';
-      } else if (connectedCount > 0) {
-        status = 'degraded';
-      } else {
-        status = 'down';
-      }
-
-      const errors = checkedBots.filter((b) => b.error).map((b) => b.error);
-
-      return {
-        status,
-        connected: connectedCount > 0,
-        lastPing: new Date(),
-        details: `${connectedCount}/${totalCount} bot(s) connected`,
-        error: errors.length > 0 ? errors.join('; ') : undefined,
-      };
-    } catch (e: any) {
-      debug(`[SlackProvider] Health check failed: ${e.message}`);
-      return {
-        status: 'down',
-        connected: false,
-        details: 'Health check failed',
-        error: e.message,
-      };
-    }
   }
 }

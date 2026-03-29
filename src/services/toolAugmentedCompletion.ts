@@ -1,5 +1,6 @@
 import Debug from 'debug';
-import { ToolManager, type OpenAITool, type ToolResult } from './ToolManager';
+import { ToolManager } from './ToolManager';
+import type { ToolDefinition, ToolResult, OpenAITool } from './ToolManager';
 
 const debug = Debug('app:toolAugmentedCompletion');
 
@@ -92,7 +93,12 @@ export async function toolAugmentedCompletion(opts: {
 
   // Tool use loop.
   for (let iteration = 0; iteration < maxIterations; iteration++) {
-    const assistantMessage = await callLLMWithTools(llmProvider, messages, openAITools, metadata);
+    const assistantMessage = await callLLMWithTools(
+      llmProvider,
+      messages,
+      openAITools,
+      metadata,
+    );
 
     // If the model produced a text reply (no tool calls), we're done.
     if (!assistantMessage.tool_calls || assistantMessage.tool_calls.length === 0) {
@@ -105,7 +111,12 @@ export async function toolAugmentedCompletion(opts: {
 
     // Execute each tool call and feed results back.
     for (const toolCall of assistantMessage.tool_calls) {
-      const result = await executeToolCall(toolManager, botName, toolCall, toolContext);
+      const result = await executeToolCall(
+        toolManager,
+        botName,
+        toolCall,
+        toolContext,
+      );
 
       messages.push({
         role: 'tool',
@@ -136,7 +147,7 @@ async function callLLMWithTools(
   llmProvider: any,
   messages: ChatMessage[],
   tools: OpenAITool[],
-  metadata: Record<string, any>
+  metadata: Record<string, any>,
 ): Promise<ChatMessage> {
   // Strategy: Try to use the OpenAI SDK directly. We load it dynamically
   // to avoid hard coupling. The provider's config tells us the API key
@@ -146,7 +157,9 @@ async function callLLMWithTools(
     const openaiConfig = require('@config/openaiConfig').default;
 
     const apiKey =
-      metadata?.openaiApiKey || openaiConfig.get('OPENAI_API_KEY') || process.env.OPENAI_API_KEY;
+      metadata?.openaiApiKey ||
+      openaiConfig.get('OPENAI_API_KEY') ||
+      process.env.OPENAI_API_KEY;
 
     const baseURL =
       metadata?.openaiBaseUrl ||
@@ -208,7 +221,7 @@ async function executeToolCall(
     messageProvider?: string;
     forumId?: string;
     forumOwnerId?: string;
-  }
+  },
 ): Promise<ToolResult> {
   const toolName = toolCall.function.name;
   let args: Record<string, unknown> = {};

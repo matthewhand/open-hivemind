@@ -231,12 +231,11 @@ const StepWizard: React.FC<StepWizardProps> = ({
           )}
 
           <button
-            className="btn btn-primary"
+            className={`btn btn-primary ${isValidating ? 'loading' : ''}`}
             onClick={handleNext}
             disabled={isValidating}
           >
-            {isValidating && <span className="loading loading-spinner" aria-hidden="true"></span>}
-            {activeStep === steps.length - 1 ? 'Complete' : 'Next →'}
+            {isValidating ? '' : activeStep === steps.length - 1 ? 'Complete' : 'Next →'}
           </button>
         </div>
       </div>

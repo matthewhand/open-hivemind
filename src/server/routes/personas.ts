@@ -1,12 +1,10 @@
 import { Router } from 'express';
 import { z } from 'zod';
 import { createLogger } from '../../common/StructuredLogger';
-import { BotManager } from '../../managers/BotManager';
 import { PersonaManager } from '../../managers/PersonaManager';
 import { ERROR_CODES, HTTP_STATUS } from '../../types/constants';
 import { ReorderSchema } from '../../validation/schemas/commonSchema';
 import {
-  BulkDeletePersonasSchema,
   ClonePersonaSchema,
   PersonaIdParamSchema,
   UpdatePersonaRouteSchema,
@@ -16,8 +14,6 @@ import { validateRequest } from '../../validation/validateRequest';
 const router = Router();
 const logger = createLogger('personasRouter');
 const manager = PersonaManager.getInstance();
-
-const MAX_SYSTEM_PROMPT_LENGTH = 8000;
 
 // Schema for create/update
 const CreatePersonaSchema = z.object({
@@ -41,12 +37,7 @@ const CreatePersonaSchema = z.object({
         type: z.string().optional(),
       })
     ),
-    systemPrompt: z
-      .string()
-      .min(1, { message: 'System prompt is required' })
-      .max(MAX_SYSTEM_PROMPT_LENGTH, {
-        message: `System prompt must not exceed ${MAX_SYSTEM_PROMPT_LENGTH} characters`,
-      }),
+    systemPrompt: z.string().min(1),
   }),
 });
 
@@ -159,80 +150,6 @@ router.put('/:id', validateRequest(UpdatePersonaRouteSchema), async (req, res) =
     return res.json(updatedPersona);
   } catch (error: any) {
     return res.status(HTTP_STATUS.BAD_REQUEST).json({ error: error.message });
-  }
-});
-
-// DELETE /api/personas/bulk
-router.delete('/bulk', validateRequest(BulkDeletePersonasSchema), async (req, res) => {
-  try {
-    const { ids } = req.body;
-    const botManager = BotManager.getInstance();
-
-    // Validate that all personas exist and are not built-in
-    const personasToDelete = [];
-    const notFound = [];
-    const builtIn = [];
-
-    for (const id of ids) {
-      const persona = manager.getPersona(id);
-      if (!persona) {
-        notFound.push(id);
-      } else if (persona.isBuiltIn) {
-        builtIn.push(id);
-      } else {
-        personasToDelete.push(persona);
-      }
-    }
-
-    // Check for bots referencing these personas
-    const allBots = await botManager.getAllBots();
-    const personaIdSet = new Set(personasToDelete.map(p => p.id));
-    const botsToRevert = allBots.filter(bot => bot.persona && personaIdSet.has(bot.persona));
-
-    // Revert bots to default persona first
-    for (const bot of botsToRevert) {
-      try {
-        await botManager.updateBot(bot.id, {
-          persona: 'default',
-          systemInstruction: 'You are a helpful assistant.',
-        });
-      } catch (error: any) {
-        logger.warn(`Failed to revert bot ${bot.id} to default persona`, error);
-        // Continue with deletion even if bot update fails
-      }
-    }
-
-    // Delete personas atomically
-    const deleted = [];
-    const failed = [];
-
-    for (const persona of personasToDelete) {
-      try {
-        const result = manager.deletePersona(persona.id);
-        if (result) {
-          deleted.push(persona.id);
-        } else {
-          failed.push({ id: persona.id, error: 'Delete operation returned false' });
-        }
-      } catch (error: any) {
-        failed.push({ id: persona.id, error: error.message });
-      }
-    }
-
-    return res.json({
-      success: true,
-      deleted,
-      notFound,
-      builtIn,
-      failed,
-      botsReverted: botsToRevert.length,
-    });
-  } catch (error: any) {
-    logger.error('Bulk delete personas failed', error);
-    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
-      error: 'Failed to delete personas',
-      details: error.message
-    });
   }
 });
 

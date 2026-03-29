@@ -235,10 +235,11 @@ export class AlertManager extends EventEmitter {
         service.responseTime && service.responseTime > this.config.responseTimeThreshold
     );
 
-    const alertPromises = slowServices
-      .filter(([serviceName]) => this.shouldTriggerAlert(`response_time_${serviceName}`))
-      .map(([serviceName, service]) =>
-        this.createAlert(
+    for (const [serviceName, service] of slowServices) {
+      const alertKey = `response_time_${serviceName}`;
+
+      if (this.shouldTriggerAlert(alertKey)) {
+        await this.createAlert(
           'response_time',
           service.responseTime! > 2000 ? 'critical' : 'warning',
           `High Response Time - ${serviceName}`,
@@ -246,41 +247,30 @@ export class AlertManager extends EventEmitter {
           service.responseTime!,
           this.config.responseTimeThreshold,
           { serviceName, responseTime: service.responseTime }
-        )
-      );
-
-    if (alertPromises.length > 0) {
-      await Promise.all(alertPromises);
+        );
+      }
     }
   }
 
   private async checkServiceStatus(healthCheck: HealthCheckResult): Promise<void> {
-    const alertPromises: Promise<Alert>[] = [];
-
     for (const [serviceName, service] of Object.entries(healthCheck.services)) {
       if (service.status === 'down') {
         const alertKey = `service_down_${serviceName}`;
 
         if (this.shouldTriggerAlert(alertKey)) {
-          alertPromises.push(
-            this.createAlert(
-              'service_down',
-              'critical',
-              `Service Down - ${serviceName}`,
-              `${serviceName} service is not responding`,
-              0,
-              0,
-              { serviceName, error: service.message }
-            )
+          await this.createAlert(
+            'service_down',
+            'critical',
+            `Service Down - ${serviceName}`,
+            `${serviceName} service is not responding`,
+            0,
+            0,
+            { serviceName, error: service.message }
           );
         }
       } else {
         this.resolveAlertsByType('service_down', serviceName);
       }
-    }
-
-    if (alertPromises.length > 0) {
-      await Promise.all(alertPromises);
     }
   }
 

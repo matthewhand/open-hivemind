@@ -135,7 +135,7 @@ describe('AnalyticsService', () => {
             expect(patterns.length).toBeGreaterThan(0);
             // Should include a provider pattern for discord
             const providerPattern = patterns.find(p => p.id.includes('provider'));
-            expect(providerPattern).not.toBeUndefined();
+            expect(providerPattern).toBeDefined();
         });
 
         it('detects error patterns', async () => {
@@ -157,7 +157,7 @@ describe('AnalyticsService', () => {
             const patterns = await analyticsService.getBehaviorPatterns();
 
             const errorPattern = patterns.find(p => p.id.includes('error'));
-            expect(errorPattern).not.toBeUndefined();
+            expect(errorPattern).toBeDefined();
         });
     });
 
@@ -282,7 +282,7 @@ describe('AnalyticsService', () => {
             const recommendations = await analyticsService.getRecommendations();
 
             const errorRec = recommendations.find(r => r.id.includes('error'));
-            expect(errorRec).not.toBeUndefined();
+            expect(errorRec).toBeDefined();
             expect(errorRec?.impact).toBe('high');
         });
 
@@ -305,7 +305,7 @@ describe('AnalyticsService', () => {
             const recommendations = await analyticsService.getRecommendations();
 
             const analyticsRec = recommendations.find(r => r.id.includes('analytics'));
-            expect(analyticsRec).not.toBeUndefined();
+            expect(analyticsRec).toBeDefined();
         });
 
         it('recommends performance optimization for slow responses', async () => {
@@ -328,7 +328,7 @@ describe('AnalyticsService', () => {
             const recommendations = await analyticsService.getRecommendations();
 
             const perfRec = recommendations.find(r => r.id.includes('performance'));
-            expect(perfRec).not.toBeUndefined();
+            expect(perfRec).toBeDefined();
             expect(perfRec?.impact).toBe('high');
         });
     });

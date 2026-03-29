@@ -6,22 +6,6 @@ import { open, type Database } from 'sqlite';
 import sqlite3 from 'sqlite3';
 import { injectable, singleton } from 'tsyringe';
 import { ConfigurationError, DatabaseError } from '@src/types/errorClasses';
-import { AIFeedbackRepository } from './AIFeedbackRepository';
-import { AnomalyRepository } from './AnomalyRepository';
-import { ApprovalRepository } from './ApprovalRepository';
-import { BotConfigRepository } from './BotConfigRepository';
-import { MessageRepository } from './MessageRepository';
-import type {
-  Anomaly,
-  ApprovalRequest,
-  BotConfiguration,
-  BotConfigurationAudit,
-  BotConfigurationVersion,
-  BotMetrics,
-  ConversationSummary,
-  DatabaseConfig,
-  MessageRecord,
-} from './types';
 
 // Re-export every type so existing `import { Foo } from '.../DatabaseManager'` keeps working.
 export type {
@@ -52,6 +36,24 @@ export type {
   ApprovalRequest,
   AIFeedback,
 } from './types';
+
+import type {
+  DatabaseConfig,
+  MessageRecord,
+  ConversationSummary,
+  BotMetrics,
+  BotConfiguration,
+  BotConfigurationVersion,
+  BotConfigurationAudit,
+  Anomaly,
+  ApprovalRequest,
+} from './types';
+
+import { MessageRepository } from './MessageRepository';
+import { BotConfigRepository } from './BotConfigRepository';
+import { AnomalyRepository } from './AnomalyRepository';
+import { ApprovalRepository } from './ApprovalRepository';
+import { AIFeedbackRepository } from './AIFeedbackRepository';
 
 const debug = Debug('app:DatabaseManager');
 

@@ -8,8 +8,6 @@ import { UserConfigStore } from '../../config/UserConfigStore';
 import { DatabaseManager } from '../../database/DatabaseManager';
 import { ConfigurationError } from '../../types/errorClasses';
 import { ErrorUtils } from '../../types/errors';
-import { BotApplyUpdateSchema } from '../../validation/schemas/miscSchema';
-import { validateRequest } from '../../validation/validateRequest';
 import { ApiResponse } from '../utils/apiResponse';
 import { auditMiddleware, logConfigChange, type AuditedRequest } from '../middleware/audit';
 import {
@@ -342,7 +340,6 @@ router.put(
 router.post(
   '/:botId/apply-update',
   requireRole('admin'),
-  validateRequest(BotApplyUpdateSchema),
   async (req: AuditedRequest, res: Response) => {
     const { botId } = req.params;
     const { approvalId } = req.body;

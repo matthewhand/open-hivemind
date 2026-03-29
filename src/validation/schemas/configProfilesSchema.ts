@@ -14,23 +14,27 @@ const profileProviderField = z
 // ── LLM Profile Schemas ─────────────────────────────────────────────────────
 
 export const CreateLlmProfileSchema = z.object({
-  body: z.object({
-    key: profileKeyField,
-    name: profileNameField,
-    provider: profileProviderField,
-    modelType: z.enum(['chat', 'embedding', 'both']).optional().default('chat'),
-  }),
+  body: z
+    .object({
+      key: profileKeyField,
+      name: profileNameField,
+      provider: profileProviderField,
+      modelType: z.enum(['chat', 'embedding', 'both']).optional().default('chat'),
+    })
+    .passthrough(),
 });
 
 export const UpdateLlmProfileSchema = z.object({
   params: z.object({
     key: z.string().min(1, { message: 'Profile key is required' }),
   }),
-  body: z.object({
-    name: profileNameField,
-    provider: profileProviderField,
-    modelType: z.enum(['chat', 'embedding', 'both']).optional(),
-  }),
+  body: z
+    .object({
+      name: profileNameField,
+      provider: profileProviderField,
+      modelType: z.enum(['chat', 'embedding', 'both']).optional(),
+    })
+    .passthrough(),
 });
 
 export const LlmProfileKeyParamSchema = z.object({
@@ -42,39 +46,25 @@ export const LlmProfileKeyParamSchema = z.object({
 // ── Message Profile Schemas ──────────────────────────────────────────────────
 
 export const CreateMessageProfileSchema = z.object({
-  body: z.object({
-    key: profileKeyField,
-    name: profileNameField,
-    provider: profileProviderField,
-  }),
-});
-
-export const UpdateMessageProfileSchema = z.object({
-  params: z.object({
-    key: z.string().min(1, { message: 'Profile key is required' }),
-  }),
   body: z
     .object({
+      key: profileKeyField,
       name: profileNameField,
       provider: profileProviderField,
     })
     .passthrough(),
 });
 
-export const MessageProfileKeyParamSchema = z.object({
-  params: z.object({
-    key: z.string().min(1, { message: 'Profile key is required' }),
-  }),
-});
-
 // ── Memory Profile Schemas ───────────────────────────────────────────────────
 
 export const CreateMemoryProfileSchema = z.object({
-  body: z.object({
-    key: profileKeyField,
-    name: profileNameField,
-    provider: profileProviderField,
-  }),
+  body: z
+    .object({
+      key: profileKeyField,
+      name: profileNameField,
+      provider: profileProviderField,
+    })
+    .passthrough(),
 });
 
 export const MemoryProfileKeyParamSchema = z.object({
@@ -86,11 +76,13 @@ export const MemoryProfileKeyParamSchema = z.object({
 // ── Tool Profile Schemas ─────────────────────────────────────────────────────
 
 export const CreateToolProfileSchema = z.object({
-  body: z.object({
-    key: profileKeyField,
-    name: profileNameField,
-    provider: profileProviderField,
-  }),
+  body: z
+    .object({
+      key: profileKeyField,
+      name: profileNameField,
+      provider: profileProviderField,
+    })
+    .passthrough(),
 });
 
 export const ToolProfileKeyParamSchema = z.object({

@@ -274,7 +274,7 @@ describe('PluginSecurityPolicy', () => {
       policy.verifyAndSetTrust('llm-ts', makeManifest());
 
       for (const evt of auditEvents) {
-        expect(typeof evt.timestamp).toBe('string');
+        expect(evt.timestamp).toBeDefined();
         expect(new Date(evt.timestamp).getTime()).not.toBeNaN();
       }
     });

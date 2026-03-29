@@ -138,7 +138,7 @@ describe('GreetingStateManager', () => {
 
       const state = (stateManager as any).state;
       expect(state['expired-service']).toBeUndefined();
-      expect(state['valid-service']).not.toBeUndefined();
+      expect(state['valid-service']).toBeDefined();
       expect(mockInfo).toHaveBeenCalledWith(
         'Cleaned up expired greeting state entries',
         expect.any(Object)
@@ -241,7 +241,7 @@ describe('GreetingStateManager', () => {
       await stateManager.markGreetingAsSent(serviceId, channelId);
 
       const state = (stateManager as any).state;
-      expect(state[serviceId]).not.toBeUndefined();
+      expect(state[serviceId]).toBeDefined();
       expect(state[serviceId].channelId).toBe(channelId);
       expect(fs.writeFile).toHaveBeenCalledWith(mockStatePath, expect.any(String), 'utf-8');
       expect(mockInfo).toHaveBeenCalledWith('Marked greeting as sent', { serviceId, channelId });

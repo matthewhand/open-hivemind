@@ -272,17 +272,14 @@ const SettingsSecurity: React.FC = () => {
             {settings.corsOrigins.map((origin, index) => (
               <div key={index} className="badge badge-lg gap-2 bg-base-300">
                 {origin}
-                <div className="tooltip" data-tip={`Remove ${origin}`}>
-                  <Button
-                    variant="ghost"
-                    size="xs"
-                    onClick={() => handleRemoveOrigin(origin)}
-                    className="hover:text-error hover:bg-transparent h-auto min-h-0 p-1 rounded-full"
-                    aria-label={`Remove origin ${origin}`}
-                  >
-                    <Trash2 className="w-3 h-3" />
-                  </Button>
-                </div>              </div>
+                <button
+                  onClick={() => handleRemoveOrigin(origin)}
+                  className="hover:text-error"
+                  aria-label={`Remove origin ${origin}`}
+                >
+                  <Trash2 className="w-3 h-3" />
+                </button>
+              </div>
             ))}
             {settings.corsOrigins.length === 0 && (
               <span className="text-base-content/50 text-sm italic">No origins configured</span>

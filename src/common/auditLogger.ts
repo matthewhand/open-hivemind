@@ -232,9 +232,7 @@ export class AuditLogger {
     filter?: (event: AuditEvent) => boolean
   ): Promise<AuditEvent[]> {
     try {
-      try {
-        await fsPromises.access(this.logFilePath);
-      } catch {
+      if (!fs.existsSync(this.logFilePath)) {
         return [];
       }
 
@@ -356,9 +354,7 @@ export class AuditLogger {
     filter?: (event: AuditEvent) => boolean
   ): Promise<AuditEvent[]> {
     try {
-      try {
-        await fsPromises.access(this.logFilePath);
-      } catch {
+      if (!fs.existsSync(this.logFilePath)) {
         return [];
       }
 

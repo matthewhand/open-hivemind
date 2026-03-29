@@ -4,7 +4,6 @@ import { getFlowiseResponse } from '@integrations/flowise/flowiseRestClient';
 import { getFlowiseSdkResponse } from '@integrations/flowise/flowiseSdkClient';
 import { getLlmProvider } from '@llm/getLlmProvider';
 import { IMessage } from '@message/interfaces/IMessage';
-import { resetAllCircuitBreakers } from '@common/CircuitBreaker';
 
 jest.mock('@integrations/flowise/flowiseRestClient');
 jest.mock('@integrations/flowise/flowiseSdkClient');
@@ -31,7 +30,6 @@ const createMockMessage = (text: string, role: 'user' | 'assistant' = 'user'): I
 
 describe('FlowiseProvider Integration', () => {
   beforeEach(() => {
-    resetAllCircuitBreakers();
     jest.clearAllMocks();
     // Set default config values
     mockedFlowiseConfig.get.mockImplementation((key: string | null | undefined) => {

@@ -8,8 +8,8 @@ import { Router } from 'express';
 import { container } from 'tsyringe';
 import DemoModeService from '../../services/DemoModeService';
 import { ErrorUtils } from '../../types/errors';
-import { ChatGenerateSchema, EmptySchema } from '../../validation/schemas/miscSchema';
 import { validateRequest } from '../../validation/validateRequest';
+import { DemoChatSchema } from '../../validation/schemas/demoSchema';
 
 const router = Router();
 
@@ -64,19 +64,9 @@ router.get('/bots', (req, res) => {
  * POST /api/demo/chat
  * Send a message to a demo bot and get a simulated response
  */
-router.post('/chat', validateRequest(ChatGenerateSchema), (req, res) => {
+router.post('/chat', validateRequest(DemoChatSchema), (req, res) => {
   try {
     const { message, botName, channelId, userId, userName } = req.body;
-
-    if (!message) {
-      res.status(400).json({ error: 'message is required' });
-      return;
-    }
-
-    if (!botName) {
-      res.status(400).json({ error: 'botName is required' });
-      return;
-    }
 
     const demoService = container.resolve(DemoModeService);
 
@@ -177,7 +167,7 @@ router.get('/conversations/:channelId/:botName', (req, res) => {
  * POST /api/demo/reset
  * Reset demo mode (clear all conversations)
  */
-router.post('/reset', validateRequest(EmptySchema), (req, res) => {
+router.post('/reset', (req, res) => {
   try {
     const demoService = container.resolve(DemoModeService);
     demoService.reset();

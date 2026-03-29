@@ -248,11 +248,10 @@ const MarketplacePage: React.FC = () => {
             <AlertIcon className="w-5 h-5" />
           )}
           <span>{actionMessage.text}</span>
-          <div className="tooltip" data-tip="Dismiss">
-            <Button variant="ghost" size="xs" onClick={() => setActionMessage(null)} aria-label="Dismiss">
-              <CloseIcon className="w-4 h-4" />
-            </Button>
-          </div>        </div>
+          <button className="btn btn-ghost btn-xs" onClick={() => setActionMessage(null)}>
+            <CloseIcon className="w-4 h-4" />
+          </button>
+        </div>
       )}
 
       {/* Error State */}

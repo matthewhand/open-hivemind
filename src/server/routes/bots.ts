@@ -11,12 +11,18 @@ import {
   UpdateBotSchema,
 } from '../../validation/schemas/botsSchema';
 import { ReorderSchema } from '../../validation/schemas/commonSchema';
+import { ImportBotsSchema } from '../../validation/schemas/importExportSchema';
 import { validateRequest } from '../../validation/validateRequest';
 import { ActivityLogger } from '../services/ActivityLogger';
 import { WebSocketService } from '../services/WebSocketService';
 
 const router = Router();
 const logger = createLogger('botsRouter');
+
+/** Safely extract message from unknown error. */
+function errMsg(error: unknown): string {
+  return error instanceof Error ? errMsg(error) : String(error);
+}
 const manager = BotManager.getInstance();
 const wsService = WebSocketService.getInstance();
 
@@ -117,7 +123,7 @@ router.put('/reorder', validateRequest(ReorderSchema), async (req, res) => {
 
 const EXPORT_SCHEMA_VERSION = 1;
 
-function sanitizeBotForExport(bot: any): any {
+function sanitizeBotForExport(bot: Record<string, unknown>): Record<string, unknown> {
   const { envOverrides, ...rest } = bot;
   const sensitiveKeys = [
     'token',
@@ -188,14 +194,9 @@ router.get('/export', async (_req, res) => {
  *       200:
  *         description: Import report
  */
-router.post('/import', async (req, res) => {
+router.post('/import', validateRequest(ImportBotsSchema), async (req, res) => {
   try {
     const { bots: incoming } = req.body;
-    if (!Array.isArray(incoming) || incoming.length === 0) {
-      return res
-        .status(HTTP_STATUS.BAD_REQUEST)
-        .json({ error: 'Request body must contain a non-empty "bots" array' });
-    }
 
     const existingBots = await manager.getAllBots();
     const existingByName = new Map(existingBots.map((b) => [b.name.toLowerCase(), b]));
@@ -230,7 +231,7 @@ router.post('/import', async (req, res) => {
       }
     }
 
-    ActivityLogger.log(req, 'import_bots', {
+    logger.info('Bot import completed', {
       created: report.created.length,
       updated: report.updated.length,
       errors: report.errors.length,
@@ -315,8 +316,8 @@ router.post('/', validateRequest(CreateBotSchema), async (req, res) => {
 
     const bot = await manager.createBot(request);
     return res.status(HTTP_STATUS.CREATED).json({ success: true, message: 'Bot created', bot });
-  } catch (error: any) {
-    return res.status(HTTP_STATUS.BAD_REQUEST).json({ error: error.message });
+  } catch (error: unknown) {
+    return res.status(HTTP_STATUS.BAD_REQUEST).json({ error: errMsg(error) });
   }
 });
 
@@ -354,11 +355,11 @@ router.put('/:id', validateRequest(UpdateBotSchema), async (req, res) => {
     const updates = req.body;
     const bot = await manager.updateBot(id, updates);
     return res.json({ success: true, message: 'Bot updated', bot });
-  } catch (error: any) {
-    const status = error.message.includes(ERROR_CODES.NOT_FOUND)
+  } catch (error: unknown) {
+    const status = errMsg(error).includes(ERROR_CODES.NOT_FOUND)
       ? HTTP_STATUS.NOT_FOUND
       : HTTP_STATUS.BAD_REQUEST;
-    return res.status(status).json({ error: error.message });
+    return res.status(status).json({ error: errMsg(error) });
   }
 });
 
@@ -389,11 +390,11 @@ router.delete('/:id', validateRequest(BotIdParamSchema), async (req, res) => {
 
     await manager.deleteBot(id);
     return res.json({ success: true, message: 'Bot deleted' });
-  } catch (error: any) {
-    const status = error.message.includes(ERROR_CODES.NOT_FOUND)
+  } catch (error: unknown) {
+    const status = errMsg(error).includes(ERROR_CODES.NOT_FOUND)
       ? HTTP_STATUS.NOT_FOUND
       : HTTP_STATUS.BAD_REQUEST;
-    return res.status(status).json({ error: error.message });
+    return res.status(status).json({ error: errMsg(error) });
   }
 });
 
@@ -440,11 +441,11 @@ router.post('/:id/clone', validateRequest(CloneBotSchema), async (req, res) => {
     return res
       .status(HTTP_STATUS.CREATED)
       .json({ success: true, message: 'Bot cloned', bot: newBot });
-  } catch (error: any) {
-    const status = error.message.includes(ERROR_CODES.NOT_FOUND)
+  } catch (error: unknown) {
+    const status = errMsg(error).includes(ERROR_CODES.NOT_FOUND)
       ? HTTP_STATUS.NOT_FOUND
       : HTTP_STATUS.BAD_REQUEST;
-    return res.status(status).json({ error: error.message });
+    return res.status(status).json({ error: errMsg(error) });
   }
 });
 
@@ -469,11 +470,11 @@ router.post('/:id/start', validateRequest(BotIdParamSchema), async (req, res) =>
     const { id } = req.params;
     await manager.startBot(id);
     return res.json({ success: true, message: 'Bot started' });
-  } catch (error: any) {
-    const status = error.message.includes(ERROR_CODES.NOT_FOUND)
+  } catch (error: unknown) {
+    const status = errMsg(error).includes(ERROR_CODES.NOT_FOUND)
       ? HTTP_STATUS.NOT_FOUND
       : HTTP_STATUS.BAD_REQUEST;
-    return res.status(status).json({ error: error.message });
+    return res.status(status).json({ error: errMsg(error) });
   }
 });
 
@@ -498,11 +499,11 @@ router.post('/:id/stop', validateRequest(BotIdParamSchema), async (req, res) => 
     const { id } = req.params;
     await manager.stopBot(id);
     return res.json({ success: true, message: 'Bot stopped' });
-  } catch (error: any) {
-    const status = error.message.includes(ERROR_CODES.NOT_FOUND)
+  } catch (error: unknown) {
+    const status = errMsg(error).includes(ERROR_CODES.NOT_FOUND)
       ? HTTP_STATUS.NOT_FOUND
       : HTTP_STATUS.BAD_REQUEST;
-    return res.status(status).json({ error: error.message });
+    return res.status(status).json({ error: errMsg(error) });
   }
 });
 
@@ -533,17 +534,17 @@ router.post('/:id/stop', validateRequest(BotIdParamSchema), async (req, res) => 
 router.get('/:id/history', validateRequest(BotHistoryQuerySchema), async (req, res) => {
   try {
     const { id } = req.params;
-    const reqQuery = req.query as any;
+    const reqQuery = req.query as Record<string, string>;
     const limit = Math.min(Math.max(parseInt(reqQuery.limit as string) || 20, 1), 100);
     const channelId = req.query.channelId as string;
 
     const history = await manager.getBotHistory(id, channelId, limit);
     return res.json({ success: true, data: { history } });
-  } catch (error: any) {
-    const status = error.message.includes(ERROR_CODES.NOT_FOUND)
+  } catch (error: unknown) {
+    const status = errMsg(error).includes(ERROR_CODES.NOT_FOUND)
       ? HTTP_STATUS.NOT_FOUND
       : HTTP_STATUS.BAD_REQUEST;
-    return res.status(status).json({ error: error.message });
+    return res.status(status).json({ error: errMsg(error) });
   }
 });
 
@@ -580,7 +581,7 @@ function redactString(val: string | undefined): string | undefined {
 router.get('/:id/activity', validateRequest(BotActivityQuerySchema), async (req, res) => {
   try {
     const { id } = req.params;
-    const reqQuery = req.query as any;
+    const reqQuery = req.query as Record<string, string>;
     const limit = Math.min(Math.max(parseInt(reqQuery.limit as string) || 20, 1), 100);
 
     const bot = await manager.getBot(id);

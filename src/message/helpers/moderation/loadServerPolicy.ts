@@ -11,12 +11,12 @@ const debug = Debug('app:loadServerPolicy');
  * It logs the success or failure of loading the policy and throws an error if the policy
  * cannot be loaded.
  *
- * @returns {Promise<string>} The server policy as a string.
+ * @returns {string} The server policy as a string.
  */
-export default async function loadServerPolicy(): Promise<string> {
+export default function loadServerPolicy(): string {
   try {
     const policyPath = path.resolve(__dirname, '../../config/serverPolicy.json');
-    const policyData = await fs.promises.readFile(policyPath, 'utf-8');
+    const policyData = fs.readFileSync(policyPath, 'utf-8');
     debug('[loadServerPolicy] Server policy loaded successfully.');
     return policyData;
   } catch (error: any) {

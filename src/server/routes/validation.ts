@@ -1,14 +1,11 @@
-import Debug from 'debug';
 import { Router, type NextFunction, type Request, type Response } from 'express';
 import { body, param, query, validationResult } from 'express-validator';
 import { requireAdmin } from '../../auth/middleware';
 import type { AuthMiddlewareRequest } from '../../auth/types';
 import type { BotConfig } from '../../types/config';
 import { ErrorUtils } from '../../types/errors';
-import { ValidationTestSchema } from '../../validation/schemas/miscSchema';
-import { validateRequest } from '../../validation/validateRequest';
 import { RealTimeValidationService } from '../services/RealTimeValidationService';
-
+import Debug from 'debug';
 const debug = Debug('app:server:routes:validation');
 
 const router = Router();
@@ -72,14 +69,6 @@ function validateBotConfiguration(bot: Partial<BotConfig>): BotValidationResult 
       errors.push('OpenAI API key is required');
     } else if (!bot.openai.apiKey.startsWith('sk-')) {
       warnings.push('OpenAI API key should start with "sk-"');
-    }
-  }
-
-  if (bot.llmProvider === 'anthropic') {
-    if (!bot.anthropic?.apiKey) {
-      errors.push('Anthropic API key is required');
-    } else if (!bot.anthropic.apiKey.startsWith('sk-ant-')) {
-      warnings.push('Anthropic API key should start with "sk-ant-"');
     }
   }
 
@@ -328,53 +317,49 @@ router.get('/api/validation', async (req: AuthMiddlewareRequest, res: Response) 
   }
 });
 
-router.post(
-  '/api/validation/test',
-  validateRequest(ValidationTestSchema),
-  async (req: AuthMiddlewareRequest, res: Response) => {
-    try {
-      const { config } = req.body ?? {};
+router.post('/api/validation/test', async (req: AuthMiddlewareRequest, res: Response) => {
+  try {
+    const { config } = req.body ?? {};
 
-      if (!config) {
-        return res.status(400).json({
-          error: 'Configuration data required',
-        });
-      }
+    if (!config) {
+      return res.status(400).json({
+        error: 'Configuration data required',
+      });
+    }
 
-      if (typeof config !== 'object' || Array.isArray(config)) {
-        return res.status(400).json({
-          error: 'Configuration data must be an object',
-        });
-      }
+    if (typeof config !== 'object' || Array.isArray(config)) {
+      return res.status(400).json({
+        error: 'Configuration data must be an object',
+      });
+    }
 
-      const bots = (config as { bots?: Partial<BotConfig>[] }).bots;
+    const bots = (config as { bots?: Partial<BotConfig>[] }).bots;
 
-      if (!Array.isArray(bots)) {
-        return res.status(200).json({
-          valid: false,
-          errors: ['Configuration must include a "bots" array'],
-          warnings: [],
-          recommendations: [],
-          botValidation: [],
-          timestamp: new Date().toISOString(),
-        });
-      }
-
-      const summary = evaluateBotConfigurations(bots);
-
-      return res.json({
-        valid: summary.isValid,
-        errors: summary.errors,
-        warnings: summary.warnings,
-        recommendations: summary.recommendations,
-        botValidation: summary.botValidation,
+    if (!Array.isArray(bots)) {
+      return res.status(200).json({
+        valid: false,
+        errors: ['Configuration must include a "bots" array'],
+        warnings: [],
+        recommendations: [],
+        botValidation: [],
         timestamp: new Date().toISOString(),
       });
-    } catch (error: any) {
-      return res.status(500).json({ error: error.message });
     }
+
+    const summary = evaluateBotConfigurations(bots);
+
+    return res.json({
+      valid: summary.isValid,
+      errors: summary.errors,
+      warnings: summary.warnings,
+      recommendations: summary.recommendations,
+      botValidation: summary.botValidation,
+      timestamp: new Date().toISOString(),
+    });
+  } catch (error: any) {
+    return res.status(500).json({ error: error.message });
   }
-);
+});
 
 router.get('/api/validation/schema', (_req: AuthMiddlewareRequest, res: Response) => {
   const schema = {
@@ -385,7 +370,7 @@ router.get('/api/validation/schema', (_req: AuthMiddlewareRequest, res: Response
         messageProvider: { type: 'string', enum: ['discord', 'slack', 'mattermost', 'webhook'] },
         llmProvider: {
           type: 'string',
-          enum: ['openai', 'anthropic', 'flowise', 'openwebui', 'perplexity', 'replicate', 'n8n', 'openswarm'],
+          enum: ['openai', 'flowise', 'openwebui', 'perplexity', 'replicate', 'n8n', 'openswarm'],
         },
         discord: {
           type: 'object',
@@ -408,15 +393,6 @@ router.get('/api/validation/schema', (_req: AuthMiddlewareRequest, res: Response
           properties: {
             apiKey: { type: 'string' },
             model: { type: 'string' },
-          },
-        },
-        anthropic: {
-          type: 'object',
-          properties: {
-            apiKey: { type: 'string' },
-            model: { type: 'string' },
-            maxTokens: { type: 'number' },
-            temperature: { type: 'number' },
           },
         },
       },

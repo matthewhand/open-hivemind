@@ -358,6 +358,7 @@ const DataTable = <T extends Record<string, any>>({
               className="input input-bordered input-sm w-full max-w-xs"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
+              aria-label="Search table data"
             />
           </div>
         )}

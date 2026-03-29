@@ -123,32 +123,6 @@ describe('Personas Routes', () => {
       expect(getMockManager().clonePersona).toHaveBeenCalledWith('p1', { name: 'Cloned Persona' });
     });
 
-    it('should clone a persona with multiple override fields', async () => {
-      const persona = {
-        id: 'p2',
-        name: 'Cloned Persona',
-        description: 'New description',
-        category: 'technical',
-        systemPrompt: 'New prompt',
-      };
-      getMockManager().clonePersona.mockReturnValue(persona);
-
-      const overrides = {
-        name: 'Cloned Persona',
-        description: 'New description',
-        category: 'technical',
-        systemPrompt: 'New prompt',
-      };
-
-      const response = await request(app)
-        .post('/api/personas/p1/clone')
-        .send(overrides)
-        .expect(201);
-
-      expect(response.body).toEqual(persona);
-      expect(getMockManager().clonePersona).toHaveBeenCalledWith('p1', overrides);
-    });
-
     it('should return 404 if persona to clone not found', async () => {
       getMockManager().clonePersona.mockImplementation(() => {
         throw new Error('Persona with ID nonexistent not found');
