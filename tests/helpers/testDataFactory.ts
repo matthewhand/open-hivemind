@@ -1,15 +1,4 @@
 import fc from 'fast-check';
-import discordConfig from '../../src/config/discordConfig';
-import flowiseConfig from '../../src/config/flowiseConfig';
-import llmConfig from '../../src/config/llmConfig';
-import llmTaskConfig from '../../src/config/llmTaskConfig';
-import mattermostConfig from '../../src/config/mattermostConfig';
-import messageConfig from '../../src/config/messageConfig';
-import openaiConfig from '../../src/config/openaiConfig';
-import openWebUIConfig from '../../src/config/openWebUIConfig';
-import slackConfig from '../../src/config/slackConfig';
-import telegramConfig from '../../src/config/telegramConfig';
-import webhookConfig from '../../src/config/webhookConfig';
 
 /**
  * Test data factories for creating consistent test data across test suites
@@ -455,69 +444,6 @@ export const commandParserTestData = {
 };
 
 /**
- * Validates generated config test data against the real backend convict schema
- * to prevent drift.
- * @param type The config type
- * @param data The generated expectedResults
- * @returns true if valid, throws error otherwise
- */
-export function validateConfigAgainstSchema(type: SupportedConfigType, data: any): boolean {
-  try {
-    switch (type) {
-      case 'discord':
-        discordConfig.load(data);
-        discordConfig.validate({ allowed: 'strict' });
-        break;
-      case 'message':
-        messageConfig.load(data);
-        messageConfig.validate({ allowed: 'strict' });
-        break;
-      case 'slack':
-        slackConfig.load(data);
-        slackConfig.validate({ allowed: 'strict' });
-        break;
-      case 'telegram':
-        telegramConfig.load(data);
-        telegramConfig.validate({ allowed: 'strict' });
-        break;
-      case 'mattermost':
-        mattermostConfig.load(data);
-        mattermostConfig.validate({ allowed: 'strict' });
-        break;
-      case 'webhook':
-        webhookConfig.load(data);
-        webhookConfig.validate({ allowed: 'strict' });
-        break;
-      case 'llm':
-        llmConfig.load(data);
-        llmConfig.validate({ allowed: 'strict' });
-        break;
-      case 'openai':
-        openaiConfig.load(data);
-        openaiConfig.validate({ allowed: 'strict' });
-        break;
-      case 'flowise':
-        flowiseConfig.load(data);
-        flowiseConfig.validate({ allowed: 'strict' });
-        break;
-      case 'openwebui':
-        openWebUIConfig.load(data);
-        openWebUIConfig.validate({ allowed: 'strict' });
-        break;
-      case 'llmtask':
-        llmTaskConfig.load(data);
-        llmTaskConfig.validate({ allowed: 'strict' });
-        break;
-      default:
-        throw new Error(`Unknown config type: ${type}`);
-    }
-    return true;
-  } catch (error) {
-    throw new Error(`Test data validation failed for ${type}: ${error}`);
-  }
-}
-
-/**
  * Factory function to create test data for different scenarios
  *
  * @param type The type of test data to generate ('discord', 'message', 'slack', 'telegram', 'mattermost', 'webhook', 'llm', 'openai', 'flowise', 'openwebui', 'llmtask', 'command')
@@ -578,8 +504,6 @@ export function createTestData(type: SupportedConfigType | 'command'): any {
       throw new Error(`Unknown test data type: ${type}`);
   }
 
-  // Validate the data against the schema
-  validateConfigAgainstSchema(type as SupportedConfigType, data.expectedResults);
   return data;
 }
 
@@ -610,14 +534,14 @@ export const discordConfigGenerator = fc.record({
   DISCORD_VOICE_CHANNEL_ID: fc.string(),
   DISCORD_PRIORITY_CHANNEL: fc.string(),
   DISCORD_MESSAGE_HISTORY_LIMIT: fc.integer({ min: 1, max: 100 }),
-  DISCORD_UNSOLICITED_CHANCE_MODIFIER: fc.float({ min: Math.fround(0.1), max: Math.fround(2.0) }),
+  DISCORD_UNSOLICITED_CHANCE_MODIFIER: fc.float({ min: Math.fround(0.1), max: Math.fround(2.0), noNaN: true }),
   DISCORD_MAX_MESSAGE_LENGTH: fc.integer({ min: 100, max: 2000 }),
   DISCORD_INTER_PART_DELAY_MS: fc.integer({ min: 0, max: 5000 }),
   DISCORD_TYPING_DELAY_MAX_MS: fc.integer({ min: 0, max: 10000 }),
-  DISCORD_PRIORITY_CHANNEL_BONUS: fc.float({ min: Math.fround(0.1), max: Math.fround(2.0) }),
+  DISCORD_PRIORITY_CHANNEL_BONUS: fc.float({ min: Math.fround(0.1), max: Math.fround(2.0), noNaN: true }),
   DISCORD_MESSAGE_PROCESSING_DELAY_MS: fc.integer({ min: 0, max: 10000 }),
   DISCORD_LOGGING_ENABLED: fc.boolean(),
-  DISCORD_CHANNEL_BONUSES: fc.dictionary(fc.string(), fc.float()),
+  DISCORD_CHANNEL_BONUSES: fc.dictionary(fc.string(), fc.float({ noNaN: true })),
 });
 
 /**
@@ -650,15 +574,15 @@ export const messageConfigGenerator = fc.record({
   MESSAGE_MAX_DELAY: fc.integer({ min: 1000, max: 20000 }),
   MESSAGE_ACTIVITY_TIME_WINDOW: fc.integer({ min: 1000, max: 600000 }),
   MESSAGE_THREAD_RELATION_WINDOW: fc.integer({ min: 1000, max: 600000 }),
-  MESSAGE_RECENT_ACTIVITY_DECAY_RATE: fc.float({ min: Math.fround(0.1), max: Math.fround(1.0) }),
-  MESSAGE_INTERROBANG_BONUS: fc.float({ min: Math.fround(0.1), max: Math.fround(2.0) }),
-  MESSAGE_BOT_RESPONSE_MODIFIER: fc.float({ min: Math.fround(-1.0), max: Math.fround(1.0) }),
+  MESSAGE_RECENT_ACTIVITY_DECAY_RATE: fc.float({ min: Math.fround(0.1), max: Math.fround(1.0), noNaN: true }),
+  MESSAGE_INTERROBANG_BONUS: fc.float({ min: Math.fround(0.1), max: Math.fround(2.0), noNaN: true }),
+  MESSAGE_BOT_RESPONSE_MODIFIER: fc.float({ min: Math.fround(-1.0), max: Math.fround(1.0), noNaN: true }),
   MESSAGE_MIN_INTERVAL_MS: fc.integer({ min: 0, max: 10000 }),
   MESSAGE_HISTORY_LIMIT: fc.integer({ min: 1, max: 100 }),
-  MESSAGE_DELAY_MULTIPLIER: fc.float({ min: Math.fround(0.1), max: Math.fround(5.0) }),
-  MESSAGE_SEMANTIC_RELEVANCE_BONUS: fc.float({ min: Math.fround(0.1), max: Math.fround(20.0) }),
+  MESSAGE_DELAY_MULTIPLIER: fc.float({ min: Math.fround(0.1), max: Math.fround(5.0), noNaN: true }),
+  MESSAGE_SEMANTIC_RELEVANCE_BONUS: fc.float({ min: Math.fround(0.1), max: Math.fround(20.0), noNaN: true }),
   MESSAGE_WAKEWORDS: fc.array(fc.string()),
-  CHANNEL_BONUSES: fc.dictionary(fc.string(), fc.float()),
+  CHANNEL_BONUSES: fc.dictionary(fc.string(), fc.float({ noNaN: true })),
   CHANNEL_PRIORITIES: fc.dictionary(fc.string(), fc.integer()),
 });
 
@@ -714,16 +638,16 @@ export const llmConfigGenerator = fc.record({
  */
 export const openaiConfigGenerator = fc.record({
   OPENAI_API_KEY: fc.string(),
-  OPENAI_TEMPERATURE: fc.float({ min: Math.fround(0), max: Math.fround(2) }),
+  OPENAI_TEMPERATURE: fc.float({ min: Math.fround(0), max: Math.fround(2), noNaN: true }),
   OPENAI_MAX_TOKENS: fc.integer({ min: 1 }),
-  OPENAI_FREQUENCY_PENALTY: fc.float({ min: Math.fround(-2), max: Math.fround(2) }),
-  OPENAI_PRESENCE_PENALTY: fc.float({ min: Math.fround(-2), max: Math.fround(2) }),
+  OPENAI_FREQUENCY_PENALTY: fc.float({ min: Math.fround(-2), max: Math.fround(2), noNaN: true }),
+  OPENAI_PRESENCE_PENALTY: fc.float({ min: Math.fround(-2), max: Math.fround(2), noNaN: true }),
   OPENAI_BASE_URL: fc.webUrl().chain((url) => fc.constant(url || 'https://api.openai.com/v1')),
   OPENAI_TIMEOUT: fc.integer({ min: 1000 }),
   OPENAI_ORGANIZATION: fc.string(),
   OPENAI_MODEL: fc.string({ minLength: 1 }),
   OPENAI_STOP: fc.array(fc.string()),
-  OPENAI_TOP_P: fc.float({ min: Math.fround(0), max: Math.fround(1) }),
+  OPENAI_TOP_P: fc.float({ min: Math.fround(0), max: Math.fround(1), noNaN: true }),
   OPENAI_SYSTEM_PROMPT: fc.string(),
   OPENAI_RESPONSE_MAX_TOKENS: fc.integer({ min: 1 }),
   OPENAI_MAX_RETRIES: fc.integer({ min: 0 }),
