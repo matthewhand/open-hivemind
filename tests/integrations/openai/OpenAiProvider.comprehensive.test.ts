@@ -2,6 +2,7 @@ import { OpenAI } from 'openai';
 import { OpenAiProvider, openAiProvider } from '@hivemind/llm-openai';
 import openaiConfig from '@config/openaiConfig';
 import { IMessage } from '@message/interfaces/IMessage';
+import { resetAllCircuitBreakers } from '@common/CircuitBreaker';
 
 // Mock the entire 'openai' library
 jest.mock('openai');
@@ -17,6 +18,7 @@ describe('OpenAiProvider Comprehensive Tests', () => {
   let mockOpenAIInstance: any;
 
   beforeEach(() => {
+    resetAllCircuitBreakers();
     jest.clearAllMocks();
 
     // Setup mock for chat completions

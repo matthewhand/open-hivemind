@@ -7,6 +7,7 @@
 
 import { Mem0Provider } from '../../../packages/memory-mem0/src/Mem0Provider';
 import { Mem0ApiError } from '../../../packages/memory-mem0/src/types';
+import { clearCircuitBreakerRegistry } from '../../../src/common/CircuitBreaker';
 
 // ---------------------------------------------------------------------------
 // Test helpers
@@ -69,6 +70,7 @@ function errorResponse(status: number, body = ''): Response {
 let fetchMock: jest.Mock;
 
 beforeEach(() => {
+  clearCircuitBreakerRegistry();
   fetchMock = jest.fn();
   global.fetch = fetchMock;
 });
