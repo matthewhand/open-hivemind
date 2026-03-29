@@ -6,6 +6,7 @@ import type { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import type { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';
 import { ErrorUtils } from '@src/types/errors';
 import MCPProviderManager from '../../config/MCPProviderManager';
+import { TTLCache } from '../../utils/TTLCache';
 import type { MCPProviderConfig } from '../../types/mcp';
 import {
   AddMCPServerSchema,
@@ -79,11 +80,19 @@ const ensureDataDir = async () => {
   }
 };
 
+const mcpConfigCache = new TTLCache<string, MCPServer[]>(30000, 'MCPConfigCache');
+
 // Load/Save MCP server configurations
 const loadMCPServers = async (): Promise<MCPServer[]> => {
   try {
+    const cached = mcpConfigCache.get(MCP_SERVERS_CONFIG_FILE);
+    if (cached) {
+      return cached;
+    }
     const data = await fs.readFile(MCP_SERVERS_CONFIG_FILE, 'utf8');
-    return JSON.parse(data);
+    const parsed = JSON.parse(data);
+    mcpConfigCache.set(MCP_SERVERS_CONFIG_FILE, parsed);
+    return parsed;
   } catch (error: unknown) {
     const hivemindError = ErrorUtils.toHivemindError(error);
     debug('MCP servers config file not found, using defaults:', hivemindError.message);
@@ -94,6 +103,7 @@ const loadMCPServers = async (): Promise<MCPServer[]> => {
 const saveMCPServers = async (servers: MCPServer[]): Promise<void> => {
   await ensureDataDir();
   await fs.writeFile(MCP_SERVERS_CONFIG_FILE, JSON.stringify(servers, null, 2));
+  mcpConfigCache.set(MCP_SERVERS_CONFIG_FILE, servers);
 };
 
 // Connect to MCP server

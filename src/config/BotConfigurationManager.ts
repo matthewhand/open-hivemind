@@ -18,6 +18,7 @@ import type {
   LettaSessionMode,
 } from '@src/types/config';
 import { ConfigurationError } from '../types/errorClasses';
+import { TTLCache } from '../utils/TTLCache';
 
 const debug = Debug('app:BotConfigurationManager');
 
@@ -334,6 +335,7 @@ export class BotConfigurationManager {
   private legacyMode = false;
   private warnings: string[] = [];
   private userConfigStore = UserConfigStore.getInstance();
+  private configCache = new TTLCache<string, Record<string, unknown>>(30000, 'BotConfigCache');
 
   public constructor() {
     this.loadConfiguration();
@@ -537,7 +539,19 @@ export class BotConfigurationManager {
 
     if (fs.existsSync(botConfigPath)) {
       debug(`Loading bot-specific config for ${botName} from ${botConfigPath}`);
-      botConfig.loadFile(botConfigPath);
+      const cachedConfig = this.configCache.get(botConfigPath);
+      if (cachedConfig) {
+        botConfig.load(cachedConfig);
+      } else {
+        botConfig.loadFile(botConfigPath);
+        // Cache the raw JSON disk content to speed up subsequent loads
+        try {
+          const raw = JSON.parse(fs.readFileSync(botConfigPath, 'utf8'));
+          this.configCache.set(botConfigPath, raw);
+        } catch (e) {
+          debug(`Failed to cache bot config ${botConfigPath}: ${e}`);
+        }
+      }
     }
 
     botConfig.validate({ allowed: 'warn' });
@@ -1080,6 +1094,7 @@ export class BotConfigurationManager {
 
     // Write config
     await fs.promises.writeFile(filePath, JSON.stringify(config, null, 2));
+    this.configCache.invalidate(filePath);
 
     // Reload to pick up new bot
     this.reload();
@@ -1136,8 +1151,14 @@ export class BotConfigurationManager {
     let currentConfig: Record<string, unknown> = {};
 
     try {
-      const data = await fs.promises.readFile(filePath, 'utf8');
-      currentConfig = JSON.parse(data);
+      const cached = this.configCache.get(filePath);
+      if (cached) {
+        currentConfig = cached;
+      } else {
+        const data = await fs.promises.readFile(filePath, 'utf8');
+        currentConfig = JSON.parse(data);
+        this.configCache.set(filePath, currentConfig);
+      }
     } catch (e: any) {
       if (e.code !== 'ENOENT') {
         debug(`Failed to read existing bot config ${filePath}: ${e}`);
@@ -1159,6 +1180,7 @@ export class BotConfigurationManager {
     }
 
     await fs.promises.writeFile(filePath, JSON.stringify(mergedConfig, null, 2));
+    this.configCache.invalidate(filePath);
     debug(`Updated bot config for ${name} at ${filePath}`);
 
     // Reload to apply changes
