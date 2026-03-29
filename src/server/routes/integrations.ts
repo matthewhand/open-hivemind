@@ -7,10 +7,20 @@ import {
   IntegrationIdParamSchema,
   UpdateIntegrationSchema,
 } from '../../validation/schemas/integrationsSchema';
+import { configRateLimiter } from '../../middleware/rateLimiter';
 import { validateRequest } from '../../validation/validateRequest';
 
 const log = Debug('app:integrationsRouter');
 const router = Router();
+
+// Apply rate limiting to all mutating operations
+router.use((req, res, next) => {
+  if (['POST', 'PUT', 'DELETE', 'PATCH'].includes(req.method)) {
+    return configRateLimiter(req, res, next);
+  }
+  next();
+});
+
 const providerManager = ProviderConfigManager.getInstance();
 
 // Middleware: Admin access required for all integration changes

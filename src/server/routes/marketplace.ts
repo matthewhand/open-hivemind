@@ -1,6 +1,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import Debug from 'debug';
+import { configRateLimiter } from '../../middleware/rateLimiter';
 import { Router } from 'express';
 import type { PluginManifest } from '@src/plugins/PluginLoader';
 import {
@@ -13,6 +14,15 @@ import { authenticateToken, requireRole } from '@src/server/middleware/auth';
 
 const debug = Debug('app:marketplace');
 const router = Router();
+
+// Apply rate limiting to all mutating operations
+router.use((req, res, next) => {
+  if (['POST', 'PUT', 'DELETE', 'PATCH'].includes(req.method)) {
+    return configRateLimiter(req, res, next);
+  }
+  next();
+});
+
 
 // ---------------------------------------------------------------------------
 // Types

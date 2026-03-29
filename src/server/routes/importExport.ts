@@ -1,5 +1,6 @@
 import fs from 'fs/promises';
 import path from 'path';
+import { configRateLimiter } from '../../middleware/rateLimiter';
 import { Router, type Request, type Response } from 'express';
 import { body, param, validationResult } from 'express-validator';
 import { authenticate, requireAdmin } from '../../auth/middleware';
@@ -19,6 +20,15 @@ type AuthMulterRequest = AuthMiddlewareRequest & { file?: MulterFile };
 const multer = require('multer');
 
 const router = Router();
+
+// Apply rate limiting to all mutating operations
+router.use((req, res, next) => {
+  if (['POST', 'PUT', 'DELETE', 'PATCH'].includes(req.method)) {
+    return configRateLimiter(req, res, next);
+  }
+  next();
+});
+
 const importExportService = ConfigurationImportExportService.getInstance();
 
 // Configure multer for file uploads

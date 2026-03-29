@@ -1,4 +1,5 @@
 import Debug from 'debug';
+import { configRateLimiter } from '../../middleware/rateLimiter';
 import { Router, type Request, type Response } from 'express';
 import { authenticate, requireAdmin, requireRole } from '../../auth/middleware';
 import { type AuthMiddlewareRequest } from '../../auth/types';
@@ -19,6 +20,15 @@ import { ConfigurationValidator } from '../services/ConfigurationValidator';
 
 const debug = Debug('app:BotConfigRoutes');
 const router = Router();
+
+// Apply rate limiting to all mutating operations
+router.use((req, res, next) => {
+  if (['POST', 'PUT', 'DELETE', 'PATCH'].includes(req.method)) {
+    return configRateLimiter(req, res, next);
+  }
+  next();
+});
+
 const botConfigManager = BotConfigurationManager.getInstance();
 const secureConfigManager = SecureConfigManager.getInstance();
 const userConfigStore = UserConfigStore.getInstance();

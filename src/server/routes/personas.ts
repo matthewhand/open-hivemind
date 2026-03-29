@@ -9,9 +9,19 @@ import {
   PersonaIdParamSchema,
   UpdatePersonaRouteSchema,
 } from '../../validation/schemas/personasSchema';
+import { configRateLimiter } from '../../middleware/rateLimiter';
 import { validateRequest } from '../../validation/validateRequest';
 
 const router = Router();
+
+// Apply rate limiting to all mutating operations
+router.use((req, res, next) => {
+  if (['POST', 'PUT', 'DELETE', 'PATCH'].includes(req.method)) {
+    return configRateLimiter(req, res, next);
+  }
+  next();
+});
+
 const logger = createLogger('personasRouter');
 const manager = PersonaManager.getInstance();
 

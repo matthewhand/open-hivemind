@@ -1,9 +1,19 @@
 import { promises as fs } from 'fs';
 import path from 'path';
+import { configRateLimiter } from '../../middleware/rateLimiter';
 import { Router } from 'express';
 import { z } from 'zod';
 
 const router = Router();
+
+// Apply rate limiting to all mutating operations
+router.use((req, res, next) => {
+  if (['POST', 'PUT', 'DELETE', 'PATCH'].includes(req.method)) {
+    return configRateLimiter(req, res, next);
+  }
+  next();
+});
+
 
 const specsDirectory = path.join(process.cwd(), 'specs');
 

@@ -27,6 +27,7 @@ import {
   UpdateLlmProfileSchema,
 } from '../../validation/schemas/configProfilesSchema';
 import { ConfigUpdateSchema } from '../../validation/schemas/configSchema';
+import { configRateLimiter } from '../../middleware/rateLimiter';
 import { validateRequest } from '../../validation/validateRequest';
 import { auditMiddleware, logConfigChange, type AuditedRequest } from '../middleware/audit';
 
@@ -66,6 +67,15 @@ function isPathWithinAllowed(targetPath: string, allowedBasePath: string): boole
 
 const debug = Debug('app:server:routes:config');
 const router = Router();
+
+// Apply rate limiting to all mutating operations
+router.use((req, res, next) => {
+  if (['POST', 'PUT', 'DELETE', 'PATCH'].includes(req.method)) {
+    return configRateLimiter(req, res, next);
+  }
+  next();
+});
+
 
 // Core schemas that are always present
 const coreSchemaSources: Record<string, any> = {
