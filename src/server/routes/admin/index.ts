@@ -6,7 +6,6 @@ import agentsRouter from '../agents';
 import guardProfilesRouter from '../guardProfiles';
 import mcpRouter from '../mcp';
 import auditRouter from './audit';
-import bulkRouter from './bulk';
 import systemRouter from './system';
 import usersRouter from './users';
 
@@ -47,6 +46,5 @@ router.use('/guard-profiles', guardProfilesRouter);
 router.use('/', auditRouter);
 router.use('/', systemRouter);
 router.use('/', usersRouter);
-router.use('/', bulkRouter);
 
 export default router;
