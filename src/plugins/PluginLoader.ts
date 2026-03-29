@@ -4,6 +4,7 @@ import * as path from 'path';
 import Debug from 'debug';
 import type { ILlmProvider, IMessengerService } from '@hivemind/shared-types';
 import type { AnyConfig } from '../types/config';
+import { PathSecurityUtils } from '../utils/PathSecurityUtils';
 
 const debug = Debug('app:pluginLoader');
 
@@ -58,7 +59,7 @@ export function loadPlugin(name: string): PluginModule {
   }
 
   // 2. Try community plugins dir
-  const pluginPath = path.join(PLUGINS_DIR, name);
+  const pluginPath = PathSecurityUtils.getSafePath(PLUGINS_DIR, name);
   if (fs.existsSync(pluginPath)) {
     try {
       // Bust require cache on reload (e.g. after update)

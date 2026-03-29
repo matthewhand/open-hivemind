@@ -2,6 +2,7 @@ import { execFileSync } from 'child_process';
 import * as fs from 'fs';
 import * as path from 'path';
 import Debug from 'debug';
+import { PathSecurityUtils } from '../utils/PathSecurityUtils';
 import { loadPlugin, PLUGINS_DIR, type PluginManifest } from './PluginLoader';
 
 const debug = Debug('app:pluginManager');
@@ -166,9 +167,10 @@ async function deriveNameFromPath(pluginPath: string): Promise<string> {
     const content = await fs.promises.readFile(path.join(pluginPath, 'package.json'), 'utf-8');
     const pkg = JSON.parse(content);
     // Strip @hivemind/ or @scope/ prefix if present
-    return pkg.name?.replace(/^@[^/]+\//, '') ?? path.basename(pluginPath);
+    const rawName = pkg.name?.replace(/^@[^/]+\//, '') ?? path.basename(pluginPath);
+    return PathSecurityUtils.sanitizeFilename(rawName);
   } catch {
-    return path.basename(pluginPath);
+    return PathSecurityUtils.sanitizeFilename(path.basename(pluginPath));
   }
 }
 
@@ -226,8 +228,8 @@ function validateRepoUrl(url: string): void {
     throw new PluginValidationError('Invalid repository URL: contains suspicious patterns.');
   }
 
-  // Prevent shell metacharacters in hostname
-  if (/[;&|`$()]/.test(decodedHostname)) {
+  // Prevent shell metacharacters in hostname and pathname
+  if (/[;&|`$()<>]/.test(decodedHostname) || /[;&|`$()<>]/.test(decodedPathname)) {
     throw new PluginValidationError('Invalid repository URL: contains shell metacharacters.');
   }
 }
@@ -256,7 +258,7 @@ export async function installPlugin(repoUrl: string): Promise<PluginInfo> {
     exec('git', ['clone', '--depth', '1', repoUrl, tempPath], PLUGINS_DIR);
 
     const name = await deriveNameFromPath(tempPath);
-    const pluginPath = path.join(PLUGINS_DIR, name);
+    const pluginPath = PathSecurityUtils.getSafePath(PLUGINS_DIR, name);
 
     // If already installed, refuse — use updatePlugin instead
     try {
@@ -311,7 +313,7 @@ export async function installPlugin(repoUrl: string): Promise<PluginInfo> {
  * @throws Error if the plugin is not found in PLUGINS_DIR
  */
 export async function uninstallPlugin(name: string): Promise<void> {
-  const pluginPath = path.join(PLUGINS_DIR, name);
+  const pluginPath = PathSecurityUtils.getSafePath(PLUGINS_DIR, name);
 
   try {
     await fs.promises.access(pluginPath);
@@ -342,7 +344,7 @@ export async function uninstallPlugin(name: string): Promise<void> {
  * @throws PluginValidationError if the updated plugin fails manifest validation
  */
 export async function updatePlugin(name: string): Promise<PluginInfo> {
-  const pluginPath = path.join(PLUGINS_DIR, name);
+  const pluginPath = PathSecurityUtils.getSafePath(PLUGINS_DIR, name);
 
   try {
     await fs.promises.access(pluginPath);
