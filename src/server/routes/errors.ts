@@ -2,6 +2,7 @@ import { Router, type Request, type Response } from 'express';
 import { ErrorFactory } from '../../types/errorClasses';
 import { errorLogger } from '../../utils/errorLogger';
 import { authenticateToken } from '../middleware/auth';
+import { ApiResponse } from "../utils/ApiResponse";
 
 const router = Router();
 
@@ -36,10 +37,7 @@ router.post('/frontend', async (req: Request, res: Response) => {
 
     // Validate required fields
     if (!errorReport.message || !errorReport.correlationId) {
-      return res.status(400).json({
-        error: 'Invalid error report: missing required fields',
-        required: ['message', 'correlationId'],
-      });
+      return ApiResponse.error(res, 'Invalid error report: missing required fields', 400, undefined, { required: ['message', 'correlationId'] });
     }
 
     // Set correlation ID in response header
@@ -71,11 +69,7 @@ router.post('/frontend', async (req: Request, res: Response) => {
     });
 
     // Return success response
-    return res.status(200).json({
-      success: true,
-      correlationId: errorReport.correlationId,
-      message: 'Error report received and logged',
-    });
+    return ApiResponse.success(res, undefined, 200, { correlationId: errorReport.correlationId, message: 'Error report received and logged' });
   } catch (error) {
     console.error('Failed to process frontend error report:', error);
 
@@ -91,10 +85,7 @@ router.post('/frontend', async (req: Request, res: Response) => {
     const correlationId = (req.headers['x-correlation-id'] as string) || 'unknown';
     res.setHeader('X-Correlation-ID', correlationId);
 
-    return res.status(500).json({
-      error: 'Failed to process error report',
-      correlationId: correlationId,
-    });
+    return ApiResponse.error(res, 'Failed to process error report', 500, undefined, { correlationId: correlationId });
   }
 });
 
@@ -105,7 +96,7 @@ router.get('/stats', authenticateToken, async (req: Request, res: Response) => {
     return res.json(stats);
   } catch (error) {
     console.error('Failed to get error stats:', error);
-    return res.status(500).json({ error: 'Failed to retrieve error statistics' });
+    return ApiResponse.error(res, 'Failed to retrieve error statistics', 500);
   }
 });
 
@@ -117,7 +108,7 @@ router.get('/recent', authenticateToken, async (req: Request, res: Response) => 
     return res.json(recentErrors);
   } catch (error) {
     console.error('Failed to get recent errors:', error);
-    return res.status(500).json({ error: 'Failed to retrieve recent errors' });
+    return ApiResponse.error(res, 'Failed to retrieve recent errors', 500);
   }
 });
 

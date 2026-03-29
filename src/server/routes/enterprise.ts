@@ -7,6 +7,7 @@ import {
   PerformanceOptimizeSchema,
 } from '../../validation/schemas/enterpriseSchema';
 import { validateRequest } from '../../validation/validateRequest';
+import { ApiResponse } from "../utils/ApiResponse";
 
 const debug = Debug('app:enterpriseRoutes');
 const router = Router();
@@ -53,11 +54,7 @@ router.get('/api/compliance', (req, res) => {
     });
   } catch (error) {
     debug('Compliance API error:', error);
-    return res.status(500).json({
-      success: false,
-      message: 'Failed to get compliance status',
-      error: error instanceof Error ? error.message : 'Unknown error',
-    });
+    return ApiResponse.error(res, error instanceof Error ? error.message : 'Unknown error', 500, undefined, { message: 'Failed to get compliance status' });
   }
 });
 
@@ -98,11 +95,7 @@ router.get('/api/cloud-providers', (req, res) => {
     });
   } catch (error) {
     debug('Cloud providers API error:', error);
-    return res.status(500).json({
-      success: false,
-      message: 'Failed to get cloud providers',
-      error: error instanceof Error ? error.message : 'Unknown error',
-    });
+    return ApiResponse.error(res, error instanceof Error ? error.message : 'Unknown error', 500, undefined, { message: 'Failed to get cloud providers' });
   }
 });
 
@@ -129,11 +122,7 @@ router.post('/api/cloud-providers', validateRequest(CreateCloudProviderSchema), 
     });
   } catch (error) {
     debug('Add cloud provider API error:', error);
-    return res.status(500).json({
-      success: false,
-      message: 'Failed to add cloud provider',
-      error: error instanceof Error ? error.message : 'Unknown error',
-    });
+    return ApiResponse.error(res, error instanceof Error ? error.message : 'Unknown error', 500, undefined, { message: 'Failed to add cloud provider' });
   }
 });
 
@@ -178,11 +167,7 @@ router.get('/api/integrations', (req, res) => {
     });
   } catch (error) {
     debug('Integrations API error:', error);
-    return res.status(500).json({
-      success: false,
-      message: 'Failed to get integrations',
-      error: error instanceof Error ? error.message : 'Unknown error',
-    });
+    return ApiResponse.error(res, error instanceof Error ? error.message : 'Unknown error', 500, undefined, { message: 'Failed to get integrations' });
   }
 });
 
@@ -210,11 +195,7 @@ router.post('/api/integrations', validateRequest(CreateEnterpriseIntegrationSche
     });
   } catch (error) {
     debug('Add integration API error:', error);
-    return res.status(500).json({
-      success: false,
-      message: 'Failed to add integration',
-      error: error instanceof Error ? error.message : 'Unknown error',
-    });
+    return ApiResponse.error(res, error instanceof Error ? error.message : 'Unknown error', 500, undefined, { message: 'Failed to add integration' });
   }
 });
 
@@ -252,11 +233,7 @@ router.get('/api/audit', async (req, res) => {
     });
   } catch (error) {
     debug('Audit API error:', error);
-    return res.status(500).json({
-      success: false,
-      message: 'Failed to get audit events',
-      error: error instanceof Error ? error.message : 'Unknown error',
-    });
+    return ApiResponse.error(res, error instanceof Error ? error.message : 'Unknown error', 500, undefined, { message: 'Failed to get audit events' });
   }
 });
 
@@ -315,11 +292,7 @@ router.get('/api/audit/export', async (req, res) => {
     return res.send(csv);
   } catch (error) {
     debug('Audit export API error:', error);
-    return res.status(500).json({
-      success: false,
-      message: 'Failed to export audit events',
-      error: error instanceof Error ? error.message : 'Unknown error',
-    });
+    return ApiResponse.error(res, error instanceof Error ? error.message : 'Unknown error', 500, undefined, { message: 'Failed to export audit events' });
   }
 });
 
@@ -364,11 +337,7 @@ router.get('/api/performance', (req, res) => {
     });
   } catch (error) {
     debug('Performance API error:', error);
-    return res.status(500).json({
-      success: false,
-      message: 'Failed to get performance metrics',
-      error: error instanceof Error ? error.message : 'Unknown error',
-    });
+    return ApiResponse.error(res, error instanceof Error ? error.message : 'Unknown error', 500, undefined, { message: 'Failed to get performance metrics' });
   }
 });
 
@@ -392,11 +361,7 @@ router.post('/api/compliance/check', (req, res) => {
     });
   } catch (error) {
     debug('Compliance check API error:', error);
-    return res.status(500).json({
-      success: false,
-      message: 'Failed to run compliance check',
-      error: error instanceof Error ? error.message : 'Unknown error',
-    });
+    return ApiResponse.error(res, error instanceof Error ? error.message : 'Unknown error', 500, undefined, { message: 'Failed to run compliance check' });
   }
 });
 
@@ -432,11 +397,7 @@ router.get('/api/security/alerts', (req, res) => {
     });
   } catch (error) {
     debug('Security alerts API error:', error);
-    return res.status(500).json({
-      success: false,
-      message: 'Failed to get security alerts',
-      error: error instanceof Error ? error.message : 'Unknown error',
-    });
+    return ApiResponse.error(res, error instanceof Error ? error.message : 'Unknown error', 500, undefined, { message: 'Failed to get security alerts' });
   }
 });
 
@@ -472,11 +433,7 @@ router.get('/api/governance/policies', (req, res) => {
     });
   } catch (error) {
     debug('Governance policies API error:', error);
-    return res.status(500).json({
-      success: false,
-      message: 'Failed to get governance policies',
-      error: error instanceof Error ? error.message : 'Unknown error',
-    });
+    return ApiResponse.error(res, error instanceof Error ? error.message : 'Unknown error', 500, undefined, { message: 'Failed to get governance policies' });
   }
 });
 
@@ -507,11 +464,7 @@ router.post('/api/performance/optimize', validateRequest(PerformanceOptimizeSche
     });
   } catch (error) {
     debug('Performance optimization API error:', error);
-    return res.status(500).json({
-      success: false,
-      message: 'Failed to optimize performance',
-      error: error instanceof Error ? error.message : 'Unknown error',
-    });
+    return ApiResponse.error(res, error instanceof Error ? error.message : 'Unknown error', 500, undefined, { message: 'Failed to optimize performance' });
   }
 });
 

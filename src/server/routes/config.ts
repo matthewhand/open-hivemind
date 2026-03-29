@@ -1,3 +1,4 @@
+import { ApiResponse } from '../utils/ApiResponse';
 import fs from 'fs';
 import path from 'path';
 import Debug from 'debug';
@@ -271,10 +272,7 @@ router.get('/bots', async (req, res) => {
     });
   } catch (error: unknown) {
     const hivemindError = ErrorUtils.toHivemindError(error) as any;
-    return res.status(hivemindError.statusCode || 500).json({
-      error: hivemindError.message,
-      code: 'CONFIG_BOTS_ERROR',
-    });
+    return ApiResponse.error(res, hivemindError.message, hivemindError.statusCode || 500, undefined, { code: 'CONFIG_BOTS_ERROR' });
   }
 });
 
@@ -344,10 +342,7 @@ router.get('/sources', async (req, res) => {
     });
   } catch (error: unknown) {
     const hivemindError = ErrorUtils.toHivemindError(error) as any;
-    return res.status(500).json({
-      error: hivemindError.message,
-      code: 'CONFIG_SOURCES_ERROR',
-    });
+    return ApiResponse.error(res, hivemindError.message, 500, undefined, { code: 'CONFIG_SOURCES_ERROR' });
   }
 });
 
@@ -358,10 +353,7 @@ router.get('/llm-status', (req, res) => {
     return res.json(status);
   } catch (error: unknown) {
     const hivemindError = ErrorUtils.toHivemindError(error) as any;
-    return res.status(hivemindError.statusCode || 500).json({
-      error: hivemindError.message,
-      code: 'LLM_STATUS_GET_ERROR',
-    });
+    return ApiResponse.error(res, hivemindError.message, hivemindError.statusCode || 500, undefined, { code: 'LLM_STATUS_GET_ERROR' });
   }
 });
 
@@ -372,10 +364,7 @@ router.get('/llm-profiles', (req, res) => {
     return res.json(profiles);
   } catch (error: unknown) {
     const hivemindError = ErrorUtils.toHivemindError(error) as any;
-    return res.status(hivemindError.statusCode || 500).json({
-      error: hivemindError.message,
-      code: 'LLM_PROFILES_GET_ERROR',
-    });
+    return ApiResponse.error(res, hivemindError.message, hivemindError.statusCode || 500, undefined, { code: 'LLM_PROFILES_GET_ERROR' });
   }
 });
 
@@ -385,18 +374,12 @@ router.post('/llm-profiles', validateRequest(CreateLlmProfileSchema), (req, res)
 
     const modelType = newProfile.modelType || 'chat';
     if (!['chat', 'embedding', 'both'].includes(modelType)) {
-      return res.status(400).json({
-        error: `Invalid modelType '${modelType}'. Must be one of: chat, embedding, both`,
-        code: 'INVALID_REQUEST',
-      });
+      return ApiResponse.error(res, `Invalid modelType '${modelType}'. Must be one of: chat, embedding, both`, 400, undefined, { code: 'INVALID_REQUEST' });
     }
 
     const profiles = getLlmProfiles();
     if (profiles.llm.find((p) => p.key.toLowerCase() === newProfile.key.toLowerCase())) {
-      return res.status(409).json({
-        error: `LLM profile with key '${newProfile.key}' already exists`,
-        code: 'CONFLICT',
-      });
+      return ApiResponse.error(res, `LLM profile with key '${newProfile.key}' already exists`, 409, undefined, { code: 'CONFLICT' });
     }
 
     const sanitizedProfile = {
@@ -407,13 +390,10 @@ router.post('/llm-profiles', validateRequest(CreateLlmProfileSchema), (req, res)
     profiles.llm.push(sanitizedProfile);
     saveLlmProfiles(profiles);
 
-    return res.status(201).json({ success: true, profile: sanitizedProfile });
+    return ApiResponse.success(res, undefined, 201, { profile: sanitizedProfile });
   } catch (error: unknown) {
     const hivemindError = ErrorUtils.toHivemindError(error) as any;
-    return res.status(hivemindError.statusCode || 500).json({
-      error: hivemindError.message,
-      code: 'LLM_PROFILE_CREATE_ERROR',
-    });
+    return ApiResponse.error(res, hivemindError.message, hivemindError.statusCode || 500, undefined, { code: 'LLM_PROFILE_CREATE_ERROR' });
   }
 });
 
@@ -428,7 +408,7 @@ router.put('/llm-profiles/:key', validateRequest(UpdateLlmProfileSchema), (req, 
     const index = profiles.llm.findIndex((p) => p.key.toLowerCase() === normalizedKey);
 
     if (index === -1) {
-      return res.status(404).json({ error: `LLM profile with key '${key}' not found` });
+      return ApiResponse.error(res, `LLM profile with key '${key}' not found`, 404);
     }
 
     const updatedProfile = {
@@ -446,10 +426,7 @@ router.put('/llm-profiles/:key', validateRequest(UpdateLlmProfileSchema), (req, 
     });
   } catch (error: unknown) {
     const hivemindError = ErrorUtils.toHivemindError(error) as any;
-    return res.status(hivemindError.statusCode || 500).json({
-      error: hivemindError.message,
-      code: 'LLM_PROFILE_UPDATE_ERROR',
-    });
+    return ApiResponse.error(res, hivemindError.message, hivemindError.statusCode || 500, undefined, { code: 'LLM_PROFILE_UPDATE_ERROR' });
   }
 });
 
@@ -462,7 +439,7 @@ router.delete('/llm-profiles/:key', validateRequest(LlmProfileKeyParamSchema), (
     );
 
     if (index === -1) {
-      return res.status(404).json({ error: `LLM profile with key '${key}' not found` });
+      return ApiResponse.error(res, `LLM profile with key '${key}' not found`, 404);
     }
 
     const [deletedProfile] = profiles.llm.splice(index, 1);
@@ -471,10 +448,7 @@ router.delete('/llm-profiles/:key', validateRequest(LlmProfileKeyParamSchema), (
     return res.json({ success: true, profile: deletedProfile });
   } catch (error: unknown) {
     const hivemindError = ErrorUtils.toHivemindError(error) as any;
-    return res.status(hivemindError.statusCode || 500).json({
-      error: hivemindError.message,
-      code: 'LLM_PROFILE_DELETE_ERROR',
-    });
+    return ApiResponse.error(res, hivemindError.message, hivemindError.statusCode || 500, undefined, { code: 'LLM_PROFILE_DELETE_ERROR' });
   }
 });
 
@@ -577,10 +551,7 @@ router.get('/global', (req, res) => {
     return res.json(response);
   } catch (error: unknown) {
     const hivemindError = ErrorUtils.toHivemindError(error) as any;
-    return res.status(hivemindError.statusCode || 500).json({
-      error: hivemindError.message,
-      code: hivemindError.code || 'CONFIG_GLOBAL_GET_ERROR',
-    });
+    return ApiResponse.error(res, hivemindError.message, hivemindError.statusCode || 500, undefined, { code: hivemindError.code || 'CONFIG_GLOBAL_GET_ERROR' });
   }
 });
 
@@ -592,11 +563,7 @@ router.put('/global', validateRequest(ConfigUpdateSchema), async (req, res) => {
     const { configName, updates, ...directUpdates } = req.body;
 
     if (configName && !isValidConfigName(configName)) {
-      return res.status(400).json({
-        error: 'Invalid config name',
-        message:
-          'Config name must be 1-64 characters, lowercase alphanumeric with hyphens/underscores only',
-      });
+      return ApiResponse.error(res, 'Invalid config name', 400, undefined, { message: 'Config name must be 1-64 characters, lowercase alphanumeric with hyphens/underscores only' });
     }
 
     if (!configName) {
@@ -631,9 +598,7 @@ router.put('/global', validateRequest(ConfigUpdateSchema), async (req, res) => {
         createdNew = true;
       } else {
         // Updated error message to use schemaSources keys
-        return res.status(400).json({
-          error: `Invalid configName '${configName}'. Must be existing or match 'type-name' pattern. Valid types: ${Object.keys(schemaSources).join(', ')}`,
-        });
+        return ApiResponse.error(res, `Invalid configName '${configName}'. Must be existing or match 'type-name' pattern. Valid types: ${Object.keys(schemaSources).join(', ')}`, 400);
       }
     }
 
@@ -657,10 +622,7 @@ router.put('/global', validateRequest(ConfigUpdateSchema), async (req, res) => {
 
     // Security: Ensure the target path is within the config directory
     if (!isPathWithinAllowed(targetPath, configDir)) {
-      return res.status(400).json({
-        error: 'Invalid config path',
-        message: 'Path traversal detected',
-      });
+      return ApiResponse.error(res, 'Invalid config path', 400, undefined, { message: 'Path traversal detected' });
     }
 
     // Read existing file if not creating new
@@ -695,10 +657,7 @@ router.put('/global', validateRequest(ConfigUpdateSchema), async (req, res) => {
     return res.json({ success: true, message: 'Configuration updated and persisted' });
   } catch (error: unknown) {
     const hivemindError = ErrorUtils.toHivemindError(error) as any;
-    return res.status(hivemindError.statusCode || 500).json({
-      error: hivemindError.message,
-      code: hivemindError.code || 'CONFIG_GLOBAL_PUT_ERROR',
-    });
+    return ApiResponse.error(res, hivemindError.message, hivemindError.statusCode || 500, undefined, { code: hivemindError.code || 'CONFIG_GLOBAL_PUT_ERROR' });
   }
 });
 
@@ -710,10 +669,7 @@ router.get('/message-profiles', (req, res) => {
     return res.json(profiles);
   } catch (error: unknown) {
     const hivemindError = ErrorUtils.toHivemindError(error) as any;
-    return res.status(hivemindError.statusCode || 500).json({
-      error: hivemindError.message,
-      code: 'MESSAGE_PROFILES_GET_ERROR',
-    });
+    return ApiResponse.error(res, hivemindError.message, hivemindError.statusCode || 500, undefined, { code: 'MESSAGE_PROFILES_GET_ERROR' });
   }
 });
 
@@ -725,22 +681,16 @@ router.post('/message-profiles', validateRequest(CreateMessageProfileSchema), (r
 
     // Check if key already exists
     if (profiles.message.find((p) => p.key === newProfile.key)) {
-      return res.status(409).json({
-        error: `Message profile with key '${newProfile.key}' already exists`,
-        code: 'CONFLICT',
-      });
+      return ApiResponse.error(res, `Message profile with key '${newProfile.key}' already exists`, 409, undefined, { code: 'CONFLICT' });
     }
 
     profiles.message.push(newProfile);
     saveMessageProfiles(profiles);
 
-    return res.status(201).json({ success: true, profile: newProfile });
+    return ApiResponse.success(res, undefined, 201, { profile: sanitizedProfile });
   } catch (error: unknown) {
     const hivemindError = ErrorUtils.toHivemindError(error) as any;
-    return res.status(hivemindError.statusCode || 500).json({
-      error: hivemindError.message,
-      code: 'MESSAGE_PROFILES_CREATE_ERROR',
-    });
+    return ApiResponse.error(res, hivemindError.message, hivemindError.statusCode || 500, undefined, { code: 'MESSAGE_PROFILES_CREATE_ERROR' });
   }
 });
 
@@ -756,10 +706,7 @@ router.get('/memory-profiles', (_req, res) => {
     return res.json(profiles);
   } catch (error: unknown) {
     const hivemindError = ErrorUtils.toHivemindError(error) as any;
-    return res.status(hivemindError.statusCode || 500).json({
-      error: hivemindError.message,
-      code: 'MEMORY_PROFILES_GET_ERROR',
-    });
+    return ApiResponse.error(res, hivemindError.message, hivemindError.statusCode || 500, undefined, { code: 'MEMORY_PROFILES_GET_ERROR' });
   }
 });
 
@@ -768,18 +715,13 @@ router.post('/memory-profiles', validateRequest(CreateMemoryProfileSchema), (req
     const newProfile = req.body;
     const profiles = memoryProfilesModule.getMemoryProfiles();
     if (profiles.memory.find((p: any) => p.key === newProfile.key))
-      return res.status(409).json({
-        error: `Memory profile with key '${newProfile.key}' already exists`,
-        code: 'CONFLICT',
-      });
+      return ApiResponse.error(res, `Memory profile with key '${newProfile.key}' already exists`, 409, undefined, { code: 'CONFLICT' });
     profiles.memory.push(newProfile);
     memoryProfilesModule.saveMemoryProfiles(profiles);
-    return res.status(201).json({ success: true, profile: newProfile });
+    return ApiResponse.success(res, undefined, 201, { profile: sanitizedProfile });
   } catch (error: unknown) {
     const hivemindError = ErrorUtils.toHivemindError(error) as any;
-    return res
-      .status(hivemindError.statusCode || 500)
-      .json({ error: hivemindError.message, code: 'MEMORY_PROFILES_CREATE_ERROR' });
+    return ApiResponse.error(res, hivemindError.message, hivemindError.statusCode || 500, 'MEMORY_PROFILES_CREATE_ERROR');
   }
 });
 
@@ -789,17 +731,13 @@ router.put('/memory-profiles/:key', validateRequest(MemoryProfileKeyParamSchema)
     const profiles = memoryProfilesModule.getMemoryProfiles();
     const index = profiles.memory.findIndex((p: any) => p.key === key);
     if (index === -1)
-      return res
-        .status(404)
-        .json({ error: `Memory profile '${key}' not found`, code: 'NOT_FOUND' });
+      return ApiResponse.error(res, `Memory profile '${key}' not found`, 404, 'NOT_FOUND');
     profiles.memory[index] = { ...profiles.memory[index], ...req.body, key };
     memoryProfilesModule.saveMemoryProfiles(profiles);
     return res.json({ success: true, profile: profiles.memory[index] });
   } catch (error: unknown) {
     const hivemindError = ErrorUtils.toHivemindError(error) as any;
-    return res
-      .status(hivemindError.statusCode || 500)
-      .json({ error: hivemindError.message, code: 'MEMORY_PROFILES_UPDATE_ERROR' });
+    return ApiResponse.error(res, hivemindError.message, hivemindError.statusCode || 500, 'MEMORY_PROFILES_UPDATE_ERROR');
   }
 });
 
@@ -809,17 +747,13 @@ router.delete('/memory-profiles/:key', validateRequest(MemoryProfileKeyParamSche
     const profiles = memoryProfilesModule.getMemoryProfiles();
     const index = profiles.memory.findIndex((p: any) => p.key === key);
     if (index === -1)
-      return res
-        .status(404)
-        .json({ error: `Memory profile '${key}' not found`, code: 'NOT_FOUND' });
+      return ApiResponse.error(res, `Memory profile '${key}' not found`, 404, 'NOT_FOUND');
     profiles.memory.splice(index, 1);
     memoryProfilesModule.saveMemoryProfiles(profiles);
     return res.json({ success: true, message: `Memory profile '${key}' deleted` });
   } catch (error: unknown) {
     const hivemindError = ErrorUtils.toHivemindError(error) as any;
-    return res
-      .status(hivemindError.statusCode || 500)
-      .json({ error: hivemindError.message, code: 'MEMORY_PROFILES_DELETE_ERROR' });
+    return ApiResponse.error(res, hivemindError.message, hivemindError.statusCode || 500, 'MEMORY_PROFILES_DELETE_ERROR');
   }
 });
 
@@ -831,10 +765,7 @@ router.get('/tool-profiles', (_req, res) => {
     return res.json(profiles);
   } catch (error: unknown) {
     const hivemindError = ErrorUtils.toHivemindError(error) as any;
-    return res.status(hivemindError.statusCode || 500).json({
-      error: hivemindError.message,
-      code: 'TOOL_PROFILES_GET_ERROR',
-    });
+    return ApiResponse.error(res, hivemindError.message, hivemindError.statusCode || 500, undefined, { code: 'TOOL_PROFILES_GET_ERROR' });
   }
 });
 
@@ -843,18 +774,13 @@ router.post('/tool-profiles', validateRequest(CreateToolProfileSchema), (req, re
     const newProfile = req.body;
     const profiles = toolProfilesModule.getToolProfiles();
     if (profiles.tool.find((p: any) => p.key === newProfile.key))
-      return res.status(409).json({
-        error: `Tool profile with key '${newProfile.key}' already exists`,
-        code: 'CONFLICT',
-      });
+      return ApiResponse.error(res, `Tool profile with key '${newProfile.key}' already exists`, 409, undefined, { code: 'CONFLICT' });
     profiles.tool.push(newProfile);
     toolProfilesModule.saveToolProfiles(profiles);
-    return res.status(201).json({ success: true, profile: newProfile });
+    return ApiResponse.success(res, undefined, 201, { profile: sanitizedProfile });
   } catch (error: unknown) {
     const hivemindError = ErrorUtils.toHivemindError(error) as any;
-    return res
-      .status(hivemindError.statusCode || 500)
-      .json({ error: hivemindError.message, code: 'TOOL_PROFILES_CREATE_ERROR' });
+    return ApiResponse.error(res, hivemindError.message, hivemindError.statusCode || 500, 'TOOL_PROFILES_CREATE_ERROR');
   }
 });
 
@@ -864,15 +790,13 @@ router.put('/tool-profiles/:key', validateRequest(ToolProfileKeyParamSchema), (r
     const profiles = toolProfilesModule.getToolProfiles();
     const index = profiles.tool.findIndex((p: any) => p.key === key);
     if (index === -1)
-      return res.status(404).json({ error: `Tool profile '${key}' not found`, code: 'NOT_FOUND' });
+      return ApiResponse.error(res, `Tool profile '${key}' not found`, 404, 'NOT_FOUND');
     profiles.tool[index] = { ...profiles.tool[index], ...req.body, key };
     toolProfilesModule.saveToolProfiles(profiles);
     return res.json({ success: true, profile: profiles.tool[index] });
   } catch (error: unknown) {
     const hivemindError = ErrorUtils.toHivemindError(error) as any;
-    return res
-      .status(hivemindError.statusCode || 500)
-      .json({ error: hivemindError.message, code: 'TOOL_PROFILES_UPDATE_ERROR' });
+    return ApiResponse.error(res, hivemindError.message, hivemindError.statusCode || 500, 'TOOL_PROFILES_UPDATE_ERROR');
   }
 });
 
@@ -882,15 +806,13 @@ router.delete('/tool-profiles/:key', validateRequest(ToolProfileKeyParamSchema),
     const profiles = toolProfilesModule.getToolProfiles();
     const index = profiles.tool.findIndex((p: any) => p.key === key);
     if (index === -1)
-      return res.status(404).json({ error: `Tool profile '${key}' not found`, code: 'NOT_FOUND' });
+      return ApiResponse.error(res, `Tool profile '${key}' not found`, 404, 'NOT_FOUND');
     profiles.tool.splice(index, 1);
     toolProfilesModule.saveToolProfiles(profiles);
     return res.json({ success: true, message: `Tool profile '${key}' deleted` });
   } catch (error: unknown) {
     const hivemindError = ErrorUtils.toHivemindError(error) as any;
-    return res
-      .status(hivemindError.statusCode || 500)
-      .json({ error: hivemindError.message, code: 'TOOL_PROFILES_DELETE_ERROR' });
+    return ApiResponse.error(res, hivemindError.message, hivemindError.statusCode || 500, 'TOOL_PROFILES_DELETE_ERROR');
   }
 });
 

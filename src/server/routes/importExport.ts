@@ -5,6 +5,7 @@ import { body, param, validationResult } from 'express-validator';
 import { authenticate, requireAdmin } from '../../auth/middleware';
 import type { AuthMiddlewareRequest } from '../../auth/types';
 import { ConfigurationImportExportService } from '../services/ConfigurationImportExportService';
+import { ApiResponse } from "../utils/ApiResponse";
 
 type MulterFile = {
   path: string;
@@ -172,11 +173,7 @@ const validateBackupRestore = [
 const handleValidationErrors = (req: Request, res: Response, next: any) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
-    return res.status(400).json({
-      success: false,
-      message: 'Validation failed',
-      errors: errors.array(),
-    });
+    return ApiResponse.error(res, 'Validation failed', 400, undefined, { message: 'Validation failed', errors: errors.array() });
   }
   return next();
 };
@@ -187,20 +184,11 @@ const handleValidationErrors = (req: Request, res: Response, next: any) => {
 const handleUploadError = (error: any, req: Request, res: Response, next: any) => {
   if (error instanceof multer.MulterError) {
     if (error.code === 'LIMIT_FILE_SIZE') {
-      return res.status(400).json({
-        success: false,
-        message: 'File too large. Maximum size is 50MB.',
-      });
+      return ApiResponse.error(res, 'File too large. Maximum size is 50MB.', 400, undefined, { message: 'File too large. Maximum size is 50MB.' });
     }
-    return res.status(400).json({
-      success: false,
-      message: `File upload error: ${error.message}`,
-    });
+    return ApiResponse.error(res, `File upload error: ${error.message}`, 400, undefined, { message: `File upload error: ${error.message}` });
   } else if (error) {
-    return res.status(400).json({
-      success: false,
-      message: error.message,
-    });
+    return ApiResponse.error(res, error.message , 400);
   }
   return next();
 };
@@ -236,19 +224,11 @@ router.post(
           },
         });
       } else {
-        return res.status(400).json({
-          success: false,
-          message: 'Export failed',
-          error: result.error,
-        });
+        return ApiResponse.error(res, result.error, 400, undefined, { message: 'Export failed' });
       }
     } catch (error) {
       console.error('Error exporting configurations:', error);
-      return res.status(500).json({
-        success: false,
-        message: 'Failed to export configurations',
-        error: (error as any).message,
-      });
+      return ApiResponse.error(res, (error as any).message, 500, undefined, { message: 'Failed to export configurations' });
     }
   }
 );
@@ -267,10 +247,7 @@ router.post(
   async (req: AuthMulterRequest, res: Response) => {
     try {
       if (!req.file) {
-        return res.status(400).json({
-          success: false,
-          message: 'No file uploaded',
-        });
+        return ApiResponse.error(res, 'No file uploaded', 400, undefined, { message: 'No file uploaded' });
       }
 
       const importedBy = req.user?.username || 'unknown';
@@ -305,11 +282,7 @@ router.post(
         }
       }
 
-      return res.status(500).json({
-        success: false,
-        message: 'Failed to import configurations',
-        error: (error as any).message,
-      });
+      return ApiResponse.error(res, (error as any).message, 500, undefined, { message: 'Failed to import configurations' });
     }
   }
 );
@@ -353,19 +326,11 @@ router.post(
           },
         });
       } else {
-        return res.status(400).json({
-          success: false,
-          message: 'Backup creation failed',
-          error: result.error,
-        });
+        return ApiResponse.error(res, result.error, 400, undefined, { message: 'Backup creation failed' });
       }
     } catch (error) {
       console.error('Error creating backup:', error);
-      return res.status(500).json({
-        success: false,
-        message: 'Failed to create backup',
-        error: (error as any).message,
-      });
+      return ApiResponse.error(res, (error as any).message, 500, undefined, { message: 'Failed to create backup' });
     }
   }
 );
@@ -384,11 +349,7 @@ router.get('/backups', requireAdmin, async (req: AuthMiddlewareRequest, res: Res
     });
   } catch (error) {
     console.error('Error listing backups:', error);
-    return res.status(500).json({
-      success: false,
-      message: 'Failed to list backups',
-      error: (error as any).message,
-    });
+    return ApiResponse.error(res, (error as any).message, 500, undefined, { message: 'Failed to list backups' });
   }
 });
 
@@ -410,10 +371,7 @@ router.post(
       const backupPath = await importExportService.getBackupFilePath(backupId);
 
       if (!backupPath) {
-        return res.status(404).json({
-          success: false,
-          message: 'Backup not found or invalid',
-        });
+        return ApiResponse.error(res, 'Backup not found or invalid', 404, undefined, { message: 'Backup not found or invalid' });
       }
 
       const result = await importExportService.restoreFromBackup(
@@ -435,11 +393,7 @@ router.post(
       });
     } catch (error) {
       console.error('Error restoring from backup:', error);
-      return res.status(500).json({
-        success: false,
-        message: 'Failed to restore from backup',
-        error: (error as any).message,
-      });
+      return ApiResponse.error(res, (error as any).message, 500, undefined, { message: 'Failed to restore from backup' });
     }
   }
 );
@@ -462,18 +416,11 @@ router.delete(
           message: 'Backup deleted successfully',
         });
       } else {
-        return res.status(404).json({
-          success: false,
-          message: 'Backup not found',
-        });
+        return ApiResponse.error(res, 'Backup not found', 404, undefined, { message: 'Backup not found' });
       }
     } catch (error) {
       console.error('Error deleting backup:', error);
-      return res.status(500).json({
-        success: false,
-        message: 'Failed to delete backup',
-        error: (error as any).message,
-      });
+      return ApiResponse.error(res, (error as any).message, 500, undefined, { message: 'Failed to delete backup' });
     }
   }
 );
@@ -493,10 +440,7 @@ router.get(
       const backupPath = await importExportService.getBackupFilePath(backupId);
 
       if (!backupPath) {
-        return res.status(404).json({
-          success: false,
-          message: 'Backup not found or invalid',
-        });
+        return ApiResponse.error(res, 'Backup not found or invalid', 404, undefined, { message: 'Backup not found or invalid' });
       }
 
       const backupFileName = path.basename(backupPath);
@@ -505,10 +449,7 @@ router.get(
       try {
         await fs.access(backupPath);
       } catch {
-        return res.status(404).json({
-          success: false,
-          message: 'Backup file not found',
-        });
+        return ApiResponse.error(res, 'Backup file not found', 404, undefined, { message: 'Backup file not found' });
       }
 
       // Set headers and send file
@@ -517,11 +458,7 @@ router.get(
       return res.sendFile(backupPath);
     } catch (error) {
       console.error('Error downloading backup:', error);
-      return res.status(500).json({
-        success: false,
-        message: 'Failed to download backup',
-        error: (error as any).message,
-      });
+      return ApiResponse.error(res, (error as any).message, 500, undefined, { message: 'Failed to download backup' });
     }
   }
 );
@@ -538,10 +475,7 @@ router.post(
   async (req: AuthMulterRequest, res: Response) => {
     try {
       if (!req.file) {
-        return res.status(400).json({
-          success: false,
-          message: 'No file uploaded',
-        });
+        return ApiResponse.error(res, 'No file uploaded', 400, undefined, { message: 'No file uploaded' });
       }
 
       const result = await importExportService.importConfigurations(req.file.path, {
@@ -575,11 +509,7 @@ router.post(
         }
       }
 
-      return res.status(500).json({
-        success: false,
-        message: 'Failed to validate file',
-        error: (error as any).message,
-      });
+      return ApiResponse.error(res, (error as any).message, 500, undefined, { message: 'Failed to validate file' });
     }
   }
 );

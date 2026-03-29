@@ -2,6 +2,7 @@ import Debug from 'debug';
 import { Router, type Request, type Response } from 'express';
 import { SecureConfigManager, type SecureConfig } from '@config/SecureConfigManager';
 import { auditMiddleware, logConfigChange, type AuditedRequest } from '../middleware/audit';
+import { ApiResponse } from "../utils/ApiResponse";
 
 const debug = Debug('app:SecureConfigRoutes');
 const router = Router();
@@ -44,10 +45,7 @@ router.get('/', async (req: Request, res: Response) => {
     });
   } catch (error: any) {
     debug('Failed to list secure configs:', error);
-    return res.status(500).json({
-      success: false,
-      error: 'Failed to retrieve configurations',
-    });
+    return ApiResponse.error(res, 'Failed to retrieve configurations', 500);
   }
 });
 
@@ -61,10 +59,7 @@ router.get('/:id', async (req: Request, res: Response) => {
     const config = await secureConfigManager.getConfig(id);
 
     if (!config) {
-      return res.status(404).json({
-        success: false,
-        error: 'Configuration not found',
-      });
+      return ApiResponse.error(res, 'Configuration not found', 404);
     }
 
     return res.json({
@@ -73,10 +68,7 @@ router.get('/:id', async (req: Request, res: Response) => {
     });
   } catch (error: any) {
     debug(`Failed to get secure config ${req.params.id}:`, error);
-    return res.status(500).json({
-      success: false,
-      error: 'Failed to retrieve configuration',
-    });
+    return ApiResponse.error(res, 'Failed to retrieve configuration', 500);
   }
 });
 
@@ -96,10 +88,7 @@ router.post('/', async (req: AuditedRequest, res: Response) => {
         'failure',
         'Missing required fields: id, name, type, data'
       );
-      return res.status(400).json({
-        success: false,
-        error: 'Missing required fields: id, name, type, data',
-      });
+      return ApiResponse.error(res, 'Missing required fields: id, name, type, data', 400);
     }
 
     const config: Omit<SecureConfig, 'updatedAt' | 'checksum'> = {
@@ -120,11 +109,7 @@ router.post('/', async (req: AuditedRequest, res: Response) => {
       `Created secure configuration ${name} of type ${type}`
     );
 
-    return res.status(201).json({
-      success: true,
-      message: 'Configuration stored securely',
-      data: { id, name, type },
-    });
+    return ApiResponse.success(res, { id, name, type }, 201, { message: 'Configuration stored securely' });
   } catch (error: any) {
     debug('Failed to create secure config:', error);
     logConfigChange(
@@ -134,10 +119,7 @@ router.post('/', async (req: AuditedRequest, res: Response) => {
       'failure',
       `Failed to create secure configuration: ${error.message}`
     );
-    return res.status(500).json({
-      success: false,
-      error: 'Failed to store configuration',
-    });
+    return ApiResponse.error(res, 'Failed to store configuration', 500);
   }
 });
 
@@ -158,20 +140,14 @@ router.put('/:id', async (req: AuditedRequest, res: Response) => {
         'failure',
         'Missing required fields: name, type, data'
       );
-      return res.status(400).json({
-        success: false,
-        error: 'Missing required fields: name, type, data',
-      });
+      return ApiResponse.error(res, 'Missing required fields: name, type, data', 400);
     }
 
     // Check if config exists
     const existingConfig = await secureConfigManager.getConfig(id);
     if (!existingConfig) {
       logConfigChange(req, 'UPDATE', `secure-config/${id}`, 'failure', 'Configuration not found');
-      return res.status(404).json({
-        success: false,
-        error: 'Configuration not found',
-      });
+      return ApiResponse.error(res, 'Configuration not found', 404);
     }
 
     const updatedConfig: Omit<SecureConfig, 'updatedAt' | 'checksum'> = {
@@ -210,10 +186,7 @@ router.put('/:id', async (req: AuditedRequest, res: Response) => {
       'failure',
       `Failed to update secure configuration: ${error.message}`
     );
-    return res.status(500).json({
-      success: false,
-      error: 'Failed to update configuration',
-    });
+    return ApiResponse.error(res, 'Failed to update configuration', 500);
   }
 });
 
@@ -232,10 +205,7 @@ router.delete('/:id', async (req: AuditedRequest, res: Response) => {
       await secureConfigManager.deleteConfig(id);
     } catch {
       logConfigChange(req, 'DELETE', `secure-config/${id}`, 'failure', 'Configuration not found');
-      return res.status(404).json({
-        success: false,
-        error: 'Configuration not found',
-      });
+      return ApiResponse.error(res, 'Configuration not found', 404);
     }
 
     logConfigChange(
@@ -262,10 +232,7 @@ router.delete('/:id', async (req: AuditedRequest, res: Response) => {
       'failure',
       `Failed to delete secure configuration: ${error.message}`
     );
-    return res.status(500).json({
-      success: false,
-      error: 'Failed to delete configuration',
-    });
+    return ApiResponse.error(res, 'Failed to delete configuration', 500);
   }
 });
 
@@ -299,10 +266,7 @@ router.post('/backup', async (req: AuditedRequest, res: Response) => {
       'failure',
       `Failed to create backup: ${error.message}`
     );
-    return res.status(500).json({
-      success: false,
-      error: 'Failed to create backup',
-    });
+    return ApiResponse.error(res, 'Failed to create backup', 500);
   }
 });
 
@@ -321,10 +285,7 @@ router.get('/backups/list', async (req: Request, res: Response) => {
     });
   } catch (error: any) {
     debug('Failed to list backups:', error);
-    return res.status(500).json({
-      success: false,
-      error: 'Failed to retrieve backups',
-    });
+    return ApiResponse.error(res, 'Failed to retrieve backups', 500);
   }
 });
 
@@ -358,10 +319,7 @@ router.post('/restore/:backupId', async (req: AuditedRequest, res: Response) => 
       'failure',
       `Failed to restore from backup ${req.params.backupId}: ${error.message}`
     );
-    return res.status(500).json({
-      success: false,
-      error: 'Failed to restore from backup',
-    });
+    return ApiResponse.error(res, 'Failed to restore from backup', 500);
   }
 });
 

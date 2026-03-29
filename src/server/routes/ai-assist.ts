@@ -7,6 +7,7 @@ import * as openWebUIImport from '../../integrations/openwebui/runInference';
 import type { ILlmProvider } from '../../llm/interfaces/ILlmProvider';
 import { IMessage } from '../../message/interfaces/IMessage';
 import { ErrorUtils } from '../../types/errors';
+import { ApiResponse } from "../utils/ApiResponse";
 
 const debug = Debug('app:ai-assist');
 const router = Router();
@@ -88,19 +89,15 @@ router.post('/generate', async (req, res) => {
   try {
     const { prompt, systemPrompt } = req.body;
     if (!prompt) {
-      return res.status(400).json({ error: 'Prompt is required' });
+      return ApiResponse.error(res, 'Prompt is required', 400);
     }
 
     // Input validation for prompt sizes
     if (prompt.length > MAX_PROMPT_LENGTH) {
-      return res
-        .status(400)
-        .json({ error: `Prompt exceeds maximum length of ${MAX_PROMPT_LENGTH} characters` });
+      return ApiResponse.error(res, `Prompt exceeds maximum length of ${MAX_PROMPT_LENGTH} characters`, 400);
     }
     if (systemPrompt && systemPrompt.length > MAX_SYSTEM_PROMPT_LENGTH) {
-      return res.status(400).json({
-        error: `System prompt exceeds maximum length of ${MAX_SYSTEM_PROMPT_LENGTH} characters`,
-      });
+      return ApiResponse.error(res, `System prompt exceeds maximum length of ${MAX_SYSTEM_PROMPT_LENGTH} characters`, 400);
     }
 
     const userConfig = UserConfigStore.getInstance();
@@ -108,14 +105,12 @@ router.post('/generate', async (req, res) => {
     const providerKey = settings.webuiIntelligenceProvider;
 
     if (!providerKey || providerKey === 'none') {
-      return res.status(400).json({ error: 'AI Assistance is not configured.' });
+      return ApiResponse.error(res, 'AI Assistance is not configured.', 400);
     }
 
     const profile = getLlmProfileByKey(providerKey);
     if (!profile) {
-      return res
-        .status(404)
-        .json({ error: 'Configured AI Assistance provider profile not found.' });
+      return ApiResponse.error(res, 'Configured AI Assistance provider profile not found.', 404);
     }
 
     let instance: ILlmProvider | undefined;
@@ -137,18 +132,16 @@ router.post('/generate', async (req, res) => {
           break;
         default:
           debug(`Unknown LLM provider type for AI Assist: ${profile.provider}`);
-          return res.status(400).json({ error: `Unsupported provider type: ${profile.provider}` });
+          return ApiResponse.error(res, `Unsupported provider type: ${profile.provider}`, 400);
       }
     } catch (error: unknown) {
       const hivemindError = ErrorUtils.toHivemindError(error);
       debug(`Failed to initialize provider ${profile.name}:`, hivemindError);
-      return res.status(500).json({
-        error: `Failed to initialize provider: ${hivemindError instanceof Error ? hivemindError.message : String(hivemindError)}`,
-      });
+      return ApiResponse.error(res, `Failed to initialize provider: ${hivemindError instanceof Error ? hivemindError.message : String(hivemindError)}`, 500);
     }
 
     if (!instance) {
-      return res.status(500).json({ error: 'Failed to instantiate provider instance.' });
+      return ApiResponse.error(res, 'Failed to instantiate provider instance.', 500);
     }
 
     // Construct messages
@@ -165,17 +158,14 @@ router.post('/generate', async (req, res) => {
       const fullPrompt = systemPrompt ? `${systemPrompt}\n\n${prompt}` : prompt;
       result = await instance.generateCompletion(fullPrompt);
     } else {
-      return res.status(400).json({ error: 'Provider does not support generation.' });
+      return ApiResponse.error(res, 'Provider does not support generation.', 400);
     }
 
     return res.json({ result });
   } catch (error: unknown) {
     const hivemindError = ErrorUtils.toHivemindError(error);
     debug('Error in AI Assist generation:', hivemindError);
-    return res.status(500).json({
-      error: 'Failed to generate response',
-      message: hivemindError instanceof Error ? hivemindError.message : String(hivemindError),
-    });
+    return ApiResponse.error(res, 'Failed to generate response', 500, undefined, { message: hivemindError instanceof Error ? hivemindError.message : String(hivemindError) });
   }
 });
 

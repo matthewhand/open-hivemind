@@ -6,6 +6,7 @@ import {
   UpdateAccessControlSchema,
 } from '../../validation/schemas/guardsSchema';
 import { validateRequest } from '../../validation/validateRequest';
+import { ApiResponse } from "../utils/ApiResponse";
 
 const router = Router();
 const debug = Debug('app:webui:guards');
@@ -22,10 +23,7 @@ router.get('/', (req: Request, res: Response) => {
   } catch (error: any) {
     console.error('Error retrieving guards:', error);
     debug('Error retrieving guards:', error);
-    return res.status(500).json({
-      error: 'Failed to retrieve guards',
-      message: error.message || 'An error occurred while retrieving guards',
-    });
+    return ApiResponse.error(res, 'Failed to retrieve guards', 500, undefined, { message: error.message || 'An error occurred while retrieving guards' });
   }
 });
 
@@ -54,10 +52,7 @@ router.post('/', validateRequest(UpdateAccessControlSchema), (req: Request, res:
     if (accessConfig.ips) {
       for (const ip of accessConfig.ips) {
         if (!validateIpOctets(ip)) {
-          return res.status(400).json({
-            error: 'Validation error',
-            message: 'Invalid IP address or CIDR notation in ips array',
-          });
+          return ApiResponse.error(res, 'Validation error', 400, undefined, { message: 'Invalid IP address or CIDR notation in ips array' });
         }
       }
     }
@@ -68,10 +63,7 @@ router.post('/', validateRequest(UpdateAccessControlSchema), (req: Request, res:
 
     if (!accessGuard) {
       // Should not happen if getGuards initializes defaults, but just in case
-      return res.status(404).json({
-        error: 'Not found',
-        message: 'Access control guard not found',
-      });
+      return ApiResponse.error(res, 'Not found', 404, undefined, { message: 'Access control guard not found' });
     }
 
     // Update the config with validated data only
@@ -90,10 +82,7 @@ router.post('/', validateRequest(UpdateAccessControlSchema), (req: Request, res:
     });
   } catch (error: any) {
     debug('Error saving access control:', error);
-    return res.status(500).json({
-      error: 'Failed to save access control',
-      message: error.message || 'An error occurred while saving access control',
-    });
+    return ApiResponse.error(res, 'Failed to save access control', 500, undefined, { message: error.message || 'An error occurred while saving access control' });
   }
 });
 
@@ -108,10 +97,7 @@ router.post('/:id/toggle', validateRequest(ToggleGuardSchema), (req: Request, re
     const guard = guards.find((g: any) => g.id === id);
 
     if (!guard) {
-      return res.status(404).json({
-        error: 'Not found',
-        message: `Guard with ID ${id} not found`,
-      });
+      return ApiResponse.error(res, 'Not found', 404, undefined, { message: `Guard with ID ${id} not found` });
     }
 
     webUIStorage.toggleGuard(id, enabled);
@@ -122,10 +108,7 @@ router.post('/:id/toggle', validateRequest(ToggleGuardSchema), (req: Request, re
     });
   } catch (error: any) {
     debug('Error toggling guard:', error);
-    return res.status(500).json({
-      error: 'Failed to toggle guard',
-      message: error.message || 'An error occurred while toggling guard',
-    });
+    return ApiResponse.error(res, 'Failed to toggle guard', 500, undefined, { message: error.message || 'An error occurred while toggling guard' });
   }
 });
 

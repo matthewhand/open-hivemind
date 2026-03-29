@@ -10,6 +10,7 @@ import {
   updatePlugin,
 } from '@src/plugins/PluginManager';
 import { authenticateToken, requireRole } from '@src/server/middleware/auth';
+import { ApiResponse } from "../utils/ApiResponse";
 
 const debug = Debug('app:marketplace');
 const router = Router();
@@ -190,7 +191,7 @@ router.get('/packages', async (req, res) => {
     return res.json(packages);
   } catch (err: any) {
     debug('Error listing packages: %s', err);
-    return res.status(500).json({ error: 'Failed to list packages', message: err.message });
+    return ApiResponse.error(res, 'Failed to list packages', 500, undefined, { message: err.message });
   }
 });
 
@@ -206,13 +207,13 @@ router.get('/packages/:name', async (req, res) => {
     const pkg = packages.find((p) => p.name === name);
 
     if (!pkg) {
-      return res.status(404).json({ error: 'Package not found' });
+      return ApiResponse.error(res, 'Package not found', 404);
     }
 
     return res.json(pkg);
   } catch (err: any) {
     debug('Error getting package: %s', err);
-    return res.status(500).json({ error: 'Failed to get package', message: err.message });
+    return ApiResponse.error(res, 'Failed to get package', 500, undefined, { message: err.message });
   }
 });
 
@@ -226,7 +227,7 @@ router.post('/install', requireRole('admin'), async (req, res) => {
     const { repoUrl } = req.body;
 
     if (!repoUrl || typeof repoUrl !== 'string') {
-      return res.status(400).json({ error: 'Missing or invalid repoUrl' });
+      return ApiResponse.error(res, 'Missing or invalid repoUrl', 400);
     }
 
     debug('Installing plugin from %s', repoUrl);
@@ -236,23 +237,20 @@ router.post('/install', requireRole('admin'), async (req, res) => {
     // ⚡ Bolt Optimization: Invalidate cache after install
     invalidateCache();
 
-    return res.status(201).json({
-      success: true,
-      package: {
-        name: plugin.name,
-        displayName: plugin.manifest.displayName,
-        description: plugin.manifest.description,
-        type: plugin.manifest.type,
-        version: plugin.version,
-        status: 'installed' as const,
-        repoUrl: plugin.repoUrl,
-        installedAt: plugin.installedAt,
-        updatedAt: plugin.updatedAt,
-      },
-    });
+    return ApiResponse.success(res, undefined, 201, { package: {
+            name: plugin.name,
+            displayName: plugin.manifest.displayName,
+            description: plugin.manifest.description,
+            type: plugin.manifest.type,
+            version: plugin.version,
+            status: 'installed' as const,
+            repoUrl: plugin.repoUrl,
+            installedAt: plugin.installedAt,
+            updatedAt: plugin.updatedAt,
+          } });
   } catch (err: any) {
     debug('Install error: %s', err);
-    return res.status(400).json({ error: 'Installation failed', message: err.message });
+    return ApiResponse.error(res, 'Installation failed', 400, undefined, { message: err.message });
   }
 });
 
@@ -274,7 +272,7 @@ router.post('/uninstall/:name', requireRole('admin'), async (req, res) => {
     return res.json({ success: true, message: `Plugin ${name} uninstalled` });
   } catch (err: any) {
     debug('Uninstall error: %s', err);
-    return res.status(400).json({ error: 'Uninstall failed', message: err.message });
+    return ApiResponse.error(res, 'Uninstall failed', 400, undefined, { message: err.message });
   }
 });
 
@@ -309,7 +307,7 @@ router.post('/update/:name', requireRole('admin'), async (req, res) => {
     });
   } catch (err: any) {
     debug('Update error: %s', err);
-    return res.status(400).json({ error: 'Update failed', message: err.message });
+    return ApiResponse.error(res, 'Update failed', 400, undefined, { message: err.message });
   }
 });
 

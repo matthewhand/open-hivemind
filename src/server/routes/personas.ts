@@ -10,6 +10,7 @@ import {
   UpdatePersonaRouteSchema,
 } from '../../validation/schemas/personasSchema';
 import { validateRequest } from '../../validation/validateRequest';
+import { ApiResponse } from "../utils/ApiResponse";
 
 const router = Router();
 const logger = createLogger('personasRouter');
@@ -51,9 +52,7 @@ router.get('/', (req, res) => {
       'Failed to retrieve personas',
       error instanceof Error ? error : new Error(String(error))
     );
-    return res
-      .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
-      .json({ error: 'Failed to retrieve personas' });
+    return ApiResponse.error(res, 'Failed to retrieve personas', HTTP_STATUS.INTERNAL_SERVER_ERROR);
   }
 });
 
@@ -77,9 +76,7 @@ router.put('/reorder', validateRequest(ReorderSchema), (req, res) => {
       'Failed to reorder personas',
       error instanceof Error ? error : new Error(String(error))
     );
-    return res
-      .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
-      .json({ error: 'Failed to reorder personas' });
+    return ApiResponse.error(res, 'Failed to reorder personas', HTTP_STATUS.INTERNAL_SERVER_ERROR);
   }
 });
 
@@ -88,7 +85,7 @@ router.get('/:id', validateRequest(PersonaIdParamSchema), (req, res) => {
   try {
     const persona = manager.getPersona(req.params.id);
     if (!persona) {
-      return res.status(HTTP_STATUS.NOT_FOUND).json({ error: 'Persona not found' });
+      return ApiResponse.error(res, 'Persona not found', HTTP_STATUS.NOT_FOUND);
     }
     return res.json(persona);
   } catch (error: unknown) {
@@ -97,9 +94,7 @@ router.get('/:id', validateRequest(PersonaIdParamSchema), (req, res) => {
       error instanceof Error ? error : new Error(String(error)),
       { id: req.params.id }
     );
-    return res
-      .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
-      .json({ error: 'Failed to retrieve persona' });
+    return ApiResponse.error(res, 'Failed to retrieve persona', HTTP_STATUS.INTERNAL_SERVER_ERROR);
   }
 });
 
@@ -117,7 +112,7 @@ router.post('/', validateRequest(CreatePersonaSchema), async (req, res) => {
     const newPersona = manager.createPersona(req.body);
     return res.status(HTTP_STATUS.CREATED).json(newPersona);
   } catch (error: any) {
-    return res.status(HTTP_STATUS.BAD_REQUEST).json({ error: error.message });
+    return ApiResponse.error(res, error.message, HTTP_STATUS.BAD_REQUEST);
   }
 });
 
@@ -137,9 +132,9 @@ router.post('/:id/clone', validateRequest(ClonePersonaSchema), (req, res) => {
     return res.status(HTTP_STATUS.CREATED).json(clonedPersona);
   } catch (error: any) {
     if (error.message.includes(ERROR_CODES.NOT_FOUND)) {
-      return res.status(HTTP_STATUS.NOT_FOUND).json({ error: error.message });
+      return ApiResponse.error(res, error.message, HTTP_STATUS.NOT_FOUND);
     }
-    return res.status(HTTP_STATUS.BAD_REQUEST).json({ error: error.message });
+    return ApiResponse.error(res, error.message, HTTP_STATUS.BAD_REQUEST);
   }
 });
 
@@ -149,7 +144,7 @@ router.put('/:id', validateRequest(UpdatePersonaRouteSchema), async (req, res) =
     const updatedPersona = manager.updatePersona(req.params.id, req.body);
     return res.json(updatedPersona);
   } catch (error: any) {
-    return res.status(HTTP_STATUS.BAD_REQUEST).json({ error: error.message });
+    return ApiResponse.error(res, error.message, HTTP_STATUS.BAD_REQUEST);
   }
 });
 
@@ -164,7 +159,7 @@ router.delete('/:id', validateRequest(PersonaIdParamSchema), (req, res) => {
     manager.deletePersona(req.params.id);
     return res.json({ success: true });
   } catch (error: any) {
-    return res.status(HTTP_STATUS.BAD_REQUEST).json({ error: error.message });
+    return ApiResponse.error(res, error.message, HTTP_STATUS.BAD_REQUEST);
   }
 });
 

@@ -4,6 +4,7 @@ import { BotConfigurationManager } from '../../config/BotConfigurationManager';
 import { DatabaseManager } from '../../database/DatabaseManager';
 import { auditMiddleware, logAdminAction, type AuditedRequest } from '../middleware/audit';
 import { authenticateToken, requirePermission } from '../middleware/auth';
+import { ApiResponse } from "../utils/ApiResponse";
 
 const debug = Debug('app:webui:consolidated');
 const router = Router();
@@ -67,11 +68,7 @@ router.get('/system-status', async (req, res) => {
   } catch (error) {
     debug('Error getting system status:', error);
     logAdminAction(req as AuditedRequest, 'VIEW', 'system-status', 'failure', `Error: ${error}`);
-    return res.status(500).json({
-      success: false,
-      error: 'Failed to get system status',
-      message: error instanceof Error ? error.message : 'Unknown error',
-    });
+    return ApiResponse.error(res, 'Failed to get system status', 500, undefined, { message: error instanceof Error ? error.message : 'Unknown error' });
   }
 });
 
@@ -139,10 +136,7 @@ router.get('/providers', async (req, res) => {
     });
   } catch (error) {
     debug('Error getting providers:', error);
-    return res.status(500).json({
-      success: false,
-      error: 'Failed to get providers',
-    });
+    return ApiResponse.error(res, 'Failed to get providers', 500);
   }
 });
 
@@ -182,10 +176,7 @@ router.get('/env-status', async (req, res) => {
     return res.json({ success: true, data: envStatus });
   } catch (error) {
     debug('Error getting environment status:', error);
-    return res.status(500).json({
-      success: false,
-      error: 'Failed to get environment status',
-    });
+    return ApiResponse.error(res, 'Failed to get environment status', 500);
   }
 });
 
@@ -195,10 +186,7 @@ router.post('/validate-config', async (req, res) => {
     const { botConfig } = req.body;
 
     if (!botConfig) {
-      return res.status(400).json({
-        success: false,
-        error: 'Bot configuration is required',
-      });
+      return ApiResponse.error(res, 'Bot configuration is required', 400);
     }
 
     const validation = {
@@ -277,10 +265,7 @@ router.post('/validate-config', async (req, res) => {
   } catch (error) {
     debug('Error validating config:', error);
     logAdminAction(req as AuditedRequest, 'VALIDATE', 'bot-config', 'failure', `Error: ${error}`);
-    return res.status(500).json({
-      success: false,
-      error: 'Failed to validate configuration',
-    });
+    return ApiResponse.error(res, 'Failed to validate configuration', 500);
   }
 });
 
@@ -349,10 +334,7 @@ router.get('/health', async (req, res) => {
     debug('Error getting health status:', error);
     const { createErrorResponse } = await import('../../utils/errorResponse');
     const errorResponse = createErrorResponse(error as Error, req.path);
-    return res.status(errorResponse.getStatusCode() || 500).json({
-      success: false,
-      ...errorResponse,
-    });
+    return ApiResponse.error(res, 'An error occurred', errorResponse.getStatusCode() || 500, undefined, { ...errorResponse });
   }
 });
 
@@ -404,10 +386,7 @@ router.get('/metrics', async (req, res) => {
     return res.json({ success: true, data: metrics });
   } catch (error) {
     debug('Error getting metrics:', error);
-    return res.status(500).json({
-      success: false,
-      error: 'Failed to get metrics',
-    });
+    return ApiResponse.error(res, 'Failed to get metrics', 500);
   }
 });
 

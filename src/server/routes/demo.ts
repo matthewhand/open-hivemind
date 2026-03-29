@@ -8,6 +8,7 @@ import { Router } from 'express';
 import { container } from 'tsyringe';
 import DemoModeService from '../../services/DemoModeService';
 import { ErrorUtils } from '../../types/errors';
+import { ApiResponse } from "../utils/ApiResponse";
 
 const router = Router();
 
@@ -28,10 +29,7 @@ router.get('/status', (req, res) => {
     });
   } catch (error: unknown) {
     const hivemindError = ErrorUtils.toHivemindError(error) as any;
-    res.status(hivemindError.statusCode || 500).json({
-      error: hivemindError.message,
-      code: 'DEMO_STATUS_ERROR',
-    });
+    ApiResponse.error(res, hivemindError.message, hivemindError.statusCode || 500, 'DEMO_STATUS_ERROR');
   }
 });
 
@@ -51,10 +49,7 @@ router.get('/bots', (req, res) => {
     });
   } catch (error: unknown) {
     const hivemindError = ErrorUtils.toHivemindError(error) as any;
-    res.status(hivemindError.statusCode || 500).json({
-      error: hivemindError.message,
-      code: 'DEMO_BOTS_ERROR',
-    });
+    ApiResponse.error(res, hivemindError.message, hivemindError.statusCode || 500, 'DEMO_BOTS_ERROR');
   }
 });
 
@@ -67,22 +62,19 @@ router.post('/chat', (req, res) => {
     const { message, botName, channelId, userId, userName } = req.body;
 
     if (!message) {
-      res.status(400).json({ error: 'message is required' });
+      ApiResponse.error(res, 'message is required', 400);
       return;
     }
 
     if (!botName) {
-      res.status(400).json({ error: 'botName is required' });
+      ApiResponse.error(res, 'botName is required', 400);
       return;
     }
 
     const demoService = container.resolve(DemoModeService);
 
     if (!demoService.isInDemoMode()) {
-      res.status(400).json({
-        error: 'Demo mode is not active. Configure credentials to use real services.',
-        code: 'DEMO_MODE_INACTIVE',
-      });
+      ApiResponse.error(res, 'Demo mode is not active. Configure credentials to use real services.', 400, 'DEMO_MODE_INACTIVE');
       return;
     }
 
@@ -117,10 +109,7 @@ router.post('/chat', (req, res) => {
     });
   } catch (error: unknown) {
     const hivemindError = ErrorUtils.toHivemindError(error) as any;
-    res.status(hivemindError.statusCode || 500).json({
-      error: hivemindError.message,
-      code: 'DEMO_CHAT_ERROR',
-    });
+    ApiResponse.error(res, hivemindError.message, hivemindError.statusCode || 500, 'DEMO_CHAT_ERROR');
   }
 });
 
@@ -139,10 +128,7 @@ router.get('/conversations', (req, res) => {
     });
   } catch (error: unknown) {
     const hivemindError = ErrorUtils.toHivemindError(error) as any;
-    res.status(hivemindError.statusCode || 500).json({
-      error: hivemindError.message,
-      code: 'DEMO_CONVERSATIONS_ERROR',
-    });
+    ApiResponse.error(res, hivemindError.message, hivemindError.statusCode || 500, 'DEMO_CONVERSATIONS_ERROR');
   }
 });
 
@@ -164,10 +150,7 @@ router.get('/conversations/:channelId/:botName', (req, res) => {
     });
   } catch (error: unknown) {
     const hivemindError = ErrorUtils.toHivemindError(error) as any;
-    res.status(hivemindError.statusCode || 500).json({
-      error: hivemindError.message,
-      code: 'DEMO_CONVERSATION_HISTORY_ERROR',
-    });
+    ApiResponse.error(res, hivemindError.message, hivemindError.statusCode || 500, 'DEMO_CONVERSATION_HISTORY_ERROR');
   }
 });
 
@@ -186,10 +169,7 @@ router.post('/reset', (req, res) => {
     });
   } catch (error: unknown) {
     const hivemindError = ErrorUtils.toHivemindError(error) as any;
-    res.status(hivemindError.statusCode || 500).json({
-      error: hivemindError.message,
-      code: 'DEMO_RESET_ERROR',
-    });
+    ApiResponse.error(res, hivemindError.message, hivemindError.statusCode || 500, 'DEMO_RESET_ERROR');
   }
 });
 

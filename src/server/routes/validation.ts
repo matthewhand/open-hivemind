@@ -5,6 +5,7 @@ import type { AuthMiddlewareRequest } from '../../auth/types';
 import type { BotConfig } from '../../types/config';
 import { ErrorUtils } from '../../types/errors';
 import { RealTimeValidationService } from '../services/RealTimeValidationService';
+import { ApiResponse } from "../utils/ApiResponse";
 
 const router = Router();
 const validationService = RealTimeValidationService.getInstance();
@@ -249,13 +250,7 @@ const handleValidationErrors = (req: Request, res: Response, next: NextFunction)
 
     console.error('Validation error:', hivemindError);
 
-    return res.status(400).json({
-      success: false,
-      error: hivemindError.message,
-      code: hivemindError.code,
-      details: hivemindError.details,
-      timestamp: hivemindError.timestamp,
-    });
+    return ApiResponse.error(res, hivemindError.message, 400, hivemindError.code, { details: hivemindError.details, timestamp: hivemindError.timestamp });
   }
   return next();
 };
@@ -297,21 +292,11 @@ router.get('/api/validation', async (req: AuthMiddlewareRequest, res: Response) 
     const errorMessage = 'Failed to validate configuration';
     const originalMessage = error instanceof Error ? error.message : 'Unknown error';
 
-    return res.status(500).json({
-      error: errorMessage,
-      code: 'VALIDATION_ERROR',
-      isValid: false,
-      warnings: [],
-      errors: [errorMessage],
-      recommendations: [],
-      botValidation: [],
-      environmentValidation: {
-        valid: false,
-        errors: ['Internal validation error'],
-        warnings: [],
-      },
-      timestamp: new Date().toISOString(),
-    });
+    return ApiResponse.error(res, errorMessage, 500, 'VALIDATION_ERROR', { isValid: false, warnings: [], errors: [errorMessage], recommendations: [], botValidation: [], environmentValidation: {
+            valid: false,
+            errors: ['Internal validation error'],
+            warnings: [],
+          }, timestamp: new Date().toISOString() });
   }
 });
 
@@ -320,28 +305,17 @@ router.post('/api/validation/test', async (req: AuthMiddlewareRequest, res: Resp
     const { config } = req.body ?? {};
 
     if (!config) {
-      return res.status(400).json({
-        error: 'Configuration data required',
-      });
+      return ApiResponse.error(res, 'Configuration data required', 400);
     }
 
     if (typeof config !== 'object' || Array.isArray(config)) {
-      return res.status(400).json({
-        error: 'Configuration data must be an object',
-      });
+      return ApiResponse.error(res, 'Configuration data must be an object', 400);
     }
 
     const bots = (config as { bots?: Partial<BotConfig>[] }).bots;
 
     if (!Array.isArray(bots)) {
-      return res.status(200).json({
-        valid: false,
-        errors: ['Configuration must include a "bots" array'],
-        warnings: [],
-        recommendations: [],
-        botValidation: [],
-        timestamp: new Date().toISOString(),
-      });
+      return ApiResponse.success(res, undefined, 200, { valid: false, errors: ['Configuration must include a "bots" array'], warnings: [], recommendations: [], botValidation: [], timestamp: new Date().toISOString() });
     }
 
     const summary = evaluateBotConfigurations(bots);
@@ -355,7 +329,7 @@ router.post('/api/validation/test', async (req: AuthMiddlewareRequest, res: Resp
       timestamp: new Date().toISOString(),
     });
   } catch (error: any) {
-    return res.status(500).json({ error: error.message });
+    return ApiResponse.error(res, error.message, 500);
   }
 });
 
@@ -442,12 +416,7 @@ router.get('/api/validation/rules', async (req: AuthMiddlewareRequest, res: Resp
 
     console.error('Error in', 'Get validation rules endpoint');
 
-    return res.status(500).json({
-      success: false,
-      error: hivemindError.message,
-      code: hivemindError.code,
-      timestamp: hivemindError.timestamp,
-    });
+    return ApiResponse.error(res, hivemindError.message, 500, hivemindError.code, { timestamp: hivemindError.timestamp });
   }
 });
 
@@ -465,10 +434,7 @@ router.get(
       const rule = validationService.getRule(ruleId);
 
       if (!rule) {
-        return res.status(404).json({
-          success: false,
-          message: 'Validation rule not found',
-        });
+        return ApiResponse.error(res, 'Validation rule not found', 404, undefined, { message: 'Validation rule not found' });
       }
 
       return res.json({
@@ -484,12 +450,7 @@ router.get(
 
       console.error('Error in', 'Get validation rule endpoint');
 
-      return res.status(500).json({
-        success: false,
-        error: hivemindError.message,
-        code: hivemindError.code,
-        timestamp: hivemindError.timestamp,
-      });
+      return ApiResponse.error(res, hivemindError.message, 500, hivemindError.code, { timestamp: hivemindError.timestamp });
     }
   }
 );
@@ -508,10 +469,7 @@ router.post(
       // Check if rule already exists
       const existingRule = validationService.getRule(req.body.id);
       if (existingRule) {
-        return res.status(400).json({
-          success: false,
-          message: 'Validation rule with this ID already exists',
-        });
+        return ApiResponse.error(res, 'Validation rule with this ID already exists', 400, undefined, { message: 'Validation rule with this ID already exists' });
       }
 
       // Note: In a real implementation, you would need to handle the validator function
@@ -529,11 +487,7 @@ router.post(
 
       validationService.addRule(rule);
 
-      return res.status(201).json({
-        success: true,
-        message: 'Validation rule created successfully',
-        data: rule,
-      });
+      return ApiResponse.success(res, rule, 201, { message: 'Validation rule created successfully' });
     } catch (error: unknown) {
       const hivemindError = ErrorUtils.toHivemindError(
         error,
@@ -543,12 +497,7 @@ router.post(
 
       console.error('Error in', 'Create validation rule endpoint');
 
-      return res.status(500).json({
-        success: false,
-        error: hivemindError.message,
-        code: hivemindError.code,
-        timestamp: hivemindError.timestamp,
-      });
+      return ApiResponse.error(res, hivemindError.message, 500, hivemindError.code, { timestamp: hivemindError.timestamp });
     }
   }
 );
@@ -573,10 +522,7 @@ router.delete(
           message: 'Validation rule deleted successfully',
         });
       } else {
-        return res.status(404).json({
-          success: false,
-          message: 'Validation rule not found',
-        });
+        return ApiResponse.error(res, 'Validation rule not found', 404, undefined, { message: 'Validation rule not found' });
       }
     } catch (error: unknown) {
       const hivemindError = ErrorUtils.toHivemindError(
@@ -587,12 +533,7 @@ router.delete(
 
       console.error('Error in', 'Delete validation rule endpoint');
 
-      return res.status(500).json({
-        success: false,
-        error: hivemindError.message,
-        code: hivemindError.code,
-        timestamp: hivemindError.timestamp,
-      });
+      return ApiResponse.error(res, hivemindError.message, 500, hivemindError.code, { timestamp: hivemindError.timestamp });
     }
   }
 );
@@ -618,12 +559,7 @@ router.get('/api/validation/profiles', async (req: AuthMiddlewareRequest, res: R
 
     console.error('Error in', 'Get validation profiles endpoint');
 
-    return res.status(500).json({
-      success: false,
-      error: hivemindError.message,
-      code: hivemindError.code,
-      timestamp: hivemindError.timestamp,
-    });
+    return ApiResponse.error(res, hivemindError.message, 500, hivemindError.code, { timestamp: hivemindError.timestamp });
   }
 });
 
@@ -641,10 +577,7 @@ router.get(
       const profile = validationService.getProfile(profileId);
 
       if (!profile) {
-        return res.status(404).json({
-          success: false,
-          message: 'Validation profile not found',
-        });
+        return ApiResponse.error(res, 'Validation profile not found', 404, undefined, { message: 'Validation profile not found' });
       }
 
       return res.json({
@@ -660,12 +593,7 @@ router.get(
 
       console.error('Error in', 'Get validation profile endpoint');
 
-      return res.status(500).json({
-        success: false,
-        error: hivemindError.message,
-        code: hivemindError.code,
-        timestamp: hivemindError.timestamp,
-      });
+      return ApiResponse.error(res, hivemindError.message, 500, hivemindError.code, { timestamp: hivemindError.timestamp });
     }
   }
 );
@@ -686,10 +614,7 @@ router.post(
       // Check if profile already exists
       const existingProfile = validationService.getProfile(req.body.id);
       if (existingProfile) {
-        return res.status(400).json({
-          success: false,
-          message: 'Validation profile with this ID already exists',
-        });
+        return ApiResponse.error(res, 'Validation profile with this ID already exists', 400, undefined, { message: 'Validation profile with this ID already exists' });
       }
 
       // Validate that all rule IDs exist
@@ -698,10 +623,7 @@ router.post(
       const invalidRuleIds = req.body.ruleIds.filter((id: string) => !ruleIds.includes(id));
 
       if (invalidRuleIds.length > 0) {
-        return res.status(400).json({
-          success: false,
-          message: `Invalid rule IDs: ${invalidRuleIds.join(', ')}`,
-        });
+        return ApiResponse.error(res, `Invalid rule IDs: ${invalidRuleIds.join(', ')}`, 400, undefined, { message: `Invalid rule IDs: ${invalidRuleIds.join(', ')}` });
       }
 
       const profile = {
@@ -713,11 +635,7 @@ router.post(
 
       validationService.addProfile(profile);
 
-      return res.status(201).json({
-        success: true,
-        message: 'Validation profile created successfully',
-        data: profile,
-      });
+      return ApiResponse.success(res, profile, 201, { message: 'Validation profile created successfully' });
     } catch (error: unknown) {
       const hivemindError = ErrorUtils.toHivemindError(
         error,
@@ -727,12 +645,7 @@ router.post(
 
       console.error('Error in', 'Create validation profile endpoint');
 
-      return res.status(500).json({
-        success: false,
-        error: hivemindError.message,
-        code: hivemindError.code,
-        timestamp: hivemindError.timestamp,
-      });
+      return ApiResponse.error(res, hivemindError.message, 500, hivemindError.code, { timestamp: hivemindError.timestamp });
     }
   }
 );
@@ -757,10 +670,7 @@ router.delete(
           message: 'Validation profile deleted successfully',
         });
       } else {
-        return res.status(404).json({
-          success: false,
-          message: 'Validation profile not found',
-        });
+        return ApiResponse.error(res, 'Validation profile not found', 404, undefined, { message: 'Validation profile not found' });
       }
     } catch (error: unknown) {
       const hivemindError = ErrorUtils.toHivemindError(
@@ -771,12 +681,7 @@ router.delete(
 
       console.error('Error in', 'Delete validation profile endpoint');
 
-      return res.status(500).json({
-        success: false,
-        error: hivemindError.message,
-        code: hivemindError.code,
-        timestamp: hivemindError.timestamp,
-      });
+      return ApiResponse.error(res, hivemindError.message, 500, hivemindError.code, { timestamp: hivemindError.timestamp });
     }
   }
 );
@@ -802,11 +707,7 @@ router.post(
       });
     } catch (error) {
       console.error('Error validating configuration:', error);
-      return res.status(500).json({
-        success: false,
-        message: 'Failed to validate configuration',
-        error: (error as any).message,
-      });
+      return ApiResponse.error(res, (error as any).message, 500, undefined, { message: 'Failed to validate configuration' });
     }
   }
 );
@@ -839,12 +740,7 @@ router.post(
 
       console.error('Error in', 'Validate configuration data endpoint');
 
-      return res.status(500).json({
-        success: false,
-        error: hivemindError.message,
-        code: hivemindError.code,
-        timestamp: hivemindError.timestamp,
-      });
+      return ApiResponse.error(res, hivemindError.message, 500, hivemindError.code, { timestamp: hivemindError.timestamp });
     }
   }
 );
@@ -877,12 +773,7 @@ router.post(
 
       console.error('Error in', 'Subscribe to validation endpoint');
 
-      return res.status(500).json({
-        success: false,
-        error: hivemindError.message,
-        code: hivemindError.code,
-        timestamp: hivemindError.timestamp,
-      });
+      return ApiResponse.error(res, hivemindError.message, 500, hivemindError.code, { timestamp: hivemindError.timestamp });
     }
   }
 );
@@ -909,10 +800,7 @@ router.delete(
           message: 'Unsubscribed from validation successfully',
         });
       } else {
-        return res.status(404).json({
-          success: false,
-          message: 'Subscription not found',
-        });
+        return ApiResponse.error(res, 'Subscription not found', 404, undefined, { message: 'Subscription not found' });
       }
     } catch (error: unknown) {
       const hivemindError = ErrorUtils.toHivemindError(
@@ -923,12 +811,7 @@ router.delete(
 
       console.error('Error in', 'Unsubscribe from validation endpoint');
 
-      return res.status(500).json({
-        success: false,
-        error: hivemindError.message,
-        code: hivemindError.code,
-        timestamp: hivemindError.timestamp,
-      });
+      return ApiResponse.error(res, hivemindError.message, 500, hivemindError.code, { timestamp: hivemindError.timestamp });
     }
   }
 );
@@ -969,12 +852,7 @@ router.get(
 
       console.error('Error in', 'Get validation history endpoint');
 
-      return res.status(500).json({
-        success: false,
-        error: hivemindError.message,
-        code: hivemindError.code,
-        timestamp: hivemindError.timestamp,
-      });
+      return ApiResponse.error(res, hivemindError.message, 500, hivemindError.code, { timestamp: hivemindError.timestamp });
     }
   }
 );
@@ -1000,12 +878,7 @@ router.get('/api/validation/statistics', async (req: AuthMiddlewareRequest, res:
 
     console.error('Error in', 'Get validation statistics endpoint');
 
-    return res.status(500).json({
-      success: false,
-      error: hivemindError.message,
-      code: hivemindError.code,
-      timestamp: hivemindError.timestamp,
-    });
+    return ApiResponse.error(res, hivemindError.message, 500, hivemindError.code, { timestamp: hivemindError.timestamp });
   }
 });
 

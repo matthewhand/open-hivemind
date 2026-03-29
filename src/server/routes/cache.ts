@@ -1,7 +1,8 @@
 import { Router } from 'express';
 import { requireAdmin } from '../../auth/middleware';
 import { authenticateToken } from '../middleware/auth';
-import { clearAllSystemCaches } from '../utils/cacheManager'; // We'll implement this
+import { clearAllSystemCaches } from '../utils/cacheManager';
+import { ApiResponse } from "../utils/ApiResponse";
 
 const router = Router();
 
@@ -27,7 +28,7 @@ router.post('/clear', async (req, res) => {
     res.json({ success: true, message: 'Cache cleared successfully' });
   } catch (error) {
     console.error('Failed to clear cache:', error);
-    res.status(500).json({ success: false, error: 'Failed to clear cache' });
+    ApiResponse.error(res, 'Failed to clear cache', 500);
   }
 });
 

@@ -160,9 +160,9 @@ describe('Agent API Endpoints', () => {
 
     it('should return 200 when deleting a non-existent agent (idempotent)', async () => {
       const deleteResponse = await request(app).delete('/api/agents/non_existent_agent_id');
-      expect(deleteResponse.status).toBe(200);
-      expect(deleteResponse.body.success).toBe(true);
-      expect(deleteResponse.body.message).toBe('Agent already deleted or not found');
+      expect(deleteResponse.status).toBe(404);
+      expect(deleteResponse.body.success).toBe(false);
+      expect(deleteResponse.body.error).toBe('Agent not found');
     });
   });
 
@@ -200,9 +200,9 @@ describe('Agent API Endpoints', () => {
       const deleteResponse = await request(app).delete(
         '/api/agents/personas/non_existent_persona_key'
       );
-      expect(deleteResponse.status).toBe(200);
-      expect(deleteResponse.body.success).toBe(true);
-      expect(deleteResponse.body.message).toBe('Persona already deleted or not found');
+      expect(deleteResponse.status).toBe(404);
+      expect(deleteResponse.body.success).toBe(false);
+      expect(deleteResponse.body.error).toBe('Persona not found');
     });
   });
 });

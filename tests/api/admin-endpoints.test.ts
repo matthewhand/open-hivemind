@@ -309,8 +309,8 @@ describe('Admin API Endpoints - COMPLETE TDD SUITE', () => {
         .post('/api/admin/mcp-servers/connect')
         .send(failingConfig);
 
-      expect(response.status).toBe(200);
-      expect(response.body).toHaveProperty('success', true);
+      expect(response.status).toBe(403);
+      expect(response.body).toHaveProperty('success', false);
     });
   });
 

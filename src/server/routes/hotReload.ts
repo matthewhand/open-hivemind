@@ -2,6 +2,7 @@ import Debug from 'debug';
 import { Router } from 'express';
 import { WebSocketService } from '@src/server/services/WebSocketService';
 import { HotReloadManager, type ConfigurationChange } from '@config/HotReloadManager';
+import { ApiResponse } from "../utils/ApiResponse";
 
 const debug = Debug('app:hotReloadRoutes');
 const router = Router();
@@ -14,10 +15,7 @@ router.post('/api/config/hot-reload', async (req, res) => {
     > = req.body;
 
     if (!changeData.changes || Object.keys(changeData.changes).length === 0) {
-      return res.status(400).json({
-        success: false,
-        message: 'No changes provided',
-      });
+      return ApiResponse.error(res, 'No changes provided', 400, undefined, { message: 'No changes provided' });
     }
 
     const hotReloadManager = HotReloadManager.getInstance();
@@ -26,16 +24,11 @@ router.post('/api/config/hot-reload', async (req, res) => {
     return res.json(result);
   } catch (error) {
     debug('Hot reload API error:', error);
-    return res.status(500).json({
-      success: false,
-      message: 'Hot reload failed',
-      error:
-        process.env.NODE_ENV === 'production'
-          ? 'An internal error occurred'
-          : error instanceof Error
-            ? error.message
-            : 'Unknown error',
-    });
+    return ApiResponse.error(res, process.env.NODE_ENV === 'production'
+              ? 'An internal error occurred'
+              : error instanceof Error
+                ? error.message
+                : 'Unknown error', 500, undefined, { message: 'Hot reload failed' });
   }
 });
 
@@ -51,16 +44,11 @@ router.get('/api/config/hot-reload/history', (req, res) => {
     });
   } catch (error) {
     debug('Hot reload history API error:', error);
-    return res.status(500).json({
-      success: false,
-      message: 'Failed to get change history',
-      error:
-        process.env.NODE_ENV === 'production'
-          ? 'An internal error occurred'
-          : error instanceof Error
-            ? error.message
-            : 'Unknown error',
-    });
+    return ApiResponse.error(res, process.env.NODE_ENV === 'production'
+              ? 'An internal error occurred'
+              : error instanceof Error
+                ? error.message
+                : 'Unknown error', 500, undefined, { message: 'Failed to get change history' });
   }
 });
 
@@ -75,16 +63,11 @@ router.get('/api/config/hot-reload/rollbacks', (req, res) => {
     });
   } catch (error) {
     debug('Hot reload rollbacks API error:', error);
-    return res.status(500).json({
-      success: false,
-      message: 'Failed to get available rollbacks',
-      error:
-        process.env.NODE_ENV === 'production'
-          ? 'An internal error occurred'
-          : error instanceof Error
-            ? error.message
-            : 'Unknown error',
-    });
+    return ApiResponse.error(res, process.env.NODE_ENV === 'production'
+              ? 'An internal error occurred'
+              : error instanceof Error
+                ? error.message
+                : 'Unknown error', 500, undefined, { message: 'Failed to get available rollbacks' });
   }
 });
 
@@ -110,23 +93,15 @@ router.post('/api/config/hot-reload/rollback/:snapshotId', async (req, res) => {
         message: 'Configuration rolled back successfully',
       });
     } else {
-      return res.status(404).json({
-        success: false,
-        message: 'Rollback snapshot not found or rollback failed',
-      });
+      return ApiResponse.error(res, 'Rollback snapshot not found or rollback failed', 404, undefined, { message: 'Rollback snapshot not found or rollback failed' });
     }
   } catch (error) {
     debug('Hot reload rollback API error:', error);
-    return res.status(500).json({
-      success: false,
-      message: 'Rollback failed',
-      error:
-        process.env.NODE_ENV === 'production'
-          ? 'An internal error occurred'
-          : error instanceof Error
-            ? error.message
-            : 'Unknown error',
-    });
+    return ApiResponse.error(res, process.env.NODE_ENV === 'production'
+              ? 'An internal error occurred'
+              : error instanceof Error
+                ? error.message
+                : 'Unknown error', 500, undefined, { message: 'Rollback failed' });
   }
 });
 
@@ -145,16 +120,11 @@ router.get('/api/config/hot-reload/status', (req, res) => {
     });
   } catch (error) {
     debug('Hot reload status API error:', error);
-    return res.status(500).json({
-      success: false,
-      message: 'Failed to get hot reload status',
-      error:
-        process.env.NODE_ENV === 'production'
-          ? 'An internal error occurred'
-          : error instanceof Error
-            ? error.message
-            : 'Unknown error',
-    });
+    return ApiResponse.error(res, process.env.NODE_ENV === 'production'
+              ? 'An internal error occurred'
+              : error instanceof Error
+                ? error.message
+                : 'Unknown error', 500, undefined, { message: 'Failed to get hot reload status' });
   }
 });
 

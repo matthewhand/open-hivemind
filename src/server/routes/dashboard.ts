@@ -5,6 +5,7 @@ import { BotConfigurationManager } from '@config/BotConfigurationManager';
 import { authenticate, requireAdmin } from '../../auth/middleware';
 import { AnalyticsService } from '../../services/AnalyticsService';
 import { ActivityLogger } from '../services/ActivityLogger';
+import { ApiResponse } from "../utils/ApiResponse";
 
 type AnnotatedEvent = MessageFlowEvent & { llmProvider: string };
 
@@ -195,7 +196,7 @@ router.get('/ai/stats', authenticate, requireAdmin, async (req, res) => {
     });
   } catch (error) {
     console.error('AI stats API error:', error);
-    res.status(500).json({ error: 'Failed to get AI stats' });
+    ApiResponse.error(res, 'Failed to get AI stats', 500);
   }
 });
 
@@ -213,7 +214,7 @@ router.get('/ai/segments', authenticate, requireAdmin, async (req, res) => {
     res.json(segments);
   } catch (error) {
     console.error('AI segments API error:', error);
-    res.status(500).json({ error: 'Failed to get user segments' });
+    ApiResponse.error(res, 'Failed to get user segments', 500);
   }
 });
 
@@ -231,7 +232,7 @@ router.get('/ai/patterns', authenticate, requireAdmin, async (req, res) => {
     res.json(patterns);
   } catch (error) {
     console.error('AI patterns API error:', error);
-    res.status(500).json({ error: 'Failed to get behavior patterns' });
+    ApiResponse.error(res, 'Failed to get behavior patterns', 500);
   }
 });
 
@@ -249,7 +250,7 @@ router.get('/ai/recommendations', authenticate, requireAdmin, async (req, res) =
     res.json(recommendations);
   } catch (error) {
     console.error('AI recommendations API error:', error);
-    res.status(500).json({ error: 'Failed to get recommendations' });
+    ApiResponse.error(res, 'Failed to get recommendations', 500);
   }
 });
 
@@ -261,7 +262,7 @@ router.post('/ai/feedback', authenticate, requireAdmin, async (req, res) => {
     res.json({ success: true });
   } catch (error) {
     console.error('Error storing AI feedback:', error);
-    res.status(500).json({ error: 'Failed to store feedback' });
+    ApiResponse.error(res, 'Failed to store feedback', 500);
   }
 });
 
@@ -320,7 +321,7 @@ router.get('/status', authenticate, requireAdmin, (req, res) => {
     res.json({ bots: status, uptime: process.uptime() });
   } catch (error) {
     console.error('Status API error:', error);
-    res.status(500).json({ error: 'Failed to get status' });
+    ApiResponse.error(res, 'Failed to get status', 500);
   }
 });
 
@@ -416,7 +417,7 @@ router.get('/activity', authenticate, requireAdmin, async (req, res) => {
     });
   } catch (error) {
     console.error('Activity API error:', error);
-    res.status(500).json({ error: 'Failed to retrieve activity feed' });
+    ApiResponse.error(res, 'Failed to retrieve activity feed', 500);
   }
 });
 
@@ -428,11 +429,11 @@ router.post('/alerts/:id/acknowledge', authenticate, requireAdmin, (req, res) =>
     if (success) {
       res.json({ success: true, message: 'Alert acknowledged' });
     } else {
-      res.status(404).json({ success: false, message: 'Alert not found' });
+      ApiResponse.error(res, 'Alert not found', 404, undefined, { message: 'Alert not found' });
     }
   } catch (error) {
     console.error('Acknowledge alert error:', error);
-    res.status(500).json({ error: 'Failed to acknowledge alert' });
+    ApiResponse.error(res, 'Failed to acknowledge alert', 500);
   }
 });
 
@@ -444,11 +445,11 @@ router.post('/alerts/:id/resolve', authenticate, requireAdmin, (req, res) => {
     if (success) {
       res.json({ success: true, message: 'Alert resolved' });
     } else {
-      res.status(404).json({ success: false, message: 'Alert not found' });
+      ApiResponse.error(res, 'Alert not found', 404, undefined, { message: 'Alert not found' });
     }
   } catch (error) {
     console.error('Resolve alert error:', error);
-    res.status(500).json({ error: 'Failed to resolve alert' });
+    ApiResponse.error(res, 'Failed to resolve alert', 500);
   }
 });
 

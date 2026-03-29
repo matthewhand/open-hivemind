@@ -13,6 +13,7 @@ import {
   UpdateAgentSchema,
 } from '../../validation/schemas/agentsSchema';
 import { validateRequest } from '../../validation/validateRequest';
+import { ApiResponse } from "../utils/ApiResponse";
 
 const debug = Debug('app:webui:agents');
 const router = Router();
@@ -165,11 +166,7 @@ router.get('/', async (req, res) => {
       severity: errorInfo.severity,
     });
 
-    return res.status(ErrorUtils.getStatusCode(hivemindError) || 500).json({
-      error: ErrorUtils.getMessage(hivemindError),
-      code: ErrorUtils.getCode(hivemindError) || 'AGENTS_FETCH_ERROR',
-      timestamp: new Date().toISOString(),
-    });
+    return ApiResponse.error(res, ErrorUtils.getMessage(hivemindError), ErrorUtils.getStatusCode(hivemindError) || 500, ErrorUtils.getCode(hivemindError) || 'AGENTS_FETCH_ERROR', { timestamp: new Date().toISOString() });
   }
 });
 
@@ -183,7 +180,7 @@ router.post('/', validateRequest(CreateAgentSchema), async (req, res) => {
     // Idempotency check: return existing agent with same name
     const existingAgent = agents.find((a) => a.name === agentData.name);
     if (existingAgent) {
-      return res.status(200).json({ agent: existingAgent });
+      return ApiResponse.success(res, undefined, 200, { agent: existingAgent });
     }
 
     const newAgent: AgentConfig = {
@@ -209,11 +206,7 @@ router.post('/', validateRequest(CreateAgentSchema), async (req, res) => {
       severity: errorInfo.severity,
     });
 
-    return res.status(ErrorUtils.getStatusCode(hivemindError) || 500).json({
-      error: ErrorUtils.getMessage(hivemindError),
-      code: ErrorUtils.getCode(hivemindError) || 'AGENT_CREATE_ERROR',
-      timestamp: new Date().toISOString(),
-    });
+    return ApiResponse.error(res, ErrorUtils.getMessage(hivemindError), ErrorUtils.getStatusCode(hivemindError) || 500, ErrorUtils.getCode(hivemindError) || 'AGENT_CREATE_ERROR', { timestamp: new Date().toISOString() });
   }
 });
 
@@ -227,7 +220,7 @@ router.put('/:id', validateRequest(UpdateAgentSchema), async (req, res) => {
     const agentIndex = agents.findIndex((agent) => agent.id === id);
 
     if (agentIndex === -1) {
-      return res.status(404).json({ error: 'Agent not found' });
+      return ApiResponse.error(res, 'Agent not found', 404);
     }
 
     agents[agentIndex] = { ...agents[agentIndex], ...updates };
@@ -246,11 +239,7 @@ router.put('/:id', validateRequest(UpdateAgentSchema), async (req, res) => {
       severity: errorInfo.severity,
     });
 
-    return res.status(ErrorUtils.getStatusCode(hivemindError) || 500).json({
-      error: ErrorUtils.getMessage(hivemindError),
-      code: ErrorUtils.getCode(hivemindError) || 'AGENT_UPDATE_ERROR',
-      timestamp: new Date().toISOString(),
-    });
+    return ApiResponse.error(res, ErrorUtils.getMessage(hivemindError), ErrorUtils.getStatusCode(hivemindError) || 500, ErrorUtils.getCode(hivemindError) || 'AGENT_UPDATE_ERROR', { timestamp: new Date().toISOString() });
   }
 });
 
@@ -263,7 +252,7 @@ router.delete('/:id', validateRequest(AgentIdParamSchema), async (req, res) => {
     const filteredAgents = agents.filter((agent) => agent.id !== id);
 
     if (filteredAgents.length === agents.length) {
-      return res.status(404).json({ error: 'Agent not found' });
+      return ApiResponse.error(res, 'Agent not found', 404);
     }
 
     await saveJsonConfig(AGENTS_CONFIG_FILE, filteredAgents);
@@ -281,11 +270,7 @@ router.delete('/:id', validateRequest(AgentIdParamSchema), async (req, res) => {
       severity: errorInfo.severity,
     });
 
-    return res.status(ErrorUtils.getStatusCode(hivemindError) || 500).json({
-      error: ErrorUtils.getMessage(hivemindError),
-      code: ErrorUtils.getCode(hivemindError) || 'AGENT_DELETE_ERROR',
-      timestamp: new Date().toISOString(),
-    });
+    return ApiResponse.error(res, ErrorUtils.getMessage(hivemindError), ErrorUtils.getStatusCode(hivemindError) || 500, ErrorUtils.getCode(hivemindError) || 'AGENT_DELETE_ERROR', { timestamp: new Date().toISOString() });
   }
 });
 
@@ -325,11 +310,7 @@ router.get('/personas', async (req, res) => {
       severity: errorInfo.severity,
     });
 
-    return res.status(ErrorUtils.getStatusCode(hivemindError) || 500).json({
-      error: ErrorUtils.getMessage(hivemindError),
-      code: ErrorUtils.getCode(hivemindError) || 'PERSONAS_FETCH_ERROR',
-      timestamp: new Date().toISOString(),
-    });
+    return ApiResponse.error(res, ErrorUtils.getMessage(hivemindError), ErrorUtils.getStatusCode(hivemindError) || 500, ErrorUtils.getCode(hivemindError) || 'PERSONAS_FETCH_ERROR', { timestamp: new Date().toISOString() });
   }
 });
 
@@ -344,7 +325,7 @@ router.post('/personas', validateRequest(CreateAgentPersonaSchema), async (req, 
     // Check if persona already exists
     const existingPersona = personas.find((p) => p.key === key);
     if (existingPersona) {
-      return res.status(200).json({ persona: existingPersona });
+      return ApiResponse.success(res, undefined, 200, { persona: existingPersona });
     }
 
     const newPersona: Persona = { key, name, systemPrompt };
@@ -365,11 +346,7 @@ router.post('/personas', validateRequest(CreateAgentPersonaSchema), async (req, 
       severity: errorInfo.severity,
     });
 
-    return res.status(ErrorUtils.getStatusCode(hivemindError) || 500).json({
-      error: ErrorUtils.getMessage(hivemindError),
-      code: ErrorUtils.getCode(hivemindError) || 'PERSONA_CREATE_ERROR',
-      timestamp: new Date().toISOString(),
-    });
+    return ApiResponse.error(res, ErrorUtils.getMessage(hivemindError), ErrorUtils.getStatusCode(hivemindError) || 500, ErrorUtils.getCode(hivemindError) || 'PERSONA_CREATE_ERROR', { timestamp: new Date().toISOString() });
   }
 });
 
@@ -383,7 +360,7 @@ router.put('/personas/:key', validateRequest(UpdateAgentPersonaSchema), async (r
     const personaIndex = personas.findIndex((p) => p.key === key);
 
     if (personaIndex === -1) {
-      return res.status(404).json({ error: 'Persona not found' });
+      return ApiResponse.error(res, 'Persona not found', 404);
     }
 
     personas[personaIndex] = { key, name, systemPrompt };
@@ -402,11 +379,7 @@ router.put('/personas/:key', validateRequest(UpdateAgentPersonaSchema), async (r
       severity: errorInfo.severity,
     });
 
-    return res.status(ErrorUtils.getStatusCode(hivemindError) || 500).json({
-      error: ErrorUtils.getMessage(hivemindError),
-      code: ErrorUtils.getCode(hivemindError) || 'PERSONA_UPDATE_ERROR',
-      timestamp: new Date().toISOString(),
-    });
+    return ApiResponse.error(res, ErrorUtils.getMessage(hivemindError), ErrorUtils.getStatusCode(hivemindError) || 500, ErrorUtils.getCode(hivemindError) || 'PERSONA_UPDATE_ERROR', { timestamp: new Date().toISOString() });
   }
 });
 
@@ -416,14 +389,14 @@ router.delete('/personas/:key', validateRequest(AgentPersonaKeyParamSchema), asy
     const { key } = req.params;
 
     if (key === 'default') {
-      return res.status(400).json({ error: 'Cannot delete default persona' });
+      return ApiResponse.error(res, 'Cannot delete default persona', 400);
     }
 
     const personas = await loadJsonConfig<Persona[]>(PERSONAS_CONFIG_FILE, []);
     const filteredPersonas = personas.filter((p) => p.key !== key);
 
     if (filteredPersonas.length === personas.length) {
-      return res.status(404).json({ error: 'Persona not found' });
+      return ApiResponse.error(res, 'Persona not found', 404);
     }
 
     await saveJsonConfig(PERSONAS_CONFIG_FILE, filteredPersonas);
@@ -441,11 +414,7 @@ router.delete('/personas/:key', validateRequest(AgentPersonaKeyParamSchema), asy
       severity: errorInfo.severity,
     });
 
-    return res.status(ErrorUtils.getStatusCode(hivemindError) || 500).json({
-      error: ErrorUtils.getMessage(hivemindError),
-      code: ErrorUtils.getCode(hivemindError) || 'PERSONA_DELETE_ERROR',
-      timestamp: new Date().toISOString(),
-    });
+    return ApiResponse.error(res, ErrorUtils.getMessage(hivemindError), ErrorUtils.getStatusCode(hivemindError) || 500, ErrorUtils.getCode(hivemindError) || 'PERSONA_DELETE_ERROR', { timestamp: new Date().toISOString() });
   }
 });
 

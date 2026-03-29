@@ -7,6 +7,7 @@ import { HEALTH_THRESHOLDS, HTTP_STATUS } from '../../types/constants';
 import { ErrorLogger } from '../../utils/errorLogger';
 import { globalRecoveryManager } from '../../utils/errorRecovery';
 import { optionalAuth } from '../middleware/auth';
+import { ApiResponse } from "../utils/ApiResponse";
 
 const router = Router();
 
@@ -25,22 +26,15 @@ router.get('/', (req, res) => {
   const status = dbStatus === 'healthy' ? 'healthy' : 'degraded';
   const statusCode = status === 'healthy' ? HTTP_STATUS.OK : HTTP_STATUS.OK; // Even degraded, we return 200 for basic health. /ready will return HTTP_STATUS.SERVICE_UNAVAILABLE if not ready.
 
-  return res.status(statusCode).json({
-    status: status,
-    timestamp: new Date().toISOString(),
-    version: '1.0.0',
-    uptime: process.uptime(),
-    memory: {
-      used: Math.round(memoryUsage.heapUsed / 1024 / 1024),
-      total: Math.round(memoryUsage.heapTotal / 1024 / 1024),
-      percentage: Math.round((memoryUsage.heapUsed / memoryUsage.heapTotal) * 100),
-    },
-    system: {
-      platform: process.platform,
-      nodeVersion: process.version,
-      processId: process.pid,
-    },
-  });
+  return ApiResponse.success(res, undefined, statusCode, { status: status, timestamp: new Date().toISOString(), version: '1.0.0', uptime: process.uptime(), memory: {
+        used: Math.round(memoryUsage.heapUsed / 1024 / 1024),
+        total: Math.round(memoryUsage.heapTotal / 1024 / 1024),
+        percentage: Math.round((memoryUsage.heapUsed / memoryUsage.heapTotal) * 100),
+      }, system: {
+        platform: process.platform,
+        nodeVersion: process.version,
+        processId: process.pid,
+      } });
 });
 
 // Detailed health check - requires authentication for full details
@@ -448,15 +442,11 @@ router.get('/ready', (req, res) => {
   const isReady = dbReady;
   const statusCode = isReady ? HTTP_STATUS.OK : HTTP_STATUS.SERVICE_UNAVAILABLE;
 
-  return res.status(statusCode).json({
-    ready: isReady,
-    timestamp: new Date().toISOString(),
-    checks: {
-      database: dbReady,
-      external_apis: true, // Would need actual API checks
-      configuration: true,
-    },
-  });
+  return ApiResponse.success(res, undefined, statusCode, { ready: isReady, timestamp: new Date().toISOString(), checks: {
+        database: dbReady,
+        external_apis: true, // Would need actual API checks
+        configuration: true,
+      } });
 });
 
 // Liveness probe
@@ -572,10 +562,7 @@ router.get('/api-endpoints/:id', (req, res) => {
   const status = apiMonitor.getEndpointStatus(req.params.id);
 
   if (!status) {
-    return res.status(HTTP_STATUS.NOT_FOUND).json({
-      error: 'Endpoint not found',
-      message: `No endpoint found with ID: ${req.params.id}`,
-    });
+    return ApiResponse.error(res, 'Endpoint not found', HTTP_STATUS.NOT_FOUND, undefined, { message: `No endpoint found with ID: ${req.params.id}` });
   }
 
   return res.json({
@@ -600,10 +587,7 @@ router.post('/cleanup', (req, res) => {
 
     // Validate required fields
     if (!config.id || !config.name || !config.url) {
-      return res.status(HTTP_STATUS.BAD_REQUEST).json({
-        error: 'Missing required fields',
-        message: 'id, name, and url are required',
-      });
+      return ApiResponse.error(res, 'Missing required fields', HTTP_STATUS.BAD_REQUEST, undefined, { message: 'id, name, and url are required' });
     }
 
     // Set defaults
@@ -616,17 +600,9 @@ router.post('/cleanup', (req, res) => {
 
     apiMonitor.addEndpoint(config);
 
-    return res.status(HTTP_STATUS.CREATED).json({
-      message: 'Endpoint added successfully',
-      endpoint: apiMonitor.getEndpoint(config.id),
-      timestamp: new Date().toISOString(),
-    });
+    return ApiResponse.success(res, undefined, HTTP_STATUS.CREATED, { message: 'Endpoint added successfully', endpoint: apiMonitor.getEndpoint(config.id), timestamp: new Date().toISOString() });
   } catch (error) {
-    return res.status(HTTP_STATUS.BAD_REQUEST).json({
-      error: 'Failed to add endpoint',
-      message: error instanceof Error ? error.message : 'Unknown error',
-      timestamp: new Date().toISOString(),
-    });
+    return ApiResponse.error(res, 'Failed to add endpoint', HTTP_STATUS.BAD_REQUEST, undefined, { message: error instanceof Error ? error.message : 'Unknown error', timestamp: new Date().toISOString() });
   }
 });
 
@@ -646,10 +622,7 @@ router.post('/api-endpoints', (req, res) => {
 
     // Validate required fields
     if (!config.id || !config.name || !config.url) {
-      return res.status(HTTP_STATUS.BAD_REQUEST).json({
-        error: 'Missing required fields',
-        message: 'id, name, and url are required',
-      });
+      return ApiResponse.error(res, 'Missing required fields', HTTP_STATUS.BAD_REQUEST, undefined, { message: 'id, name, and url are required' });
     }
 
     // Set defaults
@@ -662,17 +635,9 @@ router.post('/api-endpoints', (req, res) => {
 
     apiMonitor.addEndpoint(config);
 
-    return res.status(HTTP_STATUS.CREATED).json({
-      message: 'Endpoint added successfully',
-      endpoint: apiMonitor.getEndpoint(config.id),
-      timestamp: new Date().toISOString(),
-    });
+    return ApiResponse.success(res, undefined, HTTP_STATUS.CREATED, { message: 'Endpoint added successfully', endpoint: apiMonitor.getEndpoint(config.id), timestamp: new Date().toISOString() });
   } catch (error) {
-    return res.status(HTTP_STATUS.BAD_REQUEST).json({
-      error: 'Failed to add endpoint',
-      message: error instanceof Error ? error.message : 'Unknown error',
-      timestamp: new Date().toISOString(),
-    });
+    return ApiResponse.error(res, 'Failed to add endpoint', HTTP_STATUS.BAD_REQUEST, undefined, { message: error instanceof Error ? error.message : 'Unknown error', timestamp: new Date().toISOString() });
   }
 });
 
@@ -689,11 +654,7 @@ router.put('/api-endpoints/:id', (req, res) => {
       timestamp: new Date().toISOString(),
     });
   } catch (error) {
-    return res.status(HTTP_STATUS.NOT_FOUND).json({
-      error: 'Failed to update endpoint',
-      message: error instanceof Error ? error.message : 'Endpoint not found',
-      timestamp: new Date().toISOString(),
-    });
+    return ApiResponse.error(res, 'Failed to update endpoint', HTTP_STATUS.NOT_FOUND, undefined, { message: error instanceof Error ? error.message : 'Endpoint not found', timestamp: new Date().toISOString() });
   }
 });
 
@@ -704,11 +665,7 @@ router.delete('/api-endpoints/:id', (req, res) => {
   try {
     const endpoint = apiMonitor.getEndpoint(req.params.id);
     if (!endpoint) {
-      return res.status(HTTP_STATUS.NOT_FOUND).json({
-        error: 'Failed to remove endpoint',
-        message: 'Endpoint not found',
-        timestamp: new Date().toISOString(),
-      });
+      return ApiResponse.error(res, 'Failed to remove endpoint', HTTP_STATUS.NOT_FOUND, undefined, { message: 'Endpoint not found', timestamp: new Date().toISOString() });
     }
     apiMonitor.removeEndpoint(req.params.id);
 
@@ -718,11 +675,7 @@ router.delete('/api-endpoints/:id', (req, res) => {
       timestamp: new Date().toISOString(),
     });
   } catch (error) {
-    return res.status(HTTP_STATUS.NOT_FOUND).json({
-      error: 'Failed to remove endpoint',
-      message: error instanceof Error ? error.message : 'Endpoint not found',
-      timestamp: new Date().toISOString(),
-    });
+    return ApiResponse.error(res, 'Failed to remove endpoint', HTTP_STATUS.NOT_FOUND, undefined, { message: error instanceof Error ? error.message : 'Endpoint not found', timestamp: new Date().toISOString() });
   }
 });
 
@@ -753,18 +706,10 @@ router.use((err: any, req: Request, res: Response, next: NextFunction) => {
   if (isParseError && req.path?.startsWith('/api-endpoints')) {
     const method = typeof req.method === 'string' ? req.method.toUpperCase() : req.method;
     if (method === 'PUT') {
-      return res.status(HTTP_STATUS.NOT_FOUND).json({
-        error: 'Failed to update endpoint',
-        message: 'Endpoint not found or payload invalid',
-        timestamp: new Date().toISOString(),
-      });
+      return ApiResponse.error(res, 'Failed to update endpoint', HTTP_STATUS.NOT_FOUND, undefined, { message: 'Endpoint not found or payload invalid', timestamp: new Date().toISOString() });
     }
 
-    return res.status(HTTP_STATUS.BAD_REQUEST).json({
-      error: 'Invalid JSON payload',
-      message: 'Request body could not be parsed',
-      timestamp: new Date().toISOString(),
-    });
+    return ApiResponse.error(res, 'Invalid JSON payload', HTTP_STATUS.BAD_REQUEST, undefined, { message: 'Request body could not be parsed', timestamp: new Date().toISOString() });
   }
 
   return next(err);

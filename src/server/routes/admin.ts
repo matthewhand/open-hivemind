@@ -1,3 +1,4 @@
+import { ApiResponse } from '../utils/ApiResponse';
 import Debug from 'debug';
 import { Router, type Request, type Response } from 'express';
 import { container } from 'tsyringe';
@@ -110,9 +111,8 @@ router.get('/tool-usage-guards', (req: Request, res: Response) => {
     });
   } catch (error: unknown) {
     const hivemindError = ErrorUtils.toHivemindError(error);
-    return res.status(500).json({
-      error: 'Failed to retrieve tool usage guards',
-      message: hivemindError.message || 'An error occurred while retrieving tool usage guards',
+    return ApiResponse.error(res, 'Failed to retrieve tool usage guards', 500, undefined, {
+      message: hivemindError.message || 'An error occurred while retrieving tool usage guards'
     });
   }
 });
@@ -166,9 +166,8 @@ router.post(
       });
     } catch (error: unknown) {
       const hivemindError = ErrorUtils.toHivemindError(error);
-      return res.status(500).json({
-        error: 'Failed to create tool usage guard',
-        message: hivemindError.message || 'An error occurred while creating tool usage guard',
+      return ApiResponse.error(res, 'Failed to create tool usage guard', 500, undefined, {
+        message: hivemindError.message || 'An error occurred while creating tool usage guard'
       });
     }
   }
@@ -204,9 +203,8 @@ router.put(
       });
     } catch (error: unknown) {
       const hivemindError = ErrorUtils.toHivemindError(error);
-      return res.status(500).json({
-        error: 'Failed to update tool usage guard',
-        message: hivemindError.message || 'An error occurred while updating tool usage guard',
+      return ApiResponse.error(res, 'Failed to update tool usage guard', 500, undefined, {
+        message: hivemindError.message || 'An error occurred while updating tool usage guard'
       });
     }
   }
@@ -245,9 +243,8 @@ router.delete(
       });
     } catch (error: unknown) {
       const hivemindError = ErrorUtils.toHivemindError(error);
-      return res.status(500).json({
-        error: 'Failed to delete tool usage guard',
-        message: hivemindError.message || 'An error occurred while deleting tool usage guard',
+      return ApiResponse.error(res, 'Failed to delete tool usage guard', 500, undefined, {
+        message: hivemindError.message || 'An error occurred while deleting tool usage guard'
       });
     }
   }
@@ -272,9 +269,8 @@ router.post(
       });
     } catch (error: unknown) {
       const hivemindError = ErrorUtils.toHivemindError(error);
-      return res.status(500).json({
-        error: 'Failed to update guard status',
-        message: hivemindError.message || 'An error occurred while updating guard status',
+      return ApiResponse.error(res, 'Failed to update guard status', 500, undefined, {
+        message: hivemindError.message || 'An error occurred while updating guard status'
       });
     }
   }
@@ -290,9 +286,8 @@ router.get('/llm-providers', (req: Request, res: Response) => {
     });
   } catch (error: unknown) {
     const hivemindError = ErrorUtils.toHivemindError(error);
-    return res.status(500).json({
-      error: 'Failed to retrieve LLM providers',
-      message: hivemindError.message || 'An error occurred while retrieving LLM providers',
+    return ApiResponse.error(res, 'Failed to retrieve LLM providers', 500, undefined, {
+      message: hivemindError.message || 'An error occurred while retrieving LLM providers'
     });
   }
 });
@@ -356,9 +351,8 @@ router.post(
       });
     } catch (error: unknown) {
       const hivemindError = ErrorUtils.toHivemindError(error);
-      return res.status(500).json({
-        error: 'Failed to create LLM provider',
-        message: hivemindError.message || 'An error occurred while creating LLM provider',
+      return ApiResponse.error(res, 'Failed to create LLM provider', 500, undefined, {
+        message: hivemindError.message || 'An error occurred while creating LLM provider'
       });
     }
   }
@@ -398,9 +392,8 @@ router.put(
       });
     } catch (error: unknown) {
       const hivemindError = ErrorUtils.toHivemindError(error);
-      return res.status(500).json({
-        error: 'Failed to update LLM provider',
-        message: hivemindError.message || 'An error occurred while updating LLM provider',
+      return ApiResponse.error(res, 'Failed to update LLM provider', 500, undefined, {
+        message: hivemindError.message || 'An error occurred while updating LLM provider'
       });
     }
   }
@@ -441,9 +434,8 @@ router.delete(
       });
     } catch (error: unknown) {
       const hivemindError = ErrorUtils.toHivemindError(error);
-      return res.status(500).json({
-        error: 'Failed to delete LLM provider',
-        message: hivemindError.message || 'An error occurred while deleting LLM provider',
+      return ApiResponse.error(res, 'Failed to delete LLM provider', 500, undefined, {
+        message: hivemindError.message || 'An error occurred while deleting LLM provider'
       });
     }
   }
@@ -468,9 +460,8 @@ router.post(
         // Sync monitor endpoints
         container.resolve(ApiMonitorService).syncLlmEndpoints();
       } else {
-        return res.status(404).json({
-          error: 'Provider not found',
-          message: `LLM provider with ID ${id} not found`,
+        return ApiResponse.error(res, 'Provider not found', 404, undefined, {
+          message: `LLM provider with ID ${id} not found`
         });
       }
 
@@ -480,9 +471,8 @@ router.post(
       });
     } catch (error: unknown) {
       const hivemindError = ErrorUtils.toHivemindError(error);
-      return res.status(500).json({
-        error: 'Failed to update provider status',
-        message: hivemindError.message || 'An error occurred while updating provider status',
+      return ApiResponse.error(res, 'Failed to update provider status', 500, undefined, {
+        message: hivemindError.message || 'An error occurred while updating provider status'
       });
     }
   }
@@ -499,9 +489,8 @@ router.get('/messenger-providers', (req: Request, res: Response) => {
     });
   } catch (error: unknown) {
     const hivemindError = ErrorUtils.toHivemindError(error);
-    return res.status(500).json({
-      error: 'Failed to retrieve messenger providers',
-      message: hivemindError.message || 'An error occurred while retrieving messenger providers',
+    return ApiResponse.error(res, 'Failed to retrieve messenger providers', 500, undefined, {
+      message: hivemindError.message || 'An error occurred while retrieving messenger providers'
     });
   }
 });
@@ -564,9 +553,8 @@ router.post(
       });
     } catch (error: unknown) {
       const hivemindError = ErrorUtils.toHivemindError(error);
-      return res.status(500).json({
-        error: 'Failed to create messenger provider',
-        message: hivemindError.message || 'An error occurred while creating messenger provider',
+      return ApiResponse.error(res, 'Failed to create messenger provider', 500, undefined, {
+        message: hivemindError.message || 'An error occurred while creating messenger provider'
       });
     }
   }
@@ -583,9 +571,8 @@ router.put(
 
       // Validation
       if (!name || !type || !config) {
-        return res.status(400).json({
-          error: 'Validation error',
-          message: 'Name, type, and config are required',
+        return ApiResponse.error(res, 'Validation error', 400, undefined, {
+          message: 'Name, type, and config are required'
         });
       }
 
@@ -623,9 +610,8 @@ router.put(
       });
     } catch (error: unknown) {
       const hivemindError = ErrorUtils.toHivemindError(error);
-      return res.status(500).json({
-        error: 'Failed to update messenger provider',
-        message: hivemindError.message || 'An error occurred while updating messenger provider',
+      return ApiResponse.error(res, 'Failed to update messenger provider', 500, undefined, {
+        message: hivemindError.message || 'An error occurred while updating messenger provider'
       });
     }
   }
@@ -663,9 +649,8 @@ router.delete(
       });
     } catch (error: unknown) {
       const hivemindError = ErrorUtils.toHivemindError(error);
-      return res.status(500).json({
-        error: 'Failed to delete messenger provider',
-        message: hivemindError.message || 'An error occurred while deleting messenger provider',
+      return ApiResponse.error(res, 'Failed to delete messenger provider', 500, undefined, {
+        message: hivemindError.message || 'An error occurred while deleting messenger provider'
       });
     }
   }
@@ -687,9 +672,8 @@ router.post(
         provider.isActive = isActive;
         webUIStorage.saveMessengerProvider(provider);
       } else {
-        return res.status(404).json({
-          error: 'Provider not found',
-          message: `Messenger provider with ID ${id} not found`,
+        return ApiResponse.error(res, 'Provider not found', 404, undefined, {
+          message: `Messenger provider with ID ${id} not found`
         });
       }
 
@@ -699,9 +683,8 @@ router.post(
       });
     } catch (error: unknown) {
       const hivemindError = ErrorUtils.toHivemindError(error);
-      return res.status(500).json({
-        error: 'Failed to update provider status',
-        message: hivemindError.message || 'An error occurred while updating provider status',
+      return ApiResponse.error(res, 'Failed to update provider status', 500, undefined, {
+        message: hivemindError.message || 'An error occurred while updating provider status'
       });
     }
   }
@@ -751,9 +734,8 @@ router.get('/personas', (req: Request, res: Response) => {
     });
   } catch (error: unknown) {
     const hivemindError = ErrorUtils.toHivemindError(error);
-    return res.status(500).json({
-      error: 'Failed to retrieve personas',
-      message: hivemindError.message || 'An error occurred while retrieving personas',
+    return ApiResponse.error(res, 'Failed to retrieve personas', 500, undefined, {
+      message: hivemindError.message || 'An error occurred while retrieving personas'
     });
   }
 });
@@ -792,9 +774,8 @@ router.post('/personas', validateRequest(PersonaSchema), (req: Request, res: Res
     });
   } catch (error: unknown) {
     const hivemindError = ErrorUtils.toHivemindError(error);
-    return res.status(500).json({
-      error: 'Failed to create persona',
-      message: hivemindError.message || 'An error occurred while creating persona',
+    return ApiResponse.error(res, 'Failed to create persona', 500, undefined, {
+      message: hivemindError.message || 'An error occurred while creating persona'
     });
   }
 });
@@ -817,9 +798,8 @@ router.put(
       });
     } catch (error: unknown) {
       const hivemindError = ErrorUtils.toHivemindError(error);
-      return res.status(500).json({
-        error: 'Failed to update persona',
-        message: hivemindError.message || 'An error occurred while updating persona',
+      return ApiResponse.error(res, 'Failed to update persona', 500, undefined, {
+        message: hivemindError.message || 'An error occurred while updating persona'
       });
     }
   }
@@ -842,9 +822,8 @@ router.delete(
       });
     } catch (error: unknown) {
       const hivemindError = ErrorUtils.toHivemindError(error);
-      return res.status(500).json({
-        error: 'Failed to delete persona',
-        message: hivemindError.message || 'An error occurred while deleting persona',
+      return ApiResponse.error(res, 'Failed to delete persona', 500, undefined, {
+        message: hivemindError.message || 'An error occurred while deleting persona'
       });
     }
   }
@@ -861,9 +840,8 @@ router.post(
 
       // Validation
       if (!serverUrl) {
-        return res.status(400).json({
-          error: 'Validation error',
-          message: 'Server URL is required',
+        return ApiResponse.error(res, 'Validation error', 400, undefined, {
+          message: 'Server URL is required'
         });
       }
 
@@ -871,17 +849,15 @@ router.post(
       try {
         new URL(serverUrl);
       } catch {
-        return res.status(400).json({
-          error: 'Validation error',
-          message: 'Server URL must be a valid URL',
+        return ApiResponse.error(res, 'Validation error', 400, undefined, {
+          message: 'Server URL must be a valid URL'
         });
       }
 
       // Security Check: SSRF Protection
       if (!(await isSafeUrl(serverUrl))) {
-        return res.status(403).json({
-          error: 'Security Warning',
-          message: 'Target URL is blocked for security reasons (private/local network access).',
+        return ApiResponse.error(res, 'Security Warning', 403, undefined, {
+          message: 'Target URL is blocked for security reasons (private/local network access).'
         });
       }
 
@@ -901,9 +877,8 @@ router.post(
       });
     } catch (error: unknown) {
       const hivemindError = ErrorUtils.toHivemindError(error);
-      return res.status(500).json({
-        error: 'Failed to connect to MCP server',
-        message: hivemindError.message || 'An error occurred while connecting to MCP server',
+      return ApiResponse.error(res, 'Failed to connect to MCP server', 500, undefined, {
+        message: hivemindError.message || 'An error occurred while connecting to MCP server'
       });
     }
   }
@@ -920,9 +895,8 @@ router.post(
 
       // Validation
       if (!serverUrl || !name) {
-        return res.status(400).json({
-          error: 'Validation error',
-          message: 'Server URL and name are required',
+        return ApiResponse.error(res, 'Validation error', 400, undefined, {
+          message: 'Server URL and name are required'
         });
       }
 
@@ -930,17 +904,15 @@ router.post(
       try {
         new URL(serverUrl);
       } catch {
-        return res.status(400).json({
-          error: 'Validation error',
-          message: 'Server URL must be a valid URL',
+        return ApiResponse.error(res, 'Validation error', 400, undefined, {
+          message: 'Server URL must be a valid URL'
         });
       }
 
       // Security Check: SSRF Protection
       if (!(await isSafeUrl(serverUrl))) {
-        return res.status(403).json({
-          error: 'Security Warning',
-          message: 'Target URL is blocked for security reasons (private/local network access).',
+        return ApiResponse.error(res, 'Security Warning', 403, undefined, {
+          message: 'Target URL is blocked for security reasons (private/local network access).'
         });
       }
 
@@ -960,9 +932,8 @@ router.post(
       });
     } catch (error: unknown) {
       const hivemindError = ErrorUtils.toHivemindError(error);
-      return res.status(500).json({
-        error: 'Failed to connect to MCP server',
-        message: hivemindError.message || 'An error occurred while connecting to MCP server',
+      return ApiResponse.error(res, 'Failed to connect to MCP server', 500, undefined, {
+        message: hivemindError.message || 'An error occurred while connecting to MCP server'
       });
     }
   }
@@ -978,9 +949,8 @@ router.post(
 
       // Validation
       if (!name) {
-        return res.status(400).json({
-          error: 'Validation error',
-          message: 'Server name is required',
+        return ApiResponse.error(res, 'Validation error', 400, undefined, {
+          message: 'Server name is required'
         });
       }
 
@@ -993,9 +963,8 @@ router.post(
       });
     } catch (error: unknown) {
       const hivemindError = ErrorUtils.toHivemindError(error);
-      return res.status(500).json({
-        error: 'Failed to disconnect from MCP server',
-        message: hivemindError.message || 'An error occurred while disconnecting from MCP server',
+      return ApiResponse.error(res, 'Failed to disconnect from MCP server', 500, undefined, {
+        message: hivemindError.message || 'An error occurred while disconnecting from MCP server'
       });
     }
   }
@@ -1021,9 +990,8 @@ router.delete(
       });
     } catch (error: unknown) {
       const hivemindError = ErrorUtils.toHivemindError(error);
-      return res.status(500).json({
-        error: 'Failed to delete MCP server',
-        message: hivemindError.message || 'An error occurred while deleting MCP server',
+      return ApiResponse.error(res, 'Failed to delete MCP server', 500, undefined, {
+        message: hivemindError.message || 'An error occurred while deleting MCP server'
       });
     }
   }
@@ -1052,9 +1020,8 @@ router.get('/mcp-servers', (req: Request, res: Response) => {
     });
   } catch (error: unknown) {
     const hivemindError = ErrorUtils.toHivemindError(error);
-    return res.status(500).json({
-      error: 'Failed to retrieve MCP servers',
-      message: hivemindError.message || 'An error occurred while retrieving MCP servers',
+    return ApiResponse.error(res, 'Failed to retrieve MCP servers', 500, undefined, {
+      message: hivemindError.message || 'An error occurred while retrieving MCP servers'
     });
   }
 });
@@ -1071,9 +1038,8 @@ router.get(
       const tools = mcpService.getToolsFromServer(name);
 
       if (!tools) {
-        return res.status(404).json({
-          error: 'Server not found',
-          message: `MCP server ${name} not found or not connected`,
+        return ApiResponse.error(res, 'Server not found', 404, undefined, {
+          message: `MCP server ${name} not found or not connected`
         });
       }
 
@@ -1084,9 +1050,8 @@ router.get(
       });
     } catch (error: unknown) {
       const hivemindError = ErrorUtils.toHivemindError(error);
-      return res.status(500).json({
-        error: 'Failed to retrieve tools',
-        message: hivemindError.message || 'An error occurred while retrieving tools',
+      return ApiResponse.error(res, 'Failed to retrieve tools', 500, undefined, {
+        message: hivemindError.message || 'An error occurred while retrieving tools'
       });
     }
   }
@@ -1104,12 +1069,16 @@ router.get('/env-overrides', (req: Request, res: Response) => {
     });
   } catch (error: unknown) {
     const hivemindError = ErrorUtils.toHivemindError(error);
-    return res.status(500).json({
-      error: 'Failed to retrieve environment variable overrides',
-      message:
-        hivemindError.message ||
-        'An error occurred while retrieving environment variable overrides',
-    });
+    return ApiResponse.error(
+      res,
+      'Failed to retrieve environment variable overrides',
+      500,
+      undefined,
+      {
+        message: hivemindError.message ||
+        'An error occurred while retrieving environment variable overrides'
+      }
+    );
   }
 });
 
@@ -1178,9 +1147,8 @@ router.get('/providers', async (req: Request, res: Response) => {
   } catch (error) {
     const hivemindError = ErrorUtils.toHivemindError(error);
     debug('Error fetching providers:', hivemindError);
-    return res.status(500).json({
-      error: 'Failed to fetch providers',
-      message: hivemindError.message || 'An error occurred while fetching providers',
+    return ApiResponse.error(res, 'Failed to fetch providers', 500, undefined, {
+      message: hivemindError.message || 'An error occurred while fetching providers'
     });
   }
 });
@@ -1208,9 +1176,8 @@ router.get('/system-info', async (req: Request, res: Response) => {
   } catch (error) {
     const hivemindError = ErrorUtils.toHivemindError(error);
     debug('Error fetching system info:', hivemindError);
-    return res.status(500).json({
-      error: 'Failed to fetch system info',
-      message: hivemindError.message || 'An error occurred while fetching system info',
+    return ApiResponse.error(res, 'Failed to fetch system info', 500, undefined, {
+      message: hivemindError.message || 'An error occurred while fetching system info'
     });
   }
 });

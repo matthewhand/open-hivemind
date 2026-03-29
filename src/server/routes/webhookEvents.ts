@@ -1,6 +1,7 @@
 import Debug from 'debug';
 import { Router } from 'express';
 import { v4 as uuidv4 } from 'uuid';
+import { ApiResponse } from "../utils/ApiResponse";
 
 const debug = Debug('app:webui:webhook-events');
 const router = Router();
@@ -118,7 +119,7 @@ router.get('/events', (req, res) => {
     });
   } catch (error) {
     debug('Error listing webhook events:', error);
-    return res.status(500).json({ success: false, error: 'Failed to list webhook events' });
+    return ApiResponse.error(res, 'Failed to list webhook events', 500);
   }
 });
 
@@ -128,12 +129,12 @@ router.get('/events/:id', (req, res) => {
   try {
     const event = events.find((e) => e.id === req.params.id);
     if (!event) {
-      return res.status(404).json({ success: false, error: 'Event not found' });
+      return ApiResponse.error(res, 'Event not found', 404);
     }
     return res.json({ success: true, data: event });
   } catch (error) {
     debug('Error fetching webhook event:', error);
-    return res.status(500).json({ success: false, error: 'Failed to fetch webhook event' });
+    return ApiResponse.error(res, 'Failed to fetch webhook event', 500);
   }
 });
 
@@ -143,12 +144,12 @@ router.post('/events/:id/retry', async (req, res) => {
   try {
     const original = events.find((e) => e.id === req.params.id);
     if (!original) {
-      return res.status(404).json({ success: false, error: 'Event not found' });
+      return ApiResponse.error(res, 'Event not found', 404);
     }
 
     // Only allow retrying failed events
     if (original.statusCode < 400) {
-      return res.status(400).json({ success: false, error: 'Only failed events can be retried' });
+      return ApiResponse.error(res, 'Only failed events can be retried', 400);
     }
 
     // Record a retry attempt with a simulated 202 Accepted
@@ -174,7 +175,7 @@ router.post('/events/:id/retry', async (req, res) => {
     });
   } catch (error) {
     debug('Error retrying webhook event:', error);
-    return res.status(500).json({ success: false, error: 'Failed to retry webhook event' });
+    return ApiResponse.error(res, 'Failed to retry webhook event', 500);
   }
 });
 

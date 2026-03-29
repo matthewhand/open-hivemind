@@ -3,6 +3,7 @@ import { Router } from 'express';
 import type { AuthMiddlewareRequest } from '../../auth/types';
 import { DatabaseManager } from '../../database/DatabaseManager';
 import { AnomalyDetectionService } from '../../services/AnomalyDetectionService';
+import { ApiResponse } from "../utils/ApiResponse";
 
 const debug = Debug('app:webui:anomaly');
 const router = Router();
@@ -29,7 +30,7 @@ router.get('/', async (req: AuthMiddlewareRequest, res) => {
   try {
     const dbManager = DatabaseManager.getInstance();
     if (!dbManager.isConnected()) {
-      res.status(503).json({ error: 'Database not connected' });
+      ApiResponse.error(res, 'Database not connected', 503);
       return;
     }
 
@@ -43,9 +44,9 @@ router.get('/', async (req: AuthMiddlewareRequest, res) => {
     debug('Error fetching active anomalies:', error);
     // Return 503 for connection-related errors, 500 for other errors
     if (isConnectionError(error)) {
-      res.status(503).json({ error: 'Database connection error' });
+      ApiResponse.error(res, 'Database connection error', 503);
     } else {
-      res.status(500).json({ error: 'Failed to fetch active anomalies' });
+      ApiResponse.error(res, 'Failed to fetch active anomalies', 500);
     }
   }
 });
@@ -55,7 +56,7 @@ router.get('/history', async (req: AuthMiddlewareRequest, res) => {
   try {
     const dbManager = DatabaseManager.getInstance();
     if (!dbManager.isConnected()) {
-      res.status(503).json({ error: 'Database not connected' });
+      ApiResponse.error(res, 'Database not connected', 503);
       return;
     }
 
@@ -67,9 +68,9 @@ router.get('/history', async (req: AuthMiddlewareRequest, res) => {
     debug('Error fetching anomaly history:', error);
     // Return 503 for connection-related errors, 500 for other errors
     if (isConnectionError(error)) {
-      res.status(503).json({ error: 'Database connection error' });
+      ApiResponse.error(res, 'Database connection error', 503);
     } else {
-      res.status(500).json({ error: 'Failed to fetch anomaly history' });
+      ApiResponse.error(res, 'Failed to fetch anomaly history', 500);
     }
   }
 });
@@ -85,11 +86,11 @@ router.post('/:id/resolve', async (req: AuthMiddlewareRequest, res) => {
     if (success) {
       res.json({ success: true });
     } else {
-      res.status(404).json({ error: 'Anomaly not found' });
+      ApiResponse.error(res, 'Anomaly not found', 404);
     }
   } catch (error) {
     debug('Error resolving anomaly:', error);
-    res.status(500).json({ error: 'Failed to resolve anomaly' });
+    ApiResponse.error(res, 'Failed to resolve anomaly', 500);
   }
 });
 

@@ -1,5 +1,6 @@
 import { Router, type Request, type Response } from 'express';
 import { providerRegistry } from '../../registries/ProviderRegistry';
+import { ApiResponse } from "../utils/ApiResponse";
 
 const router = Router();
 
@@ -31,10 +32,7 @@ router.get('/memory', async (_req: Request, res: Response) => {
       providers: results,
     });
   } catch (err: any) {
-    return res.status(500).json({
-      error: 'Failed to retrieve memory providers',
-      message: err.message,
-    });
+    return ApiResponse.error(res, 'Failed to retrieve memory providers', 500, undefined, { message: err.message });
   }
 });
 
@@ -83,10 +81,7 @@ router.get('/tool', async (_req: Request, res: Response) => {
       providers: results,
     });
   } catch (err: any) {
-    return res.status(500).json({
-      error: 'Failed to retrieve tool providers',
-      message: err.message,
-    });
+    return ApiResponse.error(res, 'Failed to retrieve tool providers', 500, undefined, { message: err.message });
   }
 });
 
