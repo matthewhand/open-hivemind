@@ -80,7 +80,6 @@ test.describe('Persona CRUD Lifecycle', () => {
     const createButton = page.locator('button:has-text("Create Persona")').first();
     if ((await createButton.count()) > 0) {
       await createButton.click();
-      await page.waitForTimeout(500);
 
       const nameInput = page.locator('input[placeholder="e.g. Friendly Helper"]');
       if ((await nameInput.count()) > 0) {
@@ -95,7 +94,6 @@ test.describe('Persona CRUD Lifecycle', () => {
       const saveButton = page.locator('dialog.modal[open] button.btn-primary');
       if ((await saveButton.count()) > 0) {
         await saveButton.click();
-        await page.waitForTimeout(1000);
       }
     }
   });
@@ -203,7 +201,6 @@ test.describe('Persona CRUD Lifecycle', () => {
     const searchInput = page.getByPlaceholder(/search/i).first();
     if ((await searchInput.count()) > 0) {
       await searchInput.fill('Beta');
-      await page.waitForTimeout(500);
       await expect(page.getByText('Beta Writer')).toBeVisible();
     }
   });
@@ -225,7 +222,6 @@ test.describe('Persona CRUD Lifecycle', () => {
     const copyBtn = page.locator('button[title*="Copy"], button[aria-label*="Copy"]').first();
     if ((await copyBtn.count()) > 0) {
       await copyBtn.click();
-      await page.waitForTimeout(300);
     }
   });
 

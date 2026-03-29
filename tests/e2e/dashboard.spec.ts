@@ -54,9 +54,6 @@ test.describe('Dashboard experience', () => {
     await navigateAndWaitReady(page, '/admin/overview');
 
     // Wait for stats to load
-    await page.waitForTimeout(2000);
-
-    // Check for stat cards
     const stats = page.locator('[class*="stat"], [class*="card"]');
     await page.screenshot({ path: 'test-results/dashboard-04-stats.png', fullPage: true });
 

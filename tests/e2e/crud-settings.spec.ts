@@ -126,9 +126,6 @@ test.describe('Settings CRUD Lifecycle', () => {
     const messagingTab = page.locator('[role="tab"]:has-text("Messag"), .tab:has-text("Messag"), button:has-text("Messag")').first();
     if ((await messagingTab.count()) > 0) {
       await messagingTab.click();
-      await page.waitForTimeout(500);
-
-      // URL should contain tab parameter or messaging reference
       const url = page.url();
       const hasTabParam = url.includes('tab=') || url.includes('messaging') || url.includes('Messag');
       // Some implementations may not use URL params; just verify the tab is active
@@ -153,7 +150,6 @@ test.describe('Settings CRUD Lifecycle', () => {
     const generalTab = page.locator('[role="tab"]:has-text("General"), .tab:has-text("General"), button:has-text("General")').first();
     if ((await generalTab.count()) > 0) {
       await generalTab.click();
-      await page.waitForTimeout(300);
     }
 
     // Edit instance name
@@ -161,21 +157,18 @@ test.describe('Settings CRUD Lifecycle', () => {
     if ((await nameInput.count()) > 0) {
       await nameInput.clear();
       await nameInput.fill('Updated Hivemind');
-      await page.waitForTimeout(200);
     }
 
     // Toggle maintenance mode
     const maintenanceToggle = page.locator('input[type="checkbox"][name*="maintenance" i], label:has-text("Maintenance") input[type="checkbox"]').first();
     if ((await maintenanceToggle.count()) > 0) {
       await maintenanceToggle.click();
-      await page.waitForTimeout(200);
     }
 
     // Save
     const saveBtn = page.locator('button:has-text("Save"), button[type="submit"]').first();
     if ((await saveBtn.count()) > 0) {
       await saveBtn.click();
-      await page.waitForTimeout(500);
     }
   });
 
@@ -189,9 +182,6 @@ test.describe('Settings CRUD Lifecycle', () => {
     const messagingTab = page.locator('[role="tab"]:has-text("Messag"), .tab:has-text("Messag"), button:has-text("Messag")').first();
     if ((await messagingTab.count()) > 0) {
       await messagingTab.click();
-      await page.waitForTimeout(500);
-
-      // Verify messaging-related content is visible
       await expect(page.locator('body')).toBeVisible();
       const providerText = page.getByText(/provider/i).first();
       if ((await providerText.count()) > 0) {
@@ -210,7 +200,6 @@ test.describe('Settings CRUD Lifecycle', () => {
     const llmTab = page.locator('[role="tab"]:has-text("LLM"), .tab:has-text("LLM"), button:has-text("LLM")').first();
     if ((await llmTab.count()) > 0) {
       await llmTab.click();
-      await page.waitForTimeout(500);
 
       await expect(page.locator('body')).toBeVisible();
       const llmContent = page.getByText(/temperature|model|token|provider/i).first();
@@ -230,7 +219,6 @@ test.describe('Settings CRUD Lifecycle', () => {
     const securityTab = page.locator('[role="tab"]:has-text("Security"), .tab:has-text("Security"), button:has-text("Security")').first();
     if ((await securityTab.count()) > 0) {
       await securityTab.click();
-      await page.waitForTimeout(500);
 
       await expect(page.locator('body')).toBeVisible();
       const securityContent = page.getByText(/password|session|timeout|login/i).first();
@@ -258,15 +246,11 @@ test.describe('Settings CRUD Lifecycle', () => {
     if ((await nameInput.count()) > 0) {
       await nameInput.clear();
       await nameInput.fill('Payload Test Instance');
-      await page.waitForTimeout(200);
     }
 
     const saveBtn = page.locator('button:has-text("Save"), button[type="submit"]').first();
     if ((await saveBtn.count()) > 0) {
       await saveBtn.click();
-      await page.waitForTimeout(500);
-
-      // Verify API was called
       if (savedPayload) {
         expect(savedPayload).toBeTruthy();
       }
@@ -287,15 +271,11 @@ test.describe('Settings CRUD Lifecycle', () => {
     if ((await nameInput.count()) > 0) {
       await nameInput.clear();
       await nameInput.fill('Toast Test');
-      await page.waitForTimeout(200);
     }
 
     const saveBtn = page.locator('button:has-text("Save"), button[type="submit"]').first();
     if ((await saveBtn.count()) > 0) {
       await saveBtn.click();
-      await page.waitForTimeout(500);
-
-      // Look for success toast or alert
       const toast = page.locator('.toast, [role="alert"], .alert-success, [class*="toast"]', { hasText: /saved|success/i }).first();
       if ((await toast.count()) > 0) {
         await expect(toast).toBeVisible();
@@ -320,15 +300,11 @@ test.describe('Settings CRUD Lifecycle', () => {
     if ((await nameInput.count()) > 0) {
       await nameInput.clear();
       await nameInput.fill('Error Test');
-      await page.waitForTimeout(200);
     }
 
     const saveBtn = page.locator('button:has-text("Save"), button[type="submit"]').first();
     if ((await saveBtn.count()) > 0) {
       await saveBtn.click();
-      await page.waitForTimeout(500);
-
-      // Page should handle error gracefully (error toast or alert)
       await expect(page.locator('body')).toBeVisible();
       const errorIndicator = page.locator('.toast, [role="alert"], .alert-error, [class*="error"]', { hasText: /error|fail/i }).first();
       if ((await errorIndicator.count()) > 0) {
@@ -348,9 +324,6 @@ test.describe('Settings CRUD Lifecycle', () => {
     const nameInput = page.locator('input[name*="name" i], input[placeholder*="instance" i], input[id*="name" i]').first();
     if ((await nameInput.count()) > 0) {
       await nameInput.clear();
-      await page.waitForTimeout(200);
-
-      // Check for validation indicators (red border, error text, disabled save)
       const hasError = await nameInput.evaluate((el) => {
         const classes = el.className;
         return classes.includes('error') || classes.includes('invalid') || el.getAttribute('aria-invalid') === 'true';
@@ -376,9 +349,6 @@ test.describe('Settings CRUD Lifecycle', () => {
     if ((await nameInput.count()) > 0) {
       await nameInput.clear();
       await nameInput.fill('Unsaved Changes Test');
-      await page.waitForTimeout(300);
-
-      // Look for unsaved changes indicator (badge, dot, text, or modified save button)
       const unsavedIndicator = page.locator('text=/unsaved/i, text=/modified/i, .badge-warning, [class*="unsaved"]').first();
       if ((await unsavedIndicator.count()) > 0) {
         await expect(unsavedIndicator).toBeVisible();
@@ -399,7 +369,6 @@ test.describe('Settings CRUD Lifecycle', () => {
 
     // Navigate directly to security tab via query param
     await page.goto('/admin/settings?tab=security');
-    await page.waitForTimeout(500);
 
     await expect(page.locator('body')).toBeVisible();
 

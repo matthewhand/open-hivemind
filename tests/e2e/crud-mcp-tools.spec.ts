@@ -376,8 +376,10 @@ test.describe('MCP Tools CRUD Lifecycle', () => {
   });
 
   test('tool execution loading state', async ({ page }) => {
+    let completeExecution: () => void;
+    const executionPromise = new Promise<void>((resolve) => { completeExecution = resolve; });
     await page.route('**/api/mcp/servers/*/call-tool', async (route) => {
-      await new Promise((r) => setTimeout(r, 2000));
+      await executionPromise;
       await route.fulfill({ status: 200, json: mockExecutionResult });
     });
     await page.route('**/api/mcp/servers', (route) => {

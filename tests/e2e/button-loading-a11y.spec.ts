@@ -44,9 +44,6 @@ test('AIAssistButton Loading State Accessibility', async ({ page }) => {
   await page.goto('/admin/bots/create');
 
   // Wait for page to settle
-  await page.waitForTimeout(2000);
-
-  // Look for any AI assist button (may use different aria-label or text)
   const button = page.locator('button[aria-label="Generate Name"], button:has-text("Generate"), button[aria-label*="AI"]').first();
 
   if (await button.isVisible().catch(() => false)) {
@@ -62,9 +59,6 @@ test('AIAssistButton Loading State Accessibility', async ({ page }) => {
     await button.click();
 
     // Wait a bit for state to update
-    await page.waitForTimeout(500);
-
-    // Take screenshot
     await page.screenshot({ path: 'docs/screenshots/ai-assist-button-after.png' });
 
     // Since button might be disabled, let's just grab the attributes from any button that is disabled

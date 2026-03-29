@@ -92,7 +92,7 @@ test.describe('Bot Search Screenshots', () => {
     await page.setViewportSize({ width: 1280, height: 800 });
 
     // Wait for animations to settle
-    await page.waitForTimeout(500);
+    await page.waitForLoadState('networkidle');
 
     // Screenshot the Bots Page which has the search and filter bar
     await page.screenshot({ path: 'docs/screenshots/bots-page.png', fullPage: true });
@@ -102,7 +102,7 @@ test.describe('Bot Search Screenshots', () => {
     await searchInput.fill('Support');
 
     // Wait for the UI to update
-    await page.waitForTimeout(500);
+    await page.waitForLoadState('networkidle');
 
     // Screenshot the filtered results
     await page.screenshot({ path: 'docs/screenshots/bot-search-filtered.png', fullPage: true });

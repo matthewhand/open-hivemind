@@ -75,9 +75,14 @@ test.describe('ChatPage Optimistic Message Rollback', () => {
   });
 
   test('sending a message optimistically updates and rolls back on failure', async ({ page }) => {
-    // Setup delayed failure mock for message sending so we can see the optimistic state
+    // Setup manual deferred failure mock for message sending to verify optimistic state
+    let failMessage: () => void;
+    const messagePromise = new Promise<void>((resolve) => {
+      failMessage = resolve;
+    });
+
     await page.route('**/api/bots/*/message', async (route) => {
-      await new Promise((resolve) => setTimeout(resolve, 500)); // Delay to see optimistic UI
+      await messagePromise;
       await route.fulfill({
         status: 500,
         json: { error: 'Failed to send message' },
@@ -109,14 +114,19 @@ test.describe('ChatPage Optimistic Message Rollback', () => {
     // Take a screenshot of the optimistic state
     await page.screenshot({ path: 'docs/screenshots/chatpage-optimistic.png' });
 
+    // Resolve the promise to trigger the backend failure
+    failMessage!();
+
     // Wait for the failure to resolve and rollback to occur
+    await expect(page.getByText('Sending...')).not.toBeVisible({ timeout: 5000 });
+
     // The rollback will mark the optimistic message as failed (Retry button, error indicator, or message removal)
-    await page.waitForTimeout(1500);
-    // The message should either show a retry indicator or be removed
-    const retryVisible = await page.getByText('Retry').isVisible().catch(() => false);
-    const errorVisible = await page.getByText(/failed|error/i).first().isVisible().catch(() => false);
-    // At minimum, the sending indicator should be gone
-    await expect(page.getByText('Sending...')).not.toBeVisible({ timeout: 2000 });
+    // Just verify the error state
+    await expect(async () => {
+      const retryVisible = await page.getByText('Retry').isVisible().catch(() => false);
+      const errorVisible = await page.getByText(/failed|error/i).first().isVisible().catch(() => false);
+      expect(retryVisible || errorVisible).toBe(true);
+    }).toPass({ timeout: 5000 });
 
     // Take a screenshot of the rollback state
     await page.screenshot({ path: 'docs/screenshots/chatpage-rollback.png' });
@@ -152,9 +162,14 @@ test.describe('ChatPage Optimistic Message Rollback', () => {
       });
     });
 
-    // Setup high latency mock
+    // Setup manual latency mock
+    let resolveMessage: () => void;
+    const latencyPromise = new Promise<void>((resolve) => {
+      resolveMessage = resolve;
+    });
+
     await page.route('**/api/bots/*/message', async (route) => {
-      await new Promise((resolve) => setTimeout(resolve, 2000)); // 2 seconds latency
+      await latencyPromise;
       messageSent = true;
       await route.fulfill({
         status: 200,
@@ -177,6 +192,9 @@ test.describe('ChatPage Optimistic Message Rollback', () => {
     // Take a screenshot showing the loading indicator clearly
     await page.screenshot({ path: 'docs/screenshots/chatpage-latency.png' });
 
+    // Let the latency end
+    resolveMessage!();
+
     // Wait for latency to clear and 'Sending...' to disappear
     await expect(page.getByText('Sending...')).not.toBeVisible({ timeout: 4000 });
     // Verify the message persists and hasn't rolled back
@@ -195,16 +213,19 @@ test.describe('ChatPage Optimistic Message Rollback', () => {
     // Dispatch the offline event manually since context.setOffline may not trigger window events
     await page.evaluate(() => window.dispatchEvent(new Event('offline')));
 
-    // Wait for the UI to reflect offline status
-    await page.waitForTimeout(1000);
-
-    // Check for any offline indicator (text, disabled input, etc.)
+    // Wait for the UI to reflect offline status dynamically
     const offlineText = page.getByText(/offline/i).first();
     const offlinePlaceholder = page.getByPlaceholder(/offline/i).first();
+    const offlineInput = page.locator('input[disabled], textarea[disabled]').first();
 
-    if (await offlineText.isVisible().catch(() => false)) {
-      await expect(offlineText).toBeVisible();
-    }
+    await expect(async () => {
+      const isTextVisible = await offlineText.isVisible().catch(() => false);
+      const isPlaceholderVisible = await offlinePlaceholder.isVisible().catch(() => false);
+      const isInputDisabled = await offlineInput.isVisible().catch(() => false);
+      expect(isTextVisible || isPlaceholderVisible || isInputDisabled).toBeTruthy();
+    }).toPass({ timeout: 5000 }).catch(() => {
+      // Graceful fallback if UI does not reflect offline state
+    });
 
     // Screenshot offline mode
     await page.screenshot({ path: 'docs/screenshots/chatpage-offline.png' });
@@ -212,12 +233,14 @@ test.describe('ChatPage Optimistic Message Rollback', () => {
     // Simulate online
     await context.setOffline(false);
     await page.evaluate(() => window.dispatchEvent(new Event('online')));
-    await page.waitForTimeout(1000);
 
     // The input should be available again
     const chatInput = page.locator('input[type="text"], textarea').last();
-    if (await chatInput.isVisible().catch(() => false)) {
-      await expect(chatInput).toBeEnabled();
-    }
+    await expect(async () => {
+      const isVisible = await chatInput.isVisible().catch(() => false);
+      if (isVisible) {
+         await expect(chatInput).toBeEnabled();
+      }
+    }).toPass({ timeout: 5000 });
   });
 });

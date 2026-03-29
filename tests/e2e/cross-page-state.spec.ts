@@ -90,7 +90,6 @@ test.describe('Cross-Page State', () => {
         if ((await selects.count()) >= 1) {
           await selects.nth(0).selectOption('discord');
         }
-        await page.waitForTimeout(300);
       }
 
       // Mock activity endpoint to include the new bot in filter options
@@ -107,9 +106,6 @@ test.describe('Cross-Page State', () => {
 
       // Navigate to activity page
       await page.goto('/admin/activity');
-      await page.waitForTimeout(1000);
-
-      // The bot should appear somewhere on the activity page (filter dropdown or text)
       const pageContent = await page.content();
       if (bots.length > 0) {
         // Verify the page loaded without crashing
@@ -148,14 +144,10 @@ test.describe('Cross-Page State', () => {
 
       // Verify bots page shows the bot
       await page.goto('/admin/bots');
-      await page.waitForTimeout(500);
       await expect(page.getByText('Chat-Ready Bot')).toBeVisible({ timeout: 10000 }).catch(() => {});
 
       // Navigate to chat page
       await page.goto('/admin/chat');
-      await page.waitForTimeout(1000);
-
-      // The bot should be selectable in chat
       const botSelector = page.locator('select, [role="listbox"], [role="combobox"]').first();
       if ((await botSelector.count()) > 0) {
         const options = await botSelector.locator('option').allTextContents();
@@ -216,13 +208,7 @@ test.describe('Cross-Page State', () => {
 
       // Visit bots page first
       await page.goto('/admin/bots');
-      await page.waitForTimeout(500);
-
-      // Navigate to analytics
       await page.goto('/admin/analytics');
-      await page.waitForTimeout(1000);
-
-      // Bot should appear in the analytics performance table
       const analyticsContent = page.getByText(botName);
       if ((await analyticsContent.count()) > 0) {
         await expect(analyticsContent.first()).toBeVisible();
@@ -271,10 +257,8 @@ test.describe('Cross-Page State', () => {
       );
 
       await page.goto('/admin/bots');
-      await page.waitForTimeout(500);
 
       await page.goto('/admin/monitoring');
-      await page.waitForTimeout(1000);
 
       expect(page.url()).toContain('/admin/monitoring');
     });
@@ -324,18 +308,13 @@ test.describe('Cross-Page State', () => {
       );
 
       await page.goto('/admin/bots');
-      await page.waitForTimeout(500);
-
-      // Start the bot
       const startBtn = page.locator('button').filter({ hasText: /start/i }).first();
       if ((await startBtn.count()) > 0 && (await startBtn.isEnabled())) {
         await startBtn.click();
-        await page.waitForTimeout(500);
       }
 
       // Navigate to monitoring
       await page.goto('/admin/monitoring');
-      await page.waitForTimeout(1000);
 
       expect(page.url()).toContain('/admin/monitoring');
     });
@@ -376,25 +355,18 @@ test.describe('Cross-Page State', () => {
 
       // Visit bots page and delete
       await page.goto('/admin/bots');
-      await page.waitForTimeout(500);
 
       const deleteBtn = page.locator('button').filter({ hasText: /delete/i }).first();
       if ((await deleteBtn.count()) > 0) {
         await deleteBtn.click();
-        await page.waitForTimeout(300);
-        // Confirm deletion if dialog appears
         const confirmBtn = page.locator('button').filter({ hasText: /confirm|yes|delete/i }).first();
         if ((await confirmBtn.count()) > 0) {
           await confirmBtn.click();
-          await page.waitForTimeout(500);
         }
       }
 
       // Navigate to chat
       await page.goto('/admin/chat');
-      await page.waitForTimeout(1000);
-
-      // Deleted bot should not appear
       const botText = page.getByText('Deletable Bot');
       await expect(botText).toHaveCount(0).catch(() => {
         // Bot text might still appear in some non-selector context; that is acceptable
@@ -442,12 +414,10 @@ test.describe('Cross-Page State', () => {
 
       // Create persona
       await page.goto('/admin/personas');
-      await page.waitForTimeout(500);
 
       const createBtn = page.locator('button').filter({ hasText: /create|new|add/i }).first();
       if ((await createBtn.count()) > 0) {
         await createBtn.click();
-        await page.waitForTimeout(500);
 
         const modal = page.locator('.modal-box, [role="dialog"]').first();
         if ((await modal.count()) > 0) {
@@ -460,7 +430,6 @@ test.describe('Cross-Page State', () => {
 
       // Navigate to bot creation
       await page.goto('/admin/bots');
-      await page.waitForTimeout(500);
 
       expect(page.url()).toContain('/admin/bots');
     });
@@ -539,12 +508,10 @@ test.describe('Cross-Page State', () => {
 
       // Visit personas page
       await page.goto('/admin/personas');
-      await page.waitForTimeout(500);
       await expect(page.getByText('Original Persona')).toBeVisible({ timeout: 10000 }).catch(() => {});
 
       // Navigate to bots - persona name should reflect across pages
       await page.goto('/admin/bots');
-      await page.waitForTimeout(500);
       expect(page.url()).toContain('/admin/bots');
     });
 
@@ -583,22 +550,18 @@ test.describe('Cross-Page State', () => {
 
       // Delete persona on personas page
       await page.goto('/admin/personas');
-      await page.waitForTimeout(500);
 
       const deleteBtn = page.locator('button').filter({ hasText: /delete/i }).first();
       if ((await deleteBtn.count()) > 0) {
         await deleteBtn.click();
-        await page.waitForTimeout(300);
         const confirmBtn = page.locator('button').filter({ hasText: /confirm|yes|delete/i }).first();
         if ((await confirmBtn.count()) > 0) {
           await confirmBtn.click();
-          await page.waitForTimeout(500);
         }
       }
 
       // Navigate to bots page - persona should be gone
       await page.goto('/admin/bots');
-      await page.waitForTimeout(500);
 
       const personaText = page.getByText('Deletable Persona');
       await expect(personaText).toHaveCount(0).catch(() => {});
@@ -634,11 +597,7 @@ test.describe('Cross-Page State', () => {
 
       // Change setting on settings page
       await page.goto('/admin/settings');
-      await page.waitForTimeout(1000);
-
-      // Navigate to config and verify
       await page.goto('/admin/config');
-      await page.waitForTimeout(1000);
 
       expect(page.url()).toContain('/admin/config');
     });
@@ -667,11 +626,7 @@ test.describe('Cross-Page State', () => {
 
       // Visit LLM config page
       await page.goto('/admin/config');
-      await page.waitForTimeout(500);
-
-      // Navigate to bots page to see LLM profiles available
       await page.goto('/admin/bots');
-      await page.waitForTimeout(500);
 
       expect(page.url()).toContain('/admin/bots');
     });
@@ -701,11 +656,7 @@ test.describe('Cross-Page State', () => {
 
       // Visit guards page
       await page.goto('/admin/guards');
-      await page.waitForTimeout(500);
-
-      // Navigate to bots page
       await page.goto('/admin/bots');
-      await page.waitForTimeout(500);
 
       expect(page.url()).toContain('/admin/bots');
     });
@@ -750,23 +701,15 @@ test.describe('Cross-Page State', () => {
 
       // Go to bots page and apply a search filter
       await page.goto('/admin/bots');
-      await page.waitForTimeout(500);
 
       const searchInput = page.locator('input[type="search"], input[placeholder*="earch"]').first();
       if ((await searchInput.count()) > 0) {
         await searchInput.fill('Filter Bot');
-        await page.waitForTimeout(300);
       }
 
       // Navigate away
       await page.goto('/admin/personas');
-      await page.waitForTimeout(500);
-
-      // Navigate back
       await page.goto('/admin/bots');
-      await page.waitForTimeout(500);
-
-      // Search input should be empty (no stale state)
       const searchAfter = page.locator('input[type="search"], input[placeholder*="earch"]').first();
       if ((await searchAfter.count()) > 0) {
         const value = await searchAfter.inputValue();
@@ -786,12 +729,10 @@ test.describe('Cross-Page State', () => {
 
       // Open create modal on bots page
       await page.goto('/admin/bots');
-      await page.waitForTimeout(500);
 
       const createBtn = page.locator('button').filter({ hasText: /create|new|add/i }).first();
       if ((await createBtn.count()) > 0) {
         await createBtn.click();
-        await page.waitForTimeout(500);
       }
 
       const modal = page.locator('.modal-box, [role="dialog"]').first();
@@ -799,13 +740,7 @@ test.describe('Cross-Page State', () => {
 
       // Navigate away
       await page.goto('/admin/personas');
-      await page.waitForTimeout(500);
-
-      // Come back
       await page.goto('/admin/bots');
-      await page.waitForTimeout(500);
-
-      // Modal should be closed
       const modalAfter = page.locator('.modal-box, [role="dialog"]').first();
       if ((await modalAfter.count()) > 0) {
         await expect(modalAfter).not.toBeVisible().catch(() => {});
@@ -842,24 +777,14 @@ test.describe('Cross-Page State', () => {
       );
 
       await page.goto('/admin/bots');
-      await page.waitForTimeout(500);
-
-      // Type in search
       const searchInput = page.locator('input[type="search"], input[placeholder*="earch"]').first();
       if ((await searchInput.count()) > 0) {
         await searchInput.fill('SearchBot');
-        await page.waitForTimeout(300);
       }
 
       // Navigate to personas
       await page.goto('/admin/personas');
-      await page.waitForTimeout(500);
-
-      // Navigate back to bots
       await page.goto('/admin/bots');
-      await page.waitForTimeout(500);
-
-      // Search should be cleared
       const searchAfter = page.locator('input[type="search"], input[placeholder*="earch"]').first();
       if ((await searchAfter.count()) > 0) {
         const value = await searchAfter.inputValue();
@@ -884,9 +809,6 @@ test.describe('Cross-Page State', () => {
       );
 
       await page.goto('/admin/bots');
-      await page.waitForTimeout(500);
-
-      // Check auth token exists
       const tokenBefore = await page.evaluate(() => localStorage.getItem('auth_tokens'));
       expect(tokenBefore).toBeTruthy();
       const parsed = JSON.parse(tokenBefore!);
@@ -894,13 +816,8 @@ test.describe('Cross-Page State', () => {
 
       // Navigate to multiple pages
       await page.goto('/admin/personas');
-      await page.waitForTimeout(300);
       await page.goto('/admin/config');
-      await page.waitForTimeout(300);
       await page.goto('/admin/settings');
-      await page.waitForTimeout(300);
-
-      // Check token still exists
       const tokenAfter = await page.evaluate(() => localStorage.getItem('auth_tokens'));
       expect(tokenAfter).toBeTruthy();
       expect(JSON.parse(tokenAfter!).accessToken).toBe(parsed.accessToken);
@@ -922,16 +839,13 @@ test.describe('Cross-Page State', () => {
       });
 
       await page.goto('/admin/bots');
-      await page.waitForTimeout(500);
 
       const themeBefore = await page.evaluate(() => localStorage.getItem('theme'));
       expect(themeBefore).toBe('dark');
 
       // Navigate through pages
       await page.goto('/admin/personas');
-      await page.waitForTimeout(300);
       await page.goto('/admin/settings');
-      await page.waitForTimeout(300);
 
       const themeAfter = await page.evaluate(() => localStorage.getItem('theme'));
       expect(themeAfter).toBe('dark');
@@ -960,18 +874,11 @@ test.describe('Cross-Page State', () => {
 
       // Navigate to settings with a specific tab
       await page.goto('/admin/settings?tab=security');
-      await page.waitForTimeout(1000);
-
-      // Verify URL has tab parameter
       expect(page.url()).toContain('settings');
 
       // Navigate away
       await page.goto('/admin/bots');
-      await page.waitForTimeout(500);
-
-      // Navigate back to settings with the same tab
       await page.goto('/admin/settings?tab=security');
-      await page.waitForTimeout(500);
 
       expect(page.url()).toContain('settings');
     });

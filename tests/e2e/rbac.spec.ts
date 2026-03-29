@@ -53,7 +53,6 @@ test.describe('Role-Based Access Control', () => {
 
     for (const pagePath of adminPages) {
       await page.goto(pagePath);
-      await page.waitForTimeout(1000);
       expect(page.url()).toContain('/admin');
     }
     await page.screenshot({ path: 'test-results/rbac-01-admin-access.png', fullPage: true });

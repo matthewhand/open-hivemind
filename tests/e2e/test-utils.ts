@@ -136,7 +136,7 @@ export async function setupTestWithErrorDetection(page: Page): Promise<string[]>
  */
 export async function waitForPageReady(page: Page, timeout = 5000) {
   // await page.waitForLoadState('networkidle');
-  await page.waitForTimeout(Math.min(timeout, 1000)); // Small stabilization delay
+  await page.waitForLoadState('domcontentloaded');
 }
 
 /**

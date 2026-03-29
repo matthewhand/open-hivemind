@@ -12,7 +12,6 @@ test.describe('Login', () => {
     const errors = setupErrorCollection(page);
     await page.goto('/login');
     await page.waitForLoadState('networkidle');
-    await page.waitForTimeout(1000);
 
     await page.screenshot({ path: 'test-results/login-01-page.png', fullPage: true });
     await assertNoErrors(errors, 'Login page render');
@@ -72,7 +71,6 @@ test.describe('Login', () => {
 
     await page.goto('/admin/overview');
     await page.waitForLoadState('networkidle');
-    await page.waitForTimeout(1000);
 
     expect(page.url()).toContain('/admin');
     await page.screenshot({ path: 'test-results/login-03-redirect.png', fullPage: true });

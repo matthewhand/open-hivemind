@@ -115,7 +115,6 @@ test.describe('Bots Search and Filter', () => {
     await searchInput.fill('Support');
 
     // Wait for filter to apply
-    await page.waitForTimeout(500);
 
     const botRows = page.locator('.card.bg-base-100');
     // We expect 1 visible row
@@ -136,7 +135,6 @@ test.describe('Bots Search and Filter', () => {
 
     const searchInput = page.locator('input[placeholder="Search..."]');
     await searchInput.fill('Internal');
-    await page.waitForTimeout(500);
 
     const botRows = page.locator('.card.bg-base-100');
     const visibleBot = botRows.filter({ hasText: 'Internal Helper' });
@@ -153,7 +151,6 @@ test.describe('Bots Search and Filter', () => {
 
     const searchInput = page.locator('input[placeholder="Search..."]');
     await searchInput.fill('Creative');
-    await page.waitForTimeout(500);
 
     const botRows = page.locator('.card.bg-base-100');
     const visibleBot = botRows.filter({ hasText: 'Creative Writer' });
@@ -170,7 +167,6 @@ test.describe('Bots Search and Filter', () => {
 
     const searchInput = page.locator('input[placeholder="Search..."]');
     await searchInput.fill('NonExistentBot');
-    await page.waitForTimeout(500);
 
     await expect(page.locator('text=No agents found')).toBeVisible();
 

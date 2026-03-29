@@ -105,7 +105,6 @@ test.describe('Guard Profile CRUD Lifecycle', () => {
     const createBtn = page.locator('button:has-text("Create"), button:has-text("New Profile"), button:has-text("Add")').first();
     if ((await createBtn.count()) > 0) {
       await createBtn.click();
-      await page.waitForTimeout(500);
 
       const modal = page.locator('.modal-box, [role="dialog"], dialog.modal[open]').first();
       if ((await modal.count()) > 0) {
@@ -148,7 +147,6 @@ test.describe('Guard Profile CRUD Lifecycle', () => {
     const editBtn = card.locator('button:has-text("Edit"), button[title*="Edit"]').first();
     if ((await editBtn.count()) > 0) {
       await editBtn.click();
-      await page.waitForTimeout(500);
     }
   });
 
@@ -180,7 +178,6 @@ test.describe('Guard Profile CRUD Lifecycle', () => {
     const dupBtn = card.locator('button[title="Duplicate Profile"]').first();
     if ((await dupBtn.count()) > 0) {
       await dupBtn.click();
-      await page.waitForTimeout(500);
 
       const modal = page.locator('.modal-box, dialog.modal[open]').first();
       if ((await modal.count()) > 0) {

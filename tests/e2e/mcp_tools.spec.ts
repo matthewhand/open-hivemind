@@ -67,9 +67,6 @@ test.describe('MCP Tools Page - Run Tool Modal', () => {
 
     // Switch to JSON mode
     await page.getByRole('button', { name: 'Raw JSON' }).click();
-    await page.waitForTimeout(500);
-
-    // Enter invalid JSON
     const textarea = page.locator('.modal-box textarea');
     await textarea.fill('{ invalid json }');
 
@@ -111,9 +108,6 @@ test.describe('MCP Tools Page - Run Tool Modal', () => {
 
     // Switch to JSON mode
     await page.getByRole('button', { name: 'Raw JSON' }).click();
-    await page.waitForTimeout(500);
-
-    // Enter valid JSON
     const textarea = page.locator('.modal-box textarea');
     await textarea.fill(JSON.stringify({ arg1: 'value' }));
 

@@ -124,9 +124,6 @@ test.describe('Bot Configuration CRUD Lifecycle', () => {
     );
 
     await page.goto('/admin/configuration');
-    await page.waitForTimeout(1000);
-
-    // Verify section labels appear (capitalized config names)
     const generalSection = page.getByText('General').first();
     await expect(generalSection).toBeVisible({ timeout: 5000 });
 
@@ -150,18 +147,11 @@ test.describe('Bot Configuration CRUD Lifecycle', () => {
     );
 
     await page.goto('/admin/configuration');
-    await page.waitForTimeout(1000);
-
-    // Click on a section header to expand/collapse
     const sectionHeader = page.locator('button:has-text("general"), button:has-text("llm"), button:has-text("messaging"), button:has-text("security")').first();
     if ((await sectionHeader.count()) > 0) {
       // Expand
       await sectionHeader.click();
-      await page.waitForTimeout(300);
-
-      // Collapse
       await sectionHeader.click();
-      await page.waitForTimeout(300);
     }
   });
 
@@ -174,9 +164,6 @@ test.describe('Bot Configuration CRUD Lifecycle', () => {
     );
 
     await page.goto('/admin/configuration');
-    await page.waitForTimeout(1000);
-
-    // General section is expanded by default — find Instance Name input
     // The first textbox in the general section region is instanceName
     const generalRegion = page.locator('region').first();
     const instanceNameInput = generalRegion.locator('input[type="text"], input[type="password"]').first();
@@ -184,7 +171,6 @@ test.describe('Bot Configuration CRUD Lifecycle', () => {
       await expect(instanceNameInput).toHaveValue('My Hivemind');
       await instanceNameInput.clear();
       await instanceNameInput.fill('Updated Hivemind');
-      await page.waitForTimeout(200);
       await expect(instanceNameInput).toHaveValue('Updated Hivemind');
     }
   });
@@ -198,13 +184,9 @@ test.describe('Bot Configuration CRUD Lifecycle', () => {
     );
 
     await page.goto('/admin/configuration');
-    await page.waitForTimeout(1000);
-
-    // Expand general section
     const generalHeader = page.locator('button:has-text("general")').first();
     if ((await generalHeader.count()) > 0) {
       await generalHeader.click();
-      await page.waitForTimeout(300);
     }
 
     // Find Debug Mode toggle
@@ -215,8 +197,6 @@ test.describe('Bot Configuration CRUD Lifecycle', () => {
     if ((await toggleByLabel.count()) > 0) {
       const isChecked = await toggleByLabel.isChecked();
       await toggleByLabel.click();
-      await page.waitForTimeout(200);
-      // State should toggle
       if (isChecked) {
         await expect(toggleByLabel).not.toBeChecked();
       } else {
@@ -224,7 +204,6 @@ test.describe('Bot Configuration CRUD Lifecycle', () => {
       }
     } else if ((await anyToggle.count()) > 0) {
       await anyToggle.click();
-      await page.waitForTimeout(200);
     }
   });
 
@@ -237,20 +216,15 @@ test.describe('Bot Configuration CRUD Lifecycle', () => {
     );
 
     await page.goto('/admin/configuration');
-    await page.waitForTimeout(1000);
-
-    // Expand general section
     const generalHeader = page.locator('button:has-text("general")').first();
     if ((await generalHeader.count()) > 0) {
       await generalHeader.click();
-      await page.waitForTimeout(300);
     }
 
     // Find log level select
     const logLevelSelect = page.locator('select:has(option[value="info"]), select:has(option:has-text("info"))').first();
     if ((await logLevelSelect.count()) > 0) {
       await logLevelSelect.selectOption('warn');
-      await page.waitForTimeout(200);
       await expect(logLevelSelect).toHaveValue('warn');
     }
   });
@@ -272,13 +246,9 @@ test.describe('Bot Configuration CRUD Lifecycle', () => {
     );
 
     await page.goto('/admin/configuration');
-    await page.waitForTimeout(1000);
-
-    // Look for a Save button
     const saveBtn = page.locator('button:has-text("Save"), button:has-text("Apply"), button[type="submit"]').first();
     if ((await saveBtn.count()) > 0) {
       await saveBtn.click();
-      await page.waitForTimeout(500);
     }
   });
 
@@ -294,14 +264,10 @@ test.describe('Bot Configuration CRUD Lifecycle', () => {
     );
 
     await page.goto('/admin/configuration');
-    await page.waitForTimeout(1000);
 
     const saveBtn = page.locator('button:has-text("Save"), button:has-text("Apply"), button[type="submit"]').first();
     if ((await saveBtn.count()) > 0) {
       await saveBtn.click();
-      await page.waitForTimeout(500);
-
-      // Check for success toast or alert
       const successAlert = page.locator('.alert-success, [class*="toast"] [class*="success"], [role="alert"]:has-text("success"), [class*="success"]').first();
       if ((await successAlert.count()) > 0) {
         await expect(successAlert).toBeVisible();
@@ -318,15 +284,9 @@ test.describe('Bot Configuration CRUD Lifecycle', () => {
     );
 
     await page.goto('/admin/configuration');
-    await page.waitForTimeout(1000);
-
-    // Page shows "Rollbacks" button (may be disabled if no rollbacks)
     const rollbackBtn = page.locator('button:has-text("Rollbacks")').first();
     if ((await rollbackBtn.count()) > 0 && await rollbackBtn.isEnabled()) {
       await rollbackBtn.click();
-      await page.waitForTimeout(500);
-
-      // Modal should open
       const modal = page.locator('dialog.modal[open] .modal-box, .modal-box, [role="dialog"]').first();
       if ((await modal.count()) > 0) {
         await expect(modal).toBeVisible();
@@ -354,12 +314,10 @@ test.describe('Bot Configuration CRUD Lifecycle', () => {
     });
 
     await page.goto('/admin/configuration');
-    await page.waitForTimeout(1000);
 
     const rollbackBtn = page.locator('button:has-text("Rollbacks")').first();
     if ((await rollbackBtn.count()) > 0 && await rollbackBtn.isEnabled()) {
       await rollbackBtn.click();
-      await page.waitForTimeout(500);
 
       const modal = page.locator('dialog.modal[open] .modal-box, .modal-box, [role="dialog"]').first();
       if ((await modal.count()) > 0) {
@@ -367,14 +325,12 @@ test.describe('Bot Configuration CRUD Lifecycle', () => {
         const snapshotItem = modal.locator('[class*="cursor-pointer"]').filter({ hasText: /rollback/ }).first();
         if ((await snapshotItem.count()) > 0) {
           await snapshotItem.click();
-          await page.waitForTimeout(300);
         }
 
         // Confirm rollback
         const confirmBtn = modal.locator('button:has-text("Confirm"), button:has-text("Rollback"), button:has-text("Restore")').first();
         if ((await confirmBtn.count()) > 0) {
           await confirmBtn.click();
-          await page.waitForTimeout(500);
         }
       }
     }
@@ -392,14 +348,10 @@ test.describe('Bot Configuration CRUD Lifecycle', () => {
     );
 
     await page.goto('/admin/configuration');
-    await page.waitForTimeout(1000);
 
     const saveBtn = page.locator('button:has-text("Save"), button:has-text("Apply"), button[type="submit"]').first();
     if ((await saveBtn.count()) > 0) {
       await saveBtn.click();
-      await page.waitForTimeout(500);
-
-      // Check for error toast or alert
       const errorAlert = page.locator('.alert-error, [class*="toast"] [class*="error"], [role="alert"]:has-text("error"), [class*="error"]').first();
       if ((await errorAlert.count()) > 0) {
         await expect(errorAlert).toBeVisible();
@@ -416,17 +368,11 @@ test.describe('Bot Configuration CRUD Lifecycle', () => {
     );
 
     await page.goto('/admin/configuration');
-    await page.waitForTimeout(1000);
-
-    // General section is expanded by default — find Instance Name input
     const generalRegion = page.locator('region').first();
     const instanceNameInput = generalRegion.locator('input[type="text"], input[type="password"]').first();
     if ((await instanceNameInput.count()) > 0) {
       await instanceNameInput.clear();
       await instanceNameInput.fill('Modified Hivemind');
-      await page.waitForTimeout(300);
-
-      // Look for unsaved/modified indicator (page shows "Modified" badge on section)
       const modifiedIndicator = page.getByText('Modified').first();
       if ((await modifiedIndicator.count()) > 0) {
         await expect(modifiedIndicator).toBeVisible();
@@ -443,13 +389,9 @@ test.describe('Bot Configuration CRUD Lifecycle', () => {
     );
 
     await page.goto('/admin/configuration');
-    await page.waitForTimeout(1000);
-
-    // Expand LLM section which has sensitive API Key
     const llmHeader = page.locator('button:has-text("llm")').first();
     if ((await llmHeader.count()) > 0) {
       await llmHeader.click();
-      await page.waitForTimeout(300);
     }
 
     // Look for sensitive indicator near API Key field

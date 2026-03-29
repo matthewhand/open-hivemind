@@ -47,7 +47,6 @@ test.describe('Personas Management', () => {
         .first();
       if ((await createButton.count()) > 0) {
         await createButton.click();
-        await page.waitForTimeout(500);
         const modal = page.locator('[class*="modal"], [role="dialog"]').first();
         await expect(modal).toBeVisible({ timeout: 5000 });
         await page.screenshot({
@@ -75,7 +74,6 @@ test.describe('Personas Management', () => {
         .first();
       if ((await createButton.count()) > 0) {
         await createButton.click();
-        await page.waitForTimeout(500);
 
         const nameInput = page.locator('input[name="name"], input[placeholder*="name" i]').first();
         if ((await nameInput.count()) > 0) {
@@ -103,7 +101,6 @@ test.describe('Personas Management', () => {
         .first();
       if ((await createButton.count()) > 0) {
         await createButton.click();
-        await page.waitForTimeout(500);
 
         const nameInput = page.locator('input[name="name"], input[placeholder*="name" i]').first();
         if ((await nameInput.count()) > 0) {
@@ -115,7 +112,6 @@ test.describe('Personas Management', () => {
           .last();
         if ((await submitButton.count()) > 0) {
           await submitButton.click({ force: true });
-          await page.waitForTimeout(2000);
         }
         await page.screenshot({ path: 'test-results/personas-05-submitted.png', fullPage: true });
       }
@@ -152,7 +148,6 @@ test.describe('Personas Management', () => {
       const cards = page.locator('[class*="card"]');
       if ((await cards.count()) > 0) {
         await cards.first().click();
-        await page.waitForTimeout(500);
         await page.screenshot({ path: 'test-results/personas-07-details.png', fullPage: true });
       }
 

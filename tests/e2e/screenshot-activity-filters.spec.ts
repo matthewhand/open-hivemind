@@ -136,7 +136,7 @@ test.describe('Activity Page Filters Screenshots', () => {
     await page.getByPlaceholder('End Date').fill(endStr);
 
     // Wait a bit for the API to reload
-    await page.waitForTimeout(1000);
+    await page.waitForLoadState('networkidle');
 
     // Take screenshot
     await page.screenshot({ path: 'docs/screenshots/activity-page-filters.png', fullPage: true });

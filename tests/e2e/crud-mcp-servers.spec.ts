@@ -139,7 +139,6 @@ test.describe('MCP Servers CRUD Lifecycle', () => {
     const addBtn = page.locator('button:has-text("Add"), button:has-text("New"), button:has-text("Create")').first();
     if ((await addBtn.count()) > 0) {
       await addBtn.click();
-      await page.waitForTimeout(500);
 
       const modal = page.locator('.modal-box, [role="dialog"], dialog.modal[open]').first();
       if ((await modal.count()) > 0) {
@@ -185,14 +184,12 @@ test.describe('MCP Servers CRUD Lifecycle', () => {
     const addBtn = page.locator('button:has-text("Add"), button:has-text("New"), button:has-text("Create")').first();
     if ((await addBtn.count()) > 0) {
       await addBtn.click();
-      await page.waitForTimeout(500);
 
       const modal = page.locator('.modal-box, [role="dialog"], dialog.modal[open]').first();
       if ((await modal.count()) > 0) {
         const testBtn = modal.locator('button:has-text("Test"), button:has-text("Verify")').first();
         if ((await testBtn.count()) > 0) {
           await testBtn.click();
-          await page.waitForTimeout(500);
         }
       }
     }
@@ -220,15 +217,12 @@ test.describe('MCP Servers CRUD Lifecycle', () => {
     const addBtn = page.locator('button:has-text("Add"), button:has-text("New"), button:has-text("Create")').first();
     if ((await addBtn.count()) > 0) {
       await addBtn.click();
-      await page.waitForTimeout(500);
 
       const modal = page.locator('.modal-box, [role="dialog"], dialog.modal[open]').first();
       if ((await modal.count()) > 0) {
         const testBtn = modal.locator('button:has-text("Test"), button:has-text("Verify")').first();
         if ((await testBtn.count()) > 0) {
           await testBtn.click();
-          await page.waitForTimeout(500);
-          // Page should handle the error gracefully
           await expect(page.locator('body')).toBeVisible();
         }
       }
@@ -264,7 +258,6 @@ test.describe('MCP Servers CRUD Lifecycle', () => {
     const editBtn = card.locator('button[title*="Edit"], button[title*="Configure"], button:has-text("Edit")').first();
     if ((await editBtn.count()) > 0) {
       await editBtn.click();
-      await page.waitForTimeout(500);
     }
   });
 
@@ -289,7 +282,6 @@ test.describe('MCP Servers CRUD Lifecycle', () => {
     const startBtn = stoppedCard.locator('button[title*="Start"], button[title*="Connect"]').first();
     if ((await startBtn.count()) > 0) {
       await startBtn.click();
-      await page.waitForTimeout(500);
     }
   });
 
@@ -341,7 +333,6 @@ test.describe('MCP Servers CRUD Lifecycle', () => {
     const restartBtn = runningCard.locator('button[title*="Restart"], button[title*="Reconnect"]').first();
     if ((await restartBtn.count()) > 0) {
       await restartBtn.click();
-      await page.waitForTimeout(500);
     }
   });
 
@@ -373,7 +364,6 @@ test.describe('MCP Servers CRUD Lifecycle', () => {
     const deleteBtn = card.getByTitle('Delete Server');
     if ((await deleteBtn.count()) > 0) {
       await deleteBtn.click();
-      await page.waitForTimeout(500);
     }
   });
 
@@ -388,7 +378,6 @@ test.describe('MCP Servers CRUD Lifecycle', () => {
     const searchInput = page.locator('input[placeholder*="search" i], input[placeholder*="filter" i], input[type="search"]').first();
     if ((await searchInput.count()) > 0) {
       await searchInput.fill('Production');
-      await page.waitForTimeout(300);
 
       await expect(page.locator('.card', { hasText: 'Production MCP' })).toBeVisible();
     }
@@ -405,7 +394,6 @@ test.describe('MCP Servers CRUD Lifecycle', () => {
     const statusFilter = page.locator('select:has(option[value="running"]), select:has(option:has-text("Running"))').first();
     if ((await statusFilter.count()) > 0) {
       await statusFilter.selectOption('running');
-      await page.waitForTimeout(300);
     }
   });
 
@@ -433,7 +421,6 @@ test.describe('MCP Servers CRUD Lifecycle', () => {
     const toolsBtn = card.locator('button[title*="Tools"], button:has-text("Tools"), button[title*="View Tools"]').first();
     if ((await toolsBtn.count()) > 0) {
       await toolsBtn.click();
-      await page.waitForTimeout(500);
 
       const modal = page.locator('.modal-box, [role="dialog"], dialog.modal[open]').first();
       if ((await modal.count()) > 0) {

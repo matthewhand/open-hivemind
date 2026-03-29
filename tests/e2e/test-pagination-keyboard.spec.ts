@@ -73,20 +73,16 @@ test('Test pagination keyboard and aria integration', async ({ page }) => {
   `;
 
   await page.setContent(html);
-  await page.waitForTimeout(1000); // Wait for React
 
   // Set focus on the pagination container directly
   await page.locator('#pagination-container').focus();
   await page.keyboard.press('ArrowRight');
-  await page.waitForTimeout(100);
   await page.keyboard.press('ArrowRight');
-  await page.waitForTimeout(100);
 
   const currentDisplay = await page.locator('#current-page-display').textContent();
   expect(currentDisplay).toBe('Current state page: 12');
 
   await page.keyboard.press('ArrowLeft');
-  await page.waitForTimeout(100);
   const currentDisplay2 = await page.locator('#current-page-display').textContent();
   expect(currentDisplay2).toBe('Current state page: 11');
 

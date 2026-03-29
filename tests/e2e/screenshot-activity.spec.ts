@@ -129,7 +129,7 @@ test.describe('Activity Page Screenshots', () => {
     await expect(page.getByRole('table')).toBeVisible();
 
     // Wait a bit for filters to populate
-    await page.waitForTimeout(500);
+    await page.waitForLoadState('networkidle');
 
     // Take screenshot
     await page.screenshot({ path: 'docs/screenshots/activity-page.png', fullPage: true });

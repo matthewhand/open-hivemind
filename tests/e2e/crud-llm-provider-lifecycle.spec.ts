@@ -114,7 +114,6 @@ test.describe('LLM Provider CRUD Lifecycle', () => {
     const addBtn = page.locator('button:has-text("Add"), button:has-text("Create"), button:has-text("New")').first();
     if ((await addBtn.count()) > 0) {
       await addBtn.click();
-      await page.waitForTimeout(500);
     }
   });
 
@@ -143,7 +142,6 @@ test.describe('LLM Provider CRUD Lifecycle', () => {
     const testBtn = page.locator('button:has-text("Test"), button:has-text("Verify")').first();
     if ((await testBtn.count()) > 0) {
       await testBtn.click();
-      await page.waitForTimeout(1000);
     }
   });
 
@@ -172,7 +170,6 @@ test.describe('LLM Provider CRUD Lifecycle', () => {
     const testBtn = page.locator('button:has-text("Test"), button:has-text("Verify")').first();
     if ((await testBtn.count()) > 0) {
       await testBtn.click();
-      await page.waitForTimeout(1000);
     }
   });
 
@@ -263,7 +260,6 @@ test.describe('LLM Provider CRUD Lifecycle', () => {
     const apiKeyInput = page.locator('input[type="password"], input[placeholder*="API"], input[name*="apiKey"]').first();
     if ((await apiKeyInput.count()) > 0) {
       await apiKeyInput.fill('not-a-valid-key');
-      await page.waitForTimeout(300);
     }
   });
 
@@ -290,8 +286,6 @@ test.describe('LLM Provider CRUD Lifecycle', () => {
     const testBtn = page.locator('button:has-text("Test"), button:has-text("Verify")').first();
     if ((await testBtn.count()) > 0) {
       await testBtn.click();
-      await page.waitForTimeout(2000);
-      // Page should handle the timeout gracefully without crashing
       await expect(page.locator('body')).toBeVisible();
     }
   });

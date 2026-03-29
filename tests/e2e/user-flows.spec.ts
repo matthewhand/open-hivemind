@@ -67,9 +67,6 @@ test.describe('User Flows', () => {
       .first();
     if ((await createBtn.count()) > 0) {
       await createBtn.click();
-      await page.waitForTimeout(500);
-
-      // Fill form
       const nameInput = page.locator('input').first();
       if ((await nameInput.count()) > 0) {
         await nameInput.fill('E2E Test Bot');

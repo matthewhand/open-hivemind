@@ -132,9 +132,6 @@ test.describe('Bot Deletion Protection', () => {
 
     // 3. Look for a settings modal or the bot detail page
     // The page may navigate to a config page, or open a modal
-    await page.waitForTimeout(1000);
-
-    // Look for Delete Bot button - could be in a modal or on the page
     const deleteBtn = page.getByRole('button', { name: /delete/i }).first();
     if (await deleteBtn.isVisible().catch(() => false)) {
       await deleteBtn.click();

@@ -36,7 +36,7 @@ test.describe('Static Pages Screenshots', () => {
     await navigateAndWaitReady(page, '/admin/static');
 
     // Wait for content to load properly - page might be at /admin/static or redirected
-    await page.waitForTimeout(1000);
+    await page.waitForLoadState('networkidle');
     await page.waitForLoadState('networkidle');
 
     // Screenshot Static Pages

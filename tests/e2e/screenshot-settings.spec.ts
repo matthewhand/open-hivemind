@@ -18,10 +18,11 @@ test.describe('Settings Screenshots', () => {
         json: { defaultConfigured: true, defaultProviders: [], botsMissingLlmProvider: [], hasMissing: false },
       })
     );
+    let completePut: () => void;
+    const putPromise = new Promise<void>((resolve) => { completePut = resolve; });
     await page.route('**/api/config/global', async (route) => {
       if (route.request().method() === 'PUT') {
-        // Delay to capture loading spinner
-        await new Promise((f) => setTimeout(f, 3000));
+        await putPromise;
         await route.fulfill({ status: 200, json: {} });
       } else {
         await route.fulfill({ status: 200, json: { general: { values: {} } } });

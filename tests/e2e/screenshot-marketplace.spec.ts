@@ -83,7 +83,7 @@ test.describe('Marketplace Page', () => {
     await page.waitForSelector('h1:has-text("Package Marketplace")', { timeout: 10000 });
 
     // Wait for package cards to appear (or loading spinner to disappear)
-    await page.waitForTimeout(2000);
+    await page.waitForLoadState('networkidle');
 
     // Screenshot Marketplace Page
     await page.screenshot({ path: 'docs/screenshots/marketplace-page.png', fullPage: true });
@@ -120,7 +120,7 @@ test.describe('Marketplace Page', () => {
     await modal.locator('input[type="text"]').fill('https://github.com/user/custom-provider');
 
     // Wait a bit for UI to settle
-    await page.waitForTimeout(500);
+    await page.waitForLoadState('networkidle');
 
     // Screenshot Install Modal
     await page.screenshot({
@@ -150,7 +150,7 @@ test.describe('Marketplace Page', () => {
     await llmTab.click();
 
     // Wait for filter to apply
-    await page.waitForTimeout(500);
+    await page.waitForLoadState('networkidle');
 
     // Verify only LLM packages are shown (check for LLM badge)
     const llmBadges = page.locator('.badge-outline:has-text("LLM")');

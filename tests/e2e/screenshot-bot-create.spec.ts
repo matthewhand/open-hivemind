@@ -140,7 +140,7 @@ test.describe('Bot Create Page Screenshots', () => {
     // Let's stick to default for a clean "initial state" look, but ensure the preview is there.
 
     // Wait for animations to settle
-    await page.waitForTimeout(500);
+    await page.waitForLoadState('networkidle');
 
     // Take screenshot
     await page.screenshot({ path: 'docs/screenshots/bot-create-page.png', fullPage: true });

@@ -201,11 +201,11 @@ test.describe('Keyboard Navigation', () => {
   test.describe('Global Navigation', () => {
     test('Tab through sidebar links and verify focus ring is visible', async ({ page }) => {
       await page.goto('/admin/bots');
-      await page.waitForTimeout(500);
+      // Relies on Playwright auto-waiting for actionability
 
       // Tab into the sidebar navigation
       await page.keyboard.press('Tab');
-      await page.waitForTimeout(200);
+      // Relies on Playwright auto-waiting for actionability
 
       // Keep tabbing through sidebar links
       for (let i = 0; i < 5; i++) {
@@ -235,13 +235,13 @@ test.describe('Keyboard Navigation', () => {
         }
 
         await page.keyboard.press('Tab');
-        await page.waitForTimeout(150);
+        // Relies on Playwright auto-waiting for actionability
       }
     });
 
     test('Enter key activates sidebar link and navigates to page', async ({ page }) => {
       await page.goto('/admin/bots');
-      await page.waitForTimeout(500);
+      // Relies on Playwright auto-waiting for actionability
 
       // Find a sidebar link and focus it
       const sidebarLinks = page.locator('nav a, [data-testid="sidebar"] a');
@@ -249,11 +249,11 @@ test.describe('Keyboard Navigation', () => {
 
       if (linkCount > 0) {
         await sidebarLinks.first().focus();
-        await page.waitForTimeout(200);
+        // Relies on Playwright auto-waiting for actionability
 
         const href = await sidebarLinks.first().getAttribute('href');
         await page.keyboard.press('Enter');
-        await page.waitForTimeout(500);
+        // Relies on Playwright auto-waiting for actionability
 
         // Verify navigation occurred
         if (href) {
@@ -264,12 +264,12 @@ test.describe('Keyboard Navigation', () => {
 
     test('Tab through page content after navigation', async ({ page }) => {
       await page.goto('/admin/bots');
-      await page.waitForTimeout(500);
+      // Relies on Playwright auto-waiting for actionability
 
       // Tab multiple times to move through sidebar into main content
       for (let i = 0; i < 10; i++) {
         await page.keyboard.press('Tab');
-        await page.waitForTimeout(100);
+        // Relies on Playwright auto-waiting for actionability
       }
 
       // Verify focus is somewhere in the main content area
@@ -285,19 +285,19 @@ test.describe('Keyboard Navigation', () => {
 
     test('Escape key closes any open modal', async ({ page }) => {
       await page.goto('/admin/bots');
-      await page.waitForTimeout(500);
+      // Relies on Playwright auto-waiting for actionability
 
       // Try to open a create bot modal
       const createBtn = page.getByRole('button', { name: /create/i }).first();
       if (await createBtn.isVisible().catch(() => false)) {
         await createBtn.click();
-        await page.waitForTimeout(300);
+        // Relies on Playwright auto-waiting for actionability
 
         // Verify modal is open
         const modal = page.locator('[role="dialog"], .modal-box, .modal');
         if (await modal.first().isVisible().catch(() => false)) {
           await page.keyboard.press('Escape');
-          await page.waitForTimeout(300);
+          // Relies on Playwright auto-waiting for actionability
 
           // Verify modal is closed or hidden
           await expect(modal.first()).not.toBeVisible();
@@ -309,7 +309,7 @@ test.describe('Keyboard Navigation', () => {
       // Set mobile viewport
       await page.setViewportSize({ width: 375, height: 667 });
       await page.goto('/admin/bots');
-      await page.waitForTimeout(500);
+      // Relies on Playwright auto-waiting for actionability
 
       // Look for hamburger menu button
       const hamburger = page.locator(
@@ -318,11 +318,11 @@ test.describe('Keyboard Navigation', () => {
 
       if (await hamburger.first().isVisible().catch(() => false)) {
         await hamburger.first().click();
-        await page.waitForTimeout(300);
+        // Relies on Playwright auto-waiting for actionability
 
         // Press Escape to close
         await page.keyboard.press('Escape');
-        await page.waitForTimeout(300);
+        // Relies on Playwright auto-waiting for actionability
 
         // Sidebar should be closed on mobile
         const sidebarVisible = await page
@@ -340,17 +340,17 @@ test.describe('Keyboard Navigation', () => {
   test.describe('Form Interactions', () => {
     test('Tab through create bot wizard form fields in order', async ({ page }) => {
       await page.goto('/admin/bots');
-      await page.waitForTimeout(500);
+      // Relies on Playwright auto-waiting for actionability
 
       const createBtn = page.getByRole('button', { name: /create/i }).first();
       if (await createBtn.isVisible().catch(() => false)) {
         await createBtn.click();
-        await page.waitForTimeout(500);
+        // Relies on Playwright auto-waiting for actionability
 
         const focusedTags: string[] = [];
         for (let i = 0; i < 8; i++) {
           await page.keyboard.press('Tab');
-          await page.waitForTimeout(150);
+          // Relies on Playwright auto-waiting for actionability
           const tag = await page.evaluate(() => document.activeElement?.tagName ?? '');
           focusedTags.push(tag);
         }
@@ -379,12 +379,12 @@ test.describe('Keyboard Navigation', () => {
       });
 
       await page.goto('/admin/bots');
-      await page.waitForTimeout(500);
+      // Relies on Playwright auto-waiting for actionability
 
       const createBtn = page.getByRole('button', { name: /create/i }).first();
       if (await createBtn.isVisible().catch(() => false)) {
         await createBtn.click();
-        await page.waitForTimeout(500);
+        // Relies on Playwright auto-waiting for actionability
 
         // Fill in the form fields using keyboard
         const nameInput = page.locator('input[name="name"], input[placeholder*="name" i]').first();
@@ -392,7 +392,7 @@ test.describe('Keyboard Navigation', () => {
           await nameInput.focus();
           await page.keyboard.type('Test Bot');
           await page.keyboard.press('Tab');
-          await page.waitForTimeout(100);
+          // Relies on Playwright auto-waiting for actionability
         }
 
         // Find and press submit button via keyboard
@@ -402,24 +402,24 @@ test.describe('Keyboard Navigation', () => {
         if (await submitBtn.first().isVisible().catch(() => false)) {
           await submitBtn.first().focus();
           await page.keyboard.press('Enter');
-          await page.waitForTimeout(500);
+          // Relies on Playwright auto-waiting for actionability
         }
       }
     });
 
     test('Tab through persona create form', async ({ page }) => {
       await page.goto('/admin/personas');
-      await page.waitForTimeout(500);
+      // Relies on Playwright auto-waiting for actionability
 
       const createBtn = page.getByRole('button', { name: /create|add|new/i }).first();
       if (await createBtn.isVisible().catch(() => false)) {
         await createBtn.click();
-        await page.waitForTimeout(500);
+        // Relies on Playwright auto-waiting for actionability
 
         const focusedElements: string[] = [];
         for (let i = 0; i < 8; i++) {
           await page.keyboard.press('Tab');
-          await page.waitForTimeout(150);
+          // Relies on Playwright auto-waiting for actionability
           const info = await page.evaluate(() => {
             const el = document.activeElement;
             return el ? `${el.tagName}:${el.getAttribute('name') || el.getAttribute('type') || ''}` : '';
@@ -437,12 +437,12 @@ test.describe('Keyboard Navigation', () => {
 
     test('Tab through settings form fields', async ({ page }) => {
       await page.goto('/admin/settings');
-      await page.waitForTimeout(500);
+      // Relies on Playwright auto-waiting for actionability
 
       const focusedElements: string[] = [];
       for (let i = 0; i < 12; i++) {
         await page.keyboard.press('Tab');
-        await page.waitForTimeout(150);
+        // Relies on Playwright auto-waiting for actionability
         const tag = await page.evaluate(() => document.activeElement?.tagName ?? '');
         focusedElements.push(tag);
       }
@@ -456,7 +456,7 @@ test.describe('Keyboard Navigation', () => {
 
     test('Space key toggles boolean checkboxes and switches', async ({ page }) => {
       await page.goto('/admin/settings');
-      await page.waitForTimeout(500);
+      // Relies on Playwright auto-waiting for actionability
 
       // Find a visible checkbox input
       const toggle = page.locator('input[type="checkbox"]:visible').first();
@@ -472,7 +472,7 @@ test.describe('Keyboard Navigation', () => {
           await toggle.focus();
         }
         await page.keyboard.press('Space');
-        await page.waitForTimeout(300);
+        // Relies on Playwright auto-waiting for actionability
 
         const afterChecked = await toggle.isChecked().catch(() => !initialChecked);
         // DaisyUI toggles may not respond to Space the same way native checkboxes do
@@ -486,17 +486,17 @@ test.describe('Keyboard Navigation', () => {
 
     test('Arrow keys navigate select/dropdown options', async ({ page }) => {
       await page.goto('/admin/settings');
-      await page.waitForTimeout(500);
+      // Relies on Playwright auto-waiting for actionability
 
       const selectEl = page.locator('select').first();
       if (await selectEl.isVisible().catch(() => false)) {
         await selectEl.focus();
-        await page.waitForTimeout(200);
+        // Relies on Playwright auto-waiting for actionability
 
         const initialValue = await selectEl.inputValue().catch(() => '');
 
         await page.keyboard.press('ArrowDown');
-        await page.waitForTimeout(200);
+        // Relies on Playwright auto-waiting for actionability
 
         const newValue = await selectEl.inputValue().catch(() => '');
         // The value may or may not change depending on options; just verify no error
@@ -510,13 +510,13 @@ test.describe('Keyboard Navigation', () => {
   test.describe('Table Interactions', () => {
     test('Tab to table rows', async ({ page }) => {
       await page.goto('/admin/bots');
-      await page.waitForTimeout(500);
+      // Relies on Playwright auto-waiting for actionability
 
       // Tab through page until we reach a table row or card
       let reachedTableContent = false;
       for (let i = 0; i < 20; i++) {
         await page.keyboard.press('Tab');
-        await page.waitForTimeout(100);
+        // Relies on Playwright auto-waiting for actionability
 
         const isInTable = await page.evaluate(() => {
           const el = document.activeElement;
@@ -557,7 +557,7 @@ test.describe('Keyboard Navigation', () => {
       );
 
       await page.goto('/admin/bots');
-      await page.waitForTimeout(500);
+      // Relies on Playwright auto-waiting for actionability
 
       // Look for pagination buttons
       const pagination = page.locator(
@@ -567,7 +567,7 @@ test.describe('Keyboard Navigation', () => {
 
       if (paginationCount > 0) {
         await pagination.first().focus();
-        await page.waitForTimeout(200);
+        // Relies on Playwright auto-waiting for actionability
 
         const focused = await page.evaluate(() => document.activeElement?.tagName);
         expect(focused).toBe('BUTTON');
@@ -593,7 +593,7 @@ test.describe('Keyboard Navigation', () => {
       );
 
       await page.goto('/admin/bots');
-      await page.waitForTimeout(500);
+      // Relies on Playwright auto-waiting for actionability
 
       const nextBtn = page.locator(
         'button:has-text("Next"), button:has-text("❯"), button[aria-label*="next" i]'
@@ -602,7 +602,7 @@ test.describe('Keyboard Navigation', () => {
       if (await nextBtn.isVisible().catch(() => false)) {
         await nextBtn.focus();
         await page.keyboard.press('Enter');
-        await page.waitForTimeout(500);
+        // Relies on Playwright auto-waiting for actionability
 
         // The page content should update (page 2)
         const url = page.url();
@@ -612,12 +612,12 @@ test.describe('Keyboard Navigation', () => {
 
     test('Tab to action buttons within table rows', async ({ page }) => {
       await page.goto('/admin/bots');
-      await page.waitForTimeout(500);
+      // Relies on Playwright auto-waiting for actionability
 
       let reachedAction = false;
       for (let i = 0; i < 25; i++) {
         await page.keyboard.press('Tab');
-        await page.waitForTimeout(100);
+        // Relies on Playwright auto-waiting for actionability
 
         const isActionBtn = await page.evaluate(() => {
           const el = document.activeElement;
@@ -652,12 +652,12 @@ test.describe('Keyboard Navigation', () => {
   test.describe('Modal Interactions', () => {
     test('Tab key cycles focus within modal (focus trap)', async ({ page }) => {
       await page.goto('/admin/bots');
-      await page.waitForTimeout(500);
+      // Relies on Playwright auto-waiting for actionability
 
       const createBtn = page.getByRole('button', { name: /create/i }).first();
       if (await createBtn.isVisible().catch(() => false)) {
         await createBtn.click();
-        await page.waitForTimeout(500);
+        // Relies on Playwright auto-waiting for actionability
 
         const modal = page.locator('[role="dialog"], .modal-box').first();
         if (await modal.isVisible().catch(() => false)) {
@@ -665,7 +665,7 @@ test.describe('Keyboard Navigation', () => {
           const focusedIds: string[] = [];
           for (let i = 0; i < 15; i++) {
             await page.keyboard.press('Tab');
-            await page.waitForTimeout(100);
+            // Relies on Playwright auto-waiting for actionability
 
             const inModal = await page.evaluate(() => {
               const el = document.activeElement;
@@ -690,19 +690,19 @@ test.describe('Keyboard Navigation', () => {
 
     test('Shift+Tab goes backwards through modal elements', async ({ page }) => {
       await page.goto('/admin/bots');
-      await page.waitForTimeout(500);
+      // Relies on Playwright auto-waiting for actionability
 
       const createBtn = page.getByRole('button', { name: /create/i }).first();
       if (await createBtn.isVisible().catch(() => false)) {
         await createBtn.click();
-        await page.waitForTimeout(500);
+        // Relies on Playwright auto-waiting for actionability
 
         const modal = page.locator('[role="dialog"], .modal-box').first();
         if (await modal.isVisible().catch(() => false)) {
           // Tab forward a few times
           for (let i = 0; i < 3; i++) {
             await page.keyboard.press('Tab');
-            await page.waitForTimeout(100);
+            // Relies on Playwright auto-waiting for actionability
           }
 
           const forwardElement = await page.evaluate(
@@ -711,7 +711,7 @@ test.describe('Keyboard Navigation', () => {
 
           // Shift+Tab backward
           await page.keyboard.press('Shift+Tab');
-          await page.waitForTimeout(200);
+          // Relies on Playwright auto-waiting for actionability
 
           const backwardElement = await page.evaluate(
             () => document.activeElement?.tagName ?? ''
@@ -736,12 +736,12 @@ test.describe('Keyboard Navigation', () => {
       });
 
       await page.goto('/admin/bots');
-      await page.waitForTimeout(500);
+      // Relies on Playwright auto-waiting for actionability
 
       const createBtn = page.getByRole('button', { name: /create/i }).first();
       if (await createBtn.isVisible().catch(() => false)) {
         await createBtn.click();
-        await page.waitForTimeout(500);
+        // Relies on Playwright auto-waiting for actionability
 
         const modal = page.locator('[role="dialog"], .modal-box').first();
         if (await modal.isVisible().catch(() => false)) {
@@ -753,7 +753,7 @@ test.describe('Keyboard Navigation', () => {
 
           // Press Escape
           await page.keyboard.press('Escape');
-          await page.waitForTimeout(300);
+          // Relies on Playwright auto-waiting for actionability
 
           // Modal should be closed
           await expect(modal).not.toBeVisible();
@@ -777,7 +777,7 @@ test.describe('Keyboard Navigation', () => {
       });
 
       await page.goto('/admin/bots');
-      await page.waitForTimeout(500);
+      // Relies on Playwright auto-waiting for actionability
 
       // Find a delete button
       const deleteBtn = page.locator(
@@ -786,7 +786,7 @@ test.describe('Keyboard Navigation', () => {
 
       if (await deleteBtn.isVisible().catch(() => false)) {
         await deleteBtn.click();
-        await page.waitForTimeout(500);
+        // Relies on Playwright auto-waiting for actionability
 
         // Look for confirmation modal
         const confirmBtn = page.locator(
@@ -796,7 +796,7 @@ test.describe('Keyboard Navigation', () => {
         if (await confirmBtn.isVisible().catch(() => false)) {
           await confirmBtn.focus();
           await page.keyboard.press('Enter');
-          await page.waitForTimeout(500);
+          // Relies on Playwright auto-waiting for actionability
         }
       }
     });
@@ -807,13 +807,13 @@ test.describe('Keyboard Navigation', () => {
   test.describe('Page-specific Keyboard Navigation', () => {
     test('Tab through bot cards, Enter opens bot details', async ({ page }) => {
       await page.goto('/admin/bots');
-      await page.waitForTimeout(500);
+      // Relies on Playwright auto-waiting for actionability
 
       // Tab until we reach a bot card or link
       let foundBotLink = false;
       for (let i = 0; i < 20; i++) {
         await page.keyboard.press('Tab');
-        await page.waitForTimeout(100);
+        // Relies on Playwright auto-waiting for actionability
 
         const isBotElement = await page.evaluate(() => {
           const el = document.activeElement;
@@ -828,7 +828,7 @@ test.describe('Keyboard Navigation', () => {
         if (isBotElement) {
           foundBotLink = true;
           await page.keyboard.press('Enter');
-          await page.waitForTimeout(500);
+          // Relies on Playwright auto-waiting for actionability
           break;
         }
       }
@@ -842,12 +842,12 @@ test.describe('Keyboard Navigation', () => {
 
     test('Tab through persona cards', async ({ page }) => {
       await page.goto('/admin/personas');
-      await page.waitForTimeout(500);
+      // Relies on Playwright auto-waiting for actionability
 
       const focusedElements: string[] = [];
       for (let i = 0; i < 15; i++) {
         await page.keyboard.press('Tab');
-        await page.waitForTimeout(100);
+        // Relies on Playwright auto-waiting for actionability
 
         const info = await page.evaluate(() => {
           const el = document.activeElement;
@@ -865,12 +865,12 @@ test.describe('Keyboard Navigation', () => {
 
     test('Tab through guard profiles', async ({ page }) => {
       await page.goto('/admin/guards');
-      await page.waitForTimeout(500);
+      // Relies on Playwright auto-waiting for actionability
 
       let reachedGuardContent = false;
       for (let i = 0; i < 15; i++) {
         await page.keyboard.press('Tab');
-        await page.waitForTimeout(100);
+        // Relies on Playwright auto-waiting for actionability
 
         const isGuardElement = await page.evaluate(() => {
           const el = document.activeElement;
@@ -889,12 +889,12 @@ test.describe('Keyboard Navigation', () => {
 
     test('Tab through MCP server cards', async ({ page }) => {
       await page.goto('/admin/mcp');
-      await page.waitForTimeout(500);
+      // Relies on Playwright auto-waiting for actionability
 
       let reachedMcpContent = false;
       for (let i = 0; i < 15; i++) {
         await page.keyboard.press('Tab');
-        await page.waitForTimeout(100);
+        // Relies on Playwright auto-waiting for actionability
 
         const isMcpElement = await page.evaluate(() => {
           const el = document.activeElement;
@@ -918,13 +918,13 @@ test.describe('Keyboard Navigation', () => {
 
     test('Activity page: tab to filters, Enter applies', async ({ page }) => {
       await page.goto('/admin/activity');
-      await page.waitForTimeout(500);
+      // Relies on Playwright auto-waiting for actionability
 
       // Tab to filter controls
       let reachedFilter = false;
       for (let i = 0; i < 15; i++) {
         await page.keyboard.press('Tab');
-        await page.waitForTimeout(100);
+        // Relies on Playwright auto-waiting for actionability
 
         const isFilterElement = await page.evaluate(() => {
           const el = document.activeElement;
@@ -944,7 +944,7 @@ test.describe('Keyboard Navigation', () => {
 
       if (reachedFilter) {
         await page.keyboard.press('Enter');
-        await page.waitForTimeout(300);
+        // Relies on Playwright auto-waiting for actionability
         // Should not cause errors
         expect(true).toBeTruthy();
       }
@@ -962,7 +962,7 @@ test.describe('Keyboard Navigation', () => {
       });
 
       await page.goto('/admin/chat');
-      await page.waitForTimeout(500);
+      // Relies on Playwright auto-waiting for actionability
 
       // Tab to the chat input
       const chatInput = page.locator(
@@ -972,9 +972,9 @@ test.describe('Keyboard Navigation', () => {
       if (await chatInput.isVisible().catch(() => false)) {
         await chatInput.focus();
         await page.keyboard.type('Hello, bot!');
-        await page.waitForTimeout(200);
+        // Relies on Playwright auto-waiting for actionability
         await page.keyboard.press('Enter');
-        await page.waitForTimeout(500);
+        // Relies on Playwright auto-waiting for actionability
 
         // Message should have been typed
         expect(true).toBeTruthy();

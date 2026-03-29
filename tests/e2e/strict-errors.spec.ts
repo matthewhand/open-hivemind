@@ -248,16 +248,12 @@ test.describe('Strict Error Detection Tests', () => {
         .first();
       if ((await createBtn.count()) > 0) {
         await createBtn.click();
-        await page.waitForTimeout(500);
-
-        // Verify modal opened
         const modal = page.locator(SELECTORS.modal).first();
         if ((await modal.count()) > 0) {
           await expect(modal).toBeVisible();
 
           // Close with Escape
           await page.keyboard.press('Escape');
-          await page.waitForTimeout(500);
         }
       }
 
@@ -275,9 +271,6 @@ test.describe('Strict Error Detection Tests', () => {
         .first();
       if ((await createBtn.count()) > 0) {
         await createBtn.click();
-        await page.waitForTimeout(500);
-
-        // Interact with form fields
         const modal = page.locator(SELECTORS.modal).first();
         if ((await modal.count()) > 0) {
           const inputs = await modal.locator('input:visible').all();
@@ -293,7 +286,6 @@ test.describe('Strict Error Detection Tests', () => {
         }
 
         await page.keyboard.press('Escape');
-        await page.waitForTimeout(300);
       }
 
       await page.screenshot({ path: 'test-results/strict-11-form.png' });
@@ -307,9 +299,6 @@ test.describe('Strict Error Detection Tests', () => {
       await navigateAndWaitReady(page, '/admin/bots');
 
       // Wait for content to load
-      await page.waitForTimeout(2000);
-
-      // Should have either bots or empty state
       const content = page.locator('[class*="card"], [class*="empty"], [class*="bot"]').first();
       await expect(content).toBeVisible({ timeout: 10000 });
 
@@ -349,9 +338,6 @@ test.describe('Strict Error Detection Tests', () => {
       await navigateAndWaitReady(page, '/admin/config');
 
       // Wait for config to load
-      await page.waitForTimeout(2000);
-
-      // Verify page heading or content is visible (integrations panel renders cards or empty state)
       await expect(page.locator(SELECTORS.mainContent).first()).toBeVisible();
 
       await page.screenshot({ path: 'test-results/strict-13-config-sections.png' });
@@ -371,7 +357,6 @@ test.describe('Strict Error Detection Tests', () => {
         .first();
       if ((await refreshBtn.count()) > 0) {
         await refreshBtn.click();
-        await page.waitForTimeout(2000);
       }
 
       await page.screenshot({ path: 'test-results/strict-14-refresh.png' });
@@ -390,9 +375,6 @@ test.describe('Error Recovery Tests', () => {
     // Simulate network failure then recovery
     await page.route('**/api/**', (route) => route.abort());
     await page.reload();
-    await page.waitForTimeout(2000);
-
-    // Re-enable network
     await page.unroute('**/api/**');
     await page.reload();
     await waitForPageReady(page);

@@ -106,9 +106,6 @@ test.describe('Analytics Dashboard CRUD Lifecycle', () => {
     );
 
     await page.goto('/admin/monitoring');
-    await page.waitForTimeout(1000);
-
-    // Verify stats cards are visible with key metric values
     const totalMessagesText = page.getByText('12,543').or(page.getByText('12543'));
     if ((await totalMessagesText.count()) > 0) {
       await expect(totalMessagesText.first()).toBeVisible();
@@ -148,9 +145,6 @@ test.describe('Analytics Dashboard CRUD Lifecycle', () => {
     );
 
     await page.goto('/admin/monitoring');
-    await page.waitForTimeout(1000);
-
-    // Look for time range buttons or select
     const timeRangeButtons = page.locator('button:has-text("1h"), button:has-text("24h"), button:has-text("7d"), button:has-text("30d")');
     const timeRangeSelect = page.locator('select:has(option:has-text("24h")), select:has(option:has-text("7 days"))').first();
 
@@ -158,23 +152,19 @@ test.describe('Analytics Dashboard CRUD Lifecycle', () => {
       const btn7d = page.locator('button:has-text("7d"), button:has-text("7 days")').first();
       if ((await btn7d.count()) > 0) {
         await btn7d.click();
-        await page.waitForTimeout(500);
       }
 
       const btn1h = page.locator('button:has-text("1h"), button:has-text("1 hour")').first();
       if ((await btn1h.count()) > 0) {
         await btn1h.click();
-        await page.waitForTimeout(500);
       }
 
       const btn30d = page.locator('button:has-text("30d"), button:has-text("30 days")').first();
       if ((await btn30d.count()) > 0) {
         await btn30d.click();
-        await page.waitForTimeout(500);
       }
     } else if ((await timeRangeSelect.count()) > 0) {
       await timeRangeSelect.selectOption({ index: 2 });
-      await page.waitForTimeout(500);
     }
   });
 
@@ -191,13 +181,11 @@ test.describe('Analytics Dashboard CRUD Lifecycle', () => {
     );
 
     await page.goto('/admin/monitoring');
-    await page.waitForTimeout(1000);
 
     const initialCount = fetchCount;
     const refreshBtn = page.locator('button:has-text("Refresh")').first();
     if ((await refreshBtn.count()) > 0) {
       await refreshBtn.click();
-      await page.waitForTimeout(500);
       expect(fetchCount).toBeGreaterThan(initialCount);
     }
   });
@@ -217,9 +205,6 @@ test.describe('Analytics Dashboard CRUD Lifecycle', () => {
     );
 
     await page.goto('/admin/monitoring');
-    await page.waitForTimeout(1000);
-
-    // Check for chart containers (canvas for Chart.js, svg for Recharts/D3, or custom wrappers)
     const charts = page.locator('canvas, svg[class*="chart"], [class*="chart"], [class*="Chart"], [data-testid*="chart"]');
     if ((await charts.count()) > 0) {
       await expect(charts.first()).toBeVisible();
@@ -249,13 +234,9 @@ test.describe('Analytics Dashboard CRUD Lifecycle', () => {
     );
 
     await page.goto('/admin/monitoring');
-    await page.waitForTimeout(1000);
-
-    // Click on "Bot Status" tab to see bot names
     const botStatusTab = page.locator('[role="tab"]:has-text("Bot Status")').first();
     if ((await botStatusTab.count()) > 0) {
       await botStatusTab.click();
-      await page.waitForTimeout(500);
     }
 
     // Verify bot names appear
@@ -266,7 +247,7 @@ test.describe('Analytics Dashboard CRUD Lifecycle', () => {
   test('loading state during fetch', async ({ page }) => {
     // Delay the status response to observe loading state
     await page.route('**/api/dashboard/status', async (route) => {
-      await new Promise((r) => setTimeout(r, 2000));
+      await expect(page.locator('.recharts-surface').first()).toBeVisible({ timeout: 5000 });
       await route.fulfill({ status: 200, json: mockStatus });
     });
     await page.route('**/api/config', (route) =>
@@ -280,7 +261,6 @@ test.describe('Analytics Dashboard CRUD Lifecycle', () => {
     await expect(page.getByText('System Monitoring')).toBeVisible({ timeout: 5000 });
 
     // Wait for delayed data to load
-    await page.waitForTimeout(3000);
     await expect(page.locator('body')).toBeVisible();
   });
 
@@ -312,9 +292,6 @@ test.describe('Analytics Dashboard CRUD Lifecycle', () => {
     );
 
     await page.goto('/admin/monitoring');
-    await page.waitForTimeout(1000);
-
-    // Should show zeros or empty state messaging
     await expect(page.locator('body')).toBeVisible();
     const emptyText = page.locator('text=/no.*data/i, text=/no.*activity/i, text=/no.*metrics/i').first();
     if ((await emptyText.count()) > 0) {

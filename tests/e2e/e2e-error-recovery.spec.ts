@@ -301,11 +301,12 @@ test.describe('Error Recovery and Resilience', () => {
   test('double-click submit button — only one request sent', async ({ page }) => {
     let requestCount = 0;
 
+    let completeRequest: () => void;
+    const requestPromise = new Promise<void>((resolve) => { completeRequest = resolve; });
     await page.route('**/api/config', async (route) => {
       if (route.request().method() === 'POST') {
         requestCount++;
-        // Simulate slow response
-        await new Promise((resolve) => setTimeout(resolve, 500));
+        await requestPromise;
         await route.fulfill({ status: 201, json: { id: 'new-bot', name: 'Test' } });
       } else {
         await route.fulfill({ status: 200, json: { bots: [] } });

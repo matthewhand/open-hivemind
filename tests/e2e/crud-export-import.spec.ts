@@ -119,7 +119,6 @@ test.describe('Export/Import CRUD Lifecycle', () => {
     const createBtn = page.locator('button:has-text("Create Backup")').first();
     if ((await createBtn.count()) > 0) {
       await createBtn.click();
-      await page.waitForTimeout(500);
 
       const modal = page.locator('.modal-box').filter({ hasText: /Create.*Backup/i }).first();
       if ((await modal.count()) > 0) {
@@ -138,7 +137,6 @@ test.describe('Export/Import CRUD Lifecycle', () => {
         const submitBtn = modal.locator('button:has-text("Create"), button[type="submit"]').first();
         if ((await submitBtn.count()) > 0) {
           await submitBtn.click();
-          await page.waitForTimeout(500);
         }
       }
     }
@@ -176,7 +174,6 @@ test.describe('Export/Import CRUD Lifecycle', () => {
         downloadBtn.click(),
       ]);
       // Download may or may not trigger depending on UI implementation
-      await page.waitForTimeout(300);
     }
   });
 
@@ -201,15 +198,11 @@ test.describe('Export/Import CRUD Lifecycle', () => {
     const restoreBtn = page.locator('button:has-text("Restore"), button[title*="Restore"]').first();
     if ((await restoreBtn.count()) > 0) {
       await restoreBtn.click();
-      await page.waitForTimeout(500);
-
-      // Look for confirmation dialog
       const confirmModal = page.locator('.modal-box, [role="dialog"], dialog.modal[open]').first();
       if ((await confirmModal.count()) > 0) {
         const confirmBtn = confirmModal.locator('button:has-text("Confirm"), button:has-text("Restore"), button:has-text("Yes")').first();
         if ((await confirmBtn.count()) > 0) {
           await confirmBtn.click();
-          await page.waitForTimeout(500);
         }
       }
     }
@@ -244,14 +237,12 @@ test.describe('Export/Import CRUD Lifecycle', () => {
     const deleteBtn = row.locator('button:has-text("Delete"), button[title*="Delete"], button.text-error').first();
     if ((await deleteBtn.count()) > 0) {
       await deleteBtn.click();
-      await page.waitForTimeout(500);
 
       const confirmModal = page.locator('.modal-box, [role="dialog"], dialog.modal[open]').first();
       if ((await confirmModal.count()) > 0) {
         const confirmBtn = confirmModal.locator('button:has-text("Delete"), button:has-text("Confirm")').first();
         if ((await confirmBtn.count()) > 0) {
           await confirmBtn.click();
-          await page.waitForTimeout(500);
         }
       }
     }
@@ -272,7 +263,6 @@ test.describe('Export/Import CRUD Lifecycle', () => {
     const searchInput = page.locator('input[placeholder*="search" i], input[placeholder*="filter" i], input[type="search"]').first();
     if ((await searchInput.count()) > 0) {
       await searchInput.fill('Weekly');
-      await page.waitForTimeout(300);
       await expect(page.getByText('Weekly Backup').first()).toBeVisible();
     }
   });
@@ -342,7 +332,6 @@ test.describe('Export/Import CRUD Lifecycle', () => {
     const createBtn = page.locator('button:has-text("Create Backup")').first();
     if ((await createBtn.count()) > 0) {
       await createBtn.click();
-      await page.waitForTimeout(500);
 
       const modal = page.locator('.modal-box').filter({ hasText: /Create.*Backup/i }).first();
       if ((await modal.count()) > 0) {
@@ -354,8 +343,6 @@ test.describe('Export/Import CRUD Lifecycle', () => {
         const submitBtn = modal.locator('button:has-text("Create"), button[type="submit"]').first();
         if ((await submitBtn.count()) > 0) {
           await submitBtn.click();
-          await page.waitForTimeout(1000);
-          // Page should handle the error gracefully
           await expect(page.locator('body')).toBeVisible();
         }
       }

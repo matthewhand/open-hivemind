@@ -15,7 +15,6 @@ test('Flowise config forms', async ({ page }) => {
       .locator('button:has-text("Edit")')
       .click()
       .catch(() => null);
-    await page.waitForTimeout(1000);
     await page.screenshot({ path: 'test-results/flowise-config-verify.png', fullPage: true });
   }
 });

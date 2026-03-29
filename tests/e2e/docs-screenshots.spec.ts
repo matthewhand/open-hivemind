@@ -85,7 +85,7 @@ test.describe('Documentation Screenshots', () => {
     }
 
     // Wait a bit for UI to settle
-    await page.waitForTimeout(500);
+    await page.waitForLoadState('networkidle');
 
     // Screenshot Create Bot Modal
     await page.screenshot({ path: 'docs/screenshots/create-bot-modal.png', fullPage: true });
@@ -230,7 +230,7 @@ test.describe('Documentation Screenshots', () => {
     await expect(cloneModal).toBeVisible();
 
     // Wait for animation
-    await page.waitForTimeout(500);
+    await page.waitForLoadState('networkidle');
 
     // Screenshot
     await page.screenshot({ path: 'docs/screenshots/clone-bot-modal.png' });
