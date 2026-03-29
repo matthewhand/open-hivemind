@@ -1,7 +1,7 @@
 import Debug from 'debug';
 import { FlowiseClient } from 'flowise-sdk';
 import flowiseConfig from '@integrations/flowise/flowiseConfig';
-import { getCircuitBreaker } from '@common/CircuitBreaker';
+import { globalRecoveryManager } from '../../utils/errorRecovery';
 import { withTimeout } from '@common/withTimeout';
 
 const debug = Debug('app:flowiseSdkClient');
@@ -9,7 +9,7 @@ const debug = Debug('app:flowiseSdkClient');
 /** Default timeout for Flowise SDK calls (30 seconds). */
 const DEFAULT_FLOWISE_TIMEOUT_MS = 30_000;
 
-const circuitBreaker = getCircuitBreaker({
+const circuitBreaker = globalRecoveryManager.getCircuitBreaker('flowise-sdk', {
   name: 'flowise',
   failureThreshold: 5,
   resetTimeoutMs: 30_000,

@@ -6,13 +6,13 @@ import openWebUIConfig from './openWebUIConfig';
 import { getSessionKey } from './sessionManager';
 import { getKnowledgeFileId } from './uploadKnowledgeFile';
 import { withTimeout } from '@common/withTimeout';
-import { getCircuitBreaker } from '@common/CircuitBreaker';
+import { globalRecoveryManager } from '../../utils/errorRecovery';
 
 const debug = Debug('app:runInference');
 
 const DEFAULT_INFERENCE_TIMEOUT_MS = 30_000;
 
-const circuitBreaker = getCircuitBreaker({
+const circuitBreaker = globalRecoveryManager.getCircuitBreaker('openwebui', {
   name: 'openwebui',
   failureThreshold: 5,
   resetTimeoutMs: 30_000,
