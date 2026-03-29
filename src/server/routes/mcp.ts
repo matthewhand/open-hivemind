@@ -584,7 +584,7 @@ router.get('/providers', async (req, res) => {
     const providers = mcpProviderManager.getAllProviders();
     const statuses = mcpProviderManager.getAllProviderStatuses();
 
-    const providersWithStatus = providers.map((provider: Record<string, unknown>) => ({
+    const providersWithStatus = providers.map((provider: MCPProviderConfig) => ({
       ...provider,
       status: statuses[provider.id] || {
         id: provider.id,
