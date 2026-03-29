@@ -1,7 +1,6 @@
 import { EventEmitter } from 'events';
 import * as fs from 'fs';
 import * as path from 'path';
-import retry from 'async-retry';
 import Debug from 'debug';
 import express, { type Application } from 'express';
 import type { KnownBlock } from '@slack/web-api';
