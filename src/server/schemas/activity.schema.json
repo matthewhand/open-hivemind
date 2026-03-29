@@ -1,0 +1,314 @@
+{
+  "/api/activity/messages": {
+    "get": {
+      "summary": "Get filtered message activity",
+      "tags": [
+        "Activity"
+      ],
+      "parameters": [
+        {
+          "name": "agentId",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "string"
+          },
+          "description": "Filter by agent ID"
+        },
+        {
+          "name": "messageProvider",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "string"
+          },
+          "description": "Filter by message provider"
+        },
+        {
+          "name": "llmProvider",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "string"
+          },
+          "description": "Filter by LLM provider"
+        },
+        {
+          "name": "startDate",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "string"
+          },
+          "description": "ISO datetime start filter"
+        },
+        {
+          "name": "endDate",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "string"
+          },
+          "description": "ISO datetime end filter"
+        },
+        {
+          "name": "limit",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "string"
+          },
+          "description": "Limit results"
+        },
+        {
+          "name": "offset",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "string"
+          },
+          "description": "Offset for pagination"
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "Message activity data"
+        },
+        "503": {
+          "description": "Database not connected"
+        }
+      }
+    }
+  },
+  "/api/activity/llm-usage": {
+    "get": {
+      "summary": "Get LLM usage metrics",
+      "tags": [
+        "Activity"
+      ],
+      "parameters": [
+        {
+          "name": "llmProvider",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "string"
+          },
+          "description": "Filter by LLM provider"
+        },
+        {
+          "name": "startDate",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "string"
+          },
+          "description": "ISO datetime start filter"
+        },
+        {
+          "name": "endDate",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "string"
+          },
+          "description": "ISO datetime end filter"
+        },
+        {
+          "name": "limit",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "string"
+          },
+          "description": "Limit results"
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "LLM usage metrics"
+        },
+        "503": {
+          "description": "Database not connected"
+        }
+      }
+    }
+  },
+  "/api/activity/summary": {
+    "get": {
+      "summary": "Get activity summary",
+      "tags": [
+        "Activity"
+      ],
+      "parameters": [
+        {
+          "name": "startDate",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "string"
+          },
+          "description": "ISO datetime start filter"
+        },
+        {
+          "name": "endDate",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "string"
+          },
+          "description": "ISO datetime end filter"
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "Activity summary"
+        },
+        "503": {
+          "description": "Database not connected"
+        }
+      }
+    }
+  },
+  "/api/activity/chart-data": {
+    "get": {
+      "summary": "Get time-series data for charts",
+      "tags": [
+        "Activity"
+      ],
+      "parameters": [
+        {
+          "name": "messageProvider",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "string"
+          },
+          "description": "Filter by message provider"
+        },
+        {
+          "name": "llmProvider",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "string"
+          },
+          "description": "Filter by LLM provider"
+        },
+        {
+          "name": "startDate",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "string"
+          },
+          "description": "ISO datetime start filter"
+        },
+        {
+          "name": "endDate",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "string"
+          },
+          "description": "ISO datetime end filter"
+        },
+        {
+          "name": "interval",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "string"
+          },
+          "description": "Interval: hour, day, week"
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "Chart data"
+        },
+        "503": {
+          "description": "Database not connected"
+        }
+      }
+    }
+  },
+  "/api/activity/agents": {
+    "get": {
+      "summary": "Get agent activity statistics",
+      "tags": [
+        "Activity"
+      ],
+      "parameters": [
+        {
+          "name": "startDate",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "string"
+          },
+          "description": "ISO datetime start filter"
+        },
+        {
+          "name": "endDate",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "string"
+          },
+          "description": "ISO datetime end filter"
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "Agent activity statistics"
+        },
+        "503": {
+          "description": "Database not connected"
+        }
+      }
+    }
+  },
+  "/api/activity/mcp-tools": {
+    "get": {
+      "summary": "Get MCP tool usage statistics",
+      "tags": [
+        "Activity"
+      ],
+      "parameters": [
+        {
+          "name": "agentId",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "string"
+          },
+          "description": "Filter by agent ID"
+        },
+        {
+          "name": "startDate",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "string"
+          },
+          "description": "ISO datetime start filter"
+        },
+        {
+          "name": "endDate",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "string"
+          },
+          "description": "ISO datetime end filter"
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "MCP tool usage statistics"
+        }
+      }
+    }
+  }
+}
