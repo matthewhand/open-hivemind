@@ -1,4 +1,5 @@
 import type { ProviderConfigSchema } from '../types';
+import { validateApiKey } from '../../utils/apiKeyValidation';
 
 export const slackProviderSchema: ProviderConfigSchema = {
   type: 'message',
@@ -16,9 +17,19 @@ export const slackProviderSchema: ProviderConfigSchema = {
       label: 'Bot Token',
       type: 'password',
       required: true,
-      description: 'Your Slack bot token starting with xoxb-',
+      description: 'Your Slack bot token starting with xoxb- (format: xoxb-[numbers]-[numbers]-[hash])',
       placeholder: 'xoxb-[your-bot-token-here]',
       group: 'Authentication',
+      validation: {
+        pattern: '^xoxb-[0-9]{10,13}-[0-9]{10,13}-[A-Za-z0-9]{24}$',
+        custom: (value: string) => {
+          const result = validateApiKey('slack', value, false);
+          if (!result.isValid) {
+            return result.message || 'Invalid bot token format';
+          }
+          return null;
+        },
+      },
     },
     {
       name: 'appToken',

@@ -631,7 +631,7 @@ const BotsPage: React.FC = () => {
                 <div className="space-y-4">
                   <div>
                     <label className="text-xs font-bold uppercase opacity-50 mb-1 block">Description</label>
-                    <p className="text-sm italic">{previewBot.description || 'No description provided.'}</p>
+                    <p className="text-sm italic">{previewBot?.description || 'No description provided.'}</p>
                   </div>
 
                   <div className="grid grid-cols-2 gap-2">
@@ -639,14 +639,14 @@ const BotsPage: React.FC = () => {
                       <label className="text-[10px] font-bold uppercase opacity-50 block mb-1">Provider</label>
                       <div className="flex items-center gap-2">
                         <Globe className="w-3 h-3 text-primary" />
-                        <span className="text-xs font-medium uppercase">{previewBot.llmProvider}</span>
+                        <span className="text-xs font-medium uppercase">{previewBot.llmProvider || 'Not configured'}</span>
                       </div>
                     </div>
                     <div className="bg-base-200/50 p-2 rounded-lg">
                       <label className="text-[10px] font-bold uppercase opacity-50 block mb-1">Model</label>
                       <div className="flex items-center gap-2">
                         <Cpu className="w-3 h-3 text-secondary" />
-                        <span className="text-xs font-medium">{previewBot.llmModel}</span>
+                        <span className="text-xs font-medium">{previewBot.llmModel || 'Not configured'}</span>
                       </div>
                     </div>
                   </div>
@@ -654,12 +654,12 @@ const BotsPage: React.FC = () => {
                   <div className="stats bg-base-200 w-full shadow-sm">
                     <div className="stat p-3">
                       <div className="stat-title text-[10px] uppercase font-bold">Messages</div>
-                      <div className="stat-value text-xl text-primary">{previewBot.messageCount || 0}</div>
+                      <div className="stat-value text-xl text-primary">{previewBot.messageCount ?? 0}</div>
                     </div>
                     <div className="stat p-3">
                       <div className="stat-title text-[10px] uppercase font-bold">Errors</div>
-                      <div className={`stat-value text-xl ${(previewBot.errorCount || 0) > 0 ? 'text-error' : ''}`}>
-                        {previewBot.errorCount || 0}
+                      <div className={`stat-value text-xl ${(previewBot.errorCount ?? 0) > 0 ? 'text-error' : ''}`}>
+                        {previewBot.errorCount ?? 0}
                       </div>
                     </div>
                   </div>
@@ -830,7 +830,7 @@ const BotsPage: React.FC = () => {
       {editingBot && (
         <BotSettingsModal
           isOpen={!!editingBot}
-          bot={editingBot as any}
+          bot={editingBot}
           onClose={() => setEditingBot(null)}
           personas={personas}
           llmProfiles={llmProfiles}
@@ -847,9 +847,9 @@ const BotsPage: React.FC = () => {
           }}
           onDelete={(bot) => {
             setEditingBot(null);
-            setDeletingBot(bot as any);
+            setDeletingBot(bot);
           }}
-          onViewDetails={(bot) => setPreviewBot(bot as any)}
+          onViewDetails={(bot) => setPreviewBot(bot)}
         />
       )}
 

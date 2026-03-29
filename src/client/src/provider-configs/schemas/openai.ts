@@ -1,4 +1,5 @@
 import type { ProviderConfigSchema } from '../types';
+import { validateApiKey, getApiKeyFormatHint } from '../../utils/apiKeyValidation';
 
 export const openAIProviderSchema: ProviderConfigSchema = {
   type: 'llm',
@@ -18,9 +19,19 @@ export const openAIProviderSchema: ProviderConfigSchema = {
       label: 'API Key',
       type: 'password',
       required: true,
-      description: 'Your OpenAI API key',
+      description: 'Your OpenAI API key (starts with sk- followed by 48 characters)',
       placeholder: 'sk-...',
       group: 'Authentication',
+      validation: {
+        pattern: '^sk-[A-Za-z0-9]{48}$',
+        custom: (value: string) => {
+          const result = validateApiKey('openai', value, false);
+          if (!result.isValid) {
+            return result.message || 'Invalid API key format';
+          }
+          return null;
+        },
+      },
     },
     {
       name: 'organizationId',

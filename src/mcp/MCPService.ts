@@ -83,9 +83,42 @@ export class MCPService {
       return mcpTools;
     } catch (error) {
       debug(`Error testing connection to MCP server ${config.name}:`, error);
-      throw new Error(
-        `Failed to connect to MCP server ${config.name}: ${error instanceof Error ? error.message : String(error)}`
-      );
+
+      // Enhanced error with actionable messages
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      let enhancedMessage = `Failed to connect to MCP server ${config.name}`;
+      const suggestions: string[] = [];
+
+      // Detect specific error types
+      if (errorMessage.includes('ECONNREFUSED') || errorMessage.includes('ENOTFOUND')) {
+        enhancedMessage = `Cannot reach MCP server at ${config.serverUrl}. The server may be offline or the URL is incorrect.`;
+        suggestions.push('Verify the server URL is correct');
+        suggestions.push('Check if the MCP server is running');
+        suggestions.push('Ensure your network can reach the server');
+      } else if (errorMessage.includes('timeout') || errorMessage.includes('ETIMEDOUT')) {
+        enhancedMessage = `Connection to MCP server ${config.name} timed out. The server may be slow or unresponsive.`;
+        suggestions.push('Check your internet connection speed');
+        suggestions.push('Verify the server is not overloaded');
+        suggestions.push('Try again in a few moments');
+      } else if (errorMessage.includes('401') || errorMessage.includes('unauthorized')) {
+        enhancedMessage = `Authentication failed for MCP server ${config.name}. The API key may be invalid or expired.`;
+        suggestions.push('Verify your API key is correct');
+        suggestions.push('Check if the API key has expired');
+        suggestions.push('Generate a new API key if needed');
+      } else if (errorMessage.includes('403') || errorMessage.includes('forbidden')) {
+        enhancedMessage = `Access denied to MCP server ${config.name}. You may not have permission to use this server.`;
+        suggestions.push('Check your account permissions');
+        suggestions.push('Contact the server administrator');
+        suggestions.push('Verify your API key has the required scope');
+      }
+
+      const error_enhanced = new Error(enhancedMessage);
+      (error_enhanced as any).suggestions = suggestions;
+      (error_enhanced as any).canRetry = errorMessage.includes('ECONNREFUSED') ||
+                                           errorMessage.includes('ENOTFOUND') ||
+                                           errorMessage.includes('timeout');
+      (error_enhanced as any).docsUrl = 'https://docs.open-hivemind.ai/mcp/troubleshooting';
+      throw error_enhanced;
     }
   }
 
@@ -215,6 +248,35 @@ export class MCPService {
   }
 
   /**
+   * Get detailed information about all connected servers including their tools
+   */
+  public getConnectedServersWithMetadata(): Array<{
+    name: string;
+    serverUrl: string;
+    connected: boolean;
+    tools: MCPTool[];
+    toolCount: number;
+    lastConnected?: string;
+    description?: string;
+  }> {
+    const servers = [];
+
+    for (const [serverName, client] of this.clients.entries()) {
+      const tools = this.tools.get(serverName) || [];
+      servers.push({
+        name: serverName,
+        serverUrl: '', // URL is not stored in MCPService, will be enriched from storage
+        connected: true,
+        tools: tools,
+        toolCount: tools.length,
+        lastConnected: new Date().toISOString(),
+      });
+    }
+
+    return servers;
+  }
+
+  /**
    * Executes a tool on a connected MCP server.
    *
    * @param {string} serverName - The name of the MCP server
@@ -271,9 +333,43 @@ export class MCPService {
       return result;
     } catch (error) {
       debug(`Error executing tool ${toolName} on server ${serverName}:`, error);
-      throw new Error(
-        `Failed to execute tool ${toolName} on server ${serverName}: ${error instanceof Error ? error.message : String(error)}`
-      );
+
+      // Enhanced error with actionable messages
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      let enhancedMessage = `Failed to execute tool ${toolName} on server ${serverName}`;
+      const suggestions: string[] = [];
+
+      // Detect specific error types
+      if (errorMessage.includes('Not connected')) {
+        enhancedMessage = `Not connected to MCP server ${serverName}. The server connection may have been lost.`;
+        suggestions.push('Reconnect to the MCP server');
+        suggestions.push('Check if the server is still running');
+        suggestions.push('Restart the bot or application');
+      } else if (errorMessage.includes('denied') || errorMessage.includes('guard') || errorMessage.includes('permission')) {
+        enhancedMessage = `Tool access denied by security guard. ${errorMessage}`;
+        suggestions.push('Check your user permissions');
+        suggestions.push('Verify you are the channel owner if owner-only guard is enabled');
+        suggestions.push('Contact administrator to adjust guard settings');
+      } else if (errorMessage.includes('timeout')) {
+        enhancedMessage = `Tool execution timed out. The tool ${toolName} took too long to respond.`;
+        suggestions.push('Try again - the tool may have been busy');
+        suggestions.push('Check if the tool server is overloaded');
+        suggestions.push('Verify the tool parameters are correct');
+      } else if (errorMessage.includes('invalid') || errorMessage.includes('parameter')) {
+        enhancedMessage = `Invalid tool parameters for ${toolName}. ${errorMessage}`;
+        suggestions.push('Check the tool documentation for required parameters');
+        suggestions.push('Verify parameter types and values are correct');
+        suggestions.push('Review the tool schema for accepted inputs');
+      }
+
+      const error_enhanced = new Error(enhancedMessage);
+      (error_enhanced as any).suggestions = suggestions;
+      (error_enhanced as any).canRetry = errorMessage.includes('timeout') ||
+                                           errorMessage.includes('Not connected');
+      (error_enhanced as any).toolName = toolName;
+      (error_enhanced as any).serverName = serverName;
+      (error_enhanced as any).docsUrl = 'https://docs.open-hivemind.ai/tools/troubleshooting';
+      throw error_enhanced;
     }
   }
 

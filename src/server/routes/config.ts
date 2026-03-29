@@ -23,8 +23,10 @@ import {
   CreateToolProfileSchema,
   LlmProfileKeyParamSchema,
   MemoryProfileKeyParamSchema,
+  MessageProfileKeyParamSchema,
   ToolProfileKeyParamSchema,
   UpdateLlmProfileSchema,
+  UpdateMessageProfileSchema,
 } from '../../validation/schemas/configProfilesSchema';
 import { ConfigUpdateSchema } from '../../validation/schemas/configSchema';
 import { validateRequest } from '../../validation/validateRequest';
@@ -744,6 +746,65 @@ router.post('/message-profiles', validateRequest(CreateMessageProfileSchema), (r
   }
 });
 
+router.put('/message-profiles/:key', validateRequest(UpdateMessageProfileSchema), (req, res) => {
+  try {
+    const { key } = req.params;
+    const updates = req.body;
+
+    const profiles = getMessageProfiles();
+    const normalizedKey = key.toLowerCase();
+    const index = profiles.message.findIndex((p) => p.key.toLowerCase() === normalizedKey);
+
+    if (index === -1) {
+      return res.status(404).json({ error: `Message profile with key '${key}' not found` });
+    }
+
+    const updatedProfile = {
+      ...profiles.message[index],
+      ...updates,
+    };
+    profiles.message[index] = updatedProfile;
+
+    saveMessageProfiles(profiles);
+
+    return res.json({
+      success: true,
+      profile: updatedProfile,
+    });
+  } catch (error: unknown) {
+    const hivemindError = ErrorUtils.toHivemindError(error);
+    return res.status(hivemindError.statusCode || 500).json({
+      error: hivemindError.message,
+      code: 'MESSAGE_PROFILE_UPDATE_ERROR',
+    });
+  }
+});
+
+router.delete('/message-profiles/:key', validateRequest(MessageProfileKeyParamSchema), (req, res) => {
+  try {
+    const { key } = req.params;
+    const profiles = getMessageProfiles();
+    const index = profiles.message.findIndex(
+      (profile) => profile.key.toLowerCase() === key.toLowerCase()
+    );
+
+    if (index === -1) {
+      return res.status(404).json({ error: `Message profile with key '${key}' not found` });
+    }
+
+    const [deletedProfile] = profiles.message.splice(index, 1);
+    saveMessageProfiles(profiles);
+
+    return res.json({ success: true, profile: deletedProfile });
+  } catch (error: unknown) {
+    const hivemindError = ErrorUtils.toHivemindError(error);
+    return res.status(hivemindError.statusCode || 500).json({
+      error: hivemindError.message,
+      code: 'MESSAGE_PROFILE_DELETE_ERROR',
+    });
+  }
+});
+
 // -- Memory Profiles CRUD --
 
 const memoryProfilesModule = require('../../config/memoryProfiles');
@@ -891,6 +952,78 @@ router.delete('/tool-profiles/:key', validateRequest(ToolProfileKeyParamSchema),
     return res
       .status(hivemindError.statusCode || 500)
       .json({ error: hivemindError.message, code: 'TOOL_PROFILES_DELETE_ERROR' });
+  }
+});
+
+// -- LLM Provider Models --
+
+import {
+  getModelsForProvider,
+  getChatModels,
+  getEmbeddingModels,
+  getSupportedProviders,
+} from '../data/llmModels';
+
+// GET /api/config/llm-providers/:type/models - List available models for a provider
+router.get('/llm-providers/:type/models', (req, res) => {
+  try {
+    const { type } = req.params;
+    const { modelType } = req.query;
+
+    // Validate provider type
+    const supportedProviders = getSupportedProviders();
+    if (!supportedProviders.includes(type.toLowerCase())) {
+      return res.status(400).json({
+        error: `Unsupported provider type '${type}'. Supported providers: ${supportedProviders.join(', ')}`,
+        code: 'INVALID_PROVIDER_TYPE',
+      });
+    }
+
+    // Get models based on requested type
+    let models;
+    if (modelType === 'chat') {
+      models = getChatModels(type);
+    } else if (modelType === 'embedding') {
+      models = getEmbeddingModels(type);
+    } else {
+      models = getModelsForProvider(type);
+    }
+
+    return res.json({
+      success: true,
+      provider: type,
+      modelType: modelType || 'all',
+      count: models.length,
+      models,
+    });
+  } catch (error: unknown) {
+    const hivemindError = ErrorUtils.toHivemindError(error);
+    return res.status(hivemindError.statusCode || 500).json({
+      error: hivemindError.message,
+      code: 'LLM_MODELS_GET_ERROR',
+    });
+  }
+});
+
+// GET /api/config/llm-providers-supported - List all supported LLM providers
+router.get('/llm-providers-supported', (_req, res) => {
+  try {
+    const providers = getSupportedProviders();
+    return res.json({
+      success: true,
+      count: providers.length,
+      providers: providers.map((id) => ({
+        id,
+        name: id.charAt(0).toUpperCase() + id.slice(1),
+        modelsEndpoint: `/api/config/llm-providers/${id}/models`,
+      })),
+    });
+  } catch (error: unknown) {
+    const hivemindError = ErrorUtils.toHivemindError(error);
+    return res.status(hivemindError.statusCode || 500).json({
+      error: hivemindError.message,
+      code: 'SUPPORTED_PROVIDERS_GET_ERROR',
+    });
   }
 });
 

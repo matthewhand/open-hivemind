@@ -72,6 +72,14 @@ function validateBotConfiguration(bot: Partial<BotConfig>): BotValidationResult 
     }
   }
 
+  if (bot.llmProvider === 'anthropic') {
+    if (!bot.anthropic?.apiKey) {
+      errors.push('Anthropic API key is required');
+    } else if (!bot.anthropic.apiKey.startsWith('sk-ant-')) {
+      warnings.push('Anthropic API key should start with "sk-ant-"');
+    }
+  }
+
   return {
     name,
     valid: errors.length === 0 && warnings.length === 0,
@@ -370,7 +378,7 @@ router.get('/api/validation/schema', (_req: AuthMiddlewareRequest, res: Response
         messageProvider: { type: 'string', enum: ['discord', 'slack', 'mattermost', 'webhook'] },
         llmProvider: {
           type: 'string',
-          enum: ['openai', 'flowise', 'openwebui', 'perplexity', 'replicate', 'n8n', 'openswarm'],
+          enum: ['openai', 'anthropic', 'flowise', 'openwebui', 'perplexity', 'replicate', 'n8n', 'openswarm'],
         },
         discord: {
           type: 'object',
@@ -393,6 +401,15 @@ router.get('/api/validation/schema', (_req: AuthMiddlewareRequest, res: Response
           properties: {
             apiKey: { type: 'string' },
             model: { type: 'string' },
+          },
+        },
+        anthropic: {
+          type: 'object',
+          properties: {
+            apiKey: { type: 'string' },
+            model: { type: 'string' },
+            maxTokens: { type: 'number' },
+            temperature: { type: 'number' },
           },
         },
       },

@@ -22,6 +22,7 @@ export interface Persona {
   traits: { name: string; value: string; weight?: number; type?: string }[];
   systemPrompt: string;
   isBuiltIn?: boolean;
+  usageCount?: number;
   createdAt: string;
   updatedAt: string;
 }
@@ -50,6 +51,7 @@ export const BUILTIN_PERSONAS: Persona[] = [
       { name: 'Style', value: 'Professional', weight: 1, type: 'style' },
     ],
     isBuiltIn: true,
+    usageCount: 0,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   },
@@ -64,6 +66,7 @@ export const BUILTIN_PERSONAS: Persona[] = [
       { name: 'Style', value: 'Artistic', weight: 1, type: 'style' },
     ],
     isBuiltIn: true,
+    usageCount: 0,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   },
@@ -78,6 +81,7 @@ export const BUILTIN_PERSONAS: Persona[] = [
       { name: 'Style', value: 'Technical', weight: 1, type: 'style' },
     ],
     isBuiltIn: true,
+    usageCount: 0,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   },
@@ -172,6 +176,7 @@ export class PersonaManager extends EventEmitter {
     const newPersona: Persona = {
       id,
       ...request,
+      usageCount: 0,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
@@ -216,6 +221,7 @@ export class PersonaManager extends EventEmitter {
       ...overrides,
       id: newId,
       isBuiltIn: false, // Cloned personas are always custom
+      usageCount: 0, // Reset usage count for cloned personas
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
@@ -239,6 +245,24 @@ export class PersonaManager extends EventEmitter {
     this.personas.delete(id);
     this.savePersonas();
     this.emit('personaDeleted', id);
+    return true;
+  }
+
+  public incrementUsageCount(id: string): boolean {
+    const persona = this.personas.get(id);
+    if (!persona) {
+      return false;
+    }
+
+    const updated: Persona = {
+      ...persona,
+      usageCount: (persona.usageCount || 0) + 1,
+      updatedAt: new Date().toISOString(),
+    };
+
+    this.personas.set(id, updated);
+    this.savePersonas();
+    this.emit('personaUsed', updated);
     return true;
   }
 }

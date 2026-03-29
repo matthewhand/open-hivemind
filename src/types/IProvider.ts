@@ -69,6 +69,49 @@ export interface IMessageProvider<TConfig = any> extends IProvider<TConfig> {
    * Reloads the provider configuration.
    */
   reload?(): Promise<any>;
+
+  /**
+   * Sends a message to a specific channel.
+   * @param channelId - The unique identifier of the target channel
+   * @param message - The text content to send
+   * @param senderName - Optional display name for the message sender
+   * @returns A promise that resolves to the sent message's ID
+   */
+  sendMessage(channelId: string, message: string, senderName?: string): Promise<string>;
+
+  /**
+   * Retrieves messages from a specific channel.
+   * @param channelId - The unique identifier of the channel
+   * @param limit - Optional maximum number of messages to retrieve
+   * @returns A promise that resolves to an array of messages
+   */
+  getMessages(channelId: string, limit?: number): Promise<any[]>;
+
+  /**
+   * Sends a message to a channel with an optional agent name.
+   * @param channelId - The unique identifier of the target channel
+   * @param message - The text content to send
+   * @param active_agent_name - Optional name of the active agent sending the message
+   * @returns A promise that resolves to the sent message's ID
+   */
+  sendMessageToChannel(
+    channelId: string,
+    message: string,
+    active_agent_name?: string
+  ): Promise<string>;
+
+  /**
+   * Gets the unique client identifier for this provider.
+   * @returns The client ID for this provider
+   */
+  getClientId(): string;
+
+  /**
+   * Gets the owner/creator of a message forum (channel, group, etc.)
+   * @param forumId - The unique identifier of the forum (channel, group, etc.)
+   * @returns A promise that resolves to the user ID of the forum owner
+   */
+  getForumOwner(forumId: string): Promise<string>;
 }
 
 export interface ILLMProvider<TConfig = any> extends IProvider<TConfig> {

@@ -82,6 +82,7 @@ export class MattermostService extends EventEmitter implements IMessengerService
       channel: botConfig.mattermost.channel || 'town-square',
       userId: botConfig.mattermost.userId || botConfig.BOT_ID || '',
       username: botConfig.mattermost.username || botConfig.MESSAGE_USERNAME_OVERRIDE || '',
+      llmProvider: botConfig.llmProvider,
     });
   }
 
@@ -230,6 +231,26 @@ export class MattermostService extends EventEmitter implements IMessengerService
       metrics.incrementMessages();
       metrics.recordResponseTime(duration);
       debug(`Message sent successfully after ${attemptCount} attempts in ${duration}ms`);
+
+      // Record success event
+      try {
+        const ws = require('@src/server/services/WebSocketService')
+          .default as typeof import('@src/server/services/WebSocketService').default;
+        const botName = senderName || Array.from(this.clients.keys())[0];
+        const botConfig = this.botConfigs.get(botName);
+        ws.getInstance().recordMessageFlow({
+          botName,
+          provider: 'mattermost',
+          llmProvider: botConfig?.llmProvider,
+          channelId,
+          userId: 'system',
+          messageType: 'outgoing',
+          contentLength: text.length,
+          processingTime: duration,
+          status: 'success',
+        });
+      } catch {}
+
       return result;
     } catch (error: any) {
       const duration = Date.now() - startTime;
@@ -241,13 +262,17 @@ export class MattermostService extends EventEmitter implements IMessengerService
       try {
         const ws = require('@src/server/services/WebSocketService')
           .default as typeof import('@src/server/services/WebSocketService').default;
+        const botName = senderName || Array.from(this.clients.keys())[0];
+        const botConfig = this.botConfigs.get(botName);
         ws.getInstance().recordMessageFlow({
-          botName: senderName || Array.from(this.clients.keys())[0],
+          botName,
           provider: 'mattermost',
+          llmProvider: botConfig?.llmProvider,
           channelId,
           userId: 'system',
           messageType: 'outgoing',
           contentLength: text.length,
+          processingTime: duration,
           status: 'error',
           errorMessage: error.message,
         });

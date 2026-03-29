@@ -18,6 +18,29 @@ export const ErrorClassification = {
 
 export type ErrorClassification = (typeof ErrorClassification)[keyof typeof ErrorClassification];
 
+// Error types for enhanced error handling
+export type ErrorType =
+  | 'validation'
+  | 'authentication'
+  | 'authorization'
+  | 'network'
+  | 'timeout'
+  | 'rate-limit'
+  | 'configuration'
+  | 'database'
+  | 'api'
+  | 'unknown';
+
+export interface AppError {
+  message: string;
+  type: ErrorType;
+  code?: string;
+  statusCode?: number;
+  details?: Record<string, unknown>;
+  retryable?: boolean;
+  severity?: string;
+}
+
 export class ErrorUtils {
   /**
    * Converts an unknown error to a standardized HivemindError format.
@@ -31,6 +54,7 @@ export class ErrorUtils {
       return {
         message: error.message,
         code: (error as any).code,
+        statusCode: (error as any).statusCode || (error as any).status,
         originalError: error,
         context,
       };
@@ -53,35 +77,137 @@ export class ErrorUtils {
    * Classifies an error based on its properties and context.
    *
    * @param error - The HivemindError to classify.
-   * @returns An object containing the classification and suggested log level.
+   * @returns An object containing the classification, log level, type, retryable status, and severity.
    */
   public static classifyError(error: HivemindError): {
     classification: ErrorClassification;
     logLevel: 'error' | 'warn' | 'info';
+    type: ErrorType;
+    retryable: boolean;
+    severity: string;
   } {
-    // Check for specific error codes or messages
-    if (error.code === 'VALIDATION_ERROR' || error.message.toLowerCase().includes('validation')) {
-      return { classification: ErrorClassification.VALIDATION_ERROR, logLevel: 'warn' };
+    const msg = error.message.toLowerCase();
+    const code = error.code;
+    const statusCode = error.statusCode;
+
+    // Network errors
+    if (code === 'ECONNREFUSED' || code === 'ENOTFOUND' || code === 'ETIMEDOUT' || msg.includes('network')) {
+      return {
+        classification: ErrorClassification.NETWORK_ERROR,
+        logLevel: 'error',
+        type: 'network',
+        retryable: true,
+        severity: 'medium',
+      };
     }
 
-    if (
-      error.code === 'ECONNREFUSED' ||
-      error.code === 'ENOTFOUND' ||
-      error.message.toLowerCase().includes('network')
-    ) {
-      return { classification: ErrorClassification.NETWORK_ERROR, logLevel: 'error' };
+    // Timeout errors
+    if (code === 'ETIMEDOUT' || msg.includes('timeout') || statusCode === 408) {
+      return {
+        classification: ErrorClassification.NETWORK_ERROR,
+        logLevel: 'error',
+        type: 'timeout',
+        retryable: true,
+        severity: 'medium',
+      };
     }
 
-    if (error.statusCode && error.statusCode >= 400 && error.statusCode < 500) {
-      return { classification: ErrorClassification.USER_ERROR, logLevel: 'warn' };
+    // Rate limit errors
+    if (statusCode === 429 || msg.includes('rate limit') || msg.includes('too many requests')) {
+      return {
+        classification: ErrorClassification.USER_ERROR,
+        logLevel: 'warn',
+        type: 'rate-limit',
+        retryable: true,
+        severity: 'low',
+      };
     }
 
-    if (error.statusCode && error.statusCode >= 500) {
-      return { classification: ErrorClassification.SYSTEM_ERROR, logLevel: 'error' };
+    // Authentication errors
+    if (statusCode === 401 || msg.includes('unauthorized') || msg.includes('authentication')) {
+      return {
+        classification: ErrorClassification.USER_ERROR,
+        logLevel: 'warn',
+        type: 'authentication',
+        retryable: false,
+        severity: 'medium',
+      };
+    }
+
+    // Authorization errors
+    if (statusCode === 403 || msg.includes('forbidden') || msg.includes('permission')) {
+      return {
+        classification: ErrorClassification.USER_ERROR,
+        logLevel: 'warn',
+        type: 'authorization',
+        retryable: false,
+        severity: 'low',
+      };
+    }
+
+    // Validation errors
+    if (code === 'VALIDATION_ERROR' || statusCode === 400 || msg.includes('validation') || msg.includes('invalid')) {
+      return {
+        classification: ErrorClassification.VALIDATION_ERROR,
+        logLevel: 'warn',
+        type: 'validation',
+        retryable: false,
+        severity: 'low',
+      };
+    }
+
+    // Configuration errors
+    if (msg.includes('config') || msg.includes('environment')) {
+      return {
+        classification: ErrorClassification.SYSTEM_ERROR,
+        logLevel: 'error',
+        type: 'configuration',
+        retryable: false,
+        severity: 'critical',
+      };
+    }
+
+    // Database errors
+    if (msg.includes('database') || msg.includes('query') || msg.includes('sql')) {
+      return {
+        classification: ErrorClassification.SYSTEM_ERROR,
+        logLevel: 'error',
+        type: 'database',
+        retryable: true,
+        severity: 'high',
+      };
+    }
+
+    // API errors (4xx client errors)
+    if (statusCode && statusCode >= 400 && statusCode < 500) {
+      return {
+        classification: ErrorClassification.USER_ERROR,
+        logLevel: 'warn',
+        type: 'api',
+        retryable: false,
+        severity: 'low',
+      };
+    }
+
+    // System errors (5xx server errors)
+    if (statusCode && statusCode >= 500) {
+      return {
+        classification: ErrorClassification.SYSTEM_ERROR,
+        logLevel: 'error',
+        type: 'api',
+        retryable: true,
+        severity: 'high',
+      };
     }
 
     // Default classification
-    return { classification: ErrorClassification.UNKNOWN_ERROR, logLevel: 'error' };
+    return {
+      classification: ErrorClassification.UNKNOWN_ERROR,
+      logLevel: 'error',
+      type: 'unknown',
+      retryable: false,
+      severity: 'medium',
+    };
   }
 
   /**
@@ -102,6 +228,13 @@ export class ErrorUtils {
 
     // For system errors, return a generic message to avoid exposing internal details
     return 'An internal error occurred. Please try again later.';
+  }
+
+  /**
+   * Gets the HTTP status code from an error
+   */
+  public static getStatusCode(error: HivemindError): number | undefined {
+    return error.statusCode;
   }
 
   /**

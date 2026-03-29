@@ -28,10 +28,12 @@ import guardsRouter from './routes/guards';
 import healthRouter from './routes/health';
 import hotReloadRouter from './routes/hotReload';
 import importExportRouter from './routes/importExport';
+import marketplaceRouter from './routes/marketplace';
 import mcpRouter from './routes/mcp';
 import onboardingRouter from './routes/onboarding';
 import personasRouter from './routes/personas';
 import providersRouter from './routes/providers';
+import usageTrackingRouter from './routes/usage-tracking';
 import sitemapRouter from './routes/sitemap';
 import specsRouter from './routes/specs';
 import webhookEventsRouter from './routes/webhookEvents';
@@ -196,6 +198,7 @@ export class WebUIServer {
     this.app.use('/api/agents', authenticateToken, agentsRouter);
     this.app.use('/api/bots', authenticateToken, botsRouter);
     this.app.use('/api/mcp', authenticateToken, mcpRouter);
+    this.app.use('/api/usage-tracking', authenticateToken, usageTrackingRouter);
     this.app.use('/api/guards', authenticateToken, guardsRouter);
     this.app.use('/api/activity', authenticateToken, activityRouter);
     this.app.use('/api/webui', authenticateToken, consolidatedRouter);
@@ -208,6 +211,7 @@ export class WebUIServer {
     this.app.use('/api/webhooks', authenticateToken, webhookEventsRouter);
     this.app.use('/api/onboarding', authenticateToken, onboardingRouter);
     this.app.use('/api/providers', authenticateToken, providersRouter);
+    this.app.use('/api/marketplace', marketplaceRouter);
     this.app.use('/api/guards', authenticateToken, guardsRouter);
 
     // WebUI application routes (serve React app)
@@ -234,6 +238,7 @@ export class WebUIServer {
           dashboard: '/api/dashboard',
           config: '/api/config',
           hotReload: '/api/hot-reload',
+          marketplace: '/api/marketplace',
         },
         documentation: '/api/docs',
       });

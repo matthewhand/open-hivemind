@@ -13,6 +13,7 @@ import type {
   MCPProviderManager as IMCPProviderManager,
   MCPProviderStats,
 } from '../types/mcp';
+import { isMCPProviderType } from '../types/mcp';
 
 
 
@@ -339,7 +340,7 @@ export class MCPProviderManager extends EventEmitter implements IMCPProviderMana
       errors.push('Command is required');
     }
 
-    if (!config.type || !['desktop', 'cloud'].includes(config.type)) {
+    if (!config.type || !isMCPProviderType(config.type)) {
       errors.push('Provider type must be either "desktop" or "cloud"');
     }
 

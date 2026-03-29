@@ -165,8 +165,8 @@ const GuardsPage: React.FC = () => {
   const handleDuplicateProfile = (profile: GuardrailProfile) => {
     const duplicatedProfile: GuardrailProfile = JSON.parse(JSON.stringify(profile));
     duplicatedProfile.id = '';
-    duplicatedProfile.name = `Copy of ${profile.name}`;
-    duplicatedProfile.description = profile.description ? `Copy of ${profile.description}` : '';
+    duplicatedProfile.name = `Copy of ${profile?.name || 'Unnamed'}`;
+    duplicatedProfile.description = profile?.description ? `Copy of ${profile.description}` : '';
 
     setEditingProfile(duplicatedProfile);
     setIsNew(true);
@@ -367,13 +367,13 @@ const GuardsPage: React.FC = () => {
                     </button>
                   </div>
                 </div>
-                <p className="text-sm opacity-70 mb-4 h-10 line-clamp-2">{profile.description || 'No description'}</p>
+                <p className="text-sm opacity-70 mb-4 h-10 line-clamp-2">{profile?.description || 'No description'}</p>
 
                 <div className="flex flex-wrap gap-2 mt-auto">
-                  {profile.guards.mcpGuard.enabled && <span className="badge badge-primary badge-sm">Access Control</span>}
-                  {profile.guards.rateLimit?.enabled && <span className="badge badge-warning badge-sm">Rate Limit</span>}
-                  {profile.guards.contentFilter?.enabled && <span className="badge badge-error badge-sm">Content Filter</span>}
-                  {!profile.guards.mcpGuard.enabled && !profile.guards.rateLimit?.enabled && !profile.guards.contentFilter?.enabled && (
+                  {profile?.guards?.mcpGuard?.enabled && <span className="badge badge-primary badge-sm">Access Control</span>}
+                  {profile?.guards?.rateLimit?.enabled && <span className="badge badge-warning badge-sm">Rate Limit</span>}
+                  {profile?.guards?.contentFilter?.enabled && <span className="badge badge-error badge-sm">Content Filter</span>}
+                  {!profile?.guards?.mcpGuard?.enabled && !profile?.guards?.rateLimit?.enabled && !profile?.guards?.contentFilter?.enabled && (
                     <span className="badge badge-ghost badge-sm">No Guards</span>
                   )}
                 </div>

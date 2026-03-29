@@ -157,8 +157,8 @@ const LLMProvidersPage: React.FC = () => {
 
   const handleEditProfile = (profile: any) => {
     openEditModal('global', 'llm', {
-      id: profile.key, name: profile.name, type: profile.provider, config: profile.config, modelType: profile.modelType, enabled: true,
-    } as any);
+      id: profile?.key, name: profile?.name, type: profile?.provider, config: profile?.config, modelType: profile?.modelType, enabled: true,
+    });
   };
 
   const handleDeleteProfile = async (key: string) => {
@@ -228,9 +228,9 @@ const LLMProvidersPage: React.FC = () => {
 
   const filteredProfiles = useMemo(() =>
     profiles.filter(p => {
-      const matchesSearch = p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                            p.provider.toLowerCase().includes(searchQuery.toLowerCase());
-      return matchesSearch && (filterType === 'all' || p.provider === filterType);
+      const matchesSearch = p?.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                            p?.provider?.toLowerCase().includes(searchQuery.toLowerCase());
+      return matchesSearch && (filterType === 'all' || p?.provider === filterType);
     }), [profiles, searchQuery, filterType]);
 
   // Bulk selection
@@ -256,7 +256,7 @@ const LLMProvidersPage: React.FC = () => {
   };
 
   const providerTypes = useMemo(() => {
-    const types = new Set(profiles.map(p => p.provider));
+    const types = new Set(profiles.map(p => p?.provider).filter(Boolean));
     return Array.from(types).map(type => ({ label: type, value: type }));
   }, [profiles]);
 
@@ -309,9 +309,9 @@ const LLMProvidersPage: React.FC = () => {
               Fallback loaded from environment variables. Used when no profile is assigned.
             </p>
             {defaultStatus?.providers?.map((p: any) => (
-              <div key={p.id} className="flex items-center gap-2 p-2 bg-base-200/50 rounded text-sm">
-                {getProviderIcon(p.type)}
-                <span className="font-medium">{p.name}</span>
+              <div key={p?.id} className="flex items-center gap-2 p-2 bg-base-200/50 rounded text-sm">
+                {getProviderIcon(p?.type)}
+                <span className="font-medium">{p?.name || 'Unnamed'}</span>
                 <Badge variant="neutral" size="small" className="ml-auto">Read-Only</Badge>
               </div>
             ))}
@@ -345,7 +345,7 @@ const LLMProvidersPage: React.FC = () => {
               >
                 <option value="">Use System Default</option>
                 {chatProfiles.map((p) => (
-                  <option key={p.key} value={p.key}>{p.name} ({p.provider})</option>
+                  <option key={p?.key} value={p?.key}>{p?.name || 'Unnamed'} ({p?.provider || 'Unknown'})</option>
                 ))}
               </select>
             </div>
@@ -373,7 +373,7 @@ const LLMProvidersPage: React.FC = () => {
               >
                 <option value="">None (Disabled)</option>
                 {chatProfiles.map((p) => (
-                  <option key={p.key} value={p.key}>{p.name} ({p.provider})</option>
+                  <option key={p?.key} value={p?.key}>{p?.name || 'Unnamed'} ({p?.provider || 'Unknown'})</option>
                 ))}
               </select>
             </div>
@@ -400,7 +400,7 @@ const LLMProvidersPage: React.FC = () => {
               >
                 <option value="">None Selected</option>
                 {embeddingProfiles.map((p) => (
-                  <option key={p.key} value={p.key}>{p.name} ({p.provider})</option>
+                  <option key={p?.key} value={p?.key}>{p?.name || 'Unnamed'} ({p?.provider || 'Unknown'})</option>
                 ))}
               </select>
             </div>

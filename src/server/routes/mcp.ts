@@ -9,19 +9,38 @@ import MCPProviderManager from '../../config/MCPProviderManager';
 import type { MCPProviderConfig } from '../../types/mcp';
 import {
   AddMCPServerSchema,
+  BulkToggleToolsSchema,
   CallMCPToolSchema,
   CreateMCPProviderSchema,
+  GetToolExecutionByIdSchema,
+  GetToolExecutionHistorySchema,
+  GetToolPreferenceSchema,
   MCPProviderIdParamSchema,
   MCPServerNameParamSchema,
+  SaveToolExecutionSchema,
+  ToggleToolSchema,
   UpdateMCPProviderSchema,
 } from '../../validation/schemas/mcpSchema';
 import { validateRequest } from '../../validation/validateRequest';
+import { ToolExecutionHistoryService } from '../services/ToolExecutionHistoryService';
+import { ToolPreferencesService } from '../services/ToolPreferencesService';
+import { UsageTrackerService } from '../services/UsageTrackerService';
+import { randomUUID } from 'crypto';
 
 const debug = Debug('app:webui:mcp');
 const router = Router();
 
 // Initialize MCP Provider Manager (using singleton instance)
 const mcpProviderManager = MCPProviderManager;
+
+// Initialize Tool Execution History Service
+const toolExecutionHistoryService = ToolExecutionHistoryService.getInstance();
+
+// Initialize Tool Preferences Service
+const toolPreferencesService = ToolPreferencesService.getInstance();
+
+// Initialize Usage Tracker Service
+const usageTracker = UsageTrackerService.getInstance();
 
 interface MCPServer {
   name: string;
@@ -32,6 +51,7 @@ interface MCPServer {
     name: string;
     description: string;
     inputSchema: Record<string, unknown>;
+    outputSchema?: Record<string, unknown>;
   }[];
   lastConnected?: string;
   error?: string;
@@ -107,10 +127,11 @@ const connectToMCPServer = async (server: MCPServer): Promise<MCPClient> => {
 
       // Get available tools
       const toolsResponse = await client.listTools();
-      const tools = toolsResponse.tools.map((tool) => ({
+      const tools = toolsResponse.tools.map((tool: any) => ({
         name: tool.name,
         description: tool.description || '',
         inputSchema: tool.inputSchema,
+        outputSchema: tool.outputSchema || tool.output_schema || {},
       }));
 
       const mcpClient: MCPClient = {
@@ -391,10 +412,11 @@ router.get('/servers/:name/tools', validateRequest(MCPServerNameParamSchema), as
     }
 
     const toolsResponse = await mcpClient.client.listTools();
-    const tools = toolsResponse.tools.map((tool) => ({
+    const tools = toolsResponse.tools.map((tool: any) => ({
       name: tool.name,
       description: tool.description || '',
       inputSchema: tool.inputSchema,
+      outputSchema: tool.outputSchema || tool.output_schema || {},
     }));
 
     return res.json({ tools });
@@ -419,13 +441,26 @@ router.get('/servers/:name/tools', validateRequest(MCPServerNameParamSchema), as
 
 // POST /api/mcp/servers/:name/call-tool - Call a tool on MCP server
 router.post('/servers/:name/call-tool', validateRequest(CallMCPToolSchema), async (req, res) => {
-  try {
-    const { name } = req.params;
-    const { toolName, arguments: toolArgs } = req.body;
+  const startTime = Date.now();
+  const executionId = randomUUID();
+  const { name } = req.params;
+  const { toolName, arguments: toolArgs } = req.body;
 
+  try {
     const mcpClient = connectedClients.get(name);
     if (!mcpClient) {
       return res.status(404).json({ error: 'MCP server not connected' });
+    }
+
+    // Check if tool is enabled
+    const toolId = `${name}-${toolName}`;
+    if (!toolPreferencesService.isToolEnabled(toolId)) {
+      return res.status(403).json({
+        error: 'Tool is disabled',
+        code: 'TOOL_DISABLED',
+        toolId,
+        timestamp: new Date().toISOString(),
+      });
     }
 
     const result = await mcpClient.client.callTool({
@@ -433,10 +468,68 @@ router.post('/servers/:name/call-tool', validateRequest(CallMCPToolSchema), asyn
       arguments: toolArgs || {},
     });
 
-    return res.json({ result });
+    const duration = Date.now() - startTime;
+    const timestamp = new Date().toISOString();
+
+    // Save execution history (async, don't block response)
+    toolExecutionHistoryService.logExecution({
+      id: executionId,
+      serverName: name,
+      toolName,
+      arguments: toolArgs || {},
+      result,
+      status: 'success',
+      executedAt: timestamp,
+      duration,
+    }).catch(err => {
+      debug('Failed to log tool execution history:', err);
+    });
+
+    // Record usage metrics (async, don't block response)
+    usageTracker.recordUsage({
+      toolId: `${name}-${toolName}`,
+      serverName: name,
+      toolName,
+      success: true,
+      duration,
+      timestamp,
+    }).catch(err => {
+      debug('Failed to record usage metrics:', err);
+    });
+
+    return res.json({ result, executionId });
   } catch (error: unknown) {
     const hivemindError = ErrorUtils.toHivemindError(error);
     const errorInfo = ErrorUtils.classifyError(hivemindError);
+    const duration = Date.now() - startTime;
+    const timestamp = new Date().toISOString();
+
+    // Save error execution history (async, don't block response)
+    toolExecutionHistoryService.logExecution({
+      id: executionId,
+      serverName: name,
+      toolName,
+      arguments: toolArgs || {},
+      result: null,
+      error: hivemindError.message,
+      status: 'error',
+      executedAt: timestamp,
+      duration,
+    }).catch(err => {
+      debug('Failed to log tool execution error history:', err);
+    });
+
+    // Record usage metrics for failed execution (async, don't block response)
+    usageTracker.recordUsage({
+      toolId: `${name}-${toolName}`,
+      serverName: name,
+      toolName,
+      success: false,
+      duration,
+      timestamp,
+    }).catch(err => {
+      debug('Failed to record usage metrics for error:', err);
+    });
 
     debug('Error calling MCP tool:', {
       message: hivemindError.message,
@@ -882,6 +975,343 @@ router.get('/providers/stats', async (req, res) => {
       success: false,
       error: hivemindError.message,
       code: hivemindError.code || 'MCP_PROVIDER_STATS_ERROR',
+      timestamp: new Date().toISOString(),
+    });
+  }
+});
+
+// === Tool Execution History Endpoints ===
+
+// POST /api/mcp/tools/history - Save tool execution result
+router.post('/tools/history', validateRequest(SaveToolExecutionSchema), async (req, res) => {
+  try {
+    const executionRecord = req.body;
+
+    await toolExecutionHistoryService.logExecution(executionRecord);
+
+    return res.status(201).json({
+      success: true,
+      message: 'Tool execution history saved successfully',
+      id: executionRecord.id,
+    });
+  } catch (error: unknown) {
+    const hivemindError = ErrorUtils.toHivemindError(error);
+    const errorInfo = ErrorUtils.classifyError(hivemindError);
+
+    debug('Failed to save tool execution history:', {
+      message: hivemindError.message,
+      code: hivemindError.code,
+      type: errorInfo.type,
+      severity: errorInfo.severity,
+    });
+
+    return res.status(hivemindError.statusCode || 500).json({
+      success: false,
+      error: hivemindError.message,
+      code: hivemindError.code || 'TOOL_EXECUTION_HISTORY_SAVE_ERROR',
+      timestamp: new Date().toISOString(),
+    });
+  }
+});
+
+// GET /api/mcp/tools/history - Get execution history with pagination and filters
+router.get('/tools/history', validateRequest(GetToolExecutionHistorySchema), async (req, res) => {
+  try {
+    const {
+      limit,
+      offset,
+      serverName,
+      toolName,
+      status,
+      startTime,
+      endTime,
+    } = req.query as any;
+
+    const filter: any = {
+      limit: limit ? parseInt(limit, 10) : 50,
+      offset: offset ? parseInt(offset, 10) : 0,
+    };
+
+    if (serverName) filter.serverName = serverName;
+    if (toolName) filter.toolName = toolName;
+    if (status) filter.status = status;
+    if (startTime) filter.startTime = new Date(startTime);
+    if (endTime) filter.endTime = new Date(endTime);
+
+    const executions = await toolExecutionHistoryService.getExecutions(filter);
+
+    return res.json({
+      success: true,
+      data: executions,
+      pagination: {
+        limit: filter.limit,
+        offset: filter.offset,
+        total: executions.length,
+      },
+    });
+  } catch (error: unknown) {
+    const hivemindError = ErrorUtils.toHivemindError(error);
+    const errorInfo = ErrorUtils.classifyError(hivemindError);
+
+    debug('Failed to get tool execution history:', {
+      message: hivemindError.message,
+      code: hivemindError.code,
+      type: errorInfo.type,
+      severity: errorInfo.severity,
+    });
+
+    return res.status(hivemindError.statusCode || 500).json({
+      success: false,
+      error: hivemindError.message,
+      code: hivemindError.code || 'TOOL_EXECUTION_HISTORY_GET_ERROR',
+      timestamp: new Date().toISOString(),
+    });
+  }
+});
+
+// GET /api/mcp/tools/history/:id - Get specific execution result
+router.get('/tools/history/:id', validateRequest(GetToolExecutionByIdSchema), async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const execution = await toolExecutionHistoryService.getExecutionById(id);
+
+    if (!execution) {
+      return res.status(404).json({
+        success: false,
+        error: 'Tool execution not found',
+      });
+    }
+
+    return res.json({
+      success: true,
+      data: execution,
+    });
+  } catch (error: unknown) {
+    const hivemindError = ErrorUtils.toHivemindError(error);
+    const errorInfo = ErrorUtils.classifyError(hivemindError);
+
+    debug('Failed to get tool execution by ID:', {
+      message: hivemindError.message,
+      code: hivemindError.code,
+      type: errorInfo.type,
+      severity: errorInfo.severity,
+    });
+
+    return res.status(hivemindError.statusCode || 500).json({
+      success: false,
+      error: hivemindError.message,
+      code: hivemindError.code || 'TOOL_EXECUTION_GET_BY_ID_ERROR',
+      timestamp: new Date().toISOString(),
+    });
+  }
+});
+
+// GET /api/mcp/tools/stats - Get tool execution statistics
+router.get('/tools/stats', async (req, res) => {
+  try {
+    const stats = await toolExecutionHistoryService.getStats();
+
+    return res.json({
+      success: true,
+      data: stats,
+    });
+  } catch (error: unknown) {
+    const hivemindError = ErrorUtils.toHivemindError(error);
+    const errorInfo = ErrorUtils.classifyError(hivemindError);
+
+    debug('Failed to get tool execution statistics:', {
+      message: hivemindError.message,
+      code: hivemindError.code,
+      type: errorInfo.type,
+      severity: errorInfo.severity,
+    });
+
+    return res.status(hivemindError.statusCode || 500).json({
+      success: false,
+      error: hivemindError.message,
+      code: hivemindError.code || 'TOOL_EXECUTION_STATS_ERROR',
+      timestamp: new Date().toISOString(),
+    });
+  }
+});
+
+// === Tool Preferences Endpoints ===
+
+// POST /api/mcp/tools/:id/toggle - Toggle tool enabled/disabled state
+router.post('/tools/:id/toggle', validateRequest(ToggleToolSchema), async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { enabled, serverName, toolName, userId } = req.body;
+
+    const preference = await toolPreferencesService.setToolEnabled(
+      id,
+      serverName,
+      toolName,
+      enabled,
+      userId
+    );
+
+    return res.json({
+      success: true,
+      data: preference,
+      message: `Tool ${enabled ? 'enabled' : 'disabled'} successfully`,
+    });
+  } catch (error: unknown) {
+    const hivemindError = ErrorUtils.toHivemindError(error);
+    const errorInfo = ErrorUtils.classifyError(hivemindError);
+
+    debug('Failed to toggle tool:', {
+      message: hivemindError.message,
+      code: hivemindError.code,
+      type: errorInfo.type,
+      severity: errorInfo.severity,
+    });
+
+    return res.status(hivemindError.statusCode || 500).json({
+      success: false,
+      error: hivemindError.message,
+      code: hivemindError.code || 'TOOL_TOGGLE_ERROR',
+      timestamp: new Date().toISOString(),
+    });
+  }
+});
+
+// POST /api/mcp/tools/bulk-toggle - Bulk enable/disable tools
+router.post('/tools/bulk-toggle', validateRequest(BulkToggleToolsSchema), async (req, res) => {
+  try {
+    const { tools, enabled, userId } = req.body;
+
+    const preferences = await toolPreferencesService.bulkSetToolsEnabled(
+      tools,
+      enabled,
+      userId
+    );
+
+    return res.json({
+      success: true,
+      data: preferences,
+      message: `${preferences.length} tools ${enabled ? 'enabled' : 'disabled'} successfully`,
+    });
+  } catch (error: unknown) {
+    const hivemindError = ErrorUtils.toHivemindError(error);
+    const errorInfo = ErrorUtils.classifyError(hivemindError);
+
+    debug('Failed to bulk toggle tools:', {
+      message: hivemindError.message,
+      code: hivemindError.code,
+      type: errorInfo.type,
+      severity: errorInfo.severity,
+    });
+
+    return res.status(hivemindError.statusCode || 500).json({
+      success: false,
+      error: hivemindError.message,
+      code: hivemindError.code || 'TOOL_BULK_TOGGLE_ERROR',
+      timestamp: new Date().toISOString(),
+    });
+  }
+});
+
+// GET /api/mcp/tools/:id/preference - Get tool preference
+router.get('/tools/:id/preference', validateRequest(GetToolPreferenceSchema), async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const preference = toolPreferencesService.getToolPreference(id);
+
+    if (!preference) {
+      // Return default enabled state if no preference exists
+      return res.json({
+        success: true,
+        data: {
+          toolId: id,
+          enabled: true, // Default to enabled
+          isDefault: true,
+        },
+      });
+    }
+
+    return res.json({
+      success: true,
+      data: {
+        ...preference,
+        isDefault: false,
+      },
+    });
+  } catch (error: unknown) {
+    const hivemindError = ErrorUtils.toHivemindError(error);
+    const errorInfo = ErrorUtils.classifyError(hivemindError);
+
+    debug('Failed to get tool preference:', {
+      message: hivemindError.message,
+      code: hivemindError.code,
+      type: errorInfo.type,
+      severity: errorInfo.severity,
+    });
+
+    return res.status(hivemindError.statusCode || 500).json({
+      success: false,
+      error: hivemindError.message,
+      code: hivemindError.code || 'TOOL_PREFERENCE_GET_ERROR',
+      timestamp: new Date().toISOString(),
+    });
+  }
+});
+
+// GET /api/mcp/tools/preferences - Get all tool preferences
+router.get('/tools/preferences', async (req, res) => {
+  try {
+    const preferences = toolPreferencesService.getAllPreferences();
+
+    return res.json({
+      success: true,
+      data: preferences,
+    });
+  } catch (error: unknown) {
+    const hivemindError = ErrorUtils.toHivemindError(error);
+    const errorInfo = ErrorUtils.classifyError(hivemindError);
+
+    debug('Failed to get all tool preferences:', {
+      message: hivemindError.message,
+      code: hivemindError.code,
+      type: errorInfo.type,
+      severity: errorInfo.severity,
+    });
+
+    return res.status(hivemindError.statusCode || 500).json({
+      success: false,
+      error: hivemindError.message,
+      code: hivemindError.code || 'TOOL_PREFERENCES_GET_ERROR',
+      timestamp: new Date().toISOString(),
+    });
+  }
+});
+
+// GET /api/mcp/tools/preferences/stats - Get tool preferences statistics
+router.get('/tools/preferences/stats', async (req, res) => {
+  try {
+    const stats = toolPreferencesService.getStats();
+
+    return res.json({
+      success: true,
+      data: stats,
+    });
+  } catch (error: unknown) {
+    const hivemindError = ErrorUtils.toHivemindError(error);
+    const errorInfo = ErrorUtils.classifyError(hivemindError);
+
+    debug('Failed to get tool preferences statistics:', {
+      message: hivemindError.message,
+      code: hivemindError.code,
+      type: errorInfo.type,
+      severity: errorInfo.severity,
+    });
+
+    return res.status(hivemindError.statusCode || 500).json({
+      success: false,
+      error: hivemindError.message,
+      code: hivemindError.code || 'TOOL_PREFERENCES_STATS_ERROR',
       timestamp: new Date().toISOString(),
     });
   }

@@ -2,22 +2,14 @@
 import React, { useState, useEffect } from 'react';
 import { Alert, Button, Card, Input, Select, Textarea, Toggle, InputGroup, FormLabel } from 'react-daisyui';
 import { FaPlus, FaTrash, FaEye, FaEyeSlash, FaExclamationTriangle, FaInfoCircle } from 'react-icons/fa';
-import type { MCPProviderConfig, MCPProviderValidationResult } from '../../../types/mcp';
+import type { MCPProviderConfig, MCPProviderValidationResult, MCPProviderTemplate } from '../../../types/mcp';
 import { ProviderField } from '../../provider-configs/types';
 
 interface MCPProviderFormProps {
   provider?: MCPProviderConfig;
   onSave: (provider: MCPProviderConfig) => void;
   onCancel: () => void;
-  templates?: Array<{
-    id: string;
-    name: string;
-    type: 'desktop' | 'cloud';
-    description: string;
-    command: string;
-    args: string[];
-    envVars: Record<string, string>;
-  }>;
+  templates?: MCPProviderTemplate[];
 }
 
 interface EnvVar {
@@ -224,13 +216,21 @@ const MCPProviderForm: React.FC<MCPProviderFormProps> = ({
     if (templateId) {
       const template = templates.find(t => t.id === templateId);
       if (template) {
+        // Convert envVars array to env object
+        const env: Record<string, string> = {};
+        if (template.envVars) {
+          template.envVars.forEach(envVar => {
+            env[envVar.name] = envVar.defaultValue || envVar.default || '';
+          });
+        }
+
         setFormData({
           name: template.name,
           type: template.type,
           description: template.description,
           command: template.command,
           args: JSON.stringify(template.args),
-          env: template.envVars,
+          env: env,
           timeout: 30,
           autoRestart: true,
           healthCheck: {
@@ -239,7 +239,7 @@ const MCPProviderForm: React.FC<MCPProviderFormProps> = ({
             timeout: 10,
             retries: 3,
           },
-          enabled: false,
+          enabled: template.enabledByDefault || false,
         });
       }
     }

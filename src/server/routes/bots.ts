@@ -9,6 +9,7 @@ import {
   CloneBotSchema,
   CreateBotSchema,
   UpdateBotSchema,
+  UpdateBotStatusSchema,
 } from '../../validation/schemas/botsSchema';
 import { ReorderSchema } from '../../validation/schemas/commonSchema';
 import { ImportBotsSchema } from '../../validation/schemas/importExportSchema';
@@ -49,12 +50,53 @@ router.get('/', async (req, res) => {
         errors: [],
         errorCount: 0,
       };
+
+      // Extract model from provider config if available
+      let llmModel = '';
+      if (bot.config) {
+        const config = bot.config as Record<string, any>;
+        // Try to extract model from various provider configs
+        if (config.openai?.model) {
+          llmModel = config.openai.model;
+        } else if (config.openwebui?.model) {
+          llmModel = config.openwebui.model;
+        } else if (config.flowise?.chatflowId) {
+          llmModel = config.flowise.chatflowId;
+        } else if (config.perplexity?.model) {
+          llmModel = config.perplexity.model;
+        } else if (config.replicate?.model) {
+          llmModel = config.replicate.model;
+        } else if (config.openswarm?.swarmId) {
+          llmModel = config.openswarm.swarmId;
+        }
+      }
+
+      // Use llmProvider as fallback if no specific model found
+      if (!llmModel) {
+        llmModel = bot.llmProvider || 'Not configured';
+      }
+
+      // Generate description from system instruction or persona
+      let description = '';
+      if (bot.systemInstruction) {
+        // Truncate to first 100 chars for a brief description
+        description = bot.systemInstruction.length > 100
+          ? bot.systemInstruction.substring(0, 97) + '...'
+          : bot.systemInstruction;
+      } else if (bot.persona) {
+        description = `Bot using ${bot.persona} persona`;
+      } else {
+        description = `${bot.messageProvider} bot with ${bot.llmProvider} provider`;
+      }
+
       return {
         id: bot.id,
         name: bot.name,
         provider: bot.messageProvider,
         messageProvider: bot.messageProvider,
         llmProvider: bot.llmProvider,
+        llmModel,
+        description,
         persona: bot.persona,
         status: bot.isActive ? 'active' : 'disabled',
         connected: statusMap.get(bot.id) || false,
@@ -355,6 +397,51 @@ router.put('/:id', validateRequest(UpdateBotSchema), async (req, res) => {
     const updates = req.body;
     const bot = await manager.updateBot(id, updates);
     return res.json({ success: true, message: 'Bot updated', bot });
+  } catch (error: unknown) {
+    const status = errMsg(error).includes(ERROR_CODES.NOT_FOUND)
+      ? HTTP_STATUS.NOT_FOUND
+      : HTTP_STATUS.BAD_REQUEST;
+    return res.status(status).json({ error: errMsg(error) });
+  }
+});
+
+/**
+ * @openapi
+ * /api/bots/{id}/status:
+ *   patch:
+ *     summary: Update bot status (active/inactive)
+ *     tags: [Bots]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               status:
+ *                 type: string
+ *                 enum: [active, inactive]
+ *             required: [status]
+ *     responses:
+ *       200:
+ *         description: Bot status updated
+ */
+router.patch('/:id/status', validateRequest(UpdateBotStatusSchema), async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+
+    // Convert status string to isActive boolean
+    const isActive = status === 'active';
+
+    const bot = await manager.updateBot(id, { isActive });
+    return res.json({ success: true, message: 'Bot status updated', bot });
   } catch (error: unknown) {
     const status = errMsg(error).includes(ERROR_CODES.NOT_FOUND)
       ? HTTP_STATUS.NOT_FOUND

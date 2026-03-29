@@ -204,31 +204,93 @@ router.get('/detailed/services', optionalAuth, async (_req: Request, res: Respon
     });
   }
 
-  // Check Message providers
+  // Check Message providers - now with individual health checks
   const msgStart = Date.now();
   try {
     const { ProviderRegistry } = require('../../registries/ProviderRegistry');
     const registry = ProviderRegistry.getInstance();
     const msgProviders = registry.getMessageProviders?.() || [];
-    const activeMsg = msgProviders.filter((p: any) => p.status === 'active' || p.connected);
-    const msgCount = msgProviders.length;
-    const activeMsgCount = activeMsg.length;
-    const msgStatus =
-      msgCount === 0
-        ? 'down'
-        : activeMsgCount === msgCount
-          ? 'healthy'
-          : activeMsgCount > 0
-            ? 'degraded'
-            : 'down';
-    services.push({
-      name: 'Message Providers',
-      status: msgStatus as 'healthy' | 'degraded' | 'down',
-      latencyMs: Date.now() - msgStart,
-      lastChecked: now,
-      details: `${activeMsgCount}/${msgCount} providers connected`,
-    });
-  } catch {
+
+    if (msgProviders.length === 0) {
+      services.push({
+        name: 'Message Providers',
+        status: 'down',
+        latencyMs: Date.now() - msgStart,
+        lastChecked: now,
+        details: 'No message providers configured',
+      });
+    } else {
+      // Perform health checks on each provider
+      const healthChecks = await Promise.allSettled(
+        msgProviders.map(async (provider: any) => {
+          const providerName = provider.label || provider.id || 'unknown';
+
+          // Call healthCheck if available
+          if (typeof provider.healthCheck === 'function') {
+            try {
+              const health = await provider.healthCheck();
+              return {
+                provider: providerName,
+                status: health.status,
+                connected: health.connected,
+                lastPing: health.lastPing,
+                details: health.details,
+                error: health.error,
+              };
+            } catch (e: any) {
+              return {
+                provider: providerName,
+                status: 'down' as const,
+                connected: false,
+                error: `Health check failed: ${e.message}`,
+              };
+            }
+          } else {
+            // Fallback to old method if healthCheck not implemented
+            return {
+              provider: providerName,
+              status: (provider.status === 'active' || provider.connected) ? 'healthy' as const : 'down' as const,
+              connected: provider.status === 'active' || provider.connected,
+              details: 'Health check not implemented',
+            };
+          }
+        })
+      );
+
+      const providerHealths = healthChecks.map((r) =>
+        r.status === 'fulfilled' ? r.value : { provider: 'unknown', status: 'down' as const, connected: false, error: 'Health check error' }
+      );
+
+      const healthyCount = providerHealths.filter((p) => p.status === 'healthy').length;
+      const connectedCount = providerHealths.filter((p) => p.connected).length;
+      const totalCount = msgProviders.length;
+
+      let overallStatus: 'healthy' | 'degraded' | 'down';
+      if (healthyCount === totalCount) {
+        overallStatus = 'healthy';
+      } else if (connectedCount > 0) {
+        overallStatus = 'degraded';
+      } else {
+        overallStatus = 'down';
+      }
+
+      // Build details string with per-provider status
+      const providerDetails = providerHealths
+        .map((p) => {
+          const statusIcon = p.status === 'healthy' ? '✓' : p.status === 'degraded' ? '⚠' : '✗';
+          return `${statusIcon} ${p.provider}: ${p.details || p.status}`;
+        })
+        .join('; ');
+
+      services.push({
+        name: 'Message Providers',
+        status: overallStatus,
+        latencyMs: Date.now() - msgStart,
+        lastChecked: now,
+        details: `${connectedCount}/${totalCount} connected - ${providerDetails}`,
+      });
+    }
+  } catch (e: any) {
     const hasDiscord = !!process.env.DISCORD_BOT_TOKEN;
     const hasSlack = !!process.env.SLACK_BOT_TOKEN;
     const hasAny = hasDiscord || hasSlack;
@@ -237,7 +299,7 @@ router.get('/detailed/services', optionalAuth, async (_req: Request, res: Respon
       status: hasAny ? 'healthy' : 'down',
       latencyMs: Date.now() - msgStart,
       lastChecked: now,
-      details: hasAny ? 'Message provider token(s) configured' : 'No message providers configured',
+      details: hasAny ? 'Message provider token(s) configured (health check failed)' : 'No message providers configured',
     });
   }
 

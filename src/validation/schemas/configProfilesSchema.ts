@@ -55,6 +55,24 @@ export const CreateMessageProfileSchema = z.object({
     .passthrough(),
 });
 
+export const UpdateMessageProfileSchema = z.object({
+  params: z.object({
+    key: z.string().min(1, { message: 'Profile key is required' }),
+  }),
+  body: z
+    .object({
+      name: profileNameField,
+      provider: profileProviderField,
+    })
+    .passthrough(),
+});
+
+export const MessageProfileKeyParamSchema = z.object({
+  params: z.object({
+    key: z.string().min(1, { message: 'Profile key is required' }),
+  }),
+});
+
 // ── Memory Profile Schemas ───────────────────────────────────────────────────
 
 export const CreateMemoryProfileSchema = z.object({
