@@ -1,18 +1,27 @@
 import { AnomalyDetectionService } from '../../src/services/AnomalyDetectionService';
 import { DatabaseManager } from '../../src/database/DatabaseManager';
 import { WebSocketService } from '../../src/server/services/WebSocketService';
+import { MetricsCollector } from '../../src/monitoring/MetricsCollector';
 
 describe('AnomalyDetectionService', () => {
   let service: AnomalyDetectionService;
-  let dbManager: DatabaseManager;
-  let wsService: WebSocketService;
-
-  let metricsCollector: any;
+  let mockDbManager: jest.Mocked<DatabaseManager>;
+  let mockWsService: jest.Mocked<WebSocketService>;
+  let mockMetricsCollector: jest.Mocked<MetricsCollector>;
 
   beforeEach(() => {
-    service = AnomalyDetectionService.getInstance();
-    (service as any).dataWindows.clear();
-    (service as any).anomalies = [];
+    mockDbManager = {
+      storeAnomaly: jest.fn().mockResolvedValue(undefined),
+      resolveAnomaly: jest.fn().mockResolvedValue(true),
+    } as unknown as jest.Mocked<DatabaseManager>;
+
+    mockWsService = {
+      recordAlert: jest.fn(),
+    } as unknown as jest.Mocked<WebSocketService>;
+
+    mockMetricsCollector = {} as unknown as jest.Mocked<MetricsCollector>;
+
+    service = new AnomalyDetectionService(mockDbManager, mockWsService, mockMetricsCollector);
     (service as any).config = {
       enabled: true,
       windowSize: 50,
@@ -20,15 +29,11 @@ describe('AnomalyDetectionService', () => {
       metricsToMonitor: ['responseTime', 'errors'],
       minDataPoints: 10,
     };
-    dbManager = DatabaseManager.getInstance({ type: 'sqlite', path: ':memory:' });
-    wsService = WebSocketService.getInstance();
-    jest.spyOn(dbManager, 'storeAnomaly').mockResolvedValue();
-    jest.spyOn(dbManager, 'resolveAnomaly').mockResolvedValue(true);
-    jest.spyOn(wsService, 'recordAlert').mockImplementation();
   });
 
-  afterEach(async () => {
-    await dbManager.disconnect();
+  afterEach(() => {
+    service.shutdown();
+    jest.clearAllMocks();
   });
 
   test('should initialize with default config', () => {
@@ -61,8 +66,8 @@ describe('AnomalyDetectionService', () => {
     await service.runDetection();
 
     expect(service['anomalies'].length).toBeGreaterThan(0);
-    expect(dbManager.storeAnomaly).toHaveBeenCalled();
-    expect(wsService.recordAlert).toHaveBeenCalled();
+    expect(mockDbManager.storeAnomaly).toHaveBeenCalled();
+    expect(mockWsService.recordAlert).toHaveBeenCalled();
   });
 
   test('should resolve anomaly', async () => {
@@ -85,7 +90,7 @@ describe('AnomalyDetectionService', () => {
 
     expect(result).toBe(true);
     expect(service['anomalies'][0].resolved).toBe(true);
-    expect(dbManager.resolveAnomaly).toHaveBeenCalledWith('test-anomaly');
+    expect(mockDbManager.resolveAnomaly).toHaveBeenCalledWith('test-anomaly');
   });
 
   test('should get active anomalies', () => {
@@ -175,7 +180,7 @@ describe('AnomalyDetectionService', () => {
   test('runDetection should handle storeAnomaly errors gracefully', async () => {
     // Force storeAnomaly to reject
     const mockDbError = new Error('DB Error');
-    jest.spyOn(dbManager, 'storeAnomaly').mockRejectedValue(mockDbError);
+    mockDbManager.storeAnomaly.mockRejectedValue(mockDbError);
 
     // Mock the global debug logger if we need to assert, but the catch block triggers coverage
 
