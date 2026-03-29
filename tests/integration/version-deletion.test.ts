@@ -134,14 +134,14 @@ describe.skip('Configuration Version Deletion', () => {
       expect(afterHistory.versions.find((v) => v.version === '1.1.0')).toBeUndefined();
 
       // Verify other versions still exist
-      expect(afterHistory.versions.find((v) => v.version === '1.0.0')).toBeDefined();
-      expect(afterHistory.versions.find((v) => v.version === '1.2.0')).toBeDefined();
+      expect(afterHistory.versions.find((v) => v.version === '1.0.0')).not.toBeUndefined();
+      expect(afterHistory.versions.find((v) => v.version === '1.2.0')).not.toBeUndefined();
     });
 
     test('should not allow deletion of currently active version', async () => {
       // Get current config to see what's active
       const currentConfig = await dbManager.getBotConfiguration(testConfigId);
-      expect(currentConfig).toBeDefined();
+      expect(currentConfig).not.toBeNull();
 
       // The latest version should be considered active
       const history = await versionService.getVersionHistory(testConfigId);
@@ -171,7 +171,7 @@ describe.skip('Configuration Version Deletion', () => {
         (entry) => entry.action === 'DELETE' && entry.oldValues?.includes('1.3.0')
       );
 
-      expect(deleteAuditEntry).toBeDefined();
+      expect(deleteAuditEntry).not.toBeUndefined();
       expect(deleteAuditEntry!.performedAt).toBeInstanceOf(Date);
     });
   });

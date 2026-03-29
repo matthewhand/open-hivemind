@@ -157,7 +157,9 @@ describe('memoryProfiles', () => {
       mockedLoadProfiles.mockReturnValue(SAMPLE_PROFILES);
       mockedFindProfileByKey.mockReturnValue(SAMPLE_PROFILES.memory[0]);
 
-      getMemoryProfileByKey('mem0-default');
+      const profile = getMemoryProfileByKey('mem0-default');
+      expect(profile).not.toBeUndefined();
+      expect(profile!.name).toBe('Mem0 Default');
       expect(mockedFindProfileByKey).toHaveBeenCalledWith(SAMPLE_PROFILES.memory, 'key', 'mem0-default');
     });
   });
@@ -190,4 +192,36 @@ describe('memoryProfiles', () => {
     });
   });
 
+  describe('profile validation', () => {
+    test('profiles have required fields (key, name, provider, config)', () => {
+      const profile: MemoryProfile = {
+        key: 'test',
+        name: 'Test',
+        provider: 'memory-test',
+        config: {},
+      };
+      expect(profile.key).toBe('test');
+      expect(profile.name).toBe('Test');
+      expect(profile.provider).toBe('memory-test');
+      expect(typeof profile.config).toBe('object');
+    });
+
+    test('description field is optional', () => {
+      const withDesc: MemoryProfile = {
+        key: 'a',
+        name: 'A',
+        provider: 'p',
+        config: {},
+        description: 'desc',
+      };
+      const withoutDesc: MemoryProfile = {
+        key: 'b',
+        name: 'B',
+        provider: 'p',
+        config: {},
+      };
+      expect(withDesc.description).toBe('desc');
+      expect(withoutDesc.description).toBeUndefined();
+    });
+  });
 });

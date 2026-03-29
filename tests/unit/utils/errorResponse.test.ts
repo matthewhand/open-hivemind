@@ -18,7 +18,7 @@ describe('errorResponse', () => {
       expect(response.error.code).toBe('VALIDATION_ERROR');
       expect(response.error.message).toBe('Bad input');
       expect(response.error.correlationId).toBe('corr-123');
-      expect(response.error.timestamp).toBeDefined();
+      expect(typeof response.error.timestamp).toBe('string');
     });
 
     it('includes details when present on error object', () => {
@@ -87,7 +87,7 @@ describe('errorResponse', () => {
       expect(response.success).toBe(true);
       expect(response.data).toEqual({ id: 1 });
       expect(response.meta?.correlationId).toBe('corr-abc');
-      expect(response.meta?.timestamp).toBeDefined();
+      expect(typeof response.meta?.timestamp).toBe('string');
     });
 
     it('withMeta merges additional metadata', () => {

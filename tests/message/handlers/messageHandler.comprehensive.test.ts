@@ -201,10 +201,10 @@ describe('messageHandler Configuration and Features', () => {
         metadata && typeof metadata.systemPrompt === 'string' && metadata.systemPrompt.length > 0
       );
     });
-    expect(systemPromptCall).toBeDefined();
+    expect(systemPromptCall).not.toBeUndefined();
     const metadata = (systemPromptCall as any)[2] as any;
 
-    expect(metadata).toBeDefined();
+    expect(metadata).not.toBeUndefined();
     expect(metadata.systemPrompt).toContain('You are PhilosopherBot');
     expect(metadata.systemPrompt).toContain('You are a wise philosopher.');
   });

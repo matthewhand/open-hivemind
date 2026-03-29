@@ -215,8 +215,8 @@ describe('DiscordService', () => {
 
       // Test returns client correctly
       const client = service.getClient();
-      expect(client).toBeDefined();
-      expect(client.login).toBeDefined();
+      expect(client).not.toBeUndefined();
+      expect(typeof client.login).toBe('function');
       expect(client).toBe(service.getAllBots()[0].client);
     });
 
@@ -296,7 +296,7 @@ describe('DiscordService', () => {
       // The client.on mock should have been called with 'messageCreate'
       const onCalls = bot.client.on.mock.calls;
       const messageCreateCall = onCalls.find((call: any) => call[0] === 'messageCreate');
-      expect(messageCreateCall).toBeDefined();
+      expect(messageCreateCall).not.toBeUndefined();
       expect(typeof messageCreateCall[1]).toBe('function');
 
       const messageCreateHandler = messageCreateCall[1];
@@ -355,7 +355,6 @@ describe('DiscordService', () => {
         agentDisplayName: 'Madgwick AI',
       });
 
-      expect(ctx).toBeDefined();
       expect(ctx).not.toBeNull();
       expect(ctx.botId).toBe('555555555555555555');
       expect(ctx.senderKey).toBe('555555555555555555');

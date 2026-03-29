@@ -166,7 +166,6 @@ describe('Admin Routes', () => {
       const response = await request(app).get('/api/admin/llm-providers').expect(200);
 
       expect(response.body.success).toBe(true);
-      expect(response.body.data.providers).toBeDefined();
       expect(Array.isArray(response.body.data.providers)).toBe(true);
     });
 
@@ -204,7 +203,8 @@ describe('Admin Routes', () => {
         .expect(400);
 
       expect(response.body.error).toBe('Validation failed');
-      expect(response.body.issues).toBeDefined();
+      expect(Array.isArray(response.body.issues)).toBe(true);
+      expect(response.body.issues.length).toBeGreaterThan(0);
     });
 
     test('PUT /api/admin/llm-providers/:id should update provider', async () => {
@@ -248,7 +248,6 @@ describe('Admin Routes', () => {
       const response = await request(app).get('/api/admin/messenger-providers').expect(200);
 
       expect(response.body.success).toBe(true);
-      expect(response.body.data.providers).toBeDefined();
       expect(Array.isArray(response.body.data.providers)).toBe(true);
     });
 
@@ -285,7 +284,8 @@ describe('Admin Routes', () => {
         .expect(400);
 
       expect(response.body.error).toBe('Validation failed');
-      expect(response.body.issues).toBeDefined();
+      expect(Array.isArray(response.body.issues)).toBe(true);
+      expect(response.body.issues.length).toBeGreaterThan(0);
     });
   });
 
@@ -294,7 +294,6 @@ describe('Admin Routes', () => {
       const response = await request(app).get('/api/admin/personas').expect(200);
 
       expect(response.body.success).toBe(true);
-      expect(response.body.data.personas).toBeDefined();
       expect(Array.isArray(response.body.data.personas)).toBe(true);
     });
 
@@ -320,7 +319,8 @@ describe('Admin Routes', () => {
       const response = await request(app).post('/api/admin/personas').send(invalidData).expect(400);
 
       expect(response.body.error).toBe('Validation failed');
-      expect(response.body.issues).toBeDefined();
+      expect(Array.isArray(response.body.issues)).toBe(true);
+      expect(response.body.issues.length).toBeGreaterThan(0);
     });
 
     test('PUT /api/admin/personas/:key should update persona', async () => {
@@ -349,8 +349,8 @@ describe('Admin Routes', () => {
       const response = await request(app).get('/api/admin/mcp-servers').expect(200);
 
       expect(response.body.success).toBe(true);
-      expect(response.body.data.servers).toBeDefined();
-      expect(response.body.data.configurations).toBeDefined();
+      expect(Array.isArray(response.body.data.servers)).toBe(true);
+      expect(Array.isArray(response.body.data.configurations)).toBe(true);
     });
 
     test('POST /api/admin/mcp-servers/connect should connect to server', async () => {
@@ -380,7 +380,8 @@ describe('Admin Routes', () => {
         .expect(400);
 
       expect(response.body.error).toBe('Validation failed');
-      expect(response.body.issues).toBeDefined();
+      expect(Array.isArray(response.body.issues)).toBe(true);
+      expect(response.body.issues.length).toBeGreaterThan(0);
     });
 
     test('POST /api/admin/mcp-servers/disconnect should disconnect from server', async () => {
@@ -402,7 +403,6 @@ describe('Admin Routes', () => {
       const response = await request(app).get('/api/admin/tool-usage-guards').expect(200);
 
       expect(response.body.success).toBe(true);
-      expect(response.body.data.guards).toBeDefined();
       expect(Array.isArray(response.body.data.guards)).toBe(true);
     });
 
@@ -438,7 +438,8 @@ describe('Admin Routes', () => {
         .expect(400);
 
       expect(response.body.error).toBe('Validation failed');
-      expect(response.body.issues).toBeDefined();
+      expect(Array.isArray(response.body.issues)).toBe(true);
+      expect(response.body.issues.length).toBeGreaterThan(0);
     });
 
     test('PUT /api/admin/tool-usage-guards/:id should update guard', async () => {
@@ -482,7 +483,7 @@ describe('Admin Routes', () => {
       const response = await request(app).get('/api/admin/env-overrides').expect(200);
 
       expect(response.body.success).toBe(true);
-      expect(response.body.data.envVars).toBeDefined();
+      expect(typeof response.body.data.envVars).toBe('object');
     });
   });
 });

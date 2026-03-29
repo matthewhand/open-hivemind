@@ -31,7 +31,7 @@ describe('TimingManager', () => {
       const after = Date.now();
 
       const info = tm.channelsTimingInfo['ch-1'];
-      expect(info).toBeDefined();
+      expect(info).not.toBeUndefined();
       expect(info.lastIncomingMessageTime).toBeGreaterThanOrEqual(before);
       expect(info.lastIncomingMessageTime).toBeLessThanOrEqual(after);
     });

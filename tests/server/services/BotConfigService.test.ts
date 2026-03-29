@@ -276,14 +276,14 @@ describe('BotConfigService', () => {
       expect(mockDbManager.updateBotConfiguration).toHaveBeenCalled();
 
       const updateCallArgs = mockDbManager.updateBotConfiguration.mock.calls[0][1];
-      expect(updateCallArgs.mcpGuard).toBeDefined();
-      expect(updateCallArgs.discord).toBeDefined();
-      expect(updateCallArgs.slack).toBeDefined();
-      expect(updateCallArgs.mattermost).toBeDefined();
-      expect(updateCallArgs.openai).toBeDefined();
-      expect(updateCallArgs.flowise).toBeDefined();
-      expect(updateCallArgs.openwebui).toBeDefined();
-      expect(updateCallArgs.openswarm).toBeDefined();
+      expect(updateCallArgs.mcpGuard).toEqual(expect.objectContaining({ enabled: true, type: 'owner' }));
+      expect(updateCallArgs.discord).toEqual(expect.objectContaining({ token: 'newtoken' }));
+      expect(updateCallArgs.slack).toEqual(expect.objectContaining({ botToken: 'slacktoken' }));
+      expect(updateCallArgs.mattermost).toEqual(expect.objectContaining({ botToken: 'mmtoken' }));
+      expect(updateCallArgs.openai).toEqual(expect.objectContaining({ apiKey: 'openaikey' }));
+      expect(updateCallArgs.flowise).toEqual(expect.objectContaining({ endpoint: 'flowise' }));
+      expect(updateCallArgs.openwebui).toEqual(expect.objectContaining({ endpoint: 'openwebui' }));
+      expect(updateCallArgs.openswarm).toEqual(expect.objectContaining({ endpoint: 'openswarm' }));
     });
 
     it('should handle undefined and falsey values gracefully without overwriting existing data if undefined', async () => {

@@ -124,8 +124,10 @@ describe('Demo Routes', () => {
         .send({ message: 'hello', botName: 'TestBot' });
       expect(res.status).toBe(200);
       expect(res.body.success).toBe(true);
-      expect(res.body.userMessage).toBeDefined();
-      expect(res.body.botResponse).toBeDefined();
+      expect(res.body.userMessage).toEqual(expect.any(Object));
+      expect(typeof res.body.userMessage.text).toBe('string');
+      expect(res.body.botResponse).toEqual(expect.any(Object));
+      expect(typeof res.body.botResponse.text).toBe('string');
       expect(res.body.isDemo).toBe(true);
     });
   });

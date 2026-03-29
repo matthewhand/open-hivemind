@@ -205,7 +205,7 @@ describe('Tool-calling pipeline integration', () => {
       // Second LLM call included the tool result in messages.
       const secondCallMessages = mockOpenAICreate.mock.calls[1][0].messages;
       const toolResultMsg = secondCallMessages.find((m: any) => m.role === 'tool');
-      expect(toolResultMsg).toBeDefined();
+      expect(toolResultMsg).not.toBeUndefined();
       expect(toolResultMsg.content).toBe('22°C, sunny');
       expect(toolResultMsg.tool_call_id).toBe('call_1');
     });
@@ -397,7 +397,7 @@ describe('Tool-calling pipeline integration', () => {
       // The error was fed back to the LLM as a tool result message.
       const followUpMessages = mockOpenAICreate.mock.calls[1][0].messages;
       const toolMsg = followUpMessages.find((m: any) => m.role === 'tool');
-      expect(toolMsg).toBeDefined();
+      expect(toolMsg).not.toBeUndefined();
       expect(toolMsg.content).toContain('City not found in weather database');
       expect(toolMsg.tool_call_id).toBe('call_err');
     });
