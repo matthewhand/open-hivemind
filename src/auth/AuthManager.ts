@@ -4,7 +4,14 @@ import Debug from 'debug';
 import jwt from 'jsonwebtoken';
 import { AuthenticationError, ValidationError } from '@src/types/errorClasses';
 import { SecureConfigManager } from '@config/SecureConfigManager';
-import type { AuthToken, JWTPayload, LoginCredentials, RegisterData, User, UserRole } from './types';
+import type {
+  AuthToken,
+  JWTPayload,
+  LoginCredentials,
+  RegisterData,
+  User,
+  UserRole,
+} from './types';
 
 const debug = Debug('app:AuthManager');
 
@@ -326,7 +333,9 @@ export class AuthManager {
   /**
    * Verify JWT access token
    */
-  public verifyAccessToken(token: string): jwt.JwtPayload & { userId: string; role: string; permissions?: string[] } {
+  public verifyAccessToken(
+    token: string
+  ): jwt.JwtPayload & { userId: string; role: string; permissions?: string[] } {
     try {
       const payload = jwt.verify(token, this.jwtSecret);
       if (typeof payload === 'string' || !payload.userId) {

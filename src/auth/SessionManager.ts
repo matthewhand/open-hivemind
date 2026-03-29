@@ -105,8 +105,8 @@ export class SessionManager {
   /**
    * Session middleware for Express
    */
-  public sessionMiddleware() {
-    return async (req: Request, res: Response, next: NextFunction) => {
+  public sessionMiddleware(): (req: Request, res: Response, next: NextFunction) => Promise<void> {
+    return async (req: Request, res: Response, next: NextFunction): Promise<void> => {
       const authHeader = req.headers['authorization'];
       const token = authHeader && authHeader.split(' ')[1];
 

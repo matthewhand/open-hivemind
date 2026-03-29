@@ -66,7 +66,10 @@ const loadMCPServers = async (): Promise<MCPServer[]> => {
     return JSON.parse(data);
   } catch (error: unknown) {
     const hivemindError = ErrorUtils.toHivemindError(error);
-    debug('MCP servers config file not found, using defaults:', ErrorUtils.getMessage(hivemindError));
+    debug(
+      'MCP servers config file not found, using defaults:',
+      ErrorUtils.getMessage(hivemindError)
+    );
     return [];
   }
 };
@@ -150,7 +153,10 @@ const disconnectFromMCPServer = async (serverName: string): Promise<void> => {
     }
   } catch (error: unknown) {
     const hivemindError = ErrorUtils.toHivemindError(error);
-    debug(`Error disconnecting from MCP server ${serverName}:`, ErrorUtils.getMessage(hivemindError));
+    debug(
+      `Error disconnecting from MCP server ${serverName}:`,
+      ErrorUtils.getMessage(hivemindError)
+    );
     throw hivemindError;
   }
 };
