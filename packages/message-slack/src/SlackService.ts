@@ -1,6 +1,7 @@
 import { EventEmitter } from 'events';
 import * as fs from 'fs';
 import * as path from 'path';
+import retry from 'async-retry';
 import Debug from 'debug';
 import express, { type Application } from 'express';
 import type { KnownBlock } from '@slack/web-api';
@@ -388,9 +389,7 @@ export class SlackService extends EventEmitter implements IMessengerService {
       }
     }
 
-    const { container } = require('tsyringe');
-    const { StartupGreetingService } = require('@src/services/StartupGreetingService');
-    const startupGreetingService = container.resolve(StartupGreetingService);
+    const startupGreetingService = require('@src/services/StartupGreetingService').default;
     startupGreetingService.emit('service-ready', this);
   }
 
@@ -426,7 +425,6 @@ export class SlackService extends EventEmitter implements IMessengerService {
           ws.getInstance().recordMessageFlow({
             botName,
             provider: 'slack',
-            llmProvider: _botConfig?.llmProvider,
             channelId: message.getChannelId?.() || '',
             userId: message.getAuthorId?.() || '',
             messageType: 'incoming',

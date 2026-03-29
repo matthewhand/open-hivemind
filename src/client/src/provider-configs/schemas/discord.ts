@@ -1,5 +1,4 @@
 import type { ProviderConfigSchema } from '../types';
-import { validateApiKey } from '../../utils/apiKeyValidation';
 
 export const discordProviderSchema: ProviderConfigSchema = {
   type: 'message',
@@ -20,19 +19,9 @@ export const discordProviderSchema: ProviderConfigSchema = {
       label: 'Bot Token',
       type: 'password',
       required: true,
-      description: 'Your Discord bot token from the Developer Portal (typically 59+ characters)',
+      description: 'Your Discord bot token from the Developer Portal',
       placeholder: 'MTk4NzA1MD... (Bot Token)',
       group: 'Authentication',
-      validation: {
-        pattern: '^[A-Za-z0-9_\\-]{59,}$',
-        custom: (value: string) => {
-          const result = validateApiKey('discord', value, false);
-          if (!result.isValid) {
-            return result.message || 'Invalid bot token format';
-          }
-          return null;
-        },
-      },
     },
     {
       name: 'clientId',

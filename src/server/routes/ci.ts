@@ -1,7 +1,5 @@
 import Debug from 'debug';
 import { Router } from 'express';
-import { CIDeploySchema, CIRollbackSchema, EmptySchema } from '../../validation/schemas/miscSchema';
-import { validateRequest } from '../../validation/validateRequest';
 
 const debug = Debug('app:ciRoutes');
 const router = Router();
@@ -68,7 +66,7 @@ router.get('/api/deployments', (req, res) => {
 });
 
 // Start a new deployment
-router.post('/api/deployments', validateRequest(CIDeploySchema), (req, res) => {
+router.post('/api/deployments', (req, res) => {
   try {
     const { name, environment, branch, commitHash } = req.body;
 
@@ -159,7 +157,7 @@ router.get('/api/deployments/:id', (req, res) => {
 });
 
 // Rollback deployment
-router.post('/api/deployments/:id/rollback', validateRequest(CIRollbackSchema), (req, res) => {
+router.post('/api/deployments/:id/rollback', (req, res) => {
   try {
     const { id } = req.params;
 
@@ -216,7 +214,7 @@ router.get('/api/drift', (req, res) => {
 });
 
 // Validate deployment configuration
-router.post('/api/deployments/validate', validateRequest(EmptySchema), (req, res) => {
+router.post('/api/deployments/validate', (req, res) => {
   try {
     const { environment, configuration } = req.body;
 
@@ -282,7 +280,7 @@ router.get('/api/pipeline/status', (req, res) => {
 });
 
 // Trigger automated tests
-router.post('/api/tests/run', validateRequest(EmptySchema), (req, res) => {
+router.post('/api/tests/run', (req, res) => {
   try {
     const { type, environment } = req.body;
 

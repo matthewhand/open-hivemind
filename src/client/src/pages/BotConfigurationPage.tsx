@@ -3,7 +3,6 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Settings, Save, RefreshCw, AlertCircle, CheckCircle, History } from 'lucide-react';
 import PageHeader from '../components/DaisyUI/PageHeader';
 import Accordion from '../components/DaisyUI/Accordion';
-import { SkeletonList } from '../components/DaisyUI/Skeleton';
 import Input from '../components/DaisyUI/Input';
 import Select from '../components/DaisyUI/Select';
 import Toggle from '../components/DaisyUI/Toggle';
@@ -11,7 +10,6 @@ import Button from '../components/DaisyUI/Button';
 import { Alert } from '../components/DaisyUI/Alert';
 import Badge from '../components/DaisyUI/Badge';
 import Modal from '../components/DaisyUI/Modal';
-import { useSuccessToast, useErrorToast } from '../components/DaisyUI/ToastNotification';
 
 interface ConfigSchema {
   values: Record<string, any>;
@@ -33,8 +31,6 @@ const BotConfigurationPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [modifiedConfigs, setModifiedConfigs] = useState<Record<string, Record<string, any>>>({});
-  const successToast = useSuccessToast();
-  const errorToast = useErrorToast();
 
   // Rollback state
   const [rollbacks, setRollbacks] = useState<string[]>([]);
@@ -50,7 +46,7 @@ const BotConfigurationPage: React.FC = () => {
         setRollbacks(data.rollbacks || []);
       }
     } catch (err) {
-      errorToast('Rollback Error', 'Failed to fetch rollback snapshots');
+      console.error('Error fetching rollbacks:', err);
     }
   }, []);
 
@@ -71,7 +67,7 @@ const BotConfigurationPage: React.FC = () => {
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to fetch configuration';
       setError(message);
-      errorToast('Configuration Error', message);
+      console.error('Error fetching config:', err);
     } finally {
       setLoading(false);
     }
@@ -303,7 +299,7 @@ const BotConfigurationPage: React.FC = () => {
               <History className="w-4 h-4" />
               Rollbacks {rollbacks.length > 0 && <Badge variant="primary" size="sm">{rollbacks.length}</Badge>}
             </Button>
-            <Button onClick={fetchConfigs} variant="ghost" className="gap-2" disabled={loading} aria-busy={loading}>
+            <Button onClick={fetchConfigs} variant="ghost" className="gap-2" disabled={loading}>
               <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} /> Reload
             </Button>
           </div>
@@ -395,7 +391,9 @@ const BotConfigurationPage: React.FC = () => {
 
       {/* Config Accordion */}
       {loading ? (
-        <SkeletonList items={6} />
+        <div className="flex items-center justify-center py-12">
+          <span className="loading loading-spinner loading-lg" />
+        </div>
       ) : configNames.length === 0 ? (
         <div className="card bg-base-100 border border-base-300">
           <div className="card-body text-center py-12">

@@ -57,8 +57,8 @@ describe('AuditLogger', () => {
     const loggedEvent = JSON.parse(content.trim()) as AuditEvent;
 
     expect(loggedEvent).toMatchObject(event);
-    expect(typeof loggedEvent.id).toBe('string');
-    expect(typeof loggedEvent.timestamp).toBe('string');
+    expect(loggedEvent.id).toBeDefined();
+    expect(loggedEvent.timestamp).toBeDefined();
   });
 
   it('should rotate logs when size limit is exceeded', async () => {

@@ -3,8 +3,6 @@ export {
   PluginManifest,
   PluginModule,
   loadPlugin,
-  loadPluginWithSecurity,
-  requireCapability,
   instantiateLlmProvider,
   instantiateMessageService,
   instantiateMemoryProvider,
@@ -14,19 +12,4 @@ export {
   PluginInfo,
   PluginValidationError,
   listInstalledPlugins,
-  getSecurityPolicy,
-  setSecurityPolicy,
-  getPluginSecurityStatus,
 } from './PluginManager';
-export {
-  VALID_CAPABILITIES,
-  PluginCapability,
-  SecurePluginManifest,
-  TrustLevel,
-  PluginSecurityAuditEvent,
-  PluginSecurityStatus,
-  PluginSecurityPolicy,
-  canonicalizeManifest,
-  signManifest,
-  verifyPluginSignature,
-} from './PluginSecurity';

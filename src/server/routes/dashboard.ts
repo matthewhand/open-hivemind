@@ -3,13 +3,6 @@ import { DatabaseManager } from '@src/database/DatabaseManager';
 import WebSocketService, { type MessageFlowEvent } from '@src/server/services/WebSocketService';
 import { BotConfigurationManager } from '@config/BotConfigurationManager';
 import { authenticate, requireAdmin } from '../../auth/middleware';
-import { AnalyticsService } from '../../services/AnalyticsService';
-import {
-  AlertIdParamSchema,
-  DashboardConfigSchema,
-  DashboardFeedbackSchema,
-} from '../../validation/schemas/miscSchema';
-import { validateRequest } from '../../validation/validateRequest';
 import { ActivityLogger } from '../services/ActivityLogger';
 
 type AnnotatedEvent = MessageFlowEvent & { llmProvider: string };
@@ -173,115 +166,63 @@ router.get('/ai/config', authenticate, requireAdmin, (req, res) => {
   res.json(dashboardConfig);
 });
 
-router.post(
-  '/ai/config',
-  authenticate,
-  requireAdmin,
-  validateRequest(DashboardConfigSchema),
-  (req, res) => {
-    dashboardConfig = { ...dashboardConfig, ...req.body };
-    res.json(dashboardConfig);
-  }
-);
+router.post('/ai/config', authenticate, requireAdmin, (req, res) => {
+  dashboardConfig = { ...dashboardConfig, ...req.body };
+  res.json(dashboardConfig);
+});
 
 router.get('/ai/stats', authenticate, requireAdmin, (req, res) => {
-  try {
-    const analytics = AnalyticsService.getInstance();
-    const from = parseDate(req.query.from);
-    const to = parseDate(req.query.to);
-
-    const stats = analytics.getStats({
-      startTime: from || undefined,
-      endTime: to || undefined,
-    });
-
-    res.json({
-      learningProgress: stats.learningProgress,
-      behaviorPatternsCount: stats.behaviorPatternsCount,
-      userSegmentsCount: stats.userSegmentsCount,
-      totalMessages: stats.totalMessages,
-      totalErrors: stats.totalErrors,
-      avgProcessingTime: stats.avgProcessingTime,
-      activeBots: stats.activeBots,
-      activeUsers: stats.activeUsers,
-    });
-  } catch (error) {
-    console.error('AI stats API error:', error);
-    res.status(500).json({ error: 'Failed to get AI stats' });
-  }
+  res.json({
+    learningProgress: 75,
+    behaviorPatternsCount: mockBehaviorPatterns.length,
+    userSegmentsCount: mockUserSegments.length,
+  });
 });
 
 router.get('/ai/segments', authenticate, requireAdmin, (req, res) => {
-  try {
-    const analytics = AnalyticsService.getInstance();
-    const from = parseDate(req.query.from);
-    const to = parseDate(req.query.to);
-
-    const segments = analytics.getUserSegments({
-      startTime: from || undefined,
-      endTime: to || undefined,
-    });
-
-    res.json(segments);
-  } catch (error) {
-    console.error('AI segments API error:', error);
-    res.status(500).json({ error: 'Failed to get user segments' });
-  }
+  res.json(mockUserSegments);
 });
 
 router.get('/ai/patterns', authenticate, requireAdmin, (req, res) => {
-  try {
-    const analytics = AnalyticsService.getInstance();
-    const from = parseDate(req.query.from);
-    const to = parseDate(req.query.to);
-
-    const patterns = analytics.getBehaviorPatterns({
-      startTime: from || undefined,
-      endTime: to || undefined,
-    });
-
-    res.json(patterns);
-  } catch (error) {
-    console.error('AI patterns API error:', error);
-    res.status(500).json({ error: 'Failed to get behavior patterns' });
-  }
+  res.json(mockBehaviorPatterns);
 });
 
 router.get('/ai/recommendations', authenticate, requireAdmin, (req, res) => {
-  try {
-    const analytics = AnalyticsService.getInstance();
-    const from = parseDate(req.query.from);
-    const to = parseDate(req.query.to);
-
-    const recommendations = analytics.getRecommendations({
-      startTime: from || undefined,
-      endTime: to || undefined,
-    });
-
-    res.json(recommendations);
-  } catch (error) {
-    console.error('AI recommendations API error:', error);
-    res.status(500).json({ error: 'Failed to get recommendations' });
-  }
+  const recommendations: DashboardRecommendation[] = [
+    {
+      id: `rec-1`,
+      type: 'widget',
+      title: `Add Performance Widget`,
+      description: `Based on your frequent usage of system stats`,
+      confidence: 0.85,
+      impact: 'high',
+      reasoning: 'You check system stats daily',
+      preview: { widgetId: 'performance-monitor', type: 'preview' },
+    },
+    {
+      id: `rec-2`,
+      type: 'layout',
+      title: 'Optimize Dashboard Layout',
+      description: `Switch to grid-3x3 layout`,
+      confidence: 0.9,
+      impact: 'medium',
+      reasoning: `Based on your Power Users usage pattern`,
+    },
+  ];
+  res.json(recommendations);
 });
 
-router.post(
-  '/ai/feedback',
-  authenticate,
-  requireAdmin,
-  validateRequest(DashboardFeedbackSchema),
-  async (req, res) => {
-    const { recommendationId, feedback, metadata } = req.body;
-    try {
-      const db = DatabaseManager.getInstance();
-      await db.storeAIFeedback({ recommendationId, feedback, metadata });
-      res.json({ success: true });
-    } catch (error) {
-      console.error('Error storing AI feedback:', error);
-      res.status(500).json({ error: 'Failed to store feedback' });
-    }
+router.post('/ai/feedback', authenticate, requireAdmin, async (req, res) => {
+  const { recommendationId, feedback, metadata } = req.body;
+  try {
+    const db = DatabaseManager.getInstance();
+    await db.storeAIFeedback({ recommendationId, feedback, metadata });
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Error storing AI feedback:', error);
+    res.status(500).json({ error: 'Failed to store feedback' });
   }
-);
+});
 
 // Root route removed - dashboard is now served from public/index.html
 // This file only contains API endpoints
@@ -438,49 +379,37 @@ router.get('/activity', authenticate, requireAdmin, async (req, res) => {
   }
 });
 
-router.post(
-  '/alerts/:id/acknowledge',
-  authenticate,
-  requireAdmin,
-  validateRequest(AlertIdParamSchema),
-  (req, res) => {
-    try {
-      const { id } = req.params;
-      const ws = WebSocketService.getInstance();
-      const success = ws.acknowledgeAlert(id);
-      if (success) {
-        res.json({ success: true, message: 'Alert acknowledged' });
-      } else {
-        res.status(404).json({ success: false, message: 'Alert not found' });
-      }
-    } catch (error) {
-      console.error('Acknowledge alert error:', error);
-      res.status(500).json({ error: 'Failed to acknowledge alert' });
+router.post('/alerts/:id/acknowledge', authenticate, requireAdmin, (req, res) => {
+  try {
+    const { id } = req.params;
+    const ws = WebSocketService.getInstance();
+    const success = ws.acknowledgeAlert(id);
+    if (success) {
+      res.json({ success: true, message: 'Alert acknowledged' });
+    } else {
+      res.status(404).json({ success: false, message: 'Alert not found' });
     }
+  } catch (error) {
+    console.error('Acknowledge alert error:', error);
+    res.status(500).json({ error: 'Failed to acknowledge alert' });
   }
-);
+});
 
-router.post(
-  '/alerts/:id/resolve',
-  authenticate,
-  requireAdmin,
-  validateRequest(AlertIdParamSchema),
-  (req, res) => {
-    try {
-      const { id } = req.params;
-      const ws = WebSocketService.getInstance();
-      const success = ws.resolveAlert(id);
-      if (success) {
-        res.json({ success: true, message: 'Alert resolved' });
-      } else {
-        res.status(404).json({ success: false, message: 'Alert not found' });
-      }
-    } catch (error) {
-      console.error('Resolve alert error:', error);
-      res.status(500).json({ error: 'Failed to resolve alert' });
+router.post('/alerts/:id/resolve', authenticate, requireAdmin, (req, res) => {
+  try {
+    const { id } = req.params;
+    const ws = WebSocketService.getInstance();
+    const success = ws.resolveAlert(id);
+    if (success) {
+      res.json({ success: true, message: 'Alert resolved' });
+    } else {
+      res.status(404).json({ success: false, message: 'Alert not found' });
     }
+  } catch (error) {
+    console.error('Resolve alert error:', error);
+    res.status(500).json({ error: 'Failed to resolve alert' });
   }
-);
+});
 
 export default router;
 

@@ -47,6 +47,7 @@ jest.mock('../../src/config/messageConfig', () => ({
   get: jest.fn(),
   getSchema: () => ({}),
 }));
+jest.mock('../../src/config/ollamaConfig', () => ({ getSchema: () => ({}) }));
 jest.mock('../../src/config/openaiConfig', () => ({ getSchema: () => ({}) }));
 jest.mock('../../src/config/openWebUIConfig', () => ({ getSchema: () => ({}) }));
 jest.mock('../../src/config/slackConfig', () => ({ getSchema: () => ({}) }));
@@ -67,7 +68,7 @@ describe('GET /sources Performance Optimization', () => {
 
     const response = await request(app).get('/api/config/sources');
     expect(response.status).toBe(200);
-    expect(response.body.data || response.body).toHaveProperty('configFiles');
-    expect(Array.isArray(response.body.data?.configFiles || response.body.configFiles)).toBe(true);
+    expect(response.body).toHaveProperty('configFiles');
+    expect(Array.isArray(response.body.configFiles)).toBe(true);
   });
 });

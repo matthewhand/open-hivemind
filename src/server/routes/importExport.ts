@@ -4,14 +4,6 @@ import { Router, type Request, type Response } from 'express';
 import { body, param, validationResult } from 'express-validator';
 import { authenticate, requireAdmin } from '../../auth/middleware';
 import type { AuthMiddlewareRequest } from '../../auth/types';
-import {
-  BackupCreateSchema,
-  BackupRestoreSchema,
-  ExportConfigSchema,
-  ImportConfigSchema,
-  ValidateImportSchema,
-} from '../../validation/schemas/miscSchema';
-import { validateRequest } from '../../validation/validateRequest';
 import { ConfigurationImportExportService } from '../services/ConfigurationImportExportService';
 
 type MulterFile = {
@@ -21,8 +13,6 @@ type MulterFile = {
   mimetype: string;
   size: number;
 };
-
-type AuthMulterRequest = AuthMiddlewareRequest & { file?: MulterFile };
 
 const multer = require('multer');
 
@@ -220,7 +210,6 @@ const handleUploadError = (error: any, req: Request, res: Response, next: any) =
 router.post(
   '/export',
   requireAdmin,
-  validateRequest(ExportConfigSchema),
   validateExportOptions,
   handleValidationErrors,
   async (req: AuthMiddlewareRequest, res: Response) => {
@@ -273,7 +262,7 @@ router.post(
   handleUploadError,
   validateImportOptions,
   handleValidationErrors,
-  async (req: AuthMulterRequest, res: Response) => {
+  async (req: AuthMiddlewareRequest & { file?: MulterFile }, res: Response) => {
     try {
       if (!req.file) {
         return res.status(400).json({
@@ -330,7 +319,6 @@ router.post(
 router.post(
   '/backup',
   requireAdmin,
-  validateRequest(BackupCreateSchema),
   validateBackupCreation,
   handleValidationErrors,
   async (req: AuthMiddlewareRequest, res: Response) => {
@@ -409,7 +397,6 @@ router.get('/backups', requireAdmin, async (req: AuthMiddlewareRequest, res: Res
 router.post(
   '/backups/:backupId/restore',
   requireAdmin,
-  validateRequest(BackupRestoreSchema),
   validateBackupRestore,
   handleValidationErrors,
   async (req: AuthMiddlewareRequest, res: Response) => {
@@ -417,13 +404,14 @@ router.post(
       const { backupId } = req.params;
       const restoredBy = req.user?.username || 'unknown';
 
-      // Get safe backup file path
-      const backupPath = await importExportService.getBackupFilePath(backupId);
-
-      if (!backupPath) {
+      // Get backup file path safely
+      let backupPath;
+      try {
+        backupPath = await importExportService.getBackupFilePath(backupId);
+      } catch (error) {
         return res.status(404).json({
           success: false,
-          message: 'Backup not found or invalid',
+          message: 'Backup not found',
         });
       }
 
@@ -500,17 +488,16 @@ router.get(
     try {
       const { backupId } = req.params;
 
-      // Get safe backup file path
-      const backupPath = await importExportService.getBackupFilePath(backupId);
-
-      if (!backupPath) {
+      // Get backup file path safely
+      let backupPath;
+      try {
+        backupPath = await importExportService.getBackupFilePath(backupId);
+      } catch (error) {
         return res.status(404).json({
           success: false,
-          message: 'Backup not found or invalid',
+          message: 'Backup not found',
         });
       }
-
-      const backupFileName = path.basename(backupPath);
 
       // Check if file exists
       try {
@@ -524,7 +511,7 @@ router.get(
 
       // Set headers and send file
       res.setHeader('Content-Type', 'application/gzip');
-      res.setHeader('Content-Disposition', `attachment; filename="${backupFileName}"`);
+      res.setHeader('Content-Disposition', `attachment; filename="${path.basename(backupPath)}"`);
       return res.sendFile(backupPath);
     } catch (error) {
       console.error('Error downloading backup:', error);
@@ -545,9 +532,8 @@ router.post(
   '/validate',
   authenticate,
   upload.single('file'),
-  validateRequest(ValidateImportSchema),
   handleUploadError,
-  async (req: AuthMulterRequest, res: Response) => {
+  async (req: AuthMiddlewareRequest & { file?: MulterFile }, res: Response) => {
     try {
       if (!req.file) {
         return res.status(400).json({

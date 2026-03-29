@@ -1,12 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
     X, Save, MessageSquare, Cpu, Info, Edit2, Plus,
     Trash2, Copy, Shield, Eye, Settings
 } from 'lucide-react';
-import Button from './DaisyUI/Button';
 import { Bot as ApiBot, Persona as ApiPersona } from '../services/api';
-import { useConfigDiff } from '../hooks/useConfigDiff';
-import { ConfigDiffConfirmDialog } from './ConfigDiffViewer';
 
 // Extended Bot type with UI-specific fields
 interface BotConfig extends ApiBot {
@@ -50,36 +47,6 @@ export const BotSettingsModal: React.FC<BotSettingsModalProps> = ({
     onDelete,
     onViewDetails
 }) => {
-    const botConfig = {
-        messageProvider: (bot as any).messageProvider || bot.provider || '',
-        llmProvider: bot.llmProvider || '',
-        persona: bot.persona || '',
-    } as Record<string, unknown>;
-
-    const { hasChanges, diff, setOriginalConfig } = useConfigDiff(botConfig);
-    const [showDiffConfirm, setShowDiffConfirm] = useState(false);
-    const [pendingChange, setPendingChange] = useState<{ key: string; value: any } | null>(null);
-
-    useEffect(() => {
-        if (isOpen) {
-            setOriginalConfig(botConfig);
-        }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [isOpen]);
-
-    const handleConfigChangeWithConfirm = (key: string, value: any) => {
-        setPendingChange({ key, value });
-        setShowDiffConfirm(true);
-    };
-
-    const handleConfirmChange = async () => {
-        if (pendingChange) {
-            await onUpdateConfig(bot, pendingChange.key, pendingChange.value);
-        }
-        setShowDiffConfirm(false);
-        setPendingChange(null);
-    };
-
     if (!isOpen) return null;
 
     const isEnvProtected = bot.envOverrides && Object.keys(bot.envOverrides).length > 0;
@@ -88,9 +55,7 @@ export const BotSettingsModal: React.FC<BotSettingsModalProps> = ({
         <dialog className="modal modal-open" onClose={onClose}>
             <div className="modal-box w-11/12 max-w-4xl bg-base-100">
                 <form method="dialog">
-                    <div className="tooltip tooltip-left absolute right-2 top-2" data-tip="Close settings">
-                        <Button variant="ghost" size="sm" onClick={onClose} className="btn-circle" aria-label="Close settings">✕</Button>
-                    </div>
+                    <button className="btn btn-sm btn-circle btn-ghost absolute right-2 top-2" onClick={onClose} aria-label="Close settings">✕</button>
                 </form>
 
                 <div className="flex items-center gap-3 mb-6 border-b border-base-300 pb-4">
@@ -273,24 +238,22 @@ export const BotSettingsModal: React.FC<BotSettingsModalProps> = ({
 
                         {/* Action Buttons */}
                         <div className="space-y-3 pt-4">
-                            <Button variant="primary" buttonStyle="outline" className="w-full justify-start gap-3" onClick={() => onViewDetails(bot)}>
+                            <button className="btn btn-outline w-full justify-start gap-3" onClick={() => onViewDetails(bot)}>
                                 <Eye className="w-4 h-4" /> View Logs & Details
-                            </Button>
+                            </button>
 
-                            <Button variant="primary" buttonStyle="outline" className="w-full justify-start gap-3" onClick={() => onClone(bot)}>
+                            <button className="btn btn-outline w-full justify-start gap-3" onClick={() => onClone(bot)}>
                                 <Copy className="w-4 h-4" /> Clone Configuration
-                            </Button>
+                            </button>
 
                             <div className={isEnvProtected ? 'tooltip tooltip-top w-full' : 'w-full'} data-tip="Cannot delete: Defined by environment variables">
-                                <Button
-                                    variant="ghost"
-                                    buttonStyle="outline"
-                                    className="w-full justify-start gap-3 text-error border-error hover:bg-error/10"
+                                <button
+                                    className="btn btn-outline btn-error w-full justify-start gap-3"
                                     disabled={isEnvProtected}
                                     onClick={() => onDelete(bot)}
                                 >
                                     <Trash2 className="w-4 h-4" /> Delete Bot
-                                </Button>
+                                </button>
                             </div>
                         </div>
 
@@ -298,26 +261,8 @@ export const BotSettingsModal: React.FC<BotSettingsModalProps> = ({
                 </div>
 
                 <div className="modal-action">
-                    {hasChanges && (
-                        <div className="mr-auto flex items-center gap-2">
-                            <span className="badge badge-warning badge-sm">{diff.length} unsaved change{diff.length !== 1 ? 's' : ''}</span>
-                        </div>
-                    )}
-                    <Button variant="ghost" onClick={onClose}>Close</Button>
+                    <button className="btn" onClick={onClose}>Close</button>
                 </div>
-
-                <ConfigDiffConfirmDialog
-                    isOpen={showDiffConfirm}
-                    diff={pendingChange ? [{
-                        path: pendingChange.key,
-                        type: 'changed',
-                        oldValue: botConfig[pendingChange.key],
-                        newValue: pendingChange.value,
-                    }] : diff}
-                    onConfirm={handleConfirmChange}
-                    onCancel={() => { setShowDiffConfirm(false); setPendingChange(null); }}
-                    title="Confirm Configuration Change"
-                />
             </div>
             <form method="dialog" className="modal-backdrop">
                 <button onClick={onClose}>close</button>

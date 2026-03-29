@@ -1,12 +1,7 @@
 import { promises as fs } from 'fs';
 import path from 'path';
-import Debug from 'debug';
 import { Router } from 'express';
 import { z } from 'zod';
-import { SpecSchema } from '../../validation/schemas/miscSchema';
-import { validateRequest } from '../../validation/validateRequest';
-
-const debug = Debug('app:server:routes:specs');
 
 const router = Router();
 
@@ -38,17 +33,15 @@ async function saveSpecsIndex(index: SpecMetadata[]) {
   await fs.writeFile(indexPath, JSON.stringify(index, null, 2));
 }
 
-router.post('/', validateRequest(SpecSchema), async (req, res) => {
+router.post('/', async (req, res) => {
   try {
     const { id, topic, tags, author, timestamp, version, content } = req.body;
 
     // Validate content field
-    if (!content || typeof content !== 'string' || content.trim().length === 0) {
-      return res.status(400).json({
-        success: false,
-        error: 'Content is required and must be a non-empty string',
-        message: 'Validation failed',
-      });
+    if (!content || typeof content !== "string" || content.trim().length === 0) {
+      return res
+        .status(400)
+        .json({ success: false, error: "Content is required and must be a non-empty string", message: "Validation failed" });
     }
     const newSpec: SpecMetadata = { id, topic, tags, author, timestamp, version };
 
@@ -80,7 +73,7 @@ router.post('/', validateRequest(SpecSchema), async (req, res) => {
       .status(201)
       .json({ success: true, data: newSpec, message: 'Specification saved successfully' });
   } catch (error) {
-    debug('ERROR:', 'Failed to save spec:', error);
+    console.error('Failed to save spec:', error);
     return res.status(500).json({
       success: false,
       error: 'Failed to save specification',

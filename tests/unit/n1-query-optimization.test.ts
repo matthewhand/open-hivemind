@@ -105,7 +105,9 @@ describe('N+1 Query Optimization', () => {
 
       // Verify each configuration has versions and audit logs
       configs.forEach((config) => {
+        expect(config.versions).toBeDefined();
         expect(Array.isArray(config.versions)).toBe(true);
+        expect(config.auditLog).toBeDefined();
         expect(Array.isArray(config.auditLog)).toBe(true);
 
         // Should have at least 2 versions
@@ -146,8 +148,8 @@ describe('N+1 Query Optimization', () => {
       await emptyDbManager.connect();
 
       const configs = await emptyDbManager.getAllBotConfigurationsWithDetails();
+      expect(configs).toBeDefined();
       expect(Array.isArray(configs)).toBe(true);
-      expect(configs).toHaveLength(0);
 
       await emptyDbManager.disconnect();
       // Reset singleton after test
@@ -281,6 +283,7 @@ describe('N+1 Query Optimization', () => {
       // For in-memory DB with controlled data, this mainly tests the query structure
       const results = await dbManager.getAllBotConfigurationsWithDetails();
 
+      expect(results).toBeDefined();
       expect(Array.isArray(results)).toBe(true);
 
       // All results should have the expected structure

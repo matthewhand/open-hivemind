@@ -72,8 +72,7 @@ describe('Bots Router', () => {
     jest.clearAllMocks();
 
     mockManager = {
-      getAllBots: jest.fn().mockResolvedValue([]),
-      getBot: jest.fn().mockResolvedValue(undefined),
+      getAllBots: jest.fn(),
       getBotsStatus: jest.fn(),
       createBot: jest.fn(),
       updateBot: jest.fn(),
@@ -177,18 +176,16 @@ describe('Bots Router', () => {
     expect(mockManager.getBotHistory).toHaveBeenCalledWith('bot1', undefined, 20);
   });
 
-  it('GET /api/bots/:id/activity should return 404 when bot not found', async () => {
-    mockManager.getBot.mockResolvedValue(undefined);
+  it('GET /api/bots/:id/activity should return activity logs', async () => {
     const res = await request(app).get('/api/bots/bot1/activity');
-    expect(res.status).toBe(404);
-    expect(res.body.error).toBe('Bot not found');
+    expect(res.status).toBe(200);
+    expect(res.body.data.activity).toEqual([]);
   });
 
   // Error case tests
   describe('POST /api/bots', () => {
     it('should create a bot successfully', async () => {
       const newBot = { name: 'test-bot', messageProvider: 'discord', llmProvider: 'openai' };
-      mockManager.getAllBots.mockResolvedValue([]);
       mockManager.createBot.mockResolvedValue(newBot);
 
       const res = await request(app).post('/api/bots').send(newBot);
@@ -229,7 +226,6 @@ describe('Bots Router', () => {
 
   describe('DELETE /api/bots/:id', () => {
     it('should delete a bot successfully', async () => {
-      mockManager.getBot.mockResolvedValue({ id: 'test-bot', name: 'test-bot' });
       mockManager.deleteBot.mockResolvedValue(undefined);
 
       const res = await request(app).delete('/api/bots/test-bot');
@@ -239,19 +235,16 @@ describe('Bots Router', () => {
       expect(mockManager.deleteBot).toHaveBeenCalledWith('test-bot');
     });
 
-    it('should return 200 if bot not found (idempotent)', async () => {
-      mockManager.getBot.mockResolvedValue(undefined);
+    it('should return 404 if bot not found', async () => {
+      mockManager.deleteBot.mockRejectedValue(new Error('Bot "unknown" not found'));
       const res = await request(app).delete('/api/bots/unknown');
-      expect(res.status).toBe(200);
-      expect(res.body.success).toBe(true);
-      expect(res.body.message).toBe('Bot already deleted or not found');
+      expect(res.status).toBe(404);
     });
   });
 
   describe('POST /api/bots/:id/clone', () => {
     it('should clone a bot successfully', async () => {
       const clonedBot = { id: 'cloned-bot', name: 'cloned-bot' };
-      mockManager.getAllBots.mockResolvedValue([]);
       mockManager.cloneBot.mockResolvedValue(clonedBot);
 
       const res = await request(app)

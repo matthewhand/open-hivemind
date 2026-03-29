@@ -7,15 +7,15 @@ test.describe('Letta Provider Documentation Screenshots', () => {
     const errors = await setupTestWithErrorDetection(page);
 
     // Mock authentication
-    await page.route('**/api/config', async (route) =>
-      route.fulfill({ status: 200, json: { bots: [] } })
-    );
+    await page.route('/api/auth/check', async (route) => {
+      await route.fulfill({ status: 200, json: { authenticated: true, user: { role: 'admin' } } });
+    });
 
     // Mock health and status endpoints
-    await page.route('**/api/health/detailed', async (route) =>
+    await page.route('/api/health/detailed', async (route) =>
       route.fulfill({ status: 200, json: { status: 'ok' } })
     );
-    await page.route('**/api/config/llm-status', async (route) =>
+    await page.route('/api/config/llm-status', async (route) =>
       route.fulfill({
         status: 200,
         json: {
@@ -33,12 +33,12 @@ test.describe('Letta Provider Documentation Screenshots', () => {
         },
       })
     );
-    await page.route('**/api/config/global', async (route) =>
+    await page.route('/api/config/global', async (route) =>
       route.fulfill({ status: 200, json: { _userSettings: { values: {} } } })
     );
 
     // Mock LLM providers with a Letta provider
-    await page.route('**/api/admin/llm-providers', async (route) => {
+    await page.route('/api/admin/llm-providers', async (route) => {
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
@@ -61,7 +61,7 @@ test.describe('Letta Provider Documentation Screenshots', () => {
     });
 
     // Mock Letta agents endpoint
-    await page.route('**/api/letta/agents', async (route) => {
+    await page.route('/api/letta/agents', async (route) => {
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
@@ -77,13 +77,13 @@ test.describe('Letta Provider Documentation Screenshots', () => {
       });
     });
 
-    await page.route('**/api/admin/guard-profiles', async (route) =>
+    await page.route('/api/admin/guard-profiles', async (route) =>
       route.fulfill({ status: 200, json: [] })
     );
-    await page.route('**/api/demo/status', async (route) =>
+    await page.route('/api/demo/status', async (route) =>
       route.fulfill({ status: 200, json: { enabled: false } })
     );
-    await page.route('**/api/csrf-token', async (route) =>
+    await page.route('/api/csrf-token', async (route) =>
       route.fulfill({ status: 200, json: { csrfToken: 'mock-token' } })
     );
 
@@ -92,37 +92,40 @@ test.describe('Letta Provider Documentation Screenshots', () => {
     // Navigate to LLM Providers page
     await navigateAndWaitReady(page, '/admin/providers/llm');
 
-    // Wait for the page to load
-    await expect(page.getByRole('heading', { name: /LLM Providers/i })).toBeVisible();
+    // Wait for the page to load with the Letta provider
+    await expect(page.locator('text=Letta Companion Agent').first()).toBeVisible();
 
-    // Screenshot: LLM Providers list
+    // Screenshot: LLM Providers list with Letta
     await page.screenshot({
       path: 'docs/screenshots/letta-provider-list.png',
       fullPage: true,
     });
 
-    // Try to find and click the Letta provider if it appears
-    const lettaProvider = page.locator('text=Letta Companion Agent').first();
-    if (await lettaProvider.isVisible().catch(() => false)) {
-      await lettaProvider.click();
+    // Click on the Letta provider to edit
+    await page.click('text=Letta Companion Agent');
 
-      const configureModal = page.locator('text=Configure Letta (MemGPT)').first();
-      if (await configureModal.isVisible({ timeout: 3000 }).catch(() => false)) {
-        await page.screenshot({
-          path: 'docs/screenshots/letta-provider-config.png',
-        });
+    // Wait for the edit modal
+    await expect(page.locator('text=Configure Letta (MemGPT)')).toBeVisible();
 
-        const lookupButton = page.getByRole('button', { name: /🔍 Lookup Agent/i });
-        if (await lookupButton.isVisible().catch(() => false)) {
-          await lookupButton.click();
-          await expect(page.locator('input[name="agentId"]')).toHaveValue(
-            'agent-e2fa86a3-cea2-4645-acd7-d12f0dc2efd5'
-          );
-          await page.screenshot({
-            path: 'docs/screenshots/letta-provider-lookup.png',
-          });
-        }
-      }
+    // Screenshot: Letta provider configuration form
+    await page.screenshot({
+      path: 'docs/screenshots/letta-provider-config.png',
+    });
+
+    // Click the lookup button to demonstrate the feature
+    const lookupButton = page.getByRole('button', { name: /🔍 Lookup Agent/i });
+    if (await lookupButton.isVisible().catch(() => false)) {
+      await lookupButton.click();
+
+      // Wait for the agent ID to be populated
+      await expect(page.locator('input[name="agentId"]')).toHaveValue(
+        'agent-e2fa86a3-cea2-4645-acd7-d12f0dc2efd5'
+      );
+
+      // Screenshot: Agent lookup in action
+      await page.screenshot({
+        path: 'docs/screenshots/letta-provider-lookup.png',
+      });
     }
 
     // Assert no errors were captured
@@ -138,15 +141,15 @@ test.describe('Letta Provider Documentation Screenshots', () => {
     const errors = await setupTestWithErrorDetection(page);
 
     // Mock authentication
-    await page.route('**/api/config', async (route) =>
-      route.fulfill({ status: 200, json: { bots: [] } })
-    );
+    await page.route('/api/auth/check', async (route) => {
+      await route.fulfill({ status: 200, json: { authenticated: true, user: { role: 'admin' } } });
+    });
 
     // Mock health and status endpoints
-    await page.route('**/api/health/detailed', async (route) =>
+    await page.route('/api/health/detailed', async (route) =>
       route.fulfill({ status: 200, json: { status: 'ok' } })
     );
-    await page.route('**/api/config/llm-status', async (route) =>
+    await page.route('/api/config/llm-status', async (route) =>
       route.fulfill({
         status: 200,
         json: {
@@ -158,12 +161,12 @@ test.describe('Letta Provider Documentation Screenshots', () => {
         },
       })
     );
-    await page.route('**/api/config/global', async (route) =>
+    await page.route('/api/config/global', async (route) =>
       route.fulfill({ status: 200, json: { _userSettings: { values: {} } } })
     );
 
     // Mock empty LLM providers list
-    await page.route('**/api/admin/llm-providers', async (route) => {
+    await page.route('/api/admin/llm-providers', async (route) => {
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
@@ -172,7 +175,7 @@ test.describe('Letta Provider Documentation Screenshots', () => {
     });
 
     // Mock Letta agents endpoint
-    await page.route('**/api/letta/agents', async (route) => {
+    await page.route('/api/letta/agents', async (route) => {
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
@@ -189,7 +192,7 @@ test.describe('Letta Provider Documentation Screenshots', () => {
     });
 
     // Mock provider types
-    await page.route('**/api/admin/provider-types', async (route) => {
+    await page.route('/api/admin/provider-types', async (route) => {
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
@@ -200,13 +203,13 @@ test.describe('Letta Provider Documentation Screenshots', () => {
       });
     });
 
-    await page.route('**/api/admin/guard-profiles', async (route) =>
+    await page.route('/api/admin/guard-profiles', async (route) =>
       route.fulfill({ status: 200, json: [] })
     );
-    await page.route('**/api/demo/status', async (route) =>
+    await page.route('/api/demo/status', async (route) =>
       route.fulfill({ status: 200, json: { enabled: false } })
     );
-    await page.route('**/api/csrf-token', async (route) =>
+    await page.route('/api/csrf-token', async (route) =>
       route.fulfill({ status: 200, json: { csrfToken: 'mock-token' } })
     );
 
@@ -215,38 +218,39 @@ test.describe('Letta Provider Documentation Screenshots', () => {
     // Navigate to LLM Providers page
     await navigateAndWaitReady(page, '/admin/providers/llm');
 
-    // Try to find "Add Provider" button (may not exist in redesigned UI)
-    const addProviderBtn = page.getByRole('button', { name: /Add Provider/i });
-    if (await addProviderBtn.isVisible({ timeout: 3000 }).catch(() => false)) {
-      await addProviderBtn.click();
-      await expect(page.locator('.modal-box, [role="dialog"]')).toBeVisible();
+    // Click "Add Provider" button
+    await page.getByRole('button', { name: /Add Provider/i }).click();
 
-      await page.screenshot({
-        path: 'docs/screenshots/letta-provider-selection.png',
-      });
+    // Wait for provider type selection
+    await expect(page.locator('.modal-box, [role="dialog"]')).toBeVisible();
 
-      await page.click('text=Letta (MemGPT)');
-      await expect(page.locator('text=Configure Letta (MemGPT)')).toBeVisible();
+    // Screenshot: Provider type selection with Letta visible
+    await page.screenshot({
+      path: 'docs/screenshots/letta-provider-selection.png',
+    });
 
-      await page.screenshot({
-        path: 'docs/screenshots/letta-provider-create.png',
-      });
+    // Select Letta provider
+    await page.click('text=Letta (MemGPT)');
 
-      await page.fill('input[name="apiUrl"]', 'https://api.letta.com/v1');
-      await page.fill(
-        'input[name="apiKey"]',
-        'sk-let-NzU1OWUwYWUtOTE4ZS00ZjZkLWJkMmMtMGQwYTg4YTg5NzQ2'
-      );
+    // Wait for the configuration form
+    await expect(page.locator('text=Configure Letta (MemGPT)')).toBeVisible();
 
-      await page.screenshot({
-        path: 'docs/screenshots/letta-provider-filled.png',
-      });
-    } else {
-      // Page has been redesigned - just screenshot what we see
-      await page.screenshot({
-        path: 'docs/screenshots/letta-provider-selection.png',
-      });
-    }
+    // Screenshot: Empty Letta configuration form
+    await page.screenshot({
+      path: 'docs/screenshots/letta-provider-create.png',
+    });
+
+    // Fill in the form
+    await page.fill('input[name="apiUrl"]', 'https://api.letta.com/v1');
+    await page.fill(
+      'input[name="apiKey"]',
+      'sk-let-NzU1OWUwYWUtOTE4ZS00ZjZkLWJkMmMtMGQwYTg4YTg5NzQ2'
+    );
+
+    // Screenshot: Form with credentials filled
+    await page.screenshot({
+      path: 'docs/screenshots/letta-provider-filled.png',
+    });
 
     // Assert no errors were captured
     if (errors.length > 0) {

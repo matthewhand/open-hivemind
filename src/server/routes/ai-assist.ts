@@ -3,12 +3,10 @@ import { Router } from 'express';
 import { getLlmProfileByKey } from '../../config/llmProfiles';
 import { UserConfigStore } from '../../config/UserConfigStore';
 import { FlowiseProvider } from '../../integrations/flowise/flowiseProvider';
+import { ErrorUtils } from '../../types/errors';
 import * as openWebUIImport from '../../integrations/openwebui/runInference';
 import type { ILlmProvider } from '../../llm/interfaces/ILlmProvider';
 import { IMessage } from '../../message/interfaces/IMessage';
-import { ErrorUtils } from '../../types/errors';
-import { ChatGenerateSchema } from '../../validation/schemas/miscSchema';
-import { validateRequest } from '../../validation/validateRequest';
 
 const debug = Debug('app:ai-assist');
 const router = Router();
@@ -86,7 +84,7 @@ const openWebUI: ILlmProvider = {
 const MAX_PROMPT_LENGTH = 32000; // ~8k tokens approximate limit
 const MAX_SYSTEM_PROMPT_LENGTH = 16000;
 
-router.post('/generate', validateRequest(ChatGenerateSchema), async (req, res) => {
+router.post('/generate', async (req, res) => {
   try {
     const { prompt, systemPrompt } = req.body;
     if (!prompt) {
@@ -144,9 +142,7 @@ router.post('/generate', validateRequest(ChatGenerateSchema), async (req, res) =
     } catch (error: unknown) {
       const hivemindError = ErrorUtils.toHivemindError(error);
       debug(`Failed to initialize provider ${profile.name}:`, hivemindError);
-      return res.status(500).json({
-        error: `Failed to initialize provider: ${hivemindError instanceof Error ? hivemindError.message : String(hivemindError)}`,
-      });
+      return res.status(500).json({ error: `Failed to initialize provider: ${hivemindError.message}` });
     }
 
     if (!instance) {
@@ -176,7 +172,7 @@ router.post('/generate', validateRequest(ChatGenerateSchema), async (req, res) =
     debug('Error in AI Assist generation:', hivemindError);
     return res.status(500).json({
       error: 'Failed to generate response',
-      message: hivemindError instanceof Error ? hivemindError.message : String(hivemindError),
+      message: hivemindError.message,
     });
   }
 });

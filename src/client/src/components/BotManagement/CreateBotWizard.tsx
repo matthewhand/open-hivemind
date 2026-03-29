@@ -1,53 +1,28 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { Bot, MessageSquare, Cpu, User, Shield, ArrowRight, ArrowLeft, Check, AlertCircle, CheckCircle2, RotateCcw } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Bot, MessageSquare, Cpu, User, Shield, ArrowRight, ArrowLeft, Check, AlertCircle, CheckCircle2 } from 'lucide-react';
 import Input from '../DaisyUI/Input';
-import Modal from '../DaisyUI/Modal';
-import { useConfigDiff } from '../../hooks/useConfigDiff';
-import { ConfigDiffViewer, ConfigDiffConfirmDialog } from '../ConfigDiffViewer';
-import Debug from 'debug';
-const debug = Debug('app:client:components:BotManagement:CreateBotWizard');
 
 interface CreateBotWizardProps {
-    isOpen: boolean;
-    onClose: () => void;
-    onSubmit?: (data: any) => void;
-    /** @deprecated Use isOpen/onClose/onSubmit instead */
-    onCancel?: () => void;
-    /** @deprecated Use isOpen/onClose/onSubmit instead */
-    onSuccess?: () => void;
-    personas?: any[];
-    llmProfiles?: any[];
-    defaultLlmConfigured?: boolean;
+    onCancel: () => void;
+    onSuccess: () => void;
+    personas: any[];
+    llmProfiles: any[];
+    defaultLlmConfigured: boolean;
 }
 
-export const CreateBotWizard: React.FC<CreateBotWizardProps> = (props) => {
-    const {
-        isOpen,
-        onClose,
-        onSubmit,
-        onCancel,
-        onSuccess,
-        personas: propsPersonas,
-        llmProfiles: propsLlmProfiles,
-        defaultLlmConfigured: propsDefaultLlmConfigured,
-    } = props;
-
-    const handleCancel = onCancel || onClose;
-    const handleSuccess = onSuccess || onClose;
-
+export const CreateBotWizard: React.FC<CreateBotWizardProps> = ({
+    onCancel,
+    onSuccess,
+    personas,
+    llmProfiles,
+    defaultLlmConfigured,
+}) => {
     const [step, setStep] = useState(1);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [guardProfiles, setGuardProfiles] = useState<any[]>([]);
-    const [fetchedPersonas, setFetchedPersonas] = useState<any[]>([]);
-    const [fetchedLlmProfiles, setFetchedLlmProfiles] = useState<any[]>([]);
-    const [fetchedDefaultLlmConfigured, setFetchedDefaultLlmConfigured] = useState(true);
 
-    const personas = propsPersonas ?? fetchedPersonas;
-    const llmProfiles = propsLlmProfiles ?? fetchedLlmProfiles;
-    const defaultLlmConfigured = propsDefaultLlmConfigured ?? fetchedDefaultLlmConfigured;
-
-    const initialFormData = {
+    const [formData, setFormData] = useState({
         name: '',
         description: '',
         messageProvider: '',
@@ -59,23 +34,7 @@ export const CreateBotWizard: React.FC<CreateBotWizardProps> = (props) => {
             rateLimit: false,
             contentFilter: false,
         }
-    };
-
-    const [formData, setFormData] = useState(initialFormData);
-    const [showDiffConfirm, setShowDiffConfirm] = useState(false);
-
-    const formDataAsRecord = useMemo(() => formData as unknown as Record<string, unknown>, [formData]);
-    const { hasChanges, diff, setOriginalConfig, resetToOriginal } = useConfigDiff(formDataAsRecord);
-
-    useEffect(() => {
-        setOriginalConfig(initialFormData as unknown as Record<string, unknown>);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
-
-    const handleUndoAll = () => {
-        const original = resetToOriginal();
-        setFormData(original as typeof formData);
-    };
+    });
 
     useEffect(() => {
         const fetchGuardProfiles = async () => {
@@ -86,59 +45,11 @@ export const CreateBotWizard: React.FC<CreateBotWizardProps> = (props) => {
                     setGuardProfiles(data.data || []);
                 }
             } catch (e) {
-                debug('ERROR:', 'Failed to fetch guard profiles', e);
+                console.error('Failed to fetch guard profiles', e);
             }
         };
         fetchGuardProfiles();
-
-        // Fetch personas if not provided via props
-        if (!propsPersonas) {
-            const fetchPersonas = async () => {
-                try {
-                    const response = await fetch('/api/personas');
-                    if (response.ok) {
-                        const data = await response.json();
-                        setFetchedPersonas(Array.isArray(data) ? data : []);
-                    }
-                } catch (e) {
-                    debug('ERROR:', 'Failed to fetch personas', e);
-                }
-            };
-            fetchPersonas();
-        }
-
-        // Fetch LLM profiles if not provided via props
-        if (!propsLlmProfiles) {
-            const fetchLlmProfiles = async () => {
-                try {
-                    const response = await fetch('/api/config/llm-profiles');
-                    if (response.ok) {
-                        const data = await response.json();
-                        setFetchedLlmProfiles(data?.llm || data?.profiles?.llm || data?.data || []);
-                    }
-                } catch (e) {
-                    debug('ERROR:', 'Failed to fetch LLM profiles', e);
-                }
-            };
-            fetchLlmProfiles();
-        }
-
-        // Fetch LLM status if not provided via props
-        if (propsDefaultLlmConfigured === undefined) {
-            const fetchLlmStatus = async () => {
-                try {
-                    const response = await fetch('/api/config/llm-status');
-                    if (response.ok) {
-                        const data = await response.json();
-                        setFetchedDefaultLlmConfigured(data?.defaultConfigured ?? true);
-                    }
-                } catch (e) {
-                    debug('ERROR:', 'Failed to fetch LLM status', e);
-                }
-            };
-            fetchLlmStatus();
-        }
-    }, [propsPersonas, propsLlmProfiles, propsDefaultLlmConfigured]);
+    }, []);
 
     const getPersonaName = () => {
         if (formData.persona === 'default') return 'Default Assistant';
@@ -183,23 +94,18 @@ export const CreateBotWizard: React.FC<CreateBotWizardProps> = (props) => {
                 }
             };
 
-            if (onSubmit) {
-                await onSubmit(payload);
-                handleSuccess();
-            } else {
-                const response = await fetch('/api/bots', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload),
-                });
+            const response = await fetch('/api/bots', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload),
+            });
 
-                if (!response.ok) {
-                    const data = await response.json();
-                    throw new Error(data.error || 'Failed to create bot');
-                }
-
-                handleSuccess();
+            if (!response.ok) {
+                const data = await response.json();
+                throw new Error(data.error || 'Failed to create bot');
             }
+
+            onSuccess();
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Failed to create bot');
         } finally {
@@ -248,7 +154,6 @@ export const CreateBotWizard: React.FC<CreateBotWizardProps> = (props) => {
     };
 
     return (
-        <Modal isOpen={isOpen} onClose={handleCancel} title="Create New Bot" size="lg">
         <div className="flex flex-col h-full max-h-[70vh]">
             {/* Steps Indicator with Validation Status */}
             <ul className="steps w-full mb-8">
@@ -355,7 +260,6 @@ export const CreateBotWizard: React.FC<CreateBotWizardProps> = (props) => {
                                         className="btn btn-square join-item"
                                         onClick={() => window.open('/admin/config', '_blank')}
                                         title="Manage Providers"
-                                        aria-label="Manage Providers"
                                     >
                                         +
                                     </button>
@@ -554,25 +458,6 @@ export const CreateBotWizard: React.FC<CreateBotWizardProps> = (props) => {
                                         </div>
                                     )}
                                 </div>
-
-                                {hasChanges && (
-                                    <>
-                                        <div className="divider my-0"></div>
-                                        <div className="flex flex-col gap-1">
-                                            <div className="flex items-center justify-between">
-                                                <span className="opacity-70 text-sm font-semibold">Changes from defaults:</span>
-                                                <button
-                                                    type="button"
-                                                    className="btn btn-ghost btn-xs gap-1"
-                                                    onClick={handleUndoAll}
-                                                >
-                                                    <RotateCcw className="w-3 h-3" /> Undo all changes
-                                                </button>
-                                            </div>
-                                            <ConfigDiffViewer diff={diff} mode="unified" maxHeight="12rem" />
-                                        </div>
-                                    </>
-                                )}
                             </div>
                         </div>
                     </div>
@@ -581,7 +466,7 @@ export const CreateBotWizard: React.FC<CreateBotWizardProps> = (props) => {
 
             {/* Footer Actions */}
             <div className="modal-action mt-6 flex justify-between">
-                <button className="btn btn-ghost" onClick={step === 1 ? handleCancel : handleBack} disabled={loading} aria-busy={loading}>
+                <button className="btn btn-ghost" onClick={step === 1 ? onCancel : handleBack} disabled={loading}>
                     {step === 1 ? 'Cancel' : <><ArrowLeft className="w-4 h-4" /> Back</>}
                 </button>
 
@@ -590,21 +475,11 @@ export const CreateBotWizard: React.FC<CreateBotWizardProps> = (props) => {
                         Next <ArrowRight className="w-4 h-4" />
                     </button>
                 ) : (
-                    <button className="btn btn-success btn-wide" onClick={() => hasChanges ? setShowDiffConfirm(true) : handleSubmit()} disabled={loading} aria-busy={loading}>
-                        {loading ? <span className="loading loading-spinner" aria-hidden="true" /> : <><Check className="w-4 h-4" /> Finish & Create</>}
+                    <button className="btn btn-success btn-wide" onClick={handleSubmit} disabled={loading}>
+                        {loading ? <span className="loading loading-spinner" /> : <><Check className="w-4 h-4" /> Finish & Create</>}
                     </button>
                 )}
             </div>
         </div>
-
-        <ConfigDiffConfirmDialog
-            isOpen={showDiffConfirm}
-            diff={diff}
-            onConfirm={() => { setShowDiffConfirm(false); handleSubmit(); }}
-            onCancel={() => setShowDiffConfirm(false)}
-            title="Confirm Bot Configuration"
-            loading={loading}
-        />
-        </Modal>
     );
 };

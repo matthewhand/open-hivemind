@@ -139,7 +139,7 @@ const QuickActions: React.FC<QuickActionsProps> = ({ onRefresh }) => {
             className="flex items-center gap-2"
           >
             {isLoading('refresh') ? (
-              <span className="loading loading-spinner loading-sm" aria-hidden="true"></span>
+              <span className="loading loading-spinner loading-sm"></span>
             ) : (
               <ArrowPathIcon className="w-5 h-5" />
             )}
@@ -153,7 +153,7 @@ const QuickActions: React.FC<QuickActionsProps> = ({ onRefresh }) => {
             className="flex items-center gap-2"
           >
             {isLoading('clear') ? (
-              <span className="loading loading-spinner loading-sm" aria-hidden="true"></span>
+              <span className="loading loading-spinner loading-sm"></span>
             ) : (
               <XMarkIcon className="w-5 h-5" />
             )}
@@ -167,7 +167,7 @@ const QuickActions: React.FC<QuickActionsProps> = ({ onRefresh }) => {
             className="flex items-center gap-2"
           >
             {isLoading('export') ? (
-              <span className="loading loading-spinner loading-sm" aria-hidden="true"></span>
+              <span className="loading loading-spinner loading-sm"></span>
             ) : (
               <ArrowDownTrayIcon className="w-5 h-5" />
             )}
@@ -210,7 +210,7 @@ const QuickActions: React.FC<QuickActionsProps> = ({ onRefresh }) => {
             variant="primary"
             disabled={!exportFilename.trim() || isLoading('export')}
           >
-            {isLoading('export') ? <span className="loading loading-spinner loading-sm" aria-hidden="true"></span> : 'Export'}
+            {isLoading('export') ? <span className="loading loading-spinner loading-sm"></span> : 'Export'}
           </Button>
         </div>
       </Modal>

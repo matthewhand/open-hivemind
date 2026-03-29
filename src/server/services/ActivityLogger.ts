@@ -10,7 +10,6 @@ export interface ActivityFilter {
   startTime?: Date;
   endTime?: Date;
   limit?: number;
-  offset?: number;
   botName?: string;
   provider?: string;
   llmProvider?: string;
@@ -23,18 +22,14 @@ export class ActivityLogger {
   private constructor() {
     // Store in config/user/activity.jsonl as it is a persistent location for user data
     const configDir = path.join(process.cwd(), 'config', 'user');
-    this.logFile = path.join(configDir, 'activity.jsonl');
-    // Initialize directory asynchronously
-    this.initializeDirectory();
-  }
-
-  private async initializeDirectory(): Promise<void> {
-    const configDir = path.dirname(this.logFile);
-    try {
-      await fs.promises.mkdir(configDir, { recursive: true });
-    } catch (e) {
-      debug('Failed to create config/user directory: %O', e);
+    if (!fs.existsSync(configDir)) {
+      try {
+        fs.mkdirSync(configDir, { recursive: true });
+      } catch (e) {
+        debug('Failed to create config/user directory: %O', e);
+      }
     }
+    this.logFile = path.join(configDir, 'activity.jsonl');
   }
 
   public static getInstance(): ActivityLogger {
@@ -53,72 +48,9 @@ export class ActivityLogger {
     });
   }
 
-  public async getEventsCount(options: ActivityFilter = {}): Promise<number> {
-    try {
-      try {
-        await fs.promises.access(this.logFile);
-      } catch {
-        return 0;
-      }
-
-      const fileStream = fs.createReadStream(this.logFile, { encoding: 'utf8' });
-      const rl = readline.createInterface({
-        input: fileStream,
-        crlfDelay: Infinity,
-      });
-
-      let count = 0;
-      const startTimeMs = options.startTime ? options.startTime.getTime() : 0;
-      const endTimeMs = options.endTime ? options.endTime.getTime() : Infinity;
-
-      for await (const line of rl) {
-        if (!line.trim()) {
-          continue;
-        }
-
-        try {
-          const event = JSON.parse(line) as MessageFlowEvent;
-          const eventTime = new Date(event.timestamp).getTime();
-
-          if (eventTime > endTimeMs) {
-            continue;
-          }
-
-          if (eventTime < startTimeMs) {
-            continue;
-          }
-
-          if (options.botName && event.botName !== options.botName) {
-            continue;
-          }
-
-          if (options.provider && event.provider !== options.provider) {
-            continue;
-          }
-
-          if (options.llmProvider && event.llmProvider !== options.llmProvider) {
-            continue;
-          }
-
-          count++;
-        } catch (e) {
-          debug('Failed to parse activity log line: %O', e);
-          continue;
-        }
-      }
-
-      return count;
-    } catch (error) {
-      debug('Failed to count activity log: %O', error);
-      return 0;
-    }
-  }
-
   public async getEvents(options: ActivityFilter = {}): Promise<MessageFlowEvent[]> {
     try {
-      try {
-        await fs.promises.access(this.logFile);
-      } catch {
+      if (!fs.existsSync(this.logFile)) {
         return [];
       }
 
@@ -130,12 +62,10 @@ export class ActivityLogger {
 
       const bufferSize = options.limit ? options.limit : Infinity;
       const isBufferLimited = bufferSize !== Infinity;
-      const offset = options.offset || 0;
       const events: MessageFlowEvent[] = isBufferLimited
         ? new Array<MessageFlowEvent>(bufferSize)
         : [];
       let count = 0;
-      let matchedCount = 0;
 
       const startTimeMs = options.startTime ? options.startTime.getTime() : 0;
       const endTimeMs = options.endTime ? options.endTime.getTime() : Infinity;
@@ -165,16 +95,6 @@ export class ActivityLogger {
             continue;
           }
 
-          if (options.llmProvider && event.llmProvider !== options.llmProvider) {
-            continue;
-          }
-
-          // Skip events before the offset
-          if (matchedCount < offset) {
-            matchedCount++;
-            continue;
-          }
-
           if (isBufferLimited) {
             events[count % bufferSize] = event;
           } else {
@@ -182,7 +102,6 @@ export class ActivityLogger {
             (events as MessageFlowEvent[]).push(event);
           }
           count++;
-          matchedCount++;
         } catch (e) {
           debug('Failed to parse activity log line: %O', e);
           continue;

@@ -45,10 +45,8 @@ const RATE_LIMIT_CONFIG = {
 };
 
 // Redis client and store
-
-let redisClient: Record<string, (...args: unknown[]) => unknown> | null = null;
-
-let RedisStore: (new (opts: Record<string, unknown>) => unknown) | null = null;
+let redisClient: any = null;
+let RedisStore: any = null;
 let redisAvailable = false;
 
 /**
@@ -67,7 +65,7 @@ async function initializeRedis(): Promise<void> {
 
     const redisUrl = process.env.REDIS_URL;
     if (!redisUrl) {
-      debug('WARN:', 'REDIS_URL not set, using in-memory rate limiting');
+      console.warn('REDIS_URL not set, using in-memory rate limiting');
       return;
     }
 
@@ -109,7 +107,7 @@ async function initializeRedis(): Promise<void> {
     redisAvailable = true;
     debug('Redis client initialized successfully');
   } catch (err) {
-    debug('WARN:', 'Redis initialization failed, using in-memory rate limiting:', err);
+    console.warn('Redis initialization failed, using in-memory rate limiting:', err);
     redisAvailable = false;
   }
 }
@@ -184,7 +182,7 @@ const memoryStores = new Map<string, MemoryStoreWithCleanup>();
 /**
  * Create appropriate store based on environment
  */
-function createStore(prefix: string, windowMs: number): unknown {
+function createStore(prefix: string, windowMs: number): any {
   if (isProduction && redisAvailable && redisClient && RedisStore) {
     debug(`Creating Redis store for ${prefix}`);
     return new RedisStore({
@@ -463,7 +461,7 @@ function getClientKey(req: Request): string {
  * Standard rate limit handler
  */
 function createRateLimitHandler(type: string) {
-  return (req: Request & { rateLimit?: { resetTime?: number; limit?: number } }, res: Response) => {
+  return (req: Request & { rateLimit?: { resetTime?: number } }, res: Response) => {
     const retryAfter = req.rateLimit?.resetTime
       ? Math.ceil((req.rateLimit.resetTime - Date.now()) / 1000)
       : 60;
@@ -474,14 +472,6 @@ function createRateLimitHandler(type: string) {
       method: req.method,
       userAgent: req.headers['user-agent']?.substring(0, 100),
     });
-
-    // Set Retry-After and legacy X-RateLimit headers for frontend consumption
-    res.setHeader('Retry-After', String(retryAfter));
-    res.setHeader('X-RateLimit-Limit', String(req.rateLimit?.limit ?? 0));
-    res.setHeader('X-RateLimit-Remaining', '0');
-    if (req.rateLimit?.resetTime) {
-      res.setHeader('X-RateLimit-Reset', String(req.rateLimit.resetTime));
-    }
 
     res.status(429).json({
       error: 'Too many requests',
@@ -591,49 +581,7 @@ export const apiRateLimiter = rateLimit({
 });
 
 /**
- * Extract bot name from request
- * Checks various locations where bot name might be specified
- */
-function getBotNameFromRequest(req: Request): string | undefined {
-  // Check URL parameters (e.g., /api/bots/:botName/...)
-  if (req.params?.botName) {
-    return req.params.botName;
-  }
-  if (req.params?.name) {
-    return req.params.name;
-  }
-  if (req.params?.id) {
-    // ID might be a bot name in some routes
-    return req.params.id;
-  }
-
-  // Check query parameters
-  if (req.query?.botName && typeof req.query.botName === 'string') {
-    return req.query.botName;
-  }
-  if (req.query?.bot && typeof req.query.bot === 'string') {
-    return req.query.bot;
-  }
-
-  // Check request body
-  if (req.body?.botName && typeof req.body.botName === 'string') {
-    return req.body.botName;
-  }
-  if (req.body?.bot && typeof req.body.bot === 'string') {
-    return req.body.bot;
-  }
-
-  // Check custom header
-  const botHeader = req.get('X-Bot-Name');
-  if (botHeader) {
-    return botHeader;
-  }
-
-  return undefined;
-}
-
-/**
- * Middleware to apply rate limiting based on route type and bot configuration
+ * Middleware to apply rate limiting based on route type
  */
 export const applyRateLimiting = (req: Request, res: Response, next: NextFunction) => {
   if (shouldSkipRateLimit(req)) {
@@ -644,17 +592,7 @@ export const applyRateLimiting = (req: Request, res: Response, next: NextFunctio
   // This ensures correct matching regardless of where the middleware is mounted
   const path = req.baseUrl ? req.baseUrl + req.path : req.path;
 
-  // Check if this is a bot-specific request and if the bot has custom rate limits
-  const botName = getBotNameFromRequest(req);
-  if (botName) {
-    const botLimiter = getBotRateLimiter(botName);
-    if (botLimiter) {
-      debug(`Applying bot-specific rate limiter for ${botName}`);
-      return botLimiter(req, res, next);
-    }
-  }
-
-  // Apply different rate limiters based on route patterns (fallback to default behavior)
+  // Apply different rate limiters based on route patterns
   if (path.startsWith('/api/config')) {
     return configRateLimiter(req, res, next);
   } else if (path.startsWith('/api/auth') || path.startsWith('/api/login')) {
@@ -694,96 +632,6 @@ export function createRateLimiter(options: {
       });
     },
   });
-}
-
-/**
- * Create a bot-specific rate limiter using guard profile settings
- */
-export function createBotRateLimiter(botName: string): ReturnType<typeof rateLimit> | null {
-  try {
-    // Lazy import to avoid circular dependencies
-    const { getBotRateLimitSettings } = require('../config/rateLimitConfig');
-    const settings = getBotRateLimitSettings(botName);
-
-    if (!settings || !settings.enabled) {
-      return null;
-    }
-
-    debug(`Creating bot-specific rate limiter for ${botName}: ${settings.maxRequests} req/${settings.windowMs}ms`);
-
-    return rateLimit({
-      windowMs: settings.windowMs,
-      max: settings.maxRequests,
-      standardHeaders: true,
-      legacyHeaders: false,
-      store: createStore(`bot:${botName}`, settings.windowMs),
-      // Combine IP and bot name for the rate limit key
-      keyGenerator: (req: Request) => {
-        const ip = getClientKey(req);
-        return `${ip}:${botName}`;
-      },
-      skip: shouldSkipRateLimit,
-      handler: (req: Request & { rateLimit?: { resetTime?: number; limit?: number } }, res: Response) => {
-        const retryAfter = req.rateLimit?.resetTime
-          ? Math.ceil((req.rateLimit.resetTime - Date.now()) / 1000)
-          : Math.ceil(settings.windowMs / 1000);
-
-        logger.warn(`Bot rate limit exceeded for ${botName}`, {
-          ip: getClientKey(req),
-          path: req.originalUrl,
-          method: req.method,
-          botName,
-          limit: settings.maxRequests,
-          window: settings.windowMs,
-        });
-
-        res.setHeader('Retry-After', String(retryAfter));
-        res.setHeader('X-RateLimit-Limit', String(settings.maxRequests));
-        res.setHeader('X-RateLimit-Remaining', '0');
-        if (req.rateLimit?.resetTime) {
-          res.setHeader('X-RateLimit-Reset', String(req.rateLimit.resetTime));
-        }
-
-        res.status(429).json({
-          error: 'Too many requests',
-          message: `Rate limit exceeded for bot "${botName}". The guard profile allows ${settings.maxRequests} requests per ${Math.ceil(settings.windowMs / 1000)} seconds.`,
-          retryAfter,
-          code: 'BOT_RATE_LIMIT_EXCEEDED',
-          botName,
-        });
-      },
-    });
-  } catch (error) {
-    debug(`Failed to create bot rate limiter for ${botName}:`, error);
-    return null;
-  }
-}
-
-// Cache for bot-specific rate limiters to avoid recreating them on every request
-const botRateLimiters = new Map<string, ReturnType<typeof rateLimit>>();
-
-/**
- * Get or create a bot-specific rate limiter
- */
-export function getBotRateLimiter(botName: string): ReturnType<typeof rateLimit> | null {
-  if (botRateLimiters.has(botName)) {
-    return botRateLimiters.get(botName)!;
-  }
-
-  const limiter = createBotRateLimiter(botName);
-  if (limiter) {
-    botRateLimiters.set(botName, limiter);
-  }
-
-  return limiter;
-}
-
-/**
- * Clear cached bot rate limiters (useful for hot reload)
- */
-export function clearBotRateLimiters(): void {
-  botRateLimiters.clear();
-  debug('Cleared bot rate limiter cache');
 }
 
 /**
@@ -831,12 +679,4 @@ export {
 };
 
 // Export helper functions for testing
-export {
-  validateIP,
-  isIPInCIDR,
-  isTrustedProxy,
-  getClientKey,
-  ipToLong,
-  getTrustedProxies,
-  getBotNameFromRequest,
-};
+export { validateIP, isIPInCIDR, isTrustedProxy, getClientKey, ipToLong, getTrustedProxies };

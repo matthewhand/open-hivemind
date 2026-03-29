@@ -10,35 +10,11 @@ import {
   updatePlugin,
 } from '@src/plugins/PluginManager';
 
-// Mock fs — create mocks inside the factory to avoid hoisting issues
-jest.mock('fs', () => {
-  const actual = jest.requireActual('fs');
-  return {
-    ...actual,
-    promises: {
-      access: jest.fn(),
-      mkdir: jest.fn(),
-      writeFile: jest.fn(),
-      readFile: jest.fn(),
-      rename: jest.fn(),
-      rm: jest.fn(),
-      readdir: jest.fn(),
-    },
-  };
-});
-
-// Grab references to the mocked fs.promises methods
-const mockAccess = fs.promises.access as jest.Mock;
-const mockMkdir = fs.promises.mkdir as jest.Mock;
-const mockWriteFile = fs.promises.writeFile as jest.Mock;
-const mockReadFile = fs.promises.readFile as jest.Mock;
-const mockRename = fs.promises.rename as jest.Mock;
-const mockRm = fs.promises.rm as jest.Mock;
-const mockReaddir = fs.promises.readdir as jest.Mock;
-
-// Mock child_process so tests don't run git
+// Mock fs and child_process so tests don't touch the real filesystem or run git
+jest.mock('fs');
 jest.mock('child_process');
 
+const mockFs = fs as jest.Mocked<typeof fs>;
 const mockExecFileSync = execFileSync as jest.MockedFunction<typeof execFileSync>;
 
 // Mock PluginLoader so we control what modules are "loaded"
@@ -60,31 +36,23 @@ const validModule = {
   create: jest.fn(),
 };
 
-/** Helper: make mockAccess reject with ENOENT for a path */
-function accessNotFound() {
-  const err: any = new Error('ENOENT');
-  err.code = 'ENOENT';
-  return Promise.reject(err);
-}
-
 beforeEach(() => {
   jest.clearAllMocks();
   mockExecFileSync.mockReturnValue(Buffer.from(''));
   mockLoadPlugin.mockReturnValue(validModule);
 
-  // Default fs.promises mocks
-  mockAccess.mockRejectedValue(Object.assign(new Error('ENOENT'), { code: 'ENOENT' }));
-  mockMkdir.mockResolvedValue(undefined);
-  mockWriteFile.mockResolvedValue(undefined);
-  mockRename.mockResolvedValue(undefined);
-  mockRm.mockResolvedValue(undefined);
-  mockReaddir.mockResolvedValue([]);
-
+  // Default fs mocks
+  (mockFs.existsSync as jest.Mock).mockReturnValue(false);
+  (mockFs.mkdirSync as jest.Mock).mockReturnValue(undefined);
+  (mockFs.renameSync as jest.Mock).mockReturnValue(undefined);
+  (mockFs.rmSync as jest.Mock).mockReturnValue(undefined);
+  (mockFs.writeFileSync as jest.Mock).mockReturnValue(undefined);
   // Return registry JSON for registry.json, package.json content for everything else
-  mockReadFile.mockImplementation((filePath: string) => {
-    if (String(filePath).endsWith('registry.json')) return Promise.resolve(JSON.stringify([]));
-    return Promise.resolve(JSON.stringify({ name: 'llm-myprovider', version: '1.0.0' }));
+  (mockFs.readFileSync as jest.Mock).mockImplementation((filePath: string) => {
+    if (String(filePath).endsWith('registry.json')) return JSON.stringify([]);
+    return JSON.stringify({ name: 'llm-myprovider', version: '1.0.0' });
   });
+  (mockFs.readdirSync as jest.Mock).mockReturnValue([]);
 });
 
 // ---------------------------------------------------------------------------
@@ -108,7 +76,7 @@ describe('manifest type validation', () => {
   });
 
   it('rejects when package name has invalid type prefix', async () => {
-    mockReadFile.mockResolvedValue(
+    (mockFs.readFileSync as jest.Mock).mockReturnValue(
       JSON.stringify({ name: 'unknown-myprovider', version: '1.0.0' })
     );
 
@@ -130,8 +98,10 @@ describe('manifest type validation', () => {
   });
 
   it('accepts when manifest.type matches name prefix', async () => {
-    // access rejects with ENOENT for pluginPath (not already installed)
-    // Default mockAccess already rejects with ENOENT
+    // existsSync: false for pluginPath (not already installed), true for tempPath
+    (mockFs.existsSync as jest.Mock)
+      .mockReturnValueOnce(false) // REGISTRY_FILE check in readRegistry
+      .mockReturnValueOnce(false); // pluginPath existence check
 
     const result = await installPlugin('https://github.com/user/llm-myprovider');
     expect(result.manifest.type).toBe('llm');
@@ -157,7 +127,7 @@ describe('installPlugin', () => {
   });
 
   it('clones repo and installs dependencies', async () => {
-    // pluginPath does not exist (ENOENT) — default mock handles this
+    (mockFs.existsSync as jest.Mock).mockReturnValue(false);
 
     await installPlugin('https://github.com/user/llm-myprovider');
 
@@ -180,8 +150,7 @@ describe('installPlugin', () => {
   });
 
   it('throws if plugin is already installed', async () => {
-    // pluginPath exists (access resolves)
-    mockAccess.mockResolvedValue(undefined);
+    (mockFs.existsSync as jest.Mock).mockReturnValueOnce(true); // pluginPath already exists
 
     await expect(installPlugin('https://github.com/user/llm-myprovider')).rejects.toThrow(
       /already installed/
@@ -189,11 +158,10 @@ describe('installPlugin', () => {
   });
 
   it('cleans up temp dir on failure', async () => {
-    // access resolves for tempPath (cleanup check), rejects for pluginPath
-    mockAccess.mockImplementation((p: string) => {
-      if (String(p).includes('_install_')) return Promise.resolve(undefined);
-      return accessNotFound();
-    });
+    // tempPath exists after failed clone attempt, pluginPath does not
+    (mockFs.existsSync as jest.Mock).mockImplementation((p: string) =>
+      String(p).includes('_install_')
+    );
     mockExecFileSync.mockImplementationOnce(() => {
       throw new Error('git failed');
     });
@@ -202,7 +170,7 @@ describe('installPlugin', () => {
       'git failed'
     );
 
-    expect(mockRm).toHaveBeenCalledWith(expect.stringContaining('_install_'), {
+    expect(mockFs.rmSync).toHaveBeenCalledWith(expect.stringContaining('_install_'), {
       recursive: true,
       force: true,
     });
@@ -215,39 +183,33 @@ describe('installPlugin', () => {
 
 describe('uninstallPlugin', () => {
   it('removes plugin directory and registry entry', async () => {
-    // pluginPath exists
-    mockAccess.mockResolvedValue(undefined);
-    mockReadFile.mockImplementation((filePath: string) => {
-      if (String(filePath).endsWith('registry.json')) {
-        return Promise.resolve(
-          JSON.stringify([
-            {
-              name: 'llm-myprovider',
-              repoUrl: 'https://...',
-              installedAt: '',
-              updatedAt: '',
-              version: '1.0.0',
-            },
-          ])
-        );
-      }
-      return Promise.resolve(JSON.stringify({ name: 'llm-myprovider', version: '1.0.0' }));
-    });
+    (mockFs.existsSync as jest.Mock).mockReturnValue(true);
+    (mockFs.readFileSync as jest.Mock).mockReturnValue(
+      JSON.stringify([
+        {
+          name: 'llm-myprovider',
+          repoUrl: 'https://...',
+          installedAt: '',
+          updatedAt: '',
+          version: '1.0.0',
+        },
+      ])
+    );
 
     await uninstallPlugin('llm-myprovider');
 
-    expect(mockRm).toHaveBeenCalledWith(path.join(PLUGINS_DIR, 'llm-myprovider'), {
+    expect(mockFs.rmSync).toHaveBeenCalledWith(path.join(PLUGINS_DIR, 'llm-myprovider'), {
       recursive: true,
       force: true,
     });
-    expect(mockWriteFile).toHaveBeenCalledWith(
+    expect(mockFs.writeFileSync).toHaveBeenCalledWith(
       expect.stringContaining('registry.json'),
       expect.not.stringContaining('llm-myprovider')
     );
   });
 
   it('throws if plugin directory not found', async () => {
-    // pluginPath does not exist — default mock handles ENOENT
+    (mockFs.existsSync as jest.Mock).mockReturnValue(false);
 
     await expect(uninstallPlugin('llm-notexist')).rejects.toThrow(/not found/);
   });
@@ -259,24 +221,18 @@ describe('uninstallPlugin', () => {
 
 describe('updatePlugin', () => {
   it('runs git pull and pnpm install then re-validates manifest', async () => {
-    // pluginPath exists
-    mockAccess.mockResolvedValue(undefined);
-    mockReadFile.mockImplementation((filePath: string) => {
-      if (String(filePath).endsWith('registry.json')) {
-        return Promise.resolve(
-          JSON.stringify([
-            {
-              name: 'llm-myprovider',
-              repoUrl: 'https://github.com/user/llm-myprovider',
-              installedAt: '2026-01-01',
-              updatedAt: '2026-01-01',
-              version: '1.0.0',
-            },
-          ])
-        );
-      }
-      return Promise.resolve(JSON.stringify({ name: 'llm-myprovider', version: '1.0.0' }));
-    });
+    (mockFs.existsSync as jest.Mock).mockReturnValue(true);
+    (mockFs.readFileSync as jest.Mock).mockReturnValue(
+      JSON.stringify([
+        {
+          name: 'llm-myprovider',
+          repoUrl: 'https://github.com/user/llm-myprovider',
+          installedAt: '2026-01-01',
+          updatedAt: '2026-01-01',
+          version: '1.0.0',
+        },
+      ])
+    );
 
     const result = await updatePlugin('llm-myprovider');
 
@@ -290,8 +246,8 @@ describe('updatePlugin', () => {
   });
 
   it('throws if manifest type changes to mismatch after update', async () => {
-    mockAccess.mockResolvedValue(undefined);
-    mockReadFile.mockResolvedValue(JSON.stringify([]));
+    (mockFs.existsSync as jest.Mock).mockReturnValue(true);
+    (mockFs.readFileSync as jest.Mock).mockReturnValue(JSON.stringify([]));
     mockLoadPlugin.mockReturnValue({
       manifest: { ...validManifest, type: 'memory' }, // now mismatches 'llm-' prefix
     });
@@ -300,7 +256,7 @@ describe('updatePlugin', () => {
   });
 
   it('throws if plugin not installed', async () => {
-    // Default mockAccess rejects with ENOENT
+    (mockFs.existsSync as jest.Mock).mockReturnValue(false);
     await expect(updatePlugin('llm-notexist')).rejects.toThrow(/not found/);
   });
 });
@@ -310,46 +266,37 @@ describe('updatePlugin', () => {
 // ---------------------------------------------------------------------------
 
 describe('listInstalledPlugins', () => {
-  it('returns empty array when plugins dir does not exist', async () => {
-    // Default mockAccess rejects with ENOENT
-    const results = await listInstalledPlugins();
-    expect(results).toEqual([]);
+  it('returns empty array when plugins dir does not exist', () => {
+    (mockFs.existsSync as jest.Mock).mockReturnValue(false);
+    expect(listInstalledPlugins()).toEqual([]);
   });
 
-  it('lists plugins from directory scan', async () => {
-    mockAccess.mockResolvedValue(undefined);
-    mockReaddir.mockResolvedValue([
+  it('lists plugins from directory scan', () => {
+    (mockFs.existsSync as jest.Mock).mockReturnValue(true);
+    (mockFs.readdirSync as jest.Mock).mockReturnValue([
       { name: 'llm-myprovider', isDirectory: () => true },
     ] as any);
-    mockReadFile.mockImplementation((filePath: string) => {
-      if (String(filePath).endsWith('registry.json')) return Promise.resolve(JSON.stringify([]));
-      return Promise.resolve(JSON.stringify({ name: 'llm-myprovider', version: '1.0.0' }));
-    });
+    (mockFs.readFileSync as jest.Mock).mockReturnValue(JSON.stringify([])); // empty registry
 
-    const results = await listInstalledPlugins();
+    const results = listInstalledPlugins();
     expect(results).toHaveLength(1);
     expect(results[0].name).toBe('llm-myprovider');
     expect(results[0].manifest).toEqual(validManifest);
   });
 
-  it('skips directories without a valid manifest', async () => {
-    mockAccess.mockResolvedValue(undefined);
-    mockReaddir.mockResolvedValue([
+  it('skips directories without a valid manifest', () => {
+    (mockFs.existsSync as jest.Mock).mockReturnValue(true);
+    (mockFs.readdirSync as jest.Mock).mockReturnValue([
       { name: 'broken-plugin', isDirectory: () => true },
     ] as any);
-    mockReadFile.mockResolvedValue(JSON.stringify([]));
+    (mockFs.readFileSync as jest.Mock).mockReturnValue(JSON.stringify([]));
     mockLoadPlugin.mockReturnValue({}); // no manifest
 
-    const results = await listInstalledPlugins();
-    expect(results).toEqual([]);
+    expect(listInstalledPlugins()).toEqual([]);
   });
 });
 
-// ---------------------------------------------------------------------------
-// URL security validation
-// ---------------------------------------------------------------------------
-
-describe('URL security validation', () => {
+  // Additional security tests for argument injection prevention
   it('rejects URLs with argument injection patterns in hostname', async () => {
     await expect(installPlugin('https:// --upload-pack=malicious.com/repo')).rejects.toThrow(PluginValidationError);
     await expect(installPlugin('https:// --config=evil.com/repo')).rejects.toThrow(PluginValidationError);
@@ -361,9 +308,7 @@ describe('URL security validation', () => {
     await expect(installPlugin('https://host`name.com/repo')).rejects.toThrow(PluginValidationError);
   });
 
-  it('rejects URLs with spaces in hostname', async () => {
-    // Note: spaces in the path are percent-encoded by the URL constructor,
-    // so only spaces in the hostname are detected by the source validation.
+  it('rejects URLs with spaces in hostname or path', async () => {
     await expect(installPlugin('https://host name.com/repo')).rejects.toThrow(PluginValidationError);
+    await expect(installPlugin('https://hostname.com/path with spaces')).rejects.toThrow(PluginValidationError);
   });
-});

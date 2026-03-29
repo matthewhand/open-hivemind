@@ -2,8 +2,6 @@ import Debug from 'debug';
 import { Router } from 'express';
 import { BotConfigurationManager } from '../../config/BotConfigurationManager';
 import { DatabaseManager } from '../../database/DatabaseManager';
-import { ValidateConfigSchema } from '../../validation/schemas/miscSchema';
-import { validateRequest } from '../../validation/validateRequest';
 import { auditMiddleware, logAdminAction, type AuditedRequest } from '../middleware/audit';
 import { authenticateToken, requirePermission } from '../middleware/auth';
 
@@ -192,7 +190,7 @@ router.get('/env-status', async (req, res) => {
 });
 
 // POST /api/webui/validate-config - Validate bot configuration
-router.post('/validate-config', validateRequest(ValidateConfigSchema), async (req, res) => {
+router.post('/validate-config', async (req, res) => {
   try {
     const { botConfig } = req.body;
 

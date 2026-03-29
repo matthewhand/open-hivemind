@@ -157,7 +157,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
           {/* Message status indicators */}
           {message.metadata?.status === 'sending' && (
             <div className="flex items-center mt-2 text-xs opacity-60">
-              <span className="loading loading-dots loading-xs mr-1" aria-hidden="true"></span>
+              <span className="loading loading-dots loading-xs mr-1"></span>
               Sending...
             </div>
           )}
@@ -251,7 +251,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
                   </div>
                 </div>
                 <div className="chat-bubble chat-bubble-secondary">
-                  <span className="loading loading-dots loading-sm" aria-hidden="true"></span>
+                  <span className="loading loading-dots loading-sm"></span>
                 </div>
               </div>
             )}
@@ -280,17 +280,16 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
               type="button"
               className="btn btn-ghost btn-square"
               title="Attach file"
-              aria-label="Attach file"
             >
               📎
             </button>
 
             <button
               type="submit"
-              className="btn btn-primary"
+              className={`btn btn-primary ${isLoading ? 'loading' : ''}`}
               disabled={!inputValue.trim() || isLoading}
             >
-              {isLoading ? <span className="loading loading-spinner" aria-hidden="true"></span> : '➤'}
+              {isLoading ? '' : '➤'}
             </button>
           </div>
         </form>

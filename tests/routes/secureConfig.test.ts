@@ -182,7 +182,7 @@ describe('SecureConfig API Endpoints', () => {
         .send({ id: 'test' });
 
       expect(response.status).toBe(400);
-      expect(response.body.error).toBe('Validation failed');
+      expect(response.body.success).toBe(false);
     });
   });
 

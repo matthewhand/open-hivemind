@@ -37,6 +37,7 @@ describe('ConfigurationManager', () => {
 
     it('should initialize debug logging on creation', () => {
       // Debug is mocked, just verify the instance was created successfully
+      expect(configManager).toBeDefined();
       expect(configManager).toBeInstanceOf(ConfigurationManager);
     });
 
@@ -106,7 +107,7 @@ describe('ConfigurationManager', () => {
         configManager.setSession(newIntegration, testChannel, testSession);
 
         const sessions = configManager.getAllSessions(newIntegration);
-        expect(sessions).not.toBeUndefined();
+        expect(sessions).toBeDefined();
         expect(sessions![testChannel]).toBe(`${newIntegration}-${testChannel}-${testSession}`);
       });
 
@@ -222,7 +223,7 @@ describe('ConfigurationManager', () => {
       it('should return all sessions for existing integration', () => {
         const sessions = configManager.getAllSessions(testIntegration);
 
-        expect(sessions).not.toBeUndefined();
+        expect(sessions).toBeDefined();
         expect(Object.keys(sessions!)).toHaveLength(2);
         expect(sessions!['channel1']).toBe(`${testIntegration}-channel1-session1`);
         expect(sessions!['channel2']).toBe(`${testIntegration}-channel2-session2`);

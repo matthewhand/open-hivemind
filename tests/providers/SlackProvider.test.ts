@@ -64,14 +64,14 @@ describe('SlackProvider', () => {
   it('should return schema', () => {
     const schema = provider.getSchema();
     // console.log('Schema:', JSON.stringify(schema, null, 2));
-    expect(typeof schema).toBe('object');
+    expect(schema).toBeDefined();
 
     // Check if properties exist directly or nested
     const props = (schema as any).properties || (schema as any)._cvtProperties || schema;
     if (!props.SLACK_BOT_TOKEN) {
       throw new Error('Keys: ' + Object.keys(props).join(', '));
     }
-    expect(props.SLACK_BOT_TOKEN).not.toBeUndefined();
+    expect(props.SLACK_BOT_TOKEN).toBeDefined();
   });
 
   it('should return sensitive keys', () => {

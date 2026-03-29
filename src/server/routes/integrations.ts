@@ -2,12 +2,6 @@ import Debug from 'debug';
 import { Router } from 'express';
 import ProviderConfigManager from '@src/config/ProviderConfigManager';
 import { authenticateToken, requireRole } from '@src/server/middleware/auth';
-import {
-  CreateIntegrationSchema,
-  IntegrationIdParamSchema,
-  UpdateIntegrationSchema,
-} from '../../validation/schemas/integrationsSchema';
-import { validateRequest } from '../../validation/validateRequest';
 
 const log = Debug('app:integrationsRouter');
 const router = Router();
@@ -35,7 +29,7 @@ router.get('/', (req, res) => {
     const filtered = category ? providerManager.getAllProviders(category) : providers;
 
     return res.json(filtered);
-  } catch (err: unknown) {
+  } catch (err: any) {
     log('Error fetching integrations:', err);
     return res.status(500).json({ error: 'Failed to fetch integrations' });
   }
@@ -45,7 +39,7 @@ router.get('/', (req, res) => {
  * GET /api/integrations/:id
  * Get single provider instance
  */
-router.get('/:id', validateRequest(IntegrationIdParamSchema), (req, res) => {
+router.get('/:id', (req, res) => {
   const provider = providerManager.getProvider(req.params.id);
   if (!provider) {
     return res.status(404).json({ error: 'Provider not found' });
@@ -57,9 +51,13 @@ router.get('/:id', validateRequest(IntegrationIdParamSchema), (req, res) => {
  * POST /api/integrations
  * Create new provider instance
  */
-router.post('/', validateRequest(CreateIntegrationSchema), (req, res) => {
+router.post('/', (req, res) => {
   try {
     const { type, category, name, config, enabled } = req.body;
+
+    if (!type || !name || !category) {
+      return res.status(400).json({ error: 'Missing required fields: type, category, name' });
+    }
 
     const newInstance = providerManager.createProvider({
       type,
@@ -71,7 +69,7 @@ router.post('/', validateRequest(CreateIntegrationSchema), (req, res) => {
 
     log(`Created new ${category} provider: ${name} (${type})`);
     return res.status(201).json(newInstance);
-  } catch (err: unknown) {
+  } catch (err: any) {
     log('Error creating integration:', err);
     return res.status(500).json({ error: 'Failed to create integration' });
   }
@@ -81,7 +79,7 @@ router.post('/', validateRequest(CreateIntegrationSchema), (req, res) => {
  * PUT /api/integrations/:id
  * Update provider instance
  */
-router.put('/:id', validateRequest(UpdateIntegrationSchema), (req, res) => {
+router.put('/:id', (req, res) => {
   try {
     const { id } = req.params;
     const updates = req.body;
@@ -96,7 +94,7 @@ router.put('/:id', validateRequest(UpdateIntegrationSchema), (req, res) => {
 
     log(`Updated provider: ${updated.name}`);
     return res.json(updated);
-  } catch (err: unknown) {
+  } catch (err: any) {
     log('Error updating integration:', err);
     return res.status(500).json({ error: 'Failed to update integration' });
   }
@@ -106,7 +104,7 @@ router.put('/:id', validateRequest(UpdateIntegrationSchema), (req, res) => {
  * DELETE /api/integrations/:id
  * Delete provider instance
  */
-router.delete('/:id', validateRequest(IntegrationIdParamSchema), (req, res) => {
+router.delete('/:id', (req, res) => {
   try {
     const success = providerManager.deleteProvider(req.params.id);
     if (!success) {
@@ -114,7 +112,7 @@ router.delete('/:id', validateRequest(IntegrationIdParamSchema), (req, res) => {
     }
     log(`Deleted provider: ${req.params.id}`);
     return res.json({ success: true });
-  } catch (err: unknown) {
+  } catch (err: any) {
     log('Error deleting integration:', err);
     return res.status(500).json({ error: 'Failed to delete integration' });
   }

@@ -1,5 +1,4 @@
 import type { ProviderConfigSchema } from '../types';
-import { validateApiKey } from '../../utils/apiKeyValidation';
 
 export const telegramProviderSchema: ProviderConfigSchema = {
   type: 'message',
@@ -17,19 +16,9 @@ export const telegramProviderSchema: ProviderConfigSchema = {
       label: 'Bot Token',
       type: 'password',
       required: true,
-      description: 'Your Telegram bot token from BotFather (format: bot_id:auth_token)',
+      description: 'Your Telegram bot token from BotFather',
       placeholder: '1234567890:ABCDEFGHIJKLMNOPQRSTUVWXYZ123456789',
       group: 'Authentication',
-      validation: {
-        pattern: '^\\d{8,10}:[A-Za-z0-9_\\-]{35}$',
-        custom: (value: string) => {
-          const result = validateApiKey('telegram', value, false);
-          if (!result.isValid) {
-            return result.message || 'Invalid bot token format';
-          }
-          return null;
-        },
-      },
     },
     {
       name: 'webhookUrl',

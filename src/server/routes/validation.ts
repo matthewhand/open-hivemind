@@ -1,15 +1,10 @@
-import Debug from 'debug';
 import { Router, type NextFunction, type Request, type Response } from 'express';
 import { body, param, query, validationResult } from 'express-validator';
 import { requireAdmin } from '../../auth/middleware';
 import type { AuthMiddlewareRequest } from '../../auth/types';
 import type { BotConfig } from '../../types/config';
 import { ErrorUtils } from '../../types/errors';
-import { ValidationTestSchema } from '../../validation/schemas/miscSchema';
-import { validateRequest } from '../../validation/validateRequest';
 import { RealTimeValidationService } from '../services/RealTimeValidationService';
-
-const debug = Debug('app:server:routes:validation');
 
 const router = Router();
 const validationService = RealTimeValidationService.getInstance();
@@ -72,14 +67,6 @@ function validateBotConfiguration(bot: Partial<BotConfig>): BotValidationResult 
       errors.push('OpenAI API key is required');
     } else if (!bot.openai.apiKey.startsWith('sk-')) {
       warnings.push('OpenAI API key should start with "sk-"');
-    }
-  }
-
-  if (bot.llmProvider === 'anthropic') {
-    if (!bot.anthropic?.apiKey) {
-      errors.push('Anthropic API key is required');
-    } else if (!bot.anthropic.apiKey.startsWith('sk-ant-')) {
-      warnings.push('Anthropic API key should start with "sk-ant-"');
     }
   }
 
@@ -260,7 +247,7 @@ const handleValidationErrors = (req: Request, res: Response, next: NextFunction)
       'VALIDATION_ERROR'
     ) as any;
 
-    debug('ERROR:', 'Validation error:', hivemindError);
+    console.error('Validation error:', hivemindError);
 
     return res.status(400).json({
       success: false,
@@ -304,7 +291,7 @@ router.get('/api/validation', async (req: AuthMiddlewareRequest, res: Response) 
       timestamp: new Date().toISOString(),
     });
   } catch (error: unknown) {
-    debug('ERROR:', 'Error in Configuration validation endpoint:', error);
+    console.error('Error in Configuration validation endpoint:', error);
 
     // Always use the standardized error message
     const errorMessage = 'Failed to validate configuration';
@@ -328,53 +315,49 @@ router.get('/api/validation', async (req: AuthMiddlewareRequest, res: Response) 
   }
 });
 
-router.post(
-  '/api/validation/test',
-  validateRequest(ValidationTestSchema),
-  async (req: AuthMiddlewareRequest, res: Response) => {
-    try {
-      const { config } = req.body ?? {};
+router.post('/api/validation/test', async (req: AuthMiddlewareRequest, res: Response) => {
+  try {
+    const { config } = req.body ?? {};
 
-      if (!config) {
-        return res.status(400).json({
-          error: 'Configuration data required',
-        });
-      }
+    if (!config) {
+      return res.status(400).json({
+        error: 'Configuration data required',
+      });
+    }
 
-      if (typeof config !== 'object' || Array.isArray(config)) {
-        return res.status(400).json({
-          error: 'Configuration data must be an object',
-        });
-      }
+    if (typeof config !== 'object' || Array.isArray(config)) {
+      return res.status(400).json({
+        error: 'Configuration data must be an object',
+      });
+    }
 
-      const bots = (config as { bots?: Partial<BotConfig>[] }).bots;
+    const bots = (config as { bots?: Partial<BotConfig>[] }).bots;
 
-      if (!Array.isArray(bots)) {
-        return res.status(200).json({
-          valid: false,
-          errors: ['Configuration must include a "bots" array'],
-          warnings: [],
-          recommendations: [],
-          botValidation: [],
-          timestamp: new Date().toISOString(),
-        });
-      }
-
-      const summary = evaluateBotConfigurations(bots);
-
-      return res.json({
-        valid: summary.isValid,
-        errors: summary.errors,
-        warnings: summary.warnings,
-        recommendations: summary.recommendations,
-        botValidation: summary.botValidation,
+    if (!Array.isArray(bots)) {
+      return res.status(200).json({
+        valid: false,
+        errors: ['Configuration must include a "bots" array'],
+        warnings: [],
+        recommendations: [],
+        botValidation: [],
         timestamp: new Date().toISOString(),
       });
-    } catch (error: any) {
-      return res.status(500).json({ error: error.message });
     }
+
+    const summary = evaluateBotConfigurations(bots);
+
+    return res.json({
+      valid: summary.isValid,
+      errors: summary.errors,
+      warnings: summary.warnings,
+      recommendations: summary.recommendations,
+      botValidation: summary.botValidation,
+      timestamp: new Date().toISOString(),
+    });
+  } catch (error: any) {
+    return res.status(500).json({ error: error.message });
   }
-);
+});
 
 router.get('/api/validation/schema', (_req: AuthMiddlewareRequest, res: Response) => {
   const schema = {
@@ -385,7 +368,7 @@ router.get('/api/validation/schema', (_req: AuthMiddlewareRequest, res: Response
         messageProvider: { type: 'string', enum: ['discord', 'slack', 'mattermost', 'webhook'] },
         llmProvider: {
           type: 'string',
-          enum: ['openai', 'anthropic', 'flowise', 'openwebui', 'perplexity', 'replicate', 'n8n', 'openswarm'],
+          enum: ['openai', 'flowise', 'openwebui', 'perplexity', 'replicate', 'n8n', 'openswarm'],
         },
         discord: {
           type: 'object',
@@ -410,15 +393,6 @@ router.get('/api/validation/schema', (_req: AuthMiddlewareRequest, res: Response
             model: { type: 'string' },
           },
         },
-        anthropic: {
-          type: 'object',
-          properties: {
-            apiKey: { type: 'string' },
-            model: { type: 'string' },
-            maxTokens: { type: 'number' },
-            temperature: { type: 'number' },
-          },
-        },
       },
     },
   };
@@ -432,7 +406,7 @@ router.get('/api/validation/schema', (_req: AuthMiddlewareRequest, res: Response
       'VALIDATION_ERROR'
     ) as any;
 
-    debug('ERROR:', 'Error in', 'Validation schema endpoint');
+    console.error('Error in', 'Validation schema endpoint');
 
     return res
       .status(500)
@@ -466,7 +440,7 @@ router.get('/api/validation/rules', async (req: AuthMiddlewareRequest, res: Resp
       'VALIDATION_ERROR'
     ) as any;
 
-    debug('ERROR:', 'Error in', 'Get validation rules endpoint');
+    console.error('Error in', 'Get validation rules endpoint');
 
     return res.status(500).json({
       success: false,
@@ -508,7 +482,7 @@ router.get(
         'VALIDATION_ERROR'
       ) as any;
 
-      debug('ERROR:', 'Error in', 'Get validation rule endpoint');
+      console.error('Error in', 'Get validation rule endpoint');
 
       return res.status(500).json({
         success: false,
@@ -567,7 +541,7 @@ router.post(
         'VALIDATION_ERROR'
       ) as any;
 
-      debug('ERROR:', 'Error in', 'Create validation rule endpoint');
+      console.error('Error in', 'Create validation rule endpoint');
 
       return res.status(500).json({
         success: false,
@@ -611,7 +585,7 @@ router.delete(
         'VALIDATION_ERROR'
       ) as any;
 
-      debug('ERROR:', 'Error in', 'Delete validation rule endpoint');
+      console.error('Error in', 'Delete validation rule endpoint');
 
       return res.status(500).json({
         success: false,
@@ -642,7 +616,7 @@ router.get('/api/validation/profiles', async (req: AuthMiddlewareRequest, res: R
       'VALIDATION_ERROR'
     ) as any;
 
-    debug('ERROR:', 'Error in', 'Get validation profiles endpoint');
+    console.error('Error in', 'Get validation profiles endpoint');
 
     return res.status(500).json({
       success: false,
@@ -684,7 +658,7 @@ router.get(
         'VALIDATION_ERROR'
       ) as any;
 
-      debug('ERROR:', 'Error in', 'Get validation profile endpoint');
+      console.error('Error in', 'Get validation profile endpoint');
 
       return res.status(500).json({
         success: false,
@@ -751,7 +725,7 @@ router.post(
         'VALIDATION_ERROR'
       ) as any;
 
-      debug('ERROR:', 'Error in', 'Create validation profile endpoint');
+      console.error('Error in', 'Create validation profile endpoint');
 
       return res.status(500).json({
         success: false,
@@ -795,7 +769,7 @@ router.delete(
         'VALIDATION_ERROR'
       ) as any;
 
-      debug('ERROR:', 'Error in', 'Delete validation profile endpoint');
+      console.error('Error in', 'Delete validation profile endpoint');
 
       return res.status(500).json({
         success: false,
@@ -827,7 +801,7 @@ router.post(
         data: report,
       });
     } catch (error) {
-      debug('ERROR:', 'Error validating configuration:', error);
+      console.error('Error validating configuration:', error);
       return res.status(500).json({
         success: false,
         message: 'Failed to validate configuration',
@@ -863,7 +837,7 @@ router.post(
         'VALIDATION_ERROR'
       ) as any;
 
-      debug('ERROR:', 'Error in', 'Validate configuration data endpoint');
+      console.error('Error in', 'Validate configuration data endpoint');
 
       return res.status(500).json({
         success: false,
@@ -901,7 +875,7 @@ router.post(
         'VALIDATION_ERROR'
       ) as any;
 
-      debug('ERROR:', 'Error in', 'Subscribe to validation endpoint');
+      console.error('Error in', 'Subscribe to validation endpoint');
 
       return res.status(500).json({
         success: false,
@@ -947,7 +921,7 @@ router.delete(
         'VALIDATION_ERROR'
       ) as any;
 
-      debug('ERROR:', 'Error in', 'Unsubscribe from validation endpoint');
+      console.error('Error in', 'Unsubscribe from validation endpoint');
 
       return res.status(500).json({
         success: false,
@@ -993,7 +967,7 @@ router.get(
         'VALIDATION_ERROR'
       ) as any;
 
-      debug('ERROR:', 'Error in', 'Get validation history endpoint');
+      console.error('Error in', 'Get validation history endpoint');
 
       return res.status(500).json({
         success: false,
@@ -1024,7 +998,7 @@ router.get('/api/validation/statistics', async (req: AuthMiddlewareRequest, res:
       'VALIDATION_ERROR'
     ) as any;
 
-    debug('ERROR:', 'Error in', 'Get validation statistics endpoint');
+    console.error('Error in', 'Get validation statistics endpoint');
 
     return res.status(500).json({
       success: false,

@@ -55,10 +55,10 @@ describe('DiscordProvider', () => {
 
   it('should return schema', () => {
     const schema = provider.getSchema();
-    expect(typeof schema).toBe('object');
+    expect(schema).toBeDefined();
     // Assuming schema has DISCORD_BOT_TOKEN based on config file
     const props = (schema as any).properties || (schema as any)._cvtProperties || schema;
-    expect(props.DISCORD_BOT_TOKEN).not.toBeUndefined();
+    expect(props.DISCORD_BOT_TOKEN).toBeDefined();
   });
 
   it('should return sensitive keys', () => {

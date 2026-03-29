@@ -1,12 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect } from 'react';
 import { useWebSocket } from '../contexts/WebSocketContext';
+import { apiService } from '../services/api';
 import StatusCard from '../components/Monitoring/StatusCard';
 import MetricChart from '../components/Monitoring/MetricChart';
 import AlertPanel from '../components/Monitoring/AlertPanel';
 import EventStream from '../components/Monitoring/EventStream';
-import Debug from 'debug';
-const debug = Debug('app:client:pages:MonitoringDashboard');
 
 const MonitoringDashboard: React.FC = () => {
   const { isConnected, connect, disconnect, performanceMetrics, alerts } = useWebSocket();
@@ -18,8 +17,7 @@ const MonitoringDashboard: React.FC = () => {
     return () => {
       disconnect();
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [connect, disconnect]);
+  }, []);
 
   const currentMetric = performanceMetrics[performanceMetrics.length - 1] || {
     cpuUsage: 0,
@@ -186,16 +184,16 @@ const MonitoringDashboard: React.FC = () => {
             source: 'System',
             metadata: alert.metadata,
           }))}
-          onAcknowledge={(id) => debug('Acknowledged alert:', id)}
-          onResolve={(id) => debug('Resolved alert:', id)}
-          onDismiss={(id) => debug('Dismissed alert:', id)}
+          onAcknowledge={(id) => console.log('Acknowledged alert:', id)}
+          onResolve={(id) => console.log('Resolved alert:', id)}
+          onDismiss={(id) => console.log('Dismissed alert:', id)}
           maxAlerts={10}
         />
         <EventStream
           maxEvents={20}
           showFilters={true}
           autoScroll={true}
-          onEventClick={(event) => debug('Event clicked:', event)}
+          onEventClick={(event) => console.log('Event clicked:', event)}
         />
       </div>
     </div>

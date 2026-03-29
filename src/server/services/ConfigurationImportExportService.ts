@@ -1,11 +1,10 @@
 import { createCipheriv, createDecipheriv, randomBytes, scryptSync } from 'crypto';
 import { promises as fs } from 'fs';
-import { basename, join } from 'path';
+import path, { basename, join } from 'path';
 import { createGunzip, createGzip } from 'zlib';
 // @ts-ignore - csv-parse v6 ships its own types but TS can't resolve the /sync subpath
 // @ts-ignore - csv-stringify v6 ships its own types but TS can't resolve the /sync subpath
 import Debug from 'debug';
-import { PathSecurityUtils } from '@src/utils/PathSecurityUtils';
 import { AuditLogger } from '../../common/auditLogger';
 import { SecureConfigManager } from '../../config/SecureConfigManager';
 import { UserConfigStore } from '../../config/UserConfigStore';
@@ -258,7 +257,7 @@ export class ConfigurationImportExportService {
 
       // Get main configuration from SecureConfigManager
       const secureManager = SecureConfigManager.getInstance();
-      const config = await secureManager.getDecryptedMainConfig(env);
+      const config = secureManager.getDecryptedMainConfig(env);
 
       if (!config) {
         return {
@@ -735,8 +734,8 @@ export class ConfigurationImportExportService {
       if (result.success && result.filePath) {
         // Move to backups directory
         const backupTimestamp = Date.now();
-        const backupPath = this.getSafeBackupPath(name, new Date(backupTimestamp));
-        const backupFileName = basename(backupPath);
+        const backupFileName = `backup-${name}-${backupTimestamp}.json.gz`;
+        const backupPath = join(this.backupsDir, backupFileName);
         await fs.rename(result.filePath, backupPath);
 
         // Create metadata file
@@ -778,8 +777,8 @@ export class ConfigurationImportExportService {
             for (const oldBackup of backupsToDelete) {
               if (enableColdStorage) {
                 debug(`Archiving old backup to cold storage: ${oldBackup.id} (${oldBackup.name})`);
-                const oldBackupPath = this.getSafeBackupPath(oldBackup.name, oldBackup.createdAt);
-                const oldBackupFileName = basename(oldBackupPath);
+                const oldBackupFileName = `backup-${oldBackup.name}-${new Date(oldBackup.createdAt).getTime()}.json.gz`;
+                const oldBackupPath = join(this.backupsDir, oldBackupFileName);
                 const coldDir = join(process.cwd(), 'config', 'backups', 'cold');
                 await fs.mkdir(coldDir, { recursive: true });
 
@@ -899,25 +898,48 @@ export class ConfigurationImportExportService {
   }
 
   /**
+   * Resolves and validates a backup file path securely to prevent directory traversal
+   *
+   * @param backupId The ID of the backup
+   * @returns The fully resolved, validated absolute path to the backup file
+   */
+  public async getBackupFilePath(backupId: string): Promise<string> {
+    const backups = await this.listBackups();
+    const backup = backups.find((b) => b.id === backupId);
+
+    if (!backup) {
+      throw new Error(`Backup not found: ${backupId}`);
+    }
+
+    // 🛡️ Sentinel Security: Sanitize filename parts to prevent path traversal via backup.name
+    const sanitizedName = path.basename(backup.name);
+    const backupFileName = `backup-${sanitizedName}-${backup.createdAt.getTime()}.json.gz`;
+
+    const resolvedPath = path.resolve(this.backupsDir, backupFileName);
+    const resolvedBaseDir = path.resolve(this.backupsDir);
+
+    // Ensure the resolved path strictly starts with the base directory to prevent escaping
+    if (!resolvedPath.startsWith(resolvedBaseDir + path.sep)) {
+      throw new Error(
+        'Path traversal detected: Resolved backup path is outside the allowed directory boundary'
+      );
+    }
+
+    return resolvedPath;
+  }
+
+  /**
    * Delete a backup
    */
   async deleteBackup(backupId: string): Promise<boolean> {
     try {
-      const backups = await this.listBackups();
-      const backup = backups.find((b) => b.id === backupId);
-
-      if (!backup) {
-        return false;
-      }
-
-      const backupPath = this.getSafeBackupPath(backup.name, backup.createdAt);
-      const backupFileName = basename(backupPath);
-      const metadataPath = join(this.backupsDir, `${backupFileName}.meta`);
+      const backupPath = await this.getBackupFilePath(backupId);
+      const metadataPath = `${backupPath}.meta`;
 
       await fs.unlink(backupPath);
       await fs.unlink(metadataPath);
 
-      debug('Deleted backup:', backup.name);
+      debug('Deleted backup:', backupId);
       return true;
     } catch (error) {
       debug('Error deleting backup:', error);
@@ -937,39 +959,6 @@ export class ConfigurationImportExportService {
    */
   private generateBackupId(): string {
     return 'backup-' + Date.now().toString(36) + '-' + randomBytes(8).toString('hex');
-  }
-
-  /**
-   * Get safe backup path and filename.
-   * Ensures the filename is sanitized and the path stays within the backups directory.
-   * Uses PathSecurityUtils for consistent security validation.
-   */
-  private getSafeBackupPath(name: string, createdAt: Date): string {
-    const sanitizedName = PathSecurityUtils.sanitizeFilename(name);
-    const backupFileName = `backup-${sanitizedName}-${createdAt.getTime()}.json.gz`;
-
-    // Use PathSecurityUtils for consistent path validation
-    return PathSecurityUtils.getSafePath(this.backupsDir, backupFileName);
-  }
-
-  /**
-   * Get the full path for a backup file by ID.
-   * Returns null if backup metadata is not found or path is unsafe.
-   */
-  public async getBackupFilePath(backupId: string): Promise<string | null> {
-    try {
-      const backups = await this.listBackups();
-      const backup = backups.find((b) => b.id === backupId);
-
-      if (!backup) {
-        return null;
-      }
-
-      return this.getSafeBackupPath(backup.name, backup.createdAt);
-    } catch (error) {
-      debug('Error getting backup file path:', error);
-      return null;
-    }
   }
 
   /**

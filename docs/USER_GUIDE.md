@@ -13,22 +13,17 @@ Welcome to the Open-Hivemind User Guide. This document provides a detailed walkt
   - [Bot Templates](#bot-templates)
   - [LLM Providers](#llm-providers)
   - [Message Platforms](#message-platforms)
-  - [Memory Providers](#memory-providers)
-  - [Tool Providers](#tool-providers)
   - [Personas Management](#personas-management)
   - [Guards](#guards)
   - [MCP Servers](#mcp-servers)
   - [MCP Tools](#mcp-tools)
 - [System](#system)
   - [Settings Overview](#settings-overview)
-  - [Audit & Governance](#audit--governance)
   - [Webhook](#webhook)
   - [Monitoring](#monitoring)
-  - [System Management](#system-management)
   - [Global Defaults](#global-defaults)
   - [Demo Mode](#demo-mode)
 - [AI & Analytics](#ai--analytics)
-  - [Integrations](#integrations)
 - [Developer & Tools](#developer--tools)
 - [Documentation Maintenance](#documentation-maintenance)
 
@@ -72,8 +67,8 @@ Create and manage individual bot instances. Connect your AI assistants to platfo
 ![Bots Page](screenshots/bots-page.png)
 
 *   **Dedicated Create Page**: Access a full-page interface for creating bots at `/admin/bots/create`.
+*   **Search & Filter**: Quickly find bots by searching their names or filtering by their active/inactive status. <!-- screenshot: bot-search-filtered.png -->
 *   **Duplicate Bot**: Quickly clone an existing bot configuration.
-![Duplicate Bot Modal](screenshots/clone-bot-modal.png)
 *   **View Activity**: Monitor real-time logs and message flow for each bot via details modal.
 ![Bot Activity Logs](screenshots/bot-details-modal.png)
 *   **Link Persona / Providers**: Assign specific personalities, LLM providers, and platforms to the bot.
@@ -120,24 +115,6 @@ Connect your bots to messaging services.
 *   **Slack**: Set up your Slack App Token and Bot Token.
 *   **Mattermost**: Configure your Mattermost URL and Bot Token.
 *   **Status**: Check connection health for each platform.
-
-### [Memory Providers](/admin/providers/memory)
-Configure memory providers for persistent context and knowledge storage.
-
-![Memory Providers List](screenshots/memory-providers-list.png)
-
-*   **Provider Types**: Support for Redis, Pinecone, and other database or vector storage backends.
-*   **Configuration Details**: View connection parameters like host and environment.
-*   **Bot Associations**: See which bots are actively utilizing each memory profile.
-*   **System Default**: Define the fallback memory provider for bots without a specific profile.
-
-### [Tool Providers](/admin/providers/tool)
-Configure tool providers for extended capabilities and integrations.
-
-![Tool Providers List](screenshots/tool-providers-list.png)
-
-*   **Provider Integrations**: Add custom tools and APIs like GitHub, Jira, Google Search, etc.
-*   **Manage Access**: Restrict or permit specific bots from accessing configured tools.
 
 ### Personas Management
 The Personas (Beta) feature allows you to define distinct AI personalities and system prompts that can be assigned to one or more bots.
@@ -212,7 +189,6 @@ The Enterprise Manager provides an interface to monitor security, compliance, mu
 *   **Action Filtering**: Narrow down events by specific actions (e.g., CREATE_BOT) using the combobox filter.
 
 ### [Webhook](/admin/integrations/webhook)
-![Webhook Integration](screenshots/webhook-integration.png)
 Configure incoming webhooks for external integrations.
 *   **Endpoint Management**: specific URLs to trigger bot actions from external services.
 *   **Security**: Manage webhook secrets and verification.

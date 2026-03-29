@@ -1,27 +1,14 @@
 import * as fs from 'fs';
 import * as path from 'path';
-import Debug from 'debug';
 import telegramConfig, { type TelegramConfig } from '../config/telegramConfig';
 import { type IMessageProvider } from '../types/IProvider';
 import { type Message } from '../types/messages';
-import { ReconnectionManager } from './ReconnectionManager';
-const debug = Debug('app:providers:TelegramProvider');
 
 /**
  * Telegram bot token format: <bot_id>:<token_string>
  * bot_id is a sequence of digits; token_string is 35 alphanumeric/underscore/hyphen chars.
  */
 const TELEGRAM_TOKEN_REGEX = /^\d+:[A-Za-z0-9_-]{35,}$/;
-
-/**
- * Masks any Telegram bot token found in a string (e.g. a URL) so that it
- * is safe to include in log output.  The bot-id prefix is kept for
- * identification; the secret portion is replaced with asterisks.
- */
-function maskToken(value: string): string {
-  // Match the bot<id>:<secret> pattern inside the string
-  return value.replace(/(\d+):[A-Za-z0-9_-]{35,}/g, '$1:****');
-}
 
 function validateTelegramToken(token: string): void {
   if (!token || typeof token !== 'string') {
@@ -36,7 +23,6 @@ function validateTelegramToken(token: string): void {
 }
 
 export class TelegramProvider implements IMessageProvider<TelegramConfig> {
-  private reconManagers: Map<string, ReconnectionManager> = new Map();
   id = 'telegram';
   label = 'Telegram';
   type = 'messenger' as const;
@@ -72,33 +58,18 @@ export class TelegramProvider implements IMessageProvider<TelegramConfig> {
     const botPromises = await Promise.allSettled(
       instances.map(async (inst: any) => {
         let connected = false;
-        const name = inst.name || 'telegram';
-        const reconManager = this.reconManagers.get(name);
-
-        if (reconManager) {
-          connected = reconManager.getStatus().state === 'connected';
-        } else {
-          try {
-            const url = `https://api.telegram.org/bot${inst.token}/getMe`;
-            const response = await fetch(url);
-            if (!response.ok) {
-              debug(`[TelegramProvider] HTTP ${response.status} from ${maskToken(url)}`);
-              connected = false;
-            } else {
-              const data = await response.json();
-              connected = data.ok === true;
-            }
-          } catch (e: any) {
-            debug(`[TelegramProvider] Fetch error for ${maskToken(`bot${inst.token}`)}: ${e.message}`);
-            connected = false;
-          }
+        try {
+          const response = await fetch(`https://api.telegram.org/bot${inst.token}/getMe`);
+          const data = await response.json();
+          connected = data.ok === true;
+        } catch (e) {
+          // fetch error
+          connected = false;
         }
-
         return {
           provider: 'telegram',
-          name,
+          name: inst.name || 'telegram',
           connected,
-          status: reconManager ? reconManager.getStatus() : { state: connected ? 'connected' : 'disconnected' },
         };
       })
     );
@@ -176,29 +147,7 @@ export class TelegramProvider implements IMessageProvider<TelegramConfig> {
       mode: 0o600, // owner read/write only — tokens are sensitive
     });
 
-    // We can also initialize ReconnectionManager when a new bot is added dynamically
-    const botName = name || 'unnamed';
-    const reconManager = new ReconnectionManager(
-      `telegram-${botName}`,
-      async () => {
-        // Here we simulate telegram bot connection logic which checks /getMe
-        const url = `https://api.telegram.org/bot${token}/getMe`;
-        const response = await fetch(url);
-        if (!response.ok) {
-          throw new Error(`Telegram API returned HTTP ${response.status} for ${maskToken(url)}`);
-        }
-        const data = await response.json();
-        if (!data.ok) {
-          throw new Error('Telegram token validation failed during reconnection');
-        }
-      }
-    );
-    this.reconManagers.set(botName, reconManager);
-    reconManager.start().catch((err) => {
-      debug(`Failed to start Telegram bot ${botName}: ${err.message}`);
-    });
-
-    debug(`[TelegramProvider] Added bot configuration for ${botName}`);
+    console.log(`[TelegramProvider] Added bot configuration for ${name || 'unnamed'}`);
   }
 
   async reload() {
@@ -227,90 +176,20 @@ export class TelegramProvider implements IMessageProvider<TelegramConfig> {
     let added = 0;
     const instances = cfg.telegram?.instances || [];
 
-    // Implemented actual runtime reload logic with ReconnectionManager
+    // TODO: Implement actual runtime reload logic once the Service is ready
     for (const inst of instances) {
-      const name = inst.name || 'unnamed';
-
-      // Stop and replace existing manager if present
-      const existingManager = this.reconManagers.get(name);
-      if (existingManager) {
-        existingManager.stop();
-      }
-
-      const reconManager = new ReconnectionManager(
-        `telegram-${name}`,
-        async () => {
-          const url = `https://api.telegram.org/bot${inst.token}/getMe`;
-          const response = await fetch(url);
-          if (!response.ok) {
-            throw new Error(`Telegram API returned HTTP ${response.status} for ${maskToken(url)}`);
-          }
-          const data = await response.json();
-          if (!data.ok) {
-            throw new Error(`Telegram connection failed for ${name}`);
-          }
-        }
-      );
-      this.reconManagers.set(name, reconManager);
-      reconManager.start().catch((err) => {
-        debug(`Failed to start Telegram bot ${name} on reload: ${err.message}`);
-      });
-
+      // Mock loading
       added++;
     }
     return { added };
   }
 
   async sendMessage(channelId: string, message: string, senderName?: string): Promise<string> {
-    // Get the first configured bot instance to send the message
-    const configDir = process.env.NODE_CONFIG_DIR || path.join(process.cwd(), 'config');
-    const messengersPath = path.join(configDir, 'providers', 'messengers.json');
-
-    let instances: any[] = [];
-    try {
-      const content = await fs.promises.readFile(messengersPath, 'utf8');
-      const cfg = JSON.parse(content);
-      instances = cfg.telegram?.instances || [];
-    } catch (e: any) {
-      throw new Error('No Telegram bot instances configured');
-    }
-
-    if (instances.length === 0) {
-      throw new Error('No Telegram bot instances available');
-    }
-
-    const botToken = instances[0].token;
-
-    try {
-      const response = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          chat_id: channelId,
-          text: message,
-          parse_mode: 'HTML',
-        }),
-      });
-
-      const data = await response.json();
-
-      if (!data.ok) {
-        throw new Error(`Telegram API error: ${data.description || 'Unknown error'}`);
-      }
-
-      return data.result.message_id.toString();
-    } catch (error: any) {
-      debug(`[TelegramProvider] Failed to send message: ${error.message}`);
-      throw new Error(`Failed to send Telegram message: ${error.message}`);
-    }
+    throw new Error('Method not implemented.');
   }
 
   async getMessages(channelId: string, limit?: number): Promise<Message[]> {
-    // Telegram Bot API doesn't provide a method to fetch message history
-    // This would require storing messages in a local database or using a user client (not bot API)
-    // For now, return empty array with a debug message
-    debug('[TelegramProvider] getMessages not fully implemented - Telegram Bot API does not support message history retrieval');
-    return [];
+    throw new Error('Method not implemented.');
   }
 
   async sendMessageToChannel(
@@ -318,165 +197,14 @@ export class TelegramProvider implements IMessageProvider<TelegramConfig> {
     message: string,
     active_agent_name?: string
   ): Promise<string> {
-    // For Telegram, sendMessageToChannel is the same as sendMessage
-    // We can optionally prepend the agent name to the message
-    const formattedMessage = active_agent_name
-      ? `<b>${active_agent_name}</b>: ${message}`
-      : message;
-
-    return await this.sendMessage(channelId, formattedMessage);
+    throw new Error('Method not implemented.');
   }
 
   getClientId(): string {
-    // Return the bot ID from the first configured instance
-    const configDir = process.env.NODE_CONFIG_DIR || path.join(process.cwd(), 'config');
-    const messengersPath = path.join(configDir, 'providers', 'messengers.json');
-
-    try {
-      const content = fs.readFileSync(messengersPath, 'utf8');
-      const cfg = JSON.parse(content);
-      const instances = cfg.telegram?.instances || [];
-
-      if (instances.length > 0 && instances[0].token) {
-        // Extract bot ID from token (format: <bot_id>:<token>)
-        const botId = instances[0].token.split(':')[0];
-        return botId;
-      }
-    } catch (e) {
-      // Fallback to generic ID if config cannot be read
-    }
-
     return 'telegram';
   }
 
   async getForumOwner(forumId: string): Promise<string> {
-    // Get chat administrators to find the owner
-    const configDir = process.env.NODE_CONFIG_DIR || path.join(process.cwd(), 'config');
-    const messengersPath = path.join(configDir, 'providers', 'messengers.json');
-
-    try {
-      const content = await fs.promises.readFile(messengersPath, 'utf8');
-      const cfg = JSON.parse(content);
-      const instances = cfg.telegram?.instances || [];
-
-      if (instances.length === 0) {
-        return '';
-      }
-
-      const botToken = instances[0].token;
-      const response = await fetch(
-        `https://api.telegram.org/bot${botToken}/getChatAdministrators?chat_id=${forumId}`
-      );
-      const data = await response.json();
-
-      if (data.ok && data.result && data.result.length > 0) {
-        // Find the creator/owner (status: "creator")
-        const owner = data.result.find((admin: any) => admin.status === 'creator');
-        if (owner) {
-          return owner.user.id.toString();
-        }
-        // Fallback to first admin if no explicit owner
-        return data.result[0].user.id.toString();
-      }
-    } catch (e: any) {
-      debug(`[TelegramProvider] Failed to get forum owner: ${e.message}`);
-    }
-
     return '';
-  }
-
-  async healthCheck(): Promise<{
-    status: 'healthy' | 'degraded' | 'down';
-    connected: boolean;
-    lastPing?: Date;
-    details?: string;
-    error?: string;
-  }> {
-    const configDir = process.env.NODE_CONFIG_DIR || path.join(process.cwd(), 'config');
-    const messengersPath = path.join(configDir, 'providers', 'messengers.json');
-
-    let instances: any[] = [];
-    try {
-      const content = await fs.promises.readFile(messengersPath, 'utf8');
-      const cfg = JSON.parse(content);
-      instances = cfg.telegram?.instances || [];
-    } catch (e: any) {
-      return {
-        status: 'down',
-        connected: false,
-        details: 'No Telegram bot instances configured',
-        error: e.message,
-      };
-    }
-
-    if (instances.length === 0) {
-      return {
-        status: 'down',
-        connected: false,
-        details: 'No Telegram bot instances available',
-      };
-    }
-
-    // Check all instances and aggregate results
-    const results = await Promise.allSettled(
-      instances.map(async (inst: any) => {
-        const startTime = Date.now();
-        try {
-          const response = await fetch(`https://api.telegram.org/bot${inst.token}/getMe`, {
-            method: 'GET',
-            headers: { 'Content-Type': 'application/json' },
-          });
-          const data = await response.json();
-          const latency = Date.now() - startTime;
-
-          if (data.ok === true) {
-            return {
-              connected: true,
-              name: inst.name || 'telegram',
-              botUsername: data.result?.username,
-              latency,
-            };
-          } else {
-            return {
-              connected: false,
-              name: inst.name || 'telegram',
-              error: data.description || 'Unknown error',
-            };
-          }
-        } catch (e: any) {
-          return {
-            connected: false,
-            name: inst.name || 'telegram',
-            error: e.message || 'Failed to connect to Telegram API',
-          };
-        }
-      })
-    );
-
-    const checkedInstances = results.map((r) =>
-      r.status === 'fulfilled' ? r.value : { connected: false, error: 'Health check failed' }
-    );
-
-    const connectedCount = checkedInstances.filter((i) => i.connected).length;
-    const totalCount = instances.length;
-
-    let status: 'healthy' | 'degraded' | 'down';
-    if (connectedCount === totalCount) {
-      status = 'healthy';
-    } else if (connectedCount > 0) {
-      status = 'degraded';
-    } else {
-      status = 'down';
-    }
-
-    const errors = checkedInstances.filter((i) => i.error).map((i) => i.error);
-
-    return {
-      status,
-      connected: connectedCount > 0,
-      lastPing: new Date(),
-      details: `${connectedCount}/${totalCount} bot(s) connected`,
-      error: errors.length > 0 ? errors.join('; ') : undefined,
-    };
   }
 }

@@ -7,7 +7,6 @@ import path from 'path';
 import type { NextFunction, Request, Response } from 'express';
 import swarmRouter from '@src/admin/swarmRoutes';
 import { container } from '@src/di/container';
-import { registerServices } from '@src/di/registration';
 import { applyRateLimiting } from '@src/middleware/rateLimiter';
 import { authenticateToken } from '@src/server/middleware/auth';
 import { ipWhitelist } from '@src/server/middleware/security';
@@ -173,12 +172,11 @@ app.use((req: Request, res: Response, next: NextFunction) => {
 
 // Serve unified dashboard at root
 if (process.env.NODE_ENV !== 'development') {
-  app.get('/', async (req: Request, res: Response) => {
+  app.get('/', (req: Request, res: Response) => {
     const indexPath = path.join(frontendDistPath, 'index.html');
     appLogger.debug('Handling root request for frontend shell', { frontendDistPath, indexPath });
 
-    try {
-      await fs.promises.access(indexPath);
+    if (fs.existsSync(indexPath)) {
       appLogger.debug('Serving frontend index.html');
       res.sendFile(indexPath, (err) => {
         if (err) {
@@ -188,7 +186,7 @@ if (process.env.NODE_ENV !== 'development') {
           appLogger.info('Frontend served successfully');
         }
       });
-    } catch {
+    } else {
       appLogger.error('Frontend index.html not found', { indexPath });
       res.status(404).send('Frontend not found - please run npm run build:frontend');
     }
@@ -214,7 +212,7 @@ if (process.env.NODE_ENV !== 'development') {
   const serveDevHtml = async (req: Request, res: Response) => {
     try {
       const url = req.originalUrl;
-      let template = await fs.promises.readFile(path.join(process.cwd(), 'src/client/index.html'), 'utf-8');
+      let template = fs.readFileSync(path.join(process.cwd(), 'src/client/index.html'), 'utf-8');
       template = await viteServer.transformIndexHtml(url, template);
       res
         .status(200)
@@ -423,9 +421,6 @@ async function startBot(messengerService: any) {
 }
 
 async function main() {
-  // Register DI services before anything resolves from the container
-  registerServices();
-
   // Validate critical environment variables before proceeding
   validateRequiredEnvVars();
 
@@ -437,7 +432,7 @@ async function main() {
     await initProviders();
   }
   // Reload global configs to include provider schemas
-  await reloadGlobalConfigs();
+  reloadGlobalConfigs();
 
   // Run comprehensive startup diagnostics
   await startupDiagnostics.logStartupDiagnostics();

@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { apiService, ActivityEvent } from '../../services/api';
 import DistributedTraceWaterfall, { TraceSpan } from './DistributedTraceWaterfall';
 import { Alert } from '../DaisyUI/Alert';
-import { SkeletonList } from '../DaisyUI/Skeleton';
 
 export const BotActivityWaterfallMonitor: React.FC = () => {
     const [spans, setSpans] = useState<TraceSpan[]>([]);
@@ -91,10 +90,7 @@ export const BotActivityWaterfallMonitor: React.FC = () => {
                 });
 
                 // Update container durations to bound all children
-                const maxTime = newSpans.reduce(
-                    (max, s) => s.parentId ? Math.max(max, s.startTime + s.duration) : max,
-                    -Infinity
-                );
+                const maxTime = Math.max(...newSpans.filter(s => s.parentId).map(s => s.startTime + s.duration));
                 const overallDuration = Math.max(maxTime - minTime, 1000);
 
                 newSpans.forEach(span => {
@@ -118,7 +114,7 @@ export const BotActivityWaterfallMonitor: React.FC = () => {
     }, []);
 
     if (loading) {
-        return <div className="h-64 p-4"><SkeletonList items={5} /></div>;
+        return <div className="flex h-64 items-center justify-center"><span className="loading loading-spinner loading-lg text-primary"></span></div>;
     }
 
     if (error) {

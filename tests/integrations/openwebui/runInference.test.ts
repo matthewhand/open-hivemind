@@ -3,17 +3,12 @@ import Debug from 'debug';
 import { generateChatCompletion } from '../../../src/integrations/openwebui/runInference';
 import * as sessionManager from '../../../src/integrations/openwebui/sessionManager';
 import * as uploadKnowledgeFile from '../../../src/integrations/openwebui/uploadKnowledgeFile';
-import { resetAllCircuitBreakers } from '../../../src/common/CircuitBreaker';
 
 // Silence debug logs during tests
 jest.mock('debug', () => () => jest.fn());
 
 jest.mock('axios');
 const mockedAxios = axios as jest.Mocked<typeof axios>;
-
-jest.mock('../../../src/utils/ssrfGuard', () => ({
-  isSafeUrl: jest.fn().mockResolvedValue(true),
-}));
 
 describe('runInference.generateChatCompletion', () => {
   const mockGetSessionKey = jest.spyOn(sessionManager, 'getSessionKey');
@@ -25,7 +20,6 @@ describe('runInference.generateChatCompletion', () => {
     }) as any;
 
   beforeEach(() => {
-    resetAllCircuitBreakers();
     jest.clearAllMocks();
   });
 

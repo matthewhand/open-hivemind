@@ -43,7 +43,9 @@ describe('getSessionSecret', () => {
       const { getSessionSecret } = require('../../../src/middleware/sessionMiddleware');
       const secret = getSessionSecret();
       expect(secret).toBe('shortsecret');
-      // Note: warning is now emitted via structured Debug logger, not console.warn
+      expect(console.warn).toHaveBeenCalledWith(
+        expect.stringContaining('SESSION_SECRET is only 11 characters')
+      );
     });
   });
 });

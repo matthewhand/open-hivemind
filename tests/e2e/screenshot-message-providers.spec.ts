@@ -7,11 +7,15 @@ test.describe('Message Providers Screenshots', () => {
     await setupAuth(page);
 
     // Mock successful authentication check
+    await page.route('/api/auth/check', async (route) => {
+      await route.fulfill({ status: 200, json: { authenticated: true, user: { role: 'admin' } } });
+    });
+
     // Mock background polling endpoints
-    await page.route('**/api/health/detailed', async (route) =>
+    await page.route('/api/health/detailed', async (route) =>
       route.fulfill({ status: 200, json: { status: 'ok' } })
     );
-    await page.route('**/api/config/llm-status', async (route) =>
+    await page.route('/api/config/llm-status', async (route) =>
       route.fulfill({
         status: 200,
         json: {
@@ -22,27 +26,24 @@ test.describe('Message Providers Screenshots', () => {
         },
       })
     );
-    await page.route('**/api/config/global', async (route) =>
+    await page.route('/api/config/global', async (route) =>
       route.fulfill({ status: 200, json: {} })
     );
-    await page.route('**/api/config/llm-profiles', async (route) =>
+    await page.route('/api/config/llm-profiles', async (route) =>
       route.fulfill({ status: 200, json: [] })
     );
-    await page.route('**/api/admin/guard-profiles', async (route) =>
+    await page.route('/api/admin/guard-profiles', async (route) =>
       route.fulfill({ status: 200, json: [] })
     );
-    await page.route('**/api/demo/status', async (route) =>
+    await page.route('/api/demo/status', async (route) =>
       route.fulfill({ status: 200, json: { enabled: false } })
     );
-    await page.route('**/api/csrf-token', async (route) =>
+    await page.route('/api/csrf-token', async (route) =>
       route.fulfill({ status: 200, json: { csrfToken: 'mock-token' } })
     );
 
     // Mock Message Profiles
-    await page.route('**/api/config', async (route) =>
-      route.fulfill({ status: 200, json: { bots: [] } })
-    );
-    await page.route('**/api/config/message-profiles', async (route) => {
+    await page.route('/api/config/message-profiles', async (route) => {
       if (route.request().method() === 'GET') {
         await route.fulfill({
           status: 200,

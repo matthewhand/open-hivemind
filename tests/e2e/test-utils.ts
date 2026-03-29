@@ -53,15 +53,6 @@ const IGNORED_ERROR_PATTERNS = [
   /Network Error/i,
   /net::ERR_/i,
   /Download the React DevTools/i,
-  /WebSocket/i,
-  /websocket/i,
-  /socket\.io/i,
-  /ws:\/\//i,
-  /wss:\/\//i,
-  /connect_error/i,
-  /reconnect/i,
-  /polling-xhr/i,
-  /transport close/i,
 ];
 
 /**
@@ -135,16 +126,8 @@ export async function setupTestWithErrorDetection(page: Page): Promise<string[]>
  * Wait for page to be fully loaded and stable
  */
 export async function waitForPageReady(page: Page, timeout = 5000) {
-  // Wait for the DOM content to be fully loaded
-  await page.waitForLoadState('domcontentloaded', { timeout });
-
-  // Wait for no active network requests for at least 500ms
-  // Use try/catch because some pages might have constant background polling
-  try {
-    await page.waitForLoadState('networkidle', { timeout: Math.min(timeout, 2000) });
-  } catch (e) {
-    // Ignore timeout if background polling is active
-  }
+  // await page.waitForLoadState('networkidle');
+  await page.waitForTimeout(Math.min(timeout, 1000)); // Small stabilization delay
 }
 
 /**

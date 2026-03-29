@@ -76,7 +76,7 @@ describe('Swarm API Security', () => {
         .set('Authorization', 'Bearer valid-token');
 
       expect(response.status).toBe(200);
-      expect(response.body).toHaveProperty('success', true);
+      expect(response.body).toHaveProperty('ok', true);
     });
   });
 

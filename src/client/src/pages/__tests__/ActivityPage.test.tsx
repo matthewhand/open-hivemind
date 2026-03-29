@@ -21,7 +21,6 @@ vi.mock('../../components/DaisyUI', () => ({
     </div>
   ),
   LoadingSpinner: () => <div data-testid="loading-spinner" />,
-  SkeletonPage: () => <div data-testid="loading-spinner" />,
   EmptyState: ({ title }: any) => <div data-testid="empty-state">{title}</div>,
   Input: ({ type, value, onChange, placeholder }: any) => (
     <input
@@ -32,11 +31,6 @@ vi.mock('../../components/DaisyUI', () => ({
       placeholder={placeholder}
     />
   ),
-}));
-
-// Mock Skeleton components
-vi.mock('../../components/DaisyUI/Skeleton', () => ({
-  SkeletonPage: () => <div data-testid="loading-spinner" />,
 }));
 
 // Mock SearchFilterBar

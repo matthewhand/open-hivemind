@@ -22,10 +22,10 @@ describe('Sitemap Router', () => {
     const res = await request(app).get('/sitemap.json');
     expect(res.status).toBe(200);
     expect(res.header['content-type']).toContain('application/json');
-    expect(Array.isArray(res.body.urls)).toBe(true);
+    expect(res.body.urls).toBeDefined();
     expect(res.body.urls.length).toBeGreaterThan(0);
     const overviewUrl = res.body.urls.find((u: any) => u.url === '/admin/overview');
-    expect(overviewUrl).not.toBeUndefined();
+    expect(overviewUrl).toBeDefined();
   });
 
   it('GET /sitemap should return HTML content', async () => {

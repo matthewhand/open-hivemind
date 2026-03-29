@@ -3,8 +3,6 @@ import { Router } from 'express';
 import type { AuthMiddlewareRequest } from '../../auth/types';
 import { DatabaseManager } from '../../database/DatabaseManager';
 import { AnomalyDetectionService } from '../../services/AnomalyDetectionService';
-import { AnomalyResolveSchema } from '../../validation/schemas/miscSchema';
-import { validateRequest } from '../../validation/validateRequest';
 
 const debug = Debug('app:webui:anomaly');
 const router = Router();
@@ -77,26 +75,22 @@ router.get('/history', async (req: AuthMiddlewareRequest, res) => {
 });
 
 // POST /api/anomalies/:id/resolve - Resolve an anomaly
-router.post(
-  '/:id/resolve',
-  validateRequest(AnomalyResolveSchema),
-  async (req: AuthMiddlewareRequest, res) => {
-    try {
-      const service = AnomalyDetectionService.getInstance();
+router.post('/:id/resolve', async (req: AuthMiddlewareRequest, res) => {
+  try {
+    const service = AnomalyDetectionService.getInstance();
 
-      // Check for explicit tenantId if service is enhanced, otherwise just pass the id.
-      const success = await service.resolveAnomaly(req.params.id);
+    // Check for explicit tenantId if service is enhanced, otherwise just pass the id.
+    const success = await service.resolveAnomaly(req.params.id);
 
-      if (success) {
-        res.json({ success: true });
-      } else {
-        res.status(404).json({ error: 'Anomaly not found' });
-      }
-    } catch (error) {
-      debug('Error resolving anomaly:', error);
-      res.status(500).json({ error: 'Failed to resolve anomaly' });
+    if (success) {
+      res.json({ success: true });
+    } else {
+      res.status(404).json({ error: 'Anomaly not found' });
     }
+  } catch (error) {
+    debug('Error resolving anomaly:', error);
+    res.status(500).json({ error: 'Failed to resolve anomaly' });
   }
-);
+});
 
 export default router;

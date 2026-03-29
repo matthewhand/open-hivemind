@@ -1,14 +1,10 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { apiService } from '../services/api';
-import { useApiQuery } from '../hooks/useApiQuery';
 import ChatInterface, { ChatMessage } from '../components/DaisyUI/Chat';
 import { BotAvatar } from '../components/BotAvatar';
-import { RefreshCw, MessageSquare, Cpu, Check, ChevronDown, Menu as MenuIcon, X } from 'lucide-react';
-import Button from '../components/DaisyUI/Button';
+import { RefreshCw, MessageSquare, Cpu, Check, ChevronDown } from 'lucide-react';
 import EmptyState from '../components/DaisyUI/EmptyState';
-import { SkeletonList, SkeletonMessageList } from '../components/DaisyUI/Skeleton';
 import { useSuccessToast, useErrorToast } from '../components/DaisyUI/ToastNotification';
-import { useMediaQuery } from '../hooks/useBreakpoint';
 
 // Define Bot type based on API response
 interface BotData {
@@ -41,9 +37,6 @@ const ChatPage: React.FC = () => {
   const [swappingProvider, setSwappingProvider] = useState<string | null>(null);
   const [showProviderDropdown, setShowProviderDropdown] = useState<string | null>(null);
 
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  const isDesktop = useMediaQuery({ minWidth: 1024 });
-
   const showSuccess = useSuccessToast();
   const showError = useErrorToast();
 
@@ -56,7 +49,7 @@ const ChatPage: React.FC = () => {
         setLlmProviders(data.data || []);
       }
     } catch (err) {
-      showError('Failed to fetch LLM providers');
+      console.error('Failed to fetch LLM providers:', err);
     }
   }, []);
 
@@ -88,33 +81,39 @@ const ChatPage: React.FC = () => {
     }
   };
 
-  // Fetch bots via cache layer
-  const {
-    data: botsData,
-    loading: botsLoading,
-    refetch: refetchBots,
-  } = useApiQuery<BotData[]>('/api/bots', { ttl: 30_000 });
+  useEffect(() => {
+    fetchBots();
+    fetchLlmProviders();
+  }, [fetchLlmProviders]);
 
   useEffect(() => {
-    if (botsData) setBots(Array.isArray(botsData) ? botsData : []);
-  }, [botsData]);
+    if (selectedBotId) {
+      fetchHistory(selectedBotId);
+    } else {
+      setMessages([]);
+    }
+  }, [selectedBotId]);
 
-  useEffect(() => {
-    setLoading(botsLoading);
-  }, [botsLoading]);
+  const fetchBots = async () => {
+    try {
+      setLoading(true);
+      const data = await apiService.getBots();
+      setBots(data);
+    } catch (err) {
+      console.error('Failed to fetch bots:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  const fetchBots = useCallback(async () => {
-    await refetchBots();
-  }, [refetchBots]);
-
-  const fetchHistory = useCallback(async (botId: string) => {
+  const fetchHistory = async (botId: string) => {
     try {
       setHistoryLoading(true);
       const history = await apiService.getBotHistory(botId, 50);
 
       // Map history to ChatMessage
       const mappedMessages: ChatMessage[] = history.map((msg: any) => ({
-        id: msg.id || crypto.randomUUID(),
+        id: msg.id || Math.random().toString(),
         content: msg.content,
         timestamp: msg.createdAt || new Date().toISOString(),
         sender: {
@@ -130,24 +129,11 @@ const ChatPage: React.FC = () => {
 
       setMessages(mappedMessages);
     } catch (err) {
-      showError('Failed to fetch chat history');
+      console.error('Failed to fetch history:', err);
     } finally {
       setHistoryLoading(false);
     }
-  }, []);
-
-  useEffect(() => {
-    fetchBots();
-    fetchLlmProviders();
-  }, [fetchBots, fetchLlmProviders]);
-
-  useEffect(() => {
-    if (selectedBotId) {
-      fetchHistory(selectedBotId);
-    } else {
-      setMessages([]);
-    }
-  }, [selectedBotId, fetchHistory]);
+  };
 
   const handleRefresh = () => {
     if (selectedBotId) {
@@ -194,7 +180,7 @@ const ChatPage: React.FC = () => {
       // but for this task, the optimistic rollback is the focus.
       await fetchHistory(selectedBotId);
     } catch (err) {
-      showError('Failed to send message');
+      console.error('Failed to send message:', err);
       // Mark optimistic update as failed
       setMessages(prev => prev.map(m =>
         m.id === tempId
@@ -214,60 +200,34 @@ const ChatPage: React.FC = () => {
   return (
     <div className="flex flex-col h-full bg-base-200">
       <div className="p-4 bg-base-100 border-b border-base-300 shadow-sm flex justify-between items-center">
-        <div className="flex items-center gap-2">
-          {!isDesktop && (
-            <div className="tooltip tooltip-right" data-tip={sidebarOpen ? 'Close sidebar' : 'Open sidebar'}>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setSidebarOpen(!sidebarOpen)}
-                className="btn-square"
-                aria-label={sidebarOpen ? 'Close sidebar' : 'Open sidebar'}
-                aria-expanded={sidebarOpen}
-              >
-                {sidebarOpen ? <X className="w-5 h-5" /> : <MenuIcon className="w-5 h-5" />}
-              </Button>
-            </div>
-          )}
-          <div>
-            <h1 className="text-2xl font-bold flex items-center gap-2">
-              <MessageSquare className="w-6 h-6 text-primary" />
-              Live Chat Monitor
-            </h1>
-            <p className="text-sm text-base-content/60">Monitor conversations across your bot fleet</p>
-          </div>
+        <div>
+          <h1 className="text-2xl font-bold flex items-center gap-2">
+            <MessageSquare className="w-6 h-6 text-primary" />
+            Live Chat Monitor
+          </h1>
+          <p className="text-sm text-base-content/60">Monitor conversations across your bot fleet</p>
         </div>
-        <div className="tooltip tooltip-left" data-tip="Refresh">
-          <Button variant="ghost" size="md" onClick={handleRefresh} className="btn-circle" aria-label="Refresh">
-            <RefreshCw className={`w-5 h-5 ${loading || historyLoading ? 'animate-spin' : ''}`} />
-          </Button>
-        </div>
+        <button onClick={handleRefresh} className="btn btn-ghost btn-circle" title="Refresh">
+          <RefreshCw className={`w-5 h-5 ${loading || historyLoading ? 'animate-spin' : ''}`} />
+        </button>
       </div>
 
-      <div className="flex flex-1 overflow-hidden relative">
-        {/* Mobile sidebar backdrop */}
-        {!isDesktop && sidebarOpen && (
-          <div
-            className="fixed inset-0 bg-black/40 z-30"
-            onClick={() => setSidebarOpen(false)}
-            aria-hidden="true"
-          />
-        )}
+      <div className="flex flex-1 overflow-hidden">
         {/* Sidebar */}
-        <div className={`${isDesktop ? 'relative w-72' : 'fixed top-0 bottom-0 left-0 w-72 z-40 pt-[73px] transition-transform duration-300'} ${!isDesktop && !sidebarOpen ? '-translate-x-full' : 'translate-x-0'} bg-base-100 border-r border-base-300 flex flex-col`}>
+        <div className="w-72 bg-base-100 border-r border-base-300 flex flex-col">
           <div className="p-4 font-bold text-sm text-base-content/50 uppercase tracking-wide">
             Active Bots ({bots.length})
           </div>
           <div className="flex-1 overflow-y-auto">
             {loading && bots.length === 0 ? (
-              <div className="p-4"><SkeletonList items={4} showAvatar /></div>
+              <div className="flex justify-center p-4"><span className="loading loading-spinner" /></div>
             ) : (
               <ul className="menu w-full p-2 gap-1">
                 {bots.map(bot => (
                   <li key={bot.id} className="relative">
                     <button
                       className={`${selectedBotId === bot.id ? 'active' : ''} flex items-center gap-3 py-3`}
-                      onClick={() => { setSelectedBotId(bot.id); if (!isDesktop) setSidebarOpen(false); }}
+                      onClick={() => setSelectedBotId(bot.id)}
                     >
                       <div className="relative">
                         <BotAvatar bot={bot} />
@@ -291,7 +251,7 @@ const ChatPage: React.FC = () => {
                             >
                               <Cpu className="w-3 h-3" />
                               {swappingProvider === bot.id ? (
-                                <span className="loading loading-spinner loading-xs" aria-hidden="true" />
+                                <span className="loading loading-spinner loading-xs" />
                               ) : (
                                 <>
                                   <span className="truncate max-w-[80px]">{bot.llmProvider || 'Default'}</span>
@@ -352,8 +312,8 @@ const ChatPage: React.FC = () => {
           {selectedBot ? (
             <div className="flex-1 flex flex-col h-full relative">
               {historyLoading && (
-                <div className="absolute inset-0 bg-base-100/50 z-20">
-                  <SkeletonMessageList messages={4} />
+                <div className="absolute inset-0 bg-base-100/50 z-20 flex items-center justify-center">
+                  <span className="loading loading-spinner loading-lg text-primary"></span>
                 </div>
               )}
               <ChatInterface

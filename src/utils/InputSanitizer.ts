@@ -240,8 +240,7 @@ export class RateLimiter {
     const entries = Array.from(this.attempts.entries())
       .map(([key, timestamps]) => ({
         key,
-        lastAttempt:
-          timestamps.length > 0 ? timestamps.reduce((a, b) => Math.max(a, b), -Infinity) : 0,
+        lastAttempt: timestamps.length > 0 ? Math.max(...timestamps) : 0,
       }))
       .sort((a, b) => a.lastAttempt - b.lastAttempt);
 

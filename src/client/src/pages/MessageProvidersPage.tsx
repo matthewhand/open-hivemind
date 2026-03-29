@@ -8,10 +8,8 @@ import { Alert } from '../components/DaisyUI/Alert';
 import PageHeader from '../components/DaisyUI/PageHeader';
 import StatsCards from '../components/DaisyUI/StatsCards';
 import EmptyState from '../components/DaisyUI/EmptyState';
-import { SkeletonTableLayout } from '../components/DaisyUI/Skeleton';
+import { LoadingSpinner } from '../components/DaisyUI/Loading';
 import SearchFilterBar from '../components/SearchFilterBar';
-import { ConfirmModal } from '../components/DaisyUI/Modal';
-import { useErrorToast } from '../components/DaisyUI/ToastNotification';
 import {
   MessageSquare as MessageIcon,
   Plus as AddIcon,
@@ -27,26 +25,15 @@ import {
 import ProviderConfigModal from '../components/ProviderConfiguration/ProviderConfigModal';
 import { apiService } from '../services/api';
 import { getProviderSchema } from '../provider-configs';
-import useUrlParams from '../hooks/useUrlParams';
 
 const MessageProvidersPage: React.FC = () => {
   const { modalState, openAddModal, openEditModal, closeModal } = useModal();
-  const errorToast = useErrorToast();
   const [profiles, setProfiles] = useState<any[]>([]);
   const [expandedProfile, setExpandedProfile] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const { values: urlParams, setValue: setUrlParam } = useUrlParams({
-    search: { type: 'string', default: '', debounce: 300 },
-    type: { type: 'string', default: 'all' },
-  });
-  const searchQuery = urlParams.search;
-  const setSearchQuery = (v: string) => setUrlParam('search', v);
-  const filterType = urlParams.type;
-  const setFilterType = (v: string) => setUrlParam('type', v);
-  const [confirmModal, setConfirmModal] = useState<{
-    isOpen: boolean; title: string; message: string; onConfirm: () => void;
-  }>({ isOpen: false, title: '', message: '', onConfirm: () => {} });
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filterType, setFilterType] = useState('all');
 
   const fetchProfiles = useCallback(async () => {
     try {
@@ -75,20 +62,13 @@ const MessageProvidersPage: React.FC = () => {
   };
 
   const handleDeleteProfile = async (key: string) => {
-    setConfirmModal({
-      isOpen: true,
-      title: 'Delete Profile',
-      message: `Delete profile "${key}"?`,
-      onConfirm: async () => {
-        setConfirmModal(prev => ({ ...prev, isOpen: false }));
-        try {
-          await apiService.delete(`/api/config/message-profiles/${key}`);
-          fetchProfiles();
-        } catch (err: any) {
-          errorToast('Delete Failed', `Failed to delete: ${err.message}`);
-        }
-      },
-    });
+    if (!window.confirm(`Delete profile "${key}"?`)) return;
+    try {
+      await apiService.delete(`/api/config/message-profiles/${key}`);
+      fetchProfiles();
+    } catch (err: any) {
+      alert(`Failed to delete: ${err.message}`);
+    }
   };
 
   const handleProviderSubmit = async (providerData: any) => {
@@ -122,7 +102,7 @@ const MessageProvidersPage: React.FC = () => {
       closeModal();
       fetchProfiles();
     } catch (err: any) {
-      errorToast('Save Failed', `Failed to save profile: ${err.message}`);
+      alert(`Failed to save profile: ${err.message}`);
     }
   };
 
@@ -159,7 +139,7 @@ const MessageProvidersPage: React.FC = () => {
         icon={<MessageIcon className="w-6 h-6" />}
         actions={
           <div className="flex gap-2">
-            <Button variant="ghost" onClick={fetchProfiles} disabled={loading} aria-busy={loading}>
+            <Button variant="ghost" onClick={fetchProfiles} disabled={loading}>
               <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} /> Refresh
             </Button>
             <Button variant="primary" onClick={handleAddProfile}>
@@ -187,7 +167,7 @@ const MessageProvidersPage: React.FC = () => {
       />
 
       {loading ? (
-        <SkeletonTableLayout rows={6} columns={4} />
+        <div className="flex justify-center py-12"><LoadingSpinner size="lg" /></div>
       ) : profiles.length === 0 ? (
         <EmptyState
           icon={MessageIcon}
@@ -226,13 +206,13 @@ const MessageProvidersPage: React.FC = () => {
                     </div>
                   </div>
                   <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
-                    <Button size="sm" variant="ghost" onClick={() => handleEditProfile(profile)} aria-label={`Edit ${profile.name} profile`}>
+                    <Button size="sm" variant="ghost" onClick={() => handleEditProfile(profile)}>
                       <EditIcon className="w-4 h-4" />
                     </Button>
-                    <Button size="sm" variant="ghost" className="text-error hover:bg-error/10" onClick={() => handleDeleteProfile(profile.key)} aria-label={`Delete ${profile.name} profile`}>
+                    <Button size="sm" variant="ghost" className="text-error hover:bg-error/10" onClick={() => handleDeleteProfile(profile.key)}>
                       <DeleteIcon className="w-4 h-4" />
                     </Button>
-                    <Button size="sm" variant="ghost" onClick={() => toggleExpand(profile.key)} aria-label={expandedProfile === profile.key ? 'Collapse details' : 'Expand details'}>
+                    <Button size="sm" variant="ghost" onClick={() => toggleExpand(profile.key)}>
                       {expandedProfile === profile.key ? <CollapseIcon className="w-4 h-4" /> : <ExpandIcon className="w-4 h-4" />}
                     </Button>
                   </div>
@@ -270,17 +250,6 @@ const MessageProvidersPage: React.FC = () => {
         existingProviders={profiles}
         onClose={closeModal}
         onSubmit={handleProviderSubmit}
-      />
-
-      <ConfirmModal
-        isOpen={confirmModal.isOpen}
-        onClose={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))}
-        title={confirmModal.title}
-        message={confirmModal.message}
-        onConfirm={confirmModal.onConfirm}
-        confirmVariant="error"
-        confirmText="Delete"
-        cancelText="Cancel"
       />
     </div>
   );

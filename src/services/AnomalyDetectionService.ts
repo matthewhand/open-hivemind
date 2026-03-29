@@ -1,7 +1,5 @@
-import crypto from 'crypto';
 import { EventEmitter } from 'events';
 import Debug from 'debug';
-import { THIRTY_SECONDS_MS } from '@common/constants/time';
 import { DatabaseManager, type Anomaly } from '../database/DatabaseManager';
 import { MetricsCollector } from '../monitoring/MetricsCollector';
 import { WebSocketService, type AlertEvent } from '../server/services/WebSocketService';
@@ -44,7 +42,7 @@ export class AnomalyDetectionService extends EventEmitter {
     this.metricsCollector = metricsCollector;
     this.setMaxListeners(15);
     // Start periodic detection
-    this.detectionInterval = setInterval(() => this.runDetection(), THIRTY_SECONDS_MS); // Every 30 seconds
+    this.detectionInterval = setInterval(() => this.runDetection(), 30000); // Every 30 seconds
   }
 
   static getInstance(
@@ -183,7 +181,7 @@ export class AnomalyDetectionService extends EventEmitter {
     const explanation = `Value ${value} deviates from mean ${mean.toFixed(2)} by ${zScore.toFixed(2)} standard deviations (${stdDev.toFixed(2)})`;
 
     return {
-      id: `anomaly_${Date.now()}_${crypto.randomUUID()}`,
+      id: `anomaly_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
       timestamp: new Date(),
       metric,
       value,

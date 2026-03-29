@@ -2,8 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Bot, Save, ArrowLeft, Gamepad2, Hash, MessageSquare, Send, Check } from 'lucide-react';
-
-import { SkeletonList } from '../components/DaisyUI/Skeleton';
+import Breadcrumbs from '../components/DaisyUI/Breadcrumbs';
 import { Alert } from '../components/DaisyUI/Alert';
 import PageHeader from '../components/DaisyUI/PageHeader';
 import Button from '../components/DaisyUI/Button';
@@ -13,8 +12,6 @@ import Select from '../components/DaisyUI/Select';
 import { useLlmStatus } from '../hooks/useLlmStatus';
 import AIAssistButton from '../components/AIAssistButton';
 import { apiService } from '../services/api';
-import Debug from 'debug';
-const debug = Debug('app:client:pages:BotCreatePage');
 
 const CONFIG_LIMITS = {
   SYSTEM_INSTRUCTION_MAX_LENGTH: 5000,
@@ -73,7 +70,7 @@ const BotCreatePage: React.FC = () => {
         const servers = mcpResponse?.data || mcpResponse || [];
         setMcpServers(Array.isArray(servers) ? servers : []);
       } catch (err) {
-        // Error shown via alert UI
+        console.error('Failed to load data', err);
         setAlert({ type: 'error', message: 'Failed to load configuration data' });
       } finally {
         setLoading(false);
@@ -82,6 +79,10 @@ const BotCreatePage: React.FC = () => {
     fetchData();
   }, []);
 
+  const breadcrumbItems = [
+    { label: 'Bots', href: '/admin/bots' },
+    { label: 'Create Bot', href: '/admin/bots/create', isActive: true },
+  ];
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -125,6 +126,8 @@ const BotCreatePage: React.FC = () => {
   const chatCapableProfiles = llmProfiles.filter((profile: any) => profile?.modelType !== 'embedding');
   return (
     <div className="space-y-6">
+      <Breadcrumbs items={breadcrumbItems} />
+
       <PageHeader
         title="Create New Bot"
         description="Configure a new bot instance with persona and provider settings."
@@ -149,8 +152,8 @@ const BotCreatePage: React.FC = () => {
       <div className="card bg-base-100 shadow-xl max-w-4xl mx-auto">
         <div className="card-body">
           {loading ? (
-            <div className="py-6">
-              <SkeletonList items={6} />
+            <div className="flex justify-center py-12">
+              <span className="loading loading-spinner loading-lg"></span>
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="space-y-8">
@@ -382,7 +385,7 @@ const BotCreatePage: React.FC = () => {
                               onChange={(e) => {
                                 const serverId = server.id || server.name;
                                 if (!serverId) {
-                                  debug('WARN:', 'Server ID or name is required');
+                                  console.warn('Server ID or name is required');
                                   return;
                                 }
                                 setFormData(prev => ({

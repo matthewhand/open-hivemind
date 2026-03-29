@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useRef, useEffect } from 'react';
 
 export interface CheckboxProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'size'> {
   /** The label text to display next to the checkbox */
@@ -40,27 +40,19 @@ export const Checkbox: React.FC<CheckboxProps> = ({
 
   const getVariantClass = () => {
     switch (variant) {
-      case 'primary':
-        return 'checkbox-primary';
-      case 'secondary':
-        return 'checkbox-secondary';
-      case 'accent':
-        return 'checkbox-accent';
-      default:
-        return '';
+    case 'primary': return 'checkbox-primary';
+    case 'secondary': return 'checkbox-secondary';
+    case 'accent': return 'checkbox-accent';
+    default: return '';
     }
   };
 
   const getSizeClass = () => {
     switch (size) {
-      case 'xs':
-        return 'checkbox-xs';
-      case 'sm':
-        return 'checkbox-sm';
-      case 'lg':
-        return 'checkbox-lg';
-      default:
-        return '';
+    case 'xs': return 'checkbox-xs';
+    case 'sm': return 'checkbox-sm';
+    case 'lg': return 'checkbox-lg';
+    default: return '';
     }
   };
 
@@ -68,8 +60,7 @@ export const Checkbox: React.FC<CheckboxProps> = ({
   const variantClass = getVariantClass();
   const sizeClass = getSizeClass();
 
-  const generatedId = React.useId();
-  const inputId = id || `checkbox-${generatedId}`;
+  const inputId = id || `checkbox-${Math.random().toString(36).substr(2, 9)}`;
 
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     // Reset indeterminate state when user interacts with the checkbox
@@ -95,7 +86,10 @@ export const Checkbox: React.FC<CheckboxProps> = ({
           {...props}
         />
         {(label || children) && (
-          <span id={label ? `${inputId}-label` : undefined} className="label-text ml-2">
+          <span
+            id={label ? `${inputId}-label` : undefined}
+            className="label-text ml-2"
+          >
             {label || children}
           </span>
         )}

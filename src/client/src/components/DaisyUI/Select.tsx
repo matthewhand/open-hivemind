@@ -74,7 +74,7 @@ const Select = forwardRef<HTMLSelectElement, SelectProps>(
 
     return (
       <div className="relative w-full">
-        <select ref={ref} className={selectClasses} aria-busy={loading || undefined} aria-invalid={error || undefined} {...props}>
+        <select ref={ref} className={selectClasses} {...props}>
           {children}
           {options.map(renderSingleOption)}
           {optionGroups.map((group) => (
@@ -84,7 +84,7 @@ const Select = forwardRef<HTMLSelectElement, SelectProps>(
           ))}
         </select>
         {loading && (
-          <span className="loading loading-spinner absolute right-3 top-1/2 -translate-y-1/2" aria-hidden="true"></span>
+          <span className="loading loading-spinner absolute right-3 top-1/2 -translate-y-1/2"></span>
         )}
       </div>
     );

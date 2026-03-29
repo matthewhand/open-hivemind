@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { Sparkles, Loader2 } from 'lucide-react';
 import { apiService } from '../services/api';
-import { useWarningToast } from './DaisyUI/ToastNotification';
 
 /**
  * Props for the AIAssistButton component.
@@ -23,7 +22,6 @@ const AIAssistButton: React.FC<AIAssistButtonProps> = ({
 }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const warningToast = useWarningToast();
 
   const handleClick = async () => {
     try {
@@ -40,9 +38,9 @@ const AIAssistButton: React.FC<AIAssistButtonProps> = ({
       setError('Failed to generate');
       // Check if it's a configuration error
       if (err.message && err.message.includes('not configured')) {
-        warningToast('AI Not Configured', 'AI Assistance is not configured. Please go to LLM Providers page to configure it.');
+        alert('AI Assistance is not configured. Please go to LLM Providers page to configure it.');
       } else {
-        warningToast('AI Generation failed');
+        console.error('AI Gen error:', err);
       }
     } finally {
       setLoading(false);
@@ -61,6 +59,7 @@ const AIAssistButton: React.FC<AIAssistButtonProps> = ({
         onClick={handleClick}
         disabled={loading}
         aria-label={loading ? `Generating ${label.replace('Generate ', '')}...` : label}
+        aria-busy={loading}
       >
         {loading ? (
           <span className="loading loading-spinner loading-xs" aria-hidden="true" />

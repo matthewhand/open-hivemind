@@ -1,3 +1,5 @@
+import fs from 'fs';
+import path from 'path';
 import {
   loadMessageProfiles,
   saveMessageProfiles,
@@ -5,96 +7,76 @@ import {
   getMessageProfileByKey,
   type MessageProfile,
 } from '../../src/config/messageProfiles';
-import { loadProfiles, saveProfiles, findProfileByKey } from '../../src/config/profileUtils';
 
-jest.mock('../../src/config/profileUtils', () => ({
-  loadProfiles: jest.fn(),
-  saveProfiles: jest.fn(),
-  findProfileByKey: jest.requireActual('../../src/config/profileUtils').findProfileByKey,
-}));
+jest.mock('fs');
+jest.mock('path');
 
 describe('messageProfiles', () => {
+  const mockConfigDir = '/mock/config';
+  const mockFilePath = '/mock/config/message-profiles.json';
+
   beforeEach(() => {
     jest.clearAllMocks();
+    (path.join as jest.Mock).mockImplementation((...args) => args.join('/'));
+    // We need to handle path.join correctly for the test to work with the mock implementation in the source
+    // But since source uses path.join(process.cwd(), 'config'), we can just mock return value for specific calls if needed
+    // or rely on the mock implementation above.
+
+    // Actually, let's just mock path.join to return what we want for the config file
+    (path.join as jest.Mock).mockImplementation((...args) => {
+        if (args.includes('message-profiles.json')) return mockFilePath;
+        if (args.includes('config')) return mockConfigDir;
+        return args.join('/');
+    });
+
+    (path.dirname as jest.Mock).mockReturnValue(mockConfigDir);
+    process.env.NODE_CONFIG_DIR = mockConfigDir;
+  });
+
+  afterEach(() => {
+    delete process.env.NODE_CONFIG_DIR;
   });
 
   describe('loadMessageProfiles', () => {
-    it('should call loadProfiles with correct options', () => {
-      const mockData = { message: [] };
-      (loadProfiles as jest.Mock).mockReturnValue(mockData);
+    it('should return empty profiles if file does not exist', () => {
+      (fs.existsSync as jest.Mock).mockReturnValue(false);
+      // It tries to create scaffolding
+      (fs.writeFileSync as jest.Mock).mockImplementation(() => {});
+      (fs.mkdirSync as jest.Mock).mockImplementation(() => {});
 
       const profiles = loadMessageProfiles();
-
-      expect(loadProfiles).toHaveBeenCalledWith(
-        expect.objectContaining({
-          filename: 'message-profiles.json',
-          defaultData: { message: [] },
-          profileType: 'message',
-          validateAndMigrate: expect.any(Function)
-        })
-      );
-      expect(profiles).toEqual(mockData);
+      expect(profiles).toEqual({ message: [] });
+      expect(fs.writeFileSync).toHaveBeenCalled();
     });
 
-    it('validateAndMigrate should parse correctly', () => {
-      // Get the validateAndMigrate function passed to loadProfiles
-      loadMessageProfiles();
-      const callArgs = (loadProfiles as jest.Mock).mock.calls[0][0];
-      const validateAndMigrate = callArgs.validateAndMigrate;
+    it('should return profiles from file', () => {
+      (fs.existsSync as jest.Mock).mockReturnValue(true);
+      const mockData = {
+        message: [
+          { key: 'test', name: 'Test', provider: 'discord', config: {} }
+        ]
+      };
+      (fs.readFileSync as jest.Mock).mockReturnValue(JSON.stringify(mockData));
 
-      expect(validateAndMigrate({ message: [{ key: 'test' }] })).toEqual({
-        message: [{ key: 'test' }],
-      });
-
-      expect(validateAndMigrate({ message: 'invalid' })).toEqual({
-        message: [],
-      });
-
-      expect(() => validateAndMigrate('not-an-object')).toThrow('message profiles must be an object');
+      const profiles = loadMessageProfiles();
+      expect(profiles).toEqual(mockData);
     });
   });
 
   describe('saveMessageProfiles', () => {
-    it('should call saveProfiles with correct filename and data', () => {
+    it('should save profiles to file', () => {
       const profiles = {
         message: [
           { key: 'test', name: 'Test', provider: 'discord', config: {} }
         ]
       };
+      (fs.existsSync as jest.Mock).mockReturnValue(true);
 
       saveMessageProfiles(profiles);
-
-      expect(saveProfiles).toHaveBeenCalledWith('message-profiles.json', profiles);
-    });
-  });
-
-  describe('getMessageProfileByKey', () => {
-    it('should use findProfileByKey on loaded profiles', () => {
-      const mockProfiles = {
-        message: [
-          { key: 'test', name: 'Test', provider: 'discord', config: {} }
-        ]
-      };
-      (loadProfiles as jest.Mock).mockReturnValue(mockProfiles);
-
-      const expectedProfile = mockProfiles.message[0];
-
-      const result = getMessageProfileByKey('test');
-
-      expect(loadProfiles).toHaveBeenCalled();
-      expect(result).toEqual(expectedProfile);
-    });
-  });
-
-  describe('getMessageProfiles', () => {
-    it('should load message profiles', () => {
-      const mockData = { message: [] };
-      (loadProfiles as jest.Mock).mockReturnValue(mockData);
-
-      const result = getMessageProfiles();
-
-      expect(loadProfiles).toHaveBeenCalled();
-      expect(result).toEqual(mockData);
+      expect(fs.writeFileSync).toHaveBeenCalledWith(
+        mockFilePath,
+        JSON.stringify(profiles, null, 2)
+      );
     });
   });
 });

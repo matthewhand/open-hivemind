@@ -3,15 +3,13 @@ import React, { useEffect, useState } from 'react';
 import { Alert } from './DaisyUI/Alert';
 import Button from './DaisyUI/Button';
 import Card from './DaisyUI/Card';
-import { SkeletonGrid } from './DaisyUI/Skeleton';
 import Input from './DaisyUI/Input';
 import Select from './DaisyUI/Select';
 import Toggle from './DaisyUI/Toggle';
 import { LoadingSpinner as Loading } from './DaisyUI/Loading';
 import Textarea from './DaisyUI/Textarea';
-import Modal, { ConfirmModal } from './DaisyUI/Modal';
+import Modal from './DaisyUI/Modal';
 import Badge from './DaisyUI/Badge';
-import { useErrorToast } from './DaisyUI/ToastNotification';
 import {
   PuzzlePieceIcon,
   ChatBubbleLeftRightIcon,
@@ -66,7 +64,6 @@ const PROVIDER_ICONS: Record<string, any> = {
 
 
 const IntegrationsPanel: React.FC = () => {
-  const errorToast = useErrorToast();
   const [config, setConfig] = useState<GlobalConfig | null>(null);
   const [bots, setBots] = useState<any[]>([]);
   const [llmProfiles, setLlmProfiles] = useState<any[]>([]);
@@ -94,11 +91,6 @@ const IntegrationsPanel: React.FC = () => {
     providerType: 'llm',
     provider: null,
   });
-
-  // Confirm modal state
-  const [confirmModal, setConfirmModal] = useState<{
-    isOpen: boolean; title: string; message: string; onConfirm: () => void;
-  }>({ isOpen: false, title: '', message: '', onConfirm: () => {} });
 
   useEffect(() => {
     fetchData();
@@ -174,7 +166,7 @@ const IntegrationsPanel: React.FC = () => {
       setIsModalOpen(false);
       setSelectedConfigName(null);
     } catch (err: any) {
-      errorToast('Save Failed', err.message);
+      alert(err.message);
     } finally {
       setSaving(false);
     }
@@ -207,7 +199,7 @@ const IntegrationsPanel: React.FC = () => {
       setNewIntegrationName('');
       setNewConfigValues({});
     } catch (err: any) {
-      errorToast('Create Failed', err.message);
+      alert(err.message);
     } finally {
       setSaving(false);
     }
@@ -241,30 +233,23 @@ const IntegrationsPanel: React.FC = () => {
       await fetchData();
       setProviderModalState({ ...providerModalState, isOpen: false });
     } catch (err: any) {
-      errorToast('Save Failed', `Failed to save profile: ${err.message}`);
+      alert(`Failed to save profile: ${err.message}`);
     } finally {
       setSaving(false);
     }
   };
 
   const handleDeleteProfile = async (key: string) => {
-    setConfirmModal({
-      isOpen: true,
-      title: 'Delete Profile',
-      message: `Are you sure you want to delete profile "${key}"?`,
-      onConfirm: async () => {
-        setConfirmModal(prev => ({ ...prev, isOpen: false }));
-        try {
-          setSaving(true);
-          await fetch(`/api/config/llm-profiles/${key}`, { method: 'DELETE' });
-          await fetchData();
-        } catch (err: any) {
-          errorToast('Delete Failed', `Failed to delete profile: ${err.message}`);
-        } finally {
-          setSaving(false);
-        }
-      },
-    });
+    if (!window.confirm(`Are you sure you want to delete profile "${key}"?`)) return;
+    try {
+      setSaving(true);
+      await fetch(`/api/config/llm-profiles/${key}`, { method: 'DELETE' });
+      await fetchData();
+    } catch (err: any) {
+      alert(`Failed to delete profile: ${err.message}`);
+    } finally {
+      setSaving(false);
+    }
   };
 
   const openEditModal = (configName: string) => {
@@ -562,8 +547,9 @@ const IntegrationsPanel: React.FC = () => {
 
   if (loading && !config) {
     return (
-      <div className="p-6">
-        <SkeletonGrid count={4} showImage={false} />
+      <div className="flex flex-col items-center justify-center p-12 gap-4">
+        <span className="loading loading-spinner loading-lg text-primary" />
+        <span className="text-base-content/50">Loading integrations...</span>
       </div>
     );
   }
@@ -622,9 +608,8 @@ const IntegrationsPanel: React.FC = () => {
         <div className="space-y-6 max-h-[70vh] overflow-y-auto px-1">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="form-control">
-              <label htmlFor="integration-provider-type" className="label"><span className="label-text">Provider Type</span></label>
+              <label className="label"><span className="label-text">Provider Type</span></label>
               <Select
-                id="integration-provider-type"
                 value={newIntegrationType}
                 onChange={(e) => {
                   const type = e.target.value;
@@ -641,13 +626,12 @@ const IntegrationsPanel: React.FC = () => {
               />
             </div>
             <div className="form-control">
-              <label htmlFor="integration-instance-id" className="label"><span className="label-text">Instance ID</span></label>
+              <label className="label"><span className="label-text">Instance ID</span></label>
               <div className="join w-full">
                 <span className="btn btn-sm btn-static join-item bg-base-200 border-base-300 font-mono text-xs px-2">
                   {newIntegrationType ? `${newIntegrationType}-` : 'type-'}
                 </span>
                 <Input
-                  id="integration-instance-id"
                   value={newIntegrationName}
                   onChange={(e) => setNewIntegrationName(e.target.value)}
                   placeholder="production"
@@ -699,17 +683,6 @@ const IntegrationsPanel: React.FC = () => {
         existingProviders={llmProfiles}
         onClose={() => setProviderModalState({ ...providerModalState, isOpen: false })}
         onSubmit={handleProfileSubmit}
-      />
-
-      <ConfirmModal
-        isOpen={confirmModal.isOpen}
-        onClose={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))}
-        title={confirmModal.title}
-        message={confirmModal.message}
-        onConfirm={confirmModal.onConfirm}
-        confirmVariant="error"
-        confirmText="Delete"
-        cancelText="Cancel"
       />
     </div>
   );

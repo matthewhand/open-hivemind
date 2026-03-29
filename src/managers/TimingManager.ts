@@ -1,6 +1,3 @@
-import Debug from 'debug';
-
-const debug = Debug('app:managers:TimingManager');
 /**
  * TimingManager handles message timing delays.
  */
@@ -87,7 +84,7 @@ class TimingManager {
         sendFunction(messageContent);
       } catch (error) {
         // Log error but don't throw to prevent crashing
-        debug('ERROR:', 'Error in send function:', error);
+        console.error('Error in send function:', error);
       }
       // Clean up the timer reference
       delete this.channelTimers[channelId];

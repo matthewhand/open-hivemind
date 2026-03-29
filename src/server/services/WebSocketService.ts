@@ -5,14 +5,6 @@ import Debug from 'debug';
 import { Server as SocketIOServer } from 'socket.io';
 import { BotConfigurationManager } from '../../config/BotConfigurationManager';
 import ApiMonitorService, { type EndpointStatus } from '../../services/ApiMonitorService';
-import {
-  DeliveryStatus,
-  type AckPayload,
-  type DeliveryStats,
-  type MessageAckConfig,
-  type MessageEnvelope,
-  type RequestMissedPayload,
-} from '../../types/websocket';
 import { ActivityLogger } from './ActivityLogger';
 import { BotMetricsService } from './BotMetricsService';
 import 'reflect-metadata';
@@ -25,7 +17,6 @@ export interface MessageFlowEvent {
   timestamp: string;
   botName: string;
   provider: string;
-  llmProvider?: string;
   channelId: string;
   userId: string;
   messageType: 'incoming' | 'outgoing';
@@ -80,19 +71,6 @@ export class WebSocketService {
   private botErrors = new Map<string, string[]>();
   // API monitoring
   private apiMonitorService: ApiMonitorService;
-
-  // Message acknowledgment & delivery tracking
-  private pendingMessages = new Map<string, MessageEnvelope>();
-  private sequenceNumbers = new Map<string, number>();
-  private channelMessageHistory = new Map<string, MessageEnvelope[]>();
-  private ackLatencies: number[] = [];
-  private deliveryCounts = { sent: 0, acknowledged: 0, timedOut: 0, failed: 0 };
-  private ackTimeoutTimers = new Map<string, NodeJS.Timeout>();
-  private ackConfig: MessageAckConfig = {
-    messageTimeoutMs: 10_000,
-    maxRetries: 2,
-    enabled: true,
-  };
 
   constructor() {
     this.initializeMonitoringData();
@@ -451,15 +429,6 @@ export class WebSocketService {
 
       socket.on('request_api_endpoints', () => {
         this.sendApiEndpoints(socket);
-      });
-
-      socket.on('ack', (data: AckPayload) => {
-        this.handleAck(data);
-      });
-
-      socket.on('request_missed', (data: RequestMissedPayload) => {
-        const missed = this.handleRequestMissed(data);
-        socket.emit('missed_messages', { channel: data.channel, messages: missed });
       });
 
       socket.on('disconnect', () => {
@@ -853,149 +822,6 @@ export class WebSocketService {
     }
   }
 
-  // ---------------------------------------------------------------------------
-  // Message acknowledgment & delivery tracking
-  // ---------------------------------------------------------------------------
-
-  /** Configure the acknowledgment system at runtime. */
-  public configureAck(config: Partial<MessageAckConfig>): void {
-    Object.assign(this.ackConfig, config);
-  }
-
-  /**
-   * Send a tracked message to all connected clients.
-   * The message is wrapped in a {@link MessageEnvelope} with a unique ID and
-   * sequence number so clients can acknowledge receipt and detect gaps.
-   */
-  public sendTrackedMessage(event: string, payload: unknown, channel = 'default'): MessageEnvelope {
-    const seq = (this.sequenceNumbers.get(channel) ?? 0) + 1;
-    this.sequenceNumbers.set(channel, seq);
-
-    const envelope: MessageEnvelope = {
-      messageId: `ws_${Date.now()}_${randomUUID()}`,
-      sequenceNumber: seq,
-      event,
-      payload,
-      sentAt: new Date().toISOString(),
-      status: DeliveryStatus.SENT,
-      attempts: 1,
-    };
-
-    this.deliveryCounts.sent++;
-    this.pendingMessages.set(envelope.messageId, envelope);
-
-    // Persist in channel history for gap-fill requests
-    const history = this.channelMessageHistory.get(channel) ?? [];
-    history.push(envelope);
-    // Keep last 500 per channel
-    if (history.length > 500) {
-      history.splice(0, history.length - 500);
-    }
-    this.channelMessageHistory.set(channel, history);
-
-    // Actually emit
-    if (this.io) {
-      this.io.emit('tracked_message', envelope);
-    }
-
-    // Start timeout timer
-    if (this.ackConfig.enabled) {
-      this.startAckTimeout(envelope, channel);
-    }
-
-    return envelope;
-  }
-
-  /** Handle an acknowledgment from a client. */
-  public handleAck(ack: AckPayload): boolean {
-    const envelope = this.pendingMessages.get(ack.messageId);
-    if (!envelope) {
-      return false;
-    }
-
-    envelope.status = DeliveryStatus.ACKNOWLEDGED;
-    this.pendingMessages.delete(ack.messageId);
-    this.deliveryCounts.acknowledged++;
-
-    // Record latency
-    const latency = Date.now() - new Date(envelope.sentAt).getTime();
-    this.ackLatencies.push(latency);
-    // Keep last 1000 measurements
-    if (this.ackLatencies.length > 1000) {
-      this.ackLatencies.shift();
-    }
-
-    // Clear timeout timer
-    const timer = this.ackTimeoutTimers.get(ack.messageId);
-    if (timer) {
-      clearTimeout(timer);
-      this.ackTimeoutTimers.delete(ack.messageId);
-    }
-
-    return true;
-  }
-
-  /** Handle a client requesting missed messages for a channel. */
-  public handleRequestMissed(request: RequestMissedPayload): MessageEnvelope[] {
-    const history = this.channelMessageHistory.get(request.channel) ?? [];
-    return history.filter((msg) => msg.sequenceNumber > request.lastSequence);
-  }
-
-  /** Return a snapshot of delivery statistics. */
-  public getDeliveryStats(): DeliveryStats {
-    const totalCompleted =
-      this.deliveryCounts.acknowledged + this.deliveryCounts.timedOut + this.deliveryCounts.failed;
-    const avgLatency =
-      this.ackLatencies.length > 0
-        ? Math.round(this.ackLatencies.reduce((a, b) => a + b, 0) / this.ackLatencies.length)
-        : 0;
-    const successRate = totalCompleted > 0 ? this.deliveryCounts.acknowledged / totalCompleted : 0;
-
-    return {
-      totalSent: this.deliveryCounts.sent,
-      totalAcknowledged: this.deliveryCounts.acknowledged,
-      totalTimedOut: this.deliveryCounts.timedOut,
-      totalFailed: this.deliveryCounts.failed,
-      pendingCount: this.pendingMessages.size,
-      averageAckLatencyMs: avgLatency,
-      deliverySuccessRate: successRate,
-    };
-  }
-
-  /** Get the current sequence number for a channel. */
-  public getSequenceNumber(channel = 'default'): number {
-    return this.sequenceNumbers.get(channel) ?? 0;
-  }
-
-  private startAckTimeout(envelope: MessageEnvelope, channel: string): void {
-    const timer = setTimeout(() => {
-      this.ackTimeoutTimers.delete(envelope.messageId);
-
-      const pending = this.pendingMessages.get(envelope.messageId);
-      if (!pending) {
-        return; // Already acked
-      }
-
-      if (pending.attempts < this.ackConfig.maxRetries + 1) {
-        // Retry
-        pending.attempts++;
-        this.deliveryCounts.sent++;
-        if (this.io) {
-          this.io.emit('tracked_message', pending);
-        }
-        this.startAckTimeout(pending, channel);
-      } else {
-        // Mark as timed out
-        pending.status = DeliveryStatus.TIMED_OUT;
-        this.pendingMessages.delete(envelope.messageId);
-        this.deliveryCounts.timedOut++;
-        debug(`Message ${envelope.messageId} timed out after ${pending.attempts} attempts`);
-      }
-    }, this.ackConfig.messageTimeoutMs);
-
-    this.ackTimeoutTimers.set(envelope.messageId, timer);
-  }
-
   public shutdown(): void {
     if (this.metricsInterval) {
       clearInterval(this.metricsInterval);
@@ -1027,17 +853,6 @@ export class WebSocketService {
 
     // Clean up per-bot statistics to prevent memory leaks
     this.botErrors.clear();
-
-    // Clean up message acknowledgment state
-    for (const timer of this.ackTimeoutTimers.values()) {
-      clearTimeout(timer);
-    }
-    this.ackTimeoutTimers.clear();
-    this.pendingMessages.clear();
-    this.sequenceNumbers.clear();
-    this.channelMessageHistory.clear();
-    this.ackLatencies = [];
-    this.deliveryCounts = { sent: 0, acknowledged: 0, timedOut: 0, failed: 0 };
 
     debug('WebSocket service shut down');
   }

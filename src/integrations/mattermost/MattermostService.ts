@@ -104,7 +104,6 @@ export class MattermostService extends EventEmitter implements IMessengerService
       channel: botConfig.mattermost.channel || 'town-square',
       userId: botConfig.mattermost.userId || botConfig.BOT_ID || '',
       username: botConfig.mattermost.username || botConfig.MESSAGE_USERNAME_OVERRIDE || '',
-      llmProvider: botConfig.llmProvider,
     });
 
     // Initialize health tracking
@@ -237,11 +236,9 @@ export class MattermostService extends EventEmitter implements IMessengerService
       try {
         const ws = require('@src/server/services/WebSocketService')
           .default as typeof import('@src/server/services/WebSocketService').default;
-        const botConfig = this.botConfigs.get(botName);
         ws.getInstance().recordMessageFlow({
           botName,
           provider: 'mattermost',
-          llmProvider: botConfig?.llmProvider,
           channelId,
           userId: 'system',
           messageType: 'outgoing',
@@ -276,11 +273,9 @@ export class MattermostService extends EventEmitter implements IMessengerService
       try {
         const ws = require('@src/server/services/WebSocketService')
           .default as typeof import('@src/server/services/WebSocketService').default;
-        const botConfig = this.botConfigs.get(botName);
         ws.getInstance().recordMessageFlow({
           botName,
           provider: 'mattermost',
-          llmProvider: botConfig?.llmProvider,
           channelId,
           userId: 'system',
           messageType: 'outgoing',

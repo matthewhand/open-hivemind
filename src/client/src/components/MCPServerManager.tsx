@@ -8,11 +8,8 @@ import {
 import { Alert } from './DaisyUI/Alert';
 import Badge from './DaisyUI/Badge';
 import Button from './DaisyUI/Button';
-import { SkeletonList } from './DaisyUI/Skeleton';
 import Card from './DaisyUI/Card';
-import Modal, { ConfirmModal } from './DaisyUI/Modal';
-import DataTable from './DaisyUI/DataTable';
-import type { RDVColumn, RowAction } from './DaisyUI/DataTable';
+import Modal from './DaisyUI/Modal';
 
 interface MCPServer {
   name: string;
@@ -52,9 +49,6 @@ const MCPServerManager: React.FC = () => {
   const [serverTools, setServerTools] = useState<MCPTool[]>([]);
   const [toastMessage, setToastMessage] = useState('');
   const [toastType, setToastType] = useState<'success' | 'error'>('success');
-  const [confirmModal, setConfirmModal] = useState<{
-    isOpen: boolean; title: string; message: string; onConfirm: () => void;
-  }>({ isOpen: false, title: '', message: '', onConfirm: () => {} });
 
   const [formData, setFormData] = useState({ name: '', serverUrl: '', apiKey: '' });
 
@@ -127,30 +121,25 @@ const MCPServerManager: React.FC = () => {
   };
 
   const handleDisconnectServer = async (serverName: string) => {
-    setConfirmModal({
-      isOpen: true,
-      title: 'Disconnect Server',
-      message: `Disconnect from "${serverName}"?`,
-      onConfirm: async () => {
-        setConfirmModal(prev => ({ ...prev, isOpen: false }));
-        try {
-          const response = await fetch('/api/admin/mcp-servers/disconnect', {
-            method: 'POST',
-            headers: getAuthHeaders(),
-            body: JSON.stringify({ name: serverName }),
-          });
-          if (!response.ok) {
-            throw new Error('Failed to disconnect');
-          }
-          setToastMessage('MCP server disconnected');
-          setToastType('success');
-          fetchServers();
-        } catch (err) {
-          setToastMessage(err instanceof Error ? err.message : 'Failed to disconnect');
-          setToastType('error');
-        }
-      },
-    });
+    if (!confirm(`Disconnect from "${serverName}"?`)) {
+      return;
+    }
+    try {
+      const response = await fetch('/api/admin/mcp-servers/disconnect', {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({ name: serverName }),
+      });
+      if (!response.ok) {
+        throw new Error('Failed to disconnect');
+      }
+      setToastMessage('MCP server disconnected');
+      setToastType('success');
+      fetchServers();
+    } catch (err) {
+      setToastMessage(err instanceof Error ? err.message : 'Failed to disconnect');
+      setToastType('error');
+    }
   };
 
   const handleViewTools = async (server: MCPServer) => {
@@ -173,8 +162,8 @@ const MCPServerManager: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="min-h-[200px] p-4">
-        <SkeletonList items={4} />
+      <div className="flex justify-center items-center min-h-[200px]">
+        <span className="loading loading-spinner loading-lg"></span>
       </div>
     );
   }
@@ -209,54 +198,55 @@ const MCPServerManager: React.FC = () => {
 
       {error && <Alert status="error" message={error} onClose={() => setError(null)} />}
 
-      <DataTable<MCPServer>
-        data={servers}
-        columns={[
-          {
-            key: 'name',
-            title: 'Name',
-            prominent: true,
-            render: (value: string) => (
-              <div className="flex items-center gap-2">
-                <WrenchScrewdriverIcon className="w-5 h-5 text-base-content/70" />
-                <span className="font-medium">{value}</span>
-              </div>
-            ),
-          },
-          {
-            key: 'serverUrl',
-            title: 'Server URL',
-            render: (value: string) => <span className="font-mono text-sm">{value}</span>,
-          },
-          {
-            key: 'connected',
-            title: 'Status',
-            render: (value: boolean) => (
-              <Badge variant={value ? 'success' : 'secondary'}>
-                {value ? 'Connected' : 'Disconnected'}
-              </Badge>
-            ),
-          },
-        ] as RDVColumn<MCPServer>[]}
-        actions={[
-          {
-            label: 'View Tools',
-            icon: <WrenchScrewdriverIcon className="w-4 h-4" />,
-            variant: 'ghost',
-            onClick: (server) => handleViewTools(server),
-            hidden: (server) => !server.connected,
-            tooltip: 'View Tools',
-          },
-          {
-            label: 'Disconnect',
-            icon: <LinkIcon className="w-4 h-4" />,
-            variant: 'error',
-            onClick: (server) => handleDisconnectServer(server.name),
-            tooltip: 'Disconnect',
-          },
-        ] as RowAction<MCPServer>[]}
-        rowKey={(server) => server.name}
-      />
+      <div className="overflow-x-auto">
+        <table className="table w-full">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Server URL</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {servers.map((server) => (
+              <tr key={server.name} className="hover">
+                <td>
+                  <div className="flex items-center gap-2">
+                    <WrenchScrewdriverIcon className="w-5 h-5 text-base-content/70" />
+                    <span className="font-medium">{server.name}</span>
+                  </div>
+                </td>
+                <td>
+                  <span className="font-mono text-sm">{server.serverUrl}</span>
+                </td>
+                <td>
+                  <Badge variant={server.connected ? 'success' : 'secondary'}>
+                    {server.connected ? 'Connected' : 'Disconnected'}
+                  </Badge>
+                </td>
+                <td>
+                  <div className="flex gap-2">
+                    {server.connected && (
+                      <Button size="sm" variant="ghost" onClick={() => handleViewTools(server)}>
+                        <WrenchScrewdriverIcon className="w-4 h-4" />
+                      </Button>
+                    )}
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="text-error"
+                      onClick={() => handleDisconnectServer(server.name)}
+                    >
+                      <LinkIcon className="w-4 h-4" />
+                    </Button>
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
 
       <Modal
         isOpen={connectDialogOpen}
@@ -354,17 +344,6 @@ const MCPServerManager: React.FC = () => {
           </div>
         </div>
       )}
-
-      <ConfirmModal
-        isOpen={confirmModal.isOpen}
-        onClose={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))}
-        title={confirmModal.title}
-        message={confirmModal.message}
-        onConfirm={confirmModal.onConfirm}
-        confirmVariant="warning"
-        confirmText="Disconnect"
-        cancelText="Cancel"
-      />
     </Card>
   );
 };

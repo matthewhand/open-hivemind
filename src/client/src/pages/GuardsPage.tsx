@@ -1,21 +1,17 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { Shield, Plus, Edit2, Trash2, RefreshCw, Save, AlertTriangle, Copy, ToggleLeft } from 'lucide-react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { Shield, Plus, Edit2, Trash2, Check, RefreshCw, AlertCircle, Save, X, Settings, AlertTriangle, Copy } from 'lucide-react';
 import { useSuccessToast, useErrorToast } from '../components/DaisyUI/ToastNotification';
 import Modal, { ConfirmModal } from '../components/DaisyUI/Modal';
-import Button from '../components/DaisyUI/Button';
 import PageHeader from '../components/DaisyUI/PageHeader';
 import SearchFilterBar from '../components/SearchFilterBar';
 import EmptyState from '../components/DaisyUI/EmptyState';
-import { SkeletonTableLayout } from '../components/DaisyUI/Skeleton';
-import { CommaSeparatedInput } from '../components/DaisyUI/CommaSeparatedInput';
+import { LoadingSpinner } from '../components/DaisyUI/Loading';
+import { CommaSeparatedInput } from '../components/Common/CommaSeparatedInput';
 import Input from '../components/DaisyUI/Input';
 import Textarea from '../components/DaisyUI/Textarea';
 import Select from '../components/DaisyUI/Select';
 import Toggle from '../components/DaisyUI/Toggle';
-import useUrlParams from '../hooks/useUrlParams';
-import { useBulkSelection } from '../hooks/useBulkSelection';
-import BulkActionBar from '../components/BulkActionBar';
 
 interface McpGuardConfig {
   enabled: boolean;
@@ -49,11 +45,7 @@ const GuardsPage: React.FC = () => {
   const [profiles, setProfiles] = useState<GuardrailProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const { values: urlParams, setValue: setUrlParam } = useUrlParams({
-    search: { type: 'string', default: '', debounce: 300 },
-  });
-  const searchValue = urlParams.search;
-  const setSearchValue = (v: string) => setUrlParam('search', v);
+  const [searchValue, setSearchValue] = useState('');
 
   const showSuccess = useSuccessToast();
   const showError = useErrorToast();
@@ -166,8 +158,8 @@ const GuardsPage: React.FC = () => {
   const handleDuplicateProfile = (profile: GuardrailProfile) => {
     const duplicatedProfile: GuardrailProfile = JSON.parse(JSON.stringify(profile));
     duplicatedProfile.id = '';
-    duplicatedProfile.name = `Copy of ${profile?.name || 'Unnamed'}`;
-    duplicatedProfile.description = profile?.description ? `Copy of ${profile.description}` : '';
+    duplicatedProfile.name = `Copy of ${profile.name}`;
+    duplicatedProfile.description = profile.description ? `Copy of ${profile.description}` : '';
 
     setEditingProfile(duplicatedProfile);
     setIsNew(true);
@@ -198,57 +190,6 @@ const GuardsPage: React.FC = () => {
     profile.name.toLowerCase().includes(searchValue.toLowerCase())
   );
 
-  // Bulk selection
-  const filteredProfileIds = useMemo(() => filteredProfiles.map(p => p.id), [filteredProfiles]);
-  const bulk = useBulkSelection(filteredProfileIds);
-  const [bulkDeleting, setBulkDeleting] = useState(false);
-
-  const handleBulkDeleteProfiles = async () => {
-    if (bulk.selectedCount === 0) return;
-    setBulkDeleting(true);
-    try {
-      const ids = Array.from(bulk.selectedIds);
-      await Promise.allSettled(
-        ids.map(id =>
-          fetch(`${API_BASE}/guard-profiles/${id}`, { method: 'DELETE' })
-        )
-      );
-      bulk.clearSelection();
-      showSuccess('Selected profiles deleted');
-      fetchProfiles();
-    } catch (err) {
-      showError('Failed to delete some profiles');
-    } finally {
-      setBulkDeleting(false);
-    }
-  };
-
-  const handleBulkToggleGuards = async (enable: boolean) => {
-    if (bulk.selectedCount === 0) return;
-    try {
-      const ids = Array.from(bulk.selectedIds);
-      const updates = ids.map(id => {
-        const profile = profiles.find(p => p.id === id);
-        if (!profile) return Promise.resolve();
-        const updated = JSON.parse(JSON.stringify(profile));
-        updated.guards.mcpGuard.enabled = enable;
-        if (updated.guards.rateLimit) updated.guards.rateLimit.enabled = enable;
-        if (updated.guards.contentFilter) updated.guards.contentFilter.enabled = enable;
-        return fetch(`${API_BASE}/guard-profiles/${id}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(updated),
-        });
-      });
-      await Promise.allSettled(updates);
-      bulk.clearSelection();
-      showSuccess(`Guards ${enable ? 'enabled' : 'disabled'} for selected profiles`);
-      fetchProfiles();
-    } catch (err) {
-      showError('Failed to update some profiles');
-    }
-  };
-
   return (
     <div className="space-y-6">
       <PageHeader
@@ -257,15 +198,13 @@ const GuardsPage: React.FC = () => {
         icon={<Shield className="w-8 h-8 text-primary" />}
         actions={
           <div className="flex gap-2">
-            <div className="tooltip" data-tip="Refresh profiles">
-              <Button variant="ghost" size="sm" onClick={fetchProfiles} disabled={loading} aria-label="Refresh profiles">
-                <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-              </Button>
-            </div>
-            <Button variant="primary" size="sm" onClick={handleCreate}>
+            <button onClick={fetchProfiles} className="btn btn-ghost btn-sm" disabled={loading} title="Refresh" aria-label="Refresh profiles">
+              <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+            </button>
+            <button onClick={handleCreate} className="btn btn-primary btn-sm">
               <Plus className="w-4 h-4 mr-2" />
               New Profile
-            </Button>
+            </button>
           </div>
         }
       />
@@ -277,7 +216,9 @@ const GuardsPage: React.FC = () => {
       />
 
       {loading && !editingProfile ? (
-        <SkeletonTableLayout rows={5} columns={3} />
+        <div className="flex items-center justify-center py-12">
+          <LoadingSpinner size="lg" />
+        </div>
       ) : profiles.length === 0 ? (
         <EmptyState
           icon={Shield}
@@ -298,104 +239,35 @@ const GuardsPage: React.FC = () => {
           onAction={() => setSearchValue('')}
         />
       ) : (
-        <>
-          <div className="flex items-center gap-2 mb-2">
-            <input
-              type="checkbox"
-              className="checkbox checkbox-sm checkbox-primary"
-              checked={bulk.isAllSelected}
-              onChange={() => bulk.toggleAll(filteredProfileIds)}
-              aria-label="Select all profiles"
-            />
-            <span className="text-xs text-base-content/60">Select all</span>
-          </div>
-          <BulkActionBar
-            selectedCount={bulk.selectedCount}
-            onClearSelection={bulk.clearSelection}
-            actions={[
-              {
-                key: 'enable',
-                label: 'Enable All Guards',
-                icon: <ToggleLeft className="w-4 h-4" />,
-                variant: 'success',
-                onClick: () => handleBulkToggleGuards(true),
-              },
-              {
-                key: 'disable',
-                label: 'Disable All Guards',
-                icon: <ToggleLeft className="w-4 h-4" />,
-                variant: 'warning',
-                onClick: () => handleBulkToggleGuards(false),
-              },
-              {
-                key: 'delete',
-                label: 'Delete',
-                icon: <Trash2 className="w-4 h-4" />,
-                variant: 'error',
-                onClick: handleBulkDeleteProfiles,
-                loading: bulkDeleting,
-              },
-            ]}
-          />
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredProfiles.map(profile => (
             <div key={profile.id} className="card bg-base-100 border border-base-200 shadow-sm hover:shadow-md transition-shadow">
               <div className="card-body">
                 <div className="flex justify-between items-start">
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="checkbox"
-                      className="checkbox checkbox-sm checkbox-primary"
-                      checked={bulk.isSelected(profile.id)}
-                      onChange={(e) => bulk.toggleItem(profile.id, e as any)}
-                      onClick={(e) => e.stopPropagation()}
-                      aria-label={`Select ${profile.name}`}
-                    />
-                    <h3 className="card-title text-lg">{profile.name}</h3>
-                  </div>
+                  <h3 className="card-title text-lg">{profile.name}</h3>
                   <div className="flex gap-1">
-                    <div className="tooltip" data-tip="Duplicate profile">
-                      <Button
-                        variant="ghost"
-                        size="xs"
-                        onClick={() => handleDuplicateProfile(profile)}
-                        className="btn-square"
-                        aria-label="Duplicate profile"
-                      >
-                        <Copy className="w-4 h-4" />
-                      </Button>
-                    </div>
-                    <div className="tooltip" data-tip="Edit profile">
-                      <Button
-                        variant="ghost"
-                        size="xs"
-                        onClick={() => handleEdit(profile)}
-                        className="btn-square"
-                        aria-label="Edit profile"
-                      >
-                        <Edit2 className="w-4 h-4" />
-                      </Button>
-                    </div>
-                    <div className="tooltip" data-tip="Delete profile">
-                      <Button
-                        variant="ghost"
-                        size="xs"
-                        onClick={() => handleDeleteProfile(profile)}
-                        className="btn-square text-error"
-                        aria-label="Delete profile"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    </div>
+                    <button
+                      onClick={() => handleDuplicateProfile(profile)}
+                      className="btn btn-ghost btn-xs btn-square"
+                      title="Duplicate Profile"
+                    >
+                      <Copy className="w-4 h-4" />
+                    </button>
+                    <button onClick={() => handleEdit(profile)} className="btn btn-ghost btn-xs btn-square">
+                      <Edit2 className="w-4 h-4" />
+                    </button>
+                    <button onClick={() => handleDeleteProfile(profile)} className="btn btn-ghost btn-xs btn-square text-error">
+                      <Trash2 className="w-4 h-4" />
+                    </button>
                   </div>
                 </div>
-                <p className="text-sm opacity-70 mb-4 h-10 line-clamp-2">{profile?.description || 'No description'}</p>
+                <p className="text-sm opacity-70 mb-4 h-10 line-clamp-2">{profile.description || 'No description'}</p>
 
                 <div className="flex flex-wrap gap-2 mt-auto">
-                  {profile?.guards?.mcpGuard?.enabled && <span className="badge badge-primary badge-sm">Access Control</span>}
-                  {profile?.guards?.rateLimit?.enabled && <span className="badge badge-warning badge-sm">Rate Limit</span>}
-                  {profile?.guards?.contentFilter?.enabled && <span className="badge badge-error badge-sm">Content Filter</span>}
-                  {!profile?.guards?.mcpGuard?.enabled && !profile?.guards?.rateLimit?.enabled && !profile?.guards?.contentFilter?.enabled && (
+                  {profile.guards.mcpGuard.enabled && <span className="badge badge-primary badge-sm">Access Control</span>}
+                  {profile.guards.rateLimit?.enabled && <span className="badge badge-warning badge-sm">Rate Limit</span>}
+                  {profile.guards.contentFilter?.enabled && <span className="badge badge-error badge-sm">Content Filter</span>}
+                  {!profile.guards.mcpGuard.enabled && !profile.guards.rateLimit?.enabled && !profile.guards.contentFilter?.enabled && (
                     <span className="badge badge-ghost badge-sm">No Guards</span>
                   )}
                 </div>
@@ -403,7 +275,6 @@ const GuardsPage: React.FC = () => {
             </div>
           ))}
         </div>
-        </>
       )}
 
       {/* Edit Modal */}

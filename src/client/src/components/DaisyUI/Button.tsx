@@ -72,6 +72,7 @@ export const Button = memo(({
   const baseClasses = 'btn';
   const variantClass = getVariantClass();
   const sizeClass = getSizeClass();
+  const loadingClass = loading ? 'loading' : '';
   const disabledClass = disabled || loading ? 'btn-disabled' : '';
 
   const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
@@ -86,7 +87,7 @@ export const Button = memo(({
 
   const buttonContent = (
     <>
-      {loading && <span className={`loading loading-spinner ${getSpinnerSizeClass()} ${hasTextContent ? 'mr-2' : ''}`.trim()} aria-hidden="true"></span>}
+      {loading && <span className={`loading loading-spinner ${getSpinnerSizeClass()} ${hasTextContent ? 'mr-2' : ''}`.trim()}></span>}
       {(icon || startIcon) && !loading && <span className="mr-2">{icon || startIcon}</span>}
       {loading && loadingText ? loadingText : children}
       {(iconRight || endIcon) && !loading && <span className="ml-2">{iconRight || endIcon}</span>}
@@ -95,9 +96,8 @@ export const Button = memo(({
 
   return (
     <button
-      className={`${baseClasses} ${variantClass} ${sizeClass} ${disabledClass} ${className}`.trim()}
+      className={`${baseClasses} ${variantClass} ${sizeClass} ${loadingClass} ${disabledClass} ${className}`.trim()}
       disabled={disabled || loading}
-      aria-busy={loading}
       onClick={handleClick}
       {...props}
     >

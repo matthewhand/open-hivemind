@@ -1,10 +1,8 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import useUrlParams from '../hooks/useUrlParams';
+import React, { useState, useEffect, useMemo } from 'react';
 import Card from '../components/DaisyUI/Card';
-import { SkeletonGrid } from '../components/DaisyUI/Skeleton';
 import Button from '../components/DaisyUI/Button';
 import Badge from '../components/DaisyUI/Badge';
-
+import Breadcrumbs from '../components/DaisyUI/Breadcrumbs';
 import {
   Store as StoreIcon,
   Download as DownloadIcon,
@@ -21,7 +19,6 @@ import {
   CheckCircle as CheckIcon,
   X as CloseIcon,
 } from 'lucide-react';
-import { ConfirmModal } from '../components/DaisyUI/Modal';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -73,23 +70,19 @@ const MarketplacePage: React.FC = () => {
   const [packages, setPackages] = useState<MarketplacePackage[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const { values: urlParams, setValue: setUrlParam } = useUrlParams({
-    search: { type: 'string', default: '', debounce: 300 },
-    type: { type: 'string', default: 'all' },
-  });
-  const filter = urlParams.type as FilterType;
-  const setFilter = (v: FilterType) => setUrlParam('type', v);
-  const searchQuery = urlParams.search;
-  const setSearchQuery = (v: string) => setUrlParam('search', v);
+  const [filter, setFilter] = useState<FilterType>('all');
+  const [searchQuery, setSearchQuery] = useState('');
   const [installModalOpen, setInstallModalOpen] = useState(false);
   const [githubUrl, setGithubUrl] = useState('');
   const [actionInProgress, setActionInProgress] = useState<string | null>(null);
   const [actionMessage, setActionMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
-  const [confirmModal, setConfirmModal] = useState<{
-    isOpen: boolean; title: string; message: string; onConfirm: () => void;
-  }>({ isOpen: false, title: '', message: '', onConfirm: () => {} });
 
-  const fetchPackages = useCallback(async () => {
+  // Fetch packages
+  useEffect(() => {
+    fetchPackages();
+  }, []);
+
+  const fetchPackages = async () => {
     setLoading(true);
     setError(null);
     try {
@@ -102,12 +95,7 @@ const MarketplacePage: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, []);
-
-  // Fetch packages
-  useEffect(() => {
-    fetchPackages();
-  }, [fetchPackages]);
+  };
 
   // Filter packages
   const filteredPackages = useMemo(() => {
@@ -176,39 +164,40 @@ const MarketplacePage: React.FC = () => {
 
   // Uninstall package
   const handleUninstall = async (name: string) => {
-    setConfirmModal({
-      isOpen: true,
-      title: 'Uninstall Package',
-      message: `Are you sure you want to uninstall ${name}?`,
-      onConfirm: async () => {
-        setConfirmModal(prev => ({ ...prev, isOpen: false }));
-        setActionInProgress(`uninstall-${name}`);
-        setActionMessage(null);
+    if (!confirm(`Are you sure you want to uninstall ${name}?`)) return;
 
-        try {
-          const response = await fetch(`/api/marketplace/uninstall/${name}`, { method: 'POST' });
-          const data = await response.json();
+    setActionInProgress(`uninstall-${name}`);
+    setActionMessage(null);
 
-          if (!response.ok) {
-            throw new Error(data.message || 'Uninstall failed');
-          }
+    try {
+      const response = await fetch(`/api/marketplace/uninstall/${name}`, { method: 'POST' });
+      const data = await response.json();
 
-          setActionMessage({ type: 'success', text: `Uninstalled ${name} successfully!` });
-          await fetchPackages();
-        } catch (err: any) {
-          setActionMessage({ type: 'error', text: err.message || 'Uninstall failed' });
-        } finally {
-          setActionInProgress(null);
-        }
-      },
-    });
+      if (!response.ok) {
+        throw new Error(data.message || 'Uninstall failed');
+      }
+
+      setActionMessage({ type: 'success', text: `Uninstalled ${name} successfully!` });
+      await fetchPackages();
+    } catch (err: any) {
+      setActionMessage({ type: 'error', text: err.message || 'Uninstall failed' });
+    } finally {
+      setActionInProgress(null);
+    }
   };
 
+  // Breadcrumbs
+  const breadcrumbItems = [
+    { label: 'Admin', href: '/admin/overview' },
+    { label: 'Marketplace', href: '/admin/marketplace', isActive: true },
+  ];
 
   return (
     <div className="p-6">
+      <Breadcrumbs items={breadcrumbItems} />
+
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center justify-between mt-4 mb-6">
         <div className="flex items-center gap-3">
           <StoreIcon className="w-8 h-8 text-primary" />
           <div>
@@ -223,7 +212,7 @@ const MarketplacePage: React.FC = () => {
             variant="outline"
             size="sm"
             onClick={fetchPackages}
-            disabled={loading} aria-busy={loading}
+            disabled={loading}
           >
             <RefreshCw className={`w-4 h-4 mr-1 ${loading ? 'animate-spin' : ''}`} />
             Refresh
@@ -248,11 +237,10 @@ const MarketplacePage: React.FC = () => {
             <AlertIcon className="w-5 h-5" />
           )}
           <span>{actionMessage.text}</span>
-          <div className="tooltip" data-tip="Dismiss">
-            <Button variant="ghost" size="xs" onClick={() => setActionMessage(null)} aria-label="Dismiss">
-              <CloseIcon className="w-4 h-4" />
-            </Button>
-          </div>        </div>
+          <button className="btn btn-ghost btn-xs" onClick={() => setActionMessage(null)}>
+            <CloseIcon className="w-4 h-4" />
+          </button>
+        </div>
       )}
 
       {/* Error State */}
@@ -296,7 +284,9 @@ const MarketplacePage: React.FC = () => {
 
       {/* Loading State */}
       {loading && (
-        <SkeletonGrid count={6} showImage />
+        <div className="flex items-center justify-center py-12">
+          <span className="loading loading-spinner loading-lg text-primary"></span>
+        </div>
       )}
 
       {/* Empty State */}
@@ -358,7 +348,7 @@ const MarketplacePage: React.FC = () => {
                           disabled={isBusy}
                         >
                           {actionInProgress === `update-${pkg.name}` ? (
-                            <span className="loading loading-spinner loading-xs" aria-hidden="true"></span>
+                            <span className="loading loading-spinner loading-xs"></span>
                           ) : (
                             <UpdateIcon className="w-4 h-4" />
                           )}
@@ -371,7 +361,7 @@ const MarketplacePage: React.FC = () => {
                           disabled={isBusy}
                         >
                           {actionInProgress === `uninstall-${pkg.name}` ? (
-                            <span className="loading loading-spinner loading-xs" aria-hidden="true"></span>
+                            <span className="loading loading-spinner loading-xs"></span>
                           ) : (
                             <UninstallIcon className="w-4 h-4 text-error" />
                           )}
@@ -446,7 +436,7 @@ const MarketplacePage: React.FC = () => {
                 disabled={!githubUrl.trim() || actionInProgress === 'install-url'}
               >
                 {actionInProgress === 'install-url' ? (
-                  <span className="loading loading-spinner loading-sm" aria-hidden="true"></span>
+                  <span className="loading loading-spinner loading-sm"></span>
                 ) : (
                   <>
                     <GitHubIcon className="w-4 h-4 mr-1" />
@@ -465,17 +455,6 @@ const MarketplacePage: React.FC = () => {
           ></div>
         </dialog>
       )}
-
-      <ConfirmModal
-        isOpen={confirmModal.isOpen}
-        onClose={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))}
-        title={confirmModal.title}
-        message={confirmModal.message}
-        onConfirm={confirmModal.onConfirm}
-        confirmVariant="error"
-        confirmText="Uninstall"
-        cancelText="Cancel"
-      />
     </div>
   );
 };

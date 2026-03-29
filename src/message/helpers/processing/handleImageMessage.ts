@@ -1,7 +1,4 @@
 import axios from 'axios';
-import Debug from 'debug';
-
-const debug = Debug('app:message:helpers:processing:handleImageMessage');
 
 /**
  * A map that stores the association between prediction IDs and image URLs.
@@ -36,8 +33,7 @@ export async function createPrediction(imageUrl: string): Promise<any> {
     });
     return response.data;
   } catch (error: any) {
-    debug(
-      'ERROR:',
+    console.error(
       'Failed to create prediction:',
       error.response ? error.response.data : error.message
     );
@@ -67,7 +63,7 @@ export async function handleImageMessage(message: any): Promise<boolean> {
       } else {
         // Handle asynchronous prediction (via webhook)
         const predictionId = prediction.id;
-        debug('Prediction ID: ' + predictionId);
+        console.log('Prediction ID: ' + predictionId);
         predictionImageMap.set(predictionId, imageUrl);
       }
       return true;
@@ -76,7 +72,7 @@ export async function handleImageMessage(message: any): Promise<boolean> {
       return false;
     }
   } catch (error: any) {
-    debug('ERROR:', 'Error in handleImageMessage: ' + error.message);
+    console.error('Error in handleImageMessage: ' + error.message);
     return false;
   }
 }

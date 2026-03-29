@@ -50,6 +50,8 @@ describe('GreetingStateManager', () => {
   const mockDataDir = '/app/data';
 
   beforeEach(() => {
+    // Reset singleton instance
+    (GreetingStateManager as any).instance = null;
     jest.clearAllMocks();
 
     // Setup default mock implementation
@@ -60,13 +62,14 @@ describe('GreetingStateManager', () => {
     (fs.writeFile as jest.Mock).mockResolvedValue(undefined);
     (fs.mkdir as jest.Mock).mockResolvedValue(undefined);
 
-    stateManager = new GreetingStateManager();
+    stateManager = GreetingStateManager.getInstance();
   });
 
-  describe('constructor', () => {
-    it('should create an instance', () => {
-      const instance = new GreetingStateManager();
-      expect(instance).toBeInstanceOf(GreetingStateManager);
+  describe('getInstance', () => {
+    it('should return the same instance', () => {
+      const instance1 = GreetingStateManager.getInstance();
+      const instance2 = GreetingStateManager.getInstance();
+      expect(instance1).toBe(instance2);
     });
   });
 
@@ -138,7 +141,7 @@ describe('GreetingStateManager', () => {
 
       const state = (stateManager as any).state;
       expect(state['expired-service']).toBeUndefined();
-      expect(state['valid-service']).not.toBeUndefined();
+      expect(state['valid-service']).toBeDefined();
       expect(mockInfo).toHaveBeenCalledWith(
         'Cleaned up expired greeting state entries',
         expect.any(Object)
@@ -241,7 +244,7 @@ describe('GreetingStateManager', () => {
       await stateManager.markGreetingAsSent(serviceId, channelId);
 
       const state = (stateManager as any).state;
-      expect(state[serviceId]).not.toBeUndefined();
+      expect(state[serviceId]).toBeDefined();
       expect(state[serviceId].channelId).toBe(channelId);
       expect(fs.writeFile).toHaveBeenCalledWith(mockStatePath, expect.any(String), 'utf-8');
       expect(mockInfo).toHaveBeenCalledWith('Marked greeting as sent', { serviceId, channelId });

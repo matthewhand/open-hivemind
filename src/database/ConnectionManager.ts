@@ -9,15 +9,6 @@ interface ConnectionOptions {
   timeout?: number;
 }
 
-/** Result shape returned by executeQuery (INSERT/UPDATE/DELETE). */
-export interface QueryResult {
-  lastID: number;
-  changes: number;
-}
-
-/** Primitive types accepted as SQL bind parameters. */
-export type SqlParam = string | number | boolean | null | Buffer;
-
 export class ConnectionManager extends EventEmitter {
   private db: Database | null = null;
   private isConnected = false;
@@ -82,35 +73,59 @@ export class ConnectionManager extends EventEmitter {
     return this.isConnected;
   }
 
-  async executeQuery(query: string, params?: SqlParam[]): Promise<QueryResult> {
+  async executeQuery(query: string, params?: any[]): Promise<any> {
     if (!this.isConnected || !this.db) {
       throw new Error('Database not connected');
     }
 
-    try {
-      const result = await (params && params.length > 0
-        ? this.db.run(query, params)
-        : this.db.run(query));
-      return { lastID: result.lastID ?? 0, changes: result.changes ?? 0 };
-    } catch (err) {
-      Logger.error(`Query execution error: ${(err as Error).message}`);
-      throw err;
-    }
+    return new Promise((resolve, reject) => {
+      if (params && params.length > 0) {
+        this.db!.run(query, params, function (err) {
+          if (err) {
+            Logger.error(`Query execution error: ${err.message}`);
+            reject(err);
+          } else {
+            resolve({ lastID: this.lastID, changes: this.changes });
+          }
+        });
+      } else {
+        this.db!.run(query, function (err) {
+          if (err) {
+            Logger.error(`Query execution error: ${err.message}`);
+            reject(err);
+          } else {
+            resolve({ lastID: this.lastID, changes: this.changes });
+          }
+        });
+      }
+    });
   }
 
-  async selectQuery(query: string, params?: SqlParam[]): Promise<Record<string, unknown>[]> {
+  async selectQuery(query: string, params?: any[]): Promise<any[]> {
     if (!this.isConnected || !this.db) {
       throw new Error('Database not connected');
     }
 
-    try {
-      const rows = await (params && params.length > 0
-        ? this.db.all<Record<string, unknown>[]>(query, params)
-        : this.db.all<Record<string, unknown>[]>(query));
-      return rows;
-    } catch (err) {
-      Logger.error(`Select query error: ${(err as Error).message}`);
-      throw err;
-    }
+    return new Promise((resolve, reject) => {
+      if (params && params.length > 0) {
+        this.db!.all(query, params, (err, rows) => {
+          if (err) {
+            Logger.error(`Select query error: ${err.message}`);
+            reject(err);
+          } else {
+            resolve(rows);
+          }
+        });
+      } else {
+        this.db!.all(query, (err, rows) => {
+          if (err) {
+            Logger.error(`Select query error: ${err.message}`);
+            reject(err);
+          } else {
+            resolve(rows);
+          }
+        });
+      }
+    });
   }
 }

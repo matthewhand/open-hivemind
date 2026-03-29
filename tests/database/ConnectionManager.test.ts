@@ -130,26 +130,44 @@ describe('ConnectionManager', () => {
     });
 
     it('should execute a query without params', async () => {
-      runSpy.mockResolvedValueOnce({ lastID: 1, changes: 1 });
+      runSpy.mockImplementation((query, ...args) => {
+        const callback = args[args.length - 1];
+        if (typeof callback === 'function') {
+          callback.call({ lastID: 1, changes: 1 }, null);
+        }
+        return Promise.resolve({ lastID: 1, changes: 1 });
+      });
 
       const result = await connectionManager.executeQuery('INSERT INTO test VALUES (1)');
 
-      expect(runSpy).toHaveBeenCalledWith('INSERT INTO test VALUES (1)');
+      expect(runSpy).toHaveBeenCalledWith('INSERT INTO test VALUES (1)', expect.any(Function));
       expect(result).toEqual({ lastID: 1, changes: 1 });
     });
 
     it('should execute a query with params', async () => {
-      runSpy.mockResolvedValueOnce({ lastID: 1, changes: 1 });
+      runSpy.mockImplementation((query, ...args) => {
+        const callback = args[args.length - 1];
+        if (typeof callback === 'function') {
+          callback.call({ lastID: 1, changes: 1 }, null);
+        }
+        return Promise.resolve({ lastID: 1, changes: 1 });
+      });
 
       const result = await connectionManager.executeQuery('INSERT INTO test VALUES (?)', [1]);
 
-      expect(runSpy).toHaveBeenCalledWith('INSERT INTO test VALUES (?)', [1]);
+      expect(runSpy).toHaveBeenCalledWith('INSERT INTO test VALUES (?)', [1], expect.any(Function));
       expect(result).toEqual({ lastID: 1, changes: 1 });
     });
 
     it('should handle query execution errors', async () => {
       const error = new Error('Query failed');
-      runSpy.mockRejectedValueOnce(error);
+      runSpy.mockImplementation((query, ...args) => {
+        const callback = args[args.length - 1];
+        if (typeof callback === 'function') {
+          callback(error);
+        }
+        return Promise.resolve({} as any);
+      });
 
       await expect(connectionManager.executeQuery('BAD QUERY')).rejects.toThrow('Query failed');
     });
@@ -169,27 +187,49 @@ describe('ConnectionManager', () => {
 
     it('should execute a select query without params', async () => {
       const mockRows = [{ id: 1 }];
-      allSpy.mockResolvedValueOnce(mockRows);
+      allSpy.mockImplementation((query, ...args) => {
+        const callback = args[args.length - 1];
+        if (typeof callback === 'function') {
+          callback(null, mockRows);
+        }
+        return Promise.resolve(mockRows);
+      });
 
       const rows = await connectionManager.selectQuery('SELECT * FROM test');
 
-      expect(allSpy).toHaveBeenCalledWith('SELECT * FROM test');
+      expect(allSpy).toHaveBeenCalledWith('SELECT * FROM test', expect.any(Function));
       expect(rows).toEqual(mockRows);
     });
 
     it('should execute a select query with params', async () => {
       const mockRows = [{ id: 1 }];
-      allSpy.mockResolvedValueOnce(mockRows);
+      allSpy.mockImplementation((query, ...args) => {
+        const callback = args[args.length - 1];
+        if (typeof callback === 'function') {
+          callback(null, mockRows);
+        }
+        return Promise.resolve(mockRows);
+      });
 
       const rows = await connectionManager.selectQuery('SELECT * FROM test WHERE id = ?', [1]);
 
-      expect(allSpy).toHaveBeenCalledWith('SELECT * FROM test WHERE id = ?', [1]);
+      expect(allSpy).toHaveBeenCalledWith(
+        'SELECT * FROM test WHERE id = ?',
+        [1],
+        expect.any(Function)
+      );
       expect(rows).toEqual(mockRows);
     });
 
     it('should handle select query errors', async () => {
       const error = new Error('Select failed');
-      allSpy.mockRejectedValueOnce(error);
+      allSpy.mockImplementation((query, ...args) => {
+        const callback = args[args.length - 1];
+        if (typeof callback === 'function') {
+          callback(error);
+        }
+        return Promise.resolve([] as any);
+      });
 
       await expect(connectionManager.selectQuery('BAD QUERY')).rejects.toThrow('Select failed');
     });

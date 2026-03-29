@@ -249,7 +249,7 @@ const ModelAutocomplete: React.FC<ModelAutocompleteProps> = ({
             disabled={disabled}
             className={`input input-bordered w-full ${
               validationWarning ? 'input-warning' : ''
-            }`}
+            } ${isValidating ? 'loading' : ''}`}
           />
 
           {/* Loading indicator */}
@@ -267,7 +267,6 @@ const ModelAutocomplete: React.FC<ModelAutocompleteProps> = ({
               disabled={isLoading}
               className="btn btn-ghost btn-square"
               title="Refresh model list"
-              aria-label="Refresh model list"
             >
               {isLoading ? (
                 <LoadingSpinner size="sm" />

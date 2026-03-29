@@ -2,7 +2,6 @@
 import React, { useState, useEffect } from 'react';
 import Card from './DaisyUI/Card';
 import { Loading } from './DaisyUI/Loading';
-import { SkeletonList } from './DaisyUI/Skeleton';
 import Badge from './DaisyUI/Badge';
 import { Alert } from './DaisyUI/Alert';
 import Accordion from './DaisyUI/Accordion';
@@ -95,7 +94,7 @@ const SystemHealth: React.FC<SystemHealthProps> = ({
         setLastRefresh(new Date());
         setError(null);
       } catch (err: any) {
-        // Error details shown inline via setError
+        console.error('Failed to fetch system health:', err);
         // Provide more specific error messages based on error type
         if (err.name === 'TypeError' && err.message.includes('fetch')) {
           setError('Network error: Unable to connect to server. Please check your connection.');
@@ -185,8 +184,11 @@ const SystemHealth: React.FC<SystemHealthProps> = ({
     return (
       <Card>
         <Card.Body>
-          <div className="py-6 px-4">
-            <SkeletonList items={5} />
+          <div className="flex justify-center items-center py-8">
+            <span className="loading loading-spinner loading-lg"></span>
+            <span className="ml-2 text-base-content/70">
+              Loading system health data...
+            </span>
           </div>
         </Card.Body>
       </Card>
@@ -264,8 +266,8 @@ const SystemHealth: React.FC<SystemHealthProps> = ({
         {apiHealth && (
           <div className="mb-6">
             <Alert
-              status={apiHealth?.overall?.status}
-              message={apiHealth?.overall?.message || `System Status: ${metrics?.status}`}
+              status={apiHealth.overall.status}
+              message={apiHealth.overall.message || `System Status: ${metrics?.status}`}
             />
           </div>
         )}
@@ -333,12 +335,12 @@ const SystemHealth: React.FC<SystemHealthProps> = ({
               </div>
               <div className="flex items-center gap-4 mt-2">
                 <Badge
-                  variant={getStatusColor(apiHealth?.overall?.status || 'unknown') as any}
+                  variant={getStatusColor(apiHealth?.overall.status || 'unknown') as any}
                   size="lg"
                 >
-                  {apiHealth?.overall?.status || 'Unknown'}
+                  {apiHealth?.overall.status || 'Unknown'}
                 </Badge>
-                {apiHealth?.overall?.stats && (
+                {apiHealth && (
                   <span className="text-sm">
                     {apiHealth.overall.stats.online} / {apiHealth.overall.stats.total} Online
                   </span>

@@ -29,19 +29,6 @@ export type {
 } from './IServiceDependencies';
 export type { IAdapterFactory, IAdapterConfig, IAdapterModule } from './IAdapterFactory';
 export type { ILlmProvider } from './ILlmProvider';
-export type {
-  IMemoryProvider,
-  MemoryEntry,
-  MemorySearchResult,
-  MemoryScopeOptions,
-} from './IMemoryProvider';
-export type {
-  IToolProvider,
-  ToolDefinition,
-  ToolInputSchema,
-  ToolResult,
-  ToolExecutionContext,
-} from './IToolProvider';
 export {
   BaseError,
   ValidationError,

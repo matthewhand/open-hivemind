@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import type {
   ProviderModalState,
   ProviderTypeConfig,
@@ -12,13 +12,11 @@ import {
   LLM_PROVIDER_CONFIGS,
 } from '../../types/bot';
 import Button from '../DaisyUI/Button';
-import { X as XIcon, RotateCcw } from 'lucide-react';
+import { X as XIcon } from 'lucide-react';
 import { ProviderConfigForm } from '../ProviderConfigForm';
 import type { ProviderConfigSchema } from '../../provider-configs';
 import { getProviderSchema } from '../../provider-configs';
 import { apiService } from '../../services/api';
-import { useConfigDiff } from '../../hooks/useConfigDiff';
-import { ConfigDiffConfirmDialog } from '../ConfigDiffViewer';
 
 interface ProviderConfigModalProps {
   modalState: ProviderModalState;
@@ -44,15 +42,6 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
   const [formData, setFormData] = useState<Record<string, any>>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [openAiEmbeddingModels, setOpenAiEmbeddingModels] = useState<string[]>([]);
-  const [showDiffConfirm, setShowDiffConfirm] = useState(false);
-
-  const formDataAsRecord = useMemo(() => formData as Record<string, unknown>, [formData]);
-  const { hasChanges, diff, setOriginalConfig, resetToOriginal } = useConfigDiff(formDataAsRecord);
-
-  const handleUndoAll = () => {
-    const original = resetToOriginal();
-    setFormData(original as Record<string, any>);
-  };
 
   // Initialize form data when modal opens or provider changes
   useEffect(() => {
@@ -91,14 +80,6 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [modalState.isOpen, modalState.provider, modalState.isEdit, modalState.providerType]);
-
-  // Snapshot the original config after modal initializes
-  useEffect(() => {
-    if (modalState.isOpen && Object.keys(formData).length > 0) {
-      setOriginalConfig(formData as Record<string, unknown>);
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [modalState.isOpen]);
 
   useEffect(() => {
     if (!modalState.isOpen || modalState.providerType !== 'llm') {
@@ -367,7 +348,6 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
           </h3>
           <button
             className="btn btn-sm btn-circle btn-ghost"
-            aria-label="Close modal"
             onClick={onClose}
           >
             <XIcon className="w-4 h-4" />
@@ -512,16 +492,6 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
 
           {/* Actions */}
           <div className="modal-action">
-            {hasChanges && (
-              <Button
-                type="button"
-                variant="ghost"
-                onClick={handleUndoAll}
-                className="mr-auto gap-1"
-              >
-                <RotateCcw className="w-4 h-4" /> Undo all changes
-              </Button>
-            )}
             <Button
               type="button"
               variant="ghost"
@@ -530,33 +500,14 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
               Cancel
             </Button>
             <Button
-              type="button"
+              type="submit"
               variant="primary"
-              onClick={(e: any) => {
-                if (hasChanges && modalState.isEdit) {
-                  e.preventDefault();
-                  setShowDiffConfirm(true);
-                } else {
-                  handleSubmit(e);
-                }
-              }}
+              onClick={(e: any) => handleSubmit(e)}
             >
               {modalState.isEdit ? 'Update' : 'Submit'} Provider
             </Button>
           </div>
         </form>
-
-        <ConfigDiffConfirmDialog
-          isOpen={showDiffConfirm}
-          diff={diff}
-          onConfirm={() => {
-            setShowDiffConfirm(false);
-            const syntheticEvent = { preventDefault: () => {} } as React.FormEvent;
-            handleSubmit(syntheticEvent);
-          }}
-          onCancel={() => setShowDiffConfirm(false)}
-          title="Confirm Provider Changes"
-        />
       </div>
     </div>
   );

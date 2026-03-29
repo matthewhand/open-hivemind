@@ -3,7 +3,6 @@ import { EventEmitter } from 'events';
 import fs from 'fs';
 import path from 'path';
 import Debug from 'debug';
-import { injectable, singleton } from 'tsyringe';
 import { BotConfigurationManager } from '@config/BotConfigurationManager';
 import { SecureConfigManager } from '@config/SecureConfigManager';
 import { UserConfigStore } from '@config/UserConfigStore';
@@ -70,8 +69,6 @@ export interface CreateBotRequest {
   mcpGuard?: MCPGuardConfig;
 }
 
-@singleton()
-@injectable()
 export class BotManager extends EventEmitter {
   private static instance: BotManager;
   private botConfigManager: BotConfigurationManager;
@@ -258,7 +255,7 @@ export class BotManager extends EventEmitter {
       await this.storeSecureConfig(botId, request.config || {});
 
       // Add to web UI storage
-      await webUIStorage.saveAgent(botInstance);
+      webUIStorage.saveAgent(botInstance);
 
       debug(`Created new bot: ${request.name} (${botId})`);
 
@@ -395,7 +392,7 @@ export class BotManager extends EventEmitter {
       }
 
       // Update in web UI storage
-      await webUIStorage.saveAgent(updatedBot);
+      webUIStorage.saveAgent(updatedBot);
 
       debug(`Updated bot: ${updatedBot.name} (${botId})`);
 
@@ -428,7 +425,7 @@ export class BotManager extends EventEmitter {
 
       if (isCustom) {
         // Remove from web UI storage
-        await webUIStorage.deleteAgent(botId);
+        webUIStorage.deleteAgent(botId);
         // Remove secure configuration
         await this.secureConfigManager.deleteConfig(`bot_${botId}`);
       } else {

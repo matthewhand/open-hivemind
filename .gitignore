@@ -216,13 +216,10 @@ scripts/benchmarks/temp-import-bench.json
 # Development artifacts
 .letta/
 config/backups/
-src/client/coverage/
-*.patch
-/*.png
 .pending_prs.json
 current_prs.json
 patch_yml2.js
-scratch.*
+scratch.js
 scripts/merge_pr.py
 package-lock.json
 check_all_pages.js

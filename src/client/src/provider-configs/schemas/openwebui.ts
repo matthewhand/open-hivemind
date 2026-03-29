@@ -1,5 +1,4 @@
 import type { ProviderConfigSchema } from '../types';
-import { validateApiKey } from '../../utils/apiKeyValidation';
 
 export const openWebUiProviderSchema: ProviderConfigSchema = {
     type: 'llm',
@@ -24,20 +23,9 @@ export const openWebUiProviderSchema: ProviderConfigSchema = {
             label: 'API Key',
             type: 'password',
             required: false,
-            description: 'Your OpenWebUI API key (if using token auth, typically starts with sk-)',
+            description: 'Your OpenWebUI API key (if using token auth)',
             placeholder: 'sk-...',
             group: 'Authentication',
-            validation: {
-                pattern: '^sk-[A-Za-z0-9]{32,}$',
-                custom: (value: string) => {
-                    if (!value) return null; // Optional field
-                    const result = validateApiKey('openwebui', value, false);
-                    if (!result.isValid) {
-                        return result.message || 'Invalid API key format';
-                    }
-                    return null;
-                },
-            },
         },
         {
             name: 'authHeader',

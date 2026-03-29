@@ -13,8 +13,6 @@ import {
   ScaleIcon,
   ShieldCheckIcon,
 } from '@heroicons/react/24/outline';
-import DataTable from './DaisyUI/DataTable';
-import type { RDVColumn } from './DaisyUI/DataTable';
 
 interface ComplianceRule {
   id: string;
@@ -435,8 +433,7 @@ const EnterpriseManager: React.FC = () => {
               <button
                 className="btn btn-primary btn-sm"
                 onClick={() => setAddCloudProviderDialog(true)}
-                disabled={loading} aria-busy={loading}
-                aria-label="Add a new cloud provider"
+                disabled={loading}
               >
                 <PlusIcon className="w-4 h-4 mr-1" />
                 Add Provider
@@ -480,8 +477,7 @@ const EnterpriseManager: React.FC = () => {
               <button
                 className="btn btn-primary btn-sm"
                 onClick={() => setAddIntegrationDialog(true)}
-                disabled={loading} aria-busy={loading}
-                aria-label="Add a new enterprise integration"
+                disabled={loading}
               >
                 <PlusIcon className="w-4 h-4 mr-1" />
                 Add Integration
@@ -506,8 +502,8 @@ const EnterpriseManager: React.FC = () => {
                       Last sync: {new Date(integration.lastSync).toLocaleString()}
                     </p>
                     <div className="card-actions justify-end">
-                      <button className="btn btn-xs btn-outline" aria-label={`Configure ${integration.name}`}>Configure</button>
-                      <button className="btn btn-xs btn-outline" aria-label={`Test ${integration.name}`}>Test</button>
+                      <button className="btn btn-xs btn-outline">Configure</button>
+                      <button className="btn btn-xs btn-outline">Test</button>
                     </div>
                   </div>
                 </div>
@@ -565,56 +561,53 @@ const EnterpriseManager: React.FC = () => {
                   disabled={
                     !auditSearchTerm && auditActionFilter === 'all' && auditResultFilter === 'all'
                   }
-                  aria-label="Clear audit filters"
                 >
                   <FunnelIcon className="w-4 h-4 mr-1" /> Clear Filters
                 </button>
               </div>
             </div>
-            <div className="bg-base-100 rounded-box shadow">
-              <DataTable<AuditEvent>
-                data={filteredAuditEvents}
-                columns={[
-                  {
-                    key: 'timestamp',
-                    title: 'Timestamp',
-                    sortable: true,
-                    render: (value: string) => <span className="text-sm">{new Date(value).toLocaleString()}</span>,
-                  },
-                  { key: 'user', title: 'User', prominent: true },
-                  {
-                    key: 'action',
-                    title: 'Action',
-                    render: (value: string) => <div className="badge badge-ghost badge-sm">{value}</div>,
-                  },
-                  { key: 'resource', title: 'Resource' },
-                  {
-                    key: 'details',
-                    title: 'Details',
-                    render: (value: string) => (
-                      <span className="text-xs max-w-xs truncate" title={value}>{value}</span>
-                    ),
-                  },
-                  {
-                    key: 'result',
-                    title: 'Result',
-                    render: (value: string) => (
-                      <div className={`badge ${getStatusColor(value)} badge-sm`}>{value}</div>
-                    ),
-                  },
-                  {
-                    key: 'ipAddress',
-                    title: 'IP Address',
-                    render: (value: string) => <span className="font-mono text-xs">{value}</span>,
-                  },
-                ] as RDVColumn<AuditEvent>[]}
-                rowKey={(e) => e.id}
-                emptyState={
-                  <div className="text-center py-4 opacity-50">
-                    No audit events match the current structured query.
-                  </div>
-                }
-              />
+            <div className="overflow-x-auto bg-base-100 rounded-box shadow">
+              <table className="table table-zebra w-full">
+                <thead>
+                  <tr>
+                    <th>Timestamp</th>
+                    <th>User</th>
+                    <th>Action</th>
+                    <th>Resource</th>
+                    <th>Details</th>
+                    <th>Result</th>
+                    <th>IP Address</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredAuditEvents.map((event) => (
+                    <tr key={event.id}>
+                      <td className="text-sm">{new Date(event.timestamp).toLocaleString()}</td>
+                      <td>{event.user}</td>
+                      <td>
+                        <div className="badge badge-ghost badge-sm">{event.action}</div>
+                      </td>
+                      <td>{event.resource}</td>
+                      <td className="text-xs max-w-xs truncate" title={event.details}>
+                        {event.details}
+                      </td>
+                      <td>
+                        <div className={`badge ${getStatusColor(event.result)} badge-sm`}>
+                          {event.result}
+                        </div>
+                      </td>
+                      <td className="font-mono text-xs">{event.ipAddress}</td>
+                    </tr>
+                  ))}
+                  {filteredAuditEvents.length === 0 && (
+                    <tr>
+                      <td colSpan={7} className="text-center py-4">
+                        No audit events match the current structured query.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
             </div>
           </div>
         );
@@ -648,7 +641,7 @@ const EnterpriseManager: React.FC = () => {
                       {metric.trend === 'stable' && <span>→</span>}
                     </div>
                     <div className="card-actions justify-end">
-                      <button className="btn btn-sm btn-outline" aria-label={`Optimize ${metric.name}`}>Optimize</button>
+                      <button className="btn btn-sm btn-outline">Optimize</button>
                     </div>
                   </div>
                 </div>
@@ -666,7 +659,7 @@ const EnterpriseManager: React.FC = () => {
     <div className="container mx-auto p-4">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold">Enterprise Manager</h1>
-        <button className="btn btn-outline" onClick={loadEnterpriseData} disabled={loading} aria-busy={loading} aria-label="Refresh enterprise data">
+        <button className="btn btn-outline" onClick={loadEnterpriseData} disabled={loading}>
           <ArrowPathIcon className={`w-5 h-5 mr-2 ${loading ? 'animate-spin' : ''}`} />
           Refresh
         </button>
@@ -733,11 +726,10 @@ const EnterpriseManager: React.FC = () => {
         <div className="modal-box">
           <h3 className="font-bold text-lg mb-4">Add Integration</h3>
           <div className="form-control w-full mb-4">
-            <label htmlFor="integration-name" className="label">
+            <label className="label">
               <span className="label-text">Integration Name</span>
             </label>
             <input
-              id="integration-name"
               type="text"
               className="input input-bordered w-full"
               value={integrationForm.name}
@@ -745,11 +737,10 @@ const EnterpriseManager: React.FC = () => {
             />
           </div>
           <div className="form-control w-full mb-4">
-            <label htmlFor="integration-type" className="label">
+            <label className="label">
               <span className="label-text">Type</span>
             </label>
             <select
-              id="integration-type"
               className="select select-bordered w-full"
               value={integrationForm.type}
               onChange={(e) =>
@@ -767,11 +758,10 @@ const EnterpriseManager: React.FC = () => {
             </select>
           </div>
           <div className="form-control w-full mb-4">
-            <label htmlFor="integration-provider" className="label">
+            <label className="label">
               <span className="label-text">Provider</span>
             </label>
             <input
-              id="integration-provider"
               type="text"
               className="input input-bordered w-full"
               value={integrationForm.provider}
@@ -803,11 +793,10 @@ const EnterpriseManager: React.FC = () => {
         <div className="modal-box">
           <h3 className="font-bold text-lg mb-4">Add Cloud Provider</h3>
           <div className="form-control w-full mb-4">
-            <label htmlFor="cloud-provider-name" className="label">
+            <label className="label">
               <span className="label-text">Provider Name</span>
             </label>
             <input
-              id="cloud-provider-name"
               type="text"
               className="input input-bordered w-full"
               value={cloudForm.name}
@@ -815,11 +804,10 @@ const EnterpriseManager: React.FC = () => {
             />
           </div>
           <div className="form-control w-full mb-4">
-            <label htmlFor="cloud-type" className="label">
+            <label className="label">
               <span className="label-text">Cloud Type</span>
             </label>
             <select
-              id="cloud-type"
               className="select select-bordered w-full"
               value={cloudForm.type}
               onChange={(e) =>
@@ -834,11 +822,10 @@ const EnterpriseManager: React.FC = () => {
             </select>
           </div>
           <div className="form-control w-full mb-4">
-            <label htmlFor="cloud-region" className="label">
+            <label className="label">
               <span className="label-text">Region</span>
             </label>
             <input
-              id="cloud-region"
               type="text"
               className="input input-bordered w-full"
               value={cloudForm.region}

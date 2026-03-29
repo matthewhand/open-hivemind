@@ -57,14 +57,7 @@ export function getRelevantEnvVars(): Record<string, string> {
     'LLM_',
   ];
 
-  const exactKeys = new Set([
-    'PORT',
-    'NODE_ENV',
-    'BASE_URL',
-    'LOG_LEVEL',
-    'REDIS_URL',
-    'DEMO_MODE',
-  ]);
+  const exactKeys = new Set(['PORT', 'NODE_ENV', 'BASE_URL', 'LOG_LEVEL', 'REDIS_URL', 'DEMO_MODE']);
 
   Object.keys(process.env).forEach((envVar) => {
     if (prefixes.some((prefix) => envVar.startsWith(prefix)) || exactKeys.has(envVar)) {

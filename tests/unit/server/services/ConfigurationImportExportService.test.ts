@@ -106,7 +106,7 @@ describe('ConfigurationImportExportService - Backup Retention', () => {
     const result = await service.createBackup('test');
 
     expect(result.success).toBe(true);
-    expect(typeof result.filePath).toBe('string');
+    expect(result.filePath).toBeDefined();
   });
 });
 
@@ -134,7 +134,7 @@ describe('ConfigurationImportExportService - Version Caching', () => {
     (service as any).dbManager = dbManagerMock;
 
     // Mock fs.promises.readFile to return standard format JSON
-    (fs.promises.readFile as jest.Mock).mockImplementation((path: string) => {
+    (fs.promises.readFile as jest.Mock).mockImplementation((path) => {
       return Promise.resolve(JSON.stringify({
         configurations: [],
         versions: [

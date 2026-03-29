@@ -1,34 +1,14 @@
 import { expect, test } from '@playwright/test';
-import { setupAuth } from './test-utils';
 
 test.describe('MCP Servers Page - CRUD Operations', () => {
   test.beforeEach(async ({ page }) => {
-    await setupAuth(page);
-
-    // Mock common endpoints
-    await page.route('**/api/health/detailed', (route) =>
-      route.fulfill({ status: 200, json: { status: 'healthy' } })
-    );
-    await page.route('**/api/config/llm-status', (route) =>
-      route.fulfill({
-        status: 200,
-        json: { defaultConfigured: true, defaultProviders: [], botsMissingLlmProvider: [], hasMissing: false },
-      })
-    );
-    await page.route('**/api/config/global', (route) => route.fulfill({ status: 200, json: {} }));
-    await page.route('**/api/csrf-token', (route) =>
-      route.fulfill({ status: 200, json: { token: 'mock-csrf-token' } })
-    );
-    await page.route('**/api/demo/status', (route) =>
-      route.fulfill({ status: 200, json: { active: false } })
-    );
-    await page.route('**/api/admin/guard-profiles', (route) =>
-      route.fulfill({ status: 200, json: { data: [] } })
-    );
-    await page.route('**/api/config', (route) => route.fulfill({ status: 200, json: { bots: [] } }));
+    // Mock successful authentication
+    await page.route('/api/auth/check', async (route) => {
+      await route.fulfill({ status: 200, json: { authenticated: true, user: { role: 'admin' } } });
+    });
 
     // Mock initial list of servers
-    await page.route('**/api/admin/mcp-servers', async (route) => {
+    await page.route('/api/admin/mcp-servers', async (route) => {
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
@@ -59,7 +39,7 @@ test.describe('MCP Servers Page - CRUD Operations', () => {
 
   test('should stop a running server', async ({ page }) => {
     // Mock disconnect endpoint
-    await page.route('**/api/admin/mcp-servers/disconnect', async (route) => {
+    await page.route('/api/admin/mcp-servers/disconnect', async (route) => {
       const body = JSON.parse(route.request().postData() || '{}');
       expect(body.name).toBe('Running Server');
       await route.fulfill({
@@ -77,23 +57,25 @@ test.describe('MCP Servers Page - CRUD Operations', () => {
 
     await page.goto('/admin/mcp/servers');
 
-    // Wait for the running server to appear
-    await expect(page.getByRole('heading', { name: 'Running Server' })).toBeVisible();
+    // Find the running server card
+    const runningCard = page.locator('.card', { hasText: 'Running Server' });
+    await expect(runningCard).toBeVisible();
 
-    // Find the Disconnect button for the running server
-    const disconnectButton = page.getByRole('button', { name: 'Disconnect Running Server' });
-    await expect(disconnectButton).toBeVisible();
+    // Find the Stop button (text-error btn-circle with StopIcon)
+    // The icon might not be selectable by text, but we can use title
+    const stopButton = runningCard.getByTitle('Stop Server');
+    await expect(stopButton).toBeVisible();
 
-    // Click Disconnect
-    await disconnectButton.click();
+    // Click Stop
+    await stopButton.click();
 
-    // Verify success message or that the action completed
-    await page.waitForTimeout(500);
+    // Verify success message
+    await expect(page.getByRole('alert').getByText('Server stop action completed')).toBeVisible();
   });
 
   test('should delete a server', async ({ page }) => {
     // Mock delete endpoint
-    await page.route('**/api/admin/mcp-servers/Stopped%20Server', async (route) => {
+    await page.route('/api/admin/mcp-servers/Stopped%20Server', async (route) => {
       expect(route.request().method()).toBe('DELETE');
       await route.fulfill({
         status: 200,
@@ -110,17 +92,18 @@ test.describe('MCP Servers Page - CRUD Operations', () => {
 
     await page.goto('/admin/mcp/servers');
 
-    // Wait for the stopped server to appear
-    await expect(page.getByRole('heading', { name: 'Stopped Server' })).toBeVisible();
+    // Find the stopped server card
+    const stoppedCard = page.locator('.card', { hasText: 'Stopped Server' });
+    await expect(stoppedCard).toBeVisible();
 
-    // Find the Delete button for the stopped server
-    const deleteButton = page.getByRole('button', { name: 'Delete Stopped Server' });
+    // Find the Delete button
+    const deleteButton = stoppedCard.getByTitle('Delete Server');
     await expect(deleteButton).toBeVisible();
 
     // Click Delete
     await deleteButton.click();
 
-    // Verify the action completed
-    await page.waitForTimeout(500);
+    // Verify success message
+    await expect(page.getByRole('alert').getByText('Server deleted successfully')).toBeVisible();
   });
 });

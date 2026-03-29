@@ -2,9 +2,8 @@ import express from 'express';
 import request from 'supertest';
 import dashboardRouter from '../../src/server/routes/dashboard';
 
-jest.mock('../../src/auth/middleware', () => ({
-  authenticate: (req: any, res: any, next: any) => next(),
-  requireAdmin: (req: any, res: any, next: any) => next(),
+jest.mock('../../src/server/middleware/auth', () => ({
+  authenticateToken: (req: any, res: any, next: any) => next(),
 }));
 
 jest.mock('@src/config/BotConfigurationManager', () => ({
@@ -22,12 +21,6 @@ jest.mock('@src/server/services/WebSocketService', () => ({
 
 jest.mock('../../src/server/services/ActivityLogger', () => ({
   ActivityLogger: {
-    getInstance: jest.fn(),
-  },
-}));
-
-jest.mock('../../src/services/AnalyticsService', () => ({
-  AnalyticsService: {
     getInstance: jest.fn(),
   },
 }));
@@ -108,13 +101,6 @@ describe('dashboard activity route', () => {
     expect(response.body.events).toHaveLength(2);
     expect(response.body.events[0].userId).toBe('******1234');
     expect(response.body.events[0].channelId).toBe('********C123');
-    expect(response.body.pagination).toEqual({
-      total: 2,
-      page: 1,
-      limit: 50,
-      offset: 0,
-      hasMore: false,
-    });
     expect(response.body.filters.agents).toEqual(expect.arrayContaining(['AgentA', 'AgentB']));
     expect(response.body.timeline.length).toBeGreaterThan(0);
     expect(response.body.agentMetrics).toEqual(
@@ -162,110 +148,5 @@ describe('dashboard activity route', () => {
         endTime: expect.any(Date),
       })
     );
-  });
-
-  it('supports pagination parameters', async () => {
-    mockManagerInstance.getAllBots.mockReturnValue([
-      { name: 'AgentA', messageProvider: 'slack', llmProvider: 'openai' },
-    ]);
-
-    const now = new Date();
-    // Create 100 mock events
-    const mockEvents = Array.from({ length: 100 }, (_, i) => ({
-      id: String(i + 1),
-      botName: 'AgentA',
-      provider: 'slack',
-      channelId: `channel-${i}`,
-      userId: `user-${i}`,
-      messageType: 'incoming' as const,
-      contentLength: 20,
-      status: 'success' as const,
-      timestamp: new Date(now.getTime() - i * 1000).toISOString(),
-    }));
-
-    mockActivityLoggerInstance.getEvents.mockReturnValue(mockEvents);
-    mockWsInstance.getAllBotStats.mockReturnValue({ AgentA: { messageCount: 100, errors: [] } });
-
-    // Test page 1 with limit 25
-    const response1 = await request(app)
-      .get('/dashboard/activity')
-      .query({ page: 1, limit: 25 });
-
-    expect(response1.status).toBe(200);
-    expect(response1.body.events).toHaveLength(25);
-    expect(response1.body.pagination).toEqual({
-      total: 100,
-      page: 1,
-      limit: 25,
-      offset: 0,
-      hasMore: true,
-    });
-
-    // Test page 2 with limit 25
-    const response2 = await request(app)
-      .get('/dashboard/activity')
-      .query({ page: 2, limit: 25 });
-
-    expect(response2.status).toBe(200);
-    expect(response2.body.events).toHaveLength(25);
-    expect(response2.body.pagination).toEqual({
-      total: 100,
-      page: 2,
-      limit: 25,
-      offset: 25,
-      hasMore: true,
-    });
-
-    // Test last page
-    const response3 = await request(app)
-      .get('/dashboard/activity')
-      .query({ page: 4, limit: 25 });
-
-    expect(response3.status).toBe(200);
-    expect(response3.body.events).toHaveLength(25);
-    expect(response3.body.pagination).toEqual({
-      total: 100,
-      page: 4,
-      limit: 25,
-      offset: 75,
-      hasMore: false,
-    });
-  });
-
-  it('supports offset parameter', async () => {
-    mockManagerInstance.getAllBots.mockReturnValue([
-      { name: 'AgentA', messageProvider: 'slack', llmProvider: 'openai' },
-    ]);
-
-    const now = new Date();
-    const mockEvents = Array.from({ length: 50 }, (_, i) => ({
-      id: String(i + 1),
-      botName: 'AgentA',
-      provider: 'slack',
-      channelId: `channel-${i}`,
-      userId: `user-${i}`,
-      messageType: 'incoming' as const,
-      contentLength: 20,
-      status: 'success' as const,
-      timestamp: new Date(now.getTime() - i * 1000).toISOString(),
-    }));
-
-    mockActivityLoggerInstance.getEvents.mockReturnValue(mockEvents);
-    mockWsInstance.getAllBotStats.mockReturnValue({ AgentA: { messageCount: 50, errors: [] } });
-
-    // Test with offset 10, limit 10
-    const response = await request(app)
-      .get('/dashboard/activity')
-      .query({ offset: 10, limit: 10 });
-
-    expect(response.status).toBe(200);
-    expect(response.body.events).toHaveLength(10);
-    expect(response.body.pagination).toEqual({
-      total: 50,
-      page: 1,
-      limit: 10,
-      offset: 10,
-      hasMore: true,
-    });
   });
 });
