@@ -208,6 +208,25 @@ export class SecureConfigManager {
   }
 
   /**
+   * Synchronous version of getDecryptedMainConfig for use in constructors
+   * and other synchronous contexts that cannot await.
+   */
+  public getDecryptedMainConfigSync(env: string): Record<string, unknown> | null {
+    try {
+      const configPath = path.join(this.mainConfigDir, `${env}.json.enc`);
+      if (!fs.existsSync(configPath)) {
+        return null;
+      }
+      const encryptedData = fs.readFileSync(configPath, 'utf8');
+      const decryptedData = this.decrypt(encryptedData);
+      return JSON.parse(decryptedData);
+    } catch (error) {
+      debug(`Failed to read decrypted main config for env ${env}:`, error);
+      return null;
+    }
+  }
+
+  /**
    * Delete a configuration
    */
   public async deleteConfig(id: string): Promise<void> {
