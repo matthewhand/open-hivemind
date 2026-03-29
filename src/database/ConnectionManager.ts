@@ -87,27 +87,13 @@ export class ConnectionManager extends EventEmitter {
       throw new Error('Database not connected');
     }
 
-    return new Promise((resolve, reject) => {
-      if (params && params.length > 0) {
-        this.db!.run(query, params, function (err) {
-          if (err) {
-            Logger.error(`Query execution error: ${err.message}`);
-            reject(err);
-          } else {
-            resolve({ lastID: this.lastID, changes: this.changes });
-          }
-        });
-      } else {
-        this.db!.run(query, function (err) {
-          if (err) {
-            Logger.error(`Query execution error: ${err.message}`);
-            reject(err);
-          } else {
-            resolve({ lastID: this.lastID, changes: this.changes });
-          }
-        });
-      }
-    });
+    try {
+      const result = await (params && params.length > 0 ? this.db.run(query, params) : this.db.run(query));
+      return { lastID: result.lastID ?? 0, changes: result.changes ?? 0 };
+    } catch (err) {
+      Logger.error(`Query execution error: ${(err as Error).message}`);
+      throw err;
+    }
   }
 
   async selectQuery(query: string, params?: SqlParam[]): Promise<Record<string, unknown>[]> {
@@ -115,26 +101,12 @@ export class ConnectionManager extends EventEmitter {
       throw new Error('Database not connected');
     }
 
-    return new Promise((resolve, reject) => {
-      if (params && params.length > 0) {
-        this.db!.all(query, params, (err, rows) => {
-          if (err) {
-            Logger.error(`Select query error: ${err.message}`);
-            reject(err);
-          } else {
-            resolve(rows);
-          }
-        });
-      } else {
-        this.db!.all(query, (err, rows) => {
-          if (err) {
-            Logger.error(`Select query error: ${err.message}`);
-            reject(err);
-          } else {
-            resolve(rows);
-          }
-        });
-      }
-    });
+    try {
+      const rows = await (params && params.length > 0 ? this.db.all<Record<string, unknown>[]>(query, params) : this.db.all<Record<string, unknown>[]>(query));
+      return rows;
+    } catch (err) {
+      Logger.error(`Select query error: ${(err as Error).message}`);
+      throw err;
+    }
   }
 }
