@@ -1,15 +1,15 @@
 import fc from 'fast-check';
 import discordConfig from '../../src/config/discordConfig';
+import flowiseConfig from '../../src/config/flowiseConfig';
+import llmConfig from '../../src/config/llmConfig';
+import llmTaskConfig from '../../src/config/llmTaskConfig';
 import mattermostConfig from '../../src/config/mattermostConfig';
 import messageConfig from '../../src/config/messageConfig';
+import openaiConfig from '../../src/config/openaiConfig';
+import openWebUIConfig from '../../src/config/openWebUIConfig';
 import slackConfig from '../../src/config/slackConfig';
 import telegramConfig from '../../src/config/telegramConfig';
 import webhookConfig from '../../src/config/webhookConfig';
-import llmConfig from '../../src/config/llmConfig';
-import openaiConfig from '../../src/config/openaiConfig';
-import flowiseConfig from '../../src/config/flowiseConfig';
-import openWebUIConfig from '../../src/config/openWebUIConfig';
-import llmTaskConfig from '../../src/config/llmTaskConfig';
 
 /**
  * Test data factories for creating consistent test data across test suites
@@ -218,10 +218,13 @@ export const slackConfigData: ConfigTestData = {
     WELCOME_RESOURCE_URL: 'https://university.example.com/resources',
     REPORT_ISSUE_URL: 'https://university.example.com/report-issue',
     SLACK_MODE: 'socket',
-    SLACK_BOT_JOIN_CHANNEL_MESSAGE: '# Bot joined the {channel} channel! :robot_face:\n\nWelcome! I\'m here to assist. [Get Started](action:start_{channel})',
-    SLACK_USER_JOIN_CHANNEL_MESSAGE: '# Welcome, {user}, to the {channel} channel! :wave:\n\nHere’s some quick info:\n- *Purpose*: Support student inquiries related to learning objectives...\n- *Resources*: [Learn More](https://university.example.com/resources)\n\n## Actions\n- [Learning Objectives](action:learn_objectives_{channel})\n- [How-To](action:how_to_{channel})\n- [Contact Support](action:contact_support_{channel})\n- [Report Issue](action:report_issue_{channel})',
+    SLACK_BOT_JOIN_CHANNEL_MESSAGE:
+      "# Bot joined the {channel} channel! :robot_face:\n\nWelcome! I'm here to assist. [Get Started](action:start_{channel})",
+    SLACK_USER_JOIN_CHANNEL_MESSAGE:
+      '# Welcome, {user}, to the {channel} channel! :wave:\n\nHere’s some quick info:\n- *Purpose*: Support student inquiries related to learning objectives...\n- *Resources*: [Learn More](https://university.example.com/resources)\n\n## Actions\n- [Learning Objectives](action:learn_objectives_{channel})\n- [How-To](action:how_to_{channel})\n- [Contact Support](action:contact_support_{channel})\n- [Report Issue](action:report_issue_{channel})',
     SLACK_BOT_LEARN_MORE_MESSAGE: 'Here’s more info about channel {channel}!',
-    SLACK_BUTTON_MAPPINGS: '{"learn_objectives_C08BC0X4DFD": "Learning Objectives", "how_to_C08BC0X4DFD": "How-To", "contact_support_C08BC0X4DFD": "Contact Support", "report_issue_C08BC0X4DFD": "Report Issue", "start_C08BC0X4DFD": "Get Started"}',
+    SLACK_BUTTON_MAPPINGS:
+      '{"learn_objectives_C08BC0X4DFD": "Learning Objectives", "how_to_C08BC0X4DFD": "How-To", "contact_support_C08BC0X4DFD": "Contact Support", "report_issue_C08BC0X4DFD": "Report Issue", "start_C08BC0X4DFD": "Get Started"}',
   },
   envVars: {
     SLACK_BOT_TOKEN: 'xoxb-test-token-123',
@@ -291,7 +294,11 @@ export const openaiConfigData: ConfigTestData = {
     OPENAI_MAX_RETRIES: 3,
     OPENAI_FINISH_REASON_RETRY: 'stop',
     OPENAI_VOICE: 'nova',
-    OPENAI_EMBEDDING_MODELS: ['text-embedding-3-large', 'text-embedding-3-small', 'text-embedding-ada-002'],
+    OPENAI_EMBEDDING_MODELS: [
+      'text-embedding-3-large',
+      'text-embedding-3-small',
+      'text-embedding-ada-002',
+    ],
   },
   envVars: {
     OPENAI_API_KEY: 'test-openai-key-123',
@@ -317,7 +324,11 @@ export const openaiConfigData: ConfigTestData = {
     OPENAI_MAX_RETRIES: 3,
     OPENAI_FINISH_REASON_RETRY: 'stop',
     OPENAI_VOICE: 'nova',
-    OPENAI_EMBEDDING_MODELS: ['text-embedding-3-large', 'text-embedding-3-small', 'text-embedding-ada-002'],
+    OPENAI_EMBEDDING_MODELS: [
+      'text-embedding-3-large',
+      'text-embedding-3-small',
+      'text-embedding-ada-002',
+    ],
   },
 };
 
@@ -399,7 +410,18 @@ export const llmTaskConfigData: ConfigTestData = {
   },
 };
 
-export type SupportedConfigType = 'discord' | 'message' | 'slack' | 'telegram' | 'mattermost' | 'webhook' | 'llm' | 'openai' | 'flowise' | 'openwebui' | 'llmtask';
+export type SupportedConfigType =
+  | 'discord'
+  | 'message'
+  | 'slack'
+  | 'telegram'
+  | 'mattermost'
+  | 'webhook'
+  | 'llm'
+  | 'openai'
+  | 'flowise'
+  | 'openwebui'
+  | 'llmtask';
 
 // Command Parser Test Data
 export const commandParserTestData = {
@@ -439,10 +461,7 @@ export const commandParserTestData = {
  * @param data The generated expectedResults
  * @returns true if valid, throws error otherwise
  */
-export function validateConfigAgainstSchema(
-  type: SupportedConfigType,
-  data: any
-): boolean {
+export function validateConfigAgainstSchema(type: SupportedConfigType, data: any): boolean {
   try {
     switch (type) {
       case 'discord':
@@ -517,9 +536,7 @@ export function validateConfigAgainstSchema(
  * - openwebui: OPEN_WEBUI_API_URL, OPEN_WEBUI_USERNAME, OPEN_WEBUI_PASSWORD
  * - llmtask: None
  */
-export function createTestData(
-  type: SupportedConfigType | 'command'
-): any {
+export function createTestData(type: SupportedConfigType | 'command'): any {
   let data;
   switch (type) {
     case 'discord':
@@ -562,10 +579,7 @@ export function createTestData(
   }
 
   // Validate the data against the schema
-  validateConfigAgainstSchema(
-    type as SupportedConfigType,
-    data.expectedResults
-  );
+  validateConfigAgainstSchema(type as SupportedConfigType, data.expectedResults);
   return data;
 }
 
@@ -733,7 +747,9 @@ export const flowiseConfigGenerator = fc.record({
  * Property-based test generator for OpenWebUI configuration
  */
 export const openWebUIConfigGenerator = fc.record({
-  OPEN_WEBUI_API_URL: fc.webUrl().chain((url) => fc.constant(url || 'http://host.docker.internal:3000/api/')),
+  OPEN_WEBUI_API_URL: fc
+    .webUrl()
+    .chain((url) => fc.constant(url || 'http://host.docker.internal:3000/api/')),
   OPEN_WEBUI_USERNAME: fc.string({ minLength: 1 }),
   OPEN_WEBUI_PASSWORD: fc.string({ minLength: 1 }),
   OPEN_WEBUI_KNOWLEDGE_FILE: fc.string(),

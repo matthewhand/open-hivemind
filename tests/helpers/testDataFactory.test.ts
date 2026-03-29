@@ -108,67 +108,100 @@ describe('testDataFactory', () => {
   describe('validateConfigAgainstSchema', () => {
     it('should correctly validate valid discord config', () => {
       expect(() => {
-        testDataFactory.validateConfigAgainstSchema('discord', testDataFactory.discordConfigData.expectedResults);
+        testDataFactory.validateConfigAgainstSchema(
+          'discord',
+          testDataFactory.discordConfigData.expectedResults
+        );
       }).not.toThrow();
     });
 
     it('should correctly validate valid message config', () => {
       expect(() => {
-        testDataFactory.validateConfigAgainstSchema('message', testDataFactory.messageConfigData.expectedResults);
+        testDataFactory.validateConfigAgainstSchema(
+          'message',
+          testDataFactory.messageConfigData.expectedResults
+        );
       }).not.toThrow();
     });
 
     it('should correctly validate valid slack config', () => {
       expect(() => {
-        testDataFactory.validateConfigAgainstSchema('slack', testDataFactory.slackConfigData.expectedResults);
+        testDataFactory.validateConfigAgainstSchema(
+          'slack',
+          testDataFactory.slackConfigData.expectedResults
+        );
       }).not.toThrow();
     });
 
     it('should correctly validate valid telegram config', () => {
       expect(() => {
-        testDataFactory.validateConfigAgainstSchema('telegram', testDataFactory.telegramConfigData.expectedResults);
+        testDataFactory.validateConfigAgainstSchema(
+          'telegram',
+          testDataFactory.telegramConfigData.expectedResults
+        );
       }).not.toThrow();
     });
 
     it('should correctly validate valid mattermost config', () => {
       expect(() => {
-        testDataFactory.validateConfigAgainstSchema('mattermost', testDataFactory.mattermostConfigData.expectedResults);
+        testDataFactory.validateConfigAgainstSchema(
+          'mattermost',
+          testDataFactory.mattermostConfigData.expectedResults
+        );
       }).not.toThrow();
     });
 
     it('should correctly validate valid webhook config', () => {
       expect(() => {
-        testDataFactory.validateConfigAgainstSchema('webhook', testDataFactory.webhookConfigData.expectedResults);
+        testDataFactory.validateConfigAgainstSchema(
+          'webhook',
+          testDataFactory.webhookConfigData.expectedResults
+        );
       }).not.toThrow();
     });
 
     it('should correctly validate valid llm config', () => {
       expect(() => {
-        testDataFactory.validateConfigAgainstSchema('llm', testDataFactory.llmConfigData.expectedResults);
+        testDataFactory.validateConfigAgainstSchema(
+          'llm',
+          testDataFactory.llmConfigData.expectedResults
+        );
       }).not.toThrow();
     });
 
     it('should correctly validate valid openai config', () => {
       expect(() => {
-        testDataFactory.validateConfigAgainstSchema('openai', testDataFactory.openaiConfigData.expectedResults);
+        testDataFactory.validateConfigAgainstSchema(
+          'openai',
+          testDataFactory.openaiConfigData.expectedResults
+        );
       }).not.toThrow();
     });
 
     it('should correctly validate valid flowise config', () => {
       expect(() => {
-        testDataFactory.validateConfigAgainstSchema('flowise', testDataFactory.flowiseConfigData.expectedResults);
+        testDataFactory.validateConfigAgainstSchema(
+          'flowise',
+          testDataFactory.flowiseConfigData.expectedResults
+        );
       }).not.toThrow();
     });
 
     it('should correctly validate valid openwebui config', () => {
       expect(() => {
-        testDataFactory.validateConfigAgainstSchema('openwebui', testDataFactory.openWebUIConfigData.expectedResults);
+        testDataFactory.validateConfigAgainstSchema(
+          'openwebui',
+          testDataFactory.openWebUIConfigData.expectedResults
+        );
       }).not.toThrow();
     });
 
     it('should correctly validate valid llmtask config', () => {
       expect(() => {
-        testDataFactory.validateConfigAgainstSchema('llmtask', testDataFactory.llmTaskConfigData.expectedResults);
+        testDataFactory.validateConfigAgainstSchema(
+          'llmtask',
+          testDataFactory.llmTaskConfigData.expectedResults
+        );
       }).not.toThrow();
     });
 
