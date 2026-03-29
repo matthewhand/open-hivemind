@@ -26,7 +26,7 @@ export function getQuotaManager(): QuotaManager {
   if (isProduction && redisUrl) {
     try {
       // Dynamic require so the redis dependency stays optional.
-      // eslint-disable-next-line @typescript-eslint/no-var-requires
+
       const redis = require('redis');
       const client = redis.createClient({ url: redisUrl });
       client.connect().catch((err: Error) => {
@@ -154,7 +154,10 @@ export function quotaMiddleware(req: Request, res: Response, next: NextFunction)
       }
 
       // Consume one request unit
-      manager.consumeQuota(entityId, entityType).then(() => next()).catch(next);
+      manager
+        .consumeQuota(entityId, entityType)
+        .then(() => next())
+        .catch(next);
     })
     .catch((err) => {
       // On store failure, let the request through rather than blocking

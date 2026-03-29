@@ -45,9 +45,9 @@ const RATE_LIMIT_CONFIG = {
 };
 
 // Redis client and store
-// eslint-disable-next-line @typescript-eslint/no-explicit-any -- Redis client is dynamically required
+
 let redisClient: Record<string, (...args: unknown[]) => unknown> | null = null;
-// eslint-disable-next-line @typescript-eslint/no-explicit-any -- RedisStore is dynamically required
+
 let RedisStore: (new (opts: Record<string, unknown>) => unknown) | null = null;
 let redisAvailable = false;
 

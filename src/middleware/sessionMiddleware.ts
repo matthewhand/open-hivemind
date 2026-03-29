@@ -36,7 +36,8 @@ export function getSessionSecret(): string {
 
   // Validate secret strength
   if (envSecret.length < 32) {
-    debug('WARN:', 
+    debug(
+      'WARN:',
       `WARNING: SESSION_SECRET is only ${envSecret.length} characters; ` +
         'it should be at least 32 characters long for adequate security'
     );

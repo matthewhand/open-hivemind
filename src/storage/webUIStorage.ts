@@ -1,6 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import Debug from 'debug';
+
 const debug = Debug('app:storage:webUIStorage');
 
 /**
@@ -88,20 +89,24 @@ export class WebUIStorage {
 
     // Return a new promise that resolves or rejects based on this specific write
     return new Promise((resolve, reject) => {
-      this.saveQueue = this.saveQueue.then(async () => {
-        try {
-          await fs.promises.writeFile(this.configFile, dataToWrite);
-          resolve();
-        } catch (error) {
-          debug('ERROR:', 'Error saving web UI config:', error);
-          reject(new Error(
-            `Failed to save web UI configuration: ${error instanceof Error ? error.message : String(error)}`
-          ));
-        }
-      }).catch(err => {
-        debug('ERROR:', 'Write queue error:', err);
-        reject(err);
-      });
+      this.saveQueue = this.saveQueue
+        .then(async () => {
+          try {
+            await fs.promises.writeFile(this.configFile, dataToWrite);
+            resolve();
+          } catch (error) {
+            debug('ERROR:', 'Error saving web UI config:', error);
+            reject(
+              new Error(
+                `Failed to save web UI configuration: ${error instanceof Error ? error.message : String(error)}`
+              )
+            );
+          }
+        })
+        .catch((err) => {
+          debug('ERROR:', 'Write queue error:', err);
+          reject(err);
+        });
     });
   }
 
@@ -294,31 +299,31 @@ export class WebUIStorage {
     // Initialize default guards if they don't exist or if guards array is missing
     if (!config.guards || config.guards.length === 0) {
       const defaultGuards = [
-          {
-            id: 'access-control',
-            name: 'Access Control',
-            description: 'User and IP-based access restrictions',
-            type: 'access',
-            enabled: true,
-            config: { type: 'users', users: [], ips: [] },
-          },
-          {
-            id: 'rate-limiter',
-            name: 'Rate Limiter',
-            description: 'Prevents spam and excessive requests',
-            type: 'rate',
-            enabled: true,
-            config: { maxRequests: 100, windowMs: 60000 },
-          },
-          {
-            id: 'content-filter',
-            name: 'Content Filter',
-            description: 'Filters inappropriate content',
-            type: 'content',
-            enabled: false,
-            config: {},
-          },
-        ];
+        {
+          id: 'access-control',
+          name: 'Access Control',
+          description: 'User and IP-based access restrictions',
+          type: 'access',
+          enabled: true,
+          config: { type: 'users', users: [], ips: [] },
+        },
+        {
+          id: 'rate-limiter',
+          name: 'Rate Limiter',
+          description: 'Prevents spam and excessive requests',
+          type: 'rate',
+          enabled: true,
+          config: { maxRequests: 100, windowMs: 60000 },
+        },
+        {
+          id: 'content-filter',
+          name: 'Content Filter',
+          description: 'Filters inappropriate content',
+          type: 'content',
+          enabled: false,
+          config: {},
+        },
+      ];
 
       // If guards is undefined, initialize it with defaults
       if (!config.guards) {
@@ -336,7 +341,7 @@ export class WebUIStorage {
       }
 
       // Save the defaults back to storage
-      this.saveConfig(config).catch(err => {
+      this.saveConfig(config).catch((err) => {
         debug('ERROR:', 'Failed to save default guards:', err);
       });
     }

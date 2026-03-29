@@ -7,8 +7,8 @@ import * as openWebUIImport from '../../integrations/openwebui/runInference';
 import type { ILlmProvider } from '../../llm/interfaces/ILlmProvider';
 import { IMessage } from '../../message/interfaces/IMessage';
 import { ErrorUtils } from '../../types/errors';
-import { validateRequest } from '../../validation/validateRequest';
 import { GenerateAIAssistSchema } from '../../validation/schemas/aiAssistSchema';
+import { validateRequest } from '../../validation/validateRequest';
 
 const debug = Debug('app:ai-assist');
 const router = Router();

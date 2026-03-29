@@ -1,3 +1,4 @@
+import Debug from 'debug';
 import {
   type ILLMProvider,
   type IMemoryProvider,
@@ -6,7 +7,7 @@ import {
   type IToolProvider,
 } from '../types/IProvider';
 import { type IToolInstaller } from '../types/IToolInstaller';
-import Debug from 'debug';
+
 const debug = Debug('app:registries:ProviderRegistry');
 
 export class ProviderRegistry {

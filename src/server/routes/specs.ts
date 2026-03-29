@@ -1,8 +1,9 @@
 import { promises as fs } from 'fs';
 import path from 'path';
+import Debug from 'debug';
 import { Router } from 'express';
 import { z } from 'zod';
-import Debug from 'debug';
+
 const debug = Debug('app:server:routes:specs');
 
 const router = Router();

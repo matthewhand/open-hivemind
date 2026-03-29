@@ -45,87 +45,95 @@ const validateIpOctets = (ip: string): boolean => {
 };
 
 // POST / - Update access control guard config
-router.post('/', validateRequest(UpdateAccessControlSchema), async (req: Request, res: Response) => {
-  try {
-    const accessConfig = req.body;
+router.post(
+  '/',
+  validateRequest(UpdateAccessControlSchema),
+  async (req: Request, res: Response) => {
+    try {
+      const accessConfig = req.body;
 
-    // Additional IP octet validation (beyond regex)
-    if (accessConfig.ips) {
-      for (const ip of accessConfig.ips) {
-        if (!validateIpOctets(ip)) {
-          return res.status(400).json({
-            error: 'Validation error',
-            message: 'Invalid IP address or CIDR notation in ips array',
-          });
+      // Additional IP octet validation (beyond regex)
+      if (accessConfig.ips) {
+        for (const ip of accessConfig.ips) {
+          if (!validateIpOctets(ip)) {
+            return res.status(400).json({
+              error: 'Validation error',
+              message: 'Invalid IP address or CIDR notation in ips array',
+            });
+          }
         }
       }
-    }
 
-    // Get existing guards to find the access-control guard
-    const guards = webUIStorage.getGuards();
-    const accessGuard = guards.find((g: Record<string, unknown>) => g.id === 'access-control');
+      // Get existing guards to find the access-control guard
+      const guards = webUIStorage.getGuards();
+      const accessGuard = guards.find((g: Record<string, unknown>) => g.id === 'access-control');
 
-    if (!accessGuard) {
-      // Should not happen if getGuards initializes defaults, but just in case
-      return res.status(404).json({
-        error: 'Not found',
-        message: 'Access control guard not found',
+      if (!accessGuard) {
+        // Should not happen if getGuards initializes defaults, but just in case
+        return res.status(404).json({
+          error: 'Not found',
+          message: 'Access control guard not found',
+        });
+      }
+
+      // Update the config with validated data only
+      accessGuard.config = {
+        type: accessConfig.type,
+        users: accessConfig.users || [],
+        ips: accessConfig.ips || [],
+      };
+
+      // Save the updated guard
+      await webUIStorage.saveGuard(accessGuard);
+
+      return res.json({
+        success: true,
+        message: 'Access control saved successfully',
+      });
+    } catch (error: unknown) {
+      debug('Error saving access control:', error);
+      return res.status(500).json({
+        error: 'Failed to save access control',
+        message: error.message || 'An error occurred while saving access control',
       });
     }
-
-    // Update the config with validated data only
-    accessGuard.config = {
-      type: accessConfig.type,
-      users: accessConfig.users || [],
-      ips: accessConfig.ips || [],
-    };
-
-    // Save the updated guard
-    await webUIStorage.saveGuard(accessGuard);
-
-    return res.json({
-      success: true,
-      message: 'Access control saved successfully',
-    });
-  } catch (error: unknown) {
-    debug('Error saving access control:', error);
-    return res.status(500).json({
-      error: 'Failed to save access control',
-      message: error.message || 'An error occurred while saving access control',
-    });
   }
-});
+);
 
 // POST /:id/toggle - Toggle guard enabled status
-router.post('/:id/toggle', validateRequest(ToggleGuardSchema), async (req: Request, res: Response) => {
-  try {
-    const { id } = req.params;
-    const { enabled } = req.body;
+router.post(
+  '/:id/toggle',
+  validateRequest(ToggleGuardSchema),
+  async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      const { enabled } = req.body;
 
-    // Check if guard exists
-    const guards = webUIStorage.getGuards();
-    const guard = guards.find((g: Record<string, unknown>) => g.id === id);
+      // Check if guard exists
+      const guards = webUIStorage.getGuards();
+      const guard = guards.find((g: Record<string, unknown>) => g.id === id);
 
-    if (!guard) {
-      return res.status(404).json({
-        error: 'Not found',
-        message: `Guard with ID ${id} not found`,
+      if (!guard) {
+        return res.status(404).json({
+          error: 'Not found',
+          message: `Guard with ID ${id} not found`,
+        });
+      }
+
+      await webUIStorage.toggleGuard(id, enabled);
+
+      return res.json({
+        success: true,
+        message: `Guard ${guard.name} ${enabled ? 'enabled' : 'disabled'} successfully`,
+      });
+    } catch (error: unknown) {
+      debug('Error toggling guard:', error);
+      return res.status(500).json({
+        error: 'Failed to toggle guard',
+        message: error.message || 'An error occurred while toggling guard',
       });
     }
-
-    await webUIStorage.toggleGuard(id, enabled);
-
-    return res.json({
-      success: true,
-      message: `Guard ${guard.name} ${enabled ? 'enabled' : 'disabled'} successfully`,
-    });
-  } catch (error: unknown) {
-    debug('Error toggling guard:', error);
-    return res.status(500).json({
-      error: 'Failed to toggle guard',
-      message: error.message || 'An error occurred while toggling guard',
-    });
   }
-});
+);
 
 export default router;

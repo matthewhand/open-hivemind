@@ -1,3 +1,4 @@
+import Debug from 'debug';
 import { Router, type NextFunction, type Request, type Response } from 'express';
 import { body, param, query, validationResult } from 'express-validator';
 import { requireAdmin } from '../../auth/middleware';
@@ -5,7 +6,7 @@ import type { AuthMiddlewareRequest } from '../../auth/types';
 import type { BotConfig } from '../../types/config';
 import { ErrorUtils } from '../../types/errors';
 import { RealTimeValidationService } from '../services/RealTimeValidationService';
-import Debug from 'debug';
+
 const debug = Debug('app:server:routes:validation');
 
 const router = Router();
