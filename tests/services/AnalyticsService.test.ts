@@ -37,7 +37,7 @@ describe('AnalyticsService', () => {
             mockActivityLoggerInstance.getEvents.mockReturnValue([]);
             mockBotConfigInstance.getAllBots.mockReturnValue([]);
 
-            const stats = analyticsService.getStats();
+            const stats = await analyticsService.getStats();
 
             expect(stats).toMatchObject({
                 learningProgress: expect.any(Number),
@@ -83,7 +83,7 @@ describe('AnalyticsService', () => {
             mockActivityLoggerInstance.getEvents.mockReturnValue(events);
             mockBotConfigInstance.getAllBots.mockReturnValue([{ name: 'bot1' }]);
 
-            const stats = analyticsService.getStats();
+            const stats = await analyticsService.getStats();
 
             expect(stats.totalMessages).toBe(2);
             expect(stats.totalErrors).toBe(1);
@@ -97,7 +97,7 @@ describe('AnalyticsService', () => {
         it('returns default patterns when no events exist', () => {
             mockActivityLoggerInstance.getEvents.mockReturnValue([]);
 
-            const patterns = analyticsService.getBehaviorPatterns();
+            const patterns = await analyticsService.getBehaviorPatterns();
 
             expect(patterns).toBeInstanceOf(Array);
             expect(patterns.length).toBeGreaterThan(0);
@@ -130,7 +130,7 @@ describe('AnalyticsService', () => {
 
             mockActivityLoggerInstance.getEvents.mockReturnValue(events);
 
-            const patterns = analyticsService.getBehaviorPatterns();
+            const patterns = await analyticsService.getBehaviorPatterns();
 
             expect(patterns.length).toBeGreaterThan(0);
             // Should include a provider pattern for discord
@@ -154,7 +154,7 @@ describe('AnalyticsService', () => {
 
             mockActivityLoggerInstance.getEvents.mockReturnValue(events);
 
-            const patterns = analyticsService.getBehaviorPatterns();
+            const patterns = await analyticsService.getBehaviorPatterns();
 
             const errorPattern = patterns.find(p => p.id.includes('error'));
             expect(errorPattern).toBeDefined();
@@ -165,7 +165,7 @@ describe('AnalyticsService', () => {
         it('returns default segments when no events exist', () => {
             mockActivityLoggerInstance.getEvents.mockReturnValue([]);
 
-            const segments = analyticsService.getUserSegments();
+            const segments = await analyticsService.getUserSegments();
 
             expect(segments).toBeInstanceOf(Array);
             expect(segments.length).toBeGreaterThan(0);
@@ -190,7 +190,7 @@ describe('AnalyticsService', () => {
             });
         });
 
-        it('segments users by activity level', () => {
+        it('segments users by activity level', async () => {
             const now = new Date();
             const events = [
                 // High activity user
@@ -233,7 +233,7 @@ describe('AnalyticsService', () => {
 
             mockActivityLoggerInstance.getEvents.mockReturnValue(events);
 
-            const segments = analyticsService.getUserSegments();
+            const segments = await analyticsService.getUserSegments();
 
             // Should have segments for different activity levels
             expect(segments.length).toBeGreaterThan(0);
@@ -245,10 +245,10 @@ describe('AnalyticsService', () => {
     });
 
     describe('getRecommendations', () => {
-        it('returns default recommendations when no events exist', () => {
+        it('returns default recommendations when no events exist', async () => {
             mockActivityLoggerInstance.getEvents.mockReturnValue([]);
 
-            const recommendations = analyticsService.getRecommendations();
+            const recommendations = await analyticsService.getRecommendations();
 
             expect(recommendations).toBeInstanceOf(Array);
             expect(recommendations.length).toBeGreaterThan(0);
@@ -263,7 +263,7 @@ describe('AnalyticsService', () => {
             });
         });
 
-        it('recommends error monitoring for high error rate', () => {
+        it('recommends error monitoring for high error rate', async () => {
             const now = new Date();
             const events = Array(20).fill(null).map((_, i) => ({
                 id: `msg-${i}`,
@@ -279,14 +279,14 @@ describe('AnalyticsService', () => {
 
             mockActivityLoggerInstance.getEvents.mockReturnValue(events);
 
-            const recommendations = analyticsService.getRecommendations();
+            const recommendations = await analyticsService.getRecommendations();
 
             const errorRec = recommendations.find(r => r.id.includes('error'));
             expect(errorRec).toBeDefined();
             expect(errorRec?.impact).toBe('high');
         });
 
-        it('recommends analytics for high message volume', () => {
+        it('recommends analytics for high message volume', async () => {
             const now = new Date();
             const events = Array(150).fill(null).map((_, i) => ({
                 id: `msg-${i}`,
@@ -302,13 +302,13 @@ describe('AnalyticsService', () => {
 
             mockActivityLoggerInstance.getEvents.mockReturnValue(events);
 
-            const recommendations = analyticsService.getRecommendations();
+            const recommendations = await analyticsService.getRecommendations();
 
             const analyticsRec = recommendations.find(r => r.id.includes('analytics'));
             expect(analyticsRec).toBeDefined();
         });
 
-        it('recommends performance optimization for slow responses', () => {
+        it('recommends performance optimization for slow responses', async () => {
             const now = new Date();
             const events = Array(20).fill(null).map((_, i) => ({
                 id: `msg-${i}`,
@@ -325,7 +325,7 @@ describe('AnalyticsService', () => {
 
             mockActivityLoggerInstance.getEvents.mockReturnValue(events);
 
-            const recommendations = analyticsService.getRecommendations();
+            const recommendations = await analyticsService.getRecommendations();
 
             const perfRec = recommendations.find(r => r.id.includes('performance'));
             expect(perfRec).toBeDefined();
@@ -334,15 +334,15 @@ describe('AnalyticsService', () => {
     });
 
     describe('getTimeSeries', () => {
-        it('returns empty array when no events exist', () => {
+        it('returns empty array when no events exist', async () => {
             mockActivityLoggerInstance.getEvents.mockReturnValue([]);
 
-            const timeSeries = analyticsService.getTimeSeries();
+            const timeSeries = await analyticsService.getTimeSeries();
 
             expect(timeSeries).toEqual([]);
         });
 
-        it('aggregates events into hourly buckets', () => {
+        it('aggregates events into hourly buckets', async () => {
             const now = new Date();
             const events = Array(24).fill(null).map((_, i) => ({
                 id: `msg-${i}`,
@@ -359,7 +359,7 @@ describe('AnalyticsService', () => {
 
             mockActivityLoggerInstance.getEvents.mockReturnValue(events);
 
-            const timeSeries = analyticsService.getTimeSeries();
+            const timeSeries = await analyticsService.getTimeSeries();
 
             expect(timeSeries.length).toBeGreaterThan(0);
             expect(timeSeries[0]).toMatchObject({
@@ -370,7 +370,7 @@ describe('AnalyticsService', () => {
             });
         });
 
-        it('sorts time series chronologically', () => {
+        it('sorts time series chronologically', async () => {
             const now = new Date();
             const events = [
                 {
@@ -410,7 +410,7 @@ describe('AnalyticsService', () => {
 
             mockActivityLoggerInstance.getEvents.mockReturnValue(events);
 
-            const timeSeries = analyticsService.getTimeSeries();
+            const timeSeries = await analyticsService.getTimeSeries();
 
             // Verify chronological order
             for (let i = 1; i < timeSeries.length; i++) {
