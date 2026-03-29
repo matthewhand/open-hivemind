@@ -69,7 +69,7 @@ describe('PerformanceProfiler Memory Management', () => {
 
       expect(memoryUsage.snapshotsCount).toBe(0);
       expect(memoryUsage.profilesCount).toBe(0);
-      expect(memoryUsage.estimatedMemoryUsage).toBeLessThan(10); // Account for base object size like empty Map/Array
+      expect(memoryUsage.estimatedMemoryUsage).toBeLessThanOrEqual(4);
     });
   });
 
@@ -190,7 +190,7 @@ describe('PerformanceProfiler Memory Management', () => {
       const memoryUsage = testProfiler.getMemoryUsage();
       expect(memoryUsage.snapshotsCount).toBe(0);
       expect(memoryUsage.profilesCount).toBe(0);
-      expect(memoryUsage.estimatedMemoryUsage).toBeLessThan(10);
+      expect(memoryUsage.estimatedMemoryUsage).toBeLessThanOrEqual(4);
     });
 
     test('should clear all data', () => {
@@ -206,7 +206,7 @@ describe('PerformanceProfiler Memory Management', () => {
       const memoryUsage = profiler.getMemoryUsage();
       expect(memoryUsage.snapshotsCount).toBe(0);
       expect(memoryUsage.profilesCount).toBe(0);
-      expect(memoryUsage.estimatedMemoryUsage).toBeLessThan(10);
+      expect(memoryUsage.estimatedMemoryUsage).toBeLessThanOrEqual(4);
     });
   });
 

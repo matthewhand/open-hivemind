@@ -56,7 +56,7 @@ describe('Monitoring Pipeline Integration Tests', () => {
     wsService = mockedWsService;
 
     // Use a fresh instance of metrics collector
-    metricsCollector = new (MetricsCollector as any)(); // circumvent private constructor
+    metricsCollector = new MetricsCollector();
     // Reset metrics on it if needed (actually it is a new instance)
 
     // Ensure AnomalyService uses fresh injected services
