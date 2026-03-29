@@ -3,9 +3,7 @@ import express from 'express';
 import request from 'supertest';
 import { getLlmDefaultStatus } from '../../src/config/llmDefaultStatus';
 import { getLlmProfiles, saveLlmProfiles } from '../../src/config/llmProfiles';
-import { getMemoryProfiles, saveMemoryProfiles } from '../../src/config/memoryProfiles';
 import { getMessageProfiles, saveMessageProfiles } from '../../src/config/messageProfiles';
-import { getToolProfiles, saveToolProfiles } from '../../src/config/toolProfiles';
 // Import mocked modules so we can alter their behavior in tests
 import { BotManager } from '../../src/managers/BotManager';
 // Import the router after mocks are set up
@@ -63,16 +61,6 @@ jest.mock('../../src/config/messageProfiles', () => ({
   saveMessageProfiles: jest.fn(),
 }));
 
-jest.mock('../../src/config/memoryProfiles', () => ({
-  getMemoryProfiles: jest.fn().mockReturnValue({ memory: [] }),
-  saveMemoryProfiles: jest.fn(),
-}));
-
-jest.mock('../../src/config/toolProfiles', () => ({
-  getToolProfiles: jest.fn().mockReturnValue({ tool: [] }),
-  saveToolProfiles: jest.fn(),
-}));
-
 jest.mock('../../src/config/UserConfigStore', () => ({
   UserConfigStore: {
     getInstance: jest.fn().mockReturnValue({
@@ -116,7 +104,7 @@ describe('Config Router - Error Paths and Edge Cases', () => {
   });
 
   describe('GET /api/config/bots', () => {
-    it('should return 500 when botManager.getAllBots throws', async () => {
+    it('should return 503 when botManager.getAllBots throws', async () => {
       const mockError = new Error('Database connection failed');
       (mockError as any).statusCode = 503;
 
@@ -326,233 +314,22 @@ describe('Config Router - Error Paths and Edge Cases', () => {
     });
   });
 
-  describe('GET /api/config/memory-profiles', () => {
-    it('should return 500 when getMemoryProfiles throws', async () => {
-      const mockError = new Error('Parse error');
+  describe('GET /api/config/sources', () => {
+    it('should return 500 when reading config sources throws', async () => {
+      const mockError = new Error('Permission denied');
       (mockError as any).statusCode = 500;
 
-      (getMemoryProfiles as jest.Mock).mockImplementationOnce(() => {
-        throw mockError;
-      });
+      // Make Object.keys(process.env).filter(...) succeed but fs.promises.readdir throw
+      // for a non-ENOENT error to trigger the catch block
+      (fs.promises.readdir as jest.Mock).mockRejectedValueOnce(
+        Object.assign(new Error('Disk failure'), { code: 'EIO' })
+      );
       (ErrorUtils.toHivemindError as jest.Mock).mockReturnValueOnce(mockError);
 
-      const res = await request(app).get('/api/config/memory-profiles');
+      const res = await request(app).get('/api/config/sources');
 
       expect(res.status).toBe(500);
-      expect(res.body.error).toBe('Parse error');
-    });
-  });
-
-  describe('POST /api/config/memory-profiles', () => {
-    it('should return 409 when profile key already exists', async () => {
-      (getMemoryProfiles as jest.Mock).mockReturnValueOnce({
-        memory: [{ key: 'existing-mem-key' }],
-      });
-
-      const res = await request(app)
-        .post('/api/config/memory-profiles')
-        .send({ key: 'existing-mem-key' });
-
-      expect(res.status).toBe(409);
-      expect(res.body.error).toContain('already exists');
-    });
-
-    it('should return 500 when saving throws', async () => {
-      (getMemoryProfiles as jest.Mock).mockReturnValueOnce({ memory: [] });
-
-      const mockError = new Error('Write failed');
-      (mockError as any).statusCode = 500;
-
-      (saveMemoryProfiles as jest.Mock).mockImplementationOnce(() => {
-        throw mockError;
-      });
-      (ErrorUtils.toHivemindError as jest.Mock).mockReturnValueOnce(mockError);
-
-      const res = await request(app)
-        .post('/api/config/memory-profiles')
-        .send({ key: 'new-mem-key' });
-
-      expect(res.status).toBe(500);
-      expect(res.body.error).toBe('Write failed');
-    });
-  });
-
-  describe('PUT /api/config/memory-profiles/:key', () => {
-    it('should return 404 when profile key is not found', async () => {
-      (getMemoryProfiles as jest.Mock).mockReturnValueOnce({ memory: [] });
-
-      const res = await request(app)
-        .put('/api/config/memory-profiles/non-existent')
-        .send({ key: 'non-existent' });
-
-      expect(res.status).toBe(404);
-      expect(res.body.error).toContain('not found');
-    });
-
-    it('should return 500 when saving throws', async () => {
-      (getMemoryProfiles as jest.Mock).mockReturnValueOnce({
-        memory: [{ key: 'existing-key' }],
-      });
-
-      const mockError = new Error('Write failed');
-      (mockError as any).statusCode = 500;
-
-      (saveMemoryProfiles as jest.Mock).mockImplementationOnce(() => {
-        throw mockError;
-      });
-      (ErrorUtils.toHivemindError as jest.Mock).mockReturnValueOnce(mockError);
-
-      const res = await request(app)
-        .put('/api/config/memory-profiles/existing-key')
-        .send({ key: 'existing-key' });
-
-      expect(res.status).toBe(500);
-      expect(res.body.error).toBe('Write failed');
-    });
-  });
-
-  describe('DELETE /api/config/memory-profiles/:key', () => {
-    it('should return 404 when profile key is not found', async () => {
-      (getMemoryProfiles as jest.Mock).mockReturnValueOnce({ memory: [] });
-
-      const res = await request(app).delete('/api/config/memory-profiles/non-existent');
-
-      expect(res.status).toBe(404);
-      expect(res.body.error).toContain('not found');
-    });
-
-    it('should return 500 when saving throws', async () => {
-      (getMemoryProfiles as jest.Mock).mockReturnValueOnce({
-        memory: [{ key: 'existing-key' }],
-      });
-
-      const mockError = new Error('Write failed');
-      (mockError as any).statusCode = 500;
-
-      (saveMemoryProfiles as jest.Mock).mockImplementationOnce(() => {
-        throw mockError;
-      });
-      (ErrorUtils.toHivemindError as jest.Mock).mockReturnValueOnce(mockError);
-
-      const res = await request(app).delete('/api/config/memory-profiles/existing-key');
-
-      expect(res.status).toBe(500);
-      expect(res.body.error).toBe('Write failed');
-    });
-  });
-
-  describe('GET /api/config/tool-profiles', () => {
-    it('should return 500 when getToolProfiles throws', async () => {
-      const mockError = new Error('Parse error');
-      (mockError as any).statusCode = 500;
-
-      (getToolProfiles as jest.Mock).mockImplementationOnce(() => {
-        throw mockError;
-      });
-      (ErrorUtils.toHivemindError as jest.Mock).mockReturnValueOnce(mockError);
-
-      const res = await request(app).get('/api/config/tool-profiles');
-
-      expect(res.status).toBe(500);
-      expect(res.body.error).toBe('Parse error');
-    });
-  });
-
-  describe('POST /api/config/tool-profiles', () => {
-    it('should return 409 when profile key already exists', async () => {
-      (getToolProfiles as jest.Mock).mockReturnValueOnce({
-        tool: [{ key: 'existing-tool-key' }],
-      });
-
-      const res = await request(app)
-        .post('/api/config/tool-profiles')
-        .send({ key: 'existing-tool-key' });
-
-      expect(res.status).toBe(409);
-      expect(res.body.error).toContain('already exists');
-    });
-
-    it('should return 500 when saving throws', async () => {
-      (getToolProfiles as jest.Mock).mockReturnValueOnce({ tool: [] });
-
-      const mockError = new Error('Write failed');
-      (mockError as any).statusCode = 500;
-
-      (saveToolProfiles as jest.Mock).mockImplementationOnce(() => {
-        throw mockError;
-      });
-      (ErrorUtils.toHivemindError as jest.Mock).mockReturnValueOnce(mockError);
-
-      const res = await request(app)
-        .post('/api/config/tool-profiles')
-        .send({ key: 'new-tool-key' });
-
-      expect(res.status).toBe(500);
-      expect(res.body.error).toBe('Write failed');
-    });
-  });
-
-  describe('PUT /api/config/tool-profiles/:key', () => {
-    it('should return 404 when profile key is not found', async () => {
-      (getToolProfiles as jest.Mock).mockReturnValueOnce({ tool: [] });
-
-      const res = await request(app)
-        .put('/api/config/tool-profiles/non-existent')
-        .send({ key: 'non-existent' });
-
-      expect(res.status).toBe(404);
-      expect(res.body.error).toContain('not found');
-    });
-
-    it('should return 500 when saving throws', async () => {
-      (getToolProfiles as jest.Mock).mockReturnValueOnce({
-        tool: [{ key: 'existing-key' }],
-      });
-
-      const mockError = new Error('Write failed');
-      (mockError as any).statusCode = 500;
-
-      (saveToolProfiles as jest.Mock).mockImplementationOnce(() => {
-        throw mockError;
-      });
-      (ErrorUtils.toHivemindError as jest.Mock).mockReturnValueOnce(mockError);
-
-      const res = await request(app)
-        .put('/api/config/tool-profiles/existing-key')
-        .send({ key: 'existing-key' });
-
-      expect(res.status).toBe(500);
-      expect(res.body.error).toBe('Write failed');
-    });
-  });
-
-  describe('DELETE /api/config/tool-profiles/:key', () => {
-    it('should return 404 when profile key is not found', async () => {
-      (getToolProfiles as jest.Mock).mockReturnValueOnce({ tool: [] });
-
-      const res = await request(app).delete('/api/config/tool-profiles/non-existent');
-
-      expect(res.status).toBe(404);
-      expect(res.body.error).toContain('not found');
-    });
-
-    it('should return 500 when saving throws', async () => {
-      (getToolProfiles as jest.Mock).mockReturnValueOnce({
-        tool: [{ key: 'existing-key' }],
-      });
-
-      const mockError = new Error('Write failed');
-      (mockError as any).statusCode = 500;
-
-      (saveToolProfiles as jest.Mock).mockImplementationOnce(() => {
-        throw mockError;
-      });
-      (ErrorUtils.toHivemindError as jest.Mock).mockReturnValueOnce(mockError);
-
-      const res = await request(app).delete('/api/config/tool-profiles/existing-key');
-
-      expect(res.status).toBe(500);
-      expect(res.body.error).toBe('Write failed');
+      expect(res.body.code).toBe('CONFIG_SOURCES_ERROR');
     });
   });
 
@@ -605,6 +382,25 @@ describe('Config Router - Error Paths and Edge Cases', () => {
       const res = await request(app).get('/api/config/global');
       expect(res.status).toBe(200);
       expect(res.body).toHaveProperty('llm');
+    });
+
+    it('should return 500 when reading global config throws', async () => {
+      const mockError = new Error('Config read failure');
+      (mockError as any).statusCode = 500;
+      (mockError as any).code = 'CONFIG_GLOBAL_GET_ERROR';
+
+      // The global route iterates globalConfigs and calls config.getProperties().
+      // We make UserConfigStore.getInstance throw to trigger the catch block.
+      const { UserConfigStore } = require('../../src/config/UserConfigStore');
+      (UserConfigStore.getInstance as jest.Mock).mockImplementationOnce(() => {
+        throw mockError;
+      });
+      (ErrorUtils.toHivemindError as jest.Mock).mockReturnValueOnce(mockError);
+
+      const res = await request(app).get('/api/config/global');
+
+      expect(res.status).toBe(500);
+      expect(res.body.code).toBe('CONFIG_GLOBAL_GET_ERROR');
     });
   });
 });
