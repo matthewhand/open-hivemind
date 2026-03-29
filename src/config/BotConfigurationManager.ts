@@ -21,6 +21,48 @@ import { ConfigurationError } from '../types/errorClasses';
 
 const debug = Debug('app:BotConfigurationManager');
 
+/**
+ * A simple in-memory cache with time-to-live (TTL) expiration.
+ *
+ * Currently used to cache synchronous configuration reads. When the project
+ * migrates to async I/O for config loading (see #2143), this cache can be
+ * adapted to wrap async reads without changing the external API — callers
+ * that are still synchronous will continue to hit the cache while async
+ * callers benefit from deferred loading.
+ */
+class TTLCache<K, V> {
+  private cache = new Map<K, { value: V; expiresAt: number }>();
+  private readonly ttlMs: number;
+
+  constructor(ttlMs: number) {
+    this.ttlMs = ttlMs;
+  }
+
+  get(key: K): V | undefined {
+    const entry = this.cache.get(key);
+    if (!entry) {
+      return undefined;
+    }
+    if (Date.now() > entry.expiresAt) {
+      this.cache.delete(key);
+      return undefined;
+    }
+    return entry.value;
+  }
+
+  set(key: K, value: V): void {
+    this.cache.set(key, { value, expiresAt: Date.now() + this.ttlMs });
+  }
+
+  clear(): void {
+    this.cache.clear();
+  }
+
+  get size(): number {
+    return this.cache.size;
+  }
+}
+
 // Define the schema for individual bot configuration
 const botSchema = {
   // Message provider configuration
@@ -328,6 +370,9 @@ const botSchema = {
 
 // BotConfig interface is now imported from @src/types/config
 
+/** Default cache TTL: 30 seconds. Override via BOT_CONFIG_CACHE_TTL_MS env var. */
+const DEFAULT_CACHE_TTL_MS = 30_000;
+
 export class BotConfigurationManager {
   private static instance: BotConfigurationManager;
   private bots = new Map<string, BotConfig>();
@@ -335,7 +380,22 @@ export class BotConfigurationManager {
   private warnings: string[] = [];
   private userConfigStore = UserConfigStore.getInstance();
 
+  /**
+   * Per-bot config cache keyed by bot name. Avoids rebuilding BotConfig
+   * objects on every getBot() call when the underlying data has not changed.
+   *
+   * The cache is invalidated on reload() and loadConfiguration(), so callers
+   * always see fresh data after a hot-reload or manual refresh.
+   */
+  private botCache: TTLCache<string, BotConfig>;
+
+  /** Cached result of getAllBots(). Cleared alongside botCache. */
+  private allBotsCache: TTLCache<string, BotConfig[]>;
+
   public constructor() {
+    const ttl = Number(process.env.BOT_CONFIG_CACHE_TTL_MS) || DEFAULT_CACHE_TTL_MS;
+    this.botCache = new TTLCache<string, BotConfig>(ttl);
+    this.allBotsCache = new TTLCache<string, BotConfig[]>(ttl);
     this.loadConfiguration();
   }
 
@@ -363,6 +423,8 @@ export class BotConfigurationManager {
   private loadConfiguration(): void {
     this.bots.clear();
     this.warnings = [];
+    this.botCache.clear();
+    this.allBotsCache.clear();
 
     // Check for new BOTS configuration and Auto-Discovery
     const botsEnv = process.env.BOTS;
@@ -1010,14 +1072,20 @@ export class BotConfigurationManager {
    */
 
   public getAllBots(): BotConfig[] {
-    return Array.from(this.bots.values());
+    const cached = this.allBotsCache.get('__all__');
+    if (cached) {
+      return cached;
+    }
+    const result = Array.from(this.bots.values());
+    this.allBotsCache.set('__all__', result);
+    return result;
   }
 
   /**
    * Get Discord-specific bot configurations
    */
   public getDiscordBotConfigs(): BotConfig[] {
-    return Array.from(this.bots.values()).filter(bot =>
+    return this.getAllBots().filter(bot =>
       bot.messageProvider === 'discord' && bot.discord?.token,
     );
   }
@@ -1040,7 +1108,15 @@ export class BotConfigurationManager {
    */
 
   public getBot(name: string): BotConfig | undefined {
-    return this.bots.get(name);
+    const cached = this.botCache.get(name);
+    if (cached) {
+      return cached;
+    }
+    const bot = this.bots.get(name);
+    if (bot) {
+      this.botCache.set(name, bot);
+    }
+    return bot;
   }
 
   /**

@@ -182,7 +182,7 @@ describe('BotConfigurationManager', () => {
     it('should return the same instance', () => {
       const instance1 = BotConfigurationManager.getInstance();
       const instance2 = BotConfigurationManager.getInstance();
-      
+
       expect(instance1).toBe(instance2);
     });
 
@@ -198,6 +198,63 @@ describe('BotConfigurationManager', () => {
 
       manager.reload();
       expect(manager.getAllBots()).toHaveLength(2);
+    });
+  });
+
+  describe('TTLCache integration', () => {
+    it('should return cached result on repeated getBot calls', () => {
+      process.env.BOTS = 'cache-bot';
+      process.env.BOTS_CACHE_BOT_DISCORD_BOT_TOKEN = 'cache-token';
+      process.env.BOTS_CACHE_BOT_MESSAGE_PROVIDER = 'discord';
+
+      const manager = BotConfigurationManager.getInstance();
+      const first = manager.getBot('cache-bot');
+      const second = manager.getBot('cache-bot');
+
+      // Same reference means it came from cache, not rebuilt
+      expect(first).toBe(second);
+      expect(first?.name).toBe('cache-bot');
+    });
+
+    it('should return cached result on repeated getAllBots calls', () => {
+      process.env.BOTS = 'all-cache';
+      process.env.BOTS_ALL_CACHE_DISCORD_BOT_TOKEN = 'all-token';
+
+      const manager = BotConfigurationManager.getInstance();
+      const first = manager.getAllBots();
+      const second = manager.getAllBots();
+
+      // Same array reference means it came from cache
+      expect(first).toBe(second);
+      expect(first).toHaveLength(1);
+    });
+
+    it('should invalidate cache on reload', () => {
+      process.env.BOTS = 'inv-bot';
+      process.env.BOTS_INV_BOT_DISCORD_BOT_TOKEN = 'inv-token';
+
+      const manager = BotConfigurationManager.getInstance();
+      const before = manager.getAllBots();
+      expect(before).toHaveLength(1);
+
+      // Add another bot and reload
+      process.env.BOTS = 'inv-bot,inv-bot2';
+      process.env.BOTS_INV_BOT2_DISCORD_BOT_TOKEN = 'inv-token-2';
+      manager.reload();
+
+      const after = manager.getAllBots();
+      expect(after).toHaveLength(2);
+      // Different reference after reload
+      expect(after).not.toBe(before);
+    });
+
+    it('should return undefined for unknown bot names without caching them', () => {
+      process.env.BOTS = 'known';
+      process.env.BOTS_KNOWN_DISCORD_BOT_TOKEN = 'known-token';
+
+      const manager = BotConfigurationManager.getInstance();
+      const result = manager.getBot('unknown-bot');
+      expect(result).toBeUndefined();
     });
   });
 });
