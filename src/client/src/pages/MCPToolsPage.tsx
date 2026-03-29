@@ -465,6 +465,7 @@ const MCPToolsPage: React.FC = () => {
                   className={`join-item btn btn-sm ${mode === 'form' ? 'btn-primary' : 'btn-ghost'}`}
                   onClick={() => setMode('form')}
                   title="Form Builder"
+                  aria-label="Form Builder"
                 >
                   <ListBulletIcon className="w-4 h-4" />
                 </button>
@@ -472,6 +473,7 @@ const MCPToolsPage: React.FC = () => {
                   className={`join-item btn btn-sm ${mode === 'json' ? 'btn-primary' : 'btn-ghost'}`}
                   onClick={() => setMode('json')}
                   title="Raw JSON"
+                  aria-label="Raw JSON"
                 >
                   <CodeBracketIcon className="w-4 h-4" />
                 </button>
