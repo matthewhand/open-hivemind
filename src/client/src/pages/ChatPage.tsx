@@ -4,6 +4,7 @@ import { useApiQuery } from '../hooks/useApiQuery';
 import ChatInterface, { ChatMessage } from '../components/DaisyUI/Chat';
 import { BotAvatar } from '../components/BotAvatar';
 import { RefreshCw, MessageSquare, Cpu, Check, ChevronDown, Menu as MenuIcon, X } from 'lucide-react';
+import Button from '../components/DaisyUI/Button';
 import EmptyState from '../components/DaisyUI/EmptyState';
 import { SkeletonList, SkeletonMessageList } from '../components/DaisyUI/Skeleton';
 import { useSuccessToast, useErrorToast } from '../components/DaisyUI/ToastNotification';
@@ -215,14 +216,18 @@ const ChatPage: React.FC = () => {
       <div className="p-4 bg-base-100 border-b border-base-300 shadow-sm flex justify-between items-center">
         <div className="flex items-center gap-2">
           {!isDesktop && (
-            <button
-              onClick={() => setSidebarOpen(!sidebarOpen)}
-              className="btn btn-ghost btn-square btn-sm"
-              aria-label={sidebarOpen ? 'Close sidebar' : 'Open sidebar'}
-              aria-expanded={sidebarOpen}
-            >
-              {sidebarOpen ? <X className="w-5 h-5" /> : <MenuIcon className="w-5 h-5" />}
-            </button>
+            <div className="tooltip tooltip-right" data-tip={sidebarOpen ? 'Close sidebar' : 'Open sidebar'}>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setSidebarOpen(!sidebarOpen)}
+                className="btn-square"
+                aria-label={sidebarOpen ? 'Close sidebar' : 'Open sidebar'}
+                aria-expanded={sidebarOpen}
+              >
+                {sidebarOpen ? <X className="w-5 h-5" /> : <MenuIcon className="w-5 h-5" />}
+              </Button>
+            </div>
           )}
           <div>
             <h1 className="text-2xl font-bold flex items-center gap-2">
@@ -232,9 +237,11 @@ const ChatPage: React.FC = () => {
             <p className="text-sm text-base-content/60">Monitor conversations across your bot fleet</p>
           </div>
         </div>
-        <button onClick={handleRefresh} className="btn btn-ghost btn-circle" title="Refresh" aria-label="Refresh">
-          <RefreshCw className={`w-5 h-5 ${loading || historyLoading ? 'animate-spin' : ''}`} />
-        </button>
+        <div className="tooltip tooltip-left" data-tip="Refresh">
+          <Button variant="ghost" size="md" onClick={handleRefresh} className="btn-circle" aria-label="Refresh">
+            <RefreshCw className={`w-5 h-5 ${loading || historyLoading ? 'animate-spin' : ''}`} />
+          </Button>
+        </div>
       </div>
 
       <div className="flex flex-1 overflow-hidden relative">
