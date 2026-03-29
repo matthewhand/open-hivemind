@@ -1,14 +1,9 @@
 <<<<<<< HEAD
-<<<<<<< HEAD
-=======
-import * as path from 'path';
->>>>>>> af29c671d (🔒 fix: path traversal hardening for backups and templates (final v2))
 =======
 import * as path from 'path';
 >>>>>>> af29c671d (🔒 fix: path traversal hardening for backups and templates (final v2))
 import express from 'express';
 import request from 'supertest';
-import path from 'path';
 import { ConfigurationImportExportService } from '../../src/server/services/ConfigurationImportExportService';
 
 // Mock auth middleware to bypass checks
@@ -82,13 +77,7 @@ describe('ImportExport Path Traversal Verification', () => {
       next();
     });
 
-<<<<<<< HEAD
     // Mount the router (uses cached module with the stable mockService)
-=======
-    // Mount the router
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
-<<<<<<< HEAD
->>>>>>> af29c671d (🔒 fix: path traversal hardening for backups and templates (final v2))
 =======
 >>>>>>> af29c671d (🔒 fix: path traversal hardening for backups and templates (final v2))
     const importExportRouter = require('../../src/server/routes/importExport').default;
