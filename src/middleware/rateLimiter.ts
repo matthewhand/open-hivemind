@@ -619,65 +619,14 @@ export const applyRateLimiting = (req: Request, res: Response, next: NextFunctio
 /**
  * Create a custom rate limiter
  */
-export function createRateLimiter(options: {
-  windowMs: number;
-  max: number;
-  prefix: string;
-  message?: string;
-}) {
-  return rateLimit({
-    windowMs: options.windowMs,
-    max: options.max,
-    standardHeaders: true,
-    legacyHeaders: false,
-    store: createStore(options.prefix, options.windowMs),
-    keyGenerator: getClientKey,
-    skip: shouldSkipRateLimit,
-    handler: (req: Request, res: Response) => {
-      res.status(429).json({
-        error: 'Too many requests',
-        message: options.message || 'Rate limit exceeded. Please try again later.',
-        retryAfter: Math.ceil(options.windowMs / 1000),
-        code: 'RATE_LIMIT_EXCEEDED',
-      });
-    },
-  });
-}
 
 /**
  * Get rate limiting statistics
  */
-export function getRateLimitStats(): {
-  redisAvailable: boolean;
-  environment: string;
-  config: typeof RATE_LIMIT_CONFIG;
-} {
-  return {
-    redisAvailable,
-    environment: process.env.NODE_ENV || 'development',
-    config: RATE_LIMIT_CONFIG,
-  };
-}
 
 /**
  * Shutdown rate limiter and cleanup resources
  */
-export function shutdownRateLimiter(): void {
-  // Cleanup memory stores
-  for (const [prefix, store] of memoryStores.entries()) {
-    debug(`Shutting down memory store: ${prefix}`);
-    store.shutdown();
-  }
-  memoryStores.clear();
-
-  // Close Redis connection
-  if (redisClient) {
-    debug('Closing Redis connection');
-    redisClient.quit().catch((err) => {
-      debug('Error closing Redis:', err);
-    });
-  }
-}
 
 // Export all limiters for direct use
 export {

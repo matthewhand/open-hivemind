@@ -227,6 +227,7 @@ describe('ToolManager', () => {
       mockExecuteTool.mockReturnValue(new Promise(() => {}));
 
       const resultPromise = mgr.executeTool('bot1', 'slow', {});
+      await Promise.resolve(); // flush microtasks
       jest.advanceTimersByTime(30_001);
 
       const result = await resultPromise;

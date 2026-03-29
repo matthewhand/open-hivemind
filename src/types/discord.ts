@@ -480,24 +480,6 @@ export interface DiscordVoiceState {
 }
 
 // Discord Interaction Types
-export interface DiscordInteraction {
-  id: string;
-  application_id: string;
-  type: number;
-  data?: DiscordInteractionData;
-  guild_id?: string;
-  channel?: DiscordChannel;
-  channel_id?: string;
-  member?: DiscordGuildMember;
-  user?: DiscordUser;
-  token: string;
-  version: number;
-  message?: DiscordMessage;
-  app_permissions?: string;
-  locale?: string;
-  guild_locale?: string;
-  entitlements: DiscordEntitlement[];
-}
 
 export interface DiscordInteractionData {
   id?: string;
@@ -542,12 +524,6 @@ export interface DiscordEntitlement {
 }
 
 // Discord Client and Bot Types
-export interface DiscordBot {
-  client: any; // Discord.js Client
-  botUserId: string;
-  botUserName: string;
-  config: DiscordBotConfig;
-}
 
 export interface DiscordBotConfig {
   name: string;
@@ -560,39 +536,10 @@ export interface DiscordBotConfig {
 }
 
 // Discord Message Provider Types
-export interface DiscordMessageProvider {
-  getMessages(channelId: string): Promise<DiscordMessage[]>;
-  getForumOwner(forumId: string): Promise<string>;
-}
 
 // Type Guards for Runtime Type Checking
-export function isDiscordMessage(obj: any): obj is DiscordMessage {
-  return (
-    obj &&
-    typeof obj.id === 'string' &&
-    typeof obj.channel_id === 'string' &&
-    typeof obj.content === 'string' &&
-    obj.author &&
-    typeof obj.author.id === 'string'
-  );
-}
 
-export function isDiscordUser(obj: any): obj is DiscordUser {
-  return obj && typeof obj.id === 'string' && typeof obj.username === 'string';
-}
 
-export function isDiscordChannel(obj: any): obj is DiscordChannel {
-  return obj && typeof obj.id === 'string' && typeof obj.type === 'number';
-}
 
-export function isDiscordGuild(obj: any): obj is DiscordGuild {
-  return obj && typeof obj.id === 'string' && typeof obj.name === 'string';
-}
 
-export function isDiscordAPIResponse(obj: any): obj is DiscordAPIResponse {
-  return obj && typeof obj.ok === 'boolean';
-}
 
-export function isDiscordAPIError(obj: any): obj is DiscordAPIError {
-  return obj && typeof obj.code === 'number' && typeof obj.message === 'string';
-}

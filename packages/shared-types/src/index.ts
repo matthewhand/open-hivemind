@@ -10,34 +10,12 @@ export type { IMessengerService } from './IMessengerService';
 export type {
   IServiceDependencies,
   IErrorTypes,
-  IErrorRecoveryStrategy,
-  IBaseError,
-  INetworkErrorConstructor,
-  IConfigErrorConstructor,
-  IValidationErrorConstructor,
-  IAuthErrorConstructor,
   IWebSocketService,
-  IMetricsCollector,
   IChannelRouter,
   ILogger,
-  IStartupGreetingService,
   IConfigAccessor,
   IBotConfig,
-  GetBotConfigFn,
-  GetAllBotConfigsFn,
-  GetLlmProvidersFn,
 } from './IServiceDependencies';
-export type { IAdapterFactory, IAdapterConfig, IAdapterModule } from './IAdapterFactory';
+export type { IAdapterFactory, IAdapterConfig } from './IAdapterFactory';
 export type { ILlmProvider } from './ILlmProvider';
-export type { IMemoryProvider, MemoryEntry, MemorySearchResult } from './IMemoryProvider';
-export type { IToolProvider, ToolDefinition, ToolResult, ToolExecutionContext } from './IToolProvider';
-export {
-  BaseError,
-  ValidationError,
-  NetworkError,
-  ApiError,
-  ConfigurationError,
-  defaultErrorFactory,
-  type IErrorFactory,
-} from './errors';
-export { isSafeUrl, isPrivateIP } from './ssrfGuard';
+export { isSafeUrl } from './ssrfGuard';

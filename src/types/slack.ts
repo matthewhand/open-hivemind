@@ -106,14 +106,6 @@ export interface SlackResponseMetadata {
 /**
  * Slack conversation history response
  */
-export interface SlackConversationHistoryResponse extends SlackApiResponse {
-  /** Array of messages */
-  messages?: SlackMessageResponse[];
-  /** Whether there are more messages */
-  has_more?: boolean;
-  /** Pagination cursor */
-  cursor?: string;
-}
 
 /**
  * Slack message object from API
@@ -488,45 +480,10 @@ export interface SlackEventAuthorization {
 /**
  * Slack bot instance configuration
  */
-export interface SlackBotInstance {
-  /** Bot token */
-  token: string;
-  /** Signing secret */
-  signingSecret: string;
-  /** Bot name */
-  name: string;
-  /** App token */
-  appToken?: string;
-  /** Default channel ID */
-  defaultChannel?: string;
-  /** Channels to join */
-  joinChannels?: string;
-  /** Bot mode */
-  mode?: 'socket' | 'rtm';
-}
 
 /**
  * Slack bot configuration
  */
-export interface SlackBotConfig {
-  /** Bot name */
-  name: string;
-  /** Slack-specific configuration */
-  slack: {
-    /** Bot token */
-    botToken: string;
-    /** Signing secret */
-    signingSecret?: string;
-    /** App token */
-    appToken?: string;
-    /** Default channel ID */
-    defaultChannelId?: string;
-    /** Channels to join */
-    joinChannels?: string;
-    /** Bot mode */
-    mode?: 'socket' | 'rtm';
-  };
-}
 
 // ============================================================================
 // Slack Interactive Types
@@ -535,41 +492,6 @@ export interface SlackBotConfig {
 /**
  * Slack interactive payload
  */
-export interface SlackInteractivePayload {
-  /** Payload type */
-  type: string;
-  /** Team ID */
-  team: {
-    id: string;
-    domain: string;
-  };
-  /** User information */
-  user: {
-    id: string;
-    name: string;
-  };
-  /** Channel information */
-  channel: {
-    id: string;
-    name: string;
-  };
-  /** Action timestamp */
-  action_ts: string;
-  /** Message timestamp */
-  message_ts: string;
-  /** Attachment ID */
-  attachment_id?: string;
-  /** Token */
-  token: string;
-  /** Original message */
-  original_message?: SlackMessageResponse;
-  /** Response URL */
-  response_url: string;
-  /** Trigger ID */
-  trigger_id?: string;
-  /** Actions */
-  actions?: SlackAction[];
-}
 
 // ============================================================================
 // Type Guards
@@ -578,68 +500,22 @@ export interface SlackInteractivePayload {
 /**
  * Type guard for Slack event data
  */
-export function isSlackEventData(obj: unknown): obj is SlackEventData {
-  return (
-    typeof obj === 'object' &&
-    obj !== null &&
-    'type' in obj &&
-    typeof (obj as SlackEventData).type === 'string'
-  );
-}
 
 /**
  * Type guard for Slack API response
  */
-export function isSlackApiResponse<T = unknown>(obj: unknown): obj is SlackApiResponse<T> {
-  return (
-    typeof obj === 'object' &&
-    obj !== null &&
-    'ok' in obj &&
-    typeof (obj as SlackApiResponse).ok === 'boolean'
-  );
-}
 
 /**
  * Type guard for Slack message response
  */
-export function isSlackMessageResponse(obj: unknown): obj is SlackMessageResponse {
-  return (
-    typeof obj === 'object' &&
-    obj !== null &&
-    'ts' in obj &&
-    typeof (obj as SlackMessageResponse).ts === 'string'
-  );
-}
 
 /**
  * Type guard for Slack channel
  */
-export function isSlackChannel(obj: unknown): obj is SlackChannel {
-  return (
-    typeof obj === 'object' &&
-    obj !== null &&
-    'id' in obj &&
-    'name' in obj &&
-    'type' in obj &&
-    typeof (obj as SlackChannel).id === 'string' &&
-    typeof (obj as SlackChannel).name === 'string' &&
-    typeof (obj as SlackChannel).type === 'string'
-  );
-}
 
 /**
  * Type guard for Slack user
  */
-export function isSlackUser(obj: unknown): obj is SlackUser {
-  return (
-    typeof obj === 'object' &&
-    obj !== null &&
-    'id' in obj &&
-    'name' in obj &&
-    typeof (obj as SlackUser).id === 'string' &&
-    typeof (obj as SlackUser).name === 'string'
-  );
-}
 
 // ============================================================================
 // Utility Types
@@ -648,30 +524,14 @@ export function isSlackUser(obj: unknown): obj is SlackUser {
 /**
  * Union type for all Slack response types
  */
-export type SlackResponse = SlackApiResponse | SlackMessageResponse | SlackChannel | SlackUser;
 
 /**
  * Union type for all Slack event types
  */
-export type SlackEventTypes = SlackEventData | SlackEvent;
 
 /**
  * Slack provider metadata structure
  */
-export interface SlackProviderMetadata {
-  /** Channel ID for conversation context */
-  channelId: string;
-  /** User ID who sent the message */
-  userId?: string;
-  /** Platform identifier */
-  platform: 'slack';
-  /** Bot name */
-  botName?: string;
-  /** Team ID */
-  teamId?: string;
-  /** Additional context data */
-  context?: Record<string, unknown>;
-}
 
 // ============================================================================
 // Constants
@@ -708,7 +568,3 @@ export const SLACK_EVENT_TYPES = {
   MEMBER_LEFT_CHANNEL: 'member_left_channel',
 } as const;
 
-export type SlackMessageSubtype =
-  (typeof SLACK_MESSAGE_SUBTYPES)[keyof typeof SLACK_MESSAGE_SUBTYPES];
-export type SlackChannelType = (typeof SLACK_CHANNEL_TYPES)[keyof typeof SLACK_CHANNEL_TYPES];
-export type SlackEventType = (typeof SLACK_EVENT_TYPES)[keyof typeof SLACK_EVENT_TYPES];

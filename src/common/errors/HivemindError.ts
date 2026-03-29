@@ -169,39 +169,14 @@ export abstract class DatabaseError extends HivemindError {
 /**
  * Thrown when database is not initialized before use
  */
-export class DatabaseNotInitializedError extends DatabaseError {
-  readonly code = 'DB_NOT_INITIALIZED';
-
-  constructor(message = 'Database not initialized', context: ErrorContext = {}) {
-    super(message, context);
-  }
-}
 
 /**
  * Thrown when a database connection fails
  */
-export class DatabaseConnectionError extends DatabaseError {
-  readonly code = 'DB_CONNECTION_FAILED';
-
-  constructor(
-    message = 'Failed to connect to database',
-    context: ErrorContext = {},
-    cause?: Error
-  ) {
-    super(message, context, cause);
-  }
-}
 
 /**
  * Thrown when a database query fails
  */
-export class DatabaseQueryError extends DatabaseError {
-  readonly code = 'DB_QUERY_FAILED';
-
-  constructor(message = 'Database query failed', context: ErrorContext = {}, cause?: Error) {
-    super(message, context, cause);
-  }
-}
 
 /**
  * Network-related errors
@@ -213,28 +188,10 @@ export abstract class NetworkError extends HivemindError {
 /**
  * Thrown when a bot is not found
  */
-export class BotNotFoundError extends NetworkError {
-  readonly code = 'BOT_NOT_FOUND';
-  readonly botName: string;
-
-  constructor(botName: string, context: ErrorContext = {}) {
-    super(`Bot '${botName}' not found`, { ...context, botName });
-    this.botName = botName;
-  }
-}
 
 /**
  * Thrown when MCP server connection fails
  */
-export class MCPConnectionError extends NetworkError {
-  readonly code = 'MCP_CONNECTION_FAILED';
-  readonly serverName: string;
-
-  constructor(serverName: string, context: ErrorContext = {}, cause?: Error) {
-    super(`Failed to connect to MCP server '${serverName}'`, { ...context, serverName }, cause);
-    this.serverName = serverName;
-  }
-}
 
 /**
  * Thrown when an external API request fails
@@ -259,34 +216,10 @@ export abstract class ValidationError extends HivemindError {
 /**
  * Thrown when required configuration is missing
  */
-export class MissingConfigError extends ValidationError {
-  readonly code = 'MISSING_CONFIG';
-  readonly configKey: string;
-
-  constructor(configKey: string, context: ErrorContext = {}) {
-    super(`Missing required configuration: ${configKey}`, { ...context, configKey });
-    this.configKey = configKey;
-  }
-}
 
 /**
  * Thrown when input validation fails
  */
-export class InputValidationError extends ValidationError {
-  readonly code = 'INVALID_INPUT';
-  readonly field: string;
-  readonly value: unknown;
-
-  constructor(field: string, value: unknown, reason: string, context: ErrorContext = {}) {
-    super(`Invalid input for field '${field}': ${reason}`, {
-      ...context,
-      field,
-      value: String(value),
-    });
-    this.field = field;
-    this.value = value;
-  }
-}
 
 /**
  * Configuration-related errors
@@ -298,13 +231,6 @@ export abstract class ConfigurationError extends HivemindError {
 /**
  * Thrown when configuration is invalid
  */
-export class InvalidConfigError extends ConfigurationError {
-  readonly code = 'INVALID_CONFIG';
-
-  constructor(message: string, context: ErrorContext = {}) {
-    super(message, context);
-  }
-}
 
 /**
  * System-related errors
@@ -316,34 +242,10 @@ export abstract class SystemError extends HivemindError {
 /**
  * Thrown when an operation times out
  */
-export class TimeoutError extends SystemError {
-  readonly code = 'TIMEOUT';
-  readonly operation: string;
-  readonly timeoutMs: number;
-
-  constructor(operation: string, timeoutMs: number, context: ErrorContext = {}) {
-    super(`Operation '${operation}' timed out after ${timeoutMs}ms`, {
-      ...context,
-      operation,
-      timeoutMs,
-    });
-    this.operation = operation;
-    this.timeoutMs = timeoutMs;
-  }
-}
 
 /**
  * Thrown when a feature is not implemented
  */
-export class NotImplementedError extends SystemError {
-  readonly code = 'NOT_IMPLEMENTED';
-  readonly feature: string;
-
-  constructor(feature: string, context: ErrorContext = {}) {
-    super(`Feature not implemented: ${feature}`, { ...context, feature });
-    this.feature = feature;
-  }
-}
 
 /**
  * Helper function to check if an error is a HivemindError
@@ -355,42 +257,15 @@ export function isHivemindError(error: unknown): error is HivemindError {
 /**
  * Helper function to get error code from any error
  */
-export function getErrorCode(error: unknown): string {
-  if (isHivemindError(error)) {
-    return error.code;
-  }
-  return 'UNKNOWN';
-}
 
 /**
  * Helper function to get error category from any error
  */
-export function getErrorCategory(error: unknown): ErrorCategory {
-  if (isHivemindError(error)) {
-    return error.category;
-  }
-  return 'system';
-}
 
 /**
  * Generate a unique error ID for tracking
  */
-export function generateErrorId(): string {
-  return randomUUID();
-}
 
 /**
  * Wrap any error as a HivemindError
  */
-export function wrapError(error: unknown, context: ErrorContext = {}): HivemindError {
-  if (isHivemindError(error)) {
-    return error;
-  }
-
-  const message = error instanceof Error ? error.message : String(error);
-  const cause = error instanceof Error ? error : undefined;
-
-  return new (class extends SystemError {
-    readonly code = 'WRAPPED_ERROR';
-  })(message, context, cause);
-}

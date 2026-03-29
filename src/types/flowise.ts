@@ -121,12 +121,6 @@ export interface FlowiseSdkCompletion {
 /**
  * Flowise streaming response chunk
  */
-export interface FlowiseStreamChunk {
-  /** Chunk type indicator */
-  event?: 'token' | 'sourceDocuments' | 'end';
-  /** Chunk data */
-  data?: string | FlowiseSourceDocument[];
-}
 
 // ============================================================================
 // Flowise Configuration Types
@@ -153,14 +147,6 @@ export interface FlowiseConfig {
 /**
  * Flowise session data stored per channel
  */
-export interface FlowiseSession {
-  /** Current chat session ID */
-  chatId?: string;
-  /** Last interaction timestamp */
-  lastActivity?: number;
-  /** Channel-specific configuration */
-  config?: Partial<FlowiseConfig>;
-}
 
 // ============================================================================
 // Error Types
@@ -203,45 +189,18 @@ export interface FlowiseApiError {
 /**
  * Type guard for Flowise prediction response
  */
-export function isFlowisePredictionResponse(obj: unknown): obj is FlowisePredictionResponse {
-  return (
-    typeof obj === 'object' &&
-    obj !== null &&
-    'text' in obj &&
-    typeof (obj as FlowisePredictionResponse).text === 'string'
-  );
-}
 
 /**
  * Type guard for Flowise SDK completion
  */
-export function isFlowiseSdkCompletion(obj: unknown): obj is FlowiseSdkCompletion {
-  return typeof obj === 'object' && obj !== null && ('text' in obj || 'error' in obj);
-}
 
 /**
  * Type guard for Flowise error
  */
-export function isFlowiseError(obj: unknown): obj is FlowiseError {
-  return (
-    typeof obj === 'object' &&
-    obj !== null &&
-    'message' in obj &&
-    typeof (obj as FlowiseError).message === 'string'
-  );
-}
 
 /**
  * Type guard for Flowise API error response
  */
-export function isFlowiseApiError(obj: unknown): obj is FlowiseApiError {
-  return (
-    typeof obj === 'object' &&
-    obj !== null &&
-    'error' in obj &&
-    typeof (obj as FlowiseApiError).error === 'string'
-  );
-}
 
 // ============================================================================
 // Utility Types
@@ -250,26 +209,14 @@ export function isFlowiseApiError(obj: unknown): obj is FlowiseApiError {
 /**
  * Union type for all Flowise response types
  */
-export type FlowiseResponse = FlowisePredictionResponse | FlowiseSdkCompletion | FlowiseApiError;
 
 /**
  * Union type for all Flowise request types
  */
-export type FlowiseRequest = FlowiseRestRequest | FlowiseSdkRequest;
 
 /**
  * Flowise provider metadata structure
  */
-export interface FlowiseProviderMetadata {
-  /** Channel ID for conversation context */
-  channelId: string;
-  /** User ID who sent the message */
-  userId?: string;
-  /** Platform (discord, slack, etc.) */
-  platform?: string;
-  /** Additional context data */
-  context?: Record<string, unknown>;
-}
 
 // ============================================================================
 // Constants
@@ -295,4 +242,3 @@ export const FLOWISE_ERROR_CODES = {
   NETWORK_ERROR: 'FLOWISE_NETWORK_ERROR',
 } as const;
 
-export type FlowiseErrorCode = (typeof FLOWISE_ERROR_CODES)[keyof typeof FLOWISE_ERROR_CODES];

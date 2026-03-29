@@ -265,6 +265,7 @@
     "tailwindcss": "^4.1.14",
     "ts-jest": "^29.4.6",
     "ts-node": "^10.9.2",
+    "ts-prune": "^0.10.3",
     "ts-unused-exports": "^10.1.0",
     "tsconfig-paths": "^4.2.0",
     "typescript": "^5.9.3",

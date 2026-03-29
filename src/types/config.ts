@@ -245,238 +245,6 @@ export interface BotConfig {
 /**
  * Bot configuration schema for validation
  */
-export interface BotConfigSchema {
-  /** Message provider configuration */
-  MESSAGE_PROVIDER: {
-    doc: string;
-    format: MessageProvider[];
-    default: MessageProvider;
-    env: string;
-  };
-
-  /** LLM provider configuration */
-  LLM_PROVIDER: {
-    doc: string;
-    format: LlmProvider[];
-    default: LlmProvider;
-    env: string;
-  };
-
-  /** LLM provider profile */
-  LLM_PROFILE: {
-    doc: string;
-    format: StringConstructor;
-    default: string;
-    env: string;
-  };
-
-  /** Persona configuration */
-  PERSONA: {
-    doc: string;
-    format: StringConstructor;
-    default: string;
-    env: string;
-  };
-
-  /** System instruction configuration */
-  SYSTEM_INSTRUCTION: {
-    doc: string;
-    format: StringConstructor;
-    default: string;
-    env: string;
-  };
-
-  /** MCP servers configuration */
-  MCP_SERVERS: {
-    doc: string;
-    format: ArrayConstructor;
-    default: McpServerConfig[];
-    env: string;
-  };
-
-  /** MCP guard configuration */
-  MCP_GUARD: {
-    doc: string;
-    format: ObjectConstructor;
-    default: McpGuardConfig;
-    env: string;
-  };
-
-  /** Discord-specific configurations */
-  DISCORD_BOT_TOKEN: {
-    doc: string;
-    format: StringConstructor;
-    default: string;
-    env: string;
-  };
-
-  DISCORD_CLIENT_ID: {
-    doc: string;
-    format: StringConstructor;
-    default: string;
-    env: string;
-  };
-
-  DISCORD_GUILD_ID: {
-    doc: string;
-    format: StringConstructor;
-    default: string;
-    env: string;
-  };
-
-  DISCORD_CHANNEL_ID: {
-    doc: string;
-    format: StringConstructor;
-    default: string;
-    env: string;
-  };
-
-  DISCORD_VOICE_CHANNEL_ID: {
-    doc: string;
-    format: StringConstructor;
-    default: string;
-    env: string;
-  };
-
-  /** Slack-specific configurations */
-  SLACK_BOT_TOKEN: {
-    doc: string;
-    format: StringConstructor;
-    default: string;
-    env: string;
-  };
-
-  SLACK_APP_TOKEN: {
-    doc: string;
-    format: StringConstructor;
-    default: string;
-    env: string;
-  };
-
-  SLACK_SIGNING_SECRET: {
-    doc: string;
-    format: StringConstructor;
-    default: string;
-    env: string;
-  };
-
-  SLACK_JOIN_CHANNELS: {
-    doc: string;
-    format: StringConstructor;
-    default: string;
-    env: string;
-  };
-
-  SLACK_DEFAULT_CHANNEL_ID: {
-    doc: string;
-    format: StringConstructor;
-    default: string;
-    env: string;
-  };
-
-  SLACK_MODE: {
-    doc: string;
-    format: SlackMode[];
-    default: SlackMode;
-    env: string;
-  };
-
-  /** Mattermost-specific configurations */
-  MATTERMOST_SERVER_URL: {
-    doc: string;
-    format: StringConstructor;
-    default: string;
-    env: string;
-  };
-
-  MATTERMOST_TOKEN: {
-    doc: string;
-    format: StringConstructor;
-    default: string;
-    env: string;
-  };
-
-  MATTERMOST_CHANNEL: {
-    doc: string;
-    format: StringConstructor;
-    default: string;
-    env: string;
-  };
-
-  /** OpenAI configurations */
-  OPENAI_API_KEY: {
-    doc: string;
-    format: StringConstructor;
-    default: string;
-    env: string;
-  };
-
-  OPENAI_MODEL: {
-    doc: string;
-    format: StringConstructor;
-    default: string;
-    env: string;
-  };
-
-  OPENAI_BASE_URL: {
-    doc: string;
-    format: StringConstructor;
-    default: string;
-    env: string;
-  };
-
-  /** Flowise configurations */
-  FLOWISE_API_KEY: {
-    doc: string;
-    format: StringConstructor;
-    default: string;
-    env: string;
-  };
-
-  FLOWISE_API_BASE_URL: {
-    doc: string;
-    format: StringConstructor;
-    default: string;
-    env: string;
-  };
-
-  /** OpenWebUI configurations */
-  OPENWEBUI_API_KEY: {
-    doc: string;
-    format: StringConstructor;
-    default: string;
-    env: string;
-  };
-
-  OPENWEBUI_API_URL: {
-    doc: string;
-    format: StringConstructor;
-    default: string;
-    env: string;
-  };
-
-  /** OpenSwarm configurations */
-  OPENSWARM_BASE_URL: {
-    doc: string;
-    format: StringConstructor;
-    default: string;
-    env: string;
-  };
-
-  OPENSWARM_API_KEY: {
-    doc: string;
-    format: StringConstructor;
-    default: string;
-    env: string;
-  };
-
-  OPENSWARM_TEAM: {
-    doc: string;
-    format: StringConstructor;
-    default: string;
-    env: string;
-  };
-}
 
 // ============================================================================
 // Secure Configuration Types
@@ -521,24 +289,10 @@ export interface BackupMetadata {
 /**
  * Full backup data structure
  */
-export interface FullBackupData {
-  /** Backup metadata */
-  metadata: BackupMetadata;
-  /** Configuration data */
-  data: Record<string, SecureConfig>;
-}
 
 /**
  * Encryption data structure
  */
-export interface EncryptionData {
-  /** Initialization vector */
-  iv: string;
-  /** Authentication tag */
-  authTag: string;
-  /** Encrypted data */
-  data: string;
-}
 
 // ============================================================================
 // Configuration Management Types
@@ -547,20 +301,6 @@ export interface EncryptionData {
 /**
  * Configuration change event
  */
-export interface ConfigurationChange {
-  /** Change ID */
-  id: string;
-  /** Configuration name */
-  name: string;
-  /** Change type */
-  type: 'create' | 'update' | 'delete';
-  /** Change timestamp */
-  timestamp: string;
-  /** Previous configuration (for updates) */
-  previous?: SecureConfig;
-  /** New configuration (for creates/updates) */
-  current?: SecureConfig;
-}
 
 /**
  * Configuration validation result
@@ -609,18 +349,6 @@ export interface BotOverride {
 /**
  * Configuration manager metrics
  */
-export interface ConfigManagerMetrics {
-  /** Number of configured bots */
-  botCount: number;
-  /** Number of secure configurations */
-  secureConfigCount: number;
-  /** Number of backups */
-  backupCount: number;
-  /** Last configuration reload timestamp */
-  lastReload?: string;
-  /** Configuration warnings */
-  warnings: string[];
-}
 
 // ============================================================================
 // Type Guards
@@ -629,132 +357,38 @@ export interface ConfigManagerMetrics {
 /**
  * Type guard for Discord configuration
  */
-export function isDiscordConfig(obj: unknown): obj is DiscordConfig {
-  return (
-    typeof obj === 'object' &&
-    obj !== null &&
-    'token' in obj &&
-    typeof (obj as DiscordConfig).token === 'string'
-  );
-}
 
 /**
  * Type guard for Slack configuration
  */
-export function isSlackConfig(obj: unknown): obj is SlackConfig {
-  return (
-    typeof obj === 'object' &&
-    obj !== null &&
-    'botToken' in obj &&
-    'signingSecret' in obj &&
-    typeof (obj as SlackConfig).botToken === 'string' &&
-    typeof (obj as SlackConfig).signingSecret === 'string'
-  );
-}
 
 /**
  * Type guard for Mattermost configuration
  */
-export function isMattermostConfig(obj: unknown): obj is MattermostConfig {
-  return (
-    typeof obj === 'object' &&
-    obj !== null &&
-    'serverUrl' in obj &&
-    'token' in obj &&
-    typeof (obj as MattermostConfig).serverUrl === 'string' &&
-    typeof (obj as MattermostConfig).token === 'string'
-  );
-}
 
 /**
  * Type guard for OpenAI configuration
  */
-export function isOpenAIConfig(obj: unknown): obj is OpenAIConfig {
-  return (
-    typeof obj === 'object' &&
-    obj !== null &&
-    'apiKey' in obj &&
-    typeof (obj as OpenAIConfig).apiKey === 'string'
-  );
-}
 
 /**
  * Type guard for Flowise configuration
  */
-export function isFlowiseConfig(obj: unknown): obj is FlowiseConfig {
-  return (
-    typeof obj === 'object' &&
-    obj !== null &&
-    'apiKey' in obj &&
-    typeof (obj as FlowiseConfig).apiKey === 'string'
-  );
-}
 
 /**
  * Type guard for bot configuration
  */
-export function isBotConfig(obj: unknown): obj is BotConfig {
-  return (
-    typeof obj === 'object' &&
-    obj !== null &&
-    'name' in obj &&
-    'messageProvider' in obj &&
-    'llmProvider' in obj &&
-    typeof (obj as BotConfig).name === 'string' &&
-    typeof (obj as BotConfig).messageProvider === 'string' &&
-    typeof (obj as BotConfig).llmProvider === 'string'
-  );
-}
 
 /**
  * Type guard for secure configuration
  */
-export function isSecureConfig(obj: unknown): obj is SecureConfig {
-  return (
-    typeof obj === 'object' &&
-    obj !== null &&
-    'id' in obj &&
-    'name' in obj &&
-    'type' in obj &&
-    'data' in obj &&
-    'createdAt' in obj &&
-    'updatedAt' in obj &&
-    'checksum' in obj &&
-    typeof (obj as SecureConfig).id === 'string' &&
-    typeof (obj as SecureConfig).name === 'string' &&
-    typeof (obj as SecureConfig).type === 'string' &&
-    typeof (obj as SecureConfig).data === 'object' &&
-    typeof (obj as SecureConfig).createdAt === 'string' &&
-    typeof (obj as SecureConfig).updatedAt === 'string' &&
-    typeof (obj as SecureConfig).checksum === 'string'
-  );
-}
 
 /**
  * Type guard for MCP server configuration
  */
-export function isMcpServerConfig(obj: unknown): obj is McpServerConfig {
-  return (
-    typeof obj === 'object' &&
-    obj !== null &&
-    'name' in obj &&
-    typeof (obj as McpServerConfig).name === 'string'
-  );
-}
 
 /**
  * Type guard for MCP guard configuration
  */
-export function isMcpGuardConfig(obj: unknown): obj is McpGuardConfig {
-  return (
-    typeof obj === 'object' &&
-    obj !== null &&
-    'enabled' in obj &&
-    'type' in obj &&
-    typeof (obj as McpGuardConfig).enabled === 'boolean' &&
-    typeof (obj as McpGuardConfig).type === 'string'
-  );
-}
 
 // ============================================================================
 // Utility Types

@@ -197,77 +197,13 @@ export interface OpenAIFilesListResponse extends OpenAIBaseResponse {
 }
 
 // Fine-tuning API types
-export interface OpenAIFineTuneEvent {
-  object: 'fine_tune.event';
-  created_at: number;
-  level: 'info' | 'warning' | 'error';
-  message: string;
-}
 
-export interface OpenAIFineTune {
-  id: string;
-  object: 'fine_tune';
-  created_at: number;
-  updated_at: number;
-  model: string;
-  fine_tuned_model?: string;
-  organization_id: string;
-  status: 'pending' | 'running' | 'succeeded' | 'failed' | 'cancelled';
-  hyperparams: Record<string, any>;
-  training_files: OpenAIFile[];
-  validation_files: OpenAIFile[];
-  result_files: OpenAIFile[];
-  events: OpenAIFineTuneEvent[];
-}
 
 // Assistant API types (beta)
-export interface OpenAIAssistant {
-  id: string;
-  object: 'assistant';
-  created_at: number;
-  name?: string;
-  description?: string;
-  model: string;
-  instructions?: string;
-  tools: OpenAIAssistantTool[];
-  file_ids: string[];
-  metadata: Record<string, string>;
-}
 
-export interface OpenAIAssistantTool {
-  type: 'code_interpreter' | 'retrieval' | 'function';
-  function?: {
-    name: string;
-    description?: string;
-    parameters?: Record<string, any>;
-  };
-}
 
-export interface OpenAIThread {
-  id: string;
-  object: 'thread';
-  created_at: number;
-  metadata: Record<string, string>;
-}
 
-export interface OpenAIThreadMessage extends OpenAIBaseResponse {
-  object: 'thread.message';
-  role: 'user' | 'assistant';
-  content: OpenAIThreadMessageContent[];
-  file_ids: string[];
-  metadata: Record<string, string>;
-}
 
-export interface OpenAIThreadMessageContent {
-  type: 'text' | 'image_file';
-  text?: {
-    value: string;
-    annotations: OpenAIAnnotation[];
-  };
-  image_file?: {
-    file_id: string;
-  };
-}
 
 export interface OpenAIAnnotation {
   type: 'file_citation' | 'file_path';
@@ -283,34 +219,6 @@ export interface OpenAIAnnotation {
   end_index: number;
 }
 
-export interface OpenAIRun {
-  id: string;
-  object: 'thread.run';
-  created_at: number;
-  thread_id: string;
-  assistant_id: string;
-  status:
-    | 'queued'
-    | 'in_progress'
-    | 'requires_action'
-    | 'cancelling'
-    | 'cancelled'
-    | 'failed'
-    | 'completed'
-    | 'expired';
-  required_action?: OpenAIRequiredAction;
-  last_error?: OpenAIRunError;
-  expires_at: number;
-  started_at?: number;
-  completed_at?: number;
-  cancelled_at?: number;
-  failed_at?: number;
-  model: string;
-  instructions: string;
-  tools: OpenAIAssistantTool[];
-  file_ids: string[];
-  metadata: Record<string, string>;
-}
 
 export interface OpenAIRequiredAction {
   type: 'submit_tool_outputs';
@@ -319,10 +227,6 @@ export interface OpenAIRequiredAction {
   };
 }
 
-export interface OpenAIRunError {
-  code: string;
-  message: string;
-}
 
 // Custom response types for Open Hivemind
 export interface OpenHivemindChatResponse {
@@ -348,31 +252,6 @@ export type OpenAIResponse =
   | OpenAIError;
 
 // Type guards
-export function isOpenAIError(response: OpenAIResponse): response is OpenAIError {
-  return 'error' in response && response.error !== null && response.error !== undefined;
-}
 
-export function isChatCompletionResponse(
-  response: OpenAIResponse
-): response is OpenAIChatCompletionResponse {
-  return 'object' in response && response.object === 'chat.completion';
-}
 
-export function isModelsListResponse(
-  response: OpenAIResponse
-): response is OpenAIModelsListResponse {
-  return (
-    'object' in response &&
-    response.object === 'list' &&
-    'data' in response &&
-    Array.isArray(response.data) &&
-    response.data.length > 0 &&
-    'id' in response.data[0]
-  );
-}
 
-export function isCompletionResponse(
-  response: OpenAIResponse
-): response is OpenAICompletionResponse {
-  return 'object' in response && response.object === 'text_completion';
-}
