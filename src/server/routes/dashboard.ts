@@ -1,4 +1,3 @@
-import Debug from 'debug';
 import { Router } from 'express';
 import { DatabaseManager } from '@src/database/DatabaseManager';
 import WebSocketService, { type MessageFlowEvent } from '@src/server/services/WebSocketService';
@@ -7,15 +6,11 @@ import { authenticate, requireAdmin } from '../../auth/middleware';
 import { AnalyticsService } from '../../services/AnalyticsService';
 import {
   AlertIdParamSchema,
-  ExportActivitySchema,
-  ExportAnalyticsSchema,
-  SubmitAIFeedbackSchema,
-  UpdateDashboardConfigSchema,
-} from '../../validation/schemas/dashboardSchema';
+  DashboardConfigSchema,
+  DashboardFeedbackSchema,
+} from '../../validation/schemas/miscSchema';
 import { validateRequest } from '../../validation/validateRequest';
 import { ActivityLogger } from '../services/ActivityLogger';
-
-const debug = Debug('app:server:routes:dashboard');
 
 type AnnotatedEvent = MessageFlowEvent & { llmProvider: string };
 
@@ -182,40 +177,90 @@ router.post(
   '/ai/config',
   authenticate,
   requireAdmin,
-  validateRequest(UpdateDashboardConfigSchema),
+  validateRequest(DashboardConfigSchema),
   (req, res) => {
     dashboardConfig = { ...dashboardConfig, ...req.body };
     res.json(dashboardConfig);
   }
 );
 
-router.get('/ai/stats', authenticate, requireAdmin, async (req, res) => {
+router.get('/ai/stats', authenticate, requireAdmin, (req, res) => {
   try {
-    const format = (req.query.format as string) || 'csv';
     const analytics = AnalyticsService.getInstance();
-    const ws = WebSocketService.getInstance();
     const from = parseDate(req.query.from);
     const to = parseDate(req.query.to);
 
-    // Fetch analytics data
-    const stats = await analytics.getStats({
+    const stats = analytics.getStats({
       startTime: from || undefined,
       endTime: to || undefined,
     });
 
-    const patterns = await analytics.getBehaviorPatterns({
+    res.json({
+      learningProgress: stats.learningProgress,
+      behaviorPatternsCount: stats.behaviorPatternsCount,
+      userSegmentsCount: stats.userSegmentsCount,
+      totalMessages: stats.totalMessages,
+      totalErrors: stats.totalErrors,
+      avgProcessingTime: stats.avgProcessingTime,
+      activeBots: stats.activeBots,
+      activeUsers: stats.activeUsers,
+    });
+  } catch (error) {
+    console.error('AI stats API error:', error);
+    res.status(500).json({ error: 'Failed to get AI stats' });
+  }
+});
+
+router.get('/ai/segments', authenticate, requireAdmin, (req, res) => {
+  try {
+    const analytics = AnalyticsService.getInstance();
+    const from = parseDate(req.query.from);
+    const to = parseDate(req.query.to);
+
+    const segments = analytics.getUserSegments({
       startTime: from || undefined,
       endTime: to || undefined,
     });
 
-    const segments = await analytics.getUserSegments({
+    res.json(segments);
+  } catch (error) {
+    console.error('AI segments API error:', error);
+    res.status(500).json({ error: 'Failed to get user segments' });
+  }
+});
+
+router.get('/ai/patterns', authenticate, requireAdmin, (req, res) => {
+  try {
+    const analytics = AnalyticsService.getInstance();
+    const from = parseDate(req.query.from);
+    const to = parseDate(req.query.to);
+
+    const patterns = analytics.getBehaviorPatterns({
+      startTime: from || undefined,
+      endTime: to || undefined,
+    });
+
+    res.json(patterns);
+  } catch (error) {
+    console.error('AI patterns API error:', error);
+    res.status(500).json({ error: 'Failed to get behavior patterns' });
+  }
+});
+
+router.get('/ai/recommendations', authenticate, requireAdmin, (req, res) => {
+  try {
+    const analytics = AnalyticsService.getInstance();
+    const from = parseDate(req.query.from);
+    const to = parseDate(req.query.to);
+
+    const recommendations = analytics.getRecommendations({
       startTime: from || undefined,
       endTime: to || undefined,
     });
 
     res.json(recommendations);
   } catch (error) {
-    debug('ERROR:', 'AI recommendations API error:', error);
+    console.error('AI recommendations API error:', error);
     res.status(500).json({ error: 'Failed to get recommendations' });
   }
 });
@@ -224,7 +269,7 @@ router.post(
   '/ai/feedback',
   authenticate,
   requireAdmin,
-  validateRequest(SubmitAIFeedbackSchema),
+  validateRequest(DashboardFeedbackSchema),
   async (req, res) => {
     const { recommendationId, feedback, metadata } = req.body;
     try {
@@ -232,7 +277,7 @@ router.post(
       await db.storeAIFeedback({ recommendationId, feedback, metadata });
       res.json({ success: true });
     } catch (error) {
-      debug('ERROR:', 'Error storing AI feedback:', error);
+      console.error('Error storing AI feedback:', error);
       res.status(500).json({ error: 'Failed to store feedback' });
     }
   }
@@ -241,17 +286,17 @@ router.post(
 // Root route removed - dashboard is now served from public/index.html
 // This file only contains API endpoints
 
-function isProviderConnected(bot: Record<string, unknown>): boolean {
+function isProviderConnected(bot: any): boolean {
   try {
     if (bot.messageProvider === 'slack') {
-      const svc = require('@hivemind/message-slack').SlackService as Record<string, unknown>;
+      const svc = require('@hivemind/message-slack').SlackService as any;
       const instance = svc?.getInstance?.();
       const mgr = instance?.getBotManager?.(bot.name) || instance?.getBotManager?.();
       const bots = mgr?.getAllBots?.() || [];
       return Array.isArray(bots) && bots.length > 0;
     }
     if (bot.messageProvider === 'discord') {
-      const svc = require('@hivemind/message-discord') as Record<string, unknown>;
+      const svc = require('@hivemind/message-discord') as any;
       const instance =
         svc?.DiscordService?.getInstance?.() || svc?.Discord?.DiscordService?.getInstance?.();
       const bots = instance?.getAllBots?.() || [];
@@ -270,7 +315,7 @@ router.get('/status', authenticate, requireAdmin, (req, res) => {
     try {
       bots = manager.getAllBots();
     } catch (e) {
-      debug('WARN:', 'Failed to load bots for status:', e);
+      console.warn('Failed to load bots for status:', e);
       bots = [];
     }
 
@@ -292,7 +337,7 @@ router.get('/status', authenticate, requireAdmin, (req, res) => {
 
     res.json({ bots: status, uptime: process.uptime() });
   } catch (error) {
-    debug('ERROR:', 'Status API error:', error);
+    console.error('Status API error:', error);
     res.status(500).json({ error: 'Failed to get status' });
   }
 });
@@ -318,20 +363,16 @@ router.get('/activity', authenticate, requireAdmin, async (req, res) => {
       limit: 5000,
     });
 
-    const manager = BotConfigurationManager.getInstance();
-    const botList = manager.getAllBots();
-    const botMap = new Map(botList.map((bot) => [bot.name, bot]));
+    const botFilterSet = new Set(botFilter);
+    const providerFilterSet = new Set(providerFilter);
+    const llmFilterSet = new Set(llmFilter);
 
-    const annotatedEvents = storedEvents.map((event) => annotateEvent(event, botMap));
-    const agentMetrics = buildAgentMetrics(annotatedEvents, ws.getAllBotStats());
+    const hasBotFilter = botFilterSet.size > 0;
+    const hasProviderFilter = providerFilterSet.size > 0;
+    const hasLlmFilter = llmFilterSet.size > 0;
 
-    // Get current performance metrics
-    const performanceMetrics = {
-      timestamp: new Date().toISOString(),
-      cpuUsage: 0, // Would need actual system metrics
-      memoryUsage: 0, // Would need actual system metrics
-      activeConnections: ws.getConnectedClients().length,
-    };
+    const fromTime = from?.getTime();
+    const toTime = to?.getTime();
 
     const agents = new Set<string>();
     const messageProviders = new Set<string>();
@@ -392,7 +433,7 @@ router.get('/activity', authenticate, requireAdmin, async (req, res) => {
       agentMetrics,
     });
   } catch (error) {
-    debug('ERROR:', 'Activity API error:', error);
+    console.error('Activity API error:', error);
     res.status(500).json({ error: 'Failed to retrieve activity feed' });
   }
 });
@@ -413,7 +454,7 @@ router.post(
         res.status(404).json({ success: false, message: 'Alert not found' });
       }
     } catch (error) {
-      debug('ERROR:', 'Acknowledge alert error:', error);
+      console.error('Acknowledge alert error:', error);
       res.status(500).json({ error: 'Failed to acknowledge alert' });
     }
   }
@@ -435,166 +476,11 @@ router.post(
         res.status(404).json({ success: false, message: 'Alert not found' });
       }
     } catch (error) {
-      debug('ERROR:', 'Resolve alert error:', error);
+      console.error('Resolve alert error:', error);
       res.status(500).json({ error: 'Failed to resolve alert' });
     }
   }
 );
-
-
-router.get('/analytics/export', authenticate, requireAdmin, validateRequest(ExportAnalyticsSchema), async (req, res) => {
-  try {
-    const format = (req.query.format as string) || 'csv';
-    const analytics = AnalyticsService.getInstance();
-    const ws = WebSocketService.getInstance();
-    const from = parseDate(req.query.from);
-    const to = parseDate(req.query.to);
-
-    // Fetch analytics data
-    const stats = await analytics.getStats({
-      startTime: from || undefined,
-      endTime: to || undefined,
-    });
-
-    const patterns = await analytics.getBehaviorPatterns({
-      startTime: from || undefined,
-      endTime: to || undefined,
-    });
-
-    const segments = await analytics.getUserSegments({
-      startTime: from || undefined,
-      endTime: to || undefined,
-    });
-
-    // Fetch activity data for bot performance
-    const storedEvents = await ActivityLogger.getInstance().getEvents({
-      startTime: from || undefined,
-      endTime: to || undefined,
-      limit: 5000,
-    });
-
-    const manager = BotConfigurationManager.getInstance();
-    const botList = manager.getAllBots();
-    const botMap = new Map(botList.map((bot) => [bot.name, bot]));
-
-    const annotatedEvents = storedEvents.map((event) => annotateEvent(event, botMap));
-    const agentMetrics = buildAgentMetrics(annotatedEvents, ws.getAllBotStats());
-
-    // Get current performance metrics
-    const performanceMetrics = {
-      timestamp: new Date().toISOString(),
-      cpuUsage: 0, // Would need actual system metrics
-      memoryUsage: 0, // Would need actual system metrics
-      activeConnections: ws.getConnectedClients().length,
-    };
-
-    if (format === 'json') {
-      res.setHeader('Content-Type', 'application/json');
-      res.setHeader('Content-Disposition', `attachment; filename="analytics_export_${new Date().toISOString()}.json"`);
-      res.json({
-        exportDate: new Date().toISOString(),
-        filters: {
-          from: from?.toISOString(),
-          to: to?.toISOString(),
-        },
-        summary: {
-          totalMessages: stats.totalMessages,
-          totalErrors: stats.totalErrors,
-          avgProcessingTime: stats.avgProcessingTime,
-          activeBots: stats.activeBots,
-          activeUsers: stats.activeUsers,
-          errorRate: stats.totalMessages > 0 ? (stats.totalErrors / stats.totalMessages * 100).toFixed(2) + '%' : '0%',
-          successRate: stats.totalMessages > 0 ? ((stats.totalMessages - stats.totalErrors) / stats.totalMessages * 100).toFixed(2) + '%' : '100%',
-          availability: stats.totalMessages > 0 ? ((stats.totalMessages - stats.totalErrors) / stats.totalMessages * 100).toFixed(2) + '%' : '100%',
-        },
-        botPerformance: agentMetrics.map((metric) => ({
-          botName: metric.botName,
-          messageProvider: metric.messageProvider,
-          llmProvider: metric.llmProvider,
-          totalMessages: metric.totalMessages,
-          events: metric.events,
-          errors: metric.errors,
-          errorRate: metric.events > 0 ? ((metric.errors / metric.events) * 100).toFixed(2) + '%' : '0%',
-          successRate: metric.events > 0 ? (((metric.events - metric.errors) / metric.events) * 100).toFixed(2) + '%' : '100%',
-          lastActivity: metric.lastActivity,
-          avgResponseTime: metric.avgResponseTime,
-          minResponseTime: metric.minResponseTime,
-          maxResponseTime: metric.maxResponseTime,
-          p95ResponseTime: metric.p95ResponseTime,
-          p99ResponseTime: metric.p99ResponseTime,
-        })),
-        behaviorPatterns: patterns,
-        userSegments: segments,
-        performance: performanceMetrics,
-      });
-    } else {
-      // CSV format - Bot Performance Summary
-      const escapeCsv = (value: string | number | null | undefined): string => {
-        if (value === null || value === undefined) return '';
-        const stringValue = String(value);
-        const escaped = stringValue.replace(/"/g, '""').replace(/\n/g, ' ');
-        return `"${escaped}"`;
-      };
-
-      // Summary section
-      let csvContent = '# Analytics Export Summary\n';
-      csvContent += escapeCsv('Metric') + ',' + escapeCsv('Value') + '\n';
-      csvContent += escapeCsv('Export Date') + ',' + escapeCsv(new Date().toISOString()) + '\n';
-      csvContent += escapeCsv('Date Range From') + ',' + escapeCsv(from?.toISOString() || 'Beginning') + '\n';
-      csvContent += escapeCsv('Date Range To') + ',' + escapeCsv(to?.toISOString() || 'Now') + '\n';
-      csvContent += escapeCsv('Total Messages') + ',' + escapeCsv(stats.totalMessages) + '\n';
-      csvContent += escapeCsv('Total Errors') + ',' + escapeCsv(stats.totalErrors) + '\n';
-      csvContent += escapeCsv('Error Rate') + ',' + escapeCsv(stats.totalMessages > 0 ? ((stats.totalErrors / stats.totalMessages) * 100).toFixed(2) + '%' : '0%') + '\n';
-      csvContent += escapeCsv('Avg Processing Time (ms)') + ',' + escapeCsv(stats.avgProcessingTime) + '\n';
-      csvContent += escapeCsv('Active Bots') + ',' + escapeCsv(stats.activeBots) + '\n';
-      csvContent += escapeCsv('Active Users') + ',' + escapeCsv(stats.activeUsers) + '\n';
-      csvContent += escapeCsv('Active Connections') + ',' + escapeCsv(performanceMetrics.activeConnections) + '\n';
-      csvContent += '\n';
-
-      // Bot Performance section
-      csvContent += '# Bot Performance Details\n';
-      const botHeaders = [
-        'Bot Name',
-        'Message Provider',
-        'LLM Provider',
-        'Total Messages',
-        'Events',
-        'Errors',
-        'Error Rate',
-        'Success Rate',
-        'Last Activity',
-        'Avg Response Time (ms)',
-        'Min Response Time (ms)',
-        'Max Response Time (ms)',
-        'P95 Response Time (ms)',
-        'P99 Response Time (ms)',
-      ];
-      csvContent += botHeaders.map(escapeCsv).join(',') + '\n';
-
-      agentMetrics.forEach((metric) => {
-        const row = [
-          metric.botName,
-          metric.messageProvider,
-          metric.llmProvider,
-          metric.totalMessages,
-          metric.events,
-          metric.errors,
-          metric.events > 0 ? ((metric.errors / metric.events) * 100).toFixed(2) + '%' : '0%',
-          metric.events > 0 ? (((metric.events - metric.errors) / metric.events) * 100).toFixed(2) + '%' : '100%',
-          new Date(metric.lastActivity).toLocaleString('en-US', {
-            year: 'numeric',
-            month: '2-digit',
-            day: '2-digit',
-            hour: '2-digit',
-            minute: '2-digit',
-            second: '2-digit',
-            hour12: false,
-          }),
-          metric.avgResponseTime || 'N/A',
-          metric.minResponseTime || 'N/A',
-          metric.maxResponseTime || 'N/A',
-          metric.p95ResponseTime || 'N/A',
-          metric.p99ResponseTime || 'N/A',
 
 export default router;
 
@@ -689,12 +575,6 @@ function buildAgentMetrics(
       lastActivity: string;
       totalMessages: number;
       recentErrors: string[];
-      avgResponseTime: number;
-      minResponseTime: number;
-      maxResponseTime: number;
-      p95ResponseTime: number;
-      p99ResponseTime: number;
-      responseTimes: number[];
     }
   >();
 
@@ -704,7 +584,6 @@ function buildAgentMetrics(
     const totalMessages = botStats[event.botName]?.messageCount ?? 0;
 
     if (!existing) {
-      const responseTimes = event.processingTime != null ? [event.processingTime] : [];
       metrics.set(event.botName, {
         botName: event.botName,
         messageProvider: event.provider,
@@ -714,12 +593,6 @@ function buildAgentMetrics(
         lastActivity: event.timestamp,
         totalMessages,
         recentErrors: errorsForBot,
-        avgResponseTime: 0,
-        minResponseTime: 0,
-        maxResponseTime: 0,
-        p95ResponseTime: 0,
-        p99ResponseTime: 0,
-        responseTimes,
       });
       return;
     }
@@ -733,48 +606,7 @@ function buildAgentMetrics(
     }
     existing.totalMessages = totalMessages;
     existing.recentErrors = errorsForBot;
-
-    // Collect response times for calculation
-    if (event.processingTime != null) {
-      existing.responseTimes.push(event.processingTime);
-    }
   });
 
-  // Calculate response time metrics for each bot
-  const results = Array.from(metrics.values()).map((metric) => {
-    const times = metric.responseTimes;
-
-    if (times.length === 0) {
-      // No response time data available
-      const { responseTimes, ...rest } = metric;
-      return rest;
-    }
-
-    // Sort for percentile calculations
-    const sortedTimes = [...times].sort((a, b) => a - b);
-
-    // Calculate metrics
-    const sum = times.reduce((acc, t) => acc + t, 0);
-    const avgResponseTime = Math.round(sum / times.length);
-    const minResponseTime = sortedTimes[0];
-    const maxResponseTime = sortedTimes[sortedTimes.length - 1];
-
-    // Calculate percentiles
-    const p95Index = Math.ceil(sortedTimes.length * 0.95) - 1;
-    const p99Index = Math.ceil(sortedTimes.length * 0.99) - 1;
-    const p95ResponseTime = sortedTimes[Math.max(0, p95Index)];
-    const p99ResponseTime = sortedTimes[Math.max(0, p99Index)];
-
-    const { responseTimes, ...rest } = metric;
-    return {
-      ...rest,
-      avgResponseTime,
-      minResponseTime,
-      maxResponseTime,
-      p95ResponseTime,
-      p99ResponseTime,
-    };
-  });
-
-  return results.sort((a, b) => b.events - a.events);
+  return Array.from(metrics.values()).sort((a, b) => b.events - a.events);
 }

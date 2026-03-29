@@ -4,7 +4,7 @@ import { WebSocketService } from '@src/server/services/WebSocketService';
 import { HotReloadManager, type ConfigurationChange } from '@config/HotReloadManager';
 import {
   HotReloadChangeSchema,
-  HotReloadRollbackSchema,
+  SnapshotIdParamSchema,
 } from '../../validation/schemas/hotReloadSchema';
 import { validateRequest } from '../../validation/validateRequest';
 
@@ -17,6 +17,13 @@ router.post('/api/config/hot-reload', validateRequest(HotReloadChangeSchema), as
       ConfigurationChange,
       'id' | 'timestamp' | 'validated' | 'applied' | 'rollbackAvailable'
     > = req.body;
+
+    if (!changeData.changes || Object.keys(changeData.changes).length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'No changes provided',
+      });
+    }
 
     const hotReloadManager = HotReloadManager.getInstance();
     const result = await hotReloadManager.applyConfigurationChange(changeData);
@@ -88,7 +95,7 @@ router.get('/api/config/hot-reload/rollbacks', (req, res) => {
 
 router.post(
   '/api/config/hot-reload/rollback/:snapshotId',
-  validateRequest(HotReloadRollbackSchema),
+  validateRequest(SnapshotIdParamSchema),
   async (req, res) => {
     try {
       const { snapshotId } = req.params;

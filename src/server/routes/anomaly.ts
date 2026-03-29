@@ -3,7 +3,7 @@ import { Router } from 'express';
 import type { AuthMiddlewareRequest } from '../../auth/types';
 import { DatabaseManager } from '../../database/DatabaseManager';
 import { AnomalyDetectionService } from '../../services/AnomalyDetectionService';
-import { ResolveAnomalySchema } from '../../validation/schemas/anomalySchema';
+import { AnomalyResolveSchema } from '../../validation/schemas/miscSchema';
 import { validateRequest } from '../../validation/validateRequest';
 
 const debug = Debug('app:webui:anomaly');
@@ -79,7 +79,7 @@ router.get('/history', async (req: AuthMiddlewareRequest, res) => {
 // POST /api/anomalies/:id/resolve - Resolve an anomaly
 router.post(
   '/:id/resolve',
-  validateRequest(ResolveAnomalySchema),
+  validateRequest(AnomalyResolveSchema),
   async (req: AuthMiddlewareRequest, res) => {
     try {
       const service = AnomalyDetectionService.getInstance();

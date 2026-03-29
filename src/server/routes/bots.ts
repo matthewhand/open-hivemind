@@ -9,21 +9,14 @@ import {
   CloneBotSchema,
   CreateBotSchema,
   UpdateBotSchema,
-  UpdateBotStatusSchema,
 } from '../../validation/schemas/botsSchema';
 import { ReorderSchema } from '../../validation/schemas/commonSchema';
-import { ImportBotsSchema } from '../../validation/schemas/importExportSchema';
 import { validateRequest } from '../../validation/validateRequest';
 import { ActivityLogger } from '../services/ActivityLogger';
 import { WebSocketService } from '../services/WebSocketService';
 
 const router = Router();
 const logger = createLogger('botsRouter');
-
-/** Safely extract message from unknown error. */
-function errMsg(error: unknown): string {
-  return error instanceof Error ? errMsg(error) : String(error);
-}
 const manager = BotManager.getInstance();
 const wsService = WebSocketService.getInstance();
 
@@ -50,53 +43,12 @@ router.get('/', async (req, res) => {
         errors: [],
         errorCount: 0,
       };
-
-      // Extract model from provider config if available
-      let llmModel = '';
-      if (bot.config) {
-        const config = bot.config as Record<string, any>;
-        // Try to extract model from various provider configs
-        if (config.openai?.model) {
-          llmModel = config.openai.model;
-        } else if (config.openwebui?.model) {
-          llmModel = config.openwebui.model;
-        } else if (config.flowise?.chatflowId) {
-          llmModel = config.flowise.chatflowId;
-        } else if (config.perplexity?.model) {
-          llmModel = config.perplexity.model;
-        } else if (config.replicate?.model) {
-          llmModel = config.replicate.model;
-        } else if (config.openswarm?.swarmId) {
-          llmModel = config.openswarm.swarmId;
-        }
-      }
-
-      // Use llmProvider as fallback if no specific model found
-      if (!llmModel) {
-        llmModel = bot.llmProvider || 'Not configured';
-      }
-
-      // Generate description from system instruction or persona
-      let description = '';
-      if (bot.systemInstruction) {
-        // Truncate to first 100 chars for a brief description
-        description = bot.systemInstruction.length > 100
-          ? bot.systemInstruction.substring(0, 97) + '...'
-          : bot.systemInstruction;
-      } else if (bot.persona) {
-        description = `Bot using ${bot.persona} persona`;
-      } else {
-        description = `${bot.messageProvider} bot with ${bot.llmProvider} provider`;
-      }
-
       return {
         id: bot.id,
         name: bot.name,
         provider: bot.messageProvider,
         messageProvider: bot.messageProvider,
         llmProvider: bot.llmProvider,
-        llmModel,
-        description,
         persona: bot.persona,
         status: bot.isActive ? 'active' : 'disabled',
         connected: statusMap.get(bot.id) || false,
@@ -165,7 +117,7 @@ router.put('/reorder', validateRequest(ReorderSchema), async (req, res) => {
 
 const EXPORT_SCHEMA_VERSION = 1;
 
-function sanitizeBotForExport(bot: Record<string, unknown>): Record<string, unknown> {
+function sanitizeBotForExport(bot: any): any {
   const { envOverrides, ...rest } = bot;
   const sensitiveKeys = [
     'token',
@@ -236,9 +188,14 @@ router.get('/export', async (_req, res) => {
  *       200:
  *         description: Import report
  */
-router.post('/import', validateRequest(ImportBotsSchema), async (req, res) => {
+router.post('/import', async (req, res) => {
   try {
     const { bots: incoming } = req.body;
+    if (!Array.isArray(incoming) || incoming.length === 0) {
+      return res
+        .status(HTTP_STATUS.BAD_REQUEST)
+        .json({ error: 'Request body must contain a non-empty "bots" array' });
+    }
 
     const existingBots = await manager.getAllBots();
     const existingByName = new Map(existingBots.map((b) => [b.name.toLowerCase(), b]));
@@ -273,7 +230,7 @@ router.post('/import', validateRequest(ImportBotsSchema), async (req, res) => {
       }
     }
 
-    logger.info('Bot import completed', {
+    ActivityLogger.log(req, 'import_bots', {
       created: report.created.length,
       updated: report.updated.length,
       errors: report.errors.length,
@@ -358,8 +315,8 @@ router.post('/', validateRequest(CreateBotSchema), async (req, res) => {
 
     const bot = await manager.createBot(request);
     return res.status(HTTP_STATUS.CREATED).json({ success: true, message: 'Bot created', bot });
-  } catch (error: unknown) {
-    return res.status(HTTP_STATUS.BAD_REQUEST).json({ error: errMsg(error) });
+  } catch (error: any) {
+    return res.status(HTTP_STATUS.BAD_REQUEST).json({ error: error.message });
   }
 });
 
@@ -397,56 +354,11 @@ router.put('/:id', validateRequest(UpdateBotSchema), async (req, res) => {
     const updates = req.body;
     const bot = await manager.updateBot(id, updates);
     return res.json({ success: true, message: 'Bot updated', bot });
-  } catch (error: unknown) {
-    const status = errMsg(error).includes(ERROR_CODES.NOT_FOUND)
+  } catch (error: any) {
+    const status = error.message.includes(ERROR_CODES.NOT_FOUND)
       ? HTTP_STATUS.NOT_FOUND
       : HTTP_STATUS.BAD_REQUEST;
-    return res.status(status).json({ error: errMsg(error) });
-  }
-});
-
-/**
- * @openapi
- * /api/bots/{id}/status:
- *   patch:
- *     summary: Update bot status (active/inactive)
- *     tags: [Bots]
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: string
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               status:
- *                 type: string
- *                 enum: [active, inactive]
- *             required: [status]
- *     responses:
- *       200:
- *         description: Bot status updated
- */
-router.patch('/:id/status', validateRequest(UpdateBotStatusSchema), async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { status } = req.body;
-
-    // Convert status string to isActive boolean
-    const isActive = status === 'active';
-
-    const bot = await manager.updateBot(id, { isActive });
-    return res.json({ success: true, message: 'Bot status updated', bot });
-  } catch (error: unknown) {
-    const status = errMsg(error).includes(ERROR_CODES.NOT_FOUND)
-      ? HTTP_STATUS.NOT_FOUND
-      : HTTP_STATUS.BAD_REQUEST;
-    return res.status(status).json({ error: errMsg(error) });
+    return res.status(status).json({ error: error.message });
   }
 });
 
@@ -477,11 +389,11 @@ router.delete('/:id', validateRequest(BotIdParamSchema), async (req, res) => {
 
     await manager.deleteBot(id);
     return res.json({ success: true, message: 'Bot deleted' });
-  } catch (error: unknown) {
-    const status = errMsg(error).includes(ERROR_CODES.NOT_FOUND)
+  } catch (error: any) {
+    const status = error.message.includes(ERROR_CODES.NOT_FOUND)
       ? HTTP_STATUS.NOT_FOUND
       : HTTP_STATUS.BAD_REQUEST;
-    return res.status(status).json({ error: errMsg(error) });
+    return res.status(status).json({ error: error.message });
   }
 });
 
@@ -528,11 +440,11 @@ router.post('/:id/clone', validateRequest(CloneBotSchema), async (req, res) => {
     return res
       .status(HTTP_STATUS.CREATED)
       .json({ success: true, message: 'Bot cloned', bot: newBot });
-  } catch (error: unknown) {
-    const status = errMsg(error).includes(ERROR_CODES.NOT_FOUND)
+  } catch (error: any) {
+    const status = error.message.includes(ERROR_CODES.NOT_FOUND)
       ? HTTP_STATUS.NOT_FOUND
       : HTTP_STATUS.BAD_REQUEST;
-    return res.status(status).json({ error: errMsg(error) });
+    return res.status(status).json({ error: error.message });
   }
 });
 
@@ -557,11 +469,11 @@ router.post('/:id/start', validateRequest(BotIdParamSchema), async (req, res) =>
     const { id } = req.params;
     await manager.startBot(id);
     return res.json({ success: true, message: 'Bot started' });
-  } catch (error: unknown) {
-    const status = errMsg(error).includes(ERROR_CODES.NOT_FOUND)
+  } catch (error: any) {
+    const status = error.message.includes(ERROR_CODES.NOT_FOUND)
       ? HTTP_STATUS.NOT_FOUND
       : HTTP_STATUS.BAD_REQUEST;
-    return res.status(status).json({ error: errMsg(error) });
+    return res.status(status).json({ error: error.message });
   }
 });
 
@@ -586,11 +498,11 @@ router.post('/:id/stop', validateRequest(BotIdParamSchema), async (req, res) => 
     const { id } = req.params;
     await manager.stopBot(id);
     return res.json({ success: true, message: 'Bot stopped' });
-  } catch (error: unknown) {
-    const status = errMsg(error).includes(ERROR_CODES.NOT_FOUND)
+  } catch (error: any) {
+    const status = error.message.includes(ERROR_CODES.NOT_FOUND)
       ? HTTP_STATUS.NOT_FOUND
       : HTTP_STATUS.BAD_REQUEST;
-    return res.status(status).json({ error: errMsg(error) });
+    return res.status(status).json({ error: error.message });
   }
 });
 
@@ -621,17 +533,17 @@ router.post('/:id/stop', validateRequest(BotIdParamSchema), async (req, res) => 
 router.get('/:id/history', validateRequest(BotHistoryQuerySchema), async (req, res) => {
   try {
     const { id } = req.params;
-    const reqQuery = req.query as Record<string, string>;
+    const reqQuery = req.query as any;
     const limit = Math.min(Math.max(parseInt(reqQuery.limit as string) || 20, 1), 100);
     const channelId = req.query.channelId as string;
 
     const history = await manager.getBotHistory(id, channelId, limit);
     return res.json({ success: true, data: { history } });
-  } catch (error: unknown) {
-    const status = errMsg(error).includes(ERROR_CODES.NOT_FOUND)
+  } catch (error: any) {
+    const status = error.message.includes(ERROR_CODES.NOT_FOUND)
       ? HTTP_STATUS.NOT_FOUND
       : HTTP_STATUS.BAD_REQUEST;
-    return res.status(status).json({ error: errMsg(error) });
+    return res.status(status).json({ error: error.message });
   }
 });
 
@@ -668,7 +580,7 @@ function redactString(val: string | undefined): string | undefined {
 router.get('/:id/activity', validateRequest(BotActivityQuerySchema), async (req, res) => {
   try {
     const { id } = req.params;
-    const reqQuery = req.query as Record<string, string>;
+    const reqQuery = req.query as any;
     const limit = Math.min(Math.max(parseInt(reqQuery.limit as string) || 20, 1), 100);
 
     const bot = await manager.getBot(id);

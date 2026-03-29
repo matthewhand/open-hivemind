@@ -1,6 +1,8 @@
 import Debug from 'debug';
 import { Router } from 'express';
 import { requireAdmin } from '../../auth/middleware';
+import { ClearCacheSchema } from '../../validation/schemas/miscSchema';
+import { validateRequest } from '../../validation/validateRequest';
 import { authenticateToken } from '../middleware/auth';
 import { clearAllSystemCaches } from '../utils/cacheManager'; // We'll implement this
 
@@ -24,7 +26,7 @@ router.use(authenticateToken, requireAdmin);
  *       200:
  *         description: Cache cleared successfully
  */
-router.post('/clear', async (req, res) => {
+router.post('/clear', validateRequest(ClearCacheSchema), async (req, res) => {
   try {
     await clearAllSystemCaches();
     res.json({ success: true, message: 'Cache cleared successfully' });
