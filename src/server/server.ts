@@ -111,14 +111,7 @@ export class WebUIServer {
       },
       credentials: true,
       optionsSuccessStatus: 200,
-      allowedHeaders: [
-        'Content-Type',
-        'Authorization',
-        'X-Requested-With',
-        'Accept',
-        'Origin',
-        'X-Correlation-ID',
-      ],
+      allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin', 'X-Correlation-ID'],
       exposedHeaders: [
         'X-Correlation-ID',
         'X-RateLimit-Limit',

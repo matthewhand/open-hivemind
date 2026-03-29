@@ -31,11 +31,7 @@ const upload = multer({
   limits: {
     fileSize: 50 * 1024 * 1024, // 50MB limit
   },
-  fileFilter: (
-    _req: unknown,
-    file: { originalname: string },
-    cb: (error: Error | null, acceptFile?: boolean) => void
-  ) => {
+  fileFilter: (_req: unknown, file: { originalname: string }, cb: (error: Error | null, acceptFile?: boolean) => void) => {
     const allowedTypes = ['.json', '.yaml', '.yml', '.csv', '.gz', '.enc'];
     const ext = path.extname(file.originalname).toLowerCase();
 
@@ -88,10 +84,7 @@ const validateExportOptions = [
 
   body('encryptionKey')
     .optional()
-    .if(
-      (_value: unknown, { req }: { req: { body?: { encrypt?: boolean } } }) =>
-        req.body?.encrypt === true
-    )
+    .if((_value: unknown, { req }: { req: { body?: { encrypt?: boolean } } }) => req.body?.encrypt === true)
     .isLength({ min: 8 })
     .withMessage('Encryption key must be at least 8 characters long'),
 
@@ -149,10 +142,7 @@ const validateBackupCreation = [
 
   body('encryptionKey')
     .optional()
-    .if(
-      (_value: unknown, { req }: { req: { body?: { encrypt?: boolean } } }) =>
-        req.body?.encrypt === true
-    )
+    .if((_value: unknown, { req }: { req: { body?: { encrypt?: boolean } } }) => req.body?.encrypt === true)
     .isLength({ min: 8 })
     .withMessage('Encryption key must be at least 8 characters long'),
 ];

@@ -163,6 +163,7 @@ describe('Health Routes Integration', () => {
     });
 
     it('GET /api/health/api-endpoints/:id returns specific endpoint', async () => {
+      expect(endpointId).toBeDefined(); // Fail fast if POST didn't run
       const response = await request(app).get(`/api/health/api-endpoints/${endpointId}`);
 
       expect(response.status).toBe(200);
@@ -170,6 +171,7 @@ describe('Health Routes Integration', () => {
     });
 
     it('PUT /api/health/api-endpoints/:id updates an endpoint', async () => {
+      expect(endpointId).toBeDefined(); // Fail fast if POST didn't run
       const response = await request(app)
         .put(`/api/health/api-endpoints/${endpointId}`)
         .send({ name: 'Updated API' });
@@ -179,6 +181,7 @@ describe('Health Routes Integration', () => {
     });
 
     it('DELETE /api/health/api-endpoints/:id removes an endpoint', async () => {
+      expect(endpointId).toBeDefined(); // Fail fast if POST didn't run
       const response = await request(app).delete(`/api/health/api-endpoints/${endpointId}`);
 
       expect(response.status).toBe(200);
@@ -249,6 +252,8 @@ describe('Health Routes Integration', () => {
       expect(response.status).toBe(400);
     });
 
+    // Documents current behavior: empty body returns 200 with a message rather than 400.
+    // Ideally this would be a 400, but we test what the server actually does today.
     it('handles POST /api/health/api-endpoints with empty body', async () => {
       const response = await request(app).post('/api/health/api-endpoints').send({});
       expect(response.status).toBe(200);
@@ -262,6 +267,8 @@ describe('Health Routes Integration', () => {
       expect(response.status).toBe(400);
     });
 
+    // Documents current behavior: empty body returns 200 with a message rather than 400.
+    // Ideally this would be a 400, but we test what the server actually does today.
     it('handles POST /api/health/cleanup with empty body', async () => {
       const response = await request(app).post('/api/health/cleanup').send({});
       expect(response.status).toBe(200);

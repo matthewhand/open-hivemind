@@ -47,17 +47,12 @@ export async function generateChatCompletionDirect(
 
   try {
     const resp = await withTimeout(
-      (signal) =>
-        client.post(
-          '/chat/completions',
-          {
-            model: overrides.model,
-            messages,
-          },
-          { signal }
-        ),
+      (signal) => client.post('/chat/completions', {
+        model: overrides.model,
+        messages,
+      }, { signal }),
       DEFAULT_DIRECT_TIMEOUT_MS,
-      'OpenWebUI direct chat completion'
+      'OpenWebUI direct chat completion',
     );
     const text = resp?.data?.choices?.[0]?.message?.content;
     if (typeof text === 'string' && text.length > 0) {

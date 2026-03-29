@@ -1,14 +1,10 @@
 import fs from 'fs';
 import path from 'path';
 import Debug from 'debug';
+import { SwarmInstaller } from './integrations/openswarm/SwarmInstaller';
+import { loadPlugin, instantiateMemoryProvider, instantiateToolProvider } from './plugins/PluginLoader';
 import { loadMemoryProfiles } from './config/memoryProfiles';
 import { loadToolProfiles } from './config/toolProfiles';
-import { SwarmInstaller } from './integrations/openswarm/SwarmInstaller';
-import {
-  instantiateMemoryProvider,
-  instantiateToolProvider,
-  loadPlugin,
-} from './plugins/PluginLoader';
 import { providerRegistry } from './registries/ProviderRegistry';
 
 const debug = Debug('app:initProviders');
