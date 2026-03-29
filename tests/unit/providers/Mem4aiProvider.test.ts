@@ -365,6 +365,13 @@ describe('Mem4aiProvider.get()', () => {
     expect(result).toBeNull();
   });
 
+  it('throws on non-404 server error', async () => {
+    const provider = makeProvider();
+    fetchMock.mockResolvedValueOnce(errorResponse(500, 'Internal Server Error'));
+
+    await expect(provider.get('mem-99')).rejects.toThrow();
+  });
+
   it('encodes special characters in memory id', async () => {
     const provider = makeProvider();
     fetchMock.mockResolvedValueOnce(

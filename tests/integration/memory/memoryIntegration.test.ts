@@ -8,6 +8,7 @@
 
 import { Mem0Provider } from '../../../packages/memory-mem0/src/Mem0Provider';
 import { Mem4aiProvider } from '../../../packages/memory-mem4ai/src/Mem4aiProvider';
+import { create as createMem4ai } from '../../../packages/memory-mem4ai/src/index';
 import { Mem0ApiError } from '../../../packages/memory-mem0/src/types';
 import {
   clearCircuitBreakerRegistry,
@@ -494,5 +495,28 @@ describe('score:0 edge case', () => {
     // null and undefined both stripped by != null check
     expect(result.results[1]).not.toHaveProperty('score');
     expect(result.results[2]).not.toHaveProperty('score');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Mem4ai create() factory (exercises packages/memory-mem4ai/src/index.ts)
+// ---------------------------------------------------------------------------
+
+describe('Mem4ai plugin factory', () => {
+  it('create() returns a working Mem4aiProvider instance', async () => {
+    const provider = createMem4ai({
+      apiUrl: 'https://api.mem4ai.test/v1',
+      apiKey: 'test-key',
+    });
+
+    expect(provider).toBeInstanceOf(Mem4aiProvider);
+    expect(provider.id).toBe('mem4ai');
+    expect(provider.type).toBe('memory');
+
+    // Verify the instance is functional (healthCheck hits real provider code)
+    fetchMock.mockResolvedValueOnce(jsonResponse({ status: 'ok' }));
+    const healthy = await provider.healthCheck();
+    expect(healthy).toBe(true);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 });
