@@ -14,6 +14,7 @@ import ScrollToTop from './components/ScrollToTop';
 import { IntegrationProvider } from './components/IntegrationLoader';
 import KeyboardShortcutsProvider from './components/KeyboardShortcutsProvider';
 import { useTheme } from './hooks/useTheme';
+import WebSocketStatusToast from './components/WebSocketStatusToast';
 
 /**
  * Keeps data-theme, localStorage, and system-preference listener in sync.
@@ -36,6 +37,7 @@ function App() {
                 <AuthProvider>
                   <BotProvider>
                     <WebSocketProvider>
+                      <WebSocketStatusToast />
                       <IntegrationProvider>
                         <BrowserRouter>
                           <ScrollToTop />

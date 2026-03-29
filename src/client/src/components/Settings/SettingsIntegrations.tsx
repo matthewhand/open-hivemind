@@ -6,6 +6,7 @@ import Button from '../DaisyUI/Button';
 import Card from '../DaisyUI/Card';
 import { SkeletonGrid } from '../DaisyUI/Skeleton';
 import Toggle from '../DaisyUI/Toggle';
+import Tooltip from '../DaisyUI/Tooltip';
 import { Puzzle, CheckCircle, XCircle, AlertTriangle } from 'lucide-react';
 
 interface Integration {
@@ -29,9 +30,9 @@ const SettingsIntegrations: React.FC = () => {
       const response = await fetch('/api/config/global');
       if (!response.ok) {throw new Error('Failed to fetch integrations');}
       const data = await response.json();
-      
+
       const config = data.config || {};
-      
+
       // Build integrations from config
       const builtIntegrations: Integration[] = [
         {
@@ -80,7 +81,7 @@ const SettingsIntegrations: React.FC = () => {
           status: config.flowise?.baseUrl?.value ? 'connected' : 'disconnected',
         },
       ];
-      
+
       setIntegrations(builtIntegrations);
     } catch (error) {
       setAlert({ type: 'error', message: 'Failed to load integrations' });
@@ -95,9 +96,9 @@ const SettingsIntegrations: React.FC = () => {
 
   const getStatusIcon = (status: string) => {
     switch (status) {
-    case 'connected': return <CheckCircle className="w-4 h-4 text-success" />;
-    case 'error': return <AlertTriangle className="w-4 h-4 text-error" />;
-    default: return <XCircle className="w-4 h-4 text-base-content/50" />;
+    case 'connected': return <CheckCircle className="w-4 h-4 text-success" aria-label="Connected" />;
+    case 'error': return <AlertTriangle className="w-4 h-4 text-error" aria-label="Error" />;
+    default: return <XCircle className="w-4 h-4 text-base-content/50" aria-label="Disconnected" />;
     }
   };
 
@@ -157,18 +158,24 @@ const SettingsIntegrations: React.FC = () => {
 
       {/* Stats */}
       <div className="grid grid-cols-3 gap-4">
-        <div className="stat bg-base-200/50 rounded-lg p-3">
-          <div className="stat-title text-xs">Total</div>
-          <div className="stat-value text-2xl">{integrations.length}</div>
-        </div>
-        <div className="stat bg-base-200/50 rounded-lg p-3">
-          <div className="stat-title text-xs">Connected</div>
-          <div className="stat-value text-2xl text-success">{connectedCount}</div>
-        </div>
-        <div className="stat bg-base-200/50 rounded-lg p-3">
-          <div className="stat-title text-xs">Configured</div>
-          <div className="stat-value text-2xl text-info">{configuredCount}</div>
-        </div>
+        <Tooltip content="Total number of available integrations">
+          <div className="stat bg-base-200/50 rounded-lg p-3">
+            <div className="stat-title text-xs">Total</div>
+            <div className="stat-value text-2xl">{integrations.length}</div>
+          </div>
+        </Tooltip>
+        <Tooltip content="Number of integrations currently connected">
+          <div className="stat bg-base-200/50 rounded-lg p-3">
+            <div className="stat-title text-xs">Connected</div>
+            <div className="stat-value text-2xl text-success">{connectedCount}</div>
+          </div>
+        </Tooltip>
+        <Tooltip content="Number of integrations that have been configured">
+          <div className="stat bg-base-200/50 rounded-lg p-3">
+            <div className="stat-title text-xs">Configured</div>
+            <div className="stat-value text-2xl text-info">{configuredCount}</div>
+          </div>
+        </Tooltip>
       </div>
 
       {/* Integration Groups */}
@@ -195,11 +202,16 @@ const SettingsIntegrations: React.FC = () => {
                 </p>
 
                 <div className="flex items-center justify-between">
-                  <Toggle
-                    checked={integration.enabled}
-                    disabled={!integration.configured}
-                    size="sm"
-                  />
+                  <Tooltip content={integration.configured ? "Toggle this integration on or off" : "Configure this integration first"}>
+                    <div>
+                      <Toggle
+                        checked={integration.enabled}
+                        disabled={!integration.configured}
+                        size="sm"
+                        aria-label={`Toggle ${integration.name} integration`}
+                      />
+                    </div>
+                  </Tooltip>
                   {!integration.configured && (
                     <span className="text-xs text-warning">Needs config</span>
                   )}
@@ -211,6 +223,9 @@ const SettingsIntegrations: React.FC = () => {
       ))}
 
       <div className="alert alert-info">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" className="stroke-current shrink-0 w-6 h-6">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+        </svg>
         <div>
           <span className="text-sm">
             Integration credentials are configured via environment variables or the Advanced Config tab.

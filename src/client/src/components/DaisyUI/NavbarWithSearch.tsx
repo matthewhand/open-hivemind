@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import KeyboardShortcutIndicator from '../KeyboardShortcutIndicator';
 
 interface NavItem {
   id: string;
@@ -241,7 +242,7 @@ const NavbarWithSearch: React.FC<NavbarWithSearchProps> = ({
             <input
               ref={searchInputRef}
               type="text"
-              placeholder="Search... (Ctrl+K)"
+              placeholder="Search..."
               className={`input input-bordered ${isSearchFocused ? 'input-lg w-96' : 'w-64'} transition-all duration-300 ease-in-out`}
               value={searchQuery}
               onChange={handleSearchChange}
@@ -253,6 +254,11 @@ const NavbarWithSearch: React.FC<NavbarWithSearchProps> = ({
               aria-autocomplete="list"
               aria-label="Search the site"
             />
+            {!searchQuery && !isSearchFocused && (
+              <div className="absolute right-24 top-1/2 -translate-y-1/2 pointer-events-none">
+                <kbd className="kbd kbd-sm opacity-50">/</kbd>
+              </div>
+            )}
             {searchQuery && (
               <button
                 type="button"
@@ -360,13 +366,13 @@ const NavbarWithSearch: React.FC<NavbarWithSearchProps> = ({
       {/* Navbar End */}
       <div className="navbar-end gap-2">
         {/* Quick Actions */}
-        <div className="tooltip tooltip-bottom" data-tip="Create New Bot">
+        <KeyboardShortcutIndicator keys={['Ctrl', 'N']} description="Create New Bot" position="bottom">
           <button className="btn btn-ghost btn-circle btn-sm" aria-label="Create New Bot">
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4"></path>
             </svg>
           </button>
-        </div>
+        </KeyboardShortcutIndicator>
 
         {/* System Status Indicator */}
         <div className="dropdown dropdown-end">

@@ -3,6 +3,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Alert } from '../DaisyUI/Alert';
 import Toggle from '../DaisyUI/Toggle';
 import Button from '../DaisyUI/Button';
+import Tooltip from '../DaisyUI/Tooltip';
 import { SkeletonList } from '../DaisyUI/Skeleton';
 import { MessageSquare, Bot, Users, Zap, Info } from 'lucide-react';
 
@@ -81,6 +82,7 @@ const SettingsMessaging: React.FC = () => {
 
   const handleSave = async () => {
     setIsSaving(true);
+    setAlert(null);
     try {
       const response = await fetch('/api/config/global', {
         method: 'PUT',
@@ -148,24 +150,29 @@ const SettingsMessaging: React.FC = () => {
           </h6>
 
           <div className="form-control mb-4">
-            <label className="label cursor-pointer py-2">
-              <div>
-                <span className="label-text font-medium">Only When Spoken To</span>
-                <p className="text-xs text-base-content/60 mt-1">
-                  Bot only replies when directly mentioned, replied to, or wakeword used
-                </p>
-              </div>
-              <Toggle
-                checked={settings.onlyWhenSpokenTo}
-                onChange={(e) => handleChange('onlyWhenSpokenTo', e.target.checked)}
-                color="primary"
-              />
-            </label>
+            <Tooltip content="Bot only replies when directly mentioned, replied to, or wakeword used">
+              <label className="label cursor-pointer py-2">
+                <div>
+                  <span className="label-text font-medium">Only When Spoken To</span>
+                  <p className="text-xs text-base-content/60 mt-1">
+                    Bot only replies when directly mentioned, replied to, or wakeword used
+                  </p>
+                </div>
+                <Toggle
+                  checked={settings.onlyWhenSpokenTo}
+                  onChange={(e) => handleChange('onlyWhenSpokenTo', e.target.checked)}
+                  color="primary"
+                  aria-label="Toggle only when spoken to mode"
+                />
+              </label>
+            </Tooltip>
           </div>
 
           <div className="form-control">
             <label className="label py-1">
-              <span className="label-text text-sm font-medium">Grace Window</span>
+              <Tooltip content="After speaking, bot can reply freely for this duration">
+                <span className="label-text text-sm font-medium">Grace Window</span>
+              </Tooltip>
               <span className="badge badge-ghost font-mono text-xs">
                 {settings.graceWindowMs >= 60000
                   ? `${Math.round(settings.graceWindowMs / 60000)}m`
@@ -181,6 +188,7 @@ const SettingsMessaging: React.FC = () => {
               onChange={(e) => handleChange('graceWindowMs', parseInt(e.target.value))}
               className="range range-sm range-primary"
               disabled={!settings.onlyWhenSpokenTo}
+              aria-label="Grace window duration"
             />
             <p className="text-xs text-base-content/60 mt-1">
               After speaking, bot can reply freely for this duration
@@ -196,19 +204,22 @@ const SettingsMessaging: React.FC = () => {
           </h6>
 
           <div className="form-control">
-            <label className="label cursor-pointer py-2">
-              <div>
-                <span className="label-text font-medium">Allow Bot-to-Bot Replies</span>
-                <p className="text-xs text-base-content/60 mt-1">
-                  Allow spontaneous replies to other bots (not just direct mentions)
-                </p>
-              </div>
-              <Toggle
-                checked={settings.allowBotToBot}
-                onChange={(e) => handleChange('allowBotToBot', e.target.checked)}
-                color="secondary"
-              />
-            </label>
+            <Tooltip content="Allow spontaneous replies to other bots (not just direct mentions)">
+              <label className="label cursor-pointer py-2">
+                <div>
+                  <span className="label-text font-medium">Allow Bot-to-Bot Replies</span>
+                  <p className="text-xs text-base-content/60 mt-1">
+                    Allow spontaneous replies to other bots (not just direct mentions)
+                  </p>
+                </div>
+                <Toggle
+                  checked={settings.allowBotToBot}
+                  onChange={(e) => handleChange('allowBotToBot', e.target.checked)}
+                  color="secondary"
+                  aria-label="Toggle bot-to-bot interaction"
+                />
+              </label>
+            </Tooltip>
           </div>
 
           {settings.allowBotToBot && (
@@ -227,35 +238,41 @@ const SettingsMessaging: React.FC = () => {
           </h6>
 
           <div className="form-control mb-3">
-            <label className="label cursor-pointer py-2">
-              <div>
-                <span className="label-text font-medium">Reply to @mentions (others)</span>
-                <p className="text-xs text-base-content/60 mt-1">
-                  Join conversations where others are mentioned
-                </p>
-              </div>
-              <Toggle
-                checked={settings.unsolicitedAddressed}
-                onChange={(e) => handleChange('unsolicitedAddressed', e.target.checked)}
-                disabled={settings.onlyWhenSpokenTo}
-              />
-            </label>
+            <Tooltip content="Join conversations where others are mentioned">
+              <label className="label cursor-pointer py-2">
+                <div>
+                  <span className="label-text font-medium">Reply to @mentions (others)</span>
+                  <p className="text-xs text-base-content/60 mt-1">
+                    Join conversations where others are mentioned
+                  </p>
+                </div>
+                <Toggle
+                  checked={settings.unsolicitedAddressed}
+                  onChange={(e) => handleChange('unsolicitedAddressed', e.target.checked)}
+                  disabled={settings.onlyWhenSpokenTo}
+                  aria-label="Toggle reply to other mentions"
+                />
+              </label>
+            </Tooltip>
           </div>
 
           <div className="form-control">
-            <label className="label cursor-pointer py-2">
-              <div>
-                <span className="label-text font-medium">Reply to general messages</span>
-                <p className="text-xs text-base-content/60 mt-1">
-                  Spontaneously join unaddressed conversations
-                </p>
-              </div>
-              <Toggle
-                checked={settings.unsolicitedUnaddressed}
-                onChange={(e) => handleChange('unsolicitedUnaddressed', e.target.checked)}
-                disabled={settings.onlyWhenSpokenTo}
-              />
-            </label>
+            <Tooltip content="Spontaneously join unaddressed conversations">
+              <label className="label cursor-pointer py-2">
+                <div>
+                  <span className="label-text font-medium">Reply to general messages</span>
+                  <p className="text-xs text-base-content/60 mt-1">
+                    Spontaneously join unaddressed conversations
+                  </p>
+                </div>
+                <Toggle
+                  checked={settings.unsolicitedUnaddressed}
+                  onChange={(e) => handleChange('unsolicitedUnaddressed', e.target.checked)}
+                  disabled={settings.onlyWhenSpokenTo}
+                  aria-label="Toggle reply to general messages"
+                />
+              </label>
+            </Tooltip>
           </div>
         </div>
 
@@ -267,44 +284,50 @@ const SettingsMessaging: React.FC = () => {
           </h6>
 
           <div className="form-control mb-3">
-            <label className="label cursor-pointer py-2">
-              <div>
-                <span className="label-text font-medium">Add User Hint</span>
-                <p className="text-xs text-base-content/60 mt-1">
-                  Inject the original user's identity when the bot is mentioned (MESSAGE_ADD_USER_HINT)
-                </p>
-              </div>
-              <Toggle
-                checked={settings.addUserHint}
-                onChange={(e) => handleChange('addUserHint', e.target.checked)}
-                color="info"
-              />
-            </label>
+            <Tooltip content="Inject the original user's identity when the bot is mentioned">
+              <label className="label cursor-pointer py-2">
+                <div>
+                  <span className="label-text font-medium">Add User Hint</span>
+                  <p className="text-xs text-base-content/60 mt-1">
+                    Inject the original user's identity when the bot is mentioned (MESSAGE_ADD_USER_HINT)
+                  </p>
+                </div>
+                <Toggle
+                  checked={settings.addUserHint}
+                  onChange={(e) => handleChange('addUserHint', e.target.checked)}
+                  color="info"
+                  aria-label="Toggle add user hint"
+                />
+              </label>
+            </Tooltip>
           </div>
 
           <div className="form-control mb-3">
-            <label className="label cursor-pointer py-2">
-              <div>
-                <span className="label-text font-medium">Semantic Search Relevance</span>
-                <p className="text-xs text-base-content/60 mt-1">
-                  Enable semantic relevance check using a 1-token LLM call to boost reply chance if the message is on-topic (MESSAGE_SEMANTIC_RELEVANCE_ENABLED)
-                </p>
-              </div>
-              <Toggle
-                checked={settings.semanticRelevanceEnabled}
-                onChange={(e) => handleChange('semanticRelevanceEnabled', e.target.checked)}
-                color="info"
-              />
-            </label>
+            <Tooltip content="Enable semantic relevance check using a 1-token LLM call to boost reply chance if the message is on-topic">
+              <label className="label cursor-pointer py-2">
+                <div>
+                  <span className="label-text font-medium">Semantic Search Relevance</span>
+                  <p className="text-xs text-base-content/60 mt-1">
+                    Enable semantic relevance check using a 1-token LLM call to boost reply chance if the message is on-topic (MESSAGE_SEMANTIC_RELEVANCE_ENABLED)
+                  </p>
+                </div>
+                <Toggle
+                  checked={settings.semanticRelevanceEnabled}
+                  onChange={(e) => handleChange('semanticRelevanceEnabled', e.target.checked)}
+                  color="info"
+                  aria-label="Toggle semantic relevance"
+                />
+              </label>
+            </Tooltip>
           </div>
 
           <div className="form-control">
             <label className="label py-1 flex items-center justify-between">
               <span className="label-text text-sm font-medium flex-1 pr-4 flex items-center gap-1">
                 Semantic Relevance Threshold Tuning
-                <div className="tooltip tooltip-right" data-tip="Multiplier applied to base chance if the message context is semantically related to recent conversation history (e.g. 10x means a 5% base chance becomes 50%).">
-                  <Info className="w-3.5 h-3.5 text-base-content/50 cursor-help" />
-                </div>
+                <Tooltip content="Multiplier applied to base chance if the message context is semantically related to recent conversation history">
+                  <Info className="w-3.5 h-3.5 text-base-content/50 cursor-help" aria-label="Semantic relevance info" />
+                </Tooltip>
               </span>
               <span className="badge badge-info font-mono text-xs flex-none">{settings.semanticRelevanceBonus}x</span>
             </label>
@@ -322,6 +345,7 @@ const SettingsMessaging: React.FC = () => {
                 borderRadius: 'var(--rounded-box, 1rem)'
               }}
               disabled={!settings.semanticRelevanceEnabled}
+              aria-label="Semantic relevance bonus multiplier"
             />
             <div className="w-full flex justify-between text-xs px-2 mt-1 text-base-content/50">
               <span>1x</span>
@@ -345,9 +369,9 @@ const SettingsMessaging: React.FC = () => {
             <label className="label py-1 flex items-center justify-between">
               <span className="label-text text-sm font-medium flex-1 pr-4 flex items-center gap-1">
                 Base Chance
-                <div className="tooltip tooltip-right" data-tip="The absolute baseline probability (0-100%) the bot will chime in unaddressed, before any multipliers like semantic relevance are applied.">
-                  <Info className="w-3.5 h-3.5 text-base-content/50 cursor-help" />
-                </div>
+                <Tooltip content="The absolute baseline probability (0-100%) the bot will chime in unaddressed, before any multipliers like semantic relevance are applied">
+                  <Info className="w-3.5 h-3.5 text-base-content/50 cursor-help" aria-label="Base chance info" />
+                </Tooltip>
               </span>
               <span className="badge badge-accent font-mono flex-none">{settings.baseChance.toFixed(0)}%</span>
             </label>
@@ -366,6 +390,7 @@ const SettingsMessaging: React.FC = () => {
                 borderRadius: 'var(--rounded-box, 1rem)'
               }}
               disabled={settings.onlyWhenSpokenTo}
+              aria-label="Base chance percentage"
             />
             <div className="w-full flex justify-between text-xs px-2 mt-1 text-base-content/50">
               <span>0%</span>
@@ -389,6 +414,7 @@ const SettingsMessaging: React.FC = () => {
                 className="textarea textarea-bordered w-full text-xs"
                 placeholder="Type a sample message..."
                 rows={2}
+                aria-label="Test message input"
               ></textarea>
               <div className="flex justify-between items-center font-mono bg-base-100 p-2 rounded">
                 <span>{settings.baseChance}% × {settings.semanticRelevanceBonus}x</span>
@@ -403,7 +429,7 @@ const SettingsMessaging: React.FC = () => {
 
       {/* Environment Variables Reference */}
       <div className="collapse collapse-arrow bg-base-200/30">
-        <input type="checkbox" />
+        <input type="checkbox" aria-label="Toggle environment variables reference" />
         <div className="collapse-title text-sm font-medium">
           Environment Variables Reference
         </div>
@@ -475,8 +501,10 @@ const SettingsMessaging: React.FC = () => {
           disabled={isSaving}
           variant="primary"
           loading={isSaving}
+          loadingText="Saving..."
+          icon={<MessageSquare className="w-4 h-4" />}
         >
-          {isSaving ? 'Saving...' : 'Save Settings'}
+          Save Settings
         </Button>
       </div>
     </div>

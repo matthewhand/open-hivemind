@@ -37,6 +37,8 @@ import { useBulkSelection } from '../hooks/useBulkSelection';
 import BulkActionBar from '../components/BulkActionBar';
 import { useDragAndDrop } from '../hooks/useDragAndDrop';
 import { useIsBelowBreakpoint } from '../hooks/useBreakpoint';
+import { usePagination } from '../hooks/usePagination';
+import Pagination from '../components/DaisyUI/Pagination';
 
 // Extend UI Persona type to include assigned bots for display
 interface Persona extends ApiPersona {
@@ -54,6 +56,9 @@ const categoryOptions = [
   { value: 'entertainment', label: 'Entertainment' },
   { value: 'professional', label: 'Professional' },
 ];
+
+// Character limit for truncating system prompts
+const PROMPT_CHAR_LIMIT = 150;
 
 const PersonasPage: React.FC = () => {
   const infoToast = useInfoToast();
@@ -83,6 +88,7 @@ const PersonasPage: React.FC = () => {
   const [editingPersona, setEditingPersona] = useState<Persona | null>(null);
   const [cloningPersonaId, setCloningPersonaId] = useState<string | null>(null);
   const [isViewMode, setIsViewMode] = useState(false);
+  const [expandedPrompts, setExpandedPrompts] = useState<Set<string>>(new Set());
 
   // Form State
   const [personaName, setPersonaName] = useState('');
@@ -152,6 +158,12 @@ const PersonasPage: React.FC = () => {
     });
   }, [personas, searchQuery, selectedCategory]);
 
+  // Pagination
+  const pagination = usePagination(filteredPersonas, {
+    defaultPageSize: 20,
+    pageSizeOptions: [10, 20, 50, 100],
+  });
+
   // Bulk selection
   const filteredPersonaIds = useMemo(() => filteredPersonas.filter(p => !p.isBuiltIn).map(p => p.id), [filteredPersonas]);
   const bulk = useBulkSelection(filteredPersonaIds);
@@ -175,7 +187,7 @@ const PersonasPage: React.FC = () => {
     onMoveDown: onPersonaMoveDown,
     getItemStyle: getPersonaItemStyle,
   } = useDragAndDrop({
-    items: filteredPersonas,
+    items: pagination.paginatedItems,
     idAccessor: (p) => p.id,
     onReorder: handlePersonaReorder,
   });
@@ -214,6 +226,18 @@ const PersonasPage: React.FC = () => {
       // errorToast shown below
       errorToast('Error', 'Failed to copy to clipboard');
     }
+  };
+
+  const togglePromptExpansion = (personaId: string) => {
+    setExpandedPrompts((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(personaId)) {
+        newSet.delete(personaId);
+      } else {
+        newSet.add(personaId);
+      }
+      return newSet;
+    });
   };
 
   const handleSavePersona = async () => {
@@ -418,8 +442,43 @@ const PersonasPage: React.FC = () => {
     ];
   }, [personas]);
 
+  // Loading skeleton component for persona cards
+  const PersonaCardSkeleton = () => (
+    <Card className="flex flex-col h-full animate-pulse">
+      <div className="flex items-start justify-between mb-3">
+        <div className="flex items-center gap-3 w-full">
+          <div className="w-4 h-4 bg-base-300 rounded"></div>
+          <div className="w-10 h-10 bg-base-300 rounded-full"></div>
+          <div className="flex-1">
+            <div className="h-5 bg-base-300 rounded w-1/2 mb-2"></div>
+            <div className="h-3 bg-base-300 rounded w-1/3"></div>
+          </div>
+        </div>
+      </div>
+      <div className="mb-4 flex-1">
+        <div className="h-4 bg-base-300 rounded w-full mb-2"></div>
+        <div className="h-4 bg-base-300 rounded w-2/3 mb-3"></div>
+        <div className="bg-base-200/50 p-3 rounded-lg mb-3">
+          <div className="h-3 bg-base-300 rounded w-1/4 mb-2"></div>
+          <div className="h-3 bg-base-300 rounded w-full mb-1"></div>
+          <div className="h-3 bg-base-300 rounded w-5/6"></div>
+        </div>
+        <div className="h-3 bg-base-300 rounded w-1/4 mb-2"></div>
+        <div className="flex gap-1">
+          <div className="h-5 bg-base-300 rounded w-16"></div>
+          <div className="h-5 bg-base-300 rounded w-16"></div>
+        </div>
+      </div>
+      <div className="flex items-center justify-end pt-3 border-t border-base-200 gap-2">
+        <div className="h-8 bg-base-300 rounded w-16"></div>
+        <div className="h-8 bg-base-300 rounded w-16"></div>
+        <div className="h-8 bg-base-300 rounded w-16"></div>
+      </div>
+    </Card>
+  );
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 md:space-y-6">
       {/* Error Alert */}
       {error && <Alert status="error" message={error} onClose={() => setError(null)} />}
 
@@ -429,12 +488,12 @@ const PersonasPage: React.FC = () => {
         description="Manage AI personalities and system prompts"
         icon={Sparkles}
         actions={
-          <div className="flex gap-2">
-            <Button variant="ghost" onClick={fetchData} disabled={loading} aria-busy={loading}>
-              <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} /> Refresh
+          <div className="flex gap-2 flex-wrap">
+            <Button variant="ghost" onClick={fetchData} disabled={loading} aria-busy={loading} className="min-h-[44px]">
+              <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} /> <span className="hidden sm:inline">Refresh</span>
             </Button>
-            <Button variant="primary" onClick={openCreateModal}>
-              <Plus className="w-4 h-4" /> Create Persona
+            <Button variant="primary" onClick={openCreateModal} className="min-h-[44px]">
+              <Plus className="w-4 h-4" /> <span className="hidden xs:inline">Create</span><span className="hidden sm:inline"> Persona</span>
             </Button>
           </div>
         }
@@ -473,7 +532,11 @@ const PersonasPage: React.FC = () => {
 
       {/* Persona List */}
       {loading ? (
-        <SkeletonPage variant="list" statsCount={0} showFilters={false} />
+        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
+          {Array.from({ length: 6 }).map((_, index) => (
+            <PersonaCardSkeleton key={index} />
+          ))}
+        </div>
       ) : personas.length === 0 ? (
         <EmptyState
           icon={Sparkles}
@@ -522,8 +585,15 @@ const PersonasPage: React.FC = () => {
               },
             ]}
           />
-          <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
-          {filteredPersonas.map((persona, index) => (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-3 md:gap-4">
+          {pagination.paginatedItems.map((persona, index) => {
+            const isExpanded = expandedPrompts.has(persona.id);
+            const shouldTruncate = persona.systemPrompt.length > PROMPT_CHAR_LIMIT;
+            const displayPrompt = shouldTruncate && !isExpanded
+              ? `${persona.systemPrompt.slice(0, PROMPT_CHAR_LIMIT)}...`
+              : persona.systemPrompt;
+
+            return (
             <Card
               key={persona.id}
               data-testid="persona-card"
@@ -550,7 +620,7 @@ const PersonasPage: React.FC = () => {
                       <button
                         className="btn btn-ghost btn-xs btn-square p-0"
                         onClick={() => onPersonaMoveDown(index)}
-                        disabled={index === filteredPersonas.length - 1}
+                        disabled={index === pagination.paginatedItems.length - 1}
                         aria-label="Move down"
                       >
                         <ChevronDown className="w-3 h-3" />
@@ -601,19 +671,29 @@ const PersonasPage: React.FC = () => {
                       System Prompt
                     </h4>
                     <div className="flex items-center gap-2">
-                      <button
-                        className="btn btn-ghost btn-xs btn-circle text-base-content/40 hover:text-primary"
-                        onClick={() => handleCopyPrompt(persona.systemPrompt)}
-                        title="Copy System Prompt"
-                        aria-label="Copy System Prompt"
-                      >
-                        <Copy className="w-3 h-3" />
-                      </button>
+                      <div className="tooltip" data-tip="Copy System Prompt">
+                        <button
+                          className="btn btn-ghost btn-xs btn-circle text-base-content/40 hover:text-primary"
+                          onClick={() => handleCopyPrompt(persona.systemPrompt)}
+                          aria-label="Copy System Prompt"
+                        >
+                          <Copy className="w-3 h-3" />
+                        </button>
+                      </div>
                     </div>
                   </div>
-                  <p className="text-sm text-base-content/80 line-clamp-3 italic font-mono text-xs">
-                    "{persona.systemPrompt}"
+                  <p className="text-sm text-base-content/80 italic font-mono text-xs">
+                    "{displayPrompt}"
                   </p>
+                  {shouldTruncate && (
+                    <button
+                      className="btn btn-ghost btn-xs mt-2 text-primary"
+                      onClick={() => togglePromptExpansion(persona.id)}
+                      aria-label={isExpanded ? "Show less" : "Read more"}
+                    >
+                      {isExpanded ? 'Show less' : 'Read more'}
+                    </button>
+                  )}
                 </div>
 
                 <div className="flex items-center justify-between mb-2">
@@ -641,41 +721,72 @@ const PersonasPage: React.FC = () => {
               </div>
 
               <div className="flex items-center justify-end pt-3 border-t border-base-200 mt-auto gap-2">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => openViewModal(persona)}
-                  title="View Details"
-                >
-                  <Eye className="w-4 h-4 mr-1" /> View
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => openCloneModal(persona)}
-                  title="Clone Persona"
-                >
-                  <Copy className="w-4 h-4 mr-1" /> Clone
-                </Button>
+                <div className="tooltip" data-tip="View Details">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => openViewModal(persona)}
+                    aria-label={`View ${persona.name}`}
+                  >
+                    <Eye className="w-4 h-4 mr-1" /> View
+                  </Button>
+                </div>
+                <div className="tooltip" data-tip="Clone Persona">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => openCloneModal(persona)}
+                    aria-label={`Clone ${persona.name}`}
+                  >
+                    <Copy className="w-4 h-4 mr-1" /> Clone
+                  </Button>
+                </div>
                 {!persona.isBuiltIn && (
                   <>
-                    <Button variant="ghost" size="sm" onClick={() => openEditModal(persona)}>
-                      <Edit2 className="w-4 h-4" /> Edit
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleDeletePersona(persona.id)}
-                      className="text-error hover:bg-error/10"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
+                    <div className="tooltip" data-tip="Edit Persona">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => openEditModal(persona)}
+                        aria-label={`Edit ${persona.name}`}
+                      >
+                        <Edit2 className="w-4 h-4" /> Edit
+                      </Button>
+                    </div>
+                    <div className="tooltip" data-tip="Delete Persona">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleDeletePersona(persona.id)}
+                        className="text-error hover:bg-error/10"
+                        aria-label={`Delete ${persona.name}`}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
                   </>
                 )}
               </div>
             </Card>
-          ))}
+          );
+          })}
         </div>
+
+        {/* Pagination */}
+        {filteredPersonas.length > 10 && (
+          <div className="mt-6">
+            <Pagination
+              currentPage={pagination.currentPage}
+              totalItems={filteredPersonas.length}
+              pageSize={pagination.pageSize}
+              onPageChange={pagination.setCurrentPage}
+              onPageSizeChange={pagination.setPageSize}
+              style="extended"
+              showPageSizeSelector={true}
+              showItemsInfo={true}
+            />
+          </div>
+        )}
         </>
       )}
 

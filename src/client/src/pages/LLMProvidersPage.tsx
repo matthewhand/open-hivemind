@@ -65,6 +65,7 @@ const LLMProvidersPage: React.FC = () => {
   const [profiles, setProfiles] = useState<any[]>([]);
   const [defaultStatus, setDefaultStatus] = useState<any>(null);
   const [expandedProfile, setExpandedProfile] = useState<string | null>(null);
+  const [expandingProfile, setExpandingProfile] = useState<string | null>(null);
   const [libraryStatus, setLibraryStatus] = useState<Record<string, { installed: boolean; package: string }>>({});
   const [webuiIntelligenceProvider, setWebuiIntelligenceProvider] = useState<string>('');
   const [defaultChatbotProfile, setDefaultChatbotProfile] = useState<string>('');
@@ -212,7 +213,18 @@ const LLMProvidersPage: React.FC = () => {
     return config?.icon || <BrainIcon className="w-5 h-5" />;
   };
 
-  const toggleExpand = (key: string) => setExpandedProfile(expandedProfile === key ? null : key);
+  const toggleExpand = async (key: string) => {
+    if (expandedProfile === key) {
+      setExpandedProfile(null);
+      setExpandingProfile(null);
+    } else {
+      setExpandingProfile(key);
+      // Simulate async expansion with loading state
+      await new Promise(resolve => setTimeout(resolve, 100));
+      setExpandedProfile(key);
+      setExpandingProfile(null);
+    }
+  };
 
   const renderLibraryCheck = (type: string) => {
     const status = libraryStatus[type];
@@ -270,18 +282,18 @@ const LLMProvidersPage: React.FC = () => {
   ];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 md:space-y-6">
       <PageHeader
         title="LLM Providers"
         description="Configure AI provider profiles and assign them to specific use cases."
-        icon={<BrainIcon className="w-6 h-6" />}
+        icon={<BrainIcon className="w-5 h-5 sm:w-6 sm:h-6" />}
         actions={
-          <div className="flex gap-2">
-            <Button variant="ghost" onClick={fetchProfiles} disabled={loading} aria-busy={loading}>
-              <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} /> Refresh
+          <div className="flex gap-2 flex-wrap">
+            <Button variant="ghost" onClick={fetchProfiles} disabled={loading} aria-busy={loading} className="min-h-[44px]">
+              <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} /> <span className="hidden sm:inline">Refresh</span>
             </Button>
-            <Button variant="primary" onClick={handleAddProfile}>
-              <AddIcon className="w-4 h-4 mr-2" /> Create Profile
+            <Button variant="primary" onClick={handleAddProfile} className="min-h-[44px]">
+              <AddIcon className="w-4 h-4 sm:mr-2" /> <span className="hidden xs:inline">Create</span><span className="hidden sm:inline"> Profile</span>
             </Button>
           </div>
         }
@@ -292,7 +304,7 @@ const LLMProvidersPage: React.FC = () => {
       {error && <Alert status="error" icon={<XIcon />} message={error} onClose={() => setError(null)} />}
 
       {/* ── Use-case assignment cards ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-4 gap-3 md:gap-4 lg:gap-6">
 
         {/* 1. System Default (env-var fallback) */}
         <Card className={`bg-base-100 shadow-sm border ${defaultStatus?.configured ? 'border-success/20' : 'border-warning/20'}`}>
@@ -380,7 +392,7 @@ const LLMProvidersPage: React.FC = () => {
           </div>
         </Card>
 
-        <Card className="bg-base-100 shadow-sm border border-base-200">
+        <Card className={`bg-base-100 shadow-sm border ${!defaultEmbeddingProvider ? 'border-warning/40' : 'border-base-200'}`}>
           <div className="card-body p-5">
             <h3 className="font-bold flex items-center gap-2 mb-1">
               <CpuIcon className="w-4 h-4 text-secondary" /> Default Embedding Provider
@@ -390,7 +402,7 @@ const LLMProvidersPage: React.FC = () => {
             </p>
             <div className="form-control w-full">
               <select
-                className="select select-bordered select-sm w-full"
+                className={`select select-bordered select-sm w-full ${!defaultEmbeddingProvider ? 'select-warning' : ''}`}
                 value={defaultEmbeddingProvider}
                 onChange={async (e) => {
                   setDefaultEmbeddingProvider(e.target.value);
@@ -404,6 +416,12 @@ const LLMProvidersPage: React.FC = () => {
                 ))}
               </select>
             </div>
+            {!defaultEmbeddingProvider && (
+              <div className="alert alert-warning text-xs p-2 mt-2">
+                <WarningIcon className="w-3 h-3" />
+                <span>No embedding provider selected. Memory features may not work.</span>
+              </div>
+            )}
           </div>
         </Card>
       </div>
@@ -546,15 +564,44 @@ const LLMProvidersPage: React.FC = () => {
                     </div>
                   </div>
                   <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
-                    <Button size="sm" variant="ghost" onClick={() => handleEditProfile(profile)}>
-                      <EditIcon className="w-4 h-4" />
-                    </Button>
-                    <Button size="sm" variant="ghost" className="text-error hover:bg-error/10" onClick={() => handleDeleteProfile(profile.key)}>
-                      <DeleteIcon className="w-4 h-4" />
-                    </Button>
-                    <Button size="sm" variant="ghost" onClick={() => toggleExpand(profile.key)}>
-                      {expandedProfile === profile.key ? <CollapseIcon className="w-4 h-4" /> : <ExpandIcon className="w-4 h-4" />}
-                    </Button>
+                    <div className="tooltip tooltip-left" data-tip="Edit profile">
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => handleEditProfile(profile)}
+                        aria-label={`Edit ${profile.name} profile`}
+                      >
+                        <EditIcon className="w-4 h-4" />
+                      </Button>
+                    </div>
+                    <div className="tooltip tooltip-left" data-tip="Delete profile">
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="text-error hover:bg-error/10"
+                        onClick={() => handleDeleteProfile(profile.key)}
+                        aria-label={`Delete ${profile.name} profile`}
+                      >
+                        <DeleteIcon className="w-4 h-4" />
+                      </Button>
+                    </div>
+                    <div className="tooltip tooltip-left" data-tip={expandedProfile === profile.key ? "Collapse details" : "Expand details"}>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => toggleExpand(profile.key)}
+                        aria-label={expandedProfile === profile.key ? `Collapse ${profile.name} details` : `Expand ${profile.name} details`}
+                        disabled={expandingProfile === profile.key}
+                      >
+                        {expandingProfile === profile.key ? (
+                          <RefreshCw className="w-4 h-4 animate-spin" />
+                        ) : expandedProfile === profile.key ? (
+                          <CollapseIcon className="w-4 h-4" />
+                        ) : (
+                          <ExpandIcon className="w-4 h-4" />
+                        )}
+                      </Button>
+                    </div>
                   </div>
                 </div>
 

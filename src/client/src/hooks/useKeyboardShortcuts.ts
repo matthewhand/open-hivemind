@@ -1,4 +1,4 @@
-import { useEffect, useCallback, useState } from 'react';
+import { useEffect, useCallback, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 export interface Shortcut {
@@ -10,6 +10,8 @@ export interface Shortcut {
   description: string;
   /** If true, this shortcut fires even when the user is focused on an input/textarea */
   global?: boolean;
+  /** Optional category for grouping in help modal */
+  category?: string;
 }
 
 /**
@@ -56,6 +58,39 @@ export const useKeyboardShortcuts = (shortcuts: Shortcut[]) => {
 };
 
 /**
+ * Enhanced hook: provides dynamic registration and unregistration of shortcuts.
+ * Useful for components that need to add temporary shortcuts.
+ */
+export const useDynamicShortcuts = () => {
+  const [shortcuts, setShortcuts] = useState<Shortcut[]>([]);
+  const shortcutsRef = useRef<Map<string, Shortcut>>(new Map());
+
+  const registerShortcut = useCallback((id: string, shortcut: Shortcut) => {
+    shortcutsRef.current.set(id, shortcut);
+    setShortcuts(Array.from(shortcutsRef.current.values()));
+  }, []);
+
+  const unregisterShortcut = useCallback((id: string) => {
+    shortcutsRef.current.delete(id);
+    setShortcuts(Array.from(shortcutsRef.current.values()));
+  }, []);
+
+  const clearShortcuts = useCallback(() => {
+    shortcutsRef.current.clear();
+    setShortcuts([]);
+  }, []);
+
+  useKeyboardShortcuts(shortcuts);
+
+  return {
+    registerShortcut,
+    unregisterShortcut,
+    clearShortcuts,
+    shortcuts,
+  };
+};
+
+/**
  * High-level hook: wires up all default keyboard shortcuts and manages
  * the open/closed state of the command palette and shortcuts help overlay.
  */
@@ -71,6 +106,7 @@ export const useDefaultShortcuts = () => {
       global: true,
       action: () => setCommandPaletteOpen(prev => !prev),
       description: 'Open command palette',
+      category: 'General',
     },
     {
       key: 'Escape',
@@ -101,18 +137,21 @@ export const useDefaultShortcuts = () => {
         });
       },
       description: 'Close modal / overlay',
+      category: 'General',
     },
     {
       key: 'n',
       ctrlKey: true,
       action: () => navigate('/admin/bots/create'),
       description: 'Create new bot',
+      category: 'Actions',
     },
     {
       key: '?',
       shiftKey: true,
       action: () => setShortcutsHelpOpen(prev => !prev),
       description: 'Show keyboard shortcuts',
+      category: 'General',
     },
     {
       key: '/',
@@ -125,27 +164,32 @@ export const useDefaultShortcuts = () => {
         }
       },
       description: 'Focus search',
+      category: 'General',
     },
     {
       key: 'g',
       shiftKey: true,
       action: () => navigate('/admin/settings'),
       description: 'Go to settings',
+      category: 'Navigation',
     },
     {
       key: 'h',
       action: () => navigate('/admin/overview'),
       description: 'Go to overview',
+      category: 'Navigation',
     },
     {
       key: 'b',
       action: () => navigate('/admin/bots'),
       description: 'Go to bots',
+      category: 'Navigation',
     },
     {
       key: 'm',
       action: () => navigate('/admin/monitoring'),
       description: 'Go to monitoring',
+      category: 'Navigation',
     },
   ];
 

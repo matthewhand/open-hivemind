@@ -34,6 +34,8 @@ import { useBulkSelection } from '../hooks/useBulkSelection';
 import BulkActionBar from '../components/BulkActionBar';
 import { useDragAndDrop } from '../hooks/useDragAndDrop';
 import { useIsBelowBreakpoint } from '../hooks/useBreakpoint';
+import { usePagination } from '../hooks/usePagination';
+import Pagination from '../components/DaisyUI/Pagination';
 
 const BotsPage: React.FC = () => {
   const [bots, setBots] = useState<BotConfig[]>([]);
@@ -271,6 +273,12 @@ const BotsPage: React.FC = () => {
     });
   }, [bots, searchQuery, filterType]);
 
+  // Pagination
+  const pagination = usePagination(filteredBots, {
+    defaultPageSize: 20,
+    pageSizeOptions: [10, 20, 50, 100],
+  });
+
   // Bulk selection
   const filteredBotIds = useMemo(() => filteredBots.map(b => b.id), [filteredBots]);
   const bulk = useBulkSelection(filteredBotIds);
@@ -295,7 +303,7 @@ const BotsPage: React.FC = () => {
     onMoveDown: onBotMoveDown,
     getItemStyle: getBotItemStyle,
   } = useDragAndDrop({
-    items: filteredBots,
+    items: pagination.paginatedItems,
     idAccessor: (b) => b.id,
     onReorder: handleReorder,
   });
@@ -414,48 +422,48 @@ const BotsPage: React.FC = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 md:space-y-6">
       <PageHeader
         title="AI Swarm Management"
         description="Configure, monitor, and deploy your specialized AI agents."
-        icon={<Bot className="w-8 h-8 text-primary" />}
+        icon={<Bot className="w-6 h-6 sm:w-8 sm:h-8 text-primary" />}
         actions={
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-wrap">
             <button
-              className="btn btn-ghost btn-sm"
+              className="btn btn-ghost btn-sm min-h-[44px]"
               onClick={handleExportAll}
               title="Export all bots"
             >
-              <Download className="w-4 h-4 mr-1" /> Export All
+              <Download className="w-4 h-4 sm:mr-1" /> <span className="hidden sm:inline">Export All</span>
             </button>
             <button
-              className="btn btn-ghost btn-sm"
+              className="btn btn-ghost btn-sm min-h-[44px]"
               onClick={() => setIsImportModalOpen(true)}
               title="Import bots from file"
             >
-              <Upload className="w-4 h-4 mr-1" /> Import
+              <Upload className="w-4 h-4 sm:mr-1" /> <span className="hidden sm:inline">Import</span>
             </button>
             <button
-              className="btn btn-primary"
+              className="btn btn-primary btn-sm sm:btn-md min-h-[44px]"
               onClick={() => setIsCreateModalOpen(true)}
             >
-              <Plus className="w-4 h-4 mr-2" /> Create New Bot
+              <Plus className="w-4 h-4 mr-1 sm:mr-2" /> <span className="hidden xs:inline">Create</span><span className="hidden sm:inline"> New Bot</span>
             </button>
           </div>
         }
       />
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
         {/* Main Content: Bot List */}
-        <div className={`${error && bots.length === 0 ? 'lg:col-span-3' : 'lg:col-span-2'} space-y-4`}>
+        <div className={`${error && bots.length === 0 ? 'lg:col-span-3' : 'lg:col-span-2'} space-y-3 md:space-y-4`}>
           <SearchFilterBar
             searchValue={searchQuery}
             onSearchChange={setSearchQuery}
             searchPlaceholder="Search agents by name or purpose..."
           >
-            <div className="flex gap-2">
+            <div className="flex gap-2 flex-wrap">
               <select
-                className="select select-bordered select-sm"
+                className="select select-bordered select-sm min-h-[44px]"
                 value={filterType}
                 onChange={(e) => setFilterType(e.target.value as any)}
               >
@@ -464,7 +472,7 @@ const BotsPage: React.FC = () => {
                 <option value="inactive">Inactive Only</option>
               </select>
               <button
-                className="btn btn-ghost btn-sm btn-square"
+                className="btn btn-ghost btn-sm btn-square min-h-[44px] min-w-[44px]"
                 onClick={fetchBots}
                 title="Refresh list"
                 aria-label="Refresh list"
@@ -540,8 +548,8 @@ const BotsPage: React.FC = () => {
                   },
                 ]}
               />
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {filteredBots.map((bot, index) => (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2 gap-3 md:gap-4">
+                {pagination.paginatedItems.map((bot, index) => (
                   <div
                     key={bot.id}
                     className="relative"
@@ -574,7 +582,7 @@ const BotsPage: React.FC = () => {
                           <button
                             className="btn btn-ghost btn-xs btn-square p-0"
                             onClick={() => onBotMoveDown(index)}
-                            disabled={index === filteredBots.length - 1}
+                            disabled={index === pagination.paginatedItems.length - 1}
                             aria-label="Move down"
                           >
                             <ChevronDown className="w-3 h-3" />
@@ -600,13 +608,29 @@ const BotsPage: React.FC = () => {
                   </div>
                 ))}
               </div>
+
+              {/* Pagination */}
+              {filteredBots.length > 10 && (
+                <div className="mt-6">
+                  <Pagination
+                    currentPage={pagination.currentPage}
+                    totalItems={filteredBots.length}
+                    pageSize={pagination.pageSize}
+                    onPageChange={pagination.setCurrentPage}
+                    onPageSizeChange={pagination.setPageSize}
+                    style="extended"
+                    showPageSizeSelector={true}
+                    showItemsInfo={true}
+                  />
+                </div>
+              )}
             </>
           )}
         </div>
 
-        {/* Sidebar: Bot Preview/Details */}
+        {/* Sidebar: Bot Preview/Details - Hidden on mobile, shown as modal or collapsed */}
         {!(error && bots.length === 0) && (
-        <div className="lg:col-span-1">
+        <div className="lg:col-span-1 hidden lg:block">
           {previewBot ? (
             <div className="card bg-base-100 shadow-xl border border-base-200 sticky top-6 animate-in fade-in slide-in-from-right-4 duration-300">
               <div className="card-body p-5">

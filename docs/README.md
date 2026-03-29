@@ -7,6 +7,15 @@ This directory contains all documentation for Open Hivemind, organized by topic.
 - [Bot Management](admin/bots.md)
 - [Backups & System Data](admin/export.md)
 
+## 📱 Responsive Design
+- [Quick Start Summary](RESPONSIVE_SUMMARY.md) - Start here!
+- [Quick Reference Card](responsive-quick-reference.md) - One-page cheat sheet
+- [Responsive Design Guide](responsive-design.md) - Comprehensive patterns and best practices
+- [Migration Guide](responsive-migration-guide.md) - Migrating from legacy hooks
+- [Implementation Checklist](responsive-implementation-checklist.md) - Track progress
+- [Example Components](examples/ResponsiveComponent.example.tsx) - Working code samples
+- [Keyboard Shortcuts Guide](keyboard-shortcuts-guide.md) - Accessibility and navigation
+
 ## 🏗️ Architecture & Core Concepts
 - [Architecture Overview](architecture/overview.md)
 - [Unified Server Architecture](architecture/unified-server.md)

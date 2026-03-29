@@ -8,7 +8,8 @@ import { Alert } from '../components/DaisyUI/Alert';
 import PageHeader from '../components/DaisyUI/PageHeader';
 import StatsCards from '../components/DaisyUI/StatsCards';
 import EmptyState from '../components/DaisyUI/EmptyState';
-import { SkeletonTableLayout } from '../components/DaisyUI/Skeleton';
+import { Skeleton, SkeletonText, SkeletonRectangle, SkeletonCircle } from '../components/DaisyUI/Skeleton';
+import Tooltip from '../components/DaisyUI/Tooltip';
 import SearchFilterBar from '../components/SearchFilterBar';
 import { ConfirmModal } from '../components/DaisyUI/Modal';
 import { useErrorToast } from '../components/DaisyUI/ToastNotification';
@@ -23,11 +24,36 @@ import {
   ChevronRight as CollapseIcon,
   Search,
   RefreshCw,
+  Activity as ActivityIcon,
+  CheckCircle2 as HealthyIcon,
+  Clock as ClockIcon,
 } from 'lucide-react';
 import ProviderConfigModal from '../components/ProviderConfiguration/ProviderConfigModal';
 import { apiService } from '../services/api';
 import { getProviderSchema } from '../provider-configs';
 import useUrlParams from '../hooks/useUrlParams';
+
+// Provider card skeleton component
+const ProviderCardSkeleton: React.FC = () => (
+  <Card className="bg-base-100 shadow-sm border border-base-200">
+    <div className="card-body p-0">
+      <div className="p-4 flex items-center justify-between">
+        <div className="flex items-center gap-4 flex-1">
+          <SkeletonCircle width="3.5rem" height="3.5rem" />
+          <div className="flex-1 space-y-2">
+            <SkeletonRectangle width="12rem" height="1.5rem" />
+            <SkeletonRectangle width="6rem" height="1.25rem" />
+          </div>
+        </div>
+        <div className="flex gap-2">
+          <SkeletonRectangle width="2.5rem" height="2.5rem" className="rounded" />
+          <SkeletonRectangle width="2.5rem" height="2.5rem" className="rounded" />
+          <SkeletonRectangle width="2.5rem" height="2.5rem" className="rounded" />
+        </div>
+      </div>
+    </div>
+  </Card>
+);
 
 const MessageProvidersPage: React.FC = () => {
   const { modalState, openAddModal, openEditModal, closeModal } = useModal();
@@ -133,6 +159,23 @@ const MessageProvidersPage: React.FC = () => {
 
   const toggleExpand = (key: string) => setExpandedProfile(expandedProfile === key ? null : key);
 
+  // Format relative time for health indicators
+  const formatRelativeTime = (timestamp?: number): string => {
+    if (!timestamp) return 'Never';
+    const now = Date.now();
+    const diff = now - timestamp;
+    const seconds = Math.floor(diff / 1000);
+    const minutes = Math.floor(seconds / 60);
+    const hours = Math.floor(minutes / 60);
+    const days = Math.floor(hours / 24);
+
+    if (days > 0) return `${days}d ago`;
+    if (hours > 0) return `${hours}h ago`;
+    if (minutes > 0) return `${minutes}m ago`;
+    if (seconds > 0) return `${seconds}s ago`;
+    return 'Just now';
+  };
+
   const filteredProfiles = useMemo(() =>
     profiles.filter(p => {
       const matchesSearch = p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -159,10 +202,16 @@ const MessageProvidersPage: React.FC = () => {
         icon={<MessageIcon className="w-6 h-6" />}
         actions={
           <div className="flex gap-2">
-            <Button variant="ghost" onClick={fetchProfiles} disabled={loading} aria-busy={loading}>
+            <Button
+              variant="ghost"
+              onClick={fetchProfiles}
+              disabled={loading}
+              aria-busy={loading}
+              aria-label="Refresh message providers"
+            >
               <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} /> Refresh
             </Button>
-            <Button variant="primary" onClick={handleAddProfile}>
+            <Button variant="primary" onClick={handleAddProfile} aria-label="Create new message provider profile">
               <AddIcon className="w-4 h-4 mr-2" /> Create Profile
             </Button>
           </div>
@@ -187,7 +236,11 @@ const MessageProvidersPage: React.FC = () => {
       />
 
       {loading ? (
-        <SkeletonTableLayout rows={6} columns={4} />
+        <div className="grid grid-cols-1 gap-4">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <ProviderCardSkeleton key={i} />
+          ))}
+        </div>
       ) : profiles.length === 0 ? (
         <EmptyState
           icon={MessageIcon}
@@ -222,19 +275,62 @@ const MessageProvidersPage: React.FC = () => {
                         {profile.name}
                         <span className="text-xs font-normal opacity-50 px-2 py-0.5 bg-base-200 rounded-full font-mono">{profile.key}</span>
                       </h3>
-                      <Badge variant="secondary" size="small" style="outline">{profile.provider}</Badge>
+                      <div className="flex items-center gap-2 mt-1">
+                        <Badge variant="secondary" size="small" style="outline">{profile.provider}</Badge>
+                        {profile.health && (
+                          <div className="flex items-center gap-1 text-xs opacity-60">
+                            <HealthyIcon className="w-3 h-3 text-success" />
+                            <span>Connected</span>
+                          </div>
+                        )}
+                        {profile.lastPing && (
+                          <div className="flex items-center gap-1 text-xs opacity-60">
+                            <ClockIcon className="w-3 h-3" />
+                            <span>{formatRelativeTime(profile.lastPing)}</span>
+                          </div>
+                        )}
+                        {profile.messageCount !== undefined && (
+                          <div className="flex items-center gap-1 text-xs opacity-60">
+                            <MessageIcon className="w-3 h-3" />
+                            <span>{profile.messageCount} messages</span>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
                   <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
-                    <Button size="sm" variant="ghost" onClick={() => handleEditProfile(profile)}>
-                      <EditIcon className="w-4 h-4" />
-                    </Button>
-                    <Button size="sm" variant="ghost" className="text-error hover:bg-error/10" onClick={() => handleDeleteProfile(profile.key)}>
-                      <DeleteIcon className="w-4 h-4" />
-                    </Button>
-                    <Button size="sm" variant="ghost" onClick={() => toggleExpand(profile.key)}>
-                      {expandedProfile === profile.key ? <CollapseIcon className="w-4 h-4" /> : <ExpandIcon className="w-4 h-4" />}
-                    </Button>
+                    <Tooltip content="Edit profile" position="top">
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => handleEditProfile(profile)}
+                        aria-label={`Edit ${profile.name} profile`}
+                      >
+                        <EditIcon className="w-4 h-4" />
+                      </Button>
+                    </Tooltip>
+                    <Tooltip content="Delete profile" position="top">
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="text-error hover:bg-error/10"
+                        onClick={() => handleDeleteProfile(profile.key)}
+                        aria-label={`Delete ${profile.name} profile`}
+                      >
+                        <DeleteIcon className="w-4 h-4" />
+                      </Button>
+                    </Tooltip>
+                    <Tooltip content={expandedProfile === profile.key ? "Collapse details" : "Expand details"} position="top">
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => toggleExpand(profile.key)}
+                        aria-label={expandedProfile === profile.key ? `Collapse ${profile.name} details` : `Expand ${profile.name} details`}
+                        aria-expanded={expandedProfile === profile.key}
+                      >
+                        {expandedProfile === profile.key ? <CollapseIcon className="w-4 h-4" /> : <ExpandIcon className="w-4 h-4" />}
+                      </Button>
+                    </Tooltip>
                   </div>
                 </div>
 

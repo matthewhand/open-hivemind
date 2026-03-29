@@ -81,6 +81,7 @@ const MCPServersPage: React.FC = () => {
   const [confirmModal, setConfirmModal] = useState<{
     isOpen: boolean; title: string; message: string; onConfirm: () => void;
   }>({ isOpen: false, title: '', message: '', onConfirm: () => {} });
+  const [connectingServerId, setConnectingServerId] = useState<string | null>(null);
 
   // Search and Filter State (URL-persisted)
   const { values: urlParams, setValue: setUrlParam } = useUrlParams({
@@ -220,6 +221,10 @@ const MCPServersPage: React.FC = () => {
     }
 
     try {
+      if (action === 'start') {
+        setConnectingServerId(serverId);
+      }
+
       let response;
       if (action === 'stop') {
         response = await fetch('/api/admin/mcp-servers/disconnect', {
@@ -268,6 +273,8 @@ const MCPServersPage: React.FC = () => {
       setServers((prev) =>
         prev.map((s) => (s.id === serverId ? { ...s, status: 'error', error: errorMsg } : s))
       );
+    } finally {
+      setConnectingServerId(null);
     }
   };
 
@@ -542,7 +549,7 @@ const MCPServersPage: React.FC = () => {
               </div>
 
               <p className="text-sm text-base-content/70 mb-2 min-h-[40px]">
-                {server.description || 'No description provided.'}
+                {server.description || <span className="italic text-base-content/50">No description provided</span>}
               </p>
 
               {server.status === 'error' && server.error && (
@@ -598,8 +605,11 @@ const MCPServersPage: React.FC = () => {
                           : `Retry Connection ${server.name}`
                       }
                       onClick={() => handleServerAction(server.id, 'start')}
+                      disabled={connectingServerId === server.id}
                     >
-                      {server.status === 'error' ? (
+                      {connectingServerId === server.id ? (
+                        <span className="loading loading-spinner loading-sm" aria-hidden="true"></span>
+                      ) : server.status === 'error' ? (
                         <ArrowPathIcon className="w-5 h-5" />
                       ) : (
                         <PlayIcon className="w-5 h-5" />
@@ -764,7 +774,7 @@ const MCPServersPage: React.FC = () => {
                     <h3 className="font-bold text-lg">{tool.name}</h3>
                   </div>
                   <p className="text-sm text-base-content/80 mb-2">
-                    {tool.description || 'No description provided.'}
+                    {tool.description || <span className="italic text-base-content/50">No description provided</span>}
                   </p>
                   {tool.inputSchema && (
                     <div className="collapse collapse-arrow bg-base-200">

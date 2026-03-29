@@ -15,6 +15,8 @@ import Toggle from '../components/DaisyUI/Toggle';
 import useUrlParams from '../hooks/useUrlParams';
 import { useBulkSelection } from '../hooks/useBulkSelection';
 import BulkActionBar from '../components/BulkActionBar';
+import { usePagination } from '../hooks/usePagination';
+import Pagination from '../components/DaisyUI/Pagination';
 
 interface McpGuardConfig {
   enabled: boolean;
@@ -197,6 +199,12 @@ const GuardsPage: React.FC = () => {
     profile.name.toLowerCase().includes(searchValue.toLowerCase())
   );
 
+  // Pagination
+  const pagination = usePagination(filteredProfiles, {
+    defaultPageSize: 20,
+    pageSizeOptions: [10, 20, 50, 100],
+  });
+
   // Bulk selection
   const filteredProfileIds = useMemo(() => filteredProfiles.map(p => p.id), [filteredProfiles]);
   const bulk = useBulkSelection(filteredProfileIds);
@@ -256,9 +264,17 @@ const GuardsPage: React.FC = () => {
         icon={<Shield className="w-8 h-8 text-primary" />}
         actions={
           <div className="flex gap-2">
-            <button onClick={fetchProfiles} className="btn btn-ghost btn-sm" disabled={loading} aria-busy={loading} title="Refresh" aria-label="Refresh profiles">
-              <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-            </button>
+            <div className="tooltip tooltip-bottom" data-tip="Refresh profiles">
+              <button
+                onClick={fetchProfiles}
+                className="btn btn-ghost btn-sm"
+                disabled={loading}
+                aria-busy={loading}
+                aria-label="Refresh profiles"
+              >
+                <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+              </button>
+            </div>
             <button onClick={handleCreate} className="btn btn-primary btn-sm">
               <Plus className="w-4 h-4 mr-2" />
               New Profile
@@ -279,8 +295,8 @@ const GuardsPage: React.FC = () => {
         <EmptyState
           icon={Shield}
           title="No Guard Profiles"
-          description="Create a guard profile to enforce security policies and access controls for your bots."
-          actionLabel="New Profile"
+          description="Guard profiles help you enforce security policies and access controls for your bots. Create your first profile to define rate limits, content filters, and access permissions."
+          actionLabel="Create Your First Profile"
           actionIcon={Plus}
           onAction={handleCreate}
           variant="noData"
@@ -335,7 +351,7 @@ const GuardsPage: React.FC = () => {
             ]}
           />
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredProfiles.map(profile => (
+          {pagination.paginatedItems.map(profile => (
             <div key={profile.id} className="card bg-base-100 border border-base-200 shadow-sm hover:shadow-md transition-shadow">
               <div className="card-body">
                 <div className="flex justify-between items-start">
@@ -351,20 +367,33 @@ const GuardsPage: React.FC = () => {
                     <h3 className="card-title text-lg">{profile.name}</h3>
                   </div>
                   <div className="flex gap-1">
-                    <button
-                      onClick={() => handleDuplicateProfile(profile)}
-                      className="btn btn-ghost btn-xs btn-square"
-                      title="Duplicate Profile"
-                      aria-label="Duplicate Profile"
-                    >
-                      <Copy className="w-4 h-4" />
-                    </button>
-                    <button onClick={() => handleEdit(profile)} className="btn btn-ghost btn-xs btn-square" aria-label="Edit profile">
-                      <Edit2 className="w-4 h-4" />
-                    </button>
-                    <button onClick={() => handleDeleteProfile(profile)} className="btn btn-ghost btn-xs btn-square text-error" aria-label="Delete profile">
-                      <Trash2 className="w-4 h-4" />
-                    </button>
+                    <div className="tooltip tooltip-left" data-tip="Duplicate profile">
+                      <button
+                        onClick={() => handleDuplicateProfile(profile)}
+                        className="btn btn-ghost btn-xs btn-square"
+                        aria-label={`Duplicate ${profile.name}`}
+                      >
+                        <Copy className="w-4 h-4" />
+                      </button>
+                    </div>
+                    <div className="tooltip tooltip-left" data-tip="Edit profile">
+                      <button
+                        onClick={() => handleEdit(profile)}
+                        className="btn btn-ghost btn-xs btn-square"
+                        aria-label={`Edit ${profile.name}`}
+                      >
+                        <Edit2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                    <div className="tooltip tooltip-left" data-tip="Delete profile">
+                      <button
+                        onClick={() => handleDeleteProfile(profile)}
+                        className="btn btn-ghost btn-xs btn-square text-error"
+                        aria-label={`Delete ${profile.name}`}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
                   </div>
                 </div>
                 <p className="text-sm opacity-70 mb-4 h-10 line-clamp-2">{profile.description || 'No description'}</p>
@@ -381,6 +410,22 @@ const GuardsPage: React.FC = () => {
             </div>
           ))}
         </div>
+
+        {/* Pagination */}
+        {filteredProfiles.length > 10 && (
+          <div className="mt-6">
+            <Pagination
+              currentPage={pagination.currentPage}
+              totalItems={filteredProfiles.length}
+              pageSize={pagination.pageSize}
+              onPageChange={pagination.setCurrentPage}
+              onPageSizeChange={pagination.setPageSize}
+              style="extended"
+              showPageSizeSelector={true}
+              showItemsInfo={true}
+            />
+          </div>
+        )}
         </>
       )}
 

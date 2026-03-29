@@ -40,6 +40,27 @@ const KeyboardShortcutsHelp: React.FC<KeyboardShortcutsHelpProps> = ({
 }) => {
   if (!isOpen) return null;
 
+  // Group shortcuts by category
+  const groupedShortcuts = shortcuts.reduce((acc, shortcut) => {
+    const category = shortcut.category || 'Other';
+    if (!acc[category]) {
+      acc[category] = [];
+    }
+    acc[category].push(shortcut);
+    return acc;
+  }, {} as Record<string, Shortcut[]>);
+
+  // Define category order
+  const categoryOrder = ['General', 'Navigation', 'Actions', 'Other'];
+  const sortedCategories = categoryOrder.filter(cat => groupedShortcuts[cat]);
+
+  // Add any remaining categories not in the order
+  Object.keys(groupedShortcuts).forEach(cat => {
+    if (!sortedCategories.includes(cat)) {
+      sortedCategories.push(cat);
+    }
+  });
+
   return (
     <div className="fixed inset-0 z-[9999] flex items-center justify-center">
       {/* Backdrop */}
@@ -51,7 +72,7 @@ const KeyboardShortcutsHelp: React.FC<KeyboardShortcutsHelpProps> = ({
 
       {/* Dialog */}
       <div
-        className="relative w-full max-w-md bg-base-100 rounded-xl shadow-2xl border border-base-300 overflow-hidden"
+        className="relative w-full max-w-2xl bg-base-100 rounded-xl shadow-2xl border border-base-300 overflow-hidden"
         role="dialog"
         aria-label="Keyboard shortcuts"
       >
@@ -69,28 +90,35 @@ const KeyboardShortcutsHelp: React.FC<KeyboardShortcutsHelpProps> = ({
 
         {/* Shortcut list */}
         <div className="max-h-[60vh] overflow-y-auto py-2">
-          <table className="table table-sm w-full">
-            <tbody>
-              {shortcuts.map((s, idx) => (
-                <tr key={idx} className="hover">
-                  <td className="text-base-content/80 py-2 pl-5">{s.description}</td>
-                  <td className="text-right py-2 pr-5">
-                    {formatKey(s).split(' + ').map((part, i) => (
-                      <React.Fragment key={i}>
-                        {i > 0 && <span className="text-base-content/40 mx-0.5">+</span>}
-                        <kbd className="kbd kbd-sm">{part}</kbd>
-                      </React.Fragment>
-                    ))}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          {sortedCategories.map(category => (
+            <div key={category} className="mb-4">
+              <h3 className="text-xs font-semibold text-base-content/70 uppercase tracking-wide px-5 py-2 bg-base-200/50">
+                {category}
+              </h3>
+              <table className="table table-sm w-full">
+                <tbody>
+                  {groupedShortcuts[category].map((s, idx) => (
+                    <tr key={idx} className="hover">
+                      <td className="text-base-content/80 py-2 pl-5">{s.description}</td>
+                      <td className="text-right py-2 pr-5">
+                        {formatKey(s).split(' + ').map((part, i) => (
+                          <React.Fragment key={i}>
+                            {i > 0 && <span className="text-base-content/40 mx-0.5">+</span>}
+                            <kbd className="kbd kbd-sm">{part}</kbd>
+                          </React.Fragment>
+                        ))}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ))}
         </div>
 
         {/* Footer */}
         <div className="px-5 py-3 border-t border-base-300 text-xs text-base-content/50 text-center">
-          Press <kbd className="kbd kbd-xs">Esc</kbd> to close
+          Press <kbd className="kbd kbd-xs">Esc</kbd> or <kbd className="kbd kbd-xs">?</kbd> to close
         </div>
       </div>
     </div>

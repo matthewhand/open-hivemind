@@ -7,6 +7,8 @@ import LlmStatusBanner from '../LlmStatusBanner';
 import Breadcrumbs from './Breadcrumbs';
 import RateLimitIndicator from './RateLimitIndicator';
 import { useRateLimitToast } from '../../hooks/useRateLimitToast';
+import MobileBottomNav from './MobileBottomNav';
+import WebSocketStatusIndicator from '../WebSocketStatusIndicator';
 
 interface NavItem {
   id: string;
@@ -56,6 +58,7 @@ const ResponsiveNavigation: React.FC<ResponsiveNavigationProps> = ({
         <header className="fixed top-0 left-0 right-0 h-14 bg-base-300 border-b border-base-content/10 flex items-center justify-between px-4 z-50">
           <span className="font-semibold text-base-content truncate min-w-0">Hivemind</span>
           <div className="flex items-center gap-2">
+            <WebSocketStatusIndicator size="sm" />
             <RateLimitIndicator />
           </div>
           <button
@@ -81,22 +84,23 @@ const ResponsiveNavigation: React.FC<ResponsiveNavigationProps> = ({
         </div>
       )}
 
-      {/* MAIN CONTENT WRAPPER - Offset for sidebar */}
+      {/* MAIN CONTENT WRAPPER - Offset for sidebar and bottom nav */}
       <div
-        className={`flex-1 min-h-screen flex flex-col transition-all duration-300 ${isMobile ? 'mt-14 ml-0' : 'mt-0 ml-[240px]'}`}
+        className={`flex-1 min-h-screen flex flex-col transition-all duration-300 ${isMobile ? 'mt-14 ml-0 pb-16' : 'mt-0 ml-[240px]'}`}
       >
-        {/* Rate limit indicator and Demo Mode Banner - Full width relative to content wrapper */}
+        {/* Rate limit indicator, WebSocket status, and Demo Mode Banner - Full width relative to content wrapper */}
         {!isMobile && (
-          <div className="flex justify-end px-6 pt-2">
+          <div className="flex justify-end items-center gap-3 px-6 pt-2">
+            <WebSocketStatusIndicator size="sm" showLabel />
             <RateLimitIndicator />
           </div>
         )}
         <DemoModeBanner />
 
-        {/* MAIN CONTENT - With padding */}
-        <main className="flex-1 p-6">
-          {/* White content card */}
-          <div className="bg-base-100 rounded-xl border border-base-content/10 shadow-sm min-h-[calc(100vh-48px)] p-6">
+        {/* MAIN CONTENT - With responsive padding */}
+        <main className="flex-1 p-3 sm:p-4 md:p-6">
+          {/* White content card with responsive padding */}
+          <div className="bg-base-100 rounded-xl border border-base-content/10 shadow-sm min-h-[calc(100vh-48px)] p-3 sm:p-4 md:p-6">
             <Breadcrumbs />
             <div className="mb-4">
               <LlmStatusBanner />
@@ -105,6 +109,9 @@ const ResponsiveNavigation: React.FC<ResponsiveNavigationProps> = ({
           </div>
         </main>
       </div>
+
+      {/* MOBILE BOTTOM NAVIGATION */}
+      {isMobile && <MobileBottomNav />}
     </div>
   );
 };

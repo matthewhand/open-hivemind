@@ -14,11 +14,13 @@ import { Accordion } from './DaisyUI/Accordion';
 import type { AccordionItem } from './DaisyUI/Accordion';
 import { useConfigDiff } from '../hooks/useConfigDiff';
 import { ConfigDiffViewer, ConfigDiffConfirmDialog } from './ConfigDiffViewer';
+import Tooltip from './DaisyUI/Tooltip';
+import Button from './DaisyUI/Button';
 
 const Settings: React.FC = () => {
   const dispatch = useAppDispatch();
   const ui = useAppSelector(selectUI);
-  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const resetTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [showDiffConfirm, setShowDiffConfirm] = useState(false);
@@ -57,25 +59,31 @@ const Settings: React.FC = () => {
       content: (
         <div>
           <div className="form-control">
-            <label className="label cursor-pointer justify-start gap-4">
-              <span className="label-text">Dark Mode</span>
-              <input
-                type="checkbox"
-                className="toggle toggle-primary"
-                checked={ui.theme === 'dark'}
-                onChange={(event) => handleThemeToggle(event.target.checked)}
-              />
-            </label>
+            <Tooltip content="Toggle between light and dark theme" position="right">
+              <label className="label cursor-pointer justify-start gap-4">
+                <span className="label-text">Dark Mode</span>
+                <input
+                  type="checkbox"
+                  className="toggle toggle-primary"
+                  checked={ui.theme === 'dark'}
+                  onChange={(event) => handleThemeToggle(event.target.checked)}
+                  aria-label="Toggle dark mode"
+                />
+              </label>
+            </Tooltip>
           </div>
           <div className="divider my-2"></div>
           <div className="form-control w-full max-w-xs">
             <label className="label">
-              <span className="label-text text-base-content/70">Theme preset</span>
+              <Tooltip content="Choose a theme preset that best suits your preferences" position="right">
+                <span className="label-text text-base-content/70">Theme preset</span>
+              </Tooltip>
             </label>
             <select
               className="select select-bordered select-sm w-full"
               value={ui.theme}
               onChange={(event) => handleThemeSelect(event.target.value as UIState['theme'])}
+              aria-label="Select theme preset"
             >
               {themeOptions.map(option => (
                 <option key={option.value} value={option.value}>
@@ -94,25 +102,31 @@ const Settings: React.FC = () => {
       content: (
         <div>
           <div className="form-control">
-            <label className="label cursor-pointer justify-start gap-4">
-              <span className="label-text">Auto Refresh</span>
-              <input
-                type="checkbox"
-                className="toggle toggle-primary"
-                checked={ui.autoRefreshEnabled}
-                onChange={handleAutoRefreshToggle}
-              />
-            </label>
+            <Tooltip content="Automatically refresh dashboard data at regular intervals" position="right">
+              <label className="label cursor-pointer justify-start gap-4">
+                <span className="label-text">Auto Refresh</span>
+                <input
+                  type="checkbox"
+                  className="toggle toggle-primary"
+                  checked={ui.autoRefreshEnabled}
+                  onChange={handleAutoRefreshToggle}
+                  aria-label="Toggle auto refresh"
+                />
+              </label>
+            </Tooltip>
           </div>
           <div className="mt-4 form-control w-full max-w-xs">
             <label className="label">
-              <span className="label-text text-base-content/70">Refresh Interval:</span>
+              <Tooltip content="Set how often the dashboard should refresh automatically" position="right">
+                <span className="label-text text-base-content/70">Refresh Interval:</span>
+              </Tooltip>
             </label>
             <select
               className="select select-bordered select-sm w-full"
               value={ui.refreshInterval}
               onChange={(e) => handleRefreshIntervalChange(Number(e.target.value))}
               disabled={!ui.autoRefreshEnabled}
+              aria-label="Select refresh interval"
             >
               <option value={1000}>1 second</option>
               <option value={5000}>5 seconds</option>
@@ -131,37 +145,46 @@ const Settings: React.FC = () => {
       content: (
         <div>
           <div className="form-control">
-            <label className="label cursor-pointer justify-start gap-4">
-              <span className="label-text">Reduced Motion</span>
-              <input
-                type="checkbox"
-                className="toggle toggle-primary"
-                checked={!ui.animationsEnabled}
-                onChange={(event) => dispatch(setAnimationsEnabled(!event.target.checked))}
-              />
-            </label>
+            <Tooltip content="Disable animations for reduced motion preferences" position="right">
+              <label className="label cursor-pointer justify-start gap-4">
+                <span className="label-text">Reduced Motion</span>
+                <input
+                  type="checkbox"
+                  className="toggle toggle-primary"
+                  checked={!ui.animationsEnabled}
+                  onChange={(event) => dispatch(setAnimationsEnabled(!event.target.checked))}
+                  aria-label="Toggle reduced motion"
+                />
+              </label>
+            </Tooltip>
           </div>
           <div className="form-control">
-            <label className="label cursor-pointer justify-start gap-4">
-              <span className="label-text">Show Tooltips</span>
-              <input
-                type="checkbox"
-                className="toggle toggle-primary"
-                checked={ui.showTooltips}
-                onChange={(event) => dispatch(setShowTooltips(event.target.checked))}
-              />
-            </label>
+            <Tooltip content="Display helpful tooltips throughout the interface" position="right">
+              <label className="label cursor-pointer justify-start gap-4">
+                <span className="label-text">Show Tooltips</span>
+                <input
+                  type="checkbox"
+                  className="toggle toggle-primary"
+                  checked={ui.showTooltips}
+                  onChange={(event) => dispatch(setShowTooltips(event.target.checked))}
+                  aria-label="Toggle tooltips"
+                />
+              </label>
+            </Tooltip>
           </div>
           <div className="form-control">
-            <label className="label cursor-pointer justify-start gap-4">
-              <span className="label-text">Keyboard Shortcuts Overlay</span>
-              <input
-                type="checkbox"
-                className="toggle toggle-primary"
-                checked={ui.showKeyboardShortcuts}
-                onChange={(event) => dispatch(setShowKeyboardShortcuts(event.target.checked))}
-              />
-            </label>
+            <Tooltip content="Show keyboard shortcuts overlay for quick access" position="right">
+              <label className="label cursor-pointer justify-start gap-4">
+                <span className="label-text">Keyboard Shortcuts Overlay</span>
+                <input
+                  type="checkbox"
+                  className="toggle toggle-primary"
+                  checked={ui.showKeyboardShortcuts}
+                  onChange={(event) => dispatch(setShowKeyboardShortcuts(event.target.checked))}
+                  aria-label="Toggle keyboard shortcuts overlay"
+                />
+              </label>
+            </Tooltip>
           </div>
         </div>
       ),
@@ -217,7 +240,19 @@ const Settings: React.FC = () => {
 
       {saveStatus === 'saved' && (
         <div className="alert alert-success mb-6">
+          <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
           <span>Settings saved successfully!</span>
+        </div>
+      )}
+
+      {saveStatus === 'error' && (
+        <div className="alert alert-error mb-6">
+          <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <span>Failed to save settings. Please try again.</span>
         </div>
       )}
 
@@ -231,22 +266,26 @@ const Settings: React.FC = () => {
       )}
 
       <div className="flex gap-4 mt-6">
-        <button
-          className="btn btn-primary"
+        <Button
+          variant="primary"
           onClick={() => hasChanges ? setShowDiffConfirm(true) : handleSaveSettings()}
           disabled={saveStatus === 'saving'}
+          loading={saveStatus === 'saving'}
+          loadingText="Saving..."
           aria-label="Save Settings"
         >
-          {saveStatus === 'saving' ? <span className="loading loading-spinner" aria-hidden="true"></span> : null}
-          {saveStatus === 'saving' ? 'Saving...' : 'Save Settings'}
-        </button>
-        <button
-          className="btn btn-outline"
-          onClick={() => window.location.reload()}
-          aria-label="Reset to Defaults"
-        >
-          Reset to Defaults
-        </button>
+          Save Settings
+        </Button>
+        <Tooltip content="Reset all settings to their default values">
+          <Button
+            buttonStyle="outline"
+            variant="secondary"
+            onClick={() => window.location.reload()}
+            aria-label="Reset to Defaults"
+          >
+            Reset to Defaults
+          </Button>
+        </Tooltip>
       </div>
 
       <ConfigDiffConfirmDialog
