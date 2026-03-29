@@ -2,11 +2,11 @@ import Debug from 'debug';
 import { Router } from 'express';
 import { WebSocketService } from '@src/server/services/WebSocketService';
 import { HotReloadManager, type ConfigurationChange } from '@config/HotReloadManager';
-import { validateRequest } from '../../validation/validateRequest';
 import {
   HotReloadChangeSchema,
   HotReloadRollbackSchema,
 } from '../../validation/schemas/hotReloadSchema';
+import { validateRequest } from '../../validation/validateRequest';
 
 const debug = Debug('app:hotReloadRoutes');
 const router = Router();
@@ -86,47 +86,51 @@ router.get('/api/config/hot-reload/rollbacks', (req, res) => {
   }
 });
 
-router.post('/api/config/hot-reload/rollback/:snapshotId', validateRequest(HotReloadRollbackSchema), async (req, res) => {
-  try {
-    const { snapshotId } = req.params;
-    const hotReloadManager = HotReloadManager.getInstance();
+router.post(
+  '/api/config/hot-reload/rollback/:snapshotId',
+  validateRequest(HotReloadRollbackSchema),
+  async (req, res) => {
+    try {
+      const { snapshotId } = req.params;
+      const hotReloadManager = HotReloadManager.getInstance();
 
-    const success = await hotReloadManager.rollbackToSnapshot(snapshotId);
+      const success = await hotReloadManager.rollbackToSnapshot(snapshotId);
 
-    if (success) {
-      // Notify via WebSocket
-      const wsService = WebSocketService.getInstance();
-      wsService.recordAlert({
-        level: 'warning',
-        title: 'Configuration Rolled Back',
-        message: `Configuration rolled back to snapshot ${snapshotId}`,
-        metadata: { snapshotId },
-      });
+      if (success) {
+        // Notify via WebSocket
+        const wsService = WebSocketService.getInstance();
+        wsService.recordAlert({
+          level: 'warning',
+          title: 'Configuration Rolled Back',
+          message: `Configuration rolled back to snapshot ${snapshotId}`,
+          metadata: { snapshotId },
+        });
 
-      return res.json({
-        success: true,
-        message: 'Configuration rolled back successfully',
-      });
-    } else {
-      return res.status(404).json({
+        return res.json({
+          success: true,
+          message: 'Configuration rolled back successfully',
+        });
+      } else {
+        return res.status(404).json({
+          success: false,
+          message: 'Rollback snapshot not found or rollback failed',
+        });
+      }
+    } catch (error) {
+      debug('Hot reload rollback API error:', error);
+      return res.status(500).json({
         success: false,
-        message: 'Rollback snapshot not found or rollback failed',
+        message: 'Rollback failed',
+        error:
+          process.env.NODE_ENV === 'production'
+            ? 'An internal error occurred'
+            : error instanceof Error
+              ? error.message
+              : 'Unknown error',
       });
     }
-  } catch (error) {
-    debug('Hot reload rollback API error:', error);
-    return res.status(500).json({
-      success: false,
-      message: 'Rollback failed',
-      error:
-        process.env.NODE_ENV === 'production'
-          ? 'An internal error occurred'
-          : error instanceof Error
-            ? error.message
-            : 'Unknown error',
-    });
   }
-});
+);
 
 router.get('/api/config/hot-reload/status', (req, res) => {
   try {

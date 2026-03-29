@@ -1,4 +1,5 @@
 import Debug from 'debug';
+
 const debug = Debug('app:managers:TimingManager');
 /**
  * TimingManager handles message timing delays.

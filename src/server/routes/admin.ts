@@ -126,7 +126,7 @@ router.post(
   '/tool-usage-guards',
   configRateLimit,
   validateRequest(ToolUsageGuardSchema),
-  (req: Request, res: Response) => {
+  async (req: Request, res: Response) => {
     try {
       const { name, description, toolId, guardType, allowedUsers, allowedRoles, isActive } =
         req.body;
@@ -162,7 +162,7 @@ router.put(
   '/tool-usage-guards/:id',
   configRateLimit,
   validateRequest(UpdateToolUsageGuardSchema),
-  (req: Request, res: Response) => {
+  async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
       const { name, description, toolId, guardType, allowedUsers, allowedRoles, isActive } =
@@ -215,7 +215,7 @@ router.delete(
   '/tool-usage-guards/:id',
   configRateLimit,
   validateRequest(ToggleIdParamSchema),
-  (req: Request, res: Response) => {
+  async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
 
@@ -248,7 +248,7 @@ router.post(
   '/tool-usage-guards/:id/toggle',
   configRateLimit,
   validateRequest(ToggleProviderSchema),
-  (req: Request, res: Response) => {
+  async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
       const { isActive } = req.body;
@@ -313,7 +313,7 @@ router.post(
   '/llm-providers',
   configRateLimit,
   validateRequest(LlmProviderSchema),
-  (req: Request, res: Response) => {
+  async (req: Request, res: Response) => {
     try {
       const { name, type, config } = req.body;
 
@@ -335,7 +335,7 @@ router.post(
       };
 
       // Save to persistent storage
-      webUIStorage.saveLlmProvider(newProvider);
+      await webUIStorage.saveLlmProvider(newProvider);
 
       // Sync monitor endpoints
       container.resolve(ApiMonitorService).syncLlmEndpoints();
@@ -359,7 +359,7 @@ router.post(
 router.put(
   '/llm-providers/:id',
   validateRequest(UpdateLlmProviderSchema),
-  (req: Request, res: Response) => {
+  async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
       const { name, type, config } = req.body;
@@ -377,7 +377,7 @@ router.put(
       };
 
       // Save to persistent storage
-      webUIStorage.saveLlmProvider(updatedProvider);
+      await webUIStorage.saveLlmProvider(updatedProvider);
 
       // Sync monitor endpoints
       container.resolve(ApiMonitorService).syncLlmEndpoints();
@@ -416,12 +416,12 @@ router.put(
 router.delete(
   '/llm-providers/:id',
   validateRequest(ToggleIdParamSchema),
-  (req: Request, res: Response) => {
+  async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
 
       // Delete from persistent storage
-      webUIStorage.deleteLlmProvider(id);
+      await webUIStorage.deleteLlmProvider(id);
 
       // Sync monitor endpoints
       container.resolve(ApiMonitorService).syncLlmEndpoints();
@@ -444,7 +444,7 @@ router.delete(
 router.post(
   '/llm-providers/:id/toggle',
   validateRequest(ToggleProviderSchema),
-  (req: Request, res: Response) => {
+  async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
       const { isActive } = req.body;
@@ -454,7 +454,7 @@ router.post(
 
       if (provider) {
         provider.isActive = isActive;
-        webUIStorage.saveLlmProvider(provider);
+        await webUIStorage.saveLlmProvider(provider);
 
         // Sync monitor endpoints
         container.resolve(ApiMonitorService).syncLlmEndpoints();
@@ -755,7 +755,7 @@ router.get('/messenger-providers', (req: Request, res: Response) => {
 router.post(
   '/messenger-providers',
   validateRequest(MessengerProviderSchema),
-  (req: Request, res: Response) => {
+  async (req: Request, res: Response) => {
     try {
       const { name, type, config } = req.body;
 
@@ -780,7 +780,7 @@ router.post(
       };
 
       // Save to persistent storage
-      webUIStorage.saveMessengerProvider(newProvider);
+      await webUIStorage.saveMessengerProvider(newProvider);
 
       return res.json({
         success: true,
@@ -801,7 +801,7 @@ router.post(
 router.put(
   '/messenger-providers/:id',
   validateRequest(UpdateMessengerProviderSchema),
-  (req: Request, res: Response) => {
+  async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
       const { name, type, config } = req.body;
@@ -839,7 +839,7 @@ router.put(
       };
 
       // Save to persistent storage
-      webUIStorage.saveMessengerProvider(updatedProvider);
+      await webUIStorage.saveMessengerProvider(updatedProvider);
 
       return res.json({
         success: true,
@@ -875,12 +875,12 @@ router.put(
 router.delete(
   '/messenger-providers/:id',
   validateRequest(ToggleIdParamSchema),
-  (req: Request, res: Response) => {
+  async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
 
       // Delete from persistent storage
-      webUIStorage.deleteMessengerProvider(id);
+      await webUIStorage.deleteMessengerProvider(id);
 
       return res.json({
         success: true,
@@ -900,7 +900,7 @@ router.delete(
 router.post(
   '/messenger-providers/:id/toggle',
   validateRequest(ToggleProviderSchema),
-  (req: Request, res: Response) => {
+  async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
       const { isActive } = req.body;
@@ -910,7 +910,7 @@ router.post(
 
       if (provider) {
         provider.isActive = isActive;
-        webUIStorage.saveMessengerProvider(provider);
+        await webUIStorage.saveMessengerProvider(provider);
       } else {
         return res.status(404).json({
           error: 'Provider not found',
@@ -1004,12 +1004,12 @@ router.get('/personas', (req: Request, res: Response) => {
  *       200:
  *         description: Created persona
  */
-router.post('/personas', validateRequest(PersonaSchema), (req: Request, res: Response) => {
+router.post('/personas', validateRequest(PersonaSchema), async (req: Request, res: Response) => {
   try {
     const { key, name, systemPrompt } = req.body;
 
     // Save to persistent storage
-    webUIStorage.savePersona({ key, name, systemPrompt });
+    await webUIStorage.savePersona({ key, name, systemPrompt });
 
     return res.json({
       success: true,
@@ -1028,13 +1028,13 @@ router.post('/personas', validateRequest(PersonaSchema), (req: Request, res: Res
 router.put(
   '/personas/:key',
   validateRequest(UpdatePersonaSchema),
-  (req: Request, res: Response) => {
+  async (req: Request, res: Response) => {
     try {
       const { key } = req.params;
       const { name, systemPrompt } = req.body;
 
       // Save to persistent storage
-      webUIStorage.savePersona({ key, name, systemPrompt });
+      await webUIStorage.savePersona({ key, name, systemPrompt });
 
       return res.json({
         success: true,
@@ -1054,12 +1054,12 @@ router.put(
 router.delete(
   '/personas/:key',
   validateRequest(PersonaKeyParamSchema),
-  (req: Request, res: Response) => {
+  async (req: Request, res: Response) => {
     try {
       const { key } = req.params;
 
       // Delete from persistent storage
-      webUIStorage.deletePersona(key);
+      await webUIStorage.deletePersona(key);
 
       return res.json({
         success: true,
@@ -1176,7 +1176,7 @@ router.post(
       const tools = await mcpService.connectToServer({ serverUrl, apiKey, name });
 
       // Save to persistent storage with sanitized API key
-      webUIStorage.saveMcp({ name, serverUrl, apiKey: sanitizedApiKey });
+      await webUIStorage.saveMcp({ name, serverUrl, apiKey: sanitizedApiKey });
 
       return res.json({
         success: true,
@@ -1238,7 +1238,7 @@ router.delete(
       await mcpService.disconnectFromServer(name);
 
       // Remove from persistent storage
-      webUIStorage.deleteMcp(name);
+      await webUIStorage.deleteMcp(name);
 
       return res.json({
         success: true,
@@ -1302,7 +1302,7 @@ router.get('/mcp-servers', (req: Request, res: Response) => {
 router.get(
   '/mcp-servers/:name/tools',
   validateRequest(ServerNameParamSchema),
-  async (req: Request, res: Response) => {
+  (req: Request, res: Response) => {
     try {
       const { name } = req.params;
 
@@ -1527,7 +1527,7 @@ router.get('/env-overrides', (req: Request, res: Response) => {
 });
 
 // GET /providers - Get available providers
-router.get('/providers', async (req: Request, res: Response) => {
+router.get('/providers', (req: Request, res: Response) => {
   try {
     const messageProviders = [
       {

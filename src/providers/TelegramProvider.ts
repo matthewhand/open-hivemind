@@ -1,10 +1,10 @@
 import * as fs from 'fs';
 import * as path from 'path';
+import Debug from 'debug';
 import telegramConfig, { type TelegramConfig } from '../config/telegramConfig';
 import { type IMessageProvider } from '../types/IProvider';
 import { type Message } from '../types/messages';
 import { ReconnectionManager } from './ReconnectionManager';
-import Debug from 'debug';
 const debug = Debug('app:providers:TelegramProvider');
 
 /**

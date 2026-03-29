@@ -3,8 +3,12 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as crypto from 'crypto';
 import Debug from 'debug';
-import { loadPlugin, loadPluginWithSecurity, PLUGINS_DIR, type PluginManifest } from './PluginLoader';
-import { PluginSecurityPolicy, type PluginSecurityStatus, type SecurePluginManifest } from './PluginSecurity';
+import { loadPlugin, PLUGINS_DIR, type PluginManifest } from './PluginLoader';
+import {
+  PluginSecurityPolicy,
+  type PluginSecurityStatus,
+  type SecurePluginManifest,
+} from './PluginSecurity';
 
 const debug = Debug('app:pluginManager');
 

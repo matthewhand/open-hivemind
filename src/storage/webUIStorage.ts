@@ -1,6 +1,8 @@
 import fs from 'fs';
 import path from 'path';
 import Debug from 'debug';
+import { Logger } from '../common/logger';
+
 const debug = Debug('app:storage:webUIStorage');
 
 /**
@@ -23,6 +25,7 @@ export class WebUIStorage {
   private configFile: string;
   private guardsInitializationInProgress = false;
   private configCache: WebUIConfig | null = null;
+  private saveQueue: Promise<void> = Promise.resolve();
 
   constructor() {
     this.configDir = path.join(process.cwd(), 'config', 'user');
@@ -75,18 +78,38 @@ export class WebUIStorage {
   /**
    * Save configuration to file
    */
-  public saveConfig(config: WebUIConfig): void {
-    try {
-      config.lastUpdated = new Date().toISOString();
-      this.ensureConfigDir();
-      fs.writeFileSync(this.configFile, JSON.stringify(config, null, 2));
-      this.configCache = config;
-    } catch (error) {
-      debug('ERROR:', 'Error saving web UI config:', error);
-      throw new Error(
-        `Failed to save web UI configuration: ${error instanceof Error ? error.message : String(error)}`
-      );
-    }
+  public saveConfig(config: WebUIConfig): Promise<void> {
+    config.lastUpdated = new Date().toISOString();
+    this.ensureConfigDir();
+
+    // Update cache immediately so subsequent synchronous reads get the new state
+    this.configCache = config;
+
+    // Enqueue the async write to prevent concurrent file corruption
+    const dataToWrite = JSON.stringify(config, null, 2);
+
+    // Return a new promise that resolves or rejects based on this specific write
+    return new Promise((resolve, reject) => {
+      this.saveQueue = this.saveQueue
+        .then(async () => {
+          try {
+            await fs.promises.writeFile(this.configFile, dataToWrite);
+            resolve();
+          } catch (error) {
+            debug('ERROR:', 'Error saving web UI config:', error);
+            reject(
+              new Error(
+                `Failed to save web UI configuration: ${error instanceof Error ? error.message : String(error)}`
+              )
+            );
+          }
+        })
+        .catch(() => {
+          // Reset queue on failure so subsequent writes aren't blocked
+          // by a previous caller's rejection. Each caller's promise
+          // rejects independently via the try/catch above.
+        });
+    });
   }
 
   /**
@@ -100,7 +123,7 @@ export class WebUIStorage {
   /**
    * Add or update an agent
    */
-  public saveAgent(agent: any): void {
+  public async saveAgent(agent: any): Promise<void> {
     const config = this.loadConfig();
     const existingIndex = config.agents.findIndex((a: any) => a.id === agent.id);
 
@@ -110,16 +133,16 @@ export class WebUIStorage {
       config.agents.push(agent);
     }
 
-    this.saveConfig(config);
+    await this.saveConfig(config);
   }
 
   /**
    * Delete an agent
    */
-  public deleteAgent(agentId: string): void {
+  public async deleteAgent(agentId: string): Promise<void> {
     const config = this.loadConfig();
     config.agents = config.agents.filter((a: any) => a.id !== agentId);
-    this.saveConfig(config);
+    await this.saveConfig(config);
   }
 
   /**
@@ -133,7 +156,7 @@ export class WebUIStorage {
   /**
    * Add or update an MCP server
    */
-  public saveMcp(mcp: any): void {
+  public async saveMcp(mcp: any): Promise<void> {
     const config = this.loadConfig();
     const existingIndex = config.mcpServers.findIndex((m: any) => m.name === mcp.name);
 
@@ -143,16 +166,16 @@ export class WebUIStorage {
       config.mcpServers.push(mcp);
     }
 
-    this.saveConfig(config);
+    await this.saveConfig(config);
   }
 
   /**
    * Delete an MCP server
    */
-  public deleteMcp(mcpName: string): void {
+  public async deleteMcp(mcpName: string): Promise<void> {
     const config = this.loadConfig();
     config.mcpServers = config.mcpServers.filter((m: any) => m.name !== mcpName);
-    this.saveConfig(config);
+    await this.saveConfig(config);
   }
 
   /**
@@ -166,7 +189,7 @@ export class WebUIStorage {
   /**
    * Add or update a persona
    */
-  public savePersona(persona: any): void {
+  public async savePersona(persona: any): Promise<void> {
     const config = this.loadConfig();
     const existingIndex = config.personas.findIndex((p: any) => p.key === persona.key);
 
@@ -176,16 +199,16 @@ export class WebUIStorage {
       config.personas.push(persona);
     }
 
-    this.saveConfig(config);
+    await this.saveConfig(config);
   }
 
   /**
    * Delete a persona
    */
-  public deletePersona(personaKey: string): void {
+  public async deletePersona(personaKey: string): Promise<void> {
     const config = this.loadConfig();
     config.personas = config.personas.filter((p: any) => p.key !== personaKey);
-    this.saveConfig(config);
+    await this.saveConfig(config);
   }
   /**
    * Get all LLM providers
@@ -198,7 +221,7 @@ export class WebUIStorage {
   /**
    * Add or update an LLM provider
    */
-  public saveLlmProvider(provider: any): void {
+  public async saveLlmProvider(provider: any): Promise<void> {
     const config = this.loadConfig();
     if (!config.llmProviders) {
       config.llmProviders = [];
@@ -212,20 +235,20 @@ export class WebUIStorage {
       config.llmProviders.push(provider);
     }
 
-    this.saveConfig(config);
+    await this.saveConfig(config);
   }
 
   /**
    * Delete an LLM provider
    */
-  public deleteLlmProvider(providerId: string): void {
+  public async deleteLlmProvider(providerId: string): Promise<void> {
     const config = this.loadConfig();
     if (!config.llmProviders) {
       return;
     }
 
     config.llmProviders = config.llmProviders.filter((p: any) => p.id !== providerId);
-    this.saveConfig(config);
+    await this.saveConfig(config);
   }
 
   /**
@@ -239,7 +262,7 @@ export class WebUIStorage {
   /**
    * Add or update a messenger provider
    */
-  public saveMessengerProvider(provider: any): void {
+  public async saveMessengerProvider(provider: any): Promise<void> {
     const config = this.loadConfig();
     if (!config.messengerProviders) {
       config.messengerProviders = [];
@@ -253,91 +276,77 @@ export class WebUIStorage {
       config.messengerProviders.push(provider);
     }
 
-    this.saveConfig(config);
+    await this.saveConfig(config);
   }
 
   /**
    * Delete a messenger provider
    */
-  public deleteMessengerProvider(providerId: string): void {
+  public async deleteMessengerProvider(providerId: string): Promise<void> {
     const config = this.loadConfig();
     if (!config.messengerProviders) {
       return;
     }
 
     config.messengerProviders = config.messengerProviders.filter((p: any) => p.id !== providerId);
-    this.saveConfig(config);
+    await this.saveConfig(config);
   }
 
   /**
    * Get all guards
-   * Uses a flag to prevent race conditions during initialization
    */
   public getGuards(): any[] {
-    // Wait if initialization is already in progress
-    while (this.guardsInitializationInProgress) {
-      // Re-read config after initialization completes
-      const config = this.loadConfig();
-      if (config.guards && config.guards.length > 0) {
-        return config.guards;
-      }
-    }
-
     const config = this.loadConfig();
 
     // Initialize default guards if they don't exist or if guards array is missing
     if (!config.guards || config.guards.length === 0) {
-      // Set flag to prevent race conditions
-      this.guardsInitializationInProgress = true;
+      const defaultGuards = [
+        {
+          id: 'access-control',
+          name: 'Access Control',
+          description: 'User and IP-based access restrictions',
+          type: 'access',
+          enabled: true,
+          config: { type: 'users', users: [], ips: [] },
+        },
+        {
+          id: 'rate-limiter',
+          name: 'Rate Limiter',
+          description: 'Prevents spam and excessive requests',
+          type: 'rate',
+          enabled: true,
+          config: { maxRequests: 100, windowMs: 60000 },
+        },
+        {
+          id: 'content-filter',
+          name: 'Content Filter',
+          description: 'Filters inappropriate content',
+          type: 'content',
+          enabled: false,
+          config: {},
+        },
+      ];
 
-      try {
-        const defaultGuards = [
-          {
-            id: 'access-control',
-            name: 'Access Control',
-            description: 'User and IP-based access restrictions',
-            type: 'access',
-            enabled: true,
-            config: { type: 'users', users: [], ips: [] },
-          },
-          {
-            id: 'rate-limiter',
-            name: 'Rate Limiter',
-            description: 'Prevents spam and excessive requests',
-            type: 'rate',
-            enabled: true,
-            config: { maxRequests: 100, windowMs: 60000 },
-          },
-          {
-            id: 'content-filter',
-            name: 'Content Filter',
-            description: 'Filters inappropriate content',
-            type: 'content',
-            enabled: false,
-            config: {},
-          },
-        ];
-
-        // If guards is undefined, initialize it with defaults
-        if (!config.guards) {
-          config.guards = defaultGuards;
-        } else {
-          // Merge defaults: if a guard with same ID exists, keep it, otherwise add default
-          // ⚡ Bolt Optimization: Use Set for O(1) lookups instead of O(n) array search
-          const existingIds = new Set(config.guards.map((g: { id: string }) => g.id));
-          for (const defaultGuard of defaultGuards) {
-            if (!existingIds.has(defaultGuard.id)) {
-              config.guards.push(defaultGuard);
-              existingIds.add(defaultGuard.id);
-            }
+      // If guards is undefined, initialize it with defaults
+      if (!config.guards) {
+        config.guards = defaultGuards;
+      } else {
+        // Merge defaults: if a guard with same ID exists, keep it, otherwise add default
+        // ⚡ Bolt Optimization: Use Set for O(1) lookups instead of O(n) array search
+        const existingIds = new Set(config.guards.map((g: { id: string }) => g.id));
+        for (const defaultGuard of defaultGuards) {
+          if (!existingIds.has(defaultGuard.id)) {
+            config.guards.push(defaultGuard);
+            existingIds.add(defaultGuard.id);
           }
         }
-
-        // Save the defaults back to storage
-        this.saveConfig(config);
-      } finally {
-        this.guardsInitializationInProgress = false;
       }
+
+      // Save the defaults back to storage
+      this.saveConfig(config).catch((err) => {
+        debug('ERROR:', 'Failed to save default guards:', err);
+        Logger.warn('Failed to persist default guards to storage:', err);
+      });
     }
 
     return config.guards;
@@ -346,7 +355,7 @@ export class WebUIStorage {
   /**
    * Save a guard
    */
-  public saveGuard(guard: any): void {
+  public async saveGuard(guard: any): Promise<void> {
     const config = this.loadConfig();
     if (!config.guards) {
       config.guards = [];
@@ -360,13 +369,13 @@ export class WebUIStorage {
       config.guards.push(guard);
     }
 
-    this.saveConfig(config);
+    await this.saveConfig(config);
   }
 
   /**
    * Toggle a guard
    */
-  public toggleGuard(id: string, enabled: boolean): void {
+  public async toggleGuard(id: string, enabled: boolean): Promise<void> {
     const config = this.loadConfig();
     if (!config.guards) {
       return;
@@ -375,7 +384,7 @@ export class WebUIStorage {
     const guard = config.guards.find((g: any) => g.id === id);
     if (guard) {
       guard.enabled = enabled;
-      this.saveConfig(config);
+      await this.saveConfig(config);
     }
   }
 }

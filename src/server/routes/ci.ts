@@ -1,12 +1,12 @@
 import Debug from 'debug';
 import { Router } from 'express';
-import { validateRequest } from '../../validation/validateRequest';
 import {
   CreateDeploymentSchema,
   RollbackDeploymentSchema,
-  ValidateDeploymentSchema,
   RunTestsSchema,
+  ValidateDeploymentSchema,
 } from '../../validation/schemas/ciSchema';
+import { validateRequest } from '../../validation/validateRequest';
 
 const debug = Debug('app:ciRoutes');
 const router = Router();
@@ -157,26 +157,30 @@ router.get('/api/deployments/:id', (req, res) => {
 });
 
 // Rollback deployment
-router.post('/api/deployments/:id/rollback', validateRequest(RollbackDeploymentSchema), (req, res) => {
-  try {
-    const { id } = req.params;
+router.post(
+  '/api/deployments/:id/rollback',
+  validateRequest(RollbackDeploymentSchema),
+  (req, res) => {
+    try {
+      const { id } = req.params;
 
-    // In a real implementation, this would trigger a rollback
-    // For now, simulate rollback
-    return res.json({
-      success: true,
-      message: `Deployment ${id} rolled back successfully`,
-      rollbackId: `rollback_${Date.now()}`,
-    });
-  } catch (error) {
-    debug('Rollback deployment API error:', error);
-    return res.status(500).json({
-      success: false,
-      message: 'Failed to rollback deployment',
-      error: error instanceof Error ? error.message : 'Unknown error',
-    });
+      // In a real implementation, this would trigger a rollback
+      // For now, simulate rollback
+      return res.json({
+        success: true,
+        message: `Deployment ${id} rolled back successfully`,
+        rollbackId: `rollback_${Date.now()}`,
+      });
+    } catch (error) {
+      debug('Rollback deployment API error:', error);
+      return res.status(500).json({
+        success: false,
+        message: 'Failed to rollback deployment',
+        error: error instanceof Error ? error.message : 'Unknown error',
+      });
+    }
   }
-});
+);
 
 // Get configuration drift detections
 router.get('/api/drift', (req, res) => {

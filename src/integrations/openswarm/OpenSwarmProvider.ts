@@ -1,7 +1,8 @@
 import axios from 'axios';
+import Debug from 'debug';
 import type { ILlmProvider } from '@llm/interfaces/ILlmProvider';
 import { isSafeUrl } from '../../utils/ssrfGuard';
-import Debug from 'debug';
+
 const debug = Debug('app:integrations:openswarm:OpenSwarmProvider');
 
 export class OpenSwarmProvider implements ILlmProvider {

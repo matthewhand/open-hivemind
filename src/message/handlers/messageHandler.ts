@@ -3,9 +3,10 @@ import { AuditLogger } from '@src/common/auditLogger';
 import { ErrorHandler } from '@src/common/errors/ErrorHandler';
 import { PerformanceMonitor } from '@src/common/errors/PerformanceMonitor';
 import { getLlmProvider } from '@src/llm/getLlmProvider';
-import { InputSanitizer } from '@src/utils/InputSanitizer';
-import { toolAugmentedCompletion } from '@src/services/toolAugmentedCompletion';
 import { getQuotaManager } from '@src/middleware/quotaMiddleware';
+import { MemoryManager } from '@src/services/MemoryManager';
+import { toolAugmentedCompletion } from '@src/services/toolAugmentedCompletion';
+import { InputSanitizer } from '@src/utils/InputSanitizer';
 import { generateChatCompletionDirect } from '@integrations/openwebui/directClient';
 import { ChannelDelayManager } from '@message/helpers/handler/ChannelDelayManager';
 import type { IMessage } from '@message/interfaces/IMessage';
@@ -27,11 +28,10 @@ import { stripBotId } from '../helpers/processing/stripBotId';
 // New utilities
 import TokenTracker from '../helpers/processing/TokenTracker';
 import TypingActivity from '../helpers/processing/TypingActivity';
-import { MemoryManager } from '@src/services/MemoryManager';
 import { ContentFilterService } from '@src/services/ContentFilterService';
-import processingLocks from '../processing/processingLocks';
 import { PipelineMetrics, pipelineEventEmitter } from '../PipelineMetrics';
 import { PipelineMetricsAggregator } from '../PipelineMetricsAggregator';
+import processingLocks from '../processing/processingLocks';
 
 const timingManager = MessageDelayScheduler.getInstance();
 const idleResponseManager = IdleResponseManager.getInstance();
@@ -308,7 +308,10 @@ export async function handleMessage(
           botConfig
         );
         const decisionTimestamp = Date.now();
-        pipelineMetrics.endStage('validate', { shouldReply: replyDecision.shouldReply, reason: replyDecision.reason });
+        pipelineMetrics.endStage('validate', {
+          shouldReply: replyDecision.shouldReply,
+          reason: replyDecision.reason,
+        });
 
         // Safely extract human-readable names for logging
         const authorName = (() => {
@@ -342,7 +345,9 @@ export async function handleMessage(
             // Prose explanation at info level with context
             let prose = replyDecision.meta?.prose || replyDecision.reason;
             prose = await summarizeLogWithLlm(prose);
-            console.info(`\u{1F6AB} ${botConfig.name} skips @${authorName} in ${channelName}: ${prose}`);
+            console.info(
+              `\u{1F6AB} ${botConfig.name} skips @${authorName} in ${channelName}: ${prose}`
+            );
           }
           return null;
         }
@@ -395,7 +400,7 @@ export async function handleMessage(
         try {
           const memories = await memoryManager.retrieveRelevantMemories(
             botConfig.name || resolvedBotId,
-            processedMessage,
+            processedMessage
           );
           memoryContext = memoryManager.formatMemoriesForPrompt(memories);
         } catch (memErr) {
@@ -430,12 +435,12 @@ export async function handleMessage(
         if (process.env.DISABLE_QUOTA !== 'true') {
           const quotaManager = getQuotaManager();
           const quotaEntityId = userId || channelId;
-          const quotaEntityType = userId ? 'user' as const : 'channel' as const;
+          const quotaEntityType = userId ? ('user' as const) : ('channel' as const);
           const quotaStatus = await quotaManager.checkQuota(quotaEntityId, quotaEntityType);
           if (!quotaStatus.allowed) {
             logger(
               `Quota exceeded for ${quotaEntityType}:${quotaEntityId} — ` +
-              `min=${quotaStatus.used.minute} hr=${quotaStatus.used.hour} day=${quotaStatus.used.day}`
+                `min=${quotaStatus.used.minute} hr=${quotaStatus.used.hour} day=${quotaStatus.used.day}`
             );
             return null;
           }
@@ -481,21 +486,21 @@ export async function handleMessage(
           });
           // Normalise to { text: string } so the downstream `.text` checks work
           // regardless of whether the provider returned a string or an object.
-          llmResponse = typeof toolResult === 'string'
-            ? { text: toolResult }
-            : toolResult;
+          llmResponse = typeof toolResult === 'string' ? { text: toolResult } : toolResult;
         }
-        pipelineMetrics.endStage('llm_inference', { hasResponse: !!(llmResponse && llmResponse.text) });
+        pipelineMetrics.endStage('llm_inference', {
+          hasResponse: !!(llmResponse && llmResponse.text),
+        });
 
         // ── Quota: consume token usage after inference completes ──
         if (process.env.DISABLE_QUOTA !== 'true' && llmResponse?.text) {
           try {
             const quotaManager = getQuotaManager();
             const quotaEntityId = userId || channelId;
-            const quotaEntityType = userId ? 'user' as const : 'channel' as const;
+            const quotaEntityType = userId ? ('user' as const) : ('channel' as const);
             // Estimate tokens from response length (rough: 1 token ~ 4 chars)
-            const estimatedTokens = llmResponse.usage?.total_tokens
-              ?? Math.ceil((llmResponse.text?.length ?? 0) / 4);
+            const estimatedTokens =
+              llmResponse.usage?.total_tokens ?? Math.ceil((llmResponse.text?.length ?? 0) / 4);
             await quotaManager.consumeTokens(quotaEntityId, quotaEntityType, estimatedTokens);
           } catch (tokenErr) {
             logger('Failed to record token quota (non-fatal):', tokenErr);
@@ -590,9 +595,11 @@ export async function handleMessage(
           userId: message.getAuthorId(),
         };
         // Fire-and-forget \u2014 memory writes must not slow down or break responses.
-        memoryManager.storeConversationMemory(memBotName, processedMessage, 'user', memMeta)
+        memoryManager
+          .storeConversationMemory(memBotName, processedMessage, 'user', memMeta)
           .catch((e: unknown) => logger('Memory store (user) failed: %O', e));
-        memoryManager.storeConversationMemory(memBotName, llmResponse.text, 'assistant', memMeta)
+        memoryManager
+          .storeConversationMemory(memBotName, llmResponse.text, 'assistant', memMeta)
           .catch((e: unknown) => logger('Memory store (assistant) failed: %O', e));
         pipelineMetrics.endStage('memory_store');
 
@@ -615,7 +622,8 @@ export async function handleMessage(
         console.info(
           `\u274C INFERENCE/PROCESSING FAILED | error: ${error instanceof Error ? error.message : String(error)}${modelInfo}`
         );
-        logger('ERROR:', 
+        logger(
+          'ERROR:',
           `Error processing message: ${error instanceof Error ? error.message : String(error)}`
         );
         return null;

@@ -1,13 +1,14 @@
 import fs from 'fs/promises';
 import path from 'path';
+import Debug from 'debug';
 import { Router, type NextFunction, type Request, type Response } from 'express';
 import { body, param, validationResult } from 'express-validator';
 import { authenticate, requireAdmin } from '../../auth/middleware';
 import type { AuthMiddlewareRequest } from '../../auth/types';
-import { ConfigurationImportExportService } from '../services/ConfigurationImportExportService';
-import Debug from 'debug';
-import { validateRequest } from '../../validation/validateRequest';
 import { BackupIdParamSchema } from '../../validation/schemas/importExportSchema';
+import { validateRequest } from '../../validation/validateRequest';
+import { ConfigurationImportExportService } from '../services/ConfigurationImportExportService';
+
 const debug = Debug('app:server:routes:importExport');
 
 type MulterFile = {
@@ -31,7 +32,11 @@ const upload = multer({
   limits: {
     fileSize: 50 * 1024 * 1024, // 50MB limit
   },
-  fileFilter: (_req: unknown, file: { originalname: string }, cb: (error: Error | null, acceptFile?: boolean) => void) => {
+  fileFilter: (
+    _req: unknown,
+    file: { originalname: string },
+    cb: (error: Error | null, acceptFile?: boolean) => void
+  ) => {
     const allowedTypes = ['.json', '.yaml', '.yml', '.csv', '.gz', '.enc'];
     const ext = path.extname(file.originalname).toLowerCase();
 
@@ -84,7 +89,10 @@ const validateExportOptions = [
 
   body('encryptionKey')
     .optional()
-    .if((_value: unknown, { req }: { req: { body?: { encrypt?: boolean } } }) => req.body?.encrypt === true)
+    .if(
+      (_value: unknown, { req }: { req: { body?: { encrypt?: boolean } } }) =>
+        req.body?.encrypt === true
+    )
     .isLength({ min: 8 })
     .withMessage('Encryption key must be at least 8 characters long'),
 
@@ -142,7 +150,10 @@ const validateBackupCreation = [
 
   body('encryptionKey')
     .optional()
-    .if((_value: unknown, { req }: { req: { body?: { encrypt?: boolean } } }) => req.body?.encrypt === true)
+    .if(
+      (_value: unknown, { req }: { req: { body?: { encrypt?: boolean } } }) =>
+        req.body?.encrypt === true
+    )
     .isLength({ min: 8 })
     .withMessage('Encryption key must be at least 8 characters long'),
 ];

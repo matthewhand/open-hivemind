@@ -116,7 +116,7 @@ export class ToolManager {
       messageProvider?: string;
       forumId?: string;
       forumOwnerId?: string;
-    },
+    }
   ): Promise<ToolResult> {
     const startTime = Date.now();
 
@@ -136,15 +136,16 @@ export class ToolManager {
       // Execute with AbortController-based timeout.
       const timeoutMs = DEFAULT_TOOL_TIMEOUT_MS;
       const result = await withTimeout(
-        () => mcpService.executeTool(serverName, toolName, args, {
-          botName,
-          userId: context?.userId,
-          messageProvider: context?.messageProvider,
-          forumId: context?.forumId,
-          forumOwnerId: context?.forumOwnerId,
-        }),
+        () =>
+          mcpService.executeTool(serverName, toolName, args, {
+            botName,
+            userId: context?.userId,
+            messageProvider: context?.messageProvider,
+            forumId: context?.forumId,
+            forumOwnerId: context?.forumOwnerId,
+          }),
         timeoutMs,
-        `Tool "${toolName}"`,
+        `Tool "${toolName}"`
       );
 
       const elapsed = Date.now() - startTime;
@@ -199,7 +200,9 @@ export class ToolManager {
     const names = new Set<string>();
 
     // Direct MCP servers list on the bot config.
-    const mcpServers = (botConfig as Record<string, unknown>).mcpServers ?? (botConfig as Record<string, unknown>).MCP_SERVERS;
+    const mcpServers =
+      (botConfig as Record<string, unknown>).mcpServers ??
+      (botConfig as Record<string, unknown>).MCP_SERVERS;
     if (Array.isArray(mcpServers)) {
       for (const s of mcpServers) {
         if (typeof s === 'object' && s.name) {
@@ -210,7 +213,8 @@ export class ToolManager {
 
     // MCP server profile (a named bundle of servers).
     const profileKey =
-      (botConfig as Record<string, unknown>).mcpServerProfile ?? (botConfig as Record<string, unknown>).MCP_SERVER_PROFILE;
+      (botConfig as Record<string, unknown>).mcpServerProfile ??
+      (botConfig as Record<string, unknown>).MCP_SERVER_PROFILE;
     if (profileKey) {
       const profile = getMcpServerProfileByKey(profileKey);
       if (profile) {
