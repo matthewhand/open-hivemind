@@ -124,9 +124,9 @@ export class SecureConfigManager {
       debug(`Configuration ${config.id} stored successfully`);
     } catch (error: unknown) {
       const hivemindError = ErrorUtils.toHivemindError(error);
-      debug(`Failed to store configuration ${config.id}:`, hivemindError.message);
+      debug(`Failed to store configuration ${config.id}:`, ErrorUtils.getMessage(hivemindError));
       throw ErrorUtils.createError(
-        `Failed to store secure configuration: ${hivemindError.message}`,
+        `Failed to store secure configuration: ${ErrorUtils.getMessage(hivemindError)}`,
         'unknown',
         'SECURE_CONFIG_STORE_FAILED',
         500,
@@ -176,7 +176,7 @@ export class SecureConfigManager {
       return config;
     } catch (error: unknown) {
       const hivemindError = ErrorUtils.toHivemindError(error);
-      debug(`Failed to retrieve configuration ${id}:`, hivemindError.message);
+      debug(`Failed to retrieve configuration ${id}:`, ErrorUtils.getMessage(hivemindError));
       return null;
     }
   }
@@ -208,9 +208,9 @@ export class SecureConfigManager {
       }
     } catch (error: unknown) {
       const hivemindError = ErrorUtils.toHivemindError(error);
-      debug(`Failed to delete configuration ${id}:`, hivemindError.message);
+      debug(`Failed to delete configuration ${id}:`, ErrorUtils.getMessage(hivemindError));
       throw ErrorUtils.createError(
-        `Failed to delete secure configuration: ${hivemindError.message}`,
+        `Failed to delete secure configuration: ${ErrorUtils.getMessage(hivemindError)}`,
         'unknown',
         'SECURE_CONFIG_DELETE_FAILED',
         500,
@@ -314,13 +314,13 @@ export class SecureConfigManager {
       const hivemindError = ErrorUtils.toHivemindError(error);
       const errorInfo = ErrorUtils.classifyError(hivemindError);
       debug('Failed to create backup:', {
-        error: hivemindError.message,
-        errorCode: hivemindError.code,
+        error: ErrorUtils.getMessage(hivemindError),
+        errorCode: ErrorUtils.getCode(hivemindError),
         errorType: errorInfo.type,
         severity: errorInfo.severity,
       });
       throw ErrorUtils.createError(
-        `Backup creation failed: ${hivemindError.message}`,
+        `Backup creation failed: ${ErrorUtils.getMessage(hivemindError)}`,
         errorInfo.type,
         'SECURE_CONFIG_BACKUP_CREATE_FAILED',
         500,
@@ -383,13 +383,13 @@ export class SecureConfigManager {
       const hivemindError = ErrorUtils.toHivemindError(error);
       const errorInfo = ErrorUtils.classifyError(hivemindError);
       debug(`Failed to restore backup ${backupId}:`, {
-        error: hivemindError.message,
-        errorCode: hivemindError.code,
+        error: ErrorUtils.getMessage(hivemindError),
+        errorCode: ErrorUtils.getCode(hivemindError),
         errorType: errorInfo.type,
         severity: errorInfo.severity,
       });
       throw ErrorUtils.createError(
-        `Backup restoration failed: ${hivemindError.message}`,
+        `Backup restoration failed: ${ErrorUtils.getMessage(hivemindError)}`,
         errorInfo.type,
         'SECURE_CONFIG_BACKUP_RESTORE_FAILED',
         500,

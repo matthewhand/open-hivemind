@@ -326,9 +326,13 @@ export class AuthManager {
   /**
    * Verify JWT access token
    */
-  public verifyAccessToken(token: string): string | jwt.JwtPayload {
+  public verifyAccessToken(token: string): jwt.JwtPayload & { userId: string; role: string; permissions?: string[] } {
     try {
-      return jwt.verify(token, this.jwtSecret);
+      const payload = jwt.verify(token, this.jwtSecret);
+      if (typeof payload === 'string' || !payload.userId) {
+        throw new Error('Invalid token payload format');
+      }
+      return payload as jwt.JwtPayload & { userId: string; role: string; permissions?: string[] };
     } catch {
       throw new Error('Invalid access token');
     }

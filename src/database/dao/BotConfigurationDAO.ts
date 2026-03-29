@@ -280,7 +280,7 @@ export class BotConfigurationDAO {
           params.push(typeof value === 'string' ? value : (value as Date).toISOString());
         } else {
           updates.push(`${key} = ?`);
-          params.push(value);
+          params.push(value as string | number | boolean);
         }
       }
     });
@@ -385,30 +385,30 @@ export class BotConfigurationDAO {
 
   private mapRow(row: Record<string, unknown>): BotConfiguration {
     return {
-      id: row.id,
-      name: row.name,
-      messageProvider: row.messageProvider,
-      llmProvider: row.llmProvider,
-      persona: row.persona,
-      systemInstruction: row.systemInstruction,
-      mcpServers: row.mcpServers ? JSON.parse(row.mcpServers) : undefined,
-      mcpGuard: row.mcpGuard ? JSON.parse(row.mcpGuard) : undefined,
-      discord: row.discord ? JSON.parse(row.discord) : undefined,
-      slack: row.slack ? JSON.parse(row.slack) : undefined,
-      mattermost: row.mattermost ? JSON.parse(row.mattermost) : undefined,
-      openai: row.openai ? JSON.parse(row.openai) : undefined,
-      flowise: row.flowise ? JSON.parse(row.flowise) : undefined,
-      openwebui: row.openwebui ? JSON.parse(row.openwebui) : undefined,
-      openswarm: row.openswarm ? JSON.parse(row.openswarm) : undefined,
-      perplexity: row.perplexity ? JSON.parse(row.perplexity) : undefined,
-      replicate: row.replicate ? JSON.parse(row.replicate) : undefined,
-      n8n: row.n8n ? JSON.parse(row.n8n) : undefined,
-      tenantId: row.tenantId,
+      id: Number(row.id),
+      name: row.name as string,
+      messageProvider: row.messageProvider as any,
+      llmProvider: row.llmProvider as any,
+      persona: row.persona as string,
+      systemInstruction: row.systemInstruction as string,
+      mcpServers: row.mcpServers ? JSON.parse(row.mcpServers as string) : undefined,
+      mcpGuard: row.mcpGuard ? JSON.parse(row.mcpGuard as string) : undefined,
+      discord: row.discord ? JSON.parse(row.discord as string) : undefined,
+      slack: row.slack ? JSON.parse(row.slack as string) : undefined,
+      mattermost: row.mattermost ? JSON.parse(row.mattermost as string) : undefined,
+      openai: row.openai ? JSON.parse(row.openai as string) : undefined,
+      flowise: row.flowise ? JSON.parse(row.flowise as string) : undefined,
+      openwebui: row.openwebui ? JSON.parse(row.openwebui as string) : undefined,
+      openswarm: row.openswarm ? JSON.parse(row.openswarm as string) : undefined,
+      perplexity: row.perplexity ? JSON.parse(row.perplexity as string) : undefined,
+      replicate: row.replicate ? JSON.parse(row.replicate as string) : undefined,
+      n8n: row.n8n ? JSON.parse(row.n8n as string) : undefined,
+      tenantId: row.tenantId as string,
       isActive: Boolean(row.isActive),
-      createdAt: new Date(row.createdAt),
-      updatedAt: new Date(row.updatedAt),
-      createdBy: row.createdBy,
-      updatedBy: row.updatedBy,
+      createdAt: new Date(row.createdAt as string),
+      updatedAt: new Date(row.updatedAt as string),
+      createdBy: row.createdBy as string,
+      updatedBy: row.updatedBy as string,
     };
   }
 }

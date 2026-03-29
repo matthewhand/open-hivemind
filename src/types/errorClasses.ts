@@ -548,81 +548,81 @@ export class ErrorFactory {
       case 'network':
         return new NetworkError(
           ErrorUtils.getMessage(hivemindError),
-          ((hivemindError as Record<string, unknown>)).response,
-          ((hivemindError as Record<string, unknown>)).request,
+          ((hivemindError as Record<string, unknown>)).response as { data?: unknown; headers?: Record<string, string>; status?: number; } | undefined,
+          ((hivemindError as Record<string, unknown>)).request as { url?: string; method?: string; headers?: Record<string, string>; } | undefined,
           context
         );
 
       case 'validation':
         return new ValidationError(
           ErrorUtils.getMessage(hivemindError),
-          ((hivemindError as Record<string, unknown>)).field,
+          ((hivemindError as Record<string, unknown>)).field as string | undefined,
           ((hivemindError as Record<string, unknown>)).value,
           ((hivemindError as Record<string, unknown>)).expected,
-          ((hivemindError as Record<string, unknown>)).suggestions,
+          ((hivemindError as Record<string, unknown>)).suggestions as string[] | undefined,
           context
         );
 
       case 'configuration':
         return new ConfigurationError(
           ErrorUtils.getMessage(hivemindError),
-          ((hivemindError as Record<string, unknown>)).configKey,
-          ((hivemindError as Record<string, unknown>)).expectedType,
-          ((hivemindError as Record<string, unknown>)).providedType,
+          ((hivemindError as Record<string, unknown>)).configKey as string | undefined,
+          ((hivemindError as Record<string, unknown>)).expectedType as string | undefined,
+          ((hivemindError as Record<string, unknown>)).providedType as string | undefined,
           context
         );
 
       case 'database':
         return new DatabaseError(
           ErrorUtils.getMessage(hivemindError),
-          ((hivemindError as Record<string, unknown>)).operation,
-          ((hivemindError as Record<string, unknown>)).table,
-          ((hivemindError as Record<string, unknown>)).query,
+          ((hivemindError as Record<string, unknown>)).operation as string | undefined,
+          ((hivemindError as Record<string, unknown>)).table as string | undefined,
+          ((hivemindError as Record<string, unknown>)).query as string | undefined,
           context
         );
 
       case 'authentication':
         return new AuthenticationError(
           ErrorUtils.getMessage(hivemindError),
-          ((hivemindError as Record<string, unknown>)).provider,
-          ((hivemindError as Record<string, unknown>)).reason,
+          ((hivemindError as Record<string, unknown>)).provider as string | undefined,
+          ((hivemindError as Record<string, unknown>)).reason as 'invalid_credentials' | 'expired_token' | 'missing_token' | 'invalid_format' | undefined,
           context
         );
 
       case 'authorization':
         return new AuthorizationError(
           ErrorUtils.getMessage(hivemindError),
-          ((hivemindError as Record<string, unknown>)).resource,
-          ((hivemindError as Record<string, unknown>)).action,
-          ((hivemindError as Record<string, unknown>)).requiredPermission,
+          ((hivemindError as Record<string, unknown>)).resource as string | undefined,
+          ((hivemindError as Record<string, unknown>)).action as string | undefined,
+          ((hivemindError as Record<string, unknown>)).requiredPermission as string | undefined,
           context
         );
 
       case 'rate-limit':
         return new RateLimitError(
           ErrorUtils.getMessage(hivemindError),
-          ((hivemindError as Record<string, unknown>)).retryAfter || 60,
-          ((hivemindError as Record<string, unknown>)).limit,
-          ((hivemindError as Record<string, unknown>)).remaining,
-          ((hivemindError as Record<string, unknown>)).resetTime,
+          (((hivemindError as Record<string, unknown>)).retryAfter as number | undefined) || 60,
+          ((hivemindError as Record<string, unknown>)).limit as number | undefined,
+          ((hivemindError as Record<string, unknown>)).remaining as number | undefined,
+          ((hivemindError as Record<string, unknown>)).resetTime as Date | undefined,
           context
         );
 
       case 'timeout':
         return new TimeoutError(
           ErrorUtils.getMessage(hivemindError),
-          ((hivemindError as Record<string, unknown>)).timeoutMs || 30000,
-          ((hivemindError as Record<string, unknown>)).operation,
+          (((hivemindError as Record<string, unknown>)).timeoutMs as number | undefined) || 30000,
+          ((hivemindError as Record<string, unknown>)).operation as string | undefined,
           context
         );
 
       case 'api':
         return new ApiError(
           ErrorUtils.getMessage(hivemindError),
-          ((hivemindError as Record<string, unknown>)).service || 'unknown',
-          ((hivemindError as Record<string, unknown>)).endpoint,
+          (((hivemindError as Record<string, unknown>)).service as string | undefined) || 'unknown',
+          ((hivemindError as Record<string, unknown>)).endpoint as string | undefined,
           ErrorUtils.getStatusCode(hivemindError),
-          ((hivemindError as Record<string, unknown>)).retryAfter,
+          ((hivemindError as Record<string, unknown>)).retryAfter as number | undefined,
           context
         );
 
