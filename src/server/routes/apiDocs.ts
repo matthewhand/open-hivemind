@@ -1,5 +1,6 @@
 import { Router, type Request, type Response } from 'express';
 import { introspectRoutes } from '../utils/routeIntrospection';
+import { HTTP_STATUS } from '../../types/constants';
 
 const router = Router();
 
@@ -26,7 +27,7 @@ router.get('/', (req: Request, res: Response) => {
     });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Unknown error';
-    return res.status(500).json({
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
       error: 'Failed to generate API documentation',
       message,
     });

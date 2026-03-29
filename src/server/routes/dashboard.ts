@@ -11,6 +11,7 @@ import {
 } from '../../validation/schemas/miscSchema';
 import { validateRequest } from '../../validation/validateRequest';
 import { ActivityLogger } from '../services/ActivityLogger';
+import { HTTP_STATUS } from '../../types/constants';
 
 type AnnotatedEvent = MessageFlowEvent & { llmProvider: string };
 
@@ -207,7 +208,7 @@ router.get('/ai/stats', authenticate, requireAdmin, async (req, res) => {
     });
   } catch (error) {
     console.error('AI stats API error:', error);
-    res.status(500).json({ error: 'Failed to get AI stats' });
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: 'Failed to get AI stats' });
   }
 });
 
@@ -225,7 +226,7 @@ router.get('/ai/segments', authenticate, requireAdmin, async (req, res) => {
     res.json(segments);
   } catch (error) {
     console.error('AI segments API error:', error);
-    res.status(500).json({ error: 'Failed to get user segments' });
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: 'Failed to get user segments' });
   }
 });
 
@@ -243,7 +244,7 @@ router.get('/ai/patterns', authenticate, requireAdmin, async (req, res) => {
     res.json(patterns);
   } catch (error) {
     console.error('AI patterns API error:', error);
-    res.status(500).json({ error: 'Failed to get behavior patterns' });
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: 'Failed to get behavior patterns' });
   }
 });
 
@@ -261,7 +262,7 @@ router.get('/ai/recommendations', authenticate, requireAdmin, async (req, res) =
     res.json(recommendations);
   } catch (error) {
     console.error('AI recommendations API error:', error);
-    res.status(500).json({ error: 'Failed to get recommendations' });
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: 'Failed to get recommendations' });
   }
 });
 
@@ -278,7 +279,7 @@ router.post(
       res.json({ success: true });
     } catch (error) {
       console.error('Error storing AI feedback:', error);
-      res.status(500).json({ error: 'Failed to store feedback' });
+      res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: 'Failed to store feedback' });
     }
   }
 );
@@ -338,7 +339,7 @@ router.get('/status', authenticate, requireAdmin, (req, res) => {
     res.json({ bots: status, uptime: process.uptime() });
   } catch (error) {
     console.error('Status API error:', error);
-    res.status(500).json({ error: 'Failed to get status' });
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: 'Failed to get status' });
   }
 });
 
@@ -434,7 +435,7 @@ router.get('/activity', authenticate, requireAdmin, async (req, res) => {
     });
   } catch (error) {
     console.error('Activity API error:', error);
-    res.status(500).json({ error: 'Failed to retrieve activity feed' });
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: 'Failed to retrieve activity feed' });
   }
 });
 
@@ -451,11 +452,11 @@ router.post(
       if (success) {
         res.json({ success: true, message: 'Alert acknowledged' });
       } else {
-        res.status(404).json({ success: false, message: 'Alert not found' });
+        res.status(HTTP_STATUS.NOT_FOUND).json({ success: false, message: 'Alert not found' });
       }
     } catch (error) {
       console.error('Acknowledge alert error:', error);
-      res.status(500).json({ error: 'Failed to acknowledge alert' });
+      res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: 'Failed to acknowledge alert' });
     }
   }
 );
@@ -473,11 +474,11 @@ router.post(
       if (success) {
         res.json({ success: true, message: 'Alert resolved' });
       } else {
-        res.status(404).json({ success: false, message: 'Alert not found' });
+        res.status(HTTP_STATUS.NOT_FOUND).json({ success: false, message: 'Alert not found' });
       }
     } catch (error) {
       console.error('Resolve alert error:', error);
-      res.status(500).json({ error: 'Failed to resolve alert' });
+      res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: 'Failed to resolve alert' });
     }
   }
 );

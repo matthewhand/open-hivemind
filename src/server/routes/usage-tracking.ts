@@ -2,6 +2,7 @@ import { Router } from 'express';
 import Debug from 'debug';
 import { ErrorUtils } from '@src/types/errors';
 import { UsageTrackerService } from '../services/UsageTrackerService';
+import { HTTP_STATUS } from '../../types/constants';
 
 const debug = Debug('app:webui:usage-tracking');
 const router = Router();
@@ -42,7 +43,7 @@ router.get('/tools/:toolId', async (req, res) => {
     const metrics = usageTracker.getToolMetrics(toolId);
 
     if (!metrics) {
-      return res.status(404).json({
+      return res.status(HTTP_STATUS.NOT_FOUND).json({
         success: false,
         error: 'Tool metrics not found',
       });
@@ -99,7 +100,7 @@ router.get('/providers/:serverName', async (req, res) => {
     const metrics = usageTracker.getProviderMetrics(serverName);
 
     if (!metrics) {
-      return res.status(404).json({
+      return res.status(HTTP_STATUS.NOT_FOUND).json({
         success: false,
         error: 'Provider metrics not found',
       });

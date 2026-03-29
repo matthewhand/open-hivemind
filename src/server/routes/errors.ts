@@ -4,6 +4,7 @@ import { errorLogger } from '../../utils/errorLogger';
 import { ErrorLogSchema } from '../../validation/schemas/miscSchema';
 import { validateRequest } from '../../validation/validateRequest';
 import { authenticateToken } from '../middleware/auth';
+import { HTTP_STATUS } from '../../types/constants';
 
 const router = Router();
 
@@ -12,7 +13,7 @@ router.options('*', (req, res) => {
   res.header('Access-Control-Allow-Origin', '*');
   res.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
   res.header('Access-Control-Allow-Headers', 'Content-Type, X-Correlation-ID');
-  return res.status(204).send();
+  return res.status(HTTP_STATUS.NO_CONTENT).send();
 });
 
 // Frontend error reporting endpoint
@@ -38,7 +39,7 @@ router.post('/frontend', validateRequest(ErrorLogSchema), async (req: Request, r
 
     // Validate required fields
     if (!errorReport.message || !errorReport.correlationId) {
-      return res.status(400).json({
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({
         error: 'Invalid error report: missing required fields',
         required: ['message', 'correlationId'],
       });
@@ -73,7 +74,7 @@ router.post('/frontend', validateRequest(ErrorLogSchema), async (req: Request, r
     });
 
     // Return success response
-    return res.status(200).json({
+    return res.status(HTTP_STATUS.OK).json({
       success: true,
       correlationId: errorReport.correlationId,
       message: 'Error report received and logged',
@@ -93,7 +94,7 @@ router.post('/frontend', validateRequest(ErrorLogSchema), async (req: Request, r
     const correlationId = (req.headers['x-correlation-id'] as string) || 'unknown';
     res.setHeader('X-Correlation-ID', correlationId);
 
-    return res.status(500).json({
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
       error: 'Failed to process error report',
       correlationId: correlationId,
     });
@@ -107,7 +108,7 @@ router.get('/stats', authenticateToken, async (req: Request, res: Response) => {
     return res.json(stats);
   } catch (error) {
     console.error('Failed to get error stats:', error);
-    return res.status(500).json({ error: 'Failed to retrieve error statistics' });
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: 'Failed to retrieve error statistics' });
   }
 });
 
@@ -119,7 +120,7 @@ router.get('/recent', authenticateToken, async (req: Request, res: Response) => 
     return res.json(recentErrors);
   } catch (error) {
     console.error('Failed to get recent errors:', error);
-    return res.status(500).json({ error: 'Failed to retrieve recent errors' });
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: 'Failed to retrieve recent errors' });
   }
 });
 

@@ -5,6 +5,7 @@ import { ClearCacheSchema } from '../../validation/schemas/miscSchema';
 import { validateRequest } from '../../validation/validateRequest';
 import { authenticateToken } from '../middleware/auth';
 import { clearAllSystemCaches } from '../utils/cacheManager'; // We'll implement this
+import { HTTP_STATUS } from '../../types/constants';
 
 const debug = Debug('app:server:routes:cache');
 
@@ -32,7 +33,7 @@ router.post('/clear', validateRequest(ClearCacheSchema), async (req, res) => {
     res.json({ success: true, message: 'Cache cleared successfully' });
   } catch (error) {
     debug('ERROR:', 'Failed to clear cache:', error);
-    res.status(500).json({ success: false, error: 'Failed to clear cache' });
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ success: false, error: 'Failed to clear cache' });
   }
 });
 

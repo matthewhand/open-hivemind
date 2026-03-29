@@ -7,6 +7,7 @@ import {
   SnapshotIdParamSchema,
 } from '../../validation/schemas/hotReloadSchema';
 import { validateRequest } from '../../validation/validateRequest';
+import { HTTP_STATUS } from '../../types/constants';
 
 const debug = Debug('app:hotReloadRoutes');
 const router = Router();
@@ -19,7 +20,7 @@ router.post('/api/config/hot-reload', validateRequest(HotReloadChangeSchema), as
     > = req.body;
 
     if (!changeData.changes || Object.keys(changeData.changes).length === 0) {
-      return res.status(400).json({
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({
         success: false,
         message: 'No changes provided',
       });
@@ -31,7 +32,7 @@ router.post('/api/config/hot-reload', validateRequest(HotReloadChangeSchema), as
     return res.json(result);
   } catch (error) {
     debug('Hot reload API error:', error);
-    return res.status(500).json({
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
       success: false,
       message: 'Hot reload failed',
       error:
@@ -56,7 +57,7 @@ router.get('/api/config/hot-reload/history', (req, res) => {
     });
   } catch (error) {
     debug('Hot reload history API error:', error);
-    return res.status(500).json({
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
       success: false,
       message: 'Failed to get change history',
       error:
@@ -80,7 +81,7 @@ router.get('/api/config/hot-reload/rollbacks', (req, res) => {
     });
   } catch (error) {
     debug('Hot reload rollbacks API error:', error);
-    return res.status(500).json({
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
       success: false,
       message: 'Failed to get available rollbacks',
       error:
@@ -118,14 +119,14 @@ router.post(
           message: 'Configuration rolled back successfully',
         });
       } else {
-        return res.status(404).json({
+        return res.status(HTTP_STATUS.NOT_FOUND).json({
           success: false,
           message: 'Rollback snapshot not found or rollback failed',
         });
       }
     } catch (error) {
       debug('Hot reload rollback API error:', error);
-      return res.status(500).json({
+      return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
         success: false,
         message: 'Rollback failed',
         error:
@@ -154,7 +155,7 @@ router.get('/api/config/hot-reload/status', (req, res) => {
     });
   } catch (error) {
     debug('Hot reload status API error:', error);
-    return res.status(500).json({
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
       success: false,
       message: 'Failed to get hot reload status',
       error:
