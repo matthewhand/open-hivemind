@@ -79,7 +79,7 @@ describe('MCP API Endpoints', () => {
     it('should return an empty list of MCP servers', async () => {
       const response = await request(app).get('/api/mcp/servers');
       expect(response.status).toBe(200);
-      expect(response.body.servers).toEqual([]);
+      expect(response.body.data.servers).toEqual([]);
     });
   });
 
@@ -92,8 +92,8 @@ describe('MCP API Endpoints', () => {
       };
       const response = await request(app).post('/api/mcp/servers').send(newServer);
       expect(response.status).toBe(200);
-      expect(response.body.server).toHaveProperty('name', 'test-server');
-      expect(response.body.server.connected).toBe(false);
+      expect(response.body.data.server).toHaveProperty('name', 'test-server');
+      expect(response.body.data.server.connected).toBe(false);
     });
 
     it('should return existing server for duplicate names (idempotent)', async () => {
@@ -107,7 +107,7 @@ describe('MCP API Endpoints', () => {
       // Try to create another with the same name - returns existing server
       const response = await request(app).post('/api/mcp/servers').send(newServer);
       expect(response.status).toBe(200);
-      expect(response.body.server).toHaveProperty('name', 'test-server');
+      expect(response.body.data.server).toHaveProperty('name', 'test-server');
     });
   });
 
@@ -129,7 +129,7 @@ describe('MCP API Endpoints', () => {
     it('should reject connection to non-existent server', async () => {
       const response = await request(app).post('/api/mcp/servers/non-existent/connect');
       expect(response.status).toBe(404);
-      expect(response.body.error).toContain('not found');
+      expect(response.body.error.details.error).toContain('not found');
     });
   });
 
@@ -183,14 +183,14 @@ describe('MCP API Endpoints', () => {
       // Now get tools
       const response = await request(app).get('/api/mcp/servers/test-server/tools');
       expect(response.status).toBe(200);
-      expect(response.body.tools).toBeInstanceOf(Array);
-      expect(response.body.tools.length).toBeGreaterThan(0);
+      expect(response.body.data.tools).toBeInstanceOf(Array);
+      expect(response.body.data.tools.length).toBeGreaterThan(0);
     });
 
     it('should reject getting tools from disconnected server', async () => {
       const response = await request(app).get('/api/mcp/servers/disconnected-server/tools');
       expect(response.status).toBe(404);
-      expect(response.body.error).toContain('not connected');
+      expect(response.body.error.details.error).toContain('not connected');
     });
   });
 
@@ -198,7 +198,7 @@ describe('MCP API Endpoints', () => {
     it('should return connected MCP servers', async () => {
       const response = await request(app).get('/api/mcp/connected');
       expect(response.status).toBe(200);
-      expect(response.body.connected).toBeInstanceOf(Array);
+      expect(response.body.data.connected).toBeInstanceOf(Array);
     });
   });
 
@@ -217,7 +217,7 @@ describe('MCP API Endpoints', () => {
         .post('/api/mcp/servers/test-server/call-tool')
         .send({ toolName: 'test-tool', arguments: {} });
       expect(response.status).toBe(200);
-      expect(response.body.result).toBeDefined();
+      expect(response.body.data.result).toBeDefined();
     });
 
     it('should reject calling a tool on a disconnected server', async () => {
@@ -225,7 +225,7 @@ describe('MCP API Endpoints', () => {
         .post('/api/mcp/servers/disconnected-server/call-tool')
         .send({ toolName: 'test-tool', arguments: {} });
       expect(response.status).toBe(404);
-      expect(response.body.error).toContain('not connected');
+      expect(response.body.error.details.error).toContain('not connected');
     });
 
     it('should reject calling a tool without a tool name', async () => {
@@ -241,7 +241,7 @@ describe('MCP API Endpoints', () => {
         .post('/api/mcp/servers/test-server/call-tool')
         .send({ arguments: {} });
       expect(response.status).toBe(400);
-      expect(response.body.error).toBe('Validation failed');
+      expect(response.body.error.details.error).toBe('Validation failed');
       expect(response.body.issues).toBeDefined();
     });
   });

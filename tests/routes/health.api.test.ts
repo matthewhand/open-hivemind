@@ -155,7 +155,7 @@ describe('Health Routes - API Monitoring', () => {
       const response = await request(app).get('/health/api-endpoints/non-existent');
       expect(response.status).toBe(404);
       expect(response.body).toHaveProperty('error');
-      expect(response.body.error).toBe('Endpoint not found');
+      expect(response.body.error.details.error).toBe('Endpoint not found');
     });
   });
 
@@ -187,7 +187,7 @@ describe('Health Routes - API Monitoring', () => {
 
       expect(response.status).toBe(400);
       expect(response.body).toHaveProperty('error');
-      expect(response.body.error).toBe('Validation failed');
+      expect(response.body.error.details.error).toBe('Validation failed');
     });
 
     it('should set default values for optional fields', async () => {
@@ -246,7 +246,7 @@ describe('Health Routes - API Monitoring', () => {
 
       expect(response.status).toBe(404);
       expect(response.body).toHaveProperty('error');
-      expect(response.body.error).toBe('Failed to update endpoint');
+      expect(response.body.error.details.error).toBe('Failed to update endpoint');
     });
   });
 
@@ -276,7 +276,7 @@ describe('Health Routes - API Monitoring', () => {
 
       expect(response.status).toBe(404);
       expect(response.body).toHaveProperty('error');
-      expect(response.body.error).toBe('Failed to remove endpoint');
+      expect(response.body.error.details.error).toBe('Failed to remove endpoint');
     });
   });
 

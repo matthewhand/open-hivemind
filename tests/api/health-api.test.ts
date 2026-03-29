@@ -177,14 +177,14 @@ describe('Health API Endpoints - COMPLETE TDD SUITE', () => {
       const response = await request(app).get('/health/alerts').expect(200);
 
       expect(response.body).toHaveProperty('alerts');
-      expect(Array.isArray(response.body.alerts)).toBe(true);
+      expect(Array.isArray(response.body.data.alerts)).toBe(true);
       expect(response.body).toHaveProperty('timestamp');
     });
 
     it('should validate alert structure when alerts exist', async () => {
       const response = await request(app).get('/health/alerts').expect(200);
 
-      response.body.alerts.forEach((alert: any) => {
+      response.body.data.alerts.forEach((alert: any) => {
         expect(alert).toHaveProperty('level');
         expect(alert).toHaveProperty('message');
         expect(alert).toHaveProperty('timestamp');
@@ -200,7 +200,7 @@ describe('Health API Endpoints - COMPLETE TDD SUITE', () => {
       const response = await request(app).get('/health/alerts').expect(200);
 
       // Check if memory alert is generated when usage is high
-      const memoryAlerts = response.body.alerts.filter((alert: any) =>
+      const memoryAlerts = response.body.data.alerts.filter((alert: any) =>
         alert.message.toLowerCase().includes('memory')
       );
 
