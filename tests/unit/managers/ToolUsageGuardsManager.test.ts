@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach } from '@jest/globals';
-import fs from 'fs/promises';
+import fs from 'fs';
 import path from 'path';
 import { ToolUsageGuardsManager } from '@src/managers/ToolUsageGuardsManager';
 
@@ -9,14 +9,14 @@ describe('ToolUsageGuardsManager', () => {
 
   beforeEach(async () => {
     manager = ToolUsageGuardsManager.getInstance();
-    (manager as any).configPath = testConfigPath;
+    (manager as any).guardsFilePath = testConfigPath;
     (manager as any).guards.clear();
   });
 
   afterEach(async () => {
     // Clean up test files
     try {
-      await fs.unlink(testConfigPath);
+      fs.unlinkSync(testConfigPath);
     } catch {
       // Ignore if file doesn't exist
     }
@@ -75,7 +75,7 @@ describe('ToolUsageGuardsManager', () => {
         isActive: true,
       });
 
-      const retrieved = manager.getGuardById(created.id);
+      const retrieved = manager.getGuard(created.id);
       expect(retrieved).toBeDefined();
       expect(retrieved?.name).toBe('Test Guard');
     });
@@ -93,6 +93,8 @@ describe('ToolUsageGuardsManager', () => {
 
       const updated = manager.updateGuard(created.id, {
         name: 'Updated',
+        toolId: 'test-tool',
+        guardType: 'owner_only',
         allowedUsers: ['user1', 'user2'],
       });
 
@@ -113,7 +115,7 @@ describe('ToolUsageGuardsManager', () => {
 
       const deleted = manager.deleteGuard(created.id);
       expect(deleted).toBe(true);
-      expect(manager.getGuardById(created.id)).toBeUndefined();
+      expect(manager.getGuard(created.id)).toBeUndefined();
     });
 
     it('should toggle guard active status', () => {
@@ -127,16 +129,16 @@ describe('ToolUsageGuardsManager', () => {
         isActive: true,
       });
 
-      const toggled = manager.toggleGuard(created.id);
+      const toggled = manager.toggleGuard(created.id, false);
       expect(toggled?.isActive).toBe(false);
 
-      const toggledAgain = manager.toggleGuard(created.id);
+      const toggledAgain = manager.toggleGuard(created.id, true);
       expect(toggledAgain?.isActive).toBe(true);
     });
   });
 
   describe('Access Control', () => {
-    it('should allow access for owner_only guard type', () => {
+    it('should allow access for owner_only guard type', async () => {
       manager.createGuard({
         name: 'Owner Guard',
         description: 'Test',
@@ -147,12 +149,12 @@ describe('ToolUsageGuardsManager', () => {
         isActive: true,
       });
 
-      expect(manager.isUserAllowedToUseTool('owner1', 'test-tool')).toBe(true);
-      expect(manager.isUserAllowedToUseTool('owner2', 'test-tool')).toBe(true);
-      expect(manager.isUserAllowedToUseTool('other-user', 'test-tool')).toBe(false);
+      expect((await manager.isUserAllowedToUseTool('owner1', 'test-tool')).allowed).toBe(true);
+      expect((await manager.isUserAllowedToUseTool('owner2', 'test-tool')).allowed).toBe(true);
+      expect((await manager.isUserAllowedToUseTool('other-user', 'test-tool')).allowed).toBe(false);
     });
 
-    it('should allow access for user_list guard type', () => {
+    it('should allow access for user_list guard type', async () => {
       manager.createGuard({
         name: 'User List Guard',
         description: 'Test',
@@ -163,11 +165,11 @@ describe('ToolUsageGuardsManager', () => {
         isActive: true,
       });
 
-      expect(manager.isUserAllowedToUseTool('user1', 'test-tool')).toBe(true);
-      expect(manager.isUserAllowedToUseTool('user3', 'test-tool')).toBe(false);
+      expect((await manager.isUserAllowedToUseTool('user1', 'test-tool')).allowed).toBe(true);
+      expect((await manager.isUserAllowedToUseTool('user3', 'test-tool')).allowed).toBe(false);
     });
 
-    it('should allow access for role_based guard type', () => {
+    it('should allow access for role_based guard type', async () => {
       manager.createGuard({
         name: 'Role Guard',
         description: 'Test',
@@ -178,12 +180,12 @@ describe('ToolUsageGuardsManager', () => {
         isActive: true,
       });
 
-      expect(manager.isUserAllowedToUseTool('user1', 'test-tool', ['admin'])).toBe(true);
-      expect(manager.isUserAllowedToUseTool('user2', 'test-tool', ['moderator'])).toBe(true);
-      expect(manager.isUserAllowedToUseTool('user3', 'test-tool', ['user'])).toBe(false);
+      expect((await manager.isUserAllowedToUseTool('user1', 'test-tool', ['admin'])).allowed).toBe(true);
+      expect((await manager.isUserAllowedToUseTool('user2', 'test-tool', ['moderator'])).allowed).toBe(true);
+      expect((await manager.isUserAllowedToUseTool('user3', 'test-tool', ['user'])).allowed).toBe(false);
     });
 
-    it('should allow access when guard is inactive', () => {
+    it('should allow access when guard is inactive', async () => {
       manager.createGuard({
         name: 'Inactive Guard',
         description: 'Test',
@@ -195,14 +197,14 @@ describe('ToolUsageGuardsManager', () => {
       });
 
       // Should allow access even for non-owner when guard is inactive
-      expect(manager.isUserAllowedToUseTool('anyone', 'test-tool')).toBe(true);
+      expect((await manager.isUserAllowedToUseTool('anyone', 'test-tool')).allowed).toBe(true);
     });
 
-    it('should allow access when no guard exists for tool', () => {
-      expect(manager.isUserAllowedToUseTool('anyone', 'unguarded-tool')).toBe(true);
+    it('should allow access when no guard exists for tool', async () => {
+      expect((await manager.isUserAllowedToUseTool('anyone', 'unguarded-tool')).allowed).toBe(true);
     });
 
-    it('should handle multiple guards for same tool (any must pass)', () => {
+    it('should handle multiple guards for same tool (any must pass)', async () => {
       manager.createGuard({
         name: 'Guard 1',
         description: 'Test',
@@ -224,18 +226,18 @@ describe('ToolUsageGuardsManager', () => {
       });
 
       // User1 should pass via first guard
-      expect(manager.isUserAllowedToUseTool('user1', 'test-tool')).toBe(true);
+      expect((await manager.isUserAllowedToUseTool('user1', 'test-tool')).allowed).toBe(true);
 
       // Admin user should pass via second guard
-      expect(manager.isUserAllowedToUseTool('admin-user', 'test-tool', ['admin'])).toBe(true);
+      expect((await manager.isUserAllowedToUseTool('admin-user', 'test-tool', ['admin'])).allowed).toBe(true);
 
       // Regular user should fail both
-      expect(manager.isUserAllowedToUseTool('other', 'test-tool', ['user'])).toBe(false);
+      expect((await manager.isUserAllowedToUseTool('other', 'test-tool', ['user'])).allowed).toBe(false);
     });
   });
 
   describe('Persistence', () => {
-    it('should save guards to file', async () => {
+    it('should save guards to file on create', () => {
       manager.createGuard({
         name: 'Test Guard',
         description: 'Test',
@@ -246,18 +248,13 @@ describe('ToolUsageGuardsManager', () => {
         isActive: true,
       });
 
-      // Trigger save manually
-      await (manager as any).saveToFile();
-
-      // Check file exists
-      const fileExists = await fs.access(testConfigPath)
-        .then(() => true)
-        .catch(() => false);
+      // createGuard calls saveGuards internally, so file should exist
+      const fileExists = fs.existsSync(testConfigPath);
       expect(fileExists).toBe(true);
     });
 
-    it('should load guards from file', async () => {
-      // Create and save a guard
+    it('should reload guards from file', () => {
+      // Create and save a guard (saveGuards is called by createGuard)
       const created = manager.createGuard({
         name: 'Test Guard',
         description: 'Test',
@@ -267,20 +264,19 @@ describe('ToolUsageGuardsManager', () => {
         allowedRoles: [],
         isActive: true,
       });
-      await (manager as any).saveToFile();
 
       // Clear in-memory guards and reload
       (manager as any).guards.clear();
-      await (manager as any).loadFromFile();
+      (manager as any).loadGuards();
 
-      const loaded = manager.getGuardById(created.id);
+      const loaded = manager.getGuard(created.id);
       expect(loaded).toBeDefined();
       expect(loaded?.name).toBe('Test Guard');
     });
   });
 
   describe('Edge Cases', () => {
-    it('should handle empty allowed users', () => {
+    it('should handle empty allowed users', async () => {
       manager.createGuard({
         name: 'Empty Guard',
         description: 'Test',
@@ -291,10 +287,10 @@ describe('ToolUsageGuardsManager', () => {
         isActive: true,
       });
 
-      expect(manager.isUserAllowedToUseTool('anyone', 'test-tool')).toBe(false);
+      expect((await manager.isUserAllowedToUseTool('anyone', 'test-tool')).allowed).toBe(false);
     });
 
-    it('should handle null/undefined roles gracefully', () => {
+    it('should handle undefined roles gracefully', async () => {
       manager.createGuard({
         name: 'Role Guard',
         description: 'Test',
@@ -305,14 +301,24 @@ describe('ToolUsageGuardsManager', () => {
         isActive: true,
       });
 
-      expect(manager.isUserAllowedToUseTool('user1', 'test-tool', undefined)).toBe(false);
-      expect(manager.isUserAllowedToUseTool('user1', 'test-tool', [])).toBe(false);
+      expect((await manager.isUserAllowedToUseTool('user1', 'test-tool', undefined)).allowed).toBe(false);
+      expect((await manager.isUserAllowedToUseTool('user1', 'test-tool', [])).allowed).toBe(false);
     });
 
-    it('should return false for non-existent guard ID operations', () => {
+    it('should return false for non-existent guard ID delete', () => {
       expect(manager.deleteGuard('non-existent')).toBe(false);
-      expect(manager.updateGuard('non-existent', { name: 'Updated' })).toBeUndefined();
-      expect(manager.toggleGuard('non-existent')).toBeUndefined();
+    });
+
+    it('should throw for non-existent guard ID update', () => {
+      expect(() => manager.updateGuard('non-existent', {
+        name: 'Updated',
+        toolId: 'test-tool',
+        guardType: 'owner_only',
+      })).toThrow();
+    });
+
+    it('should throw for non-existent guard ID toggle', () => {
+      expect(() => manager.toggleGuard('non-existent', false)).toThrow();
     });
   });
 });

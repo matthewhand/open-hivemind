@@ -169,11 +169,7 @@ export class AnalyticsService {
   public async getUserSegments(options: ActivityFilter = {}): Promise<UserSegment[]> {
     const events = await this.activityLogger.getEvents({
       ...options,
-<<<<<<< HEAD
       limit: options.limit || DEFAULT_PAGE_LIMIT,
-=======
-      limit: options.limit || 5000,
->>>>>>> 7ea785bef (fix(di): fix di configuration overrides and analytics compilation errors)
     });
 
     if (events.length === 0) {
@@ -266,11 +262,7 @@ export class AnalyticsService {
   ): Promise<DashboardRecommendation[]> {
     const events = await this.activityLogger.getEvents({
       ...options,
-<<<<<<< HEAD
       limit: options.limit || DEFAULT_PAGE_LIMIT,
-=======
-      limit: options.limit || 5000,
->>>>>>> 7ea785bef (fix(di): fix di configuration overrides and analytics compilation errors)
     });
     const patterns = await this.getBehaviorPatterns(options);
     const segments = await this.getUserSegments(options);
@@ -365,11 +357,7 @@ export class AnalyticsService {
   public async getStats(options: ActivityFilter = {}): Promise<AnalyticsStats> {
     const events = await this.activityLogger.getEvents({
       ...options,
-<<<<<<< HEAD
       limit: options.limit || LARGE_PAGE_LIMIT,
-=======
-      limit: options.limit || 10000,
->>>>>>> 7ea785bef (fix(di): fix di configuration overrides and analytics compilation errors)
     });
     const patterns = await this.getBehaviorPatterns(options);
     const segments = await this.getUserSegments(options);
@@ -416,11 +404,7 @@ export class AnalyticsService {
   public async getTimeSeries(options: ActivityFilter = {}): Promise<TimeSeriesBucket[]> {
     const events = await this.activityLogger.getEvents({
       ...options,
-<<<<<<< HEAD
       limit: options.limit || LARGE_PAGE_LIMIT,
-=======
-      limit: options.limit || 10000,
->>>>>>> 7ea785bef (fix(di): fix di configuration overrides and analytics compilation errors)
     });
 
     if (events.length === 0) {

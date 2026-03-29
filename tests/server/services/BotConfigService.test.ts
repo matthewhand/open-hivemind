@@ -276,14 +276,15 @@ describe('BotConfigService', () => {
       expect(mockDbManager.updateBotConfiguration).toHaveBeenCalled();
 
       const updateCallArgs = mockDbManager.updateBotConfiguration.mock.calls[0][1];
-      expect(updateCallArgs.mcpGuard).toEqual(expect.objectContaining({ enabled: true, type: 'owner' }));
-      expect(updateCallArgs.discord).toEqual(expect.objectContaining({ token: 'newtoken' }));
-      expect(updateCallArgs.slack).toEqual(expect.objectContaining({ botToken: 'slacktoken' }));
-      expect(updateCallArgs.mattermost).toEqual(expect.objectContaining({ botToken: 'mmtoken' }));
-      expect(updateCallArgs.openai).toEqual(expect.objectContaining({ apiKey: 'openaikey' }));
-      expect(updateCallArgs.flowise).toEqual(expect.objectContaining({ endpoint: 'flowise' }));
-      expect(updateCallArgs.openwebui).toEqual(expect.objectContaining({ endpoint: 'openwebui' }));
-      expect(updateCallArgs.openswarm).toEqual(expect.objectContaining({ endpoint: 'openswarm' }));
+      const parseField = (val: any) => typeof val === 'string' ? JSON.parse(val) : val;
+      expect(parseField(updateCallArgs.mcpGuard)).toEqual(expect.objectContaining({ enabled: true, type: 'owner' }));
+      expect(parseField(updateCallArgs.discord)).toEqual(expect.objectContaining({ token: 'newtoken' }));
+      expect(parseField(updateCallArgs.slack)).toEqual(expect.objectContaining({ botToken: 'slacktoken' }));
+      expect(parseField(updateCallArgs.mattermost)).toEqual(expect.objectContaining({ botToken: 'mmtoken' }));
+      expect(parseField(updateCallArgs.openai)).toEqual(expect.objectContaining({ apiKey: 'openaikey' }));
+      expect(parseField(updateCallArgs.flowise)).toEqual(expect.objectContaining({ endpoint: 'flowise' }));
+      expect(parseField(updateCallArgs.openwebui)).toEqual(expect.objectContaining({ endpoint: 'openwebui' }));
+      expect(parseField(updateCallArgs.openswarm)).toEqual(expect.objectContaining({ endpoint: 'openswarm' }));
     });
 
     it('should handle undefined and falsey values gracefully without overwriting existing data if undefined', async () => {

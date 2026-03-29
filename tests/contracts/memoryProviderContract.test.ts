@@ -174,8 +174,7 @@ function runMemoryProviderContractTests(
       );
 
       if (typeof provider.deleteMemory === 'function') {
-        const result = await provider.deleteMemory('mem-1');
-        expect(typeof result).toBe('boolean');
+        await expect(provider.deleteMemory('mem-1')).resolves.not.toThrow();
       } else {
         await expect(provider.delete('mem-1')).resolves.not.toThrow();
       }
@@ -203,12 +202,14 @@ function runMemoryProviderContractTests(
 
       expect(result).toBeDefined();
       expect(result).toHaveProperty('id');
-      expect(result).toHaveProperty('memory');
+      // Providers may use 'content' (Mem0) or 'memory' (Mem4ai) for the text field
+      const hasTextField = result.hasOwnProperty('content') || result.hasOwnProperty('memory');
+      expect(hasTextField).toBe(true);
     });
 
     // ----- healthCheck ---------------------------------------------------
 
-    it('has a healthCheck method returning a boolean', async () => {
+    it('has a healthCheck method returning a status object', async () => {
       expect(typeof provider.healthCheck).toBe('function');
 
       mockFetch.mockResolvedValueOnce(
@@ -216,21 +217,23 @@ function runMemoryProviderContractTests(
       );
 
       const result = await provider.healthCheck();
-      expect(typeof result).toBe('boolean');
+      expect(result).toHaveProperty('status');
+      expect(['ok', 'error']).toContain(result.status);
     });
 
-    it('healthCheck returns true when backend is reachable', async () => {
+    it('healthCheck returns { status: "ok" } when backend is reachable', async () => {
       mockFetch.mockResolvedValueOnce(
         createMockResponse({ results: [] }),
       );
       const result = await provider.healthCheck();
-      expect(result).toBe(true);
+      expect(result).toEqual({ status: 'ok' });
     });
 
-    it('healthCheck returns false when backend is unreachable', async () => {
+    it('healthCheck returns { status: "error" } when backend is unreachable', async () => {
       mockFetch.mockRejectedValue(new Error('ECONNREFUSED'));
       const result = await provider.healthCheck();
-      expect(result).toBe(false);
+      expect(result.status).toBe('error');
+      expect(result.details).toBeDefined();
     });
 
     // ----- Error handling ------------------------------------------------

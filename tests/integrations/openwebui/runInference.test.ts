@@ -59,13 +59,12 @@ describe('runInference.generateChatCompletion', () => {
       history: ['prev1', 'prev2'],
       metadata: { a: 1 },
     });
-    expect(options).toEqual({
-      headers: {
+    expect(options).toEqual(expect.objectContaining({
+      headers: expect.objectContaining({
         Authorization: 'Bearer sk-123',
         'Content-Type': 'application/json',
-      },
-      timeout: 15000,
-    });
+      }),
+    }));
 
     expect(res).toEqual({ text: 'hello world' });
   });

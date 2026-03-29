@@ -49,6 +49,7 @@ jest.mock('tsyringe', () => {
       resolve: jest.fn(() => ({
         emit: jest.fn(),
       })),
+      registerInstance: jest.fn(),
     },
   };
 });

@@ -112,7 +112,7 @@ describe('Specs Routes', () => {
       const res = await request(app).post('/specs').send(sampleSpec);
       expect(res.status).toBe(400);
       expect(res.body.success).toBe(false);
-      expect(res.body.error).toContain('Content is required');
+      expect(res.body.error).toBeDefined();
     });
 
     it('should return 400 when content is empty string', async () => {

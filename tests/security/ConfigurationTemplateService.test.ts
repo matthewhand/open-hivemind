@@ -8,13 +8,15 @@ describe('ConfigurationTemplateService Path Security', () => {
     service = ConfigurationTemplateService.getInstance();
   });
 
-  it('getSafeTemplatePath (via private access) should throw for malicious template IDs', async () => {
+  it('getSafeTemplatePath should sanitize malicious template IDs via basename', () => {
     const maliciousId = '../../etc/passwd';
-
-    expect(() => (service as any).getSafeTemplatePath(maliciousId)).toThrow('Security Error: Path traversal detected');
+    // path.basename strips directory traversal, so the result should NOT contain ".."
+    const result = (service as any).getSafeTemplatePath(maliciousId);
+    expect(result).not.toContain('..');
+    expect(path.basename(result)).toBe('passwd.json');
   });
 
-  it('getSafeTemplatePath (via private access) should return a valid path for safe IDs', async () => {
+  it('getSafeTemplatePath should return a valid path for safe IDs', () => {
     const safeId = 'my-template';
     const result = (service as any).getSafeTemplatePath(safeId);
 

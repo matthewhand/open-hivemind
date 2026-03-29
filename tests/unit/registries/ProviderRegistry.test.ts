@@ -35,7 +35,7 @@ function makeMockToolProvider(overrides: Partial<IToolProvider> = {}): IToolProv
     type: 'tool',
     listTools: jest.fn().mockResolvedValue([]),
     executeTool: jest.fn().mockResolvedValue({ result: null }),
-    healthCheck: jest.fn().mockResolvedValue({ healthy: true }),
+    healthCheck: jest.fn().mockResolvedValue({ status: 'ok' }),
     ...overrides,
   };
 }

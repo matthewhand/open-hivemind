@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach } from '@jest/globals';
 import fs from 'fs';
 import path from 'path';
 import { ToolPreferencesService } from '@src/server/services/ToolPreferencesService';

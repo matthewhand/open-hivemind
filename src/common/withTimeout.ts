@@ -6,6 +6,9 @@
  * not complete within `timeoutMs` the controller is aborted and a descriptive
  * error is thrown.
  *
+ * A `Promise.race` is used as a fallback so that the timeout is enforced even
+ * when the operation does not honour the AbortSignal.
+ *
  * @param operation     - Async function that accepts an AbortSignal.
  * @param timeoutMs     - Maximum time (in ms) before the operation is aborted.
  * @param operationName - Human-readable label used in the timeout error message.
@@ -17,15 +20,20 @@ export async function withTimeout<T>(
   operationName: string
 ): Promise<T> {
   const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  let timer: ReturnType<typeof setTimeout> | undefined;
+
+  const timeoutPromise = new Promise<never>((_resolve, reject) => {
+    timer = setTimeout(() => {
+      controller.abort();
+      reject(new Error(`${operationName} timed out after ${timeoutMs}ms`));
+    }, timeoutMs);
+  });
+
   try {
-    return await operation(controller.signal);
-  } catch (error) {
-    if (controller.signal.aborted) {
-      throw new Error(`${operationName} timed out after ${timeoutMs}ms`);
-    }
-    throw error;
+    return await Promise.race([operation(controller.signal), timeoutPromise]);
   } finally {
-    clearTimeout(timer);
+    if (timer !== undefined) {
+      clearTimeout(timer);
+    }
   }
 }

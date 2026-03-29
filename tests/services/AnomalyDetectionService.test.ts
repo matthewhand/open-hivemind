@@ -184,7 +184,7 @@ describe('AnomalyDetectionService', () => {
   test('runDetection should emit WebSocket alert with correct level based on severity', async () => {
     // Clear the global state first
     (service as any).dataWindows.clear();
-    (wsService.recordAlert as jest.Mock).mockClear();
+    (mockWsService.recordAlert as jest.Mock).mockClear();
 
     // Low: z <= 3. By default zThreshold is 3, so to trigger low severity we must lower zThreshold.
     service.updateConfig({ zThreshold: 1 });
@@ -196,7 +196,7 @@ describe('AnomalyDetectionService', () => {
 
     await service.runDetection();
 
-    expect(wsService.recordAlert).toHaveBeenCalledWith(
+    expect(mockWsService.recordAlert).toHaveBeenCalledWith(
       expect.objectContaining({
         level: 'warning'
       })
@@ -204,7 +204,7 @@ describe('AnomalyDetectionService', () => {
 
     // Clear history and test 'warning' (medium severity, zScore > 3 and <= 4)
     (service as any).dataWindows.clear();
-    (wsService.recordAlert as jest.Mock).mockClear();
+    (mockWsService.recordAlert as jest.Mock).mockClear();
     service.updateConfig({ windowSize: 1000, minDataPoints: 10, zThreshold: 3 });
     for (let i = 0; i < 50; i++) service.addDataPoint('responseTime', 99);
     for (let i = 0; i < 50; i++) service.addDataPoint('responseTime', 101);
@@ -212,7 +212,7 @@ describe('AnomalyDetectionService', () => {
     service.addDataPoint('responseTime', 103.5);
 
     await service.runDetection();
-    expect(wsService.recordAlert).toHaveBeenCalledWith(
+    expect(mockWsService.recordAlert).toHaveBeenCalledWith(
       expect.objectContaining({
         level: 'warning'
       })
@@ -220,7 +220,7 @@ describe('AnomalyDetectionService', () => {
 
     // Clear history and test 'error' (high severity, zScore > 4 and <= 5)
     (service as any).dataWindows.clear();
-    (wsService.recordAlert as jest.Mock).mockClear();
+    (mockWsService.recordAlert as jest.Mock).mockClear();
     service.updateConfig({ windowSize: 1000, minDataPoints: 10, zThreshold: 3 });
     for (let i = 0; i < 50; i++) service.addDataPoint('responseTime', 99);
     for (let i = 0; i < 50; i++) service.addDataPoint('responseTime', 101);
@@ -228,7 +228,7 @@ describe('AnomalyDetectionService', () => {
     service.addDataPoint('responseTime', 104.5);
 
     await service.runDetection();
-    expect(wsService.recordAlert).toHaveBeenCalledWith(
+    expect(mockWsService.recordAlert).toHaveBeenCalledWith(
       expect.objectContaining({
         level: 'error'
       })
@@ -236,14 +236,14 @@ describe('AnomalyDetectionService', () => {
 
     // Clear history and test 'critical' (critical severity, zScore > 5)
     (service as any).dataWindows.clear();
-    (wsService.recordAlert as jest.Mock).mockClear();
+    (mockWsService.recordAlert as jest.Mock).mockClear();
     service.updateConfig({ windowSize: 1000, minDataPoints: 10, zThreshold: 3 });
     for (let i = 0; i < 100; i++) service.addDataPoint('responseTime', 99);
     for (let i = 0; i < 100; i++) service.addDataPoint('responseTime', 101);
     service.addDataPoint('responseTime', 110);
 
     await service.runDetection();
-    expect(wsService.recordAlert).toHaveBeenCalledWith(
+    expect(mockWsService.recordAlert).toHaveBeenCalledWith(
       expect.objectContaining({
         level: 'critical'
       })
@@ -252,7 +252,7 @@ describe('AnomalyDetectionService', () => {
 
   test('runDetection should not create anomaly if zScore is below threshold', async () => {
     (service as any).dataWindows.clear();
-    (wsService.recordAlert as jest.Mock).mockClear();
+    (mockWsService.recordAlert as jest.Mock).mockClear();
     service.updateConfig({ windowSize: 1000, minDataPoints: 10, zThreshold: 3 });
     for (let i = 0; i < 50; i++) service.addDataPoint('responseTime', 100);
 
@@ -262,7 +262,7 @@ describe('AnomalyDetectionService', () => {
     await service.runDetection();
 
     expect(service['anomalies'].length).toBe(0);
-    expect(wsService.recordAlert).not.toHaveBeenCalled();
+    expect(mockWsService.recordAlert).not.toHaveBeenCalled();
   });
 
   test('runDetection should handle storeAnomaly errors gracefully', async () => {

@@ -103,12 +103,12 @@ describe('flowiseRestClient.getFlowiseResponse', () => {
     expect(mockedAxios.post).toHaveBeenCalledWith(
       'http://flowise.local/prediction/chatflow-123',
       { question: 'hello', chatId: 'old-chat' },
-      {
+      expect.objectContaining({
         headers: {
           Authorization: 'Bearer test-api-key',
           'Content-Type': 'application/json',
         },
-      }
+      })
     );
 
     // chatId updated in session

@@ -108,13 +108,16 @@ export class McpToolProvider implements IToolProvider {
     });
   }
 
-  public async healthCheck(): Promise<boolean> {
+  public async healthCheck(): Promise<{ status: 'ok' | 'error'; details?: Record<string, unknown> }> {
     try {
       await this.ensureConnected();
       await this.client.listTools();
-      return true;
-    } catch {
-      return false;
+      return { status: 'ok' };
+    } catch (err) {
+      return {
+        status: 'error',
+        details: { message: err instanceof Error ? err.message : String(err) },
+      };
     }
   }
 

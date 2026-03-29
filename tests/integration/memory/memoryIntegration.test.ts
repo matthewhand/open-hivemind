@@ -180,7 +180,7 @@ describe('Full provider lifecycle (Mem0Provider)', () => {
 
     const healthy = await provider.healthCheck();
 
-    expect(healthy).toBe(true);
+    expect(healthy).toEqual({ status: 'ok' });
     const [url, opts] = fetchMock.mock.calls[0];
     expect(url).toContain('/memories/');
     expect(url).toContain('limit=1');
@@ -516,7 +516,7 @@ describe('Mem4ai plugin factory', () => {
     // Verify the instance is functional (healthCheck hits real provider code)
     fetchMock.mockResolvedValueOnce(jsonResponse({ status: 'ok' }));
     const healthy = await provider.healthCheck();
-    expect(healthy).toBe(true);
+    expect(healthy).toEqual({ status: 'ok' });
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 });

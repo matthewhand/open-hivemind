@@ -147,14 +147,17 @@ export class Mem4aiProvider {
     await this.request<void>('DELETE', path);
   }
 
-  async healthCheck(): Promise<boolean> {
+  async healthCheck(): Promise<{ status: 'ok' | 'error'; details?: Record<string, unknown> }> {
     try {
       const params = new URLSearchParams({ limit: '1' });
       if (this.defaultUserId) params.set('user_id', this.defaultUserId);
       await this.request<Mem4aiListResponse>('GET', `/memories/?${params.toString()}`);
-      return true;
-    } catch {
-      return false;
+      return { status: 'ok' };
+    } catch (err) {
+      return {
+        status: 'error',
+        details: { message: err instanceof Error ? err.message : String(err) },
+      };
     }
   }
 

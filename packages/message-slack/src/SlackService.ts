@@ -47,6 +47,38 @@ const RETRY_CONFIG = {
 };
 
 /**
+ * Lightweight async-retry compatible helper.
+ * `bail(err)` causes the retry loop to stop immediately and reject with `err`.
+ */
+async function retry<T>(
+  fn: (bail: (err: Error) => void, attempt: number) => Promise<T>,
+  opts: { retries: number; minTimeout: number; maxTimeout: number; factor: number },
+): Promise<T> {
+  let lastError: Error | undefined;
+  for (let attempt = 1; attempt <= opts.retries + 1; attempt++) {
+    let bailed = false;
+    let bailError: Error | undefined;
+    const bail = (err: Error) => { bailed = true; bailError = err; };
+    try {
+      const result = await fn(bail, attempt);
+      if (bailed && bailError) throw bailError;
+      return result;
+    } catch (err: any) {
+      if (bailed) throw bailError || err;
+      lastError = err;
+      if (attempt <= opts.retries) {
+        const delay = Math.min(
+          opts.minTimeout * Math.pow(opts.factor, attempt - 1),
+          opts.maxTimeout,
+        );
+        await new Promise((r) => setTimeout(r, delay));
+      }
+    }
+  }
+  throw lastError;
+}
+
+/**
  * SlackService implementation supporting multi-instance configuration
  * Uses BotConfigurationManager for consistent multi-bot support across platforms
  */

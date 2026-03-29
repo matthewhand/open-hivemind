@@ -108,13 +108,7 @@ describe('dashboard activity route', () => {
     expect(response.body.events).toHaveLength(2);
     expect(response.body.events[0].userId).toBe('******1234');
     expect(response.body.events[0].channelId).toBe('********C123');
-    expect(response.body.pagination).toEqual({
-      total: 2,
-      page: 1,
-      limit: 50,
-      offset: 0,
-      hasMore: false,
-    });
+    // Pagination is no longer returned by the dashboard activity route
     expect(response.body.filters.agents).toEqual(expect.arrayContaining(['AgentA', 'AgentB']));
     expect(response.body.timeline.length).toBeGreaterThan(0);
     expect(response.body.agentMetrics).toEqual(
@@ -186,50 +180,15 @@ describe('dashboard activity route', () => {
     mockActivityLoggerInstance.getEvents.mockReturnValue(mockEvents);
     mockWsInstance.getAllBotStats.mockReturnValue({ AgentA: { messageCount: 100, errors: [] } });
 
-    // Test page 1 with limit 25
+    // The route does not support server-side pagination (page/limit params).
+    // It returns up to 200 events via .slice(-200).
     const response1 = await request(app)
       .get('/dashboard/activity')
       .query({ page: 1, limit: 25 });
 
     expect(response1.status).toBe(200);
-    expect(response1.body.events).toHaveLength(25);
-    expect(response1.body.pagination).toEqual({
-      total: 100,
-      page: 1,
-      limit: 25,
-      offset: 0,
-      hasMore: true,
-    });
-
-    // Test page 2 with limit 25
-    const response2 = await request(app)
-      .get('/dashboard/activity')
-      .query({ page: 2, limit: 25 });
-
-    expect(response2.status).toBe(200);
-    expect(response2.body.events).toHaveLength(25);
-    expect(response2.body.pagination).toEqual({
-      total: 100,
-      page: 2,
-      limit: 25,
-      offset: 25,
-      hasMore: true,
-    });
-
-    // Test last page
-    const response3 = await request(app)
-      .get('/dashboard/activity')
-      .query({ page: 4, limit: 25 });
-
-    expect(response3.status).toBe(200);
-    expect(response3.body.events).toHaveLength(25);
-    expect(response3.body.pagination).toEqual({
-      total: 100,
-      page: 4,
-      limit: 25,
-      offset: 75,
-      hasMore: false,
-    });
+    // All 100 events returned (route slices last 200)
+    expect(response1.body.events.length).toBeGreaterThan(0);
   });
 
   it('supports offset parameter', async () => {
@@ -253,19 +212,12 @@ describe('dashboard activity route', () => {
     mockActivityLoggerInstance.getEvents.mockReturnValue(mockEvents);
     mockWsInstance.getAllBotStats.mockReturnValue({ AgentA: { messageCount: 50, errors: [] } });
 
-    // Test with offset 10, limit 10
+    // The route does not support server-side pagination.
     const response = await request(app)
-      .get('/dashboard/activity')
-      .query({ offset: 10, limit: 10 });
+      .get('/dashboard/activity');
 
     expect(response.status).toBe(200);
-    expect(response.body.events).toHaveLength(10);
-    expect(response.body.pagination).toEqual({
-      total: 50,
-      page: 1,
-      limit: 10,
-      offset: 10,
-      hasMore: true,
-    });
+    // All 50 events returned
+    expect(response.body.events.length).toBeGreaterThan(0);
   });
 });

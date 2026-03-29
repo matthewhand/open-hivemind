@@ -51,6 +51,7 @@ jest.mock('../../src/mcp/MCPService', () => ({
       connectToServer: jest.fn(),
       disconnectFromServer: jest.fn(),
       getConnectedServers: jest.fn(() => []),
+      getConnectedServersWithMetadata: jest.fn(() => []),
       getToolsFromServer: jest.fn(() => []),
     })),
   },
@@ -58,6 +59,10 @@ jest.mock('../../src/mcp/MCPService', () => ({
 
 jest.mock('../../src/utils/envUtils', () => ({
   getRelevantEnvVars: jest.fn(() => ({})),
+}));
+
+jest.mock('../../src/config/trustedMcpRepos', () => ({
+  getTrustedMcpReposConfig: jest.fn(() => ({ repos: [] })),
 }));
 
 // Mock ToolUsageGuardsManager

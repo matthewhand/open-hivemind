@@ -422,23 +422,23 @@ describe('Mem0Provider.deleteAll()', () => {
 // ---------------------------------------------------------------------------
 
 describe('Mem0Provider.healthCheck()', () => {
-  it('returns true when the API responds successfully', async () => {
+  it('returns { status: "ok" } when the API responds successfully', async () => {
     const provider = makeProvider();
     fetchMock.mockResolvedValueOnce(jsonResponse({ results: [] }));
 
     const ok = await provider.healthCheck();
-    expect(ok).toBe(true);
+    expect(ok).toEqual({ status: 'ok' });
 
     const url = fetchMock.mock.calls[0][0] as string;
     expect(url).toContain('limit=1');
   });
 
-  it('returns false when the API errors', async () => {
+  it('returns { status: "error" } when the API errors', async () => {
     const provider = makeProvider();
     fetchMock.mockRejectedValueOnce(new Error('network down'));
 
     const ok = await provider.healthCheck();
-    expect(ok).toBe(false);
+    expect(ok).toEqual({ status: 'error', details: { message: 'network down' } });
   });
 });
 

@@ -133,22 +133,24 @@ function runToolProviderContractTests(
 
     // ----- healthCheck() -------------------------------------------------
 
-    it('healthCheck() returns a Promise resolving to a boolean', async () => {
+    it('healthCheck() returns a Promise resolving to a status object', async () => {
       const healthy = await provider.healthCheck();
-      expect(typeof healthy).toBe('boolean');
+      expect(healthy).toHaveProperty('status');
+      expect(['ok', 'error']).toContain(healthy.status);
     });
 
-    it('healthCheck() returns true when backend is reachable', async () => {
+    it('healthCheck() returns { status: "ok" } when backend is reachable', async () => {
       const healthy = await provider.healthCheck();
-      expect(healthy).toBe(true);
+      expect(healthy).toEqual({ status: 'ok' });
     });
 
-    it('healthCheck() returns false when backend is unreachable', async () => {
+    it('healthCheck() returns { status: "error" } when backend is unreachable', async () => {
       // Need a fresh provider so ensureConnected runs again
       mockConnect.mockRejectedValue(new Error('connection refused'));
       const freshProvider = getProvider();
       const healthy = await freshProvider.healthCheck();
-      expect(healthy).toBe(false);
+      expect(healthy.status).toBe('error');
+      expect(healthy.details).toBeDefined();
     });
 
     // ----- Error handling ------------------------------------------------

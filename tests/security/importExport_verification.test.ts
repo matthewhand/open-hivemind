@@ -1,7 +1,4 @@
-<<<<<<< HEAD
-=======
 import * as path from 'path';
->>>>>>> af29c671d (🔒 fix: path traversal hardening for backups and templates (final v2))
 import express from 'express';
 import request from 'supertest';
 import { ConfigurationImportExportService } from '../../src/server/services/ConfigurationImportExportService';
@@ -78,8 +75,6 @@ describe('ImportExport Path Traversal Verification', () => {
     });
 
     // Mount the router (uses cached module with the stable mockService)
-=======
->>>>>>> af29c671d (🔒 fix: path traversal hardening for backups and templates (final v2))
     const importExportRouter = require('../../src/server/routes/importExport').default;
     app.use('/api/import-export', importExportRouter);
   });

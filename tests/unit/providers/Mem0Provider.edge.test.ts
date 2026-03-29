@@ -307,40 +307,46 @@ describe('Mem0Provider — partial/truncated JSON', () => {
 // ---------------------------------------------------------------------------
 
 describe('Mem0Provider — healthCheck edge cases', () => {
-  it('returns true on successful API response', async () => {
+  it('returns { status: "ok" } on successful API response', async () => {
     const provider = makeProvider();
     fetchMock.mockResolvedValueOnce(jsonResponse({ results: [] }));
 
-    expect(await provider.healthCheck()).toBe(true);
+    expect(await provider.healthCheck()).toEqual({ status: 'ok' });
   });
 
-  it('returns false on 401', async () => {
+  it('returns { status: "error" } on 401', async () => {
     const provider = makeProvider();
     fetchMock.mockResolvedValueOnce(errorResponse(401, 'Unauthorized'));
 
-    expect(await provider.healthCheck()).toBe(false);
+    const result = await provider.healthCheck();
+    expect(result.status).toBe('error');
+    expect(result.details).toBeDefined();
   });
 
-  it('returns false on 500', async () => {
+  it('returns { status: "error" } on 500', async () => {
     const provider = makeProvider();
     fetchMock.mockResolvedValueOnce(errorResponse(500, 'Internal Server Error'));
 
-    expect(await provider.healthCheck()).toBe(false);
+    const result = await provider.healthCheck();
+    expect(result.status).toBe('error');
+    expect(result.details).toBeDefined();
   });
 
-  it('returns false on network error', async () => {
+  it('returns { status: "error" } on network error', async () => {
     const provider = makeProvider();
     fetchMock.mockRejectedValueOnce(new Error('DNS resolution failed'));
 
-    expect(await provider.healthCheck()).toBe(false);
+    expect(await provider.healthCheck()).toEqual({ status: 'error', details: { message: 'DNS resolution failed' } });
   });
 
-  it('returns false on timeout', async () => {
+  it('returns { status: "error" } on timeout', async () => {
     const provider = makeProvider({ timeoutMs: 100 });
     const abortError = new DOMException('The operation was aborted', 'AbortError');
     fetchMock.mockRejectedValueOnce(abortError);
 
-    expect(await provider.healthCheck()).toBe(false);
+    const result = await provider.healthCheck();
+    expect(result.status).toBe('error');
+    expect(result.details).toBeDefined();
   });
 
   it('healthCheck does not affect subsequent operations', async () => {
@@ -348,7 +354,7 @@ describe('Mem0Provider — healthCheck edge cases', () => {
 
     // Failing healthCheck.
     fetchMock.mockRejectedValueOnce(new Error('down'));
-    expect(await provider.healthCheck()).toBe(false);
+    expect((await provider.healthCheck()).status).toBe('error');
 
     // Normal operation should still work.
     fetchMock.mockResolvedValueOnce(jsonResponse({ results: [{ id: '1', memory: 'ok' }] }));

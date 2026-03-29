@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach } from '@jest/globals';
 import { TelegramProvider } from '../../src/providers/TelegramProvider';
 import { DiscordProvider } from '../../src/providers/DiscordProvider';
 import { SlackProvider } from '../../src/providers/SlackProvider';
@@ -25,7 +25,7 @@ describe('Message Provider Health Checks', () => {
   describe('DiscordProvider', () => {
     it('should have healthCheck method', () => {
       const mockService: any = {
-        getAllBots: vi.fn(() => []),
+        getAllBots: jest.fn(() => []),
       };
       const provider = new DiscordProvider(mockService);
       expect(provider.healthCheck).toBeDefined();
@@ -34,7 +34,7 @@ describe('Message Provider Health Checks', () => {
 
     it('should return down status when no bots configured', async () => {
       const mockService: any = {
-        getAllBots: vi.fn(() => []),
+        getAllBots: jest.fn(() => []),
       };
       const provider = new DiscordProvider(mockService);
       const health = await provider.healthCheck();
@@ -46,7 +46,7 @@ describe('Message Provider Health Checks', () => {
 
     it('should return healthy status when all bots connected', async () => {
       const mockService: any = {
-        getAllBots: vi.fn(() => [
+        getAllBots: jest.fn(() => [
           {
             botUserName: 'test-bot',
             client: {
@@ -68,7 +68,7 @@ describe('Message Provider Health Checks', () => {
   describe('SlackProvider', () => {
     it('should have healthCheck method', () => {
       const mockService: any = {
-        getBotNames: vi.fn(() => []),
+        getBotNames: jest.fn(() => []),
       };
       const provider = new SlackProvider(mockService);
       expect(provider.healthCheck).toBeDefined();
@@ -77,7 +77,7 @@ describe('Message Provider Health Checks', () => {
 
     it('should return down status when no bots configured', async () => {
       const mockService: any = {
-        getBotNames: vi.fn(() => []),
+        getBotNames: jest.fn(() => []),
       };
       const provider = new SlackProvider(mockService);
       const health = await provider.healthCheck();
@@ -91,7 +91,7 @@ describe('Message Provider Health Checks', () => {
   describe('MattermostProvider', () => {
     it('should have healthCheck method', () => {
       const mockService: any = {
-        getBotNames: vi.fn(() => []),
+        getBotNames: jest.fn(() => []),
       };
       const provider = new MattermostProvider(mockService);
       expect(provider.healthCheck).toBeDefined();
@@ -100,7 +100,7 @@ describe('Message Provider Health Checks', () => {
 
     it('should return down status when no bots configured', async () => {
       const mockService: any = {
-        getBotNames: vi.fn(() => []),
+        getBotNames: jest.fn(() => []),
       };
       const provider = new MattermostProvider(mockService);
       const health = await provider.healthCheck();
@@ -114,7 +114,7 @@ describe('Message Provider Health Checks', () => {
   describe('Health Check Response Structure', () => {
     it('should return required fields in health check response', async () => {
       const mockService: any = {
-        getBotNames: vi.fn(() => []),
+        getBotNames: jest.fn(() => []),
       };
       const provider = new SlackProvider(mockService);
       const health = await provider.healthCheck();

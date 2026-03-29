@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach } from '@jest/globals';
 import { handleMessage } from '@src/message/handlers/messageHandler';
 import { IMessage } from '@src/message/interfaces/IMessage';
 import type { ContentFilterConfig } from '@src/types/config';
@@ -69,53 +69,85 @@ class MockMessage extends IMessage {
   }
 }
 
-// Mock messenger provider
-const mockMessengerProvider = {
-  getClientId: () => 'test-bot-id',
-  sendMessageToChannel: vi.fn().mockResolvedValue('msg-ts'),
-  sendTypingIndicator: vi.fn().mockResolvedValue(undefined),
-};
-
-// Mock LLM provider
-const mockLlmProvider = {
-  generateChatCompletion: vi.fn().mockResolvedValue({
-    text: 'This is a clean response',
-    usage: { total_tokens: 50 },
-  }),
-  supportsHistory: () => true,
-};
-
-// Mock module imports
-vi.mock('@message/management/getMessengerProvider', () => ({
-  getMessengerProvider: vi.fn().mockResolvedValue([mockMessengerProvider]),
+// Mock module imports - factories must be self-contained (jest hoists these above const declarations)
+jest.mock('@message/management/getMessengerProvider', () => ({
+  getMessengerProvider: jest.fn().mockResolvedValue([{
+    getClientId: () => 'test-bot-id',
+    sendMessageToChannel: jest.fn().mockResolvedValue('msg-ts'),
+    sendTypingIndicator: jest.fn().mockResolvedValue(undefined),
+  }]),
 }));
 
-vi.mock('@src/llm/getLlmProvider', () => ({
-  getLlmProvider: vi.fn().mockResolvedValue([mockLlmProvider]),
+jest.mock('@src/llm/getLlmProvider', () => ({
+  getLlmProvider: jest.fn().mockResolvedValue([{
+    generateChatCompletion: jest.fn().mockResolvedValue('This is a clean response'),
+    supportsHistory: () => true,
+  }]),
 }));
 
-vi.mock('@src/middleware/quotaMiddleware', () => ({
-  getQuotaManager: vi.fn().mockReturnValue({
-    checkQuota: vi.fn().mockResolvedValue({ allowed: true, used: {} }),
-    consumeQuota: vi.fn().mockResolvedValue(undefined),
-    consumeTokens: vi.fn().mockResolvedValue(undefined),
+jest.mock('@src/services/toolAugmentedCompletion', () => ({
+  toolAugmentedCompletion: jest.fn().mockImplementation(async (opts: any) => {
+    return opts.llmProvider.generateChatCompletion(
+      opts.userMessage,
+      opts.historyMessages,
+      opts.metadata,
+    );
   }),
 }));
 
-vi.mock('@src/services/MemoryManager', () => ({
+jest.mock('@message/helpers/processing/shouldReplyToMessage', () => ({
+  shouldReplyToMessage: jest.fn().mockResolvedValue({ shouldReply: true, reason: 'test' }),
+}));
+
+jest.mock('@message/helpers/logging/LogProseSummarizer', () => ({
+  summarizeLogWithLlm: jest.fn().mockResolvedValue('test'),
+}));
+
+jest.mock('@src/middleware/quotaMiddleware', () => ({
+  getQuotaManager: jest.fn().mockReturnValue({
+    checkQuota: jest.fn().mockResolvedValue({ allowed: true, used: {} }),
+    consumeQuota: jest.fn().mockResolvedValue(undefined),
+    consumeTokens: jest.fn().mockResolvedValue(undefined),
+  }),
+}));
+
+jest.mock('@src/services/MemoryManager', () => ({
   MemoryManager: {
-    getInstance: vi.fn().mockReturnValue({
-      retrieveRelevantMemories: vi.fn().mockResolvedValue([]),
-      formatMemoriesForPrompt: vi.fn().mockReturnValue(''),
-      storeConversationMemory: vi.fn().mockResolvedValue(undefined),
+    getInstance: jest.fn().mockReturnValue({
+      retrieveRelevantMemories: jest.fn().mockResolvedValue([]),
+      formatMemoriesForPrompt: jest.fn().mockReturnValue(''),
+      storeConversationMemory: jest.fn().mockResolvedValue(undefined),
     }),
   },
 }));
 
+// Get references to the mocked provider objects after jest.mock hoisting
+const getMockLlmProvider = () => {
+  const { getLlmProvider } = require('@src/llm/getLlmProvider');
+  // getLlmProvider returns a promise that resolves to [provider]
+  // We need to access the resolved mock provider
+  return getLlmProvider.mock.results?.[0]?.value?.[0] || getLlmProvider();
+};
+
+const getMockMessengerProvider = () => {
+  const { getMessengerProvider } = require('@message/management/getMessengerProvider');
+  return getMessengerProvider.mock.results?.[0]?.value?.[0] || getMessengerProvider();
+};
+
+let mockLlmProvider: any;
+let mockMessengerProvider: any;
+
 describe('Content Filter Integration', () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
+  beforeEach(async () => {
+    jest.clearAllMocks();
     process.env.DISABLE_QUOTA = 'true';
+    // Re-resolve mock providers after clearAllMocks
+    const { getLlmProvider } = require('@src/llm/getLlmProvider');
+    const { getMessengerProvider } = require('@message/management/getMessengerProvider');
+    const [llm] = await getLlmProvider();
+    const [messenger] = await getMessengerProvider();
+    mockLlmProvider = llm;
+    mockMessengerProvider = messenger;
   });
 
   afterEach(() => {

@@ -2,7 +2,7 @@ import { OpenAI } from 'openai';
 import { OpenAiProvider, openAiProvider } from '@hivemind/llm-openai';
 import openaiConfig from '@config/openaiConfig';
 import { IMessage } from '@message/interfaces/IMessage';
-import { resetAllCircuitBreakers } from '@common/CircuitBreaker';
+import { getCircuitBreaker } from '@common/CircuitBreaker';
 
 // Mock the entire 'openai' library
 jest.mock('openai');
@@ -18,7 +18,9 @@ describe('OpenAiProvider Comprehensive Tests', () => {
   let mockOpenAIInstance: any;
 
   beforeEach(() => {
-    resetAllCircuitBreakers();
+    // Reset the module-level circuit breaker without clearing the registry,
+    // so the same instance used by the provider is reset each time.
+    getCircuitBreaker({ name: 'openai', failureThreshold: 5, resetTimeoutMs: 30_000, halfOpenMaxAttempts: 3 }).reset();
     jest.clearAllMocks();
 
     // Setup mock for chat completions
@@ -111,7 +113,8 @@ describe('OpenAiProvider Comprehensive Tests', () => {
             expect.objectContaining({ role: 'system', content: 'You are a test assistant.' }),
             expect.objectContaining({ role: 'user', content: 'test' }),
           ]),
-        })
+        }),
+        expect.anything()
       );
     });
 
@@ -129,7 +132,8 @@ describe('OpenAiProvider Comprehensive Tests', () => {
             expect.objectContaining({ role: 'assistant', content: 'Hi there!' }),
             expect.objectContaining({ role: 'user', content: 'test' }),
           ]),
-        })
+        }),
+        expect.anything()
       );
     });
 
@@ -138,7 +142,8 @@ describe('OpenAiProvider Comprehensive Tests', () => {
       expect(mockChatCreate).toHaveBeenCalledWith(
         expect.objectContaining({
           model: 'gpt-4',
-        })
+        }),
+        expect.anything()
       );
     });
 
@@ -147,7 +152,8 @@ describe('OpenAiProvider Comprehensive Tests', () => {
       expect(mockChatCreate).toHaveBeenCalledWith(
         expect.objectContaining({
           temperature: 1.0, // 0.7 + 0.3
-        })
+        }),
+        expect.anything()
       );
     });
 
@@ -156,7 +162,8 @@ describe('OpenAiProvider Comprehensive Tests', () => {
       expect(mockChatCreate).toHaveBeenCalledWith(
         expect.objectContaining({
           temperature: 1.5, // capped at 1.5
-        })
+        }),
+        expect.anything()
       );
     });
 
@@ -165,7 +172,8 @@ describe('OpenAiProvider Comprehensive Tests', () => {
       expect(mockChatCreate).toHaveBeenCalledWith(
         expect.objectContaining({
           max_tokens: 200,
-        })
+        }),
+        expect.anything()
       );
     });
 
@@ -246,14 +254,14 @@ describe('OpenAiProvider Comprehensive Tests', () => {
         expect.objectContaining({
           prompt: 'test prompt',
           max_tokens: 150,
-        })
+        }),
+        expect.anything()
       );
     });
 
-    it('should return empty string on error', async () => {
+    it('should throw on error', async () => {
       mockCompletionsCreate.mockRejectedValue(new Error('API Error'));
-      const response = await openAiProvider.generateCompletion('test');
-      expect(response).toBe('');
+      await expect(openAiProvider.generateCompletion('test')).rejects.toThrow('API Error');
     });
 
     it('should return empty string when no response text', async () => {
@@ -296,7 +304,8 @@ describe('OpenAiProvider Comprehensive Tests', () => {
       expect(mockChatCreate).toHaveBeenCalledWith(
         expect.objectContaining({
           model: 'custom-model',
-        })
+        }),
+        expect.anything()
       );
     });
 
@@ -310,6 +319,10 @@ describe('OpenAiProvider Comprehensive Tests', () => {
   });
 
   describe('Error Handling', () => {
+    beforeEach(() => {
+      getCircuitBreaker({ name: 'openai', failureThreshold: 5, resetTimeoutMs: 30_000, halfOpenMaxAttempts: 3 }).reset();
+    });
+
     it('should handle authentication errors', async () => {
       const authError = new Error('Invalid API key');
       (authError as any).status = 401;

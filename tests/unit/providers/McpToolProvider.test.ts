@@ -332,31 +332,32 @@ describe('McpToolProvider', () => {
   // -----------------------------------------------------------------------
 
   describe('healthCheck()', () => {
-    it('returns true when the server is reachable', async () => {
+    it('returns { status: "ok" } when the server is reachable', async () => {
       mockListTools.mockResolvedValue({ tools: [] });
 
       const provider = freshProvider();
       const ok = await provider.healthCheck();
 
-      expect(ok).toBe(true);
+      expect(ok).toEqual({ status: 'ok' });
     });
 
-    it('returns false when connection fails', async () => {
+    it('returns { status: "error" } when connection fails', async () => {
       mockConnect.mockRejectedValue(new Error('ECONNREFUSED'));
 
       const provider = freshProvider();
       const ok = await provider.healthCheck();
 
-      expect(ok).toBe(false);
+      expect(ok.status).toBe('error');
+      expect(ok.details?.message).toContain('ECONNREFUSED');
     });
 
-    it('returns false when listTools throws after successful connection', async () => {
+    it('returns { status: "error" } when listTools throws after successful connection', async () => {
       mockListTools.mockRejectedValue(new Error('timeout'));
 
       const provider = freshProvider();
       const ok = await provider.healthCheck();
 
-      expect(ok).toBe(false);
+      expect(ok).toEqual({ status: 'error', details: { message: 'timeout' } });
     });
   });
 

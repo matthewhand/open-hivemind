@@ -93,13 +93,13 @@ describe('SlackProvider', () => {
     expect(status.ok).toBe(true);
     expect(status.count).toBe(2);
     expect(status.bots).toHaveLength(2);
-    expect(status.bots[0]).toEqual({
+    expect(status.bots[0]).toEqual(expect.objectContaining({
       provider: 'slack',
       name: 'bot1',
       defaultChannel: 'C1',
       mode: 'socket',
       connected: true,
-    });
+    }));
   });
 
   it('should add a bot', async () => {

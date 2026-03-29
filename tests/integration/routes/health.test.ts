@@ -252,12 +252,9 @@ describe('Health Routes Integration', () => {
       expect(response.status).toBe(400);
     });
 
-    // Documents current behavior: empty body returns 200 with a message rather than 400.
-    // Ideally this would be a 400, but we test what the server actually does today.
     it('handles POST /api/health/api-endpoints with empty body', async () => {
       const response = await request(app).post('/api/health/api-endpoints').send({});
-      expect(response.status).toBe(200);
-      expect(response.body.message).toBe('No endpoint data provided');
+      expect(response.status).toBe(400);
     });
 
     it('handles POST /api/health/cleanup with missing required fields', async () => {

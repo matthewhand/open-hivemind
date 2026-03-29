@@ -105,10 +105,13 @@ import { OpenSwarmProvider } from '../../packages/llm-openswarm/src/OpenSwarmPro
 import { getFlowiseResponse } from '@integrations/flowise/flowiseRestClient';
 import { getFlowiseSdkResponse } from '@integrations/flowise/flowiseSdkClient';
 import type { ILlmProvider } from '../../src/llm/interfaces/ILlmProvider';
+import { getCircuitBreaker } from '../../src/common/CircuitBreaker';
 
 describe('COMPREHENSIVE LLM PROVIDER TESTS - PHASE 3', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    // Reset the openai circuit breaker to prevent state leakage between tests
+    getCircuitBreaker({ name: 'openai', failureThreshold: 5, resetTimeoutMs: 30_000, halfOpenMaxAttempts: 3 }).reset();
   });
 
   // ============================================================================
@@ -224,10 +227,9 @@ describe('COMPREHENSIVE LLM PROVIDER TESTS - PHASE 3', () => {
         expect(mockCompletionsCreate).toHaveBeenCalledTimes(1);
       });
 
-      test('should return empty string on completion error', async () => {
+      test('should throw on completion error', async () => {
         mockCompletionsCreate.mockRejectedValueOnce(new Error('API Error'));
-        const result = await provider.generateCompletion('Test');
-        expect(result).toBe('');
+        await expect(provider.generateCompletion('Test')).rejects.toThrow('API Error');
       });
 
       test('should return empty string when completion text is null', async () => {
