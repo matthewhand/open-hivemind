@@ -17,7 +17,7 @@ const SpecDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const { spec, loading, error } = useSpec(id);
 
-  const handleExport = (format: 'md' | 'json' | 'yaml') => {
+  const handleExport = (format: 'md' | 'json' | 'yaml'): void => {
     if (!spec) {
       return;
     }
@@ -64,13 +64,13 @@ ${spec.content.replace(/^/gm, '  ')}
   };
 
   const exportItems = [
-    { label: 'Markdown', onClick: () => handleExport('md') },
-    { label: 'JSON', onClick: () => handleExport('json') },
-    { label: 'YAML', onClick: () => handleExport('yaml') },
+    { label: 'Markdown', onClick: (): void => handleExport('md') },
+    { label: 'JSON', onClick: (): void => handleExport('json') },
+    { label: 'YAML', onClick: (): void => handleExport('yaml') },
   ];
 
-  const handleNotImplemented = () => {
-    infoToast('This feature is currently under development.', 'Coming Soon');
+  const handleNotImplemented = (): void => {
+    infoToast('Coming Soon', 'This feature is currently under development.');
   };
 
   if (loading) {

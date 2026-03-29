@@ -36,16 +36,16 @@ const SpecsPage: React.FC = () => {
 
   const totalPages = Math.ceil(filteredSpecs.length / pageSize);
 
-  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>): void => {
     setSearchTerm(e.target.value);
     setPage(1);
   };
 
-  const handleViewSpec = (id: string) => {
+  const handleViewSpec = (id: string): void => {
     navigate(`/admin/specs/${id}`);
   };
 
-  const handleNotImplemented = () => {
+  const handleNotImplemented = (): void => {
     infoToast('Coming Soon', 'This feature is currently under development.');
   };
 
