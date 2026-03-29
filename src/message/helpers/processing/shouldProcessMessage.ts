@@ -1,4 +1,6 @@
 import messageConfig from '@config/messageConfig';
+import Debug from "debug";
+const debug = Debug("app:shouldProcessMessage");
 import type { IMessage } from '@message/interfaces/IMessage';
 
 /**
