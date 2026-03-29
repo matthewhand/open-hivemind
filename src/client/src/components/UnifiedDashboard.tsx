@@ -9,14 +9,16 @@ import DataTable from './DaisyUI/DataTable';
 import Modal from './DaisyUI/Modal';
 import ProgressBar from './DaisyUI/ProgressBar';
 import StatsCards from './DaisyUI/StatsCards';
-import ToastNotification from './DaisyUI/ToastNotification';
+import { useSuccessToast, useErrorToast } from './DaisyUI/ToastNotification';
 import { SkeletonPage } from './DaisyUI/Skeleton';
+import { LoadingSpinner } from './DaisyUI/Loading';
 import type { Bot, StatusResponse } from '../services/api';
 import { apiService } from '../services/api';
 import { CreateBotWizard } from './BotManagement/CreateBotWizard';
 import HealthCheckWidget from './Dashboard/HealthCheckWidget';
 import { Activity, Clock, Cpu, HardDrive, Info, PlusCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useProviders } from '../hooks/useProviders';
 
 type DashboardTab = 'getting-started' | 'status' | 'performance';
 
@@ -33,22 +35,6 @@ export interface BotTableRow {
   guard?: string;
   lastActivity: string;
 }
-
-const MESSAGE_PROVIDER_OPTIONS = [
-  { value: 'discord', label: 'Discord' },
-  { value: 'slack', label: 'Slack' },
-  { value: 'mattermost', label: 'Mattermost' },
-  { value: 'webhook', label: 'Webhook' },
-] as const;
-
-const LLM_PROVIDER_OPTIONS = [
-  { value: 'openai', label: 'OpenAI' },
-  { value: 'anthropic', label: 'Anthropic' },
-  { value: 'flowise', label: 'Flowise' },
-  { value: 'openwebui', label: 'Open WebUI' },
-  { value: 'openswarm', label: 'OpenSwarm' },
-  { value: 'letta', label: 'Letta' },
-] as const;
 
 const providerIconMap: Record<string, string> = {
   discord: '💬',
@@ -112,6 +98,7 @@ const buildLastActivityLabel = (
 
 const UnifiedDashboard: React.FC = () => {
   const navigate = useNavigate();
+  const { llmProviders, messageProviders } = useProviders();
   const [bots, setBots] = useState<Bot[]>([]);
   const [status, setStatus] = useState<StatusResponse | null>(null);
   const [personas, setPersonas] = useState<any[]>([]);
@@ -135,8 +122,8 @@ const UnifiedDashboard: React.FC = () => {
   const [isCreatingBot, setIsCreatingBot] = useState(false);
   const [isModalDataLoading, setIsModalDataLoading] = useState(false);
 
-  const successToast = ToastNotification.useSuccessToast();
-  const errorToast = ToastNotification.useErrorToast();
+  const successToast = useSuccessToast();
+  const errorToast = useErrorToast();
 
   // ⚡ Bolt Optimization: Lazy load modal data
   // We defer fetching personas and llmProfiles until the user attempts to open
