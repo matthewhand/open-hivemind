@@ -13,7 +13,7 @@ import { authenticateToken, optionalAuth } from './middleware/auth';
 import { csrfProtection, csrfTokenHandler } from './middleware/csrf';
 import { securityHeaders } from './middleware/security';
 import activityRouter from './routes/activity';
-import adminRouter from './routes/admin';
+import adminRouter from './routes/admin/index';
 import agentsRouter from './routes/agents';
 import aiAssistRouter from './routes/ai-assist';
 import apiDocsRouter from './routes/apiDocs';
