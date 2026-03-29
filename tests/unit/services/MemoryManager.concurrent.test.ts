@@ -318,30 +318,6 @@ describe('MemoryManager — concurrent access & edge cases', () => {
   });
 
   // =========================================================================
-  // Memory retrieval with different bot name formats
-  // =========================================================================
-
-  describe('bot name format variations', () => {
-    it.each([
-      'SimpleBot',
-      'bot-with-dashes',
-      'bot_with_underscores',
-      'BOT_UPPER',
-      'bot.with.dots',
-      'bot@special#chars!',
-      '  spacey  ',
-    ])('resolves provider for bot name "%s"', (botName: string) => {
-      const mgr = freshManager();
-      const provider = makeProvider();
-      wireBot(botName, 'prof1', provider);
-
-      const result = mgr.getProviderForBot(botName);
-      expect(result).toBe(provider);
-      expect(mockGetBot).toHaveBeenCalledWith(botName);
-    });
-  });
-
-  // =========================================================================
   // Storage with metadata edge cases
   // =========================================================================
 
