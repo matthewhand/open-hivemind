@@ -2,22 +2,27 @@ import * as fs from 'fs';
 import * as path from 'path';
 import Debug from 'debug';
 import { v4 as uuidv4 } from 'uuid';
+import { z } from 'zod';
+import Logger from '../common/logger';
 
 const debug = Debug('app:providerConfigManager');
 
-export interface ProviderInstance {
-  id: string;
-  type: string; // 'discord', 'slack', 'openai', etc.
-  category: 'message' | 'llm';
-  name: string;
-  enabled: boolean;
-  config: Record<string, any>; // Provider-specific config (token, model, etc.)
-}
+export const ProviderInstanceSchema = z.object({
+  id: z.string().min(1, 'Provider ID cannot be empty'),
+  type: z.string().min(1, 'Provider type cannot be empty'), // 'discord', 'slack', 'openai', etc.
+  category: z.enum(['message', 'llm']),
+  name: z.string().min(1, 'Provider name cannot be empty'),
+  enabled: z.boolean(),
+  config: z.record(z.string(), z.any()), // Provider-specific config (token, model, etc.)
+});
 
-export interface ProviderStore {
-  message: ProviderInstance[];
-  llm: ProviderInstance[];
-}
+export const ProviderStoreSchema = z.object({
+  message: z.array(ProviderInstanceSchema).default([]),
+  llm: z.array(ProviderInstanceSchema).default([]),
+});
+
+export type ProviderInstance = z.infer<typeof ProviderInstanceSchema>;
+export type ProviderStore = z.infer<typeof ProviderStoreSchema>;
 
 class ProviderConfigManager {
   private static instance: ProviderConfigManager;
@@ -25,14 +30,18 @@ class ProviderConfigManager {
   private store: ProviderStore = { message: [], llm: [] };
   private initialized = false;
 
-  private constructor() {
-    const configDir = process.env.NODE_CONFIG_DIR || path.join(__dirname, '../../config');
-    // Ensure providers directory exists
-    const providersDir = path.join(configDir, 'providers');
-    if (!fs.existsSync(providersDir)) {
-      fs.mkdirSync(providersDir, { recursive: true });
+  private constructor(configPathOverride?: string) {
+    if (configPathOverride) {
+      this.configPath = configPathOverride;
+    } else {
+      const configDir = process.env.NODE_CONFIG_DIR || path.join(__dirname, '../../config');
+      const providersDir = path.join(configDir, 'providers');
+      if (!fs.existsSync(providersDir)) {
+        fs.mkdirSync(providersDir, { recursive: true });
+      }
+      this.configPath = path.join(providersDir, 'instances.json');
     }
-    this.configPath = path.join(providersDir, 'instances.json');
+
     this.loadConfig();
 
     // Migration: If empty, try to populate from legacy sources (one-time)
@@ -41,9 +50,9 @@ class ProviderConfigManager {
     }
   }
 
-  public static getInstance(): ProviderConfigManager {
+  public static getInstance(configPathOverride?: string): ProviderConfigManager {
     if (!ProviderConfigManager.instance) {
-      ProviderConfigManager.instance = new ProviderConfigManager();
+      ProviderConfigManager.instance = new ProviderConfigManager(configPathOverride);
     }
     return ProviderConfigManager.instance;
   }
@@ -60,7 +69,7 @@ class ProviderConfigManager {
       });
     }
     if (Array.isArray(obj)) {
-      return obj.map(item => this.interpolateEnvVars(item));
+      return obj.map((item) => this.interpolateEnvVars(item));
     }
     if (typeof obj === 'object' && obj !== null) {
       const result: any = {};
@@ -72,23 +81,54 @@ class ProviderConfigManager {
     return obj;
   }
 
+  /**
+   * Performs Zod validation strictly, exiting the process on failure to guarantee fail-fast startup.
+   */
+  public validateConfigRaw(parsed: any): ProviderStore {
+    const validationResult = ProviderStoreSchema.safeParse(parsed);
+    if (!validationResult.success) {
+      Logger.error('---------------------------------------------------------');
+      Logger.error('🚨 CRITICAL STARTUP FAILURE: MALFORMED PROVIDER CONFIG');
+      Logger.error('---------------------------------------------------------');
+      Logger.error(`The configuration file at ${this.configPath} is invalid:`);
+      validationResult.error.errors.forEach((e) => {
+        Logger.error(` - ${e.path.join('.')}: ${e.message}`);
+      });
+      Logger.error('---------------------------------------------------------');
+      Logger.error('Please fix or remove the instances.json file. Exiting now to prevent data loss.');
+      process.exit(1);
+    }
+    return validationResult.data;
+  }
+
   private loadConfig(): void {
-    try {
-      if (fs.existsSync(this.configPath)) {
+    if (fs.existsSync(this.configPath)) {
+      try {
         const raw = fs.readFileSync(this.configPath, 'utf-8');
         const parsed = JSON.parse(raw);
+        // Validate parsed config immediately to fail fast
+        const validatedData = this.validateConfigRaw(parsed);
+
         // Interpolate ${ENV_VAR} patterns with actual env values
-        this.store = this.interpolateEnvVars(parsed);
+        this.store = this.interpolateEnvVars(validatedData);
         debug(`Loaded ${this.store.message.length} message and ${this.store.llm.length} llm providers`);
-      } else {
-        this.store = { message: [], llm: [] };
-        this.saveConfig();
+      } catch (error) {
+        // This catches JSON.parse errors
+        Logger.error('---------------------------------------------------------');
+        Logger.error('🚨 CRITICAL STARTUP FAILURE: CORRUPT PROVIDER CONFIG FILE');
+        Logger.error('---------------------------------------------------------');
+        Logger.error(`Failed to parse instances.json at ${this.configPath}:`);
+        Logger.error(error instanceof Error ? error.message : String(error));
+        Logger.error('---------------------------------------------------------');
+        Logger.error('Please ensure the file is valid JSON. Exiting now.');
+        process.exit(1);
+        return;
       }
-      this.initialized = true;
-    } catch (error) {
-      debug('Error loading provider config:', error);
+    } else {
       this.store = { message: [], llm: [] };
+      this.saveConfig();
     }
+    this.initialized = true;
   }
 
   private saveConfig(): void {
@@ -176,7 +216,7 @@ class ProviderConfigManager {
   }
 
   public getProvider(id: string): ProviderInstance | undefined {
-    return [...this.store.message, ...this.store.llm].find(p => p.id === id);
+    return [...this.store.message, ...this.store.llm].find((p) => p.id === id);
   }
 
   public createProvider(data: Omit<ProviderInstance, 'id'>): ProviderInstance {
@@ -196,13 +236,15 @@ class ProviderConfigManager {
   }
 
   public updateProvider(id: string, updates: Partial<ProviderInstance>): ProviderInstance | null {
-    let target = this.store.message.find(p => p.id === id);
+    let target = this.store.message.find((p) => p.id === id);
 
     if (!target) {
-      target = this.store.llm.find(p => p.id === id);
+      target = this.store.llm.find((p) => p.id === id);
     }
 
-    if (!target) {return null;}
+    if (!target) {
+      return null;
+    }
 
     // Merge updates
     Object.assign(target, updates);
@@ -214,14 +256,14 @@ class ProviderConfigManager {
   }
 
   public deleteProvider(id: string): boolean {
-    const msgIdx = this.store.message.findIndex(p => p.id === id);
+    const msgIdx = this.store.message.findIndex((p) => p.id === id);
     if (msgIdx !== -1) {
       this.store.message.splice(msgIdx, 1);
       this.saveConfig();
       return true;
     }
 
-    const llmIdx = this.store.llm.findIndex(p => p.id === id);
+    const llmIdx = this.store.llm.findIndex((p) => p.id === id);
     if (llmIdx !== -1) {
       this.store.llm.splice(llmIdx, 1);
       this.saveConfig();
