@@ -20,9 +20,9 @@ const envSchema = z
     SESSION_SECRET: z.string().optional(),
     JWT_SECRET: z.string().optional(),
     JWT_REFRESH_SECRET: z.string().optional(),
-    DISCORD_BOT_TOKEN: z.string().optional(),
-    SLACK_BOT_TOKEN: z.string().optional(),
-    MATTERMOST_TOKEN: z.string().optional(),
+    DISCORD_BOT_TOKEN: z.string().trim().min(1, 'DISCORD_BOT_TOKEN must not be empty').optional(),
+    SLACK_BOT_TOKEN: z.string().trim().min(1, 'SLACK_BOT_TOKEN must not be empty').optional(),
+    MATTERMOST_TOKEN: z.string().trim().min(1, 'MATTERMOST_TOKEN must not be empty').optional(),
   })
   .passthrough() // Allow other environment variables
   .superRefine((env, ctx) => {
@@ -49,9 +49,9 @@ const envSchema = z
         });
       }
 
-      const hasDiscord = !!env.DISCORD_BOT_TOKEN;
-      const hasSlack = !!env.SLACK_BOT_TOKEN;
-      const hasMattermost = !!env.MATTERMOST_TOKEN;
+      const hasDiscord = !!env.DISCORD_BOT_TOKEN?.trim();
+      const hasSlack = !!env.SLACK_BOT_TOKEN?.trim();
+      const hasMattermost = !!env.MATTERMOST_TOKEN?.trim();
 
       // Also check dynamic bots (e.g., BOTS_ALPHA_DISCORD_BOT_TOKEN)
       // Since passthrough() allows other keys, they are available in the env object
@@ -60,14 +60,15 @@ const envSchema = z
           key.startsWith('BOTS_') &&
           (key.endsWith('_DISCORD_BOT_TOKEN') ||
             key.endsWith('_SLACK_BOT_TOKEN') ||
-            key.endsWith('_MATTERMOST_TOKEN'))
+            key.endsWith('_MATTERMOST_TOKEN')) &&
+          !!(env as Record<string, string>)[key]?.trim()
       );
 
       if (!hasDiscord && !hasSlack && !hasMattermost && !hasDynamicBot) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
           message: 'Production startup requires at least one messaging platform token to be configured.',
-          path: ['DISCORD_BOT_TOKEN, SLACK_BOT_TOKEN, or MATTERMOST_TOKEN'],
+          path: ['DISCORD_BOT_TOKEN'],
         });
       }
     }
