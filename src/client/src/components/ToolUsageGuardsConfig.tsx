@@ -266,6 +266,7 @@ const ToolUsageGuardsConfig: React.FC = () => {
                     shape="circle"
                     color="ghost"
                     onClick={() => handleOpenDialog(guard)}
+                    aria-label={`Edit ${guard.name} guard`}
                   >
                     <PencilIcon className="w-4 h-4" />
                   </Button>
@@ -276,6 +277,7 @@ const ToolUsageGuardsConfig: React.FC = () => {
                     variant="secondary"
                     className="btn-outline"
                     onClick={() => handleDeleteGuard(guard.id)}
+                    aria-label={`Delete ${guard.name} guard`}
                   >
                     <TrashIcon className="w-4 h-4" />
                   </Button>
