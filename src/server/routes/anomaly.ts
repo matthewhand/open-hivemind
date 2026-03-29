@@ -5,6 +5,7 @@ import { DatabaseManager } from '../../database/DatabaseManager';
 import { AnomalyDetectionService } from '../../services/AnomalyDetectionService';
 import { validateRequest } from '../../validation/validateRequest';
 import { ResolveAnomalySchema } from '../../validation/schemas/anomalySchema';
+import { ApiResponse } from '../../utils/apiResponse';
 
 const debug = Debug('app:webui:anomaly');
 const router = Router();
@@ -47,7 +48,7 @@ router.get('/', async (req: AuthMiddlewareRequest, res) => {
     if (isConnectionError(error)) {
       res.status(503).json({ error: 'Database connection error' });
     } else {
-      res.status(500).json({ error: 'Failed to fetch active anomalies' });
+      ApiResponse.serverError(res, 'Internal Server Error', 'Failed to fetch active anomalies');
     }
   }
 });
@@ -71,7 +72,7 @@ router.get('/history', async (req: AuthMiddlewareRequest, res) => {
     if (isConnectionError(error)) {
       res.status(503).json({ error: 'Database connection error' });
     } else {
-      res.status(500).json({ error: 'Failed to fetch anomaly history' });
+      ApiResponse.serverError(res, 'Internal Server Error', 'Failed to fetch anomaly history');
     }
   }
 });
@@ -87,11 +88,11 @@ router.post('/:id/resolve', validateRequest(ResolveAnomalySchema), async (req: A
     if (success) {
       res.json({ success: true });
     } else {
-      res.status(404).json({ error: 'Anomaly not found' });
+      ApiResponse.notFound(res, 'Anomaly not found');
     }
   } catch (error) {
     debug('Error resolving anomaly:', error);
-    res.status(500).json({ error: 'Failed to resolve anomaly' });
+    ApiResponse.serverError(res, 'Internal Server Error', 'Failed to resolve anomaly');
   }
 });
 

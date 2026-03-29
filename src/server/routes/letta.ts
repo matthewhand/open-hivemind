@@ -5,6 +5,7 @@ import { getAgent, listAgents } from '@hivemind/llm-letta';
 import { ErrorResponses } from '../../utils/errorResponse';
 import { isPrivateIP, isSafeUrl } from '../../utils/ssrfGuard';
 import Debug from 'debug';
+import { ApiResponse } from '../../utils/apiResponse';
 const debug = Debug('app:server:routes:letta');
 
 const router = Router();

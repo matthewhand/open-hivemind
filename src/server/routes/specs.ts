@@ -3,6 +3,7 @@ import path from 'path';
 import { Router } from 'express';
 import { z } from 'zod';
 import Debug from 'debug';
+import { ApiResponse } from '../../utils/apiResponse';
 const debug = Debug('app:server:routes:specs');
 
 const router = Router();
@@ -78,24 +79,16 @@ router.post('/', async (req, res) => {
       .json({ success: true, data: newSpec, message: 'Specification saved successfully' });
   } catch (error) {
     debug('ERROR:', 'Failed to save spec:', error);
-    return res.status(500).json({
-      success: false,
-      error: 'Failed to save specification',
-      message: error instanceof Error ? error.message : String(error),
-    });
+    return ApiResponse.serverError(res, 'Failed to save specification', error instanceof Error ? error.message : String(error));
   }
 });
 
 router.get('/', async (req, res) => {
   try {
     const index = await getSpecsIndex();
-    return res.json({ success: true, data: index });
+    return ApiResponse.success(res, index);
   } catch (error) {
-    return res.status(500).json({
-      success: false,
-      error: 'Failed to retrieve specifications',
-      message: error instanceof Error ? error.message : String(error),
-    });
+    return ApiResponse.serverError(res, 'Failed to retrieve specifications', error instanceof Error ? error.message : String(error));
   }
 });
 
@@ -130,13 +123,9 @@ router.get('/:id', async (req, res) => {
     const versions = await fs.readdir(targetPath);
     const specWithVersions = { ...spec, versions };
 
-    return res.json({ success: true, data: specWithVersions });
+    return ApiResponse.success(res, specWithVersions);
   } catch (error) {
-    return res.status(500).json({
-      success: false,
-      error: 'Failed to retrieve specification',
-      message: error instanceof Error ? error.message : String(error),
-    });
+    return ApiResponse.serverError(res, 'Failed to retrieve specification', error instanceof Error ? error.message : String(error));
   }
 });
 

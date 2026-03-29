@@ -2,6 +2,7 @@ import { Readable } from 'stream';
 import { Router, type Request, type Response } from 'express';
 import { SitemapStream, streamToPromise } from 'sitemap';
 import Debug from 'debug';
+import { ApiResponse } from '../../utils/apiResponse';
 const debug = Debug('app:server:routes:sitemap');
 
 const router = Router();
@@ -407,7 +408,7 @@ router.get('/sitemap.xml', async (req: Request, res: Response) => {
     res.send(sitemapXml.toString());
   } catch (error) {
     debug('ERROR:', 'Error generating sitemap:', error);
-    res.status(500).json({ error: 'Failed to generate sitemap' });
+    ApiResponse.serverError(res, 'Internal Server Error', 'Failed to generate sitemap');
   }
 });
 
@@ -437,7 +438,7 @@ router.get('/sitemap.json', (req: Request, res: Response) => {
     res.json(sitemap);
   } catch (error) {
     debug('ERROR:', 'Error generating JSON sitemap:', error);
-    res.status(500).json({ error: 'Failed to generate sitemap' });
+    ApiResponse.serverError(res, 'Internal Server Error', 'Failed to generate sitemap');
   }
 });
 

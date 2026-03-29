@@ -3,6 +3,7 @@ import { Router, type Request, type Response } from 'express';
 import { SecureConfigManager, type SecureConfig } from '@config/SecureConfigManager';
 import { auditMiddleware, logConfigChange, type AuditedRequest } from '../middleware/audit';
 import { validateRequest } from '../../validation/validateRequest';
+import { ApiResponse } from '../../utils/apiResponse';
 import {
   CreateSecureConfigSchema,
   UpdateSecureConfigSchema,
@@ -44,11 +45,7 @@ router.get('/', async (req: Request, res: Response) => {
       }
     }
 
-    return res.json({
-      success: true,
-      data: configs,
-      count: configs.length,
-    });
+    return ApiResponse.success(res, { configs, count: configs.length });
   } catch (error: unknown) {
     debug('Failed to list secure configs:', error);
     return res.status(500).json({
@@ -74,10 +71,7 @@ router.get('/:id', async (req: Request, res: Response) => {
       });
     }
 
-    return res.json({
-      success: true,
-      data: config,
-    });
+    return ApiResponse.success(res, config,);
   } catch (error: unknown) {
     debug(`Failed to get secure config ${req.params.id}:`, error);
     return res.status(500).json({
@@ -228,10 +222,7 @@ router.delete('/:id', validateRequest(DeleteSecureConfigSchema), async (req: Aud
       }
     );
 
-    return res.json({
-      success: true,
-      message: 'Configuration deleted successfully',
-    });
+    return ApiResponse.success(res, undefined, 'Configuration deleted successfully',);
   } catch (error: unknown) {
     debug(`Failed to delete secure config ${req.params.id}:`, error);
     logConfigChange(
@@ -293,11 +284,7 @@ router.get('/backups/list', async (req: Request, res: Response) => {
   try {
     const backups = await secureConfigManager.listBackups();
 
-    return res.json({
-      success: true,
-      data: backups,
-      count: backups.length,
-    });
+    return ApiResponse.success(res, { backups, count: backups.length });
   } catch (error: unknown) {
     debug('Failed to list backups:', error);
     return res.status(500).json({

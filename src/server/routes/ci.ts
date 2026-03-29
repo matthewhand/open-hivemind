@@ -1,6 +1,7 @@
 import Debug from 'debug';
 import { Router } from 'express';
 import { validateRequest } from '../../validation/validateRequest';
+import { ApiResponse } from '../../utils/apiResponse';
 import {
   CreateDeploymentSchema,
   RollbackDeploymentSchema,
@@ -64,11 +65,7 @@ router.get('/api/deployments', (req, res) => {
     });
   } catch (error) {
     debug('Deployments API error:', error);
-    return res.status(500).json({
-      success: false,
-      message: 'Failed to get deployments',
-      error: error instanceof Error ? error.message : 'Unknown error',
-    });
+    return ApiResponse.serverError(res, 'Failed to get deployments', error instanceof Error ? error.message : 'Unknown error',);
   }
 });
 
@@ -106,11 +103,7 @@ router.post('/api/deployments', validateRequest(CreateDeploymentSchema), (req, r
     });
   } catch (error) {
     debug('Create deployment API error:', error);
-    return res.status(500).json({
-      success: false,
-      message: 'Failed to create deployment',
-      error: error instanceof Error ? error.message : 'Unknown error',
-    });
+    return ApiResponse.serverError(res, 'Failed to create deployment', error instanceof Error ? error.message : 'Unknown error',);
   }
 });
 
@@ -148,11 +141,7 @@ router.get('/api/deployments/:id', (req, res) => {
     });
   } catch (error) {
     debug('Get deployment API error:', error);
-    return res.status(500).json({
-      success: false,
-      message: 'Failed to get deployment',
-      error: error instanceof Error ? error.message : 'Unknown error',
-    });
+    return ApiResponse.serverError(res, 'Failed to get deployment', error instanceof Error ? error.message : 'Unknown error',);
   }
 });
 
@@ -170,11 +159,7 @@ router.post('/api/deployments/:id/rollback', validateRequest(RollbackDeploymentS
     });
   } catch (error) {
     debug('Rollback deployment API error:', error);
-    return res.status(500).json({
-      success: false,
-      message: 'Failed to rollback deployment',
-      error: error instanceof Error ? error.message : 'Unknown error',
-    });
+    return ApiResponse.serverError(res, 'Failed to rollback deployment', error instanceof Error ? error.message : 'Unknown error',);
   }
 });
 
@@ -205,11 +190,7 @@ router.get('/api/drift', (req, res) => {
     });
   } catch (error) {
     debug('Drift detection API error:', error);
-    return res.status(500).json({
-      success: false,
-      message: 'Failed to get drift detections',
-      error: error instanceof Error ? error.message : 'Unknown error',
-    });
+    return ApiResponse.serverError(res, 'Failed to get drift detections', error instanceof Error ? error.message : 'Unknown error',);
   }
 });
 
@@ -236,11 +217,7 @@ router.post('/api/deployments/validate', validateRequest(ValidateDeploymentSchem
     });
   } catch (error) {
     debug('Validation API error:', error);
-    return res.status(500).json({
-      success: false,
-      message: 'Failed to validate configuration',
-      error: error instanceof Error ? error.message : 'Unknown error',
-    });
+    return ApiResponse.serverError(res, 'Failed to validate configuration', error instanceof Error ? error.message : 'Unknown error',);
   }
 });
 
@@ -264,11 +241,7 @@ router.get('/api/pipeline/status', (req, res) => {
     });
   } catch (error) {
     debug('Pipeline status API error:', error);
-    return res.status(500).json({
-      success: false,
-      message: 'Failed to get pipeline status',
-      error: error instanceof Error ? error.message : 'Unknown error',
-    });
+    return ApiResponse.serverError(res, 'Failed to get pipeline status', error instanceof Error ? error.message : 'Unknown error',);
   }
 });
 
@@ -298,11 +271,7 @@ router.post('/api/tests/run', validateRequest(RunTestsSchema), (req, res) => {
     });
   } catch (error) {
     debug('Test run API error:', error);
-    return res.status(500).json({
-      success: false,
-      message: 'Failed to run tests',
-      error: error instanceof Error ? error.message : 'Unknown error',
-    });
+    return ApiResponse.serverError(res, 'Failed to run tests', error instanceof Error ? error.message : 'Unknown error',);
   }
 });
 
@@ -349,11 +318,7 @@ router.get('/api/tests/results/:id', (req, res) => {
     });
   } catch (error) {
     debug('Test results API error:', error);
-    return res.status(500).json({
-      success: false,
-      message: 'Failed to get test results',
-      error: error instanceof Error ? error.message : 'Unknown error',
-    });
+    return ApiResponse.serverError(res, 'Failed to get test results', error instanceof Error ? error.message : 'Unknown error',);
   }
 });
 

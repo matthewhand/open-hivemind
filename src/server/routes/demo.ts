@@ -10,6 +10,7 @@ import DemoModeService from '../../services/DemoModeService';
 import { ErrorUtils } from '../../types/errors';
 import { validateRequest } from '../../validation/validateRequest';
 import { DemoChatSchema } from '../../validation/schemas/demoSchema';
+import { ApiResponse } from '../../utils/apiResponse';
 
 const router = Router();
 
@@ -71,10 +72,7 @@ router.post('/chat', validateRequest(DemoChatSchema), (req, res) => {
     const demoService = container.resolve(DemoModeService);
 
     if (!demoService.isInDemoMode()) {
-      res.status(400).json({
-        error: 'Demo mode is not active. Configure credentials to use real services.',
-        code: 'DEMO_MODE_INACTIVE',
-      });
+      ApiResponse.badRequest(res, 'Demo mode is not active. Configure credentials to use real services.', { code: 'DEMO_MODE_INACTIVE' });
       return;
     }
 
@@ -172,10 +170,7 @@ router.post('/reset', (req, res) => {
     const demoService = container.resolve(DemoModeService);
     demoService.reset();
 
-    res.json({
-      success: true,
-      message: 'Demo mode reset - all conversations cleared',
-    });
+    ApiResponse.success(res, undefined, 'Demo mode reset - all conversations cleared');
   } catch (error: unknown) {
     const hivemindError = ErrorUtils.toHivemindError(error) as any;
     res.status(hivemindError.statusCode || 500).json({

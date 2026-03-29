@@ -12,6 +12,7 @@ import {
   UpdateGuardProfileSchema,
 } from '../../validation/schemas/guardProfilesSchema';
 import { validateRequest } from '../../validation/validateRequest';
+import { ApiResponse } from '../../utils/apiResponse';
 
 const router = Router();
 
@@ -27,16 +28,9 @@ if (!isTestEnv) {
 router.get('/', (req: Request, res: Response) => {
   try {
     const profiles = loadGuardrailProfiles();
-    return res.json({
-      success: true,
-      data: profiles,
-    });
+    return ApiResponse.success(res, profiles,);
   } catch (error: unknown) {
-    return res.status(500).json({
-      success: false,
-      error: 'Failed to load guardrail profiles',
-      message: error instanceof Error ? error.message : String(error),
-    });
+    return ApiResponse.serverError(res, 'Failed to load guardrail profiles', error instanceof Error ? error.message : String(error));
   }
 });
 
@@ -54,16 +48,9 @@ router.get('/:id', validateRequest(GuardProfileIdParamSchema), (req: Request, re
       });
     }
 
-    return res.json({
-      success: true,
-      data: profile,
-    });
+    return ApiResponse.success(res, profile,);
   } catch (error: unknown) {
-    return res.status(500).json({
-      success: false,
-      error: 'Failed to retrieve profile',
-      message: error instanceof Error ? error.message : String(error),
-    });
+    return ApiResponse.serverError(res, 'Failed to retrieve profile', error instanceof Error ? error.message : String(error));
   }
 });
 
@@ -160,11 +147,7 @@ router.post('/', validateRequest(CreateGuardProfileSchema), (req: Request, res: 
       message: 'Guard profile created successfully',
     });
   } catch (error: unknown) {
-    return res.status(500).json({
-      success: false,
-      error: 'Failed to create guard profile',
-      message: error instanceof Error ? error.message : String(error),
-    });
+    return ApiResponse.serverError(res, 'Failed to create guard profile', error instanceof Error ? error.message : String(error));
   }
 });
 
@@ -222,17 +205,9 @@ router.put('/:id', validateRequest(UpdateGuardProfileSchema), (req: Request, res
     profiles[profileIndex] = updatedProfile;
     saveGuardrailProfiles(profiles);
 
-    return res.json({
-      success: true,
-      data: updatedProfile,
-      message: 'Guard profile updated successfully',
-    });
+    return ApiResponse.success(res, updatedProfile, 'Guard profile updated successfully',);
   } catch (error: unknown) {
-    return res.status(500).json({
-      success: false,
-      error: 'Failed to update guard profile',
-      message: error instanceof Error ? error.message : String(error),
-    });
+    return ApiResponse.serverError(res, 'Failed to update guard profile', error instanceof Error ? error.message : String(error));
   }
 });
 
@@ -253,16 +228,9 @@ router.delete('/:id', validateRequest(GuardProfileIdParamSchema), (req: Request,
     const filteredProfiles = profiles.filter((p) => p.id !== id);
     saveGuardrailProfiles(filteredProfiles);
 
-    return res.json({
-      success: true,
-      message: 'Guard profile deleted successfully',
-    });
+    return ApiResponse.success(res, undefined, 'Guard profile deleted successfully',);
   } catch (error: unknown) {
-    return res.status(500).json({
-      success: false,
-      error: 'Failed to delete guard profile',
-      message: error instanceof Error ? error.message : String(error),
-    });
+    return ApiResponse.serverError(res, 'Failed to delete guard profile', error instanceof Error ? error.message : String(error));
   }
 });
 

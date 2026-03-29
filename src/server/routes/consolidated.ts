@@ -6,6 +6,7 @@ import { auditMiddleware, logAdminAction, type AuditedRequest } from '../middlew
 import { authenticateToken, requirePermission } from '../middleware/auth';
 import { validateRequest } from '../../validation/validateRequest';
 import { ValidateConfigBodySchema } from '../../validation/schemas/consolidatedSchema';
+import { ApiResponse } from '../../utils/apiResponse';
 
 const debug = Debug('app:webui:consolidated');
 const router = Router();
@@ -65,15 +66,11 @@ router.get('/system-status', async (req, res) => {
       'success',
       'System status retrieved'
     );
-    return res.json({ success: true, data: systemStatus });
+    return ApiResponse.success(res, systemStatus);
   } catch (error) {
     debug('Error getting system status:', error);
     logAdminAction(req as AuditedRequest, 'VIEW', 'system-status', 'failure', `Error: ${error}`);
-    return res.status(500).json({
-      success: false,
-      error: 'Failed to get system status',
-      message: error instanceof Error ? error.message : 'Unknown error',
-    });
+    return ApiResponse.serverError(res, 'Failed to get system status', error instanceof Error ? error.message : 'Unknown error');
   }
 });
 
@@ -181,7 +178,7 @@ router.get('/env-status', async (req, res) => {
       'success',
       'Environment status retrieved'
     );
-    return res.json({ success: true, data: envStatus });
+    return ApiResponse.success(res, envStatus);
   } catch (error) {
     debug('Error getting environment status:', error);
     return res.status(500).json({
@@ -268,7 +265,7 @@ router.post('/validate-config', validateRequest(ValidateConfigBodySchema), async
       'success',
       `Config validation: ${validation.isValid ? 'valid' : 'invalid'}`
     );
-    return res.json({ success: true, data: validation });
+    return ApiResponse.success(res, validation);
   } catch (error) {
     debug('Error validating config:', error);
     logAdminAction(req as AuditedRequest, 'VALIDATE', 'bot-config', 'failure', `Error: ${error}`);
@@ -339,7 +336,7 @@ router.get('/health', async (req, res) => {
 
     health.status = hasErrors ? 'error' : hasWarnings ? 'warning' : 'healthy';
 
-    return res.json({ success: true, data: health });
+    return ApiResponse.success(res, health);
   } catch (error) {
     debug('Error getting health status:', error);
     const { createErrorResponse } = await import('../../utils/errorResponse');
@@ -396,7 +393,7 @@ router.get('/metrics', async (req, res) => {
       debug('Error getting database metrics:', error);
     }
 
-    return res.json({ success: true, data: metrics });
+    return ApiResponse.success(res, metrics);
   } catch (error) {
     debug('Error getting metrics:', error);
     return res.status(500).json({

@@ -3,6 +3,7 @@ import { Router } from 'express';
 import { WebSocketService } from '@src/server/services/WebSocketService';
 import { HotReloadManager, type ConfigurationChange } from '@config/HotReloadManager';
 import { validateRequest } from '../../validation/validateRequest';
+import { ApiResponse } from '../../utils/apiResponse';
 import {
   HotReloadChangeSchema,
   HotReloadRollbackSchema,
@@ -24,16 +25,11 @@ router.post('/api/config/hot-reload', validateRequest(HotReloadChangeSchema), as
     return res.json(result);
   } catch (error) {
     debug('Hot reload API error:', error);
-    return res.status(500).json({
-      success: false,
-      message: 'Hot reload failed',
-      error:
-        process.env.NODE_ENV === 'production'
+    return ApiResponse.serverError(res, 'Hot reload failed', process.env.NODE_ENV === 'production'
           ? 'An internal error occurred'
           : error instanceof Error
             ? error.message
-            : 'Unknown error',
-    });
+            : 'Unknown error',);
   }
 });
 
@@ -49,16 +45,11 @@ router.get('/api/config/hot-reload/history', (req, res) => {
     });
   } catch (error) {
     debug('Hot reload history API error:', error);
-    return res.status(500).json({
-      success: false,
-      message: 'Failed to get change history',
-      error:
-        process.env.NODE_ENV === 'production'
+    return ApiResponse.serverError(res, 'Failed to get change history', process.env.NODE_ENV === 'production'
           ? 'An internal error occurred'
           : error instanceof Error
             ? error.message
-            : 'Unknown error',
-    });
+            : 'Unknown error',);
   }
 });
 
@@ -73,16 +64,11 @@ router.get('/api/config/hot-reload/rollbacks', (req, res) => {
     });
   } catch (error) {
     debug('Hot reload rollbacks API error:', error);
-    return res.status(500).json({
-      success: false,
-      message: 'Failed to get available rollbacks',
-      error:
-        process.env.NODE_ENV === 'production'
+    return ApiResponse.serverError(res, 'Failed to get available rollbacks', process.env.NODE_ENV === 'production'
           ? 'An internal error occurred'
           : error instanceof Error
             ? error.message
-            : 'Unknown error',
-    });
+            : 'Unknown error',);
   }
 });
 
@@ -103,28 +89,17 @@ router.post('/api/config/hot-reload/rollback/:snapshotId', validateRequest(HotRe
         metadata: { snapshotId },
       });
 
-      return res.json({
-        success: true,
-        message: 'Configuration rolled back successfully',
-      });
+      return ApiResponse.success(res, undefined, 'Configuration rolled back successfully',);
     } else {
-      return res.status(404).json({
-        success: false,
-        message: 'Rollback snapshot not found or rollback failed',
-      });
+      return ApiResponse.notFound(res, 'Rollback snapshot not found or rollback failed',);
     }
   } catch (error) {
     debug('Hot reload rollback API error:', error);
-    return res.status(500).json({
-      success: false,
-      message: 'Rollback failed',
-      error:
-        process.env.NODE_ENV === 'production'
+    return ApiResponse.serverError(res, 'Rollback failed', process.env.NODE_ENV === 'production'
           ? 'An internal error occurred'
           : error instanceof Error
             ? error.message
-            : 'Unknown error',
-    });
+            : 'Unknown error',);
   }
 });
 
@@ -143,16 +118,11 @@ router.get('/api/config/hot-reload/status', (req, res) => {
     });
   } catch (error) {
     debug('Hot reload status API error:', error);
-    return res.status(500).json({
-      success: false,
-      message: 'Failed to get hot reload status',
-      error:
-        process.env.NODE_ENV === 'production'
+    return ApiResponse.serverError(res, 'Failed to get hot reload status', process.env.NODE_ENV === 'production'
           ? 'An internal error occurred'
           : error instanceof Error
             ? error.message
-            : 'Unknown error',
-    });
+            : 'Unknown error',);
   }
 });
 

@@ -11,6 +11,7 @@ import {
 } from '@src/plugins/PluginManager';
 import { authenticateToken, requireRole } from '@src/server/middleware/auth';
 import { validateRequest } from '../../validation/validateRequest';
+import { ApiResponse } from '../../utils/apiResponse';
 import {
   InstallPluginSchema,
   PluginNameParamSchema,
@@ -195,7 +196,7 @@ router.get('/packages', async (req, res) => {
     return res.json(packages);
   } catch (err: any) {
     debug('Error listing packages: %s', err);
-    return res.status(500).json({ error: 'Failed to list packages', message: err.message });
+    return ApiResponse.serverError(res, 'Failed to list packages', err.message);
   }
 });
 
@@ -211,13 +212,13 @@ router.get('/packages/:name', async (req, res) => {
     const pkg = packages.find((p) => p.name === name);
 
     if (!pkg) {
-      return res.status(404).json({ error: 'Package not found' });
+      return ApiResponse.notFound(res, 'Package not found');
     }
 
     return res.json(pkg);
   } catch (err: any) {
     debug('Error getting package: %s', err);
-    return res.status(500).json({ error: 'Failed to get package', message: err.message });
+    return ApiResponse.serverError(res, 'Failed to get package', err.message);
   }
 });
 
@@ -253,7 +254,7 @@ router.post('/install', requireRole('admin'), validateRequest(InstallPluginSchem
     });
   } catch (err: any) {
     debug('Install error: %s', err);
-    return res.status(400).json({ error: 'Installation failed', message: err.message });
+    return ApiResponse.badRequest(res, err.message, 'Installation failed');
   }
 });
 
@@ -275,7 +276,7 @@ router.post('/uninstall/:name', requireRole('admin'), validateRequest(PluginName
     return res.json({ success: true, message: `Plugin ${name} uninstalled` });
   } catch (err: any) {
     debug('Uninstall error: %s', err);
-    return res.status(400).json({ error: 'Uninstall failed', message: err.message });
+    return ApiResponse.badRequest(res, err.message, 'Uninstall failed');
   }
 });
 
@@ -310,7 +311,7 @@ router.post('/update/:name', requireRole('admin'), validateRequest(PluginNamePar
     });
   } catch (err: any) {
     debug('Update error: %s', err);
-    return res.status(400).json({ error: 'Update failed', message: err.message });
+    return ApiResponse.badRequest(res, err.message, 'Update failed');
   }
 });
 

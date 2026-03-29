@@ -15,6 +15,7 @@ import { ImportBotsSchema } from '../../validation/schemas/importExportSchema';
 import { validateRequest } from '../../validation/validateRequest';
 import { ActivityLogger } from '../services/ActivityLogger';
 import { WebSocketService } from '../services/WebSocketService';
+import { ApiResponse } from '../../utils/apiResponse';
 
 const router = Router();
 const logger = createLogger('botsRouter');
@@ -109,7 +110,7 @@ router.put('/reorder', validateRequest(ReorderSchema), async (req, res) => {
     }
     fsModule.writeFileSync(orderFilePath, JSON.stringify(ids, null, 2));
 
-    return res.json({ success: true, message: 'Bot order updated' });
+    return ApiResponse.success(res, undefined, 'Bot order updated');
   } catch (error: unknown) {
     logger.error(
       'Failed to reorder bots',
@@ -354,7 +355,7 @@ router.put('/:id', validateRequest(UpdateBotSchema), async (req, res) => {
     const { id } = req.params;
     const updates = req.body;
     const bot = await manager.updateBot(id, updates);
-    return res.json({ success: true, message: 'Bot updated', bot });
+    return ApiResponse.success(res, bot, 'Bot updated');
   } catch (error: unknown) {
     const status = errMsg(error).includes(ERROR_CODES.NOT_FOUND)
       ? HTTP_STATUS.NOT_FOUND
@@ -385,11 +386,11 @@ router.delete('/:id', validateRequest(BotIdParamSchema), async (req, res) => {
     // Idempotency: return 200/204 even if resource already gone
     const existingBot = await manager.getBot(id);
     if (!existingBot) {
-      return res.json({ success: true, message: 'Bot already deleted or not found' });
+      return ApiResponse.success(res, undefined, 'Bot already deleted or not found');
     }
 
     await manager.deleteBot(id);
-    return res.json({ success: true, message: 'Bot deleted' });
+    return ApiResponse.success(res, undefined, 'Bot deleted');
   } catch (error: unknown) {
     const status = errMsg(error).includes(ERROR_CODES.NOT_FOUND)
       ? HTTP_STATUS.NOT_FOUND
@@ -469,7 +470,7 @@ router.post('/:id/start', validateRequest(BotIdParamSchema), async (req, res) =>
   try {
     const { id } = req.params;
     await manager.startBot(id);
-    return res.json({ success: true, message: 'Bot started' });
+    return ApiResponse.success(res, undefined, 'Bot started');
   } catch (error: unknown) {
     const status = errMsg(error).includes(ERROR_CODES.NOT_FOUND)
       ? HTTP_STATUS.NOT_FOUND
@@ -498,7 +499,7 @@ router.post('/:id/stop', validateRequest(BotIdParamSchema), async (req, res) => 
   try {
     const { id } = req.params;
     await manager.stopBot(id);
-    return res.json({ success: true, message: 'Bot stopped' });
+    return ApiResponse.success(res, undefined, 'Bot stopped');
   } catch (error: unknown) {
     const status = errMsg(error).includes(ERROR_CODES.NOT_FOUND)
       ? HTTP_STATUS.NOT_FOUND

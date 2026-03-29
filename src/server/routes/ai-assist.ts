@@ -9,6 +9,7 @@ import { IMessage } from '../../message/interfaces/IMessage';
 import { ErrorUtils } from '../../types/errors';
 import { validateRequest } from '../../validation/validateRequest';
 import { GenerateAIAssistSchema } from '../../validation/schemas/aiAssistSchema';
+import { ApiResponse } from '../../utils/apiResponse';
 
 const debug = Debug('app:ai-assist');
 const router = Router();
@@ -95,7 +96,7 @@ router.post('/generate', validateRequest(GenerateAIAssistSchema), async (req, re
     const providerKey = settings.webuiIntelligenceProvider;
 
     if (!providerKey || providerKey === 'none') {
-      return res.status(400).json({ error: 'AI Assistance is not configured.' });
+      return ApiResponse.badRequest(res, 'Bad Request', 'AI Assistance is not configured.');
     }
 
     const profile = getLlmProfileByKey(providerKey);
@@ -135,7 +136,7 @@ router.post('/generate', validateRequest(GenerateAIAssistSchema), async (req, re
     }
 
     if (!instance) {
-      return res.status(500).json({ error: 'Failed to instantiate provider instance.' });
+      return ApiResponse.serverError(res, 'Internal Server Error', 'Failed to instantiate provider instance.');
     }
 
     // Construct messages
@@ -152,17 +153,14 @@ router.post('/generate', validateRequest(GenerateAIAssistSchema), async (req, re
       const fullPrompt = systemPrompt ? `${systemPrompt}\n\n${prompt}` : prompt;
       result = await instance.generateCompletion(fullPrompt);
     } else {
-      return res.status(400).json({ error: 'Provider does not support generation.' });
+      return ApiResponse.badRequest(res, 'Bad Request', 'Provider does not support generation.');
     }
 
     return res.json({ result });
   } catch (error: unknown) {
     const hivemindError = ErrorUtils.toHivemindError(error);
     debug('Error in AI Assist generation:', hivemindError);
-    return res.status(500).json({
-      error: 'Failed to generate response',
-      message: hivemindError instanceof Error ? hivemindError.message : String(hivemindError),
-    });
+    return ApiResponse.serverError(res, 'Failed to generate response', hivemindError instanceof Error ? hivemindError.message : String(hivemindError));
   }
 });
 

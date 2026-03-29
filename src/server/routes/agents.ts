@@ -13,6 +13,7 @@ import {
   UpdateAgentSchema,
 } from '../../validation/schemas/agentsSchema';
 import { validateRequest } from '../../validation/validateRequest';
+import { ApiResponse } from '../../utils/apiResponse';
 
 const debug = Debug('app:webui:agents');
 const router = Router();
@@ -227,7 +228,7 @@ router.put('/:id', validateRequest(UpdateAgentSchema), async (req, res) => {
     const agentIndex = agents.findIndex((agent) => agent.id === id);
 
     if (agentIndex === -1) {
-      return res.status(404).json({ error: 'Agent not found' });
+      return ApiResponse.notFound(res, 'Agent not found');
     }
 
     agents[agentIndex] = { ...agents[agentIndex], ...updates };
@@ -263,7 +264,7 @@ router.delete('/:id', validateRequest(AgentIdParamSchema), async (req, res) => {
     const filteredAgents = agents.filter((agent) => agent.id !== id);
 
     if (filteredAgents.length === agents.length) {
-      return res.status(404).json({ error: 'Agent not found' });
+      return ApiResponse.notFound(res, 'Agent not found');
     }
 
     await saveJsonConfig(AGENTS_CONFIG_FILE, filteredAgents);
@@ -383,7 +384,7 @@ router.put('/personas/:key', validateRequest(UpdateAgentPersonaSchema), async (r
     const personaIndex = personas.findIndex((p) => p.key === key);
 
     if (personaIndex === -1) {
-      return res.status(404).json({ error: 'Persona not found' });
+      return ApiResponse.notFound(res, 'Persona not found');
     }
 
     personas[personaIndex] = { key, name, systemPrompt };
@@ -416,14 +417,14 @@ router.delete('/personas/:key', validateRequest(AgentPersonaKeyParamSchema), asy
     const { key } = req.params;
 
     if (key === 'default') {
-      return res.status(400).json({ error: 'Cannot delete default persona' });
+      return ApiResponse.badRequest(res, 'Bad Request', 'Cannot delete default persona');
     }
 
     const personas = await loadJsonConfig<Persona[]>(PERSONAS_CONFIG_FILE, []);
     const filteredPersonas = personas.filter((p) => p.key !== key);
 
     if (filteredPersonas.length === personas.length) {
-      return res.status(404).json({ error: 'Persona not found' });
+      return ApiResponse.notFound(res, 'Persona not found');
     }
 
     await saveJsonConfig(PERSONAS_CONFIG_FILE, filteredPersonas);

@@ -3,6 +3,7 @@ import { requireAdmin } from '../../auth/middleware';
 import { authenticateToken } from '../middleware/auth';
 import { clearAllSystemCaches } from '../utils/cacheManager'; // We'll implement this
 import Debug from 'debug';
+import { ApiResponse } from '../../utils/apiResponse';
 const debug = Debug('app:server:routes:cache');
 
 const router = Router();
@@ -26,7 +27,7 @@ router.use(authenticateToken, requireAdmin);
 router.post('/clear', async (req, res) => {
   try {
     await clearAllSystemCaches();
-    res.json({ success: true, message: 'Cache cleared successfully' });
+    ApiResponse.success(res, undefined, 'Cache cleared successfully');
   } catch (error) {
     debug('ERROR:', 'Failed to clear cache:', error);
     res.status(500).json({ success: false, error: 'Failed to clear cache' });

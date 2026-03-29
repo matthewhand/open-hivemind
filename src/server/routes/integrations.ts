@@ -8,6 +8,7 @@ import {
   UpdateIntegrationSchema,
 } from '../../validation/schemas/integrationsSchema';
 import { validateRequest } from '../../validation/validateRequest';
+import { ApiResponse } from '../../utils/apiResponse';
 
 const log = Debug('app:integrationsRouter');
 const router = Router();
@@ -37,7 +38,7 @@ router.get('/', (req, res) => {
     return res.json(filtered);
   } catch (err: unknown) {
     log('Error fetching integrations:', err);
-    return res.status(500).json({ error: 'Failed to fetch integrations' });
+    return ApiResponse.serverError(res, 'Internal Server Error', 'Failed to fetch integrations');
   }
 });
 
@@ -48,7 +49,7 @@ router.get('/', (req, res) => {
 router.get('/:id', validateRequest(IntegrationIdParamSchema), (req, res) => {
   const provider = providerManager.getProvider(req.params.id);
   if (!provider) {
-    return res.status(404).json({ error: 'Provider not found' });
+    return ApiResponse.notFound(res, 'Provider not found');
   }
   return res.json(provider);
 });
@@ -73,7 +74,7 @@ router.post('/', validateRequest(CreateIntegrationSchema), (req, res) => {
     return res.status(201).json(newInstance);
   } catch (err: unknown) {
     log('Error creating integration:', err);
-    return res.status(500).json({ error: 'Failed to create integration' });
+    return ApiResponse.serverError(res, 'Internal Server Error', 'Failed to create integration');
   }
 });
 
@@ -91,14 +92,14 @@ router.put('/:id', validateRequest(UpdateIntegrationSchema), (req, res) => {
 
     const updated = providerManager.updateProvider(id, updates);
     if (!updated) {
-      return res.status(404).json({ error: 'Provider not found' });
+      return ApiResponse.notFound(res, 'Provider not found');
     }
 
     log(`Updated provider: ${updated.name}`);
     return res.json(updated);
   } catch (err: unknown) {
     log('Error updating integration:', err);
-    return res.status(500).json({ error: 'Failed to update integration' });
+    return ApiResponse.serverError(res, 'Internal Server Error', 'Failed to update integration');
   }
 });
 
@@ -110,13 +111,13 @@ router.delete('/:id', validateRequest(IntegrationIdParamSchema), (req, res) => {
   try {
     const success = providerManager.deleteProvider(req.params.id);
     if (!success) {
-      return res.status(404).json({ error: 'Provider not found' });
+      return ApiResponse.notFound(res, 'Provider not found');
     }
     log(`Deleted provider: ${req.params.id}`);
     return res.json({ success: true });
   } catch (err: unknown) {
     log('Error deleting integration:', err);
-    return res.status(500).json({ error: 'Failed to delete integration' });
+    return ApiResponse.serverError(res, 'Internal Server Error', 'Failed to delete integration');
   }
 });
 

@@ -10,6 +10,7 @@ import {
   UpdatePersonaRouteSchema,
 } from '../../validation/schemas/personasSchema';
 import { validateRequest } from '../../validation/validateRequest';
+import { ApiResponse } from '../../utils/apiResponse';
 
 const router = Router();
 const logger = createLogger('personasRouter');
@@ -71,7 +72,7 @@ router.put('/reorder', validateRequest(ReorderSchema), (req, res) => {
     }
     fsModule.writeFileSync(orderFilePath, JSON.stringify(ids, null, 2));
 
-    return res.json({ success: true, message: 'Persona order updated' });
+    return ApiResponse.success(res, undefined, 'Persona order updated');
   } catch (error: unknown) {
     logger.error(
       'Failed to reorder personas',
