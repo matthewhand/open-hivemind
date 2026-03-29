@@ -353,7 +353,6 @@ const DataTable = <T extends Record<string, any>>({
             <input
               type="text"
               placeholder="Search..."
-              aria-label="Search table data"
               role="searchbox"
               className="input input-bordered input-sm w-full max-w-xs"
               value={searchTerm}
