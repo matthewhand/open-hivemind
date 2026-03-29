@@ -6,7 +6,7 @@
  */
 
 import 'reflect-metadata';
-import { container, Lifecycle } from 'tsyringe';
+import { container } from 'tsyringe';
 import Logger from '../common/logger';
 import { BotConfigurationManager } from '../config/BotConfigurationManager';
 // Import implementations
@@ -48,24 +48,6 @@ export function registerServices(): void {
   logger.debug('Registering SecureConfigManager');
   container.register(TOKENS.SecureConfigManager, {
     useValue: SecureConfigManager.getInstance(),
-  });
-
-  logger.warn(
-    'BotConfigurationManager is being registered a second time (useClass); this will override the useValue registration above'
-  );
-  container.register(
-    TOKENS.BotConfigurationManager,
-    {
-      useClass: BotConfigurationManager,
-    },
-    { lifecycle: Lifecycle.Singleton }
-  );
-
-  logger.warn(
-    'UserConfigStore is being registered a second time; this will override the first registration'
-  );
-  container.register(TOKENS.UserConfigStore, {
-    useValue: UserConfigStore.getInstance(),
   });
 
   logger.debug('Registering ProviderConfigManager');
