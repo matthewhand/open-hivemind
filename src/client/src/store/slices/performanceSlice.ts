@@ -279,19 +279,33 @@ export const selectPerformanceSummary = (state: { performance: PerformanceState 
   const metrics = state.performance.currentMetrics;
   const alerts = state.performance.alerts;
   
-  const responseTimeMetric = metrics.find(m => m.category === 'response_time');
-  const memoryMetric = metrics.find(m => m.category === 'memory');
-  const cpuMetric = metrics.find(m => m.category === 'cpu');
-  const errorRateMetric = metrics.find(m => m.category === 'network');
+  // ⚡ Bolt Optimization: Use a single O(N) pass to find all metrics instead of 4 separate O(N) find calls
+  let responseTimeMetric, memoryMetric, cpuMetric, errorRateMetric;
+  for (let i = 0; i < metrics.length; i++) {
+    const m = metrics[i];
+    if (m.category === 'response_time' && !responseTimeMetric) responseTimeMetric = m;
+    else if (m.category === 'memory' && !memoryMetric) memoryMetric = m;
+    else if (m.category === 'cpu' && !cpuMetric) cpuMetric = m;
+    else if (m.category === 'network' && !errorRateMetric) errorRateMetric = m;
+  }
+
+  // ⚡ Bolt Optimization: Use a single O(N) pass to count specific alert types instead of 2 separate O(N) filter calls
+  let errorAlertCount = 0;
+  let criticalAlertCount = 0;
+  for (let i = 0; i < alerts.length; i++) {
+    const a = alerts[i];
+    if (a.type === 'error') errorAlertCount++;
+    if (a.type === 'critical') criticalAlertCount++;
+  }
   
   return {
-    isHealthy: alerts.filter(a => a.type === 'error').length === 0,
+    isHealthy: errorAlertCount === 0,
     responseTime: responseTimeMetric?.value || 0,
     memoryUsage: memoryMetric?.value || 0,
     cpuUsage: cpuMetric?.value || 0,
     errorRate: errorRateMetric?.value || 0,
     alertCount: alerts.length,
-    criticalAlertCount: alerts.filter(a => a.type === 'critical').length,
+    criticalAlertCount: criticalAlertCount,
   };
 };
 
