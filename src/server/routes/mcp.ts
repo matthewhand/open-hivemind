@@ -5,6 +5,7 @@ import { Router } from 'express';
 import type { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import type { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';
 import { ErrorUtils } from '@src/types/errors';
+import { authenticate, requireAdmin } from '../../auth/middleware';
 import MCPProviderManager from '../../config/MCPProviderManager';
 import type { MCPProviderConfig } from '../../types/mcp';
 import {
@@ -19,6 +20,9 @@ import { validateRequest } from '../../validation/validateRequest';
 
 const debug = Debug('app:webui:mcp');
 const router = Router();
+
+// Secure all MCP routes - only admins can manage MCP servers
+router.use(authenticate, requireAdmin);
 
 // Initialize MCP Provider Manager (using singleton instance)
 const mcpProviderManager = MCPProviderManager;
