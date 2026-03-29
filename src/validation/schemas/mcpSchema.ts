@@ -34,13 +34,11 @@ export const MCPProviderIdParamSchema = z.object({
 
 /** Schema for POST /api/mcp/providers — create new MCP provider */
 export const CreateMCPProviderSchema = z.object({
-  body: z
-    .object({
-      id: z.string().min(1, { message: 'Provider ID is required' }),
-      name: z.string().min(1, { message: 'Provider name is required' }),
-      type: z.string().min(1, { message: 'Provider type is required' }),
-    })
-    .passthrough(),
+  body: z.object({
+    id: z.string().min(1, { message: 'Provider ID is required' }),
+    name: z.string().min(1, { message: 'Provider name is required' }),
+    type: z.string().min(1, { message: 'Provider type is required' }),
+  }),
 });
 
 /** Schema for PUT /api/mcp/providers/:id — update MCP provider */
@@ -48,7 +46,7 @@ export const UpdateMCPProviderSchema = z.object({
   params: z.object({
     id: z.string().min(1, { message: 'Provider ID is required' }),
   }),
-  body: z.object({}).passthrough(),
+  body: CreateMCPProviderSchema.shape.body.partial(),
 });
 
 /** Schema for POST /api/mcp/tools/history — save tool execution history */

@@ -95,20 +95,18 @@ export const UpdateGuardProfileSchema = z.object({
   params: z.object({
     id: z.string().min(1, { message: 'Profile ID is required' }),
   }),
-  body: z
-    .object({
-      name: z
-        .string()
-        .min(1, { message: 'Name is required and must be a string' })
-        .max(255, { message: 'Name must be 255 characters or fewer' })
-        .regex(/^[a-zA-Z0-9\s\-_.()]+$/, {
-          message: 'Name can only contain letters, numbers, spaces, hyphens, underscores, periods, and parentheses',
-        })
-        .optional(),
-      description: z.string().optional(),
-      guards: guardsObject.partial().optional(),
-    })
-    .passthrough(),
+  body: z.object({
+    name: z
+      .string()
+      .min(1, { message: 'Name is required and must be a string' })
+      .max(255, { message: 'Name must be 255 characters or fewer' })
+      .regex(/^[a-zA-Z0-9\s\-_.()]+$/, {
+        message: 'Name can only contain letters, numbers, spaces, hyphens, underscores, periods, and parentheses',
+      })
+      .optional(),
+    description: z.string().optional(),
+    guards: guardsObject.partial().optional(),
+  }),
 });
 
 /** Schema for GET/DELETE /:id — param-only routes */
