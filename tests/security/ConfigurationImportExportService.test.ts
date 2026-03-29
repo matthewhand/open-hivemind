@@ -1,11 +1,6 @@
 <<<<<<< HEAD
-<<<<<<< HEAD
-import path from 'path';
-=======
 import * as path from 'path';
->>>>>>> af29c671d (🔒 fix: path traversal hardening for backups and templates (final v2))
 =======
-import * as path from 'path';
 >>>>>>> af29c671d (🔒 fix: path traversal hardening for backups and templates (final v2))
 import { ConfigurationImportExportService } from '../../src/server/services/ConfigurationImportExportService';
 
