@@ -10,6 +10,7 @@ import DemoModeService from '../../services/DemoModeService';
 import { ErrorUtils } from '../../types/errors';
 import { ChatGenerateSchema, EmptySchema } from '../../validation/schemas/miscSchema';
 import { validateRequest } from '../../validation/validateRequest';
+import { HTTP_STATUS } from '../../types/constants';
 
 const router = Router();
 
@@ -69,19 +70,19 @@ router.post('/chat', validateRequest(ChatGenerateSchema), (req, res) => {
     const { message, botName, channelId, userId, userName } = req.body;
 
     if (!message) {
-      res.status(400).json({ error: 'message is required' });
+      res.status(HTTP_STATUS.BAD_REQUEST).json({ error: 'message is required' });
       return;
     }
 
     if (!botName) {
-      res.status(400).json({ error: 'botName is required' });
+      res.status(HTTP_STATUS.BAD_REQUEST).json({ error: 'botName is required' });
       return;
     }
 
     const demoService = container.resolve(DemoModeService);
 
     if (!demoService.isInDemoMode()) {
-      res.status(400).json({
+      res.status(HTTP_STATUS.BAD_REQUEST).json({
         error: 'Demo mode is not active. Configure credentials to use real services.',
         code: 'DEMO_MODE_INACTIVE',
       });

@@ -7,6 +7,7 @@ import {
   UpdatePersonaSchema,
 } from '../../../validation/schemas/adminSchema';
 import { validateRequest } from '../../../validation/validateRequest';
+import { HTTP_STATUS } from '../../../types/constants';
 
 const router = Router();
 
@@ -54,7 +55,7 @@ router.get('/personas', (req: Request, res: Response) => {
     });
   } catch (error: unknown) {
     const hivemindError = ErrorUtils.toHivemindError(error);
-    return res.status(500).json({
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
       error: 'Failed to retrieve personas',
       message: hivemindError.message || 'An error occurred while retrieving personas',
     });
@@ -95,7 +96,7 @@ router.post('/personas', validateRequest(PersonaSchema), (req: Request, res: Res
     });
   } catch (error: unknown) {
     const hivemindError = ErrorUtils.toHivemindError(error);
-    return res.status(500).json({
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
       error: 'Failed to create persona',
       message: hivemindError.message || 'An error occurred while creating persona',
     });
@@ -120,7 +121,7 @@ router.put(
       });
     } catch (error: unknown) {
       const hivemindError = ErrorUtils.toHivemindError(error);
-      return res.status(500).json({
+      return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
         error: 'Failed to update persona',
         message: hivemindError.message || 'An error occurred while updating persona',
       });
@@ -145,7 +146,7 @@ router.delete(
       });
     } catch (error: unknown) {
       const hivemindError = ErrorUtils.toHivemindError(error);
-      return res.status(500).json({
+      return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
         error: 'Failed to delete persona',
         message: hivemindError.message || 'An error occurred while deleting persona',
       });

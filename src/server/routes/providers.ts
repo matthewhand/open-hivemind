@@ -1,5 +1,6 @@
 import { Router, type Request, type Response } from 'express';
 import { providerRegistry } from '../../registries/ProviderRegistry';
+import { HTTP_STATUS } from '../../types/constants';
 
 const router = Router();
 
@@ -31,7 +32,7 @@ router.get('/memory', async (_req: Request, res: Response) => {
       providers: results,
     });
   } catch (err: unknown) {
-    return res.status(500).json({
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
       error: 'Failed to retrieve memory providers',
       message: err instanceof Error ? err.message : String(err),
     });
@@ -83,7 +84,7 @@ router.get('/tool', async (_req: Request, res: Response) => {
       providers: results,
     });
   } catch (err: unknown) {
-    return res.status(500).json({
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
       error: 'Failed to retrieve tool providers',
       message: err instanceof Error ? err.message : String(err),
     });

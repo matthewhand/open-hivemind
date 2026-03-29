@@ -17,6 +17,7 @@ import {
   UpdateMCPProviderSchema,
 } from '../../validation/schemas/mcpSchema';
 import { validateRequest } from '../../validation/validateRequest';
+import { HTTP_STATUS } from '../../types/constants';
 
 const debug = Debug('app:webui:mcp');
 const router = Router();
@@ -203,7 +204,7 @@ router.post('/servers', validateRequest(AddMCPServerSchema), async (req, res) =>
     // Check if server already exists
     const existingServer = servers.find((s) => s.name === name);
     if (existingServer) {
-      return res.status(200).json({ server: existingServer });
+      return res.status(HTTP_STATUS.OK).json({ server: existingServer });
     }
 
     const newServer: MCPServer = {
@@ -249,11 +250,11 @@ router.post(
       const server = servers.find((s) => s.name === name);
 
       if (!server) {
-        return res.status(404).json({ error: 'MCP server not found' });
+        return res.status(HTTP_STATUS.NOT_FOUND).json({ error: 'MCP server not found' });
       }
 
       if (connectedClients.has(name)) {
-        return res.status(400).json({ error: 'MCP server already connected' });
+        return res.status(HTTP_STATUS.BAD_REQUEST).json({ error: 'MCP server already connected' });
       }
 
       try {
@@ -278,7 +279,7 @@ router.post(
         };
         await saveMCPServers(servers);
 
-        return res.status(500).json({ error: `Failed to connect to MCP server: ${error}` });
+        return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: `Failed to connect to MCP server: ${error}` });
       }
     } catch (error: unknown) {
       const hivemindError = ErrorUtils.toHivemindError(error) as any;
@@ -358,7 +359,7 @@ router.delete('/servers/:name', validateRequest(MCPServerNameParamSchema), async
     const filteredServers = servers.filter((s) => s.name !== name);
 
     if (filteredServers.length === servers.length) {
-      return res.status(404).json({ error: 'MCP server not found' });
+      return res.status(HTTP_STATUS.NOT_FOUND).json({ error: 'MCP server not found' });
     }
 
     await saveMCPServers(filteredServers);
@@ -391,7 +392,7 @@ router.get('/servers/:name/tools', validateRequest(MCPServerNameParamSchema), as
 
     const mcpClient = connectedClients.get(name);
     if (!mcpClient) {
-      return res.status(404).json({ error: 'MCP server not connected' });
+      return res.status(HTTP_STATUS.NOT_FOUND).json({ error: 'MCP server not connected' });
     }
 
     const toolsResponse = await mcpClient.client.listTools();
@@ -429,7 +430,7 @@ router.post('/servers/:name/call-tool', validateRequest(CallMCPToolSchema), asyn
 
     const mcpClient = connectedClients.get(name);
     if (!mcpClient) {
-      return res.status(404).json({ error: 'MCP server not connected' });
+      return res.status(HTTP_STATUS.NOT_FOUND).json({ error: 'MCP server not connected' });
     }
 
     const result = await mcpClient.client.callTool({
@@ -535,7 +536,7 @@ router.get('/providers/:id', validateRequest(MCPProviderIdParamSchema), async (r
     const provider = mcpProviderManager.getProvider(id);
 
     if (!provider) {
-      return res.status(404).json({
+      return res.status(HTTP_STATUS.NOT_FOUND).json({
         success: false,
         error: 'MCP provider not found',
       });
@@ -578,7 +579,7 @@ router.post('/providers', validateRequest(CreateMCPProviderSchema), async (req, 
     // Idempotency check: return existing if it exists by ID
     const existingProvider = mcpProviderManager.getProvider(providerConfig.id);
     if (existingProvider) {
-      return res.status(200).json({
+      return res.status(HTTP_STATUS.OK).json({
         success: true,
         data: existingProvider,
         message: 'Provider already exists',
@@ -588,7 +589,7 @@ router.post('/providers', validateRequest(CreateMCPProviderSchema), async (req, 
     // Validate configuration
     const validation = mcpProviderManager.validateProviderConfig(providerConfig);
     if (!validation.isValid) {
-      return res.status(400).json({
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({
         success: false,
         error: 'Invalid MCP provider configuration',
         details: validation.errors,
@@ -597,7 +598,7 @@ router.post('/providers', validateRequest(CreateMCPProviderSchema), async (req, 
 
     await mcpProviderManager.addProvider(providerConfig);
 
-    return res.status(201).json({
+    return res.status(HTTP_STATUS.CREATED).json({
       success: true,
       data: providerConfig,
       warnings: validation.warnings,
@@ -632,7 +633,7 @@ router.put('/providers/:id', validateRequest(UpdateMCPProviderSchema), async (re
     // Validate updates
     const existingProvider = mcpProviderManager.getProvider(id);
     if (!existingProvider) {
-      return res.status(404).json({
+      return res.status(HTTP_STATUS.NOT_FOUND).json({
         success: false,
         error: 'MCP provider not found',
       });
@@ -642,7 +643,7 @@ router.put('/providers/:id', validateRequest(UpdateMCPProviderSchema), async (re
     const validation = mcpProviderManager.validateProviderConfig(updatedConfig);
 
     if (!validation.isValid) {
-      return res.status(400).json({
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({
         success: false,
         error: 'Invalid MCP provider configuration',
         details: validation.errors,
@@ -684,7 +685,7 @@ router.delete('/providers/:id', validateRequest(MCPProviderIdParamSchema), async
 
     const provider = mcpProviderManager.getProvider(id);
     if (!provider) {
-      return res.status(200).json({
+      return res.status(HTTP_STATUS.OK).json({
         success: true,
         message: 'MCP provider already deleted or not found',
       });
@@ -723,7 +724,7 @@ router.post('/providers/:id/start', validateRequest(MCPProviderIdParamSchema), a
 
     const provider = mcpProviderManager.getProvider(id);
     if (!provider) {
-      return res.status(404).json({
+      return res.status(HTTP_STATUS.NOT_FOUND).json({
         success: false,
         error: 'MCP provider not found',
       });
@@ -762,7 +763,7 @@ router.post('/providers/:id/stop', validateRequest(MCPProviderIdParamSchema), as
 
     const provider = mcpProviderManager.getProvider(id);
     if (!provider) {
-      return res.status(404).json({
+      return res.status(HTTP_STATUS.NOT_FOUND).json({
         success: false,
         error: 'MCP provider not found',
       });
@@ -801,7 +802,7 @@ router.post('/providers/:id/test', validateRequest(MCPProviderIdParamSchema), as
 
     const provider = mcpProviderManager.getProvider(id);
     if (!provider) {
-      return res.status(404).json({
+      return res.status(HTTP_STATUS.NOT_FOUND).json({
         success: false,
         error: 'MCP provider not found',
       });

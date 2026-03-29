@@ -13,6 +13,7 @@ import {
   UpdateAgentSchema,
 } from '../../validation/schemas/agentsSchema';
 import { validateRequest } from '../../validation/validateRequest';
+import { HTTP_STATUS } from '../../types/constants';
 
 const debug = Debug('app:webui:agents');
 const router = Router();
@@ -183,7 +184,7 @@ router.post('/', validateRequest(CreateAgentSchema), async (req, res) => {
     // Idempotency check: return existing agent with same name
     const existingAgent = agents.find((a) => a.name === agentData.name);
     if (existingAgent) {
-      return res.status(200).json({ agent: existingAgent });
+      return res.status(HTTP_STATUS.OK).json({ agent: existingAgent });
     }
 
     const newAgent: AgentConfig = {
@@ -227,7 +228,7 @@ router.put('/:id', validateRequest(UpdateAgentSchema), async (req, res) => {
     const agentIndex = agents.findIndex((agent) => agent.id === id);
 
     if (agentIndex === -1) {
-      return res.status(404).json({ error: 'Agent not found' });
+      return res.status(HTTP_STATUS.NOT_FOUND).json({ error: 'Agent not found' });
     }
 
     agents[agentIndex] = { ...agents[agentIndex], ...updates };
@@ -263,7 +264,7 @@ router.delete('/:id', validateRequest(AgentIdParamSchema), async (req, res) => {
     const filteredAgents = agents.filter((agent) => agent.id !== id);
 
     if (filteredAgents.length === agents.length) {
-      return res.status(404).json({ error: 'Agent not found' });
+      return res.status(HTTP_STATUS.NOT_FOUND).json({ error: 'Agent not found' });
     }
 
     await saveJsonConfig(AGENTS_CONFIG_FILE, filteredAgents);
@@ -344,7 +345,7 @@ router.post('/personas', validateRequest(CreateAgentPersonaSchema), async (req, 
     // Check if persona already exists
     const existingPersona = personas.find((p) => p.key === key);
     if (existingPersona) {
-      return res.status(200).json({ persona: existingPersona });
+      return res.status(HTTP_STATUS.OK).json({ persona: existingPersona });
     }
 
     const newPersona: Persona = { key, name, systemPrompt };
@@ -383,7 +384,7 @@ router.put('/personas/:key', validateRequest(UpdateAgentPersonaSchema), async (r
     const personaIndex = personas.findIndex((p) => p.key === key);
 
     if (personaIndex === -1) {
-      return res.status(404).json({ error: 'Persona not found' });
+      return res.status(HTTP_STATUS.NOT_FOUND).json({ error: 'Persona not found' });
     }
 
     personas[personaIndex] = { key, name, systemPrompt };
@@ -416,14 +417,14 @@ router.delete('/personas/:key', validateRequest(AgentPersonaKeyParamSchema), asy
     const { key } = req.params;
 
     if (key === 'default') {
-      return res.status(400).json({ error: 'Cannot delete default persona' });
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({ error: 'Cannot delete default persona' });
     }
 
     const personas = await loadJsonConfig<Persona[]>(PERSONAS_CONFIG_FILE, []);
     const filteredPersonas = personas.filter((p) => p.key !== key);
 
     if (filteredPersonas.length === personas.length) {
-      return res.status(404).json({ error: 'Persona not found' });
+      return res.status(HTTP_STATUS.NOT_FOUND).json({ error: 'Persona not found' });
     }
 
     await saveJsonConfig(PERSONAS_CONFIG_FILE, filteredPersonas);

@@ -14,6 +14,7 @@ import {
   UpdateGuardProfileSchema,
 } from '../../validation/schemas/guardProfilesSchema';
 import { validateRequest } from '../../validation/validateRequest';
+import { HTTP_STATUS } from '../../types/constants';
 
 const router = Router();
 
@@ -34,7 +35,7 @@ router.get('/', (req: Request, res: Response) => {
       data: profiles,
     });
   } catch (error: unknown) {
-    return res.status(500).json({
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
       success: false,
       error: 'Failed to load guardrail profiles',
       message: error instanceof Error ? error.message : String(error),
@@ -50,7 +51,7 @@ router.get('/:id', validateRequest(GuardProfileIdParamSchema), (req: Request, re
     const profile = profiles.find((p) => p.id === id);
 
     if (!profile) {
-      return res.status(404).json({
+      return res.status(HTTP_STATUS.NOT_FOUND).json({
         success: false,
         error: 'Profile not found',
       });
@@ -61,7 +62,7 @@ router.get('/:id', validateRequest(GuardProfileIdParamSchema), (req: Request, re
       data: profile,
     });
   } catch (error: unknown) {
-    return res.status(500).json({
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
       success: false,
       error: 'Failed to retrieve profile',
       message: error instanceof Error ? error.message : String(error),
@@ -102,7 +103,7 @@ router.post('/', validateRequest(CreateGuardProfileSchema), (req: Request, res: 
     // Idempotency check: see if profile with same name already exists
     const existingProfile = profiles.find((p) => p.name === name);
     if (existingProfile) {
-      return res.status(200).json({
+      return res.status(HTTP_STATUS.OK).json({
         success: true,
         data: existingProfile,
         message: 'Guard profile already exists',
@@ -156,13 +157,13 @@ router.post('/', validateRequest(CreateGuardProfileSchema), (req: Request, res: 
     profiles.push(newProfile);
     saveGuardrailProfiles(profiles);
 
-    return res.status(201).json({
+    return res.status(HTTP_STATUS.CREATED).json({
       success: true,
       data: newProfile,
       message: 'Guard profile created successfully',
     });
   } catch (error: unknown) {
-    return res.status(500).json({
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
       success: false,
       error: 'Failed to create guard profile',
       message: error instanceof Error ? error.message : String(error),
@@ -180,7 +181,7 @@ router.put('/:id', validateRequest(UpdateGuardProfileSchema), (req: Request, res
     const profileIndex = profiles.findIndex((p) => p.id === id);
 
     if (profileIndex === -1) {
-      return res.status(404).json({
+      return res.status(HTTP_STATUS.NOT_FOUND).json({
         success: false,
         error: 'Profile not found',
       });
@@ -230,7 +231,7 @@ router.put('/:id', validateRequest(UpdateGuardProfileSchema), (req: Request, res
       message: 'Guard profile updated successfully',
     });
   } catch (error: unknown) {
-    return res.status(500).json({
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
       success: false,
       error: 'Failed to update guard profile',
       message: error instanceof Error ? error.message : String(error),
@@ -246,7 +247,7 @@ router.delete('/:id', validateRequest(GuardProfileIdParamSchema), (req: Request,
     const profileExists = profiles.some((p) => p.id === id);
 
     if (!profileExists) {
-      return res.status(200).json({
+      return res.status(HTTP_STATUS.OK).json({
         success: true,
         message: 'Guard profile already deleted or not found',
       });
@@ -260,7 +261,7 @@ router.delete('/:id', validateRequest(GuardProfileIdParamSchema), (req: Request,
       message: 'Guard profile deleted successfully',
     });
   } catch (error: unknown) {
-    return res.status(500).json({
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
       success: false,
       error: 'Failed to delete guard profile',
       message: error instanceof Error ? error.message : String(error),
@@ -293,7 +294,7 @@ router.post(
         },
       });
     } catch (error: unknown) {
-      return res.status(500).json({
+      return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
         success: false,
         error: 'Failed to delete guard profiles',
         message: error instanceof Error ? error.message : String(error),
@@ -349,7 +350,7 @@ router.post(
         },
       });
     } catch (error: unknown) {
-      return res.status(500).json({
+      return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
         success: false,
         error: 'Failed to toggle guard profiles',
         message: error instanceof Error ? error.message : String(error),

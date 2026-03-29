@@ -34,6 +34,7 @@ import personasRouter from './routes/personas';
 import sitemapRouter from './routes/sitemap';
 import specsRouter from './routes/specs';
 import webhookEventsRouter from './routes/webhookEvents';
+import { HTTP_STATUS } from '../types/constants';
 
 const debug = Debug('app:webui:server');
 const serverLog = Logger.withContext('webui:server');
@@ -147,14 +148,14 @@ export class WebUIServer {
         if (isParseError && req.path?.startsWith('/health/api-endpoints')) {
           const method = req.method.toUpperCase();
           if (method === 'PUT') {
-            return res.status(404).json({
+            return res.status(HTTP_STATUS.NOT_FOUND).json({
               error: 'Failed to update endpoint',
               message: 'Endpoint not found or payload invalid',
               timestamp: new Date().toISOString(),
             });
           }
 
-          return res.status(400).json({
+          return res.status(HTTP_STATUS.BAD_REQUEST).json({
             error: 'Invalid JSON payload',
             message: 'Request body could not be parsed',
             timestamp: new Date().toISOString(),
@@ -238,7 +239,7 @@ export class WebUIServer {
 
     // Catch-all for undefined routes
     this.app.use('*', (req, res) => {
-      res.status(404).json({
+      res.status(HTTP_STATUS.NOT_FOUND).json({
         error: 'Not Found',
         message: `Route ${req.originalUrl} not found`,
         timestamp: new Date().toISOString(),
@@ -345,7 +346,7 @@ export async function createServer(): Promise<express.Application> {
   // Backward-compatible test route shape expected by legacy integration tests.
   app.get('/api/health', (_req, res) => {
     const memoryUsage = process.memoryUsage();
-    res.status(200).json({
+    res.status(HTTP_STATUS.OK).json({
       status: 'healthy',
       timestamp: new Date().toISOString(),
       version: '1.0.0',
@@ -364,7 +365,7 @@ export async function createServer(): Promise<express.Application> {
   });
 
   app.get('/api/health/detailed', (_req, res) => {
-    res.status(200).json({
+    res.status(HTTP_STATUS.OK).json({
       status: 'healthy',
       checks: {
         database: { status: 'healthy' },

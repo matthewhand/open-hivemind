@@ -30,6 +30,7 @@ import { ConfigUpdateSchema } from '../../validation/schemas/configSchema';
 import { ApiResponse } from '../utils/apiResponse';
 import { validateRequest } from '../../validation/validateRequest';
 import { auditMiddleware, logConfigChange, type AuditedRequest } from '../middleware/audit';
+import { HTTP_STATUS } from '../../types/constants';
 
 /**
  * Validates that a config name is safe to use in file paths.
@@ -334,7 +335,7 @@ router.get('/sources', async (req, res) => {
     return res.json(ApiResponse.success({ envVars, configFiles, count: configFiles.length }));
   } catch (error: any) {
     const hivemindError = ErrorUtils.toHivemindError(error);
-    return res.status(500).json(ApiResponse.error((hivemindError as any).message, 'CONFIG_SOURCES_ERROR', 500));
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json(ApiResponse.error((hivemindError as any).message, 'CONFIG_SOURCES_ERROR', 500));
   }
 });
 
@@ -366,12 +367,12 @@ router.post('/llm-profiles', validateRequest(CreateLlmProfileSchema), (req, res)
 
     const modelType = newProfile.modelType || 'chat';
     if (!['chat', 'embedding', 'both'].includes(modelType)) {
-      return res.status(400).json(ApiResponse.error(`Invalid modelType '${modelType}'. Must be one of: chat, embedding, both`, 'INVALID_REQUEST', 400));
+      return res.status(HTTP_STATUS.BAD_REQUEST).json(ApiResponse.error(`Invalid modelType '${modelType}'. Must be one of: chat, embedding, both`, 'INVALID_REQUEST', 400));
     }
 
     const profiles = getLlmProfiles();
     if (profiles.llm.find((p) => p.key.toLowerCase() === newProfile.key.toLowerCase())) {
-      return res.status(409).json(ApiResponse.error(`LLM profile with key '${newProfile.key}' already exists`, 'CONFLICT', 409));
+      return res.status(HTTP_STATUS.CONFLICT).json(ApiResponse.error(`LLM profile with key '${newProfile.key}' already exists`, 'CONFLICT', 409));
     }
 
     const sanitizedProfile = {
@@ -382,7 +383,7 @@ router.post('/llm-profiles', validateRequest(CreateLlmProfileSchema), (req, res)
     profiles.llm.push(sanitizedProfile);
     saveLlmProfiles(profiles);
 
-    return res.status(201).json(ApiResponse.success({ profile: sanitizedProfile }));
+    return res.status(HTTP_STATUS.CREATED).json(ApiResponse.success({ profile: sanitizedProfile }));
   } catch (error: any) {
     const hivemindError = ErrorUtils.toHivemindError(error);
     return res.status((hivemindError as any).statusCode || 500).json(ApiResponse.error((hivemindError as any).message, 'LLM_PROFILE_CREATE_ERROR', (hivemindError as any).statusCode || 500));
@@ -400,7 +401,7 @@ router.put('/llm-profiles/:key', validateRequest(UpdateLlmProfileSchema), (req, 
     const index = profiles.llm.findIndex((p) => p.key.toLowerCase() === normalizedKey);
 
     if (index === -1) {
-      return res.status(404).json(ApiResponse.error(`LLM profile with key '${key}' not found`, undefined, 404));
+      return res.status(HTTP_STATUS.NOT_FOUND).json(ApiResponse.error(`LLM profile with key '${key}' not found`, undefined, 404));
     }
 
     const updatedProfile = {
@@ -428,7 +429,7 @@ router.delete('/llm-profiles/:key', validateRequest(LlmProfileKeyParamSchema), (
     );
 
     if (index === -1) {
-      return res.status(404).json(ApiResponse.error(`LLM profile with key '${key}' not found`, undefined, 404));
+      return res.status(HTTP_STATUS.NOT_FOUND).json(ApiResponse.error(`LLM profile with key '${key}' not found`, undefined, 404));
     }
 
     const [deletedProfile] = profiles.llm.splice(index, 1);
@@ -552,7 +553,7 @@ router.put('/global', validateRequest(ConfigUpdateSchema), async (req, res) => {
     const { configName, updates, ...directUpdates } = req.body;
 
     if (configName && !isValidConfigName(configName)) {
-      return res.status(400).json(ApiResponse.error('Invalid config name', undefined, 400));
+      return res.status(HTTP_STATUS.BAD_REQUEST).json(ApiResponse.error('Invalid config name', undefined, 400));
     }
 
     if (!configName) {
@@ -587,7 +588,7 @@ router.put('/global', validateRequest(ConfigUpdateSchema), async (req, res) => {
         createdNew = true;
       } else {
         // Updated error message to use schemaSources keys
-        return res.status(400).json(ApiResponse.error(`Invalid configName '${configName}'. Must be existing or match 'type-name' pattern. Valid types: ${Object.keys(schemaSources).join(', ')}`, undefined, 400));
+        return res.status(HTTP_STATUS.BAD_REQUEST).json(ApiResponse.error(`Invalid configName '${configName}'. Must be existing or match 'type-name' pattern. Valid types: ${Object.keys(schemaSources).join(', ')}`, undefined, 400));
       }
     }
 
@@ -611,7 +612,7 @@ router.put('/global', validateRequest(ConfigUpdateSchema), async (req, res) => {
 
     // Security: Ensure the target path is within the config directory
     if (!isPathWithinAllowed(targetPath, configDir)) {
-      return res.status(400).json(ApiResponse.error('Invalid config path', undefined, 400));
+      return res.status(HTTP_STATUS.BAD_REQUEST).json(ApiResponse.error('Invalid config path', undefined, 400));
     }
 
     // Read existing file if not creating new
@@ -670,13 +671,13 @@ router.post('/message-profiles', validateRequest(CreateMessageProfileSchema), (r
 
     // Check if key already exists
     if (profiles.message.find((p) => p.key === newProfile.key)) {
-      return res.status(409).json(ApiResponse.error(`Message profile with key '${newProfile.key}' already exists`, 'CONFLICT', 409));
+      return res.status(HTTP_STATUS.CONFLICT).json(ApiResponse.error(`Message profile with key '${newProfile.key}' already exists`, 'CONFLICT', 409));
     }
 
     profiles.message.push(newProfile);
     saveMessageProfiles(profiles);
 
-    return res.status(201).json(ApiResponse.success({ profile: newProfile }));
+    return res.status(HTTP_STATUS.CREATED).json(ApiResponse.success({ profile: newProfile }));
   } catch (error: any) {
     const hivemindError = ErrorUtils.toHivemindError(error);
     return res.status((hivemindError as any).statusCode || 500).json(ApiResponse.error((hivemindError as any).message, 'MESSAGE_PROFILES_CREATE_ERROR', (hivemindError as any).statusCode || 500));
@@ -704,10 +705,10 @@ router.post('/memory-profiles', validateRequest(CreateMemoryProfileSchema), (req
     const newProfile = req.body;
     const profiles = memoryProfilesModule.getMemoryProfiles();
     if (profiles.memory.find((p: any) => p.key === newProfile.key))
-      return res.status(409).json(ApiResponse.error(`Memory profile with key '${newProfile.key}' already exists`, 'CONFLICT', 409));
+      return res.status(HTTP_STATUS.CONFLICT).json(ApiResponse.error(`Memory profile with key '${newProfile.key}' already exists`, 'CONFLICT', 409));
     profiles.memory.push(newProfile);
     memoryProfilesModule.saveMemoryProfiles(profiles);
-    return res.status(201).json(ApiResponse.success({ profile: newProfile }));
+    return res.status(HTTP_STATUS.CREATED).json(ApiResponse.success({ profile: newProfile }));
   } catch (error: any) {
     const hivemindError = ErrorUtils.toHivemindError(error);
     return res.status((hivemindError as any).statusCode || 500).json(ApiResponse.error((hivemindError as any).message, 'MEMORY_PROFILES_CREATE_ERROR', (hivemindError as any).statusCode || 500));
@@ -720,7 +721,7 @@ router.put('/memory-profiles/:key', validateRequest(MemoryProfileKeyParamSchema)
     const profiles = memoryProfilesModule.getMemoryProfiles();
     const index = profiles.memory.findIndex((p: any) => p.key === key);
     if (index === -1)
-      return res.status(404).json(ApiResponse.error(`Memory profile '${key}' not found`, 'NOT_FOUND', 404));
+      return res.status(HTTP_STATUS.NOT_FOUND).json(ApiResponse.error(`Memory profile '${key}' not found`, 'NOT_FOUND', 404));
     profiles.memory[index] = { ...profiles.memory[index], ...req.body, key };
     memoryProfilesModule.saveMemoryProfiles(profiles);
     return res.json(ApiResponse.success({ profile: profiles.memory[index] }));
@@ -736,7 +737,7 @@ router.delete('/memory-profiles/:key', validateRequest(MemoryProfileKeyParamSche
     const profiles = memoryProfilesModule.getMemoryProfiles();
     const index = profiles.memory.findIndex((p: any) => p.key === key);
     if (index === -1)
-      return res.status(404).json(ApiResponse.error(`Memory profile '${key}' not found`, 'NOT_FOUND', 404));
+      return res.status(HTTP_STATUS.NOT_FOUND).json(ApiResponse.error(`Memory profile '${key}' not found`, 'NOT_FOUND', 404));
     profiles.memory.splice(index, 1);
     memoryProfilesModule.saveMemoryProfiles(profiles);
     return res.json(ApiResponse.success());
@@ -763,10 +764,10 @@ router.post('/tool-profiles', validateRequest(CreateToolProfileSchema), (req, re
     const newProfile = req.body;
     const profiles = toolProfilesModule.getToolProfiles();
     if (profiles.tool.find((p: any) => p.key === newProfile.key))
-      return res.status(409).json(ApiResponse.error(`Tool profile with key '${newProfile.key}' already exists`, 'CONFLICT', 409));
+      return res.status(HTTP_STATUS.CONFLICT).json(ApiResponse.error(`Tool profile with key '${newProfile.key}' already exists`, 'CONFLICT', 409));
     profiles.tool.push(newProfile);
     toolProfilesModule.saveToolProfiles(profiles);
-    return res.status(201).json(ApiResponse.success({ profile: newProfile }));
+    return res.status(HTTP_STATUS.CREATED).json(ApiResponse.success({ profile: newProfile }));
   } catch (error: any) {
     const hivemindError = ErrorUtils.toHivemindError(error);
     return res.status((hivemindError as any).statusCode || 500).json(ApiResponse.error((hivemindError as any).message, 'TOOL_PROFILES_CREATE_ERROR', (hivemindError as any).statusCode || 500));
@@ -779,7 +780,7 @@ router.put('/tool-profiles/:key', validateRequest(ToolProfileKeyParamSchema), (r
     const profiles = toolProfilesModule.getToolProfiles();
     const index = profiles.tool.findIndex((p: any) => p.key === key);
     if (index === -1)
-      return res.status(404).json(ApiResponse.error(`Tool profile '${key}' not found`, 'NOT_FOUND', 404));
+      return res.status(HTTP_STATUS.NOT_FOUND).json(ApiResponse.error(`Tool profile '${key}' not found`, 'NOT_FOUND', 404));
     profiles.tool[index] = { ...profiles.tool[index], ...req.body, key };
     toolProfilesModule.saveToolProfiles(profiles);
     return res.json(ApiResponse.success({ profile: profiles.tool[index] }));
@@ -795,7 +796,7 @@ router.delete('/tool-profiles/:key', validateRequest(ToolProfileKeyParamSchema),
     const profiles = toolProfilesModule.getToolProfiles();
     const index = profiles.tool.findIndex((p: any) => p.key === key);
     if (index === -1)
-      return res.status(404).json(ApiResponse.error(`Tool profile '${key}' not found`, 'NOT_FOUND', 404));
+      return res.status(HTTP_STATUS.NOT_FOUND).json(ApiResponse.error(`Tool profile '${key}' not found`, 'NOT_FOUND', 404));
     profiles.tool.splice(index, 1);
     toolProfilesModule.saveToolProfiles(profiles);
     return res.json(ApiResponse.success());

@@ -6,6 +6,7 @@ import { ValidateConfigSchema } from '../../validation/schemas/miscSchema';
 import { validateRequest } from '../../validation/validateRequest';
 import { auditMiddleware, logAdminAction, type AuditedRequest } from '../middleware/audit';
 import { authenticateToken, requirePermission } from '../middleware/auth';
+import { HTTP_STATUS } from '../../types/constants';
 
 const debug = Debug('app:webui:consolidated');
 const router = Router();
@@ -69,7 +70,7 @@ router.get('/system-status', async (req, res) => {
   } catch (error) {
     debug('Error getting system status:', error);
     logAdminAction(req as AuditedRequest, 'VIEW', 'system-status', 'failure', `Error: ${error}`);
-    return res.status(500).json({
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
       success: false,
       error: 'Failed to get system status',
       message: error instanceof Error ? error.message : 'Unknown error',
@@ -141,7 +142,7 @@ router.get('/providers', async (req, res) => {
     });
   } catch (error) {
     debug('Error getting providers:', error);
-    return res.status(500).json({
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
       success: false,
       error: 'Failed to get providers',
     });
@@ -184,7 +185,7 @@ router.get('/env-status', async (req, res) => {
     return res.json({ success: true, data: envStatus });
   } catch (error) {
     debug('Error getting environment status:', error);
-    return res.status(500).json({
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
       success: false,
       error: 'Failed to get environment status',
     });
@@ -197,7 +198,7 @@ router.post('/validate-config', validateRequest(ValidateConfigSchema), async (re
     const { botConfig } = req.body;
 
     if (!botConfig) {
-      return res.status(400).json({
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({
         success: false,
         error: 'Bot configuration is required',
       });
@@ -279,7 +280,7 @@ router.post('/validate-config', validateRequest(ValidateConfigSchema), async (re
   } catch (error) {
     debug('Error validating config:', error);
     logAdminAction(req as AuditedRequest, 'VALIDATE', 'bot-config', 'failure', `Error: ${error}`);
-    return res.status(500).json({
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
       success: false,
       error: 'Failed to validate configuration',
     });
@@ -406,7 +407,7 @@ router.get('/metrics', async (req, res) => {
     return res.json({ success: true, data: metrics });
   } catch (error) {
     debug('Error getting metrics:', error);
-    return res.status(500).json({
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
       success: false,
       error: 'Failed to get metrics',
     });

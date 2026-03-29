@@ -7,6 +7,7 @@ import {
   UpdateToolUsageGuardSchema,
 } from '../../../validation/schemas/adminSchema';
 import { validateRequest } from '../../../validation/validateRequest';
+import { HTTP_STATUS } from '../../../types/constants';
 
 const router = Router();
 
@@ -68,7 +69,7 @@ router.get('/tool-usage-guards', (req: Request, res: Response) => {
     });
   } catch (error: unknown) {
     const hivemindError = ErrorUtils.toHivemindError(error);
-    return res.status(500).json({
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
       error: 'Failed to retrieve tool usage guards',
       message: hivemindError.message || 'An error occurred while retrieving tool usage guards',
     });
@@ -124,7 +125,7 @@ router.post(
       });
     } catch (error: unknown) {
       const hivemindError = ErrorUtils.toHivemindError(error);
-      return res.status(500).json({
+      return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
         error: 'Failed to create tool usage guard',
         message: hivemindError.message || 'An error occurred while creating tool usage guard',
       });
@@ -162,7 +163,7 @@ router.put(
       });
     } catch (error: unknown) {
       const hivemindError = ErrorUtils.toHivemindError(error);
-      return res.status(500).json({
+      return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
         error: 'Failed to update tool usage guard',
         message: hivemindError.message || 'An error occurred while updating tool usage guard',
       });
@@ -203,7 +204,7 @@ router.delete(
       });
     } catch (error: unknown) {
       const hivemindError = ErrorUtils.toHivemindError(error);
-      return res.status(500).json({
+      return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
         error: 'Failed to delete tool usage guard',
         message: hivemindError.message || 'An error occurred while deleting tool usage guard',
       });
@@ -230,7 +231,7 @@ router.post(
       });
     } catch (error: unknown) {
       const hivemindError = ErrorUtils.toHivemindError(error);
-      return res.status(500).json({
+      return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
         error: 'Failed to update guard status',
         message: hivemindError.message || 'An error occurred while updating guard status',
       });

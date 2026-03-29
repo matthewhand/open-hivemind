@@ -23,6 +23,7 @@ import {
   UpdateMessengerProviderSchema,
 } from '../../../validation/schemas/adminSchema';
 import { validateRequest } from '../../../validation/validateRequest';
+import { HTTP_STATUS } from '../../../types/constants';
 
 const router = Router();
 
@@ -48,7 +49,7 @@ router.get('/llm-providers', (req: Request, res: Response) => {
     });
   } catch (error: unknown) {
     const hivemindError = ErrorUtils.toHivemindError(error);
-    return res.status(500).json({
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
       error: 'Failed to retrieve LLM providers',
       message: hivemindError.message || 'An error occurred while retrieving LLM providers',
     });
@@ -114,7 +115,7 @@ router.post(
       });
     } catch (error: unknown) {
       const hivemindError = ErrorUtils.toHivemindError(error);
-      return res.status(500).json({
+      return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
         error: 'Failed to create LLM provider',
         message: hivemindError.message || 'An error occurred while creating LLM provider',
       });
@@ -156,7 +157,7 @@ router.put(
       });
     } catch (error: unknown) {
       const hivemindError = ErrorUtils.toHivemindError(error);
-      return res.status(500).json({
+      return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
         error: 'Failed to update LLM provider',
         message: hivemindError.message || 'An error occurred while updating LLM provider',
       });
@@ -199,7 +200,7 @@ router.delete(
       });
     } catch (error: unknown) {
       const hivemindError = ErrorUtils.toHivemindError(error);
-      return res.status(500).json({
+      return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
         error: 'Failed to delete LLM provider',
         message: hivemindError.message || 'An error occurred while deleting LLM provider',
       });
@@ -226,7 +227,7 @@ router.post(
         // Sync monitor endpoints
         container.resolve(ApiMonitorService).syncLlmEndpoints();
       } else {
-        return res.status(404).json({
+        return res.status(HTTP_STATUS.NOT_FOUND).json({
           error: 'Provider not found',
           message: `LLM provider with ID ${id} not found`,
         });
@@ -238,7 +239,7 @@ router.post(
       });
     } catch (error: unknown) {
       const hivemindError = ErrorUtils.toHivemindError(error);
-      return res.status(500).json({
+      return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
         error: 'Failed to update provider status',
         message: hivemindError.message || 'An error occurred while updating provider status',
       });
@@ -260,7 +261,7 @@ router.post(
       // Validate provider type
       const validProviderTypes = ['openai', 'flowise', 'openwebui', 'letta'];
       if (!validProviderTypes.includes(providerType.toLowerCase())) {
-        return res.status(400).json({
+        return res.status(HTTP_STATUS.BAD_REQUEST).json({
           error: 'Invalid provider type',
           message: `Provider type must be one of: ${validProviderTypes.join(', ')}`,
         });
@@ -277,7 +278,7 @@ router.post(
       } catch (error: unknown) {
         const hivemindError = ErrorUtils.toHivemindError(error);
         debug(`Failed to load provider plugin: ${hivemindError.message}`);
-        return res.status(400).json({
+        return res.status(HTTP_STATUS.BAD_REQUEST).json({
           error: 'Failed to load provider',
           message: `Could not load provider plugin: ${hivemindError.message}`,
         });
@@ -464,7 +465,7 @@ router.post(
       } catch (error: unknown) {
         const hivemindError = ErrorUtils.toHivemindError(error);
         debug(`Connection test error: ${hivemindError.message}`);
-        return res.status(500).json({
+        return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
           error: 'Connection test failed',
           message: hivemindError.message || 'An error occurred while testing the connection',
         });
@@ -472,7 +473,7 @@ router.post(
     } catch (error: unknown) {
       const hivemindError = ErrorUtils.toHivemindError(error);
       debug(`Unexpected error in test-connection endpoint: ${hivemindError.message}`);
-      return res.status(500).json({
+      return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
         error: 'Failed to test connection',
         message: hivemindError.message || 'An error occurred while testing connection',
       });
@@ -491,7 +492,7 @@ router.get('/messenger-providers', (req: Request, res: Response) => {
     });
   } catch (error: unknown) {
     const hivemindError = ErrorUtils.toHivemindError(error);
-    return res.status(500).json({
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
       error: 'Failed to retrieve messenger providers',
       message: hivemindError.message || 'An error occurred while retrieving messenger providers',
     });
@@ -556,7 +557,7 @@ router.post(
       });
     } catch (error: unknown) {
       const hivemindError = ErrorUtils.toHivemindError(error);
-      return res.status(500).json({
+      return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
         error: 'Failed to create messenger provider',
         message: hivemindError.message || 'An error occurred while creating messenger provider',
       });
@@ -575,7 +576,7 @@ router.put(
 
       // Validation
       if (!name || !type || !config) {
-        return res.status(400).json({
+        return res.status(HTTP_STATUS.BAD_REQUEST).json({
           error: 'Validation error',
           message: 'Name, type, and config are required',
         });
@@ -615,7 +616,7 @@ router.put(
       });
     } catch (error: unknown) {
       const hivemindError = ErrorUtils.toHivemindError(error);
-      return res.status(500).json({
+      return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
         error: 'Failed to update messenger provider',
         message: hivemindError.message || 'An error occurred while updating messenger provider',
       });
@@ -655,7 +656,7 @@ router.delete(
       });
     } catch (error: unknown) {
       const hivemindError = ErrorUtils.toHivemindError(error);
-      return res.status(500).json({
+      return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
         error: 'Failed to delete messenger provider',
         message: hivemindError.message || 'An error occurred while deleting messenger provider',
       });
@@ -679,7 +680,7 @@ router.post(
         provider.isActive = isActive;
         await webUIStorage.saveMessengerProvider(provider);
       } else {
-        return res.status(404).json({
+        return res.status(HTTP_STATUS.NOT_FOUND).json({
           error: 'Provider not found',
           message: `Messenger provider with ID ${id} not found`,
         });
@@ -691,7 +692,7 @@ router.post(
       });
     } catch (error: unknown) {
       const hivemindError = ErrorUtils.toHivemindError(error);
-      return res.status(500).json({
+      return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
         error: 'Failed to update provider status',
         message: hivemindError.message || 'An error occurred while updating provider status',
       });
@@ -710,7 +711,7 @@ router.post(
 
       // Validation
       if (!serverUrl) {
-        return res.status(400).json({
+        return res.status(HTTP_STATUS.BAD_REQUEST).json({
           error: 'Validation error',
           message: 'Server URL is required',
         });
@@ -720,7 +721,7 @@ router.post(
       try {
         new URL(serverUrl);
       } catch {
-        return res.status(400).json({
+        return res.status(HTTP_STATUS.BAD_REQUEST).json({
           error: 'Validation error',
           message: 'Server URL must be a valid URL',
         });
@@ -728,7 +729,7 @@ router.post(
 
       // Security Check: SSRF Protection
       if (!(await isSafeUrl(serverUrl))) {
-        return res.status(403).json({
+        return res.status(HTTP_STATUS.FORBIDDEN).json({
           error: 'Security Warning',
           message: 'Target URL is blocked for security reasons (private/local network access).',
         });
@@ -750,7 +751,7 @@ router.post(
       });
     } catch (error: unknown) {
       const hivemindError = ErrorUtils.toHivemindError(error);
-      return res.status(500).json({
+      return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
         error: 'Failed to connect to MCP server',
         message: hivemindError.message || 'An error occurred while connecting to MCP server',
       });
@@ -769,7 +770,7 @@ router.post(
 
       // Validation
       if (!serverUrl || !name) {
-        return res.status(400).json({
+        return res.status(HTTP_STATUS.BAD_REQUEST).json({
           error: 'Validation error',
           message: 'Server URL and name are required',
         });
@@ -779,7 +780,7 @@ router.post(
       try {
         new URL(serverUrl);
       } catch {
-        return res.status(400).json({
+        return res.status(HTTP_STATUS.BAD_REQUEST).json({
           error: 'Validation error',
           message: 'Server URL must be a valid URL',
         });
@@ -787,7 +788,7 @@ router.post(
 
       // Security Check: SSRF Protection
       if (!(await isSafeUrl(serverUrl))) {
-        return res.status(403).json({
+        return res.status(HTTP_STATUS.FORBIDDEN).json({
           error: 'Security Warning',
           message: 'Target URL is blocked for security reasons (private/local network access).',
         });
@@ -809,7 +810,7 @@ router.post(
       });
     } catch (error: unknown) {
       const hivemindError = ErrorUtils.toHivemindError(error);
-      return res.status(500).json({
+      return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
         error: 'Failed to connect to MCP server',
         message: hivemindError.message || 'An error occurred while connecting to MCP server',
       });
@@ -827,7 +828,7 @@ router.post(
 
       // Validation
       if (!name) {
-        return res.status(400).json({
+        return res.status(HTTP_STATUS.BAD_REQUEST).json({
           error: 'Validation error',
           message: 'Server name is required',
         });
@@ -842,7 +843,7 @@ router.post(
       });
     } catch (error: unknown) {
       const hivemindError = ErrorUtils.toHivemindError(error);
-      return res.status(500).json({
+      return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
         error: 'Failed to disconnect from MCP server',
         message: hivemindError.message || 'An error occurred while disconnecting from MCP server',
       });
@@ -870,7 +871,7 @@ router.delete(
       });
     } catch (error: unknown) {
       const hivemindError = ErrorUtils.toHivemindError(error);
-      return res.status(500).json({
+      return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
         error: 'Failed to delete MCP server',
         message: hivemindError.message || 'An error occurred while deleting MCP server',
       });
@@ -915,7 +916,7 @@ router.get('/mcp-servers', (req: Request, res: Response) => {
     });
   } catch (error: unknown) {
     const hivemindError = ErrorUtils.toHivemindError(error);
-    return res.status(500).json({
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
       error: 'Failed to retrieve MCP servers',
       message: hivemindError.message || 'An error occurred while retrieving MCP servers',
     });
@@ -934,7 +935,7 @@ router.get(
       const tools = mcpService.getToolsFromServer(name);
 
       if (!tools) {
-        return res.status(404).json({
+        return res.status(HTTP_STATUS.NOT_FOUND).json({
           error: 'Server not found',
           message: `MCP server ${name} not found or not connected`,
         });
@@ -947,7 +948,7 @@ router.get(
       });
     } catch (error: unknown) {
       const hivemindError = ErrorUtils.toHivemindError(error);
-      return res.status(500).json({
+      return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
         error: 'Failed to retrieve tools',
         message: hivemindError.message || 'An error occurred while retrieving tools',
       });
@@ -973,7 +974,7 @@ router.get(
       const storedConfig = storedMcps.find((mcp: any) => mcp.name === name);
 
       if (!isConnected && !storedConfig) {
-        return res.status(404).json({
+        return res.status(HTTP_STATUS.NOT_FOUND).json({
           error: 'Server not found',
           message: `MCP server ${name} not found`,
         });
@@ -995,7 +996,7 @@ router.get(
       });
     } catch (error: unknown) {
       const hivemindError = ErrorUtils.toHivemindError(error);
-      return res.status(500).json({
+      return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
         error: 'Failed to retrieve server status',
         message: hivemindError.message || 'An error occurred while retrieving server status',
       });
@@ -1017,7 +1018,7 @@ router.post(
       const storedConfig = storedMcps.find((mcp: any) => mcp.name === name);
 
       if (!storedConfig) {
-        return res.status(404).json({
+        return res.status(HTTP_STATUS.NOT_FOUND).json({
           error: 'Server not found',
           message: `MCP server ${name} not found in configuration`,
         });
@@ -1027,7 +1028,7 @@ router.post(
       try {
         new URL(storedConfig.serverUrl);
       } catch {
-        return res.status(400).json({
+        return res.status(HTTP_STATUS.BAD_REQUEST).json({
           error: 'Validation error',
           message: 'Server URL must be a valid URL',
         });
@@ -1035,7 +1036,7 @@ router.post(
 
       // Security Check: SSRF Protection
       if (!(await isSafeUrl(storedConfig.serverUrl))) {
-        return res.status(403).json({
+        return res.status(HTTP_STATUS.FORBIDDEN).json({
           error: 'Security Warning',
           message: 'Target URL is blocked for security reasons (private/local network access).',
         });
@@ -1066,7 +1067,7 @@ router.post(
       });
     } catch (error: unknown) {
       const hivemindError = ErrorUtils.toHivemindError(error);
-      return res.status(500).json({
+      return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
         error: 'Failed to restart MCP server',
         message: hivemindError.message || 'An error occurred while restarting MCP server',
       });
@@ -1083,7 +1084,7 @@ router.post(
       const { names } = req.body;
 
       if (!Array.isArray(names) || names.length === 0) {
-        return res.status(400).json({
+        return res.status(HTTP_STATUS.BAD_REQUEST).json({
           error: 'Validation error',
           message: 'At least one server name is required',
         });
@@ -1121,7 +1122,7 @@ router.post(
       });
     } catch (error: unknown) {
       const hivemindError = ErrorUtils.toHivemindError(error);
-      return res.status(500).json({
+      return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
         error: 'Failed to disconnect servers',
         message: hivemindError.message || 'An error occurred while disconnecting servers',
       });
@@ -1141,7 +1142,7 @@ router.get('/env-overrides', (req: Request, res: Response) => {
     });
   } catch (error: unknown) {
     const hivemindError = ErrorUtils.toHivemindError(error);
-    return res.status(500).json({
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
       error: 'Failed to retrieve environment variable overrides',
       message:
         hivemindError.message ||
@@ -1214,7 +1215,7 @@ router.get('/providers', (req: Request, res: Response) => {
     });
   } catch (error) {
     const hivemindError = ErrorUtils.toHivemindError(error);
-    return res.status(500).json({
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
       error: 'Failed to fetch providers',
       message: hivemindError.message || 'An error occurred while fetching providers',
     });
@@ -1243,7 +1244,7 @@ router.get('/system-info', async (req: Request, res: Response) => {
     return res.json({ systemInfo });
   } catch (error) {
     const hivemindError = ErrorUtils.toHivemindError(error);
-    return res.status(500).json({
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
       error: 'Failed to fetch system info',
       message: hivemindError.message || 'An error occurred while fetching system info',
     });
@@ -1281,7 +1282,7 @@ router.get('/llm-providers/:type/models', (req: Request, res: Response) => {
     // Validate provider type
     const supportedProviders = getSupportedProviders();
     if (!supportedProviders.includes(type.toLowerCase())) {
-      return res.status(400).json({
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({
         error: `Unsupported provider type '${type}'. Supported providers: ${supportedProviders.join(', ')}`,
         code: 'INVALID_PROVIDER_TYPE',
       });
@@ -1307,7 +1308,7 @@ router.get('/llm-providers/:type/models', (req: Request, res: Response) => {
   } catch (error: unknown) {
     const hivemindError = ErrorUtils.toHivemindError(error);
     debug('Error fetching LLM models:', hivemindError);
-    return res.status(500).json({
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
       error: 'Failed to fetch LLM models',
       message: hivemindError.message || 'An error occurred while fetching LLM models',
     });
