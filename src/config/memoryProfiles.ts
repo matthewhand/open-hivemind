@@ -16,7 +16,7 @@ const DEFAULT_MEMORY_PROFILES: MemoryProfiles = {
   memory: [],
 };
 
-export const loadMemoryProfiles = (): MemoryProfiles => {
+const loadMemoryProfiles = (): MemoryProfiles => {
   return loadProfiles<MemoryProfiles>({
     filename: 'memory-profiles.json',
     defaultData: DEFAULT_MEMORY_PROFILES,
@@ -32,13 +32,13 @@ export const loadMemoryProfiles = (): MemoryProfiles => {
   });
 };
 
-export const saveMemoryProfiles = (profiles: MemoryProfiles): void => {
+const saveMemoryProfiles = (profiles: MemoryProfiles): void => {
   saveProfiles('memory-profiles.json', profiles);
 };
 
-export const getMemoryProfileByKey = (key: string): MemoryProfile | undefined => {
+const getMemoryProfileByKey = (key: string): MemoryProfile | undefined => {
   const profiles = loadMemoryProfiles().memory;
   return findProfileByKey(profiles, 'key', key);
 };
 
-export const getMemoryProfiles = (): MemoryProfiles => loadMemoryProfiles();
+const getMemoryProfiles = (): MemoryProfiles => loadMemoryProfiles();

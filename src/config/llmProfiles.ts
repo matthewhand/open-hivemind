@@ -21,14 +21,14 @@ const DEFAULT_LLM_PROFILES: LlmProfiles = {
   llm: [],
 };
 
-export const normalizeModelType = (value: unknown): LlmModelType => {
+const normalizeModelType = (value: unknown): LlmModelType => {
   if (value === 'embedding' || value === 'both') {
     return value;
   }
   return 'chat';
 };
 
-export const isEmbeddingCapableProfile = (
+const isEmbeddingCapableProfile = (
   profile: Pick<ProviderProfile, 'modelType'> | null | undefined
 ): boolean => {
   const modelType = normalizeModelType(profile?.modelType);
@@ -57,7 +57,7 @@ const normalizeProfile = (profile: unknown): ProviderProfile | null => {
   };
 };
 
-export const loadLlmProfiles = (): LlmProfiles => {
+const loadLlmProfiles = (): LlmProfiles => {
   return loadProfiles<LlmProfiles>({
     filename: 'llm-profiles.json',
     defaultData: DEFAULT_LLM_PROFILES,
@@ -86,7 +86,7 @@ export const getLlmProfileByKey = (key: string): ProviderProfile | undefined => 
   return findProfileByKey(profiles, 'key', key);
 };
 
-export const getDefaultEmbeddingProfileKey = (): string | undefined => {
+const getDefaultEmbeddingProfileKey = (): string | undefined => {
   const generalSettings = UserConfigStore.getInstance().getGeneralSettings();
   const configuredDefault = llmConfig.get('DEFAULT_EMBEDDING_PROVIDER');
   const profileKey =
@@ -97,12 +97,12 @@ export const getDefaultEmbeddingProfileKey = (): string | undefined => {
   return typeof profileKey === 'string' && profileKey.trim() !== '' ? profileKey.trim() : undefined;
 };
 
-export const getEmbeddingProfileByKey = (key: string): ProviderProfile | undefined => {
+const getEmbeddingProfileByKey = (key: string): ProviderProfile | undefined => {
   const profile = getLlmProfileByKey(key);
   return isEmbeddingCapableProfile(profile) ? profile : undefined;
 };
 
-export const resolveEmbeddingProfileKey = (profileKey?: string): string | undefined => {
+const resolveEmbeddingProfileKey = (profileKey?: string): string | undefined => {
   const resolvedKey = profileKey?.trim() || getDefaultEmbeddingProfileKey();
   if (!resolvedKey) {
     return undefined;

@@ -7,14 +7,14 @@ export interface PermissionConfig {
   rateLimits?: Record<string, { count: number; window: number; lastReset: number }>;
 }
 
-export function isAuthorizedUser(userId: string, authorizedUsers: string[] = []): boolean {
+function isAuthorizedUser(userId: string, authorizedUsers: string[] = []): boolean {
   if (!userId || !Array.isArray(authorizedUsers) || authorizedUsers.length === 0) {
     return false;
   }
   return authorizedUsers.includes(userId);
 }
 
-export function checkCommandPermissions(
+function checkCommandPermissions(
   message: IMessage,
   command: string,
   config: PermissionConfig = {}

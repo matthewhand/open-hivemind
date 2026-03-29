@@ -36,7 +36,7 @@ interface TimerRecord {
  * // Clear all timers on shutdown
  * TimerRegistry.getInstance().clearAll();
  */
-export class TimerRegistry {
+class TimerRegistry {
   private static instance: TimerRegistry;
   private timers = new Map<string, TimerRecord>();
   private cleanupInterval: NodeJS.Timeout | null = null;

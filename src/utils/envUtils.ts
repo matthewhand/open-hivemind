@@ -7,7 +7,7 @@
  * @param value The value to redact
  * @returns Redacted value or original if too short
  */
-export function redactSensitiveValue(value: string): string {
+function redactSensitiveValue(value: string): string {
   if (!value || value.length <= 8) {
     return '*'.repeat(value?.length || 0);
   }
@@ -19,7 +19,7 @@ export function redactSensitiveValue(value: string): string {
  * @param envVarName The environment variable name to check
  * @returns Object with isOverridden flag and redacted value if overridden
  */
-export function checkEnvOverride(envVarName: string): {
+function checkEnvOverride(envVarName: string): {
   isOverridden: boolean;
   redactedValue?: string;
   rawValue?: string;

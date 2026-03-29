@@ -11,7 +11,7 @@ const debug = Debug('app:votingUtils');
  * @param userId - The ID of the user to start a ban vote for.
  * @returns A promise resolving with the result of the voting process.
  */
-export async function startVotingProcess(userId: string): Promise<{ votePassed: boolean }> {
+async function startVotingProcess(userId: string): Promise<{ votePassed: boolean }> {
   debug(`Starting voting process for user ID: ${userId}`);
   // Simulated voting process result
   return { votePassed: true };
@@ -26,7 +26,7 @@ export async function startVotingProcess(userId: string): Promise<{ votePassed: 
  * @param userId - The ID of the user to check eligibility for.
  * @returns A boolean indicating if the user is eligible.
  */
-export function checkVotingEligibility(userId: string): boolean {
+function checkVotingEligibility(userId: string): boolean {
   debug(`Checking voting eligibility for user ID: ${userId}`);
   // Simulated eligibility check
   return true;

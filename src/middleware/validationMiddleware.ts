@@ -1,7 +1,7 @@
 import type { NextFunction, Request, Response } from 'express';
 import { body, validationResult } from 'express-validator';
 
-export const validate = (req: Request, res: Response, next: NextFunction) => {
+const validate = (req: Request, res: Response, next: NextFunction) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
     return res.status(400).json({ errors: errors.array() });
@@ -10,7 +10,7 @@ export const validate = (req: Request, res: Response, next: NextFunction) => {
 };
 
 // Common validation schemas
-export const commonValidations = {
+const commonValidations = {
   // For API requests
   apiKey: () => body('apiKey').optional().isString().trim().escape(),
 

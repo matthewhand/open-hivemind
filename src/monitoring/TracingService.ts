@@ -95,7 +95,7 @@ export interface TraceExporter {
 /**
  * Console exporter for development
  */
-export class ConsoleTraceExporter implements TraceExporter {
+class ConsoleTraceExporter implements TraceExporter {
   async export(spans: TraceSpan[]): Promise<void> {
     for (const span of spans) {
       logger.info(
@@ -120,7 +120,7 @@ const DEFAULT_CONFIG: TracingConfig = {
 /**
  * TracingService - Distributed tracing for request flows
  */
-export class TracingService extends EventEmitter {
+class TracingService extends EventEmitter {
   private static instance: TracingService;
   private config: TracingConfig;
   private activeSpans: Map<string, TraceSpan> = new Map();
@@ -479,4 +479,3 @@ export class TracingService extends EventEmitter {
   }
 }
 
-export default TracingService;

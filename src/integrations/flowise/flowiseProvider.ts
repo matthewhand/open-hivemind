@@ -7,7 +7,7 @@ import type { IMessage } from '@message/interfaces/IMessage';
 
 const flowiseDebug = Debug('app:flowiseProvider');
 
-export class FlowiseProvider implements ILlmProvider {
+class FlowiseProvider implements ILlmProvider {
   name = 'flowise';
   private config: any;
 
@@ -70,4 +70,3 @@ export class FlowiseProvider implements ILlmProvider {
   }
 }
 
-export default new FlowiseProvider();

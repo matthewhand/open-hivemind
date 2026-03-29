@@ -29,7 +29,7 @@ const RETRY_CONFIG = {
  * Uses BotConfigurationManager for consistent multi-bot support across platforms
  * Includes retry logic, metrics emission, WebSocket telemetry, and health monitoring
  */
-export class MattermostService extends EventEmitter implements IMessengerService {
+class MattermostService extends EventEmitter implements IMessengerService {
   private static instance: MattermostService | undefined;
   private clients: Map<string, MattermostClient> = new Map();
   private channels: Map<string, string> = new Map();
@@ -748,4 +748,3 @@ export class MattermostService extends EventEmitter implements IMessengerService
   }
 }
 
-export default MattermostService;

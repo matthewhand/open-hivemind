@@ -49,7 +49,7 @@ const getProfilesPath = (): string => {
   return path.join(configDir, 'response-profiles.json');
 };
 
-export const loadResponseProfiles = (): ResponseProfile[] => {
+const loadResponseProfiles = (): ResponseProfile[] => {
   const filePath = getProfilesPath();
   try {
     if (!fs.existsSync(filePath)) {
@@ -91,7 +91,7 @@ export const loadResponseProfiles = (): ResponseProfile[] => {
   }
 };
 
-export const saveResponseProfiles = (profiles: ResponseProfile[]): void => {
+const saveResponseProfiles = (profiles: ResponseProfile[]): void => {
   const filePath = getProfilesPath();
   const dir = path.dirname(filePath);
   if (!fs.existsSync(dir)) {
@@ -101,14 +101,14 @@ export const saveResponseProfiles = (profiles: ResponseProfile[]): void => {
   fs.writeFileSync(filePath, JSON.stringify(profiles, null, 2));
 };
 
-export const getResponseProfileByKey = (key: string): ResponseProfile | undefined => {
+const getResponseProfileByKey = (key: string): ResponseProfile | undefined => {
   const normalized = key.trim().toLowerCase();
   return loadResponseProfiles().find(profile => profile.key.toLowerCase() === normalized);
 };
 
-export const getResponseProfiles = (): ResponseProfile[] => loadResponseProfiles();
+const getResponseProfiles = (): ResponseProfile[] => loadResponseProfiles();
 
-export const createResponseProfile = (profile: ResponseProfile): ResponseProfile => {
+const createResponseProfile = (profile: ResponseProfile): ResponseProfile => {
   const profiles = loadResponseProfiles();
 
   if (profiles.some(p => p.key === profile.key)) {
@@ -126,7 +126,7 @@ export const createResponseProfile = (profile: ResponseProfile): ResponseProfile
   return newProfile;
 };
 
-export const updateResponseProfile = (key: string, updates: Partial<ResponseProfile>): ResponseProfile => {
+const updateResponseProfile = (key: string, updates: Partial<ResponseProfile>): ResponseProfile => {
   const profiles = loadResponseProfiles();
   const index = profiles.findIndex(p => p.key === key);
 
@@ -147,7 +147,7 @@ export const updateResponseProfile = (key: string, updates: Partial<ResponseProf
   return updated;
 };
 
-export const deleteResponseProfile = (key: string): boolean => {
+const deleteResponseProfile = (key: string): boolean => {
   const profiles = loadResponseProfiles();
   const profile = profiles.find(p => p.key === key);
 
@@ -165,7 +165,7 @@ export const deleteResponseProfile = (key: string): boolean => {
 };
 
 // Helper to get settings from a response profile for use in message processing
-export const getResponseProfileSettings = (profileKey: string): Partial<Record<string, unknown>> | undefined => {
+const getResponseProfileSettings = (profileKey: string): Partial<Record<string, unknown>> | undefined => {
   const profile = getResponseProfileByKey(profileKey);
   if (!profile || profile.enabled === false) {
     return undefined;

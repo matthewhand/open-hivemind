@@ -17,7 +17,7 @@ const WEBHOOK_JSON_LIMIT = process.env.BODY_PARSER_WEBHOOK_LIMIT || '10mb';
  * Standard JSON body parser with default limit.
  * Use for most API endpoints.
  */
-export const jsonParser = express.json({
+const jsonParser = express.json({
   limit: DEFAULT_JSON_LIMIT,
 });
 
@@ -25,7 +25,7 @@ export const jsonParser = express.json({
  * Large JSON body parser for file uploads and large payloads.
  * Use for endpoints that accept file uploads or large data.
  */
-export const largeJsonParser = express.json({
+const largeJsonParser = express.json({
   limit: LARGE_JSON_LIMIT,
 });
 
@@ -33,14 +33,14 @@ export const largeJsonParser = express.json({
  * Webhook JSON body parser with larger limit for webhook payloads.
  * Use for webhook endpoints that may receive larger payloads.
  */
-export const webhookJsonParser = express.json({
+const webhookJsonParser = express.json({
   limit: WEBHOOK_JSON_LIMIT,
 });
 
 /**
  * URL-encoded body parser with default limit.
  */
-export const urlEncodedParser = express.urlencoded({
+const urlEncodedParser = express.urlencoded({
   extended: true,
   limit: DEFAULT_URL_ENCODED_LIMIT,
 });
@@ -49,13 +49,13 @@ export const urlEncodedParser = express.urlencoded({
  * Combined parser middleware with both JSON and URL-encoded support.
  * Uses standard limits.
  */
-export const standardParsers = [jsonParser, urlEncodedParser];
+const standardParsers = [jsonParser, urlEncodedParser];
 
 /**
  * Combined parser middleware with large limits.
  * Use for endpoints that need to accept larger payloads.
  */
-export const largeParsers = [largeJsonParser, urlEncodedParser];
+const largeParsers = [largeJsonParser, urlEncodedParser];
 
 /**
  * Error handler for body parser errors.

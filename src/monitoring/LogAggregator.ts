@@ -88,7 +88,7 @@ export interface LogAlertCondition {
 /**
  * LogAggregator - Log aggregation and analysis capabilities
  */
-export class LogAggregator extends EventEmitter {
+class LogAggregator extends EventEmitter {
   private static instance: LogAggregator;
   private logs: LogEntry[] = [];
   private maxLogs: number = 100000;
@@ -491,4 +491,3 @@ export class LogAggregator extends EventEmitter {
   }
 }
 
-export default LogAggregator;

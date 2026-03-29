@@ -1,7 +1,7 @@
 import openaiConfig, { type OpenAIConfig } from '../config/openaiConfig';
 import { type ILLMProvider } from '../types/IProvider';
 
-export class OpenAIProvider implements ILLMProvider<OpenAIConfig> {
+class OpenAIProvider implements ILLMProvider<OpenAIConfig> {
   id = 'openai';
   label = 'OpenAI';
   type = 'llm' as const;

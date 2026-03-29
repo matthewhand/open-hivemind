@@ -13,7 +13,7 @@ const debug = Debug('app:sendFollowUpRequest');
  * @param followUpText - The follow-up text to send.
  * @param messageProvider - The provider to use for sending the message.
  */
-export async function sendFollowUpRequest(
+async function sendFollowUpRequest(
   msg: IMessage,
   channelId: string,
   followUpText: string,

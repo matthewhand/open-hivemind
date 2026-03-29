@@ -15,7 +15,7 @@ function normalizeProfileName(name: string): string {
   return name.trim().toLowerCase();
 }
 
-export function getResponseProfileName(botConfig?: Record<string, any>): string | undefined {
+function getResponseProfileName(botConfig?: Record<string, any>): string | undefined {
   const raw =
     botConfig?.responseProfile ?? botConfig?.RESPONSE_PROFILE ?? botConfig?.response_profile;
 
@@ -27,7 +27,7 @@ export function getResponseProfileName(botConfig?: Record<string, any>): string 
   return trimmed.length > 0 ? trimmed : undefined;
 }
 
-export function getResponseProfileOverrides(
+function getResponseProfileOverrides(
   botConfig?: Record<string, any>
 ): ResponseProfileOverrides | undefined {
   const profileName = getResponseProfileName(botConfig);

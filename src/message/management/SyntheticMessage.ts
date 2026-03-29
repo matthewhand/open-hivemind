@@ -18,7 +18,7 @@ import { IMessage } from '@message/interfaces/IMessage';
  * console.log(synthetic.isFromBot()); // true
  * ```
  */
-export class SyntheticMessage extends IMessage {
+class SyntheticMessage extends IMessage {
   /**
    * The text content of the synthetic message.
    * @type {string}

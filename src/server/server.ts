@@ -50,7 +50,7 @@ const resolveFrontendDistPath = (): string => {
   return candidates[candidates.length - 1];
 };
 
-export class WebUIServer {
+class WebUIServer {
   private app: express.Application;
   private server: any;
   private port: number;
@@ -303,7 +303,7 @@ export class WebUIServer {
 // Export singleton instance
 let webUIServerInstance: WebUIServer | null = null;
 
-export function getWebUIServer(port?: number): WebUIServer {
+function getWebUIServer(port?: number): WebUIServer {
   if (!webUIServerInstance) {
     webUIServerInstance = new WebUIServer(port);
   }

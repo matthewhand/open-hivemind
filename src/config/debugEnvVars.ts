@@ -41,7 +41,7 @@ const debug = Debug('app:debugEnvVars');
  * Sensitive information (variables containing KEY, TOKEN, SECRET, or PASSWORD)
  * is automatically redacted before logging.
  */
-export function debugEnvVars() {
+function debugEnvVars() {
   debug('=== Environment Variables ===');
   
   // Iterate over all environment variables

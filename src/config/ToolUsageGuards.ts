@@ -1,4 +1,4 @@
-export class ToolUsageGuards {
+class ToolUsageGuards {
   /**
    * Checks if a user is allowed to use a specific tool/command.
    * This is a placeholder implementation. In the future, this method will contain

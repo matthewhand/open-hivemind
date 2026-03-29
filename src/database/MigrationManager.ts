@@ -8,7 +8,7 @@ export interface Migration {
   version: number;
 }
 
-export class MigrationManager {
+class MigrationManager {
   private migrations: Migration[] = [];
   private executedMigrations = new Set<string>();
   private db: any;

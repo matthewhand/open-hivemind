@@ -43,7 +43,7 @@ export interface KpiDefinition {
 /**
  * Business KPI collector for tracking custom business metrics
  */
-export class BusinessKpiCollector extends EventEmitter {
+class BusinessKpiCollector extends EventEmitter {
   private static instance: BusinessKpiCollector;
   private kpis: Map<string, KpiDefinition> = new Map();
   private dataRetentionMs: number = 24 * 60 * 60 * 1000; // 24 hours default
@@ -441,4 +441,3 @@ export class BusinessKpiCollector extends EventEmitter {
   }
 }
 
-export default BusinessKpiCollector;

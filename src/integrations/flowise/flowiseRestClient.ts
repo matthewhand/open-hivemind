@@ -91,9 +91,3 @@ export async function getFlowiseResponse(channelId: string, question: string): P
  * @param {string} question - The question/message from the user.
  * @returns {Promise<string>} The Flowise response text.
  */
-export async function getFlowiseResponseFallback(
-  channelId: string,
-  question: string
-): Promise<string> {
-  return await getFlowiseResponse(channelId, question);
-}

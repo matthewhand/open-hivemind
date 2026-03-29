@@ -18,7 +18,7 @@ const debug = Debug('app:sendTyping');
  * @param channelId - The ID of the channel where the typing indicator should be started.
  * @returns {Promise<void>} A promise that resolves when the typing indicator is started.
  */
-export async function sendTyping(client: Client, channelId: string): Promise<void> {
+async function sendTyping(client: Client, channelId: string): Promise<void> {
   try {
     debug('Fetching channel ID: ' + channelId);
     const channel = await client.channels.fetch(channelId);

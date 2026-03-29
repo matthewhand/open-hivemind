@@ -6,7 +6,7 @@ const debug = Debug('app:TypingActivity');
  * Tracks recent "typingStart" signals from other users in a channel.
  * Used to delay starting our own typing indicator to feel less interruptive.
  */
-export class TypingActivity {
+class TypingActivity {
   private static instance: TypingActivity;
   private byChannel = new Map<string, Map<string, number>>();
 

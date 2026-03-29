@@ -538,14 +538,14 @@ export const errorLogger = ErrorLogger.getInstance();
 /**
  * Convenience function to log errors
  */
-export function logError(error: HivemindError, context: ErrorContext): void {
+function logError(error: HivemindError, context: ErrorContext): void {
   errorLogger.logError(error, context);
 }
 
 /**
  * Create error context from Express request
  */
-export function createErrorContext(req: any): ErrorContext {
+function createErrorContext(req: any): ErrorContext {
   return {
     correlationId: req.correlationId || req.headers['x-correlation-id'] || 'unknown',
     requestId: req.headers['x-request-id'] as string,
@@ -564,7 +564,7 @@ export function createErrorContext(req: any): ErrorContext {
 /**
  * Error logging middleware
  */
-export function errorLoggingMiddleware(req: any, res: any, next: any): void {
+function errorLoggingMiddleware(req: any, res: any, next: any): void {
   // Add error logger to request object
   req.errorLogger = errorLogger;
   next();

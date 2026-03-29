@@ -72,7 +72,7 @@ const SANITIZE_CONFIG: DOMPurify.Config = {
  * @param config - Optional custom sanitization config
  * @returns Sanitized HTML string
  */
-export function sanitizeHTML(dirty: string, config?: DOMPurify.Config): string {
+function sanitizeHTML(dirty: string, config?: DOMPurify.Config): string {
   if (!dirty || typeof dirty !== 'string') {
     return '';
   }
@@ -86,7 +86,7 @@ export function sanitizeHTML(dirty: string, config?: DOMPurify.Config): string {
  * @param text - The text to sanitize
  * @returns Sanitized text with HTML entities escaped
  */
-export function sanitizeText(text: string): string {
+function sanitizeText(text: string): string {
   if (!text || typeof text !== 'string') {
     return '';
   }
@@ -105,7 +105,7 @@ export function sanitizeText(text: string): string {
  * @param url - The URL to sanitize
  * @returns Sanitized URL or empty string if dangerous
  */
-export function sanitizeURL(url: string): string {
+function sanitizeURL(url: string): string {
   if (!url || typeof url !== 'string') {
     return '';
   }
@@ -143,7 +143,7 @@ export function sanitizeURL(url: string): string {
  * @param obj - The object to sanitize
  * @returns Sanitized object
  */
-export function sanitizeObject<T extends Record<string, any>>(obj: T): T {
+function sanitizeObject<T extends Record<string, any>>(obj: T): T {
   if (!obj || typeof obj !== 'object') {
     return obj;
   }
@@ -171,7 +171,7 @@ export function sanitizeObject<T extends Record<string, any>>(obj: T): T {
  * @param html - HTML content to strip
  * @returns Plain text without any HTML tags
  */
-export function stripHTML(html: string): string {
+function stripHTML(html: string): string {
   if (!html || typeof html !== 'string') {
     return '';
   }
@@ -182,7 +182,7 @@ export function stripHTML(html: string): string {
 /**
  * Validate and sanitize user input for specific contexts
  */
-export const ContextSanitizers = {
+const ContextSanitizers = {
   /**
    * Sanitize for HTML attribute context
    */
@@ -231,7 +231,7 @@ export const ContextSanitizers = {
 /**
  * Content Security Policy nonce generator
  */
-export function generateCSPNonce(): string {
+function generateCSPNonce(): string {
   const crypto = require('crypto');
   return crypto.randomBytes(16).toString('base64');
 }
@@ -239,7 +239,7 @@ export function generateCSPNonce(): string {
 /**
  * Create a safe HTML template by escaping all interpolations
  */
-export function safeHTMLTemplate(strings: TemplateStringsArray, ...values: any[]): string {
+function safeHTMLTemplate(strings: TemplateStringsArray, ...values: any[]): string {
   return strings.reduce((result, string, i) => {
     const value = values[i] !== undefined ? values[i] : '';
     const sanitizedValue = typeof value === 'string' ? sanitizeText(value) : JSON.stringify(value);
@@ -247,13 +247,3 @@ export function safeHTMLTemplate(strings: TemplateStringsArray, ...values: any[]
   }, '');
 }
 
-export default {
-  sanitizeHTML,
-  sanitizeText,
-  sanitizeURL,
-  sanitizeObject,
-  stripHTML,
-  ContextSanitizers,
-  generateCSPNonce,
-  safeHTMLTemplate,
-};

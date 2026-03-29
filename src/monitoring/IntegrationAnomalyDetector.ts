@@ -141,7 +141,7 @@ const DEFAULT_CONFIG: IntegrationAnomalyConfig = {
 /**
  * IntegrationAnomalyDetector - Enhanced anomaly detection for Mattermost and other integrations
  */
-export class IntegrationAnomalyDetector extends EventEmitter {
+class IntegrationAnomalyDetector extends EventEmitter {
   private static instance: IntegrationAnomalyDetector;
   private config: IntegrationAnomalyConfig;
   private anomalies: Map<string, IntegrationAnomaly[]> = new Map();
@@ -653,4 +653,3 @@ export class IntegrationAnomalyDetector extends EventEmitter {
   }
 }
 
-export default IntegrationAnomalyDetector;

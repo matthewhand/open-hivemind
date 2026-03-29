@@ -53,7 +53,7 @@ export type CircuitState = 'closed' | 'open' | 'half_open';
 /**
  * Circuit breaker implementation
  */
-export class CircuitBreaker {
+class CircuitBreaker {
   private state: CircuitState = 'closed';
   private failureCount = 0;
   private lastFailureTime = 0;
@@ -152,7 +152,7 @@ export class CircuitBreaker {
 /**
  * Retry mechanism with exponential backoff
  */
-export class RetryHandler {
+class RetryHandler {
   constructor(private config: RetryConfig) {}
 
   /**
@@ -292,7 +292,7 @@ export class RetryHandler {
 /**
  * Fallback mechanism manager
  */
-export class FallbackManager {
+class FallbackManager {
   private fallbacks = new Map<string, (() => Promise<any>)[]>();
 
   /**
@@ -388,7 +388,7 @@ export class FallbackManager {
 /**
  * Adaptive recovery manager that combines retry, circuit breaker, and fallback strategies
  */
-export class AdaptiveRecoveryManager {
+class AdaptiveRecoveryManager {
   private circuitBreakers = new Map<string, CircuitBreaker>();
   private retryHandlers = new Map<string, RetryHandler>();
   private fallbackManagers = new Map<string, FallbackManager>();
@@ -560,7 +560,7 @@ export class AdaptiveRecoveryManager {
 /**
  * Default configurations
  */
-export const DEFAULT_RETRY_CONFIG: RetryConfig = {
+const DEFAULT_RETRY_CONFIG: RetryConfig = {
   maxRetries: 3,
   baseDelay: 1000,
   maxDelay: 30000,
@@ -570,7 +570,7 @@ export const DEFAULT_RETRY_CONFIG: RetryConfig = {
   retryableStatusCodes: [408, 429, 500, 502, 503, 504],
 };
 
-export const DEFAULT_CIRCUIT_BREAKER_CONFIG: CircuitBreakerConfig = {
+const DEFAULT_CIRCUIT_BREAKER_CONFIG: CircuitBreakerConfig = {
   failureThreshold: 5,
   resetTimeout: 60000, // 1 minute
   monitoringPeriod: 10000, // 10 seconds
@@ -588,7 +588,7 @@ export const globalRecoveryManager = new AdaptiveRecoveryManager(
 /**
  * Convenience instance for direct access to recovery methods
  */
-export const errorRecovery = {
+const errorRecovery = {
   withRetry: (fn: () => Promise<any>, config?: Partial<RetryConfig>) =>
     globalRecoveryManager.getRetryHandler('default', config).executeWithRetry(fn),
   withFallback: async (primary: () => Promise<any>, fallback: () => Promise<any>) => {
@@ -629,7 +629,7 @@ export const errorRecovery = {
 /**
  * Convenience function to execute with recovery
  */
-export async function executeWithRecovery<T>(
+async function executeWithRecovery<T>(
   operationKey: string,
   operation: () => Promise<T>,
   options?: {
@@ -647,7 +647,7 @@ export async function executeWithRecovery<T>(
 /**
  * Register a fallback for an operation
  */
-export function registerFallback(operationKey: string, fallback: () => Promise<any>): void {
+function registerFallback(operationKey: string, fallback: () => Promise<any>): void {
   globalRecoveryManager.registerFallback(operationKey, fallback);
 }
 

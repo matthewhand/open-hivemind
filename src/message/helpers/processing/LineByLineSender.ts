@@ -36,7 +36,7 @@ function normalizeForDedupe(text: string): string {
  * @param preserveEmpty - Whether to preserve empty lines (default: false)
  * @returns Array of non-empty lines to send sequentially
  */
-export function splitOnNewlines(response: string, preserveEmpty = false): string[] {
+function splitOnNewlines(response: string, preserveEmpty = false): string[] {
   if (!response) {
     return [];
   }
@@ -120,12 +120,12 @@ export function splitOnNewlines(response: string, preserveEmpty = false): string
  * @param baseDelay - Base delay in ms (default: 0 for immediate sending)
  * @returns Delay in milliseconds
  */
-export function calculateLineDelay(lineLength: number, baseDelay = 0): number {
+function calculateLineDelay(lineLength: number, baseDelay = 0): number {
   // Post-typing delay should be minimal - send immediately
   return calculateLineDelayWithOptions(lineLength, baseDelay);
 }
 
-export function calculateLineDelayWithOptions(
+function calculateLineDelayWithOptions(
   lineLength: number,
   baseDelay = 0,
   opts?: { perCharMs?: number; maxReadingMs?: number }
@@ -151,7 +151,7 @@ export interface LineByLineConfig {
 /**
  * Get default config for line-by-line mode
  */
-export function getDefaultLineByLineConfig(): LineByLineConfig {
+function getDefaultLineByLineConfig(): LineByLineConfig {
   return {
     enabled: true, // Default to enabled per user request
     baseDelay: 0, // Immediate sending - delays happen pre-typing, not post-typing

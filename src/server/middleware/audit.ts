@@ -79,7 +79,7 @@ export const logConfigChange = (
 /**
  * Helper function to log bot actions
  */
-export const logBotAction = (
+const logBotAction = (
   req: AuditedRequest,
   action: 'CREATE' | 'UPDATE' | 'DELETE' | 'START' | 'STOP' | 'CLONE',
   botName: string,

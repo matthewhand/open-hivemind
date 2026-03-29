@@ -2,7 +2,7 @@ import axios from 'axios';
 import type { ILlmProvider } from '@llm/interfaces/ILlmProvider';
 import { isSafeUrl } from '../../utils/ssrfGuard';
 
-export class OpenSwarmProvider implements ILlmProvider {
+class OpenSwarmProvider implements ILlmProvider {
   name = 'openswarm';
 
   private baseUrl: string;

@@ -24,7 +24,7 @@ const debug = Debug('app:MCPProviderManager');
  * Manages lifecycle, configuration, and testing of MCP (Model Context Protocol)
  * servers that provide external tool capabilities to bots.
  */
-export class MCPProviderManager extends EventEmitter implements IMCPProviderManager {
+class MCPProviderManager extends EventEmitter implements IMCPProviderManager {
   private providers = new Map<string, MCPProviderConfig>();
   private processes = new Map<string, ChildProcess>();
   private statuses = new Map<string, MCPProviderStatus>();

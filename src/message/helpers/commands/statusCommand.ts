@@ -16,7 +16,7 @@ export interface SystemStatus {
  * Retrieves the current system status, including memory usage and uptime.
  * @returns {SystemStatus} An object containing operational status, uptime, memory stats, etc.
  */
-export function getSystemStatus(): SystemStatus {
+function getSystemStatus(): SystemStatus {
   const memInfo = process.memoryUsage();
   const totalMem = os.totalmem();
   const freeMem = os.freemem();
@@ -34,7 +34,7 @@ export function getSystemStatus(): SystemStatus {
   };
 }
 
-export function formatStatusResponse(status: SystemStatus, args: string[]): string {
+function formatStatusResponse(status: SystemStatus, args: string[]): string {
   const hasVerbose = args.includes('--verbose');
   const hasJson = args.includes('--json');
   const hasHealth = args.includes('--health');

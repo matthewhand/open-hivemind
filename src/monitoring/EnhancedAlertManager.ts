@@ -253,7 +253,7 @@ const DEFAULT_THRESHOLDS: AlertThreshold[] = [
 /**
  * EnhancedAlertManager - Alerting system with configurable thresholds
  */
-export class EnhancedAlertManager extends EventEmitter {
+class EnhancedAlertManager extends EventEmitter {
   private static instance: EnhancedAlertManager;
   private alerts: Map<string, EnhancedAlert> = new Map();
   private thresholds: Map<string, AlertThreshold> = new Map();
@@ -743,4 +743,3 @@ export class EnhancedAlertManager extends EventEmitter {
   }
 }
 
-export default EnhancedAlertManager;

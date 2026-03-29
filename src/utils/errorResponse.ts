@@ -52,7 +52,7 @@ export interface StandardSuccessResponse<T = any> {
 /**
  * HTTP Status Code mappings for error types
  */
-export const HTTP_STATUS_CODES = {
+const HTTP_STATUS_CODES = {
   // Success
   OK: 200,
   CREATED: 201,
@@ -90,7 +90,7 @@ export const HTTP_STATUS_CODES = {
 /**
  * Error response builder class
  */
-export class ErrorResponseBuilder {
+class ErrorResponseBuilder {
   private response: StandardErrorResponse;
 
   constructor(error: HivemindError, correlationId?: string) {
@@ -215,7 +215,7 @@ export class ErrorResponseBuilder {
 /**
  * Success response builder class
  */
-export class SuccessResponseBuilder<T = any> {
+class SuccessResponseBuilder<T = any> {
   private response: StandardSuccessResponse<T>;
 
   constructor(data: T, correlationId?: string) {
@@ -261,7 +261,7 @@ export function createErrorResponse(
 /**
  * Create a standardized success response
  */
-export function createSuccessResponse<T>(
+function createSuccessResponse<T>(
   data: T,
   correlationId?: string
 ): SuccessResponseBuilder<T> {
@@ -271,7 +271,7 @@ export function createSuccessResponse<T>(
 /**
  * Send error response with Express
  */
-export function sendErrorResponse(
+function sendErrorResponse(
   res: Response,
   error: HivemindError,
   correlationId?: string,
@@ -297,7 +297,7 @@ export function sendErrorResponse(
 /**
  * Send success response with Express
  */
-export function sendSuccessResponse<T>(
+function sendSuccessResponse<T>(
   res: Response,
   data: T,
   correlationId?: string,
@@ -513,7 +513,7 @@ export const ErrorResponses = {
 /**
  * Response utility functions for common patterns
  */
-export const ResponseUtils = {
+const ResponseUtils = {
   /**
    * Send a paginated response
    */

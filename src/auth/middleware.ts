@@ -6,7 +6,7 @@ import type { AuthMiddlewareRequest, User, UserRole } from './types';
 
 const debug = Debug('app:AuthMiddleware');
 
-export class AuthMiddleware {
+class AuthMiddleware {
   private authManager: AuthManager;
 
   constructor() {
@@ -253,7 +253,7 @@ export const requireRole = (requiredRole: UserRole) => {
   return middleware.requireRole(requiredRole);
 };
 
-export const requirePermission = (permission: string) => {
+const requirePermission = (permission: string) => {
   const middleware = new AuthMiddleware();
   return middleware.requirePermission(permission);
 };
@@ -263,7 +263,7 @@ export const requireAdmin = (() => {
   return middleware.requireAdmin;
 })();
 
-export const optionalAuth = async (
+const optionalAuth = async (
   req: Request,
   res: Response,
   next: NextFunction
@@ -279,7 +279,7 @@ export const optionalAuth = async (
  * @param res Express Response object
  * @param next Express NextFunction
  */
-export const requireTenant = (req: Request, res: Response, next: NextFunction): void => {
+const requireTenant = (req: Request, res: Response, next: NextFunction): void => {
   // Skip tenant validation for now - just pass through
   next();
 };

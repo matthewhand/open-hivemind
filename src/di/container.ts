@@ -21,7 +21,7 @@ import 'reflect-metadata';
 import { container, Lifecycle } from 'tsyringe';
 
 // Token constants for interface-based injections
-export const TOKENS = {
+const TOKENS = {
   // Configuration
   ConfigurationManager: 'ConfigurationManager',
   BotConfigurationManager: 'BotConfigurationManager',
@@ -83,7 +83,7 @@ export const TOKENS = {
 /**
  * Clears all registered services - useful for testing
  */
-export function resetContainer(): void {
+function resetContainer(): void {
   container.reset();
 }
 
@@ -92,7 +92,7 @@ export function resetContainer(): void {
  * @param token The token/key for the service
  * @param klass The class constructor
  */
-export function registerSingleton<T>(token: string, klass: new (...args: any[]) => T): void {
+function registerSingleton<T>(token: string, klass: new (...args: any[]) => T): void {
   container.register(token, { useClass: klass }, { lifecycle: Lifecycle.Singleton });
 }
 
@@ -101,7 +101,7 @@ export function registerSingleton<T>(token: string, klass: new (...args: any[]) 
  * @param token The token/key for the service
  * @param klass The class constructor
  */
-export function registerTransient<T>(token: string, klass: new (...args: any[]) => T): void {
+function registerTransient<T>(token: string, klass: new (...args: any[]) => T): void {
   container.register(token, { useClass: klass });
 }
 
@@ -110,7 +110,7 @@ export function registerTransient<T>(token: string, klass: new (...args: any[]) 
  * @param token The token/key for the service
  * @param instance The instance to register
  */
-export function registerInstance<T>(token: string, instance: T): void {
+function registerInstance<T>(token: string, instance: T): void {
   container.registerInstance(token, instance);
 }
 
@@ -119,7 +119,7 @@ export function registerInstance<T>(token: string, instance: T): void {
  * @param token The token/key for the service
  * @returns The service instance
  */
-export function resolve<T>(token: string): T {
+function resolve<T>(token: string): T {
   return container.resolve(token);
 }
 
@@ -128,8 +128,7 @@ export function resolve<T>(token: string): T {
  * @param token The token/key to check
  * @returns true if registered
  */
-export function isRegistered(token: string): boolean {
+function isRegistered(token: string): boolean {
   return container.isRegistered(token);
 }
 
-export { container };

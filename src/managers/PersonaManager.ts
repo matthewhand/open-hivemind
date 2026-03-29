@@ -37,7 +37,7 @@ export interface CreatePersonaRequest {
 export interface UpdatePersonaRequest extends Partial<CreatePersonaRequest> {}
 
 // Built-in personas that are always available
-export const BUILTIN_PERSONAS: Persona[] = [
+const BUILTIN_PERSONAS: Persona[] = [
   {
     id: 'default',
     name: 'Helpful Assistant',

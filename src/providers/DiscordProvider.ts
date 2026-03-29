@@ -5,7 +5,7 @@ import discordConfig, { type DiscordConfig } from '../config/discordConfig';
 import type { IBotInfo } from '../types/botInfo';
 import { type IMessageProvider } from '../types/IProvider';
 
-export class DiscordProvider implements IMessageProvider<DiscordConfig> {
+class DiscordProvider implements IMessageProvider<DiscordConfig> {
   id = 'discord';
   label = 'Discord';
   type = 'messenger' as const;

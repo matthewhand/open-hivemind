@@ -17,7 +17,7 @@ const debug = Debug('app:sessionMiddleware');
  */
 
 // Validate session secret strength
-export function getSessionSecret(): string {
+function getSessionSecret(): string {
   const envSecret = process.env.SESSION_SECRET;
 
   if (!envSecret) {
@@ -66,12 +66,12 @@ const sessionConfig: session.SessionOptions = {
 };
 
 // Create session middleware
-export const sessionMiddleware = session(sessionConfig);
+const sessionMiddleware = session(sessionConfig);
 
 /**
  * Session security middleware - adds additional security checks
  */
-export const sessionSecurityMiddleware = (req: Request, res: Response, next: NextFunction) => {
+const sessionSecurityMiddleware = (req: Request, res: Response, next: NextFunction) => {
   if (!req.session) {
     return next();
   }
@@ -120,7 +120,7 @@ export const sessionSecurityMiddleware = (req: Request, res: Response, next: Nex
 /**
  * Apply session management middleware with security checks
  */
-export const applySessionManagement = (req: Request, res: Response, next: NextFunction) => {
+const applySessionManagement = (req: Request, res: Response, next: NextFunction) => {
   sessionMiddleware(req, res, (err) => {
     if (err) {
       debug('Session middleware error:', err);
@@ -133,7 +133,7 @@ export const applySessionManagement = (req: Request, res: Response, next: NextFu
 /**
  * Require valid session middleware
  */
-export const requireSession = (req: Request, res: Response, next: NextFunction) => {
+const requireSession = (req: Request, res: Response, next: NextFunction) => {
   if (!req.session || !(req.session as any).userId) {
     return res.status(401).json({
       error: 'Authentication required',
@@ -146,7 +146,7 @@ export const requireSession = (req: Request, res: Response, next: NextFunction) 
 /**
  * Destroy session (logout)
  */
-export const destroySession = (req: Request): Promise<void> => {
+const destroySession = (req: Request): Promise<void> => {
   return new Promise((resolve, reject) => {
     if (req.session) {
       req.session.destroy((err) => {
@@ -165,7 +165,7 @@ export const destroySession = (req: Request): Promise<void> => {
 /**
  * Regenerate session (prevent fixation)
  */
-export const regenerateSession = (req: Request): Promise<void> => {
+const regenerateSession = (req: Request): Promise<void> => {
   return new Promise((resolve, reject) => {
     if (req.session) {
       req.session.regenerate((err) => {

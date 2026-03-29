@@ -46,7 +46,7 @@ const AFFIRMATIVES = new Set([
 /**
  * Check if a response is affirmative
  */
-export function isAffirmative(response: string): boolean {
+function isAffirmative(response: string): boolean {
   const cleaned = response
     .trim()
     .toLowerCase()
@@ -121,17 +121,11 @@ export async function isOnTopic(conversationContext: string, newMessage: string)
 /**
  * Get the semantic relevance bonus multiplier from config
  */
-export function getSemanticBonus(): number {
+function getSemanticBonus(): number {
   const bonus = messageConfig.get('MESSAGE_SEMANTIC_RELEVANCE_BONUS');
   return typeof bonus === 'number' ? bonus : Number(bonus) || 10;
 }
 
-export default {
-  isOnTopic,
-  isAffirmative,
-  getSemanticBonus,
-  AFFIRMATIVES,
-};
 
 /**
  * Check if the message is nonsense, corrupted, or largely repetitive/gibberish.
@@ -139,7 +133,7 @@ export default {
  * @param message - The message text to analyze
  * @returns true if nonsense/corrupted, false if coherent
  */
-export async function isNonsense(message: string): Promise<boolean> {
+async function isNonsense(message: string): Promise<boolean> {
   // Skip short messages (e.g. "ok", "hi") - hard to judge as nonsense without context
   if (!message || message.length < 5) {
     return false;

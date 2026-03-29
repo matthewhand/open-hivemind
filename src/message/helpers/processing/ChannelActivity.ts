@@ -32,7 +32,7 @@ export function getLastBotActivity(channelId: string, botId: string): number {
  * Get all recent bot activity in a channel since a given timestamp.
  * Used for crosstalk detection - check if ANY bot posted during wait period.
  */
-export function getRecentChannelActivity(
+function getRecentChannelActivity(
   channelId: string,
   since: number
 ): { botId: string; timestamp: number }[] {
@@ -41,7 +41,7 @@ export function getRecentChannelActivity(
 }
 
 // For tests
-export function clearBotActivity(channelId?: string): void {
+function clearBotActivity(channelId?: string): void {
   if (channelId) {
     for (const key of Array.from(lastBotActivityByChannelAndBot.keys())) {
       if (key.startsWith(`${channelId}:`)) {

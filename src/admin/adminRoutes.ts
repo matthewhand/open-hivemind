@@ -13,7 +13,7 @@ import { type IMessageProvider } from '../types/IProvider';
 import { serializeSchema } from '../utils/schemaSerializer';
 
 const debug = Debug('app:admin');
-export const adminRouter = Router();
+const adminRouter = Router();
 
 // Apply IP whitelist middleware first (blocks unauthorized IPs)
 adminRouter.use(ipWhitelist);

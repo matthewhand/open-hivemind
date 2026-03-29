@@ -16,7 +16,7 @@ const DEFAULT_TOOL_PROFILES: ToolProfiles = {
   tool: [],
 };
 
-export const loadToolProfiles = (): ToolProfiles => {
+const loadToolProfiles = (): ToolProfiles => {
   return loadProfiles<ToolProfiles>({
     filename: 'tool-profiles.json',
     defaultData: DEFAULT_TOOL_PROFILES,
@@ -32,13 +32,13 @@ export const loadToolProfiles = (): ToolProfiles => {
   });
 };
 
-export const saveToolProfiles = (profiles: ToolProfiles): void => {
+const saveToolProfiles = (profiles: ToolProfiles): void => {
   saveProfiles('tool-profiles.json', profiles);
 };
 
-export const getToolProfileByKey = (key: string): ToolProfile | undefined => {
+const getToolProfileByKey = (key: string): ToolProfile | undefined => {
   const profiles = loadToolProfiles().tool;
   return findProfileByKey(profiles, 'key', key);
 };
 
-export const getToolProfiles = (): ToolProfiles => loadToolProfiles();
+const getToolProfiles = (): ToolProfiles => loadToolProfiles();

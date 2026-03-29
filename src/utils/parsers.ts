@@ -5,7 +5,7 @@
 /**
  * Command parser utilities
  */
-export const commandParser = {
+const commandParser = {
   /**
    * Parse a command string into command and arguments
    */
@@ -35,7 +35,7 @@ export const commandParser = {
 /**
  * Message parsing utilities
  */
-export const messageParser = {
+const messageParser = {
   /**
    * Extract mentions from message text
    */
@@ -83,7 +83,7 @@ export const messageParser = {
 /**
  * JSON parsing utilities with error handling
  */
-export const jsonParser = {
+const jsonParser = {
   /**
    * Safely parse JSON with fallback
    */
@@ -110,7 +110,7 @@ export const jsonParser = {
 /**
  * Number parsing utilities
  */
-export const numberParser = {
+const numberParser = {
   /**
    * Parse number with fallback
    */

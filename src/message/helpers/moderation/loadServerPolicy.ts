@@ -13,7 +13,7 @@ const debug = Debug('app:loadServerPolicy');
  *
  * @returns {string} The server policy as a string.
  */
-export default function loadServerPolicy(): string {
+function loadServerPolicy(): string {
   try {
     const policyPath = path.resolve(__dirname, '../../config/serverPolicy.json');
     const policyData = fs.readFileSync(policyPath, 'utf-8');

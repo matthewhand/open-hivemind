@@ -54,13 +54,13 @@ class AuditLoggerService {
   }
 }
 
-export const auditLogger = new AuditLoggerService();
+const auditLogger = new AuditLoggerService();
 
 /**
  * Middleware factory for route-specific audit logging
  * Wraps response to capture status and log the operation
  */
-export const auditMiddleware = (action: string, resource: string) => {
+const auditMiddleware = (action: string, resource: string) => {
   return (req: Request, res: Response, next: NextFunction) => {
     const originalSend = res.send;
     const startTime = Date.now();
@@ -102,7 +102,7 @@ export const auditMiddleware = (action: string, resource: string) => {
  * Enhanced audit middleware that captures before/after values
  * Use for update operations where tracking changes is important
  */
-export const auditMiddlewareWithChanges = (
+const auditMiddlewareWithChanges = (
   action: string,
   resource: string,
   getBeforeValue?: (req: Request) => Promise<any> | any
@@ -159,7 +159,7 @@ export const auditMiddlewareWithChanges = (
  * Manual audit logging function for use within route handlers
  * When you need more control over what gets logged
  */
-export const logAuditEvent = (
+const logAuditEvent = (
   req: Request,
   action: string,
   resource: string,

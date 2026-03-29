@@ -22,7 +22,7 @@ const logger = Logger.withContext('DI');
  * Registers all core services with the DI container.
  * Should be called once at application startup.
  */
-export function registerServices(): void {
+function registerServices(): void {
   // Configuration services - singletons
   logger.debug('Registering ConfigurationManager');
   container.register(TOKENS.ConfigurationManager, {
@@ -73,8 +73,7 @@ export function registerServices(): void {
 /**
  * Checks if services are already registered
  */
-export function areServicesRegistered(): boolean {
+function areServicesRegistered(): boolean {
   return container.isRegistered(TOKENS.ConfigurationManager);
 }
 
-export { container, TOKENS };

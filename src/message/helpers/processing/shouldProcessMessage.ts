@@ -7,7 +7,7 @@ const debugLogger = require('debug')('app:message:shouldProcessMessage');
  * Returns the minimum interval in milliseconds for processing messages.
  * If the configuration key MESSAGE_MIN_INTERVAL_MS is not set, defaults to 1000.
  */
-export function getMinIntervalMs(): number {
+function getMinIntervalMs(): number {
   try {
     const value = messageConfig.get('MESSAGE_MIN_INTERVAL_MS');
     const numValue = typeof value === 'number' ? value : Number(value) || 1000;
@@ -53,7 +53,7 @@ function getDefaultChannelId(): string {
  * @param message - The message to evaluate.
  * @returns `true` if the message should be processed, `false` otherwise.
  */
-export function shouldProcessMessage(message: IMessage): boolean {
+function shouldProcessMessage(message: IMessage): boolean {
   try {
     // Handle null/undefined messages
     if (!message) {

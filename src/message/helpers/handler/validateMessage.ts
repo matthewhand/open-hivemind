@@ -12,7 +12,7 @@ const debug = Debug('app:validateMessage');
  * @param {IMessage} message - The message object to validate.
  * @returns {boolean} - True if the message is valid, false otherwise.
  */
-export function validateMessage(message: IMessage): boolean {
+function validateMessage(message: IMessage): boolean {
   try {
     const text = message.getText();
     const textLength = text.length;

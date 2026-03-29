@@ -1,7 +1,7 @@
 import { type ILLMProvider, type IMessageProvider, type IProvider } from '../types/IProvider';
 import { type IToolInstaller } from '../types/IToolInstaller';
 
-export class ProviderRegistry {
+class ProviderRegistry {
   private static instance: ProviderRegistry;
   private providers: Map<string, IProvider> = new Map();
   private installers: Map<string, IToolInstaller> = new Map();
@@ -51,4 +51,4 @@ export class ProviderRegistry {
   }
 }
 
-export const providerRegistry = ProviderRegistry.getInstance();
+const providerRegistry = ProviderRegistry.getInstance();

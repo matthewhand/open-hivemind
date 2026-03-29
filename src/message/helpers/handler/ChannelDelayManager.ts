@@ -20,7 +20,7 @@ interface ChannelDelayState {
  * - The leader refetches channel history after the delay, so it naturally includes
  *   messages that arrived during the waiting period.
  */
-export class ChannelDelayManager {
+class ChannelDelayManager {
   private static instance: ChannelDelayManager;
   private states = new Map<string, ChannelDelayState>();
 
@@ -130,4 +130,3 @@ export class ChannelDelayManager {
   }
 }
 
-export default ChannelDelayManager;

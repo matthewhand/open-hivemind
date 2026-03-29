@@ -2,7 +2,7 @@ import type { Database } from 'sqlite';
 import { Logger } from '@common/logger';
 import type { ConnectionManager } from './ConnectionManager';
 
-export class SchemaManager {
+class SchemaManager {
   private connectionManager: ConnectionManager;
 
   constructor(connectionManager: ConnectionManager) {

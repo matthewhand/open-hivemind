@@ -11,7 +11,7 @@ export interface ProfileLoaderOptions<T> {
   profileType: string;
 }
 
-export const getProfilesPath = (filename: string): string => {
+const getProfilesPath = (filename: string): string => {
   const configDir = process.env.NODE_CONFIG_DIR || path.join(process.cwd(), 'config');
   return path.join(configDir, filename);
 };

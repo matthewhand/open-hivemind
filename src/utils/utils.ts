@@ -17,7 +17,7 @@ const debug = Debug('app:utils');
  * // Safe - arguments are passed as array, not concatenated
  * const output = await executeCommandSafe('ls', ['-la', '/tmp']);
  */
-export async function executeCommandSafe(
+async function executeCommandSafe(
   command: string,
   args: string[] = [],
   options: { cwd?: string; env?: NodeJS.ProcessEnv; timeout?: number } = {}

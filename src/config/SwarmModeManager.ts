@@ -1,4 +1,4 @@
-export class SwarmModeManager {
+class SwarmModeManager {
   private static locks = new Map<string, { acquiredAt: number; timeout: number }>();
 
   /**

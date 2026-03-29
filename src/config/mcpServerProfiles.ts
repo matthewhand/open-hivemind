@@ -60,7 +60,7 @@ function saveProfiles(profiles: McpServerProfile[]): void {
   debug(`Saved ${profiles.length} MCP server profiles`);
 }
 
-export function getMcpServerProfiles(): McpServerProfile[] {
+function getMcpServerProfiles(): McpServerProfile[] {
   return loadProfiles();
 }
 
@@ -68,7 +68,7 @@ export function getMcpServerProfileByKey(key: string): McpServerProfile | undefi
   return loadProfiles().find(p => p.key === key);
 }
 
-export function createMcpServerProfile(profile: McpServerProfile): McpServerProfile {
+function createMcpServerProfile(profile: McpServerProfile): McpServerProfile {
   const profiles = loadProfiles();
 
   if (profiles.some(p => p.key === profile.key)) {
@@ -87,7 +87,7 @@ export function createMcpServerProfile(profile: McpServerProfile): McpServerProf
   return newProfile;
 }
 
-export function updateMcpServerProfile(key: string, updates: Partial<McpServerProfile>): McpServerProfile | null {
+function updateMcpServerProfile(key: string, updates: Partial<McpServerProfile>): McpServerProfile | null {
   const profiles = loadProfiles();
   const index = profiles.findIndex(p => p.key === key);
 
@@ -106,7 +106,7 @@ export function updateMcpServerProfile(key: string, updates: Partial<McpServerPr
   return updated;
 }
 
-export function deleteMcpServerProfile(key: string): boolean {
+function deleteMcpServerProfile(key: string): boolean {
   const profiles = loadProfiles();
   const index = profiles.findIndex(p => p.key === key);
 
@@ -117,7 +117,7 @@ export function deleteMcpServerProfile(key: string): boolean {
   return true;
 }
 
-export function reloadMcpServerProfiles(): void {
+function reloadMcpServerProfiles(): void {
   profilesCache = null;
   loadProfiles();
 }

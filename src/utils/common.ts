@@ -31,7 +31,7 @@ export function getEmoji(): string {
 /**
  * Basic permission utilities
  */
-export const permissions = {
+const permissions = {
   /**
    * Check if a user is allowed (placeholder implementation)
    */
@@ -46,7 +46,7 @@ export const permissions = {
 /**
  * Environment utilities
  */
-export const environment = {
+const environment = {
   /**
    * Get environment variable with fallback
    */
@@ -72,7 +72,7 @@ export const environment = {
 /**
  * String utilities
  */
-export const strings = {
+const strings = {
   /**
    * Capitalize first letter of a string
    */
@@ -91,7 +91,7 @@ export const strings = {
 /**
  * Array utilities
  */
-export const arrays = {
+const arrays = {
   /**
    * Get random element from array
    */
@@ -110,7 +110,7 @@ export const arrays = {
 /**
  * Validation utilities
  */
-export const validation = {
+const validation = {
   /**
    * Check if string is empty or whitespace
    */

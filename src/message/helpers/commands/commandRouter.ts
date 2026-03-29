@@ -7,7 +7,7 @@ import { handleStatusCommand } from './statusCommand';
  * @param {string} commandContent - The raw command message from Slack.
  * @returns {Promise<string | null>} The response message or null if the command is unrecognized.
  */
-export async function routeCommand(commandContent: string): Promise<string | null> {
+async function routeCommand(commandContent: string): Promise<string | null> {
   const parsed: ParsedCommand | null = parseCommand(commandContent);
 
   if (!parsed) {

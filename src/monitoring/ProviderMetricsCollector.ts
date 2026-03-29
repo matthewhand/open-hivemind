@@ -201,7 +201,7 @@ const DEFAULT_CONFIG: ProviderMonitoringConfig = {
 /**
  * ProviderMetricsCollector - Comprehensive metrics collection for all providers
  */
-export class ProviderMetricsCollector extends EventEmitter {
+class ProviderMetricsCollector extends EventEmitter {
   private static instance: ProviderMetricsCollector;
   private messageProviders: Map<ProviderType, MessageProviderMetrics> = new Map();
   private llmProviders: Map<ProviderType, LlmProviderMetrics> = new Map();
@@ -852,4 +852,3 @@ export class ProviderMetricsCollector extends EventEmitter {
   }
 }
 
-export default ProviderMetricsCollector;

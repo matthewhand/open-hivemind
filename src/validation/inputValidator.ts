@@ -17,7 +17,7 @@ const dompurify = DOMPurify(window as any);
 /**
  * Common validation patterns
  */
-export const ValidationPatterns = {
+const ValidationPatterns = {
   // MongoDB-style ObjectId
   objectId: /^[a-f\d]{24}$/i,
   // UUID v4
@@ -131,7 +131,7 @@ export function sanitizeObject(obj: any, options: SanitizationOptions = {}): any
 /**
  * Common validation chains for reuse
  */
-export const CommonValidators = {
+const CommonValidators = {
   // Bot ID validation
   botId: param('botId')
     .trim()
@@ -284,7 +284,7 @@ export const CommonValidators = {
 /**
  * Validation middleware that checks for errors
  */
-export const validateInput = (req: Request, res: Response, next: NextFunction) => {
+const validateInput = (req: Request, res: Response, next: NextFunction) => {
   const errors = validationResult(req);
 
   if (!errors.isEmpty()) {
@@ -322,7 +322,7 @@ export function validate(validations: ValidationChain[]) {
 /**
  * Sanitization middleware for request body
  */
-export const sanitizeRequestBody = (options: SanitizationOptions = {}) => {
+const sanitizeRequestBody = (options: SanitizationOptions = {}) => {
   return (req: Request, res: Response, next: NextFunction) => {
     if (req.body && typeof req.body === 'object') {
       req.body = sanitizeObject(req.body, {
@@ -338,7 +338,7 @@ export const sanitizeRequestBody = (options: SanitizationOptions = {}) => {
 /**
  * Sanitization middleware for query parameters
  */
-export const sanitizeQueryParams = (options: SanitizationOptions = {}) => {
+const sanitizeQueryParams = (options: SanitizationOptions = {}) => {
   return (req: Request, res: Response, next: NextFunction) => {
     if (req.query && typeof req.query === 'object') {
       req.query = sanitizeObject(req.query, {
@@ -354,7 +354,7 @@ export const sanitizeQueryParams = (options: SanitizationOptions = {}) => {
 /**
  * Sanitization middleware for URL parameters
  */
-export const sanitizeUrlParams = (options: SanitizationOptions = {}) => {
+const sanitizeUrlParams = (options: SanitizationOptions = {}) => {
   return (req: Request, res: Response, next: NextFunction) => {
     if (req.params && typeof req.params === 'object') {
       req.params = sanitizeObject(req.params, {
@@ -370,14 +370,14 @@ export const sanitizeUrlParams = (options: SanitizationOptions = {}) => {
 /**
  * Combined sanitization middleware
  */
-export const sanitizeAll = (options: SanitizationOptions = {}) => {
+const sanitizeAll = (options: SanitizationOptions = {}) => {
   return [sanitizeRequestBody(options), sanitizeQueryParams(options), sanitizeUrlParams(options)];
 };
 
 /**
  * NoSQL injection prevention
  */
-export const preventNoSQLInjection = (req: Request, res: Response, next: NextFunction) => {
+const preventNoSQLInjection = (req: Request, res: Response, next: NextFunction) => {
   const checkForInjection = (obj: any): boolean => {
     if (!obj || typeof obj !== 'object') return false;
 
@@ -437,7 +437,7 @@ export const preventNoSQLInjection = (req: Request, res: Response, next: NextFun
 /**
  * Content-Type validation
  */
-export const validateContentType = (allowedTypes: string[] = ['application/json']) => {
+const validateContentType = (allowedTypes: string[] = ['application/json']) => {
   return (req: Request, res: Response, next: NextFunction) => {
     // Skip for GET, DELETE, OPTIONS
     if (['GET', 'DELETE', 'OPTIONS'].includes(req.method)) {
@@ -471,7 +471,7 @@ export const validateContentType = (allowedTypes: string[] = ['application/json'
 /**
  * Request size limit middleware
  */
-export const limitRequestSize = (maxSizeKB: number = 100) => {
+const limitRequestSize = (maxSizeKB: number = 100) => {
   return (req: Request, res: Response, next: NextFunction) => {
     const contentLength = parseInt(req.headers['content-length'] || '0', 10);
     const maxSizeBytes = maxSizeKB * 1024;
@@ -487,18 +487,3 @@ export const limitRequestSize = (maxSizeKB: number = 100) => {
   };
 };
 
-export default {
-  ValidationPatterns,
-  CommonValidators,
-  validate,
-  validateInput,
-  sanitizeValue,
-  sanitizeObject,
-  sanitizeRequestBody,
-  sanitizeQueryParams,
-  sanitizeUrlParams,
-  sanitizeAll,
-  preventNoSQLInjection,
-  validateContentType,
-  limitRequestSize,
-};

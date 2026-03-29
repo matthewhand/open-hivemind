@@ -2,7 +2,7 @@ import Debug from 'debug';
 
 const debug = Debug('app:OutgoingMessageRateLimiter');
 
-export class OutgoingMessageRateLimiter {
+class OutgoingMessageRateLimiter {
   private static instance: OutgoingMessageRateLimiter;
   private byChannel = new Map<string, number[]>();
 

@@ -87,7 +87,7 @@ interface Alert {
   resolvedAt?: number;
 }
 
-export class AdvancedMonitor extends EventEmitter {
+class AdvancedMonitor extends EventEmitter {
   private static instance: AdvancedMonitor;
   private metricsInterval: NodeJS.Timeout | null = null;
   private healthCheckInterval: NodeJS.Timeout | null = null;
@@ -530,4 +530,3 @@ export class AdvancedMonitor extends EventEmitter {
   }
 }
 
-export default AdvancedMonitor;

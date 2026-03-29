@@ -55,7 +55,7 @@ export function shouldReplyToUnsolicitedMessage(
   return true;
 }
 
-export function looksLikeOpportunity(text: string): boolean {
+function looksLikeOpportunity(text: string): boolean {
   const t = text.trim().toLowerCase();
   if (!t) {
     return false;

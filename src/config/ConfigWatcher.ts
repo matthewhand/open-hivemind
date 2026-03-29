@@ -1,7 +1,7 @@
 import { watch } from 'fs';
 import { EventEmitter } from 'events';
 
-export class ConfigWatcher extends EventEmitter {
+class ConfigWatcher extends EventEmitter {
   private watchers = new Map<string, any>();
   
   watchConfig(configPath: string) {
@@ -30,4 +30,4 @@ export class ConfigWatcher extends EventEmitter {
   }
 }
 
-export const configWatcher = new ConfigWatcher();
+const configWatcher = new ConfigWatcher();

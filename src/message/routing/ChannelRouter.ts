@@ -60,7 +60,7 @@ function parseKeyNumberMap(
  * Get configured bonus map from messageConfig.
  * Allowed bonus range is [0.0, 2.0].
  */
-export function getChannelBonuses(): Record<string, number> {
+function getChannelBonuses(): Record<string, number> {
   const raw = messageConfig.get('CHANNEL_BONUSES') as unknown;
   const bonuses = parseKeyNumberMap(raw, (v) => {
     const n = Number(v);
@@ -79,7 +79,7 @@ export function getChannelBonuses(): Record<string, number> {
  * Get configured priority map from messageConfig.
  * Priorities are integers, lower means higher priority.
  */
-export function getChannelPriorities(): Record<string, number> {
+function getChannelPriorities(): Record<string, number> {
   const raw = messageConfig.get('CHANNEL_PRIORITIES') as unknown;
   const priorities = parseKeyNumberMap(raw, (v) => {
     const n = Number(v);
@@ -94,7 +94,7 @@ export function getChannelPriorities(): Record<string, number> {
 /**
  * Returns the bonus for a channelId. Defaults to 1.0 when not configured.
  */
-export function getBonusForChannel(channelId: ChannelId): number {
+function getBonusForChannel(channelId: ChannelId): number {
   const bonuses = getChannelBonuses();
   const b = bonuses[channelId];
   return typeof b === 'number' ? b : 1.0;
@@ -104,7 +104,7 @@ export function getBonusForChannel(channelId: ChannelId): number {
  * Returns the priority for a channelId. Defaults to 0 when not configured.
  * Lower value means higher priority.
  */
-export function getPriorityForChannel(channelId: ChannelId): number {
+function getPriorityForChannel(channelId: ChannelId): number {
   const priorities = getChannelPriorities();
   const p = priorities[channelId];
   return typeof p === 'number' ? p : 0;
@@ -126,7 +126,7 @@ export function computeScore(channelId: ChannelId, _metadata?: ChannelRouterMeta
  * Picks the best channel from candidates.
  * Tie-breakers: highest bonus, then lexicographic channelId.
  */
-export function pickBestChannel(
+function pickBestChannel(
   candidates: ChannelId[],
   metadata?: ChannelRouterMetadata
 ): ChannelId | null {

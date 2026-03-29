@@ -513,7 +513,7 @@ function shouldSkipRateLimit(req: Request): boolean {
 }
 
 // Default rate limiter - 100 requests per 15 minutes
-export const defaultRateLimiter = rateLimit({
+const defaultRateLimiter = rateLimit({
   windowMs: RATE_LIMIT_CONFIG.default.windowMs,
   max: RATE_LIMIT_CONFIG.default.max,
   standardHeaders: true,
@@ -525,7 +525,7 @@ export const defaultRateLimiter = rateLimit({
 });
 
 // Configuration endpoint rate limiter - 10 requests per 5 minutes
-export const configRateLimiter = rateLimit({
+const configRateLimiter = rateLimit({
   windowMs: RATE_LIMIT_CONFIG.config.windowMs,
   max: RATE_LIMIT_CONFIG.config.max,
   standardHeaders: true,
@@ -557,7 +557,7 @@ export const authRateLimiter = rateLimit({
 });
 
 // Admin operations rate limiter - 20 requests per 15 minutes
-export const adminRateLimiter = rateLimit({
+const adminRateLimiter = rateLimit({
   windowMs: RATE_LIMIT_CONFIG.admin.windowMs,
   max: RATE_LIMIT_CONFIG.admin.max,
   standardHeaders: true,
@@ -569,7 +569,7 @@ export const adminRateLimiter = rateLimit({
 });
 
 // API rate limiter - 60 requests per minute
-export const apiRateLimiter = rateLimit({
+const apiRateLimiter = rateLimit({
   windowMs: RATE_LIMIT_CONFIG.api.windowMs,
   max: RATE_LIMIT_CONFIG.api.max,
   standardHeaders: true,
@@ -609,7 +609,7 @@ export const applyRateLimiting = (req: Request, res: Response, next: NextFunctio
 /**
  * Create a custom rate limiter
  */
-export function createRateLimiter(options: {
+function createRateLimiter(options: {
   windowMs: number;
   max: number;
   prefix: string;
@@ -637,7 +637,7 @@ export function createRateLimiter(options: {
 /**
  * Get rate limiting statistics
  */
-export function getRateLimitStats(): {
+function getRateLimitStats(): {
   redisAvailable: boolean;
   environment: string;
   config: typeof RATE_LIMIT_CONFIG;
@@ -652,7 +652,7 @@ export function getRateLimitStats(): {
 /**
  * Shutdown rate limiter and cleanup resources
  */
-export function shutdownRateLimiter(): void {
+function shutdownRateLimiter(): void {
   // Cleanup memory stores
   for (const [prefix, store] of memoryStores.entries()) {
     debug(`Shutting down memory store: ${prefix}`);

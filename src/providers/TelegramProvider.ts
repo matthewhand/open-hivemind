@@ -22,7 +22,7 @@ function validateTelegramToken(token: string): void {
   }
 }
 
-export class TelegramProvider implements IMessageProvider<TelegramConfig> {
+class TelegramProvider implements IMessageProvider<TelegramConfig> {
   id = 'telegram';
   label = 'Telegram';
   type = 'messenger' as const;

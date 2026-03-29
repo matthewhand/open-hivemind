@@ -214,7 +214,7 @@ export class InputSanitizer {
 /**
  * Rate limiting utilities
  */
-export class RateLimiter {
+class RateLimiter {
   private static attempts = new Map<string, number[]>();
 
   // Bounded cache configuration

@@ -16,4 +16,3 @@ function parse(input: string): { command: string; args: string[] } | null {
   return { command, args };
 }
 
-export { parse };

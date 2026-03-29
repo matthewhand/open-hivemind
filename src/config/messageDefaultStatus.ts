@@ -11,7 +11,7 @@ export interface MessageDefaultStatus {
   providers: MessageDefaultProviderSummary[];
 }
 
-export const getMessageDefaultStatus = (): MessageDefaultStatus => {
+const getMessageDefaultStatus = (): MessageDefaultStatus => {
   const providerManager = ProviderConfigManager.getInstance();
   const providers = providerManager
     .getAllProviders('message')

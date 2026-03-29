@@ -62,7 +62,7 @@ export interface HealthCheckResult {
 
 @singleton()
 @injectable()
-export class ApiMonitorService extends EventEmitter {
+class ApiMonitorService extends EventEmitter {
   private static instance: ApiMonitorService;
 
   public static getInstance(): ApiMonitorService {

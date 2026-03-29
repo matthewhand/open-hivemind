@@ -63,7 +63,7 @@ export interface DemoConversation {
  */
 @singleton()
 @injectable()
-export class DemoModeService {
+class DemoModeService {
   private isDemoMode = false;
   private demoBots: DemoBot[] = [];
   private conversations = new Map<string, DemoConversation>();

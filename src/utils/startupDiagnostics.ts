@@ -31,7 +31,7 @@ interface SystemResources {
   platform: string;
 }
 
-export class StartupDiagnostics {
+class StartupDiagnostics {
   private static instance: StartupDiagnostics;
 
   public static getInstance(): StartupDiagnostics {

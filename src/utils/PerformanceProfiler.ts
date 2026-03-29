@@ -42,7 +42,7 @@ interface PerformanceReport {
   alerts: string[];
 }
 
-export class PerformanceProfiler {
+class PerformanceProfiler {
   private static instance: PerformanceProfiler;
   private isProfiling = false;
   private snapshots: PerformanceSnapshot[] = [];
@@ -515,7 +515,7 @@ export class PerformanceProfiler {
 /**
  * Decorator for profiling method execution
  */
-export function Profile(target: any, propertyName: string, descriptor: PropertyDescriptor) {
+function Profile(target: any, propertyName: string, descriptor: PropertyDescriptor) {
   const method = descriptor.value;
   const className = target.constructor.name;
 
@@ -528,7 +528,7 @@ export function Profile(target: any, propertyName: string, descriptor: PropertyD
 /**
  * Decorator for profiling async method execution
  */
-export function ProfileAsync(target: any, propertyName: string, descriptor: PropertyDescriptor) {
+function ProfileAsync(target: any, propertyName: string, descriptor: PropertyDescriptor) {
   const method = descriptor.value;
   const className = target.constructor.name;
 
@@ -538,4 +538,3 @@ export function ProfileAsync(target: any, propertyName: string, descriptor: Prop
   };
 }
 
-export default PerformanceProfiler;

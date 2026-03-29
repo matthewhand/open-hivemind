@@ -15,7 +15,7 @@ export interface HistoryBudgetResult<TMessage> {
 }
 
 // Rough approximation: ~4 characters per token.
-export function estimateTokensFromText(text: string): number {
+function estimateTokensFromText(text: string): number {
   return Math.ceil(String(text || '').length / 4);
 }
 

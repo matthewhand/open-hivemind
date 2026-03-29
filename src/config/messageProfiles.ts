@@ -16,7 +16,7 @@ const DEFAULT_MESSAGE_PROFILES: MessageProfiles = {
   message: [],
 };
 
-export const loadMessageProfiles = (): MessageProfiles => {
+const loadMessageProfiles = (): MessageProfiles => {
   return loadProfiles<MessageProfiles>({
     filename: 'message-profiles.json',
     defaultData: DEFAULT_MESSAGE_PROFILES,
@@ -36,7 +36,7 @@ export const saveMessageProfiles = (profiles: MessageProfiles): void => {
   saveProfiles('message-profiles.json', profiles);
 };
 
-export const getMessageProfileByKey = (key: string): MessageProfile | undefined => {
+const getMessageProfileByKey = (key: string): MessageProfile | undefined => {
   const profiles = loadMessageProfiles().message;
   return findProfileByKey(profiles, 'key', key);
 };

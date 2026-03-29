@@ -64,4 +64,3 @@ const rateLimitConfig: RateLimitConfig = {
   },
 };
 
-export default rateLimitConfig;

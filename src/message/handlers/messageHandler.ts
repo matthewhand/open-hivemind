@@ -65,7 +65,7 @@ const historyTuner = AdaptiveHistoryTuner.getInstance();
  * ```
  */
 
-export async function handleMessage(
+async function handleMessage(
   message: IMessage,
   historyMessages: IMessage[] = [],
   botConfig: any

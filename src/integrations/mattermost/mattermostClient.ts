@@ -9,7 +9,7 @@ export interface MattermostConfig {
   token: string;
 }
 
-export default class MattermostClient {
+class MattermostClient {
   private axios: AxiosInstance;
   private connected: boolean = false;
   private me: any = null;

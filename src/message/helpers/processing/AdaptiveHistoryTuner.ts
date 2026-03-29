@@ -13,7 +13,7 @@ interface ChannelState {
  * Tracks a per-channel desired history fetch limit and adapts it based on
  * how much the prompt-builder trims history to fit the input token budget.
  */
-export class AdaptiveHistoryTuner {
+class AdaptiveHistoryTuner {
   private static instance: AdaptiveHistoryTuner;
   private state = new Map<string, ChannelState>();
 

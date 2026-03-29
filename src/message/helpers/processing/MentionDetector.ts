@@ -47,7 +47,7 @@ export function isBotNameInText(text: string, botName: string): boolean {
 /**
  * Detect mentions and replies in a message to provide context hints to the LLM
  */
-export function detectMentions(
+function detectMentions(
   message: any, // Using any for flexible message interface
   botId: string,
   botUsername?: string

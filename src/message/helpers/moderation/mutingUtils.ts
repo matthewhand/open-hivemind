@@ -13,7 +13,7 @@ const debug = Debug('app:mutingUtils');
  * @param {string} userId - The ID of the user to be muted.
  * @returns {Promise<void>} Resolves when the user is muted.
  */
-export async function muteUser(channel: TextChannel, userId: string): Promise<void> {
+async function muteUser(channel: TextChannel, userId: string): Promise<void> {
   debug('Muting user with ID: ' + userId + ' in channel: ' + channel.id);
   const member = await channel.guild.members.fetch(userId);
   const role = channel.guild.roles?.cache.find((role) => role.name === 'Muted');

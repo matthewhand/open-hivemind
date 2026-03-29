@@ -23,7 +23,7 @@ function __require(modulePath: string): any {
 
 let cachedMessengersConfig: any = null;
 
-export function resetMessengerProviderCache(): void {
+function resetMessengerProviderCache(): void {
   cachedMessengersConfig = null;
 }
 
@@ -138,4 +138,4 @@ export function getMessengerProvider() {
   return messengerServices;
 }
 
-module.exports = { getMessengerProvider, resetMessengerProviderCache };
+module.exports = { getMessengerProvider };

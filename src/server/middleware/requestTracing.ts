@@ -115,7 +115,7 @@ function generateSpanId(): string {
  * @param options - Configuration options
  * @returns Express middleware function
  */
-export function createRequestTracingMiddleware(
+function createRequestTracingMiddleware(
   options: RequestTracingOptions = {}
 ): (req: Request, res: Response, next: NextFunction) => void {
   const config = { ...defaultOptions, ...options };
@@ -175,33 +175,33 @@ export function createRequestTracingMiddleware(
 /**
  * Default request tracing middleware instance
  */
-export const requestTracing = createRequestTracingMiddleware();
+const requestTracing = createRequestTracingMiddleware();
 
 /**
  * Helper function to get trace ID from request
  */
-export function getTraceId(req: Request): string | undefined {
+function getTraceId(req: Request): string | undefined {
   return (req as TracedRequest).traceId;
 }
 
 /**
  * Helper function to get span ID from request
  */
-export function getSpanId(req: Request): string | undefined {
+function getSpanId(req: Request): string | undefined {
   return (req as TracedRequest).spanId;
 }
 
 /**
  * Helper function to get request-scoped logger
  */
-export function getRequestLogger(req: Request): StructuredLogger | undefined {
+function getRequestLogger(req: Request): StructuredLogger | undefined {
   return (req as TracedRequest).logger;
 }
 
 /**
  * Helper function to get request duration in milliseconds
  */
-export function getRequestDuration(req: Request): number | undefined {
+function getRequestDuration(req: Request): number | undefined {
   const tracedReq = req as TracedRequest;
   if (tracedReq.startTime) {
     return Date.now() - tracedReq.startTime;

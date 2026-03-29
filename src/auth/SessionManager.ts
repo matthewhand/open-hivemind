@@ -8,7 +8,7 @@ const debug = Debug('app:SessionManager');
 /**
  * SessionManager handles secure session management with token rotation
  */
-export class SessionManager {
+class SessionManager {
   private static instance: SessionManager;
   private sessionStore: SessionStore;
   private authManager: AuthManager;

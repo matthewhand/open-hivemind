@@ -275,7 +275,7 @@ ${MetricsCollector.getInstance().getPrometheusFormat()}
   return res.send(metrics);
 });
 
-export const prometheusMetricsHandler = (req: Request, res: Response) => {
+const prometheusMetricsHandler = (req: Request, res: Response) => {
   const uptime = process.uptime();
   const memoryUsage = process.memoryUsage();
   const cpuUsage = process.cpuUsage();

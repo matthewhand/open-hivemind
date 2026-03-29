@@ -105,7 +105,7 @@ export interface N8nConfig {
 /**
  * Data Access Object for managing bot configurations in the SQLite database.
  */
-export class BotConfigurationDAO {
+class BotConfigurationDAO {
   private db: Database;
   private readonly tableName = 'bot_configurations';
 

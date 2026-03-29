@@ -65,7 +65,7 @@ function startCleanupInterval() {
 
 startCleanupInterval();
 
-export function stopTokenCleanup() {
+function stopTokenCleanup() {
   if (cleanupInterval) {
     clearInterval(cleanupInterval);
     cleanupInterval = null;
@@ -75,7 +75,7 @@ export function stopTokenCleanup() {
 /**
  * Generate a cryptographically secure CSRF token
  */
-export function generateCsrfToken(): string {
+function generateCsrfToken(): string {
   return crypto.randomBytes(defaultConfig.tokenLength).toString('base64url');
 }
 
@@ -102,7 +102,7 @@ function parseCookies(cookieHeader: string | undefined): Record<string, string> 
  * Get session identifier for token storage
  * Uses a secure random session ID stored in a cookie
  */
-export function getSessionId(req: Request, res: Response): string {
+function getSessionId(req: Request, res: Response): string {
   const cookieName = `${defaultConfig.cookieName}_sid`;
 
   // Try to get from req.cookies (if cookie-parser is used)
@@ -287,7 +287,7 @@ export function csrfTokenHandler(req: Request, res: Response): void {
  * This is an alternative approach that doesn't require server-side token storage.
  * Use this for stateless applications or when Redis is not available.
  */
-export function csrfDoubleSubmit(req: Request, res: Response, next: NextFunction): void {
+function csrfDoubleSubmit(req: Request, res: Response, next: NextFunction): void {
   const method = req.method.toUpperCase();
 
   // Skip CSRF check for safe methods

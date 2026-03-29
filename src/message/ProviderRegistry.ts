@@ -170,43 +170,19 @@ export async function getMessengerServiceByProvider(
 /**
  * Get list of all discovered provider names.
  */
-export async function getRegisteredProviders(): Promise<string[]> {
-  await discoverProviders();
-  return Array.from(discoveredProviders.keys());
-}
 
 /**
  * Check if a provider is discovered.
  */
-export async function isProviderRegistered(providerName: string): Promise<boolean> {
-  await discoverProviders();
-  return discoveredProviders.has(providerName.toLowerCase());
-}
 
 /**
  * Get list of currently loaded (active) providers.
  */
-export function getLoadedProviders(): string[] {
-  return Array.from(loadedProviders.keys());
-}
 
 /**
  * Unload a provider from cache (e.g. when disabling).
  */
-export function unloadProvider(providerName: string): void {
-  const normalizedName = providerName.toLowerCase();
-  if (loadedProviders.has(normalizedName)) {
-    loadedProviders.delete(normalizedName);
-    debug(`Unloaded provider: ${providerName}`);
-  }
-}
 
 /**
  * Force re-discovery of providers (useful after adding new integrations).
  */
-export async function refreshProviders(): Promise<void> {
-  initialized = false;
-  initializationPromise = null;
-  discoveredProviders.clear();
-  await discoverProviders();
-}
