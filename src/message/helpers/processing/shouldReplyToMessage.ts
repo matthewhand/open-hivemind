@@ -554,7 +554,7 @@ const COLORS = {
 /**
  * Generate colorized modifier summary with adjectives for console output
  */
-function generateColorizedModsSummary(mods: Record<string, number | string>): string {
+export function generateColorizedModsSummary(mods: Record<string, number | string>): string {
   const parts: string[] = [];
 
   for (const [name, value] of Object.entries(mods)) {
@@ -599,7 +599,7 @@ function generateColorizedModsSummary(mods: Record<string, number | string>): st
  * Generate a human-readable prose explanation of why the bot is responding/skipping
  * Uses modifier magnitudes to add adjectives (slight/moderate/strong)
  */
-function generateProseExplanation(
+export function generateProseExplanation(
   mods: Record<string, number | string>,
   decided: boolean,
   wasDirectlyAddressed: boolean,

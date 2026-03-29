@@ -4,7 +4,7 @@ import {
   recordBotActivity,
 } from '../../../../src/message/helpers/processing/ChannelActivity';
 import { IncomingMessageDensity } from '../../../../src/message/helpers/processing/IncomingMessageDensity';
-import { shouldReplyToMessage } from '../../../../src/message/helpers/processing/shouldReplyToMessage';
+import { shouldReplyToMessage, generateProseExplanation, generateColorizedModsSummary } from '../../../../src/message/helpers/processing/shouldReplyToMessage';
 import {
   looksLikeOpportunity,
   shouldReplyToUnsolicitedMessage,
@@ -343,5 +343,47 @@ describe('shouldReplyToMessage', () => {
     expect(
       (await shouldReplyToMessage(mockMessage, 'bot-id', 'discord', 'MyBot')).shouldReply
     ).toBe(false);
+  });
+});
+
+describe('Other Thresholds and Conditions (generateProseExplanation & Modifiers)', () => {
+  it('should generate accurate prose for BotRatio and other penalties', () => {
+    // Test when deciding NOT to reply due to penalties
+    const mods = { BotRatio: -0.5, BurstTraffic: -0.2, Crowded: 0.5 };
+    const prose = generateProseExplanation(mods, false, false, false);
+    expect(prose).toContain('Skipping due to');
+    expect(prose).toContain('strongly no human participants');
+    expect(prose).toContain('busy channel');
+    expect(prose).toContain('strongly crowded typing');
+  });
+
+  it('should generate accurate prose for bonuses when deciding to reply', () => {
+    const mods = { Recent: 0.5, Q: 0.2, UserActive: 0.1 };
+    const prose = generateProseExplanation(mods, true, false, true);
+    expect(prose).toContain('Responding due to');
+    expect(prose).toContain('strongly recently active in chat');
+    expect(prose).toContain('question asked');
+    expect(prose).toContain('slightly user activity');
+  });
+
+  it('should prioritize direct mention in prose', () => {
+    const mods = { Mention: 0.5, Leading: 1.0, Reply: 0.5 };
+    const prose = generateProseExplanation(mods, true, true, false);
+    expect(prose).toContain('Responding to direct mention');
+    expect(prose).toContain('mentioned');
+    expect(prose).toContain('addressed first');
+    expect(prose).toContain('replied to');
+  });
+
+  it('should format colorized modifier summaries correctly', () => {
+    const mods = { Mention: 0.5, Crowded: 0.5, Neutral: 0 };
+    const colorized = generateColorizedModsSummary(mods);
+
+    // Should have ANSI codes
+    expect(colorized).toContain('\x1b[');
+    // Mention is a bonus, so green
+    expect(colorized).toContain('strong Mention(+0.50)');
+    // Neutral has no adjective
+    expect(colorized).toContain('Neutral(+0.00)');
   });
 });
