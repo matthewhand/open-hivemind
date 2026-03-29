@@ -3,6 +3,7 @@ import { EventEmitter } from 'events';
 import fs from 'fs';
 import path from 'path';
 import Debug from 'debug';
+import { injectable, singleton } from 'tsyringe';
 import { BotConfigurationManager } from '@config/BotConfigurationManager';
 import { SecureConfigManager } from '@config/SecureConfigManager';
 import { UserConfigStore } from '@config/UserConfigStore';
@@ -69,6 +70,8 @@ export interface CreateBotRequest {
   mcpGuard?: MCPGuardConfig;
 }
 
+@singleton()
+@injectable()
 export class BotManager extends EventEmitter {
   private static instance: BotManager;
   private botConfigManager: BotConfigurationManager;
