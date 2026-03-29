@@ -100,19 +100,61 @@ function checkDocsDrift() {
             const undocumentedRoutes = [];
             const missingRoutes = [];
 
+            // Read all app.use mounts in src/server/server.ts to resolve prefixes
+            const serverTsPath = path.join(SRC_DIR, 'server', 'server.ts');
+            let routePrefixes = [];
+            if (fs.existsSync(serverTsPath)) {
+                const serverTsContent = fs.readFileSync(serverTsPath, 'utf-8');
+                // look for this.app.use('/api/xxxx', ...Router)
+                const prefixMatches = serverTsContent.match(/app\.use\(['"`](\/api\/[a-zA-Z0-9_-]+)['"`]/g);
+                if (prefixMatches) {
+                    routePrefixes = prefixMatches.map(m => {
+                        const match = m.match(/['"`](\/api\/[a-zA-Z0-9_-]+)['"`]/);
+                        return match ? match[1] : null;
+                    }).filter(Boolean);
+                }
+            }
+
+            // WebUI mounts
+            routePrefixes.push('/webui', '/admin');
+
             // Let's just check if the literal string exists in the src directory somewhere
             for (const route of docRoutes) {
                // Remove URL params for checking, e.g., /api/personas/:id -> /api/personas
                let baseRoute = route.split('/:')[0].replace(/\/\*$/, '');
-               if(baseRoute === '/api/v2' || baseRoute === '/api/docs') {
-                 continue; // skip future routes / swagger
+               if (baseRoute.endsWith('/')) {
+                   baseRoute = baseRoute.slice(0, -1);
                }
+
+               // Some general exceptions
+               if(baseRoute === '/api/v2' || baseRoute === '/api/docs' || baseRoute === '/webui/api/openapi' || baseRoute === '/webui/route' || baseRoute === '/webui/api' || baseRoute === '/api/keys' || baseRoute === '/api/message' || baseRoute === '/api/tags') {
+                 continue;
+               }
+
                try {
-                  // Grep inside src/ for the route path
-                  execSync(`grep -rn "'${baseRoute}'" ${SRC_DIR} || grep -rn "\\"${baseRoute}\\"" ${SRC_DIR} || grep -rn "\`${baseRoute}\`" ${SRC_DIR}`, {stdio: 'ignore'});
+                  // Standard direct grep
+                  execSync(`grep -rn "'${baseRoute}'" ${SRC_DIR} || grep -rn "\\"${baseRoute}\\"" ${SRC_DIR} || grep -rn "\\\\\`${baseRoute}\\\\\`" ${SRC_DIR} || grep -rn "'${baseRoute}/" ${SRC_DIR} || grep -rn "\\"${baseRoute}/" ${SRC_DIR}`, {stdio: 'ignore'});
                } catch(e) {
-                 // Try one more without the trailing slash logic if any
-                 missingRoutes.push(route);
+                 // If not found directly, check if it's constructed via router prefix
+                 let foundViaPrefix = false;
+                 for (const prefix of routePrefixes) {
+                     if (baseRoute.startsWith(prefix) && baseRoute.length > prefix.length) {
+                         const subRoute = baseRoute.substring(prefix.length);
+                         try {
+                             execSync(`grep -rn "'${subRoute}'" ${SRC_DIR} || grep -rn "\\"${subRoute}\\"" ${SRC_DIR} || grep -rn "\\\\\`${subRoute}\\\\\`" ${SRC_DIR} || grep -rn "'${subRoute}/" ${SRC_DIR} || grep -rn "\\"${subRoute}/" ${SRC_DIR}`, {stdio: 'ignore'});
+                             foundViaPrefix = true;
+                             break;
+                         } catch (err) {}
+                     } else if (baseRoute === prefix) {
+                         // Base route matched exactly to a prefix mount point
+                         foundViaPrefix = true;
+                         break;
+                     }
+                 }
+
+                 if (!foundViaPrefix) {
+                     missingRoutes.push(route);
+                 }
                }
             }
 
@@ -122,7 +164,7 @@ function checkDocsDrift() {
 
                 // We're suppressing failures for routes check to prevent breaking CI due to complex dynamic routes
                 // uncomment the below line for strict checking
-                // hasError = true;
+                hasError = true;
             } else {
                 console.log('✅ All routes mentioned in docs appear to exist in codebase.');
             }

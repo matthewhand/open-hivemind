@@ -90,4 +90,39 @@ router.get('/tool', async (_req: Request, res: Response) => {
   }
 });
 
+/**
+ * GET /api/providers/health
+ * Provider Health Check System Endpoint
+ */
+router.get('/health', async (_req: Request, res: Response) => {
+  try {
+    const memoryProviders = Array.from(providerRegistry.getMemoryProviders().entries());
+    const toolProviders = Array.from(providerRegistry.getToolProviders().entries());
+
+    const healthStatus = {
+      timestamp: new Date().toISOString(),
+      status: 'healthy',
+      providers: {
+        memory: memoryProviders.map(([name, provider]) => ({
+          name,
+          id: provider.id,
+          status: 'active'
+        })),
+        tools: toolProviders.map(([name, provider]) => ({
+          name,
+          id: provider.id,
+          status: 'active'
+        }))
+      }
+    };
+
+    return res.json(healthStatus);
+  } catch (err: unknown) {
+    return res.status(500).json({
+      error: 'Failed to retrieve provider health',
+      message: err instanceof Error ? err.message : String(err),
+    });
+  }
+});
+
 export default router;

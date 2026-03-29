@@ -139,7 +139,7 @@
 
 ### Core Infrastructure
 - [x] **React App Setup** (`webui/` directory) - Vite + React + TypeScript
-- [x] **Backend API Endpoints** (`/api/config`, `/api/bots`, `/api/status`) - Existing routes implemented
+- [x] **Backend API Endpoints** (`/api/config`, `/api/bots`, `/api/health`) - Existing routes implemented
 - [x] **Configuration Reader Service** (merge env + files, mask secrets) - API service layer created
 - [x] **Dashboard Overview** (bot cards, health indicators, stats) - Dashboard component with Material-UI
 - [x] **Configuration Viewer** (tree view, source indicators, search) - ConfigViewer with search and tree structure

@@ -58,7 +58,7 @@ export interface ILlmProvider {
 #### Option C: Build Provider Health Check System
 - [ ] Create `src/llm/ProviderHealthService.ts`
 - [ ] Add method `checkProviderHealth(provider: ILlmProvider): Promise<HealthStatus>`
-- [ ] Create `/api/webui/providers/health` endpoint in `src/server/routes/`
+- [ ] Create `/api/providers/health` endpoint in `src/server/routes/`
 - [ ] Add health check to bot startup sequence in `BotManager`
 - [ ] Add WebUI component showing provider status
 

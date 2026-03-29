@@ -98,17 +98,17 @@ Response:
 | Method | Endpoint | Description |
 |--------|----------|-------------|
 | GET | `/api/config` | Get sanitized configuration |
-| GET | `/api/config/bots` | List all configured bots |
+| GET | `/api/bots` | List all configured bots |
 | GET | `/api/config/sources` | List configuration sources |
 | GET | `/api/config/llm-status` | Get LLM configuration status |
 | GET | `/api/config/llm-profiles` | List all LLM profiles |
 | PUT | `/api/config/llm-profiles/:key` | Update LLM profile |
 | PUT | `/api/config/global` | Update global configuration |
 
-#### GET /api/config/bots
+#### GET /api/bots
 
 ```bash
-curl http://localhost:3028/api/config/bots \
+curl http://localhost:3028/api/bots \
   -H "Authorization: Bearer <token>"
 ```
 
