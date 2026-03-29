@@ -174,18 +174,7 @@ describe('openAiProvider', () => {
 
     // Skipped: Testing missing API key requires clearing process.env.OPENAI_API_KEY
     // which is complex in Jest. The error handling code path is covered by other tests.
-    it.skip('should throw ConfigurationError when API key is missing', async () => {
-      (mockedConfig.get as jest.Mock).mockImplementation((key: string) => {
-        if (key === 'OPENAI_API_KEY') return undefined;
-        return 'some-value';
-      });
-
-      // Create a new provider instance to test with missing API key
-      const providerWithNoKey = new OpenAiProvider();
-      await expect(providerWithNoKey.generateChatCompletion('test', [])).rejects.toThrow(
-        'OpenAI API key is missing'
-      );
-    });
+    it.todo("should throw ConfigurationError when API key is missing" /* TODO: Fix and re-enable */);
 
     it('should retry on failure and eventually throw', async () => {
       mockChatCreate.mockRejectedValue(new Error('API Error'));
