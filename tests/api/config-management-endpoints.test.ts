@@ -269,7 +269,7 @@ describe('Configuration Management API Endpoints - COMPLETE TDD SUITE', () => {
   // All tests go here...
   it('should return configuration with sensitive data redacted', async () => {
     const response = await request(app).get('/api/config').expect(200);
-    expect(response.body.bots).toBeDefined();
+    expect(Array.isArray(response.body.bots)).toBe(true);
   });
 
   it('should redact sensitive information from bot configurations', async () => {
@@ -345,7 +345,7 @@ describe('Configuration Management API Endpoints - COMPLETE TDD SUITE', () => {
   it('should include export metadata', async () => {
     const response = await request(app).get('/api/config/export').expect(200);
     const data = JSON.parse(response.text);
-    expect(data.exportTimestamp).toBeDefined();
+    expect(typeof data.exportTimestamp).toBe('string');
   });
 
   it('should handle export errors gracefully', async () => {

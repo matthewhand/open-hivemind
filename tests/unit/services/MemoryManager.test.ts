@@ -167,7 +167,7 @@ describe('MemoryManager', () => {
       expect(opts.agentId).toBe('bot1');
       expect(opts.userId).toBe('u1');
       expect(opts.metadata.botName).toBe('bot1');
-      expect(opts.metadata.timestamp).toBeDefined();
+      expect(typeof opts.metadata.timestamp).toBe('string');
     });
 
     it('stores assistant message', async () => {

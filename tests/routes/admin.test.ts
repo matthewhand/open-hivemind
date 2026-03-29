@@ -295,7 +295,6 @@ describe('Admin Routes', () => {
 
       expect(response.body.success).toBe(true);
       expect(Array.isArray(response.body.data.personas)).toBe(true);
-      expect(Array.isArray(response.body.data.personas)).toBe(true);
     });
 
     test('POST /api/admin/personas should create new persona', async () => {
@@ -404,7 +403,6 @@ describe('Admin Routes', () => {
       const response = await request(app).get('/api/admin/tool-usage-guards').expect(200);
 
       expect(response.body.success).toBe(true);
-      expect(Array.isArray(response.body.data.guards)).toBe(true);
       expect(Array.isArray(response.body.data.guards)).toBe(true);
     });
 

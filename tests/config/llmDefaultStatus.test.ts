@@ -51,8 +51,8 @@ describe('llmDefaultStatus', () => {
   it('should include libraryStatus', () => {
     mockGetAllProviders.mockReturnValue([]);
     const status = getLlmDefaultStatus();
-    expect(status.libraryStatus).toBeDefined();
     expect(typeof status.libraryStatus).toBe('object');
+    expect(status.libraryStatus).not.toBeNull();
     expect(status.libraryStatus).toHaveProperty('openai');
     expect(status.libraryStatus).toHaveProperty('flowise');
   });

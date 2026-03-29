@@ -442,13 +442,13 @@ describe('Utility Functions Comprehensive Tests', () => {
       const events = await auditLogger.getAuditEvents();
       // Find our test event by looking for the specific action
       const testEvent = events.find((event: any) => event.action === 'TEST_ACTION');
-      expect(testEvent).toBeDefined();
+      expect(testEvent).not.toBeUndefined();
       expect(testEvent.user).toBe('test-user');
       expect(testEvent.resource).toBe('test-resource');
       expect(testEvent.result).toBe('success');
       expect(testEvent.details).toBe('Test audit event');
-      expect(testEvent.timestamp).toBeDefined();
-      expect(testEvent.id).toBeDefined();
+      expect(typeof testEvent.timestamp).toBe('string');
+      expect(typeof testEvent.id).toBe('string');
     });
 
     test('should filter events by user', async () => {
@@ -638,10 +638,10 @@ describe('Utility Functions Comprehensive Tests', () => {
       const events = await auditLogger.getAuditEvents();
       const foundEvent = events.find((event: any) => event.action === 'CONFIG_UPDATE');
 
-      expect(foundEvent).toBeDefined();
+      expect(foundEvent).not.toBeUndefined();
       expect(foundEvent.user).toBe('admin-user');
       expect(foundEvent.resource).toBe('bots/complex-bot');
-      expect(foundEvent.metadata).toBeDefined();
+      expect(typeof foundEvent.metadata).toBe('object');
       expect(foundEvent.metadata.changes.oldConfig.token).toBe('old-token');
       expect(foundEvent.metadata.changes.newConfig.channels).toHaveLength(3);
       expect(foundEvent.metadata.validation.schema).toBe('v2.0');

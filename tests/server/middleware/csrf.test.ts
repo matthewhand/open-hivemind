@@ -39,8 +39,8 @@ describe('CSRF Middleware', () => {
     it('should generate a token', () => {
       const token = generateCsrfToken();
 
-      expect(token).toBeDefined();
       expect(typeof token).toBe('string');
+      expect(token.length).toBeGreaterThan(0);
       expect(token.length).toBeGreaterThan(32);
     });
 

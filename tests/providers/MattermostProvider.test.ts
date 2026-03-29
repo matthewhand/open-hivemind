@@ -27,10 +27,10 @@ describe('MattermostProvider', () => {
 
   it('should return schema', () => {
     const schema = provider.getSchema();
-    expect(schema).toBeDefined();
+    expect(typeof schema).toBe('object');
     // Verify properties from mattermostConfig
     const props = (schema as any).properties || (schema as any)._cvtProperties || schema;
-    expect(props.MATTERMOST_SERVER_URL).toBeDefined();
+    expect(props.MATTERMOST_SERVER_URL).not.toBeUndefined();
   });
 
   it('should return sensitive keys', () => {

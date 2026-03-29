@@ -77,10 +77,9 @@ describe('errorHandler middleware', () => {
   describe('correlationMiddleware', () => {
     it('should generate a correlation ID if none exists', () => {
       correlationMiddleware(mockReq as Request, mockRes as Response, mockNext);
-      expect(mockReq.correlationId).toBeDefined();
       expect(mockReq.correlationId).toMatch(/^corr_\d+_[a-f0-9]+$/);
       expect(mockRes.setHeader).toHaveBeenCalledWith('X-Correlation-ID', mockReq.correlationId);
-      expect(mockReq.startTime).toBeDefined();
+      expect(typeof mockReq.startTime).toBe('number');
       expect(mockNext).toHaveBeenCalled();
     });
 
@@ -160,7 +159,7 @@ describe('errorHandler middleware', () => {
       globalErrorHandler(new Error('test'), mockReq as Request, mockRes as Response, mockNext);
 
       const jsonCallArg = (mockRes.json as jest.Mock).mock.calls[0][0];
-      expect(jsonCallArg.stack).toBeDefined();
+      expect(typeof jsonCallArg.stack).toBe('string');
 
       process.env.NODE_ENV = originalEnv;
     });

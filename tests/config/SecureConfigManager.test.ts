@@ -225,8 +225,8 @@ describe('SecureConfigManager', () => {
       await secureConfigManager.storeConfig(config);
       const backupId = await secureConfigManager.createBackup();
 
-      expect(backupId).toBeDefined();
       expect(typeof backupId).toBe('string');
+      expect(backupId.length).toBeGreaterThan(0);
 
       // Verify the backup file was created on disk
       const backupPath = path.join(process.cwd(), 'config', 'backups', `${backupId}.json`);

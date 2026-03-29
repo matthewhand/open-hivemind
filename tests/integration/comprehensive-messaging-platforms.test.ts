@@ -650,17 +650,17 @@ describe('COMPREHENSIVE MESSAGING PLATFORM TESTS - PHASE 2', () => {
 
     test('should export SlackBotManager from package', () => {
       const slackPackage = require('../../packages/message-slack/src/index');
-      expect(slackPackage.SlackBotManager).toBeDefined();
+      expect(typeof slackPackage.SlackBotManager).toBe('function');
     });
 
     test('should export SlackEventProcessor from package', () => {
       const slackPackage = require('../../packages/message-slack/src/index');
-      expect(slackPackage.SlackEventProcessor).toBeDefined();
+      expect(typeof slackPackage.SlackEventProcessor).toBe('function');
     });
 
     test('should export SlackMessageProcessor from package', () => {
       const slackPackage = require('../../packages/message-slack/src/index');
-      expect(slackPackage.SlackMessageProcessor).toBeDefined();
+      expect(typeof slackPackage.SlackMessageProcessor).toBe('function');
     });
   });
 
@@ -678,7 +678,7 @@ describe('COMPREHENSIVE MESSAGING PLATFORM TESTS - PHASE 2', () => {
     test('Mattermost create() should return a service instance', () => {
       const { create } = require('../../packages/message-mattermost/src/index');
       const instance = create({} as any);
-      expect(instance).toBeDefined();
+      expect(instance).not.toBeUndefined();
     });
   });
 
@@ -696,11 +696,10 @@ describe('COMPREHENSIVE MESSAGING PLATFORM TESTS - PHASE 2', () => {
 
       for (const pkg of packages) {
         const { manifest } = require(pkg);
-        expect(manifest).toBeDefined();
-        expect(manifest.type).toBe('message');
+        expect(manifest).toEqual(expect.objectContaining({ type: 'message' }));
         expect(typeof manifest.displayName).toBe('string');
         expect(typeof manifest.description).toBe('string');
-        expect(manifest.minVersion).toBeDefined();
+        expect(typeof manifest.minVersion).toBe('string');
       }
     });
 

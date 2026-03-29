@@ -106,7 +106,7 @@ describe('ConfigurationImportExportService - Backup Retention', () => {
     const result = await service.createBackup('test');
 
     expect(result.success).toBe(true);
-    expect(result.filePath).toBeDefined();
+    expect(typeof result.filePath).toBe('string');
   });
 });
 

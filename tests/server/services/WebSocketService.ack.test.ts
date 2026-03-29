@@ -63,8 +63,8 @@ describe('WebSocketService – message acknowledgment & delivery tracking', () =
     const env1 = service.sendTrackedMessage('test_event', { foo: 1 });
     const env2 = service.sendTrackedMessage('test_event', { foo: 2 });
 
-    expect(env1.messageId).toBeDefined();
-    expect(env2.messageId).toBeDefined();
+    expect(typeof env1.messageId).toBe('string');
+    expect(typeof env2.messageId).toBe('string');
     expect(env1.messageId).not.toBe(env2.messageId);
   });
 
