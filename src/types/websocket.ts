@@ -3,12 +3,14 @@
  */
 
 /** Delivery status of an outbound WebSocket message. */
-export enum DeliveryStatus {
-  SENT = 'SENT',
-  ACKNOWLEDGED = 'ACKNOWLEDGED',
-  FAILED = 'FAILED',
-  TIMED_OUT = 'TIMED_OUT',
-}
+export const DeliveryStatus = {
+  SENT: 'SENT',
+  ACKNOWLEDGED: 'ACKNOWLEDGED',
+  FAILED: 'FAILED',
+  TIMED_OUT: 'TIMED_OUT',
+} as const;
+
+export type DeliveryStatus = typeof DeliveryStatus[keyof typeof DeliveryStatus];
 
 /** Envelope wrapping every outbound message with tracking metadata. */
 export interface MessageEnvelope {

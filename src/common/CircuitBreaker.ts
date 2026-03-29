@@ -16,11 +16,13 @@ const debug = Debug('app:circuit-breaker');
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
-export enum CircuitBreakerState {
-  CLOSED = 'CLOSED',
-  OPEN = 'OPEN',
-  HALF_OPEN = 'HALF_OPEN',
-}
+export const CircuitBreakerState = {
+  CLOSED: 'CLOSED',
+  OPEN: 'OPEN',
+  HALF_OPEN: 'HALF_OPEN',
+} as const;
+
+export type CircuitBreakerState = typeof CircuitBreakerState[keyof typeof CircuitBreakerState];
 
 export interface CircuitBreakerOptions {
   /** Name used in log messages (e.g. "openai", "mem0"). */
