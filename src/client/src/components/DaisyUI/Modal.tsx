@@ -146,10 +146,11 @@ const Modal: React.FC<ModalProps> = ({
             {actions.map((action, index) => (
               <button
                 key={index}
-                className={`btn ${getVariantClass(action.variant)} ${action.loading ? 'loading' : ''}`}
+                className={`btn ${getVariantClass(action.variant)}`}
                 onClick={action.onClick}
                 disabled={action.disabled || action.loading}
               >
+                {action.loading && <span className="loading loading-spinner" aria-hidden="true"></span>}
                 {action.loading ? '' : action.label}
               </button>
             ))}

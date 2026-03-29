@@ -13,3 +13,7 @@
 ## 2024-05-15 - Fixed Form Control Labels in EnterpriseManager Modal
 **Learning:** Found that multiple `input` and `select` fields in custom modals (like "Add Integration" and "Add Cloud Provider" in `EnterpriseManager.tsx`) were wrapped in `<label>` elements but lacked proper `id` and `htmlFor` associations, causing screen readers to miss the label text completely.
 **Action:** Always ensure that form controls within custom DaisyUI/Tailwind modal dialogs explicitly use `htmlFor` on labels mapped to matching `id` attributes on the input fields, rather than relying on structural nesting, to guarantee robust keyboard and screen-reader accessibility.
+
+## 2024-03-28 - [Modal Action Button Loading State]
+**Learning:** In newer versions of the DaisyUI library (v3/v4), the `.loading` utility class on a `.btn` element was deprecated in favor of an explicit `<span className="loading loading-spinner"></span>` element. Older class-only usage results in no visual feedback for async actions.
+**Action:** Always use an explicit `<span className="loading loading-spinner" aria-hidden="true"></span>` element inside the button for loading states to ensure compatibility and accessibility.
