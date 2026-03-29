@@ -594,7 +594,7 @@ export async function handleMessage(
           channelId,
           userId: message.getAuthorId(),
         };
-        // Fire-and-forget \u2014 memory writes must not slow down or break responses.
+        // Fire-and-forget — memory writes must not slow down or break responses.
         memoryManager
           .storeConversationMemory(memBotName, processedMessage, 'user', memMeta)
           .catch((e: unknown) => logger('Memory store (user) failed: %O', e));
