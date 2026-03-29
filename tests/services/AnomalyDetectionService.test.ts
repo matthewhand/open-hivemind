@@ -197,7 +197,7 @@ describe('AnomalyDetectionService', () => {
       })
     );
 
-    // Clear history and test 'error' (medium severity, zScore > 3 and <= 4)
+    // Clear history and test 'warning' (medium severity, zScore > 3 and <= 4)
     (service as any).dataWindows.clear();
     (wsService.recordAlert as jest.Mock).mockClear();
     service.updateConfig({ windowSize: 1000, minDataPoints: 10, zThreshold: 3 });
@@ -335,6 +335,49 @@ describe('AnomalyDetectionService', () => {
     // Modifying the returned array should not affect the original array
     anomalies.push({ id: 'another-anomaly' } as any);
     expect(service['anomalies'].length).toBe(1);
+  });
+
+  test('should emit anomalyDetected event with correct payload when anomaly is created', async () => {
+    const anomalyHandler = jest.fn();
+    service.on('anomalyDetected', anomalyHandler);
+
+    // Seed enough data points and then add an outlier to trigger anomaly detection
+    for (let i = 0; i < 20; i++) {
+      service.addDataPoint('responseTime', 100 + i * 5);
+    }
+    service.addDataPoint('responseTime', 500); // Outlier that should trigger anomaly
+
+    await service.runDetection();
+
+    expect(anomalyHandler).toHaveBeenCalledTimes(1);
+    const payload = anomalyHandler.mock.calls[0][0];
+    expect(payload).toMatchObject({
+      metric: 'responseTime',
+      value: 500,
+      resolved: false,
+    });
+    expect(payload.id).toBeDefined();
+    expect(payload.zScore).toBeGreaterThan(3);
+    expect(payload.severity).toBeDefined();
+
+    service.removeListener('anomalyDetected', anomalyHandler);
+  });
+
+  test('should emit dataPointAdded event when addDataPoint is called', () => {
+    const dataPointHandler = jest.fn();
+    service.on('dataPointAdded', dataPointHandler);
+
+    service.addDataPoint('responseTime', 150);
+
+    expect(dataPointHandler).toHaveBeenCalledTimes(1);
+    expect(dataPointHandler).toHaveBeenCalledWith({ metric: 'responseTime', value: 150 });
+
+    // Add another data point to verify repeated emission
+    service.addDataPoint('responseTime', 200);
+    expect(dataPointHandler).toHaveBeenCalledTimes(2);
+    expect(dataPointHandler).toHaveBeenCalledWith({ metric: 'responseTime', value: 200 });
+
+    service.removeListener('dataPointAdded', dataPointHandler);
   });
 
 });
