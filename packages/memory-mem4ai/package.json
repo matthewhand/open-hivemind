@@ -10,10 +10,8 @@
         "test": "jest"
     },
     "dependencies": {
+        "@hivemind/shared-types": "workspace:*",
         "debug": "^4.3.7"
-    },
-    "peerDependencies": {
-        "@hivemind/shared-types": "workspace:*"
     },
     "devDependencies": {
         "typescript": "^5.9.2",
