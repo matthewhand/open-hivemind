@@ -2,22 +2,32 @@ import { z } from 'zod';
 import Logger from '../common/logger';
 
 // Core startup variables, regardless of environment
-const coreEnvSchema = z.object({
-  NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
-}).passthrough();
+const coreEnvSchema = z
+  .object({
+    NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
+  })
+  .passthrough();
 
 // Production variables (only checked if NODE_ENV === 'production')
-const productionEnvSchema = z.object({
-  SESSION_SECRET: z.string({
-    required_error: 'SESSION_SECRET is required in production.',
-  }).min(1, 'SESSION_SECRET must not be empty in production.'),
-  JWT_SECRET: z.string({
-    required_error: 'JWT_SECRET is required in production.',
-  }).min(1, 'JWT_SECRET must not be empty in production.'),
-  JWT_REFRESH_SECRET: z.string({
-    required_error: 'JWT_REFRESH_SECRET is required in production.',
-  }).min(1, 'JWT_REFRESH_SECRET must not be empty in production.'),
-}).passthrough();
+const productionEnvSchema = z
+  .object({
+    SESSION_SECRET: z
+      .string({
+        required_error: 'SESSION_SECRET is required in production.',
+      })
+      .min(1, 'SESSION_SECRET must not be empty in production.'),
+    JWT_SECRET: z
+      .string({
+        required_error: 'JWT_SECRET is required in production.',
+      })
+      .min(1, 'JWT_SECRET must not be empty in production.'),
+    JWT_REFRESH_SECRET: z
+      .string({
+        required_error: 'JWT_REFRESH_SECRET is required in production.',
+      })
+      .min(1, 'JWT_REFRESH_SECRET must not be empty in production.'),
+  })
+  .passthrough();
 
 /**
  * Validates the presence of strictly required environment variables at startup.
@@ -40,7 +50,7 @@ export function validateRequiredEnvVars(): void {
     const missingVars: string[] = [];
 
     if (!prodResult.success) {
-      prodResult.error.errors.forEach(e => {
+      prodResult.error.errors.forEach((e) => {
         missingVars.push(`${e.path.join('.')}: ${e.message}`);
       });
     }
@@ -60,7 +70,9 @@ export function validateRequiredEnvVars(): void {
     );
 
     if (!hasDiscord && !hasSlack && !hasMattermost && !hasDynamicBot) {
-      missingVars.push('DISCORD_BOT_TOKEN, SLACK_BOT_TOKEN, or MATTERMOST_TOKEN: Production startup requires at least one messaging platform token to be configured.');
+      missingVars.push(
+        'DISCORD_BOT_TOKEN, SLACK_BOT_TOKEN, or MATTERMOST_TOKEN: Production startup requires at least one messaging platform token to be configured.'
+      );
     }
 
     if (missingVars.length > 0) {
