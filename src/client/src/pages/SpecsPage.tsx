@@ -10,8 +10,10 @@ import { SkeletonPage } from '../components/DaisyUI/Skeleton';
 import { MagnifyingGlassIcon, PlusIcon, BookOpenIcon } from '@heroicons/react/24/outline';
 import useSpecs from '../hooks/useSpecs';
 import useUrlParams from '../hooks/useUrlParams';
+import { useInfoToast } from '../components/DaisyUI/ToastNotification';
 
 const SpecsPage: React.FC = () => {
+  const infoToast = useInfoToast();
   const navigate = useNavigate();
   const { specs, loading, error } = useSpecs();
   const { values: urlParams, setValue: setUrlParam } = useUrlParams({
@@ -24,27 +26,28 @@ const SpecsPage: React.FC = () => {
   const setPage = (v: number) => setUrlParam('page', v);
   const [pageSize] = useState(10);
 
-  const filteredSpecs = specs.filter(spec =>
-    spec.topic.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    spec.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase())),
+  const filteredSpecs = specs.filter(
+    (spec) =>
+      spec.topic.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      spec.tags.some((tag) => tag.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
-  const paginatedSpecs = filteredSpecs.slice(
-    (page - 1) * pageSize,
-    page * pageSize,
-  );
+  const paginatedSpecs = filteredSpecs.slice((page - 1) * pageSize, page * pageSize);
 
   const totalPages = Math.ceil(filteredSpecs.length / pageSize);
 
-  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>): void => {
     setSearchTerm(e.target.value);
     setPage(1);
   };
 
-  const handleViewSpec = (id: string) => {
+  const handleViewSpec = (id: string): void => {
     navigate(`/admin/specs/${id}`);
   };
 
+  const handleNotImplemented = (): void => {
+    infoToast('Coming Soon', 'This feature is currently under development.');
+  };
 
   if (loading) {
     return <SkeletonPage variant="cards" statsCount={0} showFilters />;
@@ -84,7 +87,7 @@ const SpecsPage: React.FC = () => {
             onChange={handleSearch}
           />
         </div>
-        <Button className="btn-primary">
+        <Button className="btn-primary" onClick={handleNotImplemented}>
           <PlusIcon className="w-4 h-4 mr-2" />
           Add Specification
         </Button>
@@ -128,11 +131,7 @@ const SpecsPage: React.FC = () => {
               </div>
 
               <div className="card-actions justify-end">
-                <Button
-                  size="sm"
-                  className="btn-ghost"
-                  onClick={() => handleViewSpec(spec.id)}
-                >
+                <Button size="sm" className="btn-ghost" onClick={() => handleViewSpec(spec.id)}>
                   View Details
                 </Button>
               </div>
@@ -144,11 +143,7 @@ const SpecsPage: React.FC = () => {
       {/* Pagination */}
       {totalPages > 1 && (
         <div className="flex justify-center">
-          <Pagination
-            current={page}
-            total={totalPages}
-            onPageChange={setPage}
-          />
+          <Pagination current={page} total={totalPages} onPageChange={setPage} />
         </div>
       )}
 
@@ -158,9 +153,11 @@ const SpecsPage: React.FC = () => {
           <BookOpenIcon className="w-16 h-16 mx-auto text-primary mb-4 opacity-50" />
           <h3 className="text-xl font-semibold mb-2">No specifications found</h3>
           <p className="opacity-70 mb-4">
-            {searchTerm ? 'Try adjusting your search terms' : 'Get started by creating your first specification'}
+            {searchTerm
+              ? 'Try adjusting your search terms'
+              : 'Get started by creating your first specification'}
           </p>
-          <Button className="btn-primary">
+          <Button className="btn-primary" onClick={handleNotImplemented}>
             <PlusIcon className="w-4 h-4 mr-2" />
             Create Specification
           </Button>
