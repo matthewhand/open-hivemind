@@ -7,15 +7,15 @@ test.describe('Tool Providers Screenshots', () => {
     await setupAuth(page);
 
     // Mock successful authentication check
-    await page.route('/api/auth/check', async (route) => {
+    await page.route('**/api/auth/check', async (route) => {
       await route.fulfill({ status: 200, json: { authenticated: true, user: { role: 'admin' } } });
     });
 
     // Mock background polling endpoints to prevent errors/warnings
-    await page.route('/api/health/detailed', async (route) =>
+    await page.route('**/api/health/detailed', async (route) =>
       route.fulfill({ status: 200, json: { status: 'ok' } })
     );
-    await page.route('/api/config/llm-status', async (route) =>
+    await page.route('**/api/config/llm-status', async (route) =>
       route.fulfill({
         status: 200,
         json: {
@@ -26,7 +26,7 @@ test.describe('Tool Providers Screenshots', () => {
         },
       })
     );
-    await page.route('/api/config/global', async (route) =>
+    await page.route('**/api/config/global', async (route) =>
       route.fulfill({ status: 200, json: {} })
     );
 
@@ -74,6 +74,9 @@ test.describe('Tool Providers Screenshots', () => {
   });
 
   test('Tool Providers List', async ({ page }) => {
+    // Set viewport for consistent screenshots
+    await page.setViewportSize({ width: 1280, height: 800 });
+
     // Navigate to Tool Providers page
     await page.goto('/admin/providers/tool');
 
