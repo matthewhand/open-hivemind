@@ -40,3 +40,12 @@ export const RestoreSecureConfigBackupSchema = z.object({
     backupId: z.string().min(1, { message: 'Backup ID is required' }),
   }),
 });
+
+/** Aliases */
+export const SecureConfigIdParamSchema = z.object({
+  params: z.object({
+    id: z.string().min(1, { message: 'ID is required' }),
+  }),
+});
+
+export const BackupIdParamSchema = RestoreSecureConfigBackupSchema;

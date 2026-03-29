@@ -1,15 +1,18 @@
 import fs from 'fs/promises';
 import path from 'path';
-import Debug from 'debug';
-import { Router, type NextFunction, type Request, type Response } from 'express';
+import { Router, type Request, type Response } from 'express';
 import { body, param, validationResult } from 'express-validator';
 import { authenticate, requireAdmin } from '../../auth/middleware';
 import type { AuthMiddlewareRequest } from '../../auth/types';
-import { BackupIdParamSchema } from '../../validation/schemas/importExportSchema';
+import {
+  BackupCreateSchema,
+  BackupRestoreSchema,
+  ExportConfigSchema,
+  ImportConfigSchema,
+  ValidateImportSchema,
+} from '../../validation/schemas/miscSchema';
 import { validateRequest } from '../../validation/validateRequest';
 import { ConfigurationImportExportService } from '../services/ConfigurationImportExportService';
-
-const debug = Debug('app:server:routes:importExport');
 
 type MulterFile = {
   path: string;
@@ -32,11 +35,7 @@ const upload = multer({
   limits: {
     fileSize: 50 * 1024 * 1024, // 50MB limit
   },
-  fileFilter: (
-    _req: unknown,
-    file: { originalname: string },
-    cb: (error: Error | null, acceptFile?: boolean) => void
-  ) => {
+  fileFilter: (req: any, file: any, cb: any) => {
     const allowedTypes = ['.json', '.yaml', '.yml', '.csv', '.gz', '.enc'];
     const ext = path.extname(file.originalname).toLowerCase();
 
@@ -89,10 +88,7 @@ const validateExportOptions = [
 
   body('encryptionKey')
     .optional()
-    .if(
-      (_value: unknown, { req }: { req: { body?: { encrypt?: boolean } } }) =>
-        req.body?.encrypt === true
-    )
+    .if((value: any, { req }: any) => req.body.encrypt === true)
     .isLength({ min: 8 })
     .withMessage('Encryption key must be at least 8 characters long'),
 
@@ -150,10 +146,7 @@ const validateBackupCreation = [
 
   body('encryptionKey')
     .optional()
-    .if(
-      (_value: unknown, { req }: { req: { body?: { encrypt?: boolean } } }) =>
-        req.body?.encrypt === true
-    )
+    .if((value: any, { req }: any) => req.body.encrypt === true)
     .isLength({ min: 8 })
     .withMessage('Encryption key must be at least 8 characters long'),
 ];
@@ -184,7 +177,7 @@ const validateBackupRestore = [
 /**
  * Error handler middleware
  */
-const handleValidationErrors = (req: Request, res: Response, next: NextFunction) => {
+const handleValidationErrors = (req: Request, res: Response, next: any) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
     return res.status(400).json({
@@ -199,7 +192,7 @@ const handleValidationErrors = (req: Request, res: Response, next: NextFunction)
 /**
  * Error handling for file uploads
  */
-const handleUploadError = (error: unknown, req: Request, res: Response, next: NextFunction) => {
+const handleUploadError = (error: any, req: Request, res: Response, next: any) => {
   if (error instanceof multer.MulterError) {
     if (error.code === 'LIMIT_FILE_SIZE') {
       return res.status(400).json({
@@ -214,7 +207,7 @@ const handleUploadError = (error: unknown, req: Request, res: Response, next: Ne
   } else if (error) {
     return res.status(400).json({
       success: false,
-      message: error instanceof Error ? error.message : String(error),
+      message: error.message,
     });
   }
   return next();
@@ -227,6 +220,7 @@ const handleUploadError = (error: unknown, req: Request, res: Response, next: Ne
 router.post(
   '/export',
   requireAdmin,
+  validateRequest(ExportConfigSchema),
   validateExportOptions,
   handleValidationErrors,
   async (req: AuthMiddlewareRequest, res: Response) => {
@@ -258,11 +252,11 @@ router.post(
         });
       }
     } catch (error) {
-      debug('ERROR:', 'Error exporting configurations:', error);
+      console.error('Error exporting configurations:', error);
       return res.status(500).json({
         success: false,
         message: 'Failed to export configurations',
-        error: error instanceof Error ? error.message : String(error),
+        error: (error as any).message,
       });
     }
   }
@@ -276,6 +270,7 @@ router.post(
   '/import',
   requireAdmin,
   upload.single('file'),
+  validateRequest(ImportConfigSchema),
   handleUploadError,
   validateImportOptions,
   handleValidationErrors,
@@ -300,7 +295,7 @@ router.post(
       try {
         await fs.unlink(req.file.path);
       } catch (cleanupError) {
-        debug('ERROR:', 'Error cleaning up uploaded file:', cleanupError);
+        console.error('Error cleaning up uploaded file:', cleanupError);
       }
 
       return res.json({
@@ -309,21 +304,21 @@ router.post(
         data: result,
       });
     } catch (error) {
-      debug('ERROR:', 'Error importing configurations:', error);
+      console.error('Error importing configurations:', error);
 
       // Clean up uploaded file if it exists
       if (req.file) {
         try {
           await fs.unlink(req.file.path);
         } catch (cleanupError) {
-          debug('ERROR:', 'Error cleaning up uploaded file:', cleanupError);
+          console.error('Error cleaning up uploaded file:', cleanupError);
         }
       }
 
       return res.status(500).json({
         success: false,
         message: 'Failed to import configurations',
-        error: error instanceof Error ? error.message : String(error),
+        error: (error as any).message,
       });
     }
   }
@@ -336,6 +331,7 @@ router.post(
 router.post(
   '/backup',
   requireAdmin,
+  validateRequest(BackupCreateSchema),
   validateBackupCreation,
   handleValidationErrors,
   async (req: AuthMiddlewareRequest, res: Response) => {
@@ -375,11 +371,11 @@ router.post(
         });
       }
     } catch (error) {
-      debug('ERROR:', 'Error creating backup:', error);
+      console.error('Error creating backup:', error);
       return res.status(500).json({
         success: false,
         message: 'Failed to create backup',
-        error: error instanceof Error ? error.message : String(error),
+        error: (error as any).message,
       });
     }
   }
@@ -398,11 +394,11 @@ router.get('/backups', requireAdmin, async (req: AuthMiddlewareRequest, res: Res
       count: backups.length,
     });
   } catch (error) {
-    debug('ERROR:', 'Error listing backups:', error);
+    console.error('Error listing backups:', error);
     return res.status(500).json({
       success: false,
       message: 'Failed to list backups',
-      error: error instanceof Error ? error.message : String(error),
+      error: (error as any).message,
     });
   }
 });
@@ -414,6 +410,7 @@ router.get('/backups', requireAdmin, async (req: AuthMiddlewareRequest, res: Res
 router.post(
   '/backups/:backupId/restore',
   requireAdmin,
+  validateRequest(BackupRestoreSchema),
   validateBackupRestore,
   handleValidationErrors,
   async (req: AuthMiddlewareRequest, res: Response) => {
@@ -449,11 +446,11 @@ router.post(
         data: result,
       });
     } catch (error) {
-      debug('ERROR:', 'Error restoring from backup:', error);
+      console.error('Error restoring from backup:', error);
       return res.status(500).json({
         success: false,
         message: 'Failed to restore from backup',
-        error: error instanceof Error ? error.message : String(error),
+        error: (error as any).message,
       });
     }
   }
@@ -466,7 +463,6 @@ router.post(
 router.delete(
   '/backups/:backupId',
   requireAdmin,
-  validateRequest(BackupIdParamSchema),
   async (req: AuthMiddlewareRequest, res: Response) => {
     try {
       const { backupId } = req.params;
@@ -484,11 +480,11 @@ router.delete(
         });
       }
     } catch (error) {
-      debug('ERROR:', 'Error deleting backup:', error);
+      console.error('Error deleting backup:', error);
       return res.status(500).json({
         success: false,
         message: 'Failed to delete backup',
-        error: error instanceof Error ? error.message : String(error),
+        error: (error as any).message,
       });
     }
   }
@@ -532,11 +528,11 @@ router.get(
       res.setHeader('Content-Disposition', `attachment; filename="${backupFileName}"`);
       return res.sendFile(backupPath);
     } catch (error) {
-      debug('ERROR:', 'Error downloading backup:', error);
+      console.error('Error downloading backup:', error);
       return res.status(500).json({
         success: false,
         message: 'Failed to download backup',
-        error: error instanceof Error ? error.message : String(error),
+        error: (error as any).message,
       });
     }
   }
@@ -550,6 +546,7 @@ router.post(
   '/validate',
   authenticate,
   upload.single('file'),
+  validateRequest(ValidateImportSchema),
   handleUploadError,
   async (req: AuthMulterRequest, res: Response) => {
     try {
@@ -571,7 +568,7 @@ router.post(
       try {
         await fs.unlink(req.file.path);
       } catch (cleanupError) {
-        debug('ERROR:', 'Error cleaning up uploaded file:', cleanupError);
+        console.error('Error cleaning up uploaded file:', cleanupError);
       }
 
       return res.json({
@@ -580,21 +577,21 @@ router.post(
         data: result,
       });
     } catch (error) {
-      debug('ERROR:', 'Error validating file:', error);
+      console.error('Error validating file:', error);
 
       // Clean up uploaded file if it exists
       if (req.file) {
         try {
           await fs.unlink(req.file.path);
         } catch (cleanupError) {
-          debug('ERROR:', 'Error cleaning up uploaded file:', cleanupError);
+          console.error('Error cleaning up uploaded file:', cleanupError);
         }
       }
 
       return res.status(500).json({
         success: false,
         message: 'Failed to validate file',
-        error: error instanceof Error ? error.message : String(error),
+        error: (error as any).message,
       });
     }
   }
