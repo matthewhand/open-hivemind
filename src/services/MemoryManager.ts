@@ -1,8 +1,8 @@
 import Debug from 'debug';
-import type { IMemoryProvider } from '@src/types/IProvider';
-import { getMemoryProfileByKey } from '@src/config/memoryProfiles';
 import { BotConfigurationManager } from '@src/config/BotConfigurationManager';
-import { loadPlugin, instantiateMemoryProvider } from '@src/plugins';
+import { getMemoryProfileByKey } from '@src/config/memoryProfiles';
+import { instantiateMemoryProvider, loadPlugin } from '@src/plugins';
+import type { IMemoryProvider } from '@src/types/IProvider';
 import { withTimeout } from '@common/withTimeout';
 
 const debug = Debug('app:MemoryManager');
@@ -83,9 +83,7 @@ export class MemoryManager {
         return null;
       }
 
-      const profileKey = (botConfig as Record<string, unknown>).memoryProfile as
-        | string
-        | undefined;
+      const profileKey = (botConfig as Record<string, unknown>).memoryProfile as string | undefined;
       if (!profileKey) {
         return null; // Memory not configured — this is the normal path for most bots.
       }
@@ -126,11 +124,7 @@ export class MemoryManager {
       debug('Instantiated memory provider for profile "%s" (plugin: %s)', profileKey, pluginName);
       return provider;
     } catch (err) {
-      debug(
-        'Failed to instantiate memory provider for profile "%s": %O',
-        profileKey,
-        err,
-      );
+      debug('Failed to instantiate memory provider for profile "%s": %O', profileKey, err);
       this.failedProfiles.add(profileKey);
       return null;
     }
@@ -147,7 +141,7 @@ export class MemoryManager {
     botName: string,
     message: string,
     role: 'user' | 'assistant',
-    metadata?: Record<string, unknown>,
+    metadata?: Record<string, unknown>
   ): Promise<void> {
     const provider = this.getProviderForBot(botName);
     if (!provider) {
@@ -162,13 +156,14 @@ export class MemoryManager {
 
     try {
       await withTimeout(
-        () => provider.add([{ role, content: message }], {
-          agentId: botName,
-          userId: (metadata?.userId as string) ?? undefined,
-          metadata: memMeta,
-        }),
+        () =>
+          provider.add([{ role, content: message }], {
+            agentId: botName,
+            userId: (metadata?.userId as string) ?? undefined,
+            metadata: memMeta,
+          }),
         DEFAULT_MEMORY_TIMEOUT_MS,
-        'Memory store',
+        'Memory store'
       );
       debug('Stored %s memory for bot "%s"', role, botName);
     } catch (err) {
@@ -190,7 +185,7 @@ export class MemoryManager {
   public async retrieveRelevantMemories(
     botName: string,
     query: string,
-    limit: number = DEFAULT_MEMORY_LIMIT,
+    limit: number = DEFAULT_MEMORY_LIMIT
   ): Promise<MemorySearchResult[]> {
     const provider = this.getProviderForBot(botName);
     if (!provider) {
@@ -199,12 +194,13 @@ export class MemoryManager {
 
     try {
       const response = await withTimeout(
-        () => provider.search(query, {
-          agentId: botName,
-          limit,
-        }),
+        () =>
+          provider.search(query, {
+            agentId: botName,
+            limit,
+          }),
         DEFAULT_MEMORY_TIMEOUT_MS,
-        'Memory search',
+        'Memory search'
       );
       return (response.results ?? []).map((r) => ({
         id: r.id,
@@ -235,9 +231,7 @@ export class MemoryManager {
     }
 
     const lines = memories.map((m) => `- ${m.memory}`);
-    return (
-      'Relevant memories from previous conversations:\n' + lines.join('\n')
-    );
+    return 'Relevant memories from previous conversations:\n' + lines.join('\n');
   }
 
   // ---------------------------------------------------------------------------

@@ -2,9 +2,9 @@ import axios from 'axios';
 import Debug from 'debug';
 import { ConfigurationManager } from '@config/ConfigurationManager';
 import flowiseConfig from '@integrations/flowise/flowiseConfig';
-import { isSafeUrl } from '../../utils/ssrfGuard';
-import { globalRecoveryManager } from '../../utils/errorRecovery';
 import { withTimeout } from '@common/withTimeout';
+import { globalRecoveryManager } from '../../utils/errorRecovery';
+import { isSafeUrl } from '../../utils/ssrfGuard';
 
 const debug = Debug('app:flowiseClient');
 
@@ -60,7 +60,7 @@ export async function getFlowiseResponse(channelId: string, question: string): P
       const response = await withTimeout(
         (signal) => axios.post(targetUrl, payload, { headers, signal }),
         DEFAULT_FLOWISE_TIMEOUT_MS,
-        'Flowise REST prediction',
+        'Flowise REST prediction'
       );
       const { text, chatId: newChatId } = response.data;
 

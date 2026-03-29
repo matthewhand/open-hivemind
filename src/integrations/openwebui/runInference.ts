@@ -1,12 +1,12 @@
 import axios from 'axios';
 import Debug from 'debug';
 import type { IMessage } from '@message/interfaces/IMessage';
+import { withTimeout } from '@common/withTimeout';
+import { globalRecoveryManager } from '../../utils/errorRecovery';
 import { isSafeUrl } from '../../utils/ssrfGuard';
 import openWebUIConfig from './openWebUIConfig';
 import { getSessionKey } from './sessionManager';
 import { getKnowledgeFileId } from './uploadKnowledgeFile';
-import { withTimeout } from '@common/withTimeout';
-import { globalRecoveryManager } from '../../utils/errorRecovery';
 
 const debug = Debug('app:runInference');
 
@@ -71,7 +71,7 @@ export async function generateChatCompletion(
       const response = await withTimeout(
         (signal) => axios.post(url, payload, { headers, signal }),
         DEFAULT_INFERENCE_TIMEOUT_MS,
-        'OpenWebUI inference',
+        'OpenWebUI inference'
       );
 
       debug('Inference result:', response.data);
