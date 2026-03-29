@@ -1,6 +1,15 @@
+import * as fs from 'fs';
 import express from 'express';
 import request from 'supertest';
-import * as fs from 'fs';
+import { getLlmDefaultStatus } from '../../src/config/llmDefaultStatus';
+import { getLlmProfiles, saveLlmProfiles } from '../../src/config/llmProfiles';
+import { getMemoryProfiles, saveMemoryProfiles } from '../../src/config/memoryProfiles';
+import { getMessageProfiles, saveMessageProfiles } from '../../src/config/messageProfiles';
+import { getToolProfiles, saveToolProfiles } from '../../src/config/toolProfiles';
+// Import mocked modules so we can alter their behavior in tests
+import { BotManager } from '../../src/managers/BotManager';
+// Import the router after mocks are set up
+import configRouter from '../../src/server/routes/config';
 import { ErrorUtils } from '../../src/types/errors';
 
 // Mock dependencies BEFORE importing the router
@@ -96,17 +105,6 @@ jest.mock('../../src/types/errors', () => {
   };
 });
 
-// Import the router after mocks are set up
-import configRouter from '../../src/server/routes/config';
-
-// Import mocked modules so we can alter their behavior in tests
-import { BotManager } from '../../src/managers/BotManager';
-import { getLlmDefaultStatus } from '../../src/config/llmDefaultStatus';
-import { getLlmProfiles, saveLlmProfiles } from '../../src/config/llmProfiles';
-import { getMessageProfiles, saveMessageProfiles } from '../../src/config/messageProfiles';
-import { getMemoryProfiles, saveMemoryProfiles } from '../../src/config/memoryProfiles';
-import { getToolProfiles, saveToolProfiles } from '../../src/config/toolProfiles';
-
 describe('Config Router - Error Paths and Edge Cases', () => {
   let app: express.Application;
 
@@ -123,7 +121,7 @@ describe('Config Router - Error Paths and Edge Cases', () => {
       (mockError as any).statusCode = 503;
 
       const mockBotManager = {
-        getAllBots: jest.fn().mockRejectedValue(mockError)
+        getAllBots: jest.fn().mockRejectedValue(mockError),
       };
       (BotManager.getInstance as jest.Mock).mockReturnValue(mockBotManager);
 
@@ -182,7 +180,7 @@ describe('Config Router - Error Paths and Edge Cases', () => {
 
     it('should return 409 when profile key already exists', async () => {
       (getLlmProfiles as jest.Mock).mockReturnValueOnce({
-        llm: [{ key: 'existing-key' }]
+        llm: [{ key: 'existing-key' }],
       });
 
       const res = await request(app)
@@ -227,7 +225,7 @@ describe('Config Router - Error Paths and Edge Cases', () => {
 
     it('should return 500 when saving throws', async () => {
       (getLlmProfiles as jest.Mock).mockReturnValueOnce({
-        llm: [{ key: 'existing-key' }]
+        llm: [{ key: 'existing-key' }],
       });
 
       const mockError = new Error('Write failed');
@@ -251,8 +249,7 @@ describe('Config Router - Error Paths and Edge Cases', () => {
     it('should return 404 when profile key is not found', async () => {
       (getLlmProfiles as jest.Mock).mockReturnValueOnce({ llm: [] });
 
-      const res = await request(app)
-        .delete('/api/config/llm-profiles/non-existent-key');
+      const res = await request(app).delete('/api/config/llm-profiles/non-existent-key');
 
       expect(res.status).toBe(404);
       expect(res.body.error).toContain('not found');
@@ -260,7 +257,7 @@ describe('Config Router - Error Paths and Edge Cases', () => {
 
     it('should return 500 when saving throws', async () => {
       (getLlmProfiles as jest.Mock).mockReturnValueOnce({
-        llm: [{ key: 'existing-key' }]
+        llm: [{ key: 'existing-key' }],
       });
 
       const mockError = new Error('Write failed');
@@ -271,8 +268,7 @@ describe('Config Router - Error Paths and Edge Cases', () => {
       });
       (ErrorUtils.toHivemindError as jest.Mock).mockReturnValueOnce(mockError);
 
-      const res = await request(app)
-        .delete('/api/config/llm-profiles/existing-key');
+      const res = await request(app).delete('/api/config/llm-profiles/existing-key');
 
       expect(res.status).toBe(500);
       expect(res.body.error).toBe('Write failed');
@@ -299,7 +295,7 @@ describe('Config Router - Error Paths and Edge Cases', () => {
   describe('POST /api/config/message-profiles', () => {
     it('should return 409 when profile key already exists', async () => {
       (getMessageProfiles as jest.Mock).mockReturnValueOnce({
-        message: [{ key: 'existing-msg-key' }]
+        message: [{ key: 'existing-msg-key' }],
       });
 
       const res = await request(app)
@@ -350,7 +346,7 @@ describe('Config Router - Error Paths and Edge Cases', () => {
   describe('POST /api/config/memory-profiles', () => {
     it('should return 409 when profile key already exists', async () => {
       (getMemoryProfiles as jest.Mock).mockReturnValueOnce({
-        memory: [{ key: 'existing-mem-key' }]
+        memory: [{ key: 'existing-mem-key' }],
       });
 
       const res = await request(app)
@@ -395,7 +391,7 @@ describe('Config Router - Error Paths and Edge Cases', () => {
 
     it('should return 500 when saving throws', async () => {
       (getMemoryProfiles as jest.Mock).mockReturnValueOnce({
-        memory: [{ key: 'existing-key' }]
+        memory: [{ key: 'existing-key' }],
       });
 
       const mockError = new Error('Write failed');
@@ -419,8 +415,7 @@ describe('Config Router - Error Paths and Edge Cases', () => {
     it('should return 404 when profile key is not found', async () => {
       (getMemoryProfiles as jest.Mock).mockReturnValueOnce({ memory: [] });
 
-      const res = await request(app)
-        .delete('/api/config/memory-profiles/non-existent');
+      const res = await request(app).delete('/api/config/memory-profiles/non-existent');
 
       expect(res.status).toBe(404);
       expect(res.body.error).toContain('not found');
@@ -428,7 +423,7 @@ describe('Config Router - Error Paths and Edge Cases', () => {
 
     it('should return 500 when saving throws', async () => {
       (getMemoryProfiles as jest.Mock).mockReturnValueOnce({
-        memory: [{ key: 'existing-key' }]
+        memory: [{ key: 'existing-key' }],
       });
 
       const mockError = new Error('Write failed');
@@ -439,8 +434,7 @@ describe('Config Router - Error Paths and Edge Cases', () => {
       });
       (ErrorUtils.toHivemindError as jest.Mock).mockReturnValueOnce(mockError);
 
-      const res = await request(app)
-        .delete('/api/config/memory-profiles/existing-key');
+      const res = await request(app).delete('/api/config/memory-profiles/existing-key');
 
       expect(res.status).toBe(500);
       expect(res.body.error).toBe('Write failed');
@@ -467,7 +461,7 @@ describe('Config Router - Error Paths and Edge Cases', () => {
   describe('POST /api/config/tool-profiles', () => {
     it('should return 409 when profile key already exists', async () => {
       (getToolProfiles as jest.Mock).mockReturnValueOnce({
-        tool: [{ key: 'existing-tool-key' }]
+        tool: [{ key: 'existing-tool-key' }],
       });
 
       const res = await request(app)
@@ -512,7 +506,7 @@ describe('Config Router - Error Paths and Edge Cases', () => {
 
     it('should return 500 when saving throws', async () => {
       (getToolProfiles as jest.Mock).mockReturnValueOnce({
-        tool: [{ key: 'existing-key' }]
+        tool: [{ key: 'existing-key' }],
       });
 
       const mockError = new Error('Write failed');
@@ -536,8 +530,7 @@ describe('Config Router - Error Paths and Edge Cases', () => {
     it('should return 404 when profile key is not found', async () => {
       (getToolProfiles as jest.Mock).mockReturnValueOnce({ tool: [] });
 
-      const res = await request(app)
-        .delete('/api/config/tool-profiles/non-existent');
+      const res = await request(app).delete('/api/config/tool-profiles/non-existent');
 
       expect(res.status).toBe(404);
       expect(res.body.error).toContain('not found');
@@ -545,7 +538,7 @@ describe('Config Router - Error Paths and Edge Cases', () => {
 
     it('should return 500 when saving throws', async () => {
       (getToolProfiles as jest.Mock).mockReturnValueOnce({
-        tool: [{ key: 'existing-key' }]
+        tool: [{ key: 'existing-key' }],
       });
 
       const mockError = new Error('Write failed');
@@ -556,8 +549,7 @@ describe('Config Router - Error Paths and Edge Cases', () => {
       });
       (ErrorUtils.toHivemindError as jest.Mock).mockReturnValueOnce(mockError);
 
-      const res = await request(app)
-        .delete('/api/config/tool-profiles/existing-key');
+      const res = await request(app).delete('/api/config/tool-profiles/existing-key');
 
       expect(res.status).toBe(500);
       expect(res.body.error).toBe('Write failed');
