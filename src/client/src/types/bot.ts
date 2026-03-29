@@ -445,3 +445,21 @@ export interface PersonaModalState {
   persona?: Persona;
   mode: 'create' | 'edit';
 }
+
+/**
+ * Client-side bot configuration type representing the runtime shape
+ * returned by the /api/bots endpoint. Extends the base Bot type with
+ * UI-specific fields populated by the server status response.
+ */
+export interface BotConfig extends Bot {
+  id: string;
+  status?: string;
+  description?: string;
+  llmModel?: string;
+  messageCount?: number;
+  errorCount?: number;
+  connected?: boolean;
+  provider?: string;
+  config?: Record<string, any>;
+  envOverrides?: Record<string, any>;
+}

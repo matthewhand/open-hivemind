@@ -753,7 +753,7 @@ const BotsPage: React.FC = () => {
                   {/* Validation Panel */}
                   {previewTab === 'validation' && (
                     <div className="space-y-3 max-h-[300px] overflow-y-auto pr-1 custom-scrollbar">
-                      <ConfigurationValidation bot={previewBot as any} />
+                      <ConfigurationValidation bot={previewBot} />
                     </div>
                   )}
 
