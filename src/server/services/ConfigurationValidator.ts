@@ -56,6 +56,14 @@ export interface BotConfig {
         maxTokens?: number;
       }
     | string;
+  anthropic?:
+    | {
+        apiKey: string;
+        model?: string;
+        temperature?: number;
+        maxTokens?: number;
+      }
+    | string;
   flowise?:
     | {
         apiKey: string;

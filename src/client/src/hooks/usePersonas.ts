@@ -72,8 +72,9 @@ export const usePersonas = (): UsePersonasReturn => {
         id: `persona-${Date.now()}-${uuidv4()}`,
         ...request,
         isBuiltIn: false,
-        createdAt: new Date().toISOString(),
         usageCount: 0,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
       };
 
       setPersonas((prev) => [...prev, newPersona]);
@@ -172,8 +173,9 @@ export const usePersonas = (): UsePersonasReturn => {
           id: `persona-${Date.now()}-${uuidv4()}`,
           name: newName,
           isBuiltIn: false,
-          createdAt: new Date().toISOString(),
           usageCount: 0,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
         };
 
         setPersonas((prev) => [...prev, duplicatedPersona]);

@@ -1,6 +1,7 @@
 import type { Database } from 'sqlite';
 import { Logger } from '@common/logger';
 import type { ConnectionManager } from './ConnectionManager';
+import { ActivitySchemas } from './schemas/ActivitySchemas';
 
 export class SchemaManager {
   private connectionManager: ConnectionManager;
@@ -14,6 +15,10 @@ export class SchemaManager {
     if (!db) {
       throw new Error('Database connection not established');
     }
+
+    // Create modular schemas
+    const activitySchemas = new ActivitySchemas();
+    await activitySchemas.ensureTable(db);
 
     // Create all tables
     await this.createTables(db);
@@ -103,40 +108,7 @@ export class SchemaManager {
       )
     `
     );
-
-    // Activity logs table
-    await this.createTable(
-      db,
-      `
-      CREATE TABLE IF NOT EXISTS activity_logs (
-        id TEXT PRIMARY KEY,
-        bot_id TEXT,
-        action TEXT NOT NULL,
-        details TEXT,
-        timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY (bot_id) REFERENCES bots (id) ON DELETE SET NULL
-      )
-    `
-    );
-
-    // Message logs table
-    await this.createTable(
-      db,
-      `
-      CREATE TABLE IF NOT EXISTS message_logs (
-        id TEXT PRIMARY KEY,
-        bot_id TEXT,
-        channel_id TEXT,
-        user_id TEXT,
-        message TEXT,
-        response TEXT,
-        timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY (bot_id) REFERENCES bots (id) ON DELETE SET NULL
-      )
-    `
-    );
-
-    // Health checks table
+// Health checks table
     await this.createTable(
       db,
       `
@@ -388,41 +360,7 @@ export class SchemaManager {
       )
     `
     );
-
-    // Bot audit logs table
-    await this.createTable(
-      db,
-      `
-      CREATE TABLE IF NOT EXISTS bot_audit_logs (
-        id TEXT PRIMARY KEY,
-        bot_id TEXT NOT NULL,
-        action TEXT NOT NULL,
-        user_id TEXT,
-        old_values TEXT,
-        new_values TEXT,
-        timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY (bot_id) REFERENCES bots (id) ON DELETE CASCADE
-      )
-    `
-    );
-
-    // Bot error logs table
-    await this.createTable(
-      db,
-      `
-      CREATE TABLE IF NOT EXISTS bot_error_logs (
-        id TEXT PRIMARY KEY,
-        bot_id TEXT,
-        error_message TEXT NOT NULL,
-        stack_trace TEXT,
-        severity TEXT DEFAULT 'medium',
-        timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY (bot_id) REFERENCES bots (id) ON DELETE SET NULL
-      )
-    `
-    );
-
-    // Bot performance metrics table
+// Bot performance metrics table
     await this.createTable(
       db,
       `
@@ -1851,16 +1789,6 @@ export class SchemaManager {
       // MCP templates indexes
       'CREATE INDEX IF NOT EXISTS idx_mcp_templates_name ON mcp_templates(name)',
 
-      // Activity logs indexes
-      'CREATE INDEX IF NOT EXISTS idx_activity_logs_bot_id ON activity_logs(bot_id)',
-      'CREATE INDEX IF NOT EXISTS idx_activity_logs_timestamp ON activity_logs(timestamp)',
-      'CREATE INDEX IF NOT EXISTS idx_activity_logs_action ON activity_logs(action)',
-
-      // Message logs indexes
-      'CREATE INDEX IF NOT EXISTS idx_message_logs_bot_id ON message_logs(bot_id)',
-      'CREATE INDEX IF NOT EXISTS idx_message_logs_user_id ON message_logs(user_id)',
-      'CREATE INDEX IF NOT EXISTS idx_message_logs_timestamp ON message_logs(timestamp)',
-
       // Health checks indexes
       'CREATE INDEX IF NOT EXISTS idx_health_checks_server_id ON health_checks(server_id)',
       'CREATE INDEX IF NOT EXISTS idx_health_checks_status ON health_checks(status)',
@@ -1932,16 +1860,6 @@ export class SchemaManager {
       'CREATE INDEX IF NOT EXISTS idx_bot_monitoring_bot_id ON bot_monitoring(bot_id)',
       'CREATE INDEX IF NOT EXISTS idx_bot_monitoring_metric_name ON bot_monitoring(metric_name)',
       'CREATE INDEX IF NOT EXISTS idx_bot_monitoring_alert_status ON bot_monitoring(alert_status)',
-
-      // Bot audit logs indexes
-      'CREATE INDEX IF NOT EXISTS idx_bot_audit_logs_bot_id ON bot_audit_logs(bot_id)',
-      'CREATE INDEX IF NOT EXISTS idx_bot_audit_logs_user_id ON bot_audit_logs(user_id)',
-      'CREATE INDEX IF NOT EXISTS idx_bot_audit_logs_timestamp ON bot_audit_logs(timestamp)',
-
-      // Bot error logs indexes
-      'CREATE INDEX IF NOT EXISTS idx_bot_error_logs_bot_id ON bot_error_logs(bot_id)',
-      'CREATE INDEX IF NOT EXISTS idx_bot_error_logs_severity ON bot_error_logs(severity)',
-      'CREATE INDEX IF NOT EXISTS idx_bot_error_logs_timestamp ON bot_error_logs(timestamp)',
 
       // Bot performance metrics indexes
       'CREATE INDEX IF NOT EXISTS idx_bot_performance_metrics_bot_id ON bot_performance_metrics(bot_id)',

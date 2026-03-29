@@ -161,3 +161,18 @@ export const McpServerDisconnectSchema = z.object({
     name: z.string().min(1, { message: 'Server name is required' }),
   }),
 });
+
+export const McpServerBulkDisconnectSchema = z.object({
+  body: z.object({
+    names: z.array(z.string().min(1)).min(1, { message: 'At least one server name is required' }),
+  }),
+});
+
+export const TestConnectionSchema = z.object({
+  body: z.object({
+    providerType: z.string().min(1, { message: 'Provider type is required' }),
+    config: z.record(z.any()).refine((val) => Object.keys(val).length > 0, {
+      message: 'Config is required',
+    }),
+  }),
+});

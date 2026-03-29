@@ -7,6 +7,7 @@ import type { ProviderConfigSchema } from './types';
 import { discordProviderSchema } from './schemas/discord';
 import { slackProviderSchema } from './schemas/slack';
 import { openAIProviderSchema } from './schemas/openai';
+import { anthropicProviderSchema } from './schemas/anthropic';
 import { telegramProviderSchema } from './schemas/telegram';
 import { mcpProviderSchema } from './schemas/mcp';
 import { flowiseProviderSchema } from './schemas/flowise';
@@ -27,6 +28,7 @@ export const PROVIDER_SCHEMAS: Record<string, ProviderConfigSchema> = {
 
   // LLM providers
   openai: openAIProviderSchema,
+  anthropic: anthropicProviderSchema,
   flowise: flowiseProviderSchema,
   openwebui: openWebUiProviderSchema,
   letta: lettaProviderSchema,

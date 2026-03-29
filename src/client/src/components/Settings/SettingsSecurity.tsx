@@ -37,7 +37,7 @@ const SettingsSecurity: React.FC = () => {
       const response = await fetch('/api/config/global');
       if (!response.ok) {throw new Error('Failed to fetch settings');}
       const data = await response.json();
-      
+
       const config = data.config || {};
       setSettings(prev => ({
         ...prev,
@@ -92,7 +92,7 @@ const SettingsSecurity: React.FC = () => {
           'rateLimit.windowMs': settings.rateLimitWindow * 1000,
         }),
       });
-      
+
       if (!response.ok) {throw new Error('Failed to save settings');}
       setAlert({ type: 'success', message: 'Security settings saved!' });
       setTimeout(() => setAlert(null), 3000);
@@ -272,7 +272,7 @@ const SettingsSecurity: React.FC = () => {
             {settings.corsOrigins.map((origin, index) => (
               <div key={index} className="badge badge-lg gap-2 bg-base-300">
                 {origin}
-                <button 
+                <button
                   onClick={() => handleRemoveOrigin(origin)}
                   className="hover:text-error"
                   aria-label={`Remove origin ${origin}`}

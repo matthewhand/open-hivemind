@@ -28,6 +28,7 @@ import { stripBotId } from '../helpers/processing/stripBotId';
 import TokenTracker from '../helpers/processing/TokenTracker';
 import TypingActivity from '../helpers/processing/TypingActivity';
 import { MemoryManager } from '@src/services/MemoryManager';
+import { ContentFilterService } from '@src/services/ContentFilterService';
 import processingLocks from '../processing/processingLocks';
 import { PipelineMetrics, pipelineEventEmitter } from '../PipelineMetrics';
 import { PipelineMetricsAggregator } from '../PipelineMetricsAggregator';
@@ -40,6 +41,7 @@ const channelDelayManager = ChannelDelayManager.getInstance();
 const outgoingRateLimiter = OutgoingMessageRateLimiter.getInstance();
 const typingActivity = TypingActivity.getInstance();
 const historyTuner = AdaptiveHistoryTuner.getInstance();
+const contentFilterService = ContentFilterService.getInstance();
 
 /**
  * Main message handler that processes incoming messages and generates responses.
@@ -187,6 +189,53 @@ export async function handleMessage(
           `Processing message in channel ${message.getChannelId()} from user ${userId}: "${processedMessage}"`
         );
         logger(`Processed message: "${processedMessage}"`);
+
+        // Content filter check (bypasses system messages)
+        if (botConfig.contentFilter) {
+          const filterResult = contentFilterService.checkContent(
+            processedMessage,
+            botConfig.contentFilter,
+            message.role
+          );
+
+          if (!filterResult.allowed) {
+            logger(
+              `Content blocked by filter: ${filterResult.reason}`,
+              filterResult.matchedTerms
+            );
+            AuditLogger.getInstance().logBotAction(
+              userId,
+              'BLOCK',
+              botConfig.name || botConfig.BOT_ID || 'unknown-bot',
+              'success',
+              `Content blocked: ${filterResult.reason}`,
+              {
+                metadata: {
+                  type: 'CONTENT_FILTER_BLOCK',
+                  channelId: channelId,
+                  botId: botConfig.BOT_ID || 'unknown-bot',
+                  matchedTerms: filterResult.matchedTerms,
+                  strictness: botConfig.contentFilter.strictness,
+                },
+              }
+            );
+
+            // Optionally send a message to the user (configurable)
+            if (botConfig.MESSAGE_CONTENT_FILTER_NOTIFY !== false) {
+              try {
+                await messageProvider.sendMessageToChannel(
+                  message.getChannelId(),
+                  'Your message contains content that is not allowed.',
+                  providerSenderKey
+                );
+              } catch (notifyErr) {
+                logger('Failed to send content filter notification:', notifyErr);
+              }
+            }
+
+            return null;
+          }
+        }
 
         // Command processing
         let commandProcessed = false;
@@ -467,6 +516,41 @@ export async function handleMessage(
 
         // Clean up formatting
         responseText = responseText.replace(/\\n/g, '\n').trim();
+
+        // Apply content filter to bot responses (optional, for safety)
+        if (botConfig.contentFilter && botConfig.contentFilter.enabled) {
+          const botFilterResult = contentFilterService.checkContent(
+            responseText,
+            botConfig.contentFilter,
+            'assistant' // Bot responses are assistant role
+          );
+
+          if (!botFilterResult.allowed) {
+            logger(
+              `Bot response blocked by filter: ${botFilterResult.reason}`,
+              botFilterResult.matchedTerms
+            );
+            AuditLogger.getInstance().logBotAction(
+              userId,
+              'BLOCK',
+              botConfig.name || botConfig.BOT_ID || 'unknown-bot',
+              'success',
+              `Bot response blocked: ${botFilterResult.reason}`,
+              {
+                metadata: {
+                  type: 'BOT_RESPONSE_FILTER_BLOCK',
+                  channelId: channelId,
+                  botId: botConfig.BOT_ID || 'unknown-bot',
+                  matchedTerms: botFilterResult.matchedTerms,
+                  strictness: botConfig.contentFilter.strictness,
+                },
+              }
+            );
+
+            // Don't send the response
+            return null;
+          }
+        }
 
         // Split into parts if needed
         const parts = responseText

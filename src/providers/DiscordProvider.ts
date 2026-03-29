@@ -125,4 +125,151 @@ export class DiscordProvider implements IMessageProvider<DiscordConfig> {
     }
     return { added };
   }
+
+  async sendMessage(channelId: string, message: string, senderName?: string): Promise<string> {
+    // Delegate to DiscordService if it has a sendMessage method
+    const ds = this.discordService;
+    if (ds && typeof (ds as any).sendMessage === 'function') {
+      return await (ds as any).sendMessage(channelId, message, senderName);
+    }
+
+    // TODO: Implement direct Discord API call or enhance DiscordService
+    throw new Error(
+      'DiscordProvider.sendMessage not fully implemented. ' +
+        'DiscordService needs to expose a sendMessage method.'
+    );
+  }
+
+  async getMessages(channelId: string, limit?: number): Promise<any[]> {
+    // Delegate to DiscordService if it has a getMessages/fetchMessages method
+    const ds = this.discordService;
+    if (ds && typeof (ds as any).fetchMessages === 'function') {
+      return await (ds as any).fetchMessages(channelId, limit);
+    }
+    if (ds && typeof (ds as any).getMessages === 'function') {
+      return await (ds as any).getMessages(channelId, limit);
+    }
+
+    // TODO: Implement direct Discord API call or enhance DiscordService
+    debug('DiscordProvider.getMessages not fully implemented');
+    return [];
+  }
+
+  async sendMessageToChannel(
+    channelId: string,
+    message: string,
+    active_agent_name?: string
+  ): Promise<string> {
+    // Delegate to DiscordService if it has a sendMessageToChannel method
+    const ds = this.discordService;
+    if (ds && typeof (ds as any).sendMessageToChannel === 'function') {
+      return await (ds as any).sendMessageToChannel(channelId, message, active_agent_name);
+    }
+
+    // Fallback to sendMessage
+    return await this.sendMessage(channelId, message, active_agent_name);
+  }
+
+  getClientId(): string {
+    // Delegate to DiscordService if it has a getClientId method
+    const ds = this.discordService;
+    if (ds && typeof (ds as any).getClientId === 'function') {
+      return (ds as any).getClientId();
+    }
+
+    // TODO: Return the actual Discord bot client ID
+    // For now, return a generic identifier
+    return 'discord';
+  }
+
+  async getForumOwner(forumId: string): Promise<string> {
+    // Delegate to DiscordService if it has a getForumOwner/getChannelOwner method
+    const ds = this.discordService;
+    if (ds && typeof (ds as any).getForumOwner === 'function') {
+      return await (ds as any).getForumOwner(forumId);
+    }
+    if (ds && typeof (ds as any).getChannelOwner === 'function') {
+      return await (ds as any).getChannelOwner(forumId);
+    }
+
+    // TODO: Query Discord API to get channel/guild owner
+    debug('DiscordProvider.getForumOwner not fully implemented');
+    return '';
+  }
+
+  async healthCheck(): Promise<{
+    status: 'healthy' | 'degraded' | 'down';
+    connected: boolean;
+    lastPing?: Date;
+    details?: string;
+    error?: string;
+  }> {
+    try {
+      const ds = this.discordService;
+
+      // Check if service is initialized
+      if (!ds) {
+        return {
+          status: 'down',
+          connected: false,
+          details: 'Discord service not initialized',
+        };
+      }
+
+      // Get all bots from the service
+      const bots = (ds.getAllBots?.() || []) as IBotInfo[];
+
+      if (bots.length === 0) {
+        return {
+          status: 'down',
+          connected: false,
+          details: 'No Discord bots configured',
+        };
+      }
+
+      // Check each bot's connection status
+      const botStatuses = bots.map((bot: any) => {
+        const client = bot?.client;
+        const isReady = client?.isReady?.() || false;
+        const ping = client?.ws?.ping;
+
+        return {
+          name: bot?.botUserName || bot?.config?.name || 'discord',
+          connected: isReady,
+          ping,
+        };
+      });
+
+      const connectedCount = botStatuses.filter((b) => b.connected).length;
+      const totalCount = bots.length;
+
+      let status: 'healthy' | 'degraded' | 'down';
+      if (connectedCount === totalCount) {
+        status = 'healthy';
+      } else if (connectedCount > 0) {
+        status = 'degraded';
+      } else {
+        status = 'down';
+      }
+
+      const avgPing = botStatuses
+        .filter((b) => b.ping !== undefined)
+        .reduce((sum, b) => sum + (b.ping || 0), 0) / (botStatuses.filter((b) => b.ping !== undefined).length || 1);
+
+      return {
+        status,
+        connected: connectedCount > 0,
+        lastPing: new Date(),
+        details: `${connectedCount}/${totalCount} bot(s) connected${avgPing > 0 ? `, avg ping: ${Math.round(avgPing)}ms` : ''}`,
+      };
+    } catch (e: any) {
+      debug(`[DiscordProvider] Health check failed: ${e.message}`);
+      return {
+        status: 'down',
+        connected: false,
+        details: 'Health check failed',
+        error: e.message,
+      };
+    }
+  }
 }

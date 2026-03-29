@@ -55,6 +55,7 @@ export type MessageProviderType = typeof MessageProviderType[keyof typeof Messag
 
 export const LLMProviderType = {
   OPENAI: 'openai',
+  ANTHROPIC: 'anthropic',
   FLOWISE: 'flowise',
   OPENWEBUI: 'openwebui',
   PERPLEXITY: 'perplexity',
@@ -72,6 +73,8 @@ export interface Persona {
   category: PersonaCategory;
   traits: PersonaTrait[];
   systemPrompt: string;
+  isBuiltIn?: boolean;
+  usageCount?: number;
   createdAt: string;
   updatedAt: string;
 }
@@ -189,6 +192,12 @@ export interface Bot {
     maxTokens?: number;
     baseUrl?: string;
   };
+  anthropic?: {
+    apiKey?: string;
+    model?: string;
+    temperature?: number;
+    maxTokens?: number;
+  };
   flowise?: {
     apiKey?: string;
     apiUrl?: string;
@@ -253,6 +262,12 @@ export interface CreateBotRequest {
     temperature?: number;
     maxTokens?: number;
     baseUrl?: string;
+  };
+  anthropic?: {
+    apiKey?: string;
+    model?: string;
+    temperature?: number;
+    maxTokens?: number;
   };
   flowise?: {
     apiKey?: string;
@@ -328,6 +343,18 @@ export const LLM_PROVIDER_CONFIGS = {
       { name: 'model', label: 'Default Model', type: 'text', required: false, placeholder: 'gpt-4o' },
     ],
   },
+  anthropic: {
+    type: LLMProviderType.ANTHROPIC,
+    displayName: 'Anthropic',
+    description: 'Claude models from Anthropic',
+    icon: '🧠',
+    fields: [
+      { name: 'apiKey', label: 'API Key', type: 'password', required: true },
+      { name: 'model', label: 'Default Model', type: 'text', required: false, placeholder: 'claude-3-5-sonnet-20241022' },
+      { name: 'maxTokens', label: 'Max Tokens', type: 'number', required: false, placeholder: '4096' },
+      { name: 'temperature', label: 'Temperature', type: 'number', required: false, placeholder: '1.0' },
+    ],
+  },
   flowise: {
     type: LLMProviderType.FLOWISE,
     displayName: 'Flowise',
@@ -393,6 +420,8 @@ export const DEFAULT_PERSONA: Persona = {
     { name: 'Style', value: 'Professional', weight: 1 },
   ],
   category: PersonaCategory.PROFESSIONAL,
+  isBuiltIn: true,
+  usageCount: 0,
   createdAt: new Date().toISOString(),
   updatedAt: new Date().toISOString(),
 };
@@ -409,6 +438,8 @@ export const BUILTIN_PERSONAS: Persona[] = [
       { name: 'Style', value: 'Empathetic', weight: 1 },
     ],
     category: PersonaCategory.PROFESSIONAL,
+    isBuiltIn: true,
+    usageCount: 0,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   },
@@ -422,6 +453,8 @@ export const BUILTIN_PERSONAS: Persona[] = [
       { name: 'Style', value: 'Technical', weight: 1 },
     ],
     category: PersonaCategory.TECHNICAL,
+    isBuiltIn: true,
+    usageCount: 0,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   },
@@ -435,6 +468,8 @@ export const BUILTIN_PERSONAS: Persona[] = [
       { name: 'Style', value: 'Artistic', weight: 1 },
     ],
     category: PersonaCategory.CREATIVE,
+    isBuiltIn: true,
+    usageCount: 0,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   },

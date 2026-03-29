@@ -5,6 +5,7 @@ import { authenticate, requireAdmin } from '../../auth/middleware';
 import { ErrorUtils } from '../../common/ErrorUtils';
 import { getTrustedMcpReposConfig } from '../../config/trustedMcpRepos';
 import { DatabaseManager } from '../../database/DatabaseManager';
+import { ToolUsageGuardsManager } from '../../managers/ToolUsageGuardsManager';
 import { MCPService } from '../../mcp/MCPService';
 import ApiMonitorService from '../../services/ApiMonitorService';
 import { webUIStorage } from '../../storage/webUIStorage';
@@ -12,6 +13,7 @@ import { getRelevantEnvVars } from '../../utils/envUtils';
 import { isSafeUrl } from '../../utils/ssrfGuard';
 import {
   LlmProviderSchema,
+  McpServerBulkDisconnectSchema,
   McpServerConnectSchema,
   McpServerDisconnectSchema,
   McpServerTestSchema,
@@ -19,6 +21,7 @@ import {
   PersonaKeyParamSchema,
   PersonaSchema,
   ServerNameParamSchema,
+  TestConnectionSchema,
   ToggleIdParamSchema,
   ToggleProviderSchema,
   ToolUsageGuardSchema,
@@ -32,6 +35,12 @@ import activityRouter from './activity';
 import agentsRouter from './agents';
 import guardProfilesRouter from './guardProfiles';
 import mcpRouter from './mcp';
+import {
+  getModelsForProvider,
+  getChatModels,
+  getEmbeddingModels,
+  getSupportedProviders,
+} from '../data/llmModels';
 
 const router = Router();
 const debug = Debug('app:webui:admin');
@@ -75,33 +84,8 @@ router.use('/guard-profiles', guardProfilesRouter);
  */
 router.get('/tool-usage-guards', (req: Request, res: Response) => {
   try {
-    // Mock data for tool usage guards
-    const guards = [
-      {
-        id: 'guard1',
-        name: 'Owner Only for Summarize',
-        toolName: 'summarize',
-        guardType: 'owner_only',
-        config: { ownerOnly: true },
-        isActive: true,
-      },
-      {
-        id: 'guard2',
-        name: 'Specific Users for Translate',
-        toolName: 'translate',
-        guardType: 'user_list',
-        config: { allowedUsers: ['user1', 'user2'] },
-        isActive: false,
-      },
-      {
-        id: 'guard3',
-        name: 'Role-based for Generate',
-        toolName: 'generate',
-        guardType: 'role_based',
-        config: { allowedRoles: ['admin', 'moderator'] },
-        isActive: true,
-      },
-    ];
+    const guardsManager = ToolUsageGuardsManager.getInstance();
+    const guards = guardsManager.getAllGuards();
 
     return res.json({
       success: true,
@@ -147,17 +131,16 @@ router.post(
       const { name, description, toolId, guardType, allowedUsers, allowedRoles, isActive } =
         req.body;
 
-      // In a real implementation, this would save to database
-      const newGuard = {
-        id: `guard${Date.now()}`,
+      const guardsManager = ToolUsageGuardsManager.getInstance();
+      const newGuard = guardsManager.createGuard({
         name,
         description,
         toolId,
         guardType,
-        allowedUsers: allowedUsers || [],
-        allowedRoles: allowedRoles || [],
-        isActive: isActive !== false,
-      };
+        allowedUsers,
+        allowedRoles,
+        isActive,
+      });
 
       return res.json({
         success: true,
@@ -185,17 +168,16 @@ router.put(
       const { name, description, toolId, guardType, allowedUsers, allowedRoles, isActive } =
         req.body;
 
-      // In a real implementation, this would update in database
-      const updatedGuard = {
-        id,
+      const guardsManager = ToolUsageGuardsManager.getInstance();
+      const updatedGuard = guardsManager.updateGuard(id, {
         name,
         description,
         toolId,
         guardType,
-        allowedUsers: allowedUsers || [],
-        allowedRoles: allowedRoles || [],
-        isActive: isActive !== false,
-      };
+        allowedUsers,
+        allowedRoles,
+        isActive,
+      });
 
       return res.json({
         success: true,
@@ -204,7 +186,8 @@ router.put(
       });
     } catch (error: unknown) {
       const hivemindError = ErrorUtils.toHivemindError(error);
-      return res.status(500).json({
+      const statusCode = error instanceof Error && error.message.includes('not found') ? 404 : 500;
+      return res.status(statusCode).json({
         error: 'Failed to update tool usage guard',
         message: hivemindError.message || 'An error occurred while updating tool usage guard',
       });
@@ -236,8 +219,15 @@ router.delete(
     try {
       const { id } = req.params;
 
-      // In a real implementation, this would delete from database
-      // For now, just return success
+      const guardsManager = ToolUsageGuardsManager.getInstance();
+      const deleted = guardsManager.deleteGuard(id);
+
+      if (!deleted) {
+        return res.status(404).json({
+          error: 'Tool usage guard not found',
+          message: `No tool usage guard found with ID: ${id}`,
+        });
+      }
 
       return res.json({
         success: true,
@@ -263,8 +253,8 @@ router.post(
       const { id } = req.params;
       const { isActive } = req.body;
 
-      // In a real implementation, this would update in database
-      // For now, just return success
+      const guardsManager = ToolUsageGuardsManager.getInstance();
+      guardsManager.toggleGuard(id, isActive);
 
       return res.json({
         success: true,
@@ -272,7 +262,8 @@ router.post(
       });
     } catch (error: unknown) {
       const hivemindError = ErrorUtils.toHivemindError(error);
-      return res.status(500).json({
+      const statusCode = error instanceof Error && error.message.includes('not found') ? 404 : 500;
+      return res.status(statusCode).json({
         error: 'Failed to update guard status',
         message: hivemindError.message || 'An error occurred while updating guard status',
       });
@@ -483,6 +474,240 @@ router.post(
       return res.status(500).json({
         error: 'Failed to update provider status',
         message: hivemindError.message || 'An error occurred while updating provider status',
+      });
+    }
+  }
+);
+
+// POST /providers/test-connection - Test connection to an LLM provider
+router.post(
+  '/providers/test-connection',
+  configRateLimit,
+  validateRequest(TestConnectionSchema),
+  async (req: Request, res: Response) => {
+    try {
+      const { providerType, config } = req.body;
+
+      debug(`Testing connection for provider type: ${providerType}`);
+
+      // Validate provider type
+      const validProviderTypes = ['openai', 'flowise', 'openwebui', 'letta'];
+      if (!validProviderTypes.includes(providerType.toLowerCase())) {
+        return res.status(400).json({
+          error: 'Invalid provider type',
+          message: `Provider type must be one of: ${validProviderTypes.join(', ')}`,
+        });
+      }
+
+      // Dynamically load and test the provider
+      const { instantiateLlmProvider, loadPlugin } = await import('../../plugins/PluginLoader');
+
+      let provider;
+      try {
+        const mod = loadPlugin(`llm-${providerType.toLowerCase()}`);
+        provider = instantiateLlmProvider(mod, config);
+        debug(`Loaded provider plugin: llm-${providerType}`);
+      } catch (error: unknown) {
+        const hivemindError = ErrorUtils.toHivemindError(error);
+        debug(`Failed to load provider plugin: ${hivemindError.message}`);
+        return res.status(400).json({
+          error: 'Failed to load provider',
+          message: `Could not load provider plugin: ${hivemindError.message}`,
+        });
+      }
+
+      // Test the connection based on provider type
+      let testResult: {
+        success: boolean;
+        message: string;
+        details?: any;
+      };
+
+      try {
+        switch (providerType.toLowerCase()) {
+          case 'openai': {
+            // For OpenAI, we test by making a simple completion request
+            if (!config.apiKey && !process.env.OPENAI_API_KEY) {
+              testResult = {
+                success: false,
+                message: 'API key is required for OpenAI provider',
+              };
+              break;
+            }
+
+            try {
+              // Test with a simple message
+              const testResponse = await provider.generateChatCompletion(
+                'Hello',
+                [],
+                { maxTokensOverride: 5 }
+              );
+
+              testResult = {
+                success: true,
+                message: 'Successfully connected to OpenAI',
+                details: {
+                  responseReceived: !!testResponse,
+                  model: config.model || 'gpt-4o',
+                },
+              };
+            } catch (error: unknown) {
+              const hivemindError = ErrorUtils.toHivemindError(error);
+              testResult = {
+                success: false,
+                message: `Connection test failed: ${hivemindError.message}`,
+                details: {
+                  error: hivemindError.message,
+                  code: hivemindError.code,
+                },
+              };
+            }
+            break;
+          }
+
+          case 'flowise': {
+            // For Flowise, we validate configuration
+            if (!config.chatflowId && !config.useRest) {
+              testResult = {
+                success: false,
+                message:
+                  'Either chatflowId or useRest configuration is required for Flowise provider',
+              };
+              break;
+            }
+
+            if (config.baseUrl) {
+              try {
+                new URL(config.baseUrl);
+                if (!(await isSafeUrl(config.baseUrl))) {
+                  testResult = {
+                    success: false,
+                    message: 'Base URL is blocked for security reasons',
+                  };
+                  break;
+                }
+              } catch {
+                testResult = {
+                  success: false,
+                  message: 'Invalid base URL format',
+                };
+                break;
+              }
+            }
+
+            testResult = {
+              success: true,
+              message: 'Flowise configuration is valid',
+              details: {
+                useRest: config.useRest || false,
+                chatflowId: config.chatflowId ? '***' : undefined,
+              },
+            };
+            break;
+          }
+
+          case 'openwebui': {
+            // For OpenWebUI, we validate URL
+            if (!config.baseUrl) {
+              testResult = {
+                success: false,
+                message: 'Base URL is required for OpenWebUI provider',
+              };
+              break;
+            }
+
+            try {
+              new URL(config.baseUrl);
+              if (!(await isSafeUrl(config.baseUrl))) {
+                testResult = {
+                  success: false,
+                  message: 'Base URL is blocked for security reasons',
+                };
+                break;
+              }
+            } catch {
+              testResult = {
+                success: false,
+                message: 'Invalid base URL format',
+              };
+              break;
+            }
+
+            testResult = {
+              success: true,
+              message: 'OpenWebUI configuration is valid',
+              details: {
+                baseUrl: config.baseUrl,
+              },
+            };
+            break;
+          }
+
+          case 'letta': {
+            // For Letta, we validate configuration
+            if (!config.baseUrl && !config.agentId) {
+              testResult = {
+                success: false,
+                message: 'Base URL and Agent ID are required for Letta provider',
+              };
+              break;
+            }
+
+            if (config.baseUrl) {
+              try {
+                new URL(config.baseUrl);
+                if (!(await isSafeUrl(config.baseUrl))) {
+                  testResult = {
+                    success: false,
+                    message: 'Base URL is blocked for security reasons',
+                  };
+                  break;
+                }
+              } catch {
+                testResult = {
+                  success: false,
+                  message: 'Invalid base URL format',
+                };
+                break;
+              }
+            }
+
+            testResult = {
+              success: true,
+              message: 'Letta configuration is valid',
+              details: {
+                agentId: config.agentId ? '***' : undefined,
+              },
+            };
+            break;
+          }
+
+          default:
+            testResult = {
+              success: false,
+              message: `Unsupported provider type: ${providerType}`,
+            };
+        }
+
+        return res.json({
+          success: testResult.success,
+          message: testResult.message,
+          data: testResult.details,
+        });
+      } catch (error: unknown) {
+        const hivemindError = ErrorUtils.toHivemindError(error);
+        debug(`Connection test error: ${hivemindError.message}`);
+        return res.status(500).json({
+          error: 'Connection test failed',
+          message: hivemindError.message || 'An error occurred while testing the connection',
+        });
+      }
+    } catch (error: unknown) {
+      const hivemindError = ErrorUtils.toHivemindError(error);
+      debug(`Unexpected error in test-connection endpoint: ${hivemindError.message}`);
+      return res.status(500).json({
+        error: 'Failed to test connection',
+        message: hivemindError.message || 'An error occurred while testing connection',
       });
     }
   }
@@ -1033,16 +1258,30 @@ router.delete(
 router.get('/mcp-servers', (req: Request, res: Response) => {
   try {
     const mcpService = MCPService.getInstance();
-    const servers = mcpService.getConnectedServers();
+    const connectedServers = mcpService.getConnectedServersWithMetadata();
     const trustConfig = getTrustedMcpReposConfig();
 
     // Get stored MCP server configurations
     const storedMcps = webUIStorage.getMcps();
 
+    // Enrich connected servers with stored configuration data
+    const enrichedServers = connectedServers.map((server) => {
+      const storedConfig = storedMcps.find((mcp: any) => mcp.name === server.name);
+      return {
+        name: server.name,
+        serverUrl: storedConfig?.serverUrl || storedConfig?.url || '',
+        connected: server.connected,
+        tools: server.tools,
+        toolCount: server.toolCount,
+        lastConnected: server.lastConnected,
+        description: storedConfig?.description || '',
+      };
+    });
+
     return res.json({
       success: true,
       data: {
-        servers,
+        servers: enrichedServers,
         configurations: storedMcps,
         trustedRepositories: trustConfig.trustedRepositories,
         cautionRepositories: trustConfig.cautionRepositories,
@@ -1087,6 +1326,180 @@ router.get(
       return res.status(500).json({
         error: 'Failed to retrieve tools',
         message: hivemindError.message || 'An error occurred while retrieving tools',
+      });
+    }
+  }
+);
+
+// Get individual server status with tools
+router.get(
+  '/mcp-servers/:name/status',
+  validateRequest(ServerNameParamSchema),
+  async (req: Request, res: Response) => {
+    try {
+      const { name } = req.params;
+
+      const mcpService = MCPService.getInstance();
+      const tools = mcpService.getToolsFromServer(name);
+      const connectedServers = mcpService.getConnectedServers();
+      const isConnected = connectedServers.includes(name);
+
+      // Get stored configuration for additional metadata
+      const storedMcps = webUIStorage.getMcps();
+      const storedConfig = storedMcps.find((mcp: any) => mcp.name === name);
+
+      if (!isConnected && !storedConfig) {
+        return res.status(404).json({
+          error: 'Server not found',
+          message: `MCP server ${name} not found`,
+        });
+      }
+
+      const status = {
+        name,
+        connected: isConnected,
+        serverUrl: storedConfig?.serverUrl || '',
+        toolCount: tools?.length || 0,
+        tools: tools || [],
+        lastConnected: isConnected ? new Date().toISOString() : undefined,
+      };
+
+      return res.json({
+        success: true,
+        data: { server: status },
+        message: `Status retrieved successfully for MCP server: ${name}`,
+      });
+    } catch (error: unknown) {
+      const hivemindError = ErrorUtils.toHivemindError(error);
+      return res.status(500).json({
+        error: 'Failed to retrieve server status',
+        message: hivemindError.message || 'An error occurred while retrieving server status',
+      });
+    }
+  }
+);
+
+// Restart an MCP server (disconnect and reconnect)
+router.post(
+  '/mcp-servers/:name/restart',
+  configRateLimit,
+  validateRequest(ServerNameParamSchema),
+  async (req: Request, res: Response) => {
+    try {
+      const { name } = req.params;
+
+      // Get stored configuration
+      const storedMcps = webUIStorage.getMcps();
+      const storedConfig = storedMcps.find((mcp: any) => mcp.name === name);
+
+      if (!storedConfig) {
+        return res.status(404).json({
+          error: 'Server not found',
+          message: `MCP server ${name} not found in configuration`,
+        });
+      }
+
+      // Validate URL format
+      try {
+        new URL(storedConfig.serverUrl);
+      } catch {
+        return res.status(400).json({
+          error: 'Validation error',
+          message: 'Server URL must be a valid URL',
+        });
+      }
+
+      // Security Check: SSRF Protection
+      if (!(await isSafeUrl(storedConfig.serverUrl))) {
+        return res.status(403).json({
+          error: 'Security Warning',
+          message: 'Target URL is blocked for security reasons (private/local network access).',
+        });
+      }
+
+      const mcpService = MCPService.getInstance();
+
+      // Disconnect if currently connected
+      const connectedServers = mcpService.getConnectedServers();
+      if (connectedServers.includes(name)) {
+        await mcpService.disconnectFromServer(name);
+      }
+
+      // Reconnect
+      const tools = await mcpService.connectToServer({
+        name: storedConfig.name,
+        serverUrl: storedConfig.serverUrl,
+        apiKey: storedConfig.apiKey,
+      });
+
+      return res.json({
+        success: true,
+        data: {
+          toolCount: tools.length,
+          tools,
+        },
+        message: `Successfully restarted MCP server: ${name}`,
+      });
+    } catch (error: unknown) {
+      const hivemindError = ErrorUtils.toHivemindError(error);
+      return res.status(500).json({
+        error: 'Failed to restart MCP server',
+        message: hivemindError.message || 'An error occurred while restarting MCP server',
+      });
+    }
+  }
+);
+
+// Bulk disconnect multiple servers
+router.post(
+  '/mcp-servers/bulk-disconnect',
+  validateRequest(McpServerBulkDisconnectSchema),
+  async (req: Request, res: Response) => {
+    try {
+      const { names } = req.body;
+
+      if (!Array.isArray(names) || names.length === 0) {
+        return res.status(400).json({
+          error: 'Validation error',
+          message: 'At least one server name is required',
+        });
+      }
+
+      const mcpService = MCPService.getInstance();
+      const results = {
+        successful: [] as string[],
+        failed: [] as { name: string; error: string }[],
+      };
+
+      // Disconnect each server
+      for (const name of names) {
+        try {
+          await mcpService.disconnectFromServer(name);
+          results.successful.push(name);
+        } catch (error: unknown) {
+          const hivemindError = ErrorUtils.toHivemindError(error);
+          results.failed.push({
+            name,
+            error: hivemindError.message || 'Unknown error',
+          });
+        }
+      }
+
+      const message =
+        results.failed.length === 0
+          ? `Successfully disconnected ${results.successful.length} server(s)`
+          : `Disconnected ${results.successful.length} server(s), ${results.failed.length} failed`;
+
+      return res.json({
+        success: results.failed.length === 0,
+        data: results,
+        message,
+      });
+    } catch (error: unknown) {
+      const hivemindError = ErrorUtils.toHivemindError(error);
+      return res.status(500).json({
+        error: 'Failed to disconnect servers',
+        message: hivemindError.message || 'An error occurred while disconnecting servers',
       });
     }
   }
@@ -1211,6 +1624,70 @@ router.get('/system-info', async (req: Request, res: Response) => {
     return res.status(500).json({
       error: 'Failed to fetch system info',
       message: hivemindError.message || 'An error occurred while fetching system info',
+    });
+  }
+});
+
+/**
+ * @openapi
+ * /api/admin/llm-providers/{type}/models:
+ *   get:
+ *     summary: List available models for an LLM provider
+ *     tags: [Admin]
+ *     parameters:
+ *       - in: path
+ *         name: type
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Provider type (openai, anthropic, google, perplexity)
+ *       - in: query
+ *         name: modelType
+ *         schema:
+ *           type: string
+ *           enum: [chat, embedding]
+ *         description: Filter by model type
+ *     responses:
+ *       200:
+ *         description: List of available models with metadata
+ */
+router.get('/llm-providers/:type/models', (req: Request, res: Response) => {
+  try {
+    const { type } = req.params;
+    const { modelType } = req.query;
+
+    // Validate provider type
+    const supportedProviders = getSupportedProviders();
+    if (!supportedProviders.includes(type.toLowerCase())) {
+      return res.status(400).json({
+        error: `Unsupported provider type '${type}'. Supported providers: ${supportedProviders.join(', ')}`,
+        code: 'INVALID_PROVIDER_TYPE',
+      });
+    }
+
+    // Get models based on requested type
+    let models;
+    if (modelType === 'chat') {
+      models = getChatModels(type);
+    } else if (modelType === 'embedding') {
+      models = getEmbeddingModels(type);
+    } else {
+      models = getModelsForProvider(type);
+    }
+
+    return res.json({
+      success: true,
+      provider: type,
+      modelType: (modelType as string) || 'all',
+      count: models.length,
+      models,
+    });
+  } catch (error: unknown) {
+    const hivemindError = ErrorUtils.toHivemindError(error);
+    debug('Error fetching LLM models:', hivemindError);
+    return res.status(500).json({
+      error: 'Failed to fetch LLM models',
+      message: hivemindError.message || 'An error occurred while fetching LLM models',
     });
   }
 });

@@ -401,6 +401,7 @@ export class SlackMessageIO implements ISlackMessageIO {
         ws.recordMessageFlow({
           botName: botInfo.botUserName || 'SlackBot',
           provider: 'slack',
+          llmProvider: botInfo.config?.llmProvider,
           channelId,
           userId: '',
           messageType: 'outgoing',

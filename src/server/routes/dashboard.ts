@@ -11,6 +11,8 @@ import {
   UpdateDashboardConfigSchema,
   SubmitAIFeedbackSchema,
   AlertIdParamSchema,
+  ExportActivitySchema,
+  ExportAnalyticsSchema,
 } from '../../validation/schemas/dashboardSchema';
 const debug = Debug('app:server:routes:dashboard');
 
@@ -346,6 +348,11 @@ router.get('/activity', authenticate, requireAdmin, async (req, res) => {
     const from = parseDate(req.query.from);
     const to = parseDate(req.query.to);
 
+    // Parse pagination parameters
+    const page = parseInt(String(req.query.page || '1'), 10);
+    const limit = Math.min(parseInt(String(req.query.limit || '50'), 10), 1000); // Cap at 1000
+    const offset = parseInt(String(req.query.offset || String((page - 1) * limit)), 10);
+
     // Fetch events from persistent storage
     const storedEvents = await ActivityLogger.getInstance().getEvents({
       startTime: from || undefined,
@@ -412,8 +419,20 @@ router.get('/activity', authenticate, requireAdmin, async (req, res) => {
     const timeline = buildTimeline(filteredEvents);
     const agentMetrics = buildAgentMetrics(filteredEvents, ws.getAllBotStats());
 
+    // Apply pagination to events
+    const total = filteredEvents.length;
+    const paginatedEvents = filteredEvents.slice(offset, offset + limit);
+    const hasMore = offset + limit < total;
+
     res.json({
-      events: filteredEvents.slice(-200),
+      events: paginatedEvents,
+      pagination: {
+        total,
+        page,
+        limit,
+        offset,
+        hasMore,
+      },
       filters: {
         agents: Array.from(agents).sort(),
         messageProviders: Array.from(messageProviders).sort(),
@@ -457,6 +476,316 @@ router.post('/alerts/:id/resolve', authenticate, requireAdmin, validateRequest(A
   } catch (error) {
     debug('ERROR:', 'Resolve alert error:', error);
     res.status(500).json({ error: 'Failed to resolve alert' });
+  }
+});
+
+// ----------------------------------------------------------------------------
+// Export Endpoints
+// ----------------------------------------------------------------------------
+
+router.get('/activity/export', authenticate, requireAdmin, validateRequest(ExportActivitySchema), async (req, res) => {
+  try {
+    const format = (req.query.format as string) || 'csv';
+    const manager = BotConfigurationManager.getInstance();
+    const ws = WebSocketService.getInstance();
+
+    const botList = manager.getAllBots();
+    const botMap = new Map(botList.map((bot) => [bot.name, bot]));
+
+    const botFilter = parseMultiParam(req.query.bot);
+    const providerFilter = parseMultiParam(req.query.messageProvider);
+    const llmFilter = parseMultiParam(req.query.llmProvider);
+    const from = parseDate(req.query.from);
+    const to = parseDate(req.query.to);
+
+    // For exports, fetch ALL matching events (no pagination limit)
+    const storedEvents = await ActivityLogger.getInstance().getEvents({
+      startTime: from || undefined,
+      endTime: to || undefined,
+      limit: 10000, // Higher limit for exports
+    });
+
+    const botFilterSet = new Set(botFilter);
+    const providerFilterSet = new Set(providerFilter);
+    const llmFilterSet = new Set(llmFilter);
+
+    const hasBotFilter = botFilterSet.size > 0;
+    const hasProviderFilter = providerFilterSet.size > 0;
+    const hasLlmFilter = llmFilterSet.size > 0;
+
+    const fromTime = from?.getTime();
+    const toTime = to?.getTime();
+
+    const hasAnyFilter = hasBotFilter || hasProviderFilter || hasLlmFilter || fromTime || toTime;
+
+    const filteredEvents = storedEvents
+      .filter((event) => {
+        const bot = botMap.get(event.botName);
+        const eventLlmProvider = bot?.llmProvider || 'unknown';
+
+        if (!hasAnyFilter) return true;
+
+        if (hasBotFilter && !botFilterSet.has(event.botName)) {
+          return false;
+        }
+        if (hasProviderFilter && !providerFilterSet.has(event.provider)) {
+          return false;
+        }
+        if (hasLlmFilter && !llmFilterSet.has(eventLlmProvider)) {
+          return false;
+        }
+        const ts = new Date(event.timestamp).getTime();
+        if (fromTime && ts < fromTime) {
+          return false;
+        }
+        if (toTime && ts > toTime) {
+          return false;
+        }
+        return true;
+      })
+      .map((event) => annotateEvent(event, botMap));
+
+    if (format === 'json') {
+      res.setHeader('Content-Type', 'application/json');
+      res.setHeader('Content-Disposition', `attachment; filename="activity_export_${new Date().toISOString()}.json"`);
+      res.json({
+        exportDate: new Date().toISOString(),
+        filters: {
+          bot: botFilter,
+          messageProvider: providerFilter,
+          llmProvider: llmFilter,
+          from: from?.toISOString(),
+          to: to?.toISOString(),
+        },
+        totalEvents: filteredEvents.length,
+        events: filteredEvents,
+      });
+    } else {
+      // CSV format
+      const escapeCsv = (value: string | number | null | undefined): string => {
+        if (value === null || value === undefined) return '';
+        const stringValue = String(value);
+        const escaped = stringValue.replace(/"/g, '""').replace(/\n/g, ' ');
+        return `"${escaped}"`;
+      };
+
+      const headers = [
+        'Timestamp',
+        'Formatted Time',
+        'Bot Name',
+        'Message Provider',
+        'LLM Provider',
+        'Status',
+        'Message Type',
+        'Processing Time (ms)',
+        'Content Length',
+        'User ID',
+        'Channel ID',
+        'Error Message',
+      ];
+
+      const rows = filteredEvents.map((event) => [
+        event.timestamp,
+        new Date(event.timestamp).toLocaleString('en-US', {
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit',
+          hour: '2-digit',
+          minute: '2-digit',
+          second: '2-digit',
+          hour12: false,
+        }),
+        event.botName,
+        event.provider,
+        event.llmProvider,
+        event.status,
+        event.messageType,
+        event.processingTime || '',
+        event.contentLength || '',
+        event.userId || '',
+        event.channelId || '',
+        event.errorMessage || '',
+      ]);
+
+      const csvContent = [
+        headers.map(escapeCsv).join(','),
+        ...rows.map((row) => row.map(escapeCsv).join(',')),
+      ].join('\n');
+
+      res.setHeader('Content-Type', 'text/csv;charset=utf-8;');
+      res.setHeader('Content-Disposition', `attachment; filename="activity_export_${new Date().toISOString()}.csv"`);
+      res.send(csvContent);
+    }
+  } catch (error) {
+    debug('ERROR:', 'Activity export error:', error);
+    res.status(500).json({ error: 'Failed to export activity data' });
+  }
+});
+
+router.get('/analytics/export', authenticate, requireAdmin, validateRequest(ExportAnalyticsSchema), async (req, res) => {
+  try {
+    const format = (req.query.format as string) || 'csv';
+    const analytics = AnalyticsService.getInstance();
+    const ws = WebSocketService.getInstance();
+    const from = parseDate(req.query.from);
+    const to = parseDate(req.query.to);
+
+    // Fetch analytics data
+    const stats = await analytics.getStats({
+      startTime: from || undefined,
+      endTime: to || undefined,
+    });
+
+    const patterns = await analytics.getBehaviorPatterns({
+      startTime: from || undefined,
+      endTime: to || undefined,
+    });
+
+    const segments = await analytics.getUserSegments({
+      startTime: from || undefined,
+      endTime: to || undefined,
+    });
+
+    // Fetch activity data for bot performance
+    const storedEvents = await ActivityLogger.getInstance().getEvents({
+      startTime: from || undefined,
+      endTime: to || undefined,
+      limit: 5000,
+    });
+
+    const manager = BotConfigurationManager.getInstance();
+    const botList = manager.getAllBots();
+    const botMap = new Map(botList.map((bot) => [bot.name, bot]));
+
+    const annotatedEvents = storedEvents.map((event) => annotateEvent(event, botMap));
+    const agentMetrics = buildAgentMetrics(annotatedEvents, ws.getAllBotStats());
+
+    // Get current performance metrics
+    const performanceMetrics = {
+      timestamp: new Date().toISOString(),
+      cpuUsage: 0, // Would need actual system metrics
+      memoryUsage: 0, // Would need actual system metrics
+      activeConnections: ws.getConnectedClients().length,
+    };
+
+    if (format === 'json') {
+      res.setHeader('Content-Type', 'application/json');
+      res.setHeader('Content-Disposition', `attachment; filename="analytics_export_${new Date().toISOString()}.json"`);
+      res.json({
+        exportDate: new Date().toISOString(),
+        filters: {
+          from: from?.toISOString(),
+          to: to?.toISOString(),
+        },
+        summary: {
+          totalMessages: stats.totalMessages,
+          totalErrors: stats.totalErrors,
+          avgProcessingTime: stats.avgProcessingTime,
+          activeBots: stats.activeBots,
+          activeUsers: stats.activeUsers,
+          errorRate: stats.totalMessages > 0 ? (stats.totalErrors / stats.totalMessages * 100).toFixed(2) + '%' : '0%',
+          successRate: stats.totalMessages > 0 ? ((stats.totalMessages - stats.totalErrors) / stats.totalMessages * 100).toFixed(2) + '%' : '100%',
+          availability: stats.totalMessages > 0 ? ((stats.totalMessages - stats.totalErrors) / stats.totalMessages * 100).toFixed(2) + '%' : '100%',
+        },
+        botPerformance: agentMetrics.map((metric) => ({
+          botName: metric.botName,
+          messageProvider: metric.messageProvider,
+          llmProvider: metric.llmProvider,
+          totalMessages: metric.totalMessages,
+          events: metric.events,
+          errors: metric.errors,
+          errorRate: metric.events > 0 ? ((metric.errors / metric.events) * 100).toFixed(2) + '%' : '0%',
+          successRate: metric.events > 0 ? (((metric.events - metric.errors) / metric.events) * 100).toFixed(2) + '%' : '100%',
+          lastActivity: metric.lastActivity,
+          avgResponseTime: metric.avgResponseTime,
+          minResponseTime: metric.minResponseTime,
+          maxResponseTime: metric.maxResponseTime,
+          p95ResponseTime: metric.p95ResponseTime,
+          p99ResponseTime: metric.p99ResponseTime,
+        })),
+        behaviorPatterns: patterns,
+        userSegments: segments,
+        performance: performanceMetrics,
+      });
+    } else {
+      // CSV format - Bot Performance Summary
+      const escapeCsv = (value: string | number | null | undefined): string => {
+        if (value === null || value === undefined) return '';
+        const stringValue = String(value);
+        const escaped = stringValue.replace(/"/g, '""').replace(/\n/g, ' ');
+        return `"${escaped}"`;
+      };
+
+      // Summary section
+      let csvContent = '# Analytics Export Summary\n';
+      csvContent += escapeCsv('Metric') + ',' + escapeCsv('Value') + '\n';
+      csvContent += escapeCsv('Export Date') + ',' + escapeCsv(new Date().toISOString()) + '\n';
+      csvContent += escapeCsv('Date Range From') + ',' + escapeCsv(from?.toISOString() || 'Beginning') + '\n';
+      csvContent += escapeCsv('Date Range To') + ',' + escapeCsv(to?.toISOString() || 'Now') + '\n';
+      csvContent += escapeCsv('Total Messages') + ',' + escapeCsv(stats.totalMessages) + '\n';
+      csvContent += escapeCsv('Total Errors') + ',' + escapeCsv(stats.totalErrors) + '\n';
+      csvContent += escapeCsv('Error Rate') + ',' + escapeCsv(stats.totalMessages > 0 ? ((stats.totalErrors / stats.totalMessages) * 100).toFixed(2) + '%' : '0%') + '\n';
+      csvContent += escapeCsv('Avg Processing Time (ms)') + ',' + escapeCsv(stats.avgProcessingTime) + '\n';
+      csvContent += escapeCsv('Active Bots') + ',' + escapeCsv(stats.activeBots) + '\n';
+      csvContent += escapeCsv('Active Users') + ',' + escapeCsv(stats.activeUsers) + '\n';
+      csvContent += escapeCsv('Active Connections') + ',' + escapeCsv(performanceMetrics.activeConnections) + '\n';
+      csvContent += '\n';
+
+      // Bot Performance section
+      csvContent += '# Bot Performance Details\n';
+      const botHeaders = [
+        'Bot Name',
+        'Message Provider',
+        'LLM Provider',
+        'Total Messages',
+        'Events',
+        'Errors',
+        'Error Rate',
+        'Success Rate',
+        'Last Activity',
+        'Avg Response Time (ms)',
+        'Min Response Time (ms)',
+        'Max Response Time (ms)',
+        'P95 Response Time (ms)',
+        'P99 Response Time (ms)',
+      ];
+      csvContent += botHeaders.map(escapeCsv).join(',') + '\n';
+
+      agentMetrics.forEach((metric) => {
+        const row = [
+          metric.botName,
+          metric.messageProvider,
+          metric.llmProvider,
+          metric.totalMessages,
+          metric.events,
+          metric.errors,
+          metric.events > 0 ? ((metric.errors / metric.events) * 100).toFixed(2) + '%' : '0%',
+          metric.events > 0 ? (((metric.events - metric.errors) / metric.events) * 100).toFixed(2) + '%' : '100%',
+          new Date(metric.lastActivity).toLocaleString('en-US', {
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+            hour12: false,
+          }),
+          metric.avgResponseTime || 'N/A',
+          metric.minResponseTime || 'N/A',
+          metric.maxResponseTime || 'N/A',
+          metric.p95ResponseTime || 'N/A',
+          metric.p99ResponseTime || 'N/A',
+        ];
+        csvContent += row.map(escapeCsv).join(',') + '\n';
+      });
+
+      res.setHeader('Content-Type', 'text/csv;charset=utf-8;');
+      res.setHeader('Content-Disposition', `attachment; filename="analytics_export_${new Date().toISOString()}.csv"`);
+      res.send(csvContent);
+    }
+  } catch (error) {
+    debug('ERROR:', 'Analytics export error:', error);
+    res.status(500).json({ error: 'Failed to export analytics data' });
   }
 });
 
@@ -553,6 +882,12 @@ function buildAgentMetrics(
       lastActivity: string;
       totalMessages: number;
       recentErrors: string[];
+      avgResponseTime: number;
+      minResponseTime: number;
+      maxResponseTime: number;
+      p95ResponseTime: number;
+      p99ResponseTime: number;
+      responseTimes: number[];
     }
   >();
 
@@ -562,6 +897,7 @@ function buildAgentMetrics(
     const totalMessages = botStats[event.botName]?.messageCount ?? 0;
 
     if (!existing) {
+      const responseTimes = event.processingTime != null ? [event.processingTime] : [];
       metrics.set(event.botName, {
         botName: event.botName,
         messageProvider: event.provider,
@@ -571,6 +907,12 @@ function buildAgentMetrics(
         lastActivity: event.timestamp,
         totalMessages,
         recentErrors: errorsForBot,
+        avgResponseTime: 0,
+        minResponseTime: 0,
+        maxResponseTime: 0,
+        p95ResponseTime: 0,
+        p99ResponseTime: 0,
+        responseTimes,
       });
       return;
     }
@@ -584,7 +926,48 @@ function buildAgentMetrics(
     }
     existing.totalMessages = totalMessages;
     existing.recentErrors = errorsForBot;
+
+    // Collect response times for calculation
+    if (event.processingTime != null) {
+      existing.responseTimes.push(event.processingTime);
+    }
   });
 
-  return Array.from(metrics.values()).sort((a, b) => b.events - a.events);
+  // Calculate response time metrics for each bot
+  const results = Array.from(metrics.values()).map((metric) => {
+    const times = metric.responseTimes;
+
+    if (times.length === 0) {
+      // No response time data available
+      const { responseTimes, ...rest } = metric;
+      return rest;
+    }
+
+    // Sort for percentile calculations
+    const sortedTimes = [...times].sort((a, b) => a - b);
+
+    // Calculate metrics
+    const sum = times.reduce((acc, t) => acc + t, 0);
+    const avgResponseTime = Math.round(sum / times.length);
+    const minResponseTime = sortedTimes[0];
+    const maxResponseTime = sortedTimes[sortedTimes.length - 1];
+
+    // Calculate percentiles
+    const p95Index = Math.ceil(sortedTimes.length * 0.95) - 1;
+    const p99Index = Math.ceil(sortedTimes.length * 0.99) - 1;
+    const p95ResponseTime = sortedTimes[Math.max(0, p95Index)];
+    const p99ResponseTime = sortedTimes[Math.max(0, p99Index)];
+
+    const { responseTimes, ...rest } = metric;
+    return {
+      ...rest,
+      avgResponseTime,
+      minResponseTime,
+      maxResponseTime,
+      p95ResponseTime,
+      p99ResponseTime,
+    };
+  });
+
+  return results.sort((a, b) => b.events - a.events);
 }

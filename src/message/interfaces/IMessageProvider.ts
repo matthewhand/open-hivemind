@@ -108,4 +108,28 @@ export interface IMessageProvider {
    * Optional method, as not all providers support it.
    */
   sendTyping?(channelId: string, senderName?: string, threadId?: string): Promise<void>;
+
+  /**
+   * Performs a health check on the provider to verify its operational status.
+   *
+   * This method checks the provider's connection, validates credentials,
+   * and returns detailed status information including connectivity state,
+   * last ping time, and any error messages.
+   *
+   * @returns {Promise<HealthCheckResult>} A promise that resolves to the health check result
+   *
+   * @example
+   * ```typescript
+   * const provider = new DiscordMessageProvider();
+   * const health = await provider.healthCheck();
+   * console.log(`Status: ${health.status}, Connected: ${health.connected}`);
+   * ```
+   */
+  healthCheck?(): Promise<{
+    status: 'healthy' | 'degraded' | 'down';
+    connected: boolean;
+    lastPing?: Date;
+    details?: string;
+    error?: string;
+  }>;
 }

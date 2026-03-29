@@ -60,6 +60,80 @@ jest.mock('../../src/utils/envUtils', () => ({
   getRelevantEnvVars: jest.fn(() => ({})),
 }));
 
+// Mock ToolUsageGuardsManager
+jest.mock('../../src/managers/ToolUsageGuardsManager', () => ({
+  ToolUsageGuardsManager: {
+    getInstance: jest.fn(() => {
+      const guards = new Map();
+      // Add default test guard
+      guards.set('guard1', {
+        id: 'guard1',
+        name: 'Test Guard',
+        description: 'Test description',
+        toolId: 'test_tool',
+        guardType: 'owner_only',
+        allowedUsers: [],
+        allowedRoles: [],
+        isActive: true,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      });
+
+      return {
+        getAllGuards: jest.fn(() => Array.from(guards.values())),
+        getGuard: jest.fn((id: string) => guards.get(id)),
+        createGuard: jest.fn((request: any) => {
+          const newGuard = {
+            id: `guard${Date.now()}`,
+            name: request.name,
+            description: request.description,
+            toolId: request.toolId,
+            guardType: request.guardType,
+            allowedUsers: request.allowedUsers || [],
+            allowedRoles: request.allowedRoles || [],
+            isActive: request.isActive !== false,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+          };
+          guards.set(newGuard.id, newGuard);
+          return newGuard;
+        }),
+        updateGuard: jest.fn((id: string, updates: any) => {
+          const existing = guards.get(id);
+          if (!existing) {
+            throw new Error(`Tool usage guard with ID ${id} not found`);
+          }
+          const updated = {
+            ...existing,
+            ...updates,
+            updatedAt: new Date().toISOString(),
+          };
+          guards.set(id, updated);
+          return updated;
+        }),
+        deleteGuard: jest.fn((id: string) => {
+          const existed = guards.has(id);
+          guards.delete(id);
+          return existed;
+        }),
+        toggleGuard: jest.fn((id: string, isActive: boolean) => {
+          const existing = guards.get(id);
+          if (!existing) {
+            throw new Error(`Tool usage guard with ID ${id} not found`);
+          }
+          const updated = {
+            ...existing,
+            isActive,
+            updatedAt: new Date().toISOString(),
+          };
+          guards.set(id, updated);
+          return updated;
+        }),
+      };
+    }),
+  },
+}));
+
 const app = express();
 app.use(express.json());
 app.use('/api/admin', adminRoutes);

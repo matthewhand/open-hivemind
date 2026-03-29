@@ -427,6 +427,7 @@ export class SlackService extends EventEmitter implements IMessengerService {
           ws.getInstance().recordMessageFlow({
             botName,
             provider: 'slack',
+            llmProvider: _botConfig?.llmProvider,
             channelId: message.getChannelId?.() || '',
             userId: message.getAuthorId?.() || '',
             messageType: 'incoming',

@@ -28,7 +28,7 @@ export interface PluginManifest {
   /** Minimum open-hivemind core version required, e.g. "1.0.0" */
   minVersion?: string;
   /** Provider type — derivable from package name prefix but explicit here for safety */
-  type: 'llm' | 'message' | 'memory' | 'tool';
+  type: 'llm' | 'message' | 'memory' | 'tool' | 'bot' | 'guard' | 'persona';
 }
 
 export interface PluginModule {
@@ -246,5 +246,80 @@ export function instantiateToolProvider(mod: any, config?: any): any {
   }
   throw new Error(
     'Tool plugin does not export create(), a Provider class, or a default constructor.'
+  );
+}
+
+/**
+ * Instantiate a bot from a loaded module.
+ *
+ * Contract (preferred): module exports `create(config)` → Bot instance
+ * Fallback: known Bot class patterns.
+ */
+export function instantiateBot(mod: any, config?: any): any {
+  // Preferred: explicit factory
+  if (typeof mod.create === 'function') {
+    return mod.create(config);
+  }
+  // Fallback: Bot constructor
+  const ctor = Object.keys(mod).find((k) => k.includes('Bot') && typeof mod[k] === 'function');
+  if (ctor) {
+    return new mod[ctor](config);
+  }
+  // Fallback: default export
+  if (typeof mod.default === 'function') {
+    return new mod.default(config);
+  }
+  throw new Error(
+    'Bot plugin does not export create(), a Bot class, or a default constructor.'
+  );
+}
+
+/**
+ * Instantiate a guard from a loaded module.
+ *
+ * Contract (preferred): module exports `create(config)` → Guard instance
+ * Fallback: known Guard class patterns.
+ */
+export function instantiateGuard(mod: any, config?: any): any {
+  // Preferred: explicit factory
+  if (typeof mod.create === 'function') {
+    return mod.create(config);
+  }
+  // Fallback: Guard constructor
+  const ctor = Object.keys(mod).find((k) => k.includes('Guard') && typeof mod[k] === 'function');
+  if (ctor) {
+    return new mod[ctor](config);
+  }
+  // Fallback: default export
+  if (typeof mod.default === 'function') {
+    return new mod.default(config);
+  }
+  throw new Error(
+    'Guard plugin does not export create(), a Guard class, or a default constructor.'
+  );
+}
+
+/**
+ * Instantiate a persona from a loaded module.
+ *
+ * Contract (preferred): module exports `create(config)` → Persona instance
+ * Fallback: known Persona class patterns.
+ */
+export function instantiatePersona(mod: any, config?: any): any {
+  // Preferred: explicit factory
+  if (typeof mod.create === 'function') {
+    return mod.create(config);
+  }
+  // Fallback: Persona constructor
+  const ctor = Object.keys(mod).find((k) => k.includes('Persona') && typeof mod[k] === 'function');
+  if (ctor) {
+    return new mod[ctor](config);
+  }
+  // Fallback: default export
+  if (typeof mod.default === 'function') {
+    return new mod.default(config);
+  }
+  throw new Error(
+    'Persona plugin does not export create(), a Persona class, or a default constructor.'
   );
 }

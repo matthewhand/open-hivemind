@@ -15,6 +15,8 @@ import {
   InstallPluginSchema,
   PluginNameParamSchema,
 } from '../../validation/schemas/marketplaceSchema';
+import { checkForUpdates, type VersionHistoryEntry } from '../utils/versionTracking';
+import { PLUGINS_DIR } from '@src/plugins/PluginLoader';
 
 const debug = Debug('app:marketplace');
 const router = Router();
@@ -27,12 +29,21 @@ export interface MarketplacePackage {
   name: string;
   displayName: string;
   description: string;
-  type: 'llm' | 'message' | 'memory' | 'tool';
+  type: 'llm' | 'message' | 'memory' | 'tool' | 'bot' | 'guard' | 'persona';
   version: string;
+  latestVersion?: string;
+  hasUpdate?: boolean;
   status: 'built-in' | 'installed' | 'available';
   repoUrl?: string;
+  downloadUrl?: string;
+  author?: string;
+  tags?: string[];
+  requirements?: {
+    node?: string;
+  };
   installedAt?: string;
   updatedAt?: string;
+  changelog?: VersionHistoryEntry[];
 }
 
 // ---------------------------------------------------------------------------
@@ -41,6 +52,7 @@ export interface MarketplacePackage {
 
 const PACKAGES_DIR = path.resolve(__dirname, '../../../../packages');
 const _PLUGINS_DIR = path.resolve(__dirname, '../../../../plugins');
+const COMMUNITY_MANIFEST = path.resolve(__dirname, '../data/community-packages.json');
 
 /**
  * Scan built-in packages directory for available providers.
@@ -75,7 +87,7 @@ async function scanBuiltInPackages(): Promise<MarketplacePackage[]> {
 
         // Derive type from package name prefix
         const namePrefix = dir.split('-')[0];
-        const validTypes = ['llm', 'message', 'memory', 'tool'] as const;
+        const validTypes = ['llm', 'message', 'memory', 'tool', 'bot', 'guard', 'persona'] as const;
         const type = validTypes.includes(namePrefix as any)
           ? (namePrefix as MarketplacePackage['type'])
           : 'tool';
@@ -106,7 +118,7 @@ async function scanBuiltInPackages(): Promise<MarketplacePackage[]> {
 }
 
 /**
- * Get installed community plugins.
+ * Get installed community plugins with version update checking.
  */
 async function getInstalledPlugins(): Promise<MarketplacePackage[]> {
   const plugins: MarketplacePackage[] = [];
@@ -115,16 +127,29 @@ async function getInstalledPlugins(): Promise<MarketplacePackage[]> {
     const installed = await listInstalledPlugins();
 
     for (const plugin of installed) {
+      // Check for updates asynchronously
+      const pluginPath = path.join(PLUGINS_DIR, plugin.name);
+      let versionInfo;
+
+      try {
+        versionInfo = await checkForUpdates(pluginPath, plugin.version, plugin.repoUrl);
+      } catch (e) {
+        debug('Failed to check updates for %s: %s', plugin.name, e);
+      }
+
       plugins.push({
         name: plugin.name,
         displayName: plugin.manifest.displayName,
         description: plugin.manifest.description,
         type: plugin.manifest.type,
         version: plugin.version,
+        latestVersion: versionInfo?.latest,
+        hasUpdate: versionInfo?.hasUpdate || false,
         status: 'installed',
         repoUrl: plugin.repoUrl,
         installedAt: plugin.installedAt,
         updatedAt: plugin.updatedAt,
+        changelog: versionInfo?.changelog,
       });
     }
   } catch (e) {
@@ -132,6 +157,35 @@ async function getInstalledPlugins(): Promise<MarketplacePackage[]> {
   }
 
   return plugins;
+}
+
+/**
+ * Load available community packages from manifest file.
+ *
+ * Future enhancement: Add support for fetching from a remote registry URL
+ * by checking an environment variable (e.g., REGISTRY_URL) and falling back
+ * to the local manifest file if unavailable.
+ */
+async function getAvailablePackages(): Promise<MarketplacePackage[]> {
+  const packages: MarketplacePackage[] = [];
+
+  try {
+    const manifestContent = await fs.promises.readFile(COMMUNITY_MANIFEST, 'utf-8');
+    const manifest = JSON.parse(manifestContent);
+
+    if (Array.isArray(manifest)) {
+      packages.push(...manifest);
+      debug('Loaded %d available packages from manifest', manifest.length);
+    }
+  } catch (e: any) {
+    if (e.code === 'ENOENT') {
+      debug('Community packages manifest not found at %s', COMMUNITY_MANIFEST);
+    } else {
+      debug('Failed to load community packages manifest: %s', e);
+    }
+  }
+
+  return packages;
 }
 
 // ---------------------------------------------------------------------------
@@ -159,15 +213,29 @@ async function getPackages(): Promise<MarketplacePackage[]> {
     return cachedPackages;
   }
 
-  // Cache miss or expired - scan filesystem
+  // Cache miss or expired - scan filesystem and load manifests
   debug('Cache miss or expired, scanning packages');
   const builtIn = await scanBuiltInPackages();
   const installed = await getInstalledPlugins();
+  const available = await getAvailablePackages();
 
-  // Merge: built-in packages take precedence, then installed plugins
+  // Merge packages with priority: built-in > installed > available
+  // This ensures built-in packages override community versions,
+  // and installed plugins override available ones
   const packageMap = new Map<string, MarketplacePackage>();
 
-  for (const pkg of [...builtIn, ...installed]) {
+  // First add available packages
+  for (const pkg of available) {
+    packageMap.set(pkg.name, pkg);
+  }
+
+  // Override with installed packages
+  for (const pkg of installed) {
+    packageMap.set(pkg.name, pkg);
+  }
+
+  // Override with built-in packages (highest priority)
+  for (const pkg of builtIn) {
     packageMap.set(pkg.name, pkg);
   }
 
@@ -253,7 +321,53 @@ router.post('/install', requireRole('admin'), validateRequest(InstallPluginSchem
     });
   } catch (err: any) {
     debug('Install error: %s', err);
-    return res.status(400).json({ error: 'Installation failed', message: err.message });
+
+    // Enhanced error response with actionable information
+    const errorMessage = err.message || 'Installation failed';
+    let statusCode = 400;
+    let errorType = 'marketplace_install_failed';
+    const suggestions: string[] = [];
+
+    // Detect specific error types
+    if (errorMessage.includes('git') || errorMessage.includes('clone') || errorMessage.includes('repository')) {
+      errorType = 'marketplace_git_error';
+      suggestions.push('Verify the GitHub repository URL is correct and accessible');
+      suggestions.push('Check if the repository is public or you have access');
+      suggestions.push('Ensure your server has internet connectivity');
+    } else if (errorMessage.includes('build') || errorMessage.includes('compile') || errorMessage.includes('npm')) {
+      errorType = 'marketplace_build_failed';
+      suggestions.push('Check the package build logs for specific errors');
+      suggestions.push('The package may have missing or incompatible dependencies');
+      suggestions.push('Report the issue to the package maintainer');
+      statusCode = 500;
+    } else if (errorMessage.includes('manifest') || errorMessage.includes('validation')) {
+      errorType = 'validation_error';
+      suggestions.push('The package structure may be invalid');
+      suggestions.push('Ensure the package has a valid manifest.json');
+      suggestions.push('Contact the package author for support');
+    } else if (errorMessage.includes('network') || errorMessage.includes('ECONNREFUSED') || errorMessage.includes('ENOTFOUND')) {
+      errorType = 'network_error';
+      statusCode = 503;
+      suggestions.push('Check your internet connection');
+      suggestions.push('Verify firewall settings allow outbound connections');
+      suggestions.push('Try again in a few moments');
+    }
+
+    // Add generic suggestions if none were added
+    if (suggestions.length === 0) {
+      suggestions.push('Check the repository URL is correct');
+      suggestions.push('Try again or refresh the page');
+      suggestions.push('Contact support if the issue persists');
+    }
+
+    return res.status(statusCode).json({
+      error: 'Installation failed',
+      message: errorMessage,
+      errorType,
+      suggestions,
+      canRetry: statusCode === 503 || errorType === 'network_error' || errorType === 'marketplace_git_error',
+      docsUrl: 'https://docs.open-hivemind.ai/marketplace/troubleshooting',
+    });
   }
 });
 
@@ -311,6 +425,92 @@ router.post('/update/:name', requireRole('admin'), validateRequest(PluginNamePar
   } catch (err: any) {
     debug('Update error: %s', err);
     return res.status(400).json({ error: 'Update failed', message: err.message });
+  }
+});
+
+/**
+ * GET /api/marketplace/check-updates/:name
+ * Check for available updates for a specific package
+ */
+router.get('/check-updates/:name', validateRequest(PluginNameParamSchema), async (req, res) => {
+  try {
+    const name = req.params.name;
+    const pluginPath = path.join(PLUGINS_DIR, name);
+
+    // Verify plugin exists
+    try {
+      await fs.promises.access(pluginPath);
+    } catch {
+      return res.status(404).json({ error: 'Plugin not found' });
+    }
+
+    // Get current version
+    const pkgJsonPath = path.join(pluginPath, 'package.json');
+    const pkgJsonContent = await fs.promises.readFile(pkgJsonPath, 'utf-8');
+    const pkgJson = JSON.parse(pkgJsonContent);
+    const currentVersion = pkgJson.version || '0.0.0';
+
+    // Get registry info for repoUrl
+    const installed = await listInstalledPlugins();
+    const plugin = installed.find(p => p.name === name);
+
+    // Check for updates
+    const versionInfo = await checkForUpdates(pluginPath, currentVersion, plugin?.repoUrl);
+
+    return res.json({
+      name,
+      current: versionInfo.current,
+      latest: versionInfo.latest,
+      hasUpdate: versionInfo.hasUpdate,
+      changelog: versionInfo.changelog,
+    });
+  } catch (err: any) {
+    debug('Check updates error: %s', err);
+    return res.status(500).json({ error: 'Failed to check updates', message: err.message });
+  }
+});
+
+/**
+ * GET /api/marketplace/check-all-updates
+ * Check for updates across all installed plugins
+ */
+router.get('/check-all-updates', async (req, res) => {
+  try {
+    const installed = await listInstalledPlugins();
+    const updates: Array<{
+      name: string;
+      displayName: string;
+      current: string;
+      latest?: string;
+      hasUpdate: boolean;
+    }> = [];
+
+    for (const plugin of installed) {
+      const pluginPath = path.join(PLUGINS_DIR, plugin.name);
+
+      try {
+        const versionInfo = await checkForUpdates(pluginPath, plugin.version, plugin.repoUrl);
+
+        updates.push({
+          name: plugin.name,
+          displayName: plugin.manifest.displayName,
+          current: versionInfo.current,
+          latest: versionInfo.latest,
+          hasUpdate: versionInfo.hasUpdate,
+        });
+      } catch (e) {
+        debug('Failed to check updates for %s: %s', plugin.name, e);
+      }
+    }
+
+    return res.json({
+      total: installed.length,
+      updatesAvailable: updates.filter(u => u.hasUpdate).length,
+      packages: updates,
+    });
+  } catch (err: any) {
+    debug('Check all updates error: %s', err);
+    return res.status(500).json({ error: 'Failed to check updates', message: err.message });
   }
 });
 
