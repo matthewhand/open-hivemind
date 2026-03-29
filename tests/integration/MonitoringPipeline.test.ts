@@ -37,16 +37,38 @@ describe('Monitoring Pipeline Integration Tests', () => {
   let dbManager: DatabaseManager;
   let socket: any; // Mock socket for testing
 
-  beforeAll(async () => {
-    // Get the mocked DatabaseManager
-    dbManager = DatabaseManager.getInstance();
+  beforeEach(() => {
+    jest.clearAllMocks();
 
-    // Mock init if needed
-    await (dbManager as any).init();
+    // Explicitly resetting singletons/modules for each test for full isolation
+    const mockedDbManager = {
+      storeAnomaly: jest.fn().mockResolvedValue(undefined),
+      resolveAnomaly: jest.fn().mockResolvedValue(true),
+      init: jest.fn().mockResolvedValue(undefined),
+    } as unknown as DatabaseManager;
 
-    anomalyService = AnomalyDetectionService.getInstance();
-    metricsCollector = MetricsCollector.getInstance();
-    wsService = WebSocketService.getInstance();
+    dbManager = mockedDbManager;
+
+    const mockedWsService = {
+      recordAlert: jest.fn(),
+    } as unknown as WebSocketService;
+
+    wsService = mockedWsService;
+
+    // Use a fresh instance of metrics collector
+    metricsCollector = new (MetricsCollector as any)(); // circumvent private constructor
+
+    // Ensure AnomalyService uses fresh injected services
+    anomalyService = new AnomalyDetectionService(dbManager, wsService, metricsCollector);
+
+    // Provide default config specifically for testing
+    (anomalyService as any).config = {
+      enabled: true,
+      windowSize: 50,
+      zThreshold: 3,
+      metricsToMonitor: ['responseTime', 'errors'],
+      minDataPoints: 10,
+    };
 
     // Mock WebSocket connection instead of real connection
     socket = {
@@ -61,23 +83,15 @@ describe('Monitoring Pipeline Integration Tests', () => {
       // Mock emit for testing
       socket.emit('alert_update', alert);
     });
-  }, 30000); // Increase timeout to 30 seconds for beforeAll
-
-  afterAll(() => {
-    if (socket) socket.disconnect();
   });
 
-  beforeEach(() => {
-    // Reset services
-    jest.clearAllMocks();
-
-    // Mock DB and WS for integration but keep core flow
-    jest.spyOn(dbManager, 'storeAnomaly').mockResolvedValue(undefined);
-    jest.spyOn(dbManager, 'resolveAnomaly').mockResolvedValue(true);
-    jest.spyOn(wsService, 'recordAlert').mockImplementation((alert: any) => {
-      // Mock emit for testing
-      socket.emit('alert_update', alert);
-    });
+  afterEach(() => {
+    if (anomalyService) {
+      anomalyService.shutdown();
+    }
+    if (socket) {
+      socket.disconnect();
+    }
   });
 
   test('should collect metrics, detect anomaly, alert via WebSocket, and expose via API', async () => {
@@ -166,21 +180,25 @@ describe('Monitoring Pipeline Integration Tests', () => {
   });
 
   test('should handle anomaly resolution and update dashboard', async () => {
+    // Fill window first so detection works
+    for (let i = 0; i < 20; i++) {
+      anomalyService.addDataPoint('responseTime', 100);
+    }
     // Create anomaly
-    anomalyService.addDataPoint('responseTime', 500); // Assume window built
+    anomalyService.addDataPoint('responseTime', 500);
     await anomalyService.runDetection();
 
     const anomaliesBefore = anomalyService.getActiveAnomalies();
-    expect(anomaliesBefore.length).toBeGreaterThanOrEqual(1);
+    expect(anomaliesBefore.length).toBe(1);
 
     // Resolve
     const anomalyId = anomaliesBefore[0].id;
     const resolved = await anomalyService.resolveAnomaly(anomalyId);
     expect(resolved).toBe(true);
 
-    // Verify resolved (anomalies may still exist from other tests)
+    // Verify resolved (should be empty now since isolated test)
     const anomaliesAfter = anomalyService.getActiveAnomalies();
-    expect(anomaliesAfter.length).toBeGreaterThanOrEqual(0);
+    expect(anomaliesAfter.length).toBe(0);
 
     // Verify via service (check that this specific anomaly is resolved)
     const specificAnomaly = anomalyService.getActiveAnomalies().find(a => a.id === anomalyId);
