@@ -34,5 +34,7 @@ Currently, the screenshot suite covers:
 - E2E Analytics & Dashboard Metrics
 - Site mapping & Personas Setup
 - API Guard Policies & Rate Limiting Views
+- `memory-providers-list.png` — Memory Providers admin page showing configured memory provider list
+- `tool-providers-list.png` — Tool Providers admin page showing configured tool provider list
 
 For detailed implementation instructions regarding Playwright commands, see the repository root `AGENTS.md` and `tests/e2e/` specifications.
