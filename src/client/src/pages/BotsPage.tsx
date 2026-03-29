@@ -14,6 +14,7 @@ import Modal, { ConfirmModal } from '../components/DaisyUI/Modal';
 import { useLlmStatus } from '../hooks/useLlmStatus';
 import { usePageLifecycle } from '../hooks/usePageLifecycle';
 import PageHeader from '../components/DaisyUI/PageHeader';
+import ConfigurationValidation from '../components/ConfigurationValidation';
 import SearchFilterBar from '../components/SearchFilterBar';
 import EmptyState from '../components/DaisyUI/EmptyState';
 import { SkeletonPage } from '../components/DaisyUI/Skeleton';
@@ -51,7 +52,7 @@ const BotsPage: React.FC = () => {
   const [editingBot, setEditingBot] = useState<BotConfig | null>(null);
   const [deletingBot, setDeletingBot] = useState<BotConfig | null>(null);
   const [previewBot, setPreviewBot] = useState<BotConfig | null>(null);
-  const [previewTab, setPreviewTab] = useState<'activity' | 'chat'>('activity');
+  const [previewTab, setPreviewTab] = useState<'activity' | 'chat' | 'validation'>('activity');
   const [activityLogs, setActivityLogs] = useState<any[]>([]);
   const [chatHistory, setChatHistory] = useState<any[]>([]);
   const [logFilter, setLogFilter] = useState('');
@@ -680,6 +681,13 @@ const BotsPage: React.FC = () => {
                     >
                       <MessageSquare className="w-3 h-3" /> <span className="text-[10px] uppercase font-bold">Chat</span>
                     </button>
+                    <button
+                      className={`tab tab-sm flex-1 gap-2 ${previewTab === 'validation' ? 'tab-active' : ''}`}
+                      onClick={() => setPreviewTab('validation')}
+                      role="tab"
+                    >
+                      <ShieldCheck className="w-3 h-3" /> <span className="text-[10px] uppercase font-bold">Validation</span>
+                    </button>
                   </div>
 
                   {/* Activity Log Panel */}
@@ -739,6 +747,13 @@ const BotsPage: React.FC = () => {
                           ))}
                         </div>
                       )}
+                    </div>
+                  )}
+
+                  {/* Validation Panel */}
+                  {previewTab === 'validation' && (
+                    <div className="space-y-3 max-h-[300px] overflow-y-auto pr-1 custom-scrollbar">
+                      <ConfigurationValidation bot={previewBot} />
                     </div>
                   )}
 
