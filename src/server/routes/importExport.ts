@@ -262,7 +262,7 @@ router.post(
   handleUploadError,
   validateImportOptions,
   handleValidationErrors,
-  async (req: AuthMiddlewareRequest, res: Response) => {
+  async (req: AuthMiddlewareRequest & { file?: any }, res: Response) => {
     try {
       if (!req.file) {
         return res.status(400).json({
@@ -541,7 +541,7 @@ router.post(
   authenticate,
   upload.single('file'),
   handleUploadError,
-  async (req: AuthMiddlewareRequest, res: Response) => {
+  async (req: AuthMiddlewareRequest & { file?: any }, res: Response) => {
     try {
       if (!req.file) {
         return res.status(400).json({

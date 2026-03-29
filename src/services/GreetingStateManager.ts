@@ -17,9 +17,17 @@ type GreetingState = Record<
 @singleton()
 @injectable()
 export class GreetingStateManager {
+  private static instance: GreetingStateManager;
   private stateFilePath: string;
   private state: GreetingState = {};
   private initialized = false;
+
+  public static getInstance(): GreetingStateManager {
+    if (!GreetingStateManager.instance) {
+      GreetingStateManager.instance = new GreetingStateManager();
+    }
+    return GreetingStateManager.instance;
+  }
 
   public constructor() {
     this.stateFilePath = path.join(process.cwd(), 'data', 'greeting-state.json');

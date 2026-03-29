@@ -1,6 +1,14 @@
 
 import { DatabaseManager } from '../../database/DatabaseManager';
-import { clearRequireCache } from './requireCache';
+
+export function clearRequireCache(): void {
+  // Safe require cache clearing if needed
+  Object.keys(require.cache).forEach((key) => {
+    if (key.includes('src/plugins') || key.includes('src/modules')) {
+      delete require.cache[key];
+    }
+  });
+}
 
 export async function clearAllSystemCaches(): Promise<void> {
   // Clear require cache for plugins/modules if needed

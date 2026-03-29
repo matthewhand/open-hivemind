@@ -64,9 +64,27 @@ export interface DemoConversation {
 @singleton()
 @injectable()
 export class DemoModeService {
+  private static instance: DemoModeService;
   private isDemoMode = false;
   private demoBots: DemoBot[] = [];
   private conversations = new Map<string, DemoConversation>();
+
+  public static getInstance(): DemoModeService {
+    if (!DemoModeService.instance) {
+      // Note: this is a hacky fallback, dependency injection is generally preferred
+      // but provided here since static calls are used throughout the codebase.
+      const { container } = require('tsyringe');
+      try {
+        DemoModeService.instance = container.resolve(DemoModeService);
+      } catch {
+        // Fallback if not registered in container yet
+        const { BotConfigurationManager } = require('../config/BotConfigurationManager');
+        const { UserConfigStore } = require('../config/UserConfigStore');
+        DemoModeService.instance = new DemoModeService(BotConfigurationManager.getInstance(), UserConfigStore.getInstance());
+      }
+    }
+    return DemoModeService.instance;
+  }
 
   constructor(
     @inject(TOKENS.BotConfigurationManager) private botManager: BotConfigurationManager,
