@@ -154,7 +154,6 @@ jest.mock('debug', () => {
   return () => noop;
 });
 
-jest.mock('async-retry', () => jest.fn((fn: any) => fn(() => {}, 0)));
 
 jest.mock('tsyringe', () => ({
   container: { resolve: jest.fn() },
