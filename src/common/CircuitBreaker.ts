@@ -11,6 +11,7 @@
  */
 
 import Debug from 'debug';
+import { THIRTY_SECONDS_MS } from '@common/constants/time';
 
 const debug = Debug('app:circuit-breaker');
 
@@ -74,7 +75,7 @@ export class CircuitBreaker {
   constructor(options: CircuitBreakerOptions) {
     this._name = options.name;
     this.failureThreshold = options.failureThreshold ?? 5;
-    this.resetTimeoutMs = options.resetTimeoutMs ?? 30_000;
+    this.resetTimeoutMs = options.resetTimeoutMs ?? THIRTY_SECONDS_MS;
     this.halfOpenMaxAttempts = options.halfOpenMaxAttempts ?? 3;
   }
 

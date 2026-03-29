@@ -4,6 +4,12 @@ import type { Response } from 'node-fetch';
 import { webUIStorage } from '../storage/webUIStorage';
 import 'reflect-metadata';
 import { injectable, singleton } from 'tsyringe';
+import {
+  FIVE_SECONDS_MS,
+  ONE_MINUTE_MS,
+  ONE_SECOND_MS,
+  TEN_SECONDS_MS,
+} from '@common/constants/time';
 
 const debug = Debug('app:ApiMonitorService');
 
@@ -167,10 +173,10 @@ export class ApiMonitorService extends EventEmitter {
             url: url,
             method: 'GET',
             enabled: true,
-            interval: 60000,
-            timeout: 10000,
+            interval: ONE_MINUTE_MS,
+            timeout: TEN_SECONDS_MS,
             retries: 3,
-            retryDelay: 1000,
+            retryDelay: ONE_SECOND_MS,
           };
 
           // Note: API keys are used for health check requests but are never exposed
@@ -346,7 +352,7 @@ export class ApiMonitorService extends EventEmitter {
 
   private async performRequest(config: EndpointConfig): Promise<any> {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), config.timeout || 10000);
+    const timeoutId = setTimeout(() => controller.abort(), config.timeout || TEN_SECONDS_MS);
 
     try {
       const fetchImpl = await resolveFetch();
@@ -374,7 +380,7 @@ export class ApiMonitorService extends EventEmitter {
   }
 
   private getStatusFromResponseTime(responseTime: number): 'online' | 'slow' {
-    return responseTime > 5000 ? 'slow' : 'online'; // 5 seconds threshold
+    return responseTime > FIVE_SECONDS_MS ? 'slow' : 'online';
   }
 
   public getOverallHealth(): {
