@@ -143,7 +143,7 @@ test.describe('Analytics Dashboard CRUD Lifecycle', () => {
     await page.goto('/admin/monitoring');
 
     // Wait for the page to render
-    await expect(page.locator('body')).toBeVisible();
+    await page.waitForLoadState('domcontentloaded');
 
     // Look for time range buttons or select
     // Since this is a test environment, the UI should be deterministic. We expect buttons.
@@ -164,7 +164,7 @@ test.describe('Analytics Dashboard CRUD Lifecycle', () => {
     await btn30d.click();
 
     // Just verify it doesn't crash, actual state depends on implementation details
-    await expect(page.locator('body')).toBeVisible();
+    await page.waitForLoadState('domcontentloaded');
   });
 
   test('refresh button triggers re-fetch', async ({ page }) => {
@@ -182,7 +182,7 @@ test.describe('Analytics Dashboard CRUD Lifecycle', () => {
     await page.goto('/admin/monitoring');
 
     // Wait for initial load
-    await expect(page.locator('body')).toBeVisible();
+    await page.waitForLoadState('domcontentloaded');
 
     const initialCount = fetchCount;
     const refreshBtn = page.locator('button:has-text("Refresh")').first();
@@ -213,7 +213,7 @@ test.describe('Analytics Dashboard CRUD Lifecycle', () => {
     await page.goto('/admin/monitoring');
 
     // Wait for the page to render
-    await expect(page.locator('body')).toBeVisible();
+    await page.waitForLoadState('domcontentloaded');
 
     // Check for chart containers (canvas for Chart.js, svg for Recharts/D3, or custom wrappers)
     const charts = page.locator('canvas, svg[class*="chart"], [class*="chart"], [class*="Chart"], [data-testid*="chart"]');
@@ -241,7 +241,7 @@ test.describe('Analytics Dashboard CRUD Lifecycle', () => {
     await page.goto('/admin/monitoring');
 
     // Wait for the page to render
-    await expect(page.locator('body')).toBeVisible();
+    await page.waitForLoadState('domcontentloaded');
 
     // Click on "Bot Status" tab to see bot names
     const botStatusTab = page.locator('[role="tab"]:has-text("Bot Status")').first();
@@ -277,7 +277,7 @@ test.describe('Analytics Dashboard CRUD Lifecycle', () => {
     resolveStatusPromise!();
 
     // Wait for data to populate the UI (e.g. body is visible and stats change)
-    await expect(page.locator('body')).toBeVisible();
+    await page.waitForLoadState('domcontentloaded');
 
     const supportBot = page.getByText('SupportBot').first();
     await expect(supportBot).toBeVisible({ timeout: 10000 });
@@ -313,7 +313,7 @@ test.describe('Analytics Dashboard CRUD Lifecycle', () => {
     await page.goto('/admin/monitoring');
 
     // Should show zeros or empty state messaging
-    await expect(page.locator('body')).toBeVisible();
+    await page.waitForLoadState('domcontentloaded');
     const emptyText = page.locator('text=/no.*data/i, text=/no.*activity/i, text=/no.*metrics/i').first();
     await expect(emptyText).toBeVisible({ timeout: 10000 });
 

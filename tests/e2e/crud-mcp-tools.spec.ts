@@ -424,7 +424,7 @@ test.describe('MCP Tools CRUD Lifecycle', () => {
     await page.waitForTimeout(1000);
 
     // Should show empty state
-    await expect(page.locator('body')).toBeVisible();
+    await page.waitForLoadState('domcontentloaded');
     const emptyText = page.locator('text=/no.*tool/i, text=/no.*available/i, text=/get.*started/i, text=/connect.*server/i').first();
     await expect(emptyText).toBeVisible({ timeout: 10000 });
   });
