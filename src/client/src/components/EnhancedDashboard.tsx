@@ -66,9 +66,17 @@ const EnhancedDashboard: React.FC = () => {
       setBots(botData);
 
       // Calculate stats
-      const activeBots = botData.filter((bot) => bot.status === 'active').length;
-      const totalMessages = botData.reduce((sum, bot) => sum + (bot.messageCount || 0), 0);
-      const totalErrors = botData.reduce((sum, bot) => sum + (bot.errorCount || 0), 0);
+      // ⚡ Bolt Optimization: Consolidate multiple O(N) array passes (filter, reduce, reduce) into a single O(N) loop
+      let activeBots = 0;
+      let totalMessages = 0;
+      let totalErrors = 0;
+
+      for (let i = 0; i < botData.length; i++) {
+        const bot = botData[i];
+        if (bot.status === 'active') activeBots++;
+        totalMessages += bot.messageCount || 0;
+        totalErrors += bot.errorCount || 0;
+      }
 
       setStats({
         totalBots: botData.length,
