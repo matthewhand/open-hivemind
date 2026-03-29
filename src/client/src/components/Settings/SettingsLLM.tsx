@@ -4,7 +4,6 @@ import { Alert } from '../DaisyUI/Alert';
 import Button from '../DaisyUI/Button';
 import { SkeletonList } from '../DaisyUI/Skeleton';
 import Select from '../DaisyUI/Select';
-import Tooltip from '../DaisyUI/Tooltip';
 import { Bot, Link as LinkIcon } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
@@ -62,7 +61,6 @@ const SettingsLLM: React.FC = () => {
 
     const handleSave = async () => {
         setIsSaving(true);
-        setAlert(null);
         try {
             await axios.put('/api/config/global', {
                 llm: {
@@ -117,16 +115,13 @@ const SettingsLLM: React.FC = () => {
 
                 <div className="form-control mb-4 max-w-md">
                     <label className="label">
-                        <Tooltip content="Select which LLM provider to use for AI-powered features like summaries and natural language processing">
-                            <span className="label-text font-medium">Default LLM</span>
-                        </Tooltip>
+                        <span className="label-text font-medium">Default LLM</span>
                         <span className="label-text-alt text-base-content/60">Used for features like AI summary</span>
                     </label>
                     <Select
                         value={settings.defaultLlm}
                         onChange={(e) => setSettings({ defaultLlm: e.target.value })}
                         className="w-full"
-                        aria-label="Select default LLM provider"
                     >
                         <option value="">None selected</option>
                         {providers.map((p) => (
@@ -146,12 +141,10 @@ const SettingsLLM: React.FC = () => {
 
                 <div className="flex justify-between items-center text-sm">
                     <span className="text-base-content/70">Need to configure more providers?</span>
-                    <Tooltip content="Navigate to LLM Providers management page">
-                      <Link to="/admin/providers/llm" className="btn btn-sm btn-ghost gap-2 text-primary" aria-label="Go to LLM Providers page">
-                          <LinkIcon className="w-4 h-4" />
-                          Go to LLM Providers
-                      </Link>
-                    </Tooltip>
+                    <Link to="/admin/providers/llm" className="btn btn-sm btn-ghost gap-2 text-primary">
+                        <LinkIcon className="w-4 h-4" />
+                        Go to LLM Providers
+                    </Link>
                 </div>
             </div>
 
@@ -161,10 +154,8 @@ const SettingsLLM: React.FC = () => {
                     disabled={isSaving}
                     variant="primary"
                     loading={isSaving}
-                    loadingText="Saving..."
-                    icon={<Bot className="w-4 h-4" />}
                 >
-                    Save Settings
+                    {isSaving ? 'Saving...' : 'Save Settings'}
                 </Button>
             </div>
         </div>

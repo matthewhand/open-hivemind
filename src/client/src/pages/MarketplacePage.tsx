@@ -65,13 +65,6 @@ const STATUS_BADGES = {
   'available': { label: 'Available', color: 'info' as const },
 } as const;
 
-const TYPE_DESCRIPTIONS = {
-  llm: 'Language model providers for AI interactions',
-  message: 'Message handling and communication providers',
-  memory: 'Memory and context storage providers',
-  tool: 'External tools and integrations',
-} as const;
-
 // ---------------------------------------------------------------------------
 // Component
 // ---------------------------------------------------------------------------
@@ -95,7 +88,6 @@ const MarketplacePage: React.FC = () => {
   const [confirmModal, setConfirmModal] = useState<{
     isOpen: boolean; title: string; message: string; onConfirm: () => void;
   }>({ isOpen: false, title: '', message: '', onConfirm: () => {} });
-  const [hoveredPackage, setHoveredPackage] = useState<string | null>(null);
 
   const fetchPackages = useCallback(async () => {
     setLoading(true);
@@ -155,33 +147,6 @@ const MarketplacePage: React.FC = () => {
       await fetchPackages();
     } catch (err: any) {
       setActionMessage({ type: 'error', text: err.message || 'Installation failed' });
-    } finally {
-      setActionInProgress(null);
-    }
-  };
-
-  // Install package
-  const handleInstall = async (pkg: MarketplacePackage) => {
-    setActionInProgress(`install-${pkg.name}`);
-    setActionMessage(null);
-
-    try {
-      const response = await fetch('/api/marketplace/install', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ repoUrl: pkg.repoUrl }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || `Failed to install ${pkg.displayName}`);
-      }
-
-      setActionMessage({ type: 'success', text: `Successfully installed ${pkg.displayName}!` });
-      await fetchPackages();
-    } catch (err: any) {
-      setActionMessage({ type: 'error', text: err.message || `Failed to install ${pkg.displayName}` });
     } finally {
       setActionInProgress(null);
     }
@@ -258,9 +223,7 @@ const MarketplacePage: React.FC = () => {
             variant="outline"
             size="sm"
             onClick={fetchPackages}
-            disabled={loading}
-            aria-busy={loading}
-            aria-label="Refresh package list"
+            disabled={loading} aria-busy={loading}
           >
             <RefreshCw className={`w-4 h-4 mr-1 ${loading ? 'animate-spin' : ''}`} />
             Refresh
@@ -269,7 +232,6 @@ const MarketplacePage: React.FC = () => {
             variant="primary"
             size="sm"
             onClick={() => setInstallModalOpen(true)}
-            aria-label="Install package from GitHub URL"
           >
             <PlusIcon className="w-4 h-4 mr-1" />
             Install from URL
@@ -279,21 +241,14 @@ const MarketplacePage: React.FC = () => {
 
       {/* Alert Messages */}
       {actionMessage && (
-        <div
-          className={`alert mb-4 shadow-lg ${actionMessage.type === 'success' ? 'alert-success' : 'alert-error'}`}
-          role="alert"
-        >
+        <div className={`alert mb-4 ${actionMessage.type === 'success' ? 'alert-success' : 'alert-error'}`}>
           {actionMessage.type === 'success' ? (
             <CheckIcon className="w-5 h-5" />
           ) : (
             <AlertIcon className="w-5 h-5" />
           )}
-          <span className="font-medium">{actionMessage.text}</span>
-          <button
-            className="btn btn-ghost btn-xs"
-            onClick={() => setActionMessage(null)}
-            aria-label="Dismiss message"
-          >
+          <span>{actionMessage.text}</span>
+          <button className="btn btn-ghost btn-xs" onClick={() => setActionMessage(null)}>
             <CloseIcon className="w-4 h-4" />
           </button>
         </div>
@@ -301,15 +256,10 @@ const MarketplacePage: React.FC = () => {
 
       {/* Error State */}
       {error && (
-        <div className="alert alert-error mb-4 shadow-lg" role="alert">
+        <div className="alert alert-error mb-4">
           <AlertIcon className="w-5 h-5" />
-          <span className="font-medium">{error}</span>
-          <Button
-            variant="ghost"
-            size="xs"
-            onClick={fetchPackages}
-            aria-label="Retry loading packages"
-          >
+          <span>{error}</span>
+          <Button variant="ghost" size="xs" onClick={fetchPackages}>
             Retry
           </Button>
         </div>
@@ -326,34 +276,22 @@ const MarketplacePage: React.FC = () => {
             className="input input-bordered w-full pl-10"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            aria-label="Search packages"
           />
         </div>
 
         {/* Type Filter Tabs */}
-        <div className="tabs tabs-boxed" role="tablist" aria-label="Filter packages by type">
+        <div className="tabs tabs-boxed">
           {(['all', 'llm', 'message', 'memory', 'tool'] as FilterType[]).map((t) => (
             <button
               key={t}
-              role="tab"
               className={`tab ${filter === t ? 'tab-active' : ''}`}
               onClick={() => setFilter(t)}
-              aria-selected={filter === t}
-              aria-label={`Filter by ${t === 'all' ? 'all types' : t + ' packages'}`}
             >
               {t === 'all' ? 'All' : t.toUpperCase()}
             </button>
           ))}
         </div>
       </div>
-
-      {/* Filter Description */}
-      {filter !== 'all' && (
-        <div className="mb-4 text-sm text-base-content/70 flex items-center gap-2">
-          {React.createElement(TYPE_ICONS[filter as keyof typeof TYPE_ICONS], { className: 'w-4 h-4' })}
-          <span>{TYPE_DESCRIPTIONS[filter as keyof typeof TYPE_DESCRIPTIONS]}</span>
-        </div>
-      )}
 
       {/* Loading State */}
       {loading && (
@@ -376,18 +314,12 @@ const MarketplacePage: React.FC = () => {
             const Icon = TYPE_ICONS[pkg.type];
             const color = TYPE_COLORS[pkg.type];
             const statusBadge = STATUS_BADGES[pkg.status];
-            const isBusy = actionInProgress === `install-${pkg.name}` ||
+            const isBusy = actionInProgress?.startsWith(pkg.name) ||
                           actionInProgress === `update-${pkg.name}` ||
                           actionInProgress === `uninstall-${pkg.name}`;
-            const isHovered = hoveredPackage === pkg.name;
 
             return (
-              <Card
-                key={pkg.name}
-                className="bg-base-200 hover:bg-base-300 transition-colors relative"
-                onMouseEnter={() => setHoveredPackage(pkg.name)}
-                onMouseLeave={() => setHoveredPackage(null)}
-              >
+              <Card key={pkg.name} className="bg-base-200 hover:bg-base-300 transition-colors">
                 <Card.Body className="p-4">
                   <div className="flex items-start justify-between mb-2">
                     <div className="flex items-center gap-2">
@@ -408,18 +340,6 @@ const MarketplacePage: React.FC = () => {
                     {pkg.description}
                   </p>
 
-                  {/* Tooltip on hover */}
-                  {isHovered && (
-                    <div className="absolute top-full left-0 right-0 mt-2 p-3 bg-base-100 shadow-xl rounded-lg z-10 border border-base-300">
-                      <p className="text-sm text-base-content">{pkg.description}</p>
-                      <div className="mt-2 text-xs text-base-content/60">
-                        <div>Type: {pkg.type.toUpperCase()}</div>
-                        <div>Version: {pkg.version}</div>
-                        {pkg.installedAt && <div>Installed: {new Date(pkg.installedAt).toLocaleDateString()}</div>}
-                      </div>
-                    </div>
-                  )}
-
                   <div className="flex items-center justify-between text-xs text-base-content/50 mb-3">
                     <span>v{pkg.version}</span>
                     <span className="uppercase badge badge-sm badge-outline">{pkg.type}</span>
@@ -435,23 +355,19 @@ const MarketplacePage: React.FC = () => {
                           className="flex-1"
                           onClick={() => handleUpdate(pkg.name)}
                           disabled={isBusy}
-                          aria-label={`Update ${pkg.displayName}`}
-                          aria-busy={actionInProgress === `update-${pkg.name}`}
                         >
                           {actionInProgress === `update-${pkg.name}` ? (
                             <span className="loading loading-spinner loading-xs" aria-hidden="true"></span>
                           ) : (
                             <UpdateIcon className="w-4 h-4" />
                           )}
-                          {actionInProgress === `update-${pkg.name}` ? 'Updating...' : 'Update'}
+                          Update
                         </Button>
                         <Button
                           variant="ghost"
                           size="sm"
                           onClick={() => handleUninstall(pkg.name)}
                           disabled={isBusy}
-                          aria-label={`Uninstall ${pkg.displayName}`}
-                          aria-busy={actionInProgress === `uninstall-${pkg.name}`}
                         >
                           {actionInProgress === `uninstall-${pkg.name}` ? (
                             <span className="loading loading-spinner loading-xs" aria-hidden="true"></span>
@@ -466,22 +382,14 @@ const MarketplacePage: React.FC = () => {
                         variant="primary"
                         size="sm"
                         className="flex-1"
-                        onClick={() => handleInstall(pkg)}
+                        onClick={() => {
+                          setGithubUrl(pkg.repoUrl || '');
+                          setInstallModalOpen(true);
+                        }}
                         disabled={isBusy}
-                        aria-label={`Install ${pkg.displayName}`}
-                        aria-busy={actionInProgress === `install-${pkg.name}`}
                       >
-                        {actionInProgress === `install-${pkg.name}` ? (
-                          <>
-                            <span className="loading loading-spinner loading-xs mr-1" aria-hidden="true"></span>
-                            Installing...
-                          </>
-                        ) : (
-                          <>
-                            <DownloadIcon className="w-4 h-4 mr-1" />
-                            Install
-                          </>
-                        )}
+                        <DownloadIcon className="w-4 h-4 mr-1" />
+                        Install
                       </Button>
                     )}
                     {pkg.status === 'built-in' && (
@@ -513,7 +421,6 @@ const MarketplacePage: React.FC = () => {
                 className="input input-bordered w-full"
                 value={githubUrl}
                 onChange={(e) => setGithubUrl(e.target.value)}
-                aria-label="GitHub repository URL"
               />
               <label className="label">
                 <span className="label-text-alt text-base-content/50">
@@ -529,7 +436,6 @@ const MarketplacePage: React.FC = () => {
                   setInstallModalOpen(false);
                   setGithubUrl('');
                 }}
-                aria-label="Cancel installation"
               >
                 Cancel
               </Button>
@@ -537,14 +443,9 @@ const MarketplacePage: React.FC = () => {
                 variant="primary"
                 onClick={handleInstallFromUrl}
                 disabled={!githubUrl.trim() || actionInProgress === 'install-url'}
-                aria-label="Install package from URL"
-                aria-busy={actionInProgress === 'install-url'}
               >
                 {actionInProgress === 'install-url' ? (
-                  <>
-                    <span className="loading loading-spinner loading-sm mr-1" aria-hidden="true"></span>
-                    Installing...
-                  </>
+                  <span className="loading loading-spinner loading-sm" aria-hidden="true"></span>
                 ) : (
                   <>
                     <GitHubIcon className="w-4 h-4 mr-1" />
@@ -560,7 +461,6 @@ const MarketplacePage: React.FC = () => {
               setInstallModalOpen(false);
               setGithubUrl('');
             }}
-            aria-label="Close modal"
           ></div>
         </dialog>
       )}

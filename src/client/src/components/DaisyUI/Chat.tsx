@@ -167,7 +167,6 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
               <button
                 className="btn btn-xs btn-error btn-outline"
                 onClick={() => onRetryMessage(message.id)}
-                aria-label="Retry sending message"
               >
                 Retry
               </button>
@@ -281,8 +280,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
               type="button"
               className="btn btn-ghost btn-square"
               title="Attach file"
-              aria-label="Attach file (feature coming soon)"
-              disabled
+              aria-label="Attach file"
             >
               📎
             </button>
@@ -291,8 +289,6 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
               type="submit"
               className={`btn btn-primary ${isLoading ? 'loading' : ''}`}
               disabled={!inputValue.trim() || isLoading}
-              aria-label={isLoading ? 'Sending message' : 'Send message'}
-              title={isLoading ? 'Sending...' : 'Send message (Enter)'}
             >
               {isLoading ? '' : '➤'}
             </button>

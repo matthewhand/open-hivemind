@@ -5,7 +5,6 @@ import Input from '../DaisyUI/Input';
 import Select from '../DaisyUI/Select';
 import Toggle from '../DaisyUI/Toggle';
 import Button from '../DaisyUI/Button';
-import Tooltip from '../DaisyUI/Tooltip';
 import { Settings as SettingsIcon, ShieldCheck, Activity } from 'lucide-react';
 import Debug from 'debug';
 const debug = Debug('app:client:components:Settings:SettingsGeneral');
@@ -118,7 +117,6 @@ const SettingsGeneral: React.FC = () => {
 
   const handleSave = async () => {
     setIsSaving(true);
-    setAlert(null);
     try {
       const response = await fetch('/api/config/global', {
         method: 'PUT',
@@ -184,17 +182,12 @@ const SettingsGeneral: React.FC = () => {
   if (fetchError) {
     return (
       <div className="flex flex-col items-center justify-center py-12 space-y-4">
-        <div className="alert alert-error max-w-md">
-          <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-          <div>
-            <h3 className="font-bold">Error Loading Settings</h3>
-            <div className="text-xs">{fetchError}</div>
-          </div>
+        <div className="text-error mb-2">
+          <ShieldCheck className="w-12 h-12 mx-auto mb-2 opacity-50" />
+          <p className="font-semibold text-lg text-center">{fetchError}</p>
         </div>
-        <Button variant="primary" onClick={fetchSettings} icon={<Activity className="w-4 h-4" />}>
-          Retry
+        <Button variant="primary" onClick={fetchSettings} className="gap-2">
+           <Activity className="w-4 h-4" /> Retry
         </Button>
       </div>
     );
@@ -230,24 +223,19 @@ const SettingsGeneral: React.FC = () => {
 
           <div className="form-control mb-4">
             <label className="label py-1">
-              <Tooltip content="A friendly display name for this Open-Hivemind instance">
-                <span className="label-text text-sm font-medium">Instance Name</span>
-              </Tooltip>
+              <span className="label-text text-sm font-medium">Instance Name</span>
             </label>
             <Input
               value={settings.instanceName}
               onChange={(e) => handleChange('instanceName', e.target.value)}
               placeholder="Display name for this Open-Hivemind instance"
               size="sm"
-              aria-label="Instance name"
             />
           </div>
 
           <div className="form-control">
             <label className="label py-1">
-              <Tooltip content="Brief description of this instance's purpose or role">
-                <span className="label-text text-sm font-medium">Description</span>
-              </Tooltip>
+              <span className="label-text text-sm font-medium">Description</span>
             </label>
             <textarea
               className="textarea textarea-bordered textarea-sm w-full"
@@ -255,7 +243,6 @@ const SettingsGeneral: React.FC = () => {
               onChange={(e) => handleChange('description', e.target.value)}
               placeholder="Brief description of this instance's purpose"
               rows={2}
-              aria-label="Instance description"
             />
           </div>
         </div>
@@ -269,24 +256,19 @@ const SettingsGeneral: React.FC = () => {
 
           <div className="form-control mb-4">
             <label className="label py-1">
-              <Tooltip content="Set the timezone for timestamps and scheduling">
-                <span className="label-text text-sm font-medium">Timezone</span>
-              </Tooltip>
+              <span className="label-text text-sm font-medium">Timezone</span>
             </label>
             <Select
               value={settings.timezone}
               onChange={(e) => handleChange('timezone', e.target.value)}
               size="sm"
               options={timezoneOptions}
-              aria-label="Select timezone"
             />
           </div>
 
           <div className="form-control">
             <label className="label py-1">
-              <Tooltip content="Choose between light, dark, or auto theme">
-                <span className="label-text text-sm font-medium">Theme</span>
-              </Tooltip>
+              <span className="label-text text-sm font-medium">Theme</span>
             </label>
             <Select
               value={settings.theme}
@@ -297,7 +279,6 @@ const SettingsGeneral: React.FC = () => {
                 { value: 'light', label: 'Light' },
                 { value: 'dark', label: 'Dark' },
               ]}
-              aria-label="Select theme"
             />
           </div>
         </div>
@@ -311,9 +292,7 @@ const SettingsGeneral: React.FC = () => {
 
           <div className="form-control mb-4">
             <label className="label py-1">
-              <Tooltip content="Set the minimum severity level for log messages">
-                <span className="label-text text-sm font-medium">Log Level</span>
-              </Tooltip>
+              <span className="label-text text-sm font-medium">Log Level</span>
             </label>
             <Select
               value={settings.logLevel}
@@ -325,31 +304,22 @@ const SettingsGeneral: React.FC = () => {
                 { value: 'warn', label: 'Warning' },
                 { value: 'error', label: 'Error' },
               ]}
-              aria-label="Select log level"
             />
           </div>
 
           <div className="space-y-3">
-            <Tooltip content="Enable detailed logging for troubleshooting">
-              <div>
-                <Toggle
-                  label="Enable Detailed Logging"
-                  checked={settings.enableLogging}
-                  onChange={(checked) => handleChange('enableLogging', checked)}
-                  size="sm"
-                />
-              </div>
-            </Tooltip>
-            <Tooltip content="Show desktop notifications for important events">
-              <div>
-                <Toggle
-                  label="Enable Desktop Notifications"
-                  checked={settings.enableNotifications}
-                  onChange={(checked) => handleChange('enableNotifications', checked)}
-                  size="sm"
-                />
-              </div>
-            </Tooltip>
+            <Toggle
+              label="Enable Detailed Logging"
+              checked={settings.enableLogging}
+              onChange={(checked) => handleChange('enableLogging', checked)}
+              size="sm"
+            />
+            <Toggle
+              label="Enable Desktop Notifications"
+              checked={settings.enableNotifications}
+              onChange={(checked) => handleChange('enableNotifications', checked)}
+              size="sm"
+            />
           </div>
         </div>
 
@@ -363,71 +333,54 @@ const SettingsGeneral: React.FC = () => {
           <div className="grid grid-cols-2 gap-4 mb-4">
             <div className="form-control">
               <label className="label py-1">
-                <Tooltip content="Maximum number of concurrent bots allowed">
-                  <span className="label-text text-sm font-medium">Max Bots</span>
-                </Tooltip>
+                <span className="label-text text-sm font-medium">Max Bots</span>
               </label>
               <Input
                 type="number"
                 value={settings.maxConcurrentBots}
                 onChange={(e) => handleChange('maxConcurrentBots', parseInt(e.target.value))}
                 size="sm"
-                aria-label="Maximum concurrent bots"
               />
             </div>
             <div className="form-control">
               <label className="label py-1">
-                <Tooltip content="Default timeout in seconds for bot responses">
-                  <span className="label-text text-sm font-medium">Timeout (s)</span>
-                </Tooltip>
+                <span className="label-text text-sm font-medium">Timeout (s)</span>
               </label>
               <Input
                 type="number"
                 value={settings.defaultResponseTimeout}
                 onChange={(e) => handleChange('defaultResponseTimeout', parseInt(e.target.value))}
                 size="sm"
-                aria-label="Response timeout in seconds"
               />
             </div>
           </div>
 
           <div className="space-y-3">
-            <Tooltip content="Periodically check system health and connectivity">
-              <div>
-                <Toggle
-                  label="Enable Background Health Checks"
-                  checked={settings.enableHealthChecks}
-                  onChange={(checked) => handleChange('enableHealthChecks', checked)}
-                  size="sm"
-                />
-              </div>
-            </Tooltip>
+            <Toggle
+              label="Enable Background Health Checks"
+              checked={settings.enableHealthChecks}
+              onChange={(checked) => handleChange('enableHealthChecks', checked)}
+              size="sm"
+            />
             {settings.enableHealthChecks && (
               <div className="form-control mt-2 pl-4 border-l-2 border-base-300">
                 <label className="label py-1">
-                  <Tooltip content="How often to run health checks (in seconds)">
-                    <span className="label-text text-xs font-medium">Interval (seconds)</span>
-                  </Tooltip>
+                  <span className="label-text text-xs font-medium">Interval (seconds)</span>
                 </label>
                 <Input
                   type="number"
                   value={settings.healthCheckInterval}
                   onChange={(e) => handleChange('healthCheckInterval', parseInt(e.target.value))}
                   size="xs"
-                  aria-label="Health check interval in seconds"
                 />
               </div>
             )}
-            <Tooltip content="Show all configuration options including advanced settings">
-              <div>
-                <Toggle
-                  label="Advanced Mode (Show all options)"
-                  checked={settings.advancedMode}
-                  onChange={(checked) => handleChange('advancedMode', checked)}
-                  size="sm"
-                />
-              </div>
-            </Tooltip>
+            <Toggle
+              label="Advanced Mode (Show all options)"
+              checked={settings.advancedMode}
+              onChange={(checked) => handleChange('advancedMode', checked)}
+              size="sm"
+            />
           </div>
         </div>
       </div>
@@ -437,10 +390,9 @@ const SettingsGeneral: React.FC = () => {
           variant="primary"
           onClick={handleSave}
           loading={isSaving}
-          loadingText="Saving..."
           className="min-w-[120px]"
-          icon={<SettingsIcon className="w-4 h-4" />}
         >
+          <SettingsIcon className="w-4 h-4 mr-2" />
           Save Settings
         </Button>
       </div>

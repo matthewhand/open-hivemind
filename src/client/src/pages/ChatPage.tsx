@@ -3,13 +3,11 @@ import { apiService } from '../services/api';
 import { useApiQuery } from '../hooks/useApiQuery';
 import ChatInterface, { ChatMessage } from '../components/DaisyUI/Chat';
 import { BotAvatar } from '../components/BotAvatar';
-import { RefreshCw, MessageSquare, Cpu, Check, ChevronDown, Menu as MenuIcon, X, WifiOff, Send, Paperclip } from 'lucide-react';
+import { RefreshCw, MessageSquare, Cpu, Check, ChevronDown, Menu as MenuIcon, X } from 'lucide-react';
 import EmptyState from '../components/DaisyUI/EmptyState';
 import { SkeletonList, SkeletonMessageList } from '../components/DaisyUI/Skeleton';
 import { useSuccessToast, useErrorToast } from '../components/DaisyUI/ToastNotification';
 import { useMediaQuery } from '../hooks/useBreakpoint';
-import { Alert } from '../components/DaisyUI/Alert';
-import Tooltip from '../components/DaisyUI/Tooltip';
 
 // Define Bot type based on API response
 interface BotData {
@@ -32,26 +30,6 @@ interface LlmProviderOption {
   provider: string;
 }
 
-// Custom hook for online status
-const useOnlineStatus = () => {
-  const [isOnline, setIsOnline] = useState(navigator.onLine);
-
-  useEffect(() => {
-    const handleOnline = () => setIsOnline(true);
-    const handleOffline = () => setIsOnline(false);
-
-    window.addEventListener('online', handleOnline);
-    window.addEventListener('offline', handleOffline);
-
-    return () => {
-      window.removeEventListener('online', handleOnline);
-      window.removeEventListener('offline', handleOffline);
-    };
-  }, []);
-
-  return isOnline;
-};
-
 const ChatPage: React.FC = () => {
   const [bots, setBots] = useState<BotData[]>([]);
   const [selectedBotId, setSelectedBotId] = useState<string | null>(null);
@@ -61,11 +39,9 @@ const ChatPage: React.FC = () => {
   const [llmProviders, setLlmProviders] = useState<LlmProviderOption[]>([]);
   const [swappingProvider, setSwappingProvider] = useState<string | null>(null);
   const [showProviderDropdown, setShowProviderDropdown] = useState<string | null>(null);
-  const [sendingMessage, setSendingMessage] = useState(false);
 
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const isDesktop = useMediaQuery({ minWidth: 1024 });
-  const isOnline = useOnlineStatus();
 
   const showSuccess = useSuccessToast();
   const showError = useErrorToast();
@@ -212,7 +188,6 @@ const ChatPage: React.FC = () => {
     }
 
     try {
-      setSendingMessage(true);
       await apiService.post(`/api/bots/${selectedBotId}/message`, { content });
       // Depending on backend, we could fetch history to get actual messages
       // but for this task, the optimistic rollback is the focus.
@@ -225,8 +200,6 @@ const ChatPage: React.FC = () => {
           ? { ...m, metadata: { ...m.metadata, status: 'failed' } }
           : m
       ));
-    } finally {
-      setSendingMessage(false);
     }
   };
 
@@ -239,22 +212,6 @@ const ChatPage: React.FC = () => {
 
   return (
     <div className="flex flex-col h-full bg-base-200">
-      {/* Offline Indicator */}
-      {!isOnline && (
-        <div className="w-full">
-          <Alert
-            status="warning"
-            icon={<WifiOff className="w-5 h-5" />}
-            className="rounded-none border-0 border-b border-warning/20"
-          >
-            <div className="flex items-center gap-2">
-              <span className="font-semibold">You are offline</span>
-              <span className="text-sm opacity-80">Some features may not be available</span>
-            </div>
-          </Alert>
-        </div>
-      )}
-
       <div className="p-4 bg-base-100 border-b border-base-300 shadow-sm flex justify-between items-center">
         <div className="flex items-center gap-2">
           {!isDesktop && (
@@ -275,11 +232,9 @@ const ChatPage: React.FC = () => {
             <p className="text-sm text-base-content/60">Monitor conversations across your bot fleet</p>
           </div>
         </div>
-        <Tooltip content="Refresh chat history or bot list" position="left">
-          <button onClick={handleRefresh} className="btn btn-ghost btn-circle" aria-label="Refresh chat history or bot list">
-            <RefreshCw className={`w-5 h-5 ${loading || historyLoading ? 'animate-spin' : ''}`} />
-          </button>
-        </Tooltip>
+        <button onClick={handleRefresh} className="btn btn-ghost btn-circle" title="Refresh" aria-label="Refresh">
+          <RefreshCw className={`w-5 h-5 ${loading || historyLoading ? 'animate-spin' : ''}`} />
+        </button>
       </div>
 
       <div className="flex flex-1 overflow-hidden relative">
@@ -306,14 +261,10 @@ const ChatPage: React.FC = () => {
                     <button
                       className={`${selectedBotId === bot.id ? 'active' : ''} flex items-center gap-3 py-3`}
                       onClick={() => { setSelectedBotId(bot.id); if (!isDesktop) setSidebarOpen(false); }}
-                      aria-label={`Select ${bot.name} bot`}
                     >
                       <div className="relative">
                         <BotAvatar bot={bot} />
-                        <span
-                          className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-base-100 ${bot.connected ? 'bg-success' : 'bg-base-300'}`}
-                          aria-label={bot.connected ? 'Connected' : 'Disconnected'}
-                        />
+                        <span className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-base-100 ${bot.connected ? 'bg-success' : 'bg-base-300'}`} />
                       </div>
                       <div className="flex flex-col items-start min-w-0 flex-1">
                         <span className="font-semibold truncate w-full text-left">{bot.name}</span>
@@ -322,27 +273,25 @@ const ChatPage: React.FC = () => {
                           <span className="text-xs opacity-30">•</span>
                           {/* LLM Provider Hot Swap Dropdown */}
                           <div className="dropdown dropdown-hover dropdown-right flex-1">
-                            <Tooltip content="Change LLM provider for this bot" position="right">
-                              <button
-                                className="btn btn-ghost btn-xs px-1 min-h-0 h-auto flex items-center gap-1 text-xs opacity-70 hover:opacity-100 group"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setShowProviderDropdown(showProviderDropdown === bot.id ? null : bot.id);
-                                }}
-                                disabled={swappingProvider === bot.id}
-                                aria-label={`Change LLM provider for ${bot.name}`}
-                              >
-                                <Cpu className="w-3 h-3" />
-                                {swappingProvider === bot.id ? (
-                                  <span className="loading loading-spinner loading-xs" aria-hidden="true" />
-                                ) : (
-                                  <>
-                                    <span className="truncate max-w-[80px]">{bot.llmProvider || 'Default'}</span>
-                                    <ChevronDown className="w-3 h-3 opacity-50 group-hover:opacity-100" />
-                                  </>
-                                )}
-                              </button>
-                            </Tooltip>
+                            <button
+                              className="btn btn-ghost btn-xs px-1 min-h-0 h-auto flex items-center gap-1 text-xs opacity-70 hover:opacity-100 group"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setShowProviderDropdown(showProviderDropdown === bot.id ? null : bot.id);
+                              }}
+                              disabled={swappingProvider === bot.id}
+                              title="Click to change LLM provider"
+                            >
+                              <Cpu className="w-3 h-3" />
+                              {swappingProvider === bot.id ? (
+                                <span className="loading loading-spinner loading-xs" aria-hidden="true" />
+                              ) : (
+                                <>
+                                  <span className="truncate max-w-[80px]">{bot.llmProvider || 'Default'}</span>
+                                  <ChevronDown className="w-3 h-3 opacity-50 group-hover:opacity-100" />
+                                </>
+                              )}
+                            </button>
                             {showProviderDropdown === bot.id && (
                               <ul className="dropdown-content menu p-2 shadow-lg bg-base-100 rounded-box w-52 z-50 max-h-60 overflow-y-auto">
                                 <li className="menu-title">
@@ -355,7 +304,6 @@ const ChatPage: React.FC = () => {
                                       e.stopPropagation();
                                       handleSwapProvider(bot.id, '');
                                     }}
-                                    aria-label="Use system default LLM provider"
                                   >
                                     <Check className={`w-4 h-4 ${!bot.llmProvider ? 'visible' : 'invisible'}`} />
                                     System Default
@@ -370,7 +318,6 @@ const ChatPage: React.FC = () => {
                                         e.stopPropagation();
                                         handleSwapProvider(bot.id, provider.key);
                                       }}
-                                      aria-label={`Switch to ${provider.name} provider`}
                                     >
                                       <Check className={`w-4 h-4 ${bot.llmProvider === provider.key ? 'visible' : 'invisible'}`} />
                                       <div className="flex flex-col items-start">
@@ -397,54 +344,29 @@ const ChatPage: React.FC = () => {
         <div className="flex-1 flex flex-col bg-base-100 relative">
           {selectedBot ? (
             <div className="flex-1 flex flex-col h-full relative">
-              {/* Loading indicator overlay */}
               {historyLoading && (
                 <div className="absolute inset-0 bg-base-100/50 z-20">
                   <SkeletonMessageList messages={4} />
                 </div>
               )}
-              {/* Sending message indicator */}
-              {sendingMessage && (
-                <div className="absolute top-0 left-0 right-0 z-10">
-                  <div className="bg-primary/10 px-4 py-2 flex items-center gap-2 text-sm text-primary">
-                    <span className="loading loading-spinner loading-sm" aria-hidden="true"></span>
-                    <span>Sending message...</span>
-                  </div>
-                </div>
-              )}
               <ChatInterface
                 messages={messages}
                 onSendMessage={handleSendMessage}
-                onRetryMessage={handleRetryMessage}
-                placeholder={`Send a message to ${selectedBot.name}...`}
+                placeholder="Type a message..."
                 className="h-full"
                 maxHeight="100%"
-                isLoading={sendingMessage}
+                isLoading={false}
               />
+              {/* Overlay to intercept clicks on input area if needed, but placeholder should suffice */}
             </div>
           ) : (
             <div className="flex-1 flex flex-col items-center justify-center p-8 text-center bg-base-200/50">
               <EmptyState
                 icon={MessageSquare}
-                title="No Bot Selected"
-                description="Choose a bot from the sidebar to start monitoring its real-time chat activity and conversation history."
+                title="Select a Bot"
+                description="Choose a bot from the sidebar to view its real-time chat history and activity."
                 variant="noData"
-              >
-                <div className="mt-6 space-y-2 text-sm text-base-content/60 max-w-md">
-                  <p className="flex items-center justify-center gap-2">
-                    <MessageSquare className="w-4 h-4" />
-                    View live conversations
-                  </p>
-                  <p className="flex items-center justify-center gap-2">
-                    <Cpu className="w-4 h-4" />
-                    Switch LLM providers on the fly
-                  </p>
-                  <p className="flex items-center justify-center gap-2">
-                    <RefreshCw className="w-4 h-4" />
-                    Monitor bot activity in real-time
-                  </p>
-                </div>
-              </EmptyState>
+              />
             </div>
           )}
         </div>

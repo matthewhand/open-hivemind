@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars, react-refresh/only-export-components, no-empty, no-case-declarations */
 import type { ReactNode } from 'react';
-import React, { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react';
+import React, { createContext, useContext, useEffect, useState } from 'react';
 import type { Socket } from 'socket.io-client';
 import { io } from 'socket.io-client';
 import type {
@@ -12,21 +12,15 @@ import { logger } from '../utils/logger';
 
 type BotStat = { name: string; messageCount: number; errorCount: number };
 
-type ConnectionState = 'connected' | 'disconnected' | 'reconnecting' | 'failed';
-
 interface WebSocketContextType {
   socket: Socket | null;
   isConnected: boolean;
-  connectionState: ConnectionState;
-  reconnectAttempt: number;
-  nextRetryIn: number;
   messageFlow: MessageFlowEvent[];
   alerts: AlertEvent[];
   performanceMetrics: PerformanceMetric[];
   botStats: BotStat[];
   connect: () => void;
   disconnect: () => void;
-  retryConnection: () => void;
 }
 
 const WebSocketContext = createContext<WebSocketContextType | undefined>(undefined);
@@ -37,43 +31,12 @@ const API_BASE_URL = rawBaseUrl?.replace(/\/$/, '');
 export const WebSocketProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [socket, setSocket] = useState<Socket | null>(null);
   const [isConnected, setIsConnected] = useState(false);
-  const [connectionState, setConnectionState] = useState<ConnectionState>('disconnected');
-  const [reconnectAttempt, setReconnectAttempt] = useState(0);
-  const [nextRetryIn, setNextRetryIn] = useState(0);
   const [messageFlow, setMessageFlow] = useState<MessageFlowEvent[]>([]);
   const [alerts, setAlerts] = useState<AlertEvent[]>([]);
   const [performanceMetrics, setPerformanceMetrics] = useState<PerformanceMetric[]>([]);
   const [botStats, setBotStats] = useState<BotStat[]>([]);
 
-  const countdownIntervalRef = useRef<NodeJS.Timeout | null>(null);
-  const wasConnectedRef = useRef(false);
-
-  // Clear countdown interval
-  const clearCountdown = useCallback(() => {
-    if (countdownIntervalRef.current) {
-      clearInterval(countdownIntervalRef.current);
-      countdownIntervalRef.current = null;
-    }
-  }, []);
-
-  // Start countdown timer for next retry
-  const startCountdown = useCallback((delay: number) => {
-    clearCountdown();
-    setNextRetryIn(Math.ceil(delay / 1000));
-
-    countdownIntervalRef.current = setInterval(() => {
-      setNextRetryIn(prev => {
-        const next = prev - 1;
-        if (next <= 0) {
-          clearCountdown();
-          return 0;
-        }
-        return next;
-      });
-    }, 1000);
-  }, [clearCountdown]);
-
-  const connect = useCallback(() => {
+  const connect = () => {
     if (socket?.connected) { return; }
 
     const connectionTarget = API_BASE_URL && API_BASE_URL.length > 0 ? API_BASE_URL : undefined;
@@ -104,50 +67,28 @@ export const WebSocketProvider: React.FC<{ children: ReactNode }> = ({ children 
     newSocket.on('connect', () => {
       logger.info('WebSocket connected');
       setIsConnected(true);
-      setConnectionState('connected');
-      setReconnectAttempt(0);
-      setNextRetryIn(0);
-      clearCountdown();
-      wasConnectedRef.current = true;
     });
 
     newSocket.on('disconnect', (reason) => {
       logger.info('WebSocket disconnected', reason);
       setIsConnected(false);
-      // Only show disconnected if we were previously connected
-      if (wasConnectedRef.current) {
-        setConnectionState('disconnected');
-      }
     });
 
     newSocket.on('reconnect_attempt', (attempt) => {
       logger.info(`WebSocket reconnect attempt ${attempt}`);
-      setConnectionState('reconnecting');
-      setReconnectAttempt(attempt);
-
-      // Calculate next retry delay based on exponential backoff
-      const delay = Math.min(1000 * Math.pow(1.5, attempt - 1), 5000);
-      startCountdown(delay);
     });
 
     newSocket.on('reconnect', (attempt) => {
       logger.info(`WebSocket reconnected after ${attempt} attempts`);
       setIsConnected(true);
-      setConnectionState('connected');
-      setReconnectAttempt(0);
-      setNextRetryIn(0);
-      clearCountdown();
     });
 
     newSocket.on('reconnect_error', (error) => {
       logger.error('WebSocket reconnect error:', error);
-      setConnectionState('reconnecting');
     });
 
     newSocket.on('reconnect_failed', () => {
       logger.error('WebSocket reconnect failed');
-      setConnectionState('failed');
-      clearCountdown();
     });
 
     // Message flow events
@@ -224,50 +165,31 @@ export const WebSocketProvider: React.FC<{ children: ReactNode }> = ({ children 
     });
 
     setSocket(newSocket);
-  }, [socket, startCountdown, clearCountdown]);
+  };
 
-  const disconnect = useCallback(() => {
+  const disconnect = () => {
     if (socket) {
       socket.disconnect();
       setSocket(null);
       setIsConnected(false);
-      setConnectionState('disconnected');
-      setReconnectAttempt(0);
-      setNextRetryIn(0);
-      clearCountdown();
-      wasConnectedRef.current = false;
     }
-  }, [socket, clearCountdown]);
-
-  const retryConnection = useCallback(() => {
-    logger.info('Manual retry connection triggered');
-    if (socket) {
-      socket.connect();
-    } else {
-      connect();
-    }
-  }, [socket, connect]);
+  };
 
   useEffect(() => {
     return () => {
-      clearCountdown();
       disconnect();
     };
-  }, [clearCountdown, disconnect]);
+  }, []);
 
   const value: WebSocketContextType = {
     socket,
     isConnected,
-    connectionState,
-    reconnectAttempt,
-    nextRetryIn,
     messageFlow,
     alerts,
     performanceMetrics,
     botStats,
     connect,
     disconnect,
-    retryConnection,
   };
 
   return (

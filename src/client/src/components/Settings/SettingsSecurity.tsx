@@ -5,7 +5,6 @@ import Button from '../DaisyUI/Button';
 import { SkeletonList } from '../DaisyUI/Skeleton';
 import Input from '../DaisyUI/Input';
 import Toggle from '../DaisyUI/Toggle';
-import Tooltip from '../DaisyUI/Tooltip';
 import { Shield, Plus, Trash2 } from 'lucide-react';
 import SecureConfigManager from '../SecureConfigManager';
 import Debug from 'debug';
@@ -82,7 +81,6 @@ const SettingsSecurity: React.FC = () => {
 
   const handleSave = async () => {
     setIsSaving(true);
-    setAlert(null);
     try {
       const response = await fetch('/api/config/global', {
         method: 'PUT',
@@ -141,24 +139,19 @@ const SettingsSecurity: React.FC = () => {
 
           <div className="space-y-3">
             <div className="form-control">
-              <Tooltip content="Require users to authenticate before accessing the system">
-                <label className="label cursor-pointer py-1">
-                  <span className="label-text text-sm">Enable authentication</span>
-                  <Toggle
-                    checked={settings.enableAuthentication}
-                    onChange={(e) => handleChange('enableAuthentication', e.target.checked)}
-                    size="sm"
-                    aria-label="Toggle authentication"
-                  />
-                </label>
-              </Tooltip>
+              <label className="label cursor-pointer py-1">
+                <span className="label-text text-sm">Enable authentication</span>
+                <Toggle
+                  checked={settings.enableAuthentication}
+                  onChange={(e) => handleChange('enableAuthentication', e.target.checked)}
+                  size="sm"
+                />
+              </label>
             </div>
 
             <div className={`form-control transition-all duration-200 ${!settings.enableAuthentication ? 'opacity-50 pointer-events-none' : ''}`}>
               <label className="label py-1">
-                <Tooltip content="How long a user session remains active before requiring re-authentication">
-                  <span className="label-text text-sm font-medium">Session Timeout (seconds)</span>
-                </Tooltip>
+                <span className="label-text text-sm font-medium">Session Timeout (seconds)</span>
                 {!settings.enableAuthentication && (
                   <span className="badge badge-sm badge-ghost">Disabled</span>
                 )}
@@ -176,18 +169,16 @@ const SettingsSecurity: React.FC = () => {
             </div>
 
             <div className={`form-control transition-all duration-200 ${!settings.enableAuthentication ? 'opacity-50 pointer-events-none' : ''}`}>
-              <Tooltip content="Require a second form of authentication for enhanced security">
-                <label className="label cursor-pointer py-1">
-                  <span className="label-text text-sm">Two-factor authentication</span>
-                  <Toggle
-                    checked={settings.enableTwoFactor}
-                    onChange={(e) => handleChange('enableTwoFactor', e.target.checked)}
-                    disabled={!settings.enableAuthentication}
-                    size="sm"
-                    aria-label="Toggle two-factor authentication"
-                  />
-                </label>
-              </Tooltip>
+              <label className="label cursor-pointer py-1">
+                <span className="label-text text-sm">Two-factor authentication</span>
+                <Toggle
+                  checked={settings.enableTwoFactor}
+                  onChange={(e) => handleChange('enableTwoFactor', e.target.checked)}
+                  disabled={!settings.enableAuthentication}
+                  size="sm"
+                  aria-label="Enable two-factor authentication"
+                />
+              </label>
             </div>
           </div>
         </div>
@@ -201,24 +192,19 @@ const SettingsSecurity: React.FC = () => {
 
           <div className="space-y-3">
             <div className="form-control">
-              <Tooltip content="Limit the number of API requests to prevent abuse">
-                <label className="label cursor-pointer py-1">
-                  <span className="label-text text-sm">Enable rate limiting</span>
-                  <Toggle
-                    checked={settings.enableRateLimit}
-                    onChange={(e) => handleChange('enableRateLimit', e.target.checked)}
-                    size="sm"
-                    aria-label="Toggle rate limiting"
-                  />
-                </label>
-              </Tooltip>
+              <label className="label cursor-pointer py-1">
+                <span className="label-text text-sm">Enable rate limiting</span>
+                <Toggle
+                  checked={settings.enableRateLimit}
+                  onChange={(e) => handleChange('enableRateLimit', e.target.checked)}
+                  size="sm"
+                />
+              </label>
             </div>
 
             <div className={`form-control transition-all duration-200 ${!settings.enableRateLimit ? 'opacity-50 pointer-events-none' : ''}`}>
               <label className="label py-1">
-                <Tooltip content="Time window for counting requests (in seconds)">
-                  <span className="label-text text-sm font-medium">Time Window (seconds)</span>
-                </Tooltip>
+                <span className="label-text text-sm font-medium">Time Window (seconds)</span>
                 {!settings.enableRateLimit && (
                   <span className="badge badge-sm badge-ghost">Disabled</span>
                 )}
@@ -237,9 +223,7 @@ const SettingsSecurity: React.FC = () => {
 
             <div className={`form-control transition-all duration-200 ${!settings.enableRateLimit ? 'opacity-50 pointer-events-none' : ''}`}>
               <label className="label py-1">
-                <Tooltip content="Maximum number of requests allowed per time window">
-                  <span className="label-text text-sm font-medium">Max Requests per Window</span>
-                </Tooltip>
+                <span className="label-text text-sm font-medium">Max Requests per Window</span>
                 {!settings.enableRateLimit && (
                   <span className="badge badge-sm badge-ghost">Disabled</span>
                 )}
@@ -272,35 +256,29 @@ const SettingsSecurity: React.FC = () => {
               placeholder="https://example.com"
               size="sm"
               className="flex-grow"
-              aria-label="New CORS origin URL"
             />
-            <Tooltip content="Add a new allowed origin for CORS">
-              <Button
-                variant="secondary"
-                size="sm"
-                onClick={handleAddOrigin}
-                disabled={!newOrigin}
-                icon={<Plus className="w-4 h-4" />}
-                aria-label="Add CORS origin"
-              >
-                Add
-              </Button>
-            </Tooltip>
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={handleAddOrigin}
+              disabled={!newOrigin}
+            >
+              <Plus className="w-4 h-4" />
+              Add
+            </Button>
           </div>
 
           <div className="flex flex-wrap gap-2">
             {settings.corsOrigins.map((origin, index) => (
               <div key={index} className="badge badge-lg gap-2 bg-base-300">
                 {origin}
-                <Tooltip content={`Remove ${origin}`}>
-                  <button
-                    onClick={() => handleRemoveOrigin(origin)}
-                    className="hover:text-error"
-                    aria-label={`Remove origin ${origin}`}
-                  >
-                    <Trash2 className="w-3 h-3" />
-                  </button>
-                </Tooltip>
+                <button
+                  onClick={() => handleRemoveOrigin(origin)}
+                  className="hover:text-error"
+                  aria-label={`Remove origin ${origin}`}
+                >
+                  <Trash2 className="w-3 h-3" />
+                </button>
               </div>
             ))}
             {settings.corsOrigins.length === 0 && (
@@ -318,45 +296,36 @@ const SettingsSecurity: React.FC = () => {
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="form-control">
-              <Tooltip content="Enable security headers like CSP, X-Frame-Options, etc.">
-                <label className="label cursor-pointer py-1">
-                  <span className="label-text text-sm">Security headers</span>
-                  <Toggle
-                    checked={settings.enableSecurityHeaders}
-                    onChange={(e) => handleChange('enableSecurityHeaders', e.target.checked)}
-                    size="sm"
-                    aria-label="Toggle security headers"
-                  />
-                </label>
-              </Tooltip>
+              <label className="label cursor-pointer py-1">
+                <span className="label-text text-sm">Security headers</span>
+                <Toggle
+                  checked={settings.enableSecurityHeaders}
+                  onChange={(e) => handleChange('enableSecurityHeaders', e.target.checked)}
+                  size="sm"
+                />
+              </label>
             </div>
 
             <div className="form-control">
-              <Tooltip content="Log all security-related events for audit trail">
-                <label className="label cursor-pointer py-1">
-                  <span className="label-text text-sm">Audit logging</span>
-                  <Toggle
-                    checked={settings.enableAuditLogging}
-                    onChange={(e) => handleChange('enableAuditLogging', e.target.checked)}
-                    size="sm"
-                    aria-label="Toggle audit logging"
-                  />
-                </label>
-              </Tooltip>
+              <label className="label cursor-pointer py-1">
+                <span className="label-text text-sm">Audit logging</span>
+                <Toggle
+                  checked={settings.enableAuditLogging}
+                  onChange={(e) => handleChange('enableAuditLogging', e.target.checked)}
+                  size="sm"
+                />
+              </label>
             </div>
 
             <div className="form-control">
-              <Tooltip content="Allow API access using API keys in addition to standard auth">
-                <label className="label cursor-pointer py-1">
-                  <span className="label-text text-sm">API key auth</span>
-                  <Toggle
-                    checked={settings.enableApiKeyAuth}
-                    onChange={(e) => handleChange('enableApiKeyAuth', e.target.checked)}
-                    size="sm"
-                    aria-label="Toggle API key authentication"
-                  />
-                </label>
-              </Tooltip>
+              <label className="label cursor-pointer py-1">
+                <span className="label-text text-sm">API key auth</span>
+                <Toggle
+                  checked={settings.enableApiKeyAuth}
+                  onChange={(e) => handleChange('enableApiKeyAuth', e.target.checked)}
+                  size="sm"
+                />
+              </label>
             </div>
           </div>
         </div>
@@ -368,10 +337,8 @@ const SettingsSecurity: React.FC = () => {
           onClick={handleSave}
           disabled={isSaving}
           loading={isSaving}
-          loadingText="Saving..."
-          icon={<Shield className="w-4 h-4" />}
         >
-          Save Security Settings
+          {isSaving ? 'Saving...' : 'Save Security Settings'}
         </Button>
       </div>
 

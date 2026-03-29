@@ -22,7 +22,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { ChevronRight, ChevronDown, Hexagon, Sun, Moon } from 'lucide-react';
-import { useSwipeGesture } from '../../hooks/useSwipeGesture';
 
 /* ------------------------------------------------------------------ */
 /*  Public types                                                       */
@@ -64,17 +63,6 @@ const Drawer: React.FC<DrawerProps> = ({
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
   const location = useLocation();
   const navigate = useNavigate();
-
-  /* Swipe gesture support for mobile drawer dismissal */
-  const swipeHandlers = useSwipeGesture({
-    onSwipeLeft: () => {
-      if (variant === 'mobile' || variant === 'overlay') {
-        onClose();
-      }
-    },
-    threshold: 100,
-    preventScroll: variant === 'mobile' || variant === 'overlay',
-  });
 
   /* Auto-expand parent items that contain the active route */
   useEffect(() => {
@@ -225,7 +213,6 @@ const Drawer: React.FC<DrawerProps> = ({
       className={`h-full flex flex-col bg-base-300 text-base-content ${className}`}
       role="navigation"
       aria-label="Sidebar navigation"
-      {...(variant !== 'sidebar' ? swipeHandlers : {})}
     >
       {/* Header */}
       <div className="p-4 border-b border-base-content/10 flex items-center gap-3">

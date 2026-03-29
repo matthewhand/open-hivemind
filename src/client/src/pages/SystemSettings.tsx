@@ -40,7 +40,7 @@ const SystemSettings: React.FC = () => {
   };
 
   return (
-    <div className="space-y-4 md:space-y-6">
+    <div className="p-6">
       <PageHeader
         title="Settings"
         description="Configure your Open-Hivemind instance settings and preferences"
@@ -48,50 +48,31 @@ const SystemSettings: React.FC = () => {
         gradient="primary"
       />
 
-      <div className="flex justify-end mb-3 md:mb-4">
+      <div className="flex justify-end mb-4">
         <button
-          className="btn btn-ghost btn-sm gap-2 text-base-content/60 hover:text-primary min-h-[44px]"
+          className="btn btn-ghost btn-sm gap-2 text-base-content/60 hover:text-primary"
           onClick={handleRestartWizard}
         >
           <RotateCcw className="w-4 h-4" />
-          <span className="hidden sm:inline">Restart Setup Wizard</span>
-          <span className="sm:hidden">Setup Wizard</span>
+          Restart Setup Wizard
         </button>
       </div>
 
       <div className="card bg-base-100 shadow-xl">
-        <div className="card-body p-3 sm:p-4 md:p-6">
-          {/* Mobile: Dropdown, Desktop: Tabs */}
-          <div className="hidden sm:block">
-            <div className="tabs tabs-boxed mb-4 md:mb-6 flex-wrap gap-1">
-              {tabs.map((tab) => (
-                <a
-                  key={tab.id}
-                  className={`tab min-h-[44px] ${activeTabId === tab.id ? 'tab-active' : ''}`}
-                  onClick={() => handleTabChange(tab.id)}
-                >
-                  {tab.label}
-                </a>
-              ))}
-            </div>
+        <div className="card-body">
+          <div className="tabs tabs-boxed mb-6">
+            {tabs.map((tab) => (
+              <a
+                key={tab.id}
+                className={`tab ${activeTabId === tab.id ? 'tab-active' : ''}`}
+                onClick={() => handleTabChange(tab.id)}
+              >
+                {tab.label}
+              </a>
+            ))}
           </div>
 
-          {/* Mobile dropdown */}
-          <div className="sm:hidden mb-4">
-            <select
-              className="select select-bordered w-full min-h-[44px]"
-              value={activeTabId}
-              onChange={(e) => handleTabChange(e.target.value)}
-            >
-              {tabs.map((tab) => (
-                <option key={tab.id} value={tab.id}>
-                  {tab.label}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className="mt-2 sm:mt-4">
+          <div className="mt-4">
             {tabs[activeIndex].component}
           </div>
         </div>

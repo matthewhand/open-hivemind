@@ -14,20 +14,12 @@ interface PaginationProps {
   pageSize?: number;
   /** Callback triggered when a user selects a new page. */
   onPageChange: (page: number) => void;
-  /** Callback triggered when items per page changes. */
-  onPageSizeChange?: (pageSize: number) => void;
   /** The visual style of the pagination (compact, standard, or extended). */
   style?: PaginationStyle;
   /** Additional CSS classes for the root container. */
   className?: string;
   /** Explicit override for the maximum number of visible page buttons before truncating with ellipsis. */
   maxVisiblePages?: number;
-  /** Show items-per-page selector. Defaults to true. */
-  showPageSizeSelector?: boolean;
-  /** Available page size options. Defaults to [10, 25, 50, 100]. */
-  pageSizeOptions?: number[];
-  /** Show "X-Y of Z items" text. Defaults to true. */
-  showItemsInfo?: boolean;
 }
 
 const Pagination: React.FC<PaginationProps> = ({
@@ -35,13 +27,9 @@ const Pagination: React.FC<PaginationProps> = ({
   totalItems,
   pageSize = 10,
   onPageChange,
-  onPageSizeChange,
   style = 'standard',
   className = '',
   maxVisiblePages: explicitMaxVisiblePages,
-  showPageSizeSelector = true,
-  pageSizeOptions = [10, 25, 50, 100],
-  showItemsInfo = true,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [dynamicMaxVisiblePages, setDynamicMaxVisiblePages] = useState(7);
@@ -166,68 +154,22 @@ const Pagination: React.FC<PaginationProps> = ({
     }
   };
 
-  // Calculate range for "X-Y of Z items"
-  const startItem = totalItems === 0 ? 0 : (currentPage - 1) * pageSize + 1;
-  const endItem = Math.min(currentPage * pageSize, totalItems);
-
-  if (totalPages <= 1 && !showPageSizeSelector && !showItemsInfo) {
+  if (totalPages <= 1) {
     return null;
   }
 
   return (
-    <div className={`flex flex-col sm:flex-row items-center justify-between gap-4 w-full ${className}`}>
-      {/* Left side: Items info and page size selector */}
-      <div className="flex flex-col sm:flex-row items-center gap-3">
-        {showItemsInfo && totalItems > 0 && (
-          <div className="text-sm text-base-content/70">
-            Showing <span className="font-semibold">{startItem}</span> to{' '}
-            <span className="font-semibold">{endItem}</span> of{' '}
-            <span className="font-semibold">{totalItems}</span> items
-          </div>
-        )}
-        {showPageSizeSelector && onPageSizeChange && (
-          <div className="flex items-center gap-2">
-            <label htmlFor="page-size-select" className="text-sm text-base-content/70">
-              Per page:
-            </label>
-            <select
-              id="page-size-select"
-              className="select select-bordered select-sm"
-              value={pageSize}
-              onChange={(e) => {
-                const newPageSize = Number(e.target.value);
-                onPageSizeChange(newPageSize);
-                // Adjust current page if necessary to avoid empty page
-                const newTotalPages = Math.ceil(totalItems / newPageSize);
-                if (currentPage > newTotalPages && newTotalPages > 0) {
-                  onPageChange(newTotalPages);
-                }
-              }}
-              aria-label="Items per page"
-            >
-              {pageSizeOptions.map((option) => (
-                <option key={option} value={option}>
-                  {option}
-                </option>
-              ))}
-            </select>
-          </div>
-        )}
+    <div
+      ref={containerRef}
+      className={`join ${className} w-full overflow-x-auto focus:outline-none focus:ring-1 focus:ring-primary/50`}
+      role="navigation"
+      aria-label="Pagination"
+      onKeyDown={handleKeyDown}
+      tabIndex={0}
+    >
+      <div className="sr-only" aria-live="polite" aria-atomic="true">
+        Page {currentPage} of {totalPages}
       </div>
-
-      {/* Right side: Pagination controls */}
-      {totalPages > 1 && (
-        <div
-          ref={containerRef}
-          className="join overflow-x-auto focus:outline-none focus:ring-1 focus:ring-primary/50"
-          role="navigation"
-          aria-label="Pagination"
-          onKeyDown={handleKeyDown}
-          tabIndex={0}
-        >
-          <div className="sr-only" aria-live="polite" aria-atomic="true">
-            Page {currentPage} of {totalPages}
-          </div>
       {style === 'extended' && (
         <button
           className="join-item btn"
@@ -316,8 +258,6 @@ const Pagination: React.FC<PaginationProps> = ({
         >
           »
         </button>
-      )}
-        </div>
       )}
     </div>
   );

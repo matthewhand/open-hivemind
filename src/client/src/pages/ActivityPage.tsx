@@ -2,7 +2,7 @@ import { withRetry } from '../utils/withRetry';
 import logger from '../utils/logger';
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { Clock, Download, LayoutList, GitBranch, RefreshCw, X, Info, Calendar } from 'lucide-react';
+import { Clock, Download, LayoutList, GitBranch, RefreshCw, X } from 'lucide-react';
 import { Alert } from '../components/DaisyUI/Alert';
 import Badge from '../components/DaisyUI/Badge';
 import Button from '../components/DaisyUI/Button';
@@ -17,7 +17,6 @@ import { SkeletonPage } from '../components/DaisyUI/Skeleton';
 import EmptyState from '../components/DaisyUI/EmptyState';
 import Input from '../components/DaisyUI/Input';
 import SearchFilterBar from '../components/SearchFilterBar';
-import Tooltip from '../components/DaisyUI/Tooltip';
 import { apiService, ActivityEvent, ActivityResponse } from '../services/api';
 import useUrlParams from '../hooks/useUrlParams';
 import { useApiQuery } from '../hooks/useApiQuery';
@@ -28,7 +27,6 @@ const ActivityPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'table' | 'timeline'>('table');
   const [autoRefresh, setAutoRefresh] = useState(false);
-  const [isExporting, setIsExporting] = useState(false);
 
   // Filter State (URL-persisted)
   const { values: urlParams, setValue: setUrlParam } = useUrlParams({
@@ -148,40 +146,6 @@ const ActivityPage: React.FC = () => {
     setEndDate(toDate);
   };
 
-  // Keyboard shortcuts for date range selection
-  useEffect(() => {
-    const handleKeyPress = (event: KeyboardEvent) => {
-      // Only trigger if Alt+Shift is pressed (to avoid conflicts)
-      if (event.altKey && event.shiftKey) {
-        switch(event.key) {
-          case 'H':
-            handleQuickTimeRange('1h');
-            event.preventDefault();
-            break;
-          case 'D':
-            handleQuickTimeRange('24h');
-            event.preventDefault();
-            break;
-          case 'W':
-            handleQuickTimeRange('7d');
-            event.preventDefault();
-            break;
-          case 'M':
-            handleQuickTimeRange('30d');
-            event.preventDefault();
-            break;
-          case 'C':
-            handleClearFilters();
-            event.preventDefault();
-            break;
-        }
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyPress);
-    return () => window.removeEventListener('keydown', handleKeyPress);
-  }, []);
-
   useEffect(() => {
     if (autoRefresh) {
       const interval = setInterval(fetchActivity, 5000);
@@ -189,43 +153,35 @@ const ActivityPage: React.FC = () => {
     }
   }, [autoRefresh, fetchActivity]);
 
-  const handleExport = async () => {
+  const handleExport = () => {
     if (!data?.events || data.events.length === 0) return;
 
-    setIsExporting(true);
-    try {
-      // Simulate export processing time
-      await new Promise(resolve => setTimeout(resolve, 500));
+    const headers = ['Timestamp', 'Bot', 'Provider', 'LLM', 'Status', 'Duration (ms)', 'Message Type'];
+    const rows = data.events.map(e => [
+      e.timestamp,
+      e.botName,
+      e.provider,
+      e.llmProvider,
+      e.status,
+      e.processingTime || '',
+      e.messageType
+    ]);
 
-      const headers = ['Timestamp', 'Bot', 'Provider', 'LLM', 'Status', 'Duration (ms)', 'Message Type'];
-      const rows = data.events.map(e => [
-        e.timestamp,
-        e.botName,
-        e.provider,
-        e.llmProvider,
-        e.status,
-        e.processingTime || '',
-        e.messageType
-      ]);
+    const csvContent = [
+      headers.join(','),
+      ...rows.map(row => row.map(cell => `"${cell}"`).join(','))
+    ].join('\n');
 
-      const csvContent = [
-        headers.join(','),
-        ...rows.map(row => row.map(cell => `"${cell}"`).join(','))
-      ].join('\n');
-
-      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-      const link = document.createElement('a');
-      if (link.download !== undefined) {
-        const url = URL.createObjectURL(blob);
-        link.setAttribute('href', url);
-        link.setAttribute('download', `activity_export_${new Date().toISOString()}.csv`);
-        link.style.visibility = 'hidden';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-      }
-    } finally {
-      setIsExporting(false);
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    if (link.download !== undefined) {
+      const url = URL.createObjectURL(blob);
+      link.setAttribute('href', url);
+      link.setAttribute('download', `activity_export_${new Date().toISOString()}.csv`);
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
     }
   };
 
@@ -315,7 +271,6 @@ const ActivityPage: React.FC = () => {
       value: events.length,
       icon: '📊',
       color: 'primary' as const,
-      description: 'All activity events captured in the selected time period',
     },
     {
       id: 'success',
@@ -323,7 +278,6 @@ const ActivityPage: React.FC = () => {
       value: events.filter(e => e.status === 'success').length,
       icon: '✅',
       color: 'success' as const,
-      description: 'Messages processed successfully without errors',
     },
     {
       id: 'errors',
@@ -331,7 +285,6 @@ const ActivityPage: React.FC = () => {
       value: events.filter(e => e.status === 'error' || e.status === 'timeout').length,
       icon: '❌',
       color: 'error' as const,
-      description: 'Failed messages including timeouts and processing errors',
     },
     {
       id: 'bots',
@@ -339,7 +292,6 @@ const ActivityPage: React.FC = () => {
       value: availableFilters?.agents?.length || 0,
       icon: '🤖',
       color: 'secondary' as const,
-      description: 'Number of bots that have processed messages',
     },
   ];
 
@@ -400,6 +352,10 @@ const ActivityPage: React.FC = () => {
       )}
 
       {/* Header */}
+
+      {/* Header */}
+
+      {/* Header */}
       <PageHeader
         title="Activity Feed"
         description="Real-time message flow and events"
@@ -408,112 +364,55 @@ const ActivityPage: React.FC = () => {
           <div className="flex items-center gap-2">
             {/* View Toggle */}
             <div className="join">
-              <Tooltip content="View as data table" position="bottom">
-                <Button
-                  size="sm"
-                  variant={viewMode === 'table' ? 'primary' : 'ghost'}
-                  className="join-item"
-                  onClick={() => setViewMode('table')}
-                  aria-label="Table view"
-                >
-                  <LayoutList className="w-4 h-4" /> Table
-                </Button>
-              </Tooltip>
-              <Tooltip content="View as timeline" position="bottom">
-                <Button
-                  size="sm"
-                  variant={viewMode === 'timeline' ? 'primary' : 'ghost'}
-                  className="join-item"
-                  onClick={() => setViewMode('timeline')}
-                  aria-label="Timeline view"
-                >
-                  <GitBranch className="w-4 h-4" /> Timeline
-                </Button>
-              </Tooltip>
+              <Button
+                size="sm"
+                variant={viewMode === 'table' ? 'primary' : 'ghost'}
+                className="join-item"
+                onClick={() => setViewMode('table')}
+              >
+                <LayoutList className="w-4 h-4" /> Table
+              </Button>
+              <Button
+                size="sm"
+                variant={viewMode === 'timeline' ? 'primary' : 'ghost'}
+                className="join-item"
+                onClick={() => setViewMode('timeline')}
+              >
+                <GitBranch className="w-4 h-4" /> Timeline
+              </Button>
             </div>
 
             {/* Auto Refresh Toggle */}
-            <Tooltip content="Automatically refresh data every 5 seconds" position="bottom">
-              <div>
-                <Toggle
-                  label="Auto"
-                  checked={autoRefresh}
-                  onChange={(e) => setAutoRefresh(e.target.checked)}
-                  size="sm"
-                  aria-label="Auto refresh toggle"
-                />
-              </div>
-            </Tooltip>
+            <Toggle
+              label="Auto"
+              checked={autoRefresh}
+              onChange={(e) => setAutoRefresh(e.target.checked)}
+              size="sm"
+            />
 
-            <Tooltip content="Refresh activity data" position="bottom">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={fetchActivity}
-                disabled={loading}
-                aria-busy={loading}
-                aria-label="Refresh activity data"
-              >
-                <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-              </Button>
-            </Tooltip>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={fetchActivity}
+              disabled={loading} aria-busy={loading}
+            >
+              <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+            </Button>
 
-            <Tooltip content="Export activity data to CSV" position="bottom">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleExport}
-                disabled={events.length === 0 || isExporting}
-                aria-label="Export to CSV"
-              >
-                {isExporting ? (
-                  <span className="loading loading-spinner loading-sm" aria-hidden="true"></span>
-                ) : (
-                  <Download className="w-4 h-4" />
-                )}
-                {isExporting ? ' Exporting...' : ' Export'}
-              </Button>
-            </Tooltip>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleExport}
+              disabled={events.length === 0}
+            >
+              <Download className="w-4 h-4" /> Export
+            </Button>
           </div>
         }
       />
 
-      {/* Stats Cards with Tooltips */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        {stats.map((stat) => (
-          <Tooltip key={stat.id} content={stat.description} position="top">
-            <div
-              className={`
-                card border border-base-300/50 backdrop-blur-sm
-                hover:shadow-xl hover:shadow-primary/5 hover:border-primary/30
-                transition-all duration-300 cursor-help
-                hover:-translate-y-1
-                ${stat.color === 'primary' && 'bg-gradient-to-br from-primary/20 via-primary/10 to-transparent'}
-                ${stat.color === 'success' && 'bg-gradient-to-br from-success/20 via-success/10 to-transparent'}
-                ${stat.color === 'error' && 'bg-gradient-to-br from-error/20 via-error/10 to-transparent'}
-                ${stat.color === 'secondary' && 'bg-gradient-to-br from-secondary/20 via-secondary/10 to-transparent'}
-              `}
-            >
-              <div className="card-body p-4">
-                <div className="flex items-start justify-between">
-                  <div className="space-y-1 flex-1">
-                    <p className="text-sm font-medium text-base-content/60 uppercase tracking-wide flex items-center gap-1">
-                      {stat.title}
-                      <Info className="w-3 h-3 text-base-content/40" aria-hidden="true" />
-                    </p>
-                    <p className={`text-3xl font-bold text-${stat.color}`}>
-                      {typeof stat.value === 'number' ? stat.value.toLocaleString() : stat.value}
-                    </p>
-                  </div>
-                  <div className={`p-3 rounded-xl bg-${stat.color}/20 text-${stat.color}`}>
-                    <span className="text-2xl" aria-hidden="true">{stat.icon}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </Tooltip>
-        ))}
-      </div>
+      {/* Stats Cards */}
+      <StatsCards stats={stats} isLoading={loading && !data} />
 
       {/* Filters */}
       <SearchFilterBar
@@ -528,92 +427,68 @@ const ActivityPage: React.FC = () => {
             value: selectedBot,
             onChange: setSelectedBot,
             options: botOptions,
-            className: "w-full sm:w-1/4",
-            ariaLabel: "Filter by bot"
+            className: "w-full sm:w-1/4"
           },
           {
             key: 'provider',
             value: selectedProvider,
             onChange: setSelectedProvider,
             options: providerOptions,
-            className: "w-full sm:w-1/4",
-            ariaLabel: "Filter by message provider"
+            className: "w-full sm:w-1/4"
           },
           {
             key: 'llm',
             value: selectedLlmProvider,
             onChange: setSelectedLlmProvider,
             options: llmOptions,
-            className: "w-full sm:w-1/4",
-            ariaLabel: "Filter by LLM provider"
+            className: "w-full sm:w-1/4"
           }
         ]}
       >
         <div className="flex items-center gap-2 flex-wrap">
-          <Tooltip content="Quick date range shortcuts (Alt+Shift+H/D/W/M)" position="bottom">
-            <div className="join">
-              {(['1h', '6h', '24h', '7d', '30d'] as const).map((range) => (
-                <Button
-                  key={range}
-                  size="sm"
-                  variant="ghost"
-                  className="join-item btn-xs"
-                  onClick={() => handleQuickTimeRange(range)}
-                  title={`Last ${range}`}
-                  aria-label={`Filter to last ${range}`}
-                >
-                  {range}
-                </Button>
-              ))}
-            </div>
-          </Tooltip>
-          <Tooltip content="Start date for activity filter" position="bottom">
-            <Input
-              type="date"
-              value={startDate}
-              onChange={(e) => setStartDate(e.target.value)}
-              className="input-sm w-auto"
-              placeholder="Start Date"
-              aria-label="Start date"
-              prefix={<Calendar className="w-3 h-3" aria-hidden="true" />}
-            />
-          </Tooltip>
+          <div className="join">
+            {(['1h', '6h', '24h', '7d', '30d'] as const).map((range) => (
+              <Button
+                key={range}
+                size="sm"
+                variant="ghost"
+                className="join-item btn-xs"
+                onClick={() => handleQuickTimeRange(range)}
+                title={`Last ${range}`}
+              >
+                {range}
+              </Button>
+            ))}
+          </div>
+          <Input
+            type="date"
+            value={startDate}
+            onChange={(e) => setStartDate(e.target.value)}
+            className="input-sm w-auto"
+            placeholder="Start Date"
+          />
           <span className="text-base-content/50">-</span>
-          <Tooltip content="End date for activity filter" position="bottom">
-            <Input
-              type="date"
-              value={endDate}
-              onChange={(e) => setEndDate(e.target.value)}
-              className="input-sm w-auto"
-              placeholder="End Date"
-              aria-label="End date"
-              prefix={<Calendar className="w-3 h-3" aria-hidden="true" />}
-            />
-          </Tooltip>
+          <Input
+            type="date"
+            value={endDate}
+            onChange={(e) => setEndDate(e.target.value)}
+            className="input-sm w-auto"
+            placeholder="End Date"
+          />
           {(selectedBot !== 'all' || selectedProvider !== 'all' || selectedLlmProvider !== 'all' || startDate || endDate || searchQuery) && (
-             <Tooltip content="Clear all filters (Alt+Shift+C)" position="bottom">
-               <Button
-                 size="sm"
-                 variant="ghost"
-                 className="btn-square"
-                 onClick={handleClearFilters}
-                 title="Clear All Filters"
-                 aria-label="Clear All Filters"
-               >
-                 <X className="w-4 h-4" />
-               </Button>
-             </Tooltip>
+             <Button
+               size="sm"
+               variant="ghost"
+               className="btn-square"
+               onClick={handleClearFilters}
+               title="Clear All Filters"
+               aria-label="Clear All Filters"
+             >
+               <X className="w-4 h-4" />
+             </Button>
           )}
         </div>
       </SearchFilterBar>
-
-      {/* Keyboard shortcuts help */}
-      <div className="alert alert-info text-sm">
-        <Info className="w-4 h-4" aria-hidden="true" />
-        <span>
-          <strong>Keyboard shortcuts:</strong> Alt+Shift+H (1 hour), D (24 hours), W (7 days), M (30 days), C (clear filters)
-        </span>
-      </div>
 
       {/* Content */}
       {loading && !data ? (
@@ -622,13 +497,9 @@ const ActivityPage: React.FC = () => {
         <EmptyState
           icon={Clock}
           title={events.length === 0 ? "No activity yet" : "No matching events"}
-          description={
-            events.length === 0
-              ? "Your activity feed is empty. Events will appear here as your bots process messages. Make sure your bots are configured and running to see activity."
-              : "No events match your current filters. Try adjusting your search criteria or date range to see more results."
-          }
-          actionLabel={events.length === 0 ? "Refresh" : "Clear Filters"}
-          onAction={events.length === 0 ? fetchActivity : handleClearFilters}
+          description={events.length === 0 ? "Events will appear here as your bots process messages" : "Try adjusting your search or filters"}
+          actionLabel="Refresh"
+          onAction={fetchActivity}
         />
       ) : (
         <Card>
