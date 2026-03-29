@@ -150,6 +150,10 @@ describe('AnomalyDetectionService', () => {
     service.shutdown();
     expect(service['detectionInterval']).toBeNull();
     expect(removeAllListenersSpy).toHaveBeenCalled();
+
+    // Call shutdown again when interval is null to cover that branch
+    service.shutdown();
+    expect(service['detectionInterval']).toBeNull();
   });
 
   test('resolveAnomaly should return false for unknown id', async () => {
@@ -170,6 +174,90 @@ describe('AnomalyDetectionService', () => {
 
     const criticalAnomaly = service['createAnomaly']('responseTime', 150, 100, 10, 5.5);
     expect(criticalAnomaly.severity).toBe('critical');
+  });
+
+  test('runDetection should emit WebSocket alert with correct level based on severity', async () => {
+    // Clear the global state first
+    (service as any).dataWindows.clear();
+    (wsService.recordAlert as jest.Mock).mockClear();
+
+    // Low: z <= 3. By default zThreshold is 3, so to trigger low severity we must lower zThreshold.
+    service.updateConfig({ zThreshold: 1 });
+
+    // Test 'warning' level (low severity, zScore <= 3)
+    for (let i = 0; i < 5; i++) service.addDataPoint('responseTime', 99);
+    for (let i = 0; i < 5; i++) service.addDataPoint('responseTime', 101);
+    service.addDataPoint('responseTime', 102); // zScore ~ 2
+
+    await service.runDetection();
+
+    expect(wsService.recordAlert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        level: 'warning'
+      })
+    );
+
+    // Clear history and test 'error' (medium severity, zScore > 3 and <= 4)
+    (service as any).dataWindows.clear();
+    (wsService.recordAlert as jest.Mock).mockClear();
+    service.updateConfig({ windowSize: 1000, minDataPoints: 10, zThreshold: 3 });
+    for (let i = 0; i < 50; i++) service.addDataPoint('responseTime', 99);
+    for (let i = 0; i < 50; i++) service.addDataPoint('responseTime', 101);
+    // Add point to push zScore to ~3.5
+    service.addDataPoint('responseTime', 103.5);
+
+    await service.runDetection();
+    expect(wsService.recordAlert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        level: 'warning'
+      })
+    );
+
+    // Clear history and test 'error' (high severity, zScore > 4 and <= 5)
+    (service as any).dataWindows.clear();
+    (wsService.recordAlert as jest.Mock).mockClear();
+    service.updateConfig({ windowSize: 1000, minDataPoints: 10, zThreshold: 3 });
+    for (let i = 0; i < 50; i++) service.addDataPoint('responseTime', 99);
+    for (let i = 0; i < 50; i++) service.addDataPoint('responseTime', 101);
+    // Add point to push zScore to ~4.5
+    service.addDataPoint('responseTime', 104.5);
+
+    await service.runDetection();
+    expect(wsService.recordAlert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        level: 'error'
+      })
+    );
+
+    // Clear history and test 'critical' (critical severity, zScore > 5)
+    (service as any).dataWindows.clear();
+    (wsService.recordAlert as jest.Mock).mockClear();
+    service.updateConfig({ windowSize: 1000, minDataPoints: 10, zThreshold: 3 });
+    for (let i = 0; i < 100; i++) service.addDataPoint('responseTime', 99);
+    for (let i = 0; i < 100; i++) service.addDataPoint('responseTime', 101);
+    service.addDataPoint('responseTime', 110);
+
+    await service.runDetection();
+    expect(wsService.recordAlert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        level: 'critical'
+      })
+    );
+  });
+
+  test('runDetection should not create anomaly if zScore is below threshold', async () => {
+    (service as any).dataWindows.clear();
+    (wsService.recordAlert as jest.Mock).mockClear();
+    service.updateConfig({ windowSize: 1000, minDataPoints: 10, zThreshold: 3 });
+    for (let i = 0; i < 50; i++) service.addDataPoint('responseTime', 100);
+
+    // Add point close to mean
+    service.addDataPoint('responseTime', 100);
+
+    await service.runDetection();
+
+    expect(service['anomalies'].length).toBe(0);
+    expect(wsService.recordAlert).not.toHaveBeenCalled();
   });
 
   test('runDetection should handle storeAnomaly errors gracefully', async () => {
@@ -205,6 +293,48 @@ describe('AnomalyDetectionService', () => {
     expect(typeof service['integrateWithMetrics']).toBe('function');
     // Call it to get coverage on this stub method
     service['integrateWithMetrics']();
+  });
+
+  test('addDataPoint should handle null, undefined, NaN, and Infinity', () => {
+    service.addDataPoint('responseTime', null as any);
+    expect(service['dataWindows'].get('responseTime')).toBeUndefined();
+
+    service.addDataPoint('responseTime', undefined as any);
+    expect(service['dataWindows'].get('responseTime')).toBeUndefined();
+
+    service.addDataPoint('responseTime', NaN);
+    expect(service['dataWindows'].get('responseTime')).toBeUndefined();
+
+    service.addDataPoint('responseTime', Infinity);
+    expect(service['dataWindows'].get('responseTime')).toBeUndefined();
+
+    service.addDataPoint('responseTime', -Infinity);
+    expect(service['dataWindows'].get('responseTime')).toBeUndefined();
+  });
+
+  test('getAnomalies should return a copy of the anomalies array', () => {
+    const anomaly = {
+      id: 'test-anomaly-get',
+      timestamp: new Date(),
+      metric: 'responseTime',
+      value: 500,
+      expectedMean: 100,
+      standardDeviation: 20,
+      zScore: 20,
+      threshold: 3,
+      severity: 'critical' as const,
+      explanation: 'Test anomaly',
+      resolved: false,
+    };
+    service['anomalies'].push(anomaly as any);
+
+    const anomalies = service.getAnomalies();
+    expect(anomalies.length).toBe(1);
+    expect(anomalies[0].id).toBe('test-anomaly-get');
+
+    // Modifying the returned array should not affect the original array
+    anomalies.push({ id: 'another-anomaly' } as any);
+    expect(service['anomalies'].length).toBe(1);
   });
 
 });
