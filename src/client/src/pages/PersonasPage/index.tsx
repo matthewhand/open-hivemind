@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import Alert from '../../components/DaisyUI/Alert';
 import PageHeader from '../../components/DaisyUI/PageHeader';
 import { SkeletonPage } from '../../components/DaisyUI/Skeleton';
-import * as ToastNotification from '../../components/DaisyUI/ToastNotification';
+import { useSuccessToast, useErrorToast, useInfoToast } from '../../components/DaisyUI/ToastNotification';
 import SearchFilterBar from '../../components/SearchFilterBar';
 import { useIsBelowBreakpoint } from '../../hooks/useBreakpoint';
 import { useBulkSelection } from '../../hooks/useBulkSelection';
@@ -23,9 +23,9 @@ const CATEGORIES = [
 ];
 
 const PersonasPage: React.FC = () => {
-  const successToast = ToastNotification.useSuccessToast();
-  const errorToast = ToastNotification.useErrorToast();
-  const infoToast = ToastNotification.useInfoToast();
+  const successToast = useSuccessToast();
+  const errorToast = useErrorToast();
+  const infoToast = useInfoToast();
   const isMobile = useIsBelowBreakpoint('md');
   const [error, setError] = useState<string | null>(null);
 

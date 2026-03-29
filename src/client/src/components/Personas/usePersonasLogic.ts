@@ -1,7 +1,7 @@
 import { useState, useCallback, useMemo, useEffect } from 'react';
 import useUrlParams from '../../hooks/useUrlParams';
 import { apiService, type Persona as ApiPersona, type Bot } from '../../services/api';
-import ToastNotification, { useInfoToast } from '../DaisyUI/ToastNotification';
+import { useInfoToast, useSuccessToast, useErrorToast } from '../DaisyUI/ToastNotification';
 import { useBulkSelection } from '../../hooks/useBulkSelection';
 import { useDragAndDrop } from '../../hooks/useDragAndDrop';
 import { useApiQuery } from '../../hooks/useApiQuery';
@@ -18,8 +18,8 @@ export function usePersonasLogic() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const successToast = ToastNotification.useSuccessToast();
-  const errorToast = ToastNotification.useErrorToast();
+  const successToast = useSuccessToast();
+  const errorToast = useErrorToast();
 
   const { values: urlParams, setValue: setUrlParam } = useUrlParams({
     search: { type: 'string', default: '', debounce: 300 },
