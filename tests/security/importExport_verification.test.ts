@@ -1,4 +1,8 @@
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+import * as path from 'path';
+>>>>>>> af29c671d (🔒 fix: path traversal hardening for backups and templates (final v2))
 =======
 import * as path from 'path';
 >>>>>>> af29c671d (🔒 fix: path traversal hardening for backups and templates (final v2))
@@ -83,6 +87,9 @@ describe('ImportExport Path Traversal Verification', () => {
 =======
     // Mount the router
     // eslint-disable-next-line @typescript-eslint/no-var-requires
+<<<<<<< HEAD
+>>>>>>> af29c671d (🔒 fix: path traversal hardening for backups and templates (final v2))
+=======
 >>>>>>> af29c671d (🔒 fix: path traversal hardening for backups and templates (final v2))
     const importExportRouter = require('../../src/server/routes/importExport').default;
     app.use('/api/import-export', importExportRouter);

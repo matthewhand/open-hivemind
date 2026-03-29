@@ -1,10 +1,6 @@
 import { createCipheriv, createDecipheriv, randomBytes, scryptSync } from 'crypto';
 import { promises as fs } from 'fs';
-<<<<<<< HEAD
-import { basename, join } from 'path';
-=======
 import * as path from 'path';
->>>>>>> af29c671d (🔒 fix: path traversal hardening for backups and templates (final v2))
 import { createGunzip, createGzip } from 'zlib';
 // @ts-ignore - csv-parse v6 ships its own types but TS can't resolve the /sync subpath
 // @ts-ignore - csv-stringify v6 ships its own types but TS can't resolve the /sync subpath
@@ -949,13 +945,8 @@ export class ConfigurationImportExportService {
    * Uses PathSecurityUtils for consistent security validation.
    */
   private getSafeBackupPath(name: string, createdAt: Date): string {
-<<<<<<< HEAD
     const sanitizedName = PathSecurityUtils.sanitizeFilename(name);
     const backupFileName = `backup-${sanitizedName}-${createdAt.getTime()}.json.gz`;
-=======
-    const backupFileName = `backup-${path.basename(name)}-${createdAt.getTime()}.json.gz`;
-    const backupPath = path.join(this.backupsDir, backupFileName);
->>>>>>> af29c671d (🔒 fix: path traversal hardening for backups and templates (final v2))
 
     // Use PathSecurityUtils for consistent path validation
     return PathSecurityUtils.getSafePath(this.backupsDir, backupFileName);
