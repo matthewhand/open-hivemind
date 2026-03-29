@@ -1,6 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import Debug from 'debug';
+import { Logger } from '../common/logger';
 
 const debug = Debug('app:storage:webUIStorage');
 
@@ -103,9 +104,10 @@ export class WebUIStorage {
             );
           }
         })
-        .catch((err) => {
-          debug('ERROR:', 'Write queue error:', err);
-          reject(err);
+        .catch(() => {
+          // Reset queue on failure so subsequent writes aren't blocked
+          // by a previous caller's rejection. Each caller's promise
+          // rejects independently via the try/catch above.
         });
     });
   }
@@ -343,6 +345,7 @@ export class WebUIStorage {
       // Save the defaults back to storage
       this.saveConfig(config).catch((err) => {
         debug('ERROR:', 'Failed to save default guards:', err);
+        Logger.warn('Failed to persist default guards to storage:', err);
       });
     }
 

@@ -11,7 +11,7 @@ const router = Router();
 const debug = Debug('app:webui:guards');
 
 // GET / - Get all guards
-router.get('/', async (req: Request, res: Response) => {
+router.get('/', (req: Request, res: Response) => {
   try {
     const guards = webUIStorage.getGuards();
     return res.json({

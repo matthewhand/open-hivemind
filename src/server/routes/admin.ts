@@ -82,7 +82,7 @@ router.use('/guard-profiles', guardProfilesRouter);
  *       200:
  *         description: List of tool usage guards
  */
-router.get('/tool-usage-guards', async (req: Request, res: Response) => {
+router.get('/tool-usage-guards', (req: Request, res: Response) => {
   try {
     const guardsManager = ToolUsageGuardsManager.getInstance();
     const guards = guardsManager.getAllGuards();
@@ -271,7 +271,7 @@ router.post(
   }
 );
 // GET /llm-providers - Get all LLM providers
-router.get('/llm-providers', async (req: Request, res: Response) => {
+router.get('/llm-providers', (req: Request, res: Response) => {
   try {
     const providers = webUIStorage.getLlmProviders();
     return res.json({
@@ -714,7 +714,7 @@ router.post(
 );
 
 // GET /messenger-providers - Get all messenger providers
-router.get('/messenger-providers', async (req: Request, res: Response) => {
+router.get('/messenger-providers', (req: Request, res: Response) => {
   try {
     const providers = webUIStorage.getMessengerProviders();
     return res.json({
@@ -942,7 +942,7 @@ router.post(
  *       200:
  *         description: List of personas
  */
-router.get('/personas', async (req: Request, res: Response) => {
+router.get('/personas', (req: Request, res: Response) => {
   try {
     // Get personas from persistent storage
     const storedPersonas = webUIStorage.getPersonas();
@@ -1255,7 +1255,7 @@ router.delete(
 );
 
 // Get all connected MCP servers
-router.get('/mcp-servers', async (req: Request, res: Response) => {
+router.get('/mcp-servers', (req: Request, res: Response) => {
   try {
     const mcpService = MCPService.getInstance();
     const connectedServers = mcpService.getConnectedServersWithMetadata();
@@ -1302,7 +1302,7 @@ router.get('/mcp-servers', async (req: Request, res: Response) => {
 router.get(
   '/mcp-servers/:name/tools',
   validateRequest(ServerNameParamSchema),
-  async (req: Request, res: Response) => {
+  (req: Request, res: Response) => {
     try {
       const { name } = req.params;
 
@@ -1506,7 +1506,7 @@ router.post(
 );
 
 // Get environment variable overrides
-router.get('/env-overrides', async (req: Request, res: Response) => {
+router.get('/env-overrides', (req: Request, res: Response) => {
   try {
     const envVars = getRelevantEnvVars();
 
@@ -1527,7 +1527,7 @@ router.get('/env-overrides', async (req: Request, res: Response) => {
 });
 
 // GET /providers - Get available providers
-router.get('/providers', async (req: Request, res: Response) => {
+router.get('/providers', (req: Request, res: Response) => {
   try {
     const messageProviders = [
       {
