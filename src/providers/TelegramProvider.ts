@@ -3,6 +3,7 @@ import * as path from 'path';
 import telegramConfig, { type TelegramConfig } from '../config/telegramConfig';
 import { type IMessageProvider } from '../types/IProvider';
 import { type Message } from '../types/messages';
+import { ReconnectionManager } from './ReconnectionManager';
 import Debug from 'debug';
 const debug = Debug('app:providers:TelegramProvider');
 
@@ -11,6 +12,16 @@ const debug = Debug('app:providers:TelegramProvider');
  * bot_id is a sequence of digits; token_string is 35 alphanumeric/underscore/hyphen chars.
  */
 const TELEGRAM_TOKEN_REGEX = /^\d+:[A-Za-z0-9_-]{35,}$/;
+
+/**
+ * Masks any Telegram bot token found in a string (e.g. a URL) so that it
+ * is safe to include in log output.  The bot-id prefix is kept for
+ * identification; the secret portion is replaced with asterisks.
+ */
+function maskToken(value: string): string {
+  // Match the bot<id>:<secret> pattern inside the string
+  return value.replace(/(\d+):[A-Za-z0-9_-]{35,}/g, '$1:****');
+}
 
 function validateTelegramToken(token: string): void {
   if (!token || typeof token !== 'string') {
@@ -25,6 +36,7 @@ function validateTelegramToken(token: string): void {
 }
 
 export class TelegramProvider implements IMessageProvider<TelegramConfig> {
+  private reconManagers: Map<string, ReconnectionManager> = new Map();
   id = 'telegram';
   label = 'Telegram';
   type = 'messenger' as const;
@@ -60,18 +72,33 @@ export class TelegramProvider implements IMessageProvider<TelegramConfig> {
     const botPromises = await Promise.allSettled(
       instances.map(async (inst: any) => {
         let connected = false;
-        try {
-          const response = await fetch(`https://api.telegram.org/bot${inst.token}/getMe`);
-          const data = await response.json();
-          connected = data.ok === true;
-        } catch (e) {
-          // fetch error
-          connected = false;
+        const name = inst.name || 'telegram';
+        const reconManager = this.reconManagers.get(name);
+
+        if (reconManager) {
+          connected = reconManager.getStatus().state === 'connected';
+        } else {
+          try {
+            const url = `https://api.telegram.org/bot${inst.token}/getMe`;
+            const response = await fetch(url);
+            if (!response.ok) {
+              debug(`[TelegramProvider] HTTP ${response.status} from ${maskToken(url)}`);
+              connected = false;
+            } else {
+              const data = await response.json();
+              connected = data.ok === true;
+            }
+          } catch (e: any) {
+            debug(`[TelegramProvider] Fetch error for ${maskToken(`bot${inst.token}`)}: ${e.message}`);
+            connected = false;
+          }
         }
+
         return {
           provider: 'telegram',
-          name: inst.name || 'telegram',
+          name,
           connected,
+          status: reconManager ? reconManager.getStatus() : { state: connected ? 'connected' : 'disconnected' },
         };
       })
     );
@@ -149,7 +176,29 @@ export class TelegramProvider implements IMessageProvider<TelegramConfig> {
       mode: 0o600, // owner read/write only — tokens are sensitive
     });
 
-    debug(`[TelegramProvider] Added bot configuration for ${name || 'unnamed'}`);
+    // We can also initialize ReconnectionManager when a new bot is added dynamically
+    const botName = name || 'unnamed';
+    const reconManager = new ReconnectionManager(
+      `telegram-${botName}`,
+      async () => {
+        // Here we simulate telegram bot connection logic which checks /getMe
+        const url = `https://api.telegram.org/bot${token}/getMe`;
+        const response = await fetch(url);
+        if (!response.ok) {
+          throw new Error(`Telegram API returned HTTP ${response.status} for ${maskToken(url)}`);
+        }
+        const data = await response.json();
+        if (!data.ok) {
+          throw new Error('Telegram token validation failed during reconnection');
+        }
+      }
+    );
+    this.reconManagers.set(botName, reconManager);
+    reconManager.start().catch((err) => {
+      debug(`Failed to start Telegram bot ${botName}: ${err.message}`);
+    });
+
+    debug(`[TelegramProvider] Added bot configuration for ${botName}`);
   }
 
   async reload() {
@@ -178,9 +227,35 @@ export class TelegramProvider implements IMessageProvider<TelegramConfig> {
     let added = 0;
     const instances = cfg.telegram?.instances || [];
 
-    // TODO: Implement actual runtime reload logic once the Service is ready
+    // Implemented actual runtime reload logic with ReconnectionManager
     for (const inst of instances) {
-      // Mock loading
+      const name = inst.name || 'unnamed';
+
+      // Stop and replace existing manager if present
+      const existingManager = this.reconManagers.get(name);
+      if (existingManager) {
+        existingManager.stop();
+      }
+
+      const reconManager = new ReconnectionManager(
+        `telegram-${name}`,
+        async () => {
+          const url = `https://api.telegram.org/bot${inst.token}/getMe`;
+          const response = await fetch(url);
+          if (!response.ok) {
+            throw new Error(`Telegram API returned HTTP ${response.status} for ${maskToken(url)}`);
+          }
+          const data = await response.json();
+          if (!data.ok) {
+            throw new Error(`Telegram connection failed for ${name}`);
+          }
+        }
+      );
+      this.reconManagers.set(name, reconManager);
+      reconManager.start().catch((err) => {
+        debug(`Failed to start Telegram bot ${name} on reload: ${err.message}`);
+      });
+
       added++;
     }
     return { added };

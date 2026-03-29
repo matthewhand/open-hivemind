@@ -3,10 +3,12 @@ import path from 'path';
 import { SlackService } from '@hivemind/message-slack';
 import slackConfig, { type SlackConfig } from '../config/slackConfig';
 import { type IMessageProvider } from '../types/IProvider';
+import { ReconnectionManager } from './ReconnectionManager';
 import Debug from 'debug';
 const debug = Debug('app:providers:SlackProvider');
 
 export class SlackProvider implements IMessageProvider<SlackConfig> {
+  private reconManagers: Map<string, ReconnectionManager> = new Map();
   id = 'slack';
   label = 'Slack';
   type = 'messenger' as const;
@@ -36,12 +38,14 @@ export class SlackProvider implements IMessageProvider<SlackConfig> {
     const botNames = slack.getBotNames();
     const bots = botNames.map((name: string) => {
       const cfg: any = slack.getBotConfig(name) || {};
+      const reconManager = this.reconManagers.get(name);
       return {
         provider: 'slack',
         name,
         defaultChannel: cfg?.slack?.defaultChannelId || '',
         mode: cfg?.slack?.mode || 'socket',
-        connected: true,
+        connected: reconManager ? reconManager.getStatus().state === 'connected' : true,
+        status: reconManager ? reconManager.getStatus() : { state: 'connected' },
       };
     });
     return {
@@ -115,7 +119,18 @@ export class SlackProvider implements IMessageProvider<SlackConfig> {
     };
 
     if ((slack as any).addBot) {
-      await (slack as any).addBot(instanceCfg);
+      const reconManager = new ReconnectionManager(
+        `slack-${name}`,
+        async () => {
+          await (slack as any).addBot(instanceCfg);
+        }
+      );
+      this.reconManagers.set(name, reconManager);
+
+      // Start the bot connection with reconnection management
+      reconManager.start().catch((err) => {
+        debug(`Failed to start Slack bot ${name}: ${err.message}`);
+      });
     }
   }
 
@@ -137,8 +152,9 @@ export class SlackProvider implements IMessageProvider<SlackConfig> {
     for (const inst of instances) {
       const nm = inst.name || '';
       if (!nm || !existing.has(nm)) {
+        const nameToUse = nm || `Bot${Date.now()}`;
         const instanceCfg = {
-          name: nm || `Bot${Date.now()}`,
+          name: nameToUse,
           slack: {
             botToken: inst.token,
             signingSecret: inst.signingSecret || '',
@@ -150,7 +166,16 @@ export class SlackProvider implements IMessageProvider<SlackConfig> {
           llm: inst.llm,
         };
         if ((slack as any).addBot) {
-          await (slack as any).addBot(instanceCfg);
+          const reconManager = new ReconnectionManager(
+            `slack-${nameToUse}`,
+            async () => {
+              await (slack as any).addBot(instanceCfg);
+            }
+          );
+          this.reconManagers.set(nameToUse, reconManager);
+          reconManager.start().catch((err) => {
+            debug(`Failed to start Slack bot ${nameToUse} on reload: ${err.message}`);
+          });
           added++;
         }
       }

@@ -4,10 +4,12 @@ import { Discord, type DiscordService } from '@hivemind/message-discord';
 import discordConfig, { type DiscordConfig } from '../config/discordConfig';
 import type { IBotInfo } from '../types/botInfo';
 import { type IMessageProvider } from '../types/IProvider';
+import { ReconnectionManager } from './ReconnectionManager';
 import Debug from 'debug';
 const debug = Debug('app:providers:DiscordProvider');
 
 export class DiscordProvider implements IMessageProvider<DiscordConfig> {
+  private reconManagers: Map<string, ReconnectionManager> = new Map();
   id = 'discord';
   label = 'Discord';
   type = 'messenger' as const;
@@ -32,17 +34,22 @@ export class DiscordProvider implements IMessageProvider<DiscordConfig> {
   }
 
   async getStatus() {
-    let discordBots: string[] = [];
     let discordInfo: any[] = [];
     try {
       const ds = this.discordService;
       const bots = (ds.getAllBots?.() || []) as IBotInfo[];
-      discordBots = bots.map((b) => b?.botUserName || b?.config?.name || 'discord');
-      discordInfo = bots.map((b) => ({
-        provider: 'discord',
-        name: b?.botUserName || b?.config?.name || 'discord',
-        connected: true,
-      }));
+
+      discordInfo = bots.map((b) => {
+        const name = b?.botUserName || b?.config?.name || 'discord';
+        const reconManager = this.reconManagers.get(name);
+
+        return {
+          provider: 'discord',
+          name,
+          connected: reconManager ? reconManager.getStatus().state === 'connected' : true,
+          status: reconManager ? reconManager.getStatus() : { state: 'connected' },
+        };
+      });
     } catch (e) {
       // Ignore if not initialized
     }
@@ -94,7 +101,18 @@ export class DiscordProvider implements IMessageProvider<DiscordConfig> {
     const ds = this.discordService;
     const instanceCfg = { name: name || '', token, llm };
     if (ds.addBot) {
-      await ds.addBot(instanceCfg);
+      const reconManager = new ReconnectionManager(
+        `discord-${name}`,
+        async () => {
+          await ds.addBot(instanceCfg);
+        }
+      );
+      this.reconManagers.set(name || '', reconManager);
+
+      // Start the bot connection with reconnection management
+      reconManager.start().catch((err) => {
+        debug(`Failed to start Discord bot ${name}: ${err.message}`);
+      });
     }
   }
 
@@ -116,9 +134,19 @@ export class DiscordProvider implements IMessageProvider<DiscordConfig> {
     const instances = cfg.discord?.instances || [];
     for (const inst of instances) {
       if (inst.token && !have.has(inst.token)) {
-        const instanceCfg = { name: inst.name || '', token: inst.token, llm: inst.llm };
+        const name = inst.name || '';
+        const instanceCfg = { name, token: inst.token, llm: inst.llm };
         if (ds.addBot) {
-          await ds.addBot(instanceCfg);
+          const reconManager = new ReconnectionManager(
+            `discord-${name}`,
+            async () => {
+              await ds.addBot(instanceCfg);
+            }
+          );
+          this.reconManagers.set(name, reconManager);
+          reconManager.start().catch((err) => {
+            debug(`Failed to start Discord bot ${name} on reload: ${err.message}`);
+          });
           added++;
         }
       }
