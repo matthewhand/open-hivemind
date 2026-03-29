@@ -43,6 +43,41 @@ describe('validateRequiredEnvVars', () => {
     expect(mockExit).toHaveBeenCalledWith(1);
   });
 
+  it('exits in production when SESSION_SECRET is empty', () => {
+    process.env.NODE_ENV = 'production';
+    process.env.JWT_SECRET = 'secret';
+    process.env.JWT_REFRESH_SECRET = 'refresh';
+    process.env.DISCORD_BOT_TOKEN = 'token';
+    process.env.SESSION_SECRET = '  ';
+
+    validateRequiredEnvVars();
+    expect(mockExit).toHaveBeenCalledWith(1);
+  });
+
+  it('exits when PORT is invalid', () => {
+    process.env.PORT = 'invalid-port';
+    validateRequiredEnvVars();
+    expect(mockExit).toHaveBeenCalledWith(1);
+  });
+
+  it('does not exit when PORT is valid', () => {
+    process.env.PORT = '3000';
+    validateRequiredEnvVars();
+    expect(mockExit).not.toHaveBeenCalled();
+  });
+
+  it('exits when HTTP_ENABLED is invalid', () => {
+    process.env.HTTP_ENABLED = 'yes';
+    validateRequiredEnvVars();
+    expect(mockExit).toHaveBeenCalledWith(1);
+  });
+
+  it('does not exit when HTTP_ENABLED is valid', () => {
+    process.env.HTTP_ENABLED = 'true';
+    validateRequiredEnvVars();
+    expect(mockExit).not.toHaveBeenCalled();
+  });
+
   it('exits in production when no bot tokens are configured', () => {
     process.env.NODE_ENV = 'production';
     process.env.SESSION_SECRET = 'sess';
