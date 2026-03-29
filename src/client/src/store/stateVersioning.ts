@@ -5,6 +5,8 @@
  * sequential migrations when the schema changes.
  */
 
+import { logger } from '../utils/logger';
+
 /** Bump this whenever the persisted state shape changes in a breaking way. */
 export const STATE_VERSION = 1;
 
@@ -70,7 +72,7 @@ export function migrateState(
     const migration = migrations.get(v);
     if (!migration) {
       // Missing migration — cannot upgrade safely.
-      console.warn(
+      logger.warn(
         `[stateVersioning] Missing migration from v${v} to v${v + 1}. Resetting state.`,
       );
       return null;
@@ -94,7 +96,7 @@ export function saveState(state: Record<string, unknown>): void {
     };
     localStorage.setItem(STORAGE_KEY, JSON.stringify(envelope));
   } catch (err) {
-    console.error('[stateVersioning] Failed to save state:', err);
+    logger.error('[stateVersioning] Failed to save state:', err);
   }
 }
 
@@ -111,7 +113,7 @@ export function loadState(): Record<string, unknown> | null {
     const parsed: unknown = JSON.parse(raw);
     return migrateState(parsed, STATE_VERSION);
   } catch (err) {
-    console.error('[stateVersioning] Failed to load state:', err);
+    logger.error('[stateVersioning] Failed to load state:', err);
     return null;
   }
 }

@@ -1,8 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars, react-refresh/only-export-components, no-empty, no-case-declarations */
 import type { ReactNode } from 'react';
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import Debug from 'debug';
-const debug = Debug('app:client:contexts:AuthContext');
+import { logger } from '../utils/logger';
 
 export interface User {
   id: string;
@@ -58,13 +57,13 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         } else {
           // Token is expired, try to refresh it silently
           refreshToken().catch((error) => {
-            debug('WARN:', 'Failed to refresh expired token on load:', error);
+            logger.warn('Failed to refresh expired token on load:', error);
             // Don't logout here - just don't set the user
             // The app will handle being in an unauthenticated state
           });
         }
       } catch (error) {
-        debug('ERROR:', 'Failed to parse stored auth data:', error);
+        logger.error('Failed to parse stored auth data:', error);
         // Don't logout - just don't set the user
       }
     } else if (import.meta.env.DEV && import.meta.env.VITE_AUTO_LOGIN === 'true') {
@@ -72,7 +71,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       // in a Vite development build (import.meta.env.DEV === true).
       // This prevents any unauthenticated user from being silently promoted to
       // owner in staging, preview, or production environments.
-      console.info('[AuthContext] DEV + VITE_AUTO_LOGIN=true: creating development user');
+      logger.info('[AuthContext] DEV + VITE_AUTO_LOGIN=true: creating development user');
       const devUser: User = {
         id: 'dev-user',
         username: 'developer',
@@ -173,7 +172,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
       return false;
     } catch (error) {
-      debug('ERROR:', 'Login error:', error);
+      logger.error('Login error:', error);
       return false;
     }
   };
@@ -226,7 +225,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
       return false;
     } catch (error) {
-      debug('ERROR:', 'Token refresh error:', error);
+      logger.error('Token refresh error:', error);
       logout();
       return false;
     }
@@ -265,7 +264,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
       return null;
     } catch (error) {
-      debug('ERROR:', 'Token verification error:', error);
+      logger.error('Token verification error:', error);
       return null;
     }
   };

@@ -1,5 +1,4 @@
-import Debug from 'debug';
-const debug = Debug('app:client:services:api');
+import { logger } from '../utils/logger';
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 const getEnv = (key: string): string | undefined => {
   // Use a dynamic check to avoid Babel syntax errors with import.meta in CommonJS/Node
@@ -352,7 +351,7 @@ class ApiService {
         return token;
       } catch (error) {
         // Silently fail - CSRF may not be required in all environments
-        console.debug('CSRF token fetch failed (may not be required):', error);
+        logger.debug('CSRF token fetch failed (may not be required):', error);
         return '';
       } finally {
         this.csrfTokenPromise = null;
@@ -416,7 +415,7 @@ class ApiService {
           headers['Authorization'] = `Bearer ${tokens.accessToken}`;
         }
       } catch (e) {
-        debug('ERROR:', 'Failed to parse auth token', e);
+        logger.error('Failed to parse auth token', e);
       }
     }
     return headers;
@@ -506,7 +505,7 @@ class ApiService {
         throw new Error(`Request timed out after ${options?.timeout || 15000}ms`);
       }
       const errorMessage = error instanceof Error ? error.message : String(error);
-      debug('ERROR:', `API request failed for ${endpoint}:`, errorMessage);
+      logger.error(`API request failed for ${endpoint}:`, errorMessage);
       throw error;
     }
   }

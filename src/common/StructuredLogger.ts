@@ -165,7 +165,7 @@ export class StructuredLogger {
    */
   info(message: string, context?: Record<string, unknown>): void {
     const entry = this.formatEntry('info', message, context);
-    console.info(JSON.stringify(entry));
+    process.stdout.write(JSON.stringify(entry) + '\n');
   }
 
   /**
@@ -173,7 +173,7 @@ export class StructuredLogger {
    */
   warn(message: string, context?: Record<string, unknown>): void {
     const entry = this.formatEntry('warn', message, context);
-    console.warn(JSON.stringify(entry));
+    process.stdout.write(JSON.stringify(entry) + '\n');
   }
 
   /**
@@ -188,7 +188,7 @@ export class StructuredLogger {
       : context;
 
     const entry = this.formatEntry('error', message, errorContext);
-    console.error(JSON.stringify(entry));
+    process.stderr.write(JSON.stringify(entry) + '\n');
   }
 
   /**
@@ -203,7 +203,7 @@ export class StructuredLogger {
       : context;
 
     const entry = this.formatEntry('fatal', message, errorContext);
-    console.error(JSON.stringify(entry));
+    process.stderr.write(JSON.stringify(entry) + '\n');
   }
 
   /**
