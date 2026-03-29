@@ -11,7 +11,7 @@ const router = Router();
 const debug = Debug('app:webui:guards');
 
 // GET / - Get all guards
-router.get('/', (req: Request, res: Response) => {
+router.get('/', async (req: Request, res: Response) => {
   try {
     const guards = webUIStorage.getGuards();
     return res.json({
@@ -45,7 +45,7 @@ const validateIpOctets = (ip: string): boolean => {
 };
 
 // POST / - Update access control guard config
-router.post('/', validateRequest(UpdateAccessControlSchema), (req: Request, res: Response) => {
+router.post('/', validateRequest(UpdateAccessControlSchema), async (req: Request, res: Response) => {
   try {
     const accessConfig = req.body;
 
@@ -81,7 +81,7 @@ router.post('/', validateRequest(UpdateAccessControlSchema), (req: Request, res:
     };
 
     // Save the updated guard
-    webUIStorage.saveGuard(accessGuard);
+    await webUIStorage.saveGuard(accessGuard);
 
     return res.json({
       success: true,
@@ -97,7 +97,7 @@ router.post('/', validateRequest(UpdateAccessControlSchema), (req: Request, res:
 });
 
 // POST /:id/toggle - Toggle guard enabled status
-router.post('/:id/toggle', validateRequest(ToggleGuardSchema), (req: Request, res: Response) => {
+router.post('/:id/toggle', validateRequest(ToggleGuardSchema), async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const { enabled } = req.body;
@@ -113,7 +113,7 @@ router.post('/:id/toggle', validateRequest(ToggleGuardSchema), (req: Request, re
       });
     }
 
-    webUIStorage.toggleGuard(id, enabled);
+    await webUIStorage.toggleGuard(id, enabled);
 
     return res.json({
       success: true,

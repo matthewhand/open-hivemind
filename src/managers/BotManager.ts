@@ -258,7 +258,7 @@ export class BotManager extends EventEmitter {
       await this.storeSecureConfig(botId, request.config || {});
 
       // Add to web UI storage
-      webUIStorage.saveAgent(botInstance);
+      await webUIStorage.saveAgent(botInstance);
 
       debug(`Created new bot: ${request.name} (${botId})`);
 
@@ -395,7 +395,7 @@ export class BotManager extends EventEmitter {
       }
 
       // Update in web UI storage
-      webUIStorage.saveAgent(updatedBot);
+      await webUIStorage.saveAgent(updatedBot);
 
       debug(`Updated bot: ${updatedBot.name} (${botId})`);
 
@@ -428,7 +428,7 @@ export class BotManager extends EventEmitter {
 
       if (isCustom) {
         // Remove from web UI storage
-        webUIStorage.deleteAgent(botId);
+        await webUIStorage.deleteAgent(botId);
         // Remove secure configuration
         await this.secureConfigManager.deleteConfig(`bot_${botId}`);
       } else {
