@@ -45,16 +45,15 @@ describe('corsMiddleware', () => {
     it('handles OPTIONS preflight with allowed origin', () => {
       req.method = 'OPTIONS';
       const origins = getCorsOrigins();
-      if (origins.length > 0) {
-        req.headers = { origin: origins[0] };
+      expect(origins.length).toBeGreaterThan(0);
+      req.headers = { origin: origins[0] };
 
-        applyCors(req as Request, res as Response, next as NextFunction);
+      applyCors(req as Request, res as Response, next as NextFunction);
 
-        expect(res.setHeader).toHaveBeenCalledWith('Access-Control-Allow-Origin', origins[0]);
-        expect(res.setHeader).toHaveBeenCalledWith('Access-Control-Allow-Credentials', 'true');
-        expect(res.status).toHaveBeenCalledWith(204);
-        expect(res.end).toHaveBeenCalled();
-      }
+      expect(res.setHeader).toHaveBeenCalledWith('Access-Control-Allow-Origin', origins[0]);
+      expect(res.setHeader).toHaveBeenCalledWith('Access-Control-Allow-Credentials', 'true');
+      expect(res.status).toHaveBeenCalledWith(204);
+      expect(res.end).toHaveBeenCalled();
     });
 
     it('handles OPTIONS preflight with unallowed origin', () => {
@@ -76,15 +75,14 @@ describe('corsMiddleware', () => {
 
     it('handles GET request with allowed origin', () => {
       const origins = getCorsOrigins();
-      if (origins.length > 0) {
-        req.headers = { origin: origins[0] };
+      expect(origins.length).toBeGreaterThan(0);
+      req.headers = { origin: origins[0] };
 
-        applyCors(req as Request, res as Response, next as NextFunction);
+      applyCors(req as Request, res as Response, next as NextFunction);
 
-        expect(res.setHeader).toHaveBeenCalledWith('Access-Control-Allow-Origin', origins[0]);
-        expect(res.setHeader).toHaveBeenCalledWith('Access-Control-Allow-Credentials', 'true');
-        expect(next).toHaveBeenCalled();
-      }
+      expect(res.setHeader).toHaveBeenCalledWith('Access-Control-Allow-Origin', origins[0]);
+      expect(res.setHeader).toHaveBeenCalledWith('Access-Control-Allow-Credentials', 'true');
+      expect(next).toHaveBeenCalled();
     });
 
     it('handles GET request with unallowed origin', () => {

@@ -53,6 +53,10 @@ describe('errorHandler middleware', () => {
     jest.spyOn(process, 'exit').mockImplementation((() => {}) as any);
   });
 
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
   describe('globalErrorHandler', () => {
     it('handles generic errors and returns 500 status', () => {
       const error = new Error('Test generic error');
@@ -61,7 +65,11 @@ describe('errorHandler middleware', () => {
 
       expect(res.status).toHaveBeenCalledWith(500);
       expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
-        error: expect.any(Object)
+        success: false,
+        error: expect.objectContaining({
+          message: expect.any(String),
+          code: expect.any(String),
+        }),
       }));
       expect(errorLogger.logError).toHaveBeenCalled();
     });
