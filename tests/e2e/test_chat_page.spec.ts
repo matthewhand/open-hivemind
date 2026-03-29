@@ -75,9 +75,12 @@ test.describe('ChatPage Optimistic Message Rollback', () => {
   });
 
   test('sending a message optimistically updates and rolls back on failure', async ({ page }) => {
+    let resolveMessagePromise: () => void;
+    const messagePromise = new Promise<void>((resolve) => { resolveMessagePromise = resolve; });
+
     // Setup delayed failure mock for message sending so we can see the optimistic state
     await page.route('**/api/bots/*/message', async (route) => {
-      await new Promise((resolve) => setTimeout(resolve, 500)); // Delay to see optimistic UI
+      await messagePromise;
       await route.fulfill({
         status: 500,
         json: { error: 'Failed to send message' },
@@ -109,14 +112,13 @@ test.describe('ChatPage Optimistic Message Rollback', () => {
     // Take a screenshot of the optimistic state
     await page.screenshot({ path: 'docs/screenshots/chatpage-optimistic.png' });
 
+    // Resolve the promise to let the request complete
+    resolveMessagePromise!();
+
     // Wait for the failure to resolve and rollback to occur
     // The rollback will mark the optimistic message as failed (Retry button, error indicator, or message removal)
-    await page.waitForTimeout(1500);
-    // The message should either show a retry indicator or be removed
-    const retryVisible = await page.getByText('Retry').isVisible().catch(() => false);
-    const errorVisible = await page.getByText(/failed|error/i).first().isVisible().catch(() => false);
     // At minimum, the sending indicator should be gone
-    await expect(page.getByText('Sending...')).not.toBeVisible({ timeout: 2000 });
+    await expect(page.getByText('Sending...')).not.toBeVisible({ timeout: 5000 });
 
     // Take a screenshot of the rollback state
     await page.screenshot({ path: 'docs/screenshots/chatpage-rollback.png' });
@@ -152,9 +154,12 @@ test.describe('ChatPage Optimistic Message Rollback', () => {
       });
     });
 
+    let resolveLatencyPromise: () => void;
+    const latencyPromise = new Promise<void>((resolve) => { resolveLatencyPromise = resolve; });
+
     // Setup high latency mock
     await page.route('**/api/bots/*/message', async (route) => {
-      await new Promise((resolve) => setTimeout(resolve, 2000)); // 2 seconds latency
+      await latencyPromise;
       messageSent = true;
       await route.fulfill({
         status: 200,
@@ -177,8 +182,11 @@ test.describe('ChatPage Optimistic Message Rollback', () => {
     // Take a screenshot showing the loading indicator clearly
     await page.screenshot({ path: 'docs/screenshots/chatpage-latency.png' });
 
+    // Resolve the promise
+    resolveLatencyPromise!();
+
     // Wait for latency to clear and 'Sending...' to disappear
-    await expect(page.getByText('Sending...')).not.toBeVisible({ timeout: 4000 });
+    await expect(page.getByText('Sending...')).not.toBeVisible({ timeout: 5000 });
     // Verify the message persists and hasn't rolled back
     await expect(page.getByText(testMessage)).toBeVisible();
   });
@@ -195,16 +203,11 @@ test.describe('ChatPage Optimistic Message Rollback', () => {
     // Dispatch the offline event manually since context.setOffline may not trigger window events
     await page.evaluate(() => window.dispatchEvent(new Event('offline')));
 
-    // Wait for the UI to reflect offline status
-    await page.waitForTimeout(1000);
-
     // Check for any offline indicator (text, disabled input, etc.)
     const offlineText = page.getByText(/offline/i).first();
     const offlinePlaceholder = page.getByPlaceholder(/offline/i).first();
 
-    if (await offlineText.isVisible().catch(() => false)) {
-      await expect(offlineText).toBeVisible();
-    }
+    await expect(offlineText).toBeVisible({ timeout: 10000 });
 
     // Screenshot offline mode
     await page.screenshot({ path: 'docs/screenshots/chatpage-offline.png' });
@@ -212,12 +215,9 @@ test.describe('ChatPage Optimistic Message Rollback', () => {
     // Simulate online
     await context.setOffline(false);
     await page.evaluate(() => window.dispatchEvent(new Event('online')));
-    await page.waitForTimeout(1000);
 
     // The input should be available again
     const chatInput = page.locator('input[type="text"], textarea').last();
-    if (await chatInput.isVisible().catch(() => false)) {
-      await expect(chatInput).toBeEnabled();
-    }
+    await expect(chatInput).toBeEnabled({ timeout: 10000 });
   });
 });
