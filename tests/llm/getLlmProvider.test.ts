@@ -14,60 +14,34 @@ jest.mock('@src/config/ProviderConfigManager', () => ({
   },
 }));
 
-// Mock the plugin loader used by getLlmProvider
-jest.mock('@src/plugins/PluginLoader', () => {
-  const providers: Record<string, any> = {
-    'llm-openai': {
-      create: () => ({
-        name: 'openai',
-        supportsChatCompletion: () => true,
-        supportsCompletion: () => true,
-        supportsHistory: undefined,
-        generateChatCompletion: jest.fn().mockResolvedValue('test response'),
-        generateCompletion: jest.fn().mockResolvedValue('test response'),
-      }),
-    },
-    'llm-flowise': {
-      create: () => ({
-        name: 'flowise',
-        supportsChatCompletion: () => true,
-        supportsCompletion: () => true,
-        supportsHistory: undefined,
-        generateChatCompletion: jest.fn().mockResolvedValue('test response'),
-        generateCompletion: jest.fn().mockResolvedValue('test response'),
-      }),
-    },
-    'llm-openwebui': {
-      create: () => ({
-        name: 'openwebui',
-        supportsChatCompletion: () => true,
-        supportsCompletion: () => true,
-        supportsHistory: undefined,
-        generateChatCompletion: jest.fn().mockResolvedValue('test response'),
-        generateCompletion: jest.fn().mockResolvedValue('test response'),
-      }),
-    },
-  };
-  return {
-    __esModule: true,
-    loadPlugin: jest.fn((name: string) => {
-      if (providers[name]) return providers[name];
-      throw new Error(`Plugin '${name}' not found.`);
-    }),
-    instantiateLlmProvider: jest.fn((mod: any, _config?: any) => {
-      if (typeof mod.create === 'function') return mod.create();
-      throw new Error('Plugin does not export create().');
-    }),
-  };
-});
+// Mock OpenAiProvider class
+jest.mock('@hivemind/llm-openai', () => ({
+  __esModule: true,
+  OpenAiProvider: jest.fn().mockImplementation(() => ({
+    name: 'openai',
+    supportsChatCompletion: () => true,
+    supportsCompletion: () => true,
+    generateChatCompletion: jest.fn().mockResolvedValue('test response'),
+    generateCompletion: jest.fn().mockResolvedValue('test response'),
+  })),
+}));
 
-// Mock MetricsCollector used by withTokenCounting wrapper
-jest.mock('@src/monitoring/MetricsCollector', () => ({
-  MetricsCollector: {
-    getInstance: () => ({
-      recordLlmTokenUsage: jest.fn(),
-    }),
-  },
+// Mock FlowiseProvider class
+jest.mock('@integrations/flowise/flowiseProvider', () => ({
+  __esModule: true,
+  FlowiseProvider: jest.fn().mockImplementation(() => ({
+    name: 'flowise',
+    supportsChatCompletion: () => true,
+    supportsCompletion: () => true,
+    generateChatCompletion: jest.fn().mockResolvedValue('test response'),
+    generateCompletion: jest.fn().mockResolvedValue('test response'),
+  })),
+}));
+
+// Mock openWebUI
+jest.mock('@integrations/openwebui/runInference', () => ({
+  __esModule: true,
+  generateChatCompletion: jest.fn().mockResolvedValue({ text: 'test response' }),
 }));
 
 const mockedLlmConfig = llmConfig as jest.Mocked<typeof llmConfig>;

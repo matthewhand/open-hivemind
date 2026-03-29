@@ -1,15 +1,9 @@
+import crypto from 'crypto';
 import Debug from 'debug';
 import type { NextFunction, Request, Response } from 'express';
 import session from 'express-session';
 
 const debug = Debug('app:sessionMiddleware');
-
-/** Extended session data used by Hivemind session middleware. */
-interface HivemindSessionData extends session.Session {
-  userId?: string;
-  lastActivity?: number;
-  isNew?: boolean;
-}
 
 /**
  * Secure Session Management Configuration
@@ -36,7 +30,7 @@ export function getSessionSecret(): string {
 
   // Validate secret strength
   if (envSecret.length < 32) {
-    debug('WARN:', 
+    console.warn(
       `WARNING: SESSION_SECRET is only ${envSecret.length} characters; ` +
         'it should be at least 32 characters long for adequate security'
     );
@@ -84,7 +78,7 @@ export const sessionSecurityMiddleware = (req: Request, res: Response, next: Nex
   }
 
   // Check for session fixation attacks
-  const session = req.session as HivemindSessionData;
+  const session = req.session as any;
 
   // If this is a new session but user is already authenticated, regenerate
   if (session.isNew && session.userId) {
@@ -141,7 +135,7 @@ export const applySessionManagement = (req: Request, res: Response, next: NextFu
  * Require valid session middleware
  */
 export const requireSession = (req: Request, res: Response, next: NextFunction) => {
-  if (!req.session || !(req.session as HivemindSessionData).userId) {
+  if (!req.session || !(req.session as any).userId) {
     return res.status(401).json({
       error: 'Authentication required',
       code: 'AUTHENTICATION_REQUIRED',

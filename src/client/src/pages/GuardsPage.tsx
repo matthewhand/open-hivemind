@@ -1,20 +1,17 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { Shield, Plus, Edit2, Trash2, RefreshCw, Save, AlertTriangle, Copy, ToggleLeft } from 'lucide-react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { Shield, Plus, Edit2, Trash2, Check, RefreshCw, AlertCircle, Save, X, Settings, AlertTriangle, Copy } from 'lucide-react';
 import { useSuccessToast, useErrorToast } from '../components/DaisyUI/ToastNotification';
 import Modal, { ConfirmModal } from '../components/DaisyUI/Modal';
 import PageHeader from '../components/DaisyUI/PageHeader';
 import SearchFilterBar from '../components/SearchFilterBar';
 import EmptyState from '../components/DaisyUI/EmptyState';
-import { SkeletonTableLayout } from '../components/DaisyUI/Skeleton';
-import { CommaSeparatedInput } from '../components/DaisyUI/CommaSeparatedInput';
+import { LoadingSpinner } from '../components/DaisyUI/Loading';
+import { CommaSeparatedInput } from '../components/Common/CommaSeparatedInput';
 import Input from '../components/DaisyUI/Input';
 import Textarea from '../components/DaisyUI/Textarea';
 import Select from '../components/DaisyUI/Select';
 import Toggle from '../components/DaisyUI/Toggle';
-import useUrlParams from '../hooks/useUrlParams';
-import { useBulkSelection } from '../hooks/useBulkSelection';
-import BulkActionBar from '../components/BulkActionBar';
 
 interface McpGuardConfig {
   enabled: boolean;
@@ -48,11 +45,7 @@ const GuardsPage: React.FC = () => {
   const [profiles, setProfiles] = useState<GuardrailProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const { values: urlParams, setValue: setUrlParam } = useUrlParams({
-    search: { type: 'string', default: '', debounce: 300 },
-  });
-  const searchValue = urlParams.search;
-  const setSearchValue = (v: string) => setUrlParam('search', v);
+  const [searchValue, setSearchValue] = useState('');
 
   const showSuccess = useSuccessToast();
   const showError = useErrorToast();
@@ -197,66 +190,15 @@ const GuardsPage: React.FC = () => {
     profile.name.toLowerCase().includes(searchValue.toLowerCase())
   );
 
-  // Bulk selection
-  const filteredProfileIds = useMemo(() => filteredProfiles.map(p => p.id), [filteredProfiles]);
-  const bulk = useBulkSelection(filteredProfileIds);
-  const [bulkDeleting, setBulkDeleting] = useState(false);
-
-  const handleBulkDeleteProfiles = async () => {
-    if (bulk.selectedCount === 0) return;
-    setBulkDeleting(true);
-    try {
-      const ids = Array.from(bulk.selectedIds);
-      await Promise.allSettled(
-        ids.map(id =>
-          fetch(`${API_BASE}/guard-profiles/${id}`, { method: 'DELETE' })
-        )
-      );
-      bulk.clearSelection();
-      showSuccess('Selected profiles deleted');
-      fetchProfiles();
-    } catch (err) {
-      showError('Failed to delete some profiles');
-    } finally {
-      setBulkDeleting(false);
-    }
-  };
-
-  const handleBulkToggleGuards = async (enable: boolean) => {
-    if (bulk.selectedCount === 0) return;
-    try {
-      const ids = Array.from(bulk.selectedIds);
-      const updates = ids.map(id => {
-        const profile = profiles.find(p => p.id === id);
-        if (!profile) return Promise.resolve();
-        const updated = JSON.parse(JSON.stringify(profile));
-        updated.guards.mcpGuard.enabled = enable;
-        if (updated.guards.rateLimit) updated.guards.rateLimit.enabled = enable;
-        if (updated.guards.contentFilter) updated.guards.contentFilter.enabled = enable;
-        return fetch(`${API_BASE}/guard-profiles/${id}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(updated),
-        });
-      });
-      await Promise.allSettled(updates);
-      bulk.clearSelection();
-      showSuccess(`Guards ${enable ? 'enabled' : 'disabled'} for selected profiles`);
-      fetchProfiles();
-    } catch (err) {
-      showError('Failed to update some profiles');
-    }
-  };
-
   return (
     <div className="space-y-6">
       <PageHeader
         title="Guard Profiles"
         description="Manage security and access control profiles for bots"
-        icon={<Shield className="w-8 h-8 text-primary" />}
+        icon={Shield}
         actions={
           <div className="flex gap-2">
-            <button onClick={fetchProfiles} className="btn btn-ghost btn-sm" disabled={loading} aria-busy={loading} title="Refresh" aria-label="Refresh profiles">
+            <button onClick={fetchProfiles} className="btn btn-ghost btn-sm" disabled={loading} title="Refresh">
               <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
             </button>
             <button onClick={handleCreate} className="btn btn-primary btn-sm">
@@ -274,7 +216,9 @@ const GuardsPage: React.FC = () => {
       />
 
       {loading && !editingProfile ? (
-        <SkeletonTableLayout rows={5} columns={3} />
+        <div className="flex items-center justify-center py-12">
+          <LoadingSpinner size="lg" />
+        </div>
       ) : profiles.length === 0 ? (
         <EmptyState
           icon={Shield}
@@ -295,74 +239,24 @@ const GuardsPage: React.FC = () => {
           onAction={() => setSearchValue('')}
         />
       ) : (
-        <>
-          <div className="flex items-center gap-2 mb-2">
-            <input
-              type="checkbox"
-              className="checkbox checkbox-sm checkbox-primary"
-              checked={bulk.isAllSelected}
-              onChange={() => bulk.toggleAll(filteredProfileIds)}
-              aria-label="Select all profiles"
-            />
-            <span className="text-xs text-base-content/60">Select all</span>
-          </div>
-          <BulkActionBar
-            selectedCount={bulk.selectedCount}
-            onClearSelection={bulk.clearSelection}
-            actions={[
-              {
-                key: 'enable',
-                label: 'Enable All Guards',
-                icon: <ToggleLeft className="w-4 h-4" />,
-                variant: 'success',
-                onClick: () => handleBulkToggleGuards(true),
-              },
-              {
-                key: 'disable',
-                label: 'Disable All Guards',
-                icon: <ToggleLeft className="w-4 h-4" />,
-                variant: 'warning',
-                onClick: () => handleBulkToggleGuards(false),
-              },
-              {
-                key: 'delete',
-                label: 'Delete',
-                icon: <Trash2 className="w-4 h-4" />,
-                variant: 'error',
-                onClick: handleBulkDeleteProfiles,
-                loading: bulkDeleting,
-              },
-            ]}
-          />
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredProfiles.map(profile => (
             <div key={profile.id} className="card bg-base-100 border border-base-200 shadow-sm hover:shadow-md transition-shadow">
               <div className="card-body">
                 <div className="flex justify-between items-start">
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="checkbox"
-                      className="checkbox checkbox-sm checkbox-primary"
-                      checked={bulk.isSelected(profile.id)}
-                      onChange={(e) => bulk.toggleItem(profile.id, e as any)}
-                      onClick={(e) => e.stopPropagation()}
-                      aria-label={`Select ${profile.name}`}
-                    />
-                    <h3 className="card-title text-lg">{profile.name}</h3>
-                  </div>
+                  <h3 className="card-title text-lg">{profile.name}</h3>
                   <div className="flex gap-1">
                     <button
                       onClick={() => handleDuplicateProfile(profile)}
                       className="btn btn-ghost btn-xs btn-square"
                       title="Duplicate Profile"
-                      aria-label="Duplicate Profile"
                     >
                       <Copy className="w-4 h-4" />
                     </button>
-                    <button onClick={() => handleEdit(profile)} className="btn btn-ghost btn-xs btn-square" aria-label="Edit profile">
+                    <button onClick={() => handleEdit(profile)} className="btn btn-ghost btn-xs btn-square">
                       <Edit2 className="w-4 h-4" />
                     </button>
-                    <button onClick={() => handleDeleteProfile(profile)} className="btn btn-ghost btn-xs btn-square text-error" aria-label="Delete profile">
+                    <button onClick={() => handleDeleteProfile(profile)} className="btn btn-ghost btn-xs btn-square text-error">
                       <Trash2 className="w-4 h-4" />
                     </button>
                   </div>
@@ -381,7 +275,6 @@ const GuardsPage: React.FC = () => {
             </div>
           ))}
         </div>
-        </>
       )}
 
       {/* Edit Modal */}
@@ -463,12 +356,6 @@ const GuardsPage: React.FC = () => {
                       value={editingProfile.guards.mcpGuard.allowedUsers || []}
                       onChange={v => updateGuard('mcpGuard', { allowedUsers: v })}
                       disabled={!editingProfile.guards.mcpGuard.enabled}
-                    validate={item => {
-                      if (!/^[a-zA-Z0-9-_]+$/.test(item)) {
-                        return "User IDs must contain only letters, numbers, dashes, and underscores.";
-                      }
-                      return null;
-                    }}
                     />
                   </div>
                 )}
@@ -481,12 +368,6 @@ const GuardsPage: React.FC = () => {
                     value={editingProfile.guards.mcpGuard.allowedTools || []}
                     onChange={v => updateGuard('mcpGuard', { allowedTools: v })}
                     disabled={!editingProfile.guards.mcpGuard.enabled}
-                    validate={item => {
-                      if (!/^[a-zA-Z0-9-_]+$/.test(item)) {
-                        return "Tool names must contain only letters, numbers, dashes, and underscores.";
-                      }
-                      return null;
-                    }}
                   />
                   <label className="label"><span className="label-text-alt opacity-70">Leave empty to allow all tools (if enabled)</span></label>
                 </div>

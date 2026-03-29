@@ -1,18 +1,18 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useEffect, useMemo, useState } from 'react';
-import { usePersonas } from '../../hooks/usePersonas';
-import { useProviders } from '../../hooks/useProviders';
-import { getMCPServers } from '../../services/agentService';
-import type { Bot, StatusResponse } from '../../services/api';
-import type { ProviderInfo } from '../../services/providerService';
 import {
   useApplyHotReloadChangeMutation,
   useGetConfigQuery,
   useGetStatusQuery,
 } from '../../store/slices/apiSlice';
-import { LoadingSpinner } from '../DaisyUI/Loading';
+import type { Bot, StatusResponse } from '../../services/api';
+import { useProviders } from '../../hooks/useProviders';
+import { usePersonas } from '../../hooks/usePersonas';
+import { getMCPServers } from '../../services/agentService';
 import AgentConfigCard from './AgentConfigCard';
 import type { BotUIState, GuardInputState, GuardState } from './types';
+import type { ProviderInfo } from '../../services/providerService';
+import { LoadingSpinner } from '../DaisyUI';
 
 interface AgentConfiguratorProps {
   title?: string;
@@ -58,8 +58,7 @@ const fallbackLlmProviders: ProviderInfo[] = [
     key: 'openai',
     label: 'OpenAI',
     docsUrl: 'https://platform.openai.com/account/api-keys',
-    helpText:
-      'Generate an API key from the OpenAI portal and paste it into the Open-Hivemind configuration.',
+    helpText: 'Generate an API key from the OpenAI portal and paste it into the Open-Hivemind configuration.',
   },
   {
     key: 'anthropic',
@@ -119,22 +118,14 @@ const AgentConfigurator: React.FC<AgentConfiguratorProps> = ({ title = 'Agent Co
   const [selectionState, setSelectionState] = useState<Record<string, BotUIState>>({});
   const [guardInputState, setGuardInputState] = useState<GuardInputState>({});
   const [pendingBots, setPendingBots] = useState<Record<string, boolean>>({});
-  const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(
-    null
-  );
+  const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
   const [availableMcpServers, setAvailableMcpServers] = useState<string[]>([]);
   const [mcpError, setMcpError] = useState<string | null>(null);
-  const [responseProfileOptions, setResponseProfileOptions] = useState<
-    Array<{ value: string; label: string }>
-  >([]);
-  const [guardrailProfileOptions, setGuardrailProfileOptions] = useState<
-    Array<{ value: string; label: string; description?: string }>
-  >([]);
+  const [responseProfileOptions, setResponseProfileOptions] = useState<Array<{ value: string; label: string }>>([]);
+  const [guardrailProfileOptions, setGuardrailProfileOptions] = useState<Array<{ value: string; label: string; description?: string }>>([]);
   const [guardrailProfileMap, setGuardrailProfileMap] = useState<Record<string, GuardState>>({});
   const [llmProfiles, setLlmProfiles] = useState<ProviderProfile[]>([]);
-  const [mcpServerProfileOptions, setMcpServerProfileOptions] = useState<
-    Array<{ value: string; label: string }>
-  >([]);
+  const [mcpServerProfileOptions, setMcpServerProfileOptions] = useState<Array<{ value: string; label: string }>>([]);
 
   const { personas, loading: personasLoading } = usePersonas();
   const {
@@ -163,9 +154,7 @@ const AgentConfigurator: React.FC<AgentConfiguratorProps> = ({ title = 'Agent Co
     const fetchResponseProfiles = async () => {
       try {
         const response = await fetch('/api/config/response-profiles');
-        if (!response.ok) {
-          return;
-        }
+        if (!response.ok) {return;}
         const data = await response.json();
         const profiles = Array.isArray(data?.profiles) ? data.profiles : [];
 
@@ -197,9 +186,7 @@ const AgentConfigurator: React.FC<AgentConfiguratorProps> = ({ title = 'Agent Co
     const fetchGuardrailProfiles = async () => {
       try {
         const response = await fetch('/api/config/guardrails');
-        if (!response.ok) {
-          return;
-        }
+        if (!response.ok) {return;}
         const data = await response.json();
         const profiles = Array.isArray(data?.profiles) ? data.profiles : [];
 
@@ -209,22 +196,18 @@ const AgentConfigurator: React.FC<AgentConfiguratorProps> = ({ title = 'Agent Co
             label: profile.name || profile.key,
             description: profile.description,
           }))
-          .filter((option) => option.value.length > 0)
+          .filter(option => option.value.length > 0)
           .sort((a, b) => a.label.localeCompare(b.label));
 
         const map: Record<string, GuardState> = {};
         for (const profile of profiles) {
-          if (!profile?.key || !profile?.mcpGuard) {
-            continue;
-          }
+          if (!profile?.key || !profile?.mcpGuard) {continue;}
           const guard = profile.mcpGuard;
           map[String(profile.key)] = {
             enabled: Boolean(guard.enabled),
             type: guard.type === 'custom' ? 'custom' : 'owner',
             allowedUserIds: Array.isArray(guard.allowedUserIds)
-              ? guard.allowedUserIds.filter(
-                  (id: any) => typeof id === 'string' && id.trim().length > 0
-                )
+              ? guard.allowedUserIds.filter((id: any) => typeof id === 'string' && id.trim().length > 0)
               : [],
           };
         }
@@ -249,9 +232,7 @@ const AgentConfigurator: React.FC<AgentConfiguratorProps> = ({ title = 'Agent Co
     const fetchLlmProfiles = async () => {
       try {
         const response = await fetch('/api/config/llm-profiles');
-        if (!response.ok) {
-          return;
-        }
+        if (!response.ok) {return;}
         const data = await response.json();
         const llmProfilesList = Array.isArray(data?.llm)
           ? data.llm
@@ -277,9 +258,7 @@ const AgentConfigurator: React.FC<AgentConfiguratorProps> = ({ title = 'Agent Co
     const fetchMcpServerProfiles = async () => {
       try {
         const response = await fetch('/api/config/mcp-server-profiles');
-        if (!response.ok) {
-          return;
-        }
+        if (!response.ok) {return;}
         const data = await response.json();
         const profiles = Array.isArray(data?.profiles) ? data.profiles : [];
 
@@ -317,7 +296,7 @@ const AgentConfigurator: React.FC<AgentConfiguratorProps> = ({ title = 'Agent Co
     const nextState: Record<string, BotUIState> = {};
     const nextGuardInputs: GuardInputState = {};
 
-    bots.forEach((bot) => {
+    bots.forEach(bot => {
       const guard: GuardState = normalizeGuard(bot.mcpGuard);
       nextState[bot.name] = {
         messageProvider: bot.messageProvider || '',
@@ -334,40 +313,32 @@ const AgentConfigurator: React.FC<AgentConfiguratorProps> = ({ title = 'Agent Co
       nextGuardInputs[bot.name] = guard.allowedUserIds.join(', ');
     });
 
-    setSelectionState((prev) => (deepEqual(prev, nextState) ? prev : nextState));
-    setGuardInputState((prev) => (deepEqual(prev, nextGuardInputs) ? prev : nextGuardInputs));
+    setSelectionState(prev => (deepEqual(prev, nextState) ? prev : nextState));
+    setGuardInputState(prev => (deepEqual(prev, nextGuardInputs) ? prev : nextGuardInputs));
   }, [bots]);
 
   const statusByName = useMemo(() => {
     const map = new Map<string, StatusResponse['bots'][number]>();
-    statusData?.bots?.forEach((botStatus) => {
+    statusData?.bots.forEach(botStatus => {
       map.set(botStatus.name, botStatus);
     });
     return map;
   }, [statusData]);
 
-  const messageProviderInfoList = messageProviders.length
-    ? messageProviders
-    : fallbackMessageProviders;
+  const messageProviderInfoList = messageProviders.length ? messageProviders : fallbackMessageProviders;
   const llmProviderInfoList = llmProviders.length ? llmProviders : fallbackLlmProviders;
 
-  const messageProviderOptions = useMemo(
-    () => messageProviderInfoList.map(toOptionLabel),
-    [messageProviderInfoList]
-  );
-  const llmProviderOptions = useMemo(
-    () => llmProviderInfoList.map(toOptionLabel),
-    [llmProviderInfoList]
-  );
+  const messageProviderOptions = useMemo(() => messageProviderInfoList.map(toOptionLabel), [messageProviderInfoList]);
+  const llmProviderOptions = useMemo(() => llmProviderInfoList.map(toOptionLabel), [llmProviderInfoList]);
 
   const messageProviderInfoMap = useMemo(
-    () => Object.fromEntries(messageProviderInfoList.map((info) => [info.key, info])),
-    [messageProviderInfoList]
+    () => Object.fromEntries(messageProviderInfoList.map(info => [info.key, info])),
+    [messageProviderInfoList],
   );
 
   const llmProviderInfoMap = useMemo(
-    () => Object.fromEntries(llmProviderInfoList.map((info) => [info.key, info])),
-    [llmProviderInfoList]
+    () => Object.fromEntries(llmProviderInfoList.map(info => [info.key, info])),
+    [llmProviderInfoList],
   );
 
   const isLoading = configLoading || statusLoading;
@@ -390,9 +361,9 @@ const AgentConfigurator: React.FC<AgentConfiguratorProps> = ({ title = 'Agent Co
     bot: Bot,
     field: K,
     value: BotUIState[K],
-    commitImmediately = true
+    commitImmediately = true,
   ) {
-    setSelectionState((prev) => {
+    setSelectionState(prev => {
       const current = prev[bot.name];
       const nextState = {
         ...prev,
@@ -420,20 +391,14 @@ const AgentConfigurator: React.FC<AgentConfiguratorProps> = ({ title = 'Agent Co
 
   const handleSystemInstructionBlur = (bot: Bot) => {
     const current = selectionState[bot.name];
-    if (!current) {
-      return;
-    }
+    if (!current) {return;}
     commitChanges(bot.name, { systemInstruction: current.systemInstruction });
   };
 
   const handleGuardToggle = (bot: Bot, enabled: boolean) => {
     const current = selectionState[bot.name];
-    if (!current) {
-      return;
-    }
-    if (current.mcpGuardProfile) {
-      return;
-    }
+    if (!current) {return;}
+    if (current.mcpGuardProfile) {return;}
     const updatedGuard = { ...current.mcpGuard, enabled };
     handleSelectionChange(bot, 'mcpGuard', updatedGuard, false);
     commitChanges(bot.name, { mcpGuard: updatedGuard });
@@ -441,12 +406,8 @@ const AgentConfigurator: React.FC<AgentConfiguratorProps> = ({ title = 'Agent Co
 
   const handleGuardTypeChange = (bot: Bot, type: GuardState['type']) => {
     const current = selectionState[bot.name];
-    if (!current) {
-      return;
-    }
-    if (current.mcpGuardProfile) {
-      return;
-    }
+    if (!current) {return;}
+    if (current.mcpGuardProfile) {return;}
     const updatedGuard = { ...current.mcpGuard, type };
     handleSelectionChange(bot, 'mcpGuard', updatedGuard, false);
     commitChanges(bot.name, { mcpGuard: updatedGuard });
@@ -454,22 +415,18 @@ const AgentConfigurator: React.FC<AgentConfiguratorProps> = ({ title = 'Agent Co
 
   const handleGuardUsersChange = (bot: Bot, value: string) => {
     // Only update local input state to avoid immediate tokenization
-    setGuardInputState((prev) => ({ ...prev, [bot.name]: value }));
+    setGuardInputState(prev => ({ ...prev, [bot.name]: value }));
   };
 
   const handleGuardUsersBlur = (bot: Bot) => {
     const current = selectionState[bot.name];
     const inputValue = guardInputState[bot.name] || '';
-    if (!current) {
-      return;
-    }
-    if (current.mcpGuardProfile) {
-      return;
-    }
+    if (!current) {return;}
+    if (current.mcpGuardProfile) {return;}
 
     const list = inputValue
       .split(',')
-      .map((entry) => entry.trim())
+      .map(entry => entry.trim())
       .filter(Boolean);
 
     const updatedGuard = { ...current.mcpGuard, allowedUserIds: list };
@@ -480,14 +437,12 @@ const AgentConfigurator: React.FC<AgentConfiguratorProps> = ({ title = 'Agent Co
 
   const handleGuardrailProfileChange = (bot: Bot, profileKey: string) => {
     const current = selectionState[bot.name];
-    if (!current) {
-      return;
-    }
+    if (!current) {return;}
 
     const nextProfile = profileKey.trim();
     const profileGuard = guardrailProfileMap[nextProfile];
 
-    setSelectionState((prev) => ({
+    setSelectionState(prev => ({
       ...prev,
       [bot.name]: {
         ...prev[bot.name],
@@ -497,7 +452,7 @@ const AgentConfigurator: React.FC<AgentConfiguratorProps> = ({ title = 'Agent Co
     }));
 
     if (profileGuard) {
-      setGuardInputState((prev) => ({
+      setGuardInputState(prev => ({
         ...prev,
         [bot.name]: profileGuard.allowedUserIds.join(', '),
       }));
@@ -511,7 +466,7 @@ const AgentConfigurator: React.FC<AgentConfiguratorProps> = ({ title = 'Agent Co
       return;
     }
 
-    setPendingBots((prev) => ({ ...prev, [botName]: true }));
+    setPendingBots(prev => ({ ...prev, [botName]: true }));
     setFeedback(null);
 
     try {
@@ -549,7 +504,7 @@ const AgentConfigurator: React.FC<AgentConfiguratorProps> = ({ title = 'Agent Co
       }
 
       if (Object.keys(payload).length === 0) {
-        setPendingBots((prev) => {
+        setPendingBots(prev => {
           const next = { ...prev };
           delete next[botName];
           return next;
@@ -573,7 +528,7 @@ const AgentConfigurator: React.FC<AgentConfiguratorProps> = ({ title = 'Agent Co
       const message = error instanceof Error ? error.message : 'Failed to update bot configuration';
       setFeedback({ type: 'error', message });
     } finally {
-      setPendingBots((prev) => {
+      setPendingBots(prev => {
         const next = { ...prev };
         delete next[botName];
         return next;
@@ -597,8 +552,7 @@ const AgentConfigurator: React.FC<AgentConfiguratorProps> = ({ title = 'Agent Co
           <div className="max-w-md">
             <h1 className="text-4xl font-bold">{title}</h1>
             <p className="py-6">
-              Configure messaging, LLM providers, personas, and MCP tooling for each agent. Fields
-              defined via environment variables are locked and displayed for reference.
+              Configure messaging, LLM providers, personas, and MCP tooling for each agent. Fields defined via environment variables are locked and displayed for reference.
             </p>
           </div>
         </div>
@@ -606,27 +560,14 @@ const AgentConfigurator: React.FC<AgentConfiguratorProps> = ({ title = 'Agent Co
 
       <div className="p-4">
         <div className="flex justify-end items-center gap-2 mb-4">
-          <button
-            className={`btn btn-outline ${isFetching ? 'loading' : ''}`}
-            onClick={handleRefresh}
-            disabled={isFetching}
-          >
+          <button className={`btn btn-outline ${isFetching ? 'loading' : ''}`} onClick={handleRefresh} disabled={isFetching}>
             {isFetching ? 'Refreshing…' : 'Refresh status'}
           </button>
           <div className="dropdown dropdown-end">
-            <label tabIndex={0} className="btn">
-              API Spec
-            </label>
-            <ul
-              tabIndex={0}
-              className="dropdown-content menu p-2 shadow bg-base-100 rounded-box w-52"
-            >
-              <li>
-                <a onClick={() => openApiSpec('json')}>Download JSON</a>
-              </li>
-              <li>
-                <a onClick={() => openApiSpec('yaml')}>Download YAML</a>
-              </li>
+            <label tabIndex={0} className="btn">API Spec</label>
+            <ul tabIndex={0} className="dropdown-content menu p-2 shadow bg-base-100 rounded-box w-52">
+              <li><a onClick={() => openApiSpec('json')}>Download JSON</a></li>
+              <li><a onClick={() => openApiSpec('yaml')}>Download YAML</a></li>
             </ul>
           </div>
         </div>
@@ -635,13 +576,7 @@ const AgentConfigurator: React.FC<AgentConfiguratorProps> = ({ title = 'Agent Co
           <div className={`alert alert-${feedback.type} shadow-lg mb-4`}>
             <div>
               <span>{feedback.message}</span>
-              <button
-                className="btn btn-ghost btn-sm"
-                onClick={() => setFeedback(null)}
-                aria-label="Close feedback"
-              >
-                ✕
-              </button>
+              <button className="btn btn-ghost btn-sm" onClick={() => setFeedback(null)}>✕</button>
             </div>
           </div>
         )}
@@ -671,20 +606,14 @@ const AgentConfigurator: React.FC<AgentConfiguratorProps> = ({ title = 'Agent Co
         )}
 
         {bots.length === 0 ? (
-          <div className="alert alert-info">
-            No agents detected. Create a bot configuration to get started.
-          </div>
+          <div className="alert alert-info">No agents detected. Create a bot configuration to get started.</div>
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            {bots.map((bot) => {
+            {bots.map(bot => {
               const uiState = selectionState[bot.name];
               const status = statusByName.get(bot.name);
               const metadata = bot.metadata || {};
-              const llmProfileOptions = buildProviderProfileOptions(
-                llmProfiles,
-                uiState?.llmProvider,
-                uiState?.llmProfile
-              );
+              const llmProfileOptions = buildProviderProfileOptions(llmProfiles, uiState?.llmProvider, uiState?.llmProfile);
 
               return (
                 <AgentConfigCard
@@ -730,42 +659,40 @@ const toOptionLabel = (info: ProviderInfo): { value: string; label: string } => 
   label: info.label
     ? info.label
     : info.key
-        .split(/[_\-\s]+/)
-        .filter(Boolean)
-        .map((segment) => segment.charAt(0).toUpperCase() + segment.slice(1))
-        .join(' '),
+      .split(/[_\-\s]+/)
+      .filter(Boolean)
+      .map(segment => segment.charAt(0).toUpperCase() + segment.slice(1))
+      .join(' '),
 });
 
 const formatProfileLabel = (name: string): string => {
   const trimmed = name.trim();
-  if (!trimmed) {
-    return '';
-  }
+  if (!trimmed) {return '';}
   return trimmed
     .split(/[_\-\s]+/)
     .filter(Boolean)
-    .map((segment) => segment.charAt(0).toUpperCase() + segment.slice(1))
+    .map(segment => segment.charAt(0).toUpperCase() + segment.slice(1))
     .join(' ');
 };
 
 const buildProviderProfileOptions = (
   profiles: ProviderProfile[],
   provider?: string,
-  selected?: string
+  selected?: string,
 ): Array<{ value: string; label: string }> => {
   const normalizedProvider = provider?.trim();
   const filtered = normalizedProvider
-    ? profiles.filter((profile) => profile.provider === normalizedProvider)
+    ? profiles.filter(profile => profile.provider === normalizedProvider)
     : profiles;
   const options = filtered
-    .filter((profile) => profile.modelType !== 'embedding')
-    .filter((profile) => profile.key)
-    .map((profile) => ({
+    .filter(profile => profile.modelType !== 'embedding')
+    .filter(profile => profile.key)
+    .map(profile => ({
       value: profile.key,
       label: profile.name || formatProfileLabel(profile.key),
     }));
 
-  if (selected && !options.some((option) => option.value === selected)) {
+  if (selected && !options.some(option => option.value === selected)) {
     options.unshift({
       value: selected,
       label: formatProfileLabel(selected),
@@ -775,18 +702,16 @@ const buildProviderProfileOptions = (
   return options;
 };
 
-const buildPersonaOptions = (
-  personas: Array<{ key?: string; id?: string; name: string }> | undefined
-) => {
+const buildPersonaOptions = (personas: Array<{ key?: string; id?: string; name: string }> | undefined) => {
   if (!personas || personas.length === 0) {
     return [] as Array<{ value: string; label: string }>;
   }
   return personas
-    .map((persona) => ({
+    .map(persona => ({
       value: persona.key || persona.id || '',
       label: persona.name,
     }))
-    .filter((option) => option.value);
+    .filter(option => option.value);
 };
 
 const normalizeGuard = (guard: unknown): GuardState => {
@@ -799,13 +724,11 @@ const normalizeGuard = (guard: unknown): GuardState => {
   let allowedUserIds: string[] = [];
 
   if (Array.isArray(rawAllowed)) {
-    allowedUserIds = rawAllowed.filter(
-      (id): id is string => typeof id === 'string' && id.trim().length > 0
-    );
+    allowedUserIds = rawAllowed.filter((id): id is string => typeof id === 'string' && id.trim().length > 0);
   } else if (typeof rawAllowed === 'string') {
     allowedUserIds = rawAllowed
       .split(',')
-      .map((id) => id.trim())
+      .map(id => id.trim())
       .filter(Boolean);
   }
 
@@ -819,15 +742,11 @@ const normalizeGuard = (guard: unknown): GuardState => {
 };
 
 function normalizeMcpServers(servers: unknown): string[] {
-  if (!servers) {
-    return [];
-  }
+  if (!servers) {return [];}
   if (Array.isArray(servers)) {
     return servers
-      .map((server) => {
-        if (typeof server === 'string') {
-          return server;
-        }
+      .map(server => {
+        if (typeof server === 'string') {return server;}
         if (server && typeof (server as { name?: unknown }).name === 'string') {
           return String((server as { name: unknown }).name);
         }

@@ -1,7 +1,4 @@
 import { EventEmitter } from 'events';
-import Logger from '@common/logger';
-
-const logger = Logger.withContext('MetricsCollector');
 
 export interface Metrics {
   messagesProcessed: number;
@@ -248,7 +245,7 @@ hivemind_llm_token_usage_total ${m.llmTokenUsage}`;
       llmTokenUsage: 0,
     };
     this.history = [];
-    logger.info('📊 Metrics reset');
+    console.log('📊 Metrics reset');
   }
 
   /**
@@ -259,6 +256,6 @@ hivemind_llm_token_usage_total ${m.llmTokenUsage}`;
     this.stopCollection();
     this.history = [];
     this.removeAllListeners();
-    logger.info('📊 MetricsCollector shutdown complete');
+    console.log('📊 MetricsCollector shutdown complete');
   }
 }

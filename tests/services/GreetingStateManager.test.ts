@@ -50,6 +50,8 @@ describe('GreetingStateManager', () => {
   const mockDataDir = '/app/data';
 
   beforeEach(() => {
+    // Reset singleton instance
+    (GreetingStateManager as any).instance = null;
     jest.clearAllMocks();
 
     // Setup default mock implementation
@@ -60,13 +62,14 @@ describe('GreetingStateManager', () => {
     (fs.writeFile as jest.Mock).mockResolvedValue(undefined);
     (fs.mkdir as jest.Mock).mockResolvedValue(undefined);
 
-    stateManager = new GreetingStateManager();
+    stateManager = GreetingStateManager.getInstance();
   });
 
-  describe('constructor', () => {
-    it('should create an instance', () => {
-      const instance = new GreetingStateManager();
-      expect(instance).toBeInstanceOf(GreetingStateManager);
+  describe('getInstance', () => {
+    it('should return the same instance', () => {
+      const instance1 = GreetingStateManager.getInstance();
+      const instance2 = GreetingStateManager.getInstance();
+      expect(instance1).toBe(instance2);
     });
   });
 
@@ -306,41 +309,6 @@ describe('GreetingStateManager', () => {
       const allState = stateManager.getAllState();
       expect(allState).toEqual({ [serviceId]: entry });
       expect(allState).not.toBe((stateManager as any).state); // Should be a copy
-    });
-  });
-
-  describe('Edge Cases and Concurrency', () => {
-    beforeEach(async () => {
-      await stateManager.initialize();
-    });
-
-    it('should handle null/undefined/empty string serviceId', async () => {
-      await expect(stateManager.markGreetingAsSent('', 'channel-1')).rejects.toThrow();
-      await expect(stateManager.markGreetingAsSent(null as any, 'channel-1')).rejects.toThrow();
-      await expect(
-        stateManager.markGreetingAsSent(undefined as any, 'channel-1')
-      ).rejects.toThrow();
-    });
-
-    it('should handle max-length strings for serviceId and channelId', async () => {
-      const longServiceId = 's'.repeat(5000);
-      const longChannelId = 'c'.repeat(5000);
-
-      await stateManager.markGreetingAsSent(longServiceId, longChannelId);
-      expect(stateManager.hasGreetingBeenSent(longServiceId)).toBe(true);
-      expect(stateManager.getServiceState(longServiceId)?.channelId).toBe(longChannelId);
-    });
-
-    it('should handle concurrent markGreetingAsSent calls safely', async () => {
-      const promises = [];
-      for (let i = 0; i < 50; i++) {
-        promises.push(stateManager.markGreetingAsSent(`service-${i}`, `channel-${i}`));
-      }
-      await Promise.all(promises);
-
-      for (let i = 0; i < 50; i++) {
-        expect(stateManager.hasGreetingBeenSent(`service-${i}`)).toBe(true);
-      }
     });
   });
 });

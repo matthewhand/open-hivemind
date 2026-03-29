@@ -45,10 +45,8 @@ const RATE_LIMIT_CONFIG = {
 };
 
 // Redis client and store
-// eslint-disable-next-line @typescript-eslint/no-explicit-any -- Redis client is dynamically required
-let redisClient: Record<string, (...args: unknown[]) => unknown> | null = null;
-// eslint-disable-next-line @typescript-eslint/no-explicit-any -- RedisStore is dynamically required
-let RedisStore: (new (opts: Record<string, unknown>) => unknown) | null = null;
+let redisClient: any = null;
+let RedisStore: any = null;
 let redisAvailable = false;
 
 /**
@@ -67,7 +65,7 @@ async function initializeRedis(): Promise<void> {
 
     const redisUrl = process.env.REDIS_URL;
     if (!redisUrl) {
-      debug('WARN:', 'REDIS_URL not set, using in-memory rate limiting');
+      console.warn('REDIS_URL not set, using in-memory rate limiting');
       return;
     }
 
@@ -109,7 +107,7 @@ async function initializeRedis(): Promise<void> {
     redisAvailable = true;
     debug('Redis client initialized successfully');
   } catch (err) {
-    debug('WARN:', 'Redis initialization failed, using in-memory rate limiting:', err);
+    console.warn('Redis initialization failed, using in-memory rate limiting:', err);
     redisAvailable = false;
   }
 }
@@ -184,7 +182,7 @@ const memoryStores = new Map<string, MemoryStoreWithCleanup>();
 /**
  * Create appropriate store based on environment
  */
-function createStore(prefix: string, windowMs: number): unknown {
+function createStore(prefix: string, windowMs: number): any {
   if (isProduction && redisAvailable && redisClient && RedisStore) {
     debug(`Creating Redis store for ${prefix}`);
     return new RedisStore({
@@ -463,9 +461,9 @@ function getClientKey(req: Request): string {
  * Standard rate limit handler
  */
 function createRateLimitHandler(type: string) {
-  return (req: Request & { rateLimit?: { resetTime?: number; limit?: number } }, res: Response) => {
-    const retryAfter = req.rateLimit?.resetTime
-      ? Math.ceil((req.rateLimit.resetTime - Date.now()) / 1000)
+  return (req: Request, res: Response) => {
+    const retryAfter = (req as any).rateLimit?.resetTime
+      ? Math.ceil(((req as any).rateLimit.resetTime - Date.now()) / 1000)
       : 60;
 
     logger.warn(`Rate limit exceeded for ${type}`, {
@@ -474,14 +472,6 @@ function createRateLimitHandler(type: string) {
       method: req.method,
       userAgent: req.headers['user-agent']?.substring(0, 100),
     });
-
-    // Set Retry-After and legacy X-RateLimit headers for frontend consumption
-    res.setHeader('Retry-After', String(retryAfter));
-    res.setHeader('X-RateLimit-Limit', String(req.rateLimit?.limit ?? 0));
-    res.setHeader('X-RateLimit-Remaining', '0');
-    if (req.rateLimit?.resetTime) {
-      res.setHeader('X-RateLimit-Reset', String(req.rateLimit.resetTime));
-    }
 
     res.status(429).json({
       error: 'Too many requests',

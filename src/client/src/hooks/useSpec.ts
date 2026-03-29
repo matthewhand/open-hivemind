@@ -17,12 +17,8 @@ const useSpec = (id: string) => {
         if (!response.ok) {
           throw new Error('Failed to fetch spec');
         }
-        const json = await response.json();
-        if (json.success && json.data) {
-          setSpec(json.data);
-        } else {
-          throw new Error(json.error || 'Failed to fetch spec');
-        }
+        const data = await response.json();
+        setSpec(data);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'An unknown error occurred');
       } finally {

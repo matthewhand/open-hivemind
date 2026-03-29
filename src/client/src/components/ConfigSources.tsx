@@ -1,14 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect } from 'react';
-import Card from './DaisyUI/Card';
-import Badge from './DaisyUI/Badge';
-import Button from './DaisyUI/Button';
-import { SkeletonList } from './DaisyUI/Skeleton';
-import Modal from './DaisyUI/Modal';
-import Accordion from './DaisyUI/Accordion';
-import { Alert } from './DaisyUI/Alert';
-import DataTable from './DaisyUI/DataTable';
-import { Loading } from './DaisyUI/Loading';
+import { Card, Badge, Button, Modal, Accordion, Alert, DataTable, Loading } from './DaisyUI';
 import {
   ArrowPathIcon,
   Cog6ToothIcon,
@@ -91,8 +83,9 @@ const ConfigSources: React.FC = () => {
   if (loading) {
     return (
       <Card>
-        <div className="py-6 px-4">
-          <SkeletonList items={5} />
+        <div className="flex justify-center items-center py-8">
+          <span className="loading loading-spinner loading-lg"></span>
+          <p className="ml-4">Loading configuration sources...</p>
         </div>
       </Card>
     );
@@ -222,7 +215,7 @@ const ConfigSources: React.FC = () => {
             <Button
               size="sm"
               onClick={fetchConfigSources}
-              disabled={loading} aria-busy={loading}
+              disabled={loading}
               className="flex items-center gap-2"
             >
               <ArrowPathIcon className="w-4 h-4" />

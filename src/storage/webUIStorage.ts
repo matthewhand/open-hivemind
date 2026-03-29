@@ -1,7 +1,5 @@
 import fs from 'fs';
 import path from 'path';
-import Debug from 'debug';
-const debug = Debug('app:storage:webUIStorage');
 
 /**
  * Simple persistent storage for web UI configurations
@@ -54,7 +52,7 @@ export class WebUIStorage {
         return this.configCache!;
       }
     } catch (error) {
-      debug('ERROR:', 'Error loading web UI config:', error);
+      console.error('Error loading web UI config:', error);
     }
 
     // Return default configuration
@@ -82,7 +80,7 @@ export class WebUIStorage {
       fs.writeFileSync(this.configFile, JSON.stringify(config, null, 2));
       this.configCache = config;
     } catch (error) {
-      debug('ERROR:', 'Error saving web UI config:', error);
+      console.error('Error saving web UI config:', error);
       throw new Error(
         `Failed to save web UI configuration: ${error instanceof Error ? error.message : String(error)}`
       );

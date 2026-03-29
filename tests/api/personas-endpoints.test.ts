@@ -27,13 +27,7 @@ app.use('/api/personas', personasRouter);
 const getMockManager = () => PersonaManager.getInstance() as unknown as Record<string, jest.Mock>;
 
 describe('Personas Routes', () => {
-  afterEach(() => {
-    (PersonaManager as any).instance = undefined;
-  });
-
   beforeEach(() => {
-    (PersonaManager as any).instance = undefined;
-
     jest.clearAllMocks();
   });
 
@@ -102,10 +96,9 @@ describe('Personas Routes', () => {
       await request(app).delete('/api/personas/p1').expect(200);
     });
 
-    it('should return 200 even if persona not found (idempotent)', async () => {
-      getMockManager().getPersona.mockReturnValue(undefined);
+    it('should return 404 if delete fails', async () => {
       getMockManager().deletePersona.mockReturnValue(false);
-      await request(app).delete('/api/personas/p1').expect(200);
+      await request(app).delete('/api/personas/p1').expect(404);
     });
   });
 

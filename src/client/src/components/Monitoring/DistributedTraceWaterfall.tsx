@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
-import Badge from '../DaisyUI/Badge';
-import Card from '../DaisyUI/Card';
+import { Badge, Card } from '../DaisyUI';
 import { Activity, Clock, Server, ChevronRight, ChevronDown, ZoomIn, ZoomOut, MoveLeft, MoveRight, X } from 'lucide-react';
 
 export interface TraceSpan {
@@ -262,7 +261,7 @@ export const DistributedTraceWaterfall: React.FC<DistributedTraceWaterfallProps>
               <div className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: getServiceColor(selectedSpan.service) }} />
               <span className="truncate" title={selectedSpan.name}>{selectedSpan.name}</span>
             </h4>
-            <button className="btn btn-ghost btn-xs btn-circle" aria-label="Close span detail" onClick={() => setSelectedSpanId(null)}>
+            <button className="btn btn-ghost btn-xs btn-circle" onClick={() => setSelectedSpanId(null)}>
               <X className="w-4 h-4" />
             </button>
           </div>

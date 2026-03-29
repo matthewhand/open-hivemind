@@ -6,12 +6,6 @@ import {
   saveGuardrailProfiles,
   type GuardrailProfile,
 } from '../../config/guardrailProfiles';
-import {
-  CreateGuardProfileSchema,
-  GuardProfileIdParamSchema,
-  UpdateGuardProfileSchema,
-} from '../../validation/schemas/guardProfilesSchema';
-import { validateRequest } from '../../validation/validateRequest';
 
 const router = Router();
 
@@ -41,7 +35,7 @@ router.get('/', (req: Request, res: Response) => {
 });
 
 // GET /:id - Get a specific profile
-router.get('/:id', validateRequest(GuardProfileIdParamSchema), (req: Request, res: Response) => {
+router.get('/:id', (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const profiles = loadGuardrailProfiles();
@@ -91,9 +85,25 @@ interface GuardBody {
 }
 
 // POST / - Create a new profile
-router.post('/', validateRequest(CreateGuardProfileSchema), (req: Request, res: Response) => {
+router.post('/', (req: Request, res: Response) => {
   try {
     const { name, description, guards } = req.body as GuardBody;
+
+    if (!name || typeof name !== 'string') {
+      return res.status(400).json({
+        success: false,
+        error: 'Validation error',
+        message: 'Name is required and must be a string',
+      });
+    }
+
+    if (!guards || typeof guards !== 'object') {
+      return res.status(400).json({
+        success: false,
+        error: 'Validation error',
+        message: 'Guards configuration is required',
+      });
+    }
 
     const profiles = loadGuardrailProfiles();
 
@@ -140,7 +150,7 @@ router.post('/', validateRequest(CreateGuardProfileSchema), (req: Request, res: 
             ? {
                 enabled: Boolean(guards.contentFilter.enabled),
                 strictness: ['low', 'medium', 'high'].includes(guards.contentFilter.strictness)
-                  ? (guards.contentFilter.strictness as 'low' | 'medium' | 'high')
+                  ? guards.contentFilter.strictness as 'low' | 'medium' | 'high'
                   : 'low',
                 ...(guards.contentFilter.blockedTerms &&
                 Array.isArray(guards.contentFilter.blockedTerms)
@@ -169,7 +179,7 @@ router.post('/', validateRequest(CreateGuardProfileSchema), (req: Request, res: 
 });
 
 // PUT /:id - Update a profile
-router.put('/:id', validateRequest(UpdateGuardProfileSchema), (req: Request, res: Response) => {
+router.put('/:id', (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const { name, description, guards } = req.body as Partial<GuardBody>;
@@ -189,34 +199,31 @@ router.put('/:id', validateRequest(UpdateGuardProfileSchema), (req: Request, res
       guards && typeof guards === 'object'
         ? (Object.keys(guards) as Array<keyof typeof guards>)
             .filter((key) => !['__proto__', 'constructor', 'prototype'].includes(key))
-            .reduce(
-              (acc, key) => {
-                const existingValue =
-                  profiles[profileIndex].guards[
-                    key as keyof (typeof profiles)[typeof profileIndex]['guards']
-                  ];
-                const newValue = guards[key as keyof typeof guards];
-                if (
-                  typeof newValue === 'object' &&
-                  newValue !== null &&
-                  typeof existingValue === 'object' &&
-                  existingValue !== null
-                ) {
-                  (acc as any)[key] = { ...existingValue, ...newValue };
-                } else {
-                  (acc as any)[key] = newValue;
-                }
-                return acc;
-              },
-              {} as Record<string, unknown>
-            )
+            .reduce((acc, key) => {
+              const existingValue =
+                profiles[profileIndex].guards[
+                  key as keyof (typeof profiles)[typeof profileIndex]['guards']
+                ];
+              const newValue = guards[key as keyof typeof guards];
+              if (
+                typeof newValue === 'object' &&
+                newValue !== null &&
+                typeof existingValue === 'object' &&
+                existingValue !== null
+              ) {
+                (acc as any)[key] = { ...existingValue, ...newValue };
+              } else {
+                (acc as any)[key] = newValue;
+              }
+              return acc;
+            }, {} as Record<string, unknown>)
         : profiles[profileIndex].guards;
 
     const updatedProfile = {
       ...profiles[profileIndex],
       name: name && typeof name === 'string' ? name : profiles[profileIndex].name,
       description: description !== undefined ? description : profiles[profileIndex].description,
-      guards: safeGuards as any,
+      guards: safeGuards,
     };
 
     profiles[profileIndex] = updatedProfile;
@@ -237,7 +244,7 @@ router.put('/:id', validateRequest(UpdateGuardProfileSchema), (req: Request, res
 });
 
 // DELETE /:id - Delete a profile
-router.delete('/:id', validateRequest(GuardProfileIdParamSchema), (req: Request, res: Response) => {
+router.delete('/:id', (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const profiles = loadGuardrailProfiles();

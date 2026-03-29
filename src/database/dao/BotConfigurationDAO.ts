@@ -184,7 +184,7 @@ export class BotConfigurationDAO {
 
   async findAll(tenantId?: string): Promise<BotConfiguration[]> {
     let sql = `SELECT * FROM ${this.tableName}`;
-    const params: (string | number | boolean | null)[] = [];
+    const params: any[] = [];
 
     if (tenantId) {
       sql += ' WHERE tenantId = ? OR tenantId IS NULL';
@@ -204,7 +204,7 @@ export class BotConfigurationDAO {
 
   async findActive(tenantId?: string): Promise<BotConfiguration[]> {
     let sql = `SELECT * FROM ${this.tableName} WHERE isActive = 1`;
-    const params: (string | number | boolean | null)[] = [];
+    const params: any[] = [];
 
     if (tenantId) {
       sql += ' AND (tenantId = ? OR tenantId IS NULL)';
@@ -224,7 +224,7 @@ export class BotConfigurationDAO {
 
   async update(id: number, config: Partial<BotConfiguration>): Promise<void> {
     const updates: string[] = [];
-    const params: (string | number | boolean | null)[] = [];
+    const params: any[] = [];
 
     const allowedKeys = new Set([
       'name',
@@ -383,7 +383,7 @@ export class BotConfigurationDAO {
     }
   }
 
-  private mapRow(row: Record<string, unknown>): BotConfiguration {
+  private mapRow(row: any): BotConfiguration {
     return {
       id: row.id,
       name: row.name,

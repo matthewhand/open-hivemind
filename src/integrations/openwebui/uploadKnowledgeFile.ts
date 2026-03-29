@@ -1,9 +1,9 @@
 import fs from 'fs';
 import axios from 'axios';
 import Debug from 'debug';
-import { isSafeUrl } from '../../utils/ssrfGuard';
 import openWebUIConfig from './openWebUIConfig';
 import { getSessionKey } from './sessionManager';
+import { isSafeUrl } from '@src/utils/ssrfGuard';
 
 const debug = Debug('app:uploadKnowledgeFile');
 let knowledgeFileId: string | null = null; // Cache the knowledge file ID in memory.
@@ -53,10 +53,8 @@ async function performUpload(): Promise<void> {
     throw new Error('Knowledge file path is missing in the configuration.');
   }
 
-  try {
-    await fs.promises.access(knowledgeFile, fs.constants.F_OK);
-  } catch (err) {
-    debug('Knowledge file not found:', knowledgeFile, err);
+  if (!fs.existsSync(knowledgeFile)) {
+    debug('Knowledge file not found:', knowledgeFile);
     throw new Error('Knowledge file does not exist at: ' + knowledgeFile);
   }
 

@@ -1,15 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect } from 'react';
 import type { ProviderConfigFormProps, ProviderConfigField } from '../provider-configs/types';
-import Input from './DaisyUI/Input';
-import Select from './DaisyUI/Select';
-import Textarea from './DaisyUI/Textarea';
-import Toggle from './DaisyUI/Toggle';
-import Button from './DaisyUI/Button';
-import { Alert } from './DaisyUI/Alert';
-import Badge from './DaisyUI/Badge';
-import Debug from 'debug';
-const debug = Debug('app:client:components:ProviderConfigForm');
+import { Input, Select, Textarea, Toggle, Button, Alert, Badge } from './DaisyUI';
 
 interface FieldError {
   [fieldName: string]: string;
@@ -64,7 +56,7 @@ export const ProviderConfigForm: React.FC<ProviderConfigFormProps> = ({
         if (!regex.test(value)) {
           // For API keys, show warnings instead of errors to support third-party providers
           if (field.name === 'apiKey' || field.type === 'password') {
-            debug('WARN:', `${field.label} format warning: Pattern validation failed for value starting with ${value.substring(0, 8)}...`);
+            console.warn(`${field.label} format warning: Pattern validation failed for value starting with ${value.substring(0, 8)}...`);
             // Don't return error for API keys - just warn
           } else {
             return `${field.label} format is invalid`;
@@ -297,7 +289,7 @@ export const ProviderConfigForm: React.FC<ProviderConfigFormProps> = ({
               onValidationError={(error: string) => {
                 // Show validation warnings instead of errors for API keys
                 if (field.name === 'apiKey') {
-                  debug('WARN:', `API Key validation warning: ${error}`);
+                  console.warn(`API Key validation warning: ${error}`);
                 } else {
                   setErrors(prev => ({ ...prev, [field.name]: error }));
                 }

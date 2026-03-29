@@ -1,6 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import Debug from 'debug';
-const debug = Debug('app:client:components:DaisyUI:VisualFeedback');
 
 interface Metric {
   name: string;
@@ -27,7 +25,7 @@ const VisualFeedback: React.FC<VisualFeedbackProps> = ({ metrics, initialRating 
     // Here you would typically fetch real-time data
     // For demonstration, we'll just log updates
     const interval = setInterval(() => {
-      debug('Fetching new metrics data...');
+      console.log('Fetching new metrics data...');
     }, 5000);
     return () => clearInterval(interval);
   }, []);

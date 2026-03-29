@@ -279,36 +279,19 @@ export const selectPerformanceSummary = (state: { performance: PerformanceState 
   const metrics = state.performance.currentMetrics;
   const alerts = state.performance.alerts;
 
-  let responseTime = 0;
-  let memoryUsage = 0;
-  let cpuUsage = 0;
-  let errorRate = 0;
-
-  for (let i = 0; i < metrics.length; i++) {
-    const m = metrics[i];
-    if (m.category === 'response_time') responseTime = m.value;
-    else if (m.category === 'memory') memoryUsage = m.value;
-    else if (m.category === 'cpu') cpuUsage = m.value;
-    else if (m.category === 'network') errorRate = m.value;
-  }
-
-  let errorAlerts = 0;
-  let criticalAlertCount = 0;
-
-  for (let i = 0; i < alerts.length; i++) {
-    const a = alerts[i];
-    if (a.type === 'error') errorAlerts++;
-    else if (a.type === 'critical') criticalAlertCount++;
-  }
+  const responseTimeMetric = metrics.find(m => m.category === 'response_time');
+  const memoryMetric = metrics.find(m => m.category === 'memory');
+  const cpuMetric = metrics.find(m => m.category === 'cpu');
+  const errorRateMetric = metrics.find(m => m.category === 'network');
 
   return {
-    isHealthy: errorAlerts === 0,
-    responseTime,
-    memoryUsage,
-    cpuUsage,
-    errorRate,
+    isHealthy: alerts.filter(a => a.type === 'error').length === 0,
+    responseTime: responseTimeMetric?.value || 0,
+    memoryUsage: memoryMetric?.value || 0,
+    cpuUsage: cpuMetric?.value || 0,
+    errorRate: errorRateMetric?.value || 0,
     alertCount: alerts.length,
-    criticalAlertCount,
+    criticalAlertCount: alerts.filter(a => a.type === 'critical').length,
   };
 };
 

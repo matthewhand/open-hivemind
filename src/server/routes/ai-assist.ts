@@ -6,9 +6,6 @@ import { FlowiseProvider } from '../../integrations/flowise/flowiseProvider';
 import * as openWebUIImport from '../../integrations/openwebui/runInference';
 import type { ILlmProvider } from '../../llm/interfaces/ILlmProvider';
 import { IMessage } from '../../message/interfaces/IMessage';
-import { ErrorUtils } from '../../types/errors';
-import { validateRequest } from '../../validation/validateRequest';
-import { GenerateAIAssistSchema } from '../../validation/schemas/aiAssistSchema';
 
 const debug = Debug('app:ai-assist');
 const router = Router();
@@ -86,9 +83,24 @@ const openWebUI: ILlmProvider = {
 const MAX_PROMPT_LENGTH = 32000; // ~8k tokens approximate limit
 const MAX_SYSTEM_PROMPT_LENGTH = 16000;
 
-router.post('/generate', validateRequest(GenerateAIAssistSchema), async (req, res) => {
+router.post('/generate', async (req, res) => {
   try {
     const { prompt, systemPrompt } = req.body;
+    if (!prompt) {
+      return res.status(400).json({ error: 'Prompt is required' });
+    }
+
+    // Input validation for prompt sizes
+    if (prompt.length > MAX_PROMPT_LENGTH) {
+      return res
+        .status(400)
+        .json({ error: `Prompt exceeds maximum length of ${MAX_PROMPT_LENGTH} characters` });
+    }
+    if (systemPrompt && systemPrompt.length > MAX_SYSTEM_PROMPT_LENGTH) {
+      return res.status(400).json({
+        error: `System prompt exceeds maximum length of ${MAX_SYSTEM_PROMPT_LENGTH} characters`,
+      });
+    }
 
     const userConfig = UserConfigStore.getInstance();
     const settings = userConfig.getGeneralSettings();
@@ -126,12 +138,9 @@ router.post('/generate', validateRequest(GenerateAIAssistSchema), async (req, re
           debug(`Unknown LLM provider type for AI Assist: ${profile.provider}`);
           return res.status(400).json({ error: `Unsupported provider type: ${profile.provider}` });
       }
-    } catch (error: unknown) {
-      const hivemindError = ErrorUtils.toHivemindError(error);
-      debug(`Failed to initialize provider ${profile.name}:`, hivemindError);
-      return res.status(500).json({
-        error: `Failed to initialize provider: ${hivemindError instanceof Error ? hivemindError.message : String(hivemindError)}`,
-      });
+    } catch (error: any) {
+      debug(`Failed to initialize provider ${profile.name}:`, error);
+      return res.status(500).json({ error: `Failed to initialize provider: ${error.message}` });
     }
 
     if (!instance) {
@@ -156,12 +165,11 @@ router.post('/generate', validateRequest(GenerateAIAssistSchema), async (req, re
     }
 
     return res.json({ result });
-  } catch (error: unknown) {
-    const hivemindError = ErrorUtils.toHivemindError(error);
-    debug('Error in AI Assist generation:', hivemindError);
+  } catch (error: any) {
+    debug('Error in AI Assist generation:', error);
     return res.status(500).json({
       error: 'Failed to generate response',
-      message: hivemindError instanceof Error ? hivemindError.message : String(hivemindError),
+      message: error.message,
     });
   }
 });

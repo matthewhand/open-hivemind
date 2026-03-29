@@ -11,8 +11,7 @@ import {
   BotStatus,
   DEFAULT_PERSONA,
 } from '../../types';
-import Button from '../DaisyUI/Button';
-import Badge from '../DaisyUI/Badge';
+import { Button, Badge } from '../DaisyUI';
 import {
   Play as PlayIcon,
   Square as StopIcon,
@@ -62,7 +61,7 @@ const BotCard: React.FC<BotCardProps> = ({
     mode: 'create',
   });
 
-  const currentPersona = (personas || []).find(p => p.id === bot.personaId) || DEFAULT_PERSONA;
+  const currentPersona = personas.find(p => p.id === bot.personaId) || DEFAULT_PERSONA;
 
   const getStatusColor = (status: BotStatus) => {
     switch (status) {
@@ -99,7 +98,7 @@ const BotCard: React.FC<BotCardProps> = ({
 
   const canStart = bot.status === 'inactive' || bot.status === 'error';
   const canStop = bot.status === 'active';
-  const hasProviders = (bot.messageProviders || []).length > 0 || (bot.llmProviders || []).length > 0;
+  const hasProviders = bot.messageProviders.length > 0 || bot.llmProviders.length > 0;
 
   const handleStartBot = () => {
     if (onStartBot) {onStartBot(bot.id);}
@@ -189,10 +188,10 @@ const BotCard: React.FC<BotCardProps> = ({
       <div className="card-body p-6">
         {/* Header */}
         <div className="flex justify-between items-start mb-4">
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 mb-2 min-w-0">
-              <h2 className="card-title text-lg font-semibold truncate break-all min-w-0" title={bot.name}>{bot.name}</h2>
-              <Badge variant={getStatusColor(bot.status) as "success" | "ghost" | "error" | "info"} size="sm" className="whitespace-nowrap shrink-0">
+          <div className="flex-1">
+            <div className="flex items-center gap-2 mb-2">
+              <h2 className="card-title text-lg font-semibold">{bot.name}</h2>
+              <Badge variant={getStatusColor(bot.status)} size="sm">
                 {getStatusText(bot.status)}
               </Badge>
             </div>
@@ -213,29 +212,27 @@ const BotCard: React.FC<BotCardProps> = ({
             <button
               className="btn btn-sm btn-ghost btn-circle"
               onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-              aria-label="More options"
-              aria-haspopup="true"
-              aria-expanded={isDropdownOpen}
+              aria-label="More Options"
             >
-              <MoreIcon className="w-4 h-4" aria-hidden="true" />
+              <MoreIcon className="w-4 h-4" />
             </button>
             {isDropdownOpen && (
-              <ul className="dropdown-content menu p-2 shadow-lg bg-base-100 rounded-box w-52 z-10" role="menu" aria-label="Bot actions">
+              <ul className="dropdown-content menu p-2 shadow-lg bg-base-100 rounded-box w-52 z-10">
                 <li>
-                  <a onClick={handleConfigureBot} className="flex items-center gap-2" role="menuitem">
-                    <SettingsIcon className="w-4 h-4" aria-hidden="true" />
+                  <a onClick={handleConfigureBot} className="flex items-center gap-2">
+                    <SettingsIcon className="w-4 h-4" />
                     Configure
                   </a>
                 </li>
                 <li>
-                  <a onClick={handleCloneBot} className="flex items-center gap-2" role="menuitem">
-                    <CloneIcon className="w-4 h-4" aria-hidden="true" />
+                  <a onClick={handleCloneBot} className="flex items-center gap-2">
+                    <CloneIcon className="w-4 h-4" />
                     Clone
                   </a>
                 </li>
                 <li>
-                  <a onClick={handleDeleteBot} className="flex items-center gap-2 text-error" role="menuitem">
-                    <DeleteIcon className="w-4 h-4" aria-hidden="true" />
+                  <a onClick={handleDeleteBot} className="flex items-center gap-2 text-error">
+                    <DeleteIcon className="w-4 h-4" />
                     Delete
                   </a>
                 </li>
@@ -301,7 +298,7 @@ const BotCard: React.FC<BotCardProps> = ({
                 Message Providers
               </span>
               <Badge variant="neutral" size="xs">
-                {(bot.messageProviders || []).length}
+                {bot.messageProviders.length}
               </Badge>
             </div>
             <Button
@@ -333,7 +330,7 @@ const BotCard: React.FC<BotCardProps> = ({
                 LLM Providers
               </span>
               <Badge variant="neutral" size="xs">
-                {(bot.llmProviders || []).length}
+                {bot.llmProviders.length}
               </Badge>
             </div>
             <Button

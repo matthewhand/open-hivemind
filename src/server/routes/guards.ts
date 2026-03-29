@@ -1,11 +1,6 @@
 import Debug from 'debug';
 import { Router, type Request, type Response } from 'express';
 import { webUIStorage } from '../../storage/webUIStorage';
-import {
-  ToggleGuardSchema,
-  UpdateAccessControlSchema,
-} from '../../validation/schemas/guardsSchema';
-import { validateRequest } from '../../validation/validateRequest';
 
 const router = Router();
 const debug = Debug('app:webui:guards');
@@ -19,8 +14,9 @@ router.get('/', (req: Request, res: Response) => {
       data: { guards },
       message: 'Guards retrieved successfully',
     });
-  } catch (error: unknown) {
-    debug('ERROR:', 'Error retrieving guards:', error);
+  } catch (error: any) {
+    console.error('Error retrieving guards:', error);
+    debug('Error retrieving guards:', error);
     return res.status(500).json({
       error: 'Failed to retrieve guards',
       message: error.message || 'An error occurred while retrieving guards',
@@ -29,9 +25,9 @@ router.get('/', (req: Request, res: Response) => {
 });
 
 // Email validation regex
-const _emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 // IP address or CIDR notation validation regex
-const _ipRegex = /^(\d{1,3}\.){3}\d{1,3}(\/\d{1,2})?$/;
+const ipRegex = /^(\d{1,3}\.){3}\d{1,3}(\/\d{1,2})?$/;
 
 /**
  * Validate IP address octets are in valid range (0-255)
@@ -45,14 +41,56 @@ const validateIpOctets = (ip: string): boolean => {
 };
 
 // POST / - Update access control guard config
-router.post('/', validateRequest(UpdateAccessControlSchema), (req: Request, res: Response) => {
+router.post('/', (req: Request, res: Response) => {
   try {
     const accessConfig = req.body;
 
-    // Additional IP octet validation (beyond regex)
+    // Validation
+    if (!accessConfig || typeof accessConfig !== 'object' || Array.isArray(accessConfig)) {
+      return res.status(400).json({
+        error: 'Validation error',
+        message: 'Invalid access configuration',
+      });
+    }
+
+    // Validate type field
+    if (!['owner', 'users', 'ip'].includes(accessConfig.type)) {
+      return res.status(400).json({
+        error: 'Validation error',
+        message: 'Invalid access type. Must be owner, users, or ip',
+      });
+    }
+
+    // Validate users array
+    if (accessConfig.users && !Array.isArray(accessConfig.users)) {
+      return res.status(400).json({
+        error: 'Validation error',
+        message: 'Users must be an array',
+      });
+    }
+
+    if (accessConfig.users) {
+      for (const user of accessConfig.users) {
+        if (typeof user !== 'string' || !emailRegex.test(user)) {
+          return res.status(400).json({
+            error: 'Validation error',
+            message: 'Invalid email format in users array',
+          });
+        }
+      }
+    }
+
+    // Validate ips array
+    if (accessConfig.ips && !Array.isArray(accessConfig.ips)) {
+      return res.status(400).json({
+        error: 'Validation error',
+        message: 'IPs must be an array',
+      });
+    }
+
     if (accessConfig.ips) {
       for (const ip of accessConfig.ips) {
-        if (!validateIpOctets(ip)) {
+        if (typeof ip !== 'string' || !ipRegex.test(ip) || !validateIpOctets(ip)) {
           return res.status(400).json({
             error: 'Validation error',
             message: 'Invalid IP address or CIDR notation in ips array',
@@ -63,7 +101,7 @@ router.post('/', validateRequest(UpdateAccessControlSchema), (req: Request, res:
 
     // Get existing guards to find the access-control guard
     const guards = webUIStorage.getGuards();
-    const accessGuard = guards.find((g: Record<string, unknown>) => g.id === 'access-control');
+    const accessGuard = guards.find((g: any) => g.id === 'access-control');
 
     if (!accessGuard) {
       // Should not happen if getGuards initializes defaults, but just in case
@@ -87,7 +125,7 @@ router.post('/', validateRequest(UpdateAccessControlSchema), (req: Request, res:
       success: true,
       message: 'Access control saved successfully',
     });
-  } catch (error: unknown) {
+  } catch (error: any) {
     debug('Error saving access control:', error);
     return res.status(500).json({
       error: 'Failed to save access control',
@@ -97,14 +135,21 @@ router.post('/', validateRequest(UpdateAccessControlSchema), (req: Request, res:
 });
 
 // POST /:id/toggle - Toggle guard enabled status
-router.post('/:id/toggle', validateRequest(ToggleGuardSchema), (req: Request, res: Response) => {
+router.post('/:id/toggle', (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const { enabled } = req.body;
 
+    if (typeof enabled !== 'boolean') {
+      return res.status(400).json({
+        error: 'Validation error',
+        message: 'Enabled status is required and must be a boolean',
+      });
+    }
+
     // Check if guard exists
     const guards = webUIStorage.getGuards();
-    const guard = guards.find((g: Record<string, unknown>) => g.id === id);
+    const guard = guards.find((g: any) => g.id === id);
 
     if (!guard) {
       return res.status(404).json({
@@ -119,7 +164,7 @@ router.post('/:id/toggle', validateRequest(ToggleGuardSchema), (req: Request, re
       success: true,
       message: `Guard ${guard.name} ${enabled ? 'enabled' : 'disabled'} successfully`,
     });
-  } catch (error: unknown) {
+  } catch (error: any) {
     debug('Error toggling guard:', error);
     return res.status(500).json({
       error: 'Failed to toggle guard',

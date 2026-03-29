@@ -1,13 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-
-import EmptyState from '../components/DaisyUI/EmptyState';
-import { SkeletonGrid } from '../components/DaisyUI/Skeleton';
+import { Breadcrumbs, EmptyState } from '../components/DaisyUI';
 import { Copy, Check, Search } from 'lucide-react';
-import Carousel from '../components/DaisyUI/Carousel';
 import SearchFilterBar from '../components/SearchFilterBar';
-import useUrlParams from '../hooks/useUrlParams';
 
 interface BotTemplate {
   id: string;
@@ -25,25 +21,19 @@ const BotTemplatesPage: React.FC = () => {
   const [templates, setTemplates] = useState<BotTemplate[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Filter States (URL-persisted)
-  const { values: urlParams, setValue: setUrlParam } = useUrlParams({
-    search: { type: 'string', default: '', debounce: 300 },
-    platform: { type: 'string', default: 'All' },
-    persona: { type: 'string', default: 'All' },
-    llm: { type: 'string', default: 'All' },
-  });
-  const selectedPlatform = urlParams.platform;
-  const setSelectedPlatform = (v: string) => setUrlParam('platform', v);
-  const selectedPersona = urlParams.persona;
-  const setSelectedPersona = (v: string) => setUrlParam('persona', v);
-  const selectedLlmProvider = urlParams.llm;
-  const setSelectedLlmProvider = (v: string) => setUrlParam('llm', v);
-  const searchTerm = urlParams.search;
-  const setSearchTerm = (v: string) => setUrlParam('search', v);
+  // Filter States
+  const [selectedPlatform, setSelectedPlatform] = useState<string>('All');
+  const [selectedPersona, setSelectedPersona] = useState<string>('All');
+  const [selectedLlmProvider, setSelectedLlmProvider] = useState<string>('All');
+  const [searchTerm, setSearchTerm] = useState('');
   const [copied, setCopied] = useState(false);
 
+  const breadcrumbItems = [
+    { label: 'Bots', href: '/admin/bots' },
+    { label: 'Templates', href: '/admin/bots/templates', isActive: true },
+  ];
 
-  const fetchTemplates = useCallback(async () => {
+  const fetchTemplates = async () => {
     try {
       const res = await fetch('/api/bot-config/templates');
       if (res.ok) {
@@ -65,15 +55,15 @@ const BotTemplatesPage: React.FC = () => {
         setTemplates(templatesArray);
       }
     } catch (error) {
-      // Silent: empty state shown
+      console.error('Failed to fetch templates:', error);
     } finally {
       setLoading(false);
     }
-  }, []);
+  };
 
   useEffect(() => {
     fetchTemplates();
-  }, [fetchTemplates]);
+  }, []);
 
   const handleUseTemplate = (template: BotTemplate) => {
     // In real app, this would pre-populate the create form
@@ -105,7 +95,7 @@ const BotTemplatesPage: React.FC = () => {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch (err) {
-      // Clipboard may not be available
+      console.error('Failed to copy:', err);
     }
   };
 
@@ -166,14 +156,18 @@ const BotTemplatesPage: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="p-6">
-        <SkeletonGrid count={6} showImage />
+      <div className="p-6 text-center">
+        <span className="loading loading-spinner loading-lg"></span>
+        <p className="mt-2">Loading templates...</p>
       </div>
     );
   }
 
   return (
     <div className="p-6">
+      <Breadcrumbs items={breadcrumbItems} />
+
+
 
 
       <div className="mt-4 mb-8">
@@ -295,7 +289,6 @@ const BotTemplatesPage: React.FC = () => {
                     className="btn btn-ghost btn-square"
                     onClick={() => handleCopyTemplate(template)}
                     title="Copy template JSON"
-                    aria-label="Copy template JSON"
                   >
                     {copied ? <Check className="w-4 h-4 text-success" /> : <Copy className="w-4 h-4" />}
                   </button>

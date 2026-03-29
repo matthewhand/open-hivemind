@@ -56,10 +56,6 @@ function loadIsolated(prime: (deps: { axiosPost: jest.Mock }) => void) {
     return { __esModule: true, default: axiosMock };
   });
 
-  jest.doMock('../../../src/utils/ssrfGuard', () => ({
-    isSafeUrl: jest.fn().mockResolvedValue(true),
-  }));
-
   let mod: any;
   jest.isolateModules(() => {
     prime({ axiosPost });

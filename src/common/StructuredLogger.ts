@@ -11,7 +11,6 @@
  */
 
 import Debug from 'debug';
-import { getCorrelationId } from '../middleware/correlationId';
 import { sanitizeForLogging } from './logger';
 
 /**
@@ -138,11 +137,8 @@ export class StructuredLogger {
       entry.context = sanitizeContext(context);
     }
 
-    // Use explicit traceId if set, otherwise fall back to the
-    // correlation ID stored in AsyncLocalStorage for the current request.
-    const effectiveTraceId = this.traceId ?? getCorrelationId();
-    if (effectiveTraceId) {
-      entry.traceId = effectiveTraceId;
+    if (this.traceId) {
+      entry.traceId = this.traceId;
     }
 
     if (this.spanId) {

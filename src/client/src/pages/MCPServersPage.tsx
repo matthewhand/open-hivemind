@@ -1,26 +1,19 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import { Search, Server, Trash2 as LucideTrash2 } from 'lucide-react';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
+import React, { useState, useEffect, useCallback } from 'react';
 import {
-  ArrowPathIcon,
+  PlusIcon,
+  PencilIcon,
+  TrashIcon,
+  PlayIcon,
+  StopIcon,
   CheckCircleIcon,
   ExclamationCircleIcon,
-  PencilIcon,
-  PlayIcon,
-  PlusIcon,
-  StopIcon,
-  TrashIcon,
+  ArrowPathIcon,
   WrenchScrewdriverIcon,
 } from '@heroicons/react/24/outline';
-import { Alert } from '../components/DaisyUI/Alert';
-import { SkeletonGrid } from '../components/DaisyUI/Skeleton';
-
-import EmptyState from '../components/DaisyUI/EmptyState';
-import Modal, { ConfirmModal } from '../components/DaisyUI/Modal';
+import { Server, Search } from 'lucide-react';
+import { Breadcrumbs, Alert, Modal, EmptyState } from '../components/DaisyUI';
 import SearchFilterBar from '../components/SearchFilterBar';
-import useUrlParams from '../hooks/useUrlParams';
-import { useBulkSelection } from '../hooks/useBulkSelection';
-import BulkActionBar from '../components/BulkActionBar';
 
 interface Tool {
   name: string;
@@ -57,9 +50,7 @@ const getAuthHeaders = (): Record<string, string> => {
       const parsed = JSON.parse(stored) as { accessToken?: string };
       if (parsed.accessToken) headers['Authorization'] = `Bearer ${parsed.accessToken}`;
     }
-  } catch {
-    /* ignore */
-  }
+  } catch { /* ignore */ }
   return headers;
 };
 
@@ -74,24 +65,19 @@ const MCPServersPage: React.FC = () => {
   const [viewingServerName, setViewingServerName] = useState('');
   const [isEditing, setIsEditing] = useState(false);
   const [isTesting, setIsTesting] = useState(false);
-  const [alert, setAlert] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+  const [alert, setAlert] = useState<{ type: 'success' | 'error', message: string } | null>(null);
   const [trustedRepositories, setTrustedRepositories] = useState<TrustedRepository[]>([]);
   const [cautionRepositories, setCautionRepositories] = useState<TrustedRepository[]>([]);
   const [showTrustIndicator, setShowTrustIndicator] = useState(true);
-  const [confirmModal, setConfirmModal] = useState<{
-    isOpen: boolean; title: string; message: string; onConfirm: () => void;
-  }>({ isOpen: false, title: '', message: '', onConfirm: () => {} });
 
-  // Search and Filter State (URL-persisted)
-  const { values: urlParams, setValue: setUrlParam } = useUrlParams({
-    search: { type: 'string', default: '', debounce: 300 },
-    status: { type: 'string', default: 'All' },
-  });
-  const searchTerm = urlParams.search;
-  const setSearchTerm = (v: string) => setUrlParam('search', v);
-  const statusFilter = urlParams.status;
-  const setStatusFilter = (v: string) => setUrlParam('status', v);
+  // Search and Filter State
+  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState('All');
 
+  const breadcrumbItems = [
+    { label: 'MCP', href: '/admin/mcp' },
+    { label: 'Servers', href: '/admin/mcp/servers', isActive: true },
+  ];
 
   // Fetch real MCP servers from API
   const fetchServers = useCallback(async () => {
@@ -105,43 +91,35 @@ const MCPServersPage: React.FC = () => {
       const data = await response.json();
 
       // Map API response to MCPServer format
-      const connectedServers: MCPServer[] = (data.data?.servers || []).map(
-        (server: any, index: number) => ({
-          id: server.name || `server-${index}`,
-          name: server.name || 'Unknown',
-          url: server.serverUrl || server.url || '',
-          status: server.connected ? 'running' : 'stopped',
-          description: server.description || '',
-          toolCount: server.tools?.length || 0,
-          lastConnected: server.lastConnected,
-          tools: server.tools || [],
-        })
-      );
+      const connectedServers: MCPServer[] = (data.data?.servers || []).map((server: any, index: number) => ({
+        id: server.name || `server-${index}`,
+        name: server.name || 'Unknown',
+        url: server.serverUrl || server.url || '',
+        status: server.connected ? 'running' : 'stopped',
+        description: server.description || '',
+        toolCount: server.tools?.length || 0,
+        lastConnected: server.lastConnected,
+        tools: server.tools || [],
+      }));
 
       // Also include stored configurations that might not be connected
-      const storedConfigs: MCPServer[] = (data.data?.configurations || [])
-        .map((config: any, index: number) => {
-          // Check if this config is already in connectedServers
-          const existing = connectedServers.find((s) => s.name === config.name);
-          if (existing) return null;
-          return {
-            id: config.name || `config-${index}`,
-            name: config.name || 'Unknown',
-            url: config.serverUrl || '',
-            status: 'stopped' as const,
-            description: '',
-            toolCount: 0,
-          };
-        })
-        .filter(Boolean);
+      const storedConfigs: MCPServer[] = (data.data?.configurations || []).map((config: any, index: number) => {
+        // Check if this config is already in connectedServers
+        const existing = connectedServers.find(s => s.name === config.name);
+        if (existing) return null;
+        return {
+          id: config.name || `config-${index}`,
+          name: config.name || 'Unknown',
+          url: config.serverUrl || '',
+          status: 'stopped' as const,
+          description: '',
+          toolCount: 0,
+        };
+      }).filter(Boolean);
 
       setServers([...connectedServers, ...storedConfigs]);
-      setTrustedRepositories(
-        Array.isArray(data.data?.trustedRepositories) ? data.data.trustedRepositories : []
-      );
-      setCautionRepositories(
-        Array.isArray(data.data?.cautionRepositories) ? data.data.cautionRepositories : []
-      );
+      setTrustedRepositories(Array.isArray(data.data?.trustedRepositories) ? data.data.trustedRepositories : []);
+      setCautionRepositories(Array.isArray(data.data?.cautionRepositories) ? data.data.cautionRepositories : []);
       setShowTrustIndicator(data.data?.trustSettings?.showTrustIndicator !== false);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch servers');
@@ -171,44 +149,12 @@ const MCPServersPage: React.FC = () => {
     return matchesSearch && matchesStatus;
   });
 
-  // Bulk selection
-  const filteredServerIds = useMemo(() => filteredServers.map(s => s.id), [filteredServers]);
-  const bulk = useBulkSelection(filteredServerIds);
-  const [bulkDeleting, setBulkDeleting] = useState(false);
-
-  const handleBulkDeleteServers = async () => {
-    if (bulk.selectedCount === 0) return;
-    setBulkDeleting(true);
-    try {
-      const ids = Array.from(bulk.selectedIds);
-      await Promise.allSettled(
-        ids.map(id =>
-          fetch(`/api/admin/mcp-servers/${encodeURIComponent(id)}`, {
-            method: 'DELETE',
-            headers: getAuthHeaders(),
-          })
-        )
-      );
-      bulk.clearSelection();
-      setAlert({ type: 'success', message: 'Selected servers deleted' });
-      await fetchServers();
-    } catch (err) {
-      setAlert({ type: 'error', message: 'Failed to delete some servers' });
-    } finally {
-      setBulkDeleting(false);
-    }
-  };
-
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'running':
-        return 'badge-success';
-      case 'stopped':
-        return 'badge-ghost';
-      case 'error':
-        return 'badge-error';
-      default:
-        return 'badge-ghost';
+      case 'running': return 'badge-success';
+      case 'stopped': return 'badge-ghost';
+      case 'error': return 'badge-error';
+      default: return 'badge-ghost';
     }
   };
 
@@ -228,10 +174,8 @@ const MCPServersPage: React.FC = () => {
           body: JSON.stringify({ name: serverId }),
         });
       } else {
-        const server = servers.find((s) => s.id === serverId);
-        if (!server) {
-          throw new Error('Server not found');
-        }
+        const server = servers.find(s => s.id === serverId);
+        if (!server) {throw new Error('Server not found');}
 
         response = await fetch('/api/admin/mcp-servers/connect', {
           method: 'POST',
@@ -251,13 +195,7 @@ const MCPServersPage: React.FC = () => {
       setAlert({ type: 'success', message: `Server ${action} action completed` });
 
       // Clear error state if action succeeded
-      setServers((prev) =>
-        prev.map((s) =>
-          s.id === serverId
-            ? { ...s, status: action === 'start' ? 'running' : 'stopped', error: undefined }
-            : s
-        )
-      );
+      setServers(prev => prev.map(s => s.id === serverId ? { ...s, status: action === 'start' ? 'running' : 'stopped', error: undefined } : s));
 
       await fetchServers();
     } catch (error) {
@@ -265,9 +203,7 @@ const MCPServersPage: React.FC = () => {
       setAlert({ type: 'error', message: errorMsg });
 
       // Set error state on the server card
-      setServers((prev) =>
-        prev.map((s) => (s.id === serverId ? { ...s, status: 'error', error: errorMsg } : s))
-      );
+      setServers(prev => prev.map(s => s.id === serverId ? { ...s, status: 'error', error: errorMsg } : s));
     }
   };
 
@@ -354,29 +290,21 @@ const MCPServersPage: React.FC = () => {
       const toolCount = data.data?.toolCount || 0;
       const tools = data.data?.tools || [];
 
-      const toolNames = tools
-        .slice(0, 5)
-        .map((t: any) => t.name)
-        .join(', ');
+      const toolNames = tools.slice(0, 5).map((t: any) => t.name).join(', ');
       const moreText = tools.length > 5 ? ` and ${tools.length - 5} more` : '';
 
       const message = `Connection successful! Found ${toolCount} tools: ${toolNames}${moreText}`;
 
       setAlert({ type: 'success', message });
     } catch (err) {
-      setAlert({
-        type: 'error',
-        message: err instanceof Error ? err.message : 'Connection failed',
-      });
+      setAlert({ type: 'error', message: err instanceof Error ? err.message : 'Connection failed' });
     } finally {
       setIsTesting(false);
     }
   };
 
   const handleSaveServer = async () => {
-    if (!selectedServer) {
-      return;
-    }
+    if (!selectedServer) { return; }
 
     // Validate required fields
     if (!selectedServer.name?.trim()) {
@@ -414,54 +342,40 @@ const MCPServersPage: React.FC = () => {
         throw new Error(data.message || 'Failed to connect to server');
       }
 
-      setAlert({
-        type: 'success',
-        message: isEditing ? 'Server updated successfully' : 'Server added successfully',
-      });
+      setAlert({ type: 'success', message: isEditing ? 'Server updated successfully' : 'Server added successfully' });
       setDialogOpen(false);
       await fetchServers();
     } catch (err) {
-      setAlert({
-        type: 'error',
-        message: err instanceof Error ? err.message : 'Failed to save server',
-      });
+      setAlert({ type: 'error', message: err instanceof Error ? err.message : 'Failed to save server' });
     }
   };
 
   const handleDeleteServer = async (serverId: string) => {
-    setConfirmModal({
-      isOpen: true,
-      title: 'Delete Server',
-      message: 'Are you sure you want to delete this server configuration? This action cannot be undone.',
-      onConfirm: async () => {
-        setConfirmModal(prev => ({ ...prev, isOpen: false }));
-        try {
-          const response = await fetch(`/api/admin/mcp-servers/${encodeURIComponent(serverId)}`, {
-            method: 'DELETE',
-            headers: getAuthHeaders(),
-          });
+    if (window.confirm('Are you sure you want to delete this server configuration? This action cannot be undone.')) {
+      try {
+        const response = await fetch(`/api/admin/mcp-servers/${encodeURIComponent(serverId)}`, {
+          method: 'DELETE',
+          headers: getAuthHeaders(),
+        });
 
-          if (!response.ok) {
-            const data = await response.json();
-            throw new Error(data.message || 'Failed to delete server');
-          }
-
-          setAlert({ type: 'success', message: 'Server deleted successfully' });
-          await fetchServers();
-        } catch (err) {
-          setAlert({
-            type: 'error',
-            message: err instanceof Error ? err.message : 'Failed to delete server',
-          });
+        if (!response.ok) {
+          const data = await response.json();
+          throw new Error(data.message || 'Failed to delete server');
         }
-      },
-    });
+
+        setAlert({ type: 'success', message: 'Server deleted successfully' });
+        await fetchServers();
+      } catch (err) {
+        setAlert({ type: 'error', message: err instanceof Error ? err.message : 'Failed to delete server' });
+      }
+    }
   };
 
   if (loading) {
     return (
-      <div className="p-6">
-        <SkeletonGrid count={4} showImage={false} />
+      <div className="p-6 text-center">
+        <span className="loading loading-spinner loading-lg"></span>
+        <p className="mt-2">Loading MCP servers...</p>
       </div>
     );
   }
@@ -497,48 +411,17 @@ const MCPServersPage: React.FC = () => {
     }
 
     return (
-      <>
-        <div className="flex items-center gap-2 mb-2">
-          <input
-            type="checkbox"
-            className="checkbox checkbox-sm checkbox-primary"
-            checked={bulk.isAllSelected}
-            onChange={() => bulk.toggleAll(filteredServerIds)}
-            aria-label="Select all servers"
-          />
-          <span className="text-xs text-base-content/60">Select all</span>
-        </div>
-        <BulkActionBar
-          selectedCount={bulk.selectedCount}
-          onClearSelection={bulk.clearSelection}
-          actions={[
-            {
-              key: 'delete',
-              label: 'Delete',
-              icon: <LucideTrash2 className="w-4 h-4" />,
-              variant: 'error',
-              onClick: handleBulkDeleteServers,
-              loading: bulkDeleting,
-            },
-          ]}
-        />
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {filteredServers.map((server) => (
           <div key={server.id} className="card bg-base-100 shadow-xl h-full border border-base-200">
             <div className="card-body">
               <div className="flex justify-between items-start mb-2">
-                <div className="flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    className="checkbox checkbox-sm checkbox-primary"
-                    checked={bulk.isSelected(server.id)}
-                    onChange={(e) => bulk.toggleItem(server.id, e as any)}
-                    onClick={(e) => e.stopPropagation()}
-                    aria-label={`Select ${server.name}`}
-                  />
-                  <h2 className="card-title text-lg font-bold">{server.name}</h2>
+                <h2 className="card-title text-lg font-bold">
+                  {server.name}
+                </h2>
+                <div className={`badge ${getStatusColor(server.status)}`}>
+                  {server.status}
                 </div>
-                <div className={`badge ${getStatusColor(server.status)}`}>{server.status}</div>
               </div>
 
               <p className="text-sm text-base-content/70 mb-2 min-h-[40px]">
@@ -553,21 +436,16 @@ const MCPServersPage: React.FC = () => {
               )}
 
               <div className="text-sm space-y-1 mb-4 bg-base-200/50 p-3 rounded-lg">
-                <p className="truncate" title={server.url}>
-                  <strong>URL:</strong> {server.url}
-                </p>
+                <p className="truncate" title={server.url}><strong>URL:</strong> {server.url}</p>
                 <div className="flex items-center gap-2">
-                  <p>
-                    <strong>Tools:</strong> {server.toolCount}
-                  </p>
-                  {server.toolCount > 0 &&
-                    (server.status === 'running' || server.tools?.length) && (
-                      <button
-                        className="btn btn-xs btn-ghost text-primary"
-                        onClick={() => handleViewTools(server)}
-                      >
-                        View Tools
-                      </button>
+                    <p><strong>Tools:</strong> {server.toolCount}</p>
+                    {server.toolCount > 0 && (server.status === 'running' || server.tools?.length) && (
+                        <button
+                            className="btn btn-xs btn-ghost text-primary"
+                            onClick={() => handleViewTools(server)}
+                        >
+                            View Tools
+                        </button>
                     )}
                 </div>
                 {server.lastConnected && (
@@ -591,30 +469,22 @@ const MCPServersPage: React.FC = () => {
                   ) : (
                     <button
                       className="btn btn-ghost btn-sm btn-circle text-success tooltip"
-                      data-tip={server.status === 'stopped' ? 'Connect' : 'Retry Connection'}
-                      aria-label={
-                        server.status === 'stopped'
-                          ? `Connect ${server.name}`
-                          : `Retry Connection ${server.name}`
-                      }
+                      data-tip={server.status === 'stopped' ? "Connect" : "Retry Connection"}
+                      aria-label={server.status === 'stopped' ? `Connect ${server.name}` : `Retry Connection ${server.name}`}
                       onClick={() => handleServerAction(server.id, 'start')}
                     >
-                      {server.status === 'error' ? (
-                        <ArrowPathIcon className="w-5 h-5" />
-                      ) : (
-                        <PlayIcon className="w-5 h-5" />
-                      )}
+                        {server.status === 'error' ? <ArrowPathIcon className="w-5 h-5" /> : <PlayIcon className="w-5 h-5" />}
                     </button>
                   )}
                   {server.toolCount > 0 && (
-                    <button
-                      className="btn btn-ghost btn-sm btn-circle tooltip"
-                      data-tip="View Tools"
-                      aria-label={`View Tools for ${server.name}`}
-                      onClick={() => handleViewTools(server)}
-                    >
-                      <WrenchScrewdriverIcon className="w-5 h-5" />
-                    </button>
+                     <button
+                        className="btn btn-ghost btn-sm btn-circle tooltip"
+                        data-tip="View Tools"
+                        aria-label={`View Tools for ${server.name}`}
+                        onClick={() => handleViewTools(server)}
+                     >
+                        <WrenchScrewdriverIcon className="w-5 h-5" />
+                     </button>
                   )}
                 </div>
                 <div className="flex gap-1">
@@ -640,20 +510,26 @@ const MCPServersPage: React.FC = () => {
           </div>
         ))}
       </div>
-      </>
     );
   };
 
   return (
     <div className="p-6">
-      <div className="flex justify-between items-center mb-8">
+      <Breadcrumbs items={breadcrumbItems} />
+
+      <div className="flex justify-between items-center mt-4 mb-8">
         <div>
-          <h1 className="text-3xl font-bold mb-2">MCP Servers</h1>
+          <h1 className="text-3xl font-bold mb-2">
+            MCP Servers
+          </h1>
           <p className="text-base-content/70">
             Manage Model Context Protocol servers and their tools
           </p>
         </div>
-        <button className="btn btn-primary" onClick={handleAddServer}>
+        <button
+          className="btn btn-primary"
+          onClick={handleAddServer}
+        >
           <PlusIcon className="w-5 h-5 mr-2" />
           Add Server
         </button>
@@ -701,15 +577,10 @@ const MCPServersPage: React.FC = () => {
               className="items-start"
             >
               <div className="space-y-2">
-                <p className="font-medium">
-                  Pre-vetted MCP repositories are configured for this environment.
-                </p>
+                <p className="font-medium">Pre-vetted MCP repositories are configured for this environment.</p>
                 <div className="flex flex-wrap gap-2">
                   {trustedRepositories.map((repo) => (
-                    <span
-                      key={`${repo.owner}/${repo.repo}`}
-                      className="badge badge-success badge-outline"
-                    >
+                    <span key={`${repo.owner}/${repo.repo}`} className="badge badge-success badge-outline">
                       {repo.name} ({repo.owner}/{repo.repo})
                     </span>
                   ))}
@@ -725,15 +596,10 @@ const MCPServersPage: React.FC = () => {
               className="items-start"
             >
               <div className="space-y-2">
-                <p className="font-medium">
-                  Some repositories are marked for caution before production use.
-                </p>
+                <p className="font-medium">Some repositories are marked for caution before production use.</p>
                 <div className="flex flex-wrap gap-2">
                   {cautionRepositories.map((repo) => (
-                    <span
-                      key={`${repo.owner}/${repo.repo}`}
-                      className="badge badge-warning badge-outline"
-                    >
+                    <span key={`${repo.owner}/${repo.repo}`} className="badge badge-warning badge-outline">
                       {repo.name} ({repo.owner}/{repo.repo})
                     </span>
                   ))}
@@ -753,41 +619,37 @@ const MCPServersPage: React.FC = () => {
         title={`Tools provided by ${viewingServerName}`}
       >
         <div className="overflow-y-auto max-h-[60vh]">
-          {viewingTools.length === 0 ? (
-            <div className="text-center py-8 opacity-50">No tools found for this server.</div>
-          ) : (
-            <div className="flex flex-col gap-4">
-              {viewingTools.map((tool, idx) => (
-                <div key={idx} className="border border-base-200 rounded-lg p-4 bg-base-100">
-                  <div className="flex items-center gap-2 mb-2">
-                    <WrenchScrewdriverIcon className="w-4 h-4 text-primary" />
-                    <h3 className="font-bold text-lg">{tool.name}</h3>
-                  </div>
-                  <p className="text-sm text-base-content/80 mb-2">
-                    {tool.description || 'No description provided.'}
-                  </p>
-                  {tool.inputSchema && (
-                    <div className="collapse collapse-arrow bg-base-200">
-                      <input type="checkbox" />
-                      <div className="collapse-title text-xs font-medium uppercase opacity-50">
-                        Input Schema
-                      </div>
-                      <div className="collapse-content">
-                        <pre className="text-xs bg-base-300 p-2 rounded overflow-x-auto">
-                          {JSON.stringify(tool.inputSchema, null, 2)}
-                        </pre>
-                      </div>
-                    </div>
-                  )}
+            {viewingTools.length === 0 ? (
+                <div className="text-center py-8 opacity-50">No tools found for this server.</div>
+            ) : (
+                <div className="flex flex-col gap-4">
+                    {viewingTools.map((tool, idx) => (
+                        <div key={idx} className="border border-base-200 rounded-lg p-4 bg-base-100">
+                            <div className="flex items-center gap-2 mb-2">
+                                <WrenchScrewdriverIcon className="w-4 h-4 text-primary" />
+                                <h3 className="font-bold text-lg">{tool.name}</h3>
+                            </div>
+                            <p className="text-sm text-base-content/80 mb-2">{tool.description || 'No description provided.'}</p>
+                            {tool.inputSchema && (
+                                <div className="collapse collapse-arrow bg-base-200">
+                                    <input type="checkbox" />
+                                    <div className="collapse-title text-xs font-medium uppercase opacity-50">
+                                        Input Schema
+                                    </div>
+                                    <div className="collapse-content">
+                                        <pre className="text-xs bg-base-300 p-2 rounded overflow-x-auto">
+                                            {JSON.stringify(tool.inputSchema, null, 2)}
+                                        </pre>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    ))}
                 </div>
-              ))}
-            </div>
-          )}
+            )}
         </div>
         <div className="modal-action">
-          <button className="btn" onClick={() => setToolsModalOpen(false)}>
-            Close
-          </button>
+            <button className="btn" onClick={() => setToolsModalOpen(false)}>Close</button>
         </div>
       </Modal>
 
@@ -799,80 +661,60 @@ const MCPServersPage: React.FC = () => {
       >
         <div className="space-y-4">
           {alert && (
-            <div
-              className={`alert ${alert.type === 'success' ? 'alert-success' : 'alert-error'} mb-4 flex flex-row items-center gap-2`}
-            >
-              {alert.type === 'success' ? (
-                <CheckCircleIcon className="w-6 h-6" />
-              ) : (
-                <ExclamationCircleIcon className="w-6 h-6" />
-              )}
+            <div className={`alert ${alert.type === 'success' ? 'bg-green-600' : 'bg-red-600'} text-white mb-4 flex flex-row items-center gap-2 border-none`}>
+              {alert.type === 'success' ? <CheckCircleIcon className="w-6 h-6" /> : <ExclamationCircleIcon className="w-6 h-6" />}
               <span>{alert.message}</span>
             </div>
           )}
 
           <div className="form-control w-full">
-            <label className="label" htmlFor="server-name">
+            <label className="label">
               <span className="label-text">Server Name *</span>
             </label>
             <input
-              id="server-name"
               type="text"
               className="input input-bordered w-full"
               value={selectedServer?.name || ''}
-              onChange={(e) =>
-                setSelectedServer((prev) => (prev ? { ...prev, name: e.target.value } : null))
-              }
+              onChange={(e) => setSelectedServer(prev => prev ? { ...prev, name: e.target.value } : null)}
               required
             />
           </div>
 
           <div className="form-control w-full">
-            <label className="label" htmlFor="server-url">
+            <label className="label">
               <span className="label-text">Server URL *</span>
             </label>
             <input
-              id="server-url"
               type="text"
               className="input input-bordered w-full"
               value={selectedServer?.url || ''}
-              onChange={(e) =>
-                setSelectedServer((prev) => (prev ? { ...prev, url: e.target.value } : null))
-              }
+              onChange={(e) => setSelectedServer(prev => prev ? { ...prev, url: e.target.value } : null)}
               required
               placeholder="mcp://server-host:port"
             />
           </div>
 
           <div className="form-control w-full">
-            <label className="label" htmlFor="server-api-key">
+            <label className="label">
               <span className="label-text">API Key (Optional)</span>
             </label>
             <input
-              id="server-api-key"
               type="password"
               className="input input-bordered w-full"
               value={selectedServer?.apiKey || ''}
-              onChange={(e) =>
-                setSelectedServer((prev) => (prev ? { ...prev, apiKey: e.target.value } : null))
-              }
+              onChange={(e) => setSelectedServer(prev => prev ? { ...prev, apiKey: e.target.value } : null)}
               placeholder="Leave blank if not required or unchanged"
             />
           </div>
 
           <div className="form-control w-full">
-            <label className="label" htmlFor="server-description">
+            <label className="label">
               <span className="label-text">Description</span>
             </label>
             <textarea
-              id="server-description"
               className="textarea textarea-bordered h-24"
               value={selectedServer?.description || ''}
-              onChange={(e) =>
-                setSelectedServer((prev) =>
-                  prev ? { ...prev, description: e.target.value } : null
-                )
-              }
+              onChange={(e) => setSelectedServer(prev => prev ? { ...prev, description: e.target.value } : null)}
             />
           </div>
         </div>
@@ -883,7 +725,7 @@ const MCPServersPage: React.FC = () => {
             onClick={handleTestConnection}
             disabled={isTesting}
           >
-            {isTesting ? <span className="loading loading-spinner loading-xs" aria-hidden="true"></span> : null}
+            {isTesting ? <span className="loading loading-spinner loading-xs"></span> : null}
             Test Connection
           </button>
           <button className="btn btn-ghost" onClick={() => setDialogOpen(false)}>
@@ -894,17 +736,6 @@ const MCPServersPage: React.FC = () => {
           </button>
         </div>
       </Modal>
-
-      <ConfirmModal
-        isOpen={confirmModal.isOpen}
-        onClose={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))}
-        title={confirmModal.title}
-        message={confirmModal.message}
-        onConfirm={confirmModal.onConfirm}
-        confirmVariant="error"
-        confirmText="Delete"
-        cancelText="Cancel"
-      />
     </div>
   );
 };

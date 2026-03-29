@@ -10,7 +10,7 @@ export interface SecureConfig {
   id: string;
   name: string;
   type?: string;
-  data: Record<string, unknown>;
+  data: any;
   updatedAt: string;
   checksum: string;
   createdAt?: string;
@@ -123,7 +123,7 @@ export class SecureConfigManager {
       await fs.promises.writeFile(filePath, encryptedData, 'utf8');
       debug(`Configuration ${config.id} stored successfully`);
     } catch (error: unknown) {
-      const hivemindError = ErrorUtils.toHivemindError(error);
+      const hivemindError = ErrorUtils.toHivemindError(error) as any;
       debug(`Failed to store configuration ${config.id}:`, hivemindError.message);
       throw ErrorUtils.createError(
         `Failed to store secure configuration: ${hivemindError.message}`,
@@ -153,7 +153,7 @@ export class SecureConfigManager {
       if (this.calculateChecksum(configWithoutChecksum) !== checksum) {
         throw ErrorUtils.createError(
           'Configuration integrity check failed',
-          'unknown',
+          'IntegrityError' as any,
           'SECURE_CONFIG_INTEGRITY_FAILED',
           500,
         );
@@ -175,13 +175,13 @@ export class SecureConfigManager {
 
       return config;
     } catch (error: unknown) {
-      const hivemindError = ErrorUtils.toHivemindError(error);
+      const hivemindError = ErrorUtils.toHivemindError(error) as any;
       debug(`Failed to retrieve configuration ${id}:`, hivemindError.message);
       return null;
     }
   }
 
-  public getDecryptedMainConfig(env: string): Record<string, unknown> {
+  public getDecryptedMainConfig(env: string): any {
     try {
       const configPath = path.join(this.mainConfigDir, `${env}.json.enc`);
       if (fs.existsSync(configPath)) {
@@ -207,7 +207,7 @@ export class SecureConfigManager {
         debug(`Configuration ${id} deleted`);
       }
     } catch (error: unknown) {
-      const hivemindError = ErrorUtils.toHivemindError(error);
+      const hivemindError = ErrorUtils.toHivemindError(error) as any;
       debug(`Failed to delete configuration ${id}:`, hivemindError.message);
       throw ErrorUtils.createError(
         `Failed to delete secure configuration: ${hivemindError.message}`,
@@ -311,7 +311,7 @@ export class SecureConfigManager {
       debug(`Backup ${backupId} created with ${Object.keys(allConfigs).length} configurations`);
       return backupId;
     } catch (error: unknown) {
-      const hivemindError = ErrorUtils.toHivemindError(error);
+      const hivemindError = ErrorUtils.toHivemindError(error) as any;
       const errorInfo = ErrorUtils.classifyError(hivemindError);
       debug('Failed to create backup:', {
         error: hivemindError.message,
@@ -365,7 +365,7 @@ export class SecureConfigManager {
       if (this.calculateChecksum(metadataWithoutChecksum) !== checksum) {
         throw ErrorUtils.createError(
           'Backup integrity check failed',
-          'unknown',
+          'IntegrityError' as any,
           'SECURE_CONFIG_BACKUP_INTEGRITY_FAILED',
           500,
         );
@@ -380,7 +380,7 @@ export class SecureConfigManager {
 
       debug(`Backup ${backupId} restored successfully`);
     } catch (error: unknown) {
-      const hivemindError = ErrorUtils.toHivemindError(error);
+      const hivemindError = ErrorUtils.toHivemindError(error) as any;
       const errorInfo = ErrorUtils.classifyError(hivemindError);
       debug(`Failed to restore backup ${backupId}:`, {
         error: hivemindError.message,
@@ -442,7 +442,7 @@ export class SecureConfigManager {
     return decrypted;
   }
 
-  private calculateChecksum(data: unknown): string {
+  private calculateChecksum(data: any): string {
     return crypto
       .createHash('sha256')
       .update(JSON.stringify(data))

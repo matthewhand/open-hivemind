@@ -7,13 +7,7 @@ import {
   CodeBracketIcon,
   ListBulletIcon,
 } from '@heroicons/react/24/outline';
-
-import { SkeletonGrid } from '../components/DaisyUI/Skeleton';
-import { Alert } from '../components/DaisyUI/Alert';
-import Modal from '../components/DaisyUI/Modal';
-import useUrlParams from '../hooks/useUrlParams';
-import Debug from 'debug';
-const debug = Debug('app:client:pages:MCPToolsPage');
+import { Breadcrumbs, Alert, Modal } from '../components/DaisyUI';
 
 interface MCPTool {
   id: string;
@@ -33,19 +27,15 @@ const MCPToolsPage: React.FC = () => {
   const [tools, setTools] = useState<MCPTool[]>([]);
   const [filteredTools, setFilteredTools] = useState<MCPTool[]>([]);
   const [loading, setLoading] = useState(true);
-  const { values: urlParams, setValue: setUrlParam } = useUrlParams({
-    search: { type: 'string', default: '', debounce: 300 },
-    category: { type: 'string', default: 'all' },
-    server: { type: 'string', default: 'all' },
-  });
-  const searchTerm = urlParams.search;
-  const setSearchTerm = (v: string) => setUrlParam('search', v);
-  const categoryFilter = urlParams.category;
-  const setCategoryFilter = (v: string) => setUrlParam('category', v);
-  const serverFilter = urlParams.server;
-  const setServerFilter = (v: string) => setUrlParam('server', v);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState('all');
+  const [serverFilter, setServerFilter] = useState('all');
   const [alert, setAlert] = useState<{ type: 'success' | 'error', message: string } | null>(null);
 
+  const breadcrumbItems = [
+    { label: 'MCP', href: '/admin/mcp' },
+    { label: 'Tools', href: '/admin/mcp/tools', isActive: true },
+  ];
 
   useEffect(() => {
     const fetchTools = async () => {
@@ -80,7 +70,7 @@ const MCPToolsPage: React.FC = () => {
           setFilteredTools(allTools);
         }
       } catch (err) {
-        // Error shown via alert UI
+        console.error('Failed to fetch MCP tools:', err);
         setAlert({ type: 'error', message: 'Failed to load tools from server' });
       } finally {
         setLoading(false);
@@ -190,7 +180,7 @@ const MCPToolsPage: React.FC = () => {
       }
 
       const json = await res.json();
-      debug('Tool execution result:', json);
+      console.log('Tool execution result:', json);
 
       // Update usage count
       setTools(prev => prev.map(t =>
@@ -202,7 +192,7 @@ const MCPToolsPage: React.FC = () => {
       handleCloseRunModal();
       setAlert({ type: 'success', message: `Tool executed! Result: ${JSON.stringify(json.result).substring(0, 100)}...` });
     } catch (error: any) {
-      // Error shown via alert UI
+      console.error('Tool execution error:', error);
       setAlert({ type: 'error', message: `Failed to execute tool: ${error.message}` });
       handleCloseRunModal();
     } finally {
@@ -290,15 +280,18 @@ const MCPToolsPage: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="p-6">
-        <SkeletonGrid count={6} showImage={false} />
+      <div className="p-6 text-center">
+        <span className="loading loading-spinner loading-lg"></span>
+        <p className="mt-2">Loading MCP tools...</p>
       </div>
     );
   }
 
   return (
     <div className="p-6">
-      <div className="mb-8">
+      <Breadcrumbs items={breadcrumbItems} />
+
+      <div className="mt-4 mb-8">
         <h1 className="text-3xl font-bold mb-2">
           MCP Tools
         </h1>

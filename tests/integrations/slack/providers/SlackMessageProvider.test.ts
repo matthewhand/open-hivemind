@@ -1,5 +1,5 @@
-import { SlackMessageProvider } from '@hivemind/message-slack/providers/SlackMessageProvider';
-import { SlackService } from '@hivemind/message-slack/SlackService';
+import { SlackMessageProvider } from '@integrations/slack/providers/SlackMessageProvider';
+import { SlackService } from '@integrations/slack/SlackService';
 import { IMessage } from '@message/interfaces/IMessage';
 
 // Mock Slack Web API

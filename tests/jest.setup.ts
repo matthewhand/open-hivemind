@@ -1,11 +1,3 @@
-/* eslint-disable @typescript-eslint/no-var-requires, @typescript-eslint/no-explicit-any */
-const _polyfillUtil = require("util");
-if (typeof globalThis.TextEncoder === "undefined") { (globalThis as any).TextEncoder = _polyfillUtil.TextEncoder; }
-if (typeof globalThis.TextDecoder === "undefined") { (globalThis as any).TextDecoder = _polyfillUtil.TextDecoder; }
-if (typeof Element !== "undefined" && !Element.prototype.scrollIntoView) { Element.prototype.scrollIntoView = function() {}; }
-if (typeof globalThis.ResizeObserver === "undefined") { (globalThis as any).ResizeObserver = class { observe() {} unobserve() {} disconnect() {} }; }
-if (typeof HTMLCanvasElement !== "undefined") { const _origCtx = HTMLCanvasElement.prototype.getContext; HTMLCanvasElement.prototype.getContext = function(id: string, ...a: any[]) { if (id === "2d") return { measureText: () => ({ width: 0 }), fillText: () => {}, font: "" } as any; return _origCtx?.call(this, id, ...a) ?? null; } as any; }
-import '@testing-library/jest-dom';
 import 'reflect-metadata';
 import { Server } from 'http';
 import express from 'express';

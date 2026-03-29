@@ -10,10 +10,6 @@ jest.mock('debug', () => () => jest.fn());
 jest.mock('axios');
 const mockedAxios = axios as jest.Mocked<typeof axios>;
 
-jest.mock('../../../src/utils/ssrfGuard', () => ({
-  isSafeUrl: jest.fn().mockResolvedValue(true),
-}));
-
 describe('runInference.generateChatCompletion', () => {
   const mockGetSessionKey = jest.spyOn(sessionManager, 'getSessionKey');
   const mockGetKnowledgeFileId = jest.spyOn(uploadKnowledgeFile, 'getKnowledgeFileId');

@@ -4,7 +4,6 @@ import * as path from 'path';
 import Debug from 'debug';
 import type { ILlmProvider, IMessengerService } from '@hivemind/shared-types';
 import type { AnyConfig } from '../types/config';
-import type { PluginSecurityPolicy, SecurePluginManifest, PluginCapability } from './PluginSecurity';
 
 const debug = Debug('app:pluginLoader');
 
@@ -81,61 +80,6 @@ export function loadPlugin(name: string): PluginModule {
 }
 
 /**
- * Load a plugin with security verification.
- *
- * Calls `loadPlugin` then runs the module's manifest through the security
- * policy to verify its signature and set trust / capability grants.
- *
- * @param name - Plugin package name.
- * @param securityPolicy - The active security policy instance.
- * @returns The loaded module (same as `loadPlugin`).
- */
-export function loadPluginWithSecurity(
-  name: string,
-  securityPolicy: PluginSecurityPolicy
-): PluginModule {
-  const mod = loadPlugin(name);
-
-  // Determine if built-in (resolved from @hivemind/ namespace)
-  let isBuiltIn = false;
-  try {
-    require.resolve(`@hivemind/${name}`);
-    isBuiltIn = true;
-  } catch {
-    // Not a built-in package
-  }
-
-  if (isBuiltIn) {
-    securityPolicy.registerBuiltIn(name);
-  }
-
-  // Run signature verification and trust assignment
-  const manifest = (mod.manifest ?? {}) as SecurePluginManifest;
-  securityPolicy.verifyAndSetTrust(name, manifest);
-
-  return mod;
-}
-
-/**
- * Guard that checks whether a plugin holds a required capability before
- * allowing a provider registration to proceed.
- *
- * @throws Error if the capability is denied.
- */
-export function requireCapability(
-  securityPolicy: PluginSecurityPolicy,
-  pluginName: string,
-  capability: PluginCapability
-): void {
-  if (!securityPolicy.hasCapability(pluginName, capability)) {
-    throw new Error(
-      `Plugin '${pluginName}' does not have the '${capability}' capability. ` +
-        `Grant it via the admin dashboard or sign the plugin manifest.`
-    );
-  }
-}
-
-/**
  * Instantiate an LLM provider from a loaded module.
  *
  * Contract (preferred): module exports `create(config)` → ILlmProvider
@@ -176,10 +120,7 @@ export function instantiateLlmProvider(mod: PluginModule, config?: AnyConfig | a
  * Contract (preferred): module exports `create(config)` → IMessengerService
  * Fallback: known Service singleton patterns.
  */
-export function instantiateMessageService(
-  mod: PluginModule,
-  config?: AnyConfig | any
-): IMessengerService {
+export function instantiateMessageService(mod: PluginModule, config?: AnyConfig | any): IMessengerService {
   // Preferred: explicit factory
   if (typeof mod.create === 'function') {
     return mod.create(config);
@@ -221,30 +162,5 @@ export function instantiateMemoryProvider(mod: any, config?: any): any {
   }
   throw new Error(
     'Memory plugin does not export create(), a Provider class, or a default constructor.'
-  );
-}
-
-/**
- * Instantiate a tool provider from a loaded module.
- *
- * Contract (preferred): module exports `create(config)` → IToolProvider
- * Fallback: known Provider class patterns.
- */
-export function instantiateToolProvider(mod: any, config?: any): any {
-  // Preferred: explicit factory
-  if (typeof mod.create === 'function') {
-    return mod.create(config);
-  }
-  // Fallback: *Provider constructor
-  const ctor = Object.keys(mod).find((k) => k.endsWith('Provider') && typeof mod[k] === 'function');
-  if (ctor) {
-    return new mod[ctor](config);
-  }
-  // Fallback: default export
-  if (typeof mod.default === 'function') {
-    return new mod.default(config);
-  }
-  throw new Error(
-    'Tool plugin does not export create(), a Provider class, or a default constructor.'
   );
 }

@@ -1,14 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React from 'react';
-import { Alert } from './DaisyUI/Alert';
-import Card from './DaisyUI/Card';
-import { Loading } from './DaisyUI/Loading';
-import Button from './DaisyUI/Button';
-import { SkeletonGrid } from './DaisyUI/Skeleton';
+import { Alert, Card, Loading, Button } from './DaisyUI';
 import { ArrowPathIcon } from '@heroicons/react/24/outline';
 import type { FetchBaseQueryError } from '@reduxjs/toolkit/query';
 import type { SerializedError } from '@reduxjs/toolkit';
 import { useGetPerformanceMetricsQuery } from '../store/slices/apiSlice';
+import LoadingSpinner from './LoadingSpinner';
 
 const defaultMetrics = {
   cpuUsage: 0,
@@ -55,7 +52,7 @@ const PerformanceMonitor: React.FC = () => {
   const errorMessage = error ? toErrorMessage(error) : null;
 
   if (isLoading && !data) {
-    return <div className="p-4"><SkeletonGrid count={4} showImage={false} columns="grid-cols-1 md:grid-cols-2" /></div>;
+    return <LoadingSpinner message="Loading performance data..." />;
   }
 
   const cpuUsage = metrics.cpuUsage ?? 0;
@@ -138,7 +135,7 @@ const PerformanceMonitor: React.FC = () => {
 
       {isFetching && (
         <div className="flex items-center gap-3 mt-6">
-          <span className="loading loading-spinner loading-sm" aria-hidden="true"></span>
+          <span className="loading loading-spinner loading-sm"></span>
           <p className="text-sm text-base-content/70">
             Updating metrics...
           </p>

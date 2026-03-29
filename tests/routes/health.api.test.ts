@@ -24,8 +24,6 @@ describe('Health Routes - API Monitoring', () => {
   let apiMonitor: ApiMonitorService;
 
   beforeEach(() => {
-    (ApiMonitorService as any).instance = undefined;
-
     app = express();
     app.disable('x-powered-by');
     app.set('case sensitive routing', true);
@@ -66,8 +64,6 @@ describe('Health Routes - API Monitoring', () => {
   });
 
   afterEach(() => {
-    (ApiMonitorService as any).instance = undefined;
-
     apiMonitor.stopAllMonitoring();
   });
 
@@ -187,7 +183,7 @@ describe('Health Routes - API Monitoring', () => {
 
       expect(response.status).toBe(400);
       expect(response.body).toHaveProperty('error');
-      expect(response.body.error).toBe('Validation failed');
+      expect(response.body.error).toBe('Missing required fields');
     });
 
     it('should set default values for optional fields', async () => {

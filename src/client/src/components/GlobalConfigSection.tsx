@@ -1,15 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useEffect, useState } from 'react';
-import { Alert } from './DaisyUI/Alert';
-import Button from './DaisyUI/Button';
-import Card from './DaisyUI/Card';
-import Input from './DaisyUI/Input';
-import Select from './DaisyUI/Select';
-import Toggle from './DaisyUI/Toggle';
-import { Loading } from './DaisyUI/Loading';
-import Textarea from './DaisyUI/Textarea';
-import Debug from 'debug';
-const debug = Debug('app:client:components:GlobalConfigSection');
+import { Alert, Button, Card, Input, Select, Toggle, Loading, Textarea } from './DaisyUI';
 
 interface ConfigSchema {
   doc?: string;
@@ -75,7 +66,7 @@ const GlobalConfigSection: React.FC<GlobalConfigSectionProps> = ({ section }) =>
       try {
         valuesToSave[key] = JSON.parse(jsonStr);
       } catch (e) {
-        debug('WARN:', `Skipping invalid JSON for ${section}.${key}`);
+        console.warn(`Skipping invalid JSON for ${section}.${key}`);
       }
     });
 
@@ -121,7 +112,7 @@ const GlobalConfigSection: React.FC<GlobalConfigSectionProps> = ({ section }) =>
         }),
       });
       const data = await res.json();
-      if (!res.ok || data.success === false) {
+      if (!res.ok || data.ok === false) {
         throw new Error(data.message || data.error || 'Connection test failed');
       }
       setTestStatus({ type: 'success', message: data.message || 'Connection successful' });
@@ -199,7 +190,7 @@ const GlobalConfigSection: React.FC<GlobalConfigSectionProps> = ({ section }) =>
 
   if (loading) {return (
     <div className="flex flex-col items-center justify-center p-12 gap-4">
-      <span className="loading loading-infinity loading-lg text-primary" aria-hidden="true" />
+      <span className="loading loading-infinity loading-lg text-primary" />
       <span className="text-base-content/50">Loading settings...</span>
     </div>
   );}

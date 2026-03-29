@@ -65,13 +65,6 @@ export const UserIdParamSchema = z.object({
   }),
 });
 
-// Schema for token verification
-export const VerifyTokenSchema = z.object({
-  body: z.object({
-    token: z.string().min(1, { message: 'Token is required' }),
-  }),
-});
-
 // Schema for user updates
 export const UpdateUserSchema = z.object({
   body: z.object({

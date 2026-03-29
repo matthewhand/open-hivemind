@@ -1,6 +1,6 @@
 import axios from 'axios';
 import openaiConfig from '../../config/openaiConfig';
-import { isSafeUrl } from '../../utils/ssrfGuard';
+import { isSafeUrl } from '@src/utils/ssrfGuard';
 
 export async function generateCompletion(prompt: string): Promise<string> {
   const model = openaiConfig.get('OPENAI_MODEL') || 'free-small';

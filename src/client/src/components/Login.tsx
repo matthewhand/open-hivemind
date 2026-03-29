@@ -1,10 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState } from 'react';
-import Card from './DaisyUI/Card';
-import Input from './DaisyUI/Input';
-import Button from './DaisyUI/Button';
-import { Alert } from './DaisyUI/Alert';
-import { Loading } from './DaisyUI/Loading';
+import { Card, Input, Button, Alert, Loading } from './DaisyUI';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { ExclamationTriangleIcon } from '@heroicons/react/24/outline';
@@ -63,19 +59,16 @@ const Login: React.FC = () => {
             </div>
           )}
 
-          <div aria-live="assertive" aria-atomic="true">
-            {error && (
-              <Alert status="error" message={error} className="mb-4" />
-            )}
-          </div>
+          {error && (
+            <Alert status="error" message={error} className="mb-4" />
+          )}
 
-          <form onSubmit={handleSubmit} className="space-y-4" aria-label="Sign in form">
+          <form onSubmit={handleSubmit} className="space-y-4">
             <div className="form-control">
-              <label htmlFor="login-username" className="label">
+              <label className="label">
                 <span className="label-text">Username *</span>
               </label>
               <Input
-                id="login-username"
                 name="username"
                 type="text"
                 value={formData.username}
@@ -88,11 +81,10 @@ const Login: React.FC = () => {
             </div>
 
             <div className="form-control">
-              <label htmlFor="login-password" className="label">
+              <label className="label">
                 <span className="label-text">Password *</span>
               </label>
               <Input
-                id="login-password"
                 name="password"
                 type="password"
                 value={formData.password}
@@ -112,7 +104,7 @@ const Login: React.FC = () => {
               className="w-full mt-6"
             >
               {isLoading ? (
-                <><span className="loading loading-spinner loading-sm mr-2" aria-hidden="true"></span> Signing in...</>
+                <><span className="loading loading-spinner loading-sm mr-2"></span> Signing in...</>
               ) : (
                 'Sign In'
               )}

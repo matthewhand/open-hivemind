@@ -3,7 +3,6 @@ import { Router, type Request, type Response } from 'express';
 import { AuthManager } from '../../auth/AuthManager';
 import { authenticate, requireAdmin } from '../../auth/middleware';
 import type { AuthMiddlewareRequest, LoginCredentials, RegisterData } from '../../auth/types';
-import { authRateLimiter } from '../../middleware/rateLimiter';
 import {
   ChangePasswordSchema,
   LoginSchema,
@@ -12,9 +11,9 @@ import {
   RegisterSchema,
   UpdateUserSchema,
   UserIdParamSchema,
-  VerifyTokenSchema,
 } from '../../validation/schemas/authSchema';
 import { validateRequest } from '../../validation/validateRequest';
+import { authLimiter } from '../middleware/rateLimiter';
 
 const debug = Debug('app:AuthRoutes');
 const router = Router();
@@ -42,31 +41,26 @@ const authManager = AuthManager.getInstance();
  *       401:
  *         description: Authentication failed
  */
-router.post(
-  '/login',
-  authRateLimiter,
-  validateRequest(LoginSchema),
-  async (req: Request, res: Response) => {
-    try {
-      const credentials: LoginCredentials = req.body;
-      // Normal authentication flow
+router.post('/login', validateRequest(LoginSchema), async (req: Request, res: Response) => {
+  try {
+    const credentials: LoginCredentials = req.body;
+    // Normal authentication flow
 
-      const authResult = await authManager.login(credentials);
+    const authResult = await authManager.login(credentials);
 
-      return res.json({
-        success: true,
-        data: authResult,
-        message: 'Login successful',
-      });
-    } catch (error: any) {
-      debug('Login error:', error.message);
-      return res.status(401).json({
-        error: 'Authentication failed',
-        message: error.message || 'Invalid credentials',
-      });
-    }
+    return res.json({
+      success: true,
+      data: authResult,
+      message: 'Login successful',
+    });
+  } catch (error: any) {
+    debug('Login error:', error.message);
+    return res.status(401).json({
+      error: 'Authentication failed',
+      message: error.message || 'Invalid credentials',
+    });
   }
-);
+});
 
 /**
  * @openapi
@@ -144,7 +138,6 @@ router.post(
  */
 router.post(
   '/refresh',
-  authRateLimiter,
   validateRequest(RefreshTokenSchema),
   async (req: Request, res: Response) => {
     try {
@@ -230,9 +223,10 @@ router.post(
  *       401:
  *         description: Unauthorized
  */
-router.post('/verify', authRateLimiter, validateRequest(VerifyTokenSchema), async (req: Request, res: Response) => {
+router.post('/verify', async (req: Request, res: Response) => {
   try {
     const { token } = req.body;
+    if (!token) return res.status(400).json({ success: false, error: 'Token required' });
     const payload = authManager.verifyAccessToken(token);
     const user = authManager.getUser(payload.userId);
     if (!user) return res.status(401).json({ success: false, error: 'User not found' });

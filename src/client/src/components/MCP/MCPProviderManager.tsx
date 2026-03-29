@@ -1,13 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Alert, Badge, Button, Card, Collapse, Divider, Input, Modal, Progress, Select, Tabs, Toggle, Tooltip } from 'react-daisyui';
 import { FaPlus, FaTrash, FaPlay, FaStop, FaRedo, FaCheck, FaExclamationTriangle, FaInfoCircle, FaCog, FaTerminal, FaClock, FaMemory, FaVial, FaDownload, FaUpload } from 'react-icons/fa';
-import { ConfirmModal } from '../DaisyUI/Modal';
-import { useSuccessToast, useErrorToast } from '../DaisyUI/ToastNotification';
 import type { MCPProviderConfig, MCPProviderStatus, MCPProviderTestResult, MCPProviderTemplate } from '../../types/mcp';
 import MCPProviderManager from '../../../config/MCPProviderManager';
 import { mcpProviderSchema } from '../../provider-configs/schemas/mcp';
-import MCPProviderForm from './MCPProviderForm';
 
 interface MCPProviderManagerProps {
   className?: string;
@@ -22,8 +19,6 @@ interface ProviderWithStatus extends MCPProviderConfig {
 }
 
 const MCPProviderManagerComponent: React.FC<MCPProviderManagerProps> = ({ className = '' }) => {
-  const successToast = useSuccessToast();
-  const errorToast = useErrorToast();
   const [providers, setProviders] = useState<ProviderWithStatus[]>([]);
   const [templates, setTemplates] = useState<MCPProviderTemplate[]>([]);
   const [selectedProvider, setSelectedProvider] = useState<ProviderWithStatus | null>(null);
@@ -32,10 +27,6 @@ const MCPProviderManagerComponent: React.FC<MCPProviderManagerProps> = ({ classN
   const [activeTab, setActiveTab] = useState('providers');
   const [testResults, setTestResults] = useState<Record<string, MCPProviderTestResult>>({});
   const [manager] = useState(() => new MCPProviderManager());
-  const [confirmModal, setConfirmModal] = useState<{
-    isOpen: boolean; title: string; message: string; onConfirm: () => void;
-  }>({ isOpen: false, title: '', message: '', onConfirm: () => {} });
-  const closeConfirmModal = useCallback(() => setConfirmModal(prev => ({ ...prev, isOpen: false })), []);
   const [isSaving, setIsSaving] = useState(false);
 
   // Form state for create/edit
@@ -82,7 +73,7 @@ const MCPProviderManagerComponent: React.FC<MCPProviderManagerProps> = ({ classN
 
       setProviders(providersWithStatus);
     } catch (error) {
-      errorToast('Load Failed', 'Failed to load MCP providers');
+      console.error('Failed to load providers:', error);
     }
   };
 
@@ -91,7 +82,7 @@ const MCPProviderManagerComponent: React.FC<MCPProviderManagerProps> = ({ classN
       const availableTemplates = manager.getTemplates();
       setTemplates(availableTemplates);
     } catch (error) {
-      errorToast('Templates', 'Failed to load provider templates');
+      console.error('Failed to load templates:', error);
     }
   };
 
@@ -126,21 +117,17 @@ const MCPProviderManagerComponent: React.FC<MCPProviderManagerProps> = ({ classN
   };
 
   const handleDeleteProvider = async (providerId: string) => {
-    setConfirmModal({
-      isOpen: true,
-      title: 'Delete MCP Provider',
-      message: 'Are you sure you want to delete this MCP provider?',
-      onConfirm: async () => {
-        closeConfirmModal();
-        try {
-          await manager.removeProvider(providerId);
-          await loadProviders();
-        } catch (error) {
-          /* errorToast below */
-          errorToast('Delete Failed', 'Failed to delete provider: ' + (error instanceof Error ? error.message : String(error)));
-        }
-      },
-    });
+    if (!confirm('Are you sure you want to delete this MCP provider?')) {
+      return;
+    }
+
+    try {
+      await manager.removeProvider(providerId);
+      await loadProviders();
+    } catch (error) {
+      console.error('Failed to delete provider:', error);
+      alert('Failed to delete provider: ' + (error instanceof Error ? error.message : String(error)));
+    }
   };
 
   const handleStartProvider = async (providerId: string) => {
@@ -152,8 +139,8 @@ const MCPProviderManagerComponent: React.FC<MCPProviderManagerProps> = ({ classN
       await manager.startProvider(providerId);
       await loadProviders();
     } catch (error) {
-      /* errorToast below */
-      errorToast('Start Failed', 'Failed to start provider: ' + (error instanceof Error ? error.message : String(error)));
+      console.error('Failed to start provider:', error);
+      alert('Failed to start provider: ' + (error instanceof Error ? error.message : String(error)));
     } finally {
       setProviders(prev => prev.map(p =>
         p.id === providerId ? { ...p, isStarting: false } : p,
@@ -170,8 +157,8 @@ const MCPProviderManagerComponent: React.FC<MCPProviderManagerProps> = ({ classN
       await manager.stopProvider(providerId);
       await loadProviders();
     } catch (error) {
-      /* errorToast below */
-      errorToast('Stop Failed', 'Failed to stop provider: ' + (error instanceof Error ? error.message : String(error)));
+      console.error('Failed to stop provider:', error);
+      alert('Failed to stop provider: ' + (error instanceof Error ? error.message : String(error)));
     } finally {
       setProviders(prev => prev.map(p =>
         p.id === providerId ? { ...p, isStopping: false } : p,
@@ -191,8 +178,8 @@ const MCPProviderManagerComponent: React.FC<MCPProviderManagerProps> = ({ classN
         [providerId]: result,
       }));
     } catch (error) {
-      /* errorToast below */
-      errorToast('Test Failed', 'Failed to test provider: ' + (error instanceof Error ? error.message : String(error)));
+      console.error('Failed to test provider:', error);
+      alert('Failed to test provider: ' + (error instanceof Error ? error.message : String(error)));
     } finally {
       setProviders(prev => prev.map(p =>
         p.id === providerId ? { ...p, isTesting: false } : p,
@@ -213,8 +200,8 @@ const MCPProviderManagerComponent: React.FC<MCPProviderManagerProps> = ({ classN
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
     } catch (error) {
-      /* errorToast below */
-      errorToast('Export Failed', 'Failed to export providers');
+      console.error('Failed to export providers:', error);
+      alert('Failed to export providers');
     }
   };
 
@@ -228,10 +215,10 @@ const MCPProviderManagerComponent: React.FC<MCPProviderManagerProps> = ({ classN
         const data = e.target?.result as string;
         await manager.importProviders(data);
         await loadProviders();
-        successToast('Import Successful', 'Providers imported successfully');
+        alert('Providers imported successfully');
       } catch (error) {
-        /* errorToast below */
-        errorToast('Import Failed', 'Failed to import providers: ' + (error instanceof Error ? error.message : String(error)));
+        console.error('Failed to import providers:', error);
+        alert('Failed to import providers: ' + (error instanceof Error ? error.message : String(error)));
       }
     };
     reader.readAsText(file);
@@ -607,41 +594,181 @@ const MCPProviderManagerComponent: React.FC<MCPProviderManagerProps> = ({ classN
       </div>
 
       {/* Create Provider Modal */}
-      <MCPProviderForm
-        isOpen={isCreateModalOpen}
-        onClose={() => setIsCreateModalOpen(false)}
-        title="Create MCP Provider"
-        initialData={formData as any}
-        onSave={async (providerData) => {
-          await manager.addProvider(providerData as MCPProviderConfig);
-          loadProviders();
-        }}
-      />
+      <Modal open={isCreateModalOpen} onClickBackdrop={() => setIsCreateModalOpen(false)}>
+        <Modal.Header className="font-bold">Create MCP Provider</Modal.Header>
+        <Modal.Body>
+          <div className="space-y-4">
+            <div className="form-control">
+              <label className="label"><span className="label-text">Provider Name*</span></label>
+              <Input
+                value={formData.name}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                placeholder="my-mcp-provider"
+                className="input-bordered"
+              />
+            </div>
+            <div className="form-control">
+              <label className="label"><span className="label-text">Command*</span></label>
+              <Input
+                value={formData.command}
+                onChange={(e) => setFormData({ ...formData, command: e.target.value })}
+                placeholder="npx -y @modelcontextprotocol/server-*"
+                className="input-bordered"
+              />
+              <label className="label"><span className="label-text-alt">The command to start the MCP server</span></label>
+            </div>
+            <div className="form-control">
+              <label className="label"><span className="label-text">Arguments</span></label>
+              <Input
+                value={formData.args}
+                onChange={(e) => setFormData({ ...formData, args: e.target.value })}
+                placeholder="--port 8080 --config /path/to/config"
+                className="input-bordered"
+              />
+              <label className="label"><span className="label-text-alt">Space-separated arguments</span></label>
+            </div>
+            <div className="form-control">
+              <label className="label"><span className="label-text">Environment Variables</span></label>
+              <textarea
+                className="textarea textarea-bordered"
+                value={formData.env}
+                onChange={(e) => setFormData({ ...formData, env: e.target.value })}
+                placeholder="KEY=value&#10;ANOTHER_KEY=value"
+                rows={3}
+              />
+              <label className="label"><span className="label-text-alt">One per line, KEY=value format</span></label>
+            </div>
+            <div className="form-control">
+              <label className="label"><span className="label-text">Description</span></label>
+              <Input
+                value={formData.description}
+                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                placeholder="Optional description"
+                className="input-bordered"
+              />
+            </div>
+            <div className="form-control">
+              <label className="label cursor-pointer">
+                <span className="label-text">Auto-start on boot</span>
+                <Toggle
+                  checked={formData.autoStart}
+                  onChange={(e) => setFormData({ ...formData, autoStart: e.target.checked })}
+                />
+              </label>
+            </div>
+          </div>
+        </Modal.Body>
+        <Modal.Actions>
+          <Button variant="secondary" className="btn-outline" onClick={() => setIsCreateModalOpen(false)}>
+            Cancel
+          </Button>
+          <Button
+            color="primary"
+            onClick={async () => {
+              if (!formData.name || !formData.command) {
+                alert('Name and command are required');
+                return;
+              }
+              setIsSaving(true);
+              try {
+                const envObj: Record<string, string> = {};
+                formData.env.split('\n').forEach(line => {
+                  const [key, ...valueParts] = line.split('=');
+                  if (key && valueParts.length) envObj[key.trim()] = valueParts.join('=').trim();
+                });
+                await manager.addProvider({
+                  name: formData.name,
+                  command: formData.command,
+                  args: formData.args.split(/\s+/).filter(Boolean),
+                  env: envObj,
+                  autoStart: formData.autoStart,
+                  description: formData.description,
+                });
+                setFormData({ name: '', command: '', args: '', env: '', autoStart: true, description: '' });
+                setIsCreateModalOpen(false);
+                loadProviders();
+              } catch (error) {
+                alert('Failed to create provider: ' + (error instanceof Error ? error.message : String(error)));
+              } finally {
+                setIsSaving(false);
+              }
+            }}
+            disabled={isSaving}
+          >
+            {isSaving ? <span className="loading loading-spinner loading-sm" /> : 'Create Provider'}
+          </Button>
+        </Modal.Actions>
+      </Modal>
 
       {/* Edit Provider Modal */}
-      <MCPProviderForm
-        isOpen={isEditModalOpen}
-        onClose={() => setIsEditModalOpen(false)}
-        title="Edit MCP Provider"
-        initialData={selectedProvider}
-        onSave={async (providerData) => {
-          if (selectedProvider) {
-            await manager.updateProvider(selectedProvider.id, providerData as Partial<MCPProviderConfig>);
-            loadProviders();
-          }
-        }}
-      />
-
-      <ConfirmModal
-        isOpen={confirmModal.isOpen}
-        onClose={closeConfirmModal}
-        title={confirmModal.title}
-        message={confirmModal.message}
-        onConfirm={confirmModal.onConfirm}
-        confirmVariant="error"
-        confirmText="Delete"
-        cancelText="Cancel"
-      />
+      <Modal open={isEditModalOpen} onClickBackdrop={() => setIsEditModalOpen(false)}>
+        <Modal.Header className="font-bold">Edit MCP Provider</Modal.Header>
+        <Modal.Body>
+          {selectedProvider && (
+            <div className="space-y-4">
+              <div className="form-control">
+                <label className="label"><span className="label-text">Provider Name</span></label>
+                <Input
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  className="input-bordered"
+                />
+              </div>
+              <div className="form-control">
+                <label className="label"><span className="label-text">Command</span></label>
+                <Input
+                  value={formData.command}
+                  onChange={(e) => setFormData({ ...formData, command: e.target.value })}
+                  className="input-bordered"
+                />
+              </div>
+              <div className="form-control">
+                <label className="label"><span className="label-text">Arguments</span></label>
+                <Input
+                  value={formData.args}
+                  onChange={(e) => setFormData({ ...formData, args: e.target.value })}
+                  placeholder="Space-separated arguments"
+                  className="input-bordered"
+                />
+              </div>
+              <div className="form-control">
+                <label className="label"><span className="label-text">Environment Variables</span></label>
+                <textarea
+                  className="textarea textarea-bordered"
+                  value={formData.env}
+                  onChange={(e) => setFormData({ ...formData, env: e.target.value })}
+                  rows={3}
+                />
+              </div>
+              <div className="form-control">
+                <label className="label"><span className="label-text">Description</span></label>
+                <Input
+                  value={formData.description}
+                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                  className="input-bordered"
+                />
+              </div>
+              <div className="form-control">
+                <label className="label cursor-pointer">
+                  <span className="label-text">Auto-start on boot</span>
+                  <Toggle
+                    checked={formData.autoStart}
+                    onChange={(e) => setFormData({ ...formData, autoStart: e.target.checked })}
+                  />
+                </label>
+              </div>
+            </div>
+          )}
+        </Modal.Body>
+        <Modal.Actions>
+          <Button variant="secondary" className="btn-outline" onClick={() => setIsEditModalOpen(false)}>
+            Cancel
+          </Button>
+          <Button color="primary" onClick={() => setIsEditModalOpen(false)}>
+            Save Changes
+          </Button>
+        </Modal.Actions>
+      </Modal>
     </div>
   );
 };

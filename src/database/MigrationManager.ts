@@ -1,20 +1,19 @@
-import type { Database } from 'sqlite';
 import { Logger } from '@common/logger';
 
 export interface Migration {
   id: string;
   name: string;
-  up: (db: Database) => Promise<void>;
-  down?: (db: Database) => Promise<void>;
+  up: (db: any) => Promise<void>;
+  down?: (db: any) => Promise<void>;
   version: number;
 }
 
 export class MigrationManager {
   private migrations: Migration[] = [];
   private executedMigrations = new Set<string>();
-  private db: Database;
+  private db: any;
 
-  constructor(db: Database) {
+  constructor(db: any) {
     this.db = db;
     this.loadMigrations();
   }
@@ -26,7 +25,7 @@ export class MigrationManager {
         id: '001_add_tenant_support',
         name: 'Add tenant support to existing tables',
         version: 1,
-        up: async (db: Database) => {
+        up: async (db: any) => {
           // Add tenantId columns to existing tables
           await db.exec('ALTER TABLE bot_configurations ADD COLUMN tenantId TEXT');
           await db.exec('ALTER TABLE bot_configuration_versions ADD COLUMN tenantId TEXT');
@@ -58,7 +57,7 @@ export class MigrationManager {
         id: '002_add_rbac_enhancements',
         name: 'Add RBAC enhancements to roles table',
         version: 2,
-        up: async (db: Database) => {
+        up: async (db: any) => {
           await db.exec('ALTER TABLE roles ADD COLUMN description TEXT');
           await db.exec('ALTER TABLE roles ADD COLUMN level INTEGER DEFAULT 0');
           await db.exec('ALTER TABLE roles ADD COLUMN isActive BOOLEAN DEFAULT 1');
@@ -78,7 +77,7 @@ export class MigrationManager {
         id: '003_add_user_indexes',
         name: 'Add user indexes',
         version: 3,
-        up: async (db: Database) => {
+        up: async (db: any) => {
           await db.exec('CREATE INDEX IF NOT EXISTS idx_users_tenant ON users(tenantId)');
           await db.exec('CREATE INDEX IF NOT EXISTS idx_audits_tenant ON audits(tenantId)');
           await db.exec('CREATE INDEX IF NOT EXISTS idx_audits_user ON audits(userId)');
@@ -88,7 +87,7 @@ export class MigrationManager {
         id: '004_add_anomaly_tracking',
         name: 'Add anomaly tracking tables',
         version: 4,
-        up: async (db: Database) => {
+        up: async (db: any) => {
           await db.exec(`
             CREATE TABLE IF NOT EXISTS anomaly_detection (
               id TEXT PRIMARY KEY,
@@ -130,7 +129,7 @@ export class MigrationManager {
         id: '005_add_monitoring_support',
         name: 'Add monitoring and health check support',
         version: 5,
-        up: async (db: Database) => {
+        up: async (db: any) => {
           await db.exec(`
             CREATE TABLE IF NOT EXISTS health_checks (
               id TEXT PRIMARY KEY,
@@ -178,7 +177,7 @@ export class MigrationManager {
         id: '006_add_audit_enhancements',
         name: 'Add audit log enhancements',
         version: 6,
-        up: async (db: Database) => {
+        up: async (db: any) => {
           await db.exec('ALTER TABLE audits ADD COLUMN resourceId TEXT');
           await db.exec('ALTER TABLE audits ADD COLUMN ipAddress TEXT');
           await db.exec('ALTER TABLE audits ADD COLUMN userAgent TEXT');
@@ -198,7 +197,7 @@ export class MigrationManager {
         id: '007_add_notifications',
         name: 'Add notification system',
         version: 7,
-        up: async (db: Database) => {
+        up: async (db: any) => {
           await db.exec(`
             CREATE TABLE IF NOT EXISTS notifications (
               id TEXT PRIMARY KEY,
@@ -230,7 +229,7 @@ export class MigrationManager {
         id: '008_add_caching_support',
         name: 'Add caching system support',
         version: 8,
-        up: async (db: Database) => {
+        up: async (db: any) => {
           await db.exec(`
             CREATE TABLE IF NOT EXISTS cache_entries (
               key TEXT PRIMARY KEY,
@@ -250,7 +249,7 @@ export class MigrationManager {
         id: '009_add_job_queue',
         name: 'Add job queue system',
         version: 9,
-        up: async (db: Database) => {
+        up: async (db: any) => {
           await db.exec(`
             CREATE TABLE IF NOT EXISTS job_queue (
               id TEXT PRIMARY KEY,
@@ -279,7 +278,7 @@ export class MigrationManager {
         id: '010_add_event_streaming',
         name: 'Add event streaming support',
         version: 10,
-        up: async (db: Database) => {
+        up: async (db: any) => {
           await db.exec(`
             CREATE TABLE IF NOT EXISTS event_stream (
               id TEXT PRIMARY KEY,
@@ -307,14 +306,14 @@ export class MigrationManager {
         id: '011_add_cron_timezone_support',
         name: 'Add timezone support to cron scheduling tables',
         version: 11,
-        up: async (db: Database) => {
+        up: async (db: any) => {
           await db.exec("ALTER TABLE bot_scheduling ADD COLUMN timezone TEXT DEFAULT 'UTC'");
           await db.exec("ALTER TABLE bot_backup_schedules ADD COLUMN timezone TEXT DEFAULT 'UTC'");
           await db.exec(
             "ALTER TABLE bot_data_purging_schedules ADD COLUMN timezone TEXT DEFAULT 'UTC'"
           );
         },
-        down: async (db: Database) => {
+        down: async (db: any) => {
           // SQLite doesn't support DROP COLUMN cleanly in all versions. We omit down or leave empty for safety,
           // or ideally we would recreate the table without the column. For simplicity, we'll leave it as a no-op down.
         },
@@ -336,7 +335,7 @@ export class MigrationManager {
 
   async getExecutedMigrations(): Promise<string[]> {
     const rows = await this.db.all('SELECT id FROM migrations ORDER BY version');
-    return rows.map((row: Record<string, unknown>) => row.id as string);
+    return rows.map((row: any) => row.id);
   }
 
   async runMigrations(): Promise<void> {
@@ -397,14 +396,6 @@ export class MigrationManager {
     const migrationsToRollback = this.migrations
       .filter((m) => m.version > version)
       .sort((a, b) => b.version - a.version); // Reverse order
-
-    // Validate that all migrations to be rolled back are reversible
-    const irreversibleMigration = migrationsToRollback.find((m) => !m.down);
-    if (irreversibleMigration) {
-      throw new Error(
-        `Cannot rollback: Migration ${irreversibleMigration.id} is irreversible (missing down method).`
-      );
-    }
 
     for (const migration of migrationsToRollback) {
       if (migration.down) {

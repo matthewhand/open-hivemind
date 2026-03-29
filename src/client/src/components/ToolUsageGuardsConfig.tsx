@@ -1,15 +1,22 @@
-import React, { useEffect, useState, useMemo } from 'react';
-import { PencilIcon, PlusIcon, TrashIcon } from '@heroicons/react/24/outline';
-import { Alert } from './DaisyUI/Alert';
-import Badge from './DaisyUI/Badge';
-import Button from './DaisyUI/Button';
-import { SkeletonList } from './DaisyUI/Skeleton';
-import Card from './DaisyUI/Card';
-import { ConfirmModal } from './DaisyUI/Modal';
-import Input from './DaisyUI/Input';
-import Select from './DaisyUI/Select';
-import { useConfigDiff } from '../hooks/useConfigDiff';
-import { ConfigDiffConfirmDialog } from './ConfigDiffViewer';
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
+import React, { useState, useEffect } from 'react';
+import {
+  Card,
+  Button,
+  ModalForm,
+  Input,
+  Select,
+  Alert,
+  Chip,
+  Badge,
+  Checkbox,
+} from './DaisyUI';
+import {
+  PlusIcon,
+  PencilIcon,
+  TrashIcon,
+  ShieldCheckIcon,
+} from '@heroicons/react/24/outline';
 
 interface ToolUsageGuard {
   id: string;
@@ -40,26 +47,11 @@ const ToolUsageGuardsConfig: React.FC = () => {
       ownerOnly: false,
     },
   });
-  const [showDiffConfirm, setShowDiffConfirm] = useState(false);
-
-  const formDataAsRecord = useMemo(() => formData as unknown as Record<string, unknown>, [formData]);
-  const { hasChanges, diff, setOriginalConfig, resetToOriginal } = useConfigDiff(formDataAsRecord);
-
-  const handleUndoAll = () => {
-    const original = resetToOriginal();
-    setFormData(original as Partial<ToolUsageGuard>);
-  };
-
-  const [toast, setToast] = useState<{ show: boolean; message: string; type: 'success' | 'error' }>(
-    {
-      show: false,
-      message: '',
-      type: 'success',
-    }
-  );
-  const [confirmModal, setConfirmModal] = useState<{
-    isOpen: boolean; title: string; message: string; onConfirm: () => void;
-  }>({ isOpen: false, title: '', message: '', onConfirm: () => {} });
+  const [toast, setToast] = useState<{ show: boolean; message: string; type: 'success' | 'error' }>({
+    show: false,
+    message: '',
+    type: 'success',
+  });
 
   const guardTypes = [
     { value: 'owner', label: 'Owner Only' },
@@ -90,29 +82,17 @@ const ToolUsageGuardsConfig: React.FC = () => {
 
   const handleOpenDialog = (guard?: ToolUsageGuard) => {
     setEditingGuard(guard || null);
-    setFormData(
-      guard || {
-        name: '',
-        toolName: '',
-        guardType: 'owner',
-        config: {
-          allowedUsers: [],
-          allowedRoles: [],
-          ownerOnly: false,
-        },
-      }
-    );
+    setFormData(guard || {
+      name: '',
+      toolName: '',
+      guardType: 'owner',
+      config: {
+        allowedUsers: [],
+        allowedRoles: [],
+        ownerOnly: false,
+      },
+    });
     setOpenDialog(true);
-    // Snapshot original for diff tracking
-    setTimeout(() => {
-      const snapshot = guard || {
-        name: '',
-        toolName: '',
-        guardType: 'owner',
-        config: { allowedUsers: [], allowedRoles: [], ownerOnly: false },
-      };
-      setOriginalConfig(snapshot as unknown as Record<string, unknown>);
-    }, 0);
   };
 
   const handleCloseDialog = () => {
@@ -160,46 +140,37 @@ const ToolUsageGuardsConfig: React.FC = () => {
     } catch (err) {
       setToast({
         show: true,
-        message:
-          err instanceof Error
-            ? err.message
-            : `Failed to ${editingGuard ? 'update' : 'create'} tool usage guard`,
+        message: err instanceof Error ? err.message : `Failed to ${editingGuard ? 'update' : 'create'} tool usage guard`,
         type: 'error',
       });
     }
   };
 
   const handleDeleteGuard = async (guardId: string) => {
-    setConfirmModal({
-      isOpen: true,
-      title: 'Delete Tool Usage Guard',
-      message: 'Are you sure you want to delete this tool usage guard?',
-      onConfirm: async () => {
-        setConfirmModal(prev => ({ ...prev, isOpen: false }));
-        try {
-          const response = await fetch(`/api/admin/tool-usage-guards/${guardId}`, {
-            method: 'DELETE',
-          });
+    if (!confirm('Are you sure you want to delete this tool usage guard?')) {return;}
 
-          if (!response.ok) {
-            throw new Error('Failed to delete tool usage guard');
-          }
+    try {
+      const response = await fetch(`/api/admin/tool-usage-guards/${guardId}`, {
+        method: 'DELETE',
+      });
 
-          setToast({
-            show: true,
-            message: 'Tool usage guard deleted successfully',
-            type: 'success',
-          });
-          fetchGuards();
-        } catch (err) {
-          setToast({
-            show: true,
-            message: err instanceof Error ? err.message : 'Failed to delete tool usage guard',
-            type: 'error',
-          });
-        }
-      },
-    });
+      if (!response.ok) {
+        throw new Error('Failed to delete tool usage guard');
+      }
+
+      setToast({
+        show: true,
+        message: 'Tool usage guard deleted successfully',
+        type: 'success',
+      });
+      fetchGuards();
+    } catch (err) {
+      setToast({
+        show: true,
+        message: err instanceof Error ? err.message : 'Failed to delete tool usage guard',
+        type: 'error',
+      });
+    }
   };
 
   const handleToggleActive = async (guardId: string, isActive: boolean) => {
@@ -227,11 +198,7 @@ const ToolUsageGuardsConfig: React.FC = () => {
   };
 
   if (loading) {
-    return (
-      <div className="min-h-[200px] p-4">
-        <SkeletonList items={4} />
-      </div>
-    );
+    return <div className="flex justify-center items-center min-h-[200px]"><span className="loading loading-spinner loading-lg"></span></div>;
   }
 
   return (
@@ -247,7 +214,9 @@ const ToolUsageGuardsConfig: React.FC = () => {
         </Button>
       </div>
 
-      {error && <Alert status="error" message={error} onClose={() => setError(null)} />}
+      {error && (
+        <Alert status="error" message={error} onClose={() => setError(null)} />
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {guards.map((guard) => (
@@ -256,7 +225,9 @@ const ToolUsageGuardsConfig: React.FC = () => {
               <div className="flex justify-between items-start">
                 <div>
                   <h3 className="card-title">{guard.name}</h3>
-                  <p className="text-sm text-base-content/70 mt-1">Tool: {guard.toolName}</p>
+                  <p className="text-sm text-base-content/70 mt-1">
+                    Tool: {guard.toolName}
+                  </p>
                   <div className="mt-2">
                     <Badge variant="primary">{guard.guardType}</Badge>
                   </div>
@@ -277,8 +248,7 @@ const ToolUsageGuardsConfig: React.FC = () => {
                     size="sm"
                     shape="circle"
                     color="error"
-                    variant="secondary"
-                    className="btn-outline"
+                    variant="secondary" className="btn-outline"
                     onClick={() => handleDeleteGuard(guard.id)}
                   >
                     <TrashIcon className="w-4 h-4" />
@@ -292,8 +262,7 @@ const ToolUsageGuardsConfig: React.FC = () => {
                 </span>
                 <Button
                   size="sm"
-                  variant="secondary"
-                  className="btn-outline"
+                  variant="secondary" className="btn-outline"
                   onClick={() => handleToggleActive(guard.id, !guard.isActive)}
                 >
                   {guard.isActive ? 'Deactivate' : 'Activate'}
@@ -308,13 +277,7 @@ const ToolUsageGuardsConfig: React.FC = () => {
         open={openDialog}
         title={editingGuard ? 'Edit Tool Usage Guard' : 'Add New Tool Usage Guard'}
         onClose={handleCloseDialog}
-        onSubmit={() => {
-          if (editingGuard && hasChanges) {
-            setShowDiffConfirm(true);
-          } else {
-            handleSaveGuard();
-          }
-        }}
+        onSubmit={handleSaveGuard}
         submitLabel={editingGuard ? 'Update' : 'Create'}
       >
         <div className="space-y-4">
@@ -336,12 +299,10 @@ const ToolUsageGuardsConfig: React.FC = () => {
           <Select
             label="Guard Type"
             value={formData.guardType || 'owner'}
-            onChange={(e) =>
-              setFormData({
-                ...formData,
-                guardType: e.target.value as 'owner' | 'userList' | 'role',
-              })
-            }
+            onChange={(e) => setFormData({
+              ...formData,
+              guardType: e.target.value as 'owner' | 'userList' | 'role',
+            })}
             options={guardTypes}
             fullWidth
           />
@@ -354,12 +315,10 @@ const ToolUsageGuardsConfig: React.FC = () => {
                   type="checkbox"
                   className="toggle toggle-primary"
                   checked={formData.config?.ownerOnly || false}
-                  onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      config: { ...formData.config, ownerOnly: e.target.checked },
-                    })
-                  }
+                  onChange={(e) => setFormData({
+                    ...formData,
+                    config: { ...formData.config, ownerOnly: e.target.checked },
+                  })}
                 />
               </label>
             </div>
@@ -369,18 +328,13 @@ const ToolUsageGuardsConfig: React.FC = () => {
             <Input
               label="Allowed Users"
               value={formData.config?.allowedUsers?.join(', ') || ''}
-              onChange={(e) =>
-                setFormData({
-                  ...formData,
-                  config: {
-                    ...formData.config,
-                    allowedUsers: e.target.value
-                      .split(',')
-                      .map((u) => u.trim())
-                      .filter((u) => u),
-                  },
-                })
-              }
+              onChange={(e) => setFormData({
+                ...formData,
+                config: {
+                  ...formData.config,
+                  allowedUsers: e.target.value.split(',').map(u => u.trim()).filter(u => u),
+                },
+              })}
               fullWidth
               helperText="Comma-separated list of user IDs"
             />
@@ -390,18 +344,13 @@ const ToolUsageGuardsConfig: React.FC = () => {
             <Input
               label="Allowed Roles"
               value={formData.config?.allowedRoles?.join(', ') || ''}
-              onChange={(e) =>
-                setFormData({
-                  ...formData,
-                  config: {
-                    ...formData.config,
-                    allowedRoles: e.target.value
-                      .split(',')
-                      .map((r) => r.trim())
-                      .filter((r) => r),
-                  },
-                })
-              }
+              onChange={(e) => setFormData({
+                ...formData,
+                config: {
+                  ...formData.config,
+                  allowedRoles: e.target.value.split(',').map(r => r.trim()).filter(r => r),
+                },
+              })}
               fullWidth
               helperText="Comma-separated list of user roles"
             />
@@ -413,35 +362,10 @@ const ToolUsageGuardsConfig: React.FC = () => {
         <div className="toast toast-bottom toast-center z-50" role="status" aria-live="polite">
           <div className={`alert ${toast.type === 'success' ? 'alert-success' : 'alert-error'}`}>
             <span>{toast.message}</span>
-            <button
-              className="btn btn-sm btn-ghost"
-              onClick={() => setToast({ ...toast, show: false })}
-              aria-label="Close message"
-            >
-              ✕
-            </button>
+            <button className="btn btn-sm btn-ghost" onClick={() => setToast({ ...toast, show: false })}>✕</button>
           </div>
         </div>
       )}
-
-      <ConfigDiffConfirmDialog
-        isOpen={showDiffConfirm}
-        diff={diff}
-        onConfirm={() => { setShowDiffConfirm(false); handleSaveGuard(); }}
-        onCancel={() => setShowDiffConfirm(false)}
-        title="Confirm Guard Changes"
-      />
-
-      <ConfirmModal
-        isOpen={confirmModal.isOpen}
-        onClose={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))}
-        title={confirmModal.title}
-        message={confirmModal.message}
-        onConfirm={confirmModal.onConfirm}
-        confirmVariant="error"
-        confirmText="Delete"
-        cancelText="Cancel"
-      />
     </div>
   );
 };

@@ -4,8 +4,6 @@ import { Discord, type DiscordService } from '@hivemind/message-discord';
 import discordConfig, { type DiscordConfig } from '../config/discordConfig';
 import type { IBotInfo } from '../types/botInfo';
 import { type IMessageProvider } from '../types/IProvider';
-import Debug from 'debug';
-const debug = Debug('app:providers:DiscordProvider');
 
 export class DiscordProvider implements IMessageProvider<DiscordConfig> {
   id = 'discord';
@@ -13,9 +11,9 @@ export class DiscordProvider implements IMessageProvider<DiscordConfig> {
   type = 'messenger' as const;
   docsUrl = 'https://discord.com/developers/applications';
   helpText = 'Create a Discord application, add a bot, and copy the bot token from the Bot tab.';
-  private discordService: InstanceType<typeof DiscordService>;
+  private discordService: DiscordService;
 
-  constructor(discordService?: InstanceType<typeof DiscordService>) {
+  constructor(discordService?: DiscordService) {
     this.discordService = discordService || (Discord as any).DiscordService.getInstance();
   }
 
@@ -87,7 +85,7 @@ export class DiscordProvider implements IMessageProvider<DiscordConfig> {
       await fs.promises.mkdir(path.dirname(messengersPath), { recursive: true });
       await fs.promises.writeFile(messengersPath, JSON.stringify(cfg, null, 2), 'utf8');
     } catch (e) {
-      debug('ERROR:', 'Failed writing messengers.json', e);
+      console.error('Failed writing messengers.json', e);
     }
 
     // Try runtime add

@@ -25,23 +25,22 @@ export async function isSafeUrl(url: string): Promise<boolean> {
       return false;
     }
 
+    // Allow loopback/private IPs if explicitly configured
+    if (process.env.ALLOW_LOCAL_NETWORK_ACCESS === 'true') {
+      return true;
+    }
+
     const hostname = parsedUrl.hostname;
 
     // Check if hostname is an IP literal
     if (net.isIP(hostname)) {
-      if (isPrivateIP(hostname)) {
-        return process.env.ALLOW_LOCAL_NETWORK_ACCESS === 'true';
-      }
-      return true;
+      return !isPrivateIP(hostname);
     }
 
-    // Resolve hostname to IP - ALWAYS resolve to prevent DNS rebinding/bypass
+    // Resolve hostname to IP
     try {
       const { address } = await dns.promises.lookup(hostname);
-      if (isPrivateIP(address)) {
-        return process.env.ALLOW_LOCAL_NETWORK_ACCESS === 'true';
-      }
-      return true;
+      return !isPrivateIP(address);
     } catch (error) {
       // DNS resolution failed - treat as unsafe
       return false;
@@ -104,6 +103,7 @@ function isPrivateIPv6(ip: string): boolean {
   if (ip === '::' || ip === '0:0:0:0:0:0:0:0') return true;
 
   // fc00::/7 (Unique Local)
+  // standard format usually starts with fc or fd
   const firstBlock = ip.split(':')[0].toLowerCase();
   if (firstBlock.startsWith('fc') || firstBlock.startsWith('fd')) return true;
 

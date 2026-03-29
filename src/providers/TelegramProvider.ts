@@ -3,8 +3,6 @@ import * as path from 'path';
 import telegramConfig, { type TelegramConfig } from '../config/telegramConfig';
 import { type IMessageProvider } from '../types/IProvider';
 import { type Message } from '../types/messages';
-import Debug from 'debug';
-const debug = Debug('app:providers:TelegramProvider');
 
 /**
  * Telegram bot token format: <bot_id>:<token_string>
@@ -149,7 +147,7 @@ export class TelegramProvider implements IMessageProvider<TelegramConfig> {
       mode: 0o600, // owner read/write only — tokens are sensitive
     });
 
-    debug(`[TelegramProvider] Added bot configuration for ${name || 'unnamed'}`);
+    console.log(`[TelegramProvider] Added bot configuration for ${name || 'unnamed'}`);
   }
 
   async reload() {

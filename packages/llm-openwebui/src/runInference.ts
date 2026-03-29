@@ -1,6 +1,5 @@
 import axios from 'axios';
 import Debug from 'debug';
-import { isSafeUrl } from '@hivemind/shared-types';
 import type { IMessage } from '@message/interfaces/IMessage';
 import openWebUIConfig from './openWebUIConfig';
 import { getSessionKey } from './sessionManager';
@@ -60,11 +59,6 @@ export async function generateChatCompletion(
     ) {
       payload.systemPrompt = metadata.systemPrompt;
     }
-
-    if (!(await isSafeUrl(url))) {
-      throw new Error('OpenWebUI API URL is not safe to connect to.');
-    }
-
     const response = await axios.post(url, payload, { headers, timeout: 15000 });
 
     debug('Inference result:', response.data);

@@ -1,12 +1,5 @@
 import Debug from 'debug';
 import { Router } from 'express';
-import { validateRequest } from '../../validation/validateRequest';
-import {
-  CreateDeploymentSchema,
-  RollbackDeploymentSchema,
-  ValidateDeploymentSchema,
-  RunTestsSchema,
-} from '../../validation/schemas/ciSchema';
 
 const debug = Debug('app:ciRoutes');
 const router = Router();
@@ -73,9 +66,16 @@ router.get('/api/deployments', (req, res) => {
 });
 
 // Start a new deployment
-router.post('/api/deployments', validateRequest(CreateDeploymentSchema), (req, res) => {
+router.post('/api/deployments', (req, res) => {
   try {
     const { name, environment, branch, commitHash } = req.body;
+
+    if (!name || !environment) {
+      return res.status(400).json({
+        success: false,
+        message: 'Name and environment are required',
+      });
+    }
 
     // In a real implementation, this would trigger a CI/CD pipeline
     // For now, simulate deployment creation
@@ -157,7 +157,7 @@ router.get('/api/deployments/:id', (req, res) => {
 });
 
 // Rollback deployment
-router.post('/api/deployments/:id/rollback', validateRequest(RollbackDeploymentSchema), (req, res) => {
+router.post('/api/deployments/:id/rollback', (req, res) => {
   try {
     const { id } = req.params;
 
@@ -214,9 +214,16 @@ router.get('/api/drift', (req, res) => {
 });
 
 // Validate deployment configuration
-router.post('/api/deployments/validate', validateRequest(ValidateDeploymentSchema), (req, res) => {
+router.post('/api/deployments/validate', (req, res) => {
   try {
     const { environment, configuration } = req.body;
+
+    if (!environment || !configuration) {
+      return res.status(400).json({
+        success: false,
+        message: 'Environment and configuration are required',
+      });
+    }
 
     // In a real implementation, this would validate the configuration
     // For now, simulate validation
@@ -273,7 +280,7 @@ router.get('/api/pipeline/status', (req, res) => {
 });
 
 // Trigger automated tests
-router.post('/api/tests/run', validateRequest(RunTestsSchema), (req, res) => {
+router.post('/api/tests/run', (req, res) => {
   try {
     const { type, environment } = req.body;
 

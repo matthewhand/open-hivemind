@@ -64,7 +64,7 @@ jest.mock('../../src/validation/validateRequest', () => ({
   validateRequest: () => (req: any, res: any, next: any) => next(),
 }));
 
-jest.mock('../../src/validation/schemas/botsSchema', () => ({
+jest.mock('../../src/validation/schemas/botSchema', () => ({
   BotIdParamSchema: { merge: () => ({}) },
   CloneBotSchema: {},
   CreateBotSchema: {},
@@ -79,13 +79,7 @@ app.use('/api/bots', botsRouter);
 const getMockManager = () => BotManager.getInstance() as unknown as Record<string, jest.Mock>;
 
 describe('Bots Routes', () => {
-  afterEach(() => {
-    (BotManager as any).instance = undefined;
-  });
-
   beforeEach(() => {
-    (BotManager as any).instance = undefined;
-
     jest.clearAllMocks();
   });
 
@@ -106,11 +100,9 @@ describe('Bots Routes', () => {
         expect.objectContaining({
           id: 'bot1',
           name: 'Bot 1',
-          messageProvider: 'discord',
-          provider: 'discord',
-          status: 'active',
           connected: false,
           messageCount: 0,
+          errorCount: 0,
         })
       );
     });
@@ -120,8 +112,6 @@ describe('Bots Routes', () => {
   describe('POST /api/bots', () => {
     it('should create a bot', async () => {
       const bot = { id: 'bot1', name: 'Bot 1', messageProvider: 'discord', llmProvider: 'openai' };
-      // By returning empty array we ensure the idempotency check fails and createBot runs
-      getMockManager().getAllBots.mockResolvedValue([]);
       getMockManager().createBot.mockResolvedValue(bot);
 
       const response = await request(app)

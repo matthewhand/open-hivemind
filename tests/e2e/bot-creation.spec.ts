@@ -32,83 +32,24 @@ test.describe('Bot Creation Form Validation', () => {
   test.setTimeout(90000);
 
   test.beforeEach(async ({ page }) => {
-    // Mock all API endpoints the BotsPage and CreateBotWizard need
-    await page.route('**/api/config', (route) =>
-      route.fulfill({ status: 200, json: { bots: [] } })
-    );
-    await page.route('**/api/config/global', (route) =>
-      route.fulfill({ status: 200, json: {} })
-    );
-    await page.route('**/api/config/llm-profiles', (route) =>
-      route.fulfill({
-        status: 200,
-        json: { llm: [{ key: 'openai', name: 'OpenAI', provider: 'openai' }] },
-      })
-    );
-    await page.route('**/api/admin/llm-profiles', (route) =>
+    await page.route('/api/config', (route) => route.fulfill({ status: 200, json: {} }));
+    await page.route('/api/admin/llm-profiles', (route) =>
       route.fulfill({
         status: 200,
         json: { data: [{ key: 'openai', name: 'OpenAI', provider: 'openai' }] },
       })
     );
-    await page.route('**/api/admin/guard-profiles', (route) =>
+    await page.route('/api/admin/guard-profiles', (route) =>
       route.fulfill({
         status: 200,
         json: { data: [] },
       })
     );
-    await page.route('**/api/config/llm-status', (route) =>
+    await page.route('/api/config/llm-status', (route) =>
       route.fulfill({
         status: 200,
         json: { defaultConfigured: true },
       })
-    );
-    await page.route('**/api/personas', (route) =>
-      route.fulfill({
-        status: 200,
-        json: [
-          {
-            id: 'default',
-            name: 'Default Assistant',
-            description: 'Helpful and polite general purpose assistant.',
-            systemPrompt: 'You are a helpful assistant.',
-            category: 'general',
-            traits: [],
-            isBuiltIn: true,
-            createdAt: '2025-01-01T00:00:00Z',
-            updatedAt: '2025-01-01T00:00:00Z',
-            assignedBotIds: [],
-            assignedBotNames: [],
-          },
-        ],
-      })
-    );
-    await page.route('**/api/bots', (route) => {
-      if (route.request().method() === 'GET') {
-        return route.fulfill({ status: 200, json: { data: { bots: [] } } });
-      }
-      return route.fulfill({ status: 200, json: { data: { bot: { id: 'new-bot', name: 'Test Bot' } } } });
-    });
-    await page.route('**/api/bots/*/activity*', (route) =>
-      route.fulfill({ status: 200, json: { data: { activity: [] } } })
-    );
-    await page.route('**/api/bots/*/chat*', (route) =>
-      route.fulfill({ status: 200, json: { data: { messages: [] } } })
-    );
-    await page.route('**/api/bots/*/history*', (route) =>
-      route.fulfill({ status: 200, json: { success: true, data: { history: [] } } })
-    );
-    await page.route('**/api/csrf-token', (route) =>
-      route.fulfill({ status: 200, json: { token: 'mock-csrf-token' } })
-    );
-    await page.route('**/api/health', (route) =>
-      route.fulfill({ status: 200, json: { status: 'ok' } })
-    );
-    await page.route('**/api/health/detailed', (route) =>
-      route.fulfill({ status: 200, json: { status: 'healthy' } })
-    );
-    await page.route('**/api/demo/status', (route) =>
-      route.fulfill({ status: 200, json: { active: false } })
     );
   });
 
@@ -190,7 +131,7 @@ test.describe('Bot Creation Form Validation', () => {
   });
 
   test('Submit button disabled without LLM provider', async ({ page }) => {
-    await page.route('**/api/config/llm-status', (route) =>
+    await page.route('/api/config/llm-status', (route) =>
       route.fulfill({
         status: 200,
         json: { defaultConfigured: false },
@@ -261,7 +202,7 @@ test.describe('Bot Creation Form Validation', () => {
   });
 
   test('Error styling on empty required selects', async ({ page }) => {
-    await page.route('**/api/config/llm-status', (route) =>
+    await page.route('/api/config/llm-status', (route) =>
       route.fulfill({
         status: 200,
         json: { defaultConfigured: false },

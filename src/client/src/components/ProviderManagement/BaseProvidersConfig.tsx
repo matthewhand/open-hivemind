@@ -1,38 +1,39 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import React, { useEffect, useState } from 'react';
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
+import React, { useState, useEffect } from 'react';
 import {
-  closestCenter,
+  Card,
+  Button,
+  ModalForm,
+  Input,
+  Select,
+  Alert,
+  Badge,
+} from '../DaisyUI';
+import {
+  PlusIcon,
+  PencilIcon,
+  TrashIcon,
+  ArrowTopRightOnSquareIcon,
+  Bars3Icon,
+} from '@heroicons/react/24/outline';
+import ProviderConfig from '../ProviderConfig';
+import {
   DndContext,
+  closestCenter,
   KeyboardSensor,
   PointerSensor,
   useSensor,
   useSensors,
-  type DragEndEvent,
+  DragEndEvent,
 } from '@dnd-kit/core';
 import {
   arrayMove,
   SortableContext,
   sortableKeyboardCoordinates,
-  useSortable,
   verticalListSortingStrategy,
+  useSortable,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import {
-  ArrowTopRightOnSquareIcon,
-  Bars3Icon,
-  PencilIcon,
-  PlusIcon,
-  TrashIcon,
-} from '@heroicons/react/24/outline';
-import { Alert } from '../DaisyUI/Alert';
-import Badge from '../DaisyUI/Badge';
-import Button from '../DaisyUI/Button';
-import Card from '../DaisyUI/Card';
-import { SkeletonList } from '../DaisyUI/Skeleton';
-import Modal, { ConfirmModal } from '../DaisyUI/Modal';
-import Input from '../DaisyUI/Input';
-import Select from '../DaisyUI/Select';
-import ProviderConfig from '../ProviderConfig';
 
 export interface ProviderItem {
   id: string;
@@ -71,9 +72,14 @@ const SortableProviderCard: React.FC<SortableProviderCardProps> = ({
   onDelete,
   onToggleActive,
 }) => {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
-    id: provider.id,
-  });
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: provider.id });
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -121,8 +127,7 @@ const SortableProviderCard: React.FC<SortableProviderCardProps> = ({
                 size="sm"
                 shape="circle"
                 color="error"
-                variant="secondary"
-                className="btn-outline"
+                variant="secondary" className="btn-outline"
                 onClick={() => onDelete(provider.id)}
                 aria-label="Delete Provider"
               >
@@ -137,8 +142,7 @@ const SortableProviderCard: React.FC<SortableProviderCardProps> = ({
             </span>
             <Button
               size="sm"
-              variant="secondary"
-              className="btn-outline"
+              variant="secondary" className="btn-outline"
               onClick={() => onToggleActive(provider.id, !provider.isActive)}
             >
               {provider.isActive ? 'Deactivate' : 'Activate'}
@@ -149,6 +153,7 @@ const SortableProviderCard: React.FC<SortableProviderCardProps> = ({
     </div>
   );
 };
+
 
 const BaseProvidersConfig: React.FC<BaseProvidersConfigProps> = ({
   apiEndpoint,
@@ -165,16 +170,11 @@ const BaseProvidersConfig: React.FC<BaseProvidersConfigProps> = ({
   const [openDialog, setOpenDialog] = useState(false);
   const [editingProvider, setEditingProvider] = useState<ProviderItem | null>(null);
   const [formData, setFormData] = useState<any>({});
-  const [toast, setToast] = useState<{ show: boolean; message: string; type: 'success' | 'error' }>(
-    {
-      show: false,
-      message: '',
-      type: 'success',
-    }
-  );
-  const [confirmModal, setConfirmModal] = useState<{
-    isOpen: boolean; title: string; message: string; onConfirm: () => void;
-  }>({ isOpen: false, title: '', message: '', onConfirm: () => {} });
+  const [toast, setToast] = useState<{ show: boolean; message: string; type: 'success' | 'error' }>({
+    show: false,
+    message: '',
+    type: 'success',
+  });
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -245,7 +245,9 @@ const BaseProvidersConfig: React.FC<BaseProvidersConfigProps> = ({
 
   const handleSaveProvider = async () => {
     try {
-      const url = editingProvider ? `${apiEndpoint}/${editingProvider.id}` : apiEndpoint;
+      const url = editingProvider
+        ? `${apiEndpoint}/${editingProvider.id}`
+        : apiEndpoint;
 
       const method = editingProvider ? 'PUT' : 'POST';
 
@@ -275,46 +277,37 @@ const BaseProvidersConfig: React.FC<BaseProvidersConfigProps> = ({
     } catch (err) {
       setToast({
         show: true,
-        message:
-          err instanceof Error
-            ? err.message
-            : `Failed to ${editingProvider ? 'update' : 'create'} provider`,
+        message: err instanceof Error ? err.message : `Failed to ${editingProvider ? 'update' : 'create'} provider`,
         type: 'error',
       });
     }
   };
 
   const handleDeleteProvider = async (providerId: string) => {
-    setConfirmModal({
-      isOpen: true,
-      title: 'Delete Provider',
-      message: 'Are you sure you want to delete this provider?',
-      onConfirm: async () => {
-        setConfirmModal(prev => ({ ...prev, isOpen: false }));
-        try {
-          const response = await fetch(`${apiEndpoint}/${providerId}`, {
-            method: 'DELETE',
-          });
+    if (!confirm('Are you sure you want to delete this provider?')) { return; }
 
-          if (!response.ok) {
-            throw new Error('Failed to delete provider');
-          }
+    try {
+      const response = await fetch(`${apiEndpoint}/${providerId}`, {
+        method: 'DELETE',
+      });
 
-          setToast({
-            show: true,
-            message: 'Provider deleted successfully',
-            type: 'success',
-          });
-          fetchProviders();
-        } catch (err) {
-          setToast({
-            show: true,
-            message: err instanceof Error ? err.message : 'Failed to delete provider',
-            type: 'error',
-          });
-        }
-      },
-    });
+      if (!response.ok) {
+        throw new Error('Failed to delete provider');
+      }
+
+      setToast({
+        show: true,
+        message: 'Provider deleted successfully',
+        type: 'success',
+      });
+      fetchProviders();
+    } catch (err) {
+      setToast({
+        show: true,
+        message: err instanceof Error ? err.message : 'Failed to delete provider',
+        type: 'error',
+      });
+    }
   };
 
   const handleToggleActive = async (providerId: string, isActive: boolean) => {
@@ -343,15 +336,11 @@ const BaseProvidersConfig: React.FC<BaseProvidersConfigProps> = ({
 
   const activeProviderDocs = React.useMemo(() => {
     const currentType = formData.type || editingProvider?.type;
-    return providerTypeOptions.find((o) => o.value === currentType)?.docsUrl;
+    return providerTypeOptions.find(o => o.value === currentType)?.docsUrl;
   }, [formData.type, editingProvider?.type, providerTypeOptions]);
 
   if (loading) {
-    return (
-      <div className="min-h-[200px] p-4">
-        <SkeletonList items={4} />
-      </div>
-    );
+    return <div className="flex justify-center items-center min-h-[200px]"><span className="loading loading-spinner loading-lg"></span></div>;
   }
 
   return (
@@ -359,7 +348,11 @@ const BaseProvidersConfig: React.FC<BaseProvidersConfigProps> = ({
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-2xl font-bold">{title}</h2>
         <div className="flex gap-2">
-          <Button variant="ghost" onClick={fetchProviders} startIcon={refreshIcon}>
+          <Button
+            variant="ghost"
+            onClick={fetchProviders}
+            startIcon={refreshIcon}
+          >
             Refresh
           </Button>
           <Button
@@ -372,7 +365,9 @@ const BaseProvidersConfig: React.FC<BaseProvidersConfigProps> = ({
         </div>
       </div>
 
-      {error && <Alert status="error" message={error} onClose={() => setError(null)} />}
+      {error && (
+        <Alert status="error" message={error} onClose={() => setError(null)} />
+      )}
 
       {providers.length === 0 ? (
         <div className="text-center py-12">
@@ -380,7 +375,9 @@ const BaseProvidersConfig: React.FC<BaseProvidersConfigProps> = ({
             {emptyStateIcon}
           </div>
           <h3 className="text-lg font-semibold text-base-content/70">{emptyStateTitle}</h3>
-          <p className="text-base-content/50 mb-4">{emptyStateMessage}</p>
+          <p className="text-base-content/50 mb-4">
+            {emptyStateMessage}
+          </p>
           <Button
             variant="primary"
             startIcon={<PlusIcon className="w-5 h-5" />}
@@ -390,9 +387,13 @@ const BaseProvidersConfig: React.FC<BaseProvidersConfigProps> = ({
           </Button>
         </div>
       ) : (
-        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragEnd={handleDragEnd}
+        >
           <SortableContext
-            items={providers.map((p) => p.id)}
+            items={providers.map(p => p.id)}
             strategy={verticalListSortingStrategy}
           >
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -410,26 +411,28 @@ const BaseProvidersConfig: React.FC<BaseProvidersConfigProps> = ({
         </DndContext>
       )}
 
-      <Modal
-        isOpen={openDialog}
-        title={editingProvider ? 'Edit Provider' : 'Add New Provider'}
+      <ModalForm
+        open={openDialog}
+        title={
+          <div className="flex justify-between items-center w-full pr-8">
+            <span>{editingProvider ? 'Edit Provider' : 'Add New Provider'}</span>
+            {activeProviderDocs && (
+              <a
+                href={activeProviderDocs}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-sm font-normal text-primary hover:underline flex items-center gap-1"
+              >
+                Help & Guides <ArrowTopRightOnSquareIcon className="w-4 h-4" />
+              </a>
+            )}
+          </div>
+        }
         onClose={handleCloseDialog}
-        actions={[
-          { label: 'Cancel', onClick: handleCloseDialog, variant: 'ghost' },
-          { label: editingProvider ? 'Update' : 'Create', onClick: handleSaveProvider, variant: 'primary' },
-        ]}
+        onSubmit={handleSaveProvider}
+        submitLabel={editingProvider ? 'Update' : 'Create'}
       >
         <div className="space-y-4">
-          {activeProviderDocs && (
-            <a
-              href={activeProviderDocs}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-sm font-normal text-primary hover:underline flex items-center gap-1"
-            >
-              Help & Guides <ArrowTopRightOnSquareIcon className="w-4 h-4" />
-            </a>
-          )}
           <Input
             label="Provider Name"
             value={formData.name || editingProvider?.name || ''}
@@ -460,50 +463,33 @@ const BaseProvidersConfig: React.FC<BaseProvidersConfigProps> = ({
 
           {editingProvider && editingProvider.isActive && (
             <div className="mt-6 pt-6 border-t border-base-200">
-              <h4 className="text-lg font-semibold mb-4">Activity Waterfall Trace</h4>
-              <div className="bg-base-200 rounded-lg p-4 h-32 flex items-center justify-center border border-base-300">
-                {/* Placeholder for BotActivityWaterfallMonitor or real trace chart integration */}
-                <div className="text-center text-base-content/50">
-                  <p className="text-sm">Traffic tracing enabled for active provider.</p>
-                  <div className="mt-2 flex gap-1 justify-center items-end h-8">
-                    <div className="w-2 bg-primary/40 h-full rounded-t-sm animate-pulse"></div>
-                    <div className="w-2 bg-primary/60 h-2/3 rounded-t-sm animate-pulse delay-75"></div>
-                    <div className="w-2 bg-primary/80 h-4/5 rounded-t-sm animate-pulse delay-150"></div>
-                    <div className="w-2 bg-primary h-1/2 rounded-t-sm animate-pulse delay-300"></div>
-                    <div className="w-2 bg-primary/50 h-3/4 rounded-t-sm animate-pulse delay-75"></div>
+               <h4 className="text-lg font-semibold mb-4">Activity Waterfall Trace</h4>
+               <div className="bg-base-200 rounded-lg p-4 h-32 flex items-center justify-center border border-base-300">
+                  {/* Placeholder for BotActivityWaterfallMonitor or real trace chart integration */}
+                  <div className="text-center text-base-content/50">
+                    <p className="text-sm">Traffic tracing enabled for active provider.</p>
+                    <div className="mt-2 flex gap-1 justify-center items-end h-8">
+                      <div className="w-2 bg-primary/40 h-full rounded-t-sm animate-pulse"></div>
+                      <div className="w-2 bg-primary/60 h-2/3 rounded-t-sm animate-pulse delay-75"></div>
+                      <div className="w-2 bg-primary/80 h-4/5 rounded-t-sm animate-pulse delay-150"></div>
+                      <div className="w-2 bg-primary h-1/2 rounded-t-sm animate-pulse delay-300"></div>
+                      <div className="w-2 bg-primary/50 h-3/4 rounded-t-sm animate-pulse delay-75"></div>
+                    </div>
                   </div>
-                </div>
-              </div>
+               </div>
             </div>
           )}
         </div>
-      </Modal>
+      </ModalForm>
 
       {toast.show && (
         <div className="toast toast-bottom toast-center z-50" role="status" aria-live="polite">
           <div className={`alert ${toast.type === 'success' ? 'alert-success' : 'alert-error'}`}>
             <span>{toast.message}</span>
-            <button
-              className="btn btn-sm btn-ghost"
-              onClick={() => setToast({ ...toast, show: false })}
-              aria-label="Close message"
-            >
-              ✕
-            </button>
+            <button className="btn btn-sm btn-ghost" onClick={() => setToast({ ...toast, show: false })}>✕</button>
           </div>
         </div>
       )}
-
-      <ConfirmModal
-        isOpen={confirmModal.isOpen}
-        onClose={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))}
-        title={confirmModal.title}
-        message={confirmModal.message}
-        onConfirm={confirmModal.onConfirm}
-        confirmVariant="error"
-        confirmText="Delete"
-        cancelText="Cancel"
-      />
     </div>
   );
 };

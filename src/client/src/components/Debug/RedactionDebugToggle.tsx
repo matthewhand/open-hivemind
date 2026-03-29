@@ -39,7 +39,6 @@ export const RedactionDebugToggle: React.FC = () => {
                     onClick={() => setIsVisible(true)}
                     className="btn btn-circle btn-sm btn-ghost opacity-50 hover:opacity-100"
                     title="Redaction Debug Controls"
-                    aria-label="Redaction Debug Controls"
                 >
                     <Shield className="w-4 h-4" />
                 </button>
@@ -54,7 +53,6 @@ export const RedactionDebugToggle: React.FC = () => {
                             <button
                                 onClick={() => setIsVisible(false)}
                                 className="btn btn-ghost btn-xs btn-circle"
-                                aria-label="Close debug panel"
                             >
                                 ×
                             </button>
@@ -75,7 +73,6 @@ export const RedactionDebugToggle: React.FC = () => {
                                     type="checkbox"
                                     className="toggle toggle-warning toggle-sm"
                                     checked={bypassEnabled}
-                                    aria-label={bypassEnabled ? "Hide sensitive data" : "Reveal sensitive data"}
                                     onChange={handleToggleBypass}
                                 />
                             </label>

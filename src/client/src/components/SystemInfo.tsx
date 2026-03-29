@@ -11,11 +11,13 @@
  */
 
 import React, { useState } from 'react';
-import Card from './DaisyUI/Card';
-import Button from './DaisyUI/Button';
-import { Loading } from './DaisyUI/Loading';
-import Tooltip from './DaisyUI/Tooltip';
-import { ConfirmModal } from './DaisyUI/Modal';
+import {
+  Card,
+  Button,
+  Loading,
+  Tooltip,
+  ConfirmModal,
+} from './DaisyUI';
 import {
   ArrowDownTrayIcon,
   ArrowPathIcon,
@@ -24,8 +26,6 @@ import {
   XMarkIcon,
 } from '@heroicons/react/24/outline';
 import { useAppSelector } from '../store/hooks';
-import Debug from 'debug';
-const debug = Debug('app:client:components:SystemInfo');
 
 const SystemInfo: React.FC = () => {
   const dashboard = useAppSelector(state => state.dashboard);
@@ -75,10 +75,10 @@ const SystemInfo: React.FC = () => {
       }
 
       const data = await response.json();
-      debug(`System ${action} initiated:`, data);
+      console.log(`System ${action} initiated:`, data);
       setLogs(prev => [...prev, `[${new Date().toISOString()}] System ${action} initiated: ${data.message || 'Success'}`]);
     } catch (error) {
-      debug('ERROR:', `Failed to ${action} system:`, error);
+      console.error(`Failed to ${action} system:`, error);
       setLogs(prev => [...prev, `[${new Date().toISOString()}] Failed to ${action}: ${error instanceof Error ? error.message : 'Unknown error'}`]);
     } finally {
       setIsLoading(false);
@@ -178,7 +178,7 @@ const SystemInfo: React.FC = () => {
             </div>
             {isLoading && (
               <div className="flex items-center gap-2 mt-4 text-base-content/70">
-                <span className="loading loading-spinner loading-sm" aria-hidden="true"></span>
+                <span className="loading loading-spinner loading-sm"></span>
                 <span className="text-sm">Processing system action...</span>
               </div>
             )}

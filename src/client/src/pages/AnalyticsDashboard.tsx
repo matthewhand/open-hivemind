@@ -1,24 +1,25 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useWebSocket } from '../contexts/WebSocketContext';
-import { apiService, ActivityResponse } from '../services/api';
+import { apiService, ActivityResponse, ActivityEvent } from '../services/api';
 import MetricChart from '../components/Monitoring/MetricChart';
 import StatusCard from '../components/Monitoring/StatusCard';
 import { redactString } from '../utils/redaction';
-import DataTable from '../components/DaisyUI/DataTable';
-import { useErrorToast } from '../components/DaisyUI/ToastNotification';
 
 const AnalyticsDashboard: React.FC = () => {
   const { messageFlow, performanceMetrics } = useWebSocket();
   const [activityData, setActivityData] = useState<ActivityResponse | null>(null);
   const [timeRange, setTimeRange] = useState('24h');
   const [isLoading, setIsLoading] = useState(true);
-  const errorToast = useErrorToast();
 
   // Filter message flow for valid timestamps
   const validMessageFlow = messageFlow.filter(e => e && e.timestamp);
 
-  const fetchAnalyticsData = useCallback(async () => {
+  useEffect(() => {
+    fetchAnalyticsData();
+  }, [timeRange]);
+
+  const fetchAnalyticsData = async () => {
     setIsLoading(true);
     try {
       // Calculate from date based on range
@@ -34,15 +35,11 @@ const AnalyticsDashboard: React.FC = () => {
       });
       setActivityData(data);
     } catch (error) {
-      errorToast('Analytics Error', 'Failed to fetch analytics data');
+      console.error('Failed to fetch analytics data:', error);
     } finally {
       setIsLoading(false);
     }
-  }, [timeRange]);
-
-  useEffect(() => {
-    fetchAnalyticsData();
-  }, [fetchAnalyticsData]);
+  };
 
   const currentMetric = performanceMetrics[performanceMetrics.length - 1] || {
     cpuUsage: 0, memoryUsage: 0, activeConnections: 0, messageRate: 0, errorRate: 0, responseTime: 0
@@ -54,7 +51,7 @@ const AnalyticsDashboard: React.FC = () => {
   // Message Volume (from timeline or events)
   const messageVolumeData = activityData?.timeline?.map(bucket => ({
     timestamp: bucket.timestamp,
-    value: Object.values(bucket.messageProviders ?? {}).reduce((a, b) => a + b, 0),
+    value: Object.values(bucket.messageProviders).reduce((a, b) => a + b, 0),
     label: 'Messages'
   })) || [];
 
@@ -62,7 +59,7 @@ const AnalyticsDashboard: React.FC = () => {
   const uniqueUsers = new Set(events.map(e => e.userId)).size;
 
   // Bot Performance Stats
-  const botStats = (activityData?.agentMetrics ?? []).map(am => ({
+  const botStats = activityData?.agentMetrics?.map(am => ({
     name: am.botName,
     messages: am.totalMessages,
     errors: am.errors,
@@ -79,7 +76,7 @@ const AnalyticsDashboard: React.FC = () => {
       metrics: [
         { label: 'Messages', value: events.length.toLocaleString(), icon: '💬' },
         { label: 'Throughput', value: currentMetric.messageRate.toFixed(1), unit: '/s' },
-        { label: 'Errors', value: (activityData?.agentMetrics ?? []).reduce((acc, m) => acc + (m.errors ?? 0), 0), icon: '❌' },
+        { label: 'Errors', value: activityData?.agentMetrics?.reduce((acc, m) => acc + m.errors, 0) || 0, icon: '❌' },
       ],
     },
     {
@@ -88,7 +85,7 @@ const AnalyticsDashboard: React.FC = () => {
       status: 'healthy',
       metrics: [
         { label: 'Active Users', value: uniqueUsers, icon: '👥' },
-        { label: 'Active Bots', value: activityData?.filters?.agents?.length ?? 0, icon: '🤖' },
+        { label: 'Active Bots', value: activityData?.filters.agents.length || 0, icon: '🤖' },
       ]
     },
     {
@@ -138,7 +135,7 @@ const AnalyticsDashboard: React.FC = () => {
               onClick={fetchAnalyticsData}
               disabled={isLoading}
             >
-              {isLoading ? <span className="loading loading-spinner loading-sm" aria-hidden="true"></span> : '🔄'} Refresh
+              {isLoading ? <span className="loading loading-spinner loading-sm"></span> : '🔄'} Refresh
             </button>
           </div>
         </div>
@@ -187,25 +184,35 @@ const AnalyticsDashboard: React.FC = () => {
         <div className="card bg-base-100 shadow-xl">
           <div className="card-body">
             <h2 className="card-title mb-4">Bot Performance</h2>
-            <DataTable
-              data={botStats}
-              columns={[
-                { key: 'name' as any, title: 'Bot Name', prominent: true },
-                { key: 'messages' as any, title: 'Messages' },
-                { key: 'errors' as any, title: 'Errors' },
-                {
-                  key: 'successRate' as any,
-                  title: 'Success %',
-                  render: (value: string) => (
-                    <span className={`text-${parseFloat(value) > 98 ? 'success' : 'warning'}`}>
-                      {value}%
-                    </span>
-                  ),
-                },
-              ]}
-              rowKey={(bot: any) => bot.name}
-              emptyState={<p className="text-center text-neutral-content/50 py-4">No bot activity found</p>}
-            />
+            <div className="overflow-x-auto">
+              <table className="table table-zebra w-full">
+                <thead>
+                  <tr>
+                    <th>Bot Name</th>
+                    <th>Messages</th>
+                    <th>Errors</th>
+                    <th>Success %</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {botStats.map((bot) => (
+                    <tr key={bot.name}>
+                      <td>{bot.name}</td>
+                      <td>{bot.messages}</td>
+                      <td>{bot.errors}</td>
+                      <td>
+                        <span className={`text-${parseFloat(bot.successRate) > 98 ? 'success' : 'warning'}`}>
+                          {bot.successRate}%
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                  {botStats.length === 0 && (
+                    <tr><td colSpan={4} className="text-center text-neutral-content/50">No bot activity found</td></tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
 

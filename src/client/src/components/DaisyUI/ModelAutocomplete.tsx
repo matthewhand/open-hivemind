@@ -1,8 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import Badge from './Badge';
-import { LoadingSpinner } from './Loading';
-import { Alert } from './Alert';
+import { Badge, LoadingSpinner, Alert } from './index';
 
 interface ModelOption {
   id: string;
@@ -106,7 +104,7 @@ const ModelAutocomplete: React.FC<ModelAutocompleteProps> = ({
 
       setSuggestions(models);
     } catch (error) {
-      Logger.error('Failed to fetch models:', error);
+      console.error('Failed to fetch models:', error);
       setFetchError(error instanceof Error ? error.message : 'Failed to fetch models');
     } finally {
       setIsLoading(false);
@@ -267,7 +265,6 @@ const ModelAutocomplete: React.FC<ModelAutocompleteProps> = ({
               disabled={isLoading}
               className="btn btn-ghost btn-square"
               title="Refresh model list"
-              aria-label="Refresh model list"
             >
               {isLoading ? (
                 <LoadingSpinner size="sm" />

@@ -1,16 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useMemo, useState } from 'react';
-import Card from '../DaisyUI/Card';
-import { Alert } from '../DaisyUI/Alert';
-import Button from '../DaisyUI/Button';
-import { SkeletonTimeline } from '../DaisyUI/Skeleton';
-import { Loading } from '../DaisyUI/Loading';
-import Select from '../DaisyUI/Select';
+import { Card, Alert, Button, Loading, Select } from '../DaisyUI';
 import { ArrowPathIcon } from '@heroicons/react/24/outline';
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, Legend, CartesianGrid } from 'recharts';
 import { useGetActivityQuery } from '../../store/slices/apiSlice';
 import type { ActivityResponse } from '../../services/api';
-import DataTable from '../DaisyUI/DataTable';
 
 interface ActivityFilters {
   bot?: string;
@@ -35,9 +29,9 @@ const ActivityLog: React.FC = () => {
     setAppliedFilters({});
   };
 
-  const uniqueMessageProviders = useMemo(() => data?.filters?.messageProviders ?? [], [data]);
-  const uniqueLlmProviders = useMemo(() => data?.filters?.llmProviders ?? [], [data]);
-  const uniqueAgents = useMemo(() => data?.filters?.agents ?? [], [data]);
+  const uniqueMessageProviders = useMemo(() => data?.filters.messageProviders ?? [], [data]);
+  const uniqueLlmProviders = useMemo(() => data?.filters.llmProviders ?? [], [data]);
+  const uniqueAgents = useMemo(() => data?.filters.agents ?? [], [data]);
 
   const messageTimeline = useMemo(() => buildTimelineSeries(data, 'messageProviders', uniqueMessageProviders), [data, uniqueMessageProviders]);
   const llmTimeline = useMemo(() => buildTimelineSeries(data, 'llmProviders', uniqueLlmProviders), [data, uniqueLlmProviders]);
@@ -114,7 +108,9 @@ const ActivityLog: React.FC = () => {
         </div>
 
         {isLoading ? (
-          <SkeletonTimeline items={4} />
+          <div className="flex justify-center py-8">
+            <span className="loading loading-spinner loading-lg"></span>
+          </div>
         ) : error ? (
           <Alert variant="error">Failed to load activity log</Alert>
         ) : (
@@ -133,7 +129,7 @@ const ActivityLog: React.FC = () => {
             </div>
             <div className="md:col-span-2">
               <h3 className="text-lg font-semibold mb-4">Recent Events</h3>
-              {data?.events?.length ? (
+              {data?.events.length ? (
                 <ul className="menu bg-base-200 w-full rounded-box">
                   {data.events.slice().reverse().map((event, index) => (
                     <li key={event.id}>
@@ -208,13 +204,13 @@ const TimelineChart: React.FC<TimelineChartProps> = ({ data, seriesKeys }) => {
 };
 
 function buildTimelineSeries(data: ActivityResponse | undefined, field: 'messageProviders' | 'llmProviders', keys: string[]) {
-  if (!data || !data.timeline?.length || keys.length === 0) {
+  if (!data || !data.timeline.length || keys.length === 0) {
     return [];
   }
   return data.timeline.map(bucket => {
     const entry: Record<string, number | string> = { timestamp: bucket.timestamp };
     keys.forEach(key => {
-      entry[key] = (bucket[field] ?? {})[key] || 0;
+      entry[key] = bucket[field][key] || 0;
     });
     return entry;
   });
@@ -234,20 +230,36 @@ const AgentMetricsTable: React.FC<AgentMetricsTableProps> = ({ metrics }) => {
   }
 
   return (
-    <DataTable
-      data={metrics}
-      columns={[
-        { key: 'botName' as any, title: 'Agent', prominent: true },
-        { key: 'messageProvider' as any, title: 'Provider' },
-        { key: 'llmProvider' as any, title: 'LLM' },
-        { key: 'events' as any, title: 'Events' },
-        { key: 'errors' as any, title: 'Errors' },
-        { key: 'totalMessages' as any, title: 'Total Messages' },
-        { key: 'lastActivity' as any, title: 'Last Activity', render: (v: string) => formatTimestamp(v) },
-        { key: 'recentErrors' as any, title: 'Recent Errors', render: (v: string[]) => (v ?? []).slice(-3).join(', ') || '\u2014' },
-      ]}
-      rowKey={(m: any) => m.botName}
-    />
+    <div className="overflow-x-auto">
+      <table className="table table-sm table-zebra">
+        <thead>
+          <tr>
+            <th>Agent</th>
+            <th>Provider</th>
+            <th>LLM</th>
+            <th className="text-right">Events</th>
+            <th className="text-right">Errors</th>
+            <th className="text-right">Total Messages</th>
+            <th>Last Activity</th>
+            <th>Recent Errors</th>
+          </tr>
+        </thead>
+        <tbody>
+          {metrics.map(metric => (
+            <tr key={metric.botName} className="hover">
+              <td>{metric.botName}</td>
+              <td>{metric.messageProvider}</td>
+              <td>{metric.llmProvider}</td>
+              <td className="text-right">{metric.events}</td>
+              <td className="text-right">{metric.errors}</td>
+              <td className="text-right">{metric.totalMessages}</td>
+              <td>{formatTimestamp(metric.lastActivity)}</td>
+              <td>{metric.recentErrors.slice(-3).join(', ') || '—'}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
   );
 };
 

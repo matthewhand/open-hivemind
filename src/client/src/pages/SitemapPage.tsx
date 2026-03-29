@@ -1,14 +1,14 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   ExternalLink,
   Download,
   RefreshCw,
   Map as MapIcon,
 } from 'lucide-react';
+import { Breadcrumbs, Alert } from '../components/DaisyUI';
 import PageHeader from '../components/DaisyUI/PageHeader';
 import SearchFilterBar from '../components/SearchFilterBar';
 import EmptyState from '../components/DaisyUI/EmptyState';
-import { SkeletonList } from '../components/DaisyUI/Skeleton';
 import { SelectOption } from '../components/DaisyUI/Select';
 
 interface SitemapUrl {
@@ -39,7 +39,7 @@ const SitemapPage: React.FC = () => {
     { label: 'Sitemap', href: '/admin/sitemap', isActive: true },
   ];
 
-  const fetchSitemap = useCallback(async () => {
+  const fetchSitemap = async () => {
     setLoading(true);
     setError(null);
 
@@ -58,11 +58,11 @@ const SitemapPage: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [accessFilter]);
+  };
 
   useEffect(() => {
     fetchSitemap();
-  }, [fetchSitemap]);
+  }, [accessFilter]);
 
   const getAccessColor = (access: string) => {
     switch (access) {
@@ -134,8 +134,9 @@ const SitemapPage: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="p-6">
-        <SkeletonList items={8} />
+      <div className="p-6 text-center">
+        <span className="loading loading-spinner loading-lg"></span>
+        <p className="mt-2">Loading sitemap...</p>
       </div>
     );
   }
@@ -176,7 +177,7 @@ const SitemapPage: React.FC = () => {
             <button className="btn btn-ghost gap-2" onClick={handleDownloadXml}>
               <Download className="w-4 h-4" /> XML
             </button>
-            <button className="btn btn-ghost btn-circle" onClick={fetchSitemap} title="Refresh" aria-label="Refresh">
+            <button className="btn btn-ghost btn-circle" onClick={fetchSitemap} title="Refresh">
               <RefreshCw className="w-4 h-4" />
             </button>
           </>
@@ -249,7 +250,6 @@ const SitemapPage: React.FC = () => {
                       <button
                         className="btn btn-ghost btn-xs btn-circle"
                         onClick={() => handleOpenUrl(url.fullUrl)}
-                        aria-label="Open URL"
                       >
                         <ExternalLink className="w-4 h-4" />
                       </button>

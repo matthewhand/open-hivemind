@@ -123,7 +123,7 @@ const StatusCard: React.FC<StatusCardProps> = ({
           </div>
           <div className="flex items-center gap-2">
             {isLoading && (
-              <div className="loading loading-spinner loading-sm" aria-hidden="true"></div>
+              <div className="loading loading-spinner loading-sm"></div>
             )}
             <div className={`badge ${getStatusColor(status)} badge-outline`}>
               {status}

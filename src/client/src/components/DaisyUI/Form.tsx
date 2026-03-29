@@ -1,10 +1,37 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars, react-refresh/only-export-components, no-empty, no-case-declarations */
 import type { ReactNode } from 'react';
 import React, { useState, useEffect, useRef } from 'react';
-import type { FormField, FormFieldSet } from './formTypes';
 
-export type { FormField, FormFieldSet } from './formTypes';
-export type { SelectOption } from './formTypes';
+export interface FormField {
+  name: string;
+  label: string;
+  type: 'text' | 'email' | 'password' | 'number' | 'textarea' | 'select' | 'checkbox' | 'radio' | 'file' | 'url' | 'tel' | 'date' | 'time' | 'datetime-local' | 'key-value';
+  placeholder?: string;
+  required?: boolean;
+  disabled?: boolean;
+  readonly?: boolean;
+  options?: Array<{ value: string; label: string; disabled?: boolean }>;
+  validation?: (value: any) => string | null;
+  helperText?: string;
+  multiple?: boolean;
+  accept?: string; // For file inputs
+  min?: number | string;
+  max?: number | string;
+  step?: number | string;
+  maxLength?: number;
+  minLength?: number;
+  pattern?: string;
+  autoComplete?: string;
+  'aria-describedby'?: string;
+  'aria-label'?: string;
+}
+
+export interface FormFieldSet {
+  legend: string;
+  description?: string;
+  fields: string[];
+  className?: string;
+}
 
 export interface FormProps {
   /** Form fields configuration */
@@ -234,7 +261,7 @@ export const Form: React.FC<FormProps> = ({
       setIsSubmitting(true);
       await onSubmit(formData);
     } catch (error) {
-      // Error handled by form validation UI
+      console.error('Form submission error:', error);
     } finally {
       setIsSubmitting(false);
     }
@@ -619,7 +646,7 @@ export const Form: React.FC<FormProps> = ({
             disabled={isSubmitting || loading}
           >
             {(isSubmitting || loading) && (
-              <span className="loading loading-spinner loading-sm" aria-hidden="true"></span>
+              <span className="loading loading-spinner loading-sm"></span>
             )}
             {submitText}
           </button>

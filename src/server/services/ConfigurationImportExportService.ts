@@ -5,7 +5,6 @@ import { createGunzip, createGzip } from 'zlib';
 // @ts-ignore - csv-parse v6 ships its own types but TS can't resolve the /sync subpath
 // @ts-ignore - csv-stringify v6 ships its own types but TS can't resolve the /sync subpath
 import Debug from 'debug';
-import { PathSecurityUtils } from '@src/utils/PathSecurityUtils';
 import { AuditLogger } from '../../common/auditLogger';
 import { SecureConfigManager } from '../../config/SecureConfigManager';
 import { UserConfigStore } from '../../config/UserConfigStore';
@@ -120,13 +119,8 @@ export class ConfigurationImportExportService {
       let filePath = join(this.exportsDir, `${baseFileName}.${options.format}`);
 
       // Get configurations
-      const configs = [];
-      for (const id of configIds) {
-        const config = await this.dbManager.getBotConfiguration(id);
-        if (config) {
-          configs.push(config);
-        }
-      }
+      const configsRaw = await this.dbManager.getBotConfigurationsBulk(configIds);
+      const configs = configsRaw.filter(Boolean);
 
       if (configs.length === 0) {
         return {
@@ -152,13 +146,15 @@ export class ConfigurationImportExportService {
 
       // Include versions if requested
       if (options.includeVersions) {
-        const versionPromises = configs
-          .filter((c) => c.id != null)
-          .map(async (config) => this.dbManager.getBotConfigurationVersions(config.id as number));
-        const versionsNested = await Promise.allSettled(versionPromises);
-        const versions = versionsNested
-          .map((r) => (r.status === 'fulfilled' ? r.value : []))
-          .flat();
+        const validConfigIds = configs.map(c => c.id).filter(Boolean) as number[];
+        let versions: any[] = [];
+        if (validConfigIds.length > 0) {
+          const versionsMap = await this.dbManager.getBotConfigurationVersionsBulk(validConfigIds);
+          for (const id of validConfigIds) {
+            const configVersions = versionsMap.get(id) || [];
+            versions.push(...configVersions);
+          }
+        }
 
         exportData.versions = versions;
         exportData.metadata.versionCount = versions.length;
@@ -497,29 +493,6 @@ export class ConfigurationImportExportService {
         warnings: [],
       };
 
-      // Bulk fetch existing configurations to prevent N+1 queries
-      const configIds = importData.configurations
-        .map((c: any) => c.id)
-        .filter((id: any) => id != null);
-
-      const existingConfigsMap = new Map<number, any>();
-      let bulkFetchSucceeded = false;
-
-      if (configIds.length > 0) {
-        try {
-          const existingConfigs = await this.dbManager.getBotConfigurationsBulk(configIds);
-          for (const ec of existingConfigs) {
-            if (ec.id) {
-              existingConfigsMap.set(ec.id, ec);
-            }
-          }
-          bulkFetchSucceeded = true;
-        } catch (error) {
-          debug('Failed to bulk fetch existing configurations:', error);
-          // Non-fatal, will fall back to individual queries if bulk fetch fails
-        }
-      }
-
       // Process configurations
       for (const config of importData.configurations) {
         try {
@@ -546,14 +519,9 @@ export class ConfigurationImportExportService {
           }
 
           // Check if configuration exists
-          let existingConfig = null;
-          if (config.id) {
-            if (bulkFetchSucceeded) {
-              existingConfig = existingConfigsMap.get(config.id) || null;
-            } else {
-              existingConfig = await this.dbManager.getBotConfiguration(config.id);
-            }
-          }
+          const existingConfig = config.id
+            ? await this.dbManager.getBotConfiguration(config.id)
+            : null;
 
           if (existingConfig && !options.overwrite) {
             result.skippedCount = (result.skippedCount || 0) + 1;
@@ -586,45 +554,21 @@ export class ConfigurationImportExportService {
         const validConfigIds = new Set<number>();
         const invalidConfigIds = new Set<number>();
 
-        // Pre-fetch unique valid configuration IDs in bulk
-        const uniqueIdsToCheck = new Set<number>();
-        for (const version of importData.versions) {
-          const configId = version.botConfigurationId;
-          if (!configId) continue;
-          if (!validConfigIds.has(configId) && !invalidConfigIds.has(configId)) {
-            uniqueIdsToCheck.add(configId);
-          }
-        }
-
-        const BATCH_SIZE = 50;
-        const idsArray = Array.from(uniqueIdsToCheck);
-
-        for (let i = 0; i < idsArray.length; i += BATCH_SIZE) {
-          const batch = idsArray.slice(i, i + BATCH_SIZE);
-          await Promise.all(
-            batch.map(async (configId) => {
-              try {
-                const config = await this.dbManager.getBotConfiguration(configId);
-                if (config) {
-                  validConfigIds.add(configId);
-                } else {
-                  invalidConfigIds.add(configId);
-                }
-              } catch (error) {
-                result.warnings?.push(
-                  `Error fetching configuration ${configId}: ${(error as any).message}`
-                );
-                invalidConfigIds.add(configId);
-              }
-            })
-          );
-        }
-
         for (const version of importData.versions) {
           try {
             const configId = version.botConfigurationId;
-            if (!configId) continue;
-            const isValid = validConfigIds.has(configId);
+            let isValid = validConfigIds.has(configId);
+
+            if (!isValid && !invalidConfigIds.has(configId)) {
+              // Check if configuration exists
+              const config = await this.dbManager.getBotConfiguration(configId);
+              if (config) {
+                validConfigIds.add(configId);
+                isValid = true;
+              } else {
+                invalidConfigIds.add(configId);
+              }
+            }
 
             if (isValid) {
               await this.dbManager.createBotConfigurationVersion(version);
@@ -638,29 +582,31 @@ export class ConfigurationImportExportService {
       // Process templates if included
       if (importData.templates && !options.validateOnly) {
         const BATCH_SIZE = 50;
-
-        // Fetch all existing template IDs once
-        let allExistingTemplateIds: Set<string>;
-        try {
-          allExistingTemplateIds = await this.templateService.getAllTemplateIds();
-        } catch (error) {
-          result.warnings?.push(`Error fetching existing templates: ${(error as any).message}`);
-          allExistingTemplateIds = new Set();
-        }
-
-        const newlyCreatedTemplateIds = new Set<string>();
+        const existingTemplateIds = new Set<string>();
 
         for (let i = 0; i < importData.templates.length; i += BATCH_SIZE) {
           const batch = importData.templates.slice(i, i + BATCH_SIZE);
 
+          // Pre-fetch a batch of required templates concurrently with individual error handling
+          await Promise.all(
+            batch.map(async (t: any) => {
+              try {
+                const existing = await this.templateService.getTemplateById(t.id);
+                if (existing) {
+                  existingTemplateIds.add(t.id);
+                }
+              } catch (error) {
+                result.warnings?.push(
+                  `Error checking template ${t.id || 'unknown'}: ${(error as any).message}`
+                );
+              }
+            })
+          );
+
           // Create new templates concurrently within the batch
           await Promise.all(
             batch
-              .filter(
-                (template: any) =>
-                  !allExistingTemplateIds.has(template.id) &&
-                  !newlyCreatedTemplateIds.has(template.id)
-              )
+              .filter((template: any) => !existingTemplateIds.has(template.id))
               .map(async (template: any) => {
                 try {
                   await this.templateService.createTemplate({
@@ -671,7 +617,7 @@ export class ConfigurationImportExportService {
                     config: template.config,
                     createdBy: importedBy,
                   });
-                  newlyCreatedTemplateIds.add(template.id);
+                  existingTemplateIds.add(template.id);
                 } catch (error) {
                   result.warnings?.push(`Error processing template: ${(error as any).message}`);
                 }
@@ -735,8 +681,8 @@ export class ConfigurationImportExportService {
       if (result.success && result.filePath) {
         // Move to backups directory
         const backupTimestamp = Date.now();
-        const backupPath = this.getSafeBackupPath(name, new Date(backupTimestamp));
-        const backupFileName = basename(backupPath);
+        const backupFileName = `backup-${name}-${backupTimestamp}.json.gz`;
+        const backupPath = join(this.backupsDir, backupFileName);
         await fs.rename(result.filePath, backupPath);
 
         // Create metadata file
@@ -778,8 +724,8 @@ export class ConfigurationImportExportService {
             for (const oldBackup of backupsToDelete) {
               if (enableColdStorage) {
                 debug(`Archiving old backup to cold storage: ${oldBackup.id} (${oldBackup.name})`);
-                const oldBackupPath = this.getSafeBackupPath(oldBackup.name, oldBackup.createdAt);
-                const oldBackupFileName = basename(oldBackupPath);
+                const oldBackupFileName = `backup-${oldBackup.name}-${new Date(oldBackup.createdAt).getTime()}.json.gz`;
+                const oldBackupPath = join(this.backupsDir, oldBackupFileName);
                 const coldDir = join(process.cwd(), 'config', 'backups', 'cold');
                 await fs.mkdir(coldDir, { recursive: true });
 
@@ -910,8 +856,8 @@ export class ConfigurationImportExportService {
         return false;
       }
 
-      const backupPath = this.getSafeBackupPath(backup.name, backup.createdAt);
-      const backupFileName = basename(backupPath);
+      const backupFileName = `backup-${backup.name}-${backup.createdAt.getTime()}.json.gz`;
+      const backupPath = join(this.backupsDir, backupFileName);
       const metadataPath = join(this.backupsDir, `${backupFileName}.meta`);
 
       await fs.unlink(backupPath);
@@ -937,39 +883,6 @@ export class ConfigurationImportExportService {
    */
   private generateBackupId(): string {
     return 'backup-' + Date.now().toString(36) + '-' + randomBytes(8).toString('hex');
-  }
-
-  /**
-   * Get safe backup path and filename.
-   * Ensures the filename is sanitized and the path stays within the backups directory.
-   * Uses PathSecurityUtils for consistent security validation.
-   */
-  private getSafeBackupPath(name: string, createdAt: Date): string {
-    const sanitizedName = PathSecurityUtils.sanitizeFilename(name);
-    const backupFileName = `backup-${sanitizedName}-${createdAt.getTime()}.json.gz`;
-
-    // Use PathSecurityUtils for consistent path validation
-    return PathSecurityUtils.getSafePath(this.backupsDir, backupFileName);
-  }
-
-  /**
-   * Get the full path for a backup file by ID.
-   * Returns null if backup metadata is not found or path is unsafe.
-   */
-  public async getBackupFilePath(backupId: string): Promise<string | null> {
-    try {
-      const backups = await this.listBackups();
-      const backup = backups.find((b) => b.id === backupId);
-
-      if (!backup) {
-        return null;
-      }
-
-      return this.getSafeBackupPath(backup.name, backup.createdAt);
-    } catch (error) {
-      debug('Error getting backup file path:', error);
-      return null;
-    }
   }
 
   /**

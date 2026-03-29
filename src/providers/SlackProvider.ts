@@ -3,8 +3,6 @@ import path from 'path';
 import { SlackService } from '@hivemind/message-slack';
 import slackConfig, { type SlackConfig } from '../config/slackConfig';
 import { type IMessageProvider } from '../types/IProvider';
-import Debug from 'debug';
-const debug = Debug('app:providers:SlackProvider');
 
 export class SlackProvider implements IMessageProvider<SlackConfig> {
   id = 'slack';
@@ -13,9 +11,9 @@ export class SlackProvider implements IMessageProvider<SlackConfig> {
   docsUrl = 'https://api.slack.com/apps';
   helpText =
     'Create a Slack app, enable Socket Mode or Events, and generate the bot and app tokens.';
-  private slackService: InstanceType<typeof SlackService>;
+  private slackService: SlackService;
 
-  constructor(slackService?: InstanceType<typeof SlackService>) {
+  constructor(slackService?: SlackService) {
     this.slackService = slackService || SlackService.getInstance();
   }
 
@@ -96,7 +94,7 @@ export class SlackProvider implements IMessageProvider<SlackConfig> {
       await fs.promises.mkdir(path.dirname(messengersPath), { recursive: true });
       await fs.promises.writeFile(messengersPath, JSON.stringify(cfg, null, 2), 'utf8');
     } catch (e) {
-      debug('ERROR:', 'Failed writing messengers.json', e);
+      console.error('Failed writing messengers.json', e);
     }
 
     // Runtime add

@@ -1,5 +1,3 @@
-import Debug from 'debug';
-const debug = Debug('app:client:provider-configs:types');
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 // Provider-specific configuration types - separate from core bot types
 // This allows for a pluggable architecture where providers can define their own configs
@@ -46,8 +44,7 @@ export interface ProviderConfigField {
   defaultValue?: any;
   group?: string;
   // Additional props for custom field types
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  component?: any;
+  component?: React.ComponentType<any>;
   componentProps?: Record<string, any>;
   dependsOn?: string | { field: string; value: any }; // Field dependency
   // Helper action for fetching data (e.g., agent lookup)
@@ -113,7 +110,7 @@ export class AvatarService {
       }
       return null;
     } catch (error) {
-      debug('ERROR:', 'Failed to load avatar:', error);
+      console.error('Failed to load avatar:', error);
       return null;
     }
   }

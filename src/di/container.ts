@@ -58,9 +58,11 @@ export const TOKENS = {
   SessionManager: 'SessionManager',
 
   // Monitoring
+  AdvancedMonitor: 'AdvancedMonitor',
   HealthChecker: 'HealthChecker',
   MetricsCollector: 'MetricsCollector',
   AlertManager: 'AlertManager',
+  MonitoringService: 'MonitoringService',
   ApiMonitorService: 'ApiMonitorService',
 
   // Message Processing

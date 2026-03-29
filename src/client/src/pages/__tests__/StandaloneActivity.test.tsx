@@ -26,16 +26,6 @@ vi.mock('../../services/api', () => ({
   },
 }));
 
-// Mock WebSocket hook used by Monitoring/ActivityMonitor
-vi.mock('../../hooks/useWebSocket', () => ({
-  useWebSocket: () => ({ messages: [] }),
-}));
-
-// Mock SearchFilterBar used by Monitoring/ActivityMonitor
-vi.mock('../../components/SearchFilterBar', () => ({
-  default: () => <div data-testid="search-filter-bar" />,
-}));
-
 describe('StandaloneActivity', () => {
   it('renders ActivityMonitor and loads data', async () => {
     const mockEvents = [

@@ -96,7 +96,7 @@ describe('MCP API Endpoints', () => {
       expect(response.body.server.connected).toBe(false);
     });
 
-    it('should return existing server for duplicate names (idempotent)', async () => {
+    it('should reject duplicate server names', async () => {
       // First, create a server
       const newServer = {
         name: 'test-server',
@@ -104,10 +104,10 @@ describe('MCP API Endpoints', () => {
       };
       await request(app).post('/api/mcp/servers').send(newServer);
 
-      // Try to create another with the same name - returns existing server
+      // Try to create another with the same name
       const response = await request(app).post('/api/mcp/servers').send(newServer);
-      expect(response.status).toBe(200);
-      expect(response.body.server).toHaveProperty('name', 'test-server');
+      expect(response.status).toBe(400);
+      expect(response.body.error).toContain('already exists');
     });
   });
 
@@ -241,8 +241,7 @@ describe('MCP API Endpoints', () => {
         .post('/api/mcp/servers/test-server/call-tool')
         .send({ arguments: {} });
       expect(response.status).toBe(400);
-      expect(response.body.error).toBe('Validation failed');
-      expect(response.body.issues).toBeDefined();
+      expect(response.body.error).toContain('Tool name is required');
     });
   });
 });

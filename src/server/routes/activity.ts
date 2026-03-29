@@ -1,8 +1,6 @@
 import Debug from 'debug';
 import { Router } from 'express';
 import { DatabaseManager } from '../../database/DatabaseManager';
-import { validateRequest } from '../../validation/validateRequest';
-import { LogActivitySchema } from '../../validation/schemas/activitySchema';
 
 const debug = Debug('app:webui:activity');
 const router = Router();
@@ -299,7 +297,7 @@ router.get('/mcp-tools', async (req, res) => {
 });
 
 // POST /api/activity/log - Log a new activity event (for internal use)
-router.post('/log', validateRequest(LogActivitySchema), async (req, res) => {
+router.post('/log', async (req, res) => {
   try {
     const {
       agentId,

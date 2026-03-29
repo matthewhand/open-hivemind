@@ -2,8 +2,6 @@ import { promises as fs } from 'fs';
 import path from 'path';
 import type { BotConfiguration } from '../database/DatabaseManager';
 import type { BotOverride, MessageProvider, LlmProvider, McpServerConfig, McpGuardConfig } from '@src/types/config';
-import Debug from 'debug';
-const debug = Debug('app:config:UserConfigStore');
 
 interface ToolConfig {
   guards?: {
@@ -76,7 +74,7 @@ export class UserConfigStore {
       await fs.mkdir(configDir, { recursive: true });
       await fs.writeFile(this.configPath, JSON.stringify(this.config, null, 2), 'utf-8');
     } catch (error) {
-      debug('ERROR:', 'Failed to save user config:', error);
+      console.error('Failed to save user config:', error);
       throw error;
     }
   }
@@ -158,38 +156,6 @@ export class UserConfigStore {
       mcpGuard: botConfig.mcpGuard as McpGuardConfig,
       mcpGuardProfile: (botConfig as any).mcpGuardProfile as string | undefined,
     };
-  }
-
-  /**
-   * Get all user overrides for bots in a Map for O(1) lookup.
-   * @returns A Map of botName to BotOverride.
-   */
-  public getAllBotOverrides(): Map<string, BotOverride> {
-    const overrides = new Map<string, BotOverride>();
-    if (!this.config.bots) {
-      return overrides;
-    }
-
-    // Pre-calculate disabled status for all bots to avoid O(N^2)
-    const disabledBots = new Set(this.config.generalSettings?.disabledBots || []);
-
-    for (const botConfig of this.config.bots) {
-      if (!botConfig.name) continue;
-      overrides.set(botConfig.name, {
-        disabled: disabledBots.has(botConfig.name),
-        messageProvider: botConfig.messageProvider as MessageProvider,
-        llmProvider: botConfig.llmProvider as LlmProvider,
-        llmProfile: (botConfig as any).llmProfile as string | undefined,
-        responseProfile: botConfig.responseProfile as string | undefined,
-        persona: botConfig.persona,
-        systemInstruction: botConfig.systemInstruction,
-        mcpServers: botConfig.mcpServers as McpServerConfig[],
-        mcpGuard: botConfig.mcpGuard as McpGuardConfig,
-        mcpGuardProfile: (botConfig as any).mcpGuardProfile as string | undefined,
-      });
-    }
-
-    return overrides;
   }
 
   /**

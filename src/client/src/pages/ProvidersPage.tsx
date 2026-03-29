@@ -1,8 +1,6 @@
 import React, { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import Card from '../components/DaisyUI/Card';
-import Button from '../components/DaisyUI/Button';
-import Badge from '../components/DaisyUI/Badge';
+import { Card, Button, Badge } from '../components/DaisyUI';
 import {
   MessageCircle as MessageIcon,
   Brain as LLMIcon,
@@ -11,7 +9,7 @@ import {
   Settings as ConfigIcon,
   ArrowRight as ArrowIcon,
 } from 'lucide-react';
-
+import { Breadcrumbs } from '../components/DaisyUI';
 import { getProviderSchemasByType } from '../provider-configs';
 
 // Icon mapping for provider types
@@ -68,6 +66,10 @@ const TYPE_FEATURES: Record<string, string[]> = {
 
 const ProvidersPage: React.FC = () => {
   const navigate = useNavigate();
+  const breadcrumbItems = [
+    { label: 'Admin', href: '/admin/overview' },
+    { label: 'Providers', href: '/admin/providers', isActive: true },
+  ];
 
   // Generate provider categories dynamically from schemas
   const providerCategories = useMemo(() => {
@@ -96,7 +98,9 @@ const ProvidersPage: React.FC = () => {
 
   return (
     <div className="p-6">
-      <div className="mb-8">
+      <Breadcrumbs items={breadcrumbItems} />
+
+      <div className="mt-4 mb-8">
         <h1 className="text-4xl font-bold mb-2">Provider Management</h1>
         <p className="text-base-content/70">
           Configure and manage your messaging, AI, memory, and tool providers for bot instances

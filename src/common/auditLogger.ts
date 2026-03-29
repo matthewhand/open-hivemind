@@ -1,4 +1,3 @@
-import crypto from 'crypto';
 import fs, { promises as fsPromises } from 'fs';
 import path from 'path';
 import readline from 'readline';
@@ -103,7 +102,7 @@ export class AuditLogger {
           await fsPromises.appendFile(this.logFilePath, data);
         } catch (error) {
           debug('Failed to write to audit log:', error);
-          debug('ERROR:', 'AUDIT LOG WRITE ERROR:', error);
+          console.error('AUDIT LOG WRITE ERROR:', error);
           // In case of write error, we lose these logs.
           // In a robust system we might retry or write to a fallback,
           // but for now we just log the error to stderr.
@@ -152,7 +151,7 @@ export class AuditLogger {
       this.processQueue();
     } catch (error) {
       debug('Failed to queue audit event:', error);
-      debug('ERROR:', 'AUDIT LOG ERROR:', event, error);
+      console.error('AUDIT LOG ERROR:', event, error);
     }
   }
 
@@ -286,109 +285,6 @@ export class AuditLogger {
     }
   }
 
-  /**
-   * Build a composable filter function from query-param-style options.
-   * Every non-empty field narrows the result set (AND logic).
-   */
-  public buildFilter(opts: {
-    search?: string;
-    action?: string;
-    resource?: string;
-    user?: string;
-    dateFrom?: string;
-    dateTo?: string;
-  }): (event: AuditEvent) => boolean {
-    const checks: Array<(e: AuditEvent) => boolean> = [];
-
-    if (opts.action) {
-      const action = opts.action;
-      checks.push((e) => e.action === action);
-    }
-
-    if (opts.resource) {
-      const res = opts.resource.toLowerCase();
-      checks.push((e) => e.resource.toLowerCase().includes(res));
-    }
-
-    if (opts.user) {
-      const user = opts.user.toLowerCase();
-      checks.push((e) => e.user.toLowerCase().includes(user));
-    }
-
-    if (opts.dateFrom) {
-      const from = new Date(opts.dateFrom).getTime();
-      if (!isNaN(from)) {
-        checks.push((e) => new Date(e.timestamp).getTime() >= from);
-      }
-    }
-
-    if (opts.dateTo) {
-      // dateTo is inclusive — treat as end-of-day if only a date string
-      const raw = opts.dateTo;
-      const to =
-        raw.length === 10 ? new Date(raw + 'T23:59:59.999Z').getTime() : new Date(raw).getTime();
-      if (!isNaN(to)) {
-        checks.push((e) => new Date(e.timestamp).getTime() <= to);
-      }
-    }
-
-    if (opts.search) {
-      const q = opts.search.toLowerCase();
-      checks.push(
-        (e) =>
-          e.user.toLowerCase().includes(q) ||
-          e.action.toLowerCase().includes(q) ||
-          e.resource.toLowerCase().includes(q) ||
-          e.details.toLowerCase().includes(q)
-      );
-    }
-
-    if (checks.length === 0) return () => true;
-    return (event) => checks.every((fn) => fn(event));
-  }
-
-  /**
-   * Return ALL matching events (no pagination cap). Intended for CSV export.
-   */
-  public async getAllMatchingEvents(
-    filter?: (event: AuditEvent) => boolean
-  ): Promise<AuditEvent[]> {
-    try {
-      if (!fs.existsSync(this.logFilePath)) {
-        return [];
-      }
-
-      const fileStream = fs.createReadStream(this.logFilePath, { encoding: 'utf8' });
-      const rl = readline.createInterface({
-        input: fileStream,
-        crlfDelay: Infinity,
-      });
-
-      const results: AuditEvent[] = [];
-
-      for await (const line of rl) {
-        const trimmed = line.trim();
-        if (!trimmed) continue;
-
-        try {
-          const event = JSON.parse(trimmed) as AuditEvent;
-          if (!filter || filter(event)) {
-            results.push(event);
-          }
-        } catch (e) {
-          debug('Failed to parse audit log line: %O', e);
-        }
-      }
-
-      // Return newest-first
-      results.reverse();
-      return results;
-    } catch (error) {
-      debug('Failed to read all matching audit events:', error);
-      return [];
-    }
-  }
-
   public async getAuditEventsByUser(user: string, limit = 100): Promise<AuditEvent[]> {
     return this.getAuditEvents(limit, 0, (event) => event.user === user);
   }
@@ -405,7 +301,7 @@ export class AuditLogger {
   }
 
   private generateId(): string {
-    return `audit_${Date.now()}_${crypto.randomUUID()}`;
+    return `audit_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
   }
 
   public getLogFilePath(): string {

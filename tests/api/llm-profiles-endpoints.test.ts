@@ -183,7 +183,7 @@ describe('LLM Profiles API Endpoints', () => {
       expect(mockSaveLlmProfiles).toHaveBeenCalled();
     });
 
-    it('should accept whitespace-only name field (no trim validation)', async () => {
+    it('should reject empty name field', async () => {
       const existingProfiles = {
         llm: [
           {
@@ -199,13 +199,13 @@ describe('LLM Profiles API Endpoints', () => {
       const response = await request(app)
         .put('/api/config/llm-profiles/test-profile')
         .send({ key: 'test-profile', name: '   ', provider: 'openai', config: {} })
-        .expect(200);
+        .expect(400);
 
-      expect(response.body.success).toBe(true);
-      expect(mockSaveLlmProfiles).toHaveBeenCalled();
+      expect(response.body.error).toContain('name');
+      expect(mockSaveLlmProfiles).not.toHaveBeenCalled();
     });
 
-    it('should reject empty provider field via validation', async () => {
+    it('should reject empty provider field', async () => {
       const existingProfiles = {
         llm: [
           {
@@ -223,7 +223,7 @@ describe('LLM Profiles API Endpoints', () => {
         .send({ key: 'test-profile', name: 'Updated', provider: '', config: {} })
         .expect(400);
 
-      expect(response.body.error).toBe('Validation failed');
+      expect(response.body.error).toContain('provider');
       expect(mockSaveLlmProfiles).not.toHaveBeenCalled();
     });
   });

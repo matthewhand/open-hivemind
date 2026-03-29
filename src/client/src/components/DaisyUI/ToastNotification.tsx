@@ -1,6 +1,5 @@
-/* eslint-disable  */
-import React, { createContext, useCallback, useContext, useEffect, useState } from 'react';
-import { v4 as uuidv4 } from 'uuid';
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars, react-refresh/only-export-components, no-empty, no-case-declarations */
+import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
 
 export interface Toast {
   id: string;
@@ -35,13 +34,7 @@ export const useToast = () => {
 
 interface ToastProviderProps {
   children: React.ReactNode;
-  position?:
-    | 'top-right'
-    | 'top-left'
-    | 'bottom-right'
-    | 'bottom-left'
-    | 'top-center'
-    | 'bottom-center';
+  position?: 'top-right' | 'top-left' | 'bottom-right' | 'bottom-left' | 'top-center' | 'bottom-center';
   maxToasts?: number;
 }
 
@@ -52,35 +45,32 @@ export const ToastProvider: React.FC<ToastProviderProps> = ({
 }) => {
   const [toasts, setToasts] = useState<Toast[]>([]);
 
-  const addToast = useCallback(
-    (toastData: Omit<Toast, 'id'>) => {
-      const id = `toast-${Date.now()}-${uuidv4()}`;
-      const toast: Toast = {
-        id,
-        duration: toastData.type === 'error' ? 8000 : 5000,
-        ...toastData,
-      };
+  const addToast = useCallback((toastData: Omit<Toast, 'id'>) => {
+    const id = `toast-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    const toast: Toast = {
+      id,
+      duration: 5000, // 5 seconds default
+      ...toastData,
+    };
 
-      setToasts((prev) => {
-        const newToasts = [toast, ...prev];
-        // Limit number of toasts
-        return newToasts.slice(0, maxToasts);
-      });
+    setToasts(prev => {
+      const newToasts = [toast, ...prev];
+      // Limit number of toasts
+      return newToasts.slice(0, maxToasts);
+    });
 
-      // Auto remove after duration (unless persistent)
-      if (!toast.persistent && toast.duration && toast.duration > 0) {
-        setTimeout(() => {
-          removeToast(id);
-        }, toast.duration);
-      }
+    // Auto remove after duration (unless persistent)
+    if (!toast.persistent && toast.duration && toast.duration > 0) {
+      setTimeout(() => {
+        removeToast(id);
+      }, toast.duration);
+    }
 
-      return id;
-    },
-    [maxToasts]
-  );
+    return id;
+  }, [maxToasts]);
 
   const removeToast = useCallback((id: string) => {
-    setToasts((prev) => prev.filter((toast) => toast.id !== id));
+    setToasts(prev => prev.filter(toast => toast.id !== id));
   }, []);
 
   const clearAll = useCallback(() => {
@@ -89,20 +79,20 @@ export const ToastProvider: React.FC<ToastProviderProps> = ({
 
   const getPositionClasses = () => {
     switch (position) {
-      case 'top-left':
-        return 'top-4 left-4';
-      case 'top-center':
-        return 'top-4 left-1/2 transform -translate-x-1/2';
-      case 'top-right':
-        return 'top-4 right-4';
-      case 'bottom-left':
-        return 'bottom-4 left-4';
-      case 'bottom-center':
-        return 'bottom-4 left-1/2 transform -translate-x-1/2';
-      case 'bottom-right':
-        return 'bottom-4 right-4';
-      default:
-        return 'top-4 right-4';
+    case 'top-left':
+      return 'top-4 left-4';
+    case 'top-center':
+      return 'top-4 left-1/2 transform -translate-x-1/2';
+    case 'top-right':
+      return 'top-4 right-4';
+    case 'bottom-left':
+      return 'bottom-4 left-4';
+    case 'bottom-center':
+      return 'bottom-4 left-1/2 transform -translate-x-1/2';
+    case 'bottom-right':
+      return 'bottom-4 right-4';
+    default:
+      return 'top-4 right-4';
     }
   };
 
@@ -111,9 +101,14 @@ export const ToastProvider: React.FC<ToastProviderProps> = ({
       {children}
 
       {/* Toast Container */}
-      <div className={`fixed z-50 space-y-2 ${getPositionClasses()}`} aria-live="polite" aria-label="Notifications" role="region">
+      <div className={`fixed z-50 space-y-2 ${getPositionClasses()}`}>
         {toasts.map((toast) => (
-          <ToastItem key={toast.id} toast={toast} onRemove={removeToast} position={position} />
+          <ToastItem
+            key={toast.id}
+            toast={toast}
+            onRemove={removeToast}
+            position={position}
+          />
         ))}
       </div>
     </ToastContext.Provider>
@@ -123,13 +118,7 @@ export const ToastProvider: React.FC<ToastProviderProps> = ({
 interface ToastItemProps {
   toast: Toast;
   onRemove: (id: string) => void;
-  position:
-    | 'top-right'
-    | 'top-left'
-    | 'bottom-right'
-    | 'bottom-left'
-    | 'top-center'
-    | 'bottom-center';
+  position: 'top-right' | 'top-left' | 'bottom-right' | 'bottom-left' | 'top-center' | 'bottom-center';
 }
 
 const ToastItem: React.FC<ToastItemProps> = ({ toast, onRemove, position }) => {
@@ -151,55 +140,55 @@ const ToastItem: React.FC<ToastItemProps> = ({ toast, onRemove, position }) => {
 
   const getAlertClass = () => {
     switch (toast.type) {
-      case 'success':
-        return 'alert-success';
-      case 'error':
-        return 'alert-error';
-      case 'warning':
-        return 'alert-warning';
-      case 'info':
-        return 'alert-info';
-      default:
-        return 'alert-info';
+    case 'success':
+      return 'alert-success';
+    case 'error':
+      return 'alert-error';
+    case 'warning':
+      return 'alert-warning';
+    case 'info':
+      return 'alert-info';
+    default:
+      return 'alert-info';
     }
   };
 
   const getIcon = () => {
     switch (toast.type) {
-      case 'success':
-        return '✅';
-      case 'error':
-        return '❌';
-      case 'warning':
-        return '⚠️';
-      case 'info':
-        return 'ℹ️';
-      default:
-        return 'ℹ️';
+    case 'success':
+      return '✅';
+    case 'error':
+      return '❌';
+    case 'warning':
+      return '⚠️';
+    case 'info':
+      return 'ℹ️';
+    default:
+      return 'ℹ️';
     }
   };
 
   const getRole = () => {
     switch (toast.type) {
-      case 'error':
-      case 'warning':
-        return 'alert';
-      case 'success':
-      case 'info':
-      default:
-        return 'status';
+    case 'error':
+    case 'warning':
+      return 'alert';
+    case 'success':
+    case 'info':
+    default:
+      return 'status';
     }
   };
 
   const getAriaLive = () => {
     switch (toast.type) {
-      case 'error':
-      case 'warning':
-        return 'assertive';
-      case 'success':
-      case 'info':
-      default:
-        return 'polite';
+    case 'error':
+    case 'warning':
+      return 'assertive';
+    case 'success':
+    case 'info':
+    default:
+      return 'polite';
     }
   };
 
@@ -209,13 +198,12 @@ const ToastItem: React.FC<ToastItemProps> = ({ toast, onRemove, position }) => {
       aria-live={getAriaLive()}
       className={`
         alert ${getAlertClass()} shadow-lg max-w-md transform transition-all duration-300 ease-in-out
-        ${
-          isVisible && !isRemoving
-            ? 'translate-x-0 opacity-100 scale-100'
-            : position.includes('right')
-              ? 'translate-x-full opacity-0 scale-95'
-              : '-translate-x-full opacity-0 scale-95'
-        }
+        ${isVisible && !isRemoving
+      ? 'translate-x-0 opacity-100 scale-100'
+      : position.includes('right')
+        ? 'translate-x-full opacity-0 scale-95'
+        : '-translate-x-full opacity-0 scale-95'
+    }
       `}
     >
       <div className="flex items-start space-x-3 flex-1">
@@ -223,7 +211,9 @@ const ToastItem: React.FC<ToastItemProps> = ({ toast, onRemove, position }) => {
 
         <div className="flex-1 min-w-0">
           <div className="font-semibold text-sm">{toast.title}</div>
-          {toast.message && <div className="text-sm opacity-80 mt-1">{toast.message}</div>}
+          {toast.message && (
+            <div className="text-sm opacity-80 mt-1">{toast.message}</div>
+          )}
 
           {toast.actions && toast.actions.length > 0 && (
             <div className="flex gap-2 mt-2">
@@ -231,11 +221,9 @@ const ToastItem: React.FC<ToastItemProps> = ({ toast, onRemove, position }) => {
                 <button
                   key={index}
                   className={`btn btn-xs ${
-                    action.style === 'primary'
-                      ? 'btn-primary'
-                      : action.style === 'secondary'
-                        ? 'btn-secondary'
-                        : 'btn-ghost'
+                    action.style === 'primary' ? 'btn-primary' :
+                      action.style === 'secondary' ? 'btn-secondary' :
+                        'btn-ghost'
                   }`}
                   onClick={() => {
                     action.action();
@@ -264,42 +252,30 @@ const ToastItem: React.FC<ToastItemProps> = ({ toast, onRemove, position }) => {
 // Convenience hooks for different toast types
 export const useSuccessToast = () => {
   const { addToast } = useToast();
-  return useCallback(
-    (title: string, message?: string, options?: Partial<Toast>) => {
-      return addToast({ type: 'success', title, message, ...options });
-    },
-    [addToast]
-  );
+  return useCallback((title: string, message?: string, options?: Partial<Toast>) => {
+    return addToast({ type: 'success', title, message, ...options });
+  }, [addToast]);
 };
 
 export const useErrorToast = () => {
   const { addToast } = useToast();
-  return useCallback(
-    (title: string, message?: string, options?: Partial<Toast>) => {
-      return addToast({ type: 'error', title, message, ...options });
-    },
-    [addToast]
-  );
+  return useCallback((title: string, message?: string, options?: Partial<Toast>) => {
+    return addToast({ type: 'error', title, message, ...options });
+  }, [addToast]);
 };
 
 export const useWarningToast = () => {
   const { addToast } = useToast();
-  return useCallback(
-    (title: string, message?: string, options?: Partial<Toast>) => {
-      return addToast({ type: 'warning', title, message, ...options });
-    },
-    [addToast]
-  );
+  return useCallback((title: string, message?: string, options?: Partial<Toast>) => {
+    return addToast({ type: 'warning', title, message, ...options });
+  }, [addToast]);
 };
 
 export const useInfoToast = () => {
   const { addToast } = useToast();
-  return useCallback(
-    (title: string, message?: string, options?: Partial<Toast>) => {
-      return addToast({ type: 'info', title, message, ...options });
-    },
-    [addToast]
-  );
+  return useCallback((title: string, message?: string, options?: Partial<Toast>) => {
+    return addToast({ type: 'info', title, message, ...options });
+  }, [addToast]);
 };
 
 // Notification Center Component
@@ -316,10 +292,10 @@ export const NotificationCenter: React.FC = () => {
         role="button"
         className="btn btn-ghost btn-circle"
         onClick={() => setIsOpen(!isOpen)}
-        aria-label="Notifications" aria-haspopup="true" aria-expanded={isOpen}
+        aria-label="Toggle notifications menu"
       >
         <div className="indicator">
-          <span className="text-xl" aria-hidden="true">🔔</span>
+          <span className="text-xl">🔔</span>
           {unreadCount > 0 && (
             <span className="badge badge-primary badge-xs indicator-item">
               {unreadCount > 99 ? '99+' : unreadCount}
@@ -329,12 +305,15 @@ export const NotificationCenter: React.FC = () => {
       </div>
 
       {isOpen && (
-        <div className="dropdown-content z-[1] card card-compact w-80 p-2 shadow bg-base-100" role="region" aria-label="Notification center">
+        <div className="dropdown-content z-[1] card card-compact w-80 p-2 shadow bg-base-100">
           <div className="card-body">
             <div className="flex items-center justify-between">
               <h3 className="card-title text-sm">Notifications</h3>
               {toasts.length > 0 && (
-                <button className="btn btn-ghost btn-xs" onClick={clearAll}>
+                <button
+                  className="btn btn-ghost btn-xs"
+                  onClick={clearAll}
+                >
                   Clear All
                 </button>
               )}
@@ -350,15 +329,9 @@ export const NotificationCenter: React.FC = () => {
                 toasts.map((toast) => (
                   <div
                     key={toast.id}
-                    className={`alert ${
-                      toast.type === 'success'
-                        ? 'alert-success'
-                        : toast.type === 'error'
-                          ? 'alert-error'
-                          : toast.type === 'warning'
-                            ? 'alert-warning'
-                            : 'alert-info'
-                    }
+                    className={`alert ${toast.type === 'success' ? 'alert-success' :
+                      toast.type === 'error' ? 'alert-error' :
+                        toast.type === 'warning' ? 'alert-warning' : 'alert-info'}
                                 alert-sm`}
                   >
                     <div className="text-xs">

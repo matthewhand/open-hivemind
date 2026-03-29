@@ -50,30 +50,17 @@ describe('openwebui/uploadKnowledgeFile', () => {
       getSessionKey: jest.fn().mockResolvedValue('sk-abc'),
     }));
 
-    // Mock fs.promises.access and fs.createReadStream
+    // Mock fs.existsSync and fs.createReadStream
     jest.doMock('fs', () => {
-      const access = exists
-        ? jest.fn().mockResolvedValue(undefined)
-        : jest.fn().mockRejectedValue(new Error('ENOENT'));
+      const existsSync = jest.fn().mockReturnValue(exists);
       const createReadStream = jest.fn().mockReturnValue({ _fakeStream: true });
       return {
         __esModule: true,
-        default: {
-          promises: { access },
-          createReadStream,
-          constants: { F_OK: 0 },
-        },
-        promises: { access },
+        default: { existsSync, createReadStream },
+        existsSync,
         createReadStream,
-        constants: { F_OK: 0 },
       };
     });
-
-    // Mock ssrfGuard to allow all URLs in tests
-    jest.doMock('../../../src/utils/ssrfGuard', () => ({
-      __esModule: true,
-      isSafeUrl: jest.fn().mockResolvedValue(true),
-    }));
 
     // Mock axios to ensure both axios.post and axios.create().post use same mock
     jest.doMock('axios', () => {
@@ -118,8 +105,7 @@ describe('openwebui/uploadKnowledgeFile', () => {
     // apiUrl ends with '/api/', session code appends '/v1/files' resulting in '/api//v1/files'
     expect(url).toMatch(/\/api\/\/v1\/files$/);
     // We pass the stream directly as body
-    expect(body).toBeDefined();
-    expect(body).not.toBeNull();
+    expect(body).toBeTruthy();
     expect(options).toEqual({
       headers: {
         Authorization: 'Bearer sk-abc',

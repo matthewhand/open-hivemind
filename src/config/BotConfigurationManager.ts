@@ -100,13 +100,6 @@ const botSchema = {
     env: 'BOTS_{name}_MCP_SERVER_PROFILE',
   },
 
-  MEMORY_PROFILE: {
-    doc: 'Memory provider profile name for conversation memory',
-    format: String,
-    default: '',
-    env: 'BOTS_{name}_MEMORY_PROFILE',
-  },
-
   DISABLE_DELAYS: {
     doc: 'When true, skips all artificial delays. Bot responds as fast as LLM can generate.',
     format: Boolean,
@@ -565,7 +558,6 @@ export class BotConfigurationManager {
       mcpServers: botConfig.get('MCP_SERVERS') as McpServerConfig[] || [],
       mcpGuard: botConfig.get('MCP_GUARD') as McpGuardConfig || { enabled: false, type: 'owner' },
       mcpGuardProfile: (botConfig.get('MCP_GUARD_PROFILE') as string) || undefined,
-      memoryProfile: (botConfig.get('MEMORY_PROFILE') as string) || undefined,
     };
 
 
@@ -678,7 +670,6 @@ export class BotConfigurationManager {
     assignIfAllowed('mcpGuard', 'MCP_GUARD');
     assignIfAllowed('mcpGuardProfile', 'MCP_GUARD_PROFILE');
     assignIfAllowed('mcpServerProfile', 'MCP_SERVER_PROFILE');
-    assignIfAllowed('memoryProfile', 'MEMORY_PROFILE');
 
     if (!config.mcpGuard) {
       config.mcpGuard = { enabled: false, type: 'owner' };

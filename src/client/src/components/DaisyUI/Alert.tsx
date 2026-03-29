@@ -45,7 +45,7 @@ export const Alert: React.FC<AlertProps> = ({
 
   return (
     <div role="alert" className={`alert ${statusClasses[activeStatus]} ${className}`}>
-      {React.isValidElement(icon) ? icon : (typeof icon === 'function' || typeof icon === 'object' ? React.createElement(icon as any) : icon)}
+      {icon}
       {message && <span>{message}</span>}
       {children}
       {onClose && (

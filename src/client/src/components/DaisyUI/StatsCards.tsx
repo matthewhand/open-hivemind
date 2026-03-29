@@ -120,7 +120,7 @@ const AnimatedCounter: React.FC<AnimatedCounterProps> = ({ value, className }) =
 };
 
 
-export const StatsCards: React.FC<StatsCardsProps> = ({ stats, isLoading = false, className = '' }) => {
+const StatsCards: React.FC<StatsCardsProps> = ({ stats, isLoading = false, className = '' }) => {
   const getGradientBg = (color?: string) => {
     switch (color) {
     case 'primary': return 'bg-gradient-to-br from-primary/20 via-primary/10 to-transparent';
@@ -354,7 +354,7 @@ export const useSystemStats = () => {
         setError(null);
       } catch (err) {
         setError('Failed to fetch system stats');
-        // Silent: stats show loading state
+        console.error('Error fetching stats:', err);
       } finally {
         setIsLoading(false);
       }
@@ -368,6 +368,5 @@ export const useSystemStats = () => {
 
   return { stats, isLoading, error, refresh: () => setIsLoading(true) };
 };
-
 
 export default StatsCards;

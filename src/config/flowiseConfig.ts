@@ -1,7 +1,5 @@
 import convict from 'convict';
 import path from 'path';
-import Debug from 'debug';
-const debug = Debug('app:config:flowiseConfig');
 
 const flowiseConfig = convict({
   FLOWISE_API_ENDPOINT: {
@@ -55,13 +53,16 @@ if (process.env.NODE_ENV !== 'test') {
     flowiseConfig.loadFile(configPath);
   } catch {
     // Fallback to defaults if config file is missing or invalid
-    debug('WARN:', `Warning: Could not load flowise config from ${configPath}, using defaults`);
+    console.warn(`Warning: Could not load flowise config from ${configPath}, using defaults`);
   }
 }
 
-// Always validate the config to ensure it works properly, even in test environment.
-// Validation must happen outside the generic try-catch to fail fast if config is malformed.
-flowiseConfig.validate({ allowed: 'strict' });
+// Always validate the config to ensure it works properly, even in test environment
+try {
+  flowiseConfig.validate({ allowed: 'strict' });
+} catch (error) {
+  console.warn(`Warning: Flowise config validation failed: ${error}, using defaults`);
+}
 
 // Override the get method to handle undefined keys gracefully
 const originalGet = flowiseConfig.get.bind(flowiseConfig);

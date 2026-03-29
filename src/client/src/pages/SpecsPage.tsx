@@ -1,27 +1,14 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import Card from '../components/DaisyUI/Card';
-import Button from '../components/DaisyUI/Button';
-import Input from '../components/DaisyUI/Input';
-import Badge from '../components/DaisyUI/Badge';
-
-import Pagination from '../components/DaisyUI/Pagination';
-import { SkeletonPage } from '../components/DaisyUI/Skeleton';
+import { Card, Button, Input, Badge, Breadcrumbs, Pagination } from '../components/DaisyUI';
 import { MagnifyingGlassIcon, PlusIcon, BookOpenIcon } from '@heroicons/react/24/outline';
 import useSpecs from '../hooks/useSpecs';
-import useUrlParams from '../hooks/useUrlParams';
 
 const SpecsPage: React.FC = () => {
   const navigate = useNavigate();
   const { specs, loading, error } = useSpecs();
-  const { values: urlParams, setValue: setUrlParam } = useUrlParams({
-    search: { type: 'string', default: '', debounce: 300 },
-    page: { type: 'number', default: 1 },
-  });
-  const searchTerm = urlParams.search;
-  const setSearchTerm = (v: string) => { setUrlParam('search', v); setUrlParam('page', 1); };
-  const page = urlParams.page;
-  const setPage = (v: number) => setUrlParam('page', v);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [page, setPage] = useState(1);
   const [pageSize] = useState(10);
 
   const filteredSpecs = specs.filter(spec =>
@@ -45,9 +32,14 @@ const SpecsPage: React.FC = () => {
     navigate(`/admin/specs/${id}`);
   };
 
+  const breadcrumbItems = [{ label: 'Specifications', href: '/admin/specs', isActive: true }];
 
   if (loading) {
-    return <SkeletonPage variant="cards" statsCount={0} showFilters />;
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="loading loading-spinner loading-lg"></div>
+      </div>
+    );
   }
 
   if (error) {
@@ -68,7 +60,9 @@ const SpecsPage: React.FC = () => {
 
   return (
     <div className="container mx-auto p-6">
-      <div className="mb-8">
+      <Breadcrumbs items={breadcrumbItems} />
+
+      <div className="mt-6 mb-8">
         <h1 className="text-3xl font-bold mb-2">Specifications</h1>
         <p className="opacity-70">View, search, and manage persisted specifications</p>
       </div>
@@ -111,7 +105,7 @@ const SpecsPage: React.FC = () => {
 
               <h3 className="card-title text-lg mb-2">{spec.topic}</h3>
               <p className="text-sm opacity-70 mb-4 line-clamp-3">
-                By {spec.author} • {new Date(spec.timestamp).toLocaleDateString()}
+                By {spec.author} • {new Date(spec.date).toLocaleDateString()}
               </p>
 
               <div className="flex flex-wrap gap-1 mb-4">

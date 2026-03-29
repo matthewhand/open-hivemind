@@ -3,22 +3,24 @@ import { join } from 'path';
 import cors from 'cors';
 import Debug from 'debug';
 import express from 'express';
-import { Logger } from '../common/logger';
-import { correlationMiddleware, globalErrorHandler } from '../middleware/errorHandler';
-import { applyRateLimiting } from '../middleware/rateLimiter';
+import {
+  correlationMiddleware,
+  globalErrorHandler,
+  setupGlobalErrorHandlers,
+  setupGracefulShutdown,
+} from '../middleware/errorHandler';
 // Error handling imports
 // Middleware imports
 import { auditMiddleware } from './middleware/audit';
 import { authenticateToken, optionalAuth } from './middleware/auth';
 import { csrfProtection, csrfTokenHandler } from './middleware/csrf';
+import { applyRateLimiting } from '../middleware/rateLimiter';
 import { securityHeaders } from './middleware/security';
 import activityRouter from './routes/activity';
 import adminRouter from './routes/admin';
 import agentsRouter from './routes/agents';
 import aiAssistRouter from './routes/ai-assist';
-import apiDocsRouter from './routes/apiDocs';
 import botsRouter from './routes/bots';
-import cacheRouter from './routes/cache';
 import configRouter from './routes/config';
 import consolidatedRouter from './routes/consolidated';
 import dashboardRouter from './routes/dashboard';
@@ -29,15 +31,11 @@ import healthRouter from './routes/health';
 import hotReloadRouter from './routes/hotReload';
 import importExportRouter from './routes/importExport';
 import mcpRouter from './routes/mcp';
-import onboardingRouter from './routes/onboarding';
 import personasRouter from './routes/personas';
-import providersRouter from './routes/providers';
 import sitemapRouter from './routes/sitemap';
 import specsRouter from './routes/specs';
-import webhookEventsRouter from './routes/webhookEvents';
 
 const debug = Debug('app:webui:server');
-const serverLog = Logger.withContext('webui:server');
 
 const resolveFrontendDistPath = (): string => {
   const candidates = [
@@ -111,18 +109,7 @@ export class WebUIServer {
       },
       credentials: true,
       optionsSuccessStatus: 200,
-      allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin', 'X-Correlation-ID'],
-      exposedHeaders: [
-        'X-Correlation-ID',
-        'X-RateLimit-Limit',
-        'X-RateLimit-Remaining',
-        'X-RateLimit-Reset',
-        'RateLimit-Limit',
-        'RateLimit-Remaining',
-        'RateLimit-Reset',
-        'RateLimit-Policy',
-        'Retry-After',
-      ],
+      allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin'],
       methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
       maxAge: 86400,
     };
@@ -187,11 +174,9 @@ export class WebUIServer {
     // Public API routes (optional auth)
     this.app.use('/api/health', optionalAuth, healthRouter);
     this.app.use('/api/errors', optionalAuth, errorsRouter);
-    this.app.use('/api/docs', optionalAuth, apiDocsRouter);
 
     // Protected API routes (authentication required)
     this.app.use('/api/admin', authenticateToken, adminRouter);
-    this.app.use('/api/cache', cacheRouter);
     this.app.use('/api/ai-assist', authenticateToken, aiAssistRouter);
     this.app.use('/api/agents', authenticateToken, agentsRouter);
     this.app.use('/api/bots', authenticateToken, botsRouter);
@@ -205,9 +190,6 @@ export class WebUIServer {
     this.app.use('/api/hot-reload', authenticateToken, hotReloadRouter);
     this.app.use('/api/specs', authenticateToken, specsRouter);
     this.app.use('/api/import-export', authenticateToken, importExportRouter);
-    this.app.use('/api/webhooks', authenticateToken, webhookEventsRouter);
-    this.app.use('/api/onboarding', authenticateToken, onboardingRouter);
-    this.app.use('/api/providers', authenticateToken, providersRouter);
     this.app.use('/api/guards', authenticateToken, guardsRouter);
 
     // WebUI application routes (serve React app)
@@ -255,6 +237,12 @@ export class WebUIServer {
     // Global error handler middleware
     this.app.use(globalErrorHandler);
 
+    // Setup global error handlers for uncaught exceptions and unhandled rejections
+    setupGlobalErrorHandlers();
+
+    // Setup graceful shutdown handlers
+    setupGracefulShutdown();
+
     debug('Error handling setup completed');
   }
 
@@ -263,25 +251,25 @@ export class WebUIServer {
       try {
         this.server = this.app.listen(this.port, () => {
           debug(`WebUI server started on port ${this.port}`);
-          serverLog.info('🚀 Hivemind WebUI available at:');
-          serverLog.info(`   Admin Dashboard: http://localhost:${this.port}/admin`);
-          serverLog.info(`   WebUI Interface: http://localhost:${this.port}/webui`);
-          serverLog.info(`   API Endpoints:   http://localhost:${this.port}/api`);
-          serverLog.info(`   Health Check:    http://localhost:${this.port}/health`);
+          console.log('🚀 Hivemind WebUI available at:');
+          console.log(`   Admin Dashboard: http://localhost:${this.port}/admin`);
+          console.log(`   WebUI Interface: http://localhost:${this.port}/webui`);
+          console.log(`   API Endpoints:   http://localhost:${this.port}/api`);
+          console.log(`   Health Check:    http://localhost:${this.port}/health`);
           resolve();
         });
 
         this.server.on('error', (error: any) => {
           if (error.code === 'EADDRINUSE') {
-            serverLog.error(`❌ Port ${this.port} is already in use`);
+            console.error(`❌ Port ${this.port} is already in use`);
             reject(new Error(`Port ${this.port} is already in use`));
           } else {
-            serverLog.error('❌ Server error:', error);
+            console.error('❌ Server error:', error);
             reject(error);
           }
         });
       } catch (error) {
-        serverLog.error('❌ Failed to start WebUI server:', error);
+        console.error('❌ Failed to start WebUI server:', error);
         reject(error);
       }
     });

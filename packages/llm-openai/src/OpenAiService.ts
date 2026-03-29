@@ -19,7 +19,6 @@ import {
 import llmConfig from '@config/llmConfig';
 import openaiConfig from '@config/openaiConfig';
 import { redactSensitiveInfo } from '@common/redactSensitiveInfo';
-import { withTimeout } from '@common/withTimeout';
 import { listModels } from './operations/listModels';
 
 const debug = Debug('app:OpenAiService');
@@ -156,19 +155,15 @@ export class OpenAiService {
     console.debug('[DEBUG] Chat parameters:', JSON.stringify(chatParams, null, 2));
 
     try {
-      const response = await withTimeout(
-        (signal) => this.retryWithBackoff(async () => {
-          return await this.openai.chat.completions.create({
-            model: openaiConfig.get('OPENAI_MODEL') || 'gpt-4o',
-            messages: chatParams,
-            max_tokens: maxTokens,
-            temperature,
-            stream: false,
-          }, { signal });
-        }),
-        this.requestTimeout,
-        'OpenAI chat completion',
-      );
+      const response = await this.retryWithBackoff(async () => {
+        return await this.openai.chat.completions.create({
+          model: openaiConfig.get('OPENAI_MODEL') || 'gpt-4o',
+          messages: chatParams,
+          max_tokens: maxTokens,
+          temperature,
+          stream: false,
+        });
+      });
 
       debug(
         '[DEBUG] OpenAI API response received:',

@@ -1,12 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState } from 'react';
-import Card from './DaisyUI/Card';
-import Badge from './DaisyUI/Badge';
-import Button from './DaisyUI/Button';
-import Modal from './DaisyUI/Modal';
-import Accordion from './DaisyUI/Accordion';
-import { Progress } from './DaisyUI/Loading';
-import { Loading } from './DaisyUI/Loading';
+import { Card, Badge, Button, Modal, Accordion, Progress, Loading } from './DaisyUI';
 import {
   RotateCcw,
   Settings,
@@ -371,9 +365,9 @@ const BotStatusCard: React.FC<BotStatusCardProps> = ({
               variant="secondary"
               className="btn-outline flex items-center gap-2"
               onClick={handleRefreshClick}
-              disabled={loading} aria-busy={loading}
+              disabled={loading}
             >
-              {loading ? <span className="loading loading-spinner loading-xs" aria-hidden="true"></span> : <RotateCcw className="w-4 h-4" />}
+              {loading ? <span className="loading loading-spinner loading-xs"></span> : <RotateCcw className="w-4 h-4" />}
               Refresh
             </Button>
           </div>

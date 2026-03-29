@@ -16,19 +16,9 @@ import { BotManager } from '../../managers/BotManager';
 import { providerRegistry } from '../../registries/ProviderRegistry';
 import { ErrorUtils } from '../../types/errors';
 import { type IProvider } from '../../types/IProvider';
-import {
-  CreateLlmProfileSchema,
-  CreateMemoryProfileSchema,
-  CreateMessageProfileSchema,
-  CreateToolProfileSchema,
-  LlmProfileKeyParamSchema,
-  MemoryProfileKeyParamSchema,
-  ToolProfileKeyParamSchema,
-  UpdateLlmProfileSchema,
-} from '../../validation/schemas/configProfilesSchema';
 import { ConfigUpdateSchema } from '../../validation/schemas/configSchema';
 import { validateRequest } from '../../validation/validateRequest';
-import { auditMiddleware, logConfigChange, type AuditedRequest } from '../middleware/audit';
+import { auditMiddleware, logConfigChange } from '../middleware/audit';
 
 /**
  * Validates that a config name is safe to use in file paths.
@@ -82,13 +72,13 @@ let schemaSources: Record<string, any> = { ...coreSchemaSources };
 let globalConfigs: Record<string, any> = { ...schemaSources };
 
 // Helper to load dynamic configs from files
-const loadDynamicConfigs = async () => {
+const loadDynamicConfigs = () => {
   try {
     const configDir = process.env.NODE_CONFIG_DIR || path.join(process.cwd(), 'config');
     const providersDir = path.join(configDir, 'providers');
 
-    try {
-      const files = await fs.promises.readdir(providersDir);
+    if (fs.existsSync(providersDir)) {
+      const files = fs.readdirSync(providersDir);
 
       files.forEach((file) => {
         // Match pattern: type-name.json e.g. openai-dev.json
@@ -111,25 +101,21 @@ const loadDynamicConfigs = async () => {
             try {
               newConfig.validate({ allowed: 'warn' });
             } catch (e) {
-              debug('WARN:', `Validation warning for ${name}:`, e);
+              console.warn(`Validation warning for ${name}:`, e);
             }
 
             globalConfigs[name] = newConfig;
           }
         }
       });
-    } catch (e: unknown) {
-      if (e.code !== 'ENOENT') {
-        throw e;
-      }
     }
   } catch (e) {
-    debug('ERROR:', 'Failed to load dynamic configs:', e);
+    console.error('Failed to load dynamic configs:', e);
   }
 };
 
 // Initialize configuration from registry
-export const reloadGlobalConfigs = async () => {
+export const reloadGlobalConfigs = () => {
   const providers = providerRegistry.getAll();
   providers.forEach((p) => {
     schemaSources[p.id] = p.getConfig();
@@ -139,7 +125,7 @@ export const reloadGlobalConfigs = async () => {
   globalConfigs = { ...schemaSources };
 
   // Load dynamic configs
-  await loadDynamicConfigs();
+  loadDynamicConfigs();
 
   debug(
     'Global configs reloaded with providers:',
@@ -240,7 +226,7 @@ router.get('/bots', async (req, res) => {
     const manager = BotConfigurationManager.getInstance();
 
     // Redact sensitive values before sending to frontend
-    const safeBots = bots.map((bot: Record<string, unknown>) => {
+    const safeBots = bots.map((bot: any) => {
       // Create a merged object that includes top-level props and the config object
       const mergedBot = {
         ...bot,
@@ -270,7 +256,7 @@ router.get('/bots', async (req, res) => {
       warnings: manager.getWarnings(),
     });
   } catch (error: unknown) {
-    const hivemindError = ErrorUtils.toHivemindError(error);
+    const hivemindError = ErrorUtils.toHivemindError(error) as any;
     return res.status(hivemindError.statusCode || 500).json({
       error: hivemindError.message,
       code: 'CONFIG_BOTS_ERROR',
@@ -311,9 +297,9 @@ router.get('/sources', async (req, res) => {
 
     // Detect config files
     const configDir = path.join(process.cwd(), 'config');
-    const configFiles: Record<string, unknown>[] = [];
+    const configFiles: any[] = [];
 
-    try {
+    if (fs.existsSync(configDir)) {
       const files = await fs.promises.readdir(configDir);
       const statPromises = files
         .filter((file) => file.endsWith('.json') || file.endsWith('.js') || file.endsWith('.ts'))
@@ -331,10 +317,6 @@ router.get('/sources', async (req, res) => {
 
       const fileStats = await Promise.all(statPromises);
       configFiles.push(...fileStats);
-    } catch (e: unknown) {
-      if (e.code !== 'ENOENT') {
-        throw e;
-      }
     }
 
     return res.json({
@@ -343,7 +325,7 @@ router.get('/sources', async (req, res) => {
       count: configFiles.length,
     });
   } catch (error: unknown) {
-    const hivemindError = ErrorUtils.toHivemindError(error);
+    const hivemindError = ErrorUtils.toHivemindError(error) as any;
     return res.status(500).json({
       error: hivemindError.message,
       code: 'CONFIG_SOURCES_ERROR',
@@ -357,7 +339,7 @@ router.get('/llm-status', (req, res) => {
     const status = getLlmDefaultStatus();
     return res.json(status);
   } catch (error: unknown) {
-    const hivemindError = ErrorUtils.toHivemindError(error);
+    const hivemindError = ErrorUtils.toHivemindError(error) as any;
     return res.status(hivemindError.statusCode || 500).json({
       error: hivemindError.message,
       code: 'LLM_STATUS_GET_ERROR',
@@ -371,7 +353,7 @@ router.get('/llm-profiles', (req, res) => {
     const profiles = getLlmProfiles();
     return res.json(profiles);
   } catch (error: unknown) {
-    const hivemindError = ErrorUtils.toHivemindError(error);
+    const hivemindError = ErrorUtils.toHivemindError(error) as any;
     return res.status(hivemindError.statusCode || 500).json({
       error: hivemindError.message,
       code: 'LLM_PROFILES_GET_ERROR',
@@ -379,9 +361,19 @@ router.get('/llm-profiles', (req, res) => {
   }
 });
 
-router.post('/llm-profiles', validateRequest(CreateLlmProfileSchema), (req, res) => {
+router.post('/llm-profiles', (req, res) => {
   try {
     const newProfile = req.body;
+
+    if (!newProfile.key || newProfile.key.trim() === '') {
+      return res.status(400).json({ error: 'LLM profile key is required', code: 'INVALID_REQUEST' });
+    }
+    if (!newProfile.name || newProfile.name.trim() === '') {
+      return res.status(400).json({ error: 'LLM profile name is required', code: 'INVALID_REQUEST' });
+    }
+    if (!newProfile.provider || newProfile.provider.trim() === '') {
+      return res.status(400).json({ error: 'LLM profile provider is required', code: 'INVALID_REQUEST' });
+    }
 
     const modelType = newProfile.modelType || 'chat';
     if (!['chat', 'embedding', 'both'].includes(modelType)) {
@@ -409,7 +401,7 @@ router.post('/llm-profiles', validateRequest(CreateLlmProfileSchema), (req, res)
 
     return res.status(201).json({ success: true, profile: sanitizedProfile });
   } catch (error: unknown) {
-    const hivemindError = ErrorUtils.toHivemindError(error);
+    const hivemindError = ErrorUtils.toHivemindError(error) as any;
     return res.status(hivemindError.statusCode || 500).json({
       error: hivemindError.message,
       code: 'LLM_PROFILE_CREATE_ERROR',
@@ -418,10 +410,21 @@ router.post('/llm-profiles', validateRequest(CreateLlmProfileSchema), (req, res)
 });
 
 // PUT /api/config/llm-profiles/:key - Update an LLM profile
-router.put('/llm-profiles/:key', validateRequest(UpdateLlmProfileSchema), (req, res) => {
+router.put('/llm-profiles/:key', (req, res) => {
   try {
     const { key } = req.params;
     const updates = req.body;
+
+    // Validation
+    if (!updates.name || updates.name.trim() === '') {
+      return res.status(400).json({ error: 'LLM profile name is required' });
+    }
+    if (!updates.provider || updates.provider.trim() === '') {
+      return res.status(400).json({ error: 'LLM profile provider is required' });
+    }
+    if (updates.modelType && !['chat', 'embedding', 'both'].includes(updates.modelType)) {
+      return res.status(400).json({ error: 'LLM profile modelType must be chat, embedding, or both' });
+    }
 
     const profiles = getLlmProfiles();
     const normalizedKey = key.toLowerCase();
@@ -445,7 +448,7 @@ router.put('/llm-profiles/:key', validateRequest(UpdateLlmProfileSchema), (req, 
       profile: updatedProfile,
     });
   } catch (error: unknown) {
-    const hivemindError = ErrorUtils.toHivemindError(error);
+    const hivemindError = ErrorUtils.toHivemindError(error) as any;
     return res.status(hivemindError.statusCode || 500).json({
       error: hivemindError.message,
       code: 'LLM_PROFILE_UPDATE_ERROR',
@@ -453,13 +456,11 @@ router.put('/llm-profiles/:key', validateRequest(UpdateLlmProfileSchema), (req, 
   }
 });
 
-router.delete('/llm-profiles/:key', validateRequest(LlmProfileKeyParamSchema), (req, res) => {
+router.delete('/llm-profiles/:key', (req, res) => {
   try {
     const { key } = req.params;
     const profiles = getLlmProfiles();
-    const index = profiles.llm.findIndex(
-      (profile) => profile.key.toLowerCase() === key.toLowerCase()
-    );
+    const index = profiles.llm.findIndex((profile) => profile.key.toLowerCase() === key.toLowerCase());
 
     if (index === -1) {
       return res.status(404).json({ error: `LLM profile with key '${key}' not found` });
@@ -470,7 +471,7 @@ router.delete('/llm-profiles/:key', validateRequest(LlmProfileKeyParamSchema), (
 
     return res.json({ success: true, profile: deletedProfile });
   } catch (error: unknown) {
-    const hivemindError = ErrorUtils.toHivemindError(error);
+    const hivemindError = ErrorUtils.toHivemindError(error) as any;
     return res.status(hivemindError.statusCode || 500).json({
       error: hivemindError.message,
       code: 'LLM_PROFILE_DELETE_ERROR',
@@ -483,12 +484,12 @@ router.delete('/llm-profiles/:key', validateRequest(LlmProfileKeyParamSchema), (
 // Helper to safely deep clone convict schemas while skipping function-valued properties.
 // structuredClone throws on schemas with native functions; JSON.stringify silently drops
 // them but is slower. This custom clone handles both cases correctly and idiomatically.
-const deepCloneSchema = (obj: unknown): unknown => {
+const deepCloneSchema = (obj: any): any => {
   if (obj === null || typeof obj !== 'object') {
     return obj;
   }
   if (Array.isArray(obj)) {
-    return (obj as unknown[]).map((item: unknown) => deepCloneSchema(item));
+    return obj.map((item: any) => deepCloneSchema(item));
   }
   return Object.fromEntries(
     Object.entries(obj)
@@ -543,7 +544,7 @@ router.get('/global', (req, res) => {
         }
       } else {
         // Fallback generic redaction
-        const redactObjectFallback = (obj: unknown) => {
+        const redactObjectFallback = (obj: any) => {
           for (const k in obj) {
             if (typeof obj[k] === 'object' && obj[k] !== null) {
               redactObjectFallback(obj[k]);
@@ -576,7 +577,7 @@ router.get('/global', (req, res) => {
 
     return res.json(response);
   } catch (error: unknown) {
-    const hivemindError = ErrorUtils.toHivemindError(error);
+    const hivemindError = ErrorUtils.toHivemindError(error) as any;
     return res.status(hivemindError.statusCode || 500).json({
       error: hivemindError.message,
       code: hivemindError.code || 'CONFIG_GLOBAL_GET_ERROR',
@@ -606,7 +607,7 @@ router.put('/global', validateRequest(ConfigUpdateSchema), async (req, res) => {
 
       if (process.env.NODE_ENV !== 'test') {
         logConfigChange(
-          req as AuditedRequest,
+          req as any,
           'UPDATE',
           'config/general',
           'success',
@@ -664,7 +665,7 @@ router.put('/global', validateRequest(ConfigUpdateSchema), async (req, res) => {
     }
 
     // Read existing file if not creating new
-    let fileContent: Record<string, unknown> = {};
+    let fileContent: any = {};
     try {
       const data = await fs.promises.readFile(targetPath, 'utf8');
       fileContent = JSON.parse(data);
@@ -684,7 +685,7 @@ router.put('/global', validateRequest(ConfigUpdateSchema), async (req, res) => {
 
     if (process.env.NODE_ENV !== 'test') {
       logConfigChange(
-        req as AuditedRequest,
+        req as any,
         'UPDATE',
         `config/${configName}`,
         'success',
@@ -694,7 +695,7 @@ router.put('/global', validateRequest(ConfigUpdateSchema), async (req, res) => {
 
     return res.json({ success: true, message: 'Configuration updated and persisted' });
   } catch (error: unknown) {
-    const hivemindError = ErrorUtils.toHivemindError(error);
+    const hivemindError = ErrorUtils.toHivemindError(error) as any;
     return res.status(hivemindError.statusCode || 500).json({
       error: hivemindError.message,
       code: hivemindError.code || 'CONFIG_GLOBAL_PUT_ERROR',
@@ -709,7 +710,7 @@ router.get('/message-profiles', (req, res) => {
     const profiles = getMessageProfiles();
     return res.json(profiles);
   } catch (error: unknown) {
-    const hivemindError = ErrorUtils.toHivemindError(error);
+    const hivemindError = ErrorUtils.toHivemindError(error) as any;
     return res.status(hivemindError.statusCode || 500).json({
       error: hivemindError.message,
       code: 'MESSAGE_PROFILES_GET_ERROR',
@@ -717,9 +718,25 @@ router.get('/message-profiles', (req, res) => {
   }
 });
 
-router.post('/message-profiles', validateRequest(CreateMessageProfileSchema), (req, res) => {
+router.post('/message-profiles', (req, res) => {
   try {
     const newProfile = req.body;
+
+    if (!newProfile.key || newProfile.key.trim() === '') {
+      return res
+        .status(400)
+        .json({ error: 'Message profile key is required', code: 'INVALID_REQUEST' });
+    }
+    if (!newProfile.name || newProfile.name.trim() === '') {
+      return res
+        .status(400)
+        .json({ error: 'Message profile name is required', code: 'INVALID_REQUEST' });
+    }
+    if (!newProfile.provider || newProfile.provider.trim() === '') {
+      return res
+        .status(400)
+        .json({ error: 'Message profile provider is required', code: 'INVALID_REQUEST' });
+    }
 
     const profiles = getMessageProfiles();
 
@@ -736,161 +753,11 @@ router.post('/message-profiles', validateRequest(CreateMessageProfileSchema), (r
 
     return res.status(201).json({ success: true, profile: newProfile });
   } catch (error: unknown) {
-    const hivemindError = ErrorUtils.toHivemindError(error);
+    const hivemindError = ErrorUtils.toHivemindError(error) as any;
     return res.status(hivemindError.statusCode || 500).json({
       error: hivemindError.message,
       code: 'MESSAGE_PROFILES_CREATE_ERROR',
     });
-  }
-});
-
-// -- Memory Profiles CRUD --
-
-const memoryProfilesModule = require('../../config/memoryProfiles');
-
-const toolProfilesModule = require('../../config/toolProfiles');
-
-router.get('/memory-profiles', (_req, res) => {
-  try {
-    const profiles = memoryProfilesModule.getMemoryProfiles();
-    return res.json(profiles);
-  } catch (error: unknown) {
-    const hivemindError = ErrorUtils.toHivemindError(error);
-    return res.status(hivemindError.statusCode || 500).json({
-      error: hivemindError.message,
-      code: 'MEMORY_PROFILES_GET_ERROR',
-    });
-  }
-});
-
-router.post('/memory-profiles', validateRequest(CreateMemoryProfileSchema), (req, res) => {
-  try {
-    const newProfile = req.body;
-    const profiles = memoryProfilesModule.getMemoryProfiles();
-    if (profiles.memory.find((p: Record<string, unknown>) => p.key === newProfile.key))
-      return res.status(409).json({
-        error: `Memory profile with key '${newProfile.key}' already exists`,
-        code: 'CONFLICT',
-      });
-    profiles.memory.push(newProfile);
-    memoryProfilesModule.saveMemoryProfiles(profiles);
-    return res.status(201).json({ success: true, profile: newProfile });
-  } catch (error: unknown) {
-    const hivemindError = ErrorUtils.toHivemindError(error);
-    return res
-      .status(hivemindError.statusCode || 500)
-      .json({ error: hivemindError.message, code: 'MEMORY_PROFILES_CREATE_ERROR' });
-  }
-});
-
-router.put('/memory-profiles/:key', validateRequest(MemoryProfileKeyParamSchema), (req, res) => {
-  try {
-    const { key } = req.params;
-    const profiles = memoryProfilesModule.getMemoryProfiles();
-    const index = profiles.memory.findIndex((p: Record<string, unknown>) => p.key === key);
-    if (index === -1)
-      return res
-        .status(404)
-        .json({ error: `Memory profile '${key}' not found`, code: 'NOT_FOUND' });
-    profiles.memory[index] = { ...profiles.memory[index], ...req.body, key };
-    memoryProfilesModule.saveMemoryProfiles(profiles);
-    return res.json({ success: true, profile: profiles.memory[index] });
-  } catch (error: unknown) {
-    const hivemindError = ErrorUtils.toHivemindError(error);
-    return res
-      .status(hivemindError.statusCode || 500)
-      .json({ error: hivemindError.message, code: 'MEMORY_PROFILES_UPDATE_ERROR' });
-  }
-});
-
-router.delete('/memory-profiles/:key', validateRequest(MemoryProfileKeyParamSchema), (req, res) => {
-  try {
-    const { key } = req.params;
-    const profiles = memoryProfilesModule.getMemoryProfiles();
-    const index = profiles.memory.findIndex((p: Record<string, unknown>) => p.key === key);
-    if (index === -1)
-      return res
-        .status(404)
-        .json({ error: `Memory profile '${key}' not found`, code: 'NOT_FOUND' });
-    profiles.memory.splice(index, 1);
-    memoryProfilesModule.saveMemoryProfiles(profiles);
-    return res.json({ success: true, message: `Memory profile '${key}' deleted` });
-  } catch (error: unknown) {
-    const hivemindError = ErrorUtils.toHivemindError(error);
-    return res
-      .status(hivemindError.statusCode || 500)
-      .json({ error: hivemindError.message, code: 'MEMORY_PROFILES_DELETE_ERROR' });
-  }
-});
-
-// -- Tool Profiles CRUD --
-
-router.get('/tool-profiles', (_req, res) => {
-  try {
-    const profiles = toolProfilesModule.getToolProfiles();
-    return res.json(profiles);
-  } catch (error: unknown) {
-    const hivemindError = ErrorUtils.toHivemindError(error);
-    return res.status(hivemindError.statusCode || 500).json({
-      error: hivemindError.message,
-      code: 'TOOL_PROFILES_GET_ERROR',
-    });
-  }
-});
-
-router.post('/tool-profiles', validateRequest(CreateToolProfileSchema), (req, res) => {
-  try {
-    const newProfile = req.body;
-    const profiles = toolProfilesModule.getToolProfiles();
-    if (profiles.tool.find((p: Record<string, unknown>) => p.key === newProfile.key))
-      return res.status(409).json({
-        error: `Tool profile with key '${newProfile.key}' already exists`,
-        code: 'CONFLICT',
-      });
-    profiles.tool.push(newProfile);
-    toolProfilesModule.saveToolProfiles(profiles);
-    return res.status(201).json({ success: true, profile: newProfile });
-  } catch (error: unknown) {
-    const hivemindError = ErrorUtils.toHivemindError(error);
-    return res
-      .status(hivemindError.statusCode || 500)
-      .json({ error: hivemindError.message, code: 'TOOL_PROFILES_CREATE_ERROR' });
-  }
-});
-
-router.put('/tool-profiles/:key', validateRequest(ToolProfileKeyParamSchema), (req, res) => {
-  try {
-    const { key } = req.params;
-    const profiles = toolProfilesModule.getToolProfiles();
-    const index = profiles.tool.findIndex((p: Record<string, unknown>) => p.key === key);
-    if (index === -1)
-      return res.status(404).json({ error: `Tool profile '${key}' not found`, code: 'NOT_FOUND' });
-    profiles.tool[index] = { ...profiles.tool[index], ...req.body, key };
-    toolProfilesModule.saveToolProfiles(profiles);
-    return res.json({ success: true, profile: profiles.tool[index] });
-  } catch (error: unknown) {
-    const hivemindError = ErrorUtils.toHivemindError(error);
-    return res
-      .status(hivemindError.statusCode || 500)
-      .json({ error: hivemindError.message, code: 'TOOL_PROFILES_UPDATE_ERROR' });
-  }
-});
-
-router.delete('/tool-profiles/:key', validateRequest(ToolProfileKeyParamSchema), (req, res) => {
-  try {
-    const { key } = req.params;
-    const profiles = toolProfilesModule.getToolProfiles();
-    const index = profiles.tool.findIndex((p: Record<string, unknown>) => p.key === key);
-    if (index === -1)
-      return res.status(404).json({ error: `Tool profile '${key}' not found`, code: 'NOT_FOUND' });
-    profiles.tool.splice(index, 1);
-    toolProfilesModule.saveToolProfiles(profiles);
-    return res.json({ success: true, message: `Tool profile '${key}' deleted` });
-  } catch (error: unknown) {
-    const hivemindError = ErrorUtils.toHivemindError(error);
-    return res
-      .status(hivemindError.statusCode || 500)
-      .json({ error: hivemindError.message, code: 'TOOL_PROFILES_DELETE_ERROR' });
   }
 });
 

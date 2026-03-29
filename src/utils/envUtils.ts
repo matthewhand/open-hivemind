@@ -57,17 +57,8 @@ export function getRelevantEnvVars(): Record<string, string> {
     'LLM_',
   ];
 
-  const exactKeys = new Set([
-    'PORT',
-    'NODE_ENV',
-    'BASE_URL',
-    'LOG_LEVEL',
-    'REDIS_URL',
-    'DEMO_MODE',
-  ]);
-
   Object.keys(process.env).forEach((envVar) => {
-    if (prefixes.some((prefix) => envVar.startsWith(prefix)) || exactKeys.has(envVar)) {
+    if (prefixes.some((prefix) => envVar.startsWith(prefix))) {
       const rawValue = process.env[envVar] || '';
       // Redact sensitive values (assume anything with 'KEY', 'SECRET', 'TOKEN' is sensitive)
       if (envVar.includes('KEY') || envVar.includes('SECRET') || envVar.includes('TOKEN')) {

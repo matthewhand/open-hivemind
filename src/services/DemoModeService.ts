@@ -1,4 +1,3 @@
-import crypto from 'crypto';
 /**
  * DemoModeService - Manages demo/simulation mode when no configuration is provided
  *
@@ -6,12 +5,9 @@ import crypto from 'crypto';
  * and provides a simulated environment for demonstration purposes.
  */
 
-import 'reflect-metadata';
 import Debug from 'debug';
-import { inject, injectable, singleton } from 'tsyringe';
-import { type BotConfigurationManager } from '../config/BotConfigurationManager';
-import { type UserConfigStore } from '../config/UserConfigStore';
-import { TOKENS } from '../di/container';
+import { BotConfigurationManager } from '../config/BotConfigurationManager';
+import { UserConfigStore } from '../config/UserConfigStore';
 
 const debug = Debug('app:DemoModeService');
 
@@ -61,18 +57,25 @@ export interface DemoConversation {
  *
  * Detects and manages demo mode operation
  */
-@singleton()
-@injectable()
 export class DemoModeService {
+  private static instance: DemoModeService | null = null;
   private isDemoMode = false;
   private demoBots: DemoBot[] = [];
   private conversations = new Map<string, DemoConversation>();
+  private userConfigStore = UserConfigStore.getInstance();
 
-  constructor(
-    @inject(TOKENS.BotConfigurationManager) private botManager: BotConfigurationManager,
-    @inject(TOKENS.UserConfigStore) private userConfigStore: UserConfigStore
-  ) {
+  private constructor() {
     debug('DemoModeService constructed');
+  }
+
+  /**
+   * Get singleton instance
+   */
+  public static getInstance(): DemoModeService {
+    if (!DemoModeService.instance) {
+      DemoModeService.instance = new DemoModeService();
+    }
+    return DemoModeService.instance;
   }
 
   /**
@@ -96,8 +99,9 @@ export class DemoModeService {
     }
 
     // Check for existing bot configuration
-    const bots = this.botManager.getAllBots();
-    const warnings = this.botManager.getWarnings();
+    const botManager = BotConfigurationManager.getInstance();
+    const bots = botManager.getAllBots();
+    const warnings = botManager.getWarnings();
 
     // If there are bots configured, not in demo mode
     if (bots.length > 0) {
@@ -227,9 +231,6 @@ export class DemoModeService {
    * Generate a simulated AI response
    */
   public generateDemoResponse(message: string, botName: string): string {
-    if (message === null || message === undefined) {
-      throw new Error('Message cannot be null or undefined');
-    }
     const responses = this.getContextualResponses(message, botName);
     const randomIndex = Math.floor(Math.random() * responses.length);
     return responses[randomIndex];
@@ -320,7 +321,7 @@ export class DemoModeService {
 
     if (!this.conversations.has(key)) {
       this.conversations.set(key, {
-        id: `conv-${Date.now()}-${crypto.randomUUID()}`,
+        id: `conv-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
         channelId,
         botName,
         messages: [],
@@ -346,7 +347,7 @@ export class DemoModeService {
     const conversation = this.getOrCreateConversation(channelId, botName);
 
     const message: DemoMessage = {
-      id: `msg-${Date.now()}-${crypto.randomUUID()}`,
+      id: `msg-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
       timestamp: new Date().toISOString(),
       botName,
       channelId,

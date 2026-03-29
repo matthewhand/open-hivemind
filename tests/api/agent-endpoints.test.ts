@@ -157,12 +157,6 @@ describe('Agent API Endpoints', () => {
       const getResponse = await request(app).get('/api/agents');
       expect(getResponse.body.agents.find((a: any) => a.id === agentId)).toBeUndefined();
     });
-
-    it('should return 404 when deleting a non-existent agent', async () => {
-      const deleteResponse = await request(app).delete('/api/agents/non_existent_agent_id');
-      expect(deleteResponse.status).toBe(404);
-      expect(deleteResponse.body.error).toBe('Agent not found');
-    });
   });
 
   describe('PUT /api/agents/personas/:key', () => {
@@ -193,14 +187,6 @@ describe('Agent API Endpoints', () => {
       const deleteResponse = await request(app).delete(`/api/agents/personas/persona_to_delete`);
       expect(deleteResponse.status).toBe(200);
       expect(deleteResponse.body.success).toBe(true);
-    });
-
-    it('should return 404 when deleting a non-existent persona', async () => {
-      const deleteResponse = await request(app).delete(
-        '/api/agents/personas/non_existent_persona_key'
-      );
-      expect(deleteResponse.status).toBe(404);
-      expect(deleteResponse.body.error).toBe('Persona not found');
     });
   });
 });

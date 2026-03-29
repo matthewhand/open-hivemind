@@ -1,5 +1,3 @@
-import Debug from 'debug';
-const debug = Debug('app:common:ErrorUtils');
 export interface HivemindError {
   message: string;
   code?: string;
@@ -16,7 +14,7 @@ export const ErrorClassification = {
   UNKNOWN_ERROR: 'unknown_error',
 } as const;
 
-export type ErrorClassification = (typeof ErrorClassification)[keyof typeof ErrorClassification];
+export type ErrorClassification = typeof ErrorClassification[keyof typeof ErrorClassification];
 
 export class ErrorUtils {
   /**
@@ -115,9 +113,9 @@ export class ErrorUtils {
     const classification = this.classifyError(hivemindError);
 
     if (classification.logLevel === 'error') {
-      debug('ERROR:', 'Application error:', hivemindError);
+      console.error('Application error:', hivemindError);
     } else if (classification.logLevel === 'warn') {
-      debug('WARN:', 'Application warning:', hivemindError);
+      console.warn('Application warning:', hivemindError);
     } else {
       console.info('Application info:', hivemindError);
     }

@@ -9,14 +9,6 @@ import { ConfigurationManager } from '../../../src/config/ConfigurationManager';
 import { getWebUIServer } from '../../../src/server/server';
 
 describe('Health API Integration Tests', () => {
-  afterEach(() => {
-    (ConfigurationManager as any).instance = undefined;
-  });
-
-  beforeEach(() => {
-    (ConfigurationManager as any).instance = undefined;
-  });
-
   let app: express.Application;
   let server: any;
 
@@ -49,7 +41,7 @@ describe('Health API Integration Tests', () => {
 
       expect(response.body).toHaveProperty('status');
       expect(response.body).toHaveProperty('timestamp');
-      expect(['healthy', 'degraded']).toContain(response.body.status);
+      expect(response.body.status).toBe('healthy');
     });
   });
 
@@ -77,7 +69,7 @@ describe('Health API Integration Tests', () => {
 
       // All responses should be successful
       responses.forEach((response) => {
-        expect(['healthy', 'degraded']).toContain(response.body.status);
+        expect(response.body.status).toBe('healthy');
         expect(response.body).toHaveProperty('timestamp');
       });
     });

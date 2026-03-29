@@ -1,14 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect, useCallback } from 'react';
-import { Alert } from '../DaisyUI/Alert';
-import Button from '../DaisyUI/Button';
-import { SkeletonList } from '../DaisyUI/Skeleton';
-import Input from '../DaisyUI/Input';
-import Toggle from '../DaisyUI/Toggle';
+import { Alert, Button, Input, Toggle } from '../DaisyUI';
 import { Shield, Plus, Trash2 } from 'lucide-react';
 import SecureConfigManager from '../SecureConfigManager';
-import Debug from 'debug';
-const debug = Debug('app:client:components:Settings:SettingsSecurity');
 
 const SettingsSecurity: React.FC = () => {
   const [settings, setSettings] = useState({
@@ -48,7 +42,7 @@ const SettingsSecurity: React.FC = () => {
         corsOrigins: config.cors?.origins?.value || ['http://localhost:3000'],
       }));
     } catch (error) {
-      debug('ERROR:', 'Failed to load security settings:', error);
+      console.error('Failed to load security settings:', error);
     } finally {
       setLoading(false);
     }
@@ -105,8 +99,8 @@ const SettingsSecurity: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="py-6 px-4">
-        <SkeletonList items={4} />
+      <div className="flex items-center justify-center py-12">
+        <span className="loading loading-spinner loading-lg"></span>
       </div>
     );
   }

@@ -1,15 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState } from 'react';
-import Card from './DaisyUI/Card';
-import Badge from './DaisyUI/Badge';
-import Button from './DaisyUI/Button';
-import Input from './DaisyUI/Input';
-import Select from './DaisyUI/Select';
-import Modal from './DaisyUI/Modal';
-import { Alert } from './DaisyUI/Alert';
-import Toggle from './DaisyUI/Toggle';
-import Tooltip from './DaisyUI/Tooltip';
-import { Loading } from './DaisyUI/Loading';
+import { Card, Badge, Button, Input, Select, Modal, Alert, Toggle, Tooltip, Loading } from './DaisyUI';
 import {
   ArrowPathIcon,
   TrashIcon,
@@ -20,9 +11,7 @@ import {
   selectConfig,
   selectConfigError,
 } from '../store/slices/configSlice';
-import { SkeletonPage } from './DaisyUI/Skeleton';
-import Debug from 'debug';
-const debug = Debug('app:client:components:ConfigManager');
+import LoadingSpinnerComponent from './LoadingSpinner';
 
 const ConfigManager: React.FC = () => {
   const config = useAppSelector(selectConfig);
@@ -81,7 +70,7 @@ const ConfigManager: React.FC = () => {
       setValidationErrors({});
       showToast('Configuration saved successfully', 'success');
     } catch (error) {
-      // showToast below provides feedback
+      console.error('Failed to save configuration:', error);
       showToast('Failed to save configuration', 'error');
     }
   };
@@ -119,7 +108,7 @@ const ConfigManager: React.FC = () => {
   });
 
   if (config.isLoading) {
-    return <SkeletonPage variant="list" statsCount={0} />;
+    return <LoadingSpinnerComponent message="Loading configurations..." />;
   }
 
   return (
@@ -141,8 +130,7 @@ const ConfigManager: React.FC = () => {
                   variant="ghost"
                   size="sm"
                   className="btn-circle"
-                  aria-label="Refresh configurations"
-                  onClick={() => debug('Refresh configs')}
+                  onClick={() => console.log('Refresh configs')}
                 >
                   <ArrowPathIcon className="w-5 h-5" />
                 </Button>
@@ -230,7 +218,6 @@ const ConfigManager: React.FC = () => {
                         variant="ghost"
                         size="sm"
                         className="btn-circle text-error"
-                        aria-label="Delete configuration"
                         onClick={(e) => {
                           e.stopPropagation();
                           handleDeleteConfig(config);

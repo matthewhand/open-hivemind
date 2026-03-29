@@ -1,5 +1,4 @@
 import { type NextFunction, type Request, type Response } from 'express';
-import { type AuthMiddlewareRequest } from '@src/auth/types';
 import { Logger } from '@src/common/logger';
 
 export interface AuditLogEntry {
@@ -14,40 +13,6 @@ export interface AuditLogEntry {
   after?: any;
   status: 'success' | 'failure';
   errorMessage?: string;
-}
-
-/**
- * Query filters for searching audit logs.
- * Inspired by log aggregation patterns for flexible audit trail analysis.
- */
-export interface AuditLogQuery {
-  /** ISO timestamp lower bound (inclusive) */
-  startTime?: string;
-  /** ISO timestamp upper bound (inclusive) */
-  endTime?: string;
-  /** Filter by action(s) */
-  actions?: string[];
-  /** Filter by resource(s) */
-  resources?: string[];
-  /** Filter by status */
-  status?: 'success' | 'failure';
-  /** Free-text search across action, resource, resourceId, userId, and errorMessage */
-  search?: string;
-  /** Max results (default 100) */
-  limit?: number;
-  /** Skip first N results for pagination */
-  offset?: number;
-}
-
-/**
- * Summary statistics for audit logs within a time window.
- */
-export interface AuditLogStats {
-  total: number;
-  byAction: Record<string, number>;
-  byResource: Record<string, number>;
-  byStatus: { success: number; failure: number };
-  failureRate: number;
 }
 
 class AuditLoggerService {
@@ -86,85 +51,6 @@ class AuditLoggerService {
   getLogsByAction(action: string, limit = 100): AuditLogEntry[] {
     return this.logs.filter((log) => log.action === action).slice(-limit);
   }
-
-  /**
-   * Query logs with flexible filters including time range, free-text search,
-   * and pagination. Ported from LogAggregator patterns before its removal.
-   */
-  query(filters: AuditLogQuery): AuditLogEntry[] {
-    let results = this.logs;
-
-    if (filters.startTime) {
-      results = results.filter((log) => log.timestamp >= filters.startTime!);
-    }
-    if (filters.endTime) {
-      results = results.filter((log) => log.timestamp <= filters.endTime!);
-    }
-    if (filters.actions && filters.actions.length > 0) {
-      results = results.filter((log) => filters.actions!.includes(log.action));
-    }
-    if (filters.resources && filters.resources.length > 0) {
-      results = results.filter((log) => filters.resources!.includes(log.resource));
-    }
-    if (filters.status) {
-      results = results.filter((log) => log.status === filters.status);
-    }
-    if (filters.search) {
-      const term = filters.search.toLowerCase();
-      results = results.filter(
-        (log) =>
-          log.action.toLowerCase().includes(term) ||
-          log.resource.toLowerCase().includes(term) ||
-          (log.resourceId && log.resourceId.toLowerCase().includes(term)) ||
-          (log.userId && log.userId.toLowerCase().includes(term)) ||
-          (log.errorMessage && log.errorMessage.toLowerCase().includes(term))
-      );
-    }
-
-    // Sort newest first
-    results = [...results].reverse();
-
-    // Pagination
-    const offset = filters.offset || 0;
-    const limit = filters.limit || 100;
-    return results.slice(offset, offset + limit);
-  }
-
-  /**
-   * Get summary statistics for audit logs within an optional time window.
-   * Ported from LogAggregator stats patterns before its removal.
-   */
-  getStats(startTime?: string, endTime?: string): AuditLogStats {
-    let logs = this.logs;
-
-    if (startTime) {
-      logs = logs.filter((log) => log.timestamp >= startTime);
-    }
-    if (endTime) {
-      logs = logs.filter((log) => log.timestamp <= endTime);
-    }
-
-    const byAction: Record<string, number> = {};
-    const byResource: Record<string, number> = {};
-    let successCount = 0;
-    let failureCount = 0;
-
-    for (const log of logs) {
-      byAction[log.action] = (byAction[log.action] || 0) + 1;
-      byResource[log.resource] = (byResource[log.resource] || 0) + 1;
-      if (log.status === 'success') successCount++;
-      else failureCount++;
-    }
-
-    const total = logs.length;
-    return {
-      total,
-      byAction,
-      byResource,
-      byStatus: { success: successCount, failure: failureCount },
-      failureRate: total > 0 ? (failureCount / total) * 100 : 0,
-    };
-  }
 }
 
 export const auditLogger = new AuditLoggerService();
@@ -187,10 +73,7 @@ export const auditMiddleware = (action: string, resource: string) => {
           action,
           resource,
           resourceId: req.params.id || req.params.name || req.params.key || req.params.userId,
-          userId:
-            (req as AuthMiddlewareRequest).user?.id ||
-            (req as AuthMiddlewareRequest).user?.username ||
-            'anonymous',
+          userId: (req as any).user?.id || (req as any).user?.username || 'anonymous',
           ip:
             req.ip ||
             req.connection?.remoteAddress ||
@@ -241,10 +124,7 @@ export const auditMiddlewareWithChanges = (
           action,
           resource,
           resourceId: req.params.id || req.params.name || req.params.key || req.params.userId,
-          userId:
-            (req as AuthMiddlewareRequest).user?.id ||
-            (req as AuthMiddlewareRequest).user?.username ||
-            'anonymous',
+          userId: (req as any).user?.id || (req as any).user?.username || 'anonymous',
           ip:
             req.ip ||
             req.connection?.remoteAddress ||
@@ -288,10 +168,7 @@ export const logAuditEvent = (
     action,
     resource,
     resourceId: options.resourceId || req.params.id || req.params.name || req.params.key,
-    userId:
-      (req as AuthMiddlewareRequest).user?.id ||
-      (req as AuthMiddlewareRequest).user?.username ||
-      'anonymous',
+    userId: (req as any).user?.id || (req as any).user?.username || 'anonymous',
     ip:
       req.ip ||
       req.connection?.remoteAddress ||

@@ -1,7 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect, useCallback } from 'react';
-import Debug from 'debug';
-const debug = Debug('app:client:components:DaisyUI:DashboardWidgetSystem');
 
 interface Widget {
   id: string;
@@ -314,7 +312,7 @@ const DashboardWidgetSystem: React.FC<DashboardWidgetSystemProps> = ({
         const parsedWidgets = JSON.parse(saved);
         setWidgets(parsedWidgets);
       } catch (error) {
-        debug('WARN:', 'Failed to load saved widgets:', error);
+        console.warn('Failed to load saved widgets:', error);
       }
     }
   }, [initialWidgets]);
@@ -426,8 +424,6 @@ const DashboardWidgetSystem: React.FC<DashboardWidgetSystemProps> = ({
         document.removeEventListener('mouseup', handleMouseUp);
       };
     }
-    // Ensures cleanup block is tied properly and no dangling listeners remain
-    // when dragging stops or component unmounts unexpectedly.
   }, [draggedWidget, handleMouseMove, handleMouseUp]);
 
   const resetLayout = () => {

@@ -9,10 +9,6 @@ import {
 jest.mock('axios');
 const mockedAxios = axios as jest.Mocked<typeof axios>;
 
-jest.mock('../../../src/utils/ssrfGuard', () => ({
-  isSafeUrl: jest.fn().mockResolvedValue(true),
-}));
-
 jest.mock('@integrations/flowise/flowiseConfig', () => {
   const actual = jest.requireActual('@integrations/flowise/flowiseConfig');
   return {

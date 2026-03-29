@@ -82,7 +82,7 @@ describe('Guards Route', () => {
       const response = await request(app).post('/guards').send(['invalid']); // Array should be rejected
 
       expect(response.status).toBe(400);
-      expect(response.body.error).toBe('Validation failed');
+      expect(response.body.message).toBe('Invalid access configuration');
     });
 
     it('should return 400 for invalid access type', async () => {
@@ -91,7 +91,7 @@ describe('Guards Route', () => {
         .send({ type: 'invalid', users: [], ips: [] });
 
       expect(response.status).toBe(400);
-      expect(response.body.error).toBe('Validation failed');
+      expect(response.body.message).toBe('Invalid access type. Must be owner, users, or ip');
     });
 
     it('should return 400 for invalid email in users array', async () => {
@@ -100,7 +100,7 @@ describe('Guards Route', () => {
         .send({ type: 'users', users: ['not-an-email'], ips: [] });
 
       expect(response.status).toBe(400);
-      expect(response.body.error).toBe('Validation failed');
+      expect(response.body.message).toBe('Invalid email format in users array');
     });
 
     it('should return 400 for invalid IP address', async () => {
@@ -109,7 +109,6 @@ describe('Guards Route', () => {
         .send({ type: 'ip', users: [], ips: ['999.999.999.999'] });
 
       expect(response.status).toBe(400);
-      expect(response.body.error).toBe('Validation error');
       expect(response.body.message).toBe('Invalid IP address or CIDR notation in ips array');
     });
 
@@ -119,7 +118,7 @@ describe('Guards Route', () => {
         .send({ type: 'users', users: 'not-an-array', ips: [] });
 
       expect(response.status).toBe(400);
-      expect(response.body.error).toBe('Validation failed');
+      expect(response.body.message).toBe('Users must be an array');
     });
 
     it('should return 400 for ips not being an array', async () => {
@@ -128,7 +127,7 @@ describe('Guards Route', () => {
         .send({ type: 'ip', users: [], ips: 'not-an-array' });
 
       expect(response.status).toBe(400);
-      expect(response.body.error).toBe('Validation failed');
+      expect(response.body.message).toBe('IPs must be an array');
     });
   });
 

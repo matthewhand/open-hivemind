@@ -1,7 +1,19 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect } from 'react';
 import Input from './Input';
-import type { FormField } from './formTypes';
+
+interface FormField {
+  name: string;
+  label: string;
+  type: 'text' | 'email' | 'password' | 'number' | 'textarea' | 'select' | 'checkbox' | 'radio' | 'file';
+  placeholder?: string;
+  required?: boolean;
+  options?: Array<{ value: string; label: string }>;
+  validation?: (value: any) => string | null;
+  disabled?: boolean;
+  helperText?: string;
+  multiple?: boolean;
+}
 
 interface ModalFormProps {
   isOpen: boolean;
@@ -132,7 +144,7 @@ const ModalForm: React.FC<ModalFormProps> = ({
       await onSubmit(formData);
       onClose();
     } catch (error) {
-      // Error handled by form validation UI
+      console.error('Form submission error:', error);
     } finally {
       setIsSubmitting(false);
     }
@@ -241,11 +253,11 @@ const ModalForm: React.FC<ModalFormProps> = ({
   if (!isOpen) {return null;}
 
   return (
-    <div className="modal modal-open" role="dialog" aria-modal="true" aria-labelledby="modal-form-title">
+    <div className="modal modal-open">
       <div className={`modal-box ${getSizeClass()}`}>
         {/* Header */}
         <div className="flex items-center justify-between mb-4">
-          <h3 id="modal-form-title" className="font-bold text-lg">{title}</h3>
+          <h3 className="font-bold text-lg">{title}</h3>
           <button
             className="btn btn-sm btn-circle btn-ghost"
             onClick={onClose}
@@ -296,7 +308,7 @@ const ModalForm: React.FC<ModalFormProps> = ({
 
                 {errors[field.name] && (
                   <label className="label">
-                    <span className="label-text-alt text-error" role="alert">{errors[field.name]}</span>
+                    <span className="label-text-alt text-error">{errors[field.name]}</span>
                   </label>
                 )}
 
@@ -337,7 +349,7 @@ const ModalForm: React.FC<ModalFormProps> = ({
                     className="btn btn-primary"
                     disabled={isSubmitting}
                   >
-                    {isSubmitting && <span className="loading loading-spinner loading-sm" aria-hidden="true"></span>}
+                    {isSubmitting && <span className="loading loading-spinner loading-sm"></span>}
                     {submitText}
                   </button>
                 )}
@@ -357,7 +369,7 @@ const ModalForm: React.FC<ModalFormProps> = ({
                   className="btn btn-primary"
                   disabled={isSubmitting}
                 >
-                  {isSubmitting && <span className="loading loading-spinner loading-sm" aria-hidden="true"></span>}
+                  {isSubmitting && <span className="loading loading-spinner loading-sm"></span>}
                   {submitText}
                 </button>
               </>
