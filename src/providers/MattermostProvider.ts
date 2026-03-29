@@ -1,8 +1,10 @@
 import { MattermostService } from '@hivemind/message-mattermost';
 import mattermostConfig, { type MattermostConfig } from '../config/mattermostConfig';
 import { type IMessageProvider } from '../types/IProvider';
+import { ReconnectionManager } from './ReconnectionManager';
 
 export class MattermostProvider implements IMessageProvider<MattermostConfig> {
+  private reconManagers: Map<string, ReconnectionManager> = new Map();
   id = 'mattermost';
   label = 'Mattermost';
   type = 'messenger' as const;
@@ -36,12 +38,14 @@ export class MattermostProvider implements IMessageProvider<MattermostConfig> {
     const botNames = mattermost.getBotNames();
     const bots = botNames.map((name: string) => {
       const cfg: any = mattermost.getBotConfig(name) || {};
+      const reconManager = this.reconManagers.get(name);
       return {
         provider: 'mattermost',
         name,
         serverUrl: cfg.serverUrl || '',
         channel: cfg.channel || 'town-square',
-        connected: true,
+        connected: reconManager ? reconManager.getStatus().state === 'connected' : true,
+        status: reconManager ? reconManager.getStatus() : { state: 'connected' },
       };
     });
     return {
@@ -64,6 +68,28 @@ export class MattermostProvider implements IMessageProvider<MattermostConfig> {
   }
 
   async addBot(config: any) {
+    const { name } = config;
+
+    // Since MattermostProvider does not fully implement addBot yet, we
+    // set up the foundation for the ReconnectionManager integration here.
+    // When addBot is fully implemented, this manager should be initialized
+    // and its `start` method called.
+
+    const reconManager = new ReconnectionManager(
+      `mattermost-${name || 'unnamed'}`,
+      async () => {
+        // Implementation for Mattermost connection goes here
+        throw new Error('Method not implemented.');
+      }
+    );
+    this.reconManagers.set(name || 'unnamed', reconManager);
+
+    // This will immediately fail until the underlying implementation is written,
+    // but fulfills the ReconnectionManager interface requirements.
+    reconManager.start().catch((err) => {
+      // debug(`Failed to start Mattermost bot ${name}: ${err.message}`);
+    });
+
     throw new Error('Method not implemented.');
   }
 }
