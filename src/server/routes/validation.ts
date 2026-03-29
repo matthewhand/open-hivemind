@@ -372,7 +372,8 @@ router.post(
         timestamp: new Date().toISOString(),
       });
     } catch (error: any) {
-      return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: error.message });
+      debug('Validation summary failed: %s', error.message);
+      return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: 'Internal server error' });
     }
   }
 );
