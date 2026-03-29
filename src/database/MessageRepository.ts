@@ -1,7 +1,7 @@
 import crypto from 'crypto';
 import Debug from 'debug';
 import type { Database } from 'sqlite';
-import type { BotMetrics, ConversationSummary, MessageRecord } from './types';
+import type { MessageRecord, ConversationSummary, BotMetrics } from './types';
 
 const debug = Debug('app:MessageRepository');
 

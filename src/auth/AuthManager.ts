@@ -4,14 +4,7 @@ import Debug from 'debug';
 import jwt from 'jsonwebtoken';
 import { AuthenticationError, ValidationError } from '@src/types/errorClasses';
 import { SecureConfigManager } from '@config/SecureConfigManager';
-import type {
-  AuthToken,
-  JWTPayload,
-  LoginCredentials,
-  RegisterData,
-  User,
-  UserRole,
-} from './types';
+import type { AuthToken, JWTPayload, LoginCredentials, RegisterData, User, UserRole } from './types';
 
 const debug = Debug('app:AuthManager');
 
