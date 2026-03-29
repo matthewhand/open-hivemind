@@ -88,7 +88,9 @@ export class ConnectionManager extends EventEmitter {
     }
 
     try {
-      const result = await (params && params.length > 0 ? this.db.run(query, params) : this.db.run(query));
+      const result = await (params && params.length > 0
+        ? this.db.run(query, params)
+        : this.db.run(query));
       return { lastID: result.lastID ?? 0, changes: result.changes ?? 0 };
     } catch (err) {
       Logger.error(`Query execution error: ${(err as Error).message}`);
@@ -102,7 +104,9 @@ export class ConnectionManager extends EventEmitter {
     }
 
     try {
-      const rows = await (params && params.length > 0 ? this.db.all<Record<string, unknown>[]>(query, params) : this.db.all<Record<string, unknown>[]>(query));
+      const rows = await (params && params.length > 0
+        ? this.db.all<Record<string, unknown>[]>(query, params)
+        : this.db.all<Record<string, unknown>[]>(query));
       return rows;
     } catch (err) {
       Logger.error(`Select query error: ${(err as Error).message}`);
