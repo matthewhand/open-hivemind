@@ -1,6 +1,7 @@
 import { execFileSync } from 'child_process';
 import * as fs from 'fs';
 import * as path from 'path';
+import * as crypto from 'crypto';
 import Debug from 'debug';
 import { loadPlugin, loadPluginWithSecurity, PLUGINS_DIR, type PluginManifest } from './PluginLoader';
 import { PluginSecurityPolicy, type PluginSecurityStatus, type SecurePluginManifest } from './PluginSecurity';
@@ -406,7 +407,14 @@ export async function listInstalledPlugins(): Promise<PluginInfo[]> {
 // Plugin security policy singleton
 // ---------------------------------------------------------------------------
 
-const PLUGIN_SIGNING_KEY = process.env.HIVEMIND_PLUGIN_SIGNING_KEY ?? 'hivemind-default-signing-key';
+let PLUGIN_SIGNING_KEY = process.env.HIVEMIND_PLUGIN_SIGNING_KEY;
+
+if (!PLUGIN_SIGNING_KEY) {
+  PLUGIN_SIGNING_KEY = crypto.randomBytes(32).toString('hex');
+  console.warn('⚠️  WARNING: No HIVEMIND_PLUGIN_SIGNING_KEY environment variable found.');
+  console.warn('   Generated a temporary plugin signing key for this session.');
+  console.warn('   Existing plugin signatures will fail verification until a persistent key is configured.');
+}
 
 let _securityPolicy: PluginSecurityPolicy | undefined;
 
