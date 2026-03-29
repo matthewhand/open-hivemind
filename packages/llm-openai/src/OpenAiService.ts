@@ -20,6 +20,7 @@ import llmConfig from '@config/llmConfig';
 import openaiConfig from '@config/openaiConfig';
 import { redactSensitiveInfo } from '@common/redactSensitiveInfo';
 import { withTimeout } from '@common/withTimeout';
+import { errorRecovery, type RetryConfig, DEFAULT_RETRY_CONFIG } from '@src/utils/errorRecovery';
 import { listModels } from './operations/listModels';
 
 const debug = Debug('app:OpenAiService');
@@ -156,19 +157,33 @@ export class OpenAiService {
     console.debug('[DEBUG] Chat parameters:', JSON.stringify(chatParams, null, 2));
 
     try {
-      const response = await withTimeout(
-        (signal) => this.retryWithBackoff(async () => {
-          return await this.openai.chat.completions.create({
+      const retryConfig: Partial<RetryConfig> = {
+        maxRetries: this.maxRetries,
+        retryableStatusCodes: [...DEFAULT_RETRY_CONFIG.retryableStatusCodes, 429],
+      };
+
+      const operation = async (signal?: AbortSignal) => {
+        return await this.openai.chat.completions.create(
+          {
             model: openaiConfig.get('OPENAI_MODEL') || 'gpt-4o',
             messages: chatParams,
             max_tokens: maxTokens,
             temperature,
             stream: false,
-          }, { signal });
-        }),
-        this.requestTimeout,
-        'OpenAI chat completion',
-      );
+          },
+          { signal }
+        );
+      };
+
+      const result = await errorRecovery.withRetry(async () => {
+        return await withTimeout(operation, this.requestTimeout, 'OpenAI chat completion');
+      }, retryConfig);
+
+      if (!result.success) {
+        throw result.error;
+      }
+
+      const response = result.result;
 
       debug(
         '[DEBUG] OpenAI API response received:',
@@ -261,9 +276,20 @@ export class OpenAiService {
   public async listModels(): Promise<OpenAIModelsListResponse> {
     debug('[DEBUG] listModels called');
     try {
-      const models = await this.retryWithBackoff(async () => {
+      const retryConfig: Partial<RetryConfig> = {
+        maxRetries: this.maxRetries,
+        retryableStatusCodes: [...DEFAULT_RETRY_CONFIG.retryableStatusCodes, 429],
+      };
+
+      const result = await errorRecovery.withRetry(async () => {
         return await listModels(this.openai);
-      });
+      }, retryConfig);
+
+      if (!result.success) {
+        throw result.error;
+      }
+
+      const models = result.result;
       debug('[DEBUG] Models retrieved:', models);
       return models;
     } catch (error: unknown) {
@@ -271,54 +297,6 @@ export class OpenAiService {
       debug('[DEBUG] Error listing models:', ErrorUtils.getMessage(hivemindError));
       throw hivemindError;
     }
-  }
-
-  /**
-   * Retry with exponential backoff and jitter for rate limits and transient errors
-   */
-  private async retryWithBackoff<T>(operation: () => Promise<T>): Promise<T> {
-    for (let attempt = 0; attempt <= this.maxRetries; attempt++) {
-      try {
-        return await operation();
-      } catch (error: unknown) {
-        const hivemindError = ErrorUtils.toHivemindError(error);
-        const errorType = this.classifyError(hivemindError);
-
-        if (errorType === 'fatal' || attempt === this.maxRetries) {
-          throw hivemindError;
-        }
-
-        if (errorType === 'rate-limit' || errorType === 'transient') {
-          const delay = Math.min(1000 * Math.pow(2, attempt) + Math.random() * 1000, 30000);
-          debug(`[DEBUG] Retrying after ${delay}ms (attempt ${attempt + 1}/${this.maxRetries})`);
-          await new Promise((resolve) => setTimeout(resolve, delay));
-        } else {
-          throw hivemindError;
-        }
-      }
-    }
-    throw new Error('Max retries exceeded');
-  }
-
-  /**
-   * Classify errors as rate-limit, transient, or fatal
-   */
-  private classifyError(
-    error: HivemindError | BaseHivemindError
-  ): 'rate-limit' | 'transient' | 'fatal' {
-    const statusCode = ErrorUtils.getStatusCode(error);
-    const errorCode = ErrorUtils.getCode(error);
-
-    if (statusCode === 429) {
-      return 'rate-limit';
-    }
-    if (statusCode && statusCode >= 500 && statusCode < 600) {
-      return 'transient';
-    }
-    if (errorCode === 'ECONNRESET' || errorCode === 'ETIMEDOUT') {
-      return 'transient';
-    }
-    return 'fatal';
   }
 
   /**

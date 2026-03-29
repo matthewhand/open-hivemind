@@ -9,14 +9,14 @@ import type {
   Mem0UpdateResponse,
 } from './types';
 import { Mem0ApiError } from './types';
-import { getCircuitBreaker, type CircuitBreaker as CircuitBreakerType } from '@common/CircuitBreaker';
+import { getCircuitBreaker, type CircuitBreaker as CircuitBreakerType } from '@src/common/CircuitBreaker';
+import { errorRecovery, type RetryConfig, DEFAULT_RETRY_CONFIG } from '@src/utils/errorRecovery';
 
 const debug = Debug('hivemind:memory-mem0');
 
 const DEFAULT_BASE_URL = 'https://api.mem0.ai/v1';
 const DEFAULT_TIMEOUT_MS = 30_000;
 const DEFAULT_MAX_RETRIES = 3;
-const INITIAL_BACKOFF_MS = 1_000;
 
 export class Mem0Provider {
   readonly id = 'mem0';
@@ -164,15 +164,13 @@ export class Mem0Provider {
       headers['X-Org-Id'] = this.orgId;
     }
 
-    let lastError: Error | undefined;
+    const retryConfig: Partial<RetryConfig> = {
+      maxRetries: this.maxRetries,
+      retryableStatusCodes: [...DEFAULT_RETRY_CONFIG.retryableStatusCodes, 429],
+      retryableErrors: [...DEFAULT_RETRY_CONFIG.retryableErrors, 'Mem0ApiError'],
+    };
 
-    for (let attempt = 0; attempt <= this.maxRetries; attempt++) {
-      if (attempt > 0) {
-        const backoff = INITIAL_BACKOFF_MS * 2 ** (attempt - 1);
-        debug('Retry %d/%d after %dms', attempt, this.maxRetries, backoff);
-        await sleep(backoff);
-      }
-
+    const operation = async () => {
       const controller = new AbortController();
       const timer = setTimeout(() => controller.abort(), this.timeoutMs);
 
@@ -187,19 +185,19 @@ export class Mem0Provider {
 
         if (response.status === 429 || response.status >= 500) {
           const text = await response.text().catch(() => '');
-          lastError = new Mem0ApiError(
+          throw new Mem0ApiError(
             `Mem0 API ${method} ${path} returned ${response.status}: ${text}`,
-            response.status, text,
+            response.status,
+            text
           );
-          debug('Retryable error: %s', lastError.message);
-          continue;
         }
 
         if (!response.ok) {
           const text = await response.text().catch(() => '');
           throw new Mem0ApiError(
             `Mem0 API ${method} ${path} returned ${response.status}: ${text}`,
-            response.status, text,
+            response.status,
+            text
           );
         }
 
@@ -210,24 +208,22 @@ export class Mem0Provider {
         const json = await response.json();
         return json as T;
       } catch (err) {
-        if (err instanceof Mem0ApiError) {
-          if (err.status !== 429 && err.status < 500) {
-            throw err;
-          }
-          lastError = err;
-        } else if ((err as any)?.name === 'AbortError') {
-          lastError = new Error(`Mem0 API ${method} ${path} timed out after ${this.timeoutMs}ms`);
-          debug('Timeout: %s', lastError.message);
-        } else {
-          lastError = err instanceof Error ? err : new Error(String(err));
-          debug('Network error: %s', lastError.message);
+        if ((err as any)?.name === 'AbortError') {
+          throw new Error(`Mem0 API ${method} ${path} timed out after ${this.timeoutMs}ms`);
         }
+        throw err;
       } finally {
         clearTimeout(timer);
       }
+    };
+
+    const result = await errorRecovery.withRetry(operation, retryConfig);
+
+    if (!result.success) {
+      throw result.error;
     }
 
-    throw lastError ?? new Error('Mem0 API request failed after retries');
+    return result.result;
   }
 }
 
@@ -238,8 +234,4 @@ function toResult(m: Mem0Memory): { id: string; memory: string; score?: number; 
     ...(m.score != null ? { score: m.score } : {}),
     ...(m.metadata ? { metadata: m.metadata as Record<string, any> } : {}),
   };
-}
-
-function sleep(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
 }

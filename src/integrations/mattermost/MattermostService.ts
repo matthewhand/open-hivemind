@@ -1,5 +1,4 @@
 import { EventEmitter } from 'events';
-import retry from 'async-retry';
 import Debug from 'debug';
 import type { Application } from 'express';
 import { MattermostClient } from '@hivemind/message-mattermost';
@@ -17,11 +16,14 @@ const debug = Debug('app:MattermostService:verbose');
 
 // Metrics and retry configuration
 const metrics = MetricsCollector.getInstance();
-const RETRY_CONFIG = {
-  retries: 3,
-  minTimeout: 1000,
-  maxTimeout: 5000,
-  factor: 2,
+import { errorRecovery, type RetryConfig } from '@src/utils/errorRecovery';
+
+const RETRY_CONFIG: Partial<RetryConfig> = {
+  maxRetries: 3,
+  baseDelay: 1000,
+  maxDelay: 5000,
+  backoffMultiplier: 2,
+  jitter: true,
 };
 
 /**
@@ -174,24 +176,21 @@ export class MattermostService extends EventEmitter implements IMessengerService
     });
 
     const startTime = Date.now();
-    let attemptCount = 0;
     const botName = senderName || Array.from(this.clients.keys())[0];
 
     try {
-      const result = await retry(async (bail, attempt) => {
-        attemptCount = attempt;
-        debug(`Attempting to send message (attempt ${attempt})`);
+      const operation = async () => {
+        const client = this.clients.get(botName);
+
+        if (!client) {
+          const errorMsg = `Bot ${botName} not found`;
+          debug(errorMsg);
+          throw new ValidationError(errorMsg, 'senderName', botName);
+        }
+
+        const rootId = threadId || replyToMessageId;
 
         try {
-          const client = this.clients.get(botName);
-
-          if (!client) {
-            const errorMsg = `Bot ${botName} not found`;
-            debug(errorMsg);
-            throw new ValidationError(errorMsg, 'senderName', botName);
-          }
-
-          const rootId = threadId || replyToMessageId;
           const post = await client.postMessage({
             channel: channelId,
             text: text,
@@ -201,28 +200,45 @@ export class MattermostService extends EventEmitter implements IMessengerService
           debug(`[${botName}] Sent message to channel ${channelId}`);
           return post.id;
         } catch (error: any) {
-          debug(`Send message attempt ${attempt} failed: ${error.message}`);
-
-          // Don't retry on certain errors
           if (
             error.message?.includes('channel_not_found') ||
             error.message?.includes('not_in_channel') ||
             error.message?.includes('missing_scope')
           ) {
-            const bailError = new ValidationError(error.message, 'channelId', channelId);
-            bail(bailError);
-            return '';
+            const fatalError = new ValidationError(error.message, 'channelId', channelId);
+            fatalError.name = 'FatalValidationError';
+            throw fatalError;
           }
-
-          // Convert error to appropriate Hivemind error type
-          const hivemindError = ErrorUtils.toHivemindError(error) as any;
-          if (hivemindError.type === 'network' || hivemindError.type === 'api') {
-            throw hivemindError;
-          }
-
           throw error;
         }
-      }, RETRY_CONFIG);
+      };
+
+      const customRetryConfig: Partial<RetryConfig> = {
+        ...RETRY_CONFIG,
+        retryableErrors: ['Error', 'NetworkError', 'TimeoutError', 'ApiError'],
+      };
+
+      const result = await errorRecovery.withRetry(async () => {
+        try {
+          return await operation();
+        } catch (error: any) {
+          if (error.name === 'FatalValidationError') {
+            throw error;
+          }
+          const hivemindError = ErrorUtils.toHivemindError(error) as any;
+          if (hivemindError.type === 'network' || hivemindError.type === 'api') {
+             throw error;
+          }
+          throw error;
+        }
+      }, customRetryConfig);
+
+      if (!result.success) {
+         if (result.error && result.error.name === 'FatalValidationError') {
+            throw result.error;
+         }
+         throw result.error;
+      }
 
       const duration = Date.now() - startTime;
       metrics.incrementMessages();
@@ -248,8 +264,8 @@ export class MattermostService extends EventEmitter implements IMessengerService
         });
       } catch {}
 
-      debug(`Message sent successfully after ${attemptCount} attempts in ${duration}ms`);
-      return result;
+      debug(`Message sent successfully after ${result.attempts} attempts in ${duration}ms`);
+      return result.result;
     } catch (error: any) {
       const duration = Date.now() - startTime;
       metrics.incrementErrors();
@@ -266,7 +282,7 @@ export class MattermostService extends EventEmitter implements IMessengerService
       }
 
       debug(
-        `Message send failed after ${attemptCount} attempts in ${duration}ms: ${error.message}`
+        `Message send failed in ${duration}ms: ${error.message}`
       );
 
       // Record WebSocket monitoring event for failed message
@@ -309,22 +325,18 @@ export class MattermostService extends EventEmitter implements IMessengerService
     debug('Entering fetchMessages (delegated)', { channelId, limit, botName });
 
     const startTime = Date.now();
-    let attemptCount = 0;
     const targetBot = botName || Array.from(this.clients.keys())[0];
 
     try {
-      const result = await retry(async (bail, attempt) => {
-        attemptCount = attempt;
-        debug(`Attempting to fetch messages (attempt ${attempt})`);
+      const operation = async () => {
+        const client = this.clients.get(targetBot);
+
+        if (!client) {
+          debug(`Bot ${targetBot} not found`);
+          return [];
+        }
 
         try {
-          const client = this.clients.get(targetBot);
-
-          if (!client) {
-            debug(`Bot ${targetBot} not found`);
-            return [];
-          }
-
           const posts = await client.getChannelPosts(channelId, 0, limit);
 
           const botConfig = this.botConfigs.get(targetBot) || {};
@@ -361,28 +373,45 @@ export class MattermostService extends EventEmitter implements IMessengerService
 
           return messages.reverse(); // Most recent first
         } catch (error: any) {
-          debug(`Fetch messages attempt ${attempt} failed: ${error.message}`);
-
-          // Don't retry on certain errors
           if (
             error.message?.includes('channel_not_found') ||
             error.message?.includes('not_in_channel') ||
             error.message?.includes('missing_scope')
           ) {
-            const bailError = new ValidationError(error.message, 'channelId', channelId);
-            bail(bailError);
-            return [];
+            const fatalError = new ValidationError(error.message, 'channelId', channelId);
+            fatalError.name = 'FatalValidationError';
+            throw fatalError;
           }
-
-          // Convert error to appropriate Hivemind error type
-          const hivemindError = ErrorUtils.toHivemindError(error) as any;
-          if (hivemindError.type === 'network' || hivemindError.type === 'api') {
-            throw hivemindError;
-          }
-
           throw error;
         }
-      }, RETRY_CONFIG);
+      };
+
+      const customRetryConfig: Partial<RetryConfig> = {
+        ...RETRY_CONFIG,
+        retryableErrors: ['Error', 'NetworkError', 'TimeoutError', 'ApiError'],
+      };
+
+      const result = await errorRecovery.withRetry(async () => {
+        try {
+           return await operation();
+        } catch (error: any) {
+           if (error.name === 'FatalValidationError') {
+              throw error;
+           }
+           const hivemindError = ErrorUtils.toHivemindError(error) as any;
+           if (hivemindError.type === 'network' || hivemindError.type === 'api') {
+             throw error;
+           }
+           throw error;
+        }
+      }, customRetryConfig);
+
+      if (!result.success) {
+         if (result.error && result.error.name === 'FatalValidationError') {
+            return []; // To match original `bail(bailError); return []` behavior
+         }
+         throw result.error;
+      }
 
       const duration = Date.now() - startTime;
       metrics.recordResponseTime(duration);
@@ -390,8 +419,8 @@ export class MattermostService extends EventEmitter implements IMessengerService
       // Update activity tracking
       this.lastActivity.set(targetBot, new Date());
 
-      debug(`Messages fetched successfully after ${attemptCount} attempts in ${duration}ms`);
-      return result;
+      debug(`Messages fetched successfully after ${result.attempts} attempts in ${duration}ms`);
+      return result.result || [];
     } catch (error: any) {
       const duration = Date.now() - startTime;
       metrics.incrementErrors();
@@ -400,7 +429,7 @@ export class MattermostService extends EventEmitter implements IMessengerService
       this.connectionErrors.set(targetBot, (this.connectionErrors.get(targetBot) || 0) + 1);
 
       debug(
-        `Message fetch failed after ${attemptCount} attempts in ${duration}ms: ${error.message}`
+        `Message fetch failed in ${duration}ms: ${error.message}`
       );
       return []; // Return empty array on failure
     }
