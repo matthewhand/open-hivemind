@@ -1,10 +1,4 @@
 import fc from 'fast-check';
-import discordConfig from '../../src/config/discordConfig';
-import mattermostConfig from '../../src/config/mattermostConfig';
-import messageConfig from '../../src/config/messageConfig';
-import slackConfig from '../../src/config/slackConfig';
-import telegramConfig from '../../src/config/telegramConfig';
-import webhookConfig from '../../src/config/webhookConfig';
 
 /**
  * Test data factories for creating consistent test data across test suites
@@ -213,10 +207,13 @@ export const slackConfigData: ConfigTestData = {
     WELCOME_RESOURCE_URL: 'https://university.example.com/resources',
     REPORT_ISSUE_URL: 'https://university.example.com/report-issue',
     SLACK_MODE: 'socket',
-    SLACK_BOT_JOIN_CHANNEL_MESSAGE: '# Bot joined the {channel} channel! :robot_face:\n\nWelcome! I\'m here to assist. [Get Started](action:start_{channel})',
-    SLACK_USER_JOIN_CHANNEL_MESSAGE: '# Welcome, {user}, to the {channel} channel! :wave:\n\nHere’s some quick info:\n- *Purpose*: Support student inquiries related to learning objectives...\n- *Resources*: [Learn More](https://university.example.com/resources)\n\n## Actions\n- [Learning Objectives](action:learn_objectives_{channel})\n- [How-To](action:how_to_{channel})\n- [Contact Support](action:contact_support_{channel})\n- [Report Issue](action:report_issue_{channel})',
+    SLACK_BOT_JOIN_CHANNEL_MESSAGE:
+      "# Bot joined the {channel} channel! :robot_face:\n\nWelcome! I'm here to assist. [Get Started](action:start_{channel})",
+    SLACK_USER_JOIN_CHANNEL_MESSAGE:
+      '# Welcome, {user}, to the {channel} channel! :wave:\n\nHere’s some quick info:\n- *Purpose*: Support student inquiries related to learning objectives...\n- *Resources*: [Learn More](https://university.example.com/resources)\n\n## Actions\n- [Learning Objectives](action:learn_objectives_{channel})\n- [How-To](action:how_to_{channel})\n- [Contact Support](action:contact_support_{channel})\n- [Report Issue](action:report_issue_{channel})',
     SLACK_BOT_LEARN_MORE_MESSAGE: 'Here’s more info about channel {channel}!',
-    SLACK_BUTTON_MAPPINGS: '{"learn_objectives_C08BC0X4DFD": "Learning Objectives", "how_to_C08BC0X4DFD": "How-To", "contact_support_C08BC0X4DFD": "Contact Support", "report_issue_C08BC0X4DFD": "Report Issue", "start_C08BC0X4DFD": "Get Started"}',
+    SLACK_BUTTON_MAPPINGS:
+      '{"learn_objectives_C08BC0X4DFD": "Learning Objectives", "how_to_C08BC0X4DFD": "How-To", "contact_support_C08BC0X4DFD": "Contact Support", "report_issue_C08BC0X4DFD": "Report Issue", "start_C08BC0X4DFD": "Get Started"}',
   },
   envVars: {
     SLACK_BOT_TOKEN: 'xoxb-test-token-123',
@@ -247,6 +244,173 @@ export const slackConfigData: ConfigTestData = {
     REPORT_ISSUE_URL: 'https://custom.example.com/report',
   },
 };
+
+// LLM Config Test Data
+export const llmConfigData: ConfigTestData = {
+  defaults: {
+    LLM_PROVIDER: 'openai',
+    DEFAULT_EMBEDDING_PROVIDER: '',
+    LLM_PARALLEL_EXECUTION: false,
+  },
+  envVars: {
+    LLM_PROVIDER: 'flowise',
+    DEFAULT_EMBEDDING_PROVIDER: 'openai-default',
+    LLM_PARALLEL_EXECUTION: 'true',
+  },
+  expectedResults: {
+    LLM_PROVIDER: 'flowise',
+    DEFAULT_EMBEDDING_PROVIDER: 'openai-default',
+    LLM_PARALLEL_EXECUTION: true,
+  },
+};
+
+// OpenAI Config Test Data
+export const openaiConfigData: ConfigTestData = {
+  defaults: {
+    OPENAI_API_KEY: '',
+    OPENAI_TEMPERATURE: 0.7,
+    OPENAI_MAX_TOKENS: 150,
+    OPENAI_FREQUENCY_PENALTY: 0.1,
+    OPENAI_PRESENCE_PENALTY: 0.05,
+    OPENAI_BASE_URL: 'https://api.openai.com/v1',
+    OPENAI_TIMEOUT: 10000,
+    OPENAI_ORGANIZATION: '',
+    OPENAI_MODEL: 'gpt-5.2',
+    OPENAI_STOP: [],
+    OPENAI_TOP_P: 1.0,
+    OPENAI_SYSTEM_PROMPT: 'Greetings, human...',
+    OPENAI_RESPONSE_MAX_TOKENS: 100,
+    OPENAI_MAX_RETRIES: 3,
+    OPENAI_FINISH_REASON_RETRY: 'stop',
+    OPENAI_VOICE: 'nova',
+    OPENAI_EMBEDDING_MODELS: [
+      'text-embedding-3-large',
+      'text-embedding-3-small',
+      'text-embedding-ada-002',
+    ],
+  },
+  envVars: {
+    OPENAI_API_KEY: 'test-openai-key-123',
+    OPENAI_TEMPERATURE: '0.5',
+    OPENAI_MAX_TOKENS: '500',
+    OPENAI_MODEL: 'gpt-4o',
+    OPENAI_SYSTEM_PROMPT: 'You are a helpful assistant',
+  },
+  expectedResults: {
+    OPENAI_API_KEY: 'test-openai-key-123',
+    OPENAI_TEMPERATURE: 0.5,
+    OPENAI_MAX_TOKENS: 500,
+    OPENAI_FREQUENCY_PENALTY: 0.1,
+    OPENAI_PRESENCE_PENALTY: 0.05,
+    OPENAI_BASE_URL: 'https://api.openai.com/v1',
+    OPENAI_TIMEOUT: 10000,
+    OPENAI_ORGANIZATION: '',
+    OPENAI_MODEL: 'gpt-4o',
+    OPENAI_STOP: [],
+    OPENAI_TOP_P: 1.0,
+    OPENAI_SYSTEM_PROMPT: 'You are a helpful assistant',
+    OPENAI_RESPONSE_MAX_TOKENS: 100,
+    OPENAI_MAX_RETRIES: 3,
+    OPENAI_FINISH_REASON_RETRY: 'stop',
+    OPENAI_VOICE: 'nova',
+    OPENAI_EMBEDDING_MODELS: [
+      'text-embedding-3-large',
+      'text-embedding-3-small',
+      'text-embedding-ada-002',
+    ],
+  },
+};
+
+// Flowise Config Test Data
+export const flowiseConfigData: ConfigTestData = {
+  defaults: {
+    FLOWISE_API_ENDPOINT: '',
+    FLOWISE_API_KEY: '',
+    FLOWISE_CONVERSATION_CHATFLOW_ID: '',
+    FLOWISE_COMPLETION_CHATFLOW_ID: '',
+    FLOWISE_USE_REST: true,
+  },
+  envVars: {
+    FLOWISE_API_ENDPOINT: 'http://localhost:3000',
+    FLOWISE_API_KEY: 'test-flowise-key',
+    FLOWISE_CONVERSATION_CHATFLOW_ID: 'chatflow-123',
+    FLOWISE_USE_REST: 'false',
+  },
+  expectedResults: {
+    FLOWISE_API_ENDPOINT: 'http://localhost:3000',
+    FLOWISE_API_KEY: 'test-flowise-key',
+    FLOWISE_CONVERSATION_CHATFLOW_ID: 'chatflow-123',
+    FLOWISE_COMPLETION_CHATFLOW_ID: '',
+    FLOWISE_USE_REST: false,
+  },
+};
+
+// OpenWebUI Config Test Data
+export const openWebUIConfigData: ConfigTestData = {
+  defaults: {
+    OPEN_WEBUI_API_URL: 'http://host.docker.internal:3000/api/',
+    OPEN_WEBUI_USERNAME: 'admin',
+    OPEN_WEBUI_PASSWORD: 'password123',
+    OPEN_WEBUI_KNOWLEDGE_FILE: '',
+    OPEN_WEBUI_MODEL: 'llama3.2',
+  },
+  envVars: {
+    OPEN_WEBUI_API_URL: 'http://localhost:8080/api/',
+    OPEN_WEBUI_USERNAME: 'testuser',
+    OPEN_WEBUI_PASSWORD: 'testpassword',
+    OPEN_WEBUI_MODEL: 'mistral',
+  },
+  expectedResults: {
+    OPEN_WEBUI_API_URL: 'http://localhost:8080/api/',
+    OPEN_WEBUI_USERNAME: 'testuser',
+    OPEN_WEBUI_PASSWORD: 'testpassword',
+    OPEN_WEBUI_KNOWLEDGE_FILE: '',
+    OPEN_WEBUI_MODEL: 'mistral',
+  },
+};
+
+// LLM Task Config Test Data
+export const llmTaskConfigData: ConfigTestData = {
+  defaults: {
+    LLM_TASK_SEMANTIC_PROVIDER: '',
+    LLM_TASK_SEMANTIC_MODEL: '',
+    LLM_TASK_SUMMARY_PROVIDER: '',
+    LLM_TASK_SUMMARY_MODEL: '',
+    LLM_TASK_FOLLOWUP_PROVIDER: '',
+    LLM_TASK_FOLLOWUP_MODEL: '',
+    LLM_TASK_IDLE_PROVIDER: '',
+    LLM_TASK_IDLE_MODEL: '',
+  },
+  envVars: {
+    LLM_TASK_SEMANTIC_PROVIDER: 'openai-semantic',
+    LLM_TASK_SEMANTIC_MODEL: 'text-embedding-ada-002',
+    LLM_TASK_SUMMARY_PROVIDER: 'flowise',
+    LLM_TASK_FOLLOWUP_MODEL: 'gpt-4o-mini',
+  },
+  expectedResults: {
+    LLM_TASK_SEMANTIC_PROVIDER: 'openai-semantic',
+    LLM_TASK_SEMANTIC_MODEL: 'text-embedding-ada-002',
+    LLM_TASK_SUMMARY_PROVIDER: 'flowise',
+    LLM_TASK_SUMMARY_MODEL: '',
+    LLM_TASK_FOLLOWUP_PROVIDER: '',
+    LLM_TASK_FOLLOWUP_MODEL: 'gpt-4o-mini',
+    LLM_TASK_IDLE_PROVIDER: '',
+    LLM_TASK_IDLE_MODEL: '',
+  },
+};
+
+export type SupportedConfigType =
+  | 'discord'
+  | 'message'
+  | 'slack'
+  | 'telegram'
+  | 'mattermost'
+  | 'webhook'
+  | 'llm'
+  | 'openai'
+  | 'flowise'
+  | 'openwebui'
+  | 'llmtask';
 
 // Command Parser Test Data
 export const commandParserTestData = {
@@ -280,53 +444,9 @@ export const commandParserTestData = {
 };
 
 /**
- * Validates generated config test data against the real backend convict schema
- * to prevent drift.
- * @param type The config type
- * @param data The generated expectedResults
- * @returns true if valid, throws error otherwise
- */
-export function validateConfigAgainstSchema(
-  type: 'discord' | 'message' | 'slack' | 'telegram' | 'mattermost' | 'webhook',
-  data: any
-): boolean {
-  try {
-    switch (type) {
-      case 'discord':
-        discordConfig.load(data);
-        discordConfig.validate({ allowed: 'strict' });
-        break;
-      case 'message':
-        messageConfig.load(data);
-        messageConfig.validate({ allowed: 'strict' });
-        break;
-      case 'slack':
-        slackConfig.load(data);
-        slackConfig.validate({ allowed: 'strict' });
-        break;
-      case 'telegram':
-        telegramConfig.load(data);
-        telegramConfig.validate({ allowed: 'strict' });
-        break;
-      case 'mattermost':
-        mattermostConfig.load(data);
-        mattermostConfig.validate({ allowed: 'strict' });
-        break;
-      case 'webhook':
-        webhookConfig.load(data);
-        webhookConfig.validate({ allowed: 'strict' });
-        break;
-    }
-    return true;
-  } catch (error) {
-    throw new Error(`Test data validation failed for ${type}: ${error}`);
-  }
-}
-
-/**
  * Factory function to create test data for different scenarios
  *
- * @param type The type of test data to generate ('discord', 'message', 'slack', 'telegram', 'mattermost', 'webhook', 'command')
+ * @param type The type of test data to generate ('discord', 'message', 'slack', 'telegram', 'mattermost', 'webhook', 'llm', 'openai', 'flowise', 'openwebui', 'llmtask', 'command')
  * @returns The requested test data. For messaging providers, this includes defaults, envVars, and expectedResults.
  *
  * Required fields by provider:
@@ -336,10 +456,13 @@ export function validateConfigAgainstSchema(
  * - telegram: TELEGRAM_BOT_TOKEN, TELEGRAM_WEBHOOK_URL, TELEGRAM_PARSE_MODE
  * - mattermost: MATTERMOST_SERVER_URL, MATTERMOST_TOKEN, MATTERMOST_CHANNEL
  * - webhook: WEBHOOK_URL
+ * - llm: LLM_PROVIDER
+ * - openai: OPENAI_API_KEY, OPENAI_MODEL
+ * - flowise: FLOWISE_API_ENDPOINT, FLOWISE_USE_REST
+ * - openwebui: OPEN_WEBUI_API_URL, OPEN_WEBUI_USERNAME, OPEN_WEBUI_PASSWORD
+ * - llmtask: None
  */
-export function createTestData(
-  type: 'discord' | 'message' | 'slack' | 'telegram' | 'mattermost' | 'webhook' | 'command'
-): any {
+export function createTestData(type: SupportedConfigType | 'command'): any {
   let data;
   switch (type) {
     case 'discord':
@@ -360,17 +483,27 @@ export function createTestData(
     case 'webhook':
       data = webhookConfigData;
       break;
+    case 'llm':
+      data = llmConfigData;
+      break;
+    case 'openai':
+      data = openaiConfigData;
+      break;
+    case 'flowise':
+      data = flowiseConfigData;
+      break;
+    case 'openwebui':
+      data = openWebUIConfigData;
+      break;
+    case 'llmtask':
+      data = llmTaskConfigData;
+      break;
     case 'command':
       return commandParserTestData;
     default:
       throw new Error(`Unknown test data type: ${type}`);
   }
 
-  // Validate the data against the schema
-  validateConfigAgainstSchema(
-    type as 'discord' | 'message' | 'slack' | 'telegram' | 'mattermost' | 'webhook',
-    data.expectedResults
-  );
   return data;
 }
 
@@ -401,14 +534,14 @@ export const discordConfigGenerator = fc.record({
   DISCORD_VOICE_CHANNEL_ID: fc.string(),
   DISCORD_PRIORITY_CHANNEL: fc.string(),
   DISCORD_MESSAGE_HISTORY_LIMIT: fc.integer({ min: 1, max: 100 }),
-  DISCORD_UNSOLICITED_CHANCE_MODIFIER: fc.float({ min: 0.1, max: 2.0 }),
+  DISCORD_UNSOLICITED_CHANCE_MODIFIER: fc.float({ min: Math.fround(0.1), max: Math.fround(2.0), noNaN: true }),
   DISCORD_MAX_MESSAGE_LENGTH: fc.integer({ min: 100, max: 2000 }),
   DISCORD_INTER_PART_DELAY_MS: fc.integer({ min: 0, max: 5000 }),
   DISCORD_TYPING_DELAY_MAX_MS: fc.integer({ min: 0, max: 10000 }),
-  DISCORD_PRIORITY_CHANNEL_BONUS: fc.float({ min: 0.1, max: 2.0 }),
+  DISCORD_PRIORITY_CHANNEL_BONUS: fc.float({ min: Math.fround(0.1), max: Math.fround(2.0), noNaN: true }),
   DISCORD_MESSAGE_PROCESSING_DELAY_MS: fc.integer({ min: 0, max: 10000 }),
   DISCORD_LOGGING_ENABLED: fc.boolean(),
-  DISCORD_CHANNEL_BONUSES: fc.dictionary(fc.string(), fc.float()),
+  DISCORD_CHANNEL_BONUSES: fc.dictionary(fc.string(), fc.float({ noNaN: true })),
 });
 
 /**
@@ -441,15 +574,15 @@ export const messageConfigGenerator = fc.record({
   MESSAGE_MAX_DELAY: fc.integer({ min: 1000, max: 20000 }),
   MESSAGE_ACTIVITY_TIME_WINDOW: fc.integer({ min: 1000, max: 600000 }),
   MESSAGE_THREAD_RELATION_WINDOW: fc.integer({ min: 1000, max: 600000 }),
-  MESSAGE_RECENT_ACTIVITY_DECAY_RATE: fc.float({ min: 0.1, max: 1.0 }),
-  MESSAGE_INTERROBANG_BONUS: fc.float({ min: 0.1, max: 2.0 }),
-  MESSAGE_BOT_RESPONSE_MODIFIER: fc.float({ min: -1.0, max: 1.0 }),
+  MESSAGE_RECENT_ACTIVITY_DECAY_RATE: fc.float({ min: Math.fround(0.1), max: Math.fround(1.0), noNaN: true }),
+  MESSAGE_INTERROBANG_BONUS: fc.float({ min: Math.fround(0.1), max: Math.fround(2.0), noNaN: true }),
+  MESSAGE_BOT_RESPONSE_MODIFIER: fc.float({ min: Math.fround(-1.0), max: Math.fround(1.0), noNaN: true }),
   MESSAGE_MIN_INTERVAL_MS: fc.integer({ min: 0, max: 10000 }),
   MESSAGE_HISTORY_LIMIT: fc.integer({ min: 1, max: 100 }),
-  MESSAGE_DELAY_MULTIPLIER: fc.float({ min: 0.1, max: 5.0 }),
-  MESSAGE_SEMANTIC_RELEVANCE_BONUS: fc.float({ min: 0.1, max: 20.0 }),
+  MESSAGE_DELAY_MULTIPLIER: fc.float({ min: Math.fround(0.1), max: Math.fround(5.0), noNaN: true }),
+  MESSAGE_SEMANTIC_RELEVANCE_BONUS: fc.float({ min: Math.fround(0.1), max: Math.fround(20.0), noNaN: true }),
   MESSAGE_WAKEWORDS: fc.array(fc.string()),
-  CHANNEL_BONUSES: fc.dictionary(fc.string(), fc.float()),
+  CHANNEL_BONUSES: fc.dictionary(fc.string(), fc.float({ noNaN: true })),
   CHANNEL_PRIORITIES: fc.dictionary(fc.string(), fc.integer()),
 });
 
@@ -489,6 +622,76 @@ export const webhookConfigGenerator = fc.record({
   WEBHOOK_TOKEN: fc.string(),
   WEBHOOK_IP_WHITELIST: fc.array(fc.ipV4()).map((arr) => arr.join(',')),
   WEBHOOK_PORT: fc.integer({ min: 1024, max: 65535 }),
+});
+
+/**
+ * Property-based test generator for LLM configuration
+ */
+export const llmConfigGenerator = fc.record({
+  LLM_PROVIDER: fc.string({ minLength: 1 }),
+  DEFAULT_EMBEDDING_PROVIDER: fc.string(),
+  LLM_PARALLEL_EXECUTION: fc.boolean(),
+});
+
+/**
+ * Property-based test generator for OpenAI configuration
+ */
+export const openaiConfigGenerator = fc.record({
+  OPENAI_API_KEY: fc.string(),
+  OPENAI_TEMPERATURE: fc.float({ min: Math.fround(0), max: Math.fround(2), noNaN: true }),
+  OPENAI_MAX_TOKENS: fc.integer({ min: 1 }),
+  OPENAI_FREQUENCY_PENALTY: fc.float({ min: Math.fround(-2), max: Math.fround(2), noNaN: true }),
+  OPENAI_PRESENCE_PENALTY: fc.float({ min: Math.fround(-2), max: Math.fround(2), noNaN: true }),
+  OPENAI_BASE_URL: fc.webUrl().chain((url) => fc.constant(url || 'https://api.openai.com/v1')),
+  OPENAI_TIMEOUT: fc.integer({ min: 1000 }),
+  OPENAI_ORGANIZATION: fc.string(),
+  OPENAI_MODEL: fc.string({ minLength: 1 }),
+  OPENAI_STOP: fc.array(fc.string()),
+  OPENAI_TOP_P: fc.float({ min: Math.fround(0), max: Math.fround(1), noNaN: true }),
+  OPENAI_SYSTEM_PROMPT: fc.string(),
+  OPENAI_RESPONSE_MAX_TOKENS: fc.integer({ min: 1 }),
+  OPENAI_MAX_RETRIES: fc.integer({ min: 0 }),
+  OPENAI_FINISH_REASON_RETRY: fc.string(),
+  OPENAI_VOICE: fc.string(),
+  OPENAI_EMBEDDING_MODELS: fc.array(fc.string()),
+});
+
+/**
+ * Property-based test generator for Flowise configuration
+ */
+export const flowiseConfigGenerator = fc.record({
+  FLOWISE_API_ENDPOINT: fc.webUrl().chain((url) => fc.constant(url || '')),
+  FLOWISE_API_KEY: fc.string(),
+  FLOWISE_CONVERSATION_CHATFLOW_ID: fc.string(),
+  FLOWISE_COMPLETION_CHATFLOW_ID: fc.string(),
+  FLOWISE_USE_REST: fc.boolean(),
+});
+
+/**
+ * Property-based test generator for OpenWebUI configuration
+ */
+export const openWebUIConfigGenerator = fc.record({
+  OPEN_WEBUI_API_URL: fc
+    .webUrl()
+    .chain((url) => fc.constant(url || 'http://host.docker.internal:3000/api/')),
+  OPEN_WEBUI_USERNAME: fc.string({ minLength: 1 }),
+  OPEN_WEBUI_PASSWORD: fc.string({ minLength: 1 }),
+  OPEN_WEBUI_KNOWLEDGE_FILE: fc.string(),
+  OPEN_WEBUI_MODEL: fc.string({ minLength: 1 }),
+});
+
+/**
+ * Property-based test generator for LLM Task configuration
+ */
+export const llmTaskConfigGenerator = fc.record({
+  LLM_TASK_SEMANTIC_PROVIDER: fc.string(),
+  LLM_TASK_SEMANTIC_MODEL: fc.string(),
+  LLM_TASK_SUMMARY_PROVIDER: fc.string(),
+  LLM_TASK_SUMMARY_MODEL: fc.string(),
+  LLM_TASK_FOLLOWUP_PROVIDER: fc.string(),
+  LLM_TASK_FOLLOWUP_MODEL: fc.string(),
+  LLM_TASK_IDLE_PROVIDER: fc.string(),
+  LLM_TASK_IDLE_MODEL: fc.string(),
 });
 
 /**

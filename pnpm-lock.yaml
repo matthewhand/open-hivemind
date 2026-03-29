@@ -504,6 +504,9 @@ importers:
       eslint-plugin-unused-imports:
         specifier: ^4.4.1
         version: 4.4.1(@typescript-eslint/eslint-plugin@8.57.1(@typescript-eslint/parser@8.57.1(eslint@9.39.4(jiti@2.6.1))(typescript@5.9.3))(eslint@9.39.4(jiti@2.6.1))(typescript@5.9.3))(eslint@9.39.4(jiti@2.6.1))
+      fast-check:
+        specifier: ^3.22.0
+        version: 3.23.2
       glob:
         specifier: ^11.0.0
         version: 11.1.0
@@ -5326,6 +5329,10 @@ packages:
 
   fakerest@4.2.0:
     resolution: {integrity: sha512-qJtQO0r2iirV20XTqGrYDnueb4xEreOZISRWL5u8iFDCHELVl6AElaqn6z4z+/88bI0Hia357K6YTzTVwHFLjQ==}
+
+  fast-check@3.23.2:
+    resolution: {integrity: sha512-h5+1OzzfCC3Ef7VbtKdcv7zsstUQwUDlYpUTvjeUsJAssPgLn7QzbboPtL5ro04Mq0rPOsMzl7q5hIbRs2wD1A==}
+    engines: {node: '>=8.0.0'}
 
   fast-copy@3.0.2:
     resolution: {integrity: sha512-dl0O9Vhju8IrcLndv2eU4ldt1ftXMqqfgN4H1cpmGV7P6jeB9FwpN9a2c8DPGE1Ys88rNUJVYDHq73CGAGOPfQ==}
@@ -13789,6 +13796,10 @@ snapshots:
   fakerest@4.2.0:
     dependencies:
       lodash: 4.17.23
+
+  fast-check@3.23.2:
+    dependencies:
+      pure-rand: 6.1.0
 
   fast-copy@3.0.2: {}
 
