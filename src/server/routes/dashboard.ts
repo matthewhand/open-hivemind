@@ -184,13 +184,13 @@ router.post(
   }
 );
 
-router.get('/ai/stats', authenticate, requireAdmin, (req, res) => {
+router.get('/ai/stats', authenticate, requireAdmin, async (req, res) => {
   try {
     const analytics = AnalyticsService.getInstance();
     const from = parseDate(req.query.from);
     const to = parseDate(req.query.to);
 
-    const stats = analytics.getStats({
+    const stats = await analytics.getStats({
       startTime: from || undefined,
       endTime: to || undefined,
     });
@@ -211,13 +211,13 @@ router.get('/ai/stats', authenticate, requireAdmin, (req, res) => {
   }
 });
 
-router.get('/ai/segments', authenticate, requireAdmin, (req, res) => {
+router.get('/ai/segments', authenticate, requireAdmin, async (req, res) => {
   try {
     const analytics = AnalyticsService.getInstance();
     const from = parseDate(req.query.from);
     const to = parseDate(req.query.to);
 
-    const segments = analytics.getUserSegments({
+    const segments = await analytics.getUserSegments({
       startTime: from || undefined,
       endTime: to || undefined,
     });
@@ -229,13 +229,13 @@ router.get('/ai/segments', authenticate, requireAdmin, (req, res) => {
   }
 });
 
-router.get('/ai/patterns', authenticate, requireAdmin, (req, res) => {
+router.get('/ai/patterns', authenticate, requireAdmin, async (req, res) => {
   try {
     const analytics = AnalyticsService.getInstance();
     const from = parseDate(req.query.from);
     const to = parseDate(req.query.to);
 
-    const patterns = analytics.getBehaviorPatterns({
+    const patterns = await analytics.getBehaviorPatterns({
       startTime: from || undefined,
       endTime: to || undefined,
     });
@@ -247,13 +247,13 @@ router.get('/ai/patterns', authenticate, requireAdmin, (req, res) => {
   }
 });
 
-router.get('/ai/recommendations', authenticate, requireAdmin, (req, res) => {
+router.get('/ai/recommendations', authenticate, requireAdmin, async (req, res) => {
   try {
     const analytics = AnalyticsService.getInstance();
     const from = parseDate(req.query.from);
     const to = parseDate(req.query.to);
 
-    const recommendations = analytics.getRecommendations({
+    const recommendations = await analytics.getRecommendations({
       startTime: from || undefined,
       endTime: to || undefined,
     });
