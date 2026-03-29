@@ -607,10 +607,11 @@ const AgentConfigurator: React.FC<AgentConfiguratorProps> = ({ title = 'Agent Co
       <div className="p-4">
         <div className="flex justify-end items-center gap-2 mb-4">
           <button
-            className={`btn btn-outline ${isFetching ? 'loading' : ''}`}
+            className="btn btn-outline"
             onClick={handleRefresh}
             disabled={isFetching}
           >
+            {isFetching && <span className="loading loading-spinner" aria-hidden="true"></span>}
             {isFetching ? 'Refreshing…' : 'Refresh status'}
           </button>
           <div className="dropdown dropdown-end">
