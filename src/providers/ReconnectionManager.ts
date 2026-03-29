@@ -27,6 +27,7 @@ export class ReconnectionManager {
   private lastError?: Error;
   private lastAttemptAt?: Date;
   private nextAttemptAt?: Date;
+  private stopped = false;
 
   constructor(
     private readonly providerId: string,
@@ -46,12 +47,14 @@ export class ReconnectionManager {
       return;
     }
 
+    this.stopped = false;
     this.attempts = 0;
     this.state = 'reconnecting';
     await this.attemptConnection();
   }
 
   public stop(): void {
+    this.stopped = true;
     if (this.reconnectTimer) {
       clearTimeout(this.reconnectTimer);
       this.reconnectTimer = undefined;
@@ -75,7 +78,7 @@ export class ReconnectionManager {
   }
 
   public onDisconnected(error?: Error): void {
-    if (this.state === 'reconnecting') return;
+    if (this.state === 'reconnecting' || this.stopped) return;
 
     this.state = 'disconnected';
     if (error) {
@@ -92,7 +95,7 @@ export class ReconnectionManager {
   }
 
   private async attemptConnection(): Promise<void> {
-    if (this.state !== 'reconnecting') return;
+    if (this.state !== 'reconnecting' || this.stopped) return;
 
     this.attempts++;
     this.lastAttemptAt = new Date();
@@ -100,8 +103,13 @@ export class ReconnectionManager {
     try {
       debug(`[${this.providerId}] Attempting connection (Attempt ${this.attempts}/${this.config.maxRetries})`);
       await this.connectFn();
+      // Re-check stopped flag after async connectFn to avoid acting on stale state
+      if (this.stopped) return;
       this.onConnected();
     } catch (error: any) {
+      // Re-check stopped flag after async connectFn to prevent scheduling new timers
+      if (this.stopped) return;
+
       this.lastError = error;
       debug(`[${this.providerId}] Connection attempt failed: ${error.message}`);
 
@@ -116,6 +124,8 @@ export class ReconnectionManager {
   }
 
   private scheduleNextAttempt(): void {
+    if (this.stopped) return;
+
     // Exponential backoff
     let delay = Math.min(
       this.config.initialDelayMs * Math.pow(2, this.attempts - 1),

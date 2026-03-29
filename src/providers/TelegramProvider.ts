@@ -13,6 +13,16 @@ const debug = Debug('app:providers:TelegramProvider');
  */
 const TELEGRAM_TOKEN_REGEX = /^\d+:[A-Za-z0-9_-]{35,}$/;
 
+/**
+ * Masks any Telegram bot token found in a string (e.g. a URL) so that it
+ * is safe to include in log output.  The bot-id prefix is kept for
+ * identification; the secret portion is replaced with asterisks.
+ */
+function maskToken(value: string): string {
+  // Match the bot<id>:<secret> pattern inside the string
+  return value.replace(/(\d+):[A-Za-z0-9_-]{35,}/g, '$1:****');
+}
+
 function validateTelegramToken(token: string): void {
   if (!token || typeof token !== 'string') {
     throw new Error('Telegram bot token is required');
@@ -69,11 +79,17 @@ export class TelegramProvider implements IMessageProvider<TelegramConfig> {
           connected = reconManager.getStatus().state === 'connected';
         } else {
           try {
-            const response = await fetch(`https://api.telegram.org/bot${inst.token}/getMe`);
-            const data = await response.json();
-            connected = data.ok === true;
-          } catch (e) {
-            // fetch error
+            const url = `https://api.telegram.org/bot${inst.token}/getMe`;
+            const response = await fetch(url);
+            if (!response.ok) {
+              debug(`[TelegramProvider] HTTP ${response.status} from ${maskToken(url)}`);
+              connected = false;
+            } else {
+              const data = await response.json();
+              connected = data.ok === true;
+            }
+          } catch (e: any) {
+            debug(`[TelegramProvider] Fetch error for ${maskToken(`bot${inst.token}`)}: ${e.message}`);
             connected = false;
           }
         }
@@ -166,7 +182,11 @@ export class TelegramProvider implements IMessageProvider<TelegramConfig> {
       `telegram-${botName}`,
       async () => {
         // Here we simulate telegram bot connection logic which checks /getMe
-        const response = await fetch(`https://api.telegram.org/bot${token}/getMe`);
+        const url = `https://api.telegram.org/bot${token}/getMe`;
+        const response = await fetch(url);
+        if (!response.ok) {
+          throw new Error(`Telegram API returned HTTP ${response.status} for ${maskToken(url)}`);
+        }
         const data = await response.json();
         if (!data.ok) {
           throw new Error('Telegram token validation failed during reconnection');
@@ -220,7 +240,11 @@ export class TelegramProvider implements IMessageProvider<TelegramConfig> {
       const reconManager = new ReconnectionManager(
         `telegram-${name}`,
         async () => {
-          const response = await fetch(`https://api.telegram.org/bot${inst.token}/getMe`);
+          const url = `https://api.telegram.org/bot${inst.token}/getMe`;
+          const response = await fetch(url);
+          if (!response.ok) {
+            throw new Error(`Telegram API returned HTTP ${response.status} for ${maskToken(url)}`);
+          }
           const data = await response.json();
           if (!data.ok) {
             throw new Error(`Telegram connection failed for ${name}`);
