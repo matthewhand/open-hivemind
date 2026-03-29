@@ -1,10 +1,5 @@
 import { Router } from 'express';
 
-function loadSchema(path: string): object {
-  try { return require(path); }
-  catch (err) { console.error(`Failed to load schema: ${path}`, err); return {}; }
-}
-
 const router = Router();
 
 router.get(['/openapi', '/openapi.json', '/openapi.yaml', '/openapi.yml'], (req, res) => {
@@ -43,13 +38,13 @@ function buildSpec(baseUrl: string) {
       },
     ],
     paths: {
-      ...loadSchema('../schemas/config.schema.json'),
-      ...loadSchema('../schemas/monitoring.schema.json'),
-      ...loadSchema('../schemas/auth.schema.json'),
-      ...loadSchema('../schemas/agents.schema.json'),
-      ...loadSchema('../schemas/mcp.schema.json'),
-      ...loadSchema('../schemas/activity.schema.json'),
-      ...loadSchema('../schemas/admin.schema.json'),
+      ...require('../schemas/config.schema.json'),
+      ...require('../schemas/monitoring.schema.json'),
+      ...require('../schemas/auth.schema.json'),
+      ...require('../schemas/agents.schema.json'),
+      ...require('../schemas/mcp.schema.json'),
+      ...require('../schemas/activity.schema.json'),
+      ...require('../schemas/admin.schema.json'),
     },
     tags: [
       { name: 'Configuration' },

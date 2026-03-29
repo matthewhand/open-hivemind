@@ -163,12 +163,6 @@ export interface IMemoryProvider {
 
   /** Delete all memories for a user/agent */
   deleteAll(options?: { userId?: string; agentId?: string }): Promise<void>;
-
-  /**
-   * Lightweight connectivity/readiness probe.
-   * @returns `true` when the backing store is reachable.
-   */
-  healthCheck(): Promise<boolean>;
 }
 
 /**

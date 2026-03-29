@@ -1,29 +1,36 @@
 /**
  * Memory Provider interface for persistent memory storage.
  *
- * Canonical contract that all memory provider packages must implement.
- * Aligned with the Mem0 API surface (add, search, getAll, get, update,
- * delete, deleteAll, healthCheck) which is the common denominator across
- * Mem0, Zep, Letta, and similar services.
+ * Extracted from the common patterns across memory-mem0, memory-mem4ai, and
+ * memory-memvault providers. Future memory provider packages should implement
+ * this contract so they can be used interchangeably by the plugin system.
  */
 
 // ---------------------------------------------------------------------------
 // Data types
 // ---------------------------------------------------------------------------
 
-/** A single stored memory entry returned by the provider. */
+/** A single stored memory entry. */
 export interface MemoryEntry {
   /** Unique identifier for this memory */
   id: string;
   /** The text content of the memory */
-  memory: string;
+  content: string;
   /** Relevance score (populated in search results, 0-1) */
   score?: number;
   /** Arbitrary key-value metadata attached to the memory */
   metadata?: Record<string, unknown>;
+  /** Creation/update timestamp in epoch milliseconds */
+  timestamp?: number;
+  /** Tags or labels for categorisation */
+  tags?: string[];
+  /** The user this memory belongs to */
+  userId?: string;
+  /** The agent this memory belongs to */
+  agentId?: string;
 }
 
-/** Result set returned by add and search operations. */
+/** Result set returned by search and list operations. */
 export interface MemorySearchResult {
   results: MemoryEntry[];
 }
@@ -35,66 +42,50 @@ export interface MemorySearchResult {
 /**
  * Contract that all memory providers must implement.
  *
- * Methods mirror the common surface area found across Mem0, Zep, and
- * Letta: add, search, getAll, get, update, delete, deleteAll, and
- * healthCheck.
+ * Methods mirror the common surface area found across Mem0, Mem4ai, and
+ * MemVault: add, search, list, get-by-id, update, delete, and health-check.
  */
 export interface IMemoryProvider {
-  /** Provider identifier */
-  id: string;
-  /** Display name */
-  label: string;
-  /** Provider type discriminant */
-  type: 'memory';
-
   /**
-   * Add memories from conversation messages.
-   * @returns The created entries wrapped in a result set.
+   * Add a new memory.
+   * @returns The created entry (or entries wrapped in a search result).
    */
-  add(
-    messages: Array<{ role: 'user' | 'assistant'; content: string }>,
-    options?: { userId?: string; agentId?: string; metadata?: Record<string, any> },
-  ): Promise<{
-    results: Array<{ id: string; memory: string; score?: number; metadata?: Record<string, any> }>;
-  }>;
+  addMemory(
+    content: string,
+    metadata?: Record<string, unknown>,
+    userId?: string
+  ): Promise<MemoryEntry>;
 
   /**
    * Search memories by natural-language query.
+   * @param query  Free-text search string.
+   * @param limit  Maximum number of results to return.
+   * @param userId Optional scope to a single user.
    */
-  search(
-    query: string,
-    options?: { userId?: string; agentId?: string; limit?: number },
-  ): Promise<{
-    results: Array<{ id: string; memory: string; score?: number; metadata?: Record<string, any> }>;
-  }>;
+  searchMemories(query: string, limit?: number, userId?: string): Promise<MemoryEntry[]>;
 
   /**
-   * Get all memories for a user/agent.
+   * List memories, optionally scoped to a user.
+   * @param limit  Maximum number of results.
+   * @param userId Optional user scope.
    */
-  getAll(options?: {
-    userId?: string;
-    agentId?: string;
-  }): Promise<{ results: Array<{ id: string; memory: string }> }>;
+  getMemories(limit?: number, userId?: string): Promise<MemoryEntry[]>;
 
   /**
-   * Get a specific memory by ID.
+   * Delete a single memory by ID.
+   * @returns `true` if the deletion succeeded.
    */
-  get(memoryId: string): Promise<{ id: string; memory: string } | null>;
+  deleteMemory(id: string): Promise<boolean>;
 
   /**
-   * Update a memory's content.
+   * Update the content (and optionally metadata) of an existing memory.
+   * @returns The updated entry.
    */
-  update(memoryId: string, newContent: string): Promise<{ id: string; memory: string }>;
-
-  /**
-   * Delete a specific memory.
-   */
-  delete(memoryId: string): Promise<void>;
-
-  /**
-   * Delete all memories for a user/agent.
-   */
-  deleteAll(options?: { userId?: string; agentId?: string }): Promise<void>;
+  updateMemory(
+    id: string,
+    content: string,
+    metadata?: Record<string, unknown>
+  ): Promise<MemoryEntry>;
 
   /**
    * Lightweight connectivity/readiness probe.
