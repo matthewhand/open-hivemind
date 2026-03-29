@@ -4,6 +4,8 @@
  * we must mock process.exit and the Logger.
  */
 
+import Logger from '@src/common/logger';
+
 jest.mock('@src/common/logger', () => ({
   __esModule: true,
   default: { error: jest.fn(), warn: jest.fn(), info: jest.fn() },
@@ -19,6 +21,7 @@ describe('validateRequiredEnvVars', () => {
     jest.resetModules();
     process.env = { ...originalEnv };
     mockExit = jest.spyOn(process, 'exit').mockImplementation((() => {}) as any);
+    (Logger.error as jest.Mock).mockClear();
   });
 
   afterEach(() => {
@@ -30,6 +33,7 @@ describe('validateRequiredEnvVars', () => {
     process.env.NODE_ENV = 'development';
     validateRequiredEnvVars();
     expect(mockExit).not.toHaveBeenCalled();
+    expect(Logger.error).not.toHaveBeenCalled();
   });
 
   it('exits in production when SESSION_SECRET is missing', () => {
@@ -41,6 +45,7 @@ describe('validateRequiredEnvVars', () => {
 
     validateRequiredEnvVars();
     expect(mockExit).toHaveBeenCalledWith(1);
+    expect(Logger.error).toHaveBeenCalledWith(' - SESSION_SECRET: SESSION_SECRET is required in production.');
   });
 
   it('exits in production when no bot tokens are configured', () => {
@@ -61,6 +66,14 @@ describe('validateRequiredEnvVars', () => {
 
     validateRequiredEnvVars();
     expect(mockExit).toHaveBeenCalledWith(1);
+    expect(Logger.error).toHaveBeenCalledWith(' - DISCORD_BOT_TOKEN, SLACK_BOT_TOKEN, or MATTERMOST_TOKEN: Production startup requires at least one messaging platform token to be configured.');
+  });
+
+  it('exits when NODE_ENV is invalid', () => {
+    process.env.NODE_ENV = 'invalid_env' as any;
+    validateRequiredEnvVars();
+    expect(mockExit).toHaveBeenCalledWith(1);
+    expect(Logger.error).toHaveBeenCalledWith(expect.stringContaining('Invalid enum value.'));
   });
 
   it('does not exit when all production vars and a bot token are present', () => {
