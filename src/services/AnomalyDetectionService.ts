@@ -1,6 +1,7 @@
 import crypto from 'crypto';
 import { EventEmitter } from 'events';
 import Debug from 'debug';
+import { THIRTY_SECONDS_MS } from '@common/constants/time';
 import { DatabaseManager, type Anomaly } from '../database/DatabaseManager';
 import { MetricsCollector } from '../monitoring/MetricsCollector';
 import { WebSocketService, type AlertEvent } from '../server/services/WebSocketService';
@@ -43,7 +44,7 @@ export class AnomalyDetectionService extends EventEmitter {
     this.metricsCollector = metricsCollector;
     this.setMaxListeners(15);
     // Start periodic detection
-    this.detectionInterval = setInterval(() => this.runDetection(), 30000); // Every 30 seconds
+    this.detectionInterval = setInterval(() => this.runDetection(), THIRTY_SECONDS_MS); // Every 30 seconds
   }
 
   static getInstance(

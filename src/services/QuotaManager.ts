@@ -1,4 +1,10 @@
 import Debug from 'debug';
+import {
+  ONE_HOUR_MS,
+  ONE_MINUTE_MS,
+  ONE_SECOND_MS,
+  TWENTY_FOUR_HOURS_MS,
+} from '@common/constants/time';
 import type { QuotaStore } from './QuotaStore';
 
 const debug = Debug('app:QuotaManager');
@@ -23,9 +29,9 @@ export type EntityType = 'user' | 'bot' | 'channel';
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
-const TTL_MINUTE = 60;
-const TTL_HOUR = 3600;
-const TTL_DAY = 86400;
+const TTL_MINUTE = ONE_MINUTE_MS / ONE_SECOND_MS;
+const TTL_HOUR = ONE_HOUR_MS / ONE_SECOND_MS;
+const TTL_DAY = TWENTY_FOUR_HOURS_MS / ONE_SECOND_MS;
 
 const DEFAULT_QUOTA: QuotaConfig = {
   maxRequestsPerMinute: parseInt(process.env.QUOTA_MAX_REQ_PER_MINUTE || '20', 10),
@@ -150,11 +156,7 @@ export class QuotaManager {
    * Consume request quota (1 request against minute/hour/day counters).
    * Optionally also consume a token amount.
    */
-  async consumeQuota(
-    entityId: string,
-    entityType: EntityType,
-    amount: number = 1
-  ): Promise<void> {
+  async consumeQuota(entityId: string, entityType: EntityType, amount: number = 1): Promise<void> {
     const prefix = `${entityType}:${entityId}`;
 
     await Promise.all([
@@ -169,11 +171,7 @@ export class QuotaManager {
   /**
    * Consume token quota separately (called after inference completes).
    */
-  async consumeTokens(
-    entityId: string,
-    entityType: EntityType,
-    tokens: number
-  ): Promise<void> {
+  async consumeTokens(entityId: string, entityType: EntityType, tokens: number): Promise<void> {
     const prefix = `${entityType}:${entityId}`;
     await this.store.increment(`${prefix}:tok:${windowKey('day')}`, TTL_DAY, tokens);
     debug(`Consumed ${tokens} token(s) for ${entityType}:${entityId}`);
@@ -211,6 +209,6 @@ export class QuotaManager {
     if (status.remaining.day === 0) {
       earliest = Math.min(earliest, status.resetAt.day.getTime() - now);
     }
-    return Math.max(1, Math.ceil(earliest / 1000));
+    return Math.max(1, Math.ceil(earliest / ONE_SECOND_MS));
   }
 }
