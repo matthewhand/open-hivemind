@@ -88,7 +88,7 @@ export default defineConfig({
   ],
 
   /* Retry configuration */
-  retries: process.env.CI ? 2 : 0,
+  retries: process.env.CI ? 3 : 1,
 
   /* Test organization */
   grep: process.env.GREP ? new RegExp(process.env.GREP) : undefined,

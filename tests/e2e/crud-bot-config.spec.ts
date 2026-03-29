@@ -51,7 +51,10 @@ test.describe('Bot Configuration CRUD Lifecycle', () => {
       },
       schema: {
         properties: {
-          defaultProvider: { enum: ['discord', 'slack', 'mattermost'], doc: 'Default message provider' },
+          defaultProvider: {
+            enum: ['discord', 'slack', 'mattermost'],
+            doc: 'Default message provider',
+          },
           retryAttempts: { format: 'int', doc: 'Number of retry attempts' },
           webhookSecret: { sensitive: true, doc: 'Webhook secret' },
         },
@@ -91,7 +94,12 @@ test.describe('Bot Configuration CRUD Lifecycle', () => {
       page.route('**/api/config/llm-status', (route) =>
         route.fulfill({
           status: 200,
-          json: { defaultConfigured: true, defaultProviders: [], botsMissingLlmProvider: [], hasMissing: false },
+          json: {
+            defaultConfigured: true,
+            defaultProviders: [],
+            botsMissingLlmProvider: [],
+            hasMissing: false,
+          },
         })
       ),
       page.route('**/api/config', (route) => route.fulfill({ status: 200, json: { bots: [] } })),
@@ -99,14 +107,18 @@ test.describe('Bot Configuration CRUD Lifecycle', () => {
       page.route('**/api/csrf-token', (route) =>
         route.fulfill({ status: 200, json: { token: 'mock-csrf-token' } })
       ),
-      page.route('**/api/health', (route) => route.fulfill({ status: 200, json: { status: 'ok' } })),
+      page.route('**/api/health', (route) =>
+        route.fulfill({ status: 200, json: { status: 'ok' } })
+      ),
       page.route('**/api/dashboard/api/status', (route) =>
         route.fulfill({ status: 200, json: { bots: [], uptime: 100 } })
       ),
       page.route('**/api/admin/guard-profiles', (route) =>
         route.fulfill({ status: 200, json: { data: [] } })
       ),
-      page.route('**/api/demo/status', (route) => route.fulfill({ status: 200, json: { active: false } })),
+      page.route('**/api/demo/status', (route) =>
+        route.fulfill({ status: 200, json: { active: false } })
+      ),
     ]);
   }
 
@@ -124,21 +136,18 @@ test.describe('Bot Configuration CRUD Lifecycle', () => {
     );
 
     await page.goto('/admin/configuration');
-    await page.waitForTimeout(1000);
 
     // Verify section labels appear (capitalized config names)
     const generalSection = page.getByText('General').first();
     await expect(generalSection).toBeVisible({ timeout: 5000 });
 
     const llmSection = page.getByText('Llm').first();
-    if ((await llmSection.count()) > 0) {
-      await expect(llmSection).toBeVisible();
-    }
+    await expect(llmSection).toBeVisible();
+    await expect(llmSection).toBeVisible();
 
     const messagingSection = page.getByText('Messaging').first();
-    if ((await messagingSection.count()) > 0) {
-      await expect(messagingSection).toBeVisible();
-    }
+    await expect(messagingSection).toBeVisible();
+    await expect(messagingSection).toBeVisible();
   });
 
   test('expand and collapse config sections', async ({ page }) => {
@@ -150,19 +159,19 @@ test.describe('Bot Configuration CRUD Lifecycle', () => {
     );
 
     await page.goto('/admin/configuration');
-    await page.waitForTimeout(1000);
 
     // Click on a section header to expand/collapse
-    const sectionHeader = page.locator('button:has-text("general"), button:has-text("llm"), button:has-text("messaging"), button:has-text("security")').first();
-    if ((await sectionHeader.count()) > 0) {
-      // Expand
-      await sectionHeader.click();
-      await page.waitForTimeout(300);
+    const sectionHeader = page
+      .locator(
+        'button:has-text("general"), button:has-text("llm"), button:has-text("messaging"), button:has-text("security")'
+      )
+      .first();
+    await expect(sectionHeader).toBeVisible();
+    // Expand
+    await sectionHeader.click();
 
-      // Collapse
-      await sectionHeader.click();
-      await page.waitForTimeout(300);
-    }
+    // Collapse
+    await sectionHeader.click();
   });
 
   test('edit text input field', async ({ page }) => {
@@ -174,19 +183,18 @@ test.describe('Bot Configuration CRUD Lifecycle', () => {
     );
 
     await page.goto('/admin/configuration');
-    await page.waitForTimeout(1000);
 
     // General section is expanded by default — find Instance Name input
     // The first textbox in the general section region is instanceName
     const generalRegion = page.locator('region').first();
-    const instanceNameInput = generalRegion.locator('input[type="text"], input[type="password"]').first();
-    if ((await instanceNameInput.count()) > 0) {
-      await expect(instanceNameInput).toHaveValue('My Hivemind');
-      await instanceNameInput.clear();
-      await instanceNameInput.fill('Updated Hivemind');
-      await page.waitForTimeout(200);
-      await expect(instanceNameInput).toHaveValue('Updated Hivemind');
-    }
+    const instanceNameInput = generalRegion
+      .locator('input[type="text"], input[type="password"]')
+      .first();
+    await expect(instanceNameInput).toBeVisible();
+    await expect(instanceNameInput).toHaveValue('My Hivemind');
+    await instanceNameInput.clear();
+    await instanceNameInput.fill('Updated Hivemind');
+    await expect(instanceNameInput).toHaveValue('Updated Hivemind');
   });
 
   test('toggle boolean config', async ({ page }) => {
@@ -198,33 +206,32 @@ test.describe('Bot Configuration CRUD Lifecycle', () => {
     );
 
     await page.goto('/admin/configuration');
-    await page.waitForTimeout(1000);
 
     // Expand general section
     const generalHeader = page.locator('button:has-text("general")').first();
-    if ((await generalHeader.count()) > 0) {
-      await generalHeader.click();
-      await page.waitForTimeout(300);
-    }
+    await expect(generalHeader).toBeVisible();
+    await generalHeader.click();
 
     // Find Debug Mode toggle
-    const debugToggle = page.locator('input[type="checkbox"]').filter({ has: page.locator('~ *:has-text("Debug"), ~ label:has-text("Debug")') }).first();
-    const toggleByLabel = page.locator('label:has-text("Debug") input[type="checkbox"], label:has-text("Debug Mode") input[type="checkbox"]').first();
+    const debugToggle = page
+      .locator('input[type="checkbox"]')
+      .filter({ has: page.locator('~ *:has-text("Debug"), ~ label:has-text("Debug")') })
+      .first();
+    const toggleByLabel = page
+      .locator(
+        'label:has-text("Debug") input[type="checkbox"], label:has-text("Debug Mode") input[type="checkbox"]'
+      )
+      .first();
     const anyToggle = page.locator('.toggle, input[type="checkbox"]').first();
 
-    if ((await toggleByLabel.count()) > 0) {
-      const isChecked = await toggleByLabel.isChecked();
-      await toggleByLabel.click();
-      await page.waitForTimeout(200);
-      // State should toggle
-      if (isChecked) {
-        await expect(toggleByLabel).not.toBeChecked();
-      } else {
-        await expect(toggleByLabel).toBeChecked();
-      }
-    } else if ((await anyToggle.count()) > 0) {
-      await anyToggle.click();
-      await page.waitForTimeout(200);
+    await expect(toggleByLabel).toBeVisible();
+    const isChecked = await toggleByLabel.isChecked();
+    await toggleByLabel.click();
+    // State should toggle
+    if (isChecked) {
+      await expect(toggleByLabel).not.toBeChecked();
+    } else {
+      await expect(toggleByLabel).toBeChecked();
     }
   });
 
@@ -237,22 +244,19 @@ test.describe('Bot Configuration CRUD Lifecycle', () => {
     );
 
     await page.goto('/admin/configuration');
-    await page.waitForTimeout(1000);
 
     // Expand general section
     const generalHeader = page.locator('button:has-text("general")').first();
-    if ((await generalHeader.count()) > 0) {
-      await generalHeader.click();
-      await page.waitForTimeout(300);
-    }
+    await expect(generalHeader).toBeVisible();
+    await generalHeader.click();
 
     // Find log level select
-    const logLevelSelect = page.locator('select:has(option[value="info"]), select:has(option:has-text("info"))').first();
-    if ((await logLevelSelect.count()) > 0) {
-      await logLevelSelect.selectOption('warn');
-      await page.waitForTimeout(200);
-      await expect(logLevelSelect).toHaveValue('warn');
-    }
+    const logLevelSelect = page
+      .locator('select:has(option[value="info"]), select:has(option:has-text("info"))')
+      .first();
+    await expect(logLevelSelect).toBeVisible();
+    await logLevelSelect.selectOption('warn');
+    await expect(logLevelSelect).toHaveValue('warn');
   });
 
   test('save config section triggers API call with payload', async ({ page }) => {
@@ -272,14 +276,13 @@ test.describe('Bot Configuration CRUD Lifecycle', () => {
     );
 
     await page.goto('/admin/configuration');
-    await page.waitForTimeout(1000);
 
     // Look for a Save button
-    const saveBtn = page.locator('button:has-text("Save"), button:has-text("Apply"), button[type="submit"]').first();
-    if ((await saveBtn.count()) > 0) {
-      await saveBtn.click();
-      await page.waitForTimeout(500);
-    }
+    const saveBtn = page
+      .locator('button:has-text("Save"), button:has-text("Apply"), button[type="submit"]')
+      .first();
+    await expect(saveBtn).toBeVisible();
+    await saveBtn.click();
   });
 
   test('success message after save', async ({ page }) => {
@@ -287,26 +290,31 @@ test.describe('Bot Configuration CRUD Lifecycle', () => {
       route.fulfill({ status: 200, json: mockConfigGlobal })
     );
     await page.route('**/api/config/update', (route) =>
-      route.fulfill({ status: 200, json: { success: true, message: 'Configuration saved successfully' } })
+      route.fulfill({
+        status: 200,
+        json: { success: true, message: 'Configuration saved successfully' },
+      })
     );
     await page.route('**/api/config/hot-reload/rollbacks', (route) =>
       route.fulfill({ status: 200, json: mockRollbacks })
     );
 
     await page.goto('/admin/configuration');
-    await page.waitForTimeout(1000);
 
-    const saveBtn = page.locator('button:has-text("Save"), button:has-text("Apply"), button[type="submit"]').first();
-    if ((await saveBtn.count()) > 0) {
-      await saveBtn.click();
-      await page.waitForTimeout(500);
+    const saveBtn = page
+      .locator('button:has-text("Save"), button:has-text("Apply"), button[type="submit"]')
+      .first();
+    await expect(saveBtn).toBeVisible();
+    await saveBtn.click();
 
-      // Check for success toast or alert
-      const successAlert = page.locator('.alert-success, [class*="toast"] [class*="success"], [role="alert"]:has-text("success"), [class*="success"]').first();
-      if ((await successAlert.count()) > 0) {
-        await expect(successAlert).toBeVisible();
-      }
-    }
+    // Check for success toast or alert
+    const successAlert = page
+      .locator(
+        '.alert-success, [class*="toast"] [class*="success"], [role="alert"]:has-text("success"), [class*="success"]'
+      )
+      .first();
+    await expect(successAlert).toBeVisible();
+    await expect(successAlert).toBeVisible();
   });
 
   test('rollback button opens modal with snapshot list', async ({ page }) => {
@@ -318,26 +326,24 @@ test.describe('Bot Configuration CRUD Lifecycle', () => {
     );
 
     await page.goto('/admin/configuration');
-    await page.waitForTimeout(1000);
 
     // Page shows "Rollbacks" button (may be disabled if no rollbacks)
     const rollbackBtn = page.locator('button:has-text("Rollbacks")').first();
-    if ((await rollbackBtn.count()) > 0 && await rollbackBtn.isEnabled()) {
-      await rollbackBtn.click();
-      await page.waitForTimeout(500);
+    await expect(rollbackBtn).toBeVisible();
+    await expect(rollbackBtn).toBeEnabled();
+    await rollbackBtn.click();
 
-      // Modal should open
-      const modal = page.locator('dialog.modal[open] .modal-box, .modal-box, [role="dialog"]').first();
-      if ((await modal.count()) > 0) {
-        await expect(modal).toBeVisible();
+    // Modal should open
+    const modal = page
+      .locator('dialog.modal[open] .modal-box, .modal-box, [role="dialog"]')
+      .first();
+    await expect(modal).toBeVisible();
+    await expect(modal).toBeVisible();
 
-        // Rollback timestamps should be listed
-        const snap1 = page.getByText('2026-03-25').first();
-        if ((await snap1.count()) > 0) {
-          await expect(snap1).toBeVisible();
-        }
-      }
-    }
+    // Rollback timestamps should be listed
+    const snap1 = page.getByText('2026-03-25').first();
+    await expect(snap1).toBeVisible();
+    await expect(snap1).toBeVisible();
   });
 
   test('select snapshot and confirm rollback', async ({ page }) => {
@@ -354,30 +360,32 @@ test.describe('Bot Configuration CRUD Lifecycle', () => {
     });
 
     await page.goto('/admin/configuration');
-    await page.waitForTimeout(1000);
 
     const rollbackBtn = page.locator('button:has-text("Rollbacks")').first();
-    if ((await rollbackBtn.count()) > 0 && await rollbackBtn.isEnabled()) {
-      await rollbackBtn.click();
-      await page.waitForTimeout(500);
+    await expect(rollbackBtn).toBeVisible();
+    await expect(rollbackBtn).toBeEnabled();
+    await rollbackBtn.click();
 
-      const modal = page.locator('dialog.modal[open] .modal-box, .modal-box, [role="dialog"]').first();
-      if ((await modal.count()) > 0) {
-        // Select first snapshot (rendered as clickable divs)
-        const snapshotItem = modal.locator('[class*="cursor-pointer"]').filter({ hasText: /rollback/ }).first();
-        if ((await snapshotItem.count()) > 0) {
-          await snapshotItem.click();
-          await page.waitForTimeout(300);
-        }
+    const modal = page
+      .locator('dialog.modal[open] .modal-box, .modal-box, [role="dialog"]')
+      .first();
+    await expect(modal).toBeVisible();
+    // Select first snapshot (rendered as clickable divs)
+    const snapshotItem = modal
+      .locator('[class*="cursor-pointer"]')
+      .filter({ hasText: /rollback/ })
+      .first();
+    await expect(snapshotItem).toBeVisible();
+    await snapshotItem.click();
 
-        // Confirm rollback
-        const confirmBtn = modal.locator('button:has-text("Confirm"), button:has-text("Rollback"), button:has-text("Restore")').first();
-        if ((await confirmBtn.count()) > 0) {
-          await confirmBtn.click();
-          await page.waitForTimeout(500);
-        }
-      }
-    }
+    // Confirm rollback
+    const confirmBtn = modal
+      .locator(
+        'button:has-text("Confirm"), button:has-text("Rollback"), button:has-text("Restore")'
+      )
+      .first();
+    await expect(confirmBtn).toBeVisible();
+    await confirmBtn.click();
   });
 
   test('error handling when save fails', async ({ page }) => {
@@ -385,26 +393,31 @@ test.describe('Bot Configuration CRUD Lifecycle', () => {
       route.fulfill({ status: 200, json: mockConfigGlobal })
     );
     await page.route('**/api/config/update', (route) =>
-      route.fulfill({ status: 500, json: { success: false, message: 'Internal server error: failed to persist configuration' } })
+      route.fulfill({
+        status: 500,
+        json: { success: false, message: 'Internal server error: failed to persist configuration' },
+      })
     );
     await page.route('**/api/config/hot-reload/rollbacks', (route) =>
       route.fulfill({ status: 200, json: mockRollbacks })
     );
 
     await page.goto('/admin/configuration');
-    await page.waitForTimeout(1000);
 
-    const saveBtn = page.locator('button:has-text("Save"), button:has-text("Apply"), button[type="submit"]').first();
-    if ((await saveBtn.count()) > 0) {
-      await saveBtn.click();
-      await page.waitForTimeout(500);
+    const saveBtn = page
+      .locator('button:has-text("Save"), button:has-text("Apply"), button[type="submit"]')
+      .first();
+    await expect(saveBtn).toBeVisible();
+    await saveBtn.click();
 
-      // Check for error toast or alert
-      const errorAlert = page.locator('.alert-error, [class*="toast"] [class*="error"], [role="alert"]:has-text("error"), [class*="error"]').first();
-      if ((await errorAlert.count()) > 0) {
-        await expect(errorAlert).toBeVisible();
-      }
-    }
+    // Check for error toast or alert
+    const errorAlert = page
+      .locator(
+        '.alert-error, [class*="toast"] [class*="error"], [role="alert"]:has-text("error"), [class*="error"]'
+      )
+      .first();
+    await expect(errorAlert).toBeVisible();
+    await expect(errorAlert).toBeVisible();
   });
 
   test('modified indicator before save', async ({ page }) => {
@@ -416,22 +429,20 @@ test.describe('Bot Configuration CRUD Lifecycle', () => {
     );
 
     await page.goto('/admin/configuration');
-    await page.waitForTimeout(1000);
 
     // General section is expanded by default — find Instance Name input
     const generalRegion = page.locator('region').first();
-    const instanceNameInput = generalRegion.locator('input[type="text"], input[type="password"]').first();
-    if ((await instanceNameInput.count()) > 0) {
-      await instanceNameInput.clear();
-      await instanceNameInput.fill('Modified Hivemind');
-      await page.waitForTimeout(300);
+    const instanceNameInput = generalRegion
+      .locator('input[type="text"], input[type="password"]')
+      .first();
+    await expect(instanceNameInput).toBeVisible();
+    await instanceNameInput.clear();
+    await instanceNameInput.fill('Modified Hivemind');
 
-      // Look for unsaved/modified indicator (page shows "Modified" badge on section)
-      const modifiedIndicator = page.getByText('Modified').first();
-      if ((await modifiedIndicator.count()) > 0) {
-        await expect(modifiedIndicator).toBeVisible();
-      }
-    }
+    // Look for unsaved/modified indicator (page shows "Modified" badge on section)
+    const modifiedIndicator = page.getByText('Modified').first();
+    await expect(modifiedIndicator).toBeVisible();
+    await expect(modifiedIndicator).toBeVisible();
   });
 
   test('sensitive field badge display', async ({ page }) => {
@@ -443,25 +454,24 @@ test.describe('Bot Configuration CRUD Lifecycle', () => {
     );
 
     await page.goto('/admin/configuration');
-    await page.waitForTimeout(1000);
 
     // Expand LLM section which has sensitive API Key
     const llmHeader = page.locator('button:has-text("llm")').first();
-    if ((await llmHeader.count()) > 0) {
-      await llmHeader.click();
-      await page.waitForTimeout(300);
-    }
+    await expect(llmHeader).toBeVisible();
+    await llmHeader.click();
 
     // Look for sensitive indicator near API Key field
-    const sensitiveBadge = page.locator('.badge:has-text("Sensitive"), .badge:has-text("Secret"), [class*="sensitive"], [title*="sensitive" i]').first();
-    if ((await sensitiveBadge.count()) > 0) {
-      await expect(sensitiveBadge).toBeVisible();
-    }
+    const sensitiveBadge = page
+      .locator(
+        '.badge:has-text("Sensitive"), .badge:has-text("Secret"), [class*="sensitive"], [title*="sensitive" i]'
+      )
+      .first();
+    await expect(sensitiveBadge).toBeVisible();
+    await expect(sensitiveBadge).toBeVisible();
 
     // Check masked value is present
     const maskedValue = page.getByText('••••••••').first();
-    if ((await maskedValue.count()) > 0) {
-      await expect(maskedValue).toBeVisible();
-    }
+    await expect(maskedValue).toBeVisible();
+    await expect(maskedValue).toBeVisible();
   });
 });
