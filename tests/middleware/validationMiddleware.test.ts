@@ -1,27 +1,31 @@
 import { validate, commonValidations } from '../../src/middleware/validationMiddleware';
+import { body } from 'express-validator';
 
 // Mock express-validator
 jest.mock('express-validator', () => {
   const actualModule = jest.requireActual('express-validator');
+
+  const mockChain = {
+    optional: jest.fn().mockReturnThis(),
+    isString: jest.fn().mockReturnThis(),
+    trim: jest.fn().mockReturnThis(),
+    escape: jest.fn().mockReturnThis(),
+    isLength: jest.fn().mockReturnThis(),
+    matches: jest.fn().mockReturnThis(),
+    isEmail: jest.fn().mockReturnThis(),
+    normalizeEmail: jest.fn().mockReturnThis(),
+    isInt: jest.fn().mockReturnThis(),
+    toInt: jest.fn().mockReturnThis(),
+    isBoolean: jest.fn().mockReturnThis(),
+    toBoolean: jest.fn().mockReturnThis(),
+    isURL: jest.fn().mockReturnThis(),
+    isAlphanumeric: jest.fn().mockReturnThis(),
+  };
+
   return {
     ...actualModule,
     validationResult: jest.fn(),
-    body: jest.fn(() => ({
-      optional: jest.fn().mockReturnThis(),
-      isString: jest.fn().mockReturnThis(),
-      trim: jest.fn().mockReturnThis(),
-      escape: jest.fn().mockReturnThis(),
-      isLength: jest.fn().mockReturnThis(),
-      matches: jest.fn().mockReturnThis(),
-      isEmail: jest.fn().mockReturnThis(),
-      normalizeEmail: jest.fn().mockReturnThis(),
-      isInt: jest.fn().mockReturnThis(),
-      toInt: jest.fn().mockReturnThis(),
-      isBoolean: jest.fn().mockReturnThis(),
-      toBoolean: jest.fn().mockReturnThis(),
-      isURL: jest.fn().mockReturnThis(),
-      isAlphanumeric: jest.fn().mockReturnThis(),
-    })),
+    body: jest.fn(() => mockChain),
   };
 });
 
@@ -54,36 +58,68 @@ describe('validationMiddleware', () => {
   });
 
   describe('commonValidations', () => {
+    beforeEach(() => {
+      jest.clearAllMocks();
+    });
+
     it('should have apiKey validation', () => {
-      expect(typeof commonValidations.apiKey).toBe('function');
+      commonValidations.apiKey();
+      expect(body).toHaveBeenCalledWith('apiKey');
     });
 
     it('should have username validation', () => {
-      expect(typeof commonValidations.username).toBe('function');
+      commonValidations.username();
+      expect(body).toHaveBeenCalledWith('username');
     });
 
     it('should have email validation', () => {
-      expect(typeof commonValidations.email).toBe('function');
+      commonValidations.email();
+      expect(body).toHaveBeenCalledWith('email');
     });
 
     it('should have configName validation', () => {
-      expect(typeof commonValidations.configName).toBe('function');
+      commonValidations.configName();
+      expect(body).toHaveBeenCalledWith('name');
+    });
+
+    it('should have configValue validation', () => {
+      commonValidations.configValue();
+      expect(body).toHaveBeenCalledWith('value');
+    });
+
+    it('should have comment validation', () => {
+      commonValidations.comment();
+      expect(body).toHaveBeenCalledWith('comment');
+    });
+
+    it('should have message validation', () => {
+      commonValidations.message();
+      expect(body).toHaveBeenCalledWith('message');
     });
 
     it('should have url validation', () => {
-      expect(typeof commonValidations.url).toBe('function');
+      commonValidations.url();
+      expect(body).toHaveBeenCalledWith('url');
     });
 
-    it('should have number validation', () => {
-      expect(typeof commonValidations.number).toBe('function');
+    it('should have number validation with defaults', () => {
+      commonValidations.number();
+      expect(body).toHaveBeenCalledWith('number');
+    });
+
+    it('should have number validation with custom min/max', () => {
+      commonValidations.number(1, 10);
+      expect(body).toHaveBeenCalledWith('number');
     });
 
     it('should have boolean validation', () => {
-      expect(typeof commonValidations.boolean).toBe('function');
+      commonValidations.boolean();
+      expect(body).toHaveBeenCalledWith('boolean');
     });
 
     it('should have objectId validation', () => {
-      expect(typeof commonValidations.objectId).toBe('function');
+      commonValidations.objectId();
+      expect(body).toHaveBeenCalledWith('id');
     });
   });
 });
