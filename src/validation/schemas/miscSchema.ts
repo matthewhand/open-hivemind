@@ -9,18 +9,16 @@ export const ClearCacheSchema = z.object({
     .object({
       keys: z.array(z.string()).optional(),
     })
-    .passthrough()
     .optional(),
 });
 
 export const ValidationTestSchema = z.object({
-  body: z
-    .object({
-      type: z.string().optional(),
-      data: z.any().optional(),
-      rules: z.array(z.string()).optional(),
-    })
-    .passthrough(),
+  body: z.object({
+    config: z.record(z.unknown()).optional(),
+    type: z.string().optional(),
+    data: z.record(z.unknown()).optional(),
+    rules: z.array(z.string()).optional(),
+  }),
 });
 
 export const MarketplacePluginNameParamSchema = z.object({
@@ -30,11 +28,9 @@ export const MarketplacePluginNameParamSchema = z.object({
 });
 
 export const ImportConfigSchema = z.object({
-  body: z
-    .object({
-      data: z.any(),
-    })
-    .passthrough(),
+  body: z.object({
+    data: z.record(z.unknown()),
+  }),
 });
 
 export const ExportConfigSchema = z.object({
@@ -49,21 +45,17 @@ export const ExportConfigSchema = z.object({
 });
 
 export const SpecSchema = z.object({
-  body: z
-    .object({
-      content: z.string(),
-    })
-    .passthrough(),
+  body: z.object({
+    content: z.string(),
+  }),
 });
 
 export const ErrorLogSchema = z.object({
-  body: z
-    .object({
-      error: z.string().optional(),
-      message: z.string().optional(),
-      stack: z.string().optional(),
-    })
-    .passthrough(),
+  body: z.object({
+    error: z.string().optional(),
+    message: z.string().optional(),
+    stack: z.string().optional(),
+  }),
 });
 
 export const CIDeploySchema = z.object({
@@ -73,7 +65,6 @@ export const CIDeploySchema = z.object({
       environment: z.string().optional(),
       force: z.boolean().optional(),
     })
-    .passthrough()
     .optional(),
 });
 
@@ -91,7 +82,6 @@ export const AnomalyResolveSchema = z.object({
     .object({
       resolution: z.string().optional(),
     })
-    .passthrough()
     .optional(),
 });
 
@@ -102,11 +92,9 @@ export const WebhookRetrySchema = z.object({
 });
 
 export const DashboardFeedbackSchema = z.object({
-  body: z
-    .object({
-      feedback: z.string(),
-    })
-    .passthrough(),
+  body: z.object({
+    feedback: z.string(),
+  }),
 });
 
 export const AlertIdParamSchema = z.object({
@@ -116,30 +104,28 @@ export const AlertIdParamSchema = z.object({
 });
 
 export const ChatGenerateSchema = z.object({
-  body: z
-    .object({
-      prompt: z.string(),
-      provider: z.string().optional(),
-    })
-    .passthrough(),
+  body: z.object({
+    message: z.string().min(1),
+    botName: z.string().min(1),
+    channelId: z.string().optional(),
+    userId: z.string().optional(),
+    userName: z.string().optional(),
+  }),
 });
 
 export const ValidateConfigSchema = z.object({
-  body: z
-    .object({
-      config: z.any(),
-    })
-    .passthrough(),
+  body: z.object({
+    config: z.record(z.unknown()),
+  }),
 });
 
 export const DashboardConfigSchema = z.object({
   body: z
     .object({
-      layout: z.any().optional(),
+      layout: z.record(z.unknown()).optional(),
       theme: z.string().optional(),
-      widgets: z.array(z.any()).optional(),
+      widgets: z.array(z.record(z.unknown())).optional(),
     })
-    .passthrough()
     .optional(),
 });
 
@@ -147,11 +133,9 @@ export const BotApplyUpdateSchema = z.object({
   params: z.object({
     botId: z.string().min(1),
   }),
-  body: z
-    .object({
-      approvalId: z.string().optional(),
-    })
-    .passthrough(),
+  body: z.object({
+    approvalId: z.string().optional(),
+  }),
 });
 
 export const ValidateImportSchema = z.object({

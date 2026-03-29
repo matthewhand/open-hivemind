@@ -270,7 +270,6 @@ router.post(
   '/import',
   requireAdmin,
   upload.single('file'),
-  validateRequest(ImportConfigSchema),
   handleUploadError,
   validateImportOptions,
   handleValidationErrors,
