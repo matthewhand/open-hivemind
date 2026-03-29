@@ -127,7 +127,7 @@ router.get('/check-updates/:name', validateRequest(PluginNameParamSchema), async
     debug('Check updates error: %s', err);
     return res.status(500).json({ error: 'Failed to check updates', message: err.message });
   }
-});
+);
 
 /**
  * GET /api/marketplace/check-all-updates

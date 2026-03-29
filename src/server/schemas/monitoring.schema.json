@@ -1,0 +1,75 @@
+{
+  "/dashboard/api/status": {
+    "get": {
+      "summary": "Get live bot status",
+      "tags": [
+        "Monitoring"
+      ],
+      "responses": {
+        "200": {
+          "description": "Status payload"
+        }
+      }
+    }
+  },
+  "/dashboard/api/activity": {
+    "get": {
+      "summary": "Get message activity and timelines",
+      "tags": [
+        "Monitoring"
+      ],
+      "parameters": [
+        {
+          "name": "bot",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "string"
+          },
+          "description": "Filter by bot name (comma separated)."
+        },
+        {
+          "name": "messageProvider",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "string"
+          },
+          "description": "Filter by message provider (comma separated)."
+        },
+        {
+          "name": "llmProvider",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "string"
+          },
+          "description": "Filter by llm provider (comma separated)."
+        },
+        {
+          "name": "from",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "string"
+          },
+          "description": "ISO datetime start filter."
+        },
+        {
+          "name": "to",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "string"
+          },
+          "description": "ISO datetime end filter."
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "Activity data"
+        }
+      }
+    }
+  }
+}
