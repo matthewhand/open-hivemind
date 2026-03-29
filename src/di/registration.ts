@@ -11,15 +11,15 @@ import Logger from '../common/logger';
 import { BotConfigurationManager } from '../config/BotConfigurationManager';
 // Import implementations
 import { ConfigurationManager } from '../config/ConfigurationManager';
+import { MCPProviderManager } from '../config/MCPProviderManager';
 import ProviderConfigManager from '../config/ProviderConfigManager';
 import { SecureConfigManager } from '../config/SecureConfigManager';
 import { UserConfigStore } from '../config/UserConfigStore';
 import { DatabaseManager } from '../database/DatabaseManager';
 import { SchemaManager } from '../database/SchemaManager';
 import { BotManager } from '../managers/BotManager';
-import { MCPProviderManager } from '../config/MCPProviderManager';
-import { WebSocketService } from '../server/services/WebSocketService';
 import { RealTimeValidationService } from '../server/services/RealTimeValidationService';
+import { WebSocketService } from '../server/services/WebSocketService';
 import { TOKENS } from './container';
 
 const logger = Logger.withContext('DI');
