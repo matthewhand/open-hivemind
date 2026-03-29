@@ -22,6 +22,7 @@
     "build:frontend": "bash ./scripts/build-frontend.sh",
     "build:netlify": "bash ./scripts/build-netlify.sh",
     "build:serverless": "npm run build:frontend && mkdir -p api && cp src/api/index.js api/index.js",
+    "docs:env": "pnpm exec ts-node scripts/generate-env-docs.ts",
     "audit:secrets": "echo 'Secrets audit skipped - implement a real secrets audit command later'",
     "start": "NODE_ENV=production bash ./scripts/start-runtime.sh",
     "start:test": "NODE_ENV=test bash ./scripts/start-runtime.sh",
