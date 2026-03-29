@@ -5,6 +5,7 @@ import {
   RefreshCw,
   Map as MapIcon,
 } from 'lucide-react';
+import Button from '../components/DaisyUI/Button';
 import PageHeader from '../components/DaisyUI/PageHeader';
 import SearchFilterBar from '../components/SearchFilterBar';
 import EmptyState from '../components/DaisyUI/EmptyState';
@@ -150,7 +151,7 @@ const SitemapPage: React.FC = () => {
         />
         <div className="alert alert-error">
           <span>Error loading sitemap: {error}</span>
-          <button className="btn btn-sm btn-ghost" onClick={fetchSitemap}>Retry</button>
+          <Button variant="ghost" size="sm" onClick={fetchSitemap}>Retry</Button>
         </div>
       </div>
     );
@@ -173,12 +174,14 @@ const SitemapPage: React.FC = () => {
         icon={MapIcon}
         actions={
           <>
-            <button className="btn btn-ghost gap-2" onClick={handleDownloadXml}>
+            <Button variant="ghost" onClick={handleDownloadXml} className="gap-2">
               <Download className="w-4 h-4" /> XML
-            </button>
-            <button className="btn btn-ghost btn-circle" onClick={fetchSitemap} title="Refresh" aria-label="Refresh">
-              <RefreshCw className="w-4 h-4" />
-            </button>
+            </Button>
+            <div className="tooltip" data-tip="Refresh">
+              <Button variant="ghost" onClick={fetchSitemap} className="btn-circle" aria-label="Refresh">
+                <RefreshCw className="w-4 h-4" />
+              </Button>
+            </div>
           </>
         }
       />
@@ -246,13 +249,17 @@ const SitemapPage: React.FC = () => {
                       <h3 className="font-mono text-sm break-all font-bold">
                         {url.url}
                       </h3>
-                      <button
-                        className="btn btn-ghost btn-xs btn-circle"
-                        onClick={() => handleOpenUrl(url.fullUrl)}
-                        aria-label="Open URL"
-                      >
-                        <ExternalLink className="w-4 h-4" />
-                      </button>
+                      <div className="tooltip" data-tip="Open URL">
+                        <Button
+                          variant="ghost"
+                          size="xs"
+                          onClick={() => handleOpenUrl(url.fullUrl)}
+                          className="btn-circle"
+                          aria-label="Open URL"
+                        >
+                          <ExternalLink className="w-4 h-4" />
+                        </Button>
+                      </div>
                     </div>
 
                     <p className="text-xs text-base-content/70 mb-3">
@@ -291,24 +298,30 @@ const SitemapPage: React.FC = () => {
           Access the sitemap in different formats:
         </p>
         <div className="flex flex-wrap gap-2">
-          <button
-            className="btn btn-outline btn-sm"
+          <Button
+            variant="primary"
+            size="sm"
+            buttonStyle="outline"
             onClick={() => window.open('/sitemap.xml', '_blank')}
           >
             XML Sitemap (SEO)
-          </button>
-          <button
-            className="btn btn-outline btn-sm"
+          </Button>
+          <Button
+            variant="primary"
+            size="sm"
+            buttonStyle="outline"
             onClick={() => window.open('/sitemap.json', '_blank')}
           >
             JSON API
-          </button>
-          <button
-            className="btn btn-outline btn-sm"
+          </Button>
+          <Button
+            variant="primary"
+            size="sm"
+            buttonStyle="outline"
             onClick={() => window.open('/sitemap', '_blank')}
           >
             Human-Readable HTML
-          </button>
+          </Button>
         </div>
       </div>
     </div>

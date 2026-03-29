@@ -5,6 +5,7 @@ import { CreateBotWizard } from '../../components/BotManagement/CreateBotWizard'
 import ImportBotsModal from '../../components/BotManagement/ImportBotsModal';
 import { BotSettingsModal } from '../../components/BotSettingsModal';
 import BulkActionBar from '../../components/BulkActionBar';
+import Button from '../../components/DaisyUI/Button';
 import { SkeletonPage } from '../../components/DaisyUI/Skeleton';
 import { useErrorToast, useSuccessToast } from '../../components/DaisyUI/ToastNotification';
 import SearchFilterBar from '../../components/SearchFilterBar';
@@ -170,14 +171,17 @@ const BotsPage: React.FC = () => {
                 <option value="active">Active Only</option>
                 <option value="inactive">Inactive Only</option>
               </select>
-              <button
-                className="btn btn-ghost btn-sm btn-square"
-                onClick={fetchBots}
-                title="Refresh list"
-                aria-label="Refresh list"
-              >
-                <RefreshCw className={`w-4 h-4 ${botsLoading ? 'animate-spin' : ''}`} />
-              </button>
+              <div className="tooltip" data-tip="Refresh list">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={fetchBots}
+                  className="btn-square"
+                  aria-label="Refresh list"
+                >
+                  <RefreshCw className={`w-4 h-4 ${botsLoading ? 'animate-spin' : ''}`} />
+                </Button>
+              </div>
             </div>
           </SearchFilterBar>
 

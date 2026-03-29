@@ -3,6 +3,7 @@ import {
   Bot, Activity, MessageSquare, AlertCircle, RefreshCw, X, Globe, Cpu, Download, Play, Pause, Settings, ShieldCheck
 } from 'lucide-react';
 import type { BotConfig } from '../../types/bot';
+import Button from '../../components/DaisyUI/Button';
 import ConfigurationValidation from '../../components/ConfigurationValidation';
 
 interface BotPreviewSidebarProps {
@@ -84,13 +85,11 @@ export const BotPreviewSidebar: React.FC<BotPreviewSidebarProps> = ({
               </div>
             </div>
           </div>
-          <button
-            className="btn btn-ghost btn-sm btn-square"
-            onClick={() => setPreviewBot(null)}
-            aria-label="Close preview"
-          >
-            <X className="w-4 h-4" />
-          </button>
+          <div className="tooltip" data-tip="Close preview">
+            <Button variant="ghost" size="sm" onClick={() => setPreviewBot(null)} className="btn-square" aria-label="Close preview">
+              <X className="w-4 h-4" />
+            </Button>
+          </div>
         </div>
 
         <div className="space-y-4">
@@ -276,34 +275,36 @@ export const BotPreviewSidebar: React.FC<BotPreviewSidebarProps> = ({
           )}
 
           <div className="card-actions mt-2 pt-4 border-t border-base-200">
-            <button
-              className="btn btn-primary btn-sm flex-1"
+            <Button
+              variant="primary"
+              size="sm"
+              className="flex-1"
               onClick={() => setEditingBot(previewBot)}
             >
               <Settings className="w-3 h-3 mr-2" /> Configuration
-            </button>
-            <button
-              className="btn btn-sm btn-square btn-ghost"
-              onClick={() => handleExportSingleBot(previewBot)}
-              title="Export bot config"
-              aria-label="Export bot config"
-            >
-              <Download className="w-3 h-3" />
-            </button>
-            <button
-              className={`btn btn-sm btn-square ${
-                previewBot.status === 'active' ? 'btn-error btn-outline' : 'btn-success'
-              }`}
-              onClick={() => handleToggleBotStatus(previewBot)}
-              title={previewBot.status === 'active' ? 'Deactivate' : 'Activate'}
-              aria-label={previewBot.status === 'active' ? 'Deactivate' : 'Activate'}
-            >
-              {previewBot.status === 'active' ? (
-                <Pause className="w-3 h-3" />
-              ) : (
-                <Play className="w-3 h-3" />
-              )}
-            </button>
+            </Button>
+            <div className="tooltip" data-tip="Export bot config">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => handleExportSingleBot(previewBot)}
+                className="btn-square"
+                aria-label="Export bot config"
+              >
+                <Download className="w-3 h-3" />
+              </Button>
+            </div>
+            <div className="tooltip" data-tip={previewBot.status === 'active' ? 'Deactivate' : 'Activate'}>
+              <Button
+                variant={previewBot.status === 'active' ? 'ghost' : 'primary'}
+                size="sm"
+                onClick={() => handleToggleBotStatus(previewBot)}
+                className={`btn-square ${previewBot.status === 'active' ? 'text-error border-error' : ''}`}
+                aria-label={previewBot.status === 'active' ? 'Deactivate' : 'Activate'}
+              >
+                {previewBot.status === 'active' ? <Pause className="w-3 h-3" /> : <Play className="w-3 h-3" />}
+              </Button>
+            </div>
           </div>
         </div>
       </div>

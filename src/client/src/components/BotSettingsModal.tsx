@@ -3,6 +3,7 @@ import {
     X, Save, MessageSquare, Cpu, Info, Edit2, Plus,
     Trash2, Copy, Shield, Eye, Settings
 } from 'lucide-react';
+import Button from './DaisyUI/Button';
 import { Bot as ApiBot, Persona as ApiPersona } from '../services/api';
 import { useConfigDiff } from '../hooks/useConfigDiff';
 import { ConfigDiffConfirmDialog } from './ConfigDiffViewer';
@@ -87,7 +88,9 @@ export const BotSettingsModal: React.FC<BotSettingsModalProps> = ({
         <dialog className="modal modal-open" onClose={onClose}>
             <div className="modal-box w-11/12 max-w-4xl bg-base-100">
                 <form method="dialog">
-                    <button className="btn btn-sm btn-circle btn-ghost absolute right-2 top-2" onClick={onClose} aria-label="Close settings">✕</button>
+                    <div className="tooltip tooltip-left absolute right-2 top-2" data-tip="Close settings">
+                        <Button variant="ghost" size="sm" onClick={onClose} className="btn-circle" aria-label="Close settings">✕</Button>
+                    </div>
                 </form>
 
                 <div className="flex items-center gap-3 mb-6 border-b border-base-300 pb-4">
@@ -270,22 +273,24 @@ export const BotSettingsModal: React.FC<BotSettingsModalProps> = ({
 
                         {/* Action Buttons */}
                         <div className="space-y-3 pt-4">
-                            <button className="btn btn-outline w-full justify-start gap-3" onClick={() => onViewDetails(bot)}>
+                            <Button variant="primary" buttonStyle="outline" className="w-full justify-start gap-3" onClick={() => onViewDetails(bot)}>
                                 <Eye className="w-4 h-4" /> View Logs & Details
-                            </button>
+                            </Button>
 
-                            <button className="btn btn-outline w-full justify-start gap-3" onClick={() => onClone(bot)}>
+                            <Button variant="primary" buttonStyle="outline" className="w-full justify-start gap-3" onClick={() => onClone(bot)}>
                                 <Copy className="w-4 h-4" /> Clone Configuration
-                            </button>
+                            </Button>
 
                             <div className={isEnvProtected ? 'tooltip tooltip-top w-full' : 'w-full'} data-tip="Cannot delete: Defined by environment variables">
-                                <button
-                                    className="btn btn-outline btn-error w-full justify-start gap-3"
+                                <Button
+                                    variant="ghost"
+                                    buttonStyle="outline"
+                                    className="w-full justify-start gap-3 text-error border-error hover:bg-error/10"
                                     disabled={isEnvProtected}
                                     onClick={() => onDelete(bot)}
                                 >
                                     <Trash2 className="w-4 h-4" /> Delete Bot
-                                </button>
+                                </Button>
                             </div>
                         </div>
 
@@ -298,7 +303,7 @@ export const BotSettingsModal: React.FC<BotSettingsModalProps> = ({
                             <span className="badge badge-warning badge-sm">{diff.length} unsaved change{diff.length !== 1 ? 's' : ''}</span>
                         </div>
                     )}
-                    <button className="btn" onClick={onClose}>Close</button>
+                    <Button variant="ghost" onClick={onClose}>Close</Button>
                 </div>
 
                 <ConfigDiffConfirmDialog
