@@ -1,4 +1,5 @@
 import Debug from 'debug';
+
 const debug = Debug('app:common:ErrorUtils');
 export interface HivemindError {
   message: string;

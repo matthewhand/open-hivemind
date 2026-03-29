@@ -1,8 +1,11 @@
 import type { Database } from 'sqlite';
+import { injectable, singleton } from 'tsyringe';
 import { Logger } from '@common/logger';
 import type { ConnectionManager } from './ConnectionManager';
 import { ActivitySchemas } from './schemas/ActivitySchemas';
 
+@singleton()
+@injectable()
 export class SchemaManager {
   private connectionManager: ConnectionManager;
 
