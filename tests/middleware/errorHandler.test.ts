@@ -1,14 +1,14 @@
-import { Request, Response, NextFunction } from 'express';
+import { NextFunction, Request, Response } from 'express';
 import {
-  globalErrorHandler,
   asyncErrorHandler,
+  errorRecoveryMiddleware,
+  globalErrorHandler,
   handleUncaughtException,
   handleUnhandledRejection,
-  errorRecoveryMiddleware,
 } from '../../src/middleware/errorHandler';
+import { MetricsCollector } from '../../src/monitoring/MetricsCollector';
 import { ErrorFactory } from '../../src/types/errorClasses';
 import { errorLogger } from '../../src/utils/errorLogger';
-import { MetricsCollector } from '../../src/monitoring/MetricsCollector';
 
 jest.mock('../../src/utils/errorLogger', () => ({
   errorLogger: {
@@ -64,13 +64,15 @@ describe('errorHandler middleware', () => {
       globalErrorHandler(error, req as Request, res as Response, next as NextFunction);
 
       expect(res.status).toHaveBeenCalledWith(500);
-      expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
-        success: false,
-        error: expect.objectContaining({
-          message: expect.any(String),
-          code: expect.any(String),
-        }),
-      }));
+      expect(res.json).toHaveBeenCalledWith(
+        expect.objectContaining({
+          success: false,
+          error: expect.objectContaining({
+            message: expect.any(String),
+            code: expect.any(String),
+          }),
+        })
+      );
       expect(errorLogger.logError).toHaveBeenCalled();
     });
 
@@ -123,7 +125,7 @@ describe('errorHandler middleware', () => {
     it('parses retry headers correctly', () => {
       req.headers = {
         'x-retry-count': '2',
-        'x-max-retries': '5'
+        'x-max-retries': '5',
       };
 
       errorRecoveryMiddleware(req as Request, res as Response, next as NextFunction);

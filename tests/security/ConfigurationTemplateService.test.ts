@@ -8,10 +8,10 @@
  * - Input validation
  */
 
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { promises as fs } from 'fs';
-import { join } from 'path';
 import os from 'os';
+import { join } from 'path';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   ConfigurationTemplateService,
   type CreateTemplateRequest,
@@ -56,7 +56,12 @@ describe('ConfigurationTemplateService - Security Tests', () => {
       // Verify the template file is created in the correct directory
       const templatePath = join(tempDir, `${template.id}.json`);
       expect(templatePath).toContain(tempDir);
-      expect(await fs.access(templatePath).then(() => true).catch(() => false)).toBe(true);
+      expect(
+        await fs
+          .access(templatePath)
+          .then(() => true)
+          .catch(() => false)
+      ).toBe(true);
     });
 
     it('should prevent directory traversal in template retrieval', async () => {

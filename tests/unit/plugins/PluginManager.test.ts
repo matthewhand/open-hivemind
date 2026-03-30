@@ -318,9 +318,7 @@ describe('listInstalledPlugins', () => {
 
   it('lists plugins from directory scan', async () => {
     mockAccess.mockResolvedValue(undefined);
-    mockReaddir.mockResolvedValue([
-      { name: 'llm-myprovider', isDirectory: () => true },
-    ] as any);
+    mockReaddir.mockResolvedValue([{ name: 'llm-myprovider', isDirectory: () => true }] as any);
     mockReadFile.mockImplementation((filePath: string) => {
       if (String(filePath).endsWith('registry.json')) return Promise.resolve(JSON.stringify([]));
       return Promise.resolve(JSON.stringify({ name: 'llm-myprovider', version: '1.0.0' }));
@@ -334,9 +332,7 @@ describe('listInstalledPlugins', () => {
 
   it('skips directories without a valid manifest', async () => {
     mockAccess.mockResolvedValue(undefined);
-    mockReaddir.mockResolvedValue([
-      { name: 'broken-plugin', isDirectory: () => true },
-    ] as any);
+    mockReaddir.mockResolvedValue([{ name: 'broken-plugin', isDirectory: () => true }] as any);
     mockReadFile.mockResolvedValue(JSON.stringify([]));
     mockLoadPlugin.mockReturnValue({}); // no manifest
 
@@ -351,19 +347,31 @@ describe('listInstalledPlugins', () => {
 
 describe('URL security validation', () => {
   it('rejects URLs with argument injection patterns in hostname', async () => {
-    await expect(installPlugin('https:// --upload-pack=malicious.com/repo')).rejects.toThrow(PluginValidationError);
-    await expect(installPlugin('https:// --config=evil.com/repo')).rejects.toThrow(PluginValidationError);
+    await expect(installPlugin('https:// --upload-pack=malicious.com/repo')).rejects.toThrow(
+      PluginValidationError
+    );
+    await expect(installPlugin('https:// --config=evil.com/repo')).rejects.toThrow(
+      PluginValidationError
+    );
   });
 
   it('rejects URLs with shell metacharacters in hostname', async () => {
-    await expect(installPlugin('https://host;name.com/repo')).rejects.toThrow(PluginValidationError);
-    await expect(installPlugin('https://host|name.com/repo')).rejects.toThrow(PluginValidationError);
-    await expect(installPlugin('https://host`name.com/repo')).rejects.toThrow(PluginValidationError);
+    await expect(installPlugin('https://host;name.com/repo')).rejects.toThrow(
+      PluginValidationError
+    );
+    await expect(installPlugin('https://host|name.com/repo')).rejects.toThrow(
+      PluginValidationError
+    );
+    await expect(installPlugin('https://host`name.com/repo')).rejects.toThrow(
+      PluginValidationError
+    );
   });
 
   it('rejects URLs with spaces in hostname', async () => {
     // Note: spaces in the path are percent-encoded by the URL constructor,
     // so only spaces in the hostname are detected by the source validation.
-    await expect(installPlugin('https://host name.com/repo')).rejects.toThrow(PluginValidationError);
+    await expect(installPlugin('https://host name.com/repo')).rejects.toThrow(
+      PluginValidationError
+    );
   });
 });

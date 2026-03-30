@@ -58,11 +58,7 @@ function makeProvider(overrides?: Partial<Record<string, jest.Mock>>) {
 }
 
 /** Wire up mocks so getProviderForBot(botName) resolves to a given provider. */
-function wireBot(
-  botName: string,
-  profileKey: string,
-  provider: ReturnType<typeof makeProvider>,
-) {
+function wireBot(botName: string, profileKey: string, provider: ReturnType<typeof makeProvider>) {
   mockGetBot.mockImplementation((name: string) => {
     if (name === botName) return { name: botName, memoryProfile: profileKey };
     return undefined;
@@ -77,7 +73,7 @@ function wireBot(
 
 /** Wire up multiple bots, each with its own profile and (optionally shared) provider. */
 function wireMultipleBots(
-  bots: Array<{ name: string; profile: string; provider: ReturnType<typeof makeProvider> }>,
+  bots: Array<{ name: string; profile: string; provider: ReturnType<typeof makeProvider> }>
 ) {
   const botMap = new Map(bots.map((b) => [b.name, b]));
   const profileMap = new Map(bots.map((b) => [b.profile, b]));
@@ -159,8 +155,14 @@ describe('MemoryManager — concurrent access & edge cases', () => {
       expect(resultsB).toHaveLength(1);
       expect(resultsB[0].memory).toBe('Memory for bot B');
 
-      expect(providerA.search).toHaveBeenCalledWith('query A', expect.objectContaining({ agentId: 'botA' }));
-      expect(providerB.search).toHaveBeenCalledWith('query B', expect.objectContaining({ agentId: 'botB' }));
+      expect(providerA.search).toHaveBeenCalledWith(
+        'query A',
+        expect.objectContaining({ agentId: 'botA' })
+      );
+      expect(providerB.search).toHaveBeenCalledWith(
+        'query B',
+        expect.objectContaining({ agentId: 'botB' })
+      );
     });
   });
 
@@ -172,7 +174,9 @@ describe('MemoryManager — concurrent access & edge cases', () => {
     it('store does not block concurrent retrieve', async () => {
       const mgr = freshManager();
       let storeResolveFn: (() => void) | undefined;
-      const storePromise = new Promise<void>((resolve) => { storeResolveFn = resolve; });
+      const storePromise = new Promise<void>((resolve) => {
+        storeResolveFn = resolve;
+      });
 
       const provider = makeProvider({
         add: jest.fn().mockImplementation(() => storePromise.then(() => ({ results: [] }))),
@@ -496,7 +500,7 @@ describe('MemoryManager — concurrent access & edge cases', () => {
 
       // Should not throw.
       await expect(
-        mgr.storeConversationMemory('bot1', 'will fail', 'user'),
+        mgr.storeConversationMemory('bot1', 'will fail', 'user')
       ).resolves.toBeUndefined();
     });
   });

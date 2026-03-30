@@ -3,9 +3,9 @@ import { Router } from 'express';
 import type { AuthMiddlewareRequest } from '../../auth/types';
 import { DatabaseManager } from '../../database/DatabaseManager';
 import { AnomalyDetectionService } from '../../services/AnomalyDetectionService';
+import { HTTP_STATUS } from '../../types/constants';
 import { AnomalyResolveSchema } from '../../validation/schemas/miscSchema';
 import { validateRequest } from '../../validation/validateRequest';
-import { HTTP_STATUS } from '../../types/constants';
 
 const debug = Debug('app:webui:anomaly');
 const router = Router();
@@ -48,7 +48,9 @@ router.get('/', async (req: AuthMiddlewareRequest, res) => {
     if (isConnectionError(error)) {
       res.status(HTTP_STATUS.SERVICE_UNAVAILABLE).json({ error: 'Database connection error' });
     } else {
-      res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: 'Failed to fetch active anomalies' });
+      res
+        .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
+        .json({ error: 'Failed to fetch active anomalies' });
     }
   }
 });
@@ -72,7 +74,9 @@ router.get('/history', async (req: AuthMiddlewareRequest, res) => {
     if (isConnectionError(error)) {
       res.status(HTTP_STATUS.SERVICE_UNAVAILABLE).json({ error: 'Database connection error' });
     } else {
-      res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: 'Failed to fetch anomaly history' });
+      res
+        .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
+        .json({ error: 'Failed to fetch anomaly history' });
     }
   }
 });

@@ -2,16 +2,15 @@ import Debug from 'debug';
 import type {
   IToolProvider,
   ToolDefinition,
-  ToolResult,
   ToolExecutionContext,
+  ToolResult,
 } from '@hivemind/shared-types';
-import type {
-  McpToolProviderConfig,
-  McpToolsListResponse,
-  McpToolCallResponse,
-} from './types';
-import { getCircuitBreaker, type CircuitBreaker as CircuitBreakerType } from '@common/CircuitBreaker';
+import {
+  getCircuitBreaker,
+  type CircuitBreaker as CircuitBreakerType,
+} from '@common/CircuitBreaker';
 import { withTimeout } from '@common/withTimeout';
+import type { McpToolCallResponse, McpToolProviderConfig, McpToolsListResponse } from './types';
 
 const debug = Debug('app:tool-mcp');
 
@@ -51,7 +50,7 @@ export class McpToolProvider implements IToolProvider {
         const response: McpToolsListResponse = await withTimeout(
           () => this.client.listTools(),
           timeoutMs,
-          `MCP listTools (${this.name})`,
+          `MCP listTools (${this.name})`
         );
 
         this.cachedTools = response.tools.map((tool) => ({
@@ -85,12 +84,13 @@ export class McpToolProvider implements IToolProvider {
 
         const timeoutMs = this.config.timeout ?? DEFAULT_MCP_TIMEOUT_MS;
         const response: McpToolCallResponse = await withTimeout(
-          () => this.client.callTool({
-            name: toolName,
-            arguments: args,
-          }),
+          () =>
+            this.client.callTool({
+              name: toolName,
+              arguments: args,
+            }),
           timeoutMs,
-          `MCP executeTool ${toolName} (${this.name})`,
+          `MCP executeTool ${toolName} (${this.name})`
         );
 
         debug(`Tool ${toolName} executed successfully on ${this.name}`);
@@ -108,7 +108,10 @@ export class McpToolProvider implements IToolProvider {
     });
   }
 
-  public async healthCheck(): Promise<{ status: 'ok' | 'error'; details?: Record<string, unknown> }> {
+  public async healthCheck(): Promise<{
+    status: 'ok' | 'error';
+    details?: Record<string, unknown>;
+  }> {
     try {
       await this.ensureConnected();
       await this.client.listTools();
@@ -134,7 +137,9 @@ export class McpToolProvider implements IToolProvider {
         version: '1.0.0',
       });
 
-      debug(`Connecting to MCP server ${this.name} at ${this.config.serverUrl} (${this.config.transport})`);
+      debug(
+        `Connecting to MCP server ${this.name} at ${this.config.serverUrl} (${this.config.transport})`
+      );
 
       await this.client.connect({
         url: this.config.serverUrl,

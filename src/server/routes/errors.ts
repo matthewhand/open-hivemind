@@ -1,10 +1,10 @@
 import { Router, type Request, type Response } from 'express';
+import { HTTP_STATUS } from '../../types/constants';
 import { ErrorFactory } from '../../types/errorClasses';
 import { errorLogger } from '../../utils/errorLogger';
 import { ErrorLogSchema } from '../../validation/schemas/miscSchema';
 import { validateRequest } from '../../validation/validateRequest';
 import { authenticateToken } from '../middleware/auth';
-import { HTTP_STATUS } from '../../types/constants';
 
 const router = Router();
 
@@ -108,7 +108,9 @@ router.get('/stats', authenticateToken, async (req: Request, res: Response) => {
     return res.json(stats);
   } catch (error) {
     console.error('Failed to get error stats:', error);
-    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: 'Failed to retrieve error statistics' });
+    return res
+      .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
+      .json({ error: 'Failed to retrieve error statistics' });
   }
 });
 
@@ -120,7 +122,9 @@ router.get('/recent', authenticateToken, async (req: Request, res: Response) => 
     return res.json(recentErrors);
   } catch (error) {
     console.error('Failed to get recent errors:', error);
-    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: 'Failed to retrieve recent errors' });
+    return res
+      .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
+      .json({ error: 'Failed to retrieve recent errors' });
   }
 });
 

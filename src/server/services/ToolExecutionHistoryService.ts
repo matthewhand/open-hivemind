@@ -74,7 +74,7 @@ export class ToolExecutionHistoryService {
     });
 
     // Apply retention policy asynchronously (don't block the response)
-    this.applyRetentionPolicy().catch(error => {
+    this.applyRetentionPolicy().catch((error) => {
       debug('Failed to apply retention policy: %O', error);
     });
   }
@@ -119,17 +119,19 @@ export class ToolExecutionHistoryService {
       }
 
       // Sort by executedAt descending and keep only the last MAX_RECORDS
-      allRecords.sort((a, b) =>
-        new Date(b.executedAt).getTime() - new Date(a.executedAt).getTime()
+      allRecords.sort(
+        (a, b) => new Date(b.executedAt).getTime() - new Date(a.executedAt).getTime()
       );
 
       const recordsToKeep = allRecords.slice(0, this.MAX_RECORDS);
 
       // Rewrite the file with only the records to keep
-      const newContent = recordsToKeep.map(r => JSON.stringify(r)).join('\n') + '\n';
+      const newContent = recordsToKeep.map((r) => JSON.stringify(r)).join('\n') + '\n';
       await fs.promises.writeFile(this.logFile, newContent, 'utf8');
 
-      debug(`Applied retention policy: kept ${recordsToKeep.length} of ${allRecords.length} records`);
+      debug(
+        `Applied retention policy: kept ${recordsToKeep.length} of ${allRecords.length} records`
+      );
     } catch (error) {
       debug('Error applying retention policy: %O', error);
       throw error;
@@ -190,8 +192,8 @@ export class ToolExecutionHistoryService {
       }
 
       // Sort by executedAt descending (most recent first)
-      allRecords.sort((a, b) =>
-        new Date(b.executedAt).getTime() - new Date(a.executedAt).getTime()
+      allRecords.sort(
+        (a, b) => new Date(b.executedAt).getTime() - new Date(a.executedAt).getTime()
       );
 
       // Apply offset and limit
@@ -253,8 +255,8 @@ export class ToolExecutionHistoryService {
 
     const stats = {
       totalExecutions: allRecords.length,
-      successfulExecutions: allRecords.filter(r => r.status === 'success').length,
-      failedExecutions: allRecords.filter(r => r.status === 'error').length,
+      successfulExecutions: allRecords.filter((r) => r.status === 'success').length,
+      failedExecutions: allRecords.filter((r) => r.status === 'error').length,
       averageDuration: 0,
       toolUsage: {} as Record<string, number>,
       serverUsage: {} as Record<string, number>,
@@ -265,7 +267,7 @@ export class ToolExecutionHistoryService {
       stats.averageDuration = totalDuration / allRecords.length;
 
       // Calculate tool usage
-      allRecords.forEach(record => {
+      allRecords.forEach((record) => {
         const toolKey = `${record.serverName}/${record.toolName}`;
         stats.toolUsage[toolKey] = (stats.toolUsage[toolKey] || 0) + 1;
         stats.serverUsage[record.serverName] = (stats.serverUsage[record.serverName] || 0) + 1;

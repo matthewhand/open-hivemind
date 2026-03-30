@@ -1,10 +1,10 @@
 import { execFileSync } from 'child_process';
+import * as crypto from 'crypto';
 import * as fs from 'fs';
 import * as path from 'path';
-import * as crypto from 'crypto';
 import Debug from 'debug';
 import { Logger } from '@common/logger';
-import { loadPlugin, loadPluginWithSecurity, PLUGINS_DIR, type PluginManifest } from './PluginLoader';
+import { loadPlugin, PLUGINS_DIR, type PluginManifest } from './PluginLoader';
 import {
   PluginSecurityPolicy,
   type PluginSecurityStatus,
@@ -419,7 +419,9 @@ if (!PLUGIN_SIGNING_KEY) {
   PLUGIN_SIGNING_KEY = crypto.randomBytes(32).toString('hex');
   logger.warn('⚠️  WARNING: No HIVEMIND_PLUGIN_SIGNING_KEY environment variable found.');
   logger.warn('   Generated a temporary plugin signing key for this session.');
-  logger.warn('   Existing plugin signatures will fail verification until a persistent key is configured.');
+  logger.warn(
+    '   Existing plugin signatures will fail verification until a persistent key is configured.'
+  );
 }
 
 let _securityPolicy: PluginSecurityPolicy | undefined;

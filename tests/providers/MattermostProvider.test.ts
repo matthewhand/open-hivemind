@@ -128,7 +128,10 @@ describe('MattermostProvider', () => {
 
         const result = await provider.getMessages('channel123', 10);
 
-        expect(mockMattermostInstance.getMessagesFromChannel).toHaveBeenCalledWith('channel123', 10);
+        expect(mockMattermostInstance.getMessagesFromChannel).toHaveBeenCalledWith(
+          'channel123',
+          10
+        );
         expect(result).toEqual(mockMessages);
       });
 
@@ -212,9 +215,7 @@ describe('MattermostProvider', () => {
       });
 
       it('should handle errors gracefully', async () => {
-        mockMattermostInstance.getChannelOwnerId.mockRejectedValue(
-          new Error('Channel not found')
-        );
+        mockMattermostInstance.getChannelOwnerId.mockRejectedValue(new Error('Channel not found'));
 
         await expect(provider.getForumOwner('nonexistent')).rejects.toThrow('Channel not found');
       });

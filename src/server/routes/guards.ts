@@ -1,12 +1,12 @@
 import Debug from 'debug';
 import { Router, type Request, type Response } from 'express';
 import { webUIStorage } from '../../storage/webUIStorage';
+import { HTTP_STATUS } from '../../types/constants';
 import {
   ToggleGuardSchema,
   UpdateAccessControlSchema,
 } from '../../validation/schemas/guardsSchema';
 import { validateRequest } from '../../validation/validateRequest';
-import { HTTP_STATUS } from '../../types/constants';
 
 const router = Router();
 const debug = Debug('app:webui:guards');

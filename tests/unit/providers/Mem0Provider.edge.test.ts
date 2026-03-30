@@ -87,9 +87,7 @@ describe('Mem0Provider — long memory IDs', () => {
   it('handles a very long memory ID in get()', async () => {
     const provider = makeProvider();
     const longId = 'x'.repeat(1000);
-    fetchMock.mockResolvedValueOnce(
-      jsonResponse({ id: longId, memory: 'long-id-memory' }),
-    );
+    fetchMock.mockResolvedValueOnce(jsonResponse({ id: longId, memory: 'long-id-memory' }));
 
     const result = await provider.get(longId);
     expect(result).toEqual({ id: longId, memory: 'long-id-memory' });
@@ -101,9 +99,7 @@ describe('Mem0Provider — long memory IDs', () => {
   it('handles a very long memory ID in update()', async () => {
     const provider = makeProvider();
     const longId = 'y'.repeat(1000);
-    fetchMock.mockResolvedValueOnce(
-      jsonResponse({ id: longId, memory: 'updated' }),
-    );
+    fetchMock.mockResolvedValueOnce(jsonResponse({ id: longId, memory: 'updated' }));
 
     const result = await provider.update(longId, 'updated');
     expect(result).toEqual({ id: longId, memory: 'updated' });
@@ -113,7 +109,9 @@ describe('Mem0Provider — long memory IDs', () => {
     const provider = makeProvider();
     const longId = 'z'.repeat(1000);
     fetchMock.mockResolvedValueOnce({
-      ok: true, status: 204, statusText: 'No Content',
+      ok: true,
+      status: 204,
+      statusText: 'No Content',
       headers: new Headers(),
       json: jest.fn().mockRejectedValue(new Error('no body')),
       text: jest.fn().mockResolvedValue(''),
@@ -125,9 +123,7 @@ describe('Mem0Provider — long memory IDs', () => {
   it('handles memory ID with special characters', async () => {
     const provider = makeProvider();
     const specialId = 'mem/with spaces&special=chars?query#hash';
-    fetchMock.mockResolvedValueOnce(
-      jsonResponse({ id: specialId, memory: 'special-id-memory' }),
-    );
+    fetchMock.mockResolvedValueOnce(jsonResponse({ id: specialId, memory: 'special-id-memory' }));
 
     const result = await provider.get(specialId);
     expect(result).toEqual({ id: specialId, memory: 'special-id-memory' });
@@ -336,7 +332,10 @@ describe('Mem0Provider — healthCheck edge cases', () => {
     const provider = makeProvider();
     fetchMock.mockRejectedValueOnce(new Error('DNS resolution failed'));
 
-    expect(await provider.healthCheck()).toEqual({ status: 'error', details: { message: 'DNS resolution failed' } });
+    expect(await provider.healthCheck()).toEqual({
+      status: 'error',
+      details: { message: 'DNS resolution failed' },
+    });
   });
 
   it('returns { status: "error" } on timeout', async () => {

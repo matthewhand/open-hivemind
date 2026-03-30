@@ -6,10 +6,10 @@ import { FlowiseProvider } from '../../integrations/flowise/flowiseProvider';
 import * as openWebUIImport from '../../integrations/openwebui/runInference';
 import type { ILlmProvider } from '../../llm/interfaces/ILlmProvider';
 import { IMessage } from '../../message/interfaces/IMessage';
+import { HTTP_STATUS } from '../../types/constants';
 import { ErrorUtils } from '../../types/errors';
 import { ChatGenerateSchema } from '../../validation/schemas/miscSchema';
 import { validateRequest } from '../../validation/validateRequest';
-import { HTTP_STATUS } from '../../types/constants';
 
 const debug = Debug('app:ai-assist');
 const router = Router();
@@ -111,7 +111,9 @@ router.post('/generate', validateRequest(ChatGenerateSchema), async (req, res) =
     const providerKey = settings.webuiIntelligenceProvider;
 
     if (!providerKey || providerKey === 'none') {
-      return res.status(HTTP_STATUS.BAD_REQUEST).json({ error: 'AI Assistance is not configured.' });
+      return res
+        .status(HTTP_STATUS.BAD_REQUEST)
+        .json({ error: 'AI Assistance is not configured.' });
     }
 
     const profile = getLlmProfileByKey(providerKey);
@@ -140,7 +142,9 @@ router.post('/generate', validateRequest(ChatGenerateSchema), async (req, res) =
           break;
         default:
           debug(`Unknown LLM provider type for AI Assist: ${profile.provider}`);
-          return res.status(HTTP_STATUS.BAD_REQUEST).json({ error: `Unsupported provider type: ${profile.provider}` });
+          return res
+            .status(HTTP_STATUS.BAD_REQUEST)
+            .json({ error: `Unsupported provider type: ${profile.provider}` });
       }
     } catch (error: unknown) {
       const hivemindError = ErrorUtils.toHivemindError(error);
@@ -151,7 +155,9 @@ router.post('/generate', validateRequest(ChatGenerateSchema), async (req, res) =
     }
 
     if (!instance) {
-      return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: 'Failed to instantiate provider instance.' });
+      return res
+        .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
+        .json({ error: 'Failed to instantiate provider instance.' });
     }
 
     // Construct messages
@@ -168,7 +174,9 @@ router.post('/generate', validateRequest(ChatGenerateSchema), async (req, res) =
       const fullPrompt = systemPrompt ? `${systemPrompt}\n\n${prompt}` : prompt;
       result = await instance.generateCompletion(fullPrompt);
     } else {
-      return res.status(HTTP_STATUS.BAD_REQUEST).json({ error: 'Provider does not support generation.' });
+      return res
+        .status(HTTP_STATUS.BAD_REQUEST)
+        .json({ error: 'Provider does not support generation.' });
     }
 
     return res.json({ result });

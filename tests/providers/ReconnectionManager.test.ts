@@ -21,7 +21,8 @@ describe('ReconnectionManager', () => {
   });
 
   it('should retry on failure', async () => {
-    const connectFn = jest.fn()
+    const connectFn = jest
+      .fn()
       .mockRejectedValueOnce(new Error('fail 1'))
       .mockResolvedValueOnce(undefined);
 

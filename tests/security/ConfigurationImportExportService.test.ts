@@ -46,8 +46,8 @@ describe('ConfigurationImportExportService Path Security', () => {
         size: 0,
         checksum: '',
         encrypted: false,
-        compressed: false
-      }
+        compressed: false,
+      },
     ]);
 
     const result = await service.getBackupFilePath('malicious-id');
@@ -77,8 +77,8 @@ describe('ConfigurationImportExportService Path Security', () => {
         size: 0,
         checksum: '',
         encrypted: false,
-        compressed: false
-      }
+        compressed: false,
+      },
     ]);
 
     const result = await service.getBackupFilePath('safe-id');

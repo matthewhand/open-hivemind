@@ -44,9 +44,7 @@ describe('LLMResponse', () => {
         'chat.completion',
         Date.now(),
         'gpt-4',
-        [
-          { index: 0, message: { role: 'assistant', content: 'original' }, finish_reason: 'stop' },
-        ],
+        [{ index: 0, message: { role: 'assistant', content: 'original' }, finish_reason: 'stop' }],
         { prompt_tokens: 10, completion_tokens: 10, total_tokens: 20 },
         'original',
         'completed',
@@ -70,9 +68,7 @@ describe('LLMResponse', () => {
         'chat.completion',
         Date.now(),
         'gpt-4',
-        [
-          { index: 0, message: { role: 'assistant', content: 'original' }, finish_reason: 'stop' },
-        ],
+        [{ index: 0, message: { role: 'assistant', content: 'original' }, finish_reason: 'stop' }],
         { prompt_tokens: 10, completion_tokens: 10, total_tokens: 20 },
         'original',
         'completed',

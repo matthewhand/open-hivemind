@@ -1,15 +1,18 @@
 import Debug from 'debug';
-import type {
-  Mem4aiConfig,
-  Mem4aiMemory,
-  Mem4aiAddResponse,
-  Mem4aiListResponse,
-  Mem4aiSearchResponse,
-  Mem4aiGetResponse,
-  Mem4aiUpdateResponse,
+import {
+  getCircuitBreaker,
+  type CircuitBreaker as CircuitBreakerType,
+} from '@common/CircuitBreaker';
+import {
+  Mem4aiApiError,
+  type Mem4aiAddResponse,
+  type Mem4aiConfig,
+  type Mem4aiGetResponse,
+  type Mem4aiListResponse,
+  type Mem4aiMemory,
+  type Mem4aiSearchResponse,
+  type Mem4aiUpdateResponse,
 } from './types';
-import { Mem4aiApiError } from './types';
-import { getCircuitBreaker, type CircuitBreaker as CircuitBreakerType } from '@common/CircuitBreaker';
 
 const debug = Debug('hivemind:memory-mem4ai');
 
@@ -57,14 +60,20 @@ export class Mem4aiProvider {
       halfOpenMaxAttempts: 3,
     });
 
-    debug('Mem4aiProvider initialised (baseUrl=%s, userId=%s, agentId=%s)',
-      this.baseUrl, this.defaultUserId ?? '<none>', this.defaultAgentId ?? '<none>');
+    debug(
+      'Mem4aiProvider initialised (baseUrl=%s, userId=%s, agentId=%s)',
+      this.baseUrl,
+      this.defaultUserId ?? '<none>',
+      this.defaultAgentId ?? '<none>'
+    );
   }
 
   async add(
     messages: Array<{ role: 'user' | 'assistant'; content: string }>,
-    options?: { userId?: string; agentId?: string; metadata?: Record<string, any> },
-  ): Promise<{ results: Array<{ id: string; memory: string; score?: number; metadata?: Record<string, any> }> }> {
+    options?: { userId?: string; agentId?: string; metadata?: Record<string, any> }
+  ): Promise<{
+    results: Array<{ id: string; memory: string; score?: number; metadata?: Record<string, any> }>;
+  }> {
     const body: Record<string, unknown> = {
       messages,
       user_id: options?.userId ?? this.defaultUserId,
@@ -82,8 +91,10 @@ export class Mem4aiProvider {
 
   async search(
     query: string,
-    options?: { userId?: string; agentId?: string; limit?: number },
-  ): Promise<{ results: Array<{ id: string; memory: string; score?: number; metadata?: Record<string, any> }> }> {
+    options?: { userId?: string; agentId?: string; limit?: number }
+  ): Promise<{
+    results: Array<{ id: string; memory: string; score?: number; metadata?: Record<string, any> }>;
+  }> {
     const body: Record<string, unknown> = {
       query,
       user_id: options?.userId ?? this.defaultUserId,
@@ -97,9 +108,10 @@ export class Mem4aiProvider {
     return { results: res.results.map(toResult) };
   }
 
-  async getAll(
-    options?: { userId?: string; agentId?: string },
-  ): Promise<{ results: Array<{ id: string; memory: string }> }> {
+  async getAll(options?: {
+    userId?: string;
+    agentId?: string;
+  }): Promise<{ results: Array<{ id: string; memory: string }> }> {
     const params = new URLSearchParams();
     const userId = options?.userId ?? this.defaultUserId;
     const agentId = options?.agentId ?? this.defaultAgentId;
@@ -113,7 +125,10 @@ export class Mem4aiProvider {
 
   async get(memoryId: string): Promise<{ id: string; memory: string } | null> {
     try {
-      const res = await this.request<Mem4aiGetResponse>('GET', `/memories/${encodeURIComponent(memoryId)}/`);
+      const res = await this.request<Mem4aiGetResponse>(
+        'GET',
+        `/memories/${encodeURIComponent(memoryId)}/`
+      );
       return { id: res.id, memory: res.memory };
     } catch (err) {
       if (err instanceof Mem4aiApiError && err.status === 404) {
@@ -127,7 +142,7 @@ export class Mem4aiProvider {
     const res = await this.request<Mem4aiUpdateResponse>(
       'PUT',
       `/memories/${encodeURIComponent(memoryId)}/`,
-      { text: newContent },
+      { text: newContent }
     );
     return { id: res.id, memory: res.memory };
   }
@@ -170,9 +185,9 @@ export class Mem4aiProvider {
   private async doRequest<T>(method: string, path: string, body?: unknown): Promise<T> {
     const url = `${this.baseUrl}${path}`;
     const headers: Record<string, string> = {
-      'Authorization': `Bearer ${this.apiKey}`,
+      Authorization: `Bearer ${this.apiKey}`,
       'Content-Type': 'application/json',
-      'Accept': 'application/json',
+      Accept: 'application/json',
     };
     if (this.organizationId) {
       headers['X-Organization-ID'] = this.organizationId;
@@ -203,7 +218,8 @@ export class Mem4aiProvider {
           const text = await response.text().catch(() => '');
           lastError = new Mem4aiApiError(
             `Mem4ai API ${method} ${path} returned ${response.status}: ${text}`,
-            response.status, text,
+            response.status,
+            text
           );
           debug('Retryable error: %s', lastError.message);
           continue;
@@ -213,7 +229,8 @@ export class Mem4aiProvider {
           const text = await response.text().catch(() => '');
           throw new Mem4aiApiError(
             `Mem4ai API ${method} ${path} returned ${response.status}: ${text}`,
-            response.status, text,
+            response.status,
+            text
           );
         }
 
@@ -245,7 +262,12 @@ export class Mem4aiProvider {
   }
 }
 
-function toResult(m: Mem4aiMemory): { id: string; memory: string; score?: number; metadata?: Record<string, any> } {
+function toResult(m: Mem4aiMemory): {
+  id: string;
+  memory: string;
+  score?: number;
+  metadata?: Record<string, any>;
+} {
   return {
     id: m.id,
     memory: m.memory,

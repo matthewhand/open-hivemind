@@ -1,3 +1,16 @@
+// ---------------------------------------------------------------------------
+// Imports
+// ---------------------------------------------------------------------------
+
+import type { ILlmProvider } from '@llm/interfaces/ILlmProvider';
+import { FlowiseProvider } from '../../packages/llm-flowise/src/flowiseProvider';
+// LettaProvider uses a singleton; we need special handling
+import { LettaProvider } from '../../packages/llm-letta/src/lettaProvider';
+import { OpenAiProvider } from '../../packages/llm-openai/src/openAiProvider';
+import { OpenSwarmProvider } from '../../packages/llm-openswarm/src/OpenSwarmProvider';
+// openWebUIProvider is a plain object, not a class — import it directly
+import { openWebUIProvider } from '../../packages/llm-openwebui/src/openWebUIProvider';
+
 /**
  * Contract tests for ILlmProvider implementations.
  *
@@ -30,7 +43,9 @@ jest.mock('openai', () => {
 jest.mock('axios', () => {
   const instance = {
     post: jest.fn().mockResolvedValue({
-      data: { choices: [{ message: { content: 'mocked axios response' }, text: 'mocked axios text' }] },
+      data: {
+        choices: [{ message: { content: 'mocked axios response' }, text: 'mocked axios text' }],
+      },
     }),
     get: jest.fn().mockResolvedValue({ data: {} }),
   };
@@ -85,21 +100,6 @@ jest.mock('debug', () => {
 });
 
 // ---------------------------------------------------------------------------
-// Imports
-// ---------------------------------------------------------------------------
-
-import type { ILlmProvider } from '@llm/interfaces/ILlmProvider';
-import { OpenAiProvider } from '../../packages/llm-openai/src/openAiProvider';
-import { FlowiseProvider } from '../../packages/llm-flowise/src/flowiseProvider';
-import { OpenSwarmProvider } from '../../packages/llm-openswarm/src/OpenSwarmProvider';
-
-// openWebUIProvider is a plain object, not a class — import it directly
-import { openWebUIProvider } from '../../packages/llm-openwebui/src/openWebUIProvider';
-
-// LettaProvider uses a singleton; we need special handling
-import { LettaProvider } from '../../packages/llm-letta/src/lettaProvider';
-
-// ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
 
@@ -116,10 +116,7 @@ function makeMessage(text: string, role = 'user'): any {
 /**
  * Generic contract test suite that can be run against any ILlmProvider.
  */
-function runLlmProviderContractTests(
-  providerName: string,
-  getProvider: () => ILlmProvider,
-) {
+function runLlmProviderContractTests(providerName: string, getProvider: () => ILlmProvider) {
   describe(`ILlmProvider contract: ${providerName}`, () => {
     let provider: ILlmProvider;
 
@@ -150,11 +147,10 @@ function runLlmProviderContractTests(
 
     it('has generateChatCompletion() that returns a Promise<string>', async () => {
       expect(typeof provider.generateChatCompletion).toBe('function');
-      const result = await provider.generateChatCompletion(
-        'Hello',
-        [makeMessage('Hi')],
-        { channelId: 'test', agentId: 'test-agent' },
-      );
+      const result = await provider.generateChatCompletion('Hello', [makeMessage('Hi')], {
+        channelId: 'test',
+        agentId: 'test-agent',
+      });
       expect(typeof result).toBe('string');
     });
 

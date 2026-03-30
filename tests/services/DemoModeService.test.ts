@@ -65,31 +65,41 @@ describe('DemoModeService', () => {
     });
 
     it('should return false when a bot is configured with a real Discord token', () => {
-      mockBotManager.getAllBots.mockReturnValueOnce([{ discord: { token: 'valid-discord-bot-token-here' } }]);
+      mockBotManager.getAllBots.mockReturnValueOnce([
+        { discord: { token: 'valid-discord-bot-token-here' } },
+      ]);
       mockBotManager.getWarnings.mockReturnValueOnce([]);
       expect(demoService.detectDemoMode()).toBe(false);
     });
 
     it('should return false when a bot is configured with a real Slack token', () => {
-      mockBotManager.getAllBots.mockReturnValueOnce([{ slack: { botToken: 'valid-slack-bot-token-here' } }]);
+      mockBotManager.getAllBots.mockReturnValueOnce([
+        { slack: { botToken: 'valid-slack-bot-token-here' } },
+      ]);
       mockBotManager.getWarnings.mockReturnValueOnce([]);
       expect(demoService.detectDemoMode()).toBe(false);
     });
 
     it('should return false when a bot is configured with a real Mattermost token', () => {
-      mockBotManager.getAllBots.mockReturnValueOnce([{ mattermost: { token: 'valid-mattermost-bot-token-here' } }]);
+      mockBotManager.getAllBots.mockReturnValueOnce([
+        { mattermost: { token: 'valid-mattermost-bot-token-here' } },
+      ]);
       mockBotManager.getWarnings.mockReturnValueOnce([]);
       expect(demoService.detectDemoMode()).toBe(false);
     });
 
     it('should return false when a bot is configured with a real OpenAI key', () => {
-      mockBotManager.getAllBots.mockReturnValueOnce([{ openai: { apiKey: 'sk-valid-openai-api-key-here' } }]);
+      mockBotManager.getAllBots.mockReturnValueOnce([
+        { openai: { apiKey: 'sk-valid-openai-api-key-here' } },
+      ]);
       mockBotManager.getWarnings.mockReturnValueOnce([]);
       expect(demoService.detectDemoMode()).toBe(false);
     });
 
     it('should return false when a bot is configured with a real Flowise key', () => {
-      mockBotManager.getAllBots.mockReturnValueOnce([{ flowise: { apiKey: 'valid-flowise-api-key-here' } }]);
+      mockBotManager.getAllBots.mockReturnValueOnce([
+        { flowise: { apiKey: 'valid-flowise-api-key-here' } },
+      ]);
       mockBotManager.getWarnings.mockReturnValueOnce([]);
       expect(demoService.detectDemoMode()).toBe(false);
     });

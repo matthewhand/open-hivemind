@@ -427,7 +427,6 @@ export class MetricsSchemas implements ISchemaModule {
       )
     `
     );
-
   }
 
   async createIndexes(db: Database): Promise<void> {
@@ -551,7 +550,6 @@ export class MetricsSchemas implements ISchemaModule {
       // Bot backup logs indexes
       'CREATE INDEX IF NOT EXISTS idx_bot_backup_logs_bot_id ON bot_backup_logs(bot_id)',
       'CREATE INDEX IF NOT EXISTS idx_bot_backup_logs_status ON bot_backup_logs(status)',
-
     ];
 
     for (const indexSql of indexes) {

@@ -186,8 +186,8 @@ router.delete('/bulk', validateRequest(BulkDeletePersonasSchema), async (req, re
 
     // Check for bots referencing these personas
     const allBots = await botManager.getAllBots();
-    const personaIdSet = new Set(personasToDelete.map(p => p.id));
-    const botsToRevert = allBots.filter(bot => bot.persona && personaIdSet.has(bot.persona));
+    const personaIdSet = new Set(personasToDelete.map((p) => p.id));
+    const botsToRevert = allBots.filter((bot) => bot.persona && personaIdSet.has(bot.persona));
 
     // Revert bots to default persona first
     for (const bot of botsToRevert) {
@@ -231,7 +231,7 @@ router.delete('/bulk', validateRequest(BulkDeletePersonasSchema), async (req, re
     logger.error('Bulk delete personas failed', error);
     return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
       error: 'Failed to delete personas',
-      details: error.message
+      details: error.message,
     });
   }
 });

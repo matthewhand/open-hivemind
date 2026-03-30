@@ -158,7 +158,10 @@ export class ToolUsageGuardsManager extends EventEmitter {
     return newGuard;
   }
 
-  public async updateGuard(id: string, updates: UpdateToolUsageGuardRequest): Promise<ToolUsageGuard> {
+  public async updateGuard(
+    id: string,
+    updates: UpdateToolUsageGuardRequest
+  ): Promise<ToolUsageGuard> {
     const existing = this.guards.get(id);
     if (!existing) {
       throw ErrorUtils.createError(`Tool usage guard with ID ${id} not found`, 'not_found');

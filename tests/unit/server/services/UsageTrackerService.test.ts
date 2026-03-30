@@ -1,6 +1,6 @@
-import { describe, it, expect, beforeEach, afterEach } from '@jest/globals';
 import fs from 'fs/promises';
 import path from 'path';
+import { afterEach, beforeEach, describe, expect, it } from '@jest/globals';
 import { UsageTrackerService } from '@src/server/services/UsageTrackerService';
 
 describe('UsageTrackerService', () => {
@@ -122,9 +122,30 @@ describe('UsageTrackerService', () => {
 
   describe('Top Tools and Providers', () => {
     it('should return top tools by usage', async () => {
-      await service.recordUsage({ toolId: 'a', serverName: 's', toolName: 'tool-a', success: true, duration: 100, timestamp: new Date().toISOString() });
-      await service.recordUsage({ toolId: 'b', serverName: 's', toolName: 'tool-b', success: true, duration: 100, timestamp: new Date().toISOString() });
-      await service.recordUsage({ toolId: 'b', serverName: 's', toolName: 'tool-b', success: true, duration: 100, timestamp: new Date().toISOString() });
+      await service.recordUsage({
+        toolId: 'a',
+        serverName: 's',
+        toolName: 'tool-a',
+        success: true,
+        duration: 100,
+        timestamp: new Date().toISOString(),
+      });
+      await service.recordUsage({
+        toolId: 'b',
+        serverName: 's',
+        toolName: 'tool-b',
+        success: true,
+        duration: 100,
+        timestamp: new Date().toISOString(),
+      });
+      await service.recordUsage({
+        toolId: 'b',
+        serverName: 's',
+        toolName: 'tool-b',
+        success: true,
+        duration: 100,
+        timestamp: new Date().toISOString(),
+      });
 
       const topTools = service.getTopTools(2);
       expect(topTools).toHaveLength(2);

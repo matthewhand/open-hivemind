@@ -8,10 +8,10 @@
  *   user message -> memory retrieval -> prompt injection -> LLM call -> memory storage
  */
 
-import { handleMessage } from '@message/handlers/messageHandler';
-import { getLlmProvider } from '@llm/getLlmProvider';
-import { shouldReplyToMessage } from '@message/helpers/processing/shouldReplyToMessage';
 import { MemoryManager } from '@src/services/MemoryManager';
+import { getLlmProvider } from '@llm/getLlmProvider';
+import { handleMessage } from '@message/handlers/messageHandler';
+import { shouldReplyToMessage } from '@message/helpers/processing/shouldReplyToMessage';
 
 // ---------------------------------------------------------------------------
 // Module mocks — must be declared before imports are resolved
@@ -37,7 +37,7 @@ jest.mock('@src/services/toolAugmentedCompletion', () => ({
     const resp = await opts.llmProvider.generateChatCompletion(
       opts.userMessage,
       opts.historyMessages,
-      opts.metadata,
+      opts.metadata
     );
     return resp;
   }),
@@ -100,27 +100,58 @@ class MockMessage {
     channelId = 'test-channel',
     public authorId = 'test-user',
     public messageId = 'test-message-id',
-    public isBot = false,
+    public isBot = false
   ) {
     this.content = text;
     this.channelId = channelId;
   }
 
-  getText() { return this.text; }
-  getChannelId() { return this.channelId; }
-  getAuthorId() { return this.authorId; }
-  getMessageId() { return this.messageId; }
-  isFromBot() { return this.isBot; }
-  getTimestamp() { return new Date(); }
-  setText(t: string) { this.text = t; this.content = t; }
-  getChannelTopic() { return null; }
-  getUserMentions() { return []; }
-  getChannelUsers() { return ['user1']; }
-  mentionsUsers() { return false; }
-  getAuthorName() { return 'TestUser'; }
-  getGuildOrWorkspaceId() { return 'test-guild'; }
-  isReplyToBot() { return false; }
-  isDirectMessage() { return false; }
+  getText() {
+    return this.text;
+  }
+  getChannelId() {
+    return this.channelId;
+  }
+  getAuthorId() {
+    return this.authorId;
+  }
+  getMessageId() {
+    return this.messageId;
+  }
+  isFromBot() {
+    return this.isBot;
+  }
+  getTimestamp() {
+    return new Date();
+  }
+  setText(t: string) {
+    this.text = t;
+    this.content = t;
+  }
+  getChannelTopic() {
+    return null;
+  }
+  getUserMentions() {
+    return [];
+  }
+  getChannelUsers() {
+    return ['user1'];
+  }
+  mentionsUsers() {
+    return false;
+  }
+  getAuthorName() {
+    return 'TestUser';
+  }
+  getGuildOrWorkspaceId() {
+    return 'test-guild';
+  }
+  isReplyToBot() {
+    return false;
+  }
+  isDirectMessage() {
+    return false;
+  }
 }
 
 /** Standard messenger mock. */
@@ -202,7 +233,7 @@ describe('handleMessage memory integration points', () => {
       ];
       mockRetrieveRelevantMemories.mockResolvedValue(memories);
       mockFormatMemoriesForPrompt.mockReturnValue(
-        'Relevant memories from previous conversations:\n- User prefers dark mode\n- User works at Acme Corp',
+        'Relevant memories from previous conversations:\n- User prefers dark mode\n- User works at Acme Corp'
       );
 
       const botConfig = baseBotConfig({ memoryProfile: 'test-mem0' });
@@ -213,14 +244,15 @@ describe('handleMessage memory integration points', () => {
       // Verify memory search was called with the user's message text
       expect(mockRetrieveRelevantMemories).toHaveBeenCalledWith(
         'TestBot',
-        expect.stringContaining('What theme should I use?'),
+        expect.stringContaining('What theme should I use?')
       );
 
       // Verify formatMemoriesForPrompt was called with the returned memories
       expect(mockFormatMemoriesForPrompt).toHaveBeenCalledWith(memories);
 
       // Verify the LLM received a system prompt that includes the memory block
-      const toolAugmentedCompletion = require('@src/services/toolAugmentedCompletion').toolAugmentedCompletion;
+      const toolAugmentedCompletion =
+        require('@src/services/toolAugmentedCompletion').toolAugmentedCompletion;
       const callArgs = toolAugmentedCompletion.mock.calls[0][0];
       expect(callArgs.systemPrompt).toContain('Relevant memories from previous conversations');
       expect(callArgs.systemPrompt).toContain('User prefers dark mode');
@@ -253,7 +285,7 @@ describe('handleMessage memory integration points', () => {
         expect.objectContaining({
           channelId: 'channel-42',
           userId: 'user-99',
-        }),
+        })
       );
 
       // Assistant response stored
@@ -264,7 +296,7 @@ describe('handleMessage memory integration points', () => {
         expect.objectContaining({
           channelId: 'channel-42',
           userId: 'user-99',
-        }),
+        })
       );
     });
   });
@@ -286,7 +318,8 @@ describe('handleMessage memory integration points', () => {
       // should return empty string, and the system prompt should NOT contain memory block.
       expect(mockFormatMemoriesForPrompt).toHaveBeenCalledWith([]);
 
-      const toolAugmentedCompletion = require('@src/services/toolAugmentedCompletion').toolAugmentedCompletion;
+      const toolAugmentedCompletion =
+        require('@src/services/toolAugmentedCompletion').toolAugmentedCompletion;
       const callArgs = toolAugmentedCompletion.mock.calls[0][0];
       expect(callArgs.systemPrompt).not.toContain('Relevant memories');
     });
@@ -308,7 +341,8 @@ describe('handleMessage memory integration points', () => {
       expect(response).toBe('Hello from the LLM!');
 
       // LLM was called (without memory context since retrieval failed)
-      const toolAugmentedCompletion = require('@src/services/toolAugmentedCompletion').toolAugmentedCompletion;
+      const toolAugmentedCompletion =
+        require('@src/services/toolAugmentedCompletion').toolAugmentedCompletion;
       expect(toolAugmentedCompletion).toHaveBeenCalled();
     });
   });
@@ -350,7 +384,8 @@ describe('handleMessage memory integration points', () => {
       expect(mockFormatMemoriesForPrompt).toHaveBeenCalledWith([]);
 
       // System prompt should not contain the memory preamble
-      const toolAugmentedCompletion = require('@src/services/toolAugmentedCompletion').toolAugmentedCompletion;
+      const toolAugmentedCompletion =
+        require('@src/services/toolAugmentedCompletion').toolAugmentedCompletion;
       const callArgs = toolAugmentedCompletion.mock.calls[0][0];
       expect(callArgs.systemPrompt).not.toContain('Relevant memories');
     });
@@ -363,9 +398,9 @@ describe('handleMessage memory integration points', () => {
     it('should format and inject all returned memories into the prompt', async () => {
       const memories = [
         { id: 'm1', memory: 'User name is Alice', score: 0.95 },
-        { id: 'm2', memory: 'Alice likes cats', score: 0.90 },
+        { id: 'm2', memory: 'Alice likes cats', score: 0.9 },
         { id: 'm3', memory: 'Alice lives in Berlin', score: 0.87 },
-        { id: 'm4', memory: 'Allergic to peanuts', score: 0.80 },
+        { id: 'm4', memory: 'Allergic to peanuts', score: 0.8 },
         { id: 'm5', memory: 'Favourite colour is green', score: 0.75 },
       ];
       const formattedBlock = [
@@ -389,7 +424,8 @@ describe('handleMessage memory integration points', () => {
       expect(mockFormatMemoriesForPrompt).toHaveBeenCalledWith(memories);
 
       // The formatted block should appear in the system prompt
-      const toolAugmentedCompletion = require('@src/services/toolAugmentedCompletion').toolAugmentedCompletion;
+      const toolAugmentedCompletion =
+        require('@src/services/toolAugmentedCompletion').toolAugmentedCompletion;
       const callArgs = toolAugmentedCompletion.mock.calls[0][0];
       expect(callArgs.systemPrompt).toContain('User name is Alice');
       expect(callArgs.systemPrompt).toContain('Alice likes cats');

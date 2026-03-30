@@ -1,7 +1,7 @@
-import { ConfigurationValidator } from '../../../../src/server/services/ConfigurationValidator';
 import { BotConfigurationManager } from '../../../../src/config/BotConfigurationManager';
-import { CONFIG_LIMITS } from '../../../../src/types/config';
 import { getLlmDefaultStatus } from '../../../../src/config/llmDefaultStatus';
+import { ConfigurationValidator } from '../../../../src/server/services/ConfigurationValidator';
+import { CONFIG_LIMITS } from '../../../../src/types/config';
 
 jest.mock('../../../../src/config/BotConfigurationManager');
 jest.mock('../../../../src/config/llmDefaultStatus');

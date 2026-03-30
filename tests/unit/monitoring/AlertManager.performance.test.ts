@@ -1,6 +1,6 @@
+import { runPerformanceTest } from '@tests/helpers/performanceTestHelper';
 import { AlertManager, NotificationChannel } from '@src/monitoring/AlertManager';
 import { HealthChecker, HealthCheckResult } from '@src/monitoring/HealthChecker';
-import { runPerformanceTest } from '@tests/helpers/performanceTestHelper';
 
 describe('AlertManager Performance', () => {
   let alertManager: AlertManager;

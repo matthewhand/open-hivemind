@@ -6,8 +6,8 @@
 import express from 'express';
 import request from 'supertest';
 import { ConfigurationManager } from '../../../src/config/ConfigurationManager';
-import { getWebUIServer } from '../../../src/server/server';
 import { DatabaseManager } from '../../../src/database/DatabaseManager';
+import { getWebUIServer } from '../../../src/server/server';
 
 describe('Health API Integration Tests', () => {
   afterEach(() => {

@@ -1,11 +1,11 @@
+import { HTTP_STATUS } from '@src/types/constants';
 import {
-  ErrorResponseBuilder,
-  SuccessResponseBuilder,
-  ErrorResponses,
   createErrorResponse,
   createSuccessResponse,
+  ErrorResponseBuilder,
+  ErrorResponses,
+  SuccessResponseBuilder,
 } from '@src/utils/errorResponse';
-import { HTTP_STATUS } from '@src/types/constants';
 
 describe('errorResponse', () => {
   describe('ErrorResponseBuilder', () => {
@@ -32,7 +32,11 @@ describe('errorResponse', () => {
       const response = new ErrorResponseBuilder(error)
         .withRequest('/api/test', 'POST', 'corr-1')
         .build();
-      expect(response.request).toEqual({ path: '/api/test', method: 'POST', correlationId: 'corr-1' });
+      expect(response.request).toEqual({
+        path: '/api/test',
+        method: 'POST',
+        correlationId: 'corr-1',
+      });
     });
 
     it('withDetails merges additional details', () => {
@@ -91,9 +95,7 @@ describe('errorResponse', () => {
     });
 
     it('withMeta merges additional metadata', () => {
-      const response = new SuccessResponseBuilder({})
-        .withMeta({ version: '1.0' })
-        .build();
+      const response = new SuccessResponseBuilder({}).withMeta({ version: '1.0' }).build();
       expect(response.meta?.version).toBe('1.0');
     });
   });

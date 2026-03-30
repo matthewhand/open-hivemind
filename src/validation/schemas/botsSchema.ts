@@ -70,6 +70,8 @@ export const UpdateBotStatusSchema = z.object({
     id: z.string().min(1, { message: 'Bot ID is required' }),
   }),
   body: z.object({
-    status: z.enum(['active', 'inactive'], { message: 'Status must be either "active" or "inactive"' }),
+    status: z.enum(['active', 'inactive'], {
+      message: 'Status must be either "active" or "inactive"',
+    }),
   }),
 });

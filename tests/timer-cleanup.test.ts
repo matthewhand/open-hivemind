@@ -42,7 +42,9 @@ describe('Timer Cleanup Tests', () => {
 
   describe('RealTimeValidationService', () => {
     it('should clear validationInterval on shutdown', () => {
-      const { RealTimeValidationService } = require('../src/server/services/RealTimeValidationService');
+      const {
+        RealTimeValidationService,
+      } = require('../src/server/services/RealTimeValidationService');
       const service = RealTimeValidationService.getInstance();
 
       service.shutdown();
@@ -87,7 +89,9 @@ describe('Timer Cleanup Tests', () => {
 
   describe('IntegrationAnomalyDetector', () => {
     it('should clear check interval on shutdown', () => {
-      const { IntegrationAnomalyDetector } = require('../src/monitoring/IntegrationAnomalyDetector');
+      const {
+        IntegrationAnomalyDetector,
+      } = require('../src/monitoring/IntegrationAnomalyDetector');
       const service = IntegrationAnomalyDetector.getInstance();
 
       service.startDetection();

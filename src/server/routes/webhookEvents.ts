@@ -1,9 +1,9 @@
 import Debug from 'debug';
 import { Router } from 'express';
 import { v4 as uuidv4 } from 'uuid';
+import { HTTP_STATUS } from '../../types/constants';
 import { WebhookRetrySchema } from '../../validation/schemas/miscSchema';
 import { validateRequest } from '../../validation/validateRequest';
-import { HTTP_STATUS } from '../../types/constants';
 
 const debug = Debug('app:webui:webhook-events');
 const router = Router();
@@ -121,7 +121,9 @@ router.get('/events', (req, res) => {
     });
   } catch (error) {
     debug('Error listing webhook events:', error);
-    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ success: false, error: 'Failed to list webhook events' });
+    return res
+      .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
+      .json({ success: false, error: 'Failed to list webhook events' });
   }
 });
 
@@ -136,7 +138,9 @@ router.get('/events/:id', (req, res) => {
     return res.json({ success: true, data: event });
   } catch (error) {
     debug('Error fetching webhook event:', error);
-    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ success: false, error: 'Failed to fetch webhook event' });
+    return res
+      .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
+      .json({ success: false, error: 'Failed to fetch webhook event' });
   }
 });
 
@@ -151,7 +155,9 @@ router.post('/events/:id/retry', validateRequest(WebhookRetrySchema), async (req
 
     // Only allow retrying failed events
     if (original.statusCode < 400) {
-      return res.status(HTTP_STATUS.BAD_REQUEST).json({ success: false, error: 'Only failed events can be retried' });
+      return res
+        .status(HTTP_STATUS.BAD_REQUEST)
+        .json({ success: false, error: 'Only failed events can be retried' });
     }
 
     // Record a retry attempt with a simulated 202 Accepted
@@ -177,7 +183,9 @@ router.post('/events/:id/retry', validateRequest(WebhookRetrySchema), async (req
     });
   } catch (error) {
     debug('Error retrying webhook event:', error);
-    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ success: false, error: 'Failed to retry webhook event' });
+    return res
+      .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
+      .json({ success: false, error: 'Failed to retry webhook event' });
   }
 });
 

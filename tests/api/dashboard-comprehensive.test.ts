@@ -3,11 +3,11 @@
  * Tests activity filtering, analytics metrics, and export endpoints
  */
 
-import { describe, it, expect, beforeEach, afterEach } from '@jest/globals';
-import request from 'supertest';
 import express, { Express } from 'express';
-import dashboardRouter from '../../src/server/routes/dashboard';
+import request from 'supertest';
+import { afterEach, beforeEach, describe, expect, it } from '@jest/globals';
 import { BotConfigurationManager } from '../../src/config/BotConfigurationManager';
+import dashboardRouter from '../../src/server/routes/dashboard';
 
 // Mock authentication middleware
 jest.mock('../../src/auth/middleware', () => ({
@@ -206,9 +206,7 @@ describe('Dashboard API - Comprehensive Integration Tests', () => {
     });
 
     it('should filter by bot name', async () => {
-      const response = await request(app)
-        .get('/api/dashboard/activity?bot=bot-1')
-        .expect(200);
+      const response = await request(app).get('/api/dashboard/activity?bot=bot-1').expect(200);
 
       expect(response.body.events).toBeDefined();
       response.body.events.forEach((event: any) => {
@@ -300,18 +298,14 @@ describe('Dashboard API - Comprehensive Integration Tests', () => {
     });
 
     it('should cap pagination limit at 1000', async () => {
-      const response = await request(app)
-        .get('/api/dashboard/activity?limit=5000')
-        .expect(200);
+      const response = await request(app).get('/api/dashboard/activity?limit=5000').expect(200);
 
       expect(response.body.pagination.limit).toBeLessThanOrEqual(1000);
     });
 
     it('should combine multiple filters', async () => {
       const response = await request(app)
-        .get(
-          '/api/dashboard/activity?bot=bot-1&messageProvider=slack&from=2024-01-01T09:00:00Z'
-        )
+        .get('/api/dashboard/activity?bot=bot-1&messageProvider=slack&from=2024-01-01T09:00:00Z')
         .expect(200);
 
       expect(response.body.events).toBeDefined();
@@ -408,9 +402,7 @@ describe('Dashboard API - Comprehensive Integration Tests', () => {
       const from = '2024-01-01T00:00:00Z';
       const to = '2024-01-31T23:59:59Z';
 
-      await request(app)
-        .get(`/api/dashboard/ai/stats?from=${from}&to=${to}`)
-        .expect(200);
+      await request(app).get(`/api/dashboard/ai/stats?from=${from}&to=${to}`).expect(200);
 
       expect(mockGetStats).toHaveBeenCalledWith({
         startTime: new Date(from),
@@ -454,9 +446,7 @@ describe('Dashboard API - Comprehensive Integration Tests', () => {
       const from = '2024-01-01T00:00:00Z';
       const to = '2024-01-31T23:59:59Z';
 
-      await request(app)
-        .get(`/api/dashboard/ai/patterns?from=${from}&to=${to}`)
-        .expect(200);
+      await request(app).get(`/api/dashboard/ai/patterns?from=${from}&to=${to}`).expect(200);
 
       expect(mockGetBehaviorPatterns).toHaveBeenCalled();
     });
@@ -564,9 +554,7 @@ describe('Dashboard API - Comprehensive Integration Tests', () => {
     });
 
     it('should default to CSV format when not specified', async () => {
-      const response = await request(app)
-        .get('/api/dashboard/activity/export')
-        .expect(200);
+      const response = await request(app).get('/api/dashboard/activity/export').expect(200);
 
       expect(response.headers['content-type']).toContain('text/csv');
     });
@@ -744,9 +732,7 @@ describe('Dashboard API - Comprehensive Integration Tests', () => {
     });
 
     it('should validate alert ID parameter (400)', async () => {
-      const response = await request(app)
-        .post('/api/dashboard/alerts/ /acknowledge')
-        .expect(400);
+      const response = await request(app).post('/api/dashboard/alerts/ /acknowledge').expect(400);
 
       expect(response.body.error).toBe('Validation failed');
     });
@@ -787,9 +773,7 @@ describe('Dashboard API - Comprehensive Integration Tests', () => {
     });
 
     it('should validate alert ID parameter (400)', async () => {
-      const response = await request(app)
-        .post('/api/dashboard/alerts//resolve')
-        .expect(400);
+      const response = await request(app).post('/api/dashboard/alerts//resolve').expect(400);
 
       expect(response.body.error).toBe('Validation failed');
     });

@@ -1,5 +1,5 @@
-import { BotConfigService } from '../../../../src/server/services/BotConfigService';
 import { DatabaseManager } from '../../../../src/database/DatabaseManager';
+import { BotConfigService } from '../../../../src/server/services/BotConfigService';
 import { ConfigurationValidator } from '../../../../src/server/services/ConfigurationValidator';
 import { ConfigurationError } from '../../../../src/types/errorClasses';
 
@@ -307,9 +307,9 @@ describe('BotConfigService', () => {
         suggestions: [],
       });
 
-      await expect(
-        service.updateBotConfig(1, { messageProvider: 'invalid' })
-      ).rejects.toThrow('validation failed');
+      await expect(service.updateBotConfig(1, { messageProvider: 'invalid' })).rejects.toThrow(
+        'validation failed'
+      );
     });
   });
 

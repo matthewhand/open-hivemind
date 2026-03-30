@@ -1,3 +1,5 @@
+import { SessionManager } from '@src/auth/SessionManager';
+
 /**
  * Tests for SessionManager
  * Mocks AuthManager and SessionStore to isolate session management logic.
@@ -30,8 +32,6 @@ jest.mock('@src/auth/AuthManager', () => ({
     }),
   },
 }));
-
-import { SessionManager } from '@src/auth/SessionManager';
 
 describe('SessionManager', () => {
   let manager: SessionManager;

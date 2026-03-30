@@ -10,18 +10,22 @@ jest.mock('../../../src/auth/middleware', () => ({
   },
   requireAdmin: (req: any, res: any, next: any) => {
     next();
-  }
+  },
 }));
 
 // Mock MCP Service
 jest.mock('../../../src/mcp/MCPService', () => ({
   MCPService: {
     getInstance: jest.fn().mockReturnValue({
-      getConnectedServers: jest.fn().mockReturnValue([{ name: 'mcp1', serverUrl: 'http://test.local', status: 'connected' }]),
-      getConnectedServersWithMetadata: jest.fn().mockReturnValue([{ name: 'mcp1', serverUrl: 'http://test.local', status: 'connected' }]),
+      getConnectedServers: jest
+        .fn()
+        .mockReturnValue([{ name: 'mcp1', serverUrl: 'http://test.local', status: 'connected' }]),
+      getConnectedServersWithMetadata: jest
+        .fn()
+        .mockReturnValue([{ name: 'mcp1', serverUrl: 'http://test.local', status: 'connected' }]),
       getToolsFromServer: jest.fn().mockReturnValue([]),
-    })
-  }
+    }),
+  },
 }));
 
 jest.mock('../../../src/config/trustedMcpRepos', () => ({
@@ -33,16 +37,18 @@ jest.mock('../../../src/storage/webUIStorage', () => ({
   webUIStorage: {
     getLlmProviders: jest.fn().mockReturnValue([{ id: 'llm1', name: 'OpenAI' }]),
     getMessengerProviders: jest.fn().mockReturnValue([{ id: 'msg1', name: 'Discord' }]),
-    getPersonas: jest.fn().mockReturnValue([{ key: 'persona1', name: 'Developer', systemPrompt: 'Test' }]),
+    getPersonas: jest
+      .fn()
+      .mockReturnValue([{ key: 'persona1', name: 'Developer', systemPrompt: 'Test' }]),
     getToolUsageGuards: jest.fn().mockReturnValue([{ id: 'guard1', name: 'Guard1', config: {} }]),
     getMcps: jest.fn().mockReturnValue([{ name: 'mcp1', serverUrl: 'http://test.local' }]),
     saveLlmProvider: jest.fn(),
     savePersona: jest.fn(),
-  }
+  },
 }));
 
 jest.mock('../../../src/utils/envUtils', () => ({
-  getRelevantEnvVars: jest.fn().mockReturnValue({ NODE_ENV: 'test' })
+  getRelevantEnvVars: jest.fn().mockReturnValue({ NODE_ENV: 'test' }),
 }));
 
 const app = express();
@@ -126,5 +132,4 @@ describe('Admin Routes Integration', () => {
       expect(webUIStorageMock.savePersona).toHaveBeenCalled();
     });
   });
-
 });

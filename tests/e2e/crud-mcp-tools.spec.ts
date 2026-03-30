@@ -97,7 +97,11 @@ test.describe('MCP Tools CRUD Lifecycle', () => {
     result: {
       data: [
         { title: 'Example result 1', url: 'https://example.com/1', snippet: 'First search result' },
-        { title: 'Example result 2', url: 'https://example.com/2', snippet: 'Second search result' },
+        {
+          title: 'Example result 2',
+          url: 'https://example.com/2',
+          snippet: 'Second search result',
+        },
       ],
       totalResults: 2,
     },
@@ -112,7 +116,12 @@ test.describe('MCP Tools CRUD Lifecycle', () => {
       page.route('**/api/config/llm-status', (route) =>
         route.fulfill({
           status: 200,
-          json: { defaultConfigured: true, defaultProviders: [], botsMissingLlmProvider: [], hasMissing: false },
+          json: {
+            defaultConfigured: true,
+            defaultProviders: [],
+            botsMissingLlmProvider: [],
+            hasMissing: false,
+          },
         })
       ),
       page.route('**/api/config/global', (route) => route.fulfill({ status: 200, json: {} })),
@@ -121,14 +130,18 @@ test.describe('MCP Tools CRUD Lifecycle', () => {
       page.route('**/api/csrf-token', (route) =>
         route.fulfill({ status: 200, json: { token: 'mock-csrf-token' } })
       ),
-      page.route('**/api/health', (route) => route.fulfill({ status: 200, json: { status: 'ok' } })),
+      page.route('**/api/health', (route) =>
+        route.fulfill({ status: 200, json: { status: 'ok' } })
+      ),
       page.route('**/api/dashboard/api/status', (route) =>
         route.fulfill({ status: 200, json: { bots: [], uptime: 100 } })
       ),
       page.route('**/api/admin/guard-profiles', (route) =>
         route.fulfill({ status: 200, json: { data: [] } })
       ),
-      page.route('**/api/demo/status', (route) => route.fulfill({ status: 200, json: { active: false } })),
+      page.route('**/api/demo/status', (route) =>
+        route.fulfill({ status: 200, json: { active: false } })
+      ),
     ]);
   }
 
@@ -159,7 +172,11 @@ test.describe('MCP Tools CRUD Lifecycle', () => {
     await page.goto('/admin/mcp/tools');
     await expect(page.getByText('web_search').first()).toBeVisible({ timeout: 5000 });
 
-    const searchInput = page.locator('input[placeholder*="search" i], input[placeholder*="filter" i], input[type="search"]').first();
+    const searchInput = page
+      .locator(
+        'input[placeholder*="search" i], input[placeholder*="filter" i], input[type="search"]'
+      )
+      .first();
     await expect(searchInput).toBeVisible({ timeout: 10000 });
     await searchInput.fill('email');
 
@@ -176,7 +193,11 @@ test.describe('MCP Tools CRUD Lifecycle', () => {
     await page.goto('/admin/mcp/tools');
     await expect(page.getByText('web_search').first()).toBeVisible({ timeout: 5000 });
 
-    const categoryFilter = page.locator('select:has(option:has-text("Search")), select:has(option:has-text("Category")), select[id*="category" i]').first();
+    const categoryFilter = page
+      .locator(
+        'select:has(option:has-text("Search")), select:has(option:has-text("Category")), select[id*="category" i]'
+      )
+      .first();
     await expect(categoryFilter).toBeVisible({ timeout: 10000 });
     await categoryFilter.selectOption({ label: 'Search' });
   });
@@ -189,7 +210,11 @@ test.describe('MCP Tools CRUD Lifecycle', () => {
     await page.goto('/admin/mcp/tools');
     await expect(page.getByText('web_search').first()).toBeVisible({ timeout: 5000 });
 
-    const serverFilter = page.locator('select:has(option:has-text("Production MCP")), select:has(option:has-text("Server")), select[id*="server" i]').first();
+    const serverFilter = page
+      .locator(
+        'select:has(option:has-text("Production MCP")), select:has(option:has-text("Server")), select[id*="server" i]'
+      )
+      .first();
     await expect(serverFilter).toBeVisible({ timeout: 10000 });
     await serverFilter.selectOption({ label: 'Staging MCP' });
   });
@@ -206,7 +231,9 @@ test.describe('MCP Tools CRUD Lifecycle', () => {
     const toolCard = page.locator('.card').filter({ hasText: 'send_email' }).first();
     await expect(toolCard).toBeVisible({ timeout: 10000 });
 
-    const toggleBtn = toolCard.locator('button:has-text("Enable"), button:has-text("Disable")').first();
+    const toggleBtn = toolCard
+      .locator('button:has-text("Enable"), button:has-text("Disable")')
+      .first();
     await expect(toggleBtn).toBeVisible({ timeout: 10000 });
     await toggleBtn.click();
   });
@@ -227,7 +254,9 @@ test.describe('MCP Tools CRUD Lifecycle', () => {
     await expect(runBtn).toBeVisible({ timeout: 10000 });
     await runBtn.click();
 
-    const modal = page.locator('dialog.modal[open] .modal-box, .modal-box, [role="dialog"]').first();
+    const modal = page
+      .locator('dialog.modal[open] .modal-box, .modal-box, [role="dialog"]')
+      .first();
     await expect(modal).toBeVisible({ timeout: 10000 });
   });
 
@@ -252,11 +281,15 @@ test.describe('MCP Tools CRUD Lifecycle', () => {
     await expect(runBtn).toBeVisible({ timeout: 10000 });
     await runBtn.click();
 
-    const modal = page.locator('dialog.modal[open] .modal-box, .modal-box, [role="dialog"]').first();
+    const modal = page
+      .locator('dialog.modal[open] .modal-box, .modal-box, [role="dialog"]')
+      .first();
     await expect(modal).toBeVisible({ timeout: 10000 });
 
     // Find JSON textarea or editor
-    const jsonInput = modal.locator('textarea, [class*="editor"], [contenteditable="true"]').first();
+    const jsonInput = modal
+      .locator('textarea, [class*="editor"], [contenteditable="true"]')
+      .first();
     await expect(jsonInput).toBeVisible({ timeout: 10000 });
     await jsonInput.fill('{"query": "test search", "maxResults": 5}');
 
@@ -287,7 +320,9 @@ test.describe('MCP Tools CRUD Lifecycle', () => {
     await expect(runBtn).toBeVisible({ timeout: 10000 });
     await runBtn.click();
 
-    const modal = page.locator('dialog.modal[open] .modal-box, .modal-box, [role="dialog"]').first();
+    const modal = page
+      .locator('dialog.modal[open] .modal-box, .modal-box, [role="dialog"]')
+      .first();
     await expect(modal).toBeVisible({ timeout: 10000 });
 
     // Switch to Form mode
@@ -321,7 +356,9 @@ test.describe('MCP Tools CRUD Lifecycle', () => {
     await expect(runBtn).toBeVisible({ timeout: 10000 });
     await runBtn.click();
 
-    const modal = page.locator('dialog.modal[open] .modal-box, .modal-box, [role="dialog"]').first();
+    const modal = page
+      .locator('dialog.modal[open] .modal-box, .modal-box, [role="dialog"]')
+      .first();
     await expect(modal).toBeVisible({ timeout: 10000 });
 
     // Switch to JSON mode
@@ -340,7 +377,9 @@ test.describe('MCP Tools CRUD Lifecycle', () => {
 
   test('tool execution loading state', async ({ page }) => {
     let resolveExecutionPromise: () => void;
-    const executionPromise = new Promise<void>((resolve) => { resolveExecutionPromise = resolve; });
+    const executionPromise = new Promise<void>((resolve) => {
+      resolveExecutionPromise = resolve;
+    });
 
     await page.route('**/api/mcp/servers/*/call-tool', async (route) => {
       await executionPromise;
@@ -361,7 +400,9 @@ test.describe('MCP Tools CRUD Lifecycle', () => {
     await expect(runBtn).toBeVisible({ timeout: 10000 });
     await runBtn.click();
 
-    const modal = page.locator('dialog.modal[open] .modal-box, .modal-box, [role="dialog"]').first();
+    const modal = page
+      .locator('dialog.modal[open] .modal-box, .modal-box, [role="dialog"]')
+      .first();
     await expect(modal).toBeVisible({ timeout: 10000 });
 
     const executeBtn = modal.locator('button:has-text("Run Tool")').first();
@@ -369,14 +410,18 @@ test.describe('MCP Tools CRUD Lifecycle', () => {
     await executeBtn.click();
 
     // Check for loading indicator in modal
-    const loading = modal.locator('[class*="loading"], [class*="spinner"], .skeleton, [role="progressbar"]').first();
+    const loading = modal
+      .locator('[class*="loading"], [class*="spinner"], .skeleton, [role="progressbar"]')
+      .first();
     await expect(loading).toBeVisible({ timeout: 10000 });
 
     // Resolve promise
     resolveExecutionPromise!();
 
     // Wait for result to appear
-    const resultArea = modal.locator('pre, code, [class*="result"], [class*="output"], textarea[readonly]').first();
+    const resultArea = modal
+      .locator('pre, code, [class*="result"], [class*="output"], textarea[readonly]')
+      .first();
     await expect(resultArea).toBeVisible({ timeout: 10000 });
   });
 
@@ -399,7 +444,9 @@ test.describe('MCP Tools CRUD Lifecycle', () => {
     await expect(runBtn).toBeVisible({ timeout: 10000 });
     await runBtn.click();
 
-    const modal = page.locator('dialog.modal[open] .modal-box, .modal-box, [role="dialog"]').first();
+    const modal = page
+      .locator('dialog.modal[open] .modal-box, .modal-box, [role="dialog"]')
+      .first();
     await expect(modal).toBeVisible({ timeout: 10000 });
 
     const executeBtn = modal.locator('button:has-text("Run Tool")').first();
@@ -407,11 +454,16 @@ test.describe('MCP Tools CRUD Lifecycle', () => {
     await executeBtn.click();
 
     // Check for result output area to become visible
-    const resultArea = modal.locator('pre, code, [class*="result"], [class*="output"], textarea[readonly]').first();
+    const resultArea = modal
+      .locator('pre, code, [class*="result"], [class*="output"], textarea[readonly]')
+      .first();
     await expect(resultArea).toBeVisible({ timeout: 10000 });
 
     // Check for execution time display
-    const execTime = page.getByText('245').or(page.getByText(/245\s*ms/)).first();
+    const execTime = page
+      .getByText('245')
+      .or(page.getByText(/245\s*ms/))
+      .first();
     await expect(execTime).toBeVisible({ timeout: 10000 });
   });
 
@@ -425,7 +477,11 @@ test.describe('MCP Tools CRUD Lifecycle', () => {
 
     // Should show empty state
     await page.waitForLoadState('domcontentloaded');
-    const emptyText = page.locator('text=/no.*tool/i, text=/no.*available/i, text=/get.*started/i, text=/connect.*server/i').first();
+    const emptyText = page
+      .locator(
+        'text=/no.*tool/i, text=/no.*available/i, text=/get.*started/i, text=/connect.*server/i'
+      )
+      .first();
     await expect(emptyText).toBeVisible({ timeout: 10000 });
   });
 
@@ -444,7 +500,9 @@ test.describe('MCP Tools CRUD Lifecycle', () => {
     await expect(runBtn).toBeVisible({ timeout: 10000 });
     await runBtn.click();
 
-    const modal = page.locator('dialog.modal[open] .modal-box, .modal-box, [role="dialog"]').first();
+    const modal = page
+      .locator('dialog.modal[open] .modal-box, .modal-box, [role="dialog"]')
+      .first();
     await expect(modal).toBeVisible({ timeout: 10000 });
 
     // Switch to JSON mode
@@ -453,7 +511,9 @@ test.describe('MCP Tools CRUD Lifecycle', () => {
     await jsonModeBtn.click();
 
     // Enter invalid JSON
-    const jsonInput = modal.locator('textarea, [class*="editor"], [contenteditable="true"]').first();
+    const jsonInput = modal
+      .locator('textarea, [class*="editor"], [contenteditable="true"]')
+      .first();
     await expect(jsonInput).toBeVisible({ timeout: 10000 });
     await jsonInput.fill('{invalid json content missing quotes}');
 

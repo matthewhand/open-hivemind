@@ -1,8 +1,8 @@
-import { Router } from 'express';
 import Debug from 'debug';
+import { Router } from 'express';
 import { ErrorUtils } from '@src/types/errors';
-import { UsageTrackerService } from '../services/UsageTrackerService';
 import { HTTP_STATUS } from '../../types/constants';
+import { UsageTrackerService } from '../services/UsageTrackerService';
 
 const debug = Debug('app:webui:usage-tracking');
 const router = Router();

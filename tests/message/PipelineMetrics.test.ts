@@ -1,4 +1,4 @@
-import { PipelineMetrics, pipelineEventEmitter } from '@message/PipelineMetrics';
+import { pipelineEventEmitter, PipelineMetrics } from '@message/PipelineMetrics';
 import { PipelineMetricsAggregator } from '@message/PipelineMetricsAggregator';
 
 describe('PipelineMetrics', () => {

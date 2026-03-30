@@ -187,10 +187,7 @@ export class ContentFilterService {
    * @param config - The content filter configuration
    * @returns Filtered content with blocked terms redacted
    */
-  public filterContentForDisplay(
-    content: string,
-    config: ContentFilterConfig
-  ): string {
+  public filterContentForDisplay(content: string, config: ContentFilterConfig): string {
     if (!config.enabled || !config.blockedTerms || config.blockedTerms.length === 0) {
       return content;
     }

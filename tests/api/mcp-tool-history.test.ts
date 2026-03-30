@@ -1,6 +1,9 @@
-import { describe, it, expect, beforeEach, afterEach } from '@jest/globals';
-import request from 'supertest';
+import fs from 'fs';
+import path from 'path';
 import express, { Express } from 'express';
+import request from 'supertest';
+import { afterEach, beforeEach, describe, expect, it } from '@jest/globals';
+import mcpRouter from '../../src/server/routes/mcp';
 
 // Mock auth middleware to bypass authentication
 jest.mock('../../src/auth/middleware', () => ({
@@ -11,10 +14,6 @@ jest.mock('../../src/auth/middleware', () => ({
   requireAdmin: (_req: any, _res: any, next: any) => next(),
   requireRole: () => (_req: any, _res: any, next: any) => next(),
 }));
-
-import mcpRouter from '../../src/server/routes/mcp';
-import fs from 'fs';
-import path from 'path';
 
 // Routes not yet implemented in the MCP router
 // eslint-disable-next-line jest/no-disabled-tests
@@ -93,10 +92,7 @@ describe.skip('MCP Tool Execution History API', () => {
         // Missing required fields
       };
 
-      await request(app)
-        .post('/api/mcp/tools/history')
-        .send(invalidExecution)
-        .expect(400);
+      await request(app).post('/api/mcp/tools/history').send(invalidExecution).expect(400);
     });
   });
 
@@ -145,9 +141,7 @@ describe.skip('MCP Tool Execution History API', () => {
     });
 
     it('should retrieve all executions', async () => {
-      const response = await request(app)
-        .get('/api/mcp/tools/history')
-        .expect(200);
+      const response = await request(app).get('/api/mcp/tools/history').expect(200);
 
       expect(response.body.success).toBe(true);
       expect(response.body.data).toHaveLength(3);
@@ -165,9 +159,7 @@ describe.skip('MCP Tool Execution History API', () => {
     });
 
     it('should filter by tool name', async () => {
-      const response = await request(app)
-        .get('/api/mcp/tools/history?toolName=tool-2')
-        .expect(200);
+      const response = await request(app).get('/api/mcp/tools/history?toolName=tool-2').expect(200);
 
       expect(response.body.success).toBe(true);
       expect(response.body.data).toHaveLength(1);
@@ -175,9 +167,7 @@ describe.skip('MCP Tool Execution History API', () => {
     });
 
     it('should filter by status', async () => {
-      const response = await request(app)
-        .get('/api/mcp/tools/history?status=success')
-        .expect(200);
+      const response = await request(app).get('/api/mcp/tools/history?status=success').expect(200);
 
       expect(response.body.success).toBe(true);
       expect(response.body.data).toHaveLength(2);
@@ -185,9 +175,7 @@ describe.skip('MCP Tool Execution History API', () => {
     });
 
     it('should support pagination with limit', async () => {
-      const response = await request(app)
-        .get('/api/mcp/tools/history?limit=2')
-        .expect(200);
+      const response = await request(app).get('/api/mcp/tools/history?limit=2').expect(200);
 
       expect(response.body.success).toBe(true);
       expect(response.body.data).toHaveLength(2);
@@ -220,9 +208,7 @@ describe.skip('MCP Tool Execution History API', () => {
     });
 
     it('should retrieve execution by ID', async () => {
-      const response = await request(app)
-        .get('/api/mcp/tools/history/specific-exec')
-        .expect(200);
+      const response = await request(app).get('/api/mcp/tools/history/specific-exec').expect(200);
 
       expect(response.body.success).toBe(true);
       expect(response.body.data.id).toBe('specific-exec');
@@ -230,9 +216,7 @@ describe.skip('MCP Tool Execution History API', () => {
     });
 
     it('should return 404 for non-existent ID', async () => {
-      const response = await request(app)
-        .get('/api/mcp/tools/history/non-existent-id')
-        .expect(404);
+      const response = await request(app).get('/api/mcp/tools/history/non-existent-id').expect(404);
 
       expect(response.body.success).toBe(false);
       expect(response.body.error).toBe('Tool execution not found');
@@ -282,9 +266,7 @@ describe.skip('MCP Tool Execution History API', () => {
     });
 
     it('should return execution statistics', async () => {
-      const response = await request(app)
-        .get('/api/mcp/tools/stats')
-        .expect(200);
+      const response = await request(app).get('/api/mcp/tools/stats').expect(200);
 
       expect(response.body.success).toBe(true);
       expect(response.body.data.totalExecutions).toBe(3);

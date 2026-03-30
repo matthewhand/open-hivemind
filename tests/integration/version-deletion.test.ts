@@ -9,6 +9,6 @@ import { BotConfiguration, DatabaseManager } from '../../src/database/DatabaseMa
 import { ConfigurationVersionService } from '../../src/server/services/ConfigurationVersionService';
 
 // eslint-disable-next-line jest/no-disabled-tests
-describe.skip("Configuration Version Deletion" /* TODO: Fix and re-enable entire suite */, () => {
+describe.skip('Configuration Version Deletion' /* TODO: Fix and re-enable entire suite */, () => {
   it('placeholder', () => {});
 });

@@ -182,9 +182,7 @@ describe('dashboard activity route', () => {
 
     // The route does not support server-side pagination (page/limit params).
     // It returns up to 200 events via .slice(-200).
-    const response1 = await request(app)
-      .get('/dashboard/activity')
-      .query({ page: 1, limit: 25 });
+    const response1 = await request(app).get('/dashboard/activity').query({ page: 1, limit: 25 });
 
     expect(response1.status).toBe(200);
     // All 100 events returned (route slices last 200)
@@ -213,8 +211,7 @@ describe('dashboard activity route', () => {
     mockWsInstance.getAllBotStats.mockReturnValue({ AgentA: { messageCount: 50, errors: [] } });
 
     // The route does not support server-side pagination.
-    const response = await request(app)
-      .get('/dashboard/activity');
+    const response = await request(app).get('/dashboard/activity');
 
     expect(response.status).toBe(200);
     // All 50 events returned

@@ -7,10 +7,10 @@
 import { Router } from 'express';
 import { container } from 'tsyringe';
 import DemoModeService from '../../services/DemoModeService';
+import { HTTP_STATUS } from '../../types/constants';
 import { ErrorUtils } from '../../types/errors';
 import { ChatGenerateSchema, EmptySchema } from '../../validation/schemas/miscSchema';
 import { validateRequest } from '../../validation/validateRequest';
-import { HTTP_STATUS } from '../../types/constants';
 
 const router = Router();
 

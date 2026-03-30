@@ -175,7 +175,7 @@ export const OPENAI_MODELS: ModelMetadata[] = [
     description: 'Legacy embedding model, still widely used',
     type: 'embedding',
     contextWindow: 8191,
-    pricing: { input: 0.10, output: 0 },
+    pricing: { input: 0.1, output: 0 },
   },
 ];
 
@@ -390,9 +390,12 @@ export function getModelsForProvider(providerId: string): ModelMetadata[] {
 /**
  * Get models by type
  */
-export function getModelsByType(providerId: string, type: 'chat' | 'embedding' | 'both'): ModelMetadata[] {
+export function getModelsByType(
+  providerId: string,
+  type: 'chat' | 'embedding' | 'both'
+): ModelMetadata[] {
   const models = getModelsForProvider(providerId);
-  return models.filter(model => model.type === type || model.type === 'both');
+  return models.filter((model) => model.type === type || model.type === 'both');
 }
 
 /**

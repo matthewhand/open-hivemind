@@ -1,6 +1,10 @@
-import { describe, it, expect, beforeEach, afterEach } from '@jest/globals';
-import request from 'supertest';
+import fs from 'fs';
+import path from 'path';
 import express from 'express';
+import request from 'supertest';
+import { afterEach, beforeEach, describe, expect, it } from '@jest/globals';
+import mcpRouter from '@src/server/routes/mcp';
+import { ToolPreferencesService } from '@src/server/services/ToolPreferencesService';
 
 // Mock auth middleware to bypass authentication
 jest.mock('@src/auth/middleware', () => ({
@@ -11,11 +15,6 @@ jest.mock('@src/auth/middleware', () => ({
   requireAdmin: (_req: any, _res: any, next: any) => next(),
   requireRole: () => (_req: any, _res: any, next: any) => next(),
 }));
-
-import mcpRouter from '@src/server/routes/mcp';
-import { ToolPreferencesService } from '@src/server/services/ToolPreferencesService';
-import fs from 'fs';
-import path from 'path';
 
 const app = express();
 app.use(express.json());
@@ -42,13 +41,11 @@ describe.skip('MCP Tool Preferences API', () => {
 
   describe('POST /api/mcp/tools/:id/toggle', () => {
     it('should toggle a tool to disabled', async () => {
-      const response = await request(app)
-        .post('/api/mcp/tools/server1-tool1/toggle')
-        .send({
-          enabled: false,
-          serverName: 'server1',
-          toolName: 'tool1',
-        });
+      const response = await request(app).post('/api/mcp/tools/server1-tool1/toggle').send({
+        enabled: false,
+        serverName: 'server1',
+        toolName: 'tool1',
+      });
 
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
@@ -57,14 +54,12 @@ describe.skip('MCP Tool Preferences API', () => {
     });
 
     it('should toggle a tool to enabled', async () => {
-      const response = await request(app)
-        .post('/api/mcp/tools/server1-tool1/toggle')
-        .send({
-          enabled: true,
-          serverName: 'server1',
-          toolName: 'tool1',
-          userId: 'user123',
-        });
+      const response = await request(app).post('/api/mcp/tools/server1-tool1/toggle').send({
+        enabled: true,
+        serverName: 'server1',
+        toolName: 'tool1',
+        userId: 'user123',
+      });
 
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
@@ -73,24 +68,20 @@ describe.skip('MCP Tool Preferences API', () => {
     });
 
     it('should return 400 for invalid request body', async () => {
-      const response = await request(app)
-        .post('/api/mcp/tools/server1-tool1/toggle')
-        .send({
-          enabled: 'not-a-boolean', // Invalid type
-          serverName: 'server1',
-          toolName: 'tool1',
-        });
+      const response = await request(app).post('/api/mcp/tools/server1-tool1/toggle').send({
+        enabled: 'not-a-boolean', // Invalid type
+        serverName: 'server1',
+        toolName: 'tool1',
+      });
 
       expect(response.status).toBe(400);
     });
 
     it('should return 400 for missing required fields', async () => {
-      const response = await request(app)
-        .post('/api/mcp/tools/server1-tool1/toggle')
-        .send({
-          enabled: false,
-          // Missing serverName and toolName
-        });
+      const response = await request(app).post('/api/mcp/tools/server1-tool1/toggle').send({
+        enabled: false,
+        // Missing serverName and toolName
+      });
 
       expect(response.status).toBe(400);
     });
@@ -135,12 +126,10 @@ describe.skip('MCP Tool Preferences API', () => {
     });
 
     it('should return 400 for invalid request body', async () => {
-      const response = await request(app)
-        .post('/api/mcp/tools/bulk-toggle')
-        .send({
-          tools: 'not-an-array', // Invalid type
-          enabled: false,
-        });
+      const response = await request(app).post('/api/mcp/tools/bulk-toggle').send({
+        tools: 'not-an-array', // Invalid type
+        enabled: false,
+      });
 
       expect(response.status).toBe(400);
     });
@@ -149,16 +138,13 @@ describe.skip('MCP Tool Preferences API', () => {
   describe('GET /api/mcp/tools/:id/preference', () => {
     it('should return existing preference', async () => {
       // First create a preference
-      await request(app)
-        .post('/api/mcp/tools/server1-tool1/toggle')
-        .send({
-          enabled: false,
-          serverName: 'server1',
-          toolName: 'tool1',
-        });
+      await request(app).post('/api/mcp/tools/server1-tool1/toggle').send({
+        enabled: false,
+        serverName: 'server1',
+        toolName: 'tool1',
+      });
 
-      const response = await request(app)
-        .get('/api/mcp/tools/server1-tool1/preference');
+      const response = await request(app).get('/api/mcp/tools/server1-tool1/preference');
 
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
@@ -168,8 +154,7 @@ describe.skip('MCP Tool Preferences API', () => {
     });
 
     it('should return default preference if none exists', async () => {
-      const response = await request(app)
-        .get('/api/mcp/tools/nonexistent-tool/preference');
+      const response = await request(app).get('/api/mcp/tools/nonexistent-tool/preference');
 
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
@@ -181,24 +166,19 @@ describe.skip('MCP Tool Preferences API', () => {
   describe('GET /api/mcp/tools/preferences', () => {
     it('should return all preferences', async () => {
       // Create some preferences
-      await request(app)
-        .post('/api/mcp/tools/server1-tool1/toggle')
-        .send({
-          enabled: false,
-          serverName: 'server1',
-          toolName: 'tool1',
-        });
+      await request(app).post('/api/mcp/tools/server1-tool1/toggle').send({
+        enabled: false,
+        serverName: 'server1',
+        toolName: 'tool1',
+      });
 
-      await request(app)
-        .post('/api/mcp/tools/server1-tool2/toggle')
-        .send({
-          enabled: true,
-          serverName: 'server1',
-          toolName: 'tool2',
-        });
+      await request(app).post('/api/mcp/tools/server1-tool2/toggle').send({
+        enabled: true,
+        serverName: 'server1',
+        toolName: 'tool2',
+      });
 
-      const response = await request(app)
-        .get('/api/mcp/tools/preferences');
+      const response = await request(app).get('/api/mcp/tools/preferences');
 
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
@@ -206,8 +186,7 @@ describe.skip('MCP Tool Preferences API', () => {
     });
 
     it('should return empty object if no preferences exist', async () => {
-      const response = await request(app)
-        .get('/api/mcp/tools/preferences');
+      const response = await request(app).get('/api/mcp/tools/preferences');
 
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
@@ -229,16 +208,13 @@ describe.skip('MCP Tool Preferences API', () => {
           enabled: false,
         });
 
-      await request(app)
-        .post('/api/mcp/tools/server2-tool2/toggle')
-        .send({
-          enabled: true,
-          serverName: 'server2',
-          toolName: 'tool2',
-        });
+      await request(app).post('/api/mcp/tools/server2-tool2/toggle').send({
+        enabled: true,
+        serverName: 'server2',
+        toolName: 'tool2',
+      });
 
-      const response = await request(app)
-        .get('/api/mcp/tools/preferences/stats');
+      const response = await request(app).get('/api/mcp/tools/preferences/stats');
 
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);

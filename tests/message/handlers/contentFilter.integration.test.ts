@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, afterEach } from '@jest/globals';
+import { afterEach, beforeEach, describe, expect, it } from '@jest/globals';
 import { handleMessage } from '@src/message/handlers/messageHandler';
 import { IMessage } from '@src/message/interfaces/IMessage';
 import type { ContentFilterConfig } from '@src/types/config';
@@ -71,18 +71,22 @@ class MockMessage extends IMessage {
 
 // Mock module imports - factories must be self-contained (jest hoists these above const declarations)
 jest.mock('@message/management/getMessengerProvider', () => ({
-  getMessengerProvider: jest.fn().mockResolvedValue([{
-    getClientId: () => 'test-bot-id',
-    sendMessageToChannel: jest.fn().mockResolvedValue('msg-ts'),
-    sendTypingIndicator: jest.fn().mockResolvedValue(undefined),
-  }]),
+  getMessengerProvider: jest.fn().mockResolvedValue([
+    {
+      getClientId: () => 'test-bot-id',
+      sendMessageToChannel: jest.fn().mockResolvedValue('msg-ts'),
+      sendTypingIndicator: jest.fn().mockResolvedValue(undefined),
+    },
+  ]),
 }));
 
 jest.mock('@src/llm/getLlmProvider', () => ({
-  getLlmProvider: jest.fn().mockResolvedValue([{
-    generateChatCompletion: jest.fn().mockResolvedValue('This is a clean response'),
-    supportsHistory: () => true,
-  }]),
+  getLlmProvider: jest.fn().mockResolvedValue([
+    {
+      generateChatCompletion: jest.fn().mockResolvedValue('This is a clean response'),
+      supportsHistory: () => true,
+    },
+  ]),
 }));
 
 jest.mock('@src/services/toolAugmentedCompletion', () => ({
@@ -90,7 +94,7 @@ jest.mock('@src/services/toolAugmentedCompletion', () => ({
     return opts.llmProvider.generateChatCompletion(
       opts.userMessage,
       opts.historyMessages,
-      opts.metadata,
+      opts.metadata
     );
   }),
 }));

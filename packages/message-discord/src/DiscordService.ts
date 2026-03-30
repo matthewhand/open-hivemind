@@ -2,7 +2,6 @@ import { EventEmitter } from 'events';
 import * as fs from 'fs';
 import * as path from 'path';
 import Debug from 'debug';
-import { Logger } from '@common/logger';
 import {
   GatewayIntentBits,
   type Client,
@@ -22,6 +21,7 @@ import type {
   IServiceDependencies,
   IWebSocketService,
 } from '@hivemind/shared-types';
+import { Logger } from '@common/logger';
 import DiscordMessage from './DiscordMessage';
 import { DiscordBotManager, type Bot } from './managers/DiscordBotManager';
 import { DiscordEventHandler } from './managers/DiscordEventHandler';

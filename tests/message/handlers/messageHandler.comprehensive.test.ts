@@ -220,7 +220,8 @@ describe('messageHandler Configuration and Features', () => {
     // 'You are PhilosopherBot. Your display name in chat is "PhilosopherBot".\n\nYou are a wise philosopher.'
     // stripSystemPromptLeak removes the full system prompt if it appears in the response.
     // We test with just the base part appearing in the response.
-    const builtSystemPrompt = 'You are PhilosopherBot. Your display name in chat is "PhilosopherBot".\n\nYou are a wise philosopher.';
+    const builtSystemPrompt =
+      'You are PhilosopherBot. Your display name in chat is "PhilosopherBot".\n\nYou are a wise philosopher.';
 
     (mockLlmProvider.generateChatCompletion as jest.Mock).mockResolvedValueOnce({
       text: builtSystemPrompt + '\n\nMain response',

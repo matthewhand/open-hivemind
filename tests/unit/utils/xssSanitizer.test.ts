@@ -1,3 +1,13 @@
+import {
+  ContextSanitizers,
+  safeHTMLTemplate,
+  sanitizeHTML,
+  sanitizeObject,
+  sanitizeText,
+  sanitizeURL,
+  stripHTML,
+} from '@src/utils/xssSanitizer';
+
 /**
  * Tests for xssSanitizer
  *
@@ -23,20 +33,10 @@ jest.mock('dompurify', () => {
   return jest.fn(() => ({ sanitize: sanitizeFn }));
 });
 
-import {
-  sanitizeText,
-  sanitizeURL,
-  sanitizeObject,
-  sanitizeHTML,
-  stripHTML,
-  ContextSanitizers,
-  safeHTMLTemplate,
-} from '@src/utils/xssSanitizer';
-
 describe('xssSanitizer', () => {
   describe('sanitizeText', () => {
     it('escapes single quotes to &#x27;', () => {
-      expect(sanitizeText("it's")).toBe("it&#x27;s");
+      expect(sanitizeText("it's")).toBe('it&#x27;s');
     });
 
     it('escapes forward slashes to &#x2F;', () => {
@@ -154,11 +154,11 @@ describe('xssSanitizer', () => {
     it('applies sanitizeText to string values', () => {
       const result = sanitizeObject({ name: "it's" });
       // sanitizeText escapes ' to &#x27;
-      expect(Object.values(result)[0]).toBe("it&#x27;s");
+      expect(Object.values(result)[0]).toBe('it&#x27;s');
     });
 
     it('recursively sanitizes nested objects', () => {
-      const result = sanitizeObject({ nested: { val: "a/b" } });
+      const result = sanitizeObject({ nested: { val: 'a/b' } });
       const nested = Object.values(result)[0] as any;
       expect(Object.values(nested)[0]).toBe('a&#x2F;b');
     });
@@ -186,9 +186,7 @@ describe('xssSanitizer', () => {
     });
 
     it('urlParam encodes special characters', () => {
-      expect(ContextSanitizers.urlParam('hello world&foo=bar')).toBe(
-        'hello%20world%26foo%3Dbar'
-      );
+      expect(ContextSanitizers.urlParam('hello world&foo=bar')).toBe('hello%20world%26foo%3Dbar');
     });
 
     it('json escapes for JSON string context', () => {
@@ -219,7 +217,7 @@ describe('xssSanitizer', () => {
     it('applies sanitizeText to interpolated string values', () => {
       const val = "it's";
       const result = safeHTMLTemplate`<p>${val}</p>`;
-      expect(result).toContain("it&#x27;s");
+      expect(result).toContain('it&#x27;s');
     });
 
     it('handles non-string values by JSON-stringifying', () => {

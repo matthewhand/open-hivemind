@@ -1,5 +1,5 @@
-import { validate, commonValidations } from '../../src/middleware/validationMiddleware';
 import { body } from 'express-validator';
+import { commonValidations, validate } from '../../src/middleware/validationMiddleware';
 
 // Mock express-validator
 jest.mock('express-validator', () => {

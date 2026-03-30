@@ -180,7 +180,10 @@ export class ErrorLogger {
         code: ErrorUtils.getCode(error) || 'UNKNOWN',
         type: this.getErrorType(error),
         stack: error instanceof Error ? error.stack : undefined,
-        details: error && typeof error === 'object' && 'details' in error ? error.details as Record<string, unknown> : undefined,
+        details:
+          error && typeof error === 'object' && 'details' in error
+            ? (error.details as Record<string, unknown>)
+            : undefined,
         context: error instanceof BaseHivemindError ? error.context : undefined,
       },
       request: {

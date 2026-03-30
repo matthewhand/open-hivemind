@@ -50,5 +50,7 @@ describe('SlackBotManager', () => {
     );
   });
 
-  it.todo("should handle initialization, configuration, and message handling" /* TODO: Fix and re-enable */);
+  it.todo(
+    'should handle initialization, configuration, and message handling' /* TODO: Fix and re-enable */
+  );
 });

@@ -1,9 +1,14 @@
 import type { PluginManifest } from '../../../src/plugins/PluginLoader';
-import type { McpToolProviderConfig } from './types';
 import { McpToolProvider } from './McpToolProvider';
+import type { McpToolProviderConfig } from './types';
 
 export { McpToolProvider } from './McpToolProvider';
-export type { McpToolProviderConfig, McpTransport, McpToolsListResponse, McpToolCallResponse } from './types';
+export type {
+  McpToolProviderConfig,
+  McpTransport,
+  McpToolsListResponse,
+  McpToolCallResponse,
+} from './types';
 
 /** Standard factory -- preferred entry point for PluginLoader */
 export function create(config?: McpToolProviderConfig): McpToolProvider {

@@ -1,8 +1,8 @@
-import { RealTimeValidationService } from '../../../../src/server/services/RealTimeValidationService';
+import { DatabaseManager } from '../../../../src/database/DatabaseManager';
 import { BotConfigService } from '../../../../src/server/services/BotConfigService';
 import { ConfigurationTemplateService } from '../../../../src/server/services/ConfigurationTemplateService';
 import { ConfigurationValidator } from '../../../../src/server/services/ConfigurationValidator';
-import { DatabaseManager } from '../../../../src/database/DatabaseManager';
+import { RealTimeValidationService } from '../../../../src/server/services/RealTimeValidationService';
 
 jest.mock('../../../../src/server/services/BotConfigService');
 jest.mock('../../../../src/server/services/ConfigurationTemplateService');

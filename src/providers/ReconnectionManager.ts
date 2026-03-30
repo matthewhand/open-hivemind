@@ -101,7 +101,9 @@ export class ReconnectionManager {
     this.lastAttemptAt = new Date();
 
     try {
-      debug(`[${this.providerId}] Attempting connection (Attempt ${this.attempts}/${this.config.maxRetries})`);
+      debug(
+        `[${this.providerId}] Attempting connection (Attempt ${this.attempts}/${this.config.maxRetries})`
+      );
       await this.connectFn();
       // Re-check stopped flag after async connectFn to avoid acting on stale state
       if (this.stopped) return;
@@ -139,7 +141,9 @@ export class ReconnectionManager {
     }
 
     this.nextAttemptAt = new Date(Date.now() + delay);
-    debug(`[${this.providerId}] Scheduling next attempt in ${Math.round(delay)}ms at ${this.nextAttemptAt.toISOString()}`);
+    debug(
+      `[${this.providerId}] Scheduling next attempt in ${Math.round(delay)}ms at ${this.nextAttemptAt.toISOString()}`
+    );
 
     this.reconnectTimer = setTimeout(() => {
       this.attemptConnection().catch((err) => {

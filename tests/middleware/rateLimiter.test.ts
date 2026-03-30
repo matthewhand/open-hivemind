@@ -1,12 +1,12 @@
-import { Request, Response, NextFunction } from 'express';
+import { NextFunction, Request, Response } from 'express';
 import {
-  validateIP,
+  applyRateLimiting,
+  getClientKey,
+  getTrustedProxies,
+  ipToLong,
   isIPInCIDR,
   isTrustedProxy,
-  getClientKey,
-  ipToLong,
-  getTrustedProxies,
-  applyRateLimiting,
+  validateIP,
 } from '../../src/middleware/rateLimiter';
 
 describe('rateLimiter middleware utilities', () => {

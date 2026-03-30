@@ -1,4 +1,4 @@
-import fs from 'fs';
+import { promises as fs } from 'fs';
 import path from 'path';
 import Debug from 'debug';
 import { Logger } from '../common/logger';
@@ -38,9 +38,9 @@ export class WebUIStorage {
    */
   private async ensureConfigDir(): Promise<void> {
     try {
-      await fs.promises.access(this.configDir);
+      await fs.access(this.configDir);
     } catch {
-      await fs.promises.mkdir(this.configDir, { recursive: true });
+      await fs.mkdir(this.configDir, { recursive: true });
     }
   }
 
@@ -53,8 +53,8 @@ export class WebUIStorage {
     }
 
     try {
-      await fs.promises.access(this.configFile);
-      const data = await fs.promises.readFile(this.configFile, 'utf8');
+      await fs.access(this.configFile);
+      const data = await fs.readFile(this.configFile, 'utf8');
       this.configCache = JSON.parse(data);
       return this.configCache!;
     } catch (error: any) {
@@ -96,7 +96,7 @@ export class WebUIStorage {
       this.saveQueue = this.saveQueue
         .then(async () => {
           try {
-            await fs.promises.writeFile(this.configFile, dataToWrite);
+            await fs.writeFile(this.configFile, dataToWrite);
             resolve();
           } catch (error) {
             debug('ERROR:', 'Error saving web UI config:', error);

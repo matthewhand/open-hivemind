@@ -3,12 +3,12 @@
  * Tests MCP tool execution, preferences, provider management, and history endpoints
  */
 
-import { describe, it, expect, beforeEach, afterEach, beforeAll, afterAll } from '@jest/globals';
-import request from 'supertest';
-import express, { Express } from 'express';
-import mcpRouter from '../../src/server/routes/mcp';
 import fs from 'fs';
 import path from 'path';
+import express, { Express } from 'express';
+import request from 'supertest';
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from '@jest/globals';
+import mcpRouter from '../../src/server/routes/mcp';
 
 // Mock authentication middleware
 jest.mock('../../src/auth/middleware', () => ({
@@ -197,9 +197,7 @@ describe('MCP API - Comprehensive Integration Tests', () => {
       await new Promise((resolve) => setTimeout(resolve, 100));
 
       // Check history
-      const historyResponse = await request(app)
-        .get('/api/mcp/tools/history')
-        .expect(200);
+      const historyResponse = await request(app).get('/api/mcp/tools/history').expect(200);
 
       expect(historyResponse.body.success).toBe(true);
       expect(historyResponse.body.data.length).toBeGreaterThan(0);
@@ -257,18 +255,14 @@ describe('MCP API - Comprehensive Integration Tests', () => {
         .expect(200);
 
       // Retrieve preference
-      const response = await request(app)
-        .get(`/api/mcp/tools/${toolId}/preference`)
-        .expect(200);
+      const response = await request(app).get(`/api/mcp/tools/${toolId}/preference`).expect(200);
 
       expect(response.body.success).toBe(true);
       expect(response.body.data.enabled).toBe(false);
     });
 
     it('should return default preference if none exists', async () => {
-      const response = await request(app)
-        .get(`/api/mcp/tools/new-tool-id/preference`)
-        .expect(200);
+      const response = await request(app).get(`/api/mcp/tools/new-tool-id/preference`).expect(200);
 
       expect(response.body.success).toBe(true);
       expect(response.body.data.enabled).toBe(true); // Default is enabled
@@ -442,9 +436,7 @@ describe('MCP API - Comprehensive Integration Tests', () => {
     });
 
     it('should validate server name parameter (400)', async () => {
-      const response = await request(app)
-        .post('/api/mcp/servers/%20/connect')
-        .expect(400);
+      const response = await request(app).post('/api/mcp/servers/%20/connect').expect(400);
 
       expect(response.body.error).toBe('Validation failed');
     });
@@ -516,9 +508,7 @@ describe('MCP API - Comprehensive Integration Tests', () => {
     });
 
     it('should filter by toolName', async () => {
-      const response = await request(app)
-        .get('/api/mcp/tools/history?toolName=tool-1')
-        .expect(200);
+      const response = await request(app).get('/api/mcp/tools/history?toolName=tool-1').expect(200);
 
       expect(response.body.success).toBe(true);
       response.body.data.forEach((exec: any) => {
@@ -527,9 +517,7 @@ describe('MCP API - Comprehensive Integration Tests', () => {
     });
 
     it('should filter by status', async () => {
-      const response = await request(app)
-        .get('/api/mcp/tools/history?status=error')
-        .expect(200);
+      const response = await request(app).get('/api/mcp/tools/history?status=error').expect(200);
 
       expect(response.body.success).toBe(true);
       response.body.data.forEach((exec: any) => {
@@ -539,9 +527,7 @@ describe('MCP API - Comprehensive Integration Tests', () => {
 
     it('should filter by time range', async () => {
       const response = await request(app)
-        .get(
-          '/api/mcp/tools/history?startTime=2024-01-01T10:30:00Z&endTime=2024-01-01T11:30:00Z'
-        )
+        .get('/api/mcp/tools/history?startTime=2024-01-01T10:30:00Z&endTime=2024-01-01T11:30:00Z')
         .expect(200);
 
       expect(response.body.success).toBe(true);
@@ -566,9 +552,7 @@ describe('MCP API - Comprehensive Integration Tests', () => {
     });
 
     it('should return 404 for non-existent execution ID', async () => {
-      const response = await request(app)
-        .get('/api/mcp/tools/history/nonexistent-id')
-        .expect(404);
+      const response = await request(app).get('/api/mcp/tools/history/nonexistent-id').expect(404);
 
       expect(response.body.success).toBe(false);
       expect(response.body.error).toContain('not found');
@@ -598,10 +582,7 @@ describe('MCP API - Comprehensive Integration Tests', () => {
     };
 
     it('should create new MCP provider', async () => {
-      const response = await request(app)
-        .post('/api/mcp/providers')
-        .send(testProvider)
-        .expect(201);
+      const response = await request(app).post('/api/mcp/providers').send(testProvider).expect(201);
 
       expect(response.body.success).toBe(true);
       expect(response.body.data.id).toBe(testProvider.id);
@@ -610,10 +591,7 @@ describe('MCP API - Comprehensive Integration Tests', () => {
     it('should return existing provider if already exists (idempotent)', async () => {
       await request(app).post('/api/mcp/providers').send(testProvider).expect(201);
 
-      const response = await request(app)
-        .post('/api/mcp/providers')
-        .send(testProvider)
-        .expect(200);
+      const response = await request(app).post('/api/mcp/providers').send(testProvider).expect(200);
 
       expect(response.body.success).toBe(true);
       expect(response.body.message).toContain('already exists');
@@ -631,18 +609,14 @@ describe('MCP API - Comprehensive Integration Tests', () => {
     it('should get specific provider by ID', async () => {
       await request(app).post('/api/mcp/providers').send(testProvider);
 
-      const response = await request(app)
-        .get(`/api/mcp/providers/${testProvider.id}`)
-        .expect(200);
+      const response = await request(app).get(`/api/mcp/providers/${testProvider.id}`).expect(200);
 
       expect(response.body.success).toBe(true);
       expect(response.body.data.id).toBe(testProvider.id);
     });
 
     it('should return 404 for non-existent provider', async () => {
-      const response = await request(app)
-        .get('/api/mcp/providers/nonexistent-id')
-        .expect(404);
+      const response = await request(app).get('/api/mcp/providers/nonexistent-id').expect(404);
 
       expect(response.body.success).toBe(false);
       expect(response.body.error).toContain('not found');
@@ -677,9 +651,7 @@ describe('MCP API - Comprehensive Integration Tests', () => {
     });
 
     it('should be idempotent when deleting non-existent provider', async () => {
-      const response = await request(app)
-        .delete('/api/mcp/providers/nonexistent-id')
-        .expect(200);
+      const response = await request(app).delete('/api/mcp/providers/nonexistent-id').expect(200);
 
       expect(response.body.success).toBe(true);
       expect(response.body.message).toContain('already deleted');
@@ -755,12 +727,10 @@ describe('MCP API - Comprehensive Integration Tests', () => {
   describe('Error Handling', () => {
     it('should handle server errors gracefully (500)', async () => {
       // Force an error by making an invalid operation
-      const response = await request(app)
-        .post('/api/mcp/servers/test-server/call-tool')
-        .send({
-          toolName: 'error-tool',
-          arguments: {},
-        });
+      const response = await request(app).post('/api/mcp/servers/test-server/call-tool').send({
+        toolName: 'error-tool',
+        arguments: {},
+      });
 
       if (response.status === 500) {
         expect(response.body.error).toBeDefined();

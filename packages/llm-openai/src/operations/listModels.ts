@@ -1,7 +1,7 @@
 import Debug from 'debug';
 import type { OpenAI } from 'openai';
-import { Logger } from '@common/logger';
 import { ErrorUtils, HivemindError } from '@src/types/errors';
+import { Logger } from '@common/logger';
 
 const debug = Debug('app:OpenAiService');
 const logger = Logger.withContext('OpenAiService:listModels');

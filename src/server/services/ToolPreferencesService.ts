@@ -67,11 +67,7 @@ export class ToolPreferencesService {
   private async saveData(): Promise<void> {
     try {
       this.data.lastUpdated = new Date().toISOString();
-      await fs.promises.writeFile(
-        this.dataFile,
-        JSON.stringify(this.data, null, 2),
-        'utf8'
-      );
+      await fs.promises.writeFile(this.dataFile, JSON.stringify(this.data, null, 2), 'utf8');
       debug('Saved tool preferences to file');
     } catch (error) {
       debug('Failed to save tool preferences: %O', error);
@@ -84,7 +80,7 @@ export class ToolPreferencesService {
       clearTimeout(this.saveTimeout);
     }
     this.saveTimeout = setTimeout(() => {
-      this.saveData().catch(error => {
+      this.saveData().catch((error) => {
         debug('Failed to save tool preferences: %O', error);
       });
     }, 1000);
@@ -149,9 +145,7 @@ export class ToolPreferencesService {
   }
 
   public getPreferencesByServer(serverName: string): ToolPreference[] {
-    return Object.values(this.data.preferences).filter(
-      pref => pref.serverName === serverName
-    );
+    return Object.values(this.data.preferences).filter((pref) => pref.serverName === serverName);
   }
 
   public isToolEnabled(toolId: string): boolean {
@@ -172,7 +166,7 @@ export class ToolPreferencesService {
 
   public async deletePreferencesByServer(serverName: string): Promise<number> {
     const toolIds = Object.keys(this.data.preferences).filter(
-      toolId => this.data.preferences[toolId].serverName === serverName
+      (toolId) => this.data.preferences[toolId].serverName === serverName
     );
 
     for (const toolId of toolIds) {
@@ -196,12 +190,12 @@ export class ToolPreferencesService {
     const preferences = Object.values(this.data.preferences);
     const stats = {
       totalPreferences: preferences.length,
-      enabledCount: preferences.filter(p => p.enabled).length,
-      disabledCount: preferences.filter(p => !p.enabled).length,
+      enabledCount: preferences.filter((p) => p.enabled).length,
+      disabledCount: preferences.filter((p) => !p.enabled).length,
       serverCounts: {} as Record<string, { enabled: number; disabled: number }>,
     };
 
-    preferences.forEach(pref => {
+    preferences.forEach((pref) => {
       if (!stats.serverCounts[pref.serverName]) {
         stats.serverCounts[pref.serverName] = { enabled: 0, disabled: 0 };
       }
@@ -224,7 +218,7 @@ export class ToolPreferencesService {
       this.saveTimeout = null;
     }
     // Final save before shutdown
-    await this.saveData().catch(err => {
+    await this.saveData().catch((err) => {
       debug('Failed to save data during shutdown: %O', err);
     });
     debug('ToolPreferencesService shutdown completed');

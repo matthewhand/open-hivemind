@@ -2,11 +2,11 @@ import Debug from 'debug';
 import { Router } from 'express';
 import { BotConfigurationManager } from '../../config/BotConfigurationManager';
 import { DatabaseManager } from '../../database/DatabaseManager';
+import { HTTP_STATUS } from '../../types/constants';
 import { ValidateConfigSchema } from '../../validation/schemas/miscSchema';
 import { validateRequest } from '../../validation/validateRequest';
 import { auditMiddleware, logAdminAction, type AuditedRequest } from '../middleware/audit';
 import { authenticateToken, requirePermission } from '../middleware/auth';
-import { HTTP_STATUS } from '../../types/constants';
 
 const debug = Debug('app:webui:consolidated');
 const router = Router();

@@ -1,5 +1,6 @@
 import express from 'express';
 import request from 'supertest';
+import router from '../../../src/server/routes/demo';
 
 const mockDemoService = {
   getDemoStatus: jest.fn(),
@@ -28,8 +29,6 @@ jest.mock('../../../src/types/errors', () => ({
 }));
 
 jest.mock('../../../src/services/DemoModeService', () => ({}));
-
-import router from '../../../src/server/routes/demo';
 
 describe('Demo Routes', () => {
   let app: express.Application;
@@ -90,7 +89,9 @@ describe('Demo Routes', () => {
       expect(res.status).toBe(400);
       expect(res.body.error).toBe('Validation failed');
       expect(res.body.issues).toEqual(
-        expect.arrayContaining([expect.objectContaining({ path: expect.arrayContaining(['message']) })])
+        expect.arrayContaining([
+          expect.objectContaining({ path: expect.arrayContaining(['message']) }),
+        ])
       );
     });
 
@@ -99,16 +100,16 @@ describe('Demo Routes', () => {
       expect(res.status).toBe(400);
       expect(res.body.error).toBe('Validation failed');
       expect(res.body.issues).toEqual(
-        expect.arrayContaining([expect.objectContaining({ path: expect.arrayContaining(['botName']) })])
+        expect.arrayContaining([
+          expect.objectContaining({ path: expect.arrayContaining(['botName']) }),
+        ])
       );
     });
 
     it('should return 400 when demo mode is inactive', async () => {
       mockDemoService.isInDemoMode.mockReturnValue(false);
 
-      const res = await request(app)
-        .post('/demo/chat')
-        .send({ message: 'hello', botName: 'Bot' });
+      const res = await request(app).post('/demo/chat').send({ message: 'hello', botName: 'Bot' });
       expect(res.status).toBe(400);
       expect(res.body.code).toBe('DEMO_MODE_INACTIVE');
     });

@@ -1,8 +1,8 @@
 import Debug from 'debug';
 import { Router } from 'express';
+import { HTTP_STATUS } from '../../types/constants';
 import { CIDeploySchema, CIRollbackSchema, EmptySchema } from '../../validation/schemas/miscSchema';
 import { validateRequest } from '../../validation/validateRequest';
-import { HTTP_STATUS } from '../../types/constants';
 
 const debug = Debug('app:ciRoutes');
 const router = Router();

@@ -80,7 +80,7 @@ export class Mem4aiApiError extends Error {
   constructor(
     message: string,
     public readonly status: number,
-    public readonly body?: unknown,
+    public readonly body?: unknown
   ) {
     super(message);
     this.name = 'Mem4aiApiError';

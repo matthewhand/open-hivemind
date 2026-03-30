@@ -498,8 +498,10 @@ export class BotManager extends EventEmitter {
           const service = await this.getMessengerService(bot.messageProvider);
           if (service) {
             const defaultChannel =
-              (bot.config as Record<string, { defaultChannelId?: string }>)?.slack?.defaultChannelId ||
-              (bot.config as Record<string, { defaultChannelId?: string }>)?.discord?.defaultChannelId ||
+              (bot.config as Record<string, { defaultChannelId?: string }>)?.slack
+                ?.defaultChannelId ||
+              (bot.config as Record<string, { defaultChannelId?: string }>)?.discord
+                ?.defaultChannelId ||
               service.getDefaultChannel?.();
             if (defaultChannel) {
               const welcomeText =

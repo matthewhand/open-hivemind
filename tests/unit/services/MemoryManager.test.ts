@@ -134,7 +134,9 @@ describe('MemoryManager', () => {
       const mgr = freshManager();
       mockGetBot.mockReturnValue({ name: 'bot1', memoryProfile: 'prof1' });
       mockGetMemoryProfileByKey.mockReturnValue({ provider: 'bad', config: {} });
-      mockLoadPlugin.mockImplementation(() => { throw new Error('plugin not found'); });
+      mockLoadPlugin.mockImplementation(() => {
+        throw new Error('plugin not found');
+      });
 
       expect(mgr.getProviderForBot('bot1')).toBeNull();
       // Retry is skipped.
@@ -229,7 +231,11 @@ describe('MemoryManager', () => {
         limit: 5,
       });
       expect(results).toHaveLength(2);
-      expect(results[0]).toMatchObject({ id: 'm1', memory: 'The user likes TypeScript', score: 0.95 });
+      expect(results[0]).toMatchObject({
+        id: 'm1',
+        memory: 'The user likes TypeScript',
+        score: 0.95,
+      });
     });
 
     it('passes custom limit to provider', async () => {
@@ -266,7 +272,6 @@ describe('MemoryManager', () => {
       const results = await mgr.retrieveRelevantMemories('bot1', 'anything');
       expect(results).toEqual([]);
     });
-
   });
 
   // === formatMemoriesForPrompt ===

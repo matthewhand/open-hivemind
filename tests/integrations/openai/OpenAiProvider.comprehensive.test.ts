@@ -20,7 +20,12 @@ describe('OpenAiProvider Comprehensive Tests', () => {
   beforeEach(() => {
     // Reset the module-level circuit breaker without clearing the registry,
     // so the same instance used by the provider is reset each time.
-    getCircuitBreaker({ name: 'openai', failureThreshold: 5, resetTimeoutMs: 30_000, halfOpenMaxAttempts: 3 }).reset();
+    getCircuitBreaker({
+      name: 'openai',
+      failureThreshold: 5,
+      resetTimeoutMs: 30_000,
+      halfOpenMaxAttempts: 3,
+    }).reset();
     jest.clearAllMocks();
 
     // Setup mock for chat completions
@@ -320,7 +325,12 @@ describe('OpenAiProvider Comprehensive Tests', () => {
 
   describe('Error Handling', () => {
     beforeEach(() => {
-      getCircuitBreaker({ name: 'openai', failureThreshold: 5, resetTimeoutMs: 30_000, halfOpenMaxAttempts: 3 }).reset();
+      getCircuitBreaker({
+        name: 'openai',
+        failureThreshold: 5,
+        resetTimeoutMs: 30_000,
+        halfOpenMaxAttempts: 3,
+      }).reset();
     });
 
     it('should handle authentication errors', async () => {

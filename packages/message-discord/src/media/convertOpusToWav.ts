@@ -15,15 +15,19 @@ export async function convertOpusToWav(opusBuffer: Buffer, outputDir: string): P
   await fs.promises.writeFile(inputPath, opusBuffer);
 
   return new Promise((resolve, reject) => {
-    execFile('ffmpeg', ['-i', inputPath, '-ar', '16000', '-ac', '1', '-f', 'wav', outputPath], (error) => {
-      // Clean up input file
-      fs.promises.unlink(inputPath).catch(() => {});
+    execFile(
+      'ffmpeg',
+      ['-i', inputPath, '-ar', '16000', '-ac', '1', '-f', 'wav', outputPath],
+      (error) => {
+        // Clean up input file
+        fs.promises.unlink(inputPath).catch(() => {});
 
-      if (error) {
-        reject(error);
-      } else {
-        resolve(outputPath);
+        if (error) {
+          reject(error);
+        } else {
+          resolve(outputPath);
+        }
       }
-    });
+    );
   });
 }

@@ -10,9 +10,9 @@ import {
   updatePlugin,
 } from '@src/plugins/PluginManager';
 import { authenticateToken, requireRole } from '@src/server/middleware/auth';
+import { HTTP_STATUS } from '../../types/constants';
 import { EmptySchema, MarketplacePluginNameParamSchema } from '../../validation/schemas/miscSchema';
 import { validateRequest } from '../../validation/validateRequest';
-import { HTTP_STATUS } from '../../types/constants';
 
 const debug = Debug('app:marketplace');
 const router = Router();
@@ -193,7 +193,9 @@ router.get('/packages', async (req, res) => {
     return res.json(packages);
   } catch (err: any) {
     debug('Error listing packages: %s', err);
-    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: 'Failed to list packages', message: err.message });
+    return res
+      .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
+      .json({ error: 'Failed to list packages', message: err.message });
   }
 });
 
@@ -215,7 +217,9 @@ router.get('/packages/:name', async (req, res) => {
     return res.json(pkg);
   } catch (err: any) {
     debug('Error getting package: %s', err);
-    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: 'Failed to get package', message: err.message });
+    return res
+      .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
+      .json({ error: 'Failed to get package', message: err.message });
   }
 });
 
@@ -255,7 +259,9 @@ router.post('/install', requireRole('admin'), validateRequest(EmptySchema), asyn
     });
   } catch (err: any) {
     debug('Install error: %s', err);
-    return res.status(HTTP_STATUS.BAD_REQUEST).json({ error: 'Installation failed', message: err.message });
+    return res
+      .status(HTTP_STATUS.BAD_REQUEST)
+      .json({ error: 'Installation failed', message: err.message });
   }
 });
 
@@ -281,7 +287,9 @@ router.post(
       return res.json({ success: true, message: `Plugin ${name} uninstalled` });
     } catch (err: any) {
       debug('Uninstall error: %s', err);
-      return res.status(HTTP_STATUS.BAD_REQUEST).json({ error: 'Uninstall failed', message: err.message });
+      return res
+        .status(HTTP_STATUS.BAD_REQUEST)
+        .json({ error: 'Uninstall failed', message: err.message });
     }
   }
 );
@@ -321,7 +329,9 @@ router.post(
       });
     } catch (err: any) {
       debug('Update error: %s', err);
-      return res.status(HTTP_STATUS.BAD_REQUEST).json({ error: 'Update failed', message: err.message });
+      return res
+        .status(HTTP_STATUS.BAD_REQUEST)
+        .json({ error: 'Update failed', message: err.message });
     }
   }
 );

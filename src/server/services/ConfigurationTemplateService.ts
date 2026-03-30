@@ -1,6 +1,5 @@
 import { promises as fs } from 'fs';
 import * as path from 'path';
-import { join } from 'path';
 import Debug from 'debug';
 import { DatabaseManager } from '../../database/DatabaseManager';
 import { ConfigurationValidator } from './ConfigurationValidator';

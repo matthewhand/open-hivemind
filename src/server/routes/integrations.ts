@@ -2,13 +2,13 @@ import Debug from 'debug';
 import { Router } from 'express';
 import ProviderConfigManager from '@src/config/ProviderConfigManager';
 import { authenticateToken, requireRole } from '@src/server/middleware/auth';
+import { HTTP_STATUS } from '../../types/constants';
 import {
   CreateIntegrationSchema,
   IntegrationIdParamSchema,
   UpdateIntegrationSchema,
 } from '../../validation/schemas/integrationsSchema';
 import { validateRequest } from '../../validation/validateRequest';
-import { HTTP_STATUS } from '../../types/constants';
 
 const log = Debug('app:integrationsRouter');
 const router = Router();
@@ -38,7 +38,9 @@ router.get('/', (req, res) => {
     return res.json(filtered);
   } catch (err: unknown) {
     log('Error fetching integrations:', err);
-    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: 'Failed to fetch integrations' });
+    return res
+      .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
+      .json({ error: 'Failed to fetch integrations' });
   }
 });
 
@@ -74,7 +76,9 @@ router.post('/', validateRequest(CreateIntegrationSchema), (req, res) => {
     return res.status(HTTP_STATUS.CREATED).json(newInstance);
   } catch (err: unknown) {
     log('Error creating integration:', err);
-    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: 'Failed to create integration' });
+    return res
+      .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
+      .json({ error: 'Failed to create integration' });
   }
 });
 
@@ -99,7 +103,9 @@ router.put('/:id', validateRequest(UpdateIntegrationSchema), (req, res) => {
     return res.json(updated);
   } catch (err: unknown) {
     log('Error updating integration:', err);
-    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: 'Failed to update integration' });
+    return res
+      .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
+      .json({ error: 'Failed to update integration' });
   }
 });
 
@@ -117,7 +123,9 @@ router.delete('/:id', validateRequest(IntegrationIdParamSchema), (req, res) => {
     return res.json({ success: true });
   } catch (err: unknown) {
     log('Error deleting integration:', err);
-    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: 'Failed to delete integration' });
+    return res
+      .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
+      .json({ error: 'Failed to delete integration' });
   }
 });
 

@@ -18,15 +18,19 @@ import type { IMessengerService } from '@message/interfaces/IMessengerService';
 const log = Debug('app:webhookService');
 
 // Dynamic import helper for webhook routes
-let configureWebhookRoutes: ((app: express.Application, messageService: IMessengerService, channelId: string) => void) | null = null;
+let configureWebhookRoutes:
+  | ((app: express.Application, messageService: IMessengerService, channelId: string) => void)
+  | null = null;
 
 async function loadWebhookRoutes(): Promise<void> {
   if (configureWebhookRoutes) return;
   try {
     const webhookRoutesModule = await import('@webhook/routes/webhookRoutes');
-    configureWebhookRoutes = webhookRoutesModule.configureWebhookRoutes || ((app: express.Application) => {
-      return;
-    });
+    configureWebhookRoutes =
+      webhookRoutesModule.configureWebhookRoutes ||
+      ((app: express.Application) => {
+        return;
+      });
   } catch (error) {
     log('Failed to load webhook routes:', error);
     configureWebhookRoutes = (app: express.Application) => {

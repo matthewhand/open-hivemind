@@ -15,7 +15,8 @@ const toolNameString = z
   .min(1, { message: 'Tool name cannot be empty' })
   .max(100, { message: 'Tool name must be 100 characters or fewer' })
   .regex(/^[a-zA-Z0-9_\-.:]+$/, {
-    message: 'Tool name can only contain letters, numbers, underscores, hyphens, periods, and colons',
+    message:
+      'Tool name can only contain letters, numbers, underscores, hyphens, periods, and colons',
   });
 
 // Validates blocked terms (non-empty strings with reasonable length)
@@ -31,11 +32,11 @@ const mcpGuardSchema = z
     allowedUsers: z
       .array(userIdString)
       .optional()
-      .transform(arr => (arr ? arr.filter(Boolean) : arr)),
+      .transform((arr) => (arr ? arr.filter(Boolean) : arr)),
     allowedTools: z
       .array(toolNameString)
       .optional()
-      .transform(arr => (arr ? arr.filter(Boolean) : arr)),
+      .transform((arr) => (arr ? arr.filter(Boolean) : arr)),
   })
   .optional();
 
@@ -65,7 +66,7 @@ const contentFilterSchema = z
     blockedTerms: z
       .array(blockedTermString)
       .optional()
-      .transform(arr => (arr ? arr.filter(Boolean) : arr)),
+      .transform((arr) => (arr ? arr.filter(Boolean) : arr)),
   })
   .optional();
 
@@ -83,7 +84,8 @@ export const CreateGuardProfileSchema = z.object({
       .min(1, { message: 'Name is required and must be a string' })
       .max(255, { message: 'Name must be 255 characters or fewer' })
       .regex(/^[a-zA-Z0-9\s\-_.()]+$/, {
-        message: 'Name can only contain letters, numbers, spaces, hyphens, underscores, periods, and parentheses',
+        message:
+          'Name can only contain letters, numbers, spaces, hyphens, underscores, periods, and parentheses',
       }),
     description: z.string().optional(),
     guards: guardsObject,
@@ -101,7 +103,8 @@ export const UpdateGuardProfileSchema = z.object({
       .min(1, { message: 'Name is required and must be a string' })
       .max(255, { message: 'Name must be 255 characters or fewer' })
       .regex(/^[a-zA-Z0-9\s\-_.()]+$/, {
-        message: 'Name can only contain letters, numbers, spaces, hyphens, underscores, periods, and parentheses',
+        message:
+          'Name can only contain letters, numbers, spaces, hyphens, underscores, periods, and parentheses',
       })
       .optional(),
     description: z.string().optional(),

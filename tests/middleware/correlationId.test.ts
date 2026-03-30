@@ -48,10 +48,7 @@ describe('correlationIdMiddleware', () => {
         expect((req as any).correlationId).toMatch(/^corr_/);
 
         // Response header should be set
-        expect(res.setHeader).toHaveBeenCalledWith(
-          'X-Correlation-ID',
-          (req as any).correlationId
-        );
+        expect(res.setHeader).toHaveBeenCalledWith('X-Correlation-ID', (req as any).correlationId);
 
         done();
       } catch (err) {
@@ -104,10 +101,7 @@ describe('correlationIdMiddleware', () => {
 
     const next: NextFunction = () => {
       try {
-        expect(res.setHeader).toHaveBeenCalledWith(
-          'X-Correlation-ID',
-          expect.any(String)
-        );
+        expect(res.setHeader).toHaveBeenCalledWith('X-Correlation-ID', expect.any(String));
         done();
       } catch (err) {
         done(err);

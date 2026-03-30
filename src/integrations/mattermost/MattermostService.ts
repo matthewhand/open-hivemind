@@ -254,7 +254,7 @@ export class MattermostService extends EventEmitter implements IMessengerService
           error: error instanceof Error ? error.message : String(error),
           botName,
           channelId,
-          messageType: 'outgoing'
+          messageType: 'outgoing',
         });
       }
 
@@ -300,7 +300,7 @@ export class MattermostService extends EventEmitter implements IMessengerService
           error: wsError instanceof Error ? wsError.message : String(wsError),
           botName,
           channelId,
-          originalError: error.message
+          originalError: error.message,
         });
       }
 
@@ -568,7 +568,7 @@ export class MattermostService extends EventEmitter implements IMessengerService
         error: error instanceof Error ? error.message : String(error),
         channelId,
         senderName,
-        threadId
+        threadId,
       });
     }
   }

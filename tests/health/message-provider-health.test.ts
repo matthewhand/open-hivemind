@@ -1,8 +1,8 @@
-import { describe, it, expect, beforeEach } from '@jest/globals';
-import { TelegramProvider } from '../../src/providers/TelegramProvider';
+import { beforeEach, describe, expect, it } from '@jest/globals';
 import { DiscordProvider } from '../../src/providers/DiscordProvider';
-import { SlackProvider } from '../../src/providers/SlackProvider';
 import { MattermostProvider } from '../../src/providers/MattermostProvider';
+import { SlackProvider } from '../../src/providers/SlackProvider';
+import { TelegramProvider } from '../../src/providers/TelegramProvider';
 
 describe('Message Provider Health Checks', () => {
   describe('TelegramProvider', () => {

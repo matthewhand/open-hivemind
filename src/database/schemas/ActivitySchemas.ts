@@ -66,37 +66,70 @@ export class ActivitySchemas implements ISchemaModule {
     );
 
     // Indexes
-    await this.createIndex(db, 'CREATE INDEX IF NOT EXISTS idx_activity_logs_bot_id ON activity_logs(bot_id)');
-    await this.createIndex(db, 'CREATE INDEX IF NOT EXISTS idx_activity_logs_timestamp ON activity_logs(timestamp)');
-    await this.createIndex(db, 'CREATE INDEX IF NOT EXISTS idx_activity_logs_action ON activity_logs(action)');
+    await this.createIndex(
+      db,
+      'CREATE INDEX IF NOT EXISTS idx_activity_logs_bot_id ON activity_logs(bot_id)'
+    );
+    await this.createIndex(
+      db,
+      'CREATE INDEX IF NOT EXISTS idx_activity_logs_timestamp ON activity_logs(timestamp)'
+    );
+    await this.createIndex(
+      db,
+      'CREATE INDEX IF NOT EXISTS idx_activity_logs_action ON activity_logs(action)'
+    );
 
-    await this.createIndex(db, 'CREATE INDEX IF NOT EXISTS idx_message_logs_bot_id ON message_logs(bot_id)');
-    await this.createIndex(db, 'CREATE INDEX IF NOT EXISTS idx_message_logs_user_id ON message_logs(user_id)');
-    await this.createIndex(db, 'CREATE INDEX IF NOT EXISTS idx_message_logs_timestamp ON message_logs(timestamp)');
+    await this.createIndex(
+      db,
+      'CREATE INDEX IF NOT EXISTS idx_message_logs_bot_id ON message_logs(bot_id)'
+    );
+    await this.createIndex(
+      db,
+      'CREATE INDEX IF NOT EXISTS idx_message_logs_user_id ON message_logs(user_id)'
+    );
+    await this.createIndex(
+      db,
+      'CREATE INDEX IF NOT EXISTS idx_message_logs_timestamp ON message_logs(timestamp)'
+    );
 
-    await this.createIndex(db, 'CREATE INDEX IF NOT EXISTS idx_bot_audit_logs_bot_id ON bot_audit_logs(bot_id)');
-    await this.createIndex(db, 'CREATE INDEX IF NOT EXISTS idx_bot_audit_logs_user_id ON bot_audit_logs(user_id)');
-    await this.createIndex(db, 'CREATE INDEX IF NOT EXISTS idx_bot_audit_logs_timestamp ON bot_audit_logs(timestamp)');
+    await this.createIndex(
+      db,
+      'CREATE INDEX IF NOT EXISTS idx_bot_audit_logs_bot_id ON bot_audit_logs(bot_id)'
+    );
+    await this.createIndex(
+      db,
+      'CREATE INDEX IF NOT EXISTS idx_bot_audit_logs_user_id ON bot_audit_logs(user_id)'
+    );
+    await this.createIndex(
+      db,
+      'CREATE INDEX IF NOT EXISTS idx_bot_audit_logs_timestamp ON bot_audit_logs(timestamp)'
+    );
 
-    await this.createIndex(db, 'CREATE INDEX IF NOT EXISTS idx_bot_error_logs_bot_id ON bot_error_logs(bot_id)');
-    await this.createIndex(db, 'CREATE INDEX IF NOT EXISTS idx_bot_error_logs_severity ON bot_error_logs(severity)');
-    await this.createIndex(db, 'CREATE INDEX IF NOT EXISTS idx_bot_error_logs_timestamp ON bot_error_logs(timestamp)');
+    await this.createIndex(
+      db,
+      'CREATE INDEX IF NOT EXISTS idx_bot_error_logs_bot_id ON bot_error_logs(bot_id)'
+    );
+    await this.createIndex(
+      db,
+      'CREATE INDEX IF NOT EXISTS idx_bot_error_logs_severity ON bot_error_logs(severity)'
+    );
+    await this.createIndex(
+      db,
+      'CREATE INDEX IF NOT EXISTS idx_bot_error_logs_timestamp ON bot_error_logs(timestamp)'
+    );
   }
 
   getTableNames(): string[] {
-    return [
-      'activity_logs',
-      'message_logs',
-      'bot_audit_logs',
-      'bot_error_logs',
-    ];
+    return ['activity_logs', 'message_logs', 'bot_audit_logs', 'bot_error_logs'];
   }
 
   private async createTable(db: Database, sql: string): Promise<void> {
     try {
       await db.run(sql);
     } catch (error) {
-      Logger.error(`Error creating table: ${error instanceof Error ? error.message : String(error)}`);
+      Logger.error(
+        `Error creating table: ${error instanceof Error ? error.message : String(error)}`
+      );
       throw error;
     }
   }
@@ -105,7 +138,9 @@ export class ActivitySchemas implements ISchemaModule {
     try {
       await db.run(sql);
     } catch (error) {
-      Logger.error(`Error creating index: ${error instanceof Error ? error.message : String(error)}`);
+      Logger.error(
+        `Error creating index: ${error instanceof Error ? error.message : String(error)}`
+      );
       throw error;
     }
   }

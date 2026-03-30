@@ -1,4 +1,5 @@
 import 'reflect-metadata';
+import { WebSocketService } from '../../../src/server/services/WebSocketService';
 import { DeliveryStatus } from '../../../src/types/websocket';
 
 // Stub out heavy dependencies so we can unit-test the ack logic in isolation.
@@ -36,8 +37,6 @@ jest.mock('tsyringe', () => ({
   injectable: () => (target: any) => target,
   singleton: () => (target: any) => target,
 }));
-
-import { WebSocketService } from '../../../src/server/services/WebSocketService';
 
 describe('WebSocketService – message acknowledgment & delivery tracking', () => {
   let service: WebSocketService;

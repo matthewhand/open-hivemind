@@ -6,6 +6,7 @@ import express from 'express';
 import { Logger } from '../common/logger';
 import { correlationMiddleware, globalErrorHandler } from '../middleware/errorHandler';
 import { applyRateLimiting } from '../middleware/rateLimiter';
+import { HTTP_STATUS } from '../types/constants';
 // Error handling imports
 // Middleware imports
 import { auditMiddleware } from './middleware/audit';
@@ -34,7 +35,6 @@ import personasRouter from './routes/personas';
 import sitemapRouter from './routes/sitemap';
 import specsRouter from './routes/specs';
 import webhookEventsRouter from './routes/webhookEvents';
-import { HTTP_STATUS } from '../types/constants';
 
 const debug = Debug('app:webui:server');
 const serverLog = Logger.withContext('webui:server');

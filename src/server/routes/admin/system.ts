@@ -6,6 +6,7 @@ import { DatabaseManager } from '../../../database/DatabaseManager';
 import { MCPService } from '../../../mcp/MCPService';
 import ApiMonitorService from '../../../services/ApiMonitorService';
 import { webUIStorage } from '../../../storage/webUIStorage';
+import { HTTP_STATUS } from '../../../types/constants';
 import { getRelevantEnvVars } from '../../../utils/envUtils';
 import { isSafeUrl } from '../../../utils/ssrfGuard';
 import {
@@ -23,7 +24,6 @@ import {
   UpdateMessengerProviderSchema,
 } from '../../../validation/schemas/adminSchema';
 import { validateRequest } from '../../../validation/validateRequest';
-import { HTTP_STATUS } from '../../../types/constants';
 
 const router = Router();
 
@@ -305,11 +305,9 @@ router.post(
 
             try {
               // Test with a simple message
-              const testResponse = await provider.generateChatCompletion(
-                'Hello',
-                [],
-                { maxTokensOverride: 5 }
-              );
+              const testResponse = await provider.generateChatCompletion('Hello', [], {
+                maxTokensOverride: 5,
+              });
 
               testResult = {
                 success: true,

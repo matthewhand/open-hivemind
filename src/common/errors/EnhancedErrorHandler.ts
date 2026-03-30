@@ -7,15 +7,14 @@
 
 import Debug from 'debug';
 import {
-  BaseHivemindError,
-  NetworkError,
-  ValidationError,
+  ApiError,
   AuthenticationError,
+  BaseHivemindError,
+  ConfigurationError,
+  NetworkError,
   RateLimitError,
   TimeoutError,
-  ApiError,
-  ConfigurationError,
-  type ErrorRecoveryStrategy,
+  ValidationError,
 } from '../../types/errorClasses';
 
 const debug = Debug('app:errors:enhanced');
@@ -25,7 +24,12 @@ const debug = Debug('app:errors:enhanced');
 // ============================================================================
 
 export interface ErrorContext {
-  operation: 'marketplace_install' | 'tool_execution' | 'provider_connection' | 'bot_operation' | 'general';
+  operation:
+    | 'marketplace_install'
+    | 'tool_execution'
+    | 'provider_connection'
+    | 'bot_operation'
+    | 'general';
   component?: string;
   resourceId?: string;
   resourceType?: 'bot' | 'provider' | 'tool' | 'package' | 'server';
@@ -122,7 +126,10 @@ export class EnhancedErrorHandler {
   /**
    * Convert BaseHivemindError to ActionableError
    */
-  private static fromHivemindError(error: BaseHivemindError, context?: ErrorContext): ActionableError {
+  private static fromHivemindError(
+    error: BaseHivemindError,
+    context?: ErrorContext
+  ): ActionableError {
     const recovery = error.getRecoveryStrategy();
     const errorType = this.mapHivemindErrorToType(error, context);
 
@@ -180,7 +187,10 @@ export class EnhancedErrorHandler {
   /**
    * Map HivemindError to specific ErrorType
    */
-  private static mapHivemindErrorToType(error: BaseHivemindError, context?: ErrorContext): ErrorType {
+  private static mapHivemindErrorToType(
+    error: BaseHivemindError,
+    context?: ErrorContext
+  ): ErrorType {
     if (error instanceof NetworkError) {
       const status = error.statusCode;
       if (status === 408 || error.message.toLowerCase().includes('timeout')) {
@@ -245,7 +255,8 @@ export class EnhancedErrorHandler {
    */
   private static detectErrorType(error: Error, context?: ErrorContext): ErrorType {
     const msg = error.message.toLowerCase();
-    const errorCode = error && typeof error === 'object' && 'code' in error ? String(error.code) : undefined;
+    const errorCode =
+      error && typeof error === 'object' && 'code' in error ? String(error.code) : undefined;
 
     // Network errors
     if (errorCode === 'ECONNREFUSED' || errorCode === 'ENOTFOUND' || msg.includes('network')) {
@@ -287,7 +298,11 @@ export class EnhancedErrorHandler {
     }
 
     // Permission errors
-    if (msg.includes('permission denied') || msg.includes('unauthorized') || msg.includes('forbidden')) {
+    if (
+      msg.includes('permission denied') ||
+      msg.includes('unauthorized') ||
+      msg.includes('forbidden')
+    ) {
       return 'permission_denied';
     }
 
@@ -324,7 +339,11 @@ export class EnhancedErrorHandler {
   /**
    * Get user-friendly message
    */
-  private static getUserFriendlyMessage(error: Error, errorType: ErrorType, context?: ErrorContext): string {
+  private static getUserFriendlyMessage(
+    error: Error,
+    errorType: ErrorType,
+    context?: ErrorContext
+  ): string {
     const operationMap: Record<string, string> = {
       marketplace_install: 'install the package',
       tool_execution: 'execute the tool',
@@ -332,7 +351,9 @@ export class EnhancedErrorHandler {
       bot_operation: 'start the bot',
     };
 
-    const operation = context?.operation ? operationMap[context.operation] || 'complete the operation' : 'complete the operation';
+    const operation = context?.operation
+      ? operationMap[context.operation] || 'complete the operation'
+      : 'complete the operation';
 
     switch (errorType) {
       case 'network_error':
@@ -403,7 +424,11 @@ export class EnhancedErrorHandler {
   /**
    * Get actionable suggestions based on error type
    */
-  private static getSuggestions(errorType: ErrorType, error: Error, context?: ErrorContext): string[] {
+  private static getSuggestions(
+    errorType: ErrorType,
+    error: Error,
+    context?: ErrorContext
+  ): string[] {
     switch (errorType) {
       case 'network_error':
         return [
@@ -424,8 +449,8 @@ export class EnhancedErrorHandler {
       case 'auth_invalid_key':
         return [
           'Verify your API key is correct',
-          'Check that the API key hasn\'t been revoked',
-          'Ensure you\'re using the right key for this environment',
+          "Check that the API key hasn't been revoked",
+          "Ensure you're using the right key for this environment",
           'Generate a new API key if needed',
         ];
 
@@ -548,7 +573,7 @@ export class EnhancedErrorHandler {
         return [
           'Contact an administrator for access',
           'Check your user role and permissions',
-          'Ensure you\'re logged in with the correct account',
+          "Ensure you're logged in with the correct account",
           'Request the necessary permissions',
         ];
 
@@ -599,7 +624,10 @@ export class EnhancedErrorHandler {
    */
   private static getRetryDelay(error: Error | null, errorType: ErrorType): number | undefined {
     // Check for Retry-After header
-    const retryAfter = error && typeof error === 'object' && 'retryAfter' in error ? Number(error.retryAfter) : undefined;
+    const retryAfter =
+      error && typeof error === 'object' && 'retryAfter' in error
+        ? Number(error.retryAfter)
+        : undefined;
     if (retryAfter) return retryAfter;
 
     // Default delays by error type

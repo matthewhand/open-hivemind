@@ -1,5 +1,5 @@
+import type { NextFunction, Request, Response } from 'express';
 import { applyCors, getCorsOrigins } from '../../src/middleware/corsMiddleware';
-import type { Request, Response, NextFunction } from 'express';
 
 describe('corsMiddleware', () => {
   let req: Partial<Request>;
@@ -37,7 +37,10 @@ describe('corsMiddleware', () => {
       applyCors(req as Request, res as Response, next as NextFunction);
 
       expect(res.setHeader).toHaveBeenCalledWith('Access-Control-Allow-Origin', '*');
-      expect(res.setHeader).toHaveBeenCalledWith('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH');
+      expect(res.setHeader).toHaveBeenCalledWith(
+        'Access-Control-Allow-Methods',
+        'GET, POST, PUT, DELETE, OPTIONS, PATCH'
+      );
       expect(res.status).toHaveBeenCalledWith(204);
       expect(res.end).toHaveBeenCalled();
     });

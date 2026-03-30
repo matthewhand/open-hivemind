@@ -272,23 +272,15 @@ export class BotConfigService {
         systemInstruction: updates.systemInstruction ?? existingConfig.systemInstruction,
         mcpServers: updates.mcpServers ?? existingConfig.mcpServers,
         mcpGuard: updates.mcpGuard ? JSON.stringify(updates.mcpGuard) : existingConfig.mcpGuard,
-        discord: updates.discord
-          ? JSON.stringify(updates.discord)
-          : existingConfig.discord,
+        discord: updates.discord ? JSON.stringify(updates.discord) : existingConfig.discord,
         slack: updates.slack ? JSON.stringify(updates.slack) : existingConfig.slack,
         mattermost: updates.mattermost
           ? JSON.stringify(updates.mattermost)
           : existingConfig.mattermost,
         openai: updates.openai ? JSON.stringify(updates.openai) : existingConfig.openai,
-        flowise: updates.flowise
-          ? JSON.stringify(updates.flowise)
-          : existingConfig.flowise,
-        openwebui: updates.openwebui
-          ? JSON.stringify(updates.openwebui)
-          : existingConfig.openwebui,
-        openswarm: updates.openswarm
-          ? JSON.stringify(updates.openswarm)
-          : existingConfig.openswarm,
+        flowise: updates.flowise ? JSON.stringify(updates.flowise) : existingConfig.flowise,
+        openwebui: updates.openwebui ? JSON.stringify(updates.openwebui) : existingConfig.openwebui,
+        openswarm: updates.openswarm ? JSON.stringify(updates.openswarm) : existingConfig.openswarm,
         isActive: updates.isActive ?? existingConfig.isActive,
         createdAt: existingConfig.createdAt.toISOString(),
         updatedAt: new Date().toISOString(),

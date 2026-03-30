@@ -1,18 +1,18 @@
+import { DatabaseManager } from '../../src/database/DatabaseManager';
+import { MetricsCollector } from '../../src/monitoring/MetricsCollector';
+import { WebSocketService } from '../../src/server/services/WebSocketService';
+import { AnomalyDetectionService } from '../../src/services/AnomalyDetectionService';
+
 // Mock DatabaseManager before imports
 jest.mock('../../src/database/DatabaseManager', () => ({
   DatabaseManager: {
     getInstance: jest.fn().mockReturnValue({
       init: jest.fn().mockResolvedValue(undefined),
       storeAnomaly: jest.fn().mockResolvedValue(undefined),
-      resolveAnomaly: jest.fn().mockResolvedValue(true)
-    })
-  }
+      resolveAnomaly: jest.fn().mockResolvedValue(true),
+    }),
+  },
 }));
-
-import { AnomalyDetectionService } from '../../src/services/AnomalyDetectionService';
-import { MetricsCollector } from '../../src/monitoring/MetricsCollector';
-import { WebSocketService } from '../../src/server/services/WebSocketService';
-import { DatabaseManager } from '../../src/database/DatabaseManager';
 
 // No real server; mock API responses
 const mockRequest = {
@@ -27,7 +27,7 @@ const mockRequest = {
       return Promise.resolve({ status: 200, body: { active: 0 } });
     }
     return Promise.resolve({ status: 404 });
-  })
+  }),
 } as any;
 
 describe('Monitoring Pipeline Integration Tests', () => {
@@ -75,7 +75,7 @@ describe('Monitoring Pipeline Integration Tests', () => {
       on: jest.fn(),
       emit: jest.fn(),
       disconnect: jest.fn(),
-      connected: true
+      connected: true,
     };
 
     // Mock the WebSocket connection to resolve immediately
@@ -120,11 +120,13 @@ describe('Monitoring Pipeline Integration Tests', () => {
     // Step 4: Verify WebSocket alert
     const alertPromise = new Promise((resolve) => {
       // Mock socket listener
-      const mockOnce = jest.fn().mockImplementation((event: string, callback: (alert: any) => void) => {
-        if (event === 'alert_update') {
-          setTimeout(() => callback({ title: 'Anomaly Detected', metadata: { zScore: 4 } }), 0);
-        }
-      });
+      const mockOnce = jest
+        .fn()
+        .mockImplementation((event: string, callback: (alert: any) => void) => {
+          if (event === 'alert_update') {
+            setTimeout(() => callback({ title: 'Anomaly Detected', metadata: { zScore: 4 } }), 0);
+          }
+        });
       socket.once = mockOnce;
       mockOnce('alert_update', (alert: any) => {
         expect(alert.title).toContain('Anomaly Detected');
@@ -173,7 +175,7 @@ describe('Monitoring Pipeline Integration Tests', () => {
 
     // Verify anomaly
     const anomalies = anomalyService.getActiveAnomalies();
-    expect(anomalies.some(a => a.metric === 'errors')).toBe(true);
+    expect(anomalies.some((a) => a.metric === 'errors')).toBe(true);
 
     // Verify alert broadcast
     expect(wsService.recordAlert).toHaveBeenCalled();
@@ -201,7 +203,7 @@ describe('Monitoring Pipeline Integration Tests', () => {
     expect(anomaliesAfter.length).toBe(0);
 
     // Verify via service (check that this specific anomaly is resolved)
-    const specificAnomaly = anomalyService.getActiveAnomalies().find(a => a.id === anomalyId);
+    const specificAnomaly = anomalyService.getActiveAnomalies().find((a) => a.id === anomalyId);
     expect(specificAnomaly).toBeUndefined();
   });
 });

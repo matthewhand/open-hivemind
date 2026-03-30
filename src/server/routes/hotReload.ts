@@ -2,12 +2,12 @@ import Debug from 'debug';
 import { Router } from 'express';
 import { WebSocketService } from '@src/server/services/WebSocketService';
 import { HotReloadManager, type ConfigurationChange } from '@config/HotReloadManager';
+import { HTTP_STATUS } from '../../types/constants';
 import {
   HotReloadChangeSchema,
   SnapshotIdParamSchema,
 } from '../../validation/schemas/hotReloadSchema';
 import { validateRequest } from '../../validation/validateRequest';
-import { HTTP_STATUS } from '../../types/constants';
 
 const debug = Debug('app:hotReloadRoutes');
 const router = Router();

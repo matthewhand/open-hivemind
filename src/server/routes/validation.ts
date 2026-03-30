@@ -4,11 +4,11 @@ import { body, param, query, validationResult } from 'express-validator';
 import { requireAdmin } from '../../auth/middleware';
 import type { AuthMiddlewareRequest } from '../../auth/types';
 import type { BotConfig } from '../../types/config';
+import { HTTP_STATUS } from '../../types/constants';
 import { ErrorUtils } from '../../types/errors';
 import { ValidationTestSchema } from '../../validation/schemas/miscSchema';
 import { validateRequest } from '../../validation/validateRequest';
 import { RealTimeValidationService } from '../services/RealTimeValidationService';
-import { HTTP_STATUS } from '../../types/constants';
 
 const debug = Debug('app:server:routes:validation');
 
@@ -25,9 +25,10 @@ function getErrorResponse(error: unknown): {
 } {
   const message = ErrorUtils.getMessage(error);
   const code = ErrorUtils.getCode(error) || 'VALIDATION_ERROR';
-  const timestamp = (error && typeof error === 'object' && 'timestamp' in error)
-    ? (error.timestamp as Date)
-    : new Date();
+  const timestamp =
+    error && typeof error === 'object' && 'timestamp' in error
+      ? (error.timestamp as Date)
+      : new Date();
 
   return { message, code, timestamp };
 }
@@ -281,9 +282,10 @@ const handleValidationErrors = (req: Request, res: Response, next: NextFunction)
     debug('ERROR:', 'Validation error:', hivemindError);
 
     const { message, code, timestamp } = getErrorResponse(hivemindError);
-    const details = (hivemindError && typeof hivemindError === 'object' && 'details' in hivemindError)
-      ? hivemindError.details
-      : undefined;
+    const details =
+      hivemindError && typeof hivemindError === 'object' && 'details' in hivemindError
+        ? hivemindError.details
+        : undefined;
 
     return res.status(HTTP_STATUS.BAD_REQUEST).json({
       success: false,
@@ -409,7 +411,16 @@ router.get('/api/validation/schema', (_req: AuthMiddlewareRequest, res: Response
         messageProvider: { type: 'string', enum: ['discord', 'slack', 'mattermost', 'webhook'] },
         llmProvider: {
           type: 'string',
-          enum: ['openai', 'anthropic', 'flowise', 'openwebui', 'perplexity', 'replicate', 'n8n', 'openswarm'],
+          enum: [
+            'openai',
+            'anthropic',
+            'flowise',
+            'openwebui',
+            'perplexity',
+            'replicate',
+            'n8n',
+            'openswarm',
+          ],
         },
         discord: {
           type: 'object',

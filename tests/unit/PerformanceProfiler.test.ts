@@ -20,7 +20,7 @@ describe('PerformanceProfiler Memory Management', () => {
       const customConfig = {
         maxSnapshots: 25,
         maxProfileAge: 12 * 60 * 60 * 1000, // 12 hours
-        cleanupIntervalMinutes: 30
+        cleanupIntervalMinutes: 30,
       };
 
       profiler.setCleanupConfig(customConfig);
@@ -84,7 +84,7 @@ describe('PerformanceProfiler Memory Management', () => {
       profiler.startProfiling('test-force-cleanup');
 
       // Create some old data by simulating old timestamps
-      const oldTimestamp = Date.now() - (25 * 60 * 60 * 1000); // 25 hours ago
+      const oldTimestamp = Date.now() - 25 * 60 * 60 * 1000; // 25 hours ago
 
       // Manually add old snapshot data (this would normally be done by the profiler)
       (profiler as any).snapshots.push({
@@ -99,8 +99,8 @@ describe('PerformanceProfiler Memory Management', () => {
           peak_malloced_memory: 300000,
           does_zap_garbage: false,
           number_of_native_contexts: 10,
-          number_of_detached_contexts: 5
-        }
+          number_of_detached_contexts: 5,
+        },
       });
 
       // Add some current snapshots
@@ -140,7 +140,7 @@ describe('PerformanceProfiler Memory Management', () => {
         profiler.takeSnapshot();
         timestamps.push(Date.now());
         // Small delay to ensure different timestamps
-        await new Promise(resolve => setTimeout(resolve, 1));
+        await new Promise((resolve) => setTimeout(resolve, 1));
       }
 
       const memoryUsage = profiler.getMemoryUsage();
@@ -221,7 +221,7 @@ describe('PerformanceProfiler Memory Management', () => {
         profiler.setCleanupConfig({
           maxSnapshots: -1, // Invalid negative value
           maxProfileAge: 0,
-          cleanupIntervalMinutes: -10
+          cleanupIntervalMinutes: -10,
         });
       }).not.toThrow();
     });

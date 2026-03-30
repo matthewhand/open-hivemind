@@ -1,5 +1,5 @@
-import Debug from 'debug';
 import fs from 'fs';
+import Debug from 'debug';
 import { convertOpusToWav } from '../media/convertOpusToWav';
 import { transcribeAudio } from './speechToText';
 

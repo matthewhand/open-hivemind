@@ -3,9 +3,9 @@
  * Tests tool usage metrics, provider metrics, and top tools/providers endpoints
  */
 
-import { describe, it, expect, beforeEach, afterEach } from '@jest/globals';
-import request from 'supertest';
 import express, { Express } from 'express';
+import request from 'supertest';
+import { afterEach, beforeEach, describe, expect, it } from '@jest/globals';
 import usageTrackingRouter from '../../src/server/routes/usage-tracking';
 
 // Mock UsageTrackerService
@@ -313,9 +313,7 @@ describe('Usage Tracking API - Comprehensive Integration Tests', () => {
         lastUsed: '2024-03-01T12:00:00Z',
       });
 
-      const response = await request(app)
-        .get('/api/usage-tracking/providers/server-1')
-        .expect(200);
+      const response = await request(app).get('/api/usage-tracking/providers/server-1').expect(200);
 
       expect(response.body.success).toBe(true);
       expect(response.body.data.serverName).toBe('server-1');
@@ -338,9 +336,7 @@ describe('Usage Tracking API - Comprehensive Integration Tests', () => {
         throw new Error('Database error');
       });
 
-      const response = await request(app)
-        .get('/api/usage-tracking/providers/server-1')
-        .expect(500);
+      const response = await request(app).get('/api/usage-tracking/providers/server-1').expect(500);
 
       expect(response.body.success).toBe(false);
       expect(response.body.code).toBe('PROVIDER_METRICS_ERROR');
@@ -435,9 +431,7 @@ describe('Usage Tracking API - Comprehensive Integration Tests', () => {
         { toolId: 'server-3-summarize', toolName: 'summarize', totalCalls: 40 },
       ]);
 
-      const response = await request(app)
-        .get('/api/usage-tracking/top-tools?limit=5')
-        .expect(200);
+      const response = await request(app).get('/api/usage-tracking/top-tools?limit=5').expect(200);
 
       expect(response.body.data.length).toBe(5);
       expect(mockGetTopTools).toHaveBeenCalledWith(5);
@@ -722,9 +716,7 @@ describe('Usage Tracking API - Comprehensive Integration Tests', () => {
     });
 
     it('should handle negative limit values', async () => {
-      const response = await request(app)
-        .get('/api/usage-tracking/top-tools?limit=-5')
-        .expect(200);
+      const response = await request(app).get('/api/usage-tracking/top-tools?limit=-5').expect(200);
 
       // Should be handled gracefully, likely defaulting to 10
       expect(mockGetTopTools).toHaveBeenCalled();

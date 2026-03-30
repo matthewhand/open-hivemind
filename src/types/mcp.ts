@@ -161,7 +161,9 @@ export function isMCPProviderType(value: unknown): value is MCPProviderType {
 }
 
 export function isMCPTransportType(value: unknown): value is MCPTransportType {
-  return value === 'stdio' || value === 'sse' || value === 'websocket' || value === 'streamable-http';
+  return (
+    value === 'stdio' || value === 'sse' || value === 'websocket' || value === 'streamable-http'
+  );
 }
 
 export function isValidMCPProviderConfig(config: unknown): config is MCPProviderConfig {
@@ -192,7 +194,9 @@ export function validateMCPProviderType(type: string): MCPProviderType {
 
 export function validateMCPTransportType(transport: string): MCPTransportType {
   if (!isMCPTransportType(transport)) {
-    throw new Error(`Invalid MCP transport type: ${transport}. Must be 'stdio', 'sse', 'websocket', or 'streamable-http'`);
+    throw new Error(
+      `Invalid MCP transport type: ${transport}. Must be 'stdio', 'sse', 'websocket', or 'streamable-http'`
+    );
   }
   return transport;
 }
@@ -203,7 +207,8 @@ export function validateMCPTransportType(transport: string): MCPTransportType {
  */
 export function mapTransportToProviderType(transport: string): MCPProviderType {
   if (transport === 'stdio') return 'desktop';
-  if (transport === 'sse' || transport === 'websocket' || transport === 'streamable-http') return 'cloud';
+  if (transport === 'sse' || transport === 'websocket' || transport === 'streamable-http')
+    return 'cloud';
 
   // If already a provider type, validate and return
   if (isMCPProviderType(transport)) return transport;

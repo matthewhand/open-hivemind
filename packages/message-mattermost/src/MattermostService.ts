@@ -125,11 +125,7 @@ export class MattermostService extends EventEmitter implements IMessengerService
     debug('Setting message handler for Mattermost bots');
   }
 
-  public async sendMessage(
-    channelId: string,
-    text: string,
-    senderName?: string
-  ): Promise<string> {
+  public async sendMessage(channelId: string, text: string, senderName?: string): Promise<string> {
     return this.sendMessageToChannel(channelId, text, senderName);
   }
 

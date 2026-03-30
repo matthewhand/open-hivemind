@@ -4,6 +4,7 @@ import { join } from 'path';
 import Debug from 'debug';
 import { Router } from 'express';
 import { ErrorUtils } from '@src/types/errors';
+import { HTTP_STATUS } from '../../types/constants';
 import {
   AgentIdParamSchema,
   AgentPersonaKeyParamSchema,
@@ -13,7 +14,6 @@ import {
   UpdateAgentSchema,
 } from '../../validation/schemas/agentsSchema';
 import { validateRequest } from '../../validation/validateRequest';
-import { HTTP_STATUS } from '../../types/constants';
 
 const debug = Debug('app:webui:agents');
 const router = Router();

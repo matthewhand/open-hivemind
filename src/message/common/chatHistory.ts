@@ -69,6 +69,9 @@ export class ChatHistory {
     const initialLength = this.history.length;
     this.history = this.history.filter((msg) => msg.getTimestamp() > cutoffDate);
     const clearedMessages = initialLength - this.history.length;
-    logger.debug('Old messages cleared', { clearedCount: clearedMessages, remainingCount: this.history.length });
+    logger.debug('Old messages cleared', {
+      clearedCount: clearedMessages,
+      remainingCount: this.history.length,
+    });
   }
 }

@@ -1,10 +1,10 @@
-import { Request, Response, NextFunction } from 'express';
+import { NextFunction, Request, Response } from 'express';
 import {
-  getSessionSecret,
-  sessionSecurityMiddleware,
-  requireSession,
   destroySession,
+  getSessionSecret,
   regenerateSession,
+  requireSession,
+  sessionSecurityMiddleware,
 } from '../../src/middleware/sessionMiddleware';
 
 describe('sessionMiddleware module', () => {
@@ -96,7 +96,10 @@ describe('sessionMiddleware module', () => {
       sessionSecurityMiddleware(req as Request, res as Response, next as NextFunction);
 
       expect((req.session as any).lastActivity).toBe(now);
-      expect(res.setHeader).toHaveBeenCalledWith('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+      expect(res.setHeader).toHaveBeenCalledWith(
+        'Cache-Control',
+        'no-store, no-cache, must-revalidate, proxy-revalidate'
+      );
       expect(res.setHeader).toHaveBeenCalledWith('Pragma', 'no-cache');
       expect(res.setHeader).toHaveBeenCalledWith('Expires', '0');
       expect(res.setHeader).toHaveBeenCalledWith('Surrogate-Control', 'no-store');
@@ -113,7 +116,10 @@ describe('sessionMiddleware module', () => {
       requireSession(req as Request, res as Response, next as NextFunction);
 
       expect(res.status).toHaveBeenCalledWith(401);
-      expect(res.json).toHaveBeenCalledWith({ error: 'Authentication required', code: 'AUTHENTICATION_REQUIRED' });
+      expect(res.json).toHaveBeenCalledWith({
+        error: 'Authentication required',
+        code: 'AUTHENTICATION_REQUIRED',
+      });
       expect(next).not.toHaveBeenCalled();
     });
 
@@ -123,7 +129,10 @@ describe('sessionMiddleware module', () => {
       requireSession(req as Request, res as Response, next as NextFunction);
 
       expect(res.status).toHaveBeenCalledWith(401);
-      expect(res.json).toHaveBeenCalledWith({ error: 'Authentication required', code: 'AUTHENTICATION_REQUIRED' });
+      expect(res.json).toHaveBeenCalledWith({
+        error: 'Authentication required',
+        code: 'AUTHENTICATION_REQUIRED',
+      });
       expect(next).not.toHaveBeenCalled();
     });
 

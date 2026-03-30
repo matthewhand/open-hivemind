@@ -4,6 +4,7 @@ import { ErrorHandler } from '@src/common/errors/ErrorHandler';
 import { PerformanceMonitor } from '@src/common/errors/PerformanceMonitor';
 import { getLlmProvider } from '@src/llm/getLlmProvider';
 import { getQuotaManager } from '@src/middleware/quotaMiddleware';
+import { ContentFilterService } from '@src/services/ContentFilterService';
 import { MemoryManager } from '@src/services/MemoryManager';
 import { toolAugmentedCompletion } from '@src/services/toolAugmentedCompletion';
 import { InputSanitizer } from '@src/utils/InputSanitizer';
@@ -28,8 +29,7 @@ import { stripBotId } from '../helpers/processing/stripBotId';
 // New utilities
 import TokenTracker from '../helpers/processing/TokenTracker';
 import TypingActivity from '../helpers/processing/TypingActivity';
-import { ContentFilterService } from '@src/services/ContentFilterService';
-import { PipelineMetrics, pipelineEventEmitter } from '../PipelineMetrics';
+import { pipelineEventEmitter, PipelineMetrics } from '../PipelineMetrics';
 import { PipelineMetricsAggregator } from '../PipelineMetricsAggregator';
 import processingLocks from '../processing/processingLocks';
 
@@ -199,10 +199,7 @@ export async function handleMessage(
           );
 
           if (!filterResult.allowed) {
-            logger(
-              `Content blocked by filter: ${filterResult.reason}`,
-              filterResult.matchedTerms
-            );
+            logger(`Content blocked by filter: ${filterResult.reason}`, filterResult.matchedTerms);
             AuditLogger.getInstance().logBotAction(
               userId,
               'BLOCK',
@@ -636,7 +633,7 @@ export async function handleMessage(
           } catch (error) {
             logger('Failed to clear typing interval', {
               error: error instanceof Error ? error.message : String(error),
-              channelId
+              channelId,
             });
           }
           typingInterval = null;
@@ -647,7 +644,7 @@ export async function handleMessage(
           } catch (error) {
             logger('Failed to clear typing timeout', {
               error: error instanceof Error ? error.message : String(error),
-              channelId
+              channelId,
             });
           }
           typingTimeout = null;
@@ -660,7 +657,7 @@ export async function handleMessage(
             logger('Failed to unlock processing lock', {
               error: error instanceof Error ? error.message : String(error),
               channelId,
-              botId: resolvedBotId
+              botId: resolvedBotId,
             });
           }
         }
@@ -671,7 +668,7 @@ export async function handleMessage(
             logger('Failed to clear channel delay', {
               error: error instanceof Error ? error.message : String(error),
               delayKey,
-              channelId
+              channelId,
             });
           }
         }

@@ -6,6 +6,7 @@ import discordConfig, { type DiscordConfig } from '../config/discordConfig';
 import type { IBotInfo } from '../types/botInfo';
 import { type IMessageProvider } from '../types/IProvider';
 import { ReconnectionManager } from './ReconnectionManager';
+
 const debug = Debug('app:providers:DiscordProvider');
 
 export class DiscordProvider implements IMessageProvider<DiscordConfig> {
@@ -101,12 +102,9 @@ export class DiscordProvider implements IMessageProvider<DiscordConfig> {
     const ds = this.discordService;
     const instanceCfg = { name: name || '', token, llm };
     if (ds.addBot) {
-      const reconManager = new ReconnectionManager(
-        `discord-${name}`,
-        async () => {
-          await ds.addBot(instanceCfg);
-        }
-      );
+      const reconManager = new ReconnectionManager(`discord-${name}`, async () => {
+        await ds.addBot(instanceCfg);
+      });
       this.reconManagers.set(name || '', reconManager);
 
       // Start the bot connection with reconnection management
@@ -137,12 +135,9 @@ export class DiscordProvider implements IMessageProvider<DiscordConfig> {
         const name = inst.name || '';
         const instanceCfg = { name, token: inst.token, llm: inst.llm };
         if (ds.addBot) {
-          const reconManager = new ReconnectionManager(
-            `discord-${name}`,
-            async () => {
-              await ds.addBot(instanceCfg);
-            }
-          );
+          const reconManager = new ReconnectionManager(`discord-${name}`, async () => {
+            await ds.addBot(instanceCfg);
+          });
           this.reconManagers.set(name, reconManager);
           reconManager.start().catch((err) => {
             debug(`Failed to start Discord bot ${name} on reload: ${err.message}`);
@@ -175,7 +170,9 @@ export class DiscordProvider implements IMessageProvider<DiscordConfig> {
       return await (ds as any).getMessages(channelId, limit);
     }
 
-    debug('DiscordProvider.getMessages: DiscordService does not expose fetchMessages or getMessages');
+    debug(
+      'DiscordProvider.getMessages: DiscordService does not expose fetchMessages or getMessages'
+    );
     return [];
   }
 
@@ -221,7 +218,9 @@ export class DiscordProvider implements IMessageProvider<DiscordConfig> {
       return await (ds as any).getChannelOwner(forumId);
     }
 
-    debug('DiscordProvider.getForumOwner: DiscordService does not expose channel owner lookup method');
+    debug(
+      'DiscordProvider.getForumOwner: DiscordService does not expose channel owner lookup method'
+    );
     return '';
   }
 
@@ -280,9 +279,9 @@ export class DiscordProvider implements IMessageProvider<DiscordConfig> {
         status = 'down';
       }
 
-      const avgPing = botStatuses
-        .filter((b) => b.ping !== undefined)
-        .reduce((sum, b) => sum + (b.ping || 0), 0) / (botStatuses.filter((b) => b.ping !== undefined).length || 1);
+      const avgPing =
+        botStatuses.filter((b) => b.ping !== undefined).reduce((sum, b) => sum + (b.ping || 0), 0) /
+        (botStatuses.filter((b) => b.ping !== undefined).length || 1);
 
       return {
         status,

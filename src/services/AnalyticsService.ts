@@ -106,7 +106,8 @@ export class AnalyticsService {
   public async getBehaviorPatterns(options: ActivityFilter = {}): Promise<BehaviorPattern[]> {
     const events = await this.activityLogger.getEvents({
       ...options,
-      limit: options.limit || DEFAULT_PAGE_LIMIT,    });
+      limit: options.limit || DEFAULT_PAGE_LIMIT,
+    });
 
     if (events.length === 0) {
       return this.getDefaultBehaviorPatterns();

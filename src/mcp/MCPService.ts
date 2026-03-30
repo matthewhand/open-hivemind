@@ -114,9 +114,10 @@ export class MCPService {
 
       const error_enhanced = new Error(enhancedMessage);
       (error_enhanced as any).suggestions = suggestions;
-      (error_enhanced as any).canRetry = errorMessage.includes('ECONNREFUSED') ||
-                                           errorMessage.includes('ENOTFOUND') ||
-                                           errorMessage.includes('timeout');
+      (error_enhanced as any).canRetry =
+        errorMessage.includes('ECONNREFUSED') ||
+        errorMessage.includes('ENOTFOUND') ||
+        errorMessage.includes('timeout');
       (error_enhanced as any).docsUrl = 'https://docs.open-hivemind.ai/mcp/troubleshooting';
       throw error_enhanced;
     }
@@ -345,7 +346,11 @@ export class MCPService {
         suggestions.push('Reconnect to the MCP server');
         suggestions.push('Check if the server is still running');
         suggestions.push('Restart the bot or application');
-      } else if (errorMessage.includes('denied') || errorMessage.includes('guard') || errorMessage.includes('permission')) {
+      } else if (
+        errorMessage.includes('denied') ||
+        errorMessage.includes('guard') ||
+        errorMessage.includes('permission')
+      ) {
         enhancedMessage = `Tool access denied by security guard. ${errorMessage}`;
         suggestions.push('Check your user permissions');
         suggestions.push('Verify you are the channel owner if owner-only guard is enabled');
@@ -364,8 +369,8 @@ export class MCPService {
 
       const error_enhanced = new Error(enhancedMessage);
       (error_enhanced as any).suggestions = suggestions;
-      (error_enhanced as any).canRetry = errorMessage.includes('timeout') ||
-                                           errorMessage.includes('Not connected');
+      (error_enhanced as any).canRetry =
+        errorMessage.includes('timeout') || errorMessage.includes('Not connected');
       (error_enhanced as any).toolName = toolName;
       (error_enhanced as any).serverName = serverName;
       (error_enhanced as any).docsUrl = 'https://docs.open-hivemind.ai/tools/troubleshooting';

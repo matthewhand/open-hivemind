@@ -96,7 +96,7 @@ describe('Mem0Provider — constructor / configuration', () => {
     void provider.search('hello');
     expect(fetchMock).toHaveBeenCalledWith(
       expect.stringContaining(DEFAULT_BASE_URL),
-      expect.anything(),
+      expect.anything()
     );
   });
 
@@ -111,7 +111,7 @@ describe('Mem0Provider — constructor / configuration', () => {
     void provider.search('hello');
     expect(fetchMock).toHaveBeenCalledWith(
       expect.stringContaining('https://custom.example.com/v1/memories/search/'),
-      expect.anything(),
+      expect.anything()
     );
   });
 
@@ -164,10 +164,9 @@ describe('Mem0Provider.add()', () => {
     };
     fetchMock.mockResolvedValueOnce(jsonResponse(apiResp));
 
-    const result = await provider.add(
-      [{ role: 'user', content: 'I love TypeScript' }],
-      { metadata: { source: 'chat' } },
-    );
+    const result = await provider.add([{ role: 'user', content: 'I love TypeScript' }], {
+      metadata: { source: 'chat' },
+    });
 
     expect(result.results).toHaveLength(1);
     expect(result.results[0]).toEqual({
@@ -192,10 +191,10 @@ describe('Mem0Provider.add()', () => {
     const provider = makeProvider();
     fetchMock.mockResolvedValueOnce(jsonResponse({ results: [] }));
 
-    await provider.add(
-      [{ role: 'user', content: 'hi' }],
-      { userId: 'override-user', agentId: 'override-agent' },
-    );
+    await provider.add([{ role: 'user', content: 'hi' }], {
+      userId: 'override-user',
+      agentId: 'override-agent',
+    });
 
     const body = JSON.parse(fetchMock.mock.calls[0][1].body);
     expect(body.user_id).toBe('override-user');
@@ -301,7 +300,6 @@ describe('Mem0Provider.getAll()', () => {
     expect(url).toContain('user_id=other-user');
     expect(url).toContain('agent_id=other-agent');
   });
-
 });
 
 // ---------------------------------------------------------------------------
@@ -311,9 +309,7 @@ describe('Mem0Provider.getAll()', () => {
 describe('Mem0Provider.get()', () => {
   it('returns a single memory by id', async () => {
     const provider = makeProvider();
-    fetchMock.mockResolvedValueOnce(
-      jsonResponse({ id: 'mem-99', memory: 'The earth is round' }),
-    );
+    fetchMock.mockResolvedValueOnce(jsonResponse({ id: 'mem-99', memory: 'The earth is round' }));
 
     const result = await provider.get('mem-99');
     expect(result).toEqual({ id: 'mem-99', memory: 'The earth is round' });
@@ -339,9 +335,7 @@ describe('Mem0Provider.get()', () => {
 
   it('encodes special characters in memory id', async () => {
     const provider = makeProvider();
-    fetchMock.mockResolvedValueOnce(
-      jsonResponse({ id: 'id/with spaces', memory: 'test' }),
-    );
+    fetchMock.mockResolvedValueOnce(jsonResponse({ id: 'id/with spaces', memory: 'test' }));
 
     await provider.get('id/with spaces');
     const url = fetchMock.mock.calls[0][0] as string;
@@ -356,9 +350,7 @@ describe('Mem0Provider.get()', () => {
 describe('Mem0Provider.update()', () => {
   it('updates memory content via PUT', async () => {
     const provider = makeProvider();
-    fetchMock.mockResolvedValueOnce(
-      jsonResponse({ id: 'mem-1', memory: 'Updated content' }),
-    );
+    fetchMock.mockResolvedValueOnce(jsonResponse({ id: 'mem-1', memory: 'Updated content' }));
 
     const result = await provider.update('mem-1', 'Updated content');
     expect(result).toEqual({ id: 'mem-1', memory: 'Updated content' });
@@ -586,7 +578,7 @@ describe('Mem0Provider — edge cases', () => {
     const provider = makeProvider();
     const longContent = 'x'.repeat(100_000);
     fetchMock.mockResolvedValueOnce(
-      jsonResponse({ results: [{ id: 'long-1', memory: longContent }] }),
+      jsonResponse({ results: [{ id: 'long-1', memory: longContent }] })
     );
 
     await provider.add([{ role: 'user', content: longContent }]);
@@ -614,7 +606,7 @@ describe('Mem0Provider — edge cases', () => {
   it('omits score/metadata from result when not present in API response', async () => {
     const provider = makeProvider();
     fetchMock.mockResolvedValueOnce(
-      jsonResponse({ results: [{ id: 'bare', memory: 'just text' }] }),
+      jsonResponse({ results: [{ id: 'bare', memory: 'just text' }] })
     );
 
     const result = await provider.add([{ role: 'user', content: 'hi' }]);

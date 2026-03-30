@@ -1,6 +1,6 @@
 import { Router, type Request, type Response } from 'express';
-import { introspectRoutes } from '../utils/routeIntrospection';
 import { HTTP_STATUS } from '../../types/constants';
+import { introspectRoutes } from '../utils/routeIntrospection';
 
 const router = Router();
 

@@ -35,7 +35,7 @@ export interface VersionInfo {
 export function compareVersions(a: string, b: string): number {
   const parseVersion = (v: string) => {
     const cleaned = v.replace(/^v/, '');
-    const parts = cleaned.split(/[.-]/).map(p => {
+    const parts = cleaned.split(/[.-]/).map((p) => {
       const num = parseInt(p, 10);
       return isNaN(num) ? 0 : num;
     });
@@ -72,7 +72,10 @@ export function isNewerVersion(current: string, latest: string): boolean {
  * Fetch the latest version from a git repository without cloning.
  * Checks both git tags and package.json in the default branch.
  */
-export async function fetchLatestVersionFromGit(repoUrl: string, pluginPath?: string): Promise<string | undefined> {
+export async function fetchLatestVersionFromGit(
+  repoUrl: string,
+  pluginPath?: string
+): Promise<string | undefined> {
   try {
     // If we have a local plugin path, fetch from remote
     if (pluginPath && fs.existsSync(path.join(pluginPath, '.git'))) {
@@ -96,7 +99,7 @@ export async function fetchLatestVersionFromGit(repoUrl: string, pluginPath?: st
               const pkgJson = execSync(`git show ${branch}:package.json`, {
                 cwd: pluginPath,
                 encoding: 'utf-8',
-                stdio: 'pipe'
+                stdio: 'pipe',
               });
               const pkg = JSON.parse(pkgJson);
               if (pkg.version) {
@@ -127,7 +130,11 @@ export async function fetchLatestVersionFromGit(repoUrl: string, pluginPath?: st
 /**
  * Get version history/changelog from git commits.
  */
-export async function fetchChangelog(pluginPath: string, currentVersion: string, limit: number = 10): Promise<VersionHistoryEntry[]> {
+export async function fetchChangelog(
+  pluginPath: string,
+  currentVersion: string,
+  limit: number = 10
+): Promise<VersionHistoryEntry[]> {
   const changelog: VersionHistoryEntry[] = [];
 
   try {
@@ -153,10 +160,13 @@ export async function fetchChangelog(pluginPath: string, currentVersion: string,
     const output = execSync(gitCommand, {
       cwd: pluginPath,
       encoding: 'utf-8',
-      stdio: 'pipe'
+      stdio: 'pipe',
     });
 
-    const lines = output.trim().split('\n').filter(l => l);
+    const lines = output
+      .trim()
+      .split('\n')
+      .filter((l) => l);
 
     for (const line of lines.slice(0, limit)) {
       const [sha, date, author, message] = line.split('|');
@@ -170,7 +180,7 @@ export async function fetchChangelog(pluginPath: string, currentVersion: string,
           date: new Date(date).toISOString(),
           message: message.trim(),
           author: author?.trim(),
-          sha: sha.substring(0, 7)
+          sha: sha.substring(0, 7),
         });
       }
     }
@@ -203,6 +213,6 @@ export async function checkForUpdates(
     current: currentVersion,
     latest: latestVersion,
     hasUpdate,
-    changelog
+    changelog,
   };
 }

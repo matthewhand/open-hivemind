@@ -217,7 +217,10 @@ export class PersonaManager extends EventEmitter {
     return updated;
   }
 
-  public async clonePersona(id: string, overrides?: Partial<CreatePersonaRequest>): Promise<Persona> {
+  public async clonePersona(
+    id: string,
+    overrides?: Partial<CreatePersonaRequest>
+  ): Promise<Persona> {
     const existing = this.personas.get(id);
     if (!existing) {
       throw new Error(`Persona with ID ${id} not found`);

@@ -111,7 +111,7 @@ adminRouter.get('/status', async (_req: Request, res: Response) => {
     } catch (error) {
       debug('Failed to retrieve Discord bot info (non-fatal)', {
         error: error instanceof Error ? error.message : String(error),
-        endpoint: '/status'
+        endpoint: '/status',
       });
     }
     res.json({

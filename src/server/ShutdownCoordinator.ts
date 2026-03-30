@@ -484,7 +484,9 @@ export class ShutdownCoordinator {
     // Stop MCPProviderManager
     try {
       const { MCPProviderManager } = require('@config/MCPProviderManager');
-      const mcpManager = MCPProviderManager.getInstance ? MCPProviderManager.getInstance() : MCPProviderManager;
+      const mcpManager = MCPProviderManager.getInstance
+        ? MCPProviderManager.getInstance()
+        : MCPProviderManager;
       if (mcpManager && typeof mcpManager.shutdown === 'function') {
         await mcpManager.shutdown();
         debug('MCPProviderManager shut down');

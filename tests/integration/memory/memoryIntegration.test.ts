@@ -7,12 +7,12 @@
  */
 
 import { Mem0Provider } from '../../../packages/memory-mem0/src/Mem0Provider';
-import { Mem4aiProvider } from '../../../packages/memory-mem4ai/src/Mem4aiProvider';
-import { create as createMem4ai } from '../../../packages/memory-mem4ai/src/index';
 import { Mem0ApiError } from '../../../packages/memory-mem0/src/types';
+import { create as createMem4ai } from '../../../packages/memory-mem4ai/src/index';
+import { Mem4aiProvider } from '../../../packages/memory-mem4ai/src/Mem4aiProvider';
 import {
-  clearCircuitBreakerRegistry,
   CircuitBreakerError,
+  clearCircuitBreakerRegistry,
 } from '../../../src/common/CircuitBreaker';
 
 // ---------------------------------------------------------------------------
@@ -75,13 +75,14 @@ describe('Full provider lifecycle (Mem0Provider)', () => {
   it('add() sends POST to /memories/ with correct headers and body', async () => {
     const provider = makeProvider();
     fetchMock.mockResolvedValueOnce(
-      jsonResponse({ results: [{ id: 'mem-1', memory: 'stored content', score: 0.95 }] }),
+      jsonResponse({ results: [{ id: 'mem-1', memory: 'stored content', score: 0.95 }] })
     );
 
-    const result = await provider.add(
-      [{ role: 'user', content: 'hello world' }],
-      { userId: 'u1', agentId: 'a1', metadata: { channelId: 'ch1' } },
-    );
+    const result = await provider.add([{ role: 'user', content: 'hello world' }], {
+      userId: 'u1',
+      agentId: 'a1',
+      metadata: { channelId: 'ch1' },
+    });
 
     expect(fetchMock).toHaveBeenCalledTimes(1);
     const [url, opts] = fetchMock.mock.calls[0];
@@ -96,9 +97,7 @@ describe('Full provider lifecycle (Mem0Provider)', () => {
     expect(body.agent_id).toBe('a1');
     expect(body.metadata).toEqual({ channelId: 'ch1' });
 
-    expect(result.results).toEqual([
-      { id: 'mem-1', memory: 'stored content', score: 0.95 },
-    ]);
+    expect(result.results).toEqual([{ id: 'mem-1', memory: 'stored content', score: 0.95 }]);
   });
 
   it('search() sends POST to /memories/search/ and maps response through toResult()', async () => {
@@ -109,7 +108,7 @@ describe('Full provider lifecycle (Mem0Provider)', () => {
           { id: 'r1', memory: 'found it', score: 0.9, metadata: { tag: 'x' } },
           { id: 'r2', memory: 'also found', score: 0.7 },
         ],
-      }),
+      })
     );
 
     const result = await provider.search('my query', { limit: 5 });
@@ -122,16 +121,19 @@ describe('Full provider lifecycle (Mem0Provider)', () => {
     expect(body.limit).toBe(5);
 
     expect(result.results).toHaveLength(2);
-    expect(result.results[0]).toEqual({ id: 'r1', memory: 'found it', score: 0.9, metadata: { tag: 'x' } });
+    expect(result.results[0]).toEqual({
+      id: 'r1',
+      memory: 'found it',
+      score: 0.9,
+      metadata: { tag: 'x' },
+    });
     expect(result.results[1]).toEqual({ id: 'r2', memory: 'also found', score: 0.7 });
   });
 
   it('get() calls GET /memories/{id}/ with encodeURIComponent', async () => {
     const provider = makeProvider();
     const specialId = 'mem/with spaces&chars';
-    fetchMock.mockResolvedValueOnce(
-      jsonResponse({ id: specialId, memory: 'content here' }),
-    );
+    fetchMock.mockResolvedValueOnce(jsonResponse({ id: specialId, memory: 'content here' }));
 
     const result = await provider.get(specialId);
 
@@ -142,9 +144,7 @@ describe('Full provider lifecycle (Mem0Provider)', () => {
 
   it('update() sends PUT to /memories/{id}/', async () => {
     const provider = makeProvider();
-    fetchMock.mockResolvedValueOnce(
-      jsonResponse({ id: 'mem-1', memory: 'updated text' }),
-    );
+    fetchMock.mockResolvedValueOnce(jsonResponse({ id: 'mem-1', memory: 'updated text' }));
 
     const result = await provider.update('mem-1', 'updated text');
 
@@ -220,7 +220,7 @@ describe('MemoryManager -> real provider resolution', () => {
     jest.doMock('@src/plugins', () => {
       const realMem0Module = jest.requireActual('../../../packages/memory-mem0/src/index');
       const { instantiateMemoryProvider: realInstantiate } = jest.requireActual(
-        '../../../src/plugins/PluginLoader',
+        '../../../src/plugins/PluginLoader'
       );
       return {
         loadPlugin: jest.fn().mockReturnValue(realMem0Module),
@@ -264,7 +264,7 @@ describe('MemoryManager -> real provider resolution', () => {
 
     // --- storeConversationMemory ---
     fetchMock.mockResolvedValueOnce(
-      jsonResponse({ results: [{ id: 'stored-1', memory: 'remembered' }] }),
+      jsonResponse({ results: [{ id: 'stored-1', memory: 'remembered' }] })
     );
 
     await mgr.storeConversationMemory('TestBot', 'remember this', 'user', {
@@ -284,10 +284,8 @@ describe('MemoryManager -> real provider resolution', () => {
     // --- retrieveRelevantMemories ---
     fetchMock.mockResolvedValueOnce(
       jsonResponse({
-        results: [
-          { id: 'r1', memory: 'you said remember this', score: 0.92 },
-        ],
-      }),
+        results: [{ id: 'r1', memory: 'you said remember this', score: 0.92 }],
+      })
     );
 
     const memories = await mgr.retrieveRelevantMemories('TestBot', 'what did I say?');
@@ -352,7 +350,7 @@ describe('Circuit breaker fires through real Mem0Provider', () => {
 
     // Next request should go through (new breaker, CLOSED state)
     fetchMock.mockResolvedValueOnce(
-      jsonResponse({ results: [{ id: 'recovered', memory: 'back online', score: 0.5 }] }),
+      jsonResponse({ results: [{ id: 'recovered', memory: 'back online', score: 0.5 }] })
     );
 
     const result = await provider2.search('recovery test');
@@ -383,7 +381,7 @@ describe('Provider timeout fires through real MemoryManager', () => {
 
     const realMem0Module = jest.requireActual('../../../packages/memory-mem0/src/index');
     const { instantiateMemoryProvider: realInstantiate } = jest.requireActual(
-      '../../../src/plugins/PluginLoader',
+      '../../../src/plugins/PluginLoader'
     );
     jest.doMock('@src/plugins', () => ({
       loadPlugin: jest.fn().mockReturnValue(realMem0Module),
@@ -461,7 +459,7 @@ describe('score:0 edge case', () => {
           { id: 'z2', memory: 'normal score memory', score: 0.5 },
           { id: 'z3', memory: 'no score memory' },
         ],
-      }),
+      })
     );
 
     const result = await provider.search('test');
@@ -486,7 +484,7 @@ describe('score:0 edge case', () => {
           { id: 'z2', memory: 'null score', score: null },
           { id: 'z3', memory: 'no score' },
         ],
-      }),
+      })
     );
 
     const result = await provider.search('test');

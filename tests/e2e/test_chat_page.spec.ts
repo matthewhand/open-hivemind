@@ -76,7 +76,9 @@ test.describe('ChatPage Optimistic Message Rollback', () => {
 
   test('sending a message optimistically updates and rolls back on failure', async ({ page }) => {
     let resolveMessagePromise: () => void;
-    const messagePromise = new Promise<void>((resolve) => { resolveMessagePromise = resolve; });
+    const messagePromise = new Promise<void>((resolve) => {
+      resolveMessagePromise = resolve;
+    });
 
     // Setup delayed failure mock for message sending so we can see the optimistic state
     await page.route('**/api/bots/*/message', async (route) => {
@@ -155,7 +157,9 @@ test.describe('ChatPage Optimistic Message Rollback', () => {
     });
 
     let resolveLatencyPromise: () => void;
-    const latencyPromise = new Promise<void>((resolve) => { resolveLatencyPromise = resolve; });
+    const latencyPromise = new Promise<void>((resolve) => {
+      resolveLatencyPromise = resolve;
+    });
 
     // Setup high latency mock
     await page.route('**/api/bots/*/message', async (route) => {

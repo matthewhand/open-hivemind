@@ -92,7 +92,12 @@ export class ErrorUtils {
     const statusCode = error.statusCode;
 
     // Network errors
-    if (code === 'ECONNREFUSED' || code === 'ENOTFOUND' || code === 'ETIMEDOUT' || msg.includes('network')) {
+    if (
+      code === 'ECONNREFUSED' ||
+      code === 'ENOTFOUND' ||
+      code === 'ETIMEDOUT' ||
+      msg.includes('network')
+    ) {
       return {
         classification: ErrorClassification.NETWORK_ERROR,
         logLevel: 'error',
@@ -147,7 +152,12 @@ export class ErrorUtils {
     }
 
     // Validation errors
-    if (code === 'VALIDATION_ERROR' || statusCode === 400 || msg.includes('validation') || msg.includes('invalid')) {
+    if (
+      code === 'VALIDATION_ERROR' ||
+      statusCode === 400 ||
+      msg.includes('validation') ||
+      msg.includes('invalid')
+    ) {
       return {
         classification: ErrorClassification.VALIDATION_ERROR,
         logLevel: 'warn',

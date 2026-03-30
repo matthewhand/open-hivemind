@@ -7,6 +7,7 @@ import type { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdi
 import { ErrorUtils } from '@src/types/errors';
 import { authenticate, requireAdmin } from '../../auth/middleware';
 import MCPProviderManager from '../../config/MCPProviderManager';
+import { HTTP_STATUS } from '../../types/constants';
 import type { MCPProviderConfig } from '../../types/mcp';
 import {
   AddMCPServerSchema,
@@ -17,7 +18,6 @@ import {
   UpdateMCPProviderSchema,
 } from '../../validation/schemas/mcpSchema';
 import { validateRequest } from '../../validation/validateRequest';
-import { HTTP_STATUS } from '../../types/constants';
 
 const debug = Debug('app:webui:mcp');
 const router = Router();
@@ -279,7 +279,9 @@ router.post(
         };
         await saveMCPServers(servers);
 
-        return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: `Failed to connect to MCP server: ${error}` });
+        return res
+          .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
+          .json({ error: `Failed to connect to MCP server: ${error}` });
       }
     } catch (error: unknown) {
       const hivemindError = ErrorUtils.toHivemindError(error) as any;

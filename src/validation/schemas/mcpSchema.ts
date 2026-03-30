@@ -67,15 +67,17 @@ export const SaveToolExecutionSchema = z.object({
 
 /** Schema for GET /api/mcp/tools/history — get tool execution history */
 export const GetToolExecutionHistorySchema = z.object({
-  query: z.object({
-    limit: z.coerce.number().int().positive().optional(),
-    offset: z.coerce.number().int().min(0).optional(),
-    serverName: z.string().optional(),
-    toolName: z.string().optional(),
-    status: z.enum(['success', 'error']).optional(),
-    startTime: z.string().datetime().optional(),
-    endTime: z.string().datetime().optional(),
-  }).optional(),
+  query: z
+    .object({
+      limit: z.coerce.number().int().positive().optional(),
+      offset: z.coerce.number().int().min(0).optional(),
+      serverName: z.string().optional(),
+      toolName: z.string().optional(),
+      status: z.enum(['success', 'error']).optional(),
+      startTime: z.string().datetime().optional(),
+      endTime: z.string().datetime().optional(),
+    })
+    .optional(),
 });
 
 /** Schema for GET /api/mcp/tools/history/:id — get specific execution result */
@@ -101,11 +103,13 @@ export const ToggleToolSchema = z.object({
 /** Schema for POST /api/mcp/tools/bulk-toggle — bulk enable/disable tools */
 export const BulkToggleToolsSchema = z.object({
   body: z.object({
-    tools: z.array(z.object({
-      toolId: z.string().min(1),
-      serverName: z.string().min(1),
-      toolName: z.string().min(1),
-    })),
+    tools: z.array(
+      z.object({
+        toolId: z.string().min(1),
+        serverName: z.string().min(1),
+        toolName: z.string().min(1),
+      })
+    ),
     enabled: z.boolean(),
     userId: z.string().optional(),
   }),

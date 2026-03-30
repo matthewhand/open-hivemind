@@ -3,12 +3,12 @@
  * Tests package installation, version checking, update detection, and changelog retrieval
  */
 
-import { describe, it, expect, beforeEach, afterEach } from '@jest/globals';
-import request from 'supertest';
-import express, { Express } from 'express';
-import marketplaceRouter from '../../src/server/routes/marketplace';
 import fs from 'fs';
 import path from 'path';
+import express, { Express } from 'express';
+import request from 'supertest';
+import { afterEach, beforeEach, describe, expect, it } from '@jest/globals';
+import marketplaceRouter from '../../src/server/routes/marketplace';
 
 // Mock authentication middleware
 jest.mock('../../src/auth/middleware', () => ({
@@ -170,9 +170,7 @@ describe('Marketplace API - Comprehensive Integration Tests', () => {
         current: '1.0.0',
         latest: '1.2.0',
         hasUpdate: true,
-        changelog: [
-          { version: '1.2.0', date: '2024-03-01', changes: ['New features'] },
-        ],
+        changelog: [{ version: '1.2.0', date: '2024-03-01', changes: ['New features'] }],
       });
 
       const response = await request(app)
@@ -219,10 +217,7 @@ describe('Marketplace API - Comprehensive Integration Tests', () => {
     });
 
     it('should validate missing repoUrl (400)', async () => {
-      const response = await request(app)
-        .post('/api/marketplace/install')
-        .send({})
-        .expect(400);
+      const response = await request(app).post('/api/marketplace/install').send({}).expect(400);
 
       expect(response.body.error).toBe('Validation failed');
     });
@@ -259,7 +254,9 @@ describe('Marketplace API - Comprehensive Integration Tests', () => {
         .expect(500);
 
       expect(response.body.errorType).toBe('marketplace_build_failed');
-      expect(response.body.suggestions).toContain('Check the package build logs for specific errors');
+      expect(response.body.suggestions).toContain(
+        'Check the package build logs for specific errors'
+      );
     });
 
     it('should handle manifest validation errors', async () => {
@@ -301,11 +298,11 @@ describe('Marketplace API - Comprehensive Integration Tests', () => {
     });
 
     it('should require admin role (403)', async () => {
-      jest.mocked(require('../../src/auth/middleware').requireRole).mockImplementationOnce(
-        (role: string) => (req: any, res: any, next: any) => {
+      jest
+        .mocked(require('../../src/auth/middleware').requireRole)
+        .mockImplementationOnce((role: string) => (req: any, res: any, next: any) => {
           res.status(403).json({ error: 'Forbidden' });
-        }
-      );
+        });
 
       const response = await request(app)
         .post('/api/marketplace/install')
@@ -334,9 +331,7 @@ describe('Marketplace API - Comprehensive Integration Tests', () => {
     });
 
     it('should validate package name (400)', async () => {
-      const response = await request(app)
-        .post('/api/marketplace/uninstall/%20')
-        .expect(400);
+      const response = await request(app).post('/api/marketplace/uninstall/%20').expect(400);
 
       expect(response.body.error).toBe('Validation failed');
     });
@@ -352,11 +347,11 @@ describe('Marketplace API - Comprehensive Integration Tests', () => {
     });
 
     it('should require admin role (403)', async () => {
-      jest.mocked(require('../../src/auth/middleware').requireRole).mockImplementationOnce(
-        (role: string) => (req: any, res: any, next: any) => {
+      jest
+        .mocked(require('../../src/auth/middleware').requireRole)
+        .mockImplementationOnce((role: string) => (req: any, res: any, next: any) => {
           res.status(403).json({ error: 'Forbidden' });
-        }
-      );
+        });
 
       const response = await request(app)
         .post('/api/marketplace/uninstall/test-plugin-1')
@@ -387,9 +382,7 @@ describe('Marketplace API - Comprehensive Integration Tests', () => {
 
       mockUpdatePlugin.mockResolvedValueOnce(updatedPlugin);
 
-      const response = await request(app)
-        .post('/api/marketplace/update/test-plugin-1')
-        .expect(200);
+      const response = await request(app).post('/api/marketplace/update/test-plugin-1').expect(200);
 
       expect(response.body.success).toBe(true);
       expect(response.body.package.version).toBe('1.1.0');
@@ -397,9 +390,7 @@ describe('Marketplace API - Comprehensive Integration Tests', () => {
     });
 
     it('should validate package name (400)', async () => {
-      const response = await request(app)
-        .post('/api/marketplace/update/ ')
-        .expect(400);
+      const response = await request(app).post('/api/marketplace/update/ ').expect(400);
 
       expect(response.body.error).toBe('Validation failed');
     });
@@ -407,23 +398,19 @@ describe('Marketplace API - Comprehensive Integration Tests', () => {
     it('should handle update errors', async () => {
       mockUpdatePlugin.mockRejectedValueOnce(new Error('Update failed: no updates available'));
 
-      const response = await request(app)
-        .post('/api/marketplace/update/test-plugin-1')
-        .expect(400);
+      const response = await request(app).post('/api/marketplace/update/test-plugin-1').expect(400);
 
       expect(response.body.error).toContain('Update failed');
     });
 
     it('should require admin role (403)', async () => {
-      jest.mocked(require('../../src/auth/middleware').requireRole).mockImplementationOnce(
-        (role: string) => (req: any, res: any, next: any) => {
+      jest
+        .mocked(require('../../src/auth/middleware').requireRole)
+        .mockImplementationOnce((role: string) => (req: any, res: any, next: any) => {
           res.status(403).json({ error: 'Forbidden' });
-        }
-      );
+        });
 
-      const response = await request(app)
-        .post('/api/marketplace/update/test-plugin-1')
-        .expect(403);
+      const response = await request(app).post('/api/marketplace/update/test-plugin-1').expect(403);
 
       expect(response.body.error).toBe('Forbidden');
     });
@@ -493,9 +480,7 @@ describe('Marketplace API - Comprehensive Integration Tests', () => {
     });
 
     it('should validate plugin name parameter (400)', async () => {
-      const response = await request(app)
-        .get('/api/marketplace/check-updates/%20')
-        .expect(400);
+      const response = await request(app).get('/api/marketplace/check-updates/%20').expect(400);
 
       expect(response.body.error).toBe('Validation failed');
     });
@@ -560,9 +545,7 @@ describe('Marketplace API - Comprehensive Integration Tests', () => {
           hasUpdate: false,
         });
 
-      const response = await request(app)
-        .get('/api/marketplace/check-all-updates')
-        .expect(200);
+      const response = await request(app).get('/api/marketplace/check-all-updates').expect(200);
 
       expect(response.body).toHaveProperty('total', 2);
       expect(response.body).toHaveProperty('updatesAvailable', 1);
@@ -577,9 +560,7 @@ describe('Marketplace API - Comprehensive Integration Tests', () => {
     it('should handle no installed plugins', async () => {
       mockListInstalledPlugins.mockResolvedValueOnce([]);
 
-      const response = await request(app)
-        .get('/api/marketplace/check-all-updates')
-        .expect(200);
+      const response = await request(app).get('/api/marketplace/check-all-updates').expect(200);
 
       expect(response.body.total).toBe(0);
       expect(response.body.updatesAvailable).toBe(0);
@@ -595,9 +576,7 @@ describe('Marketplace API - Comprehensive Integration Tests', () => {
         })
         .mockRejectedValueOnce(new Error('Network error'));
 
-      const response = await request(app)
-        .get('/api/marketplace/check-all-updates')
-        .expect(200);
+      const response = await request(app).get('/api/marketplace/check-all-updates').expect(200);
 
       expect(response.body.total).toBe(2);
       // Should still return results for successful checks
@@ -607,9 +586,7 @@ describe('Marketplace API - Comprehensive Integration Tests', () => {
     it('should handle errors gracefully (500)', async () => {
       mockListInstalledPlugins.mockRejectedValueOnce(new Error('Database error'));
 
-      const response = await request(app)
-        .get('/api/marketplace/check-all-updates')
-        .expect(500);
+      const response = await request(app).get('/api/marketplace/check-all-updates').expect(500);
 
       expect(response.body.error).toContain('Failed to check updates');
     });
@@ -621,11 +598,11 @@ describe('Marketplace API - Comprehensive Integration Tests', () => {
 
   describe('Authentication and Authorization', () => {
     it('should require authentication for all endpoints', async () => {
-      jest.mocked(require('../../src/auth/middleware').authenticateToken).mockImplementationOnce(
-        (req: any, res: any, next: any) => {
+      jest
+        .mocked(require('../../src/auth/middleware').authenticateToken)
+        .mockImplementationOnce((req: any, res: any, next: any) => {
           res.status(401).json({ error: 'Unauthorized' });
-        }
-      );
+        });
 
       const response = await request(app).get('/api/marketplace/packages').expect(401);
 
@@ -633,11 +610,11 @@ describe('Marketplace API - Comprehensive Integration Tests', () => {
     });
 
     it('should require admin role for installation', async () => {
-      jest.mocked(require('../../src/auth/middleware').requireRole).mockImplementationOnce(
-        (role: string) => (req: any, res: any, next: any) => {
+      jest
+        .mocked(require('../../src/auth/middleware').requireRole)
+        .mockImplementationOnce((role: string) => (req: any, res: any, next: any) => {
           res.status(403).json({ error: 'Forbidden' });
-        }
-      );
+        });
 
       const response = await request(app)
         .post('/api/marketplace/install')
@@ -648,11 +625,11 @@ describe('Marketplace API - Comprehensive Integration Tests', () => {
     });
 
     it('should require admin role for uninstallation', async () => {
-      jest.mocked(require('../../src/auth/middleware').requireRole).mockImplementationOnce(
-        (role: string) => (req: any, res: any, next: any) => {
+      jest
+        .mocked(require('../../src/auth/middleware').requireRole)
+        .mockImplementationOnce((role: string) => (req: any, res: any, next: any) => {
           res.status(403).json({ error: 'Forbidden' });
-        }
-      );
+        });
 
       const response = await request(app)
         .post('/api/marketplace/uninstall/test-plugin-1')
@@ -662,15 +639,13 @@ describe('Marketplace API - Comprehensive Integration Tests', () => {
     });
 
     it('should require admin role for updates', async () => {
-      jest.mocked(require('../../src/auth/middleware').requireRole).mockImplementationOnce(
-        (role: string) => (req: any, res: any, next: any) => {
+      jest
+        .mocked(require('../../src/auth/middleware').requireRole)
+        .mockImplementationOnce((role: string) => (req: any, res: any, next: any) => {
           res.status(403).json({ error: 'Forbidden' });
-        }
-      );
+        });
 
-      const response = await request(app)
-        .post('/api/marketplace/update/test-plugin-1')
-        .expect(403);
+      const response = await request(app).post('/api/marketplace/update/test-plugin-1').expect(403);
 
       expect(response.body.error).toBe('Forbidden');
     });
@@ -693,9 +668,7 @@ describe('Marketplace API - Comprehensive Integration Tests', () => {
     it('should handle very long package names', async () => {
       const longName = 'a'.repeat(300);
 
-      const response = await request(app)
-        .get(`/api/marketplace/packages/${longName}`)
-        .expect(404);
+      const response = await request(app).get(`/api/marketplace/packages/${longName}`).expect(404);
 
       expect(response.body.error).toContain('not found');
     });
@@ -742,9 +715,7 @@ describe('Marketplace API - Comprehensive Integration Tests', () => {
       ];
 
       for (const url of invalidUrls) {
-        const response = await request(app)
-          .post('/api/marketplace/install')
-          .send({ repoUrl: url });
+        const response = await request(app).post('/api/marketplace/install').send({ repoUrl: url });
 
         expect([400, 500]).toContain(response.status);
       }

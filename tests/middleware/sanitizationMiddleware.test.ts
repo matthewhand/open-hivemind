@@ -1,4 +1,4 @@
-import { Request, Response, NextFunction } from 'express';
+import { NextFunction, Request, Response } from 'express';
 import sanitizeInput from '../../src/middleware/sanitizationMiddleware';
 
 describe('sanitizationMiddleware', () => {
@@ -107,7 +107,7 @@ describe('sanitizationMiddleware', () => {
   describe('headers sanitization', () => {
     it('skips standard headers', () => {
       req.headers = {
-        'authorization': 'Bearer <token>',
+        authorization: 'Bearer <token>',
         'content-type': 'application/json',
         'user-agent': 'Mozilla/5.0 <script>',
       };
@@ -115,7 +115,7 @@ describe('sanitizationMiddleware', () => {
       sanitizeInput(req as Request, res as Response, next as NextFunction);
 
       expect(req.headers).toEqual({
-        'authorization': 'Bearer <token>',
+        authorization: 'Bearer <token>',
         'content-type': 'application/json',
         'user-agent': 'Mozilla/5.0 <script>',
       });

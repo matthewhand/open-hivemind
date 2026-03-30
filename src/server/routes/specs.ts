@@ -3,9 +3,9 @@ import path from 'path';
 import Debug from 'debug';
 import { Router } from 'express';
 import { z } from 'zod';
+import { HTTP_STATUS } from '../../types/constants';
 import { SpecSchema } from '../../validation/schemas/miscSchema';
 import { validateRequest } from '../../validation/validateRequest';
-import { HTTP_STATUS } from '../../types/constants';
 
 const debug = Debug('app:server:routes:specs');
 
@@ -107,7 +107,9 @@ router.get('/:id', async (req, res) => {
   const { id } = req.params;
 
   if (!/^[a-zA-Z0-9_-]+$/.test(id)) {
-    return res.status(HTTP_STATUS.BAD_REQUEST).json({ success: false, error: 'Invalid spec ID format' });
+    return res
+      .status(HTTP_STATUS.BAD_REQUEST)
+      .json({ success: false, error: 'Invalid spec ID format' });
   }
 
   const targetPath = path.join(specsDirectory, id);
@@ -128,7 +130,9 @@ router.get('/:id', async (req, res) => {
     const spec = index.find((s) => s.id === id);
 
     if (!spec) {
-      return res.status(HTTP_STATUS.NOT_FOUND).json({ success: false, error: 'Specification not found' });
+      return res
+        .status(HTTP_STATUS.NOT_FOUND)
+        .json({ success: false, error: 'Specification not found' });
     }
 
     const versions = await fs.readdir(targetPath);

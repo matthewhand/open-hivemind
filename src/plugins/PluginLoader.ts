@@ -2,7 +2,12 @@ import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
 import Debug from 'debug';
-import type { ILlmProvider, IMemoryProvider, IMessengerService, IToolProvider } from '@hivemind/shared-types';
+import type {
+  ILlmProvider,
+  IMemoryProvider,
+  IMessengerService,
+  IToolProvider,
+} from '@hivemind/shared-types';
 import type { AnyConfig } from '../types/config';
 import type {
   PluginCapability,
@@ -176,9 +181,7 @@ function instantiateProvider<T>(
     return mod[singletonKey].getInstance(config);
   }
   // Fallback: constructor
-  const ctor = Object.keys(mod).find(
-    (k) => k.endsWith(typeSuffix) && typeof mod[k] === 'function'
-  );
+  const ctor = Object.keys(mod).find((k) => k.endsWith(typeSuffix) && typeof mod[k] === 'function');
   if (ctor && typeof mod[ctor] === 'function') {
     return new mod[ctor](config);
   }
@@ -234,14 +237,20 @@ export function instantiateMessageService(
 /**
  * Instantiate a memory provider from a loaded module.
  */
-export function instantiateMemoryProvider(mod: PluginModule, config?: AnyConfig | any): IMemoryProvider {
+export function instantiateMemoryProvider(
+  mod: PluginModule,
+  config?: AnyConfig | any
+): IMemoryProvider {
   return instantiateProvider<IMemoryProvider>(mod, config, 'Memory plugin');
 }
 
 /**
  * Instantiate a tool provider from a loaded module.
  */
-export function instantiateToolProvider(mod: PluginModule, config?: AnyConfig | any): IToolProvider {
+export function instantiateToolProvider(
+  mod: PluginModule,
+  config?: AnyConfig | any
+): IToolProvider {
   return instantiateProvider<IToolProvider>(mod, config, 'Tool plugin');
 }
 
@@ -265,9 +274,7 @@ export function instantiateBot(mod: any, config?: any): any {
   if (typeof mod.default === 'function') {
     return new mod.default(config);
   }
-  throw new Error(
-    'Bot plugin does not export create(), a Bot class, or a default constructor.'
-  );
+  throw new Error('Bot plugin does not export create(), a Bot class, or a default constructor.');
 }
 
 /**

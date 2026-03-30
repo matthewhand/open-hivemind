@@ -1,8 +1,5 @@
-import { describe, it, expect } from '@jest/globals';
-import {
-  compareVersions,
-  isNewerVersion,
-} from '@src/server/utils/versionTracking';
+import { describe, expect, it } from '@jest/globals';
+import { compareVersions, isNewerVersion } from '@src/server/utils/versionTracking';
 
 describe('versionTracking', () => {
   describe('compareVersions', () => {

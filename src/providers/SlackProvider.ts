@@ -5,6 +5,7 @@ import { SlackService } from '@hivemind/message-slack';
 import slackConfig, { type SlackConfig } from '../config/slackConfig';
 import { type IMessageProvider } from '../types/IProvider';
 import { ReconnectionManager } from './ReconnectionManager';
+
 const debug = Debug('app:providers:SlackProvider');
 
 export class SlackProvider implements IMessageProvider<SlackConfig> {
@@ -119,12 +120,9 @@ export class SlackProvider implements IMessageProvider<SlackConfig> {
     };
 
     if ((slack as any).addBot) {
-      const reconManager = new ReconnectionManager(
-        `slack-${name}`,
-        async () => {
-          await (slack as any).addBot(instanceCfg);
-        }
-      );
+      const reconManager = new ReconnectionManager(`slack-${name}`, async () => {
+        await (slack as any).addBot(instanceCfg);
+      });
       this.reconManagers.set(name, reconManager);
 
       // Start the bot connection with reconnection management
@@ -166,12 +164,9 @@ export class SlackProvider implements IMessageProvider<SlackConfig> {
           llm: inst.llm,
         };
         if ((slack as any).addBot) {
-          const reconManager = new ReconnectionManager(
-            `slack-${nameToUse}`,
-            async () => {
-              await (slack as any).addBot(instanceCfg);
-            }
-          );
+          const reconManager = new ReconnectionManager(`slack-${nameToUse}`, async () => {
+            await (slack as any).addBot(instanceCfg);
+          });
           this.reconManagers.set(nameToUse, reconManager);
           reconManager.start().catch((err) => {
             debug(`Failed to start Slack bot ${nameToUse} on reload: ${err.message}`);
@@ -298,7 +293,7 @@ export class SlackProvider implements IMessageProvider<SlackConfig> {
             const response = await fetch('https://slack.com/api/auth.test', {
               method: 'POST',
               headers: {
-                'Authorization': `Bearer ${botToken}`,
+                Authorization: `Bearer ${botToken}`,
                 'Content-Type': 'application/json',
               },
             });
@@ -332,7 +327,9 @@ export class SlackProvider implements IMessageProvider<SlackConfig> {
       );
 
       const checkedBots = botStatuses.map((r) =>
-        r.status === 'fulfilled' ? r.value : { name: 'unknown', connected: false, error: 'Health check failed' }
+        r.status === 'fulfilled'
+          ? r.value
+          : { name: 'unknown', connected: false, error: 'Health check failed' }
       );
 
       const connectedCount = checkedBots.filter((b) => b.connected).length;

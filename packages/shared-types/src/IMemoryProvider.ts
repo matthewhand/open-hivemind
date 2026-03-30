@@ -90,9 +90,7 @@ export interface IMemoryProvider {
    *
    * @param options Listing parameters: limit and scope.
    */
-  getMemories(
-    options?: { limit?: number } & MemoryScopeOptions
-  ): Promise<MemoryEntry[]>;
+  getMemories(options?: { limit?: number } & MemoryScopeOptions): Promise<MemoryEntry[]>;
 
   /**
    * Retrieve a single memory by ID.

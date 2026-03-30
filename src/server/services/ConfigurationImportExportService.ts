@@ -645,7 +645,9 @@ export class ConfigurationImportExportService {
         try {
           allExistingTemplateIds = await this.templateService.getAllTemplateIds();
         } catch (error) {
-          result.warnings?.push(`Error fetching existing templates: ${ErrorUtils.getMessage(error)}`);
+          result.warnings?.push(
+            `Error fetching existing templates: ${ErrorUtils.getMessage(error)}`
+          );
           allExistingTemplateIds = new Set();
         }
 
@@ -674,7 +676,9 @@ export class ConfigurationImportExportService {
                   });
                   newlyCreatedTemplateIds.add(template.id);
                 } catch (error) {
-                  result.warnings?.push(`Error processing template: ${ErrorUtils.getMessage(error)}`);
+                  result.warnings?.push(
+                    `Error processing template: ${ErrorUtils.getMessage(error)}`
+                  );
                 }
               })
           );

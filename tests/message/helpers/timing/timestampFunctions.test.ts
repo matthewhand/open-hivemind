@@ -1,6 +1,6 @@
 import {
-  getLastTypingTimestamp,
   getLastMessageTimestamp,
+  getLastTypingTimestamp,
   logMessageTimestamp,
 } from '../../../../src/message/helpers/timing/timestampFunctions';
 

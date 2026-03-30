@@ -3,20 +3,10 @@ import Logger from '../common/logger';
 
 const envSchema = z
   .object({
-    NODE_ENV: z
-      .enum(['development', 'production', 'test'])
-      .optional()
-      .default('development'),
-    PORT: z
-      .string()
-      .regex(/^\d+$/, 'PORT must be a valid number')
-      .optional(),
-    HTTP_ENABLED: z
-      .enum(['true', 'false'])
-      .optional(),
-    SKIP_MESSENGERS: z
-      .enum(['true', 'false'])
-      .optional(),
+    NODE_ENV: z.enum(['development', 'production', 'test']).optional().default('development'),
+    PORT: z.string().regex(/^\d+$/, 'PORT must be a valid number').optional(),
+    HTTP_ENABLED: z.enum(['true', 'false']).optional(),
+    SKIP_MESSENGERS: z.enum(['true', 'false']).optional(),
     SESSION_SECRET: z.string().optional(),
     JWT_SECRET: z.string().optional(),
     JWT_REFRESH_SECRET: z.string().optional(),
@@ -67,7 +57,8 @@ const envSchema = z
       if (!hasDiscord && !hasSlack && !hasMattermost && !hasDynamicBot) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
-          message: 'Production startup requires at least one messaging platform token to be configured.',
+          message:
+            'Production startup requires at least one messaging platform token to be configured.',
           path: ['DISCORD_BOT_TOKEN'],
         });
       }

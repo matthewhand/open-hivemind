@@ -39,13 +39,15 @@ describe('generateChatCompletionDirect', () => {
     );
 
     expect(result).toBe('ok response');
-    expect(mockedAxios.create).toHaveBeenCalledWith(expect.objectContaining({
-      baseURL: 'http://localhost:3000/api',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: 'Bearer abc',
-      },
-    }));
+    expect(mockedAxios.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        baseURL: 'http://localhost:3000/api',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: 'Bearer abc',
+        },
+      })
+    );
     expect(post).toHaveBeenCalledWith(
       '/chat/completions',
       {

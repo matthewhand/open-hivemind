@@ -10,7 +10,9 @@
  * real network calls.
  */
 
-import { describe, test, expect, beforeEach, afterEach, jest } from '@jest/globals';
+import { afterEach, beforeEach, describe, expect, jest, test } from '@jest/globals';
+// Now import the function under test (after mocks are wired).
+import { toolAugmentedCompletion } from '@src/services/toolAugmentedCompletion';
 
 // ---------------------------------------------------------------------------
 // Mock setup — must come before importing the module under test.
@@ -61,9 +63,6 @@ jest.mock('@src/services/ToolManager', () => ({
   },
 }));
 
-// Now import the function under test (after mocks are wired).
-import { toolAugmentedCompletion } from '@src/services/toolAugmentedCompletion';
-
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
@@ -82,7 +81,7 @@ function textResponse(content: string) {
 /** Convenience to build an OpenAI-style tool-call reply. */
 function toolCallResponse(
   calls: Array<{ id: string; name: string; args: Record<string, unknown> }>,
-  content: string | null = null,
+  content: string | null = null
 ) {
   return {
     choices: [
@@ -168,7 +167,7 @@ describe('Tool-calling pipeline integration', () => {
 
       // First LLM call: model calls the tool.
       mockOpenAICreate.mockResolvedValueOnce(
-        toolCallResponse([{ id: 'call_1', name: 'get_weather', args: { city: 'Paris' } }]),
+        toolCallResponse([{ id: 'call_1', name: 'get_weather', args: { city: 'Paris' } }])
       );
 
       // Tool execution succeeds.
@@ -180,7 +179,7 @@ describe('Tool-calling pipeline integration', () => {
 
       // Second LLM call: model produces final text.
       mockOpenAICreate.mockResolvedValueOnce(
-        textResponse('The weather in Paris is 22°C and sunny.'),
+        textResponse('The weather in Paris is 22°C and sunny.')
       );
 
       const result = await toolAugmentedCompletion(baseOpts({ userMessage: 'Weather in Paris?' }));
@@ -199,7 +198,7 @@ describe('Tool-calling pipeline integration', () => {
         'test-bot',
         'get_weather',
         { city: 'Paris' },
-        undefined,
+        undefined
       );
 
       // Second LLM call included the tool result in messages.
@@ -224,7 +223,7 @@ describe('Tool-calling pipeline integration', () => {
         toolCallResponse([
           { id: 'call_w', name: 'get_weather', args: { city: 'Tokyo' } },
           { id: 'call_s', name: 'web_search', args: { query: 'Tokyo events' } },
-        ]),
+        ])
       );
 
       // Both tools succeed.
@@ -238,7 +237,7 @@ describe('Tool-calling pipeline integration', () => {
 
       // Final LLM call returns text.
       mockOpenAICreate.mockResolvedValueOnce(
-        textResponse('Tokyo is 18°C and cloudy. Cherry blossom festival this weekend!'),
+        textResponse('Tokyo is 18°C and cloudy. Cherry blossom festival this weekend!')
       );
 
       const result = await toolAugmentedCompletion(baseOpts({ userMessage: 'Tokyo update' }));
@@ -266,7 +265,7 @@ describe('Tool-calling pipeline integration', () => {
 
       // Turn 1: LLM calls tool A.
       mockOpenAICreate.mockResolvedValueOnce(
-        toolCallResponse([{ id: 'call_a', name: 'get_weather', args: { city: 'London' } }]),
+        toolCallResponse([{ id: 'call_a', name: 'get_weather', args: { city: 'London' } }])
       );
       mockExecuteTool.mockResolvedValueOnce({
         toolName: 'get_weather',
@@ -278,7 +277,7 @@ describe('Tool-calling pipeline integration', () => {
       mockOpenAICreate.mockResolvedValueOnce(
         toolCallResponse([
           { id: 'call_b', name: 'web_search', args: { query: 'indoor activities London rain' } },
-        ]),
+        ])
       );
       mockExecuteTool.mockResolvedValueOnce({
         toolName: 'web_search',
@@ -288,12 +287,10 @@ describe('Tool-calling pipeline integration', () => {
 
       // Turn 3: LLM produces final text.
       mockOpenAICreate.mockResolvedValueOnce(
-        textResponse("It's rainy in London. Visit the British Museum!"),
+        textResponse("It's rainy in London. Visit the British Museum!")
       );
 
-      const result = await toolAugmentedCompletion(
-        baseOpts({ userMessage: 'Plan my London day' }),
-      );
+      const result = await toolAugmentedCompletion(baseOpts({ userMessage: 'Plan my London day' }));
 
       expect(result).toBe("It's rainy in London. Visit the British Museum!");
       expect(mockOpenAICreate).toHaveBeenCalledTimes(3);
@@ -313,7 +310,7 @@ describe('Tool-calling pipeline integration', () => {
       // The LLM stubbornly keeps calling tools every turn.
       for (let i = 0; i < 5; i++) {
         mockOpenAICreate.mockResolvedValueOnce(
-          toolCallResponse([{ id: `call_${i}`, name: 'get_weather', args: { city: 'Loop' } }]),
+          toolCallResponse([{ id: `call_${i}`, name: 'get_weather', args: { city: 'Loop' } }])
         );
         mockExecuteTool.mockResolvedValueOnce({
           toolName: 'get_weather',
@@ -323,9 +320,7 @@ describe('Tool-calling pipeline integration', () => {
       }
 
       // After 5 iterations the code makes one final call WITHOUT tools.
-      mockOpenAICreate.mockResolvedValueOnce(
-        textResponse('Okay, I will stop calling tools now.'),
-      );
+      mockOpenAICreate.mockResolvedValueOnce(textResponse('Okay, I will stop calling tools now.'));
 
       const result = await toolAugmentedCompletion(baseOpts({ userMessage: 'Loop test' }));
 
@@ -375,7 +370,7 @@ describe('Tool-calling pipeline integration', () => {
 
       // LLM calls the tool.
       mockOpenAICreate.mockResolvedValueOnce(
-        toolCallResponse([{ id: 'call_err', name: 'get_weather', args: { city: 'Nowhere' } }]),
+        toolCallResponse([{ id: 'call_err', name: 'get_weather', args: { city: 'Nowhere' } }])
       );
 
       // Tool execution fails.
@@ -387,7 +382,7 @@ describe('Tool-calling pipeline integration', () => {
 
       // LLM handles the error gracefully.
       mockOpenAICreate.mockResolvedValueOnce(
-        textResponse("I couldn't find weather data for that location."),
+        textResponse("I couldn't find weather data for that location.")
       );
 
       const result = await toolAugmentedCompletion(baseOpts({ userMessage: 'Weather in Nowhere' }));
@@ -413,7 +408,7 @@ describe('Tool-calling pipeline integration', () => {
 
       // LLM calls the tool.
       mockOpenAICreate.mockResolvedValueOnce(
-        toolCallResponse([{ id: 'call_to', name: 'get_weather', args: { city: 'Slow' } }]),
+        toolCallResponse([{ id: 'call_to', name: 'get_weather', args: { city: 'Slow' } }])
       );
 
       // Tool execution times out (simulated by ToolManager returning a timeout error).
@@ -425,14 +420,12 @@ describe('Tool-calling pipeline integration', () => {
 
       // LLM recovers.
       mockOpenAICreate.mockResolvedValueOnce(
-        textResponse('The weather service is currently unavailable. Please try again later.'),
+        textResponse('The weather service is currently unavailable. Please try again later.')
       );
 
       const result = await toolAugmentedCompletion(baseOpts({ userMessage: 'Slow weather' }));
 
-      expect(result).toBe(
-        'The weather service is currently unavailable. Please try again later.',
-      );
+      expect(result).toBe('The weather service is currently unavailable. Please try again later.');
 
       // Timeout error was fed back.
       const followUpMessages = mockOpenAICreate.mock.calls[1][0].messages;
@@ -451,7 +444,7 @@ describe('Tool-calling pipeline integration', () => {
 
       // LLM responds with plain text, no tool_calls.
       mockOpenAICreate.mockResolvedValueOnce(
-        textResponse('I already know the answer. No tools needed.'),
+        textResponse('I already know the answer. No tools needed.')
       );
 
       const result = await toolAugmentedCompletion(baseOpts({ userMessage: 'Simple question' }));

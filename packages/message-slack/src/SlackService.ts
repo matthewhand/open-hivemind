@@ -2,7 +2,6 @@ import { EventEmitter } from 'events';
 import * as fs from 'fs';
 import * as path from 'path';
 import Debug from 'debug';
-import { Logger } from '@common/logger';
 import express, { type Application } from 'express';
 import type { KnownBlock } from '@slack/web-api';
 import BotConfigurationManager from '@src/config/BotConfigurationManager';
@@ -23,6 +22,7 @@ import slackConfig from '@config/slackConfig';
 import type { IMessage } from '@message/interfaces/IMessage';
 import type { IMessengerService } from '@message/interfaces/IMessengerService';
 import { computeScore as channelComputeScore } from '@message/routing/ChannelRouter';
+import { Logger } from '@common/logger';
 import { SlackBotFacade, type ISlackBotFacade } from './modules/ISlackBotFacade';
 import { SlackEventBus, type ISlackEventBus } from './modules/ISlackEventBus';
 // Module extractions
@@ -54,13 +54,16 @@ const RETRY_CONFIG = {
  */
 async function retry<T>(
   fn: (bail: (err: Error) => void, attempt: number) => Promise<T>,
-  opts: { retries: number; minTimeout: number; maxTimeout: number; factor: number },
+  opts: { retries: number; minTimeout: number; maxTimeout: number; factor: number }
 ): Promise<T> {
   let lastError: Error | undefined;
   for (let attempt = 1; attempt <= opts.retries + 1; attempt++) {
     let bailed = false;
     let bailError: Error | undefined;
-    const bail = (err: Error) => { bailed = true; bailError = err; };
+    const bail = (err: Error) => {
+      bailed = true;
+      bailError = err;
+    };
     try {
       const result = await fn(bail, attempt);
       if (bailed && bailError) throw bailError;
@@ -71,7 +74,7 @@ async function retry<T>(
       if (attempt <= opts.retries) {
         const delay = Math.min(
           opts.minTimeout * Math.pow(opts.factor, attempt - 1),
-          opts.maxTimeout,
+          opts.maxTimeout
         );
         await new Promise((r) => setTimeout(r, delay));
       }

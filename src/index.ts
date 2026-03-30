@@ -48,14 +48,13 @@ import Logger from '@common/logger';
 import { initProviders } from './initProviders';
 import { reloadGlobalConfigs } from './server/routes/config';
 import startupDiagnostics from './utils/startupDiagnostics';
-
 import 'dotenv/config';
-import express from 'express';
 import debug from 'debug';
-import * as messengerProviderModule from '@message/management/getMessengerProvider';
+import express from 'express';
 import * as debugEnvVarsModule from '@config/debugEnvVars';
 import * as messageConfigModule from '@config/messageConfig';
 import * as webhookConfigModule from '@config/webhookConfig';
+import * as messengerProviderModule from '@message/management/getMessengerProvider';
 import * as healthRouteModule from './server/routes/health';
 
 const indexLog = debug('app:index');
@@ -207,7 +206,10 @@ if (process.env.NODE_ENV !== 'development') {
   const serveDevHtml = async (req: Request, res: Response) => {
     try {
       const url = req.originalUrl;
-      let template = await fs.promises.readFile(path.join(process.cwd(), 'src/client/index.html'), 'utf-8');
+      let template = await fs.promises.readFile(
+        path.join(process.cwd(), 'src/client/index.html'),
+        'utf-8'
+      );
       template = await viteServer.transformIndexHtml(url, template);
       res
         .status(200)
@@ -645,7 +647,7 @@ async function main() {
         // SECURITY: Command injection safe - using execFile() with argument array.
         // execFile() does not spawn a shell, so arguments are passed directly to npm.
         // No user input is involved - command and args are hardcoded.
-        const { execFile } = await import('child_process');
+        const { execFile } = require('child_process');
         execFile(
           'npm',
           ['run', 'build:frontend'],

@@ -180,7 +180,9 @@ describe('openAiProvider', () => {
 
     // Skipped: Testing missing API key requires clearing process.env.OPENAI_API_KEY
     // which is complex in Jest. The error handling code path is covered by other tests.
-    it.todo("should throw ConfigurationError when API key is missing" /* TODO: Fix and re-enable */);
+    it.todo(
+      'should throw ConfigurationError when API key is missing' /* TODO: Fix and re-enable */
+    );
 
     it('should retry on failure and eventually throw', async () => {
       mockChatCreate.mockRejectedValue(new Error('API Error'));

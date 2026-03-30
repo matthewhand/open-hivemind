@@ -13,6 +13,13 @@
 import crypto from 'crypto';
 import express from 'express';
 import request from 'supertest';
+// ---------------------------------------------------------------------------
+// Imports
+// ---------------------------------------------------------------------------
+import { SlackSignatureVerifier } from '../../packages/message-slack/src/SlackSignatureVerifier';
+import type { IMessengerService } from '../../src/message/interfaces/IMessengerService';
+import { configureWebhookRoutes } from '../../src/webhook/routes/webhookRoutes';
+import { verifyIpWhitelist, verifyWebhookToken } from '../../src/webhook/security/webhookSecurity';
 
 // ---------------------------------------------------------------------------
 // Mock dependencies BEFORE imports
@@ -122,14 +129,6 @@ jest.mock('@src/message/helpers/processing/handleImageMessage', () => ({
   predictionImageMap: new Map(),
 }));
 
-// ---------------------------------------------------------------------------
-// Imports
-// ---------------------------------------------------------------------------
-import { SlackSignatureVerifier } from '../../packages/message-slack/src/SlackSignatureVerifier';
-import { verifyWebhookToken, verifyIpWhitelist } from '../../src/webhook/security/webhookSecurity';
-import { configureWebhookRoutes } from '../../src/webhook/routes/webhookRoutes';
-import type { IMessengerService } from '../../src/message/interfaces/IMessengerService';
-
 describe('COMPREHENSIVE MESSAGING PLATFORM TESTS - PHASE 2', () => {
   // ============================================================================
   // SLACK SIGNATURE VERIFICATION TESTS
@@ -149,16 +148,9 @@ describe('COMPREHENSIVE MESSAGING PLATFORM TESTS - PHASE 2', () => {
       });
     });
 
-    function generateSlackSignature(
-      secret: string,
-      timestamp: string,
-      body: string
-    ): string {
+    function generateSlackSignature(secret: string, timestamp: string, body: string): string {
       const baseString = `v0:${timestamp}:${body}`;
-      const sig = crypto
-        .createHmac('sha256', secret)
-        .update(baseString)
-        .digest('hex');
+      const sig = crypto.createHmac('sha256', secret).update(baseString).digest('hex');
       return `v0=${sig}`;
     }
 
@@ -179,9 +171,7 @@ describe('COMPREHENSIVE MESSAGING PLATFORM TESTS - PHASE 2', () => {
     });
 
     test('should reject request without signature headers', async () => {
-      const response = await request(app)
-        .post('/slack/events')
-        .send({ type: 'event_callback' });
+      const response = await request(app).post('/slack/events').send({ type: 'event_callback' });
 
       expect(response.status).toBe(400);
     });
@@ -224,7 +214,10 @@ describe('COMPREHENSIVE MESSAGING PLATFORM TESTS - PHASE 2', () => {
       const response = await request(app)
         .post('/slack/events')
         .set('x-slack-request-timestamp', timestamp)
-        .set('x-slack-signature', 'v0=deadbeef0000000000000000000000000000000000000000000000000000dead')
+        .set(
+          'x-slack-signature',
+          'v0=deadbeef0000000000000000000000000000000000000000000000000000dead'
+        )
         .send({ type: 'test' });
 
       expect(response.status).toBe(403);
@@ -289,9 +282,7 @@ describe('COMPREHENSIVE MESSAGING PLATFORM TESTS - PHASE 2', () => {
     });
 
     test('should reject request without token', async () => {
-      const response = await request(app)
-        .post('/webhook-test')
-        .send({ data: 'test' });
+      const response = await request(app).post('/webhook-test').send({ data: 'test' });
 
       expect(response.status).toBe(403);
     });
@@ -794,13 +785,15 @@ describe('COMPREHENSIVE MESSAGING PLATFORM TESTS - PHASE 2', () => {
         .update(`v0:${timestamp}:${body}`)
         .digest('hex');
 
-      const requests = Array(5).fill(null).map(() =>
-        request(app)
-          .post('/slack/events')
-          .set('x-slack-request-timestamp', timestamp)
-          .set('x-slack-signature', `v0=${sig}`)
-          .send({ type: 'test' })
-      );
+      const requests = Array(5)
+        .fill(null)
+        .map(() =>
+          request(app)
+            .post('/slack/events')
+            .set('x-slack-request-timestamp', timestamp)
+            .set('x-slack-signature', `v0=${sig}`)
+            .send({ type: 'test' })
+        );
 
       const responses = await Promise.all(requests);
       responses.forEach((response) => {

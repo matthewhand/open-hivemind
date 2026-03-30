@@ -1,6 +1,6 @@
-import { ConfigurationVersionService } from '../../../../src/server/services/ConfigurationVersionService';
 import { DatabaseManager } from '../../../../src/database/DatabaseManager';
 import { ConfigurationValidator } from '../../../../src/server/services/ConfigurationValidator';
+import { ConfigurationVersionService } from '../../../../src/server/services/ConfigurationVersionService';
 
 jest.mock('../../../../src/database/DatabaseManager');
 jest.mock('../../../../src/server/services/ConfigurationValidator');
@@ -102,9 +102,7 @@ describe('ConfigurationVersionService', () => {
         llmProvider: 'openai',
       };
 
-      const mockVersions = [
-        { version: '1.0.0', botConfigurationId: 1 },
-      ];
+      const mockVersions = [{ version: '1.0.0', botConfigurationId: 1 }];
 
       mockDbManager.getBotConfiguration.mockResolvedValue(mockConfig as any);
       mockDbManager.getBotConfigurationVersions.mockResolvedValue(mockVersions as any);
@@ -337,9 +335,7 @@ describe('ConfigurationVersionService', () => {
     });
 
     test('should throw error for non-existent version', async () => {
-      mockDbManager.getBotConfigurationVersions.mockResolvedValue([
-        { version: '1.0.0' },
-      ] as any);
+      mockDbManager.getBotConfigurationVersions.mockResolvedValue([{ version: '1.0.0' }] as any);
 
       await expect(service.compareVersions(1, '1.0.0', '1.0.1')).rejects.toThrow('not found');
     });
@@ -408,10 +404,7 @@ describe('ConfigurationVersionService', () => {
 
   describe('deleteVersion', () => {
     test('should delete non-active version', async () => {
-      const mockVersions = [
-        { version: '1.0.0' },
-        { version: '1.0.1' },
-      ];
+      const mockVersions = [{ version: '1.0.0' }, { version: '1.0.1' }];
 
       const mockConfig = {
         id: 1,

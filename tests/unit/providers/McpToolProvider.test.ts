@@ -10,10 +10,10 @@
 import { McpToolProvider } from '../../../packages/tool-mcp/src/McpToolProvider';
 import type { McpToolProviderConfig } from '../../../packages/tool-mcp/src/types';
 import {
+  mockCallTool,
   MockClient,
   mockConnect,
   mockListTools,
-  mockCallTool,
 } from '../../mocks/modelcontextprotocol-sdk';
 
 // ---------------------------------------------------------------------------
@@ -284,7 +284,7 @@ describe('McpToolProvider', () => {
 
     it('passes through special characters in tool arguments', async () => {
       const args = {
-        query: 'SELECT * FROM "users" WHERE name = \'O\'Brien\'',
+        query: "SELECT * FROM \"users\" WHERE name = 'O'Brien'",
         path: '/tmp/a b c/\u00e9\u00e8\u00ea.txt',
         emoji: '\ud83d\ude80\ud83c\udf1f',
       };
@@ -496,9 +496,7 @@ describe('McpToolProvider', () => {
 
       const provider = freshProvider();
 
-      await expect(provider.executeTool('slow-tool', {})).rejects.toThrow(
-        /Request timed out/
-      );
+      await expect(provider.executeTool('slow-tool', {})).rejects.toThrow(/Request timed out/);
     });
   });
 
@@ -524,9 +522,7 @@ describe('McpToolProvider', () => {
       });
       await provider.listTools();
 
-      expect(mockConnect).toHaveBeenCalledWith(
-        expect.objectContaining({ url: 'stdio://local' })
-      );
+      expect(mockConnect).toHaveBeenCalledWith(expect.objectContaining({ url: 'stdio://local' }));
     });
 
     it('accepts streamable-http transport config', async () => {

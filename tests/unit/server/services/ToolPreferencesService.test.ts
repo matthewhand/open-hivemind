@@ -1,6 +1,6 @@
-import { describe, it, expect, beforeEach, afterEach } from '@jest/globals';
 import fs from 'fs';
 import path from 'path';
+import { afterEach, beforeEach, describe, expect, it } from '@jest/globals';
 import { ToolPreferencesService } from '@src/server/services/ToolPreferencesService';
 
 describe('ToolPreferencesService', () => {
@@ -32,12 +32,7 @@ describe('ToolPreferencesService', () => {
 
   describe('setToolEnabled', () => {
     it('should set a tool as enabled', async () => {
-      const preference = await service.setToolEnabled(
-        'server1-tool1',
-        'server1',
-        'tool1',
-        true
-      );
+      const preference = await service.setToolEnabled('server1-tool1', 'server1', 'tool1', true);
 
       expect(preference.toolId).toBe('server1-tool1');
       expect(preference.serverName).toBe('server1');
@@ -78,7 +73,7 @@ describe('ToolPreferencesService', () => {
       const preferences = await service.bulkSetToolsEnabled(tools, false, 'user123');
 
       expect(preferences).toHaveLength(3);
-      preferences.forEach(pref => {
+      preferences.forEach((pref) => {
         expect(pref.enabled).toBe(false);
         expect(pref.updatedBy).toBe('user123');
       });
@@ -123,7 +118,7 @@ describe('ToolPreferencesService', () => {
 
       const preferences = service.getPreferencesByServer('server1');
       expect(preferences).toHaveLength(2);
-      expect(preferences.every(p => p.serverName === 'server1')).toBe(true);
+      expect(preferences.every((p) => p.serverName === 'server1')).toBe(true);
     });
 
     it('should return empty array for server with no preferences', () => {

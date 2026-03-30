@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { getAuthHeaders } from '../../../utils/api';
+import { apiService } from '../../../services/api';
 
 export interface Tool {
   name: string;
@@ -41,11 +41,7 @@ export const useMCPServerData = () => {
     try {
       setLoading(true);
       setError(null);
-      const response = await fetch('/api/admin/mcp-servers', { headers: getAuthHeaders() });
-      if (!response.ok) {
-        throw new Error(`Failed to fetch MCP servers: ${response.statusText}`);
-      }
-      const data = await response.json();
+      const data = await apiService.get<any>('/api/admin/mcp-servers');
 
       const connectedServers: MCPServer[] = (Array.isArray(data.data?.servers) ? data.data.servers : []).map(
         (server: any, index: number) => ({

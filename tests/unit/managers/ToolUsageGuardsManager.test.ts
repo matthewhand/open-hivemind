@@ -1,6 +1,6 @@
-import { describe, it, expect, beforeEach, afterEach } from '@jest/globals';
 import fs from 'fs';
 import path from 'path';
+import { afterEach, beforeEach, describe, expect, it } from '@jest/globals';
 import { ToolUsageGuardsManager } from '@src/managers/ToolUsageGuardsManager';
 
 describe('ToolUsageGuardsManager', () => {
@@ -180,9 +180,15 @@ describe('ToolUsageGuardsManager', () => {
         isActive: true,
       });
 
-      expect((await manager.isUserAllowedToUseTool('user1', 'test-tool', ['admin'])).allowed).toBe(true);
-      expect((await manager.isUserAllowedToUseTool('user2', 'test-tool', ['moderator'])).allowed).toBe(true);
-      expect((await manager.isUserAllowedToUseTool('user3', 'test-tool', ['user'])).allowed).toBe(false);
+      expect((await manager.isUserAllowedToUseTool('user1', 'test-tool', ['admin'])).allowed).toBe(
+        true
+      );
+      expect(
+        (await manager.isUserAllowedToUseTool('user2', 'test-tool', ['moderator'])).allowed
+      ).toBe(true);
+      expect((await manager.isUserAllowedToUseTool('user3', 'test-tool', ['user'])).allowed).toBe(
+        false
+      );
     });
 
     it('should allow access when guard is inactive', async () => {
@@ -229,10 +235,14 @@ describe('ToolUsageGuardsManager', () => {
       expect((await manager.isUserAllowedToUseTool('user1', 'test-tool')).allowed).toBe(true);
 
       // Admin user should pass via second guard
-      expect((await manager.isUserAllowedToUseTool('admin-user', 'test-tool', ['admin'])).allowed).toBe(true);
+      expect(
+        (await manager.isUserAllowedToUseTool('admin-user', 'test-tool', ['admin'])).allowed
+      ).toBe(true);
 
       // Regular user should fail both
-      expect((await manager.isUserAllowedToUseTool('other', 'test-tool', ['user'])).allowed).toBe(false);
+      expect((await manager.isUserAllowedToUseTool('other', 'test-tool', ['user'])).allowed).toBe(
+        false
+      );
     });
   });
 
@@ -301,7 +311,9 @@ describe('ToolUsageGuardsManager', () => {
         isActive: true,
       });
 
-      expect((await manager.isUserAllowedToUseTool('user1', 'test-tool', undefined)).allowed).toBe(false);
+      expect((await manager.isUserAllowedToUseTool('user1', 'test-tool', undefined)).allowed).toBe(
+        false
+      );
       expect((await manager.isUserAllowedToUseTool('user1', 'test-tool', [])).allowed).toBe(false);
     });
 
@@ -310,11 +322,13 @@ describe('ToolUsageGuardsManager', () => {
     });
 
     it('should throw for non-existent guard ID update', () => {
-      expect(() => manager.updateGuard('non-existent', {
-        name: 'Updated',
-        toolId: 'test-tool',
-        guardType: 'owner_only',
-      })).toThrow();
+      expect(() =>
+        manager.updateGuard('non-existent', {
+          name: 'Updated',
+          toolId: 'test-tool',
+          guardType: 'owner_only',
+        })
+      ).toThrow();
     });
 
     it('should throw for non-existent guard ID toggle', () => {

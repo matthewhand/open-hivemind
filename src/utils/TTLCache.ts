@@ -25,19 +25,25 @@ export class TTLCache<K, V> {
 
     if (!item) {
       this.misses++;
-      debug(`[${this.name}] Miss key: ${String(key)} (total hits: ${this.hits}, misses: ${this.misses})`);
+      debug(
+        `[${this.name}] Miss key: ${String(key)} (total hits: ${this.hits}, misses: ${this.misses})`
+      );
       return undefined;
     }
 
     if (Date.now() > item.expiry) {
       this.cache.delete(key);
       this.misses++;
-      debug(`[${this.name}] Miss (expired) key: ${String(key)} (total hits: ${this.hits}, misses: ${this.misses})`);
+      debug(
+        `[${this.name}] Miss (expired) key: ${String(key)} (total hits: ${this.hits}, misses: ${this.misses})`
+      );
       return undefined;
     }
 
     this.hits++;
-    debug(`[${this.name}] Hit key: ${String(key)} (total hits: ${this.hits}, misses: ${this.misses})`);
+    debug(
+      `[${this.name}] Hit key: ${String(key)} (total hits: ${this.hits}, misses: ${this.misses})`
+    );
     return item.value;
   }
 

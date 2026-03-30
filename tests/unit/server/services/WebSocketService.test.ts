@@ -1,10 +1,10 @@
 import { Server as HttpServer } from 'http';
 import { Server as SocketIOServer } from 'socket.io';
-import { WebSocketService } from '../../../../src/server/services/WebSocketService';
 import { BotConfigurationManager } from '../../../../src/config/BotConfigurationManager';
-import ApiMonitorService from '../../../../src/services/ApiMonitorService';
 import { ActivityLogger } from '../../../../src/server/services/ActivityLogger';
 import { BotMetricsService } from '../../../../src/server/services/BotMetricsService';
+import { WebSocketService } from '../../../../src/server/services/WebSocketService';
+import ApiMonitorService from '../../../../src/services/ApiMonitorService';
 
 jest.mock('socket.io');
 jest.mock('../../../../src/config/BotConfigurationManager');

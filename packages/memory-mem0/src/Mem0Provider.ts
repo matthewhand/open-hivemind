@@ -2,20 +2,23 @@ import Debug from 'debug';
 import type {
   IMemoryProvider,
   MemoryEntry,
-  MemorySearchResult,
   MemoryScopeOptions,
+  MemorySearchResult,
 } from '@hivemind/shared-types';
-import type {
-  Mem0Config,
-  Mem0Memory,
-  Mem0AddResponse,
-  Mem0ListResponse,
-  Mem0SearchResponse,
-  Mem0GetResponse,
-  Mem0UpdateResponse,
+import {
+  getCircuitBreaker,
+  type CircuitBreaker as CircuitBreakerType,
+} from '@common/CircuitBreaker';
+import {
+  Mem0ApiError,
+  type Mem0AddResponse,
+  type Mem0Config,
+  type Mem0GetResponse,
+  type Mem0ListResponse,
+  type Mem0Memory,
+  type Mem0SearchResponse,
+  type Mem0UpdateResponse,
 } from './types';
-import { Mem0ApiError } from './types';
-import { getCircuitBreaker, type CircuitBreaker as CircuitBreakerType } from '@common/CircuitBreaker';
 
 const debug = Debug('hivemind:memory-mem0');
 
@@ -56,8 +59,12 @@ export class Mem0Provider implements IMemoryProvider {
       halfOpenMaxAttempts: 3,
     });
 
-    debug('Mem0Provider initialised (baseUrl=%s, userId=%s, agentId=%s)',
-      this.baseUrl, this.defaultUserId ?? '<none>', this.defaultAgentId ?? '<none>');
+    debug(
+      'Mem0Provider initialised (baseUrl=%s, userId=%s, agentId=%s)',
+      this.baseUrl,
+      this.defaultUserId ?? '<none>',
+      this.defaultAgentId ?? '<none>'
+    );
   }
 
   // ---------------------------------------------------------------------------
@@ -67,7 +74,7 @@ export class Mem0Provider implements IMemoryProvider {
   async addMemory(
     content: string,
     metadata?: Record<string, unknown>,
-    options?: MemoryScopeOptions,
+    options?: MemoryScopeOptions
   ): Promise<MemoryEntry> {
     const body: Record<string, unknown> = {
       messages: [{ role: 'user' as const, content }],
@@ -84,7 +91,7 @@ export class Mem0Provider implements IMemoryProvider {
 
   async searchMemories(
     query: string,
-    options?: { limit?: number; threshold?: number } & MemoryScopeOptions,
+    options?: { limit?: number; threshold?: number } & MemoryScopeOptions
   ): Promise<MemorySearchResult> {
     const body: Record<string, unknown> = {
       query,
@@ -101,9 +108,7 @@ export class Mem0Provider implements IMemoryProvider {
     return { results: entries };
   }
 
-  async getMemories(
-    options?: { limit?: number } & MemoryScopeOptions,
-  ): Promise<MemoryEntry[]> {
+  async getMemories(options?: { limit?: number } & MemoryScopeOptions): Promise<MemoryEntry[]> {
     const params = new URLSearchParams();
     const userId = options?.userId ?? this.defaultUserId;
     const agentId = options?.agentId ?? this.defaultAgentId;
@@ -117,7 +122,10 @@ export class Mem0Provider implements IMemoryProvider {
 
   async getMemory(id: string): Promise<MemoryEntry | null> {
     try {
-      const res = await this.request<Mem0GetResponse>('GET', `/memories/${encodeURIComponent(id)}/`);
+      const res = await this.request<Mem0GetResponse>(
+        'GET',
+        `/memories/${encodeURIComponent(id)}/`
+      );
       return toMemoryEntry(res);
     } catch (err) {
       if (err instanceof Mem0ApiError && err.status === 404) {
@@ -130,7 +138,7 @@ export class Mem0Provider implements IMemoryProvider {
   async updateMemory(
     id: string,
     content: string,
-    metadata?: Record<string, unknown>,
+    metadata?: Record<string, unknown>
   ): Promise<MemoryEntry> {
     const body: Record<string, unknown> = { text: content };
     if (metadata) {
@@ -139,7 +147,7 @@ export class Mem0Provider implements IMemoryProvider {
     const res = await this.request<Mem0UpdateResponse>(
       'PUT',
       `/memories/${encodeURIComponent(id)}/`,
-      body,
+      body
     );
     return { id: res.id, content: res.memory };
   }
@@ -179,8 +187,10 @@ export class Mem0Provider implements IMemoryProvider {
 
   async add(
     messages: Array<{ role: 'user' | 'assistant'; content: string }>,
-    options?: { userId?: string; agentId?: string; metadata?: Record<string, any> },
-  ): Promise<{ results: Array<{ id: string; memory: string; score?: number; metadata?: Record<string, any> }> }> {
+    options?: { userId?: string; agentId?: string; metadata?: Record<string, any> }
+  ): Promise<{
+    results: Array<{ id: string; memory: string; score?: number; metadata?: Record<string, any> }>;
+  }> {
     const body: Record<string, unknown> = {
       messages,
       user_id: options?.userId ?? this.defaultUserId,
@@ -195,8 +205,10 @@ export class Mem0Provider implements IMemoryProvider {
 
   async search(
     query: string,
-    options?: { userId?: string; agentId?: string; limit?: number },
-  ): Promise<{ results: Array<{ id: string; memory: string; score?: number; metadata?: Record<string, any> }> }> {
+    options?: { userId?: string; agentId?: string; limit?: number }
+  ): Promise<{
+    results: Array<{ id: string; memory: string; score?: number; metadata?: Record<string, any> }>;
+  }> {
     const body: Record<string, unknown> = {
       query,
       user_id: options?.userId ?? this.defaultUserId,
@@ -209,9 +221,10 @@ export class Mem0Provider implements IMemoryProvider {
     return { results: res.results.map(toLegacyResult) };
   }
 
-  async getAll(
-    options?: { userId?: string; agentId?: string },
-  ): Promise<{ results: Array<{ id: string; memory: string }> }> {
+  async getAll(options?: {
+    userId?: string;
+    agentId?: string;
+  }): Promise<{ results: Array<{ id: string; memory: string }> }> {
     const params = new URLSearchParams();
     const userId = options?.userId ?? this.defaultUserId;
     const agentId = options?.agentId ?? this.defaultAgentId;
@@ -225,7 +238,10 @@ export class Mem0Provider implements IMemoryProvider {
 
   async get(memoryId: string): Promise<{ id: string; memory: string } | null> {
     try {
-      const res = await this.request<Mem0GetResponse>('GET', `/memories/${encodeURIComponent(memoryId)}/`);
+      const res = await this.request<Mem0GetResponse>(
+        'GET',
+        `/memories/${encodeURIComponent(memoryId)}/`
+      );
       return { id: res.id, memory: res.memory };
     } catch (err) {
       if (err instanceof Mem0ApiError && err.status === 404) {
@@ -239,7 +255,7 @@ export class Mem0Provider implements IMemoryProvider {
     const res = await this.request<Mem0UpdateResponse>(
       'PUT',
       `/memories/${encodeURIComponent(memoryId)}/`,
-      { text: newContent },
+      { text: newContent }
     );
     return { id: res.id, memory: res.memory };
   }
@@ -261,9 +277,9 @@ export class Mem0Provider implements IMemoryProvider {
   private async doRequest<T>(method: string, path: string, body?: unknown): Promise<T> {
     const url = `${this.baseUrl}${path}`;
     const headers: Record<string, string> = {
-      'Authorization': `Token ${this.apiKey}`,
+      Authorization: `Token ${this.apiKey}`,
       'Content-Type': 'application/json',
-      'Accept': 'application/json',
+      Accept: 'application/json',
     };
     if (this.orgId) {
       headers['X-Org-Id'] = this.orgId;
@@ -294,7 +310,8 @@ export class Mem0Provider implements IMemoryProvider {
           const text = await response.text().catch(() => '');
           lastError = new Mem0ApiError(
             `Mem0 API ${method} ${path} returned ${response.status}: ${text}`,
-            response.status, text,
+            response.status,
+            text
           );
           debug('Retryable error: %s', lastError.message);
           continue;
@@ -304,7 +321,8 @@ export class Mem0Provider implements IMemoryProvider {
           const text = await response.text().catch(() => '');
           throw new Mem0ApiError(
             `Mem0 API ${method} ${path} returned ${response.status}: ${text}`,
-            response.status, text,
+            response.status,
+            text
           );
         }
 
@@ -354,7 +372,12 @@ function toMemoryEntry(m: Mem0Memory): MemoryEntry {
 }
 
 /** Convert a Mem0 API memory to the legacy result shape used by the old API. */
-function toLegacyResult(m: Mem0Memory): { id: string; memory: string; score?: number; metadata?: Record<string, any> } {
+function toLegacyResult(m: Mem0Memory): {
+  id: string;
+  memory: string;
+  score?: number;
+  metadata?: Record<string, any>;
+} {
   return {
     id: m.id,
     memory: m.memory,

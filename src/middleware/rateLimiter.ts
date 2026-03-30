@@ -699,7 +699,9 @@ export function createRateLimiter(options: {
 /**
  * Create a bot-specific rate limiter using guard profile settings
  */
-export async function createBotRateLimiter(botName: string): Promise<ReturnType<typeof rateLimit> | null> {
+export async function createBotRateLimiter(
+  botName: string
+): Promise<ReturnType<typeof rateLimit> | null> {
   try {
     // Lazy import to avoid circular dependencies
     const { getBotRateLimitSettings } = await import('../config/rateLimitConfig');
@@ -709,7 +711,9 @@ export async function createBotRateLimiter(botName: string): Promise<ReturnType<
       return null;
     }
 
-    debug(`Creating bot-specific rate limiter for ${botName}: ${settings.maxRequests} req/${settings.windowMs}ms`);
+    debug(
+      `Creating bot-specific rate limiter for ${botName}: ${settings.maxRequests} req/${settings.windowMs}ms`
+    );
 
     return rateLimit({
       windowMs: settings.windowMs,
@@ -723,7 +727,10 @@ export async function createBotRateLimiter(botName: string): Promise<ReturnType<
         return `${ip}:${botName}`;
       },
       skip: shouldSkipRateLimit,
-      handler: (req: Request & { rateLimit?: { resetTime?: number; limit?: number } }, res: Response) => {
+      handler: (
+        req: Request & { rateLimit?: { resetTime?: number; limit?: number } },
+        res: Response
+      ) => {
         const retryAfter = req.rateLimit?.resetTime
           ? Math.ceil((req.rateLimit.resetTime - Date.now()) / 1000)
           : Math.ceil(settings.windowMs / 1000);
@@ -765,7 +772,9 @@ const botRateLimiters = new Map<string, ReturnType<typeof rateLimit>>();
 /**
  * Get or create a bot-specific rate limiter
  */
-export async function getBotRateLimiter(botName: string): Promise<ReturnType<typeof rateLimit> | null> {
+export async function getBotRateLimiter(
+  botName: string
+): Promise<ReturnType<typeof rateLimit> | null> {
   if (botRateLimiters.has(botName)) {
     return botRateLimiters.get(botName)!;
   }

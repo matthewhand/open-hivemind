@@ -8,7 +8,7 @@ describe('ApiResponse Utility', () => {
 
       expect(response).toEqual({
         success: true,
-        data: data
+        data: data,
       });
     });
 
@@ -17,7 +17,7 @@ describe('ApiResponse Utility', () => {
 
       expect(response).toEqual({
         success: true,
-        data: undefined
+        data: undefined,
       });
     });
   });
@@ -29,7 +29,7 @@ describe('ApiResponse Utility', () => {
       expect(response).toEqual({
         success: false,
         error: 'Internal Server Error',
-        code: 'ERR_500'
+        code: 'ERR_500',
       });
     });
 
@@ -38,7 +38,7 @@ describe('ApiResponse Utility', () => {
 
       expect(response).toEqual({
         success: false,
-        error: 'Not Found'
+        error: 'Not Found',
       });
     });
   });

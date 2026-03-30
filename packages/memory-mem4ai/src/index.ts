@@ -1,3 +1,10 @@
+// ---------------------------------------------------------------------------
+// Plugin manifest & factory (PluginLoader contract)
+// ---------------------------------------------------------------------------
+
+import { Mem4aiProvider } from './Mem4aiProvider';
+import type { Mem4aiConfig } from './types';
+
 /**
  * @hivemind/memory-mem4ai
  *
@@ -18,16 +25,10 @@ export type {
 } from './types';
 export { Mem4aiApiError } from './types';
 
-// ---------------------------------------------------------------------------
-// Plugin manifest & factory (PluginLoader contract)
-// ---------------------------------------------------------------------------
-
-import type { Mem4aiConfig } from './types';
-import { Mem4aiProvider } from './Mem4aiProvider';
-
 export const manifest = {
   displayName: 'Mem4ai',
-  description: 'LLM-friendly memory management with adaptive personalization via the Mem4ai REST API',
+  description:
+    'LLM-friendly memory management with adaptive personalization via the Mem4ai REST API',
   type: 'memory' as const,
 };
 

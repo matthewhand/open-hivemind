@@ -1,19 +1,19 @@
 import express from 'express';
 import request from 'supertest';
-import healthRouter from '../../../src/server/routes/health';
+import { DatabaseManager } from '../../../src/database/DatabaseManager';
 import { MetricsCollector } from '../../../src/monitoring/MetricsCollector';
+import healthRouter from '../../../src/server/routes/health';
+import ApiMonitorService from '../../../src/services/ApiMonitorService';
 import { ErrorLogger } from '../../../src/utils/errorLogger';
 import { globalRecoveryManager } from '../../../src/utils/errorRecovery';
-import ApiMonitorService from '../../../src/services/ApiMonitorService';
-import { DatabaseManager } from '../../../src/database/DatabaseManager';
 
 // Mock dependencies
 jest.mock('../../../src/database/DatabaseManager', () => ({
   DatabaseManager: {
     getInstance: jest.fn().mockReturnValue({
-      isConnected: jest.fn().mockReturnValue(true)
-    })
-  }
+      isConnected: jest.fn().mockReturnValue(true),
+    }),
+  },
 }));
 
 jest.mock('../../../src/server/middleware/auth', () => ({
@@ -23,7 +23,7 @@ jest.mock('../../../src/server/middleware/auth', () => ({
       req.user = { id: 'test', username: 'tester', role: 'admin' };
     }
     next();
-  }
+  },
 }));
 
 describe('Health Routes Integration', () => {
@@ -50,9 +50,7 @@ describe('Health Routes Integration', () => {
     });
 
     it('returns full health data for authenticated requests', async () => {
-      const response = await request(app)
-        .get('/api/health/detailed')
-        .set('x-auth-test', 'true');
+      const response = await request(app).get('/api/health/detailed').set('x-auth-test', 'true');
 
       expect(response.status).toBe(200);
       expect(response.body).toHaveProperty('status');
@@ -108,7 +106,7 @@ describe('Health Routes Integration', () => {
 
     it('returns 503 if db is down', async () => {
       (DatabaseManager.getInstance as jest.Mock).mockReturnValueOnce({
-        isConnected: jest.fn().mockReturnValue(false)
+        isConnected: jest.fn().mockReturnValue(false),
       });
 
       const response = await request(app).get('/api/health/ready');
@@ -141,13 +139,11 @@ describe('Health Routes Integration', () => {
     let endpointId: string;
 
     it('POST /api/health/api-endpoints adds an endpoint', async () => {
-      const response = await request(app)
-        .post('/api/health/api-endpoints')
-        .send({
-          id: 'test-api',
-          name: 'Test API',
-          url: 'http://test.com'
-        });
+      const response = await request(app).post('/api/health/api-endpoints').send({
+        id: 'test-api',
+        name: 'Test API',
+        url: 'http://test.com',
+      });
 
       expect(response.status).toBe(201);
       expect(response.body.message).toBe('Endpoint added successfully');
@@ -258,9 +254,7 @@ describe('Health Routes Integration', () => {
     });
 
     it('handles POST /api/health/cleanup with missing required fields', async () => {
-      const response = await request(app)
-        .post('/api/health/cleanup')
-        .send({ name: 'Test API' }); // missing id and url
+      const response = await request(app).post('/api/health/cleanup').send({ name: 'Test API' }); // missing id and url
       expect(response.status).toBe(400);
     });
 
@@ -273,13 +267,11 @@ describe('Health Routes Integration', () => {
     });
 
     it('handles POST /api/health/cleanup adds an endpoint', async () => {
-      const response = await request(app)
-        .post('/api/health/cleanup')
-        .send({
-          id: 'test-api-cleanup',
-          name: 'Test API Cleanup',
-          url: 'http://test-cleanup.com'
-        });
+      const response = await request(app).post('/api/health/cleanup').send({
+        id: 'test-api-cleanup',
+        name: 'Test API Cleanup',
+        url: 'http://test-cleanup.com',
+      });
 
       expect(response.status).toBe(201);
       expect(response.body.message).toBe('Endpoint added successfully');

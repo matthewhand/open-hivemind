@@ -50,9 +50,7 @@ app.use('/auth', authRouter);
 describe('Auth Routes Zod Validation', () => {
   describe('POST /auth/login', () => {
     it('returns 400 with standardized error envelope for missing fields', async () => {
-      const response = await request(app)
-        .post('/auth/login')
-        .send({ username: 'test' });
+      const response = await request(app).post('/auth/login').send({ username: 'test' });
 
       expect(response.status).toBe(400);
       expect(response.body).toHaveProperty('success', false);
@@ -65,13 +63,11 @@ describe('Auth Routes Zod Validation', () => {
 
   describe('POST /auth/register', () => {
     it('returns 400 for invalid username format', async () => {
-      const response = await request(app)
-        .post('/auth/register')
-        .send({
-          username: 'ab', // too short
-          password: 'Password123!',
-          email: 'test@example.com'
-        });
+      const response = await request(app).post('/auth/register').send({
+        username: 'ab', // too short
+        password: 'Password123!',
+        email: 'test@example.com',
+      });
 
       expect(response.status).toBe(400);
       expect(response.body.success).toBe(false);

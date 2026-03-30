@@ -1,9 +1,9 @@
 import {
   CircuitBreaker,
-  CircuitBreakerState,
   CircuitBreakerError,
-  getCircuitBreaker,
+  CircuitBreakerState,
   clearCircuitBreakerRegistry,
+  getCircuitBreaker,
 } from '../../src/common/CircuitBreaker';
 
 describe('CircuitBreaker', () => {
@@ -49,9 +49,9 @@ describe('CircuitBreaker', () => {
     });
 
     it('should propagate errors from the wrapped function', async () => {
-      await expect(
-        breaker.execute(() => Promise.reject(new Error('boom')))
-      ).rejects.toThrow('boom');
+      await expect(breaker.execute(() => Promise.reject(new Error('boom')))).rejects.toThrow(
+        'boom'
+      );
     });
 
     it('should count successes', async () => {
@@ -89,9 +89,9 @@ describe('CircuitBreaker', () => {
         await breaker.execute(() => Promise.reject(new Error('fail'))).catch(() => {});
       }
 
-      await expect(
-        breaker.execute(() => Promise.resolve('should not run'))
-      ).rejects.toThrow(CircuitBreakerError);
+      await expect(breaker.execute(() => Promise.resolve('should not run'))).rejects.toThrow(
+        CircuitBreakerError
+      );
     });
   });
 

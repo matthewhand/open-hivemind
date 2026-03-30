@@ -5,7 +5,6 @@
  * configuration sources like 'openaiConfig' and 'llmConfig'.
  */
 import Debug from 'debug';
-import { Logger } from '@common/logger';
 import { OpenAI, type ClientOptions } from 'openai';
 import type { ChatCompletionMessageParam } from 'openai/resources/chat/completions';
 import type { IMessage } from '@src/message/interfaces/IMessage';
@@ -19,6 +18,7 @@ import {
 } from '@src/types/openai';
 import llmConfig from '@config/llmConfig';
 import openaiConfig from '@config/openaiConfig';
+import { Logger } from '@common/logger';
 import { redactSensitiveInfo } from '@common/redactSensitiveInfo';
 import { withTimeout } from '@common/withTimeout';
 import { listModels } from './operations/listModels';
@@ -159,17 +159,21 @@ export class OpenAiService {
 
     try {
       const response = await withTimeout(
-        (signal) => this.retryWithBackoff(async () => {
-          return await this.openai.chat.completions.create({
-            model: openaiConfig.get('OPENAI_MODEL') || 'gpt-4o',
-            messages: chatParams,
-            max_tokens: maxTokens,
-            temperature,
-            stream: false,
-          }, { signal });
-        }),
+        (signal) =>
+          this.retryWithBackoff(async () => {
+            return await this.openai.chat.completions.create(
+              {
+                model: openaiConfig.get('OPENAI_MODEL') || 'gpt-4o',
+                messages: chatParams,
+                max_tokens: maxTokens,
+                temperature,
+                stream: false,
+              },
+              { signal }
+            );
+          }),
         this.requestTimeout,
-        'OpenAI chat completion',
+        'OpenAI chat completion'
       );
 
       debug(

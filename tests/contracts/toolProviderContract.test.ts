@@ -1,3 +1,16 @@
+// ---------------------------------------------------------------------------
+// Imports
+// ---------------------------------------------------------------------------
+
+import type { IToolProvider, ToolDefinition, ToolResult } from '@hivemind/shared-types';
+import { McpToolProvider } from '../../packages/tool-mcp/src/McpToolProvider';
+// Access the shared mock functions from the global MCP SDK mock
+import {
+  mockCallTool,
+  mockConnect,
+  mockListTools,
+} from '../../tests/mocks/modelcontextprotocol-sdk';
+
 /**
  * Contract tests for IToolProvider implementations.
  *
@@ -17,27 +30,10 @@ jest.mock('debug', () => {
 });
 
 // ---------------------------------------------------------------------------
-// Imports
-// ---------------------------------------------------------------------------
-
-import type {
-  IToolProvider,
-  ToolDefinition,
-  ToolResult,
-} from '@hivemind/shared-types';
-import { McpToolProvider } from '../../packages/tool-mcp/src/McpToolProvider';
-
-// Access the shared mock functions from the global MCP SDK mock
-import { mockListTools, mockCallTool, mockConnect } from '../../tests/mocks/modelcontextprotocol-sdk';
-
-// ---------------------------------------------------------------------------
 // Contract test factory
 // ---------------------------------------------------------------------------
 
-function runToolProviderContractTests(
-  providerName: string,
-  getProvider: () => IToolProvider,
-) {
+function runToolProviderContractTests(providerName: string, getProvider: () => IToolProvider) {
   describe(`IToolProvider contract: ${providerName}`, () => {
     let provider: IToolProvider;
 
@@ -160,9 +156,7 @@ function runToolProviderContractTests(
       await provider.listTools();
       // Then make callTool fail
       mockCallTool.mockRejectedValueOnce(new Error('Tool not found'));
-      await expect(
-        provider.executeTool('nonexistent-tool', {}),
-      ).rejects.toThrow();
+      await expect(provider.executeTool('nonexistent-tool', {})).rejects.toThrow();
     });
 
     it('listTools() propagates connection errors', async () => {

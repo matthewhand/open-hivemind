@@ -1,8 +1,8 @@
 import {
-  recordBotActivity,
+  clearBotActivity,
   getLastBotActivity,
   getRecentChannelActivity,
-  clearBotActivity,
+  recordBotActivity,
 } from '../../../../src/message/helpers/processing/ChannelActivity';
 
 describe('ChannelActivity', () => {

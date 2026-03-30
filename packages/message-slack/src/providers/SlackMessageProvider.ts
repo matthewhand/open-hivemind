@@ -1,7 +1,7 @@
 import type { IMessage } from '@message/interfaces/IMessage';
 import type { IMessageProvider } from '@message/interfaces/IMessageProvider';
-import { SlackService } from '../SlackService';
 import { Logger } from '@common/logger';
+import { SlackService } from '../SlackService';
 
 const logger = Logger.withContext('SlackMessageProvider');
 

@@ -1,3 +1,5 @@
+import { validateRequiredEnvVars } from '@src/utils/envValidation';
+
 /**
  * Tests for envValidation.ts
  * Since validateRequiredEnvVars throws an error on validation failure,
@@ -8,8 +10,6 @@ jest.mock('@src/common/logger', () => ({
   __esModule: true,
   default: { error: jest.fn(), warn: jest.fn(), info: jest.fn() },
 }));
-
-import { validateRequiredEnvVars } from '@src/utils/envValidation';
 
 describe('validateRequiredEnvVars', () => {
   const originalEnv = { ...process.env };
@@ -79,7 +79,12 @@ describe('validateRequiredEnvVars', () => {
     delete process.env.MATTERMOST_TOKEN;
     // Remove any dynamic bot tokens
     for (const key of Object.keys(process.env)) {
-      if (key.startsWith('BOTS_') && (key.endsWith('_DISCORD_BOT_TOKEN') || key.endsWith('_SLACK_BOT_TOKEN') || key.endsWith('_MATTERMOST_TOKEN'))) {
+      if (
+        key.startsWith('BOTS_') &&
+        (key.endsWith('_DISCORD_BOT_TOKEN') ||
+          key.endsWith('_SLACK_BOT_TOKEN') ||
+          key.endsWith('_MATTERMOST_TOKEN'))
+      ) {
         delete process.env[key];
       }
     }

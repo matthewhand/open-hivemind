@@ -6,6 +6,7 @@ import {
   saveGuardrailProfiles,
   type GuardrailProfile,
 } from '../../config/guardrailProfiles';
+import { HTTP_STATUS } from '../../types/constants';
 import {
   BulkDeleteGuardProfilesSchema,
   BulkToggleGuardProfilesSchema,
@@ -14,7 +15,6 @@ import {
   UpdateGuardProfileSchema,
 } from '../../validation/schemas/guardProfilesSchema';
 import { validateRequest } from '../../validation/validateRequest';
-import { HTTP_STATUS } from '../../types/constants';
 
 const router = Router();
 
@@ -219,7 +219,7 @@ router.put('/:id', validateRequest(UpdateGuardProfileSchema), (req: Request, res
       ...profiles[profileIndex],
       name: name && typeof name === 'string' ? name : profiles[profileIndex].name,
       description: description !== undefined ? description : profiles[profileIndex].description,
-      guards: safeGuards as typeof profiles[typeof profileIndex]['guards'],
+      guards: safeGuards as (typeof profiles)[typeof profileIndex]['guards'],
     };
 
     profiles[profileIndex] = updatedProfile;

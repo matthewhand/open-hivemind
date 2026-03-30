@@ -133,11 +133,31 @@ jest.mock('@src/llm/getLlmProvider', () => ({
 }));
 
 jest.mock('@src/types/errorClasses', () => ({
-  ApiError: class ApiError extends Error { constructor(m: string) { super(m); this.name = 'ApiError'; } },
+  ApiError: class ApiError extends Error {
+    constructor(m: string) {
+      super(m);
+      this.name = 'ApiError';
+    }
+  },
   BaseHivemindError: class BaseHivemindError extends Error {},
-  ConfigurationError: class ConfigurationError extends Error { constructor(m: string, code?: string) { super(m); this.name = 'ConfigurationError'; } },
-  NetworkError: class NetworkError extends Error { constructor(m: string) { super(m); this.name = 'NetworkError'; } },
-  ValidationError: class ValidationError extends Error { constructor(m: string) { super(m); this.name = 'ValidationError'; } },
+  ConfigurationError: class ConfigurationError extends Error {
+    constructor(m: string, code?: string) {
+      super(m);
+      this.name = 'ConfigurationError';
+    }
+  },
+  NetworkError: class NetworkError extends Error {
+    constructor(m: string) {
+      super(m);
+      this.name = 'NetworkError';
+    }
+  },
+  ValidationError: class ValidationError extends Error {
+    constructor(m: string) {
+      super(m);
+      this.name = 'ValidationError';
+    }
+  },
 }));
 
 jest.mock('@src/types/errors', () => ({
@@ -153,7 +173,6 @@ jest.mock('debug', () => {
   noop.extend = () => noop;
   return () => noop;
 });
-
 
 jest.mock('tsyringe', () => ({
   container: { resolve: jest.fn() },

@@ -104,7 +104,12 @@ test.describe('Mobile CRUD Flows', () => {
       page.route('**/api/config/llm-status', (route) =>
         route.fulfill({
           status: 200,
-          json: { defaultConfigured: true, defaultProviders: [], botsMissingLlmProvider: [], hasMissing: false },
+          json: {
+            defaultConfigured: true,
+            defaultProviders: [],
+            botsMissingLlmProvider: [],
+            hasMissing: false,
+          },
         })
       ),
       page.route('**/api/config/global', (route) => route.fulfill({ status: 200, json: {} })),
@@ -221,7 +226,10 @@ test.describe('Mobile CRUD Flows', () => {
         }
 
         // Final step: click Create/Save
-        const saveBtn = modal.locator('button').filter({ hasText: /Create|Save|Finish/i }).first();
+        const saveBtn = modal
+          .locator('button')
+          .filter({ hasText: /Create|Save|Finish/i })
+          .first();
         if ((await saveBtn.count()) > 0 && (await saveBtn.isEnabled())) {
           await saveBtn.click();
           await page.waitForTimeout(500);
@@ -274,12 +282,18 @@ test.describe('Mobile CRUD Flows', () => {
       await page.waitForTimeout(500);
 
       // Fill persona form in modal
-      const nameInput = page.locator('input[placeholder="e.g. Friendly Helper"], input[placeholder*="name" i]').first();
+      const nameInput = page
+        .locator('input[placeholder="e.g. Friendly Helper"], input[placeholder*="name" i]')
+        .first();
       if ((await nameInput.count()) > 0) {
         await nameInput.fill('Mobile Persona');
       }
 
-      const descInput = page.locator('input[placeholder="Short description of this persona"], input[placeholder*="description" i]').first();
+      const descInput = page
+        .locator(
+          'input[placeholder="Short description of this persona"], input[placeholder*="description" i]'
+        )
+        .first();
       if ((await descInput.count()) > 0) {
         await descInput.fill('Created on mobile');
       }
@@ -292,7 +306,9 @@ test.describe('Mobile CRUD Flows', () => {
         }
       }
 
-      const saveButton = page.locator('dialog.modal[open] button.btn-primary, .modal-box button.btn-primary').first();
+      const saveButton = page
+        .locator('dialog.modal[open] button.btn-primary, .modal-box button.btn-primary')
+        .first();
       if ((await saveButton.count()) > 0) {
         await saveButton.click();
         await page.waitForTimeout(500);
@@ -310,9 +326,15 @@ test.describe('Mobile CRUD Flows', () => {
       if (route.request().method() === 'PUT') {
         const body = route.request().postDataJSON();
         updatedName = body.name || updatedName;
-        await route.fulfill({ status: 200, json: { data: { bot: { ...mockBots[0], name: updatedName } } } });
+        await route.fulfill({
+          status: 200,
+          json: { data: { bot: { ...mockBots[0], name: updatedName } } },
+        });
       } else {
-        await route.fulfill({ status: 200, json: { data: { bots: [{ ...mockBots[0], name: updatedName }] } } });
+        await route.fulfill({
+          status: 200,
+          json: { data: { bots: [{ ...mockBots[0], name: updatedName }] } },
+        });
       }
     });
     await page.route('**/api/config', (route) =>
@@ -378,7 +400,9 @@ test.describe('Mobile CRUD Flows', () => {
 
     // Find delete button on card
     const card = page.locator('.card').filter({ hasText: 'Support Bot' }).first();
-    const deleteBtn = card.locator('button.text-error, button:has-text("Delete"), button[aria-label*="delete" i]').first();
+    const deleteBtn = card
+      .locator('button.text-error, button:has-text("Delete"), button[aria-label*="delete" i]')
+      .first();
     if ((await deleteBtn.count()) > 0) {
       await deleteBtn.click();
       await page.waitForTimeout(300);
@@ -511,9 +535,7 @@ test.describe('Mobile CRUD Flows', () => {
     await page.route('**/api/config', (route) =>
       route.fulfill({ status: 200, json: { bots: [] } })
     );
-    await page.route('**/api/personas', (route) =>
-      route.fulfill({ status: 200, json: [] })
-    );
+    await page.route('**/api/personas', (route) => route.fulfill({ status: 200, json: [] }));
     await page.route('**/api/admin/guard-profiles', (route) =>
       route.fulfill({ status: 200, json: { data: [] } })
     );
@@ -560,9 +582,7 @@ test.describe('Mobile CRUD Flows', () => {
     await page.route('**/api/config', (route) =>
       route.fulfill({ status: 200, json: { bots: mockBots } })
     );
-    await page.route('**/api/bots', (route) =>
-      route.fulfill({ status: 200, json: mockBots })
-    );
+    await page.route('**/api/bots', (route) => route.fulfill({ status: 200, json: mockBots }));
     await page.route('**/api/bots/*/history*', (route) =>
       route.fulfill({ status: 200, json: mockHistory })
     );
@@ -594,9 +614,11 @@ test.describe('Mobile CRUD Flows', () => {
     await page.goto('/admin/chat');
     await page.waitForTimeout(500);
 
-    const chatInput = page.locator(
-      'input[placeholder*="message" i], textarea[placeholder*="message" i], input[placeholder*="type" i], textarea[placeholder*="type" i]'
-    ).first();
+    const chatInput = page
+      .locator(
+        'input[placeholder*="message" i], textarea[placeholder*="message" i], input[placeholder*="type" i], textarea[placeholder*="type" i]'
+      )
+      .first();
     if ((await chatInput.count()) > 0) {
       // Verify input is wide enough for mobile
       const box = await chatInput.boundingBox();
@@ -607,7 +629,9 @@ test.describe('Mobile CRUD Flows', () => {
       await chatInput.fill('Hello from mobile!');
       await page.waitForTimeout(200);
 
-      const sendBtn = page.locator('button:has-text("Send"), button[type="submit"], button[aria-label*="send" i]').first();
+      const sendBtn = page
+        .locator('button:has-text("Send"), button[type="submit"], button[aria-label*="send" i]')
+        .first();
       if ((await sendBtn.count()) > 0) {
         // Send button should be tappable
         const sendBox = await sendBtn.boundingBox();
@@ -640,9 +664,7 @@ test.describe('Mobile CRUD Flows', () => {
     await page.route('**/api/config', (route) =>
       route.fulfill({ status: 200, json: { bots: mockBots } })
     );
-    await page.route('**/api/personas', (route) =>
-      route.fulfill({ status: 200, json: [] })
-    );
+    await page.route('**/api/personas', (route) => route.fulfill({ status: 200, json: [] }));
     await page.route('**/api/admin/guard-profiles', (route) =>
       route.fulfill({ status: 200, json: { data: [] } })
     );
@@ -701,9 +723,7 @@ test.describe('Mobile CRUD Flows', () => {
     await page.route('**/api/config', (route) =>
       route.fulfill({ status: 200, json: { bots: [] } })
     );
-    await page.route('**/api/personas', (route) =>
-      route.fulfill({ status: 200, json: [] })
-    );
+    await page.route('**/api/personas', (route) => route.fulfill({ status: 200, json: [] }));
     await page.route('**/api/admin/guard-profiles', (route) =>
       route.fulfill({ status: 200, json: { data: [] } })
     );
@@ -712,7 +732,9 @@ test.describe('Mobile CRUD Flows', () => {
     await page.waitForTimeout(500);
 
     // Click add server button
-    const addBtn = page.locator('button:has-text("Add"), button:has-text("New"), button:has-text("Create")').first();
+    const addBtn = page
+      .locator('button:has-text("Add"), button:has-text("New"), button:has-text("Create")')
+      .first();
     if ((await addBtn.count()) > 0) {
       await addBtn.click();
       await page.waitForTimeout(300);
@@ -733,13 +755,19 @@ test.describe('Mobile CRUD Flows', () => {
           await nameInput.fill('Mobile MCP Server');
         }
 
-        const urlInput = modal.locator('input[placeholder*="url" i], input[type="url"], input[name*="url" i]').first();
+        const urlInput = modal
+          .locator('input[placeholder*="url" i], input[type="url"], input[name*="url" i]')
+          .first();
         if ((await urlInput.count()) > 0) {
           await urlInput.fill('https://mobile-mcp.example.com');
         }
 
         // Submit
-        const saveBtn = modal.locator('button.btn-primary, button:has-text("Save"), button:has-text("Add"), button:has-text("Create")').first();
+        const saveBtn = modal
+          .locator(
+            'button.btn-primary, button:has-text("Save"), button:has-text("Add"), button:has-text("Create")'
+          )
+          .first();
         if ((await saveBtn.count()) > 0 && (await saveBtn.isEnabled())) {
           await saveBtn.click();
           await page.waitForTimeout(500);
@@ -777,9 +805,7 @@ test.describe('Mobile CRUD Flows', () => {
     await page.route('**/api/config', (route) =>
       route.fulfill({ status: 200, json: { bots: [] } })
     );
-    await page.route('**/api/personas', (route) =>
-      route.fulfill({ status: 200, json: [] })
-    );
+    await page.route('**/api/personas', (route) => route.fulfill({ status: 200, json: [] }));
 
     await page.goto('/admin/guards');
     await page.waitForTimeout(500);
@@ -787,7 +813,9 @@ test.describe('Mobile CRUD Flows', () => {
     await expect(page.getByText('Production Guard')).toBeVisible();
 
     // Click create button
-    const createBtn = page.locator('button:has-text("Create"), button:has-text("New Profile"), button:has-text("Add")').first();
+    const createBtn = page
+      .locator('button:has-text("Create"), button:has-text("New Profile"), button:has-text("Add")')
+      .first();
     if ((await createBtn.count()) > 0) {
       await createBtn.click();
       await page.waitForTimeout(300);
@@ -803,7 +831,9 @@ test.describe('Mobile CRUD Flows', () => {
         }
 
         // Fill profile name
-        const nameInput = modal.locator('input[placeholder*="Production"], input[placeholder*="name" i], input').first();
+        const nameInput = modal
+          .locator('input[placeholder*="Production"], input[placeholder*="name" i], input')
+          .first();
         if ((await nameInput.count()) > 0) {
           await nameInput.fill('Mobile Guard Profile');
 
@@ -815,7 +845,9 @@ test.describe('Mobile CRUD Flows', () => {
         }
 
         // Fill description if available
-        const descInput = modal.locator('input[placeholder*="description" i], textarea[placeholder*="description" i]').first();
+        const descInput = modal
+          .locator('input[placeholder*="description" i], textarea[placeholder*="description" i]')
+          .first();
         if ((await descInput.count()) > 0) {
           await descInput.fill('Guard profile created on mobile');
         }
@@ -828,7 +860,9 @@ test.describe('Mobile CRUD Flows', () => {
         }
 
         // Save
-        const saveBtn = modal.locator('button.btn-primary, button:has-text("Save"), button:has-text("Create")').first();
+        const saveBtn = modal
+          .locator('button.btn-primary, button:has-text("Save"), button:has-text("Create")')
+          .first();
         if ((await saveBtn.count()) > 0 && (await saveBtn.isEnabled())) {
           await saveBtn.click();
           await page.waitForTimeout(500);

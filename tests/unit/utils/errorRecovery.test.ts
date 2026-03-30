@@ -1,5 +1,16 @@
-import { CircuitBreaker, FallbackManager, DEFAULT_CIRCUIT_BREAKER_CONFIG, RetryHandler, DEFAULT_RETRY_CONFIG, AdaptiveRecoveryManager, globalRecoveryManager, errorRecovery, executeWithRecovery, registerFallback } from '@src/utils/errorRecovery';
 import { BaseHivemindError, TimeoutError } from '@src/types/errorClasses';
+import {
+  AdaptiveRecoveryManager,
+  CircuitBreaker,
+  DEFAULT_CIRCUIT_BREAKER_CONFIG,
+  DEFAULT_RETRY_CONFIG,
+  errorRecovery,
+  executeWithRecovery,
+  FallbackManager,
+  globalRecoveryManager,
+  registerFallback,
+  RetryHandler,
+} from '@src/utils/errorRecovery';
 
 describe('errorRecovery', () => {
   describe('CircuitBreaker', () => {
@@ -325,11 +336,15 @@ describe('errorRecovery', () => {
 
     it('uses retry if enabled', async () => {
       let attempts = 0;
-      const result = await arm.execute('test', async () => {
-        attempts++;
-        if (attempts === 1) throw new Error('timeout');
-        return 'ok';
-      }, { enableRetry: true, enableFallback: false });
+      const result = await arm.execute(
+        'test',
+        async () => {
+          attempts++;
+          if (attempts === 1) throw new Error('timeout');
+          return 'ok';
+        },
+        { enableRetry: true, enableFallback: false }
+      );
 
       expect(result.success).toBe(true);
       expect(result.attempts).toBe(2);
@@ -342,7 +357,7 @@ describe('errorRecovery', () => {
       const result = await arm.execute('test', () => Promise.reject(new Error('timeout')), {
         enableRetry: true,
         enableFallback: true,
-        retryConfig: { maxRetries: 0 }
+        retryConfig: { maxRetries: 0 },
       });
 
       expect(result.success).toBe(true);
@@ -373,11 +388,11 @@ describe('errorRecovery', () => {
       expect(stats['test2'].fallbacks).toBe(1);
     });
 
-    it('getCircuitBreakerStats returns null if circuit breaker doesn\'t exist', () => {
+    it("getCircuitBreakerStats returns null if circuit breaker doesn't exist", () => {
       expect(arm.getCircuitBreakerStats('non-existent')).toBeNull();
     });
 
-    it('resetCircuitBreaker does not fail if circuit breaker doesn\'t exist', () => {
+    it("resetCircuitBreaker does not fail if circuit breaker doesn't exist", () => {
       expect(() => {
         arm.resetCircuitBreaker('non-existent');
       }).not.toThrow();
@@ -387,11 +402,14 @@ describe('errorRecovery', () => {
   describe('errorRecovery convenience methods', () => {
     it('withRetry works', async () => {
       let attempts = 0;
-      const result = await errorRecovery.withRetry(async () => {
-        attempts++;
-        if (attempts === 1) throw new Error('timeout');
-        return 'ok';
-      }, { maxRetries: 1, baseDelay: 1 });
+      const result = await errorRecovery.withRetry(
+        async () => {
+          attempts++;
+          if (attempts === 1) throw new Error('timeout');
+          return 'ok';
+        },
+        { maxRetries: 1, baseDelay: 1 }
+      );
       expect(result.success).toBe(true);
       expect(result.result).toBe('ok');
     });
@@ -418,7 +436,7 @@ describe('errorRecovery', () => {
 
     it('withTimeout rejects if too slow', async () => {
       const result = await errorRecovery.withTimeout(
-        () => new Promise(resolve => setTimeout(() => resolve('slow'), 50)),
+        () => new Promise((resolve) => setTimeout(() => resolve('slow'), 50)),
         10
       );
       expect(result.success).toBe(false);

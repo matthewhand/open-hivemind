@@ -4,6 +4,7 @@ import WebSocketService, { type MessageFlowEvent } from '@src/server/services/We
 import { BotConfigurationManager } from '@config/BotConfigurationManager';
 import { authenticate, requireAdmin } from '../../auth/middleware';
 import { AnalyticsService } from '../../services/AnalyticsService';
+import { HTTP_STATUS } from '../../types/constants';
 import {
   AlertIdParamSchema,
   DashboardConfigSchema,
@@ -11,7 +12,6 @@ import {
 } from '../../validation/schemas/miscSchema';
 import { validateRequest } from '../../validation/validateRequest';
 import { ActivityLogger } from '../services/ActivityLogger';
-import { HTTP_STATUS } from '../../types/constants';
 
 type AnnotatedEvent = MessageFlowEvent & { llmProvider: string };
 
@@ -244,7 +244,9 @@ router.get('/ai/patterns', authenticate, requireAdmin, async (req, res) => {
     res.json(patterns);
   } catch (error) {
     console.error('AI patterns API error:', error);
-    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: 'Failed to get behavior patterns' });
+    res
+      .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
+      .json({ error: 'Failed to get behavior patterns' });
   }
 });
 
@@ -435,7 +437,9 @@ router.get('/activity', authenticate, requireAdmin, async (req, res) => {
     });
   } catch (error) {
     console.error('Activity API error:', error);
-    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: 'Failed to retrieve activity feed' });
+    res
+      .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
+      .json({ error: 'Failed to retrieve activity feed' });
   }
 });
 

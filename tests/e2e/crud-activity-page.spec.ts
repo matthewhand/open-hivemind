@@ -98,7 +98,12 @@ test.describe('Activity Page CRUD Lifecycle', () => {
       page.route('**/api/config/llm-status', (route) =>
         route.fulfill({
           status: 200,
-          json: { defaultConfigured: true, defaultProviders: [], botsMissingLlmProvider: [], hasMissing: false },
+          json: {
+            defaultConfigured: true,
+            defaultProviders: [],
+            botsMissingLlmProvider: [],
+            hasMissing: false,
+          },
         })
       ),
       page.route('**/api/config/global', (route) => route.fulfill({ status: 200, json: {} })),
@@ -110,14 +115,18 @@ test.describe('Activity Page CRUD Lifecycle', () => {
       page.route('**/api/csrf-token', (route) =>
         route.fulfill({ status: 200, json: { token: 'mock-csrf-token' } })
       ),
-      page.route('**/api/health', (route) => route.fulfill({ status: 200, json: { status: 'ok' } })),
+      page.route('**/api/health', (route) =>
+        route.fulfill({ status: 200, json: { status: 'ok' } })
+      ),
       page.route('**/api/dashboard/api/status', (route) =>
         route.fulfill({ status: 200, json: { bots: [], uptime: 100 } })
       ),
       page.route('**/api/admin/guard-profiles', (route) =>
         route.fulfill({ status: 200, json: { data: [] } })
       ),
-      page.route('**/api/demo/status', (route) => route.fulfill({ status: 200, json: { active: false } })),
+      page.route('**/api/demo/status', (route) =>
+        route.fulfill({ status: 200, json: { active: false } })
+      ),
     ]);
   }
 
@@ -312,7 +321,10 @@ test.describe('Activity Page CRUD Lifecycle', () => {
     const initialCount = fetchCount;
     // The refresh button is an icon-only button (no text) between Auto toggle and Export button
     // It has aria-busy attribute and is a ghost button with no text content
-    const refreshBtn = page.locator('button.btn-ghost.btn-sm[aria-busy]').filter({ hasNotText: /Export|Table|Timeline/ }).first();
+    const refreshBtn = page
+      .locator('button.btn-ghost.btn-sm[aria-busy]')
+      .filter({ hasNotText: /Export|Table|Timeline/ })
+      .first();
     if ((await refreshBtn.count()) > 0) {
       await refreshBtn.click();
       await page.waitForTimeout(500);

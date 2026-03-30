@@ -1,4 +1,4 @@
-import { ErrorUtils, ErrorClassification } from '../../src/common/ErrorUtils';
+import { ErrorClassification, ErrorUtils } from '../../src/common/ErrorUtils';
 
 describe('ErrorUtils', () => {
   describe('toHivemindError', () => {
@@ -36,7 +36,10 @@ describe('ErrorUtils', () => {
 
   describe('classifyError', () => {
     it('should classify validation errors', () => {
-      const result = ErrorUtils.classifyError({ message: 'Validation failed', code: 'VALIDATION_ERROR' });
+      const result = ErrorUtils.classifyError({
+        message: 'Validation failed',
+        code: 'VALIDATION_ERROR',
+      });
       expect(result.classification).toBe(ErrorClassification.VALIDATION_ERROR);
       expect(result.logLevel).toBe('warn');
     });

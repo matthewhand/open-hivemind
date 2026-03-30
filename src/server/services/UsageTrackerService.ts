@@ -85,7 +85,8 @@ export class UsageTrackerService {
       const content = await fs.promises.readFile(this.dataFile, 'utf8');
       const parsed = JSON.parse(content) as UsageData;
       this.data = parsed;
-      debug('Loaded usage data with %d tools and %d providers',
+      debug(
+        'Loaded usage data with %d tools and %d providers',
         Object.keys(parsed.tools).length,
         Object.keys(parsed.providers).length
       );
@@ -102,9 +103,7 @@ export class UsageTrackerService {
       clearTimeout(this.saveTimeout);
     }
     this.saveTimeout = setTimeout(() => {
-      this.saveData().catch(err =>
-        debug('Failed to save usage data: %O', err)
-      );
+      this.saveData().catch((err) => debug('Failed to save usage data: %O', err));
     }, this.SAVE_DEBOUNCE_MS);
   }
 
@@ -113,7 +112,8 @@ export class UsageTrackerService {
       this.data.lastUpdated = new Date().toISOString();
       const content = JSON.stringify(this.data, null, 2);
       await fs.promises.writeFile(this.dataFile, content, 'utf8');
-      debug('Saved usage data with %d tools and %d providers',
+      debug(
+        'Saved usage data with %d tools and %d providers',
         Object.keys(this.data.tools).length,
         Object.keys(this.data.providers).length
       );
@@ -184,7 +184,7 @@ export class UsageTrackerService {
 
     // Update tool count for provider
     const toolsForProvider = Object.values(this.data.tools).filter(
-      t => t.serverName === serverName
+      (t) => t.serverName === serverName
     );
     providerMetrics.toolCount = toolsForProvider.length;
 
@@ -223,9 +223,7 @@ export class UsageTrackerService {
    * Get usage metrics for tools from a specific provider
    */
   public getToolMetricsByProvider(serverName: string): ToolUsageMetrics[] {
-    return Object.values(this.data.tools).filter(
-      tool => tool.serverName === serverName
-    );
+    return Object.values(this.data.tools).filter((tool) => tool.serverName === serverName);
   }
 
   /**
@@ -316,7 +314,7 @@ export class UsageTrackerService {
       this.saveTimeout = null;
     }
     // Final save before shutdown
-    await this.saveData().catch(err => {
+    await this.saveData().catch((err) => {
       debug('Failed to save data during shutdown: %O', err);
     });
     debug('UsageTrackerService shutdown completed');
