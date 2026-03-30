@@ -50,6 +50,22 @@ export class SecureConfigManager {
     return SecureConfigManager.instance;
   }
 
+  /**
+   * Get the instance synchronously if already initialized, or create a non-initialized instance.
+   * This should only be used in sync contexts where async initialization isn't possible.
+   * The instance will be partially functional until initialize() is called.
+   */
+  public static getInstanceSync(): SecureConfigManager {
+    if (!SecureConfigManager.instance) {
+      SecureConfigManager.instance = new SecureConfigManager();
+      // Schedule async initialization in the background
+      SecureConfigManager.instance.initialize().catch((err) => {
+        debug('ERROR:', 'Failed to initialize SecureConfigManager:', err);
+      });
+    }
+    return SecureConfigManager.instance;
+  }
+
   private async initialize(): Promise<void> {
     await this.ensureDirectories();
     this.encryptionKey = await this.getOrCreateEncryptionKey();
