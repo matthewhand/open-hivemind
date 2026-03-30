@@ -1,49 +1,46 @@
-import React from 'react';
-import {
-  Bot, Activity, MessageSquare, AlertCircle, RefreshCw, X, Globe, Cpu, Download, Play, Pause, Settings, ShieldCheck
-} from 'lucide-react';
+import React, { useMemo } from 'react';
+import { Bot, X, Globe, Cpu, Activity, MessageSquare, ShieldCheck, AlertCircle, RefreshCw, Settings, Download, Pause, Play } from 'lucide-react';
 import type { BotConfig } from '../../types/bot';
-import Button from '../../components/DaisyUI/Button';
-import ConfigurationValidation from '../../components/ConfigurationValidation';
+import ConfigurationValidation from '../ConfigurationValidation';
 
-interface BotPreviewSidebarProps {
+interface BotStatusPanelProps {
   previewBot: BotConfig | null;
   setPreviewBot: (bot: BotConfig | null) => void;
   previewTab: 'activity' | 'chat' | 'validation';
   setPreviewTab: (tab: 'activity' | 'chat' | 'validation') => void;
-  activityLogs: any[];
-  chatHistory: any[];
   logFilter: string;
   setLogFilter: (filter: string) => void;
+  activityLogs: any[];
   activityError: string | null;
+  fetchPreviewActivity: (botId: string, limit?: number) => void;
+  chatHistory: any[];
   chatError: string | null;
-  fetchPreviewActivity: (botId: string, limit?: number) => Promise<void>;
-  fetchPreviewChat: (botId: string) => Promise<void>;
+  fetchPreviewChat: (botId: string) => void;
   setEditingBot: (bot: BotConfig | null) => void;
   handleExportSingleBot: (bot: BotConfig) => void;
   handleToggleBotStatus: (bot: BotConfig) => void;
 }
 
-export const BotPreviewSidebar: React.FC<BotPreviewSidebarProps> = ({
+export const BotStatusPanel: React.FC<BotStatusPanelProps> = ({
   previewBot,
   setPreviewBot,
   previewTab,
   setPreviewTab,
-  activityLogs,
-  chatHistory,
   logFilter,
   setLogFilter,
+  activityLogs,
   activityError,
-  chatError,
   fetchPreviewActivity,
+  chatHistory,
+  chatError,
   fetchPreviewChat,
   setEditingBot,
   handleExportSingleBot,
   handleToggleBotStatus,
 }) => {
-  const filteredLogs = React.useMemo(() => {
+  const filteredLogs = useMemo(() => {
     if (!logFilter) return activityLogs;
-    return activityLogs.filter((log) =>
+    return activityLogs.filter(log =>
       log.message?.toLowerCase().includes(logFilter.toLowerCase()) ||
       log.type?.toLowerCase().includes(logFilter.toLowerCase())
     );
@@ -55,9 +52,7 @@ export const BotPreviewSidebar: React.FC<BotPreviewSidebarProps> = ({
         <div className="card-body items-center justify-center text-center opacity-40">
           <Bot className="w-12 h-12 mb-2" />
           <h3 className="font-bold">Agent Preview</h3>
-          <p className="text-xs max-w-[200px]">
-            Select an agent from the swarm to view its activity and configuration.
-          </p>
+          <p className="text-xs max-w-[200px]">Select an agent from the swarm to view its activity and configuration.</p>
         </div>
       </div>
     );
@@ -74,22 +69,14 @@ export const BotPreviewSidebar: React.FC<BotPreviewSidebarProps> = ({
             <div>
               <h3 className="font-bold text-lg">{previewBot.name}</h3>
               <div className="flex items-center gap-2">
-                <span
-                  className={`badge badge-xs ${
-                    previewBot.status === 'active' ? 'badge-success' : 'badge-ghost'
-                  }`}
-                ></span>
-                <span className="text-xs uppercase tracking-wider font-semibold opacity-60">
-                  {previewBot.status}
-                </span>
+                <span className={`badge badge-xs ${previewBot.status === 'active' ? 'badge-success' : 'badge-ghost'}`}></span>
+                <span className="text-xs uppercase tracking-wider font-semibold opacity-60">{previewBot.status}</span>
               </div>
             </div>
           </div>
-          <div className="tooltip" data-tip="Close preview">
-            <Button variant="ghost" size="sm" onClick={() => setPreviewBot(null)} className="btn-square" aria-label="Close preview">
-              <X className="w-4 h-4" />
-            </Button>
-          </div>
+          <button className="btn btn-ghost btn-sm btn-square" onClick={() => setPreviewBot(null)} aria-label="Close preview">
+            <X className="w-4 h-4" />
+          </button>
         </div>
 
         <div className="space-y-4">
@@ -122,35 +109,26 @@ export const BotPreviewSidebar: React.FC<BotPreviewSidebarProps> = ({
             </div>
             <div className="stat p-3">
               <div className="stat-title text-[10px] uppercase font-bold">Errors</div>
-              <div
-                className={`stat-value text-xl ${
-                  (previewBot.errorCount ?? 0) > 0 ? 'text-error' : ''
-                }`}
-              >
+              <div className={`stat-value text-xl ${(previewBot.errorCount ?? 0) > 0 ? 'text-error' : ''}`}>
                 {previewBot.errorCount ?? 0}
               </div>
             </div>
           </div>
 
-          {/* Tabs Navigation */}
           <div className="tabs tabs-boxed bg-base-200/50 p-1 flex-nowrap" role="tablist">
             <button
-              className={`tab tab-sm flex-1 gap-2 ${
-                previewTab === 'activity' ? 'tab-active' : ''
-              }`}
+              className={`tab tab-sm flex-1 gap-2 ${previewTab === 'activity' ? 'tab-active' : ''}`}
               onClick={() => setPreviewTab('activity')}
               role="tab"
             >
-              <Activity className="w-3 h-3" />{' '}
-              <span className="text-[10px] uppercase font-bold">Activity</span>
+              <Activity className="w-3 h-3" /> <span className="text-[10px] uppercase font-bold">Activity</span>
             </button>
             <button
               className={`tab tab-sm flex-1 gap-2 ${previewTab === 'chat' ? 'tab-active' : ''}`}
               onClick={() => setPreviewTab('chat')}
               role="tab"
             >
-              <MessageSquare className="w-3 h-3" />{' '}
-              <span className="text-[10px] uppercase font-bold">Chat</span>
+              <MessageSquare className="w-3 h-3" /> <span className="text-[10px] uppercase font-bold">Chat</span>
             </button>
             <button
               className={`tab tab-sm flex-1 gap-2 ${previewTab === 'validation' ? 'tab-active' : ''}`}
@@ -161,7 +139,6 @@ export const BotPreviewSidebar: React.FC<BotPreviewSidebarProps> = ({
             </button>
           </div>
 
-          {/* Activity Log Panel */}
           {previewTab === 'activity' && (
             <div className="space-y-3 max-h-[300px] overflow-y-auto pr-1 custom-scrollbar">
               <div className="flex items-center justify-end mb-2">
@@ -208,10 +185,7 @@ export const BotPreviewSidebar: React.FC<BotPreviewSidebarProps> = ({
               ) : (
                 <div className="space-y-2">
                   {filteredLogs.map((log, idx) => (
-                    <div
-                      key={idx}
-                      className="bg-base-200/30 p-2 rounded text-[11px] border-l-2 border-primary"
-                    >
+                    <div key={idx} className="bg-base-200/30 p-2 rounded text-[11px] border-l-2 border-primary">
                       <div className="flex justify-between opacity-60 mb-1">
                         <span className="font-bold uppercase">{log.type}</span>
                         <span>{new Date(log.timestamp).toLocaleTimeString()}</span>
@@ -224,14 +198,12 @@ export const BotPreviewSidebar: React.FC<BotPreviewSidebarProps> = ({
             </div>
           )}
 
-          {/* Validation Panel */}
           {previewTab === 'validation' && (
             <div className="space-y-3 max-h-[300px] overflow-y-auto pr-1 custom-scrollbar">
-              <ConfigurationValidation bot={previewBot} />
+              <ConfigurationValidation bot={previewBot as any} />
             </div>
           )}
 
-          {/* Chat History Panel */}
           {previewTab === 'chat' && (
             <div className="space-y-3 max-h-[300px] overflow-y-auto pr-1 custom-scrollbar">
               {chatError ? (
@@ -253,15 +225,8 @@ export const BotPreviewSidebar: React.FC<BotPreviewSidebarProps> = ({
               ) : (
                 <div className="space-y-3">
                   {chatHistory.map((msg, idx) => (
-                    <div
-                      key={idx}
-                      className={`chat ${msg.role === 'user' ? 'chat-end' : 'chat-start'}`}
-                    >
-                      <div
-                        className={`chat-bubble text-[11px] min-h-0 py-1.5 px-3 ${
-                          msg.role === 'user' ? 'chat-bubble-primary' : 'chat-bubble-secondary'
-                        }`}
-                      >
+                    <div key={idx} className={`chat ${msg.role === 'user' ? 'chat-end' : 'chat-start'}`}>
+                      <div className={`chat-bubble text-[11px] min-h-0 py-1.5 px-3 ${msg.role === 'user' ? 'chat-bubble-primary' : 'chat-bubble-secondary'}`}>
                         {msg.content}
                       </div>
                       <div className="chat-footer opacity-50 text-[9px] mt-0.5">
@@ -275,36 +240,28 @@ export const BotPreviewSidebar: React.FC<BotPreviewSidebarProps> = ({
           )}
 
           <div className="card-actions mt-2 pt-4 border-t border-base-200">
-            <Button
-              variant="primary"
-              size="sm"
-              className="flex-1"
+            <button
+              className="btn btn-primary btn-sm flex-1"
               onClick={() => setEditingBot(previewBot)}
             >
               <Settings className="w-3 h-3 mr-2" /> Configuration
-            </Button>
-            <div className="tooltip" data-tip="Export bot config">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => handleExportSingleBot(previewBot)}
-                className="btn-square"
-                aria-label="Export bot config"
-              >
-                <Download className="w-3 h-3" />
-              </Button>
-            </div>
-            <div className="tooltip" data-tip={previewBot.status === 'active' ? 'Deactivate' : 'Activate'}>
-              <Button
-                variant={previewBot.status === 'active' ? 'ghost' : 'primary'}
-                size="sm"
-                onClick={() => handleToggleBotStatus(previewBot)}
-                className={`btn-square ${previewBot.status === 'active' ? 'text-error border-error' : ''}`}
-                aria-label={previewBot.status === 'active' ? 'Deactivate' : 'Activate'}
-              >
-                {previewBot.status === 'active' ? <Pause className="w-3 h-3" /> : <Play className="w-3 h-3" />}
-              </Button>
-            </div>
+            </button>
+            <button
+              className="btn btn-sm btn-square btn-ghost"
+              onClick={() => handleExportSingleBot(previewBot)}
+              title="Export bot config"
+              aria-label="Export bot config"
+            >
+              <Download className="w-3 h-3" />
+            </button>
+            <button
+              className={`btn btn-sm btn-square ${previewBot.status === 'active' ? 'btn-error btn-outline' : 'btn-success'}`}
+              onClick={() => handleToggleBotStatus(previewBot)}
+              title={previewBot.status === 'active' ? 'Deactivate' : 'Activate'}
+              aria-label={previewBot.status === 'active' ? 'Deactivate' : 'Activate'}
+            >
+              {previewBot.status === 'active' ? <Pause className="w-3 h-3" /> : <Play className="w-3 h-3" />}
+            </button>
           </div>
         </div>
       </div>
