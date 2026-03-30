@@ -14,10 +14,11 @@ const router = Router();
  *       200:
  *         description: Route catalog grouped by prefix
  */
-router.get('/', (req: Request, res: Response) => {
+router.get('/', async (req: Request, res: Response) => {
   try {
     const app = req.app;
-    const groups = introspectRoutes(app);
+    // ⚡ Bolt Optimization: Use async introspectRoutes to prevent blocking the event loop on I/O.
+    const groups = await introspectRoutes(app);
     return res.json({
       success: true,
       data: {
