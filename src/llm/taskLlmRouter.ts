@@ -1,5 +1,7 @@
 import Debug from 'debug';
 import ProviderConfigManager, { type ProviderInstance } from '@src/config/ProviderConfigManager';
+import { UserConfigStore } from '@src/config/UserConfigStore';
+import { getLlmProfileByKey } from '@src/config/llmProfiles';
 import { MetricsCollector } from '@src/monitoring/MetricsCollector';
 import llmTaskConfig from '@config/llmTaskConfig';
 import { FlowiseProvider } from '@integrations/flowise/flowiseProvider';
@@ -167,6 +169,45 @@ function pickProviderInstance(
   return null;
 }
 
+async function createProviderFromProfile(
+  profileKey: string
+): Promise<ILlmProvider | null> {
+  try {
+    const profile = getLlmProfileByKey(profileKey);
+    if (!profile) {
+      debug(`Profile "${profileKey}" not found`);
+      return null;
+    }
+
+    const type = String(profile.provider || '').toLowerCase();
+    const cfg = profile.config || {};
+
+    let provider: ILlmProvider | undefined;
+    switch (type) {
+      case 'openai':
+        const { OpenAiProvider } = await import('@hivemind/llm-openai');
+        provider = new OpenAiProvider(cfg);
+        break;
+      case 'flowise':
+        provider = new FlowiseProvider(cfg);
+        break;
+      case 'openwebui':
+        provider = openWebUI;
+        break;
+      default:
+        debug(`Profile "${profileKey}" has unsupported provider type "${type}"`);
+        return null;
+    }
+
+    return withTokenCounting(provider, `profile:${profileKey}`);
+  } catch (e) {
+    debug(
+      `Failed to create provider from profile "${profileKey}": ${e instanceof Error ? e.message : String(e)}`
+    );
+    return null;
+  }
+}
+
 export async function getTaskLlm(
   task: LlmTask,
   opts?: { fallbackProviders?: ILlmProvider[]; baseMetadata?: Record<string, any> }
@@ -191,6 +232,25 @@ export async function getTaskLlm(
   }
 
   if (!providerRef) {
+    // Check per-use-case profiles from UserConfigStore before falling back
+    const generalSettings = UserConfigStore.getInstance().getGeneralSettings();
+    if (generalSettings.perUseCaseEnabled) {
+      const taskProfiles: Record<string, string> = generalSettings.taskProfiles || {};
+      const profileKey = taskProfiles[task];
+      if (profileKey) {
+        const profileProvider = await createProviderFromProfile(profileKey);
+        if (profileProvider) {
+          debug(
+            `Task ${task}: using per-use-case profile "${profileKey}"`
+          );
+          return { provider: profileProvider, metadata, source: 'override' };
+        }
+        debug(
+          `Task ${task}: per-use-case profile "${profileKey}" failed; falling back to default`
+        );
+      }
+    }
+
     return {
       provider: fallbackProviders[0],
       metadata,

@@ -2,10 +2,9 @@ import Debug from 'debug';
 import { Router } from 'express';
 import { getLlmProfileByKey } from '../../config/llmProfiles';
 import { UserConfigStore } from '../../config/UserConfigStore';
-import { FlowiseProvider } from '../../integrations/flowise/flowiseProvider';
-import * as openWebUIImport from '../../integrations/openwebui/runInference';
 import type { ILlmProvider } from '../../llm/interfaces/ILlmProvider';
 import { IMessage } from '../../message/interfaces/IMessage';
+import { instantiateLlmProvider, loadPlugin } from '../../plugins/PluginLoader';
 import { HTTP_STATUS } from '../../types/constants';
 import { ErrorUtils } from '../../types/errors';
 import { ChatGenerateSchema } from '../../validation/schemas/miscSchema';
@@ -56,33 +55,6 @@ class SimpleMessage extends IMessage {
   }
 }
 
-// Define OpenWebUI provider locally as in getLlmProvider.ts
-const openWebUI: ILlmProvider = {
-  name: 'openwebui',
-  supportsChatCompletion: () => true,
-  supportsCompletion: () => false,
-  generateChatCompletion: async (
-    userMessage: string,
-    historyMessages: IMessage[],
-    metadata?: Record<string, any>
-  ) => {
-    if (openWebUIImport.generateChatCompletion.length === 3) {
-      const result = await openWebUIImport.generateChatCompletion(
-        userMessage,
-        historyMessages,
-        metadata
-      );
-      return result.text || '';
-    } else {
-      const result = await openWebUIImport.generateChatCompletion(userMessage, historyMessages);
-      return result.text || '';
-    }
-  },
-  generateCompletion: async () => {
-    throw new Error('Non-chat completion not supported by OpenWebUI');
-  },
-};
-
 // Maximum prompt length to prevent memory exhaustion and expensive API calls
 const MAX_PROMPT_LENGTH = 32000; // ~8k tokens approximate limit
 const MAX_SYSTEM_PROMPT_LENGTH = 16000;
@@ -125,27 +97,10 @@ router.post('/generate', validateRequest(ChatGenerateSchema), async (req, res) =
 
     let instance: ILlmProvider | undefined;
     try {
-      switch (profile.provider.toLowerCase()) {
-        case 'openai':
-          // Dynamic require for OpenAI provider
-          const { OpenAiProvider } = require('@hivemind/llm-openai');
-          instance = new OpenAiProvider(profile.config);
-          debug(`Initialized OpenAI provider instance for AI Assist: ${profile.name}`);
-          break;
-        case 'flowise':
-          instance = new FlowiseProvider(profile.config);
-          debug(`Initialized Flowise provider instance for AI Assist: ${profile.name}`);
-          break;
-        case 'openwebui':
-          instance = openWebUI;
-          debug(`Initialized OpenWebUI provider instance for AI Assist: ${profile.name}`);
-          break;
-        default:
-          debug(`Unknown LLM provider type for AI Assist: ${profile.provider}`);
-          return res
-            .status(HTTP_STATUS.BAD_REQUEST)
-            .json({ error: `Unsupported provider type: ${profile.provider}` });
-      }
+      const pluginName = `llm-${profile.provider.toLowerCase()}`;
+      const mod = await loadPlugin(pluginName);
+      instance = instantiateLlmProvider(mod, profile.config);
+      debug(`Initialized LLM provider via plugin for AI Assist: ${profile.provider} (${profile.name})`);
     } catch (error: unknown) {
       const hivemindError = ErrorUtils.toHivemindError(error);
       debug(`Failed to initialize provider ${profile.name}:`, hivemindError);

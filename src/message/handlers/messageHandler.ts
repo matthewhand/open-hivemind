@@ -2,7 +2,7 @@ import Debug from 'debug';
 import { AuditLogger } from '@src/common/auditLogger';
 import { ErrorHandler } from '@src/common/errors/ErrorHandler';
 import { PerformanceMonitor } from '@src/common/errors/PerformanceMonitor';
-import { getLlmProvider } from '@src/llm/getLlmProvider';
+import { getLlmProvider, getLlmProviderForBot } from '@src/llm/getLlmProvider';
 import { getQuotaManager } from '@src/middleware/quotaMiddleware';
 import { ContentFilterService } from '@src/services/ContentFilterService';
 import { MemoryManager } from '@src/services/MemoryManager';
@@ -142,7 +142,6 @@ export async function handleMessage(
 
         // Get providers safely
         const messageProviders = await getMessengerProvider();
-        const llmProviders = await getLlmProvider();
 
         if (messageProviders.length === 0) {
           logger('ERROR:', 'No message provider available');
@@ -150,14 +149,20 @@ export async function handleMessage(
           return null;
         }
 
-        if (llmProviders.length === 0) {
+        const messageProvider = messageProviders[0];
+
+        // Resolve the LLM provider for this bot. When the bot has an LLM
+        // profile assigned (populating provider-specific config such as
+        // openai.model / openai.apiKey), a dedicated provider instance is
+        // created. Otherwise falls back to the first system-level provider.
+        let llmProvider;
+        try {
+          llmProvider = await getLlmProviderForBot(botConfig);
+        } catch {
           logger('ERROR:', 'No LLM provider available');
           logger('No LLM provider available');
           return null;
         }
-
-        const messageProvider = messageProviders[0];
-        const llmProvider = llmProviders[0];
         const providerType =
           botConfig.messageProvider ||
           botConfig.MESSAGE_PROVIDER ||

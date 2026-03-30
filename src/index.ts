@@ -11,6 +11,7 @@ import { registerServices } from '@src/di/registration';
 import { applyRateLimiting } from '@src/middleware/rateLimiter';
 import { authenticateToken } from '@src/server/middleware/auth';
 import { ipWhitelist } from '@src/server/middleware/security';
+import { csrfTokenHandler } from '@src/server/middleware/csrf';
 import adminApiRouter from '@src/server/routes/admin';
 import anomalyRouter from '@src/server/routes/anomaly';
 import authRouter from '@src/server/routes/auth';
@@ -154,9 +155,10 @@ app.use((req: Request, res: Response, next: NextFunction) => {
   // Security headers
   // SECURITY: See src/server/middleware/security.ts for detailed CSP explanation
   res.setHeader('X-Content-Type-Options', 'nosniff');
+  const workerSrc = process.env.NODE_ENV === 'development' ? "worker-src 'self' blob:;" : "worker-src 'none';";
   res.setHeader(
     'Content-Security-Policy',
-    "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: https:; connect-src 'self' ws: wss:; font-src 'self' data: https://fonts.gstatic.com; object-src 'none'; frame-ancestors 'none';"
+    `default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: https:; connect-src 'self' ws: wss:; font-src 'self' data: https://fonts.gstatic.com; object-src 'none'; frame-ancestors 'none'; ${workerSrc}`
   );
 
   next();
@@ -248,6 +250,9 @@ if (!allowAllIPs) {
 } else {
   appLogger.warn('⚠️  IP filtering DISABLED (HTTP_ALLOW_ALL_IPS=true)');
 }
+
+// CSRF token endpoint
+app.get('/api/csrf-token', csrfTokenHandler);
 
 // Unified API routes - all on same port, no separation
 app.use('/api/swarm', authenticateToken, swarmRouter);
