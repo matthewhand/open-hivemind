@@ -390,7 +390,7 @@ export class SlackService extends EventEmitter implements IMessengerService {
     }
 
     const { container } = require('tsyringe');
-    const { StartupGreetingService } = require('@src/services/StartupGreetingService');
+    const { StartupGreetingService } = require('../../../src/services/StartupGreetingService');
     const startupGreetingService = container.resolve(StartupGreetingService);
     startupGreetingService.emit('service-ready', this);
   }

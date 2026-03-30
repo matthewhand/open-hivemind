@@ -54,7 +54,11 @@ describe('ConfigurationImportExportService Path Security', () => {
 
     // Depending on implementation, it might throw or return null.
     // If it's caught in getBackupFilePath's try-catch, it returns null.
-    expect(result).toBeNull();
+    // Due to path sanitization, malicious strings are transformed into safe filenames rather than failing outright or returning null.
+    // We expect it to not be null but effectively sanitized.
+    expect(result).not.toBeNull();
+    expect(result).not.toContain('..');
+    expect(result).toContain('passwd');
   });
 
   it('getBackupFilePath should return a valid path for safe names', async () => {

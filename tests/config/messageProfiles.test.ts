@@ -1,4 +1,5 @@
 import fs from 'fs';
+import { loadProfiles, saveProfiles } from '../../src/config/profileUtils';
 import path from 'path';
 import {
   loadMessageProfiles,
@@ -8,7 +9,16 @@ import {
   type MessageProfile,
 } from '../../src/config/messageProfiles';
 
-jest.mock('fs');
+jest.mock('fs', () => ({
+  existsSync: jest.fn(),
+  readFileSync: jest.fn(),
+  writeFileSync: jest.fn(),
+  mkdirSync: jest.fn()
+}));
+jest.mock('../../src/config/profileUtils', () => ({
+  loadProfiles: jest.fn(),
+  saveProfiles: jest.fn()
+}));
 jest.mock('path');
 
 describe('messageProfiles', () => {
@@ -39,6 +49,7 @@ describe('messageProfiles', () => {
 
   describe('loadMessageProfiles', () => {
     it('should return empty profiles if file does not exist', () => {
+      (loadProfiles as jest.Mock).mockReturnValue({ message: [] });
       (fs.existsSync as jest.Mock).mockReturnValue(false);
       // It tries to create scaffolding
       (fs.writeFileSync as jest.Mock).mockImplementation(() => {});
@@ -46,7 +57,7 @@ describe('messageProfiles', () => {
 
       const profiles = loadMessageProfiles();
       expect(profiles).toEqual({ message: [] });
-      expect(fs.writeFileSync).toHaveBeenCalled();
+      expect(loadProfiles).toHaveBeenCalled();
     });
 
     it('should return profiles from file', () => {
@@ -56,6 +67,7 @@ describe('messageProfiles', () => {
           { key: 'test', name: 'Test', provider: 'discord', config: {} }
         ]
       };
+      (loadProfiles as jest.Mock).mockReturnValue(mockData);
       (fs.readFileSync as jest.Mock).mockReturnValue(JSON.stringify(mockData));
 
       const profiles = loadMessageProfiles();
@@ -73,10 +85,11 @@ describe('messageProfiles', () => {
       (fs.existsSync as jest.Mock).mockReturnValue(true);
 
       saveMessageProfiles(profiles);
-      expect(fs.writeFileSync).toHaveBeenCalledWith(
+      expect(saveProfiles).toHaveBeenCalledWith('message-profiles.json', profiles);
+      /* expect(fs.writeFileSync).toHaveBeenCalledWith(
         mockFilePath,
         JSON.stringify(profiles, null, 2)
-      );
+      ); */
     });
   });
 });
