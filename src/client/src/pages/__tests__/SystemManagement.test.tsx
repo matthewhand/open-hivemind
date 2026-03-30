@@ -3,6 +3,7 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import SystemManagement from '../SystemManagement';
 import { apiService } from '../../services/api';
 import * as WebSocketContext from '../../contexts/WebSocketContext';
+import { ToastProvider } from '../../components/DaisyUI/ToastNotification';
 
 // Mock apiService
 jest.mock('../../services/api', () => ({
@@ -77,13 +78,21 @@ describe('SystemManagement', () => {
   });
 
   it('renders system management page', async () => {
-    render(<SystemManagement />);
+    render(
+      <ToastProvider>
+        <SystemManagement />
+      </ToastProvider>
+    );
     expect(screen.getByText('System Management')).toBeInTheDocument();
     await waitFor(() => expect(apiService.getGlobalConfig).toHaveBeenCalled());
   });
 
   it('handles backup creation with encryption', async () => {
-    render(<SystemManagement />);
+    render(
+      <ToastProvider>
+        <SystemManagement />
+      </ToastProvider>
+    );
 
     // Find create backup button
     const createButton = screen.getByRole('button', { name: /Create Backup/i });
@@ -114,7 +123,11 @@ describe('SystemManagement', () => {
   });
 
   it('handles performance tab interactions', async () => {
-    render(<SystemManagement />);
+    render(
+      <ToastProvider>
+        <SystemManagement />
+      </ToastProvider>
+    );
 
     // Click Performance Tuning tab
     const perfTab = screen.getByText('Performance Tuning');

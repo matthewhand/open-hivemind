@@ -3,6 +3,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import { vi } from 'vitest';
 import StandaloneActivity from '../StandaloneActivity';
 import { apiService } from '../../services/api';
+import { WebSocketProvider } from '../../contexts/WebSocketContext';
 
 // Mock components
 vi.mock('../../components/DaisyUI', () => ({
@@ -50,7 +51,11 @@ describe('StandaloneActivity', () => {
       agentMetrics: []
     });
 
-    render(<StandaloneActivity />);
+    render(
+      <WebSocketProvider>
+        <StandaloneActivity />
+      </WebSocketProvider>
+    );
 
     // ActivityMonitor initially shows loading (which might render card with spinner or similar)
     // Or it renders DataTable with loading prop.

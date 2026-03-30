@@ -8,7 +8,7 @@ import { SkeletonTimeline } from '../DaisyUI/Skeleton';
 import EmptyState from '../DaisyUI/EmptyState';
 import StatsCards from '../DaisyUI/StatsCards';
 import SearchFilterBar from '../SearchFilterBar';
-import { useWebSocket } from '../../hooks/useWebSocket';
+import { useWebSocket } from '../../contexts/WebSocketContext';
 import { apiService, ActivityEvent, ActivityResponse } from '../../services/api';
 import { Clock, Activity, AlertTriangle, MessageSquare, RefreshCw } from 'lucide-react';
 import Debug from 'debug';
@@ -24,7 +24,7 @@ interface FilterOptions {
 }
 
 const ActivityMonitor: React.FC = () => {
-  const { messages: wsMessages } = useWebSocket();
+  const { messageFlow: wsMessages } = useWebSocket();
   const [initialMessages, setInitialMessages] = useState<ActivityEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
