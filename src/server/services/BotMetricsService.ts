@@ -103,11 +103,16 @@ export class BotMetricsService {
   }
 
   public getMetrics(botName: string): BotMetrics {
-    return this.metrics[botName] || { messageCount: 0, errorCount: 0 };
+    const m = this.metrics[botName];
+    return m ? { ...m } : { messageCount: 0, errorCount: 0 };
   }
 
   public getAllMetrics(): Record<string, BotMetrics> {
-    return { ...this.metrics };
+    const copy: Record<string, BotMetrics> = {};
+    for (const [key, value] of Object.entries(this.metrics)) {
+      copy[key] = { ...value };
+    }
+    return copy;
   }
 
   public stop(): void {

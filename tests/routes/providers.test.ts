@@ -26,7 +26,7 @@ describe('GET /api/providers/memory', () => {
     const res = await request(app).get('/api/providers/memory');
 
     expect(res.status).toBe(200);
-    expect(res.body).toEqual({ count: 0, providers: [] });
+    expect(res.body).toEqual({ success: true, data: { count: 0, providers: [] } });
   });
 
   it('returns providers with health status', async () => {
@@ -44,8 +44,9 @@ describe('GET /api/providers/memory', () => {
     const res = await request(app).get('/api/providers/memory');
 
     expect(res.status).toBe(200);
-    expect(res.body.count).toBe(1);
-    expect(res.body.providers[0]).toMatchObject({
+    expect(res.body.success).toBe(true);
+    expect(res.body.data.count).toBe(1);
+    expect(res.body.data.providers[0]).toMatchObject({
       name: 'local-mem0',
       id: 'mem0',
       label: 'Mem0',
@@ -69,8 +70,9 @@ describe('GET /api/providers/memory', () => {
     const res = await request(app).get('/api/providers/memory');
 
     expect(res.status).toBe(200);
-    expect(res.body.providers[0].status).toBe('error');
-    expect(res.body.providers[0].details).toMatchObject({ message: 'Connection refused' });
+    expect(res.body.success).toBe(true);
+    expect(res.body.data.providers[0].status).toBe('error');
+    expect(res.body.data.providers[0].details).toMatchObject({ message: 'Connection refused' });
   });
 });
 
@@ -82,6 +84,7 @@ describe('POST /api/providers/memory/:name/test', () => {
     const res = await request(app).post('/api/providers/memory/nonexistent/test');
 
     expect(res.status).toBe(404);
+    expect(res.body.success).toBe(false);
     expect(res.body.error).toContain('not found');
   });
 
@@ -106,14 +109,15 @@ describe('POST /api/providers/memory/:name/test', () => {
       .send({ userId: 'test-user' });
 
     expect(res.status).toBe(200);
-    expect(res.body.provider).toBe('local-mem0');
-    expect(res.body.summary.passed).toBe(5);
-    expect(res.body.summary.failed).toBe(0);
-    expect(res.body.steps).toHaveLength(5);
-    expect(res.body.steps.map((s: any) => s.step)).toEqual([
+    expect(res.body.success).toBe(true);
+    expect(res.body.data.provider).toBe('local-mem0');
+    expect(res.body.data.summary.passed).toBe(5);
+    expect(res.body.data.summary.failed).toBe(0);
+    expect(res.body.data.steps).toHaveLength(5);
+    expect(res.body.data.steps.map((s: any) => s.step)).toEqual([
       'healthCheck', 'addMemory', 'searchMemories', 'getMemory', 'deleteMemory',
     ]);
-    expect(res.body.steps.every((s: any) => s.status === 'pass')).toBe(true);
+    expect(res.body.data.steps.every((s: any) => s.status === 'pass')).toBe(true);
   });
 
   it('reports partial failures gracefully', async () => {
@@ -135,10 +139,11 @@ describe('POST /api/providers/memory/:name/test', () => {
     const res = await request(app).post('/api/providers/memory/broken-key/test');
 
     expect(res.status).toBe(200);
-    expect(res.body.summary.passed).toBe(1);  // healthCheck passes
-    expect(res.body.summary.failed).toBe(2);  // add + search fail
-    expect(res.body.summary.skipped).toBe(2); // get + delete skipped (no memoryId)
-    expect(res.body.steps[1].detail).toContain('LLM API key invalid');
+    expect(res.body.success).toBe(true);
+    expect(res.body.data.summary.passed).toBe(1);  // healthCheck passes
+    expect(res.body.data.summary.failed).toBe(2);  // add + search fail
+    expect(res.body.data.summary.skipped).toBe(2); // get + delete skipped (no memoryId)
+    expect(res.body.data.steps[1].detail).toContain('LLM API key invalid');
   });
 });
 
@@ -158,7 +163,8 @@ describe('GET /api/providers/tool', () => {
     const res = await request(app).get('/api/providers/tool');
 
     expect(res.status).toBe(200);
-    expect(res.body.count).toBe(1);
-    expect(res.body.providers[0].status).toBe('active');
+    expect(res.body.success).toBe(true);
+    expect(res.body.data.count).toBe(1);
+    expect(res.body.data.providers[0].status).toBe('active');
   });
 });

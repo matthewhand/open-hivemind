@@ -2,7 +2,12 @@ import { DatabaseManager } from '../../../../src/database/DatabaseManager';
 import { ConfigurationValidator } from '../../../../src/server/services/ConfigurationValidator';
 import { ConfigurationVersionService } from '../../../../src/server/services/ConfigurationVersionService';
 
-jest.mock('../../../../src/database/DatabaseManager');
+jest.mock('../../../../src/database/DatabaseManager', () => ({
+  DatabaseManager: {
+    getInstance: jest.fn(),
+    instance: null,
+  },
+}));
 jest.mock('../../../../src/server/services/ConfigurationValidator');
 
 describe('ConfigurationVersionService', () => {
@@ -55,21 +60,23 @@ describe('ConfigurationVersionService', () => {
         isActive: true,
       };
 
-      const mockVersions = [
-        {
-          id: 1,
-          botConfigurationId: 1,
-          version: '1.0.0',
-          name: 'test-bot',
-          messageProvider: 'discord',
-          llmProvider: 'openai',
-          createdAt: new Date(),
-          createdBy: 'user-1',
-        },
-      ];
+      const createdVersion = {
+        id: 1,
+        botConfigurationId: 1,
+        version: '1.0.0',
+        name: 'test-bot',
+        messageProvider: 'discord',
+        llmProvider: 'openai',
+        createdAt: new Date(),
+        createdBy: 'user-1',
+        changeLog: 'Initial version',
+      };
 
       mockDbManager.getBotConfiguration.mockResolvedValue(mockConfig as any);
-      mockDbManager.getBotConfigurationVersions.mockResolvedValue(mockVersions as any);
+      // First call returns empty (no existing versions), second call returns the created version
+      mockDbManager.getBotConfigurationVersions
+        .mockResolvedValueOnce([])
+        .mockResolvedValueOnce([createdVersion]);
 
       const result = await service.createVersion({
         botConfigurationId: 1,
@@ -130,10 +137,31 @@ describe('ConfigurationVersionService', () => {
         isActive: true,
       };
 
+      const createdVersion = {
+        botConfigurationId: 1,
+        version: '1.0.1',
+        name: 'test-bot',
+        messageProvider: 'discord',
+        llmProvider: 'openai',
+        persona: 'friendly',
+        systemInstruction: 'Be helpful',
+        mcpServers: '["server1"]',
+        mcpGuard: '{"enabled": true}',
+        discord: '{"token": "test"}',
+        openai: '{"apiKey": "test"}',
+        isActive: true,
+        createdAt: new Date(),
+        createdBy: 'system',
+      };
+
       mockDbManager.getBotConfiguration.mockResolvedValue(mockConfig as any);
-      mockDbManager.getBotConfigurationVersions.mockResolvedValue([
-        { version: '1.0.0', botConfigurationId: 1 },
-      ] as any);
+      // First call checks existing versions, second call retrieves the newly created version
+      mockDbManager.getBotConfigurationVersions
+        .mockResolvedValueOnce([{ version: '1.0.0', botConfigurationId: 1 }])
+        .mockResolvedValueOnce([
+          { version: '1.0.0', botConfigurationId: 1 },
+          createdVersion,
+        ]);
 
       const result = await service.createVersion({
         botConfigurationId: 1,

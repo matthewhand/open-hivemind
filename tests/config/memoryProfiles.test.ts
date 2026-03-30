@@ -5,10 +5,29 @@ import {
   getMemoryProfiles,
   MemoryProfiles,
   MemoryProfile,
+  MemoryProfileSchema,
+  validateMemoryProfile,
 } from '../../src/config/memoryProfiles';
 import * as profileUtils from '../../src/config/profileUtils';
 
 jest.mock('../../src/config/profileUtils');
+jest.mock('@common/logger', () => {
+  const warnMock = jest.fn();
+  return {
+    Logger: {
+      withContext: () => ({
+        warn: warnMock,
+        info: jest.fn(),
+        error: jest.fn(),
+        debug: jest.fn(),
+      }),
+    },
+    __warnMock: warnMock,
+  };
+});
+
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const { __warnMock: loggerWarnMock } = require('@common/logger');
 
 const mockedLoadProfiles = profileUtils.loadProfiles as jest.MockedFunction<typeof profileUtils.loadProfiles>;
 const mockedSaveProfiles = profileUtils.saveProfiles as jest.MockedFunction<typeof profileUtils.saveProfiles>;
@@ -101,6 +120,23 @@ describe('memoryProfiles', () => {
 
       const result = loadMemoryProfiles();
       expect(result.memory).toEqual([]);
+    });
+
+    test('validateAndMigrate skips invalid profiles and keeps valid ones', () => {
+      mockedLoadProfiles.mockImplementation((opts) => {
+        return opts.validateAndMigrate({
+          memory: [
+            { key: 'good', name: 'Good', provider: 'mem0', config: {} },
+            { key: 'bad' }, // missing provider and name
+            { key: 'also-good', name: 'Also Good', provider: 'mem4ai', config: {} },
+          ],
+        });
+      });
+
+      const result = loadMemoryProfiles();
+      expect(result.memory).toHaveLength(2);
+      expect(result.memory[0].key).toBe('good');
+      expect(result.memory[1].key).toBe('also-good');
     });
   });
 
@@ -222,6 +258,209 @@ describe('memoryProfiles', () => {
       };
       expect(withDesc.description).toBe('desc');
       expect(withoutDesc.description).toBeUndefined();
+    });
+  });
+
+  // -------------------------------------------------------------------
+  // Zod schema validation tests
+  // -------------------------------------------------------------------
+
+  describe('MemoryProfileSchema (Zod)', () => {
+    test('valid config passes schema validation', () => {
+      const input = {
+        key: 'mem0-cloud',
+        name: 'Mem0 Cloud',
+        provider: 'mem0',
+        config: {
+          apiKey: 'sk-test-123',
+          baseUrl: 'https://api.mem0.ai/v1',
+          userId: 'user-1',
+          timeoutMs: 10000,
+          maxRetries: 3,
+        },
+      };
+
+      const result = MemoryProfileSchema.safeParse(input);
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data.provider).toBe('mem0');
+        expect(result.data.config.apiKey).toBe('sk-test-123');
+        expect(result.data.config.timeoutMs).toBe(10000);
+      }
+    });
+
+    test('valid config with all known fields passes', () => {
+      const input = {
+        key: 'full',
+        name: 'Full Config',
+        provider: 'mem0',
+        description: 'A fully-loaded profile',
+        config: {
+          apiKey: 'key',
+          baseUrl: 'http://localhost:8000',
+          apiUrl: 'http://localhost:9000',
+          userId: 'u1',
+          agentId: 'a1',
+          orgId: 'org1',
+          organizationId: 'org2',
+          timeoutMs: 5000,
+          timeout: 5000,
+          maxRetries: 2,
+          llmProvider: 'openai',
+          llmModel: 'gpt-4',
+          embedderModel: 'text-embedding-3-small',
+          vectorStoreProvider: 'qdrant',
+          historyDbPath: '/tmp/history.db',
+          embeddingProviderId: 'embed-1',
+          limit: 20,
+          endpoint: 'https://example.com',
+        },
+      };
+
+      const result = MemoryProfileSchema.safeParse(input);
+      expect(result.success).toBe(true);
+    });
+
+    test('missing provider field fails validation', () => {
+      const input = {
+        key: 'no-provider',
+        name: 'No Provider',
+        config: { apiKey: 'key' },
+      };
+
+      const result = MemoryProfileSchema.safeParse(input);
+      expect(result.success).toBe(false);
+    });
+
+    test('empty provider string fails validation', () => {
+      const input = {
+        key: 'empty-provider',
+        name: 'Empty Provider',
+        provider: '',
+        config: {},
+      };
+
+      const result = MemoryProfileSchema.safeParse(input);
+      expect(result.success).toBe(false);
+    });
+
+    test('missing key field fails validation', () => {
+      const input = {
+        name: 'No Key',
+        provider: 'mem0',
+        config: {},
+      };
+
+      const result = MemoryProfileSchema.safeParse(input);
+      expect(result.success).toBe(false);
+    });
+
+    test('missing name field fails validation', () => {
+      const input = {
+        key: 'no-name',
+        provider: 'mem0',
+        config: {},
+      };
+
+      const result = MemoryProfileSchema.safeParse(input);
+      expect(result.success).toBe(false);
+    });
+
+    test('config defaults to empty object when omitted', () => {
+      const input = {
+        key: 'minimal',
+        name: 'Minimal',
+        provider: 'mem0',
+      };
+
+      const result = MemoryProfileSchema.safeParse(input);
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data.config).toEqual({});
+      }
+    });
+
+    test('extra/unknown config fields are allowed (forward compat)', () => {
+      const input = {
+        key: 'future-proof',
+        name: 'Future Proof',
+        provider: 'mem0',
+        config: {
+          apiKey: 'key',
+          futureField: 'some-value',
+          anotherNewField: 42,
+        },
+      };
+
+      const result = MemoryProfileSchema.safeParse(input);
+      expect(result.success).toBe(true);
+      if (result.success) {
+        // Unknown fields are preserved
+        expect(result.data.config.futureField).toBe('some-value');
+        expect(result.data.config.anotherNewField).toBe(42);
+      }
+    });
+  });
+
+  describe('validateMemoryProfile', () => {
+    test('returns parsed profile for valid input', () => {
+      const input = {
+        key: 'test',
+        name: 'Test',
+        provider: 'mem0',
+        config: { apiKey: 'k' },
+      };
+
+      const result = validateMemoryProfile(input, 0);
+      expect(result).toBeDefined();
+      expect(result!.provider).toBe('mem0');
+    });
+
+    test('returns undefined and logs warning for missing provider', () => {
+      const input = { key: 'bad', name: 'Bad' };
+
+      const result = validateMemoryProfile(input, 3);
+      expect(result).toBeUndefined();
+      expect(loggerWarnMock).toHaveBeenCalledWith(
+        'Skipping invalid memory profile',
+        expect.objectContaining({
+          index: 3,
+          errors: expect.arrayContaining([
+            expect.objectContaining({ path: 'provider' }),
+          ]),
+        })
+      );
+    });
+
+    test('returns profile and logs warning for unknown config fields', () => {
+      const input = {
+        key: 'extra',
+        name: 'Extra Fields',
+        provider: 'mem0',
+        config: { apiKey: 'k', unknownThing: true },
+      };
+
+      const result = validateMemoryProfile(input, 0);
+      expect(result).toBeDefined();
+      expect(result!.config.unknownThing).toBe(true);
+      expect(loggerWarnMock).toHaveBeenCalledWith(
+        'Memory profile contains unknown config fields (kept for forward compat)',
+        expect.objectContaining({
+          key: 'extra',
+          unknownFields: ['unknownThing'],
+        })
+      );
+    });
+
+    test('returns undefined for completely invalid input', () => {
+      const result = validateMemoryProfile(null, 0);
+      expect(result).toBeUndefined();
+      expect(loggerWarnMock).toHaveBeenCalled();
+    });
+
+    test('returns undefined for non-object input', () => {
+      const result = validateMemoryProfile('just a string', 1);
+      expect(result).toBeUndefined();
     });
   });
 });

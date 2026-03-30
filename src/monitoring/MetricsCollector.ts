@@ -78,7 +78,7 @@ export class MetricsCollector extends EventEmitter {
     if (this.collectionInterval) {
       clearInterval(this.collectionInterval);
       this.collectionInterval = null;
-      debug('Metrics collection stopped');
+      logger.debug('Metrics collection stopped');
     }
   }
 

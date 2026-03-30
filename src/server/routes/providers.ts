@@ -1,6 +1,7 @@
 import { Router, type Request, type Response } from 'express';
 import { providerRegistry } from '../../registries/ProviderRegistry';
 import { HTTP_STATUS } from '../../types/constants';
+import { ApiResponse } from '../utils/apiResponse';
 import Debug from 'debug';
 
 const debug = Debug('app:providers-route');
@@ -45,15 +46,17 @@ router.get('/memory', async (_req: Request, res: Response) => {
       });
     }
 
-    return res.json({
-      count: results.length,
-      providers: results,
-    });
+    return res.json(ApiResponse.success({ count: results.length, providers: results }));
   } catch (err: unknown) {
-    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
-      error: 'Failed to retrieve memory providers',
-      message: err instanceof Error ? err.message : String(err),
-    });
+    return res
+      .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
+      .json(
+        ApiResponse.error(
+          'Failed to retrieve memory providers',
+          'PROVIDER_LIST_ERROR',
+          { message: err instanceof Error ? err.message : String(err) },
+        ),
+      );
   }
 });
 
@@ -73,10 +76,15 @@ router.post('/memory/:name/test', async (req: Request, res: Response) => {
     const provider = memoryProviders.get(name);
 
     if (!provider) {
-      return res.status(HTTP_STATUS.NOT_FOUND).json({
-        error: `Memory provider "${name}" not found`,
-        registered: [...memoryProviders.keys()],
-      });
+      return res
+        .status(HTTP_STATUS.NOT_FOUND)
+        .json(
+          ApiResponse.error(
+            `Memory provider "${name}" not found`,
+            'NOT_FOUND',
+            { registered: [...memoryProviders.keys()] },
+          ),
+        );
     }
 
     let memoryId: string | undefined;
@@ -146,17 +154,23 @@ router.post('/memory/:name/test', async (req: Request, res: Response) => {
 
     debug('Memory provider "%s" test: %d/%d passed in %dms', name, passed, steps.length, totalMs);
 
-    return res.json({
-      provider: name,
-      summary: { passed, failed, skipped: steps.length - passed - failed, totalMs },
-      steps,
-    });
+    return res.json(
+      ApiResponse.success({
+        provider: name,
+        summary: { passed, failed, skipped: steps.length - passed - failed, totalMs },
+        steps,
+      }),
+    );
   } catch (err: unknown) {
-    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
-      error: 'Memory provider test failed',
-      message: err instanceof Error ? err.message : String(err),
-      steps,
-    });
+    return res
+      .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
+      .json(
+        ApiResponse.error(
+          'Memory provider test failed',
+          'PROVIDER_TEST_ERROR',
+          { message: err instanceof Error ? err.message : String(err), steps },
+        ),
+      );
   }
 });
 
@@ -200,15 +214,17 @@ router.get('/tool', async (_req: Request, res: Response) => {
       });
     }
 
-    return res.json({
-      count: results.length,
-      providers: results,
-    });
+    return res.json(ApiResponse.success({ count: results.length, providers: results }));
   } catch (err: unknown) {
-    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
-      error: 'Failed to retrieve tool providers',
-      message: err instanceof Error ? err.message : String(err),
-    });
+    return res
+      .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
+      .json(
+        ApiResponse.error(
+          'Failed to retrieve tool providers',
+          'PROVIDER_LIST_ERROR',
+          { message: err instanceof Error ? err.message : String(err) },
+        ),
+      );
   }
 });
 

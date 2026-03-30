@@ -8,34 +8,37 @@ import request from 'supertest';
 import { afterEach, beforeEach, describe, expect, it } from '@jest/globals';
 import usageTrackingRouter from '../../src/server/routes/usage-tracking';
 
-// Mock UsageTrackerService
-const mockGetAllToolMetrics = jest.fn();
-const mockGetToolMetrics = jest.fn();
-const mockGetAllProviderMetrics = jest.fn();
-const mockGetProviderMetrics = jest.fn();
-const mockGetToolMetricsByProvider = jest.fn();
-const mockGetTopTools = jest.fn();
-const mockGetTopProviders = jest.fn();
-const mockGetRecentTools = jest.fn();
-const mockGetAggregateStats = jest.fn();
-const mockClearAllData = jest.fn();
-
+// All mock fns created inline in factory to avoid jest.mock hoisting TDZ issues
 jest.mock('../../src/server/services/UsageTrackerService', () => ({
   UsageTrackerService: {
     getInstance: jest.fn().mockReturnValue({
-      getAllToolMetrics: mockGetAllToolMetrics,
-      getToolMetrics: mockGetToolMetrics,
-      getAllProviderMetrics: mockGetAllProviderMetrics,
-      getProviderMetrics: mockGetProviderMetrics,
-      getToolMetricsByProvider: mockGetToolMetricsByProvider,
-      getTopTools: mockGetTopTools,
-      getTopProviders: mockGetTopProviders,
-      getRecentTools: mockGetRecentTools,
-      getAggregateStats: mockGetAggregateStats,
-      clearAllData: mockClearAllData,
+      getAllToolMetrics: jest.fn(),
+      getToolMetrics: jest.fn(),
+      getAllProviderMetrics: jest.fn(),
+      getProviderMetrics: jest.fn(),
+      getToolMetricsByProvider: jest.fn(),
+      getTopTools: jest.fn(),
+      getTopProviders: jest.fn(),
+      getRecentTools: jest.fn(),
+      getAggregateStats: jest.fn(),
+      clearAllData: jest.fn(),
     }),
   },
 }));
+
+// Get references to mock functions from the mocked module
+import { UsageTrackerService } from '../../src/server/services/UsageTrackerService';
+const _usageMockInstance = (UsageTrackerService as any).getInstance();
+const mockGetAllToolMetrics = _usageMockInstance.getAllToolMetrics as jest.Mock;
+const mockGetToolMetrics = _usageMockInstance.getToolMetrics as jest.Mock;
+const mockGetAllProviderMetrics = _usageMockInstance.getAllProviderMetrics as jest.Mock;
+const mockGetProviderMetrics = _usageMockInstance.getProviderMetrics as jest.Mock;
+const mockGetToolMetricsByProvider = _usageMockInstance.getToolMetricsByProvider as jest.Mock;
+const mockGetTopTools = _usageMockInstance.getTopTools as jest.Mock;
+const mockGetTopProviders = _usageMockInstance.getTopProviders as jest.Mock;
+const mockGetRecentTools = _usageMockInstance.getRecentTools as jest.Mock;
+const mockGetAggregateStats = _usageMockInstance.getAggregateStats as jest.Mock;
+const mockClearAllData = _usageMockInstance.clearAllData as jest.Mock;
 
 describe('Usage Tracking API - Comprehensive Integration Tests', () => {
   let app: Express;

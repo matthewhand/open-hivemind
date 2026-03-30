@@ -1,25 +1,46 @@
-export interface ApiEnvelope<T = any> {
-  success: boolean;
-  data?: T;
-  error?: string;
-  code?: string;
+/**
+ * Standard API response envelope.
+ *
+ * Success: { success: true, data: T }
+ * Error:   { success: false, error: string, code?: string, details?: unknown }
+ */
+
+export interface ApiSuccessEnvelope<T = unknown> {
+  success: true;
+  data: T;
 }
 
+export interface ApiErrorEnvelope {
+  success: false;
+  error: string;
+  code?: string;
+  details?: unknown;
+}
+
+export type ApiEnvelope<T = unknown> = ApiSuccessEnvelope<T> | ApiErrorEnvelope;
+
 export const ApiResponse = {
-  success: <T = any>(data?: T): ApiEnvelope<T> => {
-    return {
-      success: true,
-      data,
-    };
+  /**
+   * Wrap a successful payload in the standard envelope.
+   */
+  success<T = unknown>(data?: T): ApiSuccessEnvelope<T> {
+    return { success: true, data: data as T };
   },
 
-  error: (message: string, code?: string, statusCode?: number): ApiEnvelope => {
-    const envelope: ApiEnvelope = {
-      success: false,
-      error: message,
-    };
-    if (code) {
+  /**
+   * Wrap an error in the standard envelope.
+   *
+   * @param message  Human-readable error description.
+   * @param code     Machine-readable error code (e.g. "NOT_FOUND").
+   * @param details  Optional structured details (validation issues, etc.).
+   */
+  error(message: string, code?: string, details?: unknown): ApiErrorEnvelope {
+    const envelope: ApiErrorEnvelope = { success: false, error: message };
+    if (code !== undefined) {
       envelope.code = code;
+    }
+    if (details !== undefined) {
+      envelope.details = details;
     }
     return envelope;
   },

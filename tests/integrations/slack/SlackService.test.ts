@@ -4,7 +4,21 @@ import { SlackService } from '@hivemind/message-slack/SlackService';
 import { WebClient } from '@slack/web-api';
 
 // Top-level mocks
-jest.mock('fs');
+jest.mock('fs', () => {
+  const actual = jest.requireActual('fs');
+  return {
+    ...actual,
+    readFileSync: jest.fn(),
+    existsSync: jest.fn(),
+    promises: {
+      ...actual.promises,
+      mkdir: jest.fn().mockResolvedValue(undefined),
+      writeFile: jest.fn().mockResolvedValue(undefined),
+      readFile: jest.fn().mockResolvedValue('{}'),
+      access: jest.fn().mockRejectedValue({ code: 'ENOENT' }),
+    },
+  };
+});
 jest.mock('@slack/web-api', () => ({
   WebClient: jest.fn(),
 }));
@@ -68,6 +82,21 @@ const mockBotManagerInstance = {
 
 jest.mock('@hivemind/message-slack/SlackBotManager', () => ({
   SlackBotManager: jest.fn().mockImplementation(() => mockBotManagerInstance),
+}));
+
+// Also mock by resolved path for internal relative imports
+jest.mock('../../../packages/message-slack/src/SlackBotManager', () => ({
+  SlackBotManager: jest.fn().mockImplementation(() => mockBotManagerInstance),
+}));
+
+jest.mock('@src/plugins/PluginLoader', () => ({
+  loadPlugin: jest.fn(),
+  instantiateProvider: jest.fn(),
+  instantiateLlmProvider: jest.fn(),
+}));
+
+jest.mock('@src/llm/getLlmProvider', () => ({
+  getLlmProvider: jest.fn().mockReturnValue([]),
 }));
 
 jest.mock('@src/services/StartupGreetingService', () => ({

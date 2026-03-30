@@ -2,17 +2,11 @@ import fs from 'fs';
 import path from 'path';
 import { BotMetricsService } from '../../../../src/server/services/BotMetricsService';
 
-jest.mock('fs', () => ({
-  promises: {
-    access: jest.fn(),
-    readFile: jest.fn(),
-    writeFile: jest.fn(),
-    mkdir: jest.fn(),
-  },
-  constants: {
-    F_OK: 0,
-  },
-}));
+// Use jest.spyOn on fs.promises to ensure source and test share the same mock references
+const mockAccess = jest.spyOn(fs.promises, 'access');
+const mockReadFile = jest.spyOn(fs.promises, 'readFile');
+const mockWriteFile = jest.spyOn(fs.promises, 'writeFile');
+const mockMkdir = jest.spyOn(fs.promises, 'mkdir');
 
 describe('BotMetricsService', () => {
   let service: BotMetricsService;
@@ -23,9 +17,9 @@ describe('BotMetricsService', () => {
     (BotMetricsService as any).instance = null;
 
     // Mock file not existing initially
-    (fs.promises.access as jest.Mock).mockRejectedValue({ code: 'ENOENT' });
-    (fs.promises.mkdir as jest.Mock).mockResolvedValue(undefined);
-    (fs.promises.writeFile as jest.Mock).mockResolvedValue(undefined);
+    mockAccess.mockRejectedValue({ code: 'ENOENT' });
+    mockMkdir.mockResolvedValue(undefined);
+    mockWriteFile.mockResolvedValue(undefined);
 
     service = BotMetricsService.getInstance();
     await service.waitForInitialization();
@@ -45,19 +39,23 @@ describe('BotMetricsService', () => {
     });
 
     test('should load metrics from file if it exists', async () => {
+      // Stop the beforeEach service first
+      service.stop();
+
       const mockMetrics = {
         'bot-1': { messageCount: 10, errorCount: 2, lastActive: '2024-03-29T10:00:00Z' },
         'bot-2': { messageCount: 5, errorCount: 0, lastActive: '2024-03-29T11:00:00Z' },
       };
 
-      (fs.promises.access as jest.Mock).mockResolvedValue(undefined);
-      (fs.promises.readFile as jest.Mock).mockResolvedValue(JSON.stringify(mockMetrics));
+      mockAccess.mockResolvedValue(undefined);
+      mockReadFile.mockResolvedValue(JSON.stringify(mockMetrics));
 
       (BotMetricsService as any).instance = null;
       const newService = BotMetricsService.getInstance();
       await newService.waitForInitialization();
 
       const allMetrics = newService.getAllMetrics();
+      expect(allMetrics['bot-1']).toBeDefined();
       expect(allMetrics['bot-1'].messageCount).toBe(10);
       expect(allMetrics['bot-2'].messageCount).toBe(5);
 
@@ -65,8 +63,8 @@ describe('BotMetricsService', () => {
     });
 
     test('should handle file read errors gracefully', async () => {
-      (fs.promises.access as jest.Mock).mockResolvedValue(undefined);
-      (fs.promises.readFile as jest.Mock).mockRejectedValue(new Error('Read error'));
+      mockAccess.mockResolvedValue(undefined);
+      mockReadFile.mockRejectedValue(new Error('Read error'));
 
       (BotMetricsService as any).instance = null;
       const newService = BotMetricsService.getInstance();
@@ -79,8 +77,8 @@ describe('BotMetricsService', () => {
     });
 
     test('should handle corrupted metrics file', async () => {
-      (fs.promises.access as jest.Mock).mockResolvedValue(undefined);
-      (fs.promises.readFile as jest.Mock).mockResolvedValue('{ invalid json');
+      mockAccess.mockResolvedValue(undefined);
+      mockReadFile.mockResolvedValue('{ invalid json');
 
       (BotMetricsService as any).instance = null;
       const newService = BotMetricsService.getInstance();
@@ -241,16 +239,15 @@ describe('BotMetricsService', () => {
       // Trigger save
       await (service as any).saveMetrics();
 
-      expect(fs.promises.mkdir).toHaveBeenCalled();
-      expect(fs.promises.writeFile).toHaveBeenCalledWith(
+      expect(mockMkdir).toHaveBeenCalled();
+      expect(mockWriteFile).toHaveBeenCalledWith(
         mockMetricsPath,
-        expect.stringContaining('test-bot'),
-        undefined
+        expect.stringContaining('test-bot')
       );
     });
 
     test('should handle save errors gracefully', async () => {
-      (fs.promises.writeFile as jest.Mock).mockRejectedValue(new Error('Write error'));
+      mockWriteFile.mockRejectedValue(new Error('Write error'));
 
       service.incrementMessageCount('test-bot');
 
@@ -259,7 +256,7 @@ describe('BotMetricsService', () => {
     });
 
     test('should handle directory creation errors', async () => {
-      (fs.promises.mkdir as jest.Mock).mockRejectedValue(new Error('Mkdir error'));
+      mockMkdir.mockRejectedValue(new Error('Mkdir error'));
 
       service.incrementMessageCount('test-bot');
 
@@ -269,18 +266,31 @@ describe('BotMetricsService', () => {
   });
 
   describe('auto-save', () => {
-    beforeEach(() => {
+    let autoSaveService: BotMetricsService;
+
+    beforeEach(async () => {
       jest.useFakeTimers();
+      // Stop the original service and create a new one under fake timers
+      service.stop();
+      (BotMetricsService as any).instance = null;
+      mockAccess.mockRejectedValue({ code: 'ENOENT' });
+      mockMkdir.mockResolvedValue(undefined);
+      mockWriteFile.mockResolvedValue(undefined);
+      autoSaveService = BotMetricsService.getInstance();
+      // Manually resolve the initPromise under fake timers
+      await jest.runAllTimersAsync().catch(() => {});
+      await autoSaveService.waitForInitialization();
     });
 
     afterEach(() => {
+      autoSaveService.stop();
       jest.useRealTimers();
     });
 
     test('should auto-save every minute', async () => {
-      const saveSpy = jest.spyOn(service as any, 'saveMetrics');
+      const saveSpy = jest.spyOn(autoSaveService as any, 'saveMetrics');
 
-      service.incrementMessageCount('test-bot');
+      autoSaveService.incrementMessageCount('test-bot');
 
       // Fast-forward 60 seconds
       jest.advanceTimersByTime(60000);
@@ -291,9 +301,9 @@ describe('BotMetricsService', () => {
     });
 
     test('should not auto-save before interval expires', () => {
-      const saveSpy = jest.spyOn(service as any, 'saveMetrics');
+      const saveSpy = jest.spyOn(autoSaveService as any, 'saveMetrics');
 
-      service.incrementMessageCount('test-bot');
+      autoSaveService.incrementMessageCount('test-bot');
 
       // Fast-forward 30 seconds
       jest.advanceTimersByTime(30000);

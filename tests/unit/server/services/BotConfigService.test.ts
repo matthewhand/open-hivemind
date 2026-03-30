@@ -3,20 +3,9 @@ import { BotConfigService } from '../../../../src/server/services/BotConfigServi
 import { ConfigurationValidator } from '../../../../src/server/services/ConfigurationValidator';
 import { ConfigurationError } from '../../../../src/types/errorClasses';
 
-jest.mock('../../../../src/database/DatabaseManager');
-jest.mock('../../../../src/server/services/ConfigurationValidator');
-
-describe('BotConfigService', () => {
-  let service: BotConfigService;
-  let mockDbManager: jest.Mocked<DatabaseManager>;
-  let mockValidator: jest.Mocked<ConfigurationValidator>;
-
-  beforeEach(() => {
-    jest.clearAllMocks();
-    (BotConfigService as any).instance = null;
-
-    // Mock DatabaseManager
-    mockDbManager = {
+jest.mock('../../../../src/database/DatabaseManager', () => ({
+  DatabaseManager: {
+    getInstance: jest.fn().mockReturnValue({
       isConfigured: jest.fn().mockReturnValue(true),
       createBotConfiguration: jest.fn().mockResolvedValue(1),
       getBotConfiguration: jest.fn(),
@@ -29,9 +18,43 @@ describe('BotConfigService', () => {
       getBotConfigurationAudit: jest.fn().mockResolvedValue([]),
       getBotConfigurationVersions: jest.fn().mockResolvedValue([]),
       createBotConfigurationVersion: jest.fn().mockResolvedValue(1),
-    } as any;
+    }),
+    instance: null,
+  },
+}));
+jest.mock('../../../../src/server/services/ConfigurationValidator', () => ({
+  ConfigurationValidator: jest.fn().mockImplementation(() => ({
+    validateBotConfig: jest.fn().mockReturnValue({
+      isValid: true, errors: [], warnings: [], suggestions: [],
+    }),
+  })),
+}));
 
-    (DatabaseManager.getInstance as jest.Mock).mockReturnValue(mockDbManager);
+describe('BotConfigService', () => {
+  let service: BotConfigService;
+  let mockDbManager: jest.Mocked<DatabaseManager>;
+  let mockValidator: jest.Mocked<ConfigurationValidator>;
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    (BotConfigService as any).instance = null;
+
+    // Get mock references from the mocked module (factory provides defaults)
+    mockDbManager = DatabaseManager.getInstance() as any;
+
+    // Reset mock implementations after clearAllMocks
+    mockDbManager.isConfigured.mockReturnValue(true);
+    mockDbManager.createBotConfiguration.mockResolvedValue(1);
+    mockDbManager.getBotConfiguration.mockResolvedValue(null);
+    mockDbManager.getBotConfigurationByName.mockResolvedValue(null);
+    mockDbManager.getAllBotConfigurations.mockResolvedValue([]);
+    mockDbManager.getAllBotConfigurationsWithDetails.mockResolvedValue([]);
+    mockDbManager.updateBotConfiguration.mockResolvedValue(undefined);
+    mockDbManager.deleteBotConfiguration.mockResolvedValue(true);
+    mockDbManager.createBotConfigurationAudit.mockResolvedValue(1);
+    mockDbManager.getBotConfigurationAudit.mockResolvedValue([]);
+    mockDbManager.getBotConfigurationVersions.mockResolvedValue([]);
+    mockDbManager.createBotConfigurationVersion.mockResolvedValue(1);
 
     // Mock ConfigurationValidator
     mockValidator = {
@@ -46,6 +69,10 @@ describe('BotConfigService', () => {
     (ConfigurationValidator as jest.Mock).mockImplementation(() => mockValidator);
 
     service = BotConfigService.getInstance();
+
+    // Override the private dbManager with our mock after construction
+    (service as any).dbManager = mockDbManager;
+    (service as any).configValidator = mockValidator;
   });
 
   afterEach(() => {

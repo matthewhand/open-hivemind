@@ -54,9 +54,9 @@ export class Mem0Provider implements IMemoryProvider {
     this.maxRetries = config.maxRetries ?? DEFAULT_MAX_RETRIES;
     this.circuitBreaker = getCircuitBreaker({
       name: 'mem0',
-      failureThreshold: 5,
-      resetTimeoutMs: 30_000,
-      halfOpenMaxAttempts: 3,
+      failureThreshold: config.circuitBreaker?.failureThreshold ?? 5,
+      resetTimeoutMs: config.circuitBreaker?.resetTimeoutMs ?? 30_000,
+      halfOpenMaxAttempts: config.circuitBreaker?.halfOpenMaxAttempts ?? 3,
     });
 
     debug(

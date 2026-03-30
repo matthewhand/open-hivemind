@@ -157,7 +157,8 @@ describe('MattermostProvider', () => {
         expect(mockMattermostInstance.sendMessageToChannel).toHaveBeenCalledWith(
           'channel321',
           'Agent message',
-          'agent1'
+          'agent1',
+          undefined
         );
         expect(result).toBe('post_789');
       });
@@ -170,6 +171,7 @@ describe('MattermostProvider', () => {
         expect(mockMattermostInstance.sendMessageToChannel).toHaveBeenCalledWith(
           'channel999',
           'No agent',
+          undefined,
           undefined
         );
         expect(result).toBe('post_abc');

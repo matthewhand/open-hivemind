@@ -818,7 +818,7 @@ const toolProfilesModule = require('../../config/toolProfiles');
 router.get('/memory-profiles', (_req, res) => {
   try {
     const profiles = memoryProfilesModule.getMemoryProfiles();
-    return res.json(profiles);
+    return res.json(ApiResponse.success(profiles));
   } catch (error: any) {
     const hivemindError = ErrorUtils.toHivemindError(error);
     return res
@@ -827,7 +827,6 @@ router.get('/memory-profiles', (_req, res) => {
         ApiResponse.error(
           (hivemindError as any).message,
           'MEMORY_PROFILES_GET_ERROR',
-          (hivemindError as any).statusCode || 500
         )
       );
   }
@@ -844,7 +843,6 @@ router.post('/memory-profiles', validateRequest(CreateMemoryProfileSchema), (req
           ApiResponse.error(
             `Memory profile with key '${newProfile.key}' already exists`,
             'CONFLICT',
-            409
           )
         );
     profiles.memory.push(newProfile);
@@ -858,7 +856,6 @@ router.post('/memory-profiles', validateRequest(CreateMemoryProfileSchema), (req
         ApiResponse.error(
           (hivemindError as any).message,
           'MEMORY_PROFILES_CREATE_ERROR',
-          (hivemindError as any).statusCode || 500
         )
       );
   }
@@ -872,7 +869,7 @@ router.put('/memory-profiles/:key', validateRequest(MemoryProfileKeyParamSchema)
     if (index === -1)
       return res
         .status(HTTP_STATUS.NOT_FOUND)
-        .json(ApiResponse.error(`Memory profile '${key}' not found`, 'NOT_FOUND', 404));
+        .json(ApiResponse.error(`Memory profile '${key}' not found`, 'NOT_FOUND'));
     profiles.memory[index] = { ...profiles.memory[index], ...req.body, key };
     memoryProfilesModule.saveMemoryProfiles(profiles);
     return res.json(ApiResponse.success({ profile: profiles.memory[index] }));
@@ -884,7 +881,6 @@ router.put('/memory-profiles/:key', validateRequest(MemoryProfileKeyParamSchema)
         ApiResponse.error(
           (hivemindError as any).message,
           'MEMORY_PROFILES_UPDATE_ERROR',
-          (hivemindError as any).statusCode || 500
         )
       );
   }
@@ -898,7 +894,7 @@ router.delete('/memory-profiles/:key', validateRequest(MemoryProfileKeyParamSche
     if (index === -1)
       return res
         .status(HTTP_STATUS.NOT_FOUND)
-        .json(ApiResponse.error(`Memory profile '${key}' not found`, 'NOT_FOUND', 404));
+        .json(ApiResponse.error(`Memory profile '${key}' not found`, 'NOT_FOUND'));
     profiles.memory.splice(index, 1);
     memoryProfilesModule.saveMemoryProfiles(profiles);
     return res.json(ApiResponse.success());
@@ -910,7 +906,6 @@ router.delete('/memory-profiles/:key', validateRequest(MemoryProfileKeyParamSche
         ApiResponse.error(
           (hivemindError as any).message,
           'MEMORY_PROFILES_DELETE_ERROR',
-          (hivemindError as any).statusCode || 500
         )
       );
   }

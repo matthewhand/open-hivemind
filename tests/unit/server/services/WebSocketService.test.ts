@@ -6,11 +6,44 @@ import { BotMetricsService } from '../../../../src/server/services/BotMetricsSer
 import { WebSocketService } from '../../../../src/server/services/WebSocketService';
 import ApiMonitorService from '../../../../src/services/ApiMonitorService';
 
-jest.mock('socket.io');
+jest.mock('socket.io', () => ({
+  Server: jest.fn(),
+}));
 jest.mock('../../../../src/config/BotConfigurationManager');
-jest.mock('../../../../src/services/ApiMonitorService');
+jest.mock('../../../../src/services/ApiMonitorService', () => {
+  const mock = {
+    on: jest.fn(),
+    syncLlmEndpoints: jest.fn(),
+    startAllMonitoring: jest.fn(),
+    getAllStatuses: jest.fn().mockReturnValue([]),
+    getOverallHealth: jest.fn().mockReturnValue({ status: 'healthy' }),
+    getAllEndpoints: jest.fn().mockReturnValue([]),
+    getInstance: jest.fn(),
+  };
+  mock.getInstance.mockReturnValue(mock);
+  return { __esModule: true, default: mock };
+});
 jest.mock('../../../../src/server/services/ActivityLogger');
 jest.mock('../../../../src/server/services/BotMetricsService');
+jest.mock('tsyringe', () => {
+  const actual = jest.requireActual('tsyringe');
+  return {
+    ...actual,
+    container: {
+      ...actual.container,
+      resolve: jest.fn().mockReturnValue({
+        on: jest.fn(),
+        syncLlmEndpoints: jest.fn(),
+        startAllMonitoring: jest.fn(),
+        getAllStatuses: jest.fn().mockReturnValue([]),
+        getOverallHealth: jest.fn().mockReturnValue({ status: 'healthy' }),
+        getAllEndpoints: jest.fn().mockReturnValue([]),
+      }),
+    },
+    injectable: () => (target: any) => target,
+    singleton: () => (target: any) => target,
+  };
+});
 
 describe('WebSocketService', () => {
   let service: WebSocketService;

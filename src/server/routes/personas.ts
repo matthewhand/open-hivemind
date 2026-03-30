@@ -76,18 +76,16 @@ router.get('/', async (req, res) => {
 });
 
 // PUT /api/personas/reorder
-router.put('/reorder', validateRequest(ReorderSchema), (req, res) => {
+router.put('/reorder', validateRequest(ReorderSchema), async (req, res) => {
   try {
     const { ids } = req.body;
 
-    const fsModule = require('fs');
-    const pathModule = require('path');
+    const fsModule = await import('fs');
+    const pathModule = await import('path');
     const orderFilePath = pathModule.join(process.cwd(), 'config', 'user', 'persona-order.json');
     const orderDir = pathModule.dirname(orderFilePath);
-    if (!fsModule.existsSync(orderDir)) {
-      fsModule.mkdirSync(orderDir, { recursive: true });
-    }
-    fsModule.writeFileSync(orderFilePath, JSON.stringify(ids, null, 2));
+    await fsModule.promises.mkdir(orderDir, { recursive: true });
+    await fsModule.promises.writeFile(orderFilePath, JSON.stringify(ids, null, 2));
 
     return res.json({ success: true, message: 'Persona order updated' });
   } catch (error: unknown) {

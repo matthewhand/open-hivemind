@@ -20,6 +20,7 @@ To add a new screenshot:
 | ![activity-page-filters](activity-page-filters.png) | Activity page with filter controls applied |
 | ![chat-monitor](chat-monitor.png) | Chat monitoring view for live message tracking |
 | ![monitoring-dashboard](monitoring-dashboard.png) | System monitoring dashboard with health metrics |
+| ![health-dashboard](health-dashboard.png) | Health dashboard page with service status overview |
 | ![distributed-trace-waterfall](distributed-trace-waterfall.png) | Distributed tracing waterfall view for request debugging |
 
 ## Analytics & Metrics
@@ -87,6 +88,13 @@ To add a new screenshot:
 |---|---|
 | ![message-providers-list](message-providers-list.png) | Message providers list page |
 | ![message-add-provider-modal](message-add-provider-modal.png) | Modal for adding a new message provider |
+
+## Providers API
+
+| Screenshot | Description |
+|---|---|
+| ![providers-api-memory](providers-api-memory.png) | Memory providers API listing page |
+| ![providers-api-tool](providers-api-tool.png) | Tool providers API listing page |
 
 ## MCP (Model Context Protocol)
 

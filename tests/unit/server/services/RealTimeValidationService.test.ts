@@ -4,10 +4,16 @@ import { ConfigurationTemplateService } from '../../../../src/server/services/Co
 import { ConfigurationValidator } from '../../../../src/server/services/ConfigurationValidator';
 import { RealTimeValidationService } from '../../../../src/server/services/RealTimeValidationService';
 
-jest.mock('../../../../src/server/services/BotConfigService');
-jest.mock('../../../../src/server/services/ConfigurationTemplateService');
+jest.mock('../../../../src/server/services/BotConfigService', () => ({
+  BotConfigService: { getInstance: jest.fn() },
+}));
+jest.mock('../../../../src/server/services/ConfigurationTemplateService', () => ({
+  ConfigurationTemplateService: { getInstance: jest.fn() },
+}));
 jest.mock('../../../../src/server/services/ConfigurationValidator');
-jest.mock('../../../../src/database/DatabaseManager');
+jest.mock('../../../../src/database/DatabaseManager', () => ({
+  DatabaseManager: { getInstance: jest.fn() },
+}));
 
 describe('RealTimeValidationService', () => {
   let service: RealTimeValidationService;
@@ -212,7 +218,7 @@ describe('RealTimeValidationService', () => {
       expect(report.result.score).toBeLessThanOrEqual(100);
     });
 
-    test('should emit validationCompleted event', async (done) => {
+    test('should emit validationCompleted event', async () => {
       const mockConfig = {
         name: 'test-bot',
         messageProvider: 'discord',
@@ -221,24 +227,30 @@ describe('RealTimeValidationService', () => {
 
       mockBotConfigService.getBotConfig.mockResolvedValue(mockConfig as any);
 
-      service.on('validationCompleted', (report) => {
-        expect(report.configId).toBe(1);
-        done();
+      const eventPromise = new Promise<void>((resolve) => {
+        service.on('validationCompleted', (report) => {
+          expect(report.configId).toBe(1);
+          resolve();
+        });
       });
 
       await service.validateConfiguration(1, 'standard');
+      await eventPromise;
     });
 
-    test('should emit validationFailed event on errors', async (done) => {
+    test('should emit validationFailed event on errors', async () => {
       const mockConfig = { name: '', messageProvider: 'discord', llmProvider: 'openai' };
       mockBotConfigService.getBotConfig.mockResolvedValue(mockConfig as any);
 
-      service.on('validationFailed', (report) => {
-        expect(report.result.isValid).toBe(false);
-        done();
+      const eventPromise = new Promise<void>((resolve) => {
+        service.on('validationFailed', (report) => {
+          expect(report.result.isValid).toBe(false);
+          resolve();
+        });
       });
 
       await service.validateConfiguration(1, 'standard');
+      await eventPromise;
     });
 
     test('should measure execution time', async () => {

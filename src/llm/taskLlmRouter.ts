@@ -103,10 +103,10 @@ const openWebUI: ILlmProvider = {
   },
 };
 
-function createProviderFromInstance(
+async function createProviderFromInstance(
   instance: ProviderInstance,
   modelOverride?: string
-): ILlmProvider | null {
+): Promise<ILlmProvider | null> {
   try {
     const type = String(instance.type || '').toLowerCase();
     const baseConfig = instance.config || {};
@@ -167,10 +167,10 @@ function pickProviderInstance(
   return null;
 }
 
-export function getTaskLlm(
+export async function getTaskLlm(
   task: LlmTask,
   opts?: { fallbackProviders?: ILlmProvider[]; baseMetadata?: Record<string, any> }
-): TaskLlmSelection {
+): Promise<TaskLlmSelection> {
   const overrides = readOverride(task);
   const providerRef = overrides.providerRef;
   const modelRef = overrides.modelRef;
@@ -209,7 +209,7 @@ export function getTaskLlm(
     return { provider: fallbackProviders[0], metadata, source: 'default' };
   }
 
-  const instanceProvider = createProviderFromInstance(picked, modelRef);
+  const instanceProvider = await createProviderFromInstance(picked, modelRef);
   if (!instanceProvider) {
     debug(
       `Task ${task}: provider instance "${picked.id}" failed to initialize; falling back to default providers`

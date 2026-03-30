@@ -98,10 +98,8 @@ router.put('/reorder', validateRequest(ReorderSchema), async (req, res) => {
     const pathModule = await import('path');
     const orderFilePath = pathModule.join(process.cwd(), 'config', 'user', 'bot-order.json');
     const orderDir = pathModule.dirname(orderFilePath);
-    if (!fsModule.existsSync(orderDir)) {
-      fsModule.mkdirSync(orderDir, { recursive: true });
-    }
-    fsModule.writeFileSync(orderFilePath, JSON.stringify(ids, null, 2));
+    await fsModule.promises.mkdir(orderDir, { recursive: true });
+    await fsModule.promises.writeFile(orderFilePath, JSON.stringify(ids, null, 2));
 
     return res.json({ success: true, message: 'Bot order updated' });
   } catch (error: unknown) {

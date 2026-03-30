@@ -7,7 +7,12 @@
     "baseUrl": "http://mem0:8000",
     "apiKey": "not-needed-unless-ADMIN_API_KEY-is-set",
     "userId": "default",
-    "timeoutMs": 10000
+    "timeoutMs": 10000,
+    "circuitBreaker": {
+      "failureThreshold": 3,
+      "resetTimeoutMs": 15000,
+      "halfOpenMaxAttempts": 2
+    }
   },
 
   "cloud-mem0": {

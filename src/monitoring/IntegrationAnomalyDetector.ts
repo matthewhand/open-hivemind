@@ -209,7 +209,7 @@ export class IntegrationAnomalyDetector extends EventEmitter {
     if (this.checkInterval) {
       clearInterval(this.checkInterval);
       this.checkInterval = null;
-      debug('Integration anomaly detection stopped');
+      // debug: anomaly detection stopped
     }
     this.emit('detectionStopped');
   }
@@ -220,7 +220,7 @@ export class IntegrationAnomalyDetector extends EventEmitter {
   public shutdown(): void {
     this.stopDetection();
     this.removeAllListeners();
-    debug('IntegrationAnomalyDetector shutdown completed');
+    // debug: IntegrationAnomalyDetector shutdown completed
   }
 
   /**

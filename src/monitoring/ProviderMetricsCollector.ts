@@ -699,7 +699,6 @@ export class ProviderMetricsCollector extends EventEmitter {
     const existing = this.monitoringIntervals.get(intervalKey);
     if (existing) {
       clearInterval(existing);
-      debug(`Cleared existing monitoring interval for ${intervalKey}`);
     }
 
     const interval = setInterval(() => {
@@ -707,20 +706,17 @@ export class ProviderMetricsCollector extends EventEmitter {
     }, config.checkInterval);
 
     this.monitoringIntervals.set(intervalKey, interval);
-    debug(`Started monitoring interval for ${intervalKey}`);
   }
 
   /**
    * Stop all monitoring intervals (for graceful shutdown)
    */
   public shutdown(): void {
-    for (const [key, interval] of this.monitoringIntervals.entries()) {
+    for (const [, interval] of this.monitoringIntervals.entries()) {
       clearInterval(interval);
-      debug(`Cleared monitoring interval: ${key}`);
     }
     this.monitoringIntervals.clear();
     this.removeAllListeners();
-    debug('ProviderMetricsCollector shutdown completed');
   }
 
   /**

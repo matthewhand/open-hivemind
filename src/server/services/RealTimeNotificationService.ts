@@ -22,7 +22,7 @@ interface SubscriptionFilter {
   sources?: string[];
 }
 
-class RealTimeNotificationService extends EventEmitter {
+export class RealTimeNotificationService extends EventEmitter {
   private static instance: RealTimeNotificationService | null = null;
   private notifications: NotificationEvent[] = [];
   private maxNotifications = 1000;

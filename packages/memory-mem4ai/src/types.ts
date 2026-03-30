@@ -28,6 +28,17 @@ export interface Mem4aiConfig {
   timeout?: number;
   /** Maximum number of retries on 429/5xx (default: 3) */
   maxRetries?: number;
+
+  // --- circuit breaker tuning ---
+  /** Override default circuit breaker thresholds */
+  circuitBreaker?: {
+    /** Consecutive failures before opening the circuit (default: 5) */
+    failureThreshold?: number;
+    /** Time in ms before moving from OPEN to HALF_OPEN (default: 30 000) */
+    resetTimeoutMs?: number;
+    /** Max probe requests in HALF_OPEN state (default: 3) */
+    halfOpenMaxAttempts?: number;
+  };
 }
 
 // ---------------------------------------------------------------------------

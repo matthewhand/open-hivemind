@@ -61,9 +61,9 @@ export class Mem4aiProvider implements IMemoryProvider {
     this.maxRetries = config.maxRetries ?? DEFAULT_MAX_RETRIES;
     this.circuitBreaker = getCircuitBreaker({
       name: 'mem4ai',
-      failureThreshold: 5,
-      resetTimeoutMs: 30_000,
-      halfOpenMaxAttempts: 3,
+      failureThreshold: config.circuitBreaker?.failureThreshold ?? 5,
+      resetTimeoutMs: config.circuitBreaker?.resetTimeoutMs ?? 30_000,
+      halfOpenMaxAttempts: config.circuitBreaker?.halfOpenMaxAttempts ?? 3,
     });
 
     debug(
