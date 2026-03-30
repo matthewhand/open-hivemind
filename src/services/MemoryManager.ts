@@ -118,7 +118,7 @@ export class MemoryManager {
 
     try {
       const pluginName = `memory-${profile.provider}`;
-      const mod = loadPlugin(pluginName);
+      const mod = await loadPlugin(pluginName);
       const provider = instantiateMemoryProvider(mod, profile.config) as IMemoryProvider;
       this.providers.set(profileKey, provider);
       debug('Instantiated memory provider for profile "%s" (plugin: %s)', profileKey, pluginName);

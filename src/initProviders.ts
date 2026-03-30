@@ -99,7 +99,7 @@ async function discoverMemoryProviders(): Promise<void> {
         const pluginName = profile.provider.startsWith('memory-')
           ? profile.provider
           : `memory-${profile.provider}`;
-        const mod = loadPlugin(pluginName);
+        const mod = await loadPlugin(pluginName);
         const instance = instantiateMemoryProvider(mod, profile.config);
         providerRegistry.registerMemoryProvider(profile.key, instance);
         debug('Registered memory provider from profile: %s (%s)', profile.key, pluginName);
@@ -122,7 +122,7 @@ async function discoverMemoryProviders(): Promise<void> {
       // Skip if already registered via profile
       if (providerRegistry.getMemoryProvider(pkgName)) continue;
       try {
-        const mod = loadPlugin(pkgName);
+        const mod = await loadPlugin(pkgName);
         const instance = instantiateMemoryProvider(mod);
         providerRegistry.registerMemoryProvider(pkgName, instance);
         debug('Auto-discovered memory provider package: %s', pkgName);
@@ -149,7 +149,7 @@ async function discoverToolProviders(): Promise<void> {
         const pluginName = profile.provider.startsWith('tool-')
           ? profile.provider
           : `tool-${profile.provider}`;
-        const mod = loadPlugin(pluginName);
+        const mod = await loadPlugin(pluginName);
         const instance = instantiateToolProvider(mod, profile.config);
         providerRegistry.registerToolProvider(profile.key, instance);
         debug('Registered tool provider from profile: %s (%s)', profile.key, pluginName);
@@ -171,7 +171,7 @@ async function discoverToolProviders(): Promise<void> {
       const pkgName = entry.name;
       if (providerRegistry.getToolProvider(pkgName)) continue;
       try {
-        const mod = loadPlugin(pkgName);
+        const mod = await loadPlugin(pkgName);
         const instance = instantiateToolProvider(mod);
         providerRegistry.registerToolProvider(pkgName, instance);
         debug('Auto-discovered tool provider package: %s', pkgName);

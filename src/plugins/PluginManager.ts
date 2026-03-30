@@ -265,7 +265,7 @@ export async function installPlugin(repoUrl: string): Promise<PluginInfo> {
     debug('Running pnpm install --prod in %s', pluginPath);
     exec('pnpm', ['install', '--prod', '--ignore-scripts'], pluginPath);
 
-    const mod = loadPlugin(name);
+    const mod = await loadPlugin(name);
     const manifest = validateManifest(name, mod);
 
     // Run security verification on the newly installed plugin
@@ -336,7 +336,7 @@ export async function updatePlugin(name: string): Promise<PluginInfo> {
 
   evictFromCache(pluginPath);
 
-  const mod = loadPlugin(name);
+  const mod = await loadPlugin(name);
   const manifest = validateManifest(name, mod);
 
   // Re-verify security after update
@@ -384,7 +384,7 @@ export async function listInstalledPlugins(): Promise<PluginInfo[]> {
   for (const name of dirs) {
     const pluginPath = path.join(PLUGINS_DIR, name);
     try {
-      const mod = loadPlugin(name);
+      const mod = await loadPlugin(name);
       const manifest = mod.manifest as PluginManifest;
       if (!manifest) continue;
 

@@ -8,7 +8,7 @@ import type {
 import {
   getCircuitBreaker,
   type CircuitBreaker as CircuitBreakerType,
-} from '@common/CircuitBreaker';
+} from './CircuitBreaker';
 import {
   Mem4aiApiError,
   type Mem4aiAddResponse,
