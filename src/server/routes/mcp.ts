@@ -50,8 +50,8 @@ interface MCPClient {
 
 const MCP_SERVERS_CONFIG_FILE = join(process.cwd(), 'data', 'mcp-servers.json');
 
-// In-memory store for connected MCP clients
-const connectedClients = new Map<string, MCPClient>();
+// In-memory store for connected MCP clients - exported for reuse in other routes
+export const connectedClients = new Map<string, MCPClient>();
 
 // Ensure data directory exists
 const ensureDataDir = async () => {
@@ -64,8 +64,8 @@ const ensureDataDir = async () => {
   }
 };
 
-// Load/Save MCP server configurations
-const loadMCPServers = async (): Promise<MCPServer[]> => {
+// Load/Save MCP server configurations - exported for reuse in other routes
+export const loadMCPServers = async (): Promise<MCPServer[]> => {
   try {
     const data = await fs.readFile(MCP_SERVERS_CONFIG_FILE, 'utf8');
     return JSON.parse(data);

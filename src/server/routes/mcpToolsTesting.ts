@@ -1,12 +1,10 @@
 import Debug from 'debug';
 import { Router } from 'express';
 import { ErrorUtils } from '@src/types/errors';
+import { loadMCPServers, connectedClients } from './mcp';
 
 const debug = Debug('app:webui:mcpToolsTesting');
 const router = Router();
-
-// In-memory store for connected MCP clients (imported from mcp.ts route)
-// We'll reuse the existing MCP infrastructure
 
 /**
  * GET /api/admin/mcp-tools/list
@@ -14,35 +12,40 @@ const router = Router();
  */
 router.get('/list', async (req, res) => {
   try {
-    // Reuse the existing /api/mcp/servers endpoint logic
-    const servers = await fetch('http://localhost:3000/api/mcp/servers').then((r) => r.json());
+    // Load MCP servers configuration directly instead of HTTP fetch
+    const servers = await loadMCPServers();
 
     const tools: any[] = [];
 
-    if (servers.servers && Array.isArray(servers.servers)) {
-      servers.servers.forEach((server: any) => {
-        if (server.connected && server.tools && Array.isArray(server.tools)) {
-          server.tools.forEach((tool: any) => {
-            tools.push({
-              id: `${server.name}-${tool.name}`,
-              name: tool.name,
-              description: tool.description || 'No description available',
-              serverId: server.name,
-              serverName: server.name,
-              inputSchema: tool.inputSchema,
-              outputSchema: tool.outputSchema || {},
-            });
+    // Update connection status and collect tools from active clients
+    const updatedServers = servers.map((server) => ({
+      ...server,
+      connected: connectedClients.has(server.name),
+      tools: connectedClients.get(server.name)?.server.tools || server.tools,
+    }));
+
+    updatedServers.forEach((server: any) => {
+      if (server.connected && server.tools && Array.isArray(server.tools)) {
+        server.tools.forEach((tool: any) => {
+          tools.push({
+            id: `${server.name}-${tool.name}`,
+            name: tool.name,
+            description: tool.description || 'No description available',
+            serverId: server.name,
+            serverName: server.name,
+            inputSchema: tool.inputSchema,
+            outputSchema: tool.outputSchema || {},
           });
-        }
-      });
-    }
+        });
+      }
+    });
 
     return res.json({
       success: true,
       data: {
         tools,
-        totalServers: servers.servers?.length || 0,
-        connectedServers: servers.servers?.filter((s: any) => s.connected).length || 0,
+        totalServers: servers.length || 0,
+        connectedServers: updatedServers.filter((s: any) => s.connected).length || 0,
       },
     });
   } catch (error: unknown) {
@@ -90,37 +93,29 @@ router.post('/test', async (req, res) => {
 
     const startTime = Date.now();
 
-    // Call the existing MCP tool execution endpoint
-    const response = await fetch(`http://localhost:3000/api/mcp/servers/${serverName}/call-tool`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        toolName,
-        arguments: toolArgs || {},
-      }),
-    });
-
-    const executionTime = Date.now() - startTime;
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      return res.status(response.status).json({
+    // Get the MCP client directly from the in-memory store instead of HTTP fetch
+    const mcpClient = connectedClients.get(serverName);
+    if (!mcpClient) {
+      return res.status(404).json({
         success: false,
-        error: errorData.error || 'Tool execution failed',
-        code: errorData.code || 'TOOL_EXECUTION_ERROR',
-        executionTime,
+        error: 'MCP server not connected',
+        code: 'MCP_SERVER_NOT_CONNECTED',
         timestamp: new Date().toISOString(),
       });
     }
 
-    const result = await response.json();
+    // Call the tool directly using the MCP client
+    const result = await mcpClient.client.callTool({
+      name: toolName,
+      arguments: toolArgs || {},
+    });
+
+    const executionTime = Date.now() - startTime;
 
     return res.json({
       success: true,
       data: {
-        result: result.result,
+        result,
         executionTime,
         timestamp: new Date().toISOString(),
       },

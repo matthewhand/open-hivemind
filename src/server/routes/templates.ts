@@ -178,12 +178,40 @@ router.post('/:id/apply', async (req: Request, res: Response) => {
       });
     }
 
-    // Create bot configuration from template
+    // Validate that overrides don't contain protected fields
+    const protectedFields = ['name', 'description'];
+    const invalidOverrides = Object.keys(overrides).filter((key) =>
+      protectedFields.includes(key)
+    );
+
+    if (invalidOverrides.length > 0) {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid overrides',
+        message: `Cannot override protected fields: ${invalidOverrides.join(', ')}. Use the 'name' and 'description' parameters instead.`,
+      });
+    }
+
+    // Validate and sanitize name
+    const validatedName = String(name).trim();
+    if (!validatedName) {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid name',
+        message: 'Bot name cannot be empty',
+      });
+    }
+
+    // Validate and sanitize description
+    const validatedDescription = description ? String(description).trim() : template.description;
+
+    // Create bot configuration from template with validated fields taking precedence
+    // Apply overrides first, then ensure validated fields cannot be overwritten
     const botConfig = {
-      name,
-      description: description || template.description,
       ...template.config,
       ...overrides,
+      name: validatedName,
+      description: validatedDescription,
     };
 
     // Use BotConfigService to create the bot
