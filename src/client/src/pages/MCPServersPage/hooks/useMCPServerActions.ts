@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { getAuthHeaders } from '../../../utils/api';
+import { apiService } from '../../../services/api';
 import { type MCPServer } from './useMCPServerData';
 
 export const useMCPServerActions = (
@@ -22,7 +22,7 @@ export const useMCPServerActions = (
       if (action === 'stop') {
         response = await fetch('/api/admin/mcp-servers/disconnect', {
           method: 'POST',
-          headers: getAuthHeaders(),
+          headers: apiService.getAuthHeaders(),
           body: JSON.stringify({ name: serverId }),
         });
       } else {
@@ -30,7 +30,7 @@ export const useMCPServerActions = (
         if (!server) throw new Error('Server not found');
         response = await fetch('/api/admin/mcp-servers/connect', {
           method: 'POST',
-          headers: getAuthHeaders(),
+          headers: apiService.getAuthHeaders(),
           body: JSON.stringify({ name: server.name, serverUrl: server.url }),
         });
       }
@@ -70,7 +70,7 @@ export const useMCPServerActions = (
       setIsTesting(true);
       const response = await fetch('/api/admin/mcp-servers/test', {
         method: 'POST',
-        headers: getAuthHeaders(),
+        headers: apiService.getAuthHeaders(),
         body: JSON.stringify({
           name: selectedServer.name || 'Test Server',
           serverUrl: selectedServer.url,
@@ -125,14 +125,14 @@ export const useMCPServerActions = (
       if (isEditing) {
         await fetch('/api/admin/mcp-servers/disconnect', {
           method: 'POST',
-          headers: getAuthHeaders(),
+          headers: apiService.getAuthHeaders(),
           body: JSON.stringify({ name: selectedServer.id }),
         });
       }
 
       const response = await fetch('/api/admin/mcp-servers/connect', {
         method: 'POST',
-        headers: getAuthHeaders(),
+        headers: apiService.getAuthHeaders(),
         body: JSON.stringify({
           name: selectedServer.name,
           serverUrl: selectedServer.url,

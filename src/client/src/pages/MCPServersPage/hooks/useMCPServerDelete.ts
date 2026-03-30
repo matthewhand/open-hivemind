@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { getAuthHeaders } from '../../../utils/api';
+import { apiService } from '../../../services/api';
 
 export const useMCPServerDelete = (
   bulk: any,
@@ -21,7 +21,7 @@ export const useMCPServerDelete = (
         Array.from(bulk.selectedIds).map((id) =>
           fetch(`/api/admin/mcp-servers/${encodeURIComponent(id)}`, {
             method: 'DELETE',
-            headers: getAuthHeaders(),
+            headers: apiService.getAuthHeaders(),
           })
         )
       );
@@ -46,7 +46,7 @@ export const useMCPServerDelete = (
         try {
           const response = await fetch(`/api/admin/mcp-servers/${encodeURIComponent(serverId)}`, {
             method: 'DELETE',
-            headers: getAuthHeaders(),
+            headers: apiService.getAuthHeaders(),
           });
           if (!response.ok)
             throw new Error((await response.json()).message || 'Failed to delete server');

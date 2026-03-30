@@ -1,1056 +1,205 @@
-import Debug from 'debug';
-const debug = Debug('app:client:services:api');
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
-const getEnv = (key: string): string | undefined => {
-  // Use a dynamic check to avoid Babel syntax errors with import.meta in CommonJS/Node
-  try {
-    // This string-based approach prevents static analysis/Babel from failing
-    const env = (new Function('return import.meta.env'))();
-    return env[key];
-  } catch (e) {
-    // Fallback to process.env for Node/Jest
-    if (typeof process !== 'undefined' && process.env) {
-      return (process.env as any)[key];
-    }
-    return undefined;
-  }
-};
+import { BaseApiClient } from './api/baseRequest';
+export * from '../types/api';
+import {
+  ConfigResponse,
+  StatusResponse,
+  ConfigSourcesResponse,
+  Bot,
+  ProviderConfig,
+  Persona,
+  SecureConfig,
+  ActivityResponse,
+} from '../types/api';
 
-const rawBaseUrl = getEnv('VITE_API_BASE_URL');
-const API_BASE_URL = rawBaseUrl?.replace(/\/$/, '');
-
-const buildUrl = (endpoint: string): string => {
-  // In development, if no API_BASE_URL is set, use relative URLs for local backend
-  const isDev = getEnv('DEV') === 'true' || getEnv('NODE_ENV') === 'development';
-  if (!API_BASE_URL && isDev) {
-    return endpoint;
-  }
-
-  // Use the env var if set, otherwise default to empty string (relative path)
-  // This allows the Netlify redirect to handle the proxying to the backend
-  const baseUrl = API_BASE_URL || '';
-  return `${baseUrl}${endpoint}`;
-};
-
-
-
-export interface FieldMetadata {
-  source: 'env' | 'user' | 'default';
-  locked: boolean;
-  envVar?: string;
-  override?: boolean;
-}
-
-export interface BotMetadata {
-  messageProvider?: FieldMetadata;
-  llmProvider?: FieldMetadata;
-  llmProfile?: FieldMetadata;
-  responseProfile?: FieldMetadata;
-  persona?: FieldMetadata;
-  systemInstruction?: FieldMetadata;
-  mcpServers?: FieldMetadata;
-  mcpGuard?: FieldMetadata;
-  mcpGuardProfile?: FieldMetadata;
-}
-
-// Provider-specific configuration interfaces
-export interface DiscordConfig {
-  channelId?: string;
-  guildId?: string;
-  token?: string;
-  prefix?: string;
-  intents?: string[];
-}
-
-export interface SlackConfig {
-  botToken?: string;
-  appToken?: string;
-  signingSecret?: string;
-  teamId?: string;
-  channels?: string[];
-}
-
-export interface MattermostConfig {
-  url?: string;
-  accessToken?: string;
-  teamId?: string;
-  channelId?: string;
-}
-
-export interface OpenAIConfig {
-  apiKey?: string;
-  model?: string;
-  temperature?: number;
-  maxTokens?: number;
-  organization?: string;
-}
-
-export interface FlowiseConfig {
-  apiUrl?: string;
-  apiKey?: string;
-  chatflowId?: string;
-}
-
-export interface OpenWebUIConfig {
-  apiUrl?: string;
-  apiKey?: string;
-  model?: string;
-}
-
-export interface OpenSwarmConfig {
-  apiUrl?: string;
-  apiKey?: string;
-  swarmId?: string;
-}
-
-export interface PerplexityConfig {
-  apiKey?: string;
-  model?: string;
-}
-
-export interface ReplicateConfig {
-  apiKey?: string;
-  model?: string;
-  version?: string;
-}
-
-export interface N8nConfig {
-  apiUrl?: string;
-  apiKey?: string;
-  workflowId?: string;
-}
-
-export interface Persona {
-  id: string;
-  name: string;
-  description: string;
-  category: 'general' | 'customer_service' | 'creative' | 'technical' | 'educational' | 'entertainment' | 'professional';
-  traits: Array<{ name: string; value: string; weight?: number; type?: string }>;
-  systemPrompt: string;
-  isBuiltIn?: boolean;
-  usageCount?: number;
-  createdAt: string;
-  updatedAt: string;
-}
-
-// Union type for all provider configs
-export type ProviderConfig =
-  | DiscordConfig
-  | SlackConfig
-  | MattermostConfig
-  | OpenAIConfig
-  | FlowiseConfig
-  | OpenWebUIConfig
-  | OpenSwarmConfig
-  | PerplexityConfig
-  | ReplicateConfig
-  | N8nConfig;
-
-export interface Bot {
-  name: string;
-  messageProvider: string;
-  llmProvider: string;
-  llmProfile?: string;
-  responseProfile?: string;
-  mcpGuardProfile?: string;
-  persona?: string;
-  systemInstruction?: string;
-  mcpServers?: Array<{ name: string; serverUrl?: string }> | string[];
-  mcpGuard?: {
-    enabled: boolean;
-    type: 'owner' | 'custom';
-    allowedUserIds?: string[];
+class ApiService extends BaseApiClient {
+  // Domain groupings
+  public bots = {
+    getAll: (): Promise<any[]> => this.get('/api/bots'),
+    getHistory: (botId: string, limit: number = 20): Promise<any[]> =>
+      this.get<{ success: boolean; data: { history: any[] } }>(`/api/bots/${botId}/history?limit=${limit}`).then(res => res.data?.history || []),
+    create: (botData: {
+      name: string;
+      messageProvider: string;
+      llmProvider?: string;
+      config?: ProviderConfig;
+    }): Promise<{ success: boolean; message: string; bot: Bot }> => {
+      const payload = { ...botData, ...(botData.llmProvider ? {} : { llmProvider: undefined }) };
+      return this.post('/api/bots', payload);
+    },
+    update: (botId: string, updates: {
+      name?: string;
+      messageProvider?: string;
+      llmProvider?: string;
+      persona?: string;
+      systemInstruction?: string;
+      config?: ProviderConfig;
+    }): Promise<{ success: boolean; message: string; bot: Bot }> => this.put(`/api/bots/${botId}`, updates),
+    clone: (name: string, newName: string): Promise<{ success: boolean; message: string; bot: Bot }> => this.post(`/api/bots/${name}/clone`, { newName }),
+    delete: (name: string): Promise<{ success: boolean; message: string }> => this.delete(`/api/bots/${name}`),
+    start: (botId: string): Promise<{ success: boolean; message: string }> => this.post(`/api/bots/${botId}/start`),
+    stop: (botId: string): Promise<{ success: boolean; message: string }> => this.post(`/api/bots/${botId}/stop`),
   };
-  discord?: DiscordConfig;
-  slack?: SlackConfig;
-  mattermost?: MattermostConfig;
-  openai?: OpenAIConfig;
-  flowise?: FlowiseConfig;
-  openwebui?: OpenWebUIConfig;
-  openswarm?: OpenSwarmConfig;
-  perplexity?: PerplexityConfig;
-  replicate?: ReplicateConfig;
-  n8n?: N8nConfig;
-  metadata?: BotMetadata;
-}
 
-export interface ConfigResponse {
-  bots: Bot[];
-  warnings: string[];
-  legacyMode: boolean;
-  environment: string;
-}
-
-export interface StatusResponse {
-  bots: Array<{
-    name: string;
-    provider: string;
-    llmProvider: string;
-    status: string;
-    healthDetails?: any;
-    connected?: boolean;
-    messageCount?: number;
-    errorCount?: number;
-  }>;
-  uptime: number;
-}
-
-export interface ConfigFile {
-  path: string;
-  size: number;
-  lastModified: string;
-  exists: boolean;
-}
-
-export interface ConfigOverride {
-  key: string;
-  value: unknown;
-  source: 'cli' | 'env' | 'file';
-  timestamp: string;
-}
-
-export interface ConfigSourcesResponse {
-  environmentVariables: Record<string, string>;
-  configFiles: ConfigFile[];
-  overrides: ConfigOverride[];
-}
-
-export interface SecureConfig {
-  id: string;
-  name: string;
-  data: Record<string, unknown>;
-  createdAt: string;
-  updatedAt: string;
-  encrypted: boolean;
-}
-
-export interface HotReloadRequest {
-  type: 'create' | 'update' | 'delete';
-  botName?: string;
-  changes: Record<string, unknown>;
-}
-
-export interface HotReloadResponse {
-  success: boolean;
-  message: string;
-  affectedBots: string[];
-  warnings: string[];
-  errors: string[];
-  rollbackId?: string;
-}
-
-export interface ActivityEvent {
-  id: string;
-  timestamp: string;
-  botName: string;
-  provider: string;
-  llmProvider: string;
-  channelId: string;
-  userId: string;
-  messageType: 'incoming' | 'outgoing';
-  contentLength: number;
-  processingTime?: number;
-  status: 'success' | 'error' | 'timeout';
-  errorMessage?: string;
-}
-
-export interface ActivityTimelineBucket {
-  timestamp: string;
-  messageProviders: Record<string, number>;
-  llmProviders: Record<string, number>;
-}
-
-export interface ActivityResponse {
-  events: ActivityEvent[];
-  pagination: {
-    total: number;
-    page: number;
-    limit: number;
-    offset: number;
-    hasMore: boolean;
+  public config = {
+    get: (): Promise<ConfigResponse> => this.get('/api/config'),
+    getSources: (): Promise<ConfigSourcesResponse> => this.get('/api/config/sources'),
+    getLlmProfiles: (): Promise<any> => this.get('/api/config/llm-profiles'),
+    reload: (): Promise<{ success: boolean; message: string; timestamp: string }> => this.post('/api/config/reload'),
+    getGlobal: (): Promise<Record<string, any>> => this.get('/api/config/global'),
+    updateGlobal: (updates: Record<string, any>): Promise<{ success: boolean; message: string }> => this.put('/api/config/global', updates),
+    export: (): Promise<Blob> => {
+      const headers = this.getAuthHeaders();
+      headers['Accept'] = 'application/json';
+      return fetch(this.buildUrl('/api/config/export'), { method: 'GET', headers }).then(res => {
+        if (!res.ok) throw new Error(`Export failed: ${res.statusText}`);
+        return res.blob();
+      });
+    },
   };
-  filters: {
-    agents: string[];
-    messageProviders: string[];
-    llmProviders: string[];
+
+  public personas = {
+    getAll: (): Promise<Persona[]> => this.get('/api/personas'),
+    get: (id: string): Promise<Persona> => this.get(`/api/personas/${id}`),
+    create: (data: Omit<Persona, 'id' | 'createdAt' | 'updatedAt'>): Promise<Persona> => this.post('/api/personas', data),
+    update: (id: string, data: Partial<Persona>): Promise<Persona> => this.put(`/api/personas/${id}`, data),
+    clone: (id: string, overrides?: Partial<Persona>): Promise<Persona> => this.post(`/api/personas/${id}/clone`, overrides),
+    delete: (id: string): Promise<{ success: boolean }> => this.delete(`/api/personas/${id}`),
   };
-  timeline: ActivityTimelineBucket[];
-  agentMetrics: Array<{
-    botName: string;
-    messageProvider: string;
-    llmProvider: string;
-    events: number;
-    errors: number;
-    lastActivity: string;
-    totalMessages: number;
-    recentErrors: string[];
-    avgResponseTime?: number;
-    minResponseTime?: number;
-    maxResponseTime?: number;
-    p95ResponseTime?: number;
-    p99ResponseTime?: number;
-  }>;
-}
 
-export interface RateLimitInfo {
-  limit: number;
-  remaining: number;
-  resetTime: number;
-}
+  public secureConfigs = {
+    getAll: (): Promise<{ configs: SecureConfig[] }> => this.get('/api/secure-configs'),
+    get: (name: string): Promise<{ config: SecureConfig }> => this.get(`/api/secure-configs/${name}`),
+    save: (name: string, data: Record<string, unknown>, encryptSensitive = true): Promise<{ success: boolean; message: string; config: SecureConfig }> =>
+      this.post('/api/secure-configs', { name, data, encryptSensitive }),
+    delete: (name: string): Promise<{ success: boolean; message: string }> => this.delete(`/api/secure-configs/${name}`),
+    backup: (): Promise<{ success: boolean; message: string; backupFile: string }> => this.post('/api/secure-configs/backup'),
+    restore: (backupFile: string): Promise<{ success: boolean; message: string }> => this.post('/api/secure-configs/restore', { backupFile }),
+    getInfo: (): Promise<{ configDirectory: string; totalConfigs: number; directorySize: number; lastModified: string; }> => this.get('/api/secure-configs/info'),
+  };
 
-export type RateLimitListener = (info: RateLimitInfo) => void;
+  public health = {
+    getStatus: (): Promise<StatusResponse> => this.get('/api/dashboard/status'),
+    getApiEndpointsStatus: (): Promise<any> => this.get('/health/api-endpoints'),
+    getApiEndpointStatus: (id: string): Promise<any> => this.get(`/health/api-endpoints/${id}`),
+    addApiEndpoint: (config: any): Promise<any> => this.post('/health/api-endpoints', config),
+    updateApiEndpoint: (id: string, config: any): Promise<any> => this.put(`/health/api-endpoints/${id}`, config),
+    removeApiEndpoint: (id: string): Promise<any> => this.delete(`/health/api-endpoints/${id}`),
+    startApiMonitoring: (): Promise<any> => this.post('/health/api-endpoints/start'),
+    stopApiMonitoring: (): Promise<any> => this.post('/health/api-endpoints/stop'),
+    getSystemHealth: (): Promise<any> => this.get('/health/detailed'),
+    getServiceHealth: (): Promise<any> => this.get('/health/detailed/services'),
+  };
 
-class ApiService {
-  private csrfToken: string | null = null;
-  private csrfTokenPromise: Promise<string> | null = null;
-  private inflightGets = new Map<string, Promise<any>>();
-  private rateLimitListeners = new Set<RateLimitListener>();
-
-  /**
-   * Subscribe to rate limit header updates from API responses
-   */
-  public onRateLimitUpdate(listener: RateLimitListener): () => void {
-    this.rateLimitListeners.add(listener);
-    return () => { this.rateLimitListeners.delete(listener); };
-  }
-
-  /**
-   * Extract rate limit headers from a response and notify listeners
-   */
-  private extractRateLimitHeaders(response: Response): void {
-    // Try standard headers first (RateLimit-*), then legacy (X-RateLimit-*)
-    const limit = response.headers.get('RateLimit-Limit')
-      ?? response.headers.get('X-RateLimit-Limit');
-    const remaining = response.headers.get('RateLimit-Remaining')
-      ?? response.headers.get('X-RateLimit-Remaining');
-    const reset = response.headers.get('RateLimit-Reset')
-      ?? response.headers.get('X-RateLimit-Reset');
-
-    if (limit !== null && remaining !== null) {
-      const info: RateLimitInfo = {
-        limit: parseInt(limit, 10) || 0,
-        remaining: parseInt(remaining, 10) || 0,
-        resetTime: reset ? parseInt(reset, 10) || 0 : 0,
-      };
-      this.rateLimitListeners.forEach(listener => {
-        try {
-          listener(info);
-        } catch (error) {
-          debug('ERROR:', 'Rate limit listener error', {
-            error: error instanceof Error ? error.message : String(error)
-          });
-        }
+  public activity = {
+    get: (params: Record<string, any> = {}): Promise<ActivityResponse> => {
+      const query = new URLSearchParams();
+      Object.entries(params).forEach(([key, value]) => {
+        if (value !== undefined && value !== null && value !== '') query.append(key, String(value));
       });
-    }
-  }
-
-  /**
-   * Fetch CSRF token from the server and cache it
-   */
-  private async fetchCsrfToken(): Promise<string> {
-    // If already fetching, return the existing promise to avoid race conditions
-    if (this.csrfTokenPromise) {
-      return this.csrfTokenPromise;
-    }
-
-    const fetchPromise = (async (): Promise<string> => {
-      try {
-        const response = await fetch(buildUrl('/api/csrf-token'), {
-          method: 'GET',
-          credentials: 'same-origin',
-        });
-
-        if (!response.ok) {
-          // CSRF endpoint not available (e.g., in dev mode or not configured)
-          return '';
-        }
-
-        const data = await response.json();
-        const token = data.token || data.csrfToken || '';
-        this.csrfToken = token;
-        return token;
-      } catch (error) {
-        // Silently fail - CSRF may not be required in all environments
-        console.debug('CSRF token fetch failed (may not be required):', error);
-        return '';
-      } finally {
-        this.csrfTokenPromise = null;
-      }
-    })();
-
-    this.csrfTokenPromise = fetchPromise;
-    return fetchPromise;
-  }
-
-  /**
-   * Get the current CSRF token, fetching it if necessary
-   */
-  private async getCsrfToken(): Promise<string> {
-    if (this.csrfToken) {
-      return this.csrfToken;
-    }
-    return this.fetchCsrfToken();
-  }
-
-  public async get<T>(endpoint: string, options?: RequestInit & { timeout?: number }): Promise<T> {
-    return this.request<T>(endpoint, { ...options, method: 'GET' });
-  }
-
-  public async post<T>(endpoint: string, body?: any, options?: RequestInit): Promise<T> {
-    return this.request<T>(endpoint, {
-      ...options,
-      method: 'POST',
-      body: body ? JSON.stringify(body) : undefined,
-    });
-  }
-
-  public async put<T>(endpoint: string, body?: any, options?: RequestInit): Promise<T> {
-    return this.request<T>(endpoint, {
-      ...options,
-      method: 'PUT',
-      body: body ? JSON.stringify(body) : undefined,
-    });
-  }
-
-  public async delete<T>(endpoint: string, options?: RequestInit): Promise<T> {
-    return this.request<T>(endpoint, { ...options, method: 'DELETE' });
-  }
-
-  public async patch<T>(endpoint: string, body?: any, options?: RequestInit): Promise<T> {
-    return this.request<T>(endpoint, {
-      ...options,
-      method: 'PATCH',
-      body: body ? JSON.stringify(body) : undefined,
-    });
-  }
-
-  public async getBlob(endpoint: string, options?: RequestInit): Promise<Blob> {
-    const url = buildUrl(endpoint);
-    const authHeaders = this.getAuthHeaders();
-
-    const response = await fetch(url, {
-      ...options,
-      headers: {
-        ...authHeaders,
-        ...options?.headers,
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error(`Blob request failed (${response.status}): ${response.statusText}`);
-    }
-
-    return response.blob();
-  }
-
-  private getAuthHeaders(): Record<string, string> {
-    const token = localStorage.getItem('auth_tokens');
-    const headers: Record<string, string> = {};
-
-    if (token) {
-      try {
-        const tokens = JSON.parse(token);
-        if (tokens.accessToken) {
-          headers['Authorization'] = `Bearer ${tokens.accessToken}`;
-        }
-      } catch (e) {
-        debug('ERROR:', 'Failed to parse auth token', e);
-      }
-    }
-    return headers;
-  }
-
-  private async request<T>(endpoint: string, options?: RequestInit & { timeout?: number }): Promise<T> {
-    const url = buildUrl(endpoint);
-    const method = options?.method?.toUpperCase() || 'GET';
-
-    if (method === 'GET') {
-      const inflight = this.inflightGets.get(endpoint);
-      if (inflight) return inflight as Promise<T>;
-      const promise = this._doRequest<T>(url, endpoint, options).finally(() => {
-        this.inflightGets.delete(endpoint);
+      const search = query.toString();
+      return this.get(`/api/dashboard/activity${search ? `?${search}` : ''}`);
+    },
+    exportActivity: (queryString: string): Promise<string> => {
+      return fetch(this.buildUrl(`/api/dashboard/activity/export?${queryString}`), { method: 'GET', headers: this.getAuthHeaders() }).then(res => {
+        if (!res.ok) throw new Error(`Export failed: ${res.statusText}`);
+        return res.text();
       });
-      this.inflightGets.set(endpoint, promise);
-      return promise;
-    }
-
-    return this._doRequest<T>(url, endpoint, options);
-  }
-
-  private async _doRequest<T>(url: string, endpoint: string, options?: RequestInit & { timeout?: number }): Promise<T> {
-    const method = options?.method?.toUpperCase() || 'GET';
-
-    const controller = new AbortController();
-    const id = setTimeout(() => controller.abort(), options?.timeout || 15000); // Default 15s timeout
-
-    try {
-      const authHeaders = this.getAuthHeaders();
-
-      // Add CSRF token for mutating requests (POST, PUT, DELETE, PATCH)
-      const mutatingMethods = ['POST', 'PUT', 'DELETE', 'PATCH'];
-      if (mutatingMethods.includes(method)) {
-        const csrfToken = await this.getCsrfToken();
-        if (csrfToken) {
-          authHeaders['X-CSRF-Token'] = csrfToken;
-        }
-      }
-
-      const response = await fetch(url, {
-        ...options,
-        headers: {
-          'Content-Type': 'application/json',
-          ...authHeaders,
-          ...options?.headers,
-        },
-        signal: controller.signal,
+    },
+    exportAnalytics: (queryString: string): Promise<string> => {
+      return fetch(this.buildUrl(`/api/dashboard/analytics/export?${queryString}`), { method: 'GET', headers: this.getAuthHeaders() }).then(res => {
+        if (!res.ok) throw new Error(`Export failed: ${res.statusText}`);
+        return res.text();
       });
-      clearTimeout(id);
+    },
+  };
 
-      // Always extract rate limit headers, even from error responses
-      this.extractRateLimitHeaders(response);
+  public alerts = {
+    acknowledge: (alertId: string): Promise<{ success: boolean; message: string }> => this.post(`/api/dashboard/alerts/${alertId}/acknowledge`),
+    resolve: (alertId: string): Promise<{ success: boolean; message: string }> => this.post(`/api/dashboard/alerts/${alertId}/resolve`),
+  };
 
-      if (!response.ok) {
-        // Special handling for 429 Too Many Requests
-        if (response.status === 429) {
-          const retryAfter = response.headers.get('Retry-After');
-          const retrySeconds = retryAfter ? parseInt(retryAfter, 10) : 60;
-          const body = await response.json().catch(() => ({})) as Record<string, unknown>;
-          const err = new Error(
-            (body.message as string) || `Rate limit exceeded. Retry after ${retrySeconds} seconds.`
-          );
-          (err as any).status = 429;
-          (err as any).retryAfter = retrySeconds;
-          (err as any).code = 'RATE_LIMIT_EXCEEDED';
-          throw err;
-        }
+  public backups = {
+    list: (): Promise<any[]> => this.get<{ success: boolean; data: any[] }>('/api/import-export/backups').then(res => res.data || []),
+    create: (options: any): Promise<{ success: boolean; message: string; data: any }> => this.post('/api/import-export/backup', options),
+    restore: (backupId: string, options: any = {}): Promise<{ success: boolean; message: string }> => this.post(`/api/import-export/backups/${backupId}/restore`, options),
+    delete: (backupId: string): Promise<{ success: boolean; message: string }> => this.delete(`/api/import-export/backups/${backupId}`),
+    download: (backupId: string): Promise<Blob> => {
+      return fetch(this.buildUrl(`/api/import-export/backups/${backupId}/download`), { method: 'GET', headers: this.getAuthHeaders() }).then(res => {
+        if (!res.ok) throw new Error(`Download failed: ${res.statusText}`);
+        return res.blob();
+      });
+    },
+  };
 
-        const errorText = await response.text().catch(() => response.statusText);
-        throw new Error(`API request failed (${response.status}): ${errorText.slice(0, 200)}`);
-      }
+  public admin = {
+    getSystemInfo: (): Promise<any> => this.get('/api/admin/system-info'),
+    getEnvOverrides: (): Promise<any> => this.get('/api/admin/env-overrides'),
+  };
 
-      // Try to parse JSON, with graceful handling for non-JSON responses
-      const text = await response.text();
-      try {
-        return JSON.parse(text) as T;
-      } catch {
-        // If response starts with HTML (common when API returns index.html fallback)
-        if (text.trim().startsWith('<!') || text.trim().startsWith('<html')) {
-          throw new Error('Service temporarily unavailable. The server may still be starting up.');
-        }
-        throw new Error(`Invalid JSON response from server: ${text.slice(0, 100)}...`);
-      }
-    } catch (error: any) {
-      if (error.name === 'AbortError') {
-        throw new Error(`Request timed out after ${options?.timeout || 15000}ms`);
-      }
-      const errorMessage = error instanceof Error ? error.message : String(error);
-      debug('ERROR:', `API request failed for ${endpoint}:`, errorMessage);
-      throw error;
-    }
+  public cache = {
+    clear: (): Promise<{ success: boolean; message: string }> => this.post('/api/cache/clear'),
+  };
+
+  private buildUrl(endpoint: string): string {
+    // Used specifically inside fetch overrides that bypass base client
+    const isDev = (typeof process !== 'undefined' && process.env.NODE_ENV === 'development') || (typeof import.meta !== 'undefined' && (import.meta as any).env?.DEV);
+    const API_BASE_URL = (typeof process !== 'undefined' ? process.env.VITE_API_BASE_URL : (import.meta as any).env?.VITE_API_BASE_URL)?.replace(/\/$/, '') || '';
+    if (!API_BASE_URL && isDev) return endpoint;
+    return `${API_BASE_URL}${endpoint}`;
   }
 
-  async getConfig(): Promise<ConfigResponse> {
-    return this.request<ConfigResponse>('/api/config');
-  }
-
-  async getStatus(): Promise<StatusResponse> {
-    return this.request<StatusResponse>('/api/dashboard/status');
-  }
-
-  async getConfigSources(): Promise<ConfigSourcesResponse> {
-    return this.request<ConfigSourcesResponse>('/api/config/sources');
-  }
-
-  async getLlmProfiles(): Promise<any> {
-    return this.request<any>('/api/config/llm-profiles');
-  }
-
-  async reloadConfig(): Promise<{ success: boolean; message: string; timestamp: string }> {
-    return this.request('/api/config/reload', { method: 'POST' });
-  }
-
-  async getBots(): Promise<any[]> {
-    return this.request<any[]>('/api/bots');
-  }
-
-  async getBotHistory(botId: string, limit: number = 20): Promise<any[]> {
-    const res = await this.request<{ success: boolean; data: { history: any[] } }>(`/api/bots/${botId}/history?limit=${limit}`);
-    return res.data?.history || [];
-  }
-
-  async createBot(botData: {
-    name: string;
-    messageProvider: string;
-    llmProvider?: string;
-    config?: ProviderConfig;
-  }): Promise<{ success: boolean; message: string; bot: Bot }> {
-    const payload = {
-      ...botData,
-      ...(botData.llmProvider ? {} : { llmProvider: undefined }),
-    };
-    return this.request('/api/bots', {
-      method: 'POST',
-      body: JSON.stringify(payload),
-    });
-  }
-
-  async updateBot(botId: string, updates: {
-    name?: string;
-    messageProvider?: string;
-    llmProvider?: string;
-    persona?: string;
-    systemInstruction?: string;
-    config?: ProviderConfig;
-  }): Promise<{ success: boolean; message: string; bot: Bot }> {
-    return this.request(`/api/bots/${botId}`, {
-      method: 'PUT',
-      body: JSON.stringify(updates),
-    });
-  }
-
-  async cloneBot(name: string, newName: string): Promise<{ success: boolean; message: string; bot: Bot }> {
-    return this.request(`/api/bots/${name}/clone`, {
-      method: 'POST',
-      body: JSON.stringify({ newName }),
-    });
-  }
-
-  async deleteBot(name: string): Promise<{ success: boolean; message: string }> {
-    return this.request(`/api/bots/${name}`, { method: 'DELETE' });
-  }
-
-  // Persona Methods
-  async getPersonas(): Promise<Persona[]> {
-    return this.request<Persona[]>('/api/personas');
-  }
-
-  async getPersona(id: string): Promise<Persona> {
-    return this.request<Persona>(`/api/personas/${id}`);
-  }
-
-  async createPersona(data: Omit<Persona, 'id' | 'createdAt' | 'updatedAt'>): Promise<Persona> {
-    return this.request<Persona>('/api/personas', {
-      method: 'POST',
-      body: JSON.stringify(data),
-    });
-  }
-
-  async updatePersona(id: string, data: Partial<Persona>): Promise<Persona> {
-    return this.request<Persona>(`/api/personas/${id}`, {
-      method: 'PUT',
-      body: JSON.stringify(data),
-    });
-  }
-
-  async clonePersona(id: string, overrides?: Partial<Persona>): Promise<Persona> {
-    return this.request<Persona>(`/api/personas/${id}/clone`, {
-      method: 'POST',
-      body: JSON.stringify(overrides),
-    });
-  }
-
-  async deletePersona(id: string): Promise<{ success: boolean }> {
-    return this.request<{ success: boolean }>(`/api/personas/${id}`, {
-      method: 'DELETE',
-    });
-  }
-
-  // Secure Configuration Methods
-  async getSecureConfigs(): Promise<{ configs: SecureConfig[] }> {
-    return this.request('/api/secure-configs');
-  }
-
-  async getSecureConfig(name: string): Promise<{ config: SecureConfig }> {
-    return this.request(`/api/secure-configs/${name}`);
-  }
-
-  async saveSecureConfig(name: string, data: Record<string, unknown>, encryptSensitive = true): Promise<{ success: boolean; message: string; config: SecureConfig }> {
-    return this.request('/api/secure-configs', {
-      method: 'POST',
-      body: JSON.stringify({ name, data, encryptSensitive }),
-    });
-  }
-
-  async deleteSecureConfig(name: string): Promise<{ success: boolean; message: string }> {
-    return this.request(`/api/secure-configs/${name}`, { method: 'DELETE' });
-  }
-
-  async backupSecureConfigs(): Promise<{ success: boolean; message: string; backupFile: string }> {
-    return this.request('/api/secure-configs/backup', { method: 'POST' });
-  }
-
-  async restoreSecureConfigs(backupFile: string): Promise<{ success: boolean; message: string }> {
-    return this.request('/api/secure-configs/restore', {
-      method: 'POST',
-      body: JSON.stringify({ backupFile }),
-    });
-  }
-
-  async getSecureConfigInfo(): Promise<{
-    configDirectory: string;
-    totalConfigs: number;
-    directorySize: number;
-    lastModified: string;
-  }> {
-    return this.request('/api/secure-configs/info');
-  }
-
-  async getActivity(params: {
-    bot?: string;
-    messageProvider?: string;
-    llmProvider?: string;
-    from?: string;
-    to?: string;
-    page?: number;
-    limit?: number;
-    offset?: number;
-  } = {}): Promise<ActivityResponse> {
-    const query = new URLSearchParams();
-    Object.entries(params).forEach(([key, value]) => {
-      if (value !== undefined && value !== null && value !== '') {
-        query.append(key, String(value));
-      }
-    });
-    const search = query.toString();
-    const endpoint = `/api/dashboard/activity${search ? `?${search}` : ''}`;
-    return this.request<ActivityResponse>(endpoint);
-  }
-
-  async clearCache(): Promise<{ success: boolean; message: string }> {
-    return this.request('/api/cache/clear', { method: 'POST' });
-  }
-
-  async exportConfig(): Promise<Blob> {
-    const headers = this.getAuthHeaders();
-    headers['Accept'] = 'application/json';
-
-    const response = await fetch(buildUrl('/api/config/export'), {
-      method: 'GET',
-      headers,
-    });
-
-    if (!response.ok) {
-      throw new Error(`Export failed: ${response.statusText}`);
-    }
-
-    return response.blob();
-  }
-
-  // API Monitoring Methods
-  async getApiEndpointsStatus(): Promise<{
-    overall: {
-      status: 'healthy' | 'warning' | 'error';
-      message: string;
-      stats: {
-        total: number;
-        online: number;
-        slow: number;
-        offline: number;
-        error: number;
-      };
-    };
-    endpoints: Array<{
-      id: string;
-      name: string;
-      url: string;
-      status: 'online' | 'offline' | 'slow' | 'error';
-      responseTime: number;
-      lastChecked: string;
-      lastSuccessfulCheck?: string;
-      consecutiveFailures: number;
-      totalChecks: number;
-      successfulChecks: number;
-      averageResponseTime: number;
-      errorMessage?: string;
-      statusCode?: number;
-    }>;
-    timestamp: string;
-  }> {
-    return this.request('/health/api-endpoints');
-  }
-
-  async getApiEndpointStatus(id: string): Promise<{
-    endpoint: {
-      id: string;
-      name: string;
-      url: string;
-      status: 'online' | 'offline' | 'slow' | 'error';
-      responseTime: number;
-      lastChecked: string;
-      lastSuccessfulCheck?: string;
-      consecutiveFailures: number;
-      totalChecks: number;
-      successfulChecks: number;
-      averageResponseTime: number;
-      errorMessage?: string;
-      statusCode?: number;
-    };
-    timestamp: string;
-  }> {
-    return this.request(`/health/api-endpoints/${id}`);
-  }
-
-  async addApiEndpoint(config: {
-    id: string;
-    name: string;
-    url: string;
-    method?: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'HEAD';
-    headers?: Record<string, string>;
-    body?: unknown;
-    expectedStatusCodes?: number[];
-    timeout?: number;
-    interval?: number;
-    enabled?: boolean;
-    retries?: number;
-    retryDelay?: number;
-  }): Promise<{
-    message: string;
-    endpoint: {
-      id: string;
-      name: string;
-      url: string;
-      status: 'online' | 'offline' | 'slow' | 'error';
-      responseTime: number;
-      lastChecked: string;
-      lastSuccessfulCheck?: string;
-      consecutiveFailures: number;
-      totalChecks: number;
-      successfulChecks: number;
-      averageResponseTime: number;
-      errorMessage?: string;
-      statusCode?: number;
-    };
-    timestamp: string;
-  }> {
-    return this.request('/health/api-endpoints', {
-      method: 'POST',
-      body: JSON.stringify(config),
-    });
-  }
-
-  async updateApiEndpoint(id: string, config: Partial<{
-    name: string;
-    url: string;
-    method: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'HEAD';
-    headers: Record<string, string>;
-    body: unknown;
-    expectedStatusCodes: number[];
-    timeout: number;
-    interval: number;
-    enabled: boolean;
-    retries: number;
-    retryDelay: number;
-  }>): Promise<{
-    message: string;
-    endpoint: {
-      id: string;
-      name: string;
-      url: string;
-      status: 'online' | 'offline' | 'slow' | 'error';
-      responseTime: number;
-      lastChecked: string;
-      lastSuccessfulCheck?: string;
-      consecutiveFailures: number;
-      totalChecks: number;
-      successfulChecks: number;
-      averageResponseTime: number;
-      errorMessage?: string;
-      statusCode?: number;
-    };
-    timestamp: string;
-  }> {
-    return this.request(`/health/api-endpoints/${id}`, {
-      method: 'PUT',
-      body: JSON.stringify(config),
-    });
-  }
-
-  async removeApiEndpoint(id: string): Promise<{
-    message: string;
-    removedEndpoint: {
-      id: string;
-      name: string;
-      url: string;
-      status: 'online' | 'offline' | 'slow' | 'error';
-      responseTime: number;
-      lastChecked: string;
-      lastSuccessfulCheck?: string;
-      consecutiveFailures: number;
-      totalChecks: number;
-      successfulChecks: number;
-      averageResponseTime: number;
-      errorMessage?: string;
-      statusCode?: number;
-    };
-    timestamp: string;
-  }> {
-    return this.request(`/health/api-endpoints/${id}`, { method: 'DELETE' });
-  }
-
-  async startApiMonitoring(): Promise<{
-    message: string;
-    timestamp: string;
-  }> {
-    return this.request('/health/api-endpoints/start', { method: 'POST' });
-  }
-
-  async stopApiMonitoring(): Promise<{
-    message: string;
-    timestamp: string;
-  }> {
-    return this.request('/health/api-endpoints/stop', { method: 'POST' });
-  }
-
-  async getSystemHealth(): Promise<{
-    status: string;
-    timestamp: string;
-    uptime: number;
-    memory: {
-      used: number;
-      total: number;
-      usage: number;
-    };
-    cpu: {
-      user: number;
-      system: number;
-    };
-    system: {
-      platform: string;
-      arch: string;
-      release: string;
-      hostname: string;
-      loadAverage: number[];
-    };
-  }> {
-    return this.request('/health/detailed');
-  }
-  async getServiceHealth(): Promise<{
-    services: Array<{
-      name: string;
-      status: 'healthy' | 'degraded' | 'down';
-      latencyMs: number;
-      lastChecked: string;
-      details: string;
-    }>;
-  }> {
-    return this.request('/health/detailed/services');
-  }
-  async getGlobalConfig(): Promise<Record<string, any>> {
-    return this.request('/api/config/global');
-  }
-
-  async updateGlobalConfig(updates: Record<string, any>): Promise<{ success: boolean; message: string }> {
-    return this.request('/api/config/global', {
-      method: 'PUT',
-      body: JSON.stringify(updates),
-    });
-  }
-
-  async acknowledgeAlert(alertId: string): Promise<{ success: boolean; message: string }> {
-    return this.request(`/api/dashboard/alerts/${alertId}/acknowledge`, { method: 'POST' });
-  }
-
-  async resolveAlert(alertId: string): Promise<{ success: boolean; message: string }> {
-    return this.request(`/api/dashboard/alerts/${alertId}/resolve`, { method: 'POST' });
-  }
-
-  // Import/Export Backup Methods
-  async listSystemBackups(): Promise<any[]> {
-    const res = await this.request<{ success: boolean; data: any[] }>('/api/import-export/backups');
-    return res.data || [];
-  }
-
-  async createSystemBackup(options: {
-    name: string;
-    description?: string;
-    encrypt?: boolean;
-    encryptionKey?: string;
-  }): Promise<{ success: boolean; message: string; data: any }> {
-    return this.request('/api/import-export/backup', {
-      method: 'POST',
-      body: JSON.stringify(options),
-    });
-  }
-
-  async restoreSystemBackup(backupId: string, options: {
-    overwrite?: boolean;
-    decryptionKey?: string;
-  } = {}): Promise<{ success: boolean; message: string }> {
-    return this.request(`/api/import-export/backups/${backupId}/restore`, {
-      method: 'POST',
-      body: JSON.stringify(options),
-    });
-  }
-
-  async deleteSystemBackup(backupId: string): Promise<{ success: boolean; message: string }> {
-    return this.request(`/api/import-export/backups/${backupId}`, {
-      method: 'DELETE',
-    });
-  }
-
-  async downloadSystemBackup(backupId: string): Promise<Blob> {
-    const url = buildUrl(`/api/import-export/backups/${backupId}/download`);
-    const headers = this.getAuthHeaders();
-
-    const response = await fetch(url, {
-      method: 'GET',
-      headers,
-    });
-
-    if (!response.ok) {
-      throw new Error(`Download failed: ${response.statusText}`);
-    }
-
-    return response.blob();
-  }
-
-  async getSystemInfo(): Promise<any> {
-    return this.request('/api/admin/system-info');
-  }
-
-  async getEnvOverrides(): Promise<any> {
-    return this.request('/api/admin/env-overrides');
-  }
-
-  async startBot(botId: string): Promise<{ success: boolean; message: string }> {
-    return this.request(`/api/bots/${botId}/start`, { method: 'POST' });
-  }
-
-  async stopBot(botId: string): Promise<{ success: boolean; message: string }> {
-    return this.request(`/api/bots/${botId}/stop`, { method: 'POST' });
-  }
-
-  async exportActivity(queryString: string): Promise<string> {
-    const url = buildUrl(`/api/dashboard/activity/export?${queryString}`);
-    const headers = this.getAuthHeaders();
-
-    const response = await fetch(url, {
-      method: 'GET',
-      headers,
-    });
-
-    if (!response.ok) {
-      throw new Error(`Export failed: ${response.statusText}`);
-    }
-
-    return response.text();
-  }
-
-  async exportAnalytics(queryString: string): Promise<string> {
-    const url = buildUrl(`/api/dashboard/analytics/export?${queryString}`);
-    const headers = this.getAuthHeaders();
-
-    const response = await fetch(url, {
-      method: 'GET',
-      headers,
-    });
-
-    if (!response.ok) {
-      throw new Error(`Export failed: ${response.statusText}`);
-    }
-
-    return response.text();
-  }
+  // Legacy flat methods mapping for backward compatibility
+  async getConfig(): Promise<ConfigResponse> { return this.config.get(); }
+  async getStatus(): Promise<StatusResponse> { return this.health.getStatus(); }
+  async getConfigSources(): Promise<ConfigSourcesResponse> { return this.config.getSources(); }
+  async getLlmProfiles(): Promise<any> { return this.config.getLlmProfiles(); }
+  async reloadConfig(): Promise<{ success: boolean; message: string; timestamp: string }> { return this.config.reload(); }
+  async getBots(): Promise<any[]> { return this.bots.getAll(); }
+  async getBotHistory(botId: string, limit: number = 20): Promise<any[]> { return this.bots.getHistory(botId, limit); }
+  async createBot(botData: any): Promise<any> { return this.bots.create(botData); }
+  async updateBot(botId: string, updates: any): Promise<any> { return this.bots.update(botId, updates); }
+  async cloneBot(name: string, newName: string): Promise<any> { return this.bots.clone(name, newName); }
+  async deleteBot(name: string): Promise<any> { return this.bots.delete(name); }
+  async getPersonas(): Promise<Persona[]> { return this.personas.getAll(); }
+  async getPersona(id: string): Promise<Persona> { return this.personas.get(id); }
+  async createPersona(data: any): Promise<Persona> { return this.personas.create(data); }
+  async updatePersona(id: string, data: any): Promise<Persona> { return this.personas.update(id, data); }
+  async clonePersona(id: string, overrides?: any): Promise<Persona> { return this.personas.clone(id, overrides); }
+  async deletePersona(id: string): Promise<{ success: boolean }> { return this.personas.delete(id); }
+  async getSecureConfigs(): Promise<any> { return this.secureConfigs.getAll(); }
+  async getSecureConfig(name: string): Promise<any> { return this.secureConfigs.get(name); }
+  async saveSecureConfig(name: string, data: any, encryptSensitive = true): Promise<any> { return this.secureConfigs.save(name, data, encryptSensitive); }
+  async deleteSecureConfig(name: string): Promise<any> { return this.secureConfigs.delete(name); }
+  async backupSecureConfigs(): Promise<any> { return this.secureConfigs.backup(); }
+  async restoreSecureConfigs(backupFile: string): Promise<any> { return this.secureConfigs.restore(backupFile); }
+  async getSecureConfigInfo(): Promise<any> { return this.secureConfigs.getInfo(); }
+  async getActivity(params: any = {}): Promise<ActivityResponse> { return this.activity.get(params); }
+  async clearCache(): Promise<any> { return this.cache.clear(); }
+  async exportConfig(): Promise<Blob> { return this.config.export(); }
+  async getApiEndpointsStatus(): Promise<any> { return this.health.getApiEndpointsStatus(); }
+  async getApiEndpointStatus(id: string): Promise<any> { return this.health.getApiEndpointStatus(id); }
+  async addApiEndpoint(config: any): Promise<any> { return this.health.addApiEndpoint(config); }
+  async updateApiEndpoint(id: string, config: any): Promise<any> { return this.health.updateApiEndpoint(id, config); }
+  async removeApiEndpoint(id: string): Promise<any> { return this.health.removeApiEndpoint(id); }
+  async startApiMonitoring(): Promise<any> { return this.health.startApiMonitoring(); }
+  async stopApiMonitoring(): Promise<any> { return this.health.stopApiMonitoring(); }
+  async getSystemHealth(): Promise<any> { return this.health.getSystemHealth(); }
+  async getServiceHealth(): Promise<any> { return this.health.getServiceHealth(); }
+  async getGlobalConfig(): Promise<any> { return this.config.getGlobal(); }
+  async updateGlobalConfig(updates: any): Promise<any> { return this.config.updateGlobal(updates); }
+  async acknowledgeAlert(alertId: string): Promise<any> { return this.alerts.acknowledge(alertId); }
+  async resolveAlert(alertId: string): Promise<any> { return this.alerts.resolve(alertId); }
+  async listSystemBackups(): Promise<any[]> { return this.backups.list(); }
+  async createSystemBackup(options: any): Promise<any> { return this.backups.create(options); }
+  async restoreSystemBackup(backupId: string, options: any = {}): Promise<any> { return this.backups.restore(backupId, options); }
+  async deleteSystemBackup(backupId: string): Promise<any> { return this.backups.delete(backupId); }
+  async downloadSystemBackup(backupId: string): Promise<Blob> { return this.backups.download(backupId); }
+  async getSystemInfo(): Promise<any> { return this.admin.getSystemInfo(); }
+  async getEnvOverrides(): Promise<any> { return this.admin.getEnvOverrides(); }
+  async startBot(botId: string): Promise<any> { return this.bots.start(botId); }
+  async stopBot(botId: string): Promise<any> { return this.bots.stop(botId); }
+  async exportActivity(queryString: string): Promise<string> { return this.activity.exportActivity(queryString); }
+  async exportAnalytics(queryString: string): Promise<string> { return this.activity.exportAnalytics(queryString); }
 }
 
 export const apiService = new ApiService();
