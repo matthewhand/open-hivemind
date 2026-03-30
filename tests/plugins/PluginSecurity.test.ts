@@ -1,12 +1,12 @@
 import {
-  PluginSecurityPolicy,
-  verifyPluginSignature,
-  signManifest,
   canonicalizeManifest,
+  PluginSecurityPolicy,
+  signManifest,
   VALID_CAPABILITIES,
-  type SecurePluginManifest,
-  type PluginSecurityAuditEvent,
+  verifyPluginSignature,
   type PluginCapability,
+  type PluginSecurityAuditEvent,
+  type SecurePluginManifest,
 } from '../../src/plugins/PluginSecurity';
 
 // ---------------------------------------------------------------------------
@@ -243,7 +243,10 @@ describe('PluginSecurityPolicy', () => {
       expect(requests.length).toBe(2);
 
       const grants = auditEvents.filter(
-        (e) => e.event === 'capability_granted' && e.details.capability === 'network' && !e.details.manual
+        (e) =>
+          e.event === 'capability_granted' &&
+          e.details.capability === 'network' &&
+          !e.details.manual
       );
       expect(grants.length).toBeGreaterThanOrEqual(1);
 
@@ -274,7 +277,7 @@ describe('PluginSecurityPolicy', () => {
       policy.verifyAndSetTrust('llm-ts', makeManifest());
 
       for (const evt of auditEvents) {
-        expect(evt.timestamp).toBeDefined();
+        expect(typeof evt.timestamp).toBe('string');
         expect(new Date(evt.timestamp).getTime()).not.toBeNaN();
       }
     });
@@ -305,7 +308,10 @@ describe('PluginSecurityPolicy', () => {
     it('should return status for all tracked plugins', () => {
       policy.registerBuiltIn('llm-openai');
       policy.verifyAndSetTrust('llm-openai', makeManifest());
-      policy.verifyAndSetTrust('llm-community', makeSignedManifest({ requiredCapabilities: ['network'] }));
+      policy.verifyAndSetTrust(
+        'llm-community',
+        makeSignedManifest({ requiredCapabilities: ['network'] })
+      );
       policy.verifyAndSetTrust('llm-unsigned', makeManifest());
 
       const all = policy.getAllSecurityStatus();

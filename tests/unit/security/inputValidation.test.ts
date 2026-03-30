@@ -39,19 +39,16 @@ describe('Input Validation Middleware', () => {
       .expect(400);
 
     // Check that errors array exists and contains expected validation errors
-    expect(response.body.errors).toBeDefined();
     expect(Array.isArray(response.body.errors)).toBe(true);
     expect(response.body.errors.length).toBe(2);
 
     // Check for username error
     const usernameError = response.body.errors.find((e: any) => e.path === 'username');
-    expect(usernameError).toBeDefined();
-    expect(usernameError.msg).toBe('Invalid email');
+    expect(usernameError).toEqual(expect.objectContaining({ msg: 'Invalid email' }));
 
     // Check for password error
     const passwordError = response.body.errors.find((e: any) => e.path === 'password');
-    expect(passwordError).toBeDefined();
-    expect(passwordError.msg).toBe('Password too short');
+    expect(passwordError).toEqual(expect.objectContaining({ msg: 'Password too short' }));
   });
 
   test('should accept valid input', async () => {
@@ -76,16 +73,15 @@ describe('Input Validation Middleware', () => {
     const response = await request(app).post('/test').send({}).expect(400);
 
     // Check that errors array exists and has errors
-    expect(response.body.errors).toBeDefined();
     expect(Array.isArray(response.body.errors)).toBe(true);
     expect(response.body.errors.length).toBeGreaterThanOrEqual(2);
 
     // Check for username error
     const usernameError = response.body.errors.find((e: any) => e.path === 'username');
-    expect(usernameError).toBeDefined();
+    expect(usernameError).not.toBeUndefined();
 
     // Check for password error
     const passwordError = response.body.errors.find((e: any) => e.path === 'password');
-    expect(passwordError).toBeDefined();
+    expect(passwordError).not.toBeUndefined();
   });
 });

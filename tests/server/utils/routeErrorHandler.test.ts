@@ -65,16 +65,12 @@ describe('handleRouteError', () => {
     });
 
     handleRouteError(new Error('auth'), mockRes, mockDebug, 'auth err', 'DEFAULT');
-    expect(mockRes.json).toHaveBeenCalledWith(
-      expect.objectContaining({ code: 'AUTH_FAILED' })
-    );
+    expect(mockRes.json).toHaveBeenCalledWith(expect.objectContaining({ code: 'AUTH_FAILED' }));
   });
 
   it('should include success:false when includeSuccess is true', () => {
     handleRouteError(new Error('err'), mockRes, mockDebug, 'msg', 'CODE', true);
-    expect(mockRes.json).toHaveBeenCalledWith(
-      expect.objectContaining({ success: false })
-    );
+    expect(mockRes.json).toHaveBeenCalledWith(expect.objectContaining({ success: false }));
   });
 
   it('should NOT include success field when includeSuccess is false', () => {

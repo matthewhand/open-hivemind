@@ -427,7 +427,7 @@ const IntegrationsPanel: React.FC = () => {
         {/* Global LLM Settings */}
         {llmConfig && (
           <div className="collapse collapse-arrow bg-base-200/50 border border-base-200">
-            <input type="checkbox" defaultChecked={false} />
+            <input type="checkbox" defaultChecked={false} aria-label="Toggle Global Settings" />
             <div className="collapse-title text-sm font-medium flex items-center gap-2">
               <Plug className="w-4 h-4" /> Global Settings
             </div>

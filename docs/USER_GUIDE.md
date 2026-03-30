@@ -13,6 +13,8 @@ Welcome to the Open-Hivemind User Guide. This document provides a detailed walkt
   - [Bot Templates](#bot-templates)
   - [LLM Providers](#llm-providers)
   - [Message Platforms](#message-platforms)
+  - [Memory Providers](#memory-providers)
+  - [Tool Providers](#tool-providers)
   - [Personas Management](#personas-management)
   - [Guards](#guards)
   - [MCP Servers](#mcp-servers)
@@ -118,6 +120,24 @@ Connect your bots to messaging services.
 *   **Slack**: Set up your Slack App Token and Bot Token.
 *   **Mattermost**: Configure your Mattermost URL and Bot Token.
 *   **Status**: Check connection health for each platform.
+
+### [Memory Providers](/admin/providers/memory)
+Configure memory providers for persistent context and knowledge storage.
+
+![Memory Providers List](screenshots/memory-providers-list.png)
+
+*   **Provider Types**: Support for Redis, Pinecone, and other database or vector storage backends.
+*   **Configuration Details**: View connection parameters like host and environment.
+*   **Bot Associations**: See which bots are actively utilizing each memory profile.
+*   **System Default**: Define the fallback memory provider for bots without a specific profile.
+
+### [Tool Providers](/admin/providers/tool)
+Configure tool providers for extended capabilities and integrations.
+
+![Tool Providers List](screenshots/tool-providers-list.png)
+
+*   **Provider Integrations**: Add custom tools and APIs like GitHub, Jira, Google Search, etc.
+*   **Manage Access**: Restrict or permit specific bots from accessing configured tools.
 
 ### Personas Management
 The Personas (Beta) feature allows you to define distinct AI personalities and system prompts that can be assigned to one or more bots.

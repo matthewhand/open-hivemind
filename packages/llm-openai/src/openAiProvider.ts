@@ -41,7 +41,14 @@ export class OpenAiProvider implements ILlmProvider {
     maxTokens?: number;
   };
 
-  constructor(config?: OpenAIConfig & { timeout?: number; organization?: string; temperature?: number; maxTokens?: number }) {
+  constructor(
+    config?: OpenAIConfig & {
+      timeout?: number;
+      organization?: string;
+      temperature?: number;
+      maxTokens?: number;
+    }
+  ) {
     this.config = config || { apiKey: '' };
   }
 
@@ -138,16 +145,20 @@ export class OpenAiProvider implements ILlmProvider {
             openaiConfig.get('OPENAI_MAX_TOKENS') ||
             150;
 
-          const llmTimeoutMs = (typeof timeout === 'number' ? timeout : DEFAULT_LLM_TIMEOUT_MS);
+          const llmTimeoutMs = typeof timeout === 'number' ? timeout : DEFAULT_LLM_TIMEOUT_MS;
           const response = await withTimeout(
-            (signal) => openai.chat.completions.create({
-              model,
-              messages,
-              max_tokens: maxTokens,
-              temperature: effectiveTemperature,
-            }, { signal }),
+            (signal) =>
+              openai.chat.completions.create(
+                {
+                  model,
+                  messages,
+                  max_tokens: maxTokens,
+                  temperature: effectiveTemperature,
+                },
+                { signal }
+              ),
             llmTimeoutMs,
-            'OpenAI chat completion',
+            'OpenAI chat completion'
           );
 
           debug('OpenAI Response:', JSON.stringify(response, null, 2));
@@ -188,13 +199,17 @@ export class OpenAiProvider implements ILlmProvider {
 
     return circuitBreaker.execute(async () => {
       const response = await withTimeout(
-        (signal) => openai.completions.create({
-          model,
-          prompt,
-          max_tokens: 150,
-        }, { signal }),
+        (signal) =>
+          openai.completions.create(
+            {
+              model,
+              prompt,
+              max_tokens: 150,
+            },
+            { signal }
+          ),
         DEFAULT_LLM_TIMEOUT_MS,
-        'OpenAI completion',
+        'OpenAI completion'
       );
       return response.choices[0]?.text || '';
     });

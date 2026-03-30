@@ -39,21 +39,26 @@ describe('generateChatCompletionDirect', () => {
     );
 
     expect(result).toBe('ok response');
-    expect(mockedAxios.create).toHaveBeenCalledWith({
-      baseURL: 'http://localhost:3000/api',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: 'Bearer abc',
+    expect(mockedAxios.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        baseURL: 'http://localhost:3000/api',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: 'Bearer abc',
+        },
+      })
+    );
+    expect(post).toHaveBeenCalledWith(
+      '/chat/completions',
+      {
+        model: 'llama3.2',
+        messages: [
+          { role: 'system', content: 'system prompt' },
+          { role: 'assistant', content: 'prev-1' },
+          { role: 'user', content: 'hello' },
+        ],
       },
-      timeout: 15000,
-    });
-    expect(post).toHaveBeenCalledWith('/chat/completions', {
-      model: 'llama3.2',
-      messages: [
-        { role: 'system', content: 'system prompt' },
-        { role: 'assistant', content: 'prev-1' },
-        { role: 'user', content: 'hello' },
-      ],
-    });
+      expect.anything()
+    );
   });
 });

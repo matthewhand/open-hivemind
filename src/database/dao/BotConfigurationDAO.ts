@@ -1,106 +1,9 @@
 import type { Database } from 'sqlite';
 import { Logger } from '@common/logger';
+import type { BotConfiguration as TypesBotConfiguration } from '../types';
 
-export interface BotConfiguration {
-  id?: number;
-  name: string;
-  messageProvider: string;
-  llmProvider: string;
-  llmProfile?: string;
-  responseProfile?: string;
-  persona?: string;
-  systemInstruction?: string;
-  mcpServers?: { name: string; serverUrl?: string }[] | string[];
-  mcpGuard?: MCPCGuardConfig;
-  discord?: DiscordConfig;
-  slack?: SlackConfig;
-  mattermost?: MattermostConfig;
-  openai?: OpenAIConfig;
-  flowise?: FlowiseConfig;
-  openwebui?: OpenWebUIConfig;
-  openswarm?: OpenSwarmConfig;
-  perplexity?: PerplexityConfig;
-  replicate?: ReplicateConfig;
-  n8n?: N8nConfig;
-  tenantId?: string;
-  isActive: boolean;
-  createdAt: Date;
-  updatedAt: Date;
-  createdBy?: string;
-  updatedBy?: string;
-}
-
-export interface MCPCGuardConfig {
-  enabled: boolean;
-  type: 'owner' | 'custom';
-  allowedUserIds?: string[];
-}
-
-export interface DiscordConfig {
-  channelId?: string;
-  guildId?: string;
-  token?: string;
-  prefix?: string;
-  intents?: string[];
-}
-
-export interface SlackConfig {
-  botToken?: string;
-  appToken?: string;
-  signingSecret?: string;
-  teamId?: string;
-  channels?: string[];
-}
-
-export interface MattermostConfig {
-  url?: string;
-  accessToken?: string;
-  teamId?: string;
-  channelId?: string;
-}
-
-export interface OpenAIConfig {
-  apiKey?: string;
-  model?: string;
-  temperature?: number;
-  maxTokens?: number;
-  organization?: string;
-}
-
-export interface FlowiseConfig {
-  apiUrl?: string;
-  apiKey?: string;
-  chatflowId?: string;
-}
-
-export interface OpenWebUIConfig {
-  apiUrl?: string;
-  apiKey?: string;
-  model?: string;
-}
-
-export interface OpenSwarmConfig {
-  apiUrl?: string;
-  apiKey?: string;
-  swarmId?: string;
-}
-
-export interface PerplexityConfig {
-  apiKey?: string;
-  model?: string;
-}
-
-export interface ReplicateConfig {
-  apiKey?: string;
-  model?: string;
-  version?: string;
-}
-
-export interface N8nConfig {
-  apiUrl?: string;
-  apiKey?: string;
-  workflowId?: string;
-}
+// We map our type loosely for type flexibility (allowing parsed objects or stringified variants)
+export type BotConfiguration = TypesBotConfiguration;
 
 /**
  * Data Access Object for managing bot configurations in the SQLite database.
@@ -344,6 +247,9 @@ export class BotConfigurationDAO {
     byTenant: Record<string, number>;
   }> {
     try {
+      // SECURITY: SQL injection safe - this.tableName is a hardcoded constant
+      // ('bot_configurations'), not user input. String concatenation is used here
+      // for table names which cannot be parameterized in SQL.
       const totalRow = await this.db.get('SELECT COUNT(*) as total FROM ' + this.tableName);
       const activeRow = await this.db.get(
         'SELECT COUNT(*) as active FROM ' + this.tableName + ' WHERE isActive = 1'

@@ -59,16 +59,19 @@ test.describe('Mobile Responsive Layout', () => {
       page.route('**/api/config/llm-status', (route) =>
         route.fulfill({
           status: 200,
-          json: { defaultConfigured: true, defaultProviders: [], botsMissingLlmProvider: [], hasMissing: false },
+          json: {
+            defaultConfigured: true,
+            defaultProviders: [],
+            botsMissingLlmProvider: [],
+            hasMissing: false,
+          },
         })
       ),
       page.route('**/api/config/global', (route) => route.fulfill({ status: 200, json: {} })),
       page.route('**/api/config', (route) =>
         route.fulfill({ status: 200, json: { bots: mockBots } })
       ),
-      page.route('**/api/personas', (route) =>
-        route.fulfill({ status: 200, json: mockPersonas })
-      ),
+      page.route('**/api/personas', (route) => route.fulfill({ status: 200, json: mockPersonas })),
       page.route('**/api/csrf-token', (route) =>
         route.fulfill({ status: 200, json: { token: 'mock-csrf-token' } })
       ),
@@ -90,24 +93,18 @@ test.describe('Mobile Responsive Layout', () => {
       page.route('**/api/demo/status', (route) =>
         route.fulfill({ status: 200, json: { active: false } })
       ),
-      page.route('**/api/mcp/servers', (route) =>
-        route.fulfill({ status: 200, json: [] })
-      ),
+      page.route('**/api/mcp/servers', (route) => route.fulfill({ status: 200, json: [] })),
       page.route('**/api/activity**', (route) =>
         route.fulfill({ status: 200, json: { data: [], total: 0 } })
       ),
       page.route('**/api/analytics**', (route) =>
         route.fulfill({ status: 200, json: { data: {} } })
       ),
-      page.route('**/api/bots', (route) =>
-        route.fulfill({ status: 200, json: mockBots })
-      ),
+      page.route('**/api/bots', (route) => route.fulfill({ status: 200, json: mockBots })),
       page.route('**/api/bots/*/history*', (route) =>
         route.fulfill({ status: 200, json: { success: true, data: { history: [] } } })
       ),
-      page.route('**/api/export**', (route) =>
-        route.fulfill({ status: 200, json: {} })
-      ),
+      page.route('**/api/export**', (route) => route.fulfill({ status: 200, json: {} })),
       page.route('**/api/marketplace**', (route) =>
         route.fulfill({ status: 200, json: { templates: [] } })
       ),
@@ -130,7 +127,11 @@ test.describe('Mobile Responsive Layout', () => {
     await page.waitForTimeout(500);
 
     // Hamburger button should be visible on mobile
-    const hamburger = page.locator('button[aria-label*="menu" i], label[for="sidebar-drawer"], .drawer-button, button.btn-ghost.lg\\:hidden, label.btn-ghost.lg\\:hidden').first();
+    const hamburger = page
+      .locator(
+        'button[aria-label*="menu" i], label[for="sidebar-drawer"], .drawer-button, button.btn-ghost.lg\\:hidden, label.btn-ghost.lg\\:hidden'
+      )
+      .first();
     if ((await hamburger.count()) > 0) {
       await expect(hamburger).toBeVisible();
       await hamburger.click();
@@ -147,7 +148,11 @@ test.describe('Mobile Responsive Layout', () => {
     await page.goto('/admin/bots');
     await page.waitForTimeout(500);
 
-    const hamburger = page.locator('button[aria-label*="menu" i], label[for="sidebar-drawer"], .drawer-button, button.btn-ghost.lg\\:hidden, label.btn-ghost.lg\\:hidden').first();
+    const hamburger = page
+      .locator(
+        'button[aria-label*="menu" i], label[for="sidebar-drawer"], .drawer-button, button.btn-ghost.lg\\:hidden, label.btn-ghost.lg\\:hidden'
+      )
+      .first();
     if ((await hamburger.count()) > 0) {
       await expect(hamburger).toBeVisible();
     }
@@ -158,7 +163,11 @@ test.describe('Mobile Responsive Layout', () => {
     await page.goto('/admin/bots');
     await page.waitForTimeout(500);
 
-    const hamburger = page.locator('button[aria-label*="menu" i], label[for="sidebar-drawer"], .drawer-button, button.btn-ghost.lg\\:hidden, label.btn-ghost.lg\\:hidden').first();
+    const hamburger = page
+      .locator(
+        'button[aria-label*="menu" i], label[for="sidebar-drawer"], .drawer-button, button.btn-ghost.lg\\:hidden, label.btn-ghost.lg\\:hidden'
+      )
+      .first();
     if ((await hamburger.count()) > 0) {
       await hamburger.click();
       await page.waitForTimeout(300);
@@ -200,7 +209,9 @@ test.describe('Mobile Responsive Layout', () => {
       await expect(page.locator('body')).toBeVisible();
 
       // Main heading or page identifier should be visible
-      const headingEl = page.locator('h1, h2, [class*="page-title"], [class*="PageHeader"]').first();
+      const headingEl = page
+        .locator('h1, h2, [class*="page-title"], [class*="PageHeader"]')
+        .first();
       if ((await headingEl.count()) > 0) {
         await expect(headingEl).toBeVisible();
       }
@@ -316,13 +327,19 @@ test.describe('Mobile Responsive Layout', () => {
     await page.goto('/admin/bots');
     await page.waitForTimeout(500);
 
-    const hamburger = page.locator('button[aria-label*="menu" i], label[for="sidebar-drawer"], .drawer-button, button.btn-ghost.lg\\:hidden, label.btn-ghost.lg\\:hidden').first();
+    const hamburger = page
+      .locator(
+        'button[aria-label*="menu" i], label[for="sidebar-drawer"], .drawer-button, button.btn-ghost.lg\\:hidden, label.btn-ghost.lg\\:hidden'
+      )
+      .first();
     if ((await hamburger.count()) > 0) {
       await hamburger.click();
       await page.waitForTimeout(300);
 
       // Click a nav link
-      const link = page.locator('.drawer-side a[href*="personas"], aside a[href*="personas"]').first();
+      const link = page
+        .locator('.drawer-side a[href*="personas"], aside a[href*="personas"]')
+        .first();
       if ((await link.count()) > 0) {
         await link.click();
         await page.waitForTimeout(500);
@@ -456,14 +473,30 @@ test.describe('Mobile Responsive Layout', () => {
         status: 200,
         json: [
           {
-            id: 'p1', name: 'Assistant A', description: 'First', systemPrompt: 'help',
-            category: 'general', traits: [], isBuiltIn: false, createdAt: '2025-01-01T00:00:00Z',
-            updatedAt: '2025-01-01T00:00:00Z', assignedBotIds: [], assignedBotNames: [],
+            id: 'p1',
+            name: 'Assistant A',
+            description: 'First',
+            systemPrompt: 'help',
+            category: 'general',
+            traits: [],
+            isBuiltIn: false,
+            createdAt: '2025-01-01T00:00:00Z',
+            updatedAt: '2025-01-01T00:00:00Z',
+            assignedBotIds: [],
+            assignedBotNames: [],
           },
           {
-            id: 'p2', name: 'Assistant B', description: 'Second', systemPrompt: 'code',
-            category: 'technical', traits: [], isBuiltIn: false, createdAt: '2025-01-01T00:00:00Z',
-            updatedAt: '2025-01-01T00:00:00Z', assignedBotIds: [], assignedBotNames: [],
+            id: 'p2',
+            name: 'Assistant B',
+            description: 'Second',
+            systemPrompt: 'code',
+            category: 'technical',
+            traits: [],
+            isBuiltIn: false,
+            createdAt: '2025-01-01T00:00:00Z',
+            updatedAt: '2025-01-01T00:00:00Z',
+            assignedBotIds: [],
+            assignedBotNames: [],
           },
         ],
       })
@@ -484,7 +517,13 @@ test.describe('Mobile Responsive Layout', () => {
       route.fulfill({
         status: 200,
         json: [
-          { name: 'Prod MCP', url: 'https://prod.example.com', status: 'running', connected: true, tools: [] },
+          {
+            name: 'Prod MCP',
+            url: 'https://prod.example.com',
+            status: 'running',
+            connected: true,
+            tools: [],
+          },
         ],
       })
     );
@@ -517,9 +556,11 @@ test.describe('Mobile Responsive Layout', () => {
     await page.goto('/admin/chat');
     await page.waitForTimeout(500);
 
-    const chatInput = page.locator(
-      'input[placeholder*="message" i], textarea[placeholder*="message" i], input[placeholder*="type" i], textarea[placeholder*="type" i]'
-    ).first();
+    const chatInput = page
+      .locator(
+        'input[placeholder*="message" i], textarea[placeholder*="message" i], input[placeholder*="type" i], textarea[placeholder*="type" i]'
+      )
+      .first();
     if ((await chatInput.count()) > 0) {
       const box = await chatInput.boundingBox();
       if (box) {

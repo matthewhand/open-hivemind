@@ -1,3 +1,14 @@
+// Now import the module under test — it references localStorage at call time.
+import {
+  clearPersistedState,
+  loadState,
+  migrateState,
+  migrations,
+  PersistedEnvelope,
+  saveState,
+  STATE_VERSION,
+} from '../../../src/client/src/store/stateVersioning';
+
 /**
  * Tests for Redux state versioning and migration system.
  */
@@ -6,24 +17,21 @@
 const storage: Record<string, string> = {};
 const localStorageMock = {
   getItem: jest.fn((key: string) => storage[key] ?? null),
-  setItem: jest.fn((key: string, value: string) => { storage[key] = value; }),
-  removeItem: jest.fn((key: string) => { delete storage[key]; }),
-  clear: jest.fn(() => { for (const k of Object.keys(storage)) delete storage[k]; }),
-  get length() { return Object.keys(storage).length; },
+  setItem: jest.fn((key: string, value: string) => {
+    storage[key] = value;
+  }),
+  removeItem: jest.fn((key: string) => {
+    delete storage[key];
+  }),
+  clear: jest.fn(() => {
+    for (const k of Object.keys(storage)) delete storage[k];
+  }),
+  get length() {
+    return Object.keys(storage).length;
+  },
   key: jest.fn((_i: number) => null),
 };
 Object.defineProperty(globalThis, 'localStorage', { value: localStorageMock, writable: true });
-
-// Now import the module under test — it references localStorage at call time.
-import {
-  migrateState,
-  migrations,
-  saveState,
-  loadState,
-  clearPersistedState,
-  STATE_VERSION,
-  PersistedEnvelope,
-} from '../../../src/client/src/store/stateVersioning';
 
 beforeEach(() => {
   localStorageMock.clear();

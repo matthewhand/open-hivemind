@@ -11,7 +11,15 @@ export const BackupIdParamSchema = z.object({
 export const ImportBotsSchema = z.object({
   body: z.object({
     bots: z
-      .array(z.object({ name: z.string().optional() }).passthrough())
+      .array(
+        z.object({
+          name: z.string().optional(),
+          messageProvider: z.string().optional(),
+          llmProvider: z.string().optional(),
+          persona: z.string().optional(),
+          isActive: z.boolean().optional(),
+        })
+      )
       .min(1, { message: 'Request body must contain a non-empty "bots" array' }),
   }),
 });

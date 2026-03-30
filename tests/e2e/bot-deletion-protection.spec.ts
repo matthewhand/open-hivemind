@@ -147,7 +147,10 @@ test.describe('Bot Deletion Protection', () => {
     }
 
     // 4. Verify Delete Confirmation Modal
-    const deleteModal = page.locator('dialog[open], .modal.modal-open, .modal-box').filter({ hasText: /delete|confirm/i }).last();
+    const deleteModal = page
+      .locator('dialog[open], .modal.modal-open, .modal-box')
+      .filter({ hasText: /delete|confirm/i })
+      .last();
     await expect(deleteModal).toBeVisible();
 
     // 5. Check Initial State - look for a confirmation input or Delete button
@@ -156,7 +159,7 @@ test.describe('Bot Deletion Protection', () => {
 
     if (await confirmationInput.isVisible().catch(() => false)) {
       // Has confirmation input - test the typed confirmation flow
-      const placeholder = await confirmationInput.getAttribute('placeholder') || '';
+      const placeholder = (await confirmationInput.getAttribute('placeholder')) || '';
 
       // Check delete button is disabled initially
       if (await deleteConfirmButton.isDisabled().catch(() => false)) {

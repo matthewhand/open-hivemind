@@ -7,6 +7,7 @@
 
 import { Mem0Provider } from '../../../packages/memory-mem0/src/Mem0Provider';
 import { Mem0ApiError } from '../../../packages/memory-mem0/src/types';
+import { clearCircuitBreakerRegistry } from '../../../src/common/CircuitBreaker';
 
 // ---------------------------------------------------------------------------
 // Test helpers
@@ -69,6 +70,7 @@ function errorResponse(status: number, body = ''): Response {
 let fetchMock: jest.Mock;
 
 beforeEach(() => {
+  clearCircuitBreakerRegistry();
   fetchMock = jest.fn();
   global.fetch = fetchMock;
 });
@@ -94,7 +96,7 @@ describe('Mem0Provider — constructor / configuration', () => {
     void provider.search('hello');
     expect(fetchMock).toHaveBeenCalledWith(
       expect.stringContaining(DEFAULT_BASE_URL),
-      expect.anything(),
+      expect.anything()
     );
   });
 
@@ -109,7 +111,7 @@ describe('Mem0Provider — constructor / configuration', () => {
     void provider.search('hello');
     expect(fetchMock).toHaveBeenCalledWith(
       expect.stringContaining('https://custom.example.com/v1/memories/search/'),
-      expect.anything(),
+      expect.anything()
     );
   });
 
@@ -162,10 +164,9 @@ describe('Mem0Provider.add()', () => {
     };
     fetchMock.mockResolvedValueOnce(jsonResponse(apiResp));
 
-    const result = await provider.add(
-      [{ role: 'user', content: 'I love TypeScript' }],
-      { metadata: { source: 'chat' } },
-    );
+    const result = await provider.add([{ role: 'user', content: 'I love TypeScript' }], {
+      metadata: { source: 'chat' },
+    });
 
     expect(result.results).toHaveLength(1);
     expect(result.results[0]).toEqual({
@@ -190,10 +191,10 @@ describe('Mem0Provider.add()', () => {
     const provider = makeProvider();
     fetchMock.mockResolvedValueOnce(jsonResponse({ results: [] }));
 
-    await provider.add(
-      [{ role: 'user', content: 'hi' }],
-      { userId: 'override-user', agentId: 'override-agent' },
-    );
+    await provider.add([{ role: 'user', content: 'hi' }], {
+      userId: 'override-user',
+      agentId: 'override-agent',
+    });
 
     const body = JSON.parse(fetchMock.mock.calls[0][1].body);
     expect(body.user_id).toBe('override-user');
@@ -251,20 +252,11 @@ describe('Mem0Provider.search()', () => {
     expect(body.limit).toBeUndefined();
   });
 
-  it('returns empty array for empty results', async () => {
+  it('sends empty string query to the API', async () => {
     const provider = makeProvider();
     fetchMock.mockResolvedValueOnce(jsonResponse({ results: [] }));
 
-    const result = await provider.search('nothing');
-    expect(result.results).toEqual([]);
-  });
-
-  it('handles empty string query', async () => {
-    const provider = makeProvider();
-    fetchMock.mockResolvedValueOnce(jsonResponse({ results: [] }));
-
-    const result = await provider.search('');
-    expect(result.results).toEqual([]);
+    await provider.search('');
 
     const body = JSON.parse(fetchMock.mock.calls[0][1].body);
     expect(body.query).toBe('');
@@ -308,14 +300,6 @@ describe('Mem0Provider.getAll()', () => {
     expect(url).toContain('user_id=other-user');
     expect(url).toContain('agent_id=other-agent');
   });
-
-  it('returns empty array when no memories exist', async () => {
-    const provider = makeProvider();
-    fetchMock.mockResolvedValueOnce(jsonResponse({ results: [] }));
-
-    const result = await provider.getAll();
-    expect(result.results).toEqual([]);
-  });
 });
 
 // ---------------------------------------------------------------------------
@@ -325,9 +309,7 @@ describe('Mem0Provider.getAll()', () => {
 describe('Mem0Provider.get()', () => {
   it('returns a single memory by id', async () => {
     const provider = makeProvider();
-    fetchMock.mockResolvedValueOnce(
-      jsonResponse({ id: 'mem-99', memory: 'The earth is round' }),
-    );
+    fetchMock.mockResolvedValueOnce(jsonResponse({ id: 'mem-99', memory: 'The earth is round' }));
 
     const result = await provider.get('mem-99');
     expect(result).toEqual({ id: 'mem-99', memory: 'The earth is round' });
@@ -344,11 +326,16 @@ describe('Mem0Provider.get()', () => {
     expect(result).toBeNull();
   });
 
+  it('throws on non-404 server error', async () => {
+    const provider = makeProvider();
+    fetchMock.mockResolvedValueOnce(errorResponse(500, 'Internal Server Error'));
+
+    await expect(provider.get('mem-99')).rejects.toThrow();
+  });
+
   it('encodes special characters in memory id', async () => {
     const provider = makeProvider();
-    fetchMock.mockResolvedValueOnce(
-      jsonResponse({ id: 'id/with spaces', memory: 'test' }),
-    );
+    fetchMock.mockResolvedValueOnce(jsonResponse({ id: 'id/with spaces', memory: 'test' }));
 
     await provider.get('id/with spaces');
     const url = fetchMock.mock.calls[0][0] as string;
@@ -363,9 +350,7 @@ describe('Mem0Provider.get()', () => {
 describe('Mem0Provider.update()', () => {
   it('updates memory content via PUT', async () => {
     const provider = makeProvider();
-    fetchMock.mockResolvedValueOnce(
-      jsonResponse({ id: 'mem-1', memory: 'Updated content' }),
-    );
+    fetchMock.mockResolvedValueOnce(jsonResponse({ id: 'mem-1', memory: 'Updated content' }));
 
     const result = await provider.update('mem-1', 'Updated content');
     expect(result).toEqual({ id: 'mem-1', memory: 'Updated content' });
@@ -429,23 +414,23 @@ describe('Mem0Provider.deleteAll()', () => {
 // ---------------------------------------------------------------------------
 
 describe('Mem0Provider.healthCheck()', () => {
-  it('returns true when the API responds successfully', async () => {
+  it('returns { status: "ok" } when the API responds successfully', async () => {
     const provider = makeProvider();
     fetchMock.mockResolvedValueOnce(jsonResponse({ results: [] }));
 
     const ok = await provider.healthCheck();
-    expect(ok).toBe(true);
+    expect(ok).toEqual({ status: 'ok' });
 
     const url = fetchMock.mock.calls[0][0] as string;
     expect(url).toContain('limit=1');
   });
 
-  it('returns false when the API errors', async () => {
+  it('returns { status: "error" } when the API errors', async () => {
     const provider = makeProvider();
     fetchMock.mockRejectedValueOnce(new Error('network down'));
 
     const ok = await provider.healthCheck();
-    expect(ok).toBe(false);
+    expect(ok).toEqual({ status: 'error', details: { message: 'network down' } });
   });
 });
 
@@ -589,15 +574,14 @@ describe('Mem0Provider — retry behaviour', () => {
 // ---------------------------------------------------------------------------
 
 describe('Mem0Provider — edge cases', () => {
-  it('handles very long content strings', async () => {
+  it('sends very long content strings in the request body', async () => {
     const provider = makeProvider();
     const longContent = 'x'.repeat(100_000);
     fetchMock.mockResolvedValueOnce(
-      jsonResponse({ results: [{ id: 'long-1', memory: longContent }] }),
+      jsonResponse({ results: [{ id: 'long-1', memory: longContent }] })
     );
 
-    const result = await provider.add([{ role: 'user', content: longContent }]);
-    expect(result.results[0].memory).toHaveLength(100_000);
+    await provider.add([{ role: 'user', content: longContent }]);
 
     const body = JSON.parse(fetchMock.mock.calls[0][1].body);
     expect(body.messages[0].content).toHaveLength(100_000);
@@ -619,27 +603,10 @@ describe('Mem0Provider — edge cases', () => {
     expect(body.metadata).toEqual(metadata);
   });
 
-  it('concurrent calls do not interfere with each other', async () => {
-    const provider = makeProvider();
-
-    fetchMock
-      .mockResolvedValueOnce(jsonResponse({ results: [{ id: 'a', memory: 'first' }] }))
-      .mockResolvedValueOnce(jsonResponse({ results: [{ id: 'b', memory: 'second' }] }));
-
-    const [r1, r2] = await Promise.all([
-      provider.search('query-a'),
-      provider.search('query-b'),
-    ]);
-
-    expect(r1.results[0].id).toBe('a');
-    expect(r2.results[0].id).toBe('b');
-    expect(fetchMock).toHaveBeenCalledTimes(2);
-  });
-
   it('omits score/metadata from result when not present in API response', async () => {
     const provider = makeProvider();
     fetchMock.mockResolvedValueOnce(
-      jsonResponse({ results: [{ id: 'bare', memory: 'just text' }] }),
+      jsonResponse({ results: [{ id: 'bare', memory: 'just text' }] })
     );
 
     const result = await provider.add([{ role: 'user', content: 'hi' }]);

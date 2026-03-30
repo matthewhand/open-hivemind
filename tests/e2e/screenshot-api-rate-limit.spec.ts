@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { expect, test } from '@playwright/test';
 
 test.describe('Guards Page Rate Limit Screenshots', () => {
   test('capture guards page rate limit modal screenshots', async ({ page }) => {

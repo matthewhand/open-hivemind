@@ -6,6 +6,7 @@ import express from 'express';
 import { Logger } from '../common/logger';
 import { correlationMiddleware, globalErrorHandler } from '../middleware/errorHandler';
 import { applyRateLimiting } from '../middleware/rateLimiter';
+import { HTTP_STATUS } from '../types/constants';
 // Error handling imports
 // Middleware imports
 import { auditMiddleware } from './middleware/audit';
@@ -31,8 +32,8 @@ import importExportRouter from './routes/importExport';
 import mcpRouter from './routes/mcp';
 import onboardingRouter from './routes/onboarding';
 import personasRouter from './routes/personas';
-import providersRouter from './routes/providers';
 import sitemapRouter from './routes/sitemap';
+import providersRouter from './routes/providers';
 import specsRouter from './routes/specs';
 import webhookEventsRouter from './routes/webhookEvents';
 
@@ -111,9 +112,8 @@ export class WebUIServer {
       },
       credentials: true,
       optionsSuccessStatus: 200,
-      allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin', 'X-Correlation-ID'],
+      allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin'],
       exposedHeaders: [
-        'X-Correlation-ID',
         'X-RateLimit-Limit',
         'X-RateLimit-Remaining',
         'X-RateLimit-Reset',
@@ -149,14 +149,14 @@ export class WebUIServer {
         if (isParseError && req.path?.startsWith('/health/api-endpoints')) {
           const method = req.method.toUpperCase();
           if (method === 'PUT') {
-            return res.status(404).json({
+            return res.status(HTTP_STATUS.NOT_FOUND).json({
               error: 'Failed to update endpoint',
               message: 'Endpoint not found or payload invalid',
               timestamp: new Date().toISOString(),
             });
           }
 
-          return res.status(400).json({
+          return res.status(HTTP_STATUS.BAD_REQUEST).json({
             error: 'Invalid JSON payload',
             message: 'Request body could not be parsed',
             timestamp: new Date().toISOString(),
@@ -208,7 +208,6 @@ export class WebUIServer {
     this.app.use('/api/webhooks', authenticateToken, webhookEventsRouter);
     this.app.use('/api/onboarding', authenticateToken, onboardingRouter);
     this.app.use('/api/providers', authenticateToken, providersRouter);
-    this.app.use('/api/guards', authenticateToken, guardsRouter);
 
     // WebUI application routes (serve React app)
     this.app.get('/admin/*', (req, res) => {
@@ -241,7 +240,7 @@ export class WebUIServer {
 
     // Catch-all for undefined routes
     this.app.use('*', (req, res) => {
-      res.status(404).json({
+      res.status(HTTP_STATUS.NOT_FOUND).json({
         error: 'Not Found',
         message: `Route ${req.originalUrl} not found`,
         timestamp: new Date().toISOString(),
@@ -348,7 +347,7 @@ export async function createServer(): Promise<express.Application> {
   // Backward-compatible test route shape expected by legacy integration tests.
   app.get('/api/health', (_req, res) => {
     const memoryUsage = process.memoryUsage();
-    res.status(200).json({
+    res.status(HTTP_STATUS.OK).json({
       status: 'healthy',
       timestamp: new Date().toISOString(),
       version: '1.0.0',
@@ -367,7 +366,7 @@ export async function createServer(): Promise<express.Application> {
   });
 
   app.get('/api/health/detailed', (_req, res) => {
-    res.status(200).json({
+    res.status(HTTP_STATUS.OK).json({
       status: 'healthy',
       checks: {
         database: { status: 'healthy' },

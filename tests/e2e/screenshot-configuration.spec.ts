@@ -39,36 +39,39 @@ test.describe('Configuration Page Screenshots', () => {
         status: 200,
         contentType: 'application/json',
         body: JSON.stringify({
-          "general": {
-            "values": {
-              "instanceName": "Open-Hivemind Production",
-              "logLevel": "info",
-              "maxConcurrentBots": 100,
-              "allowUnknownTools": false,
+          general: {
+            values: {
+              instanceName: 'Open-Hivemind Production',
+              logLevel: 'info',
+              maxConcurrentBots: 100,
+              allowUnknownTools: false,
             },
-            "schema": {
-              "properties": {
-                "instanceName": { "doc": "Name of the instance", "format": "string" },
-                "logLevel": { "doc": "Logging level", "format": ["debug", "info", "warn", "error"] },
-                "maxConcurrentBots": { "doc": "Maximum number of concurrent bots", "format": "int" },
-                "allowUnknownTools": { "doc": "Allow bots to use unknown MCP tools", "format": "boolean" }
-              }
-            }
+            schema: {
+              properties: {
+                instanceName: { doc: 'Name of the instance', format: 'string' },
+                logLevel: { doc: 'Logging level', format: ['debug', 'info', 'warn', 'error'] },
+                maxConcurrentBots: { doc: 'Maximum number of concurrent bots', format: 'int' },
+                allowUnknownTools: {
+                  doc: 'Allow bots to use unknown MCP tools',
+                  format: 'boolean',
+                },
+              },
+            },
           },
-          "messaging": {
-             "values": {
-               "defaultPersona": "Assistant",
-               "maxMessageLength": 2000,
-               "allowMarkdown": true,
-             },
-             "schema": {
-               "properties": {
-                 "defaultPersona": { "doc": "Default persona for new bots", "format": "string" },
-                 "maxMessageLength": { "doc": "Maximum length of a single message", "format": "int" },
-                 "allowMarkdown": { "doc": "Allow markdown formatting in messages", "format": "boolean" }
-               }
-             }
-          }
+          messaging: {
+            values: {
+              defaultPersona: 'Assistant',
+              maxMessageLength: 2000,
+              allowMarkdown: true,
+            },
+            schema: {
+              properties: {
+                defaultPersona: { doc: 'Default persona for new bots', format: 'string' },
+                maxMessageLength: { doc: 'Maximum length of a single message', format: 'int' },
+                allowMarkdown: { doc: 'Allow markdown formatting in messages', format: 'boolean' },
+              },
+            },
+          },
         }),
       });
     });
@@ -79,10 +82,7 @@ test.describe('Configuration Page Screenshots', () => {
         status: 200,
         contentType: 'application/json',
         body: JSON.stringify({
-          rollbacks: [
-            "rollback_1711234567890_xxyyzz",
-            "rollback_1711230000000_aabbcc"
-          ]
+          rollbacks: ['rollback_1711234567890_xxyyzz', 'rollback_1711230000000_aabbcc'],
         }),
       });
     });
@@ -103,6 +103,5 @@ test.describe('Configuration Page Screenshots', () => {
 
     // Take screenshot of the main page
     await page.screenshot({ path: 'docs/screenshots/configuration.png', fullPage: true });
-
   });
 });

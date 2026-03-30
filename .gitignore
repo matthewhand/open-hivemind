@@ -102,6 +102,9 @@ web_modules/
 .env.local
 .env.*
 
+# Docker compose local overrides (user-specific service config)
+docker-compose.override.yml
+
 # parcel-bundler cache (https://parceljs.org/)
 .cache
 .parcel-cache
@@ -169,6 +172,7 @@ coverage/
 # Test results
 playwright-report/
 test-results/archive/
+# Note: test-results/archive/ is different from repo archive/
 *.archive
 
 .claude/
@@ -189,6 +193,7 @@ test-results/
 !docs/webui/**
 !docs/operations/**
 !docs/getting-started/**
+!archive/screenshots/README.md
 
 # User bot state config
 config/user-config.json
@@ -200,7 +205,9 @@ config/message-profiles.json
 .codex/
 k8s/
 /*.txt
-archive/
+archive/*
+!archive/screenshots/
+!archive/screenshots/*
 /api/
 .specify/
 .kilocode/
@@ -212,6 +219,9 @@ config/.key
 config/secure/
 config/providers/
 scripts/benchmarks/temp-import-bench.json
+
+# Screenshots: only allow docs/screenshots/ and archive/screenshots/
+/*.png
 
 # Development artifacts
 .letta/

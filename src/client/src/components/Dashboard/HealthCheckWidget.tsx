@@ -201,6 +201,9 @@ const HealthCheckWidget: React.FC<HealthCheckWidgetProps> = ({
                 <button
                   className="w-full p-3 flex items-center gap-3 text-left cursor-pointer"
                   onClick={() => toggleExpand(service.name)}
+                  aria-expanded={isExpanded}
+                  aria-controls={`service-details-${service.name.replace(/\s+/g, '-').toLowerCase()}`}
+                  aria-label={`${isExpanded ? 'Collapse' : 'Expand'} details for ${service.name}`}
                 >
                   <StatusIcon className={`w-4 h-4 flex-shrink-0 ${config.color}`} />
                   <div className="flex-1 min-w-0">
@@ -222,7 +225,10 @@ const HealthCheckWidget: React.FC<HealthCheckWidgetProps> = ({
                 </button>
 
                 {isExpanded && (
-                  <div className="px-3 pb-3 pt-0 border-t border-base-200/50">
+                  <div
+                    id={`service-details-${service.name.replace(/\s+/g, '-').toLowerCase()}`}
+                    className="px-3 pb-3 pt-0 border-t border-base-200/50"
+                  >
                     <div className="text-xs space-y-1 mt-2">
                       <div className="flex justify-between">
                         <span className="text-base-content/60">Details:</span>

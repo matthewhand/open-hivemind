@@ -1,8 +1,10 @@
 import Debug from 'debug';
 import type { OpenAI } from 'openai';
 import { ErrorUtils, HivemindError } from '@src/types/errors';
+import { Logger } from '@common/logger';
 
 const debug = Debug('app:OpenAiService');
+const logger = Logger.withContext('OpenAiService:listModels');
 
 /**
  * Lists all available models from OpenAI.
@@ -23,7 +25,7 @@ export async function listModels(openai: OpenAI): Promise<any> {
 
     // Log with appropriate level
     if (classification.logLevel === 'error') {
-      console.error('OpenAI list models error:', hivemindError);
+      logger.error('OpenAI list models error', { error: hivemindError });
     }
 
     throw ErrorUtils.createError(

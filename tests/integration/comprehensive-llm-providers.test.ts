@@ -9,6 +9,16 @@
  * @since 2025-09-27
  */
 
+import { getFlowiseResponse } from '@integrations/flowise/flowiseRestClient';
+import { getFlowiseSdkResponse } from '@integrations/flowise/flowiseSdkClient';
+import { FlowiseProvider } from '../../packages/llm-flowise/src/flowiseProvider';
+// ---------------------------------------------------------------------------
+// Now import the providers
+// ---------------------------------------------------------------------------
+import { OpenAiProvider } from '../../packages/llm-openai/src/openAiProvider';
+import { OpenSwarmProvider } from '../../packages/llm-openswarm/src/OpenSwarmProvider';
+import { getCircuitBreaker } from '../../src/common/CircuitBreaker';
+import type { ILlmProvider } from '../../src/llm/interfaces/ILlmProvider';
 import { LLMResponse } from '../../src/llm/interfaces/LLMResponse';
 
 // ---------------------------------------------------------------------------
@@ -96,19 +106,16 @@ jest.mock('../../src/utils/ssrfGuard', () => ({
   isSafeUrl: jest.fn().mockResolvedValue(true),
 }));
 
-// ---------------------------------------------------------------------------
-// Now import the providers
-// ---------------------------------------------------------------------------
-import { OpenAiProvider } from '../../packages/llm-openai/src/openAiProvider';
-import { FlowiseProvider } from '../../packages/llm-flowise/src/flowiseProvider';
-import { OpenSwarmProvider } from '../../packages/llm-openswarm/src/OpenSwarmProvider';
-import { getFlowiseResponse } from '@integrations/flowise/flowiseRestClient';
-import { getFlowiseSdkResponse } from '@integrations/flowise/flowiseSdkClient';
-import type { ILlmProvider } from '../../src/llm/interfaces/ILlmProvider';
-
 describe('COMPREHENSIVE LLM PROVIDER TESTS - PHASE 3', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    // Reset the openai circuit breaker to prevent state leakage between tests
+    getCircuitBreaker({
+      name: 'openai',
+      failureThreshold: 5,
+      resetTimeoutMs: 30_000,
+      halfOpenMaxAttempts: 3,
+    }).reset();
   });
 
   // ============================================================================
@@ -224,10 +231,9 @@ describe('COMPREHENSIVE LLM PROVIDER TESTS - PHASE 3', () => {
         expect(mockCompletionsCreate).toHaveBeenCalledTimes(1);
       });
 
-      test('should return empty string on completion error', async () => {
+      test('should throw on completion error', async () => {
         mockCompletionsCreate.mockRejectedValueOnce(new Error('API Error'));
-        const result = await provider.generateCompletion('Test');
-        expect(result).toBe('');
+        await expect(provider.generateCompletion('Test')).rejects.toThrow('API Error');
       });
 
       test('should return empty string when completion text is null', async () => {
@@ -287,9 +293,7 @@ describe('COMPREHENSIVE LLM PROVIDER TESTS - PHASE 3', () => {
         delete process.env.OPENAI_API_KEY;
         try {
           const noKeyProvider = new OpenAiProvider({ apiKey: '' });
-          await expect(
-            noKeyProvider.generateChatCompletion('Test', [])
-          ).rejects.toThrow(/API key/);
+          await expect(noKeyProvider.generateChatCompletion('Test', [])).rejects.toThrow(/API key/);
         } finally {
           if (savedKey !== undefined) process.env.OPENAI_API_KEY = savedKey;
         }
@@ -310,9 +314,9 @@ describe('COMPREHENSIVE LLM PROVIDER TESTS - PHASE 3', () => {
 
       test('should throw after max retries exceeded', async () => {
         mockChatCreate.mockRejectedValue(new Error('Persistent error'));
-        await expect(
-          provider.generateChatCompletion('Test', [])
-        ).rejects.toThrow('Persistent error');
+        await expect(provider.generateChatCompletion('Test', [])).rejects.toThrow(
+          'Persistent error'
+        );
         expect(mockChatCreate).toHaveBeenCalledTimes(3); // MAX_RETRIES
       });
 
@@ -378,9 +382,7 @@ describe('COMPREHENSIVE LLM PROVIDER TESTS - PHASE 3', () => {
       });
 
       test('should handle REST errors gracefully', async () => {
-        (getFlowiseResponse as jest.Mock).mockRejectedValueOnce(
-          new Error('REST timeout')
-        );
+        (getFlowiseResponse as jest.Mock).mockRejectedValueOnce(new Error('REST timeout'));
         const restProvider = new FlowiseProvider({ useRest: true });
         const result = await restProvider.generateChatCompletion('Hello', [], {
           channelId: 'ch1',
@@ -470,14 +472,16 @@ describe('COMPREHENSIVE LLM PROVIDER TESTS - PHASE 3', () => {
     describe('OpenSwarm Chat Completions', () => {
       test('should return response content from API', async () => {
         // Mock at instance level to avoid axios mock issues
-        chatCompletionSpy = jest.spyOn(provider, 'generateChatCompletion')
+        chatCompletionSpy = jest
+          .spyOn(provider, 'generateChatCompletion')
           .mockResolvedValue('Swarm response');
         const result = await provider.generateChatCompletion('Hello', []);
         expect(result).toBe('Swarm response');
       });
 
       test('should pass metadata to generateChatCompletion', async () => {
-        chatCompletionSpy = jest.spyOn(provider, 'generateChatCompletion')
+        chatCompletionSpy = jest
+          .spyOn(provider, 'generateChatCompletion')
           .mockResolvedValue('response');
         await provider.generateChatCompletion('Hello', [], { team: 'research-team' });
         expect(chatCompletionSpy).toHaveBeenCalledWith('Hello', [], { team: 'research-team' });
@@ -485,14 +489,16 @@ describe('COMPREHENSIVE LLM PROVIDER TESTS - PHASE 3', () => {
 
       test('should handle API errors gracefully (returns Error: message)', async () => {
         // OpenSwarm catches errors and returns "Error: <message>"
-        chatCompletionSpy = jest.spyOn(provider, 'generateChatCompletion')
+        chatCompletionSpy = jest
+          .spyOn(provider, 'generateChatCompletion')
           .mockResolvedValue('Error: Connection refused');
         const result = await provider.generateChatCompletion('Test', []);
         expect(result).toMatch(/Error:/);
       });
 
       test('should return "No response" when content is null', async () => {
-        chatCompletionSpy = jest.spyOn(provider, 'generateChatCompletion')
+        chatCompletionSpy = jest
+          .spyOn(provider, 'generateChatCompletion')
           .mockResolvedValue('No response');
         const result = await provider.generateChatCompletion('Test', []);
         expect(result).toBe('No response');
@@ -501,7 +507,8 @@ describe('COMPREHENSIVE LLM PROVIDER TESTS - PHASE 3', () => {
 
     describe('OpenSwarm Non-Chat Completions', () => {
       test('should delegate generateCompletion to generateChatCompletion', async () => {
-        chatCompletionSpy = jest.spyOn(provider, 'generateChatCompletion')
+        chatCompletionSpy = jest
+          .spyOn(provider, 'generateChatCompletion')
           .mockResolvedValue('Swarm response');
         const result = await provider.generateCompletion('Test prompt');
         expect(result).toBe('Swarm response');
@@ -534,7 +541,8 @@ describe('COMPREHENSIVE LLM PROVIDER TESTS - PHASE 3', () => {
       });
 
       test('should generate response via IMessage interface', async () => {
-        chatCompletionSpy = jest.spyOn(provider, 'generateChatCompletion')
+        chatCompletionSpy = jest
+          .spyOn(provider, 'generateChatCompletion')
           .mockResolvedValue('Swarm IMessage response');
         const mockMessage = {
           getText: () => 'Hello from message',
@@ -650,21 +658,15 @@ describe('COMPREHENSIVE LLM PROVIDER TESTS - PHASE 3', () => {
       expect(provider.name.length).toBeGreaterThan(0);
     });
 
-    test.each(providers)(
-      '$name should implement supportsChatCompletion',
-      ({ create }) => {
-        const provider = create();
-        expect(typeof provider.supportsChatCompletion()).toBe('boolean');
-      }
-    );
+    test.each(providers)('$name should implement supportsChatCompletion', ({ create }) => {
+      const provider = create();
+      expect(typeof provider.supportsChatCompletion()).toBe('boolean');
+    });
 
-    test.each(providers)(
-      '$name should implement supportsCompletion',
-      ({ create }) => {
-        const provider = create();
-        expect(typeof provider.supportsCompletion()).toBe('boolean');
-      }
-    );
+    test.each(providers)('$name should implement supportsCompletion', ({ create }) => {
+      const provider = create();
+      expect(typeof provider.supportsCompletion()).toBe('boolean');
+    });
 
     test.each(providers)(
       '$name should implement generateChatCompletion as async function',

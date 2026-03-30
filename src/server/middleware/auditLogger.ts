@@ -2,6 +2,10 @@ import { type NextFunction, type Request, type Response } from 'express';
 import { type AuthMiddlewareRequest } from '@src/auth/types';
 import { Logger } from '@src/common/logger';
 
+interface ResponseWithAuditFlag extends Response {
+  _auditLogged?: boolean;
+}
+
 export interface AuditLogEntry {
   timestamp: string;
   action: string;
@@ -180,8 +184,8 @@ export const auditMiddleware = (action: string, resource: string) => {
 
     res.send = function (data: any): Response {
       // Only log once
-      if (!(res as any)._auditLogged) {
-        (res as any)._auditLogged = true;
+      if (!(res as ResponseWithAuditFlag)._auditLogged) {
+        (res as ResponseWithAuditFlag)._auditLogged = true;
 
         const entry: Omit<AuditLogEntry, 'timestamp'> = {
           action,
@@ -234,8 +238,8 @@ export const auditMiddlewareWithChanges = (
     }
 
     res.send = function (data: any): Response {
-      if (!(res as any)._auditLogged) {
-        (res as any)._auditLogged = true;
+      if (!(res as ResponseWithAuditFlag)._auditLogged) {
+        (res as ResponseWithAuditFlag)._auditLogged = true;
 
         const entry: Omit<AuditLogEntry, 'timestamp'> = {
           action,

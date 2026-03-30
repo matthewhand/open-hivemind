@@ -176,7 +176,7 @@ convict.addFormat({
 const responseProfileKeySet = new Set(RESPONSE_PROFILE_OVERRIDE_KEYS);
 
 function coerceResponseProfileValue(key: string, value: unknown): number | boolean | undefined {
-  if (!responseProfileKeySet.has(key as any)) { return undefined; }
+  if (!responseProfileKeySet.has(key)) { return undefined; }
   const expectedType = RESPONSE_PROFILE_KEY_TYPES[key as keyof typeof RESPONSE_PROFILE_KEY_TYPES];
 
   if (expectedType === 'number') {
@@ -821,7 +821,7 @@ if (typeof process !== 'undefined' && process.env) {
       if (!k) { continue; }
       out[k] = clampBonus(Number(vs));
     }
-    (messageConfig as any).set('CHANNEL_BONUSES', out);
+    messageConfig.set('CHANNEL_BONUSES', out);
   }
 
   if (typeof pEnv === 'string') {
@@ -838,7 +838,7 @@ if (typeof process !== 'undefined' && process.env) {
       if (!k) { continue; }
       out[k] = coercePriority(Number(vs));
     }
-    (messageConfig as any).set('CHANNEL_PRIORITIES', out);
+    messageConfig.set('CHANNEL_PRIORITIES', out);
   }
 }
 
@@ -847,24 +847,25 @@ messageConfig.validate({ allowed: 'warn' });
 
 // Second-pass normalization with optional known channel list (none here; providers can supply later)
 const normalized = normalizeChannelMaps(
-  (messageConfig as any).get('CHANNEL_BONUSES'),
-  (messageConfig as any).get('CHANNEL_PRIORITIES'),
+  messageConfig.get('CHANNEL_BONUSES') as Record<string, number>,
+  messageConfig.get('CHANNEL_PRIORITIES') as Record<string, number>,
   undefined,
 );
 // Overwrite normalized values back into config
-(messageConfig as any).set('CHANNEL_BONUSES', normalized.bonuses);
-(messageConfig as any).set('CHANNEL_PRIORITIES', normalized.priorities);
+messageConfig.set('CHANNEL_BONUSES', normalized.bonuses);
+messageConfig.set('CHANNEL_PRIORITIES', normalized.priorities);
 
 debug('messageConfig loaded, validated, and normalized from %s', configPath);
 
 // Ensure get() never returns undefined for channel maps, and prefer fully-coerced properties
-const _origGet = (messageConfig as any).get?.bind(messageConfig);
-const _getProps = (messageConfig as any).getProperties?.bind(messageConfig);
+type ConvictConfig = typeof messageConfig;
+const _origGet = (messageConfig as unknown as { get?: (key: string) => unknown }).get?.bind(messageConfig);
+const _getProps = (messageConfig as unknown as { getProperties?: () => Record<string, unknown> }).getProperties?.bind(messageConfig);
 if (_origGet) {
-  (messageConfig as any).get = (key: string) => {
+  (messageConfig as unknown as { get: (key: string) => unknown }).get = (key: string) => {
     if (key === 'CHANNEL_BONUSES' || key === 'CHANNEL_PRIORITIES') {
       const props = _getProps ? _getProps() : undefined;
-      const val = props ? (props as any)[key] : _origGet(key);
+      const val = props ? props[key] : _origGet(key);
       return val ?? {};
     }
     return _origGet(key);

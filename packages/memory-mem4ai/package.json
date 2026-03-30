@@ -1,0 +1,26 @@
+{
+    "name": "@hivemind/memory-mem4ai",
+    "version": "1.0.0",
+    "description": "Mem4ai memory provider for Open Hivemind — persistent AI memory via mem4ai REST API",
+    "main": "dist/index.js",
+    "types": "dist/index.d.ts",
+    "scripts": {
+        "build": "npx tsc",
+        "clean": "rm -rf dist",
+        "test": "echo \"No tests yet\" && exit 0"
+    },
+    "dependencies": {
+        "debug": "^4.3.7"
+    },
+    "peerDependencies": {
+        "@hivemind/shared-types": "workspace:*"
+    },
+    "devDependencies": {
+        "typescript": "^5.9.2",
+        "@types/debug": "^4.1.12"
+    },
+    "files": [
+        "dist",
+        "src"
+    ]
+}

@@ -18,6 +18,7 @@ import type {
   LettaSessionMode,
 } from '@src/types/config';
 import { ConfigurationError } from '../types/errorClasses';
+import { TTLCache } from '../utils/TTLCache';
 
 const debug = Debug('app:BotConfigurationManager');
 
@@ -334,6 +335,7 @@ export class BotConfigurationManager {
   private legacyMode = false;
   private warnings: string[] = [];
   private userConfigStore = UserConfigStore.getInstance();
+  private configCache = new TTLCache<string, Record<string, unknown>>(30000, 'BotConfigCache');
 
   public constructor() {
     this.loadConfiguration();
@@ -537,7 +539,19 @@ export class BotConfigurationManager {
 
     if (fs.existsSync(botConfigPath)) {
       debug(`Loading bot-specific config for ${botName} from ${botConfigPath}`);
-      botConfig.loadFile(botConfigPath);
+      const cachedConfig = this.configCache.get(botConfigPath);
+      if (cachedConfig) {
+        botConfig.load(cachedConfig);
+      } else {
+        botConfig.loadFile(botConfigPath);
+        // Cache the raw JSON disk content to speed up subsequent loads
+        try {
+          const raw = JSON.parse(fs.readFileSync(botConfigPath, 'utf8'));
+          this.configCache.set(botConfigPath, raw);
+        } catch (e) {
+          debug(`Failed to cache bot config ${botConfigPath}: ${e}`);
+        }
+      }
     }
 
     botConfig.validate({ allowed: 'warn' });
@@ -1065,16 +1079,22 @@ export class BotConfigurationManager {
     const safeName = config.name.toLowerCase().replace(/[^a-z0-9_-]/g, '_');
     const filePath = path.join(botsDir, `${safeName}.json`);
 
-    if (fs.existsSync(filePath)) {
+    try {
+      await fs.promises.access(filePath);
       throw new Error(`Bot with defined filename ${safeName}.json already exists`);
+    } catch (e: any) {
+      if (e.code !== 'ENOENT') throw e;
     }
 
-    if (!fs.existsSync(botsDir)) {
-      fs.mkdirSync(botsDir, { recursive: true });
+    try {
+      await fs.promises.access(botsDir);
+    } catch {
+      await fs.promises.mkdir(botsDir, { recursive: true });
     }
 
     // Write config
-    fs.writeFileSync(filePath, JSON.stringify(config, null, 2));
+    await fs.promises.writeFile(filePath, JSON.stringify(config, null, 2));
+    this.configCache.invalidate(filePath);
 
     // Reload to pick up new bot
     this.reload();
@@ -1130,10 +1150,17 @@ export class BotConfigurationManager {
     // These overrides take precedence over env vars
     let currentConfig: Record<string, unknown> = {};
 
-    if (fs.existsSync(filePath)) {
-      try {
-        currentConfig = JSON.parse(fs.readFileSync(filePath, 'utf8'));
-      } catch (e) {
+    try {
+      const cached = this.configCache.get(filePath);
+      if (cached) {
+        currentConfig = cached;
+      } else {
+        const data = await fs.promises.readFile(filePath, 'utf8');
+        currentConfig = JSON.parse(data);
+        this.configCache.set(filePath, currentConfig);
+      }
+    } catch (e: any) {
+      if (e.code !== 'ENOENT') {
         debug(`Failed to read existing bot config ${filePath}: ${e}`);
       }
     }
@@ -1146,11 +1173,14 @@ export class BotConfigurationManager {
       _updatedAt: new Date().toISOString(),
     };
 
-    if (!fs.existsSync(botsDir)) {
-      fs.mkdirSync(botsDir, { recursive: true });
+    try {
+      await fs.promises.access(botsDir);
+    } catch {
+      await fs.promises.mkdir(botsDir, { recursive: true });
     }
 
-    fs.writeFileSync(filePath, JSON.stringify(mergedConfig, null, 2));
+    await fs.promises.writeFile(filePath, JSON.stringify(mergedConfig, null, 2));
+    this.configCache.invalidate(filePath);
     debug(`Updated bot config for ${name} at ${filePath}`);
 
     // Reload to apply changes
@@ -1166,23 +1196,28 @@ export class BotConfigurationManager {
     const safeName = name.toLowerCase().replace(/[^a-z0-9_-]/g, '_');
     const filePath = path.join(botsDir, `${safeName}.json`);
 
-    if (fs.existsSync(filePath)) {
-      fs.unlinkSync(filePath);
+    try {
+      await fs.promises.access(filePath);
+      await fs.promises.unlink(filePath);
       debug(`Deleted bot config for ${name} at ${filePath}`);
-    } else {
-      // Check if it's an environment variable bot
-      const envBotNames = this.discoverBotNamesFromEnv();
-      const canonical = (n: string): string => String(n || '').trim().toLowerCase().replace(/[_\s]+/g, '-');
-      const canonicalName = canonical(name);
+    } catch (e: any) {
+      if (e.code === 'ENOENT') {
+        // Check if it's an environment variable bot
+        const envBotNames = this.discoverBotNamesFromEnv();
+        const canonical = (n: string): string => String(n || '').trim().toLowerCase().replace(/[_\s]+/g, '-');
+        const canonicalName = canonical(name);
 
-      const foundInEnv = envBotNames.some((n) => canonical(n) === canonicalName);
+        const foundInEnv = envBotNames.some((n) => canonical(n) === canonicalName);
 
-      if (foundInEnv) {
-        throw new Error(
-          `Cannot delete bot "${name}" defined by environment variables. Please remove the environment variables starting with BOTS_${name.toUpperCase().replace(/[^A-Z0-9]/g, '_')}_...`
-        );
+        if (foundInEnv) {
+          throw new Error(
+            `Cannot delete bot "${name}" defined by environment variables. Please remove the environment variables starting with BOTS_${name.toUpperCase().replace(/[^A-Z0-9]/g, '_')}_...`
+          );
+        } else {
+          throw new Error(`Bot "${name}" not found`);
+        }
       } else {
-        throw new Error(`Bot "${name}" not found`);
+        throw e;
       }
     }
 

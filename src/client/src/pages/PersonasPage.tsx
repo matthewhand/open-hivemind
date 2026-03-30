@@ -16,7 +16,8 @@ import {
   Trash2,
   User,
 } from 'lucide-react';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState, useRef } from 'react';
+import { useVirtualizer } from '@tanstack/react-virtual';
 import useUrlParams from '../hooks/useUrlParams';
 import { Alert } from '../components/DaisyUI/Alert';
 import Badge from '../components/DaisyUI/Badge';
@@ -215,6 +216,17 @@ const PersonasPage: React.FC = () => {
       errorToast('Error', 'Failed to copy to clipboard');
     }
   };
+
+  // Virtualization for large persona lists
+  const parentRef = useRef<HTMLDivElement>(null);
+  const shouldVirtualize = filteredPersonas.length > 50;
+  const gridRowVirtualizer = useVirtualizer({
+    count: Math.ceil(filteredPersonas.length / 3), // 3 columns in xl
+    getScrollElement: () => parentRef.current,
+    estimateSize: () => 450, // Estimated card height
+    overscan: 2,
+    enabled: shouldVirtualize,
+  });
 
   const handleSavePersona = async () => {
     if (!personaName.trim()) {
@@ -522,19 +534,45 @@ const PersonasPage: React.FC = () => {
               },
             ]}
           />
-          <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
-          {filteredPersonas.map((persona, index) => (
-            <Card
-              key={persona.id}
-              data-testid="persona-card"
-              draggable={!isMobile}
-              onDragStart={onPersonaDragStart(index)}
-              onDragOver={onPersonaDragOver(index)}
-              onDragEnd={onPersonaDragEnd}
-              onDrop={onPersonaDrop(index)}
-              style={getPersonaItemStyle(index)}
-              className={`hover:shadow-md transition-all flex flex-col h-full ${persona.isBuiltIn ? 'border-l-4 border-l-primary/30' : ''}`}
-            >
+          {shouldVirtualize ? (
+            <div ref={parentRef} className="overflow-auto" style={{ height: '800px' }}>
+              <div
+                style={{
+                  height: `${gridRowVirtualizer.getTotalSize()}px`,
+                  width: '100%',
+                  position: 'relative',
+                }}
+              >
+                {gridRowVirtualizer.getVirtualItems().map((virtualRow) => {
+                  const startIndex = virtualRow.index * 3;
+                  const rowPersonas = filteredPersonas.slice(startIndex, startIndex + 3);
+
+                  return (
+                    <div
+                      key={virtualRow.key}
+                      style={{
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        width: '100%',
+                        transform: `translateY(${virtualRow.start}px)`,
+                      }}
+                    >
+                      <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4 p-1">
+                        {rowPersonas.map((persona, index) => {
+                          const globalIndex = startIndex + index;
+                          return (
+                            <Card
+                              key={persona.id}
+                              data-testid="persona-card"
+                              draggable={!isMobile}
+                              onDragStart={onPersonaDragStart(globalIndex)}
+                              onDragOver={onPersonaDragOver(globalIndex)}
+                              onDragEnd={onPersonaDragEnd}
+                              onDrop={onPersonaDrop(globalIndex)}
+                              style={getPersonaItemStyle(globalIndex)}
+                              className={`hover:shadow-md transition-all flex flex-col h-full ${persona.isBuiltIn ? 'border-l-4 border-l-primary/30' : ''}`}
+                            >
               <div className="flex items-start justify-between mb-3">
                 <div className="flex items-center gap-3">
                   {isMobile ? (
@@ -674,8 +712,170 @@ const PersonasPage: React.FC = () => {
                 )}
               </div>
             </Card>
-          ))}
-        </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
+              {filteredPersonas.map((persona, index) => (
+                <Card
+                  key={persona.id}
+                  data-testid="persona-card"
+                  draggable={!isMobile}
+                  onDragStart={onPersonaDragStart(index)}
+                  onDragOver={onPersonaDragOver(index)}
+                  onDragEnd={onPersonaDragEnd}
+                  onDrop={onPersonaDrop(index)}
+                  style={getPersonaItemStyle(index)}
+                  className={`hover:shadow-md transition-all flex flex-col h-full ${persona.isBuiltIn ? 'border-l-4 border-l-primary/30' : ''}`}
+                >
+                  <div className="flex items-start justify-between mb-3">
+                    <div className="flex items-center gap-3">
+                      {isMobile ? (
+                        <span className="flex flex-col">
+                          <button
+                            className="btn btn-ghost btn-xs btn-square p-0"
+                            onClick={() => onPersonaMoveUp(index)}
+                            disabled={index === 0}
+                            aria-label="Move up"
+                          >
+                            <ChevronUp className="w-3 h-3" />
+                          </button>
+                          <button
+                            className="btn btn-ghost btn-xs btn-square p-0"
+                            onClick={() => onPersonaMoveDown(index)}
+                            disabled={index === filteredPersonas.length - 1}
+                            aria-label="Move down"
+                          >
+                            <ChevronDown className="w-3 h-3" />
+                          </button>
+                        </span>
+                      ) : (
+                        <span
+                          className="cursor-grab active:cursor-grabbing text-base-content/40 hover:text-base-content/70"
+                          title="Drag to reorder"
+                        >
+                          <GripVertical className="w-4 h-4" />
+                        </span>
+                      )}
+                      {!persona.isBuiltIn && (
+                        <input
+                          type="checkbox"
+                          className="checkbox checkbox-sm checkbox-primary"
+                          checked={bulk.isSelected(persona.id)}
+                          onChange={(e) => bulk.toggleItem(persona.id, e as any)}
+                          onClick={(e) => e.stopPropagation()}
+                          aria-label={`Select ${persona.name}`}
+                        />
+                      )}
+                      <div
+                        className={`p-2 rounded-full ${persona.isBuiltIn ? 'bg-primary/10 text-primary' : 'bg-base-200'}`}
+                      >
+                        <User className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <h3 className="font-semibold text-lg">{persona.name}</h3>
+                          {persona.isBuiltIn && (
+                            <Badge size="small" variant="neutral" style="outline">
+                              Built-in
+                            </Badge>
+                          )}
+                        </div>
+                        <p className="text-xs text-base-content/60">{persona.category}</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="mb-4 flex-1">
+                    <p className="text-sm text-base-content/70 mb-3">{persona.description}</p>
+                    <div className="bg-base-200/50 p-3 rounded-lg mb-3">
+                      <div className="flex items-center justify-between mb-1">
+                        <h4 className="text-xs font-bold text-base-content/40 uppercase">
+                          System Prompt
+                        </h4>
+                        <div className="flex items-center gap-2">
+                          <button
+                            className="btn btn-ghost btn-xs btn-circle text-base-content/40 hover:text-primary"
+                            onClick={() => handleCopyPrompt(persona.systemPrompt)}
+                            title="Copy System Prompt"
+                            aria-label="Copy System Prompt"
+                          >
+                            <Copy className="w-3 h-3" />
+                          </button>
+                        </div>
+                      </div>
+                      <p className="text-sm text-base-content/80 line-clamp-3 italic font-mono text-xs">
+                        "{persona.systemPrompt}"
+                      </p>
+                    </div>
+
+                    <div className="flex items-center justify-between mb-2">
+                      <h4 className="text-xs font-medium text-base-content/50 uppercase">
+                        Assigned Bots
+                      </h4>
+                    </div>
+
+                    {persona.assignedBotNames.length > 0 ? (
+                      <div className="flex flex-wrap gap-1">
+                        {persona.assignedBotNames.slice(0, 3).map((botName) => (
+                          <Badge key={botName} variant="secondary" size="small" style="outline">
+                            {botName}
+                          </Badge>
+                        ))}
+                        {persona.assignedBotNames.length > 3 && (
+                          <Badge variant="ghost" size="small">
+                            +{persona.assignedBotNames.length - 3} more
+                          </Badge>
+                        )}
+                      </div>
+                    ) : (
+                      <span className="text-sm text-base-content/40 italic">No bots assigned</span>
+                    )}
+                  </div>
+
+                  <div className="flex items-center justify-end pt-3 border-t border-base-200 mt-auto gap-2">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => openViewModal(persona)}
+                      title="View Details"
+                    >
+                      <Eye className="w-4 h-4 mr-1" /> View
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => openCloneModal(persona)}
+                      title="Clone Persona"
+                    >
+                      <Copy className="w-4 h-4 mr-1" /> Clone
+                    </Button>
+                    {!persona.isBuiltIn && (
+                      <>
+                        <Button variant="ghost" size="sm" onClick={() => openEditModal(persona)}>
+                          <Edit2 className="w-4 h-4" /> Edit
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDeletePersona(persona.id)}
+                          className="text-error hover:bg-error/10"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </>
+                    )}
+                  </div>
+                </Card>
+              ))}
+            </div>
+          )}
         </>
       )}
 

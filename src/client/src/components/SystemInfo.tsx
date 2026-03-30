@@ -13,7 +13,6 @@
 import React, { useState } from 'react';
 import Card from './DaisyUI/Card';
 import Button from './DaisyUI/Button';
-import { Loading } from './DaisyUI/Loading';
 import Tooltip from './DaisyUI/Tooltip';
 import { ConfirmModal } from './DaisyUI/Modal';
 import {
@@ -198,6 +197,7 @@ const SystemInfo: React.FC = () => {
                       variant="ghost"
                       shape="circle"
                       onClick={handleDownloadLogs}
+                      aria-label="Download logs"
                     >
                       <ArrowDownTrayIcon className="w-5 h-5" />
                     </Button>
@@ -208,6 +208,7 @@ const SystemInfo: React.FC = () => {
                       variant="ghost"
                       shape="circle"
                       onClick={handleClearLogs}
+                      aria-label="Clear logs"
                     >
                       <XMarkIcon className="w-5 h-5" />
                     </Button>

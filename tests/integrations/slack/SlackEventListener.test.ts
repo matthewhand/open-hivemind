@@ -49,6 +49,7 @@ jest.mock('tsyringe', () => {
       resolve: jest.fn(() => ({
         emit: jest.fn(),
       })),
+      registerInstance: jest.fn(),
     },
   };
 });
@@ -80,6 +81,15 @@ describe('SlackEventListener', () => {
 
   beforeEach(async () => {
     jest.clearAllMocks();
+
+    // Register mock StartupGreetingService in tsyringe container
+    const { container } = require('tsyringe');
+    const { StartupGreetingService } = require('@src/services/StartupGreetingService');
+    const mockStartupGreetingService = {
+      emit: jest.fn(),
+      on: jest.fn(),
+    };
+    container.registerInstance(StartupGreetingService, mockStartupGreetingService);
 
     delete process.env.SLACK_USERNAME_OVERRIDE;
     delete process.env.SLACK_BOT_TOKEN;

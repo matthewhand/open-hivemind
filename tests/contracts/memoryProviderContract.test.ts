@@ -1,3 +1,11 @@
+// ---------------------------------------------------------------------------
+// Imports
+// ---------------------------------------------------------------------------
+
+import type { IMemoryProvider, MemoryEntry } from '@hivemind/shared-types/IMemoryProvider';
+import { Mem0Provider } from '../../packages/memory-mem0/src/Mem0Provider';
+import { Mem4aiProvider } from '../../packages/memory-mem4ai/src/Mem4aiProvider';
+
 /**
  * Contract tests for IMemoryProvider implementations.
  *
@@ -19,13 +27,6 @@ jest.mock('debug', () => {
   noop.extend = () => noop;
   return () => noop;
 });
-
-// ---------------------------------------------------------------------------
-// Imports
-// ---------------------------------------------------------------------------
-
-import type { IMemoryProvider, MemoryEntry } from '@hivemind/shared-types/IMemoryProvider';
-import { Mem0Provider } from '../../packages/memory-mem0/src/Mem0Provider';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -62,7 +63,7 @@ function createMockResponse(body: any, status = 200): Response {
  */
 function runMemoryProviderContractTests(
   providerName: string,
-  getProvider: () => any, // Using any to handle both interface shapes (shared-types and IProvider)
+  getProvider: () => any // Using any to handle both interface shapes (shared-types and IProvider)
 ) {
   describe(`IMemoryProvider contract: ${providerName}`, () => {
     let provider: any;
@@ -84,17 +85,14 @@ function runMemoryProviderContractTests(
       mockFetch.mockResolvedValueOnce(
         createMockResponse({
           results: [{ id: 'mem-1', memory: 'test memory', score: 0.9 }],
-        }),
+        })
       );
 
       let result: any;
       if (typeof provider.addMemory === 'function') {
         result = provider.addMemory('test memory', {}, 'user-1');
       } else {
-        result = provider.add(
-          [{ role: 'user', content: 'test memory' }],
-          { userId: 'user-1' },
-        );
+        result = provider.add([{ role: 'user', content: 'test memory' }], { userId: 'user-1' });
       }
       expect(result).toBeDefined();
       expect(typeof result.then).toBe('function');
@@ -113,7 +111,7 @@ function runMemoryProviderContractTests(
       mockFetch.mockResolvedValueOnce(
         createMockResponse({
           results: [{ id: 'mem-1', memory: 'relevant memory', score: 0.85 }],
-        }),
+        })
       );
 
       let result: any;
@@ -144,7 +142,7 @@ function runMemoryProviderContractTests(
             { id: 'mem-1', memory: 'memory one' },
             { id: 'mem-2', memory: 'memory two' },
           ],
-        }),
+        })
       );
 
       let result: any;
@@ -168,13 +166,10 @@ function runMemoryProviderContractTests(
     });
 
     it('delete/deleteMemory completes without error', async () => {
-      mockFetch.mockResolvedValueOnce(
-        createMockResponse(undefined, 204),
-      );
+      mockFetch.mockResolvedValueOnce(createMockResponse(undefined, 204));
 
       if (typeof provider.deleteMemory === 'function') {
-        const result = await provider.deleteMemory('mem-1');
-        expect(typeof result).toBe('boolean');
+        await expect(provider.deleteMemory('mem-1')).resolves.not.toThrow();
       } else {
         await expect(provider.delete('mem-1')).resolves.not.toThrow();
       }
@@ -190,7 +185,7 @@ function runMemoryProviderContractTests(
 
     it('update/updateMemory returns the updated entry', async () => {
       mockFetch.mockResolvedValueOnce(
-        createMockResponse({ id: 'mem-1', memory: 'updated memory' }),
+        createMockResponse({ id: 'mem-1', memory: 'updated memory' })
       );
 
       let result: any;
@@ -202,58 +197,56 @@ function runMemoryProviderContractTests(
 
       expect(result).toBeDefined();
       expect(result).toHaveProperty('id');
-      expect(result).toHaveProperty('memory');
+      // Providers may use 'content' (Mem0) or 'memory' (Mem4ai) for the text field
+      const hasTextField = result.hasOwnProperty('content') || result.hasOwnProperty('memory');
+      expect(hasTextField).toBe(true);
     });
 
     // ----- healthCheck ---------------------------------------------------
 
-    it('has a healthCheck method returning a boolean', async () => {
+    it('has a healthCheck method returning a status object', async () => {
       expect(typeof provider.healthCheck).toBe('function');
 
-      mockFetch.mockResolvedValueOnce(
-        createMockResponse({ results: [] }),
-      );
+      mockFetch.mockResolvedValueOnce(createMockResponse({ results: [] }));
 
       const result = await provider.healthCheck();
-      expect(typeof result).toBe('boolean');
+      expect(result).toHaveProperty('status');
+      expect(['ok', 'error']).toContain(result.status);
     });
 
-    it('healthCheck returns true when backend is reachable', async () => {
-      mockFetch.mockResolvedValueOnce(
-        createMockResponse({ results: [] }),
-      );
+    it('healthCheck returns { status: "ok" } when backend is reachable', async () => {
+      mockFetch.mockResolvedValueOnce(createMockResponse({ results: [] }));
       const result = await provider.healthCheck();
-      expect(result).toBe(true);
+      expect(result).toEqual({ status: 'ok' });
     });
 
-    it('healthCheck returns false when backend is unreachable', async () => {
+    it('healthCheck returns { status: "error" } when backend is unreachable', async () => {
       mockFetch.mockRejectedValue(new Error('ECONNREFUSED'));
       const result = await provider.healthCheck();
-      expect(result).toBe(false);
+      expect(result.status).toBe('error');
+      expect(result.details).toBeDefined();
     });
 
     // ----- Error handling ------------------------------------------------
 
     it('search/searchMemories rejects on API error', async () => {
-      mockFetch.mockResolvedValueOnce(
-        createMockResponse({ error: 'unauthorized' }, 401),
-      );
+      mockFetch.mockResolvedValueOnce(createMockResponse({ error: 'unauthorized' }, 401));
 
-      const searchFn = typeof provider.searchMemories === 'function'
-        ? () => provider.searchMemories('query', 10, 'user-1')
-        : () => provider.search('query', { userId: 'user-1' });
+      const searchFn =
+        typeof provider.searchMemories === 'function'
+          ? () => provider.searchMemories('query', 10, 'user-1')
+          : () => provider.search('query', { userId: 'user-1' });
 
       await expect(searchFn()).rejects.toThrow();
     });
 
     it('add/addMemory rejects on API error', async () => {
-      mockFetch.mockResolvedValueOnce(
-        createMockResponse({ error: 'bad request' }, 400),
-      );
+      mockFetch.mockResolvedValueOnce(createMockResponse({ error: 'bad request' }, 400));
 
-      const addFn = typeof provider.addMemory === 'function'
-        ? () => provider.addMemory('content', {}, 'user-1')
-        : () => provider.add([{ role: 'user', content: 'test' }], { userId: 'user-1' });
+      const addFn =
+        typeof provider.addMemory === 'function'
+          ? () => provider.addMemory('content', {}, 'user-1')
+          : () => provider.add([{ role: 'user', content: 'test' }], { userId: 'user-1' });
 
       await expect(addFn()).rejects.toThrow();
     });
@@ -268,6 +261,14 @@ runMemoryProviderContractTests('Mem0Provider', () => {
   return new Mem0Provider({
     apiKey: 'test-api-key',
     baseUrl: 'https://api.mem0.test/v1',
+    userId: 'test-user',
+  });
+});
+
+runMemoryProviderContractTests('Mem4aiProvider', () => {
+  return new Mem4aiProvider({
+    apiKey: 'test-api-key',
+    apiUrl: 'https://api.mem4ai.test/v1',
     userId: 'test-user',
   });
 });

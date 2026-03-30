@@ -35,7 +35,7 @@ function makeMockToolProvider(overrides: Partial<IToolProvider> = {}): IToolProv
     type: 'tool',
     listTools: jest.fn().mockResolvedValue([]),
     executeTool: jest.fn().mockResolvedValue({ result: null }),
-    healthCheck: jest.fn().mockResolvedValue({ healthy: true }),
+    healthCheck: jest.fn().mockResolvedValue({ status: 'ok' }),
     ...overrides,
   };
 }
@@ -63,7 +63,7 @@ describe('ProviderRegistry — memory providers', () => {
     registry.registerMemoryProvider('zep', provider);
 
     const result = registry.getMemoryProvider('zep');
-    expect(result).toBeDefined();
+    expect(result).toEqual(expect.objectContaining({ id: expect.any(String) }));
     expect(result!.id).toBe('zep-mem');
   });
 
@@ -82,7 +82,9 @@ describe('ProviderRegistry — memory providers', () => {
   test('removes a memory provider', () => {
     const provider = makeMockMemoryProvider();
     registry.registerMemoryProvider('mem0', provider);
-    expect(registry.getMemoryProvider('mem0')).toBeDefined();
+    expect(registry.getMemoryProvider('mem0')).toEqual(
+      expect.objectContaining({ id: 'mock-memory', type: 'memory' })
+    );
 
     registry.removeMemoryProvider('mem0');
     expect(registry.getMemoryProvider('mem0')).toBeUndefined();
@@ -130,7 +132,7 @@ describe('ProviderRegistry — tool providers', () => {
     registry.registerToolProvider('web-search', provider);
 
     const result = registry.getToolProvider('web-search');
-    expect(result).toBeDefined();
+    expect(result).toEqual(expect.objectContaining({ id: expect.any(String) }));
     expect(result!.id).toBe('web-search-tool');
   });
 
@@ -149,7 +151,9 @@ describe('ProviderRegistry — tool providers', () => {
   test('removes a tool provider', () => {
     const provider = makeMockToolProvider();
     registry.registerToolProvider('mcp-github', provider);
-    expect(registry.getToolProvider('mcp-github')).toBeDefined();
+    expect(registry.getToolProvider('mcp-github')).toEqual(
+      expect.objectContaining({ id: 'mock-tool', type: 'tool' })
+    );
 
     registry.removeToolProvider('mcp-github');
     expect(registry.getToolProvider('mcp-github')).toBeUndefined();

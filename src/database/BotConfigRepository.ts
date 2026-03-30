@@ -1,6 +1,6 @@
 import Debug from 'debug';
 import type { Database } from 'sqlite';
-import type { BotConfiguration, BotConfigurationVersion, BotConfigurationAudit } from './types';
+import type { BotConfiguration, BotConfigurationAudit, BotConfigurationVersion } from './types';
 
 const debug = Debug('app:BotConfigRepository');
 
@@ -62,6 +62,34 @@ export class BotConfigRepository {
     }
   }
 
+  private mapRowToBotConfiguration(row: Record<string, any>): BotConfiguration {
+    // Hydrate JSON strings into objects if necessary (SQLite strings vs Postgres JSON)
+    const parseIfString = (val: unknown) => (typeof val === 'string' ? JSON.parse(val) : val);
+
+    return {
+      id: row.id,
+      name: row.name,
+      messageProvider: row.messageProvider,
+      llmProvider: row.llmProvider,
+      persona: row.persona,
+      systemInstruction: row.systemInstruction,
+      mcpServers: row.mcpServers ? parseIfString(row.mcpServers) : null,
+      mcpGuard: row.mcpGuard ? parseIfString(row.mcpGuard) : null,
+      discord: row.discord ? parseIfString(row.discord) : null,
+      slack: row.slack ? parseIfString(row.slack) : null,
+      mattermost: row.mattermost ? parseIfString(row.mattermost) : null,
+      openai: row.openai ? parseIfString(row.openai) : null,
+      flowise: row.flowise ? parseIfString(row.flowise) : null,
+      openwebui: row.openwebui ? parseIfString(row.openwebui) : null,
+      openswarm: row.openswarm ? parseIfString(row.openswarm) : null,
+      isActive: row.isActive === 1,
+      createdAt: new Date(row.createdAt),
+      updatedAt: new Date(row.updatedAt),
+      createdBy: row.createdBy,
+      updatedBy: row.updatedBy,
+    };
+  }
+
   async getBotConfiguration(id: number): Promise<BotConfiguration | null> {
     this.ensureConnected();
 
@@ -71,28 +99,7 @@ export class BotConfigRepository {
 
       if (!row) return null;
 
-      return {
-        id: row.id,
-        name: row.name,
-        messageProvider: row.messageProvider,
-        llmProvider: row.llmProvider,
-        persona: row.persona,
-        systemInstruction: row.systemInstruction,
-        mcpServers: row.mcpServers,
-        mcpGuard: row.mcpGuard,
-        discord: row.discord,
-        slack: row.slack,
-        mattermost: row.mattermost,
-        openai: row.openai,
-        flowise: row.flowise,
-        openwebui: row.openwebui,
-        openswarm: row.openswarm,
-        isActive: row.isActive === 1,
-        createdAt: new Date(row.createdAt),
-        updatedAt: new Date(row.updatedAt),
-        createdBy: row.createdBy,
-        updatedBy: row.updatedBy,
-      };
+      return this.mapRowToBotConfiguration(row);
     } catch (error) {
       debug('Error getting bot configuration:', error);
       throw new Error(`Failed to get bot configuration: ${error}`);
@@ -117,33 +124,7 @@ export class BotConfigRepository {
         ids
       );
 
-      return rows.map((row) => {
-        // Hydrate JSON strings into objects if necessary (SQLite strings vs Postgres JSON)
-        const parseIfString = (val: unknown) => (typeof val === 'string' ? JSON.parse(val) : val);
-
-        return {
-          id: row.id,
-          name: row.name,
-          messageProvider: row.messageProvider,
-          llmProvider: row.llmProvider,
-          persona: row.persona,
-          systemInstruction: row.systemInstruction,
-          mcpServers: row.mcpServers ? parseIfString(row.mcpServers) : null,
-          mcpGuard: row.mcpGuard ? parseIfString(row.mcpGuard) : null,
-          discord: row.discord ? parseIfString(row.discord) : null,
-          slack: row.slack ? parseIfString(row.slack) : null,
-          mattermost: row.mattermost ? parseIfString(row.mattermost) : null,
-          openai: row.openai ? parseIfString(row.openai) : null,
-          flowise: row.flowise ? parseIfString(row.flowise) : null,
-          openwebui: row.openwebui ? parseIfString(row.openwebui) : null,
-          openswarm: row.openswarm ? parseIfString(row.openswarm) : null,
-          isActive: row.isActive === 1,
-          createdAt: new Date(row.createdAt),
-          updatedAt: new Date(row.updatedAt),
-          createdBy: row.createdBy,
-          updatedBy: row.updatedBy,
-        };
-      });
+      return rows.map((row) => this.mapRowToBotConfiguration(row));
     } catch (error) {
       debug('Error getting bot configurations in bulk:', error);
       throw new Error(`Failed to get bot configurations in bulk: ${error}`);
@@ -159,31 +140,7 @@ export class BotConfigRepository {
 
       if (!row) return null;
 
-      // Hydrate JSON strings into objects if necessary (SQLite strings vs Postgres JSON)
-      const parseIfString = (val: unknown) => (typeof val === 'string' ? JSON.parse(val) : val);
-
-      return {
-        id: row.id,
-        name: row.name,
-        messageProvider: row.messageProvider,
-        llmProvider: row.llmProvider,
-        persona: row.persona,
-        systemInstruction: row.systemInstruction,
-        mcpServers: row.mcpServers ? parseIfString(row.mcpServers) : null,
-        mcpGuard: row.mcpGuard ? parseIfString(row.mcpGuard) : null,
-        discord: row.discord ? parseIfString(row.discord) : null,
-        slack: row.slack ? parseIfString(row.slack) : null,
-        mattermost: row.mattermost ? parseIfString(row.mattermost) : null,
-        openai: row.openai ? parseIfString(row.openai) : null,
-        flowise: row.flowise ? parseIfString(row.flowise) : null,
-        openwebui: row.openwebui ? parseIfString(row.openwebui) : null,
-        openswarm: row.openswarm ? parseIfString(row.openswarm) : null,
-        isActive: row.isActive === 1,
-        createdAt: new Date(row.createdAt),
-        updatedAt: new Date(row.updatedAt),
-        createdBy: row.createdBy,
-        updatedBy: row.updatedBy,
-      };
+      return this.mapRowToBotConfiguration(row);
     } catch (error) {
       debug('Error getting bot configuration by name:', error);
       throw new Error(`Failed to get bot configuration by name: ${error}`);
@@ -197,28 +154,7 @@ export class BotConfigRepository {
       const db = this.getDb()!;
       const rows = await db.all('SELECT * FROM bot_configurations ORDER BY updatedAt DESC');
 
-      return rows.map((row) => ({
-        id: row.id,
-        name: row.name,
-        messageProvider: row.messageProvider,
-        llmProvider: row.llmProvider,
-        persona: row.persona,
-        systemInstruction: row.systemInstruction,
-        mcpServers: row.mcpServers,
-        mcpGuard: row.mcpGuard,
-        discord: row.discord,
-        slack: row.slack,
-        mattermost: row.mattermost,
-        openai: row.openai,
-        flowise: row.flowise,
-        openwebui: row.openwebui,
-        openswarm: row.openswarm,
-        isActive: row.isActive === 1,
-        createdAt: new Date(row.createdAt),
-        updatedAt: new Date(row.updatedAt),
-        createdBy: row.createdBy,
-        updatedBy: row.updatedBy,
-      }));
+      return rows.map((row) => this.mapRowToBotConfiguration(row));
     } catch (error) {
       debug('Error getting all bot configurations:', error);
       throw new Error(`Failed to get all bot configurations: ${error}`);
@@ -238,9 +174,7 @@ export class BotConfigRepository {
 
     try {
       const db = this.getDb()!;
-      const configs = await db.all(
-        'SELECT * FROM bot_configurations ORDER BY updatedAt DESC'
-      );
+      const configs = await db.all('SELECT * FROM bot_configurations ORDER BY updatedAt DESC');
 
       if (configs.length === 0) {
         return [];
@@ -254,30 +188,14 @@ export class BotConfigRepository {
         this.getBotConfigurationAuditBulk(configIds),
       ]);
 
-      return configs.map((row) => ({
-        id: row.id,
-        name: row.name,
-        messageProvider: row.messageProvider,
-        llmProvider: row.llmProvider,
-        persona: row.persona,
-        systemInstruction: row.systemInstruction,
-        mcpServers: row.mcpServers,
-        mcpGuard: row.mcpGuard,
-        discord: row.discord,
-        slack: row.slack,
-        mattermost: row.mattermost,
-        openai: row.openai,
-        flowise: row.flowise,
-        openwebui: row.openwebui,
-        openswarm: row.openswarm,
-        isActive: row.isActive === 1,
-        createdAt: new Date(row.createdAt),
-        updatedAt: new Date(row.updatedAt),
-        createdBy: row.createdBy,
-        updatedBy: row.updatedBy,
-        versions: versionsMap.get(row.id) || [],
-        auditLog: auditMap.get(row.id) || [],
-      }));
+      return configs.map((row) => {
+        const mappedConfig = this.mapRowToBotConfiguration(row);
+        return {
+          ...mappedConfig,
+          versions: versionsMap.get(row.id) || [],
+          auditLog: auditMap.get(row.id) || [],
+        };
+      });
     } catch (error) {
       debug('Error getting all bot configurations with details:', error);
       throw new Error(`Failed to get all bot configurations with details: ${error}`);
@@ -367,10 +285,11 @@ export class BotConfigRepository {
 
       values.push(id);
 
-      await db.run(
-        `UPDATE bot_configurations SET ${updateFields.join(', ')} WHERE id = ?`,
-        values
-      );
+      // SECURITY: SQL injection safe - updateFields contains only validated column names
+      // constructed from object keys, not user input. Each value is parameterized via
+      // the `values` array. The column names are from the config object structure which
+      // is validated by TypeScript types.
+      await db.run(`UPDATE bot_configurations SET ${updateFields.join(', ')} WHERE id = ?`, values);
 
       debug(`Bot configuration updated: ${id}`);
     } catch (error) {
@@ -448,6 +367,33 @@ export class BotConfigRepository {
     }
   }
 
+  private mapRowToBotConfigurationVersion(row: Record<string, any>): BotConfigurationVersion {
+    const parseIfString = (val: unknown) => (typeof val === 'string' ? JSON.parse(val) : val);
+    return {
+      id: row.id,
+      botConfigurationId: row.botConfigurationId,
+      version: row.version,
+      name: row.name,
+      messageProvider: row.messageProvider,
+      llmProvider: row.llmProvider,
+      persona: row.persona,
+      systemInstruction: row.systemInstruction,
+      mcpServers: row.mcpServers ? parseIfString(row.mcpServers) : null,
+      mcpGuard: row.mcpGuard ? parseIfString(row.mcpGuard) : null,
+      discord: row.discord ? parseIfString(row.discord) : null,
+      slack: row.slack ? parseIfString(row.slack) : null,
+      mattermost: row.mattermost ? parseIfString(row.mattermost) : null,
+      openai: row.openai ? parseIfString(row.openai) : null,
+      flowise: row.flowise ? parseIfString(row.flowise) : null,
+      openwebui: row.openwebui ? parseIfString(row.openwebui) : null,
+      openswarm: row.openswarm ? parseIfString(row.openswarm) : null,
+      isActive: row.isActive === 1,
+      createdAt: new Date(row.createdAt),
+      createdBy: row.createdBy,
+      changeLog: row.changeLog,
+    };
+  }
+
   async getBotConfigurationVersions(
     botConfigurationId: number
   ): Promise<BotConfigurationVersion[]> {
@@ -460,29 +406,7 @@ export class BotConfigRepository {
         [botConfigurationId]
       );
 
-      return rows.map((row) => ({
-        id: row.id,
-        botConfigurationId: row.botConfigurationId,
-        version: row.version,
-        name: row.name,
-        messageProvider: row.messageProvider,
-        llmProvider: row.llmProvider,
-        persona: row.persona,
-        systemInstruction: row.systemInstruction,
-        mcpServers: row.mcpServers,
-        mcpGuard: row.mcpGuard,
-        discord: row.discord,
-        slack: row.slack,
-        mattermost: row.mattermost,
-        openai: row.openai,
-        flowise: row.flowise,
-        openwebui: row.openwebui,
-        openswarm: row.openswarm,
-        isActive: row.isActive === 1,
-        createdAt: new Date(row.createdAt),
-        createdBy: row.createdBy,
-        changeLog: row.changeLog,
-      }));
+      return rows.map((row) => this.mapRowToBotConfigurationVersion(row));
     } catch (error) {
       debug('Error getting bot configuration versions:', error);
       throw new Error(`Failed to get bot configuration versions: ${error}`);
@@ -513,29 +437,7 @@ export class BotConfigRepository {
 
       rows.forEach((row) => {
         const configId = row.botConfigurationId;
-        const version: BotConfigurationVersion = {
-          id: row.id,
-          botConfigurationId: row.botConfigurationId,
-          version: row.version,
-          name: row.name,
-          messageProvider: row.messageProvider,
-          llmProvider: row.llmProvider,
-          persona: row.persona,
-          systemInstruction: row.systemInstruction,
-          mcpServers: row.mcpServers,
-          mcpGuard: row.mcpGuard,
-          discord: row.discord,
-          slack: row.slack,
-          mattermost: row.mattermost,
-          openai: row.openai,
-          flowise: row.flowise,
-          openwebui: row.openwebui,
-          openswarm: row.openswarm,
-          isActive: row.isActive === 1,
-          createdAt: new Date(row.createdAt),
-          createdBy: row.createdBy,
-          changeLog: row.changeLog,
-        };
+        const version = this.mapRowToBotConfigurationVersion(row);
 
         if (!versionsMap.has(configId)) {
           versionsMap.set(configId, []);
@@ -643,6 +545,20 @@ export class BotConfigRepository {
     }
   }
 
+  private mapRowToBotConfigurationAudit(row: Record<string, any>): BotConfigurationAudit {
+    return {
+      id: row.id,
+      botConfigurationId: row.botConfigurationId,
+      action: row.action,
+      oldValues: row.oldValues,
+      newValues: row.newValues,
+      performedBy: row.performedBy,
+      performedAt: new Date(row.performedAt),
+      ipAddress: row.ipAddress,
+      userAgent: row.userAgent,
+    };
+  }
+
   async getBotConfigurationAudit(botConfigurationId: number): Promise<BotConfigurationAudit[]> {
     this.ensureConnected();
 
@@ -653,17 +569,7 @@ export class BotConfigRepository {
         [botConfigurationId]
       );
 
-      return rows.map((row) => ({
-        id: row.id,
-        botConfigurationId: row.botConfigurationId,
-        action: row.action,
-        oldValues: row.oldValues,
-        newValues: row.newValues,
-        performedBy: row.performedBy,
-        performedAt: new Date(row.performedAt),
-        ipAddress: row.ipAddress,
-        userAgent: row.userAgent,
-      }));
+      return rows.map((row) => this.mapRowToBotConfigurationAudit(row));
     } catch (error) {
       debug('Error getting bot configuration audit:', error);
       throw new Error(`Failed to get bot configuration audit: ${error}`);
@@ -694,17 +600,7 @@ export class BotConfigRepository {
 
       rows.forEach((row) => {
         const configId = row.botConfigurationId;
-        const audit: BotConfigurationAudit = {
-          id: row.id,
-          botConfigurationId: row.botConfigurationId,
-          action: row.action,
-          oldValues: row.oldValues,
-          newValues: row.newValues,
-          performedBy: row.performedBy,
-          performedAt: new Date(row.performedAt),
-          ipAddress: row.ipAddress,
-          userAgent: row.userAgent,
-        };
+        const audit = this.mapRowToBotConfigurationAudit(row);
 
         if (!auditMap.has(configId)) {
           auditMap.set(configId, []);

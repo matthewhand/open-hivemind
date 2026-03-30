@@ -1,3 +1,6 @@
+import * as path from 'path';
+import { executeCommandSafe, readFile } from '../../src/utils/utils';
+
 // Create mock functions that will be used in the fs mock factory
 const mockStat = jest.fn();
 const mockReadFileAsync = jest.fn();
@@ -23,9 +26,6 @@ jest.mock('fs', () => {
     rmdirSync: actualFs.rmdirSync,
   };
 });
-
-import { executeCommandSafe, readFile } from '../../src/utils/utils';
-import * as path from 'path';
 
 describe('executeCommandSafe', () => {
   beforeEach(() => {

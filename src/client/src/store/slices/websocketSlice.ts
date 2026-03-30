@@ -183,13 +183,17 @@ export const selectConnectionStatus = (state: { websocket: WebSocketState }) => 
 
 export const selectConnectionStats = (state: { websocket: WebSocketState }) => {
   const { messages, connectionAttempts, maxConnectionAttempts } = state.websocket;
-  
+
+  // Optimize: Use a simple O(N) loop rather than functional reduction to minimize overhead.
+  const messagesByType: Record<string, number> = {};
+  for (let i = 0; i < messages.length; i++) {
+    const type = messages[i].type;
+    messagesByType[type] = (messagesByType[type] || 0) + 1;
+  }
+
   return {
     totalMessages: messages.length,
-    messagesByType: messages.reduce((acc, msg) => {
-      acc[msg.type] = (acc[msg.type] || 0) + 1;
-      return acc;
-    }, {} as Record<string, number>),
+    messagesByType,
     connectionAttempts,
     maxConnectionAttempts,
     connectionSuccessRate: connectionAttempts > 0 ? ((connectionAttempts - 1) / connectionAttempts) * 100 : 100,

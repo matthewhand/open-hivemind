@@ -27,72 +27,6 @@ interface ProviderProfile {
   config?: Record<string, unknown>;
 }
 
-const fallbackMessageProviders: ProviderInfo[] = [
-  {
-    key: 'discord',
-    label: 'Discord',
-    docsUrl: 'https://discord.com/developers/applications',
-    helpText: 'Create a Discord bot and copy the Bot Token from the Developer Portal.',
-  },
-  {
-    key: 'slack',
-    label: 'Slack',
-    docsUrl: 'https://api.slack.com/apps',
-    helpText: 'Create a Slack app, enable Socket Mode, and generate the bot token.',
-  },
-  {
-    key: 'mattermost',
-    label: 'Mattermost',
-    docsUrl: 'https://developers.mattermost.com/integrate/admin-guide/admin-bot-accounts/',
-    helpText: 'Create a bot account in Mattermost and generate a personal access token.',
-  },
-  {
-    key: 'webhook',
-    label: 'Webhook',
-    helpText: 'Send outgoing messages via generic webhooks.',
-  },
-];
-
-const fallbackLlmProviders: ProviderInfo[] = [
-  {
-    key: 'openai',
-    label: 'OpenAI',
-    docsUrl: 'https://platform.openai.com/account/api-keys',
-    helpText:
-      'Generate an API key from the OpenAI portal and paste it into the Open-Hivemind configuration.',
-  },
-  {
-    key: 'anthropic',
-    label: 'Anthropic',
-    docsUrl: 'https://console.anthropic.com/account/keys',
-    helpText: 'Generate an API key from the Anthropic console.',
-  },
-  {
-    key: 'flowise',
-    label: 'Flowise',
-    docsUrl: 'https://docs.flowiseai.com/',
-    helpText: 'Use the REST endpoint and API key from your Flowise deployment.',
-  },
-  {
-    key: 'openwebui',
-    label: 'OpenWebUI',
-    docsUrl: 'https://docs.openwebui.com/',
-    helpText: 'Enable API access in OpenWebUI and copy the token from the admin interface.',
-  },
-  {
-    key: 'openswarm',
-    label: 'OpenSwarm',
-    docsUrl: 'https://openswarm.ai/',
-    helpText: 'Provide the OpenSwarm base URL and API key configured for your swarm deployment.',
-  },
-  {
-    key: 'letta',
-    label: 'Letta',
-    docsUrl: 'https://docs.letta.com/',
-    helpText: 'Provide the Letta API URL, API key, and agent ID.',
-  },
-];
-
 const guardOptions: Array<{ value: GuardState['type']; label: string }> = [
   { value: 'owner', label: 'Forum Owner Only' },
   { value: 'custom', label: 'Custom Allowed Users' },
@@ -346,10 +280,8 @@ const AgentConfigurator: React.FC<AgentConfiguratorProps> = ({ title = 'Agent Co
     return map;
   }, [statusData]);
 
-  const messageProviderInfoList = messageProviders.length
-    ? messageProviders
-    : fallbackMessageProviders;
-  const llmProviderInfoList = llmProviders.length ? llmProviders : fallbackLlmProviders;
+  const messageProviderInfoList = messageProviders;
+  const llmProviderInfoList = llmProviders;
 
   const messageProviderOptions = useMemo(
     () => messageProviderInfoList.map(toOptionLabel),
@@ -607,10 +539,11 @@ const AgentConfigurator: React.FC<AgentConfiguratorProps> = ({ title = 'Agent Co
       <div className="p-4">
         <div className="flex justify-end items-center gap-2 mb-4">
           <button
-            className={`btn btn-outline ${isFetching ? 'loading' : ''}`}
+            className="btn btn-outline"
             onClick={handleRefresh}
             disabled={isFetching}
           >
+            {isFetching && <span className="loading loading-spinner" aria-hidden="true"></span>}
             {isFetching ? 'Refreshing…' : 'Refresh status'}
           </button>
           <div className="dropdown dropdown-end">

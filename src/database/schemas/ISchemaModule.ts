@@ -1,6 +1,8 @@
 import type { Database } from 'sqlite';
 
 export interface ISchemaModule {
-  createTables(db: Database): Promise<void>;
-  createIndexes(db: Database): Promise<void>;
+  ensureTable?(db: Database): Promise<void>;
+  getTableNames?(): string[];
+  createTables?(db: Database): Promise<void>;
+  createIndexes?(db: Database): Promise<void>;
 }

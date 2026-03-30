@@ -1,6 +1,6 @@
 import {
-  getLastTypingTimestamp,
   getLastMessageTimestamp,
+  getLastTypingTimestamp,
   logMessageTimestamp,
 } from '../../../../src/message/helpers/timing/timestampFunctions';
 
@@ -43,7 +43,7 @@ describe('timestampFunctions', () => {
       const after = Date.now();
 
       const recorded = map.get('channel-1');
-      expect(recorded).toBeDefined();
+      expect(typeof recorded).toBe('number');
       expect(recorded).toBeGreaterThanOrEqual(before);
       expect(recorded).toBeLessThanOrEqual(after);
     });

@@ -1,4 +1,11 @@
-import { getEmoji, permissions, environment, strings, arrays, validation } from '../../src/utils/common';
+import {
+  arrays,
+  environment,
+  getEmoji,
+  permissions,
+  strings,
+  validation,
+} from '../../src/utils/common';
 
 describe('utils/common', () => {
   describe('getEmoji', () => {

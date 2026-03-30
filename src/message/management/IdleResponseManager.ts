@@ -602,4 +602,15 @@ Do not mention that the channel was quiet/idle and do not say "I noticed".`;
       serviceDetails,
     };
   }
+
+  /**
+   * Shutdown and cleanup all timers
+   */
+  public shutdown(): void {
+    log('Shutting down IdleResponseManager...');
+    this.clearAllChannels();
+    this.serviceActivities.clear();
+    this.enabled = false;
+    log('IdleResponseManager shutdown completed');
+  }
 }

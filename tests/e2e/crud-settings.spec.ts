@@ -39,7 +39,12 @@ test.describe('Settings CRUD Lifecycle', () => {
       page.route('**/api/config/llm-status', (route) =>
         route.fulfill({
           status: 200,
-          json: { defaultConfigured: true, defaultProviders: [], botsMissingLlmProvider: [], hasMissing: false },
+          json: {
+            defaultConfigured: true,
+            defaultProviders: [],
+            botsMissingLlmProvider: [],
+            hasMissing: false,
+          },
         })
       ),
       page.route('**/api/config', (route) => route.fulfill({ status: 200, json: { bots: [] } })),
@@ -47,14 +52,18 @@ test.describe('Settings CRUD Lifecycle', () => {
       page.route('**/api/csrf-token', (route) =>
         route.fulfill({ status: 200, json: { token: 'mock-csrf-token' } })
       ),
-      page.route('**/api/health', (route) => route.fulfill({ status: 200, json: { status: 'ok' } })),
+      page.route('**/api/health', (route) =>
+        route.fulfill({ status: 200, json: { status: 'ok' } })
+      ),
       page.route('**/api/dashboard/api/status', (route) =>
         route.fulfill({ status: 200, json: { bots: [], uptime: 100 } })
       ),
       page.route('**/api/admin/guard-profiles', (route) =>
         route.fulfill({ status: 200, json: { data: [] } })
       ),
-      page.route('**/api/demo/status', (route) => route.fulfill({ status: 200, json: { active: false } })),
+      page.route('**/api/demo/status', (route) =>
+        route.fulfill({ status: 200, json: { active: false } })
+      ),
     ]);
   }
 
@@ -97,20 +106,34 @@ test.describe('Settings CRUD Lifecycle', () => {
     await expect(tabs.first()).toBeVisible({ timeout: 5000 });
 
     // Verify tab labels exist
-    const generalTab = page.locator('[role="tab"]:has-text("General"), .tab:has-text("General"), button:has-text("General")').first();
+    const generalTab = page
+      .locator(
+        '[role="tab"]:has-text("General"), .tab:has-text("General"), button:has-text("General")'
+      )
+      .first();
     await expect(generalTab).toBeVisible();
 
-    const messagingTab = page.locator('[role="tab"]:has-text("Messag"), .tab:has-text("Messag"), button:has-text("Messag")').first();
+    const messagingTab = page
+      .locator(
+        '[role="tab"]:has-text("Messag"), .tab:has-text("Messag"), button:has-text("Messag")'
+      )
+      .first();
     if ((await messagingTab.count()) > 0) {
       await expect(messagingTab).toBeVisible();
     }
 
-    const llmTab = page.locator('[role="tab"]:has-text("LLM"), .tab:has-text("LLM"), button:has-text("LLM")').first();
+    const llmTab = page
+      .locator('[role="tab"]:has-text("LLM"), .tab:has-text("LLM"), button:has-text("LLM")')
+      .first();
     if ((await llmTab.count()) > 0) {
       await expect(llmTab).toBeVisible();
     }
 
-    const securityTab = page.locator('[role="tab"]:has-text("Security"), .tab:has-text("Security"), button:has-text("Security")').first();
+    const securityTab = page
+      .locator(
+        '[role="tab"]:has-text("Security"), .tab:has-text("Security"), button:has-text("Security")'
+      )
+      .first();
     if ((await securityTab.count()) > 0) {
       await expect(securityTab).toBeVisible();
     }
@@ -123,14 +146,19 @@ test.describe('Settings CRUD Lifecycle', () => {
 
     await page.goto('/admin/settings');
 
-    const messagingTab = page.locator('[role="tab"]:has-text("Messag"), .tab:has-text("Messag"), button:has-text("Messag")').first();
+    const messagingTab = page
+      .locator(
+        '[role="tab"]:has-text("Messag"), .tab:has-text("Messag"), button:has-text("Messag")'
+      )
+      .first();
     if ((await messagingTab.count()) > 0) {
       await messagingTab.click();
       await page.waitForTimeout(500);
 
       // URL should contain tab parameter or messaging reference
       const url = page.url();
-      const hasTabParam = url.includes('tab=') || url.includes('messaging') || url.includes('Messag');
+      const hasTabParam =
+        url.includes('tab=') || url.includes('messaging') || url.includes('Messag');
       // Some implementations may not use URL params; just verify the tab is active
       await expect(page.locator('body')).toBeVisible();
     }
@@ -150,14 +178,20 @@ test.describe('Settings CRUD Lifecycle', () => {
 
     await page.goto('/admin/settings');
 
-    const generalTab = page.locator('[role="tab"]:has-text("General"), .tab:has-text("General"), button:has-text("General")').first();
+    const generalTab = page
+      .locator(
+        '[role="tab"]:has-text("General"), .tab:has-text("General"), button:has-text("General")'
+      )
+      .first();
     if ((await generalTab.count()) > 0) {
       await generalTab.click();
       await page.waitForTimeout(300);
     }
 
     // Edit instance name
-    const nameInput = page.locator('input[name*="name" i], input[placeholder*="instance" i], input[id*="name" i]').first();
+    const nameInput = page
+      .locator('input[name*="name" i], input[placeholder*="instance" i], input[id*="name" i]')
+      .first();
     if ((await nameInput.count()) > 0) {
       await nameInput.clear();
       await nameInput.fill('Updated Hivemind');
@@ -165,7 +199,11 @@ test.describe('Settings CRUD Lifecycle', () => {
     }
 
     // Toggle maintenance mode
-    const maintenanceToggle = page.locator('input[type="checkbox"][name*="maintenance" i], label:has-text("Maintenance") input[type="checkbox"]').first();
+    const maintenanceToggle = page
+      .locator(
+        'input[type="checkbox"][name*="maintenance" i], label:has-text("Maintenance") input[type="checkbox"]'
+      )
+      .first();
     if ((await maintenanceToggle.count()) > 0) {
       await maintenanceToggle.click();
       await page.waitForTimeout(200);
@@ -186,7 +224,11 @@ test.describe('Settings CRUD Lifecycle', () => {
 
     await page.goto('/admin/settings');
 
-    const messagingTab = page.locator('[role="tab"]:has-text("Messag"), .tab:has-text("Messag"), button:has-text("Messag")').first();
+    const messagingTab = page
+      .locator(
+        '[role="tab"]:has-text("Messag"), .tab:has-text("Messag"), button:has-text("Messag")'
+      )
+      .first();
     if ((await messagingTab.count()) > 0) {
       await messagingTab.click();
       await page.waitForTimeout(500);
@@ -207,7 +249,9 @@ test.describe('Settings CRUD Lifecycle', () => {
 
     await page.goto('/admin/settings');
 
-    const llmTab = page.locator('[role="tab"]:has-text("LLM"), .tab:has-text("LLM"), button:has-text("LLM")').first();
+    const llmTab = page
+      .locator('[role="tab"]:has-text("LLM"), .tab:has-text("LLM"), button:has-text("LLM")')
+      .first();
     if ((await llmTab.count()) > 0) {
       await llmTab.click();
       await page.waitForTimeout(500);
@@ -227,7 +271,11 @@ test.describe('Settings CRUD Lifecycle', () => {
 
     await page.goto('/admin/settings');
 
-    const securityTab = page.locator('[role="tab"]:has-text("Security"), .tab:has-text("Security"), button:has-text("Security")').first();
+    const securityTab = page
+      .locator(
+        '[role="tab"]:has-text("Security"), .tab:has-text("Security"), button:has-text("Security")'
+      )
+      .first();
     if ((await securityTab.count()) > 0) {
       await securityTab.click();
       await page.waitForTimeout(500);
@@ -254,7 +302,9 @@ test.describe('Settings CRUD Lifecycle', () => {
     await page.goto('/admin/settings');
 
     // Make a change to enable save
-    const nameInput = page.locator('input[name*="name" i], input[placeholder*="instance" i], input[id*="name" i]').first();
+    const nameInput = page
+      .locator('input[name*="name" i], input[placeholder*="instance" i], input[id*="name" i]')
+      .first();
     if ((await nameInput.count()) > 0) {
       await nameInput.clear();
       await nameInput.fill('Payload Test Instance');
@@ -278,12 +328,17 @@ test.describe('Settings CRUD Lifecycle', () => {
       route.fulfill({ status: 200, json: currentConfig })
     );
     await page.route('**/api/config/update', async (route) => {
-      await route.fulfill({ status: 200, json: { success: true, message: 'Settings saved successfully' } });
+      await route.fulfill({
+        status: 200,
+        json: { success: true, message: 'Settings saved successfully' },
+      });
     });
 
     await page.goto('/admin/settings');
 
-    const nameInput = page.locator('input[name*="name" i], input[placeholder*="instance" i], input[id*="name" i]').first();
+    const nameInput = page
+      .locator('input[name*="name" i], input[placeholder*="instance" i], input[id*="name" i]')
+      .first();
     if ((await nameInput.count()) > 0) {
       await nameInput.clear();
       await nameInput.fill('Toast Test');
@@ -296,7 +351,11 @@ test.describe('Settings CRUD Lifecycle', () => {
       await page.waitForTimeout(500);
 
       // Look for success toast or alert
-      const toast = page.locator('.toast, [role="alert"], .alert-success, [class*="toast"]', { hasText: /saved|success/i }).first();
+      const toast = page
+        .locator('.toast, [role="alert"], .alert-success, [class*="toast"]', {
+          hasText: /saved|success/i,
+        })
+        .first();
       if ((await toast.count()) > 0) {
         await expect(toast).toBeVisible();
       }
@@ -316,7 +375,9 @@ test.describe('Settings CRUD Lifecycle', () => {
 
     await page.goto('/admin/settings');
 
-    const nameInput = page.locator('input[name*="name" i], input[placeholder*="instance" i], input[id*="name" i]').first();
+    const nameInput = page
+      .locator('input[name*="name" i], input[placeholder*="instance" i], input[id*="name" i]')
+      .first();
     if ((await nameInput.count()) > 0) {
       await nameInput.clear();
       await nameInput.fill('Error Test');
@@ -330,7 +391,11 @@ test.describe('Settings CRUD Lifecycle', () => {
 
       // Page should handle error gracefully (error toast or alert)
       await expect(page.locator('body')).toBeVisible();
-      const errorIndicator = page.locator('.toast, [role="alert"], .alert-error, [class*="error"]', { hasText: /error|fail/i }).first();
+      const errorIndicator = page
+        .locator('.toast, [role="alert"], .alert-error, [class*="error"]', {
+          hasText: /error|fail/i,
+        })
+        .first();
       if ((await errorIndicator.count()) > 0) {
         await expect(errorIndicator).toBeVisible();
       }
@@ -345,7 +410,9 @@ test.describe('Settings CRUD Lifecycle', () => {
     await page.goto('/admin/settings');
 
     // Clear a required field
-    const nameInput = page.locator('input[name*="name" i], input[placeholder*="instance" i], input[id*="name" i]').first();
+    const nameInput = page
+      .locator('input[name*="name" i], input[placeholder*="instance" i], input[id*="name" i]')
+      .first();
     if ((await nameInput.count()) > 0) {
       await nameInput.clear();
       await page.waitForTimeout(200);
@@ -353,7 +420,11 @@ test.describe('Settings CRUD Lifecycle', () => {
       // Check for validation indicators (red border, error text, disabled save)
       const hasError = await nameInput.evaluate((el) => {
         const classes = el.className;
-        return classes.includes('error') || classes.includes('invalid') || el.getAttribute('aria-invalid') === 'true';
+        return (
+          classes.includes('error') ||
+          classes.includes('invalid') ||
+          el.getAttribute('aria-invalid') === 'true'
+        );
       });
 
       const saveBtn = page.locator('button:has-text("Save"), button[type="submit"]').first();
@@ -372,14 +443,18 @@ test.describe('Settings CRUD Lifecycle', () => {
     await page.goto('/admin/settings');
 
     // Modify a field
-    const nameInput = page.locator('input[name*="name" i], input[placeholder*="instance" i], input[id*="name" i]').first();
+    const nameInput = page
+      .locator('input[name*="name" i], input[placeholder*="instance" i], input[id*="name" i]')
+      .first();
     if ((await nameInput.count()) > 0) {
       await nameInput.clear();
       await nameInput.fill('Unsaved Changes Test');
       await page.waitForTimeout(300);
 
       // Look for unsaved changes indicator (badge, dot, text, or modified save button)
-      const unsavedIndicator = page.locator('text=/unsaved/i, text=/modified/i, .badge-warning, [class*="unsaved"]').first();
+      const unsavedIndicator = page
+        .locator('text=/unsaved/i, text=/modified/i, .badge-warning, [class*="unsaved"]')
+        .first();
       if ((await unsavedIndicator.count()) > 0) {
         await expect(unsavedIndicator).toBeVisible();
       }
@@ -404,7 +479,11 @@ test.describe('Settings CRUD Lifecycle', () => {
     await expect(page.locator('body')).toBeVisible();
 
     // The security tab should be active or security content visible
-    const securityTab = page.locator('[role="tab"]:has-text("Security"), .tab:has-text("Security"), button:has-text("Security")').first();
+    const securityTab = page
+      .locator(
+        '[role="tab"]:has-text("Security"), .tab:has-text("Security"), button:has-text("Security")'
+      )
+      .first();
     if ((await securityTab.count()) > 0) {
       const isActive = await securityTab.evaluate((el) => {
         const classes = el.className;

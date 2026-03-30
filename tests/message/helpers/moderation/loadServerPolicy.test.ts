@@ -2,7 +2,6 @@ import fs from 'fs';
 import path from 'path';
 import loadServerPolicy from '../../../../src/message/helpers/moderation/loadServerPolicy';
 
-jest.mock('fs');
 jest.mock('path');
 
 describe('loadServerPolicy', () => {
@@ -11,19 +10,17 @@ describe('loadServerPolicy', () => {
     (path.resolve as jest.Mock).mockReturnValue('/mock/path/serverPolicy.json');
   });
 
-  it('should return policy data when file exists', () => {
-    (fs.readFileSync as jest.Mock).mockReturnValue('{"policy": "strict"}');
+  it('should return policy data when file exists', async () => {
+    jest.spyOn(fs.promises, 'readFile').mockResolvedValue('{"policy": "strict"}');
 
-    const policy = loadServerPolicy();
+    const policy = await loadServerPolicy();
     expect(policy).toBe('{"policy": "strict"}');
-    expect(fs.readFileSync).toHaveBeenCalledWith('/mock/path/serverPolicy.json', 'utf-8');
+    expect(fs.promises.readFile).toHaveBeenCalledWith('/mock/path/serverPolicy.json', 'utf-8');
   });
 
-  it('should throw error when file read fails', () => {
-    (fs.readFileSync as jest.Mock).mockImplementation(() => {
-      throw new Error('File not found');
-    });
+  it('should throw error when file read fails', async () => {
+    jest.spyOn(fs.promises, 'readFile').mockRejectedValue(new Error('File not found'));
 
-    expect(() => loadServerPolicy()).toThrow('Unable to load server policy.');
+    await expect(loadServerPolicy()).rejects.toThrow('Unable to load server policy.');
   });
 });

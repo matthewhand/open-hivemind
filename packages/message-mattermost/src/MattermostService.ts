@@ -82,6 +82,7 @@ export class MattermostService extends EventEmitter implements IMessengerService
       channel: botConfig.mattermost.channel || 'town-square',
       userId: botConfig.mattermost.userId || botConfig.BOT_ID || '',
       username: botConfig.mattermost.username || botConfig.MESSAGE_USERNAME_OVERRIDE || '',
+      llmProvider: botConfig.llmProvider,
     });
   }
 
@@ -122,6 +123,14 @@ export class MattermostService extends EventEmitter implements IMessengerService
 
   public setMessageHandler(): void {
     debug('Setting message handler for Mattermost bots');
+  }
+
+  public async sendMessage(channelId: string, text: string, senderName?: string): Promise<string> {
+    return this.sendMessageToChannel(channelId, text, senderName);
+  }
+
+  public async getMessages(channelId: string, limit?: number): Promise<IMessage[]> {
+    return this.getMessagesFromChannel(channelId, limit);
   }
 
   public async sendMessageToChannel(
@@ -230,6 +239,26 @@ export class MattermostService extends EventEmitter implements IMessengerService
       metrics.incrementMessages();
       metrics.recordResponseTime(duration);
       debug(`Message sent successfully after ${attemptCount} attempts in ${duration}ms`);
+
+      // Record success event
+      try {
+        const ws = require('@src/server/services/WebSocketService')
+          .default as typeof import('@src/server/services/WebSocketService').default;
+        const botName = senderName || Array.from(this.clients.keys())[0];
+        const botConfig = this.botConfigs.get(botName);
+        ws.getInstance().recordMessageFlow({
+          botName,
+          provider: 'mattermost',
+          llmProvider: botConfig?.llmProvider,
+          channelId,
+          userId: 'system',
+          messageType: 'outgoing',
+          contentLength: text.length,
+          processingTime: duration,
+          status: 'success',
+        });
+      } catch {}
+
       return result;
     } catch (error: any) {
       const duration = Date.now() - startTime;
@@ -241,13 +270,17 @@ export class MattermostService extends EventEmitter implements IMessengerService
       try {
         const ws = require('@src/server/services/WebSocketService')
           .default as typeof import('@src/server/services/WebSocketService').default;
+        const botName = senderName || Array.from(this.clients.keys())[0];
+        const botConfig = this.botConfigs.get(botName);
         ws.getInstance().recordMessageFlow({
-          botName: senderName || Array.from(this.clients.keys())[0],
+          botName,
           provider: 'mattermost',
+          llmProvider: botConfig?.llmProvider,
           channelId,
           userId: 'system',
           messageType: 'outgoing',
           contentLength: text.length,
+          processingTime: duration,
           status: 'error',
           errorMessage: error.message,
         });
@@ -575,6 +608,30 @@ export class MattermostService extends EventEmitter implements IMessengerService
 
   public getBotConfig(botName: string): any {
     return this.botConfigs.get(botName);
+  }
+
+  public async getChannelOwnerId(channelId: string): Promise<string> {
+    try {
+      const firstBot = Array.from(this.clients.keys())[0];
+      const client = this.clients.get(firstBot);
+      if (!client) {
+        return '';
+      }
+
+      const channel = await client.getChannelInfo(channelId);
+      if (!channel) {
+        return '';
+      }
+
+      // In Mattermost, channels don't have a single "owner" like Discord
+      // For direct/group channels, we could return the other participant
+      // For regular channels, we could return the creator_id if available
+      // For now, return empty string as Mattermost doesn't track channel creators by default
+      return '';
+    } catch (error) {
+      debug(`Failed to get channel owner for ${channelId}:`, error);
+      return '';
+    }
   }
 
   public getDelegatedServices(): Array<{

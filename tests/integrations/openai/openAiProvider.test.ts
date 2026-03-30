@@ -2,6 +2,7 @@ import { OpenAI } from 'openai';
 import { OpenAiProvider, openAiProvider } from '@hivemind/llm-openai';
 import openaiConfig from '@config/openaiConfig';
 import { IMessage } from '@message/interfaces/IMessage';
+import { resetAllCircuitBreakers } from '@common/CircuitBreaker';
 
 // Mock the entire 'openai' library
 jest.mock('openai');
@@ -17,6 +18,7 @@ describe('openAiProvider', () => {
   let mockOpenAIInstance: any;
 
   beforeEach(() => {
+    resetAllCircuitBreakers();
     // Reset mocks before each test
     jest.clearAllMocks();
 
@@ -100,7 +102,8 @@ describe('openAiProvider', () => {
             expect.objectContaining({ role: 'system', content: 'You are a test assistant.' }),
             expect.objectContaining({ role: 'user', content: 'test' }),
           ]),
-        })
+        }),
+        expect.anything()
       );
     });
 
@@ -118,7 +121,8 @@ describe('openAiProvider', () => {
             expect.objectContaining({ role: 'assistant', content: 'Hi there!' }),
             expect.objectContaining({ role: 'user', content: 'test' }),
           ]),
-        })
+        }),
+        expect.anything()
       );
     });
 
@@ -127,7 +131,8 @@ describe('openAiProvider', () => {
       expect(mockChatCreate).toHaveBeenCalledWith(
         expect.objectContaining({
           model: 'gpt-4',
-        })
+        }),
+        expect.anything()
       );
     });
 
@@ -136,7 +141,8 @@ describe('openAiProvider', () => {
       expect(mockChatCreate).toHaveBeenCalledWith(
         expect.objectContaining({
           temperature: 1.0, // 0.7 + 0.3
-        })
+        }),
+        expect.anything()
       );
     });
 
@@ -145,7 +151,8 @@ describe('openAiProvider', () => {
       expect(mockChatCreate).toHaveBeenCalledWith(
         expect.objectContaining({
           temperature: 1.5, // capped at 1.5
-        })
+        }),
+        expect.anything()
       );
     });
 
@@ -154,7 +161,8 @@ describe('openAiProvider', () => {
       expect(mockChatCreate).toHaveBeenCalledWith(
         expect.objectContaining({
           max_tokens: 200,
-        })
+        }),
+        expect.anything()
       );
     });
 
@@ -172,18 +180,9 @@ describe('openAiProvider', () => {
 
     // Skipped: Testing missing API key requires clearing process.env.OPENAI_API_KEY
     // which is complex in Jest. The error handling code path is covered by other tests.
-    it.skip('should throw ConfigurationError when API key is missing', async () => {
-      (mockedConfig.get as jest.Mock).mockImplementation((key: string) => {
-        if (key === 'OPENAI_API_KEY') return undefined;
-        return 'some-value';
-      });
-
-      // Create a new provider instance to test with missing API key
-      const providerWithNoKey = new OpenAiProvider();
-      await expect(providerWithNoKey.generateChatCompletion('test', [])).rejects.toThrow(
-        'OpenAI API key is missing'
-      );
-    });
+    it.todo(
+      'should throw ConfigurationError when API key is missing' /* TODO: Fix and re-enable */
+    );
 
     it('should retry on failure and eventually throw', async () => {
       mockChatCreate.mockRejectedValue(new Error('API Error'));
@@ -226,14 +225,14 @@ describe('openAiProvider', () => {
         expect.objectContaining({
           prompt: 'test prompt',
           max_tokens: 150,
-        })
+        }),
+        expect.anything()
       );
     });
 
-    it('should return empty string on error', async () => {
+    it('should throw on error', async () => {
       mockCompletionsCreate.mockRejectedValue(new Error('API Error'));
-      const response = await openAiProvider.generateCompletion('test');
-      expect(response).toBe('');
+      await expect(openAiProvider.generateCompletion('test')).rejects.toThrow('API Error');
     });
 
     it('should return empty string when no response text', async () => {
@@ -261,7 +260,8 @@ describe('openAiProvider', () => {
       expect(mockChatCreate).toHaveBeenCalledWith(
         expect.objectContaining({
           model: 'custom-model',
-        })
+        }),
+        expect.anything()
       );
     });
   });

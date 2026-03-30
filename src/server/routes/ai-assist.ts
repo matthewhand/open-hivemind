@@ -6,9 +6,10 @@ import { FlowiseProvider } from '../../integrations/flowise/flowiseProvider';
 import * as openWebUIImport from '../../integrations/openwebui/runInference';
 import type { ILlmProvider } from '../../llm/interfaces/ILlmProvider';
 import { IMessage } from '../../message/interfaces/IMessage';
+import { HTTP_STATUS } from '../../types/constants';
 import { ErrorUtils } from '../../types/errors';
+import { ChatGenerateSchema } from '../../validation/schemas/miscSchema';
 import { validateRequest } from '../../validation/validateRequest';
-import { GenerateAIAssistSchema } from '../../validation/schemas/aiAssistSchema';
 
 const debug = Debug('app:ai-assist');
 const router = Router();
@@ -86,22 +87,39 @@ const openWebUI: ILlmProvider = {
 const MAX_PROMPT_LENGTH = 32000; // ~8k tokens approximate limit
 const MAX_SYSTEM_PROMPT_LENGTH = 16000;
 
-router.post('/generate', validateRequest(GenerateAIAssistSchema), async (req, res) => {
+router.post('/generate', validateRequest(ChatGenerateSchema), async (req, res) => {
   try {
     const { prompt, systemPrompt } = req.body;
+    if (!prompt) {
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({ error: 'Prompt is required' });
+    }
+
+    // Input validation for prompt sizes
+    if (prompt.length > MAX_PROMPT_LENGTH) {
+      return res
+        .status(HTTP_STATUS.BAD_REQUEST)
+        .json({ error: `Prompt exceeds maximum length of ${MAX_PROMPT_LENGTH} characters` });
+    }
+    if (systemPrompt && systemPrompt.length > MAX_SYSTEM_PROMPT_LENGTH) {
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({
+        error: `System prompt exceeds maximum length of ${MAX_SYSTEM_PROMPT_LENGTH} characters`,
+      });
+    }
 
     const userConfig = UserConfigStore.getInstance();
     const settings = userConfig.getGeneralSettings();
     const providerKey = settings.webuiIntelligenceProvider;
 
     if (!providerKey || providerKey === 'none') {
-      return res.status(400).json({ error: 'AI Assistance is not configured.' });
+      return res
+        .status(HTTP_STATUS.BAD_REQUEST)
+        .json({ error: 'AI Assistance is not configured.' });
     }
 
     const profile = getLlmProfileByKey(providerKey);
     if (!profile) {
       return res
-        .status(404)
+        .status(HTTP_STATUS.NOT_FOUND)
         .json({ error: 'Configured AI Assistance provider profile not found.' });
     }
 
@@ -124,18 +142,22 @@ router.post('/generate', validateRequest(GenerateAIAssistSchema), async (req, re
           break;
         default:
           debug(`Unknown LLM provider type for AI Assist: ${profile.provider}`);
-          return res.status(400).json({ error: `Unsupported provider type: ${profile.provider}` });
+          return res
+            .status(HTTP_STATUS.BAD_REQUEST)
+            .json({ error: `Unsupported provider type: ${profile.provider}` });
       }
     } catch (error: unknown) {
       const hivemindError = ErrorUtils.toHivemindError(error);
       debug(`Failed to initialize provider ${profile.name}:`, hivemindError);
-      return res.status(500).json({
+      return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
         error: `Failed to initialize provider: ${hivemindError instanceof Error ? hivemindError.message : String(hivemindError)}`,
       });
     }
 
     if (!instance) {
-      return res.status(500).json({ error: 'Failed to instantiate provider instance.' });
+      return res
+        .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
+        .json({ error: 'Failed to instantiate provider instance.' });
     }
 
     // Construct messages
@@ -152,14 +174,16 @@ router.post('/generate', validateRequest(GenerateAIAssistSchema), async (req, re
       const fullPrompt = systemPrompt ? `${systemPrompt}\n\n${prompt}` : prompt;
       result = await instance.generateCompletion(fullPrompt);
     } else {
-      return res.status(400).json({ error: 'Provider does not support generation.' });
+      return res
+        .status(HTTP_STATUS.BAD_REQUEST)
+        .json({ error: 'Provider does not support generation.' });
     }
 
     return res.json({ result });
   } catch (error: unknown) {
     const hivemindError = ErrorUtils.toHivemindError(error);
     debug('Error in AI Assist generation:', hivemindError);
-    return res.status(500).json({
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
       error: 'Failed to generate response',
       message: hivemindError instanceof Error ? hivemindError.message : String(hivemindError),
     });

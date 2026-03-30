@@ -11,6 +11,7 @@
  */
 
 import Debug from 'debug';
+import { THIRTY_SECONDS_MS } from '@common/constants/time';
 
 const debug = Debug('app:circuit-breaker');
 
@@ -74,7 +75,7 @@ export class CircuitBreaker {
   constructor(options: CircuitBreakerOptions) {
     this._name = options.name;
     this.failureThreshold = options.failureThreshold ?? 5;
-    this.resetTimeoutMs = options.resetTimeoutMs ?? 30_000;
+    this.resetTimeoutMs = options.resetTimeoutMs ?? THIRTY_SECONDS_MS;
     this.halfOpenMaxAttempts = options.halfOpenMaxAttempts ?? 3;
   }
 
@@ -220,5 +221,18 @@ export function getCircuitBreaker(options: CircuitBreakerOptions): CircuitBreake
  * Clear the global registry (useful for tests).
  */
 export function clearCircuitBreakerRegistry(): void {
+  registry.clear();
+}
+
+/**
+ * Reset every circuit breaker in the registry to CLOSED and clear all counters,
+ * then clear the registry itself. Use this in test `beforeEach` to prevent
+ * state leakage between tests — especially for module-level breaker instances
+ * that survive a simple `registry.clear()`.
+ */
+export function resetAllCircuitBreakers(): void {
+  for (const breaker of registry.values()) {
+    breaker.reset();
+  }
   registry.clear();
 }

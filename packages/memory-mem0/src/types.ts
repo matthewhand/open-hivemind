@@ -91,7 +91,7 @@ export class Mem0ApiError extends Error {
   constructor(
     message: string,
     public readonly status: number,
-    public readonly body?: unknown,
+    public readonly body?: unknown
   ) {
     super(message);
     this.name = 'Mem0ApiError';

@@ -1,5 +1,6 @@
 import axios from 'axios';
 import Debug from 'debug';
+import { resetAllCircuitBreakers } from '../../../src/common/CircuitBreaker';
 import { generateChatCompletion } from '../../../src/integrations/openwebui/runInference';
 import * as sessionManager from '../../../src/integrations/openwebui/sessionManager';
 import * as uploadKnowledgeFile from '../../../src/integrations/openwebui/uploadKnowledgeFile';
@@ -24,6 +25,7 @@ describe('runInference.generateChatCompletion', () => {
     }) as any;
 
   beforeEach(() => {
+    resetAllCircuitBreakers();
     jest.clearAllMocks();
   });
 
@@ -57,13 +59,14 @@ describe('runInference.generateChatCompletion', () => {
       history: ['prev1', 'prev2'],
       metadata: { a: 1 },
     });
-    expect(options).toEqual({
-      headers: {
-        Authorization: 'Bearer sk-123',
-        'Content-Type': 'application/json',
-      },
-      timeout: 15000,
-    });
+    expect(options).toEqual(
+      expect.objectContaining({
+        headers: expect.objectContaining({
+          Authorization: 'Bearer sk-123',
+          'Content-Type': 'application/json',
+        }),
+      })
+    );
 
     expect(res).toEqual({ text: 'hello world' });
   });

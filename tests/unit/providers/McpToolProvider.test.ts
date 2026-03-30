@@ -10,10 +10,10 @@
 import { McpToolProvider } from '../../../packages/tool-mcp/src/McpToolProvider';
 import type { McpToolProviderConfig } from '../../../packages/tool-mcp/src/types';
 import {
+  mockCallTool,
   MockClient,
   mockConnect,
   mockListTools,
-  mockCallTool,
 } from '../../mocks/modelcontextprotocol-sdk';
 
 // ---------------------------------------------------------------------------
@@ -284,7 +284,7 @@ describe('McpToolProvider', () => {
 
     it('passes through special characters in tool arguments', async () => {
       const args = {
-        query: 'SELECT * FROM "users" WHERE name = \'O\'Brien\'',
+        query: "SELECT * FROM \"users\" WHERE name = 'O'Brien'",
         path: '/tmp/a b c/\u00e9\u00e8\u00ea.txt',
         emoji: '\ud83d\ude80\ud83c\udf1f',
       };
@@ -332,31 +332,32 @@ describe('McpToolProvider', () => {
   // -----------------------------------------------------------------------
 
   describe('healthCheck()', () => {
-    it('returns true when the server is reachable', async () => {
+    it('returns { status: "ok" } when the server is reachable', async () => {
       mockListTools.mockResolvedValue({ tools: [] });
 
       const provider = freshProvider();
       const ok = await provider.healthCheck();
 
-      expect(ok).toBe(true);
+      expect(ok).toEqual({ status: 'ok' });
     });
 
-    it('returns false when connection fails', async () => {
+    it('returns { status: "error" } when connection fails', async () => {
       mockConnect.mockRejectedValue(new Error('ECONNREFUSED'));
 
       const provider = freshProvider();
       const ok = await provider.healthCheck();
 
-      expect(ok).toBe(false);
+      expect(ok.status).toBe('error');
+      expect(ok.details?.message).toContain('ECONNREFUSED');
     });
 
-    it('returns false when listTools throws after successful connection', async () => {
+    it('returns { status: "error" } when listTools throws after successful connection', async () => {
       mockListTools.mockRejectedValue(new Error('timeout'));
 
       const provider = freshProvider();
       const ok = await provider.healthCheck();
 
-      expect(ok).toBe(false);
+      expect(ok).toEqual({ status: 'error', details: { message: 'timeout' } });
     });
   });
 
@@ -495,9 +496,7 @@ describe('McpToolProvider', () => {
 
       const provider = freshProvider();
 
-      await expect(provider.executeTool('slow-tool', {})).rejects.toThrow(
-        /Request timed out/
-      );
+      await expect(provider.executeTool('slow-tool', {})).rejects.toThrow(/Request timed out/);
     });
   });
 
@@ -523,9 +522,7 @@ describe('McpToolProvider', () => {
       });
       await provider.listTools();
 
-      expect(mockConnect).toHaveBeenCalledWith(
-        expect.objectContaining({ url: 'stdio://local' })
-      );
+      expect(mockConnect).toHaveBeenCalledWith(expect.objectContaining({ url: 'stdio://local' }));
     });
 
     it('accepts streamable-http transport config', async () => {

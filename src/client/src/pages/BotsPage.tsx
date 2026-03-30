@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import { useVirtualizer } from '@tanstack/react-virtual';
 import {
   Bot, Plus, Edit2, Trash2, Check, RefreshCw, AlertCircle,
   Search, Filter, ChevronRight, Activity, MessageSquare,
@@ -14,6 +15,7 @@ import Modal, { ConfirmModal } from '../components/DaisyUI/Modal';
 import { useLlmStatus } from '../hooks/useLlmStatus';
 import { usePageLifecycle } from '../hooks/usePageLifecycle';
 import PageHeader from '../components/DaisyUI/PageHeader';
+import ConfigurationValidation from '../components/ConfigurationValidation';
 import SearchFilterBar from '../components/SearchFilterBar';
 import EmptyState from '../components/DaisyUI/EmptyState';
 import { SkeletonPage } from '../components/DaisyUI/Skeleton';
@@ -51,7 +53,7 @@ const BotsPage: React.FC = () => {
   const [editingBot, setEditingBot] = useState<BotConfig | null>(null);
   const [deletingBot, setDeletingBot] = useState<BotConfig | null>(null);
   const [previewBot, setPreviewBot] = useState<BotConfig | null>(null);
-  const [previewTab, setPreviewTab] = useState<'activity' | 'chat'>('activity');
+  const [previewTab, setPreviewTab] = useState<'activity' | 'chat' | 'validation'>('activity');
   const [activityLogs, setActivityLogs] = useState<any[]>([]);
   const [chatHistory, setChatHistory] = useState<any[]>([]);
   const [logFilter, setLogFilter] = useState('');
@@ -361,6 +363,17 @@ const BotsPage: React.FC = () => {
     }
   }, [toastError]);
 
+  // Virtualization for large bot lists
+  const botsParentRef = useRef<HTMLDivElement>(null);
+  const shouldVirtualizeBots = filteredBots.length > 50;
+  const botsGridRowVirtualizer = useVirtualizer({
+    count: Math.ceil(filteredBots.length / 2), // 2 columns
+    getScrollElement: () => botsParentRef.current,
+    estimateSize: () => 350, // Estimated card height
+    overscan: 2,
+    enabled: shouldVirtualizeBots,
+  });
+
   // Fetch preview panel data for a bot
   const fetchPreviewActivity = useCallback(async (botId: string, limit = 20) => {
     setActivityError(null);
@@ -540,17 +553,43 @@ const BotsPage: React.FC = () => {
                   },
                 ]}
               />
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {filteredBots.map((bot, index) => (
+              {shouldVirtualizeBots ? (
+                <div ref={botsParentRef} className="overflow-auto" style={{ height: '800px' }}>
+                  <div
+                    style={{
+                      height: `${botsGridRowVirtualizer.getTotalSize()}px`,
+                      width: '100%',
+                      position: 'relative',
+                    }}
+                  >
+                    {botsGridRowVirtualizer.getVirtualItems().map((virtualRow) => {
+                      const startIndex = virtualRow.index * 2;
+                      const rowBots = filteredBots.slice(startIndex, startIndex + 2);
+
+                      return (
+                        <div
+                          key={virtualRow.key}
+                          style={{
+                            position: 'absolute',
+                            top: 0,
+                            left: 0,
+                            width: '100%',
+                            transform: `translateY(${virtualRow.start}px)`,
+                          }}
+                        >
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-1">
+                            {rowBots.map((bot, index) => {
+                              const globalIndex = startIndex + index;
+                              return (
                   <div
                     key={bot.id}
                     className="relative"
                     draggable={!isMobile}
-                    onDragStart={onBotDragStart(index)}
-                    onDragOver={onBotDragOver(index)}
+                    onDragStart={onBotDragStart(globalIndex)}
+                    onDragOver={onBotDragOver(globalIndex)}
                     onDragEnd={onBotDragEnd}
-                    onDrop={onBotDrop(index)}
-                    style={getBotItemStyle(index)}
+                    onDrop={onBotDrop(globalIndex)}
+                    style={getBotItemStyle(globalIndex)}
                   >
                     <div className="absolute top-2 left-2 z-10 flex items-center gap-1">
                       <input
@@ -565,16 +604,16 @@ const BotsPage: React.FC = () => {
                         <span className="flex flex-col">
                           <button
                             className="btn btn-ghost btn-xs btn-square p-0"
-                            onClick={() => onBotMoveUp(index)}
-                            disabled={index === 0}
+                            onClick={() => onBotMoveUp(globalIndex)}
+                            disabled={globalIndex === 0}
                             aria-label="Move up"
                           >
                             <ChevronUp className="w-3 h-3" />
                           </button>
                           <button
                             className="btn btn-ghost btn-xs btn-square p-0"
-                            onClick={() => onBotMoveDown(index)}
-                            disabled={index === filteredBots.length - 1}
+                            onClick={() => onBotMoveDown(globalIndex)}
+                            disabled={globalIndex === filteredBots.length - 1}
                             aria-label="Move down"
                           >
                             <ChevronDown className="w-3 h-3" />
@@ -598,8 +637,76 @@ const BotsPage: React.FC = () => {
                       onToggleStatus={() => handleToggleBotStatus(bot)}
                     />
                   </div>
-                ))}
-              </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {filteredBots.map((bot, index) => (
+                    <div
+                      key={bot.id}
+                      className="relative"
+                      draggable={!isMobile}
+                      onDragStart={onBotDragStart(index)}
+                      onDragOver={onBotDragOver(index)}
+                      onDragEnd={onBotDragEnd}
+                      onDrop={onBotDrop(index)}
+                      style={getBotItemStyle(index)}
+                    >
+                      <div className="absolute top-2 left-2 z-10 flex items-center gap-1">
+                        <input
+                          type="checkbox"
+                          className="checkbox checkbox-sm checkbox-primary"
+                          checked={bulk.isSelected(bot.id)}
+                          onChange={(e) => bulk.toggleItem(bot.id, e as any)}
+                          onClick={(e) => e.stopPropagation()}
+                          aria-label={`Select ${bot.name}`}
+                        />
+                        {isMobile ? (
+                          <span className="flex flex-col">
+                            <button
+                              className="btn btn-ghost btn-xs btn-square p-0"
+                              onClick={() => onBotMoveUp(index)}
+                              disabled={index === 0}
+                              aria-label="Move up"
+                            >
+                              <ChevronUp className="w-3 h-3" />
+                            </button>
+                            <button
+                              className="btn btn-ghost btn-xs btn-square p-0"
+                              onClick={() => onBotMoveDown(index)}
+                              disabled={index === filteredBots.length - 1}
+                              aria-label="Move down"
+                            >
+                              <ChevronDown className="w-3 h-3" />
+                            </button>
+                          </span>
+                        ) : (
+                          <span
+                            className="cursor-grab active:cursor-grabbing text-base-content/40 hover:text-base-content/70"
+                            title="Drag to reorder"
+                          >
+                            <GripVertical className="w-4 h-4" />
+                          </span>
+                        )}
+                      </div>
+                      <BotCard
+                        bot={bot}
+                        isSelected={previewBot?.id === bot.id}
+                        onPreview={() => handlePreviewBot(bot)}
+                        onEdit={() => setEditingBot(bot)}
+                        onDelete={() => setDeletingBot(bot)}
+                        onToggleStatus={() => handleToggleBotStatus(bot)}
+                      />
+                    </div>
+                  ))}
+                </div>
+              )}
             </>
           )}
         </div>
@@ -631,7 +738,7 @@ const BotsPage: React.FC = () => {
                 <div className="space-y-4">
                   <div>
                     <label className="text-xs font-bold uppercase opacity-50 mb-1 block">Description</label>
-                    <p className="text-sm italic">{previewBot.description || 'No description provided.'}</p>
+                    <p className="text-sm italic">{previewBot?.description || 'No description provided.'}</p>
                   </div>
 
                   <div className="grid grid-cols-2 gap-2">
@@ -639,14 +746,14 @@ const BotsPage: React.FC = () => {
                       <label className="text-[10px] font-bold uppercase opacity-50 block mb-1">Provider</label>
                       <div className="flex items-center gap-2">
                         <Globe className="w-3 h-3 text-primary" />
-                        <span className="text-xs font-medium uppercase">{previewBot.llmProvider}</span>
+                        <span className="text-xs font-medium uppercase">{previewBot.llmProvider || 'Not configured'}</span>
                       </div>
                     </div>
                     <div className="bg-base-200/50 p-2 rounded-lg">
                       <label className="text-[10px] font-bold uppercase opacity-50 block mb-1">Model</label>
                       <div className="flex items-center gap-2">
                         <Cpu className="w-3 h-3 text-secondary" />
-                        <span className="text-xs font-medium">{previewBot.llmModel}</span>
+                        <span className="text-xs font-medium">{previewBot.llmModel || 'Not configured'}</span>
                       </div>
                     </div>
                   </div>
@@ -654,12 +761,12 @@ const BotsPage: React.FC = () => {
                   <div className="stats bg-base-200 w-full shadow-sm">
                     <div className="stat p-3">
                       <div className="stat-title text-[10px] uppercase font-bold">Messages</div>
-                      <div className="stat-value text-xl text-primary">{previewBot.messageCount || 0}</div>
+                      <div className="stat-value text-xl text-primary">{previewBot.messageCount ?? 0}</div>
                     </div>
                     <div className="stat p-3">
                       <div className="stat-title text-[10px] uppercase font-bold">Errors</div>
-                      <div className={`stat-value text-xl ${(previewBot.errorCount || 0) > 0 ? 'text-error' : ''}`}>
-                        {previewBot.errorCount || 0}
+                      <div className={`stat-value text-xl ${(previewBot.errorCount ?? 0) > 0 ? 'text-error' : ''}`}>
+                        {previewBot.errorCount ?? 0}
                       </div>
                     </div>
                   </div>
@@ -679,6 +786,13 @@ const BotsPage: React.FC = () => {
                       role="tab"
                     >
                       <MessageSquare className="w-3 h-3" /> <span className="text-[10px] uppercase font-bold">Chat</span>
+                    </button>
+                    <button
+                      className={`tab tab-sm flex-1 gap-2 ${previewTab === 'validation' ? 'tab-active' : ''}`}
+                      onClick={() => setPreviewTab('validation')}
+                      role="tab"
+                    >
+                      <ShieldCheck className="w-3 h-3" /> <span className="text-[10px] uppercase font-bold">Validation</span>
                     </button>
                   </div>
 
@@ -739,6 +853,13 @@ const BotsPage: React.FC = () => {
                           ))}
                         </div>
                       )}
+                    </div>
+                  )}
+
+                  {/* Validation Panel */}
+                  {previewTab === 'validation' && (
+                    <div className="space-y-3 max-h-[300px] overflow-y-auto pr-1 custom-scrollbar">
+                      <ConfigurationValidation bot={previewBot} />
                     </div>
                   )}
 
@@ -830,7 +951,7 @@ const BotsPage: React.FC = () => {
       {editingBot && (
         <BotSettingsModal
           isOpen={!!editingBot}
-          bot={editingBot as any}
+          bot={editingBot}
           onClose={() => setEditingBot(null)}
           personas={personas}
           llmProfiles={llmProfiles}
@@ -847,9 +968,9 @@ const BotsPage: React.FC = () => {
           }}
           onDelete={(bot) => {
             setEditingBot(null);
-            setDeletingBot(bot as any);
+            setDeletingBot(bot);
           }}
-          onViewDetails={(bot) => setPreviewBot(bot as any)}
+          onViewDetails={(bot) => setPreviewBot(bot)}
         />
       )}
 

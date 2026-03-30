@@ -32,28 +32,43 @@ test.describe('Bot CRUD Lifecycle', () => {
       page.route('**/api/config/llm-status', (route) =>
         route.fulfill({
           status: 200,
-          json: { defaultConfigured: true, defaultProviders: [], botsMissingLlmProvider: [], hasMissing: false },
+          json: {
+            defaultConfigured: true,
+            defaultProviders: [],
+            botsMissingLlmProvider: [],
+            hasMissing: false,
+          },
         })
       ),
       page.route('**/api/config/global', (route) => route.fulfill({ status: 200, json: {} })),
       page.route('**/api/config/llm-profiles', (route) =>
-        route.fulfill({ status: 200, json: { llm: [{ key: 'openai', name: 'OpenAI', provider: 'openai' }] } })
+        route.fulfill({
+          status: 200,
+          json: { llm: [{ key: 'openai', name: 'OpenAI', provider: 'openai' }] },
+        })
       ),
       page.route('**/api/personas', (route) => route.fulfill({ status: 200, json: mockPersonas })),
       page.route('**/api/csrf-token', (route) =>
         route.fulfill({ status: 200, json: { token: 'mock-csrf-token' } })
       ),
-      page.route('**/api/health', (route) => route.fulfill({ status: 200, json: { status: 'ok' } })),
+      page.route('**/api/health', (route) =>
+        route.fulfill({ status: 200, json: { status: 'ok' } })
+      ),
       page.route('**/api/dashboard/api/status', (route) =>
         route.fulfill({ status: 200, json: { bots: [], uptime: 100 } })
       ),
       page.route('**/api/admin/llm-profiles', (route) =>
-        route.fulfill({ status: 200, json: { data: [{ key: 'openai', name: 'OpenAI', provider: 'openai' }] } })
+        route.fulfill({
+          status: 200,
+          json: { data: [{ key: 'openai', name: 'OpenAI', provider: 'openai' }] },
+        })
       ),
       page.route('**/api/admin/guard-profiles', (route) =>
         route.fulfill({ status: 200, json: { data: [] } })
       ),
-      page.route('**/api/demo/status', (route) => route.fulfill({ status: 200, json: { active: false } })),
+      page.route('**/api/demo/status', (route) =>
+        route.fulfill({ status: 200, json: { active: false } })
+      ),
     ]);
   }
 
@@ -63,14 +78,18 @@ test.describe('Bot CRUD Lifecycle', () => {
   });
 
   test('empty state shows no bots message', async ({ page }) => {
-    await page.route('**/api/config', (route) => route.fulfill({ status: 200, json: { bots: [] } }));
+    await page.route('**/api/config', (route) =>
+      route.fulfill({ status: 200, json: { bots: [] } })
+    );
     await page.route('**/api/bots', (route) =>
       route.fulfill({ status: 200, json: { data: { bots: [] } } })
     );
 
     await page.goto('/admin/bots');
     await expect(page.getByText('Your swarm is empty')).toBeVisible();
-    await expect(page.getByText('Start by creating your first specialized AI agent.')).toBeVisible();
+    await expect(
+      page.getByText('Start by creating your first specialized AI agent.')
+    ).toBeVisible();
   });
 
   test('create bot via wizard and verify it appears in list', async ({ page }) => {
@@ -136,9 +155,15 @@ test.describe('Bot CRUD Lifecycle', () => {
       if (route.request().method() === 'PUT') {
         const body = route.request().postDataJSON();
         updatedName = body.name || updatedName;
-        await route.fulfill({ status: 200, json: { data: { bot: { ...bots[0], name: updatedName } } } });
+        await route.fulfill({
+          status: 200,
+          json: { data: { bot: { ...bots[0], name: updatedName } } },
+        });
       } else {
-        await route.fulfill({ status: 200, json: { data: { bots: [{ ...bots[0], name: updatedName }] } } });
+        await route.fulfill({
+          status: 200,
+          json: { data: { bots: [{ ...bots[0], name: updatedName }] } },
+        });
       }
     });
 
@@ -167,7 +192,10 @@ test.describe('Bot CRUD Lifecycle', () => {
       const url = route.request().url();
       // Don't match sub-paths like /api/bots/bot-1/status
       if (url.endsWith('/api/bots') || url.includes('/api/bots?')) {
-        await route.fulfill({ status: 200, json: { data: { bots: [{ ...bot, status: currentStatus }] } } });
+        await route.fulfill({
+          status: 200,
+          json: { data: { bots: [{ ...bot, status: currentStatus }] } },
+        });
       } else {
         await route.continue();
       }
@@ -184,7 +212,10 @@ test.describe('Bot CRUD Lifecycle', () => {
       if (route.request().method() === 'PATCH') {
         const body = route.request().postDataJSON();
         currentStatus = body.status || currentStatus;
-        await route.fulfill({ status: 200, json: { data: { bot: { ...bot, status: currentStatus } } } });
+        await route.fulfill({
+          status: 200,
+          json: { data: { bot: { ...bot, status: currentStatus } } },
+        });
       } else {
         await route.fulfill({ status: 200, json: {} });
       }
@@ -326,7 +357,9 @@ test.describe('Bot CRUD Lifecycle', () => {
   });
 
   test('empty form submit shows validation errors', async ({ page }) => {
-    await page.route('**/api/config', (route) => route.fulfill({ status: 200, json: { bots: [] } }));
+    await page.route('**/api/config', (route) =>
+      route.fulfill({ status: 200, json: { bots: [] } })
+    );
     await page.route('**/api/bots', (route) =>
       route.fulfill({ status: 200, json: { data: { bots: [] } } })
     );
@@ -334,7 +367,9 @@ test.describe('Bot CRUD Lifecycle', () => {
     await page.goto('/admin/bots');
     // Empty state should show appropriate messaging
     await expect(page.getByText('Your swarm is empty')).toBeVisible();
-    await expect(page.getByText('Start by creating your first specialized AI agent.')).toBeVisible();
+    await expect(
+      page.getByText('Start by creating your first specialized AI agent.')
+    ).toBeVisible();
     // The header "Create New Bot" button should be present
     await expect(page.locator('button', { hasText: 'Create New Bot' }).first()).toBeVisible();
     // The search bar and filter dropdown should be visible

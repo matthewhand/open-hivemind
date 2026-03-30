@@ -1,6 +1,8 @@
+import Debug from 'debug';
 import { Router, type Request, type Response } from 'express';
 import { providerRegistry } from '../registries/ProviderRegistry';
 
+const debug = Debug('app:swarmRoutes');
 const swarmRouter = Router();
 
 const getInstaller = () => {
@@ -25,7 +27,8 @@ swarmRouter.get('/check', async (_req: Request, res: Response) => {
       webUIUrl: installer.getWebUIUrl ? installer.getWebUIUrl() : '',
     });
   } catch (error: any) {
-    res.status(500).json({ success: false, error: error.message });
+    debug('Swarm check failed: %s', error.message);
+    res.status(500).json({ success: false, error: 'Internal server error' });
   }
 });
 
@@ -36,7 +39,8 @@ swarmRouter.post('/install', async (_req: Request, res: Response) => {
     const result = await installer.install();
     res.json({ success: result.success, message: result.message });
   } catch (error: any) {
-    res.status(500).json({ success: false, error: error.message });
+    debug('Swarm install failed: %s', error.message);
+    res.status(500).json({ success: false, error: 'Internal server error' });
   }
 });
 
@@ -66,7 +70,8 @@ swarmRouter.post('/start', async (req: Request, res: Response) => {
     const result = await installer.start({ port });
     return res.json({ success: result.success, message: result.message });
   } catch (error: any) {
-    return res.status(500).json({ success: false, error: error.message });
+    debug('Swarm start failed: %s', error.message);
+    return res.status(500).json({ success: false, error: 'Internal server error' });
   }
 });
 

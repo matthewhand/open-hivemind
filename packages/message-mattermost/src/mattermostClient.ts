@@ -1,5 +1,8 @@
 import axios, { type AxiosInstance } from 'axios';
+import { Logger } from '@common/logger';
 import type { MattermostPost } from './MattermostMessage';
+
+const logger = Logger.withContext('MattermostClient');
 
 interface MattermostClientOptions {
   serverUrl: string;
@@ -69,10 +72,10 @@ export default class MattermostClient {
       if (response.status === 200) {
         this.connected = true;
         this.me = response.data;
-        console.log(`Connected to Mattermost as ${response.data.username}`);
+        logger.info('Connected to Mattermost', { username: response.data.username });
       }
     } catch (error: any) {
-      console.error('Failed to connect to Mattermost:', error.message);
+      logger.error('Failed to connect to Mattermost', { error: error.message });
       throw new Error(`Mattermost connection failed: ${error.message}`);
     }
   }
@@ -94,7 +97,7 @@ export default class MattermostClient {
 
       return response.data;
     } catch (error: any) {
-      console.error('Failed to post message:', error.message);
+      logger.error('Failed to post message', { error: error.message });
       throw error;
     }
   }
@@ -108,7 +111,7 @@ export default class MattermostClient {
       const posts = response.data.posts;
       return Object.values(posts) as MattermostPost[];
     } catch (error: any) {
-      console.error('Failed to get channel posts:', error.message);
+      logger.error('Failed to get channel posts', { channelId, error: error.message });
       return [];
     }
   }
@@ -191,7 +194,7 @@ export default class MattermostClient {
 
         throw new Error(`Channel not found: ${channel}`);
       } catch (error) {
-        console.error('Failed to resolve channel:', error);
+        logger.error('Failed to resolve channel', { channel, error });
         throw error;
       } finally {
         this.pendingLookups.delete(channel);
@@ -239,7 +242,7 @@ export default class MattermostClient {
       });
     } catch (error: any) {
       // Suppress errors to avoid noisy logs on unsupported servers
-      console.debug(`Mattermost typing indicator failed: ${error?.message || error}`);
+      logger.debug('Mattermost typing indicator failed', { error: error?.message || error });
     }
   }
 }

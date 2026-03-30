@@ -4,15 +4,14 @@ import WebSocketService, { type MessageFlowEvent } from '@src/server/services/We
 import { BotConfigurationManager } from '@config/BotConfigurationManager';
 import { authenticate, requireAdmin } from '../../auth/middleware';
 import { AnalyticsService } from '../../services/AnalyticsService';
-import { ActivityLogger } from '../services/ActivityLogger';
-import Debug from 'debug';
-import { validateRequest } from '../../validation/validateRequest';
+import { HTTP_STATUS } from '../../types/constants';
 import {
-  UpdateDashboardConfigSchema,
-  SubmitAIFeedbackSchema,
   AlertIdParamSchema,
-} from '../../validation/schemas/dashboardSchema';
-const debug = Debug('app:server:routes:dashboard');
+  DashboardConfigSchema,
+  DashboardFeedbackSchema,
+} from '../../validation/schemas/miscSchema';
+import { validateRequest } from '../../validation/validateRequest';
+import { ActivityLogger } from '../services/ActivityLogger';
 
 type AnnotatedEvent = MessageFlowEvent & { llmProvider: string };
 
@@ -175,10 +174,16 @@ router.get('/ai/config', authenticate, requireAdmin, (req, res) => {
   res.json(dashboardConfig);
 });
 
-router.post('/ai/config', authenticate, requireAdmin, validateRequest(UpdateDashboardConfigSchema), (req, res) => {
-  dashboardConfig = { ...dashboardConfig, ...req.body };
-  res.json(dashboardConfig);
-});
+router.post(
+  '/ai/config',
+  authenticate,
+  requireAdmin,
+  validateRequest(DashboardConfigSchema),
+  (req, res) => {
+    dashboardConfig = { ...dashboardConfig, ...req.body };
+    res.json(dashboardConfig);
+  }
+);
 
 router.get('/ai/stats', authenticate, requireAdmin, async (req, res) => {
   try {
@@ -202,8 +207,8 @@ router.get('/ai/stats', authenticate, requireAdmin, async (req, res) => {
       activeUsers: stats.activeUsers,
     });
   } catch (error) {
-    debug('ERROR:', 'AI stats API error:', error);
-    res.status(500).json({ error: 'Failed to get AI stats' });
+    console.error('AI stats API error:', error);
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: 'Failed to get AI stats' });
   }
 });
 
@@ -220,8 +225,8 @@ router.get('/ai/segments', authenticate, requireAdmin, async (req, res) => {
 
     res.json(segments);
   } catch (error) {
-    debug('ERROR:', 'AI segments API error:', error);
-    res.status(500).json({ error: 'Failed to get user segments' });
+    console.error('AI segments API error:', error);
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: 'Failed to get user segments' });
   }
 });
 
@@ -238,8 +243,10 @@ router.get('/ai/patterns', authenticate, requireAdmin, async (req, res) => {
 
     res.json(patterns);
   } catch (error) {
-    debug('ERROR:', 'AI patterns API error:', error);
-    res.status(500).json({ error: 'Failed to get behavior patterns' });
+    console.error('AI patterns API error:', error);
+    res
+      .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
+      .json({ error: 'Failed to get behavior patterns' });
   }
 });
 
@@ -256,37 +263,43 @@ router.get('/ai/recommendations', authenticate, requireAdmin, async (req, res) =
 
     res.json(recommendations);
   } catch (error) {
-    debug('ERROR:', 'AI recommendations API error:', error);
-    res.status(500).json({ error: 'Failed to get recommendations' });
+    console.error('AI recommendations API error:', error);
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: 'Failed to get recommendations' });
   }
 });
 
-router.post('/ai/feedback', authenticate, requireAdmin, validateRequest(SubmitAIFeedbackSchema), async (req, res) => {
-  const { recommendationId, feedback, metadata } = req.body;
-  try {
-    const db = DatabaseManager.getInstance();
-    await db.storeAIFeedback({ recommendationId, feedback, metadata });
-    res.json({ success: true });
-  } catch (error) {
-    debug('ERROR:', 'Error storing AI feedback:', error);
-    res.status(500).json({ error: 'Failed to store feedback' });
+router.post(
+  '/ai/feedback',
+  authenticate,
+  requireAdmin,
+  validateRequest(DashboardFeedbackSchema),
+  async (req, res) => {
+    const { recommendationId, feedback, metadata } = req.body;
+    try {
+      const db = DatabaseManager.getInstance();
+      await db.storeAIFeedback({ recommendationId, feedback, metadata });
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Error storing AI feedback:', error);
+      res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: 'Failed to store feedback' });
+    }
   }
-});
+);
 
 // Root route removed - dashboard is now served from public/index.html
 // This file only contains API endpoints
 
-function isProviderConnected(bot: Record<string, unknown>): boolean {
+function isProviderConnected(bot: any): boolean {
   try {
     if (bot.messageProvider === 'slack') {
-      const svc = require('@hivemind/message-slack').SlackService as Record<string, unknown>;
+      const svc = require('@hivemind/message-slack').SlackService as any;
       const instance = svc?.getInstance?.();
       const mgr = instance?.getBotManager?.(bot.name) || instance?.getBotManager?.();
       const bots = mgr?.getAllBots?.() || [];
       return Array.isArray(bots) && bots.length > 0;
     }
     if (bot.messageProvider === 'discord') {
-      const svc = require('@hivemind/message-discord') as Record<string, unknown>;
+      const svc = require('@hivemind/message-discord') as any;
       const instance =
         svc?.DiscordService?.getInstance?.() || svc?.Discord?.DiscordService?.getInstance?.();
       const bots = instance?.getAllBots?.() || [];
@@ -305,7 +318,7 @@ router.get('/status', authenticate, requireAdmin, (req, res) => {
     try {
       bots = manager.getAllBots();
     } catch (e) {
-      debug('WARN:', 'Failed to load bots for status:', e);
+      console.warn('Failed to load bots for status:', e);
       bots = [];
     }
 
@@ -327,8 +340,8 @@ router.get('/status', authenticate, requireAdmin, (req, res) => {
 
     res.json({ bots: status, uptime: process.uptime() });
   } catch (error) {
-    debug('ERROR:', 'Status API error:', error);
-    res.status(500).json({ error: 'Failed to get status' });
+    console.error('Status API error:', error);
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: 'Failed to get status' });
   }
 });
 
@@ -423,42 +436,56 @@ router.get('/activity', authenticate, requireAdmin, async (req, res) => {
       agentMetrics,
     });
   } catch (error) {
-    debug('ERROR:', 'Activity API error:', error);
-    res.status(500).json({ error: 'Failed to retrieve activity feed' });
+    console.error('Activity API error:', error);
+    res
+      .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
+      .json({ error: 'Failed to retrieve activity feed' });
   }
 });
 
-router.post('/alerts/:id/acknowledge', authenticate, requireAdmin, validateRequest(AlertIdParamSchema), (req, res) => {
-  try {
-    const { id } = req.params;
-    const ws = WebSocketService.getInstance();
-    const success = ws.acknowledgeAlert(id);
-    if (success) {
-      res.json({ success: true, message: 'Alert acknowledged' });
-    } else {
-      res.status(404).json({ success: false, message: 'Alert not found' });
+router.post(
+  '/alerts/:id/acknowledge',
+  authenticate,
+  requireAdmin,
+  validateRequest(AlertIdParamSchema),
+  (req, res) => {
+    try {
+      const { id } = req.params;
+      const ws = WebSocketService.getInstance();
+      const success = ws.acknowledgeAlert(id);
+      if (success) {
+        res.json({ success: true, message: 'Alert acknowledged' });
+      } else {
+        res.status(HTTP_STATUS.NOT_FOUND).json({ success: false, message: 'Alert not found' });
+      }
+    } catch (error) {
+      console.error('Acknowledge alert error:', error);
+      res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: 'Failed to acknowledge alert' });
     }
-  } catch (error) {
-    debug('ERROR:', 'Acknowledge alert error:', error);
-    res.status(500).json({ error: 'Failed to acknowledge alert' });
   }
-});
+);
 
-router.post('/alerts/:id/resolve', authenticate, requireAdmin, validateRequest(AlertIdParamSchema), (req, res) => {
-  try {
-    const { id } = req.params;
-    const ws = WebSocketService.getInstance();
-    const success = ws.resolveAlert(id);
-    if (success) {
-      res.json({ success: true, message: 'Alert resolved' });
-    } else {
-      res.status(404).json({ success: false, message: 'Alert not found' });
+router.post(
+  '/alerts/:id/resolve',
+  authenticate,
+  requireAdmin,
+  validateRequest(AlertIdParamSchema),
+  (req, res) => {
+    try {
+      const { id } = req.params;
+      const ws = WebSocketService.getInstance();
+      const success = ws.resolveAlert(id);
+      if (success) {
+        res.json({ success: true, message: 'Alert resolved' });
+      } else {
+        res.status(HTTP_STATUS.NOT_FOUND).json({ success: false, message: 'Alert not found' });
+      }
+    } catch (error) {
+      console.error('Resolve alert error:', error);
+      res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: 'Failed to resolve alert' });
     }
-  } catch (error) {
-    debug('ERROR:', 'Resolve alert error:', error);
-    res.status(500).json({ error: 'Failed to resolve alert' });
   }
-});
+);
 
 export default router;
 

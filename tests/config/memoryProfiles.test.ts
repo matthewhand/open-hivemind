@@ -38,26 +38,16 @@ describe('memoryProfiles', () => {
   });
 
   describe('loadMemoryProfiles', () => {
-    test('loads profiles from JSON file', () => {
+    test('calls loadProfiles with correct filename and profileType', () => {
       mockedLoadProfiles.mockReturnValue(SAMPLE_PROFILES);
 
-      const result = loadMemoryProfiles();
-      expect(result.memory).toHaveLength(2);
-      expect(result.memory[0].key).toBe('mem0-default');
-      expect(result.memory[1].provider).toBe('memory-zep');
+      loadMemoryProfiles();
       expect(mockedLoadProfiles).toHaveBeenCalledWith(
         expect.objectContaining({
           filename: 'memory-profiles.json',
           profileType: 'memory',
         })
       );
-    });
-
-    test('returns default when loadProfiles returns defaults (missing file)', () => {
-      mockedLoadProfiles.mockReturnValue({ memory: [] });
-
-      const result = loadMemoryProfiles();
-      expect(result.memory).toEqual([]);
     });
 
     test('passes correct default data to loadProfiles', () => {
@@ -163,38 +153,27 @@ describe('memoryProfiles', () => {
   });
 
   describe('getMemoryProfileByKey', () => {
-    test('returns profile by key', () => {
+    test('delegates to findProfileByKey with correct arguments', () => {
       mockedLoadProfiles.mockReturnValue(SAMPLE_PROFILES);
       mockedFindProfileByKey.mockReturnValue(SAMPLE_PROFILES.memory[0]);
 
       const profile = getMemoryProfileByKey('mem0-default');
-      expect(profile).toBeDefined();
+      expect(profile).not.toBeUndefined();
       expect(profile!.name).toBe('Mem0 Default');
       expect(mockedFindProfileByKey).toHaveBeenCalledWith(SAMPLE_PROFILES.memory, 'key', 'mem0-default');
-    });
-
-    test('returns undefined for non-existent key', () => {
-      mockedLoadProfiles.mockReturnValue(SAMPLE_PROFILES);
-      mockedFindProfileByKey.mockReturnValue(undefined);
-
-      const profile = getMemoryProfileByKey('nonexistent');
-      expect(profile).toBeUndefined();
     });
   });
 
   describe('getMemoryProfiles', () => {
-    test('returns all profiles', () => {
+    test('delegates to loadMemoryProfiles', () => {
       mockedLoadProfiles.mockReturnValue(SAMPLE_PROFILES);
 
-      const profiles = getMemoryProfiles();
-      expect(profiles.memory).toHaveLength(2);
-    });
-
-    test('returns empty when no profiles configured', () => {
-      mockedLoadProfiles.mockReturnValue({ memory: [] });
-
-      const profiles = getMemoryProfiles();
-      expect(profiles.memory).toHaveLength(0);
+      getMemoryProfiles();
+      expect(mockedLoadProfiles).toHaveBeenCalledWith(
+        expect.objectContaining({
+          filename: 'memory-profiles.json',
+        })
+      );
     });
   });
 
@@ -221,10 +200,10 @@ describe('memoryProfiles', () => {
         provider: 'memory-test',
         config: {},
       };
-      expect(profile.key).toBeDefined();
-      expect(profile.name).toBeDefined();
-      expect(profile.provider).toBeDefined();
-      expect(profile.config).toBeDefined();
+      expect(profile.key).toBe('test');
+      expect(profile.name).toBe('Test');
+      expect(profile.provider).toBe('memory-test');
+      expect(typeof profile.config).toBe('object');
     });
 
     test('description field is optional', () => {

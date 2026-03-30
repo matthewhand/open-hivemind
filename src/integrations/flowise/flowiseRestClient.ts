@@ -2,16 +2,16 @@ import axios from 'axios';
 import Debug from 'debug';
 import { ConfigurationManager } from '@config/ConfigurationManager';
 import flowiseConfig from '@integrations/flowise/flowiseConfig';
-import { isSafeUrl } from '../../utils/ssrfGuard';
-import { getCircuitBreaker } from '@common/CircuitBreaker';
 import { withTimeout } from '@common/withTimeout';
+import { globalRecoveryManager } from '../../utils/errorRecovery';
+import { isSafeUrl } from '../../utils/ssrfGuard';
 
 const debug = Debug('app:flowiseClient');
 
 /** Default timeout for Flowise REST calls (30 seconds). */
 const DEFAULT_FLOWISE_TIMEOUT_MS = 30_000;
 
-const circuitBreaker = getCircuitBreaker({
+const circuitBreaker = globalRecoveryManager.getCircuitBreaker('flowise', {
   name: 'flowise',
   failureThreshold: 5,
   resetTimeoutMs: 30_000,
@@ -60,7 +60,7 @@ export async function getFlowiseResponse(channelId: string, question: string): P
       const response = await withTimeout(
         (signal) => axios.post(targetUrl, payload, { headers, signal }),
         DEFAULT_FLOWISE_TIMEOUT_MS,
-        'Flowise REST prediction',
+        'Flowise REST prediction'
       );
       const { text, chatId: newChatId } = response.data;
 

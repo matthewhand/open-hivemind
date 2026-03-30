@@ -102,8 +102,8 @@ describe('getLlmProvider', () => {
     (mockedLlmConfig.get as jest.Mock).mockReturnValue('openwebui');
     const providers = getLlmProvider();
     expect(providers).toHaveLength(1);
-    expect(providers[0].supportsChatCompletion).toBeDefined();
-    expect(providers[0].generateChatCompletion).toBeDefined();
+    expect(typeof providers[0].supportsChatCompletion).toBe('function');
+    expect(typeof providers[0].generateChatCompletion).toBe('function');
   });
 
   it('should return multiple providers for a comma-separated list', () => {

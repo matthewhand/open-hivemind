@@ -1,3 +1,8 @@
+import {
+  createOfflineMiddleware,
+  OfflineActionQueue,
+} from '../../../src/client/src/store/offlineQueue';
+
 /**
  * Tests for the offline action queue and middleware.
  */
@@ -6,15 +11,21 @@
 const storage: Record<string, string> = {};
 const localStorageMock = {
   getItem: jest.fn((key: string) => storage[key] ?? null),
-  setItem: jest.fn((key: string, value: string) => { storage[key] = value; }),
-  removeItem: jest.fn((key: string) => { delete storage[key]; }),
-  clear: jest.fn(() => { for (const k of Object.keys(storage)) delete storage[k]; }),
-  get length() { return Object.keys(storage).length; },
+  setItem: jest.fn((key: string, value: string) => {
+    storage[key] = value;
+  }),
+  removeItem: jest.fn((key: string) => {
+    delete storage[key];
+  }),
+  clear: jest.fn(() => {
+    for (const k of Object.keys(storage)) delete storage[k];
+  }),
+  get length() {
+    return Object.keys(storage).length;
+  },
   key: jest.fn((_i: number) => null),
 };
 Object.defineProperty(globalThis, 'localStorage', { value: localStorageMock, writable: true });
-
-import { OfflineActionQueue, createOfflineMiddleware } from '../../../src/client/src/store/offlineQueue';
 
 beforeEach(() => {
   localStorageMock.clear();
@@ -64,7 +75,7 @@ describe('OfflineActionQueue', () => {
     q.enqueue({ type: 'x' });
     expect(localStorageMock.setItem).toHaveBeenCalledWith(
       'hivemind_offline_queue',
-      expect.any(String),
+      expect.any(String)
     );
   });
 

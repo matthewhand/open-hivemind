@@ -45,9 +45,9 @@ const RATE_LIMIT_CONFIG = {
 };
 
 // Redis client and store
-// eslint-disable-next-line @typescript-eslint/no-explicit-any -- Redis client is dynamically required
+
 let redisClient: Record<string, (...args: unknown[]) => unknown> | null = null;
-// eslint-disable-next-line @typescript-eslint/no-explicit-any -- RedisStore is dynamically required
+
 let RedisStore: (new (opts: Record<string, unknown>) => unknown) | null = null;
 let redisAvailable = false;
 
@@ -61,8 +61,8 @@ async function initializeRedis(): Promise<void> {
   }
 
   try {
-    const redis = require('redis');
-    const rateLimitRedis = require('rate-limit-redis');
+    const redis = await import('redis');
+    const rateLimitRedis = await import('rate-limit-redis');
     RedisStore = rateLimitRedis.RedisStore;
 
     const redisUrl = process.env.REDIS_URL;
@@ -591,9 +591,51 @@ export const apiRateLimiter = rateLimit({
 });
 
 /**
- * Middleware to apply rate limiting based on route type
+ * Extract bot name from request
+ * Checks various locations where bot name might be specified
  */
-export const applyRateLimiting = (req: Request, res: Response, next: NextFunction) => {
+function getBotNameFromRequest(req: Request): string | undefined {
+  // Check URL parameters (e.g., /api/bots/:botName/...)
+  if (req.params?.botName) {
+    return req.params.botName;
+  }
+  if (req.params?.name) {
+    return req.params.name;
+  }
+  if (req.params?.id) {
+    // ID might be a bot name in some routes
+    return req.params.id;
+  }
+
+  // Check query parameters
+  if (req.query?.botName && typeof req.query.botName === 'string') {
+    return req.query.botName;
+  }
+  if (req.query?.bot && typeof req.query.bot === 'string') {
+    return req.query.bot;
+  }
+
+  // Check request body
+  if (req.body?.botName && typeof req.body.botName === 'string') {
+    return req.body.botName;
+  }
+  if (req.body?.bot && typeof req.body.bot === 'string') {
+    return req.body.bot;
+  }
+
+  // Check custom header
+  const botHeader = req.get('X-Bot-Name');
+  if (botHeader) {
+    return botHeader;
+  }
+
+  return undefined;
+}
+
+/**
+ * Middleware to apply rate limiting based on route type and bot configuration
+ */
+export const applyRateLimiting = async (req: Request, res: Response, next: NextFunction) => {
   if (shouldSkipRateLimit(req)) {
     return next();
   }
@@ -602,7 +644,17 @@ export const applyRateLimiting = (req: Request, res: Response, next: NextFunctio
   // This ensures correct matching regardless of where the middleware is mounted
   const path = req.baseUrl ? req.baseUrl + req.path : req.path;
 
-  // Apply different rate limiters based on route patterns
+  // Check if this is a bot-specific request and if the bot has custom rate limits
+  const botName = getBotNameFromRequest(req);
+  if (botName) {
+    const botLimiter = await getBotRateLimiter(botName);
+    if (botLimiter) {
+      debug(`Applying bot-specific rate limiter for ${botName}`);
+      return botLimiter(req, res, next);
+    }
+  }
+
+  // Apply different rate limiters based on route patterns (fallback to default behavior)
   if (path.startsWith('/api/config')) {
     return configRateLimiter(req, res, next);
   } else if (path.startsWith('/api/auth') || path.startsWith('/api/login')) {
@@ -642,6 +694,105 @@ export function createRateLimiter(options: {
       });
     },
   });
+}
+
+/**
+ * Create a bot-specific rate limiter using guard profile settings
+ */
+export async function createBotRateLimiter(
+  botName: string
+): Promise<ReturnType<typeof rateLimit> | null> {
+  try {
+    // Lazy import to avoid circular dependencies
+    const { getBotRateLimitSettings } = await import('../config/rateLimitConfig');
+    const settings = getBotRateLimitSettings(botName);
+
+    if (!settings || !settings.enabled) {
+      return null;
+    }
+
+    debug(
+      `Creating bot-specific rate limiter for ${botName}: ${settings.maxRequests} req/${settings.windowMs}ms`
+    );
+
+    return rateLimit({
+      windowMs: settings.windowMs,
+      max: settings.maxRequests,
+      standardHeaders: true,
+      legacyHeaders: false,
+      store: createStore(`bot:${botName}`, settings.windowMs),
+      // Combine IP and bot name for the rate limit key
+      keyGenerator: (req: Request) => {
+        const ip = getClientKey(req);
+        return `${ip}:${botName}`;
+      },
+      skip: shouldSkipRateLimit,
+      handler: (
+        req: Request & { rateLimit?: { resetTime?: number; limit?: number } },
+        res: Response
+      ) => {
+        const retryAfter = req.rateLimit?.resetTime
+          ? Math.ceil((req.rateLimit.resetTime - Date.now()) / 1000)
+          : Math.ceil(settings.windowMs / 1000);
+
+        logger.warn(`Bot rate limit exceeded for ${botName}`, {
+          ip: getClientKey(req),
+          path: req.originalUrl,
+          method: req.method,
+          botName,
+          limit: settings.maxRequests,
+          window: settings.windowMs,
+        });
+
+        res.setHeader('Retry-After', String(retryAfter));
+        res.setHeader('X-RateLimit-Limit', String(settings.maxRequests));
+        res.setHeader('X-RateLimit-Remaining', '0');
+        if (req.rateLimit?.resetTime) {
+          res.setHeader('X-RateLimit-Reset', String(req.rateLimit.resetTime));
+        }
+
+        res.status(429).json({
+          error: 'Too many requests',
+          message: `Rate limit exceeded for bot "${botName}". The guard profile allows ${settings.maxRequests} requests per ${Math.ceil(settings.windowMs / 1000)} seconds.`,
+          retryAfter,
+          code: 'BOT_RATE_LIMIT_EXCEEDED',
+          botName,
+        });
+      },
+    });
+  } catch (error) {
+    debug(`Failed to create bot rate limiter for ${botName}:`, error);
+    return null;
+  }
+}
+
+// Cache for bot-specific rate limiters to avoid recreating them on every request
+const botRateLimiters = new Map<string, ReturnType<typeof rateLimit>>();
+
+/**
+ * Get or create a bot-specific rate limiter
+ */
+export async function getBotRateLimiter(
+  botName: string
+): Promise<ReturnType<typeof rateLimit> | null> {
+  if (botRateLimiters.has(botName)) {
+    return botRateLimiters.get(botName)!;
+  }
+
+  const limiter = await createBotRateLimiter(botName);
+  if (limiter) {
+    botRateLimiters.set(botName, limiter);
+  }
+
+  return limiter;
+}
+
+/**
+ * Clear cached bot rate limiters (useful for hot reload)
+ */
+export function clearBotRateLimiters(): void {
+  botRateLimiters.clear();
+  debug('Cleared bot rate limiter cache');
 }
 
 /**
@@ -689,4 +840,12 @@ export {
 };
 
 // Export helper functions for testing
-export { validateIP, isIPInCIDR, isTrustedProxy, getClientKey, ipToLong, getTrustedProxies };
+export {
+  validateIP,
+  isIPInCIDR,
+  isTrustedProxy,
+  getClientKey,
+  ipToLong,
+  getTrustedProxies,
+  getBotNameFromRequest,
+};

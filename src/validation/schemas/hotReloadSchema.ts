@@ -7,8 +7,9 @@ export const HotReloadChangeSchema = z.object({
       message: 'At least one change is required',
     }),
     source: z.string().optional(),
+    user: z.string().optional(),
     reason: z.string().optional(),
-  }).passthrough(),
+  }),
 });
 
 /** POST /api/config/hot-reload/rollback/:snapshotId */
@@ -17,3 +18,6 @@ export const HotReloadRollbackSchema = z.object({
     snapshotId: z.string().min(1, { message: 'Snapshot ID is required' }),
   }),
 });
+
+/** Alias */
+export const SnapshotIdParamSchema = HotReloadRollbackSchema;

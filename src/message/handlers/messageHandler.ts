@@ -3,9 +3,11 @@ import { AuditLogger } from '@src/common/auditLogger';
 import { ErrorHandler } from '@src/common/errors/ErrorHandler';
 import { PerformanceMonitor } from '@src/common/errors/PerformanceMonitor';
 import { getLlmProvider } from '@src/llm/getLlmProvider';
-import { InputSanitizer } from '@src/utils/InputSanitizer';
-import { toolAugmentedCompletion } from '@src/services/toolAugmentedCompletion';
 import { getQuotaManager } from '@src/middleware/quotaMiddleware';
+import { ContentFilterService } from '@src/services/ContentFilterService';
+import { MemoryManager } from '@src/services/MemoryManager';
+import { toolAugmentedCompletion } from '@src/services/toolAugmentedCompletion';
+import { InputSanitizer } from '@src/utils/InputSanitizer';
 import { generateChatCompletionDirect } from '@integrations/openwebui/directClient';
 import { ChannelDelayManager } from '@message/helpers/handler/ChannelDelayManager';
 import type { IMessage } from '@message/interfaces/IMessage';
@@ -27,10 +29,9 @@ import { stripBotId } from '../helpers/processing/stripBotId';
 // New utilities
 import TokenTracker from '../helpers/processing/TokenTracker';
 import TypingActivity from '../helpers/processing/TypingActivity';
-import { MemoryManager } from '@src/services/MemoryManager';
-import processingLocks from '../processing/processingLocks';
-import { PipelineMetrics, pipelineEventEmitter } from '../PipelineMetrics';
+import { pipelineEventEmitter, PipelineMetrics } from '../PipelineMetrics';
 import { PipelineMetricsAggregator } from '../PipelineMetricsAggregator';
+import processingLocks from '../processing/processingLocks';
 
 const timingManager = MessageDelayScheduler.getInstance();
 const idleResponseManager = IdleResponseManager.getInstance();
@@ -40,6 +41,7 @@ const channelDelayManager = ChannelDelayManager.getInstance();
 const outgoingRateLimiter = OutgoingMessageRateLimiter.getInstance();
 const typingActivity = TypingActivity.getInstance();
 const historyTuner = AdaptiveHistoryTuner.getInstance();
+const contentFilterService = ContentFilterService.getInstance();
 
 /**
  * Main message handler that processes incoming messages and generates responses.
@@ -188,6 +190,50 @@ export async function handleMessage(
         );
         logger(`Processed message: "${processedMessage}"`);
 
+        // Content filter check (bypasses system messages)
+        if (botConfig.contentFilter) {
+          const filterResult = contentFilterService.checkContent(
+            processedMessage,
+            botConfig.contentFilter,
+            message.role
+          );
+
+          if (!filterResult.allowed) {
+            logger(`Content blocked by filter: ${filterResult.reason}`, filterResult.matchedTerms);
+            AuditLogger.getInstance().logBotAction(
+              userId,
+              'BLOCK',
+              botConfig.name || botConfig.BOT_ID || 'unknown-bot',
+              'success',
+              `Content blocked: ${filterResult.reason}`,
+              {
+                metadata: {
+                  type: 'CONTENT_FILTER_BLOCK',
+                  channelId: channelId,
+                  botId: botConfig.BOT_ID || 'unknown-bot',
+                  matchedTerms: filterResult.matchedTerms,
+                  strictness: botConfig.contentFilter.strictness,
+                },
+              }
+            );
+
+            // Optionally send a message to the user (configurable)
+            if (botConfig.MESSAGE_CONTENT_FILTER_NOTIFY !== false) {
+              try {
+                await messageProvider.sendMessageToChannel(
+                  message.getChannelId(),
+                  'Your message contains content that is not allowed.',
+                  providerSenderKey
+                );
+              } catch (notifyErr) {
+                logger('Failed to send content filter notification:', notifyErr);
+              }
+            }
+
+            return null;
+          }
+        }
+
         // Command processing
         let commandProcessed = false;
         if (botConfig.MESSAGE_COMMAND_INLINE) {
@@ -259,7 +305,10 @@ export async function handleMessage(
           botConfig
         );
         const decisionTimestamp = Date.now();
-        pipelineMetrics.endStage('validate', { shouldReply: replyDecision.shouldReply, reason: replyDecision.reason });
+        pipelineMetrics.endStage('validate', {
+          shouldReply: replyDecision.shouldReply,
+          reason: replyDecision.reason,
+        });
 
         // Safely extract human-readable names for logging
         const authorName = (() => {
@@ -293,7 +342,9 @@ export async function handleMessage(
             // Prose explanation at info level with context
             let prose = replyDecision.meta?.prose || replyDecision.reason;
             prose = await summarizeLogWithLlm(prose);
-            console.info(`\u{1F6AB} ${botConfig.name} skips @${authorName} in ${channelName}: ${prose}`);
+            console.info(
+              `\u{1F6AB} ${botConfig.name} skips @${authorName} in ${channelName}: ${prose}`
+            );
           }
           return null;
         }
@@ -346,7 +397,7 @@ export async function handleMessage(
         try {
           const memories = await memoryManager.retrieveRelevantMemories(
             botConfig.name || resolvedBotId,
-            processedMessage,
+            processedMessage
           );
           memoryContext = memoryManager.formatMemoriesForPrompt(memories);
         } catch (memErr) {
@@ -381,12 +432,12 @@ export async function handleMessage(
         if (process.env.DISABLE_QUOTA !== 'true') {
           const quotaManager = getQuotaManager();
           const quotaEntityId = userId || channelId;
-          const quotaEntityType = userId ? 'user' as const : 'channel' as const;
+          const quotaEntityType = userId ? ('user' as const) : ('channel' as const);
           const quotaStatus = await quotaManager.checkQuota(quotaEntityId, quotaEntityType);
           if (!quotaStatus.allowed) {
             logger(
               `Quota exceeded for ${quotaEntityType}:${quotaEntityId} — ` +
-              `min=${quotaStatus.used.minute} hr=${quotaStatus.used.hour} day=${quotaStatus.used.day}`
+                `min=${quotaStatus.used.minute} hr=${quotaStatus.used.hour} day=${quotaStatus.used.day}`
             );
             return null;
           }
@@ -432,21 +483,21 @@ export async function handleMessage(
           });
           // Normalise to { text: string } so the downstream `.text` checks work
           // regardless of whether the provider returned a string or an object.
-          llmResponse = typeof toolResult === 'string'
-            ? { text: toolResult }
-            : toolResult;
+          llmResponse = typeof toolResult === 'string' ? { text: toolResult } : toolResult;
         }
-        pipelineMetrics.endStage('llm_inference', { hasResponse: !!(llmResponse && llmResponse.text) });
+        pipelineMetrics.endStage('llm_inference', {
+          hasResponse: !!(llmResponse && llmResponse.text),
+        });
 
         // ── Quota: consume token usage after inference completes ──
         if (process.env.DISABLE_QUOTA !== 'true' && llmResponse?.text) {
           try {
             const quotaManager = getQuotaManager();
             const quotaEntityId = userId || channelId;
-            const quotaEntityType = userId ? 'user' as const : 'channel' as const;
+            const quotaEntityType = userId ? ('user' as const) : ('channel' as const);
             // Estimate tokens from response length (rough: 1 token ~ 4 chars)
-            const estimatedTokens = llmResponse.usage?.total_tokens
-              ?? Math.ceil((llmResponse.text?.length ?? 0) / 4);
+            const estimatedTokens =
+              llmResponse.usage?.total_tokens ?? Math.ceil((llmResponse.text?.length ?? 0) / 4);
             await quotaManager.consumeTokens(quotaEntityId, quotaEntityType, estimatedTokens);
           } catch (tokenErr) {
             logger('Failed to record token quota (non-fatal):', tokenErr);
@@ -467,6 +518,41 @@ export async function handleMessage(
 
         // Clean up formatting
         responseText = responseText.replace(/\\n/g, '\n').trim();
+
+        // Apply content filter to bot responses (optional, for safety)
+        if (botConfig.contentFilter && botConfig.contentFilter.enabled) {
+          const botFilterResult = contentFilterService.checkContent(
+            responseText,
+            botConfig.contentFilter,
+            'assistant' // Bot responses are assistant role
+          );
+
+          if (!botFilterResult.allowed) {
+            logger(
+              `Bot response blocked by filter: ${botFilterResult.reason}`,
+              botFilterResult.matchedTerms
+            );
+            AuditLogger.getInstance().logBotAction(
+              userId,
+              'BLOCK',
+              botConfig.name || botConfig.BOT_ID || 'unknown-bot',
+              'success',
+              `Bot response blocked: ${botFilterResult.reason}`,
+              {
+                metadata: {
+                  type: 'BOT_RESPONSE_FILTER_BLOCK',
+                  channelId: channelId,
+                  botId: botConfig.BOT_ID || 'unknown-bot',
+                  matchedTerms: botFilterResult.matchedTerms,
+                  strictness: botConfig.contentFilter.strictness,
+                },
+              }
+            );
+
+            // Don't send the response
+            return null;
+          }
+        }
 
         // Split into parts if needed
         const parts = responseText
@@ -505,10 +591,12 @@ export async function handleMessage(
           channelId,
           userId: message.getAuthorId(),
         };
-        // Fire-and-forget \u2014 memory writes must not slow down or break responses.
-        memoryManager.storeConversationMemory(memBotName, processedMessage, 'user', memMeta)
+        // Fire-and-forget — memory writes must not slow down or break responses.
+        memoryManager
+          .storeConversationMemory(memBotName, processedMessage, 'user', memMeta)
           .catch((e: unknown) => logger('Memory store (user) failed: %O', e));
-        memoryManager.storeConversationMemory(memBotName, llmResponse.text, 'assistant', memMeta)
+        memoryManager
+          .storeConversationMemory(memBotName, llmResponse.text, 'assistant', memMeta)
           .catch((e: unknown) => logger('Memory store (assistant) failed: %O', e));
         pipelineMetrics.endStage('memory_store');
 
@@ -531,7 +619,8 @@ export async function handleMessage(
         console.info(
           `\u274C INFERENCE/PROCESSING FAILED | error: ${error instanceof Error ? error.message : String(error)}${modelInfo}`
         );
-        logger('ERROR:', 
+        logger(
+          'ERROR:',
           `Error processing message: ${error instanceof Error ? error.message : String(error)}`
         );
         return null;
@@ -541,25 +630,47 @@ export async function handleMessage(
         if (typingInterval) {
           try {
             clearInterval(typingInterval);
-          } catch {}
+          } catch (error) {
+            logger('Failed to clear typing interval', {
+              error: error instanceof Error ? error.message : String(error),
+              channelId,
+            });
+          }
           typingInterval = null;
         }
         if (typingTimeout) {
           try {
             clearTimeout(typingTimeout);
-          } catch {}
+          } catch (error) {
+            logger('Failed to clear typing timeout', {
+              error: error instanceof Error ? error.message : String(error),
+              channelId,
+            });
+          }
           typingTimeout = null;
         }
         // Always unlock the channel after processing
         if (didLock) {
           try {
             processingLocks.unlock(channelId, resolvedBotId);
-          } catch {}
+          } catch (error) {
+            logger('Failed to unlock processing lock', {
+              error: error instanceof Error ? error.message : String(error),
+              channelId,
+              botId: resolvedBotId,
+            });
+          }
         }
         if (isLeaderInvocation && delayKey) {
           try {
             channelDelayManager.clear(delayKey);
-          } catch {}
+          } catch (error) {
+            logger('Failed to clear channel delay', {
+              error: error instanceof Error ? error.message : String(error),
+              delayKey,
+              channelId,
+            });
+          }
         }
       }
     },

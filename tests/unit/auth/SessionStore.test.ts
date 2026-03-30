@@ -1,3 +1,5 @@
+import { SessionStore } from '@src/auth/SessionStore';
+
 /**
  * Tests for SessionStore
  * Mocks TimerRegistry to avoid real intervals during tests.
@@ -12,8 +14,6 @@ jest.mock('@src/utils/TimerRegistry', () => ({
     }),
   },
 }));
-
-import { SessionStore } from '@src/auth/SessionStore';
 
 describe('SessionStore', () => {
   let store: SessionStore;

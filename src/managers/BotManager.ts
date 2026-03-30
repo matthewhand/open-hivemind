@@ -3,6 +3,7 @@ import { EventEmitter } from 'events';
 import fs from 'fs';
 import path from 'path';
 import Debug from 'debug';
+import { injectable, singleton } from 'tsyringe';
 import { BotConfigurationManager } from '@config/BotConfigurationManager';
 import { SecureConfigManager } from '@config/SecureConfigManager';
 import { UserConfigStore } from '@config/UserConfigStore';
@@ -69,6 +70,8 @@ export interface CreateBotRequest {
   mcpGuard?: MCPGuardConfig;
 }
 
+@singleton()
+@injectable()
 export class BotManager extends EventEmitter {
   private static instance: BotManager;
   private botConfigManager: BotConfigurationManager;
@@ -81,13 +84,15 @@ export class BotManager extends EventEmitter {
     this.botConfigManager = BotConfigurationManager.getInstance();
     this.secureConfigManager = SecureConfigManager.getInstance();
     this.botsFilePath = path.join(process.cwd(), 'config', 'user', 'custom-bots.json');
-    this.loadCustomBots();
+    // Note: loadCustomBots is now async but called from constructor
+    // We'll handle initialization separately
     debug('BotManager initialized');
   }
 
-  public static getInstance(): BotManager {
+  public static async getInstance(): Promise<BotManager> {
     if (!BotManager.instance) {
       BotManager.instance = new BotManager();
+      await BotManager.instance.loadCustomBots();
     }
     return BotManager.instance;
   }
@@ -105,10 +110,11 @@ export class BotManager extends EventEmitter {
   /**
    * Load custom bots from file
    */
-  private loadCustomBots(): void {
+  private async loadCustomBots(): Promise<void> {
     try {
-      if (fs.existsSync(this.botsFilePath)) {
-        const data = fs.readFileSync(this.botsFilePath, 'utf8');
+      try {
+        await fs.promises.access(this.botsFilePath);
+        const data = await fs.promises.readFile(this.botsFilePath, 'utf8');
         const bots = JSON.parse(data);
         this.customBots.clear();
         Object.entries(bots).forEach(([id, bot]: [string, unknown]) => {
@@ -120,6 +126,9 @@ export class BotManager extends EventEmitter {
           }
         });
         debug(`Loaded ${this.customBots.size} custom bots`);
+      } catch (err: any) {
+        if (err.code !== 'ENOENT') throw err;
+        // File doesn't exist yet, that's ok
       }
     } catch (error: unknown) {
       debug('Error loading custom bots:', ErrorUtils.getMessage(error));
@@ -129,15 +138,17 @@ export class BotManager extends EventEmitter {
   /**
    * Save custom bots to file
    */
-  private saveCustomBots(): void {
+  private async saveCustomBots(): Promise<void> {
     try {
       const botsDir = path.dirname(this.botsFilePath);
-      if (!fs.existsSync(botsDir)) {
-        fs.mkdirSync(botsDir, { recursive: true });
+      try {
+        await fs.promises.access(botsDir);
+      } catch {
+        await fs.promises.mkdir(botsDir, { recursive: true });
       }
 
       const bots = Object.fromEntries(this.customBots);
-      fs.writeFileSync(this.botsFilePath, JSON.stringify(bots, null, 2));
+      await fs.promises.writeFile(this.botsFilePath, JSON.stringify(bots, null, 2));
       debug(`Saved ${this.customBots.size} custom bots`);
     } catch (error: unknown) {
       debug('Error saving custom bots:', ErrorUtils.getMessage(error));
@@ -255,7 +266,7 @@ export class BotManager extends EventEmitter {
       await this.storeSecureConfig(botId, request.config || {});
 
       // Add to web UI storage
-      webUIStorage.saveAgent(botInstance);
+      await webUIStorage.saveAgent(botInstance);
 
       debug(`Created new bot: ${request.name} (${botId})`);
 
@@ -392,7 +403,7 @@ export class BotManager extends EventEmitter {
       }
 
       // Update in web UI storage
-      webUIStorage.saveAgent(updatedBot);
+      await webUIStorage.saveAgent(updatedBot);
 
       debug(`Updated bot: ${updatedBot.name} (${botId})`);
 
@@ -425,7 +436,7 @@ export class BotManager extends EventEmitter {
 
       if (isCustom) {
         // Remove from web UI storage
-        webUIStorage.deleteAgent(botId);
+        await webUIStorage.deleteAgent(botId);
         // Remove secure configuration
         await this.secureConfigManager.deleteConfig(`bot_${botId}`);
       } else {
@@ -475,7 +486,7 @@ export class BotManager extends EventEmitter {
       const isCustomBot = this.customBots.has(botId);
       if (isCustomBot) {
         this.customBots.set(botId, updatedBot);
-        this.saveCustomBots();
+        await this.saveCustomBots();
       }
 
       await this.startBotById(botId);
@@ -487,8 +498,10 @@ export class BotManager extends EventEmitter {
           const service = await this.getMessengerService(bot.messageProvider);
           if (service) {
             const defaultChannel =
-              (bot.config as any)?.slack?.defaultChannelId ||
-              (bot.config as any)?.discord?.defaultChannelId ||
+              (bot.config as Record<string, { defaultChannelId?: string }>)?.slack
+                ?.defaultChannelId ||
+              (bot.config as Record<string, { defaultChannelId?: string }>)?.discord
+                ?.defaultChannelId ||
               service.getDefaultChannel?.();
             if (defaultChannel) {
               const welcomeText =
@@ -537,7 +550,7 @@ export class BotManager extends EventEmitter {
       const isCustomBot = this.customBots.has(botId);
       if (isCustomBot) {
         this.customBots.set(botId, updatedBot);
-        this.saveCustomBots();
+        await this.saveCustomBots();
       }
 
       // Use integration-agnostic shutdown
@@ -846,8 +859,8 @@ export class BotManager extends EventEmitter {
 
       const targetChannel =
         channelId ||
-        (bot.config as any)?.slack?.defaultChannelId ||
-        (bot.config as any)?.discord?.defaultChannelId;
+        (bot.config as Record<string, { defaultChannelId?: string }>)?.slack?.defaultChannelId ||
+        (bot.config as Record<string, { defaultChannelId?: string }>)?.discord?.defaultChannelId;
       if (!targetChannel) {
         debug(`No channel specified for bot ${bot.name} history`);
         return [];
@@ -957,8 +970,8 @@ export class BotManager extends EventEmitter {
 
       const service = await this.getMessengerService(bot.messageProvider);
 
-      if (service && typeof (service as any).addBot === 'function') {
-        await (service as any).addBot({
+      if (service && 'addBot' in service && typeof service.addBot === 'function') {
+        await service.addBot({
           ...mergedConfig,
           name: bot.name,
         });
@@ -986,10 +999,10 @@ export class BotManager extends EventEmitter {
     try {
       const service = await this.getMessengerService(bot.messageProvider);
       // Check if the service supports a disconnect/removeBot method
-      if (service && typeof (service as any).disconnectBot === 'function') {
-        await (service as any).disconnectBot(bot.name);
-      } else if (service && typeof (service as any).removeBot === 'function') {
-        await (service as any).removeBot(bot.name);
+      if (service && 'disconnectBot' in service && typeof service.disconnectBot === 'function') {
+        await service.disconnectBot(bot.name);
+      } else if (service && 'removeBot' in service && typeof service.removeBot === 'function') {
+        await service.removeBot(bot.name);
       }
       debug(`Shutdown bot provider for ${bot.name}`);
     } catch (error: any) {

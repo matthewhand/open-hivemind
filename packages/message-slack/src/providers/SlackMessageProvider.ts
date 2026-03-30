@@ -1,6 +1,9 @@
 import type { IMessage } from '@message/interfaces/IMessage';
 import type { IMessageProvider } from '@message/interfaces/IMessageProvider';
+import { Logger } from '@common/logger';
 import { SlackService } from '../SlackService';
+
+const logger = Logger.withContext('SlackMessageProvider');
 
 export class SlackMessageProvider implements IMessageProvider {
   private _slackService?: SlackService;
@@ -30,7 +33,7 @@ export class SlackMessageProvider implements IMessageProvider {
     } catch (error) {
       // Assuming error is of type Error
       const err = error as Error;
-      console.error(`Failed to fetch messages for channel ${channelId}: ${err.message}`);
+      logger.error('Failed to fetch messages for channel', { channelId, error: err.message });
       return [];
     }
   }
@@ -49,19 +52,16 @@ export class SlackMessageProvider implements IMessageProvider {
   }
 
   async getForumOwner(forumId: string): Promise<string> {
-    // For Slack, the forum owner would be the channel creator
-    // This is a simplified implementation - in a real implementation,
-    // you would query the Slack API to get the channel creator
     try {
-      // Placeholder implementation - in a real implementation, you would:
-      // 1. Use the Slack Web API to get channel info
-      // 2. Extract the creator/owner ID from the response
-      // For now, we'll return a placeholder
-      return `owner-${forumId}`;
+      // Delegate to SlackService which queries the Slack API for channel creator
+      if (typeof (this.slackService as any).getChannelOwnerId === 'function') {
+        const ownerId = await (this.slackService as any).getChannelOwnerId(forumId);
+        return ownerId || '';
+      }
+      return '';
     } catch (error) {
-      console.error(`Failed to get forum owner for channel ${forumId}:`, error);
-      // Return a default owner ID in case of error
-      return 'default-owner';
+      logger.error('Failed to get forum owner for channel', { forumId, error });
+      return '';
     }
   }
 }

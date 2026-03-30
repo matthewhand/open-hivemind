@@ -1,8 +1,12 @@
 import type { Database } from 'sqlite';
+import { injectable, singleton } from 'tsyringe';
 import { Logger } from '@common/logger';
 import type { ConnectionManager } from './ConnectionManager';
+import { ActivitySchemas } from './schemas/ActivitySchemas';
 import { MetricsSchemas } from './schemas/MetricsSchemas';
 
+@singleton()
+@injectable()
 export class SchemaManager {
   private connectionManager: ConnectionManager;
 
@@ -15,6 +19,10 @@ export class SchemaManager {
     if (!db) {
       throw new Error('Database connection not established');
     }
+
+    // Create modular schemas
+    const activitySchemas = new ActivitySchemas();
+    await activitySchemas.ensureTable(db);
 
     // Create all tables
     await this.createTables(db);

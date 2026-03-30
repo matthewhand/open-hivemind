@@ -29,9 +29,9 @@ const SettingsIntegrations: React.FC = () => {
       const response = await fetch('/api/config/global');
       if (!response.ok) {throw new Error('Failed to fetch integrations');}
       const data = await response.json();
-      
+
       const config = data.config || {};
-      
+
       // Build integrations from config
       const builtIntegrations: Integration[] = [
         {
@@ -80,7 +80,7 @@ const SettingsIntegrations: React.FC = () => {
           status: config.flowise?.baseUrl?.value ? 'connected' : 'disconnected',
         },
       ];
-      
+
       setIntegrations(builtIntegrations);
     } catch (error) {
       setAlert({ type: 'error', message: 'Failed to load integrations' });

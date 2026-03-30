@@ -7,16 +7,15 @@ import Button from './DaisyUI/Button';
 import Card from './DaisyUI/Card';
 import DataTable from './DaisyUI/DataTable';
 import Modal from './DaisyUI/Modal';
-import ProgressBar from './DaisyUI/ProgressBar';
 import StatsCards from './DaisyUI/StatsCards';
-import ToastNotification from './DaisyUI/ToastNotification';
+import { useSuccessToast, useErrorToast } from './DaisyUI/ToastNotification';
 import { SkeletonPage } from './DaisyUI/Skeleton';
+import { LoadingSpinner } from './DaisyUI/Loading';
 import type { Bot, StatusResponse } from '../services/api';
 import { apiService } from '../services/api';
 import { CreateBotWizard } from './BotManagement/CreateBotWizard';
 import HealthCheckWidget from './Dashboard/HealthCheckWidget';
 import { Activity, Clock, Cpu, HardDrive, Info, PlusCircle } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
 
 type DashboardTab = 'getting-started' | 'status' | 'performance';
 
@@ -33,22 +32,6 @@ export interface BotTableRow {
   guard?: string;
   lastActivity: string;
 }
-
-const MESSAGE_PROVIDER_OPTIONS = [
-  { value: 'discord', label: 'Discord' },
-  { value: 'slack', label: 'Slack' },
-  { value: 'mattermost', label: 'Mattermost' },
-  { value: 'webhook', label: 'Webhook' },
-] as const;
-
-const LLM_PROVIDER_OPTIONS = [
-  { value: 'openai', label: 'OpenAI' },
-  { value: 'anthropic', label: 'Anthropic' },
-  { value: 'flowise', label: 'Flowise' },
-  { value: 'openwebui', label: 'Open WebUI' },
-  { value: 'openswarm', label: 'OpenSwarm' },
-  { value: 'letta', label: 'Letta' },
-] as const;
 
 const providerIconMap: Record<string, string> = {
   discord: '💬',
@@ -79,23 +62,6 @@ const getStatusBadgeVariant = (
   return 'secondary';
 };
 
-const formatUptime = (seconds: number): string => {
-  if (!seconds || seconds <= 0) {
-    return '—';
-  }
-  const days = Math.floor(seconds / 86400);
-  const hours = Math.floor((seconds % 86400) / 3600);
-  const minutes = Math.floor((seconds % 3600) / 60);
-
-  if (days > 0) {
-    return `${days}d ${hours}h`;
-  }
-  if (hours > 0) {
-    return `${hours}h ${minutes}m`;
-  }
-  return `${minutes}m`;
-};
-
 const buildLastActivityLabel = (
   messageCount?: number,
   connected?: boolean,
@@ -111,7 +77,6 @@ const buildLastActivityLabel = (
 };
 
 const UnifiedDashboard: React.FC = () => {
-  const navigate = useNavigate();
   const [bots, setBots] = useState<Bot[]>([]);
   const [status, setStatus] = useState<StatusResponse | null>(null);
   const [personas, setPersonas] = useState<any[]>([]);
@@ -132,11 +97,10 @@ const UnifiedDashboard: React.FC = () => {
   const [refreshing, setRefreshing] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-  const [isCreatingBot, setIsCreatingBot] = useState(false);
   const [isModalDataLoading, setIsModalDataLoading] = useState(false);
 
-  const successToast = ToastNotification.useSuccessToast();
-  const errorToast = ToastNotification.useErrorToast();
+  const successToast = useSuccessToast();
+  const errorToast = useErrorToast();
 
   // ⚡ Bolt Optimization: Lazy load modal data
   // We defer fetching personas and llmProfiles until the user attempts to open
@@ -239,29 +203,6 @@ const UnifiedDashboard: React.FC = () => {
       setRefreshing(false);
     }
   }, [fetchData, successToast, errorToast]);
-
-  const handleCreateBot = useCallback(
-    async (formData: Record<string, any>) => {
-      try {
-        setIsCreatingBot(true);
-        await apiService.createBot({
-          name: formData.name,
-          messageProvider: formData.messageProvider,
-          llmProvider: formData.llmProvider,
-        });
-        successToast('Bot created', `${formData.name} joined your swarm.`);
-        await fetchData();
-      } catch (err) {
-        const message =
-          err instanceof Error ? err.message : 'Failed to create bot';
-        errorToast('Bot creation failed', message);
-        throw err;
-      } finally {
-        setIsCreatingBot(false);
-      }
-    },
-    [fetchData, successToast, errorToast],
-  );
 
   const statusBots = useMemo(() => status?.bots ?? [], [status]);
 

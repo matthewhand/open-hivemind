@@ -65,31 +65,41 @@ describe('DemoModeService', () => {
     });
 
     it('should return false when a bot is configured with a real Discord token', () => {
-      mockBotManager.getAllBots.mockReturnValueOnce([{ discord: { token: 'valid-discord-bot-token-here' } }]);
+      mockBotManager.getAllBots.mockReturnValueOnce([
+        { discord: { token: 'valid-discord-bot-token-here' } },
+      ]);
       mockBotManager.getWarnings.mockReturnValueOnce([]);
       expect(demoService.detectDemoMode()).toBe(false);
     });
 
     it('should return false when a bot is configured with a real Slack token', () => {
-      mockBotManager.getAllBots.mockReturnValueOnce([{ slack: { botToken: 'valid-slack-bot-token-here' } }]);
+      mockBotManager.getAllBots.mockReturnValueOnce([
+        { slack: { botToken: 'valid-slack-bot-token-here' } },
+      ]);
       mockBotManager.getWarnings.mockReturnValueOnce([]);
       expect(demoService.detectDemoMode()).toBe(false);
     });
 
     it('should return false when a bot is configured with a real Mattermost token', () => {
-      mockBotManager.getAllBots.mockReturnValueOnce([{ mattermost: { token: 'valid-mattermost-bot-token-here' } }]);
+      mockBotManager.getAllBots.mockReturnValueOnce([
+        { mattermost: { token: 'valid-mattermost-bot-token-here' } },
+      ]);
       mockBotManager.getWarnings.mockReturnValueOnce([]);
       expect(demoService.detectDemoMode()).toBe(false);
     });
 
     it('should return false when a bot is configured with a real OpenAI key', () => {
-      mockBotManager.getAllBots.mockReturnValueOnce([{ openai: { apiKey: 'sk-valid-openai-api-key-here' } }]);
+      mockBotManager.getAllBots.mockReturnValueOnce([
+        { openai: { apiKey: 'sk-valid-openai-api-key-here' } },
+      ]);
       mockBotManager.getWarnings.mockReturnValueOnce([]);
       expect(demoService.detectDemoMode()).toBe(false);
     });
 
     it('should return false when a bot is configured with a real Flowise key', () => {
-      mockBotManager.getAllBots.mockReturnValueOnce([{ flowise: { apiKey: 'valid-flowise-api-key-here' } }]);
+      mockBotManager.getAllBots.mockReturnValueOnce([
+        { flowise: { apiKey: 'valid-flowise-api-key-here' } },
+      ]);
       mockBotManager.getWarnings.mockReturnValueOnce([]);
       expect(demoService.detectDemoMode()).toBe(false);
     });
@@ -274,7 +284,7 @@ describe('DemoModeService', () => {
     });
 
     it('should handle empty/null/undefined inputs in generateDemoResponse', () => {
-      expect(demoService.generateDemoResponse('', 'Bot')).toBeDefined();
+      expect(typeof demoService.generateDemoResponse('', 'Bot')).toBe('string');
       expect(() => demoService.generateDemoResponse(null as any, 'Bot')).toThrow();
       expect(() => demoService.generateDemoResponse(undefined as any, 'Bot')).toThrow();
     });
@@ -282,7 +292,7 @@ describe('DemoModeService', () => {
     it('should handle extremely long messages', () => {
       const longMessage = 'a'.repeat(10000);
       const response = demoService.generateDemoResponse(longMessage, 'Demo Bot');
-      expect(response).toBeDefined();
+      expect(typeof response).toBe('string');
 
       const addedMsg = demoService.addMessage('channel-1', 'Demo Bot', longMessage, 'incoming');
       expect(addedMsg.content).toBe(longMessage);

@@ -14,7 +14,7 @@ import { configureAxe } from 'jest-axe';
 export const axe = configureAxe({
   rules: {
     // WCAG 2.1 AA compliance rules
-    'label': { enabled: true },
+    label: { enabled: true },
     'aria-required-attr': { enabled: true },
     'aria-valid-attr-value': { enabled: true },
     'button-name': { enabled: true },
@@ -25,6 +25,6 @@ export const axe = configureAxe({
     // Disabled: jsdom cannot compute styles or render canvas
     'color-contrast': { enabled: false },
     // Disabled: test fragments are not full pages
-    'region': { enabled: false },
+    region: { enabled: false },
   },
 });

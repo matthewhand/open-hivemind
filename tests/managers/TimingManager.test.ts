@@ -31,7 +31,7 @@ describe('TimingManager', () => {
       const after = Date.now();
 
       const info = tm.channelsTimingInfo['ch-1'];
-      expect(info).toBeDefined();
+      expect(info).not.toBeUndefined();
       expect(info.lastIncomingMessageTime).toBeGreaterThanOrEqual(before);
       expect(info.lastIncomingMessageTime).toBeLessThanOrEqual(after);
     });
@@ -96,7 +96,9 @@ describe('TimingManager', () => {
     it('should not throw if send function throws', () => {
       const tm = new TimingManager({ minDelay: 100, maxDelay: 5000, decayRate: -0.5 });
       const errorSpy = jest.spyOn(console, 'error').mockImplementation();
-      const sendFn = jest.fn(() => { throw new Error('send failed'); });
+      const sendFn = jest.fn(() => {
+        throw new Error('send failed');
+      });
       tm.logIncomingMessage('ch-1');
 
       tm.scheduleMessage('ch-1', 'msg', 0, sendFn);

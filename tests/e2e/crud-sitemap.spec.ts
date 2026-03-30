@@ -92,7 +92,12 @@ test.describe('Sitemap Page CRUD Lifecycle', () => {
       page.route('**/api/config/llm-status', (route) =>
         route.fulfill({
           status: 200,
-          json: { defaultConfigured: true, defaultProviders: [], botsMissingLlmProvider: [], hasMissing: false },
+          json: {
+            defaultConfigured: true,
+            defaultProviders: [],
+            botsMissingLlmProvider: [],
+            hasMissing: false,
+          },
         })
       ),
       page.route('**/api/config/global', (route) => route.fulfill({ status: 200, json: {} })),
@@ -101,14 +106,18 @@ test.describe('Sitemap Page CRUD Lifecycle', () => {
       page.route('**/api/csrf-token', (route) =>
         route.fulfill({ status: 200, json: { token: 'mock-csrf-token' } })
       ),
-      page.route('**/api/health', (route) => route.fulfill({ status: 200, json: { status: 'ok' } })),
+      page.route('**/api/health', (route) =>
+        route.fulfill({ status: 200, json: { status: 'ok' } })
+      ),
       page.route('**/api/dashboard/api/status', (route) =>
         route.fulfill({ status: 200, json: { bots: [], uptime: 100 } })
       ),
       page.route('**/api/admin/guard-profiles', (route) =>
         route.fulfill({ status: 200, json: { data: [] } })
       ),
-      page.route('**/api/demo/status', (route) => route.fulfill({ status: 200, json: { active: false } })),
+      page.route('**/api/demo/status', (route) =>
+        route.fulfill({ status: 200, json: { active: false } })
+      ),
     ]);
   }
 
@@ -139,7 +148,11 @@ test.describe('Sitemap Page CRUD Lifecycle', () => {
     await page.goto('/admin/sitemap');
     await expect(page.getByText('/admin/dashboard').first()).toBeVisible({ timeout: 5000 });
 
-    const searchInput = page.locator('input[placeholder*="search" i], input[placeholder*="filter" i], input[type="search"]').first();
+    const searchInput = page
+      .locator(
+        'input[placeholder*="search" i], input[placeholder*="filter" i], input[type="search"]'
+      )
+      .first();
     if ((await searchInput.count()) > 0) {
       await searchInput.fill('documentation');
       await page.waitForTimeout(300);
@@ -161,7 +174,10 @@ test.describe('Sitemap Page CRUD Lifecycle', () => {
     await expect(page.getByText('/admin/dashboard').first()).toBeVisible({ timeout: 5000 });
 
     // Look for access level filter select (options: All Pages, Public Only, Authenticated, Owner Only)
-    const accessFilter = page.locator('select').filter({ has: page.locator('option:has-text("Public Only")') }).first();
+    const accessFilter = page
+      .locator('select')
+      .filter({ has: page.locator('option:has-text("Public Only")') })
+      .first();
 
     if ((await accessFilter.count()) > 0) {
       // Filter by Public
@@ -187,14 +203,21 @@ test.describe('Sitemap Page CRUD Lifecycle', () => {
     await expect(page.getByText('/admin/dashboard').first()).toBeVisible({ timeout: 5000 });
 
     // Apply search first
-    const searchInput = page.locator('input[placeholder*="search" i], input[placeholder*="filter" i], input[type="search"]').first();
+    const searchInput = page
+      .locator(
+        'input[placeholder*="search" i], input[placeholder*="filter" i], input[type="search"]'
+      )
+      .first();
     if ((await searchInput.count()) > 0) {
       await searchInput.fill('admin');
       await page.waitForTimeout(300);
     }
 
     // Apply access filter
-    const accessFilter = page.locator('select').filter({ has: page.locator('option:has-text("Owner Only")') }).first();
+    const accessFilter = page
+      .locator('select')
+      .filter({ has: page.locator('option:has-text("Owner Only")') })
+      .first();
     if ((await accessFilter.count()) > 0) {
       await accessFilter.selectOption('owner');
       await page.waitForTimeout(300);
@@ -243,7 +266,11 @@ test.describe('Sitemap Page CRUD Lifecycle', () => {
     await page.waitForTimeout(1000);
 
     const initialCount = fetchCount;
-    const refreshBtn = page.locator('button:has-text("Refresh"), button[title*="Refresh"], button[aria-label*="Refresh"]').first();
+    const refreshBtn = page
+      .locator(
+        'button:has-text("Refresh"), button[title*="Refresh"], button[aria-label*="Refresh"]'
+      )
+      .first();
     if ((await refreshBtn.count()) > 0) {
       await refreshBtn.click();
       await page.waitForTimeout(500);
@@ -260,13 +287,20 @@ test.describe('Sitemap Page CRUD Lifecycle', () => {
     await page.waitForTimeout(1000);
 
     // Look for total URL count
-    const urlCount = page.getByText('7').or(page.getByText(/7.*url/i)).or(page.getByText(/total.*7/i)).first();
+    const urlCount = page
+      .getByText('7')
+      .or(page.getByText(/7.*url/i))
+      .or(page.getByText(/total.*7/i))
+      .first();
     if ((await urlCount.count()) > 0) {
       await expect(urlCount).toBeVisible();
     }
 
     // Look for last generated timestamp
-    const lastGenerated = page.getByText(/last.*generated/i).or(page.getByText(/2026-03-26/)).first();
+    const lastGenerated = page
+      .getByText(/last.*generated/i)
+      .or(page.getByText(/2026-03-26/))
+      .first();
     if ((await lastGenerated.count()) > 0) {
       await expect(lastGenerated).toBeVisible();
     }
@@ -281,7 +315,9 @@ test.describe('Sitemap Page CRUD Lifecycle', () => {
     await page.waitForTimeout(1000);
 
     // Look for priority values displayed as badges or text
-    const priorityBadge = page.locator('.badge:has-text("1.0"), .badge:has-text("0.9"), [class*="priority"]').first();
+    const priorityBadge = page
+      .locator('.badge:has-text("1.0"), .badge:has-text("0.9"), [class*="priority"]')
+      .first();
     if ((await priorityBadge.count()) > 0) {
       await expect(priorityBadge).toBeVisible();
     }
@@ -302,17 +338,23 @@ test.describe('Sitemap Page CRUD Lifecycle', () => {
     await page.waitForTimeout(1000);
 
     // Check for access level badges
-    const publicBadge = page.locator('.badge:has-text("Public"), [class*="badge"]:has-text("Public")').first();
+    const publicBadge = page
+      .locator('.badge:has-text("Public"), [class*="badge"]:has-text("Public")')
+      .first();
     if ((await publicBadge.count()) > 0) {
       await expect(publicBadge).toBeVisible();
     }
 
-    const authenticatedBadge = page.locator('.badge:has-text("Authenticated"), [class*="badge"]:has-text("Authenticated")').first();
+    const authenticatedBadge = page
+      .locator('.badge:has-text("Authenticated"), [class*="badge"]:has-text("Authenticated")')
+      .first();
     if ((await authenticatedBadge.count()) > 0) {
       await expect(authenticatedBadge).toBeVisible();
     }
 
-    const ownerBadge = page.locator('.badge:has-text("Owner"), [class*="badge"]:has-text("Owner")').first();
+    const ownerBadge = page
+      .locator('.badge:has-text("Owner"), [class*="badge"]:has-text("Owner")')
+      .first();
     if ((await ownerBadge.count()) > 0) {
       await expect(ownerBadge).toBeVisible();
     }
@@ -327,13 +369,19 @@ test.describe('Sitemap Page CRUD Lifecycle', () => {
     await expect(page.getByText('/admin/dashboard').first()).toBeVisible({ timeout: 5000 });
 
     // Search for something that does not exist
-    const searchInput = page.locator('input[placeholder*="search" i], input[placeholder*="filter" i], input[type="search"]').first();
+    const searchInput = page
+      .locator(
+        'input[placeholder*="search" i], input[placeholder*="filter" i], input[type="search"]'
+      )
+      .first();
     if ((await searchInput.count()) > 0) {
       await searchInput.fill('zzz-nonexistent-url-xyz');
       await page.waitForTimeout(300);
 
       // Should show empty/no results state
-      const emptyText = page.locator('text=/no.*result/i, text=/no.*url/i, text=/no.*match/i, text=/not.*found/i').first();
+      const emptyText = page
+        .locator('text=/no.*result/i, text=/no.*url/i, text=/no.*match/i, text=/not.*found/i')
+        .first();
       if ((await emptyText.count()) > 0) {
         await expect(emptyText).toBeVisible();
       }
@@ -349,7 +397,11 @@ test.describe('Sitemap Page CRUD Lifecycle', () => {
     await expect(page.getByText('/admin/dashboard').first()).toBeVisible({ timeout: 5000 });
 
     // Look for open/visit URL button or link on a row
-    const openBtn = page.locator('a[target="_blank"], a[href*="/admin/dashboard"], button[title*="Open"], button[title*="Visit"]').first();
+    const openBtn = page
+      .locator(
+        'a[target="_blank"], a[href*="/admin/dashboard"], button[title*="Open"], button[title*="Visit"]'
+      )
+      .first();
     if ((await openBtn.count()) > 0) {
       // Verify it has the correct href or action
       const href = await openBtn.getAttribute('href');

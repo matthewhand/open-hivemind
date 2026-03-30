@@ -1,6 +1,6 @@
 import * as crypto from 'crypto';
-import Debug from 'debug';
 import { EventEmitter } from 'events';
+import Debug from 'debug';
 import type { PluginManifest } from './PluginLoader';
 
 const debug = Debug('app:pluginSecurity');
@@ -106,7 +106,10 @@ export function verifyPluginSignature(manifest: SecurePluginManifest, secretKey:
   const expected = signManifest(manifest, secretKey);
   // Constant-time comparison to prevent timing attacks
   try {
-    return crypto.timingSafeEqual(Buffer.from(manifest.signature, 'hex'), Buffer.from(expected, 'hex'));
+    return crypto.timingSafeEqual(
+      Buffer.from(manifest.signature, 'hex'),
+      Buffer.from(expected, 'hex')
+    );
   } catch {
     // Lengths differ or invalid hex
     return false;
@@ -241,13 +244,20 @@ export class PluginSecurityPolicy extends EventEmitter {
       }
       this.grants.set(name, granted);
       this.emitAudit('signature_verified', name, { signatureValid: true });
-      this.emitAudit('plugin_load', name, { trustLevel: 'trusted', grantedCapabilities: [...granted] });
+      this.emitAudit('plugin_load', name, {
+        trustLevel: 'trusted',
+        grantedCapabilities: [...granted],
+      });
       return 'trusted';
     } else {
       this.trustLevels.set(name, 'untrusted');
       this.grants.set(name, new Set());
       this.emitAudit('signature_failed', name, { signatureValid: false });
-      this.emitAudit('plugin_load', name, { trustLevel: 'untrusted', signaturePresent: true, signatureValid: false });
+      this.emitAudit('plugin_load', name, {
+        trustLevel: 'untrusted',
+        signaturePresent: true,
+        signatureValid: false,
+      });
       return 'untrusted';
     }
   }
@@ -330,7 +340,9 @@ export class PluginSecurityPolicy extends EventEmitter {
     const granted = [...(this.grants.get(pluginName) ?? [])];
     const required = this.requiredCapabilities.get(pluginName) ?? [];
     const denied = required.filter(
-      (c) => VALID_CAPABILITIES.includes(c as PluginCapability) && !granted.includes(c as PluginCapability)
+      (c) =>
+        VALID_CAPABILITIES.includes(c as PluginCapability) &&
+        !granted.includes(c as PluginCapability)
     ) as PluginCapability[];
 
     return {

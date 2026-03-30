@@ -118,6 +118,7 @@ export class DiscordEventHandler {
           webSocketService?.recordMessageFlow({
             botName: bot.botUserName,
             provider: 'discord',
+            llmProvider: bot.config?.llmProvider,
             channelId: message.channelId,
             userId: message.author.id,
             messageType: 'incoming',

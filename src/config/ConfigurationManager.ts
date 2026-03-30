@@ -110,9 +110,9 @@ export class ConfigurationManager implements IConfigurationManager {
     // Validate schema before loading files - use 'warn' to allow extra params from config files
     schema.validate({ allowed: 'warn' });
 
-    const secureManager = SecureConfigManager.getInstance();
+    const secureManager = SecureConfigManager.getInstanceSync();
     const env = process.env.NODE_ENV || 'default';
-    const fileConfig = secureManager.getDecryptedMainConfig(env);
+    const fileConfig = secureManager.getDecryptedMainConfigSync(env);
     if (fileConfig) {
       schema.load(fileConfig);
       // Use 'warn' to allow extra config params that aren't in the minimal schema

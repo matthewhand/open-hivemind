@@ -1,15 +1,24 @@
 import Debug from 'debug';
 import type {
-  Mem0Config,
-  Mem0Memory,
-  Mem0AddResponse,
-  Mem0ListResponse,
-  Mem0SearchResponse,
-  Mem0GetResponse,
-  Mem0UpdateResponse,
+  IMemoryProvider,
+  MemoryEntry,
+  MemoryScopeOptions,
+  MemorySearchResult,
+} from '@hivemind/shared-types';
+import {
+  getCircuitBreaker,
+  type CircuitBreaker as CircuitBreakerType,
+} from '@common/CircuitBreaker';
+import {
+  Mem0ApiError,
+  type Mem0AddResponse,
+  type Mem0Config,
+  type Mem0GetResponse,
+  type Mem0ListResponse,
+  type Mem0Memory,
+  type Mem0SearchResponse,
+  type Mem0UpdateResponse,
 } from './types';
-import { Mem0ApiError } from './types';
-import { getCircuitBreaker, type CircuitBreaker as CircuitBreakerType } from '@common/CircuitBreaker';
 
 const debug = Debug('hivemind:memory-mem0');
 
@@ -18,7 +27,7 @@ const DEFAULT_TIMEOUT_MS = 30_000;
 const DEFAULT_MAX_RETRIES = 3;
 const INITIAL_BACKOFF_MS = 1_000;
 
-export class Mem0Provider {
+export class Mem0Provider implements IMemoryProvider {
   readonly id = 'mem0';
   readonly label = 'Mem0';
   readonly type = 'memory' as const;
@@ -50,30 +59,40 @@ export class Mem0Provider {
       halfOpenMaxAttempts: 3,
     });
 
-    debug('Mem0Provider initialised (baseUrl=%s, userId=%s, agentId=%s)',
-      this.baseUrl, this.defaultUserId ?? '<none>', this.defaultAgentId ?? '<none>');
+    debug(
+      'Mem0Provider initialised (baseUrl=%s, userId=%s, agentId=%s)',
+      this.baseUrl,
+      this.defaultUserId ?? '<none>',
+      this.defaultAgentId ?? '<none>'
+    );
   }
 
-  async add(
-    messages: Array<{ role: 'user' | 'assistant'; content: string }>,
-    options?: { userId?: string; agentId?: string; metadata?: Record<string, any> },
-  ): Promise<{ results: Array<{ id: string; memory: string; score?: number; metadata?: Record<string, any> }> }> {
+  // ---------------------------------------------------------------------------
+  // IMemoryProvider implementation
+  // ---------------------------------------------------------------------------
+
+  async addMemory(
+    content: string,
+    metadata?: Record<string, unknown>,
+    options?: MemoryScopeOptions
+  ): Promise<MemoryEntry> {
     const body: Record<string, unknown> = {
-      messages,
+      messages: [{ role: 'user' as const, content }],
       user_id: options?.userId ?? this.defaultUserId,
       agent_id: options?.agentId ?? this.defaultAgentId,
     };
-    if (options?.metadata) {
-      body.metadata = options.metadata;
+    if (metadata) {
+      body.metadata = metadata;
     }
     const res = await this.request<Mem0AddResponse>('POST', '/memories/', body);
-    return { results: res.results.map(toResult) };
+    const first = res.results[0];
+    return toMemoryEntry(first);
   }
 
-  async search(
+  async searchMemories(
     query: string,
-    options?: { userId?: string; agentId?: string; limit?: number },
-  ): Promise<{ results: Array<{ id: string; memory: string; score?: number; metadata?: Record<string, any> }> }> {
+    options?: { limit?: number; threshold?: number } & MemoryScopeOptions
+  ): Promise<MemorySearchResult> {
     const body: Record<string, unknown> = {
       query,
       user_id: options?.userId ?? this.defaultUserId,
@@ -83,12 +102,13 @@ export class Mem0Provider {
       body.limit = options.limit;
     }
     const res = await this.request<Mem0SearchResponse>('POST', '/memories/search/', body);
-    return { results: res.results.map(toResult) };
+    const entries = res.results
+      .map(toMemoryEntry)
+      .filter((e) => options?.threshold == null || (e.score ?? 0) >= options.threshold);
+    return { results: entries };
   }
 
-  async getAll(
-    options?: { userId?: string; agentId?: string },
-  ): Promise<{ results: Array<{ id: string; memory: string }> }> {
+  async getMemories(options?: { limit?: number } & MemoryScopeOptions): Promise<MemoryEntry[]> {
     const params = new URLSearchParams();
     const userId = options?.userId ?? this.defaultUserId;
     const agentId = options?.agentId ?? this.defaultAgentId;
@@ -97,12 +117,136 @@ export class Mem0Provider {
     const qs = params.toString();
     const path = qs ? `/memories/?${qs}` : '/memories/';
     const res = await this.request<Mem0ListResponse>('GET', path);
+    return res.results.map(toMemoryEntry);
+  }
+
+  async getMemory(id: string): Promise<MemoryEntry | null> {
+    try {
+      const res = await this.request<Mem0GetResponse>(
+        'GET',
+        `/memories/${encodeURIComponent(id)}/`
+      );
+      return toMemoryEntry(res);
+    } catch (err) {
+      if (err instanceof Mem0ApiError && err.status === 404) {
+        return null;
+      }
+      throw err;
+    }
+  }
+
+  async updateMemory(
+    id: string,
+    content: string,
+    metadata?: Record<string, unknown>
+  ): Promise<MemoryEntry> {
+    const body: Record<string, unknown> = { text: content };
+    if (metadata) {
+      body.metadata = metadata;
+    }
+    const res = await this.request<Mem0UpdateResponse>(
+      'PUT',
+      `/memories/${encodeURIComponent(id)}/`,
+      body
+    );
+    return {
+      id: res.id,
+      content: res.memory,
+      ...(metadata ? { metadata } : {}),
+      timestamp: Date.now(),
+    };
+  }
+
+  async deleteMemory(id: string): Promise<void> {
+    await this.request<void>('DELETE', `/memories/${encodeURIComponent(id)}/`);
+  }
+
+  async deleteAll(options?: MemoryScopeOptions): Promise<void> {
+    const params = new URLSearchParams();
+    const userId = options?.userId ?? this.defaultUserId;
+    const agentId = options?.agentId ?? this.defaultAgentId;
+    if (userId) params.set('user_id', userId);
+    if (agentId) params.set('agent_id', agentId);
+    const qs = params.toString();
+    const path = qs ? `/memories/?${qs}` : '/memories/';
+    await this.request<void>('DELETE', path);
+  }
+
+  async healthCheck(): Promise<{ status: 'ok' | 'error'; details?: Record<string, unknown> }> {
+    try {
+      const params = new URLSearchParams({ limit: '1' });
+      if (this.defaultUserId) params.set('user_id', this.defaultUserId);
+      await this.request<Mem0ListResponse>('GET', `/memories/?${params.toString()}`);
+      return { status: 'ok' };
+    } catch (err) {
+      return {
+        status: 'error',
+        details: { message: err instanceof Error ? err.message : String(err) },
+      };
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // Legacy convenience methods (delegate to IMemoryProvider methods)
+  // ---------------------------------------------------------------------------
+
+  async add(
+    messages: Array<{ role: 'user' | 'assistant'; content: string }>,
+    options?: { userId?: string; agentId?: string; metadata?: Record<string, any> }
+  ): Promise<{
+    results: Array<{ id: string; memory: string; score?: number; metadata?: Record<string, any> }>;
+  }> {
+    const body: Record<string, unknown> = {
+      messages,
+      user_id: options?.userId ?? this.defaultUserId,
+      agent_id: options?.agentId ?? this.defaultAgentId,
+    };
+    if (options?.metadata) {
+      body.metadata = options.metadata;
+    }
+    const res = await this.request<Mem0AddResponse>('POST', '/memories/', body);
+    return { results: res.results.map(toLegacyResult) };
+  }
+
+  async search(
+    query: string,
+    options?: { userId?: string; agentId?: string; limit?: number }
+  ): Promise<{
+    results: Array<{ id: string; memory: string; score?: number; metadata?: Record<string, any> }>;
+  }> {
+    const body: Record<string, unknown> = {
+      query,
+      user_id: options?.userId ?? this.defaultUserId,
+      agent_id: options?.agentId ?? this.defaultAgentId,
+    };
+    if (options?.limit != null) {
+      body.limit = options.limit;
+    }
+    const res = await this.request<Mem0SearchResponse>('POST', '/memories/search/', body);
+    return { results: res.results.map(toLegacyResult) };
+  }
+
+  async getAll(options?: {
+    userId?: string;
+    agentId?: string;
+  }): Promise<{ results: Array<{ id: string; memory: string }> }> {
+    const params = new URLSearchParams();
+    const userId = options?.userId ?? this.defaultUserId;
+    const agentId = options?.agentId ?? this.defaultAgentId;
+    if (userId) params.set('user_id', userId);
+    if (agentId) params.set('agent_id', agentId);
+    const qs = params.toString();
+    const apiPath = qs ? `/memories/?${qs}` : '/memories/';
+    const res = await this.request<Mem0ListResponse>('GET', apiPath);
     return { results: res.results.map((m) => ({ id: m.id, memory: m.memory })) };
   }
 
   async get(memoryId: string): Promise<{ id: string; memory: string } | null> {
     try {
-      const res = await this.request<Mem0GetResponse>('GET', `/memories/${encodeURIComponent(memoryId)}/`);
+      const res = await this.request<Mem0GetResponse>(
+        'GET',
+        `/memories/${encodeURIComponent(memoryId)}/`
+      );
       return { id: res.id, memory: res.memory };
     } catch (err) {
       if (err instanceof Mem0ApiError && err.status === 404) {
@@ -116,7 +260,7 @@ export class Mem0Provider {
     const res = await this.request<Mem0UpdateResponse>(
       'PUT',
       `/memories/${encodeURIComponent(memoryId)}/`,
-      { text: newContent },
+      { text: newContent }
     );
     return { id: res.id, memory: res.memory };
   }
@@ -125,27 +269,9 @@ export class Mem0Provider {
     await this.request<void>('DELETE', `/memories/${encodeURIComponent(memoryId)}/`);
   }
 
-  async deleteAll(options?: { userId?: string; agentId?: string }): Promise<void> {
-    const params = new URLSearchParams();
-    const userId = options?.userId ?? this.defaultUserId;
-    const agentId = options?.agentId ?? this.defaultAgentId;
-    if (userId) params.set('user_id', userId);
-    if (agentId) params.set('agent_id', agentId);
-    const qs = params.toString();
-    const path = qs ? `/memories/?${qs}` : '/memories/';
-    await this.request<void>('DELETE', path);
-  }
-
-  async healthCheck(): Promise<boolean> {
-    try {
-      const params = new URLSearchParams({ limit: '1' });
-      if (this.defaultUserId) params.set('user_id', this.defaultUserId);
-      await this.request<Mem0ListResponse>('GET', `/memories/?${params.toString()}`);
-      return true;
-    } catch {
-      return false;
-    }
-  }
+  // ---------------------------------------------------------------------------
+  // HTTP transport
+  // ---------------------------------------------------------------------------
 
   private async request<T>(method: string, path: string, body?: unknown): Promise<T> {
     return this.circuitBreaker.execute(async () => {
@@ -156,9 +282,9 @@ export class Mem0Provider {
   private async doRequest<T>(method: string, path: string, body?: unknown): Promise<T> {
     const url = `${this.baseUrl}${path}`;
     const headers: Record<string, string> = {
-      'Authorization': `Token ${this.apiKey}`,
+      Authorization: `Token ${this.apiKey}`,
       'Content-Type': 'application/json',
-      'Accept': 'application/json',
+      Accept: 'application/json',
     };
     if (this.orgId) {
       headers['X-Org-Id'] = this.orgId;
@@ -189,7 +315,8 @@ export class Mem0Provider {
           const text = await response.text().catch(() => '');
           lastError = new Mem0ApiError(
             `Mem0 API ${method} ${path} returned ${response.status}: ${text}`,
-            response.status, text,
+            response.status,
+            text
           );
           debug('Retryable error: %s', lastError.message);
           continue;
@@ -199,7 +326,8 @@ export class Mem0Provider {
           const text = await response.text().catch(() => '');
           throw new Mem0ApiError(
             `Mem0 API ${method} ${path} returned ${response.status}: ${text}`,
-            response.status, text,
+            response.status,
+            text
           );
         }
 
@@ -231,7 +359,30 @@ export class Mem0Provider {
   }
 }
 
-function toResult(m: Mem0Memory): { id: string; memory: string; score?: number; metadata?: Record<string, any> } {
+// ---------------------------------------------------------------------------
+// Mapping helpers
+// ---------------------------------------------------------------------------
+
+/** Convert a Mem0 API memory object to the canonical MemoryEntry shape. */
+function toMemoryEntry(m: Mem0Memory): MemoryEntry {
+  return {
+    id: m.id,
+    content: m.memory,
+    ...(m.score != null ? { score: m.score } : {}),
+    ...(m.metadata ? { metadata: m.metadata } : {}),
+    ...(m.user_id ? { userId: m.user_id } : {}),
+    ...(m.agent_id ? { agentId: m.agent_id } : {}),
+    ...(m.created_at ? { timestamp: new Date(m.created_at).getTime() } : {}),
+  };
+}
+
+/** Convert a Mem0 API memory to the legacy result shape used by the old API. */
+function toLegacyResult(m: Mem0Memory): {
+  id: string;
+  memory: string;
+  score?: number;
+  metadata?: Record<string, any>;
+} {
   return {
     id: m.id,
     memory: m.memory,

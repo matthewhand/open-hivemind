@@ -1,4 +1,4 @@
-import { ToolManager, ToolDefinition } from '@src/services/ToolManager';
+import { ToolDefinition, ToolManager } from '@src/services/ToolManager';
 
 // ---------------------------------------------------------------------------
 // Mocks
@@ -71,10 +71,20 @@ describe('ToolManager', () => {
 
       mockGetToolsFromServer
         .mockReturnValueOnce([
-          { name: 'search', description: 'Search', inputSchema: { type: 'object' }, serverName: 'server-a' },
+          {
+            name: 'search',
+            description: 'Search',
+            inputSchema: { type: 'object' },
+            serverName: 'server-a',
+          },
         ])
         .mockReturnValueOnce([
-          { name: 'fetch', description: 'Fetch URL', inputSchema: { type: 'object' }, serverName: 'server-b' },
+          {
+            name: 'fetch',
+            description: 'Fetch URL',
+            inputSchema: { type: 'object' },
+            serverName: 'server-b',
+          },
         ]);
 
       const tools = await mgr.getToolsForBot('bot1');
@@ -177,7 +187,7 @@ describe('ToolManager', () => {
         'server-a',
         'search',
         { query: 'hello' },
-        expect.objectContaining({ botName: 'bot1' }),
+        expect.objectContaining({ botName: 'bot1' })
       );
     });
 
@@ -246,17 +256,22 @@ describe('ToolManager', () => {
       ]);
       mockExecuteTool.mockResolvedValue({});
 
-      await mgr.executeTool('bot1', 'tool1', {}, {
-        userId: 'u1',
-        channelId: 'ch1',
-        messageProvider: 'discord',
-      });
+      await mgr.executeTool(
+        'bot1',
+        'tool1',
+        {},
+        {
+          userId: 'u1',
+          channelId: 'ch1',
+          messageProvider: 'discord',
+        }
+      );
 
       expect(mockExecuteTool).toHaveBeenCalledWith(
         'server-a',
         'tool1',
         {},
-        expect.objectContaining({ userId: 'u1', messageProvider: 'discord' }),
+        expect.objectContaining({ userId: 'u1', messageProvider: 'discord' })
       );
     });
   });

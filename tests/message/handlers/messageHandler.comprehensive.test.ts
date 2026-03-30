@@ -201,10 +201,10 @@ describe('messageHandler Configuration and Features', () => {
         metadata && typeof metadata.systemPrompt === 'string' && metadata.systemPrompt.length > 0
       );
     });
-    expect(systemPromptCall).toBeDefined();
+    expect(systemPromptCall).not.toBeUndefined();
     const metadata = (systemPromptCall as any)[2] as any;
 
-    expect(metadata).toBeDefined();
+    expect(metadata).not.toBeUndefined();
     expect(metadata.systemPrompt).toContain('You are PhilosopherBot');
     expect(metadata.systemPrompt).toContain('You are a wise philosopher.');
   });
@@ -220,7 +220,8 @@ describe('messageHandler Configuration and Features', () => {
     // 'You are PhilosopherBot. Your display name in chat is "PhilosopherBot".\n\nYou are a wise philosopher.'
     // stripSystemPromptLeak removes the full system prompt if it appears in the response.
     // We test with just the base part appearing in the response.
-    const builtSystemPrompt = 'You are PhilosopherBot. Your display name in chat is "PhilosopherBot".\n\nYou are a wise philosopher.';
+    const builtSystemPrompt =
+      'You are PhilosopherBot. Your display name in chat is "PhilosopherBot".\n\nYou are a wise philosopher.';
 
     (mockLlmProvider.generateChatCompletion as jest.Mock).mockResolvedValueOnce({
       text: builtSystemPrompt + '\n\nMain response',

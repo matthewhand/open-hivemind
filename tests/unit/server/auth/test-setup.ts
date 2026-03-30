@@ -93,8 +93,7 @@ export const expectBypassInfo = (
   adminPasswordSet?: boolean
 ) => {
   if (isLocalBypass) {
-    expect(response.body.bypassInfo).toBeDefined();
-    expect(response.body.bypassInfo.isLocalBypass).toBe(true);
+    expect(response.body.bypassInfo).toEqual(expect.objectContaining({ isLocalBypass: true }));
     if (adminPasswordSet !== undefined) {
       expect(response.body.bypassInfo.adminPasswordSet).toBe(adminPasswordSet);
     }

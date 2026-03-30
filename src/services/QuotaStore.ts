@@ -46,6 +46,7 @@ export class InMemoryQuotaStore implements QuotaStore {
     if (this.cleanupTimer.unref) {
       this.cleanupTimer.unref();
     }
+    debug('InMemoryQuotaStore cleanup timer started');
   }
 
   async increment(key: string, ttlSeconds: number, amount = 1): Promise<number> {
@@ -79,6 +80,7 @@ export class InMemoryQuotaStore implements QuotaStore {
     if (this.cleanupTimer) {
       clearInterval(this.cleanupTimer);
       this.cleanupTimer = null;
+      debug('InMemoryQuotaStore cleanup timer stopped');
     }
     this.data.clear();
   }

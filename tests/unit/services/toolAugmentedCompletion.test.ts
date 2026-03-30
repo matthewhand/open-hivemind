@@ -1,3 +1,5 @@
+import { toolAugmentedCompletion } from '@src/services/toolAugmentedCompletion';
+
 /**
  * Tests for toolAugmentedCompletion — the tool-use loop that wraps LLM calls.
  *
@@ -38,8 +40,6 @@ jest.mock('@config/openaiConfig', () => ({
     get: jest.fn().mockReturnValue(undefined),
   },
 }));
-
-import { toolAugmentedCompletion } from '@src/services/toolAugmentedCompletion';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -99,11 +99,7 @@ describe('toolAugmentedCompletion', () => {
       const result = await toolAugmentedCompletion(opts);
 
       expect(result).toBe('plain response');
-      expect(opts.llmProvider.generateChatCompletion).toHaveBeenCalledWith(
-        'Hello',
-        [],
-        {},
-      );
+      expect(opts.llmProvider.generateChatCompletion).toHaveBeenCalledWith('Hello', [], {});
       expect(mockCreate).not.toHaveBeenCalled();
     });
   });
@@ -146,7 +142,7 @@ describe('toolAugmentedCompletion', () => {
             type: 'function',
             function: { name: 'search', arguments: '{"query":"test"}' },
           },
-        ]),
+        ])
       );
 
       // Tool execution result.
@@ -182,7 +178,7 @@ describe('toolAugmentedCompletion', () => {
         chatResponse(null, [
           { id: 'c1', type: 'function', function: { name: 'search', arguments: '{}' } },
           { id: 'c2', type: 'function', function: { name: 'fetch', arguments: '{}' } },
-        ]),
+        ])
       );
 
       mockExecuteTool
@@ -211,15 +207,19 @@ describe('toolAugmentedCompletion', () => {
       mockCreate.mockResolvedValueOnce(
         chatResponse(null, [
           { id: 'c1', type: 'function', function: { name: 'search', arguments: '{"q":"a"}' } },
-        ]),
+        ])
       );
-      mockExecuteTool.mockResolvedValueOnce({ toolName: 'search', success: true, result: 'partial' });
+      mockExecuteTool.mockResolvedValueOnce({
+        toolName: 'search',
+        success: true,
+        result: 'partial',
+      });
 
       // Turn 2: another tool call.
       mockCreate.mockResolvedValueOnce(
         chatResponse(null, [
           { id: 'c2', type: 'function', function: { name: 'search', arguments: '{"q":"b"}' } },
-        ]),
+        ])
       );
       mockExecuteTool.mockResolvedValueOnce({ toolName: 'search', success: true, result: 'more' });
 
@@ -246,7 +246,7 @@ describe('toolAugmentedCompletion', () => {
       mockCreate.mockResolvedValueOnce(
         chatResponse(null, [
           { id: 'c1', type: 'function', function: { name: 'search', arguments: '{}' } },
-        ]),
+        ])
       );
 
       mockExecuteTool.mockResolvedValue({
@@ -284,7 +284,7 @@ describe('toolAugmentedCompletion', () => {
       mockCreate.mockResolvedValue(
         chatResponse(null, [
           { id: 'cx', type: 'function', function: { name: 'tool1', arguments: '{}' } },
-        ]),
+        ])
       );
       mockExecuteTool.mockResolvedValue({ toolName: 'tool1', success: true, result: 'ok' });
 
@@ -352,7 +352,7 @@ describe('toolAugmentedCompletion', () => {
         expect.arrayContaining([
           expect.objectContaining({ role: 'user', content: 'previous message' }),
           expect.objectContaining({ role: 'assistant', content: 'previous reply' }),
-        ]),
+        ])
       );
     });
 
@@ -365,7 +365,11 @@ describe('toolAugmentedCompletion', () => {
 
       const history = [
         null, // malformed
-        { getText: () => { throw new Error('broken'); } },
+        {
+          getText: () => {
+            throw new Error('broken');
+          },
+        },
       ];
 
       // Should not throw.
@@ -416,13 +420,18 @@ describe('toolAugmentedCompletion', () => {
       mockCreate.mockResolvedValueOnce(
         chatResponse(null, [
           { id: 'c1', type: 'function', function: { name: 'tool1', arguments: '{}' } },
-        ]),
+        ])
       );
 
       mockExecuteTool.mockResolvedValue({
         toolName: 'tool1',
         success: true,
-        result: { content: [{ type: 'text', text: 'line1' }, { type: 'text', text: 'line2' }] },
+        result: {
+          content: [
+            { type: 'text', text: 'line1' },
+            { type: 'text', text: 'line2' },
+          ],
+        },
       });
 
       mockCreate.mockResolvedValueOnce(chatResponse('Got it'));
@@ -443,7 +452,7 @@ describe('toolAugmentedCompletion', () => {
       mockCreate.mockResolvedValueOnce(
         chatResponse(null, [
           { id: 'c1', type: 'function', function: { name: 'tool1', arguments: '{}' } },
-        ]),
+        ])
       );
 
       mockExecuteTool.mockResolvedValue({
@@ -470,7 +479,7 @@ describe('toolAugmentedCompletion', () => {
       mockCreate.mockResolvedValueOnce(
         chatResponse(null, [
           { id: 'c1', type: 'function', function: { name: 'tool1', arguments: 'not-json' } },
-        ]),
+        ])
       );
 
       // Should not call executeTool, should return error to LLM.
@@ -495,7 +504,7 @@ describe('toolAugmentedCompletion', () => {
       mockCreate.mockResolvedValueOnce(
         chatResponse(null, [
           { id: 'c1', type: 'function', function: { name: 'tool1', arguments: '{}' } },
-        ]),
+        ])
       );
       mockExecuteTool.mockResolvedValue({ toolName: 'tool1', success: true, result: 'ok' });
       mockCreate.mockResolvedValueOnce(chatResponse('Done'));

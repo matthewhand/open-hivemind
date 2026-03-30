@@ -1,7 +1,6 @@
 import { EventEmitter } from 'events';
 import * as fs from 'fs';
 import * as path from 'path';
-import retry from 'async-retry';
 import Debug from 'debug';
 import express, { type Application } from 'express';
 import type { KnownBlock } from '@slack/web-api';
@@ -23,6 +22,7 @@ import slackConfig from '@config/slackConfig';
 import type { IMessage } from '@message/interfaces/IMessage';
 import type { IMessengerService } from '@message/interfaces/IMessengerService';
 import { computeScore as channelComputeScore } from '@message/routing/ChannelRouter';
+import { Logger } from '@common/logger';
 import { SlackBotFacade, type ISlackBotFacade } from './modules/ISlackBotFacade';
 import { SlackEventBus, type ISlackEventBus } from './modules/ISlackEventBus';
 // Module extractions
@@ -37,6 +37,7 @@ import { SlackSignatureVerifier } from './SlackSignatureVerifier';
 import { SlackWelcomeHandler } from './SlackWelcomeHandler';
 
 const debug = Debug('app:SlackService:verbose');
+const logger = Logger.withContext('SlackService');
 
 // Metrics and retry configuration
 const metrics = MetricsCollector.getInstance();
@@ -46,6 +47,41 @@ const RETRY_CONFIG = {
   maxTimeout: 5000,
   factor: 2,
 };
+
+/**
+ * Lightweight async-retry compatible helper.
+ * `bail(err)` causes the retry loop to stop immediately and reject with `err`.
+ */
+async function retry<T>(
+  fn: (bail: (err: Error) => void, attempt: number) => Promise<T>,
+  opts: { retries: number; minTimeout: number; maxTimeout: number; factor: number }
+): Promise<T> {
+  let lastError: Error | undefined;
+  for (let attempt = 1; attempt <= opts.retries + 1; attempt++) {
+    let bailed = false;
+    let bailError: Error | undefined;
+    const bail = (err: Error) => {
+      bailed = true;
+      bailError = err;
+    };
+    try {
+      const result = await fn(bail, attempt);
+      if (bailed && bailError) throw bailError;
+      return result;
+    } catch (err: any) {
+      if (bailed) throw bailError || err;
+      lastError = err;
+      if (attempt <= opts.retries) {
+        const delay = Math.min(
+          opts.minTimeout * Math.pow(opts.factor, attempt - 1),
+          opts.maxTimeout
+        );
+        await new Promise((r) => setTimeout(r, delay));
+      }
+    }
+  }
+  throw lastError;
+}
 
 /**
  * SlackService implementation supporting multi-instance configuration
@@ -277,14 +313,14 @@ export class SlackService extends EventEmitter implements IMessengerService {
     } catch (error: unknown) {
       if (error instanceof BaseHivemindError) {
         debug(`Legacy configuration loading failed: ${error.message}`);
-        console.error('Slack legacy configuration loading error:', error);
+        logger.error('Slack legacy configuration loading error', { error });
       } else {
         const configError = new ConfigurationError(
           `Failed to load legacy configuration: ${error instanceof Error ? error.message : 'Unknown error'}`,
           'SLACK_LEGACY_CONFIG_ERROR'
         );
         debug(`Legacy configuration loading failed: ${configError.message}`);
-        console.error('Slack legacy configuration loading error:', configError);
+        logger.error('Slack legacy configuration loading error', { error: configError });
       }
 
       // Do not re-throw, allow service to initialize without legacy bots if file is malformed.
@@ -311,7 +347,7 @@ export class SlackService extends EventEmitter implements IMessengerService {
         SlackService.instance = new SlackService();
       } catch (error: unknown) {
         debug('Failed to create SlackService instance:', error);
-        console.error('Slack service instance creation error:', error);
+        logger.error('Slack service instance creation error', { error });
 
         if (error instanceof BaseHivemindError) {
           throw error;
@@ -427,6 +463,7 @@ export class SlackService extends EventEmitter implements IMessengerService {
           ws.getInstance().recordMessageFlow({
             botName,
             provider: 'slack',
+            llmProvider: _botConfig?.llmProvider,
             channelId: message.getChannelId?.() || '',
             userId: message.getAuthorId?.() || '',
             messageType: 'incoming',
@@ -818,6 +855,29 @@ export class SlackService extends EventEmitter implements IMessengerService {
       return (purpose || topic || null) as string | null;
     } catch (error) {
       debug(`Failed to fetch Slack channel topic for ${channelId}: ${error}`);
+      return null;
+    }
+  }
+
+  public async getChannelOwnerId(channelId: string): Promise<string | null> {
+    try {
+      const firstBot = Array.from(this.botManagers.keys())[0];
+      const botManager = this.botManagers.get(firstBot);
+      const botInfo = botManager?.getAllBots?.()[0];
+      if (!botInfo?.webClient) {
+        return null;
+      }
+
+      const info = await botInfo.webClient.conversations.info({ channel: channelId });
+      if (!info?.ok || !info.channel) {
+        return null;
+      }
+
+      // Slack channels have a 'creator' field that indicates who created the channel
+      const creator = (info.channel as any).creator;
+      return creator || null;
+    } catch (error) {
+      debug(`Failed to fetch Slack channel owner for ${channelId}: ${error}`);
       return null;
     }
   }

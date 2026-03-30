@@ -13,11 +13,18 @@ test.describe('Mobile Viewport & Touch Targets Baseline', () => {
     await page.route('**/api/config/llm-status', (route) =>
       route.fulfill({
         status: 200,
-        json: { defaultConfigured: true, defaultProviders: [], botsMissingLlmProvider: [], hasMissing: false },
+        json: {
+          defaultConfigured: true,
+          defaultProviders: [],
+          botsMissingLlmProvider: [],
+          hasMissing: false,
+        },
       })
     );
     await page.route('**/api/config/global', (route) => route.fulfill({ status: 200, json: {} }));
-    await page.route('**/api/config', (route) => route.fulfill({ status: 200, json: { bots: [] } }));
+    await page.route('**/api/config', (route) =>
+      route.fulfill({ status: 200, json: { bots: [] } })
+    );
     await page.route('**/api/csrf-token', (route) =>
       route.fulfill({ status: 200, json: { token: 'mock-csrf-token' } })
     );

@@ -128,6 +128,7 @@ export interface Persona {
   traits: Array<{ name: string; value: string; weight?: number; type?: string }>;
   systemPrompt: string;
   isBuiltIn?: boolean;
+  usageCount?: number;
   createdAt: string;
   updatedAt: string;
 }
@@ -261,6 +262,13 @@ export interface ActivityTimelineBucket {
 
 export interface ActivityResponse {
   events: ActivityEvent[];
+  pagination: {
+    total: number;
+    page: number;
+    limit: number;
+    offset: number;
+    hasMore: boolean;
+  };
   filters: {
     agents: string[];
     messageProviders: string[];
@@ -276,6 +284,11 @@ export interface ActivityResponse {
     lastActivity: string;
     totalMessages: number;
     recentErrors: string[];
+    avgResponseTime?: number;
+    minResponseTime?: number;
+    maxResponseTime?: number;
+    p95ResponseTime?: number;
+    p99ResponseTime?: number;
   }>;
 }
 
@@ -320,7 +333,13 @@ class ApiService {
         resetTime: reset ? parseInt(reset, 10) || 0 : 0,
       };
       this.rateLimitListeners.forEach(listener => {
-        try { listener(info); } catch { /* ignore listener errors */ }
+        try {
+          listener(info);
+        } catch (error) {
+          debug('ERROR:', 'Rate limit listener error', {
+            error: error instanceof Error ? error.message : String(error)
+          });
+        }
       });
     }
   }
@@ -663,13 +682,18 @@ class ApiService {
     llmProvider?: string;
     from?: string;
     to?: string;
+    page?: number;
+    limit?: number;
+    offset?: number;
   } = {}): Promise<ActivityResponse> {
     const query = new URLSearchParams();
     Object.entries(params).forEach(([key, value]) => {
-      if (value) { query.append(key, value); }
+      if (value !== undefined && value !== null && value !== '') {
+        query.append(key, String(value));
+      }
     });
     const search = query.toString();
-    const endpoint = `/api/dashboard/api/activity${search ? `?${search}` : ''}`;
+    const endpoint = `/api/dashboard/activity${search ? `?${search}` : ''}`;
     return this.request<ActivityResponse>(endpoint);
   }
 
@@ -904,11 +928,11 @@ class ApiService {
   }
 
   async acknowledgeAlert(alertId: string): Promise<{ success: boolean; message: string }> {
-    return this.request(`/api/dashboard/api/alerts/${alertId}/acknowledge`, { method: 'POST' });
+    return this.request(`/api/dashboard/alerts/${alertId}/acknowledge`, { method: 'POST' });
   }
 
   async resolveAlert(alertId: string): Promise<{ success: boolean; message: string }> {
-    return this.request(`/api/dashboard/api/alerts/${alertId}/resolve`, { method: 'POST' });
+    return this.request(`/api/dashboard/alerts/${alertId}/resolve`, { method: 'POST' });
   }
 
   // Import/Export Backup Methods
@@ -975,6 +999,38 @@ class ApiService {
 
   async stopBot(botId: string): Promise<{ success: boolean; message: string }> {
     return this.request(`/api/bots/${botId}/stop`, { method: 'POST' });
+  }
+
+  async exportActivity(queryString: string): Promise<string> {
+    const url = buildUrl(`/api/dashboard/activity/export?${queryString}`);
+    const headers = this.getAuthHeaders();
+
+    const response = await fetch(url, {
+      method: 'GET',
+      headers,
+    });
+
+    if (!response.ok) {
+      throw new Error(`Export failed: ${response.statusText}`);
+    }
+
+    return response.text();
+  }
+
+  async exportAnalytics(queryString: string): Promise<string> {
+    const url = buildUrl(`/api/dashboard/analytics/export?${queryString}`);
+    const headers = this.getAuthHeaders();
+
+    const response = await fetch(url, {
+      method: 'GET',
+      headers,
+    });
+
+    if (!response.ok) {
+      throw new Error(`Export failed: ${response.statusText}`);
+    }
+
+    return response.text();
   }
 }
 

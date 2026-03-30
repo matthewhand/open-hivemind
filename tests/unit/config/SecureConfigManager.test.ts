@@ -20,6 +20,7 @@ describe('SecureConfigManager rotation logic', () => {
     jest.spyOn(fs, 'readFileSync').mockReturnValue(Buffer.from('32-byte-long-secret-key-for-test!!'));
     jest.spyOn(fs, 'writeFileSync').mockImplementation(() => {});
     jest.spyOn(fs, 'mkdirSync').mockImplementation(() => undefined);
+    jest.spyOn(fs.promises, 'access').mockResolvedValue(undefined);
     jest.spyOn(fs.promises, 'readFile').mockResolvedValue('encrypted-data');
 
     // Re-initialize manager

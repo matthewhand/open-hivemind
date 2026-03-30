@@ -1,3 +1,10 @@
+// ---------------------------------------------------------------------------
+// Plugin manifest & factory (PluginLoader contract)
+// ---------------------------------------------------------------------------
+
+import { Mem0Provider } from './Mem0Provider';
+import type { Mem0Config } from './types';
+
 /**
  * @hivemind/memory-mem0
  *
@@ -17,13 +24,6 @@ export type {
   Mem0UpdateResponse,
 } from './types';
 export { Mem0ApiError } from './types';
-
-// ---------------------------------------------------------------------------
-// Plugin manifest & factory (PluginLoader contract)
-// ---------------------------------------------------------------------------
-
-import type { Mem0Config } from './types';
-import { Mem0Provider } from './Mem0Provider';
 
 export const manifest = {
   displayName: 'Mem0',

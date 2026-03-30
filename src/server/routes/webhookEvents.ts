@@ -1,8 +1,9 @@
 import Debug from 'debug';
 import { Router } from 'express';
 import { v4 as uuidv4 } from 'uuid';
+import { HTTP_STATUS } from '../../types/constants';
+import { WebhookRetrySchema } from '../../validation/schemas/miscSchema';
 import { validateRequest } from '../../validation/validateRequest';
-import { RetryWebhookEventSchema } from '../../validation/schemas/webhookEventsSchema';
 
 const debug = Debug('app:webui:webhook-events');
 const router = Router();
@@ -120,7 +121,9 @@ router.get('/events', (req, res) => {
     });
   } catch (error) {
     debug('Error listing webhook events:', error);
-    return res.status(500).json({ success: false, error: 'Failed to list webhook events' });
+    return res
+      .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
+      .json({ success: false, error: 'Failed to list webhook events' });
   }
 });
 
@@ -130,27 +133,31 @@ router.get('/events/:id', (req, res) => {
   try {
     const event = events.find((e) => e.id === req.params.id);
     if (!event) {
-      return res.status(404).json({ success: false, error: 'Event not found' });
+      return res.status(HTTP_STATUS.NOT_FOUND).json({ success: false, error: 'Event not found' });
     }
     return res.json({ success: true, data: event });
   } catch (error) {
     debug('Error fetching webhook event:', error);
-    return res.status(500).json({ success: false, error: 'Failed to fetch webhook event' });
+    return res
+      .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
+      .json({ success: false, error: 'Failed to fetch webhook event' });
   }
 });
 
 // ── POST /api/webhooks/events/:id/retry — replay a failed event ─────────────
 
-router.post('/events/:id/retry', validateRequest(RetryWebhookEventSchema), async (req, res) => {
+router.post('/events/:id/retry', validateRequest(WebhookRetrySchema), async (req, res) => {
   try {
     const original = events.find((e) => e.id === req.params.id);
     if (!original) {
-      return res.status(404).json({ success: false, error: 'Event not found' });
+      return res.status(HTTP_STATUS.NOT_FOUND).json({ success: false, error: 'Event not found' });
     }
 
     // Only allow retrying failed events
     if (original.statusCode < 400) {
-      return res.status(400).json({ success: false, error: 'Only failed events can be retried' });
+      return res
+        .status(HTTP_STATUS.BAD_REQUEST)
+        .json({ success: false, error: 'Only failed events can be retried' });
     }
 
     // Record a retry attempt with a simulated 202 Accepted
@@ -176,7 +183,9 @@ router.post('/events/:id/retry', validateRequest(RetryWebhookEventSchema), async
     });
   } catch (error) {
     debug('Error retrying webhook event:', error);
-    return res.status(500).json({ success: false, error: 'Failed to retry webhook event' });
+    return res
+      .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
+      .json({ success: false, error: 'Failed to retry webhook event' });
   }
 });
 
