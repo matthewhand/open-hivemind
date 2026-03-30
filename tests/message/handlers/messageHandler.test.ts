@@ -114,7 +114,7 @@ describe('messageHandler', () => {
     jest.clearAllMocks();
 
     mockLlmProvider = {
-      generateChatCompletion: jest.fn().mockResolvedValue('AI response'),
+      generateChatCompletion: jest.fn().mockResolvedValue({ text: 'AI response' }),
     };
 
     mockMessengerProvider = {
@@ -188,7 +188,7 @@ describe('messageHandler', () => {
         expect.any(Array),
         expect.objectContaining({
           channelId: 'test-channel',
-          botId: 'bot-123',
+          userId: 'test-user',
         })
       );
 
@@ -295,23 +295,24 @@ describe('messageHandler', () => {
 
   describe('error handling', () => {
     it('should handle errors gracefully', async () => {
-      // Test LLM provider errors
+      // Test LLM provider errors - handler catches and returns null
       mockLlmProvider.generateChatCompletion.mockRejectedValue(new Error('LLM Error'));
       const message = new MockMessage('Hello');
 
       const response = await handleMessage(message, [], mockBotConfig);
 
-      expect(response).toMatch(/error/i);
+      expect(response).toBeNull();
 
-      // Test missing LLM provider
+      // Test missing LLM provider - returns null
       mockGetLlmProvider.mockReturnValue([]);
       const message2 = new MockMessage('Hello');
 
       const response2 = await handleMessage(message2, [], mockBotConfig);
 
-      expect(response2).toMatch(/no.*provider/i);
+      expect(response2).toBeNull();
 
-      // Test processing errors in helper functions
+      // Test processing errors in helper functions - caught and returns null
+      mockGetLlmProvider.mockReturnValue([mockLlmProvider]);
       mockStripBotId.mockImplementation(() => {
         throw new Error('Strip error');
       });
@@ -319,23 +320,26 @@ describe('messageHandler', () => {
 
       const response3 = await handleMessage(message3, [], mockBotConfig);
 
-      expect(typeof response3).toBe('string');
+      expect(response3).toBeNull();
     });
   });
 
   describe('configuration handling', () => {
     it('should handle configuration correctly', async () => {
-      // Test respecting message configuration
-      mockMessageConfig.get.mockImplementation((key: any) => {
-        if (key === 'MESSAGE_STRIP_BOT_ID') return true;
-        if (key === 'MESSAGE_ADD_USER_HINT') return true;
-        return false;
-      });
-
+      // Handler reads configuration from botConfig directly, not messageConfig
       const message = new MockMessage('Hello');
       await handleMessage(message, [], mockBotConfig);
 
-      expect(mockMessageConfig.get).toHaveBeenCalled();
+      // Verify the handler used botConfig to determine provider type
+      expect(mockShouldReply).toHaveBeenCalledWith(
+        expect.anything(),
+        'bot-123',
+        'discord',
+        expect.any(Array),
+        expect.any(Array),
+        undefined,
+        mockBotConfig
+      );
 
       // Test different integration types
       const slackConfig = { ...mockBotConfig, integration: 'slack' };
@@ -343,7 +347,7 @@ describe('messageHandler', () => {
 
       await handleMessage(message2, [], slackConfig);
 
-      // Platform is derived from message.platform, not botConfig.integration
+      // Platform is derived from botConfig.MESSAGE_PROVIDER or integration
       expect(mockShouldReply).toHaveBeenCalledWith(
         expect.anything(),
         'bot-123',

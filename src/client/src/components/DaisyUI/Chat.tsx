@@ -287,10 +287,10 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
 
             <button
               type="submit"
-              className={`btn btn-primary ${isLoading ? 'loading' : ''}`}
+              className="btn btn-primary"
               disabled={!inputValue.trim() || isLoading}
             >
-              {isLoading ? '' : '➤'}
+              {isLoading ? <span className="loading loading-spinner" aria-hidden="true"></span> : '➤'}
             </button>
           </div>
         </form>

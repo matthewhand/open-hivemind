@@ -13,7 +13,8 @@ describe('Sitemap Routes Verification', () => {
   it('should return sitemap.json with correct /admin paths', async () => {
     const res = await request(app).get('/sitemap.json');
     expect(res.status).toBe(200);
-    expect(res.body.urls).toBeDefined();
+    expect(Array.isArray(res.body.urls)).toBe(true);
+    expect(res.body.urls.length).toBeGreaterThan(0);
 
     // Check for absence of /uber paths
     const uberUrl = res.body.urls.find((u: any) => u.url.startsWith('/uber'));
@@ -21,21 +22,21 @@ describe('Sitemap Routes Verification', () => {
 
     // Check for existence of /admin/bots
     const adminUrl = res.body.urls.find((u: any) => u.url === '/admin/bots');
-    expect(adminUrl).toBeDefined();
+    expect(adminUrl).toEqual(expect.objectContaining({ url: '/admin/bots' }));
     expect(adminUrl.access).toBe('authenticated');
   });
 
   it('should include new routes like /admin/ai/dashboard', async () => {
     const res = await request(app).get('/sitemap.json');
     const aiUrl = res.body.urls.find((u: any) => u.url === '/admin/ai/dashboard');
-    expect(aiUrl).toBeDefined();
+    expect(aiUrl).toEqual(expect.objectContaining({ url: '/admin/ai/dashboard' }));
     expect(aiUrl.description).toBe('AI System Dashboard');
   });
 
   it('should include integrations routes', async () => {
     const res = await request(app).get('/sitemap.json');
     const llmUrl = res.body.urls.find((u: any) => u.url === '/admin/integrations/llm');
-    expect(llmUrl).toBeDefined();
+    expect(llmUrl).toEqual(expect.objectContaining({ url: '/admin/integrations/llm' }));
   });
 
   it('should filter by access level', async () => {
@@ -44,13 +45,13 @@ describe('Sitemap Routes Verification', () => {
     const publicUrls = publicRes.body.urls;
     expect(publicUrls.every((u: any) => u.access === 'public')).toBe(true);
     expect(publicUrls.find((u: any) => u.url === '/admin/bots')).toBeUndefined(); // authenticated
-    expect(publicUrls.find((u: any) => u.url === '/login')).toBeDefined(); // public
+    expect(publicUrls).toContainEqual(expect.objectContaining({ url: '/login' })); // public
 
     // Test authenticated filter
     const authRes = await request(app).get('/sitemap.json?access=authenticated');
     const authUrls = authRes.body.urls;
     expect(authUrls.every((u: any) => u.access === 'authenticated')).toBe(true);
-    expect(authUrls.find((u: any) => u.url === '/admin/bots')).toBeDefined();
+    expect(authUrls).toContainEqual(expect.objectContaining({ url: '/admin/bots' }));
   });
 
   it('should return sitemap.xml', async () => {

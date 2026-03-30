@@ -36,6 +36,24 @@ jest.mock('@src/config/slackConfig', () => ({
   },
 }));
 
+jest.mock('@src/services/StartupGreetingService', () => ({
+  StartupGreetingService: jest.fn(),
+}));
+
+jest.mock('tsyringe', () => {
+  const actual = jest.requireActual('tsyringe');
+  return {
+    ...actual,
+    container: {
+      ...actual.container,
+      resolve: jest.fn(() => ({
+        emit: jest.fn(),
+      })),
+      registerInstance: jest.fn(),
+    },
+  };
+});
+
 jest.mock('@hivemind/message-slack/SlackBotManager', () => {
   return jest.fn().mockImplementation(
     (): SlackBotManagerMock => ({
@@ -63,6 +81,15 @@ describe('SlackEventListener', () => {
 
   beforeEach(async () => {
     jest.clearAllMocks();
+
+    // Register mock StartupGreetingService in tsyringe container
+    const { container } = require('tsyringe');
+    const { StartupGreetingService } = require('@src/services/StartupGreetingService');
+    const mockStartupGreetingService = {
+      emit: jest.fn(),
+      on: jest.fn(),
+    };
+    container.registerInstance(StartupGreetingService, mockStartupGreetingService);
 
     delete process.env.SLACK_USERNAME_OVERRIDE;
     delete process.env.SLACK_BOT_TOKEN;

@@ -135,7 +135,9 @@ describe('webhookSecurity edge cases', () => {
     });
 
     it('allows when whitelist contains only IPv6 loopback and request comes from IPv6', async () => {
-      setConfig({ WEBHOOK_IP_WHITELIST: '::1,::ffff:127.0.0.1' });
+      // The source normalizes ::ffff:127.0.0.1 to 127.0.0.1, so the whitelist
+      // must include the plain IPv4 form for the mock runner's default IP.
+      setConfig({ WEBHOOK_IP_WHITELIST: '::1,::ffff:127.0.0.1,127.0.0.1' });
       const { res } = await runRoute(app, 'post', '/secured', {
         headers: { 'x-webhook-token': 'secret-token' },
       });

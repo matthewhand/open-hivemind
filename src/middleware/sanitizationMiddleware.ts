@@ -49,13 +49,13 @@ function sanitizeString(value: string): string {
     .replace(/'/g, '&#x27;');
 }
 
-function sanitizeObject(obj: any): any {
+function sanitizeObject(obj: unknown): unknown {
   if (typeof obj === 'string') return sanitizeString(obj);
   if (Array.isArray(obj)) return obj.map((item) => sanitizeObject(item));
   if (obj !== null && typeof obj === 'object') {
-    const sanitized: any = {};
+    const sanitized: Record<string, unknown> = {};
     for (const key of Object.keys(obj)) {
-      sanitized[key] = sanitizeObject(obj[key]);
+      sanitized[key] = sanitizeObject((obj as Record<string, unknown>)[key]);
     }
     return sanitized;
   }

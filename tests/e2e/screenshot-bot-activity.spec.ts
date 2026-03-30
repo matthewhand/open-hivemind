@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { expect, test } from '@playwright/test';
 
 test.describe('Bot Activity Screenshots', () => {
   test('Capture Bot Activity Logs', async ({ page }) => {

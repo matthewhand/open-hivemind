@@ -1,4 +1,9 @@
-import { redactSensitiveValue, checkEnvOverride, getRelevantEnvVars, checkBotEnvOverrides } from '@src/utils/envUtils';
+import {
+  checkBotEnvOverrides,
+  checkEnvOverride,
+  getRelevantEnvVars,
+  redactSensitiveValue,
+} from '@src/utils/envUtils';
 
 describe('envUtils', () => {
   describe('redactSensitiveValue', () => {

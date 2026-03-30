@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useMemo } from 'react';
 import { useAppSelector, useAppDispatch } from '../store/hooks';
 import {
   selectUI,
@@ -12,6 +12,8 @@ import {
 import type { UIState } from '../store/slices/uiSlice';
 import { Accordion } from './DaisyUI/Accordion';
 import type { AccordionItem } from './DaisyUI/Accordion';
+import { useConfigDiff } from '../hooks/useConfigDiff';
+import { ConfigDiffViewer, ConfigDiffConfirmDialog } from './ConfigDiffViewer';
 
 const Settings: React.FC = () => {
   const dispatch = useAppDispatch();
@@ -19,6 +21,27 @@ const Settings: React.FC = () => {
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const resetTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [showDiffConfirm, setShowDiffConfirm] = useState(false);
+  const [originalSnapshot, setOriginalSnapshot] = useState(true);
+
+  const settingsAsRecord = useMemo(() => ({
+    theme: ui.theme,
+    autoRefreshEnabled: ui.autoRefreshEnabled,
+    refreshInterval: ui.refreshInterval,
+    animationsEnabled: ui.animationsEnabled,
+    showTooltips: ui.showTooltips,
+    showKeyboardShortcuts: ui.showKeyboardShortcuts,
+  }) as Record<string, unknown>, [ui.theme, ui.autoRefreshEnabled, ui.refreshInterval, ui.animationsEnabled, ui.showTooltips, ui.showKeyboardShortcuts]);
+
+  const { hasChanges, diff, setOriginalConfig } = useConfigDiff(settingsAsRecord);
+
+  useEffect(() => {
+    if (originalSnapshot) {
+      setOriginalConfig(settingsAsRecord);
+      setOriginalSnapshot(false);
+    }
+  }, [originalSnapshot, settingsAsRecord, setOriginalConfig]);
+
   const themeOptions: Array<{ value: UIState['theme']; label: string }> = [
     { value: 'light', label: 'Light' },
     { value: 'dark', label: 'Dark' },
@@ -200,10 +223,17 @@ const Settings: React.FC = () => {
 
       <Accordion items={accordionItems} allowMultiple defaultOpenItems={['appearance']} />
 
+      {hasChanges && (
+        <div className="mt-6">
+          <h3 className="text-sm font-semibold opacity-70 mb-2">Pending changes:</h3>
+          <ConfigDiffViewer diff={diff} mode="unified" maxHeight="12rem" />
+        </div>
+      )}
+
       <div className="flex gap-4 mt-6">
         <button
           className="btn btn-primary"
-          onClick={handleSaveSettings}
+          onClick={() => hasChanges ? setShowDiffConfirm(true) : handleSaveSettings()}
           disabled={saveStatus === 'saving'}
           aria-label="Save Settings"
         >
@@ -218,6 +248,15 @@ const Settings: React.FC = () => {
           Reset to Defaults
         </button>
       </div>
+
+      <ConfigDiffConfirmDialog
+        isOpen={showDiffConfirm}
+        diff={diff}
+        onConfirm={() => { setShowDiffConfirm(false); handleSaveSettings(); }}
+        onCancel={() => setShowDiffConfirm(false)}
+        title="Confirm Settings Changes"
+        loading={saveStatus === 'saving'}
+      />
     </div>
   );
 };

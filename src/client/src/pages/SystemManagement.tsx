@@ -6,6 +6,8 @@ import AlertPanel from '../components/Monitoring/AlertPanel';
 import StatusCard from '../components/Monitoring/StatusCard';
 import Modal, { ConfirmModal } from '../components/DaisyUI/Modal';
 import { useSuccessToast, useErrorToast, useWarningToast } from '../components/DaisyUI/ToastNotification';
+import DataTable from '../components/DaisyUI/DataTable';
+import type { RDVColumn, RowAction } from '../components/DaisyUI/DataTable';
 
 interface SystemConfig {
   refreshInterval: number;
@@ -88,38 +90,16 @@ const SystemManagement: React.FC = () => {
   const [isPerformanceLoading, setIsPerformanceLoading] = useState(false);
 
 
-  useEffect(() => {
-    fetchSystemConfig();
-    fetchBackupHistory();
-  }, []);
-
-
-  // Performance monitoring polling
-  useEffect(() => {
-    if (activeTab === 'performance') {
-      fetchApiStatus();
-      const interval = setInterval(fetchApiStatus, 10000); // Refresh every 10s
-      return () => clearInterval(interval);
-    }
-  }, [activeTab]);
-
-  const fetchApiStatus = async () => {
+  const fetchApiStatus = useCallback(async () => {
     try {
       const status = await apiService.getApiEndpointsStatus();
       setApiStatus(status);
     } catch (error) {
-      console.error('Failed to fetch API status:', error);
+      errorToast('API Status', 'Failed to fetch API status');
     }
-  };
+  }, []);
 
-
-  useEffect(() => {
-    if (activeTab === 'performance') {
-      fetchPerformanceData();
-    }
-  }, [activeTab]);
-
-  const fetchPerformanceData = async () => {
+  const fetchPerformanceData = useCallback(async () => {
     setIsPerformanceLoading(true);
     try {
       const [infoResult, overridesResult] = await Promise.allSettled([
@@ -132,14 +112,13 @@ const SystemManagement: React.FC = () => {
       // Backend returns { success: true, data: { envVars: ... } }
       setEnvOverrides(overrides.data?.envVars || overrides.envVars);
     } catch (error) {
-      console.error('Failed to fetch performance data:', error);
+      errorToast('Performance Data', 'Failed to fetch performance metrics');
     } finally {
       setIsPerformanceLoading(false);
-
     }
-  };
+  }, []);
 
-  const fetchSystemConfig = async () => {
+  const fetchSystemConfig = useCallback(async () => {
     try {
       const globalConfig = await apiService.getGlobalConfig();
       const userSettings = globalConfig._userSettings?.values || {};
@@ -155,11 +134,11 @@ const SystemManagement: React.FC = () => {
         }
       }));
     } catch (error) {
-      console.error('Failed to fetch system config:', error);
+      errorToast('System Config', 'Failed to fetch system configuration');
     }
-  };
+  }, []);
 
-  const fetchBackupHistory = async () => {
+  const fetchBackupHistory = useCallback(async () => {
     try {
       const backupList = await apiService.listSystemBackups();
       // Map API response to local interface
@@ -175,9 +154,29 @@ const SystemManagement: React.FC = () => {
       }));
       setBackups(mappedBackups.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));
     } catch (error) {
-      console.error('Failed to fetch backup history:', error);
+      errorToast('Backup History', 'Failed to fetch backup history');
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    fetchSystemConfig();
+    fetchBackupHistory();
+  }, [fetchSystemConfig, fetchBackupHistory]);
+
+  // Performance monitoring polling
+  useEffect(() => {
+    if (activeTab === 'performance') {
+      fetchApiStatus();
+      const interval = setInterval(fetchApiStatus, 10000); // Refresh every 10s
+      return () => clearInterval(interval);
+    }
+  }, [activeTab, fetchApiStatus]);
+
+  useEffect(() => {
+    if (activeTab === 'performance') {
+      fetchPerformanceData();
+    }
+  }, [activeTab, fetchPerformanceData]);
 
   const handleConfigUpdate = async (key: keyof SystemConfig, value: any) => {
     setIsLoading(true);
@@ -188,7 +187,7 @@ const SystemManagement: React.FC = () => {
       // Persist to backend (user settings)
       await apiService.updateGlobalConfig({ [key]: value });
     } catch (error) {
-      console.error('Failed to update configuration:', error);
+      errorToast('Config Update', 'Failed to update configuration');
     } finally {
       setIsLoading(false);
     }
@@ -198,7 +197,7 @@ const SystemManagement: React.FC = () => {
     try {
       await apiService.acknowledgeAlert(alertId);
     } catch (error) {
-      console.error('Failed to acknowledge alert:', error);
+      errorToast('Alert', 'Failed to acknowledge alert');
     }
   };
 
@@ -206,7 +205,7 @@ const SystemManagement: React.FC = () => {
     try {
       await apiService.resolveAlert(alertId);
     } catch (error) {
-      console.error('Failed to resolve alert:', error);
+      errorToast('Alert', 'Failed to resolve alert');
     }
   };
 
@@ -238,7 +237,7 @@ const SystemManagement: React.FC = () => {
       successToast('Backup Created', 'Backup created successfully');
       await fetchBackupHistory();
     } catch (error) {
-      console.error('Failed to create backup:', error);
+      /* errorToast below */
       errorToast('Backup Failed', 'Failed to create backup: ' + (error as Error).message);
     } finally {
       setIsCreatingBackup(false);
@@ -258,7 +257,7 @@ const SystemManagement: React.FC = () => {
           successToast('System Restored', 'System restored successfully. Reloading...');
           setTimeout(() => window.location.reload(), 2000);
         } catch (error) {
-          console.error('Failed to restore backup:', error);
+          /* errorToast below */
           errorToast('Restore Failed', 'Failed to restore backup: ' + (error as Error).message);
         }
       },
@@ -278,7 +277,7 @@ const SystemManagement: React.FC = () => {
           successToast('Backup Deleted', 'Backup deleted');
           setBackups(prev => prev.filter(backup => backup.id !== backupId));
         } catch (error) {
-          console.error('Failed to delete backup:', error);
+          /* errorToast below */
           errorToast('Delete Failed', 'Failed to delete backup: ' + (error as Error).message);
         }
       },
@@ -564,55 +563,37 @@ const SystemManagement: React.FC = () => {
             <div className="space-y-6">
               <h3 className="text-xl font-semibold">Backup History</h3>
 
-              <div className="overflow-x-auto">
-                <table className="table table-zebra w-full">
-                  <thead>
-                    <tr>
-                      <th>Timestamp</th>
-                      <th>Type</th>
-                      <th>Size</th>
-                      <th>Status</th>
-                      <th>Description</th>
-                      <th>Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {backups.map((backup) => (
-                      <tr key={backup.id}>
-                        <td>{new Date(backup.timestamp).toLocaleString()}</td>
-                        <td>
-                          <span className={`badge ${backup.type === 'manual' ? 'badge-info' : 'badge-neutral'}`}>
-                            {backup.type}
-                          </span>
-                        </td>
-                        <td>{backup.size}</td>
-                        <td>
-                          <span className="badge badge-success">
-                            {backup.status}
-                          </span>
-                        </td>
-                        <td>{backup.description}</td>
-                        <td>
-                          <div className="flex gap-2">
-                            <button
-                              className="btn btn-xs btn-primary"
-                              onClick={() => handleRestoreBackup(backup.id)}
-                            >
-                              Restore
-                            </button>
-                            <button
-                              className="btn btn-xs btn-error"
-                              onClick={() => handleDeleteBackup(backup.id)}
-                            >
-                              Delete
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+              <DataTable<BackupRecord>
+                data={backups}
+                columns={[
+                  {
+                    key: 'timestamp',
+                    title: 'Timestamp',
+                    prominent: true,
+                    sortable: true,
+                    render: (value: string) => new Date(value).toLocaleString(),
+                  },
+                  {
+                    key: 'type',
+                    title: 'Type',
+                    render: (value: string) => (
+                      <span className={`badge ${value === 'manual' ? 'badge-info' : 'badge-neutral'}`}>{value}</span>
+                    ),
+                  },
+                  { key: 'size', title: 'Size' },
+                  {
+                    key: 'status',
+                    title: 'Status',
+                    render: (value: string) => <span className="badge badge-success">{value}</span>,
+                  },
+                  { key: 'description', title: 'Description' },
+                ] as RDVColumn<BackupRecord>[]}
+                actions={[
+                  { label: 'Restore', variant: 'primary', onClick: (b) => handleRestoreBackup(b.id) },
+                  { label: 'Delete', variant: 'error', onClick: (b) => handleDeleteBackup(b.id) },
+                ] as RowAction<BackupRecord>[]}
+                rowKey={(b) => b.id}
+              />
             </div>
           )}
 
@@ -727,45 +708,45 @@ const SystemManagement: React.FC = () => {
               <div className="card bg-base-200">
                 <div className="card-body p-4">
                   <h4 className="card-title text-sm">API Endpoints Status</h4>
-                  <div className="overflow-x-auto">
-                    <table className="table table-xs w-full">
-                      <thead>
-                        <tr>
-                          <th>Endpoint</th>
-                          <th>Status</th>
-                          <th>Response Time</th>
-                          <th>Failures</th>
-                          <th>Last Checked</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {apiStatus?.endpoints?.map((endpoint: any) => (
-                          <tr key={endpoint.id}>
-                            <td>
-                              <div className="font-bold">{endpoint.name}</div>
-                              <div className="text-xs opacity-50">{endpoint.url}</div>
-                            </td>
-                            <td>
-                              <div className={`badge ${
-                                endpoint.status === 'online' ? 'badge-success' :
-                                endpoint.status === 'slow' ? 'badge-warning' : 'badge-error'
-                              }`}>
-                                {endpoint.status}
-                              </div>
-                            </td>
-                            <td>{endpoint.responseTime}ms</td>
-                            <td>{endpoint.consecutiveFailures}</td>
-                            <td>{new Date(endpoint.lastChecked).toLocaleTimeString()}</td>
-                          </tr>
-                        ))}
-                        {!apiStatus?.endpoints?.length && (
-                          <tr>
-                            <td colSpan={5} className="text-center">No endpoint data available</td>
-                          </tr>
-                        )}
-                      </tbody>
-                    </table>
-                  </div>
+                  <DataTable
+                    data={apiStatus?.endpoints || []}
+                    columns={[
+                      {
+                        key: 'name' as any,
+                        title: 'Endpoint',
+                        prominent: true,
+                        render: (_v: any, row: any) => (
+                          <div>
+                            <div className="font-bold">{row.name}</div>
+                            <div className="text-xs opacity-50">{row.url}</div>
+                          </div>
+                        ),
+                      },
+                      {
+                        key: 'status' as any,
+                        title: 'Status',
+                        render: (value: string) => (
+                          <div className={`badge ${
+                            value === 'online' ? 'badge-success' :
+                            value === 'slow' ? 'badge-warning' : 'badge-error'
+                          }`}>{value}</div>
+                        ),
+                      },
+                      {
+                        key: 'responseTime' as any,
+                        title: 'Response Time',
+                        render: (value: number) => `${value}ms`,
+                      },
+                      { key: 'consecutiveFailures' as any, title: 'Failures' },
+                      {
+                        key: 'lastChecked' as any,
+                        title: 'Last Checked',
+                        render: (value: string) => new Date(value).toLocaleTimeString(),
+                      },
+                    ]}
+                    rowKey={(row: any) => row.id}
+                    emptyState={<div className="text-center py-4 opacity-50">No endpoint data available</div>}
+                  />
                 </div>
               </div>
 
@@ -779,31 +760,16 @@ const SystemManagement: React.FC = () => {
                 </p>
 
                 {envOverrides ? (
-                  <div className="overflow-x-auto bg-base-300 rounded-lg p-2">
-                    <table className="table table-xs w-full">
-                      <thead>
-                        <tr>
-                          <th>Variable</th>
-                          <th>Value</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {Object.entries(envOverrides).length > 0 ? (
-                          Object.entries(envOverrides).map(([key, value]) => (
-                            <tr key={key}>
-                              <td className="font-mono font-bold text-primary">{key}</td>
-                              <td className="font-mono break-all">{value}</td>
-                            </tr>
-                          ))
-                        ) : (
-                          <tr>
-                            <td colSpan={2} className="text-center py-4 opacity-50">
-                              No environment overrides detected.
-                            </td>
-                          </tr>
-                        )}
-                      </tbody>
-                    </table>
+                  <div className="bg-base-300 rounded-lg p-2">
+                    <DataTable
+                      data={Object.entries(envOverrides).map(([k, v]) => ({ variable: k, value: v as string }))}
+                      columns={[
+                        { key: 'variable' as any, title: 'Variable', prominent: true, render: (v: string) => <span className="font-mono font-bold text-primary">{v}</span> },
+                        { key: 'value' as any, title: 'Value', render: (v: string) => <span className="font-mono break-all">{v}</span> },
+                      ]}
+                      rowKey={(row: any) => row.variable}
+                      emptyState={<div className="text-center py-4 opacity-50">No environment overrides detected.</div>}
+                    />
                   </div>
                 ) : (
                   <div className="flex justify-center py-8">

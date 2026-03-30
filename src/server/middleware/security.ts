@@ -30,6 +30,22 @@ export function securityHeaders(req: Request, res: Response, next: NextFunction)
   res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
 
   // Content Security Policy (CSP)
+  // SECURITY NOTE: CSP with 'unsafe-eval' and 'unsafe-inline'
+  //
+  // 'unsafe-eval': Required for Vite's dynamic import() in development mode and
+  // React's hot module replacement (HMR). In production builds, Vite compiles
+  // everything to static chunks, but we maintain this directive for development
+  // compatibility and potential runtime plugin loading via MCP.
+  //
+  // 'unsafe-inline': Required for:
+  //   1. Inline <style> tags in React components
+  //   2. WebSocket connection initialization scripts
+  //   3. DaisyUI theme switching which injects inline styles
+  //
+  // MITIGATION: All user input is sanitized via Zod schemas and the sanitization
+  // middleware before being stored or rendered. See:
+  //   - src/server/middleware/sanitizationMiddleware.ts
+  //   - src/common/security/inputSanitizer.ts
   const cspDirectives = [
     "default-src 'self'",
     "script-src 'self' 'unsafe-inline' 'unsafe-eval' https:", // Allow inline scripts for WebSocket connections

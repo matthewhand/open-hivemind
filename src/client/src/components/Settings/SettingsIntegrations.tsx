@@ -4,6 +4,7 @@ import { Alert } from '../DaisyUI/Alert';
 import Badge from '../DaisyUI/Badge';
 import Button from '../DaisyUI/Button';
 import Card from '../DaisyUI/Card';
+import { SkeletonGrid } from '../DaisyUI/Skeleton';
 import Toggle from '../DaisyUI/Toggle';
 import { Puzzle, CheckCircle, XCircle, AlertTriangle } from 'lucide-react';
 
@@ -28,9 +29,9 @@ const SettingsIntegrations: React.FC = () => {
       const response = await fetch('/api/config/global');
       if (!response.ok) {throw new Error('Failed to fetch integrations');}
       const data = await response.json();
-      
+
       const config = data.config || {};
-      
+
       // Build integrations from config
       const builtIntegrations: Integration[] = [
         {
@@ -79,7 +80,7 @@ const SettingsIntegrations: React.FC = () => {
           status: config.flowise?.baseUrl?.value ? 'connected' : 'disconnected',
         },
       ];
-      
+
       setIntegrations(builtIntegrations);
     } catch (error) {
       setAlert({ type: 'error', message: 'Failed to load integrations' });
@@ -127,8 +128,8 @@ const SettingsIntegrations: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-12">
-        <span className="loading loading-spinner loading-lg" aria-hidden="true"></span>
+      <div className="py-6">
+        <SkeletonGrid count={4} showImage={false} />
       </div>
     );
   }

@@ -109,9 +109,12 @@ describe('Guard Profiles Route', () => {
         .send({ ...validBody, name: undefined });
 
       expect(response.status).toBe(400);
-      expect(response.body.success).toBe(false);
-      expect(response.body.error).toBe('Validation error');
-      expect(response.body.message).toBe('Name is required and must be a string');
+      expect(response.body.error).toBe('Validation failed');
+      expect(response.body.issues).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ path: expect.arrayContaining(['body', 'name']) }),
+        ])
+      );
     });
 
     it('should return 400 if guards is missing or invalid', async () => {
@@ -120,9 +123,12 @@ describe('Guard Profiles Route', () => {
         .send({ ...validBody, guards: undefined });
 
       expect(response.status).toBe(400);
-      expect(response.body.success).toBe(false);
-      expect(response.body.error).toBe('Validation error');
-      expect(response.body.message).toBe('Guards configuration is required');
+      expect(response.body.error).toBe('Validation failed');
+      expect(response.body.issues).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ path: expect.arrayContaining(['body', 'guards']) }),
+        ])
+      );
     });
 
     it('should return 200 and existing profile if name already exists', async () => {

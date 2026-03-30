@@ -18,6 +18,7 @@
 import { randomUUID } from 'crypto';
 import { type NextFunction, type Request, type Response } from 'express';
 import { createLogger, type StructuredLogger } from '@src/common/StructuredLogger';
+import { getCorrelationId } from '@src/middleware/correlationId';
 
 /**
  * Extended Request interface with tracing fields
@@ -125,8 +126,12 @@ export function createRequestTracingMiddleware(
     const tracedReq = req as TracedRequest;
     const tracedRes = res as TracedResponse;
 
-    // Get or generate trace ID
-    const traceId = (req.headers[config.traceIdHeader as string] as string) || generateTraceId();
+    // Get or generate trace ID — prefer the correlation ID from AsyncLocalStorage
+    // when the correlation middleware ran first, ensuring a single ID across both systems.
+    const traceId =
+      (req.headers[config.traceIdHeader as string] as string) ||
+      getCorrelationId() ||
+      generateTraceId();
     const spanId = generateSpanId();
 
     // Attach to request

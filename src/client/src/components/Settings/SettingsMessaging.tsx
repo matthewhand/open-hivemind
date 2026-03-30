@@ -3,6 +3,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Alert } from '../DaisyUI/Alert';
 import Toggle from '../DaisyUI/Toggle';
 import Button from '../DaisyUI/Button';
+import { SkeletonList } from '../DaisyUI/Skeleton';
 import { MessageSquare, Bot, Users, Zap, Info } from 'lucide-react';
 
 interface MessagingConfig {
@@ -114,8 +115,8 @@ const SettingsMessaging: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-12">
-        <span className="loading loading-spinner loading-lg" aria-hidden="true"></span>
+      <div className="py-6 px-4">
+        <SkeletonList items={4} />
       </div>
     );
   }
@@ -402,7 +403,7 @@ const SettingsMessaging: React.FC = () => {
 
       {/* Environment Variables Reference */}
       <div className="collapse collapse-arrow bg-base-200/30">
-        <input type="checkbox" />
+        <input type="checkbox" aria-label="Toggle Environment Variables Reference" />
         <div className="collapse-title text-sm font-medium">
           Environment Variables Reference
         </div>

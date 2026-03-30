@@ -6,6 +6,15 @@ import {
   saveGuardrailProfiles,
   type GuardrailProfile,
 } from '../../config/guardrailProfiles';
+import { HTTP_STATUS } from '../../types/constants';
+import {
+  BulkDeleteGuardProfilesSchema,
+  BulkToggleGuardProfilesSchema,
+  CreateGuardProfileSchema,
+  GuardProfileIdParamSchema,
+  UpdateGuardProfileSchema,
+} from '../../validation/schemas/guardProfilesSchema';
+import { validateRequest } from '../../validation/validateRequest';
 
 const router = Router();
 
@@ -26,7 +35,7 @@ router.get('/', (req: Request, res: Response) => {
       data: profiles,
     });
   } catch (error: unknown) {
-    return res.status(500).json({
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
       success: false,
       error: 'Failed to load guardrail profiles',
       message: error instanceof Error ? error.message : String(error),
@@ -35,14 +44,14 @@ router.get('/', (req: Request, res: Response) => {
 });
 
 // GET /:id - Get a specific profile
-router.get('/:id', (req: Request, res: Response) => {
+router.get('/:id', validateRequest(GuardProfileIdParamSchema), (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const profiles = loadGuardrailProfiles();
     const profile = profiles.find((p) => p.id === id);
 
     if (!profile) {
-      return res.status(404).json({
+      return res.status(HTTP_STATUS.NOT_FOUND).json({
         success: false,
         error: 'Profile not found',
       });
@@ -53,7 +62,7 @@ router.get('/:id', (req: Request, res: Response) => {
       data: profile,
     });
   } catch (error: unknown) {
-    return res.status(500).json({
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
       success: false,
       error: 'Failed to retrieve profile',
       message: error instanceof Error ? error.message : String(error),
@@ -85,32 +94,16 @@ interface GuardBody {
 }
 
 // POST / - Create a new profile
-router.post('/', (req: Request, res: Response) => {
+router.post('/', validateRequest(CreateGuardProfileSchema), (req: Request, res: Response) => {
   try {
     const { name, description, guards } = req.body as GuardBody;
-
-    if (!name || typeof name !== 'string') {
-      return res.status(400).json({
-        success: false,
-        error: 'Validation error',
-        message: 'Name is required and must be a string',
-      });
-    }
-
-    if (!guards || typeof guards !== 'object') {
-      return res.status(400).json({
-        success: false,
-        error: 'Validation error',
-        message: 'Guards configuration is required',
-      });
-    }
 
     const profiles = loadGuardrailProfiles();
 
     // Idempotency check: see if profile with same name already exists
     const existingProfile = profiles.find((p) => p.name === name);
     if (existingProfile) {
-      return res.status(200).json({
+      return res.status(HTTP_STATUS.OK).json({
         success: true,
         data: existingProfile,
         message: 'Guard profile already exists',
@@ -164,13 +157,13 @@ router.post('/', (req: Request, res: Response) => {
     profiles.push(newProfile);
     saveGuardrailProfiles(profiles);
 
-    return res.status(201).json({
+    return res.status(HTTP_STATUS.CREATED).json({
       success: true,
       data: newProfile,
       message: 'Guard profile created successfully',
     });
   } catch (error: unknown) {
-    return res.status(500).json({
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
       success: false,
       error: 'Failed to create guard profile',
       message: error instanceof Error ? error.message : String(error),
@@ -179,7 +172,7 @@ router.post('/', (req: Request, res: Response) => {
 });
 
 // PUT /:id - Update a profile
-router.put('/:id', (req: Request, res: Response) => {
+router.put('/:id', validateRequest(UpdateGuardProfileSchema), (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const { name, description, guards } = req.body as Partial<GuardBody>;
@@ -188,7 +181,7 @@ router.put('/:id', (req: Request, res: Response) => {
     const profileIndex = profiles.findIndex((p) => p.id === id);
 
     if (profileIndex === -1) {
-      return res.status(404).json({
+      return res.status(HTTP_STATUS.NOT_FOUND).json({
         success: false,
         error: 'Profile not found',
       });
@@ -212,9 +205,9 @@ router.put('/:id', (req: Request, res: Response) => {
                   typeof existingValue === 'object' &&
                   existingValue !== null
                 ) {
-                  (acc as any)[key] = { ...existingValue, ...newValue };
+                  acc[key] = { ...existingValue, ...newValue };
                 } else {
-                  (acc as any)[key] = newValue;
+                  acc[key] = newValue;
                 }
                 return acc;
               },
@@ -226,7 +219,7 @@ router.put('/:id', (req: Request, res: Response) => {
       ...profiles[profileIndex],
       name: name && typeof name === 'string' ? name : profiles[profileIndex].name,
       description: description !== undefined ? description : profiles[profileIndex].description,
-      guards: safeGuards as any,
+      guards: safeGuards as (typeof profiles)[typeof profileIndex]['guards'],
     };
 
     profiles[profileIndex] = updatedProfile;
@@ -238,7 +231,7 @@ router.put('/:id', (req: Request, res: Response) => {
       message: 'Guard profile updated successfully',
     });
   } catch (error: unknown) {
-    return res.status(500).json({
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
       success: false,
       error: 'Failed to update guard profile',
       message: error instanceof Error ? error.message : String(error),
@@ -247,14 +240,14 @@ router.put('/:id', (req: Request, res: Response) => {
 });
 
 // DELETE /:id - Delete a profile
-router.delete('/:id', (req: Request, res: Response) => {
+router.delete('/:id', validateRequest(GuardProfileIdParamSchema), (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const profiles = loadGuardrailProfiles();
     const profileExists = profiles.some((p) => p.id === id);
 
     if (!profileExists) {
-      return res.status(200).json({
+      return res.status(HTTP_STATUS.OK).json({
         success: true,
         message: 'Guard profile already deleted or not found',
       });
@@ -268,12 +261,102 @@ router.delete('/:id', (req: Request, res: Response) => {
       message: 'Guard profile deleted successfully',
     });
   } catch (error: unknown) {
-    return res.status(500).json({
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
       success: false,
       error: 'Failed to delete guard profile',
       message: error instanceof Error ? error.message : String(error),
     });
   }
 });
+
+// POST /bulk/delete - Delete multiple profiles atomically
+router.post(
+  '/bulk/delete',
+  validateRequest(BulkDeleteGuardProfilesSchema),
+  (req: Request, res: Response) => {
+    try {
+      const { ids } = req.body as { ids: string[] };
+      const profiles = loadGuardrailProfiles();
+
+      // Filter out profiles with matching IDs
+      const filteredProfiles = profiles.filter((p) => !ids.includes(p.id));
+      const deletedCount = profiles.length - filteredProfiles.length;
+
+      // Save atomically
+      saveGuardrailProfiles(filteredProfiles);
+
+      return res.json({
+        success: true,
+        message: `${deletedCount} guard profile(s) deleted successfully`,
+        data: {
+          deletedCount,
+          requestedCount: ids.length,
+        },
+      });
+    } catch (error: unknown) {
+      return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
+        success: false,
+        error: 'Failed to delete guard profiles',
+        message: error instanceof Error ? error.message : String(error),
+      });
+    }
+  }
+);
+
+// POST /bulk/toggle - Toggle multiple profiles atomically
+router.post(
+  '/bulk/toggle',
+  validateRequest(BulkToggleGuardProfilesSchema),
+  (req: Request, res: Response) => {
+    try {
+      const { ids, enabled } = req.body as { ids: string[]; enabled: boolean };
+      const profiles = loadGuardrailProfiles();
+
+      let updatedCount = 0;
+
+      // Update all matching profiles
+      const updatedProfiles = profiles.map((profile) => {
+        if (ids.includes(profile.id)) {
+          updatedCount++;
+          return {
+            ...profile,
+            guards: {
+              ...profile.guards,
+              mcpGuard: profile.guards.mcpGuard
+                ? { ...profile.guards.mcpGuard, enabled }
+                : profile.guards.mcpGuard,
+              rateLimit: profile.guards.rateLimit
+                ? { ...profile.guards.rateLimit, enabled }
+                : profile.guards.rateLimit,
+              contentFilter: profile.guards.contentFilter
+                ? { ...profile.guards.contentFilter, enabled }
+                : profile.guards.contentFilter,
+            },
+          };
+        }
+        return profile;
+      });
+
+      // Save atomically
+      saveGuardrailProfiles(updatedProfiles);
+
+      return res.json({
+        success: true,
+        message: `${updatedCount} guard profile(s) ${enabled ? 'enabled' : 'disabled'} successfully`,
+        data: {
+          updatedCount,
+          requestedCount: ids.length,
+          enabled,
+        },
+      });
+    } catch (error: unknown) {
+      return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
+        success: false,
+        error: 'Failed to toggle guard profiles',
+        message: error instanceof Error ? error.message : String(error),
+      });
+    }
+  }
+);
 
 export default router;

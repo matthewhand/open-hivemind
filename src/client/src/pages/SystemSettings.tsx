@@ -1,20 +1,27 @@
 import React from 'react';
-import { useSearchParams } from 'react-router-dom';
-import Breadcrumbs from '../components/DaisyUI/Breadcrumbs';
+import { useSearchParams, useNavigate } from 'react-router-dom';
+
 import SettingsGeneral from '../components/Settings/SettingsGeneral';
 import SettingsSecurity from '../components/Settings/SettingsSecurity';
 import SettingsMessaging from '../components/Settings/SettingsMessaging';
 import SettingsLLM from '../components/Settings/SettingsLLM';
 import PageHeader from '../components/DaisyUI/PageHeader';
-import { Cog } from 'lucide-react';
+import { Cog, RotateCcw } from 'lucide-react';
 
 const SystemSettings: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
   const currentTab = searchParams.get('tab');
 
-  const breadcrumbItems = [
-    { label: 'Settings', href: '/admin/settings', isActive: true },
-  ];
+  const handleRestartWizard = async () => {
+    try {
+      await fetch('/api/onboarding/reset', { method: 'POST' });
+    } catch {
+      // best-effort
+    }
+    navigate('/onboarding');
+  };
+
 
   const tabs = [
     { id: 'general', label: 'General', component: <SettingsGeneral /> },
@@ -34,14 +41,22 @@ const SystemSettings: React.FC = () => {
 
   return (
     <div className="p-6">
-      <Breadcrumbs items={breadcrumbItems} />
-
       <PageHeader
         title="Settings"
         description="Configure your Open-Hivemind instance settings and preferences"
         icon={Cog}
         gradient="primary"
       />
+
+      <div className="flex justify-end mb-4">
+        <button
+          className="btn btn-ghost btn-sm gap-2 text-base-content/60 hover:text-primary"
+          onClick={handleRestartWizard}
+        >
+          <RotateCcw className="w-4 h-4" />
+          Restart Setup Wizard
+        </button>
+      </div>
 
       <div className="card bg-base-100 shadow-xl">
         <div className="card-body">

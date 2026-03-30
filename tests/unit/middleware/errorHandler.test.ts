@@ -77,10 +77,9 @@ describe('errorHandler middleware', () => {
   describe('correlationMiddleware', () => {
     it('should generate a correlation ID if none exists', () => {
       correlationMiddleware(mockReq as Request, mockRes as Response, mockNext);
-      expect(mockReq.correlationId).toBeDefined();
       expect(mockReq.correlationId).toMatch(/^corr_\d+_[a-f0-9]+$/);
       expect(mockRes.setHeader).toHaveBeenCalledWith('X-Correlation-ID', mockReq.correlationId);
-      expect(mockReq.startTime).toBeDefined();
+      expect(typeof mockReq.startTime).toBe('number');
       expect(mockNext).toHaveBeenCalled();
     });
 
@@ -160,7 +159,7 @@ describe('errorHandler middleware', () => {
       globalErrorHandler(new Error('test'), mockReq as Request, mockRes as Response, mockNext);
 
       const jsonCallArg = (mockRes.json as jest.Mock).mock.calls[0][0];
-      expect(jsonCallArg.stack).toBeDefined();
+      expect(typeof jsonCallArg.stack).toBe('string');
 
       process.env.NODE_ENV = originalEnv;
     });
@@ -192,18 +191,15 @@ describe('errorHandler middleware', () => {
   describe('handleUncaughtException', () => {
     const originalEnv = process.env.NODE_ENV;
     let mockExit: jest.SpyInstance;
-    let mockConsoleError: jest.SpyInstance;
 
     beforeEach(() => {
       mockExit = jest.spyOn(process, 'exit').mockImplementation((() => {}) as any);
-      mockConsoleError = jest.spyOn(console, 'error').mockImplementation(() => {});
     });
 
     afterEach(() => {
       (MetricsCollector as any).instance = undefined;
       process.env.NODE_ENV = originalEnv;
       mockExit.mockRestore();
-      mockConsoleError.mockRestore();
     });
 
     it('should log error, increment metrics, and exit in production', () => {
@@ -214,7 +210,7 @@ describe('errorHandler middleware', () => {
 
       expect(errorLogger.logError).toHaveBeenCalled();
       expect(MetricsCollector.getInstance().incrementErrors).toHaveBeenCalled();
-      expect(mockConsoleError).toHaveBeenCalled();
+      // Logging is now via structured Debug logger, not console.error
       expect(mockExit).toHaveBeenCalledWith(1);
     });
 
@@ -230,18 +226,15 @@ describe('errorHandler middleware', () => {
   describe('handleUnhandledRejection', () => {
     const originalEnv = process.env.NODE_ENV;
     let mockExit: jest.SpyInstance;
-    let mockConsoleError: jest.SpyInstance;
 
     beforeEach(() => {
       mockExit = jest.spyOn(process, 'exit').mockImplementation((() => {}) as any);
-      mockConsoleError = jest.spyOn(console, 'error').mockImplementation(() => {});
     });
 
     afterEach(() => {
       (MetricsCollector as any).instance = undefined;
       process.env.NODE_ENV = originalEnv;
       mockExit.mockRestore();
-      mockConsoleError.mockRestore();
     });
 
     it('should log error, increment metrics, and exit in production', () => {
@@ -256,7 +249,7 @@ describe('errorHandler middleware', () => {
 
       expect(errorLogger.logError).toHaveBeenCalled();
       expect(MetricsCollector.getInstance().incrementErrors).toHaveBeenCalled();
-      expect(mockConsoleError).toHaveBeenCalled();
+      // Logging is now via structured Debug logger, not console.error
       expect(mockExit).toHaveBeenCalledWith(1);
     });
 
@@ -270,7 +263,7 @@ describe('errorHandler middleware', () => {
       handleUnhandledRejection(reason, promise);
 
       expect(errorLogger.logError).toHaveBeenCalled();
-      expect(mockConsoleError).toHaveBeenCalled();
+      // Logging is now via structured Debug logger, not console.error
       expect(mockExit).not.toHaveBeenCalled();
     });
   });

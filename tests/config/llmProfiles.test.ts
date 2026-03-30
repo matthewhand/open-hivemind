@@ -1,73 +1,96 @@
-jest.mock('fs', () => ({
-  existsSync: jest.fn(),
-  readFileSync: jest.fn(),
-  writeFileSync: jest.fn(),
-  mkdirSync: jest.fn(),
-}));
-
-jest.mock('../../src/config/UserConfigStore', () => ({
-  UserConfigStore: {
-    getInstance: jest.fn(),
-  },
-}));
-
-jest.mock('../../src/config/llmConfig', () => ({
-  get: jest.fn(),
-}));
-
-import * as fs from 'fs';
-import llmConfig from '../../src/config/llmConfig';
+import { loadProfiles, findProfileByKey } from '../../src/config/profileUtils';
 import { UserConfigStore } from '../../src/config/UserConfigStore';
-import {
-  getDefaultEmbeddingProfileKey,
-  getEmbeddingProfileByKey,
-  normalizeModelType,
-  resolveEmbeddingProfileKey,
-} from '../../src/config/llmProfiles';
+import llmConfig from '../../src/config/llmConfig';
 
-const mockedFs = fs as jest.Mocked<typeof fs>;
-const mockedUserConfigStore = UserConfigStore as jest.Mocked<typeof UserConfigStore>;
-const mockedLlmConfig = llmConfig as jest.Mocked<typeof llmConfig>;
+jest.mock('../../src/config/profileUtils', () => {
+  return {
+    loadProfiles: jest.fn(),
+    findProfileByKey: jest.requireActual('../../src/config/profileUtils').findProfileByKey,
+    saveProfiles: jest.fn()
+  }
+});
+
+jest.mock('../../src/config/UserConfigStore', () => {
+  return {
+    UserConfigStore: {
+      getInstance: jest.fn().mockReturnValue({
+        getGeneralSettings: jest.fn().mockReturnValue({
+          defaultEmbeddingProfile: 'embed-openai'
+        })
+      }),
+    },
+  };
+});
+
+// Since config/llmProfiles caches the profile we need to re-require it
+let getDefaultEmbeddingProfileKey: any;
+let getEmbeddingProfileByKey: any;
+let normalizeModelType: any;
+let resolveEmbeddingProfileKey: any;
 
 describe('llmProfiles embedding helpers', () => {
+  const mockProfilesData = {
+    llm: [
+      {
+        key: 'chat-openai',
+        name: 'Chat OpenAI',
+        provider: 'openai',
+        modelType: 'chat' as any,
+        config: { model: 'gpt-4o' },
+      },
+      {
+        key: 'embed-openai',
+        name: 'Embedding OpenAI',
+        provider: 'openai',
+        modelType: 'embedding' as any,
+        config: { model: 'text-embedding-3-large' },
+      },
+      {
+        key: 'hybrid-openai',
+        name: 'Hybrid OpenAI',
+        provider: 'openai',
+        modelType: 'both' as any,
+        config: { model: 'gpt-4.1-mini' },
+      },
+    ],
+  };
+
+  const originalEnv = process.env;
+
   beforeEach(() => {
+    jest.resetModules();
     jest.resetAllMocks();
+    process.env = { ...originalEnv };
 
-    mockedFs.existsSync.mockReturnValue(true);
-    mockedFs.readFileSync.mockReturnValue(
-      JSON.stringify({
-        llm: [
-          {
-            key: 'chat-openai',
-            name: 'Chat OpenAI',
-            provider: 'openai',
-            modelType: 'chat',
-            config: { model: 'gpt-4o' },
-          },
-          {
-            key: 'embed-openai',
-            name: 'Embedding OpenAI',
-            provider: 'openai',
-            modelType: 'embedding',
-            config: { model: 'text-embedding-3-large' },
-          },
-          {
-            key: 'hybrid-openai',
-            name: 'Hybrid OpenAI',
-            provider: 'openai',
-            modelType: 'both',
-            config: { model: 'gpt-4.1-mini' },
-          },
-        ],
-      })
-    );
+    const utils = require('../../src/config/profileUtils');
+    utils.loadProfiles.mockReturnValue(mockProfilesData);
+    utils.loadProfiles.mockImplementation((options: any) => {
+        if (options && options.validateAndMigrate) {
+          return options.validateAndMigrate(mockProfilesData);
+        }
+        return mockProfilesData;
+    });
 
-    mockedUserConfigStore.getInstance.mockReturnValue({
+    const store = require('../../src/config/UserConfigStore');
+    store.UserConfigStore.getInstance.mockReturnValue({
       getGeneralSettings: () => ({
         defaultEmbeddingProfile: 'embed-openai',
       }),
-    } as any);
-    mockedLlmConfig.get.mockReturnValue('');
+    });
+
+    delete process.env.DEFAULT_EMBEDDING_PROVIDER;
+    const config = require('../../src/config/llmConfig').default;
+    config.load({ DEFAULT_EMBEDDING_PROVIDER: '' });
+
+    const mod = require('../../src/config/llmProfiles');
+    getDefaultEmbeddingProfileKey = mod.getDefaultEmbeddingProfileKey;
+    getEmbeddingProfileByKey = mod.getEmbeddingProfileByKey;
+    normalizeModelType = mod.normalizeModelType;
+    resolveEmbeddingProfileKey = mod.resolveEmbeddingProfileKey;
+  });
+
+  afterEach(() => {
+    process.env = originalEnv;
   });
 
   test('normalizes unknown model types to chat', () => {
@@ -80,7 +103,9 @@ describe('llmProfiles embedding helpers', () => {
   });
 
   test('prefers DEFAULT_EMBEDDING_PROVIDER from llm config when present', () => {
-    mockedLlmConfig.get.mockReturnValue('hybrid-openai');
+    process.env.DEFAULT_EMBEDDING_PROVIDER = 'hybrid-openai';
+    const config = require('../../src/config/llmConfig').default;
+    config.load({ DEFAULT_EMBEDDING_PROVIDER: 'hybrid-openai' });
 
     expect(getDefaultEmbeddingProfileKey()).toBe('hybrid-openai');
   });

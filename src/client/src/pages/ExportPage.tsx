@@ -13,8 +13,6 @@ import {
   Clock,
   DownloadCloud as DownloadIcon
 } from 'lucide-react';
-import { Alert } from '../components/DaisyUI/Alert';
-import ToastNotification from '../components/DaisyUI/ToastNotification';
 import Modal, { ConfirmModal } from '../components/DaisyUI/Modal';
 import Button from '../components/DaisyUI/Button';
 import Input from '../components/DaisyUI/Input';
@@ -24,6 +22,9 @@ import EmptyState from '../components/DaisyUI/EmptyState';
 import StatsCards from '../components/DaisyUI/StatsCards';
 import SearchFilterBar from '../components/SearchFilterBar';
 import { apiService } from '../services/api';
+import DataTable from '../components/DaisyUI/DataTable';
+import type { RDVColumn, RowAction } from '../components/DaisyUI/DataTable';
+import { useSuccessToast, useErrorToast } from '../components/DaisyUI/ToastNotification';
 
 interface Backup {
   id: string;
@@ -35,7 +36,8 @@ interface Backup {
 }
 
 const ExportPage: React.FC = () => {
-  const [toast, setToast] = useState<{ title: string, message?: string, type: 'success' | 'error' } | null>(null);
+  const successToast = useSuccessToast();
+  const errorToast = useErrorToast();
   const [backups, setBackups] = useState<Backup[]>([]);
   const [loading, setLoading] = useState(false);
   const [createModalOpen, setCreateModalOpen] = useState(false);
@@ -53,8 +55,7 @@ const ExportPage: React.FC = () => {
       const data = await apiService.listSystemBackups();
       setBackups(data);
     } catch (err) {
-      console.error('Failed to fetch backups:', err);
-      setToast({ title: 'Error', message: 'Failed to load backups', type: 'error' });
+      errorToast('Error', 'Failed to load backups');
     } finally {
       setLoading(false);
     }
@@ -72,13 +73,13 @@ const ExportPage: React.FC = () => {
         name: newBackupName,
         description: newBackupDesc,
       });
-      setToast({ title: 'Success', message: 'Backup created successfully', type: 'success' });
+      successToast('Success', 'Backup created successfully');
       setCreateModalOpen(false);
       setNewBackupName('');
       setNewBackupDesc('');
       fetchBackups();
     } catch (err) {
-      setToast({ title: 'Error', message: err instanceof Error ? err.message : 'Failed to create backup', type: 'error' });
+      errorToast('Error', err instanceof Error ? err.message : 'Failed to create backup');
     } finally {
       setActionLoading(null);
     }
@@ -95,10 +96,10 @@ const ExportPage: React.FC = () => {
         try {
           setActionLoading(id);
           await apiService.deleteSystemBackup(id);
-          setToast({ title: 'Success', message: 'Backup deleted successfully', type: 'success' });
+          successToast('Success', 'Backup deleted successfully');
           fetchBackups();
         } catch (err) {
-          setToast({ title: 'Error', message: 'Failed to delete backup', type: 'error' });
+          errorToast('Error', 'Failed to delete backup');
         } finally {
           setActionLoading(null);
         }
@@ -117,10 +118,10 @@ const ExportPage: React.FC = () => {
         try {
           setActionLoading(id);
           await apiService.restoreSystemBackup(id, { overwrite: true });
-          setToast({ title: 'Success', message: 'System restored successfully. Reloading...', type: 'success' });
+          successToast('Success', 'System restored. Reloading...');
           setTimeout(() => window.location.reload(), 2000);
         } catch (err) {
-          setToast({ title: 'Error', message: 'Failed to restore backup', type: 'error' });
+          errorToast('Error', 'Failed to restore backup');
         } finally {
           setActionLoading(null);
         }
@@ -141,7 +142,7 @@ const ExportPage: React.FC = () => {
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
     } catch (err) {
-      setToast({ title: 'Error', message: 'Failed to download backup', type: 'error' });
+      errorToast('Error', 'Failed to download backup');
     } finally {
       setActionLoading(null);
     }
@@ -160,9 +161,9 @@ const ExportPage: React.FC = () => {
       a.click();
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
-      setToast({ title: 'Success', message: `Configuration exported successfully as ${exportFormat.toUpperCase()}`, type: 'success' });
+      successToast('Success', `Configuration exported as ${exportFormat.toUpperCase()}`);
     } catch (err) {
-      setToast({ title: 'Error', message: 'Failed to export configuration', type: 'error' });
+      errorToast('Error', 'Failed to export configuration');
     }
   };
 
@@ -183,13 +184,9 @@ const ExportPage: React.FC = () => {
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
 
-      setToast({ title: 'Success', message: `OpenAPI ${format.toUpperCase()} spec downloaded successfully`, type: 'success' });
+      successToast('Success', `OpenAPI ${format.toUpperCase()} spec downloaded`);
     } catch (error) {
-      setToast({
-        title: 'Error',
-        message: error instanceof Error ? error.message : 'Failed to download OpenAPI spec',
-        type: 'error',
-      });
+      errorToast('Error', error instanceof Error ? error.message : 'Failed to download OpenAPI spec');
     }
   };
 
@@ -208,6 +205,58 @@ const ExportPage: React.FC = () => {
       backup.description.toLowerCase().includes(searchQuery.toLowerCase())
     );
   }, [backups, searchQuery]);
+
+  const backupColumns: RDVColumn<Backup>[] = [
+    {
+      key: 'name',
+      title: 'Name',
+      prominent: true,
+      render: (value: string) => (
+        <div className="flex items-center gap-2 font-bold">
+          <Archive className="w-4 h-4 text-base-content/40" />
+          {value}
+        </div>
+      ),
+    },
+    {
+      key: 'description',
+      title: 'Description',
+      render: (value: string) => (
+        <span className="text-sm text-base-content/70 truncate max-w-xs" title={value}>
+          {value || '-'}
+        </span>
+      ),
+    },
+    { key: 'size', title: 'Size', render: (value: number) => <span className="font-mono text-sm">{formatBytes(value)}</span> },
+    { key: 'createdAt', title: 'Created', render: (value: string) => <span className="text-sm">{new Date(value).toLocaleString()}</span> },
+  ];
+
+  const backupActions: RowAction<Backup>[] = [
+    {
+      label: 'Restore',
+      icon: <RotateCcw className="w-4 h-4" />,
+      variant: 'warning',
+      onClick: (b) => handleRestoreBackup(b.id),
+      disabled: (b) => actionLoading === b.id,
+      tooltip: 'Restore',
+    },
+    {
+      label: 'Download',
+      icon: <Download className="w-4 h-4" />,
+      variant: 'primary',
+      onClick: (b) => handleDownloadBackup(b.id, b.name),
+      disabled: (b) => actionLoading === b.id,
+      tooltip: 'Download',
+    },
+    {
+      label: 'Delete',
+      icon: <Trash2 className="w-4 h-4" />,
+      variant: 'error',
+      onClick: (b) => handleDeleteBackup(b.id),
+      disabled: (b) => actionLoading === b.id,
+      tooltip: 'Delete',
+    },
+  ];
 
   const totalSize = useMemo(() => {
     return backups.reduce((acc, b) => acc + b.size, 0);
@@ -326,104 +375,35 @@ const ExportPage: React.FC = () => {
             searchPlaceholder="Search backups..."
           />
 
-          <div className="overflow-x-auto mt-4">
-            <table className="table table-zebra w-full">
-              <thead>
-                <tr>
-                  <th>Name</th>
-                  <th>Description</th>
-                  <th>Size</th>
-                  <th>Created</th>
-                  <th className="text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {loading ? (
-                  <tr>
-                    <td colSpan={5} className="text-center py-8">
-                      <span className="loading loading-spinner loading-md" aria-hidden="true"></span>
-                    </td>
-                  </tr>
-                ) : backups.length === 0 ? (
-                  <tr>
-                    <td colSpan={5}>
-                      <EmptyState
-                        title="No backups found"
-                        description="Create your first backup to secure your configuration."
-                        icon={Archive}
-                        variant="noData"
-                        actionLabel="Create Backup"
-                        onAction={() => setCreateModalOpen(true)}
-                      />
-                    </td>
-                  </tr>
-                ) : filteredBackups.length === 0 ? (
-                  <tr>
-                    <td colSpan={5}>
-                      <EmptyState
-                        title="No backups match your search"
-                        description="Try adjusting your search query."
-                        icon={Search}
-                        variant="noResults"
-                        actionLabel="Clear Search"
-                        onAction={() => setSearchQuery('')}
-                      />
-                    </td>
-                  </tr>
+          <div className="mt-4">
+            <DataTable<Backup>
+              data={filteredBackups}
+              columns={backupColumns}
+              actions={backupActions}
+              loading={loading}
+              rowKey={(b) => b.id}
+              emptyState={
+                backups.length === 0 ? (
+                  <EmptyState
+                    title="No backups found"
+                    description="Create your first backup to secure your configuration."
+                    icon={Archive}
+                    variant="noData"
+                    actionLabel="Create Backup"
+                    onAction={() => setCreateModalOpen(true)}
+                  />
                 ) : (
-                  filteredBackups.map((backup) => (
-                    <tr key={backup.id} className="hover">
-                      <td className="font-bold">
-                        <div className="flex items-center gap-2">
-                          <Archive className="w-4 h-4 text-base-content/40" />
-                          {backup.name}
-                        </div>
-                      </td>
-                      <td className="text-sm text-base-content/70 truncate max-w-xs" title={backup.description}>
-                        {backup.description || '-'}
-                      </td>
-                      <td className="font-mono text-sm">{formatBytes(backup.size)}</td>
-                      <td className="text-sm">{new Date(backup.createdAt).toLocaleString()}</td>
-                      <td className="flex justify-end gap-2">
-                        <div className="tooltip tooltip-left" data-tip="Restore">
-                          <Button
-                            size="xs"
-                            variant="ghost"
-                            onClick={() => handleRestoreBackup(backup.id)}
-                            disabled={actionLoading === backup.id}
-                            className="text-warning hover:bg-warning/10"
-                          >
-                            <RotateCcw className="w-4 h-4" />
-                          </Button>
-                        </div>
-                        <div className="tooltip tooltip-left" data-tip="Download">
-                          <Button
-                            size="xs"
-                            variant="ghost"
-                            onClick={() => handleDownloadBackup(backup.id, backup.name)}
-                            disabled={actionLoading === backup.id}
-                            className="text-primary hover:bg-primary/10"
-                          >
-                            <Download className="w-4 h-4" />
-                          </Button>
-                        </div>
-                        <div className="tooltip tooltip-left" data-tip="Delete">
-                          <Button
-                            size="xs"
-                            variant="ghost"
-                            onClick={() => handleDeleteBackup(backup.id)}
-                            disabled={actionLoading === backup.id}
-                            className="text-error hover:bg-error/10"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
+                  <EmptyState
+                    title="No backups match your search"
+                    description="Try adjusting your search query."
+                    icon={Search}
+                    variant="noResults"
+                    actionLabel="Clear Search"
+                    onAction={() => setSearchQuery('')}
+                  />
+                )
+              }
+            />
           </div>
         </div>
       </div>
@@ -525,17 +505,6 @@ const ExportPage: React.FC = () => {
           </div>
         </div>
       </Modal>
-
-      {toast && (
-        <div className="toast toast-top toast-end">
-          <div className={`alert ${toast.type === 'success' ? 'alert-success' : 'alert-error'}`}>
-            <span>{toast.title ? `${toast.title}: ` : ''}{toast.message}</span>
-            <button onClick={() => setToast(null)} className="btn btn-sm btn-ghost" aria-label="Close modal">
-              ✕
-            </button>
-          </div>
-        </div>
-      )}
 
       <ConfirmModal
         isOpen={confirmModal.isOpen}

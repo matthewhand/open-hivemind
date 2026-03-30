@@ -2,6 +2,13 @@ import Debug from 'debug';
 import { Router } from 'express';
 import ProviderConfigManager from '@src/config/ProviderConfigManager';
 import { authenticateToken, requireRole } from '@src/server/middleware/auth';
+import { HTTP_STATUS } from '../../types/constants';
+import {
+  CreateIntegrationSchema,
+  IntegrationIdParamSchema,
+  UpdateIntegrationSchema,
+} from '../../validation/schemas/integrationsSchema';
+import { validateRequest } from '../../validation/validateRequest';
 
 const log = Debug('app:integrationsRouter');
 const router = Router();
@@ -29,9 +36,11 @@ router.get('/', (req, res) => {
     const filtered = category ? providerManager.getAllProviders(category) : providers;
 
     return res.json(filtered);
-  } catch (err: any) {
+  } catch (err: unknown) {
     log('Error fetching integrations:', err);
-    return res.status(500).json({ error: 'Failed to fetch integrations' });
+    return res
+      .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
+      .json({ error: 'Failed to fetch integrations' });
   }
 });
 
@@ -39,10 +48,10 @@ router.get('/', (req, res) => {
  * GET /api/integrations/:id
  * Get single provider instance
  */
-router.get('/:id', (req, res) => {
+router.get('/:id', validateRequest(IntegrationIdParamSchema), (req, res) => {
   const provider = providerManager.getProvider(req.params.id);
   if (!provider) {
-    return res.status(404).json({ error: 'Provider not found' });
+    return res.status(HTTP_STATUS.NOT_FOUND).json({ error: 'Provider not found' });
   }
   return res.json(provider);
 });
@@ -51,13 +60,9 @@ router.get('/:id', (req, res) => {
  * POST /api/integrations
  * Create new provider instance
  */
-router.post('/', (req, res) => {
+router.post('/', validateRequest(CreateIntegrationSchema), (req, res) => {
   try {
     const { type, category, name, config, enabled } = req.body;
-
-    if (!type || !name || !category) {
-      return res.status(400).json({ error: 'Missing required fields: type, category, name' });
-    }
 
     const newInstance = providerManager.createProvider({
       type,
@@ -68,10 +73,12 @@ router.post('/', (req, res) => {
     });
 
     log(`Created new ${category} provider: ${name} (${type})`);
-    return res.status(201).json(newInstance);
-  } catch (err: any) {
+    return res.status(HTTP_STATUS.CREATED).json(newInstance);
+  } catch (err: unknown) {
     log('Error creating integration:', err);
-    return res.status(500).json({ error: 'Failed to create integration' });
+    return res
+      .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
+      .json({ error: 'Failed to create integration' });
   }
 });
 
@@ -79,7 +86,7 @@ router.post('/', (req, res) => {
  * PUT /api/integrations/:id
  * Update provider instance
  */
-router.put('/:id', (req, res) => {
+router.put('/:id', validateRequest(UpdateIntegrationSchema), (req, res) => {
   try {
     const { id } = req.params;
     const updates = req.body;
@@ -89,14 +96,16 @@ router.put('/:id', (req, res) => {
 
     const updated = providerManager.updateProvider(id, updates);
     if (!updated) {
-      return res.status(404).json({ error: 'Provider not found' });
+      return res.status(HTTP_STATUS.NOT_FOUND).json({ error: 'Provider not found' });
     }
 
     log(`Updated provider: ${updated.name}`);
     return res.json(updated);
-  } catch (err: any) {
+  } catch (err: unknown) {
     log('Error updating integration:', err);
-    return res.status(500).json({ error: 'Failed to update integration' });
+    return res
+      .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
+      .json({ error: 'Failed to update integration' });
   }
 });
 
@@ -104,17 +113,19 @@ router.put('/:id', (req, res) => {
  * DELETE /api/integrations/:id
  * Delete provider instance
  */
-router.delete('/:id', (req, res) => {
+router.delete('/:id', validateRequest(IntegrationIdParamSchema), (req, res) => {
   try {
     const success = providerManager.deleteProvider(req.params.id);
     if (!success) {
-      return res.status(404).json({ error: 'Provider not found' });
+      return res.status(HTTP_STATUS.NOT_FOUND).json({ error: 'Provider not found' });
     }
     log(`Deleted provider: ${req.params.id}`);
     return res.json({ success: true });
-  } catch (err: any) {
+  } catch (err: unknown) {
     log('Error deleting integration:', err);
-    return res.status(500).json({ error: 'Failed to delete integration' });
+    return res
+      .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
+      .json({ error: 'Failed to delete integration' });
   }
 });
 

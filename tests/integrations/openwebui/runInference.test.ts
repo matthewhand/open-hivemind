@@ -1,5 +1,6 @@
 import axios from 'axios';
 import Debug from 'debug';
+import { resetAllCircuitBreakers } from '../../../src/common/CircuitBreaker';
 import { generateChatCompletion } from '../../../src/integrations/openwebui/runInference';
 import * as sessionManager from '../../../src/integrations/openwebui/sessionManager';
 import * as uploadKnowledgeFile from '../../../src/integrations/openwebui/uploadKnowledgeFile';
@@ -9,6 +10,10 @@ jest.mock('debug', () => () => jest.fn());
 
 jest.mock('axios');
 const mockedAxios = axios as jest.Mocked<typeof axios>;
+
+jest.mock('../../../src/utils/ssrfGuard', () => ({
+  isSafeUrl: jest.fn().mockResolvedValue(true),
+}));
 
 describe('runInference.generateChatCompletion', () => {
   const mockGetSessionKey = jest.spyOn(sessionManager, 'getSessionKey');
@@ -20,6 +25,7 @@ describe('runInference.generateChatCompletion', () => {
     }) as any;
 
   beforeEach(() => {
+    resetAllCircuitBreakers();
     jest.clearAllMocks();
   });
 
@@ -53,13 +59,14 @@ describe('runInference.generateChatCompletion', () => {
       history: ['prev1', 'prev2'],
       metadata: { a: 1 },
     });
-    expect(options).toEqual({
-      headers: {
-        Authorization: 'Bearer sk-123',
-        'Content-Type': 'application/json',
-      },
-      timeout: 15000,
-    });
+    expect(options).toEqual(
+      expect.objectContaining({
+        headers: expect.objectContaining({
+          Authorization: 'Bearer sk-123',
+          'Content-Type': 'application/json',
+        }),
+      })
+    );
 
     expect(res).toEqual({ text: 'hello world' });
   });

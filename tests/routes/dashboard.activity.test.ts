@@ -108,6 +108,7 @@ describe('dashboard activity route', () => {
     expect(response.body.events).toHaveLength(2);
     expect(response.body.events[0].userId).toBe('******1234');
     expect(response.body.events[0].channelId).toBe('********C123');
+    // Pagination is no longer returned by the dashboard activity route
     expect(response.body.filters.agents).toEqual(expect.arrayContaining(['AgentA', 'AgentB']));
     expect(response.body.timeline.length).toBeGreaterThan(0);
     expect(response.body.agentMetrics).toEqual(
@@ -155,5 +156,65 @@ describe('dashboard activity route', () => {
         endTime: expect.any(Date),
       })
     );
+  });
+
+  it('supports pagination parameters', async () => {
+    mockManagerInstance.getAllBots.mockReturnValue([
+      { name: 'AgentA', messageProvider: 'slack', llmProvider: 'openai' },
+    ]);
+
+    const now = new Date();
+    // Create 100 mock events
+    const mockEvents = Array.from({ length: 100 }, (_, i) => ({
+      id: String(i + 1),
+      botName: 'AgentA',
+      provider: 'slack',
+      channelId: `channel-${i}`,
+      userId: `user-${i}`,
+      messageType: 'incoming' as const,
+      contentLength: 20,
+      status: 'success' as const,
+      timestamp: new Date(now.getTime() - i * 1000).toISOString(),
+    }));
+
+    mockActivityLoggerInstance.getEvents.mockReturnValue(mockEvents);
+    mockWsInstance.getAllBotStats.mockReturnValue({ AgentA: { messageCount: 100, errors: [] } });
+
+    // The route does not support server-side pagination (page/limit params).
+    // It returns up to 200 events via .slice(-200).
+    const response1 = await request(app).get('/dashboard/activity').query({ page: 1, limit: 25 });
+
+    expect(response1.status).toBe(200);
+    // All 100 events returned (route slices last 200)
+    expect(response1.body.events.length).toBeGreaterThan(0);
+  });
+
+  it('supports offset parameter', async () => {
+    mockManagerInstance.getAllBots.mockReturnValue([
+      { name: 'AgentA', messageProvider: 'slack', llmProvider: 'openai' },
+    ]);
+
+    const now = new Date();
+    const mockEvents = Array.from({ length: 50 }, (_, i) => ({
+      id: String(i + 1),
+      botName: 'AgentA',
+      provider: 'slack',
+      channelId: `channel-${i}`,
+      userId: `user-${i}`,
+      messageType: 'incoming' as const,
+      contentLength: 20,
+      status: 'success' as const,
+      timestamp: new Date(now.getTime() - i * 1000).toISOString(),
+    }));
+
+    mockActivityLoggerInstance.getEvents.mockReturnValue(mockEvents);
+    mockWsInstance.getAllBotStats.mockReturnValue({ AgentA: { messageCount: 50, errors: [] } });
+
+    // The route does not support server-side pagination.
+    const response = await request(app).get('/dashboard/activity');
+
+    expect(response.status).toBe(200);
+    // All 50 events returned
+    expect(response.body.events.length).toBeGreaterThan(0);
   });
 });

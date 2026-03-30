@@ -89,7 +89,7 @@ describe('SlackMessageProcessor', () => {
 
       // Test initializes with a valid botManager
       const smp = new SlackMessageProcessor(createBotManagerMock(createWebClientMock()));
-      expect(smp).toBeDefined();
+      expect(smp).toBeInstanceOf(SlackMessageProcessor);
     });
   });
 
@@ -165,8 +165,8 @@ describe('SlackMessageProcessor', () => {
         messageCount: 3,
       });
       expect(enriched.data.slackUser).toMatchObject({ slackUserId: 'U999', userName: 'Test User' });
-      expect(enriched.data.metadata).toBeDefined();
-      expect(enriched.data.channelContent).toBeDefined();
+      expect(enriched.data.metadata).not.toBeUndefined();
+      expect(enriched.data.channelContent).toEqual({ content: '' });
       // When SUPPRESS_CANVAS_CONTENT=true, enrichment sets empty channelContent
       expect(enriched.data.channelContent).toEqual({ content: '' });
       expect(enriched.data.messageAttachments[0]).toMatchObject({
@@ -298,7 +298,7 @@ describe('SlackMessageProcessor', () => {
       const response = `He said &quot;Hello" -- that's **bold** and __italics__ "end`;
       const out = await smp.processResponse(response);
       expect(typeof out.text).toBe('string');
-      expect(out.blocks).toBeDefined();
+      expect(Array.isArray(out.blocks)).toBe(true);
       expect(out.blocks?.[0]).toMatchObject({ type: 'section' });
     });
 

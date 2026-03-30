@@ -264,7 +264,7 @@ describe('IMessengerService Integration Tests', () => {
         'thread-123'
       );
 
-      expect(messageId).toBeDefined();
+      expect(typeof messageId).toBe('string');
 
       const messages = service.getStoredMessages('general');
       expect(messages[0].data.threadId).toBe('thread-123');

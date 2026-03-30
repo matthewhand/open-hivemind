@@ -1,6 +1,13 @@
 import Debug from 'debug';
 import { Router } from 'express';
 import { AuditLogger } from '../../common/auditLogger';
+import { HTTP_STATUS } from '../../types/constants';
+import {
+  CreateCloudProviderSchema,
+  CreateEnterpriseIntegrationSchema,
+  PerformanceOptimizeSchema,
+} from '../../validation/schemas/enterpriseSchema';
+import { validateRequest } from '../../validation/validateRequest';
 
 const debug = Debug('app:enterpriseRoutes');
 const router = Router();
@@ -47,7 +54,7 @@ router.get('/api/compliance', (req, res) => {
     });
   } catch (error) {
     debug('Compliance API error:', error);
-    return res.status(500).json({
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
       success: false,
       message: 'Failed to get compliance status',
       error: error instanceof Error ? error.message : 'Unknown error',
@@ -92,7 +99,7 @@ router.get('/api/cloud-providers', (req, res) => {
     });
   } catch (error) {
     debug('Cloud providers API error:', error);
-    return res.status(500).json({
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
       success: false,
       message: 'Failed to get cloud providers',
       error: error instanceof Error ? error.message : 'Unknown error',
@@ -101,16 +108,9 @@ router.get('/api/cloud-providers', (req, res) => {
 });
 
 // Add cloud provider
-router.post('/api/cloud-providers', (req, res) => {
+router.post('/api/cloud-providers', validateRequest(CreateCloudProviderSchema), (req, res) => {
   try {
     const { name, type, region, _credentials } = req.body;
-
-    if (!name || !type || !region) {
-      return res.status(400).json({
-        success: false,
-        message: 'Name, type, and region are required',
-      });
-    }
 
     // In a real implementation, this would configure the cloud provider
     // For now, simulate creation
@@ -130,7 +130,7 @@ router.post('/api/cloud-providers', (req, res) => {
     });
   } catch (error) {
     debug('Add cloud provider API error:', error);
-    return res.status(500).json({
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
       success: false,
       message: 'Failed to add cloud provider',
       error: error instanceof Error ? error.message : 'Unknown error',
@@ -179,7 +179,7 @@ router.get('/api/integrations', (req, res) => {
     });
   } catch (error) {
     debug('Integrations API error:', error);
-    return res.status(500).json({
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
       success: false,
       message: 'Failed to get integrations',
       error: error instanceof Error ? error.message : 'Unknown error',
@@ -188,16 +188,9 @@ router.get('/api/integrations', (req, res) => {
 });
 
 // Add integration
-router.post('/api/integrations', (req, res) => {
+router.post('/api/integrations', validateRequest(CreateEnterpriseIntegrationSchema), (req, res) => {
   try {
     const { name, type, provider, config } = req.body;
-
-    if (!name || !type || !provider) {
-      return res.status(400).json({
-        success: false,
-        message: 'Name, type, and provider are required',
-      });
-    }
 
     // In a real implementation, this would create the integration
     // For now, simulate creation
@@ -218,7 +211,7 @@ router.post('/api/integrations', (req, res) => {
     });
   } catch (error) {
     debug('Add integration API error:', error);
-    return res.status(500).json({
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
       success: false,
       message: 'Failed to add integration',
       error: error instanceof Error ? error.message : 'Unknown error',
@@ -226,21 +219,32 @@ router.post('/api/integrations', (req, res) => {
   }
 });
 
-// Get audit events
+// Get audit events — supports composable query-param filters
 router.get('/api/audit', async (req, res) => {
   try {
-    const { limit = 50, offset = 0, user, action } = req.query;
+    const {
+      limit = '200',
+      offset = '0',
+      search,
+      action,
+      resource,
+      user,
+      dateFrom,
+      dateTo,
+    } = req.query as Record<string, string | undefined>;
 
     const auditLogger = AuditLogger.getInstance();
 
-    let auditEvents;
-    if (user) {
-      auditEvents = await auditLogger.getAuditEventsByUser(user as string, Number(limit));
-    } else if (action) {
-      auditEvents = await auditLogger.getAuditEventsByAction(action as string, Number(limit));
-    } else {
-      auditEvents = await auditLogger.getAuditEvents(Number(limit), Number(offset));
-    }
+    const filter = auditLogger.buildFilter({
+      search,
+      action,
+      resource,
+      user,
+      dateFrom,
+      dateTo,
+    });
+
+    const auditEvents = await auditLogger.getAuditEvents(Number(limit), Number(offset), filter);
 
     return res.json({
       success: true,
@@ -249,9 +253,72 @@ router.get('/api/audit', async (req, res) => {
     });
   } catch (error) {
     debug('Audit API error:', error);
-    return res.status(500).json({
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
       success: false,
       message: 'Failed to get audit events',
+      error: error instanceof Error ? error.message : 'Unknown error',
+    });
+  }
+});
+
+// Export audit events as CSV (no pagination cap)
+router.get('/api/audit/export', async (req, res) => {
+  try {
+    const { search, action, resource, user, dateFrom, dateTo } = req.query as Record<
+      string,
+      string | undefined
+    >;
+
+    const auditLogger = AuditLogger.getInstance();
+
+    const filter = auditLogger.buildFilter({
+      search,
+      action,
+      resource,
+      user,
+      dateFrom,
+      dateTo,
+    });
+
+    const events = await auditLogger.getAllMatchingEvents(filter);
+
+    // Build CSV
+    const header = 'id,timestamp,user,action,resource,result,details,ipAddress';
+    const escCsv = (v: string | undefined) => {
+      if (!v) return '';
+      // Escape double-quotes and wrap in quotes if the value contains commas, quotes, or newlines
+      if (/[",\n\r]/.test(v)) {
+        return `"${v.replace(/"/g, '""')}"`;
+      }
+      return v;
+    };
+
+    const rows = events.map((e) =>
+      [
+        escCsv(e.id),
+        escCsv(e.timestamp),
+        escCsv(e.user),
+        escCsv(e.action),
+        escCsv(e.resource),
+        escCsv(e.result),
+        escCsv(e.details),
+        escCsv(e.ipAddress),
+      ].join(',')
+    );
+
+    const csv = [header, ...rows].join('\n');
+
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader(
+      'Content-Disposition',
+      `attachment; filename="audit-log-${new Date().toISOString().slice(0, 10)}.csv"`
+    );
+    return res.send(csv);
+  } catch (error) {
+    debug('Audit export API error:', error);
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
+      success: false,
+      message: 'Failed to export audit events',
       error: error instanceof Error ? error.message : 'Unknown error',
     });
   }
@@ -298,7 +365,7 @@ router.get('/api/performance', (req, res) => {
     });
   } catch (error) {
     debug('Performance API error:', error);
-    return res.status(500).json({
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
       success: false,
       message: 'Failed to get performance metrics',
       error: error instanceof Error ? error.message : 'Unknown error',
@@ -326,7 +393,7 @@ router.post('/api/compliance/check', (req, res) => {
     });
   } catch (error) {
     debug('Compliance check API error:', error);
-    return res.status(500).json({
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
       success: false,
       message: 'Failed to run compliance check',
       error: error instanceof Error ? error.message : 'Unknown error',
@@ -366,7 +433,7 @@ router.get('/api/security/alerts', (req, res) => {
     });
   } catch (error) {
     debug('Security alerts API error:', error);
-    return res.status(500).json({
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
       success: false,
       message: 'Failed to get security alerts',
       error: error instanceof Error ? error.message : 'Unknown error',
@@ -406,7 +473,7 @@ router.get('/api/governance/policies', (req, res) => {
     });
   } catch (error) {
     debug('Governance policies API error:', error);
-    return res.status(500).json({
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
       success: false,
       message: 'Failed to get governance policies',
       error: error instanceof Error ? error.message : 'Unknown error',
@@ -415,7 +482,7 @@ router.get('/api/governance/policies', (req, res) => {
 });
 
 // Optimize performance
-router.post('/api/performance/optimize', (req, res) => {
+router.post('/api/performance/optimize', validateRequest(PerformanceOptimizeSchema), (req, res) => {
   try {
     const { target, type } = req.body;
 
@@ -441,7 +508,7 @@ router.post('/api/performance/optimize', (req, res) => {
     });
   } catch (error) {
     debug('Performance optimization API error:', error);
-    return res.status(500).json({
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
       success: false,
       message: 'Failed to optimize performance',
       error: error instanceof Error ? error.message : 'Unknown error',

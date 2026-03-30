@@ -51,6 +51,7 @@ jest.mock('../../src/mcp/MCPService', () => ({
       connectToServer: jest.fn(),
       disconnectFromServer: jest.fn(),
       getConnectedServers: jest.fn(() => []),
+      getConnectedServersWithMetadata: jest.fn(() => []),
       getToolsFromServer: jest.fn(() => []),
     })),
   },
@@ -58,6 +59,84 @@ jest.mock('../../src/mcp/MCPService', () => ({
 
 jest.mock('../../src/utils/envUtils', () => ({
   getRelevantEnvVars: jest.fn(() => ({})),
+}));
+
+jest.mock('../../src/config/trustedMcpRepos', () => ({
+  getTrustedMcpReposConfig: jest.fn(() => ({ repos: [] })),
+}));
+
+// Mock ToolUsageGuardsManager
+jest.mock('../../src/managers/ToolUsageGuardsManager', () => ({
+  ToolUsageGuardsManager: {
+    getInstance: jest.fn(() => {
+      const guards = new Map();
+      // Add default test guard
+      guards.set('guard1', {
+        id: 'guard1',
+        name: 'Test Guard',
+        description: 'Test description',
+        toolId: 'test_tool',
+        guardType: 'owner_only',
+        allowedUsers: [],
+        allowedRoles: [],
+        isActive: true,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      });
+
+      return {
+        getAllGuards: jest.fn(() => Array.from(guards.values())),
+        getGuard: jest.fn((id: string) => guards.get(id)),
+        createGuard: jest.fn((request: any) => {
+          const newGuard = {
+            id: `guard${Date.now()}`,
+            name: request.name,
+            description: request.description,
+            toolId: request.toolId,
+            guardType: request.guardType,
+            allowedUsers: request.allowedUsers || [],
+            allowedRoles: request.allowedRoles || [],
+            isActive: request.isActive !== false,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+          };
+          guards.set(newGuard.id, newGuard);
+          return newGuard;
+        }),
+        updateGuard: jest.fn((id: string, updates: any) => {
+          const existing = guards.get(id);
+          if (!existing) {
+            throw new Error(`Tool usage guard with ID ${id} not found`);
+          }
+          const updated = {
+            ...existing,
+            ...updates,
+            updatedAt: new Date().toISOString(),
+          };
+          guards.set(id, updated);
+          return updated;
+        }),
+        deleteGuard: jest.fn((id: string) => {
+          const existed = guards.has(id);
+          guards.delete(id);
+          return existed;
+        }),
+        toggleGuard: jest.fn((id: string, isActive: boolean) => {
+          const existing = guards.get(id);
+          if (!existing) {
+            throw new Error(`Tool usage guard with ID ${id} not found`);
+          }
+          const updated = {
+            ...existing,
+            isActive,
+            updatedAt: new Date().toISOString(),
+          };
+          guards.set(id, updated);
+          return updated;
+        }),
+      };
+    }),
+  },
 }));
 
 const app = express();
@@ -92,7 +171,6 @@ describe('Admin Routes', () => {
       const response = await request(app).get('/api/admin/llm-providers').expect(200);
 
       expect(response.body.success).toBe(true);
-      expect(response.body.data.providers).toBeDefined();
       expect(Array.isArray(response.body.data.providers)).toBe(true);
     });
 
@@ -130,7 +208,8 @@ describe('Admin Routes', () => {
         .expect(400);
 
       expect(response.body.error).toBe('Validation failed');
-      expect(response.body.issues).toBeDefined();
+      expect(Array.isArray(response.body.issues)).toBe(true);
+      expect(response.body.issues.length).toBeGreaterThan(0);
     });
 
     test('PUT /api/admin/llm-providers/:id should update provider', async () => {
@@ -174,7 +253,6 @@ describe('Admin Routes', () => {
       const response = await request(app).get('/api/admin/messenger-providers').expect(200);
 
       expect(response.body.success).toBe(true);
-      expect(response.body.data.providers).toBeDefined();
       expect(Array.isArray(response.body.data.providers)).toBe(true);
     });
 
@@ -211,7 +289,8 @@ describe('Admin Routes', () => {
         .expect(400);
 
       expect(response.body.error).toBe('Validation failed');
-      expect(response.body.issues).toBeDefined();
+      expect(Array.isArray(response.body.issues)).toBe(true);
+      expect(response.body.issues.length).toBeGreaterThan(0);
     });
   });
 
@@ -220,7 +299,6 @@ describe('Admin Routes', () => {
       const response = await request(app).get('/api/admin/personas').expect(200);
 
       expect(response.body.success).toBe(true);
-      expect(response.body.data.personas).toBeDefined();
       expect(Array.isArray(response.body.data.personas)).toBe(true);
     });
 
@@ -246,7 +324,8 @@ describe('Admin Routes', () => {
       const response = await request(app).post('/api/admin/personas').send(invalidData).expect(400);
 
       expect(response.body.error).toBe('Validation failed');
-      expect(response.body.issues).toBeDefined();
+      expect(Array.isArray(response.body.issues)).toBe(true);
+      expect(response.body.issues.length).toBeGreaterThan(0);
     });
 
     test('PUT /api/admin/personas/:key should update persona', async () => {
@@ -275,8 +354,8 @@ describe('Admin Routes', () => {
       const response = await request(app).get('/api/admin/mcp-servers').expect(200);
 
       expect(response.body.success).toBe(true);
-      expect(response.body.data.servers).toBeDefined();
-      expect(response.body.data.configurations).toBeDefined();
+      expect(Array.isArray(response.body.data.servers)).toBe(true);
+      expect(Array.isArray(response.body.data.configurations)).toBe(true);
     });
 
     test('POST /api/admin/mcp-servers/connect should connect to server', async () => {
@@ -306,7 +385,8 @@ describe('Admin Routes', () => {
         .expect(400);
 
       expect(response.body.error).toBe('Validation failed');
-      expect(response.body.issues).toBeDefined();
+      expect(Array.isArray(response.body.issues)).toBe(true);
+      expect(response.body.issues.length).toBeGreaterThan(0);
     });
 
     test('POST /api/admin/mcp-servers/disconnect should disconnect from server', async () => {
@@ -328,7 +408,6 @@ describe('Admin Routes', () => {
       const response = await request(app).get('/api/admin/tool-usage-guards').expect(200);
 
       expect(response.body.success).toBe(true);
-      expect(response.body.data.guards).toBeDefined();
       expect(Array.isArray(response.body.data.guards)).toBe(true);
     });
 
@@ -364,7 +443,8 @@ describe('Admin Routes', () => {
         .expect(400);
 
       expect(response.body.error).toBe('Validation failed');
-      expect(response.body.issues).toBeDefined();
+      expect(Array.isArray(response.body.issues)).toBe(true);
+      expect(response.body.issues.length).toBeGreaterThan(0);
     });
 
     test('PUT /api/admin/tool-usage-guards/:id should update guard', async () => {
@@ -408,7 +488,7 @@ describe('Admin Routes', () => {
       const response = await request(app).get('/api/admin/env-overrides').expect(200);
 
       expect(response.body.success).toBe(true);
-      expect(response.body.data.envVars).toBeDefined();
+      expect(typeof response.body.data.envVars).toBe('object');
     });
   });
 });

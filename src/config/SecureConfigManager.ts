@@ -10,7 +10,7 @@ export interface SecureConfig {
   id: string;
   name: string;
   type?: string;
-  data: any;
+  data: Record<string, unknown>;
   updatedAt: string;
   checksum: string;
   createdAt?: string;
@@ -34,19 +34,41 @@ export class SecureConfigManager {
     this.configDir = path.join(process.cwd(), 'config', 'secure');
     this.backupDir = path.join(process.cwd(), 'config', 'backups');
     this.keyPath = path.join(process.cwd(), 'config', '.key');
-
-    this.ensureDirectories();
-
-    // Generate or load encryption key
-    this.encryptionKey = this.getOrCreateEncryptionKey();
     this.mainConfigDir = path.join(process.cwd(), 'config');
+
+    // Note: ensureDirectories and getOrCreateEncryptionKey are now async
+    // We'll need to initialize them separately
+    // For now, use a placeholder buffer that will be replaced during initialization
+    this.encryptionKey = Buffer.alloc(32);
   }
 
-  public static getInstance(): SecureConfigManager {
+  public static async getInstance(): Promise<SecureConfigManager> {
     if (!SecureConfigManager.instance) {
       SecureConfigManager.instance = new SecureConfigManager();
+      await SecureConfigManager.instance.initialize();
     }
     return SecureConfigManager.instance;
+  }
+
+  /**
+   * Get the instance synchronously if already initialized, or create a non-initialized instance.
+   * This should only be used in sync contexts where async initialization isn't possible.
+   * The instance will be partially functional until initialize() is called.
+   */
+  public static getInstanceSync(): SecureConfigManager {
+    if (!SecureConfigManager.instance) {
+      SecureConfigManager.instance = new SecureConfigManager();
+      // Schedule async initialization in the background
+      SecureConfigManager.instance.initialize().catch((err) => {
+        debug('ERROR:', 'Failed to initialize SecureConfigManager:', err);
+      });
+    }
+    return SecureConfigManager.instance;
+  }
+
+  private async initialize(): Promise<void> {
+    await this.ensureDirectories();
+    this.encryptionKey = await this.getOrCreateEncryptionKey();
   }
 
   /**
@@ -122,8 +144,8 @@ export class SecureConfigManager {
       
       await fs.promises.writeFile(filePath, encryptedData, 'utf8');
       debug(`Configuration ${config.id} stored successfully`);
-    } catch (error: unknown) {
-      const hivemindError = ErrorUtils.toHivemindError(error) as any;
+    } catch (error: any) {
+      const hivemindError = ErrorUtils.toHivemindError(error);
       debug(`Failed to store configuration ${config.id}:`, hivemindError.message);
       throw ErrorUtils.createError(
         `Failed to store secure configuration: ${hivemindError.message}`,
@@ -140,11 +162,17 @@ export class SecureConfigManager {
   public async getConfig(id: string): Promise<SecureConfig | null> {
     try {
       const filePath = this.getSecureFilePath(id);
-      if (!fs.existsSync(filePath)) {
-        return null;
+      let encryptedData: string;
+      try {
+        await fs.promises.access(filePath);
+        encryptedData = await fs.promises.readFile(filePath, 'utf8');
+      } catch (err: any) {
+        if (err.code === 'ENOENT') {
+          return null;
+        }
+        throw err;
       }
 
-      const encryptedData = await fs.promises.readFile(filePath, 'utf8');
       const decryptedData = this.decrypt(encryptedData);
       const config: SecureConfig = JSON.parse(decryptedData);
 
@@ -153,7 +181,7 @@ export class SecureConfigManager {
       if (this.calculateChecksum(configWithoutChecksum) !== checksum) {
         throw ErrorUtils.createError(
           'Configuration integrity check failed',
-          'IntegrityError' as any,
+          'unknown',
           'SECURE_CONFIG_INTEGRITY_FAILED',
           500,
         );
@@ -169,27 +197,51 @@ export class SecureConfigManager {
 
         if (daysSinceUpdate >= config.rotationInterval) {
           debug(`[WARNING] Secure configuration '${config.name}' (ID: ${config.id}) is due for credential rotation (Interval: ${config.rotationInterval} days, Days since update: ${Math.floor(daysSinceUpdate)} days).`);
-          // In a fully automated system, this could trigger an event/webhook to automatically rotate secrets.
+          // In a automated system, this could trigger an event/webhook.
         }
       }
 
       return config;
-    } catch (error: unknown) {
-      const hivemindError = ErrorUtils.toHivemindError(error) as any;
+    } catch (error: any) {
+      const hivemindError = ErrorUtils.toHivemindError(error);
       debug(`Failed to retrieve configuration ${id}:`, hivemindError.message);
       return null;
     }
   }
 
-  public getDecryptedMainConfig(env: string): any {
+  public async getDecryptedMainConfig(env: string): Promise<Record<string, unknown> | null> {
     try {
       const configPath = path.join(this.mainConfigDir, `${env}.json.enc`);
-      if (fs.existsSync(configPath)) {
-        const encryptedData = fs.readFileSync(configPath, 'utf8');
+      try {
+        await fs.promises.access(configPath);
+        const encryptedData = await fs.promises.readFile(configPath, 'utf8');
         const decryptedData = this.decrypt(encryptedData);
         return JSON.parse(decryptedData);
+      } catch (err: any) {
+        if (err.code !== 'ENOENT') {
+          throw err;
+        }
+        return null;
       }
+    } catch (error) {
+      debug(`Failed to read decrypted main config for env ${env}:`, error);
       return null;
+    }
+  }
+
+  /**
+   * Synchronous version of getDecryptedMainConfig for use in constructors
+   * and other synchronous contexts that cannot await.
+   */
+  public getDecryptedMainConfigSync(env: string): Record<string, unknown> | null {
+    try {
+      const configPath = path.join(this.mainConfigDir, `${env}.json.enc`);
+      if (!fs.existsSync(configPath)) {
+        return null;
+      }
+      const encryptedData = fs.readFileSync(configPath, 'utf8');
+      const decryptedData = this.decrypt(encryptedData);
+      return JSON.parse(decryptedData);
     } catch (error) {
       debug(`Failed to read decrypted main config for env ${env}:`, error);
       return null;
@@ -202,12 +254,15 @@ export class SecureConfigManager {
   public async deleteConfig(id: string): Promise<void> {
     try {
       const filePath = this.getSecureFilePath(id);
-      if (fs.existsSync(filePath)) {
+      try {
+        await fs.promises.access(filePath);
         await fs.promises.unlink(filePath);
         debug(`Configuration ${id} deleted`);
+      } catch (err: any) {
+        if (err.code !== 'ENOENT') throw err;
       }
-    } catch (error: unknown) {
-      const hivemindError = ErrorUtils.toHivemindError(error) as any;
+    } catch (error: any) {
+      const hivemindError = ErrorUtils.toHivemindError(error);
       debug(`Failed to delete configuration ${id}:`, hivemindError.message);
       throw ErrorUtils.createError(
         `Failed to delete secure configuration: ${hivemindError.message}`,
@@ -254,11 +309,12 @@ export class SecureConfigManager {
    */
   public async listBackups(): Promise<any[]> {
     try {
-      if (!fs.existsSync(this.backupDir)) return [];
+      await fs.promises.access(this.backupDir);
       const files = await fs.promises.readdir(this.backupDir);
       return files.filter(f => f.endsWith('.enc'));
-    } catch {
-      return [];
+    } catch (err: any) {
+      if (err.code === 'ENOENT') return [];
+      throw err;
     }
   }
 
@@ -310,8 +366,8 @@ export class SecureConfigManager {
 
       debug(`Backup ${backupId} created with ${Object.keys(allConfigs).length} configurations`);
       return backupId;
-    } catch (error: unknown) {
-      const hivemindError = ErrorUtils.toHivemindError(error) as any;
+    } catch (error: any) {
+      const hivemindError = ErrorUtils.toHivemindError(error);
       const errorInfo = ErrorUtils.classifyError(hivemindError);
       debug('Failed to create backup:', {
         error: hivemindError.message,
@@ -347,13 +403,18 @@ export class SecureConfigManager {
         );
       }
 
-      if (!fs.existsSync(backupPath)) {
-        throw ErrorUtils.createError(
-          `Backup ${backupId} not found`,
-          'validation',
-          'SECURE_CONFIG_BACKUP_NOT_FOUND',
-          404,
-        );
+      try {
+        await fs.promises.access(backupPath);
+      } catch (err: any) {
+        if (err.code === 'ENOENT') {
+          throw ErrorUtils.createError(
+            `Backup ${backupId} not found`,
+            'validation',
+            'SECURE_CONFIG_BACKUP_NOT_FOUND',
+            404,
+          );
+        }
+        throw err;
       }
 
       const encryptedBackup = await fs.promises.readFile(backupPath, 'utf8');
@@ -365,7 +426,7 @@ export class SecureConfigManager {
       if (this.calculateChecksum(metadataWithoutChecksum) !== checksum) {
         throw ErrorUtils.createError(
           'Backup integrity check failed',
-          'IntegrityError' as any,
+          'unknown',
           'SECURE_CONFIG_BACKUP_INTEGRITY_FAILED',
           500,
         );
@@ -379,8 +440,8 @@ export class SecureConfigManager {
       );
 
       debug(`Backup ${backupId} restored successfully`);
-    } catch (error: unknown) {
-      const hivemindError = ErrorUtils.toHivemindError(error) as any;
+    } catch (error: any) {
+      const hivemindError = ErrorUtils.toHivemindError(error);
       const errorInfo = ErrorUtils.classifyError(hivemindError);
       debug(`Failed to restore backup ${backupId}:`, {
         error: hivemindError.message,
@@ -397,22 +458,27 @@ export class SecureConfigManager {
     }
   }
 
-  private ensureDirectories(): void {
-    [this.configDir, this.backupDir].forEach(dir => {
-      if (!fs.existsSync(dir)) {
-        fs.mkdirSync(dir, { recursive: true });
+  private async ensureDirectories(): Promise<void> {
+    for (const dir of [this.configDir, this.backupDir]) {
+      try {
+        await fs.promises.access(dir);
+      } catch {
+        await fs.promises.mkdir(dir, { recursive: true });
       }
-    });
+    }
   }
 
-  private getOrCreateEncryptionKey(): Buffer {
-    if (fs.existsSync(this.keyPath)) {
-      return fs.readFileSync(this.keyPath);
+  private async getOrCreateEncryptionKey(): Promise<Buffer> {
+    try {
+      await fs.promises.access(this.keyPath);
+      return await fs.promises.readFile(this.keyPath);
+    } catch (err: any) {
+      if (err.code !== 'ENOENT') throw err;
+
+      const key = crypto.randomBytes(32);
+      await fs.promises.writeFile(this.keyPath, key);
+      return key;
     }
-    
-    const key = crypto.randomBytes(32);
-    fs.writeFileSync(this.keyPath, key);
-    return key;
   }
 
   public encrypt(text: string): string {
@@ -442,7 +508,7 @@ export class SecureConfigManager {
     return decrypted;
   }
 
-  private calculateChecksum(data: any): string {
+  private calculateChecksum(data: unknown): string {
     return crypto
       .createHash('sha256')
       .update(JSON.stringify(data))

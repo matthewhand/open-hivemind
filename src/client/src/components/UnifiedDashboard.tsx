@@ -8,11 +8,13 @@ import Card from './DaisyUI/Card';
 import DataTable from './DaisyUI/DataTable';
 import Modal from './DaisyUI/Modal';
 import StatsCards from './DaisyUI/StatsCards';
-import ToastNotification from './DaisyUI/ToastNotification';
+import { useSuccessToast, useErrorToast } from './DaisyUI/ToastNotification';
+import { SkeletonPage } from './DaisyUI/Skeleton';
 import { LoadingSpinner } from './DaisyUI/Loading';
 import type { Bot, StatusResponse } from '../services/api';
 import { apiService } from '../services/api';
 import { CreateBotWizard } from './BotManagement/CreateBotWizard';
+import HealthCheckWidget from './Dashboard/HealthCheckWidget';
 import { Activity, Clock, Cpu, HardDrive, Info, PlusCircle } from 'lucide-react';
 
 type DashboardTab = 'getting-started' | 'status' | 'performance';
@@ -97,8 +99,8 @@ const UnifiedDashboard: React.FC = () => {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isModalDataLoading, setIsModalDataLoading] = useState(false);
 
-  const successToast = ToastNotification.useSuccessToast();
-  const errorToast = ToastNotification.useErrorToast();
+  const successToast = useSuccessToast();
+  const errorToast = useErrorToast();
 
   // ⚡ Bolt Optimization: Lazy load modal data
   // We defer fetching personas and llmProfiles until the user attempts to open
@@ -343,9 +345,7 @@ const UnifiedDashboard: React.FC = () => {
       </div>
 
       {loading ? (
-        <div className="flex justify-center py-20">
-          <LoadingSpinner size="lg" />
-        </div>
+        <SkeletonPage variant="cards" statsCount={4} />
       ) : (
         <>
           {/* Getting Started Tab */}
@@ -484,6 +484,8 @@ const UnifiedDashboard: React.FC = () => {
             )}
 
             <StatsCards stats={statsCards} isLoading={loading} />
+
+            <HealthCheckWidget compact={true} />
 
             <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
               <Card className="bg-base-100 shadow">
@@ -698,6 +700,8 @@ const UnifiedDashboard: React.FC = () => {
         size="lg"
       >
         <CreateBotWizard
+          isOpen={isCreateModalOpen}
+          onClose={() => setIsCreateModalOpen(false)}
           onCancel={() => setIsCreateModalOpen(false)}
           onSuccess={async () => {
             setIsCreateModalOpen(false);

@@ -64,14 +64,14 @@ describe('SlackProvider', () => {
   it('should return schema', () => {
     const schema = provider.getSchema();
     // console.log('Schema:', JSON.stringify(schema, null, 2));
-    expect(schema).toBeDefined();
+    expect(typeof schema).toBe('object');
 
     // Check if properties exist directly or nested
     const props = (schema as any).properties || (schema as any)._cvtProperties || schema;
     if (!props.SLACK_BOT_TOKEN) {
       throw new Error('Keys: ' + Object.keys(props).join(', '));
     }
-    expect(props.SLACK_BOT_TOKEN).toBeDefined();
+    expect(props.SLACK_BOT_TOKEN).not.toBeUndefined();
   });
 
   it('should return sensitive keys', () => {
@@ -93,13 +93,15 @@ describe('SlackProvider', () => {
     expect(status.ok).toBe(true);
     expect(status.count).toBe(2);
     expect(status.bots).toHaveLength(2);
-    expect(status.bots[0]).toEqual({
-      provider: 'slack',
-      name: 'bot1',
-      defaultChannel: 'C1',
-      mode: 'socket',
-      connected: true,
-    });
+    expect(status.bots[0]).toEqual(
+      expect.objectContaining({
+        provider: 'slack',
+        name: 'bot1',
+        defaultChannel: 'C1',
+        mode: 'socket',
+        connected: true,
+      })
+    );
   });
 
   it('should add a bot', async () => {
@@ -165,5 +167,78 @@ describe('SlackProvider', () => {
         name: 'bot2',
       })
     );
+  });
+
+  describe('Message Provider Methods', () => {
+    it('should send message via SlackService', async () => {
+      const mockSendMessage = jest.fn().mockResolvedValue('msg_123');
+      (mockSlackInstance as any).sendMessageToChannel = mockSendMessage;
+
+      const result = await provider.sendMessage('C123', 'Hello', 'bot1');
+
+      expect(mockSendMessage).toHaveBeenCalledWith('C123', 'Hello', 'bot1');
+      expect(result).toBe('msg_123');
+    });
+
+    it('should throw error when SlackService lacks sendMessageToChannel', async () => {
+      delete (mockSlackInstance as any).sendMessageToChannel;
+
+      await expect(provider.sendMessage('C123', 'Hello')).rejects.toThrow(
+        'SlackProvider.sendMessage: SlackService does not expose sendMessageToChannel method'
+      );
+    });
+
+    it('should get messages via SlackService', async () => {
+      const mockMessages = [{ text: 'msg1' }, { text: 'msg2' }];
+      (mockSlackInstance as any).fetchMessages = jest.fn().mockResolvedValue(mockMessages);
+
+      const result = await provider.getMessages('C123', 10);
+
+      expect((mockSlackInstance as any).fetchMessages).toHaveBeenCalledWith('C123', 10);
+      expect(result).toEqual(mockMessages);
+    });
+
+    it('should get client ID via SlackService', () => {
+      (mockSlackInstance as any).getClientId = jest.fn().mockReturnValue('U12345');
+
+      const result = provider.getClientId();
+
+      expect(result).toBe('U12345');
+    });
+
+    it('should return fallback client ID when method not available', () => {
+      delete (mockSlackInstance as any).getClientId;
+
+      const result = provider.getClientId();
+
+      expect(result).toBe('slack');
+    });
+
+    it('should get forum owner via SlackService', async () => {
+      (mockSlackInstance as any).getChannelOwnerId = jest.fn().mockResolvedValue('U99999');
+
+      const result = await provider.getForumOwner('C123');
+
+      expect((mockSlackInstance as any).getChannelOwnerId).toHaveBeenCalledWith('C123');
+      expect(result).toBe('U99999');
+    });
+
+    it('should return empty string when forum owner not found', async () => {
+      (mockSlackInstance as any).getChannelOwnerId = jest.fn().mockResolvedValue(null);
+
+      const result = await provider.getForumOwner('C123');
+
+      expect(result).toBe('');
+    });
+
+    it('should handle sendMessageToChannel as alias for sendMessage', async () => {
+      const mockSendMessage = jest.fn().mockResolvedValue('msg_456');
+      (mockSlackInstance as any).sendMessageToChannel = mockSendMessage;
+
+      const result = await provider.sendMessageToChannel('C123', 'Test', 'agent1');
+
+      expect(mockSendMessage).toHaveBeenCalledWith('C123', 'Test', 'agent1');
+      expect(result).toBe('msg_456');
+    });
   });
 });

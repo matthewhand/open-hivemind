@@ -1,6 +1,6 @@
 import { createCipheriv, createDecipheriv, randomBytes, scryptSync } from 'crypto';
 import { promises as fs } from 'fs';
-import { basename, join } from 'path';
+import * as path from 'path';
 import { createGunzip, createGzip } from 'zlib';
 // @ts-ignore - csv-parse v6 ships its own types but TS can't resolve the /sync subpath
 // @ts-ignore - csv-stringify v6 ships its own types but TS can't resolve the /sync subpath
@@ -10,6 +10,7 @@ import { AuditLogger } from '../../common/auditLogger';
 import { SecureConfigManager } from '../../config/SecureConfigManager';
 import { UserConfigStore } from '../../config/UserConfigStore';
 import { DatabaseManager } from '../../database/DatabaseManager';
+import { ErrorUtils } from '../../types/errors';
 import { ConfigurationTemplateService } from './ConfigurationTemplateService';
 import { ConfigurationValidator } from './ConfigurationValidator';
 import { ConfigurationVersionService } from './ConfigurationVersionService';
@@ -80,8 +81,8 @@ export class ConfigurationImportExportService {
     this.configValidator = new ConfigurationValidator();
     this.templateService = ConfigurationTemplateService.getInstance();
     this.versionService = ConfigurationVersionService.getInstance();
-    this.exportsDir = join(process.cwd(), 'config', 'exports');
-    this.backupsDir = join(process.cwd(), 'config', 'backups');
+    this.exportsDir = path.join(process.cwd(), 'config', 'exports');
+    this.backupsDir = path.join(process.cwd(), 'config', 'backups');
     this.ensureDirectories();
   }
 
@@ -117,7 +118,7 @@ export class ConfigurationImportExportService {
     try {
       const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
       const baseFileName = fileName || `configurations-export-${timestamp}`;
-      let filePath = join(this.exportsDir, `${baseFileName}.${options.format}`);
+      let filePath = path.join(this.exportsDir, `${baseFileName}.${options.format}`);
 
       // Get configurations
       const configs = [];
@@ -136,7 +137,7 @@ export class ConfigurationImportExportService {
       }
 
       // Prepare export data
-      const exportData: any = {
+      const exportData: Record<string, unknown> = {
         metadata: {
           id: this.generateExportId(),
           name: baseFileName,
@@ -237,7 +238,7 @@ export class ConfigurationImportExportService {
       debug('Error exporting configurations:', error);
       return {
         success: false,
-        error: (error as any).message,
+        error: ErrorUtils.getMessage(error),
       };
     }
   }
@@ -254,11 +255,11 @@ export class ConfigurationImportExportService {
     try {
       const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
       const baseFileName = fileName || `${env}-config-${timestamp}`;
-      let filePath = join(this.exportsDir, `${baseFileName}.${options.format}`);
+      let filePath = path.join(this.exportsDir, `${baseFileName}.${options.format}`);
 
       // Get main configuration from SecureConfigManager
       const secureManager = SecureConfigManager.getInstance();
-      const config = secureManager.getDecryptedMainConfig(env);
+      const config = await secureManager.getDecryptedMainConfig(env);
 
       if (!config) {
         return {
@@ -268,7 +269,7 @@ export class ConfigurationImportExportService {
       }
 
       // Prepare export data
-      const exportData: any = {
+      const exportData: Record<string, unknown> = {
         metadata: {
           id: this.generateExportId(),
           name: baseFileName,
@@ -331,7 +332,7 @@ export class ConfigurationImportExportService {
       debug('Error exporting main configuration:', error);
       return {
         success: false,
-        error: (error as any).message,
+        error: ErrorUtils.getMessage(error),
       };
     }
   }
@@ -349,7 +350,7 @@ export class ConfigurationImportExportService {
       let data: Buffer | string = await fs.readFile(filePath);
 
       // Determine environment from filename
-      const fileName = basename(filePath);
+      const fileName = path.basename(filePath);
       const envMatch = fileName.match(/(default|development|production|test)/);
       const env = envMatch ? envMatch[1] : 'default';
 
@@ -372,7 +373,7 @@ export class ConfigurationImportExportService {
             // Extract the config and save it using SecureConfigManager
             const configToSave = importData.config || importData;
             const encryptedConfig = secureManager.encrypt(JSON.stringify(configToSave));
-            const configPath = join(secureManager['mainConfigDir'], `${env}.json.enc`);
+            const configPath = path.join(secureManager['mainConfigDir'], `${env}.json.enc`);
             await fs.writeFile(configPath, encryptedConfig);
 
             return {
@@ -392,7 +393,7 @@ export class ConfigurationImportExportService {
       }
 
       // Parse data based on format
-      let importData: any;
+      let importData: unknown;
       const format = this.detectFormat(filePath);
 
       switch (format) {
@@ -415,7 +416,7 @@ export class ConfigurationImportExportService {
       // Save using SecureConfigManager
       const secureManager = SecureConfigManager.getInstance();
       const encryptedConfig = secureManager.encrypt(JSON.stringify(configToSave));
-      const configPath = join(secureManager['mainConfigDir'], `${env}.json.enc`);
+      const configPath = path.join(secureManager['mainConfigDir'], `${env}.json.enc`);
       await fs.writeFile(configPath, encryptedConfig);
 
       debug(`Imported main configuration for ${env} from ${filePath}`);
@@ -429,7 +430,7 @@ export class ConfigurationImportExportService {
       debug('Error importing main configuration:', error);
       return {
         success: false,
-        errors: [(error as any).message],
+        errors: [ErrorUtils.getMessage(error)],
       };
     }
   }
@@ -466,7 +467,7 @@ export class ConfigurationImportExportService {
       }
 
       // Parse data based on format
-      let importData: any;
+      let importData: unknown;
       const format = this.detectFormat(filePath);
 
       switch (format) {
@@ -574,7 +575,7 @@ export class ConfigurationImportExportService {
           result.importedCount = (result.importedCount || 0) + 1;
         } catch (error) {
           result.errors?.push(
-            `Error processing configuration ${config.name || 'unknown'}: ${(error as any).message}`
+            `Error processing configuration ${config.name || 'unknown'}: ${ErrorUtils.getMessage(error)}`
           );
           result.errorCount = (result.errorCount || 0) + 1;
         }
@@ -612,7 +613,7 @@ export class ConfigurationImportExportService {
                 }
               } catch (error) {
                 result.warnings?.push(
-                  `Error fetching configuration ${configId}: ${(error as any).message}`
+                  `Error fetching configuration ${configId}: ${ErrorUtils.getMessage(error)}`
                 );
                 invalidConfigIds.add(configId);
               }
@@ -630,7 +631,7 @@ export class ConfigurationImportExportService {
               await this.dbManager.createBotConfigurationVersion(version);
             }
           } catch (error) {
-            result.warnings?.push(`Error processing version: ${(error as any).message}`);
+            result.warnings?.push(`Error processing version: ${ErrorUtils.getMessage(error)}`);
           }
         }
       }
@@ -644,7 +645,9 @@ export class ConfigurationImportExportService {
         try {
           allExistingTemplateIds = await this.templateService.getAllTemplateIds();
         } catch (error) {
-          result.warnings?.push(`Error fetching existing templates: ${(error as any).message}`);
+          result.warnings?.push(
+            `Error fetching existing templates: ${ErrorUtils.getMessage(error)}`
+          );
           allExistingTemplateIds = new Set();
         }
 
@@ -673,7 +676,9 @@ export class ConfigurationImportExportService {
                   });
                   newlyCreatedTemplateIds.add(template.id);
                 } catch (error) {
-                  result.warnings?.push(`Error processing template: ${(error as any).message}`);
+                  result.warnings?.push(
+                    `Error processing template: ${ErrorUtils.getMessage(error)}`
+                  );
                 }
               })
           );
@@ -686,7 +691,7 @@ export class ConfigurationImportExportService {
       debug('Error importing configurations:', error);
       return {
         success: false,
-        errors: [(error as any).message],
+        errors: [ErrorUtils.getMessage(error)],
       };
     }
   }
@@ -736,7 +741,7 @@ export class ConfigurationImportExportService {
         // Move to backups directory
         const backupTimestamp = Date.now();
         const backupPath = this.getSafeBackupPath(name, new Date(backupTimestamp));
-        const backupFileName = basename(backupPath);
+        const backupFileName = path.basename(backupPath);
         await fs.rename(result.filePath, backupPath);
 
         // Create metadata file
@@ -755,7 +760,7 @@ export class ConfigurationImportExportService {
           compressed: !!exportOptions.compress,
         };
 
-        const metadataPath = join(this.backupsDir, `${backupFileName}.meta`);
+        const metadataPath = path.join(this.backupsDir, `${backupFileName}.meta`);
         await fs.writeFile(metadataPath, JSON.stringify(metadata, null, 2));
 
         // Enforce backup retention policy with configurable limits and cold storage
@@ -779,14 +784,14 @@ export class ConfigurationImportExportService {
               if (enableColdStorage) {
                 debug(`Archiving old backup to cold storage: ${oldBackup.id} (${oldBackup.name})`);
                 const oldBackupPath = this.getSafeBackupPath(oldBackup.name, oldBackup.createdAt);
-                const oldBackupFileName = basename(oldBackupPath);
-                const coldDir = join(process.cwd(), 'config', 'backups', 'cold');
+                const oldBackupFileName = path.basename(oldBackupPath);
+                const coldDir = path.join(process.cwd(), 'config', 'backups', 'cold');
                 await fs.mkdir(coldDir, { recursive: true });
 
                 try {
-                  await fs.rename(oldBackupPath, join(coldDir, oldBackupFileName));
+                  await fs.rename(oldBackupPath, path.join(coldDir, oldBackupFileName));
                   // delete metadata to drop from active list
-                  await fs.unlink(join(this.backupsDir, `${oldBackupFileName}.meta`));
+                  await fs.unlink(path.join(this.backupsDir, `${oldBackupFileName}.meta`));
 
                   auditLogger.logAdminAction(
                     createdBy || 'system',
@@ -834,7 +839,7 @@ export class ConfigurationImportExportService {
       debug('Error creating backup:', error);
       return {
         success: false,
-        error: (error as any).message,
+        error: ErrorUtils.getMessage(error),
       };
     }
   }
@@ -861,7 +866,7 @@ export class ConfigurationImportExportService {
       debug('Error restoring from backup:', error);
       return {
         success: false,
-        errors: [(error as any).message],
+        errors: [ErrorUtils.getMessage(error)],
       };
     }
   }
@@ -877,7 +882,7 @@ export class ConfigurationImportExportService {
       for (const file of files) {
         if (file.endsWith('.meta')) {
           try {
-            const metadataPath = join(this.backupsDir, file);
+            const metadataPath = path.join(this.backupsDir, file);
             const data = await fs.readFile(metadataPath, 'utf-8');
             const metadata = JSON.parse(data);
 
@@ -911,8 +916,8 @@ export class ConfigurationImportExportService {
       }
 
       const backupPath = this.getSafeBackupPath(backup.name, backup.createdAt);
-      const backupFileName = basename(backupPath);
-      const metadataPath = join(this.backupsDir, `${backupFileName}.meta`);
+      const backupFileName = path.basename(backupPath);
+      const metadataPath = path.join(this.backupsDir, `${backupFileName}.meta`);
 
       await fs.unlink(backupPath);
       await fs.unlink(metadataPath);
@@ -1084,7 +1089,7 @@ export class ConfigurationImportExportService {
 
     for (let i = 1; i < lines.length; i++) {
       const values = lines[i].split(',');
-      const config: any = {};
+      const config: Record<string, string> = {};
 
       for (let j = 0; j < headers.length; j++) {
         const header = headers[j].trim();

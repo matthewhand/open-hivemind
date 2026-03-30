@@ -7,6 +7,8 @@ import {
   type PersonaCategory,
   type UpdatePersonaRequest,
 } from '../types';
+import Debug from 'debug';
+const debug = Debug('app:client:hooks:usePersonas');
 
 interface UsePersonasReturn {
   personas: Persona[];
@@ -70,8 +72,9 @@ export const usePersonas = (): UsePersonasReturn => {
         id: `persona-${Date.now()}-${uuidv4()}`,
         ...request,
         isBuiltIn: false,
-        createdAt: new Date().toISOString(),
         usageCount: 0,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
       };
 
       setPersonas((prev) => [...prev, newPersona]);
@@ -170,8 +173,9 @@ export const usePersonas = (): UsePersonasReturn => {
           id: `persona-${Date.now()}-${uuidv4()}`,
           name: newName,
           isBuiltIn: false,
-          createdAt: new Date().toISOString(),
           usageCount: 0,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
         };
 
         setPersonas((prev) => [...prev, duplicatedPersona]);
@@ -199,7 +203,7 @@ export const usePersonas = (): UsePersonasReturn => {
         );
 
         // In a real implementation, this would make an API call to update the bot
-        console.log(`Assigning persona "${persona.name}" to bot "${botId}"`);
+        debug(`Assigning persona "${persona.name}" to bot "${botId}"`);
       } catch (err) {
         const errorMessage = err instanceof Error ? err.message : 'Failed to assign persona to bot';
         setError(errorMessage);

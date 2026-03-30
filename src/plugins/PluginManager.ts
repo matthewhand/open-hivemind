@@ -1,10 +1,18 @@
 import { execFileSync } from 'child_process';
+import * as crypto from 'crypto';
 import * as fs from 'fs';
 import * as path from 'path';
 import Debug from 'debug';
+import { Logger } from '@common/logger';
 import { loadPlugin, PLUGINS_DIR, type PluginManifest } from './PluginLoader';
+import {
+  PluginSecurityPolicy,
+  type PluginSecurityStatus,
+  type SecurePluginManifest,
+} from './PluginSecurity';
 
 const debug = Debug('app:pluginManager');
+const logger = Logger.withContext('PluginManager');
 
 // ---------------------------------------------------------------------------
 // Types
@@ -90,11 +98,6 @@ function evictFromCache(pluginPath: string): void {
 /**
  * Validates that a plugin's exported manifest.type matches the type prefix
  * encoded in its package name.
- *
- * Rule: 'llm-myprovider'.split('-')[0] === manifest.type
- *
- * This prevents a misconfigured community plugin tagged as type 'memory'
- * being loaded as an 'llm' provider silently at runtime.
  */
 function validateManifestType(name: string, manifest: PluginManifest): void {
   const namePrefix = name.split('-')[0];
@@ -165,7 +168,6 @@ async function deriveNameFromPath(pluginPath: string): Promise<string> {
   try {
     const content = await fs.promises.readFile(path.join(pluginPath, 'package.json'), 'utf-8');
     const pkg = JSON.parse(content);
-    // Strip @hivemind/ or @scope/ prefix if present
     return pkg.name?.replace(/^@[^/]+\//, '') ?? path.basename(pluginPath);
   } catch {
     return path.basename(pluginPath);
@@ -216,17 +218,14 @@ function validateRepoUrl(url: string): void {
     throw new PluginValidationError('Invalid repository URL: malformed URI sequence.');
   }
 
-  // Prevent argument injection via hostname or path
   if (decodedHostname.includes(' ') || decodedPathname.includes(' ')) {
     throw new PluginValidationError('Invalid repository URL: spaces not allowed.');
   }
 
-  // Prevent command injection through special git URL patterns
   if (/--[a-z-]+=/i.test(decodedHref)) {
     throw new PluginValidationError('Invalid repository URL: contains suspicious patterns.');
   }
 
-  // Prevent shell metacharacters in hostname
   if (/[;&|`$()]/.test(decodedHostname)) {
     throw new PluginValidationError('Invalid repository URL: contains shell metacharacters.');
   }
@@ -234,20 +233,11 @@ function validateRepoUrl(url: string): void {
 
 /**
  * Install a community plugin from a git repository URL.
- *
- * Steps:
- *   1. git clone <repoUrl> into PLUGINS_DIR/<name>
- *   2. pnpm install --prod in the cloned directory
- *   3. Load the module and validate manifest.type matches name prefix
- *   4. Add to registry
- *
- * @throws PluginValidationError if the manifest is invalid or type mismatches
  */
 export async function installPlugin(repoUrl: string): Promise<PluginInfo> {
   validateRepoUrl(repoUrl);
   await fs.promises.mkdir(PLUGINS_DIR, { recursive: true });
 
-  // Clone into a temp dir first so we can read the name before committing
   const tempName = `_install_${Date.now()}`;
   const tempPath = path.join(PLUGINS_DIR, tempName);
 
@@ -258,7 +248,6 @@ export async function installPlugin(repoUrl: string): Promise<PluginInfo> {
     const name = await deriveNameFromPath(tempPath);
     const pluginPath = path.join(PLUGINS_DIR, name);
 
-    // If already installed, refuse — use updatePlugin instead
     try {
       await fs.promises.access(pluginPath);
       await fs.promises.rm(tempPath, { recursive: true, force: true });
@@ -271,15 +260,17 @@ export async function installPlugin(repoUrl: string): Promise<PluginInfo> {
       }
     }
 
-    // Move temp dir to final location
     await fs.promises.rename(tempPath, pluginPath);
 
     debug('Running pnpm install --prod in %s', pluginPath);
     exec('pnpm', ['install', '--prod', '--ignore-scripts'], pluginPath);
 
-    // Load and validate — this is the gate
     const mod = loadPlugin(name);
     const manifest = validateManifest(name, mod);
+
+    // Run security verification on the newly installed plugin
+    const policy = getSecurityPolicy();
+    policy.verifyAndSetTrust(name, (mod.manifest ?? {}) as SecurePluginManifest);
 
     const version = await readPackageVersion(pluginPath);
     const now = new Date().toISOString();
@@ -289,12 +280,11 @@ export async function installPlugin(repoUrl: string): Promise<PluginInfo> {
     debug('Installed plugin %s@%s', name, version);
     return { ...entry, manifest, pluginPath };
   } catch (err) {
-    // Clean up temp dir on failure
     try {
       await fs.promises.access(tempPath);
       await fs.promises.rm(tempPath, { recursive: true, force: true });
     } catch {
-      // Temp path doesn't exist, nothing to clean up
+      // Temp path doesn't exist
     }
     throw err;
   }
@@ -302,13 +292,6 @@ export async function installPlugin(repoUrl: string): Promise<PluginInfo> {
 
 /**
  * Uninstall a community plugin by name.
- *
- * Steps:
- *   1. Evict from require cache
- *   2. Remove plugin directory
- *   3. Remove from registry
- *
- * @throws Error if the plugin is not found in PLUGINS_DIR
  */
 export async function uninstallPlugin(name: string): Promise<void> {
   const pluginPath = path.join(PLUGINS_DIR, name);
@@ -322,6 +305,9 @@ export async function uninstallPlugin(name: string): Promise<void> {
     throw e;
   }
 
+  // Record unload in security policy
+  getSecurityPolicy().recordUnload(name);
+
   evictFromCache(pluginPath);
   await fs.promises.rm(pluginPath, { recursive: true, force: true });
   await removeFromRegistry(name);
@@ -331,15 +317,6 @@ export async function uninstallPlugin(name: string): Promise<void> {
 
 /**
  * Update a community plugin to its latest commit.
- *
- * Steps:
- *   1. git pull in the plugin directory
- *   2. pnpm install --prod
- *   3. Evict require cache
- *   4. Reload and re-validate manifest (catches type changes post-update)
- *   5. Update registry
- *
- * @throws PluginValidationError if the updated plugin fails manifest validation
  */
 export async function updatePlugin(name: string): Promise<PluginInfo> {
   const pluginPath = path.join(PLUGINS_DIR, name);
@@ -359,9 +336,12 @@ export async function updatePlugin(name: string): Promise<PluginInfo> {
 
   evictFromCache(pluginPath);
 
-  // Reload and re-validate — type may have changed in an update
   const mod = loadPlugin(name);
   const manifest = validateManifest(name, mod);
+
+  // Re-verify security after update
+  const policy = getSecurityPolicy();
+  policy.verifyAndSetTrust(name, (mod.manifest ?? {}) as SecurePluginManifest);
 
   const version = await readPackageVersion(pluginPath);
   const existing = (await readRegistry()).find((e) => e.name === name);
@@ -380,7 +360,6 @@ export async function updatePlugin(name: string): Promise<PluginInfo> {
 
 /**
  * List all installed community plugins.
- * Combines registry entries with any manually-dropped directories not in registry.
  */
 export async function listInstalledPlugins(): Promise<PluginInfo[]> {
   const results: PluginInfo[] = [];
@@ -397,7 +376,6 @@ export async function listInstalledPlugins(): Promise<PluginInfo[]> {
   const registry = await readRegistry();
   const registryMap = new Map(registry.map((e) => [e.name, e]));
 
-  // Scan directory — includes manually installed plugins not in registry
   const dirEntries = await fs.promises.readdir(PLUGINS_DIR, { withFileTypes: true });
   const dirs = dirEntries
     .filter((d) => d.isDirectory() && d.name !== '_install_' && !d.name.startsWith('_install_'))
@@ -429,4 +407,47 @@ export async function listInstalledPlugins(): Promise<PluginInfo[]> {
   }
 
   return results;
+}
+
+// ---------------------------------------------------------------------------
+// Plugin security policy singleton
+// ---------------------------------------------------------------------------
+
+let PLUGIN_SIGNING_KEY = process.env.HIVEMIND_PLUGIN_SIGNING_KEY;
+
+if (!PLUGIN_SIGNING_KEY) {
+  PLUGIN_SIGNING_KEY = crypto.randomBytes(32).toString('hex');
+  logger.warn('⚠️  WARNING: No HIVEMIND_PLUGIN_SIGNING_KEY environment variable found.');
+  logger.warn('   Generated a temporary plugin signing key for this session.');
+  logger.warn(
+    '   Existing plugin signatures will fail verification until a persistent key is configured.'
+  );
+}
+
+let _securityPolicy: PluginSecurityPolicy | undefined;
+
+/**
+ * Return the shared PluginSecurityPolicy singleton.
+ * Lazily created on first access.
+ */
+export function getSecurityPolicy(): PluginSecurityPolicy {
+  if (!_securityPolicy) {
+    _securityPolicy = new PluginSecurityPolicy(PLUGIN_SIGNING_KEY);
+  }
+  return _securityPolicy;
+}
+
+/**
+ * Replace the security policy singleton (useful for tests).
+ */
+export function setSecurityPolicy(policy: PluginSecurityPolicy): void {
+  _securityPolicy = policy;
+}
+
+/**
+ * Query the security status for all tracked plugins.
+ * Intended for the admin dashboard.
+ */
+export function getPluginSecurityStatus(): PluginSecurityStatus[] {
+  return getSecurityPolicy().getAllSecurityStatus();
 }

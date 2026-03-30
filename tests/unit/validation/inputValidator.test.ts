@@ -1,3 +1,10 @@
+import {
+  SanitizationOptions,
+  sanitizeObject,
+  sanitizeValue,
+  ValidationPatterns,
+} from '@src/validation/inputValidator';
+
 // Mock jsdom before importing the module (jsdom uses ESM that Jest can't parse)
 jest.mock('jsdom', () => ({
   JSDOM: class {
@@ -20,13 +27,6 @@ jest.mock('dompurify', () => {
   factory.sanitize = sanitize;
   return { __esModule: true, default: factory };
 });
-
-import {
-  SanitizationOptions,
-  sanitizeObject,
-  sanitizeValue,
-  ValidationPatterns,
-} from '@src/validation/inputValidator';
 
 describe('Input Validator', () => {
   describe('sanitizeValue', () => {

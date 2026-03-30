@@ -28,56 +28,6 @@ export const TOKENS = {
   SecureConfigManager: 'SecureConfigManager',
   UserConfigStore: 'UserConfigStore',
   ProviderConfigManager: 'ProviderConfigManager',
-  HotReloadManager: 'HotReloadManager',
-
-  // Core Services
-  BotManager: 'BotManager',
-  PersonaManager: 'PersonaManager',
-  MCPService: 'MCPService',
-  MCPGuard: 'MCPGuard',
-
-  // Database
-  DatabaseManager: 'DatabaseManager',
-  ConnectionManager: 'ConnectionManager',
-  MigrationManager: 'MigrationManager',
-  SchemaManager: 'SchemaManager',
-
-  // Server Services
-  WebSocketService: 'WebSocketService',
-  ShutdownCoordinator: 'ShutdownCoordinator',
-  BotConfigService: 'BotConfigService',
-  ConfigurationValidator: 'ConfigurationValidator',
-  ConfigurationVersionService: 'ConfigurationVersionService',
-  ConfigurationTemplateService: 'ConfigurationTemplateService',
-  ConfigurationImportExportService: 'ConfigurationImportExportService',
-  RealTimeNotificationService: 'RealTimeNotificationService',
-  RealTimeValidationService: 'RealTimeValidationService',
-
-  // Auth
-  AuthManager: 'AuthManager',
-  SessionManager: 'SessionManager',
-
-  // Monitoring
-  AdvancedMonitor: 'AdvancedMonitor',
-  HealthChecker: 'HealthChecker',
-  MetricsCollector: 'MetricsCollector',
-  AlertManager: 'AlertManager',
-  MonitoringService: 'MonitoringService',
-  ApiMonitorService: 'ApiMonitorService',
-
-  // Message Processing
-  IdleResponseManager: 'IdleResponseManager',
-  ChannelRouter: 'ChannelRouter',
-
-  // Utilities
-  AuditLogger: 'AuditLogger',
-  PerformanceProfiler: 'PerformanceProfiler',
-  TimerRegistry: 'TimerRegistry',
-  StartupDiagnostics: 'StartupDiagnostics',
-
-  // Integration Services
-  SlackService: 'SlackService',
-  MattermostService: 'MattermostService',
 } as const;
 
 /**

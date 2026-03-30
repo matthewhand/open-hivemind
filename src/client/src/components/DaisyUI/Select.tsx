@@ -74,7 +74,7 @@ const Select = forwardRef<HTMLSelectElement, SelectProps>(
 
     return (
       <div className="relative w-full">
-        <select ref={ref} className={selectClasses} {...props}>
+        <select ref={ref} className={selectClasses} aria-busy={loading || undefined} aria-invalid={error || undefined} {...props}>
           {children}
           {options.map(renderSingleOption)}
           {optionGroups.map((group) => (

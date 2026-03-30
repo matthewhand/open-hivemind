@@ -5,6 +5,33 @@ import express from 'express';
 import { RealTimeValidationService } from '../src/server/services/RealTimeValidationService';
 import { WebSocketService } from '../src/server/services/WebSocketService';
 
+/* eslint-disable @typescript-eslint/no-var-requires, @typescript-eslint/no-explicit-any */
+const _polyfillUtil = require('util');
+if (typeof globalThis.TextEncoder === 'undefined') {
+  (globalThis as any).TextEncoder = _polyfillUtil.TextEncoder;
+}
+if (typeof globalThis.TextDecoder === 'undefined') {
+  (globalThis as any).TextDecoder = _polyfillUtil.TextDecoder;
+}
+if (typeof Element !== 'undefined' && !Element.prototype.scrollIntoView) {
+  Element.prototype.scrollIntoView = function () {};
+}
+if (typeof globalThis.ResizeObserver === 'undefined') {
+  (globalThis as any).ResizeObserver = class {
+    observe() {}
+    unobserve() {}
+    disconnect() {}
+  };
+}
+if (typeof HTMLCanvasElement !== 'undefined') {
+  const _origCtx = HTMLCanvasElement.prototype.getContext;
+  HTMLCanvasElement.prototype.getContext = function (id: string, ...a: any[]) {
+    if (id === '2d')
+      return { measureText: () => ({ width: 0 }), fillText: () => {}, font: '' } as any;
+    return _origCtx?.call(this, id, ...a) ?? null;
+  } as any;
+}
+
 process.env.SESSION_SECRET = 'testsecretlongenoughstringtoavoidwarning32chars';
 
 // Set default timeout for all tests

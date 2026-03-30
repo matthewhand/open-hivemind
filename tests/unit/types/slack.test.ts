@@ -1,8 +1,8 @@
 import {
-  isSlackEventData,
   isSlackApiResponse,
-  isSlackMessageResponse,
   isSlackChannel,
+  isSlackEventData,
+  isSlackMessageResponse,
   isSlackUser,
 } from '../../../src/types/slack';
 

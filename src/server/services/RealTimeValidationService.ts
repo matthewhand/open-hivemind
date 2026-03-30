@@ -1,6 +1,7 @@
 import { randomUUID } from 'crypto';
 import { EventEmitter } from 'events';
 import Debug from 'debug';
+import { injectable, singleton } from 'tsyringe';
 import { DatabaseManager } from '../../database/DatabaseManager';
 import { BotConfigService } from './BotConfigService';
 import { ConfigurationTemplateService } from './ConfigurationTemplateService';
@@ -88,6 +89,8 @@ interface ValidationSubscription {
   createdAt: Date;
 }
 
+@singleton()
+@injectable()
 export class RealTimeValidationService extends EventEmitter {
   private static instance: RealTimeValidationService;
   private configValidator: ConfigurationValidator;
@@ -101,7 +104,7 @@ export class RealTimeValidationService extends EventEmitter {
   private maxHistorySize = 100;
   private validationInterval: NodeJS.Timeout | null = null;
 
-  private constructor() {
+  public constructor() {
     super();
     this.configValidator = new ConfigurationValidator();
     this.botConfigService = BotConfigService.getInstance();
@@ -525,7 +528,7 @@ export class RealTimeValidationService extends EventEmitter {
   private setupEventHandlers(): void {
     // Periodic validation for subscribed configurations
     this.validationInterval = setInterval(() => {
-      this.validateSubscribedConfigurations().catch((error: any) => {
+      this.validateSubscribedConfigurations().catch((error: unknown) => {
         debug('Error in periodic validation:', error);
       });
     }, 60000); // Validate every minute
@@ -666,7 +669,7 @@ export class RealTimeValidationService extends EventEmitter {
             allErrors.push({
               id: `rule-error-${ruleId}`,
               ruleId,
-              message: `Validation rule execution failed: ${(error as any).message}`,
+              message: `Validation rule execution failed: ${error instanceof Error ? error.message : String(error)}`,
               field: 'system',
               value: null,
               category: 'required',
@@ -800,7 +803,7 @@ export class RealTimeValidationService extends EventEmitter {
             allErrors.push({
               id: `rule-error-${ruleId}`,
               ruleId,
-              message: `Validation rule execution failed: ${(error as any).message}`,
+              message: `Validation rule execution failed: ${error instanceof Error ? error.message : String(error)}`,
               field: 'system',
               value: null,
               category: 'required',
@@ -883,7 +886,7 @@ export class RealTimeValidationService extends EventEmitter {
     debug(`Subscribed client ${clientId} to validation for config ${configId}`);
 
     // Perform initial validation
-    this.validateConfiguration(configId, profileId, clientId).catch((error: any) => {
+    this.validateConfiguration(configId, profileId, clientId).catch((error: unknown) => {
       debug('Error in initial validation for subscription:', error);
     });
 

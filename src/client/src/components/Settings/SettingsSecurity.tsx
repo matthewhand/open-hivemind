@@ -2,10 +2,13 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Alert } from '../DaisyUI/Alert';
 import Button from '../DaisyUI/Button';
+import { SkeletonList } from '../DaisyUI/Skeleton';
 import Input from '../DaisyUI/Input';
 import Toggle from '../DaisyUI/Toggle';
 import { Shield, Plus, Trash2 } from 'lucide-react';
 import SecureConfigManager from '../SecureConfigManager';
+import Debug from 'debug';
+const debug = Debug('app:client:components:Settings:SettingsSecurity');
 
 const SettingsSecurity: React.FC = () => {
   const [settings, setSettings] = useState({
@@ -34,7 +37,7 @@ const SettingsSecurity: React.FC = () => {
       const response = await fetch('/api/config/global');
       if (!response.ok) {throw new Error('Failed to fetch settings');}
       const data = await response.json();
-      
+
       const config = data.config || {};
       setSettings(prev => ({
         ...prev,
@@ -45,7 +48,7 @@ const SettingsSecurity: React.FC = () => {
         corsOrigins: config.cors?.origins?.value || ['http://localhost:3000'],
       }));
     } catch (error) {
-      console.error('Failed to load security settings:', error);
+      debug('ERROR:', 'Failed to load security settings:', error);
     } finally {
       setLoading(false);
     }
@@ -89,7 +92,7 @@ const SettingsSecurity: React.FC = () => {
           'rateLimit.windowMs': settings.rateLimitWindow * 1000,
         }),
       });
-      
+
       if (!response.ok) {throw new Error('Failed to save settings');}
       setAlert({ type: 'success', message: 'Security settings saved!' });
       setTimeout(() => setAlert(null), 3000);
@@ -102,8 +105,8 @@ const SettingsSecurity: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-12">
-        <span className="loading loading-spinner loading-lg" aria-hidden="true"></span>
+      <div className="py-6 px-4">
+        <SkeletonList items={4} />
       </div>
     );
   }
@@ -269,14 +272,17 @@ const SettingsSecurity: React.FC = () => {
             {settings.corsOrigins.map((origin, index) => (
               <div key={index} className="badge badge-lg gap-2 bg-base-300">
                 {origin}
-                <button 
-                  onClick={() => handleRemoveOrigin(origin)}
-                  className="hover:text-error"
-                  aria-label={`Remove origin ${origin}`}
-                >
-                  <Trash2 className="w-3 h-3" />
-                </button>
-              </div>
+                <div className="tooltip" data-tip={`Remove ${origin}`}>
+                  <Button
+                    variant="ghost"
+                    size="xs"
+                    onClick={() => handleRemoveOrigin(origin)}
+                    className="hover:text-error hover:bg-transparent h-auto min-h-0 p-1 rounded-full"
+                    aria-label={`Remove origin ${origin}`}
+                  >
+                    <Trash2 className="w-3 h-3" />
+                  </Button>
+                </div>              </div>
             ))}
             {settings.corsOrigins.length === 0 && (
               <span className="text-base-content/50 text-sm italic">No origins configured</span>

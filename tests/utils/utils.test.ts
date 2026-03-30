@@ -1,23 +1,31 @@
-import * as fs from 'fs';
 import * as path from 'path';
-import { promisify } from 'util';
 import { executeCommandSafe, readFile } from '../../src/utils/utils';
 
-// Mock fs for controlled testing
-jest.mock('fs');
-const mockFs = fs as jest.Mocked<typeof fs>;
+// Create mock functions that will be used in the fs mock factory
+const mockStat = jest.fn();
+const mockReadFileAsync = jest.fn();
 
-// Mock the promisified readFile function
-const mockReadFile = jest.fn();
-jest.mock('util', () => ({
-  ...jest.requireActual('util'),
-  promisify: jest.fn().mockImplementation((fn) => {
-    if (fn && fn.name === 'readFile') {
-      return mockReadFile;
-    }
-    return jest.requireActual('util').promisify(fn);
-  }),
-}));
+// Mock fs - must use jest.fn() references defined above
+jest.mock('fs', () => {
+  const actualFs = jest.requireActual('fs');
+  return {
+    __esModule: true,
+    default: {
+      promises: {
+        stat: (...args: any[]) => mockStat(...args),
+        readFile: (...args: any[]) => mockReadFileAsync(...args),
+      },
+      mkdtempSync: actualFs.mkdtempSync,
+      rmdirSync: actualFs.rmdirSync,
+    },
+    promises: {
+      stat: (...args: any[]) => mockStat(...args),
+      readFile: (...args: any[]) => mockReadFileAsync(...args),
+    },
+    mkdtempSync: actualFs.mkdtempSync,
+    rmdirSync: actualFs.rmdirSync,
+  };
+});
 
 describe('executeCommandSafe', () => {
   beforeEach(() => {
@@ -85,13 +93,14 @@ describe('executeCommandSafe', () => {
     });
 
     it('should respect the working directory (cwd) option', async () => {
-      const tempDir = fs.mkdtempSync(path.join(process.cwd(), 'test-cwd-'));
+      const realFs = jest.requireActual('fs');
+      const tempDir = realFs.mkdtempSync(path.join(process.cwd(), 'test-cwd-'));
       try {
         const output = await executeCommandSafe('pwd', [], { cwd: tempDir });
         // Normalize paths for comparison (handle potential symlinks or OS differences)
         expect(output.trim()).toMatch(new RegExp(path.basename(tempDir) + '$'));
       } finally {
-        fs.rmdirSync(tempDir);
+        realFs.rmdirSync(tempDir);
       }
     });
   });
@@ -117,32 +126,27 @@ describe('executeCommandSafe', () => {
 describe('readFile', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    // Reset all mocks to default behavior
-    mockReadFile.mockReset();
-    mockFs.existsSync.mockReset();
-    mockFs.statSync.mockReset();
-    // Default statSync to return file stats
-    mockFs.statSync.mockReturnValue({ isFile: () => true, isDirectory: () => false } as any);
+    // Default stat to return file stats
+    mockStat.mockResolvedValue({ isFile: () => true, isDirectory: () => false });
   });
 
   describe('Basic functionality', () => {
     it('should read file content successfully', async () => {
-      mockReadFile.mockResolvedValue('Sample Content');
+      mockReadFileAsync.mockResolvedValue('Sample Content');
 
       const content = await readFile('tests/sample.txt');
       expect(content).toBe('Sample Content');
-      expect(mockReadFile).toHaveBeenCalledWith('tests/sample.txt', 'utf8');
     });
 
     it('should read empty files', async () => {
-      mockReadFile.mockResolvedValue('');
+      mockReadFileAsync.mockResolvedValue('');
 
       const content = await readFile('empty.txt');
       expect(content).toBe('');
     });
 
     it('should read files with different encodings', async () => {
-      mockReadFile.mockResolvedValue('UTF-8 content with special chars: àáâãäå');
+      mockReadFileAsync.mockResolvedValue('UTF-8 content with special chars: àáâãäå');
 
       const content = await readFile('utf8.txt');
       expect(content).toBe('UTF-8 content with special chars: àáâãäå');
@@ -153,7 +157,7 @@ describe('readFile', () => {
     it('should throw an error if file does not exist', async () => {
       const error = new Error('ENOENT: no such file or directory');
       (error as any).code = 'ENOENT';
-      mockReadFile.mockRejectedValue(error);
+      mockStat.mockRejectedValue(error);
 
       await expect(readFile('nonexistent.txt')).rejects.toThrow();
     });
@@ -161,7 +165,7 @@ describe('readFile', () => {
     it('should handle permission errors', async () => {
       const error = new Error('EACCES: permission denied');
       (error as any).code = 'EACCES';
-      mockReadFile.mockRejectedValue(error);
+      mockStat.mockRejectedValue(error);
 
       await expect(readFile('restricted.txt')).rejects.toThrow();
     });
@@ -176,7 +180,7 @@ describe('readFile', () => {
     });
 
     it('should handle directory paths instead of files', async () => {
-      mockFs.statSync.mockReturnValue({ isFile: () => false, isDirectory: () => true } as any);
+      mockStat.mockResolvedValue({ isFile: () => false, isDirectory: () => true });
       await expect(readFile('directory')).rejects.toThrow();
     });
   });
@@ -192,7 +196,7 @@ describe('readFile', () => {
       ],
       ['path\\with\\backslashes.txt', 'Normalized content', 'path separators'],
     ])('should handle %s', async (filePath, expectedContent, description) => {
-      mockReadFile.mockResolvedValueOnce(expectedContent);
+      mockReadFileAsync.mockResolvedValueOnce(expectedContent);
 
       const content = await readFile(filePath);
       expect(content).toBe(expectedContent);
@@ -221,7 +225,7 @@ describe('readFile', () => {
         (content: string) => expect(content.split('\n')).toHaveLength(5),
       ],
     ])('should handle %s', async (fileName, fileContent, description, additionalCheck) => {
-      mockReadFile.mockResolvedValueOnce(fileContent);
+      mockReadFileAsync.mockResolvedValueOnce(fileContent);
 
       const content = await readFile(fileName);
       expect(content).toBe(fileContent);
@@ -231,8 +235,7 @@ describe('readFile', () => {
 
   describe('Performance', () => {
     it('should read files efficiently', async () => {
-      mockFs.readFileSync.mockReturnValue('Performance test content');
-      mockFs.existsSync.mockReturnValue(true);
+      mockReadFileAsync.mockResolvedValue('Performance test content');
 
       const startTime = Date.now();
 

@@ -1,7 +1,11 @@
-import React, { useState, useEffect } from 'react';
-import { Bot, MessageSquare, Cpu, User, Shield, ArrowRight, ArrowLeft, Check, AlertCircle, CheckCircle2 } from 'lucide-react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { Bot, MessageSquare, Cpu, User, Shield, ArrowRight, ArrowLeft, Check, AlertCircle, CheckCircle2, RotateCcw } from 'lucide-react';
 import Input from '../DaisyUI/Input';
 import Modal from '../DaisyUI/Modal';
+import { useConfigDiff } from '../../hooks/useConfigDiff';
+import { ConfigDiffViewer, ConfigDiffConfirmDialog } from '../ConfigDiffViewer';
+import Debug from 'debug';
+const debug = Debug('app:client:components:BotManagement:CreateBotWizard');
 
 interface CreateBotWizardProps {
     isOpen: boolean;
@@ -43,7 +47,7 @@ export const CreateBotWizard: React.FC<CreateBotWizardProps> = (props) => {
     const llmProfiles = propsLlmProfiles ?? fetchedLlmProfiles;
     const defaultLlmConfigured = propsDefaultLlmConfigured ?? fetchedDefaultLlmConfigured;
 
-    const [formData, setFormData] = useState({
+    const initialFormData = {
         name: '',
         description: '',
         messageProvider: '',
@@ -55,7 +59,23 @@ export const CreateBotWizard: React.FC<CreateBotWizardProps> = (props) => {
             rateLimit: false,
             contentFilter: false,
         }
-    });
+    };
+
+    const [formData, setFormData] = useState(initialFormData);
+    const [showDiffConfirm, setShowDiffConfirm] = useState(false);
+
+    const formDataAsRecord = useMemo(() => formData as unknown as Record<string, unknown>, [formData]);
+    const { hasChanges, diff, setOriginalConfig, resetToOriginal } = useConfigDiff(formDataAsRecord);
+
+    useEffect(() => {
+        setOriginalConfig(initialFormData as unknown as Record<string, unknown>);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
+    const handleUndoAll = () => {
+        const original = resetToOriginal();
+        setFormData(original as typeof formData);
+    };
 
     useEffect(() => {
         const fetchGuardProfiles = async () => {
@@ -66,7 +86,7 @@ export const CreateBotWizard: React.FC<CreateBotWizardProps> = (props) => {
                     setGuardProfiles(data.data || []);
                 }
             } catch (e) {
-                console.error('Failed to fetch guard profiles', e);
+                debug('ERROR:', 'Failed to fetch guard profiles', e);
             }
         };
         fetchGuardProfiles();
@@ -81,7 +101,7 @@ export const CreateBotWizard: React.FC<CreateBotWizardProps> = (props) => {
                         setFetchedPersonas(Array.isArray(data) ? data : []);
                     }
                 } catch (e) {
-                    console.error('Failed to fetch personas', e);
+                    debug('ERROR:', 'Failed to fetch personas', e);
                 }
             };
             fetchPersonas();
@@ -97,7 +117,7 @@ export const CreateBotWizard: React.FC<CreateBotWizardProps> = (props) => {
                         setFetchedLlmProfiles(data?.llm || data?.profiles?.llm || data?.data || []);
                     }
                 } catch (e) {
-                    console.error('Failed to fetch LLM profiles', e);
+                    debug('ERROR:', 'Failed to fetch LLM profiles', e);
                 }
             };
             fetchLlmProfiles();
@@ -113,7 +133,7 @@ export const CreateBotWizard: React.FC<CreateBotWizardProps> = (props) => {
                         setFetchedDefaultLlmConfigured(data?.defaultConfigured ?? true);
                     }
                 } catch (e) {
-                    console.error('Failed to fetch LLM status', e);
+                    debug('ERROR:', 'Failed to fetch LLM status', e);
                 }
             };
             fetchLlmStatus();
@@ -534,6 +554,25 @@ export const CreateBotWizard: React.FC<CreateBotWizardProps> = (props) => {
                                         </div>
                                     )}
                                 </div>
+
+                                {hasChanges && (
+                                    <>
+                                        <div className="divider my-0"></div>
+                                        <div className="flex flex-col gap-1">
+                                            <div className="flex items-center justify-between">
+                                                <span className="opacity-70 text-sm font-semibold">Changes from defaults:</span>
+                                                <button
+                                                    type="button"
+                                                    className="btn btn-ghost btn-xs gap-1"
+                                                    onClick={handleUndoAll}
+                                                >
+                                                    <RotateCcw className="w-3 h-3" /> Undo all changes
+                                                </button>
+                                            </div>
+                                            <ConfigDiffViewer diff={diff} mode="unified" maxHeight="12rem" />
+                                        </div>
+                                    </>
+                                )}
                             </div>
                         </div>
                     </div>
@@ -551,12 +590,21 @@ export const CreateBotWizard: React.FC<CreateBotWizardProps> = (props) => {
                         Next <ArrowRight className="w-4 h-4" />
                     </button>
                 ) : (
-                    <button className="btn btn-success btn-wide" onClick={handleSubmit} disabled={loading} aria-busy={loading}>
+                    <button className="btn btn-success btn-wide" onClick={() => hasChanges ? setShowDiffConfirm(true) : handleSubmit()} disabled={loading} aria-busy={loading}>
                         {loading ? <span className="loading loading-spinner" aria-hidden="true" /> : <><Check className="w-4 h-4" /> Finish & Create</>}
                     </button>
                 )}
             </div>
         </div>
+
+        <ConfigDiffConfirmDialog
+            isOpen={showDiffConfirm}
+            diff={diff}
+            onConfirm={() => { setShowDiffConfirm(false); handleSubmit(); }}
+            onCancel={() => setShowDiffConfirm(false)}
+            title="Confirm Bot Configuration"
+            loading={loading}
+        />
         </Modal>
     );
 };

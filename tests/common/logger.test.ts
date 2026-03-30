@@ -168,10 +168,7 @@ describe('Logger', () => {
       // Import the default export
       const DefaultLogger = require('../../src/common/logger').default;
 
-      expect(DefaultLogger).toBeDefined();
-      expect(DefaultLogger.info).toBeDefined();
-      expect(DefaultLogger.error).toBeDefined();
-      expect(DefaultLogger.withContext).toBeDefined();
+      expect(DefaultLogger).not.toBeUndefined();
       expect(typeof DefaultLogger.info).toBe('function');
       expect(typeof DefaultLogger.error).toBe('function');
       expect(typeof DefaultLogger.withContext).toBe('function');

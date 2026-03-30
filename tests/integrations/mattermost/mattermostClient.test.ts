@@ -3,7 +3,7 @@ import MattermostClient from '../../../packages/message-mattermost/src/mattermos
 
 jest.mock('axios');
 jest.mock('@src/utils/ssrfGuard', () => ({
-  isSafeUrl: jest.fn().mockResolvedValue(true)
+  isSafeUrl: jest.fn().mockResolvedValue(true),
 }));
 
 describe('MattermostClient', () => {
@@ -14,7 +14,7 @@ describe('MattermostClient', () => {
     const mockApi = {
       get: jest.fn(),
       post: jest.fn(),
-      defaults: { baseURL: 'https://mattermost.example.com/api/v4' }
+      defaults: { baseURL: 'https://mattermost.example.com/api/v4' },
     };
 
     mockAxios = axios as jest.Mocked<typeof axios>;
@@ -118,5 +118,4 @@ describe('MattermostClient', () => {
 
     expect(channel?.name).toBe('general');
   });
-
 });

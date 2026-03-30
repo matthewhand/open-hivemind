@@ -26,16 +26,13 @@ export class ErrorHandler {
 
     switch (severity) {
       case 'warn':
-        logger(logMessage);
-        console.warn(logMessage);
+        logger('WARN:', logMessage);
         break;
       case 'info':
-        logger(logMessage);
-        console.info(logMessage);
+        logger('INFO:', logMessage);
         break;
       default:
-        logger(logMessage);
-        console.error(logMessage);
+        logger('ERROR:', logMessage);
         break;
     }
 

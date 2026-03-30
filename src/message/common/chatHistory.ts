@@ -1,6 +1,11 @@
 // src/message/common/chatHistory.ts
 
+import Debug from 'debug';
 import type { IMessage } from '@src/message/interfaces/IMessage';
+import { Logger } from '@common/logger';
+
+const debug = Debug('app:message:common:chatHistory');
+const logger = Logger.withContext('ChatHistory');
 
 /**
  * ChatHistory - Tracks messages sent by the bot for timing and activity purposes.
@@ -31,7 +36,7 @@ export class ChatHistory {
    */
   public addMessage(message: IMessage): void {
     this.history.push(message);
-    console.debug('[ChatHistory] Message added:', message.getMessageId());
+    logger.debug('Message added', { messageId: message.getMessageId() });
   }
 
   /**
@@ -41,17 +46,17 @@ export class ChatHistory {
    */
   public getRecentMessages(timeframe: number): IMessage[] {
     if (timeframe <= 0) {
-      console.error('[ChatHistory] Invalid timeframe provided:', timeframe);
+      debug('ERROR:', '[ChatHistory] Invalid timeframe provided:', timeframe);
       return [];
     }
     const currentTime = Date.now();
     const recentMessages = this.history.filter(
       (msg) => currentTime - msg.getTimestamp().getTime() <= timeframe
     );
-    console.debug(
-      '[ChatHistory] Recent messages retrieved:',
-      recentMessages.map((m) => m.getMessageId())
-    );
+    logger.debug('Recent messages retrieved', {
+      messageIds: recentMessages.map((m) => m.getMessageId()),
+      count: recentMessages.length,
+    });
     return recentMessages;
   }
 
@@ -64,8 +69,9 @@ export class ChatHistory {
     const initialLength = this.history.length;
     this.history = this.history.filter((msg) => msg.getTimestamp() > cutoffDate);
     const clearedMessages = initialLength - this.history.length;
-    console.debug(
-      `[ChatHistory] Cleared ${clearedMessages} old messages. Current history size: ${this.history.length}`
-    );
+    logger.debug('Old messages cleared', {
+      clearedCount: clearedMessages,
+      remainingCount: this.history.length,
+    });
   }
 }

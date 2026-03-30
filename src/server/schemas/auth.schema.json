@@ -1,0 +1,324 @@
+{
+  "/webui/api/auth/login": {
+    "post": {
+      "summary": "User login",
+      "tags": [
+        "Authentication"
+      ],
+      "requestBody": {
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "username": {
+                  "type": "string"
+                },
+                "password": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "username",
+                "password"
+              ]
+            }
+          }
+        }
+      },
+      "responses": {
+        "200": {
+          "description": "Login successful"
+        },
+        "401": {
+          "description": "Authentication failed"
+        }
+      }
+    }
+  },
+  "/webui/api/auth/register": {
+    "post": {
+      "summary": "User registration (admin only)",
+      "tags": [
+        "Authentication"
+      ],
+      "requestBody": {
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "username": {
+                  "type": "string"
+                },
+                "password": {
+                  "type": "string"
+                },
+                "email": {
+                  "type": "string"
+                },
+                "role": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "username",
+                "password",
+                "email"
+              ]
+            }
+          }
+        }
+      },
+      "responses": {
+        "201": {
+          "description": "User registered successfully"
+        },
+        "400": {
+          "description": "Registration failed"
+        }
+      }
+    }
+  },
+  "/webui/api/auth/refresh": {
+    "post": {
+      "summary": "Refresh access token",
+      "tags": [
+        "Authentication"
+      ],
+      "requestBody": {
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "refreshToken": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "refreshToken"
+              ]
+            }
+          }
+        }
+      },
+      "responses": {
+        "200": {
+          "description": "Token refreshed successfully"
+        },
+        "401": {
+          "description": "Token refresh failed"
+        }
+      }
+    }
+  },
+  "/webui/api/auth/logout": {
+    "post": {
+      "summary": "User logout",
+      "tags": [
+        "Authentication"
+      ],
+      "requestBody": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "refreshToken": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      },
+      "responses": {
+        "200": {
+          "description": "Logout successful"
+        }
+      }
+    }
+  },
+  "/webui/api/auth/me": {
+    "get": {
+      "summary": "Get current user profile",
+      "tags": [
+        "Authentication"
+      ],
+      "responses": {
+        "200": {
+          "description": "User profile data"
+        }
+      }
+    }
+  },
+  "/webui/api/auth/password": {
+    "put": {
+      "summary": "Change user password",
+      "tags": [
+        "Authentication"
+      ],
+      "requestBody": {
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "currentPassword": {
+                  "type": "string"
+                },
+                "newPassword": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "currentPassword",
+                "newPassword"
+              ]
+            }
+          }
+        }
+      },
+      "responses": {
+        "200": {
+          "description": "Password changed successfully"
+        },
+        "400": {
+          "description": "Validation error"
+        }
+      }
+    }
+  },
+  "/webui/api/auth/users": {
+    "get": {
+      "summary": "Get all users (admin only)",
+      "tags": [
+        "Authentication"
+      ],
+      "responses": {
+        "200": {
+          "description": "List of users"
+        }
+      }
+    }
+  },
+  "/webui/api/auth/users/{userId}": {
+    "get": {
+      "summary": "Get specific user (admin only)",
+      "tags": [
+        "Authentication"
+      ],
+      "parameters": [
+        {
+          "name": "userId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          },
+          "description": "User ID"
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "User data"
+        },
+        "404": {
+          "description": "User not found"
+        }
+      }
+    },
+    "put": {
+      "summary": "Update user (admin only)",
+      "tags": [
+        "Authentication"
+      ],
+      "parameters": [
+        {
+          "name": "userId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          },
+          "description": "User ID"
+        }
+      ],
+      "requestBody": {
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "username": {
+                  "type": "string"
+                },
+                "email": {
+                  "type": "string"
+                },
+                "role": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      },
+      "responses": {
+        "200": {
+          "description": "User updated successfully"
+        },
+        "404": {
+          "description": "User not found"
+        }
+      }
+    },
+    "delete": {
+      "summary": "Delete user (admin only)",
+      "tags": [
+        "Authentication"
+      ],
+      "parameters": [
+        {
+          "name": "userId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          },
+          "description": "User ID"
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "User deleted successfully"
+        },
+        "400": {
+          "description": "Cannot delete own account"
+        },
+        "404": {
+          "description": "User not found"
+        }
+      }
+    }
+  },
+  "/webui/api/auth/permissions": {
+    "get": {
+      "summary": "Get current user permissions",
+      "tags": [
+        "Authentication"
+      ],
+      "responses": {
+        "200": {
+          "description": "User permissions data"
+        }
+      }
+    }
+  }
+}

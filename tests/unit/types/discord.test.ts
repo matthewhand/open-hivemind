@@ -1,10 +1,10 @@
 import {
-  isDiscordMessage,
-  isDiscordUser,
+  isDiscordAPIError,
+  isDiscordAPIResponse,
   isDiscordChannel,
   isDiscordGuild,
-  isDiscordAPIResponse,
-  isDiscordAPIError,
+  isDiscordMessage,
+  isDiscordUser,
 } from '../../../src/types/discord';
 
 describe('Discord Type Guards', () => {
@@ -99,7 +99,9 @@ describe('Discord Type Guards', () => {
 
   describe('isDiscordUser', () => {
     it('returns true for a valid DiscordUser', () => {
-      expect(isDiscordUser({ id: 'u-123', username: 'testuser', discriminator: '0001', avatar: null })).toBe(true);
+      expect(
+        isDiscordUser({ id: 'u-123', username: 'testuser', discriminator: '0001', avatar: null })
+      ).toBe(true);
     });
 
     it('returns false for null', () => {

@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React from 'react';
+import { SkeletonTableLayout } from './DaisyUI/Skeleton';
 
 // Responsive Container
 export const ResponsiveContainer: React.FC<{ children: React.ReactNode; breakpoint?: string; orientation?: 'portrait' | 'landscape' }> = ({ children }) => (
@@ -45,7 +46,7 @@ export const ResponsiveButtonGroup: React.FC<{ children: React.ReactNode; orient
 
 // Responsive Table
 export const ResponsiveTable: React.FC<{ data: any[]; columns: { key: string; header: string; render?: (value: any, item: any) => React.ReactNode; sortable?: boolean; filterable?: boolean }[]; onRowClick?: (item: any) => void; loading?: boolean; emptyMessage?: string }> = ({ data, columns, onRowClick, loading = false, emptyMessage = 'No data available' }) => {
-  if (loading) {return <div className="flex justify-center py-4"><span className="loading loading-spinner" aria-hidden="true" /></div>;}
+  if (loading) {return <SkeletonTableLayout rows={4} columns={columns.length} />;}
   if (!data.length) {return <div className="text-center py-4">{emptyMessage}</div>;}
   return (
     <div className="overflow-x-auto">

@@ -48,7 +48,10 @@ describe('serializeSchema', () => {
   });
 
   it('serializes arrays recursively', () => {
-    const schema = [{ format: String, default: '' }, { format: Number, default: 0 }];
+    const schema = [
+      { format: String, default: '' },
+      { format: Number, default: 0 },
+    ];
     const result = serializeSchema(schema);
     expect(result[0].format).toBe('String');
     expect(result[1].format).toBe('Number');

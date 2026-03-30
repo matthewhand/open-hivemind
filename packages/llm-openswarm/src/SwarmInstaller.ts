@@ -2,8 +2,10 @@ import { exec, spawn } from 'child_process';
 import fs from 'fs';
 import path from 'path';
 import { promisify } from 'util';
+import { Logger } from '@common/logger';
 
 const execAsync = promisify(exec);
+const logger = Logger.withContext('SwarmInstaller');
 
 export class SwarmInstaller {
   private installPath: string;
@@ -45,7 +47,7 @@ export class SwarmInstaller {
         return { success: true, message: 'OpenSwarm already installed' };
       }
 
-      console.log('Installing OpenSwarm via pip...');
+      logger.info('Installing OpenSwarm via pip');
       await execAsync('pip install open-swarm');
 
       return { success: true, message: 'OpenSwarm installed successfully via pip' };

@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect } from 'react';
 import Card from './DaisyUI/Card';
+import { SkeletonList } from './DaisyUI/Skeleton';
 import Badge from './DaisyUI/Badge';
 import { Alert } from './DaisyUI/Alert';
 import Accordion from './DaisyUI/Accordion';
@@ -13,7 +14,9 @@ import {
   Info,
   Bolt,
   Cpu,
+  Server,
   Signal,
+  ChevronDown,
   Activity,
 } from 'lucide-react';
 import { apiService } from '../services/api';
@@ -91,7 +94,7 @@ const SystemHealth: React.FC<SystemHealthProps> = ({
         setLastRefresh(new Date());
         setError(null);
       } catch (err: any) {
-        console.error('Failed to fetch system health:', err);
+        // Error details shown inline via setError
         // Provide more specific error messages based on error type
         if (err.name === 'TypeError' && err.message.includes('fetch')) {
           setError('Network error: Unable to connect to server. Please check your connection.');
@@ -181,11 +184,8 @@ const SystemHealth: React.FC<SystemHealthProps> = ({
     return (
       <Card>
         <Card.Body>
-          <div className="flex justify-center items-center py-8">
-            <span className="loading loading-spinner loading-lg" aria-hidden="true"></span>
-            <span className="ml-2 text-base-content/70">
-              Loading system health data...
-            </span>
+          <div className="py-6 px-4">
+            <SkeletonList items={5} />
           </div>
         </Card.Body>
       </Card>
@@ -263,8 +263,8 @@ const SystemHealth: React.FC<SystemHealthProps> = ({
         {apiHealth && (
           <div className="mb-6">
             <Alert
-              status={apiHealth.overall.status}
-              message={apiHealth.overall.message || `System Status: ${metrics?.status}`}
+              status={apiHealth?.overall?.status}
+              message={apiHealth?.overall?.message || `System Status: ${metrics?.status}`}
             />
           </div>
         )}
@@ -332,10 +332,10 @@ const SystemHealth: React.FC<SystemHealthProps> = ({
               </div>
               <div className="flex items-center gap-4 mt-2">
                 <Badge
-                  variant={getStatusColor(apiHealth?.overall.status || 'unknown') as any}
+                  variant={getStatusColor(apiHealth?.overall?.status || 'unknown') as any}
                   size="lg"
                 >
-                  {apiHealth?.overall.status || 'Unknown'}
+                  {apiHealth?.overall?.status || 'Unknown'}
                 </Badge>
                 {apiHealth?.overall?.stats && (
                   <span className="text-sm">

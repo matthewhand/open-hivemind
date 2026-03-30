@@ -103,9 +103,15 @@ describe('Hot Reload API Endpoints - COMPLETE TDD SUITE', () => {
         .send(invalidChangeData)
         .expect(400);
 
-      expect(response.body).toHaveProperty('success', false);
-      expect(response.body).toHaveProperty('message');
-      expect(response.body.message).toContain('No changes provided');
+      expect(response.body).toHaveProperty('error', 'Validation failed');
+      expect(response.body).toHaveProperty('issues');
+      expect(response.body.issues).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            message: expect.stringContaining('At least one change is required'),
+          }),
+        ])
+      );
     });
 
     it('should reject requests missing required fields', async () => {
@@ -118,7 +124,7 @@ describe('Hot Reload API Endpoints - COMPLETE TDD SUITE', () => {
         .send(incompleteChangeData)
         .expect(400);
 
-      expect(response.body).toHaveProperty('success', false);
+      expect(response.body).toHaveProperty('error', 'Validation failed');
     });
 
     it('should handle hot reload manager errors gracefully', async () => {
@@ -423,7 +429,7 @@ describe('Hot Reload API Endpoints - COMPLETE TDD SUITE', () => {
     it('should handle empty request bodies', async () => {
       const response = await request(app).post('/api/config/hot-reload').send({}).expect(400);
 
-      expect(response.body).toHaveProperty('success', false);
+      expect(response.body).toHaveProperty('error', 'Validation failed');
     });
   });
 

@@ -20,7 +20,9 @@ import {
   selectConfig,
   selectConfigError,
 } from '../store/slices/configSlice';
-import LoadingSpinnerComponent from './LoadingSpinner';
+import { SkeletonPage } from './DaisyUI/Skeleton';
+import Debug from 'debug';
+const debug = Debug('app:client:components:ConfigManager');
 
 const ConfigManager: React.FC = () => {
   const config = useAppSelector(selectConfig);
@@ -79,7 +81,7 @@ const ConfigManager: React.FC = () => {
       setValidationErrors({});
       showToast('Configuration saved successfully', 'success');
     } catch (error) {
-      console.error('Failed to save configuration:', error);
+      // showToast below provides feedback
       showToast('Failed to save configuration', 'error');
     }
   };
@@ -117,7 +119,7 @@ const ConfigManager: React.FC = () => {
   });
 
   if (config.isLoading) {
-    return <LoadingSpinnerComponent message="Loading configurations..." />;
+    return <SkeletonPage variant="list" statsCount={0} />;
   }
 
   return (
@@ -140,7 +142,7 @@ const ConfigManager: React.FC = () => {
                   size="sm"
                   className="btn-circle"
                   aria-label="Refresh configurations"
-                  onClick={() => console.log('Refresh configs')}
+                  onClick={() => debug('Refresh configs')}
                 >
                   <ArrowPathIcon className="w-5 h-5" />
                 </Button>

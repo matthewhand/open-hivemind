@@ -157,10 +157,8 @@ describe('BotManager', () => {
       const bots = await botManager.getAllBots();
 
       expect(bots).toHaveLength(2);
-      expect(bots.some((b) => b.id === 'Configured Bot')).toBeDefined();
-      expect(bots.some((b) => b.id === 'Configured Bot')).not.toBeNull();
-      expect(bots.some((b) => b.id === 'custom-bot')).toBeDefined();
-      expect(bots.some((b) => b.id === 'custom-bot')).not.toBeNull();
+      expect(bots.some((b) => b.id === 'Configured Bot')).toBe(true);
+      expect(bots.some((b) => b.id === 'custom-bot')).toBe(true);
     });
 
     it('should prioritize custom bots over configured bots with same ID', async () => {
@@ -186,7 +184,7 @@ describe('BotManager', () => {
       botManager['customBots'].set('custom-bot', customBot);
 
       const bot = await botManager.getBot('custom-bot');
-      expect(bot).toBeDefined();
+      expect(bot).not.toBeNull();
       expect(bot?.id).toBe('custom-bot');
     });
 
@@ -214,7 +212,7 @@ describe('BotManager', () => {
       const bot = await botManager.createBot(createRequest);
 
       expect(bot.name).toBe(createRequest.name);
-      expect(bot.id).toBeDefined();
+      expect(typeof bot.id).toBe('string');
       expect(webUIStorage.saveAgent).toHaveBeenCalledWith(
         expect.objectContaining({
           name: createRequest.name,

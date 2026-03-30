@@ -1,5 +1,6 @@
 import express from 'express';
 import request from 'supertest';
+import router from '../../../src/server/routes/agents';
 
 const mockReadFile = jest.fn();
 const mockWriteFile = jest.fn();
@@ -22,8 +23,6 @@ jest.mock('@src/types/errors', () => ({
     getStatusCode: () => 500,
   },
 }));
-
-import router from '../../../src/server/routes/agents';
 
 describe('Agents Routes', () => {
   let app: express.Application;
@@ -80,7 +79,9 @@ describe('Agents Routes', () => {
 
       const res = await request(app).post('/agents').send(newAgent);
       expect(res.status).toBe(200);
-      expect(res.body.agent).toBeDefined();
+      expect(res.body.agent).toEqual(
+        expect.objectContaining({ name: 'NewBot', messageProvider: 'slack', llmProvider: 'openai' })
+      );
       expect(res.body.agent.name).toBe('NewBot');
       expect(res.body.agent.id).toMatch(/^agent_/);
       expect(mockWriteFile).toHaveBeenCalled();
@@ -88,7 +89,11 @@ describe('Agents Routes', () => {
 
     it('should return existing agent if name already exists', async () => {
       mockReadFile.mockResolvedValue(JSON.stringify([sampleAgent]));
-      const res = await request(app).post('/agents').send({ name: 'TestBot' });
+      const res = await request(app).post('/agents').send({
+        name: 'TestBot',
+        messageProvider: 'discord',
+        llmProvider: 'openai',
+      });
       expect(res.status).toBe(200);
       expect(res.body.agent.id).toBe('agent_123');
     });
@@ -97,9 +102,7 @@ describe('Agents Routes', () => {
   describe('PUT /agents/:id', () => {
     it('should update an existing agent', async () => {
       mockReadFile.mockResolvedValue(JSON.stringify([sampleAgent]));
-      const res = await request(app)
-        .put('/agents/agent_123')
-        .send({ name: 'UpdatedBot' });
+      const res = await request(app).put('/agents/agent_123').send({ name: 'UpdatedBot' });
       expect(res.status).toBe(200);
       expect(res.body.agent.name).toBe('UpdatedBot');
     });
@@ -133,7 +136,7 @@ describe('Agents Routes', () => {
       mockReadFile.mockRejectedValue(new Error('ENOENT'));
       const res = await request(app).get('/agents/personas');
       expect(res.status).toBe(200);
-      expect(res.body.personas).toBeDefined();
+      expect(Array.isArray(res.body.personas)).toBe(true);
       expect(res.body.personas.length).toBeGreaterThan(0);
     });
   });
@@ -142,7 +145,7 @@ describe('Agents Routes', () => {
     it('should return 400 if name or systemPrompt is missing', async () => {
       const res = await request(app).post('/agents/personas').send({});
       expect(res.status).toBe(400);
-      expect(res.body.error).toContain('required');
+      expect(res.body.error).toBe('Validation failed');
     });
 
     it('should create a new persona', async () => {

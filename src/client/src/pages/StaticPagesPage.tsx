@@ -2,11 +2,10 @@
 import React from 'react';
 import Card from '../components/DaisyUI/Card';
 import Button from '../components/DaisyUI/Button';
-import Breadcrumbs from '../components/DaisyUI/Breadcrumbs';
+
 import { ArrowTopRightOnSquareIcon, HomeIcon, ClockIcon, ComputerDesktopIcon } from '@heroicons/react/24/outline';
 
 const StaticPagesPage: React.FC = () => {
-  const breadcrumbItems = [{ label: 'Static Pages', href: '/static', isActive: true }];
 
   const staticPages = [
     {
@@ -38,9 +37,7 @@ const StaticPagesPage: React.FC = () => {
 
   return (
     <div className="p-6">
-      <Breadcrumbs items={breadcrumbItems} />
-
-      <div className="mt-4 mb-8">
+      <div className="mb-8">
         <h1 className="text-3xl font-bold mb-2">Static Pages</h1>
         <p className="text-base-content/70">Browse and access static HTML pages and resources</p>
       </div>

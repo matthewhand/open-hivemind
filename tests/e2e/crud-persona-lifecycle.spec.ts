@@ -18,7 +18,12 @@ test.describe('Persona CRUD Lifecycle', () => {
       page.route('**/api/config/llm-status', (route) =>
         route.fulfill({
           status: 200,
-          json: { defaultConfigured: true, defaultProviders: [], botsMissingLlmProvider: [], hasMissing: false },
+          json: {
+            defaultConfigured: true,
+            defaultProviders: [],
+            botsMissingLlmProvider: [],
+            hasMissing: false,
+          },
         })
       ),
       page.route('**/api/config/global', (route) => route.fulfill({ status: 200, json: {} })),
@@ -26,11 +31,15 @@ test.describe('Persona CRUD Lifecycle', () => {
       page.route('**/api/csrf-token', (route) =>
         route.fulfill({ status: 200, json: { token: 'mock-csrf-token' } })
       ),
-      page.route('**/api/health', (route) => route.fulfill({ status: 200, json: { status: 'ok' } })),
+      page.route('**/api/health', (route) =>
+        route.fulfill({ status: 200, json: { status: 'ok' } })
+      ),
       page.route('**/api/dashboard/api/status', (route) =>
         route.fulfill({ status: 200, json: { bots: [], uptime: 100 } })
       ),
-      page.route('**/api/demo/status', (route) => route.fulfill({ status: 200, json: { active: false } })),
+      page.route('**/api/demo/status', (route) =>
+        route.fulfill({ status: 200, json: { active: false } })
+      ),
     ]);
   }
 
@@ -44,7 +53,9 @@ test.describe('Persona CRUD Lifecycle', () => {
 
     await page.goto('/admin/personas');
     const content = page.locator('[class*="card"], [class*="empty"], [class*="persona"]');
-    await expect(content.first()).toBeVisible({ timeout: 10000 }).catch(() => {});
+    await expect(content.first())
+      .toBeVisible({ timeout: 10000 })
+      .catch(() => {});
     // The page should load without crashing
     expect(page.url()).toContain('/admin/personas');
   });
@@ -176,23 +187,49 @@ test.describe('Persona CRUD Lifecycle', () => {
   test('search filters personas by name', async ({ page }) => {
     const allPersonas = [
       {
-        id: 'p1', name: 'Alpha Helper', description: 'First', systemPrompt: 'help',
-        category: 'general', traits: [], isBuiltIn: false, createdAt: '2025-01-01T00:00:00Z',
-        updatedAt: '2025-01-01T00:00:00Z', assignedBotIds: [], assignedBotNames: [],
+        id: 'p1',
+        name: 'Alpha Helper',
+        description: 'First',
+        systemPrompt: 'help',
+        category: 'general',
+        traits: [],
+        isBuiltIn: false,
+        createdAt: '2025-01-01T00:00:00Z',
+        updatedAt: '2025-01-01T00:00:00Z',
+        assignedBotIds: [],
+        assignedBotNames: [],
       },
       {
-        id: 'p2', name: 'Beta Writer', description: 'Second', systemPrompt: 'write',
-        category: 'creative', traits: [], isBuiltIn: false, createdAt: '2025-01-01T00:00:00Z',
-        updatedAt: '2025-01-01T00:00:00Z', assignedBotIds: [], assignedBotNames: [],
+        id: 'p2',
+        name: 'Beta Writer',
+        description: 'Second',
+        systemPrompt: 'write',
+        category: 'creative',
+        traits: [],
+        isBuiltIn: false,
+        createdAt: '2025-01-01T00:00:00Z',
+        updatedAt: '2025-01-01T00:00:00Z',
+        assignedBotIds: [],
+        assignedBotNames: [],
       },
       {
-        id: 'p3', name: 'Gamma Coder', description: 'Third', systemPrompt: 'code',
-        category: 'technical', traits: [], isBuiltIn: false, createdAt: '2025-01-01T00:00:00Z',
-        updatedAt: '2025-01-01T00:00:00Z', assignedBotIds: [], assignedBotNames: [],
+        id: 'p3',
+        name: 'Gamma Coder',
+        description: 'Third',
+        systemPrompt: 'code',
+        category: 'technical',
+        traits: [],
+        isBuiltIn: false,
+        createdAt: '2025-01-01T00:00:00Z',
+        updatedAt: '2025-01-01T00:00:00Z',
+        assignedBotIds: [],
+        assignedBotNames: [],
       },
     ];
 
-    await page.route('**/api/personas', (route) => route.fulfill({ status: 200, json: allPersonas }));
+    await page.route('**/api/personas', (route) =>
+      route.fulfill({ status: 200, json: allPersonas })
+    );
 
     await page.goto('/admin/personas');
     await expect(page.getByText('Alpha Helper')).toBeVisible();
@@ -210,10 +247,17 @@ test.describe('Persona CRUD Lifecycle', () => {
 
   test('copy system prompt button click', async ({ page }) => {
     const persona = {
-      id: 'p-copy', name: 'Copyable Persona', description: 'Has a prompt to copy',
+      id: 'p-copy',
+      name: 'Copyable Persona',
+      description: 'Has a prompt to copy',
       systemPrompt: 'You are a very specific assistant with detailed instructions.',
-      category: 'general', traits: [], isBuiltIn: false, createdAt: '2025-01-01T00:00:00Z',
-      updatedAt: '2025-01-01T00:00:00Z', assignedBotIds: [], assignedBotNames: [],
+      category: 'general',
+      traits: [],
+      isBuiltIn: false,
+      createdAt: '2025-01-01T00:00:00Z',
+      updatedAt: '2025-01-01T00:00:00Z',
+      assignedBotIds: [],
+      assignedBotNames: [],
     };
 
     await page.route('**/api/personas', (route) => route.fulfill({ status: 200, json: [persona] }));
@@ -232,10 +276,17 @@ test.describe('Persona CRUD Lifecycle', () => {
   test('delete persona removes it from list', async ({ page }) => {
     const personaList = [
       {
-        id: 'p-del', name: 'Deletable Persona', description: 'Will be deleted',
-        systemPrompt: 'temp', category: 'general', traits: [], isBuiltIn: false,
-        createdAt: '2025-01-01T00:00:00Z', updatedAt: '2025-01-01T00:00:00Z',
-        assignedBotIds: [], assignedBotNames: [],
+        id: 'p-del',
+        name: 'Deletable Persona',
+        description: 'Will be deleted',
+        systemPrompt: 'temp',
+        category: 'general',
+        traits: [],
+        isBuiltIn: false,
+        createdAt: '2025-01-01T00:00:00Z',
+        updatedAt: '2025-01-01T00:00:00Z',
+        assignedBotIds: [],
+        assignedBotNames: [],
       },
     ];
 
@@ -257,10 +308,17 @@ test.describe('Persona CRUD Lifecycle', () => {
   test('very long system prompt renders without crash', async ({ page }) => {
     const longPrompt = 'You are an assistant. '.repeat(250); // ~5000 chars
     const persona = {
-      id: 'p-long', name: 'Long Prompt Persona', description: 'Has a very long prompt',
-      systemPrompt: longPrompt, category: 'general', traits: [], isBuiltIn: false,
-      createdAt: '2025-01-01T00:00:00Z', updatedAt: '2025-01-01T00:00:00Z',
-      assignedBotIds: [], assignedBotNames: [],
+      id: 'p-long',
+      name: 'Long Prompt Persona',
+      description: 'Has a very long prompt',
+      systemPrompt: longPrompt,
+      category: 'general',
+      traits: [],
+      isBuiltIn: false,
+      createdAt: '2025-01-01T00:00:00Z',
+      updatedAt: '2025-01-01T00:00:00Z',
+      assignedBotIds: [],
+      assignedBotNames: [],
     };
 
     await page.route('**/api/personas', (route) => route.fulfill({ status: 200, json: [persona] }));
@@ -271,11 +329,17 @@ test.describe('Persona CRUD Lifecycle', () => {
 
   test('special characters in persona name and prompt', async ({ page }) => {
     const persona = {
-      id: 'p-special', name: 'Test <b>bold</b> & "quotes" \'apos\'',
-      description: 'Special chars: <>&"\'', systemPrompt: 'Handle <html> & "JSON" safely',
-      category: 'general', traits: [], isBuiltIn: false,
-      createdAt: '2025-01-01T00:00:00Z', updatedAt: '2025-01-01T00:00:00Z',
-      assignedBotIds: [], assignedBotNames: [],
+      id: 'p-special',
+      name: 'Test <b>bold</b> & "quotes" \'apos\'',
+      description: 'Special chars: <>&"\'',
+      systemPrompt: 'Handle <html> & "JSON" safely',
+      category: 'general',
+      traits: [],
+      isBuiltIn: false,
+      createdAt: '2025-01-01T00:00:00Z',
+      updatedAt: '2025-01-01T00:00:00Z',
+      assignedBotIds: [],
+      assignedBotNames: [],
     };
 
     await page.route('**/api/personas', (route) => route.fulfill({ status: 200, json: [persona] }));

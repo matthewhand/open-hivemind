@@ -73,7 +73,7 @@ describe('Admin Routes - MCP Test', () => {
     expect(response.body.message).toContain('Successfully tested connection');
     expect(response.body.message).toContain(`Found ${mockTools.length} tools`);
 
-    expect(response.body.data).toBeDefined();
+    expect(typeof response.body.data).toBe('object');
     expect(response.body.data.toolCount).toBe(mockTools.length);
     expect(response.body.data.tools).toHaveLength(mockTools.length);
     expect(response.body.data.tools[0].name).toBe('tool1');

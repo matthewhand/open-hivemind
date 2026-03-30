@@ -1,50 +1,55 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
-import React, { useState } from 'react';
+import React from 'react';
 import { useParams } from 'react-router-dom';
 import Card from '../components/DaisyUI/Card';
 import Button from '../components/DaisyUI/Button';
 import Badge from '../components/DaisyUI/Badge';
 import Dropdown from '../components/DaisyUI/Dropdown';
-import Breadcrumbs from '../components/DaisyUI/Breadcrumbs';
+
+import { SkeletonList } from '../components/DaisyUI/Skeleton';
 import { ArrowLeftIcon, ArrowDownTrayIcon } from '@heroicons/react/24/outline';
 import ReactMarkdown from 'react-markdown';
 import useSpec from '../hooks/useSpec';
+import { useInfoToast } from '../components/DaisyUI/ToastNotification';
 
 const SpecDetailPage: React.FC = () => {
+  const infoToast = useInfoToast();
   const { id } = useParams<{ id: string }>();
   const { spec, loading, error } = useSpec(id);
 
-  const handleExport = (format: 'md' | 'json' | 'yaml') => {
-    if (!spec) {return;}
+  const handleExport = (format: 'md' | 'json' | 'yaml'): void => {
+    if (!spec) {
+      return;
+    }
 
     let content = '';
     let mimeType = '';
     let filename = '';
 
     switch (format) {
-    case 'md':
-      content = spec.content;
-      mimeType = 'text/markdown';
-      filename = `${spec.topic}.md`;
-      break;
-    case 'json':
-      content = JSON.stringify(spec, null, 2);
-      mimeType = 'application/json';
-      filename = `${spec.topic}.json`;
-      break;
-    case 'yaml':
-      content = `
+      case 'md':
+        content = spec.content;
+        mimeType = 'text/markdown';
+        filename = `${spec.topic}.md`;
+        break;
+      case 'json':
+        content = JSON.stringify(spec, null, 2);
+        mimeType = 'application/json';
+        filename = `${spec.topic}.json`;
+        break;
+      case 'yaml':
+        content = `
 topic: ${spec.topic}
 author: ${spec.author}
 timestamp: ${spec.timestamp}
 tags:
-${spec.tags.map(tag => `  - ${tag}`).join('\n')}
+${spec.tags.map((tag) => `  - ${tag}`).join('\n')}
 content: |
 ${spec.content.replace(/^/gm, '  ')}
         `.trim();
-      mimeType = 'text/yaml';
-      filename = `${spec.topic}.yaml`;
-      break;
+        mimeType = 'text/yaml';
+        filename = `${spec.topic}.yaml`;
+        break;
     }
 
     const blob = new Blob([content], { type: mimeType });
@@ -59,15 +64,19 @@ ${spec.content.replace(/^/gm, '  ')}
   };
 
   const exportItems = [
-    { label: 'Markdown', onClick: () => handleExport('md') },
-    { label: 'JSON', onClick: () => handleExport('json') },
-    { label: 'YAML', onClick: () => handleExport('yaml') },
+    { label: 'Markdown', onClick: (): void => handleExport('md') },
+    { label: 'JSON', onClick: (): void => handleExport('json') },
+    { label: 'YAML', onClick: (): void => handleExport('yaml') },
   ];
+
+  const handleNotImplemented = (): void => {
+    infoToast('Coming Soon', 'This feature is currently under development.');
+  };
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="loading loading-spinner loading-lg" aria-hidden="true"></div>
+      <div className="p-6">
+        <SkeletonList items={6} />
       </div>
     );
   }
@@ -88,32 +97,23 @@ ${spec.content.replace(/^/gm, '  ')}
     );
   }
 
-  const breadcrumbItems = [
-    { label: 'Specs', href: '/specs' },
-    { label: spec.topic, href: `/specs/${id}`, isActive: true },
-  ];
-
   return (
     <div className="container mx-auto p-6 max-w-4xl">
-      <Breadcrumbs items={breadcrumbItems} />
-
       <div className="mt-6">
         <Card className="shadow-lg">
           <div className="card-body">
             {/* Header */}
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-4">
-                <Button
-                  size="sm"
-                  className="btn-ghost"
-                  onClick={() => window.history.back()}
-                >
+                <Button size="sm" className="btn-ghost" onClick={() => window.history.back()}>
                   <ArrowLeftIcon className="w-4 h-4 mr-2" />
                   Back
                 </Button>
                 <div>
                   <h1 className="text-3xl font-bold">{spec.topic}</h1>
-                  <p className="opacity-70">By {spec.author} • {new Date(spec.timestamp).toLocaleDateString()}</p>
+                  <p className="opacity-70">
+                    By {spec.author} • {new Date(spec.timestamp).toLocaleDateString()}
+                  </p>
                 </div>
               </div>
               <Dropdown
@@ -148,10 +148,10 @@ ${spec.content.replace(/^/gm, '  ')}
                 Last updated: {new Date(spec.timestamp).toLocaleString()}
               </p>
               <div className="flex gap-2">
-                <Button size="sm" className="btn-ghost">
+                <Button size="sm" className="btn-ghost" onClick={handleNotImplemented}>
                   Edit
                 </Button>
-                <Button size="sm" className="btn-ghost">
+                <Button size="sm" className="btn-ghost" onClick={handleNotImplemented}>
                   Share
                 </Button>
               </div>

@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import Card from './DaisyUI/Card';
 import Badge from './DaisyUI/Badge';
 import Button from './DaisyUI/Button';
+import { SkeletonList } from './DaisyUI/Skeleton';
 import Modal from './DaisyUI/Modal';
 import Accordion from './DaisyUI/Accordion';
 import { Alert } from './DaisyUI/Alert';
@@ -90,9 +91,8 @@ const ConfigSources: React.FC = () => {
   if (loading) {
     return (
       <Card>
-        <div className="flex justify-center items-center py-8">
-          <span className="loading loading-spinner loading-lg" aria-hidden="true"></span>
-          <p className="ml-4">Loading configuration sources...</p>
+        <div className="py-6 px-4">
+          <SkeletonList items={5} />
         </div>
       </Card>
     );

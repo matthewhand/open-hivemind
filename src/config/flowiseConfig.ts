@@ -1,5 +1,7 @@
 import convict from 'convict';
 import path from 'path';
+import Debug from 'debug';
+const debug = Debug('app:config:flowiseConfig');
 
 const flowiseConfig = convict({
   FLOWISE_API_ENDPOINT: {
@@ -53,7 +55,7 @@ if (process.env.NODE_ENV !== 'test') {
     flowiseConfig.loadFile(configPath);
   } catch {
     // Fallback to defaults if config file is missing or invalid
-    console.warn(`Warning: Could not load flowise config from ${configPath}, using defaults`);
+    debug('WARN:', `Warning: Could not load flowise config from ${configPath}, using defaults`);
   }
 }
 

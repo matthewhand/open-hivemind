@@ -22,6 +22,8 @@ import {
   XMarkIcon,
 } from '@heroicons/react/24/outline';
 import { useAppSelector } from '../store/hooks';
+import Debug from 'debug';
+const debug = Debug('app:client:components:SystemInfo');
 
 const SystemInfo: React.FC = () => {
   const dashboard = useAppSelector(state => state.dashboard);
@@ -71,10 +73,10 @@ const SystemInfo: React.FC = () => {
       }
 
       const data = await response.json();
-      console.log(`System ${action} initiated:`, data);
+      debug(`System ${action} initiated:`, data);
       setLogs(prev => [...prev, `[${new Date().toISOString()}] System ${action} initiated: ${data.message || 'Success'}`]);
     } catch (error) {
-      console.error(`Failed to ${action} system:`, error);
+      debug('ERROR:', `Failed to ${action} system:`, error);
       setLogs(prev => [...prev, `[${new Date().toISOString()}] Failed to ${action}: ${error instanceof Error ? error.message : 'Unknown error'}`]);
     } finally {
       setIsLoading(false);
@@ -194,6 +196,7 @@ const SystemInfo: React.FC = () => {
                       variant="ghost"
                       shape="circle"
                       onClick={handleDownloadLogs}
+                      aria-label="Download logs"
                     >
                       <ArrowDownTrayIcon className="w-5 h-5" />
                     </Button>
@@ -204,6 +207,7 @@ const SystemInfo: React.FC = () => {
                       variant="ghost"
                       shape="circle"
                       onClick={handleClearLogs}
+                      aria-label="Clear logs"
                     >
                       <XMarkIcon className="w-5 h-5" />
                     </Button>

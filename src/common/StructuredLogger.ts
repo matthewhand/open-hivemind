@@ -11,6 +11,7 @@
  */
 
 import Debug from 'debug';
+import { getCorrelationId } from '../middleware/correlationId';
 import { sanitizeForLogging } from './logger';
 
 /**
@@ -137,8 +138,11 @@ export class StructuredLogger {
       entry.context = sanitizeContext(context);
     }
 
-    if (this.traceId) {
-      entry.traceId = this.traceId;
+    // Use explicit traceId if set, otherwise fall back to the
+    // correlation ID stored in AsyncLocalStorage for the current request.
+    const effectiveTraceId = this.traceId ?? getCorrelationId();
+    if (effectiveTraceId) {
+      entry.traceId = effectiveTraceId;
     }
 
     if (this.spanId) {
@@ -161,6 +165,7 @@ export class StructuredLogger {
    */
   info(message: string, context?: Record<string, unknown>): void {
     const entry = this.formatEntry('info', message, context);
+    // eslint-disable-next-line no-console
     console.info(JSON.stringify(entry));
   }
 
@@ -169,6 +174,7 @@ export class StructuredLogger {
    */
   warn(message: string, context?: Record<string, unknown>): void {
     const entry = this.formatEntry('warn', message, context);
+    // eslint-disable-next-line no-console
     console.warn(JSON.stringify(entry));
   }
 
@@ -184,6 +190,7 @@ export class StructuredLogger {
       : context;
 
     const entry = this.formatEntry('error', message, errorContext);
+    // eslint-disable-next-line no-console
     console.error(JSON.stringify(entry));
   }
 
@@ -199,6 +206,7 @@ export class StructuredLogger {
       : context;
 
     const entry = this.formatEntry('fatal', message, errorContext);
+    // eslint-disable-next-line no-console
     console.error(JSON.stringify(entry));
   }
 

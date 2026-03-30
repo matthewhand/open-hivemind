@@ -23,11 +23,6 @@ describe('ILlmProvider', () => {
   });
 
   it('should define all required methods', () => {
-    expect(mockProvider.generateCompletion).toBeDefined();
-    expect(mockProvider.supportsChatCompletion).toBeDefined();
-    expect(mockProvider.supportsCompletion).toBeDefined();
-    expect(mockProvider.generateChatCompletion).toBeDefined();
-
     expect(typeof mockProvider.generateCompletion).toBe('function');
     expect(typeof mockProvider.supportsChatCompletion).toBe('function');
     expect(typeof mockProvider.supportsCompletion).toBe('function');

@@ -309,8 +309,9 @@ describe('Admin API Endpoints - COMPLETE TDD SUITE', () => {
         .post('/api/admin/mcp-servers/connect')
         .send(failingConfig);
 
-      expect(response.status).toBe(200);
-      expect(response.body).toHaveProperty('success', true);
+      // SSRF guard blocks unresolvable hostnames with 403
+      expect(response.status).toBe(403);
+      expect(response.body).toHaveProperty('error');
     });
   });
 
@@ -559,12 +560,13 @@ describe('Admin API Endpoints - COMPLETE TDD SUITE', () => {
 
       const responses = await Promise.all(requests);
 
-      // Some requests might be rate limited
+      // Rate limiting is configured at 100 requests per 15min window
       const successCount = responses.filter((r) => r.status === 200).length;
       const rateLimitedCount = responses.filter((r) => r.status === 429).length;
 
-      // There is no rate limiting implemented, so all requests should succeed or fail without a 429
-      expect(rateLimitedCount).toBe(0);
+      // Some requests should succeed, some may be rate limited
+      expect(successCount + rateLimitedCount).toBe(100);
+      expect(successCount).toBeGreaterThan(0);
     });
   });
 });

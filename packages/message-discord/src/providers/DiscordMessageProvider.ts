@@ -1,6 +1,9 @@
 import type { IMessage } from '@message/interfaces/IMessage';
+import { Logger } from '@common/logger';
 import DiscordMessage from '../DiscordMessage';
 import { Discord } from '../DiscordService';
+
+const logger = Logger.withContext('DiscordMessageProvider');
 
 /**
  * Discord-specific message provider that implements the low-level message transport interface.
@@ -59,13 +62,15 @@ export class DiscordMessageProvider {
 
   public async getForumOwner(forumId: string): Promise<string> {
     try {
-      // Placeholder implementation until Discord ownership lookup is wired.
-      // Discord channel owner information requires additional API scopes; for now
-      // surface a deterministic identifier so guard logic can still function.
-      return `discord-owner-${forumId}`;
+      // Delegate to DiscordService which queries Discord API for channel/guild owner
+      if (typeof (this.discordSvc as any).getChannelOwnerId === 'function') {
+        const ownerId = await (this.discordSvc as any).getChannelOwnerId(forumId);
+        return ownerId || '';
+      }
+      return '';
     } catch (error) {
-      console.error(`Failed to get forum owner for Discord channel ${forumId}:`, error);
-      return 'discord-owner-unknown';
+      logger.error('Failed to get forum owner for Discord channel', { forumId, error });
+      return '';
     }
   }
 }

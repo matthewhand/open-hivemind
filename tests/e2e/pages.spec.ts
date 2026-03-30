@@ -88,8 +88,24 @@ async function mockAllEndpoints(page: import('@playwright/test').Page) {
         baseUrl: 'http://localhost:4050',
         totalUrls: 2,
         urls: [
-          { url: '/admin/overview', fullUrl: 'http://localhost:4050/admin/overview', changefreq: 'daily', priority: 1.0, lastmod: new Date().toISOString(), description: 'Overview', access: 'authenticated' },
-          { url: '/admin/bots', fullUrl: 'http://localhost:4050/admin/bots', changefreq: 'daily', priority: 0.8, lastmod: new Date().toISOString(), description: 'Bots', access: 'authenticated' },
+          {
+            url: '/admin/overview',
+            fullUrl: 'http://localhost:4050/admin/overview',
+            changefreq: 'daily',
+            priority: 1.0,
+            lastmod: new Date().toISOString(),
+            description: 'Overview',
+            access: 'authenticated',
+          },
+          {
+            url: '/admin/bots',
+            fullUrl: 'http://localhost:4050/admin/bots',
+            changefreq: 'daily',
+            priority: 0.8,
+            lastmod: new Date().toISOString(),
+            description: 'Bots',
+            access: 'authenticated',
+          },
         ],
       },
     });
@@ -126,7 +142,12 @@ async function mockAllEndpoints(page: import('@playwright/test').Page) {
     if (path === '/api/config/llm-status') {
       return route.fulfill({
         status: 200,
-        json: { defaultConfigured: true, defaultProviders: [], botsMissingLlmProvider: [], hasMissing: false },
+        json: {
+          defaultConfigured: true,
+          defaultProviders: [],
+          botsMissingLlmProvider: [],
+          hasMissing: false,
+        },
       });
     }
     if (path === '/api/config/global') {

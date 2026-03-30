@@ -111,16 +111,18 @@ const Modal: React.FC<ModalProps> = ({
       ref={modalRef}
       className={`modal ${getPositionClass()} ${className}`}
       onClick={handleBackdropClick}
+      aria-modal="true"
+      aria-labelledby={title ? 'modal-dialog-title' : undefined}
       // If isOpen is true and showModal is not supported/called, ensure it's visible via CSS class or open attribute if needed
       // DaisyUI uses 'modal-open' class usually or just <dialog open>
       // But for native dialog with DaisyUI, showModal() adds 'open' attribute and backdrop
-      open={isOpen} // Fallback/Sync for React
+      open={isOpen}
     >
-      <div className={getSizeClass()}>
+      <div className={getSizeClass()} role="document">
         {/* Header */}
         {(title || showCloseButton) && (
           <div className="flex items-center justify-between mb-4">
-            {title && <h3 className="font-bold text-lg">{title}</h3>}
+            {title && <h3 id="modal-dialog-title" className="font-bold text-lg">{title}</h3>}
             {showCloseButton && closable && (
               <button
                 className="btn btn-sm btn-circle btn-ghost"
@@ -144,10 +146,11 @@ const Modal: React.FC<ModalProps> = ({
             {actions.map((action, index) => (
               <button
                 key={index}
-                className={`btn ${getVariantClass(action.variant)} ${action.loading ? 'loading' : ''}`}
+                className={`btn ${getVariantClass(action.variant)}`}
                 onClick={action.onClick}
                 disabled={action.disabled || action.loading}
               >
+                {action.loading && <span className="loading loading-spinner" aria-hidden="true"></span>}
                 {action.loading ? '' : action.label}
               </button>
             ))}
@@ -227,7 +230,7 @@ export const SuccessModal: React.FC<Omit<BaseModalProps, 'children'> & { message
       {...props}
     >
       <div className="text-center py-6">
-        <div className="text-6xl mb-4">✅</div>
+        <div className="text-6xl mb-4" aria-hidden="true">✅</div>
         <p className="text-lg">{message}</p>
       </div>
     </Modal>
@@ -270,10 +273,10 @@ export const ErrorModal: React.FC<Omit<BaseModalProps, 'children'> & {
       {...props}
     >
       <div className="text-center py-6">
-        <div className="text-6xl mb-4">❌</div>
+        <div className="text-6xl mb-4" aria-hidden="true">❌</div>
         <p className="text-lg mb-4">{message}</p>
         {error && (
-          <div className="alert alert-error">
+          <div className="alert alert-error" role="alert">
             <svg className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
             </svg>
@@ -304,7 +307,7 @@ export const LoadingModal: React.FC<Omit<BaseModalProps, 'children'> & {
       showCloseButton={false}
       {...props}
     >
-      <div className="text-center py-8">
+      <div className="text-center py-8" role="status" aria-live="polite">
         <span className="loading loading-spinner loading-lg text-primary" aria-hidden="true"></span>
         <p className="mt-4 text-base-content/70">{message}</p>
       </div>

@@ -72,7 +72,6 @@ export const Button = memo(({
   const baseClasses = 'btn';
   const variantClass = getVariantClass();
   const sizeClass = getSizeClass();
-  const loadingClass = loading ? 'loading' : '';
   const disabledClass = disabled || loading ? 'btn-disabled' : '';
 
   const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
@@ -96,7 +95,7 @@ export const Button = memo(({
 
   return (
     <button
-      className={`${baseClasses} ${variantClass} ${sizeClass} ${loadingClass} ${disabledClass} ${className}`.trim()}
+      className={`${baseClasses} ${variantClass} ${sizeClass} ${disabledClass} ${className}`.trim()}
       disabled={disabled || loading}
       aria-busy={loading}
       onClick={handleClick}

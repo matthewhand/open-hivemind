@@ -1,0 +1,900 @@
+{
+  "/admin/tool-usage-guards": {
+    "get": {
+      "summary": "Get tool usage guards",
+      "tags": [
+        "Admin"
+      ],
+      "responses": {
+        "200": {
+          "description": "List of tool usage guards"
+        }
+      }
+    },
+    "post": {
+      "summary": "Create a new tool usage guard",
+      "tags": [
+        "Admin"
+      ],
+      "requestBody": {
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string"
+                },
+                "description": {
+                  "type": "string"
+                },
+                "toolId": {
+                  "type": "string"
+                },
+                "guardType": {
+                  "type": "string",
+                  "enum": [
+                    "owner_only",
+                    "user_list",
+                    "role_based"
+                  ]
+                },
+                "allowedUsers": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "allowedRoles": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "isActive": {
+                  "type": "boolean"
+                }
+              },
+              "required": [
+                "name",
+                "toolId",
+                "guardType"
+              ]
+            }
+          }
+        }
+      },
+      "responses": {
+        "200": {
+          "description": "Tool usage guard created successfully"
+        },
+        "400": {
+          "description": "Validation error"
+        }
+      }
+    }
+  },
+  "/admin/tool-usage-guards/{id}": {
+    "put": {
+      "summary": "Update a tool usage guard",
+      "tags": [
+        "Admin"
+      ],
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          },
+          "description": "Guard ID"
+        }
+      ],
+      "requestBody": {
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string"
+                },
+                "description": {
+                  "type": "string"
+                },
+                "toolId": {
+                  "type": "string"
+                },
+                "guardType": {
+                  "type": "string",
+                  "enum": [
+                    "owner_only",
+                    "user_list",
+                    "role_based"
+                  ]
+                },
+                "allowedUsers": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "allowedRoles": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "isActive": {
+                  "type": "boolean"
+                }
+              },
+              "required": [
+                "name",
+                "toolId",
+                "guardType"
+              ]
+            }
+          }
+        }
+      },
+      "responses": {
+        "200": {
+          "description": "Tool usage guard updated successfully"
+        },
+        "400": {
+          "description": "Validation error"
+        }
+      }
+    },
+    "delete": {
+      "summary": "Delete a tool usage guard",
+      "tags": [
+        "Admin"
+      ],
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          },
+          "description": "Guard ID"
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "Tool usage guard deleted successfully"
+        }
+      }
+    }
+  },
+  "/admin/tool-usage-guards/{id}/toggle": {
+    "post": {
+      "summary": "Toggle tool usage guard active status",
+      "tags": [
+        "Admin"
+      ],
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          },
+          "description": "Guard ID"
+        }
+      ],
+      "requestBody": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "isActive": {
+                  "type": "boolean"
+                }
+              }
+            }
+          }
+        }
+      },
+      "responses": {
+        "200": {
+          "description": "Tool usage guard status updated successfully"
+        }
+      }
+    }
+  },
+  "/admin/llm-providers": {
+    "get": {
+      "summary": "Get all LLM providers",
+      "tags": [
+        "Admin"
+      ],
+      "responses": {
+        "200": {
+          "description": "List of LLM providers"
+        }
+      }
+    },
+    "post": {
+      "summary": "Create a new LLM provider",
+      "tags": [
+        "Admin"
+      ],
+      "requestBody": {
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string"
+                },
+                "type": {
+                  "type": "string"
+                },
+                "config": {
+                  "type": "object"
+                }
+              },
+              "required": [
+                "name",
+                "type",
+                "config"
+              ]
+            }
+          }
+        }
+      },
+      "responses": {
+        "200": {
+          "description": "LLM provider created successfully"
+        },
+        "400": {
+          "description": "Validation error"
+        }
+      }
+    }
+  },
+  "/admin/llm-providers/{id}": {
+    "put": {
+      "summary": "Update an LLM provider",
+      "tags": [
+        "Admin"
+      ],
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          },
+          "description": "Provider ID"
+        }
+      ],
+      "requestBody": {
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string"
+                },
+                "type": {
+                  "type": "string"
+                },
+                "config": {
+                  "type": "object"
+                }
+              },
+              "required": [
+                "name",
+                "type",
+                "config"
+              ]
+            }
+          }
+        }
+      },
+      "responses": {
+        "200": {
+          "description": "LLM provider updated successfully"
+        },
+        "400": {
+          "description": "Validation error"
+        }
+      }
+    },
+    "delete": {
+      "summary": "Delete an LLM provider",
+      "tags": [
+        "Admin"
+      ],
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          },
+          "description": "Provider ID"
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "LLM provider deleted successfully"
+        }
+      }
+    }
+  },
+  "/admin/llm-providers/{id}/toggle": {
+    "post": {
+      "summary": "Toggle LLM provider active status",
+      "tags": [
+        "Admin"
+      ],
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          },
+          "description": "Provider ID"
+        }
+      ],
+      "requestBody": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "isActive": {
+                  "type": "boolean"
+                }
+              }
+            }
+          }
+        }
+      },
+      "responses": {
+        "200": {
+          "description": "LLM provider status updated successfully"
+        },
+        "404": {
+          "description": "Provider not found"
+        }
+      }
+    }
+  },
+  "/admin/messenger-providers": {
+    "get": {
+      "summary": "Get all messenger providers",
+      "tags": [
+        "Admin"
+      ],
+      "responses": {
+        "200": {
+          "description": "List of messenger providers"
+        }
+      }
+    },
+    "post": {
+      "summary": "Create a new messenger provider",
+      "tags": [
+        "Admin"
+      ],
+      "requestBody": {
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string"
+                },
+                "type": {
+                  "type": "string"
+                },
+                "config": {
+                  "type": "object"
+                }
+              },
+              "required": [
+                "name",
+                "type",
+                "config"
+              ]
+            }
+          }
+        }
+      },
+      "responses": {
+        "200": {
+          "description": "Messenger provider created successfully"
+        },
+        "400": {
+          "description": "Validation error"
+        }
+      }
+    }
+  },
+  "/admin/messenger-providers/{id}": {
+    "put": {
+      "summary": "Update a messenger provider",
+      "tags": [
+        "Admin"
+      ],
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          },
+          "description": "Provider ID"
+        }
+      ],
+      "requestBody": {
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string"
+                },
+                "type": {
+                  "type": "string"
+                },
+                "config": {
+                  "type": "object"
+                }
+              },
+              "required": [
+                "name",
+                "type",
+                "config"
+              ]
+            }
+          }
+        }
+      },
+      "responses": {
+        "200": {
+          "description": "Messenger provider updated successfully"
+        },
+        "400": {
+          "description": "Validation error"
+        }
+      }
+    },
+    "delete": {
+      "summary": "Delete a messenger provider",
+      "tags": [
+        "Admin"
+      ],
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          },
+          "description": "Provider ID"
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "Messenger provider deleted successfully"
+        }
+      }
+    }
+  },
+  "/admin/messenger-providers/{id}/toggle": {
+    "post": {
+      "summary": "Toggle messenger provider active status",
+      "tags": [
+        "Admin"
+      ],
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          },
+          "description": "Provider ID"
+        }
+      ],
+      "requestBody": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "isActive": {
+                  "type": "boolean"
+                }
+              }
+            }
+          }
+        }
+      },
+      "responses": {
+        "200": {
+          "description": "Messenger provider status updated successfully"
+        },
+        "404": {
+          "description": "Provider not found"
+        }
+      }
+    }
+  },
+  "/admin/personas": {
+    "get": {
+      "summary": "Get available personas",
+      "tags": [
+        "Admin"
+      ],
+      "responses": {
+        "200": {
+          "description": "List of personas"
+        }
+      }
+    },
+    "post": {
+      "summary": "Create a new persona",
+      "tags": [
+        "Admin"
+      ],
+      "requestBody": {
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "key": {
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "systemPrompt": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "key",
+                "name",
+                "systemPrompt"
+              ]
+            }
+          }
+        }
+      },
+      "responses": {
+        "200": {
+          "description": "Persona created successfully"
+        },
+        "400": {
+          "description": "Validation error"
+        }
+      }
+    }
+  },
+  "/admin/personas/{key}": {
+    "put": {
+      "summary": "Update a persona",
+      "tags": [
+        "Admin"
+      ],
+      "parameters": [
+        {
+          "name": "key",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          },
+          "description": "Persona key"
+        }
+      ],
+      "requestBody": {
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string"
+                },
+                "systemPrompt": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "name",
+                "systemPrompt"
+              ]
+            }
+          }
+        }
+      },
+      "responses": {
+        "200": {
+          "description": "Persona updated successfully"
+        },
+        "400": {
+          "description": "Validation error"
+        }
+      }
+    },
+    "delete": {
+      "summary": "Delete a persona",
+      "tags": [
+        "Admin"
+      ],
+      "parameters": [
+        {
+          "name": "key",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          },
+          "description": "Persona key"
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "Persona deleted successfully"
+        }
+      }
+    }
+  },
+  "/admin/mcp-servers/test": {
+    "post": {
+      "summary": "Test connection to an MCP server",
+      "tags": [
+        "Admin"
+      ],
+      "requestBody": {
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "serverUrl": {
+                  "type": "string"
+                },
+                "apiKey": {
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "serverUrl"
+              ]
+            }
+          }
+        }
+      },
+      "responses": {
+        "200": {
+          "description": "Successfully tested connection"
+        },
+        "400": {
+          "description": "Validation error"
+        },
+        "403": {
+          "description": "Security warning - URL blocked"
+        }
+      }
+    }
+  },
+  "/admin/mcp-servers/connect": {
+    "post": {
+      "summary": "Connect to an MCP server",
+      "tags": [
+        "Admin"
+      ],
+      "requestBody": {
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "serverUrl": {
+                  "type": "string"
+                },
+                "apiKey": {
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "serverUrl",
+                "name"
+              ]
+            }
+          }
+        }
+      },
+      "responses": {
+        "200": {
+          "description": "Successfully connected"
+        },
+        "400": {
+          "description": "Validation error"
+        },
+        "403": {
+          "description": "Security warning - URL blocked"
+        }
+      }
+    }
+  },
+  "/admin/mcp-servers/disconnect": {
+    "post": {
+      "summary": "Disconnect from an MCP server",
+      "tags": [
+        "Admin"
+      ],
+      "requestBody": {
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "name"
+              ]
+            }
+          }
+        }
+      },
+      "responses": {
+        "200": {
+          "description": "Successfully disconnected"
+        },
+        "400": {
+          "description": "Validation error"
+        }
+      }
+    }
+  },
+  "/admin/mcp-servers/{name}": {
+    "delete": {
+      "summary": "Delete an MCP server",
+      "tags": [
+        "Admin"
+      ],
+      "parameters": [
+        {
+          "name": "name",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          },
+          "description": "Server name"
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "MCP server deleted successfully"
+        }
+      }
+    }
+  },
+  "/admin/mcp-servers": {
+    "get": {
+      "summary": "Get all connected MCP servers",
+      "tags": [
+        "Admin"
+      ],
+      "responses": {
+        "200": {
+          "description": "List of connected MCP servers"
+        }
+      }
+    }
+  },
+  "/admin/mcp-servers/{name}/tools": {
+    "get": {
+      "summary": "Get tools from a specific MCP server",
+      "tags": [
+        "Admin"
+      ],
+      "parameters": [
+        {
+          "name": "name",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          },
+          "description": "Server name"
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "List of tools"
+        },
+        "404": {
+          "description": "Server not found"
+        }
+      }
+    }
+  },
+  "/admin/env-overrides": {
+    "get": {
+      "summary": "Get environment variable overrides",
+      "tags": [
+        "Admin"
+      ],
+      "responses": {
+        "200": {
+          "description": "Environment variable overrides"
+        }
+      }
+    }
+  },
+  "/admin/providers": {
+    "get": {
+      "summary": "Get available providers",
+      "tags": [
+        "Admin"
+      ],
+      "responses": {
+        "200": {
+          "description": "Available message and LLM providers"
+        }
+      }
+    }
+  },
+  "/admin/system-info": {
+    "get": {
+      "summary": "Get system information",
+      "tags": [
+        "Admin"
+      ],
+      "responses": {
+        "200": {
+          "description": "System information"
+        }
+      }
+    }
+  }
+}

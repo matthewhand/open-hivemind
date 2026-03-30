@@ -153,7 +153,7 @@ const NavbarWithSearch: React.FC<NavbarWithSearchProps> = ({
   ];
 
   return (
-    <div className="navbar bg-base-100 shadow-lg border-b border-base-200">
+    <nav className="navbar bg-base-100 shadow-lg border-b border-base-200" aria-label="Main navigation">
       {/* Navbar Start */}
       <div className="navbar-start">
         {/* Mobile Menu */}
@@ -236,7 +236,7 @@ const NavbarWithSearch: React.FC<NavbarWithSearchProps> = ({
 
       {/* Navbar Center - Search */}
       <div className="navbar-center hidden lg:flex">
-        <form onSubmit={(e) => { e.preventDefault(); handleSearchSubmitWithOptions(searchQuery); }} className="form-control relative">
+        <form onSubmit={(e) => { e.preventDefault(); handleSearchSubmitWithOptions(searchQuery); }} className="form-control relative" role="search" aria-label="Site search">
           <div className={`input-group ${isSearchFocused ? 'input-group-lg' : ''}`}>
             <input
               ref={searchInputRef}
@@ -248,6 +248,10 @@ const NavbarWithSearch: React.FC<NavbarWithSearchProps> = ({
               onFocus={handleFocus}
               onBlur={handleBlur}
               onKeyDown={handleKeyDown}
+              role="combobox"
+              aria-expanded={showSuggestions}
+              aria-autocomplete="list"
+              aria-label="Search the site"
             />
             {searchQuery && (
               <button
@@ -276,7 +280,7 @@ const NavbarWithSearch: React.FC<NavbarWithSearchProps> = ({
           {showSuggestions && (
             <div
               ref={suggestionsRef}
-              className="absolute top-full mt-2 w-full bg-base-100 rounded-box shadow-xl border border-base-300 z-30 max-h-80 overflow-y-auto"
+              className="absolute top-full mt-2 w-full bg-base-100 rounded-box shadow-xl border border-base-300 z-30 max-h-80 overflow-y-auto" role="listbox" aria-label="Search suggestions"
             >
               {searchQuery && filteredSuggestions.length > 0 && (
                 <div className="p-2">
@@ -399,7 +403,7 @@ const NavbarWithSearch: React.FC<NavbarWithSearchProps> = ({
             <li><a>⚠️ High memory usage detected</a></li>
             <li><a>✅ MCP Server update completed</a></li>
             <li><a>📊 Weekly report generated</a></li>
-            <li><a href="/admin/notifications" className="btn btn-sm btn-primary">View All</a></li>
+            <li><a href="/admin/monitoring" className="btn btn-sm btn-primary">View All</a></li>
           </ul>
         </div>
 
@@ -447,16 +451,16 @@ const NavbarWithSearch: React.FC<NavbarWithSearchProps> = ({
           </div>
           <ul tabIndex={0} className="menu menu-sm dropdown-content mt-3 z-[1] p-2 shadow bg-base-100 rounded-box w-52">
             <li className="menu-title">{userName}</li>
-            <li><a href="/profile">👤 Profile</a></li>
-            <li><a href="/settings">⚙️ Settings</a></li>
-            <li><a href="/help">❓ Help & Support</a></li>
-            <li><a href="/docs">📚 Documentation</a></li>
+            <li><a href="/admin/settings">👤 Profile</a></li>
+            <li><a href="/admin/settings">⚙️ Settings</a></li>
+            <li><a href="https://github.com/open-hivemind/open-hivemind" target="_blank" rel="noopener noreferrer">❓ Help & Support</a></li>
+            <li><a href="https://github.com/open-hivemind/open-hivemind" target="_blank" rel="noopener noreferrer">📚 Documentation</a></li>
             <li className="divider"></li>
-            <li><a href="/logout" className="text-error">🚪 Sign out</a></li>
+            <li><a href="/login" className="text-error">🚪 Sign out</a></li>
           </ul>
         </div>
       </div>
-    </div>
+    </nav>
   );
 };
 

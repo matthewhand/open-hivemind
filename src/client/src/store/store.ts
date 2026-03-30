@@ -8,6 +8,10 @@ import errorReducer from './slices/errorSlice';
 import uiReducer from './slices/uiSlice';
 import performanceReducer from './slices/performanceSlice';
 import websocketReducer from './slices/websocketSlice';
+import { loadState, saveState } from './stateVersioning';
+import { OfflineActionQueue, createOfflineMiddleware } from './offlineQueue';
+import Debug from 'debug';
+const debug = Debug('app:client:store:store');
 
 const rootReducer = combineReducers({
   [apiSlice.reducerPath]: apiSlice.reducer,
@@ -20,28 +24,48 @@ const rootReducer = combineReducers({
   websocket: websocketReducer,
 });
 
+// --- Offline queue instance (singleton) ---
+export const offlineQueue = new OfflineActionQueue();
+
 export const setupStore = (preloadedState?: Partial<RootState>) => {
+  // Merge persisted state (if any) under any explicitly provided preloaded state.
+  const persisted = loadState();
+  const merged = persisted
+    ? { ...persisted, ...preloadedState } as Partial<RootState>
+    : preloadedState;
+
   return configureStore({
     reducer: rootReducer,
-    preloadedState,
+    preloadedState: merged,
     middleware: (getDefaultMiddleware) =>
       getDefaultMiddleware({
         serializableCheck: {
           ignoredActions: ['persist/PERSIST'],
         },
-      }).concat(apiSlice.middleware),
+      })
+        .concat(apiSlice.middleware)
+        .concat(createOfflineMiddleware(offlineQueue)),
     devTools: process.env.NODE_ENV !== 'production',
   });
 };
 
 export const store = setupStore();
 
+// Persist state on every change.
+store.subscribe(() => {
+  saveState(store.getState() as unknown as Record<string, unknown>);
+});
+
+// Start listening for online/offline events to replay queued actions.
+offlineQueue.startListening(store.dispatch);
+
 setupListeners(store.dispatch);
 
 // Initialize UI state from localStorage
 const initializeApp = () => {
-  // Load theme and other UI settings
-  const savedTheme = localStorage.getItem('theme') as 'light' | 'dark' | 'high-contrast' | 'auto' || 'auto';
+  // Load theme from the canonical 'hivemind-theme' key.
+  // Fall back to 'auto' so that system preference is respected on first visit.
+  const savedTheme = (localStorage.getItem('hivemind-theme') as 'light' | 'dark' | 'high-contrast' | 'auto') || 'auto';
   store.dispatch({ type: 'ui/setTheme', payload: savedTheme });
 
   // Load other settings
@@ -71,7 +95,7 @@ const initializeApp = () => {
           payload: parsedValue,
         });
       } catch (e) {
-        console.error(`Failed to load setting ${setting}:`, e);
+        debug('ERROR:', `Failed to load setting ${setting}:`, e);
       }
     }
   });

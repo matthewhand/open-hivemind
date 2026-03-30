@@ -17,18 +17,27 @@ test.describe('Cross-Page State', () => {
       page.route('**/api/config/llm-status', (route) =>
         route.fulfill({
           status: 200,
-          json: { defaultConfigured: true, defaultProviders: [], botsMissingLlmProvider: [], hasMissing: false },
+          json: {
+            defaultConfigured: true,
+            defaultProviders: [],
+            botsMissingLlmProvider: [],
+            hasMissing: false,
+          },
         })
       ),
       page.route('**/api/config/global', (route) => route.fulfill({ status: 200, json: {} })),
       page.route('**/api/csrf-token', (route) =>
         route.fulfill({ status: 200, json: { token: 'mock-csrf-token' } })
       ),
-      page.route('**/api/health', (route) => route.fulfill({ status: 200, json: { status: 'ok' } })),
+      page.route('**/api/health', (route) =>
+        route.fulfill({ status: 200, json: { status: 'ok' } })
+      ),
       page.route('**/api/dashboard/api/status', (route) =>
         route.fulfill({ status: 200, json: { bots: [], uptime: 100 } })
       ),
-      page.route('**/api/demo/status', (route) => route.fulfill({ status: 200, json: { active: false } })),
+      page.route('**/api/demo/status', (route) =>
+        route.fulfill({ status: 200, json: { active: false } })
+      ),
     ]);
   }
 
@@ -69,7 +78,10 @@ test.describe('Cross-Page State', () => {
 
       await page.route('**/api/personas', (route) => route.fulfill({ status: 200, json: [] }));
       await page.route('**/api/admin/llm-profiles', (route) =>
-        route.fulfill({ status: 200, json: { data: [{ key: 'openai', name: 'OpenAI', provider: 'openai' }] } })
+        route.fulfill({
+          status: 200,
+          json: { data: [{ key: 'openai', name: 'OpenAI', provider: 'openai' }] },
+        })
       );
       await page.route('**/api/admin/guard-profiles', (route) =>
         route.fulfill({ status: 200, json: { data: [] } })
@@ -77,7 +89,9 @@ test.describe('Cross-Page State', () => {
 
       // Navigate to bots page
       await page.goto('/admin/bots');
-      await expect(page.getByText('No bots configured')).toBeVisible({ timeout: 10000 }).catch(() => {});
+      await expect(page.getByText('No bots configured'))
+        .toBeVisible({ timeout: 10000 })
+        .catch(() => {});
 
       // Create a bot
       const createBtn = page.getByRole('button', { name: 'Create Bot' }).last();
@@ -117,7 +131,9 @@ test.describe('Cross-Page State', () => {
       }
     });
 
-    test('create bot then navigate to chat page - bot appears in bot selector', async ({ page }) => {
+    test('create bot then navigate to chat page - bot appears in bot selector', async ({
+      page,
+    }) => {
       const bots = [
         {
           id: 'bot-chat-1',
@@ -132,12 +148,13 @@ test.describe('Cross-Page State', () => {
         },
       ];
 
-      await page.route('**/api/config', (route) =>
-        route.fulfill({ status: 200, json: { bots } })
-      );
+      await page.route('**/api/config', (route) => route.fulfill({ status: 200, json: { bots } }));
       await page.route('**/api/personas', (route) => route.fulfill({ status: 200, json: [] }));
       await page.route('**/api/admin/llm-profiles', (route) =>
-        route.fulfill({ status: 200, json: { data: [{ key: 'openai', name: 'OpenAI', provider: 'openai' }] } })
+        route.fulfill({
+          status: 200,
+          json: { data: [{ key: 'openai', name: 'OpenAI', provider: 'openai' }] },
+        })
       );
       await page.route('**/api/admin/guard-profiles', (route) =>
         route.fulfill({ status: 200, json: { data: [] } })
@@ -149,7 +166,9 @@ test.describe('Cross-Page State', () => {
       // Verify bots page shows the bot
       await page.goto('/admin/bots');
       await page.waitForTimeout(500);
-      await expect(page.getByText('Chat-Ready Bot')).toBeVisible({ timeout: 10000 }).catch(() => {});
+      await expect(page.getByText('Chat-Ready Bot'))
+        .toBeVisible({ timeout: 10000 })
+        .catch(() => {});
 
       // Navigate to chat page
       await page.goto('/admin/chat');
@@ -164,7 +183,9 @@ test.describe('Cross-Page State', () => {
       expect(page.url()).toContain('/admin/chat');
     });
 
-    test('create bot then navigate to analytics - bot appears in performance table', async ({ page }) => {
+    test('create bot then navigate to analytics - bot appears in performance table', async ({
+      page,
+    }) => {
       const botName = 'Analytics Bot';
 
       await page.route('**/api/config', (route) =>
@@ -207,7 +228,13 @@ test.describe('Cross-Page State', () => {
             messageVolume: [],
             responseTimeSeries: [],
             botPerformance: [
-              { name: botName, messages: 500, avgResponseTime: 1.2, errorRate: 0.02, status: 'healthy' },
+              {
+                name: botName,
+                messages: 500,
+                avgResponseTime: 1.2,
+                errorRate: 0.02,
+                status: 'healthy',
+              },
             ],
             timeRange: '24h',
           },
@@ -230,7 +257,9 @@ test.describe('Cross-Page State', () => {
       expect(page.url()).toContain('/admin/analytics');
     });
 
-    test('create bot then navigate to monitoring - bot shows in ecosystem status', async ({ page }) => {
+    test('create bot then navigate to monitoring - bot shows in ecosystem status', async ({
+      page,
+    }) => {
       const botName = 'Monitoring Bot';
 
       await page.route('**/api/config', (route) =>
@@ -317,7 +346,13 @@ test.describe('Cross-Page State', () => {
         route.fulfill({
           status: 200,
           json: {
-            bots: [{ name: 'Startable Bot', status: botStatus === 'active' ? 'online' : 'offline', uptime: 99.0 }],
+            bots: [
+              {
+                name: 'Startable Bot',
+                status: botStatus === 'active' ? 'online' : 'offline',
+                uptime: 99.0,
+              },
+            ],
             uptime: 99.0,
           },
         })
@@ -378,12 +413,18 @@ test.describe('Cross-Page State', () => {
       await page.goto('/admin/bots');
       await page.waitForTimeout(500);
 
-      const deleteBtn = page.locator('button').filter({ hasText: /delete/i }).first();
+      const deleteBtn = page
+        .locator('button')
+        .filter({ hasText: /delete/i })
+        .first();
       if ((await deleteBtn.count()) > 0) {
         await deleteBtn.click();
         await page.waitForTimeout(300);
         // Confirm deletion if dialog appears
-        const confirmBtn = page.locator('button').filter({ hasText: /confirm|yes|delete/i }).first();
+        const confirmBtn = page
+          .locator('button')
+          .filter({ hasText: /confirm|yes|delete/i })
+          .first();
         if ((await confirmBtn.count()) > 0) {
           await confirmBtn.click();
           await page.waitForTimeout(500);
@@ -396,9 +437,11 @@ test.describe('Cross-Page State', () => {
 
       // Deleted bot should not appear
       const botText = page.getByText('Deletable Bot');
-      await expect(botText).toHaveCount(0).catch(() => {
-        // Bot text might still appear in some non-selector context; that is acceptable
-      });
+      await expect(botText)
+        .toHaveCount(0)
+        .catch(() => {
+          // Bot text might still appear in some non-selector context; that is acceptable
+        });
       expect(page.url()).toContain('/admin/chat');
     });
   });
@@ -408,7 +451,9 @@ test.describe('Cross-Page State', () => {
   // ---------------------------------------------------------------------------
 
   test.describe('Persona Flow Across Pages', () => {
-    test('create persona then navigate to bot creation - persona appears in dropdown', async ({ page }) => {
+    test('create persona then navigate to bot creation - persona appears in dropdown', async ({
+      page,
+    }) => {
       const personas: any[] = [];
 
       await page.route('**/api/personas', async (route) => {
@@ -432,9 +477,14 @@ test.describe('Cross-Page State', () => {
           await route.fulfill({ status: 200, json: personas });
         }
       });
-      await page.route('**/api/config', (route) => route.fulfill({ status: 200, json: { bots: [] } }));
+      await page.route('**/api/config', (route) =>
+        route.fulfill({ status: 200, json: { bots: [] } })
+      );
       await page.route('**/api/admin/llm-profiles', (route) =>
-        route.fulfill({ status: 200, json: { data: [{ key: 'openai', name: 'OpenAI', provider: 'openai' }] } })
+        route.fulfill({
+          status: 200,
+          json: { data: [{ key: 'openai', name: 'OpenAI', provider: 'openai' }] },
+        })
       );
       await page.route('**/api/admin/guard-profiles', (route) =>
         route.fulfill({ status: 200, json: { data: [] } })
@@ -444,7 +494,10 @@ test.describe('Cross-Page State', () => {
       await page.goto('/admin/personas');
       await page.waitForTimeout(500);
 
-      const createBtn = page.locator('button').filter({ hasText: /create|new|add/i }).first();
+      const createBtn = page
+        .locator('button')
+        .filter({ hasText: /create|new|add/i })
+        .first();
       if ((await createBtn.count()) > 0) {
         await createBtn.click();
         await page.waitForTimeout(500);
@@ -465,7 +518,9 @@ test.describe('Cross-Page State', () => {
       expect(page.url()).toContain('/admin/bots');
     });
 
-    test('edit persona then navigate to bot using that persona - updated name shows', async ({ page }) => {
+    test('edit persona then navigate to bot using that persona - updated name shows', async ({
+      page,
+    }) => {
       let personaName = 'Original Persona';
 
       await page.route('**/api/personas', async (route) => {
@@ -540,7 +595,9 @@ test.describe('Cross-Page State', () => {
       // Visit personas page
       await page.goto('/admin/personas');
       await page.waitForTimeout(500);
-      await expect(page.getByText('Original Persona')).toBeVisible({ timeout: 10000 }).catch(() => {});
+      await expect(page.getByText('Original Persona'))
+        .toBeVisible({ timeout: 10000 })
+        .catch(() => {});
 
       // Navigate to bots - persona name should reflect across pages
       await page.goto('/admin/bots');
@@ -548,7 +605,9 @@ test.describe('Cross-Page State', () => {
       expect(page.url()).toContain('/admin/bots');
     });
 
-    test('delete persona then navigate to bot creation - persona no longer available', async ({ page }) => {
+    test('delete persona then navigate to bot creation - persona no longer available', async ({
+      page,
+    }) => {
       let personas = [
         {
           id: 'persona-del-1',
@@ -573,9 +632,14 @@ test.describe('Cross-Page State', () => {
           await route.fulfill({ status: 200, json: personas });
         }
       });
-      await page.route('**/api/config', (route) => route.fulfill({ status: 200, json: { bots: [] } }));
+      await page.route('**/api/config', (route) =>
+        route.fulfill({ status: 200, json: { bots: [] } })
+      );
       await page.route('**/api/admin/llm-profiles', (route) =>
-        route.fulfill({ status: 200, json: { data: [{ key: 'openai', name: 'OpenAI', provider: 'openai' }] } })
+        route.fulfill({
+          status: 200,
+          json: { data: [{ key: 'openai', name: 'OpenAI', provider: 'openai' }] },
+        })
       );
       await page.route('**/api/admin/guard-profiles', (route) =>
         route.fulfill({ status: 200, json: { data: [] } })
@@ -585,11 +649,17 @@ test.describe('Cross-Page State', () => {
       await page.goto('/admin/personas');
       await page.waitForTimeout(500);
 
-      const deleteBtn = page.locator('button').filter({ hasText: /delete/i }).first();
+      const deleteBtn = page
+        .locator('button')
+        .filter({ hasText: /delete/i })
+        .first();
       if ((await deleteBtn.count()) > 0) {
         await deleteBtn.click();
         await page.waitForTimeout(300);
-        const confirmBtn = page.locator('button').filter({ hasText: /confirm|yes|delete/i }).first();
+        const confirmBtn = page
+          .locator('button')
+          .filter({ hasText: /confirm|yes|delete/i })
+          .first();
         if ((await confirmBtn.count()) > 0) {
           await confirmBtn.click();
           await page.waitForTimeout(500);
@@ -601,7 +671,9 @@ test.describe('Cross-Page State', () => {
       await page.waitForTimeout(500);
 
       const personaText = page.getByText('Deletable Persona');
-      await expect(personaText).toHaveCount(0).catch(() => {});
+      await expect(personaText)
+        .toHaveCount(0)
+        .catch(() => {});
       expect(page.url()).toContain('/admin/bots');
     });
   });
@@ -623,7 +695,9 @@ test.describe('Cross-Page State', () => {
           await route.fulfill({ status: 200, json: { instanceName } });
         }
       });
-      await page.route('**/api/config', (route) => route.fulfill({ status: 200, json: { bots: [] } }));
+      await page.route('**/api/config', (route) =>
+        route.fulfill({ status: 200, json: { bots: [] } })
+      );
       await page.route('**/api/personas', (route) => route.fulfill({ status: 200, json: [] }));
       await page.route('**/api/admin/llm-profiles', (route) =>
         route.fulfill({ status: 200, json: { data: [] } })
@@ -643,7 +717,9 @@ test.describe('Cross-Page State', () => {
       expect(page.url()).toContain('/admin/config');
     });
 
-    test('create LLM profile then navigate to bot creation - LLM provider appears', async ({ page }) => {
+    test('create LLM profile then navigate to bot creation - LLM provider appears', async ({
+      page,
+    }) => {
       const llmProfiles = [{ key: 'openai', name: 'OpenAI', provider: 'openai' }];
 
       await page.route('**/api/admin/llm-profiles', async (route) => {
@@ -659,7 +735,9 @@ test.describe('Cross-Page State', () => {
           await route.fulfill({ status: 200, json: { data: llmProfiles } });
         }
       });
-      await page.route('**/api/config', (route) => route.fulfill({ status: 200, json: { bots: [] } }));
+      await page.route('**/api/config', (route) =>
+        route.fulfill({ status: 200, json: { bots: [] } })
+      );
       await page.route('**/api/personas', (route) => route.fulfill({ status: 200, json: [] }));
       await page.route('**/api/admin/guard-profiles', (route) =>
         route.fulfill({ status: 200, json: { data: [] } })
@@ -676,8 +754,12 @@ test.describe('Cross-Page State', () => {
       expect(page.url()).toContain('/admin/bots');
     });
 
-    test('create guard profile then navigate to bot configuration - guard appears', async ({ page }) => {
-      const guardProfiles = [{ id: 'guard-1', name: 'Content Filter', type: 'content', enabled: true }];
+    test('create guard profile then navigate to bot configuration - guard appears', async ({
+      page,
+    }) => {
+      const guardProfiles = [
+        { id: 'guard-1', name: 'Content Filter', type: 'content', enabled: true },
+      ];
 
       await page.route('**/api/admin/guard-profiles', async (route) => {
         if (route.request().method() === 'POST') {
@@ -693,10 +775,15 @@ test.describe('Cross-Page State', () => {
           await route.fulfill({ status: 200, json: { data: guardProfiles } });
         }
       });
-      await page.route('**/api/config', (route) => route.fulfill({ status: 200, json: { bots: [] } }));
+      await page.route('**/api/config', (route) =>
+        route.fulfill({ status: 200, json: { bots: [] } })
+      );
       await page.route('**/api/personas', (route) => route.fulfill({ status: 200, json: [] }));
       await page.route('**/api/admin/llm-profiles', (route) =>
-        route.fulfill({ status: 200, json: { data: [{ key: 'openai', name: 'OpenAI', provider: 'openai' }] } })
+        route.fulfill({
+          status: 200,
+          json: { data: [{ key: 'openai', name: 'OpenAI', provider: 'openai' }] },
+        })
       );
 
       // Visit guards page
@@ -716,7 +803,9 @@ test.describe('Cross-Page State', () => {
   // ---------------------------------------------------------------------------
 
   test.describe('Navigation State', () => {
-    test('navigate to page with filters then navigate away and back - filters reset', async ({ page }) => {
+    test('navigate to page with filters then navigate away and back - filters reset', async ({
+      page,
+    }) => {
       await page.route('**/api/config', (route) =>
         route.fulfill({
           status: 200,
@@ -774,11 +863,18 @@ test.describe('Cross-Page State', () => {
       }
     });
 
-    test('open modal on one page then navigate away and come back - modal is closed', async ({ page }) => {
-      await page.route('**/api/config', (route) => route.fulfill({ status: 200, json: { bots: [] } }));
+    test('open modal on one page then navigate away and come back - modal is closed', async ({
+      page,
+    }) => {
+      await page.route('**/api/config', (route) =>
+        route.fulfill({ status: 200, json: { bots: [] } })
+      );
       await page.route('**/api/personas', (route) => route.fulfill({ status: 200, json: [] }));
       await page.route('**/api/admin/llm-profiles', (route) =>
-        route.fulfill({ status: 200, json: { data: [{ key: 'openai', name: 'OpenAI', provider: 'openai' }] } })
+        route.fulfill({
+          status: 200,
+          json: { data: [{ key: 'openai', name: 'OpenAI', provider: 'openai' }] },
+        })
       );
       await page.route('**/api/admin/guard-profiles', (route) =>
         route.fulfill({ status: 200, json: { data: [] } })
@@ -788,7 +884,10 @@ test.describe('Cross-Page State', () => {
       await page.goto('/admin/bots');
       await page.waitForTimeout(500);
 
-      const createBtn = page.locator('button').filter({ hasText: /create|new|add/i }).first();
+      const createBtn = page
+        .locator('button')
+        .filter({ hasText: /create|new|add/i })
+        .first();
       if ((await createBtn.count()) > 0) {
         await createBtn.click();
         await page.waitForTimeout(500);
@@ -808,11 +907,15 @@ test.describe('Cross-Page State', () => {
       // Modal should be closed
       const modalAfter = page.locator('.modal-box, [role="dialog"]').first();
       if ((await modalAfter.count()) > 0) {
-        await expect(modalAfter).not.toBeVisible().catch(() => {});
+        await expect(modalAfter)
+          .not.toBeVisible()
+          .catch(() => {});
       }
     });
 
-    test('search on bots page then navigate to personas and back - search cleared', async ({ page }) => {
+    test('search on bots page then navigate to personas and back - search cleared', async ({
+      page,
+    }) => {
       await page.route('**/api/config', (route) =>
         route.fulfill({
           status: 200,
@@ -874,7 +977,9 @@ test.describe('Cross-Page State', () => {
 
   test.describe('Session State', () => {
     test('auth token in localStorage persists across navigation', async ({ page }) => {
-      await page.route('**/api/config', (route) => route.fulfill({ status: 200, json: { bots: [] } }));
+      await page.route('**/api/config', (route) =>
+        route.fulfill({ status: 200, json: { bots: [] } })
+      );
       await page.route('**/api/personas', (route) => route.fulfill({ status: 200, json: [] }));
       await page.route('**/api/admin/llm-profiles', (route) =>
         route.fulfill({ status: 200, json: { data: [] } })
@@ -907,7 +1012,9 @@ test.describe('Cross-Page State', () => {
     });
 
     test('theme preference persists across navigation', async ({ page }) => {
-      await page.route('**/api/config', (route) => route.fulfill({ status: 200, json: { bots: [] } }));
+      await page.route('**/api/config', (route) =>
+        route.fulfill({ status: 200, json: { bots: [] } })
+      );
       await page.route('**/api/personas', (route) => route.fulfill({ status: 200, json: [] }));
       await page.route('**/api/admin/llm-profiles', (route) =>
         route.fulfill({ status: 200, json: { data: [] } })
@@ -938,7 +1045,9 @@ test.describe('Cross-Page State', () => {
     });
 
     test('selected tab in settings persists via URL', async ({ page }) => {
-      await page.route('**/api/config', (route) => route.fulfill({ status: 200, json: { bots: [] } }));
+      await page.route('**/api/config', (route) =>
+        route.fulfill({ status: 200, json: { bots: [] } })
+      );
       await page.route('**/api/personas', (route) => route.fulfill({ status: 200, json: [] }));
       await page.route('**/api/admin/llm-profiles', (route) =>
         route.fulfill({ status: 200, json: { data: [] } })
