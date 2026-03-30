@@ -2,10 +2,7 @@ import Debug from 'debug';
 import { Router } from 'express';
 import { ErrorUtils } from '@src/types/errors';
 import { HTTP_STATUS } from '../../../types/constants';
-import {
-  CallMCPToolSchema,
-  MCPServerNameParamSchema,
-} from '../../../validation/schemas/mcpSchema';
+import { CallMCPToolSchema, MCPServerNameParamSchema } from '../../../validation/schemas/mcpSchema';
 import { validateRequest } from '../../../validation/validateRequest';
 import { connectedClients } from './servers';
 
