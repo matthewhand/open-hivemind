@@ -221,7 +221,8 @@ router.post('/import', async (req, res) => {
       }
     }
 
-    ActivityLogger.log(req, 'import_bots', {
+    const { getAuditLogger } = require('../../common/auditLogger');
+    getAuditLogger().logAdminAction(req, 'import_bots', 'bots', 'import', {
       created: report.created.length,
       updated: report.updated.length,
       errors: report.errors.length,

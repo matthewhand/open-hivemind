@@ -231,26 +231,6 @@ export class OpenAiService {
   }
 
   /**
-   * Generates a chat response using OpenAI, passthrough to generateChatCompletion.
-   */
-  public async generateChatResponse(
-    message: string,
-    historyMessages: IMessage[],
-    systemMessageContent: string = String(openaiConfig.get('OPENAI_SYSTEM_PROMPT') || ''),
-    maxTokens: number = Number(openaiConfig.get('OPENAI_RESPONSE_MAX_TOKENS') || 150),
-    temperature: number = Number(openaiConfig.get('OPENAI_TEMPERATURE') || 0.7)
-  ): Promise<OpenHivemindChatResponse> {
-    debug('[DEBUG] generateChatResponse called');
-    return this.generateChatCompletion(
-      message,
-      historyMessages,
-      systemMessageContent,
-      maxTokens,
-      temperature
-    );
-  }
-
-  /**
    * Lists available OpenAI models by invoking the OpenAI API.
    */
   public async listModels(): Promise<OpenAIModelsListResponse> {

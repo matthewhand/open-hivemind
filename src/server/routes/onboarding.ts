@@ -37,8 +37,8 @@ router.get('/status', async (_req, res) => {
     }
 
     return res.json({ completed: false, step: onboardingStep });
-  } catch (err) {
-    logger.error('Failed to get onboarding status', { error: err });
+  } catch (err: any) {
+    logger.error('Failed to get onboarding status', new Error(err?.message || String(err)));
     return res.json({ completed: false, step: 1 });
   }
 });
