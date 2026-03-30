@@ -70,6 +70,7 @@ const LLMProvidersPage: React.FC = () => {
   const [defaultChatbotProfile, setDefaultChatbotProfile] = useState<string>('');
   const [defaultEmbeddingProvider, setDefaultEmbeddingProvider] = useState<string>('');
   const [perUseCaseEnabled, setPerUseCaseEnabled] = useState<boolean>(false);
+  const [taskProfiles, setTaskProfiles] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { values: urlParams, setValue: setUrlParam } = useUrlParams({
@@ -126,6 +127,7 @@ const LLMProvidersPage: React.FC = () => {
       setDefaultChatbotProfile(gs.defaultChatbotProfile || '');
       setDefaultEmbeddingProvider(llmValues.DEFAULT_EMBEDDING_PROVIDER || gs.defaultEmbeddingProfile || '');
       setPerUseCaseEnabled(!!gs.perUseCaseEnabled);
+      setTaskProfiles(gs.taskProfiles || {});
     }
   }, [globalRes]);
 
@@ -433,6 +435,37 @@ const LLMProvidersPage: React.FC = () => {
           />
         </div>
       </Card>
+
+      {perUseCaseEnabled && (
+        <Card className="bg-base-100 shadow-sm border border-base-200">
+          <div className="card-body p-5 space-y-3">
+            <h3 className="font-bold text-sm">Task Profile Assignments</h3>
+            <p className="text-xs opacity-60">
+              Assign a profile to each task. Tasks without a profile will use the default provider.
+            </p>
+            {(['semantic', 'summary', 'followup', 'idle'] as const).map((task) => (
+              <div key={task} className="flex items-center gap-3">
+                <label className="w-28 text-sm capitalize">{task}</label>
+                <select
+                  className="select select-bordered select-sm flex-1"
+                  value={taskProfiles[task] || ''}
+                  onChange={async (e) => {
+                    const updated = { ...taskProfiles, [task]: e.target.value || undefined };
+                    if (!e.target.value) delete updated[task];
+                    setTaskProfiles(updated);
+                    await saveGlobal({ taskProfiles: updated }).catch(() => {});
+                  }}
+                >
+                  <option value="">— Default —</option>
+                  {profiles.map((p: any) => (
+                    <option key={p.key} value={p.key}>{p.name}</option>
+                  ))}
+                </select>
+              </div>
+            ))}
+          </div>
+        </Card>
+      )}
 
       <div className="divider">Custom Profiles</div>
 

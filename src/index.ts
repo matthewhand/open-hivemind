@@ -11,6 +11,7 @@ import { registerServices } from '@src/di/registration';
 import { applyRateLimiting } from '@src/middleware/rateLimiter';
 import { authenticateToken } from '@src/server/middleware/auth';
 import { ipWhitelist } from '@src/server/middleware/security';
+import { csrfTokenHandler } from '@src/server/middleware/csrf';
 import adminApiRouter from '@src/server/routes/admin';
 import anomalyRouter from '@src/server/routes/anomaly';
 import authRouter from '@src/server/routes/auth';
@@ -141,11 +142,12 @@ app.use((req: Request, res: Response, next: NextFunction) => {
 });
 
 app.use((req: Request, res: Response, next: NextFunction) => {
-  // Suppress noisy polling/health endpoints by default
-  const suppressNoisyLogs = process.env.SUPPRESS_HEALTH_LOGS !== 'false';
-  const noisyPaths = new Set(['/health', '/api/health', '/api/csrf-token']);
-  if (noisyPaths.has(req.path) && suppressNoisyLogs) {
-    // skip logging
+  // Suppress noisy health checks by default, but allow override via SUPPRESS_HEALTH_LOGS
+  const suppressHealthLogs = process.env.SUPPRESS_HEALTH_LOGS !== 'false';
+  if (req.path === '/health' || req.path === '/api/health') {
+    if (!suppressHealthLogs) {
+      httpLogger.debug('Incoming request', { method: req.method, path: req.path });
+    }
   } else {
     httpLogger.debug('Incoming request', { method: req.method, path: req.path });
   }
@@ -153,9 +155,10 @@ app.use((req: Request, res: Response, next: NextFunction) => {
   // Security headers
   // SECURITY: See src/server/middleware/security.ts for detailed CSP explanation
   res.setHeader('X-Content-Type-Options', 'nosniff');
+  const workerSrc = process.env.NODE_ENV === 'development' ? "worker-src 'self' blob:;" : "worker-src 'none';";
   res.setHeader(
     'Content-Security-Policy',
-    "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; worker-src 'self' blob:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: https:; connect-src 'self' ws: wss:; font-src 'self' data: https://fonts.gstatic.com; object-src 'none'; frame-ancestors 'none';"
+    `default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: https:; connect-src 'self' ws: wss:; font-src 'self' data: https://fonts.gstatic.com; object-src 'none'; frame-ancestors 'none'; ${workerSrc}`
   );
 
   next();
@@ -230,16 +233,10 @@ if (process.env.NODE_ENV !== 'development') {
   app.get('/login', serveDevHtml);
   app.get('/dashboard', serveDevHtml);
   app.get('/activity', serveDevHtml);
-  app.get('/analytics', serveDevHtml);
-  app.get('/monitoring', serveDevHtml);
-  app.get('/sitemap', serveDevHtml);
   app.get('/uber/*', serveDevHtml);
   app.get('/admin/*', serveDevHtml);
   app.get('/webui/*', serveDevHtml);
-  app.get('/settings/*', serveDevHtml);
-  app.get('/providers/*', serveDevHtml);
 }
-
 
 // ─────────────────────────────────────────────────────────────────────────────
 // IP Filtering Security (when auth is disabled)
@@ -253,6 +250,9 @@ if (!allowAllIPs) {
 } else {
   appLogger.warn('⚠️  IP filtering DISABLED (HTTP_ALLOW_ALL_IPS=true)');
 }
+
+// CSRF token endpoint
+app.get('/api/csrf-token', csrfTokenHandler);
 
 // Unified API routes - all on same port, no separation
 app.use('/api/swarm', authenticateToken, swarmRouter);
@@ -448,9 +448,6 @@ async function main() {
   // Reload global configs to include provider schemas
   await reloadGlobalConfigs();
 
-  // Initialize DI Container
-  registerServices();
-
   // Run comprehensive startup diagnostics
   await startupDiagnostics.logStartupDiagnostics();
 
@@ -529,9 +526,6 @@ async function main() {
         filteredMessengers.map(async (service) => {
           await startBot(service);
           appLogger.info('✅ Bot started', { provider: service.providerName });
-          // Emit service-ready event to StartupGreetingService
-          const startupGreetingService = container.resolve(StartupGreetingService);
-          startupGreetingService.emit('service-ready', service);
         })
       );
       const failures = startResults.filter((r) => r.status === 'rejected');
@@ -546,9 +540,6 @@ async function main() {
         messengerServices.map(async (service) => {
           await startBot(service);
           appLogger.info('✅ Bot started', { provider: service.providerName });
-          // Emit service-ready event to StartupGreetingService
-          const startupGreetingService = container.resolve(StartupGreetingService);
-          startupGreetingService.emit('service-ready', service);
         })
       );
       const failures = startResults.filter((r) => r.status === 'rejected');
