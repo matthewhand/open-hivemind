@@ -126,6 +126,9 @@ export interface MCPProviderManager {
   // Templates
   getTemplates(): MCPProviderTemplate[];
   createFromTemplate(templateId: string, overrides: Partial<MCPProviderConfig>): MCPProviderConfig;
+
+  // Tools
+  getToolSchema?(providerId: string, toolName: string): any;
 }
 
 export interface MCPProviderEvent {

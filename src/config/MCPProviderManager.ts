@@ -611,6 +611,23 @@ export class MCPProviderManager extends EventEmitter implements IMCPProviderMana
     return { ...baseConfig, ...overrides };
   }
 
+  // Tools
+  getToolSchema(providerId: string, toolName: string): any {
+    // Proxy to MCPSchemaRegistry which holds the validated schema structures
+    // The providerId maps to the serverName used during tool discovery
+    try {
+      const { MCPSchemaRegistry } = require('../mcp/schemas/MCPSchemaRegistry');
+      const provider = this.getProvider(providerId);
+      if (!provider) {
+        return null;
+      }
+      return MCPSchemaRegistry.getInstance().getToolSchema(provider.name, toolName);
+    } catch (err) {
+      debug('Could not retrieve tool schema:', err);
+      return null;
+    }
+  }
+
   // Statistics
   getStats(): MCPProviderStats {
     const statuses = Array.from(this.statuses.values());

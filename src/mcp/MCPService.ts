@@ -2,6 +2,7 @@ import Debug from 'debug';
 import { SlackMessageProvider } from '@hivemind/message-slack';
 import { BotConfigurationManager } from '@config/BotConfigurationManager';
 import { MCPGuard, type MCPGuardConfig } from './MCPGuard';
+import { MCPSchemaRegistry } from './schemas/MCPSchemaRegistry';
 
 // DiscordMessageProvider imported dynamically to avoid ESM require error
 
@@ -71,10 +72,16 @@ export class MCPService {
       const tools = await client.listTools();
 
       // Add server name to each tool for identification
-      const mcpTools: MCPTool[] = tools.tools.map((tool: any) => ({
-        ...tool,
-        serverName: config.name,
-      }));
+      const mcpTools: MCPTool[] = tools.tools.map((tool: any) => {
+        // Register schema in the registry
+        if (tool.inputSchema) {
+          MCPSchemaRegistry.getInstance().registerToolSchema(config.name, tool.name, tool.inputSchema);
+        }
+        return {
+          ...tool,
+          serverName: config.name,
+        };
+      });
 
       // If we got here, connection is successful
       // Since SDK doesn't have disconnect, we just let it go out of scope
@@ -165,10 +172,16 @@ export class MCPService {
       const tools = await client.listTools();
 
       // Add server name to each tool for identification
-      const mcpTools: MCPTool[] = tools.tools.map((tool: any) => ({
-        ...tool,
-        serverName: config.name,
-      }));
+      const mcpTools: MCPTool[] = tools.tools.map((tool: any) => {
+        // Register schema in the registry
+        if (tool.inputSchema) {
+          MCPSchemaRegistry.getInstance().registerToolSchema(config.name, tool.name, tool.inputSchema);
+        }
+        return {
+          ...tool,
+          serverName: config.name,
+        };
+      });
 
       // Store tools
       this.tools.set(config.name, mcpTools);
@@ -323,6 +336,9 @@ export class MCPService {
       if (!client) {
         throw new Error(`Not connected to MCP server: ${serverName}`);
       }
+
+      // Validate arguments against tool schema before execution
+      MCPSchemaRegistry.getInstance().validateToolArguments(serverName, toolName, arguments_);
 
       debug(`Executing tool ${toolName} on server ${serverName}`);
       const result = await client.callTool({
