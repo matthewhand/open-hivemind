@@ -46,13 +46,14 @@ function makeProvider(overrides?: Partial<Record<string, jest.Mock>>) {
     id: 'test-memory',
     label: 'Test Memory',
     type: 'memory' as const,
-    add: jest.fn().mockResolvedValue({ results: [] }),
-    search: jest.fn().mockResolvedValue({ results: [] }),
-    getAll: jest.fn().mockResolvedValue({ results: [] }),
-    get: jest.fn().mockResolvedValue(null),
-    update: jest.fn(),
-    delete: jest.fn(),
+    addMemory: jest.fn().mockResolvedValue({ id: 'mem-1', content: '' }),
+    searchMemories: jest.fn().mockResolvedValue({ results: [] }),
+    getMemories: jest.fn().mockResolvedValue([]),
+    getMemory: jest.fn().mockResolvedValue(null),
+    updateMemory: jest.fn(),
+    deleteMemory: jest.fn(),
     deleteAll: jest.fn(),
+    healthCheck: jest.fn().mockResolvedValue({ status: 'ok' }),
     ...overrides,
   };
 }
@@ -112,13 +113,13 @@ describe('MemoryManager — concurrent access & edge cases', () => {
       const mgr = freshManager();
 
       const providerA = makeProvider({
-        search: jest.fn().mockResolvedValue({
-          results: [{ id: 'a1', memory: 'Memory for bot A', score: 0.9 }],
+        searchMemories: jest.fn().mockResolvedValue({
+          results: [{ id: 'a1', content: 'Memory for bot A', score: 0.9 }],
         }),
       });
       const providerB = makeProvider({
-        search: jest.fn().mockResolvedValue({
-          results: [{ id: 'b1', memory: 'Memory for bot B', score: 0.8 }],
+        searchMemories: jest.fn().mockResolvedValue({
+          results: [{ id: 'b1', content: 'Memory for bot B', score: 0.8 }],
         }),
       });
 
@@ -155,11 +156,11 @@ describe('MemoryManager — concurrent access & edge cases', () => {
       expect(resultsB).toHaveLength(1);
       expect(resultsB[0].memory).toBe('Memory for bot B');
 
-      expect(providerA.search).toHaveBeenCalledWith(
+      expect(providerA.searchMemories).toHaveBeenCalledWith(
         'query A',
         expect.objectContaining({ agentId: 'botA' })
       );
-      expect(providerB.search).toHaveBeenCalledWith(
+      expect(providerB.searchMemories).toHaveBeenCalledWith(
         'query B',
         expect.objectContaining({ agentId: 'botB' })
       );
@@ -179,9 +180,9 @@ describe('MemoryManager — concurrent access & edge cases', () => {
       });
 
       const provider = makeProvider({
-        add: jest.fn().mockImplementation(() => storePromise.then(() => ({ results: [] }))),
-        search: jest.fn().mockResolvedValue({
-          results: [{ id: 's1', memory: 'instant result', score: 0.9 }],
+        addMemory: jest.fn().mockImplementation(() => storePromise.then(() => ({ id: 'mem-1', content: '' }))),
+        searchMemories: jest.fn().mockResolvedValue({
+          results: [{ id: 's1', content: 'instant result', score: 0.9 }],
         }),
       });
       wireBot('bot1', 'prof1', provider);
@@ -198,7 +199,7 @@ describe('MemoryManager — concurrent access & edge cases', () => {
       // Now let the store finish.
       storeResolveFn!();
       await storeTask;
-      expect(provider.add).toHaveBeenCalledTimes(1);
+      expect(provider.addMemory).toHaveBeenCalledTimes(1);
     });
   });
 
@@ -211,9 +212,9 @@ describe('MemoryManager — concurrent access & edge cases', () => {
       const mgr = freshManager();
       const addResults: string[] = [];
       const provider = makeProvider({
-        add: jest.fn().mockImplementation(async (msgs: any[]) => {
-          addResults.push(msgs[0].content);
-          return { results: [{ id: `mem-${addResults.length}`, memory: msgs[0].content }] };
+        addMemory: jest.fn().mockImplementation(async (content: string) => {
+          addResults.push(content);
+          return { id: `mem-${addResults.length}`, content };
         }),
       });
       wireBot('bot1', 'prof1', provider);
@@ -223,7 +224,7 @@ describe('MemoryManager — concurrent access & edge cases', () => {
         mgr.storeConversationMemory('bot1', 'message two', 'user'),
       ]);
 
-      expect(provider.add).toHaveBeenCalledTimes(2);
+      expect(provider.addMemory).toHaveBeenCalledTimes(2);
       expect(addResults).toContain('message one');
       expect(addResults).toContain('message two');
     });
@@ -232,7 +233,7 @@ describe('MemoryManager — concurrent access & edge cases', () => {
       const mgr = freshManager();
       let callCount = 0;
       const provider = makeProvider({
-        add: jest.fn().mockImplementation(async () => {
+        addMemory: jest.fn().mockImplementation(async () => {
           callCount++;
           if (callCount === 1) throw new Error('transient failure');
           return { results: [] };
@@ -246,7 +247,7 @@ describe('MemoryManager — concurrent access & edge cases', () => {
         mgr.storeConversationMemory('bot1', 'msg B', 'user'),
       ]);
 
-      expect(provider.add).toHaveBeenCalledTimes(2);
+      expect(provider.addMemory).toHaveBeenCalledTimes(2);
     });
   });
 
@@ -336,9 +337,9 @@ describe('MemoryManager — concurrent access & edge cases', () => {
         channelId: null as any,
       });
 
-      expect(provider.add).toHaveBeenCalledTimes(1);
-      const [, opts] = provider.add.mock.calls[0];
-      expect(opts.metadata.channelId).toBeNull();
+      expect(provider.addMemory).toHaveBeenCalledTimes(1);
+      const [, metadata] = provider.addMemory.mock.calls[0];
+      expect(metadata.channelId).toBeNull();
     });
 
     it('handles undefined metadata values', async () => {
@@ -351,7 +352,7 @@ describe('MemoryManager — concurrent access & edge cases', () => {
         channelId: undefined,
       });
 
-      expect(provider.add).toHaveBeenCalledTimes(1);
+      expect(provider.addMemory).toHaveBeenCalledTimes(1);
     });
 
     it('handles special characters in metadata', async () => {
@@ -365,9 +366,9 @@ describe('MemoryManager — concurrent access & edge cases', () => {
         custom: 'line1\nline2\ttab',
       });
 
-      expect(provider.add).toHaveBeenCalledTimes(1);
-      const [, opts] = provider.add.mock.calls[0];
-      expect(opts.metadata.channelId).toBe('\u{1F600}\u{1F680}');
+      expect(provider.addMemory).toHaveBeenCalledTimes(1);
+      const [, metadata] = provider.addMemory.mock.calls[0];
+      expect(metadata.channelId).toBe('\u{1F600}\u{1F680}');
     });
 
     it('handles very long metadata values', async () => {
@@ -381,9 +382,9 @@ describe('MemoryManager — concurrent access & edge cases', () => {
         longField: longValue,
       });
 
-      expect(provider.add).toHaveBeenCalledTimes(1);
-      const [, opts] = provider.add.mock.calls[0];
-      expect(opts.metadata.longField).toHaveLength(100_000);
+      expect(provider.addMemory).toHaveBeenCalledTimes(1);
+      const [, metadata] = provider.addMemory.mock.calls[0];
+      expect(metadata.longField).toHaveLength(100_000);
     });
 
     it('handles empty metadata object', async () => {
@@ -393,10 +394,10 @@ describe('MemoryManager — concurrent access & edge cases', () => {
 
       await mgr.storeConversationMemory('bot1', 'hello', 'user', {});
 
-      expect(provider.add).toHaveBeenCalledTimes(1);
-      const [, opts] = provider.add.mock.calls[0];
-      expect(opts.metadata.botName).toBe('bot1');
-      expect(opts.metadata.timestamp).toBeDefined();
+      expect(provider.addMemory).toHaveBeenCalledTimes(1);
+      const [, metadata] = provider.addMemory.mock.calls[0];
+      expect(metadata.botName).toBe('bot1');
+      expect(metadata.timestamp).toBeDefined();
     });
   });
 
@@ -423,11 +424,11 @@ describe('MemoryManager — concurrent access & edge cases', () => {
         mgr.storeConversationMemory('bot3', 'from bot3', 'user'),
       ]);
 
-      expect(sharedProvider.add).toHaveBeenCalledTimes(3);
+      expect(sharedProvider.addMemory).toHaveBeenCalledTimes(3);
       expect(mockInstantiateMemoryProvider).toHaveBeenCalledTimes(1);
 
       // Verify each call carried the correct agentId.
-      const agentIds = sharedProvider.add.mock.calls.map((c: any[]) => c[1].agentId);
+      const agentIds = sharedProvider.addMemory.mock.calls.map((c: any[]) => c[2].agentId);
       expect(agentIds).toContain('bot1');
       expect(agentIds).toContain('bot2');
       expect(agentIds).toContain('bot3');
@@ -443,10 +444,10 @@ describe('MemoryManager — concurrent access & edge cases', () => {
       const mgr = freshManager();
       let callIdx = 0;
       const provider = makeProvider({
-        search: jest.fn().mockImplementation(async (query: string) => {
+        searchMemories: jest.fn().mockImplementation(async (query: string) => {
           callIdx++;
           if (callIdx === 2) throw new Error('intermittent failure');
-          return { results: [{ id: `r${callIdx}`, memory: `result for ${query}` }] };
+          return { results: [{ id: `r${callIdx}`, content: `result for ${query}` }] };
         }),
       });
 
@@ -466,7 +467,7 @@ describe('MemoryManager — concurrent access & edge cases', () => {
 
       // The failing search returns empty array (graceful degradation), others succeed.
       expect(r1.length + r2.length + r3.length).toBe(2);
-      expect(provider.search).toHaveBeenCalledTimes(3);
+      expect(provider.searchMemories).toHaveBeenCalledTimes(3);
     });
   });
 
@@ -477,8 +478,8 @@ describe('MemoryManager — concurrent access & edge cases', () => {
   describe('fire-and-forget store behavior', () => {
     it('store completes asynchronously even when not awaited by caller', async () => {
       const mgr = freshManager();
-      const addSpy = jest.fn().mockResolvedValue({ results: [] });
-      const provider = makeProvider({ add: addSpy });
+      const addSpy = jest.fn().mockResolvedValue({ id: 'mem-1', content: '' });
+      const provider = makeProvider({ addMemory: addSpy });
       wireBot('bot1', 'prof1', provider);
 
       // Fire without awaiting (simulating fire-and-forget).
@@ -488,13 +489,13 @@ describe('MemoryManager — concurrent access & edge cases', () => {
       // Await to ensure it finishes.
       await promise;
       expect(addSpy).toHaveBeenCalledTimes(1);
-      expect(addSpy.mock.calls[0][0]).toEqual([{ role: 'user', content: 'fire and forget' }]);
+      expect(addSpy.mock.calls[0][0]).toBe('fire and forget');
     });
 
     it('failed fire-and-forget store does not throw to the caller', async () => {
       const mgr = freshManager();
       const provider = makeProvider({
-        add: jest.fn().mockRejectedValue(new Error('fire-and-forget failure')),
+        addMemory: jest.fn().mockRejectedValue(new Error('fire-and-forget failure')),
       });
       wireBot('bot1', 'prof1', provider);
 

@@ -149,7 +149,12 @@ export class Mem0Provider implements IMemoryProvider {
       `/memories/${encodeURIComponent(id)}/`,
       body
     );
-    return { id: res.id, content: res.memory };
+    return {
+      id: res.id,
+      content: res.memory,
+      ...(metadata ? { metadata } : {}),
+      timestamp: Date.now(),
+    };
   }
 
   async deleteMemory(id: string): Promise<void> {

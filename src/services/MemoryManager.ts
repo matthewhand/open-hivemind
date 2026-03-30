@@ -157,10 +157,9 @@ export class MemoryManager {
     try {
       await withTimeout(
         () =>
-          provider.add([{ role, content: message }], {
+          provider.addMemory(message, memMeta, {
             agentId: botName,
             userId: (metadata?.userId as string) ?? undefined,
-            metadata: memMeta,
           }),
         DEFAULT_MEMORY_TIMEOUT_MS,
         'Memory store'
@@ -195,7 +194,7 @@ export class MemoryManager {
     try {
       const response = await withTimeout(
         () =>
-          provider.search(query, {
+          provider.searchMemories(query, {
             agentId: botName,
             limit,
           }),
@@ -204,7 +203,7 @@ export class MemoryManager {
       );
       return (response.results ?? []).map((r) => ({
         id: r.id,
-        memory: r.memory,
+        memory: r.content,
         score: r.score,
         metadata: r.metadata,
       }));

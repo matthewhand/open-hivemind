@@ -38,13 +38,14 @@ function makeProvider(overrides?: Partial<Record<string, jest.Mock>>) {
     id: 'test-memory',
     label: 'Test Memory',
     type: 'memory' as const,
-    add: jest.fn().mockResolvedValue({ results: [] }),
-    search: jest.fn().mockResolvedValue({ results: [] }),
-    getAll: jest.fn().mockResolvedValue({ results: [] }),
-    get: jest.fn().mockResolvedValue(null),
-    update: jest.fn(),
-    delete: jest.fn(),
+    addMemory: jest.fn().mockResolvedValue({ id: 'mem-1', content: '' }),
+    searchMemories: jest.fn().mockResolvedValue({ results: [] }),
+    getMemories: jest.fn().mockResolvedValue([]),
+    getMemory: jest.fn().mockResolvedValue(null),
+    updateMemory: jest.fn(),
+    deleteMemory: jest.fn(),
     deleteAll: jest.fn(),
+    healthCheck: jest.fn().mockResolvedValue({ status: 'ok' }),
     ...overrides,
   };
 }
@@ -162,13 +163,13 @@ describe('MemoryManager', () => {
         channelId: 'ch1',
       });
 
-      expect(provider.add).toHaveBeenCalledTimes(1);
-      const [messages, opts] = provider.add.mock.calls[0];
-      expect(messages).toEqual([{ role: 'user', content: 'Hello!' }]);
+      expect(provider.addMemory).toHaveBeenCalledTimes(1);
+      const [content, metadata, opts] = provider.addMemory.mock.calls[0];
+      expect(content).toBe('Hello!');
       expect(opts.agentId).toBe('bot1');
       expect(opts.userId).toBe('u1');
-      expect(opts.metadata.botName).toBe('bot1');
-      expect(typeof opts.metadata.timestamp).toBe('string');
+      expect(metadata.botName).toBe('bot1');
+      expect(typeof metadata.timestamp).toBe('string');
     });
 
     it('stores assistant message', async () => {
@@ -180,8 +181,8 @@ describe('MemoryManager', () => {
       mockInstantiateMemoryProvider.mockReturnValue(provider);
 
       await mgr.storeConversationMemory('bot1', 'Sure!', 'assistant');
-      const [messages] = provider.add.mock.calls[0];
-      expect(messages).toEqual([{ role: 'assistant', content: 'Sure!' }]);
+      const [content] = provider.addMemory.mock.calls[0];
+      expect(content).toBe('Sure!');
     });
 
     it('returns silently when bot has no memory provider', async () => {
@@ -192,10 +193,10 @@ describe('MemoryManager', () => {
       await expect(mgr.storeConversationMemory('bot1', 'Hi', 'user')).resolves.toBeUndefined();
     });
 
-    it('catches provider.add errors without breaking the pipeline', async () => {
+    it('catches provider.addMemory errors without breaking the pipeline', async () => {
       const mgr = freshManager();
       const provider = makeProvider({
-        add: jest.fn().mockRejectedValue(new Error('storage failure')),
+        addMemory: jest.fn().mockRejectedValue(new Error('storage failure')),
       });
       mockGetBot.mockReturnValue({ name: 'bot1', memoryProfile: 'prof1' });
       mockGetMemoryProfileByKey.mockReturnValue({ provider: 'mem0', config: {} });
@@ -212,10 +213,10 @@ describe('MemoryManager', () => {
     it('searches and returns relevant context', async () => {
       const mgr = freshManager();
       const provider = makeProvider({
-        search: jest.fn().mockResolvedValue({
+        searchMemories: jest.fn().mockResolvedValue({
           results: [
-            { id: 'm1', memory: 'The user likes TypeScript', score: 0.95 },
-            { id: 'm2', memory: 'The user prefers dark mode', score: 0.8 },
+            { id: 'm1', content: 'The user likes TypeScript', score: 0.95 },
+            { id: 'm2', content: 'The user prefers dark mode', score: 0.8 },
           ],
         }),
       });
@@ -226,7 +227,7 @@ describe('MemoryManager', () => {
 
       const results = await mgr.retrieveRelevantMemories('bot1', 'preferences');
 
-      expect(provider.search).toHaveBeenCalledWith('preferences', {
+      expect(provider.searchMemories).toHaveBeenCalledWith('preferences', {
         agentId: 'bot1',
         limit: 5,
       });
@@ -248,7 +249,7 @@ describe('MemoryManager', () => {
 
       await mgr.retrieveRelevantMemories('bot1', 'query', 10);
 
-      expect(provider.search).toHaveBeenCalledWith('query', { agentId: 'bot1', limit: 10 });
+      expect(provider.searchMemories).toHaveBeenCalledWith('query', { agentId: 'bot1', limit: 10 });
     });
 
     it('returns empty array when bot has no memory provider', async () => {
@@ -259,10 +260,10 @@ describe('MemoryManager', () => {
       expect(results).toEqual([]);
     });
 
-    it('returns empty array when provider.search throws', async () => {
+    it('returns empty array when provider.searchMemories throws', async () => {
       const mgr = freshManager();
       const provider = makeProvider({
-        search: jest.fn().mockRejectedValue(new Error('search failure')),
+        searchMemories: jest.fn().mockRejectedValue(new Error('search failure')),
       });
       mockGetBot.mockReturnValue({ name: 'bot1', memoryProfile: 'prof1' });
       mockGetMemoryProfileByKey.mockReturnValue({ provider: 'mem0', config: {} });

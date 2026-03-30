@@ -208,7 +208,6 @@ export class WebUIServer {
     this.app.use('/api/webhooks', authenticateToken, webhookEventsRouter);
     this.app.use('/api/onboarding', authenticateToken, onboardingRouter);
     this.app.use('/api/providers', authenticateToken, providersRouter);
-    this.app.use('/api/guards', authenticateToken, guardsRouter);
 
     // WebUI application routes (serve React app)
     this.app.get('/admin/*', (req, res) => {

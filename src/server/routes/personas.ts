@@ -18,6 +18,15 @@ const logger = createLogger('personasRouter');
 
 const MAX_SYSTEM_PROMPT_LENGTH = 8000;
 
+/** Lazily-resolved singleton PersonaManager shared across all route handlers. */
+let _manager: PersonaManager | null = null;
+async function getManager(): Promise<PersonaManager> {
+  if (!_manager) {
+    _manager = await PersonaManager.getInstance();
+  }
+  return _manager;
+}
+
 // Schema for create/update
 const CreatePersonaSchema = z.object({
   body: z.object({
@@ -52,7 +61,7 @@ const CreatePersonaSchema = z.object({
 // GET /api/personas
 router.get('/', async (req, res) => {
   try {
-    const manager = await PersonaManager.getInstance();
+    const manager = await getManager();
     const personas = manager.getAllPersonas();
     return res.json(personas);
   } catch (error: unknown) {
@@ -93,8 +102,9 @@ router.put('/reorder', validateRequest(ReorderSchema), (req, res) => {
 });
 
 // GET /api/personas/:id
-router.get('/:id', validateRequest(PersonaIdParamSchema), (req, res) => {
+router.get('/:id', validateRequest(PersonaIdParamSchema), async (req, res) => {
   try {
+    const manager = await getManager();
     const persona = manager.getPersona(req.params.id);
     if (!persona) {
       return res.status(HTTP_STATUS.NOT_FOUND).json({ error: 'Persona not found' });
@@ -115,6 +125,7 @@ router.get('/:id', validateRequest(PersonaIdParamSchema), (req, res) => {
 // POST /api/personas
 router.post('/', validateRequest(CreatePersonaSchema), async (req, res) => {
   try {
+    const manager = await getManager();
     // Idempotency check: see if persona with same name exists
     const allPersonas = manager.getAllPersonas();
     const existingPersona = allPersonas.find((p) => p.name === req.body.name);
@@ -131,8 +142,9 @@ router.post('/', validateRequest(CreatePersonaSchema), async (req, res) => {
 });
 
 // POST /api/personas/:id/clone
-router.post('/:id/clone', validateRequest(ClonePersonaSchema), (req, res) => {
+router.post('/:id/clone', validateRequest(ClonePersonaSchema), async (req, res) => {
   try {
+    const manager = await getManager();
     if (req.body.name) {
       // Idempotency check: see if cloned persona already exists
       const allPersonas = manager.getAllPersonas();
@@ -155,6 +167,7 @@ router.post('/:id/clone', validateRequest(ClonePersonaSchema), (req, res) => {
 // PUT /api/personas/:id
 router.put('/:id', validateRequest(UpdatePersonaRouteSchema), async (req, res) => {
   try {
+    const manager = await getManager();
     const updatedPersona = manager.updatePersona(req.params.id, req.body);
     return res.json(updatedPersona);
   } catch (error: any) {
@@ -165,6 +178,7 @@ router.put('/:id', validateRequest(UpdatePersonaRouteSchema), async (req, res) =
 // DELETE /api/personas/bulk
 router.delete('/bulk', validateRequest(BulkDeletePersonasSchema), async (req, res) => {
   try {
+    const manager = await getManager();
     const { ids } = req.body;
     const botManager = BotManager.getInstance();
 
@@ -237,8 +251,9 @@ router.delete('/bulk', validateRequest(BulkDeletePersonasSchema), async (req, re
 });
 
 // DELETE /api/personas/:id
-router.delete('/:id', validateRequest(PersonaIdParamSchema), (req, res) => {
+router.delete('/:id', validateRequest(PersonaIdParamSchema), async (req, res) => {
   try {
+    const manager = await getManager();
     const existingPersona = manager.getPersona(req.params.id);
     if (!existingPersona) {
       return res.json({ success: true }); // Idempotency: return HTTP_STATUS.OK if already gone
