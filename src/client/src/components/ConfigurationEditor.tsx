@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
+
 import React, { useState, useEffect } from 'react';
 import Card from './DaisyUI/Card';
 import Button from './DaisyUI/Button';
@@ -7,7 +7,6 @@ import Input from './DaisyUI/Input';
 import Select from './DaisyUI/Select';
 import Textarea from './DaisyUI/Textarea';
 import Modal from './DaisyUI/Modal';
-import { Loading } from './DaisyUI/Loading';
 import Tooltip from './DaisyUI/Tooltip';
 import Badge from './DaisyUI/Badge';
 import {
@@ -21,6 +20,7 @@ import {
 } from 'lucide-react';
 import { type Bot } from '../services/api';
 import ProviderConfig from './ProviderConfig';
+import { useProviders } from '../hooks/useProviders';
 
 interface ConfigurationEditorProps {
   bot?: Bot;
@@ -28,6 +28,7 @@ interface ConfigurationEditorProps {
 }
 
 const ConfigurationEditor: React.FC<ConfigurationEditorProps> = ({ bot, onSave }) => {
+  const { llmProviders: rawLlmProviders, messageProviders: rawMessageProviders } = useProviders();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
@@ -49,20 +50,8 @@ const ConfigurationEditor: React.FC<ConfigurationEditorProps> = ({ bot, onSave }
     openswarm: {},
   });
 
-  const messageProviders = [
-    { value: 'discord', label: 'Discord' },
-    { value: 'slack', label: 'Slack' },
-    { value: 'mattermost', label: 'Mattermost' },
-  ];
-
-  const llmProviders = [
-    { value: 'openai', label: 'OpenAI' },
-    { value: 'anthropic', label: 'Anthropic' },
-    { value: 'flowise', label: 'Flowise' },
-    { value: 'openwebui', label: 'OpenWebUI' },
-    { value: 'openswarm', label: 'OpenSwarm' },
-    { value: 'letta', label: 'Letta' },
-  ];
+  const messageProviders = rawMessageProviders.map(p => ({ value: p.key, label: p.label }));
+  const llmProviders = rawLlmProviders.map(p => ({ value: p.key, label: p.label }));
 
   useEffect(() => {
     if (bot) {

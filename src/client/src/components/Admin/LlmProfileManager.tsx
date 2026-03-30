@@ -11,6 +11,7 @@ import Badge from '../DaisyUI/Badge';
 import Button from '../DaisyUI/Button';
 import Card from '../DaisyUI/Card';
 import Modal, { ConfirmModal } from '../DaisyUI/Modal';
+import { useProviders } from '../../hooks/useProviders';
 
 interface ProviderProfile {
   key: string;
@@ -20,9 +21,8 @@ interface ProviderProfile {
   config: Record<string, unknown>;
 }
 
-const LLM_PROVIDERS = ['openai', 'anthropic', 'flowise', 'openwebui', 'openswarm', 'letta'];
-
 const LlmProfileManager: React.FC = () => {
+  const { llmProviders } = useProviders();
   const [profiles, setProfiles] = useState<ProviderProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -255,9 +255,9 @@ const LlmProfileManager: React.FC = () => {
                 value={formData.provider}
                 onChange={(e) => setFormData({ ...formData, provider: e.target.value })}
               >
-                {LLM_PROVIDERS.map((p) => (
-                  <option key={p} value={p}>
-                    {p}
+                {llmProviders.map((p) => (
+                  <option key={p.key} value={p.key}>
+                    {p.label}
                   </option>
                 ))}
               </select>
