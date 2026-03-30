@@ -1,10 +1,10 @@
 import type { Database } from 'sqlite';
 import { Logger } from '@common/logger';
-import { ISchemaModule } from './ISchemaModule';
 import { ActivitySchemas } from './ActivitySchemas';
+import { BotManagementSchemas } from './BotManagementSchemas';
+import { type ISchemaModule } from './ISchemaModule';
 import { MetricsSchemas } from './MetricsSchemas';
 import { SecuritySchemas } from './SecuritySchemas';
-import { BotManagementSchemas } from './BotManagementSchemas';
 
 export * from './ISchemaModule';
 export * from './ActivitySchemas';

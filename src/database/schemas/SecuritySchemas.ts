@@ -1,6 +1,6 @@
 import type { Database } from 'sqlite';
 import { Logger } from '@common/logger';
-import { ISchemaModule } from './ISchemaModule';
+import { type ISchemaModule } from './ISchemaModule';
 
 export class SecuritySchemas implements ISchemaModule {
   async createTables(db: Database): Promise<void> {
@@ -242,7 +242,7 @@ export class SecuritySchemas implements ISchemaModule {
       'bot_consent_management',
       'bot_data_masking_rules',
       'bot_data_classification',
-      'bot_data_retention_policies'
+      'bot_data_retention_policies',
     ];
   }
 
