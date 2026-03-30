@@ -76,15 +76,16 @@ export class AuthManager {
 
     // Only store securely using SecureConfigManager if not in test environment
     if (process.env.NODE_ENV !== 'test') {
-      const secureConfig = SecureConfigManager.getInstance();
-      secureConfig
-        .storeConfig({
-          id: `${prefix}_secret`,
-          name: `${prefix} Secret`,
-          type: 'auth',
-          data: { secret },
-          createdAt: new Date().toISOString(),
-        })
+      SecureConfigManager.getInstance()
+        .then((secureConfig) =>
+          secureConfig.storeConfig({
+            id: `${prefix}_secret`,
+            name: `${prefix} Secret`,
+            type: 'auth',
+            data: { secret },
+            createdAt: new Date().toISOString(),
+          })
+        )
         .catch((err) => {
           debug(`Failed to store ${prefix} secret securely:`, err);
         });
