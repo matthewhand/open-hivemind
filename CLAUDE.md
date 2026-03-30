@@ -1,5 +1,12 @@
 # Agent Guidelines for open-hivemind
 
+## Running the Project
+
+- **Always use `npm run dev`** to start the server. This runs TypeScript directly via `tsx` with Vite hot-reloading for the frontend — no build step required.
+- **Do NOT run `npm run build`** or `npm start`. The `dist/` directory is not maintained and should not be relied upon.
+- Workspace packages (`packages/*`) do not need compiled `dist/` output; `tsx` resolves their source via tsconfig path aliases at runtime.
+- To verify the server starts correctly: `timeout 30 npm run dev` — look for `🎉 Open Hivemind Unified Server startup complete!` in the output.
+
 ## Screenshot Convention
 
 ### Directory roles
