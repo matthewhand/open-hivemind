@@ -491,13 +491,13 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
                 onTestConnection={async (config, signal) => {
                   // Enhanced test connection with provider-specific validation
                   try {
-                    // Add 10 second timeout
-                    const timeoutId = setTimeout(() => {
-                      if (signal && !signal.aborted) {
-                        const controller = signal as any;
-                        if (controller.abort) controller.abort();
-                      }
-                    }, 10000);
+                    // Create a timeout signal that will abort after 10 seconds
+                    const timeoutSignal = AbortSignal.timeout(10000);
+
+                    // Combine signals: abort if either the user cancels or timeout occurs
+                    const combinedSignal = signal
+                      ? AbortSignal.any([signal, timeoutSignal])
+                      : timeoutSignal;
 
                     const response = await fetch('/api/v1/admin/providers/test-connection', {
                       method: 'POST',
@@ -506,13 +506,12 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
                         providerType: selectedType,
                         config,
                       }),
-                      signal,
+                      signal: combinedSignal,
                     });
 
-                    clearTimeout(timeoutId);
                     return response.ok;
                   } catch (error) {
-                    // Check if it was aborted
+                    // Check if it was aborted (either by timeout or user)
                     if (error instanceof Error && error.name === 'AbortError') {
                       throw new Error('Connection test timed out or was cancelled');
                     }
