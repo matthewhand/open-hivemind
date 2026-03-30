@@ -98,7 +98,7 @@ export class InferenceStage {
       );
 
       if (!responseText) {
-        this.bus.emit('message:skipped', {
+        await this.bus.emitAsync('message:skipped', {
           ...ctx,
           reason: 'empty LLM response',
         });
@@ -106,7 +106,7 @@ export class InferenceStage {
         return;
       }
 
-      this.bus.emit('message:response', { ...ctx, responseText });
+      await this.bus.emitAsync('message:response', { ...ctx, responseText });
       debug(
         'Inference complete: bot=%s responseLength=%d',
         ctx.botName,
@@ -116,7 +116,7 @@ export class InferenceStage {
       const error = err instanceof Error ? err : new Error(String(err));
       debug('Inference error: %O', error);
 
-      this.bus.emit('message:error', { ...ctx, error, stage: 'inference' });
+      await this.bus.emitAsync('message:error', { ...ctx, error, stage: 'inference' });
     }
   }
 }

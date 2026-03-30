@@ -85,7 +85,7 @@ export class ReceiveStage {
     message.setText(text);
 
     // 5. Emit downstream
-    this.bus.emit('message:validated', ctx);
+    await this.bus.emitAsync('message:validated', ctx);
     debug(
       'Message validated: bot=%s platform=%s channel=%s',
       botName,

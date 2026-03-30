@@ -90,12 +90,12 @@ export class EnrichStage {
       const systemPrompt = this.promptBuilder.buildSystemPrompt(ctx.botConfig, memories, ctx.botName);
 
       // 3. Emit enriched context
-      this.bus.emit('message:enriched', { ...ctx, memories, systemPrompt });
+      await this.bus.emitAsync('message:enriched', { ...ctx, memories, systemPrompt });
       debug('Message enriched: bot=%s memories=%d', ctx.botName, memories.length);
     } catch (err) {
       const error = err instanceof Error ? err : new Error(String(err));
       debug('Prompt builder error: %O', error);
-      this.bus.emit('message:error', { ...ctx, error, stage: 'enrich' });
+      await this.bus.emitAsync('message:error', { ...ctx, error, stage: 'enrich' });
     }
   }
 

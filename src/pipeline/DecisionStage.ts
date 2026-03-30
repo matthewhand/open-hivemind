@@ -83,10 +83,10 @@ export class DecisionStage {
       const decision = await this.strategy.shouldReply(ctx);
 
       if (decision.shouldReply) {
-        this.bus.emit('message:accepted', { ...ctx, decision });
+        await this.bus.emitAsync('message:accepted', { ...ctx, decision });
         debug('Message accepted: bot=%s reason=%s', ctx.botName, decision.reason);
       } else {
-        this.bus.emit('message:skipped', { ...ctx, reason: decision.reason });
+        await this.bus.emitAsync('message:skipped', { ...ctx, reason: decision.reason });
         debug('Message skipped: bot=%s reason=%s', ctx.botName, decision.reason);
       }
 
@@ -95,7 +95,7 @@ export class DecisionStage {
       const error = err instanceof Error ? err : new Error(String(err));
       debug('Decision strategy error: %O', error);
 
-      this.bus.emit('message:error', { ...ctx, error, stage: 'decision' });
+      await this.bus.emitAsync('message:error', { ...ctx, error, stage: 'decision' });
 
       return { shouldReply: false, reason: `error: ${error.message}` };
     }
