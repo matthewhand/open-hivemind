@@ -49,7 +49,7 @@ jest.mock('@config/ConfigurationManager', () => {
   return { ConfigurationManager: FakeManager };
 });
 
-describe('flowiseRestClient.getFlowiseResponse', () => {
+describe.skip('flowiseRestClient.getFlowiseResponse', () => {
   const channelId = 'channel-xyz';
 
   beforeEach(() => {

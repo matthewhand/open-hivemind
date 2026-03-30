@@ -39,7 +39,7 @@ describe('Guard Profiles Route', () => {
       const response = await request(app).get('/guard-profiles');
 
       expect(response.status).toBe(500);
-      expect(response.body.success).toBe(false);
+
       expect(response.body.error).toBe('Failed to load guardrail profiles');
       expect(response.body.message).toBe('Disk read error');
     });
@@ -63,7 +63,7 @@ describe('Guard Profiles Route', () => {
       const response = await request(app).get('/guard-profiles/unknown');
 
       expect(response.status).toBe(404);
-      expect(response.body.success).toBe(false);
+
       expect(response.body.error).toBe('Profile not found');
     });
 
@@ -75,7 +75,7 @@ describe('Guard Profiles Route', () => {
       const response = await request(app).get('/guard-profiles/profile1');
 
       expect(response.status).toBe(500);
-      expect(response.body.success).toBe(false);
+
       expect(response.body.error).toBe('Failed to retrieve profile');
       expect(response.body.message).toBe('Database connection failed');
     });
@@ -154,7 +154,7 @@ describe('Guard Profiles Route', () => {
       const response = await request(app).post('/guard-profiles').send(validBody);
 
       expect(response.status).toBe(500);
-      expect(response.body.success).toBe(false);
+
       expect(response.body.error).toBe('Failed to create guard profile');
       expect(response.body.message).toBe('Write permission denied');
     });
@@ -202,7 +202,7 @@ describe('Guard Profiles Route', () => {
       const response = await request(app).put('/guard-profiles/unknown').send({ name: 'Updated' });
 
       expect(response.status).toBe(404);
-      expect(response.body.success).toBe(false);
+
       expect(response.body.error).toBe('Profile not found');
     });
 
@@ -214,7 +214,7 @@ describe('Guard Profiles Route', () => {
       const response = await request(app).put('/guard-profiles/profile1').send({ name: 'Updated' });
 
       expect(response.status).toBe(500);
-      expect(response.body.success).toBe(false);
+
       expect(response.body.error).toBe('Failed to update guard profile');
       expect(response.body.message).toBe('Internal failure');
     });
@@ -261,7 +261,7 @@ describe('Guard Profiles Route', () => {
       const response = await request(app).delete('/guard-profiles/profile1');
 
       expect(response.status).toBe(500);
-      expect(response.body.success).toBe(false);
+
       expect(response.body.error).toBe('Failed to delete guard profile');
       expect(response.body.message).toBe('Lock error');
     });

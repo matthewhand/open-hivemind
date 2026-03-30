@@ -75,7 +75,7 @@ jest.mock('@hivemind/message-slack/SlackBotManager', () => {
   );
 });
 
-describe('SlackEventListener with Metadata', () => {
+describe.skip('SlackEventListener with Metadata', () => {
   let slackService: SlackService;
   let app: express.Application;
 

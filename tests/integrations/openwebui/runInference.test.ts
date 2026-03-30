@@ -9,6 +9,9 @@ import * as uploadKnowledgeFile from '../../../src/integrations/openwebui/upload
 jest.mock('debug', () => () => jest.fn());
 
 jest.mock('axios');
+jest.mock('../../../src/utils/ssrfGuard', () => ({
+  isSafeUrl: jest.fn().mockResolvedValue(true)
+}));
 const mockedAxios = axios as jest.Mocked<typeof axios>;
 
 jest.mock('../../../src/utils/ssrfGuard', () => ({
