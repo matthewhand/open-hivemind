@@ -23,6 +23,7 @@ import {
   X as CloseIcon,
 } from 'lucide-react';
 import { ConfirmModal } from '../components/DaisyUI/Modal';
+import { apiService } from '../services/api';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -94,11 +95,10 @@ const MarketplacePage: React.FC = () => {
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch('/api/marketplace/packages');
-      if (!response.ok) throw new Error('Failed to fetch packages');
-      const data = await response.json();
+      const data: any = await apiService.get('/api/marketplace/packages');
       setPackages(data);
     } catch (err: any) {
+
       setError(err.message || 'Failed to load marketplace');
     } finally {
       setLoading(false);
@@ -141,17 +141,9 @@ const MarketplacePage: React.FC = () => {
     setActionMessage(null);
 
     try {
-      const response = await fetch('/api/marketplace/install', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ repoUrl: githubUrl.trim() }),
+      const data: any = await apiService.post('/api/marketplace/install', {
+        repoUrl: githubUrl.trim()
       });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || 'Installation failed');
-      }
 
       setActionMessage({ type: 'success', text: `Installed ${data.package.displayName} successfully!` });
       setGithubUrl('');
@@ -170,12 +162,7 @@ const MarketplacePage: React.FC = () => {
     setActionMessage(null);
 
     try {
-      const response = await fetch(`/api/marketplace/update/${name}`, { method: 'POST' });
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || 'Update failed');
-      }
+      const data: any = await apiService.post(`/api/marketplace/update/${name}`);
 
       setActionMessage({ type: 'success', text: `Updated ${data.package.displayName} successfully!` });
       await fetchPackages();
@@ -198,12 +185,7 @@ const MarketplacePage: React.FC = () => {
         setActionMessage(null);
 
         try {
-          const response = await fetch(`/api/marketplace/uninstall/${name}`, { method: 'POST' });
-          const data = await response.json();
-
-          if (!response.ok) {
-            throw new Error(data.message || 'Uninstall failed');
-          }
+          await apiService.post(`/api/marketplace/uninstall/${name}`);
 
           setActionMessage({ type: 'success', text: `Uninstalled ${name} successfully!` });
           await fetchPackages();
@@ -232,7 +214,7 @@ const MarketplacePage: React.FC = () => {
         </div>
         <div className="flex gap-2">
           <Button
-            variant="outline"
+            variant="ghost"
             size="sm"
             onClick={fetchPackages}
             disabled={loading} aria-busy={loading}
@@ -368,7 +350,7 @@ const MarketplacePage: React.FC = () => {
                         <p className="text-xs text-base-content/50 font-mono">{pkg.name}</p>
                       </div>
                     </div>
-                    <Badge variant={statusBadge.color} size="sm">
+                    <Badge variant="primary" size="small">
                       {statusBadge.label}
                     </Badge>
                   </div>
@@ -387,7 +369,7 @@ const MarketplacePage: React.FC = () => {
                     {pkg.status === 'installed' && (
                       <>
                         <Button
-                          variant="outline"
+                          variant="ghost"
                           size="sm"
                           className="flex-1"
                           onClick={() => handleUpdate(pkg.name)}

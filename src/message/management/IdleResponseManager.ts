@@ -100,13 +100,13 @@ export class IdleResponseManager {
     }
   }
 
-  public initialize(serviceNames?: string[]): void {
+  public async initialize(serviceNames?: string[]): Promise<void> {
     if (!this.enabled) {
       log('Idle response manager is disabled');
       return;
     }
 
-    const messengerServices = getMessengerProvider();
+    const messengerServices = await getMessengerProvider();
 
     // If serviceNames provided (for testing), use those instead of actual services
     if (serviceNames && serviceNames.length > 0) {

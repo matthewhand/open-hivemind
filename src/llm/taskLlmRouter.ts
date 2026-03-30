@@ -184,7 +184,7 @@ export async function getTaskLlm(
   const fallbackProviders =
     opts?.fallbackProviders && opts.fallbackProviders.length > 0
       ? opts.fallbackProviders
-      : getLlmProvider();
+      : await getLlmProvider();
 
   if (!fallbackProviders || fallbackProviders.length === 0) {
     throw new Error('No LLM providers available for task routing');

@@ -4,10 +4,13 @@ import { useNavigate } from 'react-router-dom';
 
 import EmptyState from '../components/DaisyUI/EmptyState';
 import { SkeletonGrid } from '../components/DaisyUI/Skeleton';
-import { Copy, Check, Search } from 'lucide-react';
+import { Copy, Check, Search, RefreshCw } from 'lucide-react';
 import Carousel from '../components/DaisyUI/Carousel';
 import SearchFilterBar from '../components/SearchFilterBar';
 import useUrlParams from '../hooks/useUrlParams';
+import { apiService } from '../services/api';
+import Badge from '../components/DaisyUI/Badge';
+import Button from '../components/DaisyUI/Button';
 
 interface BotTemplate {
   id: string;
@@ -45,25 +48,22 @@ const BotTemplatesPage: React.FC = () => {
 
   const fetchTemplates = useCallback(async () => {
     try {
-      const res = await fetch('/api/bot-config/templates');
-      if (res.ok) {
-        const json = await res.json();
-        const apiTemplates = json.data?.templates || {};
+      const json = await apiService.get('/api/bot-config/templates');
+      const apiTemplates = (json as any).data?.templates || {};
 
-        // Backend returns an object (map), convert to array
-        const templatesArray = Object.entries(apiTemplates).map(([key, t]: [string, any]) => ({
-          id: key,
-          name: t.name,
-          description: t.description,
-          platform: t.messageProvider,
-          llmProvider: t.llmProvider,
-          persona: t.persona || 'General', // Default if missing
-          tags: t.tags || [],
-          featured: false // Default
-        }));
+      // Backend returns an object (map), convert to array
+      const templatesArray = Object.entries(apiTemplates).map(([key, t]: [string, any]) => ({
+        id: key,
+        name: t.name,
+        description: t.description,
+        platform: t.messageProvider,
+        llmProvider: t.llmProvider,
+        persona: t.persona || 'General', // Default if missing
+        tags: t.tags || [],
+        featured: false // Default
+      }));
 
-        setTemplates(templatesArray);
-      }
+      setTemplates(templatesArray);
     } catch (error) {
       // Silent: empty state shown
     } finally {
@@ -110,13 +110,13 @@ const BotTemplatesPage: React.FC = () => {
   };
 
   const getPlatformColor = (platform: string) => {
-    const colors: Record<string, string> = {
-      discord: 'badge-primary',
-      slack: 'badge-secondary',
-      mattermost: 'badge-info',
-      webhook: 'badge-success',
-    };
-    return colors[platform] || 'badge-ghost';
+    switch (platform) {
+      case 'discord': return 'primary' as const;
+      case 'slack': return 'secondary' as const;
+      case 'mattermost': return 'info' as const;
+      case 'webhook': return 'success' as const;
+      default: return 'neutral' as const;
+    }
   };
 
   // Derive unique options for filters
@@ -177,72 +177,72 @@ const BotTemplatesPage: React.FC = () => {
 
 
       <div className="mt-4 mb-8">
-      <div className="flex justify-between items-center mb-4">
+        <div className="flex justify-between items-center mb-4">
           <div>
-              <h1 className="text-3xl font-bold mb-2">
+            <h1 className="text-3xl font-bold mb-2">
               Bot Templates
-              </h1>
-              <p className="text-base-content/70">
+            </h1>
+            <p className="text-base-content/70">
               Quick-start templates to help you create bots faster. Choose a template and customize it for your needs.
-              </p>
+            </p>
           </div>
-          <button
-              className="btn btn-outline"
-              onClick={() => navigate('/admin/bots/create')}
+          <Button
+            buttonStyle="outline"
+            onClick={() => navigate('/admin/bots/create')}
           >
-              Create Custom Bot
-          </button>
-      </div>
-
-      {/* Recommended Templates Carousel */}
-      {templates.length > 0 && (
-        <div className="mb-8 mt-6">
-          <h2 className="text-xl font-semibold mb-4">Recommended Templates</h2>
-          <Carousel
-            items={templates.slice(0, 3).map(t => ({
-              image: '',
-              title: t.name,
-              description: t.description,
-              bgGradient: t.platform === 'discord' ? 'linear-gradient(135deg, #5865F2, #7289DA)' :
-                         t.platform === 'slack' ? 'linear-gradient(135deg, #E01E5A, #36C5F0)' :
-                         'linear-gradient(135deg, #4f46e5, #7c3aed)'
-            }))}
-            autoplay={true}
-            interval={5000}
-            variant="card-style"
-          />
+            Create Custom Bot
+          </Button>
         </div>
-      )}
+
+        {/* Recommended Templates Carousel */}
+        {templates.length > 0 && (
+          <div className="mb-8 mt-6">
+            <h2 className="text-xl font-semibold mb-4">Recommended Templates</h2>
+            <Carousel
+              items={templates.slice(0, 3).map(t => ({
+                image: '',
+                title: t.name,
+                description: t.description,
+                bgGradient: t.platform === 'discord' ? 'linear-gradient(135deg, #5865F2, #7289DA)' :
+                  t.platform === 'slack' ? 'linear-gradient(135deg, #E01E5A, #36C5F0)' :
+                    'linear-gradient(135deg, #4f46e5, #7c3aed)'
+              }))}
+              autoplay={true}
+              interval={5000}
+              variant="card-style"
+            />
+          </div>
+        )}
 
         {/* Filters */}
         <SearchFilterBar
-            searchValue={searchTerm}
-            onSearchChange={setSearchTerm}
-            searchPlaceholder="Search templates..."
-            filters={[
-                {
-                    key: 'platform',
-                    value: selectedPlatform,
-                    onChange: setSelectedPlatform,
-                    options: platformOptions,
-                    className: 'w-full sm:w-40'
-                },
-                {
-                    key: 'persona',
-                    value: selectedPersona,
-                    onChange: setSelectedPersona,
-                    options: personaOptions,
-                    className: 'w-full sm:w-40'
-                },
-                {
-                    key: 'llm',
-                    value: selectedLlmProvider,
-                    onChange: setSelectedLlmProvider,
-                    options: llmOptions,
-                    className: 'w-full sm:w-40'
-                }
-            ]}
-            onClear={handleClearFilters}
+          searchValue={searchTerm}
+          onSearchChange={setSearchTerm}
+          searchPlaceholder="Search templates..."
+          filters={[
+            {
+              key: 'platform',
+              value: selectedPlatform,
+              onChange: setSelectedPlatform,
+              options: platformOptions,
+              className: 'w-full sm:w-40'
+            },
+            {
+              key: 'persona',
+              value: selectedPersona,
+              onChange: setSelectedPersona,
+              options: personaOptions,
+              className: 'w-full sm:w-40'
+            },
+            {
+              key: 'llm',
+              value: selectedLlmProvider,
+              onChange: setSelectedLlmProvider,
+              options: llmOptions,
+              className: 'w-full sm:w-40'
+            }
+          ]}
+          onClear={handleClearFilters}
         />
       </div>
 
@@ -260,7 +260,7 @@ const BotTemplatesPage: React.FC = () => {
                     {template.name}
                   </h2>
                   {template.featured && (
-                    <div className="badge badge-primary">Featured</div>
+                    <Badge variant="primary">Featured</Badge>
                   )}
                 </div>
 
@@ -269,51 +269,53 @@ const BotTemplatesPage: React.FC = () => {
                 </p>
 
                 <div className="flex flex-wrap gap-2 mb-4">
-                  <div className={`badge ${getPlatformColor(template.platform)}`}>
+                  <Badge variant={getPlatformColor(template.platform)}>
                     {template.platform.charAt(0).toUpperCase() + template.platform.slice(1)}
-                  </div>
-                  <div className="badge badge-outline">{template.persona}</div>
-                  <div className="badge badge-outline">{template.llmProvider}</div>
+                  </Badge>
+                  <Badge style="outline">{template.persona}</Badge>
+                  <Badge style="outline">{template.llmProvider}</Badge>
                 </div>
 
                 <div className="flex flex-wrap gap-1 mb-4">
                   {template.tags.map((tag) => (
-                    <div key={tag} className="badge badge-ghost badge-sm">
+                    <Badge key={tag} variant="neutral" size="small" style="outline">
                       {tag}
-                    </div>
+                    </Badge>
                   ))}
                 </div>
 
                 <div className="card-actions mt-auto">
-                  <button
-                    className="btn btn-primary flex-1"
+                  <Button
+                    variant="primary"
+                    className="flex-1"
                     onClick={() => handleUseTemplate(template)}
                   >
                     Use Template
-                  </button>
-                  <button
-                    className="btn btn-ghost btn-square"
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    className="btn-square"
                     onClick={() => handleCopyTemplate(template)}
                     title="Copy template JSON"
                     aria-label="Copy template JSON"
                   >
                     {copied ? <Check className="w-4 h-4 text-success" /> : <Copy className="w-4 h-4" />}
-                  </button>
+                  </Button>
                 </div>
               </div>
             </div>
           ))
         ) : (
-            <div className="col-span-full">
-                 <EmptyState
-                    title="No templates found"
-                    description="No templates match your current filters."
-                    actionLabel="Clear Filters"
-                    onAction={handleClearFilters}
-                    icon={Search}
-                    variant="noResults"
-                />
-            </div>
+          <div className="col-span-full">
+            <EmptyState
+              title="No templates found"
+              description="No templates match your current filters."
+              actionLabel="Clear Filters"
+              onAction={handleClearFilters}
+              icon={Search}
+              variant="noResults"
+            />
+          </div>
         )}
       </div>
     </div>

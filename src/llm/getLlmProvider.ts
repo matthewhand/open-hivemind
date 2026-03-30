@@ -52,7 +52,7 @@ function withTokenCounting(provider: ILlmProvider, _instanceId: string): ILlmPro
   };
 }
 
-export function getLlmProvider(): ILlmProvider[] {
+export async function getLlmProvider(): Promise<ILlmProvider[]> {
   const providerManager = ProviderConfigManager.getInstance();
   const configuredProviders = providerManager.getAllProviders('llm').filter((p) => p.enabled);
 
@@ -74,7 +74,7 @@ export function getLlmProvider(): ILlmProvider[] {
 
         let instance: ILlmProvider | undefined;
         try {
-          const mod = loadPlugin(`llm-${config.type.toLowerCase()}`);
+          const mod = await loadPlugin(`llm-${config.type.toLowerCase()}`);
           instance = instantiateLlmProvider(mod, config.config);
           debug(`Initialized LLM provider via plugin loader: ${config.type} (${config.name})`);
         } catch (err) {
@@ -122,7 +122,7 @@ export function getLlmProvider(): ILlmProvider[] {
 
         let instance: ILlmProvider | undefined;
         try {
-          const mod = loadPlugin(`llm-${type.toLowerCase()}`);
+          const mod = await loadPlugin(`llm-${type.toLowerCase()}`);
           instance = instantiateLlmProvider(mod, {});
           debug(`Initialized legacy LLM provider via plugin loader: ${type}`);
         } catch (err) {
@@ -149,7 +149,7 @@ export function getLlmProvider(): ILlmProvider[] {
       llmProviders.push(cached.instance);
       activeProviderIds.add(defaultId);
     } else {
-      const mod = loadPlugin('llm-openai');
+      const mod = await loadPlugin('llm-openai');
       const instance = instantiateLlmProvider(mod, {});
       const wrappedInstance = withTokenCounting(instance, 'default');
       providerCache.set(defaultId, { instance: wrappedInstance, configHash });

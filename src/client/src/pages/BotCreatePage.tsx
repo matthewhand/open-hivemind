@@ -58,19 +58,18 @@ const BotCreatePage: React.FC = () => {
         const personasData = personasResult.status === 'fulfilled' ? personasResult.value : [];
         const profilesData = profilesResult.status === 'fulfilled' ? profilesResult.value : {};
 
-        let mcpResponse: any = { data: [] };
+        let mcpServersData: any[] = [];
         try {
-          const res = await fetch('/api/admin/mcp-servers');
-          if (res.ok) {
-            mcpResponse = await res.json();
-          }
+          const mcpResponse: any = await apiService.get('/api/mcp/servers');
+          mcpServersData = mcpResponse?.servers || mcpResponse?.data?.servers || mcpResponse?.data || [];
         } catch {
+
           // Silent fallback for MCP servers
         }
 
         setPersonas(personasData || []);
         setLlmProfiles(profilesData?.llm || profilesData?.profiles?.llm || []);
-        const servers = mcpResponse?.data || mcpResponse || [];
+        const servers = mcpServersData;
         setMcpServers(Array.isArray(servers) ? servers : []);
       } catch (err) {
         // Error shown via alert UI
@@ -128,7 +127,7 @@ const BotCreatePage: React.FC = () => {
       <PageHeader
         title="Create New Bot"
         description="Configure a new bot instance with persona and provider settings."
-        icon={Bot}
+        icon={<Bot className="w-5 h-5" />}
         gradient="primary"
         actions={
           <Button variant="ghost" onClick={() => navigate('/admin/bots')}>

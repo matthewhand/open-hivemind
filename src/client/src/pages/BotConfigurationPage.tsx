@@ -12,6 +12,7 @@ import { Alert } from '../components/DaisyUI/Alert';
 import Badge from '../components/DaisyUI/Badge';
 import Modal from '../components/DaisyUI/Modal';
 import { useSuccessToast, useErrorToast } from '../components/DaisyUI/ToastNotification';
+import { apiService } from '../services/api';
 
 interface ConfigSchema {
   values: Record<string, any>;
@@ -23,8 +24,6 @@ interface ConfigSchema {
 interface GlobalConfigs {
   [key: string]: ConfigSchema;
 }
-
-const API_BASE = '/api';
 
 const BotConfigurationPage: React.FC = () => {
   const [configs, setConfigs] = useState<GlobalConfigs>({});
@@ -44,11 +43,8 @@ const BotConfigurationPage: React.FC = () => {
 
   const fetchRollbacks = useCallback(async () => {
     try {
-      const response = await fetch(`${API_BASE}/config/hot-reload/rollbacks`);
-      if (response.ok) {
-        const data = await response.json();
-        setRollbacks(data.rollbacks || []);
-      }
+      const data: any = await apiService.get('/api/config/hot-reload/rollbacks');
+      setRollbacks(data.rollbacks || []);
     } catch (err) {
       errorToast('Rollback Error', 'Failed to fetch rollback snapshots');
     }
@@ -59,23 +55,18 @@ const BotConfigurationPage: React.FC = () => {
       setLoading(true);
       setError(null);
 
-      const response = await fetch(`${API_BASE}/config/global`);
-      if (!response.ok) {
-        throw new Error(`Failed to fetch config: ${response.statusText}`);
-      }
-
-      const data = await response.json();
-      setConfigs(data);
+      const data: any = await apiService.get('/api/config/global');
+      setConfigs(data || {});
       setModifiedConfigs({});
       await fetchRollbacks();
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to fetch configuration';
+    } catch (err: any) {
+      const message = err.message || 'Failed to fetch configuration';
       setError(message);
       errorToast('Configuration Error', message);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [fetchRollbacks]);
 
   useEffect(() => {
     fetchConfigs();
@@ -87,21 +78,14 @@ const BotConfigurationPage: React.FC = () => {
     try {
       setRollingBack(true);
       setError(null);
-      const response = await fetch(`${API_BASE}/config/hot-reload/rollback/${selectedSnapshot}`, {
-        method: 'POST',
-      });
-
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.message || 'Failed to rollback configuration');
-      }
+      await apiService.post(`/api/config/hot-reload/rollback/${selectedSnapshot}`);
 
       setSuccess(`Successfully rolled back to snapshot ${selectedSnapshot}`);
       setIsRollbackModalOpen(false);
       setSelectedSnapshot(null);
       await fetchConfigs();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to rollback configuration');
+    } catch (err: any) {
+      setError(err.message || 'Failed to rollback configuration');
     } finally {
       setRollingBack(false);
     }
@@ -120,25 +104,16 @@ const BotConfigurationPage: React.FC = () => {
 
   const saveConfig = async (configName: string) => {
     const updates = modifiedConfigs[configName];
-    if (!updates || Object.keys(updates).length === 0) {return;}
+    if (!updates || Object.keys(updates).length === 0) return;
 
     try {
       setSaving(true);
       setError(null);
 
-      const response = await fetch(`${API_BASE}/config/global`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          configName,
-          updates,
-        }),
+      await apiService.put('/api/config/global', {
+        configName,
+        updates,
       });
-
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || 'Failed to save configuration');
-      }
 
       setSuccess(`${configName} configuration saved successfully`);
       // Clear modified state for this config
@@ -150,15 +125,15 @@ const BotConfigurationPage: React.FC = () => {
 
       // Refresh to get updated values
       await fetchConfigs();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to save configuration');
+    } catch (err: any) {
+      setError(err.message || 'Failed to save configuration');
     } finally {
       setSaving(false);
     }
   };
 
   const hasChanges = (configName: string) => {
-    return modifiedConfigs[configName] && Object.keys(modifiedConfigs[configName]).length > 0;
+    return !!(modifiedConfigs[configName] && Object.keys(modifiedConfigs[configName]).length > 0);
   };
 
   const getCurrentValue = (configName: string, key: string) => {
@@ -176,7 +151,7 @@ const BotConfigurationPage: React.FC = () => {
       <div key={key} className="form-control mb-4">
         <label className="label">
           <span className="label-text font-medium">{key}</span>
-          {isSensitive && <Badge variant="warning" size="sm">Sensitive</Badge>}
+          {isSensitive && <Badge variant="warning" size="small">Sensitive</Badge>}
         </label>
 
         {schema.format === 'boolean' || typeof value === 'boolean' ? (
@@ -239,10 +214,10 @@ const BotConfigurationPage: React.FC = () => {
       title: (
         <div className="flex items-center gap-3 w-full">
           <span className="capitalize">{name}</span>
-          <Badge variant="ghost" size="sm">{Object.keys(values).length} settings</Badge>
-          {changed && <Badge variant="warning" size="sm">Modified</Badge>}
+          <Badge variant="ghost" size="small">{Object.keys(values).length} settings</Badge>
+          {changed && <Badge variant="warning" size="small">Modified</Badge>}
         </div>
-      ) as unknown as string,
+      ),
       content: (
         <div className="py-2">
           {Object.entries(values).map(([key, value]) =>
@@ -272,7 +247,7 @@ const BotConfigurationPage: React.FC = () => {
     <div className="p-6 space-y-6">
       {/* Error Alert */}
       {error && (
-        <Alert variant="error" icon={<AlertCircle className="w-5 h-5" />}>
+        <Alert status="error" icon={<AlertCircle className="w-5 h-5" />}>
           <span>{error}</span>
           <Button variant="ghost" size="sm" onClick={() => setError(null)}>Dismiss</Button>
         </Alert>
@@ -280,7 +255,7 @@ const BotConfigurationPage: React.FC = () => {
 
       {/* Success Alert */}
       {success && (
-        <Alert variant="success" icon={<CheckCircle className="w-5 h-5" />}>
+        <Alert status="success" icon={<CheckCircle className="w-5 h-5" />}>
           <span>{success}</span>
           <Button variant="ghost" size="sm" onClick={() => setSuccess(null)}>Dismiss</Button>
         </Alert>
@@ -291,7 +266,6 @@ const BotConfigurationPage: React.FC = () => {
         title="Global Defaults"
         description="System and provider settings (convict configs)"
         icon={<Settings className="w-8 h-8" />}
-        gradient="accent"
         actions={
           <div className="flex gap-2">
             <Button
@@ -301,7 +275,7 @@ const BotConfigurationPage: React.FC = () => {
               disabled={loading || rollbacks.length === 0}
             >
               <History className="w-4 h-4" />
-              Rollbacks {rollbacks.length > 0 && <Badge variant="primary" size="sm">{rollbacks.length}</Badge>}
+              Rollbacks {rollbacks.length > 0 && <Badge variant="primary" size="small">{rollbacks.length}</Badge>}
             </Button>
             <Button onClick={fetchConfigs} variant="ghost" className="gap-2" disabled={loading} aria-busy={loading}>
               <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} /> Reload
@@ -327,7 +301,6 @@ const BotConfigurationPage: React.FC = () => {
           ) : (
             <div className="space-y-2 max-h-60 overflow-y-auto">
               {rollbacks.map((snapshotId) => {
-                // Parse timestamp from format like rollback_1711234567890_xxyyzz
                 const timestampStr = snapshotId.split('_')[1];
                 let displayDate = 'Unknown date';
                 if (timestampStr) {
@@ -340,11 +313,10 @@ const BotConfigurationPage: React.FC = () => {
                 return (
                   <div
                     key={snapshotId}
-                    className={`p-3 border rounded-lg cursor-pointer transition-colors ${
-                      selectedSnapshot === snapshotId
+                    className={`p-3 border rounded-lg cursor-pointer transition-colors ${selectedSnapshot === snapshotId
                         ? 'border-primary bg-primary/10'
                         : 'border-base-300 hover:border-primary/50'
-                    }`}
+                      }`}
                     onClick={() => setSelectedSnapshot(snapshotId)}
                   >
                     <div className="font-medium">{snapshotId}</div>
@@ -408,7 +380,7 @@ const BotConfigurationPage: React.FC = () => {
         <div className="card bg-base-100 border border-base-300">
           <div className="card-body">
             <Accordion
-              items={accordionItems}
+              items={accordionItems as any}
               allowMultiple={true}
               defaultOpenItems={configNames.slice(0, 1)}
               variant="bordered"

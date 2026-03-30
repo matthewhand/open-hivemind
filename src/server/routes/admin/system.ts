@@ -272,7 +272,7 @@ router.post(
 
       let provider;
       try {
-        const mod = loadPlugin(`llm-${providerType.toLowerCase()}`);
+        const mod = await loadPlugin(`llm-${providerType.toLowerCase()}`);
         provider = instantiateLlmProvider(mod, config);
         debug(`Loaded provider plugin: llm-${providerType}`);
       } catch (error: unknown) {

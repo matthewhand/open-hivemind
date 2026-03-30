@@ -470,12 +470,12 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
             selectedType === LLMProviderType.OPENAI &&
             (formData.modelType || 'chat') === 'embedding' &&
             openAiEmbeddingModels.length > 0 && (
-            <div className="alert alert-info mb-4 text-sm">
-              <span>
-                Select an embedding-capable OpenAI provider first, then choose one of the configured embedding models.
-              </span>
-            </div>
-          )}
+              <div className="alert alert-info mb-4 text-sm">
+                <span>
+                  Select an embedding-capable OpenAI provider first, then choose one of the configured embedding models.
+                </span>
+              </div>
+            )}
 
           {/* Provider-specific fields */}
           <div className="space-y-4 mb-6">
@@ -489,16 +489,13 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
                 onTestConnection={async (config) => {
                   // Enhanced test connection with provider-specific validation
                   try {
-                    const response = await fetch('/api/v1/admin/providers/test-connection', {
-                      method: 'POST',
-                      headers: { 'Content-Type': 'application/json' },
-                      body: JSON.stringify({
-                        providerType: selectedType,
-                        config,
-                      }),
+                    await apiService.post('/api/v1/admin/providers/test-connection', {
+                      providerType: selectedType,
+                      config,
                     });
-                    return response.ok;
-                  } catch {
+                    return true;
+                  } catch (err) {
+                    console.error('Test connection failed:', err);
                     // Fallback: basic validation if endpoint not available
                     const hasRequiredFields = ['apiKey', 'endpoint', 'baseUrl'].some(
                       key => config[key] && config[key].toString().trim() !== ''

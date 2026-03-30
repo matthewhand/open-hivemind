@@ -6,7 +6,7 @@
  */
 
 import 'reflect-metadata';
-import { container } from 'tsyringe';
+import { Lifecycle } from 'tsyringe';
 import Logger from '../common/logger';
 import { BotConfigurationManager } from '../config/BotConfigurationManager';
 // Import implementations
@@ -20,7 +20,7 @@ import { SchemaManager } from '../database/SchemaManager';
 import { BotManager } from '../managers/BotManager';
 import { RealTimeValidationService } from '../server/services/RealTimeValidationService';
 import { WebSocketService } from '../server/services/WebSocketService';
-import { TOKENS } from './container';
+import { container, TOKENS } from './container';
 
 const logger = Logger.withContext('DI');
 

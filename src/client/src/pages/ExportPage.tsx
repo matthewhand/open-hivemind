@@ -11,8 +11,12 @@ import {
   Search,
   HardDrive,
   Clock,
-  DownloadCloud as DownloadIcon
+  DownloadCloud as DownloadIcon,
+  Archive as ArchiveIcon
 } from 'lucide-react';
+import Badge from '../components/DaisyUI/Badge';
+import { Alert } from '../components/DaisyUI/Alert';
+import { useSuccessToast, useErrorToast } from '../components/DaisyUI/ToastNotification';
 import Modal, { ConfirmModal } from '../components/DaisyUI/Modal';
 import Button from '../components/DaisyUI/Button';
 import Input from '../components/DaisyUI/Input';
@@ -169,12 +173,7 @@ const ExportPage: React.FC = () => {
 
   const handleDownloadOpenAPI = async (format: 'json' | 'yaml') => {
     try {
-      const response = await fetch(`/webui/api/openapi.${format}`);
-      if (!response.ok) {
-        throw new Error('Failed to download OpenAPI spec');
-      }
-
-      const blob = await response.blob();
+      const blob = await apiService.getBlob(`/webui/api/openapi.${format}`);
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
@@ -273,7 +272,7 @@ const ExportPage: React.FC = () => {
         id: 'total-backups',
         title: 'Total Backups',
         value: totalBackups,
-        icon: <Archive className="w-8 h-8" />,
+        icon: <ArchiveIcon className="w-8 h-8" />,
         color: 'primary' as const,
       },
       {

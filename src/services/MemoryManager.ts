@@ -75,7 +75,7 @@ export class MemoryManager {
    * Returns `null` when the bot has no memory profile configured or the
    * profile / plugin cannot be resolved.
    */
-  public getProviderForBot(botName: string): IMemoryProvider | null {
+  public async getProviderForBot(botName: string): Promise<IMemoryProvider | null> {
     try {
       const botConfig = BotConfigurationManager.getInstance().getBot(botName);
       if (!botConfig) {
@@ -98,7 +98,7 @@ export class MemoryManager {
   /**
    * Resolve (and cache) a memory provider from a profile key.
    */
-  private resolveProvider(profileKey: string): IMemoryProvider | null {
+  private async resolveProvider(profileKey: string): Promise<IMemoryProvider | null> {
     // Return cached provider.
     if (this.providers.has(profileKey)) {
       return this.providers.get(profileKey)!;
@@ -118,7 +118,7 @@ export class MemoryManager {
 
     try {
       const pluginName = `memory-${profile.provider}`;
-      const mod = loadPlugin(pluginName);
+      const mod = await loadPlugin(pluginName);
       const provider = instantiateMemoryProvider(mod, profile.config) as IMemoryProvider;
       this.providers.set(profileKey, provider);
       debug('Instantiated memory provider for profile "%s" (plugin: %s)', profileKey, pluginName);
@@ -143,7 +143,7 @@ export class MemoryManager {
     role: 'user' | 'assistant',
     metadata?: Record<string, unknown>
   ): Promise<void> {
-    const provider = this.getProviderForBot(botName);
+    const provider = await this.getProviderForBot(botName);
     if (!provider) {
       return;
     }
@@ -186,7 +186,7 @@ export class MemoryManager {
     query: string,
     limit: number = DEFAULT_MEMORY_LIMIT
   ): Promise<MemorySearchResult[]> {
-    const provider = this.getProviderForBot(botName);
+    const provider = await this.getProviderForBot(botName);
     if (!provider) {
       return [];
     }

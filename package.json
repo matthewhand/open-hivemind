@@ -89,6 +89,7 @@
     "@dnd-kit/sortable": "^10.0.0",
     "@dnd-kit/utilities": "^3.2.2",
     "@heroicons/react": "^2.2.0",
+    "@hivemind/memory-mem4ai": "workspace:*",
     "@hivemind/message-discord": "workspace:*",
     "@hivemind/message-slack": "workspace:*",
     "@modelcontextprotocol/sdk": "^1.25.2",

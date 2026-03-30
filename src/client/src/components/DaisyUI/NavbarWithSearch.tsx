@@ -1,5 +1,5 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import Logo from '../Logo';
 
 interface NavItem {
   id: string;
@@ -189,13 +189,8 @@ const NavbarWithSearch: React.FC<NavbarWithSearchProps> = ({
         </div>
 
         {/* Logo and Title */}
-        <a href="/" className="btn btn-ghost text-xl">
-          <div className="avatar placeholder">
-            <div className="bg-primary text-primary-content rounded-full w-8">
-              <span className="text-sm">🤖</span>
-            </div>
-          </div>
-          <span className="font-bold">{title}</span>
+        <a href="/" className="btn btn-ghost px-2 hover:bg-transparent">
+          <Logo size="sm" />
         </a>
 
         {/* Desktop Menu */}
@@ -289,9 +284,8 @@ const NavbarWithSearch: React.FC<NavbarWithSearchProps> = ({
                     {filteredSuggestions.map((suggestion, index) => (
                       <li key={index}>
                         <button
-                          className={`w-full text-left px-3 py-2 rounded-lg hover:bg-base-200 transition-colors ${
-                            selectedSuggestionIndex === index ? 'bg-primary text-primary-content' : ''
-                          }`}
+                          className={`w-full text-left px-3 py-2 rounded-lg hover:bg-base-200 transition-colors ${selectedSuggestionIndex === index ? 'bg-primary text-primary-content' : ''
+                            }`}
                           onClick={() => handleSearchSubmitWithOptions(suggestion)}
                           onMouseEnter={() => setSelectedSuggestionIndex(index)}
                         >

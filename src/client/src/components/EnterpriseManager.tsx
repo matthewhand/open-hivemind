@@ -1,18 +1,18 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useEffect, useState } from 'react';
 import {
-  ArrowPathIcon,
-  ChartBarIcon,
-  CheckCircleIcon,
-  CloudIcon,
-  ExclamationCircleIcon,
-  ExclamationTriangleIcon,
-  FunnelIcon,
-  PlusIcon,
-  PuzzlePieceIcon,
-  ScaleIcon,
-  ShieldCheckIcon,
-} from '@heroicons/react/24/outline';
+  RefreshCw,
+  BarChart3,
+  CheckCircle2,
+  Cloud,
+  AlertCircle,
+  AlertTriangle,
+  Filter,
+  Plus,
+  Puzzle,
+  Scale,
+  ShieldCheck,
+} from 'lucide-react';
 import DataTable from './DaisyUI/DataTable';
 import type { RDVColumn } from './DaisyUI/DataTable';
 
@@ -413,7 +413,7 @@ const EnterpriseManager: React.FC = () => {
                     <p className="text-sm mb-2">{rule.description}</p>
                     {rule.remediation && (
                       <div className="alert alert-warning text-sm py-2">
-                        <ExclamationTriangleIcon className="w-4 h-4" />
+                        <AlertTriangle className="w-4 h-4" />
                         <span>{rule.remediation}</span>
                       </div>
                     )}
@@ -438,7 +438,7 @@ const EnterpriseManager: React.FC = () => {
                 disabled={loading} aria-busy={loading}
                 aria-label="Add a new cloud provider"
               >
-                <PlusIcon className="w-4 h-4 mr-1" />
+                <Plus className="w-4 h-4 mr-1" />
                 Add Provider
               </button>
             </div>
@@ -483,7 +483,7 @@ const EnterpriseManager: React.FC = () => {
                 disabled={loading} aria-busy={loading}
                 aria-label="Add a new enterprise integration"
               >
-                <PlusIcon className="w-4 h-4 mr-1" />
+                <Plus className="w-4 h-4 mr-1" />
                 Add Integration
               </button>
             </div>
@@ -567,7 +567,7 @@ const EnterpriseManager: React.FC = () => {
                   }
                   aria-label="Clear audit filters"
                 >
-                  <FunnelIcon className="w-4 h-4 mr-1" /> Clear Filters
+                  <Filter className="w-4 h-4 mr-1" /> Clear Filters
                 </button>
               </div>
             </div>
@@ -667,7 +667,7 @@ const EnterpriseManager: React.FC = () => {
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold">Enterprise Manager</h1>
         <button className="btn btn-outline" onClick={loadEnterpriseData} disabled={loading} aria-busy={loading} aria-label="Refresh enterprise data">
-          <ArrowPathIcon className={`w-5 h-5 mr-2 ${loading ? 'animate-spin' : ''}`} />
+          <RefreshCw className={`w-5 h-5 mr-2 ${loading ? 'animate-spin' : ''}`} />
           Refresh
         </button>
       </div>
@@ -675,7 +675,7 @@ const EnterpriseManager: React.FC = () => {
       {/* Alerts */}
       {error && (
         <div className="alert alert-error mb-4">
-          <ExclamationCircleIcon className="w-6 h-6" />
+          <AlertCircle className="w-6 h-6" />
           <span>{error}</span>
           <button
             onClick={() => setError(null)}
@@ -689,7 +689,7 @@ const EnterpriseManager: React.FC = () => {
 
       {success && (
         <div className="alert alert-success mb-4">
-          <CheckCircleIcon className="w-6 h-6" />
+          <CheckCircle2 className="w-6 h-6" />
           <span>{success}</span>
           <button
             onClick={() => setSuccess(null)}
@@ -704,23 +704,23 @@ const EnterpriseManager: React.FC = () => {
       {/* Tabs */}
       <div className="tabs tabs-boxed mb-6 bg-base-200 p-1">
         <a className={`tab ${activeTab === 0 ? 'tab-active' : ''}`} onClick={() => setActiveTab(0)}>
-          <ShieldCheckIcon className="w-4 h-4 mr-2" />
+          <ShieldCheck className="w-4 h-4 mr-2" />
           Security & Compliance
         </a>
         <a className={`tab ${activeTab === 1 ? 'tab-active' : ''}`} onClick={() => setActiveTab(1)}>
-          <CloudIcon className="w-4 h-4 mr-2" />
+          <Cloud className="w-4 h-4 mr-2" />
           Multi-Cloud
         </a>
         <a className={`tab ${activeTab === 2 ? 'tab-active' : ''}`} onClick={() => setActiveTab(2)}>
-          <PuzzlePieceIcon className="w-4 h-4 mr-2" />
+          <Puzzle className="w-4 h-4 mr-2" />
           Integrations
         </a>
         <a className={`tab ${activeTab === 3 ? 'tab-active' : ''}`} onClick={() => setActiveTab(3)}>
-          <ScaleIcon className="w-4 h-4 mr-2" />
+          <Scale className="w-4 h-4 mr-2" />
           Audit & Governance
         </a>
         <a className={`tab ${activeTab === 4 ? 'tab-active' : ''}`} onClick={() => setActiveTab(4)}>
-          <ChartBarIcon className="w-4 h-4 mr-2" />
+          <BarChart3 className="w-4 h-4 mr-2" />
           Performance
         </a>
       </div>
