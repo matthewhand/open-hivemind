@@ -488,9 +488,17 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
                 initialConfig={formData}
                 onConfigChange={handleProviderConfigChange}
                 externalErrors={errors}
-                onTestConnection={async (config) => {
+                onTestConnection={async (config, signal) => {
                   // Enhanced test connection with provider-specific validation
                   try {
+                    // Add 10 second timeout
+                    const timeoutId = setTimeout(() => {
+                      if (signal && !signal.aborted) {
+                        const controller = signal as any;
+                        if (controller.abort) controller.abort();
+                      }
+                    }, 10000);
+
                     const response = await fetch('/api/v1/admin/providers/test-connection', {
                       method: 'POST',
                       headers: { 'Content-Type': 'application/json' },
@@ -498,9 +506,16 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
                         providerType: selectedType,
                         config,
                       }),
+                      signal,
                     });
+
+                    clearTimeout(timeoutId);
                     return response.ok;
-                  } catch {
+                  } catch (error) {
+                    // Check if it was aborted
+                    if (error instanceof Error && error.name === 'AbortError') {
+                      throw new Error('Connection test timed out or was cancelled');
+                    }
                     // Fallback: basic validation if endpoint not available
                     const hasRequiredFields = ['apiKey', 'endpoint', 'baseUrl'].some(
                       key => config[key] && config[key].toString().trim() !== ''
