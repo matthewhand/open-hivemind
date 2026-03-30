@@ -38,6 +38,9 @@ importers:
       '@heroicons/react':
         specifier: ^2.2.0
         version: 2.2.0(react@19.2.4)
+      '@hivemind/memory-mem4ai':
+        specifier: workspace:*
+        version: link:packages/memory-mem4ai
       '@hivemind/message-discord':
         specifier: workspace:*
         version: link:packages/message-discord
@@ -62,6 +65,9 @@ importers:
       '@slack/webhook':
         specifier: ^7.0.4
         version: 7.0.8(debug@4.4.3)
+      '@tanstack/react-virtual':
+        specifier: ^3.10.8
+        version: 3.13.23(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       '@tryfabric/mack':
         specifier: ^1.2.1
         version: 1.2.1
@@ -3373,6 +3379,15 @@ packages:
     resolution: {integrity: sha512-1wmrxKFkor+q8l+ygdHmv0Sq5g84Q3p4xvuJ7AdSIAhQQ7udOt+ZSZ19g1Jea3mHqtlTslLGJsmC4vHFgP0P3A==}
     peerDependencies:
       react: ^18 || ^19
+
+  '@tanstack/react-virtual@3.13.23':
+    resolution: {integrity: sha512-XnMRnHQ23piOVj2bzJqHrRrLg4r+F86fuBcwteKfbIjJrtGxb4z7tIvPVAe4B+4UVwo9G4Giuz5fmapcrnZ0OQ==}
+    peerDependencies:
+      react: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
+      react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
+
+  '@tanstack/virtual-core@3.13.23':
+    resolution: {integrity: sha512-zSz2Z2HNyLjCplANTDyl3BcdQJc2k1+yyFoKhNRmCr7V7dY8o8q5m8uFTI1/Pg1kL+Hgrz6u3Xo6eFUB7l66cg==}
 
   '@testing-library/dom@10.4.1':
     resolution: {integrity: sha512-o4PXJQidqJl82ckFaXUeoAW+XysPLauYI43Abki5hABd853iMhitooc6znOnczgbTYmEP6U6/y1ZyKAIsvMKGg==}
@@ -11428,6 +11443,14 @@ snapshots:
     dependencies:
       '@tanstack/query-core': 5.94.5
       react: 19.2.4
+
+  '@tanstack/react-virtual@3.13.23(react-dom@19.2.4(react@19.2.4))(react@19.2.4)':
+    dependencies:
+      '@tanstack/virtual-core': 3.13.23
+      react: 19.2.4
+      react-dom: 19.2.4(react@19.2.4)
+
+  '@tanstack/virtual-core@3.13.23': {}
 
   '@testing-library/dom@10.4.1':
     dependencies:

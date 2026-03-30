@@ -9,6 +9,7 @@ import Toggle from './DaisyUI/Toggle';
 import { Loading } from './DaisyUI/Loading';
 import Textarea from './DaisyUI/Textarea';
 import Debug from 'debug';
+import { apiService } from '../services/api';
 const debug = Debug('app:client:components:GlobalConfigSection');
 
 interface ConfigSchema {
@@ -49,16 +50,14 @@ const GlobalConfigSection: React.FC<GlobalConfigSectionProps> = ({ section }) =>
     try {
       setLoading(true);
       setError(null);
-      const res = await fetch('/api/config/global');
-      if (!res.ok) {throw new Error('Failed to fetch configuration');}
-      const data = await res.json();
+      const data: any = await apiService.getGlobalConfig();
       if (data && data[section]) {
         setConfig(data[section]);
       } else {
-        setConfig(null); 
+        setConfig(null);
       }
     } catch (err: any) {
-      setError(err.message);
+      setError(err.message || 'Failed to fetch configuration');
     } finally {
       setLoading(false);
     }
@@ -80,22 +79,12 @@ const GlobalConfigSection: React.FC<GlobalConfigSectionProps> = ({ section }) =>
     });
 
     try {
-      const res = await fetch('/api/config/global', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ configName: section, updates: valuesToSave }),
-      });
-
-      if (!res.ok) {
-        const errData = await res.json();
-        throw new Error(errData.error || 'Failed to save configuration');
-      }
-
+      await apiService.updateGlobalConfig({ configName: section, updates: valuesToSave });
       setSuccess('Configuration saved successfully');
       await fetchConfig(); // Refresh
-      setJsonState({}); 
+      setJsonState({});
     } catch (err: any) {
-      setError(err.message);
+      setError(err.message || 'Failed to save configuration');
     } finally {
       setSaving(false);
       setTimeout(() => setSuccess(null), 3000);
@@ -103,25 +92,15 @@ const GlobalConfigSection: React.FC<GlobalConfigSectionProps> = ({ section }) =>
   };
 
   const handleTestConnection = async () => {
-    if (!config) {return;}
+    if (!config) { return; }
     setTesting(true);
     setTestStatus(null);
     try {
-      const stored = localStorage.getItem('auth_tokens');
-      const accessToken = stored ? (JSON.parse(stored) as { accessToken?: string })?.accessToken : undefined;
-      const res = await fetch('/api/config/message-provider/test', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
-        },
-        body: JSON.stringify({
-          provider: section,
-          config: config.values,
-        }),
+      const data: any = await apiService.post('/api/config/message-provider/test', {
+        provider: section,
+        config: config.values,
       });
-      const data = await res.json();
-      if (!res.ok || data.success === false) {
+      if (data.success === false) {
         throw new Error(data.message || data.error || 'Connection test failed');
       }
       setTestStatus({ type: 'success', message: data.message || 'Connection successful' });
@@ -135,7 +114,7 @@ const GlobalConfigSection: React.FC<GlobalConfigSectionProps> = ({ section }) =>
 
   const renderField = (key: string, value: any, schema: ConfigSchema) => {
     const handleChange = (newValue: any) => {
-      if (!config) {return;}
+      if (!config) { return; }
       setConfig({
         ...config,
         values: { ...config.values, [key]: newValue },
@@ -145,9 +124,9 @@ const GlobalConfigSection: React.FC<GlobalConfigSectionProps> = ({ section }) =>
     const isReadOnly = key.toUpperCase().includes('KEY') || key.toUpperCase().includes('TOKEN') || key.toUpperCase().includes('SECRET');
 
     let type = 'text';
-    if (typeof value === 'boolean' || schema.format === 'Boolean') {type = 'boolean';}
-    else if (typeof value === 'number' || schema.format === 'int' || schema.format === 'Number') {type = 'number';}
-    else if (Array.isArray(value) || schema.format === 'Array') {type = 'array';}
+    if (typeof value === 'boolean' || schema.format === 'Boolean') { type = 'boolean'; }
+    else if (typeof value === 'number' || schema.format === 'int' || schema.format === 'Number') { type = 'number'; }
+    else if (Array.isArray(value) || schema.format === 'Array') { type = 'array'; }
 
 
     if (type === 'boolean') {
@@ -189,7 +168,7 @@ const GlobalConfigSection: React.FC<GlobalConfigSectionProps> = ({ section }) =>
         <Input
           type={type === 'number' ? 'number' : 'text'}
           value={Array.isArray(value) ? value.join(', ') : value}
-          onChange={(e) => handleChange(type === 'number' ? Number(e.target.value) : (type === 'array' ? e.target.value.split(',').map((s:string) => s.trim()) : e.target.value))}
+          onChange={(e) => handleChange(type === 'number' ? Number(e.target.value) : (type === 'array' ? e.target.value.split(',').map((s: string) => s.trim()) : e.target.value))}
           placeholder={isReadOnly ? 'Safe to edit (Hidden)' : (type === 'array' ? 'Comma separated values' : '')}
         />
         {schema.doc && <label className="label"><span className="label-text-alt text-base-content/70">{schema.doc}</span></label>}
@@ -197,15 +176,17 @@ const GlobalConfigSection: React.FC<GlobalConfigSectionProps> = ({ section }) =>
     );
   };
 
-  if (loading) {return (
-    <div className="flex flex-col items-center justify-center p-12 gap-4">
-      <span className="loading loading-infinity loading-lg text-primary" aria-hidden="true" />
-      <span className="text-base-content/50">Loading settings...</span>
-    </div>
-  );}
-  
-  if (error) {return <Alert status="error" message={error} />;}
-  if (!config) {return <div className="alert alert-info">Configuration section '{section}' not found in global config.</div>;}
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center p-12 gap-4">
+        <span className="loading loading-infinity loading-lg text-primary" aria-hidden="true" />
+        <span className="text-base-content/50">Loading settings...</span>
+      </div>
+    );
+  }
+
+  if (error) { return <Alert status="error" message={error} />; }
+  if (!config) { return <div className="alert alert-info">Configuration section '{section}' not found in global config.</div>; }
 
   return (
     <Card className="bg-base-100 shadow-xl border border-base-200">
@@ -223,16 +204,16 @@ const GlobalConfigSection: React.FC<GlobalConfigSectionProps> = ({ section }) =>
                 loading={testing}
                 disabled={testing}
               >
-                  Test Connection
+                Test Connection
               </Button>
             )}
-            <Button 
-              variant="primary" 
+            <Button
+              variant="primary"
               onClick={() => handleSave(config.values)}
               loading={saving}
               disabled={saving}
             >
-                  Save Changes
+              Save Changes
             </Button>
           </div>
         </div>
@@ -251,7 +232,7 @@ const GlobalConfigSection: React.FC<GlobalConfigSectionProps> = ({ section }) =>
               const currentValue = jsonState[key] !== undefined ? jsonState[key] : JSON.stringify(value, null, 2);
               let isValid = true;
               try { JSON.parse(currentValue); } catch { isValid = false; }
-                 
+
               return (
                 <div className="form-control w-full col-span-2" key={key}>
                   <label className="label">
@@ -272,7 +253,7 @@ const GlobalConfigSection: React.FC<GlobalConfigSectionProps> = ({ section }) =>
                 </div>
               );
             }
-              
+
             return renderField(key, value, config.schema[key] || {});
           })}
         </div>

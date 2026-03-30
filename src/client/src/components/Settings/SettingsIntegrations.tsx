@@ -7,6 +7,7 @@ import Card from '../DaisyUI/Card';
 import { SkeletonGrid } from '../DaisyUI/Skeleton';
 import Toggle from '../DaisyUI/Toggle';
 import { Puzzle, CheckCircle, XCircle, AlertTriangle } from 'lucide-react';
+import { apiService } from '../../services/api';
 
 interface Integration {
   id: string;
@@ -26,9 +27,7 @@ const SettingsIntegrations: React.FC = () => {
   const fetchIntegrations = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await fetch('/api/config/global');
-      if (!response.ok) {throw new Error('Failed to fetch integrations');}
-      const data = await response.json();
+      const data: any = await apiService.getGlobalConfig();
 
       const config = data.config || {};
 
@@ -95,26 +94,26 @@ const SettingsIntegrations: React.FC = () => {
 
   const getStatusIcon = (status: string) => {
     switch (status) {
-    case 'connected': return <CheckCircle className="w-4 h-4 text-success" />;
-    case 'error': return <AlertTriangle className="w-4 h-4 text-error" />;
-    default: return <XCircle className="w-4 h-4 text-base-content/50" />;
+      case 'connected': return <CheckCircle className="w-4 h-4 text-success" />;
+      case 'error': return <AlertTriangle className="w-4 h-4 text-error" />;
+      default: return <XCircle className="w-4 h-4 text-base-content/50" />;
     }
   };
 
   const getStatusVariant = (status: string): 'success' | 'neutral' | 'error' => {
     switch (status) {
-    case 'connected': return 'success';
-    case 'error': return 'error';
-    default: return 'neutral';
+      case 'connected': return 'success';
+      case 'error': return 'error';
+      default: return 'neutral';
     }
   };
 
   const getCategoryColor = (category: string) => {
     switch (category) {
-    case 'messaging': return 'bg-primary';
-    case 'ai': return 'bg-secondary';
-    case 'monitoring': return 'bg-warning';
-    default: return 'bg-accent';
+      case 'messaging': return 'bg-primary';
+      case 'ai': return 'bg-secondary';
+      case 'monitoring': return 'bg-warning';
+      default: return 'bg-accent';
     }
   };
 
@@ -184,7 +183,7 @@ const SettingsIntegrations: React.FC = () => {
               <Card key={integration.id} className="bg-base-200/50 p-4">
                 <div className="flex justify-between items-start mb-2">
                   <h4 className="font-semibold">{integration.name}</h4>
-                  <Badge variant={getStatusVariant(integration.status)} size="sm">
+                  <Badge variant={getStatusVariant(integration.status)} size="small">
                     {getStatusIcon(integration.status)}
                     <span className="ml-1">{integration.status}</span>
                   </Badge>

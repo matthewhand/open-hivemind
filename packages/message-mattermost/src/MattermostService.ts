@@ -2,10 +2,8 @@ import { EventEmitter } from 'events';
 import retry from 'async-retry';
 import Debug from 'debug';
 import type { Application } from 'express';
-import { container } from 'tsyringe';
 import BotConfigurationManager from '@src/config/BotConfigurationManager';
 import { MetricsCollector } from '@src/monitoring/MetricsCollector';
-import { StartupGreetingService } from '@src/services/StartupGreetingService';
 import {
   ApiError,
   BaseHivemindError,
@@ -112,9 +110,8 @@ export class MattermostService extends EventEmitter implements IMessengerService
       }
     }
 
-    const startupGreetingService =
-      container.resolve<StartupGreetingService>(StartupGreetingService);
-    startupGreetingService.emit('service-ready', this);
+
+    // Service readiness is now handled centrally by the main application
   }
 
   public setApp(app: Application): void {
@@ -284,7 +281,7 @@ export class MattermostService extends EventEmitter implements IMessengerService
           status: 'error',
           errorMessage: error.message,
         });
-      } catch {}
+      } catch { }
 
       if (error instanceof ValidationError || error instanceof NetworkError) {
         throw error;
@@ -355,8 +352,8 @@ export class MattermostService extends EventEmitter implements IMessengerService
 
             const username = user
               ? `${user.first_name || ''} ${user.last_name || ''}`.trim() ||
-                user.username ||
-                'Unknown'
+              user.username ||
+              'Unknown'
               : 'Unknown';
             const isBot = Boolean(user?.is_bot);
 
@@ -576,7 +573,7 @@ export class MattermostService extends EventEmitter implements IMessengerService
         return;
       }
       await client.sendTyping(channelId, threadId);
-    } catch {}
+    } catch { }
   }
 
   public async setModelActivity(modelId: string, senderKey?: string): Promise<void> {

@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { Shield, Plus, Edit2, Trash2, RefreshCw, Save, AlertTriangle, Copy, ToggleLeft } from 'lucide-react';
+import { Shield, Plus, Edit2, Trash2, Check, RefreshCw, AlertCircle, Save, X, Settings, AlertTriangle, Copy, ToggleLeft } from 'lucide-react';
+import { apiService } from '../services/api';
 import { useSuccessToast, useErrorToast } from '../components/DaisyUI/ToastNotification';
 import Modal, { ConfirmModal } from '../components/DaisyUI/Modal';
 import Button from '../components/DaisyUI/Button';
@@ -16,6 +17,7 @@ import Toggle from '../components/DaisyUI/Toggle';
 import useUrlParams from '../hooks/useUrlParams';
 import { useBulkSelection } from '../hooks/useBulkSelection';
 import BulkActionBar from '../components/BulkActionBar';
+import Badge from '../components/DaisyUI/Badge';
 
 interface McpGuardConfig {
   enabled: boolean;
@@ -77,12 +79,13 @@ const GuardsPage: React.FC = () => {
   const fetchProfiles = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await fetch(`${API_BASE}/guard-profiles`);
-      if (!response.ok) throw new Error('Failed to fetch profiles');
-      const result = await response.json();
+      const result: any = await apiService.get(`${API_BASE}/guard-profiles`);
       setProfiles(result.data || []);
-    } catch (err) {
-      showError(err instanceof Error ? err.message : 'Failed to fetch profiles');
+    } catch (err: any) {
+      // Suppress 401 toasts on initial load to avoid "access popup" spam
+      if (!err.message?.includes('401')) {
+        showError(err.message || 'Failed to fetch profiles');
+      }
     } finally {
       setLoading(false);
     }
@@ -113,26 +116,20 @@ const GuardsPage: React.FC = () => {
 
     try {
       setSaving(true);
-
       const url = isNew ? `${API_BASE}/guard-profiles` : `${API_BASE}/guard-profiles/${editingProfile.id}`;
       const method = isNew ? 'POST' : 'PUT';
 
-      const response = await fetch(url, {
-        method,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(profileToSave),
-      });
-
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.message || 'Failed to save profile');
+      if (method === 'POST') {
+        await apiService.post(url, profileToSave);
+      } else {
+        await apiService.put(url, profileToSave);
       }
 
       showSuccess(`Profile ${isNew ? 'created' : 'updated'} successfully`);
       setEditingProfile(null);
       fetchProfiles();
-    } catch (err) {
-      showError(err instanceof Error ? err.message : 'Failed to save profile');
+    } catch (err: any) {
+      showError(err.message || 'Failed to save profile');
     } finally {
       setSaving(false);
     }
@@ -147,17 +144,12 @@ const GuardsPage: React.FC = () => {
 
     try {
       setLoading(true);
-      const response = await fetch(`${API_BASE}/guard-profiles/${deleteConfirm.id}`, {
-        method: 'DELETE',
-      });
-
-      if (!response.ok) throw new Error('Failed to delete profile');
-
+      await apiService.delete(`${API_BASE}/guard-profiles/${deleteConfirm.id}`);
       showSuccess('Profile deleted successfully');
       setDeleteConfirm(null);
       fetchProfiles();
-    } catch (err) {
-      showError(err instanceof Error ? err.message : 'Failed to delete profile');
+    } catch (err: any) {
+      showError(err.message || 'Failed to delete profile');
       setLoading(false);
       setDeleteConfirm(null);
     }
@@ -392,11 +384,11 @@ const GuardsPage: React.FC = () => {
                 <p className="text-sm opacity-70 mb-4 h-10 line-clamp-2">{profile?.description || 'No description'}</p>
 
                 <div className="flex flex-wrap gap-2 mt-auto">
-                  {profile?.guards?.mcpGuard?.enabled && <span className="badge badge-primary badge-sm">Access Control</span>}
-                  {profile?.guards?.rateLimit?.enabled && <span className="badge badge-warning badge-sm">Rate Limit</span>}
-                  {profile?.guards?.contentFilter?.enabled && <span className="badge badge-error badge-sm">Content Filter</span>}
+                  {profile?.guards?.mcpGuard?.enabled && <Badge variant="primary" size="small">Access Control</Badge>}
+                  {profile?.guards?.rateLimit?.enabled && <Badge variant="warning" size="small">Rate Limit</Badge>}
+                  {profile?.guards?.contentFilter?.enabled && <Badge variant="error" size="small">Content Filter</Badge>}
                   {!profile?.guards?.mcpGuard?.enabled && !profile?.guards?.rateLimit?.enabled && !profile?.guards?.contentFilter?.enabled && (
-                    <span className="badge badge-ghost badge-sm">No Guards</span>
+                    <Badge variant="ghost" size="small">No Guards</Badge>
                   )}
                 </div>
               </div>
@@ -439,10 +431,10 @@ const GuardsPage: React.FC = () => {
           </div>
 
           <div className="form-control mb-6">
+            <label className="label"><span className="label-text">Description</span></label>
             <Textarea
-              label="Description"
               className="h-20"
-              value={editingProfile.description}
+              value={editingProfile.description || ''}
               onChange={e => setEditingProfile({ ...editingProfile, description: e.target.value })}
               placeholder="Describe what this profile enforces..."
             />
@@ -458,7 +450,7 @@ const GuardsPage: React.FC = () => {
                 <Shield className="w-5 h-5" /> Access Control
                 <div className="ml-auto z-10" onClick={e => e.stopPropagation()}>
                   <Toggle
-                    variant="primary"
+                    color="primary"
                     checked={editingProfile.guards.mcpGuard.enabled}
                     onChange={e => updateGuard('mcpGuard', { enabled: e.target.checked })}
                   />
@@ -466,8 +458,8 @@ const GuardsPage: React.FC = () => {
               </div>
               <div className="collapse-content bg-base-100 pt-4">
                 <div className="form-control">
+                  <label className="label"><span className="label-text">Type</span></label>
                   <Select
-                    label="Type"
                     value={editingProfile.guards.mcpGuard.type}
                     onChange={e => updateGuard('mcpGuard', { type: e.target.value })}
                     disabled={!editingProfile.guards.mcpGuard.enabled}
@@ -485,12 +477,12 @@ const GuardsPage: React.FC = () => {
                       value={editingProfile.guards.mcpGuard.allowedUsers || []}
                       onChange={v => updateGuard('mcpGuard', { allowedUsers: v })}
                       disabled={!editingProfile.guards.mcpGuard.enabled}
-                    validate={item => {
-                      if (!/^[a-zA-Z0-9-_]+$/.test(item)) {
-                        return "User IDs must contain only letters, numbers, dashes, and underscores.";
-                      }
-                      return null;
-                    }}
+                      validate={item => {
+                        if (!/^[a-zA-Z0-9-_]+$/.test(item)) {
+                          return "User IDs must contain only letters, numbers, dashes, and underscores.";
+                        }
+                        return null;
+                      }}
                     />
                   </div>
                 )}
@@ -522,7 +514,6 @@ const GuardsPage: React.FC = () => {
                 <RefreshCw className="w-5 h-5" /> Rate Limiter
                 <div className="ml-auto z-10" onClick={e => e.stopPropagation()}>
                   <Toggle
-                    variant="warning"
                     checked={editingProfile.guards.rateLimit?.enabled || false}
                     onChange={e => updateGuard('rateLimit', { enabled: e.target.checked })}
                   />
@@ -532,36 +523,16 @@ const GuardsPage: React.FC = () => {
                 <div className="grid grid-cols-2 gap-4">
                   <div className={`form-control transition-all duration-200 ${!editingProfile.guards.rateLimit?.enabled ? 'opacity-50 pointer-events-none' : ''}`} aria-disabled={!editingProfile.guards.rateLimit?.enabled}>
                     <Input
-                      label={
-                        <div className="flex justify-between w-full">
-                          <span>Max Requests</span>
-                          {!editingProfile.guards.rateLimit?.enabled && (
-                            <span className="badge badge-sm border-base-300">Disabled</span>
-                          )}
-                        </div>
-                      }
+                      label="Max Requests"
                       type="number"
                       value={editingProfile.guards.rateLimit?.maxRequests || 100}
                       onChange={e => updateGuard('rateLimit', { maxRequests: parseInt(e.target.value) })}
                       disabled={!editingProfile.guards.rateLimit?.enabled}
-                      aria-label="Max Requests"
                     />
                   </div>
                   <div className={`form-control transition-all duration-200 ${!editingProfile.guards.rateLimit?.enabled ? 'opacity-50 pointer-events-none' : ''}`} aria-disabled={!editingProfile.guards.rateLimit?.enabled}>
                     <Input
-                      label={
-                        <div className="flex justify-between w-full">
-                          <span>Window (seconds)</span>
-                          <div className="flex items-center gap-2">
-                            <span className="label-text-alt text-info" title="Time period for counting requests">
-                              Max 1 hour (3600s)
-                            </span>
-                            {!editingProfile.guards.rateLimit?.enabled && (
-                              <span className="badge badge-sm border-base-300">Disabled</span>
-                            )}
-                          </div>
-                        </div>
-                      }
+                      label="Window (seconds)"
                       type="number"
                       value={(editingProfile.guards.rateLimit?.windowMs || 60000) / 1000}
                       onChange={e => {
@@ -572,15 +543,13 @@ const GuardsPage: React.FC = () => {
                       min={1}
                       max={3600}
                       placeholder="60"
-                      helperText={
-                        (() => {
-                          const seconds = (editingProfile.guards.rateLimit?.windowMs || 60000) / 1000;
-                          if (seconds < 60) return `${seconds} seconds`;
-                          if (seconds === 60) return '1 minute';
-                          if (seconds < 3600) return `${Math.floor(seconds / 60)} min ${seconds % 60}s`;
-                          return '1 hour';
-                        })()
-                      }
+                      helperText={(() => {
+                        const seconds = (editingProfile.guards.rateLimit?.windowMs || 60000) / 1000;
+                        if (seconds < 60) return `${seconds} seconds`;
+                        if (seconds === 60) return '1 minute';
+                        if (seconds < 3600) return `${Math.floor(seconds / 60)} min ${seconds % 60}s`;
+                        return '1 hour';
+                      })()}
                     />
                   </div>
                 </div>
@@ -594,7 +563,7 @@ const GuardsPage: React.FC = () => {
                 <AlertTriangle className="w-5 h-5" /> Content Filter
                 <div className="ml-auto z-10" onClick={e => e.stopPropagation()}>
                   <Toggle
-                    variant="error"
+                    color="error"
                     checked={editingProfile.guards.contentFilter?.enabled || false}
                     onChange={e => updateGuard('contentFilter', { enabled: e.target.checked })}
                   />

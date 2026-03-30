@@ -4,6 +4,7 @@ import Input from '../DaisyUI/Input';
 import Modal from '../DaisyUI/Modal';
 import { useConfigDiff } from '../../hooks/useConfigDiff';
 import { ConfigDiffViewer, ConfigDiffConfirmDialog } from '../ConfigDiffViewer';
+import { apiService } from '../../services/api';
 import Debug from 'debug';
 const debug = Debug('app:client:components:BotManagement:CreateBotWizard');
 
@@ -80,11 +81,8 @@ export const CreateBotWizard: React.FC<CreateBotWizardProps> = (props) => {
     useEffect(() => {
         const fetchGuardProfiles = async () => {
             try {
-                const response = await fetch('/api/admin/guard-profiles');
-                if (response.ok) {
-                    const data = await response.json();
-                    setGuardProfiles(data.data || []);
-                }
+                const data: any = await apiService.get('/api/admin/guard-profiles');
+                setGuardProfiles(data.data || []);
             } catch (e) {
                 debug('ERROR:', 'Failed to fetch guard profiles', e);
             }
@@ -95,11 +93,8 @@ export const CreateBotWizard: React.FC<CreateBotWizardProps> = (props) => {
         if (!propsPersonas) {
             const fetchPersonas = async () => {
                 try {
-                    const response = await fetch('/api/personas');
-                    if (response.ok) {
-                        const data = await response.json();
-                        setFetchedPersonas(Array.isArray(data) ? data : []);
-                    }
+                    const data: any = await apiService.getPersonas();
+                    setFetchedPersonas(Array.isArray(data) ? data : []);
                 } catch (e) {
                     debug('ERROR:', 'Failed to fetch personas', e);
                 }
@@ -111,11 +106,8 @@ export const CreateBotWizard: React.FC<CreateBotWizardProps> = (props) => {
         if (!propsLlmProfiles) {
             const fetchLlmProfiles = async () => {
                 try {
-                    const response = await fetch('/api/config/llm-profiles');
-                    if (response.ok) {
-                        const data = await response.json();
-                        setFetchedLlmProfiles(data?.llm || data?.profiles?.llm || data?.data || []);
-                    }
+                    const data: any = await apiService.getLlmProfiles();
+                    setFetchedLlmProfiles(data?.llm || data?.profiles?.llm || data?.data || []);
                 } catch (e) {
                     debug('ERROR:', 'Failed to fetch LLM profiles', e);
                 }
@@ -127,11 +119,8 @@ export const CreateBotWizard: React.FC<CreateBotWizardProps> = (props) => {
         if (propsDefaultLlmConfigured === undefined) {
             const fetchLlmStatus = async () => {
                 try {
-                    const response = await fetch('/api/config/llm-status');
-                    if (response.ok) {
-                        const data = await response.json();
-                        setFetchedDefaultLlmConfigured(data?.defaultConfigured ?? true);
-                    }
+                    const data: any = await apiService.get('/api/config/llm-status');
+                    setFetchedDefaultLlmConfigured(data?.defaultConfigured ?? true);
                 } catch (e) {
                     debug('ERROR:', 'Failed to fetch LLM status', e);
                 }
@@ -187,17 +176,7 @@ export const CreateBotWizard: React.FC<CreateBotWizardProps> = (props) => {
                 await onSubmit(payload);
                 handleSuccess();
             } else {
-                const response = await fetch('/api/bots', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload),
-                });
-
-                if (!response.ok) {
-                    const data = await response.json();
-                    throw new Error(data.error || 'Failed to create bot');
-                }
-
+                await apiService.post('/api/bots', payload);
                 handleSuccess();
             }
         } catch (err) {
@@ -249,310 +228,191 @@ export const CreateBotWizard: React.FC<CreateBotWizardProps> = (props) => {
 
     return (
         <Modal isOpen={isOpen} onClose={handleCancel} title="Create New Bot" size="lg">
-        <div className="flex flex-col h-full max-h-[70vh]">
-            {/* Steps Indicator with Validation Status */}
-            <ul className="steps w-full mb-8">
-                {steps.map(s => {
-                    const status = getStepValidationStatus(s.id);
-                    const isActive = step === s.id;
-                    const isCompleted = step > s.id;
+            <div className="flex flex-col h-full max-h-[70vh]">
+                {/* Steps Indicator with Validation Status */}
+                <ul className="steps w-full mb-8">
+                    {steps.map(s => {
+                        const status = getStepValidationStatus(s.id);
+                        const isActive = step === s.id;
+                        const isCompleted = step > s.id;
 
-                    return (
-                        <li
-                            key={s.id}
-                            className={`step ${step >= s.id ? 'step-primary' : ''} ${status === 'invalid' ? 'step-error' : ''}`}
-                            data-content={
-                                status === 'valid' && isCompleted
-                                    ? '✓'
-                                    : status === 'invalid'
-                                        ? '!'
-                                        : s.id
-                            }
-                        >
-                            <div className="flex flex-col items-center">
-                                <span className={`text-sm ${isActive ? 'font-bold' : ''}`}>{s.title}</span>
-                                {isActive && status === 'invalid' && (
-                                    <span className="text-xs text-error mt-1 flex items-center gap-1">
-                                        <AlertCircle className="w-3 h-3" /> Needs attention
-                                    </span>
-                                )}
+                        return (
+                            <li
+                                key={s.id}
+                                className={`step ${step >= s.id ? 'step-primary' : ''} ${status === 'invalid' ? 'step-error' : ''}`}
+                                data-content={
+                                    status === 'valid' && isCompleted
+                                        ? '✓'
+                                        : status === 'invalid'
+                                            ? '!'
+                                            : s.id
+                                }
+                            >
+                                <div className="flex flex-col items-center">
+                                    <span className={`text-sm ${isActive ? 'font-bold' : ''}`}>{s.title}</span>
+                                    {isActive && status === 'invalid' && (
+                                        <span className="text-xs text-error mt-1 flex items-center gap-1">
+                                            <AlertCircle className="w-3 h-3" /> Needs attention
+                                        </span>
+                                    )}
+                                </div>
+                            </li>
+                        );
+                    })}
+                </ul>
+
+                {/* Validation Errors Summary */}
+                {(() => {
+                    const { errors } = validateStep(step);
+                    return errors.length > 0 ? (
+                        <div className="alert alert-warning mb-4 shadow-lg">
+                            <AlertCircle className="w-5 h-5" />
+                            <div className="flex flex-col">
+                                <span className="font-semibold">Please fix the following before continuing:</span>
+                                <ul className="list-disc list-inside text-sm mt-1">
+                                    {errors.map((err, idx) => (
+                                        <li key={idx}>{err}</li>
+                                    ))}
+                                </ul>
                             </div>
-                        </li>
-                    );
-                })}
-            </ul>
-
-            {/* Validation Errors Summary */}
-            {(() => {
-                const { errors } = validateStep(step);
-                return errors.length > 0 ? (
-                    <div className="alert alert-warning mb-4 shadow-lg">
-                        <AlertCircle className="w-5 h-5" />
-                        <div className="flex flex-col">
-                            <span className="font-semibold">Please fix the following before continuing:</span>
-                            <ul className="list-disc list-inside text-sm mt-1">
-                                {errors.map((err, idx) => (
-                                    <li key={idx}>{err}</li>
-                                ))}
-                            </ul>
                         </div>
+                    ) : null;
+                })()}
+
+                {/* Error Alert */}
+                {error && (
+                    <div className="alert alert-error mb-4">
+                        <span>{error}</span>
                     </div>
-                ) : null;
-            })()}
+                )}
 
-            {/* Error Alert */}
-            {error && (
-                <div className="alert alert-error mb-4">
-                    <span>{error}</span>
-                </div>
-            )}
-
-            {/* Content */}
-            <div className="flex-1 overflow-y-auto px-1 pb-16">
-                {step === 1 && (
-                    <div className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-300">
-                        <Input
-                            label={<span>Bot Name <span className="text-error">*</span></span>}
-                            placeholder="e.g. HelpBot"
-                            value={formData.name}
-                            onChange={e => setFormData({ ...formData, name: e.target.value })}
-                            autoFocus
-                        />
-
-                        <div className="form-control">
-                            <textarea
-                                className="textarea textarea-bordered h-24"
-                                placeholder="What does this bot do?"
-                                aria-label="What does this bot do?"
-                                value={formData.description}
-                                onChange={e => setFormData({ ...formData, description: e.target.value })}
+                {/* Content */}
+                <div className="flex-1 overflow-y-auto px-1 pb-16">
+                    {step === 1 && (
+                        <div className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-300">
+                            <Input
+                                label={<span>Bot Name <span className="text-error">*</span></span>}
+                                placeholder="e.g. HelpBot"
+                                value={formData.name}
+                                onChange={e => setFormData({ ...formData, name: e.target.value })}
+                                autoFocus
                             />
-                        </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div className="form-control">
-                                <label className="label"><span className="label-text">Message Provider <span className="text-error">*</span></span></label>
-                                <div className="join w-full">
+                                <textarea
+                                    className="textarea textarea-bordered h-24"
+                                    placeholder="What does this bot do?"
+                                    aria-label="What does this bot do?"
+                                    value={formData.description}
+                                    onChange={e => setFormData({ ...formData, description: e.target.value })}
+                                />
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="form-control">
+                                    <label className="label"><span className="label-text">Message Provider <span className="text-error">*</span></span></label>
+                                    <div className="join w-full">
+                                        <select
+                                            className={`select select-bordered join-item w-full ${!formData.messageProvider ? 'select-error' : ''}`}
+                                            value={formData.messageProvider}
+                                            onChange={e => {
+                                                if (e.target.value === '___manage___') {
+                                                    window.open('/admin/config', '_blank');
+                                                    return;
+                                                }
+                                                setFormData({ ...formData, messageProvider: e.target.value });
+                                            }}
+                                        >
+                                            <option value="">Select Provider</option>
+                                            <option value="discord">Discord</option>
+                                            <option value="slack">Slack</option>
+                                            <option value="mattermost">Mattermost</option>
+                                            <option disabled>──────────</option>
+                                            <option value="___manage___">Add / Manage Providers...</option>
+                                        </select>
+                                        <button
+                                            className="btn btn-square join-item"
+                                            onClick={() => window.open('/admin/config', '_blank')}
+                                            title="Manage Providers"
+                                            aria-label="Manage Providers"
+                                        >
+                                            +
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div className="form-control">
+                                    <label className="label">
+                                        <span className="label-text">LLM Provider {defaultLlmConfigured ? '(optional)' : <span className="text-error">*</span>}</span>
+                                    </label>
                                     <select
-                                        className={`select select-bordered join-item w-full ${!formData.messageProvider ? 'select-error' : ''}`}
-                                        value={formData.messageProvider}
+                                        className={`select select-bordered w-full ${(!defaultLlmConfigured && !formData.llmProvider) ? 'select-error' : ''}`}
+                                        value={formData.llmProvider}
                                         onChange={e => {
                                             if (e.target.value === '___manage___') {
                                                 window.open('/admin/config', '_blank');
                                                 return;
                                             }
-                                            setFormData({ ...formData, messageProvider: e.target.value });
+                                            setFormData({ ...formData, llmProvider: e.target.value });
                                         }}
                                     >
-                                        <option value="">Select Provider</option>
-                                        <option value="discord">Discord</option>
-                                        <option value="slack">Slack</option>
-                                        <option value="mattermost">Mattermost</option>
+                                        <option value="">{defaultLlmConfigured ? 'Use System Default' : 'Select Provider'}</option>
+                                        {llmProfiles.filter(p => p.modelType !== 'embedding').map(p => (
+                                            <option key={p.key} value={p.key}>{p.name} ({p.provider})</option>
+                                        ))}
                                         <option disabled>──────────</option>
                                         <option value="___manage___">Add / Manage Providers...</option>
                                     </select>
-                                    <button
-                                        className="btn btn-square join-item"
-                                        onClick={() => window.open('/admin/config', '_blank')}
-                                        title="Manage Providers"
-                                        aria-label="Manage Providers"
-                                    >
-                                        +
-                                    </button>
+                                    <label className="label" aria-live="polite" aria-atomic="true">
+                                        {!defaultLlmConfigured && !formData.llmProvider && (
+                                            <span className="label-text-alt text-error">
+                                                System default is not configured. Please select a provider.
+                                            </span>
+                                        )}
+                                        {defaultLlmConfigured && !formData.llmProvider && (
+                                            <span className="label-text-alt text-success flex items-center gap-1">
+                                                <Check className="w-3 h-3" /> Using system default configuration
+                                            </span>
+                                        )}
+                                    </label>
                                 </div>
                             </div>
-
-                            <div className="form-control">
-                                <label className="label">
-                                    <span className="label-text">LLM Provider {defaultLlmConfigured ? '(optional)' : <span className="text-error">*</span>}</span>
-                                </label>
-                                <select
-                                    className={`select select-bordered w-full ${(!defaultLlmConfigured && !formData.llmProvider) ? 'select-error' : ''}`}
-                                    value={formData.llmProvider}
-                                    onChange={e => {
-                                        if (e.target.value === '___manage___') {
-                                            window.open('/admin/config', '_blank');
-                                            return;
-                                        }
-                                        setFormData({ ...formData, llmProvider: e.target.value });
-                                    }}
-                                >
-                                    <option value="">{defaultLlmConfigured ? 'Use System Default' : 'Select Provider'}</option>
-                                    {llmProfiles.filter(p => p.modelType !== 'embedding').map(p => (
-                                        <option key={p.key} value={p.key}>{p.name} ({p.provider})</option>
-                                    ))}
-                                    <option disabled>──────────</option>
-                                    <option value="___manage___">Add / Manage Providers...</option>
-                                </select>
-                                <label className="label" aria-live="polite" aria-atomic="true">
-                                    {!defaultLlmConfigured && !formData.llmProvider && (
-                                        <span className="label-text-alt text-error">
-                                            System default is not configured. Please select a provider.
-                                        </span>
-                                    )}
-                                    {defaultLlmConfigured && !formData.llmProvider && (
-                                        <span className="label-text-alt text-success flex items-center gap-1">
-                                            <Check className="w-3 h-3" /> Using system default configuration
-                                        </span>
-                                    )}
-                                </label>
-                            </div>
                         </div>
-                    </div>
-                )}
+                    )}
 
-                {step === 2 && (
-                    <div className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-300">
-                        <div className="form-control">
-                            <label className="label"><span className="label-text">Select Persona</span></label>
-                            <div className="grid grid-cols-1 gap-2 max-h-60 overflow-y-auto">
-                                <label className={`label cursor-pointer border rounded-lg p-3 hover:bg-base-200 transition-colors ${formData.persona === 'default' ? 'border-primary bg-primary/5' : 'border-base-300'}`}>
-                                    <span className="label-text flex flex-col">
-                                        <span className="font-bold">Default Assistant</span>
-                                        <span className="text-xs opacity-70">Helpful and polite general purpose assistant.</span>
-                                    </span>
-                                    <input
-                                        type="radio"
-                                        name="persona"
-                                        className="radio radio-primary"
-                                        checked={formData.persona === 'default'}
-                                        onChange={() => setFormData({ ...formData, persona: 'default' })}
-                                    />
-                                </label>
-                                {personas.filter(p => p.id !== 'default').map(p => (
-                                    <label key={p.id} className={`label cursor-pointer border rounded-lg p-3 hover:bg-base-200 transition-colors ${formData.persona === p.id ? 'border-primary bg-primary/5' : 'border-base-300'}`}>
+                    {step === 2 && (
+                        <div className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-300">
+                            <div className="form-control">
+                                <label className="label"><span className="label-text">Select Persona</span></label>
+                                <div className="grid grid-cols-1 gap-2 max-h-60 overflow-y-auto">
+                                    <label className={`label cursor-pointer border rounded-lg p-3 hover:bg-base-200 transition-colors ${formData.persona === 'default' ? 'border-primary bg-primary/5' : 'border-base-300'}`}>
                                         <span className="label-text flex flex-col">
-                                            <span className="font-bold">{p.name}</span>
-                                            <span className="text-xs opacity-70">{p.description || 'Custom persona'}</span>
+                                            <span className="font-bold">Default Assistant</span>
+                                            <span className="text-xs opacity-70">Helpful and polite general purpose assistant.</span>
                                         </span>
                                         <input
                                             type="radio"
                                             name="persona"
                                             className="radio radio-primary"
-                                            checked={formData.persona === p.id}
-                                            onChange={() => setFormData({ ...formData, persona: p.id })}
+                                            checked={formData.persona === 'default'}
+                                            onChange={() => setFormData({ ...formData, persona: 'default' })}
                                         />
                                     </label>
-                                ))}
-                            </div>
-                        </div>
-                    </div>
-                )}
-
-                {step === 3 && (
-                    <div className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-300">
-                        <p className="text-sm opacity-70 mb-4">Configure safety and operational guardrails for your bot.</p>
-
-                        <div className="form-control w-full mb-6">
-                            <label className="label"><span className="label-text font-bold">Guard Profile</span></label>
-                            <select
-                                className="select select-bordered w-full"
-                                value={formData.mcpGuardProfile}
-                                onChange={e => setFormData({ ...formData, mcpGuardProfile: e.target.value })}
-                            >
-                                <option value="">No Profile (Use Manual Config)</option>
-                                {guardProfiles.map(p => (
-                                    <option key={p.id} value={p.id}>{p.name}</option>
-                                ))}
-                            </select>
-                            <label className="label">
-                                <span className="label-text-alt">Using a profile overrides manual settings below.</span>
-                            </label>
-                        </div>
-
-                        <div className="divider">Manual Overrides</div>
-
-                        <div className="form-control">
-                            <label className="label cursor-pointer justify-start gap-4">
-                                <input
-                                    type="checkbox"
-                                    className="toggle toggle-primary"
-                                    checked={formData.guards.accessControl}
-                                    onChange={e => setFormData({ ...formData, guards: { ...formData.guards, accessControl: e.target.checked } })}
-                                    disabled={!!formData.mcpGuardProfile}
-                                />
-                                <div className="flex flex-col">
-                                    <span className="label-text font-bold">Access Control</span>
-                                    <span className="label-text-alt">Limit interaction to specific users or roles.</span>
-                                </div>
-                            </label>
-                        </div>
-
-                        <div className="form-control">
-                            <label className="label cursor-pointer justify-start gap-4">
-                                <input
-                                    type="checkbox"
-                                    className="toggle toggle-primary"
-                                    checked={formData.guards.rateLimit}
-                                    onChange={e => setFormData({ ...formData, guards: { ...formData.guards, rateLimit: e.target.checked } })}
-                                    disabled={!!formData.mcpGuardProfile}
-                                />
-                                <div className="flex flex-col">
-                                    <span className="label-text font-bold">Rate Limiting</span>
-                                    <span className="label-text-alt">Prevent spam by limiting message frequency.</span>
-                                </div>
-                            </label>
-                        </div>
-
-                        <div className="form-control">
-                            <label className="label cursor-pointer justify-start gap-4">
-                                <input
-                                    type="checkbox"
-                                    className="toggle toggle-primary"
-                                    checked={formData.guards.contentFilter}
-                                    onChange={e => setFormData({ ...formData, guards: { ...formData.guards, contentFilter: e.target.checked } })}
-                                    disabled={!!formData.mcpGuardProfile}
-                                />
-                                <div className="flex flex-col">
-                                    <span className="label-text font-bold">Content Filtering</span>
-                                    <span className="label-text-alt">Block inappropriate or harmful content.</span>
-                                </div>
-                            </label>
-                        </div>
-                    </div>
-                )}
-
-                {step === 4 && (
-                    <div className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-300">
-                        <div className="alert bg-base-200 border-none">
-                            <div className="flex flex-col w-full gap-2">
-                                <h3 className="font-bold text-lg">Review Configuration</h3>
-                                <div className="divider my-0"></div>
-                                <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
-                                    <span className="opacity-70">Bot Name:</span>
-                                    <span className="font-semibold">{formData.name}</span>
-
-                                    <span className="opacity-70">Description:</span>
-                                    <span className="font-semibold">{formData.description || 'None'}</span>
-
-                                    <span className="opacity-70">Platform:</span>
-                                    <span className="font-semibold capitalize">{formData.messageProvider}</span>
-
-                                    <span className="opacity-70">LLM Provider:</span>
-                                    <span className="font-semibold">{getLlmProviderName()}</span>
-
-                                    <span className="opacity-70">Persona:</span>
-                                    <span className="font-semibold">{getPersonaName()}</span>
-                                </div>
-
-                                <div className="divider my-0"></div>
-                                <div className="flex flex-col gap-1">
-                                    <span className="opacity-70 text-sm">Guardrails:</span>
-                                    {formData.mcpGuardProfile ? (
-                                        <div className="flex flex-col">
-                                            <span className="font-semibold">Profile: {getGuardProfileName()}</span>
-                                            <span className="text-xs opacity-70">Manual settings overridden.</span>
-                                        </div>
-                                    ) : (
-                                        <div className="flex flex-wrap gap-2">
-                                            {!formData.guards.accessControl && !formData.guards.rateLimit && !formData.guards.contentFilter && (
-                                                <span className="badge badge-ghost">No Guardrails Enabled</span>
-                                            )}
-                                            {formData.guards.accessControl && <span className="badge badge-primary">Access Control</span>}
-                                            {formData.guards.rateLimit && <span className="badge badge-secondary">Rate Limiting</span>}
-                                            {formData.guards.contentFilter && <span className="badge badge-accent">Content Filter</span>}
-                                        </div>
-                                    )}
+                                    {personas.filter(p => p.id !== 'default').map(p => (
+                                        <label key={p.id} className={`label cursor-pointer border rounded-lg p-3 hover:bg-base-200 transition-colors ${formData.persona === p.id ? 'border-primary bg-primary/5' : 'border-base-300'}`}>
+                                            <span className="label-text flex flex-col">
+                                                <span className="font-bold">{p.name}</span>
+                                                <span className="text-xs opacity-70">{p.description || 'Custom persona'}</span>
+                                            </span>
+                                            <input
+                                                type="radio"
+                                                name="persona"
+                                                className="radio radio-primary"
+                                                checked={formData.persona === p.id}
+                                                onChange={() => setFormData({ ...formData, persona: p.id })}
+                                            />
+                                        </label>
+                                    ))}
                                 </div>
 
                                 {hasChanges && (
@@ -575,27 +435,146 @@ export const CreateBotWizard: React.FC<CreateBotWizardProps> = (props) => {
                                 )}
                             </div>
                         </div>
-                    </div>
-                )}
-            </div>
+                    )}
 
-            {/* Footer Actions */}
-            <div className="modal-action mt-6 flex justify-between">
-                <button className="btn btn-ghost" onClick={step === 1 ? handleCancel : handleBack} disabled={loading} aria-busy={loading}>
-                    {step === 1 ? 'Cancel' : <><ArrowLeft className="w-4 h-4" /> Back</>}
-                </button>
+                    {step === 3 && (
+                        <div className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-300">
+                            <p className="text-sm opacity-70 mb-4">Configure safety and operational guardrails for your bot.</p>
 
-                {step < 4 ? (
-                    <button className="btn btn-primary" onClick={handleNext} disabled={!isStepValid()}>
-                        Next <ArrowRight className="w-4 h-4" />
+                            <div className="form-control w-full mb-6">
+                                <label className="label"><span className="label-text font-bold">Guard Profile</span></label>
+                                <select
+                                    className="select select-bordered w-full"
+                                    value={formData.mcpGuardProfile}
+                                    onChange={e => setFormData({ ...formData, mcpGuardProfile: e.target.value })}
+                                >
+                                    <option value="">No Profile (Use Manual Config)</option>
+                                    {guardProfiles.map(p => (
+                                        <option key={p.id} value={p.id}>{p.name}</option>
+                                    ))}
+                                </select>
+                                <label className="label">
+                                    <span className="label-text-alt">Using a profile overrides manual settings below.</span>
+                                </label>
+                            </div>
+
+                            <div className="divider">Manual Overrides</div>
+
+                            <div className="form-control">
+                                <label className="label cursor-pointer justify-start gap-4">
+                                    <input
+                                        type="checkbox"
+                                        className="toggle toggle-primary"
+                                        checked={formData.guards.accessControl}
+                                        onChange={e => setFormData({ ...formData, guards: { ...formData.guards, accessControl: e.target.checked } })}
+                                        disabled={!!formData.mcpGuardProfile}
+                                    />
+                                    <div className="flex flex-col">
+                                        <span className="label-text font-bold">Access Control</span>
+                                        <span className="label-text-alt">Limit interaction to specific users or roles.</span>
+                                    </div>
+                                </label>
+                            </div>
+
+                            <div className="form-control">
+                                <label className="label cursor-pointer justify-start gap-4">
+                                    <input
+                                        type="checkbox"
+                                        className="toggle toggle-primary"
+                                        checked={formData.guards.rateLimit}
+                                        onChange={e => setFormData({ ...formData, guards: { ...formData.guards, rateLimit: e.target.checked } })}
+                                        disabled={!!formData.mcpGuardProfile}
+                                    />
+                                    <div className="flex flex-col">
+                                        <span className="label-text font-bold">Rate Limiting</span>
+                                        <span className="label-text-alt">Prevent spam by limiting message frequency.</span>
+                                    </div>
+                                </label>
+                            </div>
+
+                            <div className="form-control">
+                                <label className="label cursor-pointer justify-start gap-4">
+                                    <input
+                                        type="checkbox"
+                                        className="toggle toggle-primary"
+                                        checked={formData.guards.contentFilter}
+                                        onChange={e => setFormData({ ...formData, guards: { ...formData.guards, contentFilter: e.target.checked } })}
+                                        disabled={!!formData.mcpGuardProfile}
+                                    />
+                                    <div className="flex flex-col">
+                                        <span className="label-text font-bold">Content Filtering</span>
+                                        <span className="label-text-alt">Block inappropriate or harmful content.</span>
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+                    )}
+
+                    {step === 4 && (
+                        <div className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-300">
+                            <div className="alert bg-base-200 border-none">
+                                <div className="flex flex-col w-full gap-2">
+                                    <h3 className="font-bold text-lg">Review Configuration</h3>
+                                    <div className="divider my-0"></div>
+                                    <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
+                                        <span className="opacity-70">Bot Name:</span>
+                                        <span className="font-semibold">{formData.name}</span>
+
+                                        <span className="opacity-70">Description:</span>
+                                        <span className="font-semibold">{formData.description || 'None'}</span>
+
+                                        <span className="opacity-70">Platform:</span>
+                                        <span className="font-semibold capitalize">{formData.messageProvider}</span>
+
+                                        <span className="opacity-70">LLM Provider:</span>
+                                        <span className="font-semibold">{getLlmProviderName()}</span>
+
+                                        <span className="opacity-70">Persona:</span>
+                                        <span className="font-semibold">{getPersonaName()}</span>
+                                    </div>
+
+                                    <div className="divider my-0"></div>
+                                    <div className="flex flex-col gap-1">
+                                        <span className="opacity-70 text-sm">Guardrails:</span>
+                                        {formData.mcpGuardProfile ? (
+                                            <div className="flex flex-col">
+                                                <span className="font-semibold">Profile: {getGuardProfileName()}</span>
+                                                <span className="text-xs opacity-70">Manual settings overridden.</span>
+                                            </div>
+                                        ) : (
+                                            <div className="flex flex-wrap gap-2">
+                                                {!formData.guards.accessControl && !formData.guards.rateLimit && !formData.guards.contentFilter && (
+                                                    <span className="badge badge-ghost">No Guardrails Enabled</span>
+                                                )}
+                                                {formData.guards.accessControl && <span className="badge badge-primary">Access Control</span>}
+                                                {formData.guards.rateLimit && <span className="badge badge-secondary">Rate Limiting</span>}
+                                                {formData.guards.contentFilter && <span className="badge badge-accent">Content Filter</span>}
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                </div>
+
+                {/* Footer Actions */}
+                <div className="modal-action mt-6 flex justify-between">
+                    <button className="btn btn-ghost" onClick={step === 1 ? handleCancel : handleBack} disabled={loading} aria-busy={loading}>
+                        {step === 1 ? 'Cancel' : <><ArrowLeft className="w-4 h-4" /> Back</>}
                     </button>
-                ) : (
-                    <button className="btn btn-success btn-wide" onClick={() => hasChanges ? setShowDiffConfirm(true) : handleSubmit()} disabled={loading} aria-busy={loading}>
-                        {loading ? <span className="loading loading-spinner" aria-hidden="true" /> : <><Check className="w-4 h-4" /> Finish & Create</>}
-                    </button>
-                )}
+
+                    {step < 4 ? (
+                        <button className="btn btn-primary" onClick={handleNext} disabled={!isStepValid()}>
+                            Next <ArrowRight className="w-4 h-4" />
+                        </button>
+                    ) : (
+                        <button className="btn btn-success btn-wide" onClick={() => hasChanges ? setShowDiffConfirm(true) : handleSubmit()} disabled={loading} aria-busy={loading}>
+                            {loading ? <span className="loading loading-spinner" aria-hidden="true" /> : <><Check className="w-4 h-4" /> Finish & Create</>}
+                        </button>
+                    )}
+                </div>
             </div>
-        </div>
 
         <ConfigDiffConfirmDialog
             isOpen={showDiffConfirm}

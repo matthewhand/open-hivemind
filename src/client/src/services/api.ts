@@ -424,6 +424,25 @@ class ApiService {
     });
   }
 
+  public async getBlob(endpoint: string, options?: RequestInit): Promise<Blob> {
+    const url = buildUrl(endpoint);
+    const authHeaders = this.getAuthHeaders();
+
+    const response = await fetch(url, {
+      ...options,
+      headers: {
+        ...authHeaders,
+        ...options?.headers,
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`Blob request failed (${response.status}): ${response.statusText}`);
+    }
+
+    return response.blob();
+  }
+
   private getAuthHeaders(): Record<string, string> {
     const token = localStorage.getItem('auth_tokens');
     const headers: Record<string, string> = {};

@@ -1,12 +1,12 @@
 import React from 'react';
 
 interface PageHeaderProps {
-    title: string;
-    description?: string;
-    icon?: React.ReactNode;
-    actions?: React.ReactNode;
-    gradient?: 'primary' | 'secondary' | 'accent' | 'success' | 'warning' | 'error';
-    className?: string;
+  title: string;
+  description?: string;
+  icon?: React.ReactNode | React.ElementType;
+  actions?: React.ReactNode;
+  gradient?: 'primary' | 'secondary' | 'accent' | 'success' | 'warning' | 'error';
+  className?: string;
 }
 
 const gradientMap = {

@@ -5,6 +5,7 @@ import Toggle from '../DaisyUI/Toggle';
 import Button from '../DaisyUI/Button';
 import { SkeletonList } from '../DaisyUI/Skeleton';
 import { MessageSquare, Bot, Users, Zap, Info } from 'lucide-react';
+import { apiService } from '../../services/api';
 
 interface MessagingConfig {
   onlyWhenSpokenTo: boolean;
@@ -38,17 +39,9 @@ const SettingsMessaging: React.FC = () => {
   const fetchSettings = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await fetch('/api/config/global');
-      if (!response.ok) {
-        setAlert({
-          type: 'warning',
-          message: 'Messaging config API not available. Settings shown are defaults. Configure via environment variables.',
-        });
-        return;
-      }
-      const raw = await response.json();
+      const data: any = await apiService.getGlobalConfig();
       // Global config wraps message settings under message.values
-      const data = raw?.message?.values ?? raw;
+      // const data = raw?.message?.values ?? raw;
 
       setSettings({
         onlyWhenSpokenTo: data.MESSAGE_ONLY_WHEN_SPOKEN_TO ?? true,
@@ -82,25 +75,19 @@ const SettingsMessaging: React.FC = () => {
   const handleSave = async () => {
     setIsSaving(true);
     try {
-      const response = await fetch('/api/config/global', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          message: {
-            MESSAGE_ONLY_WHEN_SPOKEN_TO: settings.onlyWhenSpokenTo,
-            MESSAGE_ALLOW_BOT_TO_BOT_UNADDRESSED: settings.allowBotToBot,
-            MESSAGE_UNSOLICITED_ADDRESSED: settings.unsolicitedAddressed,
-            MESSAGE_UNSOLICITED_UNADDRESSED: settings.unsolicitedUnaddressed,
-            MESSAGE_UNSOLICITED_BASE_CHANCE: settings.baseChance / 100,
-            MESSAGE_ONLY_WHEN_SPOKEN_TO_GRACE_WINDOW_MS: settings.graceWindowMs,
-            MESSAGE_ADD_USER_HINT: settings.addUserHint,
-            MESSAGE_SEMANTIC_RELEVANCE_ENABLED: settings.semanticRelevanceEnabled,
-            MESSAGE_SEMANTIC_RELEVANCE_BONUS: settings.semanticRelevanceBonus,
-          },
-        }),
+      await apiService.updateGlobalConfig({
+        message: {
+          MESSAGE_ONLY_WHEN_SPOKEN_TO: settings.onlyWhenSpokenTo,
+          MESSAGE_ALLOW_BOT_TO_BOT_UNADDRESSED: settings.allowBotToBot,
+          MESSAGE_UNSOLICITED_ADDRESSED: settings.unsolicitedAddressed,
+          MESSAGE_UNSOLICITED_UNADDRESSED: settings.unsolicitedUnaddressed,
+          MESSAGE_UNSOLICITED_BASE_CHANCE: settings.baseChance / 100,
+          MESSAGE_ONLY_WHEN_SPOKEN_TO_GRACE_WINDOW_MS: settings.graceWindowMs,
+          MESSAGE_ADD_USER_HINT: settings.addUserHint,
+          MESSAGE_SEMANTIC_RELEVANCE_ENABLED: settings.semanticRelevanceEnabled,
+          MESSAGE_SEMANTIC_RELEVANCE_BONUS: settings.semanticRelevanceBonus,
+        },
       });
-
-      if (!response.ok) { throw new Error('Failed to save settings'); }
       setAlert({ type: 'success', message: 'Messaging settings saved! Restart may be required.' });
       setTimeout(() => setAlert(null), 5000);
     } catch {

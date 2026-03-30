@@ -22,6 +22,7 @@ import ToolResultModal from '../components/ToolResultModal';
 import ToolResultHistory from '../components/ToolResultHistory';
 import useUrlParams from '../hooks/useUrlParams';
 import { useLocalStorage } from '../hooks/useLocalStorage';
+import { apiService } from '../services/api';
 import Debug from 'debug';
 const debug = Debug('app:client:pages:MCPToolsPage');
 
@@ -111,17 +112,11 @@ const MCPToolsPage: React.FC = () => {
     const fetchTools = async () => {
       try {
         // Fetch servers and tools
-        const res = await fetch('/api/mcp/servers');
-        if (!res.ok) {
-          throw new Error('Failed to load tools from server');
-        }
-
-        const json = await res.json();
-        const servers = json.servers || [];
+        const json: any = await apiService.get('/api/mcp/servers');
+        const servers = json.servers || json.data?.servers || [];
 
         // Fetch tool preferences
-        const prefsRes = await fetch('/api/mcp/tools/preferences');
-        const prefsJson = prefsRes.ok ? await prefsRes.json() : { success: true, data: {} };
+        const prefsJson: any = await apiService.get('/api/mcp/tools/preferences').catch(() => ({ success: true, data: {} }));
         const preferences = prefsJson.data || {};
 
         // Flatten structure: Server[] -> Tool[]
@@ -344,64 +339,25 @@ const MCPToolsPage: React.FC = () => {
     const executionId = crypto.randomUUID();
 
     try {
-      const res = await fetch(`/api/mcp/servers/${selectedTool.serverName}/call-tool`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          toolName: selectedTool.name,
-          arguments: args,
-        }),
+      const json: any = await apiService.post(`/api/mcp/servers/${selectedTool.serverName}/call-tool`, {
+        toolName: selectedTool.name,
+        arguments: args,
       });
 
       const duration = Date.now() - startTime;
 
-      if (!res.ok) {
-        const err = await res.json();
-        const errorMessage = err.error || 'Failed to execute tool';
-
-        // Log failed execution
-        await fetch('/api/mcp/tools/history', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            id: executionId,
-            serverName: selectedTool.serverName,
-            toolName: selectedTool.name,
-            arguments: args,
-            result: null,
-            error: errorMessage,
-            status: 'error',
-            executedAt: new Date().toISOString(),
-            duration,
-          }),
-        }).catch(logError => debug('Failed to log error execution:', logError));
-
-        throw new Error(errorMessage);
-      }
-
-      const json = await res.json();
       debug('Tool execution result:', json);
 
       // Log successful execution
-      await fetch('/api/mcp/tools/history', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          id: executionId,
-          serverName: selectedTool.serverName,
-          toolName: selectedTool.name,
-          arguments: args,
-          result: json.result,
-          status: 'success',
-          executedAt: new Date().toISOString(),
-          duration,
-        }),
+      await apiService.post('/api/mcp/tools/history', {
+        id: executionId,
+        serverName: selectedTool.serverName,
+        toolName: selectedTool.name,
+        arguments: args,
+        result: json.result,
+        status: 'success',
+        executedAt: new Date().toISOString(),
+        duration,
       }).catch(logError => debug('Failed to log execution:', logError));
 
       // Validate output against schema if available
@@ -453,6 +409,7 @@ const MCPToolsPage: React.FC = () => {
           ...filtered
         ].slice(0, 10); // Keep last 10 for better history
       });
+
 
       setTools(prev => prev.map(t =>
         t.id === selectedTool.id
@@ -1030,12 +987,12 @@ const MCPToolsPage: React.FC = () => {
             )}
 
             {mode === 'form' ? (
-               <div className="bg-base-200 p-4 rounded-lg">
-                  <div className="flex justify-between items-center mb-4">
-                    <span className="font-bold text-sm uppercase opacity-50">Arguments Form</span>
-                  </div>
-                  {renderFormFields()}
-               </div>
+              <div className="bg-base-200 p-4 rounded-lg">
+                <div className="flex justify-between items-center mb-4">
+                  <span className="font-bold text-sm uppercase opacity-50">Arguments Form</span>
+                </div>
+                {renderFormFields()}
+              </div>
             ) : (
               <div className="form-control">
                 <label className="label">
@@ -1049,7 +1006,7 @@ const MCPToolsPage: React.FC = () => {
                     if (jsonError) setJsonError(null);
                     try {
                       setFormArgs(JSON.parse(e.target.value));
-                    } catch {}
+                    } catch { }
                   }}
                   placeholder="{}"
                   disabled={isRunning}

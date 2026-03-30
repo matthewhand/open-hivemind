@@ -1017,7 +1017,7 @@ const PersonasPage: React.FC = () => {
                           Current:{' '}
                           {bot.persona
                             ? personas.find((p) => p.id === bot.persona || p.name === bot.persona)
-                                ?.name || bot.persona
+                              ?.name || bot.persona
                             : 'default'}
                         </span>
                       </div>

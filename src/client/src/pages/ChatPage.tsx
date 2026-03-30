@@ -3,12 +3,14 @@ import { apiService } from '../services/api';
 import { useApiQuery } from '../hooks/useApiQuery';
 import ChatInterface, { ChatMessage } from '../components/DaisyUI/Chat';
 import { BotAvatar } from '../components/BotAvatar';
-import { RefreshCw, MessageSquare, Cpu, Check, ChevronDown, Menu as MenuIcon, X } from 'lucide-react';
+import { RefreshCw, MessageSquare, Cpu, Check, ChevronDown, Menu as MenuIcon, X, XCircle } from 'lucide-react';
 import Button from '../components/DaisyUI/Button';
 import EmptyState from '../components/DaisyUI/EmptyState';
 import { SkeletonList, SkeletonMessageList } from '../components/DaisyUI/Skeleton';
 import { useSuccessToast, useErrorToast } from '../components/DaisyUI/ToastNotification';
 import { useMediaQuery } from '../hooks/useBreakpoint';
+import { Alert } from '../components/DaisyUI/Alert';
+import Badge from '../components/DaisyUI/Badge';
 
 // Define Bot type based on API response
 interface BotData {
@@ -50,11 +52,8 @@ const ChatPage: React.FC = () => {
   // Fetch LLM providers
   const fetchLlmProviders = useCallback(async () => {
     try {
-      const response = await fetch('/api/admin/llm-profiles');
-      if (response.ok) {
-        const data = await response.json();
-        setLlmProviders(data.data || []);
-      }
+      const data = await apiService.get('/api/admin/llm-profiles');
+      setLlmProviders((data as any).data || []);
     } catch (err) {
       showError('Failed to fetch LLM providers');
     }
@@ -64,15 +63,7 @@ const ChatPage: React.FC = () => {
   const handleSwapProvider = async (botId: string, newProviderKey: string) => {
     setSwappingProvider(botId);
     try {
-      const response = await fetch(`/api/admin/bots/${botId}/llm-provider`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ llmProvider: newProviderKey }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to swap provider');
-      }
+      await apiService.put(`/api/admin/bots/${botId}/llm-provider`, { llmProvider: newProviderKey });
 
       // Update local state
       setBots(prev => prev.map(bot =>

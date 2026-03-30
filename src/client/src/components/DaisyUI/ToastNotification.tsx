@@ -36,12 +36,12 @@ export const useToast = () => {
 interface ToastProviderProps {
   children: React.ReactNode;
   position?:
-    | 'top-right'
-    | 'top-left'
-    | 'bottom-right'
-    | 'bottom-left'
-    | 'top-center'
-    | 'bottom-center';
+  | 'top-right'
+  | 'top-left'
+  | 'bottom-right'
+  | 'bottom-left'
+  | 'top-center'
+  | 'bottom-center';
   maxToasts?: number;
 }
 
@@ -54,6 +54,17 @@ export const ToastProvider: React.FC<ToastProviderProps> = ({
 
   const addToast = useCallback(
     (toastData: Omit<Toast, 'id'>) => {
+      // Deduplication logic: Don't add if identical toast was added recently (within 3 seconds)
+      const isDuplicate = toasts.some(t =>
+        t.title === toastData.title &&
+        t.message === toastData.message &&
+        t.type === toastData.type
+      );
+
+      if (isDuplicate) {
+        return 'duplicate';
+      }
+
       const id = `toast-${Date.now()}-${uuidv4()}`;
       const toast: Toast = {
         id,
@@ -124,12 +135,12 @@ interface ToastItemProps {
   toast: Toast;
   onRemove: (id: string) => void;
   position:
-    | 'top-right'
-    | 'top-left'
-    | 'bottom-right'
-    | 'bottom-left'
-    | 'top-center'
-    | 'bottom-center';
+  | 'top-right'
+  | 'top-left'
+  | 'bottom-right'
+  | 'bottom-left'
+  | 'top-center'
+  | 'bottom-center';
 }
 
 const ToastItem: React.FC<ToastItemProps> = ({ toast, onRemove, position }) => {
@@ -209,12 +220,11 @@ const ToastItem: React.FC<ToastItemProps> = ({ toast, onRemove, position }) => {
       aria-live={getAriaLive()}
       className={`
         alert ${getAlertClass()} shadow-lg max-w-md transform transition-all duration-300 ease-in-out
-        ${
-          isVisible && !isRemoving
-            ? 'translate-x-0 opacity-100 scale-100'
-            : position.includes('right')
-              ? 'translate-x-full opacity-0 scale-95'
-              : '-translate-x-full opacity-0 scale-95'
+        ${isVisible && !isRemoving
+          ? 'translate-x-0 opacity-100 scale-100'
+          : position.includes('right')
+            ? 'translate-x-full opacity-0 scale-95'
+            : '-translate-x-full opacity-0 scale-95'
         }
       `}
     >
@@ -230,13 +240,12 @@ const ToastItem: React.FC<ToastItemProps> = ({ toast, onRemove, position }) => {
               {toast.actions.map((action, index) => (
                 <button
                   key={index}
-                  className={`btn btn-xs ${
-                    action.style === 'primary'
+                  className={`btn btn-xs ${action.style === 'primary'
                       ? 'btn-primary'
                       : action.style === 'secondary'
                         ? 'btn-secondary'
                         : 'btn-ghost'
-                  }`}
+                    }`}
                   onClick={() => {
                     action.action();
                     handleRemove();
@@ -350,15 +359,14 @@ export const NotificationCenter: React.FC = () => {
                 toasts.map((toast) => (
                   <div
                     key={toast.id}
-                    className={`alert ${
-                      toast.type === 'success'
+                    className={`alert ${toast.type === 'success'
                         ? 'alert-success'
                         : toast.type === 'error'
                           ? 'alert-error'
                           : toast.type === 'warning'
                             ? 'alert-warning'
                             : 'alert-info'
-                    }
+                      }
                                 alert-sm`}
                   >
                     <div className="text-xs">

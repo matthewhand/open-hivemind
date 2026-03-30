@@ -141,12 +141,11 @@ app.use((req: Request, res: Response, next: NextFunction) => {
 });
 
 app.use((req: Request, res: Response, next: NextFunction) => {
-  // Suppress noisy health checks by default, but allow override via SUPPRESS_HEALTH_LOGS
-  const suppressHealthLogs = process.env.SUPPRESS_HEALTH_LOGS !== 'false';
-  if (req.path === '/health' || req.path === '/api/health') {
-    if (!suppressHealthLogs) {
-      httpLogger.debug('Incoming request', { method: req.method, path: req.path });
-    }
+  // Suppress noisy polling/health endpoints by default
+  const suppressNoisyLogs = process.env.SUPPRESS_HEALTH_LOGS !== 'false';
+  const noisyPaths = new Set(['/health', '/api/health', '/api/csrf-token']);
+  if (noisyPaths.has(req.path) && suppressNoisyLogs) {
+    // skip logging
   } else {
     httpLogger.debug('Incoming request', { method: req.method, path: req.path });
   }
@@ -156,7 +155,7 @@ app.use((req: Request, res: Response, next: NextFunction) => {
   res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader(
     'Content-Security-Policy',
-    "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: https:; connect-src 'self' ws: wss:; font-src 'self' data: https://fonts.gstatic.com; object-src 'none'; frame-ancestors 'none';"
+    "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; worker-src 'self' blob:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: https:; connect-src 'self' ws: wss:; font-src 'self' data: https://fonts.gstatic.com; object-src 'none'; frame-ancestors 'none';"
   );
 
   next();
@@ -231,10 +230,16 @@ if (process.env.NODE_ENV !== 'development') {
   app.get('/login', serveDevHtml);
   app.get('/dashboard', serveDevHtml);
   app.get('/activity', serveDevHtml);
+  app.get('/analytics', serveDevHtml);
+  app.get('/monitoring', serveDevHtml);
+  app.get('/sitemap', serveDevHtml);
   app.get('/uber/*', serveDevHtml);
   app.get('/admin/*', serveDevHtml);
   app.get('/webui/*', serveDevHtml);
+  app.get('/settings/*', serveDevHtml);
+  app.get('/providers/*', serveDevHtml);
 }
+
 
 // ─────────────────────────────────────────────────────────────────────────────
 // IP Filtering Security (when auth is disabled)
@@ -443,6 +448,9 @@ async function main() {
   // Reload global configs to include provider schemas
   await reloadGlobalConfigs();
 
+  // Initialize DI Container
+  registerServices();
+
   // Run comprehensive startup diagnostics
   await startupDiagnostics.logStartupDiagnostics();
 
@@ -521,6 +529,9 @@ async function main() {
         filteredMessengers.map(async (service) => {
           await startBot(service);
           appLogger.info('✅ Bot started', { provider: service.providerName });
+          // Emit service-ready event to StartupGreetingService
+          const startupGreetingService = container.resolve(StartupGreetingService);
+          startupGreetingService.emit('service-ready', service);
         })
       );
       const failures = startResults.filter((r) => r.status === 'rejected');
@@ -535,6 +546,9 @@ async function main() {
         messengerServices.map(async (service) => {
           await startBot(service);
           appLogger.info('✅ Bot started', { provider: service.providerName });
+          // Emit service-ready event to StartupGreetingService
+          const startupGreetingService = container.resolve(StartupGreetingService);
+          startupGreetingService.emit('service-ready', service);
         })
       );
       const failures = startResults.filter((r) => r.status === 'rejected');

@@ -7,6 +7,7 @@ import Toggle from '../DaisyUI/Toggle';
 import Button from '../DaisyUI/Button';
 import { Settings as SettingsIcon, ShieldCheck, Activity } from 'lucide-react';
 import Debug from 'debug';
+import { apiService } from '../../services/api';
 const debug = Debug('app:client:components:Settings:SettingsGeneral');
 
 interface GeneralConfig {
@@ -77,9 +78,7 @@ const SettingsGeneral: React.FC = () => {
     try {
       setLoading(true);
       setFetchError(null);
-      const response = await fetch('/api/config/global');
-      if (!response.ok) { throw new Error('Failed to fetch settings'); }
-      const data = await response.json();
+      const data: any = await apiService.getGlobalConfig();
 
       // Extract relevant settings from user-saved config first, then fall back to defaults
       const userSettings = data._userSettings?.values || {};
@@ -118,27 +117,21 @@ const SettingsGeneral: React.FC = () => {
   const handleSave = async () => {
     setIsSaving(true);
     try {
-      const response = await fetch('/api/config/global', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          'app.name': settings.instanceName,
-          'app.description': settings.description,
-          'app.timezone': settings.timezone,
-          'app.language': settings.language,
-          'webui.theme': settings.theme,
-          'webui.notifications': settings.enableNotifications,
-          'logging.level': settings.logLevel,
-          'logging.enabled': settings.enableLogging,
-          'limits.maxBots': settings.maxConcurrentBots,
-          'limits.timeout': settings.defaultResponseTimeout,
-          'health.enabled': settings.enableHealthChecks,
-          'health.interval': settings.healthCheckInterval,
-          'webui.advancedMode': settings.advancedMode,
-        }),
+      await apiService.updateGlobalConfig({
+        'app.name': settings.instanceName,
+        'app.description': settings.description,
+        'app.timezone': settings.timezone,
+        'app.language': settings.language,
+        'webui.theme': settings.theme,
+        'webui.notifications': settings.enableNotifications,
+        'logging.level': settings.logLevel,
+        'logging.enabled': settings.enableLogging,
+        'limits.maxBots': settings.maxConcurrentBots,
+        'limits.timeout': settings.defaultResponseTimeout,
+        'health.enabled': settings.enableHealthChecks,
+        'health.interval': settings.healthCheckInterval,
+        'webui.advancedMode': settings.advancedMode,
       });
-
-      if (!response.ok) { throw new Error('Failed to save settings'); }
       setAlert({ type: 'success', message: 'Settings saved successfully!' });
       setTimeout(() => setAlert(null), 3000);
     } catch (error) {
@@ -187,7 +180,7 @@ const SettingsGeneral: React.FC = () => {
           <p className="font-semibold text-lg text-center">{fetchError}</p>
         </div>
         <Button variant="primary" onClick={fetchSettings} className="gap-2">
-           <Activity className="w-4 h-4" /> Retry
+          <Activity className="w-4 h-4" /> Retry
         </Button>
       </div>
     );

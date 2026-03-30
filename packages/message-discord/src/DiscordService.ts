@@ -158,10 +158,8 @@ export class DiscordService extends EventEmitter implements IMessengerService {
 
     logger.debug('Emitting service-ready for DiscordService');
 
-    // Emit service-ready event via injected startup greeting service
-    if (this.deps.startupGreetingService) {
-      this.deps.startupGreetingService.emit('service-ready', this);
-    }
+
+    // Service readiness is now handled centrally by the main application
   }
 
   public setMessageHandler(
@@ -195,7 +193,7 @@ export class DiscordService extends EventEmitter implements IMessengerService {
             ...(newBot.config.discord || {}),
             clientId: newBot.botUserId,
           };
-        } catch {}
+        } catch { }
         resolve();
       });
       newBot.client.login(newBot.config.token).catch(reject);
@@ -283,7 +281,7 @@ export class DiscordService extends EventEmitter implements IMessengerService {
           botName: 'DiscordService',
           metadata: { channelId, errorType: 'NetworkError' },
         });
-      } catch {}
+      } catch { }
 
       return [];
     }
@@ -418,13 +416,13 @@ export class DiscordService extends EventEmitter implements IMessengerService {
 
       const byId = cfgId
         ? this.botManager
-            .getAllBots()
-            .find(
-              (b) =>
-                b.botUserId === cfgId ||
-                b.config?.BOT_ID === cfgId ||
-                b.config?.discord?.clientId === cfgId
-            )
+          .getAllBots()
+          .find(
+            (b) =>
+              b.botUserId === cfgId ||
+              b.config?.BOT_ID === cfgId ||
+              b.config?.discord?.clientId === cfgId
+          )
         : undefined;
 
       const byInstanceName = agentInstanceName ? this.getBotByName(agentInstanceName) : undefined;
@@ -597,7 +595,7 @@ export class DiscordService extends EventEmitter implements IMessengerService {
 
         getDefaultChannel: () => this.getDefaultChannel(),
 
-        setMessageHandler: (handler) => {},
+        setMessageHandler: (handler) => { },
 
         supportsChannelPrioritization: this.supportsChannelPrioritization,
         scoreChannel: this.scoreChannel ? (cid, meta) => this.scoreChannel!(cid, meta) : undefined,

@@ -10,8 +10,6 @@ import {
   LLMProviderType,
   MESSAGE_PROVIDER_CONFIGS,
   LLM_PROVIDER_CONFIGS,
-  MESSAGE_PROVIDER_TYPES,
-  LLM_PROVIDER_TYPES,
 } from '../../types/bot';
 import Button from '../DaisyUI/Button';
 import { X as XIcon, RotateCcw } from 'lucide-react';
@@ -41,7 +39,7 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
   };
 
   const [selectedType, setSelectedType] = useState<MessageProviderType | LLMProviderType>(
-    modalState.providerType === 'message' ? 'discord' : 'openai',
+    modalState.providerType === 'message' ? MessageProviderType.DISCORD : LLMProviderType.OPENAI,
   );
   const [formData, setFormData] = useState<Record<string, any>>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -70,12 +68,12 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
       } else {
         // Add mode: start with empty form
         const defaultType = modalState.providerType === 'message'
-          ? 'discord'
-          : 'openai';
+          ? MessageProviderType.DISCORD
+          : LLMProviderType.OPENAI;
 
         const isCurrentTypeValid = modalState.providerType === 'message'
-          ? (MESSAGE_PROVIDER_TYPES as readonly string[]).includes(selectedType as string)
-          : (LLM_PROVIDER_TYPES as readonly string[]).includes(selectedType as string);
+          ? Object.values(MessageProviderType).includes(selectedType as MessageProviderType)
+          : Object.values(LLMProviderType).includes(selectedType as LLMProviderType);
 
         let newType = selectedType;
         if (!isCurrentTypeValid) {
@@ -133,7 +131,7 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
   useEffect(() => {
     if (
       modalState.providerType !== 'llm' ||
-      selectedType !== 'openai' ||
+      selectedType !== LLMProviderType.OPENAI ||
       (formData.modelType || 'chat') !== 'embedding' ||
       openAiEmbeddingModels.length === 0
     ) {
@@ -183,7 +181,7 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
 
     if (
       modalState.providerType !== 'llm' ||
-      selectedType !== 'openai' ||
+      selectedType !== LLMProviderType.OPENAI ||
       (formData.modelType || 'chat') !== 'embedding' ||
       openAiEmbeddingModels.length === 0
     ) {
@@ -469,15 +467,15 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
           )}
 
           {modalState.providerType === 'llm' &&
-            selectedType === 'openai' &&
+            selectedType === LLMProviderType.OPENAI &&
             (formData.modelType || 'chat') === 'embedding' &&
             openAiEmbeddingModels.length > 0 && (
-            <div className="alert alert-info mb-4 text-sm">
-              <span>
-                Select an embedding-capable OpenAI provider first, then choose one of the configured embedding models.
-              </span>
-            </div>
-          )}
+              <div className="alert alert-info mb-4 text-sm">
+                <span>
+                  Select an embedding-capable OpenAI provider first, then choose one of the configured embedding models.
+                </span>
+              </div>
+            )}
 
           {/* Provider-specific fields */}
           <div className="space-y-4 mb-6">
@@ -488,34 +486,16 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
                 initialConfig={formData}
                 onConfigChange={handleProviderConfigChange}
                 externalErrors={errors}
-                onTestConnection={async (config, signal) => {
+                onTestConnection={async (config) => {
                   // Enhanced test connection with provider-specific validation
                   try {
-                    // Add 10 second timeout
-                    const timeoutId = setTimeout(() => {
-                      if (signal && !signal.aborted) {
-                        const controller = signal as any;
-                        if (controller.abort) controller.abort();
-                      }
-                    }, 10000);
-
-                    const response = await fetch('/api/v1/admin/providers/test-connection', {
-                      method: 'POST',
-                      headers: { 'Content-Type': 'application/json' },
-                      body: JSON.stringify({
-                        providerType: selectedType,
-                        config,
-                      }),
-                      signal,
+                    await apiService.post('/api/v1/admin/providers/test-connection', {
+                      providerType: selectedType,
+                      config,
                     });
-
-                    clearTimeout(timeoutId);
-                    return response.ok;
-                  } catch (error) {
-                    // Check if it was aborted
-                    if (error instanceof Error && error.name === 'AbortError') {
-                      throw new Error('Connection test timed out or was cancelled');
-                    }
+                    return true;
+                  } catch (err) {
+                    console.error('Test connection failed:', err);
                     // Fallback: basic validation if endpoint not available
                     const hasRequiredFields = ['apiKey', 'endpoint', 'baseUrl'].some(
                       key => config[key] && config[key].toString().trim() !== ''

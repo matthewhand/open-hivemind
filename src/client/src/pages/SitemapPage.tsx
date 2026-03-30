@@ -11,6 +11,9 @@ import SearchFilterBar from '../components/SearchFilterBar';
 import EmptyState from '../components/DaisyUI/EmptyState';
 import { SkeletonList } from '../components/DaisyUI/Skeleton';
 import { SelectOption } from '../components/DaisyUI/Select';
+import { apiService } from '../services/api';
+import Badge from '../components/DaisyUI/Badge';
+import Button from '../components/DaisyUI/Button';
 
 interface SitemapUrl {
   url: string;
@@ -46,14 +49,8 @@ const SitemapPage: React.FC = () => {
 
     try {
       const queryParam = accessFilter !== 'all' ? `?access=${accessFilter}` : '';
-      const response = await fetch(`/sitemap.json${queryParam}`);
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch sitemap');
-      }
-
-      const data = await response.json();
-      setSitemapData(data);
+      const data = await apiService.get(`/sitemap.json${queryParam}`);
+      setSitemapData(data as any);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unknown error occurred');
     } finally {
@@ -67,17 +64,17 @@ const SitemapPage: React.FC = () => {
 
   const getAccessColor = (access: string) => {
     switch (access) {
-      case 'public': return 'badge-success';
-      case 'authenticated': return 'badge-warning';
-      case 'owner': return 'badge-error';
-      default: return 'badge-ghost';
+      case 'public': return 'success' as const;
+      case 'authenticated': return 'warning' as const;
+      case 'owner': return 'error' as const;
+      default: return 'neutral' as const;
     }
   };
 
   const getPriorityColor = (priority: number) => {
-    if (priority >= 0.8) { return 'badge-success'; }
-    if (priority >= 0.5) { return 'badge-warning'; }
-    return 'badge-ghost';
+    if (priority >= 0.8) { return 'success' as const; }
+    if (priority >= 0.5) { return 'warning' as const; }
+    return 'neutral' as const;
   };
 
   const handleDownloadXml = () => {
@@ -173,7 +170,7 @@ const SitemapPage: React.FC = () => {
         description="Complete navigation structure and page hierarchy"
         icon={MapIcon}
         actions={
-          <>
+          <div className="flex gap-2">
             <Button variant="ghost" onClick={handleDownloadXml} className="gap-2">
               <Download className="w-4 h-4" /> XML
             </Button>
@@ -182,7 +179,7 @@ const SitemapPage: React.FC = () => {
                 <RefreshCw className="w-4 h-4" />
               </Button>
             </div>
-          </>
+          </div>
         }
       />
 
@@ -232,18 +229,19 @@ const SitemapPage: React.FC = () => {
           variant={searchValue ? "noResults" : "noData"}
           onAction={searchValue ? () => setSearchValue('') : undefined}
           actionLabel={searchValue ? "Clear Search" : undefined}
+          icon={MapIcon}
         />
       ) : (
         Object.entries(groupedUrls).map(([category, urls]) => (
           <div key={category} className="mb-8">
             <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
               {category}
-              <div className="badge badge-neutral">{urls.length}</div>
+              <Badge variant="neutral">{urls.length}</Badge>
             </h2>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {urls.map((url) => (
-                <div key={url.url} className="card bg-base-100 shadow-xl h-full border border-base-200">
+              {urls.map((url, idx) => (
+                <div key={`${category}-${url.url}-${idx}`} className="card bg-base-100 shadow-xl h-full border border-base-200">
                   <div className="card-body p-4">
                     <div className="flex justify-between items-start mb-2">
                       <h3 className="font-mono text-sm break-all font-bold">
@@ -267,15 +265,15 @@ const SitemapPage: React.FC = () => {
                     </p>
 
                     <div className="flex flex-wrap gap-1 mb-2">
-                      <div className={`badge badge-sm ${getAccessColor(url.access)}`}>
+                      <Badge size="small" variant={getAccessColor(url.access)}>
                         {url.access}
-                      </div>
-                      <div className={`badge badge-sm badge-outline ${getPriorityColor(url.priority)}`}>
+                      </Badge>
+                      <Badge size="small" style="outline" variant={getPriorityColor(url.priority)}>
                         Priority: {url.priority}
-                      </div>
-                      <div className="badge badge-sm badge-outline">
+                      </Badge>
+                      <Badge size="small" style="outline">
                         {url.changefreq}
-                      </div>
+                      </Badge>
                     </div>
 
                     <div className="text-xs text-base-content/50 mt-auto">
@@ -329,3 +327,4 @@ const SitemapPage: React.FC = () => {
 };
 
 export default SitemapPage;
+

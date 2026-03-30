@@ -8,6 +8,7 @@ import Toggle from '../DaisyUI/Toggle';
 import { Shield, Plus, Trash2 } from 'lucide-react';
 import SecureConfigManager from '../SecureConfigManager';
 import Debug from 'debug';
+import { apiService } from '../../services/api';
 const debug = Debug('app:client:components:Settings:SettingsSecurity');
 
 const SettingsSecurity: React.FC = () => {
@@ -34,9 +35,7 @@ const SettingsSecurity: React.FC = () => {
   const fetchSettings = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await fetch('/api/config/global');
-      if (!response.ok) {throw new Error('Failed to fetch settings');}
-      const data = await response.json();
+      const data: any = await apiService.getGlobalConfig();
 
       const config = data.config || {};
       setSettings(prev => ({
@@ -82,18 +81,12 @@ const SettingsSecurity: React.FC = () => {
   const handleSave = async () => {
     setIsSaving(true);
     try {
-      const response = await fetch('/api/config/global', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          'auth.enabled': settings.enableAuthentication,
-          'rateLimit.enabled': settings.enableRateLimit,
-          'rateLimit.maxRequests': settings.rateLimitMax,
-          'rateLimit.windowMs': settings.rateLimitWindow * 1000,
-        }),
+      await apiService.updateGlobalConfig({
+        'auth.enabled': settings.enableAuthentication,
+        'rateLimit.enabled': settings.enableRateLimit,
+        'rateLimit.maxRequests': settings.rateLimitMax,
+        'rateLimit.windowMs': settings.rateLimitWindow * 1000,
       });
-
-      if (!response.ok) {throw new Error('Failed to save settings');}
       setAlert({ type: 'success', message: 'Security settings saved!' });
       setTimeout(() => setAlert(null), 3000);
     } catch (error) {
