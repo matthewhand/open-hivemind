@@ -37,7 +37,6 @@ test.describe('Integrations Page', () => {
     const tabs = await page.locator('[role="tab"], .tab').all();
     for (const tab of tabs.slice(0, 3)) {
       await tab.click().catch(() => {});
-      await page.waitForTimeout(500);
     }
     await page.screenshot({ path: 'test-results/integrations-03-switching.png', fullPage: true });
 

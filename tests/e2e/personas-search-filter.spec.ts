@@ -66,7 +66,6 @@ test.describe('Personas Search and Filter', () => {
     await searchInput.fill('Alpha');
 
     // Wait for filter to apply (React state update)
-    await page.waitForTimeout(500);
 
     const cards = page.locator('[data-testid="persona-card"]').filter({ hasText: 'Alpha Helper' });
     await expect(cards).toHaveCount(1);
@@ -84,7 +83,6 @@ test.describe('Personas Search and Filter', () => {
     await expect(categorySelect).toBeVisible();
 
     await categorySelect.selectOption('technical');
-    await page.waitForTimeout(500);
 
     const cards = page.locator('[data-testid="persona-card"]');
     // Should verify only 1 visible card
@@ -104,7 +102,6 @@ test.describe('Personas Search and Filter', () => {
 
     const searchInput = page.locator('input[placeholder="Search personas..."]');
     await searchInput.fill('Zeta NonExistent');
-    await page.waitForTimeout(500);
 
     await expect(page.locator('text=Try adjusting your search or filters')).toBeVisible();
 
@@ -112,7 +109,6 @@ test.describe('Personas Search and Filter', () => {
     await expect(clearButton).toBeVisible();
 
     await clearButton.click();
-    await page.waitForTimeout(500);
 
     const cards = page.locator('[data-testid="persona-card"]');
     // Using count is safer than strict equality if structure changes, but for mock data 3 is expected

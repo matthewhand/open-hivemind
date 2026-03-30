@@ -132,7 +132,6 @@ test.describe('Sitemap Page CRUD Lifecycle', () => {
     );
 
     await page.goto('/admin/sitemap');
-    await page.waitForTimeout(1000);
 
     // Verify URLs are displayed
     await expect(page.getByText('/admin/dashboard').first()).toBeVisible({ timeout: 5000 });
@@ -155,7 +154,6 @@ test.describe('Sitemap Page CRUD Lifecycle', () => {
       .first();
     if ((await searchInput.count()) > 0) {
       await searchInput.fill('documentation');
-      await page.waitForTimeout(300);
 
       // Documentation URLs should still be visible
       const docsUrl = page.getByText('/docs').first();
@@ -182,15 +180,12 @@ test.describe('Sitemap Page CRUD Lifecycle', () => {
     if ((await accessFilter.count()) > 0) {
       // Filter by Public
       await accessFilter.selectOption('public');
-      await page.waitForTimeout(300);
 
       // Filter by Owner
       await accessFilter.selectOption('owner');
-      await page.waitForTimeout(300);
 
       // Reset to All
       await accessFilter.selectOption('all');
-      await page.waitForTimeout(300);
     }
   });
 
@@ -210,7 +205,6 @@ test.describe('Sitemap Page CRUD Lifecycle', () => {
       .first();
     if ((await searchInput.count()) > 0) {
       await searchInput.fill('admin');
-      await page.waitForTimeout(300);
     }
 
     // Apply access filter
@@ -220,7 +214,6 @@ test.describe('Sitemap Page CRUD Lifecycle', () => {
       .first();
     if ((await accessFilter.count()) > 0) {
       await accessFilter.selectOption('owner');
-      await page.waitForTimeout(300);
     }
 
     // Page should still be functional with both filters
@@ -241,7 +234,6 @@ test.describe('Sitemap Page CRUD Lifecycle', () => {
     );
 
     await page.goto('/admin/sitemap');
-    await page.waitForTimeout(1000);
 
     // The page opens /sitemap.xml in a new window via window.open()
     const downloadBtn = page.locator('button:has-text("XML")').first();
@@ -251,7 +243,6 @@ test.describe('Sitemap Page CRUD Lifecycle', () => {
         page.waitForEvent('popup').catch(() => null),
         downloadBtn.click(),
       ]);
-      await page.waitForTimeout(300);
     }
   });
 
@@ -263,7 +254,6 @@ test.describe('Sitemap Page CRUD Lifecycle', () => {
     });
 
     await page.goto('/admin/sitemap');
-    await page.waitForTimeout(1000);
 
     const initialCount = fetchCount;
     const refreshBtn = page
@@ -273,7 +263,6 @@ test.describe('Sitemap Page CRUD Lifecycle', () => {
       .first();
     if ((await refreshBtn.count()) > 0) {
       await refreshBtn.click();
-      await page.waitForTimeout(500);
       expect(fetchCount).toBeGreaterThan(initialCount);
     }
   });
@@ -284,7 +273,6 @@ test.describe('Sitemap Page CRUD Lifecycle', () => {
     );
 
     await page.goto('/admin/sitemap');
-    await page.waitForTimeout(1000);
 
     // Look for total URL count
     const urlCount = page
@@ -312,7 +300,6 @@ test.describe('Sitemap Page CRUD Lifecycle', () => {
     );
 
     await page.goto('/admin/sitemap');
-    await page.waitForTimeout(1000);
 
     // Look for priority values displayed as badges or text
     const priorityBadge = page
@@ -335,7 +322,6 @@ test.describe('Sitemap Page CRUD Lifecycle', () => {
     );
 
     await page.goto('/admin/sitemap');
-    await page.waitForTimeout(1000);
 
     // Check for access level badges
     const publicBadge = page
@@ -376,7 +362,6 @@ test.describe('Sitemap Page CRUD Lifecycle', () => {
       .first();
     if ((await searchInput.count()) > 0) {
       await searchInput.fill('zzz-nonexistent-url-xyz');
-      await page.waitForTimeout(300);
 
       // Should show empty/no results state
       const emptyText = page

@@ -173,13 +173,11 @@ test.describe('Mobile CRUD Flows', () => {
     );
 
     await page.goto('/admin/bots');
-    await page.waitForTimeout(500);
 
     // Open the create bot modal
     const createBtn = page.getByRole('button', { name: /create bot/i }).last();
     if ((await createBtn.count()) > 0) {
       await createBtn.click();
-      await page.waitForTimeout(300);
 
       const modal = page.locator('.modal-box, [role="dialog"], dialog.modal[open]').first();
       await expect(modal).toBeVisible();
@@ -201,13 +199,11 @@ test.describe('Mobile CRUD Flows', () => {
       if ((await providerSelect.count()) > 0) {
         await providerSelect.selectOption('discord');
       }
-      await page.waitForTimeout(300);
 
       // Click Next if available
       const nextBtn = modal.locator('button').filter({ hasText: /Next/i });
       if ((await nextBtn.count()) > 0 && (await nextBtn.isEnabled())) {
         await nextBtn.click();
-        await page.waitForTimeout(300);
 
         // Step 2: LLM configuration (select if available)
         const llmSelect = modal.locator('select').first();
@@ -222,7 +218,6 @@ test.describe('Mobile CRUD Flows', () => {
         const nextBtn2 = modal.locator('button').filter({ hasText: /Next/i });
         if ((await nextBtn2.count()) > 0 && (await nextBtn2.isEnabled())) {
           await nextBtn2.click();
-          await page.waitForTimeout(300);
         }
 
         // Final step: click Create/Save
@@ -232,7 +227,6 @@ test.describe('Mobile CRUD Flows', () => {
           .first();
         if ((await saveBtn.count()) > 0 && (await saveBtn.isEnabled())) {
           await saveBtn.click();
-          await page.waitForTimeout(500);
         }
       }
     }
@@ -274,12 +268,10 @@ test.describe('Mobile CRUD Flows', () => {
     );
 
     await page.goto('/admin/personas');
-    await page.waitForTimeout(500);
 
     const createButton = page.locator('button:has-text("Create Persona")').first();
     if ((await createButton.count()) > 0) {
       await createButton.click();
-      await page.waitForTimeout(500);
 
       // Fill persona form in modal
       const nameInput = page
@@ -311,7 +303,6 @@ test.describe('Mobile CRUD Flows', () => {
         .first();
       if ((await saveButton.count()) > 0) {
         await saveButton.click();
-        await page.waitForTimeout(500);
       }
     }
   });
@@ -348,7 +339,6 @@ test.describe('Mobile CRUD Flows', () => {
     );
 
     await page.goto('/admin/bots');
-    await page.waitForTimeout(1000);
 
     await expect(page.getByText('Support Bot').first()).toBeVisible({ timeout: 5000 });
 
@@ -358,7 +348,6 @@ test.describe('Mobile CRUD Flows', () => {
       const configureBtn = card.locator('button:has-text("Configure")').first();
       if ((await configureBtn.count()) > 0) {
         await configureBtn.click();
-        await page.waitForTimeout(300);
 
         // Page should navigate to configure or open modal
         await expect(page.locator('body')).toBeVisible();
@@ -394,7 +383,6 @@ test.describe('Mobile CRUD Flows', () => {
     );
 
     await page.goto('/admin/bots');
-    await page.waitForTimeout(1000);
 
     await expect(page.getByText('Support Bot').first()).toBeVisible({ timeout: 5000 });
 
@@ -405,7 +393,6 @@ test.describe('Mobile CRUD Flows', () => {
       .first();
     if ((await deleteBtn.count()) > 0) {
       await deleteBtn.click();
-      await page.waitForTimeout(300);
 
       const modal = page.locator('dialog.modal[open], .modal-box').first();
       if ((await modal.count()) > 0) {
@@ -422,7 +409,6 @@ test.describe('Mobile CRUD Flows', () => {
         const confirmBtn = modal.locator('button:has-text("Delete"), button.btn-error').first();
         if ((await confirmBtn.count()) > 0) {
           await confirmBtn.click();
-          await page.waitForTimeout(500);
         }
       }
     }
@@ -459,7 +445,6 @@ test.describe('Mobile CRUD Flows', () => {
     );
 
     await page.goto('/admin/bots');
-    await page.waitForTimeout(500);
 
     const searchInput = page.getByPlaceholder(/search/i).first();
     if ((await searchInput.count()) > 0) {
@@ -472,7 +457,6 @@ test.describe('Mobile CRUD Flows', () => {
       }
 
       await searchInput.fill('Sales');
-      await page.waitForTimeout(500);
 
       // Sales Bot should still be visible, Support Bot may be hidden
       const salesBot = page.getByText('Sales Bot').first();
@@ -496,7 +480,6 @@ test.describe('Mobile CRUD Flows', () => {
     );
 
     await page.goto('/admin/bots');
-    await page.waitForTimeout(500);
 
     // Filter select (status, provider, etc.)
     const filterSelect = page.locator('select:visible').first();
@@ -510,7 +493,6 @@ test.describe('Mobile CRUD Flows', () => {
       const options = await filterSelect.locator('option').count();
       if (options > 1) {
         await filterSelect.selectOption({ index: 1 });
-        await page.waitForTimeout(300);
       }
     }
   });
@@ -541,7 +523,6 @@ test.describe('Mobile CRUD Flows', () => {
     );
 
     await page.goto('/admin/settings');
-    await page.waitForTimeout(500);
 
     // Tabs should be visible and scrollable/wrappable on mobile
     const tabs = page.locator('[role="tab"], .tab, [class*="tabs"] a, [class*="tabs"] button');
@@ -549,7 +530,6 @@ test.describe('Mobile CRUD Flows', () => {
     if (tabCount > 1) {
       // Click second tab
       await tabs.nth(1).click();
-      await page.waitForTimeout(300);
 
       // Page should still be functional
       await expect(page.locator('body')).toBeVisible();
@@ -612,7 +592,6 @@ test.describe('Mobile CRUD Flows', () => {
     );
 
     await page.goto('/admin/chat');
-    await page.waitForTimeout(500);
 
     const chatInput = page
       .locator(
@@ -627,7 +606,6 @@ test.describe('Mobile CRUD Flows', () => {
       }
 
       await chatInput.fill('Hello from mobile!');
-      await page.waitForTimeout(200);
 
       const sendBtn = page
         .locator('button:has-text("Send"), button[type="submit"], button[aria-label*="send" i]')
@@ -639,10 +617,8 @@ test.describe('Mobile CRUD Flows', () => {
           expect(Math.max(sendBox.width, sendBox.height)).toBeGreaterThanOrEqual(32);
         }
         await sendBtn.click();
-        await page.waitForTimeout(500);
       } else {
         await chatInput.press('Enter');
-        await page.waitForTimeout(500);
       }
 
       // Message should appear
@@ -670,14 +646,12 @@ test.describe('Mobile CRUD Flows', () => {
     );
 
     await page.goto('/admin/activity');
-    await page.waitForTimeout(500);
 
     // Search input should be visible
     const searchInput = page.getByPlaceholder(/search|filter/i).first();
     if ((await searchInput.count()) > 0) {
       await expect(searchInput).toBeVisible();
       await searchInput.fill('SupportBot');
-      await page.waitForTimeout(300);
     }
 
     // Filter dropdowns should be usable
@@ -729,7 +703,6 @@ test.describe('Mobile CRUD Flows', () => {
     );
 
     await page.goto('/admin/mcp');
-    await page.waitForTimeout(500);
 
     // Click add server button
     const addBtn = page
@@ -737,7 +710,6 @@ test.describe('Mobile CRUD Flows', () => {
       .first();
     if ((await addBtn.count()) > 0) {
       await addBtn.click();
-      await page.waitForTimeout(300);
 
       const modal = page.locator('.modal-box, [role="dialog"], dialog.modal[open]').first();
       if ((await modal.count()) > 0) {
@@ -770,7 +742,6 @@ test.describe('Mobile CRUD Flows', () => {
           .first();
         if ((await saveBtn.count()) > 0 && (await saveBtn.isEnabled())) {
           await saveBtn.click();
-          await page.waitForTimeout(500);
         }
       }
     }
@@ -808,7 +779,6 @@ test.describe('Mobile CRUD Flows', () => {
     await page.route('**/api/personas', (route) => route.fulfill({ status: 200, json: [] }));
 
     await page.goto('/admin/guards');
-    await page.waitForTimeout(500);
 
     await expect(page.getByText('Production Guard')).toBeVisible();
 
@@ -818,7 +788,6 @@ test.describe('Mobile CRUD Flows', () => {
       .first();
     if ((await createBtn.count()) > 0) {
       await createBtn.click();
-      await page.waitForTimeout(300);
 
       const modal = page.locator('.modal-box, [role="dialog"], dialog.modal[open]').first();
       if ((await modal.count()) > 0) {
@@ -856,7 +825,6 @@ test.describe('Mobile CRUD Flows', () => {
         const toggles = modal.locator('input[type="checkbox"], .toggle');
         if ((await toggles.count()) > 0) {
           await toggles.first().click();
-          await page.waitForTimeout(200);
         }
 
         // Save
@@ -865,7 +833,6 @@ test.describe('Mobile CRUD Flows', () => {
           .first();
         if ((await saveBtn.count()) > 0 && (await saveBtn.isEnabled())) {
           await saveBtn.click();
-          await page.waitForTimeout(500);
         }
       }
     }

@@ -206,7 +206,6 @@ test.describe('Analytics Dashboard Screenshots', () => {
     await expect(page.locator('.recharts-wrapper').first()).toBeVisible();
 
     // Wait a bit for animations/rendering
-    await page.waitForTimeout(1000);
 
     // Take screenshot
     await page.screenshot({ path: 'docs/screenshots/analytics-dashboard.png', fullPage: true });

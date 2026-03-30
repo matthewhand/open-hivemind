@@ -41,7 +41,6 @@ test.describe('System Settings', () => {
       const generalTab = page.locator('text=General').first();
       if ((await generalTab.count()) > 0) {
         await generalTab.click();
-        await page.waitForTimeout(1000);
       }
       await page.screenshot({ path: 'test-results/settings-03-general.png', fullPage: true });
 
@@ -55,7 +54,6 @@ test.describe('System Settings', () => {
       const generalTab = page.locator('text=General').first();
       if ((await generalTab.count()) > 0) {
         await generalTab.click();
-        await page.waitForTimeout(500);
       }
 
       const nameInput = page.locator('input').first();
@@ -77,7 +75,6 @@ test.describe('System Settings', () => {
       const securityTab = page.locator('text=Security').first();
       if ((await securityTab.count()) > 0) {
         await securityTab.click();
-        await page.waitForTimeout(1000);
       }
       await page.screenshot({ path: 'test-results/settings-10-security.png', fullPage: true });
 
@@ -93,7 +90,6 @@ test.describe('System Settings', () => {
       const saveButton = page.locator('button:has-text("Save")').first();
       if ((await saveButton.count()) > 0) {
         await saveButton.click();
-        await page.waitForTimeout(1500);
         const success = page.locator('[class*="success"], [class*="toast"], text=saved');
         await page.screenshot({ path: 'test-results/settings-14-saved.png', fullPage: true });
       }

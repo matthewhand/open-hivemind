@@ -74,7 +74,6 @@ test('capture rollback UI screenshots', async ({ page }) => {
 
   // 3. Open modal and mock rollback action
   await rollbackButton.click();
-  await page.waitForTimeout(500);
 
   const modal = page.locator('.modal-box');
   await expect(modal).toBeVisible();

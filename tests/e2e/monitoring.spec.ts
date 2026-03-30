@@ -177,7 +177,6 @@ test.describe('Monitoring page', () => {
     await navigateAndWaitReady(page, '/admin/monitoring');
 
     // Wait for metrics to load
-    await page.waitForTimeout(2000);
 
     // Check for metric cards or charts
     const metrics = page.locator('[class*="stat"], [class*="metric"], [class*="chart"]');

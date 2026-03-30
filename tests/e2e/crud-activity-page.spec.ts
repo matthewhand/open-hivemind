@@ -164,13 +164,11 @@ test.describe('Activity Page CRUD Lifecycle', () => {
     const timelineBtn = page.getByRole('button', { name: 'Timeline' });
     if ((await timelineBtn.count()) > 0) {
       await timelineBtn.click();
-      await page.waitForTimeout(500);
 
       // Toggle back to table
       const tableBtn = page.getByRole('button', { name: 'Table' });
       if ((await tableBtn.count()) > 0) {
         await tableBtn.click();
-        await page.waitForTimeout(500);
         await expect(page.getByRole('table').first()).toBeVisible();
       }
     }
@@ -187,7 +185,6 @@ test.describe('Activity Page CRUD Lifecycle', () => {
     const searchInput = page.getByPlaceholder('Filter activity...');
     if ((await searchInput.count()) > 0) {
       await searchInput.fill('SalesBot');
-      await page.waitForTimeout(300);
     }
   });
 
@@ -202,7 +199,6 @@ test.describe('Activity Page CRUD Lifecycle', () => {
     const botFilter = page.getByLabel('Filter by bot');
     if ((await botFilter.count()) > 0) {
       await botFilter.selectOption({ label: 'SupportBot' });
-      await page.waitForTimeout(300);
     }
   });
 
@@ -217,7 +213,6 @@ test.describe('Activity Page CRUD Lifecycle', () => {
     const providerFilter = page.getByLabel('Filter by provider');
     if ((await providerFilter.count()) > 0) {
       await providerFilter.selectOption({ index: 1 });
-      await page.waitForTimeout(300);
     }
   });
 
@@ -234,9 +229,7 @@ test.describe('Activity Page CRUD Lifecycle', () => {
     const endDate = page.getByPlaceholder('End Date');
     if ((await startDate.count()) > 0 && (await endDate.count()) > 0) {
       await startDate.fill('2026-03-25');
-      await page.waitForTimeout(200);
       await endDate.fill('2026-03-26');
-      await page.waitForTimeout(300);
     }
   });
 
@@ -252,14 +245,12 @@ test.describe('Activity Page CRUD Lifecycle', () => {
     const searchInput = page.getByPlaceholder('Filter activity...');
     if ((await searchInput.count()) > 0) {
       await searchInput.fill('SalesBot');
-      await page.waitForTimeout(300);
     }
 
     // Click clear/reset - the button has title "Clear All Filters"
     const clearBtn = page.getByTitle('Clear All Filters');
     if ((await clearBtn.count()) > 0) {
       await clearBtn.click();
-      await page.waitForTimeout(300);
 
       // Search input should be cleared
       if ((await searchInput.count()) > 0) {
@@ -282,7 +273,6 @@ test.describe('Activity Page CRUD Lifecycle', () => {
         page.waitForEvent('download').catch(() => null),
         exportBtn.click(),
       ]);
-      await page.waitForTimeout(300);
     }
   });
 
@@ -300,11 +290,9 @@ test.describe('Activity Page CRUD Lifecycle', () => {
     if ((await autoRefreshToggle.count()) > 0) {
       // Toggle on
       await autoRefreshToggle.click();
-      await page.waitForTimeout(500);
 
       // Toggle off
       await autoRefreshToggle.click();
-      await page.waitForTimeout(300);
     }
   });
 
@@ -327,7 +315,6 @@ test.describe('Activity Page CRUD Lifecycle', () => {
       .first();
     if ((await refreshBtn.count()) > 0) {
       await refreshBtn.click();
-      await page.waitForTimeout(500);
       // Fetch count should have increased
       expect(fetchCount).toBeGreaterThan(initialCount);
     }
@@ -386,14 +373,12 @@ test.describe('Activity Page CRUD Lifecycle', () => {
     const botFilter = page.getByLabel('Filter by bot');
     if ((await botFilter.count()) > 0) {
       await botFilter.selectOption({ label: 'SupportBot' });
-      await page.waitForTimeout(200);
     }
 
     // Apply provider filter
     const providerFilter = page.getByLabel('Filter by provider');
     if ((await providerFilter.count()) > 0) {
       await providerFilter.selectOption({ index: 1 });
-      await page.waitForTimeout(200);
     }
 
     // Apply date range
@@ -401,9 +386,7 @@ test.describe('Activity Page CRUD Lifecycle', () => {
     const endDateInput = page.getByPlaceholder('End Date');
     if ((await startDateInput.count()) > 0 && (await endDateInput.count()) > 0) {
       await startDateInput.fill('2026-03-25');
-      await page.waitForTimeout(200);
       await endDateInput.fill('2026-03-26');
-      await page.waitForTimeout(300);
     }
 
     // Page should still be functional with all filters applied
