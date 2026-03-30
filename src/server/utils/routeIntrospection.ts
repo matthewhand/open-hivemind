@@ -19,11 +19,12 @@ export interface RouteGroup {
 /**
  * Extract JSDoc @openapi summary lines from a route source file.
  * Returns a map of "METHOD /path" -> summary string.
+ * ⚡ Bolt Optimization: Converted from fs.readFileSync to fs.promises.readFile to prevent event loop blocking.
  */
-function extractOpenApiSummaries(filePath: string): Map<string, string> {
+async function extractOpenApiSummaries(filePath: string): Promise<Map<string, string>> {
   const summaries = new Map<string, string>();
   try {
-    const content = fs.readFileSync(filePath, 'utf-8');
+    const content = await fs.promises.readFile(filePath, 'utf-8');
     const openApiRegex = /\/\*\*[\s\S]*?@openapi[\s\S]*?\*\//g;
     let match: RegExpExecArray | null;
     while ((match = openApiRegex.exec(content)) !== null) {
@@ -44,20 +45,25 @@ function extractOpenApiSummaries(filePath: string): Map<string, string> {
 
 /**
  * Walk the Express app's route stack and extract all registered routes.
+ * ⚡ Bolt Optimization: Converted from fs.readdirSync to fs.promises.readdir to prevent event loop blocking.
  */
-export function introspectRoutes(app: Application): RouteGroup[] {
+export async function introspectRoutes(app: Application): Promise<RouteGroup[]> {
   const routesDir = path.join(__dirname, '..', 'routes');
 
   // Build a combined summaries map from all route files
   const allSummaries = new Map<string, string>();
   try {
-    const files = fs.readdirSync(routesDir).filter((f) => f.endsWith('.ts') || f.endsWith('.js'));
-    for (const file of files) {
-      const fileSummaries = extractOpenApiSummaries(path.join(routesDir, file));
-      for (const [key, val] of fileSummaries) {
-        allSummaries.set(key, val);
-      }
-    }
+    const files = (await fs.promises.readdir(routesDir)).filter(
+      (f) => f.endsWith('.ts') || f.endsWith('.js')
+    );
+    await Promise.all(
+      files.map(async (file) => {
+        const fileSummaries = await extractOpenApiSummaries(path.join(routesDir, file));
+        for (const [key, val] of fileSummaries) {
+          allSummaries.set(key, val);
+        }
+      })
+    );
   } catch {
     // routes dir not readable
   }
