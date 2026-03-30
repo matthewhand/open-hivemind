@@ -25,6 +25,14 @@ export default class ErrorBoundary extends React.Component<ErrorBoundaryProps, E
     // Lightweight client-side logging; keep it simple to avoid recursion
 
     console.error('ErrorBoundary caught an error', { error, info });
+
+    // Attempt to extract the object causing the crash from the react error info
+    // This is a hacky way to find the culprit object, as React's error messages
+    // often don't include the exact object reference in a structured way.
+    if (error.message.includes('Objects are not valid as a React child')) {
+       console.error("REACT CRASH DETAILS: Check component stack below for the culprit!");
+       console.error(info.componentStack);
+    }
   }
 
   handleReload = () => {
