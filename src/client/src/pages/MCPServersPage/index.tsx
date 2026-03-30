@@ -5,7 +5,7 @@ import {
   ServerIcon,
 } from '@heroicons/react/24/outline';
 import { ShieldExclamationIcon } from '@heroicons/react/24/solid';
-import Alert from '../../components/DaisyUI/Alert';
+import { Alert } from '../../components/DaisyUI/Alert';
 import EmptyState from '../../components/DaisyUI/EmptyState';
 import { SkeletonGrid } from '../../components/DaisyUI/Skeleton';
 import SearchFilterBar from '../../components/SearchFilterBar';
