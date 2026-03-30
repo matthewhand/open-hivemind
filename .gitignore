@@ -102,6 +102,9 @@ web_modules/
 .env.local
 .env.*
 
+# Docker compose local overrides (user-specific service config)
+docker-compose.override.yml
+
 # parcel-bundler cache (https://parceljs.org/)
 .cache
 .parcel-cache
