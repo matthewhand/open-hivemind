@@ -1094,15 +1094,25 @@ router.post(
         failed: [] as { name: string; error: string }[],
       };
 
-      // Disconnect each server
-      for (const name of names) {
+      // ⚡ Bolt Optimization: Disconnect servers concurrently instead of sequentially
+      const disconnectPromises = names.map(async (name: string) => {
         try {
           await mcpService.disconnectFromServer(name);
-          results.successful.push(name);
+          return { name, success: true as const };
         } catch (error: unknown) {
-          const hivemindError = ErrorUtils.toHivemindError(error);
+          return { name, success: false as const, error };
+        }
+      });
+
+      const outcomes = await Promise.all(disconnectPromises);
+
+      for (const outcome of outcomes) {
+        if (outcome.success) {
+          results.successful.push(outcome.name);
+        } else {
+          const hivemindError = ErrorUtils.toHivemindError(outcome.error);
           results.failed.push({
-            name,
+            name: outcome.name,
             error: hivemindError.message || 'Unknown error',
           });
         }
