@@ -1,18 +1,6 @@
-import * as os from 'os';
 import * as process from 'process';
-import { Router, type NextFunction, type Request, type Response } from 'express';
+import { Router, type Request, type Response } from 'express';
 import { MetricsCollector } from '../../../monitoring/MetricsCollector';
-import ApiMonitorService from '../../../services/ApiMonitorService';
-import { HEALTH_THRESHOLDS, HTTP_STATUS } from '../../../types/constants';
-import { ErrorLogger } from '../../../utils/errorLogger';
-import { globalRecoveryManager } from '../../../utils/errorRecovery';
-import {
-  ApiEndpointConfigSchema,
-  CleanupConfigSchema,
-  EndpointIdParamSchema,
-} from '../../../validation/schemas/healthSchema';
-import { validateRequest } from '../../../validation/validateRequest';
-import { optionalAuth } from '../../middleware/auth';
 
 const router = Router();
 
@@ -46,7 +34,6 @@ router.get('/metrics', (req, res) => {
 
   return res.json(metricsData);
 });
-
 
 // Alerts endpoint
 router.get('/alerts', (req, res) => {
@@ -84,7 +71,6 @@ router.get('/alerts', (req, res) => {
     timestamp: new Date().toISOString(),
   });
 });
-
 
 // Prometheus metrics endpoint
 router.get('/metrics/prometheus', (req, res) => {
@@ -170,6 +156,5 @@ nodejs_version_info{version="${process.version}"} 1
   res.set('Content-Type', 'text/plain');
   res.send(metrics);
 };
-
 
 export default router;

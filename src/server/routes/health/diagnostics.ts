@@ -1,9 +1,7 @@
-import * as os from 'os';
-import * as process from 'process';
 import { Router, type NextFunction, type Request, type Response } from 'express';
 import { MetricsCollector } from '../../../monitoring/MetricsCollector';
 import ApiMonitorService from '../../../services/ApiMonitorService';
-import { HEALTH_THRESHOLDS, HTTP_STATUS } from '../../../types/constants';
+import { HTTP_STATUS } from '../../../types/constants';
 import { ErrorLogger } from '../../../utils/errorLogger';
 import { globalRecoveryManager } from '../../../utils/errorRecovery';
 import {
@@ -12,8 +10,17 @@ import {
   EndpointIdParamSchema,
 } from '../../../validation/schemas/healthSchema';
 import { validateRequest } from '../../../validation/validateRequest';
-import { optionalAuth } from '../../middleware/auth';
-import { calculateErrorRate, getErrorHealthStatus, getErrorRecommendations, getRecoveryHealthStatus, getRecoveryRecommendations, detectErrorSpikes, detectErrorCorrelations, detectErrorAnomalies, generatePatternRecommendations } from './helpers';
+import {
+  calculateErrorRate,
+  detectErrorAnomalies,
+  detectErrorCorrelations,
+  detectErrorSpikes,
+  generatePatternRecommendations,
+  getErrorHealthStatus,
+  getErrorRecommendations,
+  getRecoveryHealthStatus,
+  getRecoveryRecommendations,
+} from './helpers';
 
 const router = Router();
 
@@ -234,7 +241,6 @@ router.use((err: any, req: Request, res: Response, next: NextFunction) => {
   return next(err);
 });
 
-
 // Error-specific health endpoints
 router.get('/errors', (req, res) => {
   const errorLogger = ErrorLogger.getInstance();
@@ -264,7 +270,6 @@ router.get('/errors', (req, res) => {
   return res.json(errorHealthData);
 });
 
-
 // Recovery system health endpoint
 router.get('/recovery', (req, res) => {
   const recoveryStats = globalRecoveryManager.getAllStats();
@@ -291,7 +296,6 @@ router.get('/recovery', (req, res) => {
 
   return res.json(recoveryHealthData);
 });
-
 
 // Error patterns and anomalies endpoint
 router.get('/errors/patterns', (req, res) => {
@@ -330,6 +334,5 @@ router.get('/errors/patterns', (req, res) => {
 
   return res.json(patternsData);
 });
-
 
 export default router;

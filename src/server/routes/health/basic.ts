@@ -1,18 +1,6 @@
-import * as os from 'os';
 import * as process from 'process';
-import { Router, type NextFunction, type Request, type Response } from 'express';
-import { MetricsCollector } from '../../../monitoring/MetricsCollector';
-import ApiMonitorService from '../../../services/ApiMonitorService';
-import { HEALTH_THRESHOLDS, HTTP_STATUS } from '../../../types/constants';
-import { ErrorLogger } from '../../../utils/errorLogger';
-import { globalRecoveryManager } from '../../../utils/errorRecovery';
-import {
-  ApiEndpointConfigSchema,
-  CleanupConfigSchema,
-  EndpointIdParamSchema,
-} from '../../../validation/schemas/healthSchema';
-import { validateRequest } from '../../../validation/validateRequest';
-import { optionalAuth } from '../../middleware/auth';
+import { Router } from 'express';
+import { HTTP_STATUS } from '../../../types/constants';
 
 const router = Router();
 
@@ -34,7 +22,10 @@ router.get('/', async (req, res) => {
   try {
     const { ProviderRegistry } = require('../../../registries/ProviderRegistry');
     const registry = ProviderRegistry.getInstance();
-    const memProviders: Map<string, { healthCheck(): Promise<{ status: string; details?: Record<string, unknown> }> }> = registry.getMemoryProviders();
+    const memProviders: Map<
+      string,
+      { healthCheck(): Promise<{ status: string; details?: Record<string, unknown> }> }
+    > = registry.getMemoryProviders();
     if (memProviders.size > 0) {
       const providers: Record<string, { status: string; details?: Record<string, unknown> }> = {};
       const entries = Array.from(memProviders.entries());
@@ -50,11 +41,17 @@ router.get('/', async (req, res) => {
             anyMemoryProviderUnhealthy = true;
           }
         } else {
-          providers[name] = { status: 'error', details: { error: result.reason?.message || 'Unknown error' } };
+          providers[name] = {
+            status: 'error',
+            details: { error: result.reason?.message || 'Unknown error' },
+          };
           anyMemoryProviderUnhealthy = true;
         }
       }
-      memoryProvidersStatus = { status: anyMemoryProviderUnhealthy ? 'unhealthy' : 'healthy', providers };
+      memoryProvidersStatus = {
+        status: anyMemoryProviderUnhealthy ? 'unhealthy' : 'healthy',
+        providers,
+      };
     }
   } catch {
     // Registry not available — treat as none configured
@@ -85,7 +82,6 @@ router.get('/', async (req, res) => {
   });
 });
 
-
 // Readiness probe
 router.get('/ready', (req, res) => {
   // Check if all dependencies are ready
@@ -112,7 +108,6 @@ router.get('/ready', (req, res) => {
   });
 });
 
-
 // Liveness probe
 router.get('/live', (req, res) => {
   // Simple liveness check - if we can respond, we're alive
@@ -121,6 +116,5 @@ router.get('/live', (req, res) => {
     timestamp: new Date().toISOString(),
   });
 });
-
 
 export default router;

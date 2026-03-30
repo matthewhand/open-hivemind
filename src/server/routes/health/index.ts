@@ -1,8 +1,8 @@
 import { Router } from 'express';
 import basicRouter from './basic';
 import detailedRouter from './detailed';
-import metricsRouter from './metrics';
 import diagnosticsRouter from './diagnostics';
+import metricsRouter from './metrics';
 
 const router = Router();
 

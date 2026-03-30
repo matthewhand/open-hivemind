@@ -1,19 +1,11 @@
 import * as os from 'os';
 import * as process from 'process';
-import { Router, type NextFunction, type Request, type Response } from 'express';
+import { Router, type Request, type Response } from 'express';
 import { MetricsCollector } from '../../../monitoring/MetricsCollector';
-import ApiMonitorService from '../../../services/ApiMonitorService';
-import { HEALTH_THRESHOLDS, HTTP_STATUS } from '../../../types/constants';
 import { ErrorLogger } from '../../../utils/errorLogger';
 import { globalRecoveryManager } from '../../../utils/errorRecovery';
-import {
-  ApiEndpointConfigSchema,
-  CleanupConfigSchema,
-  EndpointIdParamSchema,
-} from '../../../validation/schemas/healthSchema';
-import { validateRequest } from '../../../validation/validateRequest';
 import { optionalAuth } from '../../middleware/auth';
-import { calculateHealthStatus, calculateErrorRate } from './helpers';
+import { calculateErrorRate, calculateHealthStatus } from './helpers';
 
 const router = Router();
 
@@ -100,7 +92,6 @@ router.get('/detailed', optionalAuth, (req: Request, res: Response) => {
 
   return res.json(healthData);
 });
-
 
 // Service-level health check endpoint for the health check widget
 router.get('/detailed/services', optionalAuth, async (_req: Request, res: Response) => {
@@ -242,6 +233,5 @@ router.get('/detailed/services', optionalAuth, async (_req: Request, res: Respon
 
   return res.json({ services });
 });
-
 
 export default router;
