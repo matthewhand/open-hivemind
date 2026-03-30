@@ -1,8 +1,5 @@
 import { useState } from 'react';
-const getAuthHeaders = (): Record<string, string> => {
-  const token = localStorage.getItem('token');
-  return token ? { Authorization: `Bearer ${token}` } : {};
-};
+import { getAuthHeaders } from '../../../utils/api';
 
 export const useMCPServerDelete = (
   bulk: any,

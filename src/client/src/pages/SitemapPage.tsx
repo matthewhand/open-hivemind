@@ -13,6 +13,7 @@ import { SkeletonList } from '../components/DaisyUI/Skeleton';
 import { SelectOption } from '../components/DaisyUI/Select';
 import { apiService } from '../services/api';
 import Badge from '../components/DaisyUI/Badge';
+import Button from '../components/DaisyUI/Button';
 
 interface SitemapUrl {
   url: string;
