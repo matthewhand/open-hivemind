@@ -16,6 +16,7 @@ import { apiService } from '../services/api';
 import Debug from 'debug';
 const debug = Debug('app:client:pages:BotCreatePage');
 
+// Ensure we're importing types only or duplicate the config to avoid Vite Rollup module export issues when importing from backend out-of-scope files
 const CONFIG_LIMITS = {
   SYSTEM_INSTRUCTION_MAX_LENGTH: 5000,
   SYSTEM_INSTRUCTION_WARNING_LENGTH: 2000,
@@ -23,7 +24,7 @@ const CONFIG_LIMITS = {
   BOT_NAME_MIN_LENGTH: 2,
   BOT_NAME_MAX_LENGTH: 50,
   PROFILE_NAME_MAX_LENGTH: 100,
-};
+} as const;
 
 const BotCreatePage: React.FC = () => {
   const navigate = useNavigate();

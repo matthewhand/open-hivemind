@@ -10,6 +10,8 @@ import {
   LLMProviderType,
   MESSAGE_PROVIDER_CONFIGS,
   LLM_PROVIDER_CONFIGS,
+  MESSAGE_PROVIDER_TYPES,
+  LLM_PROVIDER_TYPES,
 } from '../../types/bot';
 import Button from '../DaisyUI/Button';
 import { X as XIcon, RotateCcw } from 'lucide-react';
@@ -39,7 +41,7 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
   };
 
   const [selectedType, setSelectedType] = useState<MessageProviderType | LLMProviderType>(
-    modalState.providerType === 'message' ? MessageProviderType.DISCORD : LLMProviderType.OPENAI,
+    modalState.providerType === 'message' ? 'discord' : 'openai',
   );
   const [formData, setFormData] = useState<Record<string, any>>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -68,12 +70,12 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
       } else {
         // Add mode: start with empty form
         const defaultType = modalState.providerType === 'message'
-          ? MessageProviderType.DISCORD
-          : LLMProviderType.OPENAI;
+          ? 'discord'
+          : 'openai';
 
         const isCurrentTypeValid = modalState.providerType === 'message'
-          ? Object.values(MessageProviderType).includes(selectedType as MessageProviderType)
-          : Object.values(LLMProviderType).includes(selectedType as LLMProviderType);
+          ? (MESSAGE_PROVIDER_TYPES as readonly string[]).includes(selectedType as string)
+          : (LLM_PROVIDER_TYPES as readonly string[]).includes(selectedType as string);
 
         let newType = selectedType;
         if (!isCurrentTypeValid) {
@@ -131,7 +133,7 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
   useEffect(() => {
     if (
       modalState.providerType !== 'llm' ||
-      selectedType !== LLMProviderType.OPENAI ||
+      selectedType !== 'openai' ||
       (formData.modelType || 'chat') !== 'embedding' ||
       openAiEmbeddingModels.length === 0
     ) {
@@ -181,7 +183,7 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
 
     if (
       modalState.providerType !== 'llm' ||
-      selectedType !== LLMProviderType.OPENAI ||
+      selectedType !== 'openai' ||
       (formData.modelType || 'chat') !== 'embedding' ||
       openAiEmbeddingModels.length === 0
     ) {
@@ -467,7 +469,7 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
           )}
 
           {modalState.providerType === 'llm' &&
-            selectedType === LLMProviderType.OPENAI &&
+            selectedType === 'openai' &&
             (formData.modelType || 'chat') === 'embedding' &&
             openAiEmbeddingModels.length > 0 && (
             <div className="alert alert-info mb-4 text-sm">

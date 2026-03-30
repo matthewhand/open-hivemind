@@ -383,15 +383,15 @@ const IntegrationsPanel: React.FC = () => {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mb-6">
             {llmProfiles.map(profile => {
-              const Icon = PROVIDER_ICONS[profile.provider] || Brain;
+              const Icon = (profile.provider && PROVIDER_ICONS[profile.provider]) || Brain;
               const connectedBots = getConnectedBots(profile.key, 'llm');
               return (
                 <Card key={profile.key} className="bg-base-100 shadow-sm hover:shadow-md transition-all border border-base-200 group">
                   <div className="card-body p-4">
                     <div className="flex items-start justify-between mb-3">
                       <div className="flex items-center gap-3 overflow-hidden">
-                        <div className="p-2 bg-base-200 rounded-lg text-primary group-hover:bg-primary group-hover:text-primary-content transition-colors">
-                          <Icon className="w-5 h-5" />
+                        <div className="p-2 bg-base-200 rounded-lg text-primary group-hover:bg-primary group-hover:text-primary-content transition-colors flex items-center justify-center">
+                          {typeof Icon === 'string' ? <span className="text-xl">{Icon}</span> : (typeof Icon === 'function' ? <Icon className="w-5 h-5" /> : (typeof Icon === 'object' && Icon && 'render' in Icon) ? React.createElement(Icon as any, { className: "w-5 h-5" }) : <div className="w-5 h-5 flex items-center justify-center">{Icon as React.ReactNode}</div>)}
                         </div>
                         <div className="min-w-0">
                           <h3 className="font-bold text-sm truncate" title={profile.name}>{profile.name}</h3>
@@ -508,9 +508,9 @@ const IntegrationsPanel: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
           {sectionItems.map(key => {
             const type = baseProviders.find(base => key === base || key.startsWith(`${base}-`)) || key;
-            const Icon = PROVIDER_ICONS[type] || PuzzlePieceIcon;
+            const Icon = (type && PROVIDER_ICONS[type]) || PuzzlePieceIcon;
             const item = config[key];
-            const isLocked = Object.values(item.schema).some((s: any) => s.locked);
+            const isLocked = item && item.schema ? Object.values(item.schema).some((s: any) => s.locked) : false;
             const isActive = isConfigured(item);
 
             const connectedBots = getConnectedBots(key, category);
@@ -520,8 +520,8 @@ const IntegrationsPanel: React.FC = () => {
                 <div className="card-body p-4">
                   <div className="flex items-start justify-between mb-3">
                     <div className="flex items-center gap-3 overflow-hidden">
-                      <div className="p-2 bg-base-200 rounded-lg text-primary group-hover:bg-primary group-hover:text-primary-content transition-colors">
-                        <Icon className="w-5 h-5" />
+                      <div className="p-2 bg-base-200 rounded-lg text-primary group-hover:bg-primary group-hover:text-primary-content transition-colors flex items-center justify-center">
+                        {typeof Icon === 'string' ? <span className="text-xl">{Icon}</span> : (typeof Icon === 'function' ? <Icon className="w-5 h-5" /> : (typeof Icon === 'object' && Icon && 'render' in Icon) ? React.createElement(Icon as any, { className: "w-5 h-5" }) : <div className="w-5 h-5 flex items-center justify-center">{Icon as React.ReactNode}</div>)}
                       </div>
                       <div className="min-w-0">
                         <h3 className="font-bold text-sm truncate" title={key}>{key}</h3>
