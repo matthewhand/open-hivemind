@@ -32,6 +32,7 @@ export const ProviderConfigForm: React.FC<ProviderConfigFormProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [testResult, setTestResult] = useState<{ success: boolean; message: string } | null>(null);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [abortController, setAbortController] = useState<AbortController | null>(null);
 
   // Group fields by their group property
   const groupedFields = schema.fields.reduce((groups, field) => {
@@ -128,22 +129,44 @@ export const ProviderConfigForm: React.FC<ProviderConfigFormProps> = ({
 
     if (!onTestConnection) {return;}
 
+    // Create new AbortController for this test
+    const controller = new AbortController();
+    setAbortController(controller);
     setIsLoading(true);
     setTestResult(null);
 
     try {
-      const success = await onTestConnection(config);
-      setTestResult({
-        success,
-        message: success ? 'Connection successful!' : 'Connection failed',
-      });
+      const success = await onTestConnection(config, controller.signal);
+      if (!controller.signal.aborted) {
+        setTestResult({
+          success,
+          message: success ? 'Connection successful!' : 'Connection failed',
+        });
+      }
     } catch (error) {
+      if (!controller.signal.aborted) {
+        setTestResult({
+          success: false,
+          message: error instanceof Error ? error.message : 'Connection test failed',
+        });
+      }
+    } finally {
+      if (!controller.signal.aborted) {
+        setIsLoading(false);
+        setAbortController(null);
+      }
+    }
+  };
+
+  const handleCancelTest = () => {
+    if (abortController) {
+      abortController.abort();
+      setAbortController(null);
+      setIsLoading(false);
       setTestResult({
         success: false,
-        message: error instanceof Error ? error.message : 'Connection test failed',
+        message: 'Connection test cancelled',
       });
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -418,22 +441,32 @@ export const ProviderConfigForm: React.FC<ProviderConfigFormProps> = ({
       {/* Action Buttons */}
       <div className="flex flex-wrap gap-3 pt-4 border-t">
         {onTestConnection && (
-          <Button
-            variant="primary"
-            onClick={handleTestConnection}
-            loading={isLoading}
-            disabled={isLoading}
-          >
-            Test Connection
-          </Button>
+          <>
+            <Button
+              variant="primary"
+              onClick={handleTestConnection}
+              loading={isLoading && !abortController}
+              disabled={isLoading && !abortController}
+            >
+              Test Connection
+            </Button>
+            {isLoading && abortController && (
+              <Button
+                variant="error"
+                onClick={handleCancelTest}
+              >
+                Cancel Test
+              </Button>
+            )}
+          </>
         )}
 
         {onAvatarLoad && schema.providerType !== 'webhook' && (
           <Button
             variant="secondary"
             onClick={handleLoadAvatar}
-            loading={isLoading}
-            disabled={isLoading}
+            loading={isLoading && !abortController}
+            disabled={isLoading && !abortController}
           >
             Load Avatar
           </Button>

@@ -67,7 +67,7 @@ export interface ProviderConfigFormProps {
   schema: ProviderConfigSchema;
   initialConfig?: Record<string, any>;
   onConfigChange: (config: Record<string, any>) => void;
-  onTestConnection?: (config: Record<string, any>) => Promise<boolean>;
+  onTestConnection?: (config: Record<string, any>, signal?: AbortSignal) => Promise<boolean>;
   onAvatarLoad?: (config: Record<string, any>) => Promise<string | null>;
   externalErrors?: Record<string, string>;
 }
