@@ -18,6 +18,7 @@ import type { ProviderConfigSchema } from '../../provider-configs';
 import { getProviderSchema } from '../../provider-configs';
 import { apiService } from '../../services/api';
 import { useConfigDiff } from '../../hooks/useConfigDiff';
+import { logger } from '../../utils/logger';
 import { ConfigDiffConfirmDialog } from '../ConfigDiffViewer';
 
 interface ProviderConfigModalProps {
@@ -495,7 +496,7 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
                     });
                     return true;
                   } catch (err) {
-                    console.error('Test connection failed:', err);
+                    logger.error('[ProviderConfigModal] Test connection failed:', err);
                     // Fallback: basic validation if endpoint not available
                     const hasRequiredFields = ['apiKey', 'endpoint', 'baseUrl'].some(
                       key => config[key] && config[key].toString().trim() !== ''
