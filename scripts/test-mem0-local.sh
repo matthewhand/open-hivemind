@@ -196,12 +196,44 @@ else
   skip "Delete memory" "no memory ID from add step"
 fi
 
-# ---- 4. Integration Check ----
+# ---- 4. Integration Check (hivemind app) ----
 echo ""
 echo "--- Integration Check ---"
-HIVEMIND_HEALTH=$(curl -sf "http://localhost:3028/health" 2>/dev/null) || true
+HIVEMIND_URL="${HIVEMIND_URL:-http://localhost:3028}"
+HIVEMIND_HEALTH=$(curl -sf "$HIVEMIND_URL/health" 2>/dev/null) || true
 if [ -n "$HIVEMIND_HEALTH" ]; then
-  pass "Hivemind app is reachable at :3028"
+  pass "Hivemind app is reachable at $HIVEMIND_URL"
+
+  # Test memory providers endpoint
+  PROVIDERS=$(curl -sf "$HIVEMIND_URL/api/providers/memory" 2>/dev/null) || true
+  if [ -n "$PROVIDERS" ]; then
+    COUNT=$(echo "$PROVIDERS" | python3 -c "import sys,json; print(json.load(sys.stdin).get('count',0))" 2>/dev/null || echo "0")
+    if [ "$COUNT" -gt 0 ]; then
+      pass "Memory providers registered ($COUNT found)"
+
+      # Run the built-in smoke test against the first provider
+      FIRST_NAME=$(echo "$PROVIDERS" | python3 -c "import sys,json; print(json.load(sys.stdin)['providers'][0]['name'])" 2>/dev/null || true)
+      if [ -n "$FIRST_NAME" ]; then
+        TEST_RESULT=$(curl -sf -X POST "$HIVEMIND_URL/api/providers/memory/$FIRST_NAME/test" \
+          -H "Content-Type: application/json" -d '{"userId":"smoke-test"}' 2>/dev/null) || true
+        if [ -n "$TEST_RESULT" ]; then
+          PASSED=$(echo "$TEST_RESULT" | python3 -c "import sys,json; print(json.load(sys.stdin)['summary']['passed'])" 2>/dev/null || echo "0")
+          FAILED=$(echo "$TEST_RESULT" | python3 -c "import sys,json; print(json.load(sys.stdin)['summary']['failed'])" 2>/dev/null || echo "0")
+          if [ "$FAILED" = "0" ]; then
+            pass "Provider '$FIRST_NAME' end-to-end test ($PASSED steps passed)"
+          else
+            fail "Provider '$FIRST_NAME' end-to-end test" "$FAILED steps failed (see API response)"
+          fi
+        else
+          skip "Provider end-to-end test" "API returned empty response"
+        fi
+      fi
+    else
+      skip "Memory providers" "none registered (configure memory-profiles.json)"
+    fi
+  else
+    skip "Memory providers endpoint" "not reachable (may need auth)"
+  fi
 else
   skip "Hivemind reachability" "not running (optional)"
 fi
