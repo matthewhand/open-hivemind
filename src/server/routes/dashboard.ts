@@ -172,13 +172,13 @@ router.post('/ai/config', authenticate, requireAdmin, (req, res) => {
   res.json(dashboardConfig);
 });
 
-router.get('/ai/stats', authenticate, requireAdmin, (req, res) => {
+router.get('/ai/stats', authenticate, requireAdmin, async (req, res) => {
   try {
     const analytics = AnalyticsService.getInstance();
     const from = parseDate(req.query.from);
     const to = parseDate(req.query.to);
 
-    const stats = analytics.getStats({
+    const stats = await analytics.getStats({
       startTime: from || undefined,
       endTime: to || undefined,
     });
