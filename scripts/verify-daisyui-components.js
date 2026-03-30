@@ -18,9 +18,15 @@ const EXPECTED_COMPONENTS = [
   'Avatar', 
   'Badge',
   'Breadcrumbs',
+  'Hero',
+  'Button',
+  'Card',
   'Carousel',
   'Chat',
+  'Diff',
+  'Indicator',
   'DataTable',
+  'Table',
   'Modal',
   'ModalForm',
   'StatsCards',
@@ -28,6 +34,8 @@ const EXPECTED_COMPONENTS = [
   'Timeline',
   'ToastNotification',
   'VisualFeedback',
+  'PageHeader',
+  'EmptyState',
   
   // Navigation Components
   'DrawerNavigation',
@@ -35,22 +43,33 @@ const EXPECTED_COMPONENTS = [
   'NavbarWithSearch',
   'HamburgerMenu',
   'Drawer',
+  'Menu',
   
   // Form & Input Components
+  'Checkbox',
+  'Chip',
   'FileUpload',
   'Dropdown',
   'RangeSlider',
+  'Form',
+  'Input',
+  'Radio',
+  'Rating',
+  'Select',
+  'Textarea',
+  'Toggle',
+  'Divider',
   
   // Utility Components
   'Kbd',
   'Tooltip',
-  'ProgressBar',
   'Countdown',
   'Mockup',
   
   // Advanced Components
   'AdvancedThemeSwitcher',
-  'DashboardWidgetSystem'
+  'DashboardWidgetSystem',
+  'Pagination'
 ];
 
 console.log('🔍 DaisyUI Component Verification\n');
