@@ -66,12 +66,12 @@ const Dropdown: React.FC<DropdownProps> = ({
 
   return (
     <div className={`dropdown ${positionClasses[position]}`} ref={dropdownRef}>
-      <div tabIndex={0} role="button" className={`btn ${sizeClasses[size]} ${colorClasses[color]}`} onClick={handleToggle} aria-haspopup="true" aria-expanded={isOpen}>
+      <div tabIndex={0} role="button" className={`btn ${sizeClasses[size]} ${colorClasses[color]}`} onClick={handleToggle}>
         {trigger}
-        <ChevronDownIcon className="h-5 w-5" aria-hidden="true" />
+        <ChevronDownIcon className="h-5 w-5" />
       </div>
       {isOpen && (
-        <ul tabIndex={0} className="dropdown-content menu p-2 shadow bg-base-100 rounded-box w-52" role="menu">
+        <ul tabIndex={0} className="dropdown-content menu p-2 shadow bg-base-100 rounded-box w-52">
           {children}
         </ul>
       )}

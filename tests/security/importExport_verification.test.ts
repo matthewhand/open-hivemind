@@ -1,6 +1,6 @@
-import * as path from 'path';
 import express from 'express';
 import request from 'supertest';
+import path from 'path';
 import { ConfigurationImportExportService } from '../../src/server/services/ConfigurationImportExportService';
 
 // Mock auth middleware to bypass checks
@@ -20,48 +20,23 @@ jest.mock('../../src/database/DatabaseManager', () => ({
   },
 }));
 
-// Mock fs/promises to handle fs.access in the download route
-jest.mock('fs/promises', () => ({
-  __esModule: true,
-  default: {
-    access: jest.fn().mockResolvedValue(undefined),
-    readFile: jest.fn(),
-    writeFile: jest.fn(),
-    readdir: jest.fn().mockResolvedValue([]),
-    mkdir: jest.fn().mockResolvedValue(undefined),
-    unlink: jest.fn(),
-    rename: jest.fn(),
-    stat: jest.fn(),
-  },
-}));
-
-// Create a STABLE mock service that persists across beforeEach calls
-const mockService = {
-  listBackups: jest.fn(),
-  restoreFromBackup: jest.fn(),
-  getBackupFilePath: jest.fn(),
-  exportConfigurations: jest.fn(),
-  importConfigurations: jest.fn(),
-  createBackup: jest.fn(),
-  deleteBackup: jest.fn(),
-};
-
-// Mock ConfigurationImportExportService - getInstance always returns the same mockService
-jest.mock('../../src/server/services/ConfigurationImportExportService', () => ({
-  ConfigurationImportExportService: {
-    getInstance: jest.fn().mockReturnValue(mockService),
-  },
-}));
+// Mock ConfigurationImportExportService
+jest.mock('../../src/server/services/ConfigurationImportExportService');
 
 describe('ImportExport Path Traversal Verification', () => {
   let app: express.Application;
+  let mockService: any;
 
   beforeEach(() => {
-    // Clear mock call history but keep implementations
     jest.clearAllMocks();
 
-    // Re-setup the stable mockService's default implementations
-    mockService.restoreFromBackup.mockResolvedValue({ success: true });
+    mockService = {
+      listBackups: jest.fn(),
+      restoreFromBackup: jest.fn().mockResolvedValue({ success: true }),
+      getBackupFilePath: jest.fn(),
+    };
+
+    (ConfigurationImportExportService.getInstance as jest.Mock).mockReturnValue(mockService);
 
     app = express();
     app.use(express.json());
@@ -74,7 +49,7 @@ describe('ImportExport Path Traversal Verification', () => {
       next();
     });
 
-    // Mount the router (uses cached module with the stable mockService)
+    // Mount the router
     const importExportRouter = require('../../src/server/routes/importExport').default;
     app.use('/api/import-export', importExportRouter);
   });
@@ -96,9 +71,6 @@ describe('ImportExport Path Traversal Verification', () => {
     const res = await request(app).get('/api/import-export/backups/safe-id/download');
 
     expect(res.status).toBe(200);
-    // The route sets Content-Type to application/gzip before our mock sendFile sets JSON,
-    // so supertest returns the body as a Buffer. Parse it manually.
-    const body = Buffer.isBuffer(res.body) ? JSON.parse(res.body.toString()) : res.body;
-    expect(body.sentPath).toBe(safePath);
+    expect(res.body.sentPath).toBe(safePath);
   });
 });

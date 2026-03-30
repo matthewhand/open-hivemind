@@ -88,12 +88,14 @@ function setupFsMocks(
   entries: Array<{ name: string; isDirectory: () => boolean }>,
   accessFilter: (p: string) => boolean = () => true
 ) {
-  (mockFsPromises.access as jest.Mock).mockImplementation(async (filePath: string) => {
-    if (accessFilter(filePath.toString())) return undefined;
-    const err: any = new Error('ENOENT');
-    err.code = 'ENOENT';
-    throw err;
-  });
+  (mockFsPromises.access as jest.Mock).mockImplementation(
+    async (filePath: string) => {
+      if (accessFilter(filePath.toString())) return undefined;
+      const err: any = new Error('ENOENT');
+      err.code = 'ENOENT';
+      throw err;
+    }
+  );
 
   (mockFsPromises.readdir as jest.Mock).mockResolvedValue(entries as any);
 }
@@ -126,35 +128,42 @@ describe('ProviderRegistry', () => {
 
   describe('getMessengerServiceByProvider', () => {
     it('should load and return a valid provider service', async () => {
-      setupFsMocks([{ name: 'validprovider', isDirectory: () => true }], (p: string) => {
-        if (p.endsWith('integrations')) return true;
-        if (
-          p.includes('validprovider') &&
-          (p.endsWith('ValidproviderService.ts') || p.endsWith('ValidproviderService.js'))
-        )
-          return true;
-        return false;
-      });
+      setupFsMocks(
+        [{ name: 'validprovider', isDirectory: () => true }],
+        (p: string) => {
+          if (p.endsWith('integrations')) return true;
+          if (
+            p.includes('validprovider') &&
+            (p.endsWith('ValidproviderService.ts') || p.endsWith('ValidproviderService.js'))
+          )
+            return true;
+          return false;
+        }
+      );
 
       await refreshProviders();
 
       const service = await getMessengerServiceByProvider('validprovider');
 
+      expect(service).toBeDefined();
       expect(service).toBe(mockServiceInstance);
       expect(await isProviderRegistered('validprovider')).toBe(true);
       expect(getLoadedProviders()).toContain('validprovider');
     });
 
     it('should return cached provider on subsequent calls', async () => {
-      setupFsMocks([{ name: 'validprovider', isDirectory: () => true }], (p: string) => {
-        if (p.endsWith('integrations')) return true;
-        if (
-          p.includes('validprovider') &&
-          (p.endsWith('ValidproviderService.ts') || p.endsWith('ValidproviderService.js'))
-        )
-          return true;
-        return false;
-      });
+      setupFsMocks(
+        [{ name: 'validprovider', isDirectory: () => true }],
+        (p: string) => {
+          if (p.endsWith('integrations')) return true;
+          if (
+            p.includes('validprovider') &&
+            (p.endsWith('ValidproviderService.ts') || p.endsWith('ValidproviderService.js'))
+          )
+            return true;
+          return false;
+        }
+      );
 
       await refreshProviders();
 
@@ -179,15 +188,18 @@ describe('ProviderRegistry', () => {
     });
 
     it('should return null if provider has no valid factory', async () => {
-      setupFsMocks([{ name: 'missingfactory', isDirectory: () => true }], (p: string) => {
-        if (p.endsWith('integrations')) return true;
-        if (
-          p.includes('missingfactory') &&
-          (p.endsWith('MissingfactoryService.ts') || p.endsWith('MissingfactoryService.js'))
-        )
-          return true;
-        return false;
-      });
+      setupFsMocks(
+        [{ name: 'missingfactory', isDirectory: () => true }],
+        (p: string) => {
+          if (p.endsWith('integrations')) return true;
+          if (
+            p.includes('missingfactory') &&
+            (p.endsWith('MissingfactoryService.ts') || p.endsWith('MissingfactoryService.js'))
+          )
+            return true;
+          return false;
+        }
+      );
 
       await refreshProviders();
 
@@ -196,15 +208,18 @@ describe('ProviderRegistry', () => {
     });
 
     it('should return null if provider service instance is invalid', async () => {
-      setupFsMocks([{ name: 'invalidservice', isDirectory: () => true }], (p: string) => {
-        if (p.endsWith('integrations')) return true;
-        if (
-          p.includes('invalidservice') &&
-          (p.endsWith('InvalidserviceService.ts') || p.endsWith('InvalidserviceService.js'))
-        )
-          return true;
-        return false;
-      });
+      setupFsMocks(
+        [{ name: 'invalidservice', isDirectory: () => true }],
+        (p: string) => {
+          if (p.endsWith('integrations')) return true;
+          if (
+            p.includes('invalidservice') &&
+            (p.endsWith('InvalidserviceService.ts') || p.endsWith('InvalidserviceService.js'))
+          )
+            return true;
+          return false;
+        }
+      );
 
       await refreshProviders();
 
@@ -215,15 +230,18 @@ describe('ProviderRegistry', () => {
 
   describe('Management', () => {
     it('should unload provider', async () => {
-      setupFsMocks([{ name: 'validprovider', isDirectory: () => true }], (p: string) => {
-        if (p.endsWith('integrations')) return true;
-        if (
-          p.includes('validprovider') &&
-          (p.endsWith('ValidproviderService.ts') || p.endsWith('ValidproviderService.js'))
-        )
-          return true;
-        return false;
-      });
+      setupFsMocks(
+        [{ name: 'validprovider', isDirectory: () => true }],
+        (p: string) => {
+          if (p.endsWith('integrations')) return true;
+          if (
+            p.includes('validprovider') &&
+            (p.endsWith('ValidproviderService.ts') || p.endsWith('ValidproviderService.js'))
+          )
+            return true;
+          return false;
+        }
+      );
 
       await refreshProviders();
 
@@ -245,15 +263,18 @@ describe('ProviderRegistry', () => {
       (mockFsPromises.readdir as jest.Mock).mockClear();
 
       // Change FS state
-      setupFsMocks([{ name: 'newprovider', isDirectory: () => true }], (p: string) => {
-        if (p.endsWith('integrations')) return true;
-        if (
-          p.includes('newprovider') &&
-          (p.endsWith('NewproviderService.ts') || p.endsWith('NewproviderService.js'))
-        )
-          return true;
-        return false;
-      });
+      setupFsMocks(
+        [{ name: 'newprovider', isDirectory: () => true }],
+        (p: string) => {
+          if (p.endsWith('integrations')) return true;
+          if (
+            p.includes('newprovider') &&
+            (p.endsWith('NewproviderService.ts') || p.endsWith('NewproviderService.js'))
+          )
+            return true;
+          return false;
+        }
+      );
 
       await refreshProviders();
 

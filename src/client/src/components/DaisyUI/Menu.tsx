@@ -126,14 +126,14 @@ const Menu: React.FC<MenuProps> = ({
     ].filter(Boolean).join(' ');
 
     return (
-      <li key={item.id} className={liClasses} role="none">
+      <li key={item.id} className={liClasses}>
         <a
           href={item.href || '#'}
           className={itemClasses}
           onClick={(e) => handleItemClick(item, e)}
           aria-expanded={hasChildren ? isExpanded : undefined}
           aria-disabled={item.disabled}
-          role="menuitem" aria-haspopup={hasChildren ? 'true' : undefined}
+          role={hasChildren ? 'button' : 'menuitem'}
           tabIndex={item.disabled ? -1 : 0}
         >
           {/* Icon */}

@@ -85,7 +85,7 @@ describe('Admin Routes I/O Performance', () => {
       const res = await request(app).get('/api/admin/personas');
 
       expect(res.status).toBe(200);
-      expect(res.body.success).toBe(true);
+      expect(res.body.ok).toBe(true);
       expect(res.body.personas).toHaveLength(1);
       expect(res.body.personas[0].key).toBe('persona2');
 
@@ -118,7 +118,7 @@ describe('Admin Routes I/O Performance', () => {
     const end = Date.now();
 
     expect(response.status).toBe(200);
-    expect(response.body.success).toBe(true);
+    expect(response.body.ok).toBe(true);
     console.log(`Request took ${end - start}ms`);
   });
 });

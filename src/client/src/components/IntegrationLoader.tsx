@@ -3,8 +3,6 @@ import type { ComponentType } from 'react';
 import { lazy, Suspense } from 'react';
 import React from 'react';
 import logger from '../utils/logger';
-import Debug from 'debug';
-const debug = Debug('app:client:components:IntegrationLoader');
 
 // Types for dynamic integration components
 export interface IntegrationUIComponent {
@@ -81,7 +79,7 @@ export class IntegrationLoader {
       const results = await Promise.all(integrationPromises);
       results.forEach((components) => allComponents.push(...components));
     } catch (error) {
-      debug('ERROR:', 'Failed to discover integrations:', error);
+      console.error('Failed to discover integrations:', error);
     }
 
     return allComponents;
@@ -152,7 +150,7 @@ export class IntegrationLoader {
       }
 
     } catch (error) {
-      debug('WARN:', `Failed to load integration ${integrationId}:`, error);
+      console.warn(`Failed to load integration ${integrationId}:`, error);
     }
 
     return components;
@@ -246,7 +244,7 @@ export class IntegrationLoader {
       components.push(...discoveredResults.filter((c): c is IntegrationUIComponent => c !== null));
 
     } catch (error) {
-      debug('WARN:', `Failed to auto-discover components for integration ${integrationId}:`, error);
+      console.warn(`Failed to auto-discover components for integration ${integrationId}:`, error);
     }
 
     return components;
@@ -361,7 +359,7 @@ export function LazyIntegrationComponent({
     loader
       .loadComponent(integrationId, componentPath)
       .catch(error => {
-        debug('ERROR:', `Failed to load integration component ${integrationId}.${componentPath}:`, error);
+        console.error(`Failed to load integration component ${integrationId}.${componentPath}:`, error);
         // Return a simple error component
         return {
           default: () => onError(error instanceof Error ? error : new Error('Unknown error')),

@@ -5,14 +5,9 @@ import {
   getFlowiseResponse,
   getFlowiseResponseFallback,
 } from '@integrations/flowise/flowiseRestClient';
-import { resetAllCircuitBreakers } from '@common/CircuitBreaker';
 
 jest.mock('axios');
 const mockedAxios = axios as jest.Mocked<typeof axios>;
-
-jest.mock('../../../src/utils/ssrfGuard', () => ({
-  isSafeUrl: jest.fn().mockResolvedValue(true),
-}));
 
 jest.mock('@integrations/flowise/flowiseConfig', () => {
   const actual = jest.requireActual('@integrations/flowise/flowiseConfig');
@@ -53,7 +48,6 @@ describe('flowiseRestClient.getFlowiseResponse', () => {
   const channelId = 'channel-xyz';
 
   beforeEach(() => {
-    resetAllCircuitBreakers();
     jest.clearAllMocks();
   });
 
@@ -103,12 +97,12 @@ describe('flowiseRestClient.getFlowiseResponse', () => {
     expect(mockedAxios.post).toHaveBeenCalledWith(
       'http://flowise.local/prediction/chatflow-123',
       { question: 'hello', chatId: 'old-chat' },
-      expect.objectContaining({
+      {
         headers: {
           Authorization: 'Bearer test-api-key',
           'Content-Type': 'application/json',
         },
-      })
+      }
     );
 
     // chatId updated in session

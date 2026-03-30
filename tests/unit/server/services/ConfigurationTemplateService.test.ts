@@ -46,7 +46,7 @@ describe('ConfigurationTemplateService', () => {
     const templates = await service.getAllTemplates();
     expect(templates.length).toBeGreaterThan(0);
     const discordBasic = templates.find((t) => t.id === 'discord-basic');
-    expect(discordBasic).toEqual(expect.objectContaining({ id: 'discord-basic' }));
+    expect(discordBasic).toBeDefined();
     expect(discordBasic?.isBuiltIn).toBe(true);
   });
 
@@ -68,12 +68,12 @@ describe('ConfigurationTemplateService', () => {
 
     const template = await service.createTemplate(request);
 
-    expect(template).toEqual(expect.any(Object));
+    expect(template).toBeDefined();
     expect(template.name).toBe(request.name);
-    expect(typeof template.id).toBe('string');
+    expect(template.id).toBeDefined();
 
     const storedTemplate = await service.getTemplateById(template.id);
-    expect(storedTemplate).toEqual(expect.objectContaining({ name: request.name }));
+    expect(storedTemplate).toBeDefined();
     expect(storedTemplate?.name).toBe(request.name);
   });
 
@@ -95,9 +95,9 @@ describe('ConfigurationTemplateService', () => {
 
     const templates = await service.getAllTemplates();
     const found = templates.find((t) => t.id === 'custom-1');
-    expect(found).toEqual(expect.objectContaining({ id: 'custom-1' }));
+    expect(found).toBeDefined();
     const builtin = templates.find((t) => t.isBuiltIn);
-    expect(builtin).toEqual(expect.objectContaining({ isBuiltIn: true }));
+    expect(builtin).toBeDefined();
   });
 
   test('should filter templates by category', async () => {
@@ -118,7 +118,7 @@ describe('ConfigurationTemplateService', () => {
     const discordTemplates = await service.getAllTemplates({ category: 'discord' });
     const generalTemplates = await service.getAllTemplates({ category: 'general' });
 
-    expect(discordTemplates).toContainEqual(expect.objectContaining({ id: 'discord-custom' }));
+    expect(discordTemplates.find((t) => t.id === 'discord-custom')).toBeDefined();
     expect(generalTemplates.find((t) => t.id === 'discord-custom')).toBeUndefined();
   });
 

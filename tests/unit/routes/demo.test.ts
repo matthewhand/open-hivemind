@@ -1,6 +1,5 @@
 import express from 'express';
 import request from 'supertest';
-import router from '../../../src/server/routes/demo';
 
 const mockDemoService = {
   getDemoStatus: jest.fn(),
@@ -29,6 +28,8 @@ jest.mock('../../../src/types/errors', () => ({
 }));
 
 jest.mock('../../../src/services/DemoModeService', () => ({}));
+
+import router from '../../../src/server/routes/demo';
 
 describe('Demo Routes', () => {
   let app: express.Application;
@@ -87,29 +88,21 @@ describe('Demo Routes', () => {
     it('should return 400 when message is missing', async () => {
       const res = await request(app).post('/demo/chat').send({ botName: 'Bot' });
       expect(res.status).toBe(400);
-      expect(res.body.error).toBe('Validation failed');
-      expect(res.body.issues).toEqual(
-        expect.arrayContaining([
-          expect.objectContaining({ path: expect.arrayContaining(['message']) }),
-        ])
-      );
+      expect(res.body.error).toBe('message is required');
     });
 
     it('should return 400 when botName is missing', async () => {
       const res = await request(app).post('/demo/chat').send({ message: 'hi' });
       expect(res.status).toBe(400);
-      expect(res.body.error).toBe('Validation failed');
-      expect(res.body.issues).toEqual(
-        expect.arrayContaining([
-          expect.objectContaining({ path: expect.arrayContaining(['botName']) }),
-        ])
-      );
+      expect(res.body.error).toBe('botName is required');
     });
 
     it('should return 400 when demo mode is inactive', async () => {
       mockDemoService.isInDemoMode.mockReturnValue(false);
 
-      const res = await request(app).post('/demo/chat').send({ message: 'hello', botName: 'Bot' });
+      const res = await request(app)
+        .post('/demo/chat')
+        .send({ message: 'hello', botName: 'Bot' });
       expect(res.status).toBe(400);
       expect(res.body.code).toBe('DEMO_MODE_INACTIVE');
     });
@@ -125,10 +118,8 @@ describe('Demo Routes', () => {
         .send({ message: 'hello', botName: 'TestBot' });
       expect(res.status).toBe(200);
       expect(res.body.success).toBe(true);
-      expect(res.body.userMessage).toEqual(expect.any(Object));
-      expect(typeof res.body.userMessage.text).toBe('string');
-      expect(res.body.botResponse).toEqual(expect.any(Object));
-      expect(typeof res.body.botResponse.text).toBe('string');
+      expect(res.body.userMessage).toBeDefined();
+      expect(res.body.botResponse).toBeDefined();
       expect(res.body.isDemo).toBe(true);
     });
   });

@@ -125,13 +125,12 @@ const StepWizard: React.FC<StepWizardProps> = ({
             className="progress progress-primary w-full"
             value={progressPercentage}
             max="100"
-            aria-label={`Wizard progress: ${Math.round(progressPercentage)}% complete`}
           />
         </div>
       )}
 
       {/* Steps Navigation */}
-      <div className={`steps w-full mb-8 ${variant === 'vertical' ? 'steps-vertical' : ''}`} role="tablist" aria-label="Wizard steps">
+      <div className={`steps w-full mb-8 ${variant === 'vertical' ? 'steps-vertical' : ''}`}>
         {steps.map((step, index) => {
           const status = getStepStatus(index);
           const canNavigate = canGoToStep(index);
@@ -146,11 +145,6 @@ const StepWizard: React.FC<StepWizardProps> = ({
               } ${canNavigate ? 'cursor-pointer' : 'cursor-not-allowed opacity-50'}`}
               data-content={getStepIcon(step, status, index)}
               onClick={() => canNavigate && handleStepChange(index)}
-              onKeyDown={(e) => { if (canNavigate && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); handleStepChange(index); } }}
-              tabIndex={canNavigate ? 0 : -1}
-              role="tab"
-              aria-selected={status === 'active'}
-              aria-current={status === 'active' ? 'step' : undefined}
             >
               <div className="text-left">
                 <div className="font-medium">{step.title}</div>
@@ -231,12 +225,11 @@ const StepWizard: React.FC<StepWizardProps> = ({
           )}
 
           <button
-            className="btn btn-primary"
+            className={`btn btn-primary ${isValidating ? 'loading' : ''}`}
             onClick={handleNext}
             disabled={isValidating}
           >
-            {isValidating && <span className="loading loading-spinner" aria-hidden="true"></span>}
-            {activeStep === steps.length - 1 ? 'Complete' : 'Next →'}
+            {isValidating ? '' : activeStep === steps.length - 1 ? 'Complete' : 'Next →'}
           </button>
         </div>
       </div>
@@ -245,7 +238,7 @@ const StepWizard: React.FC<StepWizardProps> = ({
       {completedSteps.size > 0 && (
         <div className="mt-8">
           <div className="collapse collapse-arrow bg-base-200">
-            <input type="checkbox" aria-label="Toggle Review Completed Steps" />
+            <input type="checkbox" />
             <div className="collapse-title text-xl font-medium">
               Review Completed Steps ({completedSteps.size}/{steps.length})
             </div>

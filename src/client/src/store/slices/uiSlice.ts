@@ -1,7 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
-import Debug from 'debug';
-const debug = Debug('app:client:store:slices:uiSlice');
 
 export interface UIState {
   theme: 'light' | 'dark' | 'high-contrast' | 'auto';
@@ -113,8 +111,8 @@ const uiSlice = createSlice({
     // Theme management
     setTheme: (state, action: PayloadAction<UIState['theme']>) => {
       state.theme = action.payload;
-      localStorage.setItem('hivemind-theme', action.payload);
-      // data-theme is applied reactively by the useTheme hook
+      localStorage.setItem('theme', action.payload);
+      document.documentElement.setAttribute('data-theme', action.payload);
     },
 
     toggleDarkMode: (state) => {
@@ -122,8 +120,8 @@ const uiSlice = createSlice({
       const currentIndex = themes.indexOf(state.theme);
       const nextIndex = (currentIndex + 1) % themes.length;
       state.theme = themes[nextIndex];
-      localStorage.setItem('hivemind-theme', state.theme);
-      // data-theme is applied reactively by the useTheme hook
+      localStorage.setItem('theme', state.theme);
+      document.documentElement.setAttribute('data-theme', state.theme);
     },
     
     // Sidebar management
@@ -251,7 +249,7 @@ const uiSlice = createSlice({
           const value = JSON.parse(localStorage.getItem(key) || '');
           state.userPreferences[prefKey] = value;
         } catch (e) {
-          debug('ERROR:', `Failed to load user preference ${prefKey}:`, e);
+          console.error(`Failed to load user preference ${prefKey}:`, e);
         }
       });
     },
@@ -347,9 +345,7 @@ const uiSlice = createSlice({
       ];
       
       settings.forEach(setting => {
-        // Theme uses the canonical 'hivemind-theme' key
-        const storageKey = setting === 'theme' ? 'hivemind-theme' : setting;
-        const value = localStorage.getItem(storageKey);
+        const value = localStorage.getItem(setting);
         if (value !== null) {
           try {
             if (setting === 'sidebarCollapsed' || 
@@ -367,7 +363,7 @@ const uiSlice = createSlice({
               (state as any)[setting] = value;
             }
           } catch (e) {
-            debug('ERROR:', `Failed to load setting ${setting}:`, e);
+            console.error(`Failed to load setting ${setting}:`, e);
           }
         }
       });

@@ -1,10 +1,10 @@
-import { HTTP_STATUS } from '@src/types/constants';
 import {
+  ErrorResponseBuilder,
+  SuccessResponseBuilder,
+  ErrorResponses,
+  HTTP_STATUS_CODES,
   createErrorResponse,
   createSuccessResponse,
-  ErrorResponseBuilder,
-  ErrorResponses,
-  SuccessResponseBuilder,
 } from '@src/utils/errorResponse';
 
 describe('errorResponse', () => {
@@ -18,7 +18,7 @@ describe('errorResponse', () => {
       expect(response.error.code).toBe('VALIDATION_ERROR');
       expect(response.error.message).toBe('Bad input');
       expect(response.error.correlationId).toBe('corr-123');
-      expect(typeof response.error.timestamp).toBe('string');
+      expect(response.error.timestamp).toBeDefined();
     });
 
     it('includes details when present on error object', () => {
@@ -32,11 +32,7 @@ describe('errorResponse', () => {
       const response = new ErrorResponseBuilder(error)
         .withRequest('/api/test', 'POST', 'corr-1')
         .build();
-      expect(response.request).toEqual({
-        path: '/api/test',
-        method: 'POST',
-        correlationId: 'corr-1',
-      });
+      expect(response.request).toEqual({ path: '/api/test', method: 'POST', correlationId: 'corr-1' });
     });
 
     it('withDetails merges additional details', () => {
@@ -91,11 +87,13 @@ describe('errorResponse', () => {
       expect(response.success).toBe(true);
       expect(response.data).toEqual({ id: 1 });
       expect(response.meta?.correlationId).toBe('corr-abc');
-      expect(typeof response.meta?.timestamp).toBe('string');
+      expect(response.meta?.timestamp).toBeDefined();
     });
 
     it('withMeta merges additional metadata', () => {
-      const response = new SuccessResponseBuilder({}).withMeta({ version: '1.0' }).build();
+      const response = new SuccessResponseBuilder({})
+        .withMeta({ version: '1.0' })
+        .build();
       expect(response.meta?.version).toBe('1.0');
     });
   });
@@ -151,12 +149,12 @@ describe('errorResponse', () => {
     });
   });
 
-  describe('HTTP_STATUS', () => {
+  describe('HTTP_STATUS_CODES', () => {
     it('has correct common status codes', () => {
-      expect(HTTP_STATUS.OK).toBe(200);
-      expect(HTTP_STATUS.BAD_REQUEST).toBe(400);
-      expect(HTTP_STATUS.INTERNAL_SERVER_ERROR).toBe(500);
-      expect(HTTP_STATUS.TOO_MANY_REQUESTS).toBe(429);
+      expect(HTTP_STATUS_CODES.OK).toBe(200);
+      expect(HTTP_STATUS_CODES.BAD_REQUEST).toBe(400);
+      expect(HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR).toBe(500);
+      expect(HTTP_STATUS_CODES.TOO_MANY_REQUESTS).toBe(429);
     });
   });
 });

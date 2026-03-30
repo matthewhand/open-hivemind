@@ -1,6 +1,5 @@
 import express from 'express';
 import request from 'supertest';
-import router from '../../../src/server/routes/cache';
 
 const mockClearAllSystemCaches = jest.fn();
 
@@ -16,6 +15,8 @@ jest.mock('../../../src/auth/middleware', () => ({
 jest.mock('../../../src/server/middleware/auth', () => ({
   authenticateToken: (_req: any, _res: any, next: any) => next(),
 }));
+
+import router from '../../../src/server/routes/cache';
 
 describe('Cache Routes', () => {
   let app: express.Application;

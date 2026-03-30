@@ -166,7 +166,7 @@ const CardBase: React.FC<CardProps> = ({
   // If loading, show skeleton loaders
   if (loading) {
     return (
-      <div className={cardClasses} role="article" {...props}>
+      <div className={cardClasses} {...props}>
         {imageSrc && !imageOverlay && (
           <figure className="skeleton h-32 w-full"></figure>
         )}

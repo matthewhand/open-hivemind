@@ -1,12 +1,8 @@
 import axios from 'axios';
 import Debug from 'debug';
 import type { IMessage } from '@message/interfaces/IMessage';
-import { withTimeout } from '@common/withTimeout';
 
 const debug = Debug('app:openWebUI:direct');
-
-/** Default timeout for OpenWebUI direct calls (30 seconds). */
-const DEFAULT_DIRECT_TIMEOUT_MS = 30_000;
 
 interface OpenWebUIOverrides {
   apiUrl: string;
@@ -28,7 +24,7 @@ export async function generateChatCompletionDirect(
   if (overrides.authHeader) {
     headers['Authorization'] = overrides.authHeader;
   }
-  const client = axios.create({ baseURL, headers });
+  const client = axios.create({ baseURL, headers, timeout: 15000 });
 
   const messages: { role: string; content: string }[] = [];
   if (systemPrompt && systemPrompt.trim()) {
@@ -46,19 +42,10 @@ export async function generateChatCompletionDirect(
   messages.push({ role: 'user', content: userMessage });
 
   try {
-    const resp = await withTimeout(
-      (signal) =>
-        client.post(
-          '/chat/completions',
-          {
-            model: overrides.model,
-            messages,
-          },
-          { signal }
-        ),
-      DEFAULT_DIRECT_TIMEOUT_MS,
-      'OpenWebUI direct chat completion'
-    );
+    const resp = await client.post('/chat/completions', {
+      model: overrides.model,
+      messages,
+    });
     const text = resp?.data?.choices?.[0]?.message?.content;
     if (typeof text === 'string' && text.length > 0) {
       return text;

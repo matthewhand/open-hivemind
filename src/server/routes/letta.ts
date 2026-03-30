@@ -1,13 +1,9 @@
 import dns from 'dns';
 import net from 'net';
-import Debug from 'debug';
 import { Router, type Request, type Response } from 'express';
 import { getAgent, listAgents } from '@hivemind/llm-letta';
-import { HTTP_STATUS } from '../../types/constants';
 import { ErrorResponses } from '../../utils/errorResponse';
 import { isPrivateIP, isSafeUrl } from '../../utils/ssrfGuard';
-
-const debug = Debug('app:server:routes:letta');
 
 const router = Router();
 
@@ -86,7 +82,7 @@ router.get('/agents', async (req: Request, res: Response) => {
 
     if (!apiKey) {
       return res
-        .status(HTTP_STATUS.BAD_REQUEST)
+        .status(400)
         .json(
           ErrorResponses.badRequest(
             'Please provide Letta API key via x-letta-api-key header or apiKey query parameter',
@@ -98,7 +94,7 @@ router.get('/agents', async (req: Request, res: Response) => {
     const validation = await validateLettaUrl(apiUrl);
     if (!validation.isValid) {
       return res
-        .status(HTTP_STATUS.BAD_REQUEST)
+        .status(400)
         .json(ErrorResponses.badRequest(validation.error || 'Invalid Letta API URL').build());
     }
 
@@ -106,10 +102,8 @@ router.get('/agents', async (req: Request, res: Response) => {
     return res.json(agents);
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Unknown error';
-    debug('ERROR:', 'Letta agents lookup error:', error);
-    return res
-      .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
-      .json(ErrorResponses.internalServerError(message).build());
+    console.error('Letta agents lookup error:', error);
+    return res.status(500).json(ErrorResponses.internalServerError(message).build());
   }
 });
 
@@ -127,7 +121,7 @@ router.get('/agents/:id', async (req: Request, res: Response) => {
 
     if (!apiKey) {
       return res
-        .status(HTTP_STATUS.BAD_REQUEST)
+        .status(400)
         .json(
           ErrorResponses.badRequest(
             'Please provide Letta API key via x-letta-api-key header or apiKey query parameter',
@@ -139,7 +133,7 @@ router.get('/agents/:id', async (req: Request, res: Response) => {
     const validation = await validateLettaUrl(apiUrl);
     if (!validation.isValid) {
       return res
-        .status(HTTP_STATUS.BAD_REQUEST)
+        .status(400)
         .json(ErrorResponses.badRequest(validation.error || 'Invalid Letta API URL').build());
     }
 
@@ -147,10 +141,8 @@ router.get('/agents/:id', async (req: Request, res: Response) => {
     return res.json(agent);
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Unknown error';
-    debug('ERROR:', 'Letta agent details error:', error);
-    return res
-      .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
-      .json(ErrorResponses.internalServerError(message).build());
+    console.error('Letta agent details error:', error);
+    return res.status(500).json(ErrorResponses.internalServerError(message).build());
   }
 });
 

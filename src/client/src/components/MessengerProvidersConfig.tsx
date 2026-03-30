@@ -4,10 +4,9 @@ import BaseProvidersConfig from './ProviderManagement/BaseProvidersConfig';
 
 const MessengerProvidersConfig: React.FC = () => {
   const messengerProviderTypes = [
-    { value: 'discord', label: 'Discord', docsUrl: 'https://discord.com/developers/applications' },
-    { value: 'slack', label: 'Slack', docsUrl: 'https://api.slack.com/start/quickstart' },
-    { value: 'telegram', label: 'Telegram', docsUrl: 'https://core.telegram.org/bots/tutorial' },
-    { value: 'mattermost', label: 'Mattermost', docsUrl: 'https://developers.mattermost.com/integrate/reference/bot-accounts/' },
+    { value: 'discord', label: 'Discord', docsUrl: 'https://discord.com/developers/docs/intro' },
+    { value: 'slack', label: 'Slack', docsUrl: 'https://api.slack.com/messaging/managing' },
+    { value: 'mattermost', label: 'Mattermost', docsUrl: 'https://developers.mattermost.com/integrate/getting-started/' },
   ];
 
   return (

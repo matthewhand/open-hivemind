@@ -1,13 +1,7 @@
 import { promises as fs } from 'fs';
 import path from 'path';
-import Debug from 'debug';
 import { Router } from 'express';
 import { z } from 'zod';
-import { HTTP_STATUS } from '../../types/constants';
-import { SpecSchema } from '../../validation/schemas/miscSchema';
-import { validateRequest } from '../../validation/validateRequest';
-
-const debug = Debug('app:server:routes:specs');
 
 const router = Router();
 
@@ -39,13 +33,13 @@ async function saveSpecsIndex(index: SpecMetadata[]) {
   await fs.writeFile(indexPath, JSON.stringify(index, null, 2));
 }
 
-router.post('/', validateRequest(SpecSchema), async (req, res) => {
+router.post('/', async (req, res) => {
   try {
     const { id, topic, tags, author, timestamp, version, content } = req.body;
 
     // Validate content field
     if (!content || typeof content !== 'string' || content.trim().length === 0) {
-      return res.status(HTTP_STATUS.BAD_REQUEST).json({
+      return res.status(400).json({
         success: false,
         error: 'Content is required and must be a non-empty string',
         message: 'Validation failed',
@@ -56,7 +50,7 @@ router.post('/', validateRequest(SpecSchema), async (req, res) => {
     const validation = specMetadataSchema.safeParse(newSpec);
     if (!validation.success) {
       return res
-        .status(HTTP_STATUS.BAD_REQUEST)
+        .status(400)
         .json({ success: false, error: 'Invalid spec data', message: 'Validation failed' });
     }
 
@@ -66,7 +60,7 @@ router.post('/', validateRequest(SpecSchema), async (req, res) => {
 
     if (!resolvedSpecDir.startsWith(resolvedSpecsDirectory + path.sep)) {
       return res
-        .status(HTTP_STATUS.BAD_REQUEST)
+        .status(400)
         .json({ success: false, error: 'Invalid spec ID or version: Path traversal detected' });
     }
 
@@ -78,11 +72,11 @@ router.post('/', validateRequest(SpecSchema), async (req, res) => {
     await fs.writeFile(path.join(specDir, 'spec.md'), content);
 
     return res
-      .status(HTTP_STATUS.CREATED)
+      .status(201)
       .json({ success: true, data: newSpec, message: 'Specification saved successfully' });
   } catch (error) {
-    debug('ERROR:', 'Failed to save spec:', error);
-    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
+    console.error('Failed to save spec:', error);
+    return res.status(500).json({
       success: false,
       error: 'Failed to save specification',
       message: error instanceof Error ? error.message : String(error),
@@ -95,7 +89,7 @@ router.get('/', async (req, res) => {
     const index = await getSpecsIndex();
     return res.json({ success: true, data: index });
   } catch (error) {
-    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
+    return res.status(500).json({
       success: false,
       error: 'Failed to retrieve specifications',
       message: error instanceof Error ? error.message : String(error),
@@ -107,9 +101,7 @@ router.get('/:id', async (req, res) => {
   const { id } = req.params;
 
   if (!/^[a-zA-Z0-9_-]+$/.test(id)) {
-    return res
-      .status(HTTP_STATUS.BAD_REQUEST)
-      .json({ success: false, error: 'Invalid spec ID format' });
+    return res.status(400).json({ success: false, error: 'Invalid spec ID format' });
   }
 
   const targetPath = path.join(specsDirectory, id);
@@ -121,7 +113,7 @@ router.get('/:id', async (req, res) => {
     resolvedTargetPath !== resolvedSpecsDirectory
   ) {
     return res
-      .status(HTTP_STATUS.BAD_REQUEST)
+      .status(400)
       .json({ success: false, error: 'Invalid spec ID: Path traversal detected' });
   }
 
@@ -130,9 +122,7 @@ router.get('/:id', async (req, res) => {
     const spec = index.find((s) => s.id === id);
 
     if (!spec) {
-      return res
-        .status(HTTP_STATUS.NOT_FOUND)
-        .json({ success: false, error: 'Specification not found' });
+      return res.status(404).json({ success: false, error: 'Specification not found' });
     }
 
     const versions = await fs.readdir(targetPath);
@@ -140,7 +130,7 @@ router.get('/:id', async (req, res) => {
 
     return res.json({ success: true, data: specWithVersions });
   } catch (error) {
-    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
+    return res.status(500).json({
       success: false,
       error: 'Failed to retrieve specification',
       message: error instanceof Error ? error.message : String(error),

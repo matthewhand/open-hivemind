@@ -15,30 +15,30 @@ test.describe('Webhook Integration Screenshots', () => {
             values: {
               enabled: true,
               secret: 'wh_sec_example12345',
-              endpoint: 'https://api.hivemind.test/webhooks/support',
+              endpoint: 'https://api.hivemind.test/webhooks/support'
             },
             schema: {
               enabled: {
                 doc: 'Allow incoming webhook requests',
                 format: 'Boolean',
                 default: false,
-                env: 'WEBHOOK_ENABLED',
+                env: 'WEBHOOK_ENABLED'
               },
               endpoint: {
                 doc: 'Specific URLs to trigger bot actions from external services',
                 format: 'String',
                 default: '',
-                env: 'WEBHOOK_ENDPOINT',
+                env: 'WEBHOOK_ENDPOINT'
               },
               secret: {
                 doc: 'Manage webhook secrets and verification',
                 format: 'String',
                 default: '',
-                env: 'WEBHOOK_SECRET',
-              },
-            },
-          },
-        },
+                env: 'WEBHOOK_SECRET'
+              }
+            }
+          }
+        }
       });
     });
   });

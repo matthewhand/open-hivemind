@@ -1,7 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import Input from './Input';
-import Debug from 'debug';
-const debug = Debug('app:client:components:DaisyUI:AdvancedThemeSwitcher');
 
 interface ThemeOption {
   value: string;
@@ -215,12 +213,6 @@ const AdvancedThemeSwitcher: React.FC<ThemeSwitcherProps> = ({
     if (savedAutoMode === 'true') {
       setIsAutoMode(true);
     }
-
-    // Sync with the canonical stored theme
-    const savedTheme = localStorage.getItem('hivemind-theme');
-    if (savedTheme && savedTheme !== 'auto') {
-      setSelectedTheme(savedTheme);
-    }
   }, []);
 
   // Auto theme detection
@@ -279,7 +271,7 @@ const AdvancedThemeSwitcher: React.FC<ThemeSwitcherProps> = ({
     try {
       localStorage.setItem('hivemind-favorite-themes', JSON.stringify(newFavorites));
     } catch (e) {
-      debug('ERROR:', 'Failed to persist favorites, reverting', e);
+      Logger.error('Failed to persist favorites, reverting', e);
       setFavoriteThemes(previousFavorites);
     }
   };

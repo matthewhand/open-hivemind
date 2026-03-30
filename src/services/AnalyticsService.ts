@@ -1,12 +1,4 @@
 import Debug from 'debug';
-import {
-  DEFAULT_PAGE_LIMIT,
-  FAST_PROCESSING_THRESHOLD_MS,
-  LARGE_PAGE_LIMIT,
-  ONE_HOUR_MS,
-  ONE_MINUTE_MS,
-  SLOW_PROCESSING_THRESHOLD_MS,
-} from '@common/constants/time';
 import { BotConfigurationManager } from '../config/BotConfigurationManager';
 import { ActivityLogger, type ActivityFilter } from '../server/services/ActivityLogger';
 import { type MessageFlowEvent } from '../server/services/WebSocketService';
@@ -104,10 +96,7 @@ export class AnalyticsService {
    * Get behavior patterns based on actual usage data
    */
   public async getBehaviorPatterns(options: ActivityFilter = {}): Promise<BehaviorPattern[]> {
-    const events = await this.activityLogger.getEvents({
-      ...options,
-      limit: options.limit || DEFAULT_PAGE_LIMIT,
-    });
+    const events = await this.activityLogger.getEvents({ ...options, limit: options.limit || 5000 });
 
     if (events.length === 0) {
       return this.getDefaultBehaviorPatterns();
@@ -168,10 +157,7 @@ export class AnalyticsService {
    * Get user segments based on actual activity
    */
   public async getUserSegments(options: ActivityFilter = {}): Promise<UserSegment[]> {
-    const events = await this.activityLogger.getEvents({
-      ...options,
-      limit: options.limit || DEFAULT_PAGE_LIMIT,
-    });
+    const events = await this.activityLogger.getEvents({ ...options, limit: options.limit || 5000 });
 
     if (events.length === 0) {
       return this.getDefaultUserSegments();
@@ -258,13 +244,8 @@ export class AnalyticsService {
   /**
    * Get recommendations based on actual patterns
    */
-  public async getRecommendations(
-    options: ActivityFilter = {}
-  ): Promise<DashboardRecommendation[]> {
-    const events = await this.activityLogger.getEvents({
-      ...options,
-      limit: options.limit || DEFAULT_PAGE_LIMIT,
-    });
+  public async getRecommendations(options: ActivityFilter = {}): Promise<DashboardRecommendation[]> {
+    const events = await this.activityLogger.getEvents({ ...options, limit: options.limit || 5000 });
     const patterns = await this.getBehaviorPatterns(options);
     const segments = await this.getUserSegments(options);
 
@@ -321,7 +302,7 @@ export class AnalyticsService {
 
     // Recommendation based on processing time
     const avgProcessingTime = this.calculateAvgProcessingTime(events);
-    if (avgProcessingTime > SLOW_PROCESSING_THRESHOLD_MS) {
+    if (avgProcessingTime > 2000) {
       recommendations.push({
         id: 'rec-performance',
         type: 'settings',
@@ -356,10 +337,7 @@ export class AnalyticsService {
    * Get analytics stats
    */
   public async getStats(options: ActivityFilter = {}): Promise<AnalyticsStats> {
-    const events = await this.activityLogger.getEvents({
-      ...options,
-      limit: options.limit || LARGE_PAGE_LIMIT,
-    });
+    const events = await this.activityLogger.getEvents({ ...options, limit: options.limit || 10000 });
     const patterns = await this.getBehaviorPatterns(options);
     const segments = await this.getUserSegments(options);
 
@@ -403,16 +381,13 @@ export class AnalyticsService {
    * Get time-series data for analytics
    */
   public async getTimeSeries(options: ActivityFilter = {}): Promise<TimeSeriesBucket[]> {
-    const events = await this.activityLogger.getEvents({
-      ...options,
-      limit: options.limit || LARGE_PAGE_LIMIT,
-    });
+    const events = await this.activityLogger.getEvents({ ...options, limit: options.limit || 10000 });
 
     if (events.length === 0) {
       return [];
     }
 
-    const bucketMs = ONE_HOUR_MS; // 1 hour buckets
+    const bucketMs = 60 * 60 * 1000; // 1 hour buckets
     const buckets = new Map<string, { count: number; errors: number; processingTimes: number[] }>();
 
     events.forEach((event) => {
@@ -466,7 +441,7 @@ export class AnalyticsService {
     const timeSpanMs = timestamps[timestamps.length - 1] - timestamps[0];
     if (timeSpanMs === 0) return 1;
 
-    const messagesPerMinute = events.length / (timeSpanMs / ONE_MINUTE_MS);
+    const messagesPerMinute = events.length / (timeSpanMs / 60000);
     return Math.min(1, messagesPerMinute / 10); // Normalize to 0-1 range
   }
 
@@ -592,10 +567,10 @@ export class AnalyticsService {
     let description: string;
     let recommendedWidgets: string[];
 
-    if (avgTime < FAST_PROCESSING_THRESHOLD_MS) {
+    if (avgTime < 500) {
       description = 'System responses are very fast';
       recommendedWidgets = ['performance-monitor', 'speed-metrics'];
-    } else if (avgTime < SLOW_PROCESSING_THRESHOLD_MS) {
+    } else if (avgTime < 2000) {
       description = 'System responses are within normal range';
       recommendedWidgets = ['performance-monitor'];
     } else {
@@ -612,7 +587,7 @@ export class AnalyticsService {
       trend: this.calculateTrend(events, 'count'),
       segments: ['performance-aware'],
       recommendedWidgets,
-      priority: avgTime > SLOW_PROCESSING_THRESHOLD_MS ? 1 : 3,
+      priority: avgTime > 2000 ? 1 : 3,
     };
   }
 

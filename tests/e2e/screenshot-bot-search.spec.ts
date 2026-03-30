@@ -66,12 +66,7 @@ test.describe('Bot Search Screenshots', () => {
     await page.route('**/api/config/llm-status', async (route) => {
       await route.fulfill({
         status: 200,
-        json: {
-          defaultConfigured: true,
-          defaultProviders: [],
-          botsMissingLlmProvider: [],
-          hasMissing: false,
-        },
+        json: { defaultConfigured: true, defaultProviders: [], botsMissingLlmProvider: [], hasMissing: false },
       });
     });
 
@@ -91,9 +86,7 @@ test.describe('Bot Search Screenshots', () => {
     await page.goto('/admin/bots');
 
     // Wait for the bots to load and the search input to be visible
-    await page.waitForSelector(
-      'input[placeholder="Search..."], input[placeholder="Search agents..."]'
-    );
+    await page.waitForSelector('input[placeholder="Search..."], input[placeholder="Search agents..."]');
 
     // Set viewport
     await page.setViewportSize({ width: 1280, height: 800 });
@@ -105,9 +98,7 @@ test.describe('Bot Search Screenshots', () => {
     await page.screenshot({ path: 'docs/screenshots/bots-page.png', fullPage: true });
 
     // Type in the search box
-    const searchInput = page
-      .locator('input[placeholder="Search..."], input[placeholder="Search agents..."]')
-      .first();
+    const searchInput = page.locator('input[placeholder="Search..."], input[placeholder="Search agents..."]').first();
     await searchInput.fill('Support');
 
     // Wait for the UI to update

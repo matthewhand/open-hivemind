@@ -34,7 +34,7 @@ describe('Swarm Routes', () => {
     it('should return 200 status code with system check results', async () => {
       const response = await request(app).get('/check');
       expect(response.status).toBe(200);
-      expect(response.body.success).toBe(true);
+      expect(response.body.ok).toBe(true);
       expect(response.body.pythonAvailable).toBe(true);
       expect(response.body.swarmInstalled).toBe(false);
       expect(response.body.webUIUrl).toBe('http://localhost:8000');
@@ -45,7 +45,7 @@ describe('Swarm Routes', () => {
     it('should return 200 status code on success', async () => {
       const response = await request(app).post('/install');
       expect(response.status).toBe(200);
-      expect(response.body.success).toBe(true);
+      expect(response.body.ok).toBe(true);
     });
   });
 
@@ -53,7 +53,7 @@ describe('Swarm Routes', () => {
     it('should return 200 status code on success', async () => {
       const response = await request(app).post('/start');
       expect(response.status).toBe(200);
-      expect(response.body.success).toBe(true);
+      expect(response.body.ok).toBe(true);
     });
   });
 });

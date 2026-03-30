@@ -33,9 +33,7 @@ test.describe('Edge Case Test Coverage Gaps - Max Length UX', () => {
       });
     });
 
-    await page.route('**/api/config', async (route) =>
-      route.fulfill({ status: 200, json: { bots: [] } })
-    );
+    await page.route('**/api/config', async (route) => route.fulfill({ status: 200, json: { bots: [] } }));
     await page.route('**/api/config/global', async (route) =>
       route.fulfill({ status: 200, json: {} })
     );
@@ -44,15 +42,7 @@ test.describe('Edge Case Test Coverage Gaps - Max Length UX', () => {
       route.fulfill({ status: 200, json: [] })
     );
     await page.route('**/api/config/llm-status', async (route) =>
-      route.fulfill({
-        status: 200,
-        json: {
-          defaultConfigured: true,
-          defaultProviders: [],
-          botsMissingLlmProvider: [],
-          hasMissing: false,
-        },
-      })
+      route.fulfill({ status: 200, json: { defaultConfigured: true, defaultProviders: [], botsMissingLlmProvider: [], hasMissing: false } })
     );
     await page.route('**/api/health/detailed', async (route) =>
       route.fulfill({ status: 200, json: { status: 'healthy' } })

@@ -1,5 +1,5 @@
 import { promises as fs } from 'fs';
-import * as path from 'path';
+import { join } from 'path';
 import Debug from 'debug';
 import { DatabaseManager } from '../../database/DatabaseManager';
 import { ConfigurationValidator } from './ConfigurationValidator';
@@ -54,7 +54,7 @@ export class ConfigurationTemplateService {
   private constructor(templatesDir?: string) {
     this.dbManager = DatabaseManager.getInstance();
     this.configValidator = new ConfigurationValidator();
-    this.templatesDir = templatesDir || path.join(process.cwd(), 'config', 'templates');
+    this.templatesDir = templatesDir || join(process.cwd(), 'config', 'templates');
     this.ensureTemplatesDirectory();
     this.loadBuiltInTemplates();
   }
@@ -375,7 +375,7 @@ export class ConfigurationTemplateService {
         throw new Error('Cannot delete built-in templates');
       }
 
-      const filePath = this.getSafeTemplatePath(templateId);
+      const filePath = join(this.templatesDir, `${templateId}.json`);
       await fs.unlink(filePath);
 
       debug('Deleted template:', template.name);
@@ -391,7 +391,7 @@ export class ConfigurationTemplateService {
    */
   async getTemplateById(templateId: string): Promise<ConfigurationTemplate | null> {
     try {
-      const filePath = this.getSafeTemplatePath(templateId);
+      const filePath = join(this.templatesDir, `${templateId}.json`);
       const data = await fs.readFile(filePath, 'utf-8');
       const template = JSON.parse(data);
 
@@ -433,7 +433,7 @@ export class ConfigurationTemplateService {
         .filter((file) => file.endsWith('.json'))
         .map(async (file) => {
           try {
-            const filePath = this.getSafeTemplatePath(file);
+            const filePath = join(this.templatesDir, file);
             const data = await fs.readFile(filePath, 'utf-8');
             const template = JSON.parse(data);
 
@@ -590,27 +590,10 @@ export class ConfigurationTemplateService {
   }
 
   /**
-   * Get safe template path
-   */
-  private getSafeTemplatePath(templateId: string): string {
-    const fileName = templateId.endsWith('.json') ? templateId : `${templateId}.json`;
-    const targetPath = path.join(this.templatesDir, path.basename(fileName));
-    const resolvedPath = path.resolve(targetPath);
-    const resolvedTemplatesDir = path.resolve(this.templatesDir);
-    if (
-      !resolvedPath.startsWith(resolvedTemplatesDir + path.sep) &&
-      resolvedPath !== resolvedTemplatesDir
-    ) {
-      throw new Error('Security Error: Path traversal detected');
-    }
-    return targetPath;
-  }
-
-  /**
    * Save template to file
    */
   private async saveTemplate(template: ConfigurationTemplate): Promise<void> {
-    const filePath = this.getSafeTemplatePath(template.id);
+    const filePath = join(this.templatesDir, `${template.id}.json`);
     const data = JSON.stringify(template, null, 2);
     await fs.writeFile(filePath, data, 'utf-8');
   }

@@ -57,7 +57,7 @@ export const ToastProvider: React.FC<ToastProviderProps> = ({
       const id = `toast-${Date.now()}-${uuidv4()}`;
       const toast: Toast = {
         id,
-        duration: toastData.type === 'error' ? 8000 : 5000,
+        duration: 5000, // 5 seconds default
         ...toastData,
       };
 
@@ -111,7 +111,7 @@ export const ToastProvider: React.FC<ToastProviderProps> = ({
       {children}
 
       {/* Toast Container */}
-      <div className={`fixed z-50 space-y-2 ${getPositionClasses()}`} aria-live="polite" aria-label="Notifications" role="region">
+      <div className={`fixed z-50 space-y-2 ${getPositionClasses()}`}>
         {toasts.map((toast) => (
           <ToastItem key={toast.id} toast={toast} onRemove={removeToast} position={position} />
         ))}
@@ -316,10 +316,10 @@ export const NotificationCenter: React.FC = () => {
         role="button"
         className="btn btn-ghost btn-circle"
         onClick={() => setIsOpen(!isOpen)}
-        aria-label="Notifications" aria-haspopup="true" aria-expanded={isOpen}
+        aria-label="Toggle notifications menu"
       >
         <div className="indicator">
-          <span className="text-xl" aria-hidden="true">🔔</span>
+          <span className="text-xl">🔔</span>
           {unreadCount > 0 && (
             <span className="badge badge-primary badge-xs indicator-item">
               {unreadCount > 99 ? '99+' : unreadCount}
@@ -329,7 +329,7 @@ export const NotificationCenter: React.FC = () => {
       </div>
 
       {isOpen && (
-        <div className="dropdown-content z-[1] card card-compact w-80 p-2 shadow bg-base-100" role="region" aria-label="Notification center">
+        <div className="dropdown-content z-[1] card card-compact w-80 p-2 shadow bg-base-100">
           <div className="card-body">
             <div className="flex items-center justify-between">
               <h3 className="card-title text-sm">Notifications</h3>

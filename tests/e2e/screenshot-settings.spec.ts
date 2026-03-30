@@ -2,7 +2,9 @@ import { expect, test } from '@playwright/test';
 import { setupAuth } from './test-utils';
 
 test.describe('Settings Screenshots', () => {
-  test('Capture Settings Page and Verify Tab Navigation with Real API Data', async ({ page }) => {
+  test('Capture Settings Page and Verify Tab Navigation with Real API Data', async ({
+    page,
+  }) => {
     // Setup authentication
     await setupAuth(page);
 
@@ -13,23 +15,13 @@ test.describe('Settings Screenshots', () => {
     await page.route('**/api/config/llm-status', async (route) =>
       route.fulfill({
         status: 200,
-        json: {
-          defaultConfigured: true,
-          defaultProviders: [],
-          botsMissingLlmProvider: [],
-          hasMissing: false,
-        },
+        json: { defaultConfigured: true, defaultProviders: [], botsMissingLlmProvider: [], hasMissing: false },
       })
     );
-    let resolvePutPromise: () => void;
-    const putPromise = new Promise<void>((resolve) => {
-      resolvePutPromise = resolve;
-    });
-
     await page.route('**/api/config/global', async (route) => {
       if (route.request().method() === 'PUT') {
-        // Wait indefinitely until resolvePutPromise is called to capture loading spinner
-        await putPromise;
+        // Delay to capture loading spinner
+        await new Promise((f) => setTimeout(f, 3000));
         await route.fulfill({ status: 200, json: {} });
       } else {
         await route.fulfill({ status: 200, json: { general: { values: {} } } });
@@ -59,19 +51,16 @@ test.describe('Settings Screenshots', () => {
     const saveButton = page.getByRole('button', { name: 'Save Settings' });
 
     // Trigger the save action
-    await saveButton.click();
+    saveButton.click();
 
     // Wait for the button to have the loading class applied
-    await expect(saveButton).toHaveClass(/loading/);
+    await page.waitForFunction(() => {
+      const btn = document.querySelector('button.btn-primary');
+      return btn && btn.classList.contains('loading');
+    });
 
     // Screenshot while loading
     await page.screenshot({ path: 'docs/screenshots/settings-general-loading.png' });
-
-    // Resolve the promise to let the request complete
-    resolvePutPromise!();
-
-    // Wait for the loading class to be removed, indicating the request completed
-    await expect(saveButton).not.toHaveClass(/loading/);
 
     // Check Secure Configuration Manager on Security tab
     await page.goto('/admin/settings?tab=security');

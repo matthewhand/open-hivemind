@@ -45,16 +45,18 @@
       "testUtils": ["./tests/testUtils"],
       "@hivemind/llm-openai": ["packages/llm-openai/src/index.ts"],
       "@hivemind/llm-openai/*": ["packages/llm-openai/src/*"],
+      "@hivemind/memory-mem4ai": ["packages/memory-mem4ai/src/index.ts"],
+      "@hivemind/memory-mem4ai/*": ["packages/memory-mem4ai/src/*"],
       "@hivemind/llm-letta": ["packages/llm-letta/src/index.ts"],
       "@hivemind/llm-letta/*": ["packages/llm-letta/src/*"],
+      "@hivemind/memory-memvault": ["packages/memory-memvault/src/index.ts"],
+      "@hivemind/memory-memvault/*": ["packages/memory-memvault/src/*"],
       "@hivemind/message-discord": ["packages/message-discord/src/index.ts"],
       "@hivemind/message-discord/*": ["packages/message-discord/src/*"],
       "@hivemind/message-slack": ["packages/message-slack/src/index.ts"],
       "@hivemind/message-slack/*": ["packages/message-slack/src/*"],
       "@hivemind/message-mattermost": ["packages/message-mattermost/src/index.ts"],
-      "@hivemind/message-mattermost/*": ["packages/message-mattermost/src/*"],
-      "@hivemind/memory-mem0": ["packages/memory-mem0/src/index.ts"],
-      "@hivemind/memory-mem0/*": ["packages/memory-mem0/src/*"]
+      "@hivemind/message-mattermost/*": ["packages/message-mattermost/src/*"]
     },
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true
@@ -62,6 +64,8 @@
   "include": [
     "src/**/*",
     "packages/llm-openai/src/**/*",
+    "packages/memory-mem4ai/src/**/*",
+    "packages/memory-memvault/src/**/*",
     "packages/message-discord/src/**/*",
     "packages/message-slack/src/**/*",
     "packages/message-mattermost/src/**/*"

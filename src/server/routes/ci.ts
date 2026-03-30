@@ -1,8 +1,5 @@
 import Debug from 'debug';
 import { Router } from 'express';
-import { HTTP_STATUS } from '../../types/constants';
-import { CIDeploySchema, CIRollbackSchema, EmptySchema } from '../../validation/schemas/miscSchema';
-import { validateRequest } from '../../validation/validateRequest';
 
 const debug = Debug('app:ciRoutes');
 const router = Router();
@@ -60,7 +57,7 @@ router.get('/api/deployments', (req, res) => {
     });
   } catch (error) {
     debug('Deployments API error:', error);
-    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
+    return res.status(500).json({
       success: false,
       message: 'Failed to get deployments',
       error: error instanceof Error ? error.message : 'Unknown error',
@@ -69,12 +66,12 @@ router.get('/api/deployments', (req, res) => {
 });
 
 // Start a new deployment
-router.post('/api/deployments', validateRequest(CIDeploySchema), (req, res) => {
+router.post('/api/deployments', (req, res) => {
   try {
     const { name, environment, branch, commitHash } = req.body;
 
     if (!name || !environment) {
-      return res.status(HTTP_STATUS.BAD_REQUEST).json({
+      return res.status(400).json({
         success: false,
         message: 'Name and environment are required',
       });
@@ -109,7 +106,7 @@ router.post('/api/deployments', validateRequest(CIDeploySchema), (req, res) => {
     });
   } catch (error) {
     debug('Create deployment API error:', error);
-    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
+    return res.status(500).json({
       success: false,
       message: 'Failed to create deployment',
       error: error instanceof Error ? error.message : 'Unknown error',
@@ -151,7 +148,7 @@ router.get('/api/deployments/:id', (req, res) => {
     });
   } catch (error) {
     debug('Get deployment API error:', error);
-    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
+    return res.status(500).json({
       success: false,
       message: 'Failed to get deployment',
       error: error instanceof Error ? error.message : 'Unknown error',
@@ -160,7 +157,7 @@ router.get('/api/deployments/:id', (req, res) => {
 });
 
 // Rollback deployment
-router.post('/api/deployments/:id/rollback', validateRequest(CIRollbackSchema), (req, res) => {
+router.post('/api/deployments/:id/rollback', (req, res) => {
   try {
     const { id } = req.params;
 
@@ -173,7 +170,7 @@ router.post('/api/deployments/:id/rollback', validateRequest(CIRollbackSchema), 
     });
   } catch (error) {
     debug('Rollback deployment API error:', error);
-    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
+    return res.status(500).json({
       success: false,
       message: 'Failed to rollback deployment',
       error: error instanceof Error ? error.message : 'Unknown error',
@@ -208,7 +205,7 @@ router.get('/api/drift', (req, res) => {
     });
   } catch (error) {
     debug('Drift detection API error:', error);
-    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
+    return res.status(500).json({
       success: false,
       message: 'Failed to get drift detections',
       error: error instanceof Error ? error.message : 'Unknown error',
@@ -217,12 +214,12 @@ router.get('/api/drift', (req, res) => {
 });
 
 // Validate deployment configuration
-router.post('/api/deployments/validate', validateRequest(EmptySchema), (req, res) => {
+router.post('/api/deployments/validate', (req, res) => {
   try {
     const { environment, configuration } = req.body;
 
     if (!environment || !configuration) {
-      return res.status(HTTP_STATUS.BAD_REQUEST).json({
+      return res.status(400).json({
         success: false,
         message: 'Environment and configuration are required',
       });
@@ -246,7 +243,7 @@ router.post('/api/deployments/validate', validateRequest(EmptySchema), (req, res
     });
   } catch (error) {
     debug('Validation API error:', error);
-    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
+    return res.status(500).json({
       success: false,
       message: 'Failed to validate configuration',
       error: error instanceof Error ? error.message : 'Unknown error',
@@ -274,7 +271,7 @@ router.get('/api/pipeline/status', (req, res) => {
     });
   } catch (error) {
     debug('Pipeline status API error:', error);
-    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
+    return res.status(500).json({
       success: false,
       message: 'Failed to get pipeline status',
       error: error instanceof Error ? error.message : 'Unknown error',
@@ -283,7 +280,7 @@ router.get('/api/pipeline/status', (req, res) => {
 });
 
 // Trigger automated tests
-router.post('/api/tests/run', validateRequest(EmptySchema), (req, res) => {
+router.post('/api/tests/run', (req, res) => {
   try {
     const { type, environment } = req.body;
 
@@ -308,7 +305,7 @@ router.post('/api/tests/run', validateRequest(EmptySchema), (req, res) => {
     });
   } catch (error) {
     debug('Test run API error:', error);
-    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
+    return res.status(500).json({
       success: false,
       message: 'Failed to run tests',
       error: error instanceof Error ? error.message : 'Unknown error',
@@ -359,7 +356,7 @@ router.get('/api/tests/results/:id', (req, res) => {
     });
   } catch (error) {
     debug('Test results API error:', error);
-    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
+    return res.status(500).json({
       success: false,
       message: 'Failed to get test results',
       error: error instanceof Error ? error.message : 'Unknown error',

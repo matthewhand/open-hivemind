@@ -12,12 +12,7 @@ test.describe('MCP Servers Page - Test Connection', () => {
     await page.route('**/api/config/llm-status', (route) =>
       route.fulfill({
         status: 200,
-        json: {
-          defaultConfigured: true,
-          defaultProviders: [],
-          botsMissingLlmProvider: [],
-          hasMissing: false,
-        },
+        json: { defaultConfigured: true, defaultProviders: [], botsMissingLlmProvider: [], hasMissing: false },
       })
     );
     await page.route('**/api/config/global', (route) => route.fulfill({ status: 200, json: {} }));
@@ -30,9 +25,7 @@ test.describe('MCP Servers Page - Test Connection', () => {
     await page.route('**/api/admin/guard-profiles', (route) =>
       route.fulfill({ status: 200, json: { data: [] } })
     );
-    await page.route('**/api/config', (route) =>
-      route.fulfill({ status: 200, json: { bots: [] } })
-    );
+    await page.route('**/api/config', (route) => route.fulfill({ status: 200, json: { bots: [] } }));
 
     // Mock MCP servers list
     await page.route('**/api/admin/mcp-servers', async (route) => {
@@ -81,9 +74,7 @@ test.describe('MCP Servers Page - Test Connection', () => {
     await testBtn.click();
 
     // Verify success message (look for various possible success indicators)
-    await expect(page.getByText(/connection successful|success/i).first()).toBeVisible({
-      timeout: 5000,
-    });
+    await expect(page.getByText(/connection successful|success/i).first()).toBeVisible({ timeout: 5000 });
   });
 
   test('should verify connection failure', async ({ page }) => {
@@ -117,8 +108,6 @@ test.describe('MCP Servers Page - Test Connection', () => {
     await testBtn.click();
 
     // Verify error message
-    await expect(page.getByText(/failed|error|could not connect/i).first()).toBeVisible({
-      timeout: 5000,
-    });
+    await expect(page.getByText(/failed|error|could not connect/i).first()).toBeVisible({ timeout: 5000 });
   });
 });

@@ -307,11 +307,7 @@ test.describe('Accessibility Audit', () => {
 
     test('Modals have role="dialog" and aria-modal="true"', async ({ page }) => {
       await page.goto('/admin/bots');
-      await page
-        .locator('h1, h2')
-        .first()
-        .waitFor({ state: 'attached', timeout: 15000 })
-        .catch(() => {});
+      await page.locator('h1, h2').first().waitFor({ state: 'attached', timeout: 15000 }).catch(() => {});
       await page.waitForTimeout(500);
 
       const createBtn = page.getByRole('button', { name: /create/i }).first();
@@ -320,12 +316,7 @@ test.describe('Accessibility Audit', () => {
         await page.waitForTimeout(500);
 
         const dialog = page.locator('[role="dialog"]');
-        if (
-          await dialog
-            .first()
-            .isVisible()
-            .catch(() => false)
-        ) {
+        if (await dialog.first().isVisible().catch(() => false)) {
           // Check role="dialog"
           await expect(dialog.first()).toHaveAttribute('role', 'dialog');
 
@@ -350,7 +341,9 @@ test.describe('Accessibility Audit', () => {
           const alert = alerts.nth(i);
           if (await alert.isVisible().catch(() => false)) {
             const role = await alert.getAttribute('role');
-            const hasAlertClass = await alert.evaluate((el) => el.classList.contains('alert'));
+            const hasAlertClass = await alert.evaluate((el) =>
+              el.classList.contains('alert')
+            );
             // Should have role="alert" or be an alert element
             expect(role === 'alert' || hasAlertClass).toBeTruthy();
           }
@@ -389,9 +382,7 @@ test.describe('Accessibility Audit', () => {
     }
 
     for (const pg of pages) {
-      test(`${pg.name} page has correct heading hierarchy (no skipped levels)`, async ({
-        page,
-      }) => {
+      test(`${pg.name} page has correct heading hierarchy (no skipped levels)`, async ({ page }) => {
         await page.goto(pg.path);
         // Wait for the page to load by polling for heading presence.
         // The Bots page can take extra time due to render loops from
@@ -467,7 +458,9 @@ test.describe('Accessibility Audit', () => {
             const parentLabel = btn.closest('[aria-label]');
 
             if (!text && !ariaLabel && !ariaLabelledBy && !title && !parentLabel) {
-              issues.push(`Button without name: ${btn.outerHTML.substring(0, 100)}`);
+              issues.push(
+                `Button without name: ${btn.outerHTML.substring(0, 100)}`
+              );
             }
           });
 
@@ -497,13 +490,13 @@ test.describe('Accessibility Audit', () => {
             const ariaLabelledBy = input.getAttribute('aria-labelledby');
             const placeholder = input.getAttribute('placeholder');
             const title = input.getAttribute('title');
-            const hasLabel = id ? document.querySelector(`label[for="${id}"]`) !== null : false;
+            const hasLabel = id
+              ? document.querySelector(`label[for="${id}"]`) !== null
+              : false;
             const wrappedInLabel = input.closest('label') !== null;
             // Many form frameworks use div-based labels as siblings;
             // check if a preceding sibling or parent contains descriptive text
-            const parentContainer = input.closest(
-              '[class*="form"], [class*="field"], [class*="group"]'
-            );
+            const parentContainer = input.closest('[class*="form"], [class*="field"], [class*="group"]');
             const hasSiblingText = parentContainer
               ? parentContainer.querySelector('span, div, p')?.textContent?.trim()
               : false;
@@ -520,7 +513,9 @@ test.describe('Accessibility Audit', () => {
               !hasSiblingText &&
               !hasAriaInvalid
             ) {
-              issues.push(`Input without label: ${input.outerHTML.substring(0, 100)}`);
+              issues.push(
+                `Input without label: ${input.outerHTML.substring(0, 100)}`
+              );
             }
           });
 
@@ -546,7 +541,9 @@ test.describe('Accessibility Audit', () => {
           const role = img.getAttribute('role');
           // Decorative images should have alt="" or role="presentation"
           if (alt === null && role !== 'presentation' && role !== 'none') {
-            issues.push(`Image without alt: ${img.outerHTML.substring(0, 100)}`);
+            issues.push(
+              `Image without alt: ${img.outerHTML.substring(0, 100)}`
+            );
           }
         });
 
@@ -610,7 +607,9 @@ test.describe('Accessibility Audit', () => {
             const role = spinner.getAttribute('role');
             // Spinners should be hidden from screen readers or have a role
             if (ariaHidden !== 'true' && role !== 'status' && role !== 'progressbar') {
-              issues.push(`Spinner without aria-hidden: ${spinner.outerHTML.substring(0, 100)}`);
+              issues.push(
+                `Spinner without aria-hidden: ${spinner.outerHTML.substring(0, 100)}`
+              );
             }
           });
 
@@ -641,7 +640,9 @@ test.describe('Accessibility Audit', () => {
           const ariaBusy = btn.getAttribute('aria-busy');
 
           if (hasLoadingClass && ariaBusy !== 'true') {
-            issues.push(`Loading button without aria-busy: ${btn.outerHTML.substring(0, 120)}`);
+            issues.push(
+              `Loading button without aria-busy: ${btn.outerHTML.substring(0, 120)}`
+            );
           }
         });
 
@@ -661,11 +662,7 @@ test.describe('Accessibility Audit', () => {
   test.describe('Focus Management', () => {
     test('Opening modal moves focus to first focusable element', async ({ page }) => {
       await page.goto('/admin/bots');
-      await page
-        .locator('h1, h2')
-        .first()
-        .waitFor({ state: 'attached', timeout: 15000 })
-        .catch(() => {});
+      await page.locator('h1, h2').first().waitFor({ state: 'attached', timeout: 15000 }).catch(() => {});
       await page.waitForTimeout(500);
 
       const createBtn = page.getByRole('button', { name: /create/i }).first();
@@ -692,11 +689,7 @@ test.describe('Accessibility Audit', () => {
 
     test('Closing modal returns focus to trigger element', async ({ page }) => {
       await page.goto('/admin/bots');
-      await page
-        .locator('h1, h2')
-        .first()
-        .waitFor({ state: 'attached', timeout: 15000 })
-        .catch(() => {});
+      await page.locator('h1, h2').first().waitFor({ state: 'attached', timeout: 15000 }).catch(() => {});
       await page.waitForTimeout(500);
 
       const createBtn = page.getByRole('button', { name: /create/i }).first();
@@ -750,9 +743,7 @@ test.describe('Accessibility Audit', () => {
       await page.waitForTimeout(500);
 
       const skipLink = await page.evaluate(() => {
-        const links = document.querySelectorAll(
-          'a[href="#main"], a[href="#content"], a.skip-link, a.sr-only'
-        );
+        const links = document.querySelectorAll('a[href="#main"], a[href="#content"], a.skip-link, a.sr-only');
         return Array.from(links).map((l) => ({
           href: l.getAttribute('href'),
           text: l.textContent?.trim(),
@@ -888,8 +879,10 @@ test.describe('Accessibility Audit', () => {
           'button:not(:disabled):not([aria-disabled="true"])'
         );
 
-        const getOpacity = (el: Element) => parseFloat(window.getComputedStyle(el).opacity);
-        const getCursor = (el: Element) => window.getComputedStyle(el).cursor;
+        const getOpacity = (el: Element) =>
+          parseFloat(window.getComputedStyle(el).opacity);
+        const getCursor = (el: Element) =>
+          window.getComputedStyle(el).cursor;
 
         return {
           disabledCount: disabledElements.length,
@@ -897,7 +890,10 @@ test.describe('Accessibility Audit', () => {
             opacity: getOpacity(el),
             cursor: getCursor(el),
           })),
-          enabledSampleOpacity: enabledButtons.length > 0 ? getOpacity(enabledButtons[0]) : 1,
+          enabledSampleOpacity:
+            enabledButtons.length > 0
+              ? getOpacity(enabledButtons[0])
+              : 1,
         };
       });
 
@@ -941,14 +937,14 @@ test.describe('Accessibility Audit', () => {
     }
 
     for (const pg of pages) {
-      test(`${pg.name}: all aria-labelledby and aria-describedby reference valid IDs`, async ({
-        page,
-      }) => {
+      test(`${pg.name}: all aria-labelledby and aria-describedby reference valid IDs`, async ({ page }) => {
         await page.goto(pg.path);
         await page.waitForTimeout(500);
 
         const brokenReferences = await page.evaluate(() => {
-          const elements = document.querySelectorAll('[aria-labelledby], [aria-describedby]');
+          const elements = document.querySelectorAll(
+            '[aria-labelledby], [aria-describedby]'
+          );
           const issues: string[] = [];
 
           elements.forEach((el) => {
@@ -958,7 +954,9 @@ test.describe('Accessibility Audit', () => {
             if (labelledBy) {
               labelledBy.split(' ').forEach((id) => {
                 if (!document.getElementById(id)) {
-                  issues.push(`aria-labelledby references missing id="${id}"`);
+                  issues.push(
+                    `aria-labelledby references missing id="${id}"`
+                  );
                 }
               });
             }
@@ -966,7 +964,9 @@ test.describe('Accessibility Audit', () => {
             if (describedBy) {
               describedBy.split(' ').forEach((id) => {
                 if (!document.getElementById(id)) {
-                  issues.push(`aria-describedby references missing id="${id}"`);
+                  issues.push(
+                    `aria-describedby references missing id="${id}"`
+                  );
                 }
               });
             }
@@ -980,16 +980,10 @@ test.describe('Accessibility Audit', () => {
     }
 
     for (const pg of pages) {
-      test(`${pg.name}: interactive elements have no negative tabindex (except intentional)`, async ({
-        page,
-      }) => {
+      test(`${pg.name}: interactive elements have no negative tabindex (except intentional)`, async ({ page }) => {
         await page.goto(pg.path);
         // Wait for page content to render before inspecting DOM
-        await page
-          .locator('main')
-          .first()
-          .waitFor({ state: 'attached', timeout: 15000 })
-          .catch(() => {});
+        await page.locator('main').first().waitFor({ state: 'attached', timeout: 15000 }).catch(() => {});
         await page.waitForTimeout(500);
 
         const negativeTabIndex = await page.evaluate(() => {
@@ -1066,8 +1060,17 @@ test.describe('Accessibility Audit', () => {
             const hasImg = link.querySelector('img[alt]') !== null;
             const hasSvgTitle = link.querySelector('svg title') !== null;
 
-            if (!text && !ariaLabel && !ariaLabelledBy && !title && !hasImg && !hasSvgTitle) {
-              issues.push(`Link without text: ${link.outerHTML.substring(0, 100)}`);
+            if (
+              !text &&
+              !ariaLabel &&
+              !ariaLabelledBy &&
+              !title &&
+              !hasImg &&
+              !hasSvgTitle
+            ) {
+              issues.push(
+                `Link without text: ${link.outerHTML.substring(0, 100)}`
+              );
             }
           });
 

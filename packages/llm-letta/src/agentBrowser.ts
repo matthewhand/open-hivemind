@@ -29,15 +29,13 @@ export async function listAgents(apiKey: string, apiUrl?: string): Promise<Agent
   const agents = await client.agents.list();
 
   // Transform to simplified agent summary
-  return ((agents as any)?.data || (agents as any)?.agents || (agents as any)).map(
-    (agent: any) => ({
-      id: agent.id,
-      name: agent.name,
-      description: agent.description,
-      created_at: agent.created_at,
-      updated_at: agent.updated_at,
-    })
-  );
+  return ((agents as any)?.data || (agents as any)?.agents || agents as any).map((agent: any) => ({
+    id: agent.id,
+    name: agent.name,
+    description: agent.description,
+    created_at: agent.created_at,
+    updated_at: agent.updated_at,
+  }));
 }
 
 /**
@@ -48,11 +46,7 @@ export async function listAgents(apiKey: string, apiUrl?: string): Promise<Agent
  * @param apiUrl - Optional API URL (defaults to https://api.letta.com/v1)
  * @returns Agent summary
  */
-export async function getAgent(
-  agentId: string,
-  apiKey: string,
-  apiUrl?: string
-): Promise<AgentSummary> {
+export async function getAgent(agentId: string, apiKey: string, apiUrl?: string): Promise<AgentSummary> {
   const baseURL = apiUrl || 'https://api.letta.com/v1';
 
   const client = new Letta({

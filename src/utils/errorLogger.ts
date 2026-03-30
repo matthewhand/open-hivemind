@@ -10,8 +10,6 @@ import { MetricsCollector } from '../monitoring/MetricsCollector';
 import { BaseHivemindError } from '../types/errorClasses';
 import { ErrorUtils, type HivemindError } from '../types/errors';
 
-const debug = Debug('app:utils:errorLogger');
-
 /**
  * Error log entry structure
  */
@@ -156,7 +154,7 @@ export class ErrorLogger {
     this.checkErrorPatterns(error, context);
 
     this.debug(
-      `Error logged: ${error instanceof Error ? error.name : 'Unknown'} - ${ErrorUtils.getMessage(error)}`,
+      `Error logged: ${(error as any).name || 'Unknown'} - ${ErrorUtils.getMessage(error)}`,
       {
         correlationId: context.correlationId,
         level: logLevel,
@@ -180,10 +178,7 @@ export class ErrorLogger {
         code: ErrorUtils.getCode(error) || 'UNKNOWN',
         type: this.getErrorType(error),
         stack: error instanceof Error ? error.stack : undefined,
-        details:
-          error && typeof error === 'object' && 'details' in error
-            ? (error.details as Record<string, unknown>)
-            : undefined,
+        details: error && typeof error === 'object' ? (error as any).details : undefined,
         context: error instanceof BaseHivemindError ? error.context : undefined,
       },
       request: {
@@ -315,13 +310,13 @@ export class ErrorLogger {
         console.info(message, meta);
         break;
       case 'warn':
-        debug('WARN:', message, meta);
+        console.warn(message, meta);
         break;
       case 'error':
       case 'fatal':
-        debug('ERROR:', message, meta);
+        console.error(message, meta);
         if (logEntry.error.stack) {
-          debug('ERROR:', logEntry.error.stack);
+          console.error(logEntry.error.stack);
         }
         break;
     }
@@ -338,7 +333,7 @@ export class ErrorLogger {
     // In a real implementation, this would write to a file
     // For now, we'll use console.log with a file-like format
     const logLine = JSON.stringify(logEntry) + '\n';
-    debug(`[FILE:${level.toUpperCase()}]`, logLine);
+    console.log(`[FILE:${level.toUpperCase()}]`, logLine);
   }
 
   /**
@@ -350,8 +345,8 @@ export class ErrorLogger {
     }
 
     // Emit structured log for monitoring systems
-    if ('emit' in process && typeof process.emit === 'function') {
-      process.emit('hivemind:log', {
+    if ((process as any).emit) {
+      (process as any).emit('hivemind:log', {
         type: 'error',
         level,
         entry: logEntry,
@@ -403,8 +398,8 @@ export class ErrorLogger {
       this.debug(`Error spike detected for type ${errorType}: ${count} occurrences`);
 
       // Emit alert for monitoring
-      if ('emit' in process && typeof process.emit === 'function') {
-        process.emit('hivemind:alert', {
+      if ((process as any).emit) {
+        (process as any).emit('hivemind:alert', {
           type: 'error_spike',
           errorType,
           count,
@@ -421,8 +416,8 @@ export class ErrorLogger {
     if (recentErrors > 5) {
       this.debug(`High error rate detected: ${recentErrors} errors in last minute`);
 
-      if ('emit' in process && typeof process.emit === 'function') {
-        process.emit('hivemind:alert', {
+      if ((process as any).emit) {
+        (process as any).emit('hivemind:alert', {
           type: 'high_error_rate',
           count: recentErrors,
           timeframe: '1 minute',

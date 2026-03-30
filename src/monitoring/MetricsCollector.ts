@@ -78,17 +78,7 @@ export class MetricsCollector extends EventEmitter {
     if (this.collectionInterval) {
       clearInterval(this.collectionInterval);
       this.collectionInterval = null;
-      debug('Metrics collection stopped');
     }
-  }
-
-  /**
-   * Shutdown and cleanup resources
-   */
-  public shutdown(): void {
-    this.stopCollection();
-    this.removeAllListeners();
-    debug('MetricsCollector shutdown completed');
   }
 
   private collectSystemMetrics(): void {

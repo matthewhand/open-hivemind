@@ -21,7 +21,6 @@ vi.mock('../../components/DaisyUI', () => ({
     </div>
   ),
   LoadingSpinner: () => <div data-testid="loading-spinner" />,
-  SkeletonPage: () => <div data-testid="loading-spinner" />,
   EmptyState: ({ title }: any) => <div data-testid="empty-state">{title}</div>,
   Input: ({ type, value, onChange, placeholder }: any) => (
     <input
@@ -32,11 +31,6 @@ vi.mock('../../components/DaisyUI', () => ({
       placeholder={placeholder}
     />
   ),
-}));
-
-// Mock Skeleton components
-vi.mock('../../components/DaisyUI/Skeleton', () => ({
-  SkeletonPage: () => <div data-testid="loading-spinner" />,
 }));
 
 // Mock SearchFilterBar
@@ -164,5 +158,38 @@ describe('ActivityPage', () => {
     expect(screen.getByText('Network error')).toBeInTheDocument();
   });
 
-  it.todo("refreshes data when refresh button is clicked" /* TODO: Fix flaky test */);
+  it.skip('refreshes data when refresh button is clicked', async () => {
+    getActivityMock.mockResolvedValue({ events: [], filters: {} });
+
+    render(<ActivityPage />);
+
+    await waitFor(() => expect(screen.queryByTestId('loading-spinner')).not.toBeInTheDocument(), { timeout: 3000 });
+
+    // Clear previous calls
+    getActivityMock.mockClear();
+
+    // Find refresh button (RefreshCw icon is inside a button)
+    // The PageHeader mock renders actions. We need to find the button inside it.
+    // The refresh button is the 3rd button in the actions list (View Table, View Timeline, Auto, Refresh, Export)
+    // Actually, let's just find by icon presence or similarity.
+    // But since icons are mocked to empty spans, we rely on button order or structure.
+    // In the component:
+    // Button 1: Table
+    // Button 2: Timeline
+    // Toggle: Auto
+    // Button 3: Refresh (has RefreshCw)
+    // Button 4: Export (has Download)
+
+    // Let's grab all buttons in page header
+    const header = screen.getByTestId('page-header');
+    const buttons = header.querySelectorAll('button');
+    // buttons[0] = Table, [1] = Timeline, [2] = Refresh, [3] = Export
+    // (Toggle is not a button in our mock, it's an input)
+
+    const refreshButton = buttons[2];
+    expect(refreshButton).not.toBeDisabled();
+    fireEvent.click(refreshButton);
+
+    expect(getActivityMock).toHaveBeenCalled();
+  });
 });

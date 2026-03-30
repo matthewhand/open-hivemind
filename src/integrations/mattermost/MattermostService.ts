@@ -104,7 +104,6 @@ export class MattermostService extends EventEmitter implements IMessengerService
       channel: botConfig.mattermost.channel || 'town-square',
       userId: botConfig.mattermost.userId || botConfig.BOT_ID || '',
       username: botConfig.mattermost.username || botConfig.MESSAGE_USERNAME_OVERRIDE || '',
-      llmProvider: botConfig.llmProvider,
     });
 
     // Initialize health tracking
@@ -146,8 +145,8 @@ export class MattermostService extends EventEmitter implements IMessengerService
       }
     }
 
-    const { container } = await import('../../di/container');
-    const startupGreetingService = (await import('../../services/StartupGreetingService')).default;
+    const { container } = require('../../di/container');
+    const startupGreetingService = require('../../services/StartupGreetingService').default;
     const serviceInstance = container.resolve(startupGreetingService);
     serviceInstance.emit('service-ready', this);
   }
@@ -235,13 +234,11 @@ export class MattermostService extends EventEmitter implements IMessengerService
 
       // Record WebSocket monitoring event for successful message
       try {
-        const ws = (await import('@src/server/services/WebSocketService'))
+        const ws = require('@src/server/services/WebSocketService')
           .default as typeof import('@src/server/services/WebSocketService').default;
-        const botConfig = this.botConfigs.get(botName);
         ws.getInstance().recordMessageFlow({
           botName,
           provider: 'mattermost',
-          llmProvider: botConfig?.llmProvider,
           channelId,
           userId: 'system',
           messageType: 'outgoing',
@@ -249,14 +246,7 @@ export class MattermostService extends EventEmitter implements IMessengerService
           processingTime: duration,
           status: 'success',
         });
-      } catch (error) {
-        debug('Failed to record message flow (non-fatal)', {
-          error: error instanceof Error ? error.message : String(error),
-          botName,
-          channelId,
-          messageType: 'outgoing',
-        });
-      }
+      } catch {}
 
       debug(`Message sent successfully after ${attemptCount} attempts in ${duration}ms`);
       return result;
@@ -281,13 +271,11 @@ export class MattermostService extends EventEmitter implements IMessengerService
 
       // Record WebSocket monitoring event for failed message
       try {
-        const ws = (await import('@src/server/services/WebSocketService'))
+        const ws = require('@src/server/services/WebSocketService')
           .default as typeof import('@src/server/services/WebSocketService').default;
-        const botConfig = this.botConfigs.get(botName);
         ws.getInstance().recordMessageFlow({
           botName,
           provider: 'mattermost',
-          llmProvider: botConfig?.llmProvider,
           channelId,
           userId: 'system',
           messageType: 'outgoing',
@@ -295,14 +283,7 @@ export class MattermostService extends EventEmitter implements IMessengerService
           status: 'error',
           errorMessage: error.message,
         });
-      } catch (wsError) {
-        debug('Failed to record error message flow (non-fatal)', {
-          error: wsError instanceof Error ? wsError.message : String(wsError),
-          botName,
-          channelId,
-          originalError: error.message,
-        });
-      }
+      } catch {}
 
       throw error;
     }
@@ -563,14 +544,7 @@ export class MattermostService extends EventEmitter implements IMessengerService
         return;
       }
       await client.sendTyping(channelId, threadId);
-    } catch (error) {
-      debug('Failed to send typing indicator (non-fatal)', {
-        error: error instanceof Error ? error.message : String(error),
-        channelId,
-        senderName,
-        threadId,
-      });
-    }
+    } catch {}
   }
 
   /**

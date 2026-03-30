@@ -83,7 +83,25 @@ describe('BotConfigurationManager', () => {
       expect(discordBots[0].discord?.channelId).toBe('channel-789');
     });
 
-    it.todo("should load bot-specific configuration files" /* TODO: Re-enable for CI after fix */);
+    it.skip('should load bot-specific configuration files - TEMPORARILY DISABLED FOR CI', () => {
+      process.env.BOTS = 'config-bot';
+      mockFs.existsSync.mockImplementation((filePath) => {
+        return filePath.toString().includes('config-bot.json');
+      });
+
+      mockFs.readFileSync.mockReturnValue(JSON.stringify({
+        MESSAGE_PROVIDER: 'slack',
+        LLM_PROVIDER: 'openai',
+        OPENAI_API_KEY: 'file-config-key'
+      }));
+
+      const manager = BotConfigurationManager.getInstance();
+      const bot = manager.getBot('config-bot');
+
+      expect(bot?.messageProvider).toBe('discord');
+      expect(bot?.llmProvider).toBe('flowise');
+      expect(bot?.flowise?.apiKey).toBe('file-config-key');
+    });
   });
 
   describe('Legacy configuration compatibility', () => {

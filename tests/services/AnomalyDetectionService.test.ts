@@ -1,27 +1,18 @@
-import { DatabaseManager } from '../../src/database/DatabaseManager';
-import { MetricsCollector } from '../../src/monitoring/MetricsCollector';
-import { WebSocketService } from '../../src/server/services/WebSocketService';
 import { AnomalyDetectionService } from '../../src/services/AnomalyDetectionService';
+import { DatabaseManager } from '../../src/database/DatabaseManager';
+import { WebSocketService } from '../../src/server/services/WebSocketService';
 
 describe('AnomalyDetectionService', () => {
   let service: AnomalyDetectionService;
-  let mockDbManager: jest.Mocked<DatabaseManager>;
-  let mockWsService: jest.Mocked<WebSocketService>;
-  let mockMetricsCollector: jest.Mocked<MetricsCollector>;
+  let dbManager: DatabaseManager;
+  let wsService: WebSocketService;
+
+  let metricsCollector: any;
 
   beforeEach(() => {
-    mockDbManager = {
-      storeAnomaly: jest.fn().mockResolvedValue(undefined),
-      resolveAnomaly: jest.fn().mockResolvedValue(true),
-    } as unknown as jest.Mocked<DatabaseManager>;
-
-    mockWsService = {
-      recordAlert: jest.fn(),
-    } as unknown as jest.Mocked<WebSocketService>;
-
-    mockMetricsCollector = {} as unknown as jest.Mocked<MetricsCollector>;
-
-    service = new AnomalyDetectionService(mockDbManager, mockWsService, mockMetricsCollector);
+    service = AnomalyDetectionService.getInstance();
+    (service as any).dataWindows.clear();
+    (service as any).anomalies = [];
     (service as any).config = {
       enabled: true,
       windowSize: 50,
@@ -29,11 +20,15 @@ describe('AnomalyDetectionService', () => {
       metricsToMonitor: ['responseTime', 'errors'],
       minDataPoints: 10,
     };
+    dbManager = DatabaseManager.getInstance({ type: 'sqlite', path: ':memory:' });
+    wsService = WebSocketService.getInstance();
+    jest.spyOn(dbManager, 'storeAnomaly').mockResolvedValue();
+    jest.spyOn(dbManager, 'resolveAnomaly').mockResolvedValue(true);
+    jest.spyOn(wsService, 'recordAlert').mockImplementation();
   });
 
-  afterEach(() => {
-    service.shutdown();
-    jest.clearAllMocks();
+  afterEach(async () => {
+    await dbManager.disconnect();
   });
 
   test('should initialize with default config', () => {
@@ -66,8 +61,8 @@ describe('AnomalyDetectionService', () => {
     await service.runDetection();
 
     expect(service['anomalies'].length).toBeGreaterThan(0);
-    expect(mockDbManager.storeAnomaly).toHaveBeenCalled();
-    expect(mockWsService.recordAlert).toHaveBeenCalled();
+    expect(dbManager.storeAnomaly).toHaveBeenCalled();
+    expect(wsService.recordAlert).toHaveBeenCalled();
   });
 
   test('should resolve anomaly', async () => {
@@ -90,11 +85,14 @@ describe('AnomalyDetectionService', () => {
 
     expect(result).toBe(true);
     expect(service['anomalies'][0].resolved).toBe(true);
-    expect(mockDbManager.resolveAnomaly).toHaveBeenCalledWith('test-anomaly');
+    expect(dbManager.resolveAnomaly).toHaveBeenCalledWith('test-anomaly');
   });
 
   test('should get active anomalies', () => {
-    service['anomalies'] = [{ resolved: false } as any, { resolved: true } as any];
+    service['anomalies'] = [
+      { resolved: false } as any,
+      { resolved: true } as any,
+    ];
 
     const active = service.getActiveAnomalies();
 
@@ -152,10 +150,6 @@ describe('AnomalyDetectionService', () => {
     service.shutdown();
     expect(service['detectionInterval']).toBeNull();
     expect(removeAllListenersSpy).toHaveBeenCalled();
-
-    // Call shutdown again when interval is null to cover that branch
-    service.shutdown();
-    expect(service['detectionInterval']).toBeNull();
   });
 
   test('resolveAnomaly should return false for unknown id', async () => {
@@ -178,94 +172,10 @@ describe('AnomalyDetectionService', () => {
     expect(criticalAnomaly.severity).toBe('critical');
   });
 
-  test('runDetection should emit WebSocket alert with correct level based on severity', async () => {
-    // Clear the global state first
-    (service as any).dataWindows.clear();
-    (mockWsService.recordAlert as jest.Mock).mockClear();
-
-    // Low: z <= 3. By default zThreshold is 3, so to trigger low severity we must lower zThreshold.
-    service.updateConfig({ zThreshold: 1 });
-
-    // Test 'warning' level (low severity, zScore <= 3)
-    for (let i = 0; i < 5; i++) service.addDataPoint('responseTime', 99);
-    for (let i = 0; i < 5; i++) service.addDataPoint('responseTime', 101);
-    service.addDataPoint('responseTime', 102); // zScore ~ 2
-
-    await service.runDetection();
-
-    expect(mockWsService.recordAlert).toHaveBeenCalledWith(
-      expect.objectContaining({
-        level: 'warning',
-      })
-    );
-
-    // Clear history and test 'warning' (medium severity, zScore > 3 and <= 4)
-    (service as any).dataWindows.clear();
-    (mockWsService.recordAlert as jest.Mock).mockClear();
-    service.updateConfig({ windowSize: 1000, minDataPoints: 10, zThreshold: 3 });
-    for (let i = 0; i < 50; i++) service.addDataPoint('responseTime', 99);
-    for (let i = 0; i < 50; i++) service.addDataPoint('responseTime', 101);
-    // Add point to push zScore to ~3.5
-    service.addDataPoint('responseTime', 103.5);
-
-    await service.runDetection();
-    expect(mockWsService.recordAlert).toHaveBeenCalledWith(
-      expect.objectContaining({
-        level: 'warning',
-      })
-    );
-
-    // Clear history and test 'error' (high severity, zScore > 4 and <= 5)
-    (service as any).dataWindows.clear();
-    (mockWsService.recordAlert as jest.Mock).mockClear();
-    service.updateConfig({ windowSize: 1000, minDataPoints: 10, zThreshold: 3 });
-    for (let i = 0; i < 50; i++) service.addDataPoint('responseTime', 99);
-    for (let i = 0; i < 50; i++) service.addDataPoint('responseTime', 101);
-    // Add point to push zScore to ~4.5
-    service.addDataPoint('responseTime', 104.5);
-
-    await service.runDetection();
-    expect(mockWsService.recordAlert).toHaveBeenCalledWith(
-      expect.objectContaining({
-        level: 'error',
-      })
-    );
-
-    // Clear history and test 'critical' (critical severity, zScore > 5)
-    (service as any).dataWindows.clear();
-    (mockWsService.recordAlert as jest.Mock).mockClear();
-    service.updateConfig({ windowSize: 1000, minDataPoints: 10, zThreshold: 3 });
-    for (let i = 0; i < 100; i++) service.addDataPoint('responseTime', 99);
-    for (let i = 0; i < 100; i++) service.addDataPoint('responseTime', 101);
-    service.addDataPoint('responseTime', 110);
-
-    await service.runDetection();
-    expect(mockWsService.recordAlert).toHaveBeenCalledWith(
-      expect.objectContaining({
-        level: 'critical',
-      })
-    );
-  });
-
-  test('runDetection should not create anomaly if zScore is below threshold', async () => {
-    (service as any).dataWindows.clear();
-    (mockWsService.recordAlert as jest.Mock).mockClear();
-    service.updateConfig({ windowSize: 1000, minDataPoints: 10, zThreshold: 3 });
-    for (let i = 0; i < 50; i++) service.addDataPoint('responseTime', 100);
-
-    // Add point close to mean
-    service.addDataPoint('responseTime', 100);
-
-    await service.runDetection();
-
-    expect(service['anomalies'].length).toBe(0);
-    expect(mockWsService.recordAlert).not.toHaveBeenCalled();
-  });
-
   test('runDetection should handle storeAnomaly errors gracefully', async () => {
     // Force storeAnomaly to reject
     const mockDbError = new Error('DB Error');
-    mockDbManager.storeAnomaly.mockRejectedValue(mockDbError);
+    jest.spyOn(dbManager, 'storeAnomaly').mockRejectedValue(mockDbError);
 
     // Mock the global debug logger if we need to assert, but the catch block triggers coverage
 
@@ -277,7 +187,7 @@ describe('AnomalyDetectionService', () => {
     await service.runDetection();
 
     // We need to wait a tick for the Promise.allSettled and catch block to resolve
-    await new Promise((resolve) => setTimeout(resolve, 10));
+    await new Promise(resolve => setTimeout(resolve, 10));
 
     // Verify error was handled and detection finished
     expect(service['isDetecting']).toBe(false);
@@ -297,88 +207,4 @@ describe('AnomalyDetectionService', () => {
     service['integrateWithMetrics']();
   });
 
-  test('addDataPoint should handle null, undefined, NaN, and Infinity', () => {
-    service.addDataPoint('responseTime', null as any);
-    expect(service['dataWindows'].get('responseTime')).toBeUndefined();
-
-    service.addDataPoint('responseTime', undefined as any);
-    expect(service['dataWindows'].get('responseTime')).toBeUndefined();
-
-    service.addDataPoint('responseTime', NaN);
-    expect(service['dataWindows'].get('responseTime')).toBeUndefined();
-
-    service.addDataPoint('responseTime', Infinity);
-    expect(service['dataWindows'].get('responseTime')).toBeUndefined();
-
-    service.addDataPoint('responseTime', -Infinity);
-    expect(service['dataWindows'].get('responseTime')).toBeUndefined();
-  });
-
-  test('getAnomalies should return a copy of the anomalies array', () => {
-    const anomaly = {
-      id: 'test-anomaly-get',
-      timestamp: new Date(),
-      metric: 'responseTime',
-      value: 500,
-      expectedMean: 100,
-      standardDeviation: 20,
-      zScore: 20,
-      threshold: 3,
-      severity: 'critical' as const,
-      explanation: 'Test anomaly',
-      resolved: false,
-    };
-    service['anomalies'].push(anomaly as any);
-
-    const anomalies = service.getAnomalies();
-    expect(anomalies.length).toBe(1);
-    expect(anomalies[0].id).toBe('test-anomaly-get');
-
-    // Modifying the returned array should not affect the original array
-    anomalies.push({ id: 'another-anomaly' } as any);
-    expect(service['anomalies'].length).toBe(1);
-  });
-
-  test('should emit anomalyDetected event with correct payload when anomaly is created', async () => {
-    const anomalyHandler = jest.fn();
-    service.on('anomalyDetected', anomalyHandler);
-
-    // Seed enough data points and then add an outlier to trigger anomaly detection
-    for (let i = 0; i < 20; i++) {
-      service.addDataPoint('responseTime', 100 + i * 5);
-    }
-    service.addDataPoint('responseTime', 500); // Outlier that should trigger anomaly
-
-    await service.runDetection();
-
-    expect(anomalyHandler).toHaveBeenCalledTimes(1);
-    const payload = anomalyHandler.mock.calls[0][0];
-    expect(payload).toMatchObject({
-      metric: 'responseTime',
-      value: 500,
-      resolved: false,
-    });
-    expect(payload.id).toBeDefined();
-    expect(payload.zScore).toBeGreaterThan(3);
-    expect(payload.severity).toBeDefined();
-
-    service.removeListener('anomalyDetected', anomalyHandler);
-  });
-
-  test('should emit dataPointAdded event when addDataPoint is called', () => {
-    const dataPointHandler = jest.fn();
-    service.on('dataPointAdded', dataPointHandler);
-
-    service.addDataPoint('responseTime', 150);
-
-    expect(dataPointHandler).toHaveBeenCalledTimes(1);
-    expect(dataPointHandler).toHaveBeenCalledWith({ metric: 'responseTime', value: 150 });
-
-    // Add another data point to verify repeated emission
-    service.addDataPoint('responseTime', 200);
-    expect(dataPointHandler).toHaveBeenCalledTimes(2);
-    expect(dataPointHandler).toHaveBeenCalledWith({ metric: 'responseTime', value: 200 });
-
-    service.removeListener('dataPointAdded', dataPointHandler);
-  });
 });

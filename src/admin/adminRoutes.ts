@@ -108,12 +108,7 @@ adminRouter.get('/status', async (_req: Request, res: Response) => {
         provider: 'discord',
         name: b?.botUserName || b?.config?.name || 'discord',
       }));
-    } catch (error) {
-      debug('Failed to retrieve Discord bot info (non-fatal)', {
-        error: error instanceof Error ? error.message : String(error),
-        endpoint: '/status',
-      });
-    }
+    } catch {}
     res.json({
       success: true,
       slackBots,

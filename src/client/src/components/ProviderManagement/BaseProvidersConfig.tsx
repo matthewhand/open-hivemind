@@ -28,9 +28,9 @@ import { Alert } from '../DaisyUI/Alert';
 import Badge from '../DaisyUI/Badge';
 import Button from '../DaisyUI/Button';
 import Card from '../DaisyUI/Card';
-import { SkeletonList } from '../DaisyUI/Skeleton';
-import Modal, { ConfirmModal } from '../DaisyUI/Modal';
+import { ConfirmModal } from '../DaisyUI/Modal';
 import Input from '../DaisyUI/Input';
+import ModalForm from '../DaisyUI/ModalForm';
 import Select from '../DaisyUI/Select';
 import ProviderConfig from '../ProviderConfig';
 
@@ -348,8 +348,8 @@ const BaseProvidersConfig: React.FC<BaseProvidersConfigProps> = ({
 
   if (loading) {
     return (
-      <div className="min-h-[200px] p-4">
-        <SkeletonList items={4} />
+      <div className="flex justify-center items-center min-h-[200px]">
+        <span className="loading loading-spinner loading-lg" aria-hidden="true"></span>
       </div>
     );
   }
@@ -410,26 +410,28 @@ const BaseProvidersConfig: React.FC<BaseProvidersConfigProps> = ({
         </DndContext>
       )}
 
-      <Modal
-        isOpen={openDialog}
-        title={editingProvider ? 'Edit Provider' : 'Add New Provider'}
+      <ModalForm
+        open={openDialog}
+        title={
+          <div className="flex justify-between items-center w-full pr-8">
+            <span>{editingProvider ? 'Edit Provider' : 'Add New Provider'}</span>
+            {activeProviderDocs && (
+              <a
+                href={activeProviderDocs}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-sm font-normal text-primary hover:underline flex items-center gap-1"
+              >
+                Help & Guides <ArrowTopRightOnSquareIcon className="w-4 h-4" />
+              </a>
+            )}
+          </div>
+        }
         onClose={handleCloseDialog}
-        actions={[
-          { label: 'Cancel', onClick: handleCloseDialog, variant: 'ghost' },
-          { label: editingProvider ? 'Update' : 'Create', onClick: handleSaveProvider, variant: 'primary' },
-        ]}
+        onSubmit={handleSaveProvider}
+        submitLabel={editingProvider ? 'Update' : 'Create'}
       >
         <div className="space-y-4">
-          {activeProviderDocs && (
-            <a
-              href={activeProviderDocs}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-sm font-normal text-primary hover:underline flex items-center gap-1"
-            >
-              Help & Guides <ArrowTopRightOnSquareIcon className="w-4 h-4" />
-            </a>
-          )}
           <Input
             label="Provider Name"
             value={formData.name || editingProvider?.name || ''}
@@ -477,7 +479,7 @@ const BaseProvidersConfig: React.FC<BaseProvidersConfigProps> = ({
             </div>
           )}
         </div>
-      </Modal>
+      </ModalForm>
 
       {toast.show && (
         <div className="toast toast-bottom toast-center z-50" role="status" aria-live="polite">

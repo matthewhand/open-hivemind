@@ -3,7 +3,6 @@ import React, { useEffect, useState } from 'react';
 import { Alert } from './DaisyUI/Alert';
 import Button from './DaisyUI/Button';
 import Card from './DaisyUI/Card';
-import { SkeletonGrid } from './DaisyUI/Skeleton';
 import Input from './DaisyUI/Input';
 import Select from './DaisyUI/Select';
 import Toggle from './DaisyUI/Toggle';
@@ -427,7 +426,7 @@ const IntegrationsPanel: React.FC = () => {
         {/* Global LLM Settings */}
         {llmConfig && (
           <div className="collapse collapse-arrow bg-base-200/50 border border-base-200">
-            <input type="checkbox" defaultChecked={false} aria-label="Toggle Global Settings" />
+            <input type="checkbox" defaultChecked={false} />
             <div className="collapse-title text-sm font-medium flex items-center gap-2">
               <Plug className="w-4 h-4" /> Global Settings
             </div>
@@ -562,8 +561,9 @@ const IntegrationsPanel: React.FC = () => {
 
   if (loading && !config) {
     return (
-      <div className="p-6">
-        <SkeletonGrid count={4} showImage={false} />
+      <div className="flex flex-col items-center justify-center p-12 gap-4">
+        <span className="loading loading-spinner loading-lg text-primary" aria-hidden="true" />
+        <span className="text-base-content/50">Loading integrations...</span>
       </div>
     );
   }

@@ -75,7 +75,10 @@ describe('Error Handling Integration Tests', () => {
         .send(incompleteErrorReport)
         .expect(400);
 
-      expect(response.body.error).toBe('Invalid error report: missing required fields');
+      expect(response.body).toEqual({
+        error: 'Invalid error report: missing required fields',
+        required: ['message', 'correlationId'],
+      });
     });
 
     test('should handle malformed JSON in frontend error report', async () => {
@@ -162,9 +165,8 @@ describe('Error Handling Integration Tests', () => {
 
       const response = await request(app).get('/test-error').expect(500);
 
-      expect(response.body.error).toEqual(
-        expect.objectContaining({ message: expect.stringContaining('Test error for middleware') })
-      );
+      expect(response.body.error).toBeDefined();
+      expect(response.body.error.message).toContain('Test error for middleware');
     });
 
     test('should handle async errors in route handlers', async () => {
@@ -176,9 +178,8 @@ describe('Error Handling Integration Tests', () => {
 
       const response = await request(app).get('/test-async-error').expect(500);
 
-      expect(response.body.error).toEqual(
-        expect.objectContaining({ message: expect.stringContaining('Test async error') })
-      );
+      expect(response.body.error).toBeDefined();
+      expect(response.body.error.message).toContain('Test async error');
     });
   });
 

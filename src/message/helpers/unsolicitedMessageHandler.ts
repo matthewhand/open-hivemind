@@ -1,7 +1,4 @@
 import messageConfig from '@config/messageConfig';
-import { Logger } from '@common/logger';
-
-const logger = Logger.withContext('unsolicitedMessageHandler');
 
 /**
  * Determines whether to reply to an unsolicited message.
@@ -50,12 +47,9 @@ export function shouldReplyToUnsolicitedMessage(
   );
 
   if (isDirectMention || isReplyToBot || isWakeword) {
-    logger.debug('Direct query detected', {
-      botId,
-      isDirectMention,
-      isReplyToBot,
-      isWakeword,
-    });
+    console.debug(
+      `📢 DIRECT QUERY | bot: ${botId} | mention: ${isDirectMention} | reply: ${isReplyToBot} | wakeword: ${isWakeword}`
+    );
   }
 
   return true;

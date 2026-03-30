@@ -6,7 +6,6 @@ import express from 'express';
 import { Logger } from '../common/logger';
 import { correlationMiddleware, globalErrorHandler } from '../middleware/errorHandler';
 import { applyRateLimiting } from '../middleware/rateLimiter';
-import { HTTP_STATUS } from '../types/constants';
 // Error handling imports
 // Middleware imports
 import { auditMiddleware } from './middleware/audit';
@@ -17,7 +16,6 @@ import activityRouter from './routes/activity';
 import adminRouter from './routes/admin';
 import agentsRouter from './routes/agents';
 import aiAssistRouter from './routes/ai-assist';
-import apiDocsRouter from './routes/apiDocs';
 import botsRouter from './routes/bots';
 import cacheRouter from './routes/cache';
 import configRouter from './routes/config';
@@ -30,12 +28,9 @@ import healthRouter from './routes/health';
 import hotReloadRouter from './routes/hotReload';
 import importExportRouter from './routes/importExport';
 import mcpRouter from './routes/mcp';
-import onboardingRouter from './routes/onboarding';
 import personasRouter from './routes/personas';
 import sitemapRouter from './routes/sitemap';
-import providersRouter from './routes/providers';
 import specsRouter from './routes/specs';
-import webhookEventsRouter from './routes/webhookEvents';
 
 const debug = Debug('app:webui:server');
 const serverLog = Logger.withContext('webui:server');
@@ -113,16 +108,6 @@ export class WebUIServer {
       credentials: true,
       optionsSuccessStatus: 200,
       allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin'],
-      exposedHeaders: [
-        'X-RateLimit-Limit',
-        'X-RateLimit-Remaining',
-        'X-RateLimit-Reset',
-        'RateLimit-Limit',
-        'RateLimit-Remaining',
-        'RateLimit-Reset',
-        'RateLimit-Policy',
-        'Retry-After',
-      ],
       methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
       maxAge: 86400,
     };
@@ -149,14 +134,14 @@ export class WebUIServer {
         if (isParseError && req.path?.startsWith('/health/api-endpoints')) {
           const method = req.method.toUpperCase();
           if (method === 'PUT') {
-            return res.status(HTTP_STATUS.NOT_FOUND).json({
+            return res.status(404).json({
               error: 'Failed to update endpoint',
               message: 'Endpoint not found or payload invalid',
               timestamp: new Date().toISOString(),
             });
           }
 
-          return res.status(HTTP_STATUS.BAD_REQUEST).json({
+          return res.status(400).json({
             error: 'Invalid JSON payload',
             message: 'Request body could not be parsed',
             timestamp: new Date().toISOString(),
@@ -187,7 +172,6 @@ export class WebUIServer {
     // Public API routes (optional auth)
     this.app.use('/api/health', optionalAuth, healthRouter);
     this.app.use('/api/errors', optionalAuth, errorsRouter);
-    this.app.use('/api/docs', optionalAuth, apiDocsRouter);
 
     // Protected API routes (authentication required)
     this.app.use('/api/admin', authenticateToken, adminRouter);
@@ -205,9 +189,7 @@ export class WebUIServer {
     this.app.use('/api/hot-reload', authenticateToken, hotReloadRouter);
     this.app.use('/api/specs', authenticateToken, specsRouter);
     this.app.use('/api/import-export', authenticateToken, importExportRouter);
-    this.app.use('/api/webhooks', authenticateToken, webhookEventsRouter);
-    this.app.use('/api/onboarding', authenticateToken, onboardingRouter);
-    this.app.use('/api/providers', authenticateToken, providersRouter);
+    this.app.use('/api/guards', authenticateToken, guardsRouter);
 
     // WebUI application routes (serve React app)
     this.app.get('/admin/*', (req, res) => {
@@ -240,7 +222,7 @@ export class WebUIServer {
 
     // Catch-all for undefined routes
     this.app.use('*', (req, res) => {
-      res.status(HTTP_STATUS.NOT_FOUND).json({
+      res.status(404).json({
         error: 'Not Found',
         message: `Route ${req.originalUrl} not found`,
         timestamp: new Date().toISOString(),
@@ -347,7 +329,7 @@ export async function createServer(): Promise<express.Application> {
   // Backward-compatible test route shape expected by legacy integration tests.
   app.get('/api/health', (_req, res) => {
     const memoryUsage = process.memoryUsage();
-    res.status(HTTP_STATUS.OK).json({
+    res.status(200).json({
       status: 'healthy',
       timestamp: new Date().toISOString(),
       version: '1.0.0',
@@ -366,7 +348,7 @@ export async function createServer(): Promise<express.Application> {
   });
 
   app.get('/api/health/detailed', (_req, res) => {
-    res.status(HTTP_STATUS.OK).json({
+    res.status(200).json({
       status: 'healthy',
       checks: {
         database: { status: 'healthy' },

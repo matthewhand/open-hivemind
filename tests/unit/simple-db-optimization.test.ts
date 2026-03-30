@@ -49,7 +49,7 @@ describe('Database Query Optimization', () => {
 
     // Retrieve the configuration
     const retrieved = await dbManager.getBotConfiguration(id);
-    expect(retrieved).not.toBeNull();
+    expect(retrieved).toBeDefined();
     expect(retrieved!.name).toBe('Test Bot');
   });
 

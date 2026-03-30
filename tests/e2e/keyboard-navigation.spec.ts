@@ -130,7 +130,9 @@ test.describe('Keyboard Navigation', () => {
           },
         })
       ),
-      page.route('**/api/config/global', (route) => route.fulfill({ status: 200, json: {} })),
+      page.route('**/api/config/global', (route) =>
+        route.fulfill({ status: 200, json: {} })
+      ),
       page.route('**/api/csrf-token', (route) =>
         route.fulfill({ status: 200, json: { token: 'mock-csrf-token' } })
       ),
@@ -140,7 +142,9 @@ test.describe('Keyboard Navigation', () => {
       page.route('**/api/config', (route) =>
         route.fulfill({ status: 200, json: { bots: mockBots } })
       ),
-      page.route('**/api/personas', (route) => route.fulfill({ status: 200, json: mockPersonas })),
+      page.route('**/api/personas', (route) =>
+        route.fulfill({ status: 200, json: mockPersonas })
+      ),
       page.route('**/api/admin/guard-profiles', (route) =>
         route.fulfill({ status: 200, json: { data: mockGuardProfiles } })
       ),
@@ -178,12 +182,7 @@ test.describe('Keyboard Navigation', () => {
           status: 200,
           json: {
             data: [
-              {
-                id: 'tmpl-1',
-                name: 'Starter Bot',
-                description: 'A basic bot template',
-                category: 'starter',
-              },
+              { id: 'tmpl-1', name: 'Starter Bot', description: 'A basic bot template', category: 'starter' },
             ],
             total: 1,
           },
@@ -296,12 +295,7 @@ test.describe('Keyboard Navigation', () => {
 
         // Verify modal is open
         const modal = page.locator('[role="dialog"], .modal-box, .modal');
-        if (
-          await modal
-            .first()
-            .isVisible()
-            .catch(() => false)
-        ) {
+        if (await modal.first().isVisible().catch(() => false)) {
           await page.keyboard.press('Escape');
           await page.waitForTimeout(300);
 
@@ -322,12 +316,7 @@ test.describe('Keyboard Navigation', () => {
         'button[aria-label*="menu" i], button[aria-label*="hamburger" i], label[for="sidebar-drawer"], .drawer-button'
       );
 
-      if (
-        await hamburger
-          .first()
-          .isVisible()
-          .catch(() => false)
-      ) {
+      if (await hamburger.first().isVisible().catch(() => false)) {
         await hamburger.first().click();
         await page.waitForTimeout(300);
 
@@ -410,12 +399,7 @@ test.describe('Keyboard Navigation', () => {
         const submitBtn = page.locator(
           'button[type="submit"], button:has-text("Create"), button:has-text("Save")'
         );
-        if (
-          await submitBtn
-            .first()
-            .isVisible()
-            .catch(() => false)
-        ) {
+        if (await submitBtn.first().isVisible().catch(() => false)) {
           await submitBtn.first().focus();
           await page.keyboard.press('Enter');
           await page.waitForTimeout(500);
@@ -438,9 +422,7 @@ test.describe('Keyboard Navigation', () => {
           await page.waitForTimeout(150);
           const info = await page.evaluate(() => {
             const el = document.activeElement;
-            return el
-              ? `${el.tagName}:${el.getAttribute('name') || el.getAttribute('type') || ''}`
-              : '';
+            return el ? `${el.tagName}:${el.getAttribute('name') || el.getAttribute('type') || ''}` : '';
           });
           focusedElements.push(info);
         }
@@ -479,12 +461,12 @@ test.describe('Keyboard Navigation', () => {
       // Find a visible checkbox input
       const toggle = page.locator('input[type="checkbox"]:visible').first();
 
-      if ((await toggle.count()) > 0) {
+      if (await toggle.count() > 0) {
         const initialChecked = await toggle.isChecked().catch(() => false);
 
         // Focus the parent label/container which handles click events for DaisyUI toggles
         const parent = toggle.locator('xpath=ancestor::label[1]').first();
-        if ((await parent.count()) > 0) {
+        if (await parent.count() > 0) {
           await parent.focus();
         } else {
           await toggle.focus();
@@ -613,9 +595,9 @@ test.describe('Keyboard Navigation', () => {
       await page.goto('/admin/bots');
       await page.waitForTimeout(500);
 
-      const nextBtn = page
-        .locator('button:has-text("Next"), button:has-text("❯"), button[aria-label*="next" i]')
-        .first();
+      const nextBtn = page.locator(
+        'button:has-text("Next"), button:has-text("❯"), button[aria-label*="next" i]'
+      ).first();
 
       if (await nextBtn.isVisible().catch(() => false)) {
         await nextBtn.focus();
@@ -723,13 +705,17 @@ test.describe('Keyboard Navigation', () => {
             await page.waitForTimeout(100);
           }
 
-          const forwardElement = await page.evaluate(() => document.activeElement?.tagName ?? '');
+          const forwardElement = await page.evaluate(
+            () => document.activeElement?.tagName ?? ''
+          );
 
           // Shift+Tab backward
           await page.keyboard.press('Shift+Tab');
           await page.waitForTimeout(200);
 
-          const backwardElement = await page.evaluate(() => document.activeElement?.tagName ?? '');
+          const backwardElement = await page.evaluate(
+            () => document.activeElement?.tagName ?? ''
+          );
 
           // Focus should have moved (possibly to a different element)
           expect(backwardElement).toBeTruthy();
@@ -794,20 +780,18 @@ test.describe('Keyboard Navigation', () => {
       await page.waitForTimeout(500);
 
       // Find a delete button
-      const deleteBtn = page
-        .locator('button:has-text("Delete"), button[aria-label*="delete" i]')
-        .first();
+      const deleteBtn = page.locator(
+        'button:has-text("Delete"), button[aria-label*="delete" i]'
+      ).first();
 
       if (await deleteBtn.isVisible().catch(() => false)) {
         await deleteBtn.click();
         await page.waitForTimeout(500);
 
         // Look for confirmation modal
-        const confirmBtn = page
-          .locator(
-            '[role="dialog"] button:has-text("Confirm"), [role="dialog"] button:has-text("Delete"), .modal-box button:has-text("Confirm"), .modal-box button:has-text("Delete")'
-          )
-          .first();
+        const confirmBtn = page.locator(
+          '[role="dialog"] button:has-text("Confirm"), [role="dialog"] button:has-text("Delete"), .modal-box button:has-text("Confirm"), .modal-box button:has-text("Delete")'
+        ).first();
 
         if (await confirmBtn.isVisible().catch(() => false)) {
           await confirmBtn.focus();
@@ -981,9 +965,9 @@ test.describe('Keyboard Navigation', () => {
       await page.waitForTimeout(500);
 
       // Tab to the chat input
-      const chatInput = page
-        .locator('input[type="text"], textarea, [contenteditable="true"]')
-        .last();
+      const chatInput = page.locator(
+        'input[type="text"], textarea, [contenteditable="true"]'
+      ).last();
 
       if (await chatInput.isVisible().catch(() => false)) {
         await chatInput.focus();

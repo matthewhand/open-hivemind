@@ -1,0 +1,349 @@
+import React, { useEffect, useState } from 'react';
+import {
+  ArrowPathIcon,
+  PencilIcon,
+  PlusIcon,
+  ShieldCheckIcon,
+  TrashIcon,
+} from '@heroicons/react/24/outline';
+import { CommaSeparatedInput } from '../Common/CommaSeparatedInput';
+import { Alert } from '../DaisyUI/Alert';
+import Badge from '../DaisyUI/Badge';
+import Button from '../DaisyUI/Button';
+import Card from '../DaisyUI/Card';
+import Input from '../DaisyUI/Input';
+import Modal, { ConfirmModal } from '../DaisyUI/Modal';
+import Select from '../DaisyUI/Select';
+import Textarea from '../DaisyUI/Textarea';
+import Toggle from '../DaisyUI/Toggle';
+
+interface GuardrailProfile {
+  key: string;
+  name: string;
+  description?: string;
+  mcpGuard: {
+    enabled: boolean;
+    type: 'owner' | 'custom';
+    allowedUserIds?: string[];
+  };
+}
+
+const GuardrailProfileManager: React.FC = () => {
+  const [profiles, setProfiles] = useState<GuardrailProfile[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [editingProfile, setEditingProfile] = useState<GuardrailProfile | null>(null);
+  const [toastMessage, setToastMessage] = useState('');
+  const [toastType, setToastType] = useState<'success' | 'error'>('success');
+  const [confirmModal, setConfirmModal] = useState<{
+    isOpen: boolean; title: string; message: string; onConfirm: () => void;
+  }>({ isOpen: false, title: '', message: '', onConfirm: () => {} });
+
+  const [formData, setFormData] = useState({
+    key: '',
+    name: '',
+    description: '',
+    enabled: true,
+    type: 'owner' as 'owner' | 'custom',
+    allowedUserIds: [] as string[],
+  });
+
+  const fetchProfiles = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const response = await fetch('/api/config/guardrails');
+      if (!response.ok) {
+        throw new Error('Failed to fetch guardrail profiles');
+      }
+      const data = await response.json();
+      setProfiles(data.profiles || []);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to fetch profiles');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchProfiles();
+  }, []);
+
+  const openCreateDialog = () => {
+    setEditingProfile(null);
+    setFormData({
+      key: '',
+      name: '',
+      description: '',
+      enabled: true,
+      type: 'owner',
+      allowedUserIds: [],
+    });
+    setEditDialogOpen(true);
+  };
+
+  const openEditDialog = (profile: GuardrailProfile) => {
+    setEditingProfile(profile);
+    setFormData({
+      key: profile.key,
+      name: profile.name,
+      description: profile.description || '',
+      enabled: profile.mcpGuard.enabled,
+      type: profile.mcpGuard.type,
+      allowedUserIds: profile.mcpGuard.allowedUserIds || [],
+    });
+    setEditDialogOpen(true);
+  };
+
+  const handleSave = async () => {
+    try {
+      const profileData: GuardrailProfile = {
+        key: formData.key.trim().toLowerCase().replace(/\s+/g, '-'),
+        name: formData.name.trim(),
+        description: formData.description.trim() || undefined,
+        mcpGuard: {
+          enabled: formData.enabled,
+          type: formData.type,
+          allowedUserIds: formData.type === 'custom' ? formData.allowedUserIds : undefined,
+        },
+      };
+
+      if (editingProfile) {
+        const updated = profiles.map((p) => (p.key === editingProfile.key ? profileData : p));
+        const response = await fetch('/api/config/guardrails', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ profiles: updated }),
+        });
+        if (!response.ok) {
+          throw new Error('Failed to update profile');
+        }
+      } else {
+        const response = await fetch('/api/config/guardrails', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(profileData),
+        });
+        if (!response.ok) {
+          const data = await response.json();
+          throw new Error(data.error || 'Failed to create profile');
+        }
+      }
+
+      setToastMessage(`Profile ${editingProfile ? 'updated' : 'created'} successfully`);
+      setToastType('success');
+      setEditDialogOpen(false);
+      fetchProfiles();
+    } catch (err) {
+      setToastMessage(err instanceof Error ? err.message : 'Operation failed');
+      setToastType('error');
+    }
+  };
+
+  const handleDelete = async (key: string) => {
+    setConfirmModal({
+      isOpen: true,
+      title: 'Delete Profile',
+      message: `Delete profile "${key}"?`,
+      onConfirm: async () => {
+        setConfirmModal(prev => ({ ...prev, isOpen: false }));
+        try {
+          const response = await fetch(`/api/config/guardrails/${key}`, { method: 'DELETE' });
+          if (!response.ok) {
+            throw new Error('Failed to delete profile');
+          }
+          setToastMessage('Profile deleted');
+          setToastType('success');
+          fetchProfiles();
+        } catch (err) {
+          setToastMessage(err instanceof Error ? err.message : 'Delete failed');
+          setToastType('error');
+        }
+      },
+    });
+  };
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center min-h-[200px]">
+        <span className="loading loading-spinner loading-lg" aria-hidden="true"></span>
+      </div>
+    );
+  }
+
+  return (
+    <Card title="Guardrail Profiles" className="p-4">
+      <div className="flex justify-between items-center mb-6">
+        <div className="flex items-center gap-2">
+          <ShieldCheckIcon className="w-7 h-7" />
+          <h2 className="text-2xl font-bold">Guardrail Profiles</h2>
+        </div>
+        <div className="flex gap-2">
+          <Button
+            variant="ghost"
+            onClick={fetchProfiles}
+            startIcon={<ArrowPathIcon className="w-5 h-5" />}
+          >
+            Refresh
+          </Button>
+          <Button
+            variant="primary"
+            onClick={openCreateDialog}
+            startIcon={<PlusIcon className="w-5 h-5" />}
+          >
+            Add Profile
+          </Button>
+        </div>
+      </div>
+
+      {error && <Alert status="error" message={error} onClose={() => setError(null)} />}
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {profiles.map((profile) => (
+          <Card key={profile.key} className="bg-base-200 shadow-sm">
+            <div className="card-body">
+              <h3 className="card-title">{profile.name}</h3>
+              <p className="text-sm text-base-content/70">
+                {profile.description || 'No description'}
+              </p>
+              <div className="flex gap-2 mt-2">
+                <Badge variant={profile.mcpGuard.enabled ? 'success' : 'secondary'}>
+                  {profile.mcpGuard.enabled ? 'Enabled' : 'Disabled'}
+                </Badge>
+                <Badge variant="neutral">{profile.mcpGuard.type}</Badge>
+              </div>
+              <div className="card-actions justify-end mt-4">
+                <Button variant="ghost" size="sm" onClick={() => openEditDialog(profile)}>
+                  <PencilIcon className="w-4 h-4" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-error"
+                  onClick={() => handleDelete(profile.key)}
+                >
+                  <TrashIcon className="w-4 h-4" />
+                </Button>
+              </div>
+            </div>
+          </Card>
+        ))}
+      </div>
+
+      {profiles.length === 0 && !error && (
+        <div className="text-center py-12 text-base-content/70">
+          <ShieldCheckIcon className="w-12 h-12 mx-auto mb-4 opacity-50" />
+          <p>No guardrail profiles yet. Create one to get started.</p>
+        </div>
+      )}
+
+      <Modal
+        isOpen={editDialogOpen}
+        onClose={() => setEditDialogOpen(false)}
+        title={editingProfile ? 'Edit Guardrail Profile' : 'Create Guardrail Profile'}
+      >
+        <div className="space-y-4">
+          <div className="form-control">
+            <Input
+              label="Key"
+              type="text"
+              value={formData.key}
+              onChange={(e) => setFormData({ ...formData, key: e.target.value })}
+              disabled={!!editingProfile}
+              placeholder="my-profile"
+            />
+          </div>
+          <div className="form-control">
+            <Input
+              label="Name"
+              type="text"
+              value={formData.name}
+              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+            />
+          </div>
+          <div className="form-control">
+            <Textarea
+              label="Description"
+              value={formData.description}
+              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+            />
+          </div>
+          <div className="form-control">
+            <div className="flex items-center justify-between py-2">
+              <span className="label-text font-medium">Guard Enabled</span>
+              <Toggle
+                variant="primary"
+                checked={formData.enabled}
+                onChange={(e) => setFormData({ ...formData, enabled: e.target.checked })}
+              />
+            </div>
+          </div>
+          <div className="form-control">
+            <Select
+              label="Guard Type"
+              value={formData.type}
+              onChange={(e) =>
+                setFormData({ ...formData, type: e.target.value as 'owner' | 'custom' })
+              }
+              options={[
+                { value: 'owner', label: 'Owner Only' },
+                { value: 'custom', label: 'Custom Allow List' },
+              ]}
+            />
+          </div>
+          {formData.type === 'custom' && (
+            <div className="form-control">
+              <label className="label">
+                <span className="label-text">Allowed User IDs</span>
+              </label>
+              <CommaSeparatedInput
+                id="allowed-users"
+                value={formData.allowedUserIds}
+                onChange={(v) => setFormData({ ...formData, allowedUserIds: v })}
+                placeholder="user1, user2"
+              />
+              <label className="label">
+                <span className="label-text-alt">Comma-separated user IDs</span>
+              </label>
+            </div>
+          )}
+          <div className="modal-action">
+            <Button onClick={() => setEditDialogOpen(false)}>Cancel</Button>
+            <Button variant="primary" onClick={handleSave}>
+              Save
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      {toastMessage && (
+        <div className="toast toast-bottom toast-center z-50" role="status" aria-live="polite">
+          <div className={`alert ${toastType === 'success' ? 'alert-success' : 'alert-error'}`}>
+            <span>{toastMessage}</span>
+            <button
+              className="btn btn-sm btn-ghost"
+              onClick={() => setToastMessage('')}
+              aria-label="Close message"
+            >
+              ✕
+            </button>
+          </div>
+        </div>
+      )}
+
+      <ConfirmModal
+        isOpen={confirmModal.isOpen}
+        onClose={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))}
+        title={confirmModal.title}
+        message={confirmModal.message}
+        onConfirm={confirmModal.onConfirm}
+        confirmVariant="error"
+        confirmText="Delete"
+        cancelText="Cancel"
+      />
+    </Card>
+  );
+};
+
+export default GuardrailProfileManager;

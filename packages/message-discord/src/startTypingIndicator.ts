@@ -9,10 +9,8 @@
  * @param {Function} stopCondition - A function that returns a boolean indicating whether to stop the typing indicator.
  */
 import Debug from 'debug';
-import { Logger } from '@common/logger';
 
 const debug = Debug('app:sendTyping');
-const logger = Logger.withContext('startTypingIndicator');
 
 /**
  * Utility to Start a Typing Indicator in a Discord Channel
@@ -35,25 +33,23 @@ export function sendTyping(channel: any, stopCondition: () => boolean): NodeJS.T
     debug('Invalid channel object provided.');
     return null as any;
   }
-  logger.debug('Typing loop started for channel', { channelId: channel.id });
+  console.debug('Typing loop started for channel: ' + channel.id);
   const typingInterval = setInterval(() => {
     if (stopCondition()) {
       clearInterval(typingInterval);
       debug('Typing indicator stopped.');
       return;
     }
-    logger.debug('Sending typing indicator to channel', {
-      channelName: channel.name,
-      channelId: channel.id,
-    });
+    console.debug(
+      'Sending typing indicator to channel: ' + channel.name + ' (ID: ' + channel.id + ')'
+    );
     channel.sendTyping();
     debug('Typing indicator sent.');
   }, 15000);
 
-  logger.debug('Sending typing indicator to channel', {
-    channelName: channel.name,
-    channelId: channel.id,
-  });
+  console.debug(
+    'Sending typing indicator to channel: ' + channel.name + ' (ID: ' + channel.id + ')'
+  );
   channel.sendTyping();
   debug('sendTyping: Interval started');
   return typingInterval;

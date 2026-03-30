@@ -3,7 +3,6 @@ import React, { useState, useEffect } from 'react';
 import Card from './DaisyUI/Card';
 import Badge from './DaisyUI/Badge';
 import Button from './DaisyUI/Button';
-import { SkeletonList } from './DaisyUI/Skeleton';
 import Modal, { ConfirmModal } from './DaisyUI/Modal';
 import Input from './DaisyUI/Input';
 import { Alert } from './DaisyUI/Alert';
@@ -161,8 +160,9 @@ const SecureConfigManager: React.FC<SecureConfigManagerProps> = ({ onRefresh }) 
   if (loading) {
     return (
       <Card>
-        <div className="py-6 px-4">
-          <SkeletonList items={5} />
+        <div className="flex justify-center items-center py-8">
+          <span className="loading loading-spinner loading-lg" aria-hidden="true"></span>
+          <p className="ml-4">Loading secure configurations...</p>
         </div>
       </Card>
     );

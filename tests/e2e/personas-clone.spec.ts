@@ -31,12 +31,7 @@ test.describe('Personas Cloning', () => {
     await page.route('**/api/config/llm-status', async (route) => {
       await route.fulfill({
         status: 200,
-        json: {
-          defaultConfigured: true,
-          defaultProviders: [],
-          botsMissingLlmProvider: [],
-          hasMissing: false,
-        },
+        json: { defaultConfigured: true, defaultProviders: [], botsMissingLlmProvider: [], hasMissing: false },
       });
     });
     await page.route('**/api/config/global', async (route) => {

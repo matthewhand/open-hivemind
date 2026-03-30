@@ -3,9 +3,6 @@ import { isSafeUrl } from '@hivemind/shared-types';
 import type { ILlmProvider } from '@llm/interfaces/ILlmProvider';
 import { LLMResponse } from '@llm/interfaces/LLMResponse';
 import type { IMessage } from '@message/interfaces/IMessage';
-import { Logger } from '@common/logger';
-
-const logger = Logger.withContext('OpenSwarmProvider');
 
 export class OpenSwarmProvider implements ILlmProvider {
   name = 'openswarm';
@@ -56,7 +53,7 @@ export class OpenSwarmProvider implements ILlmProvider {
 
       return response.data.choices[0]?.message?.content || 'No response';
     } catch (error: any) {
-      logger.error('OpenSwarm API error', { error: error.message });
+      console.error('OpenSwarm API error:', error.message);
       return `Error: ${error.message}`;
     }
   }

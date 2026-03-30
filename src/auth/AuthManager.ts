@@ -4,14 +4,7 @@ import Debug from 'debug';
 import jwt from 'jsonwebtoken';
 import { AuthenticationError, ValidationError } from '@src/types/errorClasses';
 import { SecureConfigManager } from '@config/SecureConfigManager';
-import type {
-  AuthToken,
-  JWTPayload,
-  LoginCredentials,
-  RegisterData,
-  User,
-  UserRole,
-} from './types';
+import type { AuthToken, LoginCredentials, RegisterData, User, UserRole } from './types';
 
 const debug = Debug('app:AuthManager');
 
@@ -76,16 +69,15 @@ export class AuthManager {
 
     // Only store securely using SecureConfigManager if not in test environment
     if (process.env.NODE_ENV !== 'test') {
-      SecureConfigManager.getInstance()
-        .then((secureConfig) =>
-          secureConfig.storeConfig({
-            id: `${prefix}_secret`,
-            name: `${prefix} Secret`,
-            type: 'auth',
-            data: { secret },
-            createdAt: new Date().toISOString(),
-          })
-        )
+      const secureConfig = SecureConfigManager.getInstance();
+      secureConfig
+        .storeConfig({
+          id: `${prefix}_secret`,
+          name: `${prefix} Secret`,
+          type: 'auth',
+          data: { secret },
+          createdAt: new Date().toISOString(),
+        } as any)
         .catch((err) => {
           debug(`Failed to store ${prefix} secret securely:`, err);
         });
@@ -119,11 +111,11 @@ export class AuthManager {
     if (!password) {
       password = crypto.randomBytes(16).toString('hex');
       this.generatedPassword = password;
-      debug('WARN:', '================================================================');
-      debug('WARN:', 'WARNING: No ADMIN_PASSWORD environment variable found.');
-      debug('WARN:', `Generated temporary admin password: ${password}`);
-      debug('WARN:', 'Please change this password immediately or set ADMIN_PASSWORD.');
-      debug('WARN:', '================================================================');
+      console.warn('================================================================');
+      console.warn('WARNING: No ADMIN_PASSWORD environment variable found.');
+      console.warn(`Generated temporary admin password: ${password}`);
+      console.warn('Please change this password immediately or set ADMIN_PASSWORD.');
+      console.warn('================================================================');
     }
 
     const defaultAdmin: User = {
@@ -272,7 +264,7 @@ export class AuthManager {
     }
 
     try {
-      const payload = jwt.verify(refreshToken, this.jwtRefreshSecret) as JWTPayload;
+      const payload = jwt.verify(refreshToken, this.jwtRefreshSecret) as any;
       const user = this.users.get(payload.userId);
 
       if (!user || !user.isActive) {
@@ -334,7 +326,7 @@ export class AuthManager {
   /**
    * Verify JWT access token
    */
-  public verifyAccessToken(token: string): string | jwt.JwtPayload {
+  public verifyAccessToken(token: string): any {
     try {
       return jwt.verify(token, this.jwtSecret);
     } catch {

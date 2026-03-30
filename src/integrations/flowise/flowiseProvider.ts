@@ -4,16 +4,8 @@ import { getFlowiseResponse } from '@integrations/flowise/flowiseRestClient';
 import { getFlowiseSdkResponse } from '@integrations/flowise/flowiseSdkClient';
 import type { ILlmProvider } from '@llm/interfaces/ILlmProvider';
 import type { IMessage } from '@message/interfaces/IMessage';
-import { getCircuitBreaker } from '@common/CircuitBreaker';
 
 const flowiseDebug = Debug('app:flowiseProvider');
-
-const circuitBreaker = getCircuitBreaker({
-  name: 'flowise',
-  failureThreshold: 5,
-  resetTimeoutMs: 30_000,
-  halfOpenMaxAttempts: 3,
-});
 
 export class FlowiseProvider implements ILlmProvider {
   name = 'flowise';
@@ -46,32 +38,30 @@ export class FlowiseProvider implements ILlmProvider {
       return 'Sorry, I am missing some context to respond. Please try again.';
     }
 
-    return circuitBreaker.execute(async () => {
-      try {
-        flowiseDebug(`Sending request to Flowise for channel ${channelId}`);
-        let response: string;
+    try {
+      flowiseDebug(`Sending request to Flowise for channel ${channelId}`);
+      let response: string;
 
-        const useRest =
-          this.config.useRest !== undefined
-            ? this.config.useRest
-            : flowiseConfig.get('FLOWISE_USE_REST');
+      const useRest =
+        this.config.useRest !== undefined
+          ? this.config.useRest
+          : flowiseConfig.get('FLOWISE_USE_REST');
 
-        if (useRest) {
-          response = await getFlowiseResponse(channelId, userMessage);
-        } else {
-          const chatflowId =
-            this.config.chatflowId || flowiseConfig.get('FLOWISE_CONVERSATION_CHATFLOW_ID');
-          if (!chatflowId) {
-            throw new Error('FLOWISE_CONVERSATION_CHATFLOW_ID is not set.');
-          }
-          response = await getFlowiseSdkResponse(userMessage, chatflowId);
+      if (useRest) {
+        response = await getFlowiseResponse(channelId, userMessage);
+      } else {
+        const chatflowId =
+          this.config.chatflowId || flowiseConfig.get('FLOWISE_CONVERSATION_CHATFLOW_ID');
+        if (!chatflowId) {
+          throw new Error('FLOWISE_CONVERSATION_CHATFLOW_ID is not set.');
         }
-        return response;
-      } catch (error) {
-        flowiseDebug('Error getting response from Flowise:', error);
-        throw error;
+        response = await getFlowiseSdkResponse(userMessage, chatflowId);
       }
-    });
+      return response;
+    } catch (error) {
+      flowiseDebug('Error getting response from Flowise:', error);
+      return 'There was an error communicating with the AI service.';
+    }
   }
 
   async generateCompletion(prompt: string): Promise<string> {

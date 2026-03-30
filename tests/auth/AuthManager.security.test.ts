@@ -12,14 +12,27 @@ jest.mock('bcrypt', () => ({
 describe('AuthManager Security Fix', () => {
   let authManager: AuthManager;
   const originalEnv = process.env;
+  let warnSpy: jest.SpyInstance;
+
   beforeEach(() => {
     jest.resetModules();
     process.env = { ...originalEnv };
+    // Clear singleton instance
+    // Note: Since we use resetModules, AuthManager class is re-imported each time if we require it inside test
+    // But since we import it at top level, we need to access the class from the require in the test or clear the instance on the class.
+    // However, TypeScript import is static.
+    // Let's use require inside the test to get a fresh module if possible, or just clear the static instance.
+
+    // We can't easily clear the static instance of the top-level imported class if it's private.
+    // But we can use (AuthManager as any).instance = null;
     (AuthManager as any).instance = null;
+
+    warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
   });
 
   afterEach(() => {
     process.env = originalEnv;
+    warnSpy.mockRestore();
     jest.clearAllMocks();
   });
 
@@ -38,7 +51,10 @@ describe('AuthManager Security Fix', () => {
     // Check if bcrypt.hashSync was called with the correct password
     expect(bcrypt.hashSync).toHaveBeenCalledWith('mysecurepassword', 12);
 
-    // Warning logging is now via structured Debug logger, not console.warn
+    // Should NOT warn about generated password
+    expect(warnSpy).not.toHaveBeenCalledWith(
+      expect.stringContaining('Generated temporary admin password')
+    );
   });
 
   it('should generate random password if ADMIN_PASSWORD is missing in production', () => {
@@ -61,7 +77,13 @@ describe('AuthManager Security Fix', () => {
     // Verify password format (hex string of 16 bytes = 32 chars)
     expect(generatedPassword).toMatch(/^[0-9a-f]{32}$/);
 
-    // Warning logging is now via structured Debug logger, not console.warn
+    // Verify warning was logged
+    expect(warnSpy).toHaveBeenCalledWith(
+      expect.stringContaining('WARNING: No ADMIN_PASSWORD environment variable found.')
+    );
+    expect(warnSpy).toHaveBeenCalledWith(
+      expect.stringContaining(`Generated temporary admin password: ${generatedPassword}`)
+    );
   });
 
   it('should still use default password in test environment', () => {
@@ -72,6 +94,7 @@ describe('AuthManager Security Fix', () => {
 
     // In test environment, it doesn't use bcrypt.hashSync, it uses 'test-admin-hash' directly
     expect(bcrypt.hashSync).not.toHaveBeenCalled();
+    expect(warnSpy).not.toHaveBeenCalled();
 
     const admin = authManager.getUser('admin');
     // The implementation details of how passwordHash is stored in test env might vary,

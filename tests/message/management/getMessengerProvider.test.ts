@@ -70,10 +70,12 @@ describe('getMessengerProvider', () => {
       process.env.MESSAGE_PROVIDER = 'discord';
       const providers = getMessengerProvider();
 
+      expect(providers).toBeDefined();
       expect(Array.isArray(providers)).toBe(true);
       expect(providers.length).toBeGreaterThan(0);
 
       const provider = providers[0];
+      expect(provider).toBeDefined();
       expect(typeof provider.sendMessageToChannel).toBe('function');
       expect(typeof provider.getClientId).toBe('function');
     });
@@ -82,10 +84,12 @@ describe('getMessengerProvider', () => {
       process.env.MESSAGE_PROVIDER = 'slack';
       const providers = getMessengerProvider();
 
+      expect(providers).toBeDefined();
       expect(Array.isArray(providers)).toBe(true);
       expect(providers.length).toBeGreaterThan(0);
 
       const provider = providers[0];
+      expect(provider).toBeDefined();
       expect(typeof provider.sendMessageToChannel).toBe('function');
       expect(typeof provider.getClientId).toBe('function');
     });
@@ -94,6 +98,7 @@ describe('getMessengerProvider', () => {
       process.env.MESSAGE_PROVIDER = 'discord,slack';
       const providers = getMessengerProvider();
 
+      expect(providers).toBeDefined();
       expect(Array.isArray(providers)).toBe(true);
       expect(providers.length).toBeGreaterThanOrEqual(1);
     });
@@ -110,6 +115,7 @@ describe('getMessengerProvider', () => {
       delete process.env.MESSAGE_PROVIDER;
 
       const providers = getMessengerProvider();
+      expect(providers).toBeDefined();
       expect(Array.isArray(providers)).toBe(true);
     });
   });
@@ -139,7 +145,7 @@ describe('getMessengerProvider', () => {
       const provider = providers[0];
 
       const result = await provider.sendMessageToChannel('test-channel', 'test message');
-      expect(result).not.toBeUndefined();
+      expect(result).toBeDefined();
       expect(mockDiscordService.sendMessageToChannel).toHaveBeenCalledWith(
         'test-channel',
         'test message'
@@ -152,6 +158,7 @@ describe('getMessengerProvider', () => {
       const provider = providers[0];
 
       const clientId = provider.getClientId();
+      expect(clientId).toBeDefined();
       expect(typeof clientId).toBe('string');
       expect(mockSlackService.getClientId).toHaveBeenCalled();
     });

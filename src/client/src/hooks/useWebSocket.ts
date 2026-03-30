@@ -8,7 +8,6 @@ interface MessageFlowEvent {
   timestamp: string;
   botName: string;
   provider: string;
-  llmProvider?: string;
   channelId: string;
   userId: string;
   messageType: 'incoming' | 'outgoing';

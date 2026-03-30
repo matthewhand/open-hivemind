@@ -187,7 +187,7 @@ describe('Health Routes - API Monitoring', () => {
 
       expect(response.status).toBe(400);
       expect(response.body).toHaveProperty('error');
-      expect(response.body.error).toBe('Validation failed');
+      expect(response.body.error).toBe('Missing required fields');
     });
 
     it('should set default values for optional fields', async () => {

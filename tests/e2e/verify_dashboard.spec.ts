@@ -88,22 +88,13 @@ test.describe('Dashboard Performance & Verification', () => {
 
     // Mock other common endpoints to prevent errors
     await page.route('**/api/config/llm-status', async (route) => {
-      await route.fulfill({
-        json: {
-          defaultConfigured: false,
-          defaultProviders: [],
-          botsMissingLlmProvider: [],
-          hasMissing: false,
-        },
-      });
+      await route.fulfill({ json: { defaultConfigured: false, defaultProviders: [], botsMissingLlmProvider: [], hasMissing: false } });
     });
     await page.route('**/api/csrf-token', async (route) => {
       await route.fulfill({ json: { token: 'mock-token' } });
     });
     await page.route('**/api/health', async (route) => route.fulfill({ json: { status: 'ok' } }));
-    await page.route('**/api/demo/status', async (route) =>
-      route.fulfill({ json: { active: false } })
-    );
+    await page.route('**/api/demo/status', async (route) => route.fulfill({ json: { active: false } }));
   });
 
   test('Dashboard loads bots correctly', async ({ page }) => {

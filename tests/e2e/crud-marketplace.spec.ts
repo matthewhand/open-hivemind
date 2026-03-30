@@ -68,12 +68,7 @@ test.describe('Marketplace CRUD Lifecycle', () => {
       page.route('**/api/config/llm-status', (route) =>
         route.fulfill({
           status: 200,
-          json: {
-            defaultConfigured: true,
-            defaultProviders: [],
-            botsMissingLlmProvider: [],
-            hasMissing: false,
-          },
+          json: { defaultConfigured: true, defaultProviders: [], botsMissingLlmProvider: [], hasMissing: false },
         })
       ),
       page.route('**/api/config/global', (route) => route.fulfill({ status: 200, json: {} })),
@@ -82,18 +77,14 @@ test.describe('Marketplace CRUD Lifecycle', () => {
       page.route('**/api/csrf-token', (route) =>
         route.fulfill({ status: 200, json: { token: 'mock-csrf-token' } })
       ),
-      page.route('**/api/health', (route) =>
-        route.fulfill({ status: 200, json: { status: 'ok' } })
-      ),
+      page.route('**/api/health', (route) => route.fulfill({ status: 200, json: { status: 'ok' } })),
       page.route('**/api/dashboard/api/status', (route) =>
         route.fulfill({ status: 200, json: { bots: [], uptime: 100 } })
       ),
       page.route('**/api/admin/guard-profiles', (route) =>
         route.fulfill({ status: 200, json: { data: [] } })
       ),
-      page.route('**/api/demo/status', (route) =>
-        route.fulfill({ status: 200, json: { active: false } })
-      ),
+      page.route('**/api/demo/status', (route) => route.fulfill({ status: 200, json: { active: false } })),
     ]);
   }
 
@@ -124,11 +115,7 @@ test.describe('Marketplace CRUD Lifecycle', () => {
     await page.goto('/admin/marketplace');
     await expect(page.getByText('openai-provider').first()).toBeVisible();
 
-    const searchInput = page
-      .locator(
-        'input[placeholder*="search" i], input[placeholder*="filter" i], input[type="search"]'
-      )
-      .first();
+    const searchInput = page.locator('input[placeholder*="search" i], input[placeholder*="filter" i], input[type="search"]').first();
     if ((await searchInput.count()) > 0) {
       await searchInput.fill('redis');
       await page.waitForTimeout(300);
@@ -191,27 +178,19 @@ test.describe('Marketplace CRUD Lifecycle', () => {
     await expect(page.locator('body')).toBeVisible();
 
     // Look for install from URL button
-    const installBtn = page
-      .locator('button:has-text("Install"), button:has-text("Add"), button:has-text("URL")')
-      .first();
+    const installBtn = page.locator('button:has-text("Install"), button:has-text("Add"), button:has-text("URL")').first();
     if ((await installBtn.count()) > 0) {
       await installBtn.click();
       await page.waitForTimeout(500);
 
       const modal = page.locator('.modal-box, [role="dialog"], dialog.modal[open]').first();
       if ((await modal.count()) > 0) {
-        const urlInput = modal
-          .locator(
-            'input[placeholder*="url" i], input[placeholder*="github" i], input[type="url"], input'
-          )
-          .first();
+        const urlInput = modal.locator('input[placeholder*="url" i], input[placeholder*="github" i], input[type="url"], input').first();
         if ((await urlInput.count()) > 0) {
           await urlInput.fill('https://github.com/user/custom-tool');
           await page.waitForTimeout(200);
 
-          const submitBtn = modal
-            .locator('button:has-text("Install"), button:has-text("Submit"), button[type="submit"]')
-            .first();
+          const submitBtn = modal.locator('button:has-text("Install"), button:has-text("Submit"), button[type="submit"]').first();
           if ((await submitBtn.count()) > 0) {
             await submitBtn.click();
             await page.waitForTimeout(500);
@@ -229,9 +208,7 @@ test.describe('Marketplace CRUD Lifecycle', () => {
     await page.goto('/admin/marketplace');
     await expect(page.locator('body')).toBeVisible();
 
-    const installBtn = page
-      .locator('button:has-text("Install"), button:has-text("Add"), button:has-text("URL")')
-      .first();
+    const installBtn = page.locator('button:has-text("Install"), button:has-text("Add"), button:has-text("URL")').first();
     if ((await installBtn.count()) > 0) {
       await installBtn.click();
       await page.waitForTimeout(500);
@@ -239,9 +216,7 @@ test.describe('Marketplace CRUD Lifecycle', () => {
       const modal = page.locator('.modal-box, [role="dialog"], dialog.modal[open]').first();
       if ((await modal.count()) > 0) {
         // Submit button should be disabled when URL is empty
-        const submitBtn = modal
-          .locator('button:has-text("Install"), button:has-text("Submit"), button[type="submit"]')
-          .first();
+        const submitBtn = modal.locator('button:has-text("Install"), button:has-text("Submit"), button[type="submit"]').first();
         if ((await submitBtn.count()) > 0) {
           await expect(submitBtn).toBeDisabled();
         }
@@ -267,15 +242,11 @@ test.describe('Marketplace CRUD Lifecycle', () => {
     await page.goto('/admin/marketplace');
 
     // discord-connector has installedVersion 2.0.0 but version 2.0.1 (update available)
-    const card = page
-      .locator('.card, [class*="package"]', { hasText: 'discord-connector' })
-      .first();
+    const card = page.locator('.card, [class*="package"]', { hasText: 'discord-connector' }).first();
     if ((await card.count()) > 0) {
       await expect(card).toBeVisible();
 
-      const updateBtn = card
-        .locator('button:has-text("Update"), button:has-text("Upgrade")')
-        .first();
+      const updateBtn = card.locator('button:has-text("Update"), button:has-text("Upgrade")').first();
       if ((await updateBtn.count()) > 0) {
         await updateBtn.click();
         await page.waitForTimeout(500);
@@ -304,13 +275,9 @@ test.describe('Marketplace CRUD Lifecycle', () => {
 
     await page.goto('/admin/marketplace');
 
-    const card = page
-      .locator('.card, [class*="package"]', { hasText: 'discord-connector' })
-      .first();
+    const card = page.locator('.card, [class*="package"]', { hasText: 'discord-connector' }).first();
     if ((await card.count()) > 0) {
-      const uninstallBtn = card
-        .locator('button:has-text("Uninstall"), button:has-text("Remove")')
-        .first();
+      const uninstallBtn = card.locator('button:has-text("Uninstall"), button:has-text("Remove")').first();
       if ((await uninstallBtn.count()) > 0) {
         await uninstallBtn.click();
         await page.waitForTimeout(500);
@@ -375,27 +342,19 @@ test.describe('Marketplace CRUD Lifecycle', () => {
     await page.goto('/admin/marketplace');
     await expect(page.locator('body')).toBeVisible();
 
-    const installBtn = page
-      .locator('button:has-text("Install"), button:has-text("Add"), button:has-text("URL")')
-      .first();
+    const installBtn = page.locator('button:has-text("Install"), button:has-text("Add"), button:has-text("URL")').first();
     if ((await installBtn.count()) > 0) {
       await installBtn.click();
       await page.waitForTimeout(500);
 
       const modal = page.locator('.modal-box, [role="dialog"], dialog.modal[open]').first();
       if ((await modal.count()) > 0) {
-        const urlInput = modal
-          .locator(
-            'input[placeholder*="url" i], input[placeholder*="github" i], input[type="url"], input'
-          )
-          .first();
+        const urlInput = modal.locator('input[placeholder*="url" i], input[placeholder*="github" i], input[type="url"], input').first();
         if ((await urlInput.count()) > 0) {
           await urlInput.fill('https://github.com/invalid/nonexistent-repo');
           await page.waitForTimeout(200);
 
-          const submitBtn = modal
-            .locator('button:has-text("Install"), button:has-text("Submit"), button[type="submit"]')
-            .first();
+          const submitBtn = modal.locator('button:has-text("Install"), button:has-text("Submit"), button[type="submit"]').first();
           if ((await submitBtn.count()) > 0) {
             await submitBtn.click();
             await page.waitForTimeout(500);
@@ -416,21 +375,13 @@ test.describe('Marketplace CRUD Lifecycle', () => {
     await page.goto('/admin/marketplace');
     await expect(page.getByText('openai-provider').first()).toBeVisible();
 
-    const searchInput = page
-      .locator(
-        'input[placeholder*="search" i], input[placeholder*="filter" i], input[type="search"]'
-      )
-      .first();
+    const searchInput = page.locator('input[placeholder*="search" i], input[placeholder*="filter" i], input[type="search"]').first();
     if ((await searchInput.count()) > 0) {
       await searchInput.fill('zzz-nonexistent-package-xyz');
       await page.waitForTimeout(300);
 
       // Should show empty state or no results message
-      const emptyText = page
-        .locator(
-          'text=/no.*package/i, text=/no.*result/i, text=/nothing.*found/i, text=/no.*match/i'
-        )
-        .first();
+      const emptyText = page.locator('text=/no.*package/i, text=/no.*result/i, text=/nothing.*found/i, text=/no.*match/i').first();
       if ((await emptyText.count()) > 0) {
         await expect(emptyText).toBeVisible();
       }

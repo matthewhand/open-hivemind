@@ -60,13 +60,13 @@ export const SearchFilterBar: React.FC<SearchFilterBarProps> = ({
   }, [onSearchChange, onClear]);
 
   return (
-    <div className={`flex flex-col sm:flex-row gap-4 justify-between items-center bg-base-100 p-4 rounded-lg shadow-sm border border-base-200 ${className}`} role="search" aria-label="Search and filter">
+    <div className={`flex flex-col sm:flex-row gap-4 justify-between items-center bg-base-100 p-4 rounded-lg shadow-sm border border-base-200 ${className}`}>
       <div className="w-full sm:flex-1">
         <Input
           placeholder={searchPlaceholder}
           value={localSearch}
           onChange={(e) => setLocalSearch(e.target.value)}
-          prefix={<Search className="w-4 h-4 text-base-content/50" aria-hidden="true" />}
+          prefix={<Search className="w-4 h-4 text-base-content/50" />}
           className="pl-10 pr-10 w-full"
           size="sm"
           suffix={

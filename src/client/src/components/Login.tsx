@@ -63,19 +63,16 @@ const Login: React.FC = () => {
             </div>
           )}
 
-          <div aria-live="assertive" aria-atomic="true">
-            {error && (
-              <Alert status="error" message={error} className="mb-4" />
-            )}
-          </div>
+          {error && (
+            <Alert status="error" message={error} className="mb-4" />
+          )}
 
-          <form onSubmit={handleSubmit} className="space-y-4" aria-label="Sign in form">
+          <form onSubmit={handleSubmit} className="space-y-4">
             <div className="form-control">
-              <label htmlFor="login-username" className="label">
+              <label className="label">
                 <span className="label-text">Username *</span>
               </label>
               <Input
-                id="login-username"
                 name="username"
                 type="text"
                 value={formData.username}
@@ -88,11 +85,10 @@ const Login: React.FC = () => {
             </div>
 
             <div className="form-control">
-              <label htmlFor="login-password" className="label">
+              <label className="label">
                 <span className="label-text">Password *</span>
               </label>
               <Input
-                id="login-password"
                 name="password"
                 type="password"
                 value={formData.password}

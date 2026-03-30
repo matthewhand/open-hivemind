@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { test, expect } from '@playwright/test';
 import { setupAuth } from './test-utils';
 
 test('Visual Proof: Barrel Export Audit and Tree-Shaking Optimisation', async ({ page }) => {
@@ -11,12 +11,7 @@ test('Visual Proof: Barrel Export Audit and Tree-Shaking Optimisation', async ({
   await page.route('**/api/config/llm-status', (route) =>
     route.fulfill({
       status: 200,
-      json: {
-        defaultConfigured: true,
-        defaultProviders: [],
-        botsMissingLlmProvider: [],
-        hasMissing: false,
-      },
+      json: { defaultConfigured: true, defaultProviders: [], botsMissingLlmProvider: [], hasMissing: false },
     })
   );
   await page.route('**/api/config/global', (route) => route.fulfill({ status: 200, json: {} }));

@@ -82,7 +82,7 @@ const MCPProviderManagerComponent: React.FC<MCPProviderManagerProps> = ({ classN
 
       setProviders(providersWithStatus);
     } catch (error) {
-      errorToast('Load Failed', 'Failed to load MCP providers');
+      console.error('Failed to load providers:', error);
     }
   };
 
@@ -91,7 +91,7 @@ const MCPProviderManagerComponent: React.FC<MCPProviderManagerProps> = ({ classN
       const availableTemplates = manager.getTemplates();
       setTemplates(availableTemplates);
     } catch (error) {
-      errorToast('Templates', 'Failed to load provider templates');
+      console.error('Failed to load templates:', error);
     }
   };
 
@@ -136,7 +136,7 @@ const MCPProviderManagerComponent: React.FC<MCPProviderManagerProps> = ({ classN
           await manager.removeProvider(providerId);
           await loadProviders();
         } catch (error) {
-          /* errorToast below */
+          console.error('Failed to delete provider:', error);
           errorToast('Delete Failed', 'Failed to delete provider: ' + (error instanceof Error ? error.message : String(error)));
         }
       },
@@ -152,7 +152,7 @@ const MCPProviderManagerComponent: React.FC<MCPProviderManagerProps> = ({ classN
       await manager.startProvider(providerId);
       await loadProviders();
     } catch (error) {
-      /* errorToast below */
+      console.error('Failed to start provider:', error);
       errorToast('Start Failed', 'Failed to start provider: ' + (error instanceof Error ? error.message : String(error)));
     } finally {
       setProviders(prev => prev.map(p =>
@@ -170,7 +170,7 @@ const MCPProviderManagerComponent: React.FC<MCPProviderManagerProps> = ({ classN
       await manager.stopProvider(providerId);
       await loadProviders();
     } catch (error) {
-      /* errorToast below */
+      console.error('Failed to stop provider:', error);
       errorToast('Stop Failed', 'Failed to stop provider: ' + (error instanceof Error ? error.message : String(error)));
     } finally {
       setProviders(prev => prev.map(p =>
@@ -191,7 +191,7 @@ const MCPProviderManagerComponent: React.FC<MCPProviderManagerProps> = ({ classN
         [providerId]: result,
       }));
     } catch (error) {
-      /* errorToast below */
+      console.error('Failed to test provider:', error);
       errorToast('Test Failed', 'Failed to test provider: ' + (error instanceof Error ? error.message : String(error)));
     } finally {
       setProviders(prev => prev.map(p =>
@@ -213,7 +213,7 @@ const MCPProviderManagerComponent: React.FC<MCPProviderManagerProps> = ({ classN
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
     } catch (error) {
-      /* errorToast below */
+      console.error('Failed to export providers:', error);
       errorToast('Export Failed', 'Failed to export providers');
     }
   };
@@ -230,7 +230,7 @@ const MCPProviderManagerComponent: React.FC<MCPProviderManagerProps> = ({ classN
         await loadProviders();
         successToast('Import Successful', 'Providers imported successfully');
       } catch (error) {
-        /* errorToast below */
+        console.error('Failed to import providers:', error);
         errorToast('Import Failed', 'Failed to import providers: ' + (error instanceof Error ? error.message : String(error)));
       }
     };

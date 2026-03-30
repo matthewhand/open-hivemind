@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
-import { LoadingSpinnerWithMessage } from './DaisyUI/Loading';
+import LoadingSpinnerComponent from './LoadingSpinner';
 import { useInactivity } from '../hooks/useInactivity';
 
 interface ScreensaverProps {
@@ -69,7 +69,7 @@ const Screensaver: React.FC<ScreensaverProps> = ({
           transform: 'translate(-50%, -50%)',
         }}
       >
-        <LoadingSpinnerWithMessage message="" size="lg" />
+        <LoadingSpinnerComponent message="" size="lg" />
       </div>
     </div>
   );

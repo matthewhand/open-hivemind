@@ -71,6 +71,7 @@ describe('flowiseConfig', () => {
 
     it('should validate schema with different validation options', () => {
       expect(() => flowiseConfig.validate({ allowed: 'warn' })).not.toThrow();
+      // expect(() => flowiseConfig.validate({ format: 'json' })).not.toThrow(); // format is not a valid option
     });
 
     it('should handle validation with populated configuration', () => {

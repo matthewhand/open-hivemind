@@ -12,8 +12,8 @@ describe('convertOpusToWav', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockFs.promises = {
-      writeFile: jest.fn().mockResolvedValue(undefined),
-      unlink: jest.fn().mockResolvedValue(undefined),
+      writeFile: jest.fn(),
+      unlink: jest.fn(),
     } as any;
   });
 

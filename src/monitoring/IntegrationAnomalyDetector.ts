@@ -209,18 +209,8 @@ export class IntegrationAnomalyDetector extends EventEmitter {
     if (this.checkInterval) {
       clearInterval(this.checkInterval);
       this.checkInterval = null;
-      debug('Integration anomaly detection stopped');
     }
     this.emit('detectionStopped');
-  }
-
-  /**
-   * Shutdown and cleanup resources
-   */
-  public shutdown(): void {
-    this.stopDetection();
-    this.removeAllListeners();
-    debug('IntegrationAnomalyDetector shutdown completed');
   }
 
   /**

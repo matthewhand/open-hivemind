@@ -1,9 +1,4 @@
 import axios from 'axios';
-import Debug from 'debug';
-import { Logger } from '@common/logger';
-
-const debug = Debug('app:message:helpers:processing:handleImageMessage');
-const logger = Logger.withContext('handleImageMessage');
 
 /**
  * A map that stores the association between prediction IDs and image URLs.
@@ -38,8 +33,7 @@ export async function createPrediction(imageUrl: string): Promise<any> {
     });
     return response.data;
   } catch (error: any) {
-    debug(
-      'ERROR:',
+    console.error(
       'Failed to create prediction:',
       error.response ? error.response.data : error.message
     );
@@ -55,13 +49,13 @@ export async function createPrediction(imageUrl: string): Promise<any> {
 export async function handleImageMessage(message: any): Promise<boolean> {
   try {
     if (message.channel.id !== process.env.DISCORD_CHAT_CHANNEL_ID) {
-      logger.debug('Ignoring message in channel', { channelId: message.channel.id });
+      console.debug('Ignoring message in channel ' + message.channel.id);
       return false;
     }
     const attachments = message.attachments;
     if (attachments.size > 0) {
       const imageUrl = attachments.first().url;
-      logger.debug('Image URL received', { imageUrl });
+      console.debug('Image URL: ' + imageUrl);
       const prediction = await createPrediction(imageUrl);
       if (!process.env.REPLICATE_WEBHOOK_URL) {
         // Handle synchronous prediction result
@@ -69,16 +63,16 @@ export async function handleImageMessage(message: any): Promise<boolean> {
       } else {
         // Handle asynchronous prediction (via webhook)
         const predictionId = prediction.id;
-        debug('Prediction ID: ' + predictionId);
+        console.log('Prediction ID: ' + predictionId);
         predictionImageMap.set(predictionId, imageUrl);
       }
       return true;
     } else {
-      logger.debug('No attachments found');
+      console.debug('No attachments found');
       return false;
     }
   } catch (error: any) {
-    debug('ERROR:', 'Error in handleImageMessage: ' + error.message);
+    console.error('Error in handleImageMessage: ' + error.message);
     return false;
   }
 }

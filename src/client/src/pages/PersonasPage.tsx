@@ -1,12 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import {
   AlertTriangle,
-  ChevronDown,
-  ChevronUp,
   Copy,
   Edit2,
   Eye,
-  GripVertical,
   Info,
   Plus,
   RefreshCw,
@@ -16,9 +13,7 @@ import {
   Trash2,
   User,
 } from 'lucide-react';
-import React, { useCallback, useEffect, useMemo, useState, useRef } from 'react';
-import { useVirtualizer } from '@tanstack/react-virtual';
-import useUrlParams from '../hooks/useUrlParams';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Alert } from '../components/DaisyUI/Alert';
 import Badge from '../components/DaisyUI/Badge';
 import Button from '../components/DaisyUI/Button';
@@ -26,18 +21,12 @@ import Card from '../components/DaisyUI/Card';
 import Input from '../components/DaisyUI/Input';
 import EmptyState from '../components/DaisyUI/EmptyState';
 import { LoadingSpinner } from '../components/DaisyUI/Loading';
-import { SkeletonPage } from '../components/DaisyUI/Skeleton';
 import Modal from '../components/DaisyUI/Modal';
 import PageHeader from '../components/DaisyUI/PageHeader';
 import StatsCards from '../components/DaisyUI/StatsCards';
 import ToastNotification, { useInfoToast } from '../components/DaisyUI/ToastNotification';
 import SearchFilterBar from '../components/SearchFilterBar';
 import { apiService, type Persona as ApiPersona, type Bot } from '../services/api';
-import { useApiQuery } from '../hooks/useApiQuery';
-import { useBulkSelection } from '../hooks/useBulkSelection';
-import BulkActionBar from '../components/BulkActionBar';
-import { useDragAndDrop } from '../hooks/useDragAndDrop';
-import { useIsBelowBreakpoint } from '../hooks/useBreakpoint';
 
 // Extend UI Persona type to include assigned bots for display
 interface Persona extends ApiPersona {
@@ -66,15 +55,9 @@ const PersonasPage: React.FC = () => {
   const successToast = ToastNotification.useSuccessToast();
   const errorToast = ToastNotification.useErrorToast();
 
-  // Filter State (URL-persisted)
-  const { values: urlParams, setValue: setUrlParam } = useUrlParams({
-    search: { type: 'string', default: '', debounce: 300 },
-    category: { type: 'string', default: 'all' },
-  });
-  const searchQuery = urlParams.search;
-  const setSearchQuery = (v: string) => setUrlParam('search', v);
-  const selectedCategory = urlParams.category;
-  const setSelectedCategory = (v: string) => setUrlParam('category', v);
+  // Filter State
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
 
   // Modals
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -92,55 +75,49 @@ const PersonasPage: React.FC = () => {
   const [selectedBotIds, setSelectedBotIds] = useState<string[]>([]); // Bot IDs are strings in new API
   const [personaCategory, setPersonaCategory] = useState<ApiPersona['category']>('general');
 
-  // Cached queries for config and personas
-  const {
-    data: configResponse,
-    loading: configLoading,
-    error: configError,
-    refetch: refetchConfig,
-  } = useApiQuery<any>('/api/config', { ttl: 30_000 });
-
-  const {
-    data: personasResponse,
-    loading: personasLoading,
-    error: personasError,
-    refetch: refetchPersonas,
-  } = useApiQuery<ApiPersona[]>('/api/personas', { ttl: 30_000 });
-
-  // Derive bots and personas from cached responses
-  useEffect(() => {
-    const botList = configResponse?.bots || [];
-    const filledBots = botList.map((b: any) => ({
-      ...b,
-      id: b.id || b.name,
-    }));
-    setBots(filledBots);
-
-    const rawPersonas = personasResponse || [];
-    const mappedPersonas = rawPersonas.map((p) => {
-      const assigned = filledBots.filter((b: any) => b.persona === p.id || b.persona === p.name);
-      return {
-        ...p,
-        assignedBotNames: assigned.map((b: any) => b.name),
-        assignedBotIds: assigned.map((b: any) => b.id),
-      };
-    });
-    setPersonas(mappedPersonas);
-  }, [configResponse, personasResponse]);
-
-  // Sync loading/error state
-  useEffect(() => {
-    setLoading(configLoading || personasLoading);
-  }, [configLoading, personasLoading]);
-
-  useEffect(() => {
-    const err = configError || personasError;
-    setError(err ? err.message : null);
-  }, [configError, personasError]);
-
   const fetchData = useCallback(async () => {
-    await Promise.all([refetchConfig(), refetchPersonas()]);
-  }, [refetchConfig, refetchPersonas]);
+    try {
+      setLoading(true);
+      setError(null);
+
+      const [configResult, personasResult] = await Promise.allSettled([
+        apiService.getConfig(),
+        apiService.getPersonas(),
+      ]);
+      const configResponse =
+        configResult.status === 'fulfilled' ? configResult.value : { bots: [] };
+      const personasResponse = personasResult.status === 'fulfilled' ? personasResult.value : [];
+
+      const botList = configResponse.bots || [];
+      const filledBots = botList.map((b: any) => ({
+        ...b,
+        id: b.id || b.name, // Fallback to name if ID missing (shouldn't happen for active bots)
+      }));
+      setBots(filledBots);
+
+      const mappedPersonas = personasResponse.map((p) => {
+        // Find assigned bots
+        // Match by persona ID stored in bot.persona OR matches persona name (legacy)
+        const assigned = filledBots.filter((b: any) => b.persona === p.id || b.persona === p.name);
+        return {
+          ...p,
+          assignedBotNames: assigned.map((b: any) => b.name),
+          assignedBotIds: assigned.map((b: any) => b.id),
+        };
+      });
+
+      setPersonas(mappedPersonas);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to fetch data';
+      setError(message);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
   // Derive filtered personas
   const filteredPersonas = useMemo(() => {
@@ -153,80 +130,15 @@ const PersonasPage: React.FC = () => {
     });
   }, [personas, searchQuery, selectedCategory]);
 
-  // Bulk selection
-  const filteredPersonaIds = useMemo(() => filteredPersonas.filter(p => !p.isBuiltIn).map(p => p.id), [filteredPersonas]);
-  const bulk = useBulkSelection(filteredPersonaIds);
-  const [bulkDeleting, setBulkDeleting] = useState(false);
-  const isMobile = useIsBelowBreakpoint('md');
-
-  const handlePersonaReorder = useCallback(async (reordered: Persona[]) => {
-    setPersonas(reordered);
-    try {
-      const ids = reordered.map(p => p.id);
-      await apiService.put('/api/personas/reorder', { ids });
-    } catch { /* persist error ignored */ }
-  }, []);
-
-  const {
-    onDragStart: onPersonaDragStart,
-    onDragOver: onPersonaDragOver,
-    onDragEnd: onPersonaDragEnd,
-    onDrop: onPersonaDrop,
-    onMoveUp: onPersonaMoveUp,
-    onMoveDown: onPersonaMoveDown,
-    getItemStyle: getPersonaItemStyle,
-  } = useDragAndDrop({
-    items: filteredPersonas,
-    idAccessor: (p) => p.id,
-    onReorder: handlePersonaReorder,
-  });
-
-  const handleBulkDeletePersonas = async () => {
-    if (bulk.selectedCount === 0) return;
-    setBulkDeleting(true);
-    try {
-      const ids = Array.from(bulk.selectedIds);
-      // Revert bots for each persona, then delete
-      for (const id of ids) {
-        const persona = personas.find(p => p.id === id);
-        if (persona) {
-          const updates = persona.assignedBotIds.map((botId) =>
-            apiService.updateBot(botId, { persona: 'default', systemInstruction: 'You are a helpful assistant.' })
-          );
-          await Promise.allSettled(updates);
-          await apiService.deletePersona(id);
-        }
-      }
-      await fetchData();
-      bulk.clearSelection();
-      successToast('Selected personas deleted');
-    } catch (err) {
-      errorToast('Error', 'Failed to delete some personas');
-    } finally {
-      setBulkDeleting(false);
-    }
-  };
-
   const handleCopyPrompt = async (text: string) => {
     try {
       await navigator.clipboard.writeText(text);
       successToast('Copied!', 'System prompt copied to clipboard');
     } catch (err) {
-      // errorToast shown below
+      console.error('Failed to copy', err);
       errorToast('Error', 'Failed to copy to clipboard');
     }
   };
-
-  // Virtualization for large persona lists
-  const parentRef = useRef<HTMLDivElement>(null);
-  const shouldVirtualize = filteredPersonas.length > 50;
-  const gridRowVirtualizer = useVirtualizer({
-    count: Math.ceil(filteredPersonas.length / 3), // 3 columns in xl
-    getScrollElement: () => parentRef.current,
-    estimateSize: () => 450, // Estimated card height
-    overscan: 2,
-    enabled: shouldVirtualize,
-  });
 
   const handleSavePersona = async () => {
     if (!personaName.trim()) {
@@ -302,7 +214,7 @@ const PersonasPage: React.FC = () => {
       setEditingPersona(null);
       setCloningPersonaId(null);
     } catch (err) {
-      errorToast('Save Failed', 'Failed to save persona changes');
+      console.error(err);
       setError('Failed to save persona changes');
     } finally {
       setLoading(false);
@@ -485,7 +397,9 @@ const PersonasPage: React.FC = () => {
 
       {/* Persona List */}
       {loading ? (
-        <SkeletonPage variant="list" statsCount={0} showFilters={false} />
+        <div className="flex items-center justify-center py-12">
+          <LoadingSpinner size="lg" />
+        </div>
       ) : personas.length === 0 ? (
         <EmptyState
           icon={Sparkles}
@@ -509,109 +423,15 @@ const PersonasPage: React.FC = () => {
           variant="noResults"
         />
       ) : (
-        <>
-          <div className="flex items-center gap-2 mb-2">
-            <input
-              type="checkbox"
-              className="checkbox checkbox-sm checkbox-primary"
-              checked={bulk.isAllSelected}
-              onChange={() => bulk.toggleAll(filteredPersonaIds)}
-              aria-label="Select all personas"
-            />
-            <span className="text-xs text-base-content/60">Select all (custom only)</span>
-          </div>
-          <BulkActionBar
-            selectedCount={bulk.selectedCount}
-            onClearSelection={bulk.clearSelection}
-            actions={[
-              {
-                key: 'delete',
-                label: 'Delete',
-                icon: <Trash2 className="w-4 h-4" />,
-                variant: 'error',
-                onClick: handleBulkDeletePersonas,
-                loading: bulkDeleting,
-              },
-            ]}
-          />
-          {shouldVirtualize ? (
-            <div ref={parentRef} className="overflow-auto" style={{ height: '800px' }}>
-              <div
-                style={{
-                  height: `${gridRowVirtualizer.getTotalSize()}px`,
-                  width: '100%',
-                  position: 'relative',
-                }}
-              >
-                {gridRowVirtualizer.getVirtualItems().map((virtualRow) => {
-                  const startIndex = virtualRow.index * 3;
-                  const rowPersonas = filteredPersonas.slice(startIndex, startIndex + 3);
-
-                  return (
-                    <div
-                      key={virtualRow.key}
-                      style={{
-                        position: 'absolute',
-                        top: 0,
-                        left: 0,
-                        width: '100%',
-                        transform: `translateY(${virtualRow.start}px)`,
-                      }}
-                    >
-                      <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4 p-1">
-                        {rowPersonas.map((persona, index) => {
-                          const globalIndex = startIndex + index;
-                          return (
-                            <Card
-                              key={persona.id}
-                              data-testid="persona-card"
-                              draggable={!isMobile}
-                              onDragStart={onPersonaDragStart(globalIndex)}
-                              onDragOver={onPersonaDragOver(globalIndex)}
-                              onDragEnd={onPersonaDragEnd}
-                              onDrop={onPersonaDrop(globalIndex)}
-                              style={getPersonaItemStyle(globalIndex)}
-                              className={`hover:shadow-md transition-all flex flex-col h-full ${persona.isBuiltIn ? 'border-l-4 border-l-primary/30' : ''}`}
-                            >
+        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
+          {filteredPersonas.map((persona) => (
+            <Card
+              key={persona.id}
+              data-testid="persona-card"
+              className={`hover:shadow-md transition-all flex flex-col h-full ${persona.isBuiltIn ? 'border-l-4 border-l-primary/30' : ''}`}
+            >
               <div className="flex items-start justify-between mb-3">
                 <div className="flex items-center gap-3">
-                  {isMobile ? (
-                    <span className="flex flex-col">
-                      <button
-                        className="btn btn-ghost btn-xs btn-square p-0"
-                        onClick={() => onPersonaMoveUp(index)}
-                        disabled={index === 0}
-                        aria-label="Move up"
-                      >
-                        <ChevronUp className="w-3 h-3" />
-                      </button>
-                      <button
-                        className="btn btn-ghost btn-xs btn-square p-0"
-                        onClick={() => onPersonaMoveDown(index)}
-                        disabled={index === filteredPersonas.length - 1}
-                        aria-label="Move down"
-                      >
-                        <ChevronDown className="w-3 h-3" />
-                      </button>
-                    </span>
-                  ) : (
-                    <span
-                      className="cursor-grab active:cursor-grabbing text-base-content/40 hover:text-base-content/70"
-                      title="Drag to reorder"
-                    >
-                      <GripVertical className="w-4 h-4" />
-                    </span>
-                  )}
-                  {!persona.isBuiltIn && (
-                    <input
-                      type="checkbox"
-                      className="checkbox checkbox-sm checkbox-primary"
-                      checked={bulk.isSelected(persona.id)}
-                      onChange={(e) => bulk.toggleItem(persona.id, e as any)}
-                      onClick={(e) => e.stopPropagation()}
-                      aria-label={`Select ${persona.name}`}
-                    />
-                  )}
                   <div
                     className={`p-2 rounded-full ${persona.isBuiltIn ? 'bg-primary/10 text-primary' : 'bg-base-200'}`}
                   >
@@ -712,171 +532,8 @@ const PersonasPage: React.FC = () => {
                 )}
               </div>
             </Card>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
-              {filteredPersonas.map((persona, index) => (
-                <Card
-                  key={persona.id}
-                  data-testid="persona-card"
-                  draggable={!isMobile}
-                  onDragStart={onPersonaDragStart(index)}
-                  onDragOver={onPersonaDragOver(index)}
-                  onDragEnd={onPersonaDragEnd}
-                  onDrop={onPersonaDrop(index)}
-                  style={getPersonaItemStyle(index)}
-                  className={`hover:shadow-md transition-all flex flex-col h-full ${persona.isBuiltIn ? 'border-l-4 border-l-primary/30' : ''}`}
-                >
-                  <div className="flex items-start justify-between mb-3">
-                    <div className="flex items-center gap-3">
-                      {isMobile ? (
-                        <span className="flex flex-col">
-                          <button
-                            className="btn btn-ghost btn-xs btn-square p-0"
-                            onClick={() => onPersonaMoveUp(index)}
-                            disabled={index === 0}
-                            aria-label="Move up"
-                          >
-                            <ChevronUp className="w-3 h-3" />
-                          </button>
-                          <button
-                            className="btn btn-ghost btn-xs btn-square p-0"
-                            onClick={() => onPersonaMoveDown(index)}
-                            disabled={index === filteredPersonas.length - 1}
-                            aria-label="Move down"
-                          >
-                            <ChevronDown className="w-3 h-3" />
-                          </button>
-                        </span>
-                      ) : (
-                        <span
-                          className="cursor-grab active:cursor-grabbing text-base-content/40 hover:text-base-content/70"
-                          title="Drag to reorder"
-                        >
-                          <GripVertical className="w-4 h-4" />
-                        </span>
-                      )}
-                      {!persona.isBuiltIn && (
-                        <input
-                          type="checkbox"
-                          className="checkbox checkbox-sm checkbox-primary"
-                          checked={bulk.isSelected(persona.id)}
-                          onChange={(e) => bulk.toggleItem(persona.id, e as any)}
-                          onClick={(e) => e.stopPropagation()}
-                          aria-label={`Select ${persona.name}`}
-                        />
-                      )}
-                      <div
-                        className={`p-2 rounded-full ${persona.isBuiltIn ? 'bg-primary/10 text-primary' : 'bg-base-200'}`}
-                      >
-                        <User className="w-5 h-5" />
-                      </div>
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <h3 className="font-semibold text-lg">{persona.name}</h3>
-                          {persona.isBuiltIn && (
-                            <Badge size="small" variant="neutral" style="outline">
-                              Built-in
-                            </Badge>
-                          )}
-                        </div>
-                        <p className="text-xs text-base-content/60">{persona.category}</p>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="mb-4 flex-1">
-                    <p className="text-sm text-base-content/70 mb-3">{persona.description}</p>
-                    <div className="bg-base-200/50 p-3 rounded-lg mb-3">
-                      <div className="flex items-center justify-between mb-1">
-                        <h4 className="text-xs font-bold text-base-content/40 uppercase">
-                          System Prompt
-                        </h4>
-                        <div className="flex items-center gap-2">
-                          <button
-                            className="btn btn-ghost btn-xs btn-circle text-base-content/40 hover:text-primary"
-                            onClick={() => handleCopyPrompt(persona.systemPrompt)}
-                            title="Copy System Prompt"
-                            aria-label="Copy System Prompt"
-                          >
-                            <Copy className="w-3 h-3" />
-                          </button>
-                        </div>
-                      </div>
-                      <p className="text-sm text-base-content/80 line-clamp-3 italic font-mono text-xs">
-                        "{persona.systemPrompt}"
-                      </p>
-                    </div>
-
-                    <div className="flex items-center justify-between mb-2">
-                      <h4 className="text-xs font-medium text-base-content/50 uppercase">
-                        Assigned Bots
-                      </h4>
-                    </div>
-
-                    {persona.assignedBotNames.length > 0 ? (
-                      <div className="flex flex-wrap gap-1">
-                        {persona.assignedBotNames.slice(0, 3).map((botName) => (
-                          <Badge key={botName} variant="secondary" size="small" style="outline">
-                            {botName}
-                          </Badge>
-                        ))}
-                        {persona.assignedBotNames.length > 3 && (
-                          <Badge variant="ghost" size="small">
-                            +{persona.assignedBotNames.length - 3} more
-                          </Badge>
-                        )}
-                      </div>
-                    ) : (
-                      <span className="text-sm text-base-content/40 italic">No bots assigned</span>
-                    )}
-                  </div>
-
-                  <div className="flex items-center justify-end pt-3 border-t border-base-200 mt-auto gap-2">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => openViewModal(persona)}
-                      title="View Details"
-                    >
-                      <Eye className="w-4 h-4 mr-1" /> View
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => openCloneModal(persona)}
-                      title="Clone Persona"
-                    >
-                      <Copy className="w-4 h-4 mr-1" /> Clone
-                    </Button>
-                    {!persona.isBuiltIn && (
-                      <>
-                        <Button variant="ghost" size="sm" onClick={() => openEditModal(persona)}>
-                          <Edit2 className="w-4 h-4" /> Edit
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleDeletePersona(persona.id)}
-                          className="text-error hover:bg-error/10"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </>
-                    )}
-                  </div>
-                </Card>
-              ))}
-            </div>
-          )}
-        </>
+          ))}
+        </div>
       )}
 
       {/* Create/Edit Modal */}

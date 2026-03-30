@@ -4,8 +4,6 @@ import { v4 as uuidv4 } from 'uuid';
 import { apiService } from '../services/api';
 import type { BotInstance } from '../types/bot';
 import { BotStatus, MessageProvider, LLMProvider } from '../types/bot';
-import Debug from 'debug';
-const debug = Debug('app:client:contexts:BotContext');
 
 interface BotContextType {
   bots: BotInstance[];
@@ -42,7 +40,7 @@ export const BotProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         setBots(JSON.parse(stored));
       }
     } catch (err) {
-      debug('ERROR:', 'Failed to load bots from storage:', err);
+      console.error('Failed to load bots from storage:', err);
     } finally {
       setInitialized(true);
     }

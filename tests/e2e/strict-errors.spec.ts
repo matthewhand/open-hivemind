@@ -89,17 +89,12 @@ test.describe('Strict Error Detection Tests', () => {
       await page.route('**/api/dashboard/api/status', async (route) =>
         route.fulfill({ json: { bots: [], uptime: 100 } })
       );
-      await page.route('**/api/config', async (route) => route.fulfill({ json: { bots: [] } }));
+      await page.route('**/api/config', async (route) =>
+        route.fulfill({ json: { bots: [] } })
+      );
       await page.route('**/api/config/global', async (route) => route.fulfill({ json: {} }));
       await page.route('**/api/config/llm-status', async (route) =>
-        route.fulfill({
-          json: {
-            defaultConfigured: false,
-            defaultProviders: [],
-            botsMissingLlmProvider: [],
-            hasMissing: false,
-          },
-        })
+        route.fulfill({ json: { defaultConfigured: false, defaultProviders: [], botsMissingLlmProvider: [], hasMissing: false } })
       );
       await page.route('**/api/config/llm-profiles', async (route) =>
         route.fulfill({ json: { profiles: { llm: [] } } })
@@ -109,27 +104,10 @@ test.describe('Strict Error Detection Tests', () => {
         route.fulfill({ json: { status: 'ok', components: {} } })
       );
       await page.route('**/health/detailed', async (route) =>
-        route.fulfill({
-          json: {
-            status: 'ok',
-            timestamp: new Date().toISOString(),
-            uptime: 100,
-            memory: { used: 100, total: 1000, usage: 10 },
-            cpu: { user: 1, system: 1 },
-            system: { platform: 'test', hostname: 'test', loadAverage: [0] },
-          },
-        })
+        route.fulfill({ json: { status: 'ok', timestamp: new Date().toISOString(), uptime: 100, memory: { used: 100, total: 1000, usage: 10 }, cpu: { user: 1, system: 1 }, system: { platform: 'test', hostname: 'test', loadAverage: [0] } } })
       );
       await page.route('**/health/api-endpoints', async (route) =>
-        route.fulfill({
-          json: {
-            overall: {
-              status: 'healthy',
-              stats: { total: 0, online: 0, slow: 0, offline: 0, error: 0 },
-            },
-            endpoints: [],
-          },
-        })
+        route.fulfill({ json: { overall: { status: 'healthy', stats: { total: 0, online: 0, slow: 0, offline: 0, error: 0 } }, endpoints: [] } })
       );
       await page.route('**/api/csrf-token', async (route) =>
         route.fulfill({ json: { token: 'mock-token' } })
@@ -159,12 +137,7 @@ test.describe('Strict Error Detection Tests', () => {
         if (msg.type() === 'error') {
           const text = msg.text();
           // Ignore known benign errors: API fetch failures during navigation transitions, favicon, etc.
-          if (
-            /Failed to fetch|favicon|403|404|ResizeObserver|net::ERR_|Download the React DevTools/i.test(
-              text
-            )
-          )
-            return;
+          if (/Failed to fetch|favicon|403|404|ResizeObserver|net::ERR_|Download the React DevTools/i.test(text)) return;
           errors.push(`[Console Error] ${text}`);
         }
       });
@@ -176,14 +149,7 @@ test.describe('Strict Error Detection Tests', () => {
       await page.route('**/api/config', async (route) => route.fulfill({ json: { bots: [] } }));
       await page.route('**/api/config/global', async (route) => route.fulfill({ json: {} }));
       await page.route('**/api/config/llm-status', async (route) =>
-        route.fulfill({
-          json: {
-            defaultConfigured: false,
-            defaultProviders: [],
-            botsMissingLlmProvider: [],
-            hasMissing: false,
-          },
-        })
+        route.fulfill({ json: { defaultConfigured: false, defaultProviders: [], botsMissingLlmProvider: [], hasMissing: false } })
       );
       await page.route('**/api/config/llm-profiles', async (route) =>
         route.fulfill({ json: { profiles: { llm: [] } } })
@@ -191,23 +157,25 @@ test.describe('Strict Error Detection Tests', () => {
       await page.route('**/api/bots', async (route) =>
         route.fulfill({ json: { data: { bots: [] } } })
       );
-      await page.route('**/api/bots/*', async (route) => route.fulfill({ json: { data: [] } }));
-      await page.route('**/api/bots/**', async (route) => route.fulfill({ json: { data: [] } }));
+      await page.route('**/api/bots/*', async (route) =>
+        route.fulfill({ json: { data: [] } })
+      );
+      await page.route('**/api/bots/**', async (route) =>
+        route.fulfill({ json: { data: [] } })
+      );
       await page.route('**/api/personas', async (route) => route.fulfill({ json: [] }));
       await page.route('**/health/api-endpoints', async (route) =>
-        route.fulfill({
-          json: {
-            overall: {
-              status: 'healthy',
-              stats: { total: 0, online: 0, slow: 0, offline: 0, error: 0 },
-            },
-            endpoints: [],
-          },
-        })
+        route.fulfill({ json: { overall: { status: 'healthy', stats: { total: 0, online: 0, slow: 0, offline: 0, error: 0 } }, endpoints: [] } })
       );
-      await page.route('**/api/admin/**', async (route) => route.fulfill({ json: { data: [] } }));
-      await page.route('**/api/marketplace/**', async (route) => route.fulfill({ json: [] }));
-      await page.route('**/api/mcp/**', async (route) => route.fulfill({ json: { data: [] } }));
+      await page.route('**/api/admin/**', async (route) =>
+        route.fulfill({ json: { data: [] } })
+      );
+      await page.route('**/api/marketplace/**', async (route) =>
+        route.fulfill({ json: [] })
+      );
+      await page.route('**/api/mcp/**', async (route) =>
+        route.fulfill({ json: { data: [] } })
+      );
       await page.route('**/api/dashboard/status', async (route) =>
         route.fulfill({ json: { bots: [], uptime: 100 } })
       );
@@ -359,14 +327,7 @@ test.describe('Strict Error Detection Tests', () => {
         route.fulfill({ json: { profiles: { llm: [] } } })
       );
       await page.route('**/api/config/llm-status', async (route) =>
-        route.fulfill({
-          json: {
-            defaultConfigured: false,
-            defaultProviders: [],
-            botsMissingLlmProvider: [],
-            hasMissing: false,
-          },
-        })
+        route.fulfill({ json: { defaultConfigured: false, defaultProviders: [], botsMissingLlmProvider: [], hasMissing: false } })
       );
       await page.route('**/api/config/message-profiles', async (route) =>
         route.fulfill({ json: { profiles: { message: [] } } })

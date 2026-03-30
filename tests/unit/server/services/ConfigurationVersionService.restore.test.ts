@@ -58,7 +58,7 @@ describe('ConfigurationVersionService Restore', () => {
       (a) => a.action === 'UPDATE' && a.oldValues && a.oldValues.includes('restoredFrom')
     );
 
-    expect(restoreAudit).not.toBeUndefined();
+    expect(restoreAudit).toBeDefined();
     expect(restoreAudit?.performedBy).toBe(restoredBy);
   });
 });

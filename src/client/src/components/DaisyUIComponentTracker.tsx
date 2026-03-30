@@ -230,7 +230,7 @@ const DaisyUIComponentTracker: React.FC<Props> = ({ isOpen = true, onClose }) =>
               <div className="space-y-4">
                 {Object.entries(stats.categories).map(([category, data]) => (
                   <div key={category} className="collapse collapse-arrow bg-base-200">
-                    <input type="checkbox" defaultChecked={data.used > 0} aria-label={`Toggle category ${category}`} />
+                    <input type="checkbox" defaultOpen={data.used > 0} />
                     <div className="collapse-title text-lg font-medium capitalize">
                       {category} ({data.used}/{data.total} components)
                     </div>

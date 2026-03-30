@@ -18,13 +18,10 @@ import {
 } from '@src/types/openai';
 import llmConfig from '@config/llmConfig';
 import openaiConfig from '@config/openaiConfig';
-import { Logger } from '@common/logger';
 import { redactSensitiveInfo } from '@common/redactSensitiveInfo';
-import { withTimeout } from '@common/withTimeout';
 import { listModels } from './operations/listModels';
 
 const debug = Debug('app:OpenAiService');
-const logger = Logger.withContext('OpenAiService');
 
 // Guard: Validate openaiConfig object
 if (!openaiConfig || typeof openaiConfig.get !== 'function') {
@@ -155,26 +152,18 @@ export class OpenAiService {
       { role: 'user', content: message },
     ];
 
-    logger.debug('Chat parameters', { chatParams });
+    console.debug('[DEBUG] Chat parameters:', JSON.stringify(chatParams, null, 2));
 
     try {
-      const response = await withTimeout(
-        (signal) =>
-          this.retryWithBackoff(async () => {
-            return await this.openai.chat.completions.create(
-              {
-                model: openaiConfig.get('OPENAI_MODEL') || 'gpt-4o',
-                messages: chatParams,
-                max_tokens: maxTokens,
-                temperature,
-                stream: false,
-              },
-              { signal }
-            );
-          }),
-        this.requestTimeout,
-        'OpenAI chat completion'
-      );
+      const response = await this.retryWithBackoff(async () => {
+        return await this.openai.chat.completions.create({
+          model: openaiConfig.get('OPENAI_MODEL') || 'gpt-4o',
+          messages: chatParams,
+          max_tokens: maxTokens,
+          temperature,
+          stream: false,
+        });
+      });
 
       debug(
         '[DEBUG] OpenAI API response received:',
@@ -239,6 +228,26 @@ export class OpenAiService {
       });
       throw hivemindError;
     }
+  }
+
+  /**
+   * Generates a chat response using OpenAI, passthrough to generateChatCompletion.
+   */
+  public async generateChatResponse(
+    message: string,
+    historyMessages: IMessage[],
+    systemMessageContent: string = String(openaiConfig.get('OPENAI_SYSTEM_PROMPT') || ''),
+    maxTokens: number = Number(openaiConfig.get('OPENAI_RESPONSE_MAX_TOKENS') || 150),
+    temperature: number = Number(openaiConfig.get('OPENAI_TEMPERATURE') || 0.7)
+  ): Promise<OpenHivemindChatResponse> {
+    debug('[DEBUG] generateChatResponse called');
+    return this.generateChatCompletion(
+      message,
+      historyMessages,
+      systemMessageContent,
+      maxTokens,
+      temperature
+    );
   }
 
   /**

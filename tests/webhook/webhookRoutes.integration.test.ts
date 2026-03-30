@@ -103,7 +103,7 @@ describe('webhookRoutes (Integration)', () => {
     it('handles concurrent webhook requests properly', async () => {
       mockWebhookConfig.get.mockImplementation((key: string) => {
         if (key === 'WEBHOOK_TOKEN') return 'secret-token';
-        if (key === 'WEBHOOK_IP_WHITELIST') return '127.0.0.1';
+        if (key === 'WEBHOOK_IP_WHITELIST') return '';
         return '';
       });
 
@@ -140,7 +140,6 @@ describe('webhookRoutes (Integration)', () => {
       // Wait, if WEBHOOK_TOKEN is required in the environment but not set, verifyWebhookToken returns 500.
       mockWebhookConfig.get.mockImplementation((key: string) => {
         if (key === 'WEBHOOK_TOKEN') return 'secret-token';
-        if (key === 'WEBHOOK_IP_WHITELIST') return '127.0.0.1';
         return '';
       });
 
@@ -157,7 +156,6 @@ describe('webhookRoutes (Integration)', () => {
     it('gracefully handles malformed JSON parsing errors (simulated via string body)', async () => {
       mockWebhookConfig.get.mockImplementation((key: string) => {
         if (key === 'WEBHOOK_TOKEN') return 'secret-token';
-        if (key === 'WEBHOOK_IP_WHITELIST') return '127.0.0.1';
         return '';
       });
 

@@ -1,26 +1,49 @@
-import { ErrorHandler } from '@src/common/errors/ErrorHandler';
-import { PerformanceMonitor } from '@src/common/errors/PerformanceMonitor';
+import { ErrorHandler, PerformanceMonitor } from '@src/common/errors/ErrorHandler';
 import 'jest';
 
 describe('ErrorHandler', () => {
+  let consoleErrorSpy: jest.SpyInstance;
+  let consoleWarnSpy: jest.SpyInstance;
+  let consoleInfoSpy: jest.SpyInstance;
+
+  beforeEach(() => {
+    consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
+    consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation();
+    consoleInfoSpy = jest.spyOn(console, 'info').mockImplementation();
+  });
+
+  afterEach(() => {
+    consoleErrorSpy.mockRestore();
+    consoleWarnSpy.mockRestore();
+    consoleInfoSpy.mockRestore();
+  });
+
   describe('Error Handling', () => {
     it('should handle Error objects correctly', () => {
       const error = new Error('Test error');
-      // Should not throw; logging is now via structured Debug logger
-      expect(() => ErrorHandler.handle(error, 'test-context')).not.toThrow();
+      ErrorHandler.handle(error, 'test-context');
+
+      expect(consoleErrorSpy).toHaveBeenCalledWith('[test-context] Test error');
     });
 
     it('should handle string errors', () => {
-      expect(() => ErrorHandler.handle('String error', 'test-context')).not.toThrow();
+      ErrorHandler.handle('String error', 'test-context');
+
+      expect(consoleErrorSpy).toHaveBeenCalledWith('[test-context] String error');
     });
 
     it('should handle unknown error types', () => {
-      expect(() => ErrorHandler.handle(null, 'test-context')).not.toThrow();
+      ErrorHandler.handle(null, 'test-context');
+
+      expect(consoleErrorSpy).toHaveBeenCalledWith('[test-context] null');
     });
 
     it('should handle different severity levels', () => {
-      expect(() => ErrorHandler.handle('Warning message', 'test-context', 'warn')).not.toThrow();
-      expect(() => ErrorHandler.handle('Info message', 'test-context', 'info')).not.toThrow();
+      ErrorHandler.handle('Warning message', 'test-context', 'warn');
+      expect(consoleWarnSpy).toHaveBeenCalledWith('[test-context] Warning message');
+
+      ErrorHandler.handle('Info message', 'test-context', 'info');
+      expect(consoleInfoSpy).toHaveBeenCalledWith('[test-context] Info message');
     });
   });
 
@@ -41,6 +64,7 @@ describe('ErrorHandler', () => {
       );
 
       expect(result).toBe('fallback');
+      expect(consoleErrorSpy).toHaveBeenCalledWith('[test-context] Async error');
     });
 
     it('should handle failed async operations without fallback', async () => {
@@ -67,6 +91,7 @@ describe('ErrorHandler', () => {
 
       const result = await wrapped();
       expect(result).toBeNull();
+      expect(consoleErrorSpy).toHaveBeenCalledWith('[test-wrapper] Sync error');
     });
 
     it('should handle async function errors', async () => {
@@ -76,6 +101,7 @@ describe('ErrorHandler', () => {
 
       const result = await wrapped();
       expect(result).toBeNull();
+      expect(consoleErrorSpy).toHaveBeenCalledWith('[test-wrapper] Async wrapper error');
     });
   });
 });

@@ -22,7 +22,6 @@ export interface Persona {
   traits: { name: string; value: string; weight?: number; type?: string }[];
   systemPrompt: string;
   isBuiltIn?: boolean;
-  usageCount?: number;
   createdAt: string;
   updatedAt: string;
 }
@@ -51,7 +50,6 @@ export const BUILTIN_PERSONAS: Persona[] = [
       { name: 'Style', value: 'Professional', weight: 1, type: 'style' },
     ],
     isBuiltIn: true,
-    usageCount: 0,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   },
@@ -66,7 +64,6 @@ export const BUILTIN_PERSONAS: Persona[] = [
       { name: 'Style', value: 'Artistic', weight: 1, type: 'style' },
     ],
     isBuiltIn: true,
-    usageCount: 0,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   },
@@ -81,7 +78,6 @@ export const BUILTIN_PERSONAS: Persona[] = [
       { name: 'Style', value: 'Technical', weight: 1, type: 'style' },
     ],
     isBuiltIn: true,
-    usageCount: 0,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   },
@@ -95,20 +91,18 @@ export class PersonaManager extends EventEmitter {
   private constructor() {
     super();
     this.personasFilePath = path.join(process.cwd(), 'config', 'user', 'custom-personas.json');
-    // Note: loadPersonas is now async but called from constructor
-    // We'll handle initialization separately
+    this.loadPersonas();
     debug('PersonaManager initialized');
   }
 
-  public static async getInstance(): Promise<PersonaManager> {
+  public static getInstance(): PersonaManager {
     if (!PersonaManager.instance) {
       PersonaManager.instance = new PersonaManager();
-      await PersonaManager.instance.loadPersonas();
     }
     return PersonaManager.instance;
   }
 
-  private async loadPersonas(): Promise<void> {
+  private loadPersonas(): void {
     try {
       // Clear existing personas (for reload functionality)
       this.personas.clear();
@@ -116,9 +110,8 @@ export class PersonaManager extends EventEmitter {
       // Load built-ins first
       BUILTIN_PERSONAS.forEach((p) => this.personas.set(p.id, { ...p }));
 
-      try {
-        await fs.promises.access(this.personasFilePath);
-        const data = await fs.promises.readFile(this.personasFilePath, 'utf8');
+      if (fs.existsSync(this.personasFilePath)) {
+        const data = fs.readFileSync(this.personasFilePath, 'utf8');
         const customPersonas = JSON.parse(data);
 
         Object.values(customPersonas).forEach((p: any) => {
@@ -128,9 +121,6 @@ export class PersonaManager extends EventEmitter {
           }
         });
         debug(`Loaded ${Object.keys(customPersonas).length} custom personas`);
-      } catch (err: any) {
-        if (err.code !== 'ENOENT') throw err;
-        // File doesn't exist yet, that's ok
       }
     } catch (error: any) {
       debug('Error loading personas:', ErrorUtils.getMessage(error));
@@ -140,19 +130,17 @@ export class PersonaManager extends EventEmitter {
   /**
    * Reload personas from disk (useful for runtime refresh without restart)
    */
-  public async reloadPersonas(): Promise<void> {
+  public reloadPersonas(): void {
     debug('Reloading personas from disk');
-    await this.loadPersonas();
+    this.loadPersonas();
     this.emit('personasReloaded');
   }
 
-  private async savePersonas(): Promise<void> {
+  private savePersonas(): void {
     try {
       const personasDir = path.dirname(this.personasFilePath);
-      try {
-        await fs.promises.access(personasDir);
-      } catch {
-        await fs.promises.mkdir(personasDir, { recursive: true });
+      if (!fs.existsSync(personasDir)) {
+        fs.mkdirSync(personasDir, { recursive: true });
       }
 
       // Filter out built-ins before saving
@@ -163,7 +151,7 @@ export class PersonaManager extends EventEmitter {
         }
       }
 
-      await fs.promises.writeFile(this.personasFilePath, JSON.stringify(customPersonas, null, 2));
+      fs.writeFileSync(this.personasFilePath, JSON.stringify(customPersonas, null, 2));
       debug(`Saved ${Object.keys(customPersonas).length} custom personas`);
     } catch (error: any) {
       debug('Error saving personas:', ErrorUtils.getMessage(error));
@@ -179,23 +167,22 @@ export class PersonaManager extends EventEmitter {
     return this.personas.get(id);
   }
 
-  public async createPersona(request: CreatePersonaRequest): Promise<Persona> {
+  public createPersona(request: CreatePersonaRequest): Persona {
     const id = crypto.randomUUID();
     const newPersona: Persona = {
       id,
       ...request,
-      usageCount: 0,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
 
     this.personas.set(id, newPersona);
-    await this.savePersonas();
+    this.savePersonas();
     this.emit('personaCreated', newPersona);
     return newPersona;
   }
 
-  public async updatePersona(id: string, updates: UpdatePersonaRequest): Promise<Persona> {
+  public updatePersona(id: string, updates: UpdatePersonaRequest): Persona {
     const existing = this.personas.get(id);
     if (!existing) {
       throw new Error(`Persona with ID ${id} not found`);
@@ -212,15 +199,12 @@ export class PersonaManager extends EventEmitter {
     };
 
     this.personas.set(id, updated);
-    await this.savePersonas();
+    this.savePersonas();
     this.emit('personaUpdated', updated);
     return updated;
   }
 
-  public async clonePersona(
-    id: string,
-    overrides?: Partial<CreatePersonaRequest>
-  ): Promise<Persona> {
+  public clonePersona(id: string, overrides?: Partial<CreatePersonaRequest>): Persona {
     const existing = this.personas.get(id);
     if (!existing) {
       throw new Error(`Persona with ID ${id} not found`);
@@ -232,18 +216,17 @@ export class PersonaManager extends EventEmitter {
       ...overrides,
       id: newId,
       isBuiltIn: false, // Cloned personas are always custom
-      usageCount: 0, // Reset usage count for cloned personas
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
 
     this.personas.set(newId, clonedPersona);
-    await this.savePersonas();
+    this.savePersonas();
     this.emit('personaCreated', clonedPersona);
     return clonedPersona;
   }
 
-  public async deletePersona(id: string): Promise<boolean> {
+  public deletePersona(id: string): boolean {
     const existing = this.personas.get(id);
     if (!existing) {
       return false;
@@ -254,26 +237,8 @@ export class PersonaManager extends EventEmitter {
     }
 
     this.personas.delete(id);
-    await this.savePersonas();
+    this.savePersonas();
     this.emit('personaDeleted', id);
-    return true;
-  }
-
-  public async incrementUsageCount(id: string): Promise<boolean> {
-    const persona = this.personas.get(id);
-    if (!persona) {
-      return false;
-    }
-
-    const updated: Persona = {
-      ...persona,
-      usageCount: (persona.usageCount || 0) + 1,
-      updatedAt: new Date().toISOString(),
-    };
-
-    this.personas.set(id, updated);
-    await this.savePersonas();
-    this.emit('personaUsed', updated);
     return true;
   }
 }

@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { useSuccessToast, useErrorToast } from '../components/DaisyUI/ToastNotification';
+import toast from 'react-hot-toast';
 
 export interface OptimisticAction<T> {
   // Action type
@@ -23,8 +23,6 @@ export interface OptimisticAction<T> {
 export function useOptimisticList<T extends { id: string }>(initialData: T[] = []) {
   const [items, setItems] = useState<T[]>(initialData);
   const [pendingIds, setPendingIds] = useState<Set<string>>(new Set());
-  const showSuccess = useSuccessToast();
-  const showError = useErrorToast();
 
   // Helper to check if an item is currently being updated
   const isUpdating = useCallback((id: string) => pendingIds.has(id), [pendingIds]);
@@ -69,7 +67,7 @@ export function useOptimisticList<T extends { id: string }>(initialData: T[] = [
         }
 
         if (successMessage) {
-          showSuccess(successMessage);
+          toast.success(successMessage);
         }
 
         return { success: true, result };
@@ -88,7 +86,7 @@ export function useOptimisticList<T extends { id: string }>(initialData: T[] = [
 
         // Explicit rollback notification
         const msg = rollbackMessage || error?.message || `Failed to ${type} item. Changes rolled back.`;
-        showError('Action Failed', msg);
+        toast.error(`Action Failed: ${msg}`);
 
         if (onError) {
             onError(error);
@@ -104,7 +102,7 @@ export function useOptimisticList<T extends { id: string }>(initialData: T[] = [
         });
       }
     },
-    [showSuccess, showError]
+    []
   );
 
   return {

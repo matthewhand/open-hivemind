@@ -2,7 +2,7 @@
 import {
   LayoutDashboard, Bot, Users, Shield,
   Settings, Cog, Activity, Component, MessageSquare, Brain,
-  Map, Webhook, FileText,
+  Map,
 } from 'lucide-react';
 import React from 'react';
 
@@ -102,13 +102,6 @@ export const hivemindNavItems: NavItem[] = [
     visible: true,
   },
   {
-    id: 'webhooks',
-    label: 'Webhook Events',
-    icon: <NavIcon><Webhook className="w-4 h-4" /></NavIcon>,
-    path: '/admin/webhooks',
-    visible: true,
-  },
-  {
     id: 'configuration',
     label: 'Global Defaults',
     icon: <NavIcon><Settings className="w-4 h-4" /></NavIcon>,
@@ -136,13 +129,6 @@ export const hivemindNavItems: NavItem[] = [
     label: 'Sitemap',
     icon: <NavIcon><Map className="w-4 h-4" /></NavIcon>,
     path: '/admin/sitemap',
-    visible: true,
-  },
-  {
-    id: 'api-docs',
-    label: 'API Docs',
-    icon: <NavIcon><FileText className="w-4 h-4" /></NavIcon>,
-    path: '/admin/api-docs',
     visible: true,
   },
 ];

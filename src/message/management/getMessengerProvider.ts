@@ -27,7 +27,7 @@ export function resetMessengerProviderCache(): void {
   cachedMessengersConfig = null;
 }
 
-export async function getMessengerProvider() {
+export function getMessengerProvider() {
   const messengersConfigPath = path.join(__dirname, '../../../config/providers/messengers.json');
 
   let messengersConfig: any = {};
@@ -36,7 +36,7 @@ export async function getMessengerProvider() {
     messengersConfig = cachedMessengersConfig;
   } else {
     try {
-      const messengersConfigRaw = await fs.promises.readFile(messengersConfigPath, 'utf-8');
+      const messengersConfigRaw = fs.readFileSync(messengersConfigPath, 'utf-8');
       messengersConfig = messengersConfigRaw ? JSON.parse(messengersConfigRaw) : {};
     } catch (_error) {
       // If file doesn't exist or JSON is invalid, use empty config
@@ -87,7 +87,7 @@ export async function getMessengerProvider() {
   for (const { name, wanted } of requestedTypes) {
     if (!wanted) continue;
     try {
-      const mod = await loadPlugin(`message-${name}`);
+      const mod = loadPlugin(`message-${name}`);
       const svc = instantiateMessageService(mod);
       if (svc) {
         if (typeof (svc as any).provider === 'undefined') {
@@ -113,7 +113,7 @@ export async function getMessengerProvider() {
     if (providerFilter.length === 0) {
       gmpDebug('No valid messenger providers initialized, defaulting to Slack');
       try {
-        const mod = await loadPlugin('message-slack');
+        const mod = loadPlugin('message-slack');
         const svc = instantiateMessageService(mod);
         if (svc) {
           if (typeof (svc as any).provider === 'undefined') {

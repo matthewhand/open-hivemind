@@ -1,11 +1,4 @@
 import React from 'react';
-import {
-  SkeletonAvatar as _SkeletonAvatar,
-  SkeletonText as _SkeletonText,
-  SkeletonCard as _LoadingSkeletonCard,
-  SkeletonTableLayout as _SkeletonTable,
-  SkeletonStatsCards as _SkeletonStats,
-} from './Skeleton';
 
 // Loading Spinner Component
 interface LoadingSpinnerProps {
@@ -110,13 +103,172 @@ export const Progress: React.FC<ProgressProps> = ({
         className={`progress ${getVariantClass()} ${getSizeClass()} flex-1`}
         value={indeterminate ? undefined : percentage}
         max="100"
-        aria-label={indeterminate ? 'Loading in progress' : `Progress: ${Math.round(percentage)}%`}
       />
       {showValue && !indeterminate && (
-        <span className="text-sm font-medium min-w-[3rem] text-right" aria-hidden="true">
+        <span className="text-sm font-medium min-w-[3rem] text-right">
           {Math.round(percentage)}%
         </span>
       )}
+    </div>
+  );
+};
+
+// Skeleton Components
+interface SkeletonProps {
+  className?: string;
+  animate?: boolean;
+}
+
+export const SkeletonText: React.FC<SkeletonProps & {
+  lines?: number;
+  width?: 'full' | '3/4' | '1/2' | '1/4';
+}> = ({
+  lines = 1,
+  width = 'full',
+  animate = true,
+  className = '',
+}) => {
+  const getWidthClass = () => {
+    switch (width) {
+    case '3/4': return 'w-3/4';
+    case '1/2': return 'w-1/2';
+    case '1/4': return 'w-1/4';
+    default: return 'w-full';
+    }
+  };
+
+  const animateClass = animate ? 'animate-pulse' : '';
+
+  return (
+    <div className={`space-y-2 ${className}`}>
+      {Array.from({ length: lines }).map((_, index) => (
+        <div
+          key={index}
+          className={`h-4 bg-base-300 rounded ${getWidthClass()} ${animateClass} ${
+            index === lines - 1 && lines > 1 ? 'w-2/3' : ''
+          }`}
+        />
+      ))}
+    </div>
+  );
+};
+
+export const LoadingSkeletonCard: React.FC<SkeletonProps> = ({
+  animate = true,
+  className = '',
+}) => {
+  const animateClass = animate ? 'animate-pulse' : '';
+
+  return (
+    <div className={`card bg-base-100 shadow-xl ${className}`}>
+      <div className="card-body">
+        <div className={`h-6 bg-base-300 rounded w-3/4 mb-4 ${animateClass}`} />
+        <div className="space-y-2">
+          <div className={`h-4 bg-base-300 rounded w-full ${animateClass}`} />
+          <div className={`h-4 bg-base-300 rounded w-5/6 ${animateClass}`} />
+          <div className={`h-4 bg-base-300 rounded w-2/3 ${animateClass}`} />
+        </div>
+        <div className="card-actions justify-end mt-4">
+          <div className={`h-10 bg-base-300 rounded w-20 ${animateClass}`} />
+          <div className={`h-10 bg-base-300 rounded w-24 ${animateClass}`} />
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export const SkeletonAvatar: React.FC<SkeletonProps & {
+  size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl';
+  shape?: 'circle' | 'square';
+}> = ({
+  size = 'md',
+  shape = 'circle',
+  animate = true,
+  className = '',
+}) => {
+  const getSizeClass = () => {
+    switch (size) {
+    case 'xs': return 'w-6 h-6';
+    case 'sm': return 'w-8 h-8';
+    case 'md': return 'w-12 h-12';
+    case 'lg': return 'w-16 h-16';
+    case 'xl': return 'w-20 h-20';
+    default: return 'w-12 h-12';
+    }
+  };
+
+  const shapeClass = shape === 'circle' ? 'rounded-full' : 'rounded';
+  const animateClass = animate ? 'animate-pulse' : '';
+
+  return (
+    <div
+      className={`bg-base-300 ${getSizeClass()} ${shapeClass} ${animateClass} ${className}`}
+    />
+  );
+};
+
+export const SkeletonTable: React.FC<SkeletonProps & {
+  rows?: number;
+  columns?: number;
+}> = ({
+  rows = 5,
+  columns = 4,
+  animate = true,
+  className = '',
+}) => {
+  const animateClass = animate ? 'animate-pulse' : '';
+
+  return (
+    <div className={`overflow-x-auto ${className}`}>
+      <table className="table">
+        <thead>
+          <tr>
+            {Array.from({ length: columns }).map((_, index) => (
+              <th key={index}>
+                <div className={`h-4 bg-base-300 rounded w-24 ${animateClass}`} />
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {Array.from({ length: rows }).map((_, rowIndex) => (
+            <tr key={rowIndex}>
+              {Array.from({ length: columns }).map((_, colIndex) => (
+                <td key={colIndex}>
+                  <div className={`h-4 bg-base-300 rounded w-32 ${animateClass}`} />
+                </td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+};
+
+export const SkeletonStats: React.FC<SkeletonProps & {
+  count?: number;
+}> = ({
+  count = 4,
+  animate = true,
+  className = '',
+}) => {
+  const animateClass = animate ? 'animate-pulse' : '';
+
+  return (
+    <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-${count} gap-4 ${className}`}>
+      {Array.from({ length: count }).map((_, index) => (
+        <div key={index} className="stats shadow bg-base-100">
+          <div className="stat">
+            <div className="stat-figure">
+              <div className={`w-8 h-8 bg-base-300 rounded ${animateClass}`} />
+            </div>
+            <div className={`stat-title h-4 bg-base-300 rounded w-20 mb-2 ${animateClass}`} />
+            <div className={`stat-value h-8 bg-base-300 rounded w-16 mb-2 ${animateClass}`} />
+            <div className={`stat-desc h-3 bg-base-300 rounded w-24 ${animateClass}`} />
+          </div>
+        </div>
+      ))}
     </div>
   );
 };
@@ -139,7 +291,7 @@ export const LoadingOverlay: React.FC<LoadingOverlayProps> = ({
     <div className={`relative ${className}`}>
       {children}
       {isLoading && (
-        <div className="absolute inset-0 bg-base-100/80 backdrop-blur-sm flex items-center justify-center z-10" role="status" aria-live="polite">
+        <div className="absolute inset-0 bg-base-100/80 backdrop-blur-sm flex items-center justify-center z-10">
           <div className="text-center">
             <LoadingSpinner size="lg" />
             <p className="mt-2 text-base-content/70">{message}</p>
@@ -177,7 +329,7 @@ export const StepProgress: React.FC<StepProgressProps> = ({
             className={`step ${index < currentStep ? getVariantClass() : ''} ${
               index === currentStep - 1 ? 'step-primary' : ''
             }`}
-            data-content={index < currentStep ? '\u2713' : index + 1}
+            data-content={index < currentStep ? '✓' : index + 1}
           >
             <div className="text-left">
               <div className="font-medium">{step.label}</div>
@@ -202,48 +354,6 @@ export const StepProgress: React.FC<StepProgressProps> = ({
   );
 };
 
-// Loading Spinner with message (replaces standalone LoadingSpinner.tsx wrapper)
-interface LoadingSpinnerWithMessageProps {
-  message?: string;
-  size?: 'xs' | 'sm' | 'md' | 'lg';
-  fullScreen?: boolean;
-}
-
-export const LoadingSpinnerWithMessage: React.FC<LoadingSpinnerWithMessageProps> = ({
-  message = 'Loading...',
-  size = 'md',
-  fullScreen = false,
-}) => {
-  const content = (
-    <div className="flex flex-col items-center justify-center gap-4 p-6">
-      <LoadingSpinner color="primary" size={size} />
-      {message && (
-        <p className="text-sm text-base-content/70">
-          {message}
-        </p>
-      )}
-    </div>
-  );
-
-  if (fullScreen) {
-    return (
-      <div className="flex items-center justify-center min-h-screen w-full">
-        {content}
-      </div>
-    );
-  }
-
-  return content;
-};
-
-// Re-export skeleton components from Skeleton.tsx for backward compatibility.
-// All skeleton primitives and layouts now live in Skeleton.tsx.
-export const SkeletonText = _SkeletonText;
-export const LoadingSkeletonCard = _LoadingSkeletonCard;
-export const SkeletonAvatar = _SkeletonAvatar;
-export const SkeletonTable = _SkeletonTable;
-export const SkeletonStats = _SkeletonStats;
-
 export default {
   Loading,
   LoadingSpinner,
@@ -255,5 +365,4 @@ export default {
   SkeletonStats,
   LoadingOverlay,
   StepProgress,
-  LoadingSpinnerWithMessage,
 };

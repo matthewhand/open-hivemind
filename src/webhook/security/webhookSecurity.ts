@@ -1,5 +1,4 @@
 import crypto from 'crypto';
-import net from 'net';
 import type { NextFunction, Request, Response } from 'express';
 import webhookConfig from '@config/webhookConfig';
 import Logger from '@common/logger';
@@ -91,6 +90,7 @@ const isValidIpv4 = (ip: string): boolean => {
 const isValidIpv6 = (ip: string): boolean => {
   // Use the net module for authoritative IPv6 validation
   try {
+    const net = require('net') as typeof import('net');
     return net.isIPv6(ip);
   } catch {
     return false;

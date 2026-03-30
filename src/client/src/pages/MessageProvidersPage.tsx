@@ -8,7 +8,7 @@ import { Alert } from '../components/DaisyUI/Alert';
 import PageHeader from '../components/DaisyUI/PageHeader';
 import StatsCards from '../components/DaisyUI/StatsCards';
 import EmptyState from '../components/DaisyUI/EmptyState';
-import { SkeletonTableLayout } from '../components/DaisyUI/Skeleton';
+import { LoadingSpinner } from '../components/DaisyUI/Loading';
 import SearchFilterBar from '../components/SearchFilterBar';
 import { ConfirmModal } from '../components/DaisyUI/Modal';
 import { useErrorToast } from '../components/DaisyUI/ToastNotification';
@@ -27,7 +27,6 @@ import {
 import ProviderConfigModal from '../components/ProviderConfiguration/ProviderConfigModal';
 import { apiService } from '../services/api';
 import { getProviderSchema } from '../provider-configs';
-import useUrlParams from '../hooks/useUrlParams';
 
 const MessageProvidersPage: React.FC = () => {
   const { modalState, openAddModal, openEditModal, closeModal } = useModal();
@@ -36,14 +35,8 @@ const MessageProvidersPage: React.FC = () => {
   const [expandedProfile, setExpandedProfile] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const { values: urlParams, setValue: setUrlParam } = useUrlParams({
-    search: { type: 'string', default: '', debounce: 300 },
-    type: { type: 'string', default: 'all' },
-  });
-  const searchQuery = urlParams.search;
-  const setSearchQuery = (v: string) => setUrlParam('search', v);
-  const filterType = urlParams.type;
-  const setFilterType = (v: string) => setUrlParam('type', v);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filterType, setFilterType] = useState('all');
   const [confirmModal, setConfirmModal] = useState<{
     isOpen: boolean; title: string; message: string; onConfirm: () => void;
   }>({ isOpen: false, title: '', message: '', onConfirm: () => {} });
@@ -187,7 +180,7 @@ const MessageProvidersPage: React.FC = () => {
       />
 
       {loading ? (
-        <SkeletonTableLayout rows={6} columns={4} />
+        <div className="flex justify-center py-12"><LoadingSpinner size="lg" /></div>
       ) : profiles.length === 0 ? (
         <EmptyState
           icon={MessageIcon}
@@ -226,13 +219,13 @@ const MessageProvidersPage: React.FC = () => {
                     </div>
                   </div>
                   <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
-                    <Button size="sm" variant="ghost" onClick={() => handleEditProfile(profile)} aria-label={`Edit ${profile.name} profile`}>
+                    <Button size="sm" variant="ghost" onClick={() => handleEditProfile(profile)}>
                       <EditIcon className="w-4 h-4" />
                     </Button>
-                    <Button size="sm" variant="ghost" className="text-error hover:bg-error/10" onClick={() => handleDeleteProfile(profile.key)} aria-label={`Delete ${profile.name} profile`}>
+                    <Button size="sm" variant="ghost" className="text-error hover:bg-error/10" onClick={() => handleDeleteProfile(profile.key)}>
                       <DeleteIcon className="w-4 h-4" />
                     </Button>
-                    <Button size="sm" variant="ghost" onClick={() => toggleExpand(profile.key)} aria-label={expandedProfile === profile.key ? 'Collapse details' : 'Expand details'}>
+                    <Button size="sm" variant="ghost" onClick={() => toggleExpand(profile.key)}>
                       {expandedProfile === profile.key ? <CollapseIcon className="w-4 h-4" /> : <ExpandIcon className="w-4 h-4" />}
                     </Button>
                   </div>

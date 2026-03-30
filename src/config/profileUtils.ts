@@ -16,28 +16,19 @@ export const getProfilesPath = (filename: string): string => {
   return path.join(configDir, filename);
 };
 
-export const loadProfiles = async <T>(options: ProfileLoaderOptions<T>): Promise<T> => {
+export const loadProfiles = <T>(options: ProfileLoaderOptions<T>): T => {
   const { filename, defaultData, validateAndMigrate, profileType } = options;
   const filePath = getProfilesPath(filename);
 
   try {
-    try {
-      await fs.promises.access(filePath);
-      const raw = await fs.promises.readFile(filePath, 'utf8');
-      const parsed = JSON.parse(raw);
-      return validateAndMigrate(parsed);
-    } catch (err: any) {
-      if (err.code !== 'ENOENT') throw err;
-
+    if (!fs.existsSync(filePath)) {
       // Create scaffolding if missing
       try {
         const dir = path.dirname(filePath);
-        try {
-          await fs.promises.access(dir);
-        } catch {
-          await fs.promises.mkdir(dir, { recursive: true });
+        if (!fs.existsSync(dir)) {
+          fs.mkdirSync(dir, { recursive: true });
         }
-        await fs.promises.writeFile(filePath, JSON.stringify(defaultData, null, 2), 'utf8');
+        fs.writeFileSync(filePath, JSON.stringify(defaultData, null, 2), 'utf8');
         debug(`Created scaffolding for ${profileType} profiles at`, filePath);
         return Array.isArray(defaultData) ? [ ...defaultData ] as unknown as T : { ...defaultData };
       } catch (err) {
@@ -45,21 +36,22 @@ export const loadProfiles = async <T>(options: ProfileLoaderOptions<T>): Promise
         return Array.isArray(defaultData) ? [ ...defaultData ] as unknown as T : { ...defaultData };
       }
     }
+    const raw = fs.readFileSync(filePath, 'utf8');
+    const parsed = JSON.parse(raw);
+    return validateAndMigrate(parsed);
   } catch (error) {
     debug(`Failed to load ${profileType} profiles, using defaults:`, error);
     return Array.isArray(defaultData) ? [ ...defaultData ] as unknown as T : { ...defaultData };
   }
 };
 
-export const saveProfiles = async <T>(filename: string, profiles: T): Promise<void> => {
+export const saveProfiles = <T>(filename: string, profiles: T): void => {
   const filePath = getProfilesPath(filename);
   const dir = path.dirname(filePath);
-  try {
-    await fs.promises.access(dir);
-  } catch {
-    await fs.promises.mkdir(dir, { recursive: true });
+  if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir, { recursive: true });
   }
-  await fs.promises.writeFile(filePath, JSON.stringify(profiles, null, 2));
+  fs.writeFileSync(filePath, JSON.stringify(profiles, null, 2));
 };
 
 export const findProfileByKey = <T, K extends keyof T>(

@@ -2,8 +2,6 @@ import { promises as fs } from 'fs';
 import path from 'path';
 import type { BotConfiguration } from '../database/DatabaseManager';
 import type { BotOverride, MessageProvider, LlmProvider, McpServerConfig, McpGuardConfig } from '@src/types/config';
-import Debug from 'debug';
-const debug = Debug('app:config:UserConfigStore');
 
 interface ToolConfig {
   guards?: {
@@ -76,7 +74,7 @@ export class UserConfigStore {
       await fs.mkdir(configDir, { recursive: true });
       await fs.writeFile(this.configPath, JSON.stringify(this.config, null, 2), 'utf-8');
     } catch (error) {
-      debug('ERROR:', 'Failed to save user config:', error);
+      console.error('Failed to save user config:', error);
       throw error;
     }
   }
@@ -150,13 +148,13 @@ export class UserConfigStore {
       disabled: this.isBotDisabled(botName),
       messageProvider: botConfig.messageProvider as MessageProvider,
       llmProvider: botConfig.llmProvider as LlmProvider,
-      llmProfile: 'llmProfile' in botConfig ? (botConfig.llmProfile as string | undefined) : undefined,
+      llmProfile: (botConfig as any).llmProfile as string | undefined,
       responseProfile: botConfig.responseProfile as string | undefined,
       persona: botConfig.persona,
       systemInstruction: botConfig.systemInstruction,
       mcpServers: botConfig.mcpServers as McpServerConfig[],
       mcpGuard: botConfig.mcpGuard as McpGuardConfig,
-      mcpGuardProfile: 'mcpGuardProfile' in botConfig ? (botConfig.mcpGuardProfile as string | undefined) : undefined,
+      mcpGuardProfile: (botConfig as any).mcpGuardProfile as string | undefined,
     };
   }
 
@@ -179,13 +177,13 @@ export class UserConfigStore {
         disabled: disabledBots.has(botConfig.name),
         messageProvider: botConfig.messageProvider as MessageProvider,
         llmProvider: botConfig.llmProvider as LlmProvider,
-        llmProfile: 'llmProfile' in botConfig ? (botConfig.llmProfile as string | undefined) : undefined,
+        llmProfile: (botConfig as any).llmProfile as string | undefined,
         responseProfile: botConfig.responseProfile as string | undefined,
         persona: botConfig.persona,
         systemInstruction: botConfig.systemInstruction,
         mcpServers: botConfig.mcpServers as McpServerConfig[],
         mcpGuard: botConfig.mcpGuard as McpGuardConfig,
-        mcpGuardProfile: 'mcpGuardProfile' in botConfig ? (botConfig.mcpGuardProfile as string | undefined) : undefined,
+        mcpGuardProfile: (botConfig as any).mcpGuardProfile as string | undefined,
       });
     }
 
@@ -206,13 +204,13 @@ export class UserConfigStore {
       name: botName,
       messageProvider: overrides.messageProvider || 'discord' as MessageProvider,
       llmProvider: overrides.llmProvider || 'flowise' as LlmProvider,
-      llmProfile: 'llmProfile' in overrides ? (overrides.llmProfile as string | undefined) : undefined,
+      llmProfile: (overrides as any).llmProfile,
       responseProfile: overrides.responseProfile,
       persona: overrides.persona,
       systemInstruction: overrides.systemInstruction,
       mcpServers: overrides.mcpServers,
       mcpGuard: overrides.mcpGuard,
-      mcpGuardProfile: 'mcpGuardProfile' in overrides ? (overrides.mcpGuardProfile as string | undefined) : undefined,
+      mcpGuardProfile: (overrides as any).mcpGuardProfile,
       isActive: true,
       createdAt: new Date(),
       updatedAt: new Date(),

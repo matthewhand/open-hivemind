@@ -69,11 +69,11 @@ export class HotReloadManager {
           });
           this.configWatchers.set(configPath, watcher);
         } catch (error: unknown) {
-          const hivemindError = ErrorUtils.toHivemindError(error);
+          const hivemindError = ErrorUtils.toHivemindError(error) as any;
           const errorInfo = ErrorUtils.classifyError(hivemindError);
           debug(`Failed to watch config path ${configPath}:`, {
             error: hivemindError.message,
-            errorCode: ErrorUtils.getCode(hivemindError),
+            errorCode: (hivemindError as any).code,
             errorType: errorInfo.type,
             severity: errorInfo.severity,
             configPath,
@@ -406,7 +406,7 @@ export class HotReloadManager {
           continue;
         }
 
-        sanitizedChanges[key] = value;
+        (sanitizedChanges as any)[key] = value;
       }
 
       if (Object.keys(sanitizedChanges).length > 0) {
@@ -415,15 +415,6 @@ export class HotReloadManager {
         // Reload configuration so changes take effect immediately
         const manager = BotConfigurationManager.getInstance();
         manager.reload();
-
-        // Clear bot rate limiter cache to pick up new guard profile settings
-        try {
-          const { clearBotRateLimiters } = require('../middleware/rateLimiter');
-          clearBotRateLimiters();
-          debug('Cleared bot rate limiter cache after configuration reload');
-        } catch (error) {
-          debug('Failed to clear bot rate limiter cache:', error);
-        }
       }
 
       return true;

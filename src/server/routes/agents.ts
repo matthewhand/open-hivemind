@@ -4,16 +4,6 @@ import { join } from 'path';
 import Debug from 'debug';
 import { Router } from 'express';
 import { ErrorUtils } from '@src/types/errors';
-import { HTTP_STATUS } from '../../types/constants';
-import {
-  AgentIdParamSchema,
-  AgentPersonaKeyParamSchema,
-  CreateAgentPersonaSchema,
-  CreateAgentSchema,
-  UpdateAgentPersonaSchema,
-  UpdateAgentSchema,
-} from '../../validation/schemas/agentsSchema';
-import { validateRequest } from '../../validation/validateRequest';
 
 const debug = Debug('app:webui:agents');
 const router = Router();
@@ -43,7 +33,7 @@ interface Persona {
   systemPrompt: string;
 }
 
-interface _MCPServer {
+interface MCPServer {
   name: string;
   url: string;
   apiKey?: string;
@@ -54,7 +44,7 @@ interface _MCPServer {
 // Agent Configuration Management
 const AGENTS_CONFIG_FILE = join(process.cwd(), 'data', 'agents.json');
 const PERSONAS_CONFIG_FILE = join(process.cwd(), 'data', 'personas.json');
-const _MCP_SERVERS_CONFIG_FILE = join(process.cwd(), 'data', 'mcp-servers.json');
+const MCP_SERVERS_CONFIG_FILE = join(process.cwd(), 'data', 'mcp-servers.json');
 
 // Ensure data directory exists
 const ensureDataDir = async () => {
@@ -175,7 +165,7 @@ router.get('/', async (req, res) => {
 });
 
 // POST /api/agents - Create new agent
-router.post('/', validateRequest(CreateAgentSchema), async (req, res) => {
+router.post('/', async (req, res) => {
   try {
     const agentData: Omit<AgentConfig, 'id' | 'createdAt' | 'updatedAt'> = req.body;
 
@@ -184,7 +174,7 @@ router.post('/', validateRequest(CreateAgentSchema), async (req, res) => {
     // Idempotency check: return existing agent with same name
     const existingAgent = agents.find((a) => a.name === agentData.name);
     if (existingAgent) {
-      return res.status(HTTP_STATUS.OK).json({ agent: existingAgent });
+      return res.status(200).json({ agent: existingAgent });
     }
 
     const newAgent: AgentConfig = {
@@ -219,7 +209,7 @@ router.post('/', validateRequest(CreateAgentSchema), async (req, res) => {
 });
 
 // PUT /api/agents/:id - Update agent
-router.put('/:id', validateRequest(UpdateAgentSchema), async (req, res) => {
+router.put('/:id', async (req, res) => {
   try {
     const { id } = req.params;
     const updates: Partial<AgentConfig> = req.body;
@@ -228,7 +218,7 @@ router.put('/:id', validateRequest(UpdateAgentSchema), async (req, res) => {
     const agentIndex = agents.findIndex((agent) => agent.id === id);
 
     if (agentIndex === -1) {
-      return res.status(HTTP_STATUS.NOT_FOUND).json({ error: 'Agent not found' });
+      return res.status(404).json({ error: 'Agent not found' });
     }
 
     agents[agentIndex] = { ...agents[agentIndex], ...updates };
@@ -256,7 +246,7 @@ router.put('/:id', validateRequest(UpdateAgentSchema), async (req, res) => {
 });
 
 // DELETE /api/agents/:id - Delete agent
-router.delete('/:id', validateRequest(AgentIdParamSchema), async (req, res) => {
+router.delete('/:id', async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -264,7 +254,7 @@ router.delete('/:id', validateRequest(AgentIdParamSchema), async (req, res) => {
     const filteredAgents = agents.filter((agent) => agent.id !== id);
 
     if (filteredAgents.length === agents.length) {
-      return res.status(HTTP_STATUS.NOT_FOUND).json({ error: 'Agent not found' });
+      return res.status(404).json({ error: 'Agent not found' });
     }
 
     await saveJsonConfig(AGENTS_CONFIG_FILE, filteredAgents);
@@ -335,9 +325,13 @@ router.get('/personas', async (req, res) => {
 });
 
 // POST /api/agents/personas - Create new persona
-router.post('/personas', validateRequest(CreateAgentPersonaSchema), async (req, res) => {
+router.post('/personas', async (req, res) => {
   try {
     const { name, systemPrompt } = req.body;
+
+    if (!name || !systemPrompt) {
+      return res.status(400).json({ error: 'Name and system prompt are required' });
+    }
 
     const personas = await loadJsonConfig<Persona[]>(PERSONAS_CONFIG_FILE, []);
     const key = name.toLowerCase().replace(/[^a-z0-9]/g, '_');
@@ -345,7 +339,7 @@ router.post('/personas', validateRequest(CreateAgentPersonaSchema), async (req, 
     // Check if persona already exists
     const existingPersona = personas.find((p) => p.key === key);
     if (existingPersona) {
-      return res.status(HTTP_STATUS.OK).json({ persona: existingPersona });
+      return res.status(200).json({ persona: existingPersona });
     }
 
     const newPersona: Persona = { key, name, systemPrompt };
@@ -375,7 +369,7 @@ router.post('/personas', validateRequest(CreateAgentPersonaSchema), async (req, 
 });
 
 // PUT /api/agents/personas/:key - Update persona
-router.put('/personas/:key', validateRequest(UpdateAgentPersonaSchema), async (req, res) => {
+router.put('/personas/:key', async (req, res) => {
   try {
     const { key } = req.params;
     const { name, systemPrompt } = req.body;
@@ -384,7 +378,7 @@ router.put('/personas/:key', validateRequest(UpdateAgentPersonaSchema), async (r
     const personaIndex = personas.findIndex((p) => p.key === key);
 
     if (personaIndex === -1) {
-      return res.status(HTTP_STATUS.NOT_FOUND).json({ error: 'Persona not found' });
+      return res.status(404).json({ error: 'Persona not found' });
     }
 
     personas[personaIndex] = { key, name, systemPrompt };
@@ -412,19 +406,19 @@ router.put('/personas/:key', validateRequest(UpdateAgentPersonaSchema), async (r
 });
 
 // DELETE /api/agents/personas/:key - Delete persona
-router.delete('/personas/:key', validateRequest(AgentPersonaKeyParamSchema), async (req, res) => {
+router.delete('/personas/:key', async (req, res) => {
   try {
     const { key } = req.params;
 
     if (key === 'default') {
-      return res.status(HTTP_STATUS.BAD_REQUEST).json({ error: 'Cannot delete default persona' });
+      return res.status(400).json({ error: 'Cannot delete default persona' });
     }
 
     const personas = await loadJsonConfig<Persona[]>(PERSONAS_CONFIG_FILE, []);
     const filteredPersonas = personas.filter((p) => p.key !== key);
 
     if (filteredPersonas.length === personas.length) {
-      return res.status(HTTP_STATUS.NOT_FOUND).json({ error: 'Persona not found' });
+      return res.status(404).json({ error: 'Persona not found' });
     }
 
     await saveJsonConfig(PERSONAS_CONFIG_FILE, filteredPersonas);
