@@ -15,6 +15,7 @@ import {
   UpdateGuardProfileSchema,
 } from '../../validation/schemas/guardProfilesSchema';
 import { validateRequest } from '../../validation/validateRequest';
+import { ApiResponse } from '../utils/apiResponse';
 
 const router = Router();
 
@@ -30,16 +31,20 @@ if (!isTestEnv) {
 router.get('/', (req: Request, res: Response) => {
   try {
     const profiles = loadGuardrailProfiles();
-    return res.json({
-      success: true,
-      data: profiles,
-    });
+    return res.json(
+      ApiResponse.success({
+        success: true,
+        data: profiles,
+      })
+    );
   } catch (error: unknown) {
-    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
-      success: false,
-      error: 'Failed to load guardrail profiles',
-      message: error instanceof Error ? error.message : String(error),
-    });
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json(
+      ApiResponse.error('An error occurred', undefined, {
+        success: false,
+        error: 'Failed to load guardrail profiles',
+        message: error instanceof Error ? error.message : String(error),
+      })
+    );
   }
 });
 
@@ -51,22 +56,28 @@ router.get('/:id', validateRequest(GuardProfileIdParamSchema), (req: Request, re
     const profile = profiles.find((p) => p.id === id);
 
     if (!profile) {
-      return res.status(HTTP_STATUS.NOT_FOUND).json({
-        success: false,
-        error: 'Profile not found',
-      });
+      return res.status(HTTP_STATUS.NOT_FOUND).json(
+        ApiResponse.error('Profile not found', undefined, {
+          success: false,
+          error: 'Profile not found',
+        })
+      );
     }
 
-    return res.json({
-      success: true,
-      data: profile,
-    });
+    return res.json(
+      ApiResponse.success({
+        success: true,
+        data: profile,
+      })
+    );
   } catch (error: unknown) {
-    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
-      success: false,
-      error: 'Failed to retrieve profile',
-      message: error instanceof Error ? error.message : String(error),
-    });
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json(
+      ApiResponse.error('An error occurred', undefined, {
+        success: false,
+        error: 'Failed to retrieve profile',
+        message: error instanceof Error ? error.message : String(error),
+      })
+    );
   }
 });
 
@@ -103,11 +114,13 @@ router.post('/', validateRequest(CreateGuardProfileSchema), (req: Request, res: 
     // Idempotency check: see if profile with same name already exists
     const existingProfile = profiles.find((p) => p.name === name);
     if (existingProfile) {
-      return res.status(HTTP_STATUS.OK).json({
-        success: true,
-        data: existingProfile,
-        message: 'Guard profile already exists',
-      });
+      return res.status(HTTP_STATUS.OK).json(
+        ApiResponse.success({
+          success: true,
+          data: existingProfile,
+          message: 'Guard profile already exists',
+        })
+      );
     }
 
     const newProfile: GuardrailProfile = {
@@ -157,17 +170,21 @@ router.post('/', validateRequest(CreateGuardProfileSchema), (req: Request, res: 
     profiles.push(newProfile);
     saveGuardrailProfiles(profiles);
 
-    return res.status(HTTP_STATUS.CREATED).json({
-      success: true,
-      data: newProfile,
-      message: 'Guard profile created successfully',
-    });
+    return res.status(HTTP_STATUS.CREATED).json(
+      ApiResponse.success({
+        success: true,
+        data: newProfile,
+        message: 'Guard profile created successfully',
+      })
+    );
   } catch (error: unknown) {
-    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
-      success: false,
-      error: 'Failed to create guard profile',
-      message: error instanceof Error ? error.message : String(error),
-    });
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json(
+      ApiResponse.error('An error occurred', undefined, {
+        success: false,
+        error: 'Failed to create guard profile',
+        message: error instanceof Error ? error.message : String(error),
+      })
+    );
   }
 });
 
@@ -181,10 +198,12 @@ router.put('/:id', validateRequest(UpdateGuardProfileSchema), (req: Request, res
     const profileIndex = profiles.findIndex((p) => p.id === id);
 
     if (profileIndex === -1) {
-      return res.status(HTTP_STATUS.NOT_FOUND).json({
-        success: false,
-        error: 'Profile not found',
-      });
+      return res.status(HTTP_STATUS.NOT_FOUND).json(
+        ApiResponse.error('Profile not found', undefined, {
+          success: false,
+          error: 'Profile not found',
+        })
+      );
     }
 
     // Merge updates with validation to prevent prototype pollution
@@ -225,17 +244,21 @@ router.put('/:id', validateRequest(UpdateGuardProfileSchema), (req: Request, res
     profiles[profileIndex] = updatedProfile;
     saveGuardrailProfiles(profiles);
 
-    return res.json({
-      success: true,
-      data: updatedProfile,
-      message: 'Guard profile updated successfully',
-    });
+    return res.json(
+      ApiResponse.success({
+        success: true,
+        data: updatedProfile,
+        message: 'Guard profile updated successfully',
+      })
+    );
   } catch (error: unknown) {
-    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
-      success: false,
-      error: 'Failed to update guard profile',
-      message: error instanceof Error ? error.message : String(error),
-    });
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json(
+      ApiResponse.error('An error occurred', undefined, {
+        success: false,
+        error: 'Failed to update guard profile',
+        message: error instanceof Error ? error.message : String(error),
+      })
+    );
   }
 });
 
@@ -247,25 +270,31 @@ router.delete('/:id', validateRequest(GuardProfileIdParamSchema), (req: Request,
     const profileExists = profiles.some((p) => p.id === id);
 
     if (!profileExists) {
-      return res.status(HTTP_STATUS.OK).json({
-        success: true,
-        message: 'Guard profile already deleted or not found',
-      });
+      return res.status(HTTP_STATUS.OK).json(
+        ApiResponse.success({
+          success: true,
+          message: 'Guard profile already deleted or not found',
+        })
+      );
     }
 
     const filteredProfiles = profiles.filter((p) => p.id !== id);
     saveGuardrailProfiles(filteredProfiles);
 
-    return res.json({
-      success: true,
-      message: 'Guard profile deleted successfully',
-    });
+    return res.json(
+      ApiResponse.success({
+        success: true,
+        message: 'Guard profile deleted successfully',
+      })
+    );
   } catch (error: unknown) {
-    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
-      success: false,
-      error: 'Failed to delete guard profile',
-      message: error instanceof Error ? error.message : String(error),
-    });
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json(
+      ApiResponse.error('An error occurred', undefined, {
+        success: false,
+        error: 'Failed to delete guard profile',
+        message: error instanceof Error ? error.message : String(error),
+      })
+    );
   }
 });
 
@@ -294,11 +323,13 @@ router.post(
         },
       });
     } catch (error: unknown) {
-      return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
-        success: false,
-        error: 'Failed to delete guard profiles',
-        message: error instanceof Error ? error.message : String(error),
-      });
+      return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json(
+        ApiResponse.error('An error occurred', undefined, {
+          success: false,
+          error: 'Failed to delete guard profiles',
+          message: error instanceof Error ? error.message : String(error),
+        })
+      );
     }
   }
 );
@@ -350,11 +381,13 @@ router.post(
         },
       });
     } catch (error: unknown) {
-      return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
-        success: false,
-        error: 'Failed to toggle guard profiles',
-        message: error instanceof Error ? error.message : String(error),
-      });
+      return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json(
+        ApiResponse.error('An error occurred', undefined, {
+          success: false,
+          error: 'Failed to toggle guard profiles',
+          message: error instanceof Error ? error.message : String(error),
+        })
+      );
     }
   }
 );

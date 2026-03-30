@@ -13,6 +13,7 @@ import { authenticateToken, requireRole } from '@src/server/middleware/auth';
 import { HTTP_STATUS } from '../../types/constants';
 import { EmptySchema, MarketplacePluginNameParamSchema } from '../../validation/schemas/miscSchema';
 import { validateRequest } from '../../validation/validateRequest';
+import { ApiResponse } from '../utils/apiResponse';
 
 const debug = Debug('app:marketplace');
 const router = Router();
@@ -190,7 +191,7 @@ router.get('/packages', async (req, res) => {
     const packages = await getPackages();
     debug('Returning %d packages', packages.length);
 
-    return res.json(packages);
+    return res.json(ApiResponse.success(packages));
   } catch (err: any) {
     debug('Error listing packages: %s', err);
     return res
@@ -211,10 +212,10 @@ router.get('/packages/:name', async (req, res) => {
     const pkg = packages.find((p) => p.name === name);
 
     if (!pkg) {
-      return res.status(HTTP_STATUS.NOT_FOUND).json({ error: 'Package not found' });
+      return res.status(HTTP_STATUS.NOT_FOUND).json(ApiResponse.error('Package not found'));
     }
 
-    return res.json(pkg);
+    return res.json(ApiResponse.success(pkg));
   } catch (err: any) {
     debug('Error getting package: %s', err);
     return res
@@ -233,7 +234,9 @@ router.post('/install', requireRole('admin'), validateRequest(EmptySchema), asyn
     const { repoUrl } = req.body;
 
     if (!repoUrl || typeof repoUrl !== 'string') {
-      return res.status(HTTP_STATUS.BAD_REQUEST).json({ error: 'Missing or invalid repoUrl' });
+      return res
+        .status(HTTP_STATUS.BAD_REQUEST)
+        .json(ApiResponse.error('Missing or invalid repoUrl'));
     }
 
     debug('Installing plugin from %s', repoUrl);
@@ -284,7 +287,9 @@ router.post(
       // ⚡ Bolt Optimization: Invalidate cache after uninstall
       invalidateCache();
 
-      return res.json({ success: true, message: `Plugin ${name} uninstalled` });
+      return res.json(
+        ApiResponse.success({ success: true, message: `Plugin ${name} uninstalled` })
+      );
     } catch (err: any) {
       debug('Uninstall error: %s', err);
       return res
@@ -313,20 +318,22 @@ router.post(
       // ⚡ Bolt Optimization: Invalidate cache after update
       invalidateCache();
 
-      return res.json({
-        success: true,
-        package: {
-          name: plugin.name,
-          displayName: plugin.manifest.displayName,
-          description: plugin.manifest.description,
-          type: plugin.manifest.type,
-          version: plugin.version,
-          status: 'installed' as const,
-          repoUrl: plugin.repoUrl,
-          installedAt: plugin.installedAt,
-          updatedAt: plugin.updatedAt,
-        },
-      });
+      return res.json(
+        ApiResponse.success({
+          success: true,
+          package: {
+            name: plugin.name,
+            displayName: plugin.manifest.displayName,
+            description: plugin.manifest.description,
+            type: plugin.manifest.type,
+            version: plugin.version,
+            status: 'installed' as const,
+            repoUrl: plugin.repoUrl,
+            installedAt: plugin.installedAt,
+            updatedAt: plugin.updatedAt,
+          },
+        })
+      );
     } catch (err: any) {
       debug('Update error: %s', err);
       return res

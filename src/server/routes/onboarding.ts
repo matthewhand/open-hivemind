@@ -3,6 +3,7 @@ import { createLogger } from '../../common/StructuredLogger';
 import { BotManager } from '../../managers/BotManager';
 import { OnboardingStepSchema } from '../../validation/schemas/onboardingSchema';
 import { validateRequest } from '../../validation/validateRequest';
+import { ApiResponse } from '../utils/apiResponse';
 
 const router = Router();
 const logger = createLogger('onboardingRouter');
@@ -27,7 +28,7 @@ router.get('/status', async (_req, res) => {
   try {
     // If already marked complete, return immediately
     if (onboardingCompleted) {
-      return res.json({ completed: true, step: 5 });
+      return res.json(ApiResponse.success({ completed: true, step: 5 }));
     }
 
     // Auto-detect completion: if bots exist, onboarding is implicitly done
@@ -35,16 +36,16 @@ router.get('/status', async (_req, res) => {
     const bots = await manager.getAllBots();
     if (bots.length > 0) {
       onboardingCompleted = true;
-      return res.json({ completed: true, step: 5 });
+      return res.json(ApiResponse.success({ completed: true, step: 5 }));
     }
 
-    return res.json({ completed: false, step: onboardingStep });
+    return res.json(ApiResponse.success({ completed: false, step: onboardingStep }));
   } catch (err) {
     logger.error(
       'Failed to get onboarding status',
       err instanceof Error ? err : new Error(String(err))
     );
-    return res.json({ completed: false, step: 1 });
+    return res.json(ApiResponse.success({ completed: false, step: 1 }));
   }
 });
 
@@ -62,7 +63,7 @@ router.post('/complete', (_req, res) => {
   onboardingCompleted = true;
   onboardingStep = 5;
   logger.info('Onboarding marked as completed');
-  return res.json({ completed: true, step: 5 });
+  return res.json(ApiResponse.success({ completed: true, step: 5 }));
 });
 
 /**
@@ -79,7 +80,7 @@ router.post('/reset', (_req, res) => {
   onboardingCompleted = false;
   onboardingStep = 1;
   logger.info('Onboarding reset');
-  return res.json({ completed: false, step: 1 });
+  return res.json(ApiResponse.success({ completed: false, step: 1 }));
 });
 
 /**
@@ -103,7 +104,7 @@ router.post('/reset', (_req, res) => {
 router.post('/step', validateRequest(OnboardingStepSchema), (req, res) => {
   const { step } = req.body;
   onboardingStep = step;
-  return res.json({ completed: false, step: onboardingStep });
+  return res.json(ApiResponse.success({ completed: false, step: onboardingStep }));
 });
 
 export default router;

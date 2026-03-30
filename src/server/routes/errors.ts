@@ -5,6 +5,7 @@ import { errorLogger } from '../../utils/errorLogger';
 import { ErrorLogSchema } from '../../validation/schemas/miscSchema';
 import { validateRequest } from '../../validation/validateRequest';
 import { authenticateToken } from '../middleware/auth';
+import { ApiResponse } from '../utils/apiResponse';
 
 const router = Router();
 
@@ -74,11 +75,13 @@ router.post('/frontend', validateRequest(ErrorLogSchema), async (req: Request, r
     });
 
     // Return success response
-    return res.status(HTTP_STATUS.OK).json({
-      success: true,
-      correlationId: errorReport.correlationId,
-      message: 'Error report received and logged',
-    });
+    return res.status(HTTP_STATUS.OK).json(
+      ApiResponse.success({
+        success: true,
+        correlationId: errorReport.correlationId,
+        message: 'Error report received and logged',
+      })
+    );
   } catch (error) {
     console.error('Failed to process frontend error report:', error);
 
@@ -94,10 +97,12 @@ router.post('/frontend', validateRequest(ErrorLogSchema), async (req: Request, r
     const correlationId = (req.headers['x-correlation-id'] as string) || 'unknown';
     res.setHeader('X-Correlation-ID', correlationId);
 
-    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
-      error: 'Failed to process error report',
-      correlationId: correlationId,
-    });
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json(
+      ApiResponse.error('An error occurred', undefined, {
+        error: 'Failed to process error report',
+        correlationId: correlationId,
+      })
+    );
   }
 });
 
@@ -105,7 +110,7 @@ router.post('/frontend', validateRequest(ErrorLogSchema), async (req: Request, r
 router.get('/stats', authenticateToken, async (req: Request, res: Response) => {
   try {
     const stats = await errorLogger.getErrorStats();
-    return res.json(stats);
+    return res.json(ApiResponse.success(stats));
   } catch (error) {
     console.error('Failed to get error stats:', error);
     return res
@@ -119,7 +124,7 @@ router.get('/recent', authenticateToken, async (req: Request, res: Response) => 
   try {
     const limit = parseInt(req.query.limit as string) || 50;
     const recentErrors = await errorLogger.getRecentErrors(limit);
-    return res.json(recentErrors);
+    return res.json(ApiResponse.success(recentErrors));
   } catch (error) {
     console.error('Failed to get recent errors:', error);
     return res

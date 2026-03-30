@@ -14,6 +14,7 @@ import {
   UpdateAgentSchema,
 } from '../../validation/schemas/agentsSchema';
 import { validateRequest } from '../../validation/validateRequest';
+import { ApiResponse } from '../utils/apiResponse';
 
 const debug = Debug('app:webui:agents');
 const router = Router();
@@ -154,7 +155,7 @@ router.get('/', async (req, res) => {
       ),
     }));
 
-    return res.json({ agents: agentsWithEnvInfo });
+    return res.json(ApiResponse.success({ agents: agentsWithEnvInfo }));
   } catch (error: unknown) {
     const hivemindError = ErrorUtils.toHivemindError(error);
     const errorInfo = ErrorUtils.classifyError(hivemindError);
@@ -184,7 +185,7 @@ router.post('/', validateRequest(CreateAgentSchema), async (req, res) => {
     // Idempotency check: return existing agent with same name
     const existingAgent = agents.find((a) => a.name === agentData.name);
     if (existingAgent) {
-      return res.status(HTTP_STATUS.OK).json({ agent: existingAgent });
+      return res.status(HTTP_STATUS.OK).json(ApiResponse.success({ agent: existingAgent }));
     }
 
     const newAgent: AgentConfig = {
@@ -198,7 +199,7 @@ router.post('/', validateRequest(CreateAgentSchema), async (req, res) => {
     await saveJsonConfig(AGENTS_CONFIG_FILE, agents);
 
     debug(`Created new agent: ${newAgent.name}`);
-    return res.json({ agent: newAgent });
+    return res.json(ApiResponse.success({ agent: newAgent }));
   } catch (error: unknown) {
     const hivemindError = ErrorUtils.toHivemindError(error);
     const errorInfo = ErrorUtils.classifyError(hivemindError);
@@ -228,14 +229,14 @@ router.put('/:id', validateRequest(UpdateAgentSchema), async (req, res) => {
     const agentIndex = agents.findIndex((agent) => agent.id === id);
 
     if (agentIndex === -1) {
-      return res.status(HTTP_STATUS.NOT_FOUND).json({ error: 'Agent not found' });
+      return res.status(HTTP_STATUS.NOT_FOUND).json(ApiResponse.error('Agent not found'));
     }
 
     agents[agentIndex] = { ...agents[agentIndex], ...updates };
     await saveJsonConfig(AGENTS_CONFIG_FILE, agents);
 
     debug(`Updated agent: ${agents[agentIndex].name}`);
-    return res.json({ agent: agents[agentIndex] });
+    return res.json(ApiResponse.success({ agent: agents[agentIndex] }));
   } catch (error: unknown) {
     const hivemindError = ErrorUtils.toHivemindError(error);
     const errorInfo = ErrorUtils.classifyError(hivemindError);
@@ -264,13 +265,13 @@ router.delete('/:id', validateRequest(AgentIdParamSchema), async (req, res) => {
     const filteredAgents = agents.filter((agent) => agent.id !== id);
 
     if (filteredAgents.length === agents.length) {
-      return res.status(HTTP_STATUS.NOT_FOUND).json({ error: 'Agent not found' });
+      return res.status(HTTP_STATUS.NOT_FOUND).json(ApiResponse.error('Agent not found'));
     }
 
     await saveJsonConfig(AGENTS_CONFIG_FILE, filteredAgents);
 
     debug(`Deleted agent: ${id}`);
-    return res.json({ success: true });
+    return res.json(ApiResponse.success({ success: true }));
   } catch (error: unknown) {
     const hivemindError = ErrorUtils.toHivemindError(error);
     const errorInfo = ErrorUtils.classifyError(hivemindError);
@@ -314,7 +315,7 @@ router.get('/personas', async (req, res) => {
       },
     ]);
 
-    return res.json({ personas });
+    return res.json(ApiResponse.success({ personas }));
   } catch (error: unknown) {
     const hivemindError = ErrorUtils.toHivemindError(error);
     const errorInfo = ErrorUtils.classifyError(hivemindError);
@@ -345,7 +346,7 @@ router.post('/personas', validateRequest(CreateAgentPersonaSchema), async (req, 
     // Check if persona already exists
     const existingPersona = personas.find((p) => p.key === key);
     if (existingPersona) {
-      return res.status(HTTP_STATUS.OK).json({ persona: existingPersona });
+      return res.status(HTTP_STATUS.OK).json(ApiResponse.success({ persona: existingPersona }));
     }
 
     const newPersona: Persona = { key, name, systemPrompt };
@@ -354,7 +355,7 @@ router.post('/personas', validateRequest(CreateAgentPersonaSchema), async (req, 
     await saveJsonConfig(PERSONAS_CONFIG_FILE, personas);
 
     debug(`Created new persona: ${name}`);
-    return res.json({ persona: newPersona });
+    return res.json(ApiResponse.success({ persona: newPersona }));
   } catch (error: unknown) {
     const hivemindError = ErrorUtils.toHivemindError(error);
     const errorInfo = ErrorUtils.classifyError(hivemindError);
@@ -384,14 +385,14 @@ router.put('/personas/:key', validateRequest(UpdateAgentPersonaSchema), async (r
     const personaIndex = personas.findIndex((p) => p.key === key);
 
     if (personaIndex === -1) {
-      return res.status(HTTP_STATUS.NOT_FOUND).json({ error: 'Persona not found' });
+      return res.status(HTTP_STATUS.NOT_FOUND).json(ApiResponse.error('Persona not found'));
     }
 
     personas[personaIndex] = { key, name, systemPrompt };
     await saveJsonConfig(PERSONAS_CONFIG_FILE, personas);
 
     debug(`Updated persona: ${name}`);
-    return res.json({ persona: personas[personaIndex] });
+    return res.json(ApiResponse.success({ persona: personas[personaIndex] }));
   } catch (error: unknown) {
     const hivemindError = ErrorUtils.toHivemindError(error);
     const errorInfo = ErrorUtils.classifyError(hivemindError);
@@ -417,20 +418,22 @@ router.delete('/personas/:key', validateRequest(AgentPersonaKeyParamSchema), asy
     const { key } = req.params;
 
     if (key === 'default') {
-      return res.status(HTTP_STATUS.BAD_REQUEST).json({ error: 'Cannot delete default persona' });
+      return res
+        .status(HTTP_STATUS.BAD_REQUEST)
+        .json(ApiResponse.error('Cannot delete default persona'));
     }
 
     const personas = await loadJsonConfig<Persona[]>(PERSONAS_CONFIG_FILE, []);
     const filteredPersonas = personas.filter((p) => p.key !== key);
 
     if (filteredPersonas.length === personas.length) {
-      return res.status(HTTP_STATUS.NOT_FOUND).json({ error: 'Persona not found' });
+      return res.status(HTTP_STATUS.NOT_FOUND).json(ApiResponse.error('Persona not found'));
     }
 
     await saveJsonConfig(PERSONAS_CONFIG_FILE, filteredPersonas);
 
     debug(`Deleted persona: ${key}`);
-    return res.json({ success: true });
+    return res.json(ApiResponse.success({ success: true }));
   } catch (error: unknown) {
     const hivemindError = ErrorUtils.toHivemindError(error);
     const errorInfo = ErrorUtils.classifyError(hivemindError);

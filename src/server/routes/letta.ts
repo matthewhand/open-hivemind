@@ -6,6 +6,7 @@ import { getAgent, listAgents } from '@hivemind/llm-letta';
 import { HTTP_STATUS } from '../../types/constants';
 import { ErrorResponses } from '../../utils/errorResponse';
 import { isPrivateIP, isSafeUrl } from '../../utils/ssrfGuard';
+import { ApiResponse } from '../utils/apiResponse';
 
 const debug = Debug('app:server:routes:letta');
 
@@ -103,7 +104,7 @@ router.get('/agents', async (req: Request, res: Response) => {
     }
 
     const agents = await listAgents(apiKey, apiUrl);
-    return res.json(agents);
+    return res.json(ApiResponse.success(agents));
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Unknown error';
     debug('ERROR:', 'Letta agents lookup error:', error);
@@ -144,7 +145,7 @@ router.get('/agents/:id', async (req: Request, res: Response) => {
     }
 
     const agent = await getAgent(id, apiKey, apiUrl);
-    return res.json(agent);
+    return res.json(ApiResponse.success(agent));
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Unknown error';
     debug('ERROR:', 'Letta agent details error:', error);

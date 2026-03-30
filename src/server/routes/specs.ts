@@ -6,6 +6,7 @@ import { z } from 'zod';
 import { HTTP_STATUS } from '../../types/constants';
 import { SpecSchema } from '../../validation/schemas/miscSchema';
 import { validateRequest } from '../../validation/validateRequest';
+import { ApiResponse } from '../utils/apiResponse';
 
 const debug = Debug('app:server:routes:specs');
 
@@ -45,11 +46,13 @@ router.post('/', validateRequest(SpecSchema), async (req, res) => {
 
     // Validate content field
     if (!content || typeof content !== 'string' || content.trim().length === 0) {
-      return res.status(HTTP_STATUS.BAD_REQUEST).json({
-        success: false,
-        error: 'Content is required and must be a non-empty string',
-        message: 'Validation failed',
-      });
+      return res.status(HTTP_STATUS.BAD_REQUEST).json(
+        ApiResponse.error('An error occurred', undefined, {
+          success: false,
+          error: 'Content is required and must be a non-empty string',
+          message: 'Validation failed',
+        })
+      );
     }
     const newSpec: SpecMetadata = { id, topic, tags, author, timestamp, version };
 
@@ -82,24 +85,28 @@ router.post('/', validateRequest(SpecSchema), async (req, res) => {
       .json({ success: true, data: newSpec, message: 'Specification saved successfully' });
   } catch (error) {
     debug('ERROR:', 'Failed to save spec:', error);
-    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
-      success: false,
-      error: 'Failed to save specification',
-      message: error instanceof Error ? error.message : String(error),
-    });
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json(
+      ApiResponse.error('An error occurred', undefined, {
+        success: false,
+        error: 'Failed to save specification',
+        message: error instanceof Error ? error.message : String(error),
+      })
+    );
   }
 });
 
 router.get('/', async (req, res) => {
   try {
     const index = await getSpecsIndex();
-    return res.json({ success: true, data: index });
+    return res.json(ApiResponse.success({ success: true, data: index }));
   } catch (error) {
-    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
-      success: false,
-      error: 'Failed to retrieve specifications',
-      message: error instanceof Error ? error.message : String(error),
-    });
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json(
+      ApiResponse.error('An error occurred', undefined, {
+        success: false,
+        error: 'Failed to retrieve specifications',
+        message: error instanceof Error ? error.message : String(error),
+      })
+    );
   }
 });
 
@@ -138,13 +145,15 @@ router.get('/:id', async (req, res) => {
     const versions = await fs.readdir(targetPath);
     const specWithVersions = { ...spec, versions };
 
-    return res.json({ success: true, data: specWithVersions });
+    return res.json(ApiResponse.success({ success: true, data: specWithVersions }));
   } catch (error) {
-    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
-      success: false,
-      error: 'Failed to retrieve specification',
-      message: error instanceof Error ? error.message : String(error),
-    });
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json(
+      ApiResponse.error('An error occurred', undefined, {
+        success: false,
+        error: 'Failed to retrieve specification',
+        message: error instanceof Error ? error.message : String(error),
+      })
+    );
   }
 });
 

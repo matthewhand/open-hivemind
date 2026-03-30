@@ -4,6 +4,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { HTTP_STATUS } from '../../types/constants';
 import { WebhookRetrySchema } from '../../validation/schemas/miscSchema';
 import { validateRequest } from '../../validation/validateRequest';
+import { ApiResponse } from '../utils/apiResponse';
 
 const debug = Debug('app:webui:webhook-events');
 const router = Router();
@@ -133,9 +134,11 @@ router.get('/events/:id', (req, res) => {
   try {
     const event = events.find((e) => e.id === req.params.id);
     if (!event) {
-      return res.status(HTTP_STATUS.NOT_FOUND).json({ success: false, error: 'Event not found' });
+      return res
+        .status(HTTP_STATUS.NOT_FOUND)
+        .json(ApiResponse.success({ success: false, error: 'Event not found' }));
     }
-    return res.json({ success: true, data: event });
+    return res.json(ApiResponse.success({ success: true, data: event }));
   } catch (error) {
     debug('Error fetching webhook event:', error);
     return res
@@ -150,7 +153,9 @@ router.post('/events/:id/retry', validateRequest(WebhookRetrySchema), async (req
   try {
     const original = events.find((e) => e.id === req.params.id);
     if (!original) {
-      return res.status(HTTP_STATUS.NOT_FOUND).json({ success: false, error: 'Event not found' });
+      return res
+        .status(HTTP_STATUS.NOT_FOUND)
+        .json(ApiResponse.success({ success: false, error: 'Event not found' }));
     }
 
     // Only allow retrying failed events

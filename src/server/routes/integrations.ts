@@ -9,6 +9,7 @@ import {
   UpdateIntegrationSchema,
 } from '../../validation/schemas/integrationsSchema';
 import { validateRequest } from '../../validation/validateRequest';
+import { ApiResponse } from '../utils/apiResponse';
 
 const log = Debug('app:integrationsRouter');
 const router = Router();
@@ -35,7 +36,7 @@ router.get('/', (req, res) => {
     const category = req.query.category as 'message' | 'llm' | undefined;
     const filtered = category ? providerManager.getAllProviders(category) : providers;
 
-    return res.json(filtered);
+    return res.json(ApiResponse.success(filtered));
   } catch (err: unknown) {
     log('Error fetching integrations:', err);
     return res
@@ -51,9 +52,9 @@ router.get('/', (req, res) => {
 router.get('/:id', validateRequest(IntegrationIdParamSchema), (req, res) => {
   const provider = providerManager.getProvider(req.params.id);
   if (!provider) {
-    return res.status(HTTP_STATUS.NOT_FOUND).json({ error: 'Provider not found' });
+    return res.status(HTTP_STATUS.NOT_FOUND).json(ApiResponse.error('Provider not found'));
   }
-  return res.json(provider);
+  return res.json(ApiResponse.success(provider));
 });
 
 /**
@@ -96,11 +97,11 @@ router.put('/:id', validateRequest(UpdateIntegrationSchema), (req, res) => {
 
     const updated = providerManager.updateProvider(id, updates);
     if (!updated) {
-      return res.status(HTTP_STATUS.NOT_FOUND).json({ error: 'Provider not found' });
+      return res.status(HTTP_STATUS.NOT_FOUND).json(ApiResponse.error('Provider not found'));
     }
 
     log(`Updated provider: ${updated.name}`);
-    return res.json(updated);
+    return res.json(ApiResponse.success(updated));
   } catch (err: unknown) {
     log('Error updating integration:', err);
     return res
@@ -117,10 +118,10 @@ router.delete('/:id', validateRequest(IntegrationIdParamSchema), (req, res) => {
   try {
     const success = providerManager.deleteProvider(req.params.id);
     if (!success) {
-      return res.status(HTTP_STATUS.NOT_FOUND).json({ error: 'Provider not found' });
+      return res.status(HTTP_STATUS.NOT_FOUND).json(ApiResponse.error('Provider not found'));
     }
     log(`Deleted provider: ${req.params.id}`);
-    return res.json({ success: true });
+    return res.json(ApiResponse.success({ success: true }));
   } catch (err: unknown) {
     log('Error deleting integration:', err);
     return res

@@ -10,6 +10,7 @@ import { HTTP_STATUS } from '../../types/constants';
 import { ErrorUtils } from '../../types/errors';
 import { ChatGenerateSchema } from '../../validation/schemas/miscSchema';
 import { validateRequest } from '../../validation/validateRequest';
+import { ApiResponse } from '../utils/apiResponse';
 
 const debug = Debug('app:ai-assist');
 const router = Router();
@@ -91,7 +92,9 @@ router.post('/generate', validateRequest(ChatGenerateSchema), async (req, res) =
   try {
     const { prompt, systemPrompt } = req.body;
     if (!prompt) {
-      return res.status(HTTP_STATUS.BAD_REQUEST).json({ error: 'Prompt is required' });
+      return res
+        .status(HTTP_STATUS.BAD_REQUEST)
+        .json(ApiResponse.error('An error occurred', undefined, { error: 'Prompt is required' }));
     }
 
     // Input validation for prompt sizes
@@ -179,14 +182,16 @@ router.post('/generate', validateRequest(ChatGenerateSchema), async (req, res) =
         .json({ error: 'Provider does not support generation.' });
     }
 
-    return res.json({ result });
+    return res.json(ApiResponse.success({ result }));
   } catch (error: unknown) {
     const hivemindError = ErrorUtils.toHivemindError(error);
     debug('Error in AI Assist generation:', hivemindError);
-    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
-      error: 'Failed to generate response',
-      message: hivemindError instanceof Error ? hivemindError.message : String(hivemindError),
-    });
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json(
+      ApiResponse.error('An error occurred', undefined, {
+        error: 'Failed to generate response',
+        message: hivemindError instanceof Error ? hivemindError.message : String(hivemindError),
+      })
+    );
   }
 });
 

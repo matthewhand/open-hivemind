@@ -3,6 +3,7 @@ import { Router } from 'express';
 import { HTTP_STATUS } from '../../types/constants';
 import { CIDeploySchema, CIRollbackSchema, EmptySchema } from '../../validation/schemas/miscSchema';
 import { validateRequest } from '../../validation/validateRequest';
+import { ApiResponse } from '../utils/apiResponse';
 
 const debug = Debug('app:ciRoutes');
 const router = Router();
@@ -54,17 +55,21 @@ router.get('/api/deployments', (req, res) => {
       },
     ];
 
-    return res.json({
-      success: true,
-      deployments,
-    });
+    return res.json(
+      ApiResponse.success({
+        success: true,
+        deployments,
+      })
+    );
   } catch (error) {
     debug('Deployments API error:', error);
-    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
-      success: false,
-      message: 'Failed to get deployments',
-      error: error instanceof Error ? error.message : 'Unknown error',
-    });
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json(
+      ApiResponse.error('An error occurred', undefined, {
+        success: false,
+        message: 'Failed to get deployments',
+        error: error instanceof Error ? error.message : 'Unknown error',
+      })
+    );
   }
 });
 
@@ -74,10 +79,12 @@ router.post('/api/deployments', validateRequest(CIDeploySchema), (req, res) => {
     const { name, environment, branch, commitHash } = req.body;
 
     if (!name || !environment) {
-      return res.status(HTTP_STATUS.BAD_REQUEST).json({
-        success: false,
-        message: 'Name and environment are required',
-      });
+      return res.status(HTTP_STATUS.BAD_REQUEST).json(
+        ApiResponse.error('An error occurred', undefined, {
+          success: false,
+          message: 'Name and environment are required',
+        })
+      );
     }
 
     // In a real implementation, this would trigger a CI/CD pipeline
@@ -103,17 +110,21 @@ router.post('/api/deployments', validateRequest(CIDeploySchema), (req, res) => {
       ],
     };
 
-    return res.json({
-      success: true,
-      deployment,
-    });
+    return res.json(
+      ApiResponse.success({
+        success: true,
+        deployment,
+      })
+    );
   } catch (error) {
     debug('Create deployment API error:', error);
-    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
-      success: false,
-      message: 'Failed to create deployment',
-      error: error instanceof Error ? error.message : 'Unknown error',
-    });
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json(
+      ApiResponse.error('An error occurred', undefined, {
+        success: false,
+        message: 'Failed to create deployment',
+        error: error instanceof Error ? error.message : 'Unknown error',
+      })
+    );
   }
 });
 
@@ -145,17 +156,21 @@ router.get('/api/deployments/:id', (req, res) => {
       ],
     };
 
-    return res.json({
-      success: true,
-      deployment,
-    });
+    return res.json(
+      ApiResponse.success({
+        success: true,
+        deployment,
+      })
+    );
   } catch (error) {
     debug('Get deployment API error:', error);
-    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
-      success: false,
-      message: 'Failed to get deployment',
-      error: error instanceof Error ? error.message : 'Unknown error',
-    });
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json(
+      ApiResponse.error('An error occurred', undefined, {
+        success: false,
+        message: 'Failed to get deployment',
+        error: error instanceof Error ? error.message : 'Unknown error',
+      })
+    );
   }
 });
 
@@ -173,11 +188,13 @@ router.post('/api/deployments/:id/rollback', validateRequest(CIRollbackSchema), 
     });
   } catch (error) {
     debug('Rollback deployment API error:', error);
-    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
-      success: false,
-      message: 'Failed to rollback deployment',
-      error: error instanceof Error ? error.message : 'Unknown error',
-    });
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json(
+      ApiResponse.error('An error occurred', undefined, {
+        success: false,
+        message: 'Failed to rollback deployment',
+        error: error instanceof Error ? error.message : 'Unknown error',
+      })
+    );
   }
 });
 
@@ -202,17 +219,21 @@ router.get('/api/drift', (req, res) => {
       },
     ];
 
-    return res.json({
-      success: true,
-      drifts,
-    });
+    return res.json(
+      ApiResponse.success({
+        success: true,
+        drifts,
+      })
+    );
   } catch (error) {
     debug('Drift detection API error:', error);
-    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
-      success: false,
-      message: 'Failed to get drift detections',
-      error: error instanceof Error ? error.message : 'Unknown error',
-    });
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json(
+      ApiResponse.error('An error occurred', undefined, {
+        success: false,
+        message: 'Failed to get drift detections',
+        error: error instanceof Error ? error.message : 'Unknown error',
+      })
+    );
   }
 });
 
@@ -222,10 +243,12 @@ router.post('/api/deployments/validate', validateRequest(EmptySchema), (req, res
     const { environment, configuration } = req.body;
 
     if (!environment || !configuration) {
-      return res.status(HTTP_STATUS.BAD_REQUEST).json({
-        success: false,
-        message: 'Environment and configuration are required',
-      });
+      return res.status(HTTP_STATUS.BAD_REQUEST).json(
+        ApiResponse.error('An error occurred', undefined, {
+          success: false,
+          message: 'Environment and configuration are required',
+        })
+      );
     }
 
     // In a real implementation, this would validate the configuration
@@ -240,17 +263,21 @@ router.post('/api/deployments/validate', validateRequest(EmptySchema), (req, res
       ],
     };
 
-    return res.json({
-      success: true,
-      validation,
-    });
+    return res.json(
+      ApiResponse.success({
+        success: true,
+        validation,
+      })
+    );
   } catch (error) {
     debug('Validation API error:', error);
-    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
-      success: false,
-      message: 'Failed to validate configuration',
-      error: error instanceof Error ? error.message : 'Unknown error',
-    });
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json(
+      ApiResponse.error('An error occurred', undefined, {
+        success: false,
+        message: 'Failed to validate configuration',
+        error: error instanceof Error ? error.message : 'Unknown error',
+      })
+    );
   }
 });
 
@@ -268,17 +295,21 @@ router.get('/api/pipeline/status', (req, res) => {
       failedDeployments: 1,
     };
 
-    return res.json({
-      success: true,
-      status,
-    });
+    return res.json(
+      ApiResponse.success({
+        success: true,
+        status,
+      })
+    );
   } catch (error) {
     debug('Pipeline status API error:', error);
-    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
-      success: false,
-      message: 'Failed to get pipeline status',
-      error: error instanceof Error ? error.message : 'Unknown error',
-    });
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json(
+      ApiResponse.error('An error occurred', undefined, {
+        success: false,
+        message: 'Failed to get pipeline status',
+        error: error instanceof Error ? error.message : 'Unknown error',
+      })
+    );
   }
 });
 
@@ -302,17 +333,21 @@ router.post('/api/tests/run', validateRequest(EmptySchema), (req, res) => {
       ],
     };
 
-    return res.json({
-      success: true,
-      testRun,
-    });
+    return res.json(
+      ApiResponse.success({
+        success: true,
+        testRun,
+      })
+    );
   } catch (error) {
     debug('Test run API error:', error);
-    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
-      success: false,
-      message: 'Failed to run tests',
-      error: error instanceof Error ? error.message : 'Unknown error',
-    });
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json(
+      ApiResponse.error('An error occurred', undefined, {
+        success: false,
+        message: 'Failed to run tests',
+        error: error instanceof Error ? error.message : 'Unknown error',
+      })
+    );
   }
 });
 
@@ -353,17 +388,21 @@ router.get('/api/tests/results/:id', (req, res) => {
       ],
     };
 
-    return res.json({
-      success: true,
-      results,
-    });
+    return res.json(
+      ApiResponse.success({
+        success: true,
+        results,
+      })
+    );
   } catch (error) {
     debug('Test results API error:', error);
-    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
-      success: false,
-      message: 'Failed to get test results',
-      error: error instanceof Error ? error.message : 'Unknown error',
-    });
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json(
+      ApiResponse.error('An error occurred', undefined, {
+        success: false,
+        message: 'Failed to get test results',
+        error: error instanceof Error ? error.message : 'Unknown error',
+      })
+    );
   }
 });
 

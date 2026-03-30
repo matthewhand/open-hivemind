@@ -7,6 +7,7 @@ import {
   UpdateAccessControlSchema,
 } from '../../validation/schemas/guardsSchema';
 import { validateRequest } from '../../validation/validateRequest';
+import { ApiResponse } from '../utils/apiResponse';
 
 const router = Router();
 const debug = Debug('app:webui:guards');
@@ -15,17 +16,21 @@ const debug = Debug('app:webui:guards');
 router.get('/', (req: Request, res: Response) => {
   try {
     const guards = webUIStorage.getGuards();
-    return res.json({
-      success: true,
-      data: { guards },
-      message: 'Guards retrieved successfully',
-    });
+    return res.json(
+      ApiResponse.success({
+        success: true,
+        data: { guards },
+        message: 'Guards retrieved successfully',
+      })
+    );
   } catch (error: unknown) {
     debug('ERROR:', 'Error retrieving guards:', error);
-    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
-      error: 'Failed to retrieve guards',
-      message: error.message || 'An error occurred while retrieving guards',
-    });
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json(
+      ApiResponse.error('An error occurred', undefined, {
+        error: 'Failed to retrieve guards',
+        message: error.message || 'An error occurred while retrieving guards',
+      })
+    );
   }
 });
 
@@ -87,16 +92,20 @@ router.post(
       // Save the updated guard
       await webUIStorage.saveGuard(accessGuard);
 
-      return res.json({
-        success: true,
-        message: 'Access control saved successfully',
-      });
+      return res.json(
+        ApiResponse.success({
+          success: true,
+          message: 'Access control saved successfully',
+        })
+      );
     } catch (error: unknown) {
       debug('Error saving access control:', error);
-      return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
-        error: 'Failed to save access control',
-        message: error.message || 'An error occurred while saving access control',
-      });
+      return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json(
+        ApiResponse.error('An error occurred', undefined, {
+          error: 'Failed to save access control',
+          message: error.message || 'An error occurred while saving access control',
+        })
+      );
     }
   }
 );
@@ -123,16 +132,20 @@ router.post(
 
       await webUIStorage.toggleGuard(id, enabled);
 
-      return res.json({
-        success: true,
-        message: `Guard ${guard.name} ${enabled ? 'enabled' : 'disabled'} successfully`,
-      });
+      return res.json(
+        ApiResponse.success({
+          success: true,
+          message: `Guard ${guard.name} ${enabled ? 'enabled' : 'disabled'} successfully`,
+        })
+      );
     } catch (error: unknown) {
       debug('Error toggling guard:', error);
-      return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
-        error: 'Failed to toggle guard',
-        message: error.message || 'An error occurred while toggling guard',
-      });
+      return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json(
+        ApiResponse.error('An error occurred', undefined, {
+          error: 'Failed to toggle guard',
+          message: error.message || 'An error occurred while toggling guard',
+        })
+      );
     }
   }
 );
