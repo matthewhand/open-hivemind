@@ -443,7 +443,7 @@ class ApiService {
     return response.blob();
   }
 
-  private getAuthHeaders(): Record<string, string> {
+  public getAuthHeaders(): Record<string, string> {
     const token = localStorage.getItem('auth_tokens');
     const headers: Record<string, string> = {};
 

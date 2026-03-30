@@ -4,6 +4,7 @@ import { Router, type Request, type Response } from 'express';
 import { body, param, validationResult } from 'express-validator';
 import { authenticate, requireAdmin } from '../../auth/middleware';
 import type { AuthMiddlewareRequest } from '../../auth/types';
+import { configLimiter } from '../../middleware/rateLimiter';
 import { HTTP_STATUS } from '../../types/constants';
 import {
   BackupCreateSchema,
@@ -219,6 +220,7 @@ const handleUploadError = (error: any, req: Request, res: Response, next: any) =
  */
 router.post(
   '/export',
+  configLimiter,
   requireAdmin,
   validateRequest(ExportConfigSchema),
   validateExportOptions,
@@ -268,6 +270,7 @@ router.post(
  */
 router.post(
   '/import',
+  configLimiter,
   requireAdmin,
   upload.single('file'),
   handleUploadError,
@@ -329,6 +332,7 @@ router.post(
  */
 router.post(
   '/backup',
+  configLimiter,
   requireAdmin,
   validateRequest(BackupCreateSchema),
   validateBackupCreation,
@@ -408,6 +412,7 @@ router.get('/backups', requireAdmin, async (req: AuthMiddlewareRequest, res: Res
  */
 router.post(
   '/backups/:backupId/restore',
+  configLimiter,
   requireAdmin,
   validateRequest(BackupRestoreSchema),
   validateBackupRestore,
@@ -461,6 +466,7 @@ router.post(
  */
 router.delete(
   '/backups/:backupId',
+  configLimiter,
   requireAdmin,
   async (req: AuthMiddlewareRequest, res: Response) => {
     try {
@@ -543,6 +549,7 @@ router.get(
  */
 router.post(
   '/validate',
+  configLimiter,
   authenticate,
   upload.single('file'),
   validateRequest(ValidateImportSchema),

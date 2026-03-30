@@ -3,6 +3,7 @@ import path from 'path';
 import Debug from 'debug';
 import { Router } from 'express';
 import { z } from 'zod';
+import { configLimiter } from '../../middleware/rateLimiter';
 import { HTTP_STATUS } from '../../types/constants';
 import { SpecSchema } from '../../validation/schemas/miscSchema';
 import { validateRequest } from '../../validation/validateRequest';
@@ -39,7 +40,7 @@ async function saveSpecsIndex(index: SpecMetadata[]) {
   await fs.writeFile(indexPath, JSON.stringify(index, null, 2));
 }
 
-router.post('/', validateRequest(SpecSchema), async (req, res) => {
+router.post('/', configLimiter, validateRequest(SpecSchema), async (req, res) => {
   try {
     const { id, topic, tags, author, timestamp, version, content } = req.body;
 
