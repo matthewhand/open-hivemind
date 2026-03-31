@@ -12,6 +12,7 @@ import { SkeletonTableLayout } from '../components/DaisyUI/Skeleton';
 import SearchFilterBar from '../components/SearchFilterBar';
 import { ConfirmModal } from '../components/DaisyUI/Modal';
 import { useErrorToast } from '../components/DaisyUI/ToastNotification';
+import Rating from '../components/DaisyUI/Rating';
 import {
   Brain as BrainIcon,
   Plus as AddIcon,
@@ -254,6 +255,29 @@ const LLMProvidersPage: React.FC = () => {
       errorToast('Bulk Delete Failed', 'Failed to delete some profiles');
     } finally {
       setBulkDeleting(false);
+    }
+  };
+
+  const handleRatingChange = async (profile: any, newRating: number) => {
+    try {
+      // Optimistically update the local state for better UX
+      setProfiles(prev => prev.map(p =>
+        p.key === profile.key ? { ...p, userRating: newRating } : p
+      ));
+
+      // Build payload matching how backend expects LLM profile updates
+      const payload = {
+        ...profile,
+        userRating: newRating
+      };
+
+      await apiService.put(`/api/config/llm-profiles/${profile.key}`, payload);
+      // Wait to fetch the latest state
+      await fetchProfiles();
+    } catch (err: any) {
+      errorToast('Rating Failed', `Failed to save rating: ${err.message}`);
+      // Revert optimistic update on failure
+      fetchProfiles();
     }
   };
 
@@ -551,7 +575,7 @@ const LLMProvidersPage: React.FC = () => {
                         {profile.name}
                         <span className="text-xs font-normal opacity-50 px-2 py-0.5 bg-base-200 rounded-full font-mono">{profile.key}</span>
                       </h3>
-                      <div className="flex items-center gap-2 mt-1">
+                      <div className="flex items-center gap-2 mt-1 flex-wrap">
                         <Badge variant="secondary" size="small" style="outline">{profile.provider}</Badge>
                         <Badge
                           variant={
@@ -575,6 +599,17 @@ const LLMProvidersPage: React.FC = () => {
                         {profile.key === defaultEmbeddingProvider && (
                           <Badge variant="secondary" size="small">Default Embedding</Badge>
                         )}
+                        <div className="mx-2 w-[1px] h-4 bg-base-300"></div>
+                        <div className="flex items-center" onClick={(e) => e.stopPropagation()}>
+                          <Rating
+                            value={profile.userRating || 0}
+                            max={5}
+                            size="sm"
+                            half={true}
+                            onChange={(val) => handleRatingChange(profile, val)}
+                            aria-label={`Rating for ${profile.name}`}
+                          />
+                        </div>
                       </div>
                     </div>
                   </div>
