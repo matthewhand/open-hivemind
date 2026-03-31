@@ -1,4 +1,5 @@
 import { Router, type Request, type Response } from 'express';
+import { ApiResponse } from '@src/server/utils/apiResponse';
 import { ErrorUtils } from '../../../common/ErrorUtils';
 import { webUIStorage } from '../../../storage/webUIStorage';
 import { HTTP_STATUS } from '../../../types/constants';
@@ -48,17 +49,12 @@ router.get('/personas', (req: Request, res: Response) => {
     // Combine stored and default personas
     const allPersonas = [...storedPersonas, ...defaultPersonas];
 
-    return res.json({
-      success: true,
-      data: { personas: allPersonas },
-      message: 'Personas retrieved successfully',
-    });
+    return res.json(ApiResponse.success({ personas: allPersonas }));
   } catch (error: unknown) {
     const hivemindError = ErrorUtils.toHivemindError(error);
-    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
-      error: 'Failed to retrieve personas',
-      message: hivemindError.message || 'An error occurred while retrieving personas',
-    });
+    return res
+      .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
+      .json(ApiResponse.error('Failed to retrieve personas'));
   }
 });
 
@@ -90,16 +86,12 @@ router.post('/personas', validateRequest(PersonaSchema), (req: Request, res: Res
     // Save to persistent storage
     webUIStorage.savePersona({ key, name, systemPrompt });
 
-    return res.json({
-      success: true,
-      message: 'Persona created successfully',
-    });
+    return res.json(ApiResponse.success());
   } catch (error: unknown) {
     const hivemindError = ErrorUtils.toHivemindError(error);
-    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
-      error: 'Failed to create persona',
-      message: hivemindError.message || 'An error occurred while creating persona',
-    });
+    return res
+      .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
+      .json(ApiResponse.error('Failed to create persona'));
   }
 });
 
@@ -115,16 +107,12 @@ router.put(
       // Save to persistent storage
       webUIStorage.savePersona({ key, name, systemPrompt });
 
-      return res.json({
-        success: true,
-        message: 'Persona updated successfully',
-      });
+      return res.json(ApiResponse.success());
     } catch (error: unknown) {
       const hivemindError = ErrorUtils.toHivemindError(error);
-      return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
-        error: 'Failed to update persona',
-        message: hivemindError.message || 'An error occurred while updating persona',
-      });
+      return res
+        .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
+        .json(ApiResponse.error('Failed to update persona'));
     }
   }
 );
@@ -140,16 +128,12 @@ router.delete(
       // Delete from persistent storage
       webUIStorage.deletePersona(key);
 
-      return res.json({
-        success: true,
-        message: 'Persona deleted successfully',
-      });
+      return res.json(ApiResponse.success());
     } catch (error: unknown) {
       const hivemindError = ErrorUtils.toHivemindError(error);
-      return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
-        error: 'Failed to delete persona',
-        message: hivemindError.message || 'An error occurred while deleting persona',
-      });
+      return res
+        .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
+        .json(ApiResponse.error('Failed to delete persona'));
     }
   }
 );
@@ -157,7 +141,7 @@ router.delete(
 // User management endpoints could go here...
 // Placeholder to fulfill requirements
 router.get('/users', (req, res) => {
-  res.json({ success: true, data: { users: [] }, message: 'Users placeholder' });
+  res.json(ApiResponse.success({ users: [] }));
 });
 
 export default router;

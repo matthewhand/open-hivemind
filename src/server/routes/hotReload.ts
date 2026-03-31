@@ -1,6 +1,7 @@
 import Debug from 'debug';
 import { Router } from 'express';
 import { WebSocketService } from '@src/server/services/WebSocketService';
+import { ApiResponse } from '@src/server/utils/apiResponse';
 import { HotReloadManager, type ConfigurationChange } from '@config/HotReloadManager';
 import { HTTP_STATUS } from '../../types/constants';
 import {
@@ -20,28 +21,26 @@ router.post('/api/config/hot-reload', validateRequest(HotReloadChangeSchema), as
     > = req.body;
 
     if (!changeData.changes || Object.keys(changeData.changes).length === 0) {
-      return res.status(HTTP_STATUS.BAD_REQUEST).json({
-        success: false,
-        message: 'No changes provided',
-      });
+      return res.status(HTTP_STATUS.BAD_REQUEST).json(ApiResponse.error('No changes provided'));
     }
 
     const hotReloadManager = HotReloadManager.getInstance();
     const result = await hotReloadManager.applyConfigurationChange(changeData);
 
-    return res.json(result);
+    return res.json(ApiResponse.success(result));
   } catch (error) {
     debug('Hot reload API error:', error);
-    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
-      success: false,
-      message: 'Hot reload failed',
-      error:
-        process.env.NODE_ENV === 'production'
-          ? 'An internal error occurred'
-          : error instanceof Error
-            ? error.message
-            : 'Unknown error',
-    });
+    return res
+      .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
+      .json(
+        ApiResponse.error(
+          process.env.NODE_ENV === 'production'
+            ? 'An internal error occurred'
+            : error instanceof Error
+              ? error.message
+              : 'Unknown error'
+        )
+      );
   }
 });
 
@@ -51,22 +50,20 @@ router.get('/api/config/hot-reload/history', (req, res) => {
     const hotReloadManager = HotReloadManager.getInstance();
     const history = hotReloadManager.getChangeHistory(limit);
 
-    return res.json({
-      success: true,
-      history,
-    });
+    return res.json(ApiResponse.success());
   } catch (error) {
     debug('Hot reload history API error:', error);
-    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
-      success: false,
-      message: 'Failed to get change history',
-      error:
-        process.env.NODE_ENV === 'production'
-          ? 'An internal error occurred'
-          : error instanceof Error
-            ? error.message
-            : 'Unknown error',
-    });
+    return res
+      .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
+      .json(
+        ApiResponse.error(
+          process.env.NODE_ENV === 'production'
+            ? 'An internal error occurred'
+            : error instanceof Error
+              ? error.message
+              : 'Unknown error'
+        )
+      );
   }
 });
 
@@ -75,22 +72,20 @@ router.get('/api/config/hot-reload/rollbacks', (req, res) => {
     const hotReloadManager = HotReloadManager.getInstance();
     const rollbacks = hotReloadManager.getAvailableRollbacks();
 
-    return res.json({
-      success: true,
-      rollbacks,
-    });
+    return res.json(ApiResponse.success());
   } catch (error) {
     debug('Hot reload rollbacks API error:', error);
-    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
-      success: false,
-      message: 'Failed to get available rollbacks',
-      error:
-        process.env.NODE_ENV === 'production'
-          ? 'An internal error occurred'
-          : error instanceof Error
-            ? error.message
-            : 'Unknown error',
-    });
+    return res
+      .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
+      .json(
+        ApiResponse.error(
+          process.env.NODE_ENV === 'production'
+            ? 'An internal error occurred'
+            : error instanceof Error
+              ? error.message
+              : 'Unknown error'
+        )
+      );
   }
 });
 
@@ -114,28 +109,25 @@ router.post(
           metadata: { snapshotId },
         });
 
-        return res.json({
-          success: true,
-          message: 'Configuration rolled back successfully',
-        });
+        return res.json(ApiResponse.success());
       } else {
-        return res.status(HTTP_STATUS.NOT_FOUND).json({
-          success: false,
-          message: 'Rollback snapshot not found or rollback failed',
-        });
+        return res
+          .status(HTTP_STATUS.NOT_FOUND)
+          .json(ApiResponse.error('Rollback snapshot not found or rollback failed'));
       }
     } catch (error) {
       debug('Hot reload rollback API error:', error);
-      return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
-        success: false,
-        message: 'Rollback failed',
-        error:
-          process.env.NODE_ENV === 'production'
-            ? 'An internal error occurred'
-            : error instanceof Error
-              ? error.message
-              : 'Unknown error',
-      });
+      return res
+        .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
+        .json(
+          ApiResponse.error(
+            process.env.NODE_ENV === 'production'
+              ? 'An internal error occurred'
+              : error instanceof Error
+                ? error.message
+                : 'Unknown error'
+          )
+        );
     }
   }
 );
@@ -144,27 +136,20 @@ router.get('/api/config/hot-reload/status', (req, res) => {
   try {
     const hotReloadManager = HotReloadManager.getInstance();
 
-    return res.json({
-      success: true,
-      status: {
-        isActive: true, // Hot reload is always active in this implementation
-        changeHistoryCount: hotReloadManager.getChangeHistory().length,
-        availableRollbacksCount: hotReloadManager.getAvailableRollbacks().length,
-        lastChange: hotReloadManager.getChangeHistory(1)[0] || null,
-      },
-    });
+    return res.json(ApiResponse.success());
   } catch (error) {
     debug('Hot reload status API error:', error);
-    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
-      success: false,
-      message: 'Failed to get hot reload status',
-      error:
-        process.env.NODE_ENV === 'production'
-          ? 'An internal error occurred'
-          : error instanceof Error
-            ? error.message
-            : 'Unknown error',
-    });
+    return res
+      .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
+      .json(
+        ApiResponse.error(
+          process.env.NODE_ENV === 'production'
+            ? 'An internal error occurred'
+            : error instanceof Error
+              ? error.message
+              : 'Unknown error'
+        )
+      );
   }
 });
 

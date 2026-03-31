@@ -1,6 +1,7 @@
 import os from 'os';
 import process from 'process';
 import { Router, type NextFunction, type Request, type Response } from 'express';
+import { ApiResponse } from '@src/server/utils/apiResponse';
 import { MetricsCollector } from '../../monitoring/MetricsCollector';
 import ApiMonitorService from '../../services/ApiMonitorService';
 import { HEALTH_THRESHOLDS, HTTP_STATUS } from '../../types/constants';
@@ -34,7 +35,10 @@ router.get('/', async (req, res) => {
   try {
     const { ProviderRegistry } = require('../../registries/ProviderRegistry');
     const registry = ProviderRegistry.getInstance();
-    const memProviders: Map<string, { healthCheck(): Promise<{ status: string; details?: Record<string, unknown> }> }> = registry.getMemoryProviders();
+    const memProviders: Map<
+      string,
+      { healthCheck(): Promise<{ status: string; details?: Record<string, unknown> }> }
+    > = registry.getMemoryProviders();
     if (memProviders.size > 0) {
       const providers: Record<string, { status: string; details?: Record<string, unknown> }> = {};
       const entries = Array.from(memProviders.entries());
@@ -50,16 +54,21 @@ router.get('/', async (req, res) => {
             anyMemoryProviderUnhealthy = true;
           }
         } else {
-          providers[name] = { status: 'error', details: { error: result.reason?.message || 'Unknown error' } };
+          providers[name] = {
+            status: 'error',
+            details: { error: result.reason?.message || 'Unknown error' },
+          };
           anyMemoryProviderUnhealthy = true;
         }
       }
-      memoryProvidersStatus = { status: anyMemoryProviderUnhealthy ? 'unhealthy' : 'healthy', providers };
+      memoryProvidersStatus = {
+        status: anyMemoryProviderUnhealthy ? 'unhealthy' : 'healthy',
+        providers,
+      };
     }
   } catch {
     // Registry not available — treat as none configured
   }
-
   // SyncProviderRegistry counts (if initialized)
   let registryCounts: Record<string, number> | undefined;
   try {
@@ -71,7 +80,6 @@ router.get('/', async (req, res) => {
   } catch {
     // SyncProviderRegistry not available — omit from response
   }
-
   let status = dbStatus === 'healthy' ? 'healthy' : 'degraded';
   if (status === 'healthy' && anyMemoryProviderUnhealthy) {
     status = 'degraded';
@@ -115,7 +123,7 @@ router.get('/detailed', optionalAuth, (req: Request, res: Response) => {
       timestamp: new Date().toISOString(),
       uptime: uptime,
     };
-    return res.json(sanitizedHealthData);
+    return res.json(ApiResponse.success(sanitizedHealthData));
   }
 
   // Full detailed response for authenticated users
@@ -197,8 +205,7 @@ router.get('/detailed', optionalAuth, (req: Request, res: Response) => {
   } catch {
     // Pipeline tracer not available — skip
   }
-
-  return res.json(healthData);
+  return res.json(ApiResponse.success(healthData));
 });
 
 // Service-level health check endpoint for the health check widget
@@ -339,7 +346,7 @@ router.get('/detailed/services', optionalAuth, async (_req: Request, res: Respon
     });
   }
 
-  return res.json({ services });
+  return res.json(ApiResponse.success({ services }));
 });
 
 // System metrics endpoint
@@ -370,7 +377,7 @@ router.get('/metrics', (req, res) => {
     },
   };
 
-  return res.json(metricsData);
+  return res.json(ApiResponse.success(metricsData));
 });
 
 // Alerts endpoint
@@ -403,11 +410,13 @@ router.get('/alerts', (req, res) => {
     });
   }
 
-  return res.json({
-    alerts: alerts,
-    count: alerts.length,
-    timestamp: new Date().toISOString(),
-  });
+  return res.json(
+    ApiResponse.success({
+      alerts: alerts,
+      count: alerts.length,
+      timestamp: new Date().toISOString(),
+    })
+  );
 });
 
 // Readiness probe
@@ -439,10 +448,12 @@ router.get('/ready', (req, res) => {
 // Liveness probe
 router.get('/live', (req, res) => {
   // Simple liveness check - if we can respond, we're alive
-  return res.json({
-    alive: true,
-    timestamp: new Date().toISOString(),
-  });
+  return res.json(
+    ApiResponse.success({
+      alive: true,
+      timestamp: new Date().toISOString(),
+    })
+  );
 });
 
 // Prometheus metrics endpoint
@@ -536,11 +547,13 @@ router.get('/api-endpoints', (req, res) => {
   const statuses = apiMonitor.getAllStatuses();
   const overallHealth = apiMonitor.getOverallHealth();
 
-  return res.json({
-    overall: overallHealth,
-    endpoints: statuses,
-    timestamp: new Date().toISOString(),
-  });
+  return res.json(
+    ApiResponse.success({
+      overall: overallHealth,
+      endpoints: statuses,
+      timestamp: new Date().toISOString(),
+    })
+  );
 });
 
 // Get specific endpoint status
@@ -549,16 +562,15 @@ router.get('/api-endpoints/:id', (req, res) => {
   const status = apiMonitor.getEndpointStatus(req.params.id);
 
   if (!status) {
-    return res.status(HTTP_STATUS.NOT_FOUND).json({
-      error: 'Endpoint not found',
-      message: `No endpoint found with ID: ${req.params.id}`,
-    });
+    return res.status(HTTP_STATUS.NOT_FOUND).json(ApiResponse.error('Endpoint not found'));
   }
 
-  return res.json({
-    endpoint: status,
-    timestamp: new Date().toISOString(),
-  });
+  return res.json(
+    ApiResponse.success({
+      endpoint: status,
+      timestamp: new Date().toISOString(),
+    })
+  );
 });
 
 // Cleanup endpoint (admin only)
@@ -569,18 +581,17 @@ router.post('/cleanup', validateRequest(CleanupConfigSchema), (req, res) => {
     const config = req.body;
 
     if (!config || Object.keys(config).length === 0) {
-      return res.json({
-        message: 'No endpoint data provided',
-        timestamp: new Date().toISOString(),
-      });
+      return res.json(
+        ApiResponse.success({
+          message: 'No endpoint data provided',
+          timestamp: new Date().toISOString(),
+        })
+      );
     }
 
     // Validate required fields
     if (!config.id || !config.name || !config.url) {
-      return res.status(HTTP_STATUS.BAD_REQUEST).json({
-        error: 'Missing required fields',
-        message: 'id, name, and url are required',
-      });
+      return res.status(HTTP_STATUS.BAD_REQUEST).json(ApiResponse.error('Missing required fields'));
     }
 
     // Set defaults
@@ -599,11 +610,7 @@ router.post('/cleanup', validateRequest(CleanupConfigSchema), (req, res) => {
       timestamp: new Date().toISOString(),
     });
   } catch (error) {
-    return res.status(HTTP_STATUS.BAD_REQUEST).json({
-      error: 'Failed to add endpoint',
-      message: error instanceof Error ? error.message : 'Unknown error',
-      timestamp: new Date().toISOString(),
-    });
+    return res.status(HTTP_STATUS.BAD_REQUEST).json(ApiResponse.error('Failed to add endpoint'));
   }
 });
 
@@ -615,18 +622,17 @@ router.post('/api-endpoints', validateRequest(ApiEndpointConfigSchema), (req, re
     const config = req.body;
 
     if (!config || Object.keys(config).length === 0) {
-      return res.json({
-        message: 'No endpoint data provided',
-        timestamp: new Date().toISOString(),
-      });
+      return res.json(
+        ApiResponse.success({
+          message: 'No endpoint data provided',
+          timestamp: new Date().toISOString(),
+        })
+      );
     }
 
     // Validate required fields
     if (!config.id || !config.name || !config.url) {
-      return res.status(HTTP_STATUS.BAD_REQUEST).json({
-        error: 'Missing required fields',
-        message: 'id, name, and url are required',
-      });
+      return res.status(HTTP_STATUS.BAD_REQUEST).json(ApiResponse.error('Missing required fields'));
     }
 
     // Set defaults
@@ -645,11 +651,7 @@ router.post('/api-endpoints', validateRequest(ApiEndpointConfigSchema), (req, re
       timestamp: new Date().toISOString(),
     });
   } catch (error) {
-    return res.status(HTTP_STATUS.BAD_REQUEST).json({
-      error: 'Failed to add endpoint',
-      message: error instanceof Error ? error.message : 'Unknown error',
-      timestamp: new Date().toISOString(),
-    });
+    return res.status(HTTP_STATUS.BAD_REQUEST).json(ApiResponse.error('Failed to add endpoint'));
   }
 });
 
@@ -660,17 +662,15 @@ router.put('/api-endpoints/:id', validateRequest(EndpointIdParamSchema), (req, r
   try {
     apiMonitor.updateEndpoint(req.params.id, req.body);
 
-    return res.json({
-      message: 'Endpoint updated successfully',
-      endpoint: apiMonitor.getEndpoint(req.params.id),
-      timestamp: new Date().toISOString(),
-    });
+    return res.json(
+      ApiResponse.success({
+        message: 'Endpoint updated successfully',
+        endpoint: apiMonitor.getEndpoint(req.params.id),
+        timestamp: new Date().toISOString(),
+      })
+    );
   } catch (error) {
-    return res.status(HTTP_STATUS.NOT_FOUND).json({
-      error: 'Failed to update endpoint',
-      message: error instanceof Error ? error.message : 'Endpoint not found',
-      timestamp: new Date().toISOString(),
-    });
+    return res.status(HTTP_STATUS.NOT_FOUND).json(ApiResponse.error('Failed to update endpoint'));
   }
 });
 
@@ -681,25 +681,19 @@ router.delete('/api-endpoints/:id', (req, res) => {
   try {
     const endpoint = apiMonitor.getEndpoint(req.params.id);
     if (!endpoint) {
-      return res.status(HTTP_STATUS.NOT_FOUND).json({
-        error: 'Failed to remove endpoint',
-        message: 'Endpoint not found',
-        timestamp: new Date().toISOString(),
-      });
+      return res.status(HTTP_STATUS.NOT_FOUND).json(ApiResponse.error('Failed to remove endpoint'));
     }
     apiMonitor.removeEndpoint(req.params.id);
 
-    return res.json({
-      message: 'Endpoint removed successfully',
-      removedEndpoint: endpoint,
-      timestamp: new Date().toISOString(),
-    });
+    return res.json(
+      ApiResponse.success({
+        message: 'Endpoint removed successfully',
+        removedEndpoint: endpoint,
+        timestamp: new Date().toISOString(),
+      })
+    );
   } catch (error) {
-    return res.status(HTTP_STATUS.NOT_FOUND).json({
-      error: 'Failed to remove endpoint',
-      message: error instanceof Error ? error.message : 'Endpoint not found',
-      timestamp: new Date().toISOString(),
-    });
+    return res.status(HTTP_STATUS.NOT_FOUND).json(ApiResponse.error('Failed to remove endpoint'));
   }
 });
 
@@ -708,10 +702,12 @@ router.post('/api-endpoints/start', validateRequest(CleanupConfigSchema), (req, 
   const apiMonitor = ApiMonitorService.getInstance();
   apiMonitor.startAllMonitoring();
 
-  return res.json({
-    message: 'Started monitoring all endpoints',
-    timestamp: new Date().toISOString(),
-  });
+  return res.json(
+    ApiResponse.success({
+      message: 'Started monitoring all endpoints',
+      timestamp: new Date().toISOString(),
+    })
+  );
 });
 
 // Stop monitoring all endpoints
@@ -719,10 +715,12 @@ router.post('/api-endpoints/stop', validateRequest(CleanupConfigSchema), (req, r
   const apiMonitor = ApiMonitorService.getInstance();
   apiMonitor.stopAllMonitoring();
 
-  return res.json({
-    message: 'Stopped monitoring all endpoints',
-    timestamp: new Date().toISOString(),
-  });
+  return res.json(
+    ApiResponse.success({
+      message: 'Stopped monitoring all endpoints',
+      timestamp: new Date().toISOString(),
+    })
+  );
 });
 
 router.use((err: any, req: Request, res: Response, next: NextFunction) => {
@@ -730,18 +728,10 @@ router.use((err: any, req: Request, res: Response, next: NextFunction) => {
   if (isParseError && req.path?.startsWith('/api-endpoints')) {
     const method = typeof req.method === 'string' ? req.method.toUpperCase() : req.method;
     if (method === 'PUT') {
-      return res.status(HTTP_STATUS.NOT_FOUND).json({
-        error: 'Failed to update endpoint',
-        message: 'Endpoint not found or payload invalid',
-        timestamp: new Date().toISOString(),
-      });
+      return res.status(HTTP_STATUS.NOT_FOUND).json(ApiResponse.error('Failed to update endpoint'));
     }
 
-    return res.status(HTTP_STATUS.BAD_REQUEST).json({
-      error: 'Invalid JSON payload',
-      message: 'Request body could not be parsed',
-      timestamp: new Date().toISOString(),
-    });
+    return res.status(HTTP_STATUS.BAD_REQUEST).json(ApiResponse.error('Invalid JSON payload'));
   }
 
   return next(err);
@@ -773,7 +763,7 @@ router.get('/errors', (req, res) => {
     },
   };
 
-  return res.json(errorHealthData);
+  return res.json(ApiResponse.success(errorHealthData));
 });
 
 // Recovery system health endpoint
@@ -800,7 +790,7 @@ router.get('/recovery', (req, res) => {
     },
   };
 
-  return res.json(recoveryHealthData);
+  return res.json(ApiResponse.success(recoveryHealthData));
 });
 
 // Error patterns and anomalies endpoint
@@ -838,7 +828,7 @@ router.get('/errors/patterns', (req, res) => {
     recommendations: generatePatternRecommendations(errorStats, recentErrors),
   };
 
-  return res.json(patternsData);
+  return res.json(ApiResponse.success(patternsData));
 });
 
 // Helper functions for health calculations

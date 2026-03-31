@@ -1,8 +1,10 @@
 import { Router } from 'express';
 import { DatabaseManager } from '@src/database/DatabaseManager';
 import WebSocketService, { type MessageFlowEvent } from '@src/server/services/WebSocketService';
+import { ApiResponse } from '@src/server/utils/apiResponse';
 import { BotConfigurationManager } from '@config/BotConfigurationManager';
 import { authenticate, requireAdmin } from '../../auth/middleware';
+import { createLogger } from '../../common/StructuredLogger';
 import { AnalyticsService } from '../../services/AnalyticsService';
 import { HTTP_STATUS } from '../../types/constants';
 import {
@@ -12,7 +14,6 @@ import {
 } from '../../validation/schemas/miscSchema';
 import { validateRequest } from '../../validation/validateRequest';
 import { ActivityLogger } from '../services/ActivityLogger';
-import { createLogger } from '../../common/StructuredLogger';
 
 type AnnotatedEvent = MessageFlowEvent & { llmProvider: string };
 
@@ -173,7 +174,7 @@ const mockUserSegments: UserSegment[] = [
 // ----------------------------------------------------------------------------
 
 router.get('/ai/config', authenticate, requireAdmin, (req, res) => {
-  res.json(dashboardConfig);
+  res.json(ApiResponse.success(dashboardConfig));
 });
 
 router.post(
@@ -183,7 +184,7 @@ router.post(
   validateRequest(DashboardConfigSchema),
   (req, res) => {
     dashboardConfig = { ...dashboardConfig, ...req.body };
-    res.json(dashboardConfig);
+    res.json(ApiResponse.success(dashboardConfig));
   }
 );
 
@@ -198,19 +199,21 @@ router.get('/ai/stats', authenticate, requireAdmin, async (req, res) => {
       endTime: to || undefined,
     });
 
-    res.json({
-      learningProgress: stats.learningProgress,
-      behaviorPatternsCount: stats.behaviorPatternsCount,
-      userSegmentsCount: stats.userSegmentsCount,
-      totalMessages: stats.totalMessages,
-      totalErrors: stats.totalErrors,
-      avgProcessingTime: stats.avgProcessingTime,
-      activeBots: stats.activeBots,
-      activeUsers: stats.activeUsers,
-    });
+    res.json(
+      ApiResponse.success({
+        learningProgress: stats.learningProgress,
+        behaviorPatternsCount: stats.behaviorPatternsCount,
+        userSegmentsCount: stats.userSegmentsCount,
+        totalMessages: stats.totalMessages,
+        totalErrors: stats.totalErrors,
+        avgProcessingTime: stats.avgProcessingTime,
+        activeBots: stats.activeBots,
+        activeUsers: stats.activeUsers,
+      })
+    );
   } catch (error) {
     logger.error('AI stats API error:', error);
-    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: 'Failed to get AI stats' });
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json(ApiResponse.error('Failed to get AI stats'));
   }
 });
 
@@ -225,10 +228,12 @@ router.get('/ai/segments', authenticate, requireAdmin, async (req, res) => {
       endTime: to || undefined,
     });
 
-    res.json(segments);
+    res.json(ApiResponse.success(segments));
   } catch (error) {
     logger.error('AI segments API error:', error);
-    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: 'Failed to get user segments' });
+    res
+      .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
+      .json(ApiResponse.error('Failed to get user segments'));
   }
 });
 
@@ -243,12 +248,12 @@ router.get('/ai/patterns', authenticate, requireAdmin, async (req, res) => {
       endTime: to || undefined,
     });
 
-    res.json(patterns);
+    res.json(ApiResponse.success(patterns));
   } catch (error) {
     logger.error('AI patterns API error:', error);
     res
       .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
-      .json({ error: 'Failed to get behavior patterns' });
+      .json(ApiResponse.error('Failed to get behavior patterns'));
   }
 });
 
@@ -263,10 +268,12 @@ router.get('/ai/recommendations', authenticate, requireAdmin, async (req, res) =
       endTime: to || undefined,
     });
 
-    res.json(recommendations);
+    res.json(ApiResponse.success(recommendations));
   } catch (error) {
     logger.error('AI recommendations API error:', error);
-    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: 'Failed to get recommendations' });
+    res
+      .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
+      .json(ApiResponse.error('Failed to get recommendations'));
   }
 });
 
@@ -280,10 +287,12 @@ router.post(
     try {
       const db = DatabaseManager.getInstance();
       await db.storeAIFeedback({ recommendationId, feedback, metadata });
-      res.json({ success: true });
+      res.json(ApiResponse.success());
     } catch (error) {
       logger.error('Error storing AI feedback:', error);
-      res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: 'Failed to store feedback' });
+      res
+        .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
+        .json(ApiResponse.error('Failed to store feedback'));
     }
   }
 );
@@ -340,10 +349,10 @@ router.get('/status', authenticate, requireAdmin, (req, res) => {
         errorCount: ws.getBotStats(bot.name).errorCount,
       }));
 
-    res.json({ bots: status, uptime: process.uptime() });
+    res.json(ApiResponse.success({ bots: status, uptime: process.uptime() }));
   } catch (error) {
     logger.error('Status API error:', error);
-    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: 'Failed to get status' });
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json(ApiResponse.error('Failed to get status'));
   }
 });
 
@@ -427,21 +436,23 @@ router.get('/activity', authenticate, requireAdmin, async (req, res) => {
     const timeline = buildTimeline(filteredEvents);
     const agentMetrics = buildAgentMetrics(filteredEvents, ws.getAllBotStats());
 
-    res.json({
-      events: filteredEvents.slice(-200),
-      filters: {
-        agents: Array.from(agents).sort(),
-        messageProviders: Array.from(messageProviders).sort(),
-        llmProviders: Array.from(llmProviders).sort(),
-      },
-      timeline,
-      agentMetrics,
-    });
+    res.json(
+      ApiResponse.success({
+        events: filteredEvents.slice(-200),
+        filters: {
+          agents: Array.from(agents).sort(),
+          messageProviders: Array.from(messageProviders).sort(),
+          llmProviders: Array.from(llmProviders).sort(),
+        },
+        timeline,
+        agentMetrics,
+      })
+    );
   } catch (error) {
     logger.error('Activity API error:', error);
     res
       .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
-      .json({ error: 'Failed to retrieve activity feed' });
+      .json(ApiResponse.error('Failed to retrieve activity feed'));
   }
 });
 
@@ -456,13 +467,15 @@ router.post(
       const ws = WebSocketService.getInstance();
       const success = ws.acknowledgeAlert(id);
       if (success) {
-        res.json({ success: true, message: 'Alert acknowledged' });
+        res.json(ApiResponse.success());
       } else {
-        res.status(HTTP_STATUS.NOT_FOUND).json({ success: false, message: 'Alert not found' });
+        res.status(HTTP_STATUS.NOT_FOUND).json(ApiResponse.error('Alert not found'));
       }
     } catch (error) {
       logger.error('Acknowledge alert error:', error);
-      res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: 'Failed to acknowledge alert' });
+      res
+        .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
+        .json(ApiResponse.error('Failed to acknowledge alert'));
     }
   }
 );
@@ -478,13 +491,15 @@ router.post(
       const ws = WebSocketService.getInstance();
       const success = ws.resolveAlert(id);
       if (success) {
-        res.json({ success: true, message: 'Alert resolved' });
+        res.json(ApiResponse.success());
       } else {
-        res.status(HTTP_STATUS.NOT_FOUND).json({ success: false, message: 'Alert not found' });
+        res.status(HTTP_STATUS.NOT_FOUND).json(ApiResponse.error('Alert not found'));
       }
     } catch (error) {
       logger.error('Resolve alert error:', error);
-      res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: 'Failed to resolve alert' });
+      res
+        .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
+        .json(ApiResponse.error('Failed to resolve alert'));
     }
   }
 );
