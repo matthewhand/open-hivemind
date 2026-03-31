@@ -90,4 +90,28 @@ test.describe('Tool Providers Screenshots', () => {
       fullPage: true,
     });
   });
+
+  test('Tool Providers Add Modal', async ({ page }) => {
+    // Set viewport for consistent screenshots
+    await page.setViewportSize({ width: 1280, height: 800 });
+
+    // Navigate to Tool Providers page
+    await page.goto('/admin/providers/tool');
+
+    // Wait for the page to load
+    await expect(page.locator('text=Tool Providers').first()).toBeVisible();
+
+    // Click Add Profile button
+    await page.getByRole('button', { name: 'Create Profile' }).click();
+
+    // Wait for modal to appear
+    const addModal = page.locator('.modal-box').filter({ hasText: 'Create Tool Profile' });
+    await expect(addModal).toBeVisible();
+
+    // Take screenshot of the modal
+    await page.screenshot({
+      path: 'docs/screenshots/tool-add-profile-modal.png',
+      fullPage: false,
+    });
+  });
 });

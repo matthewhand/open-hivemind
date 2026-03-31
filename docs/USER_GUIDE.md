@@ -135,6 +135,7 @@ Configure memory providers for persistent context and knowledge storage.
 Configure tool providers for extended capabilities and integrations.
 
 ![Tool Providers List](screenshots/tool-providers-list.png)
+![Add Tool Profile Modal](screenshots/tool-add-profile-modal.png)
 
 *   **Provider Integrations**: Add custom tools and APIs like GitHub, Jira, Google Search, etc.
 *   **Manage Access**: Restrict or permit specific bots from accessing configured tools.
