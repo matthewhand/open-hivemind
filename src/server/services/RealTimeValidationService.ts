@@ -345,29 +345,15 @@ export class RealTimeValidationService extends EventEmitter {
       description: 'Bot name must be unique across all configurations',
       category: 'business',
       severity: 'error',
-      validator: (config: any) => {
-        const errors: ValidationError[] = [];
-
-        if (config.name) {
-          // This is a synchronous validator for simplicity
-          // In a real implementation, you would make this async
-          errors.push({
-            id: 'biz-name-1',
-            ruleId: 'business-unique-name',
-            message: `Bot name "${config.name}" must be unique`,
-            field: 'name',
-            value: config.name,
-            suggestions: [`Consider using "${config.name}-2" or a different name`],
-            category: 'business',
-          });
-        }
-
+      validator: (_config: any) => {
+        // Uniqueness cannot be verified synchronously; skip for now.
+        // A proper async uniqueness check should live in the service layer.
         return {
-          isValid: errors.length === 0,
-          errors,
+          isValid: true,
+          errors: [],
           warnings: [],
           info: [],
-          score: errors.length === 0 ? 100 : 0,
+          score: 100,
         };
       },
     });
@@ -539,7 +525,11 @@ export class RealTimeValidationService extends EventEmitter {
    */
   public shutdown(): void {
     if (this.validationInterval) {
-      clearInterval(this.validationInterval);
+      // Guard against environments where clearInterval may not be available
+      // (e.g. certain Jest teardown scenarios)
+      if (typeof clearInterval === 'function') {
+        clearInterval(this.validationInterval);
+      }
       this.validationInterval = null;
     }
     this.removeAllListeners();

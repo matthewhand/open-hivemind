@@ -11,6 +11,7 @@ import type { Agent } from '../../../services/agentService';
 import { useProviders, type ProviderInfo } from '../../../hooks/useProviders';
 import { usePersonas } from '../../../hooks/usePersonas';
 import { CheckCircle, X, Trash2, Plus, Info } from 'lucide-react';
+import Toggle from '../DaisyUI/Toggle';
 
 interface AgentCardProps {
   agent: Agent;
@@ -308,8 +309,7 @@ const AgentCard: React.FC<AgentCardProps> = ({ agent, configurable }) => {
             <div className="form-control">
               <label className="label cursor-pointer">
                 <span className="label-text">Enable MCP Tool Usage Guard</span>
-                <input
-                  type="checkbox"
+                <Toggle
                   className="toggle toggle-primary"
                   checked={mcpGuard.enabled}
                   onChange={(e) => handleMcpGuardChange('enabled', e.target.checked)}

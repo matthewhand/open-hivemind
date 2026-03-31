@@ -17,6 +17,7 @@ import Modal from '../components/DaisyUI/Modal';
 import { OperationStatus, TimeoutIndicator } from '../components/DaisyUI/LoadingComponents';
 import useUrlParams from '../hooks/useUrlParams';
 import Debug from 'debug';
+import Toggle from '../components/DaisyUI/Toggle';
 const debug = Debug('app:client:pages:MCPToolsPage');
 
 interface MCPTool {
@@ -390,8 +391,7 @@ const MCPToolsPage: React.FC = () => {
               </label>
 
               {type === 'boolean' ? (
-                <input
-                  type="checkbox"
+                <Toggle
                   className="toggle toggle-primary"
                   checked={formArgs[key] || false}
                   onChange={(e) => updateFormArg(key, e.target.checked)}

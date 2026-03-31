@@ -2,10 +2,12 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { Bot, MessageSquare, Cpu, User, Shield, ArrowRight, ArrowLeft, Check, AlertCircle, CheckCircle2, RotateCcw } from 'lucide-react';
 import Input from '../DaisyUI/Input';
 import Modal from '../DaisyUI/Modal';
+import Radio from '../DaisyUI/Radio';
 import { useConfigDiff } from '../../hooks/useConfigDiff';
 import { ConfigDiffViewer, ConfigDiffConfirmDialog } from '../ConfigDiffViewer';
 import { apiService } from '../../services/api';
 import Debug from 'debug';
+import Toggle from '../DaisyUI/Toggle';
 const debug = Debug('app:client:components:BotManagement:CreateBotWizard');
 
 interface CreateBotWizardProps {
@@ -390,10 +392,9 @@ export const CreateBotWizard: React.FC<CreateBotWizardProps> = (props) => {
                                             <span className="font-bold">Default Assistant</span>
                                             <span className="text-xs opacity-70">Helpful and polite general purpose assistant.</span>
                                         </span>
-                                        <input
-                                            type="radio"
+                                        <Radio
                                             name="persona"
-                                            className="radio radio-primary"
+                                            color="primary"
                                             checked={formData.persona === 'default'}
                                             onChange={() => setFormData({ ...formData, persona: 'default' })}
                                         />
@@ -404,10 +405,9 @@ export const CreateBotWizard: React.FC<CreateBotWizardProps> = (props) => {
                                                 <span className="font-bold">{p.name}</span>
                                                 <span className="text-xs opacity-70">{p.description || 'Custom persona'}</span>
                                             </span>
-                                            <input
-                                                type="radio"
+                                            <Radio
                                                 name="persona"
-                                                className="radio radio-primary"
+                                                color="primary"
                                                 checked={formData.persona === p.id}
                                                 onChange={() => setFormData({ ...formData, persona: p.id })}
                                             />
@@ -462,8 +462,7 @@ export const CreateBotWizard: React.FC<CreateBotWizardProps> = (props) => {
 
                             <div className="form-control">
                                 <label className="label cursor-pointer justify-start gap-4">
-                                    <input
-                                        type="checkbox"
+                                    <Toggle
                                         className="toggle toggle-primary"
                                         checked={formData.guards.accessControl}
                                         onChange={e => setFormData({ ...formData, guards: { ...formData.guards, accessControl: e.target.checked } })}
@@ -478,8 +477,7 @@ export const CreateBotWizard: React.FC<CreateBotWizardProps> = (props) => {
 
                             <div className="form-control">
                                 <label className="label cursor-pointer justify-start gap-4">
-                                    <input
-                                        type="checkbox"
+                                    <Toggle
                                         className="toggle toggle-primary"
                                         checked={formData.guards.rateLimit}
                                         onChange={e => setFormData({ ...formData, guards: { ...formData.guards, rateLimit: e.target.checked } })}
@@ -494,8 +492,7 @@ export const CreateBotWizard: React.FC<CreateBotWizardProps> = (props) => {
 
                             <div className="form-control">
                                 <label className="label cursor-pointer justify-start gap-4">
-                                    <input
-                                        type="checkbox"
+                                    <Toggle
                                         className="toggle toggle-primary"
                                         checked={formData.guards.contentFilter}
                                         onChange={e => setFormData({ ...formData, guards: { ...formData.guards, contentFilter: e.target.checked } })}

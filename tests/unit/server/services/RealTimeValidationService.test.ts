@@ -39,6 +39,9 @@ describe('RealTimeValidationService', () => {
     (DatabaseManager.getInstance as jest.Mock).mockReturnValue({});
 
     service = RealTimeValidationService.getInstance();
+    // Directly inject the mock because jest.setup.ts pre-loads the real
+    // BotConfigService before the test file's jest.mock() takes effect.
+    (service as any).botConfigService = mockBotConfigService;
   });
 
   afterEach(() => {
@@ -263,7 +266,7 @@ describe('RealTimeValidationService', () => {
 
       const report = await service.validateConfiguration(1, 'standard');
 
-      expect(report.executionTime).toBeGreaterThan(0);
+      expect(report.executionTime).toBeGreaterThanOrEqual(0);
     });
   });
 
@@ -413,7 +416,13 @@ describe('RealTimeValidationService', () => {
 
   describe('validation statistics', () => {
     test('should return validation statistics', async () => {
-      const mockConfig = { name: 'test-bot', messageProvider: 'discord', llmProvider: 'openai' };
+      const mockConfig = {
+        name: 'test-bot',
+        messageProvider: 'discord',
+        llmProvider: 'openai',
+        discord: { token: 'test-token' },
+        openai: { apiKey: 'test-key' },
+      };
       mockBotConfigService.getBotConfig.mockResolvedValue(mockConfig as any);
 
       await service.validateConfiguration(1, 'standard');

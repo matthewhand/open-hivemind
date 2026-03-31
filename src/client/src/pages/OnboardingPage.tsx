@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import Input from '../components/DaisyUI/Input';
 import Button from '../components/DaisyUI/Button';
+import ProgressBar from '../components/DaisyUI/ProgressBar';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -528,14 +529,12 @@ const OnboardingPage: React.FC = () => {
 
       {/* Progress bar */}
       <div className="px-6 pt-6 pb-2 max-w-4xl mx-auto w-full">
-        <div className="flex justify-between text-sm text-base-content/60 mb-2">
-          <span>Setup Progress</span>
-          <span>{Math.round(progressPercent)}% Complete</span>
-        </div>
-        <progress
-          className="progress progress-primary w-full"
+        <ProgressBar
           value={progressPercent}
-          max="100"
+          max={100}
+          color="primary"
+          label="Setup Progress"
+          showPercentage={true}
         />
       </div>
 

@@ -15,6 +15,7 @@ import type { AccordionItem } from './DaisyUI/Accordion';
 import { useConfigDiff } from '../hooks/useConfigDiff';
 import { ConfigDiffViewer, ConfigDiffConfirmDialog } from './ConfigDiffViewer';
 import AdvancedThemeSwitcher from './DaisyUI/AdvancedThemeSwitcher';
+import Toggle from './DaisyUI/Toggle';
 
 const Settings: React.FC = () => {
   const dispatch = useAppDispatch();
@@ -71,8 +72,7 @@ const Settings: React.FC = () => {
           <div className="form-control">
             <label className="label cursor-pointer justify-start gap-4">
               <span className="label-text">Auto Refresh</span>
-              <input
-                type="checkbox"
+              <Toggle
                 className="toggle toggle-primary"
                 checked={ui.autoRefreshEnabled}
                 onChange={handleAutoRefreshToggle}
@@ -108,8 +108,7 @@ const Settings: React.FC = () => {
           <div className="form-control">
             <label className="label cursor-pointer justify-start gap-4">
               <span className="label-text">Reduced Motion</span>
-              <input
-                type="checkbox"
+              <Toggle
                 className="toggle toggle-primary"
                 checked={!ui.animationsEnabled}
                 onChange={(event) => dispatch(setAnimationsEnabled(!event.target.checked))}
@@ -119,8 +118,7 @@ const Settings: React.FC = () => {
           <div className="form-control">
             <label className="label cursor-pointer justify-start gap-4">
               <span className="label-text">Show Tooltips</span>
-              <input
-                type="checkbox"
+              <Toggle
                 className="toggle toggle-primary"
                 checked={ui.showTooltips}
                 onChange={(event) => dispatch(setShowTooltips(event.target.checked))}
@@ -130,8 +128,7 @@ const Settings: React.FC = () => {
           <div className="form-control">
             <label className="label cursor-pointer justify-start gap-4">
               <span className="label-text">Keyboard Shortcuts Overlay</span>
-              <input
-                type="checkbox"
+              <Toggle
                 className="toggle toggle-primary"
                 checked={ui.showKeyboardShortcuts}
                 onChange={(event) => dispatch(setShowKeyboardShortcuts(event.target.checked))}
