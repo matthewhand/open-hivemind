@@ -3,7 +3,10 @@ import { apiService } from '../services/api';
 import { useApiQuery } from '../hooks/useApiQuery';
 import ChatInterface, { ChatMessage } from '../components/DaisyUI/Chat';
 import { BotAvatar } from '../components/BotAvatar';
-import { RefreshCw, MessageSquare, Cpu, Check, ChevronDown, Menu as MenuIcon, X, XCircle } from 'lucide-react';
+import { RefreshCw, MessageSquare, Cpu, Check, ChevronDown, Menu as LucideMenuIcon, X, XCircle } from 'lucide-react';
+import Menu from '../components/DaisyUI/Menu';
+import Indicator from '../components/DaisyUI/Indicator';
+import Badge from '../components/DaisyUI/Badge';
 import Button from '../components/DaisyUI/Button';
 import EmptyState from '../components/DaisyUI/EmptyState';
 import { SkeletonList, SkeletonMessageList } from '../components/DaisyUI/Skeleton';
@@ -220,10 +223,9 @@ const ChatPage: React.FC = () => {
                   className={`${selectedBotId === bot.id ? 'active' : ''} flex items-center gap-3 py-3`}
                   onClick={() => { setSelectedBotId(bot.id); setSidebarOpen(false); }}
                 >
-                  <div className="relative">
+                  <Indicator item={<Badge color={bot.connected ? 'success' : undefined} className="badge-xs p-0 w-3 h-3" />} verticalPosition="bottom" horizontalPosition="end">
                     <BotAvatar bot={bot} />
-                    <span className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-base-100 ${bot.connected ? 'bg-success' : 'bg-base-300'}`} />
-                  </div>
+                  </Indicator>
                   <div className="flex flex-col items-start min-w-0 flex-1">
                     <span className="font-semibold truncate w-full text-left">{bot.name}</span>
                     <div className="flex items-center gap-2 w-full">
@@ -314,7 +316,7 @@ const ChatPage: React.FC = () => {
                 aria-label={sidebarOpen ? 'Close sidebar' : 'Open sidebar'}
                 aria-expanded={sidebarOpen}
               >
-                {sidebarOpen ? <X className="w-5 h-5" /> : <MenuIcon className="w-5 h-5" />}
+                {sidebarOpen ? <X className="w-5 h-5" /> : <LucideMenuIcon className="w-5 h-5" />}
               </Button>
             </div>
           )}

@@ -8,6 +8,7 @@ import {
 import Input from '../components/DaisyUI/Input';
 import Button from '../components/DaisyUI/Button';
 import ProgressBar from '../components/DaisyUI/ProgressBar';
+import StepWizard from '../components/DaisyUI/StepWizard';
 
 // ---------------------------------------------------------------------------
 // Types
