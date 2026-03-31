@@ -1,16 +1,22 @@
 import React from 'react';
 import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import { vi } from 'vitest';
+import { MemoryRouter } from 'react-router-dom';
 import ActivityPage from '../ActivityPage';
-import { apiService } from '../../services/api';
+import { apiCache } from '../../services/apiCache';
+
+// Mock the API Cache
+vi.mock('../../services/apiCache', () => ({
+  apiCache: {
+    get: vi.fn(),
+  }
+}));
 
 // Mock components to avoid deep rendering issues and dependency on child implementations
 vi.mock('../../components/DaisyUI', () => ({
-  Alert: ({ message }: any) => <div data-testid="alert">{message}</div>,
   Badge: ({ children }: any) => <span data-testid="badge">{children}</span>,
   Button: ({ children, onClick, disabled, title }: any) => <button onClick={onClick} disabled={disabled} title={title}>{children}</button>,
   Card: ({ children }: any) => <div data-testid="card">{children}</div>,
-  DataTable: () => <div data-testid="data-table" />,
   StatsCards: () => <div data-testid="stats-cards" />,
   Timeline: () => <div data-testid="timeline" />,
   Toggle: ({ onChange }: any) => <input type="checkbox" data-testid="toggle" onChange={onChange} />,
@@ -32,6 +38,14 @@ vi.mock('../../components/DaisyUI', () => ({
       placeholder={placeholder}
     />
   ),
+}));
+
+vi.mock('../../components/DaisyUI/Alert', () => ({
+  Alert: ({ message }: any) => <div data-testid="alert">{message}</div>,
+}));
+
+vi.mock('../../components/DaisyUI/DataTable', () => ({
+  default: () => <div data-testid="data-table" />,
 }));
 
 // Mock Skeleton components
@@ -93,23 +107,22 @@ vi.mock('lucide-react', async (importOriginal) => {
 });
 
 describe('ActivityPage', () => {
-  let getActivityMock: any;
+  let apiCacheGetMock: any;
 
   beforeEach(() => {
     vi.clearAllMocks();
-    // Mock API
-    getActivityMock = vi.spyOn(apiService, 'getActivity').mockImplementation(vi.fn());
-  });
-
-  afterEach(() => {
-    getActivityMock.mockRestore();
+    apiCacheGetMock = vi.mocked(apiCache.get);
   });
 
   it('renders loading state initially', async () => {
     // Return a promise that doesn't resolve immediately to test loading state
-    getActivityMock.mockReturnValue(new Promise(() => { }));
+    apiCacheGetMock.mockReturnValue(new Promise(() => { }));
 
-    render(<ActivityPage />);
+    render(
+      <MemoryRouter>
+        <ActivityPage />
+      </MemoryRouter>
+    );
 
     // We expect loading spinner to be present
     // Note: The component sets loading=true initially, and fetchActivity is called in useEffect.
@@ -137,27 +150,35 @@ describe('ActivityPage', () => {
       }
     };
 
-    getActivityMock.mockResolvedValue(mockData);
+    apiCacheGetMock.mockResolvedValue(mockData);
 
-    render(<ActivityPage />);
+    render(
+      <MemoryRouter>
+        <ActivityPage />
+      </MemoryRouter>
+    );
 
     // Wait for loading to finish
     await waitFor(() => expect(screen.queryByTestId('loading-spinner')).not.toBeInTheDocument(), { timeout: 3000 });
 
-    // Should show stats cards
-    expect(screen.getByTestId('stats-cards')).toBeInTheDocument();
+    // Wait for the total events card to appear
+    expect(screen.getByText('Total Events')).toBeInTheDocument();
 
     // Should show data table (default view)
     expect(screen.getByTestId('data-table')).toBeInTheDocument();
 
     // API should have been called
-    expect(getActivityMock).toHaveBeenCalled();
+    expect(apiCacheGetMock).toHaveBeenCalled();
   });
 
   it('handles API errors gracefully', async () => {
-    getActivityMock.mockRejectedValue(new Error('Network error'));
+    apiCacheGetMock.mockRejectedValue(new Error('Network error'));
 
-    render(<ActivityPage />);
+    render(
+      <MemoryRouter>
+        <ActivityPage />
+      </MemoryRouter>
+    );
 
     // Wait for loading to finish and error to appear
     await waitFor(() => expect(screen.getByTestId('alert')).toBeInTheDocument(), { timeout: 3000 });
@@ -165,14 +186,18 @@ describe('ActivityPage', () => {
   });
 
   it.skip('refreshes data when refresh button is clicked', async () => {
-    getActivityMock.mockResolvedValue({ events: [], filters: {} });
+    apiCacheGetMock.mockResolvedValue({ events: [], filters: {} });
 
-    render(<ActivityPage />);
+    render(
+      <MemoryRouter>
+        <ActivityPage />
+      </MemoryRouter>
+    );
 
     await waitFor(() => expect(screen.queryByTestId('loading-spinner')).not.toBeInTheDocument(), { timeout: 3000 });
 
     // Clear previous calls
-    getActivityMock.mockClear();
+    apiCacheGetMock.mockClear();
 
     // Find refresh button (RefreshCw icon is inside a button)
     // The PageHeader mock renders actions. We need to find the button inside it.
@@ -196,6 +221,6 @@ describe('ActivityPage', () => {
     expect(refreshButton).not.toBeDisabled();
     fireEvent.click(refreshButton);
 
-    expect(getActivityMock).toHaveBeenCalled();
+    expect(apiCacheGetMock).toHaveBeenCalled();
   });
 });
