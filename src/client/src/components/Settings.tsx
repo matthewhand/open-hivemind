@@ -14,6 +14,7 @@ import { Accordion } from './DaisyUI/Accordion';
 import type { AccordionItem } from './DaisyUI/Accordion';
 import { useConfigDiff } from '../hooks/useConfigDiff';
 import { ConfigDiffViewer, ConfigDiffConfirmDialog } from './ConfigDiffViewer';
+import AdvancedThemeSwitcher from './DaisyUI/AdvancedThemeSwitcher';
 import Toggle from './DaisyUI/Toggle';
 
 const Settings: React.FC = () => {
@@ -43,13 +44,6 @@ const Settings: React.FC = () => {
     }
   }, [originalSnapshot, settingsAsRecord, setOriginalConfig]);
 
-  const themeOptions: Array<{ value: UIState['theme']; label: string }> = [
-    { value: 'light', label: 'Light' },
-    { value: 'dark', label: 'Dark' },
-    { value: 'high-contrast', label: 'High Contrast' },
-    { value: 'auto', label: 'Auto (System)' },
-  ];
-
   const accordionItems: AccordionItem[] = [
     {
       id: 'appearance',
@@ -57,32 +51,14 @@ const Settings: React.FC = () => {
       icon: '🎨',
       content: (
         <div>
-          <div className="form-control">
-            <label className="label cursor-pointer justify-start gap-4">
-              <span className="label-text">Dark Mode</span>
-              <Toggle
-                className="toggle toggle-primary"
-                checked={ui.theme === 'dark'}
-                onChange={(event) => handleThemeToggle(event.target.checked)}
-              />
-            </label>
-          </div>
-          <div className="divider my-2"></div>
-          <div className="form-control w-full max-w-xs">
-            <label className="label">
-              <span className="label-text text-base-content/70">Theme preset</span>
-            </label>
-            <select
-              className="select select-bordered select-sm w-full"
-              value={ui.theme}
-              onChange={(event) => handleThemeSelect(event.target.value as UIState['theme'])}
-            >
-              {themeOptions.map(option => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
+          <div className="mb-4">
+            <h3 className="text-lg font-semibold mb-2">Theme Selection</h3>
+            <p className="text-sm text-base-content/70 mb-4">Choose a theme to customize your experience.</p>
+            <AdvancedThemeSwitcher
+              currentTheme={ui.theme}
+              onThemeChange={handleThemeSelect}
+              position="inline"
+            />
           </div>
         </div>
       ),
@@ -164,11 +140,7 @@ const Settings: React.FC = () => {
     },
   ];
 
-  const handleThemeToggle = (checked: boolean) => {
-    dispatch(setTheme(checked ? 'dark' : 'light'));
-  };
-
-  const handleThemeSelect = (mode: UIState['theme']) => {
+  const handleThemeSelect = (mode: string) => {
     dispatch(setTheme(mode));
   };
 
