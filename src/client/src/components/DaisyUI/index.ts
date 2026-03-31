@@ -8,6 +8,7 @@ export { default as Hero } from './Hero';
 export { default as Button } from './Button';
 export { default as Card } from './Card';
 export { default as Carousel } from './Carousel';
+export { default as Chat } from './Chat';
 export { default as Diff } from './Diff';
 export { default as Indicator } from './Indicator';
 export { default as DataTable } from './DataTable';
@@ -51,7 +52,6 @@ export { default as Divider } from './Divider';
 // Utility Components
 export { default as Kbd } from './Kbd';
 export { default as Tooltip } from './Tooltip';
-export { default as ProgressBar } from './ProgressBar';
 export { default as Countdown } from './Countdown';
 export { default as Mockup } from './Mockup';
 
