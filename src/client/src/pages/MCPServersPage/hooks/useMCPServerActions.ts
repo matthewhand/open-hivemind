@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { getAuthHeaders } from '../../../utils/api';
+import { getAuthHeaders } from '../../../utils/apiAuth';
 import { type MCPServer } from './useMCPServerData';
 
 export const useMCPServerActions = (

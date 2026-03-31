@@ -8,6 +8,7 @@ import {
   PerformanceOptimizeSchema,
 } from '../../validation/schemas/enterpriseSchema';
 import { validateRequest } from '../../validation/validateRequest';
+import { ApiResponse } from '../../utils/apiResponse';
 
 const debug = Debug('app:enterpriseRoutes');
 const router = Router();
@@ -48,17 +49,10 @@ router.get('/api/compliance', (req, res) => {
       },
     ];
 
-    return res.json({
-      success: true,
-      complianceRules,
-    });
+    return res.json(ApiResponse.success({complianceRules}));
   } catch (error) {
     debug('Compliance API error:', error);
-    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
-      success: false,
-      message: 'Failed to get compliance status',
-      error: error instanceof Error ? error.message : 'Unknown error',
-    });
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json(ApiResponse.error('Failed to get compliance status', undefined, error instanceof Error ? error.message : 'Unknown error'));
   }
 });
 
@@ -93,17 +87,10 @@ router.get('/api/cloud-providers', (req, res) => {
       },
     ];
 
-    return res.json({
-      success: true,
-      cloudProviders,
-    });
+    return res.json(ApiResponse.success({cloudProviders}));
   } catch (error) {
     debug('Cloud providers API error:', error);
-    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
-      success: false,
-      message: 'Failed to get cloud providers',
-      error: error instanceof Error ? error.message : 'Unknown error',
-    });
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json(ApiResponse.error('Failed to get cloud providers', undefined, error instanceof Error ? error.message : 'Unknown error'));
   }
 });
 
@@ -124,17 +111,10 @@ router.post('/api/cloud-providers', validateRequest(CreateCloudProviderSchema), 
       createdAt: new Date().toISOString(),
     };
 
-    return res.json({
-      success: true,
-      cloudProvider,
-    });
+    return res.json(ApiResponse.success({cloudProvider}));
   } catch (error) {
     debug('Add cloud provider API error:', error);
-    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
-      success: false,
-      message: 'Failed to add cloud provider',
-      error: error instanceof Error ? error.message : 'Unknown error',
-    });
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json(ApiResponse.error('Failed to add cloud provider', undefined, error instanceof Error ? error.message : 'Unknown error'));
   }
 });
 
@@ -173,17 +153,10 @@ router.get('/api/integrations', (req, res) => {
       },
     ];
 
-    return res.json({
-      success: true,
-      integrations,
-    });
+    return res.json(ApiResponse.success({integrations}));
   } catch (error) {
     debug('Integrations API error:', error);
-    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
-      success: false,
-      message: 'Failed to get integrations',
-      error: error instanceof Error ? error.message : 'Unknown error',
-    });
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json(ApiResponse.error('Failed to get integrations', undefined, error instanceof Error ? error.message : 'Unknown error'));
   }
 });
 
@@ -205,17 +178,10 @@ router.post('/api/integrations', validateRequest(CreateEnterpriseIntegrationSche
       createdAt: new Date().toISOString(),
     };
 
-    return res.json({
-      success: true,
-      integration,
-    });
+    return res.json(ApiResponse.success({integration}));
   } catch (error) {
     debug('Add integration API error:', error);
-    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
-      success: false,
-      message: 'Failed to add integration',
-      error: error instanceof Error ? error.message : 'Unknown error',
-    });
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json(ApiResponse.error('Failed to add integration', undefined, error instanceof Error ? error.message : 'Unknown error'));
   }
 });
 
@@ -246,18 +212,11 @@ router.get('/api/audit', async (req, res) => {
 
     const auditEvents = await auditLogger.getAuditEvents(Number(limit), Number(offset), filter);
 
-    return res.json({
-      success: true,
-      auditEvents,
-      total: auditEvents.length,
-    });
+    return res.json(ApiResponse.success({auditEvents,
+      total: auditEvents.length}));
   } catch (error) {
     debug('Audit API error:', error);
-    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
-      success: false,
-      message: 'Failed to get audit events',
-      error: error instanceof Error ? error.message : 'Unknown error',
-    });
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json(ApiResponse.error('Failed to get audit events', undefined, error instanceof Error ? error.message : 'Unknown error'));
   }
 });
 
@@ -316,11 +275,7 @@ router.get('/api/audit/export', async (req, res) => {
     return res.send(csv);
   } catch (error) {
     debug('Audit export API error:', error);
-    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
-      success: false,
-      message: 'Failed to export audit events',
-      error: error instanceof Error ? error.message : 'Unknown error',
-    });
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json(ApiResponse.error('Failed to export audit events', undefined, error instanceof Error ? error.message : 'Unknown error'));
   }
 });
 
@@ -359,17 +314,10 @@ router.get('/api/performance', (req, res) => {
       },
     ];
 
-    return res.json({
-      success: true,
-      performanceMetrics,
-    });
+    return res.json(ApiResponse.success({performanceMetrics}));
   } catch (error) {
     debug('Performance API error:', error);
-    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
-      success: false,
-      message: 'Failed to get performance metrics',
-      error: error instanceof Error ? error.message : 'Unknown error',
-    });
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json(ApiResponse.error('Failed to get performance metrics', undefined, error instanceof Error ? error.message : 'Unknown error'));
   }
 });
 
@@ -387,17 +335,10 @@ router.post('/api/compliance/check', (req, res) => {
       nextCheck: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
     };
 
-    return res.json({
-      success: true,
-      complianceResults,
-    });
+    return res.json(ApiResponse.success({complianceResults}));
   } catch (error) {
     debug('Compliance check API error:', error);
-    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
-      success: false,
-      message: 'Failed to run compliance check',
-      error: error instanceof Error ? error.message : 'Unknown error',
-    });
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json(ApiResponse.error('Failed to run compliance check', undefined, error instanceof Error ? error.message : 'Unknown error'));
   }
 });
 
@@ -427,17 +368,10 @@ router.get('/api/security/alerts', (req, res) => {
       },
     ];
 
-    return res.json({
-      success: true,
-      securityAlerts,
-    });
+    return res.json(ApiResponse.success({securityAlerts}));
   } catch (error) {
     debug('Security alerts API error:', error);
-    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
-      success: false,
-      message: 'Failed to get security alerts',
-      error: error instanceof Error ? error.message : 'Unknown error',
-    });
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json(ApiResponse.error('Failed to get security alerts', undefined, error instanceof Error ? error.message : 'Unknown error'));
   }
 });
 
@@ -467,17 +401,10 @@ router.get('/api/governance/policies', (req, res) => {
       },
     ];
 
-    return res.json({
-      success: true,
-      governancePolicies,
-    });
+    return res.json(ApiResponse.success({governancePolicies}));
   } catch (error) {
     debug('Governance policies API error:', error);
-    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
-      success: false,
-      message: 'Failed to get governance policies',
-      error: error instanceof Error ? error.message : 'Unknown error',
-    });
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json(ApiResponse.error('Failed to get governance policies', undefined, error instanceof Error ? error.message : 'Unknown error'));
   }
 });
 
@@ -502,17 +429,10 @@ router.post('/api/performance/optimize', validateRequest(PerformanceOptimizeSche
       ],
     };
 
-    return res.json({
-      success: true,
-      optimizationResults,
-    });
+    return res.json(ApiResponse.success({optimizationResults}));
   } catch (error) {
     debug('Performance optimization API error:', error);
-    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
-      success: false,
-      message: 'Failed to optimize performance',
-      error: error instanceof Error ? error.message : 'Unknown error',
-    });
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json(ApiResponse.error('Failed to optimize performance', undefined, error instanceof Error ? error.message : 'Unknown error'));
   }
 });
 

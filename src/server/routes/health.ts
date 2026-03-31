@@ -13,6 +13,7 @@ import {
 } from '../../validation/schemas/healthSchema';
 import { validateRequest } from '../../validation/validateRequest';
 import { optionalAuth } from '../middleware/auth';
+import { ApiResponse } from '../../utils/apiResponse';
 
 const router = Router();
 
@@ -66,7 +67,7 @@ router.get('/', async (req, res) => {
   }
   const statusCode = HTTP_STATUS.OK; // Even degraded, we return 200 for basic health. /ready will return HTTP_STATUS.SERVICE_UNAVAILABLE if not ready.
 
-  return res.status(statusCode).json({
+  return res.status(statusCode).json(ApiResponse.success({
     status: status,
     timestamp: new Date().toISOString(),
     version: '1.0.0',
@@ -82,7 +83,7 @@ router.get('/', async (req, res) => {
       processId: process.pid,
     },
     memoryProviders: memoryProvidersStatus,
-  });
+  }));
 });
 
 // Detailed health check - requires authentication for full details
@@ -393,7 +394,7 @@ router.get('/ready', (req, res) => {
   const isReady = dbReady;
   const statusCode = isReady ? HTTP_STATUS.OK : HTTP_STATUS.SERVICE_UNAVAILABLE;
 
-  return res.status(statusCode).json({
+  return res.status(statusCode).json(ApiResponse.success({
     ready: isReady,
     timestamp: new Date().toISOString(),
     checks: {
@@ -401,7 +402,7 @@ router.get('/ready', (req, res) => {
       external_apis: true, // Would need actual API checks
       configuration: true,
     },
-  });
+  }));
 });
 
 // Liveness probe
@@ -517,10 +518,7 @@ router.get('/api-endpoints/:id', (req, res) => {
   const status = apiMonitor.getEndpointStatus(req.params.id);
 
   if (!status) {
-    return res.status(HTTP_STATUS.NOT_FOUND).json({
-      error: 'Endpoint not found',
-      message: `No endpoint found with ID: ${req.params.id}`,
-    });
+    return res.status(HTTP_STATUS.NOT_FOUND).json(ApiResponse.error('Endpoint not found'));
   }
 
   return res.json({
@@ -545,10 +543,7 @@ router.post('/cleanup', validateRequest(CleanupConfigSchema), (req, res) => {
 
     // Validate required fields
     if (!config.id || !config.name || !config.url) {
-      return res.status(HTTP_STATUS.BAD_REQUEST).json({
-        error: 'Missing required fields',
-        message: 'id, name, and url are required',
-      });
+      return res.status(HTTP_STATUS.BAD_REQUEST).json(ApiResponse.error('Missing required fields'));
     }
 
     // Set defaults
@@ -561,17 +556,13 @@ router.post('/cleanup', validateRequest(CleanupConfigSchema), (req, res) => {
 
     apiMonitor.addEndpoint(config);
 
-    return res.status(HTTP_STATUS.CREATED).json({
-      message: 'Endpoint added successfully',
+    return res.status(HTTP_STATUS.CREATED).json(ApiResponse.success({
+    message: 'Endpoint added successfully',
       endpoint: apiMonitor.getEndpoint(config.id),
       timestamp: new Date().toISOString(),
-    });
+  }));
   } catch (error) {
-    return res.status(HTTP_STATUS.BAD_REQUEST).json({
-      error: 'Failed to add endpoint',
-      message: error instanceof Error ? error.message : 'Unknown error',
-      timestamp: new Date().toISOString(),
-    });
+    return res.status(HTTP_STATUS.BAD_REQUEST).json(ApiResponse.error('Failed to add endpoint'));
   }
 });
 
@@ -591,10 +582,7 @@ router.post('/api-endpoints', validateRequest(ApiEndpointConfigSchema), (req, re
 
     // Validate required fields
     if (!config.id || !config.name || !config.url) {
-      return res.status(HTTP_STATUS.BAD_REQUEST).json({
-        error: 'Missing required fields',
-        message: 'id, name, and url are required',
-      });
+      return res.status(HTTP_STATUS.BAD_REQUEST).json(ApiResponse.error('Missing required fields'));
     }
 
     // Set defaults
@@ -607,17 +595,13 @@ router.post('/api-endpoints', validateRequest(ApiEndpointConfigSchema), (req, re
 
     apiMonitor.addEndpoint(config);
 
-    return res.status(HTTP_STATUS.CREATED).json({
-      message: 'Endpoint added successfully',
+    return res.status(HTTP_STATUS.CREATED).json(ApiResponse.success({
+    message: 'Endpoint added successfully',
       endpoint: apiMonitor.getEndpoint(config.id),
       timestamp: new Date().toISOString(),
-    });
+  }));
   } catch (error) {
-    return res.status(HTTP_STATUS.BAD_REQUEST).json({
-      error: 'Failed to add endpoint',
-      message: error instanceof Error ? error.message : 'Unknown error',
-      timestamp: new Date().toISOString(),
-    });
+    return res.status(HTTP_STATUS.BAD_REQUEST).json(ApiResponse.error('Failed to add endpoint'));
   }
 });
 
@@ -634,11 +618,7 @@ router.put('/api-endpoints/:id', validateRequest(EndpointIdParamSchema), (req, r
       timestamp: new Date().toISOString(),
     });
   } catch (error) {
-    return res.status(HTTP_STATUS.NOT_FOUND).json({
-      error: 'Failed to update endpoint',
-      message: error instanceof Error ? error.message : 'Endpoint not found',
-      timestamp: new Date().toISOString(),
-    });
+    return res.status(HTTP_STATUS.NOT_FOUND).json(ApiResponse.error('Failed to update endpoint'));
   }
 });
 
@@ -649,11 +629,7 @@ router.delete('/api-endpoints/:id', (req, res) => {
   try {
     const endpoint = apiMonitor.getEndpoint(req.params.id);
     if (!endpoint) {
-      return res.status(HTTP_STATUS.NOT_FOUND).json({
-        error: 'Failed to remove endpoint',
-        message: 'Endpoint not found',
-        timestamp: new Date().toISOString(),
-      });
+      return res.status(HTTP_STATUS.NOT_FOUND).json(ApiResponse.error('Failed to remove endpoint'));
     }
     apiMonitor.removeEndpoint(req.params.id);
 
@@ -663,11 +639,7 @@ router.delete('/api-endpoints/:id', (req, res) => {
       timestamp: new Date().toISOString(),
     });
   } catch (error) {
-    return res.status(HTTP_STATUS.NOT_FOUND).json({
-      error: 'Failed to remove endpoint',
-      message: error instanceof Error ? error.message : 'Endpoint not found',
-      timestamp: new Date().toISOString(),
-    });
+    return res.status(HTTP_STATUS.NOT_FOUND).json(ApiResponse.error('Failed to remove endpoint'));
   }
 });
 
@@ -698,18 +670,10 @@ router.use((err: any, req: Request, res: Response, next: NextFunction) => {
   if (isParseError && req.path?.startsWith('/api-endpoints')) {
     const method = typeof req.method === 'string' ? req.method.toUpperCase() : req.method;
     if (method === 'PUT') {
-      return res.status(HTTP_STATUS.NOT_FOUND).json({
-        error: 'Failed to update endpoint',
-        message: 'Endpoint not found or payload invalid',
-        timestamp: new Date().toISOString(),
-      });
+      return res.status(HTTP_STATUS.NOT_FOUND).json(ApiResponse.error('Failed to update endpoint'));
     }
 
-    return res.status(HTTP_STATUS.BAD_REQUEST).json({
-      error: 'Invalid JSON payload',
-      message: 'Request body could not be parsed',
-      timestamp: new Date().toISOString(),
-    });
+    return res.status(HTTP_STATUS.BAD_REQUEST).json(ApiResponse.error('Invalid JSON payload'));
   }
 
   return next(err);
