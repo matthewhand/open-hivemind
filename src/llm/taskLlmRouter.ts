@@ -1,7 +1,7 @@
 import Debug from 'debug';
+import { getLlmProfileByKey } from '@src/config/llmProfiles';
 import ProviderConfigManager, { type ProviderInstance } from '@src/config/ProviderConfigManager';
 import { UserConfigStore } from '@src/config/UserConfigStore';
-import { getLlmProfileByKey } from '@src/config/llmProfiles';
 import { MetricsCollector } from '@src/monitoring/MetricsCollector';
 import llmTaskConfig from '@config/llmTaskConfig';
 import { FlowiseProvider } from '@integrations/flowise/flowiseProvider';
@@ -169,9 +169,7 @@ function pickProviderInstance(
   return null;
 }
 
-async function createProviderFromProfile(
-  profileKey: string
-): Promise<ILlmProvider | null> {
+async function createProviderFromProfile(profileKey: string): Promise<ILlmProvider | null> {
   try {
     const profile = getLlmProfileByKey(profileKey);
     if (!profile) {
@@ -240,14 +238,10 @@ export async function getTaskLlm(
       if (profileKey) {
         const profileProvider = await createProviderFromProfile(profileKey);
         if (profileProvider) {
-          debug(
-            `Task ${task}: using per-use-case profile "${profileKey}"`
-          );
+          debug(`Task ${task}: using per-use-case profile "${profileKey}"`);
           return { provider: profileProvider, metadata, source: 'override' };
         }
-        debug(
-          `Task ${task}: per-use-case profile "${profileKey}" failed; falling back to default`
-        );
+        debug(`Task ${task}: per-use-case profile "${profileKey}" failed; falling back to default`);
       }
     }
 

@@ -2,7 +2,7 @@ import Debug from 'debug';
 import { AuditLogger } from '@src/common/auditLogger';
 import { ErrorHandler } from '@src/common/errors/ErrorHandler';
 import { PerformanceMonitor } from '@src/common/errors/PerformanceMonitor';
-import { getLlmProvider, getLlmProviderForBot } from '@src/llm/getLlmProvider';
+import { getLlmProviderForBot } from '@src/llm/getLlmProvider';
 import { getQuotaManager } from '@src/middleware/quotaMiddleware';
 import { ContentFilterService } from '@src/services/ContentFilterService';
 import { MemoryManager } from '@src/services/MemoryManager';
