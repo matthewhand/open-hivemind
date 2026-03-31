@@ -588,11 +588,12 @@ async function main() {
   if (process.env.USE_LEGACY_HANDLER !== 'true') {
     const { MessageBus } = await import('@src/events/MessageBus');
     const { createPipeline } = await import('@src/pipeline/createPipeline');
-    const { PipelineTracer } = await import('@src/observability/PipelineTracer');
 
     const bus = MessageBus.getInstance();
 
-    // Create and register a pipeline instance per messenger service
+    // Create and register a pipeline instance per messenger service.
+    // createPipeline() internally creates a PipelineTracer and stores it
+    // via setActiveTracer() — no need to create a second tracer here.
     for (const service of messengerServices) {
       createPipeline(bus, {
         botConfig: {},
@@ -601,10 +602,6 @@ async function main() {
         defaultChannelId: service.getDefaultChannel?.() ?? undefined,
       });
     }
-
-    // Attach tracer for observability
-    const tracer = new PipelineTracer(bus);
-    tracer.register();
 
     appLogger.info('🔀 Pipeline mode active (set USE_LEGACY_HANDLER=true to revert)');
   }

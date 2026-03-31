@@ -10,6 +10,7 @@ import {
   updatePlugin,
 } from '@src/plugins/PluginManager';
 import { authenticateToken, requireRole } from '@src/server/middleware/auth';
+import { configLimiter } from '@src/middleware/rateLimiter';
 import { HTTP_STATUS } from '../../types/constants';
 import { EmptySchema, MarketplacePluginNameParamSchema } from '../../validation/schemas/miscSchema';
 import { validateRequest } from '../../validation/validateRequest';
@@ -228,7 +229,7 @@ router.get('/packages/:name', async (req, res) => {
  * Install a community plugin from GitHub URL
  * Body: { repoUrl: string }
  */
-router.post('/install', requireRole('admin'), validateRequest(EmptySchema), async (req, res) => {
+router.post('/install', configLimiter, requireRole('admin'), validateRequest(EmptySchema), async (req, res) => {
   try {
     const { repoUrl } = req.body;
 
@@ -271,6 +272,7 @@ router.post('/install', requireRole('admin'), validateRequest(EmptySchema), asyn
  */
 router.post(
   '/uninstall/:name',
+  configLimiter,
   requireRole('admin'),
   validateRequest(MarketplacePluginNameParamSchema),
   async (req, res) => {
@@ -300,6 +302,7 @@ router.post(
  */
 router.post(
   '/update/:name',
+  configLimiter,
   requireRole('admin'),
   validateRequest(MarketplacePluginNameParamSchema),
   async (req, res) => {
