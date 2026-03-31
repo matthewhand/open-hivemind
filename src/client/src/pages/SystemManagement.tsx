@@ -9,6 +9,7 @@ import { useSuccessToast, useErrorToast, useWarningToast } from '../components/D
 import DataTable from '../components/DaisyUI/DataTable';
 import type { RDVColumn, RowAction } from '../components/DaisyUI/DataTable';
 import Checkbox from '../components/DaisyUI/Checkbox';
+import RangeSlider from '../components/DaisyUI/RangeSlider';
 
 interface SystemConfig {
   refreshInterval: number;
@@ -486,55 +487,52 @@ const SystemManagement: React.FC = () => {
 
               <div className="space-y-4">
                 <h4 className="text-lg font-semibold">Alert Thresholds</h4>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="form-control">
-                    <label className="label">
-                      <span className="label-text">CPU Usage Threshold (%)</span>
-                    </label>
-                    <input
-                      type="number"
-                      className="input input-bordered"
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  <div className="form-control pt-2">
+                    <RangeSlider
+                      label="CPU Usage Threshold"
                       value={systemConfig.alertThresholds.cpu}
-                      onChange={(e) => handleConfigUpdate('alertThresholds', {
+                      onChange={(val) => handleConfigUpdate('alertThresholds', {
                         ...systemConfig.alertThresholds,
-                        cpu: Number(e.target.value),
+                        cpu: val,
                       })}
-                      min="50"
-                      max="95"
+                      min={0}
+                      max={100}
+                      step={5}
+                      valueFormatter={(v) => `${v}%`}
+                      variant="warning"
                     />
                   </div>
 
-                  <div className="form-control">
-                    <label className="label">
-                      <span className="label-text">Memory Usage Threshold (%)</span>
-                    </label>
-                    <input
-                      type="number"
-                      className="input input-bordered"
+                  <div className="form-control pt-2">
+                    <RangeSlider
+                      label="Memory Usage Threshold"
                       value={systemConfig.alertThresholds.memory}
-                      onChange={(e) => handleConfigUpdate('alertThresholds', {
+                      onChange={(val) => handleConfigUpdate('alertThresholds', {
                         ...systemConfig.alertThresholds,
-                        memory: Number(e.target.value),
+                        memory: val,
                       })}
-                      min="50"
-                      max="95"
+                      min={0}
+                      max={100}
+                      step={5}
+                      valueFormatter={(v) => `${v}%`}
+                      variant="warning"
                     />
                   </div>
 
-                  <div className="form-control">
-                    <label className="label">
-                      <span className="label-text">Disk Usage Threshold (%)</span>
-                    </label>
-                    <input
-                      type="number"
-                      className="input input-bordered"
+                  <div className="form-control pt-2">
+                    <RangeSlider
+                      label="Disk Usage Threshold"
                       value={systemConfig.alertThresholds.disk}
-                      onChange={(e) => handleConfigUpdate('alertThresholds', {
+                      onChange={(val) => handleConfigUpdate('alertThresholds', {
                         ...systemConfig.alertThresholds,
-                        disk: Number(e.target.value),
+                        disk: val,
                       })}
-                      min="50"
-                      max="95"
+                      min={0}
+                      max={100}
+                      step={5}
+                      valueFormatter={(v) => `${v}%`}
+                      variant="warning"
                     />
                   </div>
 

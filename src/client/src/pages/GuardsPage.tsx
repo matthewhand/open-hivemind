@@ -14,7 +14,7 @@ import Input from '../components/DaisyUI/Input';
 import Textarea from '../components/DaisyUI/Textarea';
 import Select from '../components/DaisyUI/Select';
 import Toggle from '../components/DaisyUI/Toggle';
-import Radio from '../components/DaisyUI/Radio';
+import RangeSlider from '../components/DaisyUI/RangeSlider';
 import useUrlParams from '../hooks/useUrlParams';
 import { useBulkSelection } from '../hooks/useBulkSelection';
 import BulkActionBar from '../components/BulkActionBar';
@@ -522,13 +522,18 @@ const GuardsPage: React.FC = () => {
               <div className="collapse-content bg-base-100 pt-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div className={`form-control transition-all duration-200 ${!editingProfile.guards.rateLimit?.enabled ? 'opacity-50 pointer-events-none' : ''}`} aria-disabled={!editingProfile.guards.rateLimit?.enabled}>
-                    <Input
-                      label="Max Requests"
-                      type="number"
-                      value={editingProfile.guards.rateLimit?.maxRequests || 100}
-                      onChange={e => updateGuard('rateLimit', { maxRequests: parseInt(e.target.value) })}
-                      disabled={!editingProfile.guards.rateLimit?.enabled}
-                    />
+                    <div className="pt-2">
+                      <RangeSlider
+                        label="Max Requests"
+                        value={editingProfile.guards.rateLimit?.maxRequests || 100}
+                        onChange={val => updateGuard('rateLimit', { maxRequests: val })}
+                        min={1}
+                        max={1000}
+                        step={1}
+                        disabled={!editingProfile.guards.rateLimit?.enabled}
+                        variant="primary"
+                      />
+                    </div>
                   </div>
                   <div className={`form-control transition-all duration-200 ${!editingProfile.guards.rateLimit?.enabled ? 'opacity-50 pointer-events-none' : ''}`} aria-disabled={!editingProfile.guards.rateLimit?.enabled}>
                     <Input
@@ -570,20 +575,28 @@ const GuardsPage: React.FC = () => {
                 </div>
               </div>
               <div className="collapse-content bg-base-100 pt-4">
-                <div className="form-control">
-                  <label className="label"><span className="label-text">Strictness</span></label>
-                  <div className="flex gap-4">
-                    {['low', 'medium', 'high'].map(level => (
-                      <Radio
-                        key={level}
-                        name="strictness"
-                        label={level.charAt(0).toUpperCase() + level.slice(1)}
-                        color="error"
-                        checked={editingProfile.guards.contentFilter?.strictness === level}
-                        onChange={() => updateGuard('contentFilter', { strictness: level })}
-                        disabled={!editingProfile.guards.contentFilter?.enabled}
-                      />
-                    ))}
+                <div className="form-control mb-8">
+                  <div className={`pt-2 transition-all duration-200 ${!editingProfile.guards.contentFilter?.enabled ? 'opacity-50 pointer-events-none' : ''}`}>
+                    <RangeSlider
+                      label="Strictness"
+                      value={editingProfile.guards.contentFilter?.strictness === 'high' ? 3 : editingProfile.guards.contentFilter?.strictness === 'medium' ? 2 : 1}
+                      onChange={(val) => {
+                        const level = val === 3 ? 'high' : val === 2 ? 'medium' : 'low';
+                        updateGuard('contentFilter', { strictness: level });
+                      }}
+                      min={1}
+                      max={3}
+                      step={1}
+                      disabled={!editingProfile.guards.contentFilter?.enabled}
+                      variant="error"
+                      showMarks={true}
+                      showValue={false}
+                      marks={[
+                        { value: 1, label: 'Low' },
+                        { value: 2, label: 'Medium' },
+                        { value: 3, label: 'High' }
+                      ]}
+                    />
                   </div>
                 </div>
 
