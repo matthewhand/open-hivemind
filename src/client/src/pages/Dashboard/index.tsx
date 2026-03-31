@@ -3,10 +3,12 @@ import { useNavigate } from 'react-router-dom';
 import Dashboard from '../../components/Dashboard';
 
 import Carousel from '../../components/DaisyUI/Carousel';
+import DashboardWidgetSystem from '../../components/DaisyUI/DashboardWidgetSystem';
 
 const DashboardPage: React.FC = () => {
   const navigate = useNavigate();
   const [checked, setChecked] = useState(false);
+  const [useWidgetLayout, setUseWidgetLayout] = useState(false);
 
   useEffect(() => {
     const checkOnboarding = async () => {
@@ -54,10 +56,33 @@ const DashboardPage: React.FC = () => {
 
   return (
     <div>
-      <div className="mb-8">
-        <Carousel items={carouselItems} autoplay={true} interval={6000} variant="full-width" />
+      <div className="flex justify-between items-center mb-6 px-4">
+        <h1 className="text-2xl font-bold">Dashboard</h1>
+        <div className="form-control">
+          <label className="label cursor-pointer gap-3">
+            <span className="label-text font-medium">Use Widget Layout</span>
+            <input
+              type="checkbox"
+              className="toggle toggle-primary"
+              checked={useWidgetLayout}
+              onChange={() => setUseWidgetLayout(!useWidgetLayout)}
+              aria-label="Toggle Widget Layout"
+            />
+          </label>
+        </div>
       </div>
-      <Dashboard />
+
+      {!useWidgetLayout && (
+        <div className="mb-8">
+          <Carousel items={carouselItems} autoplay={true} interval={6000} variant="full-width" />
+        </div>
+      )}
+
+      {useWidgetLayout ? (
+        <DashboardWidgetSystem />
+      ) : (
+        <Dashboard />
+      )}
     </div>
   );
 };
