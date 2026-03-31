@@ -1,8 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect, useCallback } from 'react';
-import { Alert, Badge, Button, Card, Collapse, Divider, Input, Modal, Progress, Select, Tabs, Toggle, Tooltip } from 'react-daisyui';
+import { Alert, Badge, Button, Card, Collapse, Divider, Input, Progress, Select, Tabs, Toggle, Tooltip } from 'react-daisyui';
 import { FaPlus, FaTrash, FaPlay, FaStop, FaRedo, FaCheck, FaExclamationTriangle, FaInfoCircle, FaCog, FaTerminal, FaClock, FaMemory, FaVial, FaDownload, FaUpload } from 'react-icons/fa';
+import Modal from '../DaisyUI/Modal';
 import { ConfirmModal } from '../DaisyUI/Modal';
+import FileUpload from '../DaisyUI/FileUpload';
 import { useSuccessToast, useErrorToast } from '../DaisyUI/ToastNotification';
 import type { MCPProviderConfig, MCPProviderStatus, MCPProviderTestResult, MCPProviderTemplate } from '../../types/mcp';
 import MCPProviderManager from '../../../config/MCPProviderManager';
@@ -29,6 +31,7 @@ const MCPProviderManagerComponent: React.FC<MCPProviderManagerProps> = ({ classN
   const [selectedProvider, setSelectedProvider] = useState<ProviderWithStatus | null>(null);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('providers');
   const [testResults, setTestResults] = useState<Record<string, MCPProviderTestResult>>({});
   const [manager] = useState(() => new MCPProviderManager());
@@ -218,10 +221,7 @@ const MCPProviderManagerComponent: React.FC<MCPProviderManagerProps> = ({ classN
     }
   };
 
-  const handleImportProviders = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) { return; }
-
+  const handleImportProviders = (file: File) => {
     const reader = new FileReader();
     reader.onload = async (e) => {
       try {
@@ -229,6 +229,7 @@ const MCPProviderManagerComponent: React.FC<MCPProviderManagerProps> = ({ classN
         await manager.importProviders(data);
         await loadProviders();
         successToast('Import Successful', 'Providers imported successfully');
+        setIsImportModalOpen(false);
       } catch (error) {
         /* errorToast below */
         errorToast('Import Failed', 'Failed to import providers: ' + (error instanceof Error ? error.message : String(error)));
@@ -517,16 +518,14 @@ const MCPProviderManagerComponent: React.FC<MCPProviderManagerProps> = ({ classN
               Export
             </Button>
 
-            <label className="btn btn-sm btn-outline">
+            <Button
+              size="sm"
+              variant="secondary" className="btn-outline"
+              onClick={() => setIsImportModalOpen(true)}
+            >
               <FaUpload className="w-3 h-3 mr-1" />
               Import
-              <input
-                type="file"
-                accept=".json"
-                onChange={handleImportProviders}
-                className="hidden"
-              />
-            </label>
+            </Button>
 
             <Button
               size="sm"
@@ -642,6 +641,24 @@ const MCPProviderManagerComponent: React.FC<MCPProviderManagerProps> = ({ classN
         confirmText="Delete"
         cancelText="Cancel"
       />
+
+      {/* Import Provider Modal */}
+      <Modal
+        isOpen={isImportModalOpen}
+        onClose={() => setIsImportModalOpen(false)}
+        title="Import MCP Providers"
+      >
+        <div className="py-4">
+          <FileUpload
+            onFileSelect={handleImportProviders}
+            fileTypes={['application/json']}
+          />
+        </div>
+        <div className="flex justify-end gap-2 mt-4">
+          <Button onClick={() => setIsImportModalOpen(false)}>Cancel</Button>
+        </div>
+      </Modal>
+
     </div>
   );
 };
