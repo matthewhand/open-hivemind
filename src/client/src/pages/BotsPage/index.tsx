@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Download, RefreshCw, Trash2 } from 'lucide-react';
 import React, { useEffect, useMemo, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import { CreateBotWizard } from '../../components/BotManagement/CreateBotWizard';
 import ImportBotsModal from '../../components/BotManagement/ImportBotsModal';
 import { BotSettingsModal } from '../../components/BotSettingsModal';
@@ -42,7 +43,7 @@ const BotsPage: React.FC = () => {
 
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [editingBot, setEditingBot] = useState<BotConfig | null>(null);
-  const [  setDeletingBot] = useState<BotConfig | null>(null);
+  const [, setDeletingBot] = useState<BotConfig | null>(null);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [bulkDeleting, setBulkDeleting] = useState(false);
 
