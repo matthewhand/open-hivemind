@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import Input from './Input';
 import Debug from 'debug';
+import Toggle from './Toggle';
 const debug = Debug('app:client:components:DaisyUI:AdvancedThemeSwitcher');
 
 interface ThemeOption {
@@ -358,8 +359,7 @@ const AdvancedThemeSwitcher: React.FC<ThemeSwitcherProps> = ({
         <div className="form-control mb-4">
           <label className="label cursor-pointer">
             <span className="label-text">🌗 Auto Theme (System)</span>
-            <input
-              type="checkbox"
+            <Toggle
               className="toggle toggle-primary"
               checked={isAutoMode}
               onChange={toggleAutoMode}

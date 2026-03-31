@@ -8,6 +8,7 @@ import Modal, { ConfirmModal } from '../components/DaisyUI/Modal';
 import { useSuccessToast, useErrorToast, useWarningToast } from '../components/DaisyUI/ToastNotification';
 import DataTable from '../components/DaisyUI/DataTable';
 import type { RDVColumn, RowAction } from '../components/DaisyUI/DataTable';
+import Checkbox from '../components/DaisyUI/Checkbox';
 
 interface SystemConfig {
   refreshInterval: number;
@@ -806,8 +807,7 @@ const SystemManagement: React.FC = () => {
 
           <div className="form-control">
             <label className="cursor-pointer label justify-start gap-4">
-              <input
-                type="checkbox"
+              <Checkbox
                 className="checkbox checkbox-primary"
                 checked={useEncryption}
                 onChange={(e) => setUseEncryption(e.target.checked)}

@@ -38,6 +38,7 @@ import { useBulkSelection } from '../hooks/useBulkSelection';
 import BulkActionBar from '../components/BulkActionBar';
 import { useDragAndDrop } from '../hooks/useDragAndDrop';
 import { useIsBelowBreakpoint } from '../hooks/useBreakpoint';
+import Checkbox from '../components/DaisyUI/Checkbox';
 
 // Extend UI Persona type to include assigned bots for display
 interface Persona extends ApiPersona {
@@ -511,8 +512,7 @@ const PersonasPage: React.FC = () => {
       ) : (
         <>
           <div className="flex items-center gap-2 mb-2">
-            <input
-              type="checkbox"
+            <Checkbox
               className="checkbox checkbox-sm checkbox-primary"
               checked={bulk.isAllSelected}
               onChange={() => bulk.toggleAll(filteredPersonaIds)}
@@ -603,8 +603,7 @@ const PersonasPage: React.FC = () => {
                     </span>
                   )}
                   {!persona.isBuiltIn && (
-                    <input
-                      type="checkbox"
+                    <Checkbox
                       className="checkbox checkbox-sm checkbox-primary"
                       checked={bulk.isSelected(persona.id)}
                       onChange={(e) => bulk.toggleItem(persona.id, e as any)}
@@ -764,8 +763,7 @@ const PersonasPage: React.FC = () => {
                         </span>
                       )}
                       {!persona.isBuiltIn && (
-                        <input
-                          type="checkbox"
+                        <Checkbox
                           className="checkbox checkbox-sm checkbox-primary"
                           checked={bulk.isSelected(persona.id)}
                           onChange={(e) => bulk.toggleItem(persona.id, e as any)}
@@ -995,8 +993,7 @@ const PersonasPage: React.FC = () => {
                       className={`cursor-pointer label justify-start gap-3 rounded-lg ${isEnvLocked || isViewMode ? 'opacity-50 cursor-not-allowed' : 'hover:bg-base-300'}`}
                       title={isEnvLocked ? 'Persona is locked by environment variable' : ''}
                     >
-                      <input
-                        type="checkbox"
+                      <Checkbox
                         className="checkbox checkbox-sm checkbox-primary"
                         checked={selectedBotIds.includes(bot.id)}
                         onChange={(e) => {
