@@ -1,0 +1,162 @@
+import Debug from 'debug';
+import type { NextFunction, Request, Response } from 'express';
+import { body, validationResult } from 'express-validator';
+import { HTTP_STATUS } from '../../../types/constants';
+import { ErrorUtils } from '../../../types/errors';
+
+const debug = Debug('app:server:routes:validation');
+
+/**
+ * Helper to safely extract error response properties
+ */
+export function getErrorResponse(error: unknown): {
+  message: string;
+  code: string;
+  timestamp: Date;
+} {
+  const message = ErrorUtils.getMessage(error);
+  const code = ErrorUtils.getCode(error) || 'VALIDATION_ERROR';
+  const timestamp =
+    error && typeof error === 'object' && 'timestamp' in error
+      ? (error.timestamp as Date)
+      : new Date();
+
+  return { message, code, timestamp };
+}
+
+export const validateRuleCreation = [
+  body('id')
+    .trim()
+    .notEmpty()
+    .withMessage('Rule ID is required')
+    .matches(/^[a-zA-Z0-9_-]+$/)
+    .withMessage('Rule ID can only contain letters, numbers, underscores, and hyphens'),
+
+  body('name')
+    .trim()
+    .notEmpty()
+    .withMessage('Rule name is required')
+    .isLength({ max: 100 })
+    .withMessage('Rule name must be less than 100 characters'),
+
+  body('description')
+    .trim()
+    .notEmpty()
+    .withMessage('Rule description is required')
+    .isLength({ max: 500 })
+    .withMessage('Description must be less than 500 characters'),
+
+  body('category')
+    .trim()
+    .isIn(['required', 'format', 'business', 'security', 'performance'])
+    .withMessage('Invalid rule category'),
+
+  body('severity').trim().isIn(['error', 'warning', 'info']).withMessage('Invalid rule severity'),
+];
+
+export const validateProfileCreation = [
+  body('id')
+    .trim()
+    .notEmpty()
+    .withMessage('Profile ID is required')
+    .matches(/^[a-zA-Z0-9_-]+$/)
+    .withMessage('Profile ID can only contain letters, numbers, underscores, and hyphens'),
+
+  body('name')
+    .trim()
+    .notEmpty()
+    .withMessage('Profile name is required')
+    .isLength({ max: 100 })
+    .withMessage('Profile name must be less than 100 characters'),
+
+  body('description')
+    .trim()
+    .notEmpty()
+    .withMessage('Profile description is required')
+    .isLength({ max: 500 })
+    .withMessage('Description must be less than 500 characters'),
+
+  body('ruleIds')
+    .isArray()
+    .withMessage('Rule IDs must be an array')
+    .custom((value) => {
+      if (!Array.isArray(value)) {
+        return false;
+      }
+      return value.every((id) => typeof id === 'string');
+    })
+    .withMessage('Rule IDs must be an array of strings'),
+
+  body('isDefault').optional().isBoolean().withMessage('isDefault must be a boolean'),
+];
+
+export const validateConfigurationValidation = [
+  body('configId').isInt({ min: 1 }).withMessage('Configuration ID must be a positive integer'),
+
+  body('profileId')
+    .optional()
+    .trim()
+    .isIn(['strict', 'standard', 'quick'])
+    .withMessage('Invalid profile ID'),
+
+  body('clientId')
+    .optional()
+    .trim()
+    .isLength({ max: 100 })
+    .withMessage('Client ID must be less than 100 characters'),
+];
+
+export const validateConfigurationData = [
+  body('configData').isObject().withMessage('Configuration data must be an object'),
+
+  body('profileId')
+    .optional()
+    .trim()
+    .isIn(['strict', 'standard', 'quick'])
+    .withMessage('Invalid profile ID'),
+];
+
+export const validateSubscription = [
+  body('configId').isInt({ min: 1 }).withMessage('Configuration ID must be a positive integer'),
+
+  body('clientId')
+    .trim()
+    .notEmpty()
+    .withMessage('Client ID is required')
+    .isLength({ max: 100 })
+    .withMessage('Client ID must be less than 100 characters'),
+
+  body('profileId')
+    .optional()
+    .trim()
+    .isIn(['strict', 'standard', 'quick'])
+    .withMessage('Invalid profile ID'),
+];
+
+export const handleValidationErrors = (req: Request, res: Response, next: NextFunction) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    const hivemindError = ErrorUtils.toHivemindError(
+      new Error('Validation failed'),
+      'Request validation failed',
+      'VALIDATION_ERROR'
+    );
+
+    debug('ERROR:', 'Validation error:', hivemindError);
+
+    const { message, code, timestamp } = getErrorResponse(hivemindError);
+    const details =
+      hivemindError && typeof hivemindError === 'object' && 'details' in hivemindError
+        ? hivemindError.details
+        : undefined;
+
+    return res.status(HTTP_STATUS.BAD_REQUEST).json({
+      success: false,
+      error: message,
+      code,
+      details,
+      timestamp,
+    });
+  }
+  return next();
+};

@@ -1,302 +1,28 @@
 import Debug from 'debug';
-import { Router, type NextFunction, type Request, type Response } from 'express';
-import { body, param, query, validationResult } from 'express-validator';
-import { requireAdmin } from '../../auth/middleware';
-import type { AuthMiddlewareRequest } from '../../auth/types';
-import type { BotConfig } from '../../types/config';
-import { HTTP_STATUS } from '../../types/constants';
-import { ErrorUtils } from '../../types/errors';
-import { ValidationTestSchema } from '../../validation/schemas/miscSchema';
-import { validateRequest } from '../../validation/validateRequest';
-import { RealTimeValidationService } from '../services/RealTimeValidationService';
+import { Router, type Response } from 'express';
+import { param } from 'express-validator';
+import { requireAdmin } from '../../../auth/middleware';
+import type { AuthMiddlewareRequest } from '../../../auth/types';
+import type { BotConfig } from '../../../types/config';
+import { HTTP_STATUS } from '../../../types/constants';
+import { ErrorUtils } from '../../../types/errors';
+import { ValidationTestSchema } from '../../../validation/schemas/miscSchema';
+import { validateRequest } from '../../../validation/validateRequest';
+import { RealTimeValidationService } from '../../services/RealTimeValidationService';
+import {
+  getErrorResponse,
+  handleValidationErrors,
+  validateConfigurationData,
+  validateConfigurationValidation,
+  validateProfileCreation,
+  validateRuleCreation,
+} from './middleware';
+import realtimeRouter from './realtime';
+import { evaluateBotConfigurations } from './schemas';
 
 const debug = Debug('app:server:routes:validation');
-
 const router = Router();
 const validationService = RealTimeValidationService.getInstance();
-
-/**
- * Helper to safely extract error response properties
- */
-function getErrorResponse(error: unknown): {
-  message: string;
-  code: string;
-  timestamp: Date;
-} {
-  const message = ErrorUtils.getMessage(error);
-  const code = ErrorUtils.getCode(error) || 'VALIDATION_ERROR';
-  const timestamp =
-    error && typeof error === 'object' && 'timestamp' in error
-      ? (error.timestamp as Date)
-      : new Date();
-
-  return { message, code, timestamp };
-}
-
-/**
- * Validation middleware for rule creation
- */
-interface BotValidationResult {
-  name: string;
-  valid: boolean;
-  errors: string[];
-  warnings: string[];
-}
-
-interface ValidationSummary {
-  botValidation: BotValidationResult[];
-  errors: string[];
-  warnings: string[];
-  recommendations: string[];
-  isValid: boolean;
-}
-
-function validateBotConfiguration(bot: Partial<BotConfig>): BotValidationResult {
-  const errors: string[] = [];
-  const warnings: string[] = [];
-  const name = bot.name ?? 'Unnamed bot';
-
-  if (!bot.name) {
-    errors.push('Bot name is required');
-    errors.push('Name is required');
-  }
-
-  if (!bot.messageProvider) {
-    errors.push('Message provider is required');
-  }
-
-  if (!bot.llmProvider) {
-    errors.push('LLM provider is required');
-  }
-
-  if (bot.messageProvider === 'discord') {
-    if (!bot.discord?.token) {
-      errors.push('Discord bot token is required');
-    } else if (bot.discord.token.length < 10) {
-      warnings.push('Discord token appears to be invalid (too short)');
-    }
-  }
-
-  if (bot.messageProvider === 'slack') {
-    if (!bot.slack?.botToken) {
-      errors.push('Slack bot token is required');
-    }
-    if (!bot.slack?.signingSecret) {
-      errors.push('Slack signing secret is required');
-    }
-  }
-
-  if (bot.llmProvider === 'openai') {
-    if (!bot.openai?.apiKey) {
-      errors.push('OpenAI API key is required');
-    } else if (!bot.openai.apiKey.startsWith('sk-')) {
-      warnings.push('OpenAI API key should start with "sk-"');
-    }
-  }
-
-  if (bot.llmProvider === 'anthropic') {
-    if (!bot.anthropic?.apiKey) {
-      errors.push('Anthropic API key is required');
-    } else if (!bot.anthropic.apiKey.startsWith('sk-ant-')) {
-      warnings.push('Anthropic API key should start with "sk-ant-"');
-    }
-  }
-
-  return {
-    name,
-    valid: errors.length === 0 && warnings.length === 0,
-    errors,
-    warnings,
-  };
-}
-
-const buildRecommendations = (bots: Partial<BotConfig>[]): string[] => {
-  const recommendations: string[] = [];
-
-  if (bots.length === 1) {
-    recommendations.push('Consider adding multiple message providers for redundancy');
-  }
-
-  if (bots.length > 3) {
-    recommendations.push('Consider using a load balancer for better performance');
-  }
-
-  return recommendations;
-};
-
-const evaluateBotConfigurations = (
-  bots: Partial<BotConfig>[],
-  environmentWarnings: string[] = []
-): ValidationSummary => {
-  const botValidation = bots.map(validateBotConfiguration);
-  const warnings = [
-    ...(environmentWarnings ?? []),
-    ...botValidation.flatMap((bot) => bot.warnings),
-  ];
-  const errors = botValidation.flatMap((bot) => bot.errors);
-  const recommendations = buildRecommendations(bots);
-  const isValid = botValidation.every((bot) => bot.valid) && warnings.length === 0;
-
-  return {
-    botValidation,
-    errors,
-    warnings,
-    recommendations,
-    isValid,
-  };
-};
-
-const validateRuleCreation = [
-  body('id')
-    .trim()
-    .notEmpty()
-    .withMessage('Rule ID is required')
-    .matches(/^[a-zA-Z0-9_-]+$/)
-    .withMessage('Rule ID can only contain letters, numbers, underscores, and hyphens'),
-
-  body('name')
-    .trim()
-    .notEmpty()
-    .withMessage('Rule name is required')
-    .isLength({ max: 100 })
-    .withMessage('Rule name must be less than 100 characters'),
-
-  body('description')
-    .trim()
-    .notEmpty()
-    .withMessage('Rule description is required')
-    .isLength({ max: 500 })
-    .withMessage('Description must be less than 500 characters'),
-
-  body('category')
-    .trim()
-    .isIn(['required', 'format', 'business', 'security', 'performance'])
-    .withMessage('Invalid rule category'),
-
-  body('severity').trim().isIn(['error', 'warning', 'info']).withMessage('Invalid rule severity'),
-];
-
-/**
- * Validation middleware for profile creation
- */
-const validateProfileCreation = [
-  body('id')
-    .trim()
-    .notEmpty()
-    .withMessage('Profile ID is required')
-    .matches(/^[a-zA-Z0-9_-]+$/)
-    .withMessage('Profile ID can only contain letters, numbers, underscores, and hyphens'),
-
-  body('name')
-    .trim()
-    .notEmpty()
-    .withMessage('Profile name is required')
-    .isLength({ max: 100 })
-    .withMessage('Profile name must be less than 100 characters'),
-
-  body('description')
-    .trim()
-    .notEmpty()
-    .withMessage('Profile description is required')
-    .isLength({ max: 500 })
-    .withMessage('Description must be less than 500 characters'),
-
-  body('ruleIds')
-    .isArray()
-    .withMessage('Rule IDs must be an array')
-    .custom((value) => {
-      if (!Array.isArray(value)) {
-        return false;
-      }
-      return value.every((id) => typeof id === 'string');
-    })
-    .withMessage('Rule IDs must be an array of strings'),
-
-  body('isDefault').optional().isBoolean().withMessage('isDefault must be a boolean'),
-];
-
-/**
- * Validation middleware for configuration validation
- */
-const validateConfigurationValidation = [
-  body('configId').isInt({ min: 1 }).withMessage('Configuration ID must be a positive integer'),
-
-  body('profileId')
-    .optional()
-    .trim()
-    .isIn(['strict', 'standard', 'quick'])
-    .withMessage('Invalid profile ID'),
-
-  body('clientId')
-    .optional()
-    .trim()
-    .isLength({ max: 100 })
-    .withMessage('Client ID must be less than 100 characters'),
-];
-
-/**
- * Validation middleware for configuration data validation
- */
-const validateConfigurationData = [
-  body('configData').isObject().withMessage('Configuration data must be an object'),
-
-  body('profileId')
-    .optional()
-    .trim()
-    .isIn(['strict', 'standard', 'quick'])
-    .withMessage('Invalid profile ID'),
-];
-
-/**
- * Validation middleware for subscription
- */
-const validateSubscription = [
-  body('configId').isInt({ min: 1 }).withMessage('Configuration ID must be a positive integer'),
-
-  body('clientId')
-    .trim()
-    .notEmpty()
-    .withMessage('Client ID is required')
-    .isLength({ max: 100 })
-    .withMessage('Client ID must be less than 100 characters'),
-
-  body('profileId')
-    .optional()
-    .trim()
-    .isIn(['strict', 'standard', 'quick'])
-    .withMessage('Invalid profile ID'),
-];
-
-/**
- * Error handler middleware
- */
-const handleValidationErrors = (req: Request, res: Response, next: NextFunction) => {
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    const hivemindError = ErrorUtils.toHivemindError(
-      new Error('Validation failed'),
-      'Request validation failed',
-      'VALIDATION_ERROR'
-    );
-
-    debug('ERROR:', 'Validation error:', hivemindError);
-
-    const { message, code, timestamp } = getErrorResponse(hivemindError);
-    const details =
-      hivemindError && typeof hivemindError === 'object' && 'details' in hivemindError
-        ? hivemindError.details
-        : undefined;
-
-    return res.status(HTTP_STATUS.BAD_REQUEST).json({
-      success: false,
-      error: message,
-      code,
-      details,
-      timestamp,
-    });
-  }
-  return next();
-};
 
 /**
  * GET /api/validation
@@ -305,7 +31,7 @@ const handleValidationErrors = (req: Request, res: Response, next: NextFunction)
 router.get('/api/validation', async (req: AuthMiddlewareRequest, res: Response) => {
   try {
     // Import the BotConfigurationManager to get current configuration
-    const { BotConfigurationManager } = await import('../../config/BotConfigurationManager');
+    const { BotConfigurationManager } = await import('../../../config/BotConfigurationManager');
 
     const configManager = BotConfigurationManager.getInstance();
     const bots = configManager.getAllBots() as Partial<BotConfig>[];
@@ -333,7 +59,6 @@ router.get('/api/validation', async (req: AuthMiddlewareRequest, res: Response) 
 
     // Always use the standardized error message
     const errorMessage = 'Failed to validate configuration';
-    const originalMessage = error instanceof Error ? error.message : 'Unknown error';
 
     return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
       error: errorMessage,
@@ -469,14 +194,15 @@ router.get('/api/validation/schema', (_req: AuthMiddlewareRequest, res: Response
 
     debug('ERROR:', 'Error in', 'Validation schema endpoint');
 
+    const errorObj = hivemindError as any;
     return res
       .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
       .type('application/json')
       .send(
         JSON.stringify({
-          error: hivemindError.message,
-          code: hivemindError.code,
-          timestamp: hivemindError.timestamp,
+          error: errorObj.message,
+          code: errorObj.code,
+          timestamp: errorObj.timestamp,
         })
       );
   }
@@ -546,11 +272,12 @@ router.get(
 
       debug('ERROR:', 'Error in', 'Get validation rule endpoint');
 
+    const errorObj = hivemindError as any;
       return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
         success: false,
-        error: hivemindError.message,
-        code: hivemindError.code,
-        timestamp: hivemindError.timestamp,
+      error: errorObj.message,
+      code: errorObj.code,
+      timestamp: errorObj.timestamp,
       });
     }
   }
@@ -605,11 +332,12 @@ router.post(
 
       debug('ERROR:', 'Error in', 'Create validation rule endpoint');
 
+    const errorObj = hivemindError as any;
       return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
         success: false,
-        error: hivemindError.message,
-        code: hivemindError.code,
-        timestamp: hivemindError.timestamp,
+      error: errorObj.message,
+      code: errorObj.code,
+      timestamp: errorObj.timestamp,
       });
     }
   }
@@ -649,11 +377,12 @@ router.delete(
 
       debug('ERROR:', 'Error in', 'Delete validation rule endpoint');
 
+    const errorObj = hivemindError as any;
       return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
         success: false,
-        error: hivemindError.message,
-        code: hivemindError.code,
-        timestamp: hivemindError.timestamp,
+      error: errorObj.message,
+      code: errorObj.code,
+      timestamp: errorObj.timestamp,
       });
     }
   }
@@ -723,11 +452,12 @@ router.get(
 
       debug('ERROR:', 'Error in', 'Get validation profile endpoint');
 
+    const errorObj = hivemindError as any;
       return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
         success: false,
-        error: hivemindError.message,
-        code: hivemindError.code,
-        timestamp: hivemindError.timestamp,
+      error: errorObj.message,
+      code: errorObj.code,
+      timestamp: errorObj.timestamp,
       });
     }
   }
@@ -790,11 +520,12 @@ router.post(
 
       debug('ERROR:', 'Error in', 'Create validation profile endpoint');
 
+    const errorObj = hivemindError as any;
       return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
         success: false,
-        error: hivemindError.message,
-        code: hivemindError.code,
-        timestamp: hivemindError.timestamp,
+      error: errorObj.message,
+      code: errorObj.code,
+      timestamp: errorObj.timestamp,
       });
     }
   }
@@ -834,11 +565,12 @@ router.delete(
 
       debug('ERROR:', 'Error in', 'Delete validation profile endpoint');
 
+    const errorObj = hivemindError as any;
       return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
         success: false,
-        error: hivemindError.message,
-        code: hivemindError.code,
-        timestamp: hivemindError.timestamp,
+      error: errorObj.message,
+      code: errorObj.code,
+      timestamp: errorObj.timestamp,
       });
     }
   }
@@ -902,188 +634,18 @@ router.post(
 
       debug('ERROR:', 'Error in', 'Validate configuration data endpoint');
 
+    const errorObj = hivemindError as any;
       return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
         success: false,
-        error: hivemindError.message,
-        code: hivemindError.code,
-        timestamp: hivemindError.timestamp,
+      error: errorObj.message,
+      code: errorObj.code,
+      timestamp: errorObj.timestamp,
       });
     }
   }
 );
 
-/**
- * POST /api/validation/subscribe
- * Subscribe to real-time validation for a configuration
- */
-router.post(
-  '/api/validation/subscribe',
-  validateSubscription,
-  handleValidationErrors,
-  async (req: AuthMiddlewareRequest, res: Response) => {
-    try {
-      const { configId, clientId, profileId = 'standard' } = req.body;
-
-      const subscription = validationService.subscribe(configId, clientId, profileId);
-
-      return res.json({
-        success: true,
-        message: 'Subscribed to validation successfully',
-        data: subscription,
-      });
-    } catch (error: unknown) {
-      const hivemindError = ErrorUtils.toHivemindError(
-        error,
-        'Failed to subscribe to validation',
-        'VALIDATION_ERROR'
-      );
-
-      debug('ERROR:', 'Error in', 'Subscribe to validation endpoint');
-
-      return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
-        success: false,
-        error: hivemindError.message,
-        code: hivemindError.code,
-        timestamp: hivemindError.timestamp,
-      });
-    }
-  }
-);
-
-/**
- * DELETE /api/validation/unsubscribe/:configId/:clientId
- * Unsubscribe from real-time validation
- */
-router.delete(
-  '/api/validation/unsubscribe/:configId/:clientId',
-  param('configId').isInt({ min: 1 }).withMessage('Configuration ID must be a positive integer'),
-  param('clientId').trim().notEmpty().withMessage('Client ID is required'),
-  handleValidationErrors,
-  async (req: AuthMiddlewareRequest, res: Response) => {
-    try {
-      const { configId, clientId } = req.params;
-      const configIdNum = parseInt(configId);
-
-      const success = validationService.unsubscribe(configIdNum, clientId);
-
-      if (success) {
-        return res.json({
-          success: true,
-          message: 'Unsubscribed from validation successfully',
-        });
-      } else {
-        return res.status(HTTP_STATUS.NOT_FOUND).json({
-          success: false,
-          message: 'Subscription not found',
-        });
-      }
-    } catch (error: unknown) {
-      const hivemindError = ErrorUtils.toHivemindError(
-        error,
-        'Failed to unsubscribe from validation',
-        'VALIDATION_ERROR'
-      );
-
-      debug('ERROR:', 'Error in', 'Unsubscribe from validation endpoint');
-
-      return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
-        success: false,
-        error: hivemindError.message,
-        code: hivemindError.code,
-        timestamp: hivemindError.timestamp,
-      });
-    }
-  }
-);
-
-/**
- * GET /api/validation/history
- * Get validation history
- */
-router.get(
-  '/api/validation/history',
-  query('configId')
-    .optional()
-    .isInt({ min: 1 })
-    .withMessage('Configuration ID must be a positive integer'),
-  query('limit')
-    .optional()
-    .isInt({ min: 1, max: 100 })
-    .withMessage('Limit must be between 1 and 100'),
-  handleValidationErrors,
-  async (req: AuthMiddlewareRequest, res: Response) => {
-    try {
-      const configId = req.query.configId ? parseInt(req.query.configId as string) : undefined;
-      const limit = req.query.limit ? parseInt(req.query.limit as string) : 50;
-
-      const history = validationService.getValidationHistory(configId, limit);
-
-      return res.json({
-        success: true,
-        data: history,
-        count: history.length,
-      });
-    } catch (error: unknown) {
-      const hivemindError = ErrorUtils.toHivemindError(
-        error,
-        'Failed to get validation history',
-        'VALIDATION_ERROR'
-      );
-
-      debug('ERROR:', 'Error in', 'Get validation history endpoint');
-
-      return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
-        success: false,
-        error: hivemindError.message,
-        code: hivemindError.code,
-        timestamp: hivemindError.timestamp,
-      });
-    }
-  }
-);
-
-/**
- * GET /api/validation/statistics
- * Get validation statistics
- */
-router.get('/api/validation/statistics', async (req: AuthMiddlewareRequest, res: Response) => {
-  try {
-    const statistics = validationService.getValidationStatistics();
-
-    return res.json({
-      success: true,
-      data: statistics,
-    });
-  } catch (error: unknown) {
-    const hivemindError = ErrorUtils.toHivemindError(
-      error,
-      'Failed to get validation statistics',
-      'VALIDATION_ERROR'
-    );
-
-    debug('ERROR:', 'Error in', 'Get validation statistics endpoint');
-
-    const { message, code, timestamp } = getErrorResponse(hivemindError);
-    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
-      success: false,
-      error: message,
-      code,
-      timestamp,
-    });
-  }
-});
-
-/**
- * WebSocket endpoint for real-time validation updates
- * This would be implemented with a WebSocket library like Socket.io
- */
-router.get('/api/validation/ws', (req: AuthMiddlewareRequest, res: Response) => {
-  // This is a placeholder for WebSocket implementation
-  // In a real implementation, you would set up a WebSocket connection
-  return res.json({
-    success: false,
-    message: 'WebSocket endpoint not implemented yet',
-  });
-});
+// Mount realtime router
+router.use('/', realtimeRouter);
 
 export default router;

@@ -1,11 +1,11 @@
 import { Router, type Request, type Response } from 'express';
+import { createLogger } from '../../common/StructuredLogger';
 import { HTTP_STATUS } from '../../types/constants';
 import { ErrorFactory } from '../../types/errorClasses';
 import { errorLogger } from '../../utils/errorLogger';
 import { ErrorLogSchema } from '../../validation/schemas/miscSchema';
 import { validateRequest } from '../../validation/validateRequest';
 import { authenticateToken } from '../middleware/auth';
-import { createLogger } from '../../common/StructuredLogger';
 
 const router = Router();
 const logger = createLogger('errorsRouter');
