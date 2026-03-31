@@ -4,6 +4,7 @@ import {
     Trash2, Copy, Shield, Eye, Settings
 } from 'lucide-react';
 import Button from './DaisyUI/Button';
+import Dropdown from './DaisyUI/Dropdown';
 import { Bot as ApiBot, Persona as ApiPersona } from '../services/api';
 import { useConfigDiff } from '../hooks/useConfigDiff';
 import { ConfigDiffConfirmDialog } from './ConfigDiffViewer';
@@ -128,28 +129,35 @@ export const BotSettingsModal: React.FC<BotSettingsModalProps> = ({
                                 </span>
                                 <span className="label-text-alt opacity-60">Communication channel</span>
                             </label>
-                            <div className={`dropdown w-full ${bot.envOverrides?.messageProvider ? 'dropdown-disabled' : ''}`}>
-                                <div tabIndex={0} role="button" className={`btn btn-outline border-base-300 w-full justify-between font-normal ${bot.envOverrides?.messageProvider ? 'btn-disabled opacity-50' : ''}`}>
-                                    {(bot as any).messageProvider || bot.provider || 'Select...'} <Edit2 className="w-4 h-4 opacity-50" />
-                                </div>
-                                {!bot.envOverrides?.messageProvider && (
-                                    <ul tabIndex={0} className="dropdown-content z-[10] menu p-2 shadow-lg bg-base-200 rounded-box w-full mb-2">
-                                        {integrationOptions.message.map(opt => (
-                                            <li key={opt}>
-                                                <a onClick={() => { onUpdateConfig(bot, 'messageProvider', opt); (document.activeElement as HTMLElement)?.blur(); }} className={bot.provider === opt ? 'active' : ''}>
-                                                    {opt}
-                                                </a>
-                                            </li>
-                                        ))}
-                                        <div className="divider my-1"></div>
-                                        <li>
-                                            <a href="/admin/integrations/message" target="_blank" rel="noopener noreferrer" className="flex gap-2 items-center text-primary">
-                                                <Plus className="w-4 h-4" /> New Messenger
-                                            </a>
-                                        </li>
-                                    </ul>
-                                )}
-                            </div>
+                            <Dropdown
+                                trigger={
+                                    <>
+                                        {(bot as any).messageProvider || bot.provider || 'Select...'} <Edit2 className="w-4 h-4 opacity-50" />
+                                    </>
+                                }
+                                position="bottom"
+                                className="w-full"
+                                triggerClassName="btn-outline border-base-300 w-full justify-between font-normal"
+                                contentClassName="z-[10] shadow-lg bg-base-200 w-full mb-2"
+                                disabled={!!bot.envOverrides?.messageProvider}
+                                hideArrow={true}
+                                size="none"
+                                color="none"
+                            >
+                                {integrationOptions.message.map(opt => (
+                                    <li key={opt}>
+                                        <a onClick={() => { onUpdateConfig(bot, 'messageProvider', opt); (document.activeElement as HTMLElement)?.blur(); }} className={bot.provider === opt ? 'active' : ''}>
+                                            {opt}
+                                        </a>
+                                    </li>
+                                ))}
+                                <div className="divider my-1"></div>
+                                <li>
+                                    <a href="/admin/integrations/message" target="_blank" rel="noopener noreferrer" className="flex gap-2 items-center text-primary">
+                                        <Plus className="w-4 h-4" /> New Messenger
+                                    </a>
+                                </li>
+                            </Dropdown>
                         </div>
 
                         {/* LLM Provider */}
@@ -165,40 +173,47 @@ export const BotSettingsModal: React.FC<BotSettingsModalProps> = ({
                                 </span>
                                 <span className="label-text-alt opacity-60">Intelligence model</span>
                             </label>
-                            <div className={`dropdown w-full ${bot.envOverrides?.llmProvider ? 'dropdown-disabled' : ''}`}>
-                                <div tabIndex={0} role="button" className={`btn btn-outline border-base-300 w-full justify-between font-normal ${bot.envOverrides?.llmProvider ? 'btn-disabled opacity-50' : ''}`}>
-                                    {bot.llmProvider ? (
-                                        llmProfiles.find(p => p.key === bot.llmProvider)?.name || bot.llmProvider
-                                    ) : <span className="opacity-50 italic">System Default</span>}
-                                    <Edit2 className="w-4 h-4 opacity-50" />
-                                </div>
-                                {!bot.envOverrides?.llmProvider && (
-                                    <ul tabIndex={0} className="dropdown-content z-[10] menu p-2 shadow-lg bg-base-200 rounded-box w-full max-h-60 overflow-y-auto">
-                                        <li>
-                                            <a onClick={() => { onUpdateConfig(bot, 'llmProvider', ''); (document.activeElement as HTMLElement)?.blur(); }} className={!bot.llmProvider ? 'active' : ''}>
-                                                <span className="italic opacity-75">System Default</span>
-                                            </a>
-                                        </li>
-                                        <div className="divider my-1"></div>
-                                        {llmProfiles.filter(profile => profile.modelType !== 'embedding').map(profile => (
-                                            <li key={profile.key}>
-                                                <a onClick={() => { onUpdateConfig(bot, 'llmProvider', profile.key); (document.activeElement as HTMLElement)?.blur(); }} className={bot.llmProvider === profile.key ? 'active' : ''}>
-                                                    <div className="flex flex-col gap-0.5">
-                                                        <span>{profile.name}</span>
-                                                        <span className="text-[10px] opacity-50 uppercase">{profile.provider}</span>
-                                                    </div>
-                                                </a>
-                                            </li>
-                                        ))}
-                                        <div className="divider my-1"></div>
-                                        <li>
-                                            <a href="/admin/integrations/llm" target="_blank" rel="noopener noreferrer" className="flex gap-2 items-center text-primary">
-                                                <Plus className="w-4 h-4" /> New Profile
-                                            </a>
-                                        </li>
-                                    </ul>
-                                )}
-                            </div>
+                            <Dropdown
+                                trigger={
+                                    <>
+                                        {bot.llmProvider ? (
+                                            llmProfiles.find(p => p.key === bot.llmProvider)?.name || bot.llmProvider
+                                        ) : <span className="opacity-50 italic">System Default</span>}
+                                        <Edit2 className="w-4 h-4 opacity-50" />
+                                    </>
+                                }
+                                position="bottom"
+                                className="w-full"
+                                triggerClassName="btn-outline border-base-300 w-full justify-between font-normal"
+                                contentClassName="z-[10] shadow-lg bg-base-200 w-full max-h-60 overflow-y-auto"
+                                disabled={!!bot.envOverrides?.llmProvider}
+                                hideArrow={true}
+                                size="none"
+                                color="none"
+                            >
+                                <li>
+                                    <a onClick={() => { onUpdateConfig(bot, 'llmProvider', ''); (document.activeElement as HTMLElement)?.blur(); }} className={!bot.llmProvider ? 'active' : ''}>
+                                        <span className="italic opacity-75">System Default</span>
+                                    </a>
+                                </li>
+                                <div className="divider my-1"></div>
+                                {llmProfiles.filter(profile => profile.modelType !== 'embedding').map(profile => (
+                                    <li key={profile.key}>
+                                        <a onClick={() => { onUpdateConfig(bot, 'llmProvider', profile.key); (document.activeElement as HTMLElement)?.blur(); }} className={bot.llmProvider === profile.key ? 'active' : ''}>
+                                            <div className="flex flex-col gap-0.5">
+                                                <span>{profile.name}</span>
+                                                <span className="text-[10px] opacity-50 uppercase">{profile.provider}</span>
+                                            </div>
+                                        </a>
+                                    </li>
+                                ))}
+                                <div className="divider my-1"></div>
+                                <li>
+                                    <a href="/admin/integrations/llm" target="_blank" rel="noopener noreferrer" className="flex gap-2 items-center text-primary">
+                                        <Plus className="w-4 h-4" /> New Profile
+                                    </a>
+                                </li>
+                            </Dropdown>
                         </div>
 
                         {/* Persona */}
@@ -217,31 +232,38 @@ export const BotSettingsModal: React.FC<BotSettingsModalProps> = ({
                                 </span>
                                 <span className="label-text-alt opacity-60">Personality & Instructions</span>
                             </label>
-                            <div className={`dropdown w-full ${bot.envOverrides?.persona ? 'dropdown-disabled' : ''}`}>
-                                <div tabIndex={0} role="button" className={`btn btn-outline border-base-300 w-full justify-between font-normal ${bot.envOverrides?.persona ? 'btn-disabled opacity-50' : ''}`}>
-                                    {personas.find(p => p.id === bot.persona)?.name || bot.persona || 'default'} <Edit2 className="w-4 h-4 opacity-50" />
-                                </div>
-                                {!bot.envOverrides?.persona && (
-                                    <ul tabIndex={0} className="dropdown-content z-[10] menu p-2 shadow-lg bg-base-200 rounded-box w-full max-h-60 overflow-y-auto">
-                                        {personas.map(p => (
-                                            <li key={p.id}>
-                                                <a onClick={() => { onUpdatePersona(bot, p.id); (document.activeElement as HTMLElement)?.blur(); }} className={bot.persona === p.id ? 'active' : ''}>
-                                                    {p.name}
-                                                </a>
-                                            </li>
-                                        ))}
-                                        <div className="divider my-1"></div>
-                                        <li>
-                                            <a onClick={() => {
-                                                const newP = prompt('Enter new persona name:');
-                                                if (newP) { onUpdatePersona(bot, newP); }
-                                            }}>
-                                                <Plus className="w-4 h-4" /> New Persona
-                                            </a>
-                                        </li>
-                                    </ul>
-                                )}
-                            </div>
+                            <Dropdown
+                                trigger={
+                                    <>
+                                        {personas.find(p => p.id === bot.persona)?.name || bot.persona || 'default'} <Edit2 className="w-4 h-4 opacity-50" />
+                                    </>
+                                }
+                                position="bottom"
+                                className="w-full"
+                                triggerClassName="btn-outline border-base-300 w-full justify-between font-normal"
+                                contentClassName="z-[10] shadow-lg bg-base-200 w-full max-h-60 overflow-y-auto"
+                                disabled={!!bot.envOverrides?.persona}
+                                hideArrow={true}
+                                size="none"
+                                color="none"
+                            >
+                                {personas.map(p => (
+                                    <li key={p.id}>
+                                        <a onClick={() => { onUpdatePersona(bot, p.id); (document.activeElement as HTMLElement)?.blur(); }} className={bot.persona === p.id ? 'active' : ''}>
+                                            {p.name}
+                                        </a>
+                                    </li>
+                                ))}
+                                <div className="divider my-1"></div>
+                                <li>
+                                    <a onClick={() => {
+                                        const newP = prompt('Enter new persona name:');
+                                        if (newP) { onUpdatePersona(bot, newP); }
+                                    }}>
+                                        <Plus className="w-4 h-4" /> New Persona
+                                    </a>
+                                </li>
+                            </Dropdown>
                         </div>
                     </div>
 

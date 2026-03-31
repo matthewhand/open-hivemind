@@ -20,6 +20,7 @@ import {
 import { BotConfigService } from '../services/BotConfigService';
 import { ConfigurationValidator } from '../services/ConfigurationValidator';
 import { ApiResponse } from '../utils/apiResponse';
+import { configLimiter } from '../../middleware/rateLimiter';
 
 const debug = Debug('app:BotConfigRoutes');
 const router = Router();
@@ -194,6 +195,7 @@ router.get('/:botId', async (req: Request, res: Response) => {
  */
 router.post(
   '/',
+  configLimiter,
   requireAdmin,
   validateBotConfigCreation,
   sanitizeBotConfig,
@@ -250,6 +252,7 @@ router.post(
  */
 router.put(
   '/:botId',
+  configLimiter,
   requireAdmin,
   validateBotConfigUpdate,
   sanitizeBotConfig,
@@ -372,6 +375,7 @@ router.put(
 
 router.post(
   '/:botId/apply-update',
+  configLimiter,
   requireRole('admin'),
   validateRequest(BotApplyUpdateSchema),
   async (req: AuditedRequest, res: Response) => {

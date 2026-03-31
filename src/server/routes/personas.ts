@@ -12,6 +12,7 @@ import {
   UpdatePersonaRouteSchema,
 } from '../../validation/schemas/personasSchema';
 import { validateRequest } from '../../validation/validateRequest';
+import { configLimiter } from '../../middleware/rateLimiter';
 
 const router = Router();
 const logger = createLogger('personasRouter');
@@ -76,7 +77,7 @@ router.get('/', async (req, res) => {
 });
 
 // PUT /api/personas/reorder
-router.put('/reorder', validateRequest(ReorderSchema), async (req, res) => {
+router.put('/reorder', configLimiter, validateRequest(ReorderSchema), async (req, res) => {
   try {
     const { ids } = req.body;
 
@@ -121,7 +122,7 @@ router.get('/:id', validateRequest(PersonaIdParamSchema), async (req, res) => {
 });
 
 // POST /api/personas
-router.post('/', validateRequest(CreatePersonaSchema), async (req, res) => {
+router.post('/', configLimiter, validateRequest(CreatePersonaSchema), async (req, res) => {
   try {
     const manager = await getManager();
     // Idempotency check: see if persona with same name exists
@@ -140,7 +141,7 @@ router.post('/', validateRequest(CreatePersonaSchema), async (req, res) => {
 });
 
 // POST /api/personas/:id/clone
-router.post('/:id/clone', validateRequest(ClonePersonaSchema), async (req, res) => {
+router.post('/:id/clone', configLimiter, validateRequest(ClonePersonaSchema), async (req, res) => {
   try {
     const manager = await getManager();
     if (req.body.name) {
@@ -163,7 +164,7 @@ router.post('/:id/clone', validateRequest(ClonePersonaSchema), async (req, res) 
 });
 
 // PUT /api/personas/:id
-router.put('/:id', validateRequest(UpdatePersonaRouteSchema), async (req, res) => {
+router.put('/:id', configLimiter, validateRequest(UpdatePersonaRouteSchema), async (req, res) => {
   try {
     const manager = await getManager();
     const updatedPersona = manager.updatePersona(req.params.id, req.body);
@@ -174,7 +175,7 @@ router.put('/:id', validateRequest(UpdatePersonaRouteSchema), async (req, res) =
 });
 
 // DELETE /api/personas/bulk
-router.delete('/bulk', validateRequest(BulkDeletePersonasSchema), async (req, res) => {
+router.delete('/bulk', configLimiter, validateRequest(BulkDeletePersonasSchema), async (req, res) => {
   try {
     const manager = await getManager();
     const { ids } = req.body;
@@ -249,7 +250,7 @@ router.delete('/bulk', validateRequest(BulkDeletePersonasSchema), async (req, re
 });
 
 // DELETE /api/personas/:id
-router.delete('/:id', validateRequest(PersonaIdParamSchema), async (req, res) => {
+router.delete('/:id', configLimiter, validateRequest(PersonaIdParamSchema), async (req, res) => {
   try {
     const manager = await getManager();
     const existingPersona = manager.getPersona(req.params.id);

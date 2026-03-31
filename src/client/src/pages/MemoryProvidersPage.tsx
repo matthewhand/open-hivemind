@@ -33,6 +33,7 @@ import {
 import { apiService } from '../services/api';
 import { getProviderSchema, getProviderSchemasByType } from '../provider-configs';
 import useUrlParams from '../hooks/useUrlParams';
+import { useWebSocket } from '../contexts/WebSocketContext';
 
 /** Shape returned by GET /api/providers/memory */
 interface ProviderHealth {
@@ -147,6 +148,16 @@ const MemoryProvidersPage: React.FC = () => {
 
   useEffect(() => { fetchProfiles(); }, [fetchProfiles]);
   useEffect(() => { fetchHealth(); }, [fetchHealth]);
+
+  // Auto-refresh when config changes are broadcast via WebSocket
+  const { configVersion, lastConfigChange } = useWebSocket();
+  const configVersionRef = React.useRef(configVersion);
+  useEffect(() => {
+    if (configVersionRef.current === configVersion) return;
+    configVersionRef.current = configVersion;
+    if (lastConfigChange?.type && lastConfigChange.type !== 'memory-profiles') return;
+    fetchProfiles();
+  }, [configVersion, lastConfigChange, fetchProfiles]);
 
   const handleTestProfile = useCallback(async (profileKey: string) => {
     setTestResults(prev => ({ ...prev, [profileKey]: 'loading' }));

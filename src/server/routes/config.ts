@@ -32,6 +32,24 @@ import { ConfigUpdateSchema } from '../../validation/schemas/configSchema';
 import { validateRequest } from '../../validation/validateRequest';
 import { auditMiddleware, logConfigChange, type AuditedRequest } from '../middleware/audit';
 import { ApiResponse } from '../utils/apiResponse';
+import { configLimiter } from '../../middleware/rateLimiter';
+import { WebSocketService } from '../services/WebSocketService';
+
+/**
+ * Broadcasts a config change event via WebSocket so the WebUI can react in real time.
+ */
+function broadcastConfigUpdate(
+  type: 'llm-profiles' | 'memory-profiles' | 'tool-profiles' | 'message-profiles' | 'global',
+  action: 'create' | 'update' | 'delete',
+  key?: string,
+): void {
+  try {
+    const wsService = WebSocketService.getInstance();
+    wsService.broadcastConfigChange({ type, action, key });
+  } catch {
+    // WebSocket may not be initialised in tests — silently ignore
+  }
+}
 
 /**
  * Validates that a config name is safe to use in file paths.
@@ -432,7 +450,7 @@ router.get('/llm-profiles', (req, res) => {
   }
 });
 
-router.post('/llm-profiles', validateRequest(CreateLlmProfileSchema), (req, res) => {
+router.post('/llm-profiles', configLimiter, validateRequest(CreateLlmProfileSchema), (req, res) => {
   try {
     const newProfile = req.body;
 
@@ -470,6 +488,7 @@ router.post('/llm-profiles', validateRequest(CreateLlmProfileSchema), (req, res)
     profiles.llm.push(sanitizedProfile);
     saveLlmProfiles(profiles);
 
+    broadcastConfigUpdate('llm-profiles', 'create', sanitizedProfile.key);
     return res.status(HTTP_STATUS.CREATED).json(ApiResponse.success({ profile: sanitizedProfile }));
   } catch (error: any) {
     const hivemindError = ErrorUtils.toHivemindError(error);
@@ -486,7 +505,7 @@ router.post('/llm-profiles', validateRequest(CreateLlmProfileSchema), (req, res)
 });
 
 // PUT /api/config/llm-profiles/:key - Update an LLM profile
-router.put('/llm-profiles/:key', validateRequest(UpdateLlmProfileSchema), (req, res) => {
+router.put('/llm-profiles/:key', configLimiter, validateRequest(UpdateLlmProfileSchema), (req, res) => {
   try {
     const { key } = req.params;
     const updates = req.body;
@@ -510,6 +529,7 @@ router.put('/llm-profiles/:key', validateRequest(UpdateLlmProfileSchema), (req, 
 
     saveLlmProfiles(profiles);
 
+    broadcastConfigUpdate('llm-profiles', 'update', updatedProfile.key);
     return res.json(ApiResponse.success({ profile: updatedProfile }));
   } catch (error: any) {
     const hivemindError = ErrorUtils.toHivemindError(error);
@@ -525,7 +545,7 @@ router.put('/llm-profiles/:key', validateRequest(UpdateLlmProfileSchema), (req, 
   }
 });
 
-router.delete('/llm-profiles/:key', validateRequest(LlmProfileKeyParamSchema), (req, res) => {
+router.delete('/llm-profiles/:key', configLimiter, validateRequest(LlmProfileKeyParamSchema), (req, res) => {
   try {
     const { key } = req.params;
     const profiles = getLlmProfiles();
@@ -542,6 +562,7 @@ router.delete('/llm-profiles/:key', validateRequest(LlmProfileKeyParamSchema), (
     const [deletedProfile] = profiles.llm.splice(index, 1);
     saveLlmProfiles(profiles);
 
+    broadcastConfigUpdate('llm-profiles', 'delete', deletedProfile.key);
     return res.json(ApiResponse.success({ profile: deletedProfile }));
   } catch (error: any) {
     const hivemindError = ErrorUtils.toHivemindError(error);
@@ -671,7 +692,7 @@ router.get('/global', (req, res) => {
 // ... (PUT /global same logic, uses schemaSources)
 
 // PUT /api/config/global - Update global configuration
-router.put('/global', validateRequest(ConfigUpdateSchema), async (req, res) => {
+router.put('/global', configLimiter, validateRequest(ConfigUpdateSchema), async (req, res) => {
   try {
     const { configName, updates, ...directUpdates } = req.body;
 
@@ -696,6 +717,7 @@ router.put('/global', validateRequest(ConfigUpdateSchema), async (req, res) => {
         );
       }
 
+      broadcastConfigUpdate('global', 'update');
       return res.json(ApiResponse.success());
     }
 
@@ -779,6 +801,7 @@ router.put('/global', validateRequest(ConfigUpdateSchema), async (req, res) => {
       );
     }
 
+    broadcastConfigUpdate('global', 'update', configName);
     return res.json(ApiResponse.success());
   } catch (error: any) {
     const hivemindError = ErrorUtils.toHivemindError(error);
@@ -814,7 +837,7 @@ router.get('/message-profiles', (req, res) => {
   }
 });
 
-router.post('/message-profiles', validateRequest(CreateMessageProfileSchema), (req, res) => {
+router.post('/message-profiles', configLimiter, validateRequest(CreateMessageProfileSchema), (req, res) => {
   try {
     const newProfile = req.body;
 
@@ -836,6 +859,7 @@ router.post('/message-profiles', validateRequest(CreateMessageProfileSchema), (r
     profiles.message.push(newProfile);
     saveMessageProfiles(profiles);
 
+    broadcastConfigUpdate('message-profiles', 'create', newProfile.key);
     return res.status(HTTP_STATUS.CREATED).json(ApiResponse.success({ profile: newProfile }));
   } catch (error: any) {
     const hivemindError = ErrorUtils.toHivemindError(error);
@@ -874,7 +898,7 @@ router.get('/memory-profiles', (_req, res) => {
   }
 });
 
-router.post('/memory-profiles', validateRequest(CreateMemoryProfileSchema), (req, res) => {
+router.post('/memory-profiles', configLimiter, validateRequest(CreateMemoryProfileSchema), (req, res) => {
   try {
     const newProfile = req.body;
     const profiles = memoryProfilesModule.getMemoryProfiles();
@@ -889,6 +913,7 @@ router.post('/memory-profiles', validateRequest(CreateMemoryProfileSchema), (req
         );
     profiles.memory.push(newProfile);
     memoryProfilesModule.saveMemoryProfiles(profiles);
+    broadcastConfigUpdate('memory-profiles', 'create', newProfile.key);
     return res.status(HTTP_STATUS.CREATED).json(ApiResponse.success({ profile: newProfile }));
   } catch (error: any) {
     const hivemindError = ErrorUtils.toHivemindError(error);
@@ -903,7 +928,7 @@ router.post('/memory-profiles', validateRequest(CreateMemoryProfileSchema), (req
   }
 });
 
-router.put('/memory-profiles/:key', validateRequest(MemoryProfileKeyParamSchema), (req, res) => {
+router.put('/memory-profiles/:key', configLimiter, validateRequest(MemoryProfileKeyParamSchema), (req, res) => {
   try {
     const { key } = req.params;
     const profiles = memoryProfilesModule.getMemoryProfiles();
@@ -914,6 +939,7 @@ router.put('/memory-profiles/:key', validateRequest(MemoryProfileKeyParamSchema)
         .json(ApiResponse.error(`Memory profile '${key}' not found`, 'NOT_FOUND'));
     profiles.memory[index] = { ...profiles.memory[index], ...req.body, key };
     memoryProfilesModule.saveMemoryProfiles(profiles);
+    broadcastConfigUpdate('memory-profiles', 'update', key);
     return res.json(ApiResponse.success({ profile: profiles.memory[index] }));
   } catch (error: any) {
     const hivemindError = ErrorUtils.toHivemindError(error);
@@ -928,7 +954,7 @@ router.put('/memory-profiles/:key', validateRequest(MemoryProfileKeyParamSchema)
   }
 });
 
-router.delete('/memory-profiles/:key', validateRequest(MemoryProfileKeyParamSchema), (req, res) => {
+router.delete('/memory-profiles/:key', configLimiter, validateRequest(MemoryProfileKeyParamSchema), (req, res) => {
   try {
     const { key } = req.params;
     const profiles = memoryProfilesModule.getMemoryProfiles();
@@ -939,6 +965,7 @@ router.delete('/memory-profiles/:key', validateRequest(MemoryProfileKeyParamSche
         .json(ApiResponse.error(`Memory profile '${key}' not found`, 'NOT_FOUND'));
     profiles.memory.splice(index, 1);
     memoryProfilesModule.saveMemoryProfiles(profiles);
+    broadcastConfigUpdate('memory-profiles', 'delete', key);
     return res.json(ApiResponse.success());
   } catch (error: any) {
     const hivemindError = ErrorUtils.toHivemindError(error);
@@ -973,7 +1000,7 @@ router.get('/tool-profiles', (_req, res) => {
   }
 });
 
-router.post('/tool-profiles', validateRequest(CreateToolProfileSchema), (req, res) => {
+router.post('/tool-profiles', configLimiter, validateRequest(CreateToolProfileSchema), (req, res) => {
   try {
     const newProfile = req.body;
     const profiles = toolProfilesModule.getToolProfiles();
@@ -989,6 +1016,7 @@ router.post('/tool-profiles', validateRequest(CreateToolProfileSchema), (req, re
         );
     profiles.tool.push(newProfile);
     toolProfilesModule.saveToolProfiles(profiles);
+    broadcastConfigUpdate('tool-profiles', 'create', newProfile.key);
     return res.status(HTTP_STATUS.CREATED).json(ApiResponse.success({ profile: newProfile }));
   } catch (error: any) {
     const hivemindError = ErrorUtils.toHivemindError(error);
@@ -1004,7 +1032,7 @@ router.post('/tool-profiles', validateRequest(CreateToolProfileSchema), (req, re
   }
 });
 
-router.put('/tool-profiles/:key', validateRequest(ToolProfileKeyParamSchema), (req, res) => {
+router.put('/tool-profiles/:key', configLimiter, validateRequest(ToolProfileKeyParamSchema), (req, res) => {
   try {
     const { key } = req.params;
     const profiles = toolProfilesModule.getToolProfiles();
@@ -1015,6 +1043,7 @@ router.put('/tool-profiles/:key', validateRequest(ToolProfileKeyParamSchema), (r
         .json(ApiResponse.error(`Tool profile '${key}' not found`, 'NOT_FOUND', 404));
     profiles.tool[index] = { ...profiles.tool[index], ...req.body, key };
     toolProfilesModule.saveToolProfiles(profiles);
+    broadcastConfigUpdate('tool-profiles', 'update', key);
     return res.json(ApiResponse.success({ profile: profiles.tool[index] }));
   } catch (error: any) {
     const hivemindError = ErrorUtils.toHivemindError(error);
@@ -1030,7 +1059,7 @@ router.put('/tool-profiles/:key', validateRequest(ToolProfileKeyParamSchema), (r
   }
 });
 
-router.delete('/tool-profiles/:key', validateRequest(ToolProfileKeyParamSchema), (req, res) => {
+router.delete('/tool-profiles/:key', configLimiter, validateRequest(ToolProfileKeyParamSchema), (req, res) => {
   try {
     const { key } = req.params;
     const profiles = toolProfilesModule.getToolProfiles();
@@ -1041,6 +1070,7 @@ router.delete('/tool-profiles/:key', validateRequest(ToolProfileKeyParamSchema),
         .json(ApiResponse.error(`Tool profile '${key}' not found`, 'NOT_FOUND', 404));
     profiles.tool.splice(index, 1);
     toolProfilesModule.saveToolProfiles(profiles);
+    broadcastConfigUpdate('tool-profiles', 'delete', key);
     return res.json(ApiResponse.success());
   } catch (error: any) {
     const hivemindError = ErrorUtils.toHivemindError(error);

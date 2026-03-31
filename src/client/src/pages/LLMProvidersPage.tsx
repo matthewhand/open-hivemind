@@ -39,6 +39,7 @@ import useUrlParams from '../hooks/useUrlParams';
 import { useApiQuery } from '../hooks/useApiQuery';
 import { useBulkSelection } from '../hooks/useBulkSelection';
 import BulkActionBar from '../components/BulkActionBar';
+import { useWebSocket } from '../contexts/WebSocketContext';
 
 type LlmModelType = 'chat' | 'embedding' | 'both';
 
@@ -139,6 +140,23 @@ const LLMProvidersPage: React.FC = () => {
   useEffect(() => {
     if (profilesError) setError(profilesError.message);
   }, [profilesError]);
+
+  // Auto-refresh when config changes are broadcast via WebSocket
+  const { configVersion, lastConfigChange } = useWebSocket();
+  const configVersionRef = React.useRef(configVersion);
+  useEffect(() => {
+    // Skip the initial mount (configVersion starts at 0)
+    if (configVersionRef.current === configVersion) return;
+    configVersionRef.current = configVersion;
+
+    // Only refetch when relevant config types change
+    const relevantTypes = ['llm-profiles', 'global'];
+    if (lastConfigChange?.type && !relevantTypes.includes(lastConfigChange.type)) return;
+
+    refetchProfiles();
+    refetchStatus();
+    refetchGlobal();
+  }, [configVersion, lastConfigChange, refetchProfiles, refetchStatus, refetchGlobal]);
 
   const fetchProfiles = useCallback(async () => {
     await Promise.all([refetchProfiles(), refetchStatus(), refetchGlobal()]);

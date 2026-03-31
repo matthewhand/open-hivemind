@@ -26,6 +26,7 @@ import {
 import { apiService } from '../services/api';
 import { getProviderSchema, getProviderSchemasByType } from '../provider-configs';
 import useUrlParams from '../hooks/useUrlParams';
+import { useWebSocket } from '../contexts/WebSocketContext';
 
 const ToolProvidersPage: React.FC = () => {
   const errorToast = useErrorToast();
@@ -66,6 +67,16 @@ const ToolProvidersPage: React.FC = () => {
   }, []);
 
   useEffect(() => { fetchProfiles(); }, [fetchProfiles]);
+
+  // Auto-refresh when config changes are broadcast via WebSocket
+  const { configVersion, lastConfigChange } = useWebSocket();
+  const configVersionRef = React.useRef(configVersion);
+  useEffect(() => {
+    if (configVersionRef.current === configVersion) return;
+    configVersionRef.current = configVersion;
+    if (lastConfigChange?.type && lastConfigChange.type !== 'tool-profiles') return;
+    fetchProfiles();
+  }, [configVersion, lastConfigChange, fetchProfiles]);
 
   const handleAddProfile = () => {
     const defaultProvider = toolSchemas.length > 0 ? toolSchemas[0].providerType : '';

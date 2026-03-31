@@ -5,10 +5,15 @@ type DropdownProps = {
   trigger: React.ReactNode;
   children: React.ReactNode;
   position?: 'top' | 'bottom' | 'left' | 'right';
-  color?: 'primary' | 'secondary' | 'accent' | 'ghost';
-  size?: 'xs' | 'sm' | 'md' | 'lg';
+  color?: 'primary' | 'secondary' | 'accent' | 'ghost' | 'none';
+  size?: 'xs' | 'sm' | 'md' | 'lg' | 'none';
   isOpen?: boolean;
   onToggle?: (isOpen: boolean) => void;
+  className?: string;
+  triggerClassName?: string;
+  contentClassName?: string;
+  disabled?: boolean;
+  hideArrow?: boolean;
 };
 
 const Dropdown: React.FC<DropdownProps> = ({
@@ -19,6 +24,11 @@ const Dropdown: React.FC<DropdownProps> = ({
   size = 'md',
   isOpen: controlledIsOpen,
   onToggle,
+  className = '',
+  triggerClassName = '',
+  contentClassName = '',
+  disabled = false,
+  hideArrow = false,
 }) => {
   const [uncontrolledIsOpen, setUncontrolledIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -26,8 +36,13 @@ const Dropdown: React.FC<DropdownProps> = ({
   const isOpen = controlledIsOpen ?? uncontrolledIsOpen;
   const setIsOpen = onToggle ? () => onToggle(!isOpen) : setUncontrolledIsOpen;
 
-  const handleToggle = () => {
-    setIsOpen(!isOpen);
+  const handleToggle = (e?: React.MouseEvent) => {
+    if (e) {
+      e.stopPropagation();
+    }
+    if (!disabled) {
+      setIsOpen(!isOpen);
+    }
   };
 
   useEffect(() => {
@@ -55,6 +70,7 @@ const Dropdown: React.FC<DropdownProps> = ({
     sm: 'btn-sm',
     md: 'btn-md',
     lg: 'btn-lg',
+    none: '',
   };
 
   const colorClasses = {
@@ -62,16 +78,24 @@ const Dropdown: React.FC<DropdownProps> = ({
     secondary: 'btn-secondary',
     accent: 'btn-accent',
     ghost: 'btn-ghost',
+    none: '',
   };
 
   return (
-    <div className={`dropdown ${positionClasses[position]}`} ref={dropdownRef}>
-      <div tabIndex={0} role="button" className={`btn ${sizeClasses[size]} ${colorClasses[color]}`} onClick={handleToggle} aria-haspopup="true" aria-expanded={isOpen}>
+    <div className={`dropdown ${positionClasses[position]} ${className}`} ref={dropdownRef}>
+      <div
+        tabIndex={disabled ? -1 : 0}
+        role="button"
+        className={`btn ${sizeClasses[size]} ${colorClasses[color]} ${disabled ? 'btn-disabled opacity-50' : ''} ${triggerClassName}`}
+        onClick={handleToggle}
+        aria-haspopup="true"
+        aria-expanded={isOpen}
+      >
         {trigger}
-        <ChevronDownIcon className="h-5 w-5" aria-hidden="true" />
+        {!hideArrow && <ChevronDownIcon className="h-5 w-5" aria-hidden="true" />}
       </div>
       {isOpen && (
-        <ul tabIndex={0} className="dropdown-content menu p-2 shadow bg-base-100 rounded-box w-52" role="menu">
+        <ul tabIndex={0} className={`dropdown-content menu p-2 shadow bg-base-100 rounded-box w-52 z-50 ${contentClassName}`} role="menu">
           {children}
         </ul>
       )}
